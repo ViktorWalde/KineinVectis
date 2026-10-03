@@ -67,7 +67,7 @@ Rectangle {
     signal smartHomeRequested(bool extendSelection)
 
     radius: Theme.radiusLarge
-    color: Theme.background0
+    color: Theme.backgroundEditor
 
     function remove(start, end) {
         if (readOnly) return;

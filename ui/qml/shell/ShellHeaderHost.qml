@@ -50,7 +50,12 @@ Rectangle {
     height: 44
     z: 100
     radius: root.windowEdgesFlush ? 0 : Theme.radiusLarge
-    color: Theme.background0
+    color: Theme.frame
+    gradient: Gradient {
+        orientation: Gradient.Horizontal
+        GradientStop { position: 0.0; color: Theme.frameAccentTint }
+        GradientStop { position: 0.35; color: Theme.frame }
+    }
 
     function executeMenuAction(action) {
         const recentPrefix = "workspace.recent.open:";

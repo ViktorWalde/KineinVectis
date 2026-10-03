@@ -64,7 +64,7 @@ Rectangle {
 
     height: 28
     // Moldura, como a faixa de menus: sobre o fundo da janela (0.3.9).
-    color: Theme.background0
+    color: Theme.frame
 
     StatusBarParts {
         id: statusParts

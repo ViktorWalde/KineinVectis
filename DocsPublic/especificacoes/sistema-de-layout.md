@@ -333,19 +333,30 @@ A paleta deve ser confortável, escura e com contraste equilibrado.
 
 ### 7.1 Tokens principais
 
-```text
---kv-bg-app:              #0B0D10
---kv-bg-surface:          #111418
---kv-bg-elevated:         #171B21
---kv-bg-editor:           #0F1216
---kv-bg-current-line:     #1A1F26
---kv-border-subtle:       #2A2F37
---kv-border-strong:       #3A414A
+**Paleta "ilhas" (desde 2026-10-02, decisão do autor; inspiração: o tema
+Islands da JetBrains, com o âmbar no lugar do verde).** A MOLDURA da janela —
+topo, trilho, barra de status — é cinza; a área de trabalho é mais escura,
+sem borda marcada; o código tem a cor da área. O canto esquerdo do topo
+recebe um véu âmbar que some até ~35 % da largura. Os nomes `--kv-*` seguem
+os tokens do `ui/qml/Theme.qml` (`frame`, `background0..2`, …).
 
---kv-text-primary:        #E7E2D8
---kv-text-secondary:      #A9A39A
---kv-text-muted:          #6F737A
---kv-text-disabled:       #4E535A
+```text
+--kv-frame:               #26282C   (janela, topo, trilho, status)
+--kv-frame-accent-tint:   #373328   (véu âmbar no canto do topo)
+--kv-bg-app:              #141517   (poços e campos dentro das áreas)
+--kv-bg-surface:          #191A1C   (as áreas de trabalho)
+--kv-bg-elevated:         #1F2023
+--kv-bg-editor:           #191A1C   (= a área: o código integrado)
+--kv-bg-current-line:     #1F2024
+--kv-surface-hover:       #2B2D30
+--kv-surface-selected:    #33353B
+--kv-border-subtle:       #2B2D30
+--kv-border-strong:       #3C3F44
+
+--kv-text-primary:        #DFE1E5
+--kv-text-secondary:      #B4B8BF
+--kv-text-muted:          #80848B
+--kv-text-disabled:       #5A5D63
 
 --kv-amber:               #FFB000
 --kv-amber-active:        #FFC93D

@@ -152,6 +152,10 @@ Priorizar:
 
 ### 3.1 Paleta base
 
+> Desde 2026-10-02 a paleta vigente é a "ilhas" do
+> [`sistema-de-layout.md`](sistema-de-layout.md) §7.1 (moldura #26282C, áreas
+> #191A1C, textos neutros); os valores abaixo são o histórico de antes.
+
 ```text
 Background principal:        #0B0D10
 Surface / painel:            #111418

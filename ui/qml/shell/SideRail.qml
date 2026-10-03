@@ -35,9 +35,9 @@ Rectangle {
 
     width: expanded ? 168 : 52
     radius: Theme.radiusLarge
-    color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
+    // Sobre a moldura, sem ilha (0.3.9, paleta ilhas): o trilho e' borda da
+    // janela, como na JetBrains.
+    color: "transparent"
 
     component RailButton: Rectangle {
         id: railButton

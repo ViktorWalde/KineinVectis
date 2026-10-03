@@ -13,7 +13,7 @@ Window {
     title: coreClient.workspaceName !== ""
            ? coreClient.workspaceName + " — Kinein Vectis"
            : "Kinein Vectis"
-    color: Theme.background0
+    color: Theme.frame
 
     WindowChromeController {
         id: windowChromeController

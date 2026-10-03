@@ -6,20 +6,28 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    readonly property color background0: "#0b0d10"
-    readonly property color background1: "#111418"
-    readonly property color background2: "#171b21"
-    readonly property color backgroundEditor: "#0f1216"
-    readonly property color currentLine: "#1a1f26"
-    readonly property color surface1: "#171b21"
-    readonly property color surface2: "#1a1f27"
-    readonly property color surfaceSelected: "#222833"
-    readonly property color borderSoft: "#2a2f37"
-    readonly property color borderStrong: "#3a414a"
-    readonly property color textPrimary: "#e7e2d8"
-    readonly property color textSecondary: "#a9a39a"
-    readonly property color textMuted: "#6f737a"
-    readonly property color textDisabled: "#4e535a"
+    // Paleta "ilhas" (0.3.9, pedido do autor com o tema Islands da JetBrains
+    // como inspiracao, o verde trocado pelo ambar): a MOLDURA (janela, topo,
+    // status, trilho) e' cinza; as ILHAS (explorador, editor, painel de
+    // baixo) sao mais escuras e sem borda marcada; o codigo tem a cor da
+    // ilha. Medida no print de referencia: moldura #26282c, ilha #191a1c.
+    readonly property color frame: "#26282c"
+    // O veu ambar no canto do topo: a moldura com ~8% de ambar.
+    readonly property color frameAccentTint: "#373328"
+    readonly property color background0: "#141517"
+    readonly property color background1: "#191a1c"
+    readonly property color background2: "#1f2023"
+    readonly property color backgroundEditor: "#191a1c"
+    readonly property color currentLine: "#1f2024"
+    readonly property color surface1: "#1e1f22"
+    readonly property color surface2: "#2b2d30"
+    readonly property color surfaceSelected: "#33353b"
+    readonly property color borderSoft: "#2b2d30"
+    readonly property color borderStrong: "#3c3f44"
+    readonly property color textPrimary: "#dfe1e5"
+    readonly property color textSecondary: "#b4b8bf"
+    readonly property color textMuted: "#80848b"
+    readonly property color textDisabled: "#5a5d63"
     readonly property color accent: "#ffb000"
     readonly property color accentActive: "#ffc93d"
     readonly property color accentDim: "#b97900"
