@@ -361,8 +361,8 @@ alterado.
 
 | Atalho | Ação |
 | --- | --- |
-| `Ctrl+Shift+N` ou `Ctrl+Shift+A` | **Search Everywhere**: arquivos por nome e comandos da IDE |
-| `Ctrl+E` | Arquivos recentes, no mesmo Search Everywhere |
+| `Ctrl+Shift+N` ou `Ctrl+Shift+A` | **Buscar em tudo** (o "Search Everywhere" da JetBrains): arquivos por nome e comandos da IDE |
+| `Ctrl+E` | Arquivos recentes, na mesma caixa Buscar em tudo |
 | `Alt+7` | Aba **Símbolos**: estrutura do arquivo e busca de declarações por nome no projeto |
 | — digite `@` | ...símbolos do arquivo atual (estrutura); `@nome` filtra |
 | — digite `#nome` | ...símbolos do projeto inteiro (structs, funções...) |
@@ -370,7 +370,7 @@ alterado.
 | `Ctrl+Shift+H` | **Substituir texto no projeto** (resumo + confirmação) |
 | `Ctrl+F` / `Ctrl+H` | Buscar/substituir **dentro do arquivo aberto** (barra no editor) |
 
-No Search Everywhere: `↑↓` navegam, `Enter` abre, `Esc` fecha.
+No Buscar em tudo: `↑↓` navegam, `Enter` abre, `Esc` fecha.
 
 **Busca no arquivo (`Ctrl+F`) vs. busca no projeto (`Ctrl+Shift+F`):** a
 primeira procura só no arquivo que está na tela e realça as ocorrências ali
@@ -553,18 +553,18 @@ Se o projeto for um repositório git, a IDE mostra sem você pedir:
   - **Log**: o filtro (texto; o branch de onde partir) e a lista de
     commits com o grafo, os refs (chips) e a idade. Clique num commit
     para ver, no editor, o que ele mudou (autor, arquivos, patch).
-    "Git: Historico" no Search Everywhere abre direto aqui; **atualizar**
+    "Git: Historico" no Buscar em tudo abre direto aqui; **atualizar**
     recarrega a lista.
 
 - **Blame** (autoria por linha): rode **"Git: Blame do arquivo"** no
-  Search Everywhere para ligar/desligar uma coluna ao lado dos números
+  Buscar em tudo para ligar/desligar uma coluna ao lado dos números
   de linha mostrando **quem** mudou cada linha e **há quanto tempo**.
   Linhas ainda não commitadas aparecem como "não commitado". Acompanha o
   arquivo que você está editando.
 
 O status atualiza sozinho ao salvar, criar, renomear ou excluir arquivos pela
 IDE **e também** quando o watcher detecta mudanças externas (por exemplo, um
-`git pull` no terminal). **"Git: Atualizar status"** no Search Everywhere
+`git pull` no terminal). **"Git: Atualizar status"** no Buscar em tudo
 continua disponível para atualização manual.
 
 Na janela do Git também é possível listar/trocar/criar branches, fazer **Pull** e
@@ -1296,7 +1296,7 @@ IDE, e quem aperta Enter é você.
 | Código | `Alt+O` | C/C++: alternar header/source |
 | Código | `F2` / `Shift+F2` (ou `Ctrl+Alt+E` / `Ctrl+Alt+Shift+E`) | Próximo / anterior problema |
 | IDE | `Ctrl+Alt+S` | Abrir configurações |
-| Busca | `Ctrl+Shift+N` / `Ctrl+Shift+A` | Search Everywhere (`@` símbolos do arquivo, `#` do projeto) |
+| Busca | `Ctrl+Shift+N` / `Ctrl+Shift+A` | Buscar em tudo (`@` símbolos do arquivo, `#` do projeto) |
 | Busca | `Ctrl+E` | Arquivos recentes |
 | Busca | `Alt+7` | Aba Símbolos (estrutura do arquivo; declarações do projeto por nome) |
 | Busca | `Ctrl+Shift+F` | Buscar nos arquivos |

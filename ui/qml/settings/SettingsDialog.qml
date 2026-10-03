@@ -288,7 +288,7 @@ Item {
 
             Text {
                 width: parent.width
-                text: qsTr("As mudanças valem para todos os projetos (global).")
+                text: qsTr("As mudanças valem para todos os projetos; o que o projeto define no próprio .kinein/settings.json muda só nele.")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WordWrap

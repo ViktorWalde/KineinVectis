@@ -389,4 +389,12 @@ Item {
             });
         }
     }
+
+    // Erro entre os problemas? A cor do contador da aba (amarelo so' com avisos).
+    function hasErrorProblems() {
+        for (let i = 0; i < problemItemsModel.count; i++) {
+            if (StatusColors.isError(problemItemsModel.get(i).severity)) return true;
+        }
+        return false;
+    }
 }

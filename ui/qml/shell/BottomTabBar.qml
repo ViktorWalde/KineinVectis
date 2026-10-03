@@ -12,6 +12,7 @@ Item {
 
     property string activeTab: ""
     property int problemCount: 0
+    property bool problemErrors: true
     property string testsBadge: ""
     property bool testsOk: true
     property int jobsRunning: 0
@@ -91,7 +92,7 @@ Item {
     }
 
     function badgeColorFor(key) {
-        if (key === "problems") return Theme.errorSoft;
+        if (key === "problems") return problemErrors ? Theme.errorSoft : Theme.warningSoft;
         if (key === "tests") return testsOk ? Theme.successSoft : Theme.errorSoft;
         return Theme.accent;
     }

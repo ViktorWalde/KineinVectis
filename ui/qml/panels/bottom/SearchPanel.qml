@@ -119,7 +119,8 @@ Item {
                 if (panel.truncated) {
                     return qsTr("%1+ resultados").arg(panel.resultsModel.count);
                 }
-                return qsTr("%1 resultados").arg(panel.resultsModel.count);
+                return panel.resultsModel.count === 1 ? qsTr("1 resultado")
+                                                      : qsTr("%1 resultados").arg(panel.resultsModel.count);
             }
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption

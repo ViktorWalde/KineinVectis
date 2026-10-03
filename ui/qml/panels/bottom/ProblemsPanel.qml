@@ -16,6 +16,14 @@ ListView {
     }
 
     property var diagnosticsModel: emptyDiagnosticsModel
+    // O caminho na linha e' relativo ao projeto (F5 na tela real, 2026-10-03:
+    // o absoluto do compilador ocupava a linha inteira e a mensagem sumia).
+    property string workspaceRoot: ""
+
+    function displayPath(file) {
+        const root = panel.workspaceRoot;
+        return root !== "" && file.indexOf(root + "/") === 0 ? file.substring(root.length + 1) : file;
+    }
 
     signal openRequested(string file, int line, int column)
     // F5: o proximo passo do problema (codeActions | health, com o alvo).
@@ -25,7 +33,6 @@ ListView {
     ProblemRules {
         id: nextStep
     }
-
 
     clip: true
     spacing: 2
@@ -75,13 +82,19 @@ ListView {
                 color: StatusColors.severity(problemDelegate.severity)
             }
 
+            // O caminho cabe em ate' 40% da linha, cortado no MEIO (o nome do
+            // arquivo e a linha ficam a vista); a mensagem leva o resto.
             Text {
+                id: pathLabel
+
                 anchors.verticalCenter: parent.verticalCenter
                 visible: problemDelegate.file !== ""
-                text: problemDelegate.file + ":" + problemDelegate.line
+                width: Math.min(implicitWidth, problemRow.width * 0.4)
+                text: panel.displayPath(problemDelegate.file) + ":" + problemDelegate.line
                 color: Theme.accent
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fontSizeSmall
+                elide: Text.ElideMiddle
             }
 
             Text {
@@ -89,18 +102,23 @@ ListView {
 
                 anchors.verticalCenter: parent.verticalCenter
                 visible: problemDelegate.code !== ""
+                width: Math.min(implicitWidth, problemRow.width * 0.2)
                 text: problemDelegate.code
                 color: Theme.textMuted
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fontSizeCaption
+                elide: Text.ElideRight
             }
 
+            // So' a primeira linha da mensagem: as notas do compilador (a
+            // segunda linha em diante) ficam na dica, com a mensagem inteira.
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - x - (passo.visible ? passo.width + Theme.spacingSmall : 0)
-                text: problemDelegate.message
+                width: Math.max(0, parent.width - x - (passo.visible ? passo.width + Theme.spacingSmall : 0))
+                text: problemDelegate.message.split("\n")[0]
                 color: Theme.textPrimary
                 font.pixelSize: Theme.fontSizeSmall
+                maximumLineCount: 1
                 elide: Text.ElideRight
             }
         }
@@ -130,6 +148,15 @@ ListView {
             cursorShape: Qt.PointingHandCursor
             onClicked: panel.openRequested(problemDelegate.file, problemDelegate.line,
                                            problemDelegate.column)
+            onContainsMouseChanged: {
+                if (containsMouse) {
+                    TooltipController.showFor(problemDelegate,
+                                              panel.displayPath(problemDelegate.file) + ":" + problemDelegate.line
+                                              + "\n" + problemDelegate.message, "top");
+                } else {
+                    TooltipController.hideFor(problemDelegate);
+                }
+            }
         }
     }
 }

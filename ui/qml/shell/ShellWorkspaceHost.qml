@@ -253,6 +253,7 @@ Item {
                 open: root.shellController.showBottomPanel
                 activeTab: root.shellController.bottomTab
                 problemCount: root.jobsController.problemsModel.count
+                problemErrors: root.jobsController.problemsModel.count >= 0 && root.jobsController.hasErrorProblems()
                 gitController: root.gitController
                 testsBadge: root.jobsController.testsBadge
                 testsOk: root.jobsController.testsFailed === 0
@@ -262,6 +263,7 @@ Item {
                 jobsController: root.jobsController
                 testing: root.testing
                 problemsModel: root.jobsController.problemsModel
+                workspaceRoot: root.workspaceRoot
                 terminalRender: root.runtimeController.terminalRender
                 runtimeController: root.runtimeController
                 terminalActive: root.terminalActive

@@ -10,7 +10,7 @@ Rectangle {
     property bool loading: false
     property bool truncated: false
     property string errorText: ""
-    property string titleText: qsTr("Search Everywhere")
+    property string titleText: qsTr("Buscar em tudo")
     property bool recentMode: false
     property real maxAvailableWidth: 620
     property real maxAvailableHeight: 420
@@ -105,7 +105,8 @@ Rectangle {
                     return qsTr("Digite para buscar arquivos e comandos · "
                                 + "@ símbolos do arquivo · # símbolos do workspace");
                 }
-                return qsTr("%1 resultados").arg(root.resultCount);
+                return root.resultCount === 1 ? qsTr("1 resultado")
+                                              : qsTr("%1 resultados").arg(root.resultCount);
             }
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption

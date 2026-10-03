@@ -26,13 +26,25 @@ QtObject {
     // e' pior que mostra-lo com peso demais. Era aqui que as duas copias
     // discordavam.
     function severity(value) {
+        const level = severityKind(value);
+        return level === "warning" ? Theme.warningSoft
+             : level === "info" ? Theme.infoSoft : Theme.errorSoft;
+    }
+
+    // A classificacao, dona unica: a cor acima e o contador da aba de
+    // Problemas leem daqui, e nunca discordam.
+    function severityKind(value) {
         if (value === "warning") {
-            return Theme.warningSoft;
+            return "warning";
         }
         if (value === "note" || value === "info" || value === "hint") {
-            return Theme.infoSoft;
+            return "info";
         }
-        return Theme.errorSoft;
+        return "error";
+    }
+
+    function isError(value) {
+        return severityKind(value) === "error";
     }
 
     // Estado de um arquivo no git.

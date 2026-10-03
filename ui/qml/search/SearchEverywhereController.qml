@@ -58,7 +58,7 @@ Item {
     property string symbolFilter: ""
     property var recentFiles: []
     property bool recentMode: false
-    property string everywhereTitle: qsTr("Search Everywhere")
+    property string everywhereTitle: qsTr("Buscar em tudo")
     readonly property bool hasCommands: commandList.length > 0
 
     signal resetAndFocusEverywhereRequested()
@@ -112,7 +112,7 @@ Item {
         everywhereError = "";
         pendingEverywhereQuery = "";
         recentMode = false;
-        everywhereTitle = qsTr("Search Everywhere");
+        everywhereTitle = qsTr("Buscar em tudo");
     }
 
     // As duas eram COPIA do `PathRules` (2026-09-26): mesmo `baseName`, mesmo
@@ -132,7 +132,7 @@ Item {
 
     function openSearchEverywhere() {
         recentMode = false;
-        everywhereTitle = qsTr("Search Everywhere");
+        everywhereTitle = qsTr("Buscar em tudo");
         everywhereVisible = true;
         everywhereLoading = false;
         everywhereTruncated = false;

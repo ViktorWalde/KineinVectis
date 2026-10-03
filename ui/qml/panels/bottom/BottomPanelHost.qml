@@ -8,6 +8,7 @@ Rectangle {
     property bool open: false
     property string activeTab: "logs"
     property int problemCount: 0
+    property bool problemErrors: true
     property string testsBadge: ""
     property bool testsOk: true
     property int jobsRunning: 0
@@ -19,6 +20,7 @@ Rectangle {
     property var jobsController
     property bool testing: false
     property var problemsModel
+    property string workspaceRoot: ""
     property var terminalRender: ({})
     property var runtimeController: null
     property bool terminalActive: false
@@ -120,6 +122,7 @@ Rectangle {
         anchors.margins: Theme.spacingSmall
         activeTab: root.activeTab
         problemCount: root.problemCount
+        problemErrors: root.problemErrors
         testsBadge: root.testsBadge
         testsOk: root.testsOk
         jobsRunning: root.jobsRunning
@@ -188,6 +191,7 @@ Rectangle {
         anchors.margins: Theme.spacingSmall
         visible: root.activeTab === "problems"
         diagnosticsModel: root.problemsModel
+        workspaceRoot: root.workspaceRoot
         onOpenRequested: function(file, line, column) {
             root.problemOpenRequested(file, line, column);
         }

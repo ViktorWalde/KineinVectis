@@ -108,9 +108,15 @@ Item {
             buildItems.push({ label: qsTr("Testar com pytest"), action: "test.run.python",
                               enabled: workspaceOpen && coreConnected });
         }
-        buildItems.push({ label: cargoAvailable ? qsTr("Análise Cargo") : qsTr("Análise (ruff)"),
+        // A analise de cada ecossistema (o core roda: clippy no Cargo,
+        // clang-tidy no CMake e no Makefile, ruff no Python). Ate' 2026-10-03
+        // um projeto C/C++ via "Análise (ruff)" apagado (F5 na tela real).
+        const cppAvailable = cmakeAvailable || hasBuildSystem("make");
+        buildItems.push({ label: cargoAvailable ? qsTr("Análise (clippy)")
+                                 : cppAvailable ? qsTr("Análise (clang-tidy)") : qsTr("Análise (ruff)"),
                           action: "quality.run",
-                          enabled: workspaceOpen && (cargoAvailable || pythonAvailable) && coreConnected });
+                          enabled: workspaceOpen && (cargoAvailable || cppAvailable || pythonAvailable)
+                                   && coreConnected });
         // A cobertura dos testes (D8): Rust pelo cargo-llvm-cov, Python pelo coverage.py.
         buildItems.push({ label: qsTr("Cobertura dos testes"), action: "coverage.run",
                           enabled: workspaceOpen && (cargoAvailable || pythonAvailable) && coreConnected });
@@ -138,7 +144,7 @@ Item {
                 { label: qsTr("Restaurar trilho padrão"), action: "rail.restore", enabled: true }
             ],
             navigate: [
-                { label: qsTr("Search Everywhere"), action: "search.everywhere", enabled: workspaceOpen },
+                { label: qsTr("Buscar em tudo"), action: "search.everywhere", enabled: workspaceOpen },
                 { label: qsTr("Arquivos recentes"), action: "search.recent", enabled: workspaceOpen },
                 { label: qsTr("Ir para linha"), action: "editor.gotoLine", enabled: hasActiveFile },
                 { label: qsTr("Símbolos do arquivo"), action: "search.documentSymbols", enabled: hasActiveFile }
