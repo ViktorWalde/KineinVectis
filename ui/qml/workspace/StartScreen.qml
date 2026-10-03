@@ -31,8 +31,8 @@ Rectangle {
 
     color: Theme.backgroundEditor
     radius: Theme.radiusLarge
-    border.color: folderDropReady ? Theme.accent : Theme.borderSoft
-    border.width: folderDropReady ? 2 : 1
+    border.color: Theme.accent
+    border.width: folderDropReady ? 2 : 0
 
     function localDropPath(event) {
         if (!event.hasUrls || event.urls.length !== 1 || urlDecoder === null) return "";

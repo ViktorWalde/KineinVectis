@@ -76,10 +76,9 @@ Rectangle {
     signal searchReplaceRequested(string query, string replacement)
 
     visible: open
+    // Dentro da ilha unica (0.3.9): a cor da area, sem borda propria.
     radius: Theme.radiusLarge
-    color: Theme.background2
-    border.color: Theme.borderSoft
-    border.width: 1
+    color: Theme.background1
 
     function focusSearchInput() {
         searchView.focusInput();

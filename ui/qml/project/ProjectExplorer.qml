@@ -67,8 +67,9 @@ Rectangle {
     implicitWidth: 260
     radius: Theme.radiusLarge
     color: Theme.background1
-    border.color: dropToRoot ? Theme.accent : Theme.borderSoft
-    border.width: dropToRoot ? 2 : 1
+    // Dentro da ilha unica (0.3.9): sem borda propria, so' a de "soltar aqui".
+    border.color: Theme.accent
+    border.width: dropToRoot ? 2 : 0
 
     ProjectTreeAutoScroll {
         view: explorerView

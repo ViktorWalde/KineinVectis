@@ -20,10 +20,9 @@ Rectangle {
 
     readonly property bool historyVisible: gitController ? gitController.historyVisible : false
 
+    // Dentro da ilha unica (0.3.9): sem borda propria.
     radius: Theme.radiusLarge
     color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
 
     // O minimo que o slot da esquerda precisa com o Git nele (53 §4.4): o da
     // caixa de commit, com as margens dela.

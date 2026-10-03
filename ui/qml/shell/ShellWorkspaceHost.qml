@@ -118,6 +118,10 @@ Item {
 
     ShellLayout {
         anchors.fill: parent
+        railItem: sideBar
+        leftItem: explorerPanel
+        centerItem: centerColumn
+        bottomItem: bottomPanel
 
         // As entradas do trilho sao DADO desde a V3 (2026-09-24): este host
         // nao conhece mais cada uma pelo nome. Acrescentar uma custa UMA
@@ -388,4 +392,5 @@ Item {
             root.shellController.resizeBottomPanel(-delta);
         }
     }
+
 }

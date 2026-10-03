@@ -50,8 +50,9 @@ no checkout, não em nenhum pacote publicado.
   aberto, a IDE reanalisava o texto cerca de dez vezes por segundo sem
   ninguém digitar (o realce era confundido com edição). Agora só a edição
   de verdade dispara a análise.
-- **Paleta nova, "ilhas".** Moldura cinza ao redor, áreas de trabalho mais
-  escuras sem borda marcada, o código integrado à área, textos neutros e um
+- **Paleta nova, "ilhas".** Moldura cinza ao redor, e o explorador, o
+  editor e o painel de baixo numa área escura só, separados por divisórias
+  finas, o código integrado à área, textos neutros e um
   véu âmbar no canto do topo — inspirada no tema Islands da JetBrains.
 - **Mais espaço para o código.** O topo virou uma faixa só: o ícone da IDE,
   um botão ☰ que mostra e recolhe os menus (Arquivo … Ajuda) na própria
