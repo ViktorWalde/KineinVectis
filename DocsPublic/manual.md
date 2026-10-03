@@ -100,6 +100,10 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   sem nunca deixar o editor com menos de 480 px, e voltam ao tamanho que você
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
+- **Dois trilhos** (desde 2026-10-02): à esquerda e à direita da área de
+  trabalho. Arraste um ícone de um trilho para o outro e a área passa a morar
+  lá (por projeto). Os **Símbolos** (Alt+7) são um ícone do trilho e nascem
+  à direita. O ⋯ Mais e o modo expandido ficam no trilho da esquerda.
 - **Arraste para organizar** (desde 2026-10-02): os ícones do trilho, as
   abas do painel de baixo, os widgets da barra principal e os itens da barra
   de status mudam de lugar arrastando — cada um só dentro da própria barra

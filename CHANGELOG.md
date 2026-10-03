@@ -66,6 +66,10 @@ no checkout, não em nenhum pacote publicado.
   item, a origem fica esmaecida, a pasta de destino abre sozinha e diz
   "Mover para tests/"; soltar uma pasta dentro dela mesma aparece em
   vermelho e não acontece.
+- **Dois trilhos, à esquerda e à direita.** Arraste um ícone de um trilho
+  para o outro e a área passa a morar lá; os Símbolos (Alt+7) agora são um
+  ícone do trilho, e não uma alça dentro do editor. A moldura ficou mais fina
+  e contínua ao redor da área de trabalho.
 - **Arraste para organizar.** Os ícones do trilho, as abas do painel de
   baixo, os widgets do cabeçalho e os itens da barra de status se arrastam
   para a ordem que você quiser — cada um dentro da própria barra. Durante o

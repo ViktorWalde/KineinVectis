@@ -43,7 +43,7 @@ Item {
         let failures = 0;
         popup.openAt(60, 60, "");
         const before = ids(popup.onRail);
-        failures += check(before === "explorer,tools", "no trilho ao abrir: " + before);
+        failures += check(before === "explorer,outline,tools", "no trilho ao abrir: " + before);
         failures += check(!popup.railHas("database"), "banco fora");
 
         // Fixar o banco: o estado muda, a secao nao.
@@ -54,7 +54,7 @@ Item {
         // Reabrir reorganiza.
         popup.close();
         popup.openAt(60, 60, "");
-        failures += check(ids(popup.onRail) === "explorer,database,tools",
+        failures += check(ids(popup.onRail) === "explorer,outline,database,tools",
                           "reabrir reorganiza: " + ids(popup.onRail));
 
         if (failures !== 0) console.error("FALHAS=" + failures);

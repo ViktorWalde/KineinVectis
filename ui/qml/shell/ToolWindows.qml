@@ -122,6 +122,18 @@ Item {
             "active": root.shellController !== null
                       && root.shellController.effectiveShowExplorer && root.workspaceOpen
         },
+        // Os Simbolos (estrutura + busca do arquivo) entraram no trilho em
+        // 0.3.9, pedido do autor: "levar os icones do lado direito para o
+        // esquerdo" — antes era uma alca vertical dentro da area do editor.
+        {
+            "id": "outline", "label": qsTr("Símbolos"), "icon": "documents",
+            "tooltip": qsTr("Símbolos (Alt+7)"), "area": "left", "side": "right", "order": 20,
+            "available": root.workspaceOpen,
+            "title": qsTr("Símbolos"), "kind": "dock-right", "defaultPolicy": "pinned",
+            "factKey": "", "commandId": "index.symbols", "shortcut": "Alt+7",
+            "active": root.shellController !== null && !root.shellController.outlineCollapsed
+                      && root.workspaceOpen
+        },
         // Embarcados e' por projeto (o kit mora no .kinein), como o Git.
         {
             "id": "embedded", "label": qsTr("Embarcados"), "icon": "embedded",
@@ -210,9 +222,19 @@ Item {
     readonly property var railState: root.shellController && root.shellController.railState
         ? root.shellController.railState
         : ({ pinned: [], unpinned: [], hidden: [] })
-    // O que o trilho desenha.
+    // O que os trilhos desenham.
     readonly property var visibleEntries: projection.visibleEntries(root.entries, root.railState,
                                                                     railFacts.knownFacts)
+    // De que lado cada area fica (0.3.9): o que o usuario arrastou, senao o
+    // da entrada (`side`, padrao esquerda).
+    function sideOf(entry) {
+        const sides = root.railState.sides !== undefined && root.railState.sides !== null
+                      ? root.railState.sides : {};
+        if (sides[entry.id] !== undefined) return sides[entry.id];
+        return entry.side !== undefined ? entry.side : "left";
+    }
+    readonly property var leftEntries: root.visibleEntries.filter(entry => root.sideOf(entry) === "left")
+    readonly property var rightEntries: root.visibleEntries.filter(entry => root.sideOf(entry) === "right")
 
     // Um dono AUSENTE e' o mesmo caso de um id sem dono: resultado observavel,
     // nao excecao. O trilho existe antes dos controllers em teste e na abertura
@@ -239,6 +261,12 @@ Item {
                 return false;
             }
             shellController.toggleExplorer();
+            return true;
+        case "outline":
+            if (shellController === null || shellController === undefined) {
+                return false;
+            }
+            shellController.toggleOutline();
             return true;
         case "embedded":
             return openOwner(embeddedController);

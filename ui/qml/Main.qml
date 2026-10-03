@@ -14,6 +14,7 @@ Window {
            ? coreClient.workspaceName + " — Kinein Vectis"
            : "Kinein Vectis"
     color: Theme.frame
+    WindowBackdrop { anchors.fill: parent }
 
     WindowChromeController {
         id: windowChromeController
@@ -255,7 +256,8 @@ Window {
         anchors.bottom: statusBar.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: Theme.panelGap
+        anchors.topMargin: Theme.panelGap
+        anchors.bottomMargin: Theme.panelGap
         shellController: domains.shellController
         indexController: domains.indexController
         workspaceController: domains.workspaceController

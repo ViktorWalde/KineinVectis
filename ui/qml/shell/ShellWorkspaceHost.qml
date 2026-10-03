@@ -43,15 +43,12 @@ Item {
     signal openWorkspacePathRequested(string path)
     signal closeWorkspaceRequested()
     signal toolsDetectionRequested()
-    // A acao da faixa de saude vai INTEIRA para quem tem os controllers
-    // (Main.qml): "scan", "cmakeConfigure", "cargoMetadata",
-    // "pythonEnvironment", ou o nome de uma aba.
+    // A acao da faixa de saude vai inteira para o Main (scan, configure...).
     signal healthActionRequested(string target)
     signal problemNextStepRequested(string kind, string target, string file, int line, int column)
     signal createProjectRequested(string templateId)
     signal settingsRequested()
-    // Os menus do trilho e das abas de baixo (0.3.7): itens prontos,
-    // coordenadas deste host; o Main abre o menu compartilhado.
+    // Menus do trilho e das abas (0.3.7): o Main abre o menu compartilhado.
     signal shellMenuRequested(real menuX, real menuY, var items)
 
     onWidthChanged: {
@@ -65,8 +62,7 @@ Item {
         updatePanelLimits();
     }
 
-    // Os limites dos paineis (53 §4.4): o trilho e o minimo DECLARADO por
-    // quem esta' no slot da esquerda.
+    // Limites dos paineis (53 §4.4): o trilho e o minimo do slot da esquerda.
     function updatePanelLimits() {
         root.shellController.updatePanelLimits(sideBar.width, explorerPanel.minimumWidth);
     }
@@ -112,8 +108,7 @@ Item {
         editorPaneHost.focusSymbols(query);
     }
 
-    // O trilho e' dado, e os paineis das entradas moram nele: quem monta os
-    // overlays de ambiente le' esta lista em vez de conhecer cada painel.
+    // O trilho e' dado: quem monta os overlays de ambiente le' esta lista.
     readonly property alias toolWindows: railEntries
 
     ShellLayout {
@@ -122,10 +117,9 @@ Item {
         leftItem: explorerPanel
         centerItem: centerColumn
         bottomItem: bottomPanel
+        rightItem: rightSide
 
-        // As entradas do trilho sao DADO desde a V3 (2026-09-24): este host
-        // nao conhece mais cada uma pelo nome. Acrescentar uma custa UMA
-        // entrada no `ToolWindows`.
+        // As entradas do trilho sao DADO (V3): uma entrada no `ToolWindows`.
         ToolWindows {
             id: railEntries
 
@@ -148,13 +142,14 @@ Item {
             expanded: root.shellController.railExpanded
             onWidthChanged: root.updatePanelLimits()
             onExpandedToggled: root.shellController.toggleRail()
-            entries: railEntries.visibleEntries
+            entries: railEntries.leftEntries
             order: root.shellController.savedOrder("rail")
+            partnerReorder: rightSide.reorder
             onEntryMoved: (id, dropIndex, visibleIds) => root.shellController.moveInBar(
                               "rail", visibleIds, id, dropIndex)
+            onEntryTransferred: (id, i, ids) => root.shellController.moveRailEntryToSide(id, "right", i, ids)
             onActivated: id => railEntries.activate(id)
-            // O "⋯ Mais" e o botao direito abrem o PAINEL DE AREAS; o botao
-            // direito destaca a area clicada.
+            // "⋯ Mais" e o botao direito abrem o painel de areas.
             onContextMenuRequested: function(id, menuX, menuY) {
                 const pos = mapToItem(root, menuX + Theme.spacingMedium, menuY);
                 railAreas.openAt(pos.x, pos.y, id);
@@ -165,7 +160,6 @@ Item {
             }
         }
 
-        // O slot a esquerda: o explorer OU a janela do Git (E3-3).
         ShellLeftWindowHost {
             id: explorerPanel
 
@@ -190,6 +184,7 @@ Item {
 
             width: visible
                    ? Math.max(0, parent.width - sideBar.width - Theme.panelGap
+                              - rightSide.width - Theme.panelGap
                               - (explorerPanel.visible
                                  ? explorerPanel.width + Theme.panelGap : 0))
                    : 0
@@ -349,6 +344,16 @@ Item {
             }
         }
 
+    
+    
+        RightSideRail {
+            id: rightSide
+
+            height: parent.height
+            shellController: root.shellController
+            railEntries: railEntries
+            partnerReorder: sideBar.reorder
+        }
     }
 
     RailAreasPopup {
@@ -368,8 +373,7 @@ Item {
         }
     }
 
-    // Alcas de redimensionamento em overlay sobre os vaos do layout
-    // (KVSplitter minimo da fatia C1; limites da spec no ShellController).
+    // Alcas de redimensionamento sobre os vaos (limites no ShellController).
     PanelSplitter {
         visible: explorerPanel.visible
         x: explorerPanel.x + explorerPanel.width

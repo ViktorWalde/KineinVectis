@@ -9,8 +9,8 @@ import KineinVectis
 // existe sem a coluna, mede exatamente a largura dela e some junto. Separar
 // aqui foi o que a catraca existe para forcar.
 //
-// A ALCA DE REABRIR VEM JUNTO, e por isso este Item nunca fica invisivel: ele
-// encolhe para largura ZERO. Assim a borda esquerda dele E' a borda direita do
+// A alca de reabrir saiu para o trilho da esquerda (entrada "outline", 0.3.9).
+// Este Item nunca fica invisivel: ele encolhe para largura ZERO. Assim a borda esquerda dele E' a borda direita do
 // painel quando fechado, e quem se ancora nela nao precisa de condicional
 // nenhuma — o editor e a previa simplesmente se ancoram a `outlineSide.left`.
 Item {
@@ -64,14 +64,5 @@ Item {
         onOpenRequested: function(line, column) {
             root.openRequested(line, column);
         }
-    }
-
-    EditorOutlineHandle {
-        visible: root.available && !root.expanded
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.spacingSmall
-        anchors.verticalCenter: parent.verticalCenter
-        z: 18
-        onExpandRequested: root.collapseRequested()
     }
 }

@@ -31,7 +31,7 @@ Rectangle {
     signal closeWindowRequested()
     signal moveWindowRequested()
 
-    height: 44
+    height: 38
     color: "transparent"
     border.width: 0
     z: 100

@@ -2770,8 +2770,10 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
   `base` no `git.fileDiff`). `order` (2026-10-02, aditivo no schema 1, sem
   mudar o protocolo — o core guarda o `layout` cru) é a ordem que o usuário
   arrastou em cada barra: `{ "bottom": ["tools", "terminal", …], "rail":
-  […], "header": […], "status": […] }`; a UI ignora chave que não conhece e
-  põe item novo no fim.
+  […], "railRight": […], "header": […], "statusLeft": […], "statusRight":
+  […] }`; a UI ignora chave que não conhece e põe item novo no fim.
+  `rail.sides` (mesma data) guarda o trilho de cada área que o usuário
+  arrastou para o outro lado: `{ "outline": "left" }`.
 
 ### Rascunhos / autosave (`draft.save` / `draft.clear`)
 

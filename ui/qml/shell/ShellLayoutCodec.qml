@@ -30,8 +30,28 @@ QtObject {
         return Math.max(minimum, Math.min(maximum, value));
     }
 
+    // `sides`: o trilho de cada area ({id: "left"|"right"}), quando o usuario
+    // a arrastou para o outro lado (0.3.9); sem entrada vale o da area.
     function emptyRail() {
-        return { pinned: [], unpinned: [], hidden: [] };
+        return { pinned: [], unpinned: [], hidden: [], sides: {} };
+    }
+
+    function decodeSides(value) {
+        const sides = {};
+        if (value === undefined || value === null || typeof value !== "object") return sides;
+        for (const id in value) {
+            if (value[id] === "left" || value[id] === "right") sides[id] = value[id];
+        }
+        return sides;
+    }
+
+    function withSide(state, id, side) {
+        const sides = {};
+        const current = state.sides !== undefined && state.sides !== null ? state.sides : {};
+        for (const key in current) sides[key] = current[key];
+        sides[id] = side;
+        return { pinned: listOf(state.pinned), unpinned: listOf(state.unpinned),
+                 hidden: listOf(state.hidden), sides: sides };
     }
 
     // O retrato gravado (schema 1). `rail`, `bottom.pinned` e `order` sao
@@ -65,7 +85,7 @@ QtObject {
             outlineWidth: clamp(numberOr(sizes.outline, shell.outlineWidth), 160, 420),
             bottomPreferredHeight: clamp(numberOr(sizes.bottom, shell.bottomPreferredHeight), 120, 1200),
             railState: { pinned: listOf(rail.pinned), unpinned: listOf(rail.unpinned),
-                         hidden: listOf(rail.hidden) },
+                         hidden: listOf(rail.hidden), sides: decodeSides(rail.sides) },
             bottomPinned: listOf(bottom.pinned),
             barOrders: decodeOrders(layout.order)
         };
@@ -94,7 +114,8 @@ QtObject {
             return listOf(list).filter(function(x) { return x !== id; });
         };
         const next = { pinned: without(state.pinned), unpinned: without(state.unpinned),
-                       hidden: without(state.hidden) };
+                       hidden: without(state.hidden),
+                       sides: state.sides !== undefined && state.sides !== null ? state.sides : {} };
         if (pinned) next.pinned.push(id);
         if (unpinned) next.unpinned.push(id);
         if (hidden) next.hidden.push(id);
@@ -145,6 +166,14 @@ QtObject {
         if (from < 0) return listOf(saved);
         list.splice(from, 1);
         list.splice(dropIndex > from ? dropIndex - 1 : dropIndex, 0, key);
+        return list.concat(listOf(saved).filter(function(other) { return list.indexOf(other) < 0; }));
+    }
+
+    // Uma chave que CHEGA de outra barra (o trilho da esquerda para o da
+    // direita): entra no vao `dropIndex` da lista visivel de destino.
+    function inserted(visible, saved, key, dropIndex) {
+        const list = listOf(visible).filter(function(other) { return other !== key; });
+        list.splice(Math.max(0, Math.min(list.length, dropIndex)), 0, key);
         return list.concat(listOf(saved).filter(function(other) { return list.indexOf(other) < 0; }));
     }
 

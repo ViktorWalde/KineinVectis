@@ -52,7 +52,8 @@ Item {
 
     Component.onCompleted: {
         // O CONTRATO de uma entrada: todo campo que o trilho desenha.
-        check(janelas.entries.length === 7, "sete entradas, deu " + janelas.entries.length);
+        // Oito desde 0.3.9: os Simbolos entraram (nascem no trilho da direita).
+        check(janelas.entries.length === 8, "oito entradas, deu " + janelas.entries.length);
         for (const e of janelas.entries) {
             check(e.id !== undefined && e.id !== "", "entrada sem id");
             check(e.icon !== undefined && e.icon !== "", e.id + " sem icone");
@@ -63,9 +64,14 @@ Item {
             check(typeof e.active === "boolean", e.id + " sem ativo");
         }
 
+        // Cada area num trilho: os Simbolos nascem a' direita; o resto a'
+        // esquerda; arrastar (sides) muda o lado.
+        check(janelas.sideOf(janelas.entries[1]) === "right", "simbolos nascem a' direita");
+        check(janelas.sideOf(janelas.entries[0]) === "left", "projeto a' esquerda");
+
         // A ordem e' a decidida pelo autor, e nao pode mudar por acidente.
         const ids = janelas.entries.map(function(e) { return e.id; });
-        check(ids.join(",") === "explorer,embedded,database,containers,remote,observability,tools",
+        check(ids.join(",") === "explorer,outline,embedded,database,containers,remote,observability,tools",
               "ordem do trilho mudou: " + ids.join(","));
         let anterior = -1;
         for (const e of janelas.entries) {

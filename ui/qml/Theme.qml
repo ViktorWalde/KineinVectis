@@ -57,7 +57,9 @@ QtObject {
     readonly property int radius: 5
     readonly property int radiusLarge: 8
     readonly property int radiusDialog: 12
-    readonly property int panelGap: 8
+    // O vao entre a moldura e a ilha, e dentro dela (0.3.9: 8 -> 6, a
+    // proporcao da referencia do autor).
+    readonly property int panelGap: 6
 
     // TIPOGRAFIA POR PAPEL (0.3.9, roadmap 58 §4.3): os valores sao os que o
     // QML ja' usava a mao (9 a 12 cobrem 476 dos 498 literais medidos em

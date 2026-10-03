@@ -108,7 +108,7 @@ Rectangle {
     // Sobre a moldura, na mesma linha do ☰ (o host a posiciona). Sem fundo:
     // o vazio entre os widgets e' a area de arrastar a janela, que fica
     // embaixo, na AppMenuBar.
-    height: 44
+    height: 38
     color: "transparent"
 
     Item {

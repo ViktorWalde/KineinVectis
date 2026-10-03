@@ -47,15 +47,11 @@ Rectangle {
     // melhor o espaco para codigo", modelo da JetBrains): o ☰ com o menu
     // recolhido, a barra de ferramentas logo depois e os controles da janela
     // no fim. Eram duas faixas (84 px); sao 44.
-    height: 44
+    height: 38
     z: 100
     radius: root.windowEdgesFlush ? 0 : Theme.radiusLarge
-    color: Theme.frame
-    gradient: Gradient {
-        orientation: Gradient.Horizontal
-        GradientStop { position: 0.0; color: Theme.frameAccentTint }
-        GradientStop { position: 0.35; color: Theme.frame }
-    }
+    // Transparente: a moldura (e o veu ambar) e' o WindowBackdrop.
+    color: "transparent"
 
     function executeMenuAction(action) {
         const recentPrefix = "workspace.recent.open:";

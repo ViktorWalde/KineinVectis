@@ -37,9 +37,43 @@ Item {
         }
     }
 
+    Column {
+        id: otherColumn
+
+        x: 300
+        y: 10
+        width: 40
+
+        Repeater {
+            model: ["x"]
+
+            delegate: Rectangle {
+                required property string modelData
+                readonly property string reorderKey: modelData
+
+                width: 40
+                height: 20
+            }
+        }
+    }
+
+    property var transfers: []
+
+    // A barra parceira: a coluna de cima e' a "outra" barra (os trilhos).
+    ReorderController {
+        id: otherReorder
+
+        container: otherColumn
+        vertical: true
+    }
+
     ReorderController {
         id: reorder
 
+        partner: otherReorder
+        onTransferred: function(key, dropIndex, targetKeys) {
+            root.transfers.push(key + "@" + dropIndex + ":" + targetKeys.join(""));
+        }
         container: row
         onMoved: function(key, dropIndex, visibleKeys) {
             root.moves.push(key + "@" + dropIndex + ":" + visibleKeys.join(""));
@@ -112,6 +146,23 @@ Item {
         reorder.update(0, 0);
         reorder.cancel();
         failures += check(root.moves.length === 1 && !reorder.active, "cancelar nao move");
+
+        // Passar para a barra parceira: sobre ela a linha muda de barra, e
+        // soltar transfere com o vao e as chaves de la' (0.3.9, os trilhos).
+        reorder.begin("b");
+        reorder.update(305, 15);
+        failures += check(reorder.overPartner && otherReorder.active && otherReorder.dropIndex === 1,
+                          "linha no parceiro: " + otherReorder.dropIndex);
+        reorder.finish();
+        failures += check(root.transfers.join() === "b@1:x", "transferido: " + root.transfers.join());
+        failures += check(!otherReorder.active && !reorder.active, "os dois terminaram");
+        failures += check(codec.inserted(["x"], [], "b", 1).join("") === "xb", "inserted no fim");
+        failures += check(codec.inserted(["x", "y"], ["z"], "b", 0).join("") === "bxyz", "inserted no comeco");
+        const sided = codec.withSide(codec.emptyRail(), "outline", "left");
+        failures += check(sided.sides.outline === "left", "withSide");
+        failures += check(codec.withMembership(sided, "git", true, false, false).sides.outline === "left",
+                          "fixar preserva os lados");
+        failures += check(codec.decodeSides({ a: "right", b: "cima" }).b === undefined, "lado estranho fora");
 
         // A faixa de abas na ordem do usuario.
         failures += check(tabs.orderedTabs[0].key === "problems" && tabs.orderedTabs[1].key === "terminal",

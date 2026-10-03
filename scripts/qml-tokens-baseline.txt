@@ -37,7 +37,6 @@ ui/qml/editor/EditorExternalChangeBanner.qml	fontSize	3
 ui/qml/editor/EditorFindBar.qml	fontSize	5
 ui/qml/editor/EditorGoToLineDialog.qml	fontSize	3
 ui/qml/editor/EditorHoverPopup.qml	fontSize	1
-ui/qml/editor/EditorOutlineHandle.qml	fontSize	1
 ui/qml/editor/EditorOutlinePanel.qml	fontSize	2
 ui/qml/editor/EditorTabsBar.qml	radius	1
 ui/qml/editor/EditorUsagesPopup.qml	fontSize	2

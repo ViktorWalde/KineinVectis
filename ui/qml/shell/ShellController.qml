@@ -162,6 +162,17 @@ Item {
         persistLayoutSoon();
     }
 
+    // Uma area arrastada de um trilho para o outro (0.3.9): muda de lado e
+    // entra no vao onde foi solta. A ordem de cada lado e' uma barra
+    // ("rail" e "railRight").
+    function moveRailEntryToSide(id, side, dropIndex, targetIds) {
+        const bar = side === "right" ? "railRight" : "rail";
+        railState = codec.withSide(railState, id, side);
+        barOrders = codec.withOrder(barOrders, bar,
+                                    codec.inserted(targetIds, savedOrder(bar), id, dropIndex));
+        persistLayoutSoon();
+    }
+
     // A ordem salva de uma barra; vazia = de fabrica.
     function savedOrder(bar) {
         return barOrders[bar] !== undefined ? barOrders[bar] : [];

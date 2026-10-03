@@ -16,12 +16,15 @@ Item {
     property Item leftItem: null
     property Item centerItem: null
     property Item bottomItem: null
+    // O trilho da direita, tambem na moldura: a ilha para antes dele.
+    property Item rightItem: null
 
     Rectangle {
         id: island
 
         x: root.railItem !== null ? root.railItem.width + Theme.panelGap : 0
-        width: Math.max(0, root.width - x)
+        width: Math.max(0, root.width - x
+                        - (root.rightItem !== null ? root.rightItem.width + Theme.panelGap : 0))
         height: root.height
         radius: Theme.radiusLarge
         color: Theme.background1

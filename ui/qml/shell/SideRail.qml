@@ -20,6 +20,13 @@ Rectangle {
     readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
     readonly property var orderedEntries: root.codec.orderItems(root.entries, "id", root.order)
     signal entryMoved(string id, int dropIndex, var visibleIds)
+    // Os dois trilhos (0.3.9): o da esquerda e' o PRINCIPAL (tem o "⋯ Mais" e
+    // o modo expandido); o da direita so' os icones. Um icone arrastado para
+    // o outro trilho passa para la' (`entryTransferred`).
+    property bool primary: true
+    property ReorderController partnerReorder: null
+    readonly property alias reorder: railReorder
+    signal entryTransferred(string id, int dropIndex, var targetIds)
 
     signal activated(string id)
     // 0.3.7 F1: botao direito num icone (fixar, ocultar, restaurar) e o
@@ -33,7 +40,9 @@ Rectangle {
     property bool expanded: false
     signal expandedToggled()
 
-    width: expanded ? 168 : 52
+    // Fino e encostado na borda da janela (0.3.9): com o vao, a ilha comeca
+    // a' mesma distancia da esquerda que do topo.
+    width: expanded ? 168 : 34
     radius: Theme.radiusLarge
     // Sobre a moldura, sem ilha (0.3.9, paleta ilhas): o trilho e' borda da
     // janela, como na JetBrains.
@@ -53,8 +62,8 @@ Rectangle {
         signal activated()
         signal contextMenuRequested(real menuX, real menuY)
 
-        width: root.expanded ? root.width - 2 * Theme.spacingSmall : 32
-        height: 32
+        width: root.expanded ? root.width - 2 * Theme.spacingSmall : 28
+        height: 28
         radius: Theme.radius
         opacity: enabled ? 1.0 : 0.72
         color: active ? Theme.surfaceSelected
@@ -65,9 +74,9 @@ Rectangle {
 
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
-            anchors.leftMargin: 5
+            anchors.leftMargin: 4
             name: railButton.iconName
-            size: 22
+            size: 20
             active: railButton.active
             disabled: !railButton.enabled
             iconColor: railButton.active ? Theme.accent
@@ -150,6 +159,7 @@ Rectangle {
         RailButton {
             id: moreButton
 
+            visible: root.primary
             iconName: "more"
             tooltip: qsTr("Mais áreas")
             label: qsTr("Mais")
@@ -162,10 +172,11 @@ Rectangle {
 
     // O chevron do pe': compacto <-> expandido.
     Rectangle {
+        visible: root.primary
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Theme.spacingSmall
         anchors.horizontalCenter: parent.horizontalCenter
-        width: root.expanded ? root.width - 2 * Theme.spacingSmall : 32
+        width: root.expanded ? root.width - 2 * Theme.spacingSmall : 28
         height: 24
         radius: Theme.radius
         color: chevronArea.containsMouse ? Theme.surface2 : "transparent"
@@ -191,9 +202,14 @@ Rectangle {
         id: railReorder
 
         container: railColumn
+        dropZone: root
         vertical: true
+        partner: root.partnerReorder
         onMoved: function(key, dropIndex, visibleKeys) {
             root.entryMoved(key, dropIndex, visibleKeys);
+        }
+        onTransferred: function(key, dropIndex, targetKeys) {
+            root.entryTransferred(key, dropIndex, targetKeys);
         }
     }
 }
