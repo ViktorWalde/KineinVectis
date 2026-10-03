@@ -43,12 +43,11 @@ Rectangle {
     signal closeWindowRequested()
     signal moveWindowRequested()
 
-    // A MOLDURA de cima (0.3.9, retorno do autor: "arredondar as bordas do
-    // rodape superior"; modelo Islands da JetBrains): a faixa de menus fica
-    // sobre o fundo da janela, sem faixa clara nem linha reta, e a barra de
-    // ferramentas e' uma ILHA arredondada, alinhada as de baixo pelo mesmo
-    // vao (Theme.panelGap).
-    height: 84
+    // A MOLDURA de cima em UMA linha (0.3.9, pedido do autor: "aproveitar
+    // melhor o espaco para codigo", modelo da JetBrains): o ☰ com o menu
+    // recolhido, a barra de ferramentas logo depois e os controles da janela
+    // no fim. Eram duas faixas (84 px); sao 44.
+    height: 44
     z: 100
     radius: root.windowEdgesFlush ? 0 : Theme.radiusLarge
     color: Theme.background0
@@ -164,7 +163,7 @@ Rectangle {
     }
 
     function contextMenuY() {
-        return appMenuBar.height + headerBar.height + Theme.spacingXSmall;
+        return root.height + Theme.spacingXSmall;
     }
 
     // O "⋯" dos chips: so' os contextos que nao couberam, cada um abrindo o dono.
@@ -189,10 +188,10 @@ Rectangle {
     TopHeaderBar {
         id: headerBar
 
-        x: Theme.panelGap
-        y: appMenuBar.height + 2
-        width: parent.width - 2 * Theme.panelGap
-        height: root.height - y
+        x: appMenuBar.menuEndX + Theme.spacingSmall
+        y: 0
+        width: Math.max(0, appMenuBar.controlsX - Theme.spacingSmall - x)
+        height: root.height
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         coreConnected: root.coreClient.connected
         workspaceName: root.coreClient.workspaceName
@@ -224,14 +223,14 @@ Rectangle {
         onWidgetMoved: (key, dropIndex, visibleKeys) => root.shellController.moveInBar(
                            "header", visibleKeys, key, dropIndex)
         onToolchainMenuRequested: function(menuX, menuY) {
-            root.toolchainMenuRequested(menuX, menuY + appMenuBar.height);
+            root.toolchainMenuRequested(menuX, menuY + headerBar.y);
         }
         pythonSummary: root.pythonController !== null ? root.pythonController.contextLabel() : ""
         pythonMenuOpen: root.pythonController !== null && root.pythonController.menuVisible
         // Os overlays cobrem a janela inteira: a coordenada da janela serve.
         onContextOverflowRequested: function(menuX, menuY) {
             root.headerMenu = "context";
-            root.appMenuRequested("context", menuX, menuY + appMenuBar.height,
+            root.appMenuRequested("context", menuX, menuY + headerBar.y,
                                   root.contextOverflowItems());
         }
         onPythonMenuRequested: function(menuX, menuY) {
@@ -250,19 +249,19 @@ Rectangle {
         onDebugRequested: root.debugController.startDebug()
         onStopDebugRequested: root.debugController.stopDebug()
         onConfigMenuRequested: function(menuX, menuY) {
-            root.configMenuRequested(menuX, menuY + appMenuBar.height);
+            root.configMenuRequested(menuX, menuY + headerBar.y);
         }
         // Os dois menus da barra usam o MESMO popup dos menus de aplicacao
         // (e as mesmas listas: o de projeto e' o comeco de "Arquivo", o de
         // acoes e' "Build" inteiro) — um dono para o que cada um oferece.
         onProjectMenuRequested: function(menuX, menuY) {
             root.headerMenu = "project";
-            root.appMenuRequested("project", menuX, menuY + appMenuBar.height,
+            root.appMenuRequested("project", menuX, menuY + headerBar.y,
                                   appMenuBar.projectMenuItems());
         }
         onActionsMenuRequested: function(menuX, menuY) {
             root.headerMenu = "build";
-            root.appMenuRequested("build", menuX, menuY + appMenuBar.height,
+            root.appMenuRequested("build", menuX, menuY + headerBar.y,
                                   appMenuBar.menuItems("build"));
         }
     }

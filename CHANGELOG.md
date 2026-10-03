@@ -50,6 +50,10 @@ no checkout, não em nenhum pacote publicado.
   aberto, a IDE reanalisava o texto cerca de dez vezes por segundo sem
   ninguém digitar (o realce era confundido com edição). Agora só a edição
   de verdade dispara a análise.
+- **Mais espaço para o código.** O topo virou uma faixa só: o ícone da IDE,
+  um botão ☰ que mostra e recolhe os menus (Arquivo … Ajuda) na própria
+  barra, o projeto, o Git, o contexto e o executar. São 40 px a mais de
+  editor.
 - **Abas de arquivo arrastáveis.** Mude a ordem das abas arrastando; a
   ordem e a aba ativa voltam como estavam ao reabrir o projeto.
 - **Arrastar na árvore do projeto, de verdade.** Puxar um arquivo para cima

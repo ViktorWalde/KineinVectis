@@ -354,6 +354,7 @@ Window {
         // Overlay global acima do header (z=100) e de toda a workspace. O z
         // interno de um popup não escapa do stacking context do pai.
         z: 1000
+        appMenuPassThroughTop: header.height
         hostWidth: root.width
         hostHeight: root.height
         searchEverywhereController: domains.searchEverywhereController

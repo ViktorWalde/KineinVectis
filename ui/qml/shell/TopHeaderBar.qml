@@ -105,12 +105,11 @@ Rectangle {
         return workspaceKind === "" ? "" : workspaceKind;
     }
 
-    // Uma ilha, como as areas de baixo (o host a posiciona com o vao).
-    height: 42
-    radius: Theme.radiusLarge
-    color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
+    // Sobre a moldura, na mesma linha do ☰ (o host a posiciona). Sem fundo:
+    // o vazio entre os widgets e' a area de arrastar a janela, que fica
+    // embaixo, na AppMenuBar.
+    height: 44
+    color: "transparent"
 
     Item {
         id: leftWidgets

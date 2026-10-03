@@ -29,6 +29,7 @@ Item {
     property bool aboutVisible: false
     property bool manualVisible: false
     property bool appMenuVisible: false
+    property real appMenuPassThroughTop: 0
     property real appMenuX: 0
     property real appMenuY: 0
     property var appMenuItems: []
@@ -82,6 +83,7 @@ Item {
         z: 103
         menuX: root.appMenuX
         menuY: root.appMenuY
+        passThroughTop: root.appMenuPassThroughTop
         items: root.appMenuItems
         onDismissRequested: function(restoreFocus) { root.closeAppMenu(restoreFocus); }
         onActionRequested: function(action) {

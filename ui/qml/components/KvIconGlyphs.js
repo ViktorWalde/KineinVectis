@@ -131,6 +131,12 @@ function draw(name, context, line, node) {
         line(context, 17, 10, 20, 10);
         line(context, 17, 14, 20, 14);
         return true;
+    case "menu":
+        // tres tracos: o menu principal recolhido (o "hamburger" da JetBrains)
+        line(context, 4, 7, 20, 7);
+        line(context, 4, 12, 20, 12);
+        line(context, 4, 17, 20, 17);
+        return true;
     case "add":
         // o "+" de criar (o "Criar Projeto" da tela inicial, 2026-10-01)
         line(context, 12, 5, 12, 19);

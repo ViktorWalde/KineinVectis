@@ -124,7 +124,7 @@ ui/qml/setup/SetupPanel.qml	fontSize	3
 ui/qml/setup/SetupToolRow.qml	fontSize	8
 ui/qml/setup/SetupToolRow.qml	radius	1
 ui/qml/shell/AboutDialog.qml	fontSize	3
-ui/qml/shell/AppMenuBar.qml	fontSize	2
+ui/qml/shell/AppMenuBar.qml	fontSize	1
 ui/qml/shell/AppMenuPopup.qml	fontSize	2
 ui/qml/shell/BottomTabBar.qml	fontSize	2
 ui/qml/shell/BottomTabBar.qml	radius	2

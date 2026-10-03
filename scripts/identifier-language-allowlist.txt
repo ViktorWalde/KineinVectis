@@ -79,3 +79,5 @@ codec
 posix scrim
 # 2026-10-02: API do Qt (DragHandler.centroid: o ponto do gesto)
 centroid
+# 2026-10-02: API do Qt (Image.mipmap: amostragem do icone reduzido)
+mipmap

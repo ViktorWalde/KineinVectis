@@ -4,6 +4,8 @@ import QtQuick
 FocusScope {
     id: root
 
+    // A altura da faixa de cima que recebe o clique depois de fechar o menu.
+    property real passThroughTop: 0
     property real menuX: 0
     property real menuY: 0
     property real menuWidth: 220
@@ -65,10 +67,16 @@ FocusScope {
     Keys.onShortcutOverride: function(event) { event.accepted = true; }
     Keys.onPressed: function(event) { root.handleKey(event); }
 
+    // Clicar fora fecha o menu. Na faixa de cima (a barra do ☰, 0.3.9) o
+    // clique fecha E segue para a barra: o ☰ recolhe e outro titulo abre o
+    // menu dele num clique so', como numa barra de menus.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
-        onClicked: root.dismissRequested(true)
+        onPressed: function(mouse) {
+            root.dismissRequested(true);
+            if (mouse.y < root.passThroughTop) mouse.accepted = false;
+        }
     }
 
     Rectangle {

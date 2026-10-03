@@ -824,6 +824,7 @@ qt_add_qml_module(kinein-vectis
         src/single_instance_guard.cpp
         src/single_instance_guard.h
     RESOURCES
+        assets/icons/app/kinein-64.png
         assets/icons/tree/folder-closed.svg
         assets/icons/tree/folder-open.svg
         "${KINEIN_MANUAL_FILE}"

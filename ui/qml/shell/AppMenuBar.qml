@@ -16,6 +16,13 @@ Rectangle {
     property var workspaceBuildSystems: []
     property var recentWorkspaces: []
     property string activeMenu: ""
+    // O menu principal RECOLHIDO atras do ☰ (0.3.9, pedido do autor: mais
+    // espaco para codigo, no modelo da JetBrains). Um clique abre os titulos
+    // na propria barra; outro recolhe. A barra de ferramentas mora na MESMA
+    // linha, logo depois deste bloco (ShellHeaderHost).
+    property bool menuExpanded: false
+    readonly property real menuEndX: menuRow.x + menuRow.width
+    readonly property real controlsX: windowControls.x
 
     signal actionRequested(string action)
     signal menuRequested(string key, real menuX, real menuY, var items)
@@ -24,7 +31,7 @@ Rectangle {
     signal closeWindowRequested()
     signal moveWindowRequested()
 
-    height: 40
+    height: 44
     color: "transparent"
     border.width: 0
     z: 100
@@ -85,19 +92,33 @@ Rectangle {
         height: parent.height
         spacing: Theme.spacingXSmall
 
-        Text {
+        // O icone da IDE no canto, como a JetBrains (pedido do autor). Uma
+        // copia de 64 px do icone oficial: o de 1254 px pesa 1,4 MB.
+        Image {
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.width >= 850
-            text: qsTr("Kinein")
-            color: Theme.textPrimary
-            font.pixelSize: 13
-            font.bold: true
+            width: 22
+            height: 22
+            source: "qrc:/KineinVectis/assets/icons/app/kinein-64.png"
+            sourceSize.width: 64
+            sourceSize.height: 64
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            mipmap: true
         }
 
-        Item {
-            visible: root.width >= 850
-            width: Theme.spacingSmall
-            height: 1
+        KvIconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            iconName: "menu"
+            iconSize: 18
+            active: root.menuExpanded
+            focus: false
+            focusOnClick: false
+            tooltip: root.menuExpanded ? qsTr("Recolher o menu") : qsTr("Menu principal")
+            onClicked: {
+                if (root.activeMenu !== "") root.menuRequested("", 0, 0, []);
+                root.closeMenu();
+                root.menuExpanded = !root.menuExpanded;
+            }
         }
 
         Repeater {
@@ -119,6 +140,7 @@ Rectangle {
 
                 required property var modelData
 
+                visible: root.menuExpanded
                 anchors.verticalCenter: parent.verticalCenter
                 width: menuLabel.implicitWidth + 2 * Theme.spacingSmall
                 height: 28

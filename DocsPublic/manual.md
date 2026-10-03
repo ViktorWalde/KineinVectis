@@ -107,6 +107,11 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   translúcido e uma linha laranja mostra onde ele vai cair; a ordem fica
   salva por projeto, junto com o resto do layout. Um clique sem arrastar
   continua sendo clique.
+- **O topo em uma faixa** (desde 2026-10-02): o ícone da IDE, o **☰** e a
+  barra principal na mesma linha dos controles da janela. O ☰ mostra os menus
+  (Arquivo, Editar, Exibir, Navegar, Código, Build, Executar, Ambiente,
+  Ferramentas, Ajuda) na própria barra; outro clique os recolhe. Com um menu
+  aberto, clicar em outro título abre o dele direto.
 - **Barra principal** (desde 2026-09-18, Etapa 2 F1): os widgets, como
   nas IDEs JetBrains. *Projeto* — o nome do projeto, o que ele é (Cargo +
   CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —
