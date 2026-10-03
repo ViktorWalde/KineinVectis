@@ -100,14 +100,14 @@ Rectangle {
                 Text {
                     text: qsTr("Kinein Vectis")
                     color: Theme.textPrimary
-                    font.pixelSize: 22
+                    font.pixelSize: Theme.fontSizeDisplay
                     font.bold: true
                 }
 
                 Text {
                     text: qsTr("IDE para C, C++, Rust, Python e sistemas embarcados")
                     color: Theme.textSecondary
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
             }
         }
@@ -169,7 +169,7 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 8
                         height: 8
-                        radius: 4
+                        radius: height / 2
                         color: root.tools.length === 0 ? Theme.textMuted
                                : root.detectedCount() === root.tools.length
                                  ? Theme.successSoft : Theme.warningSoft
@@ -182,7 +182,7 @@ Rectangle {
                               : qsTr("Ambiente: %1 de %2 ferramentas detectadas")
                                 .arg(root.detectedCount()).arg(root.tools.length)
                         color: Theme.textSecondary
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                         width: parent.width - x - environmentActions.width - parent.spacing
                         elide: Text.ElideRight
                     }

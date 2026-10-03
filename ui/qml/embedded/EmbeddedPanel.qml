@@ -87,7 +87,7 @@ Item {
         visible: text !== ""
         text: root.controller ? root.controller.errorText : ""
         color: Theme.errorSoft
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Item {
@@ -166,7 +166,7 @@ Item {
                 visible: text !== ""
                 text: root.toolchainController ? root.toolchainController.errorText : ""
                 color: Theme.errorSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             // O que o kit ainda nao tem, dito com o remedio (integracoes/39).
@@ -176,7 +176,7 @@ Item {
                 visible: text !== ""
                 text: root.toolchainController ? root.toolchainController.sysrootHint : ""
                 color: Theme.warningSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -186,7 +186,7 @@ Item {
                 text: root.toolchainController ? root.toolchainController.rustTargetHint() : ""
                 color: Theme.warningSoft
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             EmbeddedAdapterView { width: parent.width; toolchainController: root.toolchainController }

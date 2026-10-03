@@ -39,7 +39,7 @@ Item {
                      ? qsTr("Informe o alvo do CMake que vai linkar a biblioteca.")
                      : qsTr("Calculando…"))
             color: Theme.textDisabled
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -49,7 +49,7 @@ Item {
             visible: root.errorText !== ""
             text: root.errorText
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Column {
@@ -68,7 +68,7 @@ Item {
                       ? qsTr("Está instalada nesta máquina — a IDE vai usá-la, sem baixar nada.")
                       : qsTr("Não foi encontrada no sistema — seria baixada na versão fixada.")
                 color: Theme.textMuted
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeMicro
             }
 
             Repeater {
@@ -92,7 +92,7 @@ Item {
                         wrapMode: Text.WordWrap
                         text: "• " + passo.modelData.summary
                         color: Theme.textPrimary
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                     }
 
                     // O botao NAO escreve nada: ele entrega a acao ao dominio
@@ -127,7 +127,7 @@ Item {
                                   ? qsTr("Desativar…") : qsTr("Detalhes…")
                             color: area.containsMouse
                                    ? Theme.background0 : Theme.textPrimary
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fontSizeCaption
                             font.weight: Font.DemiBold
                         }
 
@@ -153,7 +153,7 @@ Item {
                 text: qsTr("Procurei em: ") + (root.plan && root.plan.searchedPaths
                       ? root.plan.searchedPaths.join(", ") : "")
                 color: Theme.textDisabled
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeMicro
             }
         }
     }

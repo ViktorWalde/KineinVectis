@@ -97,7 +97,7 @@ Rectangle {
                 anchors.rightMargin: Theme.spacingSmall
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 clip: true
                 selectByMouse: true
                 onTextEdited: if (root.symbols) root.symbols.setQuery(text)
@@ -112,7 +112,7 @@ Rectangle {
                     visible: campoBusca.text === ""
                     text: qsTr("Buscar função, tipo… no projeto")
                     color: Theme.textMuted
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
             }
         }

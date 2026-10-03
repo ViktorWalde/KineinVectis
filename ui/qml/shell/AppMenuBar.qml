@@ -155,7 +155,7 @@ Rectangle {
                     text: menuButton.modelData.label
                     color: root.activeMenu === menuButton.modelData.key
                            ? Theme.textPrimary : Theme.textSecondary
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.fontSizeMedium
                 }
 
                 MouseArea {

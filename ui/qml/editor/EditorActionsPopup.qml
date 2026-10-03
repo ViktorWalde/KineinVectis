@@ -26,7 +26,7 @@ Rectangle {
         visible: root.actionCount === 0
         text: qsTr("Nenhuma ação disponível aqui")
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     ListView {
@@ -65,7 +65,7 @@ Rectangle {
                     width: 64
                     text: actionDelegate.kind
                     color: Theme.accent
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                     elide: Text.ElideRight
                 }
 
@@ -74,7 +74,7 @@ Rectangle {
                     width: parent.width - 64 - Theme.spacingSmall
                     text: actionDelegate.title
                     color: Theme.textPrimary
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                     elide: Text.ElideRight
                 }
             }

@@ -67,7 +67,7 @@ Item {
         anchors.right: parent.right
         text: sectionRoot.section
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
         font.weight: Font.DemiBold
         elide: Text.ElideMiddle
     }

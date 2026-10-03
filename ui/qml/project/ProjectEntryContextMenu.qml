@@ -97,7 +97,7 @@ Item {
                     anchors.leftMargin: Theme.spacingSmall
                     text: qsTr("Adicionar arquivo")
                     color: Theme.textPrimary
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {
@@ -124,7 +124,7 @@ Item {
                     anchors.leftMargin: Theme.spacingSmall
                     text: qsTr("Adicionar pasta")
                     color: Theme.textPrimary
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {
@@ -168,7 +168,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: qsTr("Executar script")
                         color: Theme.textPrimary
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                     }
                 }
 
@@ -207,7 +207,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: qsTr("Depurar")
                         color: Theme.textPrimary
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                     }
                 }
 
@@ -243,7 +243,7 @@ Item {
                     text: root.selectionCount <= 1 ? qsTr("Renomear")
                                                      : qsTr("Renomear: selecione 1 item")
                     color: root.selectionCount <= 1 ? Theme.textPrimary : Theme.textMuted
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {
@@ -272,7 +272,7 @@ Item {
                     text: root.selectionCount <= 1 ? qsTr("Excluir")
                                                      : qsTr("Excluir: selecione 1 item")
                     color: root.selectionCount <= 1 ? Theme.errorSoft : Theme.textMuted
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {

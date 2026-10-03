@@ -56,7 +56,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Remover %1").arg(root.profileName)
                 color: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 font.bold: true
             }
 
@@ -77,7 +77,7 @@ Item {
             wrapMode: Text.WordWrap
             text: qsTr("O perfil sai do projeto. Os dados só vão junto se você marcar abaixo.")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Row {
@@ -97,7 +97,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: root.dataLabel
                 color: root.withData ? Theme.errorSoft : Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 

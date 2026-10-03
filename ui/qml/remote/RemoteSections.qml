@@ -55,7 +55,7 @@ Item {
                     // A seccao atual nao pode depender so' do fundo: em tema
                     // claro a diferenca some.
                     color: aba.atual ? Theme.textPrimary : Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 MouseArea {

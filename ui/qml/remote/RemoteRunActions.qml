@@ -132,7 +132,7 @@ Item {
                 return partes.join(" · ");
             }
             color: Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
     }
 }

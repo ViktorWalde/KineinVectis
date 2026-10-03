@@ -27,7 +27,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: root.labelText
         color: Theme.textSecondary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     Rectangle {
@@ -51,7 +51,7 @@ Item {
             selectionColor: Theme.accentDim
             selectedTextColor: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             clip: true
             selectByMouse: true
             text: root.value
@@ -64,7 +64,7 @@ Item {
             visible: campo.text === "" && !campo.activeFocus
             color: Theme.textMuted
             font.family: Theme.monoFont
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
         }
     }
 }

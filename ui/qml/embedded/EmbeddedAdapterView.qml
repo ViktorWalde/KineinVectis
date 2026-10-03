@@ -27,7 +27,7 @@ Item {
             text: qsTr("Depurador do kit: %1").arg(
                       root.toolchainController ? root.toolchainController.labelFor("debugAdapter") : "")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
 

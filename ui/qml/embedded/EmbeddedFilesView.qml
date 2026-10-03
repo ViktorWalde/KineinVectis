@@ -36,7 +36,7 @@ Item {
                 elide: Text.ElideMiddle
                 text: root.files ? qsTr("Arquivos na placa — %1  :/%2").arg(root.files.device).arg(root.files.path) : ""
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -75,7 +75,7 @@ Item {
             visible: root.files && root.files.busy
             text: qsTr("falando com o mpremote… (o programa da placa e' interrompido)")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         // A confirmacao do que ESCREVE: um segundo clique, nunca um so'.
@@ -103,7 +103,7 @@ Item {
                     wrapMode: Text.WordWrap
                     text: root.files ? root.files.pendingText() : ""
                     color: Theme.textPrimary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 KvButton {
@@ -131,7 +131,7 @@ Item {
             visible: root.files && root.files.listed && root.files.entries.length === 0 && !root.files.busy
             text: qsTr("pasta vazia")
             color: Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Repeater {
@@ -152,7 +152,7 @@ Item {
                     text: root.files ? root.files.entrySummary(linha.modelData) : ""
                     color: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 Row {
@@ -194,7 +194,7 @@ Item {
             visible: root.files && root.files.errorText !== ""
             text: root.files ? root.files.errorText : ""
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

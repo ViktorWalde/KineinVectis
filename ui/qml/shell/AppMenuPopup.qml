@@ -137,7 +137,7 @@ FocusScope {
                     text: menuItem.modelData.label
                     color: menuItem.modelData.enabled
                            ? Theme.textPrimary : Theme.textDisabled
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                     elide: Text.ElideRight
                 }
 
@@ -150,7 +150,7 @@ FocusScope {
                     text: menuItem.modelData.shortcut !== undefined
                           ? menuItem.modelData.shortcut : ""
                     color: Theme.textMuted
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 MouseArea {

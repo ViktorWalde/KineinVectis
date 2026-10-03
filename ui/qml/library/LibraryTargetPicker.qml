@@ -42,7 +42,7 @@ Item {
                   ? qsTr("Onde linkar")
                   : qsTr("Onde linkar — nenhum alvo encontrado")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Flow {
@@ -75,7 +75,7 @@ Item {
             text: qsTr("Lidos do CMakeLists.txt — o projeto ainda não foi "
                        + "configurado, então são os nomes que você escreveu.")
             color: Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
 
         Rectangle {
@@ -95,7 +95,7 @@ Item {
                 anchors.margins: 4
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 clip: true
                 selectByMouse: true
                 text: root.target
@@ -112,7 +112,7 @@ Item {
                       ? qsTr("ou digite outro alvo")
                       : qsTr("digite o alvo do CMake (ex.: app)")
                 color: Theme.textDisabled
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
         }
     }

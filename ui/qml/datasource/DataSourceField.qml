@@ -33,7 +33,7 @@ Item {
         anchors.left: parent.left
         text: root.label
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Rectangle {
@@ -63,7 +63,7 @@ Item {
             selectionColor: Theme.accentDim
             selectedTextColor: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             echoMode: root.secret ? TextInput.Password : TextInput.Normal
             inputMethodHints: root.numeric ? Qt.ImhDigitsOnly : Qt.ImhNone
             text: root.value
@@ -76,7 +76,7 @@ Item {
                 visible: entrada.text === ""
                 text: root.placeholder
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

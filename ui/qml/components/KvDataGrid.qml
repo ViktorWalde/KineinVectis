@@ -104,7 +104,7 @@ Item {
         visible: root.columns.length === 0 && root.emptyText !== ""
         text: root.emptyText
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         wrapMode: Text.WordWrap
     }
 
@@ -137,7 +137,7 @@ Item {
                           ? celulaCabecalho.modelData.label : celulaCabecalho.modelData.key
                     color: Theme.textPrimary
                     font.family: root.mono ? Theme.monoFont : ""
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }
@@ -214,7 +214,7 @@ Item {
                                 color: rules.isNull(celula.value) ? Theme.textMuted
                                        : (linha.selected ? Theme.textPrimary : Theme.textSecondary)
                                 font.family: root.mono ? Theme.monoFont : ""
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fontSizeCaption
                                 elide: Text.ElideRight
                             }
 

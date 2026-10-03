@@ -56,7 +56,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Usar o SSH que já funciona")
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             KvButton {
@@ -93,7 +93,7 @@ Item {
                             + "sem repetir usuário, porta nem chave.") + lidos;
             }
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Repeater {
@@ -121,7 +121,7 @@ Item {
                         text: linha.modelData.name
                         color: Theme.textPrimary
                         font.family: Theme.monoFont
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                         elide: Text.ElideRight
                     }
 
@@ -132,7 +132,7 @@ Item {
                         text: linha.modelData.source
                         color: Theme.textMuted
                         font.family: Theme.monoFont
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                         elide: Text.ElideMiddle
                     }
                 }
@@ -155,7 +155,7 @@ Item {
             text: root.resumo
             color: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -181,7 +181,7 @@ Item {
                 return partes.join(" · ");
             }
             color: Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
     }
 }

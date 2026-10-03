@@ -33,7 +33,7 @@ Column {
         // desenha aqui dentro.
         text: qsTr("A IDE conversa com o seu Grafana pela API dele. Os painéis abrem no navegador.")
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Row {
@@ -45,7 +45,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Endereço")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Rectangle {
@@ -67,7 +67,7 @@ Column {
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 text: root.draft.url

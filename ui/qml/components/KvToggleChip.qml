@@ -51,7 +51,7 @@ Rectangle {
         text: root.labelText
         color: root.active ? Theme.accent : Theme.textMuted
         font.family: root.codeFont ? Theme.monoFont : Theme.uiFont
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         font.bold: root.active
     }
 

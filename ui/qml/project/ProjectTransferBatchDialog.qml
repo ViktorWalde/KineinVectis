@@ -61,7 +61,7 @@ Item {
                 text: root.importing ? qsTr("Importar itens")
                       : root.cut ? qsTr("Mover itens") : qsTr("Copiar itens")
                 color: Theme.textPrimary
-                font.pixelSize: 13
+                font.pixelSize: Theme.fontSizeMedium
                 font.bold: true
             }
 
@@ -69,7 +69,7 @@ Item {
                 width: parent.width
                 text: qsTr("Destino: ") + root.destinationDisplayPath
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideMiddle
             }
 
@@ -78,7 +78,7 @@ Item {
                 text: qsTr("Ajuste o nome ou desmarque um item para pulá-lo. "
                            + "O lote não desfaz itens já concluídos.")
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WordWrap
             }
 
@@ -114,7 +114,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 17
                                 height: 17
-                                radius: 3
+                                radius: Theme.radiusXSmall
                                 color: entryRow.included ? Theme.accent : Theme.background0
                                 border.color: Theme.accent
                                 border.width: 1
@@ -123,7 +123,7 @@ Item {
                                     anchors.centerIn: parent
                                     text: entryRow.included ? "✓" : ""
                                     color: Theme.background0
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fontSizeBody
                                 }
                                 MouseArea {
                                     anchors.fill: parent
@@ -151,7 +151,7 @@ Item {
                                              && !root.transferController.batchItemSucceeded(entryRow.modelData.status)
                                     color: enabled ? Theme.textPrimary : Theme.textMuted
                                     font.family: Theme.monoFont
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.fontSizeSmall
                                     selectByMouse: true
                                     clip: true
                                     onTextEdited: root.draftEntries[entryRow.index].name = text
@@ -164,7 +164,7 @@ Item {
                                             ? qsTr("Concluído") : entryRow.modelData.from
                                     color: entryRow.modelData.error !== ""
                                            ? Theme.errorSoft : Theme.textMuted
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fontSizeMicro
                                     elide: Text.ElideMiddle
                                 }
                             }
@@ -178,7 +178,7 @@ Item {
                 visible: root.pending
                 text: qsTr("Transferindo… acompanhe ou cancele em Jobs.")
                 color: Theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -186,7 +186,7 @@ Item {
                 visible: root.errorText !== ""
                 text: root.errorText
                 color: Theme.errorSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WordWrap
             }
 

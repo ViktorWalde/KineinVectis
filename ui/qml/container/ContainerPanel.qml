@@ -46,7 +46,7 @@ Item {
             visible: text !== ""
             text: root.controller ? root.controller.errorText : ""
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // --- Motor: o veredito comum (F8) ---------------------------------
@@ -79,7 +79,7 @@ Item {
             text: root.controller && root.controller.status.hint !== undefined
                   ? root.controller.status.hint : ""
             color: Theme.warningSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // --- Containers e imagens: dono proprio -------------------------

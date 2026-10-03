@@ -33,7 +33,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Usos (%1)").arg(root.usageCount)
             color: Theme.textPrimary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
 
@@ -87,7 +87,7 @@ Rectangle {
                 text: usageDelegate.display
                 color: Theme.accent
                 font.family: Theme.monoFont
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideMiddle
             }
 

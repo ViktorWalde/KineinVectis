@@ -139,7 +139,7 @@ Rectangle {
                     Rectangle {
                         width: 6
                         height: 6
-                        radius: 3
+                        radius: height / 2
                         anchors.verticalCenter: parent.verticalCenter
                         color: root.stateColor(entry.actionState)
                     }
@@ -148,7 +148,7 @@ Rectangle {
                         text: entry.title
                         color: entry.actionState === "unavailable"
                                ? Theme.textMuted : Theme.textPrimary
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                         font.bold: entry.selected
                     }
 
@@ -157,7 +157,7 @@ Rectangle {
                         text: root.stateLabel(entry.actionState)
                         color: entry.actionState === "alreadyApplied"
                                ? Theme.successSoft : Theme.textMuted
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                     }
                 }
 
@@ -165,7 +165,7 @@ Rectangle {
                     width: parent.width
                     text: entry.reason !== "" ? entry.reason : entry.description
                     color: entry.reason !== "" ? Theme.textMuted : Theme.textSecondary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     elide: Text.ElideRight
                 }
 
@@ -174,7 +174,7 @@ Rectangle {
                     text: (entry.affects !== "" ? entry.affects : entry.category) + " · "
                           + entry.riskLabel
                     color: root.riskColor(entry.risk)
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                     elide: Text.ElideRight
                 }
             }
@@ -197,7 +197,7 @@ Rectangle {
         wrapMode: Text.WordWrap
         text: qsTr("Nenhuma ação para este projeto. Abra um projeto com CMakeLists.txt ou Cargo.toml.")
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         visible: root.actionsModel === null || root.actionsModel.count === 0
     }
 }

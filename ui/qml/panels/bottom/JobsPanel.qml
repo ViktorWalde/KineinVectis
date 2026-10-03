@@ -66,7 +66,7 @@ ListView {
         visible: panel.jobsModel.count === 0
         text: qsTr("Nenhum job recente.")
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     delegate: Rectangle {
@@ -100,7 +100,7 @@ ListView {
             Rectangle {
                 width: 8
                 height: 8
-                radius: 4
+                radius: height / 2
                 anchors.verticalCenter: parent.verticalCenter
                 color: panel.statusColor(jobDelegate.status)
             }
@@ -115,7 +115,7 @@ ListView {
                     width: parent.width
                     text: jobDelegate.title
                     color: Theme.textPrimary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     font.bold: true
                     elide: Text.ElideRight
                 }
@@ -127,7 +127,7 @@ ListView {
                           : jobDelegate.kind + " · " + jobDelegate.jobId
                     color: Theme.textMuted
                     font.family: Theme.monoFont
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                     elide: Text.ElideRight
                 }
             }
@@ -138,7 +138,7 @@ ListView {
                 anchors.verticalCenter: parent.verticalCenter
                 text: panel.statusLabel(jobDelegate.status)
                 color: panel.statusColor(jobDelegate.status)
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 font.bold: true
             }
 
@@ -149,7 +149,7 @@ ListView {
                 visible: jobDelegate.risk !== "low"
                 text: jobDelegate.risk
                 color: Theme.warningSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 font.family: Theme.monoFont
             }
         }

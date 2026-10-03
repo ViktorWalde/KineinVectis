@@ -55,7 +55,7 @@ Item {
                       : root.entryKind === "directory"
                         ? qsTr("Renomear pasta") : qsTr("Renomear arquivo")
                 color: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 font.bold: true
             }
 
@@ -64,7 +64,7 @@ Item {
                 visible: root.sourceDisplayPath !== ""
                 text: qsTr("Origem: ") + root.sourceDisplayPath
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 elide: Text.ElideMiddle
             }
 
@@ -73,7 +73,7 @@ Item {
                 text: root.sourceDisplayPath !== ""
                       ? qsTr("Destino: ") + root.entryDisplayPath : root.entryDisplayPath
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 elide: Text.ElideMiddle
             }
 
@@ -96,7 +96,7 @@ Item {
                     selectionColor: Theme.accentDim
                     selectedTextColor: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                     clip: true
                     selectByMouse: true
                     onAccepted: { if (!root.operationPending) root.confirmRequested(); }
@@ -112,7 +112,7 @@ Item {
                 visible: root.operationPending
                 text: root.pendingMessage
                 color: Theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -120,7 +120,7 @@ Item {
                 visible: root.errorText !== ""
                 text: root.errorText
                 color: Theme.errorSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WordWrap
             }
 
@@ -145,7 +145,7 @@ Item {
                               ? root.pendingDismissText : qsTr("Cancelar")
                         color: root.operationPending && root.pendingDismissText === ""
                                ? Theme.textMuted : Theme.textSecondary
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
 
                     MouseArea {
@@ -175,7 +175,7 @@ Item {
                         anchors.centerIn: parent
                         text: root.confirmText !== "" ? root.confirmText : qsTr("Renomear")
                         color: root.operationPending ? Theme.textMuted : Theme.background0
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
 
                     MouseArea {

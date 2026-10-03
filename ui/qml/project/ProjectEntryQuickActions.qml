@@ -44,7 +44,7 @@ Column {
                       : fileAction.index === 5 ? qsTr("Abrir pasta no gerenciador")
                       : qsTr("Abrir terminal nesta pasta")
                 color: fileAction.actionEnabled ? Theme.textPrimary : Theme.textMuted
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
             }
 
             MouseArea {

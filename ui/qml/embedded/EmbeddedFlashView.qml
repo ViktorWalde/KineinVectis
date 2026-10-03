@@ -42,7 +42,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Gravar")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -83,7 +83,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Firmware baixado:")
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Repeater {
@@ -107,7 +107,7 @@ Item {
             visible: root.flash && !root.flash.found && root.flash.errorText === ""
             text: qsTr("a linha do motor vem do modelo do projeto (receita do build, ELF/UF2) e da porta escolhida; nada roda sem o seu clique")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // A linha, como vai rodar — editavel depois de salva, como qualquer
@@ -119,7 +119,7 @@ Item {
             text: root.flash && root.flash.found ? root.flash.proposal.command : ""
             color: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Repeater {
@@ -132,7 +132,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: "· " + modelData
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -146,7 +146,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: qsTr("aviso: %1").arg(modelData)
                 color: Theme.warningSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -173,7 +173,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("salva, vira a configuração ativa: o botão Executar grava")
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -183,7 +183,7 @@ Item {
             visible: root.flash && root.flash.errorText !== ""
             text: root.flash ? root.flash.errorText : ""
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

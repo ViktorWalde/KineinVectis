@@ -32,7 +32,7 @@ Item {
             text: qsTr("Ainda não sondei este alvo. A sonda mede arquitetura, kernel e quais "
                        + "ferramentas ele tem — nada é instalado no alvo.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -41,7 +41,7 @@ Item {
             text: root.probeArch + "  ·  " + root.probeKernel
             color: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             elide: Text.ElideRight
         }
 
@@ -61,7 +61,7 @@ Item {
                     text: (ferramenta.modelData.found ? "✓  " : "✗  ") + ferramenta.modelData.id
                     color: ferramenta.modelData.found ? Theme.textPrimary : Theme.textMuted
                     font.family: Theme.monoFont
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Text {
@@ -71,7 +71,7 @@ Item {
                           : qsTr("não está no alvo")
                     color: Theme.textMuted
                     font.family: Theme.monoFont
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                     elide: Text.ElideMiddle
                 }
             }

@@ -36,7 +36,7 @@ Item {
                       ? qsTr("Containers (%1 de %2)").arg(root.controller.visibleContainers.length).arg(root.controller.containers.length)
                       : qsTr("Containers")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -57,7 +57,7 @@ Item {
                     anchors.rightMargin: Theme.spacingSmall
                     verticalAlignment: TextInput.AlignVCenter
                     color: Theme.textPrimary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     clip: true
                     selectByMouse: true
                     onTextEdited: root.controller.setFilter(text)
@@ -68,7 +68,7 @@ Item {
                         visible: filtro.text === ""
                         text: qsTr("filtrar por nome, imagem ou id")
                         color: Theme.textMuted
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
                 }
             }
@@ -105,7 +105,7 @@ Item {
                 text: root.hasSelection ? root.controller.selectedTarget : qsTr("escolha um container")
                 color: root.hasSelection ? Theme.textPrimary : Theme.textMuted
                 font.family: Theme.monoFont
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideMiddle
                 width: Math.min(implicitWidth, parent.width * 0.4)
             }
@@ -167,7 +167,7 @@ Item {
                                                               : qsTr("nenhum container")))
                   : ""
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         // A saida CRUA aparece quando nada foi reconhecido: e' o que deixa
@@ -180,13 +180,13 @@ Item {
             text: root.controller ? root.controller.containersRaw.trim() : ""
             color: Theme.textMuted
             font.family: Theme.monoFont
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
             text: qsTr("Imagens")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
 
@@ -213,7 +213,7 @@ Item {
                                                           : qsTr("nenhuma imagem")))
                   : ""
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
     }
 }

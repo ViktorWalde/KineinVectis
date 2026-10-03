@@ -51,7 +51,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Kinein Vectis")
                 color: Theme.textPrimary
-                font.pixelSize: 20
+                font.pixelSize: Theme.fontSizeHeadline
                 font.bold: true
             }
 
@@ -60,7 +60,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: qsTr("IDE para C, C++, Rust, Python e sistemas embarcados")
                 color: Theme.textSecondary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 wrapMode: Text.WordWrap
             }
 
@@ -70,7 +70,7 @@ Item {
                 text: qsTr("Qt/QML frontend · Rust core · IPC JSON-RPC local")
                 color: Theme.textMuted
                 font.family: Theme.monoFont
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
         }
     }

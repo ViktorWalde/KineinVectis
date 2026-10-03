@@ -82,7 +82,7 @@ Item {
             text: qsTr("Sem senha, por desenho: copie sua chave com ssh-copy-id; "
                        + "o que o ssh perguntar, pergunta no terminal da IDE.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

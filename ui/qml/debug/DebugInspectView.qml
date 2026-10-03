@@ -34,7 +34,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Escopos")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -83,7 +83,7 @@ Rectangle {
                       + (modelData.type !== undefined ? "  : " + modelData.type : "")
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -108,7 +108,7 @@ Rectangle {
                     text: root.inspect ? root.inspect.memoryReference : ""
                     color: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     clip: true
                     onAccepted: root.inspect.readMemory(text)
 
@@ -117,7 +117,7 @@ Rectangle {
                         visible: endereco.text === ""
                         text: qsTr("endereco, ex.: 0x3ff00000")
                         color: Theme.textMuted
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
                 }
             }
@@ -163,7 +163,7 @@ Rectangle {
                 text: modelData
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -173,7 +173,7 @@ Rectangle {
             visible: root.inspect !== null && root.inspect.errorText !== ""
             text: root.inspect ? root.inspect.errorText : ""
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

@@ -51,7 +51,7 @@ ListView {
         text: qsTr("Nenhum problema. Rode um build (Ctrl+F9) ou "
                    + "uma análise (Ctrl+Shift+L).")
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     delegate: Rectangle {
@@ -84,7 +84,7 @@ ListView {
             Rectangle {
                 width: 8
                 height: 8
-                radius: 4
+                radius: height / 2
                 anchors.verticalCenter: parent.verticalCenter
                 color: StatusColors.severity(problemDelegate.severity)
             }
@@ -95,7 +95,7 @@ ListView {
                 text: problemDelegate.file + ":" + problemDelegate.line
                 color: Theme.accent
                 font.family: Theme.monoFont
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             Text {
@@ -106,7 +106,7 @@ ListView {
                 text: problemDelegate.code
                 color: Theme.textMuted
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -114,7 +114,7 @@ ListView {
                 width: parent.width - x - (passo.visible ? passo.width + Theme.spacingSmall : 0)
                 text: problemDelegate.message
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideRight
             }
         }

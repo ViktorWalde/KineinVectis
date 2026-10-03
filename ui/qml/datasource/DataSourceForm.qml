@@ -51,7 +51,7 @@ Item {
             width: parent.width
             text: qsTr("Motor")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Row {
@@ -147,7 +147,7 @@ Item {
             wrapMode: Text.WordWrap
             text: qsTr("A estrutura de uma coleção é inferida da amostra, não declarada — a leitura diz quantos documentos leu e se precisou varrer a coleção inteira.")
             color: Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
 
         DataSourceField {
@@ -164,7 +164,7 @@ Item {
             visible: !root.arquivo
             text: qsTr("De onde vem a senha")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Row {
@@ -196,7 +196,7 @@ Item {
             visible: !root.arquivo
             wrapMode: Text.WordWrap
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             text: {
                 if (root.secretSource === "environment") {
                     return qsTr("A IDE lê a variável na hora de conectar. "

@@ -38,7 +38,7 @@ Rectangle {
         Text {
             text: qsTr("Ir para linha")
             color: Theme.textPrimary
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             font.bold: true
         }
 
@@ -60,7 +60,7 @@ Rectangle {
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 onAccepted: root.confirmRequested()
@@ -72,7 +72,7 @@ Rectangle {
             width: parent.width
             text: qsTr("linha ou linha:coluna · Enter vai · Esc cancela")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             wrapMode: Text.WordWrap
         }
     }

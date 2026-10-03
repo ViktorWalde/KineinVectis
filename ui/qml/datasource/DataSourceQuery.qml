@@ -41,7 +41,7 @@ Item {
             width: parent.width
             text: qsTr("Consulta")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Rectangle {
@@ -69,7 +69,7 @@ Item {
                     selectionColor: Theme.accentDim
                     selectedTextColor: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     wrapMode: TextEdit.Wrap
                     selectByMouse: true
                     onTextChanged: if (text !== root.sql) root.sqlEdited(text)
@@ -85,7 +85,7 @@ Item {
                         visible: entrada.text === ""
                         text: root.placeholder
                         color: Theme.textMuted
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                     }
                 }
             }
@@ -121,7 +121,7 @@ Item {
             text: root.status
             color: root.writeConfirmationRequired ? Theme.textSecondary : Theme.textMuted
             font.family: Theme.monoFont
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // A grade comum (F8): cabecalho fixo, largura por conteudo, `null`

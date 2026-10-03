@@ -52,7 +52,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.discovering ? qsTr("Nesta máquina — procurando…") : qsTr("Nesta máquina")
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Item { width: parent.width - x - atualizar.width; height: 1 }
@@ -106,7 +106,7 @@ Item {
                             width: parent.width
                             text: achado.modelData.label
                             color: Theme.textPrimary
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fontSizeSmall
                             elide: Text.ElideRight
                         }
 
@@ -115,7 +115,7 @@ Item {
                             text: achado.modelData.detail
                             color: Theme.textMuted
                             font.family: Theme.monoFont
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fontSizeMicro
                             elide: Text.ElideMiddle
                         }
                     }
@@ -137,7 +137,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: root.discoverHint !== "" ? root.discoverHint : qsTr("nada respondeu")
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Item { width: 1; height: Theme.spacingSmall }
@@ -145,7 +145,7 @@ Item {
             Text {
                 text: qsTr("Salvos")
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Repeater {
@@ -174,7 +174,7 @@ Item {
                             width: parent.width
                             text: linha.modelData.name
                             color: Theme.textPrimary
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fontSizeSmall
                             elide: Text.ElideRight
                         }
 
@@ -187,7 +187,7 @@ Item {
                                     + ":" + linha.modelData.port + "/" + linha.modelData.database
                             color: Theme.textMuted
                             font.family: Theme.monoFont
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fontSizeMicro
                             elide: Text.ElideMiddle
                         }
                     }
@@ -209,7 +209,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: qsTr("Nenhum perfil salvo. Clique num descoberto, ou preencha ao lado e salve.")
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

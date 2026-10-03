@@ -37,7 +37,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Portas seriais")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -77,7 +77,7 @@ Item {
                         // dois sinais, como o KvToggleChip pede de si mesmo.
                         color: linhaPorta.escolhida ? Theme.accent : Theme.textPrimary
                         font.family: Theme.monoFont
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                         elide: Text.ElideMiddle
                     }
 
@@ -141,7 +141,7 @@ Item {
                     visible: text !== ""
                     text: linhaPorta.modelData.family !== undefined ? linhaPorta.modelData.family : ""
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 // A permissao e' o que o core MEDIU com access(2); a dica e' o
@@ -154,7 +154,7 @@ Item {
                               linhaPorta.modelData.access.hint !== undefined
                               ? linhaPorta.modelData.access.hint : linhaPorta.modelData.access.mode)
                     color: Theme.errorSoft
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Text {
@@ -163,7 +163,7 @@ Item {
                     visible: root.controller.modemManagerWarns(linhaPorta.modelData)
                     text: qsTr("o ModemManager está ativo e pode ocupar esta porta por alguns segundos após conectar; uma regra udev com ID_MM_DEVICE_IGNORE=1 evita isso")
                     color: Theme.warningSoft
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
             }
         }
@@ -180,7 +180,7 @@ Item {
                      : qsTr("nenhuma porta escolhida: o Executar de MicroPython usa a primeira que o mpremote achar"))
                   : ""
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -193,7 +193,7 @@ Item {
                                                          : qsTr("nenhuma porta serial USB")))
                   : ""
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
     }
 }

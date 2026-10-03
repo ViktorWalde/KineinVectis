@@ -31,7 +31,7 @@ Item {
             text: root.identity
                   ? qsTr("Identidade pelo canal — %1").arg(root.identity.device) : ""
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
 
@@ -41,7 +41,7 @@ Item {
             visible: root.identity && root.identity.busy
             text: qsTr("perguntando ao esptool… (a placa reseta para entrar no bootloader)")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         // O que a placa disse, uma linha: chip · flash · MAC.
@@ -52,7 +52,7 @@ Item {
             text: root.identity && root.identity.found ? "● " + root.identity.summary(root.identity.identity) : ""
             color: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Text {
@@ -63,7 +63,7 @@ Item {
             text: root.identity && root.identity.identity.features !== undefined
                   ? root.identity.identity.features.join(", ") : ""
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // O kit SUGERIDO e o botao que o aplica: so' o chip muda no kit.
@@ -78,7 +78,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: root.identity ? qsTr("sugere: %1").arg(root.identity.targetSummary(root.identity.target)) : ""
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             KvButton {
@@ -98,7 +98,7 @@ Item {
             visible: root.identity && root.identity.errorText !== ""
             text: root.identity ? root.identity.errorText : ""
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // A saida crua so' quando o parser nao entendeu (sem chip): e' o que
@@ -111,7 +111,7 @@ Item {
             text: root.identity ? root.identity.rawOutput : ""
             color: Theme.textMuted
             font.family: Theme.monoFont
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

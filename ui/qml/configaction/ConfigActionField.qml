@@ -47,7 +47,7 @@ Item {
                       ? root.param.label + (root.param.required ? " *" : "")
                       : ""
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideRight
             }
 
@@ -70,7 +70,7 @@ Item {
                     selectionColor: Theme.accentDim
                     selectedTextColor: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                     clip: true
                     selectByMouse: true
                     text: root.value
@@ -86,7 +86,7 @@ Item {
                     text: root.param ? root.param.placeholder : ""
                     color: Theme.textMuted
                     font.family: Theme.monoFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
             }
         }
@@ -100,7 +100,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.param ? root.param.description : ""
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // O QUE O PROJETO OFERECE. Clicar preenche.

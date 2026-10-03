@@ -14,6 +14,6 @@ Text {
     verticalAlignment: Text.AlignVCenter
     text: section
     color: Theme.textMuted
-    font.pixelSize: 10
+    font.pixelSize: Theme.fontSizeCaption
     font.bold: true
 }

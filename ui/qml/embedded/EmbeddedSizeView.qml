@@ -28,7 +28,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Tamanho do binário")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -47,7 +47,7 @@ Item {
                 text: root.controller ? root.controller.sizeTool : ""
                 color: Theme.textMuted
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -76,13 +76,13 @@ Item {
                           + (linhaRegiao.apertado ? qsTr("  — quase cheio") : "")
                     color: linhaRegiao.apertado ? Theme.warningSoft : Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 Rectangle {
                     width: parent.width
                     height: 6
-                    radius: 3
+                    radius: height / 2
                     color: Theme.background0
                     border.width: 1
                     border.color: Theme.borderSoft
@@ -110,7 +110,7 @@ Item {
                   ? qsTr("a ferramenta de tamanho (size) não foi encontrada para este kit")
                   : qsTr("sem linker script com bloco MEMORY: medido por seção, sem a fração de uso")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Repeater {
@@ -127,7 +127,7 @@ Item {
                 text: "  " + linhaSecao.modelData.name + "  " + linhaSecao.modelData.size + " B"
                 color: Theme.textSecondary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

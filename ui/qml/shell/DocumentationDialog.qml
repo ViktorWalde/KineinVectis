@@ -75,7 +75,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: qsTr("Manual do Kinein Vectis")
                     color: Theme.textPrimary
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.fontSizeLarge
                     font.bold: true
                 }
 
@@ -83,7 +83,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: previewLabel.implicitWidth + 2 * Theme.spacingSmall
                     height: 20
-                    radius: 10
+                    radius: height / 2
                     color: Theme.surfaceSelected
 
                     Text {
@@ -92,7 +92,7 @@ Item {
                         anchors.centerIn: parent
                         text: qsTr("Visualização")
                         color: Theme.textSecondary
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                         font.bold: true
                     }
                 }
@@ -148,7 +148,7 @@ Item {
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
                 font.family: Theme.uiFont
-                font.pixelSize: 13
+                font.pixelSize: Theme.fontSizeMedium
             }
 
             VerticalScrollBar {

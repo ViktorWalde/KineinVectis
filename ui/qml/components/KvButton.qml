@@ -63,7 +63,7 @@ Rectangle {
             color: root.accented ? Theme.background0
                                  : (root.enabled ? (root.danger ? Theme.errorSoft : Theme.textPrimary)
                                     : Theme.textDisabled)
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             font.bold: root.primary || root.selected
         }
     }

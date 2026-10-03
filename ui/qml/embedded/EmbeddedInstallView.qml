@@ -40,7 +40,7 @@ Item {
                       .arg(root.lista.length)
                       .arg(root.lista.filter(t => t.recommended === true).length)
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -59,7 +59,7 @@ Item {
             text: qsTr("Baixa para %1 com o SHA-256 conferido ANTES de desempacotar (toolchains: o publicado pela fonte; firmware MicroPython: o medido no download, a fonte não publica); o tar do sistema desempacota. Nada no sistema, nada sem clique.")
                   .arg(root.toolchainController ? root.toolchainController.installRoot : "")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -68,7 +68,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.toolchainController ? root.toolchainController.lastInstallOutcome : ""
             color: text.indexOf("falhou") === 0 ? Theme.errorSoft : Theme.textSecondary
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         ListView {
@@ -105,7 +105,7 @@ Item {
                               + " · " + root.mib(linha.modelData.sizeBytes) + " MiB"
                               + (root.toolchainController.isFirmware(linha.modelData) ? qsTr(" · firmware") : "")
                         color: Theme.textPrimary
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
 
                     Text {
@@ -114,7 +114,7 @@ Item {
                         text: linha.modelData.url
                         color: Theme.textMuted
                         font.family: Theme.monoFont
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                     }
 
                     Text {
@@ -123,7 +123,7 @@ Item {
                         text: "sha256 " + linha.modelData.sha256 + " · " + linha.modelData.license
                         color: Theme.textMuted
                         font.family: Theme.monoFont
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                     }
                 }
 

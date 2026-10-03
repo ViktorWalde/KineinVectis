@@ -15,5 +15,5 @@ Text {
     verticalAlignment: Text.AlignVCenter
     text: qsTr("procurando…")
     color: Theme.textMuted
-    font.pixelSize: 10
+    font.pixelSize: Theme.fontSizeCaption
 }

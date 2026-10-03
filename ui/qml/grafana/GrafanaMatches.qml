@@ -30,7 +30,7 @@ Column {
 
     component Titulo: Text {
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
         font.bold: true
     }
 
@@ -81,7 +81,7 @@ Column {
                         text: casamento.modelData.profileName + "  →  "
                               + casamento.modelData.dataSourceName
                         color: Theme.textPrimary
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
 
                     // A JUSTIFICATIVA FICA VISIVEL. Um falso positivo aqui
@@ -93,7 +93,7 @@ Column {
                         elide: Text.ElideRight
                         text: casamento.modelData.reason
                         color: Theme.textMuted
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                     }
                 }
             }
@@ -108,6 +108,6 @@ Column {
                  && root.dataSources.length > 0
         text: qsTr("Nenhum banco deste projeto aparece nas fontes de dados do Grafana.")
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 }

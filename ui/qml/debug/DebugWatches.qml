@@ -42,7 +42,7 @@ Item {
             anchors.margins: Theme.spacingSmall
             text: qsTr("Watches")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Rectangle {
@@ -67,7 +67,7 @@ Item {
                 anchors.margins: 4
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 clip: true
 
                 onAccepted: {
@@ -87,7 +87,7 @@ Item {
                 visible: watchInput.text === ""
                 text: qsTr("expressão + Enter")
                 color: Theme.textDisabled
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
         }
 
@@ -123,7 +123,7 @@ Item {
                     elide: Text.ElideRight
                     text: watchRow.expression
                     color: Theme.textMuted
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 Text {
@@ -134,7 +134,7 @@ Item {
                     elide: Text.ElideRight
                     text: watchRow.value
                     color: watchRow.failed ? Theme.errorSoft : Theme.textPrimary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 MouseArea {
@@ -150,7 +150,7 @@ Item {
                         anchors.centerIn: parent
                         text: "×"
                         color: Theme.textDisabled
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                     }
                 }
             }

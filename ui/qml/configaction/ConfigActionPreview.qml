@@ -45,7 +45,7 @@ Item {
                 width: parent.width
                 text: root.action !== null ? root.action.title : qsTr("Selecione uma ação")
                 color: Theme.textPrimary
-                font.pixelSize: 13
+                font.pixelSize: Theme.fontSizeMedium
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -56,7 +56,7 @@ Item {
                       ? root.controller.previewSummary
                       : (root.action !== null ? root.action.description : "")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 wrapMode: Text.WordWrap
             }
 
@@ -129,7 +129,7 @@ Item {
                 width: footer.width
                 text: "⚠ " + modelData
                 color: Theme.warningSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WordWrap
             }
         }
@@ -143,7 +143,7 @@ Item {
                 width: footer.width
                 text: qsTr("docs: %1").arg(modelData.title)
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 elide: Text.ElideRight
             }
         }
@@ -158,7 +158,7 @@ Item {
                 // clica. A frase vem do core, ao lado da definicao do valor.
                 text: root.action !== null ? root.action.riskExplanation : ""
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Rectangle {
@@ -183,7 +183,7 @@ Item {
                           && root.action.id === "cmake.removeTargetLinkLibraries"
                           ? qsTr("Desativar") : qsTr("Ativar")
                     color: parent.ready ? Theme.background0 : Theme.textDisabled
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     font.bold: true
                 }
 

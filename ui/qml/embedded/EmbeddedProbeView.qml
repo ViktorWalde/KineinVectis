@@ -16,7 +16,7 @@ Column {
     Text {
         text: qsTr("Sonda")
         color: Theme.textSecondary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         font.bold: true
     }
 
@@ -32,7 +32,7 @@ Column {
             text: "● " + root.controller.probeSummary(linhaSonda.modelData)
             color: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             elide: Text.ElideMiddle
         }
     }
@@ -61,7 +61,7 @@ Column {
         visible: root.controller && root.controller.hint !== "" && !root.controller.busy
         text: root.controller ? root.controller.hint : ""
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Rectangle {
@@ -91,7 +91,7 @@ Column {
                 text: root.controller ? root.controller.rawOutput.trim() : ""
                 color: Theme.textMuted
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

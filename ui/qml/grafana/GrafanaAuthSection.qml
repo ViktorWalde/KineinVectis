@@ -32,7 +32,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Token")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Repeater {
@@ -69,7 +69,7 @@ Column {
         visible: root.draft.tokenSource === "none"
         text: qsTr("Sem token dá para ver a versão e a saúde. O que há dentro exige uma conta de serviço.")
         color: Theme.textMuted
-        font.pixelSize: 9
+        font.pixelSize: Theme.fontSizeMicro
     }
 
     Row {
@@ -82,7 +82,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Variável")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Rectangle {
@@ -102,7 +102,7 @@ Column {
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 text: root.draft.tokenVariable !== undefined ? root.draft.tokenVariable : ""
@@ -117,7 +117,7 @@ Column {
                 text: "GRAFANA_TOKEN"
                 color: Theme.textMuted
                 font.family: Theme.monoFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
             }
         }
     }

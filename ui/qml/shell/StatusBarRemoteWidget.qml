@@ -68,7 +68,7 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         width: 6
         height: 6
-        radius: 3
+        radius: height / 2
         color: {
             switch (root.hud.tone) {
             case "ok": return Theme.successSoft;

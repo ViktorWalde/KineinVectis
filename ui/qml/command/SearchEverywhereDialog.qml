@@ -47,7 +47,7 @@ Rectangle {
         Text {
             text: root.titleText
             color: Theme.textPrimary
-            font.pixelSize: 13
+            font.pixelSize: Theme.fontSizeMedium
             font.bold: true
         }
 
@@ -69,7 +69,7 @@ Rectangle {
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 13
+                font.pixelSize: Theme.fontSizeMedium
                 clip: true
                 selectByMouse: true
                 onTextChanged: root.queryChanged(text)
@@ -85,7 +85,7 @@ Rectangle {
             visible: root.errorText !== ""
             text: root.errorText
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             wrapMode: Text.WordWrap
         }
 
@@ -108,7 +108,7 @@ Rectangle {
                 return qsTr("%1 resultados").arg(root.resultCount);
             }
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         ListView {
@@ -149,7 +149,7 @@ Rectangle {
                         width: parent.width
                         text: resultDelegate.title
                         color: Theme.textPrimary
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                         font.bold: true
                         elide: Text.ElideRight
                     }
@@ -160,7 +160,7 @@ Rectangle {
                               ? resultDelegate.subtitle : resultDelegate.path
                         color: Theme.textMuted
                         font.family: Theme.monoFont
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                         elide: Text.ElideMiddle
                     }
                 }

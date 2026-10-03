@@ -25,7 +25,7 @@ Rectangle {
         anchors.centerIn: parent
         text: root.text
         color: root.primary ? Theme.background0 : Theme.textSecondary
-        font.pixelSize: 12
+        font.pixelSize: Theme.fontSizeBody
         font.bold: root.primary
     }
 

@@ -30,7 +30,7 @@ Item {
         visible: root.busy
         text: root.busyText
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Rectangle {
@@ -53,6 +53,6 @@ Item {
         text: root.message
         color: root.ok ? Theme.textPrimary : Theme.textSecondary
         font.family: Theme.monoFont
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 }

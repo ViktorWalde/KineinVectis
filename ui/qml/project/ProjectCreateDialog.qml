@@ -40,7 +40,7 @@ Rectangle {
             text: root.dialogKind === "directory"
                   ? qsTr("Nova pasta") : qsTr("Novo arquivo")
             color: Theme.textPrimary
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             font.bold: true
         }
 
@@ -48,7 +48,7 @@ Rectangle {
             width: parent.width
             text: root.parentDisplayPath
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             elide: Text.ElideMiddle
         }
 
@@ -71,7 +71,7 @@ Rectangle {
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 onAccepted: root.confirmRequested()
@@ -84,7 +84,7 @@ Rectangle {
             visible: root.errorText !== ""
             text: root.errorText
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             wrapMode: Text.WordWrap
         }
 
@@ -107,7 +107,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: qsTr("Cancelar")
                     color: Theme.textSecondary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 MouseArea {
@@ -132,7 +132,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: qsTr("Criar")
                     color: Theme.background0
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     font.bold: true
                 }
 

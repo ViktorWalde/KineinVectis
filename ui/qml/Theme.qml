@@ -75,8 +75,11 @@ QtObject {
     readonly property int fontSizeCaption: 10
     readonly property int fontSizeSmall: 11
     readonly property int fontSizeBody: 12
+    readonly property int fontSizeMedium: 13
     readonly property int fontSizeLarge: 14
+    readonly property int fontSizeSubtitle: 15
     readonly property int fontSizeHeadline: 20
+    readonly property int fontSizeDisplay: 22
 
     // MOVIMENTO POR PAPEL (0.3.9; decisao do autor de 2026-10-01: fluidez a
     // 60 Hz, 120 Hz onde der). Toda animacao tira a duracao e a curva daqui,

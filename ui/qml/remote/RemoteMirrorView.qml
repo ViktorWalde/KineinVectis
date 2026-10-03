@@ -87,7 +87,7 @@ Item {
                           : (root.browser.browsePath || qsTr("Home do alvo"))
                     color: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     elide: Text.ElideMiddle
                 }
 
@@ -134,7 +134,7 @@ Item {
                              && root.browser.browseError === ""
                     text: qsTr("Nenhuma subpasta disponível.")
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Text {
@@ -143,7 +143,7 @@ Item {
                     wrapMode: Text.WordWrap
                     text: root.browser.browseError
                     color: Theme.errorSoft
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
             }
@@ -173,7 +173,7 @@ Item {
                                  + "o que mudar no alvo só aparece ao Puxar.").arg(root.mirror.name).arg(root.mirror.path)
                           : ""
                     color: Theme.textSecondary
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Row {
@@ -202,7 +202,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.syncing ? qsTr("Sincronizando (rsync)...") : root.syncMessage
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

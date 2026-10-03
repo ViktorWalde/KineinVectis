@@ -30,7 +30,7 @@ Rectangle {
             text: root.hoverText
             color: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             wrapMode: Text.WrapAnywhere
         }
     }

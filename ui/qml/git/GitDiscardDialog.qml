@@ -42,7 +42,7 @@ Item {
                 width: parent.width
                 text: qsTr("Descartar mudanças?")
                 color: Theme.textPrimary
-                font.pixelSize: 14
+                font.pixelSize: Theme.fontSizeLarge
                 font.bold: true
             }
 
@@ -52,7 +52,7 @@ Item {
                            + "(arquivo novo será apagado). Isso não tem "
                            + "desfazer.").arg(root.entryPath)
                 color: Theme.textSecondary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 wrapMode: Text.WordWrap
             }
 
@@ -74,7 +74,7 @@ Item {
                         anchors.centerIn: parent
                         text: qsTr("Cancelar")
                         color: Theme.textPrimary
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                     }
 
                     MouseArea {
@@ -99,7 +99,7 @@ Item {
                         anchors.centerIn: parent
                         text: qsTr("Descartar")
                         color: Theme.background0
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                         font.bold: true
                     }
 

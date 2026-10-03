@@ -38,7 +38,7 @@ Rectangle {
         visible: root.iconName === ""
         text: root.labelText
         color: Theme.textSecondary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     KvIcon {

@@ -32,7 +32,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 8
                 height: 8
-                radius: 4
+                radius: height / 2
                 color: root.tool && root.tool.installed
                        ? Theme.successSoft : Theme.textDisabled
             }
@@ -41,7 +41,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.tool ? root.tool.name : ""
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.weight: Font.DemiBold
             }
 
@@ -51,14 +51,14 @@ Item {
                       ? qsTr("já instalado") : qsTr("não encontrado")
                 color: root.tool && root.tool.installed
                        ? Theme.successSoft : Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("site oficial ↗")
                 color: siteArea.containsMouse ? Theme.accent : Theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 font.underline: siteArea.containsMouse
 
                 MouseArea {
@@ -77,7 +77,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.tool ? root.tool.summary : ""
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         KvButton {
@@ -95,7 +95,7 @@ Item {
             text: qsTr("A documentação oficial não cobre esta distribuição. "
                        + "Abra o site acima — a IDE não inventa comando.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Repeater {
@@ -115,7 +115,7 @@ Item {
                     wrapMode: Text.WordWrap
                     text: (passo.index + 1) + ". " + passo.modelData.explanation
                     color: Theme.textSecondary
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Rectangle {
@@ -136,7 +136,7 @@ Item {
                         text: passo.modelData.command
                         color: Theme.textPrimary
                         font.family: Theme.monoFont
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                     }
                 }
 
@@ -169,7 +169,7 @@ Item {
                     .arg(root.guide.sourceUrl).arg(root.guide.checkedAt)
                   : ""
             color: fonteArea.containsMouse ? Theme.accent : Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
 
             MouseArea {
                 id: fonteArea

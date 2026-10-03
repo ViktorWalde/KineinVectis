@@ -93,7 +93,7 @@ Rectangle {
             visible: root.expanded
             text: railButton.label !== "" ? railButton.label : railButton.tooltip.split(" (")[0]
             color: railButton.active ? Theme.accent : Theme.textSecondary
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             elide: Text.ElideRight
         }
 
@@ -185,7 +185,7 @@ Rectangle {
             anchors.centerIn: parent
             text: root.expanded ? qsTr("‹ recolher") : "›"
             color: Theme.textMuted
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
         }
 
         MouseArea {

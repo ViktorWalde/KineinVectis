@@ -20,6 +20,6 @@ Rectangle {
         anchors.centerIn: parent
         text: root.text
         color: Theme.textPrimary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 }

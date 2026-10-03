@@ -59,7 +59,7 @@ ListView {
             Rectangle {
                 width: 8
                 height: 8
-                radius: 4
+                radius: height / 2
                 anchors.verticalCenter: parent.verticalCenter
                 color: panel.statusColor(toolDelegate.modelData.status)
             }
@@ -69,7 +69,7 @@ ListView {
                 width: 130
                 text: toolDelegate.modelData.displayName
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -81,7 +81,7 @@ ListView {
                       : (toolDelegate.modelData.message !== undefined
                          ? toolDelegate.modelData.message : "")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.family: Theme.monoFont
             }
 
@@ -91,7 +91,7 @@ ListView {
                 text: toolDelegate.modelData.suggestedInstall !== undefined
                       ? toolDelegate.modelData.suggestedInstall : ""
                 color: Theme.accent
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.family: Theme.monoFont
             }
         }

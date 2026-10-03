@@ -36,7 +36,7 @@ Item {
         height: visible ? implicitHeight : 0
         text: root.reasonText
         color: Theme.textMuted
-        font.pixelSize: 9
+        font.pixelSize: Theme.fontSizeMicro
     }
 
     Text {
@@ -48,7 +48,7 @@ Item {
         wrapMode: Text.WordWrap
         text: qsTr("Cole o token da conta de serviço. Ele vive só nesta sessão.")
         color: Theme.warningSoft
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Row {
@@ -80,7 +80,7 @@ Item {
                 echoMode: TextInput.Password
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 onAccepted: {
                     root.accepted(entrada.text);

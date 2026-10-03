@@ -47,7 +47,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: root.workspaceOpen ? root.workspaceName : qsTr("Abrir projeto")
             color: Theme.textPrimary
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             font.weight: Font.DemiBold
         }
 
@@ -57,7 +57,7 @@ Rectangle {
             visible: root.workspaceOpen && root.systemLabel !== ""
             text: root.systemLabel
             color: Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         // O ponto do core: verde conectado, vermelho nao — o mesmo que a
@@ -67,7 +67,7 @@ Rectangle {
             visible: root.workspaceOpen
             width: 6
             height: 6
-            radius: 3
+            radius: height / 2
             color: root.coreConnected ? Theme.successSoft : Theme.errorSoft
         }
 

@@ -70,7 +70,7 @@ Row {
                 visible: replaceInput.text === ""
                 text: qsTr("Substituir por (vazio remove) — \\n quebra linha")
                 color: Theme.textMuted
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
         }
     }
@@ -96,7 +96,7 @@ Row {
                   : (replaceButton.replaceArmed
                      ? qsTr("Confirmar") : qsTr("Substituir tudo"))
             color: Theme.background0
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.bold: true
         }
 

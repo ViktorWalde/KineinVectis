@@ -158,7 +158,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: bottomTab.modelData.label
                         color: bottomTab.active ? Theme.textPrimary : Theme.textSecondary
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                         font.weight: bottomTab.active ? Font.DemiBold : Font.Normal
                     }
 
@@ -168,7 +168,7 @@ Item {
                         visible: bottomTab.badge !== ""
                         width: badgeText.implicitWidth + 8
                         height: 14
-                        radius: 7
+                        radius: height / 2
                         color: tabBar.badgeColorFor(bottomTab.modelData.key)
                         opacity: 0.9
 
@@ -178,7 +178,7 @@ Item {
                             anchors.centerIn: parent
                             text: bottomTab.badge
                             color: Theme.background0
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fontSizeMicro
                             font.bold: true
                         }
                     }
@@ -198,7 +198,7 @@ Item {
                         visible: bottomTab.modelData.key === "terminal" && tabBar.processRunning
                         width: 6
                         height: 6
-                        radius: 3
+                        radius: height / 2
                         color: Theme.successSoft
                     }
                 }

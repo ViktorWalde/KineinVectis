@@ -40,7 +40,7 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         width: 96
         height: 4
-        radius: 2
+        radius: height / 2
         color: Theme.surface2
 
         Rectangle {

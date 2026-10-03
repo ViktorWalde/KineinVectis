@@ -58,7 +58,7 @@ Item {
                     text: qsTr("Automático")
                     color: root.activeConfigId === ""
                            ? Theme.accent : Theme.textPrimary
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {
@@ -96,7 +96,7 @@ Item {
                         text: configEntry.name
                         color: root.activeConfigId === configEntry.id
                                ? Theme.accent : Theme.textPrimary
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                         elide: Text.ElideRight
                     }
 
@@ -129,7 +129,7 @@ Item {
                     anchors.leftMargin: Theme.spacingSmall
                     text: qsTr("Nova configuração...")
                     color: Theme.textSecondary
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {
@@ -155,7 +155,7 @@ Item {
                     anchors.leftMargin: Theme.spacingSmall
                     text: qsTr("Editar atual...")
                     color: Theme.textSecondary
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {
@@ -181,7 +181,7 @@ Item {
                     anchors.leftMargin: Theme.spacingSmall
                     text: qsTr("Excluir atual")
                     color: Theme.errorSoft
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 MouseArea {

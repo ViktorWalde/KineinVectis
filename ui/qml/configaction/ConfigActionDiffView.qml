@@ -72,7 +72,7 @@ Rectangle {
                  : root.file.path)
               : ""
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
         visible: root.file !== null
     }
 
@@ -95,7 +95,7 @@ Rectangle {
             color: (typeof modelData !== "string" && modelData.added)
                    ? Theme.successSoft : Theme.textSecondary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         // B2 (DocsPublic/roadmaps/24): sem ela, um CMakeLists que nao cabe na caixa
@@ -129,7 +129,7 @@ Rectangle {
                  ? qsTr("Informe: %1").arg(root.missingParam)
                  : qsTr("Esta ação não altera arquivo nenhum."))
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         visible: root.file === null && root.reportLines.length === 0
     }
 }

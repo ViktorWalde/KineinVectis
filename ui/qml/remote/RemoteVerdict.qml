@@ -52,7 +52,7 @@ Item {
                   : qsTr("Nenhum alvo ainda. Em Configurar, escolha um alias do seu ~/.ssh/config "
                          + "ou cole a linha ssh que você já usa.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         KvVerdict {
@@ -91,7 +91,7 @@ Item {
                 text: qsTr("%1 — a IDE não digita senha: o ssh vai pedir no terminal, "
                            + "e o host key você aceita uma vez.").arg(root.armedName)
                 color: Theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -100,7 +100,7 @@ Item {
                 text: "$ " + root.armedCommand
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Row {
@@ -126,7 +126,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.deploying ? qsTr("Enviando...") : root.deployMessage
             color: Theme.textSecondary
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -135,7 +135,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.lastOutcome
             color: Theme.textSecondary
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -145,7 +145,7 @@ Item {
             text: "$ " + root.lastCommand
             color: Theme.textMuted
             font.family: Theme.monoFont
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
 
         Text {
@@ -154,7 +154,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.errorText
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

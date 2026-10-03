@@ -40,7 +40,7 @@ Item {
                 text: root.entryKind === "directory"
                       ? qsTr("Remover pasta") : qsTr("Remover arquivo")
                 color: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 font.bold: true
             }
 
@@ -49,7 +49,7 @@ Item {
                 text: qsTr("Mover \"%1\" para a lixeira? Você poderá recuperar "
                            + "o item pelo gerenciador de arquivos.").arg(root.entryName)
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 wrapMode: Text.WordWrap
             }
 
@@ -58,7 +58,7 @@ Item {
                 visible: root.errorText !== ""
                 text: root.errorText
                 color: Theme.errorSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WordWrap
             }
 
@@ -67,7 +67,7 @@ Item {
                 visible: root.pending
                 text: qsTr("Removendo…")
                 color: Theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Row {

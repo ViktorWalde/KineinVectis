@@ -180,7 +180,7 @@ Item {
             visible: text !== ""
             text: root.controller ? root.controller.contentPhrase : ""
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         // O FILTRO SO' EXISTE QUANDO HA' O QUE FILTRAR. Uma caixa de busca
@@ -204,7 +204,7 @@ Item {
                 color: Theme.textPrimary
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 clip: true
                 selectByMouse: true
                 // ESC LIMPA, e nao fecha nada: e' o gesto que devolve a lista
@@ -219,7 +219,7 @@ Item {
                 visible: campoFiltro.text === ""
                 text: qsTr("filtrar dashboards, pasta ou fonte…")
                 color: Theme.textMuted
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
         }
     }

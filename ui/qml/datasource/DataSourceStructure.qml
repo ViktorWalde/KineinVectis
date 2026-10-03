@@ -50,7 +50,7 @@ Item {
             visible: root.loading
             text: qsTr("Lendo a estrutura...")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -59,7 +59,7 @@ Item {
             wrapMode: Text.WordWrap
             text: qsTr("Clique em \"Ler estrutura\" para ver esquemas, tabelas e colunas.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Repeater {
@@ -76,7 +76,7 @@ Item {
                 Text {
                     text: "▾ " + blocoEsquema.modelData.name
                     color: Theme.textSecondary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     font.weight: Font.DemiBold
                 }
 
@@ -85,7 +85,7 @@ Item {
                     x: Theme.spacingMedium
                     text: qsTr("(vazio)")
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Repeater {
@@ -110,13 +110,13 @@ Item {
                             Text {
                                 text: blocoTabela.aberta ? "▾" : "▸"
                                 color: Theme.textMuted
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fontSizeCaption
                             }
 
                             Text {
                                 text: blocoTabela.modelData.name
                                 color: Theme.textPrimary
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fontSizeCaption
                             }
 
                             Text {
@@ -124,14 +124,14 @@ Item {
                                       ? qsTr("view") : qsTr("tabela")
                                 color: blocoTabela.modelData.kind === "view"
                                        ? Theme.infoSoft : Theme.textMuted
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fontSizeMicro
                             }
 
                             Text {
                                 text: "· " + blocoTabela.modelData.columns.length
                                       + qsTr(" colunas")
                                 color: Theme.textMuted
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fontSizeMicro
                             }
                         }
 
@@ -154,7 +154,7 @@ Item {
                                       + (modelData.nullable ? "" : "  NOT NULL")
                                 color: Theme.textMuted
                                 font.family: Theme.monoFont
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fontSizeCaption
                             }
                         }
                     }

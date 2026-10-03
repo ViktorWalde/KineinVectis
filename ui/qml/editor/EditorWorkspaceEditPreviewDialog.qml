@@ -32,7 +32,7 @@ Rectangle {
         anchors.margins: Theme.spacingMedium
         text: root.operationTitle === "" ? qsTr("Revisar alteracoes") : root.operationTitle
         color: Theme.textPrimary
-        font.pixelSize: 14
+        font.pixelSize: Theme.fontSizeLarge
         font.bold: true
         elide: Text.ElideRight
     }
@@ -49,7 +49,7 @@ Rectangle {
         text: qsTr("%1 arquivo(s), %2 edit(s). Nenhuma alteracao foi gravada ainda.")
               .arg(root.files.length).arg(root.editCount)
         color: Theme.textSecondary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     ListView {
@@ -88,7 +88,7 @@ Rectangle {
                       + qsTr("%1 edit(s)").arg(fileDelegate.modelData.edits)
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 elide: Text.ElideMiddle
             }
 
@@ -132,7 +132,7 @@ Rectangle {
         visible: root.errorText !== ""
         text: root.errorText
         color: Theme.errorSoft
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
         wrapMode: Text.WordWrap
     }
 
@@ -158,7 +158,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: qsTr("Cancelar")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             MouseArea {
@@ -183,7 +183,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: qsTr("Aplicar alteracoes")
                 color: Theme.background0
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -218,7 +218,7 @@ Rectangle {
             anchors.margins: Theme.spacingSmall
             text: parent.heading
             color: parent.headingColor
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.bold: true
         }
 
@@ -244,7 +244,7 @@ Rectangle {
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: TextEdit.NoWrap
             }
         }

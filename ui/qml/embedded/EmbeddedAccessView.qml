@@ -34,7 +34,7 @@ Item {
                         : qsTr("Permissões — %1 canal(is) precisam de um passo").arg(root.access.problems)))
                   : ""
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
 
@@ -55,7 +55,7 @@ Item {
                     text: (canal.modelData.ok ? "✓ " : "✗ ") + root.access.channelTitle(canal.modelData)
                           + " — " + canal.modelData.detail
                     color: canal.modelData.ok ? Theme.textPrimary : Theme.errorSoft
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 Text {
@@ -65,7 +65,7 @@ Item {
                     text: canal.modelData.distroDidIt !== undefined && canal.modelData.distroDidIt !== null
                           ? canal.modelData.distroDidIt : ""
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Text {
@@ -75,7 +75,7 @@ Item {
                     text: canal.modelData.problem !== undefined && canal.modelData.problem !== null
                           ? canal.modelData.problem : ""
                     color: Theme.warningSoft
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 // Um passo por linha: a explicacao, o comando em mono e o botao
@@ -96,7 +96,7 @@ Item {
                             wrapMode: Text.WordWrap
                             text: passo.modelData.explanation
                             color: Theme.textSecondary
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fontSizeCaption
                         }
 
                         Row {
@@ -110,7 +110,7 @@ Item {
                                 text: passo.modelData.command
                                 color: Theme.textPrimary
                                 font.family: Theme.monoFont
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fontSizeCaption
                             }
 
                             KvButton {
@@ -133,7 +133,7 @@ Item {
                           ? qsTr("fonte: %1 (conferida em %2)").arg(canal.modelData.fix.sourceUrl).arg(canal.modelData.fix.checkedOn)
                           : ""
                     color: Theme.textMuted
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                 }
             }
         }
@@ -144,7 +144,7 @@ Item {
             visible: root.access && root.access.errorText !== ""
             text: root.access ? root.access.errorText : ""
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

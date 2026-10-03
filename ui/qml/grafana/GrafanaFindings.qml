@@ -51,7 +51,7 @@ Column {
 
     component Titulo: Text {
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
         font.bold: true
     }
 
@@ -95,7 +95,7 @@ Column {
             visible: root.linhasDashboards.length === 0
             text: peneira.emptyPhrase(root.dashboards.length, root.filtro)
             color: Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
 
         Text {
@@ -103,7 +103,7 @@ Column {
             visible: gradeDashboards.activeFocus
             text: qsTr("Enter abre no navegador")
             color: Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
     }
 
@@ -138,7 +138,7 @@ Column {
             visible: root.linhasFontes.length === 0
             text: peneira.emptyPhrase(root.dataSources.length, root.filtro)
             color: Theme.textMuted
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
     }
 }

@@ -33,7 +33,7 @@ Item {
         anchors.left: parent.left
         text: qsTr("Bibliotecas")
         color: Theme.textPrimary
-        font.pixelSize: 12
+        font.pixelSize: Theme.fontSizeBody
         font.weight: Font.DemiBold
     }
 
@@ -48,7 +48,7 @@ Item {
         text: qsTr("● verde = já está no seu projeto.  ● cinza = disponível "
                    + "para ativar.  Licença verificada na fonte, versão fixada.")
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     LibraryTargetPicker {
@@ -105,7 +105,7 @@ Item {
                 anchors.leftMargin: Theme.spacingSmall
                 width: 8
                 height: 8
-                radius: 4
+                radius: height / 2
                 color: linha.modelData.applied === true
                        ? Theme.successSoft : Theme.textDisabled
             }
@@ -119,7 +119,7 @@ Item {
                 anchors.leftMargin: Theme.spacingSmall
                 text: linha.modelData.name
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.weight: Font.DemiBold
             }
 
@@ -134,7 +134,7 @@ Item {
                          && linha.modelData.standardLineage !== ""
                 text: "★ " + (linha.modelData.standardLineage || "")
                 color: Theme.accent
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -153,7 +153,7 @@ Item {
                          : qsTr("baixa junto do projeto"))
                 color: linha.modelData.applied === true
                        ? Theme.successSoft : Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -168,7 +168,7 @@ Item {
                 elide: Text.ElideRight
                 text: linha.modelData.summary
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             Text {
@@ -181,7 +181,7 @@ Item {
                 text: linha.modelData.license + " · " + linha.modelData.pinnedVersion
                       + " · " + linha.modelData.releasedAt
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             // O REPOSITORIO a um clique, para o autor olhar ANTES de ativar.
@@ -211,7 +211,7 @@ Item {
                                  && atalhoExterno.modelData.url !== ""
                         text: atalhoExterno.modelData.rotulo + " ↗"
                         color: linkArea.containsMouse ? Theme.accent : Theme.textSecondary
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                         font.underline: linkArea.containsMouse
 
                         MouseArea {

@@ -221,7 +221,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: root.errorText
                 color: Theme.errorSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

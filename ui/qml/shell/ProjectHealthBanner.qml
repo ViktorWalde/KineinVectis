@@ -62,7 +62,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: root.message
         color: Theme.textSecondary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         elide: Text.ElideRight
     }
 
@@ -86,7 +86,7 @@ Rectangle {
             anchors.centerIn: parent
             text: root.actionLabel
             color: Theme.textPrimary
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         MouseArea {

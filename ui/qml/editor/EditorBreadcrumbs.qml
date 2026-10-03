@@ -44,7 +44,7 @@ Row {
                 anchors.verticalCenter: parent.verticalCenter
                 text: segment.modelData
                 color: segment.isLast ? Theme.textSecondary : Theme.textMuted
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             Text {
@@ -52,7 +52,7 @@ Row {
                 visible: !segment.isLast
                 text: "›"
                 color: Theme.textMuted
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
         }
     }

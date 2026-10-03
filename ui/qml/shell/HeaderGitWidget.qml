@@ -49,7 +49,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: root.branchLabel
             color: branchArea.containsMouse ? Theme.accent : Theme.textPrimary
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             font.family: Theme.monoFont
             font.underline: branchArea.containsMouse
 
@@ -69,7 +69,7 @@ Rectangle {
             visible: root.aheadCount > 0
             text: "↑" + root.aheadCount
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Text {
@@ -77,7 +77,7 @@ Rectangle {
             visible: root.behindCount > 0
             text: "↓" + root.behindCount
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         // As alteracoes como um contador com fundo: e' o numero que pede
@@ -87,7 +87,7 @@ Rectangle {
             visible: root.changeCount > 0
             width: alteracoes.implicitWidth + Theme.spacingSmall
             height: 16
-            radius: 8
+            radius: height / 2
             color: Theme.accentDim
 
             Text {
@@ -96,7 +96,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: root.changeCount
                 color: Theme.textPrimary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 font.weight: Font.DemiBold
             }
         }

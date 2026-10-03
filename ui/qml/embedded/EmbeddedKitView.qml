@@ -23,7 +23,7 @@ Column {
     Text {
         text: qsTr("Alvo do kit %1").arg(root.preset)
         color: Theme.textSecondary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         font.bold: true
     }
 

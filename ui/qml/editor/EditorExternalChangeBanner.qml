@@ -31,7 +31,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: root.message
         color: Theme.textPrimary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
         elide: Text.ElideRight
     }
 
@@ -55,7 +55,7 @@ Rectangle {
             anchors.centerIn: parent
             text: qsTr("Recarregar do disco")
             color: Theme.textPrimary
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         MouseArea {
@@ -88,7 +88,7 @@ Rectangle {
             anchors.centerIn: parent
             text: root.deleted ? qsTr("Manter buffer") : qsTr("Manter local")
             color: Theme.accentActive
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         MouseArea {

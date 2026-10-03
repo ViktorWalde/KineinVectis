@@ -43,7 +43,7 @@ KvPanelFrame {
         width: parent.width
         text: qsTr("Revisar colagem no terminal")
         color: Theme.textPrimary
-        font.pixelSize: 15
+        font.pixelSize: Theme.fontSizeSubtitle
         font.bold: true
     }
     Text {
@@ -55,7 +55,7 @@ KvPanelFrame {
         textFormat: Text.PlainText
         wrapMode: Text.WordWrap
         color: Theme.textSecondary
-        font.pixelSize: 12
+        font.pixelSize: Theme.fontSizeBody
     }
     Flickable {
         anchors.top: warning.bottom
@@ -77,7 +77,7 @@ KvPanelFrame {
             textFormat: Text.PlainText
             wrapMode: Text.WrapAnywhere
             font.family: Theme.monoFont
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             color: Theme.textPrimary
         }
     }

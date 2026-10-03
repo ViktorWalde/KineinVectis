@@ -132,7 +132,7 @@ Item {
                 anchors.leftMargin: Theme.radiusLarge
                 anchors.rightMargin: Theme.radiusLarge
                 height: 2
-                radius: 1
+                radius: height / 2
                 visible: tabDelegate.active
                 color: Theme.accent
             }

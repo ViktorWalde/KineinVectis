@@ -29,7 +29,7 @@ Item {
         Text {
             text: qsTr("Sysroot e SDK do alvo")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
 
@@ -84,7 +84,7 @@ Item {
             visible: text !== ""
             text: root.toolchainController ? root.toolchainController.sysrootSummary() : ""
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -93,7 +93,7 @@ Item {
             visible: text !== ""
             text: root.toolchainController ? root.toolchainController.importError : ""
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Repeater {
@@ -109,7 +109,7 @@ Item {
                 text: linhaProposta.modelData
                 color: Theme.textSecondary
                 font.family: Theme.monoFont
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeMicro
             }
         }
 
@@ -121,7 +121,7 @@ Item {
                   ? qsTr("toolchain file do kit: %1").arg(root.toolchainController.toolchainFile) : ""
             color: Theme.textMuted
             font.family: Theme.monoFont
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
         }
     }
 }

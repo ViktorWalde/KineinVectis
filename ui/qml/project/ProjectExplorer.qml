@@ -96,7 +96,7 @@ Rectangle {
                 elide: Text.ElideRight
                 text: root.workspaceName
                 color: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Font.DemiBold
             }
 

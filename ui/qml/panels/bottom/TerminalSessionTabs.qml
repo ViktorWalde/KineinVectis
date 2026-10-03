@@ -68,7 +68,7 @@ Row {
                     anchors.verticalCenter: parent.verticalCenter
                     text: termChip.title
                     color: termChip.current ? Theme.accent : Theme.textSecondary
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                     font.bold: true
                 }
 
@@ -118,7 +118,7 @@ Row {
             anchors.centerIn: parent
             text: "+"
             color: newTerminalArea.containsMouse ? Theme.accent : Theme.textSecondary
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             font.bold: true
         }
 

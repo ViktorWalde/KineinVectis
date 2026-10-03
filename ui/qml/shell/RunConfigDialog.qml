@@ -52,7 +52,7 @@ Rectangle {
         Text {
             text: qsTr("Nome")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Rectangle {
@@ -73,7 +73,7 @@ Rectangle {
                 color: Theme.textPrimary
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 onAccepted: commandInput.forceActiveFocus()
@@ -84,7 +84,7 @@ Rectangle {
         Text {
             text: qsTr("Comando (roda na raiz do projeto)")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Rectangle {
@@ -106,7 +106,7 @@ Rectangle {
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 onAccepted: root.confirmRequested()
@@ -132,7 +132,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: qsTr("Cancelar")
                     color: Theme.textSecondary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 MouseArea {
@@ -157,7 +157,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: qsTr("Salvar")
                     color: Theme.background0
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     font.bold: true
                 }
 

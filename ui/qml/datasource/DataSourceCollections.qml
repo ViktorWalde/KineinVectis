@@ -82,7 +82,7 @@ Item {
             visible: root.loading
             text: qsTr("Lendo as coleções...")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -91,7 +91,7 @@ Item {
             wrapMode: Text.WordWrap
             text: qsTr("Clique em \"Ler estrutura\" para ver as coleções e os campos.")
             color: Theme.textDisabled
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Repeater {
@@ -127,7 +127,7 @@ Item {
                               + linhaColecao.modelData.name
                               + "  " + linhaColecao.modelData.kind
                         color: Theme.textPrimary
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
 
                     MouseArea {
@@ -154,7 +154,7 @@ Item {
                             .arg(linhaColecao.modelData.metaField)
                             .arg(linhaColecao.modelData.granularity)
                     color: Theme.infoSoft
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                 }
 
                 Text {
@@ -164,7 +164,7 @@ Item {
                     text: root.procedencia(linhaColecao.modelData)
                     color: linhaColecao.modelData.declared === true
                            ? Theme.successSoft : Theme.textMuted
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                 }
 
                 // O QUE FOI CORTADO, dito. Uma árvore que parece completa e não
@@ -177,7 +177,7 @@ Item {
                     wrapMode: Text.WordWrap
                     text: "⚠ " + linhaColecao.modelData.truncated
                     color: Theme.warningSoft
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                 }
 
                 Repeater {
@@ -207,7 +207,7 @@ Item {
                                   + (linhaCampo.modelData.required === true ? " *" : "")
                             color: Theme.textSecondary
                             font.family: Theme.monoFont
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fontSizeCaption
                         }
 
                         // MAIS DE UM TIPO NÃO É ERRO — é o que uma coluna não
@@ -223,7 +223,7 @@ Item {
                             color: linhaCampo.modelData.types.length > 1
                                    ? Theme.warningSoft : Theme.infoSoft
                             font.family: Theme.monoFont
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fontSizeMicro
                         }
 
                         Text {
@@ -237,7 +237,7 @@ Item {
                             text: root.presenca(linhaCampo.modelData)
                             color: Theme.textMuted
                             font.family: Theme.monoFont
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fontSizeMicro
                         }
                     }
                 }

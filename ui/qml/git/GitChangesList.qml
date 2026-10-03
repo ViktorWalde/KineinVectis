@@ -68,7 +68,7 @@ ListView {
               ? qsTr("Sem mudanças — árvore limpa.")
               : qsTr("Este projeto não é um repositório git.")
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     delegate: Rectangle {
@@ -126,7 +126,7 @@ ListView {
             anchors.rightMargin: Theme.spacingSmall
             text: changeRow.path.substring(changeRow.path.lastIndexOf("/") + 1)
             color: StatusColors.gitKind(changeRow.kind)
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.family: Theme.monoFont
             elide: Text.ElideMiddle
         }
@@ -163,7 +163,7 @@ ListView {
                 anchors.centerIn: parent
                 text: qsTr("diff")
                 color: Theme.textSecondary
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeMicro
             }
 
             MouseArea {
@@ -194,7 +194,7 @@ ListView {
                 anchors.centerIn: parent
                 text: "↩"
                 color: Theme.errorSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             MouseArea {

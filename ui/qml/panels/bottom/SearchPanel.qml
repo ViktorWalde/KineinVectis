@@ -73,7 +73,7 @@ Item {
                     visible: searchInput.text === ""
                     text: qsTr("Buscar no projeto (Enter) — \\n quebra linha")
                     color: Theme.textMuted
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
             }
         }
@@ -94,7 +94,7 @@ Item {
                 anchors.centerIn: parent
                 text: qsTr("Aa")
                 color: panel.caseSensitive ? Theme.accent : Theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 font.bold: true
             }
 
@@ -122,7 +122,7 @@ Item {
                 return qsTr("%1 resultados").arg(panel.resultsModel.count);
             }
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 
@@ -149,7 +149,7 @@ Item {
         visible: panel.replaceError !== "" || panel.replaceSummary !== ""
         text: panel.replaceError !== "" ? panel.replaceError : panel.replaceSummary
         color: panel.replaceError !== "" ? Theme.errorSoft : Theme.successSoft
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
         elide: Text.ElideRight
     }
 
@@ -192,7 +192,7 @@ Item {
             visible: panel.resultsModel.count === 0 && !panel.searching
             text: qsTr("Digite um termo e pressione Enter (Ctrl+Shift+F).")
             color: Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         delegate: Rectangle {
@@ -222,7 +222,7 @@ Item {
                     text: searchResultDelegate.path + ":" + searchResultDelegate.line
                     color: Theme.accent
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 Text {
@@ -231,7 +231,7 @@ Item {
                     text: searchResultDelegate.preview
                     color: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     elide: Text.ElideRight
                 }
             }

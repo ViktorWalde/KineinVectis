@@ -65,7 +65,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Novo banco")
                 color: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 font.bold: true
             }
 
@@ -121,7 +121,7 @@ Item {
             wrapMode: Text.WordWrap
             text: qsTr("Sem Podman/Docker no PATH não há como subir um servidor em container.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Row {
@@ -153,7 +153,7 @@ Item {
             text: root.preview
             color: Theme.textSecondary
             font.family: Theme.monoFont
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Text {
@@ -162,7 +162,7 @@ Item {
             wrapMode: Text.WordWrap
             text: qsTr("Autenticação `trust` SÓ no loopback: a IDE não guarda senha, e a porta não sai desta máquina.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         KvVerdict {

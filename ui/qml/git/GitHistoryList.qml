@@ -54,7 +54,7 @@ ListView {
                  ? qsTr("Sem commits ainda.")
                  : qsTr("Este projeto não é um repositório git."))
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     delegate: Rectangle {
@@ -142,7 +142,7 @@ ListView {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 8
                 height: 8
-                radius: 4
+                radius: height / 2
                 color: commitRowItem.merge ? Theme.background1 : Theme.accent
                 border.width: commitRowItem.merge ? 2 : 0
                 border.color: Theme.accent
@@ -157,7 +157,7 @@ ListView {
             anchors.leftMargin: Theme.spacingSmall
             text: commitRowItem.shortSha
             color: Theme.accent
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.family: Theme.monoFont
         }
 
@@ -181,7 +181,7 @@ ListView {
 
                     width: refLabel.implicitWidth + 2 * Theme.spacingXSmall + 2
                     height: 14
-                    radius: 7
+                    radius: height / 2
                     color: ref.head ? Theme.accentDim : (ref.tag ? Theme.purpleOrbital : Theme.surface2)
 
                     Text {
@@ -190,7 +190,7 @@ ListView {
                         anchors.centerIn: parent
                         text: refChip.ref.name
                         color: refChip.ref.head || refChip.ref.tag ? Theme.background0 : Theme.textSecondary
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                         font.bold: refChip.ref.head
                     }
                 }
@@ -205,7 +205,7 @@ ListView {
             anchors.rightMargin: Theme.spacingSmall
             text: commitRowItem.summary
             color: Theme.textPrimary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             elide: Text.ElideRight
         }
 
@@ -219,7 +219,7 @@ ListView {
             // resumo: so' a idade; o autor esta' no visualizador do commit.
             text: root.width < 420 ? commitRowItem.age : commitRowItem.author + ", " + commitRowItem.age
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         MouseArea {

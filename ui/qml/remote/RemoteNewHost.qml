@@ -37,7 +37,7 @@ Item {
         Text {
             text: qsTr("Configurar um servidor novo")
             color: Theme.textPrimary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Text {
@@ -46,7 +46,7 @@ Item {
             text: qsTr("Cole a linha que você já usaria no terminal. A IDE lê a linha — "
                        + "não a executa — e preenche o formulário abaixo para você conferir.")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Row {
@@ -84,7 +84,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: "· " + modelData
                 color: Theme.textMuted
-                font.pixelSize: 9
+                font.pixelSize: Theme.fontSizeMicro
             }
         }
 
@@ -94,7 +94,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.errorText
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

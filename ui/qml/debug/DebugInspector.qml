@@ -47,7 +47,7 @@ Item {
             anchors.margins: Theme.spacingSmall
             text: qsTr("Frames")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.bold: true
         }
 
@@ -87,7 +87,7 @@ Item {
                           : frameRow.name
                     color: root.currentFrameIndex === frameRow.index
                            ? Theme.textPrimary : Theme.textSecondary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     elide: Text.ElideRight
                 }
 
@@ -125,7 +125,7 @@ Item {
             anchors.margins: Theme.spacingSmall
             text: qsTr("Variáveis")
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             font.bold: true
         }
 
@@ -141,7 +141,7 @@ Item {
             text: root.notice
             wrapMode: Text.WordWrap
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         ListView {
@@ -183,7 +183,7 @@ Item {
                     text: variableRowDelegate.reference > 0
                           ? (variableRowDelegate.expanded ? "▾" : "▸") : ""
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Text {
@@ -201,7 +201,7 @@ Item {
                                 .arg(variableRowDelegate.value)
                     color: Theme.textSecondary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     elide: Text.ElideRight
                 }
 

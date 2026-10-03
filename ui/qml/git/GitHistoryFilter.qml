@@ -40,7 +40,7 @@ Item {
                 anchors.rightMargin: Theme.spacingSmall
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 clip: true
                 selectByMouse: true
                 text: root.filterText
@@ -51,7 +51,7 @@ Item {
                     visible: campo.text === ""
                     text: qsTr("Filtrar por mensagem, autor ou sha…")
                     color: Theme.textMuted
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
             }
         }
@@ -106,7 +106,7 @@ Item {
                         x: Theme.spacingSmall
                         text: qsTr("HEAD (o branch atual)")
                         color: root.logRef === "" ? Theme.accent : Theme.textSecondary
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                     }
 
                     MouseArea {
@@ -140,7 +140,7 @@ Item {
                             text: linhaRef.name + (linhaRef.current ? qsTr("  (atual)") : "")
                             color: root.logRef === linhaRef.name ? Theme.accent : Theme.textSecondary
                             font.family: Theme.monoFont
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fontSizeSmall
                             elide: Text.ElideMiddle
                         }
 

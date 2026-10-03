@@ -64,7 +64,7 @@ ListView {
                      ? " · " + symbolRow.modelData.symbol.source : "")
             color: Theme.textMuted
             font.family: Theme.monoFont
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSizeMicro
             elide: Text.ElideMiddle
         }
 
@@ -84,6 +84,6 @@ ListView {
         text: symbolList.symbols && symbolList.symbols.indexState !== "" && symbolList.symbols.indexState !== "ready"
               ? qsTr("o índice ainda está lendo o projeto") : qsTr("nenhum símbolo com esse nome")
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 }

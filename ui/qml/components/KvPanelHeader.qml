@@ -46,7 +46,7 @@ Item {
             visible: root.subtitle !== ""
             text: root.subtitle
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             elide: Text.ElideRight
         }
     }

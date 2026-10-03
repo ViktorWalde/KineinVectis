@@ -92,7 +92,7 @@ Rectangle {
                     selectionColor: Theme.accentDim
                     selectedTextColor: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                     clip: true
                     selectByMouse: true
                     onTextEdited: root.queryEdited(text)
@@ -120,7 +120,7 @@ Rectangle {
                         text: qsTr("Localizar")
                         color: Theme.textDisabled
                         font.family: Theme.monoFont
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                     }
                 }
             }
@@ -194,7 +194,7 @@ Rectangle {
                     selectionColor: Theme.accentDim
                     selectedTextColor: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                     clip: true
                     selectByMouse: true
                     onTextEdited: root.replacementEdited(text)
@@ -207,7 +207,7 @@ Rectangle {
                         text: qsTr("Substituir por")
                         color: Theme.textDisabled
                         font.family: Theme.monoFont
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeBody
                     }
                 }
             }
@@ -237,7 +237,7 @@ Rectangle {
             visible: root.statusText !== ""
             text: root.statusText
             color: root.invalidRegex ? Theme.errorSoft : Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

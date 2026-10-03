@@ -23,7 +23,7 @@ Item {
         anchors.left: parent.left
         text: qsTr("Instalar ferramentas")
         color: Theme.textPrimary
-        font.pixelSize: 12
+        font.pixelSize: Theme.fontSizeBody
         font.weight: Font.DemiBold
     }
 
@@ -41,7 +41,7 @@ Item {
                      + "sozinha.").arg(root.distroName)
               : qsTr("Distribuição não reconhecida — abaixo ficam os sites oficiais.")
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     Flickable {
@@ -87,7 +87,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: root.errorText
                 color: Theme.errorSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

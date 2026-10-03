@@ -65,7 +65,7 @@ Item {
             anchors.margins: Theme.spacingMedium
             text: qsTr("Configurações")
             color: Theme.textPrimary
-            font.pixelSize: 14
+            font.pixelSize: Theme.fontSizeLarge
             font.bold: true
         }
 
@@ -99,13 +99,13 @@ Item {
                     Text {
                         text: qsTr("Tamanho da fonte do editor")
                         color: Theme.textPrimary
-                        font.pixelSize: 13
+                        font.pixelSize: Theme.fontSizeMedium
                     }
 
                     Text {
                         text: qsTr("Aplica na hora ao editor")
                         color: Theme.textMuted
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSizeCaption
                     }
                 }
 
@@ -127,7 +127,7 @@ Item {
                             anchors.centerIn: parent
                             text: "−"
                             color: Theme.textPrimary
-                            font.pixelSize: 14
+                            font.pixelSize: Theme.fontSizeLarge
                         }
 
                         MouseArea {
@@ -153,7 +153,7 @@ Item {
                         text: root.editorFontSize
                         color: Theme.textPrimary
                         font.family: Theme.monoFont
-                        font.pixelSize: 14
+                        font.pixelSize: Theme.fontSizeLarge
                     }
 
                     Rectangle {
@@ -168,7 +168,7 @@ Item {
                             anchors.centerIn: parent
                             text: "+"
                             color: Theme.textPrimary
-                            font.pixelSize: 14
+                            font.pixelSize: Theme.fontSizeLarge
                         }
 
                         MouseArea {
@@ -225,14 +225,14 @@ Item {
                 Text {
                     text: qsTr("Perfil de rigor")
                     color: Theme.textPrimary
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.fontSizeMedium
                 }
 
                 Text {
                     width: parent.width
                     text: qsTr("Regula clippy e warnings do SEU projeto (não afeta o Kinein)")
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                     wrapMode: Text.WordWrap
                 }
 
@@ -265,7 +265,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: segment.modelData.label
                                 color: segment.selected ? Theme.background0 : Theme.textPrimary
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fontSizeSmall
                                 font.bold: segment.selected
                             }
 
@@ -290,7 +290,7 @@ Item {
                 width: parent.width
                 text: qsTr("As mudanças valem para todos os projetos (global).")
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WordWrap
             }
         }

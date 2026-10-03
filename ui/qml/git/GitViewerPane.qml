@@ -79,7 +79,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.tabTitle
                 color: Theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideMiddle
             }
 

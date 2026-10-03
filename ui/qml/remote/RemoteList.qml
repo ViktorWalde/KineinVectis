@@ -20,7 +20,7 @@ Item {
         anchors.left: parent.left
         text: qsTr("Alvos")
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     ListView {
@@ -59,7 +59,7 @@ Item {
                 Text {
                     text: linha.modelData.name
                     color: Theme.textPrimary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     elide: Text.ElideRight
                     width: parent.width
                 }
@@ -70,7 +70,7 @@ Item {
                           + (linha.modelData.port ? ":" + linha.modelData.port : "")
                     color: Theme.textMuted
                     font.family: Theme.monoFont
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                     elide: Text.ElideMiddle
                     width: parent.width
                 }
@@ -95,7 +95,7 @@ Item {
         wrapMode: Text.WordWrap
         text: qsTr("Nenhum alvo salvo.\nComece em Configurar.")
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSizeCaption
     }
 
     KvButton {

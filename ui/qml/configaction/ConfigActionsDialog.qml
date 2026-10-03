@@ -70,7 +70,7 @@ Item {
             anchors.margins: Theme.spacingMedium
             text: qsTr("Ambiente do projeto")
             color: Theme.textPrimary
-            font.pixelSize: 14
+            font.pixelSize: Theme.fontSizeLarge
             font.bold: true
         }
 
@@ -84,7 +84,7 @@ Item {
                   ? qsTr("Escopo: %1").arg(root.controller.activeBuildSystems.join(" + "))
                   : qsTr("Nenhum build system detectado")
             color: Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Rectangle {
@@ -104,7 +104,7 @@ Item {
                 anchors.centerIn: parent
                 text: "✕"
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             MouseArea {
@@ -179,7 +179,7 @@ Item {
                 color: Theme.textPrimary
                 selectionColor: Theme.accentDim
                 selectedTextColor: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 onTextChanged: root.controller.searchQuery = text
@@ -192,7 +192,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Buscar ação...")
                 color: Theme.textMuted
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 visible: searchInput.text === ""
             }
         }
@@ -260,7 +260,7 @@ Item {
             text: root.controller.errorText !== "" ? root.controller.errorText
                                                    : root.controller.statusText
             color: root.controller.errorText !== "" ? Theme.errorSoft : Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             elide: Text.ElideRight
         }
     }

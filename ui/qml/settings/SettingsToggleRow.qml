@@ -21,7 +21,7 @@ Row {
         Text {
             text: root.label
             color: Theme.textPrimary
-            font.pixelSize: 13
+            font.pixelSize: Theme.fontSizeMedium
         }
 
         Text {
@@ -29,7 +29,7 @@ Row {
             visible: root.hint !== ""
             text: root.hint
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             wrapMode: Text.WordWrap
         }
     }
@@ -40,7 +40,7 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         width: 40
         height: 22
-        radius: 11
+        radius: height / 2
         color: root.checked ? Theme.accent : Theme.surface1
         border.color: root.checked ? Theme.accent : Theme.borderStrong
         border.width: 1
@@ -48,7 +48,7 @@ Row {
         Rectangle {
             width: 16
             height: 16
-            radius: 8
+            radius: height / 2
             anchors.verticalCenter: parent.verticalCenter
             x: root.checked ? parent.width - width - 3 : 3
             color: root.checked ? Theme.background0 : Theme.textSecondary

@@ -113,7 +113,7 @@ Item {
                     text: debugControl.modelData.label
                     color: debugControl.modelData.key === "stop"
                            ? Theme.errorSoft : Theme.textPrimary
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
 
                 MouseArea {
@@ -190,7 +190,7 @@ Item {
             text: qsTr("Clique na gutter para marcar breakpoints e use o"
                        + " botão Debug na barra superior (Ctrl+Alt+D).")
             color: Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         delegate: Text {
@@ -203,7 +203,7 @@ Item {
             text: line
             color: panel.lineColor(debugLineDelegate.kind)
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             wrapMode: Text.WrapAnywhere
         }
     }

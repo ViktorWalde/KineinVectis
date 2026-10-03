@@ -25,7 +25,7 @@ Item {
         Text {
             text: qsTr("Projeto")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
 
@@ -41,7 +41,7 @@ Item {
                 text: "● " + root.controller.frameworkSummary(linhaFramework.modelData)
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideMiddle
             }
         }
@@ -53,7 +53,7 @@ Item {
             text: root.controller && root.controller.projectBusy ? qsTr("lendo o projeto…")
                   : qsTr("nenhum framework de embarcado reconhecido (ESP-IDF, Zephyr, pico-sdk, PlatformIO, STM32Cube, Rust bare metal, MicroPython, Yocto, Buildroot)")
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         // O alvo: chip, familia, motores — e a evidencia de cada deducao
@@ -65,7 +65,7 @@ Item {
             text: root.controller ? qsTr("alvo: %1").arg(root.controller.targetSummary(root.controller.projectTarget)) : ""
             color: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Text {
@@ -75,7 +75,7 @@ Item {
             text: root.controller ? root.controller.artifactsSummary(root.controller.projectArtifacts) : ""
             color: Theme.textSecondary
             font.family: Theme.monoFont
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Repeater {
@@ -91,7 +91,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: "  ↳ " + linhaEvidencia.modelData
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -112,7 +112,7 @@ Item {
                          ? " · " + linhaSdk.modelData.path
                          : (linhaSdk.modelData.hint !== undefined ? " — " + linhaSdk.modelData.hint : ""))
                 color: linhaSdk.modelData.found ? Theme.textSecondary : Theme.warningSoft
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
 
@@ -129,7 +129,7 @@ Item {
                 visible: linhaDica.modelData.indexOf("falta ") !== 0
                 text: linhaDica.modelData
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
         }
     }

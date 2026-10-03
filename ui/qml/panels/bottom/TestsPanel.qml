@@ -53,7 +53,7 @@ Item {
             visible: panel.summary !== ""
             text: panel.summary
             color: Theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             font.bold: true
         }
     }
@@ -89,7 +89,7 @@ Item {
             visible: lista.count === 0 && !panel.running
             text: qsTr("Nenhum teste. Listar testes mostra a árvore; Testes (Ctrl+Shift+F9) roda tudo.")
             color: Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         delegate: Item {
@@ -120,7 +120,7 @@ Item {
                       ? linha.model.file + "  " + linha.model.name : linha.model.name
                 color: linha.model.status === "failed" ? Theme.textPrimary : Theme.textSecondary
                 font.family: Theme.monoFont
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideMiddle
             }
 
@@ -185,7 +185,7 @@ Item {
             text: line
             color: Theme.textSecondary
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             wrapMode: Text.NoWrap
             elide: Text.ElideRight
         }

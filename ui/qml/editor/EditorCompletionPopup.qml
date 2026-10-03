@@ -56,7 +56,7 @@ Rectangle {
                     width: 52
                     text: completionDelegate.kind
                     color: Theme.accent
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fontSizeMicro
                     elide: Text.ElideRight
                 }
 
@@ -65,7 +65,7 @@ Rectangle {
                     text: completionDelegate.label
                     color: Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
 
                 Text {
@@ -73,7 +73,7 @@ Rectangle {
                     width: parent.width - x
                     text: completionDelegate.detail
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                     elide: Text.ElideRight
                 }
             }

@@ -57,7 +57,7 @@ Rectangle {
             width: parent.width
             text: qsTr("Os projetos abertos com sucesso aparecerão aqui.")
             color: Theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             wrapMode: Text.WordWrap
         }
 
@@ -110,7 +110,7 @@ Rectangle {
                                  ? "" : qsTr(" — caminho ausente"))
                         color: workspaceRow.modelData.available
                                ? Theme.textPrimary : Theme.warningSoft
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontSizeSmall
                         font.bold: workspaceRow.modelData.pinned
                         elide: Text.ElideRight
                     }
@@ -119,7 +119,7 @@ Rectangle {
                         width: parent.width
                         text: workspaceRow.modelData.root
                         color: Theme.textMuted
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                         elide: Text.ElideMiddle
                     }
                 }
@@ -133,7 +133,7 @@ Rectangle {
                     visible: workspaceRow.highlighted && workspaceRow.modelData.available
                     text: qsTr("Enter abre")
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 KvButton {
@@ -188,7 +188,7 @@ Rectangle {
                       : qsTr("%1 recentes sem caminho foram ocultados")
                         .arg(root.controller.hiddenMissingCount)
                 color: Theme.textMuted
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
             }
 
             KvButton {
@@ -204,7 +204,7 @@ Rectangle {
             width: parent.width
             text: root.controller.errorText
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             elide: Text.ElideRight
         }
     }

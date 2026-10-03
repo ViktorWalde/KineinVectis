@@ -56,7 +56,7 @@ Rectangle {
             visible: root.width >= 260
             text: qsTr("Git")
             color: Theme.textPrimary
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSizeBody
             font.weight: Font.DemiBold
         }
 
@@ -154,7 +154,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: gitActionChip.modelData.label
                     color: gitActionChip.modelData.action === "branch" ? Theme.accent : Theme.textSecondary
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                     font.family: gitActionChip.modelData.action === "branch" ? Theme.monoFont : Theme.uiFont
                 }
 

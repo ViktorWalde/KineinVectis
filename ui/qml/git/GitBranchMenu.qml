@@ -64,7 +64,7 @@ Rectangle {
                     text: branchRow.name
                     color: branchRow.current ? Theme.accent : Theme.textPrimary
                     font.family: Theme.monoFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                 }
             }
 
@@ -109,7 +109,7 @@ Rectangle {
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 clip: true
                 onAccepted: root.branchCreateRequested(text)
 
@@ -118,7 +118,7 @@ Rectangle {
                     visible: newBranchInput.text === ""
                     text: qsTr("nova branch")
                     color: Theme.textMuted
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fontSizeCaption
                 }
             }
         }
@@ -137,7 +137,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: qsTr("Criar")
                 color: Theme.background0
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 font.bold: true
             }
 

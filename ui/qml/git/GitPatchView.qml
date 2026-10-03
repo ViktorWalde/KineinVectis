@@ -30,7 +30,7 @@ ListView {
         visible: view.patch === ""
         text: view.loading ? qsTr("Carregando…") : view.emptyText
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     delegate: Rectangle {
@@ -54,7 +54,7 @@ ListView {
             text: linha.modelData === "" ? " " : linha.modelData
             color: view.colorFor(linha.kind)
             font.family: Theme.monoFont
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontSizeSmall
             wrapMode: Text.WrapAnywhere
         }
     }

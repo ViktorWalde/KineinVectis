@@ -19,7 +19,7 @@ Item {
         wrapMode: Text.WordWrap
         text: qsTr("Clique numa mudança para ver o diff, ou num commit para ver o que ele mudou.")
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizeSmall
     }
 
     Column {
@@ -41,7 +41,7 @@ Item {
                 text: root.inspector ? root.inspector.shortSha : ""
                 color: Theme.accent
                 font.family: Theme.monoFont
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             Text {
@@ -49,7 +49,7 @@ Item {
                 width: parent.width - x
                 text: root.inspector ? root.inspector.summary : ""
                 color: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: Font.DemiBold
                 elide: Text.ElideMiddle
             }
@@ -60,7 +60,7 @@ Item {
             visible: root.inspector && root.inspector.isCommit
             text: root.inspector ? root.inspector.author + " · " + root.inspector.age : ""
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Flow {
@@ -80,7 +80,7 @@ Item {
 
                     width: chipLabel.implicitWidth + 2 * Theme.spacingSmall
                     height: 16
-                    radius: 8
+                    radius: height / 2
                     color: ref.head ? Theme.accentDim : (ref.tag ? Theme.purpleOrbital : Theme.surface2)
                     opacity: 0.9
 
@@ -90,7 +90,7 @@ Item {
                         anchors.centerIn: parent
                         text: chip.ref.name
                         color: chip.ref.head || chip.ref.tag ? Theme.background0 : Theme.textSecondary
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fontSizeMicro
                         font.bold: chip.ref.head
                     }
                 }
