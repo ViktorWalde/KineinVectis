@@ -19,7 +19,7 @@ Item {
                               : error ? Theme.errorSoft
                               : warning ? Theme.warningSoft
                               : success ? Theme.successSoft
-                              : active ? Theme.accent : Theme.textSecondary
+                              : active ? Theme.accent : Theme.iconDefault
     readonly property url assetSource: {
         if (root.name === "tree-folder-closed") {
             return "qrc:/KineinVectis/assets/icons/tree/folder-closed.svg";
@@ -61,7 +61,9 @@ Item {
             context.scale(width / 24, height / 24);
             context.strokeStyle = root.iconColor;
             context.fillStyle = root.iconColor;
-            context.lineWidth = 1.75;
+            // 2.0 no grid de 24 (era 1.75): a 20 px o traco tinha ~1,4 px e
+            // sumia sobre a moldura cinza (0.3.9).
+            context.lineWidth = 2.0;
             context.lineCap = "round";
             context.lineJoin = "round";
             context.beginPath();

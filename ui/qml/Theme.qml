@@ -24,8 +24,15 @@ QtObject {
     readonly property color surfaceSelected: "#33353b"
     readonly property color borderSoft: "#2b2d30"
     readonly property color borderStrong: "#3c3f44"
-    readonly property color textPrimary: "#dfe1e5"
-    readonly property color textSecondary: "#b4b8bf"
+    // Texto confortavel (0.3.9, pedido do autor: "branco muito puro"): 10,7:1
+    // sobre a area, 7,3:1 o secundario (WCAG AAA); o fraco fica em 4,6:1.
+    readonly property color textPrimary: "#c8cbd0"
+    readonly property color textSecondary: "#a4a8af"
+    // Icones de traco (0.3.9, retorno do autor: "muito fracos"): em repouso um
+    // pouco mais claros que o texto secundario; no hover, quase o texto
+    // principal claro. O ativo continua ambar.
+    readonly property color iconDefault: "#b9bdc4"
+    readonly property color iconHover: "#e2e4e8"
     readonly property color textMuted: "#80848b"
     readonly property color textDisabled: "#5a5d63"
     readonly property color accent: "#ffb000"

@@ -189,6 +189,10 @@ Rectangle {
     TopHeaderBar {
         id: headerBar
 
+        // ACIMA da AppMenuBar (z 100): na mesma linha, a area de arrastar a
+        // janela dela cobria os widgets e nenhum recebia clique (0.3.9). O
+        // vazio desta barra nao trata mouse, entao o arrasto continua passando.
+        z: 101
         x: appMenuBar.menuEndX + Theme.spacingSmall
         y: 0
         width: Math.max(0, appMenuBar.controlsX - Theme.spacingSmall - x)

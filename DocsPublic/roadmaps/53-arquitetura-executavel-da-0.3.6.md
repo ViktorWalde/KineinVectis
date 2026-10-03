@@ -621,7 +621,10 @@ aviso no AppImage e as telas nas três larguras.
 num lançamento só**, anunciado como uma versão única. As etapas continuam
 existindo como ordem de trabalho e de registro (40.7), não como pacotes
 publicados. **Em aberto:** publicar esse lançamento junto com as notas da 0.4,
-separando a 0.4.5 a partir daí — o autor ainda decide.
+separando a 0.4.5 a partir daí — o autor ainda decide. Em 2026-10-02 (noite)
+o autor disse que está **pensando em lançar tudo isso junto com a 0.4** —
+intenção registrada, não decisão; a ordem de trabalho segue: os retornos
+visuais dele, o resto da 0.3.9 (53 §5.8) e então a 0.4 (roadmap 52).
 
 ```text
 0.3.6  LIMPEZA E BASE

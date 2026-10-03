@@ -81,8 +81,8 @@ Rectangle {
             disabled: !railButton.enabled
             iconColor: railButton.active ? Theme.accent
                                          : (railButtonArea.containsMouse
-                                            ? Theme.textPrimary
-                                            : Theme.textSecondary)
+                                            ? Theme.iconHover
+                                            : Theme.iconDefault)
         }
 
         Text {

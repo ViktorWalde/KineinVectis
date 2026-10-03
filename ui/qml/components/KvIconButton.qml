@@ -55,8 +55,8 @@ Rectangle {
                                  : (root.danger ? Theme.errorSoft
                                     : (root.active ? Theme.accent
                                        : (buttonArea.containsMouse
-                                          ? Theme.textPrimary
-                                          : Theme.textSecondary)))
+                                          ? Theme.iconHover
+                                          : Theme.iconDefault)))
     }
 
     MouseArea {
