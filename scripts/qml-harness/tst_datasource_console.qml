@@ -56,6 +56,16 @@ Item {
         failures += check(consoles.statementAt("select 1;\n", 10, 10, 10, false) === "select 1",
                           "linha vazia depois do unico ;");
         failures += check(consoles.statementAt("-- so comentario\n", 5, 5, 5, false) === "", "nada a executar");
+        // A LINHA EM BRANCO separa (achado na tela real): o select sem `;` nao
+        // gruda no DELETE de baixo.
+        const loose = "select * from t where id > 1 -- fim\n\n\nDELETE FROM clientes;";
+        failures += check(consoles.statementAt(loose, loose.length, loose.length, loose.length, false) === "DELETE FROM clientes",
+                          "linha em branco separa: " + JSON.stringify(consoles.statementAt(loose, loose.length, loose.length, loose.length, false)));
+        failures += check(consoles.statementAt(loose, 5, 5, 5, false) === "select * from t where id > 1 -- fim",
+                          "o de cima continua o de cima");
+        const blankLine = loose.indexOf("\n\n") + 1;
+        failures += check(consoles.statementAt(loose, blankLine, blankLine, blankLine, false).indexOf("select") === 0,
+                          "cursor na linha em branco: a instrucao de antes");
         const sel = text.indexOf("select 3");
         failures += check(consoles.statementAt(text, 0, sel, sel + 8, false) === "select 3", "a selecao vence");
         failures += check(consoles.statementAt("// mongo\nleituras {}\npedidos {\"a\": 1}", 12, 12, 12, true)

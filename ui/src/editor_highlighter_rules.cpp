@@ -52,6 +52,14 @@ QString EditorHighlighter::languageForPath(const QString& filePath)
     if (suffix == QStringLiteral("sh")) {
         return QStringLiteral("shell");
     }
+    // O console do Banco (.kinein/consoles/, 2026-10-03) e qualquer .sql do
+    // projeto; o console do MongoDB e' `<colecao> <filtro JSON>` por linha.
+    if (suffix == QStringLiteral("sql")) {
+        return QStringLiteral("sql");
+    }
+    if (suffix == QStringLiteral("mongo")) {
+        return QStringLiteral("mongo");
+    }
     return QStringLiteral("plain");
 }
 
@@ -304,7 +312,7 @@ void EditorHighlighter::rebuildRules()
         addRule(singleQuoteString(), stringFormat);
         addRule(QRegularExpression(QStringLiteral("#[^\n]*")), commentFormat);
     }
-    else if (m_language == QStringLiteral("json")) {
+    else if (m_language == QStringLiteral("json") || m_language == QStringLiteral("mongo")) {
         addRule(QRegularExpression(QStringLiteral("\"(?:\\\\.|[^\"\\\\])*\"(?=\\s*:)")),
                 keywordFormat);
         addRule(numberPattern(), numberFormat);
@@ -312,6 +320,91 @@ void EditorHighlighter::rebuildRules()
         addRule(keywordPattern(
                     {QStringLiteral("true"), QStringLiteral("false"), QStringLiteral("null")}),
                 numberFormat);
+        if (m_language == QStringLiteral("mongo")) {
+            // A colecao no comeco da linha e o comentario do console.
+            addRule(QRegularExpression(QStringLiteral("^\\s*[\\w.-]+")), typeFormat);
+            addRule(QRegularExpression(QStringLiteral("//[^\n]*")), commentFormat);
+        }
+    }
+    else if (m_language == QStringLiteral("sql")) {
+        // SQL nao diferencia maiuscula: `select` e `SELECT` sao a mesma
+        // palavra. A funcao vem ANTES da palavra-chave para `IN (` e
+        // `VALUES (` continuarem palavra-chave.
+        const auto anyCase = [](const QStringList& words) {
+            return QRegularExpression(QStringLiteral("\\b(?:%1)\\b").arg(words.join(u'|')),
+                                      QRegularExpression::CaseInsensitiveOption);
+        };
+        addRule(QRegularExpression(QStringLiteral("\\b[A-Za-z_]\\w*(?=\\s*\\()")), stdlibFormat);
+        addRule(anyCase({QStringLiteral("select"),     QStringLiteral("from"),
+                         QStringLiteral("where"),      QStringLiteral("and"),
+                         QStringLiteral("or"),         QStringLiteral("not"),
+                         QStringLiteral("null"),       QStringLiteral("is"),
+                         QStringLiteral("in"),         QStringLiteral("like"),
+                         QStringLiteral("ilike"),      QStringLiteral("between"),
+                         QStringLiteral("exists"),     QStringLiteral("as"),
+                         QStringLiteral("on"),         QStringLiteral("join"),
+                         QStringLiteral("left"),       QStringLiteral("right"),
+                         QStringLiteral("inner"),      QStringLiteral("outer"),
+                         QStringLiteral("full"),       QStringLiteral("cross"),
+                         QStringLiteral("using"),      QStringLiteral("group"),
+                         QStringLiteral("by"),         QStringLiteral("order"),
+                         QStringLiteral("having"),     QStringLiteral("limit"),
+                         QStringLiteral("offset"),     QStringLiteral("union"),
+                         QStringLiteral("all"),        QStringLiteral("distinct"),
+                         QStringLiteral("intersect"),  QStringLiteral("except"),
+                         QStringLiteral("insert"),     QStringLiteral("into"),
+                         QStringLiteral("values"),     QStringLiteral("update"),
+                         QStringLiteral("set"),        QStringLiteral("delete"),
+                         QStringLiteral("returning"),  QStringLiteral("create"),
+                         QStringLiteral("alter"),      QStringLiteral("drop"),
+                         QStringLiteral("truncate"),   QStringLiteral("table"),
+                         QStringLiteral("view"),       QStringLiteral("index"),
+                         QStringLiteral("unique"),     QStringLiteral("primary"),
+                         QStringLiteral("key"),        QStringLiteral("foreign"),
+                         QStringLiteral("references"), QStringLiteral("constraint"),
+                         QStringLiteral("default"),    QStringLiteral("check"),
+                         QStringLiteral("cascade"),    QStringLiteral("if"),
+                         QStringLiteral("schema"),     QStringLiteral("database"),
+                         QStringLiteral("column"),     QStringLiteral("add"),
+                         QStringLiteral("rename"),     QStringLiteral("to"),
+                         QStringLiteral("with"),       QStringLiteral("recursive"),
+                         QStringLiteral("case"),       QStringLiteral("when"),
+                         QStringLiteral("then"),       QStringLiteral("else"),
+                         QStringLiteral("end"),        QStringLiteral("begin"),
+                         QStringLiteral("commit"),     QStringLiteral("rollback"),
+                         QStringLiteral("explain"),    QStringLiteral("analyze"),
+                         QStringLiteral("asc"),        QStringLiteral("desc"),
+                         QStringLiteral("true"),       QStringLiteral("false"),
+                         QStringLiteral("pragma"),     QStringLiteral("conflict"),
+                         QStringLiteral("do"),         QStringLiteral("nothing"),
+                         QStringLiteral("over"),       QStringLiteral("partition"),
+                         QStringLiteral("show"),       QStringLiteral("grant"),
+                         QStringLiteral("revoke"),     QStringLiteral("trigger")}),
+                keywordFormat);
+        addRule(anyCase({QStringLiteral("integer"),     QStringLiteral("int"),
+                         QStringLiteral("bigint"),      QStringLiteral("smallint"),
+                         QStringLiteral("serial"),      QStringLiteral("bigserial"),
+                         QStringLiteral("real"),        QStringLiteral("double"),
+                         QStringLiteral("precision"),   QStringLiteral("numeric"),
+                         QStringLiteral("decimal"),     QStringLiteral("float"),
+                         QStringLiteral("text"),        QStringLiteral("varchar"),
+                         QStringLiteral("char"),        QStringLiteral("boolean"),
+                         QStringLiteral("bool"),        QStringLiteral("date"),
+                         QStringLiteral("time"),        QStringLiteral("timestamp"),
+                         QStringLiteral("timestamptz"), QStringLiteral("interval"),
+                         QStringLiteral("uuid"),        QStringLiteral("json"),
+                         QStringLiteral("jsonb"),       QStringLiteral("blob"),
+                         QStringLiteral("bytea")}),
+                typeFormat);
+        addRule(numberPattern(), numberFormat);
+        // "identificador entre aspas duplas" (nome de tabela/coluna), 'texto'.
+        addRule(doubleQuoteString(), metaFormat);
+        addRule(singleQuoteString(), stringFormat);
+        addRule(QRegularExpression(QStringLiteral("--[^\n]*")), commentFormat);
+        m_blockStart = QRegularExpression(QStringLiteral("/\\*"));
+        m_blockEnd = QRegularExpression(QStringLiteral("\\*/"));
+        m_blockFormat = commentFormat;
+        m_hasBlockSpans = true;
     }
     else if (m_language == QStringLiteral("shell")) {
         addRule(keywordPattern(

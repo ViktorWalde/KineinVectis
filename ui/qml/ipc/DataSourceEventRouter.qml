@@ -42,6 +42,10 @@ Item {
             root.dataSourceController.handleQueried(outcome);
         }
 
+        function onDataSourceImpactMeasured(impact) {
+            root.dataSourceController.impact.handleMeasured(impact);
+        }
+
         function onDataSourceDiscovered(candidates, containerEngine, hint) {
             root.dataSourceController.discovery.handleDiscovered(candidates, containerEngine, hint);
         }

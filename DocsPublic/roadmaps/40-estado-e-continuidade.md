@@ -8,7 +8,7 @@
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.149.0`,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.150.0`,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
 >   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.204.
 >   A arquitetura da casca para quem chega, com diagramas, está em
@@ -35,6 +35,10 @@
 >     abrem no slot do trilho em que o ícone está, e há um slot à direita.
 >     Os Símbolos escondem o slot da direita enquanto estão abertos, e o
 >     Ctrl+F6 passa pelos dois slots.
+>   - **Segurança do SQL** (§7.209, protocolo `0.150.0`): antes de uma
+>     escrita, o painel mostra o comando e a consequência contada. No que é
+>     destrutivo, só roda depois de digitar o nome do alvo. O console tem
+>     cores e separa instruções por linha em branco (§7.208).
 >   - **Em seguida:** os Containers no mesmo modelo, com inspiração no Docker
 >     Desktop. O Grafana dentro da IDE (uma visualização web local, opcional)
 >     espera o autor aceitar o tamanho que o QtWebEngine acrescenta.
@@ -206,9 +210,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.149.0 (2026-10-03; o historico das versoes e' o arquitetura/03)
-metodos     175 IPC roteados, 57 eventos (scripts/verificar-fiacao-ipc.sh,
-            2026-10-03; o 175o e' datasource.console); 109 harnesses QML em
+protocolo   0.150.0 (2026-10-03; o historico das versoes e' o arquitetura/03)
+metodos     176 IPC roteados, 58 eventos (scripts/verificar-fiacao-ipc.sh,
+            2026-10-03; os mais novos: datasource.console e datasource.impact); 110 harnesses QML em
             scripts/qml-harness (ls tst_*.qml, 2026-10-03)
 testes      874 Rust aprovados; 1 C++; 67 harnesses QML (medicao de 2026-09-24, §7.99)
 historico   168 IPC roteados, 56 eventos em 2026-09-24 (remote.parseCommand em 0.134.0;

@@ -1,5 +1,25 @@
 # 03 — Protocolo IPC
 
+> **0.150.0 (2026-10-03) — a escrita mostra a consequência antes de rodar.**
+> `datasource.impact { name, password?, sql } -> { jobId }` e
+> `event.datasource.impact { jobId, name, sql, severity, statements }`.
+> O core divide o texto em instruções (respeitando strings, comentários e
+> `$$`) e classifica cada uma:
+>
+> - **`destructive`:** `DELETE`/`UPDATE` sem `WHERE` de topo, `TRUNCATE`,
+>   `DROP TABLE/SCHEMA/DATABASE`, `ALTER … DROP COLUMN` e outro `DROP`.
+> - **`write`:** o resto que escreve.
+>
+> O job roda **só leituras** (`SELECT count(*) …`, pelo caminho read-only)
+> para dar `rows` (e `totalRows`, num `DELETE`/`UPDATE` filtrado). Um
+> `WHERE` que pega todas as linhas de uma tabela não vazia é promovido a
+> `destructive`. Um `WHERE` dentro de subconsulta não conta como filtro.
+> Uma contagem recusada vira `note`. A recusa `WRITE_CONFIRMATION_REQUIRED`
+> do `datasource.query` passou a trazer `severity` em `details`. A UI mostra
+> o comando e a consequência, e na destrutiva só executa depois que o autor
+> digita o nome do alvo. Pedido do autor, porque "já ocorreu e ocorre do
+> desenvolvedor apagar o banco de dados inteiro sem ter essa intenção".
+
 > **0.149.0 (2026-10-03) — o console SQL mora no editor.**
 > `datasource.console { name } -> { path, created }` garante
 > `.kinein/consoles/<nome>.sql` (`.mongo` para MongoDB) e devolve o caminho;
@@ -3150,7 +3170,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 175 métodos roteados — a lista inteira
+## Os 176 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3202,6 +3222,7 @@ datasource.console
 datasource.create
 datasource.destroy
 datasource.discover
+datasource.impact
 datasource.introspect
 datasource.list
 datasource.query
@@ -3380,7 +3401,13 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 50 eventos emitidos — a lista inteira
+## Os 58 eventos emitidos — a lista inteira
+
+> **2026-10-03:** a lista estava atrás do código — sete eventos entraram sem
+> chegar aqui (`coverage.finished`, `python.stubs`, `remote.deployed`,
+> `remote.directories`, `remote.probed`, `remote.synced`, `serial.files`).
+> Conferida contra o código (o comando está no `roadmaps/40` §1) e completada,
+> junto com `datasource.impact` (0.150.0).
 
 > **2026-09-17:** `event.lsp.log` (0.111.0) e `event.serial.identified`
 > (0.112.0) entraram; eram 48.
@@ -3401,6 +3428,7 @@ event.cmake.started
 
 event.datasource.created
 event.datasource.destroyed
+event.datasource.impact
 event.datasource.introspected
 event.datasource.queried
 event.datasource.tested
@@ -3414,6 +3442,7 @@ event.debug.stopped
 event.environment.finished
 event.environment.started
 event.container.finished
+event.coverage.finished
 
 event.environment.tool
 
@@ -3440,10 +3469,16 @@ event.lsp.status
 
 event.project.changed
 event.python.finished
+event.python.stubs
 event.quality.diagnostic
 event.quality.finished
 event.quality.output                <- so por format!
 event.quality.started               <- so por format!
+event.remote.deployed
+event.remote.directories
+event.remote.probed
+event.remote.synced
+event.serial.files
 
 event.serial.identified
 
@@ -4418,6 +4453,7 @@ datasource.list       {}                      -> { profiles: [DataSourceProfile]
 datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult
 datasource.test       { name, password? }     -> DataSourceTestAccepted   (job)
+datasource.impact    { name, password?, sql } -> aceite + job + event.datasource.impact  (0.150.0; so' leituras)
 datasource.introspect { name, password? }     -> aceite + job
 datasource.query      { name, password?, sql, maxRows?, confirmWrite? } -> aceite + job  (0.121.0)
 ```
@@ -4426,6 +4462,7 @@ datasource.query      { name, password?, sql, maxRows?, confirmWrite? } -> aceit
 
 ```text
 event.datasource.tested        { jobId, ok, message, ... }
+event.datasource.impact        { jobId, name, sql, severity, statements: [{ text, kind, targets, column?, filter?, severity, rows?, totalRows?, note? }] }  (0.150.0)
 event.datasource.introspected  { jobId, schemas | collections, ... }
 event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
                                  rowCount, affected?, truncated, elapsedMs, message?, secretRequired }

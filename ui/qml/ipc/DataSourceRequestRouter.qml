@@ -53,6 +53,16 @@ Item {
         }
     }
 
+    // O impacto de uma escrita (0.150.0) e' do filho `impact`: medir antes de
+    // pedir a confirmacao, com a senha da sessao.
+    Connections {
+        target: root.dataSourceController ? root.dataSourceController.impact : null
+
+        function onImpactRequested(name, sql) {
+            root.coreClient.dataSourceImpact(name, root.dataSourceController.sessionPassword, sql);
+        }
+    }
+
     // A descoberta e a criacao (0.124.0) sao do controller FILHO `discovery`
     // — ligar ao pai seria a Connections sem sinal que o gate binario-abre
     // passou a reprovar (40 §7.63).

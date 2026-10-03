@@ -2,16 +2,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Estado das FONTES DE DADOS (etapa 26 do roadmaps/35).
-//
-// Guarda o que o core respondeu e o que o autor esta' editando. NAO decide
-// nada: quem valida perfil, quem sabe de onde vem a senha e quem conversa com
-// o servidor e' o core.
-//
-// A SENHA VIVE AQUI E SO' AQUI, em `sessionPassword`, e some sozinha:
-//   - ao trocar de perfil selecionado;
-//   - ao fechar o painel;
-//   - ao trocar de workspace.
+// Estado das FONTES DE DADOS (etapa 26 do roadmaps/35): o que o core respondeu e
+// o que o autor edita. NAO decide nada: validar, a senha e o servidor sao do core.
+// A SENHA VIVE AQUI E SO' AQUI, em `sessionPassword`, e some sozinha ao
+// trocar de perfil, ao fechar o painel e ao trocar de projeto.
 // Ela nunca vai para o perfil (que e' o que o core persiste) e nunca aparece
 // no log do cliente, que redige por nome de campo. Ver `DocsPublic/seguranca/40`.
 //
@@ -78,10 +72,15 @@ Item {
 
     // Descoberta e criacao (0.124.0): filho com dono proprio; adocao volta aqui.
     readonly property alias discovery: discoveryController
-    // O console SQL no editor e o resultado embaixo (2026-10-03).
+    // O console SQL no editor (2026-10-03) e a confirmacao de escrita com o
+    // IMPACTO medido antes de rodar (0.150.0).
     readonly property DataSourceConsoleController consoles: DataSourceConsoleController {
         dataSourceController: root
         workspaceRoot: root.workspaceRoot
+    }
+    readonly property DataSourceImpactController impact: DataSourceImpactController {
+        dataSourceController: root
+        onRunConfirmed: (name, text) => root.runOn(name, text, true)
     }
 
     DataSourceDiscoveryController {
@@ -204,10 +203,8 @@ Item {
         clearVerdict();
     }
 
-    // Copia rasa com os campos que o protocolo aceita. Copiar campo a campo
-    // (e nao o objeto inteiro) garante que nada que o core mande a mais entre
-    // no `save` — o perfil tem `deny_unknown_fields`, e um campo extra seria
-    // recusado.
+    // Copia campo a campo: nada que o core mande a mais entra no `save` (o
+    // perfil tem `deny_unknown_fields`, e um campo extra seria recusado).
     function cloneProfile(source) {
         return {
             engine: source.engine || "postgres",
@@ -311,9 +308,8 @@ Item {
         }
     }
 
-    // `true` quando o perfil em edicao fala de DOCUMENTO (o painel e o host leem daqui).
-    readonly property bool documentEngine:
-        root.draft ? DataSourceKinds.isMongo(root.draft.engine) : false
+    // O perfil em edicao fala de DOCUMENTO (o painel e o host leem daqui).
+    readonly property bool documentEngine: root.draft ? DataSourceKinds.isMongo(root.draft.engine) : false
 
     function handleTested(name, ok, version, message, needsSecret) {
         testing = false;
@@ -362,6 +358,7 @@ Item {
             queryRows = outcome.rows || [];
             secretRequired = false;
             if (outcome.affected !== undefined && outcome.affected !== null) {
+                if (lastQuery !== null) lastQuery = Object.assign({}, lastQuery, { wrote: true });
                 queryStatus = qsTr("%1 linha(s) afetada(s) em %2 ms").arg(outcome.affected).arg(outcome.elapsedMs);
             } else {
                 queryStatus = qsTr("%1 linha(s)%2 em %3 ms").arg(outcome.rowCount)
@@ -370,6 +367,7 @@ Item {
         } else {
             queryColumns = [];
             queryRows = [];
+            if (lastQuery !== null) lastQuery = Object.assign({}, lastQuery, { failed: true });
             queryStatus = outcome.message || qsTr("a consulta falhou");
             secretRequired = outcome.secretRequired === true;
         }
@@ -381,6 +379,7 @@ Item {
                 || method === "datasource.destroy") {
             return;
         }
+        if (method === "datasource.impact") return impact.handleFailed(message);
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;
@@ -389,6 +388,7 @@ Item {
             if (code === "WRITE_CONFIRMATION_REQUIRED") {
                 writeConfirmationRequired = true;
                 queryStatus = message;
+                if (lastQuery !== null) impact.begin(lastQuery.name, lastQuery.sql);
             } else if (code === "SECRET_REQUIRED" && method === "datasource.query") {
                 secretRequired = true;
                 queryStatus = message;

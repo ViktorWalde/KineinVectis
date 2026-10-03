@@ -30,6 +30,10 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
             params.value(QStringLiteral("secretRequired")).toBool(false));
         return;
     }
+    if (method == QStringLiteral("event.datasource.impact")) {
+        emit dataSourceImpactMeasured(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.datasource.queried")) {
         // columns, rows (celulas em texto, null = NULL), affected, truncated,
         // elapsedMs, message e secretRequired viajam juntos: e' uma tabela.

@@ -784,12 +784,8 @@ crates/kinein-core/src/handlers/datasource_discover.rs	titulo	2
 crates/kinein-core/src/handlers/datasource_discover.rs	tudo	2
 crates/kinein-core/src/handlers/datasource_discover.rs	ultimas	7
 crates/kinein-core/src/handlers/datasource_query.rs	consulta	2
-crates/kinein-core/src/handlers/datasource_query.rs	escrita	4
 crates/kinein-core/src/handlers/datasource_query.rs	evento	5
-crates/kinein-core/src/handlers/datasource_query.rs	pedido	10
 crates/kinein-core/src/handlers/datasource_query.rs	resultado	4
-crates/kinein-core/src/handlers/datasource_query.rs	risco	2
-crates/kinein-core/src/handlers/datasource_query.rs	titulo	2
 crates/kinein-core/src/handlers/debug.rs	alvo	7
 crates/kinein-core/src/handlers/debug.rs	efetivo	2
 crates/kinein-core/src/handlers/debug.rs	medir	1

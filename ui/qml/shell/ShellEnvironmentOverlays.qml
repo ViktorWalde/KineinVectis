@@ -102,6 +102,24 @@ Item {
         onDismissRequested: root.dataSourceController.close()
     }
 
+    // A pergunta antes de uma escrita, com o impacto medido (0.150.0): por
+    // cima de tudo, inclusive do dialogo da conexao.
+    SqlImpactDialog {
+        anchors.fill: parent
+        visible: root.dataSourceController !== null && root.dataSourceController.impact.open
+        z: 100
+        impact: root.dataSourceController ? root.dataSourceController.impact : null
+        engineLabel: {
+            if (root.dataSourceController === null) return "";
+            const name = root.dataSourceController.impact.name;
+            const profile = root.dataSourceController.profiles.find(p => p.name === name);
+            return profile === undefined ? "" : DataSourceKinds.engineName(profile.engine);
+        }
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.dataSourceController.impact.cancel()
+    }
+
     // O passo de permissao (E2) vai para o TERMINAL DA IDE, visivel, pelo
     // mesmo caminho do painel de instalacao. Nada roda escondido.
     Connections {

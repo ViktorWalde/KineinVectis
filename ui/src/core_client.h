@@ -189,6 +189,10 @@ public:
     // e' o reconhecimento de que a instrucao escreve (o core recusa sem ele).
     Q_INVOKABLE void dataSourceQuery(const QString& name, const QString& password,
                                      const QString& sql, int maxRows, bool confirmWrite);
+    // O impacto de uma escrita ANTES de ela rodar (datasource.impact, 0.150.0):
+    // job de contagens so' de leitura; a resposta chega por evento.
+    Q_INVOKABLE void dataSourceImpact(const QString& name, const QString& password,
+                                      const QString& sql);
 
     // Observabilidade: o Grafana que observa este projeto. A licenca dele
     // (AGPL-3.0) decide a FORMA — a IDE CONVERSA, nunca embute.
@@ -407,6 +411,8 @@ signals:
                                    const QString& note);
     void dataSourceDestroyed(bool success, const QString& message, const QVariantList& profiles);
     void dataSourceQueried(const QVariantMap& outcome);
+    /// O impacto medido: `severity`, `sql` e cada instrucao com alvo e linhas.
+    void dataSourceImpactMeasured(const QVariantMap& impact);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.
     void dataSourceTested(const QString& name, bool ok, const QString& serverVersion,

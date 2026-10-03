@@ -25,6 +25,11 @@ Item {
     readonly property bool querying: root.controller !== null && root.controller.querying
     readonly property bool mustConfirm: root.controller !== null && root.controller.writeConfirmationRequired
                                         && root.lastQuery !== null
+    // A consulta falhou: a mensagem do motor ganha lugar proprio, quebrada em
+    // linhas e em vermelho. Na linha de status (uma linha so') ela quebrava o
+    // layout: a mensagem do SQLite traz `\n` e o elide nao corta texto com
+    // quebra (2026-10-03, achado na tela real).
+    readonly property bool failed: root.lastQuery !== null && root.lastQuery.failed === true && !root.querying
 
     Item {
         id: statusRow
@@ -52,8 +57,14 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: root.lastQuery === null ? qsTr("Dados")
                   : root.lastQuery.name + "  ·  " + (root.querying ? qsTr("executando…")
-                                                      : (root.controller ? root.controller.queryStatus : ""))
-            color: root.mustConfirm ? Theme.warningSoft : Theme.textSecondary
+                     : (root.failed ? qsTr("falhou")
+                        // A escrita espera o painel do impacto; fechado sem
+                        // executar, diz que NADA rodou (e nao "confirme").
+                        : (root.mustConfirm ? (root.controller.impact.open ? qsTr("aguardando a confirmação…")
+                                                                           : qsTr("cancelada — nada foi executado"))
+                           : (root.controller ? root.controller.queryStatus.replace(/\s+/g, " ") : ""))))
+            maximumLineCount: 1
+            color: root.failed ? Theme.errorSoft : (root.mustConfirm ? Theme.warningSoft : Theme.textSecondary)
             font.pixelSize: Theme.fontSizeCaption
             elide: Text.ElideRight
         }
@@ -71,26 +82,13 @@ Item {
         }
     }
 
-    KvButton {
-        id: confirmButton
-
-        anchors.top: statusRow.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        visible: root.mustConfirm
-        height: visible ? implicitHeight : 0
-        compact: true
-        danger: true
-        text: qsTr("Esta instrução escreve — executar mesmo assim")
-        enabled: !root.querying
-        onClicked: root.controller.runOn(root.lastQuery.name, root.lastQuery.sql, true)
-    }
-
+    // A escrita nao confirmada abre o painel do impacto (SqlImpactDialog):
+    // aqui fica so' o status, em ambar, enquanto ele pergunta.
     // A instrucao que gerou os dados, numa linha: o que se esta' vendo.
     Text {
         id: sqlLine
 
-        anchors.top: confirmButton.bottom
+        anchors.top: statusRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         visible: root.lastQuery !== null
@@ -105,17 +103,34 @@ Item {
         elide: Text.ElideRight
     }
 
+    // A mensagem do motor, inteira, no lugar da grade.
+    Text {
+        anchors.top: sqlLine.bottom
+        anchors.topMargin: Theme.spacingXSmall
+        anchors.left: parent.left
+        anchors.right: parent.right
+        visible: root.failed
+        wrapMode: Text.Wrap
+        text: root.controller ? root.controller.queryStatus : ""
+        color: Theme.errorSoft
+        font.family: Theme.monoFont
+        font.pixelSize: Theme.fontSizeCaption
+    }
+
     KvDataGrid {
         id: grid
 
+        visible: !root.failed
         clip: true
         anchors.top: sqlLine.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        maxHeight: Math.max(40, root.height - statusRow.height - confirmButton.height - sqlLine.height)
+        maxHeight: Math.max(40, root.height - statusRow.height - sqlLine.height)
         // O core manda o nome da coluna; a grade quer { key, label }.
         columns: root.controller ? root.controller.queryColumns.map(name => ({ key: name, label: name })) : []
         rows: root.controller ? root.controller.queryRows : []
-        emptyText: root.querying ? "" : qsTr("Sem linhas.")
+        // Uma escrita nao devolve linhas — ela as afeta (o status diz quantas).
+        emptyText: root.querying || root.mustConfirm ? ""
+                   : (root.lastQuery !== null && root.lastQuery.wrote === true ? qsTr("Instrução executada.") : qsTr("Sem linhas."))
     }
 }

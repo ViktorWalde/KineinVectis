@@ -149,6 +149,23 @@ no checkout, não em nenhum pacote publicado.
     o editor;
   - **a grade:** mostra os valores de verdade (antes, tudo vinha `null`) e o
     botão "ver dados" não pisca mais.
+- Protocolo `0.150.0` — **antes de escrever, a IDE mostra a consequência.**
+  Uma escrita no console abre um painel com o comando e o que acontece,
+  instrução por instrução, com as linhas contadas antes (a contagem é só
+  leitura: "Apaga TODAS as linhas de clientes: 2 linhas", "Remove a tabela
+  pedidos e 2 linhas dela"). O destrutivo, com a tabela inteira atingida,
+  só roda depois que você **digita o nome** do que vai sumir. Isso vale para
+  `DELETE`/`UPDATE` sem `WHERE` ou com um `WHERE` que pega tudo, `TRUNCATE`,
+  `DROP TABLE`/`SCHEMA`/`DATABASE` e coluna removida. Cancelar é o padrão.
+- **Cores no SQL** (e no console `.mongo`). No console, uma linha em branco
+  também separa instruções, então um `select` sem `;` não gruda no
+  `DELETE` de baixo.
+- **A grade dos dados**, revista:
+  - cada coluna na largura do texto, com a sobra para a última;
+  - arrastar a borda do cabeçalho redimensiona a coluna, e o clique duplo
+    volta ao natural;
+  - números alinhados à direita;
+  - o valor cortado aparece ao pairar.
 - **Janelas do lado do ícone.** Projeto, Git e Banco abrem do lado do trilho
   em que o ícone está, e há um slot novo à direita:
   - arraste o ícone para o outro trilho e a janela vai junto, com tudo o que

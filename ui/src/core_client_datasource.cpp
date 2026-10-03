@@ -110,6 +110,15 @@ void CoreClient::dataSourceQuery(const QString& name, const QString& password, c
     sendRequest(QStringLiteral("datasource.query"), params);
 }
 
+void CoreClient::dataSourceImpact(const QString& name, const QString& password, const QString& sql)
+{
+    QJsonObject params{{QStringLiteral("name"), name}, {QStringLiteral("sql"), sql}};
+    if (!password.isEmpty()) {
+        params.insert(QStringLiteral("password"), password);
+    }
+    sendRequest(QStringLiteral("datasource.impact"), params);
+}
+
 bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("setup.list")) {
@@ -160,6 +169,10 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
     {
         // O teste responde com o JOB; o veredito chega depois, por evento.
         emit dataSourceTestAccepted(result.value(QStringLiteral("jobId")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("datasource.impact")) {
+        // So' o aceite do job: o impacto chega em event.datasource.impact.
         return true;
     }
     return dispatchGrafanaResult(method, result);

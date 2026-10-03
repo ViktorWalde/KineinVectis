@@ -28,56 +28,60 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.query");
         };
-        let pedido = match parse_params::<DataSourceQueryParams>(
+        let request = match parse_params::<DataSourceQueryParams>(
             request_id.as_ref(),
             params,
             "datasource.query exige { name, sql } e aceita { password, maxRows, confirmWrite }",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
-        if pedido.sql.trim().is_empty() {
+        if request.sql.trim().is_empty() {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(JsonRpcErrorCode::InvalidParams, "escreva a instrucao", None),
             );
         }
-        let profile = match Self::find_profile(&root, &pedido.name) {
+        let profile = match Self::find_profile(&root, &request.name) {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
-        let escrita = !query::is_read(&pedido.sql)
+        let write = !query::is_read(&request.sql)
             && profile.engine != kinein_protocol::DataSourceEngine::Mongo;
-        if escrita && !pedido.confirm_write {
+        if write && !request.confirm_write {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::WriteConfirmationRequired,
                     "esta instrucao ESCREVE no banco; confirme para executar",
-                    Some(json!({ "name": profile.name })),
+                    // A gravidade ja' vai na recusa (pura, sem banco): a tela
+                    // sabe na hora se pede o nome do que some; os numeros
+                    // vem do `datasource.impact` (0.150.0).
+                    Some(json!({
+                        "name": profile.name,
+                        "severity": crate::datasource::impact::overall(
+                            &crate::datasource::impact::classify_all(&request.sql)
+                        ),
+                    })),
                 ),
             );
         }
-        let secret = match Self::resolve_secret(&profile, pedido.password) {
+        let secret = match Self::resolve_secret(&profile, request.password) {
             Ok(secret) => secret,
             Err(response) => return com_id(*response, request_id),
         };
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "datasource.query");
         };
-        let max_rows = query::clamp_rows(pedido.max_rows);
-        let sql = pedido.sql;
-        let titulo = format!(
+        let max_rows = query::clamp_rows(request.max_rows);
+        let sql = request.sql;
+        let title = format!(
             "{} em {}",
-            if escrita { "Escrever" } else { "Consultar" },
+            if write { "Escrever" } else { "Consultar" },
             profile.name
         );
-        let risco = if escrita {
-            JobRisk::Medium
-        } else {
-            JobRisk::Low
-        };
-        let job_id = jobs.spawn("datasource", titulo, risco, false, move |ctx| {
+        let risk = if write { JobRisk::Medium } else { JobRisk::Low };
+        let job_id = jobs.spawn("datasource", title, risk, false, move |ctx| {
             let resultado = query::run(&profile, secret.as_ref(), &sql, max_rows);
             let evento = evento_da_consulta(ctx, profile.name, resultado);
             let ok = evento.success;

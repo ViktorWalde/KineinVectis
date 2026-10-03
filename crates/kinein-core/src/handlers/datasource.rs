@@ -33,6 +33,7 @@ impl Core {
             "datasource.create" => Some(self.datasource_create_response(request_id, params)),
             "datasource.destroy" => Some(self.datasource_destroy_response(request_id, params)),
             "datasource.console" => Some(self.datasource_console_response(request_id, params)),
+            "datasource.impact" => Some(self.datasource_impact_response(request_id, params)),
             "datasource.introspect" => {
                 Some(self.datasource_introspect_response(request_id, params))
             }

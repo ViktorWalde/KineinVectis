@@ -44,6 +44,7 @@ pub mod console;
 pub mod create;
 pub mod destroy;
 pub mod discover;
+pub mod impact;
 pub mod introspect;
 pub mod mongo;
 pub mod mongo_infer;

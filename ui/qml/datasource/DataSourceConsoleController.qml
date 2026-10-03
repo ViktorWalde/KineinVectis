@@ -48,12 +48,16 @@ QtObject {
         return profile === undefined ? "" : profile.name;
     }
 
-    // A instrucao a executar: a selecao, se houver; senao, no SQL, o trecho
-    // entre o `;` anterior e o seguinte ao cursor; no Mongo, a linha. Linhas
-    // de comentario (`--`, `//`) ficam de fora. Cursor logo DEPOIS do `;`
-    // (o normal ao terminar de digitar) roda a instrucao que acabou ali —
-    // antes o trecho vazio depois do `;` fazia o Ctrl+Enter nao fazer nada
-    // (2026-10-03, achado na tela real).
+    // A instrucao a executar: a selecao, se houver; senao, no Mongo, a linha;
+    // no SQL, o trecho sob o cursor, e um trecho TERMINA num `;` ou numa
+    // LINHA EM BRANCO, como no console da JetBrains. Linhas de comentario
+    // (`--`, `//`) ficam de fora. Cursor num trecho vazio (logo depois do
+    // `;`, ou numa linha em branco) vale a instrucao que acabou antes dele.
+    //
+    // Por que a linha em branco (2026-10-03, achado na tela real): um
+    // `select ...` sem `;` seguido de linhas vazias e de um `DELETE FROM x;`
+    // virava UMA instrucao "select ... DELETE ..." — foi para o caminho de
+    // leitura, o motor recusou, e o painel do impacto nunca abriu.
     function statementAt(text, cursor, selectionStart, selectionEnd, mongo) {
         if (selectionEnd > selectionStart) return text.substring(selectionStart, selectionEnd).trim();
         const clean = piece => piece.split("\n").filter(line => !/^\s*(--|\/\/)/.test(line)).join("\n").trim();
@@ -62,11 +66,18 @@ QtObject {
             const lineEnd = text.indexOf("\n", cursor);
             return clean(text.substring(lineStart, lineEnd < 0 ? text.length : lineEnd));
         }
-        const start = text.lastIndexOf(";", cursor - 1) + 1;
-        const end = text.indexOf(";", cursor);
-        const here = clean(text.substring(start, end < 0 ? text.length : end));
-        if (here !== "" || start === 0) return here;
-        return clean(text.substring(text.lastIndexOf(";", start - 2) + 1, start - 1));
+        const pieces = [];
+        const boundary = /;|\n[ \t]*(?=\n)/g;
+        let start = 0;
+        for (let match = boundary.exec(text); match !== null; match = boundary.exec(text)) {
+            pieces.push({ start: start, text: clean(text.substring(start, match.index)) });
+            start = match.index + match[0].length;
+        }
+        pieces.push({ start: start, text: clean(text.substring(start)) });
+        let at = 0;
+        while (at + 1 < pieces.length && pieces[at + 1].start <= cursor) at++;
+        while (at > 0 && pieces[at].text === "") at--;
+        return pieces[at].text;
     }
 
     function open(name) {

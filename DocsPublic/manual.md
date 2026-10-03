@@ -826,21 +826,64 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   sobrescrito**: o que você escreveu fica lá para a próxima vez. Nesse arquivo,
   **`Ctrl+Enter`** executa:
   - a **seleção**, se houver;
-  - senão, no SQL, a instrução **sob o cursor** (o trecho entre o `;` anterior
-    e o seguinte). Com o cursor **logo depois do `;`** — o normal ao terminar
-    de digitar — vale a instrução que acabou ali;
+  - senão, no SQL, a instrução **sob o cursor**: uma instrução termina num
+    `;` **ou numa linha em branco** (como no console da JetBrains), então um
+    `select` sem `;` não gruda no `DELETE` de baixo. Com o cursor **logo
+    depois do `;`** — o normal ao terminar de digitar — ou numa linha em
+    branco, vale a instrução que acabou antes;
   - no MongoDB, a **linha** do cursor (`<coleção> <filtro JSON>`).
   Linhas de comentário (`--`, `//`) ficam de fora. O resultado aparece na
   seção de dados da janela do Banco, que se abre sozinha se estiver fechada.
-  Fora de um console o `Ctrl+Enter` não faz nada de especial.
+  Se o motor recusar, a mensagem dele aparece inteira, em vermelho, no lugar
+  da grade. Fora de um console o `Ctrl+Enter` não faz nada de especial.
+- **Cores no SQL** (desde 2026-10-03). Qualquer `.sql` (o console também) ganha
+  cores:
+  - palavras-chave em qualquer caixa (`select` e `SELECT`);
+  - tipos (`integer`, `text`, `timestamp`…);
+  - funções (o nome antes de `(`);
+  - números, `'texto'` e `"identificador"`;
+  - comentários `--` e `/* */`.
+
+  O console `.mongo` usa as cores do JSON, com a coleção no começo da linha e
+  os comentários `//`. São regras do editor, sem servidor de linguagem; um
+  LSP de SQL (o Postgres Language Server, de licença MIT) é passo seguinte.
 - **Leitura e escrita.** Uma leitura (`SELECT`, `WITH`, `VALUES`, `SHOW`,
   `EXPLAIN`) roda com teto de 500 linhas (a IDE põe o `LIMIT` por fora; "teto
   atingido" avisa) e **de verdade só lê**: no PostgreSQL vai numa transação
   `READ ONLY`, no SQLite o arquivo abre só para leitura — um `WITH … INSERT`
-  disfarçado é recusado pelo próprio motor. Uma instrução que **escreve**
-  (`INSERT`, `UPDATE`, `DELETE`, DDL) não roda de primeira: a seção de dados
-  mostra o botão *"Esta instrução escreve — executar mesmo assim"*, e só o
-  clique nele executa; o resultado diz quantas linhas foram afetadas. A grade
+  disfarçado é recusado pelo próprio motor.
+- **Antes de escrever, a IDE mostra a consequência** (desde 2026-10-03). Uma
+  instrução que **escreve** não roda de primeira: abre um painel com a
+  conexão, o **comando inteiro** e **o que acontece**, instrução por
+  instrução, com as linhas contadas antes. A contagem é só leitura
+  (`SELECT count(*)` no mesmo alvo e com o mesmo `WHERE`) e não muda nada.
+  Exemplos do que o painel diz:
+
+  ```text
+  DELETE FROM clientes               Apaga TODAS as linhas de clientes: 2 linhas
+  DELETE ... WHERE id = 2            Apaga 1 linha de clientes (a tabela tem 2)
+  UPDATE ... WHERE 1 = 1             Altera TODAS as 2 linhas de clientes — o WHERE
+                                     pega a tabela inteira
+  DROP TABLE pedidos                 Remove a tabela pedidos e 2 linhas dela
+  ALTER TABLE t DROP COLUMN email    Remove a coluna email de t: 2 valores somem
+  DROP SCHEMA audit                  Remove o esquema audit e 3 tabelas dele
+  DROP DATABASE loja                 Remove o banco loja INTEIRO
+  ```
+
+  - **Escrita comum** (`INSERT`, `UPDATE`/`DELETE` com `WHERE` que não pega
+    tudo, `CREATE`, `DROP VIEW`/`INDEX`): título em âmbar e **Executar** com
+    um clique.
+  - **Destrutiva** (`DELETE`/`UPDATE` sem `WHERE` ou com um `WHERE` que pega
+    a tabela inteira, `TRUNCATE`, `DROP TABLE`/`SCHEMA`/`DATABASE`, coluna
+    removida): título em vermelho, o aviso de que não há como desfazer e
+    **"Para confirmar, digite clientes"**. O botão **Executar e apagar** só
+    liga quando o nome digitado confere; o cursor já abre no campo.
+  - Se a contagem não puder ser feita (senha, rede, tabela que não existe),
+    o painel diz o motivo e trata a instrução como destrutiva, pedindo o nome
+    da conexão.
+  - **Cancelar é o padrão:** o botão, o **Esc** ou o clique fora. A seção de
+    dados diz "cancelada — nada foi executado". Depois de executar, ela diz
+    quantas linhas foram afetadas. A grade
   mostra toda célula como texto e `NULL` como *null* em itálico. No MongoDB a
   consulta é só leitura, e cada chave de primeiro nível vira coluna.
 - **Tamanho.** A janela tem **mínimo de 260 px** (abaixo disso o cabeçalho e

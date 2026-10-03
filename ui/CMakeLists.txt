@@ -186,6 +186,8 @@ set_source_files_properties(qml/datasource/DataSourceResultsPanel.qml PROPERTIES
 set_source_files_properties(qml/datasource/DataSourceConsoleController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceConsoleController.qml)
 set_source_files_properties(qml/datasource/DatabaseWindow.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseWindow.qml)
 set_source_files_properties(qml/datasource/DatabaseTreeView.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseTreeView.qml)
+set_source_files_properties(qml/datasource/DataSourceImpactController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceImpactController.qml)
+set_source_files_properties(qml/datasource/SqlImpactDialog.qml PROPERTIES QT_RESOURCE_ALIAS SqlImpactDialog.qml)
 set_source_files_properties(qml/datasource/DataSourceDiscoveryController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDiscoveryController.qml)
 set_source_files_properties(qml/datasource/DataSourceCreateBox.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceCreateBox.qml)
 set_source_files_properties(qml/datasource/DataSourceDestroyBox.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDestroyBox.qml)
@@ -571,6 +573,8 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceConsoleController.qml
         qml/datasource/DatabaseWindow.qml
         qml/datasource/DatabaseTreeView.qml
+        qml/datasource/DataSourceImpactController.qml
+        qml/datasource/SqlImpactDialog.qml
         qml/datasource/DataSourceDiscoveryController.qml
         qml/datasource/DataSourceCreateBox.qml
         qml/datasource/DataSourceDestroyBox.qml
