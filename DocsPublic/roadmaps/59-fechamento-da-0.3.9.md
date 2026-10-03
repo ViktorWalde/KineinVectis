@@ -51,8 +51,8 @@ Cada passo termina com:
 
 | # | Passo | Situação |
 | --- | --- | --- |
-| 1 | **Containers acoplados** (§3), **tela de boas-vindas** (§3.1) e **interruptor moderno** (§3.2) | provados na tela; falta o commit |
-| 2 | **Topo:** o ☰ esconde por um momento os widgets do topo, em vez de empurrá-los (§3.3) | a fazer |
+| 1 | **Containers acoplados** (§3), **tela de boas-vindas** (§3.1) e **interruptor moderno** (§3.2) | feito (40.7 §7.210–§7.211) |
+| 2 | **Topo:** o ☰ esconde por um momento os widgets do topo, em vez de empurrá-los (§3.3) | feito (40.7 §7.213) |
 | 3 | **Modernizar os controles antigos** no padrão interativo (§3.4) | a fazer |
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | a fazer |
 | 5 | **Remoto acoplado** (§4) | a fazer |

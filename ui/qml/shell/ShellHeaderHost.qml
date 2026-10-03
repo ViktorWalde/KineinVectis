@@ -197,7 +197,17 @@ Rectangle {
         // janela dela cobria os widgets e nenhum recebia clique (0.3.9). O
         // vazio desta barra nao trata mouse, entao o arrasto continua passando.
         z: 101
-        x: appMenuBar.menuEndX + Theme.spacingSmall
+        // POSICAO FIXA, logo depois do ☰ (2026-10-03, pedido do autor): com
+        // os menus abertos a barra SOME por um momento — eles ocupam o lugar
+        // dela — e volta igual ao fechar; antes, ela era EMPURRADA para a
+        // direita pelos menus e mudava de lugar a cada clique no ☰.
+        x: appMenuBar.collapsedEndX + Theme.spacingSmall
+        opacity: appMenuBar.menuExpanded ? 0 : 1
+        visible: opacity > 0
+        enabled: !appMenuBar.menuExpanded
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.motionFast }
+        }
         y: 0
         width: Math.max(0, appMenuBar.controlsX - Theme.spacingSmall - x)
         height: root.height

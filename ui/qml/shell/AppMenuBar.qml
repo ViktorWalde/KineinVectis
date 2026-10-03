@@ -22,6 +22,9 @@ Rectangle {
     // linha, logo depois deste bloco (ShellHeaderHost).
     property bool menuExpanded: false
     readonly property real menuEndX: menuRow.x + menuRow.width
+    // Onde o ☰ termina (os menus, abertos, comecam dali): a barra de widgets
+    // do topo fica SEMPRE aqui, aberta ou nao (ShellHeaderHost).
+    readonly property real collapsedEndX: menuRow.x + hamburger.x + hamburger.width
     readonly property real controlsX: windowControls.x
 
     signal actionRequested(string action)
@@ -107,6 +110,8 @@ Rectangle {
         }
 
         KvIconButton {
+            id: hamburger
+
             anchors.verticalCenter: parent.verticalCenter
             iconName: "menu"
             iconSize: 18
