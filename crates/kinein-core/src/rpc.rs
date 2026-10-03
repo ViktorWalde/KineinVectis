@@ -42,18 +42,41 @@ pub(crate) fn fs_error_response(
     )
 }
 
-pub(crate) fn workspace_error_response(
-    request_id: Option<Value>,
-    error: &workspace::WorkspaceError,
-) -> JsonRpcResponse {
-    let code = if error.is_invalid_path() {
+const fn workspace_error_code(error: &workspace::WorkspaceError) -> JsonRpcErrorCode {
+    if error.is_invalid_path() {
         JsonRpcErrorCode::InvalidParams
     } else if error.is_missing_tool() {
         JsonRpcErrorCode::ToolNotFound
     } else {
         JsonRpcErrorCode::InternalError
-    };
-    JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
+    }
+}
+
+pub(crate) fn workspace_error_response(
+    request_id: Option<Value>,
+    error: &workspace::WorkspaceError,
+) -> JsonRpcResponse {
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(workspace_error_code(error), error.to_string(), None),
+    )
+}
+
+/// The same error, carrying the requested path (`workspace.browse` and
+/// `workspace.open`: the UI says which folder failed).
+pub(crate) fn workspace_path_error_response(
+    request_id: Option<Value>,
+    error: &workspace::WorkspaceError,
+    path: &str,
+) -> JsonRpcResponse {
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(
+            workspace_error_code(error),
+            error.to_string(),
+            Some(json!({ "path": path })),
+        ),
+    )
 }
 
 pub(crate) fn terminal_unavailable_response(

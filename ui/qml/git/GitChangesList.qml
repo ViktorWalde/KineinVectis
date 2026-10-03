@@ -28,27 +28,12 @@ ListView {
     signal discardRequested(int index)
     signal openRequested(string absPath)
 
-
-
-    // B2 (DocsPublic/roadmaps/24): barra de rolagem. `parent: root` é OBRIGATÓRIO — um filho
-    // declarado dentro de um ListView vira filho do contentItem e ROLARIA
-    // junto com a lista. O ListView segue sendo a fonte da verdade.
-    VerticalScrollBar {
+    FlickableScrollBar {
         id: scrollBar
 
-        parent: root
-        anchors.right: root.right
-        anchors.top: root.top
-        anchors.bottom: root.bottom
-
-        contentSize: root.contentHeight
-        viewportSize: root.height
-        position: root.contentY
-
-        onMoveRequested: function(position) {
-            root.contentY = position;
-        }
+        view: root
     }
+
     clip: true
     model: root.changesModel
 

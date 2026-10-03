@@ -139,64 +139,50 @@ FocusScope {
                 wrapMode: Text.WordWrap
             }
 
-            Item { width: 1; height: Theme.spacingXSmall }
-
-            Text {
-                text: qsTr("NO TRILHO")
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSizeMicro
-                font.weight: Font.DemiBold
-                font.letterSpacing: 0.8
-            }
-
+            // As duas secoes, NO TRILHO e FORA DO TRILHO: o mesmo titulo e a
+            // mesma linha; a de fora so' aparece quando tem alguem.
             Repeater {
-                model: root.onRail
+                model: [{ "title": qsTr("NO TRILHO"), "entries": root.onRail, "always": true },
+                        { "title": qsTr("FORA DO TRILHO"), "entries": root.offRail, "always": false }]
 
-                delegate: RailAreaRow {
+                delegate: Column {
+                    id: section
+
                     required property var modelData
 
                     width: content.width
-                    entry: modelData
-                    onRail: root.railHas(modelData.id)
-                    status: root.projection.statusOf(modelData, root.railState,
-                                                     root.railHas(modelData.id))
-                    pinned: root.projection.isPinned(modelData, root.railState)
-                    hidden: root.projection.contains(root.railState.hidden, modelData.id)
-                    highlighted: root.focusId === modelData.id
-                    onOpenRequested: root.open(modelData)
-                    onPinToggled: root.togglePin(modelData)
-                    onHideToggled: root.toggleHidden(modelData)
-                }
-            }
+                    spacing: content.spacing
+                    visible: section.modelData.always || section.modelData.entries.length > 0
 
-            Item { width: 1; height: Theme.spacingXSmall; visible: root.offRail.length > 0 }
+                    Item { width: 1; height: Theme.spacingXSmall }
 
-            Text {
-                visible: root.offRail.length > 0
-                text: qsTr("FORA DO TRILHO")
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSizeMicro
-                font.weight: Font.DemiBold
-                font.letterSpacing: 0.8
-            }
+                    Text {
+                        text: section.modelData.title
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontSizeMicro
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: 0.8
+                    }
 
-            Repeater {
-                model: root.offRail
+                    Repeater {
+                        model: section.modelData.entries
 
-                delegate: RailAreaRow {
-                    required property var modelData
+                        delegate: RailAreaRow {
+                            required property var modelData
 
-                    width: content.width
-                    entry: modelData
-                    onRail: root.railHas(modelData.id)
-                    status: root.projection.statusOf(modelData, root.railState,
-                                                     root.railHas(modelData.id))
-                    pinned: root.projection.isPinned(modelData, root.railState)
-                    hidden: root.projection.contains(root.railState.hidden, modelData.id)
-                    highlighted: root.focusId === modelData.id
-                    onOpenRequested: root.open(modelData)
-                    onPinToggled: root.togglePin(modelData)
-                    onHideToggled: root.toggleHidden(modelData)
+                            width: content.width
+                            entry: modelData
+                            onRail: root.railHas(modelData.id)
+                            status: root.projection.statusOf(modelData, root.railState,
+                                                             root.railHas(modelData.id))
+                            pinned: root.projection.isPinned(modelData, root.railState)
+                            hidden: root.projection.contains(root.railState.hidden, modelData.id)
+                            highlighted: root.focusId === modelData.id
+                            onOpenRequested: root.open(modelData)
+                            onPinToggled: root.togglePin(modelData)
+                            onHideToggled: root.toggleHidden(modelData)
+                        }
+                    }
                 }
             }
 

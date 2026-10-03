@@ -19,7 +19,9 @@ use std::path::PathBuf;
 
 use kinein_protocol::{FlashProposalResult, ProjectModel};
 
-use super::{ESPTOOL_BAUD, FindTool, FlashError, quote, tamanho_legivel, tool};
+use super::{
+    ESPTOOL_BAUD, FindTool, FlashError, chosen_port, esptool_binary, quote, tamanho_legivel, tool,
+};
 
 /// Um firmware INSTALADO (o arquivo existe na pasta da IDE), como o
 /// catalogo o descreve.
@@ -99,21 +101,8 @@ fn esptool(
     source: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) -> Result<String, FlashError> {
-    let esptool = find_tool("esptool")
-        .or_else(|| find_tool("esptool.py"))
-        .map(|p| quote(&p.display().to_string()))
-        .ok_or_else(|| FlashError::MissingTool {
-            tool: "esptool".to_owned(),
-            hint: "pipx install esptool (o painel de instalacao mostra o passo)".to_owned(),
-        })?;
-    let device = device
-        .map(str::trim)
-        .filter(|d| !d.is_empty())
-        .ok_or_else(|| FlashError::NoDevice {
-            message: "escolha a porta no painel de Embarcados (chip \"Executar\" na porta): \
-                      gravar na placa errada e' pior que um clique"
-                .to_owned(),
-        })?;
+    let esptool = esptool_binary(find_tool)?;
+    let device = chosen_port(device)?;
     let offset = imagem
         .offset
         .as_deref()

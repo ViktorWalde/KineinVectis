@@ -156,26 +156,12 @@ Item {
     ListView {
         id: searchResultsView
 
-
-        // B2 (DocsPublic/roadmaps/24): barra de rolagem. `parent: searchResultsView` é OBRIGATÓRIO — um filho
-        // declarado dentro de um ListView vira filho do contentItem e ROLARIA
-        // junto com a lista. O ListView segue sendo a fonte da verdade.
-        VerticalScrollBar {
+        FlickableScrollBar {
             id: scrollBar_searchResultsView
 
-            parent: searchResultsView
-            anchors.right: searchResultsView.right
-            anchors.top: searchResultsView.top
-            anchors.bottom: searchResultsView.bottom
-
-            contentSize: searchResultsView.contentHeight
-            viewportSize: searchResultsView.height
-            position: searchResultsView.contentY
-
-            onMoveRequested: function(position) {
-                searchResultsView.contentY = position;
-            }
+            view: searchResultsView
         }
+
         anchors.top: replaceFeedback.visible ? replaceFeedback.bottom
                     : (replaceControls.visible ? replaceControls.bottom
                                                : searchControls.bottom)

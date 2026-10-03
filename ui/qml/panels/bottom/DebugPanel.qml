@@ -149,26 +149,12 @@ Item {
     ListView {
         id: debugOutputView
 
-
-        // B2 (DocsPublic/roadmaps/24): barra de rolagem. `parent: debugOutputView` é OBRIGATÓRIO — um filho
-        // declarado dentro de um ListView vira filho do contentItem e ROLARIA
-        // junto com a lista. O ListView segue sendo a fonte da verdade.
-        VerticalScrollBar {
+        FlickableScrollBar {
             id: scrollBar_debugOutputView
 
-            parent: debugOutputView
-            anchors.right: debugOutputView.right
-            anchors.top: debugOutputView.top
-            anchors.bottom: debugOutputView.bottom
-
-            contentSize: debugOutputView.contentHeight
-            viewportSize: debugOutputView.height
-            position: debugOutputView.contentY
-
-            onMoveRequested: function(position) {
-                debugOutputView.contentY = position;
-            }
+            view: debugOutputView
         }
+
         anchors.top: debugControlsRow.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom

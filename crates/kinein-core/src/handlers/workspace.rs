@@ -14,6 +14,7 @@ use serde_json::{Value, json};
 
 use crate::rpc::{
     fs_error_response, no_workspace_response, parse_params, workspace_error_response,
+    workspace_path_error_response,
 };
 use crate::{Core, db, workspace};
 
@@ -339,34 +340,17 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceBrowseParams>(params) {
-            Ok(params) => match workspace::browse_directories(Path::new(&params.path)) {
-                Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
-                Err(error) => {
-                    let code = if error.is_invalid_path() {
-                        JsonRpcErrorCode::InvalidParams
-                    } else {
-                        JsonRpcErrorCode::InternalError
-                    };
-                    JsonRpcResponse::failure(
-                        request_id,
-                        JsonRpcError::new(
-                            code,
-                            error.to_string(),
-                            Some(json!({ "path": params.path })),
-                        ),
-                    )
-                }
-            },
-            Err(error) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.browse requer params com o campo path",
-                    Some(json!({ "error": error.to_string() })),
-                ),
-            ),
+        let params = match parse_params::<WorkspaceBrowseParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.browse requer params com o campo path",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        match workspace::browse_directories(Path::new(&params.path)) {
+            Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
+            Err(error) => workspace_path_error_response(request_id, &error, &params.path),
         }
     }
 
@@ -374,27 +358,22 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceCreateFolderParams>(params) {
-            Ok(params) => {
-                match workspace::create_directory(Path::new(&params.parent), &params.name) {
-                    Ok(path) => JsonRpcResponse::success(
-                        request_id,
-                        json!(WorkspaceCreateFolderResult {
-                            path: path.display().to_string(),
-                        }),
-                    ),
-                    Err(error) => workspace_error_response(request_id, &error),
-                }
-            }
-            Err(error) => JsonRpcResponse::failure(
+        let params = match parse_params::<WorkspaceCreateFolderParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.createFolder requer parent e name",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        match workspace::create_directory(Path::new(&params.parent), &params.name) {
+            Ok(path) => JsonRpcResponse::success(
                 request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.createFolder requer parent e name",
-                    Some(json!({ "error": error.to_string() })),
-                ),
+                json!(WorkspaceCreateFolderResult {
+                    path: path.display().to_string(),
+                }),
             ),
+            Err(error) => workspace_error_response(request_id, &error),
         }
     }
 
@@ -403,27 +382,20 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceCreateProjectParams>(params) {
-            Ok(params) => match workspace::create_project(
-                Path::new(&params.parent),
-                &params.name,
-                params.template,
-            ) {
-                Ok(opened) => {
-                    self.activate_workspace(&opened);
-                    JsonRpcResponse::success(request_id, json!(opened))
-                }
-                Err(error) => workspace_error_response(request_id, &error),
-            },
-            Err(error) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.createProject requer parent, name e template",
-                    Some(json!({ "error": error.to_string() })),
-                ),
-            ),
+        let params = match parse_params::<WorkspaceCreateProjectParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.createProject requer parent, name e template",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        match workspace::create_project(Path::new(&params.parent), &params.name, params.template) {
+            Ok(opened) => {
+                self.activate_workspace(&opened);
+                JsonRpcResponse::success(request_id, json!(opened))
+            }
+            Err(error) => workspace_error_response(request_id, &error),
         }
     }
 
@@ -432,55 +404,38 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceOpenParams>(params) {
-            Ok(params) => match workspace::open_workspace(Path::new(&params.path)) {
-                Ok(opened) => {
-                    self.activate_workspace(&opened);
-                    // Recupera buffers não salvos que sobreviveram a um crash
-                    // da UI (DocsPublic/seguranca/23). Só o `open` recupera: um
-                    // projeto recém-criado não tem rascunho anterior.
-                    let recovered = self.recover_drafts();
-                    let session = workspace::load_session(Path::new(&opened.root));
-                    let mut result = json!(opened);
-                    if let Some(map) = result.as_object_mut() {
-                        if let Some(session) = session {
-                            map.insert("session".to_owned(), json!(session));
-                        }
-                        if !recovered.is_empty() {
-                            map.insert("drafts".to_owned(), json!(recovered));
-                        }
-                        // Um espelho remoto (P6 fatia 2) diz de quem e'.
-                        if let Some(mirror) = self.current_mirror() {
-                            map.insert("remote".to_owned(), json!(mirror));
-                        }
+        let params = match parse_params::<WorkspaceOpenParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.open requer params com o campo path",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        match workspace::open_workspace(Path::new(&params.path)) {
+            Ok(opened) => {
+                self.activate_workspace(&opened);
+                // Recupera buffers não salvos que sobreviveram a um crash
+                // da UI (DocsPublic/seguranca/23). Só o `open` recupera: um
+                // projeto recém-criado não tem rascunho anterior.
+                let recovered = self.recover_drafts();
+                let session = workspace::load_session(Path::new(&opened.root));
+                let mut result = json!(opened);
+                if let Some(map) = result.as_object_mut() {
+                    if let Some(session) = session {
+                        map.insert("session".to_owned(), json!(session));
                     }
-                    JsonRpcResponse::success(request_id, result)
+                    if !recovered.is_empty() {
+                        map.insert("drafts".to_owned(), json!(recovered));
+                    }
+                    // Um espelho remoto (P6 fatia 2) diz de quem e'.
+                    if let Some(mirror) = self.current_mirror() {
+                        map.insert("remote".to_owned(), json!(mirror));
+                    }
                 }
-                Err(error) => {
-                    let code = if error.is_invalid_path() {
-                        JsonRpcErrorCode::InvalidParams
-                    } else {
-                        JsonRpcErrorCode::InternalError
-                    };
-                    JsonRpcResponse::failure(
-                        request_id,
-                        JsonRpcError::new(
-                            code,
-                            error.to_string(),
-                            Some(json!({ "path": params.path })),
-                        ),
-                    )
-                }
-            },
-            Err(error) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.open requer params com o campo path",
-                    Some(json!({ "error": error.to_string() })),
-                ),
-            ),
+                JsonRpcResponse::success(request_id, result)
+            }
+            Err(error) => workspace_path_error_response(request_id, &error, &params.path),
         }
     }
 }

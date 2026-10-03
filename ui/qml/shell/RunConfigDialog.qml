@@ -118,56 +118,17 @@ Rectangle {
             anchors.right: parent.right
             spacing: Theme.spacingSmall
 
-            Rectangle {
-                width: cancelText.width + 2 * Theme.spacingMedium
-                height: 26
-                radius: Theme.radius
-                color: cancelArea.containsMouse ? Theme.surface2 : Theme.surface1
-                border.color: Theme.borderSoft
-                border.width: 1
-
-                Text {
-                    id: cancelText
-
-                    anchors.centerIn: parent
-                    text: qsTr("Cancelar")
-                    color: Theme.textSecondary
-                    font.pixelSize: Theme.fontSizeSmall
-                }
-
-                MouseArea {
-                    id: cancelArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.cancelRequested()
-                }
+            KvButton {
+                compact: true
+                text: qsTr("Cancelar")
+                onClicked: root.cancelRequested()
             }
 
-            Rectangle {
-                width: confirmText.width + 2 * Theme.spacingMedium
-                height: 26
-                radius: Theme.radius
-                color: confirmArea.pressed ? Theme.accentDim : Theme.accent
-
-                Text {
-                    id: confirmText
-
-                    anchors.centerIn: parent
-                    text: qsTr("Salvar")
-                    color: Theme.background0
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.bold: true
-                }
-
-                MouseArea {
-                    id: confirmArea
-
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.confirmRequested()
-                }
+            KvButton {
+                compact: true
+                primary: true
+                text: qsTr("Salvar")
+                onClicked: root.confirmRequested()
             }
         }
     }

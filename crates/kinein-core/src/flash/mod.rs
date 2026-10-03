@@ -205,6 +205,31 @@ pub(super) fn tool(
         })
 }
 
+/// O esptool (ou o `esptool.py` antigo), ja' entre aspas para a linha de
+/// comando. Um dono para as duas gravacoes que o usam (projeto e firmware).
+fn esptool_binary(find_tool: &FindTool<'_>) -> Result<String, FlashError> {
+    find_tool("esptool")
+        .or_else(|| find_tool("esptool.py"))
+        .map(|p| quote(&p.display().to_string()))
+        .ok_or_else(|| FlashError::MissingTool {
+            tool: "esptool".to_owned(),
+            hint: "pipx install esptool (o painel de instalacao mostra o passo)".to_owned(),
+        })
+}
+
+/// A porta escolhida pelo usuario. Sem porta nao ha' gravacao: adivinhar a
+/// placa errada e' pior que um clique.
+fn chosen_port(device: Option<&str>) -> Result<&str, FlashError> {
+    device
+        .map(str::trim)
+        .filter(|d| !d.is_empty())
+        .ok_or_else(|| FlashError::NoDevice {
+            message: "escolha a porta no painel de Embarcados (chip \"Executar\" na porta): \
+                      gravar na placa errada e' pior que um clique"
+                .to_owned(),
+        })
+}
+
 fn esptool(
     model: &ProjectModel,
     device: Option<&str>,
@@ -213,13 +238,7 @@ fn esptool(
     source: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) -> Result<String, FlashError> {
-    let esptool = find_tool("esptool")
-        .or_else(|| find_tool("esptool.py"))
-        .map(|p| quote(&p.display().to_string()))
-        .ok_or_else(|| FlashError::MissingTool {
-            tool: "esptool".to_owned(),
-            hint: "pipx install esptool (o painel de instalacao mostra o passo)".to_owned(),
-        })?;
+    let esptool = esptool_binary(find_tool)?;
     let receita: &FlashRecipe = model
         .artifacts
         .flash_recipe
@@ -230,14 +249,7 @@ fn esptool(
                       build — compile o projeto primeiro"
                 .to_owned(),
         })?;
-    let device = device
-        .map(str::trim)
-        .filter(|d| !d.is_empty())
-        .ok_or_else(|| FlashError::NoDevice {
-            message: "escolha a porta no painel de Embarcados (chip \"Executar\" na porta): \
-                      gravar na placa errada e' pior que um clique"
-                .to_owned(),
-        })?;
+    let device = chosen_port(device)?;
     let chip = receita
         .chip
         .as_deref()

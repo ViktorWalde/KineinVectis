@@ -6,9 +6,9 @@ use kinein_protocol::{
 };
 use serde_json::{Value, json};
 
-use super::build::{emit_build_event, emit_run_error, job_outcome};
+use super::build::{emit_build_event, finish_quality_job};
 use crate::rpc::no_workspace_response;
-use crate::{Core, build, cargo, jobs};
+use crate::{Core, build, cargo};
 
 impl Core {
     /// Roteia os metodos `cargo.*`; `None` quando o metodo nao e Cargo.
@@ -93,24 +93,10 @@ impl Core {
             move |ctx| {
                 let cancel = ctx.cancellation();
                 let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-                match build::run_cargo_check(&root, &toolchain, &cancel, &mut sink) {
-                    Ok(outcome) => {
-                        ctx.emit_event(
-                            "event.quality.finished",
-                            json!({
-                                "jobId": ctx.id(),
-                                "success": outcome.success,
-                                "exitCode": outcome.exit_code,
-                                "diagnostics": outcome.diagnostics,
-                            }),
-                        );
-                        job_outcome(outcome.success)
-                    }
-                    Err(error) => {
-                        emit_run_error(ctx, "quality", &error.to_string());
-                        jobs::JobOutcome::Failed
-                    }
-                }
+                finish_quality_job(
+                    ctx,
+                    build::run_cargo_check(&root, &toolchain, &cancel, &mut sink),
+                )
             },
         );
 

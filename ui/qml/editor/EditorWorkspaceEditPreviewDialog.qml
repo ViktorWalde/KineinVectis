@@ -144,56 +144,17 @@ Rectangle {
         anchors.margins: Theme.spacingMedium
         spacing: Theme.spacingSmall
 
-        Rectangle {
-            width: cancelText.width + 2 * Theme.spacingMedium
-            height: 26
-            radius: Theme.radius
-            color: cancelArea.containsMouse ? Theme.surface2 : Theme.surface1
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: cancelText
-
-                anchors.centerIn: parent
-                text: qsTr("Cancelar")
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSizeSmall
-            }
-
-            MouseArea {
-                id: cancelArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.cancelRequested()
-            }
+        KvButton {
+            compact: true
+            text: qsTr("Cancelar")
+            onClicked: root.cancelRequested()
         }
 
-        Rectangle {
-            width: applyText.width + 2 * Theme.spacingMedium
-            height: 26
-            radius: Theme.radius
-            color: applyArea.pressed ? Theme.accentDim : Theme.accent
-
-            Text {
-                id: applyText
-
-                anchors.centerIn: parent
-                text: qsTr("Aplicar alteracoes")
-                color: Theme.background0
-                font.pixelSize: Theme.fontSizeSmall
-                font.bold: true
-            }
-
-            MouseArea {
-                id: applyArea
-
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.applyRequested()
-            }
+        KvButton {
+            compact: true
+            primary: true
+            text: qsTr("Aplicar alteracoes")
+            onClicked: root.applyRequested()
         }
     }
 

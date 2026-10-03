@@ -1,7 +1,7 @@
 //! Workspace-confined copy, with one motor for direct calls and cancelable jobs.
 
 use std::{
-    ffi::OsStr,
+    ffi::{OsStr, OsString},
     fs,
     io::{self, Read, Write},
     os::unix::{ffi::OsStrExt, fs::PermissionsExt},
@@ -199,24 +199,31 @@ fn scan_open_entry<C: Fn() -> bool>(
         return Ok(metadata.len());
     }
     let mut total = 0u64;
-    let entries = Dir::read_from(descriptor).map_err(|error| FsError::Io {
-        path: source.display().to_string(),
-        source: error.into(),
-    })?;
-    for entry in entries {
-        let entry = entry.map_err(|error| FsError::Io {
-            path: source.display().to_string(),
-            source: error.into(),
-        })?;
-        let name = OsStr::from_bytes(entry.file_name().to_bytes());
-        if name == OsStr::new(".") || name == OsStr::new("..") {
-            continue;
-        }
-        let child_path = source.join(name);
-        let child = open_child(descriptor, name, &child_path)?;
+    for name in child_names(descriptor, source)? {
+        let child_path = source.join(&name);
+        let child = open_child(descriptor, &name, &child_path)?;
         total = total.saturating_add(scan_open_entry(&child, &child_path, depth + 1, cancel)?);
     }
     Ok(total)
+}
+
+/// Os nomes dentro de um diretorio aberto, sem `.` e `..`. So' os NOMES: o
+/// chamador abre um filho de cada vez, e uma pasta enorme nao acumula
+/// descritores abertos.
+fn child_names(descriptor: &fs::File, source: &Path) -> Result<Vec<OsString>, FsError> {
+    let io_error = |error: rustix::io::Errno| FsError::Io {
+        path: source.display().to_string(),
+        source: error.into(),
+    };
+    let mut names = Vec::new();
+    for entry in Dir::read_from(descriptor).map_err(io_error)? {
+        let entry = entry.map_err(io_error)?;
+        let name = OsStr::from_bytes(entry.file_name().to_bytes());
+        if name != OsStr::new(".") && name != OsStr::new("..") {
+            names.push(name.to_os_string());
+        }
+    }
+    Ok(names)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -273,25 +280,13 @@ where
             path: target.display().to_string(),
             source: error,
         })?;
-        let entries = Dir::read_from(descriptor).map_err(|error| FsError::Io {
-            path: source.display().to_string(),
-            source: error.into(),
-        })?;
-        for entry in entries {
-            let entry = entry.map_err(|error| FsError::Io {
-                path: source.display().to_string(),
-                source: error.into(),
-            })?;
-            let name = OsStr::from_bytes(entry.file_name().to_bytes());
-            if name == OsStr::new(".") || name == OsStr::new("..") {
-                continue;
-            }
-            let child_path = source.join(name);
-            let child = open_child(descriptor, name, &child_path)?;
+        for name in child_names(descriptor, source)? {
+            let child_path = source.join(&name);
+            let child = open_child(descriptor, &name, &child_path)?;
             copy_entry(
                 &child,
                 &child_path,
-                &target.join(name),
+                &target.join(&name),
                 depth + 1,
                 cancel,
                 report,

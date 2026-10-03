@@ -159,24 +159,10 @@ impl Core {
         let job_id = jobs.spawn("quality", "Quality", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-            match build::run_quality(&root, kind, profile, &toolchain, &tools, &cancel, &mut sink) {
-                Ok(outcome) => {
-                    ctx.emit_event(
-                        "event.quality.finished",
-                        json!({
-                            "jobId": ctx.id(),
-                            "success": outcome.success,
-                            "exitCode": outcome.exit_code,
-                            "diagnostics": outcome.diagnostics,
-                        }),
-                    );
-                    job_outcome(outcome.success)
-                }
-                Err(error) => {
-                    emit_run_error(ctx, "quality", &error.to_string());
-                    JobOutcome::Failed
-                }
-            }
+            finish_quality_job(
+                ctx,
+                build::run_quality(&root, kind, profile, &toolchain, &tools, &cancel, &mut sink),
+            )
         });
 
         JsonRpcResponse::success(request_id, json!(JobAcceptedResult { job_id }))
@@ -358,6 +344,32 @@ pub(super) fn emit_run_error(ctx: &JobContext, domain: &str, message: &str) {
         &format!("event.{domain}.finished"),
         json!({ "jobId": ctx.id(), "success": false, "error": message }),
     );
+}
+
+/// O fim de um job de QUALIDADE (o `quality` e o `cargo.check`): o evento
+/// `event.quality.finished` com os diagnosticos, ou a falha com a mensagem.
+pub(super) fn finish_quality_job(
+    ctx: &JobContext,
+    result: Result<build::BuildOutcome, build::BuildError>,
+) -> JobOutcome {
+    match result {
+        Ok(outcome) => {
+            ctx.emit_event(
+                "event.quality.finished",
+                json!({
+                    "jobId": ctx.id(),
+                    "success": outcome.success,
+                    "exitCode": outcome.exit_code,
+                    "diagnostics": outcome.diagnostics,
+                }),
+            );
+            job_outcome(outcome.success)
+        }
+        Err(error) => {
+            emit_run_error(ctx, "quality", &error.to_string());
+            JobOutcome::Failed
+        }
+    }
 }
 
 pub(super) const fn job_outcome(success: bool) -> JobOutcome {
