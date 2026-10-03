@@ -20,4 +20,6 @@ ARCHITECTURE.md                  as regras: camadas, corte por responsabilidade,
 33-busca-no-projeto.md           os três buscadores
 35-crescer-sem-god-object.md     a análise de arquitetura: o que está saudável e
                                  o que recusar
+36-casca-da-ide.md               a janela principal: moldura, ilha, trilhos,
+                                 barras arrastáveis, layout gravado e foco
 ```

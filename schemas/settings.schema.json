@@ -121,6 +121,13 @@
             },
             "tab": {
               "type": "string"
+            },
+            "pinned": {
+              "type": "array",
+              "description": "Abas fixadas no painel de baixo (0.3.7): ficam na faixa mesmo sem conteudo.",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
