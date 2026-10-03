@@ -130,7 +130,9 @@ void EditorHighlighter::trackEdit(int position, int charsRemoved, int charsAdded
     const int start = first.blockNumber();
     QSet<int> dirty;
     for (int line = start; line <= start + std::max(0, delta); ++line) {
-        if (m_semanticSpansByLine.contains(line) || (line != start && m_syntaxSpansByLine.contains(line))) {
+        if (m_semanticSpansByLine.contains(line) ||
+            (line != start && m_syntaxSpansByLine.contains(line)))
+        {
             dirty.insert(line);
         }
     }

@@ -43,11 +43,13 @@ template <typename Span>
         const int line = it.key();
         if (line < start) {
             moved.insert(line, it.value());
-        } else if (line == start) {
+        }
+        else if (line == start) {
             if (keepStart) {
                 moved.insert(line, it.value());
             }
-        } else if (line > lastTouched) {
+        }
+        else if (line > lastTouched) {
             moved.insert(line + delta, it.value());
         }
     }
