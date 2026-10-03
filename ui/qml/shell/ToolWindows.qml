@@ -55,50 +55,15 @@ Item {
     // Os PAINEIS das entradas. Cada um amarra o seu controller; o que e' igual
     // (ancoras, z, folga da janela) fica com quem os monta. `parent` aqui e' o
     // `Loader` do host, que preenche a janela.
-    readonly property Component embeddedPanel: Component {
-        EmbeddedPanelHost {
-            controller: root.embeddedController
-            toolchainController: root.toolchainController
-            maxAvailableWidth: parent.width - 4 * Theme.spacingMedium
-            maxAvailableHeight: parent.height - 4 * Theme.spacingMedium
-            onDismissRequested: root.embeddedController.close()
-        }
-    }
-
-    readonly property Component databasePanel: Component {
-        DataSourcePanelHost {
-            controller: root.dataSourceController
-            maxAvailableWidth: parent.width - 4 * Theme.spacingMedium
-            maxAvailableHeight: parent.height - 4 * Theme.spacingMedium
-            onDismissRequested: root.dataSourceController.close()
-        }
-    }
-
-    readonly property Component containersPanel: Component {
-        ContainerPanelHost {
-            controller: root.containerController
-            maxAvailableWidth: parent.width - 4 * Theme.spacingMedium
-            maxAvailableHeight: parent.height - 4 * Theme.spacingMedium
-            onDismissRequested: root.containerController.close()
-        }
-    }
-
-    readonly property Component remotePanel: Component {
-        RemotePanelHost {
-            controller: root.remoteController
-            maxAvailableWidth: parent.width - 4 * Theme.spacingMedium
-            maxAvailableHeight: parent.height - 4 * Theme.spacingMedium
-            onDismissRequested: root.remoteController.close()
-        }
-    }
-
-    readonly property Component observabilityPanel: Component {
-        GrafanaPanelHost {
-            controller: root.grafanaController
-            maxAvailableWidth: parent.width - 4 * Theme.spacingMedium
-            maxAvailableHeight: parent.height - 4 * Theme.spacingMedium
-            onDismissRequested: root.grafanaController.close()
-        }
+    // Os paineis de ambiente que as entradas abrem (dono proprio desde a
+    // 0.3.9: este arquivo diz QUAIS areas existem; aquele, COMO cada painel nasce).
+    readonly property ToolWindowPanels panels: ToolWindowPanels {
+        embeddedController: root.embeddedController
+        toolchainController: root.toolchainController
+        dataSourceController: root.dataSourceController
+        containerController: root.containerController
+        remoteController: root.remoteController
+        grafanaController: root.grafanaController
     }
 
     // O GIT SAIU DO TRILHO em 2026-09-24, por observacao do autor: o widget do
@@ -155,7 +120,7 @@ Item {
             "factKey": "project.embedded", "commandId": "probe.list", "shortcut": "Ctrl+Alt+M",
             "active": root.embeddedController !== null && root.embeddedController !== undefined
                       && root.embeddedController.panelVisible
-            ,"panel": root.embeddedPanel
+            ,"panel": root.panels.embeddedPanel
         },
         // Ferramentas NATIVAS com atalho visual (decisao do autor, 2026-09-12;
         // a ordem e o banco em 2026-09-13): banco, containers e observabilidade
@@ -169,7 +134,7 @@ Item {
             "factKey": "datasource.any", "commandId": "datasource.list", "shortcut": "Ctrl+Alt+J",
             "active": root.dataSourceController !== null && root.dataSourceController !== undefined
                       && root.dataSourceController.panelVisible
-            ,"panel": root.databasePanel
+            ,"panel": root.panels.databasePanel
         },
         {
             "id": "containers", "label": "", "icon": "container",
@@ -179,7 +144,7 @@ Item {
             "factKey": "container.engine", "commandId": "container.list", "shortcut": "Ctrl+Alt+W",
             "active": root.containerController !== null && root.containerController !== undefined
                       && root.containerController.panelVisible
-            ,"panel": root.containersPanel
+            ,"panel": root.panels.containersPanel
         },
         // O REMOTE entrou no trilho na V4 (2026-09-25), e custou esta entrada —
         // era o aceite da V3, exercitado. Ele abre SEM projeto aberto pelo mesmo
@@ -193,7 +158,7 @@ Item {
             "factKey": "remote.any", "commandId": "remote.list", "shortcut": "",
             "active": root.remoteController !== null && root.remoteController !== undefined
                       && root.remoteController.panelVisible
-            ,"panel": root.remotePanel
+            ,"panel": root.panels.remotePanel
         },
         {
             "id": "observability", "label": qsTr("Grafana"), "icon": "observability",
@@ -203,7 +168,7 @@ Item {
             "factKey": "grafana.instance", "commandId": "grafana.get", "shortcut": "Ctrl+Alt+O",
             "active": root.grafanaController !== null && root.grafanaController !== undefined
                       && root.grafanaController.panelVisible
-            ,"panel": root.observabilityPanel
+            ,"panel": root.panels.observabilityPanel
         },
         {
             "id": "tools", "label": "", "icon": "tools",
