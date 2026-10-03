@@ -541,13 +541,13 @@ carga    medir antes: hoje os overlays de ambiente são criados na abertura
 
 ### 5.9 F5 — prova da versão
 
-**Andamento (2026-10-03, 40.7 §7.201):** espaço de código, gestos e
-desempenho comparados com a 0.3.5 e a F0. A primeira linha subiu 68 px, e
-cabem de 4 a 5 linhas a mais em toda largura. A medida achou e corrigiu uma
-regressão de digitação (§7.198). O primeiro quadro está em 400 ms, no limite
-do orçamento (F0: 372 ms), por acúmulo de fatias; criar sob demanda o que só
-existe com projeto aberto é a proposta, para decisão do autor. Falta a tarefa
-real cronometrada pela mão do autor.
+**Andamento (2026-10-03, 40.7 §7.201, §7.203 e §7.204):** espaço de código,
+gestos e desempenho comparados com a 0.3.5 e a F0. A primeira linha subiu
+68 px, e cabem de 4 a 5 linhas a mais em toda largura. A medida achou e
+corrigiu uma regressão de digitação (§7.198). O primeiro quadro caiu de 404
+para 247 ms com a criação sob demanda medida por componente (§7.203). A
+sessão na tela real, com o mouse e o teclado do autor, mediu gestos e
+resposta e corrigiu os Problemas ilegíveis (§7.204). **A F5 está completa.**
 
 Comparação antes/depois na mesma máquina; tarefa real cronometrada e com
 contagem de gestos: abrir projeto, achar arquivo, alternar painel, compilar,

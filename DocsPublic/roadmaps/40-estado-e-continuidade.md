@@ -10,17 +10,18 @@
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
 > - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.148.0`,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.201.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.204.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
->   - **F0–F4 completas.** A **F5** (§7.201) comparou espaço de código (+4 a
->     5 linhas em toda largura), gestos e desempenho, e achou e corrigiu uma
->     regressão de digitação (§7.198). Falta a tarefa real cronometrada pela
->     mão do autor.
->   - **Proposta aberta para o autor decidir:** o primeiro quadro está em
->     400 ms, no limite do orçamento (F0: 372 ms), por acúmulo de fatias.
->     Criar sob demanda o que só existe com projeto aberto o devolve, mas
->     mexe no ciclo de vida de controladores e terminais.
+>   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
+>     (+4 a 5 linhas em toda largura), gestos e desempenho, e foi feita
+>     também na tela real com o mouse e o teclado do autor. Ela achou e
+>     corrigiu a regressão de digitação (§7.198) e os Problemas ilegíveis
+>     (§7.204).
+>   - **Primeiro quadro: 247 ms** (era 404 ms; orçamento 400). A criação sob
+>     demanda, medida por componente no qmlprofiler, está no §7.203.
+>   - **Perfil de rigor no C/C++ corrigido** (§7.202): trocar com o projeto
+>     aberto agora reconfigura e muda o build.
 >   - **Dívida anotada:** 20 campos de texto feitos à mão em 18 arquivos (um
 >     `KvTextField` é fatia própria, §7.199).
 > - **Próximo:** a 0.4 (embarcados, [`52`](52-arquitetura-executavel-da-0.4.md)),
