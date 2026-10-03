@@ -678,17 +678,22 @@ Everywhere). No v1 há quatro opções, que valem para **todos os projetos**:
 - **Fechar pares automaticamente**: liga/desliga o auto-fechamento de
   `( [ { " '` ao digitar.
 - **Perfil de rigor**: regula o quanto os botões **[Verificar]** e
-  **[Compilar]** apertam **o seu projeto** (nunca o próprio Kinein).
-  Três níveis:
-  - **Estrito** (padrão): clippy com `pedantic` + `nursery` e warning
-    vira erro (`cargo build` também falha em warning). É a régua da casa
-    — o código sai afiado.
-  - **Equilibrado**: clippy padrão (bugs, estilo, performance), warnings
-    aparecem mas não travam o build.
-  - **Relaxado**: só o essencial (`clippy::correctness` — bugs reais);
-    o resto é permitido. Bom para prototipar rápido.
-  Só afeta projetos **Rust** no v1; trocar de perfil recompila o projeto
-  (o `cargo` reavalia as flags).
+  **[Compilar]** apertam **o seu projeto** (nunca o próprio Kinein). Vale
+  no próximo build: trocar com o projeto aberto basta, e a IDE reconfigura
+  ou recompila o que precisar.
+
+  | | Estrito (padrão) | Equilibrado | Relaxado |
+  | --- | --- | --- | --- |
+  | **C/C++ (CMake)** | aviso do compilador **para o build** (`CMAKE_COMPILE_WARNING_AS_ERROR=ON`) | o projeto decide (se ele pede aviso como erro, vale) | aviso **nunca** para o build, nem quando o projeto pede (`--compile-no-warning-as-error`) |
+  | **Rust** | `cargo build` falha em warning; clippy `pedantic` + `nursery` | clippy padrão; warning não trava | só `clippy::correctness` |
+  | **Python** | ruff com `E,F,W,I,UP,B,N` (quando o projeto não declara regras) | regras do ruff padrão | só os erros graves (`E9,F63,F7,F82`) |
+
+  No C/C++ a IDE **não acrescenta avisos** (`-Wall` e companhia são do
+  seu `CMakeLists`); ela decide se um aviso para o build. Isso usa o
+  mecanismo oficial do CMake 3.24+, sem tocar no `CMakeLists` nem nas suas
+  flags. Num CMake mais antigo, o Relaxado fica igual ao Equilibrado. O
+  clang-tidy (**[Verificar]** no C/C++) segue o `.clang-tidy` do projeto, e
+  um Makefile puro ainda não recebe o perfil.
 
 As configurações ficam em `~/.config/kinein-vectis/settings.json`. Um
 projeto pode ter ajustes próprios em `.kinein/settings.json` (têm

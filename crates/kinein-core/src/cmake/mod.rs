@@ -6,6 +6,9 @@
 //! file-api oficial do `CMake`, nunca de parser proprio de `CMakeLists.txt`.
 
 pub mod model;
+mod rigor;
+
+pub use rigor::{applied_rigor, configure_with_rigor, needs_configure, record_rigor, rigor_key};
 
 use std::{
     fs, io,
@@ -160,6 +163,7 @@ pub fn configure_command(
     preset: Option<&str>,
     toolchain: &crate::toolchain::Toolchain,
     extra: &[String],
+    rigor: &[String],
 ) -> Command {
     let programa = toolchain
         .program_for(ToolchainRole::Cmake)
@@ -170,6 +174,9 @@ pub fn configure_command(
     }
     command.arg("-S").arg(root).arg("-B").arg(build_dir(root));
     command.arg("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON");
+    // O perfil de rigor (M4.5) ANTES do kit e do framework: um `-D` explicito
+    // deles continua valendo por ultimo, como a regra abaixo pede.
+    command.args(rigor);
     // Depois do `-D` fixo e antes de nada: um preset que ja escolhe gerador
     // conflita com um `-G` explicito, e o CMake reclama em vez de adivinhar —
     // que e o comportamento certo, e a mensagem dele nomeia o conflito.
@@ -488,7 +495,13 @@ mod tests {
     #[test]
     fn configure_command_pins_build_dir_and_exports_cdb() {
         let root = temp_root("command");
-        let command = configure_command(&root, Some("dev"), &Toolchain::resolve(&root, &[]), &[]);
+        let command = configure_command(
+            &root,
+            Some("dev"),
+            &Toolchain::resolve(&root, &[]),
+            &[],
+            &[],
+        );
         let arguments = command
             .get_args()
             .map(|argument| argument.to_string_lossy().into_owned())

@@ -141,11 +141,7 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.settingsController.closeDialog()
-        onSettingChanged: function(key, value) {
-            const values = {};
-            values[key] = value;
-            root.settingsController.setGlobal(values);
-        }
+        onSettingChanged: (key, value) => root.settingsController.setWhereItLives(key, value)
     }
 
     ToolchainMenu {

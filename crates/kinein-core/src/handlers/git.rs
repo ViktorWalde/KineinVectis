@@ -9,7 +9,7 @@ use kinein_protocol::{
 };
 use serde_json::{Value, json};
 
-use crate::rpc::{no_workspace_response, parse_params};
+use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 use crate::{Core, git};
 
 impl Core {
@@ -142,14 +142,7 @@ impl Core {
             return no_workspace_response(request_id, method);
         };
         let Some(jobs) = self.jobs.as_ref() else {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InternalError,
-                    "jobs nao estao habilitados neste loop do core",
-                    Some(json!({ "method": method })),
-                ),
-            );
+            return jobs_unavailable_response(request_id, method);
         };
         self.syntax.clear();
         self.workspace_edits.clear();

@@ -7,7 +7,7 @@ use kinein_protocol::{
 };
 use serde_json::{Value, json};
 
-use crate::rpc::{no_workspace_response, parse_params};
+use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 use crate::{Core, cmake, jobs, process};
 
 /// Linguagem cujos documentos o `cmake.configure` invalida.
@@ -110,14 +110,7 @@ impl Core {
             Err(response) => return *response,
         };
         let Some(jobs) = self.jobs.as_ref() else {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InternalError,
-                    "jobs nao estao habilitados neste loop do core",
-                    Some(json!({ "method": "cmake.configure" })),
-                ),
-            );
+            return jobs_unavailable_response(request_id, "cmake.configure");
         };
 
         // O preset (P0 do 40 §4.1, 2026-09-17): o pedido (o kit ativo, que a
@@ -140,6 +133,9 @@ impl Core {
         let toolchain =
             crate::toolchain::Toolchain::resolve_kit(&root, &self.detected_tools(), &kit);
         let extra = self.framework_cmake_args(&root);
+        // O perfil de rigor do usuario (M4.5) entra no configure, como no
+        // configure que o build faz sozinho.
+        let profile = crate::settings::effective_rigor_profile(&root);
         let job_id = jobs.spawn(
             "cmake.configure",
             "CMake Configure",
@@ -150,8 +146,13 @@ impl Core {
                 if let Err(error) = cmake::write_file_api_query(&root) {
                     ctx.emit_output(&format!("aviso: query do file-api falhou: {error}"));
                 }
-                let command =
-                    cmake::configure_command(&root, preset.as_deref(), &toolchain, &extra);
+                let command = cmake::configure_with_rigor(
+                    &root,
+                    preset.as_deref(),
+                    &toolchain,
+                    &extra,
+                    profile,
+                );
                 let label = preset.as_deref().map_or_else(
                     || "cmake configure".to_owned(),
                     |name| format!("cmake configure --preset {name}"),
@@ -187,6 +188,7 @@ impl Core {
                 };
                 if success {
                     cmake::record_preset(&root, preset.as_deref());
+                    cmake::record_rigor(&root, profile);
                 }
                 let status = cmake::status(&root);
                 ctx.emit_event(

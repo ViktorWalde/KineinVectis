@@ -16,7 +16,7 @@ crates/kinein-core/src/build/mod.rs	alvo	4
 crates/kinein-core/src/build/mod.rs	aplica	4
 crates/kinein-core/src/build/mod.rs	declara	2
 crates/kinein-core/src/build/mod.rs	padrao	2
-crates/kinein-core/src/build/mod.rs	programa	6
+crates/kinein-core/src/build/mod.rs	programa	5
 crates/kinein-core/src/build/mod.rs	projeto	2
 crates/kinein-core/src/build/parse.rs	aviso	6
 crates/kinein-core/src/build/parse.rs	codigo	9

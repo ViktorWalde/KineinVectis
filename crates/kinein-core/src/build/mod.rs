@@ -5,6 +5,7 @@
 //! `--message-format=json`, CMake/compilers via the classic
 //! `file:line:column: level: message` format.
 
+mod cmake;
 pub mod engine;
 mod frameworks;
 mod make;
@@ -255,9 +256,12 @@ pub fn run_build(
         .unwrap_or_default();
     match kind {
         ProjectKind::RustCargo => run_cargo_build(root, profile, toolchain, cancel, sink),
-        // C++ CMake -Werror por perfil fica para uma fatia futura (injetar
-        // flag no build do usuario e invasivo — DocsPublic/roadmaps/21-roadmap-de-longo-prazo.md §M4.5).
-        ProjectKind::Cmake => run_cmake_build(root, toolchain, &extra, cancel, sink),
+        // C/C++: o perfil entra no configure pelo mecanismo do proprio CMake
+        // (`CMAKE_COMPILE_WARNING_AS_ERROR`, cmake::rigor_arguments), sem
+        // tocar no CMakeLists nem nas flags do usuario (M4.5, 2026-10-03).
+        ProjectKind::Cmake => {
+            cmake::run_cmake_build(root, profile, toolchain, &extra, cancel, sink)
+        }
         ProjectKind::Make => make::run_make_build(root, make_tools, cancel, sink),
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
@@ -384,46 +388,6 @@ fn run_cargo_build(
         command,
         "cargo build",
         DiagnosticFormat::CargoJson,
-        cancel,
-        sink,
-    )
-}
-
-fn run_cmake_build(
-    root: &Path,
-    toolchain: &Toolchain,
-    extra: &[String],
-    cancel: &Arc<AtomicBool>,
-    sink: &mut dyn FnMut(BuildEvent),
-) -> Result<BuildOutcome, BuildError> {
-    let build_dir = root.join(".kinein").join("build");
-
-    if !build_dir.join("CMakeCache.txt").is_file() {
-        let mut configure = Command::new(programa(toolchain, ToolchainRole::Cmake, "cmake"));
-        configure.arg("-S").arg(root).arg("-B").arg(&build_dir);
-        configure.args(toolchain.cmake_arguments());
-        // O que o framework acrescenta (`-DPICO_SDK_PATH`, bloco E).
-        configure.args(extra);
-
-        let outcome = stream_command(
-            configure,
-            "cmake (configure)",
-            DiagnosticFormat::GccLike,
-            cancel,
-            sink,
-        )?;
-        if !outcome.success {
-            return Ok(outcome);
-        }
-    }
-
-    let mut build = Command::new(programa(toolchain, ToolchainRole::Cmake, "cmake"));
-    build.arg("--build").arg(&build_dir);
-
-    stream_command(
-        build,
-        "cmake --build",
-        DiagnosticFormat::GccLike,
         cancel,
         sink,
     )

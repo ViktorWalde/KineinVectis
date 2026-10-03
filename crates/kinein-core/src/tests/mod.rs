@@ -35,6 +35,7 @@ mod project;
 mod python;
 mod remote;
 mod remote_mirror;
+mod rigor;
 mod run;
 mod runconfig;
 mod runners;

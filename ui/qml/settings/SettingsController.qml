@@ -81,6 +81,16 @@ Item {
         setRequested("global", values);
     }
 
+    // Uma escolha do dialogo vai para ONDE o valor mora: se o projeto o
+    // define no proprio settings, e' la' que ela tem efeito — gravada no
+    // global, ficaria por baixo do valor do projeto e a troca nao valeria
+    // (2026-10-03, o perfil de rigor que "nao mudava").
+    function setWhereItLives(key, value) {
+        const values = {};
+        values[key] = value;
+        setRequested(workspaceValues[key] !== undefined ? "workspace" : "global", values);
+    }
+
     // O layout e' por projeto (53 §4.4): o shell diz o escopo ("workspace" ou
     // "global"); outro valor o core recusa (`SettingsScope`).
     function setScoped(scope, values) {

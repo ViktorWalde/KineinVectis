@@ -230,7 +230,7 @@ Item {
 
                 Text {
                     width: parent.width
-                    text: qsTr("Regula clippy e warnings do SEU projeto (não afeta o Kinein)")
+                    text: qsTr("Se um aviso do compilador para o build do SEU projeto (C/C++ com CMake, Rust) e quanto o lint aperta (clippy, ruff). Vale no próximo build. Detalhes no manual, §7.")
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontSizeCaption
                     wrapMode: Text.WordWrap

@@ -7,7 +7,7 @@ use kinein_protocol::{
 use serde_json::{Value, json};
 
 use super::build::{emit_build_event, finish_quality_job};
-use crate::rpc::no_workspace_response;
+use crate::rpc::{jobs_unavailable_response, no_workspace_response};
 use crate::{Core, build, cargo};
 
 impl Core {
@@ -71,14 +71,7 @@ impl Core {
             Err(response) => return *response,
         };
         let Some(jobs) = self.jobs.as_ref() else {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InternalError,
-                    "jobs nao estao habilitados neste loop do core",
-                    Some(json!({ "method": "cargo.check" })),
-                ),
-            );
+            return jobs_unavailable_response(request_id, "cargo.check");
         };
 
         // Reusa o pipeline de eventos do quality: mesmo JSON de diagnostics,

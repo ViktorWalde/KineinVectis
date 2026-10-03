@@ -17,11 +17,11 @@
 use std::sync::{Arc, Mutex};
 
 use kinein_protocol::{
-    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ToolInfo,
-    ToolStatus, ToolsDetectResult,
+    JobAcceptedResult, JobRisk, JsonRpcResponse, ToolInfo, ToolStatus, ToolsDetectResult,
 };
 use serde_json::{Value, json};
 
+use crate::rpc::jobs_unavailable_response;
 use crate::tools::KNOWN_TOOLS;
 use crate::{Core, jobs};
 
@@ -83,14 +83,7 @@ impl Core {
     /// progresso por ferramenta. Longo por natureza — nunca síncrono.
     pub(crate) fn environment_scan_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
         let Some(jobs) = self.jobs.as_ref() else {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InternalError,
-                    "jobs nao estao habilitados neste loop do core",
-                    Some(json!({ "method": "environment.scan" })),
-                ),
-            );
+            return jobs_unavailable_response(request_id, "environment.scan");
         };
 
         let detector = self.detector.clone();
