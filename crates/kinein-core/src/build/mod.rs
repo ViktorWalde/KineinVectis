@@ -211,10 +211,14 @@ fn aplica_alvo(command: &mut Command, toolchain: &Toolchain) {
 
 /// Executavel de um papel da toolchain, caindo no nome nu quando nao ha
 /// escolha fixada — que e o padrao e mantem o `PATH` no comando.
-fn programa(toolchain: &Toolchain, role: ToolchainRole, padrao: &str) -> std::path::PathBuf {
+fn program_for_role(
+    toolchain: &Toolchain,
+    role: ToolchainRole,
+    fallback: &str,
+) -> std::path::PathBuf {
     toolchain
         .program_for(role)
-        .unwrap_or_else(|| std::path::PathBuf::from(padrao))
+        .unwrap_or_else(|| std::path::PathBuf::from(fallback))
 }
 
 /// O que o handler resolve para o job (o job nao alcanca o detector nem o
@@ -279,7 +283,7 @@ pub fn run_cargo_check(
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
-    let mut command = Command::new(programa(toolchain, ToolchainRole::Cargo, "cargo"));
+    let mut command = Command::new(program_for_role(toolchain, ToolchainRole::Cargo, "cargo"));
     command
         .arg("check")
         .arg("--workspace")
@@ -343,7 +347,8 @@ pub fn run_quality(
             )
         }
         ProjectKind::RustCargo => {
-            let mut command = Command::new(programa(toolchain, ToolchainRole::Cargo, "cargo"));
+            let mut command =
+                Command::new(program_for_role(toolchain, ToolchainRole::Cargo, "cargo"));
             command
                 .arg("clippy")
                 .arg("--all-targets")
@@ -372,7 +377,7 @@ fn run_cargo_build(
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
-    let mut command = Command::new(programa(toolchain, ToolchainRole::Cargo, "cargo"));
+    let mut command = Command::new(program_for_role(toolchain, ToolchainRole::Cargo, "cargo"));
     command
         .arg("build")
         .arg("--message-format=json")

@@ -70,6 +70,12 @@ Arguments parse(const QStringList& arguments, const QString& currentDirectory)
             verbose = true;
             continue;
         }
+        if (raw.startsWith(QLatin1String("-qmljsdebugger="))) {
+            // A opcao do PROPRIO Qt para o qmlprofiler e o depurador QML. So'
+            // age num build com QT_QML_DEBUG; nos outros o Qt a ignora. E' a
+            // porta para medir a abertura por componente (0.3.9, 40.7 §7.203).
+            continue;
+        }
         if (raw.startsWith(QLatin1Char('-'))) {
             // Opcao desconhecida e' recusa, nao algo a ignorar: ignorar faria a
             // IDE abrir fingindo que entendeu o que a pessoa pediu.

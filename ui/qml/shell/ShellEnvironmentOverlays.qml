@@ -46,23 +46,31 @@ Item {
         // component outside its creation context") — os cinco paineis de
         // ambiente nao abriam no pacote, so' no checkout com Qt mais novo.
         // `createObject` usa o contexto de criacao do componente nas duas.
-        // Criado uma vez, alternando so' `visible`.
+        // Criado na PRIMEIRA abertura e guardado (o estado do painel fica):
+        // criar os cinco na abertura da IDE pesava no primeiro quadro
+        // (qmlprofiler, 40.7 §7.203).
         Item {
             id: panelSlot
 
             required property int index
             readonly property var entry: root.toolWindows === null
                                          ? undefined : root.toolWindows.overlayEntries[panelSlot.index]
+            property Item panel: null
 
             anchors.fill: parent
             z: 99
             visible: panelSlot.entry !== undefined && panelSlot.entry.active === true
 
-            Component.onCompleted: {
+            function ensurePanel() {
+                if (panelSlot.panel !== null || !panelSlot.visible) return;
                 const panel = panelSlot.entry.panel.createObject(panelSlot);
                 panel.width = Qt.binding(() => panelSlot.width);
                 panel.height = Qt.binding(() => panelSlot.height);
+                panelSlot.panel = panel;
             }
+
+            onVisibleChanged: panelSlot.ensurePanel()
+            Component.onCompleted: panelSlot.ensurePanel()
         }
     }
 

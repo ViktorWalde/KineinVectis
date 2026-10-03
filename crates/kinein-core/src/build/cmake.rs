@@ -10,7 +10,9 @@ use std::{
 
 use kinein_protocol::{RigorProfile, ToolchainRole};
 
-use super::{BuildError, BuildEvent, BuildOutcome, DiagnosticFormat, programa, stream_command};
+use super::{
+    BuildError, BuildEvent, BuildOutcome, DiagnosticFormat, program_for_role, stream_command,
+};
 use crate::toolchain::Toolchain;
 
 pub(super) fn run_cmake_build(
@@ -52,7 +54,7 @@ pub(super) fn run_cmake_build(
         crate::cmake::record_rigor(root, profile);
     }
 
-    let mut build = Command::new(programa(toolchain, ToolchainRole::Cmake, "cmake"));
+    let mut build = Command::new(program_for_role(toolchain, ToolchainRole::Cmake, "cmake"));
     build.arg("--build").arg(&build_dir);
 
     stream_command(

@@ -81,21 +81,35 @@ Item {
 
     Component.onCompleted: {
         let failures = 0;
-        failures += check(root.created === 2, "dois paineis criados: " + root.created);
+        // Nada aberto, nada criado: o painel nasce na primeira abertura
+        // (40.7 §7.203; criar os cinco na abertura pesava no primeiro quadro).
+        failures += check(root.created === 0, "nenhum painel criado fechado: " + root.created);
         const before = slots();
         failures += check(before.length === 2 && !before[0].visible, "duas vagas, fechadas");
-        before[0].children[0].typed = "host.example";
 
         // A lista refeita, como faz o ToolWindows quando um painel abre.
         fakeToolWindows.overlayEntries = [
             { "id": "remote", "active": true, "panel": fakePanel },
             { "id": "database", "active": false, "panel": fakePanel }
         ];
-        const after = slots();
-        failures += check(root.created === 2, "nenhum painel recriado: " + root.created);
-        failures += check(after[0] === before[0] && after[0].visible && !after[1].visible,
+        const opened = slots();
+        failures += check(root.created === 1, "abrir cria so' o aberto: " + root.created);
+        failures += check(opened[0] === before[0] && opened[0].visible && !opened[1].visible,
                           "a mesma vaga, agora visivel");
-        failures += check(after[0].children[0].typed === "host.example", "o painel guardou o digitado");
+        opened[0].panel.typed = "host.example";
+
+        // Fecha e reabre (a lista refeita outra vez): o mesmo painel volta.
+        fakeToolWindows.overlayEntries = [
+            { "id": "remote", "active": false, "panel": fakePanel },
+            { "id": "database", "active": false, "panel": fakePanel }
+        ];
+        fakeToolWindows.overlayEntries = [
+            { "id": "remote", "active": true, "panel": fakePanel },
+            { "id": "database", "active": false, "panel": fakePanel }
+        ];
+        const again = slots();
+        failures += check(root.created === 1, "reabrir nao recria: " + root.created);
+        failures += check(again[0].panel.typed === "host.example", "o painel guardou o digitado");
 
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);

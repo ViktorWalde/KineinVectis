@@ -57,7 +57,7 @@ appdir cargotoml cmakelists makefile readme dist micro pico pong mtime ctime
 vmrss sqlstate dbname cert getmtime
 
 # --- ferramentas, sistemas e bibliotecas externas
-cmake ctest clangd clippy rustfmt rustc rustup rustflags cargo pytest gtest
+cmake ctest clangd clippy rustfmt rustc rustup rustflags cargo pytest gtest profiler qmlprofiler
 podman rsync openssh openocd qemu gdbserver picotool picocom esptool espflash
 espressif mpremote micropython debugpy pyright basedpyright maturin pipx pacman
 redhat yocto buildroot bootlin xpacks linuxdeploy appimage binutils lcov llvm

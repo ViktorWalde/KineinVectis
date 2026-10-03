@@ -8,6 +8,11 @@ import KineinVectis
 Item {
     id: root
 
+    // O manual inteiro so' entra no TextEdit na PRIMEIRA abertura, e fica.
+    // Parsear o Markdown dele na abertura da IDE, com o dialogo escondido,
+    // era o maior custo do primeiro quadro (qmlprofiler, 40.7 §7.203).
+    property bool manualLoaded: false
+
     property real maxAvailableWidth: 1100
     property real maxAvailableHeight: 760
 
@@ -15,6 +20,7 @@ Item {
 
     onVisibleChanged: {
         if (visible) {
+            manualLoaded = true;
             forceActiveFocus();
         }
     }
@@ -141,7 +147,7 @@ Item {
                 width: manualFlick.width - 2 * Theme.spacingLarge
                 readOnly: true
                 selectByMouse: true
-                text: Documentation.manualMarkdown
+                text: root.manualLoaded ? Documentation.manualMarkdown : ""
                 textFormat: TextEdit.MarkdownText
                 wrapMode: TextEdit.Wrap
                 color: Theme.textPrimary

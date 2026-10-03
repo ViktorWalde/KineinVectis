@@ -33,6 +33,7 @@ private slots:
     void unknown_option_is_refused_not_ignored();
     void two_paths_are_refused_naming_both();
     void the_separator_hands_the_rest_to_qt();
+    void the_qml_profiler_option_belongs_to_qt();
     void the_disk_says_what_is_wrong();
     void wait_and_verbose_are_parsed();
     void detaches_only_when_a_terminal_calls();
@@ -113,6 +114,19 @@ void TestCliArgs::the_separator_hands_the_rest_to_qt()
                          QStringLiteral("/x"));
     QCOMPARE(r.action, Action::Open);
     QCOMPARE(r.folder, QStringLiteral("/tmp"));
+}
+
+void TestCliArgs::the_qml_profiler_option_belongs_to_qt()
+{
+    // O qmlprofiler poe `-qmljsdebugger=...` ANTES de tudo (nao ha' como
+    // passar `--` antes dele). E' opcao do Qt: nao e' pasta nem recusa.
+    const auto r =
+        parse({QStringLiteral("-qmljsdebugger=file:/tmp/x,block"), QStringLiteral("/tmp")},
+              QStringLiteral("/x"));
+    QCOMPARE(r.action, Action::Open);
+    QCOMPARE(r.folder, QStringLiteral("/tmp"));
+    // So' ela: um parecido continua recusado.
+    QCOMPARE(parse({QStringLiteral("-qmljsdebug")}, QStringLiteral("/x")).action, Action::Refusal);
 }
 
 void TestCliArgs::the_disk_says_what_is_wrong()
