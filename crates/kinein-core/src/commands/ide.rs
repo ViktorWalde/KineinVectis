@@ -77,6 +77,25 @@ pub(super) fn settings_command_descriptors() -> Vec<CommandDescriptor> {
             default_shortcut: None,
             requires_workspace: false,
         },
+        // O modo Foco e o "voltar ao editor" (0.3.9 F4, roadmap 53 §5.8): mais
+        // espaco para o codigo num gesto, e o caminho de volta sempre a mao.
+        CommandDescriptor {
+            id: "view.focusMode".to_owned(),
+            title: "Modo Foco".to_owned(),
+            category: "IDE".to_owned(),
+            description: "Recolhe os paineis em volta do editor; de novo, restaura como estavam"
+                .to_owned(),
+            default_shortcut: Some("Ctrl+Shift+F12".to_owned()),
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "view.returnToEditor".to_owned(),
+            title: "Voltar ao editor".to_owned(),
+            category: "IDE".to_owned(),
+            description: "Devolve o foco do teclado ao editor".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
     ]
 }
 

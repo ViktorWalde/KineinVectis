@@ -512,6 +512,10 @@ estados  configurado / detectado / selecionado / efetivo quando o core
 
 ### 5.8 F4 — foco, teclado, densidade e modo Foco
 
+**Andamento (2026-10-02):** modo Foco e "Voltar ao editor" feitos (40.7
+§7.191, `view.focusMode` Ctrl+Shift+F12 e `view.returnToEditor`). Faltam o
+ciclo de foco entre áreas, o foco visível e o estreito abaixo de 1024 px.
+
 ```text
 foco     grafo explícito: trilho → dock esquerdo → editor → dock direito →
          painel de baixo → header → status; Ctrl+F6 (proposto, gate) percorre;

@@ -56,6 +56,12 @@ Item {
         case "view.areas":
             showTabRequested("areas");
             return true;
+        case "view.focusMode":
+            showTabRequested("focusMode");
+            return true;
+        case "view.returnToEditor":
+            editorController.focusEditor();
+            return true;
         case "workspace.close":
             coreClient.closeWorkspace();
             return true;

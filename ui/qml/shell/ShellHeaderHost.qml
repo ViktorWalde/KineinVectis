@@ -71,6 +71,8 @@ Rectangle {
         switch (action) {
         case "rail.restore": root.shellController.restoreRail(); break;
         case "view.areas": root.shellController.showTab("areas"); break;
+        case "view.focusMode": root.shellController.focusMode.toggle(); break;
+        case "view.returnToEditor": root.editorController.focusEditor(); break;
         case "workspace.open": root.shellController.requestOpenFolder(); break;
         case "workspace.createProject": root.shellController.requestFolder("createProject"); break;
         case "workspace.recent.clear": root.recentWorkspacesController.clearAll(); break;

@@ -2800,7 +2800,6 @@ scripts/qml-harness/tst_tests_output.qml	abas	3
 scripts/qml-harness/tst_tests_output.qml	descobertas	3
 scripts/qml-harness/tst_tool_windows.qml	chamadas	11
 scripts/qml-harness/tst_tool_windows.qml	falso	8
-scripts/qml-harness/tst_tool_windows.qml	janelas	17
 scripts/qml-harness/tst_tool_windows.qml	mensagem	2
 scripts/qml-harness/tst_tool_windows.qml	painel	5
 scripts/qml-harness/tst_tool_windows.qml	remoto	3

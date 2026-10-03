@@ -66,6 +66,9 @@ no checkout, não em nenhum pacote publicado.
   item, a origem fica esmaecida, a pasta de destino abre sozinha e diz
   "Mover para tests/"; soltar uma pasta dentro dela mesma aparece em
   vermelho e não acontece.
+- **Modo Foco.** Ctrl+Shift+F12 (ou Exibir → Modo Foco) recolhe os painéis
+  em volta do editor; o mesmo atalho os devolve exatamente como estavam.
+  Exibir → Voltar ao editor devolve o teclado ao código de qualquer lugar.
 - **Texto e ícones mais confortáveis.** O texto deixou o branco puro por um
   cinza-claro que continua bem legível (contraste acima de 7:1), e os ícones
   ganharam traço mais firme e uma cor própria, mais clara.

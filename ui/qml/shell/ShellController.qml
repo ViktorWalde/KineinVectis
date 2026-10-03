@@ -79,8 +79,17 @@ Item {
 
     // O que a pessoa abre e fecha tambem e' layout (R5: "volta como estava").
     onLeftWindowChanged: layoutStateChanged()
-    onShowExplorerChanged: layoutStateChanged()
-    onShowBottomPanelChanged: layoutStateChanged()
+    onShowExplorerChanged: {
+        focusMode.panelOpened(showExplorer);
+        layoutStateChanged();
+    }
+    onShowBottomPanelChanged: {
+        focusMode.panelOpened(showBottomPanel);
+        layoutStateChanged();
+    }
+    onOutlineCollapsedChanged: focusMode.panelOpened(!outlineCollapsed)
+    // O modo Foco (0.3.9 F4) tem dono proprio.
+    readonly property FocusModeController focusMode: FocusModeController { shell: root }
     onBottomTabChanged: layoutStateChanged()
 
     // Trocar de projeto: nada do anterior pode ser gravado no novo antes de
@@ -248,6 +257,11 @@ Item {
     function showTab(tab) {
         if (tab === "areas") {
             areasPanelRequested();
+            return;
+        }
+        // O modo Foco chega pelo mesmo canal do dispatcher (`view.focusMode`).
+        if (tab === "focusMode") {
+            focusMode.toggle();
             return;
         }
         if (tab === "git") {

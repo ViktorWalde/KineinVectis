@@ -100,6 +100,11 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   sem nunca deixar o editor com menos de 480 px, e voltam ao tamanho que você
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
+- **Modo Foco** (desde 2026-10-02): **Ctrl+Shift+F12** (ou Exibir → Modo
+  Foco) recolhe o explorador, os Símbolos e o painel de baixo; o mesmo atalho
+  devolve os três exatamente como estavam. Se você abrir um painel à mão
+  durante o Foco, o modo acaba ali e nada é restaurado por cima. **Exibir →
+  Voltar ao editor** devolve o teclado ao código.
 - **Dois trilhos** (desde 2026-10-02): à esquerda e à direita da área de
   trabalho. Arraste um ícone de um trilho para o outro e a área passa a morar
   lá (por projeto). Os **Símbolos** (Alt+7) são um ícone do trilho e nascem

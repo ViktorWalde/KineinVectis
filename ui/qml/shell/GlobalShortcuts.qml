@@ -234,6 +234,12 @@ Item {
     }
 
     Shortcut {
+        // comando: view.focusMode
+        sequence: "Ctrl+Shift+F12"
+        onActivated: root.shellController.focusMode.toggle()
+    }
+
+    Shortcut {
         // comando: index.symbols
         sequence: "Alt+7"
         onActivated: root.shellController.openSymbols("")

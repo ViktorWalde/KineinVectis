@@ -44,7 +44,7 @@ Item {
     property var chamadasDoTeste: []
 
     ToolWindows {
-        id: janelas
+        id: toolWindows
 
         shellController: shellFalso
         workspaceOpen: false
@@ -53,8 +53,8 @@ Item {
     Component.onCompleted: {
         // O CONTRATO de uma entrada: todo campo que o trilho desenha.
         // Oito desde 0.3.9: os Simbolos entraram (nascem no trilho da direita).
-        check(janelas.entries.length === 8, "oito entradas, deu " + janelas.entries.length);
-        for (const e of janelas.entries) {
+        check(toolWindows.entries.length === 8, "oito entradas, deu " + toolWindows.entries.length);
+        for (const e of toolWindows.entries) {
             check(e.id !== undefined && e.id !== "", "entrada sem id");
             check(e.icon !== undefined && e.icon !== "", e.id + " sem icone");
             check(e.tooltip !== undefined && e.tooltip !== "", e.id + " sem tooltip");
@@ -66,15 +66,15 @@ Item {
 
         // Cada area num trilho: os Simbolos nascem a' direita; o resto a'
         // esquerda; arrastar (sides) muda o lado.
-        check(janelas.sideOf(janelas.entries[1]) === "right", "simbolos nascem a' direita");
-        check(janelas.sideOf(janelas.entries[0]) === "left", "projeto a' esquerda");
+        check(toolWindows.sideOf(toolWindows.entries[1]) === "right", "simbolos nascem a' direita");
+        check(toolWindows.sideOf(toolWindows.entries[0]) === "left", "projeto a' esquerda");
 
         // A ordem e' a decidida pelo autor, e nao pode mudar por acidente.
-        const ids = janelas.entries.map(function(e) { return e.id; });
+        const ids = toolWindows.entries.map(function(e) { return e.id; });
         check(ids.join(",") === "explorer,outline,embedded,database,containers,remote,observability,tools",
               "ordem do trilho mudou: " + ids.join(","));
         let anterior = -1;
-        for (const e of janelas.entries) {
+        for (const e of toolWindows.entries) {
             check(e.order > anterior, "ordem nao crescente em " + e.id);
             anterior = e.order;
         }
@@ -82,7 +82,7 @@ Item {
         // DISPONIBILIDADE: Projeto/Git/Embarcados exigem projeto aberto; banco,
         // containers e Grafana sao da MAQUINA e abrem sem projeto.
         function porId(id) {
-            return janelas.entries.filter(function(e) { return e.id === id; })[0];
+            return toolWindows.entries.filter(function(e) { return e.id === id; })[0];
         }
         check(!porId("explorer").available && !porId("embedded").available,
               "sem projeto, Projeto e Embarcados ficam indisponiveis");
@@ -90,7 +90,7 @@ Item {
               && porId("observability").available && porId("tools").available
               && porId("remote").available,
               "os da maquina abrem sem projeto");
-        janelas.workspaceOpen = true;
+        toolWindows.workspaceOpen = true;
         check(porId("explorer").available && porId("embedded").available,
               "com projeto, Projeto e Embarcados liberam");
 
@@ -98,7 +98,7 @@ Item {
         // abre o mesmo painel e diz mais. Travado aqui para nao voltar por
         // distracao — dois caminhos cegos para o mesmo gesto.
         check(porId("git") === undefined, "Git nao volta ao trilho");
-        check(janelas.activate("git") === false, "e o trilho nao trata git");
+        check(toolWindows.activate("git") === false, "e o trilho nao trata git");
 
         // ATIVO segue o estado real, nao a existencia do controller.
         check(!porId("tools").active, "tools exige a aba certa, nao so' o painel");
@@ -109,18 +109,18 @@ Item {
         check(porId("tools").active, "aba tools acende Ferramentas");
 
         // ATIVAR: um dono so' sabe o que cada id faz.
-        check(janelas.activate("explorer") === true && chamadas[0] === "explorer", "explorer");
-        check(janelas.activate("tools") === true && chamadas[1] === "tab:tools", "tools");
+        check(toolWindows.activate("explorer") === true && chamadas[0] === "explorer", "explorer");
+        check(toolWindows.activate("tools") === true && chamadas[1] === "tab:tools", "tools");
 
         // O REMOTO (V4): activate abre o painel do controller, e "active" segue o
         // painel — nao a existencia do controller. Sem controller, nao acende e
         // nao estoura.
         check(!porId("remote").active, "sem controller, o remoto nao acende");
-        check(janelas.activate("remote") === false, "sem controller, nada a ativar");
+        check(toolWindows.activate("remote") === false, "sem controller, nada a ativar");
         const remotoFalso = painel("remote");
-        janelas.remoteController = remotoFalso;
+        toolWindows.remoteController = remotoFalso;
         check(!porId("remote").active, "controller com painel fechado nao acende");
-        check(janelas.activate("remote") === true
+        check(toolWindows.activate("remote") === true
               && chamadasDoTeste[chamadasDoTeste.length - 1] === "remote",
               "activate('remote') chama o open do dono");
         remotoFalso.panelVisible = true;
@@ -129,10 +129,10 @@ Item {
         // O CAMPO `componente` DA V3, que so' entrou quando ganhou consumidor:
         // a entrada carrega o painel dela. Quem monta os overlays le' esta
         // lista em vez de conhecer cada painel pelo nome.
-        const comPainel = janelas.overlayEntries.map(function(e) { return e.id; });
+        const comPainel = toolWindows.overlayEntries.map(function(e) { return e.id; });
         check(comPainel.join(",") === "embedded,database,containers,remote,observability",
               "os paineis de ambiente, na ordem do trilho: " + comPainel.join(","));
-        for (const e of janelas.overlayEntries) {
+        for (const e of toolWindows.overlayEntries) {
             check(e.panel !== undefined && e.panel !== null, e.id + " sem componente");
         }
         // Explorer e Ferramentas NAO tem painel de ambiente: o primeiro e' o
@@ -142,7 +142,7 @@ Item {
         check(porId("tools").panel === undefined, "tools nao e' overlay");
 
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
-        check(janelas.activate("nao.existe") === false, "id sem dono devolve false");
+        check(toolWindows.activate("nao.existe") === false, "id sem dono devolve false");
         check(chamadas.length === 2 && chamadasDoTeste.length === 1,
               "id sem dono nao pode tocar em nada");
 
