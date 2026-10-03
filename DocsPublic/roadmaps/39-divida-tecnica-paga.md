@@ -170,7 +170,7 @@ arquivo.
 Depois de sair dele a trilha de breadcrumbs
 ([`EditorBreadcrumbs.qml`](../../ui/qml/editor/EditorBreadcrumbs.qml)) e a alça
 de reabrir a Estrutura
-([`EditorOutlineHandle.qml`](../../ui/qml/editor/EditorOutlineHandle.qml)), o
+(`EditorOutlineHandle.qml`; removido em 2026-10-02 — os Símbolos viraram ícone do trilho, 40.7 §7.189), o
 painel **quase não desenhava mais nada** — três linhas de cartão (`radius`,
 `color`, `border`) e o resto composição. E o volume estava em outro lugar:
 
