@@ -66,6 +66,9 @@ no checkout, não em nenhum pacote publicado.
   item, a origem fica esmaecida, a pasta de destino abre sozinha e diz
   "Mover para tests/"; soltar uma pasta dentro dela mesma aparece em
   vermelho e não acontece.
+- **Terminal no trilho.** Um clique abre o terminal (o mesmo do Alt+F12) e,
+  aberto, o recolhe. Numa janela estreita (abaixo de 1024 px) os Símbolos
+  recolhem sozinhos e voltam ao alargar.
 - **Teclado de área em área.** Ctrl+F6 leva o teclado para a próxima área
   (explorador, editor, painel de baixo) e Ctrl+Shift+F6 para a anterior; a
   área que recebe o foco fica marcada.

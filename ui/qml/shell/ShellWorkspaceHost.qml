@@ -120,6 +120,7 @@ Item {
             grafanaController: root.grafanaController
             remoteController: root.remoteController
             toolchainController: root.toolchainController
+            runtimeController: root.runtimeController
             workspaceOpen: root.workspaceOpen
             toolsList: root.toolsList
             projectHealthController: root.projectHealthController

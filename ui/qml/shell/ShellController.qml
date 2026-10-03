@@ -13,6 +13,11 @@ Item {
     property string bottomTab: "logs"
     property bool showExplorer: true
     property real viewportWidth: 1280
+    // ESTREITO (0.3.9 F4, 53 §5.8): abaixo de 1024 px o dock direito (os
+    // Simbolos) recolhe sozinho antes de o editor encolher. A preferencia do
+    // usuario (`outlineCollapsed`) nao muda: alargar a janela o traz de volta.
+    readonly property bool narrowViewport: viewportWidth < 1024
+    readonly property bool effectiveOutlineCollapsed: outlineCollapsed || narrowViewport
     property real viewportHeight: 720
     property bool layoutLoaded: false
     property bool persistedLayout: false

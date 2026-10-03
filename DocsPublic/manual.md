@@ -110,7 +110,9 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   durante o Foco, o modo acaba ali e nada é restaurado por cima. **Exibir →
   Voltar ao editor** devolve o teclado ao código.
 - **Dois trilhos** (desde 2026-10-02): à esquerda e à direita da área de
-  trabalho. Arraste um ícone de um trilho para o outro e a área passa a morar
+  trabalho. O **Terminal** tem ícone no trilho da esquerda: um clique abre
+  (como o Alt+F12), outro recolhe. Numa janela com menos de 1024 px de
+  largura os Símbolos recolhem sozinhos e voltam quando a janela alarga. Arraste um ícone de um trilho para o outro e a área passa a morar
   lá (por projeto). Os **Símbolos** (Alt+7) são um ícone do trilho e nascem
   à direita. O ⋯ Mais e o modo expandido ficam no trilho da esquerda.
 - **Arraste para organizar** (desde 2026-10-02): os ícones do trilho, as

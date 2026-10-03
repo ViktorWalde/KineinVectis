@@ -42,6 +42,7 @@ Item {
     property var remoteController: null
     // O painel de embarcados edita o KIT (chip, alvo, depurador).
     property var toolchainController: null
+    property var runtimeController: null
     property bool workspaceOpen: false
     // As ferramentas detectadas (tools.detect): o fato dos containers e' a
     // MAQUINA ter podman ou docker, porque o status do motor so' chega quando
@@ -122,6 +123,17 @@ Item {
             "active": root.shellController !== null
                       && root.shellController.effectiveShowExplorer && root.workspaceOpen
         },
+        // O Terminal no trilho (0.3.9, pedido do autor: "um atalho para o
+        // terminal, para ficar mais pratico"): o mesmo gesto do Alt+F12.
+        {
+            "id": "terminal", "label": qsTr("Terminal"), "icon": "terminal",
+            "tooltip": qsTr("Terminal (Alt+F12)"), "area": "left", "order": 15,
+            "available": root.workspaceOpen,
+            "title": qsTr("Terminal"), "kind": "bottom", "defaultPolicy": "pinned",
+            "factKey": "", "commandId": "terminal.open", "shortcut": "Alt+F12",
+            "active": root.shellController !== null && root.shellController.showBottomPanel
+                      && root.shellController.bottomTab === "terminal" && root.workspaceOpen
+        },
         // Os Simbolos (estrutura + busca do arquivo) entraram no trilho em
         // 0.3.9, pedido do autor: "levar os icones do lado direito para o
         // esquerdo" — antes era uma alca vertical dentro da area do editor.
@@ -131,7 +143,7 @@ Item {
             "available": root.workspaceOpen,
             "title": qsTr("Símbolos"), "kind": "dock-right", "defaultPolicy": "pinned",
             "factKey": "", "commandId": "index.symbols", "shortcut": "Alt+7",
-            "active": root.shellController !== null && !root.shellController.outlineCollapsed
+            "active": root.shellController !== null && !root.shellController.effectiveOutlineCollapsed
                       && root.workspaceOpen
         },
         // Embarcados e' por projeto (o kit mora no .kinein), como o Git.
@@ -261,6 +273,20 @@ Item {
                 return false;
             }
             shellController.toggleExplorer();
+            return true;
+        // Aberto, recolhe; fechado, abre pelo RuntimeController, que cria a
+        // sessao se nao houver nenhuma (o dono do Alt+F12).
+        case "terminal":
+            if (shellController === null || shellController === undefined) {
+                return false;
+            }
+            if (shellController.tabActive("terminal")) {
+                shellController.toggleBottomTab("terminal");
+            } else if (runtimeController !== null && runtimeController !== undefined) {
+                runtimeController.openTerminalPanel();
+            } else {
+                shellController.showTab("terminal");
+            }
             return true;
         case "outline":
             if (shellController === null || shellController === undefined) {

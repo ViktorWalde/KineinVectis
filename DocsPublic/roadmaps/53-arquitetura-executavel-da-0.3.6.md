@@ -514,8 +514,9 @@ estados  configurado / detectado / selecionado / efetivo quando o core
 
 **Andamento (2026-10-02):** modo Foco e "Voltar ao editor" feitos (40.7
 §7.191, `view.focusMode` Ctrl+Shift+F12 e `view.returnToEditor`), ciclo de
-foco entre áreas com foco visível (§7.192, Ctrl+F6). Falta o estreito abaixo
-de 1024 px.
+foco entre áreas com foco visível (§7.192, Ctrl+F6), e o estreito abaixo de
+1024 px (§7.193). A F4 está completa; resta medir a carga dos overlays de
+ambiente (item "carga"), que só muda se a medida mostrar custo.
 
 ```text
 foco     grafo explícito: trilho → dock esquerdo → editor → dock direito →

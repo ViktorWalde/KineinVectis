@@ -49,6 +49,15 @@ Item {
         failures += check(!shell.showExplorer && shell.showBottomPanel,
                           "nada foi restaurado por cima do gesto: " + state());
 
+        // Estreito (53 §5.8): abaixo de 1024 px os Simbolos recolhem sem mudar
+        // a preferencia; alargar os traz de volta.
+        shell.outlineCollapsed = false;
+        shell.viewportWidth = 900;
+        failures += check(shell.effectiveOutlineCollapsed && !shell.outlineCollapsed,
+                          "estreito recolhe sem apagar a preferencia");
+        shell.viewportWidth = 1366;
+        failures += check(!shell.effectiveOutlineCollapsed, "alargar devolve os Simbolos");
+
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

@@ -146,7 +146,7 @@ Item {
         outlineItems: root.editorController.syntaxOutline
         symbols: root.indexController ? root.indexController.symbols : null
         outlineWidth: root.shellController.outlineWidth
-        outlineCollapsed: root.shellController.outlineCollapsed
+        outlineCollapsed: root.shellController.effectiveOutlineCollapsed
         markdownAvailable: markdownPreview.available
         previewMode: markdownPreview.mode
         previewWidth: markdownPreview.splitWidth
