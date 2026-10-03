@@ -70,7 +70,7 @@ FocusScope {
     // Clicar fora fecha o menu. Na faixa de cima (a barra do ☰, 0.3.9) o
     // clique fecha E segue para a barra: o ☰ recolhe e outro titulo abre o
     // menu dele num clique so', como numa barra de menus.
-    MouseArea {
+    KvBackdrop {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
         onPressed: function(mouse) {

@@ -14,7 +14,7 @@ Item {
     signal permanentRequested()
     signal cancelRequested()
 
-    MouseArea {
+    KvBackdrop {
         anchors.fill: parent
     }
 

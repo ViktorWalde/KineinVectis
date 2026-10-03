@@ -12,7 +12,7 @@ Item {
     signal confirmRequested()
     signal cancelRequested()
 
-    MouseArea {
+    KvBackdrop {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: root.cancelRequested()

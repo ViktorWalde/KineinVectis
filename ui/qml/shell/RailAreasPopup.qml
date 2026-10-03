@@ -77,7 +77,7 @@ FocusScope {
     Keys.onEscapePressed: close()
 
     // Clique fora fecha.
-    MouseArea {
+    KvBackdrop {
         anchors.fill: parent
         onClicked: root.close()
     }

@@ -108,7 +108,7 @@ Item {
         anchors.fill: parent
         color: Theme.scrim
 
-        MouseArea {
+        KvBackdrop {
             anchors.fill: parent
             onClicked: picker.close()
         }

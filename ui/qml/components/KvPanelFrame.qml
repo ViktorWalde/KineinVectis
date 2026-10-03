@@ -47,7 +47,7 @@ Item {
     readonly property real frameWidth: Math.min(panelWidth, maxAvailableWidth)
     readonly property real frameHeight: Math.min(panelHeight, maxAvailableHeight)
 
-    MouseArea {
+    KvBackdrop {
         anchors.fill: parent
         onClicked: root.dismissRequested()
     }

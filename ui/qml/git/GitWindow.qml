@@ -5,8 +5,8 @@ import KineinVectis
 // A janela do Git EM PE', a esquerda (Etapa 3, E3-3 — roadmaps/44 §4.1;
 // pedido do autor: "o posicionamento nao ta' memoria muscular JetBrains").
 // Alterna com o explorer no mesmo slot. Abas Commit | Log em cima; a
-// linha do branch (pull/push/stash/pop) quebra em Flow para caber a 220
-// px; Commit = a lista de mudancas por pasta + a caixa de commit no pe';
+// linha do branch (pull/push/stash/pop) inteira, porque o minimo da janela a
+// comporta (2026-10-03); Commit = a lista de mudancas por pasta + a caixa de commit no pe';
 // Log = o filtro + o grafo. O que esta' selecionado abre NO EDITOR
 // (GitViewerPane), nao aqui. Fala com o GitController; abrir arquivo e
 // fechar a janela saem por sinal.
@@ -24,9 +24,27 @@ Rectangle {
     radius: Theme.radiusLarge
     color: Theme.background1
 
-    // O minimo que o slot da esquerda precisa com o Git nele (53 §4.4): o da
-    // caixa de commit, com as margens dela.
-    readonly property real minimumWidth: commitRow.minimumWidth + 2 * Theme.spacingSmall
+    // O minimo que o slot da esquerda precisa com o Git nele (53 §4.4): a
+    // MAIOR das tres linhas, cada uma inteira numa linha so' — o cabecalho,
+    // o branch com pull/push/stash/pop e o rodape do commit (2026-10-03,
+    // pedido do autor, com a foto de referencia: nada quebra, nada some).
+    readonly property real headerMinimumWidth: titleLabel.implicitWidth + commitTab.width + logTab.width
+                                              + refreshButton.width + closeButton.width + 5 * headerRow.spacing
+    readonly property real minimumWidth: Math.max(headerMinimumWidth, branchRowWidth(),
+                                                  commitRow.minimumWidth) + 2 * Theme.spacingSmall
+
+    // A linha do branch inteira: as fichas e os espacos entre elas.
+    function branchRowWidth() {
+        let total = 0;
+        let count = 0;
+        for (let i = 0; i < gitActions.children.length; i++) {
+            const chip = gitActions.children[i];
+            if (chip.modelData === undefined) continue;
+            total += chip.width;
+            count += 1;
+        }
+        return total + Math.max(0, count - 1) * gitActions.spacing;
+    }
 
     function clearMessage() {
         commitRow.clearMessage();
@@ -35,7 +53,7 @@ Rectangle {
     // ---- o cabecalho: titulo, as duas abas, atualizar, fechar -------------
 
     Row {
-        id: cabecalho
+        id: headerRow
 
         anchors.top: parent.top
         anchors.left: parent.left
@@ -44,16 +62,13 @@ Rectangle {
         height: 24
         spacing: Theme.spacingSmall
 
-        // O titulo cede a vez as abas a 220 px (a foto a 1024: o x sumia).
-        // Sem `width` explicito: a Row ja' pula filho invisivel (posicao E
-        // espacamento). O antigo `visible ? implicitWidth : -parent.spacing`
-        // amarrava a largura do Text ao proprio implicitWidth e dava "Binding
-        // loop detected for property width" ao abrir o Log (0.3.6, 53 §5.2).
+        // O titulo fica sempre: o minimo da janela ja' o inclui (2026-10-03).
+        // Sem `width` explicito, para nao amarrar a largura do Text ao
+        // proprio implicitWidth ("Binding loop detected", 0.3.6, 53 §5.2).
         Text {
             id: titleLabel
 
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.width >= 260
             text: qsTr("Git")
             color: Theme.textPrimary
             font.pixelSize: Theme.fontSizeBody
@@ -61,7 +76,7 @@ Rectangle {
         }
 
         KvToggleChip {
-            id: abaCommit
+            id: commitTab
 
             anchors.verticalCenter: parent.verticalCenter
             labelText: root.gitController && root.gitController.changeCount > 0
@@ -71,7 +86,7 @@ Rectangle {
         }
 
         KvToggleChip {
-            id: abaLog
+            id: logTab
 
             anchors.verticalCenter: parent.verticalCenter
             labelText: qsTr("Log")
@@ -81,15 +96,14 @@ Rectangle {
 
         Item {
             // O titulo so' ocupa largura e um espacamento quando visivel.
-            width: Math.max(0, parent.width
-                            - (titleLabel.visible ? titleLabel.implicitWidth + parent.spacing : 0)
-                            - abaCommit.width - abaLog.width
-                            - atualizar.width - fechar.width - 4 * parent.spacing)
+            width: Math.max(0, parent.width - titleLabel.implicitWidth - parent.spacing
+                            - commitTab.width - logTab.width
+                            - refreshButton.width - closeButton.width - 4 * parent.spacing)
             height: 1
         }
 
         KvIconButton {
-            id: atualizar
+            id: refreshButton
 
             anchors.verticalCenter: parent.verticalCenter
             compact: true
@@ -99,7 +113,7 @@ Rectangle {
         }
 
         KvIconButton {
-            id: fechar
+            id: closeButton
 
             anchors.verticalCenter: parent.verticalCenter
             compact: true
@@ -109,12 +123,12 @@ Rectangle {
         }
     }
 
-    // ---- a linha do branch: quebra quando a janela e' estreita ------------
+    // ---- a linha do branch, inteira (o minimo da janela a comporta) --------
 
     Flow {
         id: gitActions
 
-        anchors.top: cabecalho.bottom
+        anchors.top: headerRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
@@ -148,10 +162,15 @@ Rectangle {
                 border.color: modelData.action === "branch" ? Theme.accent : Theme.borderSoft
                 border.width: 1
 
+                // Um branch de nome comprido fica em ate' 140 px, com "…": a
+                // linha nao alarga a janela sem limite (o nome inteiro aparece
+                // no menu de branches, que este chip abre).
                 Text {
                     id: actionLabel
 
                     anchors.centerIn: parent
+                    width: Math.min(implicitWidth, 140)
+                    elide: Text.ElideRight
                     text: gitActionChip.modelData.label
                     color: gitActionChip.modelData.action === "branch" ? Theme.accent : Theme.textSecondary
                     font.pixelSize: Theme.fontSizeCaption

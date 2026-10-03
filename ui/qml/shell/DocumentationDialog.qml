@@ -25,7 +25,7 @@ Item {
         }
     }
 
-    MouseArea {
+    KvBackdrop {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: root.dismissRequested()

@@ -65,6 +65,7 @@ set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/components/ReorderController.qml PROPERTIES QT_RESOURCE_ALIAS ReorderController.qml)
 set_source_files_properties(qml/components/ReorderMouseArea.qml PROPERTIES QT_RESOURCE_ALIAS ReorderMouseArea.qml)
 set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_ALIAS KvButton.qml)
+set_source_files_properties(qml/components/KvBackdrop.qml PROPERTIES QT_RESOURCE_ALIAS KvBackdrop.qml)
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
 set_source_files_properties(qml/workspace/LspStatusController.qml PROPERTIES QT_RESOURCE_ALIAS LspStatusController.qml)
 set_source_files_properties(qml/jobs/ActiveJobController.qml PROPERTIES QT_RESOURCE_ALIAS ActiveJobController.qml)
@@ -441,6 +442,7 @@ qt_add_qml_module(kinein-vectis
         qml/components/ReorderController.qml
         qml/components/ReorderMouseArea.qml
         qml/components/KvButton.qml
+        qml/components/KvBackdrop.qml
         qml/shell/TopHeaderBar.qml
         qml/workspace/LspStatusController.qml
         qml/jobs/ActiveJobController.qml

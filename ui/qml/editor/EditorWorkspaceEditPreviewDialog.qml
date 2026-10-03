@@ -23,6 +23,12 @@ Rectangle {
     focus: visible
     Keys.onEscapePressed: root.cancelRequested()
 
+    // A roda do mouse dentro da caixa nao atravessa para o codigo (o clique
+    // passa: so' a roda e' segurada, KvBackdrop).
+    KvBackdrop {
+        acceptedButtons: Qt.NoButton
+    }
+
     Text {
         id: titleLabel
 

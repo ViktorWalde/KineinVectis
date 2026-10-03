@@ -32,6 +32,12 @@ Rectangle {
         return commandInput.text.trim();
     }
 
+    // A roda do mouse dentro da caixa nao atravessa para o codigo (o clique
+    // passa: so' a roda e' segurada, KvBackdrop).
+    KvBackdrop {
+        acceptedButtons: Qt.NoButton
+    }
+
     Column {
         id: configColumn
 

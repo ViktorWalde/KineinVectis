@@ -3554,9 +3554,6 @@ ui/qml/git/GitViewerPane.qml	faixa	2
 ui/qml/git/GitViewerPane.qml	fechar	2
 ui/qml/git/GitViewerPane.qml	icone	2
 ui/qml/git/GitViewerPane.qml	titulo	2
-ui/qml/git/GitWindow.qml	atualizar	2
-ui/qml/git/GitWindow.qml	cabecalho	2
-ui/qml/git/GitWindow.qml	fechar	2
 ui/qml/grafana/GrafanaActionRules.qml	frase	1
 ui/qml/grafana/GrafanaActionRules.qml	frescor	1
 ui/qml/grafana/GrafanaActionRules.qml	onde	4

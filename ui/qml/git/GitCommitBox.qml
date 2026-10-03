@@ -24,9 +24,11 @@ Item {
     signal commitAndPushRequested(string message)
     signal amendToggled()
 
-    // O MINIMO que esta caixa precisa (53 §4.4): os botoes nao quebram; o
-    // resto se rearranja. O GitWindow soma as margens e o declara ao shell.
-    readonly property real minimumWidth: buttonRow.implicitWidth
+    // O MINIMO que esta caixa precisa (53 §4.4): o rodape INTEIRO numa linha
+    // — Amend, Commit e Push e Commit (2026-10-03, pedido do autor: "um
+    // tamanho minimo que comporte tudo exatamente"). O GitWindow soma as
+    // margens e o declara ao shell.
+    readonly property real minimumWidth: amendChip.implicitWidth + Theme.spacingSmall + buttonRow.implicitWidth
     readonly property bool compactFooter: width < amendChip.implicitWidth + Theme.spacingSmall
                                                   + buttonRow.implicitWidth
     readonly property bool canCommit: commitInput.text.trim() !== "" && (stagedCount > 0 || amend)

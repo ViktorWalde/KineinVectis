@@ -38,7 +38,7 @@ Item {
         else root.cancelRequested();
     }
 
-    MouseArea { anchors.fill: parent }
+    KvBackdrop { anchors.fill: parent }
 
     Rectangle {
         anchors.centerIn: parent

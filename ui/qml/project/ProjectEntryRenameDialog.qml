@@ -28,7 +28,7 @@ Item {
         return entryRenameInput.text.trim();
     }
 
-    MouseArea {
+    KvBackdrop {
         anchors.fill: parent
     }
 
