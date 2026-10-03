@@ -73,6 +73,8 @@ Rectangle {
         case "view.areas": root.shellController.showTab("areas"); break;
         case "view.focusMode": root.shellController.focusMode.toggle(); break;
         case "view.returnToEditor": root.editorController.focusEditor(); break;
+        case "view.cycleFocus": root.shellController.focusCycleRequested(1); break;
+        case "view.cycleFocusBack": root.shellController.focusCycleRequested(-1); break;
         case "workspace.open": root.shellController.requestOpenFolder(); break;
         case "workspace.createProject": root.shellController.requestFolder("createProject"); break;
         case "workspace.recent.clear": root.recentWorkspacesController.clearAll(); break;

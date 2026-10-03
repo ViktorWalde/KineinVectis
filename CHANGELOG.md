@@ -66,6 +66,9 @@ no checkout, não em nenhum pacote publicado.
   item, a origem fica esmaecida, a pasta de destino abre sozinha e diz
   "Mover para tests/"; soltar uma pasta dentro dela mesma aparece em
   vermelho e não acontece.
+- **Teclado de área em área.** Ctrl+F6 leva o teclado para a próxima área
+  (explorador, editor, painel de baixo) e Ctrl+Shift+F6 para a anterior; a
+  área que recebe o foco fica marcada.
 - **Modo Foco.** Ctrl+Shift+F12 (ou Exibir → Modo Foco) recolhe os painéis
   em volta do editor; o mesmo atalho os devolve exatamente como estavam.
   Exibir → Voltar ao editor devolve o teclado ao código de qualquer lugar.

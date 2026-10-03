@@ -59,6 +59,12 @@ Item {
         case "view.focusMode":
             showTabRequested("focusMode");
             return true;
+        case "view.cycleFocus":
+            showTabRequested("focusNext");
+            return true;
+        case "view.cycleFocusBack":
+            showTabRequested("focusPrevious");
+            return true;
         case "view.returnToEditor":
             editorController.focusEditor();
             return true;

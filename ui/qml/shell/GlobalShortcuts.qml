@@ -234,6 +234,18 @@ Item {
     }
 
     Shortcut {
+        // comando: view.cycleFocus
+        sequence: "Ctrl+F6"
+        onActivated: root.shellController.focusCycleRequested(1)
+    }
+
+    Shortcut {
+        // comando: view.cycleFocusBack
+        sequence: "Ctrl+Shift+F6"
+        onActivated: root.shellController.focusCycleRequested(-1)
+    }
+
+    Shortcut {
         // comando: view.focusMode
         sequence: "Ctrl+Shift+F12"
         onActivated: root.shellController.focusMode.toggle()

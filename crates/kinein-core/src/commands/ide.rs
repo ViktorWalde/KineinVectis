@@ -89,6 +89,23 @@ pub(super) fn settings_command_descriptors() -> Vec<CommandDescriptor> {
             requires_workspace: true,
         },
         CommandDescriptor {
+            id: "view.cycleFocus".to_owned(),
+            title: "Proxima area".to_owned(),
+            category: "IDE".to_owned(),
+            description: "Leva o teclado para a proxima area: esquerda, editor, painel de baixo"
+                .to_owned(),
+            default_shortcut: Some("Ctrl+F6".to_owned()),
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "view.cycleFocusBack".to_owned(),
+            title: "Area anterior".to_owned(),
+            category: "IDE".to_owned(),
+            description: "Leva o teclado para a area anterior".to_owned(),
+            default_shortcut: Some("Ctrl+Shift+F6".to_owned()),
+            requires_workspace: true,
+        },
+        CommandDescriptor {
             id: "view.returnToEditor".to_owned(),
             title: "Voltar ao editor".to_owned(),
             category: "IDE".to_owned(),

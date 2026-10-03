@@ -63,49 +63,39 @@ Item {
     }
 
     // Limites dos paineis (53 §4.4): o trilho e o minimo do slot da esquerda.
-    function updatePanelLimits() {
-        root.shellController.updatePanelLimits(sideBar.width, explorerPanel.minimumWidth);
+    function updatePanelLimits() { root.shellController.updatePanelLimits(sideBar.width, explorerPanel.minimumWidth); }
+
+    function focusSearchInput() { bottomPanel.focusSearchInput(); }
+
+    function focusSearchReplaceInput() { bottomPanel.focusSearchReplaceInput(); }
+
+    function clearSearchInput() { bottomPanel.clearSearchInput(); }
+
+    function focusTerminalInput() { bottomPanel.focusTerminalInput(); }
+
+    function clearTerminalInput() { bottomPanel.clearTerminalInput(); }
+
+    function focusCreateDialog() { editorPaneHost.focusCreateDialog(); }
+
+    function openRenameDialogWithName(name) { editorPaneHost.openRenameDialogWithName(name); }
+
+    function openGoToLineDialog(prefill) { editorPaneHost.openGoToLineDialog(prefill); }
+
+    function focusFindBar() { editorPaneHost.focusFindBar(); }
+
+    function focusSymbols(query) { editorPaneHost.focusSymbols(query); }
+
+    // Ctrl+F6 / Ctrl+Shift+F6 (0.3.9 F4): o teclado de area em area.
+    function cycleFocus(direction) { focusCycle.cycle(root.Window.activeFocusItem, direction); }
+    Connections {
+        target: root.shellController
+        function onFocusCycleRequested(direction) { root.cycleFocus(direction); }
     }
+    FocusCycle {
+        id: focusCycle
 
-    function focusSearchInput() {
-        bottomPanel.focusSearchInput();
-    }
-
-    function focusSearchReplaceInput() {
-        bottomPanel.focusSearchReplaceInput();
-    }
-
-    function clearSearchInput() {
-        bottomPanel.clearSearchInput();
-    }
-
-    function focusTerminalInput() {
-        bottomPanel.focusTerminalInput();
-    }
-
-    function clearTerminalInput() {
-        bottomPanel.clearTerminalInput();
-    }
-
-
-    function focusCreateDialog() {
-        editorPaneHost.focusCreateDialog();
-    }
-
-    function openRenameDialogWithName(name) {
-        editorPaneHost.openRenameDialogWithName(name);
-    }
-
-    function openGoToLineDialog(prefill) {
-        editorPaneHost.openGoToLineDialog(prefill);
-    }
-
-    function focusFindBar() {
-        editorPaneHost.focusFindBar();
-    }
-
-    function focusSymbols(query) {
-        editorPaneHost.focusSymbols(query);
+        areas: [explorerPanel, editorPaneHost, bottomPanel]
+        editorArea: editorPaneHost
     }
 
     // O trilho e' dado: quem monta os overlays de ambiente le' esta lista.

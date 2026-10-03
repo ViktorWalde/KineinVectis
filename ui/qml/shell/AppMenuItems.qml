@@ -131,6 +131,10 @@ Item {
                   enabled: workspaceOpen },
                 { label: qsTr("Voltar ao editor"), action: "view.returnToEditor",
                   enabled: workspaceOpen },
+                { label: qsTr("Próxima área (Ctrl+F6)"), action: "view.cycleFocus",
+                  enabled: workspaceOpen },
+                { label: qsTr("Área anterior (Ctrl+Shift+F6)"), action: "view.cycleFocusBack",
+                  enabled: workspaceOpen },
                 { label: qsTr("Restaurar trilho padrão"), action: "rail.restore", enabled: true }
             ],
             navigate: [

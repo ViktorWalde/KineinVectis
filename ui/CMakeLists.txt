@@ -85,6 +85,7 @@ set_source_files_properties(qml/shell/RailAreasPopup.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/shell/RailAreaRow.qml PROPERTIES QT_RESOURCE_ALIAS RailAreaRow.qml)
 set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
 set_source_files_properties(qml/shell/ShellLayout.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayout.qml)
+set_source_files_properties(qml/shell/FocusCycle.qml PROPERTIES QT_RESOURCE_ALIAS FocusCycle.qml)
 set_source_files_properties(qml/shell/FocusModeController.qml PROPERTIES QT_RESOURCE_ALIAS FocusModeController.qml)
 set_source_files_properties(qml/shell/RightSideRail.qml PROPERTIES QT_RESOURCE_ALIAS RightSideRail.qml)
 set_source_files_properties(qml/shell/WindowBackdrop.qml PROPERTIES QT_RESOURCE_ALIAS WindowBackdrop.qml)
@@ -458,6 +459,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/RailAreaRow.qml
         qml/shell/SideRail.qml
         qml/shell/ShellLayout.qml
+        qml/shell/FocusCycle.qml
         qml/shell/FocusModeController.qml
         qml/shell/RightSideRail.qml
         qml/shell/WindowBackdrop.qml

@@ -70,6 +70,12 @@ Item {
         function onFocusTreeRequested() { explorerPanel.focusTree(); }
     }
 
+    // O ciclo de foco (Ctrl+F6) entra aqui: na arvore, ou na janela do Git.
+    function focusArea() {
+        if (gitWindow.visible) gitWindow.forceActiveFocus();
+        else explorerPanel.focusTree();
+    }
+
     GitWindow {
         id: gitWindow
 

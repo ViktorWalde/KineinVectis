@@ -68,6 +68,8 @@ Item {
     signal toolsDetectionRequested()
     // "Exibir > Areas da IDE..." e a paleta: o host abre o painel de areas.
     signal areasPanelRequested()
+    // Ctrl+F6 / Ctrl+Shift+F6 (0.3.9 F4): o host da area de trabalho percorre.
+    signal focusCycleRequested(int direction)
     // `scope`: "workspace" (o layout do projeto aberto) ou "global" (o
     // padrao de quem ainda nao tem layout, e as preferencias do usuario).
     signal layoutSaveRequested(string scope, var values)
@@ -262,6 +264,10 @@ Item {
         // O modo Foco chega pelo mesmo canal do dispatcher (`view.focusMode`).
         if (tab === "focusMode") {
             focusMode.toggle();
+            return;
+        }
+        if (tab === "focusNext" || tab === "focusPrevious") {
+            focusCycleRequested(tab === "focusNext" ? 1 : -1);
             return;
         }
         if (tab === "git") {

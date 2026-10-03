@@ -76,9 +76,13 @@ Rectangle {
     signal searchReplaceRequested(string query, string replacement)
 
     visible: open
-    // Dentro da ilha unica (0.3.9): a cor da area, sem borda propria.
+    // Dentro da ilha unica (0.3.9): a cor da area, sem borda propria — so' a
+    // de FOCO, quando e' o painel quem tem o teclado (o ciclo Ctrl+F6 chega
+    // aqui; o foco tem de ser visivel, 53 §5.8).
     radius: Theme.radiusLarge
     color: Theme.background1
+    border.color: Theme.accentDim
+    border.width: activeFocus ? 1 : 0
 
     function focusSearchInput() {
         searchView.focusInput();
@@ -94,6 +98,13 @@ Rectangle {
 
     function focusTerminalInput() {
         terminalView.focusInput();
+    }
+
+    // O ciclo de foco (Ctrl+F6) entra aqui: o terminal recebe o teclado; as
+    // outras abas, o proprio painel.
+    function focusArea() {
+        if (root.activeTab === "terminal") terminalView.focusInput();
+        else root.forceActiveFocus();
     }
 
     function clearTerminalInput() {

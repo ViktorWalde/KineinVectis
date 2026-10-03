@@ -100,6 +100,10 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   sem nunca deixar o editor com menos de 480 px, e voltam ao tamanho que você
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
+- **De área em área pelo teclado** (desde 2026-10-02): **Ctrl+F6** leva o
+  teclado para a próxima área visível — explorador (ou Git), editor, painel
+  de baixo — e **Ctrl+Shift+F6** para a anterior. No painel de baixo, a aba
+  Terminal recebe a digitação direto; a área com o teclado fica marcada.
 - **Modo Foco** (desde 2026-10-02): **Ctrl+Shift+F12** (ou Exibir → Modo
   Foco) recolhe o explorador, os Símbolos e o painel de baixo; o mesmo atalho
   devolve os três exatamente como estavam. Se você abrir um painel à mão

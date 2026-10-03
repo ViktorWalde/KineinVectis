@@ -58,6 +58,11 @@ Item {
         overlayHost.openGoToLineDialog(prefill);
     }
 
+    // O ciclo de foco (Ctrl+F6) entra aqui: o texto do editor.
+    function focusArea() {
+        root.editorController.focusEditor();
+    }
+
     function focusFindBar() {
         overlayHost.focusFindBar();
     }
