@@ -76,11 +76,6 @@ Item {
         resolved();
     }
 
-    // A UI edita o escopo GLOBAL no v1 (values e um objeto parcial).
-    function setGlobal(values) {
-        setRequested("global", values);
-    }
-
     // Uma escolha do dialogo vai para ONDE o valor mora: se o projeto o
     // define no proprio settings, e' la' que ela tem efeito — gravada no
     // global, ficaria por baixo do valor do projeto e a troca nao valeria
