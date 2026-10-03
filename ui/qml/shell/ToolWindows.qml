@@ -103,7 +103,7 @@ Item {
         // 0.3.9, pedido do autor: "levar os icones do lado direito para o
         // esquerdo" — antes era uma alca vertical dentro da area do editor.
         {
-            "id": "outline", "label": qsTr("Símbolos"), "icon": "documents",
+            "id": "outline", "label": qsTr("Símbolos"), "icon": "outline",
             "tooltip": qsTr("Símbolos (Alt+7)"), "area": "left", "side": "right", "order": 20,
             "available": root.workspaceOpen,
             "title": qsTr("Símbolos"), "kind": "dock-right", "defaultPolicy": "pinned",

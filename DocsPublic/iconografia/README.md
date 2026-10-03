@@ -17,6 +17,62 @@ A **spec normativa** do sistema visual é
 Os pacotes aqui são os assets e o detalhamento que a implementam; onde houver
 divergência, a spec vale sobre o pacote.
 
+## Família da casca (em uso desde a 0.3.9)
+
+Os ícones simbólicos da janela vêm de **um** arquivo,
+`ui/qml/components/KvIconGlyphs.js`. Ele cobre o trilho, o topo, as abas, as
+ações, o Git, os lugares do seletor de pasta e os controles da janela. Cada
+nome é um SVG path no grid 24×24. O `KvIcon.qml` escala o desenho para o
+tamanho pedido (16, 20, 24 ou 28 px) e pinta na cor de estado do `Theme`
+(padrão, ativo em âmbar, aviso, erro, desabilitado).
+
+A reformulação foi pedida pelo autor ("os ícones estão muito fracos"; "fazer
+ícones melhores visualmente"). Antes, os desenhos eram traçados à mão com
+`moveTo`/`lineTo`, sem curvas nem cantos redondos. Vários não diziam o que
+eram:
+
+- **Compilar** parecia um prompt.
+- **Ferramentas** era um grafo de nós.
+- **Remoto** era uma barra com colchetes.
+- **Parar** era um polígono torto.
+- Os **Símbolos** usavam a folha de documento.
+
+```text
+regra       valor                                   por quê
+área viva   2..22 no grid de 24                     o desenho ocupa o quadro, não um canto
+traço       2.0, ponta e junção redondas            a 20 px dá ~1,7 px: firme sobre a moldura cinza
+cantos      retângulos com raio 1.5..2.5            o mesmo canto redondo da ilha e das abas
+peso        cheio só onde a forma é o signo         executar, parar, cabeça do martelo, pontos
+ponto       "h.01" com ponta redonda                um ponto do tamanho do traço
+metáfora    uma por ação, sem repetir no trilho     Projeto=pasta, Terminal=janela com prompt,
+                                                    Compilar=martelo, Ferramentas=caixa de
+                                                    ferramentas, Remoto=servidor, Símbolos=
+                                                    estrutura, Receber/Enviar=setas diagonais
+```
+
+```text
+KvIcon { name: "build"; size: 20 }
+   │
+   ├─ KvIconGlyphs.shape("build") → { stroke: "M13.7 3.9L20.1 10.3…", fill: "<cabeça>" }
+   │     context.path = stroke; stroke()   (traço 2.0 no grid de 24, escalado)
+   │     context.path = fill;   fill()
+   │
+   └─ nome fora da família → KvFileIconGlyphs.draw (tipos de arquivo da árvore)
+                           → senão, a folha "file"
+```
+
+**Para acrescentar um ícone**, basta uma entrada em `shapes` no
+`KvIconGlyphs.js`, seguindo as regras acima. O harness
+`scripts/qml-harness/tst_icon_family.qml` pinta **todos** os nomes num Canvas
+24×24 e exige pixels acesos, no Qt 6.10 e no Qt 6.4. Um path que o parser do
+Qt não entende não dá erro; o ícone apenas some, e só o harness o pega. A
+prova por mutação (um path inválido em `add`) reprovou com "add acendeu 0
+pixels".
+
+O pacote `sistema-visual/` abaixo continua como **estudo e origem**. Os SVGs
+dele usam traço 1,45 num grid de 20, mais fino do que o que o autor aceitou
+na moldura nova.
+
 ## sistema-visual/
 
 Pacote principal: identidade visual, grade, paleta e o conjunto completo de
