@@ -22,12 +22,13 @@ Item {
 
     Area { id: left; key: "esquerda" }
     Area { id: editor; key: "editor" }
+    Area { id: right; key: "direita" }
     Area { id: bottom; key: "baixo" }
 
     FocusCycle {
         id: cycle
 
-        areas: [left, editor, bottom]
+        areas: [left, editor, right, bottom]
         editorArea: editor
     }
 
@@ -38,6 +39,8 @@ Item {
 
     Component.onCompleted: {
         let failures = 0;
+        // O slot da direita (2026-10-03) so' entra no ciclo quando aberto.
+        right.visible = false;
         cycle.cycle(null, 1);
         failures += check(root.visits.join() === "editor", "sem foco comeca no editor: " + root.visits);
         cycle.cycle(editor.innerItem, 1);
@@ -48,6 +51,10 @@ Item {
         bottom.visible = false;
         cycle.cycle(editor.innerItem, 1);
         failures += check(root.visits[4] === "esquerda", "area escondida e' pulada: " + root.visits);
+        // Aberto, o slot da direita vem depois do editor.
+        right.visible = true;
+        cycle.cycle(editor.innerItem, 1);
+        failures += check(root.visits[5] === "direita", "editor -> direita: " + root.visits);
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

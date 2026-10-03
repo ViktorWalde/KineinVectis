@@ -81,3 +81,5 @@ posix scrim
 centroid
 # 2026-10-02: API do Qt (Image.mipmap: amostragem do icone reduzido)
 mipmap
+# 2026-10-03: termo do MongoDB (colecao de serie temporal, `type: "timeseries"`)
+timeseries

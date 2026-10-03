@@ -19,8 +19,7 @@ Rectangle {
     property bool usagesVisible: false
     property bool hoverVisible: false
     property bool actionsVisible: false
-    // C4 (gutter): breakpoints do arquivo atual e a linha de execucao
-    // pausada do debugger (0 = nenhuma). Estado vive no DebugController.
+    // C4 (gutter): breakpoints e a linha pausada (0 = nenhuma), do DebugController.
     property var breakpointLines: []
     property int executionLine: 0
     // M3.2: linha→kind do diff git (added|modified|removed); a revisão força
@@ -34,9 +33,8 @@ Rectangle {
     property bool blameActive: false
     property var blameLineAnnotations: ({})
     property int blameRevision: 0
-    // T6: diagnósticos do arquivo ativo. Os spans (0-based UTF-16) vão
-    // para o highlighter (sublinhado ondulado); o mapa linha→{severity,
-    // message} desenha a marca e o tooltip da gutter.
+    // T6: diagnósticos do arquivo ativo — spans (0-based UTF-16) sublinham no
+    // highlighter; o mapa linha→{severity, message} vai para a gutter.
     property var diagnosticSpans: []
     property var diagnosticByLine: ({})
     property int diagnosticRevision: 0

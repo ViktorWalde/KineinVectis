@@ -39,6 +39,20 @@ Item {
         }
     }
 
+    // O console no editor (0.149.0) e' do filho `consoles`: o core garante o
+    // arquivo; abrir e' o mesmo `fs.read` que a arvore usa para abrir arquivo.
+    Connections {
+        target: root.dataSourceController ? root.dataSourceController.consoles : null
+
+        function onConsoleRequested(name) {
+            root.coreClient.dataSourceConsole(name);
+        }
+
+        function onOpenFileRequested(path) {
+            root.coreClient.readFile(path);
+        }
+    }
+
     // A descoberta e a criacao (0.124.0) sao do controller FILHO `discovery`
     // — ligar ao pai seria a Connections sem sinal que o gate binario-abre
     // passou a reprovar (40 §7.63).

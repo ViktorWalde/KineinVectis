@@ -87,7 +87,11 @@ Item {
         }
         check(!porId("explorer").available && !porId("embedded").available,
               "sem projeto, Projeto e Embarcados ficam indisponiveis");
-        check(porId("database").available && porId("containers").available
+        // O Banco virou janela da area da esquerda (2026-10-03): as conexoes
+        // sao do projeto, e sem projeto ele nao abre.
+        check(!porId("database").available && porId("database").kind === "dock-left",
+              "Banco e' janela do projeto");
+        check(porId("containers").available
               && porId("observability").available && porId("tools").available
               && porId("remote").available,
               "os da maquina abrem sem projeto");
@@ -142,7 +146,7 @@ Item {
         // a entrada carrega o painel dela. Quem monta os overlays le' esta
         // lista em vez de conhecer cada painel pelo nome.
         const comPainel = toolWindows.overlayEntries.map(function(e) { return e.id; });
-        check(comPainel.join(",") === "embedded,database,containers,remote,observability",
+        check(comPainel.join(",") === "embedded,containers,remote,observability",
               "os paineis de ambiente, na ordem do trilho: " + comPainel.join(","));
         for (const e of toolWindows.overlayEntries) {
             check(e.panel !== undefined && e.panel !== null, e.id + " sem componente");

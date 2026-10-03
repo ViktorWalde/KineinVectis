@@ -126,6 +126,9 @@ const shapes = {
                fill: "" },
 
     // Ambiente do projeto
+    // O navegador do Banco: o esquema (camadas) e a tabela (grade).
+    "schema": { stroke: "M12 3l9 4.5-9 4.5-9-4.5z M3 12l9 4.5 9-4.5 M3 16.5l9 4.5 9-4.5", fill: "" },
+    "table": { stroke: roundRect(3, 4, 18, 16, 2) + "M3 9.5h18M3 14.75h18M9.5 9.5V20", fill: "" },
     "database": { stroke: "M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0 M4 6v12a8 3 0 0 0 16 0V6 M4 12a8 3 0 0 0 16 0",
                   fill: "" },
     "container": { stroke: "M12 3l8 4.5v9L12 21l-8-4.5v-9z M4 7.5l8 4.5 8-4.5 M12 12v9", fill: "" },

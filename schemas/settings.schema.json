@@ -86,11 +86,22 @@
           "type": "string",
           "enum": [
             "explorer",
-            "git"
+            "git",
+            "database"
           ]
         },
         "leftVisible": {
           "type": "boolean"
+        },
+        "rightWindow": {
+          "type": "string",
+          "description": "a janela aberta no slot da direita (o icone dela esta' no trilho da direita); vazio = fechado",
+          "enum": [
+            "",
+            "explorer",
+            "git",
+            "database"
+          ]
         },
         "sizes": {
           "type": "object",
@@ -102,6 +113,10 @@
             },
             "outline": {
               "type": "integer"
+            },
+            "right": {
+              "type": "integer",
+              "description": "largura preferida do slot da direita"
             },
             "bottom": {
               "type": "integer",

@@ -131,6 +131,12 @@ Item {
         const orders = codec.decodeOrders({ bottom: ["jobs", 3, "terminal"], rail: "x" });
         failures += check(orders.bottom.join(",") === "jobs,terminal" && orders.rail.length === 0, "decode");
         failures += check(Object.keys(codec.decodeOrders(null)).length === 0, "decode nulo");
+        // Aba gravada que deixou de existir nao volta (o painel ficava vazio).
+        const shell = { leftWindows: ["explorer"], bottomTab: "logs", explorerWidth: 260, outlineWidth: 220,
+                        bottomPreferredHeight: 240 };
+        failures += check(codec.decode({ bottom: { tab: "database" } }, shell).bottomTab === undefined,
+                          "aba sumida cai no padrao");
+        failures += check(codec.decode({ bottom: { tab: "jobs" } }, shell).bottomTab === "jobs", "aba valida volta");
         failures += check(codec.withOrder({ rail: ["a"] }, "bottom", ["b"]).rail.join("") === "a", "withOrder preserva");
 
         // O controlador: vao pelos centros (a=0..40, b=44..84, c=88..128).

@@ -18,6 +18,8 @@ Item {
     property Item bottomItem: null
     // O trilho da direita, tambem na moldura: a ilha para antes dele.
     property Item rightItem: null
+    // O slot da direita (a janela cujo icone esta' no trilho da direita).
+    property Item rightDockItem: null
 
     Rectangle {
         id: island
@@ -41,6 +43,16 @@ Item {
     Rectangle {
         visible: root.leftItem !== null && root.leftItem.visible
         x: root.leftItem !== null ? root.leftItem.x + root.leftItem.width + Theme.panelGap / 2 : 0
+        y: Theme.spacingSmall
+        width: 1
+        height: root.height - 2 * Theme.spacingSmall
+        color: Theme.borderSoft
+    }
+
+    // Entre o centro e o slot da direita.
+    Rectangle {
+        visible: root.rightDockItem !== null && root.rightDockItem.visible
+        x: root.rightDockItem !== null ? root.rightDockItem.x - Theme.panelGap / 2 : 0
         y: Theme.spacingSmall
         width: 1
         height: root.height - 2 * Theme.spacingSmall

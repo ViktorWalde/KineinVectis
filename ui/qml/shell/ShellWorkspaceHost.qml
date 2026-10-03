@@ -51,19 +51,17 @@ Item {
     // Menus do trilho e das abas (0.3.7): o Main abre o menu compartilhado.
     signal shellMenuRequested(real menuX, real menuY, var items)
 
-    onWidthChanged: {
-        if (root.shellController) root.shellController.updateViewport(width, height);
-    }
-    onHeightChanged: {
-        if (root.shellController) root.shellController.updateViewport(width, height);
-    }
+    onWidthChanged: if (root.shellController) root.shellController.updateViewport(width, height)
+    onHeightChanged: if (root.shellController) root.shellController.updateViewport(width, height)
     Component.onCompleted: {
         root.shellController.updateViewport(width, height);
         updatePanelLimits();
     }
 
-    // Limites dos paineis (53 §4.4): o trilho e o minimo do slot da esquerda.
-    function updatePanelLimits() { root.shellController.updatePanelLimits(sideBar.width, explorerPanel.minimumWidth); }
+    // Limites dos paineis (53 §4.4): o trilho e o minimo de cada slot.
+    function updatePanelLimits() {
+        root.shellController.updatePanelLimits(sideBar.width, explorerPanel.minimumWidth, explorerPanel.rightMinimumWidth);
+    }
 
     function focusSearchInput() { bottomPanel.focusSearchInput(); }
 
@@ -94,7 +92,7 @@ Item {
     FocusCycle {
         id: focusCycle
 
-        areas: [explorerPanel, editorPaneHost, bottomPanel]
+        areas: [explorerPanel, editorPaneHost, rightDock, bottomPanel]
         editorArea: editorPaneHost
     }
 
@@ -108,6 +106,7 @@ Item {
         centerItem: centerColumn
         bottomItem: bottomPanel
         rightItem: rightSide
+        rightDockItem: rightDock
 
         // As entradas do trilho sao DADO (V3): uma entrada no `ToolWindows`.
         ToolWindows {
@@ -156,13 +155,17 @@ Item {
 
             width: visible ? root.shellController.explorerWidth : 0
             height: parent.height
-            visible: root.workspaceOpen
-                     && (root.shellController.effectiveShowExplorer
-                         || root.shellController.gitWindowVisible)
+            // A janela aberta a direita nao deixa o slot da esquerda vazio.
+            visible: root.workspaceOpen && root.shellController.showExplorer
+                     && root.shellController.leftWindow !== root.shellController.rightWindow
+            rightSlot: rightDock
             shellController: root.shellController
             projectTree: root.projectTree
             gitController: root.gitController
+            dataSourceController: root.dataSourceController
+            editorController: root.editorController
             onMinimumWidthChanged: root.updatePanelLimits()
+            onRightMinimumWidthChanged: root.updatePanelLimits()
             workspaceName: root.workspaceName
             workspaceRoot: root.workspaceRoot
             onListDirRequested: function(path) { root.listDirRequested(path); }
@@ -176,6 +179,7 @@ Item {
             width: visible
                    ? Math.max(0, parent.width - sideBar.width - Theme.panelGap
                               - rightSide.width - Theme.panelGap
+                              - (rightDock.visible ? rightDock.width + Theme.panelGap : 0)
                               - (explorerPanel.visible
                                  ? explorerPanel.width + Theme.panelGap : 0))
                    : 0
@@ -337,8 +341,15 @@ Item {
             }
         }
 
-    
-    
+        ShellRightDock {
+            id: rightDock
+
+            height: parent.height
+            shellController: root.shellController
+            workspaceOpen: root.workspaceOpen
+            windowHost: explorerPanel
+        }
+
         RightSideRail {
             id: rightSide
 
@@ -372,11 +383,8 @@ Item {
         x: explorerPanel.x + explorerPanel.width
         width: Theme.panelGap
         height: parent.height
-        onDragged: function(delta) {
-            root.shellController.resizeExplorer(delta);
-        }
+        onDragged: delta => root.shellController.resizeExplorer(delta)
     }
-
 
     PanelSplitter {
         visible: bottomPanel.visible
@@ -385,9 +393,6 @@ Item {
         y: centerColumn.y + bottomPanel.y - Theme.panelGap
         width: centerColumn.width
         height: Theme.panelGap
-        onDragged: function(delta) {
-            root.shellController.resizeBottomPanel(-delta);
-        }
+        onDragged: delta => root.shellController.resizeBottomPanel(-delta)
     }
-
 }

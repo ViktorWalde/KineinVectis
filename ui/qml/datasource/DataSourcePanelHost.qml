@@ -2,15 +2,15 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O painel de fontes de dados na moldura comum (KvPanelFrame, F8): o
+// O dialogo da conexao do Banco na moldura comum (KvPanelFrame, F8): o
 // CONTEUDO (DataSourcePanel, burro) separado do CHROME.
 KvPanelFrame {
     id: root
 
     property var controller: null
 
-    panelWidth: 720
-    panelHeight: 560
+    panelWidth: 820
+    panelHeight: 600
 
     DataSourcePanel {
         anchors.fill: parent
@@ -24,17 +24,8 @@ KvPanelFrame {
         serverVersion: root.controller ? root.controller.serverVersion : ""
         testMessage: root.controller ? root.controller.testMessage : ""
         secretRequired: root.controller ? root.controller.secretRequired : false
-        schemas: root.controller ? root.controller.schemas : []
-        collections: root.controller ? root.controller.collections : []
         documentEngine: root.controller ? root.controller.documentEngine : false
-        reading: root.controller ? root.controller.reading : false
         sessionPassword: root.controller ? root.controller.sessionPassword : ""
-        sql: root.controller ? root.controller.sql : ""
-        querying: root.controller ? root.controller.querying : false
-        writeConfirmationRequired: root.controller ? root.controller.writeConfirmationRequired : false
-        queryColumns: root.controller ? root.controller.queryColumns : []
-        queryRows: root.controller ? root.controller.queryRows : []
-        queryStatus: root.controller ? root.controller.queryStatus : ""
         candidates: root.controller ? root.controller.discovery.candidates : []
         discovering: root.controller ? root.controller.discovery.discovering : false
         discoverHint: root.controller ? root.controller.discovery.hint : ""
@@ -61,9 +52,6 @@ KvPanelFrame {
         onPasswordEdited: text => root.controller.sessionPassword = text
         onSaveRequested: root.controller.save()
         onTestRequested: root.controller.test()
-        onIntrospectRequested: root.controller.introspect()
-        onSqlEdited: text => root.controller.sql = text
-        onQueryRequested: confirmWrite => root.controller.runQuery(confirmWrite)
         onCloseRequested: root.dismissRequested()
     }
 }

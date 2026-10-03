@@ -2,14 +2,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// A coluna da esquerda: o que responde NESTA MAQUINA (descoberto pelo core:
-// servidor no loopback, container de banco, arquivo SQLite do projeto) e
-// os perfis salvos neste workspace (0.124.0 — antes so' os salvos).
-//
-// Cada perfil mostra a linha de conexao (`usuario@host:porta/banco`), porque
-// dois perfis "local" e "local-2" nao se distinguem pelo nome — e' o destino
-// que o autor precisa ver antes de clicar em Testar. Clicar num descoberto
-// poe o perfil dele no formulario; salvar e' do autor.
+// A coluna de LOCAIS do navegador do Banco (2026-10-03, no modelo do seletor
+// de pastas): CONEXÕES salvas em cima — e' para onde se volta —, depois o que
+// responde NESTA MÁQUINA (socket, porta, container, .sqlite). Cada linha diz
+// o motor pelo icone e pela etiqueta; a selecionada fica marcada. No pe', as
+// duas portas de criacao: uma conexao nova (o formulario) e um banco novo.
 Item {
     id: root
 
@@ -24,6 +21,101 @@ Item {
     signal discoverRequested()
     signal newRequested()
     signal createRequested()
+
+    // Sem host e' arquivo: a linha e' o caminho.
+    function profileDetail(profile) {
+        return profile.host === "" ? profile.database
+                                   : profile.user + "@" + profile.host + ":" + profile.port + "/" + profile.database;
+    }
+
+    component SectionTitle: Text {
+        width: parent ? parent.width : 0
+        leftPadding: Theme.spacingSmall
+        topPadding: Theme.spacingSmall
+        bottomPadding: Theme.spacingXSmall
+        color: Theme.textMuted
+        font.pixelSize: Theme.fontSizeCaption
+        font.weight: Font.DemiBold
+        font.letterSpacing: 0.8
+    }
+
+    // Uma linha: icone do motor, nome, detalhe em mono e a etiqueta do motor.
+    component PlaceRow: Rectangle {
+        id: row
+
+        property string iconName: "database"
+        property bool iconLive: true
+        property string title: ""
+        property string detail: ""
+        property string badge: ""
+        property bool current: false
+
+        signal clicked()
+
+        width: parent ? parent.width : 0
+        height: 38
+        radius: Theme.radius
+        color: row.current ? Theme.surfaceSelected : (rowArea.containsMouse ? Theme.surface2 : "transparent")
+
+        KvIcon {
+            id: rowIcon
+
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingSmall
+            anchors.verticalCenter: parent.verticalCenter
+            size: 18
+            name: row.iconName
+            active: row.current
+            disabled: !row.iconLive
+        }
+
+        Column {
+            anchors.left: rowIcon.right
+            anchors.leftMargin: Theme.spacingSmall
+            anchors.right: badgeLabel.left
+            anchors.rightMargin: Theme.spacingXSmall
+            anchors.verticalCenter: parent.verticalCenter
+
+            Text {
+                width: parent.width
+                text: row.title
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontSizeSmall
+                font.weight: row.current ? Font.DemiBold : Font.Normal
+                elide: Text.ElideRight
+            }
+
+            Text {
+                width: parent.width
+                visible: row.detail !== ""
+                text: row.detail
+                color: Theme.textMuted
+                font.family: Theme.monoFont
+                font.pixelSize: Theme.fontSizeMicro
+                elide: Text.ElideMiddle
+            }
+        }
+
+        Text {
+            id: badgeLabel
+
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingSmall
+            anchors.verticalCenter: parent.verticalCenter
+            text: row.badge
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeMicro
+        }
+
+        MouseArea {
+            id: rowArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: row.clicked()
+        }
+    }
 
     Flickable {
         id: rolagem
@@ -44,25 +136,52 @@ Item {
             width: rolagem.width
             spacing: 2
 
-            Row {
-                width: parent.width
-                height: 22
+            SectionTitle {
+                text: qsTr("CONEXÕES")
+            }
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.discovering ? qsTr("Nesta máquina — procurando…") : qsTr("Nesta máquina")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeCaption
+            Repeater {
+                model: root.profiles
+
+                delegate: PlaceRow {
+                    required property var modelData
+
+                    iconName: DataSourceKinds.engineIcon(modelData.engine)
+                    title: modelData.name
+                    detail: root.profileDetail(modelData)
+                    badge: DataSourceKinds.engineShort(modelData.engine)
+                    current: modelData.name === root.selectedName
+                    onClicked: root.profileSelected(modelData.name)
+                }
+            }
+
+            Text {
+                width: parent.width
+                visible: root.profiles.length === 0
+                leftPadding: Theme.spacingSmall
+                rightPadding: Theme.spacingSmall
+                wrapMode: Text.WordWrap
+                text: qsTr("Nenhuma conexão salva. Escolha uma desta máquina, abaixo, ou crie uma.")
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontSizeCaption
+            }
+
+            Item {
+                width: parent.width
+                height: discoverTitle.implicitHeight
+
+                SectionTitle {
+                    id: discoverTitle
+
+                    text: root.discovering ? qsTr("NESTA MÁQUINA — PROCURANDO…") : qsTr("NESTA MÁQUINA")
                 }
 
-                Item { width: parent.width - x - atualizar.width; height: 1 }
-
                 KvIconButton {
-                    id: atualizar
-
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
                     compact: true
                     iconName: "refresh"
+                    iconSize: 14
                     tooltip: qsTr("Procurar de novo (sockets, portas, containers, .sqlite)")
                     enabled: !root.discovering
                     onClicked: root.discoverRequested()
@@ -72,168 +191,53 @@ Item {
             Repeater {
                 model: root.candidates
 
-                delegate: Rectangle {
-                    id: achado
-
+                delegate: PlaceRow {
                     required property int index
                     required property var modelData
 
-                    width: coluna.width
-                    height: 32
-                    radius: Theme.radius
-                    color: areaAchado.containsMouse ? Theme.surface2 : "transparent"
-
-                    Rectangle {
-                        id: bolinha
-
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.spacingSmall
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 7
-                        height: 7
-                        radius: 3.5
-                        color: achado.modelData.running ? Theme.successSoft : Theme.textDisabled
-                    }
-
-                    Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: bolinha.right
-                        anchors.leftMargin: Theme.spacingSmall
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.spacingSmall
-
-                        Text {
-                            width: parent.width
-                            text: achado.modelData.label
-                            color: Theme.textPrimary
-                            font.pixelSize: Theme.fontSizeSmall
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: achado.modelData.detail
-                            color: Theme.textMuted
-                            font.family: Theme.monoFont
-                            font.pixelSize: Theme.fontSizeMicro
-                            elide: Text.ElideMiddle
-                        }
-                    }
-
-                    MouseArea {
-                        id: areaAchado
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.candidateSelected(achado.index)
-                    }
+                    iconName: DataSourceKinds.engineIcon(modelData.profile.engine)
+                    iconLive: modelData.running
+                    title: modelData.label
+                    detail: modelData.detail
+                    badge: modelData.running ? DataSourceKinds.engineShort(modelData.profile.engine) : qsTr("parado")
+                    onClicked: root.candidateSelected(index)
                 }
             }
 
             Text {
                 width: parent.width
                 visible: !root.discovering && root.candidates.length === 0
+                leftPadding: Theme.spacingSmall
+                rightPadding: Theme.spacingSmall
                 wrapMode: Text.WordWrap
                 text: root.discoverHint !== "" ? root.discoverHint : qsTr("nada respondeu")
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontSizeCaption
-            }
-
-            Item { width: 1; height: Theme.spacingSmall }
-
-            Text {
-                text: qsTr("Salvos")
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontSizeCaption
-            }
-
-            Repeater {
-                model: root.profiles
-
-                delegate: Rectangle {
-                    id: linha
-
-                    required property var modelData
-
-                    width: coluna.width
-                    height: 32
-                    radius: Theme.radius
-                    color: linha.modelData.name === root.selectedName
-                           ? Theme.surfaceSelected
-                           : (area.containsMouse ? Theme.surface2 : "transparent")
-
-                    Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.leftMargin: Theme.spacingSmall
-                        anchors.rightMargin: Theme.spacingSmall
-
-                        Text {
-                            width: parent.width
-                            text: linha.modelData.name
-                            color: Theme.textPrimary
-                            font.pixelSize: Theme.fontSizeSmall
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            width: parent.width
-                            // Sem host e' arquivo: a linha e' o caminho.
-                            text: linha.modelData.host === ""
-                                  ? linha.modelData.database
-                                  : linha.modelData.user + "@" + linha.modelData.host
-                                    + ":" + linha.modelData.port + "/" + linha.modelData.database
-                            color: Theme.textMuted
-                            font.family: Theme.monoFont
-                            font.pixelSize: Theme.fontSizeMicro
-                            elide: Text.ElideMiddle
-                        }
-                    }
-
-                    MouseArea {
-                        id: area
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.profileSelected(linha.modelData.name)
-                    }
-                }
-            }
-
-            Text {
-                width: parent.width
-                visible: root.profiles.length === 0
-                wrapMode: Text.WordWrap
-                text: qsTr("Nenhum perfil salvo. Clique num descoberto, ou preencha ao lado e salve.")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeCaption
             }
         }
     }
 
-    Row {
+    Column {
         id: rodape
 
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: Theme.spacingSmall
+        spacing: Theme.spacingXSmall
 
         KvButton {
-            width: (parent.width - parent.spacing) / 2
+            width: parent.width
             compact: true
-            text: qsTr("Nova fonte")
+            iconName: "add"
+            text: qsTr("Nova conexão")
             onClicked: root.newRequested()
         }
 
         KvButton {
-            width: (parent.width - parent.spacing) / 2
+            width: parent.width
             compact: true
-            primary: true
-            text: qsTr("Novo banco")
+            iconName: "database"
+            text: qsTr("Novo banco…")
             onClicked: root.createRequested()
         }
     }

@@ -2,12 +2,13 @@ import QtQuick
 
 // O CICLO DE FOCO entre as areas (0.3.9 F4, roadmap 53 §5.8): Ctrl+F6 leva o
 // teclado para a PROXIMA area visivel, Ctrl+Shift+F6 para a anterior; o fim
-// volta ao comeco. Ordem: a area da esquerda (explorador ou Git) -> o editor
-// -> o painel de baixo.
+// volta ao comeco. Ordem: o slot da esquerda (Projeto, Git ou Banco) -> o
+// editor -> o slot da direita (2026-10-03: a janela cujo icone esta' no
+// trilho da direita) -> o painel de baixo. Area escondida fica de fora.
 //
-//   [esquerda] --Ctrl+F6--> [editor] --Ctrl+F6--> [painel de baixo] --+
-//        ^                                                            |
-//        +------------------------- Ctrl+F6 --------------------------+
+//   [esquerda] -> [editor] -> [direita] -> [painel de baixo] --+
+//        ^                                                     |
+//        +-------------------- Ctrl+F6 ------------------------+
 //
 // Cada area expoe `focusArea()`. A area ATUAL e' a que contem o item com o
 // foco ativo da janela; sem nenhuma, o ciclo comeca no editor.

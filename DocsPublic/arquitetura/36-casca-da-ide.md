@@ -46,14 +46,14 @@ borda própria e são separadas por divisórias de 1 px.
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ [K] ☰  │ projeto ▾ │ main ③ │ Clang++ · Ninja ▾ │ ⋯      ▷ ⏹ ⌘   _ □ ✕ │ ← topo (38 px)
 │                                                                          │   AppMenuBar + TopHeaderBar
-│ ┌──┐ ╭──────────────┬──────────────────────────────────────────╮ ┌──┐   │
-│ │▣ │ │ área da      │ abas do editor                           │ │▤ │   │
-│ │⌨ │ │ esquerda     │                                          │ │  │   │
-│ │⬡ │ │ (Projeto ou  │ editor                                   │ │  │   │ ← trilhos na moldura
-│ │⋯ │ │  Git)        │                                          │ │  │   │   (SideRail esquerdo,
-│ │  │ │              ├──────────────────────────────────────────┤ │  │   │    RightSideRail)
-│ │  │ │              │ painel de baixo (Terminal, Problemas…)   │ │  │   │
-│ └──┘ ╰──────────────┴──────────────────────────────────────────╯ └──┘   │
+│ ┌──┐ ╭──────────────┬────────────────────────────┬─────────────╮ ┌──┐   │
+│ │▣ │ │ slot da      │ abas do editor             │ slot da     │ │▤ │   │
+│ │⌨ │ │ ESQUERDA     │                            │ DIREITA     │ │🛢│   │
+│ │⬡ │ │ (Projeto,    │ editor                     │ (a janela   │ │  │   │ ← trilhos na moldura
+│ │⋯ │ │  Git ou      │                            │  cujo ícone │ │  │   │   (SideRail esquerdo,
+│ │  │ │  Banco)      ├────────────────────────────┤  está à     │ │  │   │    RightSideRail)
+│ │  │ │              │ painel de baixo            │  direita)   │ │  │   │
+│ └──┘ ╰──────────────┴────────────────────────────┴─────────────╯ └──┘   │
 │ projeto › src › main.cpp   índice…   contexto…          1:1  LSP ● 1  IDE│ ← barra de status
 └──────────────────────────────────────────────────────────────────────────┘
   └─ WindowBackdrop: a moldura inteira (Theme.frame) com um véu âmbar no canto
@@ -70,7 +70,10 @@ borda própria e são separadas por divisórias de 1 px.
 | Linha do topo, à esquerda | `ui/qml/shell/AppMenuBar.qml` | Ícone da IDE, ☰ (`menuExpanded`), os menus Arquivo…Ajuda **na própria barra** quando expandidos e os controles da janela. É também a área de arrastar a janela. |
 | Linha do topo, ao meio | `ui/qml/shell/TopHeaderBar.qml` | Os widgets de contexto: projeto, Git, toolchain, Python e o "⋯". A barra é transparente e fica por cima da `AppMenuBar` (`z: 101`). |
 | Montagem do topo | `ui/qml/shell/ShellHeaderHost.qml` | Põe a `TopHeaderBar` logo depois do fim dos menus (`menuEndX`) e antes dos controles da janela (`controlsX`). |
-| Ilha e divisórias | `ui/qml/shell/ShellLayout.qml` | Um `Rectangle` arredondado atrás de uma `Row` (área da esquerda e centro), mais as divisórias de 1 px. |
+| Ilha e divisórias | `ui/qml/shell/ShellLayout.qml` | Um `Rectangle` arredondado atrás de uma `Row` (slot da esquerda, centro e slot da direita), mais as divisórias de 1 px (esquerda/centro, centro/direita, editor/painel de baixo). |
+| Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
+| Slot da direita | `ui/qml/shell/ShellRightDock.qml` | Um `Item` vazio na `Row`, com a alça de largura no vão à esquerda dele. Recebe a janela por troca de pai. |
+| De que lado cada janela abre | `ui/qml/shell/ShellDocks.qml` | Funções sobre o estado do `ShellController`: `sideOf`, `placed`, `showing`, `show`, `close`, `toggle`, `followSide`, `normalize`, `widen` (§2.3). |
 | Trilho da esquerda | `ui/qml/shell/SideRail.qml` | Ícones das áreas (34 px de largura, botões de 28 px, ícones de 20 px). |
 | Trilho da direita | `ui/qml/shell/RightSideRail.qml` | Um `SideRail` com o lado e a barra de ordem da direita. |
 | Barra de status | `ui/qml/shell/WorkspaceStatusBar.qml` | Duas faixas (esquerda e direita) de lugares arrastáveis. |
@@ -127,13 +130,14 @@ Os dois casos (40.7 §7.190 e §7.172):
                   ┌────────────────────────────┐
                   │ ShellController            │  DONO do estado da casca:
                   │  showExplorer, leftWindow  │  painéis, tamanhos, abas,
+                  │  rightWindow (2026-10-03)  │  os dois slots,
                   │  showBottomPanel, bottomTab│  trilho, ordem das barras
                   │  outlineCollapsed, sizes   │
                   │  railState {pinned,        │
                   │    unpinned, hidden, sides}│
                   │  barOrders {bar: [chaves]} │
                   └──────┬──────────────┬──────┘
-          codec puro ◀───┘              └───▶ FocusModeController (Foco)
+          codec puro ◀───┘   ShellDocks ◀──┘──▶ FocusModeController (Foco)
    ShellLayoutCodec                            narrowViewport (< 1024 px)
    snapshot/decode/ordered/                    effectiveOutlineCollapsed
    reordered/inserted/withSide
@@ -152,6 +156,82 @@ Os dois casos (40.7 §7.190 e §7.172):
   prefere `outlineCollapsed`. A tela mostra `effectiveOutlineCollapsed`, que
   é a preferência **ou** a janela estreita. Uma janela estreita não apaga a
   preferência: ao alargar, ela volta.
+
+### 2.0 Janelas acopladas: os dois slots (2026-10-03)
+
+**Pedido do autor:** "coloca para o painel aparecer no canto de acordo com o
+ícone na trilha", primeiro para o Banco e depois também para o Projeto. Ele
+avisou que essa parte "pode ser complicada de se fazer para evitar bugs".
+Por isso as regras abaixo são **um dono só** (`ShellDocks`) e estão provadas
+uma a uma no `tst_shell_docks`.
+
+**O estado.** Há um slot por lado:
+
+| Lado | Estado no `ShellController` | Fechado quando |
+| --- | --- | --- |
+| esquerda | `leftWindow` (`explorer`/`git`/`database`) + `showExplorer` | `showExplorer` é falso |
+| direita | `rightWindow` (a mesma lista, ou `""`) | `rightWindow` é `""` |
+
+**De que lado** uma janela abre é o lado do **ícone** dela no trilho:
+`railState.sides[nome]`, que o usuário muda arrastando o ícone (§3.4). Sem
+registro, o lado é a esquerda. O Git não tem ícone no trilho, então abre à
+esquerda até alguém mudar isso.
+
+**As regras** (`ShellDocks`):
+
+| Situação | O que acontece |
+| --- | --- |
+| `show(nome)` com o ícone à direita | `rightWindow = nome`; se a mesma janela estava na esquerda, a esquerda fecha. |
+| `show(nome)` com o ícone à esquerda | `leftWindow = nome`, `showExplorer = true`; se estava na direita, a direita esvazia. |
+| `toggle(nome)` | Visível em algum lado: fecha. Senão: `show`. É o clique no ícone. |
+| Ícone arrastado com a janela **aberta** do outro lado (`followSide`) | A janela vai junto (`show` no lado novo). |
+| Ícone arrastado com a janela **fechada** | Nada abre. |
+| Layout gravado com a janela no lado errado (`normalize`, depois de `applyLayout`) | A janela vai para o lado do ícone. Pega layouts gravados antes de existir o slot da direita. |
+| Símbolos abertos (`effectiveOutlineCollapsed` falso) | O slot da direita **some** (`showing` devolve `""`, o `ShellRightDock` fica invisível), sem perder `rightWindow`; ao fechar os Símbolos ele volta igual. Decisão do autor: "quando ele aparecer, o que estiver ali desaparece momentaneamente". |
+| `show` de uma janela escondida pelos Símbolos | Fecha os Símbolos (`toggleOutline`); senão o clique no ícone não faria nada visível. |
+| A janela pede mais largura (`widen`) | O slot dela **só alarga** até o pedido; o teto do `ShellController` continua valendo, e nunca encolhe por aqui. O Banco pede a largura natural da grade de dados (§2.0, "Tamanhos"). |
+
+`placed(nome)` diz em que slot a janela está **posta**, e `showing(nome)` diz
+onde ela está **visível** agora (a diferença são os Símbolos). As derivações
+`effectiveShowExplorer`, `gitWindowVisible` e `databaseWindowVisible` usam
+`showing`, e por isso o realce do ícone no trilho apaga quando os Símbolos
+escondem a janela.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Fechada
+    Fechada --> Esquerda: show (ícone à esquerda)
+    Fechada --> Direita: show (ícone à direita)
+    Esquerda --> Fechada: toggle / ×
+    Direita --> Fechada: toggle / ×
+    Esquerda --> Direita: ícone arrastado para a direita (followSide)
+    Direita --> Esquerda: ícone arrastado para a esquerda (followSide)
+    Direita --> Escondida: Símbolos abrem
+    Escondida --> Direita: Símbolos fecham, ou clique no ícone
+```
+
+**Uma instância, troca de pai.** As janelas não são duplicadas para cada
+lado. `ShellLeftWindowHost` tem uma instância de cada uma, e o `parent` dela
+é o próprio host ou o `ShellRightDock` (`slotOf(nome)`). O estado vai junto
+de graça: a árvore aberta do Banco, os dados na tela e a seleção no Projeto
+sobrevivem a trocar de lado, fechar e reabrir. Duas instâncias exigiriam
+sincronizar esse estado, e é aí que nasceriam os defeitos. O host da
+esquerda fica invisível quando `leftWindow === rightWindow`, para não mostrar
+um slot vazio.
+
+**Tamanhos.** Cada slot tem o próprio preferido: `explorerPreferredWidth`
+(esquerda) e `rightPreferredWidth` (direita, padrão 300, gravado em
+`sizes.right`, entre 220 e 640). O mínimo é **declarado pela janela** que
+está no slot, `ShellLeftWindowHost.minimumOf(nome)`:
+
+| Janela | Mínimo |
+| --- | --- |
+| Projeto | 220 px |
+| Git | a maior das três linhas do Git (40.7 §7.205) |
+| Banco | 260 px |
+
+O teto da direita é o teto da esquerda menos o que a esquerda ocupa, e assim
+o editor nunca fica abaixo de 480 px.
 
 ### 2.1 Gravação do layout
 
@@ -190,7 +270,8 @@ O schema formal está em
     "schemaVersion": 1,
     "leftWindow": "explorer",
     "leftVisible": true,
-    "sizes": { "explorer": 280, "outline": 260, "bottom": 240 },
+    "rightWindow": "database",
+    "sizes": { "explorer": 280, "outline": 260, "right": 300, "bottom": 240 },
     "outlineCollapsed": false,
     "bottom": { "visible": true, "tab": "terminal", "pinned": ["terminal"] },
     "rail": {
@@ -208,6 +289,17 @@ O schema formal está em
   }
 }
 ```
+
+Validação na leitura (`ShellLayoutCodec.decode`):
+
+- **`leftWindow` e `rightWindow`.** Só valem se estiverem na lista
+  `leftWindows`. `rightWindow` aceita `""` (fechado). Uma janela que não
+  existe é ignorada.
+- **`bottom.tab`.** Só vale se a aba existir hoje (`bottomTabs`). Uma aba que
+  deixou de existir cai no padrão. É o caso de `"git"`, que virou janela, e
+  de `"database"`, a aba "Resultado" de 2026-10-03, cujos dados foram para a
+  janela do Banco. Antes disso, o painel de baixo abria **vazio**: isso foi
+  achado na tela real.
 
 Regras do `order`, que valem para as seis barras:
 
@@ -319,10 +411,10 @@ age é a função `activate(id)`.
 
 | `kind` | Exemplos | O clique faz |
 | --- | --- | --- |
-| `dock-left` | Projeto | alterna a área da esquerda |
-| `dock-right` | Símbolos | recolhe/expande os Símbolos |
+| `dock-left` | Projeto, Banco | janela acoplada: abre ou fecha no slot **do lado do ícone** (`toggleDockWindow`, §2.0) |
+| `dock-right` | Símbolos | recolhe/expande os Símbolos (abertos, escondem o slot da direita) |
 | `bottom` | Terminal, Ferramentas | abre o painel de baixo na aba; se ela já estiver à vista, recolhe |
-| `overlay` | Embarcados, Banco, Containers, Remoto, Grafana | abre o painel de ambiente do dono (`owner.open()`) |
+| `overlay` | Embarcados, Containers, Remoto, Grafana | abre o painel de ambiente do dono (`owner.open()`) |
 
 Duas camadas filtram o que aparece:
 
@@ -439,10 +531,14 @@ editor de qualquer lugar.
 O dono é `ui/qml/shell/FocusCycle.qml`.
 
 ```text
-[área da esquerda] ──Ctrl+F6──▶ [editor] ──Ctrl+F6──▶ [painel de baixo] ─┐
-        ▲                                                                │
-        └──────────────────────────── Ctrl+F6 ───────────────────────────┘
+[slot da esquerda] ─▶ [editor] ─▶ [slot da direita] ─▶ [painel de baixo] ─┐
+        ▲                                                                 │
+        └─────────────────────────── Ctrl+F6 ─────────────────────────────┘
 ```
+
+O slot da direita entrou em 2026-10-03. O `focusArea()` dele pede ao
+`ShellLeftWindowHost` o foco da janela que está ali (`focusSlot("right")`),
+porque é o host quem tem as janelas.
 
 - Só as áreas **visíveis** entram no ciclo.
 - A área atual é a que **contém** o item com foco ativo (o ciclo sobe pela
@@ -475,17 +571,27 @@ com Qt 6.4. Os casos abaixo passaram no 6.10 e quebraram no 6.4:
 | `children` não é `Array` | `children.find` não existe | Laço por índice. |
 | `Loader.sourceComponent` com componente *bound* | Painel não abre | `createObject` (§6). |
 
+Outras armadilhas, que valem nas duas versões e foram achadas na tela real
+em 2026-10-03:
+
+| Armadilha | Sintoma | Como a casca evita |
+| --- | --- | --- |
+| Uma lista vinda do C++ (`QVariantList`) **não** é `Array`: `Array.isArray` dá falso, e só existem `length` e índices | O trilho perdia a ordem (40.7 §7.160); a grade do Banco mostrava tudo como `null`, porque tratava a linha como objeto | Um dono para a pergunta, `ui/qml/components/KvLists.js` (`isList`, `listOf`), usado pelo codec e pela `GridRules`. |
+| Botão que aparece com `containsMouse` da `MouseArea` da linha | O botão pisca: quando o mouse entra nele, ele "rouba" o hover, some, devolve e reaparece | Hover passivo: `HoverHandler` na linha (`DatabaseTreeView`). |
+| `Text` com `elide` e `height: implicitHeight + …` | "Binding loop detected for property height" no log | Altura tirada da **fonte**, e não do próprio texto (`DataSourceResultsPanel`). |
+
 ## 9. Provas
 
 | Harness (`scripts/qml-harness/`) | O que prova |
 | --- | --- |
-| `tst_bar_reorder` | O codec (ordem, vão, chave escondida, transferência, lados), o `ReorderController` com `partner`, as abas e o status na ordem salva. |
+| `tst_bar_reorder` | O codec (ordem, vão, chave escondida, transferência, lados, aba de baixo que deixou de existir), o `ReorderController` com `partner`, as abas e o status na ordem salva. |
 | `tst_header_order` | Os widgets do topo na ordem de fábrica e na ordem salva; nenhum chip vai para o "⋯" quando cabe. |
 | `tst_tool_windows` | As nove entradas, `activate`, os painéis por entrada e os trilhos sem as áreas indisponíveis. |
 | `tst_environment_overlays` | Os painéis de ambiente nascem na primeira abertura, uma vez só, e guardam o estado. |
 | `tst_focus_mode` | Foco: guardar e restaurar; painel aberto à mão; janela estreita. |
-| `tst_focus_cycle` | O ciclo com áreas escondidas, para frente e para trás. |
-| `tst_shell_panel_limits` | Os tamanhos entre o mínimo e o máximo; o retrato do layout. |
+| `tst_focus_cycle` | O ciclo com áreas escondidas, para frente e para trás; o slot da direita depois do editor. |
+| `tst_shell_docks` | §2.0 inteira: lado do ícone, um slot por lado, nunca nos dois lados, arrastar leva junto (e fechada não abre), Símbolos escondem e devolvem, `normalize`, `widen` só alarga, o retrato e o decode do slot da direita. |
+| `tst_shell_panel_limits` | Os tamanhos entre o mínimo e o máximo; o retrato do layout (com `rightWindow` e `sizes.right`). |
 
 Todos rodam em `scripts/verificar-qml-logica.sh` (Qt 6.10) e em
 `scripts/verificar-qml-logica-qt64.sh` (Qt 6.4), dentro do gate

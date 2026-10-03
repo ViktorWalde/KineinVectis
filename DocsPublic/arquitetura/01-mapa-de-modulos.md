@@ -79,7 +79,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 174 métodos IPC roteados pelo core.
+Medido: 175 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -268,7 +268,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 174 métodos roteados pelo core, 143 seguem o caminho padrão
+Dos 175 métodos roteados pelo core, 144 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 31 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -1113,13 +1113,16 @@ flowchart LR
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_grafana_cpp["core_client_grafana.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
+    n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
   end
   subgraph IPC["JSON-RPC"]
-    n_ipc_datasource(["datasource.* · 9"])
+    n_ipc_datasource(["datasource.* · 10"])
+    n_ipc_fs(["fs.* · 1"])
     n_ipc_grafana(["grafana.* · 4"])
   end
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_datasource_rs["handlers/datasource.rs"]
+    n_crates_kinein_core_src_handlers_fs_rs["handlers/fs.rs"]
     n_crates_kinein_core_src_handlers_grafana_rs["handlers/grafana.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
     n_core_datasource[datasource]
@@ -1133,6 +1136,7 @@ flowchart LR
   n_ui_qml_grafana_GrafanaController_qml --> n_ui_qml_ipc_GrafanaRequestRouter_qml
   n_ui_qml_ipc_DataSourceEventRouter_qml -.-> n_ui_qml_datasource_DataSourceController_qml
   n_ui_qml_ipc_DataSourceRequestRouter_qml --> n_ui_src_core_client_datasource_cpp
+  n_ui_qml_ipc_DataSourceRequestRouter_qml --> n_ui_src_core_client_requests_cpp
   n_ui_qml_ipc_GrafanaEventRouter_qml -.-> n_ui_qml_grafana_GrafanaController_qml
   n_ui_qml_ipc_GrafanaRequestRouter_qml --> n_ui_src_core_client_grafana_cpp
   n_ui_src_core_client_datasource_cpp --> n_ipc_datasource
@@ -1143,10 +1147,14 @@ flowchart LR
   n_ui_src_core_client_grafana_cpp -.-> n_ui_qml_ipc_GrafanaEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_DataSourceEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_GrafanaEventRouter_qml
+  n_ui_src_core_client_requests_cpp --> n_ipc_fs
   n_ipc_datasource --> n_crates_kinein_core_src_handlers_datasource_rs
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_datasource
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_jobs
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_rpc
+  n_ipc_fs --> n_crates_kinein_core_src_handlers_fs_rs
+  n_crates_kinein_core_src_handlers_fs_rs --> n_core_jobs
+  n_crates_kinein_core_src_handlers_fs_rs --> n_core_rpc
   n_ipc_grafana --> n_crates_kinein_core_src_handlers_grafana_rs
   n_crates_kinein_core_src_handlers_grafana_rs --> n_core_datasource
   n_crates_kinein_core_src_handlers_grafana_rs --> n_core_grafana
@@ -1169,11 +1177,13 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_grafana.cpp` | Dominio de OBSERVABILIDADE no lado da UI: |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
+| ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | handler Rust | `crates/kinein-core/src/handlers/datasource.rs` | Handler dos pedidos datasource.* (impl Core). |
+| handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
 | handler Rust | `crates/kinein-core/src/handlers/grafana.rs` | Handler dos pedidos grafana.* (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (13): `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.introspect`, `datasource.list`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`.
+Métodos IPC (15): `datasource.console`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.introspect`, `datasource.list`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`.
 
 ### Containers
 

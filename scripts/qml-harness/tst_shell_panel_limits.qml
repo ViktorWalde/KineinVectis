@@ -93,8 +93,8 @@ Item {
 
         // Layout schema 1: aplicar, e o retrato devolve o mesmo.
         const layout = {
-            schemaVersion: 1, leftWindow: "git", leftVisible: true,
-            sizes: { explorer: 340, outline: 240, bottom: 300 },
+            schemaVersion: 1, leftWindow: "git", leftVisible: true, rightWindow: "",
+            sizes: { explorer: 340, outline: 240, right: 300, bottom: 300 },
             outlineCollapsed: false, bottom: { visible: true, tab: "problems", pinned: ["build"] },
             rail: { pinned: ["database"], unpinned: [], hidden: ["tools"], sides: { outline: "left" } },
             // A ordem arrastada de cada barra (0.3.9) vai e volta igual.

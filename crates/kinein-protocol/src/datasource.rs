@@ -248,6 +248,25 @@ pub struct DataSourceRemoveParams {
     pub name: String,
 }
 
+/// Parameters for `datasource.console` (`0.149.0`): the console of a saved
+/// profile, opened in the IDE's own editor.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataSourceConsoleParams {
+    /// Name of the saved profile.
+    pub name: String,
+}
+
+/// Result payload for `datasource.console`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceConsoleResult {
+    /// Absolute path of the console file (`.kinein/consoles/<name>.sql`).
+    pub path: String,
+    /// `true` when this call created it.
+    pub created: bool,
+}
+
 /// Result payload for `datasource.save` and `datasource.remove`.
 #[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

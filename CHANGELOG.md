@@ -136,6 +136,26 @@ no checkout, não em nenhum pacote publicado.
   mostra mais Projeto, Terminal e Símbolos apagados; os painéis de ambiente
   (Embarcados, Banco, Containers, Remoto, Grafana) não perdem mais o que
   você digitou quando outra parte da janela muda.
+- Protocolo `0.149.0` — **o Banco integrado ao layout**, no modelo da janela
+  Database da JetBrains. É uma janela acoplada, não mais um painel por cima
+  do código:
+  - **árvore:** conexão, esquema, tabela, coluna (no MongoDB, coleção e
+    campos);
+  - **dados:** clique duplo numa tabela traz as linhas para a **própria
+    janela**, embaixo da árvore;
+  - **console SQL:** é um arquivo do editor (`.kinein/consoles/<conexão>.sql`),
+    onde **Ctrl+Enter** executa a seleção ou a instrução sob o cursor;
+  - **largura:** a janela se alarga sozinha para a grade caber, sem espremer
+    o editor;
+  - **a grade:** mostra os valores de verdade (antes, tudo vinha `null`) e o
+    botão "ver dados" não pisca mais.
+- **Janelas do lado do ícone.** Projeto, Git e Banco abrem do lado do trilho
+  em que o ícone está, e há um slot novo à direita:
+  - arraste o ícone para o outro trilho e a janela vai junto, com tudo o que
+    estava aberto;
+  - os Símbolos (☰) escondem o slot da direita enquanto estão abertos e o
+    devolvem ao fechar;
+  - **Ctrl+F6** passa pelos dois lados.
 
 ## 0.3.5 — lançada em 2026-10-01 (pré-release "Public Beta")
 

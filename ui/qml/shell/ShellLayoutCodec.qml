@@ -1,4 +1,5 @@
 import QtQuick
+import "KvLists.js" as KvLists
 
 // O RETRATO DO LAYOUT (53 §4.4), montado e lido por funcoes puras. Saiu do
 // ShellController quando ele chegou a 393/400: gravar e ler o `layout` e' uma
@@ -6,20 +7,19 @@ import QtQuick
 //
 // LISTAS: o que chega do settings atravessa o C++ (QVariantMap) e a lista vem
 // como QVariantList, que no QML NAO e' um Array do JS — `Array.isArray` da'
-// falso. `listOf` copia por `length`, e e' o unico jeito de ler lista aqui
-// (o trilho mostrou o defeito em 2026-10-02, 40.7 §7.160).
+// falso. `listOf` (KvLists.js, o dono) copia por `length`, e e' o unico jeito
+// de ler lista aqui (o trilho mostrou o defeito em 2026-10-02, 40.7 §7.160).
 QtObject {
     id: root
 
+    // As abas que existem no painel de baixo. Uma aba gravada que deixou de
+    // existir ("git", que virou janela; "database", que foi para a janela do
+    // Banco em 2026-10-03) deixava o painel aberto e VAZIO; agora cai no padrao.
+    readonly property var bottomTabs: ["terminal", "build", "problems", "tests", "jobs", "debug",
+                                       "search", "tools", "logs"]
+
     function listOf(value) {
-        const out = [];
-        if (value !== undefined && value !== null && typeof value.length === "number"
-                && typeof value !== "string") {
-            for (let i = 0; i < value.length; i++) {
-                out.push(value[i]);
-            }
-        }
-        return out;
+        return KvLists.listOf(value);
     }
 
     function numberOr(value, fallback) {
@@ -61,9 +61,11 @@ QtObject {
             schemaVersion: 1,
             leftWindow: shell.leftWindow,
             leftVisible: shell.showExplorer,
+            rightWindow: shell.rightWindow,
             sizes: {
                 explorer: Math.round(shell.explorerPreferredWidth),
                 outline: Math.round(shell.outlineWidth),
+                right: Math.round(shell.rightPreferredWidth),
                 bottom: Math.round(shell.bottomPreferredHeight)
             },
             outlineCollapsed: shell.outlineCollapsed,
@@ -83,6 +85,7 @@ QtObject {
         const values = {
             explorerPreferredWidth: clamp(numberOr(sizes.explorer, shell.explorerPreferredWidth), 160, 1200),
             outlineWidth: clamp(numberOr(sizes.outline, shell.outlineWidth), 160, 420),
+            rightPreferredWidth: clamp(numberOr(sizes.right, shell.rightPreferredWidth), 220, 640),
             bottomPreferredHeight: clamp(numberOr(sizes.bottom, shell.bottomPreferredHeight), 120, 1200),
             railState: { pinned: listOf(rail.pinned), unpinned: listOf(rail.unpinned),
                          hidden: listOf(rail.hidden), sides: decodeSides(rail.sides) },
@@ -92,13 +95,17 @@ QtObject {
         if (listOf(shell.leftWindows).indexOf(layout.leftWindow) >= 0) {
             values.leftWindow = layout.leftWindow;
         }
+        // O slot da direita: so' uma janela que existe ("" = fechado).
+        if (layout.rightWindow === "" || listOf(shell.leftWindows).indexOf(layout.rightWindow) >= 0) {
+            values.rightWindow = layout.rightWindow;
+        }
         if (typeof layout.leftVisible === "boolean") {
             values.showExplorer = layout.leftVisible;
         }
         if (typeof layout.outlineCollapsed === "boolean") {
             values.outlineCollapsed = layout.outlineCollapsed;
         }
-        if (typeof bottom.tab === "string" && bottom.tab !== "" && bottom.tab !== "git") {
+        if (root.bottomTabs.indexOf(bottom.tab) >= 0) {
             values.bottomTab = bottom.tab;
         }
         if (typeof bottom.visible === "boolean") {

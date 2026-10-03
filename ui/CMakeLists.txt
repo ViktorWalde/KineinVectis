@@ -46,16 +46,19 @@ qt_add_executable(kinein-vectis
 
 set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/datasource/DataSourceKinds.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS DataSourceKinds.qml)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
 set_source_files_properties(qml/components/KvFileIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvFileIcon.qml)
 set_source_files_properties(qml/components/KvIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvIconGlyphs.js)
+set_source_files_properties(qml/components/KvLists.js PROPERTIES QT_RESOURCE_ALIAS KvLists.js)
 set_source_files_properties(qml/components/KvFileIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvFileIconGlyphs.js)
 set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
 set_source_files_properties(qml/components/KvPanelFrame.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelFrame.qml)
 set_source_files_properties(qml/components/KvPanelHeader.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelHeader.qml)
 set_source_files_properties(qml/components/KvVerdict.qml PROPERTIES QT_RESOURCE_ALIAS KvVerdict.qml)
 set_source_files_properties(qml/components/KvDataGrid.qml PROPERTIES QT_RESOURCE_ALIAS KvDataGrid.qml)
+set_source_files_properties(qml/components/KvDataGridHeader.qml PROPERTIES QT_RESOURCE_ALIAS KvDataGridHeader.qml)
 set_source_files_properties(qml/components/GridRules.qml PROPERTIES QT_RESOURCE_ALIAS GridRules.qml)
 set_source_files_properties(qml/components/KvBarButton.qml PROPERTIES QT_RESOURCE_ALIAS KvBarButton.qml)
 set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
@@ -107,6 +110,8 @@ set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
 set_source_files_properties(qml/shell/ShellEditorHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorHost.qml)
 set_source_files_properties(qml/shell/ShellLeftWindowHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellLeftWindowHost.qml)
+set_source_files_properties(qml/shell/ShellRightDock.qml PROPERTIES QT_RESOURCE_ALIAS ShellRightDock.qml)
+set_source_files_properties(qml/shell/ShellDocks.qml PROPERTIES QT_RESOURCE_ALIAS ShellDocks.qml)
 set_source_files_properties(qml/shell/ShellEditorOverlayHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorOverlayHost.qml)
 set_source_files_properties(qml/shell/ShellProjectOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellProjectOverlays.qml)
 set_source_files_properties(qml/shell/AppMenuItems.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuItems.qml)
@@ -173,16 +178,18 @@ set_source_files_properties(qml/app/AppEnvironmentDomains.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/ipc/EmbeddedEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedEventRouter.qml)
 set_source_files_properties(qml/ipc/EmbeddedRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedRequestRouter.qml)
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
-set_source_files_properties(qml/datasource/DataSourceQuery.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceQuery.qml)
 set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanelHost.qml)
 set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceForm.qml)
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
+set_source_files_properties(qml/datasource/DataSourceTree.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceTree.qml)
+set_source_files_properties(qml/datasource/DataSourceResultsPanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceResultsPanel.qml)
+set_source_files_properties(qml/datasource/DataSourceConsoleController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceConsoleController.qml)
+set_source_files_properties(qml/datasource/DatabaseWindow.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseWindow.qml)
+set_source_files_properties(qml/datasource/DatabaseTreeView.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseTreeView.qml)
 set_source_files_properties(qml/datasource/DataSourceDiscoveryController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDiscoveryController.qml)
 set_source_files_properties(qml/datasource/DataSourceCreateBox.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceCreateBox.qml)
 set_source_files_properties(qml/datasource/DataSourceDestroyBox.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDestroyBox.qml)
 set_source_files_properties(qml/datasource/DataSourceVerdict.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceVerdict.qml)
-set_source_files_properties(qml/datasource/DataSourceStructure.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceStructure.qml)
-set_source_files_properties(qml/datasource/DataSourceCollections.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceCollections.qml)
 set_source_files_properties(qml/setup/SetupController.qml PROPERTIES QT_RESOURCE_ALIAS SetupController.qml)
 set_source_files_properties(qml/setup/SetupPanel.qml PROPERTIES QT_RESOURCE_ALIAS SetupPanel.qml)
 set_source_files_properties(qml/setup/SetupPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS SetupPanelHost.qml)
@@ -427,12 +434,14 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvIcon.qml
         qml/components/KvFileIcon.qml
         qml/components/KvIconGlyphs.js
+        qml/components/KvLists.js
         qml/components/KvFileIconGlyphs.js
         qml/components/KvToggleChip.qml
         qml/components/KvPanelFrame.qml
         qml/components/KvPanelHeader.qml
         qml/components/KvVerdict.qml
         qml/components/KvDataGrid.qml
+        qml/components/KvDataGridHeader.qml
         qml/components/GridRules.qml
         qml/components/KvBarButton.qml
         qml/components/KvTooltip.qml
@@ -485,6 +494,8 @@ qt_add_qml_module(kinein-vectis
         qml/shell/ShellWorkspaceHost.qml
         qml/shell/ShellEditorHost.qml
         qml/shell/ShellLeftWindowHost.qml
+        qml/shell/ShellRightDock.qml
+        qml/shell/ShellDocks.qml
         qml/shell/ShellEditorOverlayHost.qml
         qml/shell/ShellProjectOverlays.qml
         qml/shell/AppMenuItems.qml
@@ -551,16 +562,19 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/EmbeddedEventRouter.qml
         qml/ipc/EmbeddedRequestRouter.qml
         qml/datasource/DataSourcePanel.qml
-        qml/datasource/DataSourceQuery.qml
         qml/datasource/DataSourcePanelHost.qml
         qml/datasource/DataSourceForm.qml
         qml/datasource/DataSourceList.qml
+        qml/datasource/DataSourceTree.qml
+        qml/datasource/DataSourceKinds.qml
+        qml/datasource/DataSourceResultsPanel.qml
+        qml/datasource/DataSourceConsoleController.qml
+        qml/datasource/DatabaseWindow.qml
+        qml/datasource/DatabaseTreeView.qml
         qml/datasource/DataSourceDiscoveryController.qml
         qml/datasource/DataSourceCreateBox.qml
         qml/datasource/DataSourceDestroyBox.qml
         qml/datasource/DataSourceVerdict.qml
-        qml/datasource/DataSourceStructure.qml
-        qml/datasource/DataSourceCollections.qml
         qml/setup/SetupController.qml
         qml/setup/SetupPanel.qml
         qml/setup/SetupPanelHost.qml

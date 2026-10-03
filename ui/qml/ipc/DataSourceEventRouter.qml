@@ -24,6 +24,10 @@ Item {
             root.dataSourceController.handleList(profiles);
         }
 
+        function onDataSourceConsoleResolved(path, created) {
+            root.dataSourceController.consoles.handleResolved(path);
+        }
+
         function onDataSourceTested(name, ok, serverVersion, message, secretRequired) {
             root.dataSourceController.handleTested(name, ok, serverVersion, message,
                                                    secretRequired);

@@ -1,5 +1,19 @@
 # 03 — Protocolo IPC
 
+> **0.149.0 (2026-10-03) — o console SQL mora no editor.**
+> `datasource.console { name } -> { path, created }` garante
+> `.kinein/consoles/<nome>.sql` (`.mongo` para MongoDB) e devolve o caminho;
+> a UI abre o arquivo como uma aba comum do editor, e Ctrl+Enter roda a
+> instrução sob o cursor (ou a seleção) por `datasource.query`, com o
+> resultado na seção de dados da **própria janela do Banco** (o autor pediu o
+> contexto num lugar só; a aba "Resultado" no painel de baixo existiu algumas
+> horas e saiu). Chamar de novo **não**
+> sobrescreve o que se escreveu (`created: false`). O nome do perfil nunca
+> vira caminho: só letras, dígitos, `-`, `_` e `.` passam, o resto vira `_`,
+> e um perfil que não existe é recusado com `InvalidParams`. Decisão do
+> autor: o navegador de banco num painel por cima do código ficou
+> "desacoplado demais"; o modelo agora é a janela Database da JetBrains.
+
 > **0.148.0 (2026-10-03) — o catálogo de comandos separa o que é ação do
 > usuário.** `CommandDescriptor.internal?` (`bool`, serializado só quando
 > `true`) marca o **encanamento do protocolo**: `core.ping`,
@@ -3136,7 +3150,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 174 métodos roteados — a lista inteira
+## Os 175 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3184,6 +3198,7 @@ core.shutdown
 coverage.lines
 coverage.run
 
+datasource.console
 datasource.create
 datasource.destroy
 datasource.discover
@@ -4398,6 +4413,7 @@ datasource.discover   {}                      -> { candidates: [DataSourceCandid
 datasource.create     { kind: sqliteFile, name, path? } -> { profile }                                       (0.124.0)
                       { kind: containerServer, engine, name, port } -> { jobId, command }  + event.datasource.created
 datasource.destroy    { name, data? }         -> { profiles, note? } | { jobId, command } + event.datasource.destroyed  (0.129.0)
+datasource.console    { name }                -> { path, created }   (0.149.0; arquivo em .kinein/consoles/)
 datasource.list       {}                      -> { profiles: [DataSourceProfile] }
 datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult

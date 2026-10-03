@@ -40,6 +40,7 @@
 //! dois dizem "banco" e nao tem nada a ver um com o outro.
 
 pub mod connection;
+pub mod console;
 pub mod create;
 pub mod destroy;
 pub mod discover;

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 // Estado das FONTES DE DADOS (etapa 26 do roadmaps/35).
 //
@@ -47,6 +48,13 @@ Item {
     // visao pelo motor do perfil.
     property var collections: []
     property bool reading: false
+    // A estrutura POR CONEXAO, para a arvore da janela do Banco (2026-10-03):
+    // nome -> { schemas, collections }; e quem esta' sendo lido agora.
+    property var structures: ({})
+    property var readingNames: ({})
+    // A ultima consulta pedida por NOME (o console do editor): repetida tal
+    // qual quando a escrita pede confirmacao.
+    property var lastQuery: null
 
     // Senha da sessao. Nunca persistida, nunca enviada ao `save`.
     property string sessionPassword: ""
@@ -68,9 +76,13 @@ Item {
     signal introspectRequested(string name, string password)
     signal queryRequested(string name, string password, string sql, bool confirmWrite)
 
-    // O que responde nesta maquina e a criacao (0.124.0): dono proprio,
-    // filho deste. Os pedidos saem dele; a adocao/criacao volta para ca'.
+    // Descoberta e criacao (0.124.0): filho com dono proprio; adocao volta aqui.
     readonly property alias discovery: discoveryController
+    // O console SQL no editor e o resultado embaixo (2026-10-03).
+    readonly property DataSourceConsoleController consoles: DataSourceConsoleController {
+        dataSourceController: root
+        workspaceRoot: root.workspaceRoot
+    }
 
     DataSourceDiscoveryController {
         id: discoveryController
@@ -111,14 +123,16 @@ Item {
         };
     }
 
+    // A lista do projeto e o que responde nesta maquina — PERGUNTA de novo
+    // a cada abertura: um servidor sobe e cai fora da IDE.
+    function refreshCatalog() {
+        listRequested();
+        discoveryController.discover();
+    }
+
     function open() {
         panelVisible = true;
-        if (profiles.length === 0) {
-            listRequested();
-        }
-        // Toda abertura PERGUNTA de novo, como o painel de containers: um
-        // servidor sobe e cai fora da IDE.
-        discoveryController.discover();
+        refreshCatalog();
     }
 
     // Um perfil vindo da descoberta (nao salvo: vai ao formulario para o
@@ -262,7 +276,26 @@ Item {
         introspectRequested(draft.name, sessionPassword);
     }
 
+    // Ler a estrutura de UMA conexao pelo nome, sem mexer no formulario.
+    function introspectProfile(name) {
+        readingNames = Object.assign({}, readingNames, { [name]: true });
+        introspectRequested(name, sessionPassword);
+    }
+
+    // Executar `text` na conexao `name` (o console no editor).
+    function runOn(name, text, confirmWrite) {
+        if (name === "" || text.trim() === "") return;
+        lastQuery = { name: name, sql: text };
+        querying = true;
+        writeConfirmationRequired = false;
+        queryStatus = "";
+        queryRequested(name, sessionPassword, text, confirmWrite === true);
+    }
+
     function handleIntrospected(name, ok, newSchemas, newCollections, message, needsSecret) {
+        readingNames = Object.assign({}, readingNames, { [name]: false });
+        structures = Object.assign({}, structures, { [name]: ok ? { schemas: newSchemas, collections: newCollections }
+                                                                : { schemas: [], collections: [], failed: message } });
         reading = false;
         testedName = name;
         if (ok) {
@@ -278,10 +311,9 @@ Item {
         }
     }
 
-    // `true` quando o perfil em edicao fala de DOCUMENTO, e nao de tabela.
-    // Um so' dono desta derivacao: o painel e o host leem daqui.
+    // `true` quando o perfil em edicao fala de DOCUMENTO (o painel e o host leem daqui).
     readonly property bool documentEngine:
-        root.draft ? root.draft.engine === "mongo" : false
+        root.draft ? DataSourceKinds.isMongo(root.draft.engine) : false
 
     function handleTested(name, ok, version, message, needsSecret) {
         testing = false;
@@ -352,6 +384,7 @@ Item {
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;
+            readingNames = ({});
             querying = false;
             if (code === "WRITE_CONFIRMATION_REQUIRED") {
                 writeConfirmationRequired = true;

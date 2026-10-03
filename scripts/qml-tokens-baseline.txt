@@ -1,7 +1,6 @@
 # Literais de raio, fonte, duracao e cor no QML, CONGELADOS (catraca: so' descem).
 # arquivo<TAB>categoria<TAB>ocorrencias. Gerado por verificar_qml_tokens.py --atualizar-baseline.
 ui/qml/Theme.qml	radius	1
-ui/qml/datasource/DataSourceList.qml	radius	1
 ui/qml/embedded/EmbeddedSizeView.qml	radius	1
 ui/qml/panels/bottom/TerminalGeometryOverlay.qml	color	3
 ui/qml/panels/bottom/TerminalGeometryOverlay.qml	fontSize	1

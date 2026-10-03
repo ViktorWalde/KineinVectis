@@ -8,7 +8,7 @@
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.148.0`,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.149.0`,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
 >   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.204.
 >   A arquitetura da casca para quem chega, com diagramas, está em
@@ -24,6 +24,20 @@
 >     aberto agora reconfigura e muda o build.
 >   - **Dívida anotada:** 20 campos de texto feitos à mão em 18 arquivos (um
 >     `KvTextField` é fatia própria, §7.199).
+>   - **Banco integrado ao layout** (§7.206, protocolo `0.149.0`):
+>     - O Banco virou uma **janela acoplada**, como a Database da JetBrains,
+>       com a árvore, os dados na própria janela e o console SQL como arquivo
+>       do editor (`.kinein/consoles/`, Ctrl+Enter).
+>     - Duas formas foram recusadas pelo autor e estão registradas com o
+>       motivo: o painel por cima do código e a aba "Resultado" no painel de
+>       baixo.
+>   - **Janelas acopladas do lado do ícone** (§7.207). Projeto, Git e Banco
+>     abrem no slot do trilho em que o ícone está, e há um slot à direita.
+>     Os Símbolos escondem o slot da direita enquanto estão abertos, e o
+>     Ctrl+F6 passa pelos dois slots.
+>   - **Em seguida:** os Containers no mesmo modelo, com inspiração no Docker
+>     Desktop. O Grafana dentro da IDE (uma visualização web local, opcional)
+>     espera o autor aceitar o tamanho que o QtWebEngine acrescenta.
 > - **Próximo:** a 0.4 (embarcados, [`52`](52-arquitetura-executavel-da-0.4.md)),
 >   depois de o autor revisar a série na tela. Onde cada versão começa no
 >   código: [`58`](58-onde-cada-versao-comeca-no-codigo.md).
@@ -192,9 +206,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.148.0 (2026-10-03; o historico das versoes e' o arquitetura/03)
-metodos     174 IPC roteados, 57 eventos (scripts/verificar-fiacao-ipc.sh,
-            2026-10-01); 98 harnesses QML em scripts/qml-harness (2026-10-02)
+protocolo   0.149.0 (2026-10-03; o historico das versoes e' o arquitetura/03)
+metodos     175 IPC roteados, 57 eventos (scripts/verificar-fiacao-ipc.sh,
+            2026-10-03; o 175o e' datasource.console); 109 harnesses QML em
+            scripts/qml-harness (ls tst_*.qml, 2026-10-03)
 testes      874 Rust aprovados; 1 C++; 67 harnesses QML (medicao de 2026-09-24, §7.99)
 historico   168 IPC roteados, 56 eventos em 2026-09-24 (remote.parseCommand em 0.134.0;
             remote.command kind copyId em 0.133.0;

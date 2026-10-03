@@ -2,14 +2,19 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// As fontes de dados na tela: escolher, editar, salvar e TESTAR.
+// O DIALOGO DA CONEXAO do Banco (2026-10-03), no papel do "Data Sources" da
+// JetBrains: a lista de conexoes e do que responde nesta maquina a esquerda,
+// e a direita uma face por vez —
 //
-// Componente burro: recebe por property, pede por signal. Compoe as quatro
-// areas — lista, formulario, veredito e acoes —, cada uma com dono proprio.
+//   connection  o veredito do teste e o formulario (nova, ou editar)
+//   create      um banco novo (SQLite, ou servidor em container)
+//   destroy     remover o perfil (e, se pedido, os dados)
 //
-// "Testar" e' a acao central, e por isso e' a primaria — no cabecalho comum
-// (F8): sem ela o autor descobre que o perfil esta errado so' quando for
-// usar o banco, longe daqui. O veredito vem ANTES do formulario.
+// Navegar pelas tabelas e escrever SQL nao moram aqui: a janela do Banco fica
+// na area da esquerda e o SQL se escreve no editor (console), com o
+// resultado no painel de baixo.
+//
+// Componente burro: recebe por property, pede por signal.
 Item {
     id: root
 
@@ -23,17 +28,8 @@ Item {
     property string serverVersion: ""
     property string testMessage: ""
     property bool secretRequired: false
-    property var schemas: []
-    property var collections: []
     property bool documentEngine: false
-    property bool reading: false
     property string sessionPassword: ""
-    property string sql: ""
-    property bool querying: false
-    property bool writeConfirmationRequired: false
-    property var queryColumns: []
-    property var queryRows: []
-    property string queryStatus: ""
     // A descoberta e a criacao (0.124.0).
     property var candidates: []
     property bool discovering: false
@@ -44,9 +40,7 @@ Item {
     property string createCommand: ""
     property string createMessage: ""
     property bool createOk: false
-    property bool createVisible: false
-    // A remocao (0.129.0): a caixa abre no lugar do botao "Remover".
-    property bool destroyVisible: false
+    // A remocao (0.129.0).
     property bool destroying: false
     property string destroyMessage: ""
     property bool destroyOk: false
@@ -64,39 +58,32 @@ Item {
     signal passwordEdited(string text)
     signal saveRequested()
     signal testRequested()
-    signal introspectRequested()
-    signal sqlEdited(string text)
-    signal queryRequested(bool confirmWrite)
     signal closeRequested()
 
+    property string face: "connection"
     readonly property bool draftNamed: root.draft !== null && root.draft.name !== ""
+    readonly property bool savedSelected: root.selectedName !== ""
 
-    // A primeira linha comum dos paineis de ambiente (F8): titulo, uma
-    // linha, a acao primaria — "Testar" — e o x.
     KvPanelHeader {
-        id: cabecalho
+        id: header
 
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        title: qsTr("Banco de dados")
+        title: root.face === "create" ? qsTr("Novo banco")
+               : (root.savedSelected ? qsTr("Conexão %1").arg(root.selectedName) : qsTr("Nova conexão"))
         subtitle: qsTr("A IDE guarda o perfil, nunca a senha. Um PostgreSQL local por socket conecta sem senha nenhuma.")
-        primaryLabel: qsTr("Testar")
-        primaryEnabled: root.draftNamed
-        primaryBusy: root.testing
-        onPrimaryRequested: root.testRequested()
         onCloseRequested: root.closeRequested()
     }
 
     DataSourceList {
-        id: lista
+        id: places
 
-        anchors.top: cabecalho.bottom
+        anchors.top: header.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.left: parent.left
-        anchors.bottom: acoes.top
-        anchors.bottomMargin: Theme.spacingSmall
-        width: Math.round(parent.width * 0.38)
+        anchors.bottom: parent.bottom
+        width: Math.min(240, Math.round(parent.width * 0.3))
 
         profiles: root.profiles
         selectedName: root.selectedName
@@ -104,52 +91,85 @@ Item {
         discovering: root.discovering
         discoverHint: root.discoverHint
 
-        onProfileSelected: name => root.profileSelected(name)
-        onCandidateSelected: index => root.candidateSelected(index)
+        onProfileSelected: name => { root.profileSelected(name); root.face = "connection"; }
+        onCandidateSelected: index => { root.candidateSelected(index); root.face = "connection"; }
         onDiscoverRequested: root.discoverRequested()
-        onNewRequested: root.newRequested()
-        onCreateRequested: root.createVisible = !root.createVisible
+        onNewRequested: { root.newRequested(); root.face = "connection"; }
+        onCreateRequested: root.face = "create"
+    }
+
+    Rectangle {
+        anchors.top: places.top
+        anchors.bottom: parent.bottom
+        anchors.left: places.right
+        anchors.leftMargin: Theme.spacingSmall
+        width: 1
+        color: Theme.borderSoft
     }
 
     Flickable {
-        id: rolagem
+        id: faceScroll
 
-        anchors.top: lista.top
-        anchors.left: lista.right
-        anchors.leftMargin: Theme.spacingMedium
+        anchors.top: header.bottom
+        anchors.topMargin: Theme.spacingSmall
+        anchors.left: places.right
+        anchors.leftMargin: Theme.spacingMedium + 1
         anchors.right: parent.right
-        anchors.bottom: lista.bottom
+        anchors.bottom: actions.top
+        anchors.bottomMargin: Theme.spacingSmall
         clip: true
         contentWidth: width
-        contentHeight: conteudo.implicitHeight
+        contentHeight: faceColumn.implicitHeight
         boundsBehavior: Flickable.StopAtBounds
 
         Column {
-            id: conteudo
+            id: faceColumn
 
-            width: rolagem.width
+            width: faceScroll.width
             spacing: Theme.spacingSmall
+
+            DataSourceVerdict {
+                width: parent.width
+                visible: root.face === "connection"
+                         && (root.testing || root.secretRequired || root.testMessage !== "")
+                testing: root.testing
+                ok: root.testOk
+                serverVersion: root.serverVersion
+                message: root.testMessage
+                secretRequired: root.secretRequired
+                password: root.sessionPassword
+                onPasswordEdited: text => root.passwordEdited(text)
+                onRetryRequested: root.testRequested()
+            }
+
+            DataSourceForm {
+                width: parent.width
+                visible: root.face === "connection"
+                draft: root.draft
+                mongo: root.documentEngine
+                onFieldEdited: (field, value) => root.fieldEdited(field, value)
+            }
 
             DataSourceCreateBox {
                 width: parent.width
-                visible: root.createVisible
+                visible: root.face === "create"
                 canServe: root.canServe
                 containerEngine: root.containerEngine
                 creating: root.creating
                 command: root.createCommand
                 message: root.createMessage
                 ok: root.createOk
-                serverProfileNamed: root.selectedName !== "" && root.draft !== null && root.draft.engine === "postgres"
+                serverProfileNamed: root.savedSelected && root.draft !== null && root.draft.engine === "postgres"
                 serverProfileName: root.selectedName
                 onCreateSqliteRequested: (name, path) => root.createSqliteRequested(name, path)
                 onCreateServerRequested: (engine, name, port) => root.createServerRequested(engine, name, port)
                 onCreateDatabaseRequested: name => root.createDatabaseRequested(name)
-                onCloseRequested: root.createVisible = false
+                onCloseRequested: root.face = "connection"
             }
 
             DataSourceDestroyBox {
                 width: parent.width
-                visible: root.destroyVisible && root.selectedName !== ""
+                visible: root.face === "destroy" && root.savedSelected
                 profileName: root.selectedName
                 database: root.draft ? root.draft.database : ""
                 fileEngine: root.draft ? root.draft.host === "" : false
@@ -159,60 +179,7 @@ Item {
                 ok: root.destroyOk
                 note: root.destroyNote
                 onDestroyRequested: (name, data) => root.destroyRequested(name, data)
-                onCloseRequested: root.destroyVisible = false
-            }
-
-            DataSourceVerdict {
-                width: parent.width
-                testing: root.testing
-                ok: root.testOk
-                serverVersion: root.serverVersion
-                message: root.testMessage
-                secretRequired: root.secretRequired
-                password: root.sessionPassword
-
-                onPasswordEdited: text => root.passwordEdited(text)
-                onRetryRequested: root.testRequested()
-            }
-
-            DataSourceForm {
-                width: parent.width
-                draft: root.draft
-                mongo: root.documentEngine
-                onFieldEdited: (field, value) => root.fieldEdited(field, value)
-            }
-
-            // A consulta (0.121.0) fica ENTRE o veredito e a estrutura: a
-            // estrutura e' o que se le para escrever a consulta.
-            DataSourceQuery {
-                width: parent.width
-                sql: root.sql
-                documentEngine: root.documentEngine
-                querying: root.querying
-                writeConfirmationRequired: root.writeConfirmationRequired
-                columns: root.queryColumns
-                rows: root.queryRows
-                status: root.queryStatus
-                canRun: root.draftNamed
-                onSqlEdited: text => root.sqlEdited(text)
-                onRunRequested: confirmWrite => root.queryRequested(confirmWrite)
-            }
-
-            // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. A visao e' escolhida
-            // pelo MOTOR, e nao por "qual lista veio vazia": uma coleção que
-            // de fato nao tem campo nenhum continua sendo Mongo.
-            DataSourceStructure {
-                width: parent.width
-                visible: !root.documentEngine
-                schemas: root.schemas
-                loading: root.reading && !root.documentEngine
-            }
-
-            DataSourceCollections {
-                width: parent.width
-                visible: root.documentEngine
-                collections: root.collections
-                loading: root.reading && root.documentEngine
+                onCloseRequested: root.face = "connection"
             }
 
             Text {
@@ -227,33 +194,45 @@ Item {
     }
 
     Row {
-        id: acoes
+        id: actions
 
         anchors.bottom: parent.bottom
-        anchors.left: parent.left
+        anchors.left: faceScroll.left
         anchors.right: parent.right
         spacing: Theme.spacingSmall
-        layoutDirection: Qt.RightToLeft
+        visible: root.face === "connection"
 
         KvButton {
-            text: qsTr("Ler estrutura")
             compact: true
-            enabled: root.draftNamed && !root.reading
-            onClicked: root.introspectRequested()
+            text: root.testing ? qsTr("Testando…") : qsTr("Testar")
+            enabled: root.draftNamed && !root.testing
+            onClicked: root.testRequested()
         }
 
         KvButton {
-            text: qsTr("Salvar")
+            visible: root.savedSelected
             compact: true
-            enabled: root.draftNamed
-            onClicked: root.saveRequested()
-        }
-
-        KvButton {
+            danger: true
             text: qsTr("Remover…")
+            onClicked: root.face = "destroy"
+        }
+
+        Item {
+            width: Math.max(0, actions.width - x - saveButton.width - actions.spacing)
+            height: 1
+        }
+
+        KvButton {
+            id: saveButton
+
             compact: true
-            enabled: root.selectedName !== ""
-            onClicked: root.destroyVisible = !root.destroyVisible
+            primary: true
+            text: qsTr("Salvar")
+            enabled: root.draftNamed
+            onClicked: {
+                root.saveRequested();
+                root.closeRequested();
+            }
         }
     }
 }

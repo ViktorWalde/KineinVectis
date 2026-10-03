@@ -5,7 +5,7 @@ import KineinVectis
 // A GRADE comum dos paineis de ambiente (Etapa 2 F8): cabecalho fixo,
 // colunas com a largura da regra pura (GridRules), `null` em italico,
 // rolagem nos dois sentidos quando nao cabe. Nasceu da grade do banco
-// (DataSourceQuery) e serve a containers, portas seriais e sondas.
+// (a secao de dados da janela do Banco) e serve a containers, portas seriais e sondas.
 Item {
     id: root
 
@@ -88,14 +88,54 @@ Item {
         }
     }
 
-    readonly property var widths: rules.columnWidths(columns, rows, width)
+    // A largura que a pessoa ARRASTOU em cada coluna ({indice: px}); clique
+    // duplo na alca volta a coluna ao natural. Colunas novas (outra consulta)
+    // comecam do natural.
+    property var overrides: ({})
+    onColumnsChanged: root.overrides = ({})
+
+    function resizeColumn(index, width) {
+        const next = Object.assign({}, root.overrides);
+        next[index] = Math.max(rules.minWidth, Math.round(width));
+        root.overrides = next;
+    }
+
+    function autoFitColumn(index) {
+        const next = Object.assign({}, root.overrides);
+        delete next[index];
+        root.overrides = next;
+    }
+
+    readonly property var widths: rules.columnWidths(columns, rows, width, overrides)
+    // Colunas de numero alinham a direita.
+    readonly property var numeric: columns.map((column, index) => rules.isNumericColumn(rows, column, index))
     readonly property int contentWidth: widths.reduce((sum, w) => sum + w + 1, 0)
+    // A largura em que tudo cabe sem rolar (a janela do Banco se alarga ate' ela).
+    readonly property int naturalWidth: rules.naturalTotal(columns, rows)
 
     implicitHeight: columns.length === 0
                     ? (emptyText === "" ? 0 : vazio.implicitHeight)
                     : Math.min(maxHeight, rowHeight + 1 + rows.length * (rowHeight + 1))
 
-    GridRules { id: rules }
+    // A largura natural sai da FONTE que desenha (o cabecalho, em negrito, e'
+    // o mais largo), e nao de um palpite de 7 px por caractere. A medida e'
+    // um Text igual ao do cabecalho, fora da tela: o FontMetrics devolvia o
+    // dobro (outra fonte), e a coluna `cliente_id` saia com 170 px.
+    Text {
+        id: probe
+
+        visible: false
+        text: "MMMMMMMMMM"
+        font.family: root.mono ? Theme.monoFont : ""
+        font.pixelSize: Theme.fontSizeCaption
+        font.weight: Font.DemiBold
+    }
+
+    GridRules {
+        id: rules
+
+        charWidth: probe.implicitWidth / 10
+    }
 
     Text {
         id: vazio
@@ -108,41 +148,13 @@ Item {
         wrapMode: Text.WordWrap
     }
 
-    Row {
+    // O cabecalho, com a alca de largura de cada coluna.
+    KvDataGridHeader {
         id: cabecalho
 
         visible: root.columns.length > 0
         x: -corpo.contentX
-        spacing: 1
-        clip: true
-
-        Repeater {
-            model: root.columns
-
-            delegate: Rectangle {
-                id: celulaCabecalho
-
-                required property var modelData
-                required property int index
-
-                width: root.widths[index]
-                height: root.rowHeight
-                color: Theme.surface2
-
-                Text {
-                    anchors.fill: parent
-                    anchors.leftMargin: 5
-                    verticalAlignment: Text.AlignVCenter
-                    text: celulaCabecalho.modelData.label !== undefined
-                          ? celulaCabecalho.modelData.label : celulaCabecalho.modelData.key
-                    color: Theme.textPrimary
-                    font.family: root.mono ? Theme.monoFont : ""
-                    font.pixelSize: Theme.fontSizeCaption
-                    font.weight: Font.DemiBold
-                    elide: Text.ElideRight
-                }
-            }
-        }
+        grid: root
     }
 
     // ONDE O TECLADO ESTA' FALANDO. Sem isto, a grade responde a setas sem
@@ -206,9 +218,13 @@ Item {
                                    : (area.containsMouse ? Theme.surface2 : Theme.background1)
 
                             Text {
+                                id: cellText
+
                                 anchors.fill: parent
                                 anchors.leftMargin: 5
+                                anchors.rightMargin: 5
                                 verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: root.numeric[celula.index] ? Text.AlignRight : Text.AlignLeft
                                 text: rules.cellText(celula.value)
                                 font.italic: rules.isNull(celula.value)
                                 color: rules.isNull(celula.value) ? Theme.textMuted
@@ -228,6 +244,11 @@ Item {
                                 acceptedButtons: root.selectable ? Qt.LeftButton : Qt.NoButton
                                 cursorShape: root.selectable ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: root.rowClicked(linha.index)
+                                // Valor cortado: o texto inteiro ao pairar.
+                                onContainsMouseChanged: {
+                                    if (containsMouse && cellText.truncated) TooltipController.showFor(celula, cellText.text, "bottom");
+                                    else TooltipController.hideFor(celula);
+                                }
                             }
                         }
                     }

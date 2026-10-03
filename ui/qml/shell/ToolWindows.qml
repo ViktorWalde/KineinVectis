@@ -60,7 +60,6 @@ Item {
     readonly property ToolWindowPanels panels: ToolWindowPanels {
         embeddedController: root.embeddedController
         toolchainController: root.toolchainController
-        dataSourceController: root.dataSourceController
         containerController: root.containerController
         remoteController: root.remoteController
         grafanaController: root.grafanaController
@@ -126,15 +125,17 @@ Item {
         // a ordem e o banco em 2026-09-13): banco, containers e observabilidade
         // abrem SEM projeto aberto — os perfis, o motor e o Grafana sao da
         // maquina, nao do workspace. "Ferramentas" fecha a lista.
+        // O Banco virou JANELA na area da esquerda (2026-10-03, decisao do
+        // autor: acoplado como na JetBrains, o SQL no editor). As conexoes
+        // sao do projeto (.kinein/datasources.json): sem projeto, nao abre.
         {
             "id": "database", "label": qsTr("Banco"), "icon": "database",
             "tooltip": qsTr("Banco de dados (Ctrl+Alt+J)"), "area": "left", "order": 40,
-            "available": true,
-            "title": qsTr("Banco de dados"), "kind": "overlay", "defaultPolicy": "contextual",
+            "available": root.workspaceOpen,
+            "title": qsTr("Banco de dados"), "kind": "dock-left", "defaultPolicy": "contextual",
             "factKey": "datasource.any", "commandId": "datasource.list", "shortcut": "Ctrl+Alt+J",
-            "active": root.dataSourceController !== null && root.dataSourceController !== undefined
-                      && root.dataSourceController.panelVisible
-            ,"panel": root.panels.databasePanel
+            "active": root.shellController !== null && root.shellController.databaseWindowVisible === true
+                      && root.workspaceOpen
         },
         {
             "id": "containers", "label": "", "icon": "container",
@@ -267,7 +268,9 @@ Item {
         case "embedded":
             return openOwner(embeddedController);
         case "database":
-            return openOwner(dataSourceController);
+            if (shellController === null || shellController === undefined) return false;
+            shellController.toggleDockWindow("database");
+            return true;
         case "containers":
             return openOwner(containerController);
         case "observability":

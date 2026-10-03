@@ -57,15 +57,25 @@ Item {
     // explorer OU a janela do Git, como a referencia alterna Project/Commit.
     property string leftWindow: "explorer"
     // As janelas que o slot da esquerda conhece (o codec valida contra esta).
-    readonly property var leftWindows: ["explorer", "git"]
+    readonly property var leftWindows: ["explorer", "git", "database"]
     // O trilho por areas (0.3.7 F1, 53 §4.2): o que o USUARIO decidiu. O que
     // o core sabe (fatos) nao mora aqui. Vai no `layout`, por workspace.
     property var railState: ({ pinned: [], unpinned: [], hidden: [] })
     property var bottomPinned: []
     // A ordem arrastada em cada barra (0.3.9): {"bottom": [...], "rail": [...]}.
     property var barOrders: ({})
-    readonly property bool effectiveShowExplorer: showExplorer && leftWindow === "explorer"
-    readonly property bool gitWindowVisible: showExplorer && leftWindow === "git"
+    // O slot da DIREITA (2026-10-03): a janela cujo icone esta' no trilho da
+    // direita abre ali ("" = fechado). De que lado cada uma abre: ShellDocks.
+    property string rightWindow: ""
+    property real rightPreferredWidth: 300
+    property real rightMinimumWidth: 240
+    readonly property real rightWidth: panelSize(rightPreferredWidth, rightMinimumWidth, leftMaximumWidth
+                                                 - (showExplorer ? explorerWidth + Theme.panelGap : 0))
+    readonly property ShellDocks docks: ShellDocks { shell: root }
+    // Visivel de QUALQUER lado (o host decide onde pelo ShellDocks).
+    readonly property bool effectiveShowExplorer: docks.showing("explorer") !== ""
+    readonly property bool gitWindowVisible: docks.showing("git") !== ""
+    readonly property bool databaseWindowVisible: docks.showing("database") !== ""
 
     // `intent`: "open" (abrir uma pasta) ou "createProject" (o seletor ja'
     // no modo de criar, com a escolha de linguagem). Uma porta, duas intencoes.
@@ -86,6 +96,7 @@ Item {
 
     // O que a pessoa abre e fecha tambem e' layout (R5: "volta como estava").
     onLeftWindowChanged: layoutStateChanged()
+    onRightWindowChanged: layoutStateChanged()
     onShowExplorerChanged: {
         focusMode.panelOpened(showExplorer);
         layoutStateChanged();
@@ -151,6 +162,7 @@ Item {
         for (const key in values) {
             root[key] = values[key];
         }
+        docks.normalize();
     }
 
     function pinArea(id) { setRail(codec.withMembership(railState, id, true, false, false)); }
@@ -182,8 +194,9 @@ Item {
     // entra no vao onde foi solta. A ordem de cada lado e' uma barra
     // ("rail" e "railRight").
     function moveRailEntryToSide(id, side, dropIndex, targetIds) {
-        const bar = side === "right" ? "railRight" : "rail";
+        const bar = docks.barOf(side);
         railState = codec.withSide(railState, id, side);
+        docks.followSide(id, side);
         barOrders = codec.withOrder(barOrders, bar,
                                     codec.inserted(targetIds, savedOrder(bar), id, dropIndex));
         persistLayoutSoon();
@@ -231,9 +244,10 @@ Item {
 
     // O host informa o que muda os limites: a largura do trilho (compacto ou
     // expandido) e o minimo que o conteudo da esquerda declara.
-    function updatePanelLimits(currentRailWidth, leftMinimum) {
+    function updatePanelLimits(currentRailWidth, leftMinimum, rightMinimum) {
         railWidth = currentRailWidth;
         leftMinimumWidth = Math.max(220, leftMinimum);
+        rightMinimumWidth = Math.max(220, rightMinimum || 0);
     }
 
     function applyAutomaticLayout() {
@@ -320,6 +334,11 @@ Item {
         persistLayoutSoon();
     }
 
+    function resizeRightDock(delta) {
+        rightPreferredWidth = panelSize(rightWidth + delta, rightMinimumWidth, 640);
+        persistLayoutSoon();
+    }
+
     function resizeBottomPanel(delta) {
         bottomPreferredHeight = panelSize(bottomPanelHeight + delta, 160, bottomMaximumHeight);
         persistLayoutSoon();
@@ -350,28 +369,12 @@ Item {
         symbolsFocusRequested(query === undefined ? "" : query);
     }
 
-    // O icone do que esta' aberto fecha o slot; o do outro traz o outro.
-    function toggleExplorer() {
-        if (leftWindow !== "explorer") {
-            leftWindow = "explorer";
-            showExplorer = true;
-            return;
-        }
-        showExplorer = !showExplorer;
-    }
-
-    function toggleGitWindow() {
-        if (leftWindow !== "git") {
-            showGitWindow();
-            return;
-        }
-        showExplorer = !showExplorer;
-    }
-
-    function showGitWindow() {
-        leftWindow = "git";
-        showExplorer = true;
-    }
+    // Abrir/fechar uma janela acoplada NO LADO DO ICONE dela (ShellDocks).
+    function toggleDockWindow(name) { docks.toggle(name); }
+    function showDockWindow(name) { docks.show(name); }
+    function toggleExplorer() { docks.toggle("explorer"); }
+    function toggleGitWindow() { docks.toggle("git"); }
+    function showGitWindow() { docks.show("git"); }
 
     function requestOpenFolder() {
         requestFolder("open");

@@ -22,6 +22,10 @@ Item {
     // folga da janela. Acrescentar uma janela nao toca mais neste arquivo.
     property var toolWindows: null
     property var libraryController: null
+    // O dialogo da conexao do Banco (2026-10-03): a janela do Banco mora na
+    // area da esquerda; criar e editar conexao abre aqui, como o "Data
+    // Sources" da JetBrains.
+    property var dataSourceController: null
     property var embeddedController: null
     property var setupController: null
     // Nao e' painel de ambiente: e' quem recebe o plano que a biblioteca produz.
@@ -86,6 +90,16 @@ Item {
             root.libraryController.close();
             root.configActionController.openWith(actionId, params);
         }
+    }
+
+    DataSourcePanelHost {
+        anchors.fill: parent
+        visible: root.dataSourceController !== null && root.dataSourceController.panelVisible
+        z: 99
+        controller: root.dataSourceController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.dataSourceController.close()
     }
 
     // O passo de permissao (E2) vai para o TERMINAL DA IDE, visivel, pelo

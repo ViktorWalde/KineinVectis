@@ -1,9 +1,9 @@
 import QtQuick
 import KineinVectis
 
-// O SLOT a esquerda do trilho (E3-3, roadmaps/44 §4.1): UM lugar, duas
-// janelas — o explorer do projeto ou a janela do Git em pe' — como a
-// referencia alterna Project/Commit. Quem decide qual esta' visivel e' o
+// O SLOT a esquerda do trilho (E3-3, roadmaps/44 §4.1): UM lugar, tres
+// janelas — o explorer do projeto, a janela do Git em pe' e (2026-10-03) a do
+// Banco — como a referencia alterna Project/Commit/Database. Quem decide qual esta' visivel e' o
 // ShellController (leftWindow); a largura e o splitter sao os do explorer.
 // O explorer saiu do ShellWorkspaceHost como estava.
 Item {
@@ -12,13 +12,26 @@ Item {
     property var shellController
     property var projectTree
     property var gitController
+    property var dataSourceController: null
+    property var editorController: null
     property string workspaceName: ""
     property string workspaceRoot: ""
+    // O slot da direita (ShellRightDock): a janela cujo icone esta' no trilho
+    // da direita muda de PAI para la' — a mesma instancia, o mesmo estado.
+    property Item rightSlot: null
+
+    function slotOf(name) {
+        return root.rightSlot !== null && root.shellController.rightWindow === name ? root.rightSlot : root;
+    }
+
+    function minimumOf(name) {
+        return name === "git" ? gitWindow.minimumWidth : (name === "database" ? databaseWindow.minimumWidth : 220);
+    }
 
     // O minimo DECLARADO por quem esta' no slot (53 §4.4); o shell o usa como
     // piso da largura. O explorer se vira em 220.
-    readonly property real minimumWidth: root.shellController.gitWindowVisible
-                                         ? gitWindow.minimumWidth : 220
+    readonly property real minimumWidth: root.minimumOf(root.shellController.leftWindow)
+    readonly property real rightMinimumWidth: root.minimumOf(root.shellController.rightWindow)
 
     signal listDirRequested(string path)
     signal readFileRequested(string path)
@@ -27,6 +40,7 @@ Item {
     ProjectExplorer {
         id: explorerPanel
 
+        parent: root.slotOf("explorer")
         anchors.fill: parent
         visible: root.shellController.effectiveShowExplorer
         workspaceName: root.workspaceName
@@ -70,15 +84,23 @@ Item {
         function onFocusTreeRequested() { explorerPanel.focusTree(); }
     }
 
-    // O ciclo de foco (Ctrl+F6) entra aqui: na arvore, ou na janela do Git.
+    // O ciclo de foco (Ctrl+F6) entra aqui: na janela que esta' no slot.
+    // O slot da direita (ShellRightDock) pede o dele por `focusSlot("right")`.
     function focusArea() {
-        if (gitWindow.visible) gitWindow.forceActiveFocus();
+        root.focusSlot("left");
+    }
+
+    function focusSlot(side) {
+        const name = root.shellController.docks.windowOn(side);
+        if (name === "git") gitWindow.forceActiveFocus();
+        else if (name === "database") databaseWindow.forceActiveFocus();
         else explorerPanel.focusTree();
     }
 
     GitWindow {
         id: gitWindow
 
+        parent: root.slotOf("git")
         anchors.fill: parent
         visible: root.shellController.gitWindowVisible
         gitController: root.gitController
@@ -88,5 +110,58 @@ Item {
             root.readFileRequested(absPath);
         }
         onCloseRequested: root.shellController.toggleGitWindow()
+    }
+
+    DatabaseWindow {
+        id: databaseWindow
+
+        parent: root.slotOf("database")
+        anchors.fill: parent
+        visible: root.shellController.databaseWindowVisible
+        controller: root.dataSourceController
+        onVisibleChanged: if (visible) root.dataSourceController.refreshCatalog()
+        onConsoleRequested: name => root.dataSourceController.consoles.open(name)
+        onTableDataRequested: (connection, engine, schema, table) =>
+            root.dataSourceController.consoles.tableData(connection, engine, schema, table)
+        onEditRequested: name => {
+            root.dataSourceController.select(name);
+            root.dataSourceController.open();
+        }
+        onNewRequested: {
+            root.dataSourceController.startNew();
+            root.dataSourceController.open();
+        }
+        onCandidateChosen: index => {
+            root.dataSourceController.discovery.adopt(index);
+            root.dataSourceController.open();
+        }
+        onCloseRequested: root.shellController.toggleDockWindow("database")
+        onWidenRequested: width => root.shellController.docks.widen("database", width)
+    }
+
+    // Ctrl+Enter num console do Banco (`.kinein/consoles/`) executa a
+    // instrucao sob o cursor — ou a selecao — na conexao do arquivo. Fora de
+    // um console o atalho fica desligado e a tecla segue para o editor.
+    Shortcut {
+        sequences: ["Ctrl+Return", "Ctrl+Enter"]
+        enabled: root.editorController !== null && root.dataSourceController !== null
+                 && root.dataSourceController.consoles.isConsole(root.editorController.currentFilePath())
+        onActivated: {
+            const surface = root.editorController.editorSurface;
+            root.dataSourceController.consoles.runFromEditor(root.editorController.currentFilePath(), surface.text,
+                                                            surface.cursorPosition, surface.selectionStart,
+                                                            surface.selectionEnd);
+        }
+    }
+
+    // Executar no console (Ctrl+Enter) ou abrir uma tabela traz a janela do
+    // Banco com a secao de dados aberta, mesmo que ela estivesse fechada.
+    Connections {
+        target: root.dataSourceController ? root.dataSourceController.consoles : null
+
+        function onResultsRequested() {
+            root.shellController.showDockWindow("database");
+            databaseWindow.showResults();
+        }
     }
 }

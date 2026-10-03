@@ -193,6 +193,7 @@ Item {
         hostHeight: root.hostHeight
         toolWindows: root.toolWindows
         libraryController: root.libraryController
+        dataSourceController: root.dataSourceController
         embeddedController: root.embeddedController
         setupController: root.setupController
         configActionController: root.configActionController

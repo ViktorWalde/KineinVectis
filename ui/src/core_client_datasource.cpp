@@ -35,6 +35,11 @@ void CoreClient::dataSourceRemove(const QString& name)
     sendRequest(QStringLiteral("datasource.remove"), QJsonObject{{QStringLiteral("name"), name}});
 }
 
+void CoreClient::dataSourceConsole(const QString& name)
+{
+    sendRequest(QStringLiteral("datasource.console"), QJsonObject{{QStringLiteral("name"), name}});
+}
+
 void CoreClient::dataSourceTest(const QString& name, const QString& password)
 {
     QJsonObject params{{QStringLiteral("name"), name}};
@@ -119,6 +124,11 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
     {
         emit dataSourceListResolved(
             result.value(QStringLiteral("profiles")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("datasource.console")) {
+        emit dataSourceConsoleResolved(result.value(QStringLiteral("path")).toString(),
+                                       result.value(QStringLiteral("created")).toBool());
         return true;
     }
     if (method == QStringLiteral("datasource.discover")) {

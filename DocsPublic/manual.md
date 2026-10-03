@@ -77,12 +77,15 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 ┌──────────────────────────────────────────────────────────────┐
 │ App Bar: Arquivo · Editar · Exibir · Navegar · Código ...    │
 │ Barra: [Projeto ▾] [⎇ git]           [config ▾] ▶ 🐞 [⋯]   │
-├───┬───────────────┬─────────────────────────────┬────────────┤
-│ R │ Projeto OU    │ Editor (abas + código;      │ Símbolos   │
-│ a │ Git (Commit/  │  o diff/commit do Git abre  │ (estrutura │
-│ i │ Log, em pé)   │  aqui como visualização)    │  + busca)  │
-│ l │               │                             │            │
-├───┴───────────────┴─────────────────────────────┴────────────┤
+├───┬───────────────┬──────────────────────────┬─────────────┬───┤
+│ T │ slot da       │ Editor (abas + código;   │ slot da     │ T │
+│ r │ ESQUERDA:     │  o diff/commit do Git    │ DIREITA:    │ r │
+│ i │ Projeto, Git  │  abre aqui; o console    │ a janela    │ i │
+│ l │ ou Banco      │  SQL do Banco também)    │ cujo ícone  │ l │
+│ h │               │                          │ está à dir. │ h │
+│ o │               │                          │ (ou os      │ o │
+│   │               │                          │  Símbolos)  │   │
+├───┴───────────────┴──────────────────────────┴─────────────┴───┤
 │ Painel inferior: Build | Jobs | Problemas | Testes |         │
 │                  Terminal | Debug | Busca | IDE |            │
 │                  Ferramentas                                 │
@@ -91,8 +94,26 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 └──────────────────────────────────────────────────────────────┘
 ```
 
+- **Janelas acopladas, do lado do ícone** (desde 2026-10-03): **Projeto**,
+  **Git** e **Banco** são janelas acopladas ao layout. Cada uma abre **no
+  lado do trilho em que o ícone dela está**: ícone no trilho da esquerda,
+  janela no slot da esquerda; arraste o ícone para o trilho da direita e ela
+  passa a abrir no slot da direita, entre o editor e o trilho. Regras:
+  - **um slot por lado** — duas janelas do mesmo lado se alternam (como
+    Project/Commit/Database na JetBrains); uma de cada lado ficam juntas
+    (ex.: Projeto à esquerda e Banco à direita);
+  - **arrastar o ícone com a janela aberta leva a janela junto**, com o
+    estado dela (árvore aberta, dados, seleção); com ela fechada, nada abre;
+  - a mesma janela **nunca** aparece nos dois lados;
+  - o ícone da janela aberta a fecha; o de outra a traz;
+  - o slot da direita tem largura própria (arraste a borda; padrão 300 px) e
+    o mesmo piso do editor (480 px);
+  - os **Símbolos** (☰ do trilho da direita, `Alt+7`) ocupam o lado direito:
+    abertos, a janela do slot da direita **some por um momento**; fechados,
+    ela **volta igual**. Clicar no ícone da janela escondida fecha os
+    Símbolos e a traz de volta.
 - **O layout volta como você deixou, por projeto** (desde 2026-10-01): qual
-  janela está à esquerda (Projeto ou Git), as larguras que você arrastou, a
+  janela está em cada slot (esquerda e, desde 2026-10-03, direita), as larguras que você arrastou, a
   Estrutura recolhida ou não e o painel de baixo com a aba aberta. Cada
   projeto lembra o seu; sem projeto aberto, o que você ajusta vira o padrão.
   A aba Terminal volta vazia — o shell só abre quando você pede (Alt+F12).
@@ -101,8 +122,9 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
 - **De área em área pelo teclado** (desde 2026-10-02): **Ctrl+F6** leva o
-  teclado para a próxima área visível — explorador (ou Git), editor, painel
-  de baixo — e **Ctrl+Shift+F6** para a anterior. No painel de baixo, a aba
+  teclado para a próxima área visível — slot da esquerda, editor, slot da
+  direita (desde 2026-10-03), painel de baixo — e **Ctrl+Shift+F6** para a
+  anterior. Área fechada ou escondida fica de fora. No painel de baixo, a aba
   Terminal recebe a digitação direto; a área com o teclado fica marcada.
 - **Modo Foco** (desde 2026-10-02): **Ctrl+Shift+F12** (ou Exibir → Modo
   Foco) recolhe o explorador, os Símbolos e o painel de baixo; o mesmo atalho
@@ -113,7 +135,8 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   trabalho. O **Terminal** tem ícone no trilho da esquerda: um clique abre
   (como o Alt+F12), outro recolhe. Numa janela com menos de 1024 px de
   largura os Símbolos recolhem sozinhos e voltam quando a janela alarga. Arraste um ícone de um trilho para o outro e a área passa a morar
-  lá (por projeto). Os **Símbolos** (Alt+7) são um ícone do trilho e nascem
+  lá (por projeto); para Projeto, Git e Banco isso decide também **de que
+  lado a janela abre** (veja "Janelas acopladas", acima). Os **Símbolos** (Alt+7) são um ícone do trilho e nascem
   à direita. O ⋯ Mais e o modo expandido ficam no trilho da esquerda.
 - **Arraste para organizar** (desde 2026-10-02): os ícones do trilho, as
   abas do painel de baixo, os widgets da barra principal e os itens da barra
@@ -179,8 +202,8 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   fica só com o clique que abre a linha. A aba mostra a contagem.
 - **Rail** (coluna fininha à esquerda; o `›` do pé expande com os
   rótulos): **Projeto · Git · Embarcados · Banco · Containers · Grafana ·
-  Ferramentas**. Projeto e Git alternam no mesmo slot à esquerda; os
-  outros abrem o painel de cada um. Busca, Build e Debug **não estão** no
+  Ferramentas**. Projeto, Git e Banco são janelas acopladas (abrem no slot
+  do lado do ícone); os outros ainda abrem o painel de cada um por cima. Busca, Build e Debug **não estão** no
   rail (desde a Etapa 3): a busca no projeto é `Ctrl+Shift+F` / a aba
   Busca; Build e Debug são o widget Executar do cabeçalho (▶ 🐞 ⋯), o
   menu Build e o painel inferior.
@@ -715,9 +738,10 @@ pode ser disparado pelo banner de Project Health.
 Este menu existe porque configurar o ambiente **não é "ferramenta"**: é o que se
 faz antes de compilar. São nove painéis, e todos seguem a mesma regra — a IDE
 **mostra o que vai fazer e espera você aceitar**; nenhum deles escreve no seu
-projeto sozinho. Os quatro que se usam todo dia também estão na **barra lateral
-esquerda**, nesta ordem: Banco de dados, Containers, Observabilidade e, por
-último, Ferramentas.
+projeto sozinho. Os que se usam todo dia também têm ícone nos **trilhos**:
+Banco de dados, Containers, Observabilidade e Ferramentas. O **Banco** é uma
+janela acoplada (abre no lado do trilho em que o ícone está, ao lado do
+editor); os outros ainda abrem como painel por cima.
 
 ### Bibliotecas
 
@@ -759,21 +783,87 @@ garante que existe em toda linha, tem um tipo e não aninha, e **nenhuma das tr�
 vale para um documento**. Desenhar documento como linha faria a tela afirmar três
 coisas falsas.
 
-Além de testar a conexão, o painel **lê o banco**: esquemas, tabelas e colunas —
-ou coleções e a forma dos documentos.
+**A janela do Banco** (desde 2026-10-03; `Ctrl+Alt+J` ou o ícone do banco no
+trilho) é uma janela **acoplada ao layout**, como a janela Database da
+JetBrains — não um painel por cima do código. Ela abre **do lado do trilho em
+que o ícone está**: à esquerda por padrão; arraste o ícone para o trilho da
+direita e ela passa a abrir à direita (veja "Janelas acopladas" na seção 2).
+Só existe com um projeto aberto, porque o perfil mora no projeto
+(`.kinein/datasources.json`).
 
-**Executar** (desde 0.121.0): o campo **Consulta** aceita o que você escrever
-— `Ctrl+Enter` ou **Executar**. Uma leitura (`SELECT`, `WITH`, `VALUES`,
-`SHOW`, `EXPLAIN`) roda com teto de 500 linhas (a IDE põe o `LIMIT` por
-fora; "teto atingido" avisa) e **de verdade só lê**: no PostgreSQL vai numa
-transação `READ ONLY`, no SQLite o arquivo abre só para leitura — um `WITH …
-INSERT` disfarçado é recusado pelo próprio motor. Uma instrução que
-**escreve** (`INSERT`, `UPDATE`, `DELETE`, DDL) não roda de primeira: aparece
-o botão *"Esta instrução ESCREVE — executar mesmo assim"*, e só o clique nele
-executa; o resultado diz quantas linhas foram afetadas. A grade mostra
-toda célula como texto e `NULL` como *null* em itálico. No MongoDB a
-consulta é `<coleção> <filtro JSON>` (ex.: `sensores {"placa": "esp32"}`), só
-leitura, e cada chave de primeiro nível vira coluna.
+```text
+┌ Banco                    + ⟳ × ┐   +  nova conexão (abre o diálogo)
+│ ▾ loja                  SQLite │   ⟳  procurar bancos nesta máquina
+│   ▾ clientes         4 colunas │   ×  fechar a janela
+│       id               INTEGER │
+│       nome     TEXT · não nulo │   com o mouse em cima:
+│   ▸ pedidos          4 colunas │     na conexão  ▢ console SQL · ⚙ editar
+│   ▸ vendas_por_cliente  (visão)│     na tabela   ▦ ver os dados
+├────────── divisória ───────────┤
+│ ▦ loja · 2 linha(s) em 0 ms  × │   a seção de DADOS, na própria janela
+│ SELECT * FROM "clientes" ...   │
+│ id │ nome  │ email      │ ...  │
+│ 1  │ Ana   │ ana@ex.com │      │
+└────────────────────────────────┘
+```
+
+- **A árvore.** Conexão › esquema › tabela/visão › coluna (com tipo e "não
+  nulo"); um esquema só (o `main` do SQLite) não ganha nível próprio. No
+  MongoDB: conexão › coleção (ou série temporal) › campos, com os tipos vistos
+  e a presença ("em 50%"). Abrir uma conexão **lê a estrutura** na hora, se
+  ainda não leu; uma leitura que falhou mostra a mensagem e o "tentar de novo".
+  O que estava aberto continua aberto depois de ler de novo.
+- **Ver os dados de uma tabela:** **clique duplo** nela, ou o ícone ▦ que
+  aparece com o mouse em cima da linha. As primeiras **200 linhas**
+  (`SELECT * FROM … LIMIT 200`; no MongoDB, `coleção {}`) aparecem na **seção
+  de dados, embaixo da árvore, na mesma janela** — o contexto não se espalha
+  por outros painéis. A divisória entre árvore e dados arrasta; o × da seção a
+  fecha e devolve o espaço à árvore e à lista "Nesta máquina".
+- **O console SQL é um arquivo do editor.** O ▢ ao lado da conexão abre
+  `.kinein/consoles/<conexão>.sql` (`.mongo` no MongoDB) como uma **aba comum
+  do editor** — realce, desfazer, buscar e salvar sozinho, tudo o que o editor
+  já faz. O arquivo nasce uma vez com um comentário de cabeçalho e **nunca é
+  sobrescrito**: o que você escreveu fica lá para a próxima vez. Nesse arquivo,
+  **`Ctrl+Enter`** executa:
+  - a **seleção**, se houver;
+  - senão, no SQL, a instrução **sob o cursor** (o trecho entre o `;` anterior
+    e o seguinte). Com o cursor **logo depois do `;`** — o normal ao terminar
+    de digitar — vale a instrução que acabou ali;
+  - no MongoDB, a **linha** do cursor (`<coleção> <filtro JSON>`).
+  Linhas de comentário (`--`, `//`) ficam de fora. O resultado aparece na
+  seção de dados da janela do Banco, que se abre sozinha se estiver fechada.
+  Fora de um console o `Ctrl+Enter` não faz nada de especial.
+- **Leitura e escrita.** Uma leitura (`SELECT`, `WITH`, `VALUES`, `SHOW`,
+  `EXPLAIN`) roda com teto de 500 linhas (a IDE põe o `LIMIT` por fora; "teto
+  atingido" avisa) e **de verdade só lê**: no PostgreSQL vai numa transação
+  `READ ONLY`, no SQLite o arquivo abre só para leitura — um `WITH … INSERT`
+  disfarçado é recusado pelo próprio motor. Uma instrução que **escreve**
+  (`INSERT`, `UPDATE`, `DELETE`, DDL) não roda de primeira: a seção de dados
+  mostra o botão *"Esta instrução escreve — executar mesmo assim"*, e só o
+  clique nele executa; o resultado diz quantas linhas foram afetadas. A grade
+  mostra toda célula como texto e `NULL` como *null* em itálico. No MongoDB a
+  consulta é só leitura, e cada chave de primeiro nível vira coluna.
+- **Tamanho.** A janela tem **mínimo de 260 px** (abaixo disso o cabeçalho e
+  os nomes da árvore se perdem). Quando chegam dados, ela **se alarga sozinha**
+  até a largura em que a grade cabe sem rolar — no máximo 640 px e nunca a
+  ponto de deixar o editor com menos de 480 px. Ela só **alarga**; o que você
+  arrastar para menos fica, e a grade rola nos dois sentidos.
+- **A grade de dados.** Cada coluna tem a largura do maior texto dela, e o
+  espaço que sobra vai para a última.
+  - **Largura:** arraste a borda direita de um cabeçalho para mudar a
+    largura; o **clique duplo** na borda volta ao tamanho natural.
+  - **Números:** colunas de números ficam alinhadas à direita.
+  - **Valor cortado:** aparece inteiro ao passar o mouse.
+- **Nesta máquina.** Embaixo da árvore (quando a seção de dados está fechada),
+  o que responde no computador: socket ou porta do PostgreSQL, containers,
+  arquivos `.sqlite` do projeto. Um clique abre o diálogo da conexão já
+  preenchido.
+- **O diálogo da conexão** (o + do cabeçalho, ou o ⚙ de uma conexão) é o
+  único lugar que **edita** perfis: à esquerda as **Conexões** salvas e o que
+  responde **Nesta máquina**; à direita o veredito do teste e o formulário.
+  **Testar**, **Remover…** (o perfil e, se pedido, os dados) e **Salvar**
+  (salva e fecha). **Novo banco…** cria um SQLite novo ou sobe um servidor em
+  container.
 
 **TLS** (PostgreSQL): o chip **TLS verificado (verify-full)** cifra a conexão
 e confere a cadeia **e** o nome do host — para um servidor com certificado

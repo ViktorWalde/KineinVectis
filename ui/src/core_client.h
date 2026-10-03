@@ -172,6 +172,8 @@ public:
     Q_INVOKABLE void dataSourceList();
     Q_INVOKABLE void dataSourceSave(const QVariantMap& profile);
     Q_INVOKABLE void dataSourceRemove(const QString& name);
+    // O console da conexao, no editor (datasource.console, 0.149.0).
+    Q_INVOKABLE void dataSourceConsole(const QString& name);
     Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password);
     Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password);
     /// O que responde nesta maquina (0.124.0): servidores no loopback,
@@ -388,6 +390,7 @@ signals:
     void setupListResolved(const QString& distroName, const QString& family,
                            const QVariantList& tools);
     void dataSourceListResolved(const QVariantList& profiles);
+    void dataSourceConsoleResolved(const QString& path, bool created);
     void dataSourceTestAccepted(const QString& jobId);
     /// `candidates` com o perfil pronto de cada um; `hint` quando vazio.
     void dataSourceDiscovered(const QVariantList& candidates, const QString& containerEngine,

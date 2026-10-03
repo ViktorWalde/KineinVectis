@@ -22,7 +22,7 @@ Item {
     // Mostrar esses campos vazios seria pedir ao autor que preenchesse o que
     // nao existe — que e' como a maioria das IDEs trata SQLite.
     readonly property bool arquivo:
-        root.draft ? root.draft.engine === "sqlite" : false
+        root.draft ? DataSourceKinds.isSqlite(root.draft.engine) : false
 
     // O MongoDB tem servidor e porta como o Postgres, mas NAO exige usuario —
     // um servidor local sem autenticacao e' o caso comum de desenvolvimento. E
