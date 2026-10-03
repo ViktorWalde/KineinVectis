@@ -32,7 +32,7 @@ Item {
     //
     // A grade NAO escreve em `selectedIndex`. Ela emite `rowClicked`, igual ao
     // mouse, e quem e' dono da selecao continua sendo quem sempre foi — no
-    // `ContainerListView` ela e' um binding para o controller, e escrever aqui
+    // antigo `ContainerListView` ela era um binding para o controller, e escrever aqui
     // quebraria esse binding em silencio, que e' a forma de estrago que o QML
     // nao acusa.
     activeFocusOnTab: root.selectable && root.rows.length > 0

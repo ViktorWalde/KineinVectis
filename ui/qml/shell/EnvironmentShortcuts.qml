@@ -31,6 +31,10 @@ Item {
     property var embeddedController: null
     property var setupController: null
     property var containerController: null
+    // As AREAS de projeto (Banco, Containers, Grafana, Embarcados, Bibliotecas,
+    // Acoes) nao abrem na tela de boas-vindas (decisao do autor, 2026-10-03);
+    // Configuracoes e Instalar ferramentas continuam.
+    property bool workspaceOpen: false
 
     visible: false
 
@@ -47,6 +51,7 @@ Item {
         // FORMATAVA o arquivo, porque o `format.text` anunciava o mesmo
         // atalho e era esse que a UI ligava. Achado por relato de uso.
         sequence: "Ctrl+Alt+K"
+        enabled: root.workspaceOpen
         onActivated: root.libraryController.open()
     }
 
@@ -55,6 +60,7 @@ Item {
         // Ctrl+Alt+J pelo mesmo motivo: o Ctrl+Alt+D que este comando
         // anunciava ao nascer ja' era alias do `debug.start` na UI.
         sequence: "Ctrl+Alt+J"
+        enabled: root.workspaceOpen
         onActivated: root.dataSourceController.open()
     }
 
@@ -65,6 +71,7 @@ Item {
         // anuncia e a UI usa para outra coisa e' exatamente o defeito que o
         // `verificar-atalhos.sh` nasceu para pegar.
         sequence: "Ctrl+Alt+O"
+        enabled: root.workspaceOpen
         onActivated: root.grafanaController.open()
     }
 
@@ -72,6 +79,7 @@ Item {
         // comando: probe.list
         // Ctrl+Alt+M de eMbarcados: o Ctrl+Alt+E ja' e' de outra coisa na UI.
         sequence: "Ctrl+Alt+M"
+        enabled: root.workspaceOpen
         onActivated: root.embeddedController.open()
     }
 
@@ -88,12 +96,14 @@ Item {
         // atalho que a paleta anuncia e a UI usa para outra coisa e' o defeito
         // que o `verificar-atalhos.sh` pega. W de "whale", o simbolo do Docker.
         sequence: "Ctrl+Alt+W"
+        enabled: root.workspaceOpen
         onActivated: root.containerController.open()
     }
 
     Shortcut {
         // comando: configAction.list
         sequence: "Ctrl+Alt+P"
+        enabled: root.workspaceOpen
         onActivated: root.configActionController.openDialog()
     }
 }

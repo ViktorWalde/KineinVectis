@@ -22,6 +22,7 @@ Item {
     property var containerController
     property var grafanaController
     property var dataSourceController
+    property var settingsController: null
     property var embeddedController: null
     property var remoteController: null
     property var toolchainController: null
@@ -36,7 +37,6 @@ Item {
     property bool running: false
     property var logLinesModel
     property var toolsList: []
-    property bool scanningEnvironment: false
 
     signal listDirRequested(string path)
     signal readFileRequested(string path)
@@ -128,6 +128,7 @@ Item {
         SideRail {
             id: sideBar
 
+            visible: root.workspaceOpen // boas-vindas sem trilhos (autor, 2026-10-03)
             height: parent.height
             expanded: root.shellController.railExpanded
             onWidthChanged: root.updatePanelLimits()
@@ -155,15 +156,15 @@ Item {
 
             width: visible ? root.shellController.explorerWidth : 0
             height: parent.height
-            // A janela aberta a direita nao deixa o slot da esquerda vazio.
-            visible: root.workspaceOpen && root.shellController.showExplorer
-                     && root.shellController.leftWindow !== root.shellController.rightWindow
+            // Sem projeto, nada; nunca a mesma janela dos dois lados.
+            visible: root.shellController.docks.slotVisible("left", root.workspaceOpen)
             rightSlot: rightDock
             shellController: root.shellController
             projectTree: root.projectTree
             gitController: root.gitController
             dataSourceController: root.dataSourceController
             editorController: root.editorController
+            containerController: root.containerController
             onMinimumWidthChanged: root.updatePanelLimits()
             onRightMinimumWidthChanged: root.updatePanelLimits()
             workspaceName: root.workspaceName
@@ -177,8 +178,8 @@ Item {
             id: centerColumn
 
             width: visible
-                   ? Math.max(0, parent.width - sideBar.width - Theme.panelGap
-                              - rightSide.width - Theme.panelGap
+                   ? Math.max(0, parent.width - (sideBar.visible ? sideBar.width + Theme.panelGap : 0)
+                              - (rightSide.visible ? rightSide.width + Theme.panelGap : 0)
                               - (rightDock.visible ? rightDock.width + Theme.panelGap : 0)
                               - (explorerPanel.visible
                                  ? explorerPanel.width + Theme.panelGap : 0))
@@ -204,18 +205,16 @@ Item {
                         ? parent.height - (bottomPanel.visible
                           ? bottomPanel.height + Theme.panelGap : 0) : 0
                 visible: !root.workspaceOpen
-                tools: root.toolsList
                 recentWorkspacesController: root.recentWorkspacesController
                 urlDecoder: Clipboard
-                scanning: root.scanningEnvironment
+                animationEnabled: root.settingsController ? root.settingsController.welcomeAnimation : true
+                onAnimationToggled: on => root.settingsController.setWelcomeAnimation(on)
                 onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
                 onWorkspacePathDropped: path => root.openWorkspacePathRequested(path)
                 onNewProjectRequested: function(templateId) {
                     root.createProjectRequested(templateId);
                 }
                 onSettingsRequested: root.settingsRequested()
-                onDetectToolsRequested: root.toolsDetectionRequested()
-                onToolsPanelRequested: root.shellController.showTab("tools")
             }
 
             ShellEditorHost {
@@ -254,7 +253,7 @@ Item {
                     const pos = mapToItem(root, menuX, menuY);
                     root.shellMenuRequested(pos.x, pos.y, bottomPanel.tabMenuItems(key));
                 }
-                open: root.shellController.showBottomPanel
+                open: root.shellController.showBottomPanel && root.workspaceOpen
                 activeTab: root.shellController.bottomTab
                 problemCount: root.jobsController.problemsModel.count
                 problemErrors: root.jobsController.problemsModel.count >= 0 && root.jobsController.hasErrorProblems()
@@ -353,6 +352,7 @@ Item {
         RightSideRail {
             id: rightSide
 
+            visible: root.workspaceOpen
             height: parent.height
             shellController: root.shellController
             railEntries: railEntries

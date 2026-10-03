@@ -166,6 +166,24 @@ no checkout, não em nenhum pacote publicado.
     volta ao natural;
   - números alinhados à direita;
   - o valor cortado aparece ao pairar.
+- Protocolo `0.151.0` — **a tela de boas-vindas é só de boas-vindas.**
+  - **O conteúdo:** a apresentação da IDE, criar, abrir, configurações e os
+    projetos recentes, que agora destacam ao passar o mouse, dizem "há 2 h"
+    e fixam ou removem com um clique.
+  - **O que sai:** trilhos, painéis e atalhos de área, que só aparecem com
+    um projeto aberto.
+  - **O fundo:** um degradê suave nas cores do ícone, com uma **onda**
+    animada. O interruptor **Animação** a desliga, e ela para sozinha ao
+    abrir um projeto.
+- **Containers como janela acoplada**, no espírito do Docker Desktop:
+  - uma lista estável por nome, em que nada pula de lugar ao parar ou
+    iniciar;
+  - ações sempre à vista e coloridas, com "parando…" enquanto o motor
+    trabalha;
+  - remover em dois cliques;
+  - a porta como link e as imagens "em uso".
+- **Interruptores modernos**: liga/desliga com trilho e bolinha, e todos os
+  chips respondem ao mouse.
 - **Janelas do lado do ícone.** Projeto, Git e Banco abrem do lado do trilho
   em que o ícone está, e há um slot novo à direita:
   - arraste o ícone para o outro trilho e a janela vai junto, com tudo o que

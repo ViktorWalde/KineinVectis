@@ -70,6 +70,11 @@
       "default": false,
       "description": "Trilho lateral com rotulos (0.128.0); preferencia do usuario, fora do layout."
     },
+    "welcomeAnimation": {
+      "type": "boolean",
+      "default": true,
+      "description": "Onda animada no fundo da tela de boas-vindas (0.151.0); so' corre com a tela a vista."
+    },
     "layout": {
       "description": "Layout do shell (0.146.0, roadmap 53 §4.4). Substituido inteiro a cada gravacao; um schemaVersion maior que o conhecido e' ignorado e preservado.",
       "type": "object",
@@ -87,7 +92,8 @@
           "enum": [
             "explorer",
             "git",
-            "database"
+            "database",
+            "containers"
           ]
         },
         "leftVisible": {
@@ -100,7 +106,8 @@
             "",
             "explorer",
             "git",
-            "database"
+            "database",
+            "containers"
           ]
         },
         "sizes": {

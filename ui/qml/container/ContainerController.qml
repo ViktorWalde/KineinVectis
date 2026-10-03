@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 // Estado do painel de containers (roadmaps/28 §0: Docker e Podman como dominio
 // NATIVO; priorizado pelo autor em 2026-09-12).
@@ -14,7 +15,6 @@ Item {
     id: root
 
     property string workspaceRoot: ""
-    property bool panelVisible: false
 
     // container.status — o mapa inteiro do core, e o que a tela le dele.
     property var status: ({})
@@ -93,20 +93,20 @@ Item {
 
     visible: false
 
-    onWorkspaceRootChanged: {
-        // O motor e' da MAQUINA, nao do projeto: o status sobrevive a troca de
-        // workspace. A lista tambem — mas o painel fecha, como os outros.
-        panelVisible = false;
-        errorText = "";
-    }
+    // O motor e' da MAQUINA, nao do projeto: o status, a lista e a janela
+    // sobrevivem a troca de projeto (2026-10-03: a janela e' acoplada).
+    onWorkspaceRootChanged: errorText = ""
 
+    // A janela de Containers e' ACOPLADA (2026-10-03): abrir PEDE a janela ao
+    // shell — que a abre do lado do icone (ShellDocks) — e pergunta ao motor.
+    // Se ela esta' visivel, quem sabe e' o shell.
+    signal windowRequested()
+
+    // Pergunta ANTES de pedir a janela: a janela, ao aparecer, pergunta so'
+    // se ninguem perguntou (`listBusy`) — uma ida ao motor, nao duas.
     function open() {
-        panelVisible = true;
         refresh();
-    }
-
-    function close() {
-        panelVisible = false;
+        windowRequested();
     }
 
     // Toda abertura PERGUNTA de novo: container e' coisa que sobe e cai fora
@@ -154,6 +154,9 @@ Item {
     // e' perguntada de novo, porque o estado mudou fora daqui.
     function handleFinished(event) {
         lastFinished = event === undefined || event === null ? ({}) : event;
+        const left = Object.assign({}, pending);
+        delete left[lastFinished.target];
+        pending = left;
         if (lastFinished.ok === false) {
             errorText = qsTr("%1 %2 falhou: %3").arg(lastFinished.action).arg(lastFinished.target)
                         .arg(lastFinished.message !== undefined ? lastFinished.message : "");
@@ -174,11 +177,23 @@ Item {
                    && method !== "container.compose") {
             return;
         }
+        // A recusa nao diz o alvo: nada fica "em andamento" para sempre.
+        if (method === "container.action") pending = ({});
         errorText = message;
+    }
+
+    // O que esta' em andamento, por alvo ({ alvo: acao }): a linha mostra
+    // "parando…", o ponto pulsa e as acoes dela desligam ate' o motor
+    // responder (event.container.finished traz o mesmo alvo).
+    property var pending: ({})
+
+    function isPending(target) {
+        return pending[target] !== undefined;
     }
 
     function act(id, action) {
         errorText = "";
+        pending = Object.assign({}, pending, { [id]: action });
         actionRequested(id, action);
     }
 
@@ -211,26 +226,16 @@ Item {
     // O que se pode fazer com um container depende do estado que o motor
     // declarou — nunca se oferece "parar" ao que ja' parou.
     function isRunning(container) {
-        return container.state === "running";
+        return ContainerStates.isRunning(container);
     }
 
     function setFilter(text) {
         filter = text === undefined ? "" : text;
     }
 
-    function selectRow(index) {
-        selectedId = index >= 0 && index < visibleContainers.length ? visibleContainers[index].id : "";
-    }
-
-    // As linhas da grade comum: estado, nome, imagem, portas, status.
-    function containerRows() {
-        return visibleContainers.map(c => ({
-            state: isRunning(c) ? "●" : "○",
-            name: c.names !== undefined && c.names.length > 0 ? c.names.join(", ") : String(c.id).substring(0, 12),
-            image: c.image !== undefined ? c.image : "",
-            ports: c.ports !== undefined ? c.ports.join(" ") : "",
-            status: c.status !== undefined ? c.status : ""
-        }));
+    // A janela escolhe pelo id ("" = nenhum).
+    function select(id) {
+        selectedId = id === undefined ? "" : id;
     }
 
     // Uma linha por container: nome, imagem, portas e o status humano do
@@ -249,14 +254,6 @@ Item {
             partes.push(container.ports.join(" "));
         }
         return partes.join(" · ");
-    }
-
-    // As linhas da grade comum (F8): o tamanho ja' formatado, o resto como veio.
-    function imageRows() {
-        return images.map(image => ({
-            repository: image.repository, tag: image.tag,
-            size: formatSize(image.size), created: image.created
-        }));
     }
 
     // Bytes (Podman) viram MB/GB; texto pronto (Docker: "431MB") passa direto.

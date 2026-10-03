@@ -14,6 +14,7 @@ Item {
     property var gitController
     property var dataSourceController: null
     property var editorController: null
+    property var containerController: null
     property string workspaceName: ""
     property string workspaceRoot: ""
     // O slot da direita (ShellRightDock): a janela cujo icone esta' no trilho
@@ -25,7 +26,9 @@ Item {
     }
 
     function minimumOf(name) {
-        return name === "git" ? gitWindow.minimumWidth : (name === "database" ? databaseWindow.minimumWidth : 220);
+        if (name === "git") return gitWindow.minimumWidth;
+        if (name === "database") return databaseWindow.minimumWidth;
+        return name === "containers" ? containersWindow.minimumWidth : 220;
     }
 
     // O minimo DECLARADO por quem esta' no slot (53 §4.4); o shell o usa como
@@ -94,6 +97,7 @@ Item {
         const name = root.shellController.docks.windowOn(side);
         if (name === "git") gitWindow.forceActiveFocus();
         else if (name === "database") databaseWindow.forceActiveFocus();
+        else if (name === "containers") containersWindow.forceActiveFocus();
         else explorerPanel.focusTree();
     }
 
@@ -137,6 +141,29 @@ Item {
         }
         onCloseRequested: root.shellController.toggleDockWindow("database")
         onWidenRequested: width => root.shellController.docks.widen("database", width)
+    }
+
+    // Os Containers (2026-10-03): janela acoplada como o Banco, e a unica que
+    // abre sem projeto (ShellDocks.needsProject). Toda abertura pergunta ao
+    // motor de novo — container sobe e cai fora da IDE.
+    ContainersWindow {
+        id: containersWindow
+
+        parent: root.slotOf("containers")
+        anchors.fill: parent
+        visible: root.shellController.containersWindowVisible
+        controller: root.containerController
+        onVisibleChanged: if (visible && root.containerController && !root.containerController.listBusy) root.containerController.refresh()
+        onCloseRequested: root.shellController.toggleDockWindow("containers")
+    }
+
+    // Ctrl+Alt+W, o menu e a paleta pedem a janela pelo controller.
+    Connections {
+        target: root.containerController
+
+        function onWindowRequested() {
+            root.shellController.showDockWindow("containers");
+        }
     }
 
     // Ctrl+Enter num console do Banco (`.kinein/consoles/`) executa a

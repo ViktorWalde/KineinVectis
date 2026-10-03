@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **0.151.0 (2026-10-03) — a onda da tela de boas-vindas é preferência.**
+> `settings.get/set` ganham `welcomeAnimation` (`bool`, aditivo), que liga ou
+> desliga a onda animada do fundo da tela de boas-vindas. Ela é preferência
+> do **usuário**: só o escopo global vale, porque a tela não tem projeto, e
+> o efetivo vem `true` quando ausente. A UI só anima com a tela à vista e a
+> janela em uso, e ao abrir um projeto a animação para sozinha. Nenhum método
+> novo (continuam 176).
+
 > **0.150.0 (2026-10-03) — a escrita mostra a consequência antes de rodar.**
 > `datasource.impact { name, password?, sql } -> { jobId }` e
 > `event.datasource.impact { jobId, name, sql, severity, statements }`.

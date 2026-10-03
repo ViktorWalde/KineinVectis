@@ -15,7 +15,7 @@ Item {
     id: root
 
     property int failures: 0
-    property var chamadas: []
+    property var calls: []
 
     function check(ok, mensagem) {
         if (!ok) {
@@ -25,28 +25,30 @@ Item {
     }
 
     QtObject {
-        id: shellFalso
+        id: fakeShell
         property bool effectiveShowExplorer: false
         property bool gitWindowVisible: false
         property bool showBottomPanel: false
         property string bottomTab: ""
-        function toggleExplorer() { root.chamadas.push("explorer"); }
-        function toggleBottomTab(tab) { root.chamadas.push("tab:" + tab); }
+        property bool containersWindowVisible: false
+        function toggleExplorer() { root.calls.push("explorer"); }
+        function toggleDockWindow(name) { root.calls.push("dock:" + name); }
+        function toggleBottomTab(tab) { root.calls.push("tab:" + tab); }
     }
 
     function painel(nome) {
         return Qt.createQmlObject(
             'import QtQuick; QtObject { property bool panelVisible: false; '
-            + 'function open() { chamadasDoTeste.push("' + nome + '"); } }',
+            + 'function open() { testCalls.push("' + nome + '"); } }',
             root);
     }
 
-    property var chamadasDoTeste: []
+    property var testCalls: []
 
     ToolWindows {
         id: toolWindows
 
-        shellController: shellFalso
+        shellController: fakeShell
         workspaceOpen: false
     }
 
@@ -91,10 +93,12 @@ Item {
         // sao do projeto, e sem projeto ele nao abre.
         check(!porId("database").available && porId("database").kind === "dock-left",
               "Banco e' janela do projeto");
-        check(porId("containers").available
-              && porId("observability").available && porId("tools").available
-              && porId("remote").available,
-              "os da maquina abrem sem projeto");
+        // A tela de boas-vindas e' so' de boas-vindas (decisao do autor,
+        // 2026-10-03): sem projeto, NENHUMA area fica a mao — nem as da
+        // maquina (Containers, Ferramentas, Remoto, Grafana).
+        check(!porId("containers").available && !porId("observability").available
+              && !porId("tools").available && !porId("remote").available,
+              "sem projeto, nenhuma area");
         // Os trilhos so' levam o que se usa agora (pente fino 0.3.9): sem
         // projeto, Projeto, Terminal e Simbolos ficam de fora dos dois.
         const railIds = function() {
@@ -118,35 +122,35 @@ Item {
 
         // ATIVO segue o estado real, nao a existencia do controller.
         check(!porId("tools").active, "tools exige a aba certa, nao so' o painel");
-        shellFalso.showBottomPanel = true;
-        shellFalso.bottomTab = "git";
+        fakeShell.showBottomPanel = true;
+        fakeShell.bottomTab = "git";
         check(!porId("tools").active, "painel aberto noutra aba nao acende Ferramentas");
-        shellFalso.bottomTab = "tools";
+        fakeShell.bottomTab = "tools";
         check(porId("tools").active, "aba tools acende Ferramentas");
 
         // ATIVAR: um dono so' sabe o que cada id faz.
-        check(toolWindows.activate("explorer") === true && chamadas[0] === "explorer", "explorer");
-        check(toolWindows.activate("tools") === true && chamadas[1] === "tab:tools", "tools");
+        check(toolWindows.activate("explorer") === true && calls[0] === "explorer", "explorer");
+        check(toolWindows.activate("tools") === true && calls[1] === "tab:tools", "tools");
 
         // O REMOTO (V4): activate abre o painel do controller, e "active" segue o
         // painel — nao a existencia do controller. Sem controller, nao acende e
         // nao estoura.
         check(!porId("remote").active, "sem controller, o remoto nao acende");
         check(toolWindows.activate("remote") === false, "sem controller, nada a ativar");
-        const remotoFalso = painel("remote");
-        toolWindows.remoteController = remotoFalso;
+        const fakeRemote = painel("remote");
+        toolWindows.remoteController = fakeRemote;
         check(!porId("remote").active, "controller com painel fechado nao acende");
         check(toolWindows.activate("remote") === true
-              && chamadasDoTeste[chamadasDoTeste.length - 1] === "remote",
+              && testCalls[testCalls.length - 1] === "remote",
               "activate('remote') chama o open do dono");
-        remotoFalso.panelVisible = true;
+        fakeRemote.panelVisible = true;
         check(porId("remote").active, "painel aberto acende o remoto");
 
         // O CAMPO `componente` DA V3, que so' entrou quando ganhou consumidor:
         // a entrada carrega o painel dela. Quem monta os overlays le' esta
         // lista em vez de conhecer cada painel pelo nome.
         const comPainel = toolWindows.overlayEntries.map(function(e) { return e.id; });
-        check(comPainel.join(",") === "embedded,containers,remote,observability",
+        check(comPainel.join(",") === "embedded,remote,observability",
               "os paineis de ambiente, na ordem do trilho: " + comPainel.join(","));
         for (const e of toolWindows.overlayEntries) {
             check(e.panel !== undefined && e.panel !== null, e.id + " sem componente");
@@ -156,10 +160,18 @@ Item {
         // seria forcar a abstracao sobre quem nao e'.
         check(porId("explorer").panel === undefined, "explorer nao e' overlay");
         check(porId("tools").panel === undefined, "tools nao e' overlay");
+        // Os Containers viraram JANELA acoplada (2026-10-03): abrem pelo slot
+        // do lado do icone, e acendem pelo que o shell diz que esta' visivel.
+        check(porId("containers").kind === "dock-left" && porId("containers").panel === undefined,
+              "containers e' janela, nao overlay");
+        check(toolWindows.activate("containers") === true && calls[calls.length - 1] === "dock:containers",
+              "activate('containers') abre a janela");
+        fakeShell.containersWindowVisible = true;
+        check(porId("containers").active, "janela visivel acende o icone");
 
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
         check(toolWindows.activate("nao.existe") === false, "id sem dono devolve false");
-        check(chamadas.length === 2 && chamadasDoTeste.length === 1,
+        check(calls.length === 3 && testCalls.length === 1, // explorer, tools, dock:containers
               "id sem dono nao pode tocar em nada");
 
         Qt.exit(failures === 0 ? 0 : 1);

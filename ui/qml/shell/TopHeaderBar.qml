@@ -132,6 +132,9 @@ Rectangle {
                 NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
             }
             opacity: headerReorder.opacityFor("project")
+            // Na tela de boas-vindas o "Abrir projeto" do topo repetia o cartao
+            // (decisao do autor, 2026-10-03): o widget so' existe com projeto.
+            visible: root.workspaceOpen
 
             anchors.verticalCenter: parent.verticalCenter
             workspaceOpen: root.workspaceOpen

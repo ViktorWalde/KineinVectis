@@ -2,21 +2,31 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Os recentes da tela inicial (Etapa 2 F7): o ultimo aberto em destaque
-// (Enter abre), os de caminho ausente ocultos com desfazer. A logica e'
-// do RecentWorkspacesController; aqui so' a forma.
+// Os recentes da tela de boas-vindas (Etapa 2 F7; mais interativos em
+// 2026-10-03, pedido do autor): o ultimo aberto em destaque (Enter abre), os
+// de caminho ausente ocultos com desfazer. A logica e' do
+// RecentWorkspacesController; aqui so' a forma.
+//
+//   Projetos recentes  (3)                                   Limpar
+//   ▌[▣] meu-app                                  há 2 h   📌  ×
+//        ~/projetos/meu-app
+//
+// Cada linha acende ao pairar (transicao curta, barra ambar a esquerda), e o
+// mouse e o teclado falam do MESMO destaque: pairar destaca, Enter abre o
+// destacado. Fixar e remover aparecem com o mouse; o fixado tem a placa em
+// ambar e fica sempre no topo (o controller ordena).
 Rectangle {
     id: root
 
     required property var controller
 
-    readonly property var shown: controller.visibleWorkspaces.slice(0, 4)
+    readonly property var shown: controller.visibleWorkspaces.slice(0, 5)
 
-    height: (shown.length === 0 ? 86 : 54 + shown.length * 36)
-            + (controller.hiddenMissingCount > 0 ? 32 : 0)
-            + (controller.errorText === "" ? 0 : 18)
+    height: header.height + list.height + 2 * Theme.spacingMedium + Theme.spacingXSmall
+            + (missing.visible ? missing.height : 0) + (errorLine.visible ? errorLine.height : 0)
     radius: Theme.radiusLarge
-    color: Theme.background1
+    // Translucido: a arte da tela de boas-vindas aparece por baixo.
+    color: Qt.rgba(Theme.background1.r, Theme.background1.g, Theme.background1.b, 0.86)
     border.color: Theme.borderSoft
     border.width: 1
 
@@ -25,26 +35,46 @@ Rectangle {
         anchors.margins: Theme.spacingMedium
         spacing: Theme.spacingXSmall
 
-        Row {
+        Item {
+            id: header
+
             width: parent.width
-            height: 26
+            height: 28
 
-            Text {
+            Row {
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Projetos recentes")
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizePanelTitle
-                font.bold: true
-            }
+                spacing: Theme.spacingSmall
 
-            Item {
-                width: parent.width - x - clearButton.width
-                height: 1
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Projetos recentes")
+                    color: Theme.textPrimary
+                    font.pixelSize: Theme.fontSizePanelTitle
+                    font.bold: true
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.controller.workspaces.length > 0
+                    width: countText.implicitWidth + 2 * Theme.spacingSmall
+                    height: 16
+                    radius: height / 2
+                    color: Theme.surface2
+
+                    Text {
+                        id: countText
+
+                        anchors.centerIn: parent
+                        text: root.controller.visibleWorkspaces.length
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontSizeMicro
+                    }
+                }
             }
 
             KvButton {
-                id: clearButton
-
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
                 compact: true
                 visible: root.controller.workspaces.length > 0
                 text: qsTr("Limpar")
@@ -52,130 +82,45 @@ Rectangle {
             }
         }
 
-        Text {
-            visible: root.shown.length === 0
+        Column {
+            id: list
+
             width: parent.width
-            text: qsTr("Os projetos abertos com sucesso aparecerão aqui.")
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontSizeSmall
-            wrapMode: Text.WordWrap
-        }
+            spacing: 2
 
-        Repeater {
-            model: root.shown
-
-            delegate: Rectangle {
-                id: workspaceRow
-
-                required property var modelData
-                required property int index
-
-                readonly property bool highlighted: index === root.controller.highlightedIndex
-
-                width: parent.width
-                height: 34
-                radius: Theme.radius
-                color: highlighted ? Theme.surfaceSelected
-                       : openArea.containsMouse && workspaceRow.modelData.available
-                       ? Theme.surface2 : "transparent"
-                border.width: highlighted ? 1 : 0
-                border.color: Theme.borderStrong
-                opacity: workspaceRow.modelData.available ? 1.0 : 0.72
+            // Vazio: o que vai aparecer aqui, e por onde comecar.
+            Row {
+                visible: root.shown.length === 0
+                height: 44
+                spacing: Theme.spacingSmall
 
                 KvIcon {
-                    id: workspaceIcon
-
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
                     anchors.verticalCenter: parent.verticalCenter
-                    name: "project"
-                    size: 16
-                    disabled: !workspaceRow.modelData.available
-                    active: workspaceRow.modelData.pinned
-                }
-
-                Column {
-                    anchors.left: workspaceIcon.right
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.right: pinButton.left
-                    anchors.rightMargin: Theme.spacingSmall
-                                         + (enterHint.visible ? enterHint.width + Theme.spacingSmall : 0)
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 0
-
-                    Text {
-                        width: parent.width
-                        text: workspaceRow.modelData.name
-                              + (workspaceRow.modelData.available
-                                 ? "" : qsTr(" — caminho ausente"))
-                        color: workspaceRow.modelData.available
-                               ? Theme.textPrimary : Theme.warningSoft
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.bold: workspaceRow.modelData.pinned
-                        elide: Text.ElideRight
-                    }
-
-                    Text {
-                        width: parent.width
-                        text: workspaceRow.modelData.root
-                        color: Theme.textMuted
-                        font.pixelSize: Theme.fontSizeMicro
-                        elide: Text.ElideMiddle
-                    }
+                    name: "recent"
+                    size: 18
                 }
 
                 Text {
-                    id: enterHint
-
-                    anchors.right: pinButton.left
-                    anchors.rightMargin: Theme.spacingSmall
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: workspaceRow.highlighted && workspaceRow.modelData.available
-                    text: qsTr("Enter abre")
+                    text: qsTr("Os projetos que você abrir aparecem aqui — comece criando ou abrindo um, acima.")
                     color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeCaption
+                    font.pixelSize: Theme.fontSizeSmall
                 }
+            }
 
-                KvButton {
-                    id: pinButton
+            Repeater {
+                model: root.shown
 
-                    anchors.right: removeButton.left
-                    anchors.rightMargin: Theme.spacingXSmall
-                    anchors.verticalCenter: parent.verticalCenter
-                    compact: true
-                    text: workspaceRow.modelData.pinned ? qsTr("Soltar") : qsTr("Fixar")
-                    selected: workspaceRow.modelData.pinned
-                    onClicked: root.controller.togglePinned(workspaceRow.modelData.root)
-                }
-
-                KvIconButton {
-                    id: removeButton
-
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spacingXSmall
-                    anchors.verticalCenter: parent.verticalCenter
-                    compact: true
-                    iconName: "close"
-                    tooltip: qsTr("Remover dos projetos recentes")
-                    onClicked: root.controller.removeWorkspace(workspaceRow.modelData.root)
-                }
-
-                MouseArea {
-                    id: openArea
-
-                    anchors.left: parent.left
-                    anchors.right: pinButton.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    enabled: workspaceRow.modelData.available
-                    hoverEnabled: true
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.controller.openWorkspace(workspaceRow.modelData.root)
+                delegate: RecentWorkspaceRow {
+                    width: list.width
+                    controller: root.controller
                 }
             }
         }
 
         Row {
+            id: missing
+
             visible: root.controller.hiddenMissingCount > 0
             width: parent.width
             height: 28
@@ -185,8 +130,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.controller.hiddenMissingCount === 1
                       ? qsTr("1 recente sem caminho foi ocultado")
-                      : qsTr("%1 recentes sem caminho foram ocultados")
-                        .arg(root.controller.hiddenMissingCount)
+                      : qsTr("%1 recentes sem caminho foram ocultados").arg(root.controller.hiddenMissingCount)
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeCaption
             }
@@ -200,6 +144,8 @@ Rectangle {
         }
 
         Text {
+            id: errorLine
+
             visible: root.controller.errorText !== ""
             width: parent.width
             text: root.controller.errorText

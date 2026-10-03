@@ -19,9 +19,18 @@ uso.
 
 ## 1. Primeiros passos
 
-1. A IDE abre na **Start Screen**, que mostra o estado das ferramentas sem
-   instalar ou alterar nada automaticamente. Clique em **Abrir projeto**
-   (ou `Ctrl+O`).
+1. A IDE abre na **tela de boas-vindas** (desde 2026-10-03), que é só de
+   boas-vindas:
+   - **O que ela tem:** a apresentação da IDE, os cartões **Criar projeto**,
+     **Abrir projeto** e **Configurações**, e os **Projetos recentes**.
+   - **O que ela não tem:** trilhos, janelas, painel de baixo e atalhos de
+     área (Banco, Containers e os outros aparecem quando um projeto abre).
+   - **O fundo:** um degradê nas cores do ícone, com uma **onda** que se move
+     devagar. O interruptor **Animação**, no canto, a desliga, e a escolha
+     fica guardada. Ela só anda com a tela à vista: ao abrir um projeto, ela
+     para, e nada fica rodando.
+
+   Clique em **Abrir projeto** (ou `Ctrl+O`).
 2. Navegue até a pasta do seu projeto e confirme. À esquerda ficam os
    locais (Início, Documentos, Downloads, Raiz) e os projetos recentes; em
    cima, o caminho em partes clicáveis, com voltar, avançar e subir. Pastas
@@ -37,9 +46,18 @@ separadamente, e o Project Health verifica as duas toolchains.
    (sessão automática).
 
 Depois da primeira abertura bem-sucedida, o projeto aparece em **Projetos
-recentes** na Start Screen e em **Arquivo → Abrir recente**. Um clique reabre o
-projeto e restaura suas abas. Na Start Screen também é possível **fixar** os
-projetos mais importantes no topo, remover uma entrada ou limpar toda a lista.
+recentes** na tela de boas-vindas e em **Arquivo → Abrir recente**. Um clique
+reabre o projeto e restaura suas abas. Cada linha mostra:
+
+- a placa do projeto, em âmbar quando ele está fixado;
+- o nome e o caminho;
+- **quando** ele foi aberto ("há 2 h", "ontem").
+
+Passar o mouse **destaca** a linha, que acende com uma barra âmbar, e o
+**Enter** abre o projeto destacado. O mouse e o teclado falam do mesmo
+destaque. Com o mouse em cima aparecem o **alfinete** (fixa o projeto no
+topo) e o **×** (tira da lista, sem tocar na pasta). **Limpar** esvazia a
+lista.
 Se uma pasta foi movida ou apagada, ela aparece como **caminho ausente**, fica
 desabilitada e pode ser removida com segurança.
 
@@ -95,7 +113,7 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 ```
 
 - **Janelas acopladas, do lado do ícone** (desde 2026-10-03): **Projeto**,
-  **Git** e **Banco** são janelas acopladas ao layout. Cada uma abre **no
+  **Git**, **Banco** e **Containers** são janelas acopladas ao layout. Cada uma abre **no
   lado do trilho em que o ícone dela está**: ícone no trilho da esquerda,
   janela no slot da esquerda; arraste o ícone para o trilho da direita e ela
   passa a abrir no slot da direita, entre o editor e o trilho. Regras:
@@ -135,7 +153,7 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   trabalho. O **Terminal** tem ícone no trilho da esquerda: um clique abre
   (como o Alt+F12), outro recolhe. Numa janela com menos de 1024 px de
   largura os Símbolos recolhem sozinhos e voltam quando a janela alarga. Arraste um ícone de um trilho para o outro e a área passa a morar
-  lá (por projeto); para Projeto, Git e Banco isso decide também **de que
+  lá (por projeto); para Projeto, Git, Banco e Containers isso decide também **de que
   lado a janela abre** (veja "Janelas acopladas", acima). Os **Símbolos** (Alt+7) são um ícone do trilho e nascem
   à direita. O ⋯ Mais e o modo expandido ficam no trilho da esquerda.
 - **Arraste para organizar** (desde 2026-10-02): os ícones do trilho, as
@@ -202,8 +220,9 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   fica só com o clique que abre a linha. A aba mostra a contagem.
 - **Rail** (coluna fininha à esquerda; o `›` do pé expande com os
   rótulos): **Projeto · Git · Embarcados · Banco · Containers · Grafana ·
-  Ferramentas**. Projeto, Git e Banco são janelas acopladas (abrem no slot
-  do lado do ícone); os outros ainda abrem o painel de cada um por cima. Busca, Build e Debug **não estão** no
+  Ferramentas**. Projeto, Git, Banco e Containers são janelas acopladas (abrem
+  no slot do lado do ícone); Embarcados, Remoto e Grafana ainda abrem o painel
+  de cada um por cima (o 59 diz quando cada um muda). Busca, Build e Debug **não estão** no
   rail (desde a Etapa 3): a busca no projeto é `Ctrl+Shift+F` / a aba
   Busca; Build e Debug são o widget Executar do cabeçalho (▶ 🐞 ⋯), o
   menu Build e o painel inferior.
@@ -739,9 +758,11 @@ Este menu existe porque configurar o ambiente **não é "ferramenta"**: é o que
 faz antes de compilar. São nove painéis, e todos seguem a mesma regra — a IDE
 **mostra o que vai fazer e espera você aceitar**; nenhum deles escreve no seu
 projeto sozinho. Os que se usam todo dia também têm ícone nos **trilhos**:
-Banco de dados, Containers, Observabilidade e Ferramentas. O **Banco** é uma
-janela acoplada (abre no lado do trilho em que o ícone está, ao lado do
-editor); os outros ainda abrem como painel por cima.
+Banco de dados, Containers, Observabilidade e Ferramentas. **Banco** e
+**Containers** são janelas acopladas (abrem no lado do trilho em que o ícone
+está, ao lado do editor); Observabilidade ainda abre como painel por cima. Sem
+projeto aberto, nenhum deles aparece (a tela de boas-vindas é só de
+boas-vindas).
 
 ### Bibliotecas
 
@@ -1273,27 +1294,55 @@ linhas do canal) — o defmt já chega decodificado.
 
 ### Containers (`Ctrl+Alt+W`)
 
-Docker **ou** Podman — o que responder nesta máquina (no Fedora, `docker`
-costuma ser o `podman-docker`, e o painel diz isso). A primeira linha é o
-**motor**: versão, rootless ou com daemon, o socket, se responde e qual
-`compose` existe. Se algo falta, o painel imprime o passo oficial (grupo
-`docker`, `systemctl`, `podman.socket`) — **e não o executa**.
+Docker **ou** Podman, o que responder nesta máquina (no Fedora, `docker`
+costuma ser o `podman-docker`). Desde 2026-10-03 é uma **janela acoplada**,
+como o Banco: abre no lado do trilho em que o ícone está, ao lado do editor,
+e só existe com um projeto aberto. A inspiração é o Docker Desktop, no estilo
+da IDE.
 
-Abaixo, os containers numa **grade** (estado · nome · imagem · portas ·
-status; os parados também, pelo chip **parados também**), com um **filtro**
-por nome, imagem ou id. Clique numa linha para escolhê-la: a **barra de
-ações** logo abaixo oferece o que o estado dela permite — **Iniciar** o que
-parou, **Parar/Reiniciar** o que roda, **Remover** só o parado (remover o
-que roda é dois gestos, de propósito). **Logs** e **Shell** abrem numa aba
-de terminal — por isso pedem um projeto aberto: a aba é do projeto (o
-botão desligado diz isso ao pairar). As imagens locais fecham a lista.
+```text
+┌ Containers  ● Podman 5.7.0 · rootless      ⟳ × ┐
+│ [filtrar por nome, imagem ou id]   ( Parados ●) │
+│ ▾ CONTAINERS (3)                                │
+│   ○ kinein-testando          :27017   ▶  ▤  🗑  │
+│     mongo:7 · Exited (0) …                      │
+│   ● web                      :8080 ↗  ■  ▤  >_  │
+│     nginx:1.27 · Up 2 hours                     │
+│ ▾ IMAGENS (12)                                  │
+│   ⬡ docker.io/library/nginx:1.27  em uso  187 MB│
+│ ───────────────────────────────────────────────│
+│ ● web · rodando                               × │  o escolhido
+│ imagem / id / status / portas (link) / ações    │
+│ compose.yaml                [compose up] [down] │
+└─────────────────────────────────────────────────┘
+```
 
-**compose up / compose down** são do **projeto**: só acendem quando há motor
-respondendo, uma ferramenta de compose **e um arquivo de compose na raiz do
-projeto** (`compose.yaml`, `docker-compose.yml`...). Sem um deles, a linha do
-motor diz o que falta. `up` é `-d`; a saída viva mora nos logs de cada
-container. Toda ação é um job cancelável, e o que falhou vira motivo no topo
-do painel.
+- **Motor.** A linha do topo diz o motor e se ele responde. Se algo falta, o
+  meio da janela mostra o passo oficial (grupo `docker`, `systemctl`,
+  `podman.socket`) e **não o executa**.
+- **Uma lista só, em ordem de nome.** Parar ou iniciar não muda a linha de
+  lugar: com seções separadas por estado, a linha pulava e o "Iniciar" de
+  **outro** container ficava embaixo do cursor. O estado está no **ponto**
+  (verde rodando, âmbar pausado, contorno parado).
+- **Ações sempre à vista**, discretas, que acendem com o mouse na linha:
+  - ▶ **iniciar** (verde) e ■ **parar** (vermelho);
+  - ▤ **logs** e `>_` **shell**, que abrem numa aba do terminal;
+  - 🗑 **remover**, só o parado, em **dois cliques**: o primeiro arma (✓) e o
+    segundo, dentro de alguns segundos, remove.
+- **Enquanto o motor trabalha**, a linha diz "parando…/iniciando…", o ponto
+  pulsa e as ações dela ficam desligadas.
+- **A porta do host** é uma etiqueta. Com o container rodando, ela vira link
+  ↗ para `http://localhost:<porta>`.
+- **Imagens "em uso"** são as que algum container usa. O tamanho vem
+  formatado.
+- **O escolhido.** Um clique na linha mostra embaixo a imagem, o id, o
+  status, as portas e as ações do estado dele (Reiniciar incluído).
+- **Parados.** O interruptor **Parados** mostra ou esconde os containers
+  parados.
+- **compose up / down** são do **projeto**: só aparecem com motor
+  respondendo, uma ferramenta de compose **e** um arquivo de compose na raiz.
+  Sem isso, o rodapé diz o que falta. `up` é `-d`, e toda ação é um job
+  cancelável.
 
 ---
 

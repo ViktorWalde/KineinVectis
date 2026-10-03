@@ -22,6 +22,8 @@ Item {
     property int outlineWidth: 220
     property bool outlineCollapsed: false
     property bool railExpanded: false
+    // A onda da tela de boas-vindas (0.151.0): ligada por padrao, so' global.
+    property bool welcomeAnimation: true
     // O layout do shell (0.146.0): o do workspace, senao o global, ja'
     // filtrado pelo core (so' schema conhecido). null = nenhum.
     property var layout: null
@@ -67,6 +69,7 @@ Item {
                 ? effective.outlineWidth : 220;
         outlineCollapsed = effective.outlineCollapsed === true;
         railExpanded = effective.railExpanded === true;
+        welcomeAnimation = effective.welcomeAnimation !== false;
         layout = effective.layout !== undefined ? effective.layout : null;
         globalValues = global;
         workspaceValues = workspace;
@@ -90,6 +93,13 @@ Item {
     // "global"); outro valor o core recusa (`SettingsScope`).
     function setScoped(scope, values) {
         setRequested(scope, values);
+    }
+
+    // Preferencia do USUARIO (a tela de boas-vindas nao tem projeto): global.
+    // O valor muda na hora; o eco do core confirma.
+    function setWelcomeAnimation(on) {
+        welcomeAnimation = on;
+        setRequested("global", { welcomeAnimation: on });
     }
 
     function hasPersistedLayout() {

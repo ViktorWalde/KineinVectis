@@ -47,6 +47,7 @@ qt_add_executable(kinein-vectis
 set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/datasource/DataSourceKinds.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS DataSourceKinds.qml)
+set_source_files_properties(qml/container/ContainerStates.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS ContainerStates.qml)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
 set_source_files_properties(qml/components/KvFileIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvFileIcon.qml)
@@ -161,6 +162,12 @@ set_source_files_properties(qml/embedded/EmbeddedAdapterView.qml PROPERTIES QT_R
 set_source_files_properties(qml/embedded/EmbeddedInstallView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedInstallView.qml)
 set_source_files_properties(qml/embedded/EmbeddedKitImportView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitImportView.qml)
 set_source_files_properties(qml/container/ContainerController.qml PROPERTIES QT_RESOURCE_ALIAS ContainerController.qml)
+set_source_files_properties(qml/container/ContainerRows.qml PROPERTIES QT_RESOURCE_ALIAS ContainerRows.qml)
+set_source_files_properties(qml/container/ContainersWindow.qml PROPERTIES QT_RESOURCE_ALIAS ContainersWindow.qml)
+set_source_files_properties(qml/container/ContainerListPane.qml PROPERTIES QT_RESOURCE_ALIAS ContainerListPane.qml)
+set_source_files_properties(qml/container/ContainerDetail.qml PROPERTIES QT_RESOURCE_ALIAS ContainerDetail.qml)
+set_source_files_properties(qml/container/ContainerRow.qml PROPERTIES QT_RESOURCE_ALIAS ContainerRow.qml)
+set_source_files_properties(qml/container/ContainerRowActions.qml PROPERTIES QT_RESOURCE_ALIAS ContainerRowActions.qml)
 set_source_files_properties(qml/index/IndexController.qml PROPERTIES QT_RESOURCE_ALIAS IndexController.qml)
 set_source_files_properties(qml/ipc/IndexEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexEventRouter.qml)
 set_source_files_properties(qml/ipc/IndexRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexRequestRouter.qml)
@@ -169,9 +176,6 @@ set_source_files_properties(qml/python/PythonContextPopover.qml PROPERTIES QT_RE
 set_source_files_properties(qml/python/PythonContextFact.qml PROPERTIES QT_RESOURCE_ALIAS PythonContextFact.qml)
 set_source_files_properties(qml/ipc/PythonEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS PythonEventRouter.qml)
 set_source_files_properties(qml/ipc/PythonRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS PythonRequestRouter.qml)
-set_source_files_properties(qml/container/ContainerPanel.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanel.qml)
-set_source_files_properties(qml/container/ContainerListView.qml PROPERTIES QT_RESOURCE_ALIAS ContainerListView.qml)
-set_source_files_properties(qml/container/ContainerPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanelHost.qml)
 set_source_files_properties(qml/ipc/ContainerEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ContainerEventRouter.qml)
 set_source_files_properties(qml/ipc/ContainerRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ContainerRequestRouter.qml)
 set_source_files_properties(qml/app/AppEnvironmentDomains.qml PROPERTIES QT_RESOURCE_ALIAS AppEnvironmentDomains.qml)
@@ -320,7 +324,9 @@ set_source_files_properties(qml/workspace/ProjectKindNames.qml PROPERTIES QT_QML
 set_source_files_properties(qml/workspace/WorkspaceController.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceController.qml)
 set_source_files_properties(qml/workspace/RecentWorkspacesController.qml PROPERTIES QT_RESOURCE_ALIAS RecentWorkspacesController.qml)
 set_source_files_properties(qml/workspace/RecentWorkspacesCard.qml PROPERTIES QT_RESOURCE_ALIAS RecentWorkspacesCard.qml)
+set_source_files_properties(qml/workspace/RecentWorkspaceRow.qml PROPERTIES QT_RESOURCE_ALIAS RecentWorkspaceRow.qml)
 set_source_files_properties(qml/workspace/StartScreen.qml PROPERTIES QT_RESOURCE_ALIAS StartScreen.qml)
+set_source_files_properties(qml/workspace/WelcomeWave.qml PROPERTIES QT_RESOURCE_ALIAS WelcomeWave.qml)
 set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthController.qml)
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
@@ -547,6 +553,13 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedInstallView.qml
         qml/embedded/EmbeddedKitImportView.qml
         qml/container/ContainerController.qml
+        qml/container/ContainerStates.qml
+        qml/container/ContainerRows.qml
+        qml/container/ContainersWindow.qml
+        qml/container/ContainerListPane.qml
+        qml/container/ContainerDetail.qml
+        qml/container/ContainerRow.qml
+        qml/container/ContainerRowActions.qml
         qml/index/IndexController.qml
         qml/ipc/IndexEventRouter.qml
         qml/ipc/IndexRequestRouter.qml
@@ -555,9 +568,6 @@ qt_add_qml_module(kinein-vectis
         qml/python/PythonContextFact.qml
         qml/ipc/PythonEventRouter.qml
         qml/ipc/PythonRequestRouter.qml
-        qml/container/ContainerPanel.qml
-        qml/container/ContainerListView.qml
-        qml/container/ContainerPanelHost.qml
         qml/ipc/ContainerEventRouter.qml
         qml/ipc/ContainerRequestRouter.qml
         qml/app/AppEnvironmentDomains.qml
@@ -705,7 +715,9 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/WorkspaceController.qml
         qml/workspace/RecentWorkspacesController.qml
         qml/workspace/RecentWorkspacesCard.qml
+        qml/workspace/RecentWorkspaceRow.qml
         qml/workspace/StartScreen.qml
+        qml/workspace/WelcomeWave.qml
         qml/workspace/ProjectHealthController.qml
         qml/workspace/WorkspaceUiResetter.qml
         qml/jobs/JobsController.qml

@@ -34,10 +34,9 @@ Item {
         }
 
         // A sessao ja' esta' na contabilidade do CoreClient; aqui ela vira
-        // uma aba com o comando como titulo, e o painel de containers fecha
-        // para o terminal aparecer.
+        // uma aba com o comando como titulo. A janela de Containers e'
+        // acoplada (2026-10-03): fica aberta ao lado do terminal.
         function onContainerTerminalOpened(id, command) {
-            root.containerController.close();
             root.runtimeController.handleTerminalOpened(id, command, command);
         }
 

@@ -83,3 +83,5 @@ centroid
 mipmap
 # 2026-10-03: termo do MongoDB (colecao de serie temporal, `type: "timeseries"`)
 timeseries
+# 2026-10-03: o espaco de cor OKLab (Ottosson 2020), o da mistura suave do degrade
+oklab

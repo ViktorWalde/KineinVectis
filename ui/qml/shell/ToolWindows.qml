@@ -60,7 +60,6 @@ Item {
     readonly property ToolWindowPanels panels: ToolWindowPanels {
         embeddedController: root.embeddedController
         toolchainController: root.toolchainController
-        containerController: root.containerController
         remoteController: root.remoteController
         grafanaController: root.grafanaController
     }
@@ -140,12 +139,11 @@ Item {
         {
             "id": "containers", "label": "", "icon": "container",
             "tooltip": qsTr("Containers (Ctrl+Alt+W)"), "area": "left", "order": 50,
-            "available": true,
-            "title": qsTr("Containers"), "kind": "overlay", "defaultPolicy": "contextual",
+            "available": root.workspaceOpen,
+            // Janela acoplada desde 2026-10-03, como o Banco.
+            "title": qsTr("Containers"), "kind": "dock-left", "defaultPolicy": "contextual",
             "factKey": "container.engine", "commandId": "container.list", "shortcut": "Ctrl+Alt+W",
-            "active": root.containerController !== null && root.containerController !== undefined
-                      && root.containerController.panelVisible
-            ,"panel": root.panels.containersPanel
+            "active": root.shellController !== null && root.shellController.containersWindowVisible === true
         },
         // O REMOTE entrou no trilho na V4 (2026-09-25), e custou esta entrada —
         // era o aceite da V3, exercitado. Ele abre SEM projeto aberto pelo mesmo
@@ -154,7 +152,7 @@ Item {
         {
             "id": "remote", "label": qsTr("Remoto"), "icon": "remote",
             "tooltip": qsTr("Alvo remoto — Linux por SSH"), "area": "left", "order": 55,
-            "available": true,
+            "available": root.workspaceOpen,
             "title": qsTr("Remoto"), "kind": "overlay", "defaultPolicy": "contextual",
             "factKey": "remote.any", "commandId": "remote.list", "shortcut": "",
             "active": root.remoteController !== null && root.remoteController !== undefined
@@ -164,7 +162,7 @@ Item {
         {
             "id": "observability", "label": qsTr("Grafana"), "icon": "observability",
             "tooltip": qsTr("Observabilidade — Grafana (Ctrl+Alt+O)"), "area": "left",
-            "order": 60, "available": true,
+            "order": 60, "available": root.workspaceOpen,
             "title": qsTr("Observabilidade"), "kind": "overlay", "defaultPolicy": "contextual",
             "factKey": "grafana.instance", "commandId": "grafana.get", "shortcut": "Ctrl+Alt+O",
             "active": root.grafanaController !== null && root.grafanaController !== undefined
@@ -174,7 +172,7 @@ Item {
         {
             "id": "tools", "label": "", "icon": "tools",
             "tooltip": qsTr("Ferramentas"), "area": "left", "order": 70,
-            "available": true,
+            "available": root.workspaceOpen,
             "title": qsTr("Ferramentas"), "kind": "bottom", "defaultPolicy": "pinned",
             "factKey": "", "commandId": "tools.detect", "shortcut": "",
             "active": root.shellController !== null && root.shellController.showBottomPanel
@@ -272,7 +270,9 @@ Item {
             shellController.toggleDockWindow("database");
             return true;
         case "containers":
-            return openOwner(containerController);
+            if (shellController === null || shellController === undefined) return false;
+            shellController.toggleDockWindow("containers");
+            return true;
         case "observability":
             return openOwner(grafanaController);
         case "remote":

@@ -31,6 +31,8 @@ Item {
         let failures = 0;
         shell.updateViewport(1600, 900);
         shell.outlineCollapsed = true;
+        // Com projeto aberto: sem ele, a tela inicial nao reabre janela (abaixo).
+        shell.workspaceRoot = "/w";
 
         failures += check(shell.effectiveShowExplorer && shell.rightWindow === "", "padrao: Projeto a esquerda");
         shell.toggleDockWindow("database");
@@ -99,6 +101,14 @@ Item {
         failures += check(shell.rightPreferredWidth === 420, "nunca encolhe por pedido");
         shell.docks.widen("git", 600);
         failures += check(shell.rightPreferredWidth === 420, "janela fechada nao mexe em nada");
+
+        // TELA DE BOAS-VINDAS (sem projeto): nenhum slot aparece, nem com o
+        // layout lembrando uma janela aberta (decisao do autor, 2026-10-03).
+        shell.moveRailEntryToSide("containers", "left", 0, []);
+        shell.showDockWindow("containers");
+        failures += check(!shell.docks.slotVisible("left", false) && shell.docks.slotVisible("left", true),
+                          "sem projeto, o slot nao aparece");
+        shell.toggleExplorer();
 
         // Gravar e ler o slot da direita.
         shell.rightPreferredWidth = 360;

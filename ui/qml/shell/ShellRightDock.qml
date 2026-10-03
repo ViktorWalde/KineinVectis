@@ -19,8 +19,7 @@ Item {
 
     width: visible ? root.shellController.rightWidth : 0
     // Os Simbolos abertos escondem o slot por um momento (ShellDocks.showing).
-    visible: root.workspaceOpen && root.shellController.rightWindow !== ""
-             && root.shellController.effectiveOutlineCollapsed
+    visible: root.shellController.docks.slotVisible("right", root.workspaceOpen)
 
     PanelSplitter {
         x: -width

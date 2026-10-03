@@ -6,7 +6,7 @@
 // escolhia linha nenhuma, em nenhum deles.
 //
 // O CUIDADO QUE ESTE TESTE GUARDA: a grade NAO escreve em `selectedIndex`. Ela
-// emite `rowClicked`, exatamente como o clique, porque no `ContainerListView`
+// emite `rowClicked`, exatamente como o clique, porque no antigo `ContainerListView`
 // essa propriedade e' um BINDING para o controller — escrever nela de dentro
 // quebraria o binding em silencio, que e' o estrago que nenhum gate acusa.
 //

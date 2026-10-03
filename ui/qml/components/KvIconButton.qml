@@ -9,6 +9,8 @@ Rectangle {
     property bool active: false
     property bool primary: false
     property bool danger: false
+    // Verde de "liga/inicia" (o par do `danger` vermelho de "para/remove").
+    property bool success: false
     property bool compact: false
     property int iconSize: 20
     property real iconRotation: 0
@@ -53,6 +55,7 @@ Rectangle {
         iconColor: !root.enabled ? Theme.textDisabled
                                  : root.primary ? Theme.background0
                                  : (root.danger ? Theme.errorSoft
+                                    : root.success ? Theme.successSoft
                                     : (root.active ? Theme.accent
                                        : (buttonArea.containsMouse
                                           ? Theme.iconHover

@@ -63,9 +63,7 @@ Window {
     Connections {
         target: domains.editorController
 
-        // Troca de aba (ou abertura/fechamento de arquivo) re-aponta o
-        // diff da gutter — e o blame, quando ligado — para o arquivo
-        // ativo.
+        // Trocar de aba re-aponta o diff da gutter (e o blame) para o ativo.
         function onCurrentTabChanged() {
             domains.gitController.requestDiffFor(domains.editorController.currentFilePath());
             domains.gitController.requestBlameFor(domains.editorController.currentFilePath());
@@ -186,6 +184,7 @@ Window {
         embeddedController: domains.embeddedController
         setupController: domains.setupController
         containerController: domains.containerController
+        workspaceOpen: coreClient.workspaceRoot !== ""
     }
 
     ShellHeaderHost {
@@ -247,6 +246,7 @@ Window {
     ShellWorkspaceHost {
         id: workspaceHost
 
+        settingsController: domains.settingsController
         onShellMenuRequested: function(menuX, menuY, items) {
             const pos = workspaceHost.mapToItem(shellOverlays, menuX, menuY);
             shellOverlays.openAppMenu(pos.x, pos.y, items);
@@ -289,7 +289,6 @@ Window {
         running: coreClient.running
         logLinesModel: coreClient.logLines
         toolsList: domains.workspaceController.toolsList
-        scanningEnvironment: coreClient.scanningEnvironment
         onListDirRequested: function(path) {
             coreClient.listDir(path);
         }

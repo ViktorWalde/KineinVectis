@@ -64,6 +64,11 @@ const shapes = {
     "chevron-down": { stroke: "M6 9l6 6 6-6", fill: "" },
     "chevron-up": { stroke: "M6 15l6-6 6 6", fill: "" },
     "close": { stroke: "M6 6l12 12M18 6L6 18", fill: "" },
+    // Remover (lixeira) e abrir fora (o navegador): as acoes dos Containers.
+    "trash": { stroke: "M4 7h16 M9.5 7V4.5h5V7 M6.5 7l.9 12.6A1.5 1.5 0 0 0 8.9 21h6.2a1.5 1.5 0 0 0 1.5-1.4L17.5 7"
+                       + " M10.25 11v6M13.75 11v6", fill: "" },
+    "external": { stroke: "M14 4h6v6M20 4l-9 9 M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11"
+                          + "A1.5 1.5 0 0 1 5.5 6H10", fill: "" },
     "expand": { stroke: "M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6", fill: "" },
     "collapse": { stroke: "M4 14h6v6M20 10h-6V4M14 10l6-6M4 20l6-6", fill: "" },
     "menu": { stroke: "M4 6.5h16M4 12h16M4 17.5h16", fill: "" },

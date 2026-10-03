@@ -81,6 +81,11 @@ pub struct SettingsValues {
     /// only (`0.128.0`, Etapa 2 F1 "modo compacto/expandido").
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rail_expanded: Option<bool>,
+    /// Whether the welcome screen animates its background wave (`0.151.0`).
+    /// A user preference (global), on by default; the UI stops the animation
+    /// on its own whenever the welcome screen is not on screen.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub welcome_animation: Option<bool>,
     /// The shell layout (`0.146.0`, roadmap 53 §4.4): which left window,
     /// preferred panel sizes, bottom panel and Structure state, versioned by
     /// its own `schemaVersion`. Kept as raw JSON on purpose: a layout written
@@ -123,6 +128,8 @@ pub struct EffectiveSettings {
     pub outline_collapsed: bool,
     /// Effective side-rail mode: labels visible (`true`) or icons only.
     pub rail_expanded: bool,
+    /// Effective welcome-screen animation (`true` unless turned off).
+    pub welcome_animation: bool,
     /// The layout to restore: the workspace one, else the global one, and
     /// only when its `schemaVersion` is one this core understands. Absent =
     /// the UI uses the legacy width fields above, or its automatic layout.

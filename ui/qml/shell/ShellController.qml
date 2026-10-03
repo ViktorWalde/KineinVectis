@@ -57,7 +57,7 @@ Item {
     // explorer OU a janela do Git, como a referencia alterna Project/Commit.
     property string leftWindow: "explorer"
     // As janelas que o slot da esquerda conhece (o codec valida contra esta).
-    readonly property var leftWindows: ["explorer", "git", "database"]
+    readonly property var leftWindows: ["explorer", "git", "database", "containers"]
     // O trilho por areas (0.3.7 F1, 53 §4.2): o que o USUARIO decidiu. O que
     // o core sabe (fatos) nao mora aqui. Vai no `layout`, por workspace.
     property var railState: ({ pinned: [], unpinned: [], hidden: [] })
@@ -76,6 +76,7 @@ Item {
     readonly property bool effectiveShowExplorer: docks.showing("explorer") !== ""
     readonly property bool gitWindowVisible: docks.showing("git") !== ""
     readonly property bool databaseWindowVisible: docks.showing("database") !== ""
+    readonly property bool containersWindowVisible: docks.showing("containers") !== ""
 
     // `intent`: "open" (abrir uma pasta) ou "createProject" (o seletor ja'
     // no modo de criar, com a escolha de linguagem). Uma porta, duas intencoes.

@@ -1,24 +1,40 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 
-// A tela inicial (Etapa 2 F7, 2026-09-18): comecar em 1 clique — ou em
-// Enter, no ultimo recente em destaque — e o ambiente numa linha ("37 de
-// 62 ferramentas · Ver"); a lista inteira fica no painel Ferramentas.
+// A tela de BOAS-VINDAS (Etapa 2 F7, 2026-09-18; redesenhada em 2026-10-03,
+// pedidos do autor: um boas-vindas estilizado que apresente a IDE, com um
+// degrade suave da paleta do icone e uma onda animada desligavel):
+//
+//   ┌──────────────────────────────────────────────── [Animação] ┐
+//   │              ▣ BETA PUBLICO 0.3.x · LINUX                  │
+//   │              Bem-vindo ao Kinein Vectis                    │
+//   │              Do codigo a placa,                            │
+//   │              no mesmo lugar.  (ambar)                      │
+//   │              o que a IDE e', em 2 linhas                   │
+//   │              [Criar] [Abrir] [Configuracoes]               │
+//   │              Projetos recentes                             │
+//   │  ～～～ a onda (ardosia, ambar escuro, ambar) ～～～～～～～  │
+//   └────────────────────────────────────────────────────────────┘
+//
+// So' boas-vindas (decisao do autor, 2026-10-03): sem trilhos, sem janelas,
+// sem painel de baixo, sem atalhos de area (o shell cuida disso) e sem a linha
+// do Ambiente (ela foi para o painel Ferramentas, dentro do projeto). O fundo
+// ambienta; o foco e' o texto e os projetos. Comecar em 1 clique — ou em Enter, no recente em destaque.
 Rectangle {
     id: root
 
-    property var tools: []
     required property var recentWorkspacesController
+    // A onda do fundo (preferencia do usuario, 0.151.0).
+    property bool animationEnabled: true
     property var urlDecoder: null
-    property bool scanning: false
     property bool folderDropReady: false
 
     signal openWorkspaceRequested()
     signal workspacePathDropped(string path)
     signal newProjectRequested(string templateId)
     signal settingsRequested()
-    signal detectToolsRequested()
-    signal toolsPanelRequested()
+    signal animationToggled(bool enabled)
 
     focus: visible
     // Sem workspace, o teclado e' desta tela: Enter abre o recente em destaque.
@@ -58,24 +74,35 @@ Rectangle {
         onDropped: function(drop) { root.acceptFolderDrop(drop); }
     }
 
-    function detectedCount() {
-        let count = 0;
-        for (let i = 0; i < tools.length; i++) {
-            if (tools[i].status === "detected" || tools[i].status === "ready") {
-                count++;
-            }
-        }
-        return count;
+    // O fundo: a onda na paleta do icone (WelcomeWave). Ela so' anda com a
+    // preferencia ligada, a tela a vista e a janela em uso; abrir um projeto
+    // esconde esta tela e a onda para sozinha.
+    WelcomeWave {
+        anchors.fill: parent
+        animated: root.animationEnabled && root.visible && root.Window.active
     }
+
+    // Ligar e desligar a onda, no canto (a escolha fica guardada).
+    KvToggleChip {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: Theme.spacingMedium
+        z: 3
+        switchStyle: true
+        iconName: "observability"
+        labelText: qsTr("Animação")
+        tooltip: qsTr("A onda do fundo desta tela; desligada, nada se move nem gasta processador")
+        active: root.animationEnabled
+        onToggled: root.animationToggled(!root.animationEnabled)
+    }
+
 
     Flickable {
         id: startFlick
 
         anchors.fill: parent
         contentWidth: width
-        contentHeight: Math.max(height,
-                                contentColumn.y + contentColumn.height
-                                + Theme.spacingRegion)
+        contentHeight: Math.max(height, contentColumn.y + contentColumn.height + Theme.spacingRegion)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.VerticalFlick
@@ -83,34 +110,71 @@ Rectangle {
         Column {
             id: contentColumn
 
+            width: Math.min(720, startFlick.width - 2 * Theme.spacingRegion)
             x: (startFlick.width - width) / 2
-            y: Math.max(Theme.spacingRegion,
-                        (startFlick.height - height) / 2)
-            width: Math.min(760, startFlick.width - 2 * Theme.spacingRegion)
+            y: Math.max(Theme.spacingRegion, (startFlick.height - height) / 2)
             spacing: Theme.spacingLarge
 
-        Row {
-            width: parent.width
-            height: 54
-            spacing: Theme.spacingMedium
+            // O selo: a marca, o estagio e a plataforma.
+            Row {
+                spacing: Theme.spacingSmall
 
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
+                Rectangle {
+                    width: 26
+                    height: 26
+                    radius: Theme.radius
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Theme.accent
 
-                Text {
-                    text: qsTr("Kinein Vectis")
-                    color: Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeDisplay
-                    font.bold: true
+                    Image {
+                        anchors.centerIn: parent
+                        width: 16
+                        height: 16
+                        source: "qrc:/KineinVectis/assets/icons/app/kinein-64.png"
+                        smooth: true
+                        mipmap: true
+                    }
                 }
 
                 Text {
-                    text: qsTr("IDE para C, C++, Rust, Python e sistemas embarcados")
-                    color: Theme.textSecondary
-                    font.pixelSize: Theme.fontSizeBody
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("BETA PÚBLICO %1 · LINUX").arg(Qt.application.version)
+                    color: Theme.accent
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fontSizeCaption
+                    font.weight: Font.DemiBold
+                    font.letterSpacing: 1.2
                 }
             }
-        }
+
+            // Boas-vindas e a IDE apresentada (texto proprio, nao o do site).
+            Text {
+                width: parent.width
+                text: qsTr("Bem-vindo ao Kinein Vectis")
+                color: Theme.textSecondary
+                font.pixelSize: Theme.fontSizeLarge
+            }
+
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                textFormat: Text.StyledText
+                text: qsTr("Do código à placa,<br><font color=\"%1\">no mesmo lugar.</font>").arg(Theme.accent)
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontSizeHero
+                font.weight: Font.Bold
+                lineHeight: 1.05
+            }
+
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("C, C++, Rust e Python — de um programa no computador ao firmware de um microcontrolador ou um Linux embarcado. Abra uma pasta ou crie um projeto: a IDE reconhece o build, o compilador e a placa, e mostra o que vai fazer antes de fazer.")
+                color: Theme.textSecondary
+                font.pixelSize: Theme.fontSizeMedium
+                lineHeight: 1.25
+            }
 
             // As tres acoes como CARTOES que dizem para que servem (0.3.8,
             // retorno do autor). UM gesto para criar, e a linguagem se escolhe
@@ -150,66 +214,6 @@ Rectangle {
             RecentWorkspacesCard {
                 width: parent.width
                 controller: root.recentWorkspacesController
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 64
-                radius: Theme.radiusLarge
-                color: Theme.background1
-                border.color: Theme.borderSoft
-                border.width: 1
-
-                Row {
-                    anchors.fill: parent
-                    anchors.margins: Theme.spacingLarge
-                    spacing: Theme.spacingMedium
-
-                    Rectangle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 8
-                        height: 8
-                        radius: height / 2
-                        color: root.tools.length === 0 ? Theme.textMuted
-                               : root.detectedCount() === root.tools.length
-                                 ? Theme.successSoft : Theme.warningSoft
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root.tools.length === 0
-                              ? qsTr("Ambiente: compiladores, CMake, depuradores e ferramentas ainda não detectados — a IDE só inspeciona, nunca instala sem confirmação.")
-                              : qsTr("Ambiente: %1 de %2 ferramentas detectadas")
-                                .arg(root.detectedCount()).arg(root.tools.length)
-                        color: Theme.textSecondary
-                        font.pixelSize: Theme.fontSizeBody
-                        width: parent.width - x - environmentActions.width - parent.spacing
-                        elide: Text.ElideRight
-                    }
-
-                    Row {
-                        id: environmentActions
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Theme.spacingSmall
-
-                        KvButton {
-                            compact: true
-                            visible: root.tools.length > 0
-                            text: qsTr("Ver")
-                            iconName: "tools"
-                            onClicked: root.toolsPanelRequested()
-                        }
-
-                        KvButton {
-                            compact: true
-                            enabled: !root.scanning
-                            text: root.scanning ? qsTr("Detectando...") : qsTr("Redetectar")
-                            iconName: "refresh"
-                            onClicked: root.detectToolsRequested()
-                        }
-                    }
-                }
             }
         }
     }

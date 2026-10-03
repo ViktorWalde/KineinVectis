@@ -164,6 +164,8 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
             .rail_expanded
             .or(global.rail_expanded)
             .unwrap_or(false),
+        // A tela de boas-vindas nao tem projeto: so' o global vale.
+        welcome_animation: global.welcome_animation.unwrap_or(true),
         layout: effective_layout(global, workspace),
     }
 }
@@ -207,6 +209,7 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         outline_width: incoming.outline_width.or(base.outline_width),
         outline_collapsed: incoming.outline_collapsed.or(base.outline_collapsed),
         rail_expanded: incoming.rail_expanded.or(base.rail_expanded),
+        welcome_animation: incoming.welcome_animation.or(base.welcome_animation),
         // Inteiro, nunca campo a campo: um layout e' um retrato, e misturar
         // dois retratos daria um que ninguem montou.
         layout: incoming.layout.clone().or_else(|| base.layout.clone()),
@@ -248,6 +251,30 @@ mod tests {
 
     fn layout(version: u64, explorer: u64) -> serde_json::Value {
         serde_json::json!({ "schemaVersion": version, "sizes": { "explorer": explorer } })
+    }
+
+    /// A onda da tela de boas-vindas (0.151.0): ligada por padrao; desligada
+    /// no global, fica desligada; o projeto nao opina (a tela nao tem
+    /// projeto); e gravar outro campo nao a liga de volta.
+    #[test]
+    fn the_welcome_animation_is_on_by_default_and_only_the_global_decides() {
+        let none = SettingsValues::default();
+        assert!(resolve(&none, &none).welcome_animation);
+        let off = SettingsValues {
+            welcome_animation: Some(false),
+            ..SettingsValues::default()
+        };
+        assert!(!resolve(&off, &none).welcome_animation);
+        let workspace_on = SettingsValues {
+            welcome_animation: Some(true),
+            ..SettingsValues::default()
+        };
+        assert!(!resolve(&off, &workspace_on).welcome_animation);
+        let other = SettingsValues {
+            rail_expanded: Some(true),
+            ..SettingsValues::default()
+        };
+        assert_eq!(merge(&off, &other).welcome_animation, Some(false));
     }
 
     /// O layout do workspace vence o global; sem nenhum, nao ha' layout e a

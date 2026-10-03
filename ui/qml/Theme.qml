@@ -36,6 +36,18 @@ QtObject {
     readonly property color textMuted: "#80848b"
     readonly property color textDisabled: "#5a5d63"
     readonly property color accent: "#ffb000"
+    // A PALETA DO ICONE da IDE (medida no icon-amber.png, 2026-10-03): o
+    // fundo da tela de boas-vindas e a onda dele usam estas cores, e so' elas.
+    readonly property color brandInk: "#0f1215"
+    readonly property color brandSlate: "#45494f"
+    readonly property color brandAmberDeep: "#a25b00"
+    readonly property color brandAmber: "#fbb119"
+    // O fundo da onda embaixo: o ambar escuro do icone, quase apagado.
+    readonly property color brandEmber: "#231203"
+    // BEGIN welcomeGradient (gerado: scripts/gerar_degrade_boas_vindas.py)
+    // De `brandInk` a `brandEmber` em OKLab, nas posicoes [0.0, 0.16, 0.33, 0.5, 0.67, 0.84, 1.0].
+    readonly property var welcomeGradient: ["#0f1215", "#121213", "#161210", "#19130d", "#1d1209", "#201206", "#231203"]
+    // END welcomeGradient
     readonly property color accentActive: "#ffc93d"
     readonly property color accentDim: "#b97900"
     // O fundo escurecido atras de um dialogo modal.
@@ -80,6 +92,8 @@ QtObject {
     readonly property int fontSizeSubtitle: 15
     readonly property int fontSizeHeadline: 20
     readonly property int fontSizeDisplay: 22
+    // O titulo da tela de boas-vindas, no estilo do site (2026-10-03).
+    readonly property int fontSizeHero: 40
 
     // MOVIMENTO POR PAPEL (0.3.9; decisao do autor de 2026-10-01: fluidez a
     // 60 Hz, 120 Hz onde der). Toda animacao tira a duracao e a curva daqui,
@@ -90,6 +104,10 @@ QtObject {
     readonly property int motionCaretBlink: 520
     readonly property int motionPulse: 600
     readonly property int motionProgress: 900
+    // A onda da tela de boas-vindas: um ciclo LENTO (ela ambienta, nao chama).
+    readonly property int motionWave: 14000
+    // O passo do relogio da onda: 20 por segundo bastam para um movimento lento.
+    readonly property int motionWaveTick: 50
     readonly property int easingStandard: Easing.OutCubic
     readonly property int easingPendulum: Easing.InOutSine
 

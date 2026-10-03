@@ -14,6 +14,16 @@ QtObject {
 
     property var shell: null
 
+    // O slot de um lado tem o que mostrar agora (o host liga o `visible`).
+    // Sem projeto, nenhum: a tela de boas-vindas e' so' de boas-vindas
+    // (decisao do autor, 2026-10-03).
+    function slotVisible(side, workspaceOpen) {
+        const name = root.windowOn(side);
+        if (name === "" || !workspaceOpen) return false;
+        if (side === "right") return root.shell.effectiveOutlineCollapsed;
+        return root.shell.showExplorer && name !== root.shell.rightWindow;
+    }
+
     function sideOf(name) {
         const sides = root.shell.railState.sides;
         return sides !== undefined && sides !== null && sides[name] === "right" ? "right" : "left";

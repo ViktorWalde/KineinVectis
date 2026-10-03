@@ -8,7 +8,7 @@
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.150.0`,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.151.0`,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
 >   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.204.
 >   A arquitetura da casca para quem chega, com diagramas, está em
@@ -39,11 +39,18 @@
 >     escrita, o painel mostra o comando e a consequência contada. No que é
 >     destrutivo, só roda depois de digitar o nome do alvo. O console tem
 >     cores e separa instruções por linha em branco (§7.208).
->   - **Em seguida:** os Containers no mesmo modelo, com inspiração no Docker
->     Desktop. O Grafana dentro da IDE (uma visualização web local, opcional)
->     espera o autor aceitar o tamanho que o QtWebEngine acrescenta.
-> - **Próximo:** a 0.4 (embarcados, [`52`](52-arquitetura-executavel-da-0.4.md)),
->   depois de o autor revisar a série na tela. Onde cada versão começa no
+>   - **A 0.3.9 NÃO está encerrada** (decisão do autor, 2026-10-03, noite).
+>     Ela só fecha depois do plano em
+>     [`59`](59-fechamento-da-0.3.9.md):
+>     1. Containers e Remoto acoplados.
+>     2. Banco completo, prático e seguro, com o MongoDB lendo e escrevendo.
+>     3. Grafana com visualização web dentro da IDE, opcional e desligada por
+>        padrão.
+>     4. Pente fino.
+>
+>     Depois disso, a 0.4 é inteira dos embarcados.
+> - **Próximo:** fechar a 0.3.9 pelo [`59`](59-fechamento-da-0.3.9.md); depois a 0.4
+>   (embarcados, [`52`](52-arquitetura-executavel-da-0.4.md)). Onde cada versão começa no
 >   código: [`58`](58-onde-cada-versao-comeca-no-codigo.md).
 > - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15 nem
 >   no Ubuntu 26.04 / Qt 6.10 / clang 21 do autor (a exceção do clang-tidy só
@@ -210,7 +217,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.150.0 (2026-10-03; o historico das versoes e' o arquitetura/03)
+protocolo   0.151.0 (2026-10-03; o historico das versoes e' o arquitetura/03)
 metodos     176 IPC roteados, 58 eventos (scripts/verificar-fiacao-ipc.sh,
             2026-10-03; os mais novos: datasource.console e datasource.impact); 110 harnesses QML em
             scripts/qml-harness (ls tst_*.qml, 2026-10-03)

@@ -13,6 +13,7 @@ Item {
     id: root
 
     property int statusPedidos: 0
+    property int windowRequests: 0
     property int listaPedidos: 0
     property bool ultimoAll: false
     property int imagensPedidos: 0
@@ -28,6 +29,7 @@ Item {
         onImagesRequested: root.imagensPedidos += 1
         onActionRequested: function(id, action) { root.acoes.push(id + ":" + action); }
         onOpenRequested: function(id, mode) { root.aberturas.push(id + ":" + mode); }
+        onWindowRequested: root.windowRequests += 1
         onComposeRequested: function(action, file) { root.composes.push(action + ":" + file); }
     }
 
@@ -36,7 +38,7 @@ Item {
 
         // Abrir PERGUNTA as tres coisas, e a lista vem com os parados (padrao).
         controller.open();
-        if (!controller.panelVisible) failures += 1;
+        if (root.windowRequests !== 1) failures += 1;
         if (root.statusPedidos !== 1 || root.listaPedidos !== 1 || root.imagensPedidos !== 1) failures += 2;
         if (!root.ultimoAll) failures += 4;
         if (!controller.statusBusy || !controller.listBusy) failures += 8;
@@ -70,11 +72,10 @@ Item {
         // Bytes viram GB/MB; texto pronto (Docker) passa direto.
         if (controller.formatSize(3035568151) !== "3.04 GB") failures += 8192;
         if (controller.formatSize("431MB") !== "431MB") failures += 16384;
-        // F8: a grade comum recebe linhas com o tamanho ja' formatado.
+        // As imagens chegam como o motor mandou; a janela formata o tamanho
+        // (formatSize, acima) e as linhas sao do ContainerRows (tst_container_rows).
         controller.handleImages([{ repository: "postgres", tag: "16", size: 452984832, created: "2026-09-01" }], "");
-        const linhaImagem = controller.imageRows()[0];
-        if (linhaImagem.repository !== "postgres" || linhaImagem.tag !== "16"
-            || linhaImagem.size !== "453.0 MB" || linhaImagem.created !== "2026-09-01") failures += 32768;
+        if (controller.images.length !== 1 || controller.formatSize(controller.images[0].size) !== "453.0 MB") failures += 32768;
 
         // Agir e' PEDIR: o controller nao roda nada. Logs/shell sao abas de
         // terminal, e a aba e' do projeto: sem workspace o pedido nao sai e o
@@ -134,18 +135,18 @@ Item {
         controller.setShowAll(false);
         if (root.ultimoAll !== false) failures += 33554432;
 
-        // Trocar de workspace FECHA o painel mas NAO esquece o motor: ele e'
-        // da maquina, nao do projeto.
+        // Trocar de projeto NAO esquece o motor (ele e' da maquina), e a janela
+        // acoplada nao e' pedida de novo nem fechada por aqui.
         controller.handleStatus({ engine: "podman", reachable: true, emulated: false });
         controller.workspaceRoot = "/tmp/outro";
-        if (controller.panelVisible) failures += 67108864;
+        if (root.windowRequests !== 1) failures += 67108864;
         if (!controller.engineFound) failures += 134217728;
 
         // E3-6: o filtro por nome/imagem/id, a linha escolhida POR ID (o
         // indice muda a cada refresh) e o alvo das acoes.
         controller.handleContainers([rodando, parado], "podman", "", "");
         if (controller.visibleContainers.length !== 2 || controller.selected !== null) failures += 536870912;
-        controller.selectRow(1);
+        controller.select("fdd8de359c22");
         if (controller.selectedId !== "fdd8de359c22" || controller.selectedTarget !== "timescaledb"
                 || controller.selectedRunning) failures += 1073741824;
         controller.setFilter("POSTGRES");
@@ -156,11 +157,20 @@ Item {
         // A lista volta e a escolha (por id) volta com ela, no indice novo.
         controller.handleContainers([parado, rodando], "podman", "", "");
         if (controller.selectedIndex !== 0 || controller.selectedTarget !== "timescaledb") failures += 8589934592;
-        const linhas = controller.containerRows();
-        if (linhas.length !== 2 || linhas[1].state !== "●" || linhas[0].state !== "○"
-                || linhas[1].name !== "postgres-dev, pg" || linhas[1].ports !== "0.0.0.0:5433->5432/tcp") failures += 17179869184;
+        // As linhas da janela (estado, nome, portas) sao do ContainerRows:
+        // tst_container_rows prova.
         controller.setFilter("fdd8");
         if (controller.visibleContainers.length !== 1) failures += 34359738368;
+
+        // EM ANDAMENTO (2026-10-03): agir marca o alvo; a resposta do motor
+        // (com o mesmo alvo) desmarca; a recusa sem alvo limpa tudo.
+        controller.act("web", "stop");
+        if (!controller.isPending("web") || controller.isPending("db")) failures += 68719476736;
+        controller.handleFinished({ action: "stop", target: "web", ok: true, message: "" });
+        if (controller.isPending("web")) failures += 137438953472;
+        controller.act("db", "start");
+        controller.handleFailed("container.action", "recusado");
+        if (controller.isPending("db")) failures += 274877906944;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

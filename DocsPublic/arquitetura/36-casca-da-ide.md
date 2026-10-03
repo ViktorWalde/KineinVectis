@@ -94,7 +94,7 @@ trilho           34 px  largura; botões 28 px; ícones 20 px
 ilha             raio Theme.radiusLarge (8 px); cor Theme.background1
 divisória        1 px Theme.borderSoft, com recuo de Theme.spacingSmall nas pontas
 fontes           Micro 9 · Caption 10 · Small 11 · Body 12 · Medium 13 ·
-                 Large 14 · Subtitle 15 · Headline 20 · Display 22
+                 Large 14 · Subtitle 15 · Headline 20 · Display 22 · Hero 40
 ```
 
 ### 1.3 Ordem de empilhamento (z) — onde cliques se perdem
@@ -169,7 +169,7 @@ uma a uma no `tst_shell_docks`.
 
 | Lado | Estado no `ShellController` | Fechado quando |
 | --- | --- | --- |
-| esquerda | `leftWindow` (`explorer`/`git`/`database`) + `showExplorer` | `showExplorer` é falso |
+| esquerda | `leftWindow` (`explorer`/`git`/`database`/`containers`) + `showExplorer` | `showExplorer` é falso |
 | direita | `rightWindow` (a mesma lista, ou `""`) | `rightWindow` é `""` |
 
 **De que lado** uma janela abre é o lado do **ícone** dela no trilho:
@@ -181,6 +181,7 @@ esquerda até alguém mudar isso.
 
 | Situação | O que acontece |
 | --- | --- |
+| Sem projeto (tela de boas-vindas) | **Nenhum** slot aparece (`slotVisible`), mesmo que o layout lembre uma janela aberta; os trilhos, o painel de baixo, os atalhos de área (`EnvironmentShortcuts`) e o widget "Abrir projeto" do topo também somem. Decisão do autor (2026-10-03): a tela de boas-vindas é só de boas-vindas. |
 | `show(nome)` com o ícone à direita | `rightWindow = nome`; se a mesma janela estava na esquerda, a esquerda fecha. |
 | `show(nome)` com o ícone à esquerda | `leftWindow = nome`, `showExplorer = true`; se estava na direita, a direita esvazia. |
 | `toggle(nome)` | Visível em algum lado: fecha. Senão: `show`. É o clique no ícone. |
@@ -411,10 +412,10 @@ age é a função `activate(id)`.
 
 | `kind` | Exemplos | O clique faz |
 | --- | --- | --- |
-| `dock-left` | Projeto, Banco | janela acoplada: abre ou fecha no slot **do lado do ícone** (`toggleDockWindow`, §2.0) |
+| `dock-left` | Projeto, Banco, Containers | janela acoplada: abre ou fecha no slot **do lado do ícone** (`toggleDockWindow`, §2.0) |
 | `dock-right` | Símbolos | recolhe/expande os Símbolos (abertos, escondem o slot da direita) |
 | `bottom` | Terminal, Ferramentas | abre o painel de baixo na aba; se ela já estiver à vista, recolhe |
-| `overlay` | Embarcados, Containers, Remoto, Grafana | abre o painel de ambiente do dono (`owner.open()`) |
+| `overlay` | Embarcados, Remoto, Grafana | abre o painel de ambiente do dono (`owner.open()`); Remoto e Grafana viram janela pelo [`59`](../roadmaps/59-fechamento-da-0.3.9.md) |
 
 Duas camadas filtram o que aparece:
 

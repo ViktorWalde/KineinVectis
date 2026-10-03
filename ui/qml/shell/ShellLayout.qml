@@ -24,9 +24,9 @@ Item {
     Rectangle {
         id: island
 
-        x: root.railItem !== null ? root.railItem.width + Theme.panelGap : 0
+        x: root.railItem !== null && root.railItem.visible ? root.railItem.width + Theme.panelGap : 0
         width: Math.max(0, root.width - x
-                        - (root.rightItem !== null ? root.rightItem.width + Theme.panelGap : 0))
+                        - (root.rightItem !== null && root.rightItem.visible ? root.rightItem.width + Theme.panelGap : 0))
         height: root.height
         radius: Theme.radiusLarge
         color: Theme.background1
