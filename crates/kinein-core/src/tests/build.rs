@@ -237,8 +237,6 @@ fn roda_build(
 #[test]
 #[cfg(unix)]
 fn a_plain_makefile_builds_with_bear_when_it_exists_and_says_so_when_not() {
-    use std::os::unix::fs::PermissionsExt;
-
     let base = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-build-make", std::process::id()));
@@ -250,8 +248,7 @@ fn a_plain_makefile_builds_with_bear_when_it_exists_and_says_so_when_not() {
     std::fs::write(dir.join("Makefile"), "all:\n\t@echo compilando\n").unwrap();
     let executavel = |nome: &str, corpo: &str| {
         let p = bin.join(nome);
-        std::fs::write(&p, corpo).unwrap();
-        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(&p, corpo);
     };
     executavel("make", "#!/bin/sh\necho \"make-falso $*\"\n");
 

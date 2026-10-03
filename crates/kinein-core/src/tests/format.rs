@@ -142,8 +142,6 @@ fn command_list_includes_format_text() {
 /// tambem e' conferido.
 #[test]
 fn format_text_formats_a_python_buffer_with_ruff() {
-    use std::os::unix::fs::PermissionsExt;
-
     let dir = workspace_dir("ruff");
     std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
     std::fs::create_dir_all(dir.join("pacote")).unwrap();
@@ -151,15 +149,13 @@ fn format_text_formats_a_python_buffer_with_ruff() {
     let bin = dir.join("bin-falso");
     std::fs::create_dir_all(&bin).unwrap();
     let registro = dir.join("ruff-recebeu.txt");
-    std::fs::write(
+    crate::write_executable(
         bin.join("ruff"),
         format!(
             "#!/bin/sh\necho \"$@\" > {reg}\npwd >> {reg}\ncat >> {reg}\nprintf 'formatado\\n'\n",
             reg = registro.display()
         ),
-    )
-    .unwrap();
-    std::fs::set_permissions(bin.join("ruff"), std::fs::Permissions::from_mode(0o755)).unwrap();
+    );
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(&bin));
     let root = open_workspace(&mut core, &dir);
     let outcome = core.handle_request(&JsonRpcRequest::new(

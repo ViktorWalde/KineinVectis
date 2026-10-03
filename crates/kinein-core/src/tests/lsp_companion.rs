@@ -380,7 +380,7 @@ fn the_core_registers_ruff_as_a_companion_when_the_binary_is_detected() {
     std::fs::write(dir.join("app.py"), "import os\n").unwrap();
     let log = dir.join("ruff.jsonl");
     let wrapper = dir.join("bin/ruff");
-    std::fs::write(
+    crate::write_executable(
         &wrapper,
         format!(
             "#!/bin/sh\nexec {} {} {} --publica ruff\n",
@@ -388,13 +388,7 @@ fn the_core_registers_ruff_as_a_companion_when_the_binary_is_detected() {
             fake_server().display(),
             log.display()
         ),
-    )
-    .unwrap();
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755)).unwrap();
-    }
+    );
     let dir = dir.canonicalize().unwrap();
     let (sender, receiver) = mpsc::channel::<JsonRpcRequest>();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(

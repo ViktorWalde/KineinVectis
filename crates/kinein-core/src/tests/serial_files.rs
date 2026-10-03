@@ -52,8 +52,7 @@ fn cenario(nome: &str) -> Cenario {
 }
 
 fn executavel(caminho: &Path, corpo: &str) {
-    std::fs::write(caminho, corpo).unwrap();
-    std::fs::set_permissions(caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
+    crate::write_executable(caminho, corpo);
 }
 
 impl Cenario {

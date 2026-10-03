@@ -351,8 +351,6 @@ mod tests {
     #[test]
     #[cfg(unix)]
     fn binaries_are_asked_for_their_cases_and_one_case_runs_by_the_binary() {
-        use std::os::unix::fs::PermissionsExt;
-
         use super::{Framework, SEP, discover_inner_cases, list_cases, run_inner_case};
         use crate::test::TestEvent;
 
@@ -363,8 +361,7 @@ mod tests {
         std::fs::create_dir_all(&raiz).unwrap();
         let exe = |nome: &str, corpo: &str| -> std::path::PathBuf {
             let p = raiz.join(nome);
-            std::fs::write(&p, format!("#!/bin/sh\n{corpo}")).unwrap();
-            std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+            crate::write_executable(&p, format!("#!/bin/sh\n{corpo}"));
             p
         };
         let gtest = exe(

@@ -230,18 +230,15 @@ fn status_de(core: &mut crate::Core, id: i64) -> serde_json::Value {
 #[test]
 #[cfg(unix)]
 fn configure_picks_the_project_default_preset_and_status_reports_it() {
-    use std::os::unix::fs::PermissionsExt;
     let dir = cmake_workspace("preset-automatico");
     std::fs::create_dir_all(dir.join("bin")).unwrap();
     // O cmake falso ecoa os argv e "configura" (cria o CMakeCache no -B).
     let cmake = dir.join("bin/cmake");
-    std::fs::write(
+    crate::write_executable(
         &cmake,
         "#!/bin/sh\necho \"cmake-falso $*\"\nwhile [ $# -gt 0 ]; do [ \"$1\" = -B ] && \
          { mkdir -p \"$2\"; : > \"$2/CMakeCache.txt\"; }; shift; done\nexit 0\n",
-    )
-    .unwrap();
-    std::fs::set_permissions(&cmake, std::fs::Permissions::from_mode(0o755)).unwrap();
+    );
     std::fs::write(
         dir.join("CMakePresets.json"),
         r#"{"version": 6, "configurePresets": [{"name": "base", "hidden": true}, {"name": "projeto"}]}"#,

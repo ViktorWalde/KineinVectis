@@ -8,7 +8,6 @@
 //! como tipo de projeto.
 
 use std::{
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     sync::mpsc,
     time::Duration,
@@ -85,8 +84,7 @@ fn executavel(caminho: &Path, corpo: &str) {
     if let Some(pasta) = caminho.parent() {
         std::fs::create_dir_all(pasta).unwrap();
     }
-    std::fs::write(caminho, corpo).unwrap();
-    std::fs::set_permissions(caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
+    crate::write_executable(caminho, corpo);
 }
 
 impl Cenario {

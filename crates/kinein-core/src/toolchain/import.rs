@@ -447,7 +447,7 @@ fn print_sysroot(gcc: &Path) -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use std::os::unix::fs::PermissionsExt;
+
     use std::path::{Path, PathBuf};
 
     use super::import;
@@ -463,8 +463,7 @@ mod tests {
 
     fn executavel(p: &Path, corpo: &str) {
         std::fs::create_dir_all(p.parent().unwrap()).unwrap();
-        std::fs::write(p, corpo).unwrap();
-        std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(p, corpo);
     }
 
     /// Um SDK Yocto na forma documentada: o environment-setup exporta CC com

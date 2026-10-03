@@ -159,40 +159,21 @@ mod tests {
 
     #[test]
     fn find_files_uses_fd_output_and_confines_results() {
-        use std::os::unix::fs::PermissionsExt;
-
         let root = temp_root("find-files");
         fs::create_dir(root.join("src")).unwrap();
         fs::write(root.join("src/main.rs"), "fn main() {}\n").unwrap();
         fs::write(root.join("README.md"), "# demo\n").unwrap();
 
         let fd = root.join("fake-fd");
-        fs::write(
+        crate::write_executable(
             &fd,
             "#!/bin/sh\nprintf 'src/main.rs\\nREADME.md\\n../escape.rs\\n'\n",
-        )
-        .unwrap();
-        let mut permissions = fs::metadata(&fd).unwrap().permissions();
-        permissions.set_mode(0o755);
-        fs::set_permissions(&fd, permissions).unwrap();
+        );
 
-        // Testes rodam em paralelo e outros deles fazem fork/exec; um filho
-        // pode herdar por instantes o fd de escrita do script acima e o
-        // primeiro exec falha com ETXTBSY (race classico de Unix). Retentar
-        // poucas vezes elimina o flake sem mascarar erro real.
-        let mut outcome = find_files_with_binary(&root, "main", &fd);
-        for _attempt in 0..20 {
-            let is_busy = matches!(
-                &outcome,
-                Err(super::FsError::Io { source, .. })
-                    if source.raw_os_error() == Some(26)
-            );
-            if !is_busy {
-                break;
-            }
-            std::thread::sleep(std::time::Duration::from_millis(10));
-            outcome = find_files_with_binary(&root, "main", &fd);
-        }
+        // O script foi gravado por `crate::write_executable`: este processo
+        // nunca o teve aberto para escrita, entao nenhum fork concorrente herda
+        // o descritor e o exec nao pode voltar ETXTBSY (antes, retentava 20x).
+        let outcome = find_files_with_binary(&root, "main", &fd);
         let (matches, truncated) = outcome.unwrap();
         let paths = matches
             .iter()

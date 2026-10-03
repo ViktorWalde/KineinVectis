@@ -104,7 +104,6 @@ pub fn zephyr_board(root: &Path, west: &Path) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use std::os::unix::fs::PermissionsExt;
 
     use super::zephyr_board;
 
@@ -117,8 +116,10 @@ mod tests {
         let _ = std::fs::remove_dir_all(&raiz);
         std::fs::create_dir_all(raiz.join("build")).unwrap();
         let west = raiz.join("west");
-        std::fs::write(&west, "#!/bin/sh\nif [ \"$1 $2\" = \"config build.board\" ]; then echo nrf52840dk/nrf52840; fi\n").unwrap();
-        std::fs::set_permissions(&west, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(
+            &west,
+            "#!/bin/sh\nif [ \"$1 $2\" = \"config build.board\" ]; then echo nrf52840dk/nrf52840; fi\n",
+        );
         assert_eq!(
             zephyr_board(&raiz, &west).as_deref(),
             Some("nrf52840dk/nrf52840")

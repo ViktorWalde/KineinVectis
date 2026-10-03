@@ -154,10 +154,8 @@ fn python_run_workspace(nome: &str) -> std::path::PathBuf {
 
 #[cfg(unix)]
 fn executavel(caminho: &std::path::Path, corpo: &str) {
-    use std::os::unix::fs::PermissionsExt;
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
-    std::fs::write(caminho, corpo).unwrap();
-    std::fs::set_permissions(caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
+    crate::write_executable(caminho, corpo);
 }
 
 /// Um core com jobs cuja busca de ferramentas e' SO' `dir/bin`, com `dir`

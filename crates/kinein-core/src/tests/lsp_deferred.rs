@@ -10,7 +10,6 @@
 //! dos outros testes), a espera e' inline como sempre.
 
 use std::{
-    os::unix::fs::PermissionsExt,
     path::PathBuf,
     sync::mpsc,
     time::{Duration, Instant},
@@ -35,16 +34,14 @@ fn workspace(nome: &str) -> PathBuf {
 /// Um envoltorio que liga o atraso do hover no servidor falso.
 fn slow_server(root: &std::path::Path, delay_ms: u32) -> PathBuf {
     let script = root.join("lsp-lento.sh");
-    std::fs::write(
+    crate::write_executable(
         &script,
         format!(
             "#!/bin/sh\nFAKE_LSP_HOVER_DELAY_MS={delay_ms} exec {} {} \"$@\"\n",
             python3(),
             fake_server().display()
         ),
-    )
-    .unwrap();
-    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+    );
     script
 }
 
@@ -174,16 +171,14 @@ fn a_slow_rename_waits_off_the_loop_and_finishes_in_a_continuation() {
     core.enable_deferred_responses(responses);
     core.enable_continuations(continuations);
     let script = root.join("lsp-rename-lento.sh");
-    std::fs::write(
+    crate::write_executable(
         &script,
         format!(
             "#!/bin/sh\nFAKE_LSP_RENAME_DELAY_MS=3000 exec {} {} \"$@\"\n",
             python3(),
             fake_server().display()
         ),
-    )
-    .unwrap();
-    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+    );
     assert!(core.use_language_server_command(
         "rust",
         script.to_str().unwrap(),

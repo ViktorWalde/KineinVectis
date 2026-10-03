@@ -11,7 +11,6 @@
 //! quando o `.venv/bin/python` existe, e o `index.context` passa a apontar o
 //! ambiente novo — a razao de o dominio existir.
 
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -34,12 +33,11 @@ fn temp_dir(name: &str) -> PathBuf {
 
 fn escrever(caminho: &Path, conteudo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
-    std::fs::write(caminho, conteudo).unwrap();
+    crate::write_executable(caminho, conteudo);
 }
 
 fn script(caminho: &Path, corpo: &str) {
     escrever(caminho, &format!("#!/bin/sh\n{corpo}\n"));
-    std::fs::set_permissions(caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
 }
 
 fn abrir(core: &mut Core, raiz: &Path) {

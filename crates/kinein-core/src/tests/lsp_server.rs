@@ -88,20 +88,10 @@ fn harness(name: &str) -> Harness {
     std::fs::write(root.join("app.py"), "def main():\n    pass\n").unwrap();
     // Um .venv com interpretador: e' ele que o basedpyright tem de receber.
     std::fs::create_dir_all(root.join(".venv/bin")).unwrap();
-    std::fs::write(
+    crate::write_executable(
         root.join(".venv/bin/python"),
         "#!/bin/sh\necho Python 3.13.0\n",
-    )
-    .unwrap();
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(
-            root.join(".venv/bin/python"),
-            std::fs::Permissions::from_mode(0o755),
-        )
-        .unwrap();
-    }
+    );
     let root = root.canonicalize().unwrap();
     let log = root.join("lsp-wire.jsonl");
 
@@ -647,8 +637,6 @@ fn the_python_server_receives_the_board_stubs_path_after_they_are_installed() {
 #[test]
 #[cfg(unix)]
 fn the_python_server_is_the_detected_binary_with_stdio() {
-    use std::os::unix::fs::PermissionsExt;
-
     let base = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-lspwire-python-detectado", std::process::id()));
@@ -664,7 +652,7 @@ fn the_python_server_is_the_detected_binary_with_stdio() {
     let base = base.canonicalize().unwrap();
     let log = base.join("lsp-wire.jsonl");
     let args = base.join("args.txt");
-    std::fs::write(
+    crate::write_executable(
         base.join("bin/basedpyright-langserver"),
         format!(
             "#!/bin/sh\necho \"$@\" > {args}\nexec {py} {script} {log}\n",
@@ -673,13 +661,7 @@ fn the_python_server_is_the_detected_binary_with_stdio() {
             script = fake_server().display(),
             log = log.display()
         ),
-    )
-    .unwrap();
-    std::fs::set_permissions(
-        base.join("bin/basedpyright-langserver"),
-        std::fs::Permissions::from_mode(0o755),
-    )
-    .unwrap();
+    );
 
     let (sender, receiver) = mpsc::channel::<JsonRpcRequest>();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(

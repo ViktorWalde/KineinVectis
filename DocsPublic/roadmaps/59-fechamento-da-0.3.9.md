@@ -279,13 +279,10 @@ já sobe um PostgreSQL em container ("Novo banco…"). A bateria na tela inclui:
   retrabalho; a 0.3.9 vai servir de base"). A lista:
   - o slot da esquerda tem uma largura só para as três janelas: alargar o
     Banco alarga o Projeto;
-  - o teste intermitente
-    `tests::lsp_server::the_rust_server_receives_the_kit_target_and_restarts_when_it_changes`
-    (1 falha em 4 rodadas da suíte inteira, só sob carga);
   - os campos de texto feitos à mão (`KvTextField`, 40.7 §7.199).
-  - os testes intermitentes do core: `lsp_server::the_rust_server_receives_the_kit_target_and_restarts_when_it_changes`
-    e `test::tests::pytest_discovery_reads_stdout_only_and_treats_exit_5_as_empty`
-    (cada um, 1 falha em algumas rodadas da suíte inteira, só sob carga).
+  - ~~os testes intermitentes do core~~: **resolvidos na causa** em
+    2026-10-03 (40.7 §7.212, `crate::write_executable`); 25 rodadas
+    paralelas sem falha, e o gate voltou a rodar em paralelo.
   - ~~a lista de recentes do ambiente de teste que apareceu alterada~~:
     confirmado em 2026-10-03, era o autor usando a instância de teste pela
     tela, e não um defeito.

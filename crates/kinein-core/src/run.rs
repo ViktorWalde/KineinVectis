@@ -236,23 +236,13 @@ mod tests {
     #[test]
     #[cfg(unix)]
     fn default_command_finds_single_cmake_executable() {
-        use std::os::unix::fs::PermissionsExt;
-
         let root = temp_root("cmake-bin");
         let build = root.join(".kinein").join("build");
         std::fs::create_dir_all(build.join("CMakeFiles")).unwrap();
-        std::fs::write(build.join("CMakeFiles/ignorado"), "#!/bin/sh\n").unwrap();
-        let mut ignored_permissions = std::fs::metadata(build.join("CMakeFiles/ignorado"))
-            .unwrap()
-            .permissions();
-        ignored_permissions.set_mode(0o755);
-        std::fs::set_permissions(build.join("CMakeFiles/ignorado"), ignored_permissions).unwrap();
+        crate::write_executable(build.join("CMakeFiles/ignorado"), "#!/bin/sh\n");
 
         let binary = build.join("app");
-        std::fs::write(&binary, "#!/bin/sh\n").unwrap();
-        let mut permissions = std::fs::metadata(&binary).unwrap().permissions();
-        permissions.set_mode(0o755);
-        std::fs::set_permissions(&binary, permissions).unwrap();
+        crate::write_executable(&binary, "#!/bin/sh\n");
 
         let command = default_command(ProjectKind::Cmake, &root).unwrap();
         assert!(command.contains("app"));

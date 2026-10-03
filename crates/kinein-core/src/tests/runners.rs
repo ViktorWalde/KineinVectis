@@ -245,8 +245,6 @@ fn quality_run_without_ruff_names_the_tool() {
 /// = erro; o resto aviso, com "corrigivel" quando o ruff marca `[*]`).
 #[test]
 fn quality_run_lints_python_with_the_detected_ruff() {
-    use std::os::unix::fs::PermissionsExt;
-
     let (dir, mut core, receiver) = python_quality_fixture("com-ruff");
     // O workspace pede perfil strict e NAO declara regras: o `--select` do
     // perfil tem de ir na linha de comando.
@@ -257,15 +255,13 @@ fn quality_run_lints_python_with_the_detected_ruff() {
     )
     .unwrap();
     let registro = dir.join("pedido.txt");
-    std::fs::write(
+    crate::write_executable(
         dir.join("bin/ruff"),
         format!(
             "#!/bin/sh\necho \"$@\" > {reg}\npwd >> {reg}\nprintf 'app.py:1:8: F401 [*] `os` imported but unused\\napp.py:2:1: E999 SyntaxError: nao\\nFound 2 errors.\\n'\nexit 1\n",
             reg = registro.display()
         ),
-    )
-    .unwrap();
-    std::fs::set_permissions(dir.join("bin/ruff"), std::fs::Permissions::from_mode(0o755)).unwrap();
+    );
 
     let (diagnosticos, finished) = run_quality_and_collect(&mut core, &receiver);
 
@@ -309,8 +305,6 @@ fn quality_run_lints_python_with_the_detected_ruff() {
 /// quando dado.
 #[cfg(unix)]
 fn pytest_workspace(nome: &str, corpo_do_python: Option<&str>) -> std::path::PathBuf {
-    use std::os::unix::fs::PermissionsExt;
-
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-test-python-{nome}", std::process::id()));
@@ -326,8 +320,7 @@ fn pytest_workspace(nome: &str, corpo_do_python: Option<&str>) -> std::path::Pat
     if let Some(corpo) = corpo_do_python {
         let py = dir.join(".venv/bin/python");
         std::fs::create_dir_all(py.parent().unwrap()).unwrap();
-        std::fs::write(&py, corpo).unwrap();
-        std::fs::set_permissions(&py, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(&py, corpo);
     }
     dir.canonicalize().unwrap()
 }
@@ -484,23 +477,15 @@ fn test_run_runs_pytest_with_the_project_interpreter() {
 #[test]
 #[cfg(unix)]
 fn test_run_in_a_micropython_project_stays_on_the_host() {
-    use std::os::unix::fs::PermissionsExt;
-
     let dir = pytest_workspace(
         "micropython",
         Some("#!/bin/sh\necho 'tests/test_a.py::test_soma PASSED [100%]'\n"),
     );
     std::fs::write(dir.join("main.py"), "import machine\n").unwrap();
-    std::fs::write(
+    crate::write_executable(
         dir.join("bin/mpremote"),
         "#!/bin/sh\necho NAO-DEVERIA\nexit 1\n",
-    )
-    .unwrap();
-    std::fs::set_permissions(
-        dir.join("bin/mpremote"),
-        std::fs::Permissions::from_mode(0o755),
-    )
-    .unwrap();
+    );
     let (eventos, finished) = run_tests_and_collect(&dir, None);
     let started = eventos
         .iter()
@@ -689,8 +674,6 @@ fn cpp_quality_fixture(
 #[test]
 #[cfg(unix)]
 fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
-    use std::os::unix::fs::PermissionsExt;
-
     let _serial = crate::serializar_executaveis();
 
     // Sem CDB: o motor existe, mas diz o que falta.
@@ -717,8 +700,7 @@ fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
     // e avisa como o real.
     let executavel = |nome: &str, corpo: &str| {
         let p = dir.join("bin").join(nome);
-        std::fs::write(&p, corpo).unwrap();
-        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(&p, corpo);
     };
     executavel(
         "clang-tidy",
@@ -762,15 +744,12 @@ fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
 #[test]
 #[cfg(unix)]
 fn quality_run_on_cpp_prefers_run_clang_tidy() {
-    use std::os::unix::fs::PermissionsExt;
-
     let _serial = crate::serializar_executaveis();
 
     let (dir, _core, _receiver) = cpp_quality_fixture("run-tidy", true);
     let executavel = |nome: &str, corpo: &str| {
         let p = dir.join("bin").join(nome);
-        std::fs::write(&p, corpo).unwrap();
-        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(&p, corpo);
     };
     executavel("clang-tidy", "#!/bin/sh\nexit 0\n");
     executavel(

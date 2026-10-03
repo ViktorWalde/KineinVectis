@@ -69,10 +69,8 @@ mod tests {
 
     #[cfg(unix)]
     fn executavel(dir: &Path, nome: &str, corpo: &str) -> std::path::PathBuf {
-        use std::os::unix::fs::PermissionsExt;
         let caminho = dir.join(nome);
-        std::fs::write(&caminho, corpo).unwrap();
-        std::fs::set_permissions(&caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(&caminho, corpo);
         caminho
     }
 

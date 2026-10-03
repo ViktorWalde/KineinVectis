@@ -470,13 +470,46 @@ mod tests;
 /// si: um `fork` enquanto outra thread ainda tem um executavel aberto para
 /// escrita da' `ETXTBSY` no `exec` do filho (o descritor e' herdado).
 ///
-/// MEDIDO em 2026-09-24: este lock NAO resolve a classe. Ele serializa quem
-/// ESCREVE, e a corrida e' entre escrever e QUALQUER `fork` concorrente. Por
-/// isso o gate passou a rodar `cargo test -- --test-threads=1` (11,5 s ->
-/// 40,7 s, medido). O lock fica porque documenta a intencao e protege quem
-/// rodar em paralelo na mao.
+/// MEDIDO em 2026-09-24: este lock NAO resolve a classe — ele serializa quem
+/// ESCREVE, e a corrida e' entre escrever e QUALQUER `fork` concorrente. O gate
+/// rodou em uma thread ate' 2026-10-03, quando a causa foi resolvida por
+/// [`write_executable`] (abaixo); desde entao a suite roda em paralelo de novo.
+/// O lock fica para os testes que ainda o tomam por outros motivos.
 #[cfg(test)]
 pub(crate) static EXECUTAVEIS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// Grava um EXECUTAVEL de teste sem que este processo o abra para escrita.
+///
+/// A corrida do `ETXTBSY` (acima): enquanto uma thread ESCREVE o script, outra
+/// faz `fork`, e o filho herda o descritor de escrita ate' o `exec` dele; se o
+/// script for executado nessa janela, o `exec` falha com "Text file busy" e o
+/// teste so' percebe pelo prazo (o servidor falso "nao respondeu"). Medido em
+/// 2026-10-03: 2 falhas em 8 rodadas da suite em paralelo.
+///
+/// A saida e' nunca ter o executavel aberto para escrita AQUI: o conteudo vai
+/// para um arquivo de passagem (que nunca e' executado) e quem cria o
+/// executavel e' OUTRO processo (`install -m 755`). Nenhum `fork` deste
+/// processo herda um descritor do executavel, e a classe some — inclusive
+/// com `cargo test` em paralelo.
+#[cfg(test)]
+pub(crate) fn write_executable(path: impl AsRef<std::path::Path>, contents: impl AsRef<[u8]>) {
+    let path = path.as_ref();
+    let staging = path.with_file_name(format!(
+        ".{}.staging",
+        path.file_name()
+            .map_or_else(|| "exec".into(), |n| n.to_string_lossy())
+    ));
+    std::fs::write(&staging, contents).expect("grava o arquivo de passagem");
+    let status = std::process::Command::new("install")
+        .arg("-m")
+        .arg("755")
+        .arg(&staging)
+        .arg(path)
+        .status()
+        .expect("roda o install");
+    assert!(status.success(), "install -m 755 {} falhou", path.display());
+    drop(std::fs::remove_file(&staging));
+}
 
 /// Toma o lock dos executaveis TOLERANDO veneno.
 ///

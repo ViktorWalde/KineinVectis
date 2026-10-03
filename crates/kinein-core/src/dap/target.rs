@@ -168,11 +168,7 @@ mod tests {
 
     #[cfg(unix)]
     fn write_executable(path: &Path) {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::write(path, "#!/bin/sh\n").unwrap();
-        let mut permissions = std::fs::metadata(path).unwrap().permissions();
-        permissions.set_mode(0o755);
-        std::fs::set_permissions(path, permissions).unwrap();
+        crate::write_executable(path, "#!/bin/sh\n");
     }
 
     #[test]

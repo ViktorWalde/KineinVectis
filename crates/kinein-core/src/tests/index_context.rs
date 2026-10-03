@@ -15,7 +15,6 @@
 //! Nada aqui roda ferramenta da maquina: o cargo, o poetry e o python sao
 //! scripts escritos pelo teste, ou `None`.
 
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
@@ -39,13 +38,12 @@ fn temp_dir(name: &str) -> PathBuf {
 
 fn escrever(caminho: &Path, conteudo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
-    std::fs::write(caminho, conteudo).unwrap();
+    crate::write_executable(caminho, conteudo);
 }
 
 /// Um executavel que imprime `saida` e sai com 0.
 fn script(caminho: &Path, saida: &str) -> PathBuf {
     escrever(caminho, &format!("#!/bin/sh\ncat <<'FIM'\n{saida}\nFIM\n"));
-    std::fs::set_permissions(caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
     caminho.to_path_buf()
 }
 

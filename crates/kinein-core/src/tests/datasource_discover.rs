@@ -7,7 +7,7 @@
 //! motor com o comando pinado no loopback, salva o perfil e emite
 //! `event.datasource.created`; sem motor no PATH, `TOOL_NOT_FOUND`.
 
-use std::{os::unix::fs::PermissionsExt, path::PathBuf, sync::mpsc, time::Duration};
+use std::{path::PathBuf, sync::mpsc, time::Duration};
 
 use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::{Value, json};
@@ -40,8 +40,7 @@ fn cenario(nome: &str, com_motor: bool) -> Cenario {
     std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
     if com_motor {
         let podman = dir.join("bin/podman");
-        std::fs::write(&podman, format!("#!/bin/sh\n{PODMAN_FALSO}")).unwrap();
-        std::fs::set_permissions(&podman, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(&podman, format!("#!/bin/sh\n{PODMAN_FALSO}"));
     }
     let (sender, receiver) = mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(

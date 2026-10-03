@@ -37,14 +37,7 @@ fn workspace_with_tools(name: &str, binarios: &[&str]) -> (PathBuf, PathBuf) {
 
     for binario in binarios {
         let caminho = bin.join(binario);
-        std::fs::write(&caminho, "#!/bin/sh\necho 1.0\n").unwrap();
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissoes = std::fs::metadata(&caminho).unwrap().permissions();
-            permissoes.set_mode(0o755);
-            std::fs::set_permissions(&caminho, permissoes).unwrap();
-        }
+        crate::write_executable(&caminho, "#!/bin/sh\necho 1.0\n");
     }
     (root.canonicalize().unwrap(), bin)
 }
@@ -299,17 +292,10 @@ fn rust_targets_come_from_the_detected_rustup_or_are_absent() {
     let sem = call(&mut core, "toolchain.get", &json!({}));
     assert!(sem.get("rustTargets").is_none(), "{sem}");
 
-    std::fs::write(
+    crate::write_executable(
         bin.join("rustup"),
         "#!/bin/sh\nif [ \"$1\" = target ] && [ \"$3\" = --installed ]; then printf 'x86_64-unknown-linux-gnu\\nthumbv7em-none-eabihf\\n'; elif [ \"$1\" = target ]; then printf 'x86_64-unknown-linux-gnu\\nthumbv7em-none-eabihf\\nriscv32imc-unknown-none-elf\\n'; else echo 1.29.0; fi\n",
-    )
-    .unwrap();
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(bin.join("rustup"), std::fs::Permissions::from_mode(0o755))
-            .unwrap();
-    }
+    );
     let mut core = core_with_path(&bin);
     open(&mut core, &root);
     let com = call(&mut core, "toolchain.get", &json!({}));
@@ -332,23 +318,13 @@ fn a_linux_cross_compiler_without_a_sysroot_gets_the_hint() {
     let (root, bin) = workspace_with_tools("sysroot-hint", &["cmake", "arm-none-eabi-gcc"]);
     let sysroot = root.join("sysroot-vazio");
     std::fs::create_dir_all(&sysroot).unwrap();
-    std::fs::write(
+    crate::write_executable(
         bin.join("aarch64-linux-gnu-gcc"),
         format!(
             "#!/bin/sh\nif [ \"$1\" = -print-sysroot ]; then echo {}; else echo 16.1.1; fi\n",
             sysroot.display()
         ),
-    )
-    .unwrap();
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(
-            bin.join("aarch64-linux-gnu-gcc"),
-            std::fs::Permissions::from_mode(0o755),
-        )
-        .unwrap();
-    }
+    );
     let mut core = core_with_path(&bin);
     open(&mut core, &root);
     // Automatico: o primeiro candidato detectado e' o arm-none-eabi-gcc (bare
@@ -501,7 +477,6 @@ fn the_install_catalogue_is_visible_before_any_click_and_refuses_what_it_must() 
 #[test]
 #[cfg(unix)]
 fn an_installed_toolchain_becomes_a_candidate_on_the_next_toolchain_get() {
-    use std::os::unix::fs::PermissionsExt;
     let (root, bin) = workspace_with_tools("instalada-vira-candidato", &["cmake"]);
     let raiz = bin.parent().unwrap().join("toolchains");
     let (sender, _receiver) = std::sync::mpsc::channel();
@@ -531,8 +506,7 @@ fn an_installed_toolchain_becomes_a_candidate_on_the_next_toolchain_get() {
     // A "instalacao": a pasta nasce com o binario (o que o job faria).
     let gcc = raiz.join("arm-gnu-arm-none-eabi/15.2.rel1/bin/arm-none-eabi-gcc");
     std::fs::create_dir_all(gcc.parent().unwrap()).unwrap();
-    std::fs::write(&gcc, "#!/bin/sh\necho 15.2\n").unwrap();
-    std::fs::set_permissions(&gcc, std::fs::Permissions::from_mode(0o755)).unwrap();
+    crate::write_executable(&gcc, "#!/bin/sh\necho 15.2\n");
     // Sem o evento, o registro antigo ainda vale (o toolchain.get e' barato).
     let ainda = core.handle_request(&JsonRpcRequest::new(
         41_i64,
@@ -570,12 +544,10 @@ fn an_installed_toolchain_becomes_a_candidate_on_the_next_toolchain_get() {
 /// sysroot com headers e libs, e o toolchainfile.cmake.
 #[cfg(unix)]
 fn buildroot_tree(bin: &Path) -> PathBuf {
-    use std::os::unix::fs::PermissionsExt;
     let host = bin.parent().unwrap().join("br/output/host");
     let gcc = host.join("bin/aarch64-buildroot-linux-gnu-gcc");
     std::fs::create_dir_all(gcc.parent().unwrap()).unwrap();
-    std::fs::write(&gcc, "#!/bin/sh\n").unwrap();
-    std::fs::set_permissions(&gcc, std::fs::Permissions::from_mode(0o755)).unwrap();
+    crate::write_executable(&gcc, "#!/bin/sh\n");
     std::fs::create_dir_all(host.join("aarch64-buildroot-linux-gnu/sysroot/usr/include")).unwrap();
     std::fs::create_dir_all(host.join("aarch64-buildroot-linux-gnu/sysroot/usr/lib")).unwrap();
     std::fs::create_dir_all(host.join("share/buildroot")).unwrap();

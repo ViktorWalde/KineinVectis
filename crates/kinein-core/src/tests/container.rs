@@ -7,7 +7,6 @@
 //! lista, que portas/nomes/estado saem certos de cada uma, e que a imagem do
 //! Podman (que nao traz `repository`) ganha repo e tag do `Names`.
 
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::{ComposeAction, ContainerAction, ContainerEngine, ContainerOpenMode};
@@ -30,8 +29,7 @@ fn temp_dir(name: &str) -> PathBuf {
 
 fn binario_falso(dir: &Path, nome: &str, corpo: &str) {
     let caminho = dir.join(nome);
-    std::fs::write(&caminho, format!("#!/bin/sh\n{corpo}\n")).unwrap();
-    std::fs::set_permissions(&caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
+    crate::write_executable(&caminho, format!("#!/bin/sh\n{corpo}\n"));
 }
 
 /// O que o `podman-docker` faz em 2026-09-12: aviso em stderr, versao do podman

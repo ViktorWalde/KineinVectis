@@ -339,13 +339,8 @@ mod tests {
 
     #[cfg(unix)]
     fn write_fake_tool(dir: &std::path::Path, name: &str, script_body: &str) {
-        use std::os::unix::fs::PermissionsExt;
-
         let path = dir.join(name);
-        fs::write(&path, format!("#!/bin/sh\n{script_body}\n")).unwrap();
-        let mut permissions = fs::metadata(&path).unwrap().permissions();
-        permissions.set_mode(0o755);
-        fs::set_permissions(&path, permissions).unwrap();
+        crate::write_executable(&path, format!("#!/bin/sh\n{script_body}\n"));
     }
 
     #[test]
@@ -712,8 +707,6 @@ mod tests {
     #[test]
     #[cfg(unix)]
     fn the_install_root_is_read_on_every_lookup() {
-        use std::os::unix::fs::PermissionsExt;
-
         // Escreve um executavel e o roda: sem este lock corre com os
         // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
         let _serial = crate::serializar_executaveis();
@@ -728,24 +721,14 @@ mod tests {
         // A toolchain nasce DEPOIS: a mesma instancia a encontra.
         let bin = raiz.join("arm-gnu-arm-none-eabi/15.2.rel1/bin");
         std::fs::create_dir_all(&bin).unwrap();
-        std::fs::write(bin.join("arm-none-eabi-gcc"), "#!/bin/sh\n").unwrap();
-        std::fs::set_permissions(
-            bin.join("arm-none-eabi-gcc"),
-            std::fs::Permissions::from_mode(0o755),
-        )
-        .unwrap();
+        crate::write_executable(bin.join("arm-none-eabi-gcc"), "#!/bin/sh\n");
         assert_eq!(
             detector.find_in_path("arm-none-eabi-gcc"),
             Some(bin.join("arm-none-eabi-gcc"))
         );
 
         // O PATH vence a pasta da IDE.
-        std::fs::write(path_dir.join("arm-none-eabi-gcc"), "#!/bin/sh\n").unwrap();
-        std::fs::set_permissions(
-            path_dir.join("arm-none-eabi-gcc"),
-            std::fs::Permissions::from_mode(0o755),
-        )
-        .unwrap();
+        crate::write_executable(path_dir.join("arm-none-eabi-gcc"), "#!/bin/sh\n");
         assert_eq!(
             detector.find_in_path("arm-none-eabi-gcc"),
             Some(path_dir.join("arm-none-eabi-gcc"))

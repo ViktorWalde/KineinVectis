@@ -234,8 +234,6 @@ fn evaluate_guards_empty_expression_and_missing_session() {
 #[test]
 #[cfg(unix)]
 fn a_python_target_needs_the_project_interpreter_with_debugpy() {
-    use std::os::unix::fs::PermissionsExt;
-
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-debug-python", std::process::id()));
@@ -287,15 +285,13 @@ fn a_python_target_needs_the_project_interpreter_with_debugpy() {
     let python = dir.join(".venv/bin/python");
     std::fs::create_dir_all(python.parent().unwrap()).unwrap();
     let registro = dir.join("chamadas.txt");
-    std::fs::write(
+    crate::write_executable(
         &python,
         format!(
             "#!/bin/sh\necho \"$*\" >> {reg}\necho 'No module named debugpy' >&2\nexit 1\n",
             reg = registro.display()
         ),
-    )
-    .unwrap();
-    std::fs::set_permissions(&python, std::fs::Permissions::from_mode(0o755)).unwrap();
+    );
     let mut core = abrir();
     let erro = iniciar(&mut core).error.unwrap();
     assert_eq!(erro.code, JsonRpcErrorCode::ToolNotFound, "{erro:?}");
@@ -320,8 +316,6 @@ fn a_python_target_needs_the_project_interpreter_with_debugpy() {
 #[test]
 #[cfg(unix)]
 fn a_dying_adapter_leaves_its_stderr_in_the_error_and_as_events() {
-    use std::os::unix::fs::PermissionsExt;
-
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-debug-adapter-stderr", std::process::id()));
@@ -331,14 +325,12 @@ fn a_dying_adapter_leaves_its_stderr_in_the_error_and_as_events() {
     std::fs::write(dir.join("main.py"), "print('x')\n").unwrap();
     let dir = dir.canonicalize().unwrap();
     let python = dir.join(".venv/bin/python");
-    std::fs::write(
+    crate::write_executable(
         &python,
         "#!/bin/sh\ncase \"$*\" in\n  *'import debugpy'*) exit 0 ;;\n  *debugpy.adapter*) \
          echo 'Traceback (most recent call last):' >&2; echo 'ImportError: boom no adaptador' >&2; \
          exit 1 ;;\nesac\nexit 0\n",
-    )
-    .unwrap();
-    std::fs::set_permissions(&python, std::fs::Permissions::from_mode(0o755)).unwrap();
+    );
 
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut core = core_with_empty_search_path("debug-adapter-stderr");

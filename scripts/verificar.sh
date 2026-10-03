@@ -98,28 +98,28 @@ passo "cargo fmt --all --check" \
     "Confere a formatacao Rust sem modificar os arquivos."
 cargo fmt --all --check
 
-passo "cargo test --workspace --all-features --no-fail-fast -- --test-threads=1" \
-    "Executa os testes Rust em UMA thread (a paralela tem corrida de ETXTBSY), todos os crates."
-# UMA THREAD, e isto foi MEDIDO em 2026-09-24.
+passo "cargo test --workspace --all-features --no-fail-fast" \
+    "Executa os testes Rust de todos os crates, em paralelo (a corrida de ETXTBSY foi resolvida na causa)."
+# EM PARALELO de novo desde 2026-10-03.
 #
-# Varios testes escrevem um executavel e o rodam. Em paralelo, basta outra
-# thread dar `fork` na janela entre escrever e executar: o filho HERDA o
-# descritor aberto para escrita (o `CLOEXEC` do Rust so' fecha no `exec`, nao no
-# `fork`), e o `exec` do primeiro volta `ETXTBSY` — "Text file busy". Como o
-# teste estoura segurando o mutex `EXECUTAVEIS`, os chamadores que usam
-# `.lock().unwrap()` envenenam em seguida, e uma corrida vira cinco falhas.
+# De 2026-09-24 a 2026-10-03 o gate rodou em UMA thread. Varios testes
+# escrevem um executavel e o rodam; em paralelo, outra thread dava `fork` na
+# janela entre escrever e executar, o filho herdava o descritor de escrita (o
+# `CLOEXEC` do Rust so' fecha no `exec`, nao no `fork`) e o `exec` do script
+# voltava `ETXTBSY` ("Text file busy"). Serializar escondia a classe.
 #
-# O mutex do `lib.rs` nao resolve a classe: ele serializa quem ESCREVE, e o
-# problema e' qualquer `fork` concorrente. Serializar os testes resolve.
+# A CAUSA foi resolvida: todo executavel de teste e' gravado por
+# `crate::write_executable` (lib.rs), que nunca abre o executavel para escrita
+# neste processo — o conteudo vai para um arquivo de passagem e quem cria o
+# executavel e' o `install -m 755`. MEDIDO: 25 rodadas paralelas seguidas da
+# suite do core sem falha (antes: 3 falhas em 12), e 13 s em paralelo contra
+# ~44 s em serie para o workspace.
 #
-# CUSTO MEDIDO: 11,5 s em paralelo contra 40,7 s em serie. Vinte e nove segundos
-# num gate de ~20 minutos, contra reprovacoes aleatorias que custam o gate
-# inteiro — e que ensinam a ignorar vermelho, que e' o dano de verdade.
 # --no-fail-fast: sem ele o cargo para no PRIMEIRO crate que falha e os
 # outros nem rodam — medido em 2026-10-01, duas falhas do kinein-core
 # esconderam o resultado de kinein-protocol e kinein-config. O gate reprova
 # do mesmo jeito; so' passa a mostrar TUDO o que esta' vermelho de uma vez.
-cargo test --workspace --all-features --no-fail-fast -- --test-threads=1
+cargo test --workspace --all-features --no-fail-fast
 
 passo "cargo clippy --workspace --all-targets --all-features -- -D warnings" \
     "Reprova qualquer diagnostico do Clippy em codigo, testes e alvos Rust."

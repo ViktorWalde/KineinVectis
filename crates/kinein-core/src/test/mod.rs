@@ -367,8 +367,6 @@ mod tests {
     #[test]
     #[cfg(unix)]
     fn pytest_discovery_reads_stdout_only_and_treats_exit_5_as_empty() {
-        use std::os::unix::fs::PermissionsExt;
-
         // Este teste ESCREVE um executavel e o roda; sem o lock do crate ele
         // corre com os outros que fazem o mesmo e o `exec` do filho volta
         // `ETXTBSY` ("Text file busy"), porque outra thread ainda tem o
@@ -381,12 +379,10 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let falso = dir.join("python");
-        std::fs::write(
+        crate::write_executable(
             &falso,
             "#!/bin/sh\necho 'tests/a.py::no_stderr' >&2\necho 'tests/a.py::test_x'\necho '1 test collected in 0.00s'\nexit 0\n",
-        )
-        .unwrap();
-        std::fs::set_permissions(&falso, std::fs::Permissions::from_mode(0o755)).unwrap();
+        );
         let launcher = crate::python::run::PythonLauncher::Interpreter(falso.clone());
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let casos = super::discover_tests(

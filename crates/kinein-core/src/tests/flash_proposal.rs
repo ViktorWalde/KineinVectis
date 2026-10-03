@@ -6,7 +6,6 @@
 //! `run.start {}` — e a saida do "motor" na sessao de execucao.
 
 use std::{
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     sync::mpsc,
     time::Duration,
@@ -87,8 +86,7 @@ fn cenario(nome: &str, com_receita: bool) -> Cenario {
 impl Cenario {
     fn esptool_falso(&self) {
         let caminho = self.dir.join("bin/esptool");
-        std::fs::write(&caminho, "#!/bin/sh\necho \"esptool-falso $*\"\n").unwrap();
-        std::fs::set_permissions(&caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::write_executable(&caminho, "#!/bin/sh\necho \"esptool-falso $*\"\n");
     }
 
     fn rpc(&mut self, id: i64, method: &str, params: Value) -> kinein_protocol::JsonRpcResponse {
