@@ -430,18 +430,27 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
     - Depois, o gate Qt 6.4 (`verificar-qml-qt64`,
       `verificar-qml-logica-qt64`) passa a valer para a versão nova; rever
       o que hoje só existe para o 6.4.
-  - **Alvo de compatibilidade** (o autor, 2026-10-04): Ubuntu **22.04 LTS em
-    diante** e as derivadas, mais o Debian 12 e 13.
-    - O pacote precisa ser montado na distro MAIS ANTIGA do alvo. A base
-      atual (Debian 12, glibc 2.36) não abre no Ubuntu 22.04 (glibc 2.35).
-    - Builder em **Ubuntu 22.04** (glibc 2.35), com o Qt dos binários
-      oficiais. Antes de escolher entre o 6.10 e o 6.8 LTS, conferir a glibc
-      mínima de cada release.
-    - Provar o AppImage em contêineres Ubuntu 22.04, 24.04 e Debian 13.
-  - **Para o autor decidir:** compilar do código-fonte exigir Qt ≥ 6.8
-    (instalador oficial) e aposentar o gate Qt 6.4 (`verificar-qml-qt64`,
-    `verificar-qml-logica-qt64`). Ele hoje existe porque o Ubuntu 24.04 tem
-    o Qt 6.4 no sistema.
+  - **Alvo de compatibilidade** (o autor, 2026-10-04): as distros recentes.
+    - **Ubuntu 24.04 LTS em diante** e derivadas. O 22.04 fica de fora.
+    - **Fedora atual e a anterior** (hoje 43 e 42).
+    - **Debian 13.**
+    - **Arch** (rolante).
+    - O pacote é montado na distro MAIS ANTIGA do alvo. O mínimo é o Ubuntu
+      24.04 (glibc 2.39); Debian 13, Fedora 42/43 e Arch têm glibc igual ou
+      mais nova.
+    - Builder em **Ubuntu 24.04**, com o Qt estável atual dos binários
+      oficiais (o do sistema é 6.4).
+    - Provar o AppImage em contêineres Ubuntu 24.04, Debian 13, Fedora 43 e
+      Arch.
+  - **Gate Qt 6.4 aposentado** (o autor: "prosseguir com a modernização").
+    Compilar do código-fonte passa a exigir Qt ≥ 6.8 (instalador oficial ou
+    aqtinstall).
+    - Saem `verificar-qml-qt64`, `verificar-qml-logica-qt64` e o contêiner
+      `Containerfile.qml64`.
+    - Sai também o que só existe para o 6.4: o `createObject` no lugar do
+      `Loader` do `ShellEnvironmentOverlays`, o `action` da aba Web e os
+      contornos marcados "Qt 6.4" no código.
+    - O `contribuindo/` e o manual dizem a versão mínima nova.
   - **Caminho acelerado para a aba Web.** Hoje o hook portátil força
     `QT_QUICK_BACKEND=software` para não depender do driver da máquina, e o
     Chromium roda sem GPU ("Using Supported QSG Backend: no").
