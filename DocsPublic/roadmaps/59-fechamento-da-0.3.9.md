@@ -272,6 +272,31 @@ já sobe um PostgreSQL em container ("Novo banco…"). A bateria na tela inclui:
 - TLS `verify-full` (configuração);
 - transação com prévia (§5.3).
 
+As imagens `postgres:16-alpine` e `mongo:7` já estão no podman local.
+
+### 5.7 "Todos os bancos": a pergunta do autor (2026-10-04), para decidir
+
+O autor perguntou se há algo pronto que a IDE só orquestre, para a pessoa
+escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
+
+| Caminho | O que cobre | Custo |
+| --- | --- | --- |
+| **ODBC** (crate `odbc-api`, unixODBC) | Qualquer banco com driver ODBC: Oracle, SQL Server, MySQL, Firebird, DB2, Snowflake… A pessoa instala o driver do fabricante; a IDE lista os DSN do `odbcinst`. | Uma dependência de sistema (`unixodbc`). A árvore sai do catálogo padrão (`SQLTables`/`SQLColumns`). A qualidade varia por driver. |
+| **ADBC** (Arrow Database Connectivity) | PostgreSQL, SQLite, DuckDB, Snowflake, BigQuery, Flight SQL | Bom para dados em colunas, mas com poucos motores ainda. |
+| **`usql`** (cliente universal, um binário Go) | Mais de 40 bancos pela linha de comando | Orquestrar um processo externo e ler a saída como texto. Serve para console, não para árvore nem edição. |
+| JDBC (o caminho do DBeaver e do DataGrip) | Praticamente todos | Exige uma JVM. Fora, pelo peso. |
+
+**Proposta, a confirmar com o autor:** dois níveis.
+
+1. **Nativos completos.** PostgreSQL, MySQL/MariaDB, SQLite e MongoDB, com
+   árvore, edição, aviso de impacto e transação.
+2. **"Outro banco (ODBC)" genérico.** Console, árvore pelo catálogo padrão e
+   grade de leitura, com o aviso de escrita na forma genérica (sem contagem
+   prévia).
+
+É a forma que cobre "a escolha do usuário" sem a IDE manter um driver por
+banco. Não entra na 0.3.9 sem a decisão do autor.
+
 ## 6. Grafana: visualização web dentro da IDE
 
 - **QtWebEngine.** O painel pop-up atual sai; ele está quebrado: o
@@ -286,6 +311,98 @@ já sobe um PostgreSQL em container ("Novo banco…"). A bateria na tela inclui:
 - **Janela acoplada**, com o endereço, o estado e o painel web.
 - **O AppImage** passa a levar o QtWebEngine. O aumento do download foi
   aceito pelo autor e é medido e registrado no passo.
+
+### 6.1 O desenho decidido (2026-10-04, antes de codificar)
+
+Levantado no código e na máquina; a próxima sessão começa daqui.
+
+**Situação de partida.**
+
+- O Grafana é um pop-up (`GrafanaPanelHost` → `KvPanelFrame`, criado pelo
+  `ToolWindowPanels.observabilityPanel` dentro do
+  `ShellEnvironmentOverlays`).
+- A entrada do trilho é `observability`, com `kind: "overlay"`, atalho
+  Ctrl+Alt+O e `active` lido de `grafanaController.panelVisible`.
+- O `GrafanaController` (394 linhas; o teto é 400) tem `open()`/`close()`
+  mexendo em `panelVisible`. Um `Timer` de 30 s anda com ele.
+- O conteúdo (`GrafanaPanel`: cabeçalho, ajustes, autenticação, token,
+  veredito, cruzamentos, filtro, achados) é reaproveitável.
+- O "configurar…" quebrado é o `secondaryLabel` do `KvPanelHeader`, que só
+  alterna `setupPinned`.
+
+**A janela acoplada, pelo mesmo caminho do Remoto** (commit `d46b925`; ver o
+`git show d46b925 -- ui/qml/shell`).
+
+- O nome da janela é `observability`, o mesmo id do trilho.
+- `ShellController.leftWindows` e `observabilityWindowVisible`.
+- No `ShellLeftWindowHost`: instância, `minimumOf`, `focusSlot` e
+  `Connections { onWindowRequested → showDockWindow("observability") }`.
+- No `ToolWindows`: `kind: "dock-left"`, `active` pela janela, sem `panel`; o
+  `case "observability"` faz `toggleDockWindow`.
+- Saem `GrafanaPanelHost` e `observabilityPanel` do `ToolWindowPanels`.
+- No controller: `signal windowRequested()`; `open()` emite o sinal;
+  `prepare()` liga `panelVisible` e pede `getRequested`; a janela chama
+  `prepare()` ao aparecer e `close()` ao sumir. Para caber em 400 linhas,
+  aparar comentários como no `RemoteController`.
+- Padrão novo de frontend: cabeçalho como o do `RemoteWindow`, com o título,
+  o `statusPhrase`, uma engrenagem que abre e fecha os ajustes (substitui o
+  "configurar…" quebrado) e o ×.
+- Abas `RemoteSections` "Painel" e "Web".
+
+**A aba Web (QtWebEngine), opcional.**
+
+- Configuração global `grafanaWebView`, desligada por padrão, na página
+  Interface das Configurações (`SettingsInterfacePage`, `SettingsToggleRow`).
+  A aba Web desligada mostra um cartão: o que é, o custo de memória medido e
+  um botão "Ligar" (atalho para a mesma configuração) mais "Abrir no
+  navegador".
+- **Sem import estático.** A view nasce com
+  `Qt.createQmlObject("import QtWebEngine; WebEngineView {…}", slot)`
+  dentro de `try/catch`, só quando a opção está ligada E a aba Web abre.
+  Assim:
+  - nada do módulo web carrega com a opção desligada (a prova é a RSS igual
+    aos 117 MB do 40.7 §7.203);
+  - o `qmlcachegen` e o `qmllint` não precisam do módulo;
+  - sem o módulo instalado, a aba diz "instale `qml6-module-qtwebengine`" em
+    vez de quebrar.
+- **No `main.cpp`**, antes de criar o `QGuiApplication`:
+  `QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts)`. É o que o
+  QtWebEngine exige quando é inicializado por plugin, e não custa nada
+  desligado. Não linkar `Qt6WebEngineQuick`.
+- **Só endereço local:**
+  - `onNavigationRequested` recusa host fora de
+    `localhost`/`127.0.0.1`/`::1`, e o link externo vai para o navegador do
+    sistema;
+  - `onNewWindowRequested` também vai para o navegador.
+  - Compatível com Qt 6.4 e 6.10: `request.reject()` quando existir; senão,
+    `request.action = WebEngineNavigationRequest.IgnoreRequest`.
+- **Com a aba Web à vista,** a janela pede largura (`docks.widen`, como o
+  `DatabaseWindow.widenRequested`, uns 900 px). Clicar num dashboard dos
+  achados abre na aba Web quando ela está ligada; senão, no navegador.
+- Fechar a janela destrói a view (libera o processo do Chromium). A RSS com
+  a view aberta é medida e registrada.
+
+**Ambiente de teste (sem sudo).**
+
+- O QtWebEngine não está instalado no sistema. Os `.deb` (Qt 6.10.2) foram
+  extraídos com `apt-get download` + `dpkg -x` numa pasta local; 94 MB de
+  pacote, 271 MB extraído.
+- Pacotes: `libqt6webenginecore6`, `libqt6webenginecore6-bin`,
+  `libqt6webengine6-data`, `libqt6webenginequick6`,
+  `qml6-module-qtwebengine`, `qml6-module-qtwebengine-controlsdelegates`,
+  `libqt6webchannel6`, `libqt6webchannelquick6`, `qml6-module-qtwebchannel`
+  e `libqt6positioning6`.
+- Para rodar: `QML_IMPORT_PATH=<root>/usr/lib/x86_64-linux-gnu/qt6/qml`,
+  `LD_LIBRARY_PATH=<root>/usr/lib/x86_64-linux-gnu`,
+  `QTWEBENGINEPROCESS_PATH=<root>/usr/lib/qt6/libexec/QtWebEngineProcess`,
+  `QTWEBENGINE_RESOURCES_PATH=<root>/usr/share/qt6/resources` e
+  `QTWEBENGINE_LOCALES_PATH=<root>/usr/share/qt6/translations/qtwebengine_locales`.
+- Grafana real: a imagem `docker.io/grafana/grafana:11.2.0` já está no
+  podman, na porta 3000.
+
+**O AppImage** (Qt 6.4, Debian 12) passa a levar o QtWebEngine 6.4. O
+aumento do download é medido e registrado; a aba Web tem de passar no gate
+Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
 
 ## 7. Pente fino e fechamento
 

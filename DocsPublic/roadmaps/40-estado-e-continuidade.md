@@ -3,14 +3,14 @@
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
 >
-> **O estado, em 2026-10-03 (leia isto; o resto do cabeçalho é histórico):**
+> **O estado, em 2026-10-04 (leia isto; o resto do cabeçalho é histórico):**
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.151.0`,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.153.0`,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.204.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.217.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -22,6 +22,10 @@
 >     demanda, medida por componente no qmlprofiler, está no §7.203.
 >   - **Perfil de rigor no C/C++ corrigido** (§7.202): trocar com o projeto
 >     aberto agora reconfigura e muda o build.
+>   - **Painel de baixo em relevo** (§7.217): bandeja um tom acima do
+>     editor e o conteúdo de todas as abas num poço rebaixado. Corrigidos: o
+>     texto colorido do terminal fora da grade e o espelho remoto que
+>     ignorava o `XDG_CACHE_HOME`.
 >   - **Remoto acoplado e prático** (§7.216, protocolo `0.153.0`): provado
 >     contra dois sshd reais; confiar no servidor pela impressão digital,
 >     copiar a chave numa aba própria, último contato de cada alvo, programa
@@ -61,6 +65,11 @@
 >     3. Grafana com visualização web dentro da IDE, opcional e desligada por
 >        padrão.
 >     4. Pente fino.
+>
+>     Feitos: passos 1–5 e o 5b do 59 §2 (Containers, topo, controles,
+>     Configurações, Remoto, painel de baixo). **Próximo passo: o 6, Grafana**
+>     — o desenho já decidido está no 59 §6.1; depois o 7 (Banco) e o 8
+>     (pente fino).
 >
 >     Depois disso, a 0.4 é inteira dos embarcados.
 > - **Próximo:** fechar a 0.3.9 pelo [`59`](59-fechamento-da-0.3.9.md); depois a 0.4
