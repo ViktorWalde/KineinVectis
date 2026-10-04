@@ -416,14 +416,35 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
 
 ## 7. Pente fino e fechamento
 
-- **AppImage, depois de todo o pente fino** (decisão do autor, 2026-10-04).
-  Antes de empacotar de novo:
-  - um QtWebEngine mais novo que o 6.4 do Debian 12, que tem o defeito dos
-    avisos "is neither a QObject" (40.7 §7.219);
-  - um caminho acelerado para a aba Web, já que o hook portátil força
-    software e o Chromium avisa do modo degradado;
-  - o `runtime-x86_64` fixado numa release com tag, em vez do canal
-    `continuous`.
+- **AppImage, depois de todo o pente fino** (decisões do autor, 2026-10-04).
+  - **O tamanho não importa; o consumo de recurso no dia a dia sim.** Medir
+    RSS/PSS e CPU parados e em uso, com e sem a aba Web.
+  - **Qt atual no pacote.** O checkout usa o Qt 6.10.2, mas o AppImage é
+    montado no Debian 12 e leva o Qt **6.4.2** do sistema. É esse 6.4 que
+    tem o defeito dos avisos "is neither a QObject" (40.7 §7.219).
+    - A correção é montar o pacote com o Qt estável atual (6.10, ou o 6.8
+      LTS), com o QtWebEngine, a partir dos binários oficiais (aqtinstall
+      ou o instalador da Qt).
+    - Esses binários são compilados para uma glibc antiga, compatível com a
+      base Debian 12. A base de glibc do pacote não muda.
+    - Depois, o gate Qt 6.4 (`verificar-qml-qt64`,
+      `verificar-qml-logica-qt64`) passa a valer para a versão nova; rever
+      o que hoje só existe para o 6.4.
+  - **Caminho acelerado para a aba Web.** Hoje o hook portátil força
+    `QT_QUICK_BACKEND=software` para não depender do driver da máquina, e o
+    Chromium roda sem GPU ("Using Supported QSG Backend: no").
+    - O backend do Qt Quick não troca com a IDE aberta.
+    - A proposta: tentar o OpenGL/RHI por padrão, com detecção e queda
+      automática para software quando a máquina não aguenta (e um modo
+      seguro por variável, como hoje).
+    - Medir o primeiro quadro e a RSS nos dois modos antes de decidir o
+      padrão.
+  - **`runtime-x86_64` fixado numa release com tag**, em vez do canal
+    `continuous`, que mudou sem aviso.
+- **Primeira abertura e a segurança da aba Web.** As proteções da view
+  (configurações, permissões) só existem quando a view nasce, e ela nasce sob
+  demanda: não tocam a abertura. O que roda na abertura é só o
+  `AA_ShareOpenGLContexts`, e o A/B dele está na lista acima.
 - **Terminal com reflow:** ao alargar, as linhas antigas continuam quebradas
   na largura estreita (visto com a janela do Grafana voltando ao tamanho).
   Terminais modernos refazem a quebra.
