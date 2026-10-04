@@ -144,6 +144,10 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   sem nunca deixar o editor com menos de 480 px, e voltam ao tamanho que você
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
+- **O painel de baixo em relevo** (desde 2026-10-04): as abas ficam numa
+  bandeja um tom acima do editor, e o conteúdo de qualquer aba (Terminal,
+  Problemas, Jobs, Build…) num fundo rebaixado, com borda e uma sombra no
+  topo.
 - **De área em área pelo teclado** (desde 2026-10-02): **Ctrl+F6** leva o
   teclado para a próxima área visível — slot da esquerda, editor, slot da
   direita (desde 2026-10-03), painel de baixo — e **Ctrl+Shift+F6** para a

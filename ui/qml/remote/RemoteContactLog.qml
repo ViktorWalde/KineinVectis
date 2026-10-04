@@ -9,6 +9,10 @@ QtObject {
 
     // name -> { ok, at (segundos Unix), arch, kernel, failure }
     property var byName: ({})
+    // O relogio do "ha' 3 min", UM para a lista e a Visao (as duas diziam
+    // idades diferentes: a Visao lia o Date.now() uma vez so'). Quem o faz
+    // andar e' a lista, enquanto esta' a vista.
+    property real nowSeconds: Date.now() / 1000
 
     function handleList(list) {
         const map = {};
@@ -19,7 +23,8 @@ QtObject {
     // A sonda que acabou de chegar, sem esperar o proximo `remote.list`.
     function record(outcome) {
         const map = Object.assign({}, root.byName);
-        map[outcome.name] = { name: outcome.name, ok: outcome.success === true, at: Math.floor(Date.now() / 1000),
+        root.nowSeconds = Date.now() / 1000;
+        map[outcome.name] = { name: outcome.name, ok: outcome.success === true, at: Math.floor(root.nowSeconds),
                               arch: outcome.arch || "", kernel: outcome.kernel || "", failure: outcome.failure || "" };
         root.byName = map;
     }

@@ -26,15 +26,15 @@ Column {
         return root.controller !== null && root.controller.probedName === name;
     }
 
-    // O relogio do "ha' 3 min": anda so' com a janela a vista.
-    property real nowSeconds: Date.now() / 1000
+    // O relogio do "ha' 3 min" (RemoteContactLog): anda so' com a janela a vista.
+    readonly property real nowSeconds: root.controller ? root.controller.contacts.nowSeconds : 0
 
     Timer {
         interval: 30000
         repeat: true
-        running: root.visible
+        running: root.visible && root.controller !== null
         triggeredOnStart: true
-        onTriggered: root.nowSeconds = Date.now() / 1000
+        onTriggered: root.controller.contacts.nowSeconds = Date.now() / 1000
     }
 
     // O ponto: a sonda desta sessao, senao o ultimo contato guardado no

@@ -224,6 +224,12 @@ no checkout, não em nenhum pacote publicado.
   execução rápida sumia junto com a aba); a aba leva o nome da configuração;
   enviar uma pasta para o alvo leva o conteúdo dela; um alvo novo não
   sobrescreve mais outro de mesmo nome.
+- **O painel de baixo em relevo.** As abas ficam numa bandeja um tom acima do
+  editor, e o conteúdo (Terminal, Problemas, Jobs…) num fundo rebaixado, com
+  borda e sombra no topo: dá para ver onde o código acaba e a saída começa.
+- **Correções:** o texto colorido do terminal não abre mais buracos no prompt
+  (`hugh@ruki :~`); a pasta de um alvo remoto aberta na IDE respeita o
+  `XDG_CACHE_HOME`.
 
 ## 0.3.5 — lançada em 2026-10-01 (pré-release "Public Beta")
 

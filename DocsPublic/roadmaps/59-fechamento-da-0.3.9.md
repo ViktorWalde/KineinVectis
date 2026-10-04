@@ -56,6 +56,7 @@ Cada passo termina com:
 | 3 | **Modernizar os controles antigos** no padrão interativo (§3.4) | feito (40.7 §7.214) |
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | feito (40.7 §7.215), com os campos de texto refeitos e o menu que não deixa o mouse atravessar |
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
+| 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | a fazer |
 | 7 | **Banco completo** (§5.1–§5.6), com o MongoDB lendo e escrevendo | a camada de segurança 1 e a grade estão feitas; o resto, a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |

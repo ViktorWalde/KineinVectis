@@ -18,6 +18,7 @@
 //! caminho: e' o `changed` do evento, lido sem adivinhar.
 
 use std::{
+    ffi::OsStr,
     fs,
     hash::{DefaultHasher, Hash, Hasher},
     path::{Path, PathBuf},
@@ -41,16 +42,29 @@ struct MirrorFile {
     path: String,
 }
 
-/// A raiz de todos os espelhos: `<home>/.cache/kinein-vectis/remote`.
+/// A pasta de cache do usuario: o `XDG_CACHE_HOME` absoluto, senao `<home>/.cache`.
+///
+/// A especificacao manda ignorar o `XDG_CACHE_HOME` relativo. Ate'
+/// 2026-10-04 o espelho ia sempre para `<home>/.cache`, mesmo com o
+/// `XDG_CACHE_HOME` apontando para outro lugar (a UI ja' o respeitava).
 #[must_use]
-pub fn cache_root(home: &Path) -> PathBuf {
-    home.join(".cache/kinein-vectis/remote")
+pub fn cache_home(home: &Path, xdg_cache: Option<&OsStr>) -> PathBuf {
+    xdg_cache
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .unwrap_or_else(|| home.join(".cache"))
+}
+
+/// A raiz de todos os espelhos: `<cache>/kinein-vectis/remote`.
+#[must_use]
+pub fn cache_root(cache: &Path) -> PathBuf {
+    cache.join("kinein-vectis/remote")
 }
 
 /// Onde o espelho de `path` no alvo mora: `<cache>/<alvo>/<hash>/<basename>`.
 /// O basename e' o nome do workspace que a IDE mostra.
 #[must_use]
-pub fn mirror_root(home: &Path, target: &RemoteTarget, path: &str) -> PathBuf {
+pub fn mirror_root(cache: &Path, target: &RemoteTarget, path: &str) -> PathBuf {
     let path = path.trim().trim_end_matches('/');
     let mut hasher = DefaultHasher::new();
     path.hash(&mut hasher);
@@ -59,7 +73,7 @@ pub fn mirror_root(home: &Path, target: &RemoteTarget, path: &str) -> PathBuf {
         .next()
         .filter(|b| !b.is_empty())
         .unwrap_or("raiz");
-    cache_root(home)
+    cache_root(cache)
         .join(&target.name)
         .join(format!("{:016x}", hasher.finish()))
         .join(base)
@@ -226,13 +240,27 @@ mod tests {
 
     #[test]
     fn the_mirror_lives_under_the_cache_named_after_the_remote_folder() {
-        let home = Path::new("/home/u");
-        let m = mirror_root(home, &pi(), "/home/pi/projetos/sensor/");
+        let cache = cache_home(Path::new("/home/u"), None);
+        let m = mirror_root(&cache, &pi(), "/home/pi/projetos/sensor/");
         assert!(m.starts_with("/home/u/.cache/kinein-vectis/remote/pi/"));
         assert_eq!(m.file_name().unwrap(), "sensor");
-        assert_eq!(m, mirror_root(home, &pi(), "/home/pi/projetos/sensor"));
-        assert_ne!(m, mirror_root(home, &pi(), "/home/pi/outro/sensor"));
-        assert_eq!(mirror_root(home, &pi(), "/").file_name().unwrap(), "raiz");
+        assert_eq!(m, mirror_root(&cache, &pi(), "/home/pi/projetos/sensor"));
+        assert_ne!(m, mirror_root(&cache, &pi(), "/home/pi/outro/sensor"));
+        assert_eq!(mirror_root(&cache, &pi(), "/").file_name().unwrap(), "raiz");
+    }
+
+    #[test]
+    fn the_cache_follows_an_absolute_xdg_cache_home_only() {
+        let home = Path::new("/home/u");
+        assert_eq!(
+            cache_home(home, Some(OsStr::new("/srv/cache"))),
+            Path::new("/srv/cache")
+        );
+        assert_eq!(
+            cache_home(home, Some(OsStr::new("relativo"))),
+            Path::new("/home/u/.cache")
+        );
+        assert_eq!(cache_home(home, None), Path::new("/home/u/.cache"));
     }
 
     #[test]

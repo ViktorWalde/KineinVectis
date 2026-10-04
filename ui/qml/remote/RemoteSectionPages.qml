@@ -38,7 +38,7 @@ Flickable {
             visible: root.section === "visao"
             hasTarget: root.c !== null && root.c.selectedSaved
             lastContact: root.c !== null && root.c.contacts.state(root.c.selectedName) !== ""
-                         ? root.c.contacts.describe(root.c.selectedName, Date.now() / 1000) : ""
+                         ? root.c.contacts.describe(root.c.selectedName, root.c.contacts.nowSeconds) : ""
             probed: root.probed
             probing: root.c !== null && root.c.probing
             probeOk: root.c !== null && root.c.probeOk

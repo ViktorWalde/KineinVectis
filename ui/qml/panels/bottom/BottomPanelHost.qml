@@ -81,8 +81,10 @@ Rectangle {
     // Dentro da ilha unica (0.3.9): a cor da area, sem borda propria — so' a
     // de FOCO, quando e' o painel quem tem o teclado (o ciclo Ctrl+F6 chega
     // aqui; o foco tem de ser visivel, 53 §5.8).
+    // A bandeja (surface1) um degrau acima do editor; o conteudo de cada aba
+    // fica no poco (BottomPanelWell), um degrau abaixo.
     radius: Theme.radiusLarge
-    color: Theme.background1
+    color: Theme.surface1
     border.color: Theme.accentDim
     border.width: activeFocus ? 1 : 0
 
@@ -152,43 +154,42 @@ Rectangle {
         onRefreshToolsRequested: root.refreshToolsRequested()
     }
 
-    BuildPanel {
-        anchors.top: bottomTabs.bottom
+    // Atras de todas as abas: declarado antes delas.
+    BottomPanelWell {
+        id: well
+
+        anchors.top: sessionRow.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
+    }
+
+    BuildPanel {
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "build"
         outputModel: root.buildOutputModel
     }
 
     TestsPanel {
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "tests"
         controller: root.jobsController
         running: root.testing
     }
 
     JobsPanel {
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "jobs"
         jobsModel: root.jobsModel
     }
 
     ProblemsPanel {
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "problems"
         diagnosticsModel: root.problemsModel
         workspaceRoot: root.workspaceRoot
@@ -220,11 +221,8 @@ Rectangle {
     TerminalPanel {
         id: terminalView
 
-        anchors.top: sessionRow.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "terminal"
         render: root.terminalRender
         runtimeController: root.runtimeController
@@ -263,11 +261,8 @@ Rectangle {
     }
 
     DebugPanel {
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "debug"
 
         outputModel: root.debugController.outputModel
@@ -298,11 +293,8 @@ Rectangle {
     SearchPanel {
         id: searchView
 
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "search"
         resultsModel: root.searchModel
         caseSensitive: root.searchCaseSensitive
@@ -327,21 +319,15 @@ Rectangle {
     }
 
     IdeLogPanel {
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "logs"
         logLinesModel: root.logLinesModel
     }
 
     ToolsPanel {
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
+        anchors.fill: well
+        anchors.margins: Theme.spacingXSmall
         visible: root.activeTab === "tools"
         tools: root.toolsList
     }

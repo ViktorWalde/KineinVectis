@@ -45,10 +45,9 @@ Item {
         return selectionController.cellAt(local.x, local.y);
     }
 
-    Rectangle {
+    // Sem fundo proprio: o terminal mora no poco do painel (BottomPanelWell).
+    Item {
         anchors.fill: parent
-        radius: Theme.radiusLarge
-        color: Theme.backgroundEditor
 
         Text {
             anchors.centerIn: parent
@@ -126,6 +125,11 @@ Item {
                             font.italic: spanCell.modelData.italic === true
                             font.underline: spanCell.modelData.underline === true
                             font.preferShaping: false
+                            // Cada glifo na SUA celula (2026-10-04): sem isto o span
+                            // andava pelo avanco cru e abria buraco ("hugh@ruki :~").
+                            font.letterSpacing: root.metrics
+                                                ? root.metrics.cellWidth - root.metrics.glyphAdvance : 0
+                            leftPadding: root.metrics ? root.metrics.glyphLeft : 0
                             verticalAlignment: Text.AlignVCenter
                         }
                     }

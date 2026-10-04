@@ -119,15 +119,27 @@ impl Core {
             .and_then(|root| mirror::read_marker(&root))
     }
 
+    /// A pasta de cache: `$XDG_CACHE_HOME` ou `<home>/.cache`; com o `$HOME`
+    /// fixado (testes), sempre `<home>/.cache`.
+    fn cache_home(&self) -> Option<PathBuf> {
+        let home = self.sdk_home()?;
+        let xdg_cache = if self.home_override.is_some() {
+            None
+        } else {
+            std::env::var_os("XDG_CACHE_HOME")
+        };
+        Some(mirror::cache_home(&home, xdg_cache.as_deref()))
+    }
+
     fn rsync_and_transport(&self, target: &RemoteTarget) -> Result<(PathBuf, String), String> {
         let rsync = self
             .detector
             .find_in_path("rsync")
             .ok_or_else(|| "nao achei `rsync` no PATH — instale-o (e no alvo tambem)".to_owned())?;
-        let home = self
-            .sdk_home()
-            .ok_or_else(|| "sem HOME: nao sei onde guardar o espelho".to_owned())?;
-        let control = mirror::cache_root(&home);
+        let cache = self
+            .cache_home()
+            .ok_or_else(|| "sem HOME: não sei onde guardar o espelho".to_owned())?;
+        let control = mirror::cache_root(&cache);
         std::fs::create_dir_all(&control)
             .map_err(|e| format!("falha criando {}: {e}", control.display()))?;
         Ok((rsync, mirror::ssh_transport(target, &control)))
@@ -173,8 +185,8 @@ impl Core {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "remote.open");
         };
-        let home = self.sdk_home().unwrap_or_default();
-        let espelho = mirror::mirror_root(&home, &target, &remote_path);
+        let cache = self.cache_home().unwrap_or_default();
+        let espelho = mirror::mirror_root(&cache, &target, &remote_path);
         let plan = SyncPlan {
             rsync,
             target,
