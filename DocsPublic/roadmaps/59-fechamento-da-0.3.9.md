@@ -430,6 +430,18 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
     - Depois, o gate Qt 6.4 (`verificar-qml-qt64`,
       `verificar-qml-logica-qt64`) passa a valer para a versão nova; rever
       o que hoje só existe para o 6.4.
+  - **Alvo de compatibilidade** (o autor, 2026-10-04): Ubuntu **22.04 LTS em
+    diante** e as derivadas, mais o Debian 12 e 13.
+    - O pacote precisa ser montado na distro MAIS ANTIGA do alvo. A base
+      atual (Debian 12, glibc 2.36) não abre no Ubuntu 22.04 (glibc 2.35).
+    - Builder em **Ubuntu 22.04** (glibc 2.35), com o Qt dos binários
+      oficiais. Antes de escolher entre o 6.10 e o 6.8 LTS, conferir a glibc
+      mínima de cada release.
+    - Provar o AppImage em contêineres Ubuntu 22.04, 24.04 e Debian 13.
+  - **Para o autor decidir:** compilar do código-fonte exigir Qt ≥ 6.8
+    (instalador oficial) e aposentar o gate Qt 6.4 (`verificar-qml-qt64`,
+    `verificar-qml-logica-qt64`). Ele hoje existe porque o Ubuntu 24.04 tem
+    o Qt 6.4 no sistema.
   - **Caminho acelerado para a aba Web.** Hoje o hook portátil força
     `QT_QUICK_BACKEND=software` para não depender do driver da máquina, e o
     Chromium roda sem GPU ("Using Supported QSG Backend: no").
