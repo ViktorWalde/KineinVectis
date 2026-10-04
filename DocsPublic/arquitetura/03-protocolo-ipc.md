@@ -1,5 +1,12 @@
 # 03 — Protocolo IPC
 
+> **0.154.0 (2026-10-04) — Grafana dentro da IDE, opcional.** Uma chave nova nas
+> configurações, `grafanaWebView` (global, `false` por padrão; o projeto não
+> opina), aditiva em `settings.get`/`settings.set`. Nenhum método novo (178).
+> Ligada, a janela do Grafana cria a visualização web só quando a aba Web
+> aparece (roadmaps/59 §6.1). Também: o espelho remoto respeita o
+> `XDG_CACHE_HOME` absoluto.
+>
 > **0.153.0 (2026-10-04) — o Remoto confia no servidor pela tela e lembra o
 > último contato.** Dois métodos novos (agora 178): `remote.hostKey { name }`
 > lê a impressão digital do servidor sem logar, e `remote.trustHost { name,

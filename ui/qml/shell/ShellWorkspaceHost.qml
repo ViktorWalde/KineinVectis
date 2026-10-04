@@ -166,6 +166,8 @@ Item {
             editorController: root.editorController
             containerController: root.containerController
             remoteController: root.remoteController
+            grafanaController: root.grafanaController
+            settingsController: root.settingsController
             onMinimumWidthChanged: root.updatePanelLimits()
             onRightMinimumWidthChanged: root.updatePanelLimits()
             workspaceName: root.workspaceName
@@ -289,8 +291,7 @@ Item {
                 toolsList: root.workspaceController.toolsList
                 onHideRequested: root.shellController.showBottomPanel = false
                 onTabRequested: function(tab) {
-                    // A aba Terminal abre uma sessao se nao ha' nenhuma: o
-                    // dono disso e' o RuntimeController.
+                    // Terminal sem sessao abre uma (dono: RuntimeController).
                     if (tab === "terminal" && !root.shellController.tabActive("terminal")) {
                         root.runtimeController.openTerminalPanel();
                         return;

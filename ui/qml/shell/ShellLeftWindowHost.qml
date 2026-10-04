@@ -16,6 +16,8 @@ Item {
     property var editorController: null
     property var containerController: null
     property var remoteController: null
+    property var grafanaController: null
+    property var settingsController: null
     property string workspaceName: ""
     property string workspaceRoot: ""
     // O slot da direita (ShellRightDock): a janela cujo icone esta' no trilho
@@ -30,6 +32,7 @@ Item {
         if (name === "git") return gitWindow.minimumWidth;
         if (name === "database") return databaseWindow.minimumWidth;
         if (name === "remote") return remoteWindow.minimumWidth;
+        if (name === "observability") return grafanaWindow.minimumWidth;
         return name === "containers" ? containersWindow.minimumWidth : 220;
     }
 
@@ -101,6 +104,7 @@ Item {
         else if (name === "database") databaseWindow.forceActiveFocus();
         else if (name === "containers") containersWindow.forceActiveFocus();
         else if (name === "remote") remoteWindow.forceActiveFocus();
+        else if (name === "observability") grafanaWindow.forceActiveFocus();
         else explorerPanel.focusTree();
     }
 
@@ -178,6 +182,33 @@ Item {
 
         function onWindowRequested() {
             root.shellController.showDockWindow("remote");
+        }
+    }
+
+    // O Grafana (2026-10-04, 59 §6.1): acoplado como o Remoto. Aparecer liga o
+    // relogio e pede o perfil; sumir para o relogio (o token fica, §7).
+    GrafanaWindow {
+        id: grafanaWindow
+
+        parent: root.slotOf("observability")
+        anchors.fill: parent
+        visible: root.shellController.observabilityWindowVisible
+        controller: root.grafanaController
+        settings: root.settingsController
+        onVisibleChanged: {
+            if (!root.grafanaController) return;
+            if (visible) root.grafanaController.prepare();
+            else root.grafanaController.close();
+        }
+        onCloseRequested: root.shellController.toggleDockWindow("observability")
+        onWidenRequested: width => root.shellController.docks.widen("observability", width)
+    }
+
+    Connections {
+        target: root.grafanaController
+
+        function onWindowRequested() {
+            root.shellController.showDockWindow("observability");
         }
     }
 

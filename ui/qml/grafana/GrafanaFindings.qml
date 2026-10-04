@@ -79,9 +79,10 @@ Column {
             emptyText: ""
 
             onRowClicked: indice => root.dashboardEscolhido = indice
-            // ABRIR NO NAVEGADOR, e nao dentro da IDE. A licenca AGPL do
-            // Grafana decide a forma da integracao: a IDE CONVERSA com ele,
-            // nunca o embute (DocsPublic/integracoes/37 §2).
+            // Abre no navegador, ou na aba Web (um navegador apontado para a
+            // instancia da pessoa, 0.154.0): quem decide e' a GrafanaWindow.
+            // A AGPL do Grafana proibe EMPACOTAR o Grafana, nao abri-lo num
+            // navegador (DocsPublic/integracoes/37 §2).
             onRowActivated: indice => {
                 if (indice >= 0 && indice < root.dashboardsVisiveis.length) {
                     root.dashboardActivated(root.dashboardsVisiveis[indice].url);

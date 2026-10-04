@@ -224,6 +224,14 @@ no checkout, não em nenhum pacote publicado.
   execução rápida sumia junto com a aba); a aba leva o nome da configuração;
   enviar uma pasta para o alvo leva o conteúdo dela; um alvo novo não
   sobrescreve mais outro de mesmo nome.
+- Protocolo `0.154.0` — **o Grafana ao lado do código, e (opcional) dentro
+  da IDE.** A janela do Grafana fica acoplada, como o Banco, com a engrenagem
+  para endereço e token. A nova aba **Web** mostra o seu Grafana local dentro
+  da IDE. Vem desligada; ligue na aba ou em Configurações → Interface.
+  Desligada, o navegador embutido nem carrega. Duplo clique num dashboard o
+  abre ali.
+- **Correções:** escolher "Pedir na sessão" agora abre o campo do token; o
+  duplo clique abre a linha em qualquer grade.
 - **O painel de baixo em relevo.** As abas ficam numa bandeja um tom acima do
   editor, e o conteúdo (Terminal, Problemas, Jobs…) num fundo rebaixado, com
   borda e sombra no topo: dá para ver onde o código acaba e a saída começa.

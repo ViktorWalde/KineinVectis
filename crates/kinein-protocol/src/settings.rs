@@ -86,6 +86,11 @@ pub struct SettingsValues {
     /// on its own whenever the welcome screen is not on screen.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub welcome_animation: Option<bool>,
+    /// Whether the Grafana window may show the instance inside the IDE
+    /// (`0.154.0`, roadmap 59 §6.1). A user preference (global), OFF by
+    /// default: the web module is only loaded once this is on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grafana_web_view: Option<bool>,
     /// The shell layout (`0.146.0`, roadmap 53 §4.4): which left window,
     /// preferred panel sizes, bottom panel and Structure state, versioned by
     /// its own `schemaVersion`. Kept as raw JSON on purpose: a layout written
@@ -130,6 +135,8 @@ pub struct EffectiveSettings {
     pub rail_expanded: bool,
     /// Effective welcome-screen animation (`true` unless turned off).
     pub welcome_animation: bool,
+    /// Effective Grafana web view (`false` unless turned on).
+    pub grafana_web_view: bool,
     /// The layout to restore: the workspace one, else the global one, and
     /// only when its `schemaVersion` is one this core understands. Absent =
     /// the UI uses the legacy width fields above, or its automatic layout.

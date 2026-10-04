@@ -71,7 +71,7 @@ borda própria e são separadas por divisórias de 1 px.
 | Linha do topo, ao meio | `ui/qml/shell/TopHeaderBar.qml` | Os widgets de contexto: projeto, Git, toolchain, Python e o "⋯". A barra é transparente e fica por cima da `AppMenuBar` (`z: 101`). |
 | Montagem do topo | `ui/qml/shell/ShellHeaderHost.qml` | Põe a `TopHeaderBar` logo depois do fim dos menus (`menuEndX`) e antes dos controles da janela (`controlsX`). |
 | Ilha e divisórias | `ui/qml/shell/ShellLayout.qml` | Um `Rectangle` arredondado atrás de uma `Row` (slot da esquerda, centro e slot da direita), mais as divisórias de 1 px (esquerda/centro, centro/direita, editor/painel de baixo). |
-| Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco, Containers, Remoto). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
+| Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco, Containers, Remoto, Grafana). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
 | Slot da direita | `ui/qml/shell/ShellRightDock.qml` | Um `Item` vazio na `Row`, com a alça de largura no vão à esquerda dele. Recebe a janela por troca de pai. |
 | De que lado cada janela abre | `ui/qml/shell/ShellDocks.qml` | Funções sobre o estado do `ShellController`: `sideOf`, `placed`, `showing`, `show`, `close`, `toggle`, `followSide`, `normalize`, `widen` (§2.3). |
 | Trilho da esquerda | `ui/qml/shell/SideRail.qml` | Ícones das áreas (34 px de largura, botões de 28 px, ícones de 20 px). |
@@ -169,7 +169,7 @@ uma a uma no `tst_shell_docks`.
 
 | Lado | Estado no `ShellController` | Fechado quando |
 | --- | --- | --- |
-| esquerda | `leftWindow` (`explorer`/`git`/`database`/`containers`/`remote`) + `showExplorer` | `showExplorer` é falso |
+| esquerda | `leftWindow` (`explorer`/`git`/`database`/`containers`/`remote`/`observability`) + `showExplorer` | `showExplorer` é falso |
 | direita | `rightWindow` (a mesma lista, ou `""`) | `rightWindow` é `""` |
 
 **De que lado** uma janela abre é o lado do **ícone** dela no trilho:
@@ -412,10 +412,10 @@ age é a função `activate(id)`.
 
 | `kind` | Exemplos | O clique faz |
 | --- | --- | --- |
-| `dock-left` | Projeto, Banco, Containers, Remoto | janela acoplada: abre ou fecha no slot **do lado do ícone** (`toggleDockWindow`, §2.0) |
+| `dock-left` | Projeto, Banco, Containers, Remoto, Grafana | janela acoplada: abre ou fecha no slot **do lado do ícone** (`toggleDockWindow`, §2.0) |
 | `dock-right` | Símbolos | recolhe/expande os Símbolos (abertos, escondem o slot da direita) |
 | `bottom` | Terminal, Ferramentas | abre o painel de baixo na aba; se ela já estiver à vista, recolhe |
-| `overlay` | Embarcados, Remoto, Grafana | abre o painel de ambiente do dono (`owner.open()`); Remoto e Grafana viram janela pelo [`59`](../roadmaps/59-fechamento-da-0.3.9.md) |
+| `overlay` | Embarcados | abre o painel de ambiente do dono (`owner.open()`); vira janela na 0.4 |
 
 Duas camadas filtram o que aparece:
 

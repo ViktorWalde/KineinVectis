@@ -166,6 +166,9 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
             .unwrap_or(false),
         // A tela de boas-vindas nao tem projeto: so' o global vale.
         welcome_animation: global.welcome_animation.unwrap_or(true),
+        // A visualizacao web do Grafana (0.154.0): preferencia do usuario,
+        // desligada por padrao (59 §6.1).
+        grafana_web_view: global.grafana_web_view.unwrap_or(false),
         layout: effective_layout(global, workspace),
     }
 }
@@ -210,6 +213,7 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         outline_collapsed: incoming.outline_collapsed.or(base.outline_collapsed),
         rail_expanded: incoming.rail_expanded.or(base.rail_expanded),
         welcome_animation: incoming.welcome_animation.or(base.welcome_animation),
+        grafana_web_view: incoming.grafana_web_view.or(base.grafana_web_view),
         // Inteiro, nunca campo a campo: um layout e' um retrato, e misturar
         // dois retratos daria um que ninguem montou.
         layout: incoming.layout.clone().or_else(|| base.layout.clone()),
@@ -275,6 +279,29 @@ mod tests {
             ..SettingsValues::default()
         };
         assert_eq!(merge(&off, &other).welcome_animation, Some(false));
+    }
+
+    /// A visualizacao web do Grafana (0.154.0) nasce desligada, so' o global
+    /// a liga, e gravar outro campo nao a desliga.
+    #[test]
+    fn the_grafana_web_view_is_off_by_default_and_only_the_global_decides() {
+        let none = SettingsValues::default();
+        assert!(!resolve(&none, &none).grafana_web_view);
+        let on = SettingsValues {
+            grafana_web_view: Some(true),
+            ..SettingsValues::default()
+        };
+        assert!(resolve(&on, &none).grafana_web_view);
+        let workspace_on = SettingsValues {
+            grafana_web_view: Some(true),
+            ..SettingsValues::default()
+        };
+        assert!(!resolve(&none, &workspace_on).grafana_web_view);
+        let other = SettingsValues {
+            rail_expanded: Some(true),
+            ..SettingsValues::default()
+        };
+        assert_eq!(merge(&on, &other).grafana_web_view, Some(true));
     }
 
     /// O layout do workspace vence o global; sem nenhum, nao ha' layout e a

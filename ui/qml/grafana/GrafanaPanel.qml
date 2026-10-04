@@ -3,7 +3,8 @@ import QtQuick
 import KineinVectis
 
 // O painel de observabilidade: qual Grafana observa este projeto, e o que ele
-// ja' sabe sobre os bancos daqui.
+// ja' sabe sobre os bancos daqui. Desde 2026-10-04 e' a aba "Painel" da
+// GrafanaWindow acoplada (59 §6.1): o cabecalho e o fechar sao da janela.
 //
 // Burro de proposito, como o `DataSourcePanel`: recebe estado e emite pedidos.
 // Quem guarda e' o controller; quem decide e' o core.
@@ -12,7 +13,9 @@ Item {
 
     property var controller: null
 
-    signal closeRequested()
+    // Um dashboard dos achados: a janela decide onde abre (aba Web ou
+    // navegador do sistema).
+    signal dashboardActivated(string path)
 
     // ONDE O CURSOR CAI AO ABRIR. Primeiro uso: o campo do endereco, que e' o
     // unico que importa. Uso diario: o filtro, que e' por onde se acha o
@@ -42,15 +45,23 @@ Item {
     // dimensionamento que o autor pediu em 2026-09-04.
     readonly property int alturaCampo: 26
 
-    // O autor abriu `configurar…` com tudo em ordem. E' escolha dele, e por
-    // isso mora na tela e nao na regra.
-    property bool setupPinned: false
+    // A ENGRENAGEM da janela (2026-10-04): "" = a regra decide; "open" e
+    // "closed" = o autor decidiu, e vence a regra. O antigo `configurar…` so'
+    // sabia fixar ABERTO — com a regra ja' abrindo, o clique nao mudava nada
+    // (o "configurar nao faz nada" do 59 §6).
+    property string setupChoice: ""
+    readonly property bool setupShown: root.setupChoice === "open"
+            || (root.setupChoice === "" && (root.controller ? root.controller.setupExpanded : true))
+
+    function toggleSetup() {
+        root.setupChoice = root.setupShown ? "closed" : "open";
+    }
 
     readonly property bool temAchados: root.controller !== null
             && (root.controller.dashboards.length > 0
                 || root.controller.dataSources.length > 0)
 
-    readonly property var acao: root.controller
+    readonly property var action: root.controller
             ? root.controller.primaryAction
             : ({ "kind": "", "label": "", "hint": "", "section": "" })
 
@@ -59,7 +70,7 @@ Item {
         if (root.controller === null) {
             return;
         }
-        switch (root.acao.kind) {
+        switch (root.action.kind) {
         case "connect":
             // CONECTAR e' salvar e medir no mesmo gesto (§5.1). Salvar deixou
             // de ser pre-condicao visual para sondar — e o botao que promete
@@ -72,7 +83,7 @@ Item {
         case "fixUrl":
             // LEVAR ATE' O CAMPO, e nao so' acender um botao: e' para isso que
             // a acao carrega `section`.
-            root.setupPinned = true;
+            root.setupChoice = "open";
             ajustes.focusUrl();
             break;
         case "provideToken":
@@ -97,25 +108,19 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingSmall
 
-        // A MESMA PRIMEIRA LINHA DOS OUTROS QUATRO PAINEIS de ambiente. Eu
-        // tinha escrito um cabecalho proprio para o Grafana — titulo,
-        // subtitulo e botoes —, que e' exatamente o que o `KvPanelHeader` ja'
-        // fazia para banco, remoto, embarcados e containers. Painel que comeca
-        // diferente dos irmaos custa uma leitura a mais a cada abertura, e a
-        // §9 da especificacao pede coerencia com estes componentes.
-        KvPanelHeader {
+        // A ACAO PRIMARIA, uma so', derivada do estado (GrafanaActionRules).
+        // Rotulo vazio esconde o botao: quando o gesto primario E' o campo do
+        // token, quem o desenha e' o `GrafanaTokenPrompt`.
+        KvButton {
+            objectName: "grafanaPrimary"
+
             width: parent.width
-            title: qsTr("Observabilidade")
-            subtitle: root.controller ? root.controller.statusPhrase : ""
-            // Rotulo vazio esconde o botao: quando o gesto primario E' o campo
-            // do token, quem o desenha e' o `GrafanaTokenPrompt`.
-            primaryLabel: root.acao.kind === "provideToken" ? "" : root.acao.label
-            primaryBusy: root.acao.kind === "waiting"
-            secondaryLabel: root.setupPinned ? qsTr("ocultar ajustes")
-                                             : qsTr("configurar…")
-            onPrimaryRequested: root.executarPrimaria()
-            onSecondaryRequested: root.setupPinned = !root.setupPinned
-            onCloseRequested: root.closeRequested()
+            primary: true
+            visible: root.action.label !== "" && root.action.kind !== "provideToken"
+            enabled: root.action.kind !== "waiting"
+            text: root.action.label
+            tooltip: root.action.hint
+            onClicked: root.executarPrimaria()
         }
 
         GrafanaSetupSection {
@@ -123,20 +128,21 @@ Item {
 
             width: parent.width
             // A REGRA DECIDE, O AUTOR TEM A ULTIMA PALAVRA: a configuracao se
-            // abre sozinha quando o proximo gesto mora nela, e o `configurar…`
-            // a mantem aberta quando ele quer mexer com tudo em ordem.
-            visible: (root.controller ? root.controller.setupExpanded : true)
-                     || root.setupPinned
+            // abre sozinha quando o proximo gesto mora nela, e a engrenagem
+            // abre ou fecha por cima da regra.
+            visible: root.setupShown
             controller: root.controller
             draft: root.draft
-            alturaCampo: root.alturaCampo
         }
 
         GrafanaAuthSection {
             width: parent.width
+            // Sozinha so' quando o servidor pede (a regra); a engrenagem a
+            // mostra junto do endereco — sem isso, um Grafana que responde
+            // sem token nao deixava dar um para listar os dashboards.
+            visible: root.setupShown || (root.controller ? root.controller.authVisible : false)
             controller: root.controller
             draft: root.draft
-            alturaCampo: root.alturaCampo
         }
 
         // O PEDIDO DE TOKEN aparece por decisao do CORE (`SECRET_REQUIRED`,
@@ -149,10 +155,16 @@ Item {
         GrafanaTokenPrompt {
             objectName: "grafanaTokenPrompt"
 
+            // Tambem quando a pessoa ESCOLHEU "Pedir na sessao" e ainda nao deu
+            // um: antes a escolha nao abria campo nenhum (beco sem saida
+            // achado na tela em 2026-10-04).
+            readonly property bool chosen: root.draft.tokenSource === "prompt"
+                                           && root.controller !== null && !root.controller.hasSessionToken
             width: parent.width
-            visible: root.acao.kind === "provideToken"
-            reasonText: root.acao.hint
-            labelText: root.acao.label
+            visible: root.action.kind === "provideToken" || chosen
+            reasonText: root.action.kind === "provideToken" ? root.action.hint : ""
+            labelText: root.action.kind === "provideToken" ? root.action.label : qsTr("Usar o token")
+            primaryGesture: root.action.kind === "provideToken"
             onAccepted: token => root.controller.probeWithToken(token)
         }
 
@@ -225,8 +237,7 @@ Item {
             dashboards: root.controller ? root.controller.dashboards : []
             filtro: campoFiltro.text
 
-            onDashboardActivated: caminho =>
-                Qt.openUrlExternally(root.controller.dashboardUrl(caminho))
+            onDashboardActivated: caminho => root.dashboardActivated(caminho)
         }
     }
 }

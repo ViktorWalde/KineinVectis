@@ -44,6 +44,23 @@ A regra que sustenta isso **já existe** e não foi inventada para esta frente �
 GPL-3) é **executada como processo**, nunca linkada."* A AGPL é a versão mais
 exigente dessa família, e a mesma fronteira serve.
 
+**A aba Web (0.154.0, 2026-10-04) fica do lado do PODE.** Ela é um
+**navegador** (QtWebEngine, LGPL-3) apontado para a instância da própria
+pessoa, como abrir o Grafana no Firefox:
+
+- o JavaScript do Grafana vem do servidor da pessoa, na hora;
+- a Kinein não leva nenhum arquivo do Grafana no pacote, não o serve e não o
+  modifica (não injeta código na página).
+
+Continua proibido:
+
+- empacotar o Grafana (servidor ou frontend) no AppImage;
+- servir uma cópia dele a partir da IDE;
+- alterar o que a instância entrega.
+
+O QtWebEngine entra no AppImage como biblioteca dinâmica, que é a forma que a
+LGPL aceita.
+
 **Consequência prática para "plug and play":** a IDE pode *detectar* um Grafana
 rodando, *oferecer* subir um via Docker (que é domínio nativo, já decidido) e
 *gerar* dashboards — mas o Grafana continua sendo processo do usuário, não peça

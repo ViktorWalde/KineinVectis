@@ -106,12 +106,12 @@ Item {
     }
 
     Component.onCompleted: {
-        const primaria = root.achar(painel, "kvPanelPrimary");
+        const primaria = root.achar(painel, "grafanaPrimary");
         const pedido = root.achar(painel, "grafanaTokenPrompt");
         if (primaria === null || pedido === null) {
             // Sem os dois nao ha' o que comparar: as assercoes seguintes
             // estourariam em `null.visible` e esconderiam esta causa.
-            console.error("FALHOU: o painel nao tem mais kvPanelPrimary/grafanaTokenPrompt");
+            console.error("FALHOU: o painel nao tem mais grafanaPrimary/grafanaTokenPrompt");
             Qt.exit(1);
             return;
         }

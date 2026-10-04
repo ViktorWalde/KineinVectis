@@ -60,7 +60,6 @@ Item {
     readonly property ToolWindowPanels panels: ToolWindowPanels {
         embeddedController: root.embeddedController
         toolchainController: root.toolchainController
-        grafanaController: root.grafanaController
     }
 
     // O GIT SAIU DO TRILHO em 2026-09-24, por observacao do autor: o widget do
@@ -161,11 +160,10 @@ Item {
             "id": "observability", "label": qsTr("Grafana"), "icon": "observability",
             "tooltip": qsTr("Observabilidade — Grafana (Ctrl+Alt+O)"), "area": "left",
             "order": 60, "available": root.workspaceOpen,
-            "title": qsTr("Observabilidade"), "kind": "overlay", "defaultPolicy": "contextual",
+            // Janela acoplada desde 2026-10-04 (59 §6.1), como o Remoto.
+            "title": qsTr("Observabilidade"), "kind": "dock-left", "defaultPolicy": "contextual",
             "factKey": "grafana.instance", "commandId": "grafana.get", "shortcut": "Ctrl+Alt+O",
-            "active": root.grafanaController !== null && root.grafanaController !== undefined
-                      && root.grafanaController.panelVisible
-            ,"panel": root.panels.observabilityPanel
+            "active": root.shellController !== null && root.shellController.observabilityWindowVisible === true
         },
         {
             "id": "tools", "label": "", "icon": "tools",
@@ -272,7 +270,9 @@ Item {
             shellController.toggleDockWindow("containers");
             return true;
         case "observability":
-            return openOwner(grafanaController);
+            if (shellController === null || shellController === undefined) return false;
+            shellController.toggleDockWindow("observability");
+            return true;
         case "remote":
             if (shellController === null || shellController === undefined) return false;
             shellController.toggleDockWindow("remote");

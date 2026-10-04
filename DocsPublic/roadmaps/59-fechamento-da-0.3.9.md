@@ -57,7 +57,7 @@ Cada passo termina com:
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | feito (40.7 §7.215), com os campos de texto refeitos e o menu que não deixa o mouse atravessar |
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
-| 6 | **Grafana: visualização web opcional** (§6) | a fazer |
+| 6 | **Grafana: visualização web opcional** (§6) | feito na IDE (40.7 §7.218, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real; **falta o AppImage levar o QtWebEngine 6.4** (medir o aumento do download) |
 | 7 | **Banco completo** (§5.1–§5.6), com o MongoDB lendo e escrevendo | a camada de segurança 1 e a grade estão feitas; o resto, a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
@@ -406,6 +406,12 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
 
 ## 7. Pente fino e fechamento
 
+- **A/B do `AA_ShareOpenGLContexts`** (40.7 §7.218): RSS e primeiro quadro
+  com e sem a linha, N≥5 na mesma cena. Se custar, ligar só quando a opção
+  `grafanaWebView` estiver ligada (lida antes do `QGuiApplication`).
+- **Grafana:** o `KvButton` mostra o tooltip antigo depois que o rótulo muda,
+  enquanto o mouse continua em cima ("testa o endereço…" sobre "Atualizar").
+  É do `TooltipController`, não do Grafana.
 - **Polimento de frontend:** consistência visual entre as janelas acopladas,
   textos, foco e teclado.
 - **Caça a bugs de comportamento**, exercitando fluxos inteiros e não fotos

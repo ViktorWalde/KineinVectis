@@ -14,9 +14,7 @@ Column {
 
     property var controller: null
     property var draft: ({ url: "", tokenSource: "none" })
-    property int alturaCampo: 26
 
-    readonly property int larguraRotulo: 78
 
     spacing: Theme.spacingSmall
 
@@ -31,31 +29,20 @@ Column {
         // O QUE A TELA PROMETE E' O QUE ELA FAZ. A IDE conversa com um Grafana
         // que e' processo do usuario; ela nao o instala, nao o embute e nao o
         // desenha aqui dentro.
-        text: qsTr("A IDE conversa com o seu Grafana pela API dele. Os painéis abrem no navegador.")
+        text: qsTr("A IDE conversa com o seu Grafana pela API dele. Os dashboards abrem no navegador ou, com a opção ligada, na aba Web.")
         color: Theme.textMuted
         font.pixelSize: Theme.fontSizeCaption
     }
 
-    Row {
+    // Padrao novo de frontend (2026-10-04): o rotulo mora no campo.
+    KvTextField {
+        id: campoUrl
+
         width: parent.width
-        spacing: Theme.spacingSmall
-
-        Text {
-            width: root.larguraRotulo
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Endereço")
-            color: Theme.textSecondary
-            font.pixelSize: Theme.fontSizeSmall
-        }
-
-        KvTextField {
-            id: campoUrl
-
-            width: parent.width - root.larguraRotulo - Theme.spacingSmall
-            height: root.alturaCampo
-            text: root.draft.url
-            onEdited: (text) => root.controller.setDraftField("url", text)
-        }
+        label: qsTr("Endereço do Grafana")
+        pixelSize: Theme.fontSizeSmall
+        text: root.draft.url
+        onEdited: (text) => root.controller.setDraftField("url", text)
     }
 
     // Os gestos raros continuam alcancaveis, e param de disputar a atencao de
@@ -65,24 +52,28 @@ Column {
         spacing: Theme.spacingSmall
         visible: root.controller ? root.controller.hasInstance : false
 
-        KvBarButton {
-            labelText: qsTr("Salvar endereço")
+        KvButton {
+            compact: true
+            text: qsTr("Salvar")
             enabled: root.controller ? root.controller.editing : false
-            onActivated: root.controller.save()
+            onClicked: root.controller.save()
         }
 
-        KvBarButton {
-            labelText: qsTr("Esquecer")
-            onActivated: root.controller.forget()
+        KvButton {
+            compact: true
+            danger: true
+            text: qsTr("Esquecer este Grafana")
+            onClicked: root.controller.forget()
         }
 
         // §7.2 regra 4: apagar a credencial e' gesto proprio, alcancavel ATE'
         // AUTENTICADO. Antes isso acontecia sozinho ao fechar o painel, o que
         // escondia a decisao dentro de outro gesto.
-        KvBarButton {
-            labelText: qsTr("Esquecer credencial")
+        KvButton {
+            compact: true
+            text: qsTr("Esquecer o token")
             visible: root.controller ? root.controller.hasSessionToken : false
-            onActivated: root.controller.forgetCredential()
+            onClicked: root.controller.forgetCredential()
         }
     }
 }

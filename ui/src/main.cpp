@@ -229,6 +229,12 @@ int main(int argc, char* argv[])
     QElapsedTimer perfTimer;
     perfTimer.start();
 
+    // A aba Web do Grafana (roadmaps/59 §6.1) cria a WebEngineView so' quando
+    // a opcao esta' ligada, pelo plugin QML: o QtWebEngine exige o contexto
+    // OpenGL compartilhado ANTES do QGuiApplication. Desligada, nao custa nada
+    // — nada do modulo web e' linkado nem carregado.
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("Kinein Vectis"));
     QGuiApplication::setOrganizationName(QStringLiteral("Kinein Vectis"));

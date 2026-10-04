@@ -13,14 +13,8 @@ Item {
     property string primaryIcon: ""
     property bool primaryEnabled: true
     property bool primaryBusy: false
-    // UM SEGUNDO GESTO, quando o painel tem um caminho de volta que nao e' a
-    // acao do dia: `configurar…` no Grafana, onde a configuracao se recolhe
-    // depois de pronta (§5.2 da especificacao dele). Vazio nos outros quatro
-    // paineis, e entao nem aparece.
-    property string secondaryLabel: ""
 
     signal primaryRequested()
-    signal secondaryRequested()
     signal closeRequested()
 
     implicitHeight: 40
@@ -68,13 +62,6 @@ Item {
             text: root.primaryLabel
             iconName: root.primaryIcon
             onClicked: root.primaryRequested()
-        }
-
-        KvButton {
-            visible: root.secondaryLabel !== ""
-            compact: true
-            text: root.secondaryLabel
-            onClicked: root.secondaryRequested()
         }
 
         KvIconButton {

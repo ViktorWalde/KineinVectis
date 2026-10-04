@@ -214,7 +214,9 @@ Item {
                 Text {
                     width: parent.width
                     wrapMode: Text.WrapAnywhere
-                    text: root.isMirror
+                    // `isMirror` e `mirror` chegam em sinais separados: um
+                    // instante com o primeiro e sem o segundo (TypeError no log).
+                    text: root.isMirror && root.mirror !== null
                           ? qsTr("Este projeto é um espelho de %1:%2 — salvar empurra o arquivo; "
                                  + "o que mudar no alvo só aparece ao Puxar.").arg(root.mirror.name).arg(root.mirror.path)
                           : ""

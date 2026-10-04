@@ -15,20 +15,17 @@ Column {
 
     property var controller: null
     property var draft: ({ url: "", tokenSource: "none" })
-    property int alturaCampo: 26
 
     // Uma condicao, um dono: os filhos so' carregam o que os distingue.
     visible: root.controller ? root.controller.authVisible : false
     spacing: Theme.spacingSmall
 
-    readonly property int larguraRotulo: 78
 
     Row {
         width: parent.width
         spacing: Theme.spacingSmall
 
         Text {
-            width: root.larguraRotulo
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Token")
             color: Theme.textSecondary
@@ -46,15 +43,15 @@ Column {
                 { valor: "prompt", rotulo: qsTr("Pedir na sessão") }
             ]
 
-            delegate: KvToggleChip {
+            delegate: KvButton {
                 id: chipPolitica
 
                 required property var modelData
 
-                height: 22
-                labelText: chipPolitica.modelData.rotulo
-                active: root.draft.tokenSource === chipPolitica.modelData.valor
-                onToggled: root.controller.setDraftField("tokenSource",
+                compact: true
+                text: chipPolitica.modelData.rotulo
+                selected: root.draft.tokenSource === chipPolitica.modelData.valor
+                onClicked: root.controller.setDraftField("tokenSource",
                                                          chipPolitica.modelData.valor)
             }
         }
@@ -72,27 +69,13 @@ Column {
         font.pixelSize: Theme.fontSizeMicro
     }
 
-    Row {
+    KvTextField {
         width: parent.width
-        spacing: Theme.spacingSmall
         visible: root.controller ? root.controller.draftUsesVariable : false
-
-        Text {
-            width: root.larguraRotulo
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Variável")
-            color: Theme.textSecondary
-            font.pixelSize: Theme.fontSizeSmall
-        }
-
-        KvTextField {
-            id: campoVariavel
-
-            width: parent.width - root.larguraRotulo - Theme.spacingSmall
-            height: root.alturaCampo
-            text: root.draft.tokenVariable !== undefined ? root.draft.tokenVariable : ""
-            placeholder: "GRAFANA_TOKEN"
-            onEdited: (text) => root.controller.setDraftField("tokenVariable", text)
-        }
+        label: qsTr("Variável de ambiente com o token")
+        pixelSize: Theme.fontSizeSmall
+        text: root.draft.tokenVariable !== undefined ? root.draft.tokenVariable : ""
+        placeholder: "GRAFANA_TOKEN"
+        onEdited: (text) => root.controller.setDraftField("tokenVariable", text)
     }
 }

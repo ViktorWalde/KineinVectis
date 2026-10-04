@@ -192,7 +192,7 @@ Item {
                 model: root.rows
 
                 delegate: Row {
-                    id: linha
+                    id: gridRow
 
                     required property var modelData
                     required property int index
@@ -210,11 +210,11 @@ Item {
                             required property var modelData
                             required property int index
 
-                            readonly property var value: rules.cellOf(linha.modelData, modelData, index)
+                            readonly property var value: rules.cellOf(gridRow.modelData, modelData, index)
 
                             width: root.widths[index]
                             height: root.rowHeight
-                            color: linha.selected ? Theme.surfaceSelected
+                            color: gridRow.selected ? Theme.surfaceSelected
                                    : (area.containsMouse ? Theme.surface2 : Theme.background1)
 
                             Text {
@@ -228,7 +228,7 @@ Item {
                                 text: rules.cellText(celula.value)
                                 font.italic: rules.isNull(celula.value)
                                 color: rules.isNull(celula.value) ? Theme.textMuted
-                                       : (linha.selected ? Theme.textPrimary : Theme.textSecondary)
+                                       : (gridRow.selected ? Theme.textPrimary : Theme.textSecondary)
                                 font.family: root.mono ? Theme.monoFont : ""
                                 font.pixelSize: Theme.fontSizeCaption
                                 elide: Text.ElideRight
@@ -243,7 +243,10 @@ Item {
                                 hoverEnabled: true
                                 acceptedButtons: root.selectable ? Qt.LeftButton : Qt.NoButton
                                 cursorShape: root.selectable ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: root.rowClicked(linha.index)
+                                onClicked: root.rowClicked(gridRow.index)
+                                // Duplo clique abre, como o Enter (2026-10-04: o
+                                // dashboard do Grafana so' abria pelo teclado).
+                                onDoubleClicked: root.rowActivated(gridRow.index)
                                 // Valor cortado: o texto inteiro ao pairar.
                                 onContainsMouseChanged: {
                                     if (containsMouse && cellText.truncated) TooltipController.showFor(celula, cellText.text, "bottom");

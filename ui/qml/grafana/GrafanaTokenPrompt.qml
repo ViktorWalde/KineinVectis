@@ -18,6 +18,8 @@ Item {
     // O rotulo do botao tambem vem de la': quando ele e' O gesto primario, ele
     // fala a lingua do estado ("Tentar outro token"), nao "Sondar".
     property string labelText: qsTr("Sondar")
+    // Ambar so' quando E' o gesto primario: uma acao primaria por tela.
+    property bool primaryGesture: true
 
     // Piso mais o que o conteudo pedir — o dimensionamento decidido pelo autor
     // em 2026-09-04.
@@ -61,26 +63,31 @@ Item {
         spacing: Theme.spacingSmall
 
         KvTextField {
-            id: entrada
+            id: tokenInput
 
             width: parent.width - confirmar.width - Theme.spacingSmall
-            height: 26
+            anchors.verticalCenter: parent.verticalCenter
+            label: qsTr("Token da conta de serviço")
+            pixelSize: Theme.fontSizeSmall
             // O token nao aparece na tela: um print de tela num chamado e'
             // o caminho mais banal de vazamento que existe.
             echoMode: TextInput.Password
             onAccepted: {
-                root.accepted(entrada.text);
-                entrada.text = "";
+                root.accepted(tokenInput.text);
+                tokenInput.text = "";
             }
         }
 
-        KvBarButton {
+        KvButton {
             id: confirmar
 
-            labelText: root.labelText
-            onActivated: {
-                root.accepted(entrada.text);
-                entrada.text = "";
+            anchors.verticalCenter: parent.verticalCenter
+            primary: root.primaryGesture
+            text: root.labelText
+            enabled: tokenInput.text !== ""
+            onClicked: {
+                root.accepted(tokenInput.text);
+                tokenInput.text = "";
             }
         }
     }

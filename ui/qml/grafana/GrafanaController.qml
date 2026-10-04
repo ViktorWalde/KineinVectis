@@ -132,6 +132,7 @@ Item {
     // endereco e so' gravava; a medida vem quando o perfil volta do core.
     property bool probeAfterProfile: false
 
+    signal windowRequested()
     signal getRequested()
     signal saveRequested(var profile)
     signal forgetRequested()
@@ -184,11 +185,15 @@ Item {
         matches = [];
     }
 
+    // Janela acoplada desde 2026-10-04 (59 §6.1): abrir PEDE a janela; ela,
+    // ao aparecer, chama `prepare` (o relogio anda e o perfil vem).
     function open() {
+        windowRequested();
+    }
+
+    function prepare() {
         panelVisible = true;
-        if (workspaceRoot !== "") {
-            getRequested();
-        }
+        if (workspaceRoot !== "") getRequested();
     }
 
     function close() {

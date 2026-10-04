@@ -229,10 +229,9 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   fica só com o clique que abre a linha. A aba mostra a contagem.
 - **Rail** (coluna fininha à esquerda; o `›` do pé expande com os
   rótulos): **Projeto · Git · Embarcados · Banco · Containers · Grafana ·
-  Ferramentas**. Projeto, Git, Banco, Containers e Remoto são janelas
-  acopladas (abrem no slot do lado do ícone e ficam abertas enquanto você
-  edita); Embarcados e Grafana ainda abrem o painel de cada um por cima (o 59
-  diz quando cada um muda). Uma área com a janela aberta aparece no rail
+  Ferramentas**. Projeto, Git, Banco, Containers, Remoto e Grafana são
+  janelas acopladas (abrem no slot do lado do ícone e ficam abertas enquanto
+  você edita); Embarcados ainda abre o painel por cima (muda na 0.4). Uma área com a janela aberta aparece no rail
   enquanto estiver aberta, mesmo que ainda não tenha uso no projeto. Busca, Build e Debug **não estão** no
   rail (desde a Etapa 3): a busca no projeto é `Ctrl+Shift+F` / a aba
   Busca; Build e Debug são o widget Executar do cabeçalho (▶ 🐞 ⋯), o
@@ -788,8 +787,8 @@ faz antes de compilar. São nove painéis, e todos seguem a mesma regra — a ID
 **mostra o que vai fazer e espera você aceitar**; nenhum deles escreve no seu
 projeto sozinho. Os que se usam todo dia também têm ícone nos **trilhos**:
 Banco de dados, Containers, Observabilidade e Ferramentas. **Banco** e
-**Containers** são janelas acopladas (abrem no lado do trilho em que o ícone
-está, ao lado do editor); Observabilidade ainda abre como painel por cima. Sem
+**Containers**, Remoto e Observabilidade são janelas acopladas (abrem no lado
+do trilho em que o ícone está, ao lado do editor). Sem
 projeto aberto, nenhum deles aparece (a tela de boas-vindas é só de
 boas-vindas).
 
@@ -1116,22 +1115,47 @@ espelho aberto, "Rodar em pi" roda o que você acabou de salvar.
 
 ### Observabilidade (Grafana)
 
-A IDE conversa com o Grafana pela **HTTP API** e nunca o embute — a licença dele
-(AGPL-3.0) decide essa forma. Ela guarda o endereço e a política; **o token não
-tem onde ser gravado**, e isso é garantia estrutural, não disciplina.
+A IDE conversa com o Grafana pela **HTTP API** e nunca o empacota — a licença
+dele (AGPL-3.0) decide essa forma. Ela guarda o endereço e a política; **o token
+não tem onde ser gravado**, e isso é garantia estrutural, não disciplina.
+
+**A janela** (desde 2026-10-04) fica acoplada ao lado do código, como o Banco
+(Ctrl+Alt+O ou o ícone no trilho). Tem duas abas:
+
+- **Painel:** o endereço, o token, o estado e os dashboards. A **engrenagem**
+  ⚙ do cabeçalho mostra ou esconde o endereço e o token a qualquer momento;
+  o ↗ abre o Grafana no navegador.
+- **Web:** o seu Grafana **dentro da IDE**. É opcional e vem **desligado**.
+  Ligue pelo botão da própria aba ou em Configurações → Interface → "Grafana
+  dentro da IDE".
+  - Desligado, o navegador embutido nem é carregado.
+  - Ligado, ele só carrega quando a aba Web aparece, e a janela alarga para o
+    dashboard caber.
+  - Abre só endereço local (`localhost`, `127.0.0.1`, `::1`): é para o
+    Grafana que você desenvolve no projeto. Um link para fora vai para o
+    navegador do sistema.
+  - Duplo clique (ou Enter) num dashboard do Painel abre o dashboard na aba
+    Web.
+  - Custa memória enquanto está aberto (por volta de 240 MB, medidos com um
+    dashboard). Fechar a janela libera a página; um resto pequeno do
+    navegador embutido (cerca de 45 MB) só sai quando a IDE fecha.
+  - No Ubuntu/Debian sem o pacote `qml6-module-qtwebengine`, a aba diz o que
+    instalar. O AppImage já leva o navegador embutido.
 
 **A integração é somente de leitura.** A IDE pergunta a versão, a saúde, as
 fontes de dados e os dashboards. Ela não cria, não edita e não apaga nada no seu
-Grafana, e não o instala nem o configura. Os painéis abrem **no seu navegador**.
+Grafana, e não o instala nem o configura. Os dashboards abrem **no seu
+navegador** ou, com a opção ligada, na aba Web.
 
 **Primeiro uso.** Só o endereço, e `Conectar` — que grava e mede no mesmo gesto.
-A política de token (variável de ambiente ou digitar na sessão) **só aparece se
-o servidor pedir**: sem token dá para ver a versão e a saúde, e é comum não
-precisar de mais nada.
+A política de token (variável de ambiente ou digitar na sessão) aparece sozinha
+**se o servidor pedir**, ou pela engrenagem: sem token dá para ver a versão e a
+saúde; para listar os dashboards, escolha "Pedir na sessão" e cole o token de
+uma conta de serviço (ele vive só na sessão).
 
 **Uso diário.** O cabeçalho diz onde e quando — *autenticado em grafana.lab:3000
 · medido há 12 min* — e oferece um gesto só: **Atualizar**. A configuração fica
-recolhida em `configurar…` e volta sozinha quando o endereço é o problema.
+recolhida atrás da engrenagem e volta sozinha quando o endereço é o problema.
 
 **O que a IDE tem e o navegador não:** o cruzamento. Quais **bancos deste
 projeto** o seu Grafana já observa, com a justificativa do casamento ao lado —

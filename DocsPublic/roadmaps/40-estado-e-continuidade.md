@@ -69,7 +69,8 @@
 >     Feitos: passos 1–5 e o 5b do 59 §2 (Containers, topo, controles,
 >     Configurações, Remoto, painel de baixo). **Próximo passo: o 6, Grafana**
 >     — o desenho já decidido está no 59 §6.1; depois o 7 (Banco) e o 8
->     (pente fino).
+>     (pente fino). **Atualização:** o passo 6 está feito na IDE (§7.218,
+>     protocolo `0.154.0`); falta só o AppImage levar o QtWebEngine.
 >
 >     Depois disso, a 0.4 é inteira dos embarcados.
 > - **Próximo:** fechar a 0.3.9 pelo [`59`](59-fechamento-da-0.3.9.md); depois a 0.4

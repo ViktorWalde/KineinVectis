@@ -1,7 +1,7 @@
 import QtQuick
 // Pelo MODULO, e nao pela pasta: desde que a entrada carrega o painel dela
 // (V3, campo `componente`), o `ToolWindows` referencia tipos de outras pastas —
-// `GrafanaPanelHost` — que um import de diretorio nao
+// `EmbeddedPanelHost` — que um import de diretorio nao
 // resolve. O espelho plano do harness tem todos.
 import KineinVectis
 
@@ -137,7 +137,7 @@ Item {
         // a entrada carrega o painel dela. Quem monta os overlays le' esta
         // lista em vez de conhecer cada painel pelo nome.
         const comPainel = toolWindows.overlayEntries.map(function(e) { return e.id; });
-        check(comPainel.join(",") === "embedded,observability",
+        check(comPainel.join(",") === "embedded",
               "os paineis de ambiente, na ordem do trilho: " + comPainel.join(","));
         for (const e of toolWindows.overlayEntries) {
             check(e.panel !== undefined && e.panel !== null, e.id + " sem componente");
@@ -151,6 +151,11 @@ Item {
         // do lado do icone, e acendem pelo que o shell diz que esta' visivel.
         check(porId("containers").kind === "dock-left" && porId("containers").panel === undefined,
               "containers e' janela, nao overlay");
+        // O Grafana tambem (2026-10-04, 59 §6.1).
+        check(porId("observability").kind === "dock-left" && porId("observability").panel === undefined,
+              "observability e' janela, nao overlay");
+        check(toolWindows.activate("observability") === true && calls[calls.length - 1] === "dock:observability",
+              "activate('observability') abre a janela");
         check(toolWindows.activate("containers") === true && calls[calls.length - 1] === "dock:containers",
               "activate('containers') abre a janela");
         fakeShell.containersWindowVisible = true;
@@ -158,7 +163,7 @@ Item {
 
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
         check(toolWindows.activate("nao.existe") === false, "id sem dono devolve false");
-        check(calls.length === 4, // explorer, tools, dock:remote, dock:containers
+        check(calls.length === 5, // explorer, tools, dock:remote, dock:observability, dock:containers
               "id sem dono nao pode tocar em nada");
 
         Qt.exit(failures === 0 ? 0 : 1);
