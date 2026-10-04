@@ -231,7 +231,10 @@ no checkout, não em nenhum pacote publicado.
   Desligada, o navegador embutido nem carrega. Duplo clique num dashboard o
   abre ali.
 - **Correções:** escolher "Pedir na sessão" agora abre o campo do token; o
-  duplo clique abre a linha em qualquer grade.
+  duplo clique abre a linha em qualquer grade; a janela do Grafana devolve a
+  largura ao sair da aba Web; o texto do terminal vazio não transborda mais.
+  A aba Web recusa por padrão janelas, área de transferência e permissões, e
+  não grava nada no disco.
 - **O painel de baixo em relevo.** As abas ficam numa bandeja um tom acima do
   editor, e o conteúdo (Terminal, Problemas, Jobs…) num fundo rebaixado, com
   borda e sombra no topo: dá para ver onde o código acaba e a saída começa.

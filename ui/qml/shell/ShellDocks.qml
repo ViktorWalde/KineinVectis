@@ -101,6 +101,15 @@ QtObject {
         root.shell.persistLayoutSoon();
     }
 
+    // O contrario do `widen`: devolve a largura de antes (o Grafana ao sair da
+    // aba Web ou fechar, 2026-10-04). Pelo lado do ICONE, porque ao fechar a
+    // janela ja' nao esta' posta em lado nenhum.
+    function restore(name, width) {
+        if (root.sideOf(name) === "right") root.shell.rightPreferredWidth = width;
+        else root.shell.explorerPreferredWidth = width;
+        root.shell.persistLayoutSoon();
+    }
+
     // O icone mudou de trilho: aberta do lado antigo, a janela vai junto.
     function followSide(name, side) {
         const now = root.placed(name);

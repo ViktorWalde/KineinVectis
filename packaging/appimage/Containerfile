@@ -31,6 +31,8 @@ RUN apt-get update \
         qml6-module-qtqml-workerscript \
         qml6-module-qtquick \
         qml6-module-qtquick-window \
+        qml6-module-qtwebengine \
+        qml6-module-qtwebchannel \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

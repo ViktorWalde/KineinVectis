@@ -49,8 +49,13 @@ Item {
     Item {
         anchors.fill: parent
 
+        // Quebra dentro do poco: numa coluna estreita a frase saia pelos lados.
         Text {
-            anchors.centerIn: parent
+            anchors.fill: parent
+            anchors.margins: Theme.spacingMedium
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.WordWrap
             visible: root.lines.length === 0
             text: root.emptyText
             color: Theme.textMuted
@@ -66,24 +71,14 @@ Item {
         anchors.margins: Theme.spacingSmall
         clip: true
 
-        // CAUSA-RAIZ do cursor "desalocado" (2026-07-16, DocsPublic/roadmaps/26 §4.7).
-        //
-        // Antes isto era um `Column` de `Row`s. O positioner do Qt Quick
-        // DESCARTA filhos de largura zero — e uma linha vazia vem do core como
-        // `[]` (o `build_line` corta o run final de espaços no estilo default),
-        // virando um `Row` sem filhos, logo sem largura. Resultado medido: cada
-        // linha vazia sumia do layout e TODO o texto abaixo subia uma linha,
-        // enquanto o cursor ficava na posição correta da grade. O cursor não
-        // estava errado; o texto é que escorregava para cima.
-        //
-        // Por isso as correções de sub-pixel (R1) não mudaram nada: o erro era
-        // de LINHA INTEIRA. E por isso o Terminal comum passou no aceite e as
-        // TUIs não: no shell as linhas vazias ficam abaixo do cursor, numa TUI
-        // elas ficam acima.
-        //
-        // A correção é a regra do R1.4 levada até o fim: a linha é posicionada
-        // pela MESMA métrica que o cursor, não por um positioner. Layout não
-        // decide geometria de grade.
+        // CAUSA-RAIZ do cursor "desalocado" (2026-07-16, roadmaps/26 §4.7): isto
+        // era um `Column` de `Row`s, e o positioner DESCARTA filhos de largura
+        // zero — uma linha vazia vem do core como `[]`, virava um `Row` sem
+        // largura, sumia, e todo o texto abaixo subia uma linha enquanto o
+        // cursor ficava certo. Por isso o shell passava e as TUIs nao (nelas as
+        // linhas vazias ficam acima do cursor), e as correcoes de sub-pixel
+        // (R1) nao mudavam nada. A regra do R1.4 ate' o fim: a linha e'
+        // posicionada pela MESMA metrica do cursor; layout nao decide grade.
         Repeater {
             model: root.lines
 

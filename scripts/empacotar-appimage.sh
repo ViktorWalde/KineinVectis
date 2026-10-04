@@ -314,7 +314,9 @@ QMAKE="$(
 )"
 export QMAKE
 
-export QML_SOURCES_PATHS="$REPO_ROOT/ui/qml"
+# O segundo caminho so' tem o `import QtWebEngine` da aba Web do Grafana, que
+# a IDE cria sob demanda e sem import estatico (59 §6.1).
+export QML_SOURCES_PATHS="$REPO_ROOT/ui/qml:$REPO_ROOT/packaging/appimage/qml-extra"
 export PATH="$TOOLS_DIR:$PATH"
 export LDAI_OUTPUT="$OUTPUT_FILE"
 export LDAI_RUNTIME_FILE="$TYPE2_RUNTIME"
@@ -363,7 +365,9 @@ export EXTRA_PLATFORM_PLUGINS
 # Os icones da UI sao SVG (`assets/icons/**.svg`) e nenhum binario linka QtSvg:
 # sem pedir o modulo, o linuxdeploy nao leva `imageformats/libqsvg.so` e o Qt
 # so' avisa "Unsupported image format" no stderr (AppImage de 2026-10-01).
-export EXTRA_QT_MODULES="svg"
+# `webenginecore`: a aba Web do Grafana (0.154.0, 59 §6.1). O deployer do
+# plugin leva o QtWebEngineProcess, os .pak e os locales.
+export EXTRA_QT_MODULES="svg;webenginecore"
 
 # A libxkbcommon e' do SISTEMA, nao do pacote: ela le os dados de teclado do
 # sistema (/usr/share/X11/locale/*/Compose), e a do Debian 12 empacotada nao

@@ -24,6 +24,7 @@ Rectangle {
 
     signal closeRequested()
     signal widenRequested(real width)
+    signal restoreWidthRequested(real width)
 
     radius: Theme.radiusLarge
     color: Theme.background1
@@ -32,10 +33,27 @@ Rectangle {
     readonly property bool webEnabled: root.settings !== null && root.settings.grafanaWebView
     readonly property string baseUrl: root.controller ? root.controller.profile.url : ""
     property string tab: "painel"
+    // A largura de antes da aba Web. Sair dela, ou fechar a janela, devolve o
+    // espaco ao codigo: antes a janela ficava com 830 px tambem no Painel
+    // (achado na tela, 2026-10-04).
+    property real widthBeforeWeb: 0
+
+    function widenForWeb() {
+        if (!root.webEnabled || root.widthBeforeWeb > 0) return;
+        root.widthBeforeWeb = root.width;
+        root.widenRequested(900);
+    }
+
+    function giveBackWidth() {
+        if (root.widthBeforeWeb <= 0) return;
+        root.restoreWidthRequested(root.widthBeforeWeb);
+        root.widthBeforeWeb = 0;
+    }
 
     function showTab(id) {
         root.tab = id;
-        if (id === "web" && root.webEnabled) root.widenRequested(900);
+        if (id === "web") root.widenForWeb();
+        else root.giveBackWidth();
     }
 
     // Um dashboard dos achados abre AQUI quando a aba Web esta' ligada; senao,
@@ -50,7 +68,14 @@ Rectangle {
         }
     }
 
-    onVisibleChanged: if (!root.visible) web.release()
+    onVisibleChanged: {
+        if (root.visible) {
+            if (root.tab === "web") root.widenForWeb();
+        } else {
+            web.release();
+            root.giveBackWidth();
+        }
+    }
 
     // ---- cabecalho: titulo, estado, ajustes, abrir fora, fechar -------------
 
@@ -165,7 +190,7 @@ Rectangle {
         baseUrl: root.baseUrl
         onEnableRequested: {
             root.settings.setGrafanaWebView(true);
-            root.widenRequested(900);
+            Qt.callLater(root.widenForWeb);
         }
     }
 }

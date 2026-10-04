@@ -46,6 +46,15 @@ Item {
         failures += check(!page.isLocal("https://grafana.example.com"), "host remoto");
         failures += check(!page.isLocal("http://127.0.0.10:3000"), "outro IP");
         failures += check(!page.isLocal("file:///etc/passwd"), "arquivo");
+        // Tentativas classicas de burlar o "so' local" (59 §7, seguranca).
+        failures += check(!page.isLocal("http://localhost:3000@evil.com/"), "userinfo depois da porta");
+        failures += check(!page.isLocal("http://localhost@evil.com/"), "userinfo sem porta");
+        failures += check(!page.isLocal("http://127.0.0.1.evil.com/"), "IP como prefixo de dominio");
+        failures += check(!page.isLocal("http://localhost\\@evil.com/"), "barra invertida");
+        failures += check(!page.isLocal("http://localhost\n.evil.com/"), "quebra de linha");
+        failures += check(!page.isLocal("javascript:alert(1)//http://localhost"), "javascript:");
+        failures += check(!page.isLocal(" http://localhost:3000"), "espaco antes");
+        failures += check(!page.isLocal("http://localhost:3000x"), "porta com lixo");
 
         // Desligada: nenhuma view, nenhum erro — o modulo web nao foi tocado.
         page.ensureView();

@@ -57,7 +57,7 @@ Cada passo termina com:
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | feito (40.7 §7.215), com os campos de texto refeitos e o menu que não deixa o mouse atravessar |
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
-| 6 | **Grafana: visualização web opcional** (§6) | feito na IDE (40.7 §7.218, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real; **falta o AppImage levar o QtWebEngine 6.4** (medir o aumento do download) |
+| 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
 | 7 | **Banco completo** (§5.1–§5.6), com o MongoDB lendo e escrevendo | a camada de segurança 1 e a grade estão feitas; o resto, a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
@@ -295,7 +295,17 @@ escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
    prévia).
 
 É a forma que cobre "a escolha do usuário" sem a IDE manter um driver por
-banco. Não entra na 0.3.9 sem a decisão do autor.
+banco.
+
+**Decidido pelo autor em 2026-10-04: vale, e entra no passo 7.** Nas palavras
+dele: "os nativos e os por plugins que o usuário quiser usar, e a IDE apenas
+orquestra". Ficam assim:
+
+- os nativos completos, como acima;
+- os outros bancos pelo driver ODBC que a pessoa instala;
+- a IDE só lista os DSN e orquestra;
+- a IDE não baixa driver sozinha. Um driver é código nativo de terceiros, e
+  carregá-lo é gesto explícito, com aviso (§7, segurança).
 
 ## 6. Grafana: visualização web dentro da IDE
 
@@ -406,6 +416,45 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
 
 ## 7. Pente fino e fechamento
 
+- **AppImage, depois de todo o pente fino** (decisão do autor, 2026-10-04).
+  Antes de empacotar de novo:
+  - um QtWebEngine mais novo que o 6.4 do Debian 12, que tem o defeito dos
+    avisos "is neither a QObject" (40.7 §7.219);
+  - um caminho acelerado para a aba Web, já que o hook portátil força
+    software e o Chromium avisa do modo degradado;
+  - o `runtime-x86_64` fixado numa release com tag, em vez do canal
+    `continuous`.
+- **Terminal com reflow:** ao alargar, as linhas antigas continuam quebradas
+  na largura estreita (visto com a janela do Grafana voltando ao tamanho).
+  Terminais modernos refazem a quebra.
+- **Segurança da casca** (pedido do autor, 2026-10-04: a IDE orquestra
+  ferramentas prontas — ssh, Grafana, drivers de banco — e a falha não pode
+  vir do lado dela). Revisar e testar, com teste que tenta quebrar:
+  - **Injeção em linha de comando:** host, usuário, porta, caminho e nome de
+    alvo viram argumentos de `ssh`/`rsync`/`ssh-copy-id`/`ssh-keyscan`.
+    Valores que começam com `-`, ou que têm `;`, `$()`, espaço ou quebra de
+    linha, num `remotes.json` de projeto clonado, não podem virar opção nem
+    comando. O mesmo vale para runconfigs e para a linha armada no terminal.
+  - **Projeto não confiável:** abrir um repositório de terceiros não executa
+    nada, não grava chave e não conecta sem gesto explícito (`.kinein/`:
+    runconfigs, remotos, Grafana, conexões).
+  - **Credenciais:** o token do Grafana e a senha de banco ficam só na
+    memória. Conferir a redação do log do cliente e do core com valores
+    reais.
+  - **Aba Web:** só localhost; nenhuma ponte JavaScript↔IDE (não há
+    WebChannel exposto); link externo e janela nova vão ao navegador.
+    Conferir que uma página local não alcança arquivo (`file://`).
+  - **`known_hosts`/chaves:** grava só a chave vista; nunca sobrescreve a que
+    mudou (`hostKeyChanged`).
+  - **Caminhos:** o espelho remoto e o deploy não escapam da pasta (`..`,
+    link simbólico, caminho absoluto).
+  - **Cadeia de suprimento:** `cargo deny`, hashes fixados, e o runtime do
+    AppImage tirado do canal `continuous`, que mudou sem aviso em 2026-10-04
+    (o SHA fixado não bateu e o build recusou). Fixar uma release com tag.
+  - **ODBC:** driver é código nativo de terceiros. A IDE carrega o que a
+    pessoa instalou, com aviso, e nunca baixa driver.
+- **Shift+F10** abre o menu de contexto no terminal e na árvore; Executar fica
+  no Ctrl+Alt+R. **Confirmado pelo autor em 2026-10-04.**
 - **A/B do `AA_ShareOpenGLContexts`** (40.7 §7.218): RSS e primeiro quadro
   com e sem a linha, N≥5 na mesma cena. Se custar, ligar só quando a opção
   `grafanaWebView` estiver ligada (lida antes do `QGuiApplication`).

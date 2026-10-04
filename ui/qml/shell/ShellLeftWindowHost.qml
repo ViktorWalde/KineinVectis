@@ -202,6 +202,7 @@ Item {
         }
         onCloseRequested: root.shellController.toggleDockWindow("observability")
         onWidenRequested: width => root.shellController.docks.widen("observability", width)
+        onRestoreWidthRequested: width => root.shellController.docks.restore("observability", width)
     }
 
     Connections {

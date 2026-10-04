@@ -57,6 +57,13 @@ Item {
                 + "WebEngineView {\n"
                 + "    property var page: null\n"
                 + "    anchors.fill: parent\n"
+                // Recusa por padrao (seguranca, 59 §7): a pagina nao abre
+                // janela, nao le a area de transferencia e nao roda plugin.
+                + "    settings.javascriptCanOpenWindows: false\n"
+                + "    settings.javascriptCanAccessClipboard: false\n"
+                + "    settings.pluginsEnabled: false\n"
+                + "    settings.localContentCanAccessFileUrls: false\n"
+                + "    settings.localContentCanAccessRemoteUrls: false\n"
                 + "    onNavigationRequested: function(request) {\n"
                 + "        if (page.isLocal(request.url)) return;\n"
                 + "        if (typeof request.reject === 'function') request.reject();\n"
@@ -66,12 +73,27 @@ Item {
                 + "    onNewWindowRequested: function(request) { page.openOutside(request.requestedUrl); }\n"
                 + "}\n", viewSlot, "GrafanaWebView");
             root.view.page = root;
+            root.denyPermissions(root.view);
             root.view.url = root.pendingUrl !== "" ? root.pendingUrl : root.baseUrl;
             root.loadError = "";
         } catch (error) {
             root.view = null;
             root.loadError = qsTr("O navegador embutido (QtWebEngine) não está instalado. No Ubuntu/Debian: sudo apt install qml6-module-qtwebengine. Enquanto isso, use Abrir no navegador.");
             console.warn("GrafanaWebPage: " + error);
+        }
+    }
+
+    // Camera, microfone, localizacao, notificacao, tela: o Grafana nao
+    // precisa de nada disso, e a resposta e' NAO sem perguntar. O sinal mudou
+    // de nome no Qt 6.8; um manipulador com o nome errado na string faria a
+    // criacao falhar no outro Qt, entao a conexao e' pelo que a view tem.
+    // Downloads nao aceitos sao cancelados pelo proprio QtWebEngine.
+    function denyPermissions(view) {
+        if (typeof view.permissionRequested === "function") {
+            view.permissionRequested.connect(permission => permission.deny());
+        } else if (typeof view.featurePermissionRequested === "function") {
+            view.featurePermissionRequested.connect(
+                (origin, feature) => view.grantFeaturePermission(origin, feature, false));
         }
     }
 

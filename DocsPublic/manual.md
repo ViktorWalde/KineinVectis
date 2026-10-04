@@ -1134,6 +1134,11 @@ não tem onde ser gravado**, e isso é garantia estrutural, não disciplina.
   - Abre só endereço local (`localhost`, `127.0.0.1`, `::1`): é para o
     Grafana que você desenvolve no projeto. Um link para fora vai para o
     navegador do sistema.
+  - A página não abre janelas, não lê a área de transferência e não ganha
+    câmera, microfone nem localização. Nada fica gravado no disco: cookies e
+    cache somem ao fechar a IDE.
+  - A janela alarga só enquanto a aba Web está à vista; de volta ao Painel,
+    ela devolve a largura que tinha.
   - Duplo clique (ou Enter) num dashboard do Painel abre o dashboard na aba
     Web.
   - Custa memória enquanto está aberto (por volta de 240 MB, medidos com um
