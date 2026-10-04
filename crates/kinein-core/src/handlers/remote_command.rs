@@ -19,23 +19,37 @@ use crate::Core;
 use crate::remote;
 use crate::rpc::{no_workspace_response, parse_params};
 
-use super::remote::alvo_ou_falha;
+use super::remote::target_or_error;
 
 /// `remote.command { kind: copyId }`: a linha que copia a chave do usuario.
 ///
 /// PURO, como os outros `kind`: compoe e devolve. Quem executa e' a UI, e so'
 /// depois de mostrar a linha e receber um gesto explicito — copiar chave nao
 /// pode acontecer porque alguem clicou em "sondar".
-fn copy_id_response(request_id: Option<Value>, target: &RemoteTarget) -> JsonRpcResponse {
+///
+/// Sem chave nenhuma (2026-10-04), a linha CRIA a chave antes de copiar: o
+/// `ssh-copy-id` sozinho so' diria "No identities found". A frase-senha e a
+/// senha do alvo sao perguntadas no terminal; a IDE nao as ve'.
+fn copy_id_response(
+    request_id: Option<Value>,
+    target: &RemoteTarget,
+    home: &std::path::Path,
+) -> JsonRpcResponse {
+    let (command, creates) = remote::trust::copy_id_plan(target, home);
     JsonRpcResponse::success(
         request_id,
         json!(RemoteCommandResult {
-            command: remote::ssh_copy_id_line(target),
+            command,
             remote_target: None,
-            name: format!("Copiar chave para {}", target.name),
+            name: if creates {
+                format!("Criar minha chave e copiar para {}", target.name)
+            } else {
+                format!("Copiar minha chave para {}", target.name)
+            },
             source: vec![
                 format!("alvo `{}` de .kinein/remotes.json", target.name),
-                "a chave publica e' SUA; a IDE nao gera chave nem digita senha".to_owned(),
+                "a chave é SUA; a senha do alvo é pedida uma vez, no terminal, e a IDE não a vê"
+                    .to_owned(),
             ],
         }),
     )
@@ -83,12 +97,12 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "remote.command");
         };
-        let target = match alvo_ou_falha(&root, request_id.as_ref(), &parsed.name) {
+        let target = match target_or_error(&root, request_id.as_ref(), &parsed.name) {
             Ok(target) => target,
             Err(response) => return *response,
         };
         if parsed.kind == RemoteCommandKind::CopyId {
-            return copy_id_response(request_id, &target);
+            return copy_id_response(request_id, &target, &self.sdk_home().unwrap_or_default());
         }
         let projeto = root.file_name().map_or_else(
             || "projeto".to_owned(),

@@ -49,6 +49,7 @@ set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYP
 set_source_files_properties(qml/datasource/DataSourceKinds.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS DataSourceKinds.qml)
 set_source_files_properties(qml/container/ContainerStates.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS ContainerStates.qml)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/components/TextMenuController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
 set_source_files_properties(qml/components/KvFileIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvFileIcon.qml)
 set_source_files_properties(qml/components/KvIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvIconGlyphs.js)
@@ -56,6 +57,8 @@ set_source_files_properties(qml/components/KvLists.js PROPERTIES QT_RESOURCE_ALI
 set_source_files_properties(qml/components/KvFileIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvFileIconGlyphs.js)
 set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
 set_source_files_properties(qml/components/KvTextField.qml PROPERTIES QT_RESOURCE_ALIAS KvTextField.qml)
+set_source_files_properties(qml/components/KvTextCaret.qml PROPERTIES QT_RESOURCE_ALIAS KvTextCaret.qml)
+set_source_files_properties(qml/components/KvFocusKeeper.qml PROPERTIES QT_RESOURCE_ALIAS KvFocusKeeper.qml)
 set_source_files_properties(qml/components/KvPanelFrame.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelFrame.qml)
 set_source_files_properties(qml/components/KvPanelHeader.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelHeader.qml)
 set_source_files_properties(qml/components/KvVerdict.qml PROPERTIES QT_RESOURCE_ALIAS KvVerdict.qml)
@@ -66,6 +69,9 @@ set_source_files_properties(qml/components/KvBarButton.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
 set_source_files_properties(qml/components/KvTooltipHost.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltipHost.qml)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_RESOURCE_ALIAS TooltipController.qml)
+set_source_files_properties(qml/components/TextMenuController.qml PROPERTIES QT_RESOURCE_ALIAS TextMenuController.qml)
+set_source_files_properties(qml/components/KvTextMenuHost.qml PROPERTIES QT_RESOURCE_ALIAS KvTextMenuHost.qml)
+set_source_files_properties(qml/components/KvFloatingLayer.qml PROPERTIES QT_RESOURCE_ALIAS KvFloatingLayer.qml)
 set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOURCE_ALIAS KvIconButton.qml)
 set_source_files_properties(qml/components/ReorderController.qml PROPERTIES QT_RESOURCE_ALIAS ReorderController.qml)
 set_source_files_properties(qml/components/ReorderMouseArea.qml PROPERTIES QT_RESOURCE_ALIAS ReorderMouseArea.qml)
@@ -262,19 +268,23 @@ set_source_files_properties(qml/ipc/RemoteEventRouter.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/ipc/RemoteRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS RemoteRequestRouter.qml)
 set_source_files_properties(qml/remote/RemoteController.qml PROPERTIES QT_RESOURCE_ALIAS RemoteController.qml)
 set_source_files_properties(qml/remote/RemoteSetupController.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSetupController.qml)
+set_source_files_properties(qml/remote/RemoteTrustController.qml PROPERTIES QT_RESOURCE_ALIAS RemoteTrustController.qml)
+set_source_files_properties(qml/remote/RemoteContactLog.qml PROPERTIES QT_RESOURCE_ALIAS RemoteContactLog.qml)
 set_source_files_properties(qml/remote/RemoteWorkspaceController.qml PROPERTIES QT_RESOURCE_ALIAS RemoteWorkspaceController.qml)
-set_source_files_properties(qml/remote/RemoteList.qml PROPERTIES QT_RESOURCE_ALIAS RemoteList.qml)
 set_source_files_properties(qml/remote/RemoteDiscovery.qml PROPERTIES QT_RESOURCE_ALIAS RemoteDiscovery.qml)
 set_source_files_properties(qml/remote/RemoteNewHost.qml PROPERTIES QT_RESOURCE_ALIAS RemoteNewHost.qml)
 set_source_files_properties(qml/remote/RemoteHudRules.qml PROPERTIES QT_RESOURCE_ALIAS RemoteHudRules.qml)
 set_source_files_properties(qml/remote/RemoteActionRules.qml PROPERTIES QT_RESOURCE_ALIAS RemoteActionRules.qml)
 set_source_files_properties(qml/remote/RemoteSections.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSections.qml)
+set_source_files_properties(qml/remote/RemoteWindow.qml PROPERTIES QT_RESOURCE_ALIAS RemoteWindow.qml)
+set_source_files_properties(qml/remote/RemoteActionRow.qml PROPERTIES QT_RESOURCE_ALIAS RemoteActionRow.qml)
+set_source_files_properties(qml/remote/RemoteHostKeyBox.qml PROPERTIES QT_RESOURCE_ALIAS RemoteHostKeyBox.qml)
+set_source_files_properties(qml/remote/RemoteTargetRows.qml PROPERTIES QT_RESOURCE_ALIAS RemoteTargetRows.qml)
+set_source_files_properties(qml/remote/RemoteSectionPages.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSectionPages.qml)
 set_source_files_properties(qml/remote/RemoteSystemView.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSystemView.qml)
 set_source_files_properties(qml/remote/RemoteRunActions.qml PROPERTIES QT_RESOURCE_ALIAS RemoteRunActions.qml)
 set_source_files_properties(qml/remote/RemoteForm.qml PROPERTIES QT_RESOURCE_ALIAS RemoteForm.qml)
 set_source_files_properties(qml/remote/RemoteVerdict.qml PROPERTIES QT_RESOURCE_ALIAS RemoteVerdict.qml)
-set_source_files_properties(qml/remote/RemotePanel.qml PROPERTIES QT_RESOURCE_ALIAS RemotePanel.qml)
-set_source_files_properties(qml/remote/RemotePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS RemotePanelHost.qml)
 set_source_files_properties(qml/remote/RemoteMirrorView.qml PROPERTIES QT_RESOURCE_ALIAS RemoteMirrorView.qml)
 set_source_files_properties(qml/ipc/GitRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitRequestRouter.qml)
 set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
@@ -448,6 +458,8 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvFileIconGlyphs.js
         qml/components/KvToggleChip.qml
         qml/components/KvTextField.qml
+        qml/components/KvTextCaret.qml
+        qml/components/KvFocusKeeper.qml
         qml/components/KvPanelFrame.qml
         qml/components/KvPanelHeader.qml
         qml/components/KvVerdict.qml
@@ -458,6 +470,9 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvTooltip.qml
         qml/components/KvTooltipHost.qml
         qml/components/TooltipController.qml
+        qml/components/TextMenuController.qml
+        qml/components/KvTextMenuHost.qml
+        qml/components/KvFloatingLayer.qml
         qml/components/KvIconButton.qml
         qml/components/ReorderController.qml
         qml/components/ReorderMouseArea.qml
@@ -656,19 +671,23 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/RemoteRequestRouter.qml
         qml/remote/RemoteController.qml
         qml/remote/RemoteSetupController.qml
+        qml/remote/RemoteTrustController.qml
+        qml/remote/RemoteContactLog.qml
         qml/remote/RemoteWorkspaceController.qml
-        qml/remote/RemoteList.qml
         qml/remote/RemoteDiscovery.qml
         qml/remote/RemoteNewHost.qml
         qml/remote/RemoteHudRules.qml
         qml/remote/RemoteActionRules.qml
         qml/remote/RemoteSections.qml
+        qml/remote/RemoteWindow.qml
+        qml/remote/RemoteActionRow.qml
+        qml/remote/RemoteHostKeyBox.qml
+        qml/remote/RemoteTargetRows.qml
+        qml/remote/RemoteSectionPages.qml
         qml/remote/RemoteSystemView.qml
         qml/remote/RemoteRunActions.qml
         qml/remote/RemoteForm.qml
         qml/remote/RemoteVerdict.qml
-        qml/remote/RemotePanel.qml
-        qml/remote/RemotePanelHost.qml
         qml/remote/RemoteMirrorView.qml
         qml/ipc/GitRequestRouter.qml
         qml/ipc/DebugEventRouter.qml

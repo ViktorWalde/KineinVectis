@@ -23,6 +23,16 @@ Item {
 
     signal dismissRequested()
 
+    // Esc fecha, como em todo popover (2026-10-04: so' fechava no clique fora).
+    onVisibleChanged: visible ? focusKeeper.take() : focusKeeper.giveBack()
+    Keys.onEscapePressed: root.dismissRequested()
+
+    KvFocusKeeper {
+        id: focusKeeper
+
+        target: root
+    }
+
     KvBackdrop {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton

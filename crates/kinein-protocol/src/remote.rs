@@ -6,6 +6,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::RemoteContact;
+
 /// One SSH target. No password field, structurally: SSH is by key here, and
 /// whatever the `ssh` of the system needs to ask, it asks in the IDE's
 /// terminal.
@@ -28,6 +30,13 @@ pub struct RemoteTarget {
     /// Where deploys land on the target; absent = `~/kinein/<project>`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deploy_dir: Option<String>,
+    /// The program run on the target, relative to the deploy dir
+    /// (`0.153.0`): remembered so reopening the IDE does not lose it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub program: Option<String>,
+    /// What is sent, relative to the project (`0.153.0`); absent = `build/`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deploy_source: Option<String>,
 }
 
 /// Parameters for `remote.list`.
@@ -41,6 +50,10 @@ pub struct RemoteListParams {}
 pub struct RemoteListResult {
     /// Targets sorted by name.
     pub targets: Vec<RemoteTarget>,
+    /// The last contact with each target (`0.153.0`): what the last probe
+    /// found, and when. Persisted per project, so it survives a restart.
+    #[serde(default)]
+    pub contacts: Vec<RemoteContact>,
 }
 
 /// Parameters for `remote.save`.
@@ -155,8 +168,15 @@ pub struct RemoteDeployedEvent {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum RemoteFailure {
-    /// Key refused or host key not accepted: `ssh-copy-id` is the gesture.
+    /// Key refused: `ssh-copy-id` is the gesture.
     Authentication,
+    /// First contact: the target's host key is not in `known_hosts` yet
+    /// (`0.153.0`). The gesture is `remote.hostKey` + `remote.trustHost`,
+    /// not `ssh-copy-id`.
+    UnknownHost,
+    /// The host key CHANGED since it was trusted (`0.153.0`): a reinstalled
+    /// board, or someone in the middle. The IDE never overwrites it.
+    HostKeyChanged,
     /// The name or IP does not resolve.
     Host,
     /// Did not reach the target: timeout, refused, no route.

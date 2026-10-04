@@ -1,7 +1,7 @@
 import QtQuick
 // Pelo MODULO, e nao pela pasta: desde que a entrada carrega o painel dela
 // (V3, campo `componente`), o `ToolWindows` referencia tipos de outras pastas —
-// `GrafanaPanelHost`, `RemotePanelHost` — que um import de diretorio nao
+// `GrafanaPanelHost` — que um import de diretorio nao
 // resolve. O espelho plano do harness tem todos.
 import KineinVectis
 
@@ -31,19 +31,12 @@ Item {
         property bool showBottomPanel: false
         property string bottomTab: ""
         property bool containersWindowVisible: false
+        property bool remoteWindowVisible: false
         function toggleExplorer() { root.calls.push("explorer"); }
         function toggleDockWindow(name) { root.calls.push("dock:" + name); }
         function toggleBottomTab(tab) { root.calls.push("tab:" + tab); }
     }
 
-    function painel(nome) {
-        return Qt.createQmlObject(
-            'import QtQuick; QtObject { property bool panelVisible: false; '
-            + 'function open() { testCalls.push("' + nome + '"); } }',
-            root);
-    }
-
-    property var testCalls: []
 
     ToolWindows {
         id: toolWindows
@@ -132,25 +125,19 @@ Item {
         check(toolWindows.activate("explorer") === true && calls[0] === "explorer", "explorer");
         check(toolWindows.activate("tools") === true && calls[1] === "tab:tools", "tools");
 
-        // O REMOTO (V4): activate abre o painel do controller, e "active" segue o
-        // painel — nao a existencia do controller. Sem controller, nao acende e
-        // nao estoura.
-        check(!porId("remote").active, "sem controller, o remoto nao acende");
-        check(toolWindows.activate("remote") === false, "sem controller, nada a ativar");
-        const fakeRemote = painel("remote");
-        toolWindows.remoteController = fakeRemote;
-        check(!porId("remote").active, "controller com painel fechado nao acende");
-        check(toolWindows.activate("remote") === true
-              && testCalls[testCalls.length - 1] === "remote",
-              "activate('remote') chama o open do dono");
-        fakeRemote.panelVisible = true;
-        check(porId("remote").active, "painel aberto acende o remoto");
+        // O REMOTO virou janela acoplada (2026-10-04): activate alterna a
+        // janela no shell, e "active" segue a janela aberta.
+        check(!porId("remote").active, "janela fechada nao acende o remoto");
+        check(toolWindows.activate("remote") === true && calls[calls.length - 1] === "dock:remote",
+              "activate('remote') alterna a janela acoplada");
+        fakeShell.remoteWindowVisible = true;
+        check(porId("remote").active, "janela aberta acende o remoto");
 
         // O CAMPO `componente` DA V3, que so' entrou quando ganhou consumidor:
         // a entrada carrega o painel dela. Quem monta os overlays le' esta
         // lista em vez de conhecer cada painel pelo nome.
         const comPainel = toolWindows.overlayEntries.map(function(e) { return e.id; });
-        check(comPainel.join(",") === "embedded,remote,observability",
+        check(comPainel.join(",") === "embedded,observability",
               "os paineis de ambiente, na ordem do trilho: " + comPainel.join(","));
         for (const e of toolWindows.overlayEntries) {
             check(e.panel !== undefined && e.panel !== null, e.id + " sem componente");
@@ -171,7 +158,7 @@ Item {
 
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
         check(toolWindows.activate("nao.existe") === false, "id sem dono devolve false");
-        check(calls.length === 3 && testCalls.length === 1, // explorer, tools, dock:containers
+        check(calls.length === 4, // explorer, tools, dock:remote, dock:containers
               "id sem dono nao pode tocar em nada");
 
         Qt.exit(failures === 0 ? 0 : 1);

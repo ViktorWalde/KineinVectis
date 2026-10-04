@@ -22,6 +22,11 @@ Item {
     property string deploySource: ""
     property var probeTools: []
     property bool probed: false
+    // O retorno dos gestos AQUI MESMO (2026-10-04: enviar nao dizia nada na
+    // seccao; o resultado so' aparecia na Visao).
+    property string deployMessage: ""
+    property bool deployOk: false
+    property string lastOutcome: ""
 
     signal programEdited(string text)
     signal deploySourceEdited(string text)
@@ -45,6 +50,9 @@ Item {
         return root.probed && !root.temFerramenta(id);
     }
 
+    // Sem alvo salvo, nada aqui roda: o motivo vai no topo e em cada linha.
+    readonly property string blockedReason: qsTr("salve um alvo em Configurar primeiro")
+
     Column {
         id: coluna
 
@@ -52,87 +60,136 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingSmall
 
-        Row {
+        // Os dois campos EMPILHADOS (2026-10-04): lado a lado, numa janela
+        // acoplada, os rotulos longos se sobrepunham.
+        DataSourceField {
             width: parent.width
-            spacing: Theme.spacingSmall
-
-            DataSourceField {
-                width: Math.round((parent.width - parent.spacing) / 2)
-                label: qsTr("Origem do deploy (vazio = build/)")
-                placeholder: "build/app"
-                value: root.deploySource
-                onEdited: text => root.deploySourceEdited(text)
-            }
-
-            DataSourceField {
-                width: Math.round((parent.width - parent.spacing) / 2)
-                label: qsTr("Programa no alvo (relativo = na pasta de deploy)")
-                placeholder: "app, main.py, /opt/app/bin"
-                value: root.program
-                onEdited: text => root.programEdited(text)
-            }
+            label: qsTr("Origem do deploy (vazio = build/)")
+            placeholder: "build/app"
+            value: root.deploySource
+            onEdited: text => root.deploySourceEdited(text)
         }
 
-        Flow {
+        DataSourceField {
             width: parent.width
-            spacing: Theme.spacingSmall
-
-            KvButton {
-                text: qsTr("Enviar (deploy)")
-                compact: true
-                enabled: root.ready && !root.deploying
-                onClicked: root.deployRequested()
-            }
-
-            KvButton {
-                text: qsTr("Rodar em… → config")
-                compact: true
-                enabled: root.ready
-                onClicked: root.commandRequested("run")
-            }
-
-            KvButton {
-                text: root.falta("gdbserver")
-                      ? qsTr("gdbserver → kit (falta no alvo)")
-                      : qsTr("gdbserver → kit")
-                compact: true
-                enabled: root.ready
-                onClicked: root.commandRequested("debugServer")
-            }
-
-            KvButton {
-                text: root.falta("python3")
-                      ? qsTr("debugpy → config (sem python3)")
-                      : qsTr("debugpy → config")
-                compact: true
-                enabled: root.ready
-                onClicked: root.commandRequested("debugpy")
-            }
-
-            KvButton {
-                text: qsTr("Shell no terminal")
-                compact: true
-                enabled: root.ready
-                onClicked: root.commandRequested("shell")
-            }
+            label: qsTr("Programa no alvo (relativo = na pasta de deploy)")
+            placeholder: "app, main.py, /opt/app/bin"
+            value: root.program
+            onEdited: text => root.programEdited(text)
         }
 
         Text {
-            width: parent.width
-            visible: root.probed && (root.falta("gdbserver") || root.falta("rsync"))
-            wrapMode: Text.WordWrap
-            text: {
-                const partes = [];
-                if (root.falta("gdbserver")) {
-                    partes.push(qsTr("sem gdbserver, o alvo não depura C/C++ remoto"));
-                }
-                if (root.falta("rsync")) {
-                    partes.push(qsTr("sem rsync, o envio cai para scp (mais lento, sem --delete)"));
-                }
-                return partes.join(" · ");
-            }
+            topPadding: Theme.spacingXSmall
+            text: qsTr("AÇÕES")
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeMicro
+            font.weight: Font.DemiBold
+            font.letterSpacing: 0.6
+        }
+
+        RemoteActionRow {
+            width: parent.width
+            iconName: "push"
+            title: qsTr("Enviar para o alvo")
+            detail: !root.ready ? root.blockedReason
+                    : root.falta("rsync") ? qsTr("sem rsync no alvo: vai por scp (mais lento, sem --delete)")
+                    : qsTr("%1 → pasta de deploy (rsync)").arg(root.deploySource !== "" ? root.deploySource : "build/")
+            caution: root.ready && root.falta("rsync")
+            available: root.ready && !root.deploying
+            busy: root.deploying
+            onTriggered: root.deployRequested()
+        }
+
+        RemoteActionRow {
+            width: parent.width
+            iconName: "run"
+            title: qsTr("Rodar no alvo")
+            detail: root.ready ? qsTr("cria a configuração de execução “Rodar em …”") : root.blockedReason
+            available: root.ready
+            onTriggered: root.commandRequested("run")
+        }
+
+        RemoteActionRow {
+            width: parent.width
+            iconName: "debug"
+            title: qsTr("Depurar C/C++ (gdbserver)")
+            detail: !root.ready ? root.blockedReason
+                    : root.falta("gdbserver") ? qsTr("falta gdbserver no alvo: instale antes de depurar")
+                    : qsTr("preenche o kit com o alvo e o gdbserver")
+            caution: root.ready && root.falta("gdbserver")
+            available: root.ready
+            onTriggered: root.commandRequested("debugServer")
+        }
+
+        RemoteActionRow {
+            width: parent.width
+            iconName: "debug"
+            title: qsTr("Depurar Python (debugpy)")
+            detail: !root.ready ? root.blockedReason
+                    : root.falta("python3") ? qsTr("o alvo não tem python3")
+                    : qsTr("cria a configuração com debugpy no alvo")
+            caution: root.ready && root.falta("python3")
+            available: root.ready
+            onTriggered: root.commandRequested("debugpy")
+        }
+
+        RemoteActionRow {
+            width: parent.width
+            iconName: "terminal"
+            title: qsTr("Abrir shell no terminal")
+            detail: root.ready ? qsTr("ssh no painel de baixo; a senha, se houver, pergunta lá") : root.blockedReason
+            available: root.ready
+            onTriggered: root.commandRequested("shell")
+        }
+
+        // O resultado do ultimo gesto: enviando, enviado, falhou, configurado.
+        Rectangle {
+            width: parent.width
+            visible: root.deploying || root.deployMessage !== "" || root.lastOutcome !== ""
+            height: resultColumn.implicitHeight + 2 * Theme.spacingSmall
+            radius: Theme.radius
+            color: Theme.background0
+            border.width: 1
+            border.color: !root.deploying && root.deployMessage !== "" && !root.deployOk ? Theme.errorSoft : Theme.borderSoft
+
+            Column {
+                id: resultColumn
+
+                anchors.fill: parent
+                anchors.margins: Theme.spacingSmall
+                spacing: 2
+
+                Row {
+                    visible: root.deploying || root.deployMessage !== ""
+                    width: parent.width
+                    spacing: Theme.spacingSmall
+
+                    KvIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: root.deploying ? "refresh" : (root.deployOk ? "check" : "warning")
+                        size: 13
+                        success: !root.deploying && root.deployOk
+                        error: !root.deploying && !root.deployOk
+                    }
+
+                    Text {
+                        width: parent.width - 13 - parent.spacing
+                        text: root.deploying ? qsTr("Enviando…") : root.deployMessage
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontSizeCaption
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                Text {
+                    width: parent.width
+                    visible: root.lastOutcome !== ""
+                    text: root.lastOutcome
+                    color: Theme.textMuted
+                    font.pixelSize: Theme.fontSizeCaption
+                    wrapMode: Text.WordWrap
+                }
+            }
         }
     }
 }

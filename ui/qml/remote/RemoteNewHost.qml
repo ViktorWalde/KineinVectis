@@ -35,9 +35,11 @@ Item {
         spacing: 4
 
         Text {
+            topPadding: Theme.spacingSmall
             text: qsTr("Configurar um servidor novo")
             color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeSmall
+            font.pixelSize: Theme.fontSizeBody
+            font.weight: Font.DemiBold
         }
 
         Text {
@@ -49,27 +51,23 @@ Item {
             font.pixelSize: Theme.fontSizeCaption
         }
 
-        Row {
+        // Campo inteiro e o botao embaixo (2026-10-04): na janela acoplada a
+        // linha colada ficava cortada ao lado do botao.
+        DataSourceField {
             width: parent.width
-            spacing: Theme.spacingSmall
+            label: qsTr("Comando ssh")
+            placeholder: "ssh -p 2222 pi@192.168.0.42"
+            value: root.pasted
+            onEdited: text => root.pastedEdited(text)
+            onAccepted: if (root.canParse) root.parseRequested()
+        }
 
-            DataSourceField {
-                width: parent.width - interpretar.width - parent.spacing
-                label: qsTr("Comando ssh")
-                placeholder: "ssh -p 2222 pi@192.168.0.42"
-                value: root.pasted
-                onEdited: text => root.pastedEdited(text)
-            }
-
-            KvButton {
-                id: interpretar
-
-                anchors.bottom: parent.bottom
-                compact: true
-                text: qsTr("Interpretar")
-                enabled: root.canParse
-                onClicked: root.parseRequested()
-            }
+        KvButton {
+            anchors.right: parent.right
+            compact: true
+            text: qsTr("Interpretar")
+            enabled: root.canParse
+            onClicked: root.parseRequested()
         }
 
         // A PROCEDENCIA de cada campo. Sem isso, o formulario se preencheria

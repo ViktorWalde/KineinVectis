@@ -14,6 +14,16 @@ Item {
     signal permanentRequested()
     signal cancelRequested()
 
+    // Esc cancela (2026-10-04: o dialogo so' fechava no botao).
+    onVisibleChanged: visible ? focusKeeper.take() : focusKeeper.giveBack()
+    Keys.onEscapePressed: if (!root.pending) root.cancelRequested()
+
+    KvFocusKeeper {
+        id: focusKeeper
+
+        target: root
+    }
+
     KvBackdrop {
         anchors.fill: parent
     }

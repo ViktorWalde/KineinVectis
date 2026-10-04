@@ -197,11 +197,11 @@ Item {
         running: root.coreClient.running
         terminalActive: root.coreClient.terminalActive
         terminalPanelVisible: shellController.tabActive("terminal")
-        // A porta escolhida no painel de Embarcados e' o `device` do Executar
-        // (MicroPython na placa). Composicao, nao IPC: o controller so' le.
+        // A porta do painel de Embarcados (o `device` do Executar) e o nome da
+        // configuracao ativa (a aba da execucao): composicao, nao IPC.
         serialDevice: environment.embeddedController.selectedPort
-        // Pedido ao core mora no RuntimeRequestRouter. Aqui fica so fiacao de
-        // controller para HOST/shell, que nao e IPC.
+        activeRunName: runConfigController.activeConfigName
+        // Pedido ao core mora no RuntimeRequestRouter; aqui, so' fiacao de host.
         onShowTabRequested: tab => shellController.showTab(tab)
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()

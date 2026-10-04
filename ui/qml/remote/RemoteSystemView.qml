@@ -12,6 +12,8 @@ Item {
     id: root
 
     property bool probed: false
+    // A sonda rodou e nao alcancou o alvo: nao e' "ainda nao sondei".
+    property bool failed: false
     property string probeArch: ""
     property string probeKernel: ""
     property var probeTools: []
@@ -29,8 +31,10 @@ Item {
             width: parent.width
             visible: !root.probed
             wrapMode: Text.WordWrap
-            text: qsTr("Ainda não sondei este alvo. A sonda mede arquitetura, kernel e quais "
-                       + "ferramentas ele tem — nada é instalado no alvo.")
+            text: root.failed
+                  ? qsTr("A última sonda não alcançou o alvo. O que ele tem aparece aqui quando ela responder.")
+                  : qsTr("Ainda não sondei este alvo. A sonda mede arquitetura, kernel e quais "
+                         + "ferramentas ele tem — nada é instalado no alvo.")
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
         }
@@ -49,25 +53,36 @@ Item {
             model: root.probed ? root.probeTools : []
 
             delegate: Row {
-                id: ferramenta
+                id: tool
 
                 required property var modelData
 
                 width: coluna.width
+                height: 22
                 spacing: Theme.spacingSmall
 
+                KvIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: tool.modelData.found ? "check" : "close"
+                    size: 13
+                    success: tool.modelData.found
+                    disabled: !tool.modelData.found
+                }
+
                 Text {
-                    width: 96
-                    text: (ferramenta.modelData.found ? "✓  " : "✗  ") + ferramenta.modelData.id
-                    color: ferramenta.modelData.found ? Theme.textPrimary : Theme.textMuted
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 84
+                    text: tool.modelData.id
+                    color: tool.modelData.found ? Theme.textPrimary : Theme.textMuted
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fontSizeCaption
                 }
 
                 Text {
-                    width: ferramenta.width - 96 - ferramenta.spacing
-                    text: ferramenta.modelData.found
-                          ? (ferramenta.modelData.path || "")
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: tool.width - 84 - 13 - 2 * tool.spacing
+                    text: tool.modelData.found
+                          ? (tool.modelData.path || "")
                           : qsTr("não está no alvo")
                     color: Theme.textMuted
                     font.family: Theme.monoFont

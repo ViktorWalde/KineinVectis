@@ -383,7 +383,7 @@ Window {
         onAppMenuDismissed: header.closeAppMenu()
     }
 
-    KvTooltipHost {
+    KvFloatingLayer {
         anchors.fill: parent
         z: 10000
     }

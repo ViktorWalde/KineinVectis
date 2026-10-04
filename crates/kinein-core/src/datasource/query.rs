@@ -205,15 +205,17 @@ pub fn run_sqlite(
     let inicio = Instant::now();
     let mut resultado = QueryResult::default();
     if leitura {
-        let mut stmt = conexao.prepare(sql).map_err(|e| sqlite::falha(&e))?;
+        let mut stmt = conexao
+            .prepare(sql)
+            .map_err(|e| sqlite::error_response(&e))?;
         resultado.columns = stmt
             .column_names()
             .iter()
             .map(|c| (*c).to_owned())
             .collect();
         let largura = resultado.columns.len();
-        let mut linhas = stmt.query([]).map_err(|e| sqlite::falha(&e))?;
-        while let Some(linha) = linhas.next().map_err(|e| sqlite::falha(&e))? {
+        let mut linhas = stmt.query([]).map_err(|e| sqlite::error_response(&e))?;
+        while let Some(linha) = linhas.next().map_err(|e| sqlite::error_response(&e))? {
             if resultado.rows.len() == max_rows as usize {
                 resultado.truncated = true;
                 break;
@@ -224,7 +226,9 @@ pub fn run_sqlite(
             resultado.rows.push(celulas);
         }
     } else {
-        conexao.execute_batch(sql).map_err(|e| sqlite::falha(&e))?;
+        conexao
+            .execute_batch(sql)
+            .map_err(|e| sqlite::error_response(&e))?;
         resultado.affected = Some(conexao.changes());
     }
     resultado.elapsed_ms = u64::try_from(inicio.elapsed().as_millis()).unwrap_or(u64::MAX);

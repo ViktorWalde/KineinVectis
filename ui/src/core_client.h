@@ -265,6 +265,10 @@ public:
     // A linha `ssh` colada vira perfil proposto (remote.parseCommand, 0.134.0):
     // lida, nunca executada, e nada e' salvo ate' o remote.save.
     Q_INVOKABLE void remoteParseCommand(const QString& command);
+    // Confiar no servidor na primeira conexao (remote.hostKey/trustHost,
+    // 0.153.0): ler a impressao digital sem logar, e gravar a que foi vista.
+    Q_INVOKABLE void remoteHostKey(const QString& name);
+    Q_INVOKABLE void remoteTrustHost(const QString& name, const QStringList& fingerprints);
     Q_INVOKABLE void toolchainSetKitRemote(const QString& remoteTarget, const QString& debugServer);
     // O workspace espelhado (remote.open/sync/status, 0.122.0): a pasta do alvo vira
     // espelho local por rsync; a UI abre o espelho com o openWorkspace de sempre.
@@ -483,11 +487,13 @@ signals:
     void coverageFinished(const QVariantMap& outcome);
     void coverageLinesResolved(const QString& file, bool known, const QVariantList& covered,
                                const QVariantList& missed);
-    void remoteTargetsResolved(const QVariantList& targets);
+    void remoteTargetsResolved(const QVariantList& targets, const QVariantList& contacts);
     void remoteJobAccepted(const QString& method, const QString& jobId, const QString& command);
     void remoteCommandResolved(const QVariantMap& result);
     void remoteAliasesDiscovered(const QVariantList& aliases, const QVariantList& sources);
     void remoteHostResolved(const QVariantMap& summary);
+    void remoteHostKeyResolved(const QVariantMap& result);
+    void remoteHostTrusted(const QVariantMap& result);
     void remoteCommandParsed(const QVariantMap& proposal);
     void remoteProbed(const QVariantMap& outcome);
     void remoteDeployed(const QVariantMap& outcome);

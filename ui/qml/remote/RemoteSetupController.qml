@@ -42,6 +42,17 @@ Item {
     signal parseRequested(string command)
     signal proposalReady(var target)
 
+    // Os nomes ja' salvos: a proposta nunca repete um (o save e' por nome e
+    // substituiria o outro alvo — achado com dois sshd em 127.0.0.1).
+    property var existingNames: []
+
+    function uniqueName(target) {
+        if (root.existingNames.indexOf(target.name) < 0) return target;
+        let name = target.port ? target.name + "-" + target.port : target.name + "-2";
+        for (let n = 2; root.existingNames.indexOf(name) >= 0; n++) name = target.name + "-" + n;
+        return Object.assign({}, target, { name: name });
+    }
+
     visible: false
 
     function discover() {
@@ -93,7 +104,7 @@ Item {
             return;
         }
         proposalSource = result.source || [];
-        proposalReady(result.target);
+        proposalReady(root.uniqueName(result.target));
     }
 
     // Cada falha no seu estado: descobrir falhar nao diz nada sobre resolver.

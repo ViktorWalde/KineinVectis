@@ -38,6 +38,7 @@ pub mod remote_command;
 pub mod remote_directories;
 pub mod remote_discover;
 pub mod remote_mirror;
+pub mod remote_trust;
 pub mod run;
 pub mod runconfig;
 pub mod serial;

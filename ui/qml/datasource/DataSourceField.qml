@@ -24,31 +24,22 @@ Item {
     signal edited(string text)
     signal accepted()
 
-    implicitHeight: rotulo.height + 2 + caixa.height
-
-    Text {
-        id: rotulo
-
-        anchors.top: parent.top
-        anchors.left: parent.left
-        text: root.label
-        color: Theme.textMuted
-        font.pixelSize: Theme.fontSizeCaption
-    }
+    // Desde 2026-10-04 o rotulo MORA NO CAMPO e sobe ao focar ou ter texto
+    // (o rotulo flutuante do KvTextField; pedido do autor: campos "mais
+    // modernos"). Antes era um rotulo pequeno em cima de uma caixa de 26 px.
+    implicitHeight: field.implicitHeight
 
     KvTextField {
-        id: caixa
+        id: field
 
-        anchors.top: rotulo.bottom
-        anchors.topMargin: 2
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 26
+        label: root.label
+        placeholder: root.placeholder
         pixelSize: Theme.fontSizeSmall
         readOnly: root.readOnlyField
         echoMode: root.secret ? TextInput.Password : TextInput.Normal
         inputMethodHints: root.numeric ? Qt.ImhDigitsOnly : Qt.ImhNone
-        placeholder: root.placeholder
         text: root.value
         onEdited: (text) => root.edited(text)
         onAccepted: root.accepted()

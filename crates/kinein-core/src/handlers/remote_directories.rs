@@ -15,7 +15,7 @@ use crate::process::stream_command_lines_cancelable;
 use crate::remote;
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
-use super::remote::{alvo_ou_falha, falha};
+use super::remote::{error_response, target_or_error};
 
 // The remote target is Linux (the contract of this domain). `find -print0`
 // preserves names containing newlines; `head` caps the data transferred to
@@ -87,19 +87,19 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "remote.directories");
         };
-        let target = match alvo_ou_falha(&root, request_id.as_ref(), &parsed.name) {
+        let target = match target_or_error(&root, request_id.as_ref(), &parsed.name) {
             Ok(target) => target,
             Err(response) => return *response,
         };
         let path = parsed.path.unwrap_or_default();
         if !path.is_empty() && !valid_path(&path) {
-            return falha(
+            return error_response(
                 request_id,
                 "a pasta remota precisa ser absoluta e sem caracteres de controle",
             );
         }
         let Some(ssh) = self.detector.find_in_path("ssh") else {
-            return falha(
+            return error_response(
                 request_id,
                 "não achei `ssh` no PATH — instale o openssh-client",
             );

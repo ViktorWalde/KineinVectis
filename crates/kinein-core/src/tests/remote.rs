@@ -242,11 +242,14 @@ fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
         );
     }
     let fora = c.ok("remote.command", json!({ "name": "pi", "kind": "copyId" }));
+    // A chave do perfil (`/home/u/.ssh/pi`) nao existe neste disco: desde
+    // 2026-10-04 a linha a CRIA antes de copiar, em vez de deixar o
+    // `ssh-copy-id` dizer "No identities found".
     assert_eq!(
         fora["command"],
-        "ssh-copy-id -p 2222 -i /home/u/.ssh/pi pi@192.168.0.42"
+        "ssh-keygen -t ed25519 -f /home/u/.ssh/pi && ssh-copy-id -p 2222 -i /home/u/.ssh/pi pi@192.168.0.42"
     );
-    assert_eq!(fora["name"], "Copiar chave para pi");
+    assert_eq!(fora["name"], "Criar minha chave e copiar para pi");
     assert!(fora["remoteTarget"].is_null(), "{fora}");
     // A procedencia tem de dizer de quem e' a chave.
     let origem = fora["source"].as_array().unwrap();
@@ -303,6 +306,8 @@ fn deploy_prefers_rsync_and_falls_back_to_scp() {
         .map(str::to_owned)
         .collect();
     assert_eq!(args[3], "ssh -p 2222 -i /home/u/.ssh/pi");
+    // A pasta vai com o CONTEUDO (2026-10-04): a barra final do rsync.
+    assert_eq!(args[4], format!("{}/", c.root.join("build").display()));
     assert_eq!(args[5], "pi@192.168.0.42:~/kinein/ws/");
 
     let ausente = c.rpc(
@@ -337,7 +342,8 @@ fn deploy_prefers_rsync_and_falls_back_to_scp() {
             "-i",
             "/home/u/.ssh/pi",
             "-r",
-            c.root.join("build").display().to_string().as_str(),
+            // A pasta vai com o CONTEUDO (2026-10-04): `build/.`.
+            format!("{}/.", c.root.join("build").display()).as_str(),
             "pi@192.168.0.42:/opt/app/"
         ]
     );

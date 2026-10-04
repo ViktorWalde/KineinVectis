@@ -225,9 +225,11 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   fica só com o clique que abre a linha. A aba mostra a contagem.
 - **Rail** (coluna fininha à esquerda; o `›` do pé expande com os
   rótulos): **Projeto · Git · Embarcados · Banco · Containers · Grafana ·
-  Ferramentas**. Projeto, Git, Banco e Containers são janelas acopladas (abrem
-  no slot do lado do ícone); Embarcados, Remoto e Grafana ainda abrem o painel
-  de cada um por cima (o 59 diz quando cada um muda). Busca, Build e Debug **não estão** no
+  Ferramentas**. Projeto, Git, Banco, Containers e Remoto são janelas
+  acopladas (abrem no slot do lado do ícone e ficam abertas enquanto você
+  edita); Embarcados e Grafana ainda abrem o painel de cada um por cima (o 59
+  diz quando cada um muda). Uma área com a janela aberta aparece no rail
+  enquanto estiver aberta, mesmo que ainda não tenha uso no projeto. Busca, Build e Debug **não estão** no
   rail (desde a Etapa 3): a busca no projeto é `Ctrl+Shift+F` / a aba
   Busca; Build e Debug são o widget Executar do cabeçalho (▶ 🐞 ⋯), o
   menu Build e o painel inferior.
@@ -246,6 +248,13 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 - **Ajuda → Manual da IDE** abre este mesmo `DocsPublic/manual.md` numa visualização
   Markdown renderizada dentro da Kinein; não abre editor externo nem mantém
   uma segunda documentação divergente.
+- **Menus e campos de texto.** Todo menu da IDE (o ☰, o clique direito na
+  árvore e no terminal, a configuração de execução) tem ícone, o atalho à
+  direita e grupos separados, e responde a setas, Enter e Esc. Todo campo de
+  texto copia e cola **pelo teclado** (Ctrl+C, Ctrl+X, Ctrl+V, Ctrl+A) e
+  **pelo mouse**: o clique direito abre Recortar, Copiar, Colar, Selecionar
+  tudo e Limpar (o que não se aplica fica apagado; campo de senha não copia).
+  Nos formulários, o rótulo mora dentro do campo e sobe quando você o focaliza.
 
 ### Arquivos e pastas do projeto (checkout da série 0.3, em 2026-09-30)
 
@@ -999,12 +1008,33 @@ que importa: a segunda janela não abre, e o terminal diz por quê.
 
 Uma Raspberry Pi, uma placa com imagem própria (Yocto, Buildroot) — um Linux
 que você alcança por SSH — vira **recurso do projeto**: menu Ambiente →
-**Alvo remoto (SSH)...** (ou `remote.list` na paleta). A IDE guarda o
-**perfil** (nome, host, usuário, porta, chave privada, pasta de deploy) em
-`.kinein/remotes.json`. **Não há campo de senha, por desenho**: SSH aqui é
-por chave — copie a sua com `ssh-copy-id usuario@host` uma vez; o que o
-`ssh` do sistema precisar perguntar (o host key novo, a senha da chave),
-pergunta no terminal da IDE. A IDE nunca digita nem guarda senha.
+**Alvo remoto (SSH)...** (ou `remote.list` na paleta). Ele abre como
+**janela acoplada**, do lado do ícone no rail, e fica aberto enquanto você
+edita. Em cima ficam os **alvos**: o escolhido é um cartão com o estado e
+**a ação principal** dentro dele, com o porquê (Configurar, Salvar, Sondar,
+Confiar neste servidor, Copiar minha chave, Rodar no terminal, Puxar…); os
+outros são linhas com o **último contato** ("respondeu há 3 min · x86_64",
+"não respondeu ontem"), que fica guardado no projeto e sobrevive a fechar a
+IDE. O ponto de cada alvo: verde respondeu, vermelho falhou, âmbar primeira
+conexão, cinza nunca sondado. Embaixo, as abas Visão, Projeto, Executar,
+Sistema e a engrenagem (Configurar). Um alvo novo nasce em Configurar (colar a
+linha ssh ou escolher um alias); até você salvar, o cartão diz "não salvo".
+**Salvar** e **Remover** ficam em Configurar, e salvar um alvo novo com o nome
+de outro é recusado, em vez de sobrescrevê-lo. A IDE guarda o **perfil** (nome,
+host, usuário, porta, chave privada, pasta de deploy, e também o programa e a
+origem do deploy que você usou por último) em `.kinein/remotes.json`. **Não há
+campo de senha, por desenho**: SSH aqui é por chave, e a senha do alvo só é
+pedida uma vez, no terminal da IDE, para copiar a sua chave. A IDE nunca digita
+nem guarda senha.
+
+**Primeira conexão com um servidor.** O SSH só conecta num servidor cuja
+identidade você já aceitou. Na primeira sonda, a IDE mostra a **impressão
+digital** que o servidor apresenta (por exemplo `ED25519 SHA256:WWfk…`) e como
+conferi-la nele; a ação principal vira **Confiar neste servidor**. Confiar
+grava exatamente essa chave no seu `~/.ssh/known_hosts` (o arquivo que o `ssh`
+usaria) e sonda de novo. Se um dia a identidade **mudar** (placa reinstalada,
+ou alguém no meio), a IDE avisa e **não** sobrescreve: se foi reinstalação,
+remova a chave antiga com `ssh-keygen -R <host>`.
 
 **Se `ssh <alias>` já funciona na sua máquina, não preencha nada.** No topo do
 painel, **Usar o SSH que já funciona** lista os aliases concretos do seu
@@ -1020,12 +1050,14 @@ porque não é um destino — mas continua valendo na resolução do OpenSSH. O
 formulário abaixo continua inteiro para **configurar um servidor** que ainda não
 está no seu `~/.ssh/config`.
 
-**Se a sonda disser que o alvo recusou a chave**, o botão **Copiar minha chave
-(ssh-copy-id)** aparece ali mesmo, junto da explicação. Ele **não** executa nada:
-mostra a linha exata que rodaria, com a porta e a chave do seu perfil, e espera
-você confirmar em **Rodar no terminal**. A IDE nunca gera chave nem digita senha
-— quem pergunta é o `ssh`, no terminal, e o host key você aceita uma vez.
-Trocar de alvo cancela a linha, porque ela carrega um host.
+**Se a sonda disser que o alvo recusou a chave**, a ação principal vira
+**Copiar minha chave**. Ela **não** executa nada: mostra no cartão a linha
+exata que rodaria, com a porta e a chave do seu perfil, e vira **Rodar no
+terminal**. Roda numa aba própria do terminal, onde o `ssh` pede a senha do
+alvo **uma vez**; depois disso, a ação vira **Sondar** para conferir. Se você
+ainda não tem chave nenhuma, a mesma linha cria uma antes (`ssh-keygen -t
+ed25519`, que pergunta a frase-senha; Enter deixa sem). Trocar de alvo cancela
+a linha, porque ela carrega um host.
 
 **Para um servidor que ainda não está no seu `~/.ssh/config`**, não preencha o
 formulário: em **Configurar um servidor novo**, cole a linha que você já usaria
@@ -1040,21 +1072,24 @@ fica prometendo uma conexão que não faria.
 Sondar          ssh -o BatchMode=yes -o ConnectTimeout=5 … 'uname -m; uname -sr; command -v …'
                 -> arquitetura (aarch64), kernel e o que o alvo TEM: gdbserver, python3, rsync
                    sem chave: falha em segundos e diz o `ssh-copy-id`
-Enviar (deploy) rsync -az --delete <origem> alvo:<pasta>/   (ou scp -r sem rsync)
-                origem padrao build/, pasta padrao ~/kinein/<projeto>
+Enviar (deploy) rsync -az --delete <origem>/ alvo:<pasta>/   (ou scp -r sem rsync)
+                origem padrao build/ (o CONTEUDO dela: build/app chega como <pasta>/app),
+                pasta padrao ~/kinein/<projeto>
 Rodar em…       configuracao de execucao "Rodar em <nome>": ssh -tt alvo '<programa>'
 gdbserver → kit o kit ganha debugServer = ssh -tt alvo 'gdbserver :2345 <programa>' e
                 remoteTarget = host:2345 — o [Debug] de sempre sobe o servidor e conecta
 debugpy → config "debugpy em <nome>": python3 -m debugpy --listen 0.0.0.0:5678 --wait-for-client
                 <script>; depois, o attach TCP da aba Debug em host:5678
-Shell no terminal ssh alvo, no terminal da IDE
+Shell no terminal ssh alvo, numa aba propria do terminal da IDE
 ```
 
 O campo **Programa no alvo** é o caminho DO OUTRO LADO: relativo entra na
 pasta de deploy (`app` → `~/kinein/<projeto>/app`), absoluto vai como está.
 Sondar e enviar só valem para um alvo **salvo** — o core só conhece o que
-está no arquivo. Cada botão mostra a linha que compôs (`$ …`), e o que ela
-virou (a configuração salva, o kit gravado).
+está no arquivo. Cada ação diz, na própria seção Executar, o que fez (enviado
+para…, configuração salva, kit gravado), e uma ação que não dá para usar diz por
+quê (salve um alvo; falta gdbserver no alvo). A aba da execução leva o nome da
+configuração ("▶ Rodar em pi").
 
 **Abrir a pasta do alvo como espelho** (desde 0.122.0; navegador na candidata
 0.3.5): com um alvo salvo, clique **Escolher…** para listar a home do usuário

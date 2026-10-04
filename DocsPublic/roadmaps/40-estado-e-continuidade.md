@@ -22,6 +22,12 @@
 >     demanda, medida por componente no qmlprofiler, está no §7.203.
 >   - **Perfil de rigor no C/C++ corrigido** (§7.202): trocar com o projeto
 >     aberto agora reconfigura e muda o build.
+>   - **Remoto acoplado e prático** (§7.216, protocolo `0.153.0`): provado
+>     contra dois sshd reais; confiar no servidor pela impressão digital,
+>     copiar a chave numa aba própria, último contato de cada alvo, programa
+>     lembrado. Corrigidos no caminho: o ▶ que não mostrava a execução numa
+>     IDE recém-aberta, o deploy de pasta, nome repetido sobrescrevendo alvo.
+>     Campos de texto copiam e colam pelo mouse.
 >   - **Configurações e seletor "Abrir projeto" redesenhados** (§7.215,
 >     protocolo `0.152.0`): seções, prévia da fonte, selo "neste projeto";
 >     o seletor abre no Início, só com o Início em LOCAIS, e marca a pasta

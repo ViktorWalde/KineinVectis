@@ -43,7 +43,7 @@ pub fn probe_file(profile: &DataSourceProfile) -> Result<String, ConnectionFailu
     // `SELECT version()` do Postgres: "com o que eu estou falando?".
     let versao: String = conexao
         .query_row("SELECT sqlite_version()", [], |linha| linha.get(0))
-        .map_err(|erro| falha(&erro))?;
+        .map_err(|erro| error_response(&erro))?;
     Ok(format!("SQLite {versao}"))
 }
 
@@ -65,10 +65,10 @@ pub fn read_structure(
              WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' \
              ORDER BY name",
         )
-        .map_err(|erro| falha(&erro))?;
+        .map_err(|erro| error_response(&erro))?;
     let encontradas: Vec<(String, String)> = consulta
         .query_map([], |linha| Ok((linha.get(0)?, linha.get(1)?)))
-        .map_err(|erro| falha(&erro))?
+        .map_err(|erro| error_response(&erro))?
         .filter_map(Result::ok)
         .take(MAX_TABLES)
         .collect();
@@ -100,7 +100,7 @@ fn colunas_de(
     // na string, que e' injecao de SQL com nome vindo do banco.
     let mut consulta = conexao
         .prepare("SELECT name, type, \"notnull\" FROM pragma_table_info(?1) ORDER BY cid")
-        .map_err(|erro| falha(&erro))?;
+        .map_err(|erro| error_response(&erro))?;
     let colunas = consulta
         .query_map([tabela], |linha| {
             let nao_nulo: i64 = linha.get(2)?;
@@ -110,7 +110,7 @@ fn colunas_de(
                 nullable: nao_nulo == 0,
             })
         })
-        .map_err(|erro| falha(&erro))?
+        .map_err(|erro| error_response(&erro))?
         .filter_map(Result::ok)
         .collect();
     Ok(colunas)
@@ -145,14 +145,14 @@ pub(super) fn abrir_com(
             secret_required: false,
         });
     }
-    Connection::open_with_flags(caminho, flags).map_err(|erro| falha(&erro))
+    Connection::open_with_flags(caminho, flags).map_err(|erro| error_response(&erro))
 }
 
 /// Erro do `rusqlite` na forma que a UI ja' entende.
 ///
 /// `secret_required` e' SEMPRE `false`, e a constante diz algo: `SQLite` nao
 /// tem autenticacao. Pedir senha aqui seria um dialogo que nao resolve nada.
-pub(super) fn falha(erro: &rusqlite::Error) -> ConnectionFailure {
+pub(super) fn error_response(erro: &rusqlite::Error) -> ConnectionFailure {
     ConnectionFailure {
         message: super::connection::describe(erro),
         sql_state: None,

@@ -9,7 +9,7 @@ import QtQuick
 //
 // A IDE nunca roda sudo. `runStep(command)` emite o comando para ser
 // ESCRITO no terminal da IDE (o mesmo caminho do painel de instalacao,
-// ShellEnvironmentOverlays -> RuntimeController.submitShellInput); o prompt
+// ShellEnvironmentOverlays -> RuntimeController.runInNewTerminal); o prompt
 // de senha aparece la', a vista.
 Item {
     id: root

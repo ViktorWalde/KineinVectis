@@ -82,6 +82,8 @@ mod tests {
             port: Some(22),
             identity_file: Some("~/.ssh/id_ed25519".to_owned()),
             deploy_dir: None,
+            program: None,
+            deploy_source: None,
         }
     }
 

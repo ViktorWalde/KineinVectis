@@ -80,25 +80,34 @@ Item {
         c.handleProbed({ name: "pi", success: false, error: "o alvo recusou a chave: ssh-copy-id pi@192.168.0.42" });
         if (c.probeOk || c.probeMessage.indexOf("ssh-copy-id") < 0) failures += 64;
 
-        // Enviar com a origem digitada; o desfecho vira texto.
+        // Enviar com a origem digitada; o desfecho vira texto. Desde
+        // 2026-10-04 a origem e o programa ficam NO ALVO: enviar ou rodar com
+        // outro valor grava o alvo antes (um `save` a mais).
+        const has = function(prefix) { return root.pedidos.some(function(p) { return p.indexOf(prefix) === 0; }); };
         c.deploySource = "build/app";
         c.deploy();
-        if (!c.deploying || root.pedidos[3] !== "deploy:pi:build/app:") failures += 128;
+        if (!c.deploying || !has("deploy:pi:build/app:")) failures += 128;
+        if (!root.pedidos.some(function(p) { return p.indexOf("save:") === 0 && p.indexOf('"deploySource":"build/app"') >= 0; })) failures += 128;
         c.handleDeployed({ name: "pi", success: true, dest: "~/kinein/w" });
         if (c.deploying || c.deployMessage.indexOf("~/kinein/w") < 0) failures += 256;
+        c.handleTargets([{ name: "pi", host: "192.168.0.42", user: "pi", port: 2222, deploySource: "build/app", program: "app" }]);
 
         // Cada comando vai ao dono certo.
         c.program = "app";
         c.requestCommand("run");
-        if (root.pedidos[4] !== "command:pi:run:app:0") failures += 512;
+        if (!has("command:pi:run:app:0")) failures += 512;
         c.handleCommand({ name: "Rodar em pi", command: "ssh -tt pi@192.168.0.42 '~/kinein/w/app'" });
-        if (root.pedidos[5] !== "runconfig:Rodar em pi=ssh -tt pi@192.168.0.42 '~/kinein/w/app'") failures += 1024;
+        if (!has("runconfig:Rodar em pi=ssh -tt pi@192.168.0.42 '~/kinein/w/app'")) failures += 1024;
         c.requestCommand("debugServer");
         c.handleCommand({ name: "gdbserver em pi", command: "ssh -tt pi@192.168.0.42 'gdbserver :2345 ~/kinein/w/app'", remoteTarget: "192.168.0.42:2345" });
-        if (root.pedidos[7] !== "kit:192.168.0.42:2345=ssh -tt pi@192.168.0.42 'gdbserver :2345 ~/kinein/w/app'") failures += 2048;
+        if (!has("kit:192.168.0.42:2345=ssh -tt pi@192.168.0.42 'gdbserver :2345 ~/kinein/w/app'")) failures += 2048;
         c.requestCommand("shell");
         c.handleCommand({ name: "Shell em pi", command: "ssh pi@192.168.0.42" });
-        if (root.pedidos[9] !== "shell:ssh pi@192.168.0.42" || c.lastOutcome === "" || c.pendingKind !== "") failures += 4096;
+        if (!has("shell:ssh pi@192.168.0.42") || c.lastOutcome === "" || c.pendingKind !== "") failures += 4096;
+        // Escolher o alvo de novo traz o programa e a origem lembrados.
+        c.program = ""; c.deploySource = "";
+        c.select("pi");
+        if (c.program !== "app" || c.deploySource !== "build/app") failures += 4096;
 
         // A falha de um pedido remote.* vira texto e destrava.
         c.probe();

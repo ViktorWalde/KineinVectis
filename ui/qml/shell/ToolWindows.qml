@@ -60,7 +60,6 @@ Item {
     readonly property ToolWindowPanels panels: ToolWindowPanels {
         embeddedController: root.embeddedController
         toolchainController: root.toolchainController
-        remoteController: root.remoteController
         grafanaController: root.grafanaController
     }
 
@@ -153,11 +152,10 @@ Item {
             "id": "remote", "label": qsTr("Remoto"), "icon": "remote",
             "tooltip": qsTr("Alvo remoto — Linux por SSH"), "area": "left", "order": 55,
             "available": root.workspaceOpen,
-            "title": qsTr("Remoto"), "kind": "overlay", "defaultPolicy": "contextual",
+            // Janela acoplada desde 2026-10-04, como o Banco e os Containers.
+            "title": qsTr("Remoto"), "kind": "dock-left", "defaultPolicy": "contextual",
             "factKey": "remote.any", "commandId": "remote.list", "shortcut": "",
-            "active": root.remoteController !== null && root.remoteController !== undefined
-                      && root.remoteController.panelVisible
-            ,"panel": root.panels.remotePanel
+            "active": root.shellController !== null && root.shellController.remoteWindowVisible === true
         },
         {
             "id": "observability", "label": qsTr("Grafana"), "icon": "observability",
@@ -276,7 +274,9 @@ Item {
         case "observability":
             return openOwner(grafanaController);
         case "remote":
-            return openOwner(remoteController);
+            if (shellController === null || shellController === undefined) return false;
+            shellController.toggleDockWindow("remote");
+            return true;
         case "tools":
             if (shellController === null || shellController === undefined) {
                 return false;

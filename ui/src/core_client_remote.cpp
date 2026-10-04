@@ -132,13 +132,30 @@ void CoreClient::remoteParseCommand(const QString& command)
                 QJsonObject{{QStringLiteral("command"), command}});
 }
 
+void CoreClient::remoteHostKey(const QString& name)
+{
+    // Le' as chaves que o servidor OFERECE (ssh-keyscan): nao loga, nao grava.
+    sendRequest(QStringLiteral("remote.hostKey"), QJsonObject{{QStringLiteral("name"), name}});
+}
+
+void CoreClient::remoteTrustHost(const QString& name, const QStringList& fingerprints)
+{
+    // So' as impressoes que a pessoa VIU: o core escaneia de novo e grava
+    // apenas as chaves que batem.
+    sendRequest(
+        QStringLiteral("remote.trustHost"),
+        QJsonObject{{QStringLiteral("name"), name},
+                    {QStringLiteral("fingerprints"), QJsonArray::fromStringList(fingerprints)}});
+}
+
 bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("remote.list") || method == QStringLiteral("remote.save") ||
         method == QStringLiteral("remote.remove"))
     {
         emit remoteTargetsResolved(
-            result.value(QStringLiteral("targets")).toArray().toVariantList());
+            result.value(QStringLiteral("targets")).toArray().toVariantList(),
+            result.value(QStringLiteral("contacts")).toArray().toVariantList());
         return true;
     }
     if (method == QStringLiteral("remote.probe") || method == QStringLiteral("remote.deploy")) {
@@ -159,6 +176,14 @@ bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& 
     }
     if (method == QStringLiteral("remote.resolve")) {
         emit remoteHostResolved(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("remote.hostKey")) {
+        emit remoteHostKeyResolved(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("remote.trustHost")) {
+        emit remoteHostTrusted(result.toVariantMap());
         return true;
     }
     if (method == QStringLiteral("remote.command")) {

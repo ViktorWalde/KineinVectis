@@ -291,6 +291,11 @@ bool CoreClient::handleTerminalNotification(const QString& method, const QJsonOb
         const QString id = params.value(QStringLiteral("id")).toString();
         const int exitCode = params.value(QStringLiteral("exitCode")).toInt(-1);
         m_terminalIds.remove(id);
+        // O FECHAMENTO vem antes de "terminal ativo" cair (2026-10-04): a
+        // execucao rapida era a ultima sessao viva, e com o `terminalActive`
+        // falso primeiro o QML descartava a aba dela antes de saber que era
+        // uma execucao terminada — o ▶ rodava e nada aparecia.
+        emit terminalClosed(id, exitCode);
         setTerminalActive(!m_terminalIds.isEmpty());
         // A sessao da execucao fechou: `running` cai e o desfecho e' dito.
         if (!m_runTerminalId.isEmpty() && id == m_runTerminalId) {
@@ -298,7 +303,6 @@ bool CoreClient::handleTerminalNotification(const QString& method, const QJsonOb
             setRunning(false);
             emit runFinished(exitCode == 0, exitCode);
         }
-        emit terminalClosed(id, exitCode);
         return true;
     }
     return false;

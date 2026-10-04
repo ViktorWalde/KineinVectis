@@ -22,10 +22,12 @@
 //! O que NAO entra nesta fatia (dito): workspace remoto, LSP do outro lado,
 //! mapeamento de caminhos — o `RemoteContext` inteiro do 28 §4.
 
+pub mod contacts;
 pub mod discover;
 pub mod mirror;
 pub mod parse;
 mod store;
+pub mod trust;
 
 use std::path::Path;
 
@@ -79,7 +81,7 @@ pub fn validate(target: &RemoteTarget) -> Result<(), String> {
 }
 
 fn normalize(target: &RemoteTarget) -> RemoteTarget {
-    let limpo = |s: &Option<String>| {
+    let trimmed = |s: &Option<String>| {
         s.as_deref()
             .map(str::trim)
             .filter(|s| !s.is_empty())
@@ -88,10 +90,12 @@ fn normalize(target: &RemoteTarget) -> RemoteTarget {
     RemoteTarget {
         name: target.name.trim().to_owned(),
         host: target.host.trim().to_owned(),
-        user: limpo(&target.user),
+        user: trimmed(&target.user),
         port: target.port.filter(|p| *p != 22),
-        identity_file: limpo(&target.identity_file),
-        deploy_dir: limpo(&target.deploy_dir),
+        identity_file: trimmed(&target.identity_file),
+        deploy_dir: trimmed(&target.deploy_dir),
+        program: trimmed(&target.program),
+        deploy_source: trimmed(&target.deploy_source),
     }
 }
 
@@ -198,16 +202,25 @@ pub fn parse_probe(raw: &str) -> (Option<String>, Option<String>, Vec<RemoteTool
 /// quebraria em qualquer traducao ou reformulacao.
 #[must_use]
 pub fn classify_ssh_failure(raw: &str) -> RemoteFailure {
-    let baixo = raw.to_lowercase();
-    if baixo.contains("permission denied") || baixo.contains("host key verification failed") {
+    let lower = raw.to_lowercase();
+    // A identidade que MUDOU vem antes: o `ssh` tambem diz "host key
+    // verification failed" nesse caso, e confundir os dois seria convidar a
+    // pessoa a confiar num servidor trocado.
+    if lower.contains("remote host identification has changed") {
+        return RemoteFailure::HostKeyChanged;
+    }
+    if lower.contains("host key verification failed") {
+        return RemoteFailure::UnknownHost;
+    }
+    if lower.contains("permission denied") {
         return RemoteFailure::Authentication;
     }
-    if baixo.contains("could not resolve") || baixo.contains("name or service not known") {
+    if lower.contains("could not resolve") || lower.contains("name or service not known") {
         return RemoteFailure::Host;
     }
-    if baixo.contains("connection timed out")
-        || baixo.contains("connection refused")
-        || baixo.contains("no route")
+    if lower.contains("connection timed out")
+        || lower.contains("connection refused")
+        || lower.contains("no route")
     {
         return RemoteFailure::Network;
     }
@@ -241,19 +254,32 @@ pub fn describe_ssh_failure(target: &RemoteTarget, raw: &str) -> String {
     match classify_ssh_failure(raw) {
         RemoteFailure::Authentication => {
             return format!(
-                "o alvo recusou a chave (BatchMode): copie a sua com \
-                 `ssh-copy-id {destino}` e aceite o host key uma vez no \
-                 terminal — a IDE nunca digita senha"
+                "o alvo recusou a sua chave: copie-a para lá (`ssh-copy-id {destino}`) — a \
+                 senha do alvo é pedida uma vez, no terminal, e a IDE nunca a vê"
+            );
+        }
+        RemoteFailure::UnknownHost => {
+            return format!(
+                "primeira conexão com {destino}: confira a impressão digital do servidor \
+                 e confie nele uma vez"
+            );
+        }
+        RemoteFailure::HostKeyChanged => {
+            return format!(
+                "a identidade de {destino} MUDOU desde que você confiou nele — placa \
+                 reinstalada, ou alguém no meio. A IDE não sobrescreve: se a placa foi \
+                 reinstalada, remova a chave antiga com `ssh-keygen -R {}`",
+                target.host
             );
         }
         RemoteFailure::Host => {
             return format!(
-                "nao resolvi o host `{}` — IP ou nome errado, ou sem rede",
+                "não resolvi o host `{}` — IP ou nome errado, ou sem rede",
                 target.host
             );
         }
         RemoteFailure::Network => {
-            return format!("nao alcancei {destino} em 5 s: a placa esta' ligada e o sshd ativo?");
+            return format!("não alcancei {destino} em 5 s: a placa está ligada e o sshd ativo?");
         }
         RemoteFailure::Other => {}
     }
@@ -309,6 +335,19 @@ pub fn deploy_command(
     use_rsync: bool,
 ) -> (String, Vec<String>) {
     let destino = format!("{}:{}/", destination(target), dest);
+    // Uma PASTA vai com o CONTEUDO (2026-10-04, achado contra um sshd real):
+    // sem isso `build/app` chegava em `<deploy>/build/app`, e o "Programa no
+    // alvo (relativo a pasta de deploy)" `app` nao existia. A barra final do
+    // rsync e o `/.` do scp copiam o conteudo.
+    let source_arg = if source.is_dir() {
+        if use_rsync {
+            format!("{}/", source.display().to_string().trim_end_matches('/'))
+        } else {
+            format!("{}/.", source.display().to_string().trim_end_matches('/'))
+        }
+    } else {
+        source.display().to_string()
+    };
     if use_rsync {
         let mut e = vec!["ssh".to_owned()];
         if let Some(port) = target.port {
@@ -324,7 +363,7 @@ pub fn deploy_command(
                 "--delete".to_owned(),
                 "-e".to_owned(),
                 e.join(" "),
-                source.display().to_string(),
+                source_arg,
                 destino,
             ],
         )
@@ -339,7 +378,7 @@ pub fn deploy_command(
             args.push(key.clone());
         }
         args.push("-r".to_owned());
-        args.push(source.display().to_string());
+        args.push(source_arg);
         args.push(destino);
         ("scp".to_owned(), args)
     }
@@ -413,6 +452,8 @@ mod tests {
             port: Some(2222),
             identity_file: Some("/home/u/.ssh/pi".to_owned()),
             deploy_dir: None,
+            program: None,
+            deploy_source: None,
         }
     }
 
@@ -439,6 +480,8 @@ mod tests {
             port: None,
             identity_file: None,
             deploy_dir: Some("/opt/app".to_owned()),
+            program: None,
+            deploy_source: None,
         };
         assert_eq!(ssh_args(&simples, false), ["bancada"]);
         assert_eq!(
@@ -513,7 +556,7 @@ mod tests {
                 &pi(),
                 "ssh: Could not resolve hostname x: Name or service not known"
             )
-            .contains("nao resolvi")
+            .contains("não resolvi")
         );
         assert_eq!(
             describe_ssh_failure(&pi(), ""),
@@ -562,9 +605,11 @@ mod tests {
                 "pi@192.168.0.42: Permission denied (publickey).",
                 RemoteFailure::Authentication,
             ),
+            ("Host key verification failed.", RemoteFailure::UnknownHost),
             (
-                "Host key verification failed.",
-                RemoteFailure::Authentication,
+                "@@@@@@@@@@@\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n\
+                 Host key verification failed.",
+                RemoteFailure::HostKeyChanged,
             ),
             (
                 "ssh: Could not resolve hostname pi: Name or service not known",
@@ -609,6 +654,8 @@ mod tests {
             port: None,
             identity_file: None,
             deploy_dir: None,
+            program: None,
+            deploy_source: None,
         };
         assert_eq!(ssh_copy_id_line(&simples), "ssh-copy-id bancada");
         // Nao ha' rota para senha nesta linha, por construcao.

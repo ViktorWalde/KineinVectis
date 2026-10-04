@@ -20,12 +20,21 @@ Item {
             root.remoteController.setup.handleResolved(summary);
         }
 
+        function onRemoteHostKeyResolved(result) {
+            root.remoteController.trust.handleHostKey(result);
+        }
+
+        function onRemoteHostTrusted(result) {
+            root.remoteController.trust.handleTrusted(result);
+        }
+
         function onRemoteCommandParsed(proposal) {
             root.remoteController.setup.handleParsed(proposal);
         }
 
-        function onRemoteTargetsResolved(targets) {
+        function onRemoteTargetsResolved(targets, contacts) {
             root.remoteController.handleTargets(targets);
+            root.remoteController.contacts.handleList(contacts);
         }
 
         function onRemoteJobAccepted(method, jobId, command) {

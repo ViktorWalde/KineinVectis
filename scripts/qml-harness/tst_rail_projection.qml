@@ -66,6 +66,15 @@ Item {
         const unpinned = { pinned: [], unpinned: ["explorer"], hidden: [] };
         failures += check(ids(projection.visibleEntries(entries, unpinned, { "remote.any": true }))
                           === "remote", "desfixada");
+        // Aberta, aparece enquanto aberta: contextual sem fato e ate' oculta
+        // (2026-10-04, a janela no slot tem de ter o icone que a fecha).
+        const openRemote = entries.map(function(e) {
+            return e.id === "remote" ? Object.assign({}, e, { active: true }) : e;
+        });
+        failures += check(ids(projection.visibleEntries(openRemote, none, {})) === "explorer,remote",
+                          "aberta aparece sem fato");
+        failures += check(ids(projection.visibleEntries(openRemote, hidden, {})) === "explorer,remote",
+                          "aberta aparece mesmo oculta");
         // Teto de 7.
         const many = [];
         for (let i = 0; i < 9; i++) {

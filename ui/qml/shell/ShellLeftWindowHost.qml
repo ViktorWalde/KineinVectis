@@ -15,6 +15,7 @@ Item {
     property var dataSourceController: null
     property var editorController: null
     property var containerController: null
+    property var remoteController: null
     property string workspaceName: ""
     property string workspaceRoot: ""
     // O slot da direita (ShellRightDock): a janela cujo icone esta' no trilho
@@ -28,6 +29,7 @@ Item {
     function minimumOf(name) {
         if (name === "git") return gitWindow.minimumWidth;
         if (name === "database") return databaseWindow.minimumWidth;
+        if (name === "remote") return remoteWindow.minimumWidth;
         return name === "containers" ? containersWindow.minimumWidth : 220;
     }
 
@@ -98,6 +100,7 @@ Item {
         if (name === "git") gitWindow.forceActiveFocus();
         else if (name === "database") databaseWindow.forceActiveFocus();
         else if (name === "containers") containersWindow.forceActiveFocus();
+        else if (name === "remote") remoteWindow.forceActiveFocus();
         else explorerPanel.focusTree();
     }
 
@@ -155,6 +158,27 @@ Item {
         controller: root.containerController
         onVisibleChanged: if (visible && root.containerController && !root.containerController.listBusy) root.containerController.refresh()
         onCloseRequested: root.shellController.toggleDockWindow("containers")
+    }
+
+    // O Remoto (2026-10-04): o alvo SSH acoplado, como o Banco. Abrir comeca
+    // na visao geral e le' o que falta (RemoteController.prepare).
+    RemoteWindow {
+        id: remoteWindow
+
+        parent: root.slotOf("remote")
+        anchors.fill: parent
+        visible: root.shellController.remoteWindowVisible
+        controller: root.remoteController
+        onVisibleChanged: if (visible && root.remoteController) root.remoteController.prepare()
+        onCloseRequested: root.shellController.toggleDockWindow("remote")
+    }
+
+    Connections {
+        target: root.remoteController
+
+        function onWindowRequested() {
+            root.shellController.showDockWindow("remote");
+        }
     }
 
     // Ctrl+Alt+W / Ctrl+Alt+J, o menu e a paleta pedem a janela pelo controller.

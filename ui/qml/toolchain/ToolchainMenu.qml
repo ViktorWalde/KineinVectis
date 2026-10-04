@@ -70,9 +70,22 @@ Item {
         root.expandedKey = root.expandedKey === key ? "" : key;
     }
 
-    onVisibleChanged: if (visible) {
-        root.expandedKey = "";
-        root.showOthers = false;
+    onVisibleChanged: {
+        if (visible) {
+            root.expandedKey = "";
+            root.showOthers = false;
+            focusKeeper.take();
+        } else {
+            focusKeeper.giveBack();
+        }
+    }
+    // Esc fecha, como em todo popover (2026-10-04: so' fechava no clique fora).
+    Keys.onEscapePressed: root.dismissRequested()
+
+    KvFocusKeeper {
+        id: focusKeeper
+
+        target: root
     }
 
     KvBackdrop {

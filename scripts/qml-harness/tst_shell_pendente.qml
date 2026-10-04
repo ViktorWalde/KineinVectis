@@ -6,9 +6,13 @@ import "../../ui/qml/runtime"
 //
 // O painel Remoto tem "Shell no terminal": o core devolve a linha `ssh ...` e o
 // controller a manda para o terminal da IDE. Com NENHUMA sessao aberta — o
-// estado normal de quem acabou de abrir a IDE — o `submitShellInput` pedia um
+// estado normal de quem acabou de abrir a IDE — o pedido de shell abria um
 // terminal e devolvia SEM ENVIAR NADA. O autor via um terminal vazio, e o painel
 // dizia "shell aberto no terminal".
+//
+// Desde 2026-10-04 (`runInNewTerminal`) o shell remoto SEMPRE abre a sua
+// sessao: mandado para a "sessao ativa", ele caia numa execucao ja' terminada
+// e se perdia (achado contra um sshd real).
 Item {
     id: root
 
@@ -38,7 +42,7 @@ Item {
     // depois num terminal que o autor abriu para outra coisa, e quem pediu fica
     // sabendo que ela nao foi.
     Component.onCompleted: {
-        runtime.submitShellInput("ssh nunca@abre");
+        runtime.runInNewTerminal("ssh nunca@abre");
         if (root.openRequests !== 1) root.failures += 1;
         if (runtime.pendingShellInput !== "ssh nunca@abre") root.failures += 2;
         afterDeadline.start();
@@ -55,7 +59,7 @@ Item {
 
             // SEGUNDO cenario: a sessao nasce, e a linha sai — uma vez, com o
             // \n que o shell espera.
-            runtime.submitShellInput("ssh pi@10.0.0.7");
+            runtime.runInNewTerminal("ssh pi@10.0.0.7");
             if (root.openRequests !== 2) root.failures += 32;
             if (root.sent.length !== 0) root.failures += 64;
             runtime.handleTerminalOpened("t1", "/bin/sh");
@@ -67,12 +71,13 @@ Item {
             runtime.handleTerminalOpened("t2", "/bin/sh");
             if (root.sent.length !== 1) root.failures += 1024;
 
-            // TERCEIRO: com sessao viva, vai direto para a aba ativa, sem pedir
-            // terminal nenhum.
-            runtime.submitShellInput("ssh outro@host");
-            if (root.sent.length !== 2) root.failures += 2048;
-            if (root.sent[1] !== "t2|ssh outro@host\n") root.failures += 4096;
-            if (root.openRequests !== 2) root.failures += 8192;
+            // TERCEIRO: com sessao viva, abre OUTRA, e a linha vai para a nova
+            // (nunca para a ativa, que pode ser uma execucao terminada).
+            runtime.runInNewTerminal("ssh outro@host");
+            if (root.openRequests !== 3) root.failures += 8192;
+            if (root.sent.length !== 1) root.failures += 2048;
+            runtime.handleTerminalOpened("t3", "/bin/sh");
+            if (root.sent[1] !== "t3|ssh outro@host\n") root.failures += 4096;
 
             // E o guarda nao dispara depois de a linha ter saido.
             noLateEcho.start();

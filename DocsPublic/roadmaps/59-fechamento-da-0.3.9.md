@@ -55,7 +55,7 @@ Cada passo termina com:
 | 2 | **Topo:** o ☰ esconde por um momento os widgets do topo, em vez de empurrá-los (§3.3) | feito (40.7 §7.213) |
 | 3 | **Modernizar os controles antigos** no padrão interativo (§3.4) | feito (40.7 §7.214) |
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | feito (40.7 §7.215), com os campos de texto refeitos e o menu que não deixa o mouse atravessar |
-| 5 | **Remoto acoplado** (§4) | a fazer |
+| 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 6 | **Grafana: visualização web opcional** (§6) | a fazer |
 | 7 | **Banco completo** (§5.1–§5.6), com o MongoDB lendo e escrevendo | a camada de segurança 1 e a grade estão feitas; o resto, a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
@@ -179,6 +179,12 @@ acompanhada enquanto se edita. O painel pop-up vira janela acoplada:
 
 O mesmo modelo serve de referência para a JetBrains ("Remote Host").
 
+Feito em 2026-10-04 (40.7 §7.216): `RemoteWindow` no slot do lado do ícone,
+com os alvos em cima (o ponto da última sonda), uma ação primária com o
+porquê, as seções em chips que quebram a linha e o conteúdo da seção. O
+pop-up (`RemotePanel`, `RemotePanelHost`, `RemoteList`) saiu. A área com a
+janela aberta aparece no trilho enquanto estiver aberta.
+
 ## 5. Banco de dados completo
 
 O que existe em 2026-10-03:
@@ -296,6 +302,14 @@ já sobe um PostgreSQL em container ("Novo banco…"). A bateria na tela inclui:
     Banco alarga o Projeto;
   - ~~os campos de texto feitos à mão~~: **resolvidos** em 2026-10-03
     (`KvTextField`, 40.7 §7.214), com os botões e os menus antigos.
+  - **os `Flickable` que podem ficar rolados além do fim** (achado em
+    2026-10-04 no Remoto: o conteúdo encolhe com a página rolada e o clique
+    seguinte é gasto em "parar o movimento"). Corrigidos no Remoto e nas
+    Configurações; varrer os outros 26 com o mesmo modo.
+  - **mensagens do core sem acento** (achado em 2026-10-04, no veredito do
+    Remoto: "nao alcancei … esta' ligada"): cerca de 60 textos que chegam à
+    tela escritos sem acento. As três do Remoto e da instalação foram
+    corrigidas; o resto se resolve no pente fino.
   - ~~os testes intermitentes do core~~: **resolvidos na causa** em
     2026-10-03 (40.7 §7.212, `crate::write_executable`); 25 rodadas
     paralelas sem falha, e o gate voltou a rodar em paralelo.

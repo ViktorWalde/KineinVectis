@@ -211,6 +211,19 @@ no checkout, não em nenhum pacote publicado.
 - **Correções:** o mouse não atravessa mais um menu aberto para acender o que
   está embaixo, e fechar um menu com Esc não desliga mais atalhos como
   Ctrl+O e Ctrl+Alt+S.
+- Protocolo `0.153.0` — **o Remoto (SSH) acoplado e prático.** Fica ao lado do
+  código; o alvo escolhido mostra o estado e a próxima ação. Na primeira
+  conexão, a IDE mostra a impressão digital do servidor e **Confiar neste
+  servidor** grava exatamente essa chave. **Copiar minha chave** roda numa aba
+  própria e só pede a senha do alvo uma vez (e cria a chave, se você não tiver
+  uma). Cada alvo diz quando respondeu pela última vez, mesmo depois de fechar
+  a IDE, e o programa que você roda fica lembrado.
+- **Campos de texto copiam e colam pelo mouse** (clique direito: Recortar,
+  Copiar, Colar, Selecionar tudo, Limpar), além do teclado.
+- **Correções:** o ▶ mostra a execução também numa IDE recém-aberta (uma
+  execução rápida sumia junto com a aba); a aba leva o nome da configuração;
+  enviar uma pasta para o alvo leva o conteúdo dela; um alvo novo não
+  sobrescreve mais outro de mesmo nome.
 
 ## 0.3.5 — lançada em 2026-10-01 (pré-release "Public Beta")
 

@@ -311,10 +311,10 @@ fn extract(
 fn descrever(erro: &str, url: &str) -> String {
     let baixo = erro.to_lowercase();
     if baixo.contains("dns") || baixo.contains("resolve") || baixo.contains("name") {
-        return format!("nao resolvi o nome de {url} — sem rede, ou sem DNS?");
+        return format!("não resolvi o nome de {url} — sem rede, ou sem DNS?");
     }
     if baixo.contains("connection refused") || baixo.contains("timed out") {
-        return format!("nao alcancei {url} ({erro})");
+        return format!("não alcancei {url} ({erro})");
     }
     format!("{url}: {erro}")
 }

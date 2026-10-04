@@ -6,7 +6,8 @@ import QtQuick
 // funcoes puras: o `SideRail` desenha, o `ShellController` guarda o estado, o
 // harness testa sem janela (tst_rail_projection.qml).
 //
-//   visivel(e) = e.id fora das ocultas
+//   visivel(e) = e.active (a janela dela esta' aberta, 2026-10-04)
+//              OU e.id fora das ocultas
 //              E ( e.id nas fixadas
 //                  OU (politica "pinned" E e.id fora das desfixadas)
 //                  OU (politica "contextual" E fato(e.factKey)) )
@@ -24,6 +25,12 @@ QtObject {
     }
 
     function isVisible(entry, state, facts) {
+        // Aberta, a area aparece ENQUANTO estiver aberta, mesmo contextual
+        // sem fato ou oculta: a janela no slot tem de ter o icone que a fecha
+        // (achado na tela: o Remoto aberto pelo menu, sem icone no trilho).
+        if (entry.active === true) {
+            return true;
+        }
         if (contains(state.hidden, entry.id)) {
             return false;
         }

@@ -31,20 +31,23 @@ fn descrever_processo(erro: &crate::process::ProcessError) -> String {
     }
 }
 
-pub(super) fn falha(request_id: Option<Value>, mensagem: impl Into<String>) -> JsonRpcResponse {
+pub(super) fn error_response(
+    request_id: Option<Value>,
+    mensagem: impl Into<String>,
+) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(JsonRpcErrorCode::InvalidRequest, mensagem, None),
     )
 }
 
-pub(super) fn alvo_ou_falha(
+pub(super) fn target_or_error(
     root: &Path,
     request_id: Option<&Value>,
     name: &str,
 ) -> Result<RemoteTarget, Box<JsonRpcResponse>> {
     remote::find(root, name).ok_or_else(|| {
-        Box::new(falha(
+        Box::new(error_response(
             request_id.cloned(),
             format!("nao ha' alvo remoto chamado `{name}` — salve-o no painel Remoto"),
         ))
@@ -103,6 +106,7 @@ impl Core {
         JsonRpcResponse::success(
             request_id,
             json!(RemoteListResult {
+                contacts: remote::contacts::load(&root),
                 targets: remote::list(&root)
             }),
         )
@@ -125,10 +129,14 @@ impl Core {
             return no_workspace_response(request_id, "remote.save");
         };
         match remote::save(&root, &parsed.target) {
-            Ok(targets) => {
-                JsonRpcResponse::success(request_id, json!(RemoteListResult { targets }))
-            }
-            Err(mensagem) => falha(request_id, mensagem),
+            Ok(targets) => JsonRpcResponse::success(
+                request_id,
+                json!(RemoteListResult {
+                    targets,
+                    contacts: remote::contacts::load(&root)
+                }),
+            ),
+            Err(mensagem) => error_response(request_id, mensagem),
         }
     }
 
@@ -150,7 +158,14 @@ impl Core {
         };
         match remote::remove(&root, &parsed.name) {
             Ok(targets) => {
-                JsonRpcResponse::success(request_id, json!(RemoteListResult { targets }))
+                remote::contacts::forget(&root, &parsed.name);
+                JsonRpcResponse::success(
+                    request_id,
+                    json!(RemoteListResult {
+                        targets,
+                        contacts: remote::contacts::load(&root)
+                    }),
+                )
             }
             Err(mensagem) => JsonRpcResponse::failure(
                 request_id,
@@ -178,12 +193,12 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "remote.probe");
         };
-        let target = match alvo_ou_falha(&root, request_id.as_ref(), &parsed.name) {
+        let target = match target_or_error(&root, request_id.as_ref(), &parsed.name) {
             Ok(target) => target,
             Err(response) => return *response,
         };
         let Some(ssh) = self.detector.find_in_path("ssh") else {
-            return falha(
+            return error_response(
                 request_id,
                 "nao achei `ssh` no PATH — instale o openssh-client",
             );
@@ -196,6 +211,7 @@ impl Core {
         let command_line = format!("{} {}", ssh.display(), args.join(" "));
         let name = target.name.clone();
         let titulo = format!("Sondar {name}");
+        let contacts_root = root;
         let linha = command_line.clone();
         let job_id = jobs.spawn("remote.probe", &titulo, JobRisk::Low, true, move |ctx| {
             ctx.emit_output(&format!("$ {linha}"));
@@ -215,9 +231,9 @@ impl Core {
             };
             let status =
                 stream_command_lines_cancelable(command, &ctx.cancellation(), &mut on_line);
-            let sucesso = matches!(&status, Ok(s) if s.success());
+            let succeeded = matches!(&status, Ok(s) if s.success());
             let (arch, kernel, tools) = remote::parse_probe(&stdout);
-            let error = if sucesso {
+            let error = if succeeded {
                 None
             } else {
                 Some(match status {
@@ -227,16 +243,28 @@ impl Core {
             };
             // Mesma causa que escolheu a frase, agora tipada: a UI oferece o
             // gesto certo sem ler a sentenca.
-            let failure = (!sucesso).then(|| remote::classify_ssh_failure(&stderr));
+            let failure = (!succeeded).then(|| remote::classify_ssh_failure(&stderr));
             if let Some(erro) = &error {
                 ctx.emit_output(erro);
             }
+            // O ultimo contato fica no projeto (0.153.0): a lista diz quando
+            // cada alvo respondeu, mesmo depois de fechar a IDE.
+            remote::contacts::record(
+                &contacts_root,
+                remote::contacts::observed(
+                    &name,
+                    succeeded,
+                    arch.as_ref(),
+                    kernel.as_ref(),
+                    failure,
+                ),
+            );
             ctx.emit_event(
                 "event.remote.probed",
                 json!(RemoteProbedEvent {
                     job_id: ctx.id().to_owned(),
                     name,
-                    success: sucesso,
+                    success: succeeded,
                     failure,
                     arch,
                     kernel,
@@ -245,7 +273,7 @@ impl Core {
                     raw: format!("{stdout}{stderr}"),
                 }),
             );
-            if sucesso {
+            if succeeded {
                 JobOutcome::Success
             } else {
                 JobOutcome::Failed
@@ -279,7 +307,7 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "remote.deploy");
         };
-        let target = match alvo_ou_falha(&root, request_id.as_ref(), &parsed.name) {
+        let target = match target_or_error(&root, request_id.as_ref(), &parsed.name) {
             Ok(target) => target,
             Err(response) => return *response,
         };
@@ -337,8 +365,8 @@ impl Core {
                 };
                 let status =
                     stream_command_lines_cancelable(command, &ctx.cancellation(), &mut on_line);
-                let sucesso = matches!(&status, Ok(s) if s.success());
-                let error = (!sucesso).then(|| match status {
+                let succeeded = matches!(&status, Ok(s) if s.success());
+                let error = (!succeeded).then(|| match status {
                     Err(erro) => descrever_processo(&erro),
                     Ok(_) => remote::describe_ssh_failure(&target, &saida),
                 });
@@ -347,14 +375,14 @@ impl Core {
                     json!(RemoteDeployedEvent {
                         job_id: ctx.id().to_owned(),
                         name,
-                        success: sucesso,
+                        success: succeeded,
                         source: origem,
                         dest: destino,
                         command: linha,
                         error,
                     }),
                 );
-                if sucesso {
+                if succeeded {
                     JobOutcome::Success
                 } else {
                     JobOutcome::Failed
@@ -383,7 +411,7 @@ impl Core {
             .filter(|s| !s.trim().is_empty())
             .map_or_else(|| root.join("build"), |s| root.join(s));
         if !source.exists() {
-            return Err(Box::new(falha(
+            return Err(Box::new(error_response(
                 request_id.cloned(),
                 format!(
                     "a origem `{}` nao existe — compile antes, ou aponte outra pasta",
@@ -400,7 +428,7 @@ impl Core {
             None => match self.detector.find_in_path("scp") {
                 Some(scp) => (scp, false),
                 None => {
-                    return Err(Box::new(falha(
+                    return Err(Box::new(error_response(
                         request_id.cloned(),
                         "nem `rsync` nem `scp` no PATH — instale o openssh-client",
                     )));

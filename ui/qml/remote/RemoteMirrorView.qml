@@ -31,38 +31,45 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingXSmall
 
-        Row {
+        // Campo e botoes EMPILHADOS (2026-10-04): na janela acoplada, lado a
+        // lado, o campo sobrava com uns poucos pixels.
+        DataSourceField {
             width: parent.width
+            label: qsTr("Pasta no alvo (abre como espelho local)")
+            placeholder: "/home/pi/projeto"
+            value: root.openPath
+            onEdited: text => root.openPathEdited(text)
+            onAccepted: root.openFolderRequested()
+        }
+
+        Row {
+            anchors.right: parent.right
             spacing: Theme.spacingSmall
 
-            DataSourceField {
-                width: parent.width - abrir.width - escolher.width - 2 * parent.spacing
-                label: qsTr("Pasta no alvo (abre como espelho local)")
-                placeholder: "/home/pi/projeto"
-                value: root.openPath
-                onEdited: text => root.openPathEdited(text)
-                onAccepted: root.openFolderRequested()
-            }
-
             KvButton {
-                id: escolher
-
-                anchors.bottom: parent.bottom
                 text: qsTr("Escolher…")
+                iconName: "folder"
                 compact: true
                 enabled: root.canOpen
                 onClicked: root.browseAction("start", "")
             }
 
             KvButton {
-                id: abrir
-
-                anchors.bottom: parent.bottom
                 text: qsTr("Abrir espelho")
                 compact: true
+                primary: true
                 enabled: root.canOpen && root.openPath.trim() !== ""
                 onClicked: root.openFolderRequested()
             }
+        }
+
+        Text {
+            width: parent.width
+            visible: !root.canOpen && !root.syncing
+            wrapMode: Text.WordWrap
+            text: qsTr("Salve um alvo em Configurar para abrir uma pasta dele.")
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeCaption
         }
 
         Rectangle {
@@ -96,6 +103,7 @@ Item {
 
                     KvButton {
                         text: qsTr("Subir")
+                        iconName: "chevron-up"
                         compact: true
                         enabled: !root.browser.browseLoading && root.browser.browseParent !== ""
                         onClicked: root.browseAction("navigate", root.browser.browseParent)
@@ -118,13 +126,51 @@ Item {
                     model: root.browser.browseEntries
                     spacing: 2
 
-                    delegate: KvButton {
+                    // Uma pasta por linha, como no seletor de pastas.
+                    delegate: Rectangle {
+                        id: folderRow
+
                         required property var modelData
 
                         width: ListView.view.width
-                        text: modelData.name
-                        compact: true
-                        onClicked: root.browseAction("navigate", modelData.path)
+                        height: 28
+                        radius: Theme.radius
+                        color: folderArea.containsMouse ? Theme.surfaceSelected : "transparent"
+
+                        Behavior on color {
+                            ColorAnimation { duration: Theme.motionFast }
+                        }
+
+                        KvIcon {
+                            id: folderIcon
+
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.spacingSmall
+                            anchors.verticalCenter: parent.verticalCenter
+                            name: "folder"
+                            size: 14
+                            active: folderArea.containsMouse
+                        }
+
+                        Text {
+                            anchors.left: folderIcon.right
+                            anchors.leftMargin: Theme.spacingSmall
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: folderRow.modelData.name
+                            color: Theme.textPrimary
+                            font.pixelSize: Theme.fontSizeSmall
+                            elide: Text.ElideRight
+                        }
+
+                        MouseArea {
+                            id: folderArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.browseAction("navigate", folderRow.modelData.path)
+                        }
                     }
                 }
 
@@ -181,6 +227,7 @@ Item {
 
                     KvButton {
                         text: qsTr("Puxar do alvo")
+                        iconName: "pull"
                         compact: true
                         enabled: !root.syncing
                         onClicked: root.syncRequested("pull")
@@ -188,6 +235,7 @@ Item {
 
                     KvButton {
                         text: qsTr("Empurrar tudo")
+                        iconName: "push"
                         compact: true
                         enabled: !root.syncing
                         onClicked: root.syncRequested("push")

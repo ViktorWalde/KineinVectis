@@ -197,7 +197,10 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.page = navItem.modelData.key
+                        onClicked: {
+                            root.page = navItem.modelData.key;
+                            pageScroll.contentY = 0;
+                        }
                     }
                 }
             }
@@ -230,6 +233,9 @@ Item {
             contentWidth: width
             contentHeight: pageColumn.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
+            // Nunca alem do fim; trocar de seccao volta ao topo (o mesmo
+            // defeito achado no Remoto em 2026-10-04).
+            onContentHeightChanged: pageScroll.returnToBounds()
 
             Column {
                 id: pageColumn

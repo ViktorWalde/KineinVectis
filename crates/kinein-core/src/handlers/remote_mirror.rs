@@ -90,7 +90,7 @@ impl SyncPlan {
     }
 }
 
-fn falha(request_id: Option<Value>, mensagem: impl Into<String>) -> JsonRpcResponse {
+fn error_response(request_id: Option<Value>, mensagem: impl Into<String>) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(JsonRpcErrorCode::InvalidRequest, mensagem, None),
@@ -154,21 +154,21 @@ impl Core {
             return no_workspace_response(request_id, "remote.open");
         };
         let Some(target) = remote::find(&root, &parsed.name) else {
-            return falha(
+            return error_response(
                 request_id,
                 format!("nao ha' alvo remoto chamado `{}`", parsed.name),
             );
         };
         let remote_path = parsed.path.trim().trim_end_matches('/').to_owned();
         if !remote::valid_remote_dir(&remote_path) {
-            return falha(
+            return error_response(
                 request_id,
                 "informe a pasta absoluta no alvo (ex.: /home/pi/projeto)",
             );
         }
         let (rsync, transport) = match self.rsync_and_transport(&target) {
             Ok(x) => x,
-            Err(m) => return falha(request_id, m),
+            Err(m) => return error_response(request_id, m),
         };
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "remote.open");
@@ -228,7 +228,7 @@ impl Core {
             return no_workspace_response(request_id, "remote.sync");
         };
         let Some(espelho) = mirror::read_marker(&root) else {
-            return falha(
+            return error_response(
                 request_id,
                 "este projeto nao e' um espelho remoto — abra uma pasta do alvo pelo painel Remoto",
             );
@@ -241,7 +241,7 @@ impl Core {
                     .map(|p| p.trim_matches('/').to_owned())
                     .collect();
                 if rels.is_empty() || rels.iter().any(|r| !mirror::safe_relative(r)) {
-                    return falha(
+                    return error_response(
                         request_id,
                         "paths devem ser relativos ao espelho, sem `..`, e nunca `.kinein`",
                     );
@@ -253,7 +253,7 @@ impl Core {
             Ok((job_id, command)) => {
                 JsonRpcResponse::success(request_id, json!({ "jobId": job_id, "command": command }))
             }
-            Err(mensagem) => falha(request_id, mensagem),
+            Err(mensagem) => error_response(request_id, mensagem),
         }
     }
 
@@ -320,6 +320,8 @@ impl Core {
             port: None,
             identity_file: None,
             deploy_dir: None,
+            program: None,
+            deploy_source: None,
         });
         let (rsync, transport) = self.rsync_and_transport(&target)?;
         let jobs = self

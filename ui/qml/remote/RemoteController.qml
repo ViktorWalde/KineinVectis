@@ -4,19 +4,15 @@ import QtQuick
 // Estado do ALVO LINUX POR SSH (P6 fatia 1 do roadmaps/42, 2026-09-17): a
 // Raspberry Pi, a placa com imagem propria, como recurso do projeto.
 //
-// Guarda o que o core respondeu e o que o autor esta' editando. NAO decide
-// nada: quem valida o perfil, quem compoe a linha `ssh …` e quem le a sonda
-// e' o core. NAO HA' SENHA AQUI: SSH e' por chave, e o que o `ssh` do sistema
-// precisar perguntar, pergunta no terminal da IDE.
-//
-// Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
+// Guarda o que o core respondeu e o que o autor edita; quem valida, compoe e
+// le' a sonda e' o core. NAO HA' SENHA AQUI (SSH e' por chave; o que o `ssh`
+// perguntar, pergunta no terminal). Pede por sinal e recebe do roteador.
 Item {
     id: root
 
     property string workspaceRoot: ""
     property var targets: []
     property string selectedName: ""
-    property bool panelVisible: false
     property string errorText: ""
     property var draft: root.emptyDraft()
 
@@ -29,10 +25,10 @@ Item {
     property var probeTools: []
     property string probeMessage: ""
 
-    // O deploy (remote.deploy -> event.remote.deployed) e o programa NO
-    // ALVO que rodar/depurar usam: relativo entra no deployDir.
+    // O deploy e o programa NO ALVO (relativo entra no deployDir).
     property bool deploying: false
     property string deployMessage: ""
+    property bool deployOk: false
     property string deploySource: ""
     property string program: ""
 
@@ -41,53 +37,59 @@ Item {
     property string lastCommand: ""
     property string lastOutcome: ""
 
-    // Qual seccao do painel esta' aberta (R1/V2). Dono aqui porque ela
-    // sobrevive a fechar e reabrir o painel, e porque a acao primaria pode
-    // LEVAR a pessoa ate' a seccao onde o gesto vive.
+    // A seccao aberta (R1/V2): dono aqui porque sobrevive a fechar a janela e
+    // porque a acao primaria LEVA a pessoa ate' onde o gesto vive.
     property string section: "visao"
+    readonly property bool configuring: section === "configurar"
 
-    // Por que a sonda falhou, TIPADO pelo core (0.133.0): authentication |
-    // host | network | other. A UI escolhe o gesto por isto, nunca lendo a
-    // frase — frase muda de idioma, tipo nao.
+    // Por que a sonda falhou, TIPADO pelo core: o gesto sai disto, nunca da frase.
     property string probeFailure: ""
-    // QUANDO a sonda mediu. O HUD da V4 precisa da idade: "sondado uma vez"
-    // nao pode parecer "conectado agora" (defeito 5 da §3). 0 = nunca nesta
-    // sessao, que e' o estado inicial que a V4 exige.
+    // QUANDO a sonda mediu (V4: "sondado uma vez" nao parece "conectado
+    // agora"); 0 = nunca nesta sessao.
     property double probedAt: 0
-    // Uma linha ARMADA: composta pelo core e mostrada, esperando um gesto
-    // explicito. Copiar chave nao pode acontecer porque alguem sondou.
+    // Uma linha ARMADA: composta pelo core, a vista, esperando um gesto explicito.
     property string armedCommand: ""
     property string armedName: ""
+    // A linha da chave rodou no terminal: o proximo gesto e' Sondar de novo.
+    property bool keySent: false
 
 
     signal listRequested()
+    signal windowRequested()
     signal saveRequested(var target)
     signal removeRequested(string name)
     signal probeRequested(string name)
     signal deployRequested(string name, string source, string dest)
     signal commandRequested(string name, string kind, string program, int port)
-    // O que o resultado de `remote.command` vira: configuracao de execucao
-    // ("Rodar em pi"), os dois campos do kit, ou uma linha no terminal.
+    // O resultado de `remote.command` vira configuracao, kit ou terminal.
     signal runConfigRequested(string name, string command)
     signal kitRemoteRequested(string remoteTarget, string debugServer)
     signal shellRequested(string command)
 
     visible: false
 
-    // O SETUP como filho (roadmap 48 §8.3 nomeia os filhos possiveis e diz que
-    // eles nao nascem preventivamente — este nasceu quando a catraca mandou).
-    // Ele guarda o que a MAQUINA tem; a fachada guarda o alvo DESTE projeto.
-    // Trocar de workspace nao o reinicia: o `~/.ssh/config` nao mudou.
+    // Os FILHOS (roadmap 48 §8.3; nascem quando a catraca manda): o setup
+    // guarda o que a MAQUINA tem; a fachada, o alvo DESTE projeto.
     readonly property alias setup: setupController
 
     RemoteSetupController {
         id: setupController
 
+        existingNames: root.targets.map(target => target.name)
         onProposalReady: function(target) { root.useProposal(target); }
     }
 
-    // O espelho e o sync (roadmap 48 §8.3). Ele nao conhece o catalogo: o alvo
-    // chega por property e a selecao volta por sinal.
+    readonly property RemoteContactLog contacts: RemoteContactLog {}
+    // Confiar no servidor na primeira conexao (0.153.0): confiou, sonda de novo.
+    readonly property alias trust: trustController
+
+    RemoteTrustController {
+        id: trustController
+
+        onTrusted: name => { if (name === root.selectedName) root.probe(); }
+    }
+
+    // O espelho e o sync: o alvo chega por property e a selecao volta por sinal.
     readonly property alias workspace: workspaceController
 
     RemoteWorkspaceController {
@@ -122,23 +124,14 @@ Item {
     }
 
 
-    // TUDO que o setup propoe vira rascunho por aqui — o alias escolhido e a
-    // linha `ssh` colada sao a mesma operacao, e ter duas funcoes quase iguais
-    // era o comeco de duas verdades sobre o que um alvo novo e'.
-    //
-    // Campo ausente vira vazio, e porta ausente vira 0: a ponte descarta os
-    // dois, entao o perfil fica so' com o que a pessoa realmente disse e o
-    // OpenSSH continua decidindo o resto. Esse e' o criterio de aceite da R0.5.
-    //
-    // Salvar continua sendo gesto dela: ler nao e' gravar.
+    // TUDO que o setup propoe vira rascunho aqui; o ausente fica para o OpenSSH.
     function useProposal(target) {
         if (!target || !target.host) {
             return;
         }
-        draft = { name: target.name || "", host: target.host,
-                  user: target.user || "", port: target.port || 0,
-                  identityFile: target.identityFile || "",
-                  deployDir: target.deployDir || "" };
+        // Proposta de OUTRO alvo: "nao salvo", com "Salvar alvo" no cartao.
+        if ((target.name || "") !== selectedName) { selectedName = ""; clearVerdict(); }
+        draft = Object.assign(cloneTarget(target), { port: target.port || 0 }); // 0: o ssh decide
     }
 
     // "Usar o SSH que ja' funciona": o alias e' nome e host, e nada mais.
@@ -155,8 +148,13 @@ Item {
         }
     }
 
+    // Pedir a janela (acoplada desde 2026-10-04): quem a abre e' o shell.
     function open() {
-        panelVisible = true;
+        windowRequested();
+    }
+
+    // A janela ficou visivel: comeca na visao geral e le' o que falta.
+    function prepare() {
         // "Visao geral como padrao" — decisao do autor em 2026-09-24. Ela so'
         // funciona porque a seccao deixou de abrir em branco: sem alvo, ela diz
         // o que falta, e a ACAO PRIMARIA leva a Configurar num clique.
@@ -170,10 +168,6 @@ Item {
         if (setup.discovery === "idle") {
             setup.discover();
         }
-    }
-
-    function close() {
-        panelVisible = false;
     }
 
     function clearVerdict() {
@@ -195,8 +189,7 @@ Item {
         return targets.find(function(item) { return item.name === name; }) || null;
     }
 
-    // Copia campo a campo: o alvo tem `deny_unknown_fields`, e um campo a
-    // mais (ou uma senha) seria recusado — e nao deve nem chegar la'.
+    // Campo a campo: o alvo tem `deny_unknown_fields` (uma senha nem chega la').
     function cloneTarget(source) {
         return {
             name: source.name || "",
@@ -204,7 +197,7 @@ Item {
             user: source.user || "",
             port: source.port || 22,
             identityFile: source.identityFile || "",
-            deployDir: source.deployDir || ""
+            deployDir: source.deployDir || "", program: source.program || "", deploySource: source.deploySource || ""
         };
     }
 
@@ -212,6 +205,7 @@ Item {
         selectedName = name;
         const encontrado = targetByName(name);
         draft = encontrado === null ? emptyDraft() : cloneTarget(encontrado);
+        program = draft.program || ""; deploySource = draft.deploySource || "";
         clearVerdict();
     }
 
@@ -227,9 +221,12 @@ Item {
         draft = atualizado;
     }
 
+    // Alvo NOVO com o nome de outro: o core o SUBSTITUIRIA (save por nome).
     function save() {
-        errorText = "";
-        saveRequested(cloneTarget(draft));
+        const name = draft.name.trim();
+        errorText = name !== selectedName && targetByName(name) !== null
+                    ? qsTr("já existe um alvo “%1” — escolha outro nome").arg(name) : "";
+        if (errorText === "") saveRequested(cloneTarget(draft));
     }
 
     function remove() {
@@ -238,8 +235,7 @@ Item {
         }
     }
 
-    // A sonda e o deploy sao do alvo SALVO: o core so' conhece o que esta'
-    // em .kinein/remotes.json.
+    // A sonda e o deploy sao do alvo SALVO (o que esta' no remotes.json).
     readonly property bool selectedSaved: selectedName !== "" && targetByName(selectedName) !== null
 
     function probe() {
@@ -255,6 +251,7 @@ Item {
         if (!selectedSaved) {
             return;
         }
+        rememberRun();
         deploying = true;
         deployMessage = "";
         deployRequested(selectedName, deploySource, "");
@@ -264,9 +261,17 @@ Item {
         if (!selectedSaved) {
             return;
         }
+        rememberRun();
         pendingKind = kind;
         lastOutcome = "";
         commandRequested(selectedName, kind, program, 0);
+    }
+
+    // Programa e origem ficam NO ALVO (0.153.0): reabrir a IDE nao os perde.
+    function rememberRun() {
+        const saved = targetByName(selectedName);
+        if (saved !== null && ((saved.program || "") !== program || (saved.deploySource || "") !== deploySource))
+            saveRequested(Object.assign(cloneTarget(saved), { program: program, deploySource: deploySource }));
     }
 
     function handleTargets(newTargets) {
@@ -279,11 +284,8 @@ Item {
         if (selectedName !== "" && targetByName(selectedName) === null) {
             startNew();
         }
-        // Chegou lista e nada esta' selecionado: cair no primeiro. Medido na
-        // foto de 2026-09-24 — com dois alvos salvos e nenhum selecionado, o
-        // painel oferecia "Salvar alvo" e dizia "nenhum alvo ainda", as duas
-        // coisas falsas. E o aceite da V2 e' o contrario disso: "no segundo uso
-        // do mesmo alvo, o usuario nao toca nos campos de perfil".
+        // Lista sem selecao: cair no primeiro (foto de 2026-09-24: com dois
+        // alvos e nenhum escolhido o painel dizia "nenhum alvo ainda").
         if (selectedName === "" && targets.length > 0) {
             select(targets[0].name);
         }
@@ -295,6 +297,7 @@ Item {
 
     function handleProbed(outcome) {
         probing = false;
+        keySent = false;
         probedName = outcome.name || "";
         probeOk = outcome.success === true;
         probeArch = outcome.arch || "";
@@ -303,12 +306,11 @@ Item {
         probeMessage = probeOk ? "" : (outcome.error || qsTr("a sonda falhou"));
         probeFailure = probeOk ? "" : (outcome.failure || "other");
         probedAt = Date.now();
+        trust.follow(probeFailure, probedName);
+        contacts.record(outcome);
     }
 
-    // O alvo recusou a chave: o unico gesto que resolve isso e' copiar a sua.
-    // DONO UNICO de "oferecer o gesto da chave". Com uma linha ja' armada o
-    // botao sai de cena — deixar a view decidir isso partiria a derivacao em
-    // dois lugares que divergem calados.
+    // DONO UNICO de "oferecer copiar a chave"; com linha armada, sai de cena.
     readonly property bool canCopyId: !probeOk && probeFailure === "authentication"
                                       && probedName !== "" && selectedSaved
                                       && armedCommand === ""
@@ -327,33 +329,33 @@ Item {
         armedName = "";
     }
 
-    // O painel PROMETEU "shell no terminal". Se a sessao nao nasceu e a linha
-    // foi descartada, a promessa se desmente no mesmo lugar onde apareceu.
+    // A sessao nao nasceu e a linha caiu: a promessa se desmente onde apareceu.
     function reportShellDropped(command) {
         lastOutcome = qsTr("o terminal não abriu; a linha NÃO foi enviada: %1").arg(command);
     }
 
-    // So' aqui algo sai para o terminal, e so' depois de a linha ter estado
-    // na tela. A IDE nao gera chave, nao digita senha e nao roda sozinha.
+    // So' aqui algo sai para o terminal, depois de a linha estar na tela. A IDE
+    // nao digita senha e nao roda sozinha (a chave nova, o ssh-keygen pergunta).
     function runArmed() {
         if (armedCommand === "") {
             return;
         }
         const linha = armedCommand;
         disarm();
+        keySent = true;
         shellRequested(linha);
-        lastOutcome = qsTr("rodando no terminal: aceite o host key e digite a senha lá, uma vez");
+        lastOutcome = qsTr("rodando no terminal: digite a senha do alvo lá, uma vez; depois, Sondar");
     }
 
     function handleDeployed(outcome) {
         deploying = false;
+        deployOk = outcome.success === true;
         deployMessage = outcome.success === true
             ? qsTr("enviado para %1:%2").arg(outcome.name).arg(outcome.dest)
             : qsTr("deploy falhou: %1").arg(outcome.error || "");
     }
 
-    // O resultado PURO vira a acao que o autor pediu. Cada destino tem um
-    // dono fora daqui (run configs, kit, terminal); este controller so' liga.
+    // O resultado PURO vira a acao pedida; o dono e' de fora (config, kit, terminal).
     function handleCommand(result) {
         lastCommand = result.command || "";
         const kind = pendingKind;
@@ -378,6 +380,10 @@ Item {
     }
 
     function handleFailed(method, message) {
+        if (method === "remote.hostKey" || method === "remote.trustHost") {
+            trust.handleFailed(message);
+            return;
+        }
         if (method === "remote.discover" || method === "remote.resolve") {
             setup.handleFailed(method);
             errorText = message;

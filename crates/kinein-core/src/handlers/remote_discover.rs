@@ -23,7 +23,7 @@ use crate::Core;
 use crate::remote;
 use crate::rpc::parse_params;
 
-use super::remote::falha;
+use super::remote::error_response;
 
 /// A primeira linha que o `ssh -G` reclamou, para a UI repetir em vez de
 /// inventar um resumo.
@@ -72,7 +72,7 @@ impl Core {
         // `sdk_home` e' o `$HOME` do core, sobrescrivivel em teste — nao um
         // detalhe de SDK. E' a mesma home de onde o `ssh` leria o config.
         let Some(home) = self.sdk_home() else {
-            return falha(
+            return error_response(
                 request_id,
                 "sem HOME: nao sei onde procurar o `~/.ssh/config`",
             );
@@ -99,7 +99,7 @@ impl Core {
             Ok((target, source)) => {
                 JsonRpcResponse::success(request_id, json!(RemoteParseResult { target, source }))
             }
-            Err(motivo) => falha(request_id, motivo),
+            Err(motivo) => error_response(request_id, motivo),
         }
     }
 
@@ -123,10 +123,10 @@ impl Core {
             Err(response) => return *response,
         };
         if let Err(motivo) = remote::discover::validate_host(&parsed.host) {
-            return falha(request_id, motivo);
+            return error_response(request_id, motivo);
         }
         let Some(ssh) = self.detector.find_in_path("ssh") else {
-            return falha(
+            return error_response(
                 request_id,
                 "nao achei `ssh` no PATH — instale o openssh-client",
             );
@@ -149,8 +149,8 @@ impl Core {
                     &String::from_utf8_lossy(&fim.stdout)
                 )),
             ),
-            Ok(fim) => falha(request_id, recusa_do_ssh(&parsed.host, &fim.stderr)),
-            Err(erro) => falha(request_id, format!("nao pude rodar `ssh -G`: {erro}")),
+            Ok(fim) => error_response(request_id, recusa_do_ssh(&parsed.host, &fim.stderr)),
+            Err(erro) => error_response(request_id, format!("nao pude rodar `ssh -G`: {erro}")),
         }
     }
 }

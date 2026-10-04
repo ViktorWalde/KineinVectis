@@ -20,11 +20,11 @@ QtObject {
     // `kind` e' o que o host chama; `hint` e' a frase curta que explica por que
     // ESTE e' o proximo passo — sem ela a acao primaria vira adivinhacao.
     function primaryFor(e) {
-        if (e.sincronizando) {
+        if (e.syncing) {
             return { label: qsTr("Sincronizando…"), kind: "", enabled: false, busy: true,
                      hint: qsTr("o rsync está movendo os arquivos") };
         }
-        if (e.sondando) {
+        if (e.probing) {
             return { label: qsTr("Sondando…"), kind: "", enabled: false, busy: true,
                      hint: qsTr("o ssh está medindo o alvo, até 5 s") };
         }
@@ -34,8 +34,8 @@ QtObject {
         // com "Visao geral" como padrao (decisao do autor, 2026-09-24), um
         // botao desabilitado seria um beco — a pessoa veria o que falta sem ter
         // um gesto para resolver.
-        if (!e.temAlvoSalvo) {
-            if (e.rascunhoNomeado === true) {
+        if (!e.savedTarget) {
+            if (e.namedDraft === true) {
                 return { label: qsTr("Salvar alvo"), kind: "salvar", enabled: true, busy: false,
                          hint: qsTr("grava o perfil neste projeto") };
             }
@@ -43,27 +43,53 @@ QtObject {
                      busy: false,
                      hint: qsTr("escolha um alias do seu ~/.ssh/config ou cole a linha ssh") };
         }
+        // A linha da chave ja' esta' ARMADA (2026-10-04): o proximo gesto e'
+        // roda-la, ali mesmo; a senha do alvo e' pedida no terminal.
+        if (e.armedLine === true) {
+            return { label: qsTr("Rodar no terminal"), kind: "rodarArmada", enabled: true, busy: false,
+                     hint: qsTr("a senha do alvo é pedida uma vez, lá; depois, Sondar de novo") };
+        }
+        // Primeira conexao (0.153.0): o gesto e' confiar no servidor depois de
+        // conferir a impressao digital, e nao copiar chave nem digitar `yes`.
+        if (e.probed && !e.probeOk && e.firstContact === true) {
+            return { label: e.trusting ? qsTr("Confiando…") : qsTr("Confiar neste servidor"),
+                     kind: "confiar", enabled: e.serverKeyRead === true && !e.trusting,
+                     busy: e.trusting === true,
+                     hint: e.serverKeyRead === true
+                         ? qsTr("primeira conexão: confira a impressão digital acima")
+                         : qsTr("lendo a impressão digital do servidor…") };
+        }
+        // A identidade MUDOU: nada a confiar pela IDE; o aviso diz o que fazer.
+        if (e.probed && !e.probeOk && e.failure === "hostKeyChanged") {
+            return { label: qsTr("Sondar"), kind: "sondar", enabled: true, busy: false,
+                     hint: qsTr("a identidade do servidor mudou — resolva o aviso antes") };
+        }
+        // A chave ja' foi para o terminal: conferir e' sondar de novo.
+        if (e.probed && !e.probeOk && e.failure === "authentication" && e.keySent === true) {
+            return { label: qsTr("Sondar"), kind: "sondar", enabled: true, busy: false,
+                     hint: qsTr("terminou no terminal? sonde de novo para conferir") };
+        }
         // A chave recusada tem UM gesto que a resolve, e nao e' sondar de novo.
-        if (e.sondou && !e.sondaOk && e.falha === "authentication") {
+        if (e.probed && !e.probeOk && e.failure === "authentication") {
             return { label: qsTr("Copiar minha chave"), kind: "copiarChave", enabled: true,
                      busy: false,
                      hint: qsTr("o alvo recusou a chave; a linha aparece antes de rodar") };
         }
-        if (!e.sondou || !e.sondaOk) {
+        if (!e.probed || !e.probeOk) {
             return { label: qsTr("Sondar"), kind: "sondar", enabled: true, busy: false,
-                     hint: e.sondou
+                     hint: e.probed
                          ? qsTr("tente de novo depois de resolver o que o erro diz")
                          : qsTr("mede arquitetura, kernel e ferramentas do alvo") };
         }
         // Sondado e' um espelho aberto: o gesto diario vira sincronizar.
-        if (e.eEspelho) {
+        if (e.isMirror) {
             return { label: qsTr("Puxar do alvo"), kind: "puxar", enabled: true, busy: false,
                      hint: qsTr("traz o que mudou no alvo para o espelho local") };
         }
-        return { label: e.temPastaRemota ? qsTr("Abrir pasta no alvo")
+        return { label: e.hasRemoteFolder ? qsTr("Abrir pasta no alvo")
                                          : qsTr("Escolher pasta no alvo"), kind: "abrirPasta",
                  enabled: true, busy: false,
-                 hint: e.temPastaRemota
+                 hint: e.hasRemoteFolder
                      ? qsTr("abre a pasta do alvo como espelho local")
                      : qsTr("começa pela home do alvo em Projeto") };
     }

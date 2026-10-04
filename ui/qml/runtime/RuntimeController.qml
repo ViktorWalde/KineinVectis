@@ -204,15 +204,13 @@ Item {
         }
     }
 
-    function submitShellInput(text) {
-        if (root.activeTerminalId === "") {
-            pendingShell.hold(text);
-            showTabRequested("terminal");
-            terminalOpenRequested("");
-            return;
-        }
-        terminalInputRequested(root.activeTerminalId, text + "\n");
-        clearTerminalInputRequested();
+    // Uma sessao INTERATIVA nova (ssh no alvo, a copia da chave): aba propria,
+    // nunca a sessao ativa — que pode ser uma execucao ja' terminada, onde a
+    // linha se perdia (achado contra um sshd real, 2026-10-04).
+    function runInNewTerminal(text) {
+        pendingShell.hold(text);
+        showTabRequested("terminal");
+        terminalOpenRequested("");
     }
 
     // A porta so' acompanha o LANCADOR PADRAO (command vazio): um comando
@@ -222,6 +220,7 @@ Item {
             return;
         }
         lastRunMessage = "";
+        pendingRunName = command === "" ? activeRunName : "";
         runStartRequested(command, command === "" ? serialDevice : "");
     }
 
@@ -241,6 +240,11 @@ Item {
 
     // O nome da aba da execucao: "▶ " + o comando ate' caber (o caminho
     // longo de um script vira o nome do arquivo).
+    // O nome da configuracao ativa: a aba da execucao se chama "▶ Rodar em pi",
+    // e nao "▶ ssh -tt -p 2222 -i /tmp/…" (2026-10-04).
+    property string activeRunName: ""
+    property string pendingRunName: ""
+
     function runTabTitle(command) {
         const partes = command.trim().split(/\s+/);
         let base = partes.length > 0 ? partes[0] : command;
@@ -363,7 +367,7 @@ Item {
             return;
         }
         runTerminalId = terminalId;
-        handleTerminalOpened(terminalId, "", runTabTitle(command));
+        handleTerminalOpened(terminalId, "", pendingRunName !== "" ? "▶ " + pendingRunName : runTabTitle(command));
     }
 
     /// A sessao da execucao fechou: a aba fica (o autor le a saida) e o

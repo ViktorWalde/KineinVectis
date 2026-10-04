@@ -80,6 +80,20 @@ FocusScope {
         root.edited("");
     }
 
+    // O gesto do menu de contexto (TextMenuController). Colar e recortar
+    // passam pelo `textEdited` da entrada, como se fossem digitados.
+    function runMenuAction(action, selectionStart, selectionEnd) {
+        input.forceActiveFocus();
+        if (selectionEnd > selectionStart) input.select(selectionStart, selectionEnd);
+        switch (action) {
+        case "cut": input.cut(); break;
+        case "copy": input.copy(); break;
+        case "paste": input.paste(); break;
+        case "selectAll": input.selectAll(); break;
+        case "clear": root.clear(); break;
+        }
+    }
+
     implicitWidth: 200
     implicitHeight: root.hasLabel ? 44 : 30
     Accessible.role: Accessible.EditableText
@@ -160,6 +174,10 @@ FocusScope {
 
         x: input.x
         y: root.floated ? 5 : (root.height - height) / 2
+        // A largura que sobra, desfeita a escala: o rotulo longo termina em
+        // reticencias em vez de passar da borda.
+        width: Math.max(0, (root.width - x - Theme.spacingMedium) / scale)
+        elide: Text.ElideRight
         visible: root.hasLabel
         text: root.label
         color: root.error ? Theme.errorSoft : (root.focused ? Theme.accent : Theme.textMuted)
@@ -206,44 +224,24 @@ FocusScope {
         onAccepted: root.accepted()
         onEditingFinished: root.editingFinished()
 
-        // O cursor ambar, que pisca suave e fica firme enquanto se digita.
-        cursorDelegate: Item {
-            id: caret
-
-            width: 2
-
-            Rectangle {
-                id: caretBar
-
-                width: 2
-                height: Math.min(parent.height, input.font.pixelSize + 4)
-                anchors.verticalCenter: parent.verticalCenter
-                radius: width / 2
-                color: Theme.accent
-
-                SequentialAnimation on opacity {
-                    id: caretBlink
-
-                    running: input.activeFocus && input.selectedText === ""
-                    loops: Animation.Infinite
-                    alwaysRunToEnd: false
-
-                    PauseAnimation { duration: Theme.motionCaretBlink }
-                    NumberAnimation { to: 0; duration: Theme.motionMedium }
-                    PauseAnimation { duration: Theme.motionCaretBlink - Theme.motionMedium }
-                    NumberAnimation { to: 1; duration: Theme.motionMedium }
-                }
+        // O clique DIREITO abre Recortar/Copiar/Colar/Selecionar tudo
+        // (2026-10-04). Uma area SO' do botao direito, por cima da entrada: ela
+        // fica com o aperto antes de a entrada mover o cursor e desfazer a
+        // selecao (Copiar vinha apagado); o esquerdo passa direto.
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            cursorShape: Qt.IBeamCursor
+            onPressed: (mouse) => {
+                input.forceActiveFocus();
+                const scene = input.mapToItem(null, mouse.x, mouse.y);
+                TextMenuController.openFor(root, scene.x, scene.y, Clipboard.text() !== "");
             }
+        }
 
-            // Digitar ou mover o cursor reinicia o piscar com o cursor aceso.
-            Connections {
-                target: input
-
-                function onCursorPositionChanged() {
-                    caretBar.opacity = 1;
-                    if (caretBlink.running) caretBlink.restart();
-                }
-            }
+        // O cursor ambar com piscar suave (KvTextCaret).
+        cursorDelegate: KvTextCaret {
+            input: root.input
         }
 
         // O placeholder: esmaece e desliza ao comecar a digitar. Com rotulo,

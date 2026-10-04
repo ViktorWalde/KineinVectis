@@ -219,6 +219,8 @@ mod tests {
             port: Some(2222),
             identity_file: None,
             deploy_dir: None,
+            program: None,
+            deploy_source: None,
         }
     }
 

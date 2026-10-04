@@ -29,6 +29,19 @@ Item {
         }
     }
 
+    // Confiar no servidor (0.153.0), filho do controller.
+    Connections {
+        target: root.remoteController ? root.remoteController.trust : null
+
+        function onHostKeyRequested(name) {
+            root.coreClient.remoteHostKey(name);
+        }
+
+        function onTrustRequested(name, fingerprints) {
+            root.coreClient.remoteTrustHost(name, fingerprints);
+        }
+    }
+
     // O espelho e o sync (roadmap 48 §8.3), tambem filho do controller.
     Connections {
         target: root.remoteController ? root.remoteController.workspace : null
@@ -87,7 +100,7 @@ Item {
         }
 
         function onShellRequested(command) {
-            root.runtimeController.submitShellInput(command);
+            root.runtimeController.runInNewTerminal(command);
         }
 
     }

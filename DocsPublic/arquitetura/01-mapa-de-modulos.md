@@ -79,7 +79,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 176 métodos IPC roteados pelo core.
+Medido: 178 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -268,7 +268,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 176 métodos roteados pelo core, 145 seguem o caminho padrão
+Dos 178 métodos roteados pelo core, 147 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 31 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -1004,7 +1004,7 @@ flowchart LR
     n_ui_src_core_client_requests_run_cpp["core_client_requests_run.cpp"]
   end
   subgraph IPC["JSON-RPC"]
-    n_ipc_remote(["remote.* · 12"])
+    n_ipc_remote(["remote.* · 14"])
     n_ipc_runConfig(["runConfig.* · 1"])
     n_ipc_toolchain(["toolchain.* · 1"])
     n_ipc_workspace(["workspace.* · 1"])
@@ -1015,6 +1015,7 @@ flowchart LR
     n_crates_kinein_core_src_handlers_remote_directories_rs["handlers/remote_directories.rs"]
     n_crates_kinein_core_src_handlers_remote_discover_rs["handlers/remote_discover.rs"]
     n_crates_kinein_core_src_handlers_remote_mirror_rs["handlers/remote_mirror.rs"]
+    n_crates_kinein_core_src_handlers_remote_trust_rs["handlers/remote_trust.rs"]
     n_crates_kinein_core_src_handlers_runconfig_rs["handlers/runconfig.rs"]
     n_crates_kinein_core_src_handlers_toolchain_rs["handlers/toolchain.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
@@ -1061,6 +1062,9 @@ flowchart LR
   n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_process
   n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_remote
   n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_rpc
+  n_ipc_remote --> n_crates_kinein_core_src_handlers_remote_trust_rs
+  n_crates_kinein_core_src_handlers_remote_trust_rs --> n_core_remote
+  n_crates_kinein_core_src_handlers_remote_trust_rs --> n_core_rpc
   n_ipc_runConfig --> n_crates_kinein_core_src_handlers_runconfig_rs
   n_crates_kinein_core_src_handlers_runconfig_rs --> n_core_build
   n_crates_kinein_core_src_handlers_runconfig_rs --> n_core_rpc
@@ -1088,11 +1092,12 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/remote_directories.rs` | One-level remote directory browsing for the existing SSH mirror flow. |
 | handler Rust | `crates/kinein-core/src/handlers/remote_discover.rs` | remote.discover / remote.resolve (impl Core) — a DESCOBERTA e a EXPLICACAO do SSH que a maquina ja' tem (0.132.0, fatia R0.5 de especificacoes/remote-ssh-ui-hud… |
 | handler Rust | `crates/kinein-core/src/handlers/remote_mirror.rs` | remote.open / remote.sync / remote.status (impl Core) — o workspace ESPELHADO (P6 fatia 2 do roadmaps/42, 2026-09-18) — e o empurrao automatico depois de um fs.… |
+| handler Rust | `crates/kinein-core/src/handlers/remote_trust.rs` | remote.hostKey / remote.trustHost (impl Core, 0.153.0): |
 | handler Rust | `crates/kinein-core/src/handlers/runconfig.rs` | Handlers for runConfig.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/toolchain.rs` | Handlers for toolchain.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (15): `remote.command`, `remote.deploy`, `remote.directories`, `remote.discover`, `remote.list`, `remote.open`, `remote.parseCommand`, `remote.probe`, `remote.remove`, `remote.resolve`, `remote.save`, `remote.sync`, `runConfig.save`, `toolchain.setKit`, `workspace.open`.
+Métodos IPC (17): `remote.command`, `remote.deploy`, `remote.directories`, `remote.discover`, `remote.hostKey`, `remote.list`, `remote.open`, `remote.parseCommand`, `remote.probe`, `remote.remove`, `remote.resolve`, `remote.save`, `remote.sync`, `remote.trustHost`, `runConfig.save`, `toolchain.setKit`, `workspace.open`.
 
 ### Banco de dados e observabilidade
 

@@ -1,5 +1,16 @@
 # 03 — Protocolo IPC
 
+> **0.153.0 (2026-10-04) — o Remoto confia no servidor pela tela e lembra o
+> último contato.** Dois métodos novos (agora 178): `remote.hostKey { name }`
+> lê a impressão digital do servidor sem logar, e `remote.trustHost { name,
+> fingerprints }` grava no `known_hosts` exatamente a chave vista. A falha da
+> sonda ganha `unknownHost` (primeira conexão) e `hostKeyChanged` (a
+> identidade mudou; a IDE não sobrescreve). `remote.list/save/remove` devolvem
+> `contacts` (aditivo), o último contato de cada alvo, guardado em
+> `.kinein/remote-contacts.json`. O `copyId` cria a chave antes de copiar
+> quando não há nenhuma. O deploy de uma PASTA leva o conteúdo dela para a
+> pasta de deploy (antes chegava `build/` dentro de `build/`).
+
 > **0.152.0 (2026-10-03) — o seletor de pastas mostra o projeto híbrido e
 > só o Início.** `workspace.browse`: cada entrada ganha `buildSystems`
 > (`BuildSystem[]`, aditivo, omitido quando vazio) com **todos** os sistemas
@@ -3188,7 +3199,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 176 métodos roteados — a lista inteira
+## Os 178 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3347,6 +3358,7 @@ remote.command
 remote.deploy
 remote.directories
 remote.discover
+remote.hostKey
 remote.list
 remote.open
 remote.parseCommand
@@ -3356,6 +3368,7 @@ remote.resolve
 remote.save
 remote.status
 remote.sync
+remote.trustHost
 
 run.capabilities
 run.script
@@ -4200,14 +4213,22 @@ do projeto — no molde do `datasource.*`. Transporte é o `ssh`/`rsync`/`scp`
 do sistema como **processo** (OpenSSH BSD, rsync GPL-3 — nunca crate).
 
 ```text
-remote.list    {}                                -> { targets: [RemoteTarget] }
+remote.list    {}                                -> { targets: [RemoteTarget], contacts: [RemoteContact] }
+               contacts (0.153.0): a última sonda de cada alvo, em
+               `.kinein/remote-contacts.json` — { name, ok, at (s Unix), arch?, kernel?, failure? }
 remote.save    { target }                        -> { targets }   (cria/substitui pelo nome)
 remote.remove  { name }                          -> { targets }
 remote.probe   { name }                          -> { jobId, command }   (job)
 remote.deploy  { name, source?, dest? }          -> { jobId, command }   (job)
 remote.command { name, kind, program?, port? }   -> { command, remoteTarget?, name, source[] }
                kind: run | debugServer | debugpy | shell | copyId   (PURO: nada roda)
-               copyId (0.133.0) -> `ssh-copy-id [-p P] [-i K] [user@]host`
+               copyId (0.133.0) -> `ssh-copy-id [-p P] [-i K] [user@]host`; sem chave
+               nenhuma (0.153.0) -> `ssh-keygen -t ed25519 -f K && ssh-copy-id …`
+remote.hostKey   { name }                        -> { name, host, keys: [{ kind, fingerprint }] }
+               (0.153.0; `ssh -G` + `ssh-keyscan` + `ssh-keygen -lf`; não loga, não grava)
+remote.trustHost { name, fingerprints[] }        -> { name, file, recorded }
+               (0.153.0; escaneia DE NOVO e grava só as chaves cujas impressões vieram;
+               o arquivo é o `UserKnownHostsFile` que o `ssh -G` reporta)
 remote.parseCommand { command }                  -> { target: RemoteTarget, source[] }
                (0.134.0; SEM workspace; LE' a linha, nunca a executa; nada e' salvo)
 remote.discover {}                               -> { aliases: [{ name, source }], sources[] }
@@ -4223,7 +4244,8 @@ RemoteTarget   name · host · user? · port? (22) · identityFile? · deployDir
 event.remote.probed   { jobId, name, success, arch?, kernel?, tools: [{ id, found, path? }],
                         error?, failure?, raw }
                         failure (0.133.0, ausente quando success): authentication |
-                        host | network | other — a causa TIPADA, nao a frase
+                        unknownHost | hostKeyChanged (0.153.0) | host | network |
+                        other — a causa TIPADA, nao a frase
 event.remote.deployed { jobId, name, success, source, dest, command, error? }
 event.remote.directories { jobId, name, requestedPath, success, path, parent?,
                            entries: [{ name, path }], error? }

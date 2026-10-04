@@ -126,7 +126,7 @@ Item {
         target: root.embeddedController ? root.embeddedController.access : null
 
         function onCommandRequested(comando) {
-            root.runtimeController.submitShellInput(comando);
+            root.runtimeController.runInNewTerminal(comando);
         }
     }
 
@@ -139,6 +139,6 @@ Item {
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.setupController.close()
         // O comando vai para o TERMINAL DA IDE, visivel. Nada roda escondido.
-        onCommandRequested: comando => root.runtimeController.submitShellInput(comando)
+        onCommandRequested: comando => root.runtimeController.runInNewTerminal(comando)
     }
 }

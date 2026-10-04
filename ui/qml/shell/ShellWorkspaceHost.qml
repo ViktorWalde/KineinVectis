@@ -165,6 +165,7 @@ Item {
             dataSourceController: root.dataSourceController
             editorController: root.editorController
             containerController: root.containerController
+            remoteController: root.remoteController
             onMinimumWidthChanged: root.updatePanelLimits()
             onRightMinimumWidthChanged: root.updatePanelLimits()
             workspaceName: root.workspaceName

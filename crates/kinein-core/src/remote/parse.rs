@@ -123,6 +123,8 @@ pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), Str
         port: porta,
         identity_file: chave,
         deploy_dir: None,
+        program: None,
+        deploy_source: None,
     };
     Ok((alvo, fonte))
 }

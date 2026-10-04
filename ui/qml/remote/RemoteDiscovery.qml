@@ -48,21 +48,25 @@ Item {
         anchors.right: parent.right
         spacing: 4
 
-        Row {
+        Item {
             width: parent.width
-            spacing: Theme.spacingSmall
+            height: 24
 
             Text {
+                anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Usar o SSH que já funciona")
                 color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
+                font.pixelSize: Theme.fontSizeBody
+                font.weight: Font.DemiBold
             }
 
-            KvButton {
+            KvIconButton {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
                 compact: true
-                text: root.discovery === "ready" || root.discovery === "failed"
-                      ? qsTr("Procurar de novo") : qsTr("Procurar")
+                iconName: "refresh"
+                tooltip: qsTr("Ler o ~/.ssh/config de novo")
                 enabled: !root.discovering
                 onClicked: root.refreshRequested()
             }
@@ -105,14 +109,45 @@ Item {
                 required property var modelData
 
                 width: coluna.width
-                height: 30
+                height: 36
                 radius: Theme.radius
                 color: area.containsMouse ? Theme.surface2 : "transparent"
 
+                Behavior on color {
+                    ColorAnimation { duration: Theme.motionFast }
+                }
+
+                KvIcon {
+                    id: aliasIcon
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "remote"
+                    size: 15
+                    active: area.containsMouse
+                }
+
+                KvIcon {
+                    id: aliasChevron
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spacingSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "add"
+                    size: 13
+                    opacity: area.containsMouse ? 1 : 0
+                    active: true
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: Theme.motionFast }
+                    }
+                }
+
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.right: parent.right
+                    anchors.left: aliasIcon.right
+                    anchors.right: aliasChevron.left
                     anchors.leftMargin: Theme.spacingSmall
                     anchors.rightMargin: Theme.spacingSmall
 

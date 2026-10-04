@@ -25,6 +25,9 @@ Item {
     property string armedName: ""
     property bool hasTarget: false
     property bool probed: false
+    // O ultimo contato guardado no projeto ("respondeu ha' 23 min · x86_64"),
+    // quando nao houve sonda nesta sessao (0.153.0).
+    property string lastContact: ""
 
     signal copyIdRequested()
     signal runArmedRequested()
@@ -46,8 +49,10 @@ Item {
             width: parent.width
             visible: !root.probing && !root.probed
             wrapMode: Text.WordWrap
-            text: root.hasTarget
-                  ? qsTr("Alvo salvo, ainda não medido. A ação no topo sonda ele: arquitetura, "
+            text: root.hasTarget && root.lastContact !== ""
+                  ? qsTr("Última sonda: %1. Sonde de novo para ver o estado de agora.").arg(root.lastContact)
+                  : root.hasTarget
+                  ? qsTr("Alvo salvo, ainda não medido. A ação acima sonda ele: arquitetura, "
                          + "kernel e quais ferramentas ele tem. Nada é instalado no alvo.")
                   : qsTr("Nenhum alvo ainda. Em Configurar, escolha um alias do seu ~/.ssh/config "
                          + "ou cole a linha ssh que você já usa.")
