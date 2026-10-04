@@ -422,11 +422,11 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
   - **Qt atual no pacote.** O checkout usa o Qt 6.10.2, mas o AppImage é
     montado no Debian 12 e leva o Qt **6.4.2** do sistema. É esse 6.4 que
     tem o defeito dos avisos "is neither a QObject" (40.7 §7.219).
-    - A correção é montar o pacote com o Qt estável atual (6.10, ou o 6.8
-      LTS), com o QtWebEngine, a partir dos binários oficiais (aqtinstall
-      ou o instalador da Qt).
-    - Esses binários são compilados para uma glibc antiga, compatível com a
-      base Debian 12. A base de glibc do pacote não muda.
+    - A correção é montar o pacote com o Qt estável mais recente, com o
+      QtWebEngine, a partir dos binários oficiais (aqtinstall ou o
+      instalador da Qt).
+    - Esses binários são compilados para uma glibc antiga e rodam na base do
+      builder (Ubuntu 24.04, abaixo).
     - Depois, o gate Qt 6.4 (`verificar-qml-qt64`,
       `verificar-qml-logica-qt64`) passa a valer para a versão nova; rever
       o que hoje só existe para o 6.4.
@@ -438,13 +438,16 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
     - O pacote é montado na distro MAIS ANTIGA do alvo. O mínimo é o Ubuntu
       24.04 (glibc 2.39); Debian 13, Fedora 42/43 e Arch têm glibc igual ou
       mais nova.
-    - Builder em **Ubuntu 24.04**, com o Qt estável atual dos binários
-      oficiais (o do sistema é 6.4).
+    - Builder em **Ubuntu 24.04**, com o **Qt estável mais recente** dos
+      binários oficiais (hoje o 6.10.x; o do sistema é 6.4). Decisão do
+      autor: os melhores recursos estáveis, não o LTS. O QtWebEngine é da
+      mesma versão, e o Rust é o estável atual.
     - Provar o AppImage em contêineres Ubuntu 24.04, Debian 13, Fedora 43 e
       Arch.
   - **Gate Qt 6.4 aposentado** (o autor: "prosseguir com a modernização").
-    Compilar do código-fonte passa a exigir Qt ≥ 6.8 (instalador oficial ou
-    aqtinstall).
+    Compilar do código-fonte passa a exigir a **mesma versão de Qt do
+    AppImage** (a estável mais recente, pelo instalador oficial ou
+    aqtinstall), para o código poder usar o que ela traz.
     - Saem `verificar-qml-qt64`, `verificar-qml-logica-qt64` e o contêiner
       `Containerfile.qml64`.
     - Sai também o que só existe para o 6.4: o `createObject` no lugar do
