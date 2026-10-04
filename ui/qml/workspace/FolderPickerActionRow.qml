@@ -3,7 +3,9 @@ import KineinVectis
 
 // O pe' do seletor (0.3.8): cada modo com a sua acao principal, e o que ela
 // vai fazer dito em palavras antes do clique.
-//   abrir   "Criar projeto…" a esquerda; "Abrir <pasta>" e os botoes
+//   abrir   "Abrir <pasta>" e os botoes (o "+ Criar projeto…" daqui saiu em
+//           2026-10-03, decisao do autor: apagado e sem funcao clara no
+//           "Abrir"; criar fica no cartao da tela de boas-vindas e no menu)
 //   escolher (o SDK do kit) "Escolher"
 //   criar   "Cancelar" e "Criar projeto", habilitado so' com linguagem e nome
 //   local   "Voltar" e "Usar esta pasta" (o local do projeto novo, 0.3.9)
@@ -19,25 +21,12 @@ Item {
     signal cancelRequested()
     signal openRequested()
     signal createRequested()
-    signal switchToCreateRequested()
 
     width: parent.width
     height: 32
 
-    FolderPickerButton {
-        id: createLink
-
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        visible: !root.creatingProject && !root.pickingFolder
-        height: parent.height
-        text: qsTr("+ Criar projeto…")
-        onClicked: root.switchToCreateRequested()
-    }
-
     Text {
-        anchors.left: createLink.visible ? createLink.right : parent.left
-        anchors.leftMargin: Theme.spacingMedium
+        anchors.left: parent.left
         anchors.right: buttons.left
         anchors.rightMargin: Theme.spacingMedium
         anchors.verticalCenter: parent.verticalCenter
@@ -59,13 +48,13 @@ Item {
         height: parent.height
         spacing: Theme.spacingSmall
 
-        FolderPickerButton {
+        KvButton {
             text: root.choosingLocation ? qsTr("Voltar") : qsTr("Cancelar")
             height: parent.height
             onClicked: root.cancelRequested()
         }
 
-        FolderPickerButton {
+        KvButton {
             id: primaryButton
 
             readonly property bool creates: root.creatingProject && !root.choosingLocation
@@ -76,7 +65,6 @@ Item {
             height: parent.height
             primary: true
             enabled: !primaryButton.creates || root.canCreate
-            opacity: enabled ? 1.0 : 0.5
             onClicked: primaryButton.creates ? root.createRequested() : root.openRequested()
         }
     }

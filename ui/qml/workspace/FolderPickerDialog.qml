@@ -45,11 +45,18 @@ Item {
         controller.beginCreateProject();
     }
 
-    // Abrir ou criar: a mesma porta, com a intencao de quem pediu. Um projeto
-    // novo nasce na home, nao dentro do workspace aberto.
+    // Abrir ou criar: a mesma porta, com a intencao de quem pediu. Os dois
+    // comecam no Inicio (/home/<usuario>): um projeto novo nasce la', e o
+    // "Abrir" mostra os projetos de la' — com o aberto ja' marcado (2026-10-04,
+    // pedido do autor: abrir DENTRO do projeto mostrava "pastas dentro de
+    // pastas" que nao sao projeto).
     function openWith(intent, startPath) {
         if (intent === "createProject") {
             openCreateProject(controller.homePath, "");
+        } else if (controller.homePath !== "") {
+            picker.visible = true;
+            picker.forceActiveFocus();
+            controller.openFor("workspace", controller.homePath, startPath);
         } else {
             open(startPath);
         }

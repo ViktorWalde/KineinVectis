@@ -54,7 +54,7 @@ Cada passo termina com:
 | 1 | **Containers acoplados** (§3), **tela de boas-vindas** (§3.1) e **interruptor moderno** (§3.2) | feito (40.7 §7.210–§7.211) |
 | 2 | **Topo:** o ☰ esconde por um momento os widgets do topo, em vez de empurrá-los (§3.3) | feito (40.7 §7.213) |
 | 3 | **Modernizar os controles antigos** no padrão interativo (§3.4) | feito (40.7 §7.214) |
-| 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | a fazer |
+| 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | feito (40.7 §7.215), com os campos de texto refeitos e o menu que não deixa o mouse atravessar |
 | 5 | **Remoto acoplado** (§4) | a fazer |
 | 6 | **Grafana: visualização web opcional** (§6) | a fazer |
 | 7 | **Banco completo** (§5.1–§5.6), com o MongoDB lendo e escrevendo | a camada de segurança 1 e a grade estão feitas; o resto, a fazer |
@@ -140,6 +140,10 @@ campos de texto, ~20 botões e três menus desenhados à mão. Agora:
 
 ### 3.6 O seletor "Abrir projeto" (pedido do autor, 2026-10-03, noite)
 
+Feito em 2026-10-04 (40.7 §7.215, protocolo `0.152.0`). O autor acrescentou,
+vendo a tela: o seletor **abre sempre no Início** (`/home/<usuário>`), com o
+projeto aberto marcado, e não dentro do projeto.
+
 A navegação de pastas "está muito boa". O que muda:
 
 - **LOCAIS só com o Início** (`/home/<usuário>`). É lá que os projetos
@@ -159,8 +163,10 @@ A navegação de pastas "está muito boa". O que muda:
 
 ### 3.5 Configurações
 
-O pop-up de Configurações é redesenhado no padrão atual. Ele também passa a
-ter a opção da animação da tela de boas-vindas.
+Feito em 2026-10-04 (40.7 §7.215). Três seções à esquerda (Editor, Build,
+Interface), a linha inteira clicável, a prévia da fonte, o perfil de rigor
+com o que cada opção faz, a animação da tela de boas-vindas, e o selo
+"neste projeto" onde o valor vem do projeto.
 
 ## 4. Remoto acoplado
 

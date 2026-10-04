@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
@@ -6,13 +7,25 @@ import KineinVectis
 // POR QUE ESTE ARQUIVO EXISTE (2026-10-03). Havia 32 campos montados a mao —
 // um `Rectangle` com um `TextInput` dentro e um `Text` de placeholder por
 // cima — e cada um com a sua altura, a sua borda e o seu jeito de mostrar
-// foco (uns com placeholder sumindo no foco, outros nao; uns com selecao
-// ambar, outros azul do sistema). Pedido do autor no fechamento da 0.3.9:
-// modernizar todo controle no estilo antigo, com a mesma linguagem dos
-// interruptores (KvToggleChip). Um dono para a forma, 32 usos.
+// foco. Um dono para a forma, 32 usos.
 //
-//   [🔍 filtrar…                       ×]   pairar: borda acende
-//   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   foco: borda ambar + anel suave
+// O DESENHO (refeito em 2026-10-04, relato do autor: "esses campos de
+// digitacao estao ruins, precisam ser mais dinamicos"; a primeira versao
+// tinha um anel ambar por fora da borda ambar, que lia como uma caixa grossa
+// e parada):
+//
+//   repouso   [ 🔍 filtrar…                      ]  borda discreta
+//   pairar    [ 🔍 filtrar…                      ]  o fundo clareia
+//   foco      [ 🔍 alp|                        × ]  o icone acende, o cursor
+//             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ambar pisca suave, e a
+//                                                   linha ambar CRESCE do
+//                                                   centro para as pontas
+//   recusado  a linha e a borda em vermelho, e o campo treme uma vez
+//
+// O placeholder esmaece e desliza ao comecar a digitar; o × aparece com
+// fade. Com `label`, o rotulo mora DENTRO do campo e sobe quando ele ganha
+// foco ou texto (o rotulo flutuante) — a pergunta fica a vista mesmo depois
+// de respondida.
 //
 // O FOCO E' DO CAMPO INTEIRO. A raiz e' um FocusScope: `campo.forceActiveFocus()`
 // chega na entrada, e `activeFocus` do campo diz se ela tem o foco. As teclas
@@ -25,6 +38,8 @@ FocusScope {
 
     property alias text: input.text
     property string placeholder: ""
+    // O rotulo flutuante (opcional): dentro do campo, sobe no foco/texto.
+    property string label: ""
     // Mono para codigo, caminho, nome de alvo; texto de interface sem.
     property bool codeFont: true
     property int pixelSize: Theme.fontSizeBody
@@ -39,7 +54,7 @@ FocusScope {
     // Icone a esquerda (busca, filtro) e o × que limpa.
     property string iconName: ""
     property bool clearable: false
-    // Valor recusado: a borda em vermelho brando (o motivo vai em outro lugar).
+    // Valor recusado: vermelho e um tremor (o motivo vai em outro lugar).
     property bool error: false
     property color fill: root.readOnly ? Theme.background2 : Theme.background0
     // A entrada, para o raro uso que precisa dela (posicao do cursor, etc.).
@@ -51,6 +66,10 @@ FocusScope {
     signal keyPressed(var event)
 
     readonly property bool hovered: hover.hovered
+    readonly property bool focused: input.activeFocus
+    readonly property bool hasLabel: root.label !== ""
+    // O rotulo sobe com foco ou texto.
+    readonly property bool floated: root.focused || input.text !== "" || input.preeditText !== ""
 
     function selectAll() {
         input.selectAll();
@@ -62,23 +81,22 @@ FocusScope {
     }
 
     implicitWidth: 200
-    implicitHeight: 28
+    implicitHeight: root.hasLabel ? 44 : 30
     Accessible.role: Accessible.EditableText
-    Accessible.name: root.placeholder
+    Accessible.name: root.hasLabel ? root.label : root.placeholder
 
-    // O anel de foco: suave, por fora da borda.
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: -2
-        radius: box.radius + 2
-        color: "transparent"
-        border.width: 2
-        border.color: root.error ? Theme.errorSoft : Theme.accent
-        opacity: input.activeFocus ? 0.28 : 0
+    onErrorChanged: if (root.error) shake.restart()
 
-        Behavior on opacity {
-            NumberAnimation { duration: Theme.motionFast }
-        }
+    transform: Translate {
+        id: shakeOffset
+    }
+
+    SequentialAnimation {
+        id: shake
+
+        NumberAnimation { target: shakeOffset; property: "x"; to: -4; duration: Theme.motionFast / 2 }
+        NumberAnimation { target: shakeOffset; property: "x"; to: 3; duration: Theme.motionFast / 2 }
+        NumberAnimation { target: shakeOffset; property: "x"; to: 0; duration: Theme.motionFast / 2 }
     }
 
     Rectangle {
@@ -86,14 +104,35 @@ FocusScope {
 
         anchors.fill: parent
         radius: Theme.radius
-        color: root.fill
+        // Clareia ao pairar e um pouco mais no foco: o campo "acorda".
+        color: root.readOnly ? root.fill
+               : root.focused ? Qt.lighter(root.fill, 1.35)
+               : (root.hovered ? Qt.lighter(root.fill, 1.2) : root.fill)
         border.width: 1
         border.color: root.error ? Theme.errorSoft
-                      : input.activeFocus ? Theme.accent
+                      : root.focused ? Theme.borderStrong
                       : (root.hovered && !root.readOnly ? Theme.borderStrong : Theme.borderSoft)
+        clip: true
+
+        Behavior on color {
+            ColorAnimation { duration: Theme.motionFast }
+        }
 
         Behavior on border.color {
             ColorAnimation { duration: Theme.motionFast }
+        }
+
+        // A linha do foco: cresce do centro para as pontas.
+        Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            height: 2
+            width: root.focused || root.error ? parent.width : 0
+            color: root.error ? Theme.errorSoft : Theme.accent
+
+            Behavior on width {
+                NumberAnimation { duration: Theme.motionMedium; easing.type: Theme.easingStandard }
+            }
         }
     }
 
@@ -107,23 +146,51 @@ FocusScope {
         id: leading
 
         anchors.left: parent.left
-        anchors.leftMargin: Theme.spacingSmall
+        anchors.leftMargin: Theme.spacingSmall + 2
         anchors.verticalCenter: parent.verticalCenter
         visible: root.iconName !== ""
         name: root.iconName === "" ? "search" : root.iconName
         size: 14
-        active: input.activeFocus
+        active: root.focused
+    }
+
+    // O rotulo flutuante: no meio quando vazio, no alto e menor quando sobe.
+    Text {
+        id: floatingLabel
+
+        x: input.x
+        y: root.floated ? 5 : (root.height - height) / 2
+        visible: root.hasLabel
+        text: root.label
+        color: root.error ? Theme.errorSoft : (root.focused ? Theme.accent : Theme.textMuted)
+        font.family: Theme.uiFont
+        font.pixelSize: root.pixelSize
+        scale: root.floated ? 0.78 : 1
+        transformOrigin: Item.TopLeft
+
+        Behavior on y {
+            NumberAnimation { duration: Theme.motionMedium; easing.type: Theme.easingStandard }
+        }
+
+        Behavior on scale {
+            NumberAnimation { duration: Theme.motionMedium; easing.type: Theme.easingStandard }
+        }
+
+        Behavior on color {
+            ColorAnimation { duration: Theme.motionFast }
+        }
     }
 
     TextInput {
         id: input
 
         anchors.left: leading.visible ? leading.right : parent.left
-        anchors.leftMargin: Theme.spacingSmall
-        anchors.right: clearButton.visible ? clearButton.left : parent.right
-        anchors.rightMargin: clearButton.visible ? 2 : Theme.spacingSmall
-        anchors.verticalCenter: parent.verticalCenter
-        height: parent.height
+        anchors.leftMargin: leading.visible ? Theme.spacingSmall : Theme.spacingMedium
+        anchors.right: clearButton.left
+        anchors.rightMargin: Theme.spacingXSmall
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.hasLabel ? 4 : 0
+        height: root.hasLabel ? parent.height - 18 : parent.height
         focus: true
         verticalAlignment: TextInput.AlignVCenter
         clip: true
@@ -139,16 +206,67 @@ FocusScope {
         onAccepted: root.accepted()
         onEditingFinished: root.editingFinished()
 
+        // O cursor ambar, que pisca suave e fica firme enquanto se digita.
+        cursorDelegate: Item {
+            id: caret
+
+            width: 2
+
+            Rectangle {
+                id: caretBar
+
+                width: 2
+                height: Math.min(parent.height, input.font.pixelSize + 4)
+                anchors.verticalCenter: parent.verticalCenter
+                radius: width / 2
+                color: Theme.accent
+
+                SequentialAnimation on opacity {
+                    id: caretBlink
+
+                    running: input.activeFocus && input.selectedText === ""
+                    loops: Animation.Infinite
+                    alwaysRunToEnd: false
+
+                    PauseAnimation { duration: Theme.motionCaretBlink }
+                    NumberAnimation { to: 0; duration: Theme.motionMedium }
+                    PauseAnimation { duration: Theme.motionCaretBlink - Theme.motionMedium }
+                    NumberAnimation { to: 1; duration: Theme.motionMedium }
+                }
+            }
+
+            // Digitar ou mover o cursor reinicia o piscar com o cursor aceso.
+            Connections {
+                target: input
+
+                function onCursorPositionChanged() {
+                    caretBar.opacity = 1;
+                    if (caretBlink.running) caretBlink.restart();
+                }
+            }
+        }
+
+        // O placeholder: esmaece e desliza ao comecar a digitar. Com rotulo,
+        // so' aparece com o rotulo ja' no alto.
         Text {
             anchors.fill: parent
+            anchors.leftMargin: input.text === "" ? 0 : Theme.spacingSmall
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: input.horizontalAlignment
-            visible: input.text === "" && input.preeditText === ""
+            opacity: input.text === "" && input.preeditText === "" && (!root.hasLabel || root.focused) ? 1 : 0
             text: root.placeholder
             color: Theme.textMuted
             elide: Text.ElideRight
             font.family: input.font.family
             font.pixelSize: input.font.pixelSize
+
+            Behavior on opacity {
+                NumberAnimation { duration: Theme.motionFast }
+            }
+
+            Behavior on anchors.leftMargin {
+                NumberAnimation { duration: Theme.motionFast }
+            }
         }
     }
 
@@ -156,12 +274,14 @@ FocusScope {
         id: clearButton
 
         anchors.right: parent.right
-        anchors.rightMargin: 2
-        anchors.verticalCenter: parent.verticalCenter
-        visible: root.clearable && input.text !== "" && !root.readOnly
-        compact: true
-        width: Math.min(22, root.height - 4)
+        anchors.rightMargin: root.clearable ? 3 : 0
+        anchors.verticalCenter: input.verticalCenter
+        readonly property bool shown: root.clearable && input.text !== "" && !root.readOnly
+        width: root.clearable ? Math.min(22, root.height - 6) : 0
         height: width
+        opacity: clearButton.shown ? 1 : 0
+        enabled: clearButton.shown
+        compact: true
         iconSize: 12
         iconName: "close"
         tooltip: qsTr("Limpar")
@@ -169,6 +289,10 @@ FocusScope {
         onClicked: {
             root.clear();
             input.forceActiveFocus();
+        }
+
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.motionFast }
         }
     }
 }

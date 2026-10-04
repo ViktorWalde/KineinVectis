@@ -3,7 +3,7 @@ import QtQuick
 import KineinVectis
 
 // A coluna de LOCAIS do navegador de pastas (0.3.9, modelo da JetBrains):
-// os lugares de sempre num clique, e os projetos recentes quando se abre um.
+// o Inicio num clique, e os projetos recentes quando se abre um.
 // Os locais vem do core (`places`, 0.147.0) — so' os que existem; o rotulo e
 // o icone sao daqui, pelo `id`.
 Rectangle {
@@ -16,20 +16,11 @@ Rectangle {
     color: Theme.background1
     radius: Theme.radiusLarge
 
-    readonly property var placeNames: ({
-        home: qsTr("Início"),
-        desktop: qsTr("Área de trabalho"),
-        documents: qsTr("Documentos"),
-        downloads: qsTr("Downloads"),
-        root: qsTr("Raiz do sistema")
-    })
-    readonly property var placeIcons: ({
-        home: "home",
-        desktop: "desktop",
-        documents: "documents",
-        downloads: "download",
-        root: "drive"
-    })
+    // So' o Inicio (0.152.0, decisao do autor em 2026-10-03: os projetos
+    // ficam la', e ele ja' contem Documentos, Downloads e o resto); a raiz
+    // so' quando nao ha' home. A raiz continua na barra de caminho (`/`).
+    readonly property var placeNames: ({ home: qsTr("Início"), root: qsTr("Raiz do sistema") })
+    readonly property var placeIcons: ({ home: "home", root: "drive" })
 
     // A pasta atual dentro deste lugar acende a linha dele (o mais fundo).
     function isCurrent(path) {

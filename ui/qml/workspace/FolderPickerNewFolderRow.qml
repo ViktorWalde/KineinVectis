@@ -48,7 +48,7 @@ Rectangle {
         }
     }
 
-    FolderPickerButton {
+    KvButton {
         id: createButton
 
         anchors.right: cancelButton.left

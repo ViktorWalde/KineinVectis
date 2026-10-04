@@ -101,6 +101,9 @@ QtObject {
     // e' o de hover, alternar e aparecer (antes 90 e 120 ms, misturados);
     // os outros sao ritmos de atencao que ja' existiam, agora com nome.
     readonly property int motionFast: 110
+    // Um gesto que se percebe (a linha do foco que cresce, o rotulo que sobe
+    // no campo de texto): curto, mas mais que o do pairar.
+    readonly property int motionMedium: 180
     readonly property int motionCaretBlink: 520
     readonly property int motionPulse: 600
     readonly property int motionProgress: 900

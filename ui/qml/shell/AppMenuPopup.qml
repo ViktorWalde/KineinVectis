@@ -16,7 +16,18 @@ FocusScope {
     signal dismissRequested(bool restoreFocus)
     signal actionRequested(string action)
 
-    onVisibleChanged: if (visible) Qt.callLater(prepare)
+    // Fechado, o menu NUNCA fica com o foco (2026-10-04, achado na tela:
+    // aberto quando nada tinha foco — clique na area vazia do editor —, ao
+    // fechar ninguem recebia o foco de volta; o menu invisivel continuava
+    // com ele e aceitando todo ShortcutOverride, e Ctrl+O/Ctrl+Alt+S morriam).
+    onVisibleChanged: {
+        if (visible) {
+            Qt.callLater(prepare);
+        } else if (activeFocus) {
+            restorePreviousFocus();
+            if (activeFocus) focus = false;
+        }
+    }
     Component.onCompleted: if (visible) Qt.callLater(prepare)
     onActiveFocusChanged: if (visible && !activeFocus) dismissRequested(false)
 
@@ -64,7 +75,7 @@ FocusScope {
                  || event.key === Qt.Key_Space) activate(currentIndex);
     }
 
-    Keys.onShortcutOverride: function(event) { event.accepted = true; }
+    Keys.onShortcutOverride: function(event) { event.accepted = root.visible; }
     Keys.onPressed: function(event) { root.handleKey(event); }
 
     // Clicar fora fecha o menu. Na faixa de cima (a barra do ☰, 0.3.9) o
@@ -95,9 +106,13 @@ FocusScope {
         border.color: Theme.borderStrong
         border.width: 1
 
+        // A moldura segura clique, roda e pairar: nada atravessa o menu
+        // (nem nas frestas entre os itens) para o que esta' por baixo.
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+            onWheel: wheel => wheel.accepted = true
         }
 
         ListView {

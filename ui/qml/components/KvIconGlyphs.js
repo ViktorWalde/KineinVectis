@@ -77,6 +77,7 @@ const shapes = {
                       + " M8.5 4v4.5h6V4 M8.5 20.5v-6h7v6", fill: "" },
     "rename": { stroke: "M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z M14 8l3 3", fill: "" },
     "goto": { stroke: "M4 12h11 M11 8l4 4-4 4 M20 5v14", fill: "" },
+    "layers": { stroke: "M12 4l8 4-8 4-8-4z M4 12l8 4 8-4 M4 16l8 4 8-4", fill: "" },
     "undo": { stroke: "M9 14L4 9l5-5 M4 9h10.5a5.5 5.5 0 0 1 0 11H11", fill: "" },
     "copy": { stroke: "M9 9h10.5v10.5H9z M15 9V5.5A1.5 1.5 0 0 0 13.5 4h-8A1.5 1.5 0 0 0 4 5.5v8"
                       + "A1.5 1.5 0 0 0 5.5 15H9", fill: "" },

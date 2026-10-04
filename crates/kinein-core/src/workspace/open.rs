@@ -93,11 +93,13 @@ pub fn browse_directories(path: &Path) -> Result<WorkspaceBrowseResult, Workspac
                 })?;
             // A pasta de projeto vem marcada (0.147.0): o seletor mostra o
             // ecossistema antes de abrir. Sao stats na pasta filha, sem ler.
-            let (kind, _, _) = detect_project(&canonical_path);
+            // Todos os sistemas (0.152.0): o hibrido aparece como hibrido.
+            let (kind, _, capabilities) = detect_project(&canonical_path);
             entries.push(WorkspaceBrowseEntry {
                 name: dir_entry.file_name().to_string_lossy().into_owned(),
                 path: canonical_path.display().to_string(),
                 kind: (kind != ProjectKind::Unknown).then_some(kind),
+                build_systems: capabilities.build_systems,
             });
         }
     }
@@ -216,10 +218,8 @@ mod tests {
             .collect::<Vec<_>>();
         assert_eq!(names, ["Alpha", "zeta"]);
         assert!(result.entries.iter().all(|entry| entry.kind.is_none()));
-        assert_eq!(
-            result.places.last().map(|place| place.id.as_str()),
-            Some("root")
-        );
+        // Um lugar so': o Inicio (ou a raiz, sem home) — 0.152.0.
+        assert_eq!(result.places.len(), 1);
     }
 
     #[test]
@@ -239,6 +239,31 @@ mod tests {
         assert_eq!(
             kinds,
             [("app", Some(ProjectKind::RustCargo)), ("notes", None)]
+        );
+    }
+
+    #[test]
+    fn browse_directories_lists_every_build_system_of_a_hybrid_folder() {
+        let dir = temp_workspace("browse-hybrid");
+        fs::create_dir(dir.join("ide")).unwrap();
+        fs::write(dir.join("ide").join("Cargo.toml"), "[workspace]").unwrap();
+        fs::write(dir.join("ide").join("CMakeLists.txt"), "project(ui)").unwrap();
+        fs::create_dir(dir.join("app")).unwrap();
+        fs::write(dir.join("app").join("Cargo.toml"), "[package]").unwrap();
+
+        let result = browse_directories(&dir).unwrap();
+
+        let systems = result
+            .entries
+            .iter()
+            .map(|entry| (entry.name.as_str(), entry.build_systems.clone()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            systems,
+            [
+                ("app", vec![BuildSystem::Cargo]),
+                ("ide", vec![BuildSystem::Cargo, BuildSystem::Cmake]),
+            ]
         );
     }
 

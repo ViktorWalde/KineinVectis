@@ -219,6 +219,10 @@ set_source_files_properties(qml/diagnostics/DiagnosticsController.qml PROPERTIES
 set_source_files_properties(qml/settings/SettingsController.qml PROPERTIES QT_RESOURCE_ALIAS SettingsController.qml)
 set_source_files_properties(qml/settings/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
 set_source_files_properties(qml/settings/SettingsToggleRow.qml PROPERTIES QT_RESOURCE_ALIAS SettingsToggleRow.qml)
+set_source_files_properties(qml/settings/SettingsEditorPage.qml PROPERTIES QT_RESOURCE_ALIAS SettingsEditorPage.qml)
+set_source_files_properties(qml/settings/SettingsBuildPage.qml PROPERTIES QT_RESOURCE_ALIAS SettingsBuildPage.qml)
+set_source_files_properties(qml/settings/SettingsInterfacePage.qml PROPERTIES QT_RESOURCE_ALIAS SettingsInterfacePage.qml)
+set_source_files_properties(qml/settings/SettingsProjectBadge.qml PROPERTIES QT_RESOURCE_ALIAS SettingsProjectBadge.qml)
 set_source_files_properties(qml/ipc/SettingsEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SettingsEventRouter.qml)
 set_source_files_properties(qml/configaction/ConfigActionController.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionController.qml)
 set_source_files_properties(qml/configaction/ConfigActionsDialog.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionsDialog.qml)
@@ -305,7 +309,6 @@ set_source_files_properties(qml/panels/bottom/TestsPanel.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/panels/bottom/ToolsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ToolsPanel.qml)
 set_source_files_properties(qml/workspace/FolderPickerDialog.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerDialog.qml)
 set_source_files_properties(qml/workspace/FolderPickerController.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerController.qml)
-set_source_files_properties(qml/workspace/FolderPickerButton.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerButton.qml)
 set_source_files_properties(qml/workspace/FolderPickerHeader.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerHeader.qml)
 set_source_files_properties(qml/workspace/FolderPickerPathBar.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerPathBar.qml)
 set_source_files_properties(qml/workspace/FolderPickerCreatePanel.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCreatePanel.qml)
@@ -610,6 +613,10 @@ qt_add_qml_module(kinein-vectis
         qml/settings/SettingsController.qml
         qml/settings/SettingsDialog.qml
         qml/settings/SettingsToggleRow.qml
+        qml/settings/SettingsEditorPage.qml
+        qml/settings/SettingsBuildPage.qml
+        qml/settings/SettingsInterfacePage.qml
+        qml/settings/SettingsProjectBadge.qml
         qml/ipc/SettingsEventRouter.qml
         qml/configaction/ConfigActionController.qml
         qml/configaction/ConfigActionsDialog.qml
@@ -696,7 +703,6 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/ToolsPanel.qml
         qml/workspace/FolderPickerDialog.qml
         qml/workspace/FolderPickerController.qml
-        qml/workspace/FolderPickerButton.qml
         qml/workspace/FolderPickerHeader.qml
         qml/workspace/FolderPickerPathBar.qml
         qml/workspace/FolderPickerCreatePanel.qml

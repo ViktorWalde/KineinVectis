@@ -76,14 +76,24 @@ Item {
         openFor("workspace", startPath);
     }
 
-    function openFor(newPurpose, startPath) {
+    // A pasta de dentro de `parent` no caminho ate' `path` ("" se `path` nao
+    // mora em `parent`): /home/u + /home/u/dev/app -> /home/u/dev.
+    function childOnTheWay(parent, path) {
+        const base = parent.endsWith("/") ? parent : parent + "/";
+        if (parent === "" || path === undefined || !path.startsWith(base)) return "";
+        return base + path.slice(base.length).split("/")[0];
+    }
+
+    // `highlightPath`: a pasta que ja' vem marcada na lista (o projeto aberto,
+    // ou a pasta do caminho ate' ele).
+    function openFor(newPurpose, startPath, highlightPath) {
         purpose = newPurpose === undefined || newPurpose === "" ? "workspace" : newPurpose;
         const path = startPath !== "" ? startPath : "/";
         errorText = "";
         selectedPath = path;
         createMode = "";
         creatingFolder = false;
-        pendingSelectionPath = "";
+        pendingSelectionPath = root.childOnTheWay(path, highlightPath);
         backStack = [];
         forwardStack = [];
         // A primeira listagem desta abertura nao empilha a pasta da anterior.
@@ -174,7 +184,10 @@ Item {
             entryModel.append({
                 name: entry.name,
                 path: entry.path,
-                kind: entry.kind !== undefined ? entry.kind : ""
+                kind: entry.kind !== undefined ? entry.kind : "",
+                // Todos os sistemas (0.152.0), em texto: o ListModel nao
+                // guarda lista. "cargo,cmake" -> o selo de hibrido.
+                buildSystems: entry.buildSystems !== undefined ? entry.buildSystems.join(",") : ""
             });
         }
         hiddenCount = hidden;

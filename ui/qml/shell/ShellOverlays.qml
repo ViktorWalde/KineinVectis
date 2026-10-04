@@ -138,6 +138,8 @@ Item {
         editorFontSize: root.settingsController.editorFontSize
         autoClosePairs: root.settingsController.autoClosePairs
         rigorProfile: root.settingsController.rigorProfile
+        welcomeAnimation: root.settingsController.welcomeAnimation
+        projectKeys: Object.keys(root.settingsController.workspaceValues)
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.settingsController.closeDialog()

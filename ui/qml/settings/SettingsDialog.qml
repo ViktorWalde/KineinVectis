@@ -2,11 +2,23 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Página de configurações (fatia M4.1), overlay simples no padrão dos
-// diálogos. Componente burro: recebe os valores efetivos por property e
-// emite settingChanged(key, value) por controle; o pai encaminha para o
-// SettingsController (escopo global no v1). A UI não usa QtQuick.Controls,
-// então toggles e stepper são próprios.
+// As Configuracoes (redesenhadas em 2026-10-03, passo 4 do roadmap 59).
+//
+//   ⚙ Configurações                                              ×
+//     Preferências da IDE — valem para todos os projetos
+//   ┌────────────┬────────────────────────────────────────────────┐
+//   │▌✎ Editor   │ fonte (com previa), salvar, formatar, pares     │
+//   │ ▶ Build    │ perfil de rigor, cada opcao dizendo o que faz   │
+//   │ ▭ Interface│ a animacao da tela de boas-vindas               │
+//   └────────────┴────────────────────────────────────────────────┘
+//
+// Antes era uma lista corrida numa coluna estreita, com o −/+ desenhado a
+// mao e so' a bolinha do interruptor respondendo. Agora: secoes com icone,
+// a linha inteira clicavel e acesa ao pairar, e o selo "neste projeto" onde
+// o valor vem do .kinein/settings.json (e' la' que a troca grava).
+//
+// Componente burro: recebe os valores efetivos e emite settingChanged(key,
+// value); o pai encaminha ao SettingsController.setWhereItLives.
 Item {
     id: root
 
@@ -15,27 +27,29 @@ Item {
     property int editorFontSize: 14
     property bool autoClosePairs: true
     property string rigorProfile: "strict"
+    property bool welcomeAnimation: true
+    // As chaves que o projeto aberto define no proprio settings (o pai passa
+    // todas; aqui ficam so' as que esta tela mostra — o layout tambem e' do
+    // projeto e nao tem selo).
+    property var projectKeys: []
+    readonly property var shownProjectKeys: root.projectKeys.filter(function(key) {
+        return ["editorFontSize", "autoSave", "formatOnSave", "autoClosePairs", "rigorProfile"].indexOf(key) >= 0;
+    })
     property real maxAvailableWidth: 900
     property real maxAvailableHeight: 600
+    property string page: "editor"
 
-    // Opções do perfil de rigor (M4.5): chave (serde camelCase) + rótulo.
-    readonly property var rigorOptions: [
-        { "key": "strict", "label": qsTr("Estrito") },
-        { "key": "balanced", "label": qsTr("Equilibrado") },
-        { "key": "relaxed", "label": qsTr("Relaxado") }
+    readonly property var pages: [
+        { key: "editor", label: qsTr("Editor"), icon: "file" },
+        { key: "build", label: qsTr("Build"), icon: "build" },
+        { key: "interface", label: qsTr("Interface"), icon: "desktop" }
     ]
-
-    readonly property int minFontSize: 8
-    readonly property int maxFontSize: 40
 
     signal dismissRequested()
     signal settingChanged(string key, var value)
 
-    onVisibleChanged: {
-        if (visible) {
-            forceActiveFocus();
-        }
-    }
+    onVisibleChanged: if (visible) forceActiveFocus()
+    Keys.onEscapePressed: root.dismissRequested()
 
     KvBackdrop {
         anchors.fill: parent
@@ -44,257 +58,210 @@ Item {
     }
 
     Rectangle {
+        id: frame
+
         anchors.centerIn: parent
-        width: Math.min(480, root.maxAvailableWidth)
-        height: Math.min(420, root.maxAvailableHeight)
+        width: Math.min(700, root.maxAvailableWidth)
+        height: Math.min(500, root.maxAvailableHeight)
         radius: Theme.radiusLarge
         color: Theme.background2
         border.color: Theme.borderStrong
         border.width: 1
 
+        // O clique dentro nao fecha (o fundo fecha).
         MouseArea {
             anchors.fill: parent
         }
 
-        Text {
-            id: dialogTitle
+        KvIcon {
+            id: titleIcon
 
-            anchors.top: parent.top
             anchors.left: parent.left
-            anchors.right: closeChip.left
-            anchors.margins: Theme.spacingMedium
-            text: qsTr("Configurações")
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeLarge
-            font.bold: true
-        }
-
-        KvIconButton {
-            id: closeChip
             anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.margins: Theme.spacingSmall
-            iconName: "close"
-            tooltip: qsTr("Fechar")
-            onClicked: root.dismissRequested()
+            anchors.leftMargin: Theme.spacingLarge
+            anchors.topMargin: Theme.spacingLarge
+            name: "settings"
+            size: 20
+            active: true
         }
 
         Column {
-            anchors.top: dialogTitle.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Theme.spacingMedium
-            anchors.topMargin: Theme.spacingLarge
-            spacing: Theme.spacingLarge
+            id: header
 
-            // --- Tamanho da fonte do editor ---
-            Row {
-                width: parent.width
-                spacing: Theme.spacingMedium
+            anchors.left: titleIcon.right
+            anchors.leftMargin: Theme.spacingMedium
+            anchors.right: closeButton.left
+            anchors.top: parent.top
+            anchors.topMargin: Theme.spacingMedium + 2
+            spacing: 2
 
-                Column {
-                    width: parent.width - fontStepper.width - Theme.spacingMedium
-                    spacing: 2
-
-                    Text {
-                        text: qsTr("Tamanho da fonte do editor")
-                        color: Theme.textPrimary
-                        font.pixelSize: Theme.fontSizeMedium
-                    }
-
-                    Text {
-                        text: qsTr("Aplica na hora ao editor")
-                        color: Theme.textMuted
-                        font.pixelSize: Theme.fontSizeCaption
-                    }
-                }
-
-                Row {
-                    id: fontStepper
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Theme.spacingSmall
-
-                    Rectangle {
-                        width: 26
-                        height: 26
-                        radius: Theme.radius
-                        color: fontMinusArea.containsMouse ? Theme.surface2 : Theme.surface1
-                        border.color: Theme.borderSoft
-                        border.width: 1
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "−"
-                            color: Theme.textPrimary
-                            font.pixelSize: Theme.fontSizeLarge
-                        }
-
-                        MouseArea {
-                            id: fontMinusArea
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                const next = Math.max(root.minFontSize,
-                                                      root.editorFontSize - 1);
-                                if (next !== root.editorFontSize) {
-                                    root.settingChanged("editorFontSize", next);
-                                }
-                            }
-                        }
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 28
-                        horizontalAlignment: Text.AlignHCenter
-                        text: root.editorFontSize
-                        color: Theme.textPrimary
-                        font.family: Theme.monoFont
-                        font.pixelSize: Theme.fontSizeLarge
-                    }
-
-                    Rectangle {
-                        width: 26
-                        height: 26
-                        radius: Theme.radius
-                        color: fontPlusArea.containsMouse ? Theme.surface2 : Theme.surface1
-                        border.color: Theme.borderSoft
-                        border.width: 1
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "+"
-                            color: Theme.textPrimary
-                            font.pixelSize: Theme.fontSizeLarge
-                        }
-
-                        MouseArea {
-                            id: fontPlusArea
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                const next = Math.min(root.maxFontSize,
-                                                      root.editorFontSize + 1);
-                                if (next !== root.editorFontSize) {
-                                    root.settingChanged("editorFontSize", next);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // --- Salvar automaticamente (Etapa 2 F3) ---
-            SettingsToggleRow {
-                width: parent.width
-                label: qsTr("Salvar automaticamente")
-                hint: qsTr("Após uma pausa na digitação, ao trocar de aba e ao sair do editor; "
-                           + "Ctrl+S continua valendo. O rascunho de segurança fica ligado.")
-                checked: root.autoSave
-                onToggled: root.settingChanged("autoSave", !root.autoSave)
-            }
-
-            // --- Formatar ao salvar ---
-            SettingsToggleRow {
-                width: parent.width
-                label: qsTr("Formatar ao salvar")
-                hint: qsTr("Ctrl+S formata (rustfmt/clang-format) e então salva")
-                checked: root.formatOnSave
-                onToggled: root.settingChanged("formatOnSave", !root.formatOnSave)
-            }
-
-            // --- Fechar pares automaticamente ---
-            SettingsToggleRow {
-                width: parent.width
-                label: qsTr("Fechar pares automaticamente")
-                hint: qsTr("( [ { \" ' fecham sozinhos ao digitar")
-                checked: root.autoClosePairs
-                onToggled: root.settingChanged("autoClosePairs", !root.autoClosePairs)
-            }
-
-            // --- Perfil de rigor (M4.5) ---
-            Column {
-                width: parent.width
-                spacing: Theme.spacingSmall
-
-                Text {
-                    text: qsTr("Perfil de rigor")
-                    color: Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeMedium
-                }
-
-                Text {
-                    width: parent.width
-                    text: qsTr("Se um aviso do compilador para o build do SEU projeto (C/C++ com CMake, Rust) e quanto o lint aperta (clippy, ruff). Vale no próximo build. Detalhes no manual, §7.")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeCaption
-                    wrapMode: Text.WordWrap
-                }
-
-                Row {
-                    id: rigorSegments
-
-                    width: parent.width
-                    spacing: Theme.spacingSmall
-
-                    Repeater {
-                        model: root.rigorOptions
-
-                        delegate: Rectangle {
-                            id: segment
-
-                            required property var modelData
-
-                            readonly property bool selected: root.rigorProfile === segment.modelData.key
-
-                            width: (rigorSegments.width - 2 * Theme.spacingSmall) / 3
-                            height: 30
-                            radius: Theme.radius
-                            color: segment.selected
-                                    ? Theme.accent
-                                    : (segmentArea.containsMouse ? Theme.surface2 : Theme.surface1)
-                            border.color: segment.selected ? Theme.accent : Theme.borderSoft
-                            border.width: 1
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: segment.modelData.label
-                                color: segment.selected ? Theme.background0 : Theme.textPrimary
-                                font.pixelSize: Theme.fontSizeSmall
-                                font.bold: segment.selected
-                            }
-
-                            MouseArea {
-                                id: segmentArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (root.rigorProfile !== segment.modelData.key) {
-                                        root.settingChanged("rigorProfile", segment.modelData.key);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            Text {
+                text: qsTr("Configurações")
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontSizeLarge
+                font.bold: true
             }
 
             Text {
                 width: parent.width
-                text: qsTr("As mudanças valem para todos os projetos; o que o projeto define no próprio .kinein/settings.json muda só nele.")
+                text: root.shownProjectKeys.length > 0
+                      ? qsTr("Valem para todos os projetos; o selo “neste projeto” marca o que este projeto define.")
+                      : qsTr("Valem para todos os projetos.")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeCaption
-                wrapMode: Text.WordWrap
+                elide: Text.ElideRight
+            }
+        }
+
+        KvIconButton {
+            id: closeButton
+
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: Theme.spacingSmall
+            iconName: "close"
+            tooltip: qsTr("Fechar (Esc)")
+            onClicked: root.dismissRequested()
+        }
+
+        // ---- as secoes -----------------------------------------------------
+        Column {
+            id: nav
+
+            anchors.top: header.bottom
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.topMargin: Theme.spacingLarge
+            anchors.margins: Theme.spacingMedium
+            width: 168
+            spacing: 2
+
+            Repeater {
+                model: root.pages
+
+                delegate: Rectangle {
+                    id: navItem
+
+                    required property var modelData
+
+                    readonly property bool current: root.page === navItem.modelData.key
+
+                    width: nav.width
+                    height: 34
+                    radius: Theme.radius
+                    color: navItem.current ? Theme.surfaceSelected : (navArea.containsMouse ? Theme.surface2 : "transparent")
+                    Accessible.role: Accessible.PageTab
+                    Accessible.name: navItem.modelData.label
+
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.motionFast }
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 3
+                        height: navItem.current ? parent.height - 14 : 0
+                        radius: width / 2
+                        color: Theme.accent
+
+                        Behavior on height {
+                            NumberAnimation { duration: Theme.motionFast }
+                        }
+                    }
+
+                    KvIcon {
+                        id: navIcon
+
+                        anchors.left: parent.left
+                        anchors.leftMargin: Theme.spacingMedium
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: navItem.modelData.icon
+                        size: 16
+                        active: navItem.current
+                    }
+
+                    Text {
+                        anchors.left: navIcon.right
+                        anchors.leftMargin: Theme.spacingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: navItem.modelData.label
+                        color: navItem.current ? Theme.textPrimary : Theme.textSecondary
+                        font.pixelSize: Theme.fontSizeBody
+                        font.weight: navItem.current ? Font.DemiBold : Font.Normal
+                    }
+
+                    MouseArea {
+                        id: navArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.page = navItem.modelData.key
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: divider
+
+            anchors.top: nav.top
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Theme.spacingMedium
+            anchors.left: nav.right
+            anchors.leftMargin: Theme.spacingMedium
+            width: 1
+            color: Theme.borderSoft
+        }
+
+        // ---- a pagina -------------------------------------------------------
+        Flickable {
+            id: pageScroll
+
+            anchors.top: nav.top
+            anchors.left: divider.right
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: Theme.spacingLarge
+            anchors.rightMargin: Theme.spacingLarge
+            anchors.bottomMargin: Theme.spacingMedium
+            clip: true
+            contentWidth: width
+            contentHeight: pageColumn.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+
+            Column {
+                id: pageColumn
+
+                width: pageScroll.width
+                spacing: Theme.spacingMedium
+
+                Text {
+                    text: root.pages.filter(function(entry) { return entry.key === root.page; })[0].label
+                    color: Theme.textPrimary
+                    font.pixelSize: Theme.fontSizePanelTitle
+                    font.bold: true
+                }
+
+                SettingsEditorPage {
+                    width: parent.width
+                    visible: root.page === "editor"
+                    settings: root
+                }
+
+                SettingsBuildPage {
+                    width: parent.width
+                    visible: root.page === "build"
+                    settings: root
+                }
+
+                SettingsInterfacePage {
+                    width: parent.width
+                    visible: root.page === "interface"
+                    settings: root
+                }
             }
         }
     }
-
-    Keys.onEscapePressed: root.dismissRequested()
 }

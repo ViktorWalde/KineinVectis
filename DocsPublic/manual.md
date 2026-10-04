@@ -31,12 +31,17 @@ uso.
      para, e nada fica rodando.
 
    Clique em **Abrir projeto** (ou `Ctrl+O`).
-2. Navegue até a pasta do seu projeto e confirme. À esquerda ficam os
-   locais (Início, Documentos, Downloads, Raiz) e os projetos recentes; em
-   cima, o caminho em partes clicáveis, com voltar, avançar e subir. Pastas
-   de projeto vêm marcadas com o ecossistema (Rust/Cargo, CMake, Python…).
-   Digite `/` ou `~` para escrever um caminho; setas, Enter e Backspace
-   navegam; o olho da barra mostra as pastas ocultas.
+2. Navegue até a pasta do seu projeto e confirme. O seletor **sempre abre
+   no seu Início** (`/home/<seu usuário>`), onde os projetos ficam; com um
+   projeto aberto, ele já vem marcado na lista. À esquerda ficam o
+   **Início** e os projetos recentes; em cima, o caminho em partes
+   clicáveis, com voltar, avançar e subir (a raiz `/` continua no começo do
+   caminho). Pastas de projeto vêm marcadas com o ecossistema (Rust/Cargo,
+   CMake, Python…); uma pasta **híbrida**, com duas linguagens ou mais (como
+   Rust e C/C++), leva o selo de camadas em âmbar, e passar o mouse nele
+   diz quais são. Digite `/` ou `~` para escrever um caminho; setas, Enter e
+   Backspace navegam; o olho da barra mostra as pastas ocultas. Criar um
+   projeto fica no cartão **Criar projeto** e no menu Arquivo.
 3. A árvore de arquivos aparece à esquerda. Clique num arquivo para editar.
 
 Se a raiz tiver `Cargo.toml` **e** `CMakeLists.txt`, a Kinein reconhece o
@@ -710,16 +715,25 @@ de dados pertencem à CLI que você iniciou.
 
 ## 7. Configurações (`Ctrl+Alt+S`)
 
-Abra as configurações com `Ctrl+Alt+S` (ou "Configurações" no Search
-Everywhere). No v1 há quatro opções, que valem para **todos os projetos**:
+Abra as configurações com `Ctrl+Alt+S`, pelo menu Editar ou pelo cartão da
+tela de boas-vindas. Elas valem para **todos os projetos** e estão em três
+seções, à esquerda:
 
-- **Tamanho da fonte do editor**: `−`/`+` (8 a 40), aplica na hora.
-- **Formatar ao salvar**: quando ligado, `Ctrl+S` formata o arquivo
-  (rustfmt/clang-format) e **então** salva. Se o formatador falhar, o
-  arquivo é salvo assim mesmo.
-- **Fechar pares automaticamente**: liga/desliga o auto-fechamento de
-  `( [ { " '` ao digitar.
-- **Perfil de rigor**: regula o quanto os botões **[Verificar]** e
+- **Editor**
+  - **Tamanho da fonte do editor**: `−`/`+` (8 a 40), com uma prévia do
+    código no tamanho escolhido; aplica na hora.
+  - **Salvar automaticamente**: depois de uma pausa na digitação, ao trocar
+    de aba e ao sair do editor. `Ctrl+S` continua valendo.
+  - **Formatar ao salvar**: quando ligado, `Ctrl+S` formata o arquivo
+    (rustfmt, clang-format, ruff) e **então** salva. Se o formatador falhar,
+    o arquivo é salvo assim mesmo.
+  - **Fechar pares automaticamente**: liga/desliga o auto-fechamento de
+    `( [ { " '` ao digitar.
+- **Interface**
+  - **Animação da tela de boas-vindas**: a mesma do interruptor
+    **Animação** da tela.
+- **Build**
+  - **Perfil de rigor** (cada opção diz o que faz): regula o quanto os botões **[Verificar]** e
   **[Compilar]** apertam **o seu projeto** (nunca o próprio Kinein). Vale
   no próximo build: trocar com o projeto aberto basta, e a IDE reconfigura
   ou recompila o que precisar.
@@ -737,9 +751,11 @@ Everywhere). No v1 há quatro opções, que valem para **todos os projetos**:
   clang-tidy (**[Verificar]** no C/C++) segue o `.clang-tidy` do projeto, e
   um Makefile puro ainda não recebe o perfil.
 
-As configurações ficam em `~/.config/kinein-vectis/settings.json`. Um
-projeto pode ter ajustes próprios em `.kinein/settings.json` (têm
-prioridade sobre o global) — por enquanto editando o arquivo à mão.
+A linha inteira de cada opção é clicável. As configurações ficam em
+`~/.config/kinein-vectis/settings.json`. Um projeto pode ter ajustes
+próprios em `.kinein/settings.json` (têm prioridade sobre o global); a opção
+que o projeto define leva o selo **neste projeto**, e trocá-la grava no
+projeto.
 
 ---
 

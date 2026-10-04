@@ -1,5 +1,15 @@
 # 03 — Protocolo IPC
 
+> **0.152.0 (2026-10-03) — o seletor de pastas mostra o projeto híbrido e
+> só o Início.** `workspace.browse`: cada entrada ganha `buildSystems`
+> (`BuildSystem[]`, aditivo, omitido quando vazio) com **todos** os sistemas
+> de build achados na pasta, e não só o primeiro (`kind` continua, o
+> principal); a UI marca como híbrida a pasta com duas ou mais linguagens.
+> `places` passa a trazer **só** o Início (`home`; `root` quando não há
+> home): Área de trabalho, Documentos, Downloads e a raiz saíram por decisão
+> do autor, porque os projetos ficam no Início e ele já contém essas pastas.
+> Nenhum método novo (continuam 176).
+
 > **0.151.0 (2026-10-03) — a onda da tela de boas-vindas é preferência.**
 > `settings.get/set` ganham `welcomeAnimation` (`bool`, aditivo), que liga ou
 > desliga a onda animada do fundo da tela de boas-vindas. Ela é preferência

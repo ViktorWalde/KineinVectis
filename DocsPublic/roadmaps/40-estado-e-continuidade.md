@@ -22,6 +22,12 @@
 >     demanda, medida por componente no qmlprofiler, está no §7.203.
 >   - **Perfil de rigor no C/C++ corrigido** (§7.202): trocar com o projeto
 >     aberto agora reconfigura e muda o build.
+>   - **Configurações e seletor "Abrir projeto" redesenhados** (§7.215,
+>     protocolo `0.152.0`): seções, prévia da fonte, selo "neste projeto";
+>     o seletor abre no Início, só com o Início em LOCAIS, e marca a pasta
+>     híbrida. Os campos de texto ganharam movimento (linha que cresce,
+>     cursor âmbar, rótulo flutuante), e fechar um menu não mata mais os
+>     atalhos globais.
 >   - **Controles antigos modernizados** (§7.214): o `KvTextField` substituiu
 >     os 31 campos feitos à mão (a dívida do §7.199), os botões respondem ao
 >     pairar e ao pressionar, e a IDE tem um menu só, com ícones, atalhos do

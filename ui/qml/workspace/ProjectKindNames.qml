@@ -16,6 +16,46 @@ QtObject {
         platformIo: { label: "PlatformIO", marker: "platformio.ini" }
     })
 
+    // Cada sistema de build e a linguagem que a IDE suporta por ele (0.152.0).
+    // Maven e Gradle sao reconhecidos, mas Java nao e' linguagem da IDE: nao
+    // contam para "hibrido".
+    readonly property var systems: ({
+        cargo: { label: "Cargo", language: "Rust" },
+        cmake: { label: "CMake", language: "C/C++" },
+        make: { label: "Make", language: "C/C++" },
+        platformIo: { label: "PlatformIO", language: "C/C++" },
+        python: { label: "Python", language: "Python" },
+        maven: { label: "Maven", language: "" },
+        gradle: { label: "Gradle", language: "" }
+    })
+
+    // As linguagens, sem repetir, na ordem dos marcadores: [{ language,
+    // systems: ["Cargo"] }].
+    function languages(buildSystems) {
+        const out = [];
+        for (const key of buildSystems.split(",")) {
+            const system = systems[key];
+            if (system === undefined || system.language === "") continue;
+            const found = out.filter(function(entry) { return entry.language === system.language; })[0];
+            if (found !== undefined) found.systems.push(system.label);
+            else out.push({ language: system.language, systems: [system.label] });
+        }
+        return out;
+    }
+
+    // Hibrido: duas ou mais linguagens que a IDE suporta (Rust e C/C++, como
+    // o proprio Kinein).
+    function isHybrid(buildSystems) {
+        return languages(buildSystems).length >= 2;
+    }
+
+    // "Rust (Cargo) · C/C++ (CMake)"
+    function hybridDescription(buildSystems) {
+        return languages(buildSystems).map(function(entry) {
+            return entry.language + " (" + entry.systems.join(", ") + ")";
+        }).join(" · ");
+    }
+
     function label(kind) {
         return kinds[kind] !== undefined ? kinds[kind].label : "";
     }

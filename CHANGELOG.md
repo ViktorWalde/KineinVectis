@@ -199,6 +199,18 @@ no checkout, não em nenhum pacote publicado.
   (placeholder, foco âmbar, × para limpar nos filtros), e os botões acendem ao
   pairar e respondem ao clique. O ☰ esconde os widgets do topo enquanto está
   aberto, em vez de empurrá-los.
+- Protocolo `0.152.0` — **"Abrir projeto" começa no seu Início.** O seletor
+  abre em `/home/<usuário>` com o projeto atual marcado; à esquerda, só o
+  Início e os recentes. Uma pasta com duas linguagens (como Rust e C/C++)
+  leva o selo **híbrido**, que diz quais são ao passar o mouse.
+- **Configurações redesenhadas**: seções Editor, Build e Interface, prévia da
+  fonte, cada perfil de rigor explicado, a animação da tela de boas-vindas, e
+  o selo "neste projeto" no que o projeto define.
+- **Campos de texto vivos**: a linha âmbar cresce no foco, o cursor pisca
+  suave, o rótulo do campo sobe ao digitar, e um valor recusado treme.
+- **Correções:** o mouse não atravessa mais um menu aberto para acender o que
+  está embaixo, e fechar um menu com Esc não desliga mais atalhos como
+  Ctrl+O e Ctrl+Alt+S.
 
 ## 0.3.5 — lançada em 2026-10-01 (pré-release "Public Beta")
 

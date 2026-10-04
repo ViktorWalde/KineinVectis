@@ -28,7 +28,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.margins: 1
         // Estreito, a coluna de locais cede: a lista e' o que importa.
-        width: root.width >= 640 ? 200 : 0
+        width: root.width >= 640 ? 176 : 0
         visible: width > 0
         controller: root.controller
         recentProjects: root.recentProjects

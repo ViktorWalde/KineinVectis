@@ -218,15 +218,19 @@ pub struct WorkspaceBrowseEntry {
     /// (`0.147.0`): the picker marks project folders without opening them.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<ProjectKind>,
+    /// Every build system found in the directory (`0.152.0`): a hybrid
+    /// project (Cargo and `CMake`, like the Kinein itself) is marked as such
+    /// instead of only by the first marker.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub build_systems: Vec<BuildSystem>,
 }
 
-/// One quick place of the folder picker (`0.147.0`): the home, the XDG user
-/// directories that exist and the filesystem root.
+/// One quick place of the folder picker (`0.147.0`). Since `0.152.0` it is
+/// only the home (the root when there is no home): projects live there.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceBrowsePlace {
-    /// Stable id the UI translates: `home`, `desktop`, `documents`,
-    /// `downloads` or `root`.
+    /// Stable id the UI translates: `home`, or `root` without a home.
     pub id: String,
     /// Canonical absolute path of the place.
     pub path: String,

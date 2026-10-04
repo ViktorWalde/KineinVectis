@@ -98,31 +98,19 @@ Item {
             elide: Text.ElideRight
         }
 
-        // ---- 2. o nome -------------------------------------------------------
-        Text {
-            text: qsTr("NOME")
-            color: Theme.textSecondary
-            font.pixelSize: Theme.fontSizeMicro
-            font.weight: Font.DemiBold
-            font.letterSpacing: 0.8
-        }
+        // ---- 2. o nome: o rotulo mora no campo e sobe no foco (2026-10-04) ---
+        KvTextField {
+            id: nameField
 
-        Item {
             width: parent.width
-            height: 34
-
-            KvTextField {
-                id: nameField
-
-                width: parent.width
-                height: parent.height
-                codeFont: false
-                pixelSize: Theme.fontSizeLarge
-                text: root.controller.createName
-                placeholder: qsTr("meu-projeto")
-                onEdited: (text) => { root.controller.createName = text; }
-                onAccepted: root.controller.submitCreate()
-            }
+            height: 48
+            codeFont: false
+            pixelSize: Theme.fontSizeLarge
+            label: qsTr("Nome do projeto")
+            text: root.controller.createName
+            placeholder: qsTr("meu-projeto")
+            onEdited: (text) => { root.controller.createName = text; }
+            onAccepted: root.controller.submitCreate()
         }
 
         // ---- 3. o local: uma linha; o navegador so' se pedir --------------
@@ -150,7 +138,7 @@ Item {
                 elide: Text.ElideMiddle
             }
 
-            FolderPickerButton {
+            KvButton {
                 id: changeLocation
 
                 height: parent.height

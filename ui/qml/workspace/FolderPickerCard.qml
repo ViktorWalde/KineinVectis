@@ -129,10 +129,6 @@ Rectangle {
             onOpenRequested: root.choosingLocation ? root.controller.useAsLocation()
                                                    : root.controller.openSelected()
             onCreateRequested: root.controller.submitCreate()
-            onSwitchToCreateRequested: {
-                root.controller.chooseTemplate("");
-                root.controller.beginCreateProject();
-            }
         }
     }
 }

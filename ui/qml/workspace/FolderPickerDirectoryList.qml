@@ -74,6 +74,8 @@ FocusScope {
             required property string name
             required property string path
             required property string kind
+            required property string buildSystems
+            readonly property bool hybrid: ProjectKindNames.isHybrid(folderRow.buildSystems)
             readonly property bool selected: root.controller.selectedPath === folderRow.path
             readonly property bool hidden: root.controller.isHidden(folderRow.name)
 
@@ -81,13 +83,18 @@ FocusScope {
             height: 34
             radius: Theme.radius
             color: folderRow.selected ? Theme.surfaceSelected
-                   : (folderMouse.containsMouse ? Theme.surface2 : "transparent")
+                   : (rowHover.hovered ? Theme.surface2 : "transparent")
             border.color: folderRow.selected && folderList.activeFocus ? Theme.accentDim
                                                                        : "transparent"
             border.width: 1
 
             Behavior on color {
                 ColorAnimation { duration: Theme.motionFast }
+            }
+
+            // O destaque da linha continua aceso com o mouse sobre o selo.
+            HoverHandler {
+                id: rowHover
             }
 
             KvFileIcon {
@@ -114,9 +121,13 @@ FocusScope {
                 elide: Text.ElideRight
             }
 
+            // O ecossistema da pasta. Hibrida (duas linguagens ou mais): o
+            // selo de camadas em ambar, e as linguagens no tooltip
+            // (2026-10-03, pedido do autor: antes so' o primeiro marcador).
             Rectangle {
                 id: badge
 
+                z: 1
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spacingMedium
                 anchors.verticalCenter: parent.verticalCenter
@@ -125,7 +136,7 @@ FocusScope {
                 height: 22
                 radius: height / 2
                 color: Theme.background2
-                border.color: Theme.borderSoft
+                border.color: folderRow.hybrid ? Theme.accentDim : Theme.borderSoft
                 border.width: 1
 
                 Row {
@@ -134,17 +145,43 @@ FocusScope {
                     anchors.centerIn: parent
                     spacing: Theme.spacingXSmall
 
+                    KvIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: folderRow.hybrid
+                        name: "layers"
+                        size: 14
+                        active: true
+                    }
+
                     KvFileIcon {
                         anchors.verticalCenter: parent.verticalCenter
+                        visible: !folderRow.hybrid
                         fileName: ProjectKindNames.marker(folderRow.kind)
                         size: 14
                     }
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: ProjectKindNames.label(folderRow.kind)
+                        text: folderRow.hybrid
+                              ? ProjectKindNames.languages(folderRow.buildSystems).map(function(entry) {
+                                    return entry.language;
+                                }).join(" + ")
+                              : ProjectKindNames.label(folderRow.kind)
                         color: Theme.textSecondary
                         font.pixelSize: Theme.fontSizeSmall
+                    }
+                }
+
+                // Por cima da linha so' para o pairar: o clique (NoButton)
+                // segue para a linha, que escolhe e abre.
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: folderRow.hybrid
+                    acceptedButtons: Qt.NoButton
+                    onContainsMouseChanged: {
+                        if (containsMouse) TooltipController.showFor(badge, qsTr("Projeto híbrido: %1")
+                                                                      .arg(ProjectKindNames.hybridDescription(folderRow.buildSystems)), "bottom");
+                        else TooltipController.hideFor(badge);
                     }
                 }
             }
