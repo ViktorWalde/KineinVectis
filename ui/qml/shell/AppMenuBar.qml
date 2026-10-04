@@ -15,6 +15,8 @@ Rectangle {
     property string workspaceKind: ""
     property var workspaceBuildSystems: []
     property var recentWorkspaces: []
+    // O catalogo de comandos (command.list): de onde sai o atalho de cada item.
+    property var commandList: []
     property string activeMenu: ""
     // O menu principal RECOLHIDO atras do ☰ (0.3.9, pedido do autor: mais
     // espaco para codigo, no modelo da JetBrains). Um clique abre os titulos
@@ -84,6 +86,7 @@ Rectangle {
         debugging: root.debugging
         workspaceBuildSystems: root.workspaceBuildSystems
         recentWorkspaces: root.recentWorkspaces
+        commandList: root.commandList
     }
 
     Row {

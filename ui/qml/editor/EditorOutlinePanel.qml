@@ -83,38 +83,22 @@ Rectangle {
         }
 
         // O campo: por nome, no projeto inteiro (o indice) e na pasta do arquivo.
-        Rectangle {
+        KvTextField {
+            id: campoBusca
+
             width: parent.width
             height: 30
-            radius: Theme.radius
-            color: Theme.background0
-
-            TextInput {
-                id: campoBusca
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
-                clip: true
-                selectByMouse: true
-                onTextEdited: if (root.symbols) root.symbols.setQuery(text)
-                onAccepted: {
-                    if (root.symbols && root.symbols.folderResults.length > 0) root.symbols.open(root.symbols.folderResults[0]);
-                    else if (root.symbols && root.symbols.results.length > 0) root.symbols.open(root.symbols.results[0]);
-                }
-                Keys.onEscapePressed: { text = ""; if (root.symbols) root.symbols.setQuery(""); }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: campoBusca.text === ""
-                    text: qsTr("Buscar função, tipo… no projeto")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeSmall
-                }
+            codeFont: false
+            pixelSize: Theme.fontSizeSmall
+            iconName: "search"
+            clearable: true
+            placeholder: qsTr("Buscar função, tipo… no projeto")
+            onEdited: (text) => { if (root.symbols) root.symbols.setQuery(text); }
+            onAccepted: {
+                if (root.symbols && root.symbols.folderResults.length > 0) root.symbols.open(root.symbols.folderResults[0]);
+                else if (root.symbols && root.symbols.results.length > 0) root.symbols.open(root.symbols.results[0]);
             }
+            Keys.onEscapePressed: campoBusca.clear()
         }
 
         // Os resultados da busca (E3-2): a pasta do arquivo, depois o projeto.

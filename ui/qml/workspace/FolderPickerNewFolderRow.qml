@@ -28,47 +28,23 @@ Rectangle {
         size: 18
     }
 
-    Rectangle {
+    KvTextField {
+        id: nameField
+
         anchors.left: icon.right
         anchors.leftMargin: Theme.spacingMedium
         anchors.right: createButton.left
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
         height: 26
-        radius: Theme.radius
-        color: Theme.background0
-        border.color: nameField.activeFocus ? Theme.accent : Theme.borderSoft
-        border.width: 1
-
-        TextInput {
-            id: nameField
-
-            anchors.fill: parent
-            anchors.leftMargin: Theme.spacingSmall
-            anchors.rightMargin: Theme.spacingSmall
-            verticalAlignment: TextInput.AlignVCenter
-            text: root.controller.folderName
-            color: Theme.textPrimary
-            selectedTextColor: Theme.textPrimary
-            selectionColor: Theme.accentDim
-            font.pixelSize: Theme.fontSizeBody
-            clip: true
-            selectByMouse: true
-            onTextEdited: root.controller.folderName = text
-            onAccepted: root.controller.submitCreateFolder()
-            Keys.onEscapePressed: function(event) {
-                root.controller.cancelCreateFolder();
-                event.accepted = true;
-            }
-        }
-
-        Text {
-            anchors.fill: nameField
-            verticalAlignment: Text.AlignVCenter
-            visible: nameField.text === ""
-            text: qsTr("nome da nova pasta")
-            color: Theme.textDisabled
-            font: nameField.font
+        codeFont: false
+        text: root.controller.folderName
+        placeholder: qsTr("nome da nova pasta")
+        onEdited: (text) => { root.controller.folderName = text; }
+        onAccepted: root.controller.submitCreateFolder()
+        Keys.onEscapePressed: (event) => {
+            root.controller.cancelCreateFolder();
+            event.accepted = true;
         }
     }
 

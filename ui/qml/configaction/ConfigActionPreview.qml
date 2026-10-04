@@ -161,40 +161,17 @@ Item {
                 font.pixelSize: Theme.fontSizeCaption
             }
 
-            Rectangle {
-                readonly property bool ready: root.controller.previewId !== ""
-                                              && root.controller.previewId === root.controller.selectedId
-
-                width: applyText.width + 2 * Theme.spacingMedium
-                height: 26
-                radius: Theme.radius
-                color: !ready ? Theme.surface1
-                              : (applyArea.pressed ? Theme.accentDim : Theme.accent)
-                border.color: ready ? "transparent" : Theme.borderSoft
-                border.width: 1
-
-                Text {
-                    id: applyText
-
-                    anchors.centerIn: parent
-                    // O mesmo par de verbos do painel de bibliotecas: quem
-                    // desfaz nao "aplica", desativa.
-                    text: root.action !== null
-                          && root.action.id === "cmake.removeTargetLinkLibraries"
-                          ? qsTr("Desativar") : qsTr("Ativar")
-                    color: parent.ready ? Theme.background0 : Theme.textDisabled
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.bold: true
-                }
-
-                MouseArea {
-                    id: applyArea
-
-                    anchors.fill: parent
-                    enabled: parent.ready
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.controller.apply()
-                }
+            // O mesmo par de verbos do painel de bibliotecas: quem desfaz nao
+            // "aplica", desativa.
+            KvButton {
+                compact: true
+                primary: true
+                enabled: root.controller.previewId !== ""
+                         && root.controller.previewId === root.controller.selectedId
+                text: root.action !== null
+                      && root.action.id === "cmake.removeTargetLinkLibraries"
+                      ? qsTr("Desativar") : qsTr("Ativar")
+                onClicked: root.controller.apply()
             }
         }
     }

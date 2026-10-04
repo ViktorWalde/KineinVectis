@@ -43,64 +43,64 @@ import pathlib
 import re
 import sys
 
-RAIZ = pathlib.Path(__file__).resolve().parent.parent
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # Atalhos padrao do Qt: portateis por desenho, e por isso escritos como
 # `StandardKey.X` em vez do texto da tecla. O mapa e' o que liga os dois
 # mundos; so' entra aqui o que a UI realmente usa.
-TECLAS_PADRAO = {
+STANDARD_KEYS = {
     "StandardKey.Save": "Ctrl+S",
     "StandardKey.Open": "Ctrl+O",
 }
 
 
-def comandos_declarados():
+def declared_commands():
     """id -> atalho, lidos dos descriptors do core."""
-    declarados = {}
-    pasta = RAIZ / "crates/kinein-core/src/commands"
-    for arquivo in sorted(pasta.glob("*.rs")):
-        texto = arquivo.read_text()
-        for bloco in re.finditer(
-            r'id:\s*"([^"]+)"\.to_owned\(\),(.*?)requires_workspace', texto, re.S
+    declared = {}
+    folder = ROOT / "crates/kinein-core/src/commands"
+    for path in sorted(folder.glob("*.rs")):
+        source = path.read_text()
+        for block in re.finditer(
+            r'id:\s*"([^"]+)"\.to_owned\(\),(.*?)requires_workspace', source, re.S
         ):
-            atalho = re.search(r'default_shortcut:\s*Some\("([^"]+)"', bloco.group(2))
-            if atalho:
-                declarados[bloco.group(1)] = atalho.group(1)
-    return declarados
+            shortcut = re.search(r'default_shortcut:\s*Some\("([^"]+)"', block.group(2))
+            if shortcut:
+                declared[block.group(1)] = shortcut.group(1)
+    return declared
 
 
-def atalhos_da_ui():
+def ui_shortcuts():
     """Lista de (arquivo, linha, comando anotado ou None, sequencias)."""
-    encontrados = []
-    for arquivo in sorted((RAIZ / "ui/qml").rglob("*.qml")):
-        linhas = arquivo.read_text().split("\n")
-        for indice, linha in enumerate(linhas):
-            if linha.strip() != "Shortcut {":
+    found = []
+    for path in sorted((ROOT / "ui/qml").rglob("*.qml")):
+        lines = path.read_text().split("\n")
+        for index, line in enumerate(lines):
+            if line.strip() != "Shortcut {":
                 continue
-            fim = indice
-            while fim < len(linhas) and linhas[fim].strip() != "}":
-                fim += 1
-            bloco = "\n".join(linhas[indice:fim])
-            anotado = re.search(r"//\s*comando:\s*([\w.]+)", bloco)
-            listadas = re.search(r'sequences?:\s*(\[[^\]]*\]|"[^"]*")', bloco)
-            sequencias = re.findall(r'"([^"]+)"', listadas.group(1)) if listadas else []
-            for chave, texto in TECLAS_PADRAO.items():
-                if chave in bloco:
-                    sequencias.append(texto)
-            encontrados.append(
+            end = index
+            while end < len(lines) and lines[end].strip() != "}":
+                end += 1
+            block = "\n".join(lines[index:end])
+            annotated = re.search(r"//\s*comando:\s*([\w.]+)", block)
+            listed = re.search(r'sequences?:\s*(\[[^\]]*\]|"[^"]*")', block)
+            sequences = re.findall(r'"([^"]+)"', listed.group(1)) if listed else []
+            for key, source in STANDARD_KEYS.items():
+                if key in block:
+                    sequences.append(source)
+            found.append(
                 (
-                    arquivo.relative_to(RAIZ),
-                    indice + 1,
-                    anotado.group(1) if anotado else None,
-                    sequencias,
+                    path.relative_to(ROOT),
+                    index + 1,
+                    annotated.group(1) if annotated else None,
+                    sequences,
                 )
             )
-    return encontrados
+    return found
 
 
-def menu_e_tratamento():
+def menu_and_handling():
     """(acoes declaradas no menu, acoes tratadas pelo host)."""
-    host = (RAIZ / "ui/qml/shell/ShellHeaderHost.qml").read_text()
+    host = (ROOT / "ui/qml/shell/ShellHeaderHost.qml").read_text()
     # Os itens do menu da barra de titulo vivem em `ui/qml/shell/AppMenu*.qml`.
     # O padrao de nome E' o acoplamento, e ele e' deliberado: em 2026-09-04 o
     # `AppMenuBar` foi partido e os itens foram para o `AppMenuItems`; um gate
@@ -110,101 +110,126 @@ def menu_e_tratamento():
     # Casar pela FORMA (`{ label:..., action:... }`) em todo o QML foi tentado e
     # e' pior: o painel de git tem menu proprio com a mesma forma e outro
     # despachante, e os itens dele apareceriam aqui como falha.
-    arquivos = sorted((RAIZ / "ui/qml/shell").glob("AppMenu*.qml"))
-    declaradas = set()
-    for arquivo in arquivos:
-        declaradas |= set(re.findall(r'action:\s*"([^"]+)"', arquivo.read_text()))
-    if not declaradas:
+    paths = sorted((ROOT / "ui/qml/shell").glob("AppMenu*.qml"))
+    offered = set()
+    for path in paths:
+        source = path.read_text()
+        offered |= set(re.findall(r'action:\s*"([^"]+)"', source))
+        # Desde 2026-10-03 o item nasce de `root.item(<rotulo>, "acao", ...)` (o
+        # item ganhou icone e atalho; a forma literal virou funcao). O rotulo
+        # pode ser condicional (`cargo ? qsTr("…") : qsTr("…")`).
+        offered |= set(re.findall(r'root\.item\((?:[^()"]|"[^"]*"|\((?:[^()"]|"[^"]*")*\))*?,\s*"([^"]+)"\s*,', source))
+    offered.discard("")
+    if not offered:
         raise SystemExit(
             "verificar_atalhos: nenhum item de menu encontrado em "
             "ui/qml/shell/AppMenu*.qml — o padrao de nome mudou?"
         )
-    tratadas = set(re.findall(r'case\s*"([^"]+)":', host))
+    handled = set(re.findall(r'case\s*"([^"]+)":', host))
     # Acao montada em tempo de execucao (`"workspace.recent.open:" + index`)
     # nao aparece como `case`: o host casa por PREFIXO, guardado num `const`.
     # O gate le' esses prefixos em vez de reclamar de um literal que nunca
     # existiu inteiro.
-    prefixos = set(re.findall(r'const\s+\w*[Pp]refix\w*\s*=\s*"([^"]+)"', host))
-    return declaradas, tratadas, prefixos
+    prefixes = set(re.findall(r'const\s+\w*[Pp]refix\w*\s*=\s*"([^"]+)"', host))
+    return offered, handled, prefixes
 
 
 def main():
-    declarados = comandos_declarados()
-    na_ui = atalhos_da_ui()
-    falhas = []
+    declared = declared_commands()
+    in_ui = ui_shortcuts()
+    failures = []
 
-    duplicados = {}
-    for comando, atalho in declarados.items():
-        duplicados.setdefault(atalho, []).append(comando)
-    for atalho, comandos in sorted(duplicados.items()):
-        if len(comandos) > 1:
-            falhas.append(
-                f"atalho `{atalho}` declarado por MAIS DE UM comando: "
-                f"{', '.join(sorted(comandos))}"
+    duplicates = {}
+    for command, shortcut in declared.items():
+        duplicates.setdefault(shortcut, []).append(command)
+    for shortcut, commands in sorted(duplicates.items()):
+        if len(commands) > 1:
+            failures.append(
+                f"atalho `{shortcut}` declarado por MAIS DE UM comando: "
+                f"{', '.join(sorted(commands))}"
             )
 
-    vistas = {}
-    for arquivo, linha, _, sequencias in na_ui:
-        for sequencia in sequencias:
-            vistas.setdefault(sequencia, []).append(f"{arquivo}:{linha}")
-    for sequencia, locais in sorted(vistas.items()):
-        if len(locais) > 1:
-            falhas.append(
-                f"sequencia `{sequencia}` ligada em MAIS DE UM Shortcut: "
-                f"{', '.join(locais)}"
+    seen = {}
+    for path, line, _, sequences in in_ui:
+        for sequence in sequences:
+            seen.setdefault(sequence, []).append(f"{path}:{line}")
+    for sequence, places in sorted(seen.items()):
+        if len(places) > 1:
+            failures.append(
+                f"sequencia `{sequence}` ligada em MAIS DE UM Shortcut: "
+                f"{', '.join(places)}"
             )
 
-    anotados = {}
-    for arquivo, linha, comando, sequencias in na_ui:
-        if comando is None:
+    annotated_by_command = {}
+    for path, line, command, sequences in in_ui:
+        if command is None:
             continue
-        anotados.setdefault(comando, []).append((arquivo, linha, sequencias))
+        annotated_by_command.setdefault(command, []).append((path, line, sequences))
 
-    for comando, atalho in sorted(declarados.items()):
-        alvos = anotados.get(comando)
-        if not alvos:
-            falhas.append(
-                f"`{comando}` anuncia `{atalho}` na paleta e NAO tem Shortcut "
+    for command, shortcut in sorted(declared.items()):
+        targets = annotated_by_command.get(command)
+        if not targets:
+            failures.append(
+                f"`{command}` anuncia `{shortcut}` na paleta e NAO tem Shortcut "
                 f"anotado na UI — apertar nao faz o que a paleta promete"
             )
             continue
-        if len(alvos) > 1:
-            falhas.append(f"`{comando}` tem mais de um Shortcut anotado")
-        arquivo, linha, sequencias = alvos[0]
-        if atalho not in sequencias:
-            falhas.append(
-                f"`{comando}` anuncia `{atalho}` mas o Shortcut de "
-                f"{arquivo}:{linha} liga {sequencias or '(nada)'}"
+        if len(targets) > 1:
+            failures.append(f"`{command}` tem mais de um Shortcut anotado")
+        path, line, sequences = targets[0]
+        if shortcut not in sequences:
+            failures.append(
+                f"`{command}` anuncia `{shortcut}` mas o Shortcut de "
+                f"{path}:{line} liga {sequences or '(nada)'}"
             )
 
-    do_menu, do_host, prefixos = menu_e_tratamento()
-    for acao in sorted(do_menu):
-        if acao in do_host:
+    from_menu, from_host, prefixes = menu_and_handling()
+    for action in sorted(from_menu):
+        if action in from_host:
             continue
-        if any(acao.startswith(p) for p in prefixos):
+        if any(action.startswith(p) for p in prefixes):
             continue
-        falhas.append(
-            f"o menu oferece `{acao}` e o ShellHeaderHost nao trata: clicar "
+        failures.append(
+            f"o menu oferece `{action}` e o ShellHeaderHost nao trata: clicar "
             f"nao faz NADA, sem erro nenhum"
         )
-    for acao in sorted(do_host):
-        if acao not in do_menu:
-            falhas.append(
-                f"o ShellHeaderHost trata `{acao}` e nenhum item de menu o "
+    for action in sorted(from_host):
+        if action not in from_menu:
+            failures.append(
+                f"o ShellHeaderHost trata `{action}` e nenhum item de menu o "
                 f"oferece — codigo morto, ou item esquecido"
             )
 
-    for comando, alvos in sorted(anotados.items()):
-        if comando not in declarados:
-            arquivo, linha, _ = alvos[0]
-            falhas.append(
-                f"{arquivo}:{linha} diz implementar `{comando}`, que nao "
+    # O ATALHO QUE O MENU MOSTRA (2026-10-03): o item mostra a tecla do
+    # catalogo; quando o comando tem outro nome (`commandOf`) ou a tecla so'
+    # existe na UI (`uiShortcuts`), o mapa do AppMenuItems e' a costura — e
+    # costura sem conferencia e' a mentira de 2026-09-04 de novo.
+    items_source = (ROOT / "ui/qml/shell/AppMenuItems.qml").read_text()
+    bound = {sequence for _, _, _, sequences in in_ui for sequence in sequences}
+    for name in ("commandOf", "uiShortcuts"):
+        mapping = re.search(r"property var " + name + r":\s*\(\{(.*?)\}\)", items_source, re.S)
+        if not mapping:
+            failures.append(f"AppMenuItems.qml sem o mapa `{name}` — o padrao mudou?")
+            continue
+        for action, value in re.findall(r'"([^"]+)":\s*"([^"]+)"', mapping.group(1)):
+            if action not in from_menu:
+                failures.append(f"`{name}` cita `{action}`, que nenhum item de menu oferece")
+            if name == "commandOf" and value not in declared:
+                failures.append(f"o menu mostra a tecla de `{value}` para `{action}`, e esse comando nao declara atalho")
+            if name == "uiShortcuts" and value not in bound:
+                failures.append(f"o menu anuncia `{value}` para `{action}`, e nenhum Shortcut liga essa tecla")
+
+    for command, targets in sorted(annotated_by_command.items()):
+        if command not in declared:
+            path, line, _ = targets[0]
+            failures.append(
+                f"{path}:{line} diz implementar `{command}`, que nao "
                 f"declara atalho nenhum no core"
             )
 
-    if falhas:
+    if failures:
         print("✗ atalhos: a paleta promete o que a IDE nao faz", file=sys.stderr)
-        for falha in falhas:
+        for falha in failures:
             print(f"  {falha}", file=sys.stderr)
         print(
             "\n  A anotacao `// comando: <id>` acima do Shortcut e' o elo. "
@@ -215,10 +240,10 @@ def main():
         return 1
 
     print(
-        f"atalhos: {len(declarados)} comandos com atalho, todos ligados ao que "
+        f"atalhos: {len(declared)} comandos com atalho, todos ligados ao que "
         f"a paleta anuncia."
     )
-    print(f"menu: {len(do_menu)} itens, todos com tratamento no host.")
+    print(f"menu: {len(from_menu)} itens, todos com tratamento no host.")
     return 0
 
 

@@ -72,6 +72,17 @@ const shapes = {
     "expand": { stroke: "M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6", fill: "" },
     "collapse": { stroke: "M4 14h6v6M20 10h-6V4M14 10l6-6M4 20l6-6", fill: "" },
     "menu": { stroke: "M4 6.5h16M4 12h16M4 17.5h16", fill: "" },
+    // 2026-10-03: os itens de menu sem desenho (os menus ganharam icone).
+    "save": { stroke: "M5.5 5.5A1.5 1.5 0 0 1 7 4h9l3.5 3.5V19a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 19z"
+                      + " M8.5 4v4.5h6V4 M8.5 20.5v-6h7v6", fill: "" },
+    "rename": { stroke: "M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z M14 8l3 3", fill: "" },
+    "goto": { stroke: "M4 12h11 M11 8l4 4-4 4 M20 5v14", fill: "" },
+    "undo": { stroke: "M9 14L4 9l5-5 M4 9h10.5a5.5 5.5 0 0 1 0 11H11", fill: "" },
+    "copy": { stroke: "M9 9h10.5v10.5H9z M15 9V5.5A1.5 1.5 0 0 0 13.5 4h-8A1.5 1.5 0 0 0 4 5.5v8"
+                      + "A1.5 1.5 0 0 0 5.5 15H9", fill: "" },
+    "paste": { stroke: "M8 5H6.5A1.5 1.5 0 0 0 5 6.5v13A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-13"
+                       + "A1.5 1.5 0 0 0 17.5 5H16 M9 3.5h6V7H9z", fill: "" },
+    "cut": { stroke: circle(6.5, 17.5, 2.5) + circle(17.5, 17.5, 2.5) + "M8.4 15.8L18 4 M15.6 15.8L6 4", fill: "" },
     "more": { stroke: "", fill: circle(6, 12, 1.7) + circle(12, 12, 1.7) + circle(18, 12, 1.7) },
     "refresh": { stroke: "M20 12A8 8 0 1 1 17.65 6.35L20 8.6 M20 4.5v4.1h-4.1", fill: "" },
     "search": { stroke: circle(10.5, 10.5, 6.5) + "M15.5 15.5L20 20", fill: "" },

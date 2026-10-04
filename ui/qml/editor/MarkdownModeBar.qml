@@ -23,38 +23,18 @@ Row {
             { "id": "side", "label": qsTr("Lado a lado") }
         ]
 
-        Rectangle {
+        // A escolha de uma opcao, na linguagem do KvToggleChip (2026-10-03).
+        KvToggleChip {
             id: chip
 
             required property var modelData
 
-            readonly property bool active: chip.modelData.id === root.mode
-
-            width: rotulo.implicitWidth + 2 * Theme.spacingSmall
             height: 22
-            radius: Theme.radius
-            color: chip.active ? Theme.surfaceSelected
-                               : (area.containsMouse ? Theme.surface2 : "transparent")
-            border.width: chip.active ? 1 : 0
-            border.color: Theme.borderStrong
-
-            Text {
-                id: rotulo
-
-                anchors.centerIn: parent
-                text: chip.modelData.label
-                color: chip.active ? Theme.textPrimary : Theme.textSecondary
-                font.pixelSize: Theme.fontSizeStatus
-            }
-
-            MouseArea {
-                id: area
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.modeSelected(chip.modelData.id)
-            }
+            outlined: true
+            codeFont: false
+            labelText: chip.modelData.label
+            active: chip.modelData.id === root.mode
+            onToggled: root.modeSelected(chip.modelData.id)
         }
     }
 }

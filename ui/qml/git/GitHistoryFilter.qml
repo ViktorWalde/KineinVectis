@@ -24,36 +24,18 @@ Item {
         anchors.fill: parent
         spacing: Theme.spacingSmall
 
-        Rectangle {
+        KvTextField {
+            id: campo
+
             width: parent.width - refChip.width - parent.spacing
             height: 24
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: campo.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: campo
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
-                clip: true
-                selectByMouse: true
-                text: root.filterText
-                onTextEdited: root.filterTextEdited(text)
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: campo.text === ""
-                    text: qsTr("Filtrar por mensagem, autor ou sha…")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeSmall
-                }
-            }
+            codeFont: false
+            pixelSize: Theme.fontSizeSmall
+            iconName: "search"
+            clearable: true
+            text: root.filterText
+            placeholder: qsTr("Filtrar por mensagem, autor ou sha…")
+            onEdited: (text) => root.filterTextEdited(text)
         }
 
         // O branch de onde o historico parte: HEAD por padrao.
@@ -101,6 +83,10 @@ Item {
                     radius: Theme.radiusXSmall
                     color: headArea.containsMouse ? Theme.surface2 : "transparent"
 
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.motionFast }
+                    }
+
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         x: Theme.spacingSmall
@@ -132,6 +118,10 @@ Item {
                         height: 22
                         radius: Theme.radiusXSmall
                         color: refArea.containsMouse ? Theme.surface2 : "transparent"
+
+                        Behavior on color {
+                            ColorAnimation { duration: Theme.motionFast }
+                        }
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter

@@ -157,12 +157,20 @@ Item {
         onCloseRequested: root.shellController.toggleDockWindow("containers")
     }
 
-    // Ctrl+Alt+W, o menu e a paleta pedem a janela pelo controller.
+    // Ctrl+Alt+W / Ctrl+Alt+J, o menu e a paleta pedem a janela pelo controller.
     Connections {
         target: root.containerController
 
         function onWindowRequested() {
             root.shellController.showDockWindow("containers");
+        }
+    }
+
+    Connections {
+        target: root.dataSourceController
+
+        function onWindowRequested() {
+            root.shellController.showDockWindow("database");
         }
     }
 

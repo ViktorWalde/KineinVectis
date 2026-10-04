@@ -119,7 +119,7 @@ Rectangle {
         case "debug.stop": root.debugController.stopDebug(); break;
         case "tools.detect": root.coreClient.detectTools(); break;
         case "library.list": root.libraryController.open(); break;
-        case "datasource.list": root.dataSourceController.open(); break;
+        case "datasource.list": root.dataSourceController.windowRequested(); break;
         case "remote.list": root.remoteController.open(); break;
         case "grafana.get": root.grafanaController.open(); break;
         case "probe.list": root.embeddedController.open(); break;
@@ -153,6 +153,7 @@ Rectangle {
         workspaceName: root.coreClient.workspaceName
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
+        commandList: root.searchEverywhereController.commandList
         recentWorkspaces: root.recentWorkspacesController.workspaces
         windowMaximized: root.windowMaximized
         onActionRequested: function(action) {

@@ -185,42 +185,20 @@ Item {
 
         // O FILTRO SO' EXISTE QUANDO HA' O QUE FILTRAR. Uma caixa de busca
         // sobre lista vazia e' convite a procurar o que nao chegou.
-        Rectangle {
+        KvTextField {
+            id: campoFiltro
+
             width: parent.width
             height: root.alturaCampo
             visible: root.temAchados
-            radius: Theme.radius
-            color: Theme.background0
-            border.width: 1
-            border.color: campoFiltro.activeFocus ? Theme.accent : Theme.borderSoft
-
-            TextInput {
-                id: campoFiltro
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
-                clip: true
-                selectByMouse: true
-                // ESC LIMPA, e nao fecha nada: e' o gesto que devolve a lista
-                // inteira sem tirar a mao do teclado.
-                Keys.onEscapePressed: campoFiltro.text = ""
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                visible: campoFiltro.text === ""
-                text: qsTr("filtrar dashboards, pasta ou fonte…")
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontSizeSmall
-            }
+            codeFont: false
+            pixelSize: Theme.fontSizeSmall
+            iconName: "search"
+            clearable: true
+            placeholder: qsTr("filtrar dashboards, pasta ou fonte…")
+            // ESC LIMPA, e nao fecha nada: e' o gesto que devolve a lista
+            // inteira sem tirar a mao do teclado.
+            Keys.onEscapePressed: campoFiltro.clear()
         }
     }
 

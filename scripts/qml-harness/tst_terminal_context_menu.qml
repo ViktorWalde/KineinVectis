@@ -21,8 +21,11 @@ Item {
 
     Component.onCompleted: {
         let failures = 0;
-        const entries = menu.entries();
-        if (entries.length !== 8) failures += 1;
+        // Os separadores (2026-10-03) ficam entre os grupos; os testes de
+        // conteudo olham os itens.
+        const all = menu.entries();
+        const entries = all.filter(function(entry) { return entry.separator !== true; });
+        if (entries.length !== 8 || all.length !== 11 || all[2].separator !== true || all[2].enabled) failures += 1;
         if (entries[0].action !== "terminal.copy" || !entries[0].enabled
                 || entries[0].shortcut !== "Ctrl+Shift+C") failures += 2;
         if (entries[1].action !== "terminal.paste" || entries[1].enabled

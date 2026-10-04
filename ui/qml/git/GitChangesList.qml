@@ -71,7 +71,11 @@ ListView {
         height: 24
         radius: Theme.radiusXSmall
         color: selected ? Theme.surfaceSelected
-               : (changeRowArea.containsMouse ? Theme.surface2 : "transparent")
+               : (rowHover.hovered ? Theme.surface2 : "transparent")
+
+        HoverHandler {
+            id: rowHover
+        }
 
         Rectangle {
             id: stageBox
@@ -127,69 +131,40 @@ ListView {
             onDoubleClicked: root.openRequested(changeRow.absPath)
         }
 
-        Rectangle {
+        // As acoes da linha aparecem com o mouse SOBRE A LINHA (HoverHandler: nao
+        // pisca ao passar de um botao para outro, o defeito da arvore do Banco).
+        KvIconButton {
             id: diffChip
 
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: discardChip.left
-            anchors.rightMargin: Theme.spacingXSmall
-            width: diffChipLabel.width + 2 * Theme.spacingSmall
-            height: 18
-            radius: Theme.radiusXSmall
-            visible: changeRowArea.containsMouse || diffChipArea.containsMouse
-                     || discardChipArea.containsMouse
-            color: diffChipArea.containsMouse ? Theme.surfaceSelected : Theme.surface1
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: diffChipLabel
-
-                anchors.centerIn: parent
-                text: qsTr("diff")
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSizeMicro
-            }
-
-            MouseArea {
-                id: diffChipArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.diffRequested(changeRow.absPath)
-            }
+            width: 20
+            height: 20
+            visible: rowHover.hovered
+            compact: true
+            iconSize: 13
+            iconName: "eye"
+            tooltip: qsTr("Ver o diff")
+            focusOnClick: false
+            onClicked: root.diffRequested(changeRow.absPath)
         }
 
-        Rectangle {
+        KvIconButton {
             id: discardChip
 
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
-            anchors.rightMargin: Theme.spacingSmall
-            width: 18
-            height: 18
-            radius: Theme.radiusXSmall
+            anchors.rightMargin: Theme.spacingXSmall
+            width: 20
+            height: 20
             visible: diffChip.visible
-            color: discardChipArea.containsMouse ? Theme.surfaceSelected : Theme.surface1
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                anchors.centerIn: parent
-                text: "↩"
-                color: Theme.errorSoft
-                font.pixelSize: Theme.fontSizeCaption
-            }
-
-            MouseArea {
-                id: discardChipArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.discardRequested(changeRow.index)
-            }
+            compact: true
+            danger: true
+            iconSize: 13
+            iconName: "undo"
+            tooltip: qsTr("Descartar a mudança…")
+            focusOnClick: false
+            onClicked: root.discardRequested(changeRow.index)
         }
     }
 }

@@ -85,40 +85,14 @@ Column {
             font.pixelSize: Theme.fontSizeSmall
         }
 
-        Rectangle {
+        KvTextField {
+            id: campoVariavel
+
             width: parent.width - root.larguraRotulo - Theme.spacingSmall
             height: root.alturaCampo
-            radius: Theme.radius
-            color: Theme.background0
-            border.width: 1
-            border.color: campoVariavel.activeFocus ? Theme.accent : Theme.borderSoft
-
-            TextInput {
-                id: campoVariavel
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                text: root.draft.tokenVariable !== undefined ? root.draft.tokenVariable : ""
-                onTextEdited: root.controller.setDraftField("tokenVariable", text)
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                visible: campoVariavel.text === ""
-                text: "GRAFANA_TOKEN"
-                color: Theme.textMuted
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeBody
-            }
+            text: root.draft.tokenVariable !== undefined ? root.draft.tokenVariable : ""
+            placeholder: "GRAFANA_TOKEN"
+            onEdited: (text) => root.controller.setDraftField("tokenVariable", text)
         }
     }
 }

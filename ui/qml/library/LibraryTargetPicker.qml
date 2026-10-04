@@ -78,42 +78,17 @@ Item {
             font.pixelSize: Theme.fontSizeMicro
         }
 
-        Rectangle {
-            id: caixa
+        KvTextField {
+            id: targetField
 
             width: parent.width
-            height: 22
-            radius: Theme.radius
-            color: Theme.surface2
-            border.width: 1
-            border.color: entrada.activeFocus ? Theme.accent : Theme.borderSoft
-
-            TextInput {
-                id: entrada
-
-                anchors.fill: parent
-                anchors.margins: 4
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
-                clip: true
-                selectByMouse: true
-                text: root.target
-
-                onEditingFinished: root.targetEdited(text.trim())
-            }
-
-            Text {
-                anchors.fill: parent
-                anchors.margins: 4
-                verticalAlignment: Text.AlignVCenter
-                visible: entrada.text === ""
-                text: root.targets.length > 0
-                      ? qsTr("ou digite outro alvo")
-                      : qsTr("digite o alvo do CMake (ex.: app)")
-                color: Theme.textDisabled
-                font.pixelSize: Theme.fontSizeSmall
-            }
+            height: 26
+            pixelSize: Theme.fontSizeSmall
+            text: root.target
+            placeholder: root.targets.length > 0
+                         ? qsTr("ou digite outro alvo")
+                         : qsTr("digite o alvo do CMake (ex.: app)")
+            onEditingFinished: root.targetEdited(targetField.text.trim())
         }
     }
 }

@@ -197,31 +197,15 @@ KvPanelFrame {
                 font.weight: Font.DemiBold
             }
 
-            Rectangle {
+            KvTextField {
+                id: confirmInput
+
                 width: 200
                 height: 26
-                radius: Theme.radiusXSmall
-                color: Theme.background0
-                border.width: 1
-                border.color: confirmInput.activeFocus ? Theme.accent : Theme.borderSoft
-
-                TextInput {
-                    id: confirmInput
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    text: root.impact ? root.impact.typed : ""
-                    color: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeSmall
-                    clip: true
-                    selectByMouse: true
-                    onTextEdited: root.impact.typed = text
-                    Keys.onReturnPressed: root.impact.confirm()
-                    Keys.onEnterPressed: root.impact.confirm()
-                }
+                pixelSize: Theme.fontSizeSmall
+                text: root.impact ? root.impact.typed : ""
+                onEdited: (text) => { root.impact.typed = text; }
+                onAccepted: root.impact.confirm()
             }
         }
     }

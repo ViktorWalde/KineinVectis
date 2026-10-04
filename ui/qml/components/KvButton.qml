@@ -21,17 +21,36 @@ Rectangle {
     // nao fazia nada parecia defeito da funcao ("compose up" sem projeto,
     // medido em 2026-09-13). Desligado, ele e' um botao comum e apagado.
     readonly property bool accented: primary && enabled
+    // Primario E perigoso: o vermelho CHEIO da acao irreversivel (descartar
+    // no Git). So' `danger` e' o contorno vermelho de uma acao que remove.
+    readonly property color fill: danger ? Theme.errorSoft : Theme.accent
 
     implicitWidth: buttonContent.implicitWidth + 2 * Theme.spacingMedium
     implicitHeight: compact ? 28 : 32
     radius: Theme.radius
-    color: accented ? (buttonArea.pressed ? Theme.accentDim : Theme.accent)
-                    : selected ? Theme.surfaceSelected
+    // INTERATIVO (2026-10-03, o mesmo pedido dos interruptores: modernizar o
+    // que ainda tinha o estilo antigo): pairar acende fundo e borda, apertar
+    // escurece e encolhe um pouco, tudo com transicao curta — a mesma
+    // linguagem do KvToggleChip.
+    color: accented ? (buttonArea.pressed ? Qt.darker(root.fill, 1.25)
+                                          : (buttonArea.containsMouse ? Qt.lighter(root.fill, 1.08) : root.fill))
+                    : (buttonArea.pressed || selected) ? Theme.surfaceSelected
                     : (buttonArea.containsMouse || activeFocus
                        ? Theme.surface2 : Theme.surface1)
-    border.color: activeFocus || selected ? Theme.accent : (danger && enabled ? Theme.errorSoft : Theme.borderSoft)
+    border.color: activeFocus || selected ? Theme.accent
+                  : (danger && enabled ? Theme.errorSoft
+                     : (buttonArea.containsMouse ? Theme.borderStrong : Theme.borderSoft))
     border.width: accented ? 0 : 1
     opacity: enabled ? 1.0 : 0.72
+    scale: buttonArea.pressed ? 0.97 : 1
+
+    Behavior on color {
+        ColorAnimation { duration: Theme.motionFast }
+    }
+
+    Behavior on scale {
+        NumberAnimation { duration: Theme.motionFast }
+    }
     focus: true
     Accessible.role: Accessible.Button
     Accessible.name: text

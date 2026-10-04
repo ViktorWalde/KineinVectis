@@ -61,30 +61,14 @@ Rectangle {
             font.pixelSize: Theme.fontSizeSmall
         }
 
-        Rectangle {
+        KvTextField {
+            id: nameInput
+
             width: parent.width
             height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: nameInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: nameInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                onAccepted: commandInput.forceActiveFocus()
-                Keys.onEscapePressed: root.cancelRequested()
-            }
+            codeFont: false
+            onAccepted: commandInput.forceActiveFocus()
+            Keys.onEscapePressed: root.cancelRequested()
         }
 
         Text {
@@ -93,31 +77,13 @@ Rectangle {
             font.pixelSize: Theme.fontSizeSmall
         }
 
-        Rectangle {
+        KvTextField {
+            id: commandInput
+
             width: parent.width
             height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: commandInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: commandInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                onAccepted: root.confirmRequested()
-                Keys.onEscapePressed: root.cancelRequested()
-            }
+            onAccepted: root.confirmRequested()
+            Keys.onEscapePressed: root.cancelRequested()
         }
 
         Row {

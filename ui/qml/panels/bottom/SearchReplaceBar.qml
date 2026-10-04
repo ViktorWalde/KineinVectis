@@ -41,79 +41,36 @@ Row {
         replaceButton.replaceArmed = false;
     }
 
-    Rectangle {
+    KvTextField {
+        id: replaceInput
+
         width: root.width - replaceButton.width - Theme.spacingSmall
         height: 30
-        radius: Theme.radius
-        color: Theme.background0
-        border.color: replaceInput.activeFocus ? Theme.accent : Theme.borderSoft
-        border.width: 1
-
-        TextInput {
-            id: replaceInput
-
-            anchors.fill: parent
-            anchors.leftMargin: Theme.spacingSmall
-            anchors.rightMargin: Theme.spacingSmall
-            verticalAlignment: TextInput.AlignVCenter
-            color: Theme.textPrimary
-            selectionColor: Theme.accentDim
-            selectedTextColor: Theme.textPrimary
-            font.family: Theme.monoFont
-            font.pixelSize: Theme.fontSizeTerminal
-            clip: true
-            selectByMouse: true
-            onTextChanged: root.disarm()
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: replaceInput.text === ""
-                text: qsTr("Substituir por (vazio remove) — \\n quebra linha")
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontSizeSmall
-            }
-        }
+        pixelSize: Theme.fontSizeTerminal
+        placeholder: qsTr("Substituir por (vazio remove) — \\n quebra linha")
+        onTextChanged: root.disarm()
     }
 
-    Rectangle {
+    // Dois cliques: o primeiro arma (vermelho, "Confirmar"), o segundo
+    // substitui.
+    KvButton {
         id: replaceButton
 
         property bool replaceArmed: false
 
-        width: replaceLabel.width + 2 * Theme.spacingMedium
         height: 30
-        radius: Theme.radius
-        opacity: root.busy ? 0.55 : 1.0
-        color: replaceArmed ? Theme.errorSoft
-                            : (replaceArea.pressed ? Theme.accentDim
-                                                   : Theme.accent)
-
-        Text {
-            id: replaceLabel
-
-            anchors.centerIn: parent
-            text: root.busy ? qsTr("Substituindo...")
-                  : (replaceButton.replaceArmed
-                     ? qsTr("Confirmar") : qsTr("Substituir tudo"))
-            color: Theme.background0
-            font.pixelSize: Theme.fontSizeCaption
-            font.bold: true
-        }
-
-        MouseArea {
-            id: replaceArea
-
-            anchors.fill: parent
-            enabled: !root.busy
-            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: {
-                if (!replaceButton.replaceArmed) {
-                    replaceButton.replaceArmed = true;
-                    return;
-                }
-                replaceButton.replaceArmed = false;
-                root.replaceRequested(replaceInput.text);
+        primary: !replaceButton.replaceArmed
+        danger: replaceButton.replaceArmed
+        enabled: !root.busy
+        text: root.busy ? qsTr("Substituindo...")
+              : (replaceButton.replaceArmed ? qsTr("Confirmar") : qsTr("Substituir tudo"))
+        onClicked: {
+            if (!replaceButton.replaceArmed) {
+                replaceButton.replaceArmed = true;
+                return;
             }
+            replaceButton.replaceArmed = false;
+            root.replaceRequested(replaceInput.text);
         }
     }
 }

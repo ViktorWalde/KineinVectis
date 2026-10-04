@@ -76,8 +76,14 @@ Item {
     // do harness nunca fica ATIVA, entao `activeFocus` e' falso em tudo mesmo
     // depois de `forceActiveFocus` — o que se mede aqui e' para onde o painel
     // MANDOU o foco, que e' a decisao dele.
+    // O alvo e' um CAMPO (tem cursor). Desde 2026-10-03 todo campo e' um
+    // KvTextField: o foco do campo e' o do FocusScope dele (a entrada de
+    // dentro tem `focus` sempre, no escopo dela), entao nao se desce nele.
     function focadoDentroDe(item) {
-        if (item.focus === true && item.children.length === 0) {
+        if (item.input !== undefined && item.cursorPosition !== undefined) {
+            return item.focus === true ? item : null;
+        }
+        if (item.focus === true && item.cursorPosition !== undefined) {
             return item;
         }
         for (let indice = 0; indice < item.children.length; ++indice) {

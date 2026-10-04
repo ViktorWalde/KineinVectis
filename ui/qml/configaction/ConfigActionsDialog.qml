@@ -138,7 +138,7 @@ Item {
             }
         }
 
-        Rectangle {
+        KvTextField {
             id: searchBox
 
             anchors.top: scopeRow.visible ? scopeRow.bottom : dialogTitle.bottom
@@ -147,37 +147,12 @@ Item {
             anchors.topMargin: Theme.spacingSmall
             width: 300
             height: 26
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: searchInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: searchInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                onTextChanged: root.controller.searchQuery = text
-                Keys.onEscapePressed: root.dismissRequested()
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Buscar ação...")
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontSizeBody
-                visible: searchInput.text === ""
-            }
+            codeFont: false
+            iconName: "search"
+            clearable: true
+            placeholder: qsTr("Buscar ação...")
+            onTextChanged: root.controller.searchQuery = text
+            Keys.onEscapePressed: root.dismissRequested()
         }
 
         ConfigActionList {

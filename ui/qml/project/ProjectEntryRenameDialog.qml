@@ -77,33 +77,15 @@ Item {
                 elide: Text.ElideMiddle
             }
 
-            Rectangle {
+            KvTextField {
+                id: entryRenameInput
+
                 width: parent.width
                 height: 30
-                radius: Theme.radius
-                color: Theme.background0
-                border.color: entryRenameInput.activeFocus
-                              ? Theme.accent : Theme.borderSoft
-                border.width: 1
-
-                TextInput {
-                    id: entryRenameInput
-
-                    anchors.fill: parent
-                    anchors.margins: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.textPrimary
-                    selectionColor: Theme.accentDim
-                    selectedTextColor: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeBody
-                    clip: true
-                    selectByMouse: true
-                    onAccepted: { if (!root.operationPending) root.confirmRequested(); }
-                    Keys.onEscapePressed: {
-                        if (!root.operationPending) root.cancelRequested();
-                        else if (root.pendingDismissText !== "") root.pendingDismissRequested();
-                    }
+                onAccepted: { if (!root.operationPending) root.confirmRequested(); }
+                Keys.onEscapePressed: {
+                    if (!root.operationPending) root.cancelRequested();
+                    else if (root.pendingDismissText !== "") root.pendingDismissRequested();
                 }
             }
 
@@ -128,65 +110,23 @@ Item {
                 anchors.right: parent.right
                 spacing: Theme.spacingSmall
 
-                Rectangle {
-                    width: entryRenameCancelText.width + 2 * Theme.spacingMedium
-                    height: 24
-                    radius: Theme.radius
-                    color: entryRenameCancelArea.containsMouse
-                           ? Theme.surface2 : Theme.surface1
-                    border.color: Theme.borderSoft
-                    border.width: 1
-
-                    Text {
-                        id: entryRenameCancelText
-
-                        anchors.centerIn: parent
-                        text: root.operationPending && root.pendingDismissText !== ""
-                              ? root.pendingDismissText : qsTr("Cancelar")
-                        color: root.operationPending && root.pendingDismissText === ""
-                               ? Theme.textMuted : Theme.textSecondary
-                        font.pixelSize: Theme.fontSizeSmall
-                    }
-
-                    MouseArea {
-                        id: entryRenameCancelArea
-
-                        anchors.fill: parent
-                        enabled: !root.operationPending || root.pendingDismissText !== ""
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (root.operationPending) root.pendingDismissRequested();
-                            else root.cancelRequested();
-                        }
+                KvButton {
+                    compact: true
+                    enabled: !root.operationPending || root.pendingDismissText !== ""
+                    text: root.operationPending && root.pendingDismissText !== ""
+                          ? root.pendingDismissText : qsTr("Cancelar")
+                    onClicked: {
+                        if (root.operationPending) root.pendingDismissRequested();
+                        else root.cancelRequested();
                     }
                 }
 
-                Rectangle {
-                    width: entryRenameConfirmText.width + 2 * Theme.spacingMedium
-                    height: 24
-                    radius: Theme.radius
-                    color: root.operationPending ? Theme.surface1
-                           : entryRenameConfirmArea.pressed ? Theme.accentDim : Theme.accent
-
-                    Text {
-                        id: entryRenameConfirmText
-
-                        anchors.centerIn: parent
-                        text: root.confirmText !== "" ? root.confirmText : qsTr("Renomear")
-                        color: root.operationPending ? Theme.textMuted : Theme.background0
-                        font.pixelSize: Theme.fontSizeSmall
-                    }
-
-                    MouseArea {
-                        id: entryRenameConfirmArea
-
-                        anchors.fill: parent
-                        enabled: !root.operationPending
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.confirmRequested()
-                    }
+                KvButton {
+                    compact: true
+                    primary: true
+                    enabled: !root.operationPending
+                    text: root.confirmText !== "" ? root.confirmText : qsTr("Renomear")
+                    onClicked: root.confirmRequested()
                 }
             }
         }

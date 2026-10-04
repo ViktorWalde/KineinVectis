@@ -181,7 +181,7 @@ Item {
             libraryController.open();
             return true;
         case "datasource.list":
-            dataSourceController.open();
+            dataSourceController.windowRequested();
             return true;
         case "remote.list":
             remoteController.open();

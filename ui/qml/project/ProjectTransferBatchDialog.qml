@@ -144,17 +144,14 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 1
 
-                                TextInput {
+                                KvTextField {
                                     width: parent.width
+                                    height: 22
                                     text: entryRow.modelData.name
                                     enabled: !root.pending
                                              && !root.transferController.batchItemSucceeded(entryRow.modelData.status)
-                                    color: enabled ? Theme.textPrimary : Theme.textMuted
-                                    font.family: Theme.monoFont
-                                    font.pixelSize: Theme.fontSizeSmall
-                                    selectByMouse: true
-                                    clip: true
-                                    onTextEdited: root.draftEntries[entryRow.index].name = text
+                                    pixelSize: Theme.fontSizeSmall
+                                    onEdited: (text) => { root.draftEntries[entryRow.index].name = text; }
                                 }
                                 Text {
                                     width: parent.width

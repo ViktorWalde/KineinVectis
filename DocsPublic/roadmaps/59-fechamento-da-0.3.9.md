@@ -53,7 +53,7 @@ Cada passo termina com:
 | --- | --- | --- |
 | 1 | **Containers acoplados** (§3), **tela de boas-vindas** (§3.1) e **interruptor moderno** (§3.2) | feito (40.7 §7.210–§7.211) |
 | 2 | **Topo:** o ☰ esconde por um momento os widgets do topo, em vez de empurrá-los (§3.3) | feito (40.7 §7.213) |
-| 3 | **Modernizar os controles antigos** no padrão interativo (§3.4) | a fazer |
+| 3 | **Modernizar os controles antigos** no padrão interativo (§3.4) | feito (40.7 §7.214) |
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | a fazer |
 | 5 | **Remoto acoplado** (§4) | a fazer |
 | 6 | **Grafana: visualização web opcional** (§6) | a fazer |
@@ -124,10 +124,19 @@ serem empurrados para o lado. Ao fechar o ☰, eles voltam iguais.
 
 ### 3.4 Modernizar os controles antigos
 
-Fazer um levantamento tela por tela do que ainda tem o estilo antigo
-(botões, campos de texto feitos à mão, abas, chips) e trazer tudo ao padrão
-interativo: superfície que acende ao pairar, resposta ao pressionar e
-transições curtas. Inclui o `KvTextField` (40.7 §7.199).
+Feito em 2026-10-03 (40.7 §7.214). O levantamento, por script, achou 31
+campos de texto, ~20 botões e três menus desenhados à mão. Agora:
+
+- **`KvTextField`** é o campo da IDE (placeholder, pairar, foco âmbar com
+  anel, ícone opcional, × que limpa). Os 31 campos usam ele; fica só o
+  caminho editável do seletor de pastas, revisto no passo 4.
+- **`KvButton`/`KvIconButton`** acendem ao pairar e respondem ao pressionar,
+  com transição; `primary` + `danger` é o vermelho cheio do irreversível.
+- **Um menu só** (`AppMenuPopup`) para o ☰, a árvore, o terminal e a
+  configuração de execução: ícone, atalho real à direita, separador entre
+  grupos e a barra âmbar no item da vez.
+- **O atalho do menu sai do catálogo de comandos**, e o gate de atalhos
+  confere os mapas de exceção.
 
 ### 3.6 O seletor "Abrir projeto" (pedido do autor, 2026-10-03, noite)
 
@@ -279,7 +288,8 @@ já sobe um PostgreSQL em container ("Novo banco…"). A bateria na tela inclui:
   retrabalho; a 0.3.9 vai servir de base"). A lista:
   - o slot da esquerda tem uma largura só para as três janelas: alargar o
     Banco alarga o Projeto;
-  - os campos de texto feitos à mão (`KvTextField`, 40.7 §7.199).
+  - ~~os campos de texto feitos à mão~~: **resolvidos** em 2026-10-03
+    (`KvTextField`, 40.7 §7.214), com os botões e os menus antigos.
   - ~~os testes intermitentes do core~~: **resolvidos na causa** em
     2026-10-03 (40.7 §7.212, `crate::write_executable`); 25 rodadas
     paralelas sem falha, e o gate voltou a rodar em paralelo.

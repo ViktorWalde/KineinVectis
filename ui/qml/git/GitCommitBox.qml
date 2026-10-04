@@ -61,39 +61,18 @@ Item {
             wrapMode: Text.WordWrap
         }
 
-        Rectangle {
+        KvTextField {
+            id: commitInput
+
             width: parent.width
             height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: commitInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: commitInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                onTextEdited: root.pushArmed = false
-                onAccepted: {
-                    if (root.canCommit) {
-                        root.commitRequested(commitInput.text);
-                        commitInput.text = "";
-                    }
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: commitInput.text === ""
-                    text: root.amend ? qsTr("Nova mensagem do último commit…") : qsTr("Mensagem do commit…")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeBody
+            codeFont: false
+            placeholder: root.amend ? qsTr("Nova mensagem do último commit…") : qsTr("Mensagem do commit…")
+            onEdited: root.pushArmed = false
+            onAccepted: {
+                if (root.canCommit) {
+                    root.commitRequested(commitInput.text);
+                    commitInput.text = "";
                 }
             }
         }

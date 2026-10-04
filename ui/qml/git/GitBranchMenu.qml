@@ -93,61 +93,25 @@ Rectangle {
         height: 28
         spacing: Theme.spacingSmall
 
-        Rectangle {
+        KvTextField {
+            id: newBranchInput
+
             width: parent.width - createBranchButton.width - Theme.spacingSmall
             height: parent.height
-            radius: Theme.radiusXSmall
-            color: Theme.background0
-            border.color: newBranchInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: newBranchInput
-
-                anchors.fill: parent
-                anchors.margins: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeCaption
-                clip: true
-                onAccepted: root.branchCreateRequested(text)
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: newBranchInput.text === ""
-                    text: qsTr("nova branch")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-            }
+            pixelSize: Theme.fontSizeCaption
+            placeholder: qsTr("nova branch")
+            onAccepted: root.branchCreateRequested(newBranchInput.text)
         }
 
-        Rectangle {
+        KvButton {
             id: createBranchButton
 
-            width: createBranchLabel.width + 2 * Theme.spacingSmall
             height: parent.height
-            radius: Theme.radiusXSmall
-            color: createBranchArea.pressed ? Theme.accentDim : Theme.accent
-
-            Text {
-                id: createBranchLabel
-
-                anchors.centerIn: parent
-                text: qsTr("Criar")
-                color: Theme.background0
-                font.pixelSize: Theme.fontSizeCaption
-                font.bold: true
-            }
-
-            MouseArea {
-                id: createBranchArea
-
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.branchCreateRequested(newBranchInput.text)
-            }
+            compact: true
+            primary: true
+            enabled: newBranchInput.text.trim() !== ""
+            text: qsTr("Criar")
+            onClicked: root.branchCreateRequested(newBranchInput.text)
         }
     }
 }

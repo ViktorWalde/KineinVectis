@@ -61,7 +61,7 @@ Item {
         // anunciava ao nascer ja' era alias do `debug.start` na UI.
         sequence: "Ctrl+Alt+J"
         enabled: root.workspaceOpen
-        onActivated: root.dataSourceController.open()
+        onActivated: root.dataSourceController.windowRequested()
     }
 
     Shortcut {

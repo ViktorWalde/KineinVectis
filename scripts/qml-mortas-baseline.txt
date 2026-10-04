@@ -7,7 +7,6 @@ ui/qml/editor/EditorPersistenceController.qml::cancelPendingSaves
 ui/qml/embedded/EmbeddedFilesController.qml::makeDir
 ui/qml/git/GitController.qml::closeBranchMenu
 ui/qml/library/LibraryController.qml::libraryById
-ui/qml/python/PythonController.qml::nativeModuleBuildHint
 ui/qml/remote/RemoteActionRules.qml::sectionFor
 ui/qml/runtime/RuntimeController.qml::appendTerminalData
 ui/qml/toolchain/ToolchainController.qml::isAutomatic

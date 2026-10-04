@@ -41,23 +41,28 @@ Item {
         showAt(point.x, point.y);
     }
 
+    // Em grupos, com icone (2026-10-03: o mesmo menu da barra e da arvore).
     function entries() {
+        const sep = { "separator": true, "label": "", "action": "", "enabled": false };
         return [
-            { "label": qsTr("Copiar"), "shortcut": qsTr("Ctrl+Shift+C"),
+            { "label": qsTr("Copiar"), "shortcut": qsTr("Ctrl+Shift+C"), "icon": "copy",
               "action": "terminal.copy", "enabled": canCopy },
-            { "label": qsTr("Colar"), "shortcut": qsTr("Ctrl+V"),
+            { "label": qsTr("Colar"), "shortcut": qsTr("Ctrl+V"), "icon": "paste",
               "action": "terminal.paste", "enabled": canPaste },
-            { "label": qsTr("Selecionar Tudo"), "shortcut": "",
+            sep,
+            { "label": qsTr("Selecionar Tudo"), "shortcut": "", "icon": "",
               "action": "terminal.selectAll", "enabled": canSelectAll },
-            { "label": qsTr("Selecionar área visível"), "shortcut": "",
+            { "label": qsTr("Selecionar área visível"), "shortcut": "", "icon": "",
               "action": "terminal.selectVisible", "enabled": canSelectVisible },
-            { "label": qsTr("Limpar tela"), "shortcut": qsTr("Ctrl+L"),
+            sep,
+            { "label": qsTr("Limpar tela"), "shortcut": qsTr("Ctrl+L"), "icon": "refresh",
               "action": "terminal.clearScreen", "enabled": canUseSession },
-            { "label": qsTr("Limpar histórico"), "shortcut": "",
+            { "label": qsTr("Limpar histórico"), "shortcut": "", "icon": "trash",
               "action": "terminal.clearScrollback", "enabled": canClearScrollback },
-            { "label": qsTr("Novo terminal"), "shortcut": "",
+            sep,
+            { "label": qsTr("Novo terminal"), "shortcut": "", "icon": "add",
               "action": "terminal.new", "enabled": canCreateSession },
-            { "label": qsTr("Fechar terminal"), "shortcut": "",
+            { "label": qsTr("Fechar terminal"), "shortcut": "", "icon": "close",
               "action": "terminal.close", "enabled": canCloseSession }
         ];
     }
@@ -66,7 +71,7 @@ Item {
         anchors.fill: parent
         menuX: root.popupX
         menuY: root.popupY
-        menuWidth: 320
+        menuWidth: 300
         items: root.entries()
         onDismissRequested: function(restoreFocus) {
             root.open = false;

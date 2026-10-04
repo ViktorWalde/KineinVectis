@@ -66,37 +66,17 @@ Rectangle {
         elide: Text.ElideRight
     }
 
-    Rectangle {
+    KvButton {
         id: actionButton
 
-        width: actionText.width + 2 * Theme.spacingSmall
-        height: 22
         anchors.right: dismissButton.left
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
+        height: 24
+        compact: true
         visible: root.actionLabel !== ""
-        radius: Theme.radius
-        color: actionArea.containsMouse ? Theme.surface2 : "transparent"
-        border.color: Theme.borderSoft
-        border.width: 1
-
-        Text {
-            id: actionText
-
-            anchors.centerIn: parent
-            text: root.actionLabel
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeCaption
-        }
-
-        MouseArea {
-            id: actionArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.actionRequested()
-        }
+        text: root.actionLabel
+        onClicked: root.actionRequested()
     }
 
     KvIconButton {

@@ -60,32 +60,17 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingSmall
 
-        Rectangle {
+        KvTextField {
+            id: entrada
+
             width: parent.width - confirmar.width - Theme.spacingSmall
             height: 26
-            radius: Theme.radius
-            color: Theme.background0
-            border.width: 1
-            border.color: entrada.activeFocus ? Theme.accent : Theme.borderSoft
-
-            TextInput {
-                id: entrada
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                // O token nao aparece na tela: um print de tela num chamado e'
-                // o caminho mais banal de vazamento que existe.
-                echoMode: TextInput.Password
-                color: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                onAccepted: {
-                    root.accepted(entrada.text);
-                    entrada.text = "";
-                }
+            // O token nao aparece na tela: um print de tela num chamado e'
+            // o caminho mais banal de vazamento que existe.
+            echoMode: TextInput.Password
+            onAccepted: {
+                root.accepted(entrada.text);
+                entrada.text = "";
             }
         }
 

@@ -60,56 +60,17 @@ Item {
                 anchors.right: parent.right
                 spacing: Theme.spacingSmall
 
-                Rectangle {
-                    width: cancelLabel.width + 2 * Theme.spacingMedium
-                    height: 28
-                    radius: Theme.radius
-                    color: cancelArea.containsMouse ? Theme.surface2 : Theme.surface1
-                    border.color: Theme.borderSoft
-                    border.width: 1
-
-                    Text {
-                        id: cancelLabel
-
-                        anchors.centerIn: parent
-                        text: qsTr("Cancelar")
-                        color: Theme.textPrimary
-                        font.pixelSize: Theme.fontSizeBody
-                    }
-
-                    MouseArea {
-                        id: cancelArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.cancelRequested()
-                    }
+                KvButton {
+                    text: qsTr("Cancelar")
+                    onClicked: root.cancelRequested()
                 }
 
-                Rectangle {
-                    width: confirmLabel.width + 2 * Theme.spacingMedium
-                    height: 28
-                    radius: Theme.radius
-                    color: confirmArea.pressed ? Theme.surface1 : Theme.errorSoft
-
-                    Text {
-                        id: confirmLabel
-
-                        anchors.centerIn: parent
-                        text: qsTr("Descartar")
-                        color: Theme.background0
-                        font.pixelSize: Theme.fontSizeBody
-                        font.bold: true
-                    }
-
-                    MouseArea {
-                        id: confirmArea
-
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.confirmRequested()
-                    }
+                // Vermelho CHEIO de proposito: descartar nao tem volta.
+                KvButton {
+                    primary: true
+                    danger: true
+                    text: qsTr("Descartar")
+                    onClicked: root.confirmRequested()
                 }
             }
         }

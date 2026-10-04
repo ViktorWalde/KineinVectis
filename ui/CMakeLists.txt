@@ -55,6 +55,7 @@ set_source_files_properties(qml/components/KvIconGlyphs.js PROPERTIES QT_RESOURC
 set_source_files_properties(qml/components/KvLists.js PROPERTIES QT_RESOURCE_ALIAS KvLists.js)
 set_source_files_properties(qml/components/KvFileIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvFileIconGlyphs.js)
 set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
+set_source_files_properties(qml/components/KvTextField.qml PROPERTIES QT_RESOURCE_ALIAS KvTextField.qml)
 set_source_files_properties(qml/components/KvPanelFrame.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelFrame.qml)
 set_source_files_properties(qml/components/KvPanelHeader.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelHeader.qml)
 set_source_files_properties(qml/components/KvVerdict.qml PROPERTIES QT_RESOURCE_ALIAS KvVerdict.qml)
@@ -357,11 +358,9 @@ set_source_files_properties(qml/project/ProjectTreeSelection.qml PROPERTIES QT_R
 set_source_files_properties(qml/project/ProjectTreeRow.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRow.qml)
 set_source_files_properties(qml/project/ProjectTreeAutoScroll.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeAutoScroll.qml)
 set_source_files_properties(qml/project/ProjectDragGhost.qml PROPERTIES QT_RESOURCE_ALIAS ProjectDragGhost.qml)
-set_source_files_properties(qml/project/ProjectEntryMenuKeyboard.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryMenuKeyboard.qml)
 set_source_files_properties(qml/project/ProjectTreeResults.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeResults.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
 set_source_files_properties(qml/project/ProjectEntryContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryContextMenu.qml)
-set_source_files_properties(qml/project/ProjectEntryQuickActions.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryQuickActions.qml)
 set_source_files_properties(qml/project/ProjectDragRules.qml PROPERTIES
     QT_RESOURCE_ALIAS ProjectDragRules.qml QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/project/ProjectEntryRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryRenameDialog.qml)
@@ -445,6 +444,7 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvLists.js
         qml/components/KvFileIconGlyphs.js
         qml/components/KvToggleChip.qml
+        qml/components/KvTextField.qml
         qml/components/KvPanelFrame.qml
         qml/components/KvPanelHeader.qml
         qml/components/KvVerdict.qml
@@ -748,11 +748,9 @@ qt_add_qml_module(kinein-vectis
         qml/project/ProjectTreeRow.qml
         qml/project/ProjectTreeAutoScroll.qml
         qml/project/ProjectDragGhost.qml
-        qml/project/ProjectEntryMenuKeyboard.qml
         qml/project/ProjectTreeResults.qml
         qml/project/ProjectExplorer.qml
         qml/project/ProjectEntryContextMenu.qml
-        qml/project/ProjectEntryQuickActions.qml
         qml/project/ProjectDragRules.qml
         qml/project/ProjectEntryRenameDialog.qml
         qml/project/ProjectEntryDeleteDialog.qml

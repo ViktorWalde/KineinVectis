@@ -191,6 +191,14 @@ no checkout, não em nenhum pacote publicado.
   - os Símbolos (☰) escondem o slot da direita enquanto estão abertos e o
     devolvem ao fechar;
   - **Ctrl+F6** passa pelos dois lados.
+- **Menus com hierarquia e atalhos de verdade.** O ☰, o clique direito na
+  árvore, o menu do terminal e o seletor de execução são o mesmo menu: ícone,
+  atalho à direita (o mesmo que a IDE obedece), grupos separados e o item da
+  vez marcado; setas, Enter e Esc em todos.
+- **Campos e botões que respondem.** Todo campo de texto tem o mesmo desenho
+  (placeholder, foco âmbar, × para limpar nos filtros), e os botões acendem ao
+  pairar e respondem ao clique. O ☰ esconde os widgets do topo enquanto está
+  aberto, em vez de empurrá-los.
 
 ## 0.3.5 — lançada em 2026-10-01 (pré-release "Public Beta")
 

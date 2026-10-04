@@ -92,34 +92,15 @@ Rectangle {
             width: parent.width
             spacing: Theme.spacingSmall
 
-            Rectangle {
+            KvTextField {
+                id: endereco
+
                 width: parent.width - ler.width - desmontar.width - 2 * Theme.spacingSmall
                 height: 24
-                color: Theme.background0
-                border.width: 1
-                border.color: Theme.borderSoft
-                radius: Theme.radius
-
-                TextInput {
-                    id: endereco
-
-                    anchors.fill: parent
-                    anchors.margins: 4
-                    text: root.inspect ? root.inspect.memoryReference : ""
-                    color: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeSmall
-                    clip: true
-                    onAccepted: root.inspect.readMemory(text)
-
-                    Text {
-                        anchors.fill: parent
-                        visible: endereco.text === ""
-                        text: qsTr("endereco, ex.: 0x3ff00000")
-                        color: Theme.textMuted
-                        font.pixelSize: Theme.fontSizeSmall
-                    }
-                }
+                pixelSize: Theme.fontSizeSmall
+                text: root.inspect ? root.inspect.memoryReference : ""
+                placeholder: qsTr("endereco, ex.: 0x3ff00000")
+                onAccepted: root.inspect.readMemory(endereco.text)
             }
 
             KvButton {

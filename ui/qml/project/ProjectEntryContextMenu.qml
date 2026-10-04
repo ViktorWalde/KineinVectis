@@ -1,13 +1,29 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
+// O menu de contexto da arvore do projeto.
+//
+// DESDE 2026-10-03 e' o MESMO menu da barra e do terminal (AppMenuPopup):
+// grupos com separador, icone, atalho a direita e a barra ambar no item da
+// vez. Antes eram 13 linhas desenhadas a mao numa cor so', com um teclado
+// proprio (ProjectEntryMenuKeyboard) e um pedaco em outro arquivo
+// (ProjectEntryQuickActions) — o autor rejeita lista plana numa cor, e tres
+// menus com tres teclados eram tres jeitos de divergir.
+//
+// O que nao se aplica ao item some (executar/depurar de quem nao e' script);
+// o que se aplica mas nao agora fica APAGADO e diz por que ("selecione 1
+// item").
 Item {
     id: root
+
     property real menuX: 0
     property real menuY: 0
     property bool runnableScript: false
     property bool debuggableScript: false
     property int selectionCount: 1
     property bool pasteAvailable: false
+
     signal dismissRequested()
     signal createFileRequested()
     signal createDirectoryRequested()
@@ -22,278 +38,66 @@ Item {
     signal copyRelativePathRequested()
     signal openFolderRequested()
     signal openTerminalRequested()
-    focus: visible
-    onVisibleChanged: {
-        if (visible) {
-            menuKeys.currentAction = 0;
-            forceActiveFocus();
-        }
-    }
-    Keys.onPressed: function(event) { event.accepted = menuKeys.handleKey(event); }
 
-    ProjectEntryMenuKeyboard {
-        id: menuKeys
-        runnableScript: root.runnableScript
-        debuggableScript: root.debuggableScript
-        singleSelection: root.selectionCount <= 1
-        fileSelectionAvailable: root.selectionCount >= 1 && root.selectionCount <= 128
-        pasteAvailable: root.pasteAvailable
-        onDismissRequested: root.dismissRequested()
-        onActionRequested: function(index) {
-            switch (index) {
-            case 0: root.createFileRequested(); break;
-            case 1: root.createDirectoryRequested(); break;
-            case 2: root.runScriptRequested(); break;
-            case 3: root.debugScriptRequested(); break;
-            case 4: root.renameRequested(); break;
-            case 5: root.deleteRequested(); break;
-            case 6: root.copyRequested(); break;
-            case 7: root.cutRequested(); break;
-            case 8: root.pasteRequested(); break;
-            case 9: root.copyAbsolutePathRequested(); break;
-            case 10: root.copyRelativePathRequested(); break;
-            case 11: root.openFolderRequested(); break;
-            case 12: root.openTerminalRequested(); break;
-            }
-        }
+    function entry(label, action, icon, enabled, shortcut) {
+        return { label: label, action: action, icon: icon, enabled: enabled, shortcut: shortcut || "" };
     }
 
-    KvBackdrop {
+    function entries() {
+        const single = root.selectionCount <= 1;
+        const files = root.selectionCount >= 1 && root.selectionCount <= 128;
+        const groups = [
+            [root.entry(qsTr("Adicionar arquivo"), "create.file", "file", true),
+             root.entry(qsTr("Adicionar pasta"), "create.directory", "folder", true)],
+            [],
+            [root.entry(single ? qsTr("Renomear") : qsTr("Renomear: selecione 1 item"), "rename", "rename", single),
+             root.entry(single ? qsTr("Excluir") : qsTr("Excluir: selecione 1 item"), "delete", "trash", single)],
+            [root.entry(qsTr("Copiar"), "copy", "copy", files, "Ctrl+C"),
+             root.entry(qsTr("Recortar"), "cut", "cut", files, "Ctrl+X"),
+             root.entry(root.pasteAvailable ? qsTr("Colar") : qsTr("Colar: itens do projeto"), "paste", "paste",
+                        root.pasteAvailable, "Ctrl+V")],
+            [root.entry(qsTr("Copiar caminho absoluto"), "path.absolute", "copy", files),
+             root.entry(qsTr("Copiar caminho relativo"), "path.relative", "copy", files)],
+            [root.entry(qsTr("Abrir pasta no gerenciador"), "open.folder", "external", single),
+             root.entry(qsTr("Abrir terminal nesta pasta"), "open.terminal", "terminal", single)]
+        ];
+        if (root.runnableScript) groups[1].push(root.entry(qsTr("Executar script"), "run", "run", true));
+        if (root.debuggableScript) groups[1].push(root.entry(qsTr("Depurar"), "debug", "debug", true));
+        const out = [];
+        for (const group of groups) {
+            if (group.length === 0) continue;
+            if (out.length > 0) out.push({ separator: true, label: "", action: "", enabled: false });
+            for (const item of group) out.push(item);
+        }
+        return out;
+    }
+
+    function dispatch(action) {
+        switch (action) {
+        case "create.file": root.createFileRequested(); break;
+        case "create.directory": root.createDirectoryRequested(); break;
+        case "run": root.runScriptRequested(); break;
+        case "debug": root.debugScriptRequested(); break;
+        case "rename": root.renameRequested(); break;
+        case "delete": root.deleteRequested(); break;
+        case "copy": root.copyRequested(); break;
+        case "cut": root.cutRequested(); break;
+        case "paste": root.pasteRequested(); break;
+        case "path.absolute": root.copyAbsolutePathRequested(); break;
+        case "path.relative": root.copyRelativePathRequested(); break;
+        case "open.folder": root.openFolderRequested(); break;
+        case "open.terminal": root.openTerminalRequested(); break;
+        }
+    }
+
+    AppMenuPopup {
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: root.dismissRequested()
-    }
-
-    Rectangle {
-        x: root.menuX
-        y: Math.max(0, Math.min(root.menuY, root.height - height))
-        width: 240
-        height: entryMenuColumn.height + 2 * Theme.spacingSmall
-        radius: Theme.radius
-        color: Theme.background2
-        border.color: Theme.borderSoft
-        border.width: 1
-
-        Column {
-            id: entryMenuColumn
-
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Theme.spacingSmall
-            spacing: 2
-
-            Rectangle {
-                width: parent.width
-                height: 26
-                radius: Theme.radius
-                color: entryCreateFileHover.containsMouse
-                       || (root.activeFocus && menuKeys.currentAction === 0)
-                       ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    text: qsTr("Adicionar arquivo")
-                    color: Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeBody
-                }
-
-                MouseArea {
-                    id: entryCreateFileHover
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.createFileRequested()
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 26
-                radius: Theme.radius
-                color: entryCreateDirectoryHover.containsMouse
-                       || (root.activeFocus && menuKeys.currentAction === 1)
-                       ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    text: qsTr("Adicionar pasta")
-                    color: Theme.textPrimary
-                    font.pixelSize: Theme.fontSizeBody
-                }
-
-                MouseArea {
-                    id: entryCreateDirectoryHover
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.createDirectoryRequested()
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: Theme.borderSoft
-            }
-
-            Rectangle {
-                width: parent.width
-                height: root.runnableScript ? 26 : 0
-                visible: root.runnableScript
-                radius: Theme.radius
-                color: entryRunHover.containsMouse
-                       || (root.activeFocus && menuKeys.currentAction === 2)
-                       ? Theme.surface2 : "transparent"
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    spacing: Theme.spacingSmall
-
-                    KvIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: "run"
-                        size: 14
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: qsTr("Executar script")
-                        color: Theme.textPrimary
-                        font.pixelSize: Theme.fontSizeBody
-                    }
-                }
-
-                MouseArea {
-                    id: entryRunHover
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.runScriptRequested()
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: root.debuggableScript ? 26 : 0
-                visible: root.debuggableScript
-                radius: Theme.radius
-                color: entryDebugHover.containsMouse
-                       || (root.activeFocus && menuKeys.currentAction === 3)
-                       ? Theme.surface2 : "transparent"
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    spacing: Theme.spacingSmall
-
-                    KvIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: "debug"
-                        size: 14
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: qsTr("Depurar")
-                        color: Theme.textPrimary
-                        font.pixelSize: Theme.fontSizeBody
-                    }
-                }
-
-                MouseArea {
-                    id: entryDebugHover
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.debugScriptRequested()
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: root.runnableScript ? 1 : 0
-                visible: root.runnableScript
-                color: Theme.borderSoft
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 26
-                radius: Theme.radius
-                color: entryRenameHover.containsMouse
-                       || (root.activeFocus && menuKeys.currentAction === 4)
-                       ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    text: root.selectionCount <= 1 ? qsTr("Renomear")
-                                                     : qsTr("Renomear: selecione 1 item")
-                    color: root.selectionCount <= 1 ? Theme.textPrimary : Theme.textMuted
-                    font.pixelSize: Theme.fontSizeBody
-                }
-
-                MouseArea {
-                    id: entryRenameHover
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: root.selectionCount <= 1
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.renameRequested()
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 26
-                radius: Theme.radius
-                color: entryDeleteHover.containsMouse
-                       || (root.activeFocus && menuKeys.currentAction === 5)
-                       ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    text: root.selectionCount <= 1 ? qsTr("Excluir")
-                                                     : qsTr("Excluir: selecione 1 item")
-                    color: root.selectionCount <= 1 ? Theme.errorSoft : Theme.textMuted
-                    font.pixelSize: Theme.fontSizeBody
-                }
-
-                MouseArea {
-                    id: entryDeleteHover
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: root.selectionCount <= 1
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.deleteRequested()
-                }
-            }
-            Rectangle { width: parent.width; height: 1; color: Theme.borderSoft }
-            ProjectEntryQuickActions {
-                width: parent.width
-                selectionCount: root.selectionCount
-                pasteAvailable: root.pasteAvailable
-                menuFocused: root.activeFocus
-                currentAction: menuKeys.currentAction
-                onActionRequested: index => menuKeys.actionRequested(index)
-            }
-        }
+        visible: root.visible
+        menuX: root.menuX
+        menuY: root.menuY
+        menuWidth: 260
+        items: root.entries()
+        onDismissRequested: root.dismissRequested()
+        onActionRequested: function(action) { root.dispatch(action); }
     }
 }

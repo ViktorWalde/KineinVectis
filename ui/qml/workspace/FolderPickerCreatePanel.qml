@@ -111,40 +111,17 @@ Item {
             width: parent.width
             height: 34
 
-            Rectangle {
+            KvTextField {
+                id: nameField
+
                 width: parent.width
                 height: parent.height
-                radius: Theme.radius
-                color: Theme.background0
-                border.color: nameField.activeFocus ? Theme.accent : Theme.borderSoft
-                border.width: 1
-
-                TextInput {
-                    id: nameField
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    text: root.controller.createName
-                    color: Theme.textPrimary
-                    selectedTextColor: Theme.textPrimary
-                    selectionColor: Theme.accentDim
-                    font.pixelSize: Theme.fontSizeLarge
-                    clip: true
-                    selectByMouse: true
-                    onTextEdited: root.controller.createName = text
-                    onAccepted: root.controller.submitCreate()
-                }
-
-                Text {
-                    anchors.fill: nameField
-                    verticalAlignment: Text.AlignVCenter
-                    visible: nameField.text === ""
-                    text: qsTr("meu-projeto")
-                    color: Theme.textDisabled
-                    font: nameField.font
-                }
+                codeFont: false
+                pixelSize: Theme.fontSizeLarge
+                text: root.controller.createName
+                placeholder: qsTr("meu-projeto")
+                onEdited: (text) => { root.controller.createName = text; }
+                onAccepted: root.controller.submitCreate()
             }
         }
 

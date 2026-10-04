@@ -48,30 +48,13 @@ Rectangle {
             font.bold: true
         }
 
-        Rectangle {
+        KvTextField {
+            id: goToLineInput
+
             width: parent.width
             height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: goToLineInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: goToLineInput
-
-                anchors.fill: parent
-                anchors.margins: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                onAccepted: root.confirmRequested()
-                Keys.onEscapePressed: root.cancelRequested()
-            }
+            onAccepted: root.confirmRequested()
+            Keys.onEscapePressed: root.cancelRequested()
         }
 
         Text {

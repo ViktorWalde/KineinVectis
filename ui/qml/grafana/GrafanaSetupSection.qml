@@ -48,31 +48,13 @@ Column {
             font.pixelSize: Theme.fontSizeSmall
         }
 
-        Rectangle {
+        KvTextField {
+            id: campoUrl
+
             width: parent.width - root.larguraRotulo - Theme.spacingSmall
             height: root.alturaCampo
-            radius: Theme.radius
-            color: Theme.background0
-            border.width: 1
-            border.color: campoUrl.activeFocus ? Theme.accent : Theme.borderSoft
-
-            TextInput {
-                id: campoUrl
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                text: root.draft.url
-                onTextEdited: root.controller.setDraftField("url", text)
-            }
+            text: root.draft.url
+            onEdited: (text) => root.controller.setDraftField("url", text)
         }
     }
 

@@ -36,6 +36,12 @@ Rectangle {
     border.color: Theme.borderStrong
     border.width: 1
 
+    function findStep(event) {
+        if (event.modifiers & Qt.ShiftModifier) root.findPreviousRequested();
+        else root.findNextRequested();
+        event.accepted = true;
+    }
+
     function focusQuery() {
         queryInput.forceActiveFocus();
         queryInput.selectAll();
@@ -69,60 +75,19 @@ Rectangle {
             width: parent.width
             spacing: Theme.spacingSmall
 
-            Rectangle {
+            KvTextField {
+                id: queryInput
+
                 width: parent.width - findControls.width - Theme.spacingSmall
                 height: 26
-                radius: Theme.radius
-                color: Theme.background0
-                border.width: 1
-                border.color: root.invalidRegex
-                              ? Theme.errorSoft
-                              : (queryInput.activeFocus ? Theme.accent
-                                                        : Theme.borderSoft)
-
-                TextInput {
-                    id: queryInput
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    text: root.query
-                    color: Theme.textPrimary
-                    selectionColor: Theme.accentDim
-                    selectedTextColor: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeBody
-                    clip: true
-                    selectByMouse: true
-                    onTextEdited: root.queryEdited(text)
-                    Keys.onEscapePressed: root.closeRequested()
-                    Keys.onReturnPressed: function(event) {
-                        if (event.modifiers & Qt.ShiftModifier) {
-                            root.findPreviousRequested();
-                        } else {
-                            root.findNextRequested();
-                        }
-                        event.accepted = true;
-                    }
-                    Keys.onEnterPressed: function(event) {
-                        if (event.modifiers & Qt.ShiftModifier) {
-                            root.findPreviousRequested();
-                        } else {
-                            root.findNextRequested();
-                        }
-                        event.accepted = true;
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: queryInput.text === ""
-                        text: qsTr("Localizar")
-                        color: Theme.textDisabled
-                        font.family: Theme.monoFont
-                        font.pixelSize: Theme.fontSizeBody
-                    }
-                }
+                text: root.query
+                error: root.invalidRegex
+                placeholder: qsTr("Localizar")
+                onEdited: (text) => root.queryEdited(text)
+                Keys.onEscapePressed: root.closeRequested()
+                // Enter: proxima; Shift+Enter: anterior.
+                Keys.onReturnPressed: (event) => root.findStep(event)
+                Keys.onEnterPressed: (event) => root.findStep(event)
             }
 
             Row {
@@ -173,43 +138,16 @@ Rectangle {
             visible: root.replaceMode
             spacing: Theme.spacingSmall
 
-            Rectangle {
+            KvTextField {
+                id: replaceInput
+
                 width: parent.width - replaceControls.width - Theme.spacingSmall
                 height: 26
-                radius: Theme.radius
-                color: Theme.background0
-                border.width: 1
-                border.color: replaceInput.activeFocus ? Theme.accent
-                                                       : Theme.borderSoft
-
-                TextInput {
-                    id: replaceInput
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    text: root.replacement
-                    color: Theme.textPrimary
-                    selectionColor: Theme.accentDim
-                    selectedTextColor: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeBody
-                    clip: true
-                    selectByMouse: true
-                    onTextEdited: root.replacementEdited(text)
-                    Keys.onEscapePressed: root.closeRequested()
-                    onAccepted: root.replaceRequested()
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: replaceInput.text === ""
-                        text: qsTr("Substituir por")
-                        color: Theme.textDisabled
-                        font.family: Theme.monoFont
-                        font.pixelSize: Theme.fontSizeBody
-                    }
-                }
+                text: root.replacement
+                placeholder: qsTr("Substituir por")
+                onEdited: (text) => root.replacementEdited(text)
+                Keys.onEscapePressed: root.closeRequested()
+                onAccepted: root.replaceRequested()
             }
 
             Row {

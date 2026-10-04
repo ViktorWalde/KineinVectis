@@ -30,41 +30,14 @@ Item {
         font.pixelSize: Theme.fontSizeSmall
     }
 
-    Rectangle {
+    KvTextField {
+        id: campo
+
         anchors.left: rotulo.right
         anchors.leftMargin: Theme.spacingSmall
         anchors.right: parent.right
         height: parent.height
-        radius: Theme.radius
-        color: Theme.background0
-        border.width: 1
-        border.color: campo.activeFocus ? Theme.accent : Theme.borderSoft
-
-        TextInput {
-            id: campo
-
-            anchors.fill: parent
-            anchors.leftMargin: Theme.spacingSmall
-            anchors.rightMargin: Theme.spacingSmall
-            verticalAlignment: TextInput.AlignVCenter
-            color: Theme.textPrimary
-            selectionColor: Theme.accentDim
-            selectedTextColor: Theme.textPrimary
-            font.family: Theme.monoFont
-            font.pixelSize: Theme.fontSizeBody
-            clip: true
-            selectByMouse: true
-            text: root.value
-        }
-
-        Text {
-            anchors.fill: campo
-            verticalAlignment: Text.AlignVCenter
-            text: root.placeholder
-            visible: campo.text === "" && !campo.activeFocus
-            color: Theme.textMuted
-            font.family: Theme.monoFont
-            font.pixelSize: Theme.fontSizeBody
-        }
+        placeholder: root.placeholder
+        text: root.value
     }
 }

@@ -168,6 +168,8 @@ Item {
                     wrapMode: Text.WordWrap
                 }
 
+                // Abrir/fechar a lista dos outros papeis: uma linha com a seta que diz o
+                // estado, e que acende ao pairar.
                 Rectangle {
                     visible: root.otherRoles.length > 0
                     width: parent.width
@@ -175,13 +177,28 @@ Item {
                     radius: Theme.radius
                     color: othersArea.containsMouse ? Theme.surface2 : "transparent"
 
-                    Text {
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.motionFast }
+                    }
+
+                    KvIcon {
+                        id: othersChevron
+
                         anchors.left: parent.left
                         anchors.leftMargin: Theme.spacingMedium
                         anchors.verticalCenter: parent.verticalCenter
+                        size: 14
+                        name: root.showOthers ? "chevron-up" : "chevron-down"
+                        active: othersArea.containsMouse
+                    }
+
+                    Text {
+                        anchors.left: othersChevron.right
+                        anchors.leftMargin: Theme.spacingSmall
+                        anchors.verticalCenter: parent.verticalCenter
                         text: (root.showOthers ? qsTr("Esconder outros papéis")
                                                : qsTr("Outros papéis (%1)").arg(root.otherRoles.length))
-                        color: Theme.textMuted
+                        color: othersArea.containsMouse ? Theme.textSecondary : Theme.textMuted
                         font.pixelSize: Theme.fontSizeSmall
                         font.bold: true
                     }

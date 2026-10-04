@@ -134,38 +134,20 @@ Rectangle {
         height: 24
         visible: root.controller !== null && root.controller.engineFound
 
-        Rectangle {
+        KvTextField {
+            id: filterInput
+
             anchors.left: parent.left
             anchors.right: stoppedChip.left
             anchors.rightMargin: Theme.spacingSmall
             height: parent.height
-            radius: Theme.radiusXSmall
-            color: Theme.background0
-            border.width: 1
-            border.color: filterInput.activeFocus ? Theme.accent : Theme.borderSoft
-
-            TextInput {
-                id: filterInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
-                clip: true
-                selectByMouse: true
-                onTextEdited: root.controller.setFilter(text)
-                Keys.onEscapePressed: { text = ""; root.controller.setFilter(""); }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: filterInput.text === ""
-                    text: qsTr("filtrar por nome, imagem ou id")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeSmall
-                }
-            }
+            codeFont: false
+            pixelSize: Theme.fontSizeSmall
+            iconName: "search"
+            clearable: true
+            placeholder: qsTr("filtrar por nome, imagem ou id")
+            onEdited: (text) => root.controller.setFilter(text)
+            Keys.onEscapePressed: filterInput.clear()
         }
 
         KvToggleChip {

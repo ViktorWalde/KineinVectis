@@ -45,8 +45,8 @@ Item {
             font.pixelSize: Theme.fontSizeCaption
         }
 
-        Rectangle {
-            id: watchInputBox
+        KvTextField {
+            id: watchInput
 
             anchors.top: watchesTitle.bottom
             anchors.topMargin: 2
@@ -54,47 +54,23 @@ Item {
             anchors.right: parent.right
             anchors.leftMargin: Theme.spacingSmall
             anchors.rightMargin: Theme.spacingSmall
-            height: 20
-            radius: Theme.radius
-            color: Theme.surface2
-            border.width: 1
-            border.color: watchInput.activeFocus ? Theme.accent : Theme.borderSoft
-
-            TextInput {
-                id: watchInput
-
-                anchors.fill: parent
-                anchors.margins: 4
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
-                clip: true
-
-                onAccepted: {
-                    const expressao = text.trim();
-                    if (expressao === "") {
-                        return;
-                    }
-                    root.watchAdded(expressao);
-                    text = "";
+            height: 24
+            pixelSize: Theme.fontSizeSmall
+            placeholder: qsTr("expressão + Enter")
+            onAccepted: {
+                const expressao = watchInput.text.trim();
+                if (expressao === "") {
+                    return;
                 }
-            }
-
-            Text {
-                anchors.fill: parent
-                anchors.margins: 4
-                verticalAlignment: Text.AlignVCenter
-                visible: watchInput.text === ""
-                text: qsTr("expressão + Enter")
-                color: Theme.textDisabled
-                font.pixelSize: Theme.fontSizeSmall
+                root.watchAdded(expressao);
+                watchInput.text = "";
             }
         }
 
         ListView {
             id: watchesView
 
-            anchors.top: watchInputBox.bottom
+            anchors.top: watchInput.bottom
             anchors.topMargin: 2
             anchors.left: parent.left
             anchors.right: parent.right

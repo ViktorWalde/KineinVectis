@@ -8,7 +8,7 @@ FocusScope {
     property real passThroughTop: 0
     property real menuX: 0
     property real menuY: 0
-    property real menuWidth: 220
+    property real menuWidth: 280
     property var items: []
     property int currentIndex: -1
     property Item previousFocusItem: null
@@ -110,33 +110,83 @@ FocusScope {
             model: root.items
             currentIndex: root.currentIndex
 
+            // Um item: icone, rotulo e o atalho a direita; o separador e' uma
+            // linha fina entre os grupos (2026-10-03: os menus eram listas
+            // planas numa cor so'). Ao pairar, a superficie acende com
+            // transicao e a barra ambar marca o item.
             delegate: Rectangle {
                 id: menuItem
 
                 required property var modelData
                 required property int index
 
+                readonly property bool separator: menuItem.modelData.separator === true
+                readonly property bool current: index === root.currentIndex && menuItem.modelData.enabled
+
                 width: menuList.width
-                height: 28
+                height: menuItem.separator ? 9 : 30
                 radius: Theme.radius
-                color: (itemArea.containsMouse || index === root.currentIndex) && modelData.enabled
-                       ? Theme.surfaceSelected : "transparent"
-                opacity: modelData.enabled ? 1.0 : 0.72
-                Accessible.role: Accessible.MenuItem
-                Accessible.name: modelData.label
+                color: menuItem.current ? Theme.surfaceSelected : "transparent"
+                Accessible.role: menuItem.separator ? Accessible.Separator : Accessible.MenuItem
+                Accessible.name: menuItem.modelData.label
                 Accessible.onPressAction: root.activate(menuItem.index)
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.motionFast }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: Theme.spacingSmall
+                    anchors.rightMargin: Theme.spacingSmall
+                    visible: menuItem.separator
+                    height: 1
+                    color: Theme.borderSoft
+                }
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !menuItem.separator
+                    width: 3
+                    height: menuItem.current ? parent.height - 12 : 0
+                    radius: width / 2
+                    color: Theme.accent
+
+                    Behavior on height {
+                        NumberAnimation { duration: Theme.motionFast }
+                    }
+                }
+
+                KvIcon {
+                    id: itemIcon
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingSmall + 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !menuItem.separator
+                    width: 16
+                    size: 16
+                    name: menuItem.modelData.icon !== undefined && menuItem.modelData.icon !== ""
+                          ? menuItem.modelData.icon : "fill"
+                    opacity: menuItem.modelData.icon !== undefined && menuItem.modelData.icon !== "" ? 1 : 0
+                    active: menuItem.current
+                    disabled: !menuItem.modelData.enabled
+                }
 
                 Text {
                     id: itemLabel
 
-                    anchors.left: parent.left
+                    anchors.left: itemIcon.right
                     anchors.leftMargin: Theme.spacingSmall
                     anchors.right: itemShortcut.left
-                    anchors.rightMargin: Theme.spacingSmall
+                    anchors.rightMargin: Theme.spacingMedium
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: !menuItem.separator
                     text: menuItem.modelData.label
-                    color: menuItem.modelData.enabled
-                           ? Theme.textPrimary : Theme.textDisabled
+                    color: menuItem.modelData.enabled ? Theme.textPrimary : Theme.textDisabled
                     font.pixelSize: Theme.fontSizeBody
                     elide: Text.ElideRight
                 }
@@ -147,10 +197,11 @@ FocusScope {
                     anchors.right: parent.right
                     anchors.rightMargin: Theme.spacingSmall
                     anchors.verticalCenter: parent.verticalCenter
-                    text: menuItem.modelData.shortcut !== undefined
-                          ? menuItem.modelData.shortcut : ""
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeSmall
+                    visible: !menuItem.separator
+                    text: menuItem.modelData.shortcut !== undefined ? menuItem.modelData.shortcut : ""
+                    color: menuItem.current ? Theme.textSecondary : Theme.textMuted
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fontSizeCaption
                 }
 
                 MouseArea {

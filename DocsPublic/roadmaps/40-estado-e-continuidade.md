@@ -22,8 +22,10 @@
 >     demanda, medida por componente no qmlprofiler, está no §7.203.
 >   - **Perfil de rigor no C/C++ corrigido** (§7.202): trocar com o projeto
 >     aberto agora reconfigura e muda o build.
->   - **Dívida anotada:** 20 campos de texto feitos à mão em 18 arquivos (um
->     `KvTextField` é fatia própria, §7.199).
+>   - **Controles antigos modernizados** (§7.214): o `KvTextField` substituiu
+>     os 31 campos feitos à mão (a dívida do §7.199), os botões respondem ao
+>     pairar e ao pressionar, e a IDE tem um menu só, com ícones, atalhos do
+>     catálogo e grupos.
 >   - **Banco integrado ao layout** (§7.206, protocolo `0.149.0`):
 >     - O Banco virou uma **janela acoplada**, como a Database da JetBrains,
 >       com a árvore, os dados na própria janela e o console SQL como arquivo

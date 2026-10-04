@@ -48,30 +48,13 @@ Rectangle {
             font.bold: true
         }
 
-        Rectangle {
+        KvTextField {
+            id: renameInput
+
             width: parent.width
             height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: renameInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: renameInput
-
-                anchors.fill: parent
-                anchors.margins: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeBody
-                clip: true
-                selectByMouse: true
-                onAccepted: root.confirmRequested()
-                Keys.onEscapePressed: root.cancelRequested()
-            }
+            onAccepted: root.confirmRequested()
+            Keys.onEscapePressed: root.cancelRequested()
         }
 
         Text {
@@ -87,57 +70,17 @@ Rectangle {
             anchors.right: parent.right
             spacing: Theme.spacingSmall
 
-            Rectangle {
-                width: renameCancelText.width + 2 * Theme.spacingMedium
-                height: 24
-                radius: Theme.radius
-                color: renameCancelArea.containsMouse
-                       ? Theme.surface2 : Theme.surface1
-                border.color: Theme.borderSoft
-                border.width: 1
-
-                Text {
-                    id: renameCancelText
-
-                    anchors.centerIn: parent
-                    text: qsTr("Cancelar")
-                    color: Theme.textSecondary
-                    font.pixelSize: Theme.fontSizeSmall
-                }
-
-                MouseArea {
-                    id: renameCancelArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.cancelRequested()
-                }
+            KvButton {
+                compact: true
+                text: qsTr("Cancelar")
+                onClicked: root.cancelRequested()
             }
 
-            Rectangle {
-                width: renameConfirmText.width + 2 * Theme.spacingMedium
-                height: 24
-                radius: Theme.radius
-                color: renameConfirmArea.pressed ? Theme.accentDim : Theme.accent
-
-                Text {
-                    id: renameConfirmText
-
-                    anchors.centerIn: parent
-                    text: qsTr("Renomear")
-                    color: Theme.background0
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.bold: true
-                }
-
-                MouseArea {
-                    id: renameConfirmArea
-
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.confirmRequested()
-                }
+            KvButton {
+                compact: true
+                primary: true
+                text: qsTr("Renomear")
+                onClicked: root.confirmRequested()
             }
         }
     }

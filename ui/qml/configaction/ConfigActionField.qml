@@ -51,43 +51,12 @@ Item {
                 elide: Text.ElideRight
             }
 
-            Rectangle {
+            KvTextField {
                 width: parent.width - 110 - Theme.spacingSmall
                 height: 26
-                radius: Theme.radius
-                color: Theme.background0
-                border.color: entrada.activeFocus ? Theme.accent : Theme.borderSoft
-                border.width: 1
-
-                TextInput {
-                    id: entrada
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.textPrimary
-                    selectionColor: Theme.accentDim
-                    selectedTextColor: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeBody
-                    clip: true
-                    selectByMouse: true
-                    text: root.value
-
-                    onTextEdited: root.edited(text)
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: entrada.text === ""
-                    text: root.param ? root.param.placeholder : ""
-                    color: Theme.textMuted
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeBody
-                }
+                placeholder: root.param ? root.param.placeholder : ""
+                text: root.value
+                onEdited: (text) => root.edited(text)
             }
         }
 

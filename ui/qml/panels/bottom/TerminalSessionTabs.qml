@@ -106,29 +106,14 @@ Row {
     }
 
     // Novo terminal.
-    Rectangle {
-        width: 20
-        height: 20
-        radius: Theme.radiusXSmall
-        color: newTerminalArea.containsMouse ? Theme.surface2 : "transparent"
-        border.color: Theme.borderSoft
-        border.width: 1
-
-        Text {
-            anchors.centerIn: parent
-            text: "+"
-            color: newTerminalArea.containsMouse ? Theme.accent : Theme.textSecondary
-            font.pixelSize: Theme.fontSizeBody
-            font.bold: true
-        }
-
-        MouseArea {
-            id: newTerminalArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.newRequested()
-        }
+    KvIconButton {
+        width: 22
+        height: 22
+        compact: true
+        iconSize: 14
+        iconName: "add"
+        tooltip: qsTr("Novo terminal")
+        focusOnClick: false
+        onClicked: root.newRequested()
     }
 }

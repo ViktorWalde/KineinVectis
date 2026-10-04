@@ -31,13 +31,24 @@ Rectangle {
     implicitWidth: compact ? 24 : 32
     implicitHeight: compact ? 24 : 32
     radius: Theme.radius
+    // Pairar acende, apertar escurece e encolhe um pouco, com transicao curta
+    // (2026-10-03; a linguagem do KvToggleChip e do KvButton).
     color: accented ? (buttonArea.pressed ? Theme.accentDim : Theme.accent)
-                    : active ? Theme.surfaceSelected
+                    : (buttonArea.pressed || active) ? Theme.surfaceSelected
                    : (buttonArea.containsMouse || activeFocus
                       ? Theme.surface2 : "transparent")
     border.color: activeFocus ? Theme.accent : "transparent"
     border.width: 1
     opacity: enabled ? 1.0 : 0.72
+    scale: buttonArea.pressed ? 0.94 : 1
+
+    Behavior on color {
+        ColorAnimation { duration: Theme.motionFast }
+    }
+
+    Behavior on scale {
+        NumberAnimation { duration: Theme.motionFast }
+    }
     focus: true
     Accessible.role: Accessible.Button
     Accessible.name: accessibleName

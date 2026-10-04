@@ -86,7 +86,7 @@ Item {
                         id: rotulo
 
                         anchors.left: parent.left
-                        anchors.right: aplicar.left
+                        anchors.right: applyButton.left
                         anchors.rightMargin: Theme.spacingSmall
                         anchors.verticalCenter: parent.verticalCenter
                         wrapMode: Text.WordWrap
@@ -99,47 +99,20 @@ Item {
                     // configaction, que abre o preview e pede consentimento.
                     // Aplicar sem mostrar o diff seria a IDE mexendo no arquivo
                     // do usuario por conta propria.
-                    Rectangle {
-                        id: aplicar
+                    // O verbo diz o que vai acontecer, e e' o INVERSO do que a bolinha diz.
+                    // Ela diz "ativa neste projeto"; o botao diz "Desativar", nao "Remover" —
+                    // decisao do autor em 2026-09-04: dois verbos para o mesmo par de estados
+                    // confundem.
+                    KvButton {
+                        id: applyButton
 
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 68
-                        height: 20
-                        radius: Theme.radiusXSmall
-                        // O botao PRIMARIO da tela precisa parecer um botao.
-                        // "revisar…" em 9px sem preenchimento nao parecia
-                        // clicavel — relato de uso em 2026-09-04.
-                        color: area.containsMouse ? Theme.accent : Theme.surface2
-                        border.width: 1
-                        border.color: area.containsMouse ? Theme.accent : Theme.borderSoft
-
-                        Text {
-                            anchors.centerIn: parent
-                            // O verbo diz o que vai acontecer, e e' o INVERSO
-                            // do que a bolinha diz. Ela diz "ativa neste
-                            // projeto"; o botao tem de dizer "Desativar", nao
-                            // "Remover" — decisao do autor em 2026-09-04, e a
-                            // simetria e' o argumento: dois verbos diferentes
-                            // para o mesmo par de estados confundem.
-                            text: passo.modelData.actionId
-                                  === "cmake.removeTargetLinkLibraries"
-                                  ? qsTr("Desativar…") : qsTr("Detalhes…")
-                            color: area.containsMouse
-                                   ? Theme.background0 : Theme.textPrimary
-                            font.pixelSize: Theme.fontSizeCaption
-                            font.weight: Font.DemiBold
-                        }
-
-                        MouseArea {
-                            id: area
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.applyStepRequested(passo.modelData.actionId,
-                                                               passo.modelData.params)
-                        }
+                        height: 22
+                        compact: true
+                        text: passo.modelData.actionId === "cmake.removeTargetLinkLibraries"
+                              ? qsTr("Desativar…") : qsTr("Detalhes…")
+                        onClicked: root.applyStepRequested(passo.modelData.actionId, passo.modelData.params)
                     }
                 }
             }

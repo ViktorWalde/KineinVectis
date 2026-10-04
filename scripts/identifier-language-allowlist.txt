@@ -85,3 +85,6 @@ mipmap
 timeseries
 # 2026-10-03: o espaco de cor OKLab (Ottosson 2020), o da mistura suave do degrade
 oklab
+# 2026-10-03: API do TextInput do Qt (`validator`, `preeditText`), repassada pelo KvTextField
+validator
+preedit

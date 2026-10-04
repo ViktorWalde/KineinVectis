@@ -35,70 +35,31 @@ Rectangle {
         elide: Text.ElideRight
     }
 
-    Rectangle {
+    KvButton {
         id: reloadButton
 
-        width: reloadText.width + 2 * Theme.spacingSmall
-        height: 24
         anchors.right: keepButton.left
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
+        height: 24
+        compact: true
         visible: !root.watcherFailure && !root.deleted
-        radius: Theme.radius
-        color: reloadArea.containsMouse ? Theme.surfaceSelected : "transparent"
-        border.color: Theme.borderStrong
-        border.width: 1
-
-        Text {
-            id: reloadText
-
-            anchors.centerIn: parent
-            text: qsTr("Recarregar do disco")
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeCaption
-        }
-
-        MouseArea {
-            id: reloadArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.reloadRequested()
-        }
+        text: qsTr("Recarregar do disco")
+        onClicked: root.reloadRequested()
     }
 
-    Rectangle {
+    KvButton {
         id: keepButton
 
-        width: keepText.width + 2 * Theme.spacingSmall
-        height: 24
         anchors.right: dismissButton.left
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
+        height: 24
+        compact: true
+        selected: true
         visible: !root.watcherFailure
-        radius: Theme.radius
-        color: keepArea.containsMouse ? Theme.surfaceSelected : "transparent"
-        border.color: Theme.accentDim
-        border.width: 1
-
-        Text {
-            id: keepText
-
-            anchors.centerIn: parent
-            text: root.deleted ? qsTr("Manter buffer") : qsTr("Manter local")
-            color: Theme.accentActive
-            font.pixelSize: Theme.fontSizeCaption
-        }
-
-        MouseArea {
-            id: keepArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.keepLocalRequested()
-        }
+        text: root.deleted ? qsTr("Manter buffer") : qsTr("Manter local")
+        onClicked: root.keepLocalRequested()
     }
 
     KvIconButton {

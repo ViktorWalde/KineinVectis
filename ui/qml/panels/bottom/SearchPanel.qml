@@ -42,67 +42,28 @@ Item {
         width: parent.width
         spacing: Theme.spacingSmall
 
-        Rectangle {
+        KvTextField {
+            id: searchInput
+
             width: parent.width - caseChip.width
                    - searchStatus.width - 2 * Theme.spacingSmall
             height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: searchInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: searchInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeTerminal
-                clip: true
-                selectByMouse: true
-                onAccepted: panel.searchRequested(text)
-                onTextChanged: replaceControls.disarm()
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: searchInput.text === ""
-                    text: qsTr("Buscar no projeto (Enter) — \\n quebra linha")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeSmall
-                }
-            }
+            pixelSize: Theme.fontSizeTerminal
+            iconName: "search"
+            placeholder: qsTr("Buscar no projeto (Enter) — \\n quebra linha")
+            onAccepted: panel.searchRequested(searchInput.text)
+            onTextChanged: replaceControls.disarm()
         }
 
-        Rectangle {
+        KvToggleChip {
             id: caseChip
 
-            width: caseChipLabel.width + 2 * Theme.spacingSmall
+            anchors.verticalCenter: parent.verticalCenter
             height: 30
-            radius: Theme.radius
-            color: panel.caseSensitive ? Theme.surfaceSelected : "transparent"
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: caseChipLabel
-
-                anchors.centerIn: parent
-                text: qsTr("Aa")
-                color: panel.caseSensitive ? Theme.accent : Theme.textSecondary
-                font.pixelSize: Theme.fontSizeCaption
-                font.bold: true
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: panel.caseSensitivityToggleRequested(searchInput.text)
-            }
+            labelText: "Aa"
+            tooltip: qsTr("Diferenciar maiúsculas")
+            active: panel.caseSensitive
+            onToggled: panel.caseSensitivityToggleRequested(searchInput.text)
         }
 
         Text {

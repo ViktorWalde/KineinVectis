@@ -57,33 +57,18 @@ Rectangle {
             font.bold: true
         }
 
-        Rectangle {
+        KvTextField {
+            id: searchInput
+
             width: parent.width
             height: 34
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: searchInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: searchInput
-
-                anchors.fill: parent
-                anchors.margins: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeMedium
-                clip: true
-                selectByMouse: true
-                onTextChanged: root.queryChanged(text)
-                onAccepted: root.acceptRequested()
-                Keys.onEscapePressed: root.dismissRequested()
-                Keys.onDownPressed: root.moveDownRequested()
-                Keys.onUpPressed: root.moveUpRequested()
-            }
+            iconName: "search"
+            pixelSize: Theme.fontSizeMedium
+            onTextChanged: root.queryChanged(text)
+            onAccepted: root.acceptRequested()
+            Keys.onEscapePressed: root.dismissRequested()
+            Keys.onDownPressed: root.moveDownRequested()
+            Keys.onUpPressed: root.moveUpRequested()
         }
 
         Text {

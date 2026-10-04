@@ -37,9 +37,7 @@ Item {
     // tres consultas pela rede, e fazer isso sozinho ao abrir o painel seria
     // gastar a conexao de quem so' queria conferir a porta.
     property var schemas: []
-    // A SEGUNDA FORMA, para os motores sem esquema fixo. Nunca preenchida ao
-    // mesmo tempo que `schemas`: o core manda uma OU outra, e a tela escolhe a
-    // visao pelo motor do perfil.
+    // A SEGUNDA FORMA (motor sem esquema fixo): o core manda esta OU `schemas`.
     property var collections: []
     property bool reading: false
     // A estrutura POR CONEXAO, para a arvore da janela do Banco (2026-10-03):
@@ -69,6 +67,8 @@ Item {
     signal testRequested(string name, string password)
     signal introspectRequested(string name, string password)
     signal queryRequested(string name, string password, string sql, bool confirmWrite)
+    // Menu, paleta e Ctrl+Alt+J pedem a JANELA do Banco (o shell a abre do lado do icone).
+    signal windowRequested()
 
     // Descoberta e criacao (0.124.0): filho com dono proprio; adocao volta aqui.
     readonly property alias discovery: discoveryController
@@ -308,7 +308,6 @@ Item {
         }
     }
 
-    // O perfil em edicao fala de DOCUMENTO (o painel e o host leem daqui).
     readonly property bool documentEngine: root.draft ? DataSourceKinds.isMongo(root.draft.engine) : false
 
     function handleTested(name, ok, version, message, needsSecret) {
