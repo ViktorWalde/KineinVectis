@@ -518,6 +518,14 @@ ser interrompida pelo controle normal de Run (ou pelo × da aba). Só arquivos d
 terminal e digitar o caminho. O que a árvore aceita como executável é o core
 quem diz — a lista não mora na tela.
 
+**Repetir uma execução** reutiliza a aba do mesmo arquivo ou configuração.
+A aba fica na mesma posição e mostra a saída da tentativa atual, que continua
+visível após o fim. Arquivos/configurações diferentes têm abas próprias.
+Enquanto estiver iniciando ou rodando, outro clique não abre uma segunda
+execução; pare a atual se precisar reiniciar. Fechar a aba libera seu lugar,
+e a próxima execução abre uma aba novamente. Shells interativos permanecem
+independentes.
+
 ---
 
 ### 4.1 Depurar (debugger)
@@ -888,14 +896,18 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   por outros painéis. A divisória entre árvore e dados arrasta; o × da seção a
   fecha e devolve o espaço à árvore e à lista "Nesta máquina".
 - **O console SQL é um arquivo do editor.** O ▢ ao lado da conexão abre
-  `.kinein/consoles/<conexão>.sql` (`.mongo` no MongoDB) como uma **aba comum
+  seu arquivo em `.kinein/consoles/v1/` (`.mongo` no MongoDB) como uma **aba comum
   do editor** — realce, desfazer, buscar e salvar sozinho, tudo o que o editor
   já faz. O arquivo nasce uma vez com um comentário de cabeçalho e **nunca é
-  sobrescrito**: o que você escreveu fica lá para a próxima vez. Nesse arquivo,
+  sobrescrito**: o que você escreveu fica lá para a próxima vez. A aba mostra
+  **Console · nome da conexão**, inclusive quando nomes parecidos exigem
+  arquivos diferentes. Console antigo sem ambiguidade continua vinculado;
+  se duas conexões compartilhavam o nome antigo, seu texto fica intacto e
+  cada conexão ganha um console separado. Nesse arquivo,
   **`Ctrl+Enter`** executa:
   - a **seleção**, se houver;
   - senão, no SQL, a instrução **sob o cursor**: uma instrução termina num
-    `;` **ou numa linha em branco** (como no console da JetBrains), então um
+    `;` **ou numa linha em branco** fora de literais, comentários e parênteses, então um
     `select` sem `;` não gruda no `DELETE` de baixo. Com o cursor **logo
     depois do `;`** — o normal ao terminar de digitar — ou numa linha em
     branco, vale a instrução que acabou antes;
@@ -904,6 +916,10 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   seção de dados da janela do Banco, que se abre sozinha se estiver fechada.
   Se o motor recusar, a mensagem dele aparece inteira, em vermelho, no lugar
   da grade. Fora de um console o `Ctrl+Enter` não faz nada de especial.
+  A separação automática recusa SQL ambíguo; nesse caso corrija o texto ou
+  selecione explicitamente a instrução. A seleção ainda passa pela política
+  de escrita, produção e somente leitura. Trocar de conexão/projeto durante
+  o pedido descarta a resposta antiga.
 - **Cores no SQL** (desde 2026-10-03). Qualquer `.sql` (o console também) ganha
   cores:
   - palavras-chave em qualquer caixa (`select` e `SELECT`);

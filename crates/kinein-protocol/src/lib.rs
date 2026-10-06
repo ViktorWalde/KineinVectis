@@ -18,6 +18,7 @@ mod container;
 mod core;
 mod coverage;
 mod datasource;
+mod datasource_console;
 mod datasource_discover;
 mod datasource_impact;
 mod datasource_odbc;
@@ -60,6 +61,7 @@ pub use container::*;
 pub use core::*;
 pub use coverage::*;
 pub use datasource::*;
+pub use datasource_console::*;
 pub use datasource_discover::*;
 pub use datasource_impact::*;
 pub use datasource_odbc::*;
@@ -97,4 +99,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.159.0";
+pub const PROTOCOL_VERSION: &str = "0.160.0";

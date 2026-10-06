@@ -11,6 +11,15 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolo `0.160.0` — **Console e execução com identidades estáveis**
+  (validado no checkout; 40.7 §7.225). Nomes parecidos ganham consoles
+  distintos e abas legíveis; arquivos antigos ambíguos permanecem intactos.
+  Criação recusa links/FIFO e não substitui arquivos existentes. O core
+  extrai a instrução com o léxico comum e offsets UTF-16, preservando
+  strings/comentários e descartando respostas de outro contexto. Repetir
+  o ▶ mantém a aba na mesma posição, com sessão e saída novas; arquivos
+  diferentes e shells continuam separados.
+
 - **Editor com a profundidade do terminal** (validado no 40.7 §7.224):
   bandeja das abas mais clara e fundo rebaixado comum ao código, gutter,
   Markdown e conteúdo do painel inferior. Mesmas margens e espaço útil;

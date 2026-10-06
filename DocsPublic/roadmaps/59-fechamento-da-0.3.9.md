@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); restante a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); menus, console, grade e motores restantes a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -195,16 +195,18 @@ terminou com a fatia ainda sem commit: escrita MongoDB (`mongo_command` e
 motor. A retomada revisou a recusa no core e o aviso na UI, testou a
 gramática e os padrões, provou PostgreSQL/MongoDB reais e os gestos com
 mouse/teclado na janela da IDE, sincronizou a documentação e passou pelo
-gate completo e estrito. Fatia concluída no 40.7 §7.220. ODBC e o restante
-do passo 7 vêm depois.
+gate completo e estrito. Fatia concluída no 40.7 §7.220. Esse é o registro
+da retomada de 2026-10-05; ODBC foi concluído depois (§7.221), seguido por
+produção/somente leitura (§7.222) e prévia PostgreSQL (§7.223).
 
 **Decisão do autor na sessão de 2026-10-04:** escrita comum roda direto;
 remoção, esvaziamento, alteração em massa sem filtro e instrução que o core
 não sabe classificar pedem confirmação. Essa decisão substitui a regra de
 avisar em toda escrita de desenvolvimento. Perfis de produção, modo somente
-leitura e transação com prévia continuam como trabalho planejado em §5.3.
+leitura e transação com prévia PostgreSQL estão implementados e validados
+(§5.3; 40.7 §7.222–§7.223).
 
-O que existe em 2026-10-03:
+**Base histórica em 2026-10-03, antes dessas entregas:**
 
 - a janela acoplada, com a árvore e os dados na própria janela;
 - o console no editor, com cores;
@@ -271,6 +273,10 @@ Ver 40.7 §7.206–§7.209.
 
 ### 5.5 MongoDB completo
 
+**Implementado e validado em 2026-10-05 (40.7 §7.220).** O core interpreta
+JSON estrito e chama o driver para leitura, escrita e medição; não avalia
+JavaScript. A sintaxe aceita está no manual e na arquitetura/37 §4.
+
 - **Escrita:** `insertOne`/`insertMany`, `updateOne`/`updateMany`,
   `deleteOne`/`deleteMany` e `drop`. A sintaxe do console é definida no
   passo, documentada no manual e com teste.
@@ -288,8 +294,12 @@ confirmação passaram na janela da IDE; a prova automatizada está em
 Para completar a bateria do passo 7, faltam:
 
 - o aviso com `UPDATE … FROM`;
-- TLS `verify-full` (configuração);
-- transação com prévia (§5.3).
+- TLS `verify-full` (configuração).
+
+A transação com prévia deixou de ser pendência: COMMIT/ROLLBACK, expiração,
+contexto e desfecho desconhecido foram provados contra PostgreSQL real e
+na IDE, no 40.7 §7.223. TLS obrigatório também foi corrigido e provado contra
+servidor sem TLS nessa fatia; isso não substitui a prova de `verify-full`.
 
 As imagens `postgres:16-alpine` e `mongo:7` já estão no podman local.
 
@@ -305,7 +315,7 @@ escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
 | **`usql`** (cliente universal, um binário Go) | Mais de 40 bancos pela linha de comando | Orquestrar um processo externo e ler a saída como texto. Serve para console, não para árvore nem edição. |
 | JDBC (o caminho do DBeaver e do DataGrip) | Praticamente todos | Exige uma JVM. Fora, pelo peso. |
 
-**Proposta, a confirmar com o autor:** dois níveis.
+**Proposta histórica, aceita pelo autor abaixo:** dois níveis.
 
 1. **Nativos completos.** PostgreSQL, MySQL/MariaDB, SQLite e MongoDB, com
    árvore, edição, aviso de impacto e transação.
@@ -334,9 +344,11 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** prévia PostgreSQL (§5.11; protocolo 0.159.0),
-com provas reais/visuais, gates completos e estritos e limites registrados
-no 40.7 §7.223. Confira git log para o commit local. Produção/somente leitura
+**Última fatia concluída:** base segura dos consoles/árvore (§5.12) e
+reutilização das abas de execução (§7), protocolo 0.160.0. A retomada
+revisou e completou o código local, corrigiu dois achados dos gates e
+provou os gestos na IDE. Aceite e limites no 40.7 §7.225; confira git log.
+Prévia PostgreSQL permanece aceita no §7.223 (fbf3294). Produção/somente leitura
 permanecem aceitas no §7.222 (c4d8779), e ODBC no §7.221 (fa32f51).
 Não repita provas aceitas sem risco concreto.
 
@@ -346,8 +358,9 @@ KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
 de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
 completos e estritos verdes. Confira git log para o commit local.
 
-**Fatia atual:** menus/árvore viva (§5.1), começando por proteger o vínculo
-entre arquivo do console e conexão e a identidade dos objetos da árvore.
+**Fatia atual:** ações e menus/árvore viva (§5.1). O vínculo entre arquivo
+do console e conexão e a identidade dos objetos da árvore já estão
+protegidos e validados na §5.12; continuar sobre essa base.
 O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
 (§5.4), com prova real conforme §5.6.
 MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
@@ -406,6 +419,9 @@ pelo autor e registre o fechamento. Limite de uso não encerra a tarefa.
 
 ### 5.9 Desenho da fatia ODBC — 2026-10-05
 
+**Implementado e validado no 40.7 §7.221 (fa32f51, protocolo 0.157.0).**
+O desenho abaixo registra a situação anterior à implementação.
+
 **Antes do código.** Base: commit 57dc6ec; protocolo 0.156.0; worktree
 layout-0.3.6 limpo. O sistema tem unixODBC 2.3.14 como biblioteca, sem os
 comandos isql/odbcinst nem driver de banco encontrado. Não há ODBC no enum,
@@ -458,9 +474,10 @@ NULL/teto e escrita confirmada. Provar também os gestos na janela real da IDE,
 com mouse/teclado e capturas só dessa janela. Limpar tudo que a prova criar.
 Todos os gates verdes antes do commit local, sem push.
 
-**Continuação:** esta fatia não encerra o passo 7. MySQL/MariaDB nativo,
-produção/somente leitura, transação com prévia, árvore viva, completion e
-ampliação da grade seguem a fila do §5.8. Reempacotar AppImage permanece
+**Continuação atualizada:** esta fatia não encerra o passo 7. Produção/
+somente leitura e prévia PostgreSQL já foram aceitas (§7.222–§7.223).
+MySQL/MariaDB nativo, árvore viva, completion e ampliação da grade seguem
+a fila do §5.8. Reempacotar AppImage permanece
 no fim do passo 8; a dependência unixODBC deve ser tratada nessa etapa.
 
 ### 5.10 Desenho da próxima fatia: produção e somente leitura — 2026-10-06
@@ -533,6 +550,9 @@ e decisões antigas ou repetidas.
 
 
 ### 5.11 Desenho da fatia seguinte: prévia PostgreSQL — 2026-10-06
+
+**Implementado e validado no 40.7 §7.223 (fbf3294, protocolo 0.159.0).**
+O plano original abaixo preserva as decisões e limites anteriores ao código.
 
 **Plano antes do código, condicionado ao aceite da §5.10.** Preservar
 produção, somente leitura, contexto e dono da senha da 0.158.0. A prévia
@@ -649,6 +669,55 @@ no diálogo e amostra real. Registrar a limitação de sequência/trigger no
 manual e na arquitetura. Todos os gates antes do commit local; nenhum
 AppImage nessa fatia. Em seguida continuam §5.1, §5.2, §5.4 e §5.7.
 
+### 5.12 Base dos menus/árvore: identidade do console e instrução — 2026-10-06
+
+**Concluída e validada no 40.7 §7.225 (protocolo 0.160.0).** A retomada
+revisou os arquivos modificados e novos, preservou sua implementação e
+corrigiu os achados dos gates. O desenho abaixo antecedeu o código.
+A leitura do caminho anterior
+achou três riscos concretos: nomes diferentes viram o mesmo fileStem; ensure
+segue symlinks e escreve com truncamento; statementAt divide por regex dentro
+de literais/comentários. Antes das novas ações de geração/execução, a fatia
+0.160.0 corrige essas fronteiras e as chaves da árvore.
+
+- O core é dono do nome do arquivo: prefixo legível limitado e SHA-256 completo
+  do nome UTF-8, com extensão por motor, na subpasta v1 dos consoles. Essa
+  pasta separa a identidade nova dos nomes legados. Catálogo devolve bindings públicos e
+  workspace junto com perfis. UI usa igualdade de caminhos fornecidos, sem
+  reconstruir nomes nem aceitar descendentes por prefixo.
+- Console antigo continua utilizável somente se seu nome de arquivo identifica
+  exatamente um perfil. Arquivo ambíguo permanece intacto e perde o vínculo de
+  execução; consoles novos desses perfis têm identidades distintas. Nada de
+  migrar, sobrescrever ou apagar SQL existente implicitamente.
+- Criação/inspeção atravessa .kinein/consoles por descritores, NOFOLLOW,
+  NONBLOCK e verificação de arquivo regular. Criação exclusiva e header com
+  nome escapado em uma linha; symlink, FIFO e diretório recusados. Isso protege
+  esta operação; não promete isolamento contra outro processo do mesmo usuário
+  que renomeie a árvore depois de devolver o caminho.
+- datasource.console passa a correlacionar pedido/resposta com perfil e
+  workspace públicos. datasource.console.statement recebe caminho, texto
+  ainda não salvo e offsets UTF-16 do editor, com contexto/token obrigatórios;
+  resolve vínculo e instrução no core, sem senha, conexão ou job.
+- Seleção explícita vence. SQL usa o léxico comum para ; e linhas em branco
+  externos a literais, identificadores, comentários e parênteses. Entrada
+  ambígua é recusada na separação automática. Seleção explícita conserva o
+  texto inteiro para a política de query existente, inclusive dialeto desconhecido.
+  Offsets inválidos, meio de surrogate e texto maior que
+  1 MiB também. Mongo mantém um comando por linha e JSON estrito no executor.
+  A UI aceita só sua resposta ainda ativa e usa datasource.query/impact
+  existentes, incluindo produção, somente leitura, ODBC e prévia.
+- Chaves da árvore usam tuplas JSON. Mapas por nome têm protótipo nulo e
+  leitura por propriedade própria: nomes com |, __proto__ e constructor
+  não confundem expansão, leitura pendente ou estrutura de outra conexão.
+
+Provas antes do aceite: colisões e arquivo legado intacto; links nos dois
+níveis e no arquivo, FIFO, criação concorrente; newline no nome; literais
+multilinha/dollar quotes/comentários e Unicode; contexto alterado e respostas
+fora de ordem; nomes especiais na árvore. Repetir gestos reais de console,
+produção/prévia quando afetados, só janela da IDE, XDG isolado e limpeza.
+Todos os gates completos/estritos antes do commit. Depois implementar os menus,
+ações e atualização automática do §5.1; passo 7 continua aberto.
+
 ## 6. Grafana: visualização web dentro da IDE
 
 - **QtWebEngine.** O painel pop-up atual sai; ele está quebrado: o
@@ -758,12 +827,39 @@ Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
 
 ## 7. Pente fino e fechamento
 
+**Correção solicitada durante Banco (2026-10-06; validada no 40.7 §7.225):** o ▶ do
+arquivo criava outra aba a cada tentativa. Manter uma aba por arquivo,
+configuração ativa ou comando explícito no projeto. A identidade é resolvida
+no core: tupla serializada de workspace canônico, categoria e caminho
+canônico/id da configuração/comando completo. O título abreviado não decide
+identidade. Repetir substitui a sessão e o grid na mesma posição; a saída da
+última tentativa fica após o fim. Arquivos distintos continuam separados.
+Fechar a aba libera seu vínculo, inclusive se ainda estiver rodando; eventos
+atrasados do PTY anterior não alteram a tentativa atual. Trocar projeto limpa
+os vínculos. Nenhuma sessão PTY/id é reutilizada.
+
+A UI bloqueia cliques desde o envio até o aceite/erro; o core recusa outra
+execução enquanto a anterior estiver viva, inclusive pedidos IPC sem UI.
+Provar antes/depois: repetição sem crescimento, programas distintos, resposta
+duplicada, render/fechamento atrasados, fechar/reabrir, clique duplo, erro e
+troca de projeto. Executar processos reais e repetir o gesto na janela da
+IDE; shell interativo continua independente. Gates completos antes do commit.
+
 **Achado técnico da prévia a fechar nesta revisão:** resolver DNS/NSS
 bloqueante do Tokio pode atrasar o Drop do runtime além do timeout da future
 de conexão. O registro mantém a capacidade ocupada e o IPC fica livre, mas
 o prazo não é teto absoluto do job com hostname. Reproduzir com resolvedor
 controlado da prova e resolver duração/cancelamento sem acumular threads ou
 processos órfãos; conferir também o caminho PostgreSQL ordinário.
+
+**Inspeção adicional pedida pelo autor em 2026-10-06:** abrir o estado atual
+da IDE e procurar defeitos fora do foco recente de Banco, sem declarar a
+0.3.9 encerrada. A revisão inicial conferiu o handler de mensagens Qt com
+uma prova isolada usando o código real e o handler padrão, fora do QtTest:
+aviso chegou ao stderr e ao cache, saída 0. A hipótese de ocultação por
+previousHandler nulo não se confirmou; nenhum código foi alterado para isso.
+O auxiliar/binário e cache da prova foram limpos. PageUp/PageDown continuam
+na fila abaixo, com reprodução real já registrada; a inspeção prossegue.
 
 **Navegação do editor, achado na prova do relevo (40.7 §7.224):** PageDown
 não moveu o cursor/viewport nem no release anterior ao relevo. Conferir

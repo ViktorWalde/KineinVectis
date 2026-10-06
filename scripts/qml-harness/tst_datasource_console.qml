@@ -1,87 +1,86 @@
 import QtQuick
 import KineinVectis
 
-// O console SQL no editor (2026-10-03): qual conexao um arquivo de console
-// representa, qual instrucao o Ctrl+Enter executa, e o pedido que sai.
+// Identidade e correlação na UI; extração SQL é provada no core real.
 Item {
     id: root
-
-    property var ran: []
+    property var statements: []
+    property var opens: []
+    property var queries: []
+    property var files: []
     property int results: 0
 
-    QtObject {
-        id: fakeController
-
-        property var profiles: [{ name: "loja", engine: "sqlite" }, { name: "meu pg", engine: "postgres" }]
-
-        function runOn(name, text, confirmWrite) {
-            root.ran.push(name + "|" + text);
-        }
-    }
-
-    DataSourceConsoleController {
-        id: consoles
-
-        dataSourceController: fakeController
+    DataSourceController {
+        id: controller
         workspaceRoot: "/p"
-        onResultsRequested: root.results += 1
+        onQueryRequested: (name, password, sql, confirmed, maxRows, context, confirmation) =>
+            root.queries.push({ name: name, sql: sql, preview: context.preview })
     }
-
+    Connections {
+        target: controller.consoles
+        function onStatementRequested(operation) { root.statements.push(operation); }
+        function onConsoleRequested(name, context) { root.opens.push(context); }
+        function onOpenFileRequested(path) { root.files.push(path); }
+        function onResultsRequested() { root.results += 1; }
+    }
     function check(condition, label) {
         if (!condition) console.error("FALHOU: " + label);
         return condition ? 0 : 1;
     }
-
+    function response(operation, statement) { return Object.assign({}, operation, { statement: statement }); }
     Component.onCompleted: {
         let failures = 0;
-        // O nome de arquivo e' o mesmo que o core da' (datasource/console.rs).
-        failures += check(consoles.fileStem("meu pg") === "meu_pg" && consoles.fileStem("../x") === "_x"
-                          && consoles.fileStem("...") === "console", "fileStem igual ao do core");
-        failures += check(consoles.connectionFor("/p/.kinein/consoles/loja.sql") === "loja", "console da loja");
-        failures += check(consoles.connectionFor("/p/.kinein/consoles/meu_pg.sql") === "meu pg", "nome com espaco");
-        failures += check(consoles.connectionFor("/p/src/main.sql") === "", "fora de .kinein/consoles nao e' console");
-        failures += check(consoles.connectionFor("/p/.kinein/consoles/sumiu.sql") === "", "perfil apagado");
-
-        const text = "-- Console da conexao loja.\nselect 1;\n\nselect *\nfrom clientes\nwhere id = 2;\nselect 3;";
-        // Cursor no meio da segunda instrucao (em "clientes").
-        const cursor = text.indexOf("clientes") + 3;
-        failures += check(consoles.statementAt(text, cursor, cursor, cursor, false)
-                          === "select *\nfrom clientes\nwhere id = 2", "a instrucao sob o cursor");
-        failures += check(consoles.statementAt(text, 3, 3, 3, false) === "select 1",
-                          "comentario fora: " + JSON.stringify(consoles.statementAt(text, 3, 3, 3, false)));
-        // Cursor logo depois do `;` (fim da digitacao): a instrucao que acabou ali.
-        failures += check(consoles.statementAt(text, text.length, text.length, text.length, false) === "select 3",
-                          "depois do ultimo ;: " + JSON.stringify(consoles.statementAt(text, text.length, text.length,
-                                                                                         text.length, false)));
-        failures += check(consoles.statementAt("select 1;\n", 10, 10, 10, false) === "select 1",
-                          "linha vazia depois do unico ;");
-        failures += check(consoles.statementAt("-- so comentario\n", 5, 5, 5, false) === "", "nada a executar");
-        // A LINHA EM BRANCO separa (achado na tela real): o select sem `;` nao
-        // gruda no DELETE de baixo.
-        const loose = "select * from t where id > 1 -- fim\n\n\nDELETE FROM clientes;";
-        failures += check(consoles.statementAt(loose, loose.length, loose.length, loose.length, false) === "DELETE FROM clientes",
-                          "linha em branco separa: " + JSON.stringify(consoles.statementAt(loose, loose.length, loose.length, loose.length, false)));
-        failures += check(consoles.statementAt(loose, 5, 5, 5, false) === "select * from t where id > 1 -- fim",
-                          "o de cima continua o de cima");
-        const blankLine = loose.indexOf("\n\n") + 1;
-        failures += check(consoles.statementAt(loose, blankLine, blankLine, blankLine, false).indexOf("select") === 0,
-                          "cursor na linha em branco: a instrucao de antes");
-        const sel = text.indexOf("select 3");
-        failures += check(consoles.statementAt(text, 0, sel, sel + 8, false) === "select 3", "a selecao vence");
-        failures += check(consoles.statementAt("// mongo\nleituras {}\npedidos {\"a\": 1}", 12, 12, 12, true)
-                          === "leituras {}", "Mongo: a linha");
-
-        failures += check(consoles.runFromEditor("/p/.kinein/consoles/loja.sql", text, cursor, cursor, cursor)
-                          && root.ran[0] === "loja|select *\nfrom clientes\nwhere id = 2" && root.results === 1,
-                          "Ctrl+Enter executa na conexao do arquivo: " + root.ran[0]);
-        failures += check(!consoles.runFromEditor("/p/src/a.sql", text, 0, 0, 0) && root.ran.length === 1,
-                          "fora de console nao executa");
-        consoles.tableData("loja", "sqlite", "main", "clientes");
-        consoles.tableData("meu pg", "postgres", "public", "pedidos");
-        failures += check(root.ran[1] === "loja|SELECT * FROM \"clientes\" LIMIT 200"
-                          && root.ran[2] === "meu pg|SELECT * FROM \"public\".\"pedidos\" LIMIT 200",
-                          "dados da tabela: " + root.ran[1] + " / " + root.ran[2]);
-
+        const first = Object.assign(controller.emptyDraft(), { name: "meu pg", engine: "sqlite", database: "/p/a.db" });
+        const second = Object.assign({}, first, { name: "meu_pg", database: "/p/b.db" });
+        controller.handleList([first, second]);
+        const consoles = controller.consoles;
+        const firstPath = "/p/.kinein/consoles/v1/first.sql";
+        const secondPath = "/p/.kinein/consoles/v1/second.sql";
+        consoles.catalogue([{ name: first.name, paths: [firstPath] }, { name: second.name, paths: [secondPath] }], "/p");
+        failures += check(consoles.connectionFor(firstPath) === first.name && consoles.connectionFor(secondPath) === second.name,
+            "binding do core separa nomes que colidiam");
+        for (const path of [firstPath + "/child.sql", firstPath + ".bak", "/p/.kinein/consoles/meu_pg.sql", "/p/src/a.sql"])
+            failures += check(!consoles.isConsole(path), "caminho exato: " + path);
+        consoles.open(first.name);
+        consoles.open(second.name);
+        consoles.handleResolved(Object.assign({}, root.opens[0], { path: firstPath }));
+        failures += check(root.files.length === 0, "abertura velha descartada");
+        consoles.handleResolved(Object.assign({}, root.opens[1], { path: secondPath }));
+        failures += check(root.files.length === 1 && root.files[0] === secondPath, "abertura atual");
+        const text = "SELECT '; DELETE', '😀';";
+        failures += check(consoles.runFromEditor(firstPath, text, 12, 12, 12, true), "console envia extração");
+        const request = root.statements[0];
+        failures += check(request.text === text && request.cursor === 12 && request.preview === undefined
+            && request.expectedContext.profile.name === first.name && root.queries.length === 0, "texto não interpretado pela UI");
+        consoles.handleStatement(response(request, "SELECT '; DELETE', '😀'"));
+        failures += check(root.queries.length === 1 && root.queries[0].name === first.name
+            && root.queries[0].sql === "SELECT '; DELETE', '😀'" && root.queries[0].preview === true, "resposta atual passa pela consulta existente");
+        consoles.handleStatement(response(request, "DELETE FROM t"));
+        failures += check(root.queries.length === 1, "resposta consumida uma vez");
+        consoles.runFromEditor(firstPath, "SELECT 1", 0, 0, 0);
+        consoles.runFromEditor(secondPath, "SELECT 2", 0, 0, 0);
+        consoles.handleStatement(response(root.statements[1], "SELECT 1"));
+        failures += check(root.queries.length === 1, "resposta de extração velha descartada");
+        const current = root.statements[2];
+        consoles.handleStatement(Object.assign(response(current, "SELECT 2"), { path: firstPath }));
+        failures += check(root.queries.length === 1, "caminho trocado descartado");
+        consoles.handleStatement(response(current, "SELECT 2"));
+        failures += check(root.queries.length === 2, "extração mais recente");
+        consoles.runFromEditor(firstPath, "SELECT 3", 0, 0, 0);
+        controller.handleList([Object.assign({}, first, { database: "/p/other.db" }), second]);
+        consoles.handleStatement(response(root.statements[3], "SELECT 3"));
+        failures += check(root.queries.length === 2, "perfil mudou, não executa");
+        consoles.runFromEditor(secondPath, "SELECT 4", 0, 0, 0);
+        const pending = root.statements[4];
+        consoles.fail("datasource.console.statement", "recusa", { name: second.name, clientContext: "outro" });
+        failures += check(consoles.pendingStatement !== null, "falha velha não cancela atual");
+        consoles.fail("datasource.console.statement", "recusa", pending);
+        failures += check(consoles.pendingStatement === null && controller.queryStatus === "recusa", "recusa correlacionada");
+        consoles.catalogue([{ name: first.name, paths: [firstPath] }, { name: second.name, paths: [firstPath] }], "/p");
+        failures += check(consoles.connectionFor(firstPath) === "", "binding ambíguo recusado");
+        controller.workspaceRoot = "/outro";
+        consoles.handleStatement(response(pending, "DELETE FROM t"));
+        failures += check(root.queries.length === 2 && consoles.bindings.length === 0, "projeto mudou, não executa");
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

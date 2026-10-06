@@ -11,6 +11,10 @@ pub struct SqlScan {
     pub valid: bool,
     /// End of the last SQL token/literal, excluding trailing whitespace/comments.
     pub code_end: usize,
+    /// First non-comment SQL token/literal, in bytes.
+    pub code_start: Option<usize>,
+    /// Blank paragraph separators outside SQL constructs.
+    pub paragraphs: Vec<(usize, usize)>,
 }
 
 /// Palavra ou identificador sem interpretar strings como comandos.
@@ -161,6 +165,8 @@ pub fn lex(sql: &str) -> SqlScan {
     let mut valid = true;
     let mut depth = 0usize;
     let mut code_end = 0;
+    let mut code_start = None;
+    let mut paragraphs = Vec::new();
     while at < bytes.len() {
         if bytes[at..].starts_with(b"--") {
             let end = bytes[at..]
@@ -189,6 +195,7 @@ pub fn lex(sql: &str) -> SqlScan {
             valid &= nesting == 0;
             blank(&mut masked, start, at);
         } else if bytes[at] == b'\'' {
+            code_start.get_or_insert(at);
             let start = at;
             let (end, closed, escaped) = quoted_end(bytes, at, b'\'');
             // A interpretação de barra depende do motor/configuração.
@@ -197,12 +204,14 @@ pub fn lex(sql: &str) -> SqlScan {
             at = end;
             code_end = at;
         } else if matches!(bytes[at], b'"' | b'`' | b'[') {
+            code_start.get_or_insert(at);
             let close = if bytes[at] == b'[' { b']' } else { bytes[at] };
             let (end, closed, escaped) = quoted_end(bytes, at, close);
             valid &= closed && !escaped;
             at = end;
             code_end = at;
         } else if let Some(delimiter) = dollar_delimiter(bytes, at) {
+            code_start.get_or_insert(at);
             let start = at;
             let after = at + delimiter.len();
             let closing = bytes[after..]
@@ -213,6 +222,14 @@ pub fn lex(sql: &str) -> SqlScan {
             blank(&mut masked, start, at);
             code_end = at;
         } else {
+            if depth == 0 && bytes[at] == b'\n' {
+                let end = paragraph_end(bytes, at);
+                if end > at {
+                    paragraphs.push((at, end));
+                    at = end;
+                    continue;
+                }
+            }
             match bytes[at] {
                 b';' if depth == 0 => boundaries.push(at),
                 b'(' => depth += 1,
@@ -225,6 +242,7 @@ pub fn lex(sql: &str) -> SqlScan {
                 _ => {}
             }
             if !bytes[at].is_ascii_whitespace() {
+                code_start.get_or_insert(at);
                 code_end = at + 1;
             }
             at += 1;
@@ -236,6 +254,23 @@ pub fn lex(sql: &str) -> SqlScan {
         boundaries,
         valid,
         code_end,
+        code_start,
+        paragraphs,
+    }
+}
+
+fn paragraph_end(bytes: &[u8], start: usize) -> usize {
+    let mut end = start + 1;
+    while bytes
+        .get(end)
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t' | b'\r' | b'\n'))
+    {
+        end += 1;
+    }
+    if bytes[start + 1..end].contains(&b'\n') {
+        end
+    } else {
+        start
     }
 }
 

@@ -46,6 +46,7 @@ qt_add_executable(kinein-vectis
 
 set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/datasource/DataSourceMap.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS DataSourceMap.qml)
 set_source_files_properties(qml/datasource/DataSourceKinds.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS DataSourceKinds.qml)
 set_source_files_properties(qml/container/ContainerStates.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE QT_RESOURCE_ALIAS ContainerStates.qml)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
@@ -357,6 +358,7 @@ set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
+set_source_files_properties(qml/runtime/RunTerminalController.qml PROPERTIES QT_RESOURCE_ALIAS RunTerminalController.qml)
 set_source_files_properties(qml/runtime/PendingShellInput.qml PROPERTIES QT_RESOURCE_ALIAS PendingShellInput.qml)
 set_source_files_properties(qml/runtime/RunConfigController.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigController.qml)
 set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
@@ -619,6 +621,7 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceList.qml
         qml/datasource/DataSourceTree.qml
         qml/datasource/DataSourceKinds.qml
+        qml/datasource/DataSourceMap.qml
         qml/datasource/DataSourceResultsPanel.qml
         qml/datasource/DataSourceConsoleController.qml
         qml/datasource/DataSourceConsoleBanner.qml
@@ -771,6 +774,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/WorkspaceUiResetter.qml
         qml/jobs/JobsController.qml
         qml/runtime/RuntimeController.qml
+        qml/runtime/RunTerminalController.qml
         qml/runtime/PendingShellInput.qml
         qml/runtime/RunConfigController.qml
         qml/search/SearchController.qml

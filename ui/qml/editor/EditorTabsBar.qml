@@ -13,6 +13,9 @@ Item {
     id: root
 
     property var filesModel
+    // A composição pode dar um nome legível a um documento sem mudar seu
+    // caminho/identidade ou o ícone do arquivo.
+    property var fileLabels: ({})
     property int fileCount: 0
     property int currentIndex: -1
 
@@ -40,13 +43,21 @@ Item {
                                  + root.tabChromeWidth));
     }
 
+    function labelFor(file) {
+        // O delegate ainda pode recalcular durante sua remoção/destruição.
+        if (!file) return "";
+        const label = root.fileLabels && Object.prototype.hasOwnProperty.call(root.fileLabels, file.path)
+            ? root.fileLabels[file.path] : "";
+        return label || file.name;
+    }
+
     function calculateNaturalTabsWidth() {
         if (!root.filesModel || root.fileCount <= 0) {
             return 0;
         }
         let total = (root.fileCount - 1) * root.tabSpacing;
         for (let i = 0; i < root.fileCount; ++i) {
-            total += root.naturalTabWidthFor(root.filesModel.get(i).name);
+            total += root.naturalTabWidthFor(root.labelFor(root.filesModel.get(i)));
         }
         return total;
     }
@@ -111,10 +122,11 @@ Item {
 
             readonly property bool active: index === root.currentIndex
             readonly property string reorderKey: String(docId)
+            readonly property string label: root.labelFor(root.filesModel.get(index))
 
             readonly property bool hovered: tabArea.containsMouse || closeArea.containsMouse
 
-            width: root.tabWidthFor(name)
+            width: root.tabWidthFor(label)
             height: 28
             opacity: tabReorder.opacityFor(String(docId))
             y: (tabList.height - height) / 2
@@ -155,7 +167,8 @@ Item {
                 anchors.leftMargin: Theme.spacingXSmall
                 anchors.right: closeButton.left
                 anchors.rightMargin: Theme.spacingXSmall
-                text: tabDelegate.name
+                text: tabDelegate.label
+                textFormat: Text.PlainText
                 color: tabDelegate.active ? Theme.textPrimary : Theme.textSecondary
                 elide: Text.ElideRight
                 font.pixelSize: Theme.fontSizeBody
@@ -209,7 +222,7 @@ Item {
                 onContainsMouseChanged: {
                     if (containsMouse && tabLabel.truncated) {
                         TooltipController.showFor(tabDelegate,
-                                                  tabDelegate.name,
+                                                  tabDelegate.label,
                                                   "bottom");
                     } else {
                         TooltipController.hideFor(tabDelegate);

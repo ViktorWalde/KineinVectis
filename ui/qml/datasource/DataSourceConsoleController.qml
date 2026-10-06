@@ -3,100 +3,149 @@ import KineinVectis
 
 // O CONSOLE SQL NO EDITOR (2026-10-03, decisao do autor: "editar/criar
 // comandos SQL no proprio campo que ja' e' usado para desenvolver codigo").
-// Cada conexao salva tem um arquivo em `.kinein/consoles/<conexao>.sql`
+// O core identifica o arquivo de cada conexão em `.kinein/consoles/`
 // (`.mongo` no MongoDB), que abre como aba comum do editor — realce, desfazer,
 // salvar sozinho, tudo o que o editor ja' faz. Ctrl+Enter num desses
 // arquivos executa a instrucao sob o cursor (ou a selecao) na conexao do
 // arquivo; o resultado aparece na secao de dados da janela do Banco.
 //
-// Puro na logica (qual conexao, qual instrucao); os pedidos saem por sinal.
+// A UI correlaciona os pedidos; vínculo e instrução são regras do core.
 QtObject {
     id: root
 
     property var dataSourceController: null
     property string workspaceRoot: ""
 
-    signal consoleRequested(string name)
+    signal consoleRequested(string name, var context)
     signal openFileRequested(string path)
     signal resultsRequested()
 
-    // O nome de arquivo que o core da' a um perfil (datasource/console.rs):
-    // letras, numeros, `.`, `-` e `_`; o resto vira `_`.
-    function fileStem(name) {
-        let stem = "";
-        for (const c of name) {
-            const keep = c.toLowerCase() !== c.toUpperCase() || (c >= "0" && c <= "9") || "._-".indexOf(c) >= 0;
-            stem += keep ? c : "_";
+    property var bindings: []
+    property var pendingOpen: null
+    property var pendingStatement: null
+    property int generation: 0
+    property int serial: 0
+
+    signal statementRequested(var operation)
+    onWorkspaceRootChanged: {
+        root.generation += 1;
+        root.bindings = [];
+        root.pendingOpen = null;
+        root.pendingStatement = null;
+    }
+
+    readonly property Connections profileChanges: Connections {
+        target: root.dataSourceController
+        function onDraftChanged() {
+            if (!root.current(root.pendingStatement)) root.pendingStatement = null;
         }
-        stem = stem.replace(/^\.+|\.+$/g, "");
-        return stem === "" ? "console" : stem;
+        function onProfilesChanged() {
+            if (!root.current(root.pendingOpen)) root.pendingOpen = null;
+            if (!root.current(root.pendingStatement)) root.pendingStatement = null;
+        }
     }
 
-    readonly property string consolesDir: root.workspaceRoot === "" ? "" : root.workspaceRoot + "/.kinein/consoles/"
-
-    function isConsole(path) {
-        return root.consolesDir !== "" && path.indexOf(root.consolesDir) === 0;
+    function catalogue(bindings, workspace) {
+        if (workspace === root.workspaceRoot) root.bindings = bindings;
     }
 
-    // A conexao de um arquivo de console; "" quando nao e' console ou o
-    // perfil ja' nao existe.
+    // Rótulos são dados de apresentação, sem callback dinâmico no editor.
+    function labels() {
+        const result = Object.create(null);
+        for (const binding of root.bindings) {
+            for (const path of binding.paths) {
+                const name = root.connectionFor(path);
+                if (name !== "") result[path] = qsTr("Console · %1").arg(name);
+            }
+        }
+        return result;
+    }
+
+    function isConsole(path) { return root.connectionFor(path) !== ""; }
+
+    // Só igualdade com caminhos calculados pelo core. Colisão recusa por padrão.
     function connectionFor(path) {
-        if (!root.isConsole(path) || root.dataSourceController === null) return "";
-        const file = path.substring(root.consolesDir.length);
-        const stem = file.replace(/\.(sql|mongo)$/, "");
-        const profile = root.dataSourceController.profiles.find(item => root.fileStem(item.name) === stem);
-        return profile === undefined ? "" : profile.name;
+        if (root.dataSourceController === null) return "";
+        const matches = root.bindings.filter(item => item.paths.indexOf(path) >= 0
+            && root.dataSourceController.profileByName(item.name) !== null);
+        return matches.length === 1 ? matches[0].name : "";
     }
 
-    // A instrucao a executar: a selecao, se houver; senao, no Mongo, a linha;
-    // no SQL, o trecho sob o cursor, e um trecho TERMINA num `;` ou numa
-    // LINHA EM BRANCO, como no console da JetBrains. Linhas de comentario
-    // (`--`, `//`) ficam de fora. Cursor num trecho vazio (logo depois do
-    // `;`, ou numa linha em branco) vale a instrucao que acabou antes dele.
-    //
-    // Por que a linha em branco (2026-10-03, achado na tela real): um
-    // `select ...` sem `;` seguido de linhas vazias e de um `DELETE FROM x;`
-    // virava UMA instrucao "select ... DELETE ..." — foi para o caminho de
-    // leitura, o motor recusou, e o painel do impacto nunca abriu.
-    function statementAt(text, cursor, selectionStart, selectionEnd, mongo) {
-        if (selectionEnd > selectionStart) return text.substring(selectionStart, selectionEnd).trim();
-        const clean = piece => piece.split("\n").filter(line => !/^\s*(--|\/\/)/.test(line)).join("\n").trim();
-        if (mongo) {
-            const lineStart = text.lastIndexOf("\n", cursor - 1) + 1;
-            const lineEnd = text.indexOf("\n", cursor);
-            return clean(text.substring(lineStart, lineEnd < 0 ? text.length : lineEnd));
-        }
-        const pieces = [];
-        const boundary = /;|\n[ \t]*(?=\n)/g;
-        let start = 0;
-        for (let match = boundary.exec(text); match !== null; match = boundary.exec(text)) {
-            pieces.push({ start: start, text: clean(text.substring(start, match.index)) });
-            start = match.index + match[0].length;
-        }
-        pieces.push({ start: start, text: clean(text.substring(start)) });
-        let at = 0;
-        while (at + 1 < pieces.length && pieces[at + 1].start <= cursor) at++;
-        while (at > 0 && pieces[at].text === "") at--;
-        return pieces[at].text;
+    function current(operation) {
+        if (!operation || root.dataSourceController === null) return false;
+        const controller = root.dataSourceController;
+        const editing = controller.selectedName === operation.name || controller.draft.name === operation.name;
+        return (!editing || controller.queries.profileKey(controller.draft) === controller.queries.profileKey(operation.expectedContext.profile))
+            && operation.expectedContext.workspace === root.workspaceRoot
+            && controller.queries.profileKey(operation.expectedContext.profile)
+                === controller.queries.profileKey(controller.profileByName(operation.name));
+    }
+
+    function operation(name) {
+        const profile = root.dataSourceController.profileByName(name);
+        if (profile === null) return null;
+        root.serial += 1;
+        return { name: name, clientContext: "console." + String(root.generation) + ":" + String(root.serial),
+            expectedContext: { workspace: root.workspaceRoot, profile: Object.assign({}, profile) } };
+    }
+
+    function matches(pending, response) {
+        return root.current(pending) && response && response.name === pending.name
+            && response.clientContext === pending.clientContext
+            && response.expectedContext && response.expectedContext.workspace === root.workspaceRoot
+            && root.dataSourceController.queries.profileKey(response.expectedContext.profile)
+                === root.dataSourceController.queries.profileKey(pending.expectedContext.profile);
     }
 
     function open(name) {
-        root.consoleRequested(name);
+        root.pendingOpen = root.operation(name);
+        if (root.pendingOpen !== null) root.consoleRequested(name, root.pendingOpen);
     }
 
-    function handleResolved(path) {
-        root.openFileRequested(path);
+    function handleResolved(response) {
+        if (!root.matches(root.pendingOpen, response) || root.connectionFor(response.path) !== response.name) return;
+        root.pendingOpen = null;
+        root.openFileRequested(response.path);
     }
 
-    // Ctrl+Enter no editor. false = nao e' console (o atalho nao faz nada).
+    // O core escolhe a instrução. Nenhuma regex da UI interpreta SQL.
     function runFromEditor(path, text, cursor, selectionStart, selectionEnd, preview) {
         const name = root.connectionFor(path);
         if (name === "") return false;
-        const statement = root.statementAt(text, cursor, selectionStart, selectionEnd, path.endsWith(".mongo"));
-        if (statement === "") return true;
-        root.dataSourceController.runOn(name, statement, false, 0, null, preview === true);
-        root.resultsRequested();
+        const operation = root.operation(name);
+        if (!root.current(operation)) {
+            root.dataSourceController.queryStatus = qsTr("Salve as alterações da conexão antes de executar.");
+            root.resultsRequested();
+            return true;
+        }
+        root.pendingStatement = Object.assign({}, operation, { path: path, preview: preview === true });
+        root.statementRequested(Object.assign({}, operation, {
+            path: path, text: text, cursor: cursor, selectionStart: selectionStart, selectionEnd: selectionEnd }));
         return true;
+    }
+
+    function handleStatement(response) {
+        const pending = root.pendingStatement;
+        if (!root.matches(pending, response) || response.path !== pending.path
+                || root.connectionFor(response.path) !== pending.name) return;
+        root.pendingStatement = null;
+        if (typeof response.statement !== "string" || response.statement.trim() === "") return;
+        root.dataSourceController.runOn(pending.name, response.statement, false, 0, null, pending.preview);
+        root.resultsRequested();
+    }
+
+    function fail(method, message, operation) {
+        const pending = method === "datasource.console" ? root.pendingOpen : root.pendingStatement;
+        if (!root.current(pending) || !operation || pending.clientContext !== operation.clientContext
+                || pending.name !== operation.name) return;
+        if (method === "datasource.console") {
+            root.pendingOpen = null;
+            root.dataSourceController.errorText = message;
+        } else {
+            root.pendingStatement = null;
+            root.dataSourceController.queryStatus = message;
+            root.resultsRequested();
+        }
     }
 
     // Clique duplo numa tabela da arvore: as primeiras linhas dela.

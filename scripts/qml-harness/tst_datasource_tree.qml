@@ -27,7 +27,7 @@ Item {
         failures += check(tree.rows.length === 3 && tree.rows[0].kind === "connection"
                           && tree.rows[0].detail === "SQLite", "tres conexoes fechadas");
 
-        tree.toggle("c|loja");
+        tree.toggle(tree.key(["c", "loja"]));
         failures += check(tree.rows[1].kind === "read", "aberta sem leitura pede leitura");
         tree.readingNames = { "loja": true };
         failures += check(tree.rows[1].kind === "status", "lendo");
@@ -44,7 +44,7 @@ Item {
                           "colunas com tipo e contexto: " + tree.rows[3].detail);
 
         // Varios esquemas: o nivel do esquema aparece.
-        tree.toggle("c|pg");
+        tree.toggle(tree.key(["c", "pg"]));
         tree.structures = Object.assign({}, tree.structures, { pg: { schemas: [
             { name: "public", tables: [{ name: "t", kind: "table", columns: [] }] },
             { name: "audit", tables: [] }], collections: [] } });
@@ -55,7 +55,7 @@ Item {
                           "releitura mantem o aberto");
 
         // Mongo: colecao e campos, com tipos e presenca.
-        tree.toggle("c|sensores");
+        tree.toggle(tree.key(["c", "sensores"]));
         tree.structures = Object.assign({}, tree.structures, { "sensores": { schemas: [], collections: [
             { name: "leituras", kind: "timeseries", documentCount: 3, declared: false, sampled: 3, timeField: "ts",
               fields: [{ path: "meta.placa", depth: 1, types: ["string"], presence: 0.5 }] }] } });
@@ -69,6 +69,27 @@ Item {
         // Falha de leitura: a mensagem e o caminho de tentar de novo.
         tree.structures = Object.assign({}, tree.structures, { pg: { schemas: [], collections: [], failed: "senha" } });
         failures += check(tree.rows.some(r => r.kind === "failed" && r.name === "senha"), "falha aparece");
+
+        // Os mesmos separadores em posições diferentes eram uma chave só.
+        tree.profiles = [{ name: "a|b", engine: "sqlite" }, { name: "a", engine: "sqlite" },
+                         { name: "__proto__", engine: "sqlite" }, { name: "constructor", engine: "sqlite" }];
+        tree.expanded = DataSourceMap.copy();
+        tree.structures = DataSourceMap.copy(null, {
+            ["a|b"]: { schemas: [{ name: "c", tables: [{ name: "d", columns: [], kind: "table" }] }], collections: [] },
+            ["a"]: { schemas: [{ name: "b|c", tables: [{ name: "d", columns: [], kind: "table" }] }], collections: [] }
+        });
+        for (const name of ["a|b", "a", "__proto__", "constructor"]) tree.toggle(tree.key(["c", name]));
+        const tables = tree.rows.filter(item => item.kind === "table");
+        failures += check(tables.length === 2 && tables[0].key !== tables[1].key, "tuplas não colidem");
+        tree.toggle(tables[0].key);
+        failures += check(tree.rows.find(item => item.key === tables[0].key).expanded === true
+            && tree.rows.find(item => item.key === tables[1].key).expanded === false, "expansão isolada");
+        failures += check(tree.rows.filter(item => item.kind === "read").length === 2, "prototype não vira catálogo");
+        tree.structures = DataSourceMap.copy(tree.structures, { ["__proto__"]: { schemas: [], collections: [] } });
+        tree.readingNames = DataSourceMap.copy(null, { ["constructor"]: true });
+        failures += check(DataSourceMap.get(tree.structures, "__proto__").schemas.length === 0
+            && tree.rows.some(item => item.connection === "constructor" && item.kind === "status"), "nomes especiais conservados");
+        failures += check(DataSourceMap.get({}, "constructor") === undefined, "leitura só de propriedade própria");
 
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);

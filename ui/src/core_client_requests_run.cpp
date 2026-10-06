@@ -154,6 +154,11 @@ bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& res
     // reconhecem; `running` acompanha a sessao ate' o `event.terminal.closed`.
     const QString command = result.value(QStringLiteral("command")).toString();
     const QString terminalId = result.value(QStringLiteral("terminalId")).toString();
+    const QString workspace = result.value(QStringLiteral("workspace")).toString();
+    const QString executionKey = result.value(QStringLiteral("executionKey")).toString();
+    if (workspace != m_workspaceRoot || executionKey.isEmpty()) {
+        return true;
+    }
     if (!terminalId.isEmpty()) {
         m_terminalIds.insert(terminalId);
         setTerminalActive(true);
@@ -161,7 +166,7 @@ bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& res
         setRunning(true);
     }
     appendLog(QStringLiteral("execucao iniciada (%1): %2").arg(terminalId, command));
-    emit runStarted(command, terminalId);
+    emit runStarted(command, terminalId, executionKey, workspace);
     return true;
 }
 

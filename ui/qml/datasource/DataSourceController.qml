@@ -35,8 +35,8 @@ Item {
     property bool reading: false
     // A estrutura POR CONEXAO, para a arvore da janela do Banco (2026-10-03):
     // nome -> { schemas, collections }; e quem esta' sendo lido agora.
-    property var structures: ({})
-    property var readingNames: ({})
+    property var structures: DataSourceMap.copy()
+    property var readingNames: DataSourceMap.copy()
     // A ultima consulta pedida por NOME (o console do editor): repetida tal
     // qual quando a escrita pede confirmacao.
     property alias lastQuery: queryController.lastQuery
@@ -126,8 +126,8 @@ Item {
         draft = emptyDraft();
         clearSecret();
         clearVerdict();
-        structures = ({});
-        readingNames = ({});
+        structures = DataSourceMap.copy();
+        readingNames = DataSourceMap.copy();
         lastQuery = null;
         errorText = "";
         if (workspaceRoot !== "") {
@@ -322,7 +322,7 @@ Item {
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;
-            readingNames = ({});
+            readingNames = DataSourceMap.copy();
             querying = false;
             if (code === "DRIVER_APPROVAL_REQUIRED") return;
             errorText = message;

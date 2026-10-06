@@ -615,6 +615,48 @@ em 2026-10-03:
 
 ## 9. Provas
 
+### Abas de execução (0.160.0, 2026-10-06; aceite no 40.7)
+
+RuntimeController mantém a lista/render das sessões; RunTerminalController
+é o dono dos vínculos das execuções, aceite pendente e desfechos. O core
+devolve workspace e executionKey: tupla JSON opaca com categoria e destino
+canônico (arquivo, id da configuração ou comando completo). O título
+abreviado é apresentação. Shells não participam desse mapa.
+
+```mermaid
+sequenceDiagram
+    actor Autor
+    participant UI as RunTerminalController
+    participant Core
+    participant PTY
+    Autor->>UI: Executar arquivo
+    UI->>UI: Bloquear clique durante aceite
+    UI->>Core: run.script(path)
+    Core->>Core: Confinar caminho e recusar execução já viva
+    Core->>PTY: Abrir sessão nova
+    Core-->>UI: workspace, executionKey, terminalId
+    UI->>UI: Inserir ou substituir aba correspondente
+    PTY-->>UI: Render e fechamento por terminalId
+    UI->>UI: Manter resultado na aba
+    Autor->>UI: Executar o mesmo arquivo novamente
+    UI->>Core: run.script(path)
+    Core-->>UI: Mesma executionKey, novo terminalId
+    UI->>UI: Mesma posição, grid e resultado novos
+```
+
+Substituir remove estado e vínculo do PTY anterior, sem reutilizar seu id.
+Render atrasado sem aba dona é descartado. Fechar uma execução viva pede
+terminal.close e remove a aba quando o fechamento chega; uma concluída
+fecha localmente. Falha de aceite/desconexão libera o bloqueio. Mudança de
+workspace limpa o estado. Resposta de outro workspace não cria aba.
+O pendingShell não entrega seu comando a uma execução: ele espera a resposta
+terminal.open do shell. Isso evita injetar uma linha interativa no programa.
+
+As provas são tst_run_tab_reuse, tst_run_tab_survives, tst_run_device e
+tests/run_reuse.rs: repetição, posições, saída, eventos atrasados, fechamento,
+clique duplo, recusa antes do spawn, caminhos canônicos e configuração editada.
+Os processos PTY são reais; a prova visual e gates constam do 40.7.
+
 | Harness (`scripts/qml-harness/`) | O que prova |
 | --- | --- |
 | `tst_bar_reorder` | O codec (ordem, vão, chave escondida, transferência, lados, aba de baixo que deixou de existir), o `ReorderController` com `partner`, as abas e o status na ordem salva. |

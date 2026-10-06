@@ -43,6 +43,7 @@ pub mod classification;
 pub mod confirm;
 pub mod connection;
 pub mod console;
+pub mod console_statement;
 pub mod create;
 pub mod destroy;
 pub mod discover;

@@ -4,6 +4,15 @@
 > arquivo do projeto quando o detector automático falhou — o que aconteceu em
 > 1 das 2.
 >
+> **Estado do Banco em 2026-10-06:** PostgreSQL, SQLite e MongoDB têm
+> leitura/escrita; ODBC por DSN tem catálogo, consulta e carregamento
+> explícito do driver por sessão. Produção/somente leitura, contexto,
+> prévia PostgreSQL e base segura dos consoles estão validados no checkout
+> (protocolos até `0.160.0`; 40.7 §7.220–§7.225). Donos e limites atuais:
+> [arquitetura/37](../arquitetura/37-banco-de-dados.md). Banco ainda não
+> encerrado: ações/menus, console, grade e motores restantes seguem o
+> [59](../roadmaps/59-fechamento-da-0.3.9.md).
+>
 > **Frente H do [`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md).**
 > Escrito quando eram candidatas; **ADOTADAS em 2026-09-04** (`roadmaps/40` §4
 > item 27, fechado): PostgreSQL/TimescaleDB, SQLite e MongoDB no domínio

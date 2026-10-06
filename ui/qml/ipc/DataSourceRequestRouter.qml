@@ -59,9 +59,11 @@ Item {
     Connections {
         target: root.dataSourceController ? root.dataSourceController.consoles : null
 
-        function onConsoleRequested(name) {
-            root.coreClient.dataSourceConsole(name);
+        function onConsoleRequested(name, context) {
+            root.coreClient.dataSourceConsole(name, context);
         }
+
+        function onStatementRequested(operation) { root.coreClient.dataSourceConsoleStatement(operation); }
 
         function onOpenFileRequested(path) {
             root.coreClient.readFile(path);

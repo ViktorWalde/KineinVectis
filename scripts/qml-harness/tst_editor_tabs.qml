@@ -27,6 +27,22 @@ Item {
         currentIndex: 1
     }
 
+    // Deixar os delegates existir antes da remoção reproduz o ciclo real.
+    Timer {
+        id: closeTimer
+        interval: 50
+        repeat: true
+        onTriggered: {
+            if (files.count > 0) {
+                files.remove(0);
+                tabs.fileLabels = undefined;
+            } else {
+                closeTimer.stop();
+                Qt.exit(0);
+            }
+        }
+    }
+
     Component.onCompleted: {
         let failures = 0;
 
@@ -47,6 +63,7 @@ Item {
                 + (files.count - 1) * tabs.tabSpacing <= root.width) failures += 128;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
-        Qt.exit(failures === 0 ? 0 : 1);
+        if (failures !== 0) Qt.exit(1);
+        else closeTimer.start();
     }
 }

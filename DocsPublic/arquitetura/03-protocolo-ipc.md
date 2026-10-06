@@ -1,6 +1,16 @@
 # 03 — Protocolo IPC
 
-> **0.159.0 (2026-10-06, contrato antes do código; aceite pendente).**
+> **0.160.0 (2026-10-06, validado no checkout; 40.7 §7.225).**
+> Console: identidades fornecidas pelo core, criação sem symlinks/substituição
+> e extração de instrução com offsets UTF-16 no core. Contrato ao final deste
+> documento, desenho no 59 §5.12. Um método novo: datasource.console.statement.
+> Execução: `run.start` e `run.script` também devolvem `workspace` e
+> `executionKey`, identidade opaca do arquivo/configuração/comando resolvida
+> pelo core. A aba correspondente é reutilizada; cada tentativa recebe um
+> novo `terminalId`, com grid e saída próprios. Pedido enquanto uma execução
+> está viva é recusado antes de criar outro PTY. Desenho no 59 §7.
+
+> **0.159.0 (2026-10-06, validado no checkout; 40.7 §7.223).**
 > Prévia PostgreSQL: `datasource.query.preview?` é falso quando ausente.
 > Prévia exige contexto/token, confirmação anterior à escrita e uma instrução
 > direta INSERT/UPDATE/DELETE elegível no core. O aceite da consulta acrescenta
@@ -3268,7 +3278,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 181 métodos roteados — a lista inteira
+## Os 182 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3319,6 +3329,7 @@ coverage.run
 datasource.odbc.sources
 datasource.odbc.authorize
 datasource.console
+datasource.console.statement
 datasource.create
 datasource.destroy
 datasource.discover
@@ -4729,3 +4740,21 @@ pedido que a UI faz depois de subir o processo (`04-boot-e-comunicacao.md`).
 **O `core.shutdown` pede, não mata.** Ele responde e deixa o encerramento
 acontecer com o drain dos jobs em andamento, que é o que impede um build a meio
 caminho de virar processo órfão.
+
+## Console e árvore (0.160.0, desenho e aceite em 2026-10-06)
+
+Ainda não aceito. datasource.list/save/remove devolvem também workspace e
+consoleBindings: lista de {name, paths}, calculada pelo core. paths contém o
+console novo e, quando sem colisão, o console legado. Não há leitura de dados
+ou senha nessa derivação. datasource.console aceita clientContext e
+expectedContext opcionais para clientes antigos; a UI os envia e a resposta
+traz name, path, created, clientContext e expectedContext.
+
+datasource.console.statement exige {name, path, text, cursor, selectionStart,
+selectionEnd, clientContext, expectedContext}; offsets em unidades UTF-16.
+Resposta: {name, path, statement, clientContext, expectedContext}. Recusa antes
+de qualquer conexão/job; detalhes de falha contêm só nome/token públicos.
+A UI conserva preview no pedido local, valida token/contexto da resposta e
+passa statement para datasource.query existente. Não se adiciona autorização
+de escrita nem se persiste o texto nesta chamada. Limite: 1 MiB de texto.
+Desenho e provas requeridas no roadmap 59 §5.12.

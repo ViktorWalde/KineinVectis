@@ -121,6 +121,7 @@ Item {
 
         workspaceOpen: root.workspaceOpen
         filesModel: root.editorController.filesModel
+        fileLabels: root.dataSourceController === null ? ({}) : root.dataSourceController.consoles.labels()
         fileCount: root.editorController.filesModel.count
         currentTab: root.editorController.currentTab
         completionVisible: root.editorController.completionVisible

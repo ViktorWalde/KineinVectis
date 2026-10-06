@@ -98,7 +98,14 @@ impl Core {
         };
         let command = run::script_display_command(&root, interpreter, &script);
         let args = vec!["--".to_owned(), script.display().to_string()];
-        self.start_in_terminal(request_id, &root, interpreter, &args, command)
+        self.start_in_terminal(
+            request_id,
+            &root,
+            interpreter,
+            &args,
+            command,
+            &json!(["script", root, script]),
+        )
     }
 
     /// O lancador do HOST: `uv run` se o projeto e' do uv e o uv existe;
@@ -170,6 +177,7 @@ impl Core {
             &program.display().to_string(),
             &args,
             command,
+            &json!(["script", root, script]),
         )
     }
 
@@ -211,10 +219,16 @@ impl Core {
         // Uma configuracao de execucao ATIVA e' um comando que o autor salvou:
         // vence o lancador padrao e, como o comando explicito, nao recebe a
         // porta. O `command` ecoado diz o que rodou.
-        let command = if let Some(command) =
-            explicito.or_else(|| crate::runconfig::active_command(root))
-        {
-            command
+        let state = crate::runconfig::load(root);
+        let active = state
+            .configs
+            .iter()
+            .find(|config| Some(&config.id) == state.active_id.as_ref());
+        let (command, identity) = if let Some(command) = explicito {
+            let identity = json!(["command", root, command]);
+            (command, identity)
+        } else if let Some(config) = active {
+            (config.command.clone(), json!(["config", root, config.id]))
         } else {
             // Python nao passa por run::default_command: precisa do lancador do
             // projeto (interpretador ou `uv run`).
@@ -230,14 +244,14 @@ impl Core {
                 run::default_command(workspace.kind, root)
             };
             match padrao {
-                Ok(command) => command,
+                Ok(command) => (command, json!(["default", root])),
                 Err(error) => return run_error_response(request_id, &error),
             }
         };
 
         // Como o autor digitaria: pelo shell, com o ambiente de login.
         let args = vec!["-lc".to_owned(), command.clone()];
-        self.start_in_terminal(request_id, root, "sh", &args, command)
+        self.start_in_terminal(request_id, root, "sh", &args, command, &identity)
     }
 
     /// Abre `program args` numa sessao de terminal (PTY) na raiz do workspace
@@ -250,10 +264,25 @@ impl Core {
         program: &str,
         args: &[String],
         command: String,
+        identity: &Value,
     ) -> JsonRpcResponse {
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "run.start");
         };
+        if self
+            .run_terminal
+            .as_deref()
+            .is_some_and(|id| session.is_open(id))
+        {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidRequest,
+                    "Uma execução já está em andamento; pare-a antes de executar novamente.",
+                    None,
+                ),
+            );
+        }
         match session.open_command(root, program, args) {
             Ok(terminal_id) => {
                 self.run_terminal = Some(terminal_id.clone());
@@ -261,6 +290,8 @@ impl Core {
                     request_id,
                     json!(RunStartResult {
                         command,
+                        workspace: root.display().to_string(),
+                        execution_key: identity.to_string(),
                         terminal_id: Some(terminal_id)
                     }),
                 )

@@ -61,9 +61,17 @@ void CoreClient::dataSourceRemove(const QString& name)
     sendRequest(QStringLiteral("datasource.remove"), QJsonObject{{QStringLiteral("name"), name}});
 }
 
-void CoreClient::dataSourceConsole(const QString& name)
+void CoreClient::dataSourceConsole(const QString& name, const QVariantMap& context)
 {
-    sendRequest(QStringLiteral("datasource.console"), QJsonObject{{QStringLiteral("name"), name}});
+    QJsonObject params{{QStringLiteral("name"), name}};
+    appendOperationContext(params, context);
+    sendRequest(QStringLiteral("datasource.console"), params);
+}
+
+void CoreClient::dataSourceConsoleStatement(const QVariantMap& operation)
+{
+    sendRequest(QStringLiteral("datasource.console.statement"),
+                QJsonObject::fromVariantMap(operation));
 }
 
 void CoreClient::dataSourceTest(const QString& name, const QString& password,
@@ -197,12 +205,17 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
         method == QStringLiteral("datasource.remove"))
     {
         emit dataSourceListResolved(
-            result.value(QStringLiteral("profiles")).toArray().toVariantList());
+            result.value(QStringLiteral("profiles")).toArray().toVariantList(),
+            result.value(QStringLiteral("consoleBindings")).toArray().toVariantList(),
+            result.value(QStringLiteral("workspace")).toString());
         return true;
     }
     if (method == QStringLiteral("datasource.console")) {
-        emit dataSourceConsoleResolved(result.value(QStringLiteral("path")).toString(),
-                                       result.value(QStringLiteral("created")).toBool());
+        emit dataSourceConsoleResolved(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("datasource.console.statement")) {
+        emit dataSourceConsoleStatementResolved(result.toVariantMap());
         return true;
     }
     if (method == QStringLiteral("datasource.discover")) {

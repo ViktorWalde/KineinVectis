@@ -7,6 +7,7 @@ Rectangle {
 
     property alias editorSurface: editor
     property var filesModel
+    property var fileLabels: ({})
     property int fileCount: 0
     property int currentTab: -1
     property bool workspaceOpen: false
@@ -112,6 +113,7 @@ Rectangle {
         anchors.right: modeBar.visible ? modeBar.left : parent.right
         anchors.margins: Theme.spacingSmall
         filesModel: root.filesModel
+        fileLabels: root.fileLabels
         fileCount: root.fileCount
         currentIndex: root.currentTab
         onTabSelected: docId => root.tabSelected(docId)

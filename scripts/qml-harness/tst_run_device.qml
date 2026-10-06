@@ -35,39 +35,52 @@ Item {
 
         // Sem escolha: o campo vai vazio (= ausente na ponte C++).
         runtime.startRun("");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         runtime.startScript("/tmp/workspace/main.py");
         if (root.pedidos.join(",") !== "start::,script:/tmp/workspace/main.py:") failures += 1;
 
         // Com escolha: o botao Executar e o "Executar" num .py levam a porta.
+        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.serialDevice = "/dev/ttyUSB0";
         runtime.startRun("");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         runtime.startScript("/tmp/workspace/main.py");
         if (root.pedidos.join(",")
                 !== "start::/dev/ttyUSB0,script:/tmp/workspace/main.py:/dev/ttyUSB0") failures += 2;
 
         // Um comando DIGITADO roda como foi escrito: a porta NAO vai junto
         // (o core recusa command + device).
+        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.startRun("python tools/gera.py");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         runtime.startRun("echo oi");
         if (root.pedidos.join(",") !== "start:python tools/gera.py:,start:echo oi:") failures += 4;
 
         // A escolha e' de quem a fez: trocar/desfazer no painel chega aqui
         // pelo binding e vale no proximo gesto.
+        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.serialDevice = "/dev/ttyACM1";
         runtime.startScript("/tmp/workspace/util.py");
+        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
         runtime.serialDevice = "";
         runtime.startScript("/tmp/workspace/util.py");
         if (root.pedidos.join(",")
                 !== "script:/tmp/workspace/util.py:/dev/ttyACM1,script:/tmp/workspace/util.py:") failures += 8;
 
         // Processo em curso ou sem workspace: nada vai, com ou sem porta.
+        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.serialDevice = "/dev/ttyUSB0";
         runtime.running = true;
         runtime.startRun("");
+        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
         runtime.startScript("/tmp/workspace/main.py");
         runtime.running = false;
         runtime.workspaceRoot = "";
@@ -84,11 +97,10 @@ Item {
 
         // A execucao e' uma ABA DE TERMINAL (2026-09-18): o core devolve o id
         // e a aba nasce com o nome do comando; ao fechar, o desfecho fica dito.
-        runtime.handleRunStarted("cargo run --release", "t7");
+        runtime.handleRunStarted("cargo run --release", "t7", "config-cargo", "/tmp/workspace");
         if (runtime.runTerminalId !== "t7" || runtime.activeTerminalId !== "t7"
                 || runtime.terminalsModel.count !== 1
                 || runtime.terminalsModel.get(0).title !== "▶ cargo run --release") failures += 128;
-        if (runtime.runTabTitle("/home/x/.venv/bin/python 'tools/gera.py'") !== "▶ python 'tools/gera.py'") failures += 256;
         runtime.handleRunFinished(false, 101);
         if (runtime.lastRunMessage.indexOf("101") < 0) failures += 512;
         // A sessao fechou: a aba FICA (o autor le a saida), com o desfecho
@@ -99,7 +111,12 @@ Item {
                 || !runtime.isFinishedRun("t7")) failures += 1024;
         runtime.closeTerminal("t7");
         if (runtime.terminalsModel.count !== 0 || runtime.isFinishedRun("t7")) failures += 2048;
-        runtime.handleRunStarted("cargo run", "");
+        runtime.handleRunStarted("/home/x/.venv/bin/python 'tools/gera.py'", "t8", "script-python", "/tmp/workspace");
+        if (runtime.terminalsModel.count !== 1
+                || runtime.terminalsModel.get(0).title !== "▶ python 'tools/gera.py'") failures += 256;
+        runtime.handleTerminalClosed("t8", 0);
+        runtime.closeTerminal("t8");
+        runtime.handleRunStarted("cargo run", "", "config-cargo", "/tmp/workspace");
         if (runtime.terminalsModel.count !== 0) failures += 4096;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);

@@ -32,8 +32,12 @@ Item {
             root.runConfigController.handleRunConfigs(configs, activeId);
         }
 
-        function onRunStarted(command, terminalId) {
-            root.runtimeController.handleRunStarted(command, terminalId);
+        function onRunStarted(command, terminalId, executionKey, workspace) {
+            root.runtimeController.handleRunStarted(command, terminalId, executionKey, workspace);
+        }
+
+        function onStatusChanged() {
+            if (!root.coreClient.connected) root.runtimeController.handleCoreDisconnected();
         }
 
         function onRunFinished(success, exitCode) {
@@ -47,7 +51,8 @@ Item {
             if (method === "terminal.selectAll" || method === "terminal.copySelection") {
                 root.runtimeController.terminalSelectionFailed();
             }
-            if (method === "run.start" || method === "run.script" || method === "run.stop") {
+            if (method === "run.start" || method === "run.script" || method === "run.stop"
+                    || method === "terminal.close") {
                 root.runtimeController.handleRequestFailed(method, message);
             }
         }

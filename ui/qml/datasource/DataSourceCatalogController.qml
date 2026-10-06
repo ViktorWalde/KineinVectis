@@ -10,8 +10,8 @@ QtObject {
     property int generation: 0
     property int serial: 0
     property int selectionGeneration: 0
-    property var pending: ({})
-    property var structureKeys: ({})
+    property var pending: DataSourceMap.copy()
+    property var structureKeys: DataSourceMap.copy()
     property string lastTest: ""
 
     signal testRequested(string name, var context)
@@ -37,26 +37,26 @@ QtObject {
 
     function reset() {
         root.generation += 1;
-        root.pending = ({});
-        root.structureKeys = ({});
+        root.pending = DataSourceMap.copy();
+        root.structureKeys = DataSourceMap.copy();
         root.lastTest = "";
     }
 
     function validate() {
-        const next = Object.assign({}, root.pending);
+        const next = DataSourceMap.copy(root.pending);
         for (const id of Object.keys(next)) {
             if (root.current(next[id])) continue;
             if (next[id].method === "test") root.dataSourceController.testing = false;
             else {
                 if (root.dataSourceController.draft.name === next[id].name) root.dataSourceController.reading = false;
-                root.dataSourceController.readingNames = Object.assign({}, root.dataSourceController.readingNames, { [next[id].name]: false });
+                root.dataSourceController.readingNames = DataSourceMap.copy(root.dataSourceController.readingNames, { [next[id].name]: false });
             }
             delete next[id];
         }
         root.pending = next;
-        const structures = Object.assign({}, root.dataSourceController.structures);
+        const structures = DataSourceMap.copy(root.dataSourceController.structures);
         for (const name of Object.keys(structures)) {
-            if (root.structureKeys[name] !== root.key(root.dataSourceController.profileByName(name))) delete structures[name];
+            if (DataSourceMap.get(root.structureKeys, name) !== root.key(root.dataSourceController.profileByName(name))) delete structures[name];
         }
         root.dataSourceController.structures = structures;
     }
@@ -72,14 +72,14 @@ QtObject {
         const context = { clientContext: "catalog." + String(root.generation) + ":" + String(root.serial),
             expectedContext: { workspace: root.workspaceRoot, profile: Object.assign({}, profile) } };
         const operation = Object.assign({ method: method, name: name, selectionGeneration: root.selectionGeneration }, context);
-        root.pending = Object.assign({}, root.pending, { [method + ":" + name]: operation });
+        root.pending = DataSourceMap.copy(root.pending, { [method + ":" + name]: operation });
         if (method === "test") {
             controller.clearVerdict();
             controller.testing = true;
             root.lastTest = context.clientContext;
             root.testRequested(name, context);
         } else {
-            controller.readingNames = Object.assign({}, controller.readingNames, { [name]: true });
+            controller.readingNames = DataSourceMap.copy(controller.readingNames, { [name]: true });
             if (controller.draft.name === name) controller.reading = true;
             root.introspectRequested(name, context);
         }
@@ -95,7 +95,7 @@ QtObject {
         const id = method + ":" + name;
         const operation = root.pending[id];
         if (!operation || token !== operation.clientContext || !root.current(operation)) return null;
-        const next = Object.assign({}, root.pending);
+        const next = DataSourceMap.copy(root.pending);
         delete next[id];
         root.pending = next;
         return operation;
@@ -118,9 +118,9 @@ QtObject {
         const operation = root.take("introspect", name, token);
         if (!operation) return;
         const controller = root.dataSourceController;
-        controller.readingNames = Object.assign({}, controller.readingNames, { [name]: false });
-        root.structureKeys = Object.assign({}, root.structureKeys, { [name]: root.key(operation.expectedContext.profile) });
-        controller.structures = Object.assign({}, controller.structures, { [name]: ok ? { schemas: schemas, collections: collections }
+        controller.readingNames = DataSourceMap.copy(controller.readingNames, { [name]: false });
+        root.structureKeys = DataSourceMap.copy(root.structureKeys, { [name]: root.key(operation.expectedContext.profile) });
+        controller.structures = DataSourceMap.copy(controller.structures, { [name]: ok ? { schemas: schemas, collections: collections }
             : { schemas: [], collections: [], failed: message } });
         const sameSelection = operation.selectionGeneration === root.selectionGeneration;
         if (sameSelection && controller.draft.name === name) {
@@ -144,7 +144,7 @@ QtObject {
         if (method === "test") controller.testing = false;
         else {
             if (controller.draft.name === event.name) controller.reading = false;
-            controller.readingNames = Object.assign({}, controller.readingNames, { [event.name]: false });
+            controller.readingNames = DataSourceMap.copy(controller.readingNames, { [event.name]: false });
         }
         if (sameSelection && controller.draft.name === event.name) {
             controller.testMessage = message;

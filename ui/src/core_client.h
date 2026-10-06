@@ -176,7 +176,8 @@ public:
     Q_INVOKABLE void dataSourceSave(const QVariantMap& profile);
     Q_INVOKABLE void dataSourceRemove(const QString& name);
     // O console da conexao, no editor (datasource.console, 0.149.0).
-    Q_INVOKABLE void dataSourceConsole(const QString& name);
+    Q_INVOKABLE void dataSourceConsole(const QString& name, const QVariantMap& context = {});
+    Q_INVOKABLE void dataSourceConsoleStatement(const QVariantMap& operation);
     Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password,
                                     const QVariantMap& context = {});
     Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password,
@@ -407,12 +408,14 @@ signals:
     void cargoMetadataResolved(int packages);
     void setupListResolved(const QString& distroName, const QString& family,
                            const QVariantList& tools);
-    void dataSourceListResolved(const QVariantList& profiles);
+    void dataSourceListResolved(const QVariantList& profiles, const QVariantList& consoleBindings,
+                                const QString& workspace);
     void dataSourceOdbcSourcesResolved(const QVariantList& sources);
     void dataSourceOdbcAuthorized(const QString& name, const QString& identity,
                                   const QString& workspace);
     void dataSourceDriverRequired(const QString& method, const QVariantMap& details);
-    void dataSourceConsoleResolved(const QString& path, bool created);
+    void dataSourceConsoleResolved(const QVariantMap& operation);
+    void dataSourceConsoleStatementResolved(const QVariantMap& operation);
     void dataSourceTestAccepted(const QString& jobId);
     /// `candidates` com o perfil pronto de cada um; `hint` quando vazio.
     void dataSourceDiscovered(const QVariantList& candidates, const QString& containerEngine,
@@ -605,7 +608,8 @@ signals:
     void runningChanged();
     /// A execucao abriu numa ABA DE TERMINAL (0.125.0): `terminalId` e' a
     /// sessao — a saida chega por `terminalRendered`, como as outras.
-    void runStarted(const QString& command, const QString& terminalId);
+    void runStarted(const QString& command, const QString& terminalId, const QString& executionKey,
+                    const QString& workspace);
     /// A sessao da execucao fechou (`event.terminal.closed` com o id dela).
     void runFinished(bool success, int exitCode);
     void debuggingChanged();

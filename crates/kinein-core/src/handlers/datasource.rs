@@ -42,6 +42,9 @@ impl Core {
             "datasource.create" => Some(self.datasource_create_response(request_id, params)),
             "datasource.destroy" => Some(self.datasource_destroy_response(request_id, params)),
             "datasource.console" => Some(self.datasource_console_response(request_id, params)),
+            "datasource.console.statement" => {
+                Some(self.datasource_console_statement_response(request_id, params))
+            }
             "datasource.impact" => Some(self.datasource_impact_response(request_id, params)),
             "datasource.introspect" => {
                 Some(self.datasource_introspect_response(request_id, params))
@@ -66,8 +69,11 @@ impl Core {
         ) {
             return *response;
         }
+        let profiles = crate::datasource::list(&root);
         let resultado = DataSourceListResult {
-            profiles: crate::datasource::list(&root),
+            console_bindings: crate::datasource::console::bindings(&root, &profiles),
+            workspace: root.display().to_string(),
+            profiles,
         };
         JsonRpcResponse::success(request_id, json!(resultado))
     }
@@ -92,7 +98,14 @@ impl Core {
         match crate::datasource::save(&root, &request.profile) {
             Ok(profiles) => {
                 self.previews.revoke(&root, &request.profile.name);
-                JsonRpcResponse::success(request_id, json!(DataSourceWriteResult { profiles }))
+                JsonRpcResponse::success(
+                    request_id,
+                    json!(DataSourceWriteResult {
+                        console_bindings: crate::datasource::console::bindings(&root, &profiles),
+                        workspace: root.display().to_string(),
+                        profiles
+                    }),
+                )
             }
             Err(mensagem) => JsonRpcResponse::failure(
                 request_id,
@@ -124,9 +137,14 @@ impl Core {
         self.odbc.revoke(&root, &request.name);
         self.previews.revoke(&root, &request.name);
         match crate::datasource::remove(&root, &request.name) {
-            Ok(profiles) => {
-                JsonRpcResponse::success(request_id, json!(DataSourceWriteResult { profiles }))
-            }
+            Ok(profiles) => JsonRpcResponse::success(
+                request_id,
+                json!(DataSourceWriteResult {
+                    console_bindings: crate::datasource::console::bindings(&root, &profiles),
+                    workspace: root.display().to_string(),
+                    profiles
+                }),
+            ),
             Err(mensagem) => JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(JsonRpcErrorCode::InternalError, mensagem, None),

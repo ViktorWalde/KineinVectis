@@ -397,7 +397,13 @@ fn the_profile_console_is_created_once_through_dispatch() {
     let result = created.response().result.as_ref().unwrap().clone();
     assert_eq!(result["created"], true);
     let path = result["path"].as_str().unwrap().to_owned();
-    assert!(path.ends_with(".kinein/consoles/local.sql"), "{path}");
+    assert!(
+        std::path::Path::new(&path)
+            .parent()
+            .unwrap()
+            .ends_with(".kinein/consoles/v1"),
+        "{path}"
+    );
     std::fs::write(&path, "select 1;\n").unwrap();
 
     let again = core.handle_request(&JsonRpcRequest::new(

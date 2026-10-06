@@ -582,9 +582,54 @@ prova intermediária como fechamento do passo 7.
 
 ## 10. Onde continuar
 
+### Console: arquivo, vínculo e instrução (0.160.0, 2026-10-06)
+
+Validado no 40.7 §7.225. Rótulos das abas são um mapa de apresentação
+produzido pelo controller do console, com caminhos exatos como chaves;
+o editor não chama uma função guardada em propriedade dinâmica.
+
+O core fornece consoleBindings junto do workspace e perfis: caminhos exatos
+para cada nome. A UI não deriva fileStem nem aceita subcaminhos por prefixo.
+Consoles novos vivem em `.kinein/consoles/v1/<prefixo>--<sha256>.sql` ou
+`.mongo`: prefixo ASCII de até 32 bytes e SHA-256 completo do nome UTF-8.
+A aba mostra o nome da conexão; o caminho continua identidade de documento.
+
+Legado só conserva vínculo quando há exatamente um perfil com seu nome
+antigo/extensão. Colisão deixa o texto antigo intacto e sem vínculo de
+execução; cada perfil ganha arquivo novo. Não há migração ou sobrescrita.
+console_fs abre diretórios/arquivo com NOFOLLOW, verifica regularidade com
+NONBLOCK, publica header completo por renameat NOREPLACE e recusa links,
+FIFO e diretórios. Header escapa o nome numa linha. Não há isolamento contra
+renomeações posteriores de outro processo do mesmo usuário.
+
+```mermaid
+flowchart LR
+    A[Editor: texto ainda não salvo e offsets UTF-16] --> B[datasource.console.statement]
+    B --> C{Contexto e caminho exato válidos?}
+    C -->|não| D[Recusa sem conexão ou job]
+    C -->|sim| E[Core: seleção ou léxico SQL / linha Mongo]
+    E --> F[Resposta com token e contexto públicos]
+    F --> G{Ainda corresponde ao pedido ativo?}
+    G -->|sim| H[query/impact com políticas existentes]
+    G -->|não| I[Descartar resposta antiga]
+```
+
+Limite do texto: 1 MiB. Offsets inválidos ou entre pares surrogate são
+recusados. Seleção explícita preserva seu texto; separação automática exige
+léxico válido e divide apenas fora de literais/comentários/parênteses.
+Não resolve senha nem abre banco nessa etapa. O bridge não registra o buffer
+nem a instrução dessa operação nos logs. Isso não é uma auditoria completa
+dos logs de todos os métodos da IDE, pendente no passo 8.
+
+Chaves da árvore são tuplas JSON; mapas por nome têm protótipo nulo e
+leitura de propriedade própria. Nomes com separadores, __proto__ ou
+constructor não confundem estrutura, expansão ou leitura de outro perfil.
+Testes tentam colisões, links/FIFO, oito criações concorrentes, nome com
+newline, literais multilinha, Unicode, resposta antiga e contexto alterado.
+
 A fila e o prompt de retomada ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
-Aceitar a fatia PostgreSQL (§9), atender o pedido do autor de profundidade
-do editor e seguir menus/árvore viva, console, completion e ampliação da
-grade no passo 7. O pente fino e o
+Prévia PostgreSQL (§9) e profundidade do editor aceitas no 40.7 §7.223/224.
+Base de console/árvore aceita no 40.7 §7.225. Seguir ações e menus/árvore
+viva, console, completion e ampliação da grade no passo 7. O pente fino e o
 AppImage seguem a ordem do 59 §7.

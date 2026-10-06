@@ -72,6 +72,18 @@ Item {
         controller.editDraft("name", "novo-nome");
         failures += check(!controller.testing && controller.catalog.pending["test:loja"] === undefined,
             "renomear rascunho invalida teste do perfil selecionado");
+        for (const name of ["__proto__", "constructor"]) {
+            const special = Object.assign({}, profile, { name: name });
+            controller.handleList([special]);
+            controller.select(name);
+            controller.introspectProfile(name);
+            const operation = controller.catalog.pending["introspect:" + name];
+            failures += check(DataSourceMap.get(controller.readingNames, name) === true, "indicador guarda " + name);
+            controller.handleIntrospected(name, true, [{ name: "main", tables: [] }], [], "", false, operation.clientContext);
+            failures += check(DataSourceMap.get(controller.structures, name).schemas[0].name === "main", "catálogo guarda " + name);
+            controller.handleList([Object.assign({}, special, { host: "changed" })]);
+            failures += check(DataSourceMap.get(controller.structures, name) === undefined, "cache especial invalidado");
+        }
         Qt.exit(failures === 0 ? 0 : 1);
     }
 }

@@ -165,7 +165,9 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
         method == QStringLiteral("datasource.test") ||
         method == QStringLiteral("datasource.introspect") ||
         method == QStringLiteral("datasource.destroy") ||
-        method == QStringLiteral("datasource.preview.decide"))
+        method == QStringLiteral("datasource.preview.decide") ||
+        method == QStringLiteral("datasource.console") ||
+        method == QStringLiteral("datasource.console.statement"))
     {
         m_pendingDataSourceQueries.insert(
             id,
@@ -197,7 +199,9 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
     const QByteArray payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
     // Teclas/paste podem conter senhas sem um campo chamado "password".
     if (method != QStringLiteral("lsp.didChange") &&
-        method != QStringLiteral("syntaxTree.update") && method != QStringLiteral("terminal.input"))
+        method != QStringLiteral("syntaxTree.update") &&
+        method != QStringLiteral("terminal.input") &&
+        method != QStringLiteral("datasource.console.statement"))
     {
         const QByteArray registered =
             QJsonDocument(kinein::redactSecrets(request)).toJson(QJsonDocument::Compact);

@@ -5,12 +5,19 @@
 >
 > **O estado, em 2026-10-06 (leia isto; o resto do cabeçalho é histórico):**
 >
+> Este estado corresponde ao worktree `layout-0.3.6`, localizado por
+> `git worktree list`. A `main` ainda está em `6c4f649`, protocolo `0.154.0`;
+> a base aceita da `0.159.0` terminou em `28c7048`, e a `0.160.0` foi
+> validada depois no 40.7 §7.225. Confira
+> branch, log e alterações locais antes de retomar, para não reimplementar
+> MongoDB, ODBC, proteção de produção ou prévia PostgreSQL.
+>
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.159.0` validado,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.160.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.224.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.225.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -75,7 +82,11 @@
 >     Profundidade do editor como no terminal validada (§7.224; autor,
 >     2026-10-06), com a mesma área útil. Atual: menus/árvore viva, com
 >     proteção do vínculo entre console e conexão, depois console/grade
->     e motores restantes.
+>     e motores restantes. **Base dos consoles/árvore e abas de execução
+>     aceita** (`0.160.0`, 40.7 §7.225): vínculos sem colisão, extração da
+>     instrução no core, chaves seguras e uma aba por execução, com PTY novo
+>     a cada tentativa. A retomada conferiu e completou o trabalho local,
+>     sem duplicar os motores existentes. Próximo: ações e menus do 59 §5.1.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >
@@ -830,7 +841,7 @@ ainda não está verde.
 | P5 — qualidade | **FEITO em 2026-09-17 (§7.50, 0.119.0):** `--clang-tidy` no clangd e o clang-tidy do projeto pela CDB no `quality.run` (D6); gtest/Catch2 dentro dos binários do ctest na árvore, rodar um pelo filtro (D7); domínio `coverage.*` — cargo-llvm-cov e coverage.py em LCOV, a calha pinta (D8); a lâmpada 💡 na linha do cursor com diagnóstico. **Resta:** cppcheck como segundo motor; gcov/lcov para C/C++ (exige `--coverage` no build do usuário); doctest. |
 | P6 — Linux embarcado | **Fatia 1 FEITA em 2026-09-17 (§7.51, 0.120.0):** domínio `remote.*` — perfil SSH sem senha, `remote.probe`, `remote.deploy`, `remote.command`; painel **Alvo remoto (SSH)**. **Fatia 2 FEITA em 2026-09-18 (§7.53, 0.122.0):** o workspace ESPELHADO — `remote.open` puxa a pasta do alvo por rsync para o cache e a IDE a abre como workspace comum (`workspace.open` responde `remote`), salvar empurra o arquivo, `remote.sync` pull/push sem `--delete`, `remote.status`. **Resta (42 §P6):** watcher do lado remoto, renomear/apagar propagados, LSP/interpretador do alvo, journalctl/dmesg, Yocto/Buildroot reconhecidos, `sshd` local no gate, exercitação numa Pi real. |
 | Frameworks, bloco E | **FEITO em 2026-09-17 (§7.48, 0.117.0):** `build.run` compila pelo wrapper de cada um (`pio run`; `idf.py build` no ambiente ativado — export.sh ou EIM; `west build -d build -b <placa>`; CMake com `-DPICO_SDK_PATH`), Gravar ganhou `idf.py`/`west`/`platformio`, o monitor ganhou o IDF Monitor e o `pio device monitor`, `platformio.ini` é tipo de projeto. Provado com wrappers falsos — nenhum SDK real nesta máquina. Resta: E5 templates curados, E6 Unity/Ceedling. |
-| Banco | **FEITO em 2026-09-18 (§7.52, 0.121.0):** `datasource.query` — leitura com teto imposto por fora e `READ ONLY` no motor, escrita só com `confirmWrite` (código `WRITE_CONFIRMATION_REQUIRED`), células em texto, Mongo `<coleção> <filtro>` só leitura; TLS `verify-full` no PostgreSQL (`tokio-postgres-rustls`, +11 crates, deny verde). **Resta:** escrever documento no Mongo; abas/histórico de consulta; exportar; cancelar consulta longa; PostgreSQL/Mongo reais e o TLS de ponta a ponta não provados no gate (só SQLite). |
+| Banco | **FEITO em 2026-09-18 (§7.52, 0.121.0):** `datasource.query` — leitura com teto imposto por fora e `READ ONLY` no motor, escrita só com `confirmWrite` (código `WRITE_CONFIRMATION_REQUIRED`), células em texto, Mongo `<coleção> <filtro>` só leitura; TLS `verify-full` no PostgreSQL (`tokio-postgres-rustls`, +11 crates, deny verde). **Naquela data faltavam:** escrever documento no Mongo; abas/histórico de consulta; exportar; cancelar consulta longa; PostgreSQL/Mongo reais e o TLS de ponta a ponta não provados no gate (só SQLite). **Estado atual:** escrita MongoDB, ODBC, produção/somente leitura, prévia e consoles aceitos no 40.7 §7.220–§7.225; pendências atuais no 59 §5. |
 | Varredura 40 §8 | `quality.output` descartado no C++; `environmentScan` sem ouvinte; presets sem tela. Os demais achados permanecem detalhados no §8. |
 | Frentes grandes, bloco F | Jupyter; dev containers com contexto remoto; polimento Rust com nextest e llvm-cov. |
 

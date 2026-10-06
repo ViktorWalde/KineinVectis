@@ -33,7 +33,8 @@ void CoreClient::handleResponseLine(const QByteArray& line)
         method != QStringLiteral("lsp.semanticTokens") &&
         method != QStringLiteral("terminal.copySelection") &&
         method != QStringLiteral("syntaxTree.update") &&
-        method != QStringLiteral("syntaxTree.indent"))
+        method != QStringLiteral("syntaxTree.indent") &&
+        method != QStringLiteral("datasource.console.statement"))
     {
         appendLog(QStringLiteral("<- %1").arg(QString::fromUtf8(line.left(200))));
     }

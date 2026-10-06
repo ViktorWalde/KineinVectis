@@ -24,7 +24,8 @@ Item {
     // autor: "ja' temos o terminal integrado"): o core abre a sessao e devolve
     // o id; a aba ganha o nome do comando. Aqui fica qual sessao e' a da
     // execucao, e o desfecho da ultima.
-    property string runTerminalId: ""
+    property alias runTerminalId: runTabs.terminalId
+    readonly property bool runPending: runTabs.pending
     property string lastRunMessage: ""
     // A porta serial que o Executar leva ao core como `device` (run.start /
     // run.script, 0.110.0): num projeto MicroPython o arquivo roda na placa
@@ -54,6 +55,9 @@ Item {
     signal clearTerminalInputRequested()
 
     visible: false
+    onWorkspaceRootChanged: {
+        if (runTabs !== null) clearTerminals();
+    }
 
     // D2.3: uma linha por terminal aberto — { termId, title }.
     ListModel {
@@ -66,8 +70,7 @@ Item {
         root.activeTerminalId = "";
         root.terminalRender = ({});
         root.terminalRenders = ({});
-        root.runTerminalId = "";
-        root.finishedRuns = ({});
+        runTabs.clear();
     }
 
     function clear() {
@@ -120,6 +123,10 @@ Item {
     }
 
     function handleTerminalOpened(id, shell, title) {
+        if (indexOfTerminal(id) >= 0) {
+            if (!isFinishedRun(id)) return;
+            removeTerminalTab(id);
+        }
         root.terminalRenders[id] = ({});
         terminalsListModel.append({
             "termId": id,
@@ -162,6 +169,7 @@ Item {
             removeTerminalTab(id);
             return;
         }
+        runTabs.closing(id);
         terminalCloseRequested(id);
     }
 
@@ -216,19 +224,20 @@ Item {
     // A porta so' acompanha o LANCADOR PADRAO (command vazio): um comando
     // digitado roda como foi escrito, e o core recusa os dois juntos.
     function startRun(command) {
-        if (workspaceRoot === "" || running) {
+        if (workspaceRoot === "" || running || runPending) {
             return;
         }
         lastRunMessage = "";
-        pendingRunName = command === "" ? activeRunName : "";
+        runTabs.begin(command === "" ? activeRunName : "");
         runStartRequested(command, command === "" ? serialDevice : "");
     }
 
     function startScript(path) {
-        if (workspaceRoot === "" || running || path === "") {
+        if (workspaceRoot === "" || running || runPending || path === "") {
             return;
         }
         lastRunMessage = "";
+        runTabs.begin("");
         runScriptRequested(path, serialDevice);
     }
 
@@ -243,18 +252,12 @@ Item {
     // O nome da configuracao ativa: a aba da execucao se chama "▶ Rodar em pi",
     // e nao "▶ ssh -tt -p 2222 -i /tmp/…" (2026-10-04).
     property string activeRunName: ""
-    property string pendingRunName: ""
-
-    function runTabTitle(command) {
-        const partes = command.trim().split(/\s+/);
-        let base = partes.length > 0 ? partes[0] : command;
-        if (base.indexOf("/") >= 0) {
-            base = base.substring(base.lastIndexOf("/") + 1).replace(/'$/, "");
-        }
-        const resto = partes.slice(1).join(" ");
-        const titulo = resto === "" ? base : base + " " + resto;
-        return "▶ " + (titulo.length > 28 ? titulo.substring(0, 27) + "…" : titulo);
+    RunTerminalController {
+        id: runTabs
+        runtime: root
     }
+
+    function handleCoreDisconnected() { runTabs.disconnected(); }
 
     /// Roteia o render pra sessão dona. Só a ABA ATIVA vira `terminalRender`
     /// (o que a tela desenha); as outras ficam guardadas e voltam na troca.
@@ -310,36 +313,15 @@ Item {
         }
     }
 
-    // As execucoes que ja' terminaram e cuja aba FICA (o autor le a saida):
-    // id -> exitCode. Fechar a aba de uma delas e' so' local — o core nao
-    // tem mais a sessao.
-    property var finishedRuns: ({})
+    // O estado de execucao tem um dono; shells continuam neste controller.
+    function isFinishedRun(id) { return runTabs.isFinished(id); }
 
-    function isFinishedRun(id) {
-        return root.finishedRuns[id] !== undefined;
-    }
-
-    /// Uma sessão morreu (shell saiu ou fechamos a aba): tira da lista e, se
-    /// era a ativa, cai pra vizinha. Sem sessão, a aba fica vazia e a próxima
-    /// tecla reabre. A aba de uma EXECUCAO fica, com o desfecho no nome.
     function handleTerminalClosed(id, exitCode) {
-        if (id === root.runTerminalId && !isFinishedRun(id)) {
-            const codigo = exitCode === undefined ? -1 : exitCode;
-            root.finishedRuns[id] = codigo;
-            const index = indexOfTerminal(id);
-            if (index >= 0) {
-                const titulo = terminalsListModel.get(index).title;
-                terminalsListModel.setProperty(index, "title",
-                    titulo + (codigo === 0 ? " ✓" : " ✗ " + codigo));
-                root.terminalsRevision += 1;
-            }
-            return;
-        }
-        removeTerminalTab(id);
+        if (!runTabs.finished(id, exitCode)) removeTerminalTab(id);
     }
 
     function removeTerminalTab(id) {
-        delete root.finishedRuns[id];
+        runTabs.release(id);
         const index = indexOfTerminal(id);
         if (index >= 0) {
             terminalsListModel.remove(index);
@@ -360,14 +342,8 @@ Item {
         root.terminalRender = root.terminalRenders[next] || ({});
     }
 
-    /// A execucao abriu: vira aba de terminal com o nome do comando e ganha
-    /// o foco. Sem `terminalId` (core antigo) nao ha' o que mostrar.
-    function handleRunStarted(command, terminalId) {
-        if (terminalId === undefined || terminalId === "") {
-            return;
-        }
-        runTerminalId = terminalId;
-        handleTerminalOpened(terminalId, "", pendingRunName !== "" ? "▶ " + pendingRunName : runTabTitle(command));
+    function handleRunStarted(command, terminalId, executionKey, workspace) {
+        runTabs.started(command, terminalId, executionKey, workspace);
     }
 
     /// A sessao da execucao fechou: a aba fica (o autor le a saida) e o
@@ -380,6 +356,7 @@ Item {
     }
 
     function handleRequestFailed(method, message) {
+        runTabs.failed(method);
         if (method === "run.start" || method === "run.script" || method === "run.stop") {
             lastRunMessage = message;
             showTabRequested("terminal");

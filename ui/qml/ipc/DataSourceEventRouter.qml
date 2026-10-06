@@ -28,13 +28,17 @@ Item {
             root.dataSourceController.odbc.handleRequired(method, details);
         }
 
-        function onDataSourceListResolved(profiles) {
+        function onDataSourceListResolved(profiles, bindings, workspace) {
+            if (workspace !== root.dataSourceController.workspaceRoot) return;
+            root.dataSourceController.consoles.catalogue(bindings, workspace);
             root.dataSourceController.handleList(profiles);
         }
 
-        function onDataSourceConsoleResolved(path, created) {
-            root.dataSourceController.consoles.handleResolved(path);
+        function onDataSourceConsoleResolved(operation) {
+            root.dataSourceController.consoles.handleResolved(operation);
         }
+
+        function onDataSourceConsoleStatementResolved(operation) { root.dataSourceController.consoles.handleStatement(operation); }
 
         function onDataSourceTested(name, ok, serverVersion, message, secretRequired, clientContext) {
             root.dataSourceController.handleTested(name, ok, serverVersion, message,
@@ -53,7 +57,8 @@ Item {
         function onDataSourcePreviewed(event) { root.dataSourceController.previews.prepared(event); }
 
         function onDataSourceOperationFailed(method, message, code, operation) {
-            if (method === "datasource.query") root.dataSourceController.handleFailed(method, message, code, operation);
+            if (method === "datasource.console" || method === "datasource.console.statement") root.dataSourceController.consoles.fail(method, message, operation);
+            else if (method === "datasource.query") root.dataSourceController.handleFailed(method, message, code, operation);
             else if (method === "datasource.test" || method === "datasource.introspect") root.dataSourceController.handleFailed(method, message, code, operation);
             else if (method === "datasource.destroy") root.dataSourceController.discovery.handleFailed(method, message, code, operation);
             else if (method === "datasource.impact") root.dataSourceController.impact.handleFailed(message, operation, code);
@@ -85,7 +90,7 @@ Item {
         }
 
         function onRequestFailed(method, message, code) {
-            if (["datasource.query", "datasource.impact", "datasource.test", "datasource.introspect", "datasource.destroy", "datasource.preview.decide"].indexOf(method) >= 0) return;
+            if (["datasource.query", "datasource.impact", "datasource.test", "datasource.introspect", "datasource.destroy", "datasource.preview.decide", "datasource.console", "datasource.console.statement"].indexOf(method) >= 0) return;
             root.dataSourceController.handleFailed(method, message, code);
             root.dataSourceController.discovery.handleFailed(method, message);
         }

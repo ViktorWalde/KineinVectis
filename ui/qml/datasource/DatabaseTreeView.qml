@@ -27,7 +27,7 @@ ListView {
         } else if (row.expandable) {
             root.treeModel.toggle(row.key);
             if (row.kind === "connection" && row.expanded === false
-                    && root.controller.structures[row.connection] === undefined) {
+                    && DataSourceMap.get(root.controller.structures, row.connection) === undefined) {
                 root.controller.introspectProfile(row.connection);
             }
         }

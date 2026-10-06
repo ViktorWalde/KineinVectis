@@ -3596,9 +3596,6 @@ ui/qml/remote/RemoteRunActions.qml	ferramenta	2
 ui/qml/remote/RemoteSetupController.qml	alvo	5
 ui/qml/remote/RemoteSystemView.qml	coluna	3
 ui/qml/remote/RemoteVerdict.qml	coluna	2
-ui/qml/runtime/RuntimeController.qml	codigo	4
-ui/qml/runtime/RuntimeController.qml	resto	3
-ui/qml/runtime/RuntimeController.qml	titulo	6
 ui/qml/search/SearchController.qml	indice	9
 ui/qml/search/SearchController.qml	saida	5
 ui/qml/search/SearchController.qml	seguinte	3

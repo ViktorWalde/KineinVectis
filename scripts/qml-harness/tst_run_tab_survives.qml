@@ -25,7 +25,7 @@ Item {
     Component.onCompleted: {
         let failures = 0;
         runtime.startRun("");
-        runtime.handleRunStarted("ssh -tt pi 'app'", "t1");
+        runtime.handleRunStarted("ssh -tt pi 'app'", "t1", "config-pi", "/w");
         if (runtime.terminalsModel.count !== 1) failures += 1;
         if (runtime.terminalsModel.get(0).title !== "▶ Rodar em pi") failures += 2;
         // A ordem do CoreClient: fechou, e so' depois o terminal fica inativo.

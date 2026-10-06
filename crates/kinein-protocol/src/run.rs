@@ -52,6 +52,11 @@ pub struct RunCapabilitiesResult {
 pub struct RunStartResult {
     /// Command that is now running.
     pub command: String,
+    /// Canonical workspace owning this execution (`0.160.0`).
+    pub workspace: String,
+    /// Opaque logical tab identity, resolved by the core. Each attempt still
+    /// uses a fresh PTY/session id; clients must not derive identity from titles.
+    pub execution_key: String,
     /// The terminal session it runs in (`0.125.0`): the output arrives as
     /// `event.terminal.render` for this id, the end as `event.terminal.closed`.
     #[serde(default, skip_serializing_if = "Option::is_none")]

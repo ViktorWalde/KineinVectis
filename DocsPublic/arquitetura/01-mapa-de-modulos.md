@@ -79,7 +79,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 181 métodos IPC roteados pelo core.
+Medido: 182 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -269,7 +269,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 181 métodos roteados pelo core, 151 seguem o caminho padrão
+Dos 182 métodos roteados pelo core, 152 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 30 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -664,6 +664,7 @@ flowchart LR
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_dispatch_cmake_cpp["core_client_dispatch_cmake.cpp"]
     n_ui_src_core_client_dispatch_lsp_cpp["core_client_dispatch_lsp.cpp"]
+    n_ui_src_core_client_log_cpp["core_client_log.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
     n_ui_src_core_client_requests_run_cpp["core_client_requests_run.cpp"]
@@ -708,6 +709,7 @@ flowchart LR
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_dispatch_lsp_cpp -.-> n_ui_qml_ipc_JobsEventRouter_qml
+  n_ui_src_core_client_log_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_CoverageEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_JobsEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
@@ -752,6 +754,7 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch_cmake.cpp` | Dispatch do dominio CMake/build (ARCHITECTURE.md §5). |
 | ponte C++ | `ui/src/core_client_dispatch_lsp.cpp` | Dispatch do dominio LSP (ARCHITECTURE.md §5): |
+| ponte C++ | `ui/src/core_client_log.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | ponte C++ | `ui/src/core_client_requests_run.cpp` | Dominio RUN no lado da UI: |
@@ -1121,7 +1124,7 @@ flowchart LR
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
   end
   subgraph IPC["JSON-RPC"]
-    n_ipc_datasource(["datasource.* · 14"])
+    n_ipc_datasource(["datasource.* · 15"])
     n_ipc_fs(["fs.* · 1"])
     n_ipc_grafana(["grafana.* · 4"])
     n_ipc_job(["job.* · 1"])
@@ -1195,7 +1198,7 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/jobs.rs` | Handlers for job.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (20): `datasource.console`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.preview.decide`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`, `job.cancel`.
+Métodos IPC (21): `datasource.console`, `datasource.console.statement`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.preview.decide`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`, `job.cancel`.
 
 ### Containers
 
