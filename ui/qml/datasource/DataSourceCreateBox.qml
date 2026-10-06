@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// "Novo banco" (0.124.0): um arquivo SQLite no projeto, um PostgreSQL ou
+// "Criar banco" (0.124.0; "Novo banco" ate' 2026-10-04): um arquivo SQLite no projeto, um PostgreSQL ou
 // MongoDB em container no loopback (o comando aparece ANTES e DEPOIS —
 // baixa imagem, nunca em silencio), ou um banco dentro do PostgreSQL do
 // perfil em edicao (`CREATE DATABASE`, pela escrita confirmada). Burro:
@@ -23,15 +23,20 @@ Item {
     signal createSqliteRequested(string name, string path)
     signal createServerRequested(string engine, string name, int port)
     signal createDatabaseRequested(string name)
-    signal closeRequested()
 
     property string kind: "sqlite"
     property string name: ""
     property string port: ""
 
+    // O que acontece: frase para o SQLite, o COMANDO (em caixa de codigo)
+    // para o que roda num servidor.
+    readonly property string sentence: kind === "sqlite"
+        ? qsTr("Cria data/%1.sqlite no projeto e salva a conexão.").arg(name || "<nome>")
+        : (kind === "database" ? qsTr("Cria o banco dentro do PostgreSQL da conexão %1.").arg(serverProfileName || "?")
+                               : qsTr("Sobe um servidor novo em contêiner, só no loopback desta máquina. O comando:"))
     readonly property string preview: {
-        if (kind === "sqlite") return qsTr("cria data/%1.sqlite no projeto e salva o perfil").arg(name || "<nome>");
-        if (kind === "database") return "CREATE DATABASE \"" + (name || "<nome>") + "\"  —  " + qsTr("no perfil %1").arg(serverProfileName || "?");
+        if (kind === "sqlite") return "";
+        if (kind === "database") return "CREATE DATABASE \"" + (name || "<nome>") + "\"";
         const motor = containerEngine || "podman";
         const imagem = kind === "mongo" ? "docker.io/library/mongo:7" : "docker.io/library/postgres:16";
         const interna = kind === "mongo" ? 27017 : 5432;
@@ -42,14 +47,6 @@ Item {
 
     implicitHeight: coluna.implicitHeight + 2 * Theme.spacingSmall
 
-    Rectangle {
-        anchors.fill: parent
-        radius: Theme.radius
-        color: Theme.background2
-        border.width: 1
-        border.color: Theme.borderSoft
-    }
-
     Column {
         id: coluna
 
@@ -58,61 +55,23 @@ Item {
         width: parent.width - 2 * Theme.spacingSmall
         spacing: Theme.spacingSmall
 
-        Row {
+        // Padrao novo (2026-10-04): o seletor segmentado; o titulo e o x
+        // repetidos sairam (o dialogo ja' diz "Criar banco").
+        KvSegmentedControl {
             width: parent.width
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Novo banco")
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeBody
-                font.bold: true
-            }
-
-            Item { width: parent.width - x - fechar.width; height: 1 }
-
-            KvIconButton {
-                id: fechar
-
-                compact: true
-                iconName: "close"
-                tooltip: qsTr("Fechar")
-                onClicked: root.closeRequested()
-            }
-        }
-
-        // Flow, nao Row: com ~400 px a coluna nao cabia os quatro chips e o
-        // "MongoDB em container" ficava cortado (o autor viu, 2026-09-19).
-        Flow {
-            width: parent.width
-            spacing: Theme.spacingXSmall
-
-            KvToggleChip {
-                labelText: qsTr("SQLite (arquivo)")
-                active: root.kind === "sqlite"
-                onToggled: root.kind = "sqlite"
-            }
-
-            KvToggleChip {
-                labelText: qsTr("PostgreSQL em container")
-                active: root.kind === "postgres"
-                enabled: root.canServe
-                onToggled: root.kind = "postgres"
-            }
-
-            KvToggleChip {
-                labelText: qsTr("MongoDB em container")
-                active: root.kind === "mongo"
-                enabled: root.canServe
-                onToggled: root.kind = "mongo"
-            }
-
-            KvToggleChip {
-                labelText: qsTr("Banco no servidor")
-                active: root.kind === "database"
-                enabled: root.serverProfileNamed
-                onToggled: root.kind = "database"
-            }
+            current: root.kind
+            options: [
+                { value: "sqlite", label: qsTr("SQLite"), icon: DataSourceKinds.engineIcon("sqlite"),
+                  tooltip: qsTr("Um arquivo de banco dentro do projeto") },
+                { value: "postgres", label: qsTr("PostgreSQL"), icon: DataSourceKinds.engineIcon("postgres"),
+                  enabled: root.canServe, tooltip: qsTr("Um servidor novo em contêiner (Podman/Docker)") },
+                { value: "mongo", label: qsTr("MongoDB"), icon: DataSourceKinds.engineIcon("mongo"),
+                  enabled: root.canServe, tooltip: qsTr("Um servidor novo em contêiner (Podman/Docker)") },
+                { value: "database", label: qsTr("No servidor"), icon: "schema",
+                  enabled: root.serverProfileNamed,
+                  tooltip: qsTr("Um banco dentro do PostgreSQL da conexão escolhida") }
+            ]
+            onSelected: value => root.kind = value
         }
 
         Text {
@@ -149,11 +108,32 @@ Item {
 
         Text {
             width: parent.width
-            wrapMode: Text.WrapAnywhere
-            text: root.preview
+            wrapMode: Text.WordWrap
+            text: root.sentence
             color: Theme.textSecondary
-            font.family: Theme.monoFont
             font.pixelSize: Theme.fontSizeCaption
+        }
+
+        Rectangle {
+            width: parent.width
+            visible: root.preview !== ""
+            height: previewText.implicitHeight + 2 * Theme.spacingSmall
+            radius: Theme.radius
+            color: Theme.background0
+            border.width: 1
+            border.color: Theme.borderSoft
+
+            Text {
+                id: previewText
+
+                anchors.fill: parent
+                anchors.margins: Theme.spacingSmall
+                wrapMode: Text.WrapAnywhere
+                text: "$ " + root.preview
+                color: Theme.textPrimary
+                font.family: Theme.monoFont
+                font.pixelSize: Theme.fontSizeCaption
+            }
         }
 
         Text {
@@ -174,12 +154,14 @@ Item {
         }
 
         KvButton {
-            text: root.kind === "sqlite" ? qsTr("Criar arquivo")
-                  : root.kind === "database" ? qsTr("Criar banco (escreve no servidor)")
-                  : qsTr("Subir servidor (baixa a imagem)")
+            activeFocusOnTab: true
+            width: parent.width
+            text: root.kind === "sqlite" ? qsTr("Criar o arquivo")
+                  : root.kind === "database" ? qsTr("Criar o banco no servidor")
+                  : qsTr("Subir o servidor (baixa a imagem)")
             primary: true
-            compact: true
             enabled: !root.creating && root.name.trim() !== ""
+                     && (root.kind === "sqlite" || (root.kind === "database" ? root.serverProfileNamed : root.canServe))
             onClicked: {
                 if (root.kind === "sqlite") root.createSqliteRequested(root.name, "");
                 else if (root.kind === "database") root.createDatabaseRequested(root.name);

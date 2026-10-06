@@ -1,5 +1,22 @@
 # 03 — Protocolo IPC
 
+> **0.156.0 (2026-10-05) — confirmação seletiva.**
+> Inserir, criar e alterar com filtro rodam diretamente. Remover dados ou
+> objetos, alterar tudo sem filtro e instruções desconhecidas continuam
+> exigindo `confirmWrite`. Alterações filtradas têm medição silenciosa num
+> job: se atingem todos os registros, ou a medição falha, a escrita não roda
+> e `event.datasource.queried` traz `confirmationSql` com o texto bloqueado
+> (aditivo; ausente no resultado comum). A UI reutiliza o diálogo de impacto. Medição e
+> execução continuam sendo operações separadas; a contagem é uma prévia.
+
+> **0.155.0 (fatia iniciada em 2026-10-04) — escrita MongoDB.**
+> O campo `sql` aceita um comando `colecao.operacao(argumentos JSON)` por
+> vez, com `find`, `insertOne/Many`, `updateOne/Many`, `deleteOne/Many` e
+> `drop`. Os argumentos são convertidos em BSON, incluindo Extended JSON.
+> `datasource.impact` conta documentos e acrescenta os tipos `mongoInsert`,
+> `mongoUpdate`, `mongoDelete` e `dropCollection`. Nenhum método novo.
+
+
 > **0.154.0 (2026-10-04) — Grafana dentro da IDE, opcional.** Uma chave nova nas
 > configurações, `grafanaWebView` (global, `false` por padrão; o projeto não
 > opina), aditiva em `settings.get`/`settings.set`. Nenhum método novo (178).
@@ -4488,10 +4505,11 @@ que fazer com a detecção fica na UI (`27-modulos-por-dominio.md` §6).
 
 ## `datasource.*` — os perfis de banco, e a senha que não mora em disco
 
-Domínio da etapa 26/27 (`../roadmaps/35` §9). Oito métodos, quatro eventos.
+Domínio da etapa 26/27 (`../roadmaps/35` §9), ampliado no passo 7 do 59.
+A arquitetura e os fluxos estão no [37](37-banco-de-dados.md).
 
 ```text
-datasource.discover   {}                      -> { candidates: [DataSourceCandidate], containerEngine?, hint? }  (0.124.0, adiado)
+datasource.discover   {}                      -> { candidates: [DataSourceCandidate], containerEngine?, hint? }  (0.124.0)
 datasource.create     { kind: sqliteFile, name, path? } -> { profile }                                       (0.124.0)
                       { kind: containerServer, engine, name, port } -> { jobId, command }  + event.datasource.created
 datasource.destroy    { name, data? }         -> { profiles, note? } | { jobId, command } + event.datasource.destroyed  (0.129.0)
@@ -4512,7 +4530,7 @@ event.datasource.tested        { jobId, ok, message, ... }
 event.datasource.impact        { jobId, name, sql, severity, statements: [{ text, kind, targets, column?, filter?, severity, rows?, totalRows?, note? }] }  (0.150.0)
 event.datasource.introspected  { jobId, schemas | collections, ... }
 event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
-                                 rowCount, affected?, truncated, elapsedMs, message?, secretRequired }
+                                 rowCount, affected?, truncated, elapsedMs, message?, secretRequired, confirmationSql? }
 event.datasource.created       { jobId, success, profile?, message }                          (0.124.0)
 event.datasource.destroyed     { jobId, success, message, profiles? }                          (0.129.0)
 ```
@@ -4533,19 +4551,22 @@ impõe** o que a classificação prometeu: no PostgreSQL a leitura roda em
 no SQLite o arquivo abre com `SQLITE_OPEN_READ_ONLY`. O teto (`maxRows`,
 padrão 500, máximo 10.000) vem de fora do texto: `SELECT * FROM (<sql>) AS
 kinein_q LIMIT n+1` quando é uma instrução só de `SELECT`/`WITH`/`VALUES`/
-`TABLE`, o `step` até n+1 no SQLite; `truncated` diz quando cortou. Uma
-instrução que **não** é leitura sem `confirmWrite: true` é recusada antes do
-job com `WRITE_CONFIRMATION_REQUIRED` (código próprio, `details.name`) — a
-UI mostra "esta instrução ESCREVE" e reenvia com o campo; confirmada, roda
-como o autor escreveu (`simple_query`/`execute_batch`) e `affected` é o que
-o motor contou (o SQLite conta a última instrução). Células são texto: o
-protocolo simples do PostgreSQL devolve toda coluna assim, sem mapa de
-tipos; `NULL` é `null`; `BLOB` do SQLite vira `<N bytes>`; várias
-instruções → o último conjunto de resultados. MongoDB nesta fatia: só
-leitura — `<coleção> <filtro JSON>` (filtro ausente = `{}`) → `find` com
-`limit`, colunas = união das chaves de primeiro nível (`_id` primeiro),
-células = o JSON relaxado do valor; escrever documento fica dito como não
-feito. Vazio é `INVALID_PARAMS`; a senha segue a política do perfil
+`TABLE`, o `step` até n+1 no SQLite; `truncated` diz quando cortou. A política de confirmação desde `0.156.0` está no [37 §3](37-banco-de-dados.md).
+Remoção, substituição destrutiva, alteração sem filtro e operação desconhecida
+são recusadas antes do job com `WRITE_CONFIRMATION_REQUIRED`. Inserção e
+criação rodam direto; alteração filtrada tem medição silenciosa num job.
+Se atinge tudo ou não pode ser medida, o evento traz `confirmationSql`, sem
+executar a escrita. A UI abre o mesmo diálogo e reenvia o texto com
+`confirmWrite: true` depois do gesto explícito.
+
+A execução mantém o texto do autor (`simple_query`/`execute_batch`), e
+`affected` é o que o motor contou (SQLite: a última instrução). Células são
+texto; `NULL` é `null`; `BLOB` SQLite vira `<N bytes>`; num lote, a grade
+mostra o último conjunto de resultados. O MongoDB lê e escreve desde
+`0.155.0`, pela gramática JSON do [manual](../manual.md); a forma anterior
+`coleção {filtro}` continua lendo. O impacto inclui `mongoInsert`,
+`mongoUpdate`, `mongoDelete`, `dropCollection` e `replace` (SQLite).
+Vazio é `INVALID_PARAMS`; a senha segue a política do perfil
 (`SECRET_REQUIRED` síncrono, `secretRequired` no evento).
 
 **TLS no PostgreSQL (`0.121.0`).** `DataSourceProfile.tls: disable |

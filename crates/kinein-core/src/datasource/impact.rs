@@ -191,9 +191,8 @@ pub fn severity_of(kind: &str, filtered: bool) -> SqlImpactSeverity {
     match kind {
         "read" => SqlImpactSeverity::Read,
         "delete" | "update" if !filtered => SqlImpactSeverity::Destructive,
-        "truncate" | "dropTable" | "dropSchema" | "dropDatabase" | "dropColumn" | "drop" => {
-            SqlImpactSeverity::Destructive
-        }
+        "replace" | "truncate" | "dropTable" | "dropSchema" | "dropDatabase" | "dropColumn"
+        | "drop" => SqlImpactSeverity::Destructive,
         _ => SqlImpactSeverity::Write,
     }
 }
@@ -217,7 +216,11 @@ pub fn classify(statement: &str) -> SqlStatementImpact {
         targets.push(word(at).to_owned());
         filter = where_clause(statement, &list, at + 1);
     } else if is(0, "update") {
-        kind = "update";
+        kind = if is(1, "or") && is(2, "replace") {
+            "replace"
+        } else {
+            "update"
+        };
         // `UPDATE ONLY t` (PostgreSQL) e `UPDATE OR REPLACE t` (SQLite).
         let at = if is(1, "or") {
             3
@@ -258,7 +261,11 @@ pub fn classify(statement: &str) -> SqlStatementImpact {
             }
         }
     } else if is(0, "insert") || is(0, "replace") {
-        kind = "insert";
+        kind = if is(0, "replace") || (is(1, "or") && is(2, "replace")) {
+            "replace"
+        } else {
+            "insert"
+        };
         if let Some(into) = list.iter().position(|w| w.is("into")) {
             targets.push(word(into + 1).to_owned());
         }

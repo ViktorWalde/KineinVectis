@@ -16,7 +16,7 @@ struct Cenario {
     events: mpsc::Receiver<JsonRpcRequest>,
 }
 
-fn cenario(nome: &str) -> (Cenario, std::path::PathBuf) {
+fn scenario(nome: &str) -> (Cenario, std::path::PathBuf) {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-dsquery-{nome}", std::process::id()));
@@ -58,7 +58,7 @@ impl Cenario {
     }
 }
 
-fn banco(dir: &std::path::Path) -> String {
+fn database(dir: &std::path::Path) -> String {
     let caminho = dir.join("dados.db");
     let conexao = rusqlite::Connection::open(&caminho).unwrap();
     conexao
@@ -72,11 +72,11 @@ fn banco(dir: &std::path::Path) -> String {
 
 #[test]
 fn sqlite_query_reads_refuses_unconfirmed_writes_and_writes_when_confirmed() {
-    let (mut c, dir) = cenario("sqlite");
+    let (mut c, dir) = scenario("sqlite");
     let salvo = c.rpc(
         "datasource.save",
         json!({ "profile": { "name": "arquivo", "engine": "sqlite", "host": "", "port": 0,
-                             "database": banco(&dir), "user": "" } }),
+                             "database": database(&dir), "user": "" } }),
     );
     assert!(salvo.error.is_none(), "{:?}", salvo.error);
 
@@ -161,7 +161,7 @@ fn sqlite_query_reads_refuses_unconfirmed_writes_and_writes_when_confirmed() {
 /// e' o mesmo que ausente e some; num motor que nao e' `PostgreSQL` some.
 #[test]
 fn tls_policy_is_saved_normalized_and_only_for_postgres() {
-    let (mut c, _dir) = cenario("tls");
+    let (mut c, _dir) = scenario("tls");
     let salvo = c.rpc(
         "datasource.save",
         json!({ "profile": { "name": "seguro", "host": "db.exemplo", "port": 5432, "database": "app",
@@ -195,4 +195,130 @@ fn tls_policy_is_saved_normalized_and_only_for_postgres() {
         invalido.error.unwrap().code,
         JsonRpcErrorCode::InvalidParams
     );
+}
+
+#[test]
+fn ordinary_writes_run_directly_but_whole_table_updates_never_do() {
+    let (mut c, dir) = scenario("selective");
+    let path = database(&dir);
+    assert!(
+        c.rpc(
+            "datasource.save",
+            json!({"profile": {
+                "name": "arquivo", "engine": "sqlite", "host": "", "port": 0,
+                "database": path, "user": ""
+            }})
+        )
+        .error
+        .is_none()
+    );
+    for sql in [
+        "INSERT INTO leituras (placa, valor) VALUES ('nova', 7)",
+        "UPDATE leituras SET valor = 8 WHERE placa = 'nova'",
+        "CREATE TABLE auxiliar (id int)",
+        "ALTER TABLE auxiliar ADD COLUMN nome text",
+    ] {
+        let accepted = c.rpc("datasource.query", json!({"name": "arquivo", "sql": sql}));
+        assert!(accepted.error.is_none(), "{sql}: {:?}", accepted.error);
+        assert_eq!(c.queried()["success"], true, "{sql}");
+    }
+    for sql in [
+        "DELETE FROM leituras WHERE placa = 'nova'",
+        "UPDATE leituras SET valor = 0",
+        "DROP TABLE auxiliar",
+        "INSERT OR REPLACE INTO leituras (id, placa) VALUES (1, 'substituida')",
+        "REPLACE INTO leituras (id, placa) VALUES (1, 'substituida')",
+        "UPDATE OR REPLACE leituras SET id = 1 WHERE id = 2",
+        "SELECT 1; COMMIT; DELETE FROM leituras",
+        "SELECT ';' AS texto; DELETE FROM leituras",
+        "INSERT INTO leituras (placa) VALUES ('nao'); DELETE FROM leituras",
+    ] {
+        let refused = c.rpc("datasource.query", json!({"name": "arquivo", "sql": sql}));
+        assert_eq!(
+            refused.error.unwrap().code,
+            JsonRpcErrorCode::WriteConfirmationRequired,
+            "{sql}"
+        );
+    }
+    let whole = "UPDATE leituras SET valor = 999 WHERE id > 0";
+    assert!(
+        c.rpc("datasource.query", json!({"name": "arquivo", "sql": whole}))
+            .error
+            .is_none()
+    );
+    let measured = c.queried();
+    assert_eq!(measured["confirmationSql"], whole, "{measured}");
+    assert_eq!(measured["success"], false);
+    let connection = rusqlite::Connection::open(&path).unwrap();
+    assert_eq!(
+        connection
+            .query_row("SELECT count(*) FROM leituras WHERE valor = 999", [], |r| r
+                .get::<_, u64>(0))
+            .unwrap(),
+        0
+    );
+    // Nao conseguir contar nao significa que pode escrever.
+    assert!(
+        c.rpc(
+            "datasource.query",
+            json!({"name": "arquivo",
+        "sql": "UPDATE leituras SET valor = 5 WHERE unknown(id)"})
+        )
+        .error
+        .is_none()
+    );
+    assert_eq!(
+        c.queried()["confirmationSql"],
+        "UPDATE leituras SET valor = 5 WHERE unknown(id)"
+    );
+    // Depois da confirmacao explicita, executa o MESMO comando.
+    assert!(
+        c.rpc(
+            "datasource.query",
+            json!({"name": "arquivo", "sql": whole,
+        "confirmWrite": true})
+        )
+        .error
+        .is_none()
+    );
+    assert_eq!(c.queried()["affected"], 4);
+    assert_eq!(
+        connection
+            .query_row("SELECT count(*) FROM leituras WHERE valor = 999", [], |r| r
+                .get::<_, u64>(0))
+            .unwrap(),
+        4
+    );
+    drop(connection);
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn mongo_deletions_require_confirmation_before_any_connection() {
+    let (mut c, dir) = scenario("mongo-refusal");
+    assert!(
+        c.rpc(
+            "datasource.save",
+            json!({"profile": {
+                "name": "mongo", "engine": "mongo", "host": "127.0.0.1", "port": 1,
+                "database": "teste", "user": ""
+            }})
+        )
+        .error
+        .is_none()
+    );
+    for sql in [
+        r#"s.deleteOne({"id": 1})"#,
+        r#"s.deleteMany({"id": 1})"#,
+        "s.drop()",
+        r#"s.updateMany({}, {"$set": {"x": 1}})"#,
+    ] {
+        let refused = c.rpc("datasource.query", json!({"name": "mongo", "sql": sql}));
+        assert_eq!(
+            refused.error.unwrap().code,
+            JsonRpcErrorCode::WriteConfirmationRequired,
+            "{sql}"
+        );
+    }
+    std::fs::remove_dir_all(dir).unwrap();
 }

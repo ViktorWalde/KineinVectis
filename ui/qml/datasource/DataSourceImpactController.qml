@@ -44,6 +44,8 @@ QtObject {
         const first = root.statements.find(s => root.isDestructive(s) && s.targets.length > 0);
         if (first === undefined) return root.name;
         const target = String(first.targets[0]).replace(/"/g, "");
+        // No Mongo o ponto pertence ao nome da colecao, nao a um esquema.
+        if (first.kind.indexOf("mongo") === 0 || first.kind === "dropCollection") return target;
         return target.substring(target.lastIndexOf(".") + 1);
     }
     readonly property bool canRun: root.open && !root.measuring
@@ -121,6 +123,24 @@ QtObject {
                 .arg(root.rows(n, qsTr("1 linha"), qsTr("%1 linhas"))).arg(target)
                 + (total >= 0 ? qsTr(" (a tabela tem %1)").arg(total) : "");
         }
+        // MongoDB (0.155.0): documentos e colecoes, na mesma forma.
+        case "mongoDelete":
+        case "mongoUpdate": {
+            const verb = s.kind === "mongoDelete" ? qsTr("Apaga") : qsTr("Altera");
+            const docs = root.rows(n, qsTr("1 documento"), qsTr("%1 documentos"));
+            if (!known) return qsTr("%1 documentos de %2%3").arg(verb).arg(target).arg(unknown);
+            if (!filtered && total > 0 && n === total) return qsTr("%1 TODOS os documentos de %2: %3").arg(verb).arg(target).arg(docs);
+            if (total > 0 && n === total) {
+                return qsTr("%1 TODOS os %2 documentos de %3 — o filtro pega a coleção inteira").arg(verb).arg(n).arg(target);
+            }
+            return qsTr("%1 %2 de %3").arg(verb).arg(docs).arg(target)
+                + (total >= 0 ? qsTr(" (a coleção tem %1)").arg(total) : "");
+        }
+        case "mongoInsert":
+            return qsTr("Insere %1 em %2").arg(root.rows(n, qsTr("1 documento"), qsTr("%1 documentos"))).arg(target);
+        case "dropCollection":
+            return qsTr("Remove a coleção %1").arg(target)
+                + (known ? qsTr(" e %1 dela").arg(root.rows(n, qsTr("1 documento"), qsTr("%1 documentos"))) : unknown);
         case "truncate":
             return qsTr("Esvazia %1").arg(target) + (known ? qsTr(": %1 somem").arg(root.rows(n, qsTr("1 linha"), qsTr("%1 linhas"))) : unknown);
         case "dropTable":
@@ -138,6 +158,8 @@ QtObject {
             return qsTr("Remove a visão %1 (os dados das tabelas ficam)").arg(target);
         case "dropIndex":
             return qsTr("Remove o índice %1 (os dados ficam)").arg(target);
+        case "replace":
+            return qsTr("Substitui registros de %1, podendo apagar os anteriores").arg(target);
         case "insert":
             return qsTr("Insere linhas em %1").arg(target);
         case "create":
@@ -145,7 +167,7 @@ QtObject {
         case "alter":
             return qsTr("Muda a estrutura de %1").arg(target);
         default:
-            return qsTr("Escreve no banco");
+            return qsTr("O core não conseguiu determinar o impacto desta instrução");
         }
     }
 }

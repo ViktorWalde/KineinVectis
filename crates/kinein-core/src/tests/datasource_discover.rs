@@ -219,7 +219,7 @@ fn create_container_server_without_an_engine_is_tool_not_found() {
         resultado["hint"]
             .as_str()
             .unwrap()
-            .contains("sem Podman/Docker")
+            .contains("Sem Podman/Docker")
     );
 }
 

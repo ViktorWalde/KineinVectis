@@ -841,7 +841,7 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
 (`.kinein/datasources.json`).
 
 ```text
-┌ Banco                    + ⟳ × ┐   +  nova conexão (abre o diálogo)
+┌ Banco                    + ⟳ × ┐   +  Conectar banco (abre o diálogo)
 │ ▾ loja                  SQLite │   ⟳  procurar bancos nesta máquina
 │   ▾ clientes         4 colunas │   ×  fechar a janela
 │       id               INTEGER │
@@ -880,7 +880,7 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
     `select` sem `;` não gruda no `DELETE` de baixo. Com o cursor **logo
     depois do `;`** — o normal ao terminar de digitar — ou numa linha em
     branco, vale a instrução que acabou antes;
-  - no MongoDB, a **linha** do cursor (`<coleção> <filtro JSON>`).
+  - no MongoDB, a **linha** do cursor, com um comando JSON por execução.
   Linhas de comentário (`--`, `//`) ficam de fora. O resultado aparece na
   seção de dados da janela do Banco, que se abre sozinha se estiver fechada.
   Se o motor recusar, a mensagem dele aparece inteira, em vermelho, no lugar
@@ -901,40 +901,50 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   atingido" avisa) e **de verdade só lê**: no PostgreSQL vai numa transação
   `READ ONLY`, no SQLite o arquivo abre só para leitura — um `WITH … INSERT`
   disfarçado é recusado pelo próprio motor.
-- **Antes de escrever, a IDE mostra a consequência** (desde 2026-10-03). Uma
-  instrução que **escreve** não roda de primeira: abre um painel com a
-  conexão, o **comando inteiro** e **o que acontece**, instrução por
-  instrução, com as linhas contadas antes. A contagem é só leitura
-  (`SELECT count(*)` no mesmo alvo e com o mesmo `WHERE`) e não muda nada.
-  Exemplos do que o painel diz:
+- **Confirmar remoções e alterações destrutivas** (protocolo `0.156.0`).
+  Inserir e criar rodam diretamente. Alterar com filtro também, depois de
+  uma verificação silenciosa: se o filtro pega todos os registros, a IDE pede
+  confirmação antes de escrever. Apagar, esvaziar, remover tabela, coleção,
+  esquema ou coluna, substituir registros com `REPLACE` e alterar tudo sem
+  filtro abrem o painel de impacto.
+
+  O painel mostra a conexão, o comando inteiro e as linhas ou documentos
+  atingidos. A contagem é leitura. Remoção filtrada que não pega tudo libera
+  **Executar** com um clique. Operação destrutiva exige digitar o nome do
+  alvo; impacto desconhecido exige confirmação explícita também. Se a
+  contagem falha, o motivo aparece e a operação é tratada como destrutiva:
+  digite o alvo conhecido, ou a conexão quando nenhum alvo foi identificado.
+
+  **Cancelar**, Esc ou clicar fora deixam o banco intacto. A confirmação
+  reenvia o comando exibido. A prévia não reserva nem congela os dados;
+  transação com prévia ainda não está disponível.
+
+- **Console MongoDB: ler e escrever.** Um comando por linha; argumentos em
+  JSON, com chaves entre aspas:
 
   ```text
-  DELETE FROM clientes               Apaga TODAS as linhas de clientes: 2 linhas
-  DELETE ... WHERE id = 2            Apaga 1 linha de clientes (a tabela tem 2)
-  UPDATE ... WHERE 1 = 1             Altera TODAS as 2 linhas de clientes — o WHERE
-                                     pega a tabela inteira
-  DROP TABLE pedidos                 Remove a tabela pedidos e 2 linhas dela
-  ALTER TABLE t DROP COLUMN email    Remove a coluna email de t: 2 valores somem
-  DROP SCHEMA audit                  Remove o esquema audit e 3 tabelas dele
-  DROP DATABASE loja                 Remove o banco loja INTEIRO
+  sensores.find({"placa":"esp32"})
+  sensores.insertOne({"placa":"esp32","valor":21})
+  sensores.insertMany([{"placa":"pico"},{"placa":"pi"}])
+  sensores.updateOne({"placa":"pico"},{"$set":{"ativo":true}})
+  sensores.updateMany({"placa":"esp32"},{"$inc":{"valor":1}})
+  sensores.deleteOne({"placa":"pi"})
+  sensores.deleteMany({"ativo":false})
+  sensores.drop()
   ```
 
-  - **Escrita comum** (`INSERT`, `UPDATE`/`DELETE` com `WHERE` que não pega
-    tudo, `CREATE`, `DROP VIEW`/`INDEX`): título em âmbar e **Executar** com
-    um clique.
-  - **Destrutiva** (`DELETE`/`UPDATE` sem `WHERE` ou com um `WHERE` que pega
-    a tabela inteira, `TRUNCATE`, `DROP TABLE`/`SCHEMA`/`DATABASE`, coluna
-    removida): título em vermelho, o aviso de que não há como desfazer e
-    **"Para confirmar, digite clientes"**. O botão **Executar e apagar** só
-    liga quando o nome digitado confere; o cursor já abre no campo.
-  - Se a contagem não puder ser feita (senha, rede, tabela que não existe),
-    o painel diz o motivo e trata a instrução como destrutiva, pedindo o nome
-    da conexão.
-  - **Cancelar é o padrão:** o botão, o **Esc** ou o clique fora. A seção de
-    dados diz "cancelada — nada foi executado". Depois de executar, ela diz
-    quantas linhas foram afetadas. A grade
-  mostra toda célula como texto e `NULL` como *null* em itálico. No MongoDB a
-  consulta é só leitura, e cada chave de primeiro nível vira coluna.
+  A forma antiga `sensores {"placa":"esp32"}` continua lendo.
+  Extended JSON permite buscar um `_id` com
+  `{"_id":{"$oid":"0123456789abcdef01234567"}}`.
+  `updateOne/Many` exigem operadores como `$set` ou `$inc`; JavaScript
+  e métodos encadeados não são comandos do console.
+  `deleteOne` apaga no máximo um documento, mesmo sem filtro;
+  `deleteMany` com filtro vazio e `drop()` pedem o nome da coleção.
+  Se o nome tem ponto, digite-o inteiro: `telemetria.sensores` exige
+  `telemetria.sensores`, não apenas `sensores`.
+  A leitura transforma cada chave de primeiro nível em coluna; os
+  documentos escritos ou apagados aparecem na contagem do resultado.
+
 - **Tamanho.** A janela tem **mínimo de 260 px** (abaixo disso o cabeçalho e
   os nomes da árvore se perdem). Quando chegam dados, ela **se alarga sozinha**
   até a largura em que a grade cabe sem rolar — no máximo 640 px e nunca a
@@ -954,10 +964,14 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   único lugar que **edita** perfis: à esquerda as **Conexões** salvas e o que
   responde **Nesta máquina**; à direita o veredito do teste e o formulário.
   **Testar**, **Remover…** (o perfil e, se pedido, os dados) e **Salvar**
-  (salva e fecha). **Novo banco…** cria um SQLite novo ou sobe um servidor em
-  container.
+  (salva e fecha). **Conectar banco** prepara uma conexão existente;
+  **Criar banco…** cria SQLite, sobe um servidor em contêiner ou cria um banco
+  no PostgreSQL selecionado. Motor, origem da senha e TLS usam seletores
+  segmentados: Tab percorre seletores, campos e botões; as setas mudam
+  a opção disponível e pulam as desabilitadas. A troca de motor adota seus
+  padrões e preserva valores personalizados.
 
-**TLS** (PostgreSQL): o chip **TLS verificado (verify-full)** cifra a conexão
+**TLS** (PostgreSQL): a opção **TLS verificado (verify-full)** cifra a conexão
 e confere a cadeia **e** o nome do host — para um servidor com certificado
 próprio, aponte o PEM no campo que aparece. Não existe "cifra sem conferir":
 é a opção que dá sensação de segurança sem a garantia.

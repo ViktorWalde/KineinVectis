@@ -54,29 +54,18 @@ Item {
             font.pixelSize: Theme.fontSizeCaption
         }
 
-        Row {
+        // Padrao novo (2026-10-04): o seletor segmentado no lugar dos chips
+        // em fonte mono; "SQLite (arquivo)" virou "SQLite" (pedido do autor).
+        KvSegmentedControl {
             width: parent.width
-            spacing: Theme.spacingXSmall
-
-            KvToggleChip {
-                labelText: qsTr("PostgreSQL / TimescaleDB")
-                // Era `!arquivo`: com o Mongo escolhido acendiam DOIS chips
-                // (visto pelo autor em 2026-09-18). Um motor, um chip.
-                active: !root.arquivo && !root.mongo
-                onToggled: root.fieldEdited("engine", "postgres")
-            }
-
-            KvToggleChip {
-                labelText: qsTr("SQLite (arquivo)")
-                active: root.arquivo
-                onToggled: root.fieldEdited("engine", "sqlite")
-            }
-
-            KvToggleChip {
-                labelText: qsTr("MongoDB")
-                active: root.mongo
-                onToggled: root.fieldEdited("engine", "mongo")
-            }
+            current: root.arquivo ? "sqlite" : (root.mongo ? "mongo" : "postgres")
+            options: [
+                { value: "postgres", label: qsTr("PostgreSQL"), icon: DataSourceKinds.engineIcon("postgres"),
+                  tooltip: qsTr("PostgreSQL e TimescaleDB") },
+                { value: "sqlite", label: qsTr("SQLite"), icon: DataSourceKinds.engineIcon("sqlite") },
+                { value: "mongo", label: qsTr("MongoDB"), icon: DataSourceKinds.engineIcon("mongo") }
+            ]
+            onSelected: value => root.fieldEdited("engine", value)
         }
 
         DataSourceField {
@@ -99,8 +88,8 @@ Item {
         DataSourceField {
             width: parent.width
             visible: !root.arquivo
-            label: qsTr("Host ou diretório de socket")
-            placeholder: qsTr("/var/run/postgresql, ou db.exemplo.com")
+            label: root.mongo ? qsTr("Host") : qsTr("Host ou diretório de socket")
+            placeholder: root.mongo ? qsTr("localhost, ou db.exemplo.com") : qsTr("/var/run/postgresql, ou db.exemplo.com")
             value: root.draft ? root.draft.host : ""
             onEdited: text => root.fieldEdited("host", text)
         }
@@ -167,28 +156,16 @@ Item {
             font.pixelSize: Theme.fontSizeCaption
         }
 
-        Row {
+        KvSegmentedControl {
             width: parent.width
             visible: !root.arquivo
-            spacing: Theme.spacingXSmall
-
-            KvToggleChip {
-                labelText: qsTr("Automático")
-                active: root.secretSource === "automatic"
-                onToggled: root.fieldEdited("secretSource", "automatic")
-            }
-
-            KvToggleChip {
-                labelText: qsTr("Ambiente")
-                active: root.secretSource === "environment"
-                onToggled: root.fieldEdited("secretSource", "environment")
-            }
-
-            KvToggleChip {
-                labelText: qsTr("Perguntar")
-                active: root.secretSource === "prompt"
-                onToggled: root.fieldEdited("secretSource", "prompt")
-            }
+            current: root.secretSource
+            options: [
+                { value: "automatic", label: qsTr("Automático") },
+                { value: "environment", label: qsTr("Variável de ambiente") },
+                { value: "prompt", label: qsTr("Perguntar") }
+            ]
+            onSelected: value => root.fieldEdited("secretSource", value)
         }
 
         Text {
@@ -206,8 +183,10 @@ Item {
                     return qsTr("A senha é pedida a cada sessão e vive só em "
                                 + "memória.");
                 }
-                return qsTr("Não manda senha: o servidor decide. Cobre socket "
-                            + "unix com peer, trust local e o ~/.pgpass.");
+                return root.mongo
+                    ? qsTr("Não manda senha: o servidor decide (um MongoDB local sem autenticação, por exemplo).")
+                    : qsTr("Não manda senha: o servidor decide. Cobre socket "
+                           + "unix com peer, trust local e o ~/.pgpass.");
             }
         }
 
@@ -223,22 +202,16 @@ Item {
         // TLS (0.121.0): so' o PostgreSQL. `require` e' o verify-full do
         // libpq — cadeia E nome do host conferidos; nao existe "cifra sem
         // conferir" aqui.
-        Row {
+        KvSegmentedControl {
             width: parent.width
             visible: root.postgres
-            spacing: Theme.spacingXSmall
-
-            KvToggleChip {
-                labelText: qsTr("Sem TLS")
-                active: root.tls !== "require"
-                onToggled: root.fieldEdited("tls", "disable")
-            }
-
-            KvToggleChip {
-                labelText: qsTr("TLS verificado (verify-full)")
-                active: root.tls === "require"
-                onToggled: root.fieldEdited("tls", "require")
-            }
+            current: root.tls === "require" ? "require" : "disable"
+            options: [
+                { value: "disable", label: qsTr("Sem TLS") },
+                { value: "require", label: qsTr("TLS verificado"),
+                  tooltip: qsTr("verify-full: confere a cadeia e o nome do host") }
+            ]
+            onSelected: value => root.fieldEdited("tls", value)
         }
 
         DataSourceField {

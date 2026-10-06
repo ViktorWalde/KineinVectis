@@ -65,13 +65,13 @@ pub fn discover(root: &Path, detector: &ToolDetector) -> DataSourceDiscoverResul
     candidates.extend(sqlite_files(root));
     let hint = candidates.is_empty().then(|| {
         if engine.is_some() {
-            "nenhum servidor no loopback, nenhum container de banco e nenhum .sqlite no \
-             projeto. `Novo banco` cria um arquivo SQLite ou sobe um PostgreSQL/MongoDB em \
-             container."
+            "Nenhum servidor no loopback, nenhum contêiner de banco e nenhum .sqlite no \
+             projeto. \"Criar banco\" cria um arquivo SQLite ou sobe um PostgreSQL/MongoDB em \
+             contêiner."
                 .to_owned()
         } else {
-            "nenhum servidor no loopback e nenhum .sqlite no projeto; sem Podman/Docker no \
-             PATH nao ha' como subir um servidor em container — `Novo banco` cria um SQLite."
+            "Nenhum servidor no loopback e nenhum .sqlite no projeto. Sem Podman/Docker no \
+             PATH não há como subir um servidor em contêiner; \"Criar banco\" cria um SQLite."
                 .to_owned()
         }
     });

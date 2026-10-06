@@ -8,16 +8,13 @@
 //! `WHERE` que chama funcao.
 
 use kinein_protocol::{
-    DataSourceImpactEvent, DataSourceImpactParams, DataSourceTestAccepted, JobRisk,
-    JsonRpcResponse, SqlImpactSeverity, SqlStatementImpact,
+    DataSourceImpactEvent, DataSourceImpactParams, DataSourceTestAccepted, JobRisk, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
 use super::datasource::com_id;
 use crate::Core;
-use crate::datasource::impact;
-use crate::datasource::query;
-use crate::datasource::secret::Secret;
+use crate::datasource::{impact, measurement};
 use crate::jobs::JobOutcome;
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
@@ -53,10 +50,7 @@ impl Core {
         };
         let title = format!("Medir o impacto em {}", profile.name);
         let job_id = jobs.spawn("datasource", title, JobRisk::Low, false, move |ctx| {
-            let statements = impact::classify_all(&request.sql)
-                .into_iter()
-                .map(|statement| measure(&profile, secret.as_ref(), statement))
-                .collect::<Vec<_>>();
+            let statements = measurement::statements(&profile, secret.as_ref(), &request.sql);
             let event = DataSourceImpactEvent {
                 job_id: ctx.id().to_owned(),
                 name: profile.name.clone(),
@@ -69,49 +63,4 @@ impl Core {
         });
         JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
     }
-}
-
-/// Roda as contagens de uma instrucao e promove o `WHERE` que pega tudo.
-fn measure(
-    profile: &kinein_protocol::DataSourceProfile,
-    secret: Option<&Secret>,
-    mut statement: SqlStatementImpact,
-) -> SqlStatementImpact {
-    let Some((hit, total)) = impact::count_queries(&statement) else {
-        return statement;
-    };
-    match count(profile, secret, &hit) {
-        Ok(rows) => statement.rows = Some(rows),
-        Err(message) => {
-            statement.note = Some(message);
-            return statement;
-        }
-    }
-    if let Some(total) = total {
-        statement.total_rows = count(profile, secret, &total).ok();
-    }
-    // `WHERE 1=1`, um filtro esquecido: pega TODAS as linhas de uma tabela
-    // que tem linhas — e' tao destrutivo quanto nao ter WHERE.
-    if let (Some(rows), Some(total)) = (statement.rows, statement.total_rows)
-        && total > 0
-        && rows == total
-    {
-        statement.severity = SqlImpactSeverity::Destructive;
-    }
-    statement
-}
-
-/// Uma contagem: a primeira celula da primeira linha, como numero.
-fn count(
-    profile: &kinein_protocol::DataSourceProfile,
-    secret: Option<&Secret>,
-    sql: &str,
-) -> Result<u64, String> {
-    let result = query::run(profile, secret, sql, 1).map_err(|(message, _)| message)?;
-    result
-        .rows
-        .first()
-        .and_then(|row| row.first().cloned().flatten())
-        .and_then(|cell| cell.trim().parse::<u64>().ok())
-        .ok_or_else(|| "o motor nao devolveu a contagem".to_owned())
 }

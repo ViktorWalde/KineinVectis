@@ -3,14 +3,14 @@
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
 >
-> **O estado, em 2026-10-04 (leia isto; o resto do cabeçalho é histórico):**
+> **O estado, em 2026-10-05 (leia isto; o resto do cabeçalho é histórico):**
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.153.0`,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.156.0` na fatia atual,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.217.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.220.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -54,7 +54,7 @@
 >     Os Símbolos escondem o slot da direita enquanto estão abertos, e o
 >     Ctrl+F6 passa pelos dois slots.
 >   - **Segurança do SQL** (§7.209, protocolo `0.150.0`): antes de uma
->     escrita, o painel mostra o comando e a consequência contada. No que é
+>     operação que exige confirmação, o painel mostra comando e consequência. No que é
 >     destrutivo, só roda depois de digitar o nome do alvo. O console tem
 >     cores e separa instruções por linha em branco (§7.208).
 >   - **A 0.3.9 NÃO está encerrada** (decisão do autor, 2026-10-03, noite).
@@ -66,11 +66,11 @@
 >        padrão.
 >     4. Pente fino.
 >
->     Feitos: passos 1–5 e o 5b do 59 §2 (Containers, topo, controles,
->     Configurações, Remoto, painel de baixo). **Próximo passo: o 6, Grafana**
->     — o desenho já decidido está no 59 §6.1; depois o 7 (Banco) e o 8
->     (pente fino). **Atualização:** o passo 6 está feito na IDE (§7.218,
->     protocolo `0.154.0`); falta só o AppImage levar o QtWebEngine.
+>     Feitos: passos 1–6 e o 5b do 59 §2. **Atual: passo 7, Banco** —
+>     escrita MongoDB, confirmação seletiva e formulário concluídos
+>     (40.7 §7.220; arquitetura [37](../arquitetura/37-banco-de-dados.md)).
+>     Próxima fatia: ODBC; o prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
+>     com QtWebEngine atual, só depois do pente fino.
 >
 >     Depois disso, a 0.4 é inteira dos embarcados.
 > - **Próximo:** fechar a 0.3.9 pelo [`59`](59-fechamento-da-0.3.9.md); depois a 0.4
@@ -406,6 +406,11 @@ mutacao: tirar o teto derruba a caixa a 70px, devolver o dialogo ao tamanho
 antigo derruba a 249px, e cada mutacao acende um bit diferente.
 
 ## 4. O que está aberto
+
+**Fila atual da 0.3.9 (2026-10-05):** passo 7 do
+[59](59-fechamento-da-0.3.9.md). Fatia 40.7 §7.220 concluída; próxima:
+ODBC e as demais fatias de 59 §5.8. O roteiro de retomada está nessa seção.
+A lista datada abaixo preserva o histórico das dívidas anteriores.
 
 ```text
 27  bancos relacional/temporal/nao-     FECHADA em 2026-09-04. Postgres,

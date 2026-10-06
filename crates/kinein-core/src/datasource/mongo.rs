@@ -173,7 +173,7 @@ pub fn probe_server(
 ) -> Result<String, MongoFailure> {
     let client = Client::with_options(options_for(profile, secret))
         .map_err(|e| describe(&e, &profile.host))?;
-    let banco = client.database(banco_de(profile));
+    let banco = client.database(database_for(profile));
     let resposta = banco
         .run_command(doc! { "buildInfo": 1 })
         .run()
@@ -186,7 +186,7 @@ pub fn probe_server(
 }
 
 /// O banco do perfil, com o padrao do servidor quando vazio.
-pub(super) fn banco_de(profile: &DataSourceProfile) -> &str {
+pub(super) fn database_for(profile: &DataSourceProfile) -> &str {
     let nome = profile.database.trim();
     if nome.is_empty() { "admin" } else { nome }
 }
@@ -201,7 +201,7 @@ pub fn read_structure(
 ) -> Result<Vec<MongoCollection>, MongoFailure> {
     let client = Client::with_options(options_for(profile, secret))
         .map_err(|e| describe(&e, &profile.host))?;
-    let banco = client.database(banco_de(profile));
+    let banco = client.database(database_for(profile));
     let amostra = profile
         .sample_size
         .unwrap_or(DEFAULT_SAMPLE)

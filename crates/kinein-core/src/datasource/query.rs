@@ -12,7 +12,7 @@
 //!           e' recusa SINCRONA do handler, antes do job)
 //! celulas   texto (protocolo simples do PostgreSQL; ValueRef do SQLite;
 //!           JSON do valor no Mongo); NULL e' `null`
-//! mongo     `<colecao> <filtro JSON>` -> find com limit; so' leitura nesta fatia
+//! mongo     gramatica JSON de `mongo_command`; leitura com teto, escrita por `mongo_write`
 //! ```
 
 use std::time::Instant;
@@ -245,42 +245,31 @@ fn celula_sqlite(valor: ValueRef<'_>) -> Option<String> {
     }
 }
 
-/// Le uma colecao do `MongoDB`: `<colecao> <filtro JSON>` (filtro ausente =
-/// `{}`), `find` com `limit`; colunas = uniao das chaves de primeiro nivel.
+/// O console do `MongoDB` (`mongo_command`): `find` le com teto; o resto
+/// escreve depois da verificacao do `datasource.query` (`confirm`).
 ///
 /// # Errors
-/// Texto sem colecao, filtro que nao e' JSON, ou a falha do driver.
+/// Comando invalido (nada vai ao banco) ou a falha do driver.
 pub fn run_mongo(
     profile: &DataSourceProfile,
     secret: Option<&Secret>,
     texto: &str,
     max_rows: u32,
 ) -> Result<QueryResult, mongo::MongoFailure> {
-    let texto = texto.trim();
-    let (colecao, filtro) = texto
-        .split_once(char::is_whitespace)
-        .unwrap_or((texto, "{}"));
-    if colecao.is_empty() {
-        return Err(mongo::MongoFailure {
-            message: "escreva `<colecao> <filtro JSON>` — ex.: `sensores {\"placa\": \"esp32\"}`"
-                .to_owned(),
-            secret_required: false,
-        });
+    let command = super::mongo_command::parse(texto).map_err(|message| mongo::MongoFailure {
+        message,
+        secret_required: false,
+    })?;
+    if command.op.writes() {
+        return super::mongo_write::execute(profile, secret, command);
     }
-    let filtro: Document = serde_json::from_str::<serde_json::Value>(filtro.trim())
-        .ok()
-        .and_then(|v| mongodb::bson::to_document(&v).ok())
-        .ok_or_else(|| mongo::MongoFailure {
-            message: "o filtro precisa ser um objeto JSON (ex.: `{\"campo\": 1}`)".to_owned(),
-            secret_required: false,
-        })?;
     let client = mongodb::sync::Client::with_options(mongo::options_for(profile, secret))
         .map_err(|e| mongo::describe(&e, &profile.host))?;
     let inicio = Instant::now();
     let cursor = client
-        .database(mongo::banco_de(profile))
-        .collection::<Document>(colecao)
-        .find(filtro)
+        .database(mongo::database_for(profile))
+        .collection::<Document>(&command.collection)
+        .find(command.filter)
         .limit(i64::from(max_rows) + 1)
         .run()
         .map_err(|e| mongo::describe(&e, &profile.host))?;
@@ -493,13 +482,13 @@ mod tests {
             run_mongo(&perfil, None, "", 10)
                 .unwrap_err()
                 .message
-                .contains("<colecao>")
+                .contains("escreva a colecao")
         );
         assert!(
             run_mongo(&perfil, None, "col nao-json", 10)
                 .unwrap_err()
                 .message
-                .contains("objeto JSON")
+                .contains("precisam ser JSON")
         );
     }
 }

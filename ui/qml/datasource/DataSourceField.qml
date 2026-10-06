@@ -32,6 +32,7 @@ Item {
     KvTextField {
         id: field
 
+        activeFocusOnTab: true
         anchors.left: parent.left
         anchors.right: parent.right
         label: root.label

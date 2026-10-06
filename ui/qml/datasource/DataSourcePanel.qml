@@ -70,8 +70,8 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        title: root.face === "create" ? qsTr("Novo banco")
-               : (root.savedSelected ? qsTr("Conexão %1").arg(root.selectedName) : qsTr("Nova conexão"))
+        title: root.face === "create" ? qsTr("Criar banco")
+               : (root.savedSelected ? qsTr("Conexão %1").arg(root.selectedName) : qsTr("Conectar banco"))
         subtitle: qsTr("A IDE guarda o perfil, nunca a senha. Um PostgreSQL local por socket conecta sem senha nenhuma.")
         onCloseRequested: root.closeRequested()
     }
@@ -164,7 +164,6 @@ Item {
                 onCreateSqliteRequested: (name, path) => root.createSqliteRequested(name, path)
                 onCreateServerRequested: (engine, name, port) => root.createServerRequested(engine, name, port)
                 onCreateDatabaseRequested: name => root.createDatabaseRequested(name)
-                onCloseRequested: root.face = "connection"
             }
 
             DataSourceDestroyBox {
@@ -203,6 +202,7 @@ Item {
         visible: root.face === "connection"
 
         KvButton {
+            activeFocusOnTab: true
             compact: true
             text: root.testing ? qsTr("Testando…") : qsTr("Testar")
             enabled: root.draftNamed && !root.testing
@@ -210,6 +210,7 @@ Item {
         }
 
         KvButton {
+            activeFocusOnTab: true
             visible: root.savedSelected
             compact: true
             danger: true
@@ -225,6 +226,7 @@ Item {
         KvButton {
             id: saveButton
 
+            activeFocusOnTab: true
             compact: true
             primary: true
             text: qsTr("Salvar")

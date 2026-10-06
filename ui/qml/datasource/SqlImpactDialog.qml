@@ -6,7 +6,7 @@ import KineinVectis
 // autor: "exibindo para ele o comando e a consequencia de rodar aquele
 // comando"). A logica e' do DataSourceImpactController; aqui so' o desenho:
 //
-//   ⚠ Esta instrução APAGA dados                 (ou: escreve no banco)
+//   ⚠ Esta instrução APAGA dados                 (ou: remove dados)
 //   conexão loja · SQLite
 //   ┌ o comando, inteiro, em mono ─────────────────────────────┐
 //   └──────────────────────────────────────────────────────────┘
@@ -74,8 +74,10 @@ KvPanelFrame {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: !root.impact ? "" : (root.impact.measuring ? qsTr("Esta instrução escreve no banco — medindo o impacto…")
-                      : (root.destructive ? qsTr("Esta instrução APAGA dados") : qsTr("Esta instrução escreve no banco")))
+                // Desde o 0.156.0 o aviso so' aparece para o que REMOVE dados
+                // (inserir e alterar com filtro rodam direto).
+                text: !root.impact ? "" : (root.impact.measuring ? qsTr("Medindo o impacto da instrução…")
+                      : (root.destructive ? qsTr("Operação destrutiva no banco") : qsTr("Esta instrução exige confirmação")))
                 color: root.destructive ? Theme.errorSoft : Theme.warningSoft
                 font.pixelSize: Theme.fontSizeLarge
                 font.weight: Font.DemiBold
@@ -200,6 +202,7 @@ KvPanelFrame {
             KvTextField {
                 id: confirmInput
 
+                activeFocusOnTab: true
                 width: 200
                 height: 26
                 pixelSize: Theme.fontSizeSmall
@@ -220,6 +223,7 @@ KvPanelFrame {
         KvButton {
             id: cancelButton
 
+            activeFocusOnTab: true
             compact: true
             text: qsTr("Cancelar")
             onClicked: root.dismissRequested()
@@ -227,6 +231,7 @@ KvPanelFrame {
 
         // Vermelho so' para o que destroi; a escrita comum e' a acao primaria.
         KvButton {
+            activeFocusOnTab: true
             compact: true
             danger: root.destructive
             primary: !root.destructive

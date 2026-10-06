@@ -2,7 +2,8 @@
 //! escreveu, como JOB — a rede e o disco esperam; o laco de despacho nao.
 //!
 //! A recusa `WRITE_CONFIRMATION_REQUIRED` e' SINCRONA, antes do job: a
-//! instrucao nao e' de leitura e o pedido nao trouxe `confirmWrite: true`.
+//! operacao exige confirmacao e o pedido nao trouxe `confirmWrite: true`.
+//! Alteracoes filtradas medem em silencio no job antes de escrever.
 //! A UI pergunta e reenvia — pelo codigo, nunca pelo texto.
 
 use kinein_protocol::{
@@ -46,22 +47,35 @@ impl Core {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
-        let write = !query::is_read(&request.sql)
-            && profile.engine != kinein_protocol::DataSourceEngine::Mongo;
-        if write && !request.confirm_write {
+        // O Mongo escreve desde o 0.155.0; o comando validado diz o que faz
+        // (um texto invalido nao escreve — falha no job sem tocar o banco).
+        let mongo = profile.engine == kinein_protocol::DataSourceEngine::Mongo;
+        let statements = if mongo {
+            crate::datasource::mongo_command::parse(&request.sql)
+                .map(|c| vec![crate::datasource::mongo_command::impact(&c, &request.sql)])
+                .unwrap_or_default()
+        } else {
+            crate::datasource::impact::classify_all(&request.sql)
+        };
+        // Classifica TODO o lote: uma leitura inicial nao pode esconder um
+        // COMMIT que encerra o READ ONLY e uma remocao de dados logo depois.
+        let write = statements
+            .iter()
+            .any(|s| s.severity != kinein_protocol::SqlImpactSeverity::Read);
+        // So' o que REMOVE dados pede o aviso (0.156.0, decisao do autor):
+        // inserir e alterar com filtro rodam direto (`datasource::confirm`).
+        if crate::datasource::confirm::needs_confirmation(&statements) && !request.confirm_write {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::WriteConfirmationRequired,
-                    "esta instrucao ESCREVE no banco; confirme para executar",
+                    "esta instrucao pode remover ou alterar dados; confirme para executar",
                     // A gravidade ja' vai na recusa (pura, sem banco): a tela
                     // sabe na hora se pede o nome do que some; os numeros
                     // vem do `datasource.impact` (0.150.0).
                     Some(json!({
                         "name": profile.name,
-                        "severity": crate::datasource::impact::overall(
-                            &crate::datasource::impact::classify_all(&request.sql)
-                        ),
+                        "severity": crate::datasource::impact::overall(&statements),
                     })),
                 ),
             );
@@ -74,6 +88,8 @@ impl Core {
             return jobs_unavailable_response(request_id, "datasource.query");
         };
         let max_rows = query::clamp_rows(request.max_rows);
+        let preflight =
+            !request.confirm_write && crate::datasource::confirm::needs_measurement(&statements);
         let sql = request.sql;
         let title = format!(
             "{} em {}",
@@ -82,6 +98,26 @@ impl Core {
         );
         let risk = if write { JobRisk::Medium } else { JobRisk::Low };
         let job_id = jobs.spawn("datasource", title, risk, false, move |ctx| {
+            if preflight {
+                let measured =
+                    crate::datasource::measurement::statements(&profile, secret.as_ref(), &sql);
+                if crate::datasource::confirm::needs_confirmation(&measured) {
+                    ctx.emit_event(
+                        "event.datasource.queried",
+                        json!(DataSourceQueriedEvent {
+                            job_id: ctx.id().to_owned(),
+                            name: profile.name,
+                            confirmation_sql: Some(sql),
+                            message: Some(
+                                "o impacto exige confirmacao; nenhuma escrita foi executada"
+                                    .to_owned()
+                            ),
+                            ..DataSourceQueriedEvent::default()
+                        }),
+                    );
+                    return JobOutcome::Failed;
+                }
+            }
             let resultado = query::run(&profile, secret.as_ref(), &sql, max_rows);
             let evento = evento_da_consulta(ctx, profile.name, resultado);
             let ok = evento.success;
@@ -126,6 +162,7 @@ fn evento_da_consulta(
                 elapsed_ms: r.elapsed_ms,
                 message: None,
                 secret_required: false,
+                confirmation_sql: None,
             }
         }
         Err((message, secret_required)) => {

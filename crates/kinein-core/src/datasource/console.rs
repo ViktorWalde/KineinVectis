@@ -46,10 +46,12 @@ pub fn file_stem(name: &str) -> String {
 fn header(name: &str, engine: DataSourceEngine) -> String {
     match engine {
         DataSourceEngine::Mongo => format!(
-            "// Console da conexao {name}.\n// Uma consulta por linha: colecao {{\"campo\": \"valor\"}}. Ctrl+Enter executa a linha do cursor.\n\n"
+            "// Console da conexao {name}. Um comando por linha; Ctrl+Enter executa a linha do cursor.\n\
+             // Ler: colecao.find({{\"campo\": \"valor\"}})  Escrever: insertOne, insertMany, updateOne,\n\
+             // updateMany (com $set, $inc…). Apagar pede confirmacao: deleteOne, deleteMany, drop().\n\n"
         ),
         DataSourceEngine::Postgres | DataSourceEngine::Sqlite => format!(
-            "-- Console da conexao {name}.\n-- Ctrl+Enter executa a instrucao sob o cursor (ou a selecao). Escrita pede confirmacao.\n\n"
+            "-- Console da conexao {name}.\n-- Ctrl+Enter executa a instrucao sob o cursor (ou a selecao). Apagar pede confirmacao.\n\n"
         ),
     }
 }

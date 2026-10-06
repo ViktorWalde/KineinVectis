@@ -39,6 +39,7 @@
 //! de seguranca do `DocsPublic/seguranca/23`). Este modulo e' o banco DO AUTOR. Os
 //! dois dizem "banco" e nao tem nada a ver um com o outro.
 
+pub mod confirm;
 pub mod connection;
 pub mod console;
 pub mod create;
@@ -46,8 +47,11 @@ pub mod destroy;
 pub mod discover;
 pub mod impact;
 pub mod introspect;
+pub mod measurement;
 pub mod mongo;
+pub mod mongo_command;
 pub mod mongo_infer;
+pub mod mongo_write;
 pub mod query;
 pub mod secret;
 pub mod sqlite;

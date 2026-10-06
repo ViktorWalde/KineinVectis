@@ -29,7 +29,8 @@ pub struct SqlStatementImpact {
     pub text: String,
     /// `read`, `insert`, `update`, `delete`, `truncate`, `dropTable`,
     /// `dropView`, `dropIndex`, `dropSchema`, `dropDatabase`, `dropColumn`,
-    /// `drop`, `alter`, `create` or `other`.
+    /// `drop`, `alter`, `create` or `other`; for `MongoDB` (`0.155.0`)
+    /// `mongoInsert`, `mongoUpdate`, `mongoDelete` or `dropCollection`.
     pub kind: String,
     /// The tables (or schema, or database) the statement names.
     pub targets: Vec<String>,

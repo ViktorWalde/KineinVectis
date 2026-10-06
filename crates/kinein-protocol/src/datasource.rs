@@ -177,13 +177,15 @@ pub struct DataSourceQueryParams {
     /// from the client log exactly like `datasource.test`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
-    /// The statement: SQL, or `<collection> <JSON filter>` for `MongoDB`.
+    /// SQL, or one `collection.operation(JSON arguments)` command for `MongoDB`.
+    /// The legacy `<collection> <JSON filter>` read form also remains valid.
     pub sql: String,
     /// Row ceiling for a read; absent = 500. The result says when it hit it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_rows: Option<u32>,
-    /// `true` acknowledges that the statement writes. Without it a statement
-    /// that is not a read is refused with `WRITE_CONFIRMATION_REQUIRED`.
+    /// Acknowledges an operation requiring confirmation (`0.156.0`): deletion,
+    /// an unfiltered mass update or an unknown operation. Ordinary writes run
+    /// directly; a filtered update affecting every record also requires it.
     #[serde(default)]
     pub confirm_write: bool,
 }
@@ -217,6 +219,11 @@ pub struct DataSourceQueriedEvent {
     /// `true` when asking for the password and retrying is the next step.
     #[serde(default)]
     pub secret_required: bool,
+    /// Exact text awaiting confirmation after a blocked preflight.
+    /// Present only when no write ran and user confirmation is required.
+    /// Allows the UI to ignore a result for an older request to the same profile.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confirmation_sql: Option<String>,
 }
 
 /// Result payload for `datasource.list`.

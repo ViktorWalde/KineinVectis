@@ -77,6 +77,22 @@ Item {
         failures += check(impact.describe({ kind: "update", targets: ["t"], filter: "1=1", rows: 3, totalRows: 3 }).indexOf("tabela inteira") >= 0,
                           "WHERE que pega tudo");
 
+        failures += check(impact.describe({ kind: "mongoDelete", targets: ["s"], filter: "",
+                                            rows: 1, totalRows: 3 }).indexOf("TODOS") < 0,
+                          "deleteOne sem filtro nao apaga a colecao inteira");
+        // Colecao com ponto exige o nome inteiro; SQL continua sem esquema.
+        for (const command of [["dropCollection", "drop()"], ["mongoDelete", "deleteMany({})"],
+                               ["mongoUpdate", 'updateMany({}, {"$set":{"v":2}})']]) {
+            const kind = command[0];
+            const sql = "telemetria.sensores." + command[1];
+            impact.begin("mongo", sql);
+            impact.handleMeasured({ name: "mongo", sql: sql, severity: "destructive",
+                                    statements: [{ kind: kind, targets: ["telemetria.sensores"], severity: "destructive" }] });
+            impact.typed = "sensores";
+            failures += check(!impact.canRun && impact.confirmName === "telemetria.sensores", "nome Mongo completo");
+            impact.typed = "telemetria.sensores";
+            failures += check(impact.canRun, "nome Mongo completo libera");
+        }
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

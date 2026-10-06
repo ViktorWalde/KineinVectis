@@ -23,3 +23,6 @@ ARCHITECTURE.md                  as regras: camadas, corte por responsabilidade,
 36-casca-da-ide.md               a janela principal: moldura, ilha, trilhos,
                                  barras arrastáveis, layout gravado e foco
 ```
+
+[37 — Banco de dados](37-banco-de-dados.md): consulta, confirmação, MongoDB,
+padrões por motor, limites e provas reproduzíveis, com diagramas.

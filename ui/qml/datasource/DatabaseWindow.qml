@@ -81,7 +81,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             compact: true
             iconName: "add"
-            tooltip: qsTr("Nova conexão")
+            tooltip: qsTr("Conectar banco")
             onClicked: root.newRequested()
         }
 

@@ -58,6 +58,7 @@ set_source_files_properties(qml/components/KvFileIconGlyphs.js PROPERTIES QT_RES
 set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
 set_source_files_properties(qml/components/KvTextField.qml PROPERTIES QT_RESOURCE_ALIAS KvTextField.qml)
 set_source_files_properties(qml/components/KvTextCaret.qml PROPERTIES QT_RESOURCE_ALIAS KvTextCaret.qml)
+set_source_files_properties(qml/components/KvSegmentedControl.qml PROPERTIES QT_RESOURCE_ALIAS KvSegmentedControl.qml)
 set_source_files_properties(qml/components/KvFocusKeeper.qml PROPERTIES QT_RESOURCE_ALIAS KvFocusKeeper.qml)
 set_source_files_properties(qml/components/KvPanelFrame.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelFrame.qml)
 set_source_files_properties(qml/components/KvPanelHeader.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelHeader.qml)
@@ -461,6 +462,7 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvToggleChip.qml
         qml/components/KvTextField.qml
         qml/components/KvTextCaret.qml
+        qml/components/KvSegmentedControl.qml
         qml/components/KvFocusKeeper.qml
         qml/components/KvPanelFrame.qml
         qml/components/KvPanelHeader.qml

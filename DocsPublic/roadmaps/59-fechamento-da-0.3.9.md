@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.6), com o MongoDB lendo e escrevendo | a camada de segurança 1 e a grade estão feitas; o resto, a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); próxima fatia ODBC (§5.8); restante a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -188,6 +188,22 @@ janela aberta aparece no trilho enquanto estiver aberta.
 
 ## 5. Banco de dados completo
 
+**Retomada em 2026-10-05, antes de editar o código.** A sessão anterior
+terminou com a fatia ainda sem commit: escrita MongoDB (`mongo_command` e
+`mongo_write`), protocolo `0.156.0`, confirmação seletiva (`confirm`), nomes
+**Conectar banco** / **Criar banco…**, `KvSegmentedControl` e padrões por
+motor. A retomada revisou a recusa no core e o aviso na UI, testou a
+gramática e os padrões, provou PostgreSQL/MongoDB reais e os gestos com
+mouse/teclado na janela da IDE, sincronizou a documentação e passou pelo
+gate completo e estrito. Fatia concluída no 40.7 §7.220. ODBC e o restante
+do passo 7 vêm depois.
+
+**Decisão do autor na sessão de 2026-10-04:** escrita comum roda direto;
+remoção, esvaziamento, alteração em massa sem filtro e instrução que o core
+não sabe classificar pedem confirmação. Essa decisão substitui a regra de
+avisar em toda escrita de desenvolvimento. Perfis de produção, modo somente
+leitura e transação com prévia continuam como trabalho planejado em §5.3.
+
 O que existe em 2026-10-03:
 
 - a janela acoplada, com a árvore e os dados na própria janela;
@@ -238,8 +254,10 @@ Ver 40.7 §7.206–§7.209.
 3. **Transação com prévia** (PostgreSQL). Uma opção no aviso: executar dentro
    de `BEGIN`, mostrar as linhas afetadas e só então **confirmar (COMMIT)** ou
    **desfazer (ROLLBACK)**.
-4. **Mongo também passa pelo aviso.** `deleteMany({})`, `drop()` e
-   `updateMany({})` sem filtro são destrutivos.
+4. **Mongo usa a mesma política de confirmação** (decisão de 2026-10-04).
+   Inserir e alterar com filtro podem rodar diretamente. Apagar pede aviso;
+   `deleteMany({})`, `drop()` e `updateMany({})` são destrutivos. Filtro que
+   pega toda uma coleção não vazia também exige confirmação.
 
 ### 5.4 Grade de dados de trabalho
 
@@ -249,26 +267,27 @@ Ver 40.7 §7.206–§7.209.
 - **Copiar:** célula ou linha, em TSV ou CSV.
 - **Exportar** o resultado para CSV.
 - **Editar célula** numa tabela com chave primária: gera o `UPDATE … WHERE pk`,
-  que passa pelo aviso de impacto.
+  que respeita a política de confirmação e de alcance do §5.3.
 
 ### 5.5 MongoDB completo
 
 - **Escrita:** `insertOne`/`insertMany`, `updateOne`/`updateMany`,
   `deleteOne`/`deleteMany` e `drop`. A sintaxe do console é definida no
   passo, documentada no manual e com teste.
-- **O aviso de impacto vale aqui também:** contagem por `countDocuments`
-  com o mesmo filtro, e filtro vazio é destrutivo.
+- **Impacto:** contagem por `countDocuments` com o mesmo filtro.
+  Alterar/apagar em massa com filtro vazio é destrutivo; `updateOne` e
+  `deleteOne` tocam no máximo um documento. Apagar sempre pede confirmação.
 - **Teste com MongoDB real em container**, como o PostgreSQL.
 
 ### 5.6 Provado com PostgreSQL real
 
-Até aqui tudo foi provado com SQLite, porque não há servidor no gate. A IDE
-já sobe um PostgreSQL em container ("Novo banco…"). A bateria na tela inclui:
+A fatia 7.220 provou PostgreSQL e MongoDB reais em 2026-10-05: leitura,
+escrita, senha pedida/recusada e aviso com DROP. Os gestos de console e
+confirmação passaram na janela da IDE; a prova automatizada está em
+`testar-banco-real.py`. A IDE cria PostgreSQL em contêiner por **Criar banco…**.
+Para completar a bateria do passo 7, faltam:
 
-- leitura e escrita;
-- o aviso com `DROP SCHEMA` (contagem por `information_schema`) e
-  `UPDATE … FROM`;
-- senha pedida;
+- o aviso com `UPDATE … FROM`;
 - TLS `verify-full` (configuração);
 - transação com prévia (§5.3).
 
@@ -306,6 +325,58 @@ orquestra". Ficam assim:
 - a IDE só lista os DSN e orquestra;
 - a IDE não baixa driver sozinha. Um driver é código nativo de terceiros, e
   carregá-lo é gesto explícito, com aviso (§7, segurança).
+
+### 5.8 A fatia retomada e o próximo prompt (2026-10-05)
+
+A arquitetura do Banco, com diagramas, donos e limites, está no
+[37](../arquitetura/37-banco-de-dados.md). A escrita MongoDB, a confirmação
+seletiva e o formulário estão concluídos, com gate completo e estrito
+verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
+O passo 7 continua aberto.
+
+**Ordem das próximas fatias:** ODBC (§5.7), produção/somente leitura e
+transação com prévia (§5.3), menus/árvore viva (§5.1), console (§5.2) e grade
+(§5.4), com prova real conforme §5.6. MySQL/MariaDB é alvo do §5.7; não está
+no enum de motores atual. O passo 8 vem depois.
+
+Prompt de continuidade (conferir estado e log antes de usar):
+
+```text
+Kinein Vectis — continuar o fechamento da 0.3.9, passo 7 (Banco).
+Use o worktree layout-0.3.6 existente; localize-o por git worktree list.
+O mantenedor integra main por fast-forward e faz o push.
+
+Comece com git status --short --branch e git log -5; preserve todo trabalho
+local. Leia 00-comece-aqui, o cabeçalho e a fila do 40, a última entrada
+do 40.7, o 59 §2/§5/§7, arquitetura/37 e o contrato arquitetura/03.
+Confira PROTOCOL_VERSION no código. A fatia do 40.7 §7.220 está concluída;
+preserve suas provas e proteções ao implementar a próxima fatia.
+
+A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
+rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido
+pedem confirmação. A medição silenciosa protege filtro que pega todos.
+O console Mongo usa um comando por linha, com JSON estrito; preserve
+a forma antiga de leitura e o tratamento de Extended JSON.
+
+Próxima fatia: Outro banco (ODBC), conforme 59 §5.7. A IDE lista os DSN
+do unixODBC, orquestra console, catálogo padrão e grade de leitura.
+Nunca baixa driver; carregar código nativo de terceiro é gesto explícito
+com aviso. Desenhe e registre o contrato antes de implementar.
+Depois siga a ordem de §5.8, uma fatia por commit.
+
+PT-BR na documentação/UI; identificadores em inglês; regras no core.
+Segurança: argumentos sem shell, validação estrita, segredos só em memória,
+recusa por padrão e testes que tentam quebrar. Não suprima avisos de terminal.
+Prove os gestos com mouse/teclado na janela da IDE, capturando só essa janela.
+HOME real, XDG isolado; bancos de teste em contêineres no loopback, com limpeza.
+Todos os gates verdes antes do commit local. Nunca push.
+Registre em 40.7, 59, 40, CHANGELOG, manual e arquitetura.
+
+Após o Banco, passo 8 inteiro: revisão minuciosa das outras áreas que
+o autor relatou em 2026-10-05, além de segurança, bugs e desempenho.
+O critério é consumo de recurso no uso diário. O AppImage é a última etapa,
+com Qt estável atual e caminho acelerado da aba Web; não o faça antes.
+```
 
 ## 6. Grafana: visualização web dentro da IDE
 

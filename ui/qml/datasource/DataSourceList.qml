@@ -229,7 +229,7 @@ Item {
             width: parent.width
             compact: true
             iconName: "add"
-            text: qsTr("Nova conexão")
+            text: qsTr("Conectar banco")
             onClicked: root.newRequested()
         }
 
@@ -237,7 +237,7 @@ Item {
             width: parent.width
             compact: true
             iconName: "database"
-            text: qsTr("Novo banco…")
+            text: qsTr("Criar banco…")
             onClicked: root.createRequested()
         }
     }

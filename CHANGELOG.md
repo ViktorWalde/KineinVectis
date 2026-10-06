@@ -11,6 +11,18 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolos `0.155.0`–`0.156.0` — **Banco: escrita MongoDB e confirmação
+  seletiva** (fatia de 2026-10-05). O console lê, insere, altera e apaga
+  documentos pela gramática JSON, com Extended JSON. Remoções e alterações
+  destrutivas pedem confirmação; inserção, criação e alteração filtrada podem
+  rodar diretamente. A medição silenciosa impede alterar todos os registros
+  sem confirmação, mesmo com filtro. O diálogo usa **Conectar banco** e
+  **Criar banco…**, seletores segmentados e padrões por motor, preservando
+  valores personalizados e o tamanho da amostra. Corrigidos o percurso de
+  Tab no Banco, a recusa de remoção escondida depois de leitura no lote SQL
+  e a exigência do nome completo de coleções MongoDB com ponto.
+  Arquitetura pública com
+  diagramas no 37; provas e pendências no 40.7 §7.220.
 - Protocolo `0.145.0` — **depurador sem globais, explicado.** Com o gdb < 16
   (o 15 do Ubuntu 24.04), o painel de variáveis de um alvo bare-metal mostrava
   só registradores, sem dizer por quê. Agora diz: o gdb anterior ao 16 não

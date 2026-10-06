@@ -29,13 +29,11 @@ Item {
     property bool testOk: false
     property string serverVersion: ""
     property string testMessage: ""
-    // O core disse que PEDIR A SENHA resolve. A UI abre o campo por este
-    // campo, nunca lendo `testMessage` — a mensagem do servidor e' localizada.
+    // O core disse que PEDIR A SENHA resolve (nunca lendo `testMessage`).
     property bool secretRequired: false
 
-    // A estrutura lida do banco. Vazia ate' o autor pedir: ler catalogo custa
-    // tres consultas pela rede, e fazer isso sozinho ao abrir o painel seria
-    // gastar a conexao de quem so' queria conferir a porta.
+    // A estrutura lida do banco. Vazia ate' o autor pedir: ler o catalogo
+    // custa tres consultas pela rede.
     property var schemas: []
     // A SEGUNDA FORMA (motor sem esquema fixo): o core manda esta OU `schemas`.
     property var collections: []
@@ -51,9 +49,8 @@ Item {
     // Senha da sessao. Nunca persistida, nunca enviada ao `save`.
     property string sessionPassword: ""
 
-    // A consulta (0.121.0): o texto, o resultado como tabela de texto, e o
-    // pedido de confirmacao quando a instrucao escreve — pelo CODIGO
-    // `WRITE_CONFIRMATION_REQUIRED`, nunca lendo a mensagem.
+    // A consulta (0.121.0): texto, resultado, e o pedido de confirmacao (so'
+    // remocao desde o 0.156.0) pelo CODIGO `WRITE_CONFIRMATION_REQUIRED`.
     property string sql: ""
     property bool querying: false
     property bool writeConfirmationRequired: false
@@ -108,18 +105,15 @@ Item {
     // PostgreSQL local por socket unix com `peer` conecta sem senha nenhuma
     // (DocsPublic/seguranca/40 §7). Por isso host de socket e `automatic`.
     function emptyDraft() {
-        return {
+        return Object.assign({
             engine: "postgres",
             name: "",
-            host: "/var/run/postgresql",
-            port: 5432,
-            database: "postgres",
             user: "",
             secretSource: "automatic",
             secretVariable: "",
             tls: "disable",
             caFile: ""
-        };
+        }, DataSourceKinds.defaultsFor("postgres"));
     }
 
     // A lista do projeto e o que responde nesta maquina — PERGUNTA de novo
@@ -134,9 +128,8 @@ Item {
         refreshCatalog();
     }
 
-    // Um perfil vindo da descoberta (nao salvo: vai ao formulario para o
-    // autor confirmar) ou da criacao (ja' salvo: a lista e' relida e ele
-    // fica selecionado).
+    // Um perfil vindo da descoberta (vai ao formulario para o autor
+    // confirmar) ou da criacao (ja' salvo: a lista e' relida e ele fica).
     function adoptProfile(profile, saved) {
         draft = cloneProfile(profile);
         selectedName = saved ? profile.name : "";
@@ -215,15 +208,20 @@ Item {
             user: source.user,
             secretSource: source.secretSource || "automatic",
             secretVariable: source.secretVariable || "",
+            sampleSize: source.sampleSize,
             tls: source.tls || "disable",
             caFile: source.caFile || ""
         };
     }
 
     function editDraft(field, value) {
-        const atualizado = cloneProfile(draft);
-        atualizado[field] = value;
-        draft = atualizado;
+        const updated = cloneProfile(draft);
+        updated[field] = value;
+        if (field === "engine" && value !== draft.engine) {
+            DataSourceKinds.adoptDefaults(updated, draft.engine, value);
+            clearSecret();
+        }
+        draft = updated;
     }
 
     // O core recusa `secretVariable` vazia? Nao — ele a normaliza para
@@ -340,7 +338,13 @@ Item {
     }
 
     function handleQueried(outcome) {
+        if (outcome.confirmationSql !== undefined && (lastQuery === null
+                || outcome.name !== lastQuery.name || outcome.confirmationSql !== lastQuery.sql)) return;
         querying = false;
+        if (outcome.confirmationSql !== undefined) {
+            handleFailed("datasource.query", outcome.message || "", "WRITE_CONFIRMATION_REQUIRED");
+            return;
+        }
         if (outcome.success === true && pendingDatabase !== "") {
             const novo = cloneProfile(draft);
             novo.name = draft.name + "-" + pendingDatabase;
@@ -356,13 +360,10 @@ Item {
             queryColumns = outcome.columns || [];
             queryRows = outcome.rows || [];
             secretRequired = false;
-            if (outcome.affected !== undefined && outcome.affected !== null) {
-                if (lastQuery !== null) lastQuery = Object.assign({}, lastQuery, { wrote: true });
-                queryStatus = qsTr("%1 linha(s) afetada(s) em %2 ms").arg(outcome.affected).arg(outcome.elapsedMs);
-            } else {
-                queryStatus = qsTr("%1 linha(s)%2 em %3 ms").arg(outcome.rowCount)
-                    .arg(outcome.truncated ? qsTr(" — teto atingido") : "").arg(outcome.elapsedMs);
-            }
+            if (outcome.affected !== undefined && outcome.affected !== null && lastQuery !== null)
+                lastQuery = Object.assign({}, lastQuery, { wrote: true });
+            const ran = root.profiles.find(p => lastQuery !== null && p.name === lastQuery.name);
+            queryStatus = DataSourceKinds.querySummary(outcome, ran === undefined ? "postgres" : ran.engine);
         } else {
             queryColumns = [];
             queryRows = [];
@@ -373,7 +374,6 @@ Item {
     }
 
     function handleFailed(method, message, code) {
-        // Descoberta, criacao e remocao tem dono proprio (discovery.handleFailed).
         if (method === "datasource.discover" || method === "datasource.create"
                 || method === "datasource.destroy") {
             return;
