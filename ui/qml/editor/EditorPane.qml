@@ -100,9 +100,9 @@ Rectangle {
     // overlay ancora nisso o que flutua no topo; ver ShellEditorOverlayHost.
     readonly property real overlayTop: statusBanners.y + statusBanners.height
 
-    // Dentro da ilha unica (0.3.9): sem borda propria.
+    // Bandeja das abas; código e Markdown ficam nas superfícies rebaixadas.
     radius: Theme.radiusLarge
-    color: Theme.background1
+    color: Theme.surface1
 
     EditorTabsBar {
         id: tabBar

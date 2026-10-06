@@ -27,4 +27,5 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 echo "== propriedades QML (binding para propriedade inexistente) =="
 
+python3 scripts/test_qml_properties.py
 python3 scripts/verificar_qml_propriedades.py

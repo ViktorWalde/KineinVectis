@@ -308,7 +308,7 @@ set_source_files_properties(qml/shell/WorkspaceStatusBar.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/shell/StatusBarParts.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarParts.qml)
 set_source_files_properties(qml/shell/StatusBarSlot.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarSlot.qml)
 set_source_files_properties(qml/panels/bottom/BottomPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelHost.qml)
-set_source_files_properties(qml/panels/bottom/BottomPanelWell.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelWell.qml)
+set_source_files_properties(qml/components/KvInsetSurface.qml PROPERTIES QT_RESOURCE_ALIAS KvInsetSurface.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSessionTabs.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSessionTabs.qml)
 set_source_files_properties(qml/panels/bottom/BuildPanel.qml PROPERTIES QT_RESOURCE_ALIAS BuildPanel.qml)
 set_source_files_properties(qml/panels/bottom/IdeLogPanel.qml PROPERTIES QT_RESOURCE_ALIAS IdeLogPanel.qml)
@@ -723,7 +723,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/StatusBarSlot.qml
         qml/shell/StatusBarProjectSummaries.qml
         qml/panels/bottom/BottomPanelHost.qml
-        qml/panels/bottom/BottomPanelWell.qml
+        qml/components/KvInsetSurface.qml
         qml/panels/bottom/TerminalSessionTabs.qml
         qml/panels/bottom/BuildPanel.qml
         qml/panels/bottom/IdeLogPanel.qml

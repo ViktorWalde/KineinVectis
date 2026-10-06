@@ -10,7 +10,7 @@
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
 > - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.159.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.223.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.224.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -72,8 +72,9 @@
 >     ODBC concluído e validado (40.7 §7.221; ADR-0007). Produção, somente
 >     leitura e contexto validados (§7.222, c4d8779). Prévia PostgreSQL
 >     concluída e validada (`0.159.0`; §7.223, 59 §5.11).
->     Atual: atender o pedido de profundidade do editor
->     como no terminal (autor, 2026-10-06), seguido de árvore/console/grade
+>     Profundidade do editor como no terminal validada (§7.224; autor,
+>     2026-10-06), com a mesma área útil. Atual: menus/árvore viva, com
+>     proteção do vínculo entre console e conexão, depois console/grade
 >     e motores restantes.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.

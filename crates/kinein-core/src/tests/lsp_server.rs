@@ -778,6 +778,9 @@ fn the_rust_server_receives_the_kit_target_and_restarts_when_it_changes() {
         h.count_of("initialize") > antes,
         "o servidor de Rust nao reiniciou"
     );
+    // A configuração chega antes do didOpen. Observar a reabertura no wire
+    // antes de derrubar este servidor: enfileirar não garante a entrega.
+    h.wait_for("textDocument/didOpen", 1);
 
     // Limpar o alvo ("" limpa, como nos outros campos) tira a configuracao
     // na proxima subida — o reinicio seguinte sobe sem `rust-analyzer`.

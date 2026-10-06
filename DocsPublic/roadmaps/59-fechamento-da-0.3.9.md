@@ -340,13 +340,16 @@ no 40.7 §7.223. Confira git log para o commit local. Produção/somente leitura
 permanecem aceitas no §7.222 (c4d8779), e ODBC no §7.221 (fa32f51).
 Não repita provas aceitas sem risco concreto.
 
-**Fatia atual:** profundidade do editor como no terminal, pedido do autor
-em 2026-10-06 e desenho anterior ao código no §7. A comparação inicial
-registrou 24 linhas de código na janela de 1400×875. Aplicar o desenho
-comum preservando dimensões, foco e digitação, com prova visual e commit próprio.
+**Relevo do editor concluído:** pedido do autor em 2026-10-06, desenho
+anterior ao código no §7 e aceite no 40.7 §7.224. Código e Markdown usam
+KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
+de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
+completos e estritos verdes. Confira git log para o commit local.
 
-**Ordem das próximas fatias:** profundidade do editor (§7), menus/árvore viva
-(§5.1), console (§5.2) e grade (§5.4), com prova real conforme §5.6.
+**Fatia atual:** menus/árvore viva (§5.1), começando por proteger o vínculo
+entre arquivo do console e conexão e a identidade dos objetos da árvore.
+O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
+(§5.4), com prova real conforme §5.6.
 MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
 vem depois e inclui a correção do limite DNS/NSS registrado no §7.
 
@@ -369,9 +372,10 @@ ODBC está no commit local fa32f51. Produção/somente leitura/contexto
 localizar o commit e preservar qualquer trabalho posterior. Não repita
 provas aceitas sem risco concreto. Prévia PostgreSQL (§5.11), protocolo
 0.159.0, está concluída e validada (§7.223). Confira git log e preserve
-qualquer trabalho posterior. Atual: analise/aplique profundidade do editor
-como no terminal (pedido do autor em 2026-10-06, §7), com prova visual e
-commit próprio.
+qualquer trabalho posterior. O relevo do editor está validado (§7.224),
+com prova visual, gates completos e estritos e commit próprio. Atual:
+menus/árvore viva (§5.1), incluindo a proteção do vínculo console/conexão
+e das identidades da árvore. Leia o desenho registrado antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
 rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido
@@ -760,6 +764,13 @@ de conexão. O registro mantém a capacidade ocupada e o IPC fica livre, mas
 o prazo não é teto absoluto do job com hostname. Reproduzir com resolvedor
 controlado da prova e resolver duração/cancelamento sem acumular threads ou
 processos órfãos; conferir também o caminho PostgreSQL ordinário.
+
+**Navegação do editor, achado na prova do relevo (40.7 §7.224):** PageDown
+não moveu o cursor/viewport nem no release anterior ao relevo. Conferir
+PageUp/PageDown com foco real, seleção com Shift, folding e tamanho da área
+visível; corrigir no pente fino após Banco. Roda e barra são verificadas
+separadamente; um evento discreto do auxiliar de input não foi entregue,
+e a roda respondeu ao evento apropriado, sem alterar código da IDE.
 
 **Pedido do autor em 2026-10-06:** depois de concluir a correção em curso da
 prévia PostgreSQL, analisar e aplicar na área de edição de código o relevo

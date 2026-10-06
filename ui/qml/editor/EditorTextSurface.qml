@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-Rectangle {
+KvInsetSurface {
     id: root
 
     property alias text: textEditor.text
@@ -63,9 +63,6 @@ Rectangle {
     signal newlineRequested()
     signal closerBraceRequested()
     signal smartHomeRequested(bool extendSelection)
-
-    radius: Theme.radiusLarge
-    color: Theme.backgroundEditor
 
     function remove(start, end) {
         if (readOnly) return;

@@ -11,7 +11,7 @@ import KineinVectis
 //
 // A largura de leitura e' limitada (§3.2): paragrafo esticado pela janela
 // inteira e' desconfortavel de ler, e nenhum leitor de documentacao faz isso.
-Item {
+KvInsetSurface {
     id: root
 
     // O BUFFER como ele esta' agora. NAO vai direto para o renderer: ver o

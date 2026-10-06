@@ -45,7 +45,7 @@ Item {
         return selectionController.cellAt(local.x, local.y);
     }
 
-    // Sem fundo proprio: o terminal mora no poco do painel (BottomPanelWell).
+    // Sem fundo proprio: o terminal mora no poco do painel (KvInsetSurface).
     Item {
         anchors.fill: parent
 

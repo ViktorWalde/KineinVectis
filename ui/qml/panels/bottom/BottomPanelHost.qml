@@ -82,7 +82,7 @@ Rectangle {
     // de FOCO, quando e' o painel quem tem o teclado (o ciclo Ctrl+F6 chega
     // aqui; o foco tem de ser visivel, 53 §5.8).
     // A bandeja (surface1) um degrau acima do editor; o conteudo de cada aba
-    // fica no poco (BottomPanelWell), um degrau abaixo.
+    // fica no poco (KvInsetSurface), um degrau abaixo.
     radius: Theme.radiusLarge
     color: Theme.surface1
     border.color: Theme.accentDim
@@ -155,7 +155,7 @@ Rectangle {
     }
 
     // Atras de todas as abas: declarado antes delas.
-    BottomPanelWell {
+    KvInsetSurface {
         id: well
 
         anchors.top: sessionRow.bottom

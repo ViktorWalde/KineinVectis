@@ -1,19 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O POCO do painel de baixo (2026-10-04, pedido do autor: "acrescentar um
-// fundo e melhorar a separacao visual do painel inferior ... um relevo").
-//
-// Antes, editor, painel e terminal tinham a MESMA cor (#191a1c): o painel
-// so' se distinguia do editor por uma linha. Agora sao tres planos:
-//
-//   editor          background1   o que se edita
-//   painel (bandeja) surface1     um degrau acima: abas e sessoes
-//   poco (conteudo)  background0  um degrau ABAIXO, com a sombra interna no
-//                                 topo: a saida fica "dentro" da bandeja
-//
-// Todas as abas (Terminal, Problemas, Jobs, Build...) desenham sobre ele, entao
-// a separacao e' a mesma em qualquer uma.
+// Fundo rebaixado comum ao editor, à prévia Markdown e ao painel de baixo.
+// A bandeja do host usa surface1; o conteúdo fica em background0 com borda
+// e sombra interna. Só desenho: margens, foco e input pertencem ao consumidor.
 Rectangle {
     id: root
 

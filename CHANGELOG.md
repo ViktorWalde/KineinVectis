@@ -11,6 +11,11 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- **Editor com a profundidade do terminal** (validado no 40.7 §7.224):
+  bandeja das abas mais clara e fundo rebaixado comum ao código, gutter,
+  Markdown e conteúdo do painel inferior. Mesmas margens e espaço útil;
+  desenho compartilhado no componente KvInsetSurface.
+
 - Protocolo `0.159.0` — **Prévia PostgreSQL** (validada no checkout;
   aceite no 40.7 §7.223). Uma instrução INSERT/UPDATE/DELETE elegível pode
   executar dentro de transação pendente, com amostra RETURNING, confirmação

@@ -110,48 +110,53 @@ def indent(linha: str) -> int:
     return len(linha) - len(linha.lstrip())
 
 
-def checar(caminho: Path, tipos: dict[str, set[str]]) -> list[str]:
-    linhas = caminho.read_text(encoding="utf-8").split("\n")
-    erros: list[str] = []
-    # pilha de blocos abertos: (indentacao_do_cabecalho, tipo)
-    pilha: list[tuple[int, str | None]] = []
+def check_file(path: Path, types: dict[str, set[str]]) -> list[str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    errors: list[str] = []
+    # Pilha de blocos abertos: (indentação do cabeçalho, tipo efetivo).
+    stack: list[tuple[int, str | None]] = []
 
-    abre = re.compile(r"^(\s*)(?:\w+\s*:\s*)?([A-Z]\w*)\s*\{\s*$")
-    atrib = re.compile(r"^(\s*)([A-Za-z_][\w.]*)\s*:")
+    open_block = re.compile(r"^(\s*)(?:\w+\s*:\s*)?([A-Z]\w*)\s*\{\s*$")
+    assignment = re.compile(r"^(\s*)([A-Za-z_][\w.]*)\s*:")
 
-    for n, linha in enumerate(linhas, 1):
-        crua = linha.rstrip()
-        if not crua.strip() or crua.strip().startswith("//"):
+    for line_number, line in enumerate(lines, 1):
+        raw = line.rstrip()
+        if not raw.strip() or raw.strip().startswith("//"):
             continue
 
-        m = abre.match(crua)
-        if m:
-            pilha.append((len(m.group(1)), m.group(2)))
+        match = open_block.match(raw)
+        if match:
+            type_name = match.group(2)
+            # A raiz declara sua própria interface, além da herdada. Nos
+            # filhos, continua valendo a interface do componente instanciado.
+            if not stack and type_name in types and path.stem in types:
+                type_name = path.stem
+            stack.append((len(match.group(1)), type_name))
             continue
 
-        if crua.strip() == "}" and pilha:
-            ind = indent(crua)
-            while pilha and pilha[-1][0] >= ind:
-                pilha.pop()
+        if raw.strip() == "}" and stack:
+            position = indent(raw)
+            while stack and stack[-1][0] >= position:
+                stack.pop()
             continue
 
-        a = atrib.match(crua)
-        if a and pilha:
-            ind_cab, tipo = pilha[-1]
+        binding = assignment.match(raw)
+        if binding and stack:
+            header_indent, type_name = stack[-1]
             # so' o nivel imediatamente dentro do bloco
-            if indent(crua) != ind_cab + 4:
+            if indent(raw) != header_indent + 4:
                 continue
-            if tipo not in tipos:
+            if type_name not in types:
                 continue
-            nome = a.group(2)
-            if PREFIXO_OK.match(nome) or nome in BASE:
+            name = binding.group(2)
+            if PREFIXO_OK.match(name) or name in BASE:
                 continue
-            if nome in tipos[tipo]:
+            if name in types[type_name]:
                 continue
-            erros.append(
-                f"{caminho.relative_to(RAIZ)}:{n}: `{nome}:` nao existe em "
-                f"{tipo} (nem propriedade, nem alias, nem on<Sinal>)")
-    return erros
+            errors.append(
+                f"{path.relative_to(RAIZ)}:{line_number}: `{name}:` nao existe em "
+                f"{type_name} (nem propriedade, nem alias, nem on<Sinal>)")
+    return errors
 
 
 # Uma margem de ancora SEM a ancora e' um no-op silencioso: `anchors.rightMargin`
@@ -251,7 +256,7 @@ def main() -> int:
 
     erros: list[str] = []
     for p in sorted(QML.rglob("*.qml")):
-        erros += checar(p, tipos)
+        erros += check_file(p, tipos)
         erros += margens_sem_ancora(p)
         erros += bindings_tortos(p)
 

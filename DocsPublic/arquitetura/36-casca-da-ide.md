@@ -39,8 +39,9 @@ JetBrains, com âmbar onde elas usam verde:
 - **A ilha** é um retângulo arredondado. Ela leva o trabalho: a área da
   esquerda, o editor e o painel de baixo.
 
-Não há bordas retas nem faixas separadas. As áreas dentro da ilha não têm
-borda própria e são separadas por divisórias de 1 px.
+As áreas dentro da ilha são separadas por divisórias de 1 px. Editor,
+prévia Markdown e conteúdo do painel inferior têm um fundo interno
+rebaixado (§1.2.1), dentro das bandejas das abas.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -80,6 +81,7 @@ borda própria e são separadas por divisórias de 1 px.
 | Peças do status | `ui/qml/shell/StatusBarParts.qml` | Um `Component` por peça: trilha do arquivo, índice, contexto, cursor, LSP, core… |
 | Lugar do status | `ui/qml/shell/StatusBarSlot.qml` | Cria a peça por `createObject` e trata o arrasto. |
 | Composição | `ui/qml/shell/ShellWorkspaceHost.qml` | Monta tudo e liga sinais a donos. Não guarda estado próprio. |
+| Conteúdo rebaixado | `ui/qml/components/KvInsetSurface.qml` | Desenho comum do editor, Markdown e painel inferior: fundo, borda e sombra interna. Nenhuma regra de input. |
 
 ### 1.2 Medidas que valem para a janela inteira
 
@@ -96,6 +98,33 @@ divisória        1 px Theme.borderSoft, com recuo de Theme.spacingSmall nas pon
 fontes           Micro 9 · Caption 10 · Small 11 · Body 12 · Medium 13 ·
                  Large 14 · Subtitle 15 · Headline 20 · Display 22 · Hero 40
 ```
+
+### 1.2.1 Profundidade do editor e do painel inferior
+
+Desde 2026-10-06, o editor usa a mesma separação visual do terminal, a pedido
+do autor (40.7 §7.224). `EditorPane` e `BottomPanelHost` desenham a bandeja
+em `Theme.surface1` (#1e1f22). `KvInsetSurface` desenha o conteúdo em
+`Theme.background0` (#141517), raio `radiusLarge`, borda `borderSoft` de
+1 px e sombra interna no topo (10 px, alfa 0,32 até transparente).
+
+```mermaid
+flowchart LR
+  surface[KvInsetSurface: desenho comum] --> editor[EditorTextSurface: texto e gutter]
+  surface --> markdown[MarkdownPreviewPane: leitura selecionável]
+  surface --> bottom[BottomPanelHost: conteúdo das abas]
+  editor --> input[EditorTypingController: input existente]
+```
+
+O componente foi extraído de `BottomPanelWell`; o painel inferior conserva
+seu desenho. Editor e Markdown usam o componente como raiz, sem mudar ancoras,
+larguras, margens, tamanho da fonte ou espaçamento de linhas. O gutter fica
+no mesmo fundo do código. Abas, símbolos, overlays e separadores conservam
+seus donos e gestos; o relevo não cria MouseArea, Timer, animação ou layer.
+Markdown lado a lado mantém duas superfícies e a alça existente.
+
+`Theme.backgroundEditor` permanece como estava: outros consumidores
+(Início, configuração e diffs) continuam com seus tokens. A mudança é nos
+hosts/superfícies citados, sem redefinir a paleta global.
 
 ### 1.3 Ordem de empilhamento (z) — onde cliques se perdem
 

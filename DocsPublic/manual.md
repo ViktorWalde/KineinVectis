@@ -148,6 +148,10 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   bandeja um tom acima do editor, e o conteúdo de qualquer aba (Terminal,
   Problemas, Jobs, Build…) num fundo rebaixado, com borda e uma sombra no
   topo.
+- **O editor tem a mesma profundidade do terminal** (desde 2026-10-06):
+  abas na bandeja mais clara; código, números de linha e prévia Markdown
+  no fundo rebaixado. O relevo conserva o espaço útil e os gestos do editor,
+  inclusive na leitura de Markdown lado a lado.
 - **De área em área pelo teclado** (desde 2026-10-02): **Ctrl+F6** leva o
   teclado para a próxima área visível — slot da esquerda, editor, slot da
   direita (desde 2026-10-03), painel de baixo — e **Ctrl+Shift+F6** para a
