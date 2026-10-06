@@ -208,6 +208,8 @@ set_source_files_properties(qml/datasource/DataSourceResultsPanel.qml PROPERTIES
 set_source_files_properties(qml/datasource/DataSourceConsoleController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceConsoleController.qml)
 set_source_files_properties(qml/datasource/DataSourceConsoleBanner.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceConsoleBanner.qml)
 set_source_files_properties(qml/datasource/DatabaseWindow.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseWindow.qml)
+set_source_files_properties(qml/datasource/DatabaseTreeActions.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseTreeActions.qml)
+set_source_files_properties(qml/datasource/DatabaseToolbar.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseToolbar.qml)
 set_source_files_properties(qml/datasource/DatabaseTreeView.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseTreeView.qml)
 set_source_files_properties(qml/datasource/DataSourceImpactController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceImpactController.qml)
 set_source_files_properties(qml/datasource/SqlImpactDialog.qml PROPERTIES QT_RESOURCE_ALIAS SqlImpactDialog.qml)
@@ -626,6 +628,8 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceConsoleController.qml
         qml/datasource/DataSourceConsoleBanner.qml
         qml/datasource/DatabaseWindow.qml
+        qml/datasource/DatabaseTreeActions.qml
+        qml/datasource/DatabaseToolbar.qml
         qml/datasource/DatabaseTreeView.qml
         qml/datasource/DataSourceImpactController.qml
         qml/datasource/SqlImpactDialog.qml

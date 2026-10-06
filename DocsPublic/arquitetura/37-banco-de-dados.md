@@ -69,6 +69,9 @@ Os caminhos são relativos à raiz do repositório.
 | Ponte existente e eventos | `ui/src/core_client_datasource.cpp`, `ui/src/core_client_notifications.cpp` |
 | Pedidos e respostas da UI | `ui/qml/ipc/DataSourceRequestRouter.qml`, `ui/qml/ipc/DataSourceEventRouter.qml` |
 | Composição, perfis e rascunho | `ui/qml/datasource/DataSourceController.qml` |
+| Identidade, expansão e seleção da árvore | `ui/qml/datasource/DataSourceTree.qml` |
+| Contexto do menu e despacho das ações existentes | `ui/qml/datasource/DatabaseTreeActions.qml` |
+| Barra, árvore visual e menu na camada da janela | `ui/qml/datasource/DatabaseToolbar.qml`, `ui/qml/datasource/DatabaseTreeView.qml`, `ui/qml/datasource/DatabaseWindow.qml` |
 | Credencial vinculada ao destino e retomada pública | `ui/qml/datasource/DataSourceSecretController.qml` |
 | Consulta e descarte de resposta antiga | `ui/qml/datasource/DataSourceQueryController.qml` |
 | Pedidos de teste e catálogo por destino | `ui/qml/datasource/DataSourceCatalogController.qml` |
@@ -627,9 +630,33 @@ constructor não confundem estrutura, expansão ou leitura de outro perfil.
 Testes tentam colisões, links/FIFO, oito criações concorrentes, nome com
 newline, literais multilinha, Unicode, resposta antiga e contexto alterado.
 
+### Seleção e ações da árvore (2026-10-06)
+
+`DataSourceTree` mantém a chave selecionada e a conexão de origem. Enquanto
+o catálogo está lendo, conserva a chave e mostra a conexão como seleção
+provisória. A resposta preserva o objeto se ele existir; remoção retorna à
+conexão. Workspace novo limpa expansão e seleção. A navegação usa o índice
+lógico dessa seleção: o `currentIndex` transitório do ListView não decide o
+próximo objeto nem a posição do menu.
+
+`DatabaseTreeActions` conserva chave e contexto do menu (workspace e perfil
+completo). Mudança de contexto ou remoção do objeto fecha o menu; uma ação
+confere sua disponibilidade antes de fechar. O AppMenuPopup restaura o foco
+ao ficar invisível, antes do sinal que pode abrir um diálogo. A camada cobre
+a janela e não herda o recorte da árvore, incluindo o dock direito.
+
+Releitura, console e dados reutilizam catálogo, console e consulta existentes.
+Não há método IPC novo, nem SQL novo gerado pelo menu. `readSql` do ODBC é
+encaminhado intacto. O seletor de motores reutiliza os padrões do formulário;
+a paleta pertence ao Theme e a classificação dos objetos ao DataSourceKinds.
+Shift+F10/F5 têm ShortcutOverride local enquanto a árvore está com foco.
+O harness de composição também prova que restaurar foco não cancela a ação
+nem rouba o foco do diálogo que ela abre.
+
 A fila e o prompt de retomada ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
 Prévia PostgreSQL (§9) e profundidade do editor aceitas no 40.7 §7.223/224.
-Base de console/árvore aceita no 40.7 §7.225. Seguir ações e menus/árvore
-viva, console, completion e ampliação da grade no passo 7. O pente fino e o
+Base de console/árvore aceita no 40.7 §7.225; primeira fatia de ações no
+§7.226. Seguir geração de instruções no core, ações com impacto, desconectar
+e releitura automática após DDL; depois console, completion e grade no passo 7. O pente fino e o
 AppImage seguem a ordem do 59 §7.

@@ -23,6 +23,8 @@ Item {
     // O slot da direita (ShellRightDock): a janela cujo icone esta' no trilho
     // da direita muda de PAI para la' — a mesma instancia, o mesmo estado.
     property Item rightSlot: null
+    // O menu sai do recorte dos slots sem passar uma camada por outro host.
+    readonly property Item menuLayer: root.Window.window ? root.Window.window.contentItem : root
 
     function slotOf(name) {
         return root.rightSlot !== null && root.shellController.rightWindow === name ? root.rightSlot : root;
@@ -101,7 +103,7 @@ Item {
     function focusSlot(side) {
         const name = root.shellController.docks.windowOn(side);
         if (name === "git") gitWindow.forceActiveFocus();
-        else if (name === "database") databaseWindow.forceActiveFocus();
+        else if (name === "database") databaseWindow.focusTree();
         else if (name === "containers") containersWindow.forceActiveFocus();
         else if (name === "remote") remoteWindow.forceActiveFocus();
         else if (name === "observability") grafanaWindow.forceActiveFocus();
@@ -130,6 +132,7 @@ Item {
         anchors.fill: parent
         visible: root.shellController.databaseWindowVisible
         controller: root.dataSourceController
+        menuLayer: root.menuLayer
         onVisibleChanged: if (visible) root.dataSourceController.refreshCatalog()
         onConsoleRequested: name => root.dataSourceController.consoles.open(name)
         onTableDataRequested: (connection, engine, schema, table, readSql) =>
@@ -138,8 +141,9 @@ Item {
             root.dataSourceController.select(name);
             root.dataSourceController.open();
         }
-        onNewRequested: {
+        onNewRequested: engine => {
             root.dataSourceController.startNew();
+            root.dataSourceController.editDraft("engine", engine);
             root.dataSourceController.open();
         }
         onCandidateChosen: index => {

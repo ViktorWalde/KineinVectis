@@ -218,6 +218,21 @@ Ver 40.7 §7.206–§7.209.
 
 ### 5.1 Barra, menus e árvore viva
 
+**Primeira fatia concluída e validada em 2026-10-06; provas no 40.7 §7.226.**
+Seleção estável, setas/Home/End/Enter, F5, botão direito/Shift+F10 e Escape;
+barra com releitura do catálogo, console, dados e recolher; + por motor e
+descoberta local; estado vazio clicável/Alt+Insert; cores por motor e menu
+fora do recorte nos dois docks. Console/edição/consulta usam os donos atuais.
+Protocolo permanece `0.160.0`. Aceite dos gates registrado no diário.
+
+**Ainda pendentes desta seção:** “Novo banco…” no submenu, localizar o
+objeto do console, abrir console com SELECT/modelos SELECT/INSERT/UPDATE,
+esvaziar/remover objetos com aviso de impacto, desconectar com descarte
+real da sessão e atualizar o catálogo após DDL. SQL/modelos e detecção de
+mudança estrutural precisam de contrato no core; não duplicar o gerador
+existente de leitura da tabela no QML. A lista abaixo conserva o escopo
+completo da seção, incluindo o que já foi feito.
+
 - **Barra da janela**, como na referência JetBrains:
   - **+** com submenu de motores, cada um com ícone colorido, e "Desta
     máquina…" e "Novo banco…";
@@ -232,6 +247,34 @@ Ver 40.7 §7.206–§7.209.
 - **A árvore se atualiza sozinha.** Depois de um `CREATE`, `DROP` ou `ALTER`
   executado com sucesso, a estrutura da conexão é relida.
 - **Ícones dos motores coloridos**, para reconhecer o motor de relance.
+
+#### 5.1.1 Desenho da primeira fatia de ações (2026-10-06)
+
+A base é `d116b43`, protocolo `0.160.0`. Esta fatia liga gestos novos aos
+pedidos existentes: `datasource.introspect`, `datasource.console` e
+`datasource.query`. Não altera o contrato IPC nem cria outra interpretação
+SQL. A geração de modelos e o refresh automático após DDL serão uma fatia
+posterior no core, junto com a semântica de desconectar.
+
+- `DataSourceTree`: seleção por chave de tupla, navegação e recolher tudo;
+  releitura preserva a seleção ou retorna à conexão se o objeto sumir.
+- `DatabaseTreeActions`: dono das ações disponíveis e do contexto do menu;
+  perfis, workspace ou objeto diferentes invalidam um menu aberto. Releitura
+  usa o catálogo existente e fica indisponível enquanto ele estiver lendo.
+- `DatabaseTreeView`: seleção visível, setas, Home/End, Enter, F5, Shift+F10
+  e botão direito. A view emite gestos e não interpreta SQL.
+- `DatabaseToolbar` e `DatabaseWindow`: criar conexão por motor, reler a
+  conexão escolhida, console, dados, recolher; estado vazio clicável e
+  Alt+Insert quando o foco está no Banco.
+- O menu usa `AppMenuPopup` numa camada da janela, fora do recorte da
+  árvore e válida também no dock direito. Escape devolve o foco à árvore;
+  a ação restaura o foco antes de abrir outro diálogo.
+
+Provas: harnesses com mudança de catálogo durante seleção/menu, colisões de
+nomes, invalidação de perfil/workspace, releitura ocupada e ações por tipo;
+GUI real com clique direito, teclado, releitura de uma tabela criada fora da
+IDE, dois bancos homônimos e dock estreito. Lint, fiação, arquitetura,
+harnesses nos Qt 6.10/6.4, build e abertura sem diagnósticos obrigatórios.
 
 ### 5.2 Console que ajuda
 
@@ -344,10 +387,11 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** base segura dos consoles/árvore (§5.12) e
-reutilização das abas de execução (§7), protocolo 0.160.0. A retomada
-revisou e completou o código local, corrigiu dois achados dos gates e
-provou os gestos na IDE. Aceite e limites no 40.7 §7.225; confira git log.
+**Última fatia concluída:** primeira fatia de ações da árvore (§5.1.1),
+mantendo protocolo 0.160.0. Barra, menu por objeto/motor, seleção, atalhos
+locais e releitura foram validados nos Qt 6.10/6.4 e na IDE real, nos dois
+docks. Aceite, achados e limites no 40.7 §7.226; confira git log. Consoles
+seguros e reutilização das abas continuam aceitos no §7.225 (d116b43).
 Prévia PostgreSQL permanece aceita no §7.223 (fbf3294). Produção/somente leitura
 permanecem aceitas no §7.222 (c4d8779), e ODBC no §7.221 (fa32f51).
 Não repita provas aceitas sem risco concreto.
@@ -358,9 +402,10 @@ KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
 de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
 completos e estritos verdes. Confira git log para o commit local.
 
-**Fatia atual:** ações e menus/árvore viva (§5.1). O vínculo entre arquivo
-do console e conexão e a identidade dos objetos da árvore já estão
-protegidos e validados na §5.12; continuar sobre essa base.
+**Fatia atual:** restante de ações/árvore viva (§5.1): geração de instruções
+no core e ações com impacto, depois desconectar/localizar objeto e refresh
+após DDL. Vínculo console/conexão, identidades, seleção, menus e releitura
+já estão validados (§5.12/§5.1.1); continuar sobre essa base.
 O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
 (§5.4), com prova real conforme §5.6.
 MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
@@ -386,9 +431,12 @@ localizar o commit e preservar qualquer trabalho posterior. Não repita
 provas aceitas sem risco concreto. Prévia PostgreSQL (§5.11), protocolo
 0.159.0, está concluída e validada (§7.223). Confira git log e preserve
 qualquer trabalho posterior. O relevo do editor está validado (§7.224),
-com prova visual, gates completos e estritos e commit próprio. Atual:
-menus/árvore viva (§5.1), incluindo a proteção do vínculo console/conexão
-e das identidades da árvore. Leia o desenho registrado antes do código.
+com prova visual, gates completos e estritos e commit próprio. Consoles
+seguros e abas de execução estão aceitos no §7.225, protocolo 0.160.0.
+Barra, menus, seleção/atalhos locais e releitura estão aceitos no §7.226.
+Atual: geração de instruções no core e ações com impacto, depois desconectar,
+localizar objeto e refresh após DDL (§5.1). Não refaça os menus/seleção.
+Leia os donos, limites e o desenho antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
 rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido

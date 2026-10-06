@@ -11,6 +11,13 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- **Ações da árvore do Banco** (40.7 §7.226, protocolo mantido em
+  `0.160.0`): barra de releitura/console/dados/recolher, menu de motores,
+  menu de contexto e seleção por teclado que sobrevive à releitura.
+  Shift+F10 abre o menu com foco na árvore; F5 relê o catálogo. Menu fecha
+  ao mudar perfil/workspace/objeto, restaura foco antes da ação e cabe nos
+  dois docks. Estado vazio com botão e Alt+Insert. Cores por motor.
+
 - Protocolo `0.160.0` — **Console e execução com identidades estáveis**
   (validado no checkout; 40.7 §7.225). Nomes parecidos ganham consoles
   distintos e abas legíveis; arquivos antigos ambíguos permanecem intactos.

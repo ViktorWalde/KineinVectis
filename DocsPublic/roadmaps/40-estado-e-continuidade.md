@@ -17,7 +17,7 @@
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
 > - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.160.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.225.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.226.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -86,7 +86,10 @@
 >     aceita** (`0.160.0`, 40.7 §7.225): vínculos sem colisão, extração da
 >     instrução no core, chaves seguras e uma aba por execução, com PTY novo
 >     a cada tentativa. A retomada conferiu e completou o trabalho local,
->     sem duplicar os motores existentes. Próximo: ações e menus do 59 §5.1.
+>     sem duplicar os motores existentes. **Primeira fatia de ações**
+>     aceita no §7.226: barra, seleção por teclado, menu de contexto,
+>     releitura e motores. Próximo no 59 §5.1: geração no core, ações com
+>     impacto, desconectar e atualização automática após DDL.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >

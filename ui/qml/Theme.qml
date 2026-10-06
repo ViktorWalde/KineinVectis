@@ -67,6 +67,12 @@ QtObject {
     readonly property color infoSoft: "#5c8dff"
     readonly property color purpleOrbital: "#8a5cff"
 
+    // Identidade dos motores do Banco, em repouso e nos menus.
+    readonly property color databasePostgres: "#71a9d7"
+    readonly property color databaseSqlite: "#79caca"
+    readonly property color databaseMongo: "#78bf82"
+    readonly property color databaseOdbc: "#b89de3"
+
     readonly property int spacingXSmall: 4
     readonly property int spacingSmall: 8
     readonly property int spacingMedium: 12

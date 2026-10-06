@@ -868,9 +868,10 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
 (`.kinein/datasources.json`).
 
 ```text
-┌ Banco                    + ⟳ × ┐   +  Conectar banco (abre o diálogo)
-│ ▾ loja                  SQLite │   ⟳  procurar bancos nesta máquina
-│   ▾ clientes         4 colunas │   ×  fechar a janela
+┌ Banco                        × ┐   ×  fechar a janela
+│ +  ⟳  ▢  ▦  recolher           │   +  conexão por motor / desta máquina
+│ ▾ loja                  SQLite │   ⟳  reler a estrutura selecionada
+│   ▾ clientes         4 colunas │   ▢  console · ▦ dados
 │       id               INTEGER │
 │       nome     TEXT · não nulo │   com o mouse em cima:
 │   ▸ pedidos          4 colunas │     na conexão  ▢ console SQL · ⚙ editar
@@ -888,7 +889,23 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   MongoDB: conexão › coleção (ou série temporal) › campos, com os tipos vistos
   e a presença ("em 50%"). Abrir uma conexão **lê a estrutura** na hora, se
   ainda não leu; uma leitura que falhou mostra a mensagem e o "tentar de novo".
-  O que estava aberto continua aberto depois de ler de novo.
+  O que estava aberto continua aberto depois de ler de novo. A seleção usa
+  a identidade do objeto e sobrevive à releitura; se ele desaparecer, volta
+  para a conexão. Trocar de projeto reinicia seleção e expansão.
+- **Ações e teclado da árvore.** As setas percorrem as linhas; direita abre
+  ou entra num filho, esquerda recolhe ou volta ao pai. Home/End vão aos
+  extremos. Enter mostra os dados de tabela/visão/coleção; F5 relê o catálogo
+  da conexão, sem duplicar uma leitura em andamento. Botão direito ou
+  Shift+F10 abre o menu do objeto; Escape devolve o foco. Com foco na árvore,
+  Shift+F10 abre esse menu; fora dela, continua sendo Executar.
+- **Barra e menus.** O + escolhe PostgreSQL, SQLite, MongoDB ou ODBC antes
+  de abrir o formulário; “Desta máquina…” relê a descoberta local. Console,
+  dados e recolher tudo usam a seleção da árvore. O menu da conexão oferece
+  console, releitura, edição e cópia do nome; o de uma tabela/coleção oferece
+  dados, console da conexão, releitura e cópia do nome literal. Abrir console
+  conserva o arquivo existente; ainda não insere um SELECT do objeto.
+  Sem conexões, “Criar conexão…” e Alt+Insert (com foco no Banco) abrem o
+  mesmo menu de motores. Os ícones usam a cor de cada motor nos dois docks.
 - **Ver os dados de uma tabela:** **clique duplo** nela, ou o ícone ▦ que
   aparece com o mouse em cima da linha. As primeiras **200 linhas**
   (`SELECT * FROM … LIMIT 200`; no MongoDB, `coleção {}`) aparecem na **seção

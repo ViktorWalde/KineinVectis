@@ -188,6 +188,8 @@ FocusScope {
                           ? menuItem.modelData.icon : "fill"
                     opacity: menuItem.modelData.icon !== undefined && menuItem.modelData.icon !== "" ? 1 : 0
                     active: menuItem.current
+                    iconColor: !menuItem.modelData.enabled ? Theme.textDisabled
+                               : (menuItem.modelData.iconColor || (menuItem.current ? Theme.accent : Theme.iconDefault))
                     disabled: !menuItem.modelData.enabled
                 }
 

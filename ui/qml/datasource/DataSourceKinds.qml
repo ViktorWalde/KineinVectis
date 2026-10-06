@@ -27,6 +27,10 @@ QtObject {
         return isSqlite(engine) ? "file" : (isMongo(engine) ? "documents" : "database");
     }
 
+    function engineColor(engine) {
+        return isSqlite(engine) ? Theme.databaseSqlite : (isMongo(engine) ? Theme.databaseMongo : (isOdbc(engine) ? Theme.databaseOdbc : Theme.databasePostgres));
+    }
+
     function engineName(engine) {
         return isOdbc(engine) ? "Outro banco (ODBC)" : (isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "MongoDB" : "PostgreSQL"));
     }
@@ -130,6 +134,8 @@ QtObject {
     }
 
     // Tem linhas para mostrar na secao de dados (clique duplo na arvore)?
+    function isConnection(kind) { return kind === "connection"; }
+
     function hasData(kind) {
         return ["table", "view", "collection", "timeseries"].indexOf(kind) >= 0;
     }

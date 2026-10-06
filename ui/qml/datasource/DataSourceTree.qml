@@ -21,11 +21,57 @@ QtObject {
     id: root
 
     property var profiles: []
+    property string workspaceRoot: ""
+    onWorkspaceRootChanged: {
+        root.selectedKey = "";
+        root.selectedConnection = "";
+        root.expanded = DataSourceMap.copy();
+    }
     property var structures: DataSourceMap.copy()
     property var readingNames: DataSourceMap.copy()
     property var expanded: DataSourceMap.copy()
 
     readonly property var rows: root.buildRows()
+    property string selectedKey: ""
+    property string selectedConnection: ""
+    readonly property int selectedIndex: root.selectionIndex()
+
+    function selectionIndex() {
+        const exact = root.rows.findIndex(item => item.key === root.selectedKey);
+        return exact >= 0 ? exact : root.rows.findIndex(item => DataSourceKinds.isConnection(item.kind) && item.connection === root.selectedConnection);
+    }
+    readonly property var selectedRow: root.selectedIndex >= 0 ? root.rows[root.selectedIndex] : null
+    onRowsChanged: root.restoreSelection()
+
+    function select(key) {
+        const row = root.rows.find(item => item.key === key);
+        if (!row) return;
+        root.selectedConnection = row.connection;
+        root.selectedKey = key;
+    }
+
+    function restoreSelection() {
+        if (root.rows.some(item => item.key === root.selectedKey)) return;
+        if (DataSourceMap.get(root.readingNames, root.selectedConnection) === true
+                && root.rows.some(item => DataSourceKinds.isConnection(item.kind) && item.connection === root.selectedConnection)) return;
+        const connection = root.rows.find(item => DataSourceKinds.isConnection(item.kind) && item.connection === root.selectedConnection);
+        root.select(connection ? connection.key : (root.rows.length ? root.rows[0].key : ""));
+        if (!root.rows.length) { root.selectedKey = ""; root.selectedConnection = ""; }
+    }
+
+    function moveSelection(index) {
+        if (root.rows.length) root.select(root.rows[Math.max(0, Math.min(index, root.rows.length - 1))].key);
+    }
+
+    function selectParent() {
+        const row = root.selectedRow;
+        if (!row) return;
+        for (let index = root.selectedIndex - 1; index >= 0; index--) {
+            if (root.rows[index].depth < row.depth) { root.select(root.rows[index].key); return; }
+        }
+    }
+
+    function collapseAll() { root.expanded = DataSourceMap.copy(); }
 
     function key(parts) { return JSON.stringify(parts); }
 

@@ -17,11 +17,29 @@ Rectangle {
     id: root
 
     property var controller: null
+    property Item menuLayer: root
+    onVisibleChanged: if (!visible) treeActions.menuOpen = false
+
+    function focusTree() { treeView.focusTree(); }
+
+    function showNewMenu(item, x, y) {
+        const point = item.mapToItem(menu, x, y);
+        menu.menuX = point.x;
+        menu.menuY = point.y;
+        treeActions.showNew();
+    }
+
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Insert && (event.modifiers & Qt.AltModifier)) {
+            root.showNewMenu(headerRow, 0, headerRow.height);
+            event.accepted = true;
+        }
+    }
 
     signal consoleRequested(string name)
     signal tableDataRequested(string connection, string engine, string schema, string table, string readSql)
     signal editRequested(string name)
-    signal newRequested()
+    signal newRequested(string engine)
     signal candidateChosen(int index)
     signal closeRequested()
 
@@ -50,57 +68,52 @@ Rectangle {
 
     DataSourceTree {
         id: tree
+        workspaceRoot: root.controller ? root.controller.workspaceRoot : ""
 
         profiles: root.controller ? root.controller.profiles : []
         structures: root.controller ? root.controller.structures : ({})
         readingNames: root.controller ? root.controller.readingNames : ({})
     }
 
-    // ---- o cabecalho: titulo, nova conexao, ler de novo, fechar ------------
+    DatabaseTreeActions {
+        id: treeActions
+        controller: root.controller
+        treeModel: tree
+        onConsoleRequested: name => root.consoleRequested(name)
+        onEditRequested: name => root.editRequested(name)
+        onTableDataRequested: (connection, engine, schema, table, readSql) =>
+            root.tableDataRequested(connection, engine, schema, table, readSql)
+        onNewRequested: engine => root.newRequested(engine)
+        onDiscoveryRequested: {
+            root.resultsOpen = false;
+            root.controller.discovery.discover();
+        }
+    }
 
-    Row {
+    DatabaseToolbar {
         id: headerRow
-
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
-        height: 24
-        spacing: Theme.spacingSmall
+        actions: treeActions
+        onNewMenuRequested: (x, y) => root.showNewMenu(headerRow, x, y)
+        onCloseRequested: root.closeRequested()
+    }
 
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - 3 * (24 + parent.spacing)
-            text: qsTr("Banco")
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeBody
-            font.weight: Font.DemiBold
-        }
-
-        KvIconButton {
-            anchors.verticalCenter: parent.verticalCenter
-            compact: true
-            iconName: "add"
-            tooltip: qsTr("Conectar banco")
-            onClicked: root.newRequested()
-        }
-
-        KvIconButton {
-            anchors.verticalCenter: parent.verticalCenter
-            compact: true
-            iconName: "refresh"
-            tooltip: qsTr("Procurar bancos nesta máquina")
-            enabled: root.controller !== null && !root.controller.discovery.discovering
-            onClicked: root.controller.discovery.discover()
-        }
-
-        KvIconButton {
-            anchors.verticalCenter: parent.verticalCenter
-            compact: true
-            iconName: "close"
-            tooltip: qsTr("Fechar a janela do Banco")
-            onClicked: root.closeRequested()
-        }
+    // A camada cobre o workspace e acompanha também o dock direito.
+    AppMenuPopup {
+        id: menu
+        parent: root.menuLayer
+        anchors.fill: parent
+        z: 100
+        visible: root.visible && treeActions.menuOpen
+        menuWidth: 290
+        items: treeActions.entries()
+        onDismissRequested: treeActions.menuOpen = false
+        // activateMenu valida antes de fechar. AppMenuPopup devolve o foco
+        // ao ficar invisível, antes de despachar o gesto ao controller.
+        onActionRequested: action => treeActions.activateMenu(action)
     }
 
     // ---- a arvore -----------------------------------------------------------
@@ -116,6 +129,14 @@ Rectangle {
         anchors.margins: Theme.spacingXSmall
         controller: root.controller
         treeModel: tree
+        actions: treeActions
+        onNewRequested: root.showNewMenu(headerRow, 0, headerRow.height)
+        onContextMenuRequested: (key, x, y) => {
+            const point = treeView.mapToItem(menu, x, y);
+            menu.menuX = point.x;
+            menu.menuY = point.y;
+            treeActions.showRow(key);
+        }
         onConsoleRequested: name => root.consoleRequested(name)
         onEditRequested: name => root.editRequested(name)
         onTableDataRequested: (connection, engine, schema, table, readSql) =>
