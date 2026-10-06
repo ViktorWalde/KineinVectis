@@ -25,6 +25,12 @@ impl Core {
         params: Option<&Value>,
     ) -> Option<JsonRpcResponse> {
         match method {
+            "datasource.odbc.sources" => {
+                Some(self.datasource_odbc_sources_response(request_id, params))
+            }
+            "datasource.odbc.authorize" => {
+                Some(self.datasource_odbc_authorize_response(request_id, params))
+            }
             "datasource.list" => Some(self.datasource_list_response(request_id, params)),
             "datasource.save" => Some(self.datasource_save_response(request_id, params)),
             "datasource.remove" => Some(self.datasource_remove_response(request_id, params)),
@@ -72,15 +78,15 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.save");
         };
-        let pedido = match parse_params::<DataSourceSaveParams>(
+        let request = match parse_params::<DataSourceSaveParams>(
             request_id.as_ref(),
             params,
             "datasource.save exige { profile }",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
-        match crate::datasource::save(&root, &pedido.profile) {
+        match crate::datasource::save(&root, &request.profile) {
             Ok(profiles) => {
                 JsonRpcResponse::success(request_id, json!(DataSourceWriteResult { profiles }))
             }
@@ -103,15 +109,16 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.remove");
         };
-        let pedido = match parse_params::<DataSourceRemoveParams>(
+        let request = match parse_params::<DataSourceRemoveParams>(
             request_id.as_ref(),
             params,
             "datasource.remove exige { name }",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
-        match crate::datasource::remove(&root, &pedido.name) {
+        self.odbc.revoke(&root, &request.name);
+        match crate::datasource::remove(&root, &request.name) {
             Ok(profiles) => {
                 JsonRpcResponse::success(request_id, json!(DataSourceWriteResult { profiles }))
             }
@@ -141,20 +148,23 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.test");
         };
-        let pedido = match parse_params::<DataSourceTestParams>(
+        let request = match parse_params::<DataSourceTestParams>(
             request_id.as_ref(),
             params,
             "datasource.test exige { name } e aceita { password }",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
-        let profile = match Self::find_profile(&root, &pedido.name) {
+        let profile = match Self::find_profile(&root, &request.name) {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
 
-        let secret = match Self::resolve_secret(&profile, pedido.password) {
+        if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
+            return *response;
+        }
+        let secret = match Self::resolve_secret(&profile, request.password) {
             Ok(secret) => secret,
             Err(response) => return *response,
         };
@@ -172,14 +182,19 @@ impl Core {
             // tem SQLSTATE — o campo simplesmente nao vai no evento dele, e a
             // UI ja' decide pelo `secretRequired`, nunca pelo texto.
             let evento = match profile.engine {
-                kinein_protocol::DataSourceEngine::Sqlite => resultado_do_teste(
+                kinein_protocol::DataSourceEngine::Odbc => test_result(
+                    ctx,
+                    &profile,
+                    crate::datasource::odbc::probe_server(&profile, secret.as_ref()),
+                ),
+                kinein_protocol::DataSourceEngine::Sqlite => test_result(
                     ctx,
                     &profile,
                     crate::datasource::sqlite::probe_file(&profile),
                 ),
                 kinein_protocol::DataSourceEngine::Mongo => {
                     let bruto = crate::datasource::mongo::probe_server(&profile, secret.as_ref());
-                    resultado_do_teste(
+                    test_result(
                         ctx,
                         &profile,
                         bruto.map_err(|falha| crate::datasource::connection::ConnectionFailure {
@@ -192,7 +207,7 @@ impl Core {
                         }),
                     )
                 }
-                kinein_protocol::DataSourceEngine::Postgres => resultado_do_teste(
+                kinein_protocol::DataSourceEngine::Postgres => test_result(
                     ctx,
                     &profile,
                     crate::datasource::connection::probe_server(&profile, secret.as_ref()),
@@ -278,19 +293,22 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.introspect");
         };
-        let pedido = match parse_params::<DataSourceIntrospectParams>(
+        let request = match parse_params::<DataSourceIntrospectParams>(
             request_id.as_ref(),
             params,
             "datasource.introspect exige { name } e aceita { password }",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
-        let profile = match Self::find_profile(&root, &pedido.name) {
+        let profile = match Self::find_profile(&root, &request.name) {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
-        let secret = match Self::resolve_secret(&profile, pedido.password) {
+        if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
+            return *response;
+        }
+        let secret = match Self::resolve_secret(&profile, request.password) {
             Ok(secret) => secret,
             Err(response) => return com_id(*response, request_id),
         };
@@ -323,7 +341,9 @@ impl Core {
                     }),
                 }
             } else {
-                let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
+                let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
+                    crate::datasource::odbc_catalog::read_structure(&profile, secret.as_ref())
+                } else if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
                     crate::datasource::sqlite::read_structure(&profile)
                 } else {
                     crate::datasource::introspect::read_structure(&profile, secret.as_ref())
@@ -363,7 +383,7 @@ impl Core {
 /// Existe uma vez so' porque os tres motores respondem a MESMA pergunta, e
 /// tres copias do mesmo `json!` divergiriam no campo que menos se olha — que
 /// aqui e' justamente o `secretRequired`, o que faz a UI pedir a senha.
-fn resultado_do_teste(
+fn test_result(
     ctx: &crate::jobs::JobContext,
     profile: &DataSourceProfile,
     resultado: Result<String, crate::datasource::connection::ConnectionFailure>,

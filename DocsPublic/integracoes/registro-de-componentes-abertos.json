@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-11",
+  "updatedAt": "2026-10-06",
   "components": [
     {
       "id": "alacritty-terminal",
@@ -15,7 +15,7 @@
       "version": {
         "selected": "0.26.0",
         "pin": "Cargo constraint plus Cargo.lock checksum bda177466b9524d59f1b12f0dd30b68696788e9992a7e959021c4a0ed96fcf59",
-        "reason": "Current stable release; MSRV 1.85 matches the project. Same emulator that backs Alacritty and Zed, and it re-exports the vte 0.15 the core already resolved."
+        "reason": "Current stable release; MSRV 1.85 is below the project minimum 1.88. Same emulator that backs Alacritty and Zed, and it re-exports the vte 0.15 the core already resolved."
       },
       "license": {
         "spdx": "Apache-2.0",
@@ -66,7 +66,7 @@
       "version": {
         "selected": "8.2.0",
         "pin": "Exact Cargo constraint (=8.2.0) plus Cargo.lock",
-        "reason": "Latest stable release compatible with project MSRV 1.85; 9.x was prerelease during adoption"
+        "reason": "Latest stable release compatible with project minimum 1.88; 9.x was prerelease during adoption"
       },
       "license": {
         "spdx": "CC0-1.0",
@@ -134,7 +134,7 @@
         "rustGrammar": "0.24.2",
         "pythonGrammar": "0.25.0 (added 2026-09-12; LICENSE read at the repository: MIT)",
         "pin": "Exact Cargo constraints plus Cargo.lock",
-        "reason": "Current stable official releases; runtime MSRV 1.77 is below project MSRV 1.85 and grammar ABI is covered by integration tests"
+        "reason": "Current stable official releases; runtime MSRV 1.77 is below project minimum 1.88 and grammar ABI is covered by integration tests"
       },
       "license": {
         "spdx": "MIT",
@@ -374,6 +374,57 @@
         "notes": "Measured with `cargo tree -i rustix` on 2026-09-11: the crate was already in the graph via polling and rustix-openpty; the direct declaration only widens its feature set by `fs`."
       },
       "verification": "cargo deny check (advisories, bans, licenses, sources) green on the real workspace with the crate declared, 2026-09-11; the `serial` tests exercise access() against 0o000, 0o060 and 0o600 nodes"
+    },
+    {
+      "id": "odbc-api",
+      "name": "odbc-api / unixODBC",
+      "role": "Generic ODBC console and standard catalog through locally registered DSNs",
+      "adoptionMode": "A",
+      "integration": "MIT Rust wrapper linked by kinein-core; Linux uses the system unixODBC driver manager dynamically. Third-party database driver loading requires explicit per-session consent. This is the exception authorized in roadmap 59 section 5.7; no executable plugin marketplace.",
+      "upstream": {
+        "repository": "https://github.com/pacman82/odbc-api",
+        "documentation": "https://docs.rs/odbc-api/29.1.1/odbc_api/",
+        "manager": "https://www.unixodbc.org/unixODBC.html"
+      },
+      "version": {
+        "selected": "odbc-api 29.1.1; system unixODBC 2.3.14 measured",
+        "pin": "Exact Cargo constraint (=29.1.1), Cargo.lock checksums; native manager provided by host",
+        "reason": "Safe high-level API for SQLConnect, bounded row buffers and standard catalog cursors; no repository unsafe/FFI code."
+      },
+      "license": {
+        "spdx": "MIT",
+        "accepted": true,
+        "source": "Published odbc-api Cargo manifest; native libodbc uses LGPL-2.1-or-later (system package copyright). Driver license is independent and drivers are never shipped or downloaded by the IDE."
+      },
+      "maintenance": {
+        "statusAtReview": "Maintained upstream crate, pinned published release; unixODBC 2.3.14 stable manager installed on test host",
+        "reviewedAt": "2026-10-05"
+      },
+      "runtimeSecurity": {
+        "telemetry": false,
+        "network": true,
+        "shellExecution": false,
+        "secretsAccess": true,
+        "userContentUpload": false,
+        "nativeCode": true,
+        "notes": "Network only to the selected database through its installed driver. Credentials are separate SQLConnect fields. Native drivers execute inside the core process; explicit consent is not a sandbox. DSN tracing/logging and behavior of third-party drivers remain the responsibility of their configuration."
+      },
+      "scopeControls": [
+        "SQLDataSources/SQLDrivers enumeration never connects; arbitrary DSN attributes are not exposed",
+        "Approval bound to workspace, complete profile and driver identity; changed profile/driver or workspace requires consent again",
+        "Removing/destroying the profile and closing/switching workspaces revoke session approval",
+        "No connection strings, driver download, installation or DSN configuration from the product",
+        "Unknown SQL and all writes require generic confirmation; impact is local and never issues COUNT in an assumed dialect",
+        "128 columns, 16 KiB cells, 8 MiB retained result and explicit truncation checks",
+        "The system LGPL manager is dynamically linked; release packaging must audit notices/source/replacement obligations before AppImage, under roadmap 59 section 7"
+      ],
+      "verification": [
+        "Dispatch refusal before jobs and credential resolution",
+        "UI cancellation, stale workspace/profile/query and explicit consent tests",
+        "Real SQLite ODBC catalog, quoted identifier injection cases, NULL, row/cell limits and confirmed write",
+        "Cargo deny license/advisory/source audit; Rust/C++/QML gates"
+      ],
+      "decision": "DocsPublic/decisoes-adr/ADR-0007-odbc-com-consentimento.md"
     }
   ]
 }

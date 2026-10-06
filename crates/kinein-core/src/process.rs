@@ -150,11 +150,11 @@ pub fn stream_command_lines_cancelable(
             drop(child.kill());
             killed = true;
         }
-        if exited.is_none() {
-            if let Ok(Some(status)) = child.try_wait() {
-                exited = Some(status);
-                drain_deadline = Some(Instant::now() + CANCEL_DRAIN_DEADLINE);
-            }
+        if exited.is_none()
+            && let Ok(Some(status)) = child.try_wait()
+        {
+            exited = Some(status);
+            drain_deadline = Some(Instant::now() + CANCEL_DRAIN_DEADLINE);
         }
         if drain_deadline.is_some_and(|deadline| Instant::now() >= deadline) {
             break;

@@ -47,10 +47,15 @@ impl Core {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
+        if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
+            return *response;
+        }
         // O Mongo escreve desde o 0.155.0; o comando validado diz o que faz
         // (um texto invalido nao escreve — falha no job sem tocar o banco).
         let mongo = profile.engine == kinein_protocol::DataSourceEngine::Mongo;
-        let statements = if mongo {
+        let statements = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
+            crate::datasource::odbc_query::classify(&request.sql)
+        } else if mongo {
             crate::datasource::mongo_command::parse(&request.sql)
                 .map(|c| vec![crate::datasource::mongo_command::impact(&c, &request.sql)])
                 .unwrap_or_default()

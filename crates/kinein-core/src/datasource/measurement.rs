@@ -13,7 +13,9 @@ pub fn statements(
     secret: Option<&Secret>,
     text: &str,
 ) -> Vec<SqlStatementImpact> {
-    let measured = if profile.engine == DataSourceEngine::Mongo {
+    let measured = if profile.engine == DataSourceEngine::Odbc {
+        super::odbc_query::classify(text)
+    } else if profile.engine == DataSourceEngine::Mongo {
         measure_mongo(profile, secret, text)
     } else {
         impact::classify_all(text)

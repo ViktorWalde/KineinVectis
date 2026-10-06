@@ -149,6 +149,8 @@ pub enum JsonRpcErrorCode {
     /// request did not carry `confirmWrite: true`. The UI asks and resends —
     /// its own code so no message text is matched.
     WriteConfirmationRequired,
+    /// Driver ODBC de terceiro ainda nao autorizado para o perfil/sessao.
+    DriverApprovalRequired,
 }
 
 #[cfg(test)]

@@ -67,6 +67,7 @@ pub fn plan(root: &Path, profile: &DataSourceProfile, container_exists: bool) ->
                 }
             }
         }
+        DataSourceEngine::Odbc => DestroyPlan::ProfileOnly { note: "o DSN e os dados ficam: somente o perfil da IDE e' removido".to_owned() },
         _ if container_exists => DestroyPlan::Container {
             name: format!("kinein-{}", profile.name),
         },

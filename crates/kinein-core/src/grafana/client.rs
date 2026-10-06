@@ -106,10 +106,10 @@ fn agent() -> ureq::Agent {
 /// Um GET autenticado; devolve `(status, corpo)`.
 fn get(agent: &ureq::Agent, url: &str, token: Option<&Secret>) -> Result<(u16, String), String> {
     let mut request = agent.get(url);
-    if let Some(secret) = token {
-        if !secret.is_empty() {
-            request = request.header("Authorization", &format!("Bearer {}", secret.expose()));
-        }
+    if let Some(secret) = token
+        && !secret.is_empty()
+    {
+        request = request.header("Authorization", &format!("Bearer {}", secret.expose()));
     }
     let mut response = request
         .call()

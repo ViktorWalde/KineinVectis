@@ -79,6 +79,7 @@ Rectangle {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: root.text
+            textFormat: Text.PlainText
             color: root.accented ? Theme.background0
                                  : (root.enabled ? (root.danger ? Theme.errorSoft : Theme.textPrimary)
                                     : Theme.textDisabled)

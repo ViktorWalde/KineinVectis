@@ -354,15 +354,15 @@ fn esptool_avisos(
             cifradas.join(", ")
         ));
     }
-    if let (Some(placa), Some(receita_bytes)) = (flash_size_bytes, receita.flash_size_bytes) {
-        if u64::from(receita_bytes) > placa {
-            warnings.push(format!(
-                "a receita foi gerada para {} de flash e a placa identificada tem {}: ajuste \
+    if let (Some(placa), Some(receita_bytes)) = (flash_size_bytes, receita.flash_size_bytes)
+        && u64::from(receita_bytes) > placa
+    {
+        warnings.push(format!(
+            "a receita foi gerada para {} de flash e a placa identificada tem {}: ajuste \
                  CONFIG_ESPTOOLPY_FLASHSIZE e recompile",
-                receita.flash_size.as_deref().unwrap_or("?"),
-                tamanho_legivel(placa)
-            ));
-        }
+            receita.flash_size.as_deref().unwrap_or("?"),
+            tamanho_legivel(placa)
+        ));
     }
 }
 
@@ -453,9 +453,9 @@ pub(super) fn quote(texto: &str) -> String {
 }
 
 pub(super) fn tamanho_legivel(bytes: u64) -> String {
-    if bytes >= 1024 * 1024 && bytes % (1024 * 1024) == 0 {
+    if bytes >= 1024 * 1024 && bytes.is_multiple_of(1024 * 1024) {
         format!("{}MB", bytes / (1024 * 1024))
-    } else if bytes >= 1024 && bytes % 1024 == 0 {
+    } else if bytes >= 1024 && bytes.is_multiple_of(1024) {
         format!("{}KB", bytes / 1024)
     } else {
         format!("{bytes} B")

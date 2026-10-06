@@ -41,9 +41,13 @@ impl Core {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
-        let secret = match Self::resolve_secret(&profile, request.password) {
-            Ok(secret) => secret,
-            Err(response) => return com_id(*response, request_id),
+        let secret = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
+            None
+        } else {
+            match Self::resolve_secret(&profile, request.password) {
+                Ok(secret) => secret,
+                Err(response) => return com_id(*response, request_id),
+            }
         };
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "datasource.impact");

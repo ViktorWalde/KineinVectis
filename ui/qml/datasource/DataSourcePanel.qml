@@ -21,6 +21,10 @@ Item {
     property var profiles: []
     property string selectedName: ""
     property var draft: null
+    property var odbcSources: []
+    property bool odbcLoading: false
+    property string odbcMessage: ""
+    signal odbcRefreshRequested()
     property string errorText: ""
 
     property bool testing: false
@@ -147,6 +151,10 @@ Item {
                 visible: root.face === "connection"
                 draft: root.draft
                 mongo: root.documentEngine
+                odbcSources: root.odbcSources
+                odbcLoading: root.odbcLoading
+                odbcMessage: root.odbcMessage
+                onOdbcRefreshRequested: root.odbcRefreshRequested()
                 onFieldEdited: (field, value) => root.fieldEdited(field, value)
             }
 
@@ -159,7 +167,7 @@ Item {
                 command: root.createCommand
                 message: root.createMessage
                 ok: root.createOk
-                serverProfileNamed: root.savedSelected && root.draft !== null && root.draft.engine === "postgres"
+                serverProfileNamed: root.savedSelected && root.draft !== null && DataSourceKinds.isPostgres(root.draft.engine)
                 serverProfileName: root.selectedName
                 onCreateSqliteRequested: (name, path) => root.createSqliteRequested(name, path)
                 onCreateServerRequested: (engine, name, port) => root.createServerRequested(engine, name, port)
@@ -171,7 +179,8 @@ Item {
                 visible: root.face === "destroy" && root.savedSelected
                 profileName: root.selectedName
                 database: root.draft ? root.draft.database : ""
-                fileEngine: root.draft ? root.draft.host === "" : false
+                fileEngine: root.draft ? DataSourceKinds.isSqlite(root.draft.engine) : false
+                profileOnly: root.draft ? DataSourceKinds.isOdbc(root.draft.engine) : false
                 documentEngine: root.documentEngine
                 destroying: root.destroying
                 message: root.destroyMessage

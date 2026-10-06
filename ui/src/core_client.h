@@ -170,6 +170,9 @@ public:
     // ser por KIT, nao por workspace).
     Q_INVOKABLE void setupList();
     Q_INVOKABLE void dataSourceList();
+    Q_INVOKABLE void dataSourceOdbcSources();
+    Q_INVOKABLE void dataSourceOdbcAuthorize(const QString& name, const QString& identity,
+                                             const QString& workspace);
     Q_INVOKABLE void dataSourceSave(const QVariantMap& profile);
     Q_INVOKABLE void dataSourceRemove(const QString& name);
     // O console da conexao, no editor (datasource.console, 0.149.0).
@@ -398,6 +401,10 @@ signals:
     void setupListResolved(const QString& distroName, const QString& family,
                            const QVariantList& tools);
     void dataSourceListResolved(const QVariantList& profiles);
+    void dataSourceOdbcSourcesResolved(const QVariantList& sources);
+    void dataSourceOdbcAuthorized(const QString& name, const QString& identity,
+                                  const QString& workspace);
+    void dataSourceDriverRequired(const QString& method, const QVariantMap& details);
     void dataSourceConsoleResolved(const QString& path, bool created);
     void dataSourceTestAccepted(const QString& jobId);
     /// `candidates` com o perfil pronto de cada um; `hint` quando vazio.
@@ -658,6 +665,8 @@ private:
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);
+    void handleDataSourceDriverRequired(const QString& method, const QJsonObject& error,
+                                        const QVariantMap& requestQuery);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
     bool dispatchRunResult(const QString& method, const QJsonObject& result);
@@ -710,6 +719,7 @@ private:
     QHash<qint64, QString> m_pendingMethods;
     QHash<qint64, QString> m_pendingPaths;
     QHash<qint64, QString> m_pendingRemoteDirectoryNames;
+    QHash<qint64, QVariantMap> m_pendingDataSourceQueries;
     bool m_connected = false;
     bool m_building = false;
     bool m_testing = false;

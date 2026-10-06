@@ -61,10 +61,10 @@ pub fn import(path: &Path) -> Result<KitImport, String> {
     if let Some(host) = buildroot_host(path) {
         return Ok(buildroot(&host));
     }
-    if path.join("bin").is_dir() {
-        if let Some(kit) = toolchain_dir(path) {
-            return Ok(kit);
-        }
+    if path.join("bin").is_dir()
+        && let Some(kit) = toolchain_dir(path)
+    {
+        return Ok(kit);
     }
     Err(format!(
         "{} nao e' um SDK que eu reconheca: procurei um environment-setup-* (Yocto), um \

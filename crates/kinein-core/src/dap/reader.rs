@@ -212,26 +212,25 @@ fn emit_output(events: &EventSender, body: &Value) {
 
 /// Consulta o frame do topo e emite `event.debug.stopped` com file/line.
 fn emit_enriched_stopped(wire: &Wire, events: &EventSender, thread_id: i64, reason: &str) {
-    let mut file = Value::Null;
-    let mut line = Value::Null;
-    if let Ok(body) = wire.request(
+    let (file, line) = if let Ok(body) = wire.request(
         "stackTrace",
         &json!({ "threadId": thread_id, "startFrame": 0, "levels": 1 }),
         REQUEST_TIMEOUT,
-    ) {
-        if let Some(frame) = body
-            .get("stackFrames")
-            .and_then(Value::as_array)
-            .and_then(|frames| frames.first())
-        {
-            file = frame
-                .get("source")
-                .and_then(|source| source.get("path"))
-                .cloned()
-                .unwrap_or(Value::Null);
-            line = frame.get("line").cloned().unwrap_or(Value::Null);
-        }
-    }
+    ) && let Some(frame) = body
+        .get("stackFrames")
+        .and_then(Value::as_array)
+        .and_then(|frames| frames.first())
+    {
+        let file = frame
+            .get("source")
+            .and_then(|source| source.get("path"))
+            .cloned()
+            .unwrap_or(Value::Null);
+        let line = frame.get("line").cloned().unwrap_or(Value::Null);
+        (file, line)
+    } else {
+        (Value::Null, Value::Null)
+    };
     send_event(
         events,
         "event.debug.stopped",

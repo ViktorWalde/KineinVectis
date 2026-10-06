@@ -102,16 +102,16 @@ pub(super) fn parse_gcc_like_line(line: &str) -> Option<BuildDiagnostic> {
         let middle = pieces.next();
         let head = pieces.next();
 
-        if let (Some(head), Some(middle)) = (head, middle) {
-            if let (Ok(line_number), Ok(column)) = (middle.parse::<u64>(), last.parse::<u64>()) {
-                return Some(BuildDiagnostic {
-                    severity,
-                    message,
-                    file: Some(head.to_owned()),
-                    line: Some(line_number),
-                    column: Some(column),
-                });
-            }
+        if let (Some(head), Some(middle)) = (head, middle)
+            && let (Ok(line_number), Ok(column)) = (middle.parse::<u64>(), last.parse::<u64>())
+        {
+            return Some(BuildDiagnostic {
+                severity,
+                message,
+                file: Some(head.to_owned()),
+                line: Some(line_number),
+                column: Some(column),
+            });
         }
 
         let mut pieces = location.rsplitn(2, ':');

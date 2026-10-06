@@ -102,11 +102,11 @@ pub fn parse_flash_id(saida: &str) -> SerialIdentity {
             id.flash_manufacturer = Some(v.to_owned());
         } else if let Some(v) = campo(linha, "Device:") {
             id.flash_device = Some(v.to_owned());
-        } else if let Some(v) = campo(linha, "Detected flash size:") {
-            if !v.eq_ignore_ascii_case("unknown") {
-                id.flash_size = Some(v.to_owned());
-                id.flash_size_bytes = tamanho_em_bytes(v);
-            }
+        } else if let Some(v) = campo(linha, "Detected flash size:")
+            && !v.eq_ignore_ascii_case("unknown")
+        {
+            id.flash_size = Some(v.to_owned());
+            id.flash_size_bytes = tamanho_em_bytes(v);
         }
     }
     id

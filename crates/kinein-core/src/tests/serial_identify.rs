@@ -71,10 +71,10 @@ impl Cenario {
     fn identified(&self) -> Value {
         let prazo = std::time::Instant::now() + Duration::from_secs(15);
         while std::time::Instant::now() < prazo {
-            if let Ok(event) = self.events.recv_timeout(Duration::from_millis(50)) {
-                if event.method == "event.serial.identified" {
-                    return event.params.unwrap();
-                }
+            if let Ok(event) = self.events.recv_timeout(Duration::from_millis(50))
+                && event.method == "event.serial.identified"
+            {
+                return event.params.unwrap();
             }
         }
         panic!("event.serial.identified nao chegou");
@@ -260,12 +260,11 @@ fn cancelling_the_job_kills_esptool() {
     // Espera o processo estar rodando (a primeira linha saiu como output).
     let prazo = std::time::Instant::now() + Duration::from_secs(10);
     loop {
-        if let Ok(event) = c.events.recv_timeout(Duration::from_millis(50)) {
-            if event.method == "event.job.output"
-                && event.params.as_ref().unwrap()["line"] == "Connecting......"
-            {
-                break;
-            }
+        if let Ok(event) = c.events.recv_timeout(Duration::from_millis(50))
+            && event.method == "event.job.output"
+            && event.params.as_ref().unwrap()["line"] == "Connecting......"
+        {
+            break;
         }
         assert!(
             std::time::Instant::now() < prazo,

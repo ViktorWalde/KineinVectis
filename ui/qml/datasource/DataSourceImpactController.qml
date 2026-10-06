@@ -167,7 +167,7 @@ QtObject {
         case "alter":
             return qsTr("Muda a estrutura de %1").arg(target);
         default:
-            return qsTr("O core não conseguiu determinar o impacto desta instrução");
+            return s.note || qsTr("O core não conseguiu determinar o impacto desta instrução");
         }
     }
 }

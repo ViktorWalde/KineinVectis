@@ -20,6 +20,14 @@ Item {
     Connections {
         target: root.coreClient
 
+        function onDataSourceOdbcSourcesResolved(sources) { root.dataSourceController.odbc.handleSources(sources); }
+        function onDataSourceOdbcAuthorized(name, identity, workspace) {
+            root.dataSourceController.odbc.handleAuthorized(name, identity, workspace);
+        }
+        function onDataSourceDriverRequired(method, details) {
+            root.dataSourceController.odbc.handleRequired(method, details);
+        }
+
         function onDataSourceListResolved(profiles) {
             root.dataSourceController.handleList(profiles);
         }

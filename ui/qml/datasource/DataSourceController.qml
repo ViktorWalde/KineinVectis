@@ -2,14 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Estado das FONTES DE DADOS (etapa 26 do roadmaps/35): o que o core respondeu e
-// o que o autor edita. NAO decide nada: validar, a senha e o servidor sao do core.
-// A SENHA VIVE AQUI E SO' AQUI, em `sessionPassword`, e some sozinha ao
-// trocar de perfil, ao fechar o painel e ao trocar de projeto.
-// Ela nunca vai para o perfil (que e' o que o core persiste) e nunca aparece
-// no log do cliente, que redige por nome de campo. Ver `DocsPublic/seguranca/40`.
-//
-// Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
+// Estado de fontes de dados; regras/validacao sao do core. IPC pelos roteadores.
+// sessionPassword vive so' em memoria, nunca no perfil/log (seguranca/40).
+// Trocar perfil/projeto ou fechar painel limpa o segredo.
 Item {
     id: root
 
@@ -63,7 +58,7 @@ Item {
     signal removeRequested(string name)
     signal testRequested(string name, string password)
     signal introspectRequested(string name, string password)
-    signal queryRequested(string name, string password, string sql, bool confirmWrite)
+    signal queryRequested(string name, string password, string sql, bool confirmWrite, int maxRows)
     // Menu, paleta e Ctrl+Alt+J pedem a JANELA do Banco (o shell a abre do lado do icone).
     signal windowRequested()
 
@@ -78,6 +73,11 @@ Item {
     readonly property DataSourceImpactController impact: DataSourceImpactController {
         dataSourceController: root
         onRunConfirmed: (name, text) => root.runOn(name, text, true)
+    }
+
+    readonly property DataSourceOdbcController odbc: DataSourceOdbcController {
+        dataSourceController: root
+        workspaceRoot: root.workspaceRoot
     }
 
     DataSourceDiscoveryController {
@@ -95,6 +95,9 @@ Item {
         draft = emptyDraft();
         clearSecret();
         clearVerdict();
+        structures = ({});
+        readingNames = ({});
+        lastQuery = null;
         errorText = "";
         if (workspaceRoot !== "") {
             listRequested();
@@ -104,23 +107,14 @@ Item {
     // O padrao e' o caso comum do autor, nao o mais defensivo da IDE: um
     // PostgreSQL local por socket unix com `peer` conecta sem senha nenhuma
     // (DocsPublic/seguranca/40 §7). Por isso host de socket e `automatic`.
-    function emptyDraft() {
-        return Object.assign({
-            engine: "postgres",
-            name: "",
-            user: "",
-            secretSource: "automatic",
-            secretVariable: "",
-            tls: "disable",
-            caFile: ""
-        }, DataSourceKinds.defaultsFor("postgres"));
-    }
+    function emptyDraft() { return DataSourceKinds.emptyProfile(); }
 
     // A lista do projeto e o que responde nesta maquina — PERGUNTA de novo
     // a cada abertura: um servidor sobe e cai fora da IDE.
     function refreshCatalog() {
         listRequested();
         discoveryController.discover();
+        odbc.refresh();
     }
 
     function open() {
@@ -147,7 +141,7 @@ Item {
 
     function createDatabaseOnServer(name) {
         const limpo = name.trim();
-        if (draft.name === "" || draft.engine !== "postgres" || !/^[A-Za-z0-9_]+$/.test(limpo)) {
+        if (draft.name === "" || !DataSourceKinds.isPostgres(draft.engine) || !/^[A-Za-z0-9_]+$/.test(limpo)) {
             errorText = qsTr("um banco novo pede um perfil PostgreSQL salvo e um nome só de letras, dígitos e _");
             return;
         }
@@ -168,6 +162,7 @@ Item {
     function clearVerdict() {
         clearQuery();
         schemas = [];
+        collections = [];
         reading = false;
         testing = false;
         testedName = "";
@@ -198,21 +193,7 @@ Item {
 
     // Copia campo a campo: nada que o core mande a mais entra no `save` (o
     // perfil tem `deny_unknown_fields`, e um campo extra seria recusado).
-    function cloneProfile(source) {
-        return {
-            engine: source.engine || "postgres",
-            name: source.name,
-            host: source.host,
-            port: source.port,
-            database: source.database,
-            user: source.user,
-            secretSource: source.secretSource || "automatic",
-            secretVariable: source.secretVariable || "",
-            sampleSize: source.sampleSize,
-            tls: source.tls || "disable",
-            caFile: source.caFile || ""
-        };
-    }
+    function cloneProfile(source) { return DataSourceKinds.cloneProfile(source); }
 
     function editDraft(field, value) {
         const updated = cloneProfile(draft);
@@ -241,9 +222,13 @@ Item {
         if (draft.name === "") {
             return;
         }
+        testProfile(draft.name);
+    }
+
+    function testProfile(name) {
         clearVerdict();
         testing = true;
-        testRequested(draft.name, sessionPassword);
+        testRequested(name, sessionPassword);
     }
 
     function handleList(newProfiles) {
@@ -278,13 +263,13 @@ Item {
     }
 
     // Executar `text` na conexao `name` (o console no editor).
-    function runOn(name, text, confirmWrite) {
+    function runOn(name, text, confirmWrite, maxRows) {
         if (name === "" || text.trim() === "") return;
-        lastQuery = { name: name, sql: text };
+        lastQuery = { name: name, sql: text, confirmWrite: confirmWrite === true, maxRows: maxRows || 0 };
         querying = true;
         writeConfirmationRequired = false;
         queryStatus = "";
-        queryRequested(name, sessionPassword, text, confirmWrite === true);
+        queryRequested(name, sessionPassword, text, confirmWrite === true, maxRows || 0);
     }
 
     function handleIntrospected(name, ok, newSchemas, newCollections, message, needsSecret) {
@@ -331,10 +316,7 @@ Item {
         if (draft.name === "" || sql.trim() === "") {
             return;
         }
-        querying = true;
-        writeConfirmationRequired = false;
-        queryStatus = "";
-        queryRequested(draft.name, sessionPassword, sql, confirmWrite === true);
+        runOn(draft.name, sql, confirmWrite);
     }
 
     function handleQueried(outcome) {
@@ -378,12 +360,14 @@ Item {
                 || method === "datasource.destroy") {
             return;
         }
+        if (method.indexOf("datasource.odbc.") === 0) return odbc.handleFailed(method, message);
         if (method === "datasource.impact") return impact.handleFailed(message);
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;
             readingNames = ({});
             querying = false;
+            if (code === "DRIVER_APPROVAL_REQUIRED") return;
             if (code === "WRITE_CONFIRMATION_REQUIRED") {
                 writeConfirmationRequired = true;
                 queryStatus = message;

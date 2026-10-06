@@ -79,6 +79,7 @@ pub fn read_structure(
             columns: colunas_de(&conexao, &nome)?,
             kind: if tipo == "view" { "view" } else { "table" }.to_owned(),
             name: nome,
+            read_sql: None,
         });
     }
 

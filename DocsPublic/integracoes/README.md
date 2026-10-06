@@ -18,6 +18,17 @@ Uma integração é o core ORQUESTRANDO uma ferramenta madura por um contrato
 tipado, com a UI apenas listando, configurando e pedindo ações.
 ```
 
+**Exceção explícita: ODBC (59 §5.7, decisão do autor).** O driver de banco
+é código nativo carregado no processo do core somente após o gesto
+**Carregar driver**. A autorização é efêmera e vinculada ao perfil/projeto;
+a IDE não instala nem baixa drivers. O adaptador Rust é MIT, enquanto o
+gerenciador unixODBC do sistema é LGPL e permanece ligado dinamicamente.
+A licença própria de cada driver continua independente. O empacotamento
+dessas dependências será auditado antes do AppImage (59 §7).
+A decisão técnica está no
+[ADR-0007](../decisoes-adr/ADR-0007-odbc-com-consentimento.md) e o fluxo,
+com diagrama e limites, na [arquitetura/37](../arquitetura/37-banco-de-dados.md).
+
 Fluxo obrigatório, sem atalho:
 
 ```text

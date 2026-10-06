@@ -101,6 +101,7 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
     m_pendingMethods.clear();
     m_pendingPaths.clear();
     m_pendingRemoteDirectoryNames.clear();
+    m_pendingDataSourceQueries.clear();
     setBuilding(false);
     setTesting(false);
     setAnalyzing(false);
@@ -159,6 +160,14 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
 
     const qint64 id = m_nextRequestId++;
     m_pendingMethods.insert(id, method);
+    if (method == QStringLiteral("datasource.query")) {
+        m_pendingDataSourceQueries.insert(
+            id, {{QStringLiteral("name"), params.value(QStringLiteral("name")).toString()},
+                 {QStringLiteral("sql"), params.value(QStringLiteral("sql")).toString()},
+                 {QStringLiteral("confirmWrite"),
+                  params.value(QStringLiteral("confirmWrite")).toBool()},
+                 {QStringLiteral("maxRows"), params.value(QStringLiteral("maxRows")).toInt()}});
+    }
     const QJsonValue path = method == QStringLiteral("fs.copy")
                                 ? params.value(QStringLiteral("to"))
                                 : params.value(QStringLiteral("path"));

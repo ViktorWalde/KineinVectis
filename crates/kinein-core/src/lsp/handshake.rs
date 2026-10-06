@@ -233,10 +233,10 @@ fn wait_for_initialize(
                 message: format!("{command} encerrou durante o initialize"),
             });
         };
-        if message.get("id").and_then(Value::as_i64) == Some(1) {
-            if let Some(result) = message.get("result") {
-                return Ok(semantic_token_legend(result));
-            }
+        if message.get("id").and_then(Value::as_i64) == Some(1)
+            && let Some(result) = message.get("result")
+        {
+            return Ok(semantic_token_legend(result));
         }
         answer_server_request(&message, stdin, &Value::Null);
     }

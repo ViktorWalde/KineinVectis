@@ -1,5 +1,16 @@
 # 03 — Protocolo IPC
 
+> **0.157.0 (2026-10-06, fatia ODBC).** Motor `odbc`;
+> `database` é DSN, não connection string. `datasource.odbc.sources {}` ->
+> `{ sources: [{ dsn, driver, identity }] }`, sem conectar/carregar driver.
+> `datasource.odbc.authorize { name, identity, workspace }` -> `{ name, identity, workspace }`,
+> aprovação somente na memória, vinculada a projeto/perfil/driver.
+> `DRIVER_APPROVAL_REQUIRED` recusa teste, catálogo e consulta antes do job;
+> detalhes `{ name, dsn, driver, identity, workspace }` alimentam o aviso explícito.
+> `DataSourceTable.readSql?` é aditivo, leitura gerada no core para o driver.
+> ODBC usa impacto genérico local; nenhuma consulta de contagem de outro
+> dialeto é enviada. Desenho e provas previstas no 59 §5.9.
+
 > **0.156.0 (2026-10-05) — confirmação seletiva.**
 > Inserir, criar e alterar com filtro rodam diretamente. Remover dados ou
 > objetos, alterar tudo sem filtro e instruções desconhecidas continuam
@@ -3223,7 +3234,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 178 métodos roteados — a lista inteira
+## Os 180 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3271,6 +3282,8 @@ core.shutdown
 coverage.lines
 coverage.run
 
+datasource.odbc.sources
+datasource.odbc.authorize
 datasource.console
 datasource.create
 datasource.destroy
@@ -4513,6 +4526,8 @@ datasource.discover   {}                      -> { candidates: [DataSourceCandid
 datasource.create     { kind: sqliteFile, name, path? } -> { profile }                                       (0.124.0)
                       { kind: containerServer, engine, name, port } -> { jobId, command }  + event.datasource.created
 datasource.destroy    { name, data? }         -> { profiles, note? } | { jobId, command } + event.datasource.destroyed  (0.129.0)
+datasource.odbc.sources {}                     -> { sources: [{ dsn, driver, identity }] } (0.157.0; sem carregar driver)
+datasource.odbc.authorize { name, identity, workspace } -> { name, identity, workspace } (0.157.0; consentimento em memória)
 datasource.console    { name }                -> { path, created }   (0.149.0; arquivo em .kinein/consoles/)
 datasource.list       {}                      -> { profiles: [DataSourceProfile] }
 datasource.save       { profile }             -> DataSourceWriteResult

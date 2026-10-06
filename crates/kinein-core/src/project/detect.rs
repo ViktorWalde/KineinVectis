@@ -154,10 +154,10 @@ fn reconhecer(root: &Path, caminho: &Path, dir: &Path) -> Vec<FrameworkInfo> {
             ));
         }
         "config.toml" if dir.file_name().is_some_and(|d| d == ".cargo") => {
-            if let Some(texto) = ler(caminho) {
-                if let Some(triple) = alvo_do_cargo(&texto) {
-                    achados.push(info(Framework::CargoEmbedded, Some(triple)));
-                }
+            if let Some(texto) = ler(caminho)
+                && let Some(triple) = alvo_do_cargo(&texto)
+            {
+                achados.push(info(Framework::CargoEmbedded, Some(triple)));
             }
         }
         "memory.x" | "Embed.toml" => {
@@ -166,13 +166,13 @@ fn reconhecer(root: &Path, caminho: &Path, dir: &Path) -> Vec<FrameworkInfo> {
             }
         }
         "boot.py" | "main.py" => {
-            if let Some(texto) = ler(caminho) {
-                if let Some(modulo) = importa_hardware(&texto) {
-                    achados.push(info(
-                        Framework::MicroPython,
-                        Some(format!("importa {modulo}")),
-                    ));
-                }
+            if let Some(texto) = ler(caminho)
+                && let Some(modulo) = importa_hardware(&texto)
+            {
+                achados.push(info(
+                    Framework::MicroPython,
+                    Some(format!("importa {modulo}")),
+                ));
             }
         }
         "local.conf" if dir.file_name().is_some_and(|d| d == "conf") => {
@@ -188,16 +188,16 @@ fn reconhecer(root: &Path, caminho: &Path, dir: &Path) -> Vec<FrameworkInfo> {
             ));
         }
         ".config" => {
-            if let Some(texto) = ler(caminho) {
-                if texto.contains("BR2_") {
-                    let detalhe = valor_de_atribuicao(&texto, "BR2_ARCH")
-                        .map(|a| format!("BR2_ARCH {a}"))
-                        .or_else(|| {
-                            valor_de_atribuicao(&texto, "BR2_DEFCONFIG")
-                                .map(|d| format!("BR2_DEFCONFIG {d}"))
-                        });
-                    achados.push(info(Framework::Buildroot, detalhe));
-                }
+            if let Some(texto) = ler(caminho)
+                && texto.contains("BR2_")
+            {
+                let detalhe = valor_de_atribuicao(&texto, "BR2_ARCH")
+                    .map(|a| format!("BR2_ARCH {a}"))
+                    .or_else(|| {
+                        valor_de_atribuicao(&texto, "BR2_DEFCONFIG")
+                            .map(|d| format!("BR2_DEFCONFIG {d}"))
+                    });
+                achados.push(info(Framework::Buildroot, detalhe));
             }
         }
         "external.desc" => {
@@ -306,13 +306,13 @@ fn ambientes_do_platformio(texto: &str) -> String {
             atual = Some((nome.to_owned(), None, None));
         } else if linha.starts_with('[') {
             fecha(&mut atual, &mut ambientes);
-        } else if let Some((_, plataforma, placa)) = atual.as_mut() {
-            if let Some((chave, valor)) = linha.split_once('=') {
-                match chave.trim() {
-                    "platform" => *plataforma = Some(valor.trim().to_owned()),
-                    "board" => *placa = Some(valor.trim().to_owned()),
-                    _ => {}
-                }
+        } else if let Some((_, plataforma, placa)) = atual.as_mut()
+            && let Some((chave, valor)) = linha.split_once('=')
+        {
+            match chave.trim() {
+                "platform" => *plataforma = Some(valor.trim().to_owned()),
+                "board" => *placa = Some(valor.trim().to_owned()),
+                _ => {}
             }
         }
     }

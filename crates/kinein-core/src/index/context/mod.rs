@@ -74,13 +74,12 @@ impl CompileContext {
                     .or_else(|| cdb::cmakelists_mais_novo(root, &caminho, &ctx.unidades));
             }
         }
-        if root.join("Cargo.toml").is_file() {
-            if let Some(cargo) = ferramentas.cargo.as_deref() {
-                if let Some((pacotes, alvos)) = cargo::cargo_metadata(cargo, root) {
-                    ctx.pacotes = pacotes;
-                    ctx.alvos = alvos;
-                }
-            }
+        if root.join("Cargo.toml").is_file()
+            && let Some(cargo) = ferramentas.cargo.as_deref()
+            && let Some((pacotes, alvos)) = cargo::cargo_metadata(cargo, root)
+        {
+            ctx.pacotes = pacotes;
+            ctx.alvos = alvos;
         }
         ctx.python = crate::python::env::python_env(root, &ferramentas.python);
         ctx.cmake = CmakeModel::load(&crate::cmake::build_dir(root));

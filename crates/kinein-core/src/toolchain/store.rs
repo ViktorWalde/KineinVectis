@@ -104,10 +104,10 @@ pub(super) fn load(root: &Path) -> BTreeMap<String, Kit> {
     let Ok(body) = fs::read_to_string(path_for(root)) else {
         return BTreeMap::new();
     };
-    if let Ok(file) = serde_json::from_str::<ToolchainFile>(&body) {
-        if file.schema_version == SCHEMA_VERSION {
-            return file.kits;
-        }
+    if let Ok(file) = serde_json::from_str::<ToolchainFile>(&body)
+        && file.schema_version == SCHEMA_VERSION
+    {
+        return file.kits;
     }
     match serde_json::from_str::<ToolchainFileV1>(&body) {
         Ok(antigo) if antigo.schema_version == 1 && !antigo.selections.is_empty() => {

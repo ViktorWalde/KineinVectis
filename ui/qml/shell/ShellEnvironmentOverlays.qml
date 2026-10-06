@@ -120,6 +120,16 @@ Item {
         onDismissRequested: root.dataSourceController.impact.cancel()
     }
 
+    DataSourceDriverDialog {
+        anchors.fill: parent
+        visible: root.dataSourceController !== null && root.dataSourceController.odbc.open
+        z: 101
+        controller: root.dataSourceController ? root.dataSourceController.odbc : null
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.dataSourceController.odbc.cancel()
+    }
+
     // O passo de permissao (E2) vai para o TERMINAL DA IDE, visivel, pelo
     // mesmo caminho do painel de instalacao. Nada roda escondido.
     Connections {

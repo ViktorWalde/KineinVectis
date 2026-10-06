@@ -334,6 +334,8 @@ pub fn run(
         DataSourceEngine::Mongo => {
             run_mongo(profile, secret, sql, max_rows).map_err(|f| (f.message, f.secret_required))
         }
+        DataSourceEngine::Odbc => super::odbc_query::run(profile, secret, sql, max_rows)
+            .map_err(|f| (f.message, f.secret_required)),
     }
 }
 

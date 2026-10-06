@@ -71,6 +71,7 @@ pub struct Core {
     detector: ToolDetector,
     tool_registry: Arc<Mutex<Option<Vec<ToolInfo>>>>,
     workspace: Option<WorkspaceInfo>,
+    odbc: datasource::odbc::Session,
     fswatch: Option<fswatch::WorkspaceWatcher>,
     syntax: lang::SyntaxTreeService,
     /// O indice do projeto inteiro (pilar 0 do roadmaps/42): construido por um
@@ -121,6 +122,7 @@ impl Core {
             detector,
             tool_registry: Arc::new(Mutex::new(None)),
             workspace: None,
+            odbc: datasource::odbc::Session::default(),
             fswatch: None,
             syntax: lang::SyntaxTreeService::default(),
             index: Arc::new(Mutex::new(index::ProjectIndex::default())),

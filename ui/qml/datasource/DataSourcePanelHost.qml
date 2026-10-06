@@ -16,6 +16,10 @@ KvPanelFrame {
         anchors.fill: parent
 
         profiles: root.controller ? root.controller.profiles : []
+        odbcSources: root.controller ? root.controller.odbc.sources : []
+        odbcLoading: root.controller ? root.controller.odbc.loading : false
+        odbcMessage: root.controller ? root.controller.odbc.message : ""
+        onOdbcRefreshRequested: root.controller.odbc.refresh()
         selectedName: root.controller ? root.controller.selectedName : ""
         draft: root.controller ? root.controller.draft : null
         errorText: root.controller ? root.controller.errorText : ""

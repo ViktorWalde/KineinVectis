@@ -100,7 +100,14 @@ QtObject {
     }
 
     // Clique duplo numa tabela da arvore: as primeiras linhas dela.
-    function tableData(connection, engine, schema, table) {
+    function tableData(connection, engine, schema, table, readSql) {
+        if (DataSourceKinds.isOdbc(engine)) {
+            if (!readSql) {
+                root.dataSourceController.queryStatus = qsTr("O driver não forneceu uma leitura para esta tabela. Use o console.");
+            } else root.dataSourceController.runOn(connection, readSql, false, 200);
+            root.resultsRequested();
+            return;
+        }
         const quote = name => "\"" + name.replace(/"/g, "\"\"") + "\"";
         const sql = DataSourceKinds.isMongo(engine) ? table + " {}"
                   : "SELECT * FROM " + (DataSourceKinds.isSqlite(engine) || schema === "" ? "" : quote(schema) + ".")

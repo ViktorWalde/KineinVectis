@@ -34,8 +34,17 @@ Item {
             root.coreClient.dataSourceIntrospect(name, password);
         }
 
-        function onQueryRequested(name, password, sql, confirmWrite) {
-            root.coreClient.dataSourceQuery(name, password, sql, 0, confirmWrite);
+        function onQueryRequested(name, password, sql, confirmWrite, maxRows) {
+            root.coreClient.dataSourceQuery(name, password, sql, maxRows, confirmWrite);
+        }
+    }
+
+    Connections {
+        target: root.dataSourceController ? root.dataSourceController.odbc : null
+
+        function onSourcesRequested() { root.coreClient.dataSourceOdbcSources(); }
+        function onAuthorizeRequested(name, identity, workspace) {
+            root.coreClient.dataSourceOdbcAuthorize(name, identity, workspace);
         }
     }
 

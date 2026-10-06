@@ -16,6 +16,12 @@
 > `DocsPublic/especificacoes/arquitetura-interna-core-ipc-jobs.md`; este documento
 > é a ponte entre o que **já existe** e como **evoluir** até lá.
 
+O domínio Banco, seus donos e fluxos de confirmação estão em
+[37-banco-de-dados](37-banco-de-dados.md). O carregamento ODBC por gesto
+explícito é a exceção registrada no
+[ADR-0007](../decisoes-adr/ADR-0007-odbc-com-consentimento.md): biblioteca
+segura no core, gerenciador do sistema e driver nativo de terceiro.
+
 ## 1. Por que este documento existe
 
 Em 2026-07 o core, o protocolo e o CLI foram quebrados de arquivos-monólito

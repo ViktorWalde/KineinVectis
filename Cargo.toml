@@ -14,7 +14,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/kinein/kinein-vectis"
 homepage = "https://github.com/kinein/kinein-vectis"
 readme = "README.md"
-rust-version = "1.85"
+rust-version = "1.88"
 # Nenhum crate deste workspace vai para o crates.io: eles sao internos da IDE.
 # Alem de ser a verdade, isto e' o que permite `allow-wildcard-paths` no
 # deny.toml — o cargo-deny so aceita dependencia de path em crate NAO publicado,
@@ -86,6 +86,9 @@ rustix = { version = "1.1", default-features = false, features = ["std", "fs"] }
 # A feature `sync` da' a API bloqueante; o codigo deste repositorio segue
 # sincrono, como no `postgres`.
 mongodb = { version = "3.9", features = ["sync"] }
+
+# ODBC: API Rust segura (MIT); gerenciador unixODBC instalado no sistema.
+odbc-api = { version = "=29.1.1", default-features = false, features = ["odbc_version_3_80"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

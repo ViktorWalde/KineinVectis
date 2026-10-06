@@ -83,14 +83,12 @@ impl Core {
                 .files
                 .iter()
                 .find(|f| f.name.as_deref() == Some("app"));
-            if let Some(app) = app {
-                if let Ok(meta) = std::fs::metadata(&app.file) {
-                    if let Some(regiao) =
-                        size::region_from_partition(&tabela.entries, app.offset, meta.len())
-                    {
-                        relatorio.regions.push(regiao);
-                    }
-                }
+            if let Some(app) = app
+                && let Ok(meta) = std::fs::metadata(&app.file)
+                && let Some(regiao) =
+                    size::region_from_partition(&tabela.entries, app.offset, meta.len())
+            {
+                relatorio.regions.push(regiao);
             }
         }
         JsonRpcResponse::success(request_id, json!(relatorio))

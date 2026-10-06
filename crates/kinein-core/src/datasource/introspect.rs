@@ -89,6 +89,7 @@ pub fn read_structure(
                 // desenha diferente, entao o valor cru vai junto.
                 kind: if tipo == "VIEW" { "view" } else { "table" }.to_owned(),
                 columns: Vec::new(),
+                read_sql: None,
             });
         }
     }

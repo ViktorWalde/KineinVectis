@@ -137,10 +137,10 @@ impl CmakeModel {
             };
             // O nome vem no detalhe E na entrada do codemodel; a entrada
             // basta quando o detalhe (uma fixture minima) nao o traz.
-            if detalhe.get("name").is_none() {
-                if let (Some(obj), Some(nome)) = (detalhe.as_object_mut(), entrada.get("name")) {
-                    obj.insert("name".to_owned(), nome.clone());
-                }
+            if detalhe.get("name").is_none()
+                && let (Some(obj), Some(nome)) = (detalhe.as_object_mut(), entrada.get("name"))
+            {
+                obj.insert("name".to_owned(), nome.clone());
             }
             if let Some(target) = ler_target(&detalhe, &source_dir, &build_abs) {
                 targets.push(target);

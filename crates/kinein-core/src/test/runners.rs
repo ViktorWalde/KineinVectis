@@ -138,10 +138,10 @@ pub(super) fn run_pytest(
 
     let mut sem_pytest = false;
     let mut observando = |event: TestEvent| {
-        if let TestEvent::Output { line, .. } = &event {
-            if line.contains("No module named pytest") {
-                sem_pytest = true;
-            }
+        if let TestEvent::Output { line, .. } = &event
+            && line.contains("No module named pytest")
+        {
+            sem_pytest = true;
         }
         sink(event);
     };

@@ -13,6 +13,7 @@ mod coverage;
 mod datasource;
 mod datasource_discover;
 mod datasource_impact;
+mod datasource_odbc;
 mod datasource_query;
 mod debug;
 mod debug_attach;

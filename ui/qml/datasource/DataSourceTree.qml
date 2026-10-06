@@ -57,7 +57,7 @@ QtObject {
     function tableRows(out, prefix, depth, tables, context) {
         for (const table of tables) {
             const key = prefix + "|" + table.name;
-            const extra = Object.assign({ table: table.name }, context);
+            const extra = Object.assign({ table: table.name, readSql: table.readSql || "" }, context);
             out.push(root.row(key, depth, DataSourceKinds.tableKind(table.kind), table.name,
                               root.plural(table.columns.length, qsTr("1 coluna"), qsTr("%1 colunas")), true, extra));
             if (root.isExpanded(key)) root.columnRows(out, key, depth + 1, table, extra);

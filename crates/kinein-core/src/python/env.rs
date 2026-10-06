@@ -47,21 +47,18 @@ pub fn python_env(root: &Path, f: &PythonTools) -> Option<PythonEnv> {
             return Some(com_versao(py, pasta, None));
         }
     }
-    if root.join("poetry.lock").is_file() {
-        if let Some(poetry) = f.poetry.as_deref() {
-            if let Ok(saida) = Command::new(poetry)
-                .args(["env", "info", "-p"])
-                .current_dir(root)
-                .output()
-            {
-                if saida.status.success() {
-                    let caminho = String::from_utf8_lossy(&saida.stdout).trim().to_owned();
-                    let py = Path::new(&caminho).join("bin").join("python");
-                    if py.is_file() {
-                        return Some(com_versao(py, "poetry", None));
-                    }
-                }
-            }
+    if root.join("poetry.lock").is_file()
+        && let Some(poetry) = f.poetry.as_deref()
+        && let Ok(saida) = Command::new(poetry)
+            .args(["env", "info", "-p"])
+            .current_dir(root)
+            .output()
+        && saida.status.success()
+    {
+        let caminho = String::from_utf8_lossy(&saida.stdout).trim().to_owned();
+        let py = Path::new(&caminho).join("bin").join("python");
+        if py.is_file() {
+            return Some(com_versao(py, "poetry", None));
         }
     }
     f.python_sistema.clone().map(|py| {

@@ -67,10 +67,10 @@ pub fn workspace_path(root: &Path) -> PathBuf {
 
 /// Base de config do XDG: `$XDG_CONFIG_HOME`, senão `$HOME/.config`.
 fn config_home() -> PathBuf {
-    if let Some(xdg) = std::env::var_os("XDG_CONFIG_HOME") {
-        if !xdg.is_empty() {
-            return PathBuf::from(xdg);
-        }
+    if let Some(xdg) = std::env::var_os("XDG_CONFIG_HOME")
+        && !xdg.is_empty()
+    {
+        return PathBuf::from(xdg);
     }
     let home = std::env::var_os("HOME").unwrap_or_default();
     PathBuf::from(home).join(".config")

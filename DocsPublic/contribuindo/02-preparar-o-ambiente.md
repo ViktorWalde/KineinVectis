@@ -9,7 +9,12 @@ gate está verde".
 ## O que precisa estar na máquina
 
 - **Rust** pela `rust-toolchain.toml` do repositório (rustup respeita o
-  arquivo; a versão exata está lá — não instale outra à mão).
+  arquivo; a versão exata está lá — não instale outra à mão). O mínimo
+  declarado do workspace é **1.88**; a validação de compatibilidade usa
+  uma toolchain separada e não muda o pin do desenvolvimento.
+- **unixODBC de desenvolvimento**, para ligar o adaptador ODBC do core:
+  `unixodbc-dev` no Debian/Ubuntu, `unixODBC-devel` no Fedora e `unixodbc`
+  no Arch. Nenhum driver de banco é necessário para compilar ou abrir.
 - **Qt 6.10+** (Quick, Qml, QuickControls2) e **CMake ≥ 3.28** com Ninja.
 - **Clang/LLVM** (clang, clang++, clang-tidy, clang-format, lldb) — os
   presets oficiais são clang; o gate C++ é clang-tidy.

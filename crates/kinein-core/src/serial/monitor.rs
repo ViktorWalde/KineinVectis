@@ -89,23 +89,25 @@ pub fn escolher(
         }
     }
     let (efetivo_id, efetivo_path) = toolchain.effective_program(ToolchainRole::SerialMonitor)?;
-    if !fixado && micropython {
-        if let Some(mpremote) = toolchain.candidate_path(ToolchainRole::SerialMonitor, "mpremote") {
-            return Some(Escolha {
-                id: "mpremote".to_owned(),
-                program: mpremote.to_owned(),
-                activation: None,
-            });
-        }
+    if !fixado
+        && micropython
+        && let Some(mpremote) = toolchain.candidate_path(ToolchainRole::SerialMonitor, "mpremote")
+    {
+        return Some(Escolha {
+            id: "mpremote".to_owned(),
+            program: mpremote.to_owned(),
+            activation: None,
+        });
     }
-    if !fixado && chip_e_espressif(toolchain.chip()) {
-        if let Some(espflash) = toolchain.candidate_path(ToolchainRole::SerialMonitor, "espflash") {
-            return Some(Escolha {
-                id: "espflash".to_owned(),
-                program: espflash.to_owned(),
-                activation: None,
-            });
-        }
+    if !fixado
+        && chip_e_espressif(toolchain.chip())
+        && let Some(espflash) = toolchain.candidate_path(ToolchainRole::SerialMonitor, "espflash")
+    {
+        return Some(Escolha {
+            id: "espflash".to_owned(),
+            program: espflash.to_owned(),
+            activation: None,
+        });
     }
     Some(Escolha {
         id: efetivo_id.to_owned(),

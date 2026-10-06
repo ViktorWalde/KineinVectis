@@ -19,7 +19,7 @@ Rectangle {
     property var controller: null
 
     signal consoleRequested(string name)
-    signal tableDataRequested(string connection, string engine, string schema, string table)
+    signal tableDataRequested(string connection, string engine, string schema, string table, string readSql)
     signal editRequested(string name)
     signal newRequested()
     signal candidateChosen(int index)
@@ -118,8 +118,8 @@ Rectangle {
         treeModel: tree
         onConsoleRequested: name => root.consoleRequested(name)
         onEditRequested: name => root.editRequested(name)
-        onTableDataRequested: (connection, engine, schema, table) =>
-            root.tableDataRequested(connection, engine, schema, table)
+        onTableDataRequested: (connection, engine, schema, table, readSql) =>
+            root.tableDataRequested(connection, engine, schema, table, readSql)
     }
 
     // ---- os dados, embaixo da arvore e na mesma janela ----------------------

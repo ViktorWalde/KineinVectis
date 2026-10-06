@@ -52,6 +52,10 @@ pub mod mongo;
 pub mod mongo_command;
 pub mod mongo_infer;
 pub mod mongo_write;
+pub mod odbc;
+pub mod odbc_catalog;
+pub mod odbc_query;
+pub mod odbc_rows;
 pub mod query;
 pub mod secret;
 pub mod sqlite;
@@ -89,6 +93,9 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
     // nem usuario; exigir os tres seria pedir ao autor que preenchesse o que
     // nao existe — e deixar campos vazios na tela e' a forma como a maioria
     // das IDEs trata SQLite (decisao do autor, 2026-09-04).
+    if profile.engine == DataSourceEngine::Odbc {
+        return odbc::validate_dsn(&profile.database);
+    }
     if profile.engine == DataSourceEngine::Sqlite {
         return if profile.database.trim().is_empty() {
             Err("informe o caminho do arquivo .db".to_owned())
@@ -171,8 +178,16 @@ fn normalize(profile: &DataSourceProfile) -> DataSourceProfile {
     DataSourceProfile {
         engine: profile.engine,
         name: profile.name.trim().to_owned(),
-        host: profile.host.trim().to_owned(),
-        port: profile.port,
+        host: if profile.engine == DataSourceEngine::Odbc {
+            String::new()
+        } else {
+            profile.host.trim().to_owned()
+        },
+        port: if profile.engine == DataSourceEngine::Odbc {
+            0
+        } else {
+            profile.port
+        },
         database: profile.database.trim().to_owned(),
         user: profile.user.trim().to_owned(),
         secret_source: profile.secret_source,

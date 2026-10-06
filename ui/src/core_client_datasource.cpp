@@ -24,6 +24,20 @@ void CoreClient::dataSourceList()
     sendRequest(QStringLiteral("datasource.list"), QJsonObject{});
 }
 
+void CoreClient::dataSourceOdbcSources()
+{
+    sendRequest(QStringLiteral("datasource.odbc.sources"), QJsonObject{});
+}
+
+void CoreClient::dataSourceOdbcAuthorize(const QString& name, const QString& identity,
+                                         const QString& workspace)
+{
+    sendRequest(QStringLiteral("datasource.odbc.authorize"),
+                QJsonObject{{QStringLiteral("name"), name},
+                            {QStringLiteral("identity"), identity},
+                            {QStringLiteral("workspace"), workspace}});
+}
+
 void CoreClient::dataSourceSave(const QVariantMap& profile)
 {
     sendRequest(QStringLiteral("datasource.save"),
@@ -121,6 +135,17 @@ void CoreClient::dataSourceImpact(const QString& name, const QString& password, 
 
 bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("datasource.odbc.sources")) {
+        emit dataSourceOdbcSourcesResolved(
+            result.value(QStringLiteral("sources")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("datasource.odbc.authorize")) {
+        emit dataSourceOdbcAuthorized(result.value(QStringLiteral("name")).toString(),
+                                      result.value(QStringLiteral("identity")).toString(),
+                                      result.value(QStringLiteral("workspace")).toString());
+        return true;
+    }
     if (method == QStringLiteral("setup.list")) {
         emit setupListResolved(result.value(QStringLiteral("distroName")).toString(),
                                result.value(QStringLiteral("family")).toString(),
@@ -176,6 +201,21 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
         return true;
     }
     return dispatchGrafanaResult(method, result);
+}
+
+void CoreClient::handleDataSourceDriverRequired(const QString& method, const QJsonObject& error,
+                                                const QVariantMap& requestQuery)
+{
+    if (error.value(QStringLiteral("code")).toString() !=
+        QStringLiteral("DRIVER_APPROVAL_REQUIRED"))
+    {
+        return;
+    }
+    QVariantMap details = error.value(QStringLiteral("details")).toObject().toVariantMap();
+    if (!requestQuery.isEmpty()) {
+        details.insert(QStringLiteral("query"), requestQuery);
+    }
+    emit dataSourceDriverRequired(method, details);
 }
 
 } // namespace kinein

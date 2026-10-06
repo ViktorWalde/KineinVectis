@@ -27,6 +27,7 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     const QString method = m_pendingMethods.take(id);
     const QString requestPath = m_pendingPaths.take(id);
     const QString requestRemoteName = m_pendingRemoteDirectoryNames.take(id);
+    const QVariantMap requestQuery = m_pendingDataSourceQueries.take(id);
 
     if (method != QStringLiteral("lsp.didChange") &&
         method != QStringLiteral("lsp.semanticTokens") &&
@@ -78,6 +79,7 @@ void CoreClient::handleResponseLine(const QByteArray& line)
                                          .toString(),
                                      message);
         }
+        handleDataSourceDriverRequired(method, error, requestQuery);
         emit requestFailed(method, message, error.value(QStringLiteral("code")).toString());
         return;
     }

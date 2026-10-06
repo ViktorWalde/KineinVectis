@@ -253,18 +253,17 @@ pub(super) fn spawn_reader_thread(
 
             if message.get("method").and_then(Value::as_str)
                 == Some("textDocument/publishDiagnostics")
+                && let Some(params) = message.get("params")
             {
-                if let Some(params) = message.get("params") {
-                    cache_diagnostics(&diagnostics_by_uri, params);
-                    // O que ESTE servidor publicou entra no cache fundido, e o
-                    // evento que sai leva a uniao com os outros servidores da
-                    // linguagem — a UI substitui por arquivo, e dois eventos
-                    // parciais se apagariam um ao outro.
-                    if let Some((path, diagnostics)) = published_diagnostics(params) {
-                        let event = diagnostics_merge::record(&merged, key, &path, diagnostics);
-                        if events.send(event).is_err() {
-                            break;
-                        }
+                cache_diagnostics(&diagnostics_by_uri, params);
+                // O que ESTE servidor publicou entra no cache fundido, e o
+                // evento que sai leva a uniao com os outros servidores da
+                // linguagem — a UI substitui por arquivo, e dois eventos
+                // parciais se apagariam um ao outro.
+                if let Some((path, diagnostics)) = published_diagnostics(params) {
+                    let event = diagnostics_merge::record(&merged, key, &path, diagnostics);
+                    if events.send(event).is_err() {
+                        break;
                     }
                 }
             }

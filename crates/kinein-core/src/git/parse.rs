@@ -47,10 +47,10 @@ pub fn parse_status(body: &str, prefix: &str) -> GitStatusResult {
             // Tipo 2 (rename): o token seguinte e o caminho antigo.
             let _original = tokens.next();
         }
-        if let Some(entry) = entry {
-            if let Some(path) = workspace_relative(&entry.path, prefix) {
-                result.entries.push(GitEntryInfo { path, ..entry });
-            }
+        if let Some(entry) = entry
+            && let Some(path) = workspace_relative(&entry.path, prefix)
+        {
+            result.entries.push(GitEntryInfo { path, ..entry });
         }
     }
 

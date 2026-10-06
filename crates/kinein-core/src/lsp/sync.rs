@@ -75,10 +75,10 @@ impl LspManager {
         let language_id = self.registry.language_id_of(language);
         let mut enviou = false;
         for key in self.registry.keys_of(language) {
-            if let Some(handle) = self.servers.get_mut(key) {
-                if handle.versions.contains_key(&uri) {
-                    enviou |= open_or_change(handle, &uri, language_id, content, hash, true);
-                }
+            if let Some(handle) = self.servers.get_mut(key)
+                && handle.versions.contains_key(&uri)
+            {
+                enviou |= open_or_change(handle, &uri, language_id, content, hash, true);
             }
         }
         if enviou {
@@ -98,10 +98,10 @@ impl LspManager {
             "text": content,
         });
         for key in self.registry.keys_of(language) {
-            if let Some(handle) = self.servers.get(key) {
-                if handle.versions.contains_key(&uri) {
-                    send_notification(&handle.stdin, "textDocument/didSave", &params);
-                }
+            if let Some(handle) = self.servers.get(key)
+                && handle.versions.contains_key(&uri)
+            {
+                send_notification(&handle.stdin, "textDocument/didSave", &params);
             }
         }
     }
@@ -184,10 +184,10 @@ impl LspManager {
         let hash = content_hash(content);
         let language_id = self.registry.language_id_of(language);
         for key in self.registry.keys_of(language) {
-            if let Some(handle) = self.servers.get_mut(key) {
-                if handle.versions.contains_key(&uri) {
-                    open_or_change(handle, &uri, language_id, content, hash, true);
-                }
+            if let Some(handle) = self.servers.get_mut(key)
+                && handle.versions.contains_key(&uri)
+            {
+                open_or_change(handle, &uri, language_id, content, hash, true);
             }
         }
     }

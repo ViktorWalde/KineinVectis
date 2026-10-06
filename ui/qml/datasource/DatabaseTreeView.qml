@@ -15,7 +15,7 @@ ListView {
 
     signal consoleRequested(string name)
     signal editRequested(string name)
-    signal tableDataRequested(string connection, string engine, string schema, string table)
+    signal tableDataRequested(string connection, string engine, string schema, string table, string readSql)
 
     clip: true
     boundsBehavior: Flickable.StopAtBounds
@@ -35,7 +35,7 @@ ListView {
 
     function openData(row) {
         if (DataSourceKinds.hasData(row.kind)) {
-            root.tableDataRequested(row.connection, row.engine, row.schema || "", row.table);
+            root.tableDataRequested(row.connection, row.engine, row.schema || "", row.table, row.readSql || "");
         }
     }
 

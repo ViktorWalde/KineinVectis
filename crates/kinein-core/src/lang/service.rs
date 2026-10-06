@@ -231,10 +231,10 @@ fn parse_incremental(
     let mut edited_tree = previous
         .filter(|document| document.language == language_id)
         .map(|document| document.tree.clone());
-    if let (Some(document), Some(tree)) = (previous, edited_tree.as_mut()) {
-        if document.content != content {
-            tree.edit(&contiguous_edit(&document.content, content));
-        }
+    if let (Some(document), Some(tree)) = (previous, edited_tree.as_mut())
+        && document.content != content
+    {
+        tree.edit(&contiguous_edit(&document.content, content));
     }
     parser
         .parse(content.as_bytes(), edited_tree.as_ref())

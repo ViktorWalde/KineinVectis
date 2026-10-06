@@ -67,10 +67,10 @@ pub fn config_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> Confi
         .dbname(&profile.database)
         .user(&profile.user)
         .connect_timeout(CONNECT_TIMEOUT);
-    if let Some(secret) = secret {
-        if !secret.is_empty() {
-            config.password(secret.expose());
-        }
+    if let Some(secret) = secret
+        && !secret.is_empty()
+    {
+        config.password(secret.expose());
     }
     config
 }

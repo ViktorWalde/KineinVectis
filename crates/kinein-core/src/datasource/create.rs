@@ -173,6 +173,9 @@ pub fn container_server(
                 ca_file: None,
             },
         ),
+        DataSourceEngine::Odbc => {
+            return Err("ODBC conecta a DSN existentes; nao cria servidores".to_owned());
+        }
         DataSourceEngine::Sqlite => {
             return Err("SQLite e' um arquivo: use `sqliteFile`".to_owned());
         }

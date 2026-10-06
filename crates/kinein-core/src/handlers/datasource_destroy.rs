@@ -49,6 +49,7 @@ impl Core {
                 ),
             );
         };
+        self.odbc.revoke(&root, &profile.name);
         if !pedido.data {
             return catalogo(
                 request_id,

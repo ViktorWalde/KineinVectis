@@ -2,7 +2,7 @@
 
 <!-- caminhos-conferidos -->
 
-> **Classe: ESTADO.** Conferido contra o código em 2026-10-05, na fatia do
+> **Classe: ESTADO.** Conferido contra o código em 2026-10-06, nas fatias do
 > passo 7 da [0.3.9](../roadmaps/59-fechamento-da-0.3.9.md).
 > O contrato do fio pertence ao [03](03-protocolo-ipc.md); o uso, ao
 > [manual](../manual.md); a fila, ao [40](../roadmaps/40-estado-e-continuidade.md).
@@ -209,6 +209,7 @@ e corrigiu o salto que saía do seletor direto para os controles da janela.
 | PostgreSQL | `/var/run/postgresql` | 5432 | `postgres` |
 | MongoDB | `localhost` | 27017 | `test` |
 | SQLite | vazio | 0 | vazio; a pessoa informa o arquivo |
+| Outro banco (ODBC) | vazio | 0 | DSN escolhido no registro local |
 
 Ao trocar de motor, campos ainda iguais ao padrão anterior ou vazios
 recebem o novo padrão. Valores personalizados são preservados. A senha da
@@ -242,10 +243,104 @@ diálogo existentes.
 papel, nome, seleção e ação acessível do controle. Nenhum código ou runtime
 da referência foi incorporado.
 
-## 7. Onde continuar
+## 7. ODBC: descoberta e carregamento são operações distintas
+
+A decisão, alternativas e licenças estão no
+[ADR-0007](../decisoes-adr/ADR-0007-odbc-com-consentimento.md).
+Protocolo `0.157.0`: motor `odbc`, com DSN em `database` e segredo pelo
+contrato existente. O formulário lista o que está registrado na máquina.
+Não configura DSN, instala driver ou cria banco pelo ODBC.
+
+```mermaid
+sequenceDiagram
+  actor user as Pessoa
+  participant ui as UI / OdbcController
+  participant core as Core
+  participant manager as unixODBC
+  participant driver as Driver local
+  ui->>core: datasource.odbc.sources
+  core->>manager: SQLDataSources / SQLDrivers
+  manager-->>ui: DSN, driver e identidade (sem conectar)
+  user->>ui: Testar, abrir estrutura ou executar consulta
+  ui->>core: datasource.test / introspect / query
+  core-->>ui: DRIVER_APPROVAL_REQUIRED antes do job
+  ui-->>user: Aviso de código nativo; Cancelar em foco
+  alt Cancelar
+    user->>ui: Cancelar ou Esc
+    Note over core,driver: Sem conexão nem carregamento
+  else Carregar driver
+    user->>ui: Carregar driver
+    ui->>core: datasource.odbc.authorize com projeto e desafio
+    core->>core: Conferir perfil e driver; guardar só em memória
+    core-->>ui: Autorização correlacionada
+    ui->>core: Repetir a operação original
+    core->>manager: SQLConnect com campos separados
+    manager->>driver: Carregar biblioteca e conectar
+    driver-->>ui: Catálogo ou resultado limitado
+  end
+```
+
+### Donos da fatia
+
+| Responsabilidade | Dono |
+| --- | --- |
+| Mensagens de descoberta e autorização | `crates/kinein-protocol/src/datasource_odbc.rs` |
+| Descoberta, identidade, sessão e conexão | `crates/kinein-core/src/datasource/odbc.rs` |
+| Validação antes de criar job | `crates/kinein-core/src/handlers/datasource_odbc.rs` e handlers de Banco |
+| Classificação conservadora e execução | `crates/kinein-core/src/datasource/odbc_query.rs` |
+| Catálogo e leitura escapada de tabela | `crates/kinein-core/src/datasource/odbc_catalog.rs` |
+| Buffer comum de consulta e catálogo | `crates/kinein-core/src/datasource/odbc_rows.rs` |
+| Correlação do erro com o pedido original | `ui/src/core_client_dispatch.cpp`, `ui/src/core_client_process.cpp` |
+| Estado da lista/aviso e repetição após o gesto | `ui/qml/datasource/DataSourceOdbcController.qml` |
+| DSN e confirmação de carregamento | `ui/qml/datasource/DataSourceDsnPicker.qml`, `ui/qml/datasource/DataSourceDriverDialog.qml` |
+
+A ponte guarda os parâmetros da consulta pendente por id RPC, sem senha;
+retira-os ao receber a resposta. Anexa esse pedido ao erro entregue à UI,
+sem acrescentá-lo ao log do protocolo. O controller confere projeto,
+perfil, nome e texto antes de repetir. Resposta obsoleta não executa outro
+comando. Autorizar driver não substitui a confirmação de escrita.
+
+Catálogo usa `SQLTables`/`SQLColumns` em duas passagens, sem N+1. Recusa
+catálogo incompleto, truncamento e mais de 500 tabelas ou 16.000 colunas.
+`readSql` é aditivo em `DataSourceTable`; a UI conserva esse texto e envia
+`maxRows: 200`, sem LIMIT de motor nativo. Delimitadores suportados: aspas
+duplas, crase e colchete, com fechamento escapado. Sem delimitador, só
+identificadores ASCII simples. Qualificação usa ponto; outros formatos
+podem exigir SQL manual. Nenhuma compatibilidade com driver não provado
+é presumida.
+
+Console e catálogo conservam NULL; o buffer limita 128 colunas, 16 KiB por
+célula e 8 MiB de resultado retido, incluindo a estrutura das linhas.
+Mais linhas sinalizam `truncated`; célula cortada ou UTF-8 inválido é erro.
+Login e statement recebem timeout de cinco segundos; um driver que ignora
+o atributo não está isolado por esse limite.
+
+**Política ODBC:** leitura simples e única pode executar diretamente.
+Funções, CTE, sequências, escrita e sintaxe desconhecida pedem confirmação
+pelo nome da conexão. Impacto é local, sem COUNT nem abertura do driver.
+Leitura solicita transação sem autocommit e termina com rollback. Isso
+não equivale a READ ONLY do servidor, nem cobre efeitos externos de views,
+triggers ou código nativo. Drivers sem os recursos solicitados falham;
+não há fallback que retira proteção. Só o primeiro conjunto de resultados
+é exibido. Permissões do servidor continuam essenciais.
+
+As aprovações não são salvas no projeto: mudar/fechar projeto e remover
+perfil revoga o consentimento. Identidade por caminho/tamanho/mtime
+detecta alterações usuais, com precedência Driver64; não oferece pin de
+conteúdo contra mudanças externas. Diagnósticos arbitrários são removidos
+na fronteira de driver para evitar eco de credenciais; SQLSTATE é mantido.
+Tracing configurado fora da IDE permanece sob controle do usuário.
+
+**Provas reproduzíveis:** `crates/kinein-core/src/tests/datasource_odbc.rs`,
+`scripts/qml-harness/tst_datasource_odbc.qml` e
+`python3 scripts/testar-odbc-real.py --driver /caminho/do/driver.so`.
+O script nunca baixa driver, isola ODBC/XDG e limpa seus arquivos.
+Acrescente `--ui` para gesto real na IDE; capture somente a janela.
+
+## 8. Onde continuar
 
 A fila e o prompt de retomada ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
-ODBC, produção/somente leitura, transação com prévia, menus e árvore viva,
+Produção/somente leitura, transação com prévia, menus e árvore viva,
 completion e ampliação da grade continuam no passo 7. O pente fino e o
 AppImage seguem a ordem do 59 §7.

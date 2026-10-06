@@ -185,10 +185,10 @@ pub fn discover_tests(
         if line.contains("No module named pytest") {
             sem_pytest = true;
         }
-        if stream == "stdout" {
-            if let Some(caso) = parse(&line) {
-                casos.push(caso);
-            }
+        if stream == "stdout"
+            && let Some(caso) = parse(&line)
+        {
+            casos.push(caso);
         }
         sink(TestEvent::Output { stream, line });
     };

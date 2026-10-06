@@ -95,10 +95,10 @@ impl Core {
             return;
         };
         self.configure_python_lsp(&root);
-        if let Some(lsp) = self.lsp.as_mut() {
-            if lsp.is_running("python") {
-                lsp.restart_language("python");
-            }
+        if let Some(lsp) = self.lsp.as_mut()
+            && lsp.is_running("python")
+        {
+            lsp.restart_language("python");
         }
     }
 

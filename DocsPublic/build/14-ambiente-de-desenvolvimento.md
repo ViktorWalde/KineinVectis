@@ -19,6 +19,10 @@ reconfigurar: o CMake guarda caminhos absolutos da distro no cache.
 
 Toolchain definido em `rust-toolchain.toml`:
 
+O mínimo do workspace é Rust **1.88** (corrigido em 2026-10-06): o código
+já usa let chains e dependências como MongoDB/ICU/time já exigiam 1.88.
+O antigo `rust-version = 1.85` não refletia o código compilável.
+
 ```bash
 cargo --version
 cargo kw-fmt
@@ -38,6 +42,13 @@ Os aliases `kw-*` estão em `.cargo/config.toml`.
 > arquivo: é o rustup que resolve o pin por você.
 
 ## C++/Qt/QML
+
+O core também liga dinamicamente o gerenciador unixODBC do sistema.
+Para compilar, instale `unixodbc-dev` (Debian/Ubuntu), `unixODBC-devel`
+(Fedora) ou `unixodbc` (Arch). A IDE lista DSN existentes; instalar e
+configurar o driver do banco é responsabilidade da pessoa. Não existe
+download automático de driver. A decisão e a licença estão no
+[ADR-0007](../decisoes-adr/ADR-0007-odbc-com-consentimento.md).
 
 Dependências base no Arch/CachyOS:
 

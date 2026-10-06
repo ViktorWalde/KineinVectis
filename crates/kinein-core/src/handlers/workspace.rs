@@ -262,6 +262,7 @@ impl Core {
         if let Some(debug) = self.debug.as_mut() {
             debug.clear();
         }
+        self.odbc.clear();
         self.workspace = Some(opened.clone());
         // O modelo do projeto embarcado (pilar 0 do roadmaps/42) nasce com o
         // workspace — por qualquer porta: open, createProject — e vai por
@@ -306,6 +307,7 @@ impl Core {
         if let Some(debug) = self.debug.as_mut() {
             debug.clear();
         }
+        self.odbc.clear();
         let closed = self.workspace.take();
         self.fswatch = None;
         self.syntax.clear();

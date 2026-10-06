@@ -209,15 +209,15 @@ fn fingerprint(keygen: &Path, line: &str) -> Option<RemoteHostKey> {
 
 /// Acrescenta as linhas ao `known_hosts`, criando `~/.ssh` (0700) se faltar.
 fn append_lines(file: &Path, lines: &[String]) -> Result<(), String> {
-    if let Some(parent) = file.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent)
-                .map_err(|error| format!("não pude criar {}: {error}", parent.display()))?;
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt as _;
-                let _ = fs::set_permissions(parent, fs::Permissions::from_mode(0o700));
-            }
+    if let Some(parent) = file.parent()
+        && !parent.exists()
+    {
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("não pude criar {}: {error}", parent.display()))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            let _ = fs::set_permissions(parent, fs::Permissions::from_mode(0o700));
         }
     }
     let mut handle = OpenOptions::new()

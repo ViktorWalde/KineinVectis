@@ -80,7 +80,7 @@ instalar_arch() {
         base-devel git cmake ninja \
         clang compiler-rt lldb gdb \
         qt6-base qt6-declarative qt6-tools qt6-svg \
-        rustup \
+        rustup unixodbc \
         ripgrep fd
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo pacman -S --needed --noconfirm shellcheck
@@ -97,7 +97,7 @@ instalar_debian() {
         qml6-module-qtqml-models qml6-module-qtquick \
         qml6-module-qtquick-controls qml6-module-qtquick-layouts \
         qml6-module-qtquick-window libqt6svg6 \
-        ripgrep fd-find
+        ripgrep fd-find unixodbc-dev
     # O runtime dos sanitizers (ASan/UBSan do clang) que o preset
     # linux-clang-debug-strict linka. Sem ele: "cannot find
     # libclang_rt.asan-x86_64.a" (medido no Ubuntu 24.04, 2026-10-01). Chamada
@@ -135,7 +135,7 @@ instalar_fedora() {
         clang clang-tools-extra compiler-rt lldb gdb \
         qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel qt6-qtsvg \
         $pacotes_rust \
-        ripgrep fd-find
+        ripgrep fd-find unixODBC-devel
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo dnf install -y ShellCheck
     fi
@@ -148,7 +148,7 @@ case "$DISTRO" in
     *)
         echo "distro nao reconhecida. Instale manualmente:" >&2
         echo "  git cmake ninja clang(+clangd/format/tidy) gcc gdb lldb" >&2
-        echo "  Qt6 (base, declarative, tools) rustup rust-analyzer rg fd" >&2
+        echo "  Qt6 (base, declarative, tools) unixODBC (desenvolvimento) rustup rust-analyzer rg fd" >&2
         exit 1
         ;;
 esac

@@ -7,8 +7,16 @@ import QtQuick
 // "visao" o que outra chama de "tabela" sem ninguem perceber (catraca de
 // duplicacao QML).
 QtObject {
+    function isPostgres(engine) {
+        return engine === "postgres";
+    }
+
     function isMongo(engine) {
         return engine === "mongo";
+    }
+
+    function isOdbc(engine) {
+        return engine === "odbc";
     }
 
     function isSqlite(engine) {
@@ -20,18 +28,18 @@ QtObject {
     }
 
     function engineName(engine) {
-        return isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "MongoDB" : "PostgreSQL");
+        return isOdbc(engine) ? "Outro banco (ODBC)" : (isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "MongoDB" : "PostgreSQL"));
     }
 
     function engineShort(engine) {
-        return isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "Mongo" : "PG");
+        return isOdbc(engine) ? "ODBC" : (isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "Mongo" : "PG"));
     }
 
     // Os padroes de cada motor (2026-10-04): trocar o motor no formulario
     // trazia o PostgreSQL junto (`/var/run/postgresql`, 5432) para o MongoDB.
     function defaultsFor(engine) {
         if (isMongo(engine)) return { host: "localhost", port: 27017, database: "test" };
-        if (isSqlite(engine)) return { host: "", port: 0, database: "" };
+        if (isSqlite(engine) || isOdbc(engine)) return { host: "", port: 0, database: "" };
         return { host: "/var/run/postgresql", port: 5432, database: "postgres" };
     }
 
@@ -39,12 +47,46 @@ QtObject {
     // motor novo SO' os campos que ainda estao no padrao do anterior (ou
     // vazios): o que a pessoa digitou fica.
     function adoptDefaults(draft, fromEngine, toEngine) {
+        if (isOdbc(toEngine) || isOdbc(fromEngine)) {
+            Object.assign(draft, defaultsFor(toEngine), { tls: "disable", caFile: "", user: "", secretSource: "automatic", secretVariable: "" });
+            return;
+        }
         const before = defaultsFor(fromEngine);
         const after = defaultsFor(toEngine);
         for (const key of ["host", "port", "database"]) {
             if (draft[key] === before[key] || draft[key] === "" || draft[key] === undefined) draft[key] = after[key];
         }
     }
+
+    function emptyProfile() {
+        return Object.assign({
+            engine: "postgres",
+            name: "",
+            user: "",
+            secretSource: "automatic",
+            secretVariable: "",
+            tls: "disable",
+            caFile: ""
+        }, defaultsFor("postgres"));
+    }
+
+
+    function cloneProfile(source) {
+        return {
+            engine: source.engine || "postgres",
+            name: source.name,
+            host: source.host,
+            port: source.port,
+            database: source.database,
+            user: source.user,
+            secretSource: source.secretSource || "automatic",
+            secretVariable: source.secretVariable || "",
+            sampleSize: source.sampleSize,
+            tls: source.tls || "disable",
+            caFile: source.caFile || ""
+        };
+    }
+
 
     // Traducao do resultado: Mongo conta documentos; SQL conta linhas.
     function querySummary(outcome, engine) {

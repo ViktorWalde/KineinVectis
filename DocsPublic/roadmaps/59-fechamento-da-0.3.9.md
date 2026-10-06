@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); próxima fatia ODBC (§5.8); restante a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); restante a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -300,7 +300,7 @@ escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
 
 | Caminho | O que cobre | Custo |
 | --- | --- | --- |
-| **ODBC** (crate `odbc-api`, unixODBC) | Qualquer banco com driver ODBC: Oracle, SQL Server, MySQL, Firebird, DB2, Snowflake… A pessoa instala o driver do fabricante; a IDE lista os DSN do `odbcinst`. | Uma dependência de sistema (`unixodbc`). A árvore sai do catálogo padrão (`SQLTables`/`SQLColumns`). A qualidade varia por driver. |
+| **ODBC** (crate `odbc-api`, unixODBC) | Qualquer banco com driver ODBC: Oracle, SQL Server, MySQL, Firebird, DB2, Snowflake… A pessoa instala o driver do fabricante; a IDE lista os DSN por `SQLDataSources`, sem depender do executável `odbcinst`. | Uma dependência de sistema (`unixodbc`). A árvore sai do catálogo padrão (`SQLTables`/`SQLColumns`). A qualidade varia por driver. |
 | **ADBC** (Arrow Database Connectivity) | PostgreSQL, SQLite, DuckDB, Snowflake, BigQuery, Flight SQL | Bom para dados em colunas, mas com poucos motores ainda. |
 | **`usql`** (cliente universal, um binário Go) | Mais de 40 bancos pela linha de comando | Orquestrar um processo externo e ler a saída como texto. Serve para console, não para árvore nem edição. |
 | JDBC (o caminho do DBeaver e do DataGrip) | Praticamente todos | Exige uma JVM. Fora, pelo peso. |
@@ -326,7 +326,7 @@ orquestra". Ficam assim:
 - a IDE não baixa driver sozinha. Um driver é código nativo de terceiros, e
   carregá-lo é gesto explícito, com aviso (§7, segurança).
 
-### 5.8 A fatia retomada e o próximo prompt (2026-10-05)
+### 5.8 A fatia retomada e o próximo prompt (atualizado em 2026-10-06)
 
 A arquitetura do Banco, com diagramas, donos e limites, está no
 [37](../arquitetura/37-banco-de-dados.md). A escrita MongoDB, a confirmação
@@ -334,7 +334,10 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Ordem das próximas fatias:** ODBC (§5.7), produção/somente leitura e
+**Última fatia concluída:** ODBC (§5.7), com provas reais/visuais e gates
+registrados no 40.7 §7.221. Próxima: produção/somente leitura (§5.10).
+
+**Ordem das próximas fatias:** produção/somente leitura e
 transação com prévia (§5.3), menus/árvore viva (§5.1), console (§5.2) e grade
 (§5.4), com prova real conforme §5.6. MySQL/MariaDB é alvo do §5.7; não está
 no enum de motores atual. O passo 8 vem depois.
@@ -344,13 +347,17 @@ Prompt de continuidade (conferir estado e log antes de usar):
 ```text
 Kinein Vectis — continuar o fechamento da 0.3.9, passo 7 (Banco).
 Use o worktree layout-0.3.6 existente; localize-o por git worktree list.
-O mantenedor integra main por fast-forward e faz o push.
+O autor autorizou concluir Banco e pente fino, integrar main por fast-forward,
+gerar/validar AppImage final e só então retirar o worktree extra. Sem push.
+Não integre nem empacote antes de cumprir os critérios do passo 8.
 
 Comece com git status --short --branch e git log -5; preserve todo trabalho
 local. Leia 00-comece-aqui, o cabeçalho e a fila do 40, a última entrada
 do 40.7, o 59 §2/§5/§7, arquitetura/37 e o contrato arquitetura/03.
-Confira PROTOCOL_VERSION no código. A fatia do 40.7 §7.220 está concluída;
-preserve suas provas e proteções ao implementar a próxima fatia.
+Confira PROTOCOL_VERSION no código. Preserve as proteções do 40.7 §7.220.
+Leia o aceite do §7.221: protocolo 0.157.0, ODBC concluído e validado.
+Confira no log se o commit local dessa fatia já foi feito; não refaça provas
+aceitas sem um risco concreto. Comece pelo desenho de §5.10.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
 rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido
@@ -358,11 +365,10 @@ pedem confirmação. A medição silenciosa protege filtro que pega todos.
 O console Mongo usa um comando por linha, com JSON estrito; preserve
 a forma antiga de leitura e o tratamento de Extended JSON.
 
-Próxima fatia: Outro banco (ODBC), conforme 59 §5.7. A IDE lista os DSN
-do unixODBC, orquestra console, catálogo padrão e grade de leitura.
-Nunca baixa driver; carregar código nativo de terceiro é gesto explícito
-com aviso. Desenhe e registre o contrato antes de implementar.
-Depois siga a ordem de §5.8, uma fatia por commit.
+Siga produção/somente leitura e transação com prévia
+(§5.3), menus/árvore viva (§5.1), console (§5.2), grade (§5.4) e motores
+nativos restantes (§5.7). Uma fatia por commit, contrato antes do código.
+ODBC nunca baixa driver; preserve o gesto de carregar e a revogação da sessão.
 
 PT-BR na documentação/UI; identificadores em inglês; regras no core.
 Segurança: argumentos sem shell, validação estrita, segredos só em memória,
@@ -376,7 +382,133 @@ Após o Banco, passo 8 inteiro: revisão minuciosa das outras áreas que
 o autor relatou em 2026-10-05, além de segurança, bugs e desempenho.
 O critério é consumo de recurso no uso diário. O AppImage é a última etapa,
 com Qt estável atual e caminho acelerado da aba Web; não o faça antes.
+Ao concluir de fato a 0.3.9, desative o timer local de retomada autorizado
+pelo autor e registre o fechamento. Limite de uso não encerra a tarefa.
 ```
+
+### 5.9 Desenho da fatia ODBC — 2026-10-05
+
+**Antes do código.** Base: commit 57dc6ec; protocolo 0.156.0; worktree
+layout-0.3.6 limpo. O sistema tem unixODBC 2.3.14 como biblioteca, sem os
+comandos isql/odbcinst nem driver de banco encontrado. Não há ODBC no enum,
+no console ou na árvore atuais. A biblioteca Rust escolhida para avaliar
+é odbc-api 29.1.1 (MIT), sem features de interface gráfica ou derive.
+A IDE usa o gerenciador instalado no sistema; não instala nem baixa driver.
+
+**Contrato previsto, protocolo 0.157.0:**
+
+- Motor `odbc`; `database` identifica um DSN existente, não uma string de
+  conexão. Host e porta ficam vazios/zero; usuário e política de segredo
+  seguem os contratos existentes. Perfil salvo nunca contém senha.
+- `datasource.odbc.sources {}` retorna `{ sources }`, com `dsn`, `driver` e
+  `identity` em cada entrada. Usa SQLDataSources/SQLDrivers do gerenciador;
+  não conecta nem carrega o driver. Expõe somente nome/identidade pública,
+  nunca os atributos arbitrários, que podem conter segredos.
+- `datasource.odbc.authorize { name, identity, workspace }` retorna `{ name, identity, workspace }`.
+  Confere projeto e desafio do perfil completo/driver atual e registra aprovação apenas na memória do core,
+  vinculada ao projeto, perfil e DSN/driver. Mudança de perfil ou identidade
+  exige nova autorização; remover o perfil revoga a aprovação.
+- `DRIVER_APPROVAL_REQUIRED`, com detalhes `{ name, dsn, driver, identity, workspace }`,
+  recusa test/introspect/query antes do job que abriria a conexão. A UI mostra
+  o aviso de código nativo e só envia authorize ao clicar **Carregar driver**.
+  Cancelar não conecta; resposta atrasada não autoriza outro perfil/projeto.
+- Catálogo por SQLTables/SQLColumns; retorna schemas/tables/columns existentes.
+  Campo aditivo `readSql` da tabela guarda a leitura gerada pelo core com o
+  delimitador de identificador informado pelo driver. A UI não adivinha a
+  sintaxe do motor que está atrás do ODBC.
+- Console usa query/queried existentes e segredo só em memória, via SQLConnect,
+  sem shell, argumento de processo ou montagem de connection string. Leitura
+  tem teto de linhas, colunas, célula e memória. Toda escrita ODBC exige o
+  aviso genérico: nenhum COUNT SQL de outro dialeto é enviado para estimar.
+  Impacto ODBC é classificação local, sem carregar driver ou executar SQL.
+
+**Donos e arquivos:** tipos em protocol/datasource_odbc e datasource;
+serviços em core/datasource/odbc (descoberta/aprovação/conexão),
+odbc_query, odbc_catalog e odbc_rows (buffer comum); handler datasource_odbc; integração nos handlers
+existentes; ponte core_client_datasource, dispatch de erro tipado e os
+roteadores existentes. Um DataSourceOdbcController filho guarda o estado do
+aviso e da lista; o formulário recebe DSN e emite escolha. Views Kv* e um
+diálogo de carregamento próprio; criação de banco continua nativa.
+
+**Provas de aceite:** recusa antes de qualquer carregamento, cancelamento,
+identidade/perfil alterado e projeto diferente; params estritos, ausência de
+senha no perfil/log e erros do driver sem ecoar credenciais; DSN malformado
+não vira connection string; SQL e nomes com aspas não escapam dos limites.
+Driver real de teste somente em diretório temporário, configuração ODBC/XDG
+isolada e HOME real: listar sem carregar, autorizar, catálogo, leitura com
+NULL/teto e escrita confirmada. Provar também os gestos na janela real da IDE,
+com mouse/teclado e capturas só dessa janela. Limpar tudo que a prova criar.
+Todos os gates verdes antes do commit local, sem push.
+
+**Continuação:** esta fatia não encerra o passo 7. MySQL/MariaDB nativo,
+produção/somente leitura, transação com prévia, árvore viva, completion e
+ampliação da grade seguem a fila do §5.8. Reempacotar AppImage permanece
+no fim do passo 8; a dependência unixODBC deve ser tratada nessa etapa.
+
+### 5.10 Desenho da próxima fatia: produção e somente leitura — 2026-10-06
+
+**Plano, antes do código.** Implementar após aceitar e commitar ODBC.
+O contrato terá duas preferências do perfil, `production` e `readOnly`,
+ambas falsas quando ausentes. A decisão fica num módulo pequeno do core,
+antes da resolução de senha e da criação do job. O modo somente leitura
+recusa escrita e operação desconhecida, mesmo com `confirmWrite: true`.
+Todo o lote deve ser considerado, incluindo CTE e comandos de transação.
+Preservar a proteção de leitura no motor nativo e os limites declarados
+para ODBC; não apresentar rollback genérico como garantia de READ ONLY.
+
+Produção terá destaque na árvore, console e aviso. Toda escrita exige
+confirmação; na destrutiva, conexão e alvo precisam ser conferidos.
+Medição e confirmação devem continuar ligadas ao projeto, perfil e SQL,
+para uma resposta antiga não liberar outra operação. O contrato tipado
+deve ser atualizado antes de ligar os controles da UI.
+
+O pedido da UI terá um `clientContext` público e único, ecoado no resultado
+e na recusa, além do projeto esperado e da cópia pública do perfil salvo.
+O core confere o destino antes da senha/job; a UI descarta resposta cujo
+contexto já foi invalidado. A senha só entra no envio, por `passwordFor`,
+e nunca na cópia da operação pendente. O léxico SQL terá um único dono
+para fronteiras de instrução, strings, identificadores, comentários e
+blocos com dólar; lote ou CTE mutante não se torna leitura pela primeira
+palavra. Entrada ambígua exige confirmação e não passa em `readOnly`.
+
+**Achado da revisão, ainda a corrigir:** a senha de sessão da UI é global.
+`runOn(name)`, teste, catálogo e impacto podem enviá-la para outro perfil,
+e editar o destino sem trocar de motor não a limpa. Extrair o dono da
+credencial, ligando-a ao projeto e à cópia canônica do perfil completo.
+Todos os emissores devem pedir `passwordFor(name)` ao mesmo dono;
+nome igual com outro host/DSN não permite reutilização. Troca, edição,
+remoção, fechamento e mudança de projeto limpam o segredo. Não salvar
+senha em consulta pendente, histórico, perfil ou log.
+
+A revisão também encontrou contexto incompleto nos resultados comuns:
+o aviso de impacto não é cancelado na troca de projeto e `handleQueried`
+não correlaciona todo resultado com o pedido ativo. Corrigir isso junto
+da política, incluindo perfil alterado e projeto reaberto. A senha pedida
+no console deve selecionar o perfil certo e repetir o SQL original.
+`createDatabaseOnServer` não pode marcar escrita de produção como já
+confirmada; `datasource.destroy` com dados também respeita `readOnly`.
+Remover apenas o perfil continua sendo uma alteração de configuração.
+
+Para a fatia do console (§5.2), guardar os achados: nomes diferentes
+podem virar o mesmo `file_stem`; o cabeçalho não pode transformar quebra
+de linha do nome em SQL; `ensure` precisa conferir links simbólicos e
+limites do projeto; `statementAt` não pode separar dentro de literais.
+Resolver a associação do console no core, sem escolher silenciosamente
+o primeiro perfil cujo nome sanitizado coincide.
+
+Aceite: testes que tentam contornar `readOnly`, lotes e confirmação;
+teste QML com duas conexões e alteração de destino, inspecionando os
+argumentos emitidos; PostgreSQL/MongoDB/SQLite reais; gestos na IDE com
+produção destacada, nome parcial recusado e somente leitura bloqueando
+escrita. Gates completos e documentação antes do commit local.
+
+**Prévia PostgreSQL vem na fatia seguinte.** Worker mantém a transação,
+decisão por canal, tempo limitado e rollback ao cancelar, falhar,
+trocar projeto ou encerrar. Token ligado ao contexto, sem rede no despacho;
+SQL que encerra a transação não pode escapar. Registrar limites de
+sequências, triggers e efeitos externos antes de oferecer a prévia.
+Provar commit e rollback por uma conexão independente, além de expiração
+e decisões antigas ou repetidas.
 
 ## 6. Grafana: visualização web dentro da IDE
 

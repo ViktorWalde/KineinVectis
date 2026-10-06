@@ -78,6 +78,8 @@ pub enum DataSourceEngine {
     /// Por isso o resultado da introspeccao tem uma segunda forma
     /// ([`MongoCollection`]), e nao um preenchimento criativo da primeira.
     Mongo,
+    /// DSN registrado no unixODBC; driver carregado somente com gesto explicito.
+    Odbc,
 }
 
 /// A saved connection to a database. Never carries a password.
@@ -329,6 +331,9 @@ pub struct DataSourceTable {
     pub kind: String,
     /// Columns, in declaration order.
     pub columns: Vec<DataSourceColumn>,
+    /// Leitura ODBC gerada no core com o delimitador de identificador do driver.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub read_sql: Option<String>,
 }
 
 /// A schema the author owns; server catalogues are filtered out.

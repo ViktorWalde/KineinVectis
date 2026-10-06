@@ -10,6 +10,7 @@ ADR-0002-tree-sitter-syntax-foundation.md  Tree-sitter como fundação sintátic
 ADR-0003-linuxdeploy-appimage-packaging.md linuxdeploy/AppImage como empacotamento
 ADR-0004-alacritty-terminal-emulator.md    o emulador de terminal do alacritty
 ADR-0005-tres-arvores-de-documentacao.md   as árvores de documentação (duas desde 2026-09-12)
+ADR-0007-odbc-com-consentimento.md         DSN local, driver nativo e consentimento de sessão
 ```
 
 O ADR-0006 (`exmex`) saiu do repositório com a simulação em 2026-09-12

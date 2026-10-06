@@ -14,6 +14,7 @@ Item {
     // Os fatos vem de fora (o controller ja' os deriva): arquivo ou documento.
     property bool fileEngine: false
     property bool documentEngine: false
+    property bool profileOnly: false
     property bool destroying: false
     property string message: ""
     property bool ok: false
@@ -75,7 +76,8 @@ Item {
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
-            text: qsTr("O perfil sai do projeto. Os dados só vão junto se você marcar abaixo.")
+            text: root.profileOnly ? qsTr("O perfil sai do projeto. O DSN, o driver e os dados permanecem no sistema.")
+                                  : qsTr("O perfil sai do projeto. Os dados só vão junto se você marcar abaixo.")
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeSmall
         }
@@ -83,6 +85,7 @@ Item {
         Row {
             width: parent.width
             spacing: Theme.spacingSmall
+            visible: !root.profileOnly
 
             KvToggleChip {
                 anchors.verticalCenter: parent.verticalCenter
@@ -113,9 +116,9 @@ Item {
         KvButton {
             compact: true
             primary: true
-            text: root.withData ? qsTr("Remover perfil E dados") : qsTr("Remover perfil")
+            text: root.withData && !root.profileOnly ? qsTr("Remover perfil E dados") : qsTr("Remover perfil")
             enabled: !root.destroying && root.profileName !== ""
-            onClicked: root.destroyRequested(root.profileName, root.withData)
+            onClicked: root.destroyRequested(root.profileName, root.withData && !root.profileOnly)
         }
     }
 }

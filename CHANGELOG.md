@@ -11,6 +11,15 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolo `0.157.0` — **Outro banco (ODBC)**: DSN do unixODBC, catálogo
+  padrão, console e grade limitada com NULL. Carregar driver nativo exige
+  gesto explícito por sessão/perfil/projeto; cancelar não conecta. A IDE
+  nunca baixa drivers. SQL desconhecido e escrita pedem confirmação genérica
+  pelo nome da conexão. Diagnósticos arbitrários do driver não ecoam
+  credenciais. Documentação técnica, diagrama e limites em arquitetura/37
+  e ADR-0007; provas no 40.7 §7.221. Corrigido o mínimo declarado de Rust
+  para 1.88, já exigido pelo código e dependências existentes.
+
 - Protocolos `0.155.0`–`0.156.0` — **Banco: escrita MongoDB e confirmação
   seletiva** (fatia de 2026-10-05). O console lê, insere, altera e apaga
   documentos pela gramática JSON, com Extended JSON. Remoções e alterações

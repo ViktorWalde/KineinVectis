@@ -86,14 +86,14 @@ fn settings_result(global: SettingsValues, workspace: SettingsValues) -> Setting
 
 /// `None` quando os values sao aceitaveis; senao a mensagem do erro.
 fn validate_values(values: &SettingsValues) -> Option<String> {
-    if let Some(size) = values.editor_font_size {
-        if !(settings::MIN_EDITOR_FONT_SIZE..=settings::MAX_EDITOR_FONT_SIZE).contains(&size) {
-            return Some(format!(
-                "editorFontSize deve estar entre {} e {}",
-                settings::MIN_EDITOR_FONT_SIZE,
-                settings::MAX_EDITOR_FONT_SIZE
-            ));
-        }
+    if let Some(size) = values.editor_font_size
+        && !(settings::MIN_EDITOR_FONT_SIZE..=settings::MAX_EDITOR_FONT_SIZE).contains(&size)
+    {
+        return Some(format!(
+            "editorFontSize deve estar entre {} e {}",
+            settings::MIN_EDITOR_FONT_SIZE,
+            settings::MAX_EDITOR_FONT_SIZE
+        ));
     }
     for (name, width) in [
         ("explorerWidth", values.explorer_width),
@@ -132,14 +132,13 @@ fn validate_values(values: &SettingsValues) -> Option<String> {
     // O layout (0.146.0) e' um retrato que a UI monta: tem de ser objeto com
     // `schemaVersion`. O conteudo, a UI confere ao aplicar (cada tamanho passa
     // pelos limites do ShellController); aqui so' se recusa lixo.
-    if let Some(layout) = &values.layout {
-        if layout
+    if let Some(layout) = &values.layout
+        && layout
             .get("schemaVersion")
             .and_then(serde_json::Value::as_u64)
             .is_none_or(|version| version == 0)
-        {
-            return Some("layout deve ser um objeto com schemaVersion >= 1".to_owned());
-        }
+    {
+        return Some("layout deve ser um objeto com schemaVersion >= 1".to_owned());
     }
     None
 }

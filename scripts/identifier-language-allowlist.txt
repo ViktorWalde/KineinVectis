@@ -92,3 +92,5 @@ preedit
 keyscan
 # 2026-10-04: a ferramenta do OpenSSH (`ssh-keygen`)
 keygen
+# 2026-10-06: sigla Open Database Connectivity e APIs oficiais odbc-api/sqlite3
+odbc preallocate autocommit executescript

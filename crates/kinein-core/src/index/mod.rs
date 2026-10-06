@@ -348,7 +348,7 @@ fn caminhar(
                 simbolos += arquivo.symbols.len() as u64;
                 indice.files.insert(arquivo.path.clone(), arquivo);
                 lidos += 1;
-                if indice.files.len() % 200 == 0 {
+                if indice.files.len().is_multiple_of(200) {
                     progress(indice.files.len() as u64, simbolos);
                 }
             }

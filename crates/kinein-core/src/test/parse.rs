@@ -47,10 +47,10 @@ pub(super) fn parse_pytest_case(line: &str) -> Option<(String, CaseStatus)> {
     let mut melhor: Option<(usize, CaseStatus)> = None;
     for (palavra, status) in ESTADOS {
         let marcador = format!(" {palavra}");
-        if let Some(pos) = line.rfind(&marcador) {
-            if melhor.is_none_or(|(p, _)| pos > p) {
-                melhor = Some((pos, status));
-            }
+        if let Some(pos) = line.rfind(&marcador)
+            && melhor.is_none_or(|(p, _)| pos > p)
+        {
+            melhor = Some((pos, status));
         }
     }
     let (pos, status) = melhor?;

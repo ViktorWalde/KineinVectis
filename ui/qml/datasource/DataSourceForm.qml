@@ -13,6 +13,10 @@ Item {
 
     property var draft: null
 
+    property var odbcSources: []
+    property bool odbcLoading: false
+    property string odbcMessage: ""
+    signal odbcRefreshRequested()
     signal fieldEdited(string field, var value)
 
     readonly property string secretSource:
@@ -35,7 +39,8 @@ Item {
     // estrutura, e duas copias da mesma derivacao divergem em silencio — o
     // gate de duplicacao pegou a segunda no mesmo dia em que ela nasceu.
     property bool mongo: false
-    readonly property bool postgres: !root.arquivo && !root.mongo
+    readonly property bool postgres: root.draft !== null && DataSourceKinds.isPostgres(root.draft.engine)
+    readonly property bool odbc: root.draft !== null && DataSourceKinds.isOdbc(root.draft.engine)
     readonly property string tls: root.draft ? (root.draft.tls || "disable") : "disable"
 
     implicitHeight: coluna.implicitHeight
@@ -58,12 +63,13 @@ Item {
         // em fonte mono; "SQLite (arquivo)" virou "SQLite" (pedido do autor).
         KvSegmentedControl {
             width: parent.width
-            current: root.arquivo ? "sqlite" : (root.mongo ? "mongo" : "postgres")
+            current: root.draft ? root.draft.engine : "postgres"
             options: [
                 { value: "postgres", label: qsTr("PostgreSQL"), icon: DataSourceKinds.engineIcon("postgres"),
                   tooltip: qsTr("PostgreSQL e TimescaleDB") },
                 { value: "sqlite", label: qsTr("SQLite"), icon: DataSourceKinds.engineIcon("sqlite") },
-                { value: "mongo", label: qsTr("MongoDB"), icon: DataSourceKinds.engineIcon("mongo") }
+                { value: "mongo", label: qsTr("MongoDB"), icon: DataSourceKinds.engineIcon("mongo") },
+                { value: "odbc", label: qsTr("Outro (ODBC)"), tooltip: qsTr("Driver instalado e DSN registrado no unixODBC") }
             ]
             onSelected: value => root.fieldEdited("engine", value)
         }
@@ -74,6 +80,17 @@ Item {
             placeholder: qsTr("como a IDE vai chamar esta fonte")
             value: root.draft ? root.draft.name : ""
             onEdited: text => root.fieldEdited("name", text)
+        }
+
+        DataSourceDsnPicker {
+            width: parent.width
+            visible: root.odbc
+            sources: root.odbcSources
+            current: root.draft ? root.draft.database : ""
+            loading: root.odbcLoading
+            message: root.odbcMessage
+            onSelected: dsn => root.fieldEdited("database", dsn)
+            onRefreshRequested: root.odbcRefreshRequested()
         }
 
         DataSourceField {
@@ -87,7 +104,7 @@ Item {
 
         DataSourceField {
             width: parent.width
-            visible: !root.arquivo
+            visible: !root.arquivo && !root.odbc
             label: root.mongo ? qsTr("Host") : qsTr("Host ou diretório de socket")
             placeholder: root.mongo ? qsTr("localhost, ou db.exemplo.com") : qsTr("/var/run/postgresql, ou db.exemplo.com")
             value: root.draft ? root.draft.host : ""
@@ -96,7 +113,7 @@ Item {
 
         Row {
             width: parent.width
-            visible: !root.arquivo
+            visible: !root.arquivo && !root.odbc
             spacing: Theme.spacingSmall
 
             DataSourceField {
@@ -183,8 +200,8 @@ Item {
                     return qsTr("A senha é pedida a cada sessão e vive só em "
                                 + "memória.");
                 }
-                return root.mongo
-                    ? qsTr("Não manda senha: o servidor decide (um MongoDB local sem autenticação, por exemplo).")
+                return root.mongo || root.odbc
+                    ? qsTr("Não manda senha: o servidor decide (um servidor sem autenticação, por exemplo).")
                     : qsTr("Não manda senha: o servidor decide. Cobre socket "
                            + "unix com peer, trust local e o ~/.pgpass.");
             }
@@ -194,7 +211,7 @@ Item {
             width: parent.width
             visible: !root.arquivo && root.secretSource === "environment"
             label: qsTr("Variável de ambiente")
-            placeholder: "PGPASSWORD"
+            placeholder: root.odbc ? "DB_PASSWORD" : "PGPASSWORD"
             value: root.draft ? (root.draft.secretVariable || "") : ""
             onEdited: text => root.fieldEdited("secretVariable", text)
         }

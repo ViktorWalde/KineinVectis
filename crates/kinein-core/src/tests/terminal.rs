@@ -540,10 +540,10 @@ fn closing_the_workspace_closes_every_terminal() {
         let Ok(evento) = receptor.recv_timeout(Duration::from_secs(10)) else {
             break;
         };
-        if evento.method == "event.terminal.closed" {
-            if let Some(id) = evento.params.as_ref().and_then(|p| p["id"].as_str()) {
-                mortas.insert(id.to_owned());
-            }
+        if evento.method == "event.terminal.closed"
+            && let Some(id) = evento.params.as_ref().and_then(|p| p["id"].as_str())
+        {
+            mortas.insert(id.to_owned());
         }
     }
     for id in &abertos {

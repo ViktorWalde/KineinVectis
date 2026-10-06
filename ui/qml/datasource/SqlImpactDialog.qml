@@ -86,6 +86,7 @@ KvPanelFrame {
 
         Text {
             text: root.impact ? qsTr("conexão %1").arg(root.impact.name) + (root.engineLabel !== "" ? " · " + root.engineLabel : "") : ""
+            textFormat: Text.PlainText
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeSmall
         }
@@ -115,6 +116,7 @@ KvPanelFrame {
                     width: commandScroll.width
                     wrapMode: Text.WrapAnywhere
                     text: root.impact ? root.impact.sql : ""
+                    textFormat: Text.PlainText
                     color: Theme.textPrimary
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fontSizeSmall
@@ -151,6 +153,7 @@ KvPanelFrame {
                 Text {
                     width: root.frameWidth - 6 * Theme.spacingMedium
                     text: root.impact.describe(effect.modelData)
+                    textFormat: Text.PlainText
                     color: Theme.textPrimary
                     font.pixelSize: Theme.fontSizeSmall
                     font.weight: root.impact.isDestructive(effect.modelData) ? Font.DemiBold : Font.Normal

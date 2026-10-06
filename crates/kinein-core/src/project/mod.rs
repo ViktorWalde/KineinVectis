@@ -119,21 +119,20 @@ fn deduzir_alvo(frameworks: &[FrameworkInfo], kit_chip: Option<&str>) -> TargetM
         alvo.chip = Some(chip.to_owned());
         alvo.evidence
             .push("chip: kit do projeto (toolchain.setKit)".to_owned());
-    } else if let Some(info) = principal {
-        if let Some((chip, de)) = chip_do_framework(info) {
-            alvo.chip = Some(chip);
-            alvo.evidence.push(format!("chip: {de}"));
-        }
+    } else if let Some(info) = principal
+        && let Some((chip, de)) = chip_do_framework(info)
+    {
+        alvo.chip = Some(chip);
+        alvo.evidence.push(format!("chip: {de}"));
     }
 
     // 2. O triple, quando o build system declara um.
-    if let Some(info) = principal {
-        if info.framework == Framework::CargoEmbedded {
-            if let Some(d) = info.detail.as_deref().filter(|d| d.contains("-none-")) {
-                alvo.triple = Some(d.to_owned());
-                alvo.evidence.push("triple: .cargo/config.toml".to_owned());
-            }
-        }
+    if let Some(info) = principal
+        && info.framework == Framework::CargoEmbedded
+        && let Some(d) = info.detail.as_deref().filter(|d| d.contains("-none-"))
+    {
+        alvo.triple = Some(d.to_owned());
+        alvo.evidence.push("triple: .cargo/config.toml".to_owned());
     }
 
     // 3. A familia, do chip ou do framework.

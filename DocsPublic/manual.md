@@ -819,12 +819,13 @@ esperam e sugerem valores lidos do **seu** projeto — não exemplos genéricos.
 
 A IDE guarda o **perfil** da conexão: motor, endereço, porta, base e usuário.
 **Nunca a senha** — quando ela é necessária, a IDE pede na hora, e nada de
-credencial vai para o disco. Três motores:
+credencial vai para o disco. Quatro opções:
 
 ```text
 PostgreSQL   e tudo que fala o protocolo dele — TimescaleDB incluso
 SQLite       um ARQUIVO: sem servidor, sem porta, sem usuario
 MongoDB      colecao -> documento, e a tela dele e' OUTRA
+Outro (ODBC) DSN registrado no unixODBC; driver instalado pela pessoa
 ```
 
 O MongoDB tem uma forma de exibição própria de propósito: uma coluna de tabela
@@ -896,7 +897,7 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   O console `.mongo` usa as cores do JSON, com a coleção no começo da linha e
   os comentários `//`. São regras do editor, sem servidor de linguagem; um
   LSP de SQL (o Postgres Language Server, de licença MIT) é passo seguinte.
-- **Leitura e escrita.** Uma leitura (`SELECT`, `WITH`, `VALUES`, `SHOW`,
+- **Leitura e escrita nos motores nativos.** Uma leitura (`SELECT`, `WITH`, `VALUES`, `SHOW`,
   `EXPLAIN`) roda com teto de 500 linhas (a IDE põe o `LIMIT` por fora; "teto
   atingido" avisa) e **de verdade só lê**: no PostgreSQL vai numa transação
   `READ ONLY`, no SQLite o arquivo abre só para leitura — um `WITH … INSERT`
@@ -918,6 +919,34 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   **Cancelar**, Esc ou clicar fora deixam o banco intacto. A confirmação
   reenvia o comando exibido. A prévia não reserva nem congela os dados;
   transação com prévia ainda não está disponível.
+
+- **Outro banco (ODBC)** (protocolo `0.157.0`). Escolha o DSN no formulário;
+  **Atualizar** consulta o registro do unixODBC, sem conectar. Host, porta
+  e TLS vêm da configuração do DSN. A IDE não baixa nem instala driver.
+  O console é `.sql`, a árvore usa o catálogo padrão do driver e a grade
+  aceita NULL. A leitura de tabela limita 200 linhas no cliente, sem
+  acrescentar LIMIT de outro dialeto.
+
+  Antes de testar, abrir estrutura ou executar pela primeira vez, aparece
+  **Carregar driver ODBC?**. O aviso identifica conexão, DSN e driver.
+  **Cancelar** ou Esc não conectam. **Carregar driver** permite que o código
+  nativo instalado execute dentro do core e acesse dados e credenciais;
+  use somente driver confiável. A autorização vale para o perfil/projeto
+  durante a sessão. Alterar perfil/driver, remover conexão ou trocar projeto
+  exige nova autorização. Essa escolha não substitui a confirmação SQL.
+
+  Leitura simples pode rodar diretamente. Escrita, função, CTE, sequência
+  e SQL desconhecido exigem confirmação pelo **nome da conexão**, sem
+  contagem de impacto inventada. A leitura solicita transação e rollback;
+  não é garantia universal de READ ONLY. Use as permissões do servidor.
+  Drivers variam em catálogo, transação, timeout e dialeto; erros aparecem
+  com mensagem própria e SQLSTATE, sem reproduzir diagnósticos que podem
+  conter senha. Mais de 16 KiB numa célula é recusado; mais linhas ou
+  memória sinalizam teto atingido. Só o primeiro resultado é exibido.
+
+  **Remover conexão ODBC** remove só o perfil da IDE. Não apaga o DSN,
+  banco ou driver. Para detalhes técnicos e limites, veja
+  [arquitetura/37](arquitetura/37-banco-de-dados.md).
 
 - **Console MongoDB: ler e escrever.** Um comando por linha; argumentos em
   JSON, com chaves entre aspas:

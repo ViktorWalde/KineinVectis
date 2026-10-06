@@ -58,10 +58,11 @@ impl Toolchain {
         let mut args = vec!["--background-index".to_owned(), "--clang-tidy".to_owned()];
         let mut drivers: Vec<String> = Vec::new();
         for role in [ToolchainRole::CCompiler, ToolchainRole::CxxCompiler] {
-            if let Some((id, path)) = self.effective_program(role) {
-                if !NATIVOS.contains(&id) && !drivers.iter().any(|d| d == path) {
-                    drivers.push(path.to_owned());
-                }
+            if let Some((id, path)) = self.effective_program(role)
+                && !NATIVOS.contains(&id)
+                && !drivers.iter().any(|d| d == path)
+            {
+                drivers.push(path.to_owned());
             }
         }
         if !drivers.is_empty() {

@@ -132,8 +132,8 @@ Item {
         controller: root.dataSourceController
         onVisibleChanged: if (visible) root.dataSourceController.refreshCatalog()
         onConsoleRequested: name => root.dataSourceController.consoles.open(name)
-        onTableDataRequested: (connection, engine, schema, table) =>
-            root.dataSourceController.consoles.tableData(connection, engine, schema, table)
+        onTableDataRequested: (connection, engine, schema, table, readSql) =>
+            root.dataSourceController.consoles.tableData(connection, engine, schema, table, readSql)
         onEditRequested: name => {
             root.dataSourceController.select(name);
             root.dataSourceController.open();

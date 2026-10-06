@@ -50,7 +50,7 @@ fn header(name: &str, engine: DataSourceEngine) -> String {
              // Ler: colecao.find({{\"campo\": \"valor\"}})  Escrever: insertOne, insertMany, updateOne,\n\
              // updateMany (com $set, $inc…). Apagar pede confirmacao: deleteOne, deleteMany, drop().\n\n"
         ),
-        DataSourceEngine::Postgres | DataSourceEngine::Sqlite => format!(
+        DataSourceEngine::Postgres | DataSourceEngine::Sqlite | DataSourceEngine::Odbc => format!(
             "-- Console da conexao {name}.\n-- Ctrl+Enter executa a instrucao sob o cursor (ou a selecao). Apagar pede confirmacao.\n\n"
         ),
     }

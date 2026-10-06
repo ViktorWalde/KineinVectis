@@ -79,7 +79,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 178 métodos IPC roteados pelo core.
+Medido: 180 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -268,7 +268,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 178 métodos roteados pelo core, 147 seguem o caminho padrão
+Dos 180 métodos roteados pelo core, 149 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 31 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -1121,7 +1121,7 @@ flowchart LR
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
   end
   subgraph IPC["JSON-RPC"]
-    n_ipc_datasource(["datasource.* · 11"])
+    n_ipc_datasource(["datasource.* · 13"])
     n_ipc_fs(["fs.* · 1"])
     n_ipc_grafana(["grafana.* · 4"])
   end
@@ -1172,7 +1172,7 @@ flowchart LR
 
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
-| controller | `ui/qml/datasource/DataSourceController.qml` | Estado das FONTES DE DADOS (etapa 26 do roadmaps/35): |
+| controller | `ui/qml/datasource/DataSourceController.qml` | Estado de fontes de dados; regras/validacao sao do core. |
 | controller | `ui/qml/grafana/GrafanaController.qml` | Estado da OBSERVABILIDADE (etapa 27 do roadmaps/35). |
 | roteador | `ui/qml/ipc/DataSourceRequestRouter.qml` | Espelho do DataSourceEventRouter: |
 | roteador | `ui/qml/ipc/DataSourceEventRouter.qml` | Roteia as respostas de datasource.* do CoreClient para o controller. |
@@ -1188,7 +1188,7 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/grafana.rs` | Handler dos pedidos grafana.* (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (16): `datasource.console`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`.
+Métodos IPC (18): `datasource.console`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`.
 
 ### Containers
 
