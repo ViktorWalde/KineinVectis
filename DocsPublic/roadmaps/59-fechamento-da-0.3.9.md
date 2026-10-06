@@ -415,10 +415,13 @@ Prompt de continuidade (conferir estado e log antes de usar):
 
 ```text
 Kinein Vectis — continuar o fechamento da 0.3.9, passo 7 (Banco).
-Use o worktree layout-0.3.6 existente; localize-o por git worktree list.
-O autor autorizou concluir Banco e pente fino, integrar main por fast-forward,
-gerar/validar AppImage final e só então retirar o worktree extra. Sem push.
-Não integre nem empacote antes de cumprir os critérios do passo 8.
+Use a main em /home/hugh/KineinVectis. Em 2026-10-06 o autor pediu reunir
+frontend e core nesse checkout: os sete commits até b31aa89 foram incorporados
+por fast-forward. Não abra outra divisão para o frontend.
+O autor autorizou concluir Banco e pente fino e gerar/validar AppImage final.
+A integração antecipada em main e a retirada da divisão substituem a ordem
+anterior, por pedido explícito nessa sessão. Sem push. Não empacote antes de
+cumprir os critérios do passo 8.
 
 Comece com git status --short --branch e git log -5; preserve todo trabalho
 local. Leia 00-comece-aqui, o cabeçalho e a fila do 40, a última entrada

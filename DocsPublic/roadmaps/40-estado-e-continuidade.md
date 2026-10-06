@@ -5,10 +5,11 @@
 >
 > **O estado, em 2026-10-06 (leia isto; o resto do cabeçalho é histórico):**
 >
-> Este estado corresponde ao worktree `layout-0.3.6`, localizado por
-> `git worktree list`. A `main` ainda está em `6c4f649`, protocolo `0.154.0`;
-> a base aceita da `0.159.0` terminou em `28c7048`, e a `0.160.0` foi
-> validada depois no 40.7 §7.225. Confira
+> O desenvolvimento voltou à `main` em `/home/hugh/KineinVectis`, por pedido
+> do autor em 2026-10-06. Os sete commits até `b31aa89` foram incorporados
+> por fast-forward, incluindo frontend e core, protocolo `0.160.0`.
+> A base aceita da `0.159.0` terminou em `28c7048`; a `0.160.0` e as ações
+> da árvore foram validadas no 40.7 §7.225–§7.226. Confira
 > branch, log e alterações locais antes de retomar, para não reimplementar
 > MongoDB, ODBC, proteção de produção ou prévia PostgreSQL.
 >
