@@ -51,20 +51,29 @@ class Core:
         self.process.stdin.flush()
         return self.wait(lambda value: value.get("id") == identifier)
 
-    def event(self, name):
+    def event(self, name, context=None):
         method = "event.datasource." + name
+        def matches(value):
+            return value.get("method") == method and (
+                context is None or value.get("params", {}).get("clientContext") == context)
         for index, value in enumerate(self.events):
-            if value.get("method") == method:
+            if matches(value):
                 return self.events.pop(index)["params"]
-        return self.wait(lambda value: value.get("method") == method)["params"]
+        return self.wait(matches)["params"]
 
-    def query(self, name, sql, password=None, confirmed=False):
+    def query(self, name, sql, password=None, confirmed=False, *, context=None, confirmation=None, max_rows=None):
         params = {"name": name, "sql": sql, "confirmWrite": confirmed}
+        if context is not None:
+            params.update(context)
+        if confirmation is not None:
+            params["confirmation"] = confirmation
+        if max_rows is not None:
+            params["maxRows"] = max_rows
         if password is not None:
             params["password"] = password
         response = self.rpc("datasource.query", params)
         assert "error" not in response, response.get("error", {}).get("message")
-        return self.event("queried")
+        return self.event("queried", context["clientContext"] if context else None)
 
     def close(self):
         if self.process.poll() is not None:
@@ -74,4 +83,3 @@ class Core:
         finally:
             self.process.terminate()
             self.process.wait(timeout=5)
-

@@ -13,6 +13,18 @@
 #include <QJsonArray>
 
 namespace kinein {
+namespace {
+void appendOperationContext(QJsonObject& params, const QVariantMap& context)
+{
+    if (context.isEmpty()) {
+        return;
+    }
+    params.insert(QStringLiteral("clientContext"),
+                  QJsonValue::fromVariant(context.value(QStringLiteral("clientContext"))));
+    params.insert(QStringLiteral("expectedContext"),
+                  QJsonValue::fromVariant(context.value(QStringLiteral("expectedContext"))));
+}
+} // namespace
 
 void CoreClient::setupList()
 {
@@ -54,7 +66,8 @@ void CoreClient::dataSourceConsole(const QString& name)
     sendRequest(QStringLiteral("datasource.console"), QJsonObject{{QStringLiteral("name"), name}});
 }
 
-void CoreClient::dataSourceTest(const QString& name, const QString& password)
+void CoreClient::dataSourceTest(const QString& name, const QString& password,
+                                const QVariantMap& context)
 {
     QJsonObject params{{QStringLiteral("name"), name}};
     // Campo ausente e campo vazio sao coisas diferentes para o core: ausente
@@ -63,15 +76,18 @@ void CoreClient::dataSourceTest(const QString& name, const QString& password)
     if (!password.isEmpty()) {
         params.insert(QStringLiteral("password"), password);
     }
+    appendOperationContext(params, context);
     sendRequest(QStringLiteral("datasource.test"), params);
 }
 
-void CoreClient::dataSourceIntrospect(const QString& name, const QString& password)
+void CoreClient::dataSourceIntrospect(const QString& name, const QString& password,
+                                      const QVariantMap& context)
 {
     QJsonObject params{{QStringLiteral("name"), name}};
     if (!password.isEmpty()) {
         params.insert(QStringLiteral("password"), password);
     }
+    appendOperationContext(params, context);
     sendRequest(QStringLiteral("datasource.introspect"), params);
 }
 
@@ -99,17 +115,26 @@ void CoreClient::dataSourceCreateServer(const QString& engine, const QString& na
                             {QStringLiteral("port"), port}});
 }
 
-void CoreClient::dataSourceDestroy(const QString& name, bool data)
+void CoreClient::dataSourceDestroy(const QString& name, bool data, const QString& password,
+                                   const QVariantMap& context, const QVariantMap& confirmation)
 {
     QJsonObject params{{QStringLiteral("name"), name}};
     if (data) {
         params.insert(QStringLiteral("data"), true);
     }
+    appendOperationContext(params, context);
+    if (!password.isEmpty()) {
+        params.insert(QStringLiteral("password"), password);
+    }
+    if (!confirmation.isEmpty()) {
+        params.insert(QStringLiteral("confirmation"), QJsonObject::fromVariantMap(confirmation));
+    }
     sendRequest(QStringLiteral("datasource.destroy"), params);
 }
 
 void CoreClient::dataSourceQuery(const QString& name, const QString& password, const QString& sql,
-                                 int maxRows, bool confirmWrite)
+                                 int maxRows, bool confirmWrite, const QVariantMap& context,
+                                 const QVariantMap& confirmation)
 {
     QJsonObject params{{QStringLiteral("name"), name}, {QStringLiteral("sql"), sql}};
     if (!password.isEmpty()) {
@@ -121,15 +146,21 @@ void CoreClient::dataSourceQuery(const QString& name, const QString& password, c
     if (confirmWrite) {
         params.insert(QStringLiteral("confirmWrite"), true);
     }
+    appendOperationContext(params, context);
+    if (!confirmation.isEmpty()) {
+        params.insert(QStringLiteral("confirmation"), QJsonObject::fromVariantMap(confirmation));
+    }
     sendRequest(QStringLiteral("datasource.query"), params);
 }
 
-void CoreClient::dataSourceImpact(const QString& name, const QString& password, const QString& sql)
+void CoreClient::dataSourceImpact(const QString& name, const QString& password, const QString& sql,
+                                  const QVariantMap& context)
 {
     QJsonObject params{{QStringLiteral("name"), name}, {QStringLiteral("sql"), sql}};
     if (!password.isEmpty()) {
         params.insert(QStringLiteral("password"), password);
     }
+    appendOperationContext(params, context);
     sendRequest(QStringLiteral("datasource.impact"), params);
 }
 
@@ -178,7 +209,8 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
             result.value(QStringLiteral("profiles")).toArray().toVariantList(), immediate,
             result.value(QStringLiteral("jobId")).toString(),
             result.value(QStringLiteral("command")).toString(),
-            result.value(QStringLiteral("note")).toString());
+            result.value(QStringLiteral("note")).toString(),
+            result.value(QStringLiteral("clientContext")).toString());
         return true;
     }
     if (method == QStringLiteral("datasource.create")) {
@@ -203,9 +235,14 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
     return dispatchGrafanaResult(method, result);
 }
 
-void CoreClient::handleDataSourceDriverRequired(const QString& method, const QJsonObject& error,
-                                                const QVariantMap& requestQuery)
+void CoreClient::handleDataSourceFailure(const QString& method, const QJsonObject& error,
+                                         const QVariantMap& requestQuery)
 {
+    if (!requestQuery.isEmpty()) {
+        emit dataSourceOperationFailed(method, error.value(QStringLiteral("message")).toString(),
+                                       error.value(QStringLiteral("code")).toString(),
+                                       requestQuery);
+    }
     if (error.value(QStringLiteral("code")).toString() !=
         QStringLiteral("DRIVER_APPROVAL_REQUIRED"))
     {

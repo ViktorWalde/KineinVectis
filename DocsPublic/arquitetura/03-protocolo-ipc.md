@@ -1,5 +1,19 @@
 # 03 — Protocolo IPC
 
+> **0.158.0 (2026-10-06, validado no checkout; 40.7 §7.222).** Perfis recebem
+> `production` e `readOnly`, falsos quando ausentes. Consulta, impacto,
+> teste, catálogo e remoção aceitam `clientContext?` e `expectedContext?`, com
+> `{ workspace, profile }` público. A UI envia ambos; o core confere o destino
+> antes de resolver senha ou criar job e ecoa o token nos eventos. Consulta
+> confirma produção com `confirmation?: { connection, target }`; `confirmWrite`
+> não contorna `readOnly`. `datasource.destroy` também recebe contexto, nomes
+> e `password?` de sessão; resposta/evento de remoção ecoam `clientContext`.
+> Novas recusas: `READ_ONLY_VIOLATION` e `DATA_SOURCE_CONTEXT_CHANGED`.
+> `event.datasource.queried.access` (`read`/`write`) indica o caminho utilizado,
+> incluindo zero linhas; falha no caminho de escrita pode ter efeito parcial.
+> Impacto traz `confirmationTarget?` literal e `requiresConnection` para a UI
+> conferir os nomes exigidos pelo core. Plano no 59 §5.10; nenhum método novo.
+
 > **0.157.0 (2026-10-06, fatia ODBC).** Motor `odbc`;
 > `database` é DSN, não connection string. `datasource.odbc.sources {}` ->
 > `{ sources: [{ dsn, driver, identity }] }`, sem conectar/carregar driver.
@@ -4525,29 +4539,30 @@ A arquitetura e os fluxos estão no [37](37-banco-de-dados.md).
 datasource.discover   {}                      -> { candidates: [DataSourceCandidate], containerEngine?, hint? }  (0.124.0)
 datasource.create     { kind: sqliteFile, name, path? } -> { profile }                                       (0.124.0)
                       { kind: containerServer, engine, name, port } -> { jobId, command }  + event.datasource.created
-datasource.destroy    { name, data? }         -> { profiles, note? } | { jobId, command } + event.datasource.destroyed  (0.129.0)
+datasource.destroy    { name, data?, password?, clientContext?, expectedContext?, confirmation? } -> { profiles, note?, clientContext? } | { jobId, command, clientContext? } + event.datasource.destroyed (0.158.0)
 datasource.odbc.sources {}                     -> { sources: [{ dsn, driver, identity }] } (0.157.0; sem carregar driver)
 datasource.odbc.authorize { name, identity, workspace } -> { name, identity, workspace } (0.157.0; consentimento em memória)
 datasource.console    { name }                -> { path, created }   (0.149.0; arquivo em .kinein/consoles/)
 datasource.list       {}                      -> { profiles: [DataSourceProfile] }
 datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult
-datasource.test       { name, password? }     -> DataSourceTestAccepted   (job)
-datasource.impact    { name, password?, sql } -> aceite + job + event.datasource.impact  (0.150.0; so' leituras)
-datasource.introspect { name, password? }     -> aceite + job
-datasource.query      { name, password?, sql, maxRows?, confirmWrite? } -> aceite + job  (0.121.0)
+datasource.test       { name, password?, clientContext?, expectedContext? }     -> DataSourceTestAccepted   (job)
+datasource.impact    { name, password?, sql, clientContext?, expectedContext? } -> aceite + job + event.datasource.impact  (0.150.0; so' leituras)
+datasource.introspect { name, password?, clientContext?, expectedContext? }     -> aceite + job
+datasource.query      { name, password?, sql, maxRows?, confirmWrite?, clientContext?, expectedContext?, confirmation? } -> aceite + job  (0.121.0)
 ```
 
 **Os cinco últimos exigem workspace aberto**; o perfil mora no projeto.
 
 ```text
-event.datasource.tested        { jobId, ok, message, ... }
-event.datasource.impact        { jobId, name, sql, severity, statements: [{ text, kind, targets, column?, filter?, severity, rows?, totalRows?, note? }] }  (0.150.0)
-event.datasource.introspected  { jobId, schemas | collections, ... }
+event.datasource.tested        { jobId, name, ok, message, clientContext?, ... }
+event.datasource.impact        { jobId, name, sql, severity, clientContext?, confirmationTarget?, requiresConnection,
+                                 statements: [{ text, kind, targets, column?, filter?, severity, rows?, totalRows?, note? }] }  (0.158.0)
+event.datasource.introspected  { jobId, name, schemas | collections, clientContext?, ... }
 event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
-                                 rowCount, affected?, truncated, elapsedMs, message?, secretRequired, confirmationSql? }
+                                 rowCount, affected?, truncated, elapsedMs, message?, secretRequired, confirmationSql?, clientContext?, access }
 event.datasource.created       { jobId, success, profile?, message }                          (0.124.0)
-event.datasource.destroyed     { jobId, success, message, profiles? }                          (0.129.0)
+event.datasource.destroyed     { jobId, success, message, profiles?, clientContext? }                          (0.129.0)
 ```
 
 **Descobrir e criar (`0.124.0`).** `DataSourceCandidate { kind: localServer
@@ -4558,18 +4573,28 @@ loopback** (`-p 127.0.0.1:…`): a IDE não guarda senha, e a porta não sai da
 máquina; imagens pinadas (`postgres:16`, `mongo:7`). O MongoDB cria banco na
 primeira escrita — não há `create` para ele além do servidor.
 
+**Contexto e política (`0.158.0`).** `expectedContext` é a cópia pública
+`{ workspace, profile }`; o core compara antes da senha/job. `clientContext`
+aceita até 128 bytes ASCII alfanuméricos, `:._-`; é ecoado nos eventos e nas
+recusas de política. Campos são opcionais para clientes anteriores.
+A UI atual sempre os envia. Produção pede aviso em qualquer escrita;
+remoção/alteração global/impacto desconhecido exigem `confirmation` com nomes
+exatos. `readOnly` recusa escrita mesmo confirmada. O léxico comum confere o
+lote inteiro e CTE, além da proteção nativa de leitura. Detalhes no 37 §8.
+
 **Executar o que o autor escreveu (`0.121.0`, `../roadmaps/35` §7.4).** A
-primeira palavra da instrução (comentários iniciais pulados) diz se é
-leitura — `SELECT`, `WITH`, `VALUES`, `TABLE`, `SHOW`, `EXPLAIN` — e o **motor
-impõe** o que a classificação prometeu: no PostgreSQL a leitura roda em
-`BEGIN READ ONLY` (um `WITH … INSERT` disfarçado é recusado pelo servidor),
+classificação do lote inteiro pelo léxico comum decide o caminho —
+`SELECT`, `WITH`, `VALUES`, `TABLE`, `SHOW`, `EXPLAIN` são candidatos a leitura;
+CTE mutante, controle de transação e instrução desconhecida são escrita.
+No PostgreSQL a leitura roda em `BEGIN READ ONLY`,
 no SQLite o arquivo abre com `SQLITE_OPEN_READ_ONLY`. O teto (`maxRows`,
 padrão 500, máximo 10.000) vem de fora do texto: `SELECT * FROM (<sql>) AS
 kinein_q LIMIT n+1` quando é uma instrução só de `SELECT`/`WITH`/`VALUES`/
 `TABLE`, o `step` até n+1 no SQLite; `truncated` diz quando cortou. A política de confirmação desde `0.156.0` está no [37 §3](37-banco-de-dados.md).
 Remoção, substituição destrutiva, alteração sem filtro e operação desconhecida
-são recusadas antes do job com `WRITE_CONFIRMATION_REQUIRED`. Inserção e
-criação rodam direto; alteração filtrada tem medição silenciosa num job.
+são recusadas antes do job com `WRITE_CONFIRMATION_REQUIRED`. Em
+Desenvolvimento, inserção e criação rodam direto; alteração filtrada tem
+medição silenciosa num job. Produção exige aviso para toda escrita.
 Se atinge tudo ou não pode ser medida, o evento traz `confirmationSql`, sem
 executar a escrita. A UI abre o mesmo diálogo e reenvia o texto com
 `confirmWrite: true` depois do gesto explícito.

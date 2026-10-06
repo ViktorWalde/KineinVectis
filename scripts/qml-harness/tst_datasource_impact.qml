@@ -9,15 +9,24 @@ import KineinVectis
 // frases dizem o numero.
 Item {
     id: root
+    width: 800
+    height: 800
 
     property var asked: []
     property var ran: []
 
     DataSourceImpactController {
-        id: impact
+        id: impactController
 
         onImpactRequested: (name, sql) => root.asked.push(name + "|" + sql)
         onRunConfirmed: (name, sql) => root.ran.push(name + "|" + sql)
+    }
+
+    // O diálogo real também avalia as ligações dos delegados do impacto.
+    SqlImpactDialog {
+        anchors.fill: parent
+        impact: impactController
+        visible: impactController.open
     }
 
     function check(condition, message) {
@@ -30,54 +39,54 @@ Item {
 
     Component.onCompleted: {
         let failures = 0;
-        impact.begin("loja", "DELETE FROM clientes");
-        failures += check(impact.open && impact.measuring && root.asked[0] === "loja|DELETE FROM clientes", "abrir mede");
-        failures += check(!impact.canRun, "medindo: Executar desligado");
-        impact.handleMeasured({ name: "loja", sql: "outra coisa", severity: "write", statements: [] });
-        failures += check(impact.measuring, "evento de outra pergunta nao vale");
+        impactController.begin("loja", "DELETE FROM clientes");
+        failures += check(impactController.open && impactController.measuring && root.asked[0] === "loja|DELETE FROM clientes", "abrir mede");
+        failures += check(!impactController.canRun, "medindo: Executar desligado");
+        impactController.handleMeasured({ clientContext: impactController.clientContext, name: "loja", sql: "outra coisa", severity: "write", statements: [] });
+        failures += check(impactController.measuring, "evento de outra pergunta nao vale");
 
-        impact.handleMeasured({ name: "loja", sql: "DELETE FROM clientes", severity: "destructive",
+        impactController.handleMeasured({ clientContext: impactController.clientContext, name: "loja", sql: "DELETE FROM clientes", severity: "destructive", confirmationTarget: "clientes",
                                 statements: [{ kind: "delete", targets: ["\"public\".\"clientes\""], severity: "destructive", rows: 3 }] });
-        failures += check(impact.destructive && impact.confirmName === "clientes", "nome a digitar: " + impact.confirmName);
-        failures += check(!impact.canRun, "destrutiva sem o nome: desligado");
-        impact.typed = "client";
-        failures += check(!impact.canRun, "nome errado: desligado");
-        impact.typed = "clientes";
-        failures += check(impact.canRun, "nome certo: ligado");
-        failures += check(impact.describe(impact.statements[0]).indexOf("TODAS") >= 0
-                          && impact.describe(impact.statements[0]).indexOf("3 linhas") >= 0,
-                          "frase: " + impact.describe(impact.statements[0]));
-        impact.confirm();
-        failures += check(!impact.open && root.ran[0] === "loja|DELETE FROM clientes", "confirmar roda o texto exato");
+        failures += check(impactController.destructive && impactController.confirmName === "clientes", "nome a digitar: " + impactController.confirmName);
+        failures += check(!impactController.canRun, "destrutiva sem o nome: desligado");
+        impactController.typed = "client";
+        failures += check(!impactController.canRun, "nome errado: desligado");
+        impactController.typed = "clientes";
+        failures += check(impactController.canRun, "nome certo: ligado");
+        failures += check(impactController.describe(impactController.statements[0]).indexOf("TODAS") >= 0
+                          && impactController.describe(impactController.statements[0]).indexOf("3 linhas") >= 0,
+                          "frase: " + impactController.describe(impactController.statements[0]));
+        impactController.confirm();
+        failures += check(!impactController.open && root.ran[0] === "loja|DELETE FROM clientes", "confirmar roda o texto exato");
 
         // Escrita comum: um clique, depois da medida.
-        impact.begin("loja", "DELETE FROM clientes WHERE id = 2");
-        impact.handleMeasured({ name: "loja", sql: "DELETE FROM clientes WHERE id = 2", severity: "write",
+        impactController.begin("loja", "DELETE FROM clientes WHERE id = 2");
+        impactController.handleMeasured({ clientContext: impactController.clientContext, name: "loja", sql: "DELETE FROM clientes WHERE id = 2", severity: "write",
                                 statements: [{ kind: "delete", targets: ["clientes"], filter: "id = 2", severity: "write",
                                                rows: 1, totalRows: 3 }] });
-        failures += check(!impact.destructive && impact.canRun, "escrita comum libera");
-        failures += check(impact.describe(impact.statements[0]) === "Apaga 1 linha de clientes (a tabela tem 3)",
-                          "frase filtrada: " + impact.describe(impact.statements[0]));
-        impact.cancel();
-        failures += check(!impact.open && root.ran.length === 1, "cancelar nao roda");
+        failures += check(!impactController.destructive && impactController.canRun, "escrita comum libera");
+        failures += check(impactController.describe(impactController.statements[0]) === "Apaga 1 linha de clientes (a tabela tem 3)",
+                          "frase filtrada: " + impactController.describe(impactController.statements[0]));
+        impactController.cancel();
+        failures += check(!impactController.open && root.ran.length === 1, "cancelar nao roda");
 
         // Sem medida: destrutiva, com o nome da conexao.
-        impact.begin("loja", "DROP TABLE x");
-        impact.handleFailed("senha necessaria");
-        failures += check(impact.destructive && impact.confirmName === "loja" && !impact.canRun, "falha vira destrutiva");
-        impact.typed = "loja";
-        failures += check(impact.canRun, "com o nome da conexao, libera");
+        impactController.begin("loja", "DROP TABLE x");
+        impactController.handleFailed("senha necessaria", { name: impactController.name, clientContext: impactController.clientContext });
+        failures += check(impactController.destructive && impactController.confirmName === "loja" && !impactController.canRun, "falha vira destrutiva");
+        impactController.typed = "loja";
+        failures += check(impactController.canRun, "com o nome da conexao, libera");
 
         // As frases dos outros tipos.
-        failures += check(impact.describe({ kind: "dropTable", targets: ["pedidos"], rows: 1 }) === "Remove a tabela pedidos e 1 linha dela",
-                          impact.describe({ kind: "dropTable", targets: ["pedidos"], rows: 1 }));
-        failures += check(impact.describe({ kind: "dropColumn", targets: ["t"], column: "email", rows: 2 }).indexOf("2 valores") >= 0, "coluna");
-        failures += check(impact.describe({ kind: "dropDatabase", targets: ["loja"] }).indexOf("INTEIRO") >= 0, "banco");
-        failures += check(impact.describe({ kind: "delete", targets: ["sumiu"], note: "no such table" }).indexOf("não deu para contar") >= 0, "sem contagem");
-        failures += check(impact.describe({ kind: "update", targets: ["t"], filter: "1=1", rows: 3, totalRows: 3 }).indexOf("tabela inteira") >= 0,
+        failures += check(impactController.describe({ kind: "dropTable", targets: ["pedidos"], rows: 1 }) === "Remove a tabela pedidos e 1 linha dela",
+                          impactController.describe({ kind: "dropTable", targets: ["pedidos"], rows: 1 }));
+        failures += check(impactController.describe({ kind: "dropColumn", targets: ["t"], column: "email", rows: 2 }).indexOf("2 valores") >= 0, "coluna");
+        failures += check(impactController.describe({ kind: "dropDatabase", targets: ["loja"] }).indexOf("INTEIRO") >= 0, "banco");
+        failures += check(impactController.describe({ kind: "delete", targets: ["sumiu"], note: "no such table" }).indexOf("não deu para contar") >= 0, "sem contagem");
+        failures += check(impactController.describe({ kind: "update", targets: ["t"], filter: "1=1", rows: 3, totalRows: 3 }).indexOf("tabela inteira") >= 0,
                           "WHERE que pega tudo");
 
-        failures += check(impact.describe({ kind: "mongoDelete", targets: ["s"], filter: "",
+        failures += check(impactController.describe({ kind: "mongoDelete", targets: ["s"], filter: "",
                                             rows: 1, totalRows: 3 }).indexOf("TODOS") < 0,
                           "deleteOne sem filtro nao apaga a colecao inteira");
         // Colecao com ponto exige o nome inteiro; SQL continua sem esquema.
@@ -85,15 +94,15 @@ Item {
                                ["mongoUpdate", 'updateMany({}, {"$set":{"v":2}})']]) {
             const kind = command[0];
             const sql = "telemetria.sensores." + command[1];
-            impact.begin("mongo", sql);
-            impact.handleMeasured({ name: "mongo", sql: sql, severity: "destructive",
+            impactController.begin("mongo", sql);
+            impactController.handleMeasured({ clientContext: impactController.clientContext, name: "mongo", sql: sql, severity: "destructive", confirmationTarget: "telemetria.sensores",
                                     statements: [{ kind: kind, targets: ["telemetria.sensores"], severity: "destructive" }] });
-            impact.typed = "sensores";
-            failures += check(!impact.canRun && impact.confirmName === "telemetria.sensores", "nome Mongo completo");
-            impact.typed = "telemetria.sensores";
-            failures += check(impact.canRun, "nome Mongo completo libera");
+            impactController.typed = "sensores";
+            failures += check(!impactController.canRun && impactController.confirmName === "telemetria.sensores", "nome Mongo completo");
+            impactController.typed = "telemetria.sensores";
+            failures += check(impactController.canRun, "nome Mongo completo libera");
         }
         if (failures !== 0) console.error("FALHAS " + failures);
-        Qt.exit(failures === 0 ? 0 : 1);
+        Qt.callLater(() => Qt.exit(failures === 0 ? 0 : 1));
     }
 }

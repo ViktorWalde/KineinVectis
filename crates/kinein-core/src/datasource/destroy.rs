@@ -122,6 +122,8 @@ mod tests {
 
     fn profile(engine: DataSourceEngine, name: &str, database: &str) -> DataSourceProfile {
         DataSourceProfile {
+            production: false,
+            read_only: false,
             name: name.to_owned(),
             engine,
             host: "127.0.0.1".to_owned(),

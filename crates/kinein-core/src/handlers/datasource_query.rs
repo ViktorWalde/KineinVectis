@@ -14,7 +14,7 @@ use serde_json::{Value, json};
 
 use super::datasource::com_id;
 use crate::Core;
-use crate::datasource::query;
+use crate::datasource::{classification, policy, query};
 use crate::jobs::JobOutcome;
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
@@ -29,7 +29,7 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.query");
         };
-        let request = match parse_params::<DataSourceQueryParams>(
+        let mut request = match parse_params::<DataSourceQueryParams>(
             request_id.as_ref(),
             params,
             "datasource.query exige { name, sql } e aceita { password, maxRows, confirmWrite }",
@@ -47,55 +47,51 @@ impl Core {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
-        if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
-            return *response;
-        }
         // O Mongo escreve desde o 0.155.0; o comando validado diz o que faz
         // (um texto invalido nao escreve — falha no job sem tocar o banco).
-        let mongo = profile.engine == kinein_protocol::DataSourceEngine::Mongo;
-        let statements = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
-            crate::datasource::odbc_query::classify(&request.sql)
-        } else if mongo {
-            crate::datasource::mongo_command::parse(&request.sql)
-                .map(|c| vec![crate::datasource::mongo_command::impact(&c, &request.sql)])
-                .unwrap_or_default()
-        } else {
-            crate::datasource::impact::classify_all(&request.sql)
-        };
+        let statements = classification::classify(profile.engine, &request.sql);
         // Classifica TODO o lote: uma leitura inicial nao pode esconder um
         // COMMIT que encerra o READ ONLY e uma remocao de dados logo depois.
         let write = statements
             .iter()
             .any(|s| s.severity != kinein_protocol::SqlImpactSeverity::Read);
-        // So' o que REMOVE dados pede o aviso (0.156.0, decisao do autor):
-        // inserir e alterar com filtro rodam direto (`datasource::confirm`).
-        if crate::datasource::confirm::needs_confirmation(&statements) && !request.confirm_write {
-            return JsonRpcResponse::failure(
+        if let Err(rejection) = policy::check_context(
+            &root,
+            &profile,
+            request.expected_context.as_ref(),
+            request.client_context.as_deref(),
+        ) {
+            return rejection.response(
                 request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::WriteConfirmationRequired,
-                    "esta instrucao pode remover ou alterar dados; confirme para executar",
-                    // A gravidade ja' vai na recusa (pura, sem banco): a tela
-                    // sabe na hora se pede o nome do que some; os numeros
-                    // vem do `datasource.impact` (0.150.0).
-                    Some(json!({
-                        "name": profile.name,
-                        "severity": crate::datasource::impact::overall(&statements),
-                    })),
-                ),
+                &profile.name,
+                request.client_context.as_deref(),
             );
         }
-        let secret = match Self::resolve_secret(&profile, request.password) {
+        // Politica seletiva em desenvolvimento (0.156.0); producao exige
+        // aviso em toda escrita, e somente leitura recusa antes da senha/job.
+        if let Err(rejection) = policy::check_query(
+            &profile,
+            &statements,
+            request.confirm_write,
+            request.confirmation.as_ref(),
+        ) {
+            return rejection.query_response(
+                request_id,
+                &profile,
+                &statements,
+                request.client_context.as_deref(),
+            );
+        }
+        if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
+            return *response;
+        }
+        let secret = match Self::resolve_secret(&profile, request.password.take()) {
             Ok(secret) => secret,
             Err(response) => return com_id(*response, request_id),
         };
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "datasource.query");
         };
-        let max_rows = query::clamp_rows(request.max_rows);
-        let preflight =
-            !request.confirm_write && crate::datasource::confirm::needs_measurement(&statements);
-        let sql = request.sql;
         let title = format!(
             "{} em {}",
             if write { "Escrever" } else { "Consultar" },
@@ -103,37 +99,61 @@ impl Core {
         );
         let risk = if write { JobRisk::Medium } else { JobRisk::Low };
         let job_id = jobs.spawn("datasource", title, risk, false, move |ctx| {
-            if preflight {
-                let measured =
-                    crate::datasource::measurement::statements(&profile, secret.as_ref(), &sql);
-                if crate::datasource::confirm::needs_confirmation(&measured) {
-                    ctx.emit_event(
-                        "event.datasource.queried",
-                        json!(DataSourceQueriedEvent {
-                            job_id: ctx.id().to_owned(),
-                            name: profile.name,
-                            confirmation_sql: Some(sql),
-                            message: Some(
-                                "o impacto exige confirmacao; nenhuma escrita foi executada"
-                                    .to_owned()
-                            ),
-                            ..DataSourceQueriedEvent::default()
-                        }),
-                    );
-                    return JobOutcome::Failed;
-                }
-            }
-            let resultado = query::run(&profile, secret.as_ref(), &sql, max_rows);
-            let evento = evento_da_consulta(ctx, profile.name, resultado);
-            let ok = evento.success;
-            ctx.emit_event("event.datasource.queried", json!(evento));
-            if ok {
-                JobOutcome::Success
-            } else {
-                JobOutcome::Failed
-            }
+            run_query_job(ctx, profile, secret.as_ref(), request, &statements, write)
         });
         JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
+    }
+}
+
+/// Medição/execução esperam no worker; o despacho continua livre.
+fn run_query_job(
+    ctx: &crate::jobs::JobContext,
+    profile: kinein_protocol::DataSourceProfile,
+    secret: Option<&crate::datasource::Secret>,
+    request: DataSourceQueryParams,
+    statements: &[kinein_protocol::SqlStatementImpact],
+    write: bool,
+) -> JobOutcome {
+    let max_rows = query::clamp_rows(request.max_rows);
+    let preflight = (!request.confirm_write || profile.production)
+        && crate::datasource::confirm::needs_measurement(statements);
+    let sql = request.sql;
+    if preflight {
+        let measured = crate::datasource::measurement::statements(&profile, secret, &sql);
+        if let Err(rejection) = policy::check_query(
+            &profile,
+            &measured,
+            request.confirm_write,
+            request.confirmation.as_ref(),
+        ) {
+            ctx.emit_event(
+                "event.datasource.queried",
+                json!(DataSourceQueriedEvent {
+                    job_id: ctx.id().to_owned(),
+                    name: profile.name,
+                    confirmation_sql: Some(sql),
+                    client_context: request.client_context,
+                    message: Some(rejection.message.to_owned()),
+                    ..DataSourceQueriedEvent::default()
+                }),
+            );
+            return JobOutcome::Failed;
+        }
+    }
+    let resultado = query::run(&profile, secret, &sql, max_rows);
+    let mut event = evento_da_consulta(ctx, profile.name, resultado);
+    event.client_context = request.client_context;
+    event.access = if write {
+        kinein_protocol::DataSourceQueryAccess::Write
+    } else {
+        kinein_protocol::DataSourceQueryAccess::Read
+    };
+    let ok = event.success;
+    ctx.emit_event("event.datasource.queried", json!(event));
+    if ok {
+        JobOutcome::Success
+    } else {
+        JobOutcome::Failed
     }
 }
 
@@ -168,6 +188,8 @@ fn evento_da_consulta(
                 message: None,
                 secret_required: false,
                 confirmation_sql: None,
+                client_context: None,
+                access: kinein_protocol::DataSourceQueryAccess::Read,
             }
         }
         Err((message, secret_required)) => {

@@ -131,8 +131,9 @@ QtObject {
         const out = [];
         for (const profile of root.profiles) {
             const key = "c|" + profile.name;
-            out.push(root.row(key, 0, "connection", profile.name, DataSourceKinds.engineName(profile.engine), true,
-                              { connection: profile.name, engine: profile.engine }));
+            const policy = DataSourceKinds.policyLabel(profile);
+            out.push(root.row(key, 0, "connection", profile.name, DataSourceKinds.engineName(profile.engine) + (policy ? " · " + policy : ""), true,
+                              { connection: profile.name, engine: profile.engine, production: profile.production === true }));
             if (root.isExpanded(key)) root.structureRows(out, profile);
         }
         return out;

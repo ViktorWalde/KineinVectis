@@ -67,7 +67,10 @@ fn mask(sql: &str) -> Option<String> {
     while i < bytes.len() {
         let rest = &bytes[i..];
         let end = if rest.starts_with(b"--") {
-            i + rest.iter().position(|&b| b == b'\n').unwrap_or(rest.len())
+            i + rest
+                .iter()
+                .position(|&b| matches!(b, b'\n' | b'\r'))
+                .unwrap_or(rest.len())
         } else if rest.starts_with(b"/*") {
             if rest.starts_with(b"/*!") || rest.starts_with(b"/*+") {
                 return None;
@@ -111,11 +114,16 @@ pub fn run(
     sql: &str,
     max_rows: u32,
 ) -> Result<QueryResult, ConnectionFailure> {
-    let start = Instant::now();
-    let connection = odbc::connect(profile, secret)?;
     let read = classify(sql)
         .iter()
         .all(|s| s.severity == SqlImpactSeverity::Read);
+    super::policy::check_read_only(profile, !read).map_err(|rejection| ConnectionFailure {
+        message: rejection.message.to_owned(),
+        sql_state: None,
+        secret_required: false,
+    })?;
+    let start = Instant::now();
+    let connection = odbc::connect(profile, secret)?;
     if read {
         connection
             .set_autocommit(false)

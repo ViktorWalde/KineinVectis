@@ -196,10 +196,14 @@ set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/datasource/DataSourceDsnPicker.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDsnPicker.qml)
 set_source_files_properties(qml/datasource/DataSourceDriverDialog.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDriverDialog.qml)
 set_source_files_properties(qml/datasource/DataSourceOdbcController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceOdbcController.qml)
+set_source_files_properties(qml/datasource/DataSourceSecretController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceSecretController.qml)
+set_source_files_properties(qml/datasource/DataSourceQueryController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceQueryController.qml)
+set_source_files_properties(qml/datasource/DataSourceCatalogController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceCatalogController.qml)
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
 set_source_files_properties(qml/datasource/DataSourceTree.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceTree.qml)
 set_source_files_properties(qml/datasource/DataSourceResultsPanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceResultsPanel.qml)
 set_source_files_properties(qml/datasource/DataSourceConsoleController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceConsoleController.qml)
+set_source_files_properties(qml/datasource/DataSourceConsoleBanner.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceConsoleBanner.qml)
 set_source_files_properties(qml/datasource/DatabaseWindow.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseWindow.qml)
 set_source_files_properties(qml/datasource/DatabaseTreeView.qml PROPERTIES QT_RESOURCE_ALIAS DatabaseTreeView.qml)
 set_source_files_properties(qml/datasource/DataSourceImpactController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceImpactController.qml)
@@ -605,11 +609,15 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceDsnPicker.qml
         qml/datasource/DataSourceDriverDialog.qml
         qml/datasource/DataSourceOdbcController.qml
+        qml/datasource/DataSourceSecretController.qml
+        qml/datasource/DataSourceQueryController.qml
+        qml/datasource/DataSourceCatalogController.qml
         qml/datasource/DataSourceList.qml
         qml/datasource/DataSourceTree.qml
         qml/datasource/DataSourceKinds.qml
         qml/datasource/DataSourceResultsPanel.qml
         qml/datasource/DataSourceConsoleController.qml
+        qml/datasource/DataSourceConsoleBanner.qml
         qml/datasource/DatabaseWindow.qml
         qml/datasource/DatabaseTreeView.qml
         qml/datasource/DataSourceImpactController.qml
@@ -970,5 +978,3 @@ install(
 if(BUILD_TESTING)
     add_subdirectory(tests)
 endif()
-
-

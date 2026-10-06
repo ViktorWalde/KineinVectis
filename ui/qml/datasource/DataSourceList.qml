@@ -49,6 +49,7 @@ Item {
         property string detail: ""
         property string badge: ""
         property bool current: false
+        property bool production: false
 
         signal clicked()
 
@@ -79,6 +80,7 @@ Item {
             Text {
                 width: parent.width
                 text: row.title
+                textFormat: Text.PlainText
                 color: Theme.textPrimary
                 font.pixelSize: Theme.fontSizeSmall
                 font.weight: row.current ? Font.DemiBold : Font.Normal
@@ -89,6 +91,7 @@ Item {
                 width: parent.width
                 visible: row.detail !== ""
                 text: row.detail
+                textFormat: Text.PlainText
                 color: Theme.textMuted
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fontSizeMicro
@@ -103,7 +106,7 @@ Item {
             anchors.rightMargin: Theme.spacingSmall
             anchors.verticalCenter: parent.verticalCenter
             text: row.badge
-            color: Theme.textMuted
+            color: row.production ? Theme.errorSoft : Theme.textMuted
             font.pixelSize: Theme.fontSizeMicro
         }
 
@@ -148,8 +151,9 @@ Item {
 
                     iconName: DataSourceKinds.engineIcon(modelData.engine)
                     title: modelData.name
-                    detail: root.profileDetail(modelData)
-                    badge: DataSourceKinds.engineShort(modelData.engine)
+                    detail: root.profileDetail(modelData) + (DataSourceKinds.policyLabel(modelData) ? " · " + DataSourceKinds.policyLabel(modelData) : "")
+                    production: modelData.production === true
+                    badge: modelData.production === true ? qsTr("PROD") : DataSourceKinds.engineShort(modelData.engine)
                     current: modelData.name === root.selectedName
                     onClicked: root.profileSelected(modelData.name)
                 }

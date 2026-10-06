@@ -40,10 +40,11 @@ Item {
                           "SQLite nao herda rede nem banco Postgres");
         ctl.editDraft("engine", "mongo");
         failures += check(ctl.draft.port === 27017, "porta vazia do SQLite adota Mongo");
+        ctl.handleList([Object.assign({}, root.saved)]);
         ctl.runOn("sensores", "s.updateMany({}, {})", false);
-        ctl.handleQueried({ name: "sensores", success: false, confirmationSql: "outra consulta" });
+        ctl.handleQueried({ name: "sensores", clientContext: ctl.lastQuery.clientContext, success: false, confirmationSql: "outra consulta" });
         failures += check(!ctl.impact.open && ctl.querying, "recusa antiga nao abre aviso novo");
-        ctl.handleQueried({ name: "sensores", success: false, confirmationSql: "s.updateMany({}, {})" });
+        ctl.handleQueried({ name: "sensores", clientContext: ctl.lastQuery.clientContext, success: false, confirmationSql: "s.updateMany({}, {})" });
         failures += check(ctl.impact.open && ctl.impact.measuring
                           && ctl.impact.sql === "s.updateMany({}, {})", "preflight abre impacto");
         Qt.exit(failures === 0 ? 0 : 1);

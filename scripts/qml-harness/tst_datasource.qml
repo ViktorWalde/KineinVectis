@@ -81,16 +81,20 @@ Item {
         } else {
             if (enviado.password !== undefined) f += 128;
             if (enviado.extra !== undefined) f += 256;
-            // 11 campos com sampleSize; senha continua fora.
-            if (Object.keys(enviado).length !== 11) f += 512;
+            // 13 campos com sampleSize e política; senha continua fora.
+            if (Object.keys(enviado).length !== 13) f += 512;
         }
 
         // 6) O veredito vem por CAMPO. A mensagem do servidor e' localizada, e
         //    ler ela para decidir acoplaria a UI ao idioma do banco.
+        fontes.handleList([fontes.cloneProfile(fontes.draft)]);
+        fontes.select("c");
+        fontes.test();
         fontes.handleTested("c", false,
-                            "", "FATAL: autenticação do tipo senha falhou", true);
+                            "", "FATAL: autenticação do tipo senha falhou", true, fontes.catalog.pending["test:c"].clientContext);
         if (!fontes.secretRequired || fontes.testing) f += 1024;
-        fontes.handleTested("c", true, "PostgreSQL 18.6", "", false);
+        fontes.test();
+        fontes.handleTested("c", true, "PostgreSQL 18.6", "", false, fontes.catalog.pending["test:c"].clientContext);
         if (!fontes.testOk || fontes.secretRequired) f += 2048;
         if (fontes.serverVersion !== "PostgreSQL 18.6") f += 4096;
 

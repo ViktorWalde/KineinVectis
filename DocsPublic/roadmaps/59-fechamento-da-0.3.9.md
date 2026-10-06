@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); restante a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); restante a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -245,7 +245,7 @@ Ver 40.7 §7.206–§7.209.
 
 1. **Feito (40.7 §7.209).** O aviso mostra o comando e a consequência contada,
    e na destrutiva só roda com o nome digitado.
-2. **Conexão de produção.**
+2. **Conexão de produção — feito (40.7 §7.222).**
    - Um perfil marcado como **produção** ganha uma cor de destaque na janela,
      no console e no aviso.
    - Toda escrita pede o aviso, mesmo a comum, e a destrutiva pede o nome da
@@ -334,11 +334,13 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** ODBC (§5.7), com provas reais/visuais e gates
-registrados no 40.7 §7.221. Próxima: produção/somente leitura (§5.10).
+**Última fatia concluída:** produção/somente leitura e contexto (§5.10;
+protocolo 0.158.0), com provas reais/visuais e gates registrados no
+40.7 §7.222. ODBC permanece aceito no §7.221, commit local fa32f51.
+Não repita essas fatias sem risco concreto.
 
-**Ordem das próximas fatias:** produção/somente leitura e
-transação com prévia (§5.3), menus/árvore viva (§5.1), console (§5.2) e grade
+**Ordem das próximas fatias:** transação com prévia PostgreSQL (§5.3 e
+desenho §5.11), menus/árvore viva (§5.1), console (§5.2) e grade
 (§5.4), com prova real conforme §5.6. MySQL/MariaDB é alvo do §5.7; não está
 no enum de motores atual. O passo 8 vem depois.
 
@@ -356,8 +358,11 @@ local. Leia 00-comece-aqui, o cabeçalho e a fila do 40, a última entrada
 do 40.7, o 59 §2/§5/§7, arquitetura/37 e o contrato arquitetura/03.
 Confira PROTOCOL_VERSION no código. Preserve as proteções do 40.7 §7.220.
 Leia o aceite do §7.221: protocolo 0.157.0, ODBC concluído e validado.
-Confira no log se o commit local dessa fatia já foi feito; não refaça provas
-aceitas sem um risco concreto. Comece pelo desenho de §5.10.
+ODBC está no commit local fa32f51. Produção/somente leitura/contexto
+(protocolo 0.158.0) estão validados no §7.222. Confira git log/status para
+localizar o commit e preservar qualquer trabalho posterior. Não repita
+provas aceitas sem risco concreto. Próxima fatia: prévia PostgreSQL (§5.11),
+com contrato aditivo na próxima versão do protocolo antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
 rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido
@@ -365,8 +370,8 @@ pedem confirmação. A medição silenciosa protege filtro que pega todos.
 O console Mongo usa um comando por linha, com JSON estrito; preserve
 a forma antiga de leitura e o tratamento de Extended JSON.
 
-Siga produção/somente leitura e transação com prévia
-(§5.3), menus/árvore viva (§5.1), console (§5.2), grade (§5.4) e motores
+Siga transação com prévia (§5.3 e §5.11), menus/árvore viva (§5.1),
+console (§5.2), grade (§5.4) e motores
 nativos restantes (§5.7). Uma fatia por commit, contrato antes do código.
 ODBC nunca baixa driver; preserve o gesto de carregar e a revogação da sessão.
 
@@ -447,6 +452,9 @@ no fim do passo 8; a dependência unixODBC deve ser tratada nessa etapa.
 
 ### 5.10 Desenho da próxima fatia: produção e somente leitura — 2026-10-06
 
+**Execução concluída e validada no 40.7 §7.222.** O desenho original abaixo
+preserva as decisões e os achados anteriores ao código.
+
 **Plano, antes do código.** Implementar após aceitar e commitar ODBC.
 O contrato terá duas preferências do perfil, `production` e `readOnly`,
 ambas falsas quando ausentes. A decisão fica num módulo pequeno do core,
@@ -509,6 +517,124 @@ SQL que encerra a transação não pode escapar. Registrar limites de
 sequências, triggers e efeitos externos antes de oferecer a prévia.
 Provar commit e rollback por uma conexão independente, além de expiração
 e decisões antigas ou repetidas.
+
+
+### 5.11 Desenho da fatia seguinte: prévia PostgreSQL — 2026-10-06
+
+**Plano antes do código, condicionado ao aceite da §5.10.** Preservar
+produção, somente leitura, contexto e dono da senha da 0.158.0. A prévia
+executa uma escrita real dentro de uma transação ainda aberta; a janela
+mostra o efeito antes de a pessoa escolher confirmar ou desfazer. Não é
+simulação. Conexão, locks e credencial ficam no worker, nunca no despacho.
+
+**Referência de produto (MODE-D, consulta em 2026-10-06):** o
+[modo de transação do DBeaver](https://dbeaver.com/docs/dbeaver/Auto-and-Manual-Commit-Modes/)
+mantém alterações pendentes e oferece Commit/Rollback explícitos. A tradução
+para a Kinein é um controller filho, mensagens IPC tipadas e a transação
+pertencendo ao worker, com prazo e descarte ao perder o contexto.
+
+**Referências e limites do motor.** O PostgreSQL documenta
+[ROLLBACK](https://www.postgresql.org/docs/16/sql-rollback.html),
+[RETURNING do UPDATE](https://www.postgresql.org/docs/16/sql-update.html)
+e [sequências](https://www.postgresql.org/docs/16/functions-sequence.html).
+O rollback desfaz as alterações transacionais; valores consumidos por
+`nextval` e alterações de `setval` não são revertidos. Funções/triggers podem
+ter efeitos externos que também não são desfeitos pela IDE. A UI precisa
+explicar isso antes de executar a prévia; nunca prometer ausência de efeitos.
+
+**API medida no checkout.** `postgres` 0.19.14 expõe `simple_query` que
+coleta um `Vec`; seu comentário menciona `simple_query_iter`, mas essa API
+não existe no código público instalado. Não implementar a partir do comentário.
+`tokio-postgres` 0.7.18 já está no lock e expõe `Client::simple_query_raw`;
+`Transaction::client()` permite usá-lo na conexão da transação. Conferir os
+fontes e a documentação de [Client](https://docs.rs/tokio-postgres/latest/tokio_postgres/struct.Client.html)
+e [Transaction](https://docs.rs/tokio-postgres/latest/tokio_postgres/struct.Transaction.html)
+novamente antes do código. Tornar explícitas as
+dependências já transitivas necessárias, auditar licença/MSRV e compartilhar
+a montagem de configuração/TLS com o caminho atual. Runtime assíncrono fica
+no worker para drenar o driver enquanto a prévia aguarda a decisão.
+
+**Contrato proposto para a próxima versão do protocolo:**
+
+- `datasource.query` recebe `preview?: bool`, falso quando ausente. Todas
+  as regras de confirmação/contexto continuam valendo antes de senha/job.
+  Pedir prévia exige o aviso antes da escrita, também em Desenvolvimento.
+- `event.datasource.impact` acrescenta `previewEligible`, decidido no core.
+  O aviso oferece executar com prévia quando elegível; o console também
+  recebe um gesto explícito para pedi-la nos comandos que normalmente rodam
+  sem aviso. Nenhuma elegibilidade é deduzida por parser na UI.
+- `event.datasource.previewed` informa `jobId`, `name`, `clientContext`,
+  `previewId`, prazo em segundos, SQL original/executado, colunas, linhas,
+  total afetado e truncamento. Nenhuma senha ou configuração do driver.
+- `datasource.preview.decide` recebe `previewId`, `decision: commit | rollback`,
+  `name`, `clientContext` e `expectedContext` obrigatórios. Resposta aceita a
+  decisão; o resultado real de COMMIT/ROLLBACK chega por evento. Token
+  desconhecido, expirado, de contexto diferente ou já consumido é recusado.
+- `event.datasource.queried` encerra o job com o desfecho da prévia. Uma
+  falha de COMMIT é falha, não confirmação presumida; perda de conexão
+  durante COMMIT pode deixar o desfecho desconhecido e deve dizer isso.
+
+**Primeiro recorte de execução:** uma instrução direta `INSERT`, `UPDATE`
+ou `DELETE` no PostgreSQL. O léxico comum recusa ambiguidades, lotes,
+controle de transação, SQL dinâmico e comandos fora desse recorte. Prévia
+não aceita `CREATE DATABASE`, que não roda nessa transação. A execução
+comum desses comandos continua no caminho existente.
+
+Sem `RETURNING` explícito, compor `RETURNING *` apenas depois de validar
+uma instrução desse recorte e localizar seu fim pelo léxico; preservar o
+comando original e mostrar a forma executada. Retornar as linhas alteradas
+com teto de retenção e contar todas pelo comando do servidor. Não separar
+instruções nem inserir cláusula por expressão regular na UI.
+
+**Donos e ciclo:**
+
+- Módulo de registro da sessão do Banco guarda apenas contexto público,
+  identificadores e canal de decisão. No máximo quatro prévias vivas e
+  uma por destino; confirmar consome o identificador uma única vez.
+- Executor PostgreSQL mantém a transação no worker, com streaming de
+  resultado, orçamento de colunas/célula/bytes e tempo de consulta. Ao
+  exceder limite de segurança ou falhar, desfaz e encerra a conexão.
+- Prazo inicial de decisão: 60 segundos; `lock_timeout` e
+  `statement_timeout` curtos, além do prazo total do cliente. Poll/cancel
+  não bloqueia o laço IPC. Fechamento/troca do workspace, cancelamento do
+  job, canal perdido e expiração desfazem prévias ainda sem decisão.
+- Dispatcher confere perfil/contexto outra vez ao aceitar COMMIT. Uma
+  decisão já aceita entra em execução; trocar projeto depois não é
+  promessa de revogar um COMMIT que o servidor já recebeu.
+- Controller filho da consulta guarda apenas a prévia atual. Trocar
+  consulta/destino/projeto solicita rollback; resposta antiga não reabre
+  o painel. O diálogo Kv mostra destino, política, SQL, amostra e número
+  afetado; **Desfazer** recebe foco padrão. A opção de prévia só aparece
+  quando o core disser que o comando é elegível.
+
+```mermaid
+sequenceDiagram
+  participant ui as Aviso e prévia
+  participant core as Despacho
+  participant worker as Worker PostgreSQL
+  participant db as Servidor
+  ui->>core: query + preview + confirmação/contexto
+  core->>worker: Contexto público + segredo separado
+  worker->>db: BEGIN + escrita com RETURNING
+  worker-->>ui: previewed: amostra, total e prazo
+  alt Decisão COMMIT válida
+    ui->>core: preview.decide commit
+    core->>worker: Canal consumido uma vez
+    worker->>db: COMMIT
+  else Desfazer, cancelamento ou expiração
+    worker->>db: ROLLBACK / encerrar conexão
+  end
+  worker-->>ui: queried: desfecho real
+```
+
+**Provas necessárias:** confirmar e desfazer com conferência por conexão
+independente; expirar; cancelar job; fechar/trocar/reabrir workspace;
+substituir perfil; repetir decisão; token antigo; lote com COMMIT oculto;
+erro, lock e queda de rede; resultado grande sem retenção ilimitada;
+`UPDATE ... FROM`; senha ausente em logs/disco; gestos com mouse/teclado
+no diálogo e amostra real. Registrar a limitação de sequência/trigger no
+manual e na arquitetura. Todos os gates antes do commit local; nenhum
+AppImage nessa fatia. Em seguida continuam §5.1, §5.2, §5.4 e §5.7.
 
 ## 6. Grafana: visualização web dentro da IDE
 

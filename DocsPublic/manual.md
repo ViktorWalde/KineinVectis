@@ -817,6 +817,20 @@ esperam e sugerem valores lidos do **seu** projeto — não exemplos genéricos.
 
 ### Banco de dados
 
+**No checkout com protocolo 0.158.0, validado no 40.7 §7.222.**
+No formulário, escolha **Desenvolvimento / Produção** e **Permitir escrita /
+Somente leitura**, depois salve. Produção pede confirmação para toda escrita;
+remoções e alterações globais exigem o nome completo da conexão e do alvo.
+A árvore e a faixa do console destacam produção. Somente leitura recusa
+escrita, comandos desconhecidos e lotes mutantes, mesmo confirmados.
+Ainda permite remover apenas o perfil, preservando os dados.
+
+Se o console pedir senha, o diálogo seleciona a conexão usada. Digite a
+senha da sessão e pressione Enter para repetir a operação original. Trocar
+o destino ou fechar o diálogo limpa a senha e cancela essa retomada. A IDE
+não reutiliza a senha digitada para outra conexão. Alterações do perfil
+precisam ser salvas antes de testar/conectar.
+
 A IDE guarda o **perfil** da conexão: motor, endereço, porta, base e usuário.
 **Nunca a senha** — quando ela é necessária, a IDE pede na hora, e nada de
 credencial vai para o disco. Quatro opções:

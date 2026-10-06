@@ -56,13 +56,14 @@ Item {
             anchors.rightMargin: Theme.spacingXSmall
             anchors.verticalCenter: parent.verticalCenter
             text: root.lastQuery === null ? qsTr("Dados")
-                  : root.lastQuery.name + "  ·  " + (root.querying ? qsTr("executando…")
+                  : root.lastQuery.name + "  ·  " + (DataSourceKinds.policyLabel(root.lastQuery.expectedContext.profile) ? DataSourceKinds.policyLabel(root.lastQuery.expectedContext.profile) + " · " : "") + (root.querying ? qsTr("executando…")
                      : (root.failed ? qsTr("falhou")
                         // A escrita espera o painel do impacto; fechado sem
                         // executar, diz que NADA rodou (e nao "confirme").
                         : (root.mustConfirm ? (root.controller.impact.open ? qsTr("aguardando a confirmação…")
                                                                            : qsTr("cancelada — nada foi executado"))
                            : (root.controller ? root.controller.queryStatus.replace(/\s+/g, " ") : ""))))
+            textFormat: Text.PlainText
             maximumLineCount: 1
             color: root.failed ? Theme.errorSoft : (root.mustConfirm ? Theme.warningSoft : Theme.textSecondary)
             font.pixelSize: Theme.fontSizeCaption
@@ -97,6 +98,7 @@ Item {
         height: visible ? Theme.fontSizeMicro + 2 * Theme.spacingXSmall : 0
         verticalAlignment: Text.AlignVCenter
         text: root.lastQuery !== null ? root.lastQuery.sql.replace(/\s+/g, " ") : ""
+        textFormat: Text.PlainText
         color: Theme.textMuted
         font.family: Theme.monoFont
         font.pixelSize: Theme.fontSizeMicro
@@ -112,6 +114,7 @@ Item {
         visible: root.failed
         wrapMode: Text.Wrap
         text: root.controller ? root.controller.queryStatus : ""
+        textFormat: Text.PlainText
         color: Theme.errorSoft
         font.family: Theme.monoFont
         font.pixelSize: Theme.fontSizeCaption

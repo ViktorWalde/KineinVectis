@@ -134,6 +134,8 @@ mod tests {
 
     fn perfil(source: SecretSource, variable: Option<&str>) -> DataSourceProfile {
         DataSourceProfile {
+            production: false,
+            read_only: false,
             engine: DataSourceEngine::Postgres,
             name: "local".to_owned(),
             host: "localhost".to_owned(),

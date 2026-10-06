@@ -105,6 +105,12 @@ pub struct DataSourceProfile {
     /// that.
     #[serde(default)]
     pub engine: DataSourceEngine,
+    /// Production writes always require explicit confirmation.
+    #[serde(default)]
+    pub production: bool,
+    /// The core refuses writes and unknown operations before resolving secrets.
+    #[serde(default)]
+    pub read_only: bool,
     /// Host name, address, or — starting with `/` — a Unix socket DIRECTORY.
     ///
     /// libpq treats a host beginning with a slash as a socket directory (for
@@ -190,6 +196,15 @@ pub struct DataSourceQueryParams {
     /// directly; a filtered update affecting every record also requires it.
     #[serde(default)]
     pub confirm_write: bool,
+    /// Opaque public request token echoed by the event, never a secret.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
+    /// Destination snapshot checked before opening a connection.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_context: Option<crate::DataSourceOperationContext>,
+    /// Names typed for production removals or an unknown operation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confirmation: Option<crate::DataSourceConfirmation>,
 }
 
 /// Payload of `event.datasource.queried`.
@@ -226,6 +241,12 @@ pub struct DataSourceQueriedEvent {
     /// Allows the UI to ignore a result for an older request to the same profile.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confirmation_sql: Option<String>,
+    /// Public token of the original request, including a blocked preflight.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
+    /// Engine path used, even when zero rows changed or the operation failed.
+    #[serde(default)]
+    pub access: crate::DataSourceQueryAccess,
 }
 
 /// Result payload for `datasource.list`.
@@ -299,6 +320,12 @@ pub struct DataSourceTestParams {
     /// (`ui/src/core_client_process.cpp`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
+    /// Public request token echoed by the event and refusals.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
+    /// Exact public destination checked before driver approval or credentials.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_context: Option<crate::DataSourceOperationContext>,
 }
 
 /// Result payload for `datasource.test` — the job that will report the answer.
@@ -357,6 +384,12 @@ pub struct DataSourceIntrospectParams {
     /// Redacted from the client log exactly like `datasource.test`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
+    /// Public request token echoed by the event and refusals.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
+    /// Exact public destination checked before driver approval or credentials.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_context: Option<crate::DataSourceOperationContext>,
 }
 
 /// Um campo de documento, achatado pelo CAMINHO ate' ele.

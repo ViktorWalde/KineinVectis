@@ -1,6 +1,5 @@
 import QtQuick
 import KineinVectis
-
 Item {
     id: root
 
@@ -221,6 +220,7 @@ Item {
             }
 
             ShellEditorHost {
+                dataSourceController: root.dataSourceController
                 id: editorPaneHost
 
                 width: parent.width

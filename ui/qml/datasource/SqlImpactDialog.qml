@@ -30,6 +30,8 @@ KvPanelFrame {
     panelHeight: body.implicitHeight + Theme.spacingMedium + buttons.height + 2 * Theme.spacingMedium
 
     readonly property bool destructive: root.impact !== null && root.impact.destructive
+    readonly property bool production: root.impact !== null && root.impact.expectedContext !== null
+        && root.impact.expectedContext.profile.production === true
 
     onVisibleChanged: if (visible) focusTimer.restart()
     // A medida chega depois de o painel abrir: se ela diz DESTRUTIVA, o foco
@@ -44,6 +46,10 @@ KvPanelFrame {
         function onErrorTextChanged() {
             if (root.visible) focusTimer.restart();
         }
+
+        function onMeasuringChanged() {
+            if (root.visible) focusTimer.restart();
+        }
     }
 
     // O foco vai ao campo de confirmacao (destrutiva) ou ao Cancelar.
@@ -51,7 +57,11 @@ KvPanelFrame {
         id: focusTimer
 
         interval: 0
-        onTriggered: if (root.destructive) confirmInput.forceActiveFocus(); else cancelButton.forceActiveFocus()
+        onTriggered: {
+            if (root.impact && root.impact.requiresConnection && !root.impact.measuring) connectionInput.focusField();
+            else if (root.destructive && !root.impact.measuring) confirmInput.forceActiveFocus();
+            else cancelButton.forceActiveFocus();
+        }
     }
 
     Column {
@@ -89,6 +99,16 @@ KvPanelFrame {
             textFormat: Text.PlainText
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeSmall
+        }
+
+        Text {
+            width: parent.width
+            visible: root.production
+            text: qsTr("PRODUÇÃO — confira o destino e o comando antes de executar.")
+            wrapMode: Text.WordWrap
+            color: Theme.errorSoft
+            font.pixelSize: Theme.fontSizeSmall
+            font.weight: Font.DemiBold
         }
 
         // O comando inteiro, como vai rodar.
@@ -181,6 +201,16 @@ KvPanelFrame {
             font.pixelSize: Theme.fontSizeCaption
         }
 
+        DataSourceField {
+            id: connectionInput
+            width: parent.width
+            visible: root.impact !== null && root.impact.requiresConnection && !root.impact.measuring
+            label: qsTr("Digite o nome da conexão: %1").arg(root.impact ? root.impact.name : "")
+            value: root.impact ? root.impact.typedConnection : ""
+            onEdited: text => root.impact.typedConnection = text
+            onAccepted: confirmInput.forceActiveFocus()
+        }
+
         // A confirmacao digitada da destrutiva.
         Row {
             visible: root.destructive && !root.impact.measuring
@@ -196,6 +226,7 @@ KvPanelFrame {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.impact ? root.impact.confirmName : ""
+                textFormat: Text.PlainText
                 color: Theme.textPrimary
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fontSizeSmall

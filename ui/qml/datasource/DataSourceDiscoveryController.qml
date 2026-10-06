@@ -8,6 +8,18 @@ import QtQuick
 Item {
     id: root
 
+    property var dataSourceController: null
+    property string workspaceRoot: ""
+    property int generation: 0
+    property int serial: 0
+    property var pendingDestroy: null
+    onWorkspaceRootChanged: { root.generation += 1; root.pendingDestroy = null; root.destroying = false; }
+    readonly property Connections profileChanges: Connections {
+        target: root.dataSourceController
+        function onProfilesChanged() { root.validateDestroy(); }
+        function onDraftChanged() { root.validateDestroy(); }
+    }
+
     // Cada candidato: { kind, label, detail, running, profile }.
     property var candidates: []
     property bool discovering: false
@@ -25,7 +37,7 @@ Item {
     signal createSqliteRequested(string name, string path)
     signal createServerRequested(string engine, string name, int port)
     // Remover o perfil e, com `data`, o que ele aponta (0.129.0).
-    signal destroyRequested(string name, bool data)
+    signal destroyRequested(string name, bool data, var context, var confirmation)
     // O catalogo depois de uma remocao imediata ou do job — o pai relista.
     signal profilesChanged(var profiles)
     // Um perfil pronto (adotado de um candidato ou recem-criado) para o pai
@@ -121,40 +133,72 @@ Item {
     property string destroyNote: ""
 
     // `destroyProfile`, nao `destroy`: todo objeto QML ja' tem um `destroy()`.
-    function destroyProfile(name, data) {
+    function destroyProfile(name, data, confirmation) {
+        const profile = root.dataSourceController ? root.dataSourceController.profileByName(name) : null;
+        if (profile === null) { root.destroyMessage = qsTr("A conexão já foi removida."); return; }
+        root.serial += 1;
+        const context = { clientContext: "destroy." + String(root.generation) + ":" + String(root.serial),
+            expectedContext: { workspace: root.workspaceRoot, profile: Object.assign({}, profile) } };
+        root.pendingDestroy = Object.assign({ name: name, data: data === true, confirmation: confirmation || ({}) }, context);
         destroying = true;
         destroyOk = false;
         destroyMessage = "";
         destroyNote = "";
-        destroyRequested(name, data === true);
+        destroyRequested(name, data === true, context, confirmation || ({}));
     }
 
-    function handleDestroyResolved(profiles, immediate, jobId, command, note) {
+    function destroyCurrent(token) {
+        return root.pendingDestroy !== null && token === root.pendingDestroy.clientContext
+            && root.pendingDestroy.expectedContext.workspace === root.workspaceRoot
+            && root.dataSourceController.queries.profileKey(root.pendingDestroy.expectedContext.profile)
+                === root.dataSourceController.queries.profileKey(root.dataSourceController.profileByName(root.pendingDestroy.name));
+    }
+
+    function validateDestroy() {
+        if (root.pendingDestroy === null) return;
+        const draft = root.dataSourceController.draft;
+        if (root.destroyCurrent(root.pendingDestroy.clientContext)
+                && (root.dataSourceController.selectedName !== root.pendingDestroy.name && draft.name !== root.pendingDestroy.name
+                    || root.dataSourceController.queries.profileKey(draft)
+                    === root.dataSourceController.queries.profileKey(root.pendingDestroy.expectedContext.profile))) return;
+        root.pendingDestroy = null;
+        root.destroying = false;
+        root.destroyMessage = "";
+        root.destroyOk = false;
+        root.destroyNote = "";
+    }
+
+    function handleDestroyResolved(profiles, immediate, jobId, command, note, token) {
+        if (!root.destroyCurrent(token)) return;
         destroyNote = note === undefined ? "" : note;
         if (immediate) {
+            root.pendingDestroy = null;
             destroying = false;
             destroyOk = true;
             destroyMessage = qsTr("removido");
             profilesChanged(profiles);
             discover();
         } else if (jobId === "") {
+            root.pendingDestroy = null;
             destroying = false;
         } else {
             destroyMessage = qsTr("rodando: %1").arg(command);
         }
     }
 
-    function handleDestroyed(success, message, profiles) {
+    function handleDestroyed(success, message, profiles, token) {
+        if (!root.destroyCurrent(token)) return;
+        root.pendingDestroy = null;
         destroying = false;
         destroyOk = success;
         destroyMessage = message;
         if (success) {
-            profilesChanged(profiles);
+            if (profiles !== undefined && profiles !== null) profilesChanged(profiles);
             discover();
         }
     }
 
-    function handleFailed(method, message) {
+    function handleFailed(method, message, code, operation) {
         if (method === "datasource.discover") {
             discovering = false;
             hint = message;
@@ -163,6 +207,8 @@ Item {
             createOk = false;
             createMessage = message;
         } else if (method === "datasource.destroy") {
+            if (!operation || !root.destroyCurrent(operation.clientContext)) return;
+            if (code === "SECRET_REQUIRED") root.dataSourceController.secrets.request("destroy", Object.assign({}, root.pendingDestroy));
             destroying = false;
             destroyOk = false;
             destroyMessage = message;

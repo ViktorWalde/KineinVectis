@@ -139,7 +139,7 @@ fn sqlite_query_reads_refuses_unconfirmed_writes_and_writes_when_confirmed() {
     assert_eq!(ev["rows"], json!([["2"]]));
     assert_eq!(ev["truncated"], false);
 
-    // O erro do motor vira texto; a leitura que escreve e' recusada pelo motor.
+    // O erro do motor vira texto; CTE mutante agora é recusado antes do job.
     c.rpc(
         "datasource.query",
         json!({ "name": "arquivo", "sql": "SELECT x FROM nada" }),
@@ -148,13 +148,29 @@ fn sqlite_query_reads_refuses_unconfirmed_writes_and_writes_when_confirmed() {
     assert_eq!(ev["success"], false);
     assert!(ev["message"].as_str().unwrap().contains("nada"), "{ev}");
     assert_eq!(ev["secretRequired"], false);
-    c.rpc(
-        "datasource.query",
-        json!({ "name": "arquivo", "sql": "WITH x AS (SELECT 1) INSERT INTO leituras (placa) SELECT 'nunca' FROM x" }),
+    let sql = "WITH x AS (SELECT 1) INSERT INTO leituras (placa) SELECT 'nunca' FROM x";
+    let blocked = c.rpc("datasource.query", json!({ "name": "arquivo", "sql": sql }));
+    assert_eq!(
+        blocked.error.unwrap().code,
+        JsonRpcErrorCode::WriteConfirmationRequired
     );
+    let independent = rusqlite::Connection::open(dir.join("dados.db")).unwrap();
+    let count: u64 = independent
+        .query_row("SELECT count(*) FROM leituras", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(count, 2, "CTE bloqueado não pode escrever");
+    let accepted = c.rpc(
+        "datasource.query",
+        json!({"name": "arquivo", "sql": sql, "confirmWrite": true}),
+    );
+    assert!(accepted.error.is_none());
     let ev = c.queried();
-    assert_eq!(ev["success"], false);
-    assert!(ev["message"].as_str().unwrap().contains("readonly"), "{ev}");
+    assert_eq!(ev["success"], true, "{ev}");
+    assert_eq!(ev["access"], "write");
+    let count: u64 = independent
+        .query_row("SELECT count(*) FROM leituras", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(count, 3, "CTE só escreve depois de confirmação explícita");
 }
 
 /// TLS e' campo do perfil: `require` + `caFile` sobrevivem ao save; `disable`

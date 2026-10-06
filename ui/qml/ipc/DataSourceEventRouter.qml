@@ -36,18 +36,25 @@ Item {
             root.dataSourceController.consoles.handleResolved(path);
         }
 
-        function onDataSourceTested(name, ok, serverVersion, message, secretRequired) {
+        function onDataSourceTested(name, ok, serverVersion, message, secretRequired, clientContext) {
             root.dataSourceController.handleTested(name, ok, serverVersion, message,
-                                                   secretRequired);
+                                                   secretRequired, clientContext);
         }
 
-        function onDataSourceIntrospected(name, ok, schemas, collections, message, secretRequired) {
+        function onDataSourceIntrospected(name, ok, schemas, collections, message, secretRequired, clientContext) {
             root.dataSourceController.handleIntrospected(name, ok, schemas, collections, message,
-                                                         secretRequired);
+                                                         secretRequired, clientContext);
         }
 
         function onDataSourceQueried(outcome) {
             root.dataSourceController.handleQueried(outcome);
+        }
+
+        function onDataSourceOperationFailed(method, message, code, operation) {
+            if (method === "datasource.query") root.dataSourceController.handleFailed(method, message, code, operation);
+            else if (method === "datasource.test" || method === "datasource.introspect") root.dataSourceController.handleFailed(method, message, code, operation);
+            else if (method === "datasource.destroy") root.dataSourceController.discovery.handleFailed(method, message, code, operation);
+            else if (method === "datasource.impact") root.dataSourceController.impact.handleFailed(message, operation, code);
         }
 
         function onDataSourceImpactMeasured(impact) {
@@ -66,15 +73,16 @@ Item {
             root.dataSourceController.discovery.handleCreated(success, profile, message);
         }
 
-        function onDataSourceDestroyResolved(profiles, immediate, jobId, command, note) {
-            root.dataSourceController.discovery.handleDestroyResolved(profiles, immediate, jobId, command, note);
+        function onDataSourceDestroyResolved(profiles, immediate, jobId, command, note, clientContext) {
+            root.dataSourceController.discovery.handleDestroyResolved(profiles, immediate, jobId, command, note, clientContext);
         }
 
-        function onDataSourceDestroyed(success, message, profiles) {
-            root.dataSourceController.discovery.handleDestroyed(success, message, profiles);
+        function onDataSourceDestroyed(success, message, profiles, clientContext) {
+            root.dataSourceController.discovery.handleDestroyed(success, message, profiles, clientContext);
         }
 
         function onRequestFailed(method, message, code) {
+            if (["datasource.query", "datasource.impact", "datasource.test", "datasource.introspect", "datasource.destroy"].indexOf(method) >= 0) return;
             root.dataSourceController.handleFailed(method, message, code);
             root.dataSourceController.discovery.handleFailed(method, message);
         }

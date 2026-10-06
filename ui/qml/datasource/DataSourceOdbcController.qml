@@ -45,8 +45,12 @@ QtObject {
         if (profile === null) return;
         const query = details.query || null;
         if (method === "datasource.query" && (query === null || dataSourceController.lastQuery === null
-                || query.name !== dataSourceController.lastQuery.name || query.sql !== dataSourceController.lastQuery.sql)) return;
-        pending = Object.assign({}, details, { method: method, query: query, profile: JSON.stringify(profile) });
+                || query.name !== dataSourceController.lastQuery.name || query.sql !== dataSourceController.lastQuery.sql
+                || query.clientContext !== dataSourceController.lastQuery.clientContext)) return;
+        if ((method === "datasource.test" || method === "datasource.introspect") && !dataSourceController.catalog.matches(method.substring(11), query)) return;
+        const original = query === null ? null : Object.assign({}, query);
+        if (method === "datasource.query") original.confirmation = dataSourceController.lastQuery.confirmation;
+        pending = Object.assign({}, details, { method: method, query: original, profile: JSON.stringify(profile) });
         authorizing = false;
         message = "";
     }
@@ -69,13 +73,15 @@ QtObject {
         const current = JSON.stringify(dataSourceController.profileByName(name));
         cancel();
         if (current !== operation.profile) return;
-        if (operation.method === "datasource.test") dataSourceController.testProfile(name);
-        else if (operation.method === "datasource.introspect") dataSourceController.introspectProfile(name);
+        if (operation.method === "datasource.test" || operation.method === "datasource.introspect") {
+            const method = operation.method.substring(11);
+            if (dataSourceController.catalog.matches(method, operation.query)) dataSourceController.catalog.begin(method, name);
+        }
         else if (operation.method === "datasource.query") {
             const query = operation.query;
             const last = dataSourceController.lastQuery;
-            if (last !== null && last.name === query.name && last.sql === query.sql)
-                dataSourceController.runOn(name, query.sql, query.confirmWrite, query.maxRows);
+            if (last !== null && last.name === query.name && last.sql === query.sql && last.clientContext === query.clientContext)
+                dataSourceController.runOn(name, query.sql, query.confirmWrite, query.maxRows, query.confirmation);
         }
     }
 

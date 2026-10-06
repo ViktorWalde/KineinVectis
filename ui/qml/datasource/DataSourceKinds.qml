@@ -35,6 +35,14 @@ QtObject {
         return isOdbc(engine) ? "ODBC" : (isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "Mongo" : "PG"));
     }
 
+    function policyLabel(profile) {
+        if (!profile) return "";
+        const labels = [];
+        if (profile.production === true) labels.push(qsTr("PRODUÇÃO"));
+        if (profile.readOnly === true) labels.push(qsTr("somente leitura"));
+        return labels.join(" · ");
+    }
+
     // Os padroes de cada motor (2026-10-04): trocar o motor no formulario
     // trazia o PostgreSQL junto (`/var/run/postgresql`, 5432) para o MongoDB.
     function defaultsFor(engine) {
@@ -65,6 +73,8 @@ QtObject {
             user: "",
             secretSource: "automatic",
             secretVariable: "",
+            production: false,
+            readOnly: false,
             tls: "disable",
             caFile: ""
         }, defaultsFor("postgres"));
@@ -81,6 +91,8 @@ QtObject {
             user: source.user,
             secretSource: source.secretSource || "automatic",
             secretVariable: source.secretVariable || "",
+            production: source.production === true,
+            readOnly: source.readOnly === true,
             sampleSize: source.sampleSize,
             tls: source.tls || "disable",
             caFile: source.caFile || ""

@@ -8,9 +8,9 @@
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.157.0` na fatia atual,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.158.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.221.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.222.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -69,8 +69,9 @@
 >     Feitos: passos 1–6 e o 5b do 59 §2. **Atual: passo 7, Banco** —
 >     escrita MongoDB, confirmação seletiva e formulário concluídos
 >     (40.7 §7.220; arquitetura [37](../arquitetura/37-banco-de-dados.md)).
->     ODBC concluído e validado (40.7 §7.221; ADR-0007). Depois: produção/
->     somente leitura e transação, árvore/console/grade e motores restantes.
+>     ODBC concluído e validado (40.7 §7.221; ADR-0007). Produção, somente
+>     leitura e contexto validados (§7.222). Atual: prévia PostgreSQL
+>     (59 §5.11), árvore/console/grade e motores restantes.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >
@@ -410,8 +411,8 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 ## 4. O que está aberto
 
 **Fila atual da 0.3.9 (2026-10-06):** passo 7 do
-[59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.221 concluídas;
-próxima: produção/somente leitura (59 §5.10) e as demais de §5.8. O roteiro de retomada está nessa seção.
+[59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.222 concluídas;
+próxima: prévia PostgreSQL (59 §5.11) e as demais de §5.8. O roteiro de retomada está nessa seção.
 A lista datada abaixo preserva o histórico das dívidas anteriores.
 
 ```text

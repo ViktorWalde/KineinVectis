@@ -15,15 +15,25 @@ Item {
     property bool fileEngine: false
     property bool documentEngine: false
     property bool profileOnly: false
+    property bool production: false
+    property bool readOnly: false
     property bool destroying: false
     property string message: ""
     property bool ok: false
     property string note: ""
 
-    signal destroyRequested(string name, bool data)
+    signal destroyRequested(string name, bool data, var confirmation)
     signal closeRequested()
 
     property bool withData: false
+    property string typedConnection: ""
+    property string typedDatabase: ""
+    readonly property bool removesData: root.withData && !root.profileOnly && !root.readOnly
+    readonly property bool canRemove: !root.destroying && root.profileName !== ""
+        && (!root.removesData || !root.production || root.typedConnection === root.profileName && root.typedDatabase === root.database)
+    onProfileNameChanged: { root.withData = false; root.typedConnection = ""; root.typedDatabase = ""; }
+    onVisibleChanged: { root.withData = false; root.typedConnection = ""; root.typedDatabase = ""; }
+    onReadOnlyChanged: if (root.readOnly) root.withData = false
 
     readonly property string dataLabel: {
         if (fileEngine) return qsTr("apagar também o arquivo %1 (só se estiver dentro do projeto)").arg(database);
@@ -56,6 +66,7 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Remover %1").arg(root.profileName)
+                textFormat: Text.PlainText
                 color: Theme.textPrimary
                 font.pixelSize: Theme.fontSizeBody
                 font.bold: true
@@ -82,26 +93,50 @@ Item {
             font.pixelSize: Theme.fontSizeSmall
         }
 
-        Row {
+        KvSegmentedControl {
             width: parent.width
-            spacing: Theme.spacingSmall
             visible: !root.profileOnly
+            current: root.removesData ? "data" : "profile"
+            options: [ { value: "profile", label: qsTr("Só o perfil") },
+                       { value: "data", label: qsTr("Perfil e dados"), enabled: !root.readOnly } ]
+            onSelected: value => root.withData = value === "data"
+        }
 
-            KvToggleChip {
-                anchors.verticalCenter: parent.verticalCenter
-                labelText: root.withData ? qsTr("com os dados") : qsTr("só o perfil")
-                active: root.withData
-                onToggled: root.withData = !root.withData
-            }
+        Text {
+            width: parent.width
+            visible: !root.profileOnly
+            wrapMode: Text.WordWrap
+            textFormat: Text.PlainText
+            text: root.readOnly ? qsTr("Somente leitura: a IDE permite remover o perfil, mas recusa apagar os dados.") : root.dataLabel
+            color: root.removesData ? Theme.errorSoft : Theme.textMuted
+            font.pixelSize: Theme.fontSizeCaption
+        }
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - x
-                wrapMode: Text.WordWrap
-                text: root.dataLabel
-                color: root.withData ? Theme.errorSoft : Theme.textMuted
-                font.pixelSize: Theme.fontSizeCaption
-            }
+        Text {
+            width: parent.width
+            visible: root.production && root.removesData
+            text: qsTr("PRODUÇÃO — os dados serão apagados. Confira os dois nomes.")
+            wrapMode: Text.WordWrap
+            color: Theme.errorSoft
+            font.pixelSize: Theme.fontSizeSmall
+        }
+
+        DataSourceField {
+            width: parent.width
+            visible: root.production && root.removesData
+            label: qsTr("Nome da conexão: %1").arg(root.profileName)
+            value: root.typedConnection
+            onEdited: text => root.typedConnection = text
+        }
+
+        DataSourceField {
+            width: parent.width
+            visible: root.production && root.removesData
+            label: qsTr("Banco ou arquivo: %1").arg(root.database)
+            value: root.typedDatabase
+            onEdited: text => root.typedDatabase = text
+            onAccepted: if (root.canRemove) root.destroyRequested(root.profileName, root.removesData,
+                { connection: root.typedConnection, target: root.typedDatabase })
         }
 
         KvVerdict {
@@ -115,10 +150,13 @@ Item {
 
         KvButton {
             compact: true
-            primary: true
-            text: root.withData && !root.profileOnly ? qsTr("Remover perfil E dados") : qsTr("Remover perfil")
-            enabled: !root.destroying && root.profileName !== ""
-            onClicked: root.destroyRequested(root.profileName, root.withData && !root.profileOnly)
+            activeFocusOnTab: true
+            danger: root.removesData
+            primary: !root.removesData
+            text: root.removesData ? qsTr("Remover perfil e dados") : qsTr("Remover perfil")
+            enabled: root.canRemove
+            onClicked: root.destroyRequested(root.profileName, root.removesData,
+                { connection: root.typedConnection, target: root.typedDatabase })
         }
     }
 }

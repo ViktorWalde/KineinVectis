@@ -33,65 +33,88 @@ QtObject {
     // O que a pessoa digitou para confirmar a destrutiva.
     property string typed: ""
 
+    property string typedConnection: ""
+    property string targetName: ""
+    property bool requiresConnection: false
+    property string clientContext: ""
+    property string queryContext: ""
+    property int serial: 0
+    property var expectedContext: null
+
     function isDestructive(statement) {
         return statement.severity === "destructive";
     }
 
-    readonly property bool destructive: root.severity === "destructive" || root.errorText !== ""
-    // O nome que se digita: o alvo da primeira instrucao destrutiva (sem
-    // aspas nem esquema); sem medida, o nome da conexao.
-    readonly property string confirmName: {
-        const first = root.statements.find(s => root.isDestructive(s) && s.targets.length > 0);
-        if (first === undefined) return root.name;
-        const target = String(first.targets[0]).replace(/"/g, "");
-        // No Mongo o ponto pertence ao nome da colecao, nao a um esquema.
-        if (first.kind.indexOf("mongo") === 0 || first.kind === "dropCollection") return target;
-        return target.substring(target.lastIndexOf(".") + 1);
-    }
-    readonly property bool canRun: root.open && !root.measuring
-                                   && (!root.destructive || root.typed.trim() === root.confirmName)
+    readonly property bool destructive: root.severity === "destructive" || root.errorText !== "" || root.requiresConnection
+    readonly property string confirmName: root.targetName === "" ? root.name : root.targetName
+    readonly property bool canRun: root.open && !root.measuring && root.contextCurrent()
+        && (!root.destructive || root.typed === root.confirmName)
+        && (!root.requiresConnection || root.typedConnection.trim() === root.name)
 
-    signal impactRequested(string name, string sql)
-    signal runConfirmed(string name, string sql)
+    signal impactRequested(string name, string sql, var context)
+    signal runConfirmed(string name, string sql, var confirmation)
+
+    function contextCurrent() {
+        if (root.dataSourceController === null) return true;
+        const query = root.dataSourceController.lastQuery;
+        return root.dataSourceController.queries.current() && query !== null
+            && query.name === root.name && query.sql === root.sql && query.clientContext === root.queryContext;
+    }
 
     function begin(name, sql) {
+        const query = root.dataSourceController ? root.dataSourceController.lastQuery : null;
+        if (root.dataSourceController !== null && (query === null || query.name !== name || query.sql !== sql)) return;
         root.name = name;
         root.sql = sql;
         root.severity = "";
         root.statements = [];
         root.errorText = "";
         root.typed = "";
+        root.typedConnection = "";
+        root.targetName = "";
+        root.requiresConnection = false;
+        root.expectedContext = query ? query.expectedContext : null;
+        root.queryContext = query ? query.clientContext : "standalone";
+        root.serial += 1;
+        root.clientContext = root.queryContext + ".impact." + String(root.serial);
         root.measuring = true;
         root.open = true;
-        root.impactRequested(name, sql);
+        root.impactRequested(name, sql, { clientContext: root.clientContext, expectedContext: root.expectedContext });
     }
 
-    // Um evento de outra pergunta (a pessoa ja' cancelou e pediu outra) nao
-    // vale para esta.
     function handleMeasured(event) {
-        if (!root.open || event.name !== root.name || event.sql !== root.sql) return;
+        if (!root.open || !root.contextCurrent() || event.name !== root.name || event.sql !== root.sql
+                || event.clientContext !== root.clientContext) return;
         root.measuring = false;
         root.severity = event.severity;
+        root.targetName = event.confirmationTarget || "";
+        root.requiresConnection = event.requiresConnection === true;
         root.statements = KvLists.listOf(event.statements).filter(s => s.severity !== "read");
     }
 
-    // Sem medida (senha, rede): o painel continua, mas como DESTRUTIVO — sem
-    // saber o tamanho, pede o nome da conexao.
-    function handleFailed(message) {
-        if (!root.open) return;
+    function handleFailed(message, operation, code) {
+        if (!root.open || !root.contextCurrent() || !operation || operation.name !== root.name
+                || operation.clientContext !== root.clientContext) return;
         root.measuring = false;
+        if (code === "SECRET_REQUIRED" && root.dataSourceController !== null) {
+            root.cancel();
+            root.dataSourceController.secrets.request("query", Object.assign({}, root.dataSourceController.lastQuery));
+            return;
+        }
         root.errorText = message;
+        root.targetName = root.name;
+        root.requiresConnection = root.expectedContext !== null && root.expectedContext.profile.production === true;
     }
 
     function confirm() {
         if (!root.canRun) return;
         root.open = false;
-        root.runConfirmed(root.name, root.sql);
+        const confirmation = root.destructive || root.requiresConnection
+            ? { connection: root.typedConnection.trim(), target: root.typed } : ({});
+        root.runConfirmed(root.name, root.sql, confirmation);
     }
 
-    function cancel() {
-        root.open = false;
-    }
+    function cancel() { root.open = false; }
 
     function rows(count, one, many) {
         return count === 1 ? one : many.arg(count);

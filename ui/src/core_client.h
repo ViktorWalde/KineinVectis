@@ -177,8 +177,10 @@ public:
     Q_INVOKABLE void dataSourceRemove(const QString& name);
     // O console da conexao, no editor (datasource.console, 0.149.0).
     Q_INVOKABLE void dataSourceConsole(const QString& name);
-    Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password);
-    Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password);
+    Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password,
+                                    const QVariantMap& context = {});
+    Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password,
+                                          const QVariantMap& context = {});
     /// O que responde nesta maquina (0.124.0): servidores no loopback,
     /// containers de banco, arquivos SQLite do projeto.
     Q_INVOKABLE void dataSourceDiscover();
@@ -187,15 +189,19 @@ public:
     /// Sobe um PostgreSQL/MongoDB em container no loopback (job; baixa imagem).
     Q_INVOKABLE void dataSourceCreateServer(const QString& engine, const QString& name, int port);
     /// Remove o perfil e, com `data`, o que ele aponta (0.129.0).
-    Q_INVOKABLE void dataSourceDestroy(const QString& name, bool data);
+    Q_INVOKABLE void dataSourceDestroy(const QString& name, bool data, const QString& password = {},
+                                       const QVariantMap& context = {},
+                                       const QVariantMap& confirmation = {});
     // Executar o que o autor escreveu (datasource.query, 0.121.0): job; `confirmWrite`
     // e' o reconhecimento de que a instrucao escreve (o core recusa sem ele).
     Q_INVOKABLE void dataSourceQuery(const QString& name, const QString& password,
-                                     const QString& sql, int maxRows, bool confirmWrite);
+                                     const QString& sql, int maxRows, bool confirmWrite,
+                                     const QVariantMap& context = {},
+                                     const QVariantMap& confirmation = {});
     // O impacto de uma escrita ANTES de ela rodar (datasource.impact, 0.150.0):
     // job de contagens so' de leitura; a resposta chega por evento.
     Q_INVOKABLE void dataSourceImpact(const QString& name, const QString& password,
-                                      const QString& sql);
+                                      const QString& sql, const QVariantMap& context = {});
 
     // Observabilidade: o Grafana que observa este projeto. A licenca dele
     // (AGPL-3.0) decide a FORMA — a IDE CONVERSA, nunca embute.
@@ -419,15 +425,19 @@ signals:
     /// `profiles` quando foi na hora; `jobId`/`command` quando e' job; `note` o que ficou.
     void dataSourceDestroyResolved(const QVariantList& profiles, bool immediate,
                                    const QString& jobId, const QString& command,
-                                   const QString& note);
-    void dataSourceDestroyed(bool success, const QString& message, const QVariantList& profiles);
+                                   const QString& note, const QString& clientContext);
+    void dataSourceDestroyed(bool success, const QString& message, const QVariantList& profiles,
+                             const QString& clientContext);
     void dataSourceQueried(const QVariantMap& outcome);
+    void dataSourceOperationFailed(const QString& method, const QString& message,
+                                   const QString& code, const QVariantMap& operation);
     /// O impacto medido: `severity`, `sql` e cada instrucao com alvo e linhas.
     void dataSourceImpactMeasured(const QVariantMap& impact);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.
     void dataSourceTested(const QString& name, bool ok, const QString& serverVersion,
-                          const QString& message, bool secretRequired);
+                          const QString& message, bool secretRequired,
+                          const QString& clientContext);
     /// Estrutura lida do banco. DUAS FORMAS, e exatamente uma vem preenchida:
     /// `schemas` e' `esquema -> tabela -> coluna` dos motores relacionais;
     /// `collections` e' `colecao -> campo` do MongoDB, onde campo tem presenca,
@@ -435,7 +445,7 @@ signals:
     /// tela afirmar tres coisas falsas.
     void dataSourceIntrospected(const QString& name, bool ok, const QVariantList& schemas,
                                 const QVariantList& collections, const QString& message,
-                                bool secretRequired);
+                                bool secretRequired, const QString& clientContext);
     /// A instancia salva neste workspace. `exists` distingue "nao ha' nenhuma"
     /// de "ha' uma com campos vazios" — a tela desenha coisas diferentes.
     void grafanaProfileResolved(const QVariantMap& profile, bool exists);
@@ -665,8 +675,8 @@ private:
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);
-    void handleDataSourceDriverRequired(const QString& method, const QJsonObject& error,
-                                        const QVariantMap& requestQuery);
+    void handleDataSourceFailure(const QString& method, const QJsonObject& error,
+                                 const QVariantMap& requestQuery);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
     bool dispatchRunResult(const QString& method, const QJsonObject& result);

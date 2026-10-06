@@ -111,6 +111,7 @@ ListView {
             anchors.rightMargin: Theme.spacingXSmall
             anchors.verticalCenter: parent.verticalCenter
             text: treeRow.modelData.name
+            textFormat: Text.PlainText
             color: treeRow.action ? Theme.accent : Theme.textPrimary
             font.family: treeRow.leaf && !treeRow.action ? Theme.monoFont : Theme.uiFont
             font.pixelSize: Theme.fontSizeSmall
@@ -128,7 +129,8 @@ ListView {
             width: Math.min(implicitWidth, treeRow.width * 0.45)
             horizontalAlignment: Text.AlignRight
             text: treeRow.modelData.detail
-            color: Theme.textMuted
+            textFormat: Text.PlainText
+            color: treeRow.modelData.production === true ? Theme.errorSoft : Theme.textMuted
             font.family: treeRow.leaf ? Theme.monoFont : Theme.uiFont
             font.pixelSize: Theme.fontSizeMicro
             elide: Text.ElideLeft

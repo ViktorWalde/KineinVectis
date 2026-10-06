@@ -14,7 +14,7 @@ use serde_json::{Value, json};
 
 use super::datasource::com_id;
 use crate::Core;
-use crate::datasource::{impact, measurement};
+use crate::datasource::{confirm, impact, measurement, policy};
 use crate::jobs::JobOutcome;
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
@@ -41,6 +41,18 @@ impl Core {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
+        if let Err(rejection) = policy::check_context(
+            &root,
+            &profile,
+            request.expected_context.as_ref(),
+            request.client_context.as_deref(),
+        ) {
+            return rejection.response(
+                request_id,
+                &profile.name,
+                request.client_context.as_deref(),
+            );
+        }
         let secret = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
             None
         } else {
@@ -55,12 +67,21 @@ impl Core {
         let title = format!("Medir o impacto em {}", profile.name);
         let job_id = jobs.spawn("datasource", title, JobRisk::Low, false, move |ctx| {
             let statements = measurement::statements(&profile, secret.as_ref(), &request.sql);
+            let severity = impact::overall(&statements);
+            let requires_connection =
+                profile.production && confirm::needs_confirmation(&statements);
+            let confirmation_target = (severity == kinein_protocol::SqlImpactSeverity::Destructive
+                || requires_connection)
+                .then(|| policy::confirm_target(&profile, &statements));
             let event = DataSourceImpactEvent {
                 job_id: ctx.id().to_owned(),
                 name: profile.name.clone(),
                 sql: request.sql,
-                severity: impact::overall(&statements),
+                severity,
                 statements,
+                client_context: request.client_context,
+                confirmation_target,
+                requires_connection,
             };
             ctx.emit_event("event.datasource.impact", json!(event));
             JobOutcome::Success

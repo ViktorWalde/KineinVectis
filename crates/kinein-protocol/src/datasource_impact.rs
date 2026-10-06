@@ -66,6 +66,12 @@ pub struct DataSourceImpactParams {
     pub password: Option<String>,
     /// The text the author is about to run.
     pub sql: String,
+    /// Public request token; measurement cannot authorize a different operation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
+    /// Saved destination shown by the UI.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_context: Option<crate::DataSourceOperationContext>,
 }
 
 /// Payload of `event.datasource.impact`.
@@ -82,4 +88,13 @@ pub struct DataSourceImpactEvent {
     pub severity: SqlImpactSeverity,
     /// Statement by statement.
     pub statements: Vec<SqlStatementImpact>,
+    /// Public token echoed from the measurement request.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
+    /// Literal target name the UI must ask for; absent for an ordinary warning.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confirmation_target: Option<String>,
+    /// Production removal also requires the full connection name.
+    #[serde(default)]
+    pub requires_connection: bool,
 }

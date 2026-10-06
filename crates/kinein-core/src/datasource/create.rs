@@ -91,6 +91,8 @@ pub fn sqlite_file(
         .map_err(|e| format!("SQLite recusou escrever em {}: {e}", file.display()))?;
     drop(connection);
     Ok(DataSourceProfile {
+        production: false,
+        read_only: false,
         name: name.to_owned(),
         engine: DataSourceEngine::Sqlite,
         host: String::new(),
@@ -136,6 +138,8 @@ pub fn container_server(
                 POSTGRES_IMAGE.into(),
             ],
             DataSourceProfile {
+                production: false,
+                read_only: false,
                 name: name.to_owned(),
                 engine: DataSourceEngine::Postgres,
                 host: "127.0.0.1".to_owned(),
@@ -160,6 +164,8 @@ pub fn container_server(
                 MONGO_IMAGE.into(),
             ],
             DataSourceProfile {
+                production: false,
+                read_only: false,
                 name: name.to_owned(),
                 engine: DataSourceEngine::Mongo,
                 host: "127.0.0.1".to_owned(),

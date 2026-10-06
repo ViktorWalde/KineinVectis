@@ -143,6 +143,18 @@ pub struct DataSourceDestroyParams {
     /// database). `MongoDB` data is never dropped from here.
     #[serde(default)]
     pub data: bool,
+    /// Checked destination before removing data or configuration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_context: Option<crate::DataSourceOperationContext>,
+    /// Names typed when production data is removed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confirmation: Option<crate::DataSourceConfirmation>,
+    /// Public token echoed by the immediate response and job event.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
+    /// Session password for a server removal, never stored in the profile.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
 }
 
 /// Result payload for `datasource.destroy`: the catalogue when it was
@@ -164,6 +176,9 @@ pub struct DataSourceDestroyResult {
     /// without a container, a `MongoDB` database...).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
+    /// Public token of the requested removal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
 }
 
 /// `event.datasource.destroyed` — the outcome of a destroy job.
@@ -179,4 +194,7 @@ pub struct DataSourceDestroyedEvent {
     /// The catalogue after the removal (on success).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub profiles: Option<Vec<DataSourceProfile>>,
+    /// Public token of the requested removal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_context: Option<String>,
 }

@@ -169,6 +169,8 @@ mod tests {
 
     fn perfil(caminho: &str) -> DataSourceProfile {
         DataSourceProfile {
+            production: false,
+            read_only: false,
             engine: DataSourceEngine::Sqlite,
             name: "arquivo".to_owned(),
             host: String::new(),

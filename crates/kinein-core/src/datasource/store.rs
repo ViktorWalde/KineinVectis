@@ -89,6 +89,8 @@ mod tests {
 
     fn perfil(name: &str) -> DataSourceProfile {
         DataSourceProfile {
+            production: false,
+            read_only: false,
             engine: DataSourceEngine::Postgres,
             name: name.to_owned(),
             host: "localhost".to_owned(),

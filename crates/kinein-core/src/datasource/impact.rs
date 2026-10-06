@@ -27,23 +27,24 @@
 
 use kinein_protocol::{SqlImpactSeverity, SqlStatementImpact};
 
-use super::query::is_read;
+use super::sql_syntax::{self, Word, is_read, words};
 
 /// As instrucoes do texto, separadas por `;` FORA de string (`'...'`),
 /// identificador (`"..."`), comentario (`--`, `/* */`) e bloco `$$...$$`.
 /// Vazias (so' espaco ou comentario) ficam de fora.
 #[must_use]
 pub fn split_statements(sql: &str) -> Vec<String> {
-    let masked = mask(sql);
+    let parsed = sql_syntax::lex(sql);
+    if !parsed.valid {
+        return vec![sql.trim().to_owned()];
+    }
     let mut out = Vec::new();
     let mut start = 0;
-    for (index, byte) in masked.bytes().enumerate() {
-        if byte == b';' {
-            push_statement(&mut out, &sql[start..index], &masked[start..index]);
-            start = index + 1;
-        }
+    for index in parsed.boundaries {
+        push_statement(&mut out, &sql[start..index], &parsed.masked[start..index]);
+        start = index + 1;
     }
-    push_statement(&mut out, &sql[start..], &masked[start..]);
+    push_statement(&mut out, &sql[start..], &parsed.masked[start..]);
     out
 }
 
@@ -51,130 +52,6 @@ fn push_statement(out: &mut Vec<String>, text: &str, masked: &str) {
     if !masked.trim().is_empty() {
         out.push(text.trim().to_owned());
     }
-}
-
-/// O texto com comentarios e o MIOLO das strings trocados por espaco (as
-/// aspas ficam), na mesma posicao byte a byte: palavras e `;` de dentro de
-/// uma string ou comentario somem; identificadores entre aspas duplas ficam.
-fn mask(sql: &str) -> String {
-    let bytes = sql.as_bytes();
-    let mut out = bytes.to_vec();
-    let mut i = 0;
-    while i < bytes.len() {
-        let rest = &bytes[i..];
-        if rest.starts_with(b"--") {
-            let end = rest
-                .iter()
-                .position(|&b| b == b'\n')
-                .map_or(bytes.len(), |p| i + p);
-            blank(&mut out, i, end);
-            i = end;
-        } else if rest.starts_with(b"/*") {
-            let end = find(bytes, i + 2, b"*/").map_or(bytes.len(), |p| p + 2);
-            blank(&mut out, i, end);
-            i = end;
-        } else if rest.starts_with(b"$$") {
-            let end = find(bytes, i + 2, b"$$").map_or(bytes.len(), |p| p + 2);
-            blank(&mut out, i, end);
-            i = end;
-        } else if bytes[i] == b'\'' {
-            let mut j = i + 1;
-            while j < bytes.len() {
-                if bytes[j] == b'\'' && bytes.get(j + 1) == Some(&b'\'') {
-                    j += 2;
-                } else if bytes[j] == b'\'' {
-                    break;
-                } else {
-                    j += 1;
-                }
-            }
-            blank(&mut out, i + 1, j);
-            i = j + 1;
-        } else if bytes[i] == b'"' {
-            let end = bytes[i + 1..]
-                .iter()
-                .position(|&b| b == b'"')
-                .map_or(bytes.len(), |p| i + 1 + p);
-            i = end + 1;
-        } else {
-            i += 1;
-        }
-    }
-    // So' bytes ASCII foram trocados por espaco: continua UTF-8 valido.
-    String::from_utf8(out).unwrap_or_default()
-}
-
-fn blank(out: &mut [u8], from: usize, to: usize) {
-    let len = out.len();
-    for byte in &mut out[from.min(len)..to.min(len)] {
-        if *byte != b'\n' {
-            *byte = b' ';
-        }
-    }
-}
-
-fn find(bytes: &[u8], from: usize, needle: &[u8]) -> Option<usize> {
-    bytes
-        .get(from..)?
-        .windows(needle.len())
-        .position(|w| w == needle)
-        .map(|p| from + p)
-}
-
-/// Uma palavra do texto mascarado: o texto ORIGINAL, onde comeca e a
-/// profundidade de parenteses (0 = a instrucao em si, nao uma subconsulta).
-struct Word<'a> {
-    text: &'a str,
-    start: usize,
-    depth: usize,
-}
-
-impl Word<'_> {
-    fn is(&self, keyword: &str) -> bool {
-        self.text.eq_ignore_ascii_case(keyword)
-    }
-}
-
-/// Palavras e identificadores (`schema.tabela`, `"Tabela"`) em ordem.
-fn words<'a>(text: &'a str, masked: &str) -> Vec<Word<'a>> {
-    let bytes = masked.as_bytes();
-    let mut out = Vec::new();
-    let mut i = 0;
-    let mut depth = 0usize;
-    while i < bytes.len() {
-        let b = bytes[i];
-        if b == b'(' {
-            depth += 1;
-            i += 1;
-        } else if b == b')' {
-            depth = depth.saturating_sub(1);
-            i += 1;
-        } else if b.is_ascii_alphanumeric() || b == b'_' || b == b'"' {
-            let start = i;
-            while i < bytes.len() {
-                let c = bytes[i];
-                if c == b'"' {
-                    i += 1;
-                    while i < bytes.len() && bytes[i] != b'"' {
-                        i += 1;
-                    }
-                    i += 1;
-                } else if c.is_ascii_alphanumeric() || c == b'_' || c == b'.' || c == b'$' {
-                    i += 1;
-                } else {
-                    break;
-                }
-            }
-            out.push(Word {
-                text: &text[start..i.min(text.len())],
-                start,
-                depth,
-            });
-        } else {
-            i += 1;
-        }
-    }
-    out
 }
 
 /// Um alvo que vira SQL de contagem: so' nome (`a`, `a.b`, `"A"."b"`).
@@ -200,8 +77,20 @@ pub fn severity_of(kind: &str, filtered: bool) -> SqlImpactSeverity {
 /// Classifica UMA instrucao (sem contagem: `rows` e `total_rows` vazios).
 #[must_use]
 pub fn classify(statement: &str) -> SqlStatementImpact {
-    let masked = mask(statement);
-    let list = words(statement, &masked);
+    let parsed = sql_syntax::lex(statement);
+    if !parsed.valid {
+        return SqlStatementImpact {
+            text: statement.trim().to_owned(),
+            kind: "other".to_owned(),
+            severity: SqlImpactSeverity::Destructive,
+            note: Some(
+                "Não foi possível determinar com segurança as fronteiras desta instrução."
+                    .to_owned(),
+            ),
+            ..SqlStatementImpact::default()
+        };
+    }
+    let list = words(statement, &parsed.masked);
     let word = |i: usize| list.get(i).map_or("", |w| w.text);
     let is = |i: usize, k: &str| list.get(i).is_some_and(|w| w.is(k));
     let mut kind = "other";

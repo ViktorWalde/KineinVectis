@@ -96,6 +96,8 @@ fn profile(
     user: &str,
 ) -> DataSourceProfile {
     DataSourceProfile {
+        production: false,
+        read_only: false,
         name: name.to_owned(),
         engine,
         host: host.to_owned(),

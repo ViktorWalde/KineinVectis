@@ -57,7 +57,9 @@ Os caminhos são relativos à raiz do repositório.
 | Perfis e mensagens tipadas | `crates/kinein-protocol/src/datasource.rs`, `crates/kinein-protocol/src/datasource_impact.rs` |
 | Persistir, normalizar e validar perfil | `crates/kinein-core/src/datasource/mod.rs`, `crates/kinein-core/src/datasource/store.rs` |
 | Política de segredo e conexão PostgreSQL | `crates/kinein-core/src/datasource/secret.rs`, `crates/kinein-core/src/datasource/connection.rs` |
-| Dividir e classificar SQL; construir contagens | `crates/kinein-core/src/datasource/impact.rs` |
+| Léxico SQL comum, fronteiras e leitura do lote inteiro | `crates/kinein-core/src/datasource/sql_syntax.rs` |
+| Classificar por motor e construir contagens | `crates/kinein-core/src/datasource/classification.rs`, `crates/kinein-core/src/datasource/impact.rs` |
+| Produção, somente leitura, contexto e nomes | `crates/kinein-core/src/datasource/policy.rs`, `crates/kinein-protocol/src/datasource_policy.rs` |
 | Decidir se uma operação pede confirmação ou medição silenciosa | `crates/kinein-core/src/datasource/confirm.rs` |
 | Medir o alcance; promover operação desconhecida ou contagem falha | `crates/kinein-core/src/datasource/measurement.rs` |
 | Gramática MongoDB, sem avaliação local de JavaScript | `crates/kinein-core/src/datasource/mongo_command.rs` |
@@ -66,7 +68,10 @@ Os caminhos são relativos à raiz do repositório.
 | Jobs de consulta e impacto | `crates/kinein-core/src/handlers/datasource_query.rs`, `crates/kinein-core/src/handlers/datasource_impact.rs` |
 | Ponte existente e eventos | `ui/src/core_client_datasource.cpp`, `ui/src/core_client_notifications.cpp` |
 | Pedidos e respostas da UI | `ui/qml/ipc/DataSourceRequestRouter.qml`, `ui/qml/ipc/DataSourceEventRouter.qml` |
-| Estado, rascunho e segredo de sessão | `ui/qml/datasource/DataSourceController.qml` |
+| Composição, perfis e rascunho | `ui/qml/datasource/DataSourceController.qml` |
+| Credencial vinculada ao destino e retomada pública | `ui/qml/datasource/DataSourceSecretController.qml` |
+| Consulta e descarte de resposta antiga | `ui/qml/datasource/DataSourceQueryController.qml` |
+| Pedidos de teste e catálogo por destino | `ui/qml/datasource/DataSourceCatalogController.qml` |
 | Padrões e textos por motor | `ui/qml/datasource/DataSourceKinds.qml` |
 | Estado do aviso e apresentação | `ui/qml/datasource/DataSourceImpactController.qml`, `ui/qml/datasource/SqlImpactDialog.qml` |
 | Seleção de opções, foco e setas | `ui/qml/components/KvSegmentedControl.qml` |
@@ -130,8 +135,8 @@ sequenceDiagram
 ```
 
 O evento que interrompe a medição silenciosa leva `confirmationSql` com o
-texto exato. O controller compara texto e conexão com o último pedido antes
-de abrir o aviso. Uma resposta de uma consulta anterior não deve abrir um
+texto exato. O controller compara texto, conexão e `clientContext` com o pedido ativo
+antes de abrir o aviso. Mudança de projeto ou perfil invalida esse contexto. Uma resposta de uma consulta anterior não deve abrir um
 diálogo para a consulta nova.
 
 O diálogo espera a medição terminar. Na operação destrutiva exige o nome
@@ -146,11 +151,12 @@ A transação PostgreSQL com prévia, `COMMIT` e `ROLLBACK` ainda é trabalho do
 59 §5.3. A classificação SQL é uma análise limitada; não prevê efeitos de
 triggers, funções e cascatas. Ela não substitui as permissões do servidor.
 
-O executor SQL ainda escolhe leitura pela primeira palavra. Um lote misto
-iniciado por leitura pode ser recusado pelo caminho de leitura do motor.
-A proteção do handler cobre o lote inteiro, mas isso não transforma o
-executor numa sessão de console com transação. Essa evolução pertence ao
-59 §5.2–§5.3.
+Desde o `0.158.0`, handler e executor SQL usam o mesmo léxico para conferir
+o lote inteiro, incluindo CTE mutante, comandos de transação, comentários,
+identificadores delimitados e blocos com dólar. Entrada incompleta ou ambígua
+não é promovida a leitura. O parser conserva fronteiras em bytes UTF-8.
+Isso continua sendo classificação conservadora, não um parser completo nem
+uma sessão de transação mantida entre pedidos.
 
 ## 4. MongoDB e a gramática do console
 
@@ -337,10 +343,91 @@ Tracing configurado fora da IDE permanece sob controle do usuário.
 O script nunca baixa driver, isola ODBC/XDG e limpa seus arquivos.
 Acrescente `--ui` para gesto real na IDE; capture somente a janela.
 
-## 8. Onde continuar
+## 8. Produção, somente leitura e contexto — 0.158.0
+
+**Implementado e validado no checkout; aceite e provas no 40.7 §7.222.**
+`production` e `readOnly` são preferências públicas, persistidas no perfil,
+com padrão falso. O formulário usa `KvSegmentedControl`; árvore, console e
+resultado mostram o destino e a política. Salve alterações antes de conectar.
+
+| Perfil/operação | Decisão do core |
+| --- | --- |
+| Desenvolvimento: inserir/criar/alterar com filtro | Política seletiva da §3 |
+| Produção: qualquer escrita | Aviso explícito antes de executar |
+| Produção: remoção, alteração global ou operação desconhecida | Confirmação com nome exato da conexão e alvo fornecido pelo core |
+| Somente leitura: escrita, lote mutante ou operação desconhecida | `READ_ONLY_VIOLATION`, antes de senha, aprovação ODBC e job |
+| Remover somente perfil | Alteração de configuração permitida, inclusive em produção/somente leitura |
+| Remover dados de produção | Nome exato da conexão e banco/arquivo; `readOnly` recusa |
+
+As duas opções podem coexistir: produção destaca o destino, e somente
+leitura continua recusando escrita mesmo com `confirmWrite: true`.
+O caminho nativo também confere `readOnly` antes de abrir a conexão;
+PostgreSQL e SQLite mantêm a proteção de leitura do motor. ODBC conserva
+as restrições e os limites da §7. Funções, triggers e efeitos externos
+continuam dependendo das permissões do servidor; a IDE não oferece sandbox
+de banco universal. Contagem e execução ainda são separadas.
+
+O léxico nativo reconhece LF e CR como fim de comentário de linha; `$$`
+colado a identificador, inclusive Unicode, não abre string. A regra de
+dólar acompanha a [estrutura léxica do PostgreSQL](https://www.postgresql.org/docs/16/sql-syntax-lexical.html).
+ODBC também encerra comentário em LF/CR em seu classificador conservador.
+Testes tentam esconder COMMIT/DELETE nessas formas antes de senha/job.
+
+```mermaid
+sequenceDiagram
+  participant ui as Pedido ativo na UI
+  participant core as Despacho do core
+  participant secret as Credencial do destino
+  participant job as Job do motor
+  ui->>core: nome + clientContext + expectedContext público
+  core->>core: Comparar projeto/perfil e conferir política
+  alt Destino mudou ou escrita em somente leitura
+    core-->>ui: Recusa tipada + contexto público
+  else Destino permitido
+    core->>secret: Resolver senha somente agora
+    core->>job: Perfil capturado + segredo separado
+    job-->>ui: Evento com clientContext original
+    ui->>ui: Conferir token e destino ainda ativos
+  end
+```
+
+`expectedContext` contém `{ workspace, profile }` com a cópia pública do
+perfil salvo. `clientContext` identifica o pedido, inclusive para o mesmo
+SQL e para reabertura do mesmo caminho. A UI o ecoa na medição e descarta
+resultados antigos de consulta, teste, catálogo e remoção. O token não é
+segredo nem autorização: o core confere o perfil e a política novamente.
+Clientes antigos podem omitir contexto; a UI atual sempre o envia.
+
+A senha de sessão tem dono: projeto e chave canônica do perfil completo.
+`passwordFor(name)` é usado por consulta, teste, catálogo, impacto e remoção.
+Outro nome, outro host/DSN, edição, remoção, fechamento ou troca de projeto
+revoga a credencial. Operações pendentes guardam apenas intenção pública.
+Quando o console pede senha, a UI seleciona o perfil certo e Enter repete
+o SQL, teto e propósito originais com token novo. `CREATE DATABASE` começa
+sem confirmação presumida; seu perfil derivado usa o destino capturado.
+
+Uma remoção PostgreSQL aceita senha de sessão pelo mesmo fio redigido no
+log. No fim do job, `remove_unchanged` compara o perfil capturado e conserva
+uma substituição de mesmo nome. As leituras/escritas do catálogo feitas por
+este core são serializadas por mutex; outro processo editando o JSON não
+participa desse mutex, e isso não é uma transação entre processos.
+
+`event.datasource.queried.access` informa `read` ou `write`, inclusive quando
+nenhuma linha mudou. Uma falha no caminho de escrita pode ter efeitos parciais;
+o evento não promete rollback de um lote ou de `insertMany`.
+
+Provas específicas: `tst_datasource_secrets`, `tst_datasource_context`,
+`tst_datasource_retry`, `tst_datasource_catalog_context` e
+`tst_datasource_destroy_policy`, além de `tests/datasource_policy.rs`.
+`python3 scripts/testar-banco-real.py --policy` acrescenta bancos reais,
+conferência independente, nomes parciais, CTE/lote, teste/catálogo com contexto
+e remoção PostgreSQL com senha. `--ui` mantém o ambiente para gestos e limpa
+o que criou ao encerrar a IDE.
+
+## 9. Onde continuar
 
 A fila e o prompt de retomada ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
-Produção/somente leitura, transação com prévia, menus e árvore viva,
+Transação com prévia PostgreSQL (59 §5.11), menus e árvore viva,
 completion e ampliação da grade continuam no passo 7. O pente fino e o
 AppImage seguem a ordem do 59 §7.

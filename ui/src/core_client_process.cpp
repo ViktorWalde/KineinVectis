@@ -160,13 +160,20 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
 
     const qint64 id = m_nextRequestId++;
     m_pendingMethods.insert(id, method);
-    if (method == QStringLiteral("datasource.query")) {
+    if (method == QStringLiteral("datasource.query") ||
+        method == QStringLiteral("datasource.impact") ||
+        method == QStringLiteral("datasource.test") ||
+        method == QStringLiteral("datasource.introspect") ||
+        method == QStringLiteral("datasource.destroy"))
+    {
         m_pendingDataSourceQueries.insert(
             id, {{QStringLiteral("name"), params.value(QStringLiteral("name")).toString()},
                  {QStringLiteral("sql"), params.value(QStringLiteral("sql")).toString()},
                  {QStringLiteral("confirmWrite"),
                   params.value(QStringLiteral("confirmWrite")).toBool()},
-                 {QStringLiteral("maxRows"), params.value(QStringLiteral("maxRows")).toInt()}});
+                 {QStringLiteral("maxRows"), params.value(QStringLiteral("maxRows")).toInt()},
+                 {QStringLiteral("clientContext"),
+                  params.value(QStringLiteral("clientContext")).toString()}});
     }
     const QJsonValue path = method == QStringLiteral("fs.copy")
                                 ? params.value(QStringLiteral("to"))

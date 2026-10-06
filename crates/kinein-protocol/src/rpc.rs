@@ -151,6 +151,10 @@ pub enum JsonRpcErrorCode {
     WriteConfirmationRequired,
     /// Driver ODBC de terceiro ainda nao autorizado para o perfil/sessao.
     DriverApprovalRequired,
+    /// The saved profile forbids writes, including confirmed writes.
+    ReadOnlyViolation,
+    /// The project or public profile changed after the UI prepared the operation.
+    DataSourceContextChanged,
 }
 
 #[cfg(test)]

@@ -2,9 +2,9 @@
 //! esta' no `roadmaps/35` §7.4, escrito antes deste arquivo).
 //!
 //! ```text
-//! leitura   SELECT | WITH | VALUES | TABLE | SHOW | EXPLAIN  (primeira palavra)
+//! leitura   lote inteiro pelo lexico comum; SELECT/WITH/VALUES/TABLE/SHOW/EXPLAIN
 //!           o MOTOR impoe: BEGIN READ ONLY no PostgreSQL, SQLITE_OPEN_READ_ONLY
-//!           no SQLite — um `WITH … INSERT` disfarcado e' recusado pelo servidor
+//!           no SQLite — CTE mutante e controle de transacao pedem aviso no core
 //! teto      SELECT * FROM (<sql>) AS kinein_q LIMIT n+1  (uma instrucao so')
 //!           no SQLite, `step` ate' n+1; `truncated` diz quando cortou
 //! escrita   o que o autor escreveu e' o que roda; `affected` e' o que o
@@ -46,20 +46,10 @@ pub struct QueryResult {
     pub elapsed_ms: u64,
 }
 
-/// A instrucao e' de LEITURA pela primeira palavra (comentarios `--` e
-/// `/* */` iniciais pulados). Puro; o motor confirma.
+/// Leitura nativa considera o lote inteiro, inclusive CTE e transação.
 #[must_use]
 pub fn is_read(sql: &str) -> bool {
-    let corpo = strip_leading_comments(sql);
-    let palavra: String = corpo
-        .chars()
-        .take_while(char::is_ascii_alphabetic)
-        .collect::<String>()
-        .to_ascii_uppercase();
-    matches!(
-        palavra.as_str(),
-        "SELECT" | "WITH" | "VALUES" | "TABLE" | "SHOW" | "EXPLAIN"
-    )
+    super::sql_syntax::is_read(sql)
 }
 
 fn strip_leading_comments(sql: &str) -> &str {
@@ -125,6 +115,14 @@ fn aplicar_teto(rows: &mut Vec<Vec<Option<String>>>, max_rows: u32) -> bool {
     }
 }
 
+fn enforce_read_only(profile: &DataSourceProfile, writing: bool) -> Result<(), ConnectionFailure> {
+    super::policy::check_read_only(profile, writing).map_err(|rejection| ConnectionFailure {
+        message: rejection.message.to_owned(),
+        sql_state: None,
+        secret_required: false,
+    })
+}
+
 /// Roda no `PostgreSQL` pelo protocolo SIMPLES (toda coluna vem em texto).
 ///
 /// # Errors
@@ -136,8 +134,9 @@ pub fn run_postgres(
     sql: &str,
     max_rows: u32,
 ) -> Result<QueryResult, ConnectionFailure> {
+    enforce_read_only(profile, !is_read(sql))?;
     let mut client = connect(profile, secret)?;
-    let leitura = is_read(sql);
+    let leitura = profile.read_only || is_read(sql);
     let texto = if leitura {
         wrap_limit(sql, max_rows)
     } else {
@@ -195,7 +194,8 @@ pub fn run_sqlite(
     sql: &str,
     max_rows: u32,
 ) -> Result<QueryResult, ConnectionFailure> {
-    let leitura = is_read(sql);
+    enforce_read_only(profile, !is_read(sql))?;
+    let leitura = profile.read_only || is_read(sql);
     let flags = if leitura {
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX
     } else {
@@ -259,6 +259,12 @@ pub fn run_mongo(
     let command = super::mongo_command::parse(texto).map_err(|message| mongo::MongoFailure {
         message,
         secret_required: false,
+    })?;
+    super::policy::check_read_only(profile, command.op.writes()).map_err(|rejection| {
+        mongo::MongoFailure {
+            message: rejection.message.to_owned(),
+            secret_required: false,
+        }
     })?;
     if command.op.writes() {
         return super::mongo_write::execute(profile, secret, command);
@@ -379,6 +385,8 @@ mod tests {
 
     fn perfil_sqlite(caminho: &std::path::Path) -> DataSourceProfile {
         DataSourceProfile {
+            production: false,
+            read_only: false,
             name: "arquivo".to_owned(),
             engine: DataSourceEngine::Sqlite,
             host: String::new(),
@@ -409,9 +417,9 @@ mod tests {
     #[test]
     fn sqlite_reads_with_a_ceiling_and_writes_with_a_count() {
         let caminho = banco_temporario("leitura");
-        let perfil = perfil_sqlite(&caminho);
+        let mut profile = perfil_sqlite(&caminho);
         let r = run_sqlite(
-            &perfil,
+            &profile,
             "SELECT id, placa, valor, bruto FROM leituras ORDER BY id",
             2,
         )
@@ -431,29 +439,31 @@ mod tests {
         assert_eq!(r.rows[1][2], None);
         assert_eq!(r.affected, None);
 
-        // A leitura que tenta escrever e' recusada pelo MOTOR (arquivo so' leitura).
+        // Um perfil somente leitura também força a proteção do motor.
+        profile.read_only = true;
         let erro = run_sqlite(
-            &perfil,
+            &profile,
             "WITH x AS (SELECT 1) INSERT INTO leituras (placa) SELECT 'nunca' FROM x",
             10,
         )
         .unwrap_err();
-        assert!(erro.message.contains("readonly"), "{}", erro.message);
+        assert!(erro.message.contains("somente leitura"), "{}", erro.message);
         assert_eq!(
-            run_sqlite(&perfil, "SELECT count(*) FROM leituras", 10)
+            run_sqlite(&profile, "SELECT count(*) FROM leituras", 10)
                 .unwrap()
                 .rows[0][0]
                 .as_deref(),
             Some("3")
         );
 
-        let escrita = run_sqlite(&perfil, "UPDATE leituras SET valor = 0 WHERE valor IS NULL; DELETE FROM leituras WHERE placa = 'pi'", 10).unwrap();
+        profile.read_only = false;
+        let escrita = run_sqlite(&profile, "UPDATE leituras SET valor = 0 WHERE valor IS NULL; DELETE FROM leituras WHERE placa = 'pi'", 10).unwrap();
         assert_eq!(escrita.affected, Some(1));
         assert!(escrita.columns.is_empty());
-        let depois = run_sqlite(&perfil, "SELECT count(*) FROM leituras", 10).unwrap();
+        let depois = run_sqlite(&profile, "SELECT count(*) FROM leituras", 10).unwrap();
         assert_eq!(depois.rows[0][0], Some("2".to_owned()));
         assert!(!depois.truncated);
-        let ruim = run_sqlite(&perfil, "SELECT nada FROM lugar_nenhum", 10).unwrap_err();
+        let ruim = run_sqlite(&profile, "SELECT nada FROM lugar_nenhum", 10).unwrap_err();
         assert!(ruim.message.contains("lugar_nenhum"), "{}", ruim.message);
     }
 
@@ -473,7 +483,9 @@ mod tests {
         assert_eq!(t.rows[1][3].as_deref(), Some("21.5"));
         assert_eq!(t.rows[1][1], None);
         assert_eq!(t.elapsed_ms, 7);
-        let perfil = DataSourceProfile {
+        let profile = DataSourceProfile {
+            production: false,
+            read_only: false,
             engine: DataSourceEngine::Mongo,
             host: "localhost".to_owned(),
             port: 1,
@@ -481,13 +493,13 @@ mod tests {
             ..perfil_sqlite(std::path::Path::new("x"))
         };
         assert!(
-            run_mongo(&perfil, None, "", 10)
+            run_mongo(&profile, None, "", 10)
                 .unwrap_err()
                 .message
                 .contains("escreva a colecao")
         );
         assert!(
-            run_mongo(&perfil, None, "col nao-json", 10)
+            run_mongo(&profile, None, "col nao-json", 10)
                 .unwrap_err()
                 .message
                 .contains("precisam ser JSON")

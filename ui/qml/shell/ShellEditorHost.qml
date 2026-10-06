@@ -12,6 +12,7 @@ import KineinVectis
 Item {
     id: root
 
+    property var dataSourceController: null
     property var editorController
     property var shellController
     property var debugController
@@ -96,10 +97,22 @@ Item {
         editorController: root.editorController
     }
 
+    DataSourceConsoleBanner {
+        id: consoleBanner
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        profile: root.dataSourceController === null ? null : root.dataSourceController.profileByName(
+            root.dataSourceController.consoles.connectionFor(root.editorController.currentFilePath()))
+    }
+
     EditorPane {
         id: editorPane
 
-        anchors.fill: parent
+        anchors.top: consoleBanner.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
 
         workspaceOpen: root.workspaceOpen
         filesModel: root.editorController.filesModel

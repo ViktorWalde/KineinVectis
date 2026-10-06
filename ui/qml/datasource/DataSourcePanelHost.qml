@@ -50,12 +50,13 @@ KvPanelFrame {
         onCreateSqliteRequested: (name, path) => root.controller.discovery.createSqlite(name, path)
         onCreateServerRequested: (engine, name, port) => root.controller.discovery.createServer(engine, name, port)
         onCreateDatabaseRequested: name => root.controller.createDatabaseOnServer(name)
-        onDestroyRequested: (name, data) => root.controller.discovery.destroyProfile(name, data)
+        onDestroyRequested: (name, data, confirmation) => root.controller.discovery.destroyProfile(name, data, confirmation)
         onNewRequested: root.controller.startNew()
         onFieldEdited: (field, value) => root.controller.editDraft(field, value)
         onPasswordEdited: text => root.controller.sessionPassword = text
         onSaveRequested: root.controller.save()
         onTestRequested: root.controller.test()
+        onSecretRetryRequested: root.controller.retryWithSecret()
         onCloseRequested: root.dismissRequested()
     }
 }

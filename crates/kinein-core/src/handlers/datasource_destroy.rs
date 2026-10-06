@@ -28,32 +28,71 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.destroy");
         };
-        let pedido = match parse_params::<DataSourceDestroyParams>(
+        let mut request = match parse_params::<DataSourceDestroyParams>(
             request_id.as_ref(),
             params,
             "datasource.destroy exige { name, data? }",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
         let Some(profile) = crate::datasource::list(&root)
             .into_iter()
-            .find(|p| p.name == pedido.name)
+            .find(|p| p.name == request.name)
         else {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    format!("nao ha perfil chamado {}", pedido.name),
+                    format!("nao ha perfil chamado {}", request.name),
                     None,
                 ),
             );
         };
-        self.odbc.revoke(&root, &profile.name);
-        if !pedido.data {
+        if let Err(rejection) = crate::datasource::policy::check_context(
+            &root,
+            &profile,
+            request.expected_context.as_ref(),
+            request.client_context.as_deref(),
+        )
+        .and_then(|()| {
+            crate::datasource::policy::check_destroy(
+                &profile,
+                request.data,
+                request.confirmation.as_ref(),
+            )
+        }) {
+            return rejection.response(
+                request_id,
+                &profile.name,
+                request.client_context.as_deref(),
+            );
+        }
+        let token = request.client_context.clone();
+        let mut response = self.execute_destroy(request_id, &root, &profile, &mut request);
+        if let Some(result) = response.result.as_mut().and_then(Value::as_object_mut) {
+            result.insert("clientContext".to_owned(), json!(token));
+        }
+        response
+    }
+
+    fn execute_destroy(
+        &self,
+        request_id: Option<Value>,
+        root: &std::path::Path,
+        profile: &kinein_protocol::DataSourceProfile,
+        request: &mut DataSourceDestroyParams,
+    ) -> JsonRpcResponse {
+        let operation = DestroyContext {
+            root: root.to_path_buf(),
+            profile: profile.clone(),
+            client_context: request.client_context.clone(),
+        };
+        self.odbc.revoke(root, &profile.name);
+        if !request.data {
             return catalogo(
                 request_id,
-                crate::datasource::remove(&root, &profile.name),
+                crate::datasource::remove(root, &profile.name),
                 None,
             );
         }
@@ -67,16 +106,16 @@ impl Core {
                     .any(|n| n == &container_name || n == &format!("/{container_name}"))
             })
         });
-        match destroy::plan(&root, &profile, container_exists) {
+        match destroy::plan(root, profile, container_exists) {
             DestroyPlan::ProfileOnly { note } => catalogo(
                 request_id,
-                crate::datasource::remove(&root, &profile.name),
+                crate::datasource::remove(root, &profile.name),
                 Some(note),
             ),
             DestroyPlan::SqliteFile { path } => match destroy::delete_sqlite_file(&path) {
                 Ok(()) => catalogo(
                     request_id,
-                    crate::datasource::remove(&root, &profile.name),
+                    crate::datasource::remove(root, &profile.name),
                     None,
                 ),
                 Err(mensagem) => JsonRpcResponse::failure(
@@ -85,17 +124,17 @@ impl Core {
                 ),
             },
             DestroyPlan::Container { name } => {
-                self.destroy_container_response(request_id, &root, &profile.name, engine, &name)
+                self.destroy_container_response(request_id, operation, engine, &name)
             }
             DestroyPlan::PostgresDrop {
                 maintenance,
                 database,
             } => self.destroy_postgres_response(
                 request_id,
-                &root,
-                &profile.name,
+                operation,
                 &maintenance,
                 &database,
+                request.password.take(),
             ),
         }
     }
@@ -104,8 +143,7 @@ impl Core {
     fn destroy_container_response(
         &self,
         request_id: Option<Value>,
-        root: &std::path::Path,
-        profile_name: &str,
+        operation: DestroyContext,
         engine: Option<crate::container::Engine>,
         name: &str,
     ) -> JsonRpcResponse {
@@ -125,8 +163,6 @@ impl Core {
                 .map_or_else(String::new, |n| n.to_string_lossy().to_string())
         );
         let mostrado = shown.clone();
-        let profile_name = profile_name.to_owned();
-        let root = root.to_path_buf();
         let job_id = jobs.spawn(
             "datasource",
             format!("Remover o container {name}"),
@@ -144,7 +180,7 @@ impl Core {
                     crate::process::stream_command_lines_cancelable(command, &cancel, &mut on_line),
                     Ok(status) if status.success()
                 );
-                fechar(ctx, &root, &profile_name, ok, &ultimas.join("\n"))
+                fechar(ctx, &operation, ok, &ultimas.join("\n"))
             },
         );
         JsonRpcResponse::success(
@@ -161,22 +197,20 @@ impl Core {
     fn destroy_postgres_response(
         &self,
         request_id: Option<Value>,
-        root: &std::path::Path,
-        profile_name: &str,
+        operation: DestroyContext,
         maintenance: &kinein_protocol::DataSourceProfile,
         database: &str,
+        password: Option<String>,
     ) -> JsonRpcResponse {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "datasource.destroy");
         };
-        let secret = match Self::resolve_secret(maintenance, None) {
+        let secret = match Self::resolve_secret(maintenance, password) {
             Ok(secret) => secret,
-            Err(response) => return *response,
+            Err(response) => return super::datasource::com_id(*response, request_id),
         };
         let sql = destroy::drop_statement(database);
         let mostrado = sql.clone();
-        let profile_name = profile_name.to_owned();
-        let root = root.to_path_buf();
         let maintenance = maintenance.clone();
         let job_id = jobs.spawn(
             "datasource",
@@ -189,7 +223,7 @@ impl Core {
                     Ok(_) => (true, String::new()),
                     Err((mensagem, _)) => (false, mensagem),
                 };
-                fechar(ctx, &root, &profile_name, ok, &detalhe)
+                fechar(ctx, &operation, ok, &detalhe)
             },
         );
         JsonRpcResponse::success(
@@ -225,17 +259,30 @@ fn catalogo(
     }
 }
 
-/// O fecho do job: com sucesso, o perfil sai; o evento diz o desfecho.
+#[derive(Debug)]
+struct DestroyContext {
+    root: std::path::PathBuf,
+    profile: kinein_protocol::DataSourceProfile,
+    client_context: Option<String>,
+}
+
+/// O fecho do job conserva um perfil alterado enquanto a remoção rodava.
 fn fechar(
     ctx: &crate::jobs::JobContext,
-    root: &std::path::Path,
-    profile_name: &str,
+    operation: &DestroyContext,
     ok: bool,
     detalhe: &str,
 ) -> JobOutcome {
+    let profile_name = &operation.profile.name;
     let (success, message, profiles) = if ok {
-        match crate::datasource::remove(root, profile_name) {
-            Ok(profiles) => (true, format!("{profile_name} removido"), Some(profiles)),
+        match crate::datasource::remove_unchanged(&operation.root, &operation.profile) {
+            Ok(Some(profiles)) => (true, format!("{profile_name} removido"), Some(profiles)),
+            Ok(None) => (
+                true,
+                "Os dados do destino original foram removidos; o perfil alterado foi preservado."
+                    .to_owned(),
+                Some(crate::datasource::list(&operation.root)),
+            ),
             Err(e) => (
                 false,
                 format!("os dados sumiram, mas o perfil nao saiu: {e}"),
@@ -260,7 +307,8 @@ fn fechar(
             job_id: ctx.id().to_owned(),
             success,
             message,
-            profiles
+            profiles,
+            client_context: operation.client_context.clone(),
         }),
     );
     if success {

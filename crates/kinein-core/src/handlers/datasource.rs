@@ -148,7 +148,7 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.test");
         };
-        let request = match parse_params::<DataSourceTestParams>(
+        let mut request = match parse_params::<DataSourceTestParams>(
             request_id.as_ref(),
             params,
             "datasource.test exige { name } e aceita { password }",
@@ -161,12 +161,24 @@ impl Core {
             Err(response) => return com_id(*response, request_id),
         };
 
+        if let Err(rejection) = crate::datasource::policy::check_context(
+            &root,
+            &profile,
+            request.expected_context.as_ref(),
+            request.client_context.as_deref(),
+        ) {
+            return rejection.response(
+                request_id,
+                &profile.name,
+                request.client_context.as_deref(),
+            );
+        }
         if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
             return *response;
         }
-        let secret = match Self::resolve_secret(&profile, request.password) {
+        let secret = match Self::resolve_secret(&profile, request.password.take()) {
             Ok(secret) => secret,
-            Err(response) => return *response,
+            Err(response) => return com_id(*response, request_id),
         };
 
         let Some(jobs) = self.jobs.as_ref() else {
@@ -181,7 +193,7 @@ impl Core {
             // forma: versao ou (mensagem, precisa de segredo). O `MongoDB` nao
             // tem SQLSTATE — o campo simplesmente nao vai no evento dele, e a
             // UI ja' decide pelo `secretRequired`, nunca pelo texto.
-            let evento = match profile.engine {
+            let mut event = match profile.engine {
                 kinein_protocol::DataSourceEngine::Odbc => test_result(
                     ctx,
                     &profile,
@@ -213,8 +225,9 @@ impl Core {
                     crate::datasource::connection::probe_server(&profile, secret.as_ref()),
                 ),
             };
-            let ok = evento["ok"].as_bool().unwrap_or(false);
-            ctx.emit_event("event.datasource.tested", evento);
+            event["clientContext"] = json!(request.client_context);
+            let ok = event["ok"].as_bool().unwrap_or(false);
+            ctx.emit_event("event.datasource.tested", event);
             if ok {
                 JobOutcome::Success
             } else {
@@ -293,7 +306,7 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "datasource.introspect");
         };
-        let request = match parse_params::<DataSourceIntrospectParams>(
+        let mut request = match parse_params::<DataSourceIntrospectParams>(
             request_id.as_ref(),
             params,
             "datasource.introspect exige { name } e aceita { password }",
@@ -305,10 +318,22 @@ impl Core {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
+        if let Err(rejection) = crate::datasource::policy::check_context(
+            &root,
+            &profile,
+            request.expected_context.as_ref(),
+            request.client_context.as_deref(),
+        ) {
+            return rejection.response(
+                request_id,
+                &profile.name,
+                request.client_context.as_deref(),
+            );
+        }
         if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
             return *response;
         }
-        let secret = match Self::resolve_secret(&profile, request.password) {
+        let secret = match Self::resolve_secret(&profile, request.password.take()) {
             Ok(secret) => secret,
             Err(response) => return com_id(*response, request_id),
         };
@@ -324,7 +349,7 @@ impl Core {
             // escolhe a visao por QUAL das duas chegou — forcar o Mongo na
             // primeira faria a tela afirmar que todo documento tem o campo,
             // que ele tem um tipo so' e que nao ha' aninhamento.
-            let evento = if profile.engine == kinein_protocol::DataSourceEngine::Mongo {
+            let mut event = if profile.engine == kinein_protocol::DataSourceEngine::Mongo {
                 match crate::datasource::mongo::read_structure(&profile, secret.as_ref()) {
                     Ok(collections) => json!({
                         "jobId": ctx.id(),
@@ -365,8 +390,9 @@ impl Core {
                     }),
                 }
             };
-            let ok = evento["ok"].as_bool().unwrap_or(false);
-            ctx.emit_event("event.datasource.introspected", evento);
+            event["clientContext"] = json!(request.client_context);
+            let ok = event["ok"].as_bool().unwrap_or(false);
+            ctx.emit_event("event.datasource.introspected", event);
             if ok {
                 JobOutcome::Success
             } else {

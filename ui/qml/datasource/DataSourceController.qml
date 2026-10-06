@@ -39,26 +39,30 @@ Item {
     property var readingNames: ({})
     // A ultima consulta pedida por NOME (o console do editor): repetida tal
     // qual quando a escrita pede confirmacao.
-    property var lastQuery: null
+    property alias lastQuery: queryController.lastQuery
 
     // Senha da sessao. Nunca persistida, nunca enviada ao `save`.
-    property string sessionPassword: ""
+    property alias sessionPassword: secretController.value
+    readonly property DataSourceSecretController secrets: DataSourceSecretController {
+        id: secretController
+        dataSourceController: root
+        workspaceRoot: root.workspaceRoot
+    }
 
     // A consulta (0.121.0): texto, resultado, e o pedido de confirmacao (so'
     // remocao desde o 0.156.0) pelo CODIGO `WRITE_CONFIRMATION_REQUIRED`.
-    property string sql: ""
-    property bool querying: false
-    property bool writeConfirmationRequired: false
-    property var queryColumns: []
-    property var queryRows: []
-    property string queryStatus: ""
+    property alias querying: queryController.querying
+    property alias writeConfirmationRequired: queryController.writeConfirmationRequired
+    property alias queryColumns: queryController.columns
+    property alias queryRows: queryController.rows
+    property alias queryStatus: queryController.status
 
     signal listRequested()
     signal saveRequested(var profile)
     signal removeRequested(string name)
-    signal testRequested(string name, string password)
-    signal introspectRequested(string name, string password)
-    signal queryRequested(string name, string password, string sql, bool confirmWrite, int maxRows)
+    signal testRequested(string name, string password, var context)
+    signal introspectRequested(string name, string password, var context)
+    signal queryRequested(string name, string password, string sql, bool confirmWrite, int maxRows, var context, var confirmation)
     // Menu, paleta e Ctrl+Alt+J pedem a JANELA do Banco (o shell a abre do lado do icone).
     signal windowRequested()
 
@@ -72,7 +76,7 @@ Item {
     }
     readonly property DataSourceImpactController impact: DataSourceImpactController {
         dataSourceController: root
-        onRunConfirmed: (name, text) => root.runOn(name, text, true)
+        onRunConfirmed: (name, text, confirmation) => root.queries.begin(name, text, true, root.lastQuery ? root.lastQuery.maxRows : 0, confirmation, root.pendingDatabase)
     }
 
     readonly property DataSourceOdbcController odbc: DataSourceOdbcController {
@@ -80,8 +84,31 @@ Item {
         workspaceRoot: root.workspaceRoot
     }
 
+    readonly property DataSourceQueryController queries: DataSourceQueryController {
+        id: queryController
+        dataSourceController: root
+        workspaceRoot: root.workspaceRoot
+        onRequested: (name, text, confirmed, maxRows, context, confirmation) => root.queryRequested(name, root.passwordFor(name), text, confirmed, maxRows, context, confirmation)
+        onDatabaseCreated: profile => {
+            root.draft = profile;
+            root.selectedName = "";
+            root.clearSecret();
+            root.saveRequested(profile);
+        }
+        onSecretNeeded: operation => root.secrets.request("query", operation)
+    }
+
+    readonly property DataSourceCatalogController catalog: DataSourceCatalogController {
+        dataSourceController: root
+        workspaceRoot: root.workspaceRoot
+        onTestRequested: (name, context) => root.testRequested(name, root.passwordFor(name), context)
+        onIntrospectRequested: (name, context) => root.introspectRequested(name, root.passwordFor(name), context)
+    }
+
     DataSourceDiscoveryController {
         id: discoveryController
+        dataSourceController: root
+        workspaceRoot: root.workspaceRoot
 
         onProfileReady: function(profile, saved) { root.adoptProfile(profile, saved); }
         onProfilesChanged: function(profiles) { root.handleList(profiles); root.startNew(); }
@@ -137,7 +164,7 @@ Item {
     // Um banco DENTRO do PostgreSQL do perfil em edicao: `CREATE DATABASE`
     // pelo caminho de escrita confirmada que ja' existe; quando o core
     // responder, o perfil clonado com o banco novo e' salvo (handleQueried).
-    property string pendingDatabase: ""
+    property alias pendingDatabase: queryController.pendingDatabase
 
     function createDatabaseOnServer(name) {
         const limpo = name.trim();
@@ -145,9 +172,8 @@ Item {
             errorText = qsTr("um banco novo pede um perfil PostgreSQL salvo e um nome só de letras, dígitos e _");
             return;
         }
-        pendingDatabase = limpo;
-        sql = "CREATE DATABASE \"" + limpo + "\"";
-        runQuery(true);
+        const sql = "CREATE DATABASE \"" + limpo + "\"";
+        queries.begin(draft.name, sql, false, 0, null, limpo);
     }
 
     function close() {
@@ -156,7 +182,19 @@ Item {
     }
 
     function clearSecret() {
-        sessionPassword = "";
+        secrets.clear();
+    }
+
+    function passwordFor(name) { return secrets.forName(name); }
+
+    function retryWithSecret() {
+        const operation = secrets.takePending();
+        if (operation === null) return;
+        secretRequired = false;
+        if (operation.method === "query") queries.begin(operation.name, operation.sql, operation.confirmWrite,
+            operation.maxRows, operation.confirmation, operation.database);
+        else if (operation.method === "destroy") discovery.destroyProfile(operation.name, operation.data, operation.confirmation);
+        else catalog.begin(operation.method, operation.name);
     }
 
     function clearVerdict() {
@@ -225,11 +263,7 @@ Item {
         testProfile(draft.name);
     }
 
-    function testProfile(name) {
-        clearVerdict();
-        testing = true;
-        testRequested(name, sessionPassword);
-    }
+    function testProfile(name) { catalog.begin("test", name); }
 
     function handleList(newProfiles) {
         profiles = newProfiles;
@@ -245,139 +279,45 @@ Item {
         }
     }
 
-    function introspect() {
-        if (draft.name === "") {
-            return;
-        }
-        schemas = [];
-        collections = [];
-        reading = true;
-        testMessage = "";
-        introspectRequested(draft.name, sessionPassword);
-    }
+    function introspect() { catalog.begin("introspect", draft.name); }
 
-    // Ler a estrutura de UMA conexao pelo nome, sem mexer no formulario.
-    function introspectProfile(name) {
-        readingNames = Object.assign({}, readingNames, { [name]: true });
-        introspectRequested(name, sessionPassword);
-    }
+    function introspectProfile(name) { catalog.begin("introspect", name); }
 
     // Executar `text` na conexao `name` (o console no editor).
-    function runOn(name, text, confirmWrite, maxRows) {
-        if (name === "" || text.trim() === "") return;
-        lastQuery = { name: name, sql: text, confirmWrite: confirmWrite === true, maxRows: maxRows || 0 };
-        querying = true;
-        writeConfirmationRequired = false;
-        queryStatus = "";
-        queryRequested(name, sessionPassword, text, confirmWrite === true, maxRows || 0);
+    function runOn(name, text, confirmWrite, maxRows, confirmation) {
+        queries.begin(name, text, confirmWrite, maxRows, confirmation);
     }
 
-    function handleIntrospected(name, ok, newSchemas, newCollections, message, needsSecret) {
-        readingNames = Object.assign({}, readingNames, { [name]: false });
-        structures = Object.assign({}, structures, { [name]: ok ? { schemas: newSchemas, collections: newCollections }
-                                                                : { schemas: [], collections: [], failed: message } });
-        reading = false;
-        testedName = name;
-        if (ok) {
-            schemas = newSchemas;
-            collections = newCollections;
-            testMessage = "";
-            secretRequired = false;
-        } else {
-            schemas = [];
-            collections = [];
-            testMessage = message;
-            secretRequired = needsSecret;
-        }
+    function handleIntrospected(name, ok, schemas, collections, message, needsSecret, token) {
+        catalog.introspected(name, ok, schemas, collections, message, needsSecret, token);
     }
 
     readonly property bool documentEngine: root.draft ? DataSourceKinds.isMongo(root.draft.engine) : false
 
-    function handleTested(name, ok, version, message, needsSecret) {
-        testing = false;
-        testedName = name;
-        testOk = ok;
-        serverVersion = version;
-        testMessage = message;
-        secretRequired = needsSecret;
+    function handleTested(name, ok, version, message, needsSecret, token) {
+        catalog.tested(name, ok, version, message, needsSecret, token);
     }
 
-    function clearQuery() {
-        querying = false;
-        writeConfirmationRequired = false;
-        queryColumns = [];
-        queryRows = [];
-        queryStatus = "";
-    }
+    function clearQuery() { queries.invalidate(); }
 
-    // Executar o que esta' no editor. `confirmWrite` so' vai `true` quando o
-    // autor respondeu ao pedido de confirmacao — o core recusa o resto.
-    function runQuery(confirmWrite) {
-        if (draft.name === "" || sql.trim() === "") {
-            return;
-        }
-        runOn(draft.name, sql, confirmWrite);
-    }
+    function handleQueried(outcome) { queries.handleOutcome(outcome); }
 
-    function handleQueried(outcome) {
-        if (outcome.confirmationSql !== undefined && (lastQuery === null
-                || outcome.name !== lastQuery.name || outcome.confirmationSql !== lastQuery.sql)) return;
-        querying = false;
-        if (outcome.confirmationSql !== undefined) {
-            handleFailed("datasource.query", outcome.message || "", "WRITE_CONFIRMATION_REQUIRED");
-            return;
-        }
-        if (outcome.success === true && pendingDatabase !== "") {
-            const novo = cloneProfile(draft);
-            novo.name = draft.name + "-" + pendingDatabase;
-            novo.database = pendingDatabase;
-            pendingDatabase = "";
-            draft = novo;
-            selectedName = "";
-            saveRequested(novo);
-        } else if (outcome.success !== true) {
-            pendingDatabase = "";
-        }
-        if (outcome.success === true) {
-            queryColumns = outcome.columns || [];
-            queryRows = outcome.rows || [];
-            secretRequired = false;
-            if (outcome.affected !== undefined && outcome.affected !== null && lastQuery !== null)
-                lastQuery = Object.assign({}, lastQuery, { wrote: true });
-            const ran = root.profiles.find(p => lastQuery !== null && p.name === lastQuery.name);
-            queryStatus = DataSourceKinds.querySummary(outcome, ran === undefined ? "postgres" : ran.engine);
-        } else {
-            queryColumns = [];
-            queryRows = [];
-            if (lastQuery !== null) lastQuery = Object.assign({}, lastQuery, { failed: true });
-            queryStatus = outcome.message || qsTr("a consulta falhou");
-            secretRequired = outcome.secretRequired === true;
-        }
-    }
-
-    function handleFailed(method, message, code) {
+    function handleFailed(method, message, code, operation) {
+        if (method === "datasource.query") return queries.fail(message, code, operation);
+        if (method === "datasource.test" || method === "datasource.introspect") return catalog.fail(method.substring(11), message, code, operation);
         if (method === "datasource.discover" || method === "datasource.create"
                 || method === "datasource.destroy") {
             return;
         }
         if (method.indexOf("datasource.odbc.") === 0) return odbc.handleFailed(method, message);
-        if (method === "datasource.impact") return impact.handleFailed(message);
+        if (method === "datasource.impact") return impact.handleFailed(message, operation, code);
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;
             readingNames = ({});
             querying = false;
             if (code === "DRIVER_APPROVAL_REQUIRED") return;
-            if (code === "WRITE_CONFIRMATION_REQUIRED") {
-                writeConfirmationRequired = true;
-                queryStatus = message;
-                if (lastQuery !== null) impact.begin(lastQuery.name, lastQuery.sql);
-            } else if (code === "SECRET_REQUIRED" && method === "datasource.query") {
-                secretRequired = true;
-                queryStatus = message;
-            } else {
-                errorText = message;
-            }
+            errorText = message;
         }
     }
 }

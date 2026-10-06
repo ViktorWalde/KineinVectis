@@ -94,3 +94,6 @@ keyscan
 keygen
 # 2026-10-06: sigla Open Database Connectivity e APIs oficiais odbc-api/sqlite3
 odbc preallocate autocommit executescript
+
+# 2026-10-06: API oficial sqlite3.Cursor.fetchone (retorna uma linha)
+fetchone

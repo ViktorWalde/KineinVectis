@@ -82,6 +82,36 @@ Item {
             onEdited: text => root.fieldEdited("name", text)
         }
 
+        Text {
+            text: qsTr("Ambiente")
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeCaption
+        }
+
+        KvSegmentedControl {
+            width: parent.width
+            current: root.draft && root.draft.production ? "production" : "development"
+            options: [ { value: "development", label: qsTr("Desenvolvimento") },
+                       { value: "production", label: qsTr("Produção"), icon: "warning" } ]
+            onSelected: value => root.fieldEdited("production", value === "production")
+        }
+
+        KvSegmentedControl {
+            width: parent.width
+            current: root.draft && root.draft.readOnly ? "read" : "write"
+            options: [ { value: "write", label: qsTr("Permitir escrita") },
+                       { value: "read", label: qsTr("Somente leitura"), icon: "eye" } ]
+            onSelected: value => root.fieldEdited("readOnly", value === "read")
+        }
+
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            text: qsTr("Produção pede confirmação para toda escrita. Somente leitura recusa escrita e comandos desconhecidos. Salve antes de testar estas opções.")
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeCaption
+        }
+
         DataSourceDsnPicker {
             width: parent.width
             visible: root.odbc

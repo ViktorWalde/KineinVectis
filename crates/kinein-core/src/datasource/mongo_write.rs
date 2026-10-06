@@ -171,6 +171,8 @@ mod tests {
         let address = std::env::var("KINEIN_TEST_MONGO").ok()?;
         let (host, port) = address.split_once(':')?;
         Some(DataSourceProfile {
+            production: false,
+            read_only: false,
             name: "teste".to_owned(),
             engine: DataSourceEngine::Mongo,
             host: host.to_owned(),

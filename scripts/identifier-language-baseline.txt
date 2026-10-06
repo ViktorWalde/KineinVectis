@@ -355,7 +355,6 @@ crates/kinein-core/src/datasource/mod.rs	mensagem	1
 crates/kinein-core/src/datasource/mod.rs	mesmo	1
 crates/kinein-core/src/datasource/mod.rs	normalizado	4
 crates/kinein-core/src/datasource/mod.rs	ordenado	1
-crates/kinein-core/src/datasource/mod.rs	perfil	14
 crates/kinein-core/src/datasource/mod.rs	porta	3
 crates/kinein-core/src/datasource/mod.rs	reprova	1
 crates/kinein-core/src/datasource/mod.rs	salvar	2
@@ -467,7 +466,7 @@ crates/kinein-core/src/datasource/query.rs	chave	3
 crates/kinein-core/src/datasource/query.rs	chaves	6
 crates/kinein-core/src/datasource/query.rs	colunas	2
 crates/kinein-core/src/datasource/query.rs	conexao	6
-crates/kinein-core/src/datasource/query.rs	corpo	12
+crates/kinein-core/src/datasource/query.rs	corpo	10
 crates/kinein-core/src/datasource/query.rs	depois	7
 crates/kinein-core/src/datasource/query.rs	documentos	8
 crates/kinein-core/src/datasource/query.rs	erro	3
@@ -480,8 +479,8 @@ crates/kinein-core/src/datasource/query.rs	linhas	2
 crates/kinein-core/src/datasource/query.rs	mensagem	2
 crates/kinein-core/src/datasource/query.rs	mensagens	2
 crates/kinein-core/src/datasource/query.rs	outro	2
-crates/kinein-core/src/datasource/query.rs	palavra	4
-crates/kinein-core/src/datasource/query.rs	perfil	13
+crates/kinein-core/src/datasource/query.rs	palavra	2
+crates/kinein-core/src/datasource/query.rs	perfil	3
 crates/kinein-core/src/datasource/query.rs	resto	6
 crates/kinein-core/src/datasource/query.rs	resultado	18
 crates/kinein-core/src/datasource/query.rs	ruim	3
@@ -748,7 +747,6 @@ crates/kinein-core/src/handlers/coverage.rs	erro	3
 crates/kinein-core/src/handlers/coverage.rs	resultado	2
 crates/kinein-core/src/handlers/datasource.rs	bruto	2
 crates/kinein-core/src/handlers/datasource.rs	candidato	2
-crates/kinein-core/src/handlers/datasource.rs	evento	6
 crates/kinein-core/src/handlers/datasource.rs	falha	14
 crates/kinein-core/src/handlers/datasource.rs	mensagem	6
 crates/kinein-core/src/handlers/datasource.rs	recusa	3
@@ -763,7 +761,6 @@ crates/kinein-core/src/handlers/datasource_destroy.rs	fechar	3
 crates/kinein-core/src/handlers/datasource_destroy.rs	linha	3
 crates/kinein-core/src/handlers/datasource_destroy.rs	mensagem	6
 crates/kinein-core/src/handlers/datasource_destroy.rs	mostrado	4
-crates/kinein-core/src/handlers/datasource_destroy.rs	pedido	6
 crates/kinein-core/src/handlers/datasource_destroy.rs	removido	2
 crates/kinein-core/src/handlers/datasource_destroy.rs	ultimas	3
 crates/kinein-core/src/handlers/datasource_discover.rs	comando	2
@@ -779,7 +776,7 @@ crates/kinein-core/src/handlers/datasource_discover.rs	titulo	2
 crates/kinein-core/src/handlers/datasource_discover.rs	tudo	2
 crates/kinein-core/src/handlers/datasource_discover.rs	ultimas	7
 crates/kinein-core/src/handlers/datasource_query.rs	consulta	2
-crates/kinein-core/src/handlers/datasource_query.rs	evento	5
+crates/kinein-core/src/handlers/datasource_query.rs	evento	2
 crates/kinein-core/src/handlers/datasource_query.rs	resultado	4
 crates/kinein-core/src/handlers/debug.rs	alvo	7
 crates/kinein-core/src/handlers/debug.rs	efetivo	2
@@ -2778,7 +2775,6 @@ scripts/sonda_drafts.py	caminho	2
 scripts/sonda_drafts.py	detalhe	3
 scripts/sonda_drafts.py	diretorio	2
 scripts/sonda_drafts.py	escrito	6
-scripts/sonda_drafts.py	fetchone	1
 scripts/sonda_drafts.py	linhas	2
 scripts/sonda_drafts.py	pedido	3
 scripts/sonda_drafts.py	raiz	13
@@ -3283,7 +3279,6 @@ ui/qml/container/ContainerController.qml	emulado	2
 ui/qml/container/ContainerController.qml	versao	2
 ui/qml/datasource/DataSourceController.qml	encontrado	3
 ui/qml/datasource/DataSourceController.qml	limpo	4
-ui/qml/datasource/DataSourceController.qml	novo	5
 ui/qml/datasource/DataSourceCreateBox.qml	coluna	2
 ui/qml/datasource/DataSourceCreateBox.qml	imagem	2
 ui/qml/datasource/DataSourceCreateBox.qml	interna	3

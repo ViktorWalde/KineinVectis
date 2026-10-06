@@ -33,7 +33,7 @@ Item {
         failures += check(controller.odbc.sources.length === 1 && root.approvals.length === 0, "listar nao autoriza");
         controller.runOn("outro", "SELECT * FROM t", false, 200);
         const details = { name: "outro", dsn: "dsn", driver: "driver", identity: "desafio", workspace: "/projeto",
-                          query: { name: "outro", sql: "SELECT * FROM t", confirmWrite: false, maxRows: 200 } };
+                          query: { name: "outro", sql: "SELECT * FROM t", confirmWrite: false, maxRows: 200, clientContext: controller.lastQuery.clientContext } };
         controller.odbc.handleRequired("datasource.query", details);
         failures += check(controller.odbc.open && root.approvals.length === 0, "recusa abre aviso sem gesto automatico");
         controller.odbc.cancel();
@@ -48,12 +48,14 @@ Item {
         controller.odbc.handleAuthorized("outro", "desafio", "/projeto");
         failures += check(root.queries.length === 2 && root.queries[1].maxRows === 200
                           && !root.queries[1].confirmed && !controller.odbc.open, "reenvia somente a leitura original com teto");
+        details.query.clientContext = controller.lastQuery.clientContext;
         controller.odbc.handleRequired("datasource.query", details);
         controller.odbc.confirm();
         controller.runOn("outro", "DELETE FROM t", false);
         controller.odbc.handleAuthorized("outro", "desafio", "/projeto");
         failures += check(root.queries.length === 3 && !root.queries[2].confirmed, "consulta mudada nao ganha confirmacao antiga");
         controller.runOn("outro", "SELECT * FROM t", false);
+        details.query.clientContext = controller.lastQuery.clientContext;
         controller.odbc.handleRequired("datasource.query", details);
         controller.profiles = [{ name: "outro", engine: "odbc", database: "outro-dsn" }];
         controller.odbc.confirm();

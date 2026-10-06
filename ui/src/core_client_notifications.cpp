@@ -27,7 +27,8 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
             params.value(QStringLiteral("schemas")).toArray().toVariantList(),
             params.value(QStringLiteral("collections")).toArray().toVariantList(),
             params.value(QStringLiteral("message")).toString(),
-            params.value(QStringLiteral("secretRequired")).toBool(false));
+            params.value(QStringLiteral("secretRequired")).toBool(false),
+            params.value(QStringLiteral("clientContext")).toString());
         return;
     }
     if (method == QStringLiteral("event.datasource.impact")) {
@@ -45,14 +46,15 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
                               params.value(QStringLiteral("ok")).toBool(false),
                               params.value(QStringLiteral("serverVersion")).toString(),
                               params.value(QStringLiteral("message")).toString(),
-                              params.value(QStringLiteral("secretRequired")).toBool(false));
+                              params.value(QStringLiteral("secretRequired")).toBool(false),
+                              params.value(QStringLiteral("clientContext")).toString());
         return;
     }
     if (method == QStringLiteral("event.datasource.destroyed")) {
-        emit dataSourceDestroyed(
-            params.value(QStringLiteral("success")).toBool(false),
-            params.value(QStringLiteral("message")).toString(),
-            params.value(QStringLiteral("profiles")).toArray().toVariantList());
+        emit dataSourceDestroyed(params.value(QStringLiteral("success")).toBool(false),
+                                 params.value(QStringLiteral("message")).toString(),
+                                 params.value(QStringLiteral("profiles")).toArray().toVariantList(),
+                                 params.value(QStringLiteral("clientContext")).toString());
         return;
     }
     if (method == QStringLiteral("event.datasource.created")) {

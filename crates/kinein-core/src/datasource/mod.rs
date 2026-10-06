@@ -39,6 +39,7 @@
 //! de seguranca do `DocsPublic/seguranca/23`). Este modulo e' o banco DO AUTOR. Os
 //! dois dizem "banco" e nao tem nada a ver um com o outro.
 
+pub mod classification;
 pub mod confirm;
 pub mod connection;
 pub mod console;
@@ -56,8 +57,10 @@ pub mod odbc;
 pub mod odbc_catalog;
 pub mod odbc_query;
 pub mod odbc_rows;
+pub mod policy;
 pub mod query;
 pub mod secret;
+pub mod sql_syntax;
 pub mod sqlite;
 mod store;
 
@@ -67,12 +70,17 @@ use kinein_protocol::{DataSourceEngine, DataSourceProfile};
 
 pub use secret::{Secret, SecretPlan};
 
+static CATALOG_WRITES: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// Porta padrao do `PostgreSQL`, usada quando o perfil nao informa outra.
 pub const DEFAULT_PORT: u16 = 5432;
 
 /// Le o catalogo do workspace, ja ordenado por nome.
 #[must_use]
 pub fn list(root: &Path) -> Vec<DataSourceProfile> {
+    let Ok(_guard) = CATALOG_WRITES.lock() else {
+        return Vec::new();
+    };
     let mut profiles = store::load(root);
     profiles.sort_by(|a, b| a.name.cmp(&b.name));
     profiles
@@ -140,6 +148,9 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
 /// Perfil invalido ([`validate`]) ou falha de escrita em disco.
 pub fn save(root: &Path, profile: &DataSourceProfile) -> Result<Vec<DataSourceProfile>, String> {
     validate(profile)?;
+    let _guard = CATALOG_WRITES
+        .lock()
+        .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
     let mut profiles = store::load(root);
     let normalizado = normalize(profile);
     match profiles
@@ -163,11 +174,36 @@ pub fn save(root: &Path, profile: &DataSourceProfile) -> Result<Vec<DataSourcePr
 /// # Errors
 /// Falha de escrita em disco.
 pub fn remove(root: &Path, name: &str) -> Result<Vec<DataSourceProfile>, String> {
+    let _guard = CATALOG_WRITES
+        .lock()
+        .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
     let mut profiles = store::load(root);
     profiles.retain(|profile| profile.name != name);
     profiles.sort_by(|a, b| a.name.cmp(&b.name));
     store::save(root, &profiles)?;
     Ok(profiles)
+}
+
+/// Remove o perfil original de um job sem apagar uma substituição de mesmo nome.
+/// A comparação e a gravação são serializadas com as demais escritas deste core.
+///
+/// # Errors
+/// Catálogo indisponível ou falha de gravação. Escritores externos não participam do mutex.
+pub fn remove_unchanged(
+    root: &Path,
+    expected: &DataSourceProfile,
+) -> Result<Option<Vec<DataSourceProfile>>, String> {
+    let _guard = CATALOG_WRITES
+        .lock()
+        .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
+    let mut profiles = store::load(root);
+    if !profiles.iter().any(|profile| profile == expected) {
+        return Ok(None);
+    }
+    profiles.retain(|profile| profile.name != expected.name);
+    profiles.sort_by(|a, b| a.name.cmp(&b.name));
+    store::save(root, &profiles)?;
+    Ok(Some(profiles))
 }
 
 /// Tira espaco das bordas dos campos de texto.
@@ -176,6 +212,8 @@ pub fn remove(root: &Path, name: &str) -> Result<Vec<DataSourceProfile>, String>
 /// produz ("host nao encontrado") nao mostra o espaco.
 fn normalize(profile: &DataSourceProfile) -> DataSourceProfile {
     DataSourceProfile {
+        production: profile.production,
+        read_only: profile.read_only,
         engine: profile.engine,
         name: profile.name.trim().to_owned(),
         host: if profile.engine == DataSourceEngine::Odbc {
@@ -235,8 +273,10 @@ mod tests {
         dir
     }
 
-    fn perfil(name: &str) -> DataSourceProfile {
+    fn profile(name: &str) -> DataSourceProfile {
         DataSourceProfile {
+            production: false,
+            read_only: false,
             engine: DataSourceEngine::Postgres,
             name: name.to_owned(),
             host: "localhost".to_owned(),
@@ -252,36 +292,72 @@ mod tests {
     }
 
     #[test]
+    fn job_removes_only_its_original_profile_and_preserves_replacements() {
+        let root = temp_root("job-profile");
+        let original = profile("alvo");
+        let mut changed = original.clone();
+        changed.host = "outro-destino".to_owned();
+        save(&root, &original).unwrap();
+        save(&root, &profile("vizinho")).unwrap();
+        save(&root, &changed).unwrap();
+        assert!(remove_unchanged(&root, &original).unwrap().is_none());
+        assert_eq!(list(&root), vec![changed.clone(), profile("vizinho")]);
+        assert_eq!(
+            remove_unchanged(&root, &changed).unwrap(),
+            Some(vec![profile("vizinho")])
+        );
+        assert!(remove_unchanged(&root, &changed).unwrap().is_none());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn concurrent_catalog_writes_keep_all_profiles() {
+        let root = temp_root("parallel-catalog");
+        std::thread::scope(|scope| {
+            for writer in ["a", "b"] {
+                let root = &root;
+                scope.spawn(move || {
+                    for item in 0..20 {
+                        save(root, &profile(&format!("{writer}-{item}"))).unwrap();
+                    }
+                });
+            }
+        });
+        assert_eq!(list(&root).len(), 40);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn campo_vazio_reprova_com_mensagem_acionavel() {
-        let mut sem_nome = perfil("");
+        let mut sem_nome = profile("");
         sem_nome.name = "   ".to_owned();
         assert!(validate(&sem_nome).unwrap_err().contains("nome"));
 
-        let mut sem_host = perfil("local");
+        let mut sem_host = profile("local");
         sem_host.host = String::new();
         assert!(validate(&sem_host).unwrap_err().contains("localhost"));
 
-        let mut porta_zero = perfil("local");
+        let mut porta_zero = profile("local");
         porta_zero.port = 0;
         assert!(validate(&porta_zero).unwrap_err().contains("5432"));
 
-        let mut sem_banco = perfil("local");
+        let mut sem_banco = profile("local");
         sem_banco.database = String::new();
         assert!(validate(&sem_banco).is_err());
 
-        let mut sem_usuario = perfil("local");
+        let mut sem_usuario = profile("local");
         sem_usuario.user = String::new();
         assert!(validate(&sem_usuario).is_err());
 
-        assert!(validate(&perfil("local")).is_ok());
+        assert!(validate(&profile("local")).is_ok());
     }
 
     #[test]
     fn salvar_com_o_mesmo_nome_edita_em_vez_de_duplicar() {
         let root = temp_root("edita");
-        save(&root, &perfil("local")).unwrap();
+        save(&root, &profile("local")).unwrap();
 
-        let mut corrigido = perfil("local");
+        let mut corrigido = profile("local");
         corrigido.port = 6543;
         let catalogo = save(&root, &corrigido).unwrap();
 
@@ -292,8 +368,8 @@ mod tests {
     #[test]
     fn catalogo_volta_ordenado_por_nome() {
         let root = temp_root("ordem");
-        save(&root, &perfil("staging")).unwrap();
-        save(&root, &perfil("local")).unwrap();
+        save(&root, &profile("staging")).unwrap();
+        save(&root, &profile("local")).unwrap();
         let nomes: Vec<_> = list(&root).into_iter().map(|p| p.name).collect();
         assert_eq!(nomes, vec!["local".to_owned(), "staging".to_owned()]);
     }
@@ -301,7 +377,7 @@ mod tests {
     #[test]
     fn espaco_nas_bordas_some_ao_salvar() {
         let root = temp_root("trim");
-        let mut colado = perfil("  local  ");
+        let mut colado = profile("  local  ");
         colado.host = " db.example.com ".to_owned();
         colado.secret_variable = Some("   ".to_owned());
         let catalogo = save(&root, &colado).unwrap();
@@ -317,7 +393,7 @@ mod tests {
     #[test]
     fn remover_o_que_nao_existe_nao_e_erro() {
         let root = temp_root("remove");
-        save(&root, &perfil("local")).unwrap();
+        save(&root, &profile("local")).unwrap();
 
         assert_eq!(remove(&root, "local").unwrap().len(), 0);
         assert_eq!(
@@ -333,7 +409,7 @@ mod tests {
     #[test]
     fn o_catalogo_nao_encosta_no_banco_local_da_ide() {
         let root = temp_root("vizinhos");
-        save(&root, &perfil("local")).unwrap();
+        save(&root, &profile("local")).unwrap();
         assert!(root.join(".kinein/datasources.json").exists());
         assert!(!root.join(".kinein/kinein.db").exists());
     }

@@ -11,6 +11,15 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolo `0.158.0` — **Banco: produção, somente leitura e contexto**
+  (validado no checkout, aceite no 40.7 §7.222). Produção pede aviso
+  para toda escrita e nomes completos nas remoções/alterações globais.
+  Somente leitura recusa escrita e lotes/CTE mutantes antes de conectar.
+  Respostas antigas não preenchem consulta, teste, catálogo ou remoção de
+  outro contexto. Senha de sessão vinculada ao destino; Enter repete o pedido
+  original do console. Remoção PostgreSQL aceita senha de sessão e conserva
+  perfil substituído enquanto o job rodava. Desenho e limites em arquitetura/37.
+
 - Protocolo `0.157.0` — **Outro banco (ODBC)**: DSN do unixODBC, catálogo
   padrão, console e grade limitada com NULL. Carregar driver nativo exige
   gesto explícito por sessão/perfil/projeto; cancelar não conecta. A IDE

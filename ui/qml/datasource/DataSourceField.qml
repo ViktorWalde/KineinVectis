@@ -21,6 +21,8 @@ Item {
     property bool numeric: false
     property bool readOnlyField: false
 
+    function focusField() { field.forceActiveFocus(); }
+
     signal edited(string text)
     signal accepted()
 

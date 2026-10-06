@@ -98,6 +98,8 @@ mod tests {
     fn save(root: &std::path::Path, name: &str, engine: DataSourceEngine) {
         let file = engine == DataSourceEngine::Sqlite;
         let profile = DataSourceProfile {
+            production: false,
+            read_only: false,
             engine,
             name: name.to_owned(),
             host: if file {

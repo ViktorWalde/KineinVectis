@@ -74,10 +74,14 @@ Item {
         if (d.creating || !d.createOk || fontes.selectedName !== "dev" || fontes.draft.port !== 5432) failures += 128;
 
         // banco DENTRO do servidor: CREATE DATABASE confirmado, depois o clone salvo
+        fontes.workspaceRoot = "/w";
+        fontes.handleList([{ name: "dev", engine: "postgres", host: "127.0.0.1", port: 5432,
+            database: "postgres", user: "postgres", secretSource: "automatic" }]);
+        fontes.select("dev");
         fontes.createDatabaseOnServer("loja");
         const q = root.consultas[root.consultas.length - 1];
-        if (!q || q.sql !== 'CREATE DATABASE "loja"' || !q.confirmWrite || q.name !== "dev") failures += 256;
-        fontes.handleQueried({ success: true, columns: [], rows: [], affected: 0, elapsedMs: 3 });
+        if (!q || q.sql !== 'CREATE DATABASE "loja"' || q.confirmWrite || q.name !== "dev") failures += 256;
+        fontes.handleQueried({ name: fontes.lastQuery.name, clientContext: fontes.lastQuery.clientContext, success: true, columns: [], rows: [], affected: 0, elapsedMs: 3 });
         const salvo = root.salvos[root.salvos.length - 1];
         if (!salvo || salvo.name !== "dev-loja" || salvo.database !== "loja" || salvo.host !== "127.0.0.1") failures += 512;
         fontes.createDatabaseOnServer("nome ruim");
@@ -99,18 +103,20 @@ Item {
         fontes.select("a");
         d.destroyProfile("a", true);
         if (root.pedidos[root.pedidos.length - 1] !== "destroy:a:true" || !d.destroying) failures += 8192;
-        d.handleDestroyResolved([{ name: "b", engine: "postgres", host: "h", port: 5432, database: "postgres", user: "u" }], true, "", "", "");
+        d.handleDestroyResolved([{ name: "b", engine: "postgres", host: "h", port: 5432, database: "postgres", user: "u" }], true, "", "", "", d.pendingDestroy.clientContext);
         if (d.destroying || !d.destroyOk || fontes.profiles.length !== 1 || fontes.selectedName !== "") failures += 16384;
         d.destroyProfile("b", true);
-        d.handleDestroyResolved([], false, "job_3", "podman rm -f kinein-b", "");
+        d.handleDestroyResolved([], false, "job_3", "podman rm -f kinein-b", "", d.pendingDestroy.clientContext);
         if (!d.destroying || d.destroyMessage.indexOf("podman rm") < 0) failures += 32768;
-        d.handleDestroyed(true, "b removido", []);
+        d.handleDestroyed(true, "b removido", [], d.pendingDestroy.clientContext);
         if (d.destroying || !d.destroyOk || fontes.profiles.length !== 0) failures += 65536;
+        fontes.handleList([{ name: "x", host: "h", port: 5432, database: "d", user: "u" }]);
         d.destroyProfile("x", false);
-        d.handleDestroyResolved([], true, "", "", "o servidor fica");
+        d.handleDestroyResolved([], true, "", "", "o servidor fica", d.pendingDestroy.clientContext);
         if (d.destroyNote !== "o servidor fica") failures += 131072;
+        fontes.handleList([{ name: "y", host: "h", port: 5432, database: "d", user: "u" }]);
         d.destroyProfile("y", true);
-        d.handleFailed("datasource.destroy", "nao ha perfil");
+        d.handleFailed("datasource.destroy", "nao ha perfil", "INVALID_PARAMS", d.pendingDestroy);
         if (d.destroying || d.destroyOk || d.destroyMessage !== "nao ha perfil") failures += 262144;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);

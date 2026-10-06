@@ -235,6 +235,8 @@ mod tests {
 
     fn perfil_banco(nome: &str, host: &str, porta: u16, banco: &str) -> DataSourceProfile {
         DataSourceProfile {
+            production: false,
+            read_only: false,
             name: nome.to_owned(),
             engine: DataSourceEngine::Postgres,
             host: host.to_owned(),

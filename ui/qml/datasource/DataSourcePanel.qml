@@ -56,17 +56,20 @@ Item {
     signal createSqliteRequested(string name, string path)
     signal createServerRequested(string engine, string name, int port)
     signal createDatabaseRequested(string name)
-    signal destroyRequested(string name, bool data)
+    signal destroyRequested(string name, bool data, var confirmation)
     signal newRequested()
     signal fieldEdited(string field, var value)
     signal passwordEdited(string text)
     signal saveRequested()
     signal testRequested()
+    signal secretRetryRequested()
     signal closeRequested()
 
     property string face: "connection"
     readonly property bool draftNamed: root.draft !== null && root.draft.name !== ""
     readonly property bool savedSelected: root.selectedName !== ""
+    readonly property bool draftSaved: root.profiles.some(profile => profile.name === root.selectedName
+        && JSON.stringify(DataSourceKinds.cloneProfile(profile)) === JSON.stringify(root.draft))
 
     KvPanelHeader {
         id: header
@@ -143,7 +146,7 @@ Item {
                 secretRequired: root.secretRequired
                 password: root.sessionPassword
                 onPasswordEdited: text => root.passwordEdited(text)
-                onRetryRequested: root.testRequested()
+                onRetryRequested: root.secretRetryRequested()
             }
 
             DataSourceForm {
@@ -181,12 +184,14 @@ Item {
                 database: root.draft ? root.draft.database : ""
                 fileEngine: root.draft ? DataSourceKinds.isSqlite(root.draft.engine) : false
                 profileOnly: root.draft ? DataSourceKinds.isOdbc(root.draft.engine) : false
+                production: root.draft !== null && root.draft.production === true
+                readOnly: root.draft !== null && root.draft.readOnly === true
                 documentEngine: root.documentEngine
                 destroying: root.destroying
                 message: root.destroyMessage
                 ok: root.destroyOk
                 note: root.destroyNote
-                onDestroyRequested: (name, data) => root.destroyRequested(name, data)
+                onDestroyRequested: (name, data, confirmation) => root.destroyRequested(name, data, confirmation)
                 onCloseRequested: root.face = "connection"
             }
 
@@ -214,7 +219,7 @@ Item {
             activeFocusOnTab: true
             compact: true
             text: root.testing ? qsTr("Testando…") : qsTr("Testar")
-            enabled: root.draftNamed && !root.testing
+            enabled: root.draftSaved && !root.testing
             onClicked: root.testRequested()
         }
 
@@ -224,6 +229,7 @@ Item {
             compact: true
             danger: true
             text: qsTr("Remover…")
+            enabled: root.draftSaved
             onClicked: root.face = "destroy"
         }
 

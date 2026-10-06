@@ -43,6 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ui", action="store_true")
     parser.add_argument("--metadata", type=Path)
+    parser.add_argument("--policy", action="store_true", help="também prova produção, somente leitura e contexto (0.158.0)")
     args = parser.parse_args()
     directory = Path(tempfile.mkdtemp(prefix="kinein-banco-prova-"))
     containers = []
@@ -144,6 +145,9 @@ def main():
               "MongoDB: remover colecao com ponto")
         core.query(mongo["name"],
             'sensores.insertMany([{"placa":"esp32","v":1},{"placa":"pico","v":2},{"placa":"esp32","v":3}])')
+        if args.policy:
+            from datasource_policy_proof import exercise
+            exercise(core, project, pg, mongo, password, containers, check, command)
         check(password not in "".join(core.raw + core.errors), "senha ausente no stdout e stderr do core")
         check(all(password not in path.read_text(errors="replace")
                   for path in project.rglob("*") if path.is_file()), "senha ausente no projeto")

@@ -79,7 +79,7 @@ void CoreClient::handleResponseLine(const QByteArray& line)
                                          .toString(),
                                      message);
         }
-        handleDataSourceDriverRequired(method, error, requestQuery);
+        handleDataSourceFailure(method, error, requestQuery);
         emit requestFailed(method, message, error.value(QStringLiteral("code")).toString());
         return;
     }

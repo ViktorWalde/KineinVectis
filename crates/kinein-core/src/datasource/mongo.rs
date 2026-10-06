@@ -436,6 +436,8 @@ mod tests {
     #[test]
     fn a_senha_nao_entra_na_uri() {
         let perfil = DataSourceProfile {
+            production: false,
+            read_only: false,
             name: "m".to_owned(),
             engine: kinein_protocol::DataSourceEngine::Mongo,
             host: "localhost".to_owned(),
@@ -468,6 +470,8 @@ mod tests {
     #[test]
     fn sem_usuario_nao_ha_credencial() {
         let perfil = DataSourceProfile {
+            production: false,
+            read_only: false,
             name: "m".to_owned(),
             engine: kinein_protocol::DataSourceEngine::Mongo,
             host: "localhost".to_owned(),

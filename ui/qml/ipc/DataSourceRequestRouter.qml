@@ -26,16 +26,16 @@ Item {
             root.coreClient.dataSourceRemove(name);
         }
 
-        function onTestRequested(name, password) {
-            root.coreClient.dataSourceTest(name, password);
+        function onTestRequested(name, password, context) {
+            root.coreClient.dataSourceTest(name, password, context);
         }
 
-        function onIntrospectRequested(name, password) {
-            root.coreClient.dataSourceIntrospect(name, password);
+        function onIntrospectRequested(name, password, context) {
+            root.coreClient.dataSourceIntrospect(name, password, context);
         }
 
-        function onQueryRequested(name, password, sql, confirmWrite, maxRows) {
-            root.coreClient.dataSourceQuery(name, password, sql, maxRows, confirmWrite);
+        function onQueryRequested(name, password, sql, confirmWrite, maxRows, context, confirmation) {
+            root.coreClient.dataSourceQuery(name, password, sql, maxRows, confirmWrite, context, confirmation);
         }
     }
 
@@ -67,8 +67,8 @@ Item {
     Connections {
         target: root.dataSourceController ? root.dataSourceController.impact : null
 
-        function onImpactRequested(name, sql) {
-            root.coreClient.dataSourceImpact(name, root.dataSourceController.sessionPassword, sql);
+        function onImpactRequested(name, sql, context) {
+            root.coreClient.dataSourceImpact(name, root.dataSourceController.passwordFor(name), sql, context);
         }
     }
 
@@ -90,8 +90,8 @@ Item {
             root.coreClient.dataSourceCreateServer(engine, name, port);
         }
 
-        function onDestroyRequested(name, data) {
-            root.coreClient.dataSourceDestroy(name, data);
+        function onDestroyRequested(name, data, context, confirmation) {
+            root.coreClient.dataSourceDestroy(name, data, root.dataSourceController.passwordFor(name), context, confirmation);
         }
     }
 }
