@@ -155,6 +155,7 @@ Estado real hoje (detalhe e pins no registry):
 | Git (CLI) | A | Controle de versão | — |
 | notify | A | Mudanças externas no filesystem | [ADR-0001](../decisoes-adr/ADR-0001-notify-filesystem-watcher.md) |
 | alacritty_terminal | A | Emulador VT do terminal integrado | [ADR-0004](../decisoes-adr/ADR-0004-alacritty-terminal-emulator.md) |
+| tokio-postgres · tokio · futures-util | A | Streaming e transação da prévia PostgreSQL no job | [ADR-0008](../decisoes-adr/ADR-0008-previa-postgresql-no-worker.md) |
 | linuxdeploy (+ plugin Qt) | A | Empacotamento AppImage (build-time) | [ADR-0003](../decisoes-adr/ADR-0003-linuxdeploy-appimage-packaging.md) |
 
 > **CORRIGIDO em 2026-09-10.** Esta linha dizia *"Próxima integração recomendada:

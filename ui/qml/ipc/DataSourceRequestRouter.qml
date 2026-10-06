@@ -40,6 +40,12 @@ Item {
     }
 
     Connections {
+        target: root.dataSourceController ? root.dataSourceController.previews : null
+        function onDecisionRequested(operation) { root.coreClient.dataSourcePreviewDecide(operation); }
+        function onCancelExecutionRequested(jobId) { root.coreClient.cancelJob(jobId); }
+    }
+
+    Connections {
         target: root.dataSourceController ? root.dataSourceController.odbc : null
 
         function onSourcesRequested() { root.coreClient.dataSourceOdbcSources(); }

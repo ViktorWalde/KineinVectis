@@ -97,4 +97,7 @@ pub struct DataSourceImpactEvent {
     /// Production removal also requires the full connection name.
     #[serde(default)]
     pub requires_connection: bool,
+    /// The core permits `PostgreSQL` transaction preview for this exact command.
+    #[serde(default)]
+    pub preview_eligible: bool,
 }

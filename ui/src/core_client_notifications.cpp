@@ -15,11 +15,9 @@
 
 namespace kinein {
 
-void CoreClient::handleNotification(const QString& method, const QJsonObject& params)
+// Eventos do Banco compartilham o contexto público e o ciclo dos jobs.
+bool CoreClient::handleDataSourceNotification(const QString& method, const QJsonObject& params)
 {
-    if (handleFileSystemNotification(method, params)) {
-        return;
-    }
     if (method == QStringLiteral("event.datasource.introspected")) {
         emit dataSourceIntrospected(
             params.value(QStringLiteral("name")).toString(),
@@ -29,17 +27,21 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
             params.value(QStringLiteral("message")).toString(),
             params.value(QStringLiteral("secretRequired")).toBool(false),
             params.value(QStringLiteral("clientContext")).toString());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.datasource.impact")) {
         emit dataSourceImpactMeasured(params.toVariantMap());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.datasource.queried")) {
         // columns, rows (celulas em texto, null = NULL), affected, truncated,
         // elapsedMs, message e secretRequired viajam juntos: e' uma tabela.
         emit dataSourceQueried(params.toVariantMap());
-        return;
+        return true;
+    }
+    if (method == QStringLiteral("event.datasource.previewed")) {
+        emit dataSourcePreviewed(params.toVariantMap());
+        return true;
     }
     if (method == QStringLiteral("event.datasource.tested")) {
         emit dataSourceTested(params.value(QStringLiteral("name")).toString(),
@@ -48,19 +50,30 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
                               params.value(QStringLiteral("message")).toString(),
                               params.value(QStringLiteral("secretRequired")).toBool(false),
                               params.value(QStringLiteral("clientContext")).toString());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.datasource.destroyed")) {
         emit dataSourceDestroyed(params.value(QStringLiteral("success")).toBool(false),
                                  params.value(QStringLiteral("message")).toString(),
                                  params.value(QStringLiteral("profiles")).toArray().toVariantList(),
                                  params.value(QStringLiteral("clientContext")).toString());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.datasource.created")) {
         emit dataSourceCreated(params.value(QStringLiteral("success")).toBool(false),
                                params.value(QStringLiteral("profile")).toObject().toVariantMap(),
                                params.value(QStringLiteral("message")).toString());
+        return true;
+    }
+    return false;
+}
+
+void CoreClient::handleNotification(const QString& method, const QJsonObject& params)
+{
+    if (handleFileSystemNotification(method, params)) {
+        return;
+    }
+    if (handleDataSourceNotification(method, params)) {
         return;
     }
     if (method == QStringLiteral("event.grafana.probed")) {

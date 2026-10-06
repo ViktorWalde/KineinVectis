@@ -104,6 +104,11 @@ Item {
         anchors.right: parent.right
         profile: root.dataSourceController === null ? null : root.dataSourceController.profileByName(
             root.dataSourceController.consoles.connectionFor(root.editorController.currentFilePath()))
+        onPreviewRequested: {
+            const surface = editorPane.editorSurface;
+            root.dataSourceController.consoles.runFromEditor(root.editorController.currentFilePath(), surface.text,
+                surface.cursorPosition, surface.selectionStart, surface.selectionEnd, true);
+        }
     }
 
     EditorPane {

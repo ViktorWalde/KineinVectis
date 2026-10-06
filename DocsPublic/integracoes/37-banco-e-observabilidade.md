@@ -195,8 +195,14 @@ uma dependência.
 **O `postgres` 0.19.14** é o cliente *síncrono* dos mesmos mantenedores do
 `tokio-postgres` (repositório `rust-postgres`), atualizado em 2026-06-12. Ele
 embute um `tokio` 1.53.1 como detalhe de implementação — a árvore tem tokio —,
-mas **o código deste repositório continua síncrono**, que é o desenho do core
-(`Core::new()` puro roda sem GUI e sem runtime).
+e inicialmente o código do repositório usava apenas sua interface síncrona.
+Desde a prévia PostgreSQL (`0.159.0`, 2026-10-06), um worker usa explicitamente
+`tokio-postgres` 0.7.18, `tokio` 1.53.1 e `futures-util` 0.3.34, já presentes
+no lock. O runtime de uma thread existe somente durante esse job: drena o
+resultado e mantém o driver vivo enquanto aguarda a decisão. O despacho IPC
+e `Core::new()` continuam sem exigir runtime. Não entrou crate ou versão
+nova no lock; as três dependências diretas foram declaradas e auditadas.
+Donos, limites e ciclo da conexão em [arquitetura/37 §9](../arquitetura/37-banco-de-dados.md).
 
 (Escrito em 2026-09-04, quando a árvore não tinha `rustls` nem `openssl`; o
 `mongodb` trouxe o `rustls` no mesmo dia, e o `postgres` o usa desde 0.121.0

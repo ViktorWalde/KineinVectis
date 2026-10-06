@@ -143,6 +143,7 @@ Item {
         width: parent.width
         visible: root.columns.length === 0 && root.emptyText !== ""
         text: root.emptyText
+        textFormat: Text.PlainText
         color: Theme.textMuted
         font.pixelSize: Theme.fontSizeSmall
         wrapMode: Text.WordWrap
@@ -226,6 +227,7 @@ Item {
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: root.numeric[celula.index] ? Text.AlignRight : Text.AlignLeft
                                 text: rules.cellText(celula.value)
+                                textFormat: Text.PlainText
                                 font.italic: rules.isNull(celula.value)
                                 color: rules.isNull(celula.value) ? Theme.textMuted
                                        : (gridRow.selected ? Theme.textPrimary : Theme.textSecondary)

@@ -72,6 +72,7 @@ pub struct Core {
     tool_registry: Arc<Mutex<Option<Vec<ToolInfo>>>>,
     workspace: Option<WorkspaceInfo>,
     odbc: datasource::odbc::Session,
+    previews: datasource::preview::Session,
     fswatch: Option<fswatch::WorkspaceWatcher>,
     syntax: lang::SyntaxTreeService,
     /// O indice do projeto inteiro (pilar 0 do roadmaps/42): construido por um
@@ -123,6 +124,7 @@ impl Core {
             tool_registry: Arc::new(Mutex::new(None)),
             workspace: None,
             odbc: datasource::odbc::Session::default(),
+            previews: datasource::preview::Session::default(),
             fswatch: None,
             syntax: lang::SyntaxTreeService::default(),
             index: Arc::new(Mutex::new(index::ProjectIndex::default())),
@@ -191,6 +193,7 @@ impl Core {
                 json!(CorePingResult::default()),
             )),
             "core.shutdown" => {
+                self.previews.clear();
                 // M4.3b: cancela jobs vivos já no shutdown (sinal pronto +
                 // entrega os event.job.* enquanto o canal existe); o drain
                 // final fica no Drop do JobManager, após a resposta.

@@ -74,6 +74,9 @@ Os caminhos são relativos à raiz do repositório.
 | Pedidos de teste e catálogo por destino | `ui/qml/datasource/DataSourceCatalogController.qml` |
 | Padrões e textos por motor | `ui/qml/datasource/DataSourceKinds.qml` |
 | Estado do aviso e apresentação | `ui/qml/datasource/DataSourceImpactController.qml`, `ui/qml/datasource/SqlImpactDialog.qml` |
+| Contrato, registro e decisão da prévia | `crates/kinein-protocol/src/datasource_preview.rs`, `crates/kinein-core/src/datasource/preview.rs`, `crates/kinein-core/src/handlers/datasource_preview.rs` |
+| Elegibilidade, execução e amostra PostgreSQL | `crates/kinein-core/src/datasource/preview_sql.rs`, `crates/kinein-core/src/datasource/preview_postgres.rs`, `crates/kinein-core/src/datasource/preview_rows.rs` |
+| Estado público e janela da prévia | `ui/qml/datasource/DataSourcePreviewController.qml`, `ui/qml/datasource/DataSourcePreviewDialog.qml` |
 | Seleção de opções, foco e setas | `ui/qml/components/KvSegmentedControl.qml` |
 
 A confirmação nasce no core. A UI apresenta a classificação recebida e
@@ -146,9 +149,9 @@ e `sensores` não libera a confirmação. Cancelar não envia escrita.
 Confirmar reenvia o mesmo texto com `confirmWrite: true`.
 
 **Limites reais:** contagem e execução usam conexões/operações separadas.
-A prévia não congela o banco: alterações concorrentes podem mudar o alcance.
-A transação PostgreSQL com prévia, `COMMIT` e `ROLLBACK` ainda é trabalho do
-59 §5.3. A classificação SQL é uma análise limitada; não prevê efeitos de
+Essa contagem não congela o banco: alterações concorrentes podem mudar o alcance.
+A execução PostgreSQL com prévia é um caminho explícito separado (§9).
+A classificação SQL é uma análise limitada; não prevê efeitos de
 triggers, funções e cascatas. Ela não substitui as permissões do servidor.
 
 Desde o `0.158.0`, handler e executor SQL usam o mesmo léxico para conferir
@@ -156,7 +159,8 @@ o lote inteiro, incluindo CTE mutante, comandos de transação, comentários,
 identificadores delimitados e blocos com dólar. Entrada incompleta ou ambígua
 não é promovida a leitura. O parser conserva fronteiras em bytes UTF-8.
 Isso continua sendo classificação conservadora, não um parser completo nem
-uma sessão de transação mantida entre pedidos.
+uma sessão comum de transação mantida entre pedidos. A prévia da §9 tem
+seu próprio contrato, prazo e conexão pertencendo ao worker.
 
 ## 4. MongoDB e a gramática do console
 
@@ -424,10 +428,163 @@ conferência independente, nomes parciais, CTE/lote, teste/catálogo com context
 e remoção PostgreSQL com senha. `--ui` mantém o ambiente para gestos e limpa
 o que criou ao encerrar a IDE.
 
-## 9. Onde continuar
+## 9. Prévia PostgreSQL — 0.159.0
+
+**Implementada; aceite da fatia pendente no 40.7 §7.223.** Plano antes do
+código no 59 §5.11. A prévia executa uma escrita real e conserva a transação
+pendente até uma decisão; não é simulação nem a contagem de impacto da §3.
+O aviso antecede a execução, também em Desenvolvimento. Produção e somente
+leitura mantêm suas regras; não há atalho por `confirmWrite`.
+
+```mermaid
+sequenceDiagram
+  actor person as Pessoa
+  participant ui as Consulta, aviso e prévia QML
+  participant dispatch as Despacho IPC
+  participant registry as Registro público da sessão
+  participant worker as Job PostgreSQL
+  participant pg as Servidor
+  person->>ui: Executar com prévia
+  ui->>dispatch: query: preview, contexto e confirmação
+  dispatch->>dispatch: Validar perfil, política e SQL antes da senha/job
+  dispatch->>registry: Reservar contexto e canal único
+  dispatch->>worker: Pedido e segredo separados
+  dispatch-->>ui: jobId e contexto correlacionado
+  worker->>pg: BEGIN, limites locais, escrita com RETURNING
+  worker-->>ui: previewed: SQL, amostra, total e prazo
+  person->>ui: Confirmar ou desfazer
+  ui->>dispatch: preview.decide com id, token e contexto
+  dispatch->>registry: Conferir destino e consumir canal uma vez
+  registry->>worker: Decisão aceita
+  worker->>pg: COMMIT ou ROLLBACK
+  pg-->>worker: Resposta ou perda da conexão
+  worker->>registry: Liberar reserva ao terminar
+  worker-->>ui: queried: desfecho real
+```
+
+### Elegibilidade e SQL executado
+
+`preview_sql` usa o mesmo léxico `SqlScan` da política. Aceita somente uma
+instrução direta `INSERT`, `UPDATE` ou `DELETE` PostgreSQL; recusa lotes,
+controle de transação, comandos fora desse recorte e léxico ambíguo.
+É uma regra conservadora de elegibilidade, não um parser SQL completo nem
+sandbox. CTE inicial não tem prévia nesse recorte.
+
+Sem RETURNING explícito no nível da instrução, acrescenta `RETURNING *`
+antes de comentários finais; com RETURNING, conserva a cláusula. Literais,
+identificadores, comentários, dólar e posições UTF-8 passam pelo léxico
+comum. O SQL original e o executado ficam visíveis separadamente. As linhas
+vêm do [RETURNING do PostgreSQL](https://www.postgresql.org/docs/16/dml-returning.html):
+na alteração são os valores novos; na remoção são os valores removidos.
+O tamanho da amostra não limita o alcance da escrita.
+
+A medição silenciosa de produção pode promover um filtro que pega todos
+os registros para confirmação por nomes. Nesse caso ainda não houve prévia
+executada: `queried` informa `access: write` e `confirmationSql`, libera a
+reserva e a UI retorna ao aviso mantendo a intenção de prévia.
+
+### Donos, capacidade e descarte
+
+O registro `preview::Session` pertence ao Core. Guarda apenas cópia pública
+do projeto/perfil, token, identificador, job, prazo e canal de decisão.
+Não guarda SQL, senha, driver ou conexão. `Lease` é a reserva do worker:
+até quatro vivas por core, uma por projeto/nome de conexão. A capacidade
+permanece ocupada durante cancelamento e finalização, e é liberada antes
+do evento terminal. Identificador desconhecido, não pronto, repetido,
+expirado ou com contexto diferente é recusado.
+
+O job mantém conexão, senha e transação. Um runtime Tokio de uma thread
+é criado somente para esse worker; o driver é drenado enquanto se espera
+a decisão. O despacho IPC continua disponível. `tokio-postgres` 0.7.18,
+`tokio` 1.53.1 e `futures-util` 0.3.34 já eram transitivos no lock e agora
+são dependências diretas explícitas. Não entrou crate ou versão nova.
+Licenças, escopo e verificação constam no registro de componentes abertos.
+
+Troca/fechamento do projeto, alteração/remoção do perfil, shutdown e
+cancelamento descartam decisões ainda pendentes. COMMIT confere o perfil
+salvo novamente antes de consumir o canal. Depois do aceite, cancelar o
+job retorna falso: a IDE não promete revogar um comando que já pode ter
+chegado ao servidor. O controller QML guarda só dados públicos, cancela
+aceite/resultado antigo e não reabre a janela para outra consulta.
+**Desfazer** recebe o foco inicial; Esc/clique fora solicitam rollback.
+SQL solicitado/executado, aliases, células, dicas e mensagens da grade são texto
+literal. Dados não confiáveis não ganham links ou imagens por AutoText;
+`tst_kv_data_grid_plain_text` reproduziu links nesses pontos antes da
+correção e verifica o resultado desenhado, sem abrir URLs.
+
+### Orçamentos e desfechos
+
+| Recurso | Limite desta implementação |
+| --- | --- |
+| Conexão | 5 s no socket do driver; timeout de 6 s na future de conexão |
+| Consulta | statement_timeout 10 s, lock_timeout 1 s, 15 s totais no worker |
+| Decisão | 60 s após a amostra ficar pronta |
+| Transação ociosa | idle_in_transaction_session_timeout 65 s no servidor |
+| COMMIT/ROLLBACK | 12 s no cliente; statement_timeout local continua valendo |
+| Amostra | maxRows: padrão 500, máximo 10.000; 128 colunas, 16 KiB por célula, 8 MiB de células retidas |
+
+**Limite do resolvedor ainda a tratar:** host com nome usa DNS/NSS bloqueante
+no pool do Tokio. A future de conexão pode vencer em 6 s, mas o Drop do
+runtime espera esse trabalho terminar; o evento terminal do job pode chegar
+mais tarde se o resolvedor do sistema travar. O laço IPC continua livre e a
+reserva permanece ocupada, limitando o total de prévias em limpeza. Não
+apresentar esse timeout como teto absoluto de duração do job com DNS.
+Os fontes resolvidos de `tokio-postgres`/Tokio confirmam esse caminho; a
+[documentação de Runtime](https://docs.rs/tokio/latest/tokio/runtime/struct.Runtime.html)
+explica a espera de tarefas bloqueantes no encerramento. Corrigir e provar
+esse ciclo na revisão de recursos/segurança antes do fechamento da 0.3.9;
+não trocar por shutdown_background que permita acumular resoluções órfãs.
+
+O stream drena todas as linhas e usa o total do comando do servidor, mesmo
+quando só retém uma amostra. NULL permanece nulo. Erro SQL, limite de
+célula/coluna/memória ou tempo excessivo encerra a execução/conexão. O driver
+aloca a mensagem recebida antes da validação de cada célula; esses limites
+não são um teto absoluto da memória de todos os frames na rede. O caminho
+comum `postgres::simple_query` ainda coleta um Vec: esta fatia não resolve
+seu consumo na consulta ordinária.
+
+`committed` e `rolledBack` só chegam após a resposta correspondente.
+Expiração/cancelamento com ROLLBACK reconhecido chegam como `expired`/
+`cancelled`; sem reconhecimento de rollback, há falha, sem afirmar que o
+servidor o confirmou. COMMIT recusado com severidade tipada ERROR é `failed`,
+exceto resultado desconhecido (`40003`) ou classe de conexão (`08`). FATAL,
+PANIC, perda de transporte ou timeout durante COMMIT são `unknown`.
+Ter SQLSTATE, sozinho, não prova que COMMIT foi recusado. A pessoa deve
+conferir os dados em outra conexão antes de repetir.
+
+Rollback não recupera valores consumidos de [sequências](https://www.postgresql.org/docs/16/functions-sequence.html)
+nem efeitos externos de funções/triggers. Locks e efeitos no servidor
+existem durante a prévia; não há promessa de ausência de efeitos colaterais.
+
+A configuração de conexão/TLS é compartilhada com as operações síncronas.
+O perfil TLS verificado define `SslMode::Require` explicitamente; sem TLS,
+define `Disable`. Isso corrige o fallback indevido do padrão `Prefer`,
+reproduzido por teste antes da correção e por servidor real sem TLS.
+
+### Provas reproduzíveis
+
+Testes unitários: `preview_tests.rs`, `preview_sql.rs`, `preview_rows.rs`,
+contrato `datasource_preview.rs` e conexão `connection_tests.rs`.
+`tst_datasource_preview` tenta contexto antigo, decisão repetida, expiração
+da UI, descarte, cancelamento antes da amostra e preservação de decisão aceita.
+
+`python3 scripts/testar-banco-real.py --preview` acrescenta PostgreSQL real:
+commit/rollback com psql independente, NULL, UPDATE FROM, RETURNING explícito,
+sequência não recuperada, recusa somente leitura/contexto/TLS/lote,
+cancelamento, perfil/projeto alterado, amostra de 2 para 3.000 alterações,
+célula hostil, erro SQL, lock_timeout, expiração real de 60 s, constraint
+diferida que recusa COMMIT e duas perdas de resposta durante COMMIT.
+A última mata somente o backend dentro do contêiner descartável da prova,
+confere recuperação e saldo por outra conexão; nunca usa banco do autor.
+`--ui` conserva esse ambiente até o fechamento normal da janela e limpa
+os contêineres/projeto/XDG. O aceite completo fica no 40.7, sem tratar uma
+prova intermediária como fechamento do passo 7.
+
+## 10. Onde continuar
 
 A fila e o prompt de retomada ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
-Transação com prévia PostgreSQL (59 §5.11), menus e árvore viva,
-completion e ampliação da grade continuam no passo 7. O pente fino e o
+Aceitar a fatia PostgreSQL (§9), atender o pedido do autor de profundidade
+do editor e seguir menus/árvore viva, console, completion e ampliação da
+grade no passo 7. O pente fino e o
 AppImage seguem a ordem do 59 §7.

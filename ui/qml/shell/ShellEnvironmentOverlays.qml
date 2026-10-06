@@ -130,6 +130,16 @@ Item {
         onDismissRequested: root.dataSourceController.odbc.cancel()
     }
 
+    DataSourcePreviewDialog {
+        anchors.fill: parent
+        visible: root.dataSourceController !== null && root.dataSourceController.previews.open
+        z: 102
+        controller: root.dataSourceController ? root.dataSourceController.previews : null
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.dataSourceController.previews.decide("rollback")
+    }
+
     // O passo de permissao (E2) vai para o TERMINAL DA IDE, visivel, pelo
     // mesmo caminho do painel de instalacao. Nada roda escondido.
     Connections {

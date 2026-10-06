@@ -1,5 +1,25 @@
 # 03 — Protocolo IPC
 
+> **0.159.0 (2026-10-06, contrato antes do código; aceite pendente).**
+> Prévia PostgreSQL: `datasource.query.preview?` é falso quando ausente.
+> Prévia exige contexto/token, confirmação anterior à escrita e uma instrução
+> direta INSERT/UPDATE/DELETE elegível no core. O aceite da consulta acrescenta
+> `name`, `clientContext?` e `preview` ao `jobId`, permitindo cancelar uma prévia
+> substituída antes de seu resultado. `event.datasource.impact`
+> informa `previewEligible`. `event.datasource.previewed` traz `jobId`, `name`,
+> `clientContext`, `previewId`, `expiresInSeconds`, `sql`, `executedSql`,
+> `columns`, `rows`, `affected`, `truncated` e `elapsedMs`, sem senha.
+> `datasource.preview.decide { previewId, decision: commit | rollback, name,
+> clientContext, expectedContext }` aceita uma decisão uma vez e devolve
+> `{ jobId }`; o evento final `queried.previewOutcome?` informa `committed`,
+> `rolledBack`, `expired`, `cancelled`, `failed` ou `unknown`. Falha de rede
+> durante COMMIT não presume sucesso nem rollback. `DATA_SOURCE_PREVIEW_UNAVAILABLE`
+> recusa prévia inelegível, ocupada, desconhecida, não pronta ou expirada.
+> Até quatro prévias por core, uma por projeto/conexão; decisão em 60 segundos.
+> Troca/fechamento do projeto, alteração/remoção do perfil e cancelamento do job
+> descartam decisões ainda pendentes. Uma decisão de COMMIT já aceita não é
+> revogável por esse descarte. Plano e limites no 59 §5.11.
+
 > **0.158.0 (2026-10-06, validado no checkout; 40.7 §7.222).** Perfis recebem
 > `production` e `readOnly`, falsos quando ausentes. Consulta, impacto,
 > teste, catálogo e remoção aceitam `clientContext?` e `expectedContext?`, com
@@ -3248,7 +3268,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 180 métodos roteados — a lista inteira
+## Os 181 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3306,6 +3326,7 @@ datasource.impact
 datasource.introspect
 datasource.list
 datasource.query
+datasource.preview.decide
 datasource.remove
 datasource.save
 datasource.test
@@ -3483,7 +3504,7 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 58 eventos emitidos — a lista inteira
+## Os 59 eventos emitidos — a lista inteira
 
 > **2026-10-03:** a lista estava atrás do código — sete eventos entraram sem
 > chegar aqui (`coverage.finished`, `python.stubs`, `remote.deployed`,
@@ -3513,6 +3534,7 @@ event.datasource.destroyed
 event.datasource.impact
 event.datasource.introspected
 event.datasource.queried
+event.datasource.previewed
 event.datasource.tested
 
 event.debug.continued
@@ -4549,18 +4571,23 @@ datasource.remove     { name }                -> DataSourceWriteResult
 datasource.test       { name, password?, clientContext?, expectedContext? }     -> DataSourceTestAccepted   (job)
 datasource.impact    { name, password?, sql, clientContext?, expectedContext? } -> aceite + job + event.datasource.impact  (0.150.0; so' leituras)
 datasource.introspect { name, password?, clientContext?, expectedContext? }     -> aceite + job
-datasource.query      { name, password?, sql, maxRows?, confirmWrite?, clientContext?, expectedContext?, confirmation? } -> aceite + job  (0.121.0)
+datasource.query      { name, password?, sql, maxRows?, confirmWrite?, clientContext?, expectedContext?, confirmation?, preview? } -> { jobId, name, clientContext?, preview } + job (0.159.0)
+datasource.preview.decide { previewId, decision, name, clientContext, expectedContext } -> { jobId } + queried com desfecho (0.159.0)
 ```
 
-**Os cinco últimos exigem workspace aberto**; o perfil mora no projeto.
+Teste, impacto, catálogo, consulta e decisão de prévia exigem workspace
+aberto; o perfil mora no projeto.
 
 ```text
 event.datasource.tested        { jobId, name, ok, message, clientContext?, ... }
-event.datasource.impact        { jobId, name, sql, severity, clientContext?, confirmationTarget?, requiresConnection,
+event.datasource.impact        { jobId, name, sql, severity, clientContext?, confirmationTarget?, requiresConnection, previewEligible,
                                  statements: [{ text, kind, targets, column?, filter?, severity, rows?, totalRows?, note? }] }  (0.158.0)
 event.datasource.introspected  { jobId, name, schemas | collections, clientContext?, ... }
+event.datasource.previewed     { jobId, name, clientContext, previewId, expiresInSeconds, sql, executedSql,
+                                 columns: [string], rows: [[string | null]], affected, truncated, elapsedMs } (0.159.0)
 event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
-                                 rowCount, affected?, truncated, elapsedMs, message?, secretRequired, confirmationSql?, clientContext?, access }
+                                 rowCount, affected?, truncated, elapsedMs, message?, secretRequired, confirmationSql?, clientContext?, access,
+                                 previewOutcome?: committed | rolledBack | expired | cancelled | failed | unknown }
 event.datasource.created       { jobId, success, profile?, message }                          (0.124.0)
 event.datasource.destroyed     { jobId, success, message, profiles?, clientContext? }                          (0.129.0)
 ```
@@ -4599,6 +4626,15 @@ Se atinge tudo ou não pode ser medida, o evento traz `confirmationSql`, sem
 executar a escrita. A UI abre o mesmo diálogo e reenvia o texto com
 `confirmWrite: true` depois do gesto explícito.
 
+**Prévia (`0.159.0`).** É execução real dentro de transação PostgreSQL, para
+uma instrução direta INSERT/UPDATE/DELETE elegível; não é a contagem do aviso.
+Contexto/token e confirmação são obrigatórios antes da escrita.
+`preview.decide` rejeita campos desconhecidos, inclusive senha e autorização;
+COMMIT confere o perfil salvo novamente e a decisão só é aceita uma vez.
+SQLSTATE em FATAL não basta para afirmar recusa: perda de resposta de COMMIT
+é `unknown`. Sequências e efeitos externos não são recuperados por rollback.
+O ciclo, streaming e orçamentos estão no [37 §9](37-banco-de-dados.md).
+
 A execução mantém o texto do autor (`simple_query`/`execute_batch`), e
 `affected` é o que o motor contou (SQLite: a última instrução). Células são
 texto; `NULL` é `null`; `BLOB` SQLite vira `<N bytes>`; num lote, a grade
@@ -4614,7 +4650,9 @@ require` (ausente = `disable`, o de sempre) e `caFile` (PEM em que confiar,
 para o servidor autoassinado; ausente = raízes públicas do `webpki-roots`).
 `require` é o `verify-full` do libpq — cadeia **e** nome do host conferidos
 —; não existe "cifra sem conferir" (o `sslmode=require` do libpq). Só vale
-para o motor `postgres`: noutro motor o `save` descarta. Implementação:
+para o motor `postgres`: noutro motor o `save` descarta. Desde a correção
+`0.159.0`, conexão comum e prévia definem `SslMode::Require` explicitamente:
+servidor sem TLS é recusado, sem fallback sem cifra. Implementação:
 `tokio-postgres-rustls` 0.14 (MIT) sobre o `rustls` que o `mongodb` já
 trazia — +11 crates medidos em 2026-09-18, `cargo deny` verde
 (`../integracoes/37`).

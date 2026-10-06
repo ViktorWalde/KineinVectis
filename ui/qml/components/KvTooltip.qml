@@ -19,6 +19,7 @@ Rectangle {
 
         anchors.centerIn: parent
         text: root.text
+        textFormat: Text.PlainText
         color: Theme.textPrimary
         font.pixelSize: Theme.fontSizeSmall
     }

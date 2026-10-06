@@ -9,6 +9,8 @@ pub struct SqlScan {
     pub boundaries: Vec<usize>,
     /// Todas as fronteiras são conhecidas; falso exige recusa conservadora.
     pub valid: bool,
+    /// End of the last SQL token/literal, excluding trailing whitespace/comments.
+    pub code_end: usize,
 }
 
 /// Palavra ou identificador sem interpretar strings como comandos.
@@ -158,6 +160,7 @@ pub fn lex(sql: &str) -> SqlScan {
     let mut at = 0;
     let mut valid = true;
     let mut depth = 0usize;
+    let mut code_end = 0;
     while at < bytes.len() {
         if bytes[at..].starts_with(b"--") {
             let end = bytes[at..]
@@ -192,11 +195,13 @@ pub fn lex(sql: &str) -> SqlScan {
             valid &= closed && !escaped;
             blank(&mut masked, start, end);
             at = end;
+            code_end = at;
         } else if matches!(bytes[at], b'"' | b'`' | b'[') {
             let close = if bytes[at] == b'[' { b']' } else { bytes[at] };
             let (end, closed, escaped) = quoted_end(bytes, at, close);
             valid &= closed && !escaped;
             at = end;
+            code_end = at;
         } else if let Some(delimiter) = dollar_delimiter(bytes, at) {
             let start = at;
             let after = at + delimiter.len();
@@ -206,6 +211,7 @@ pub fn lex(sql: &str) -> SqlScan {
             valid &= closing.is_some();
             at = closing.map_or(bytes.len(), |n| after + n + delimiter.len());
             blank(&mut masked, start, at);
+            code_end = at;
         } else {
             match bytes[at] {
                 b';' if depth == 0 => boundaries.push(at),
@@ -218,6 +224,9 @@ pub fn lex(sql: &str) -> SqlScan {
                 }
                 _ => {}
             }
+            if !bytes[at].is_ascii_whitespace() {
+                code_end = at + 1;
+            }
             at += 1;
         }
     }
@@ -226,6 +235,7 @@ pub fn lex(sql: &str) -> SqlScan {
         masked: String::from_utf8(masked).unwrap_or_default(),
         boundaries,
         valid,
+        code_end,
     }
 }
 

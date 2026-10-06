@@ -79,7 +79,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 180 métodos IPC roteados pelo core.
+Medido: 181 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -148,6 +148,7 @@ flowchart LR
   n_core_dap --> n_core_stderr_tail
   n_core_datasource --> n_core_container
   n_core_datasource --> n_core_db
+  n_core_datasource --> n_core_jobs
   n_core_datasource --> n_core_tools
   n_core_flash --> n_core_build
   n_core_fswatch --> n_core_lsp
@@ -211,7 +212,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-43 módulos, 80 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+43 módulos, 81 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -231,7 +232,7 @@ flowchart LR
 | `container` | tools | Containers como dominio NATIVO: |
 | `coverage` | process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | lsp, python, run, stderr_tail | Subsistema de debug: |
-| `datasource` | container, db, tools | Fontes de dados: |
+| `datasource` | container, db, jobs, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `flash` | build | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | — | Buffer formatting by orchestrating the project's own formatters. |
@@ -268,8 +269,8 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 180 métodos roteados pelo core, 149 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 31 estão aqui,
+Dos 181 métodos roteados pelo core, 151 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 30 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -283,7 +284,6 @@ nomeados, para nada ficar invisível:
 | `coverage.run` | `ui/qml/app/AppDomains.qml` |
 | `environment.scan` | `ui/qml/Main.qml` |
 | `format.capabilities` | `ui/qml/Main.qml` |
-| `job.cancel` | `ui/qml/app/AppDomains.qml` |
 | `lsp.restart` | `ui/qml/command/CommandDispatcher.qml`, `ui/qml/shell/ShellHeaderHost.qml` |
 | `quality.run` | `ui/qml/app/AppDomains.qml` |
 | `run.capabilities` | `ui/qml/Main.qml` |
@@ -1121,14 +1121,16 @@ flowchart LR
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
   end
   subgraph IPC["JSON-RPC"]
-    n_ipc_datasource(["datasource.* · 13"])
+    n_ipc_datasource(["datasource.* · 14"])
     n_ipc_fs(["fs.* · 1"])
     n_ipc_grafana(["grafana.* · 4"])
+    n_ipc_job(["job.* · 1"])
   end
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_datasource_rs["handlers/datasource.rs"]
     n_crates_kinein_core_src_handlers_fs_rs["handlers/fs.rs"]
     n_crates_kinein_core_src_handlers_grafana_rs["handlers/grafana.rs"]
+    n_crates_kinein_core_src_handlers_jobs_rs["handlers/jobs.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
     n_core_datasource[datasource]
     n_core_grafana[grafana]
@@ -1153,6 +1155,7 @@ flowchart LR
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_DataSourceEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_GrafanaEventRouter_qml
   n_ui_src_core_client_requests_cpp --> n_ipc_fs
+  n_ui_src_core_client_requests_cpp --> n_ipc_job
   n_ipc_datasource --> n_crates_kinein_core_src_handlers_datasource_rs
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_datasource
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_jobs
@@ -1165,6 +1168,9 @@ flowchart LR
   n_crates_kinein_core_src_handlers_grafana_rs --> n_core_grafana
   n_crates_kinein_core_src_handlers_grafana_rs --> n_core_jobs
   n_crates_kinein_core_src_handlers_grafana_rs --> n_core_rpc
+  n_ipc_job --> n_crates_kinein_core_src_handlers_jobs_rs
+  n_crates_kinein_core_src_handlers_jobs_rs --> n_core_jobs
+  n_crates_kinein_core_src_handlers_jobs_rs --> n_core_rpc
   n_ipc_datasource --> n_crates_kinein_core_src_lib_rs
   n_crates_kinein_core_src_lib_rs --> n_core_tools
   CORE -.->|processos| n_tools_data
@@ -1186,9 +1192,10 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/datasource.rs` | Handler dos pedidos datasource.* (impl Core). |
 | handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
 | handler Rust | `crates/kinein-core/src/handlers/grafana.rs` | Handler dos pedidos grafana.* (impl Core). |
+| handler Rust | `crates/kinein-core/src/handlers/jobs.rs` | Handlers for job.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (18): `datasource.console`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`.
+Métodos IPC (20): `datasource.console`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.preview.decide`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`, `job.cancel`.
 
 ### Containers
 

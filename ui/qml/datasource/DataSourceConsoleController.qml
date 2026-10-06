@@ -89,12 +89,12 @@ QtObject {
     }
 
     // Ctrl+Enter no editor. false = nao e' console (o atalho nao faz nada).
-    function runFromEditor(path, text, cursor, selectionStart, selectionEnd) {
+    function runFromEditor(path, text, cursor, selectionStart, selectionEnd, preview) {
         const name = root.connectionFor(path);
         if (name === "") return false;
         const statement = root.statementAt(text, cursor, selectionStart, selectionEnd, path.endsWith(".mongo"));
         if (statement === "") return true;
-        root.dataSourceController.runOn(name, statement, false);
+        root.dataSourceController.runOn(name, statement, false, 0, null, preview === true);
         root.resultsRequested();
         return true;
     }

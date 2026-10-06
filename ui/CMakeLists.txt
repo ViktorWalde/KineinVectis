@@ -197,6 +197,8 @@ set_source_files_properties(qml/datasource/DataSourceDsnPicker.qml PROPERTIES QT
 set_source_files_properties(qml/datasource/DataSourceDriverDialog.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDriverDialog.qml)
 set_source_files_properties(qml/datasource/DataSourceOdbcController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceOdbcController.qml)
 set_source_files_properties(qml/datasource/DataSourceSecretController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceSecretController.qml)
+set_source_files_properties(qml/datasource/DataSourcePreviewController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePreviewController.qml)
+set_source_files_properties(qml/datasource/DataSourcePreviewDialog.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePreviewDialog.qml)
 set_source_files_properties(qml/datasource/DataSourceQueryController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceQueryController.qml)
 set_source_files_properties(qml/datasource/DataSourceCatalogController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceCatalogController.qml)
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
@@ -610,6 +612,8 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceDriverDialog.qml
         qml/datasource/DataSourceOdbcController.qml
         qml/datasource/DataSourceSecretController.qml
+        qml/datasource/DataSourcePreviewController.qml
+        qml/datasource/DataSourcePreviewDialog.qml
         qml/datasource/DataSourceQueryController.qml
         qml/datasource/DataSourceCatalogController.qml
         qml/datasource/DataSourceList.qml

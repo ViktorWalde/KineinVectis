@@ -36,6 +36,9 @@ impl Core {
             "datasource.remove" => Some(self.datasource_remove_response(request_id, params)),
             "datasource.test" => Some(self.datasource_test_response(request_id, params)),
             "datasource.query" => Some(self.datasource_query_response(request_id, params)),
+            "datasource.preview.decide" => {
+                Some(self.datasource_preview_decide_response(request_id, params))
+            }
             "datasource.create" => Some(self.datasource_create_response(request_id, params)),
             "datasource.destroy" => Some(self.datasource_destroy_response(request_id, params)),
             "datasource.console" => Some(self.datasource_console_response(request_id, params)),
@@ -88,6 +91,7 @@ impl Core {
         };
         match crate::datasource::save(&root, &request.profile) {
             Ok(profiles) => {
+                self.previews.revoke(&root, &request.profile.name);
                 JsonRpcResponse::success(request_id, json!(DataSourceWriteResult { profiles }))
             }
             Err(mensagem) => JsonRpcResponse::failure(
@@ -118,6 +122,7 @@ impl Core {
             Err(response) => return *response,
         };
         self.odbc.revoke(&root, &request.name);
+        self.previews.revoke(&root, &request.name);
         match crate::datasource::remove(&root, &request.name) {
             Ok(profiles) => {
                 JsonRpcResponse::success(request_id, json!(DataSourceWriteResult { profiles }))

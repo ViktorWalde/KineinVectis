@@ -30,6 +30,9 @@ tree-sitter-python.workspace = true
 alacritty_terminal = "0.26"
 # Fontes de dados do autor (DocsPublic/integracoes/37, DocsPublic/seguranca/40).
 postgres.workspace = true
+tokio-postgres.workspace = true
+tokio.workspace = true
+futures-util.workspace = true
 # Observabilidade (DocsPublic/integracoes/37 §2): o Grafana e' AGPL e por isso a IDE
 # so' CONVERSA com ele, pela HTTP API. Este e' o cliente dessa conversa.
 ureq.workspace = true

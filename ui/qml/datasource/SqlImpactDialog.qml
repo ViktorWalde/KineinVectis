@@ -28,6 +28,7 @@ KvPanelFrame {
     // A altura do CONTEUDO (o texto, a lista, a confirmacao) + a linha dos
     // botoes + a margem da moldura: sem vao vazio entre o campo e os botoes.
     panelHeight: body.implicitHeight + Theme.spacingMedium + buttons.height + 2 * Theme.spacingMedium
+    contentHeight: body.implicitHeight + Theme.spacingMedium + buttons.height
 
     readonly property bool destructive: root.impact !== null && root.impact.destructive
     readonly property bool production: root.impact !== null && root.impact.expectedContext !== null
@@ -196,8 +197,29 @@ KvPanelFrame {
             width: parent.width
             visible: root.destructive && !root.impact.measuring
             wrapMode: Text.WordWrap
-            text: qsTr("Não há como desfazer depois de executar. Se os dados importam, faça um backup antes.")
+            text: root.impact && root.impact.previewSelected
+                ? qsTr("A escrita ficará numa transação pendente para confirmar ou desfazer.")
+                : qsTr("Não há como desfazer depois de executar. Se os dados importam, faça um backup antes.")
             color: Theme.errorSoft
+            font.pixelSize: Theme.fontSizeCaption
+        }
+
+        KvToggleChip {
+            width: parent.width
+            visible: root.impact !== null && root.impact.previewEligible && !root.impact.measuring
+            labelText: qsTr("Executar com prévia antes de confirmar")
+            switchStyle: true
+            active: root.impact !== null && root.impact.previewSelected
+            onToggled: root.impact.previewSelected = !root.impact.previewSelected
+        }
+
+        Text {
+            width: parent.width
+            visible: root.impact !== null && root.impact.previewSelected
+            text: qsTr("A prévia executa uma escrita real. Rollback desfaz as alterações transacionais, mas não recupera números de sequência nem efeitos externos de funções e triggers. Você terá 60 segundos para decidir.")
+            textFormat: Text.PlainText
+            wrapMode: Text.WordWrap
+            color: Theme.warningSoft
             font.pixelSize: Theme.fontSizeCaption
         }
 
@@ -269,7 +291,8 @@ KvPanelFrame {
             compact: true
             danger: root.destructive
             primary: !root.destructive
-            text: root.destructive ? qsTr("Executar e apagar") : qsTr("Executar")
+            text: root.impact && root.impact.previewSelected ? qsTr("Executar prévia")
+                : root.destructive ? qsTr("Executar e apagar") : qsTr("Executar")
             enabled: root.impact !== null && root.impact.canRun
             onClicked: root.impact.confirm()
         }

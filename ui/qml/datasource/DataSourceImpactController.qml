@@ -40,6 +40,8 @@ QtObject {
     property string queryContext: ""
     property int serial: 0
     property var expectedContext: null
+    property bool previewEligible: false
+    property bool previewSelected: false
 
     function isDestructive(statement) {
         return statement.severity === "destructive";
@@ -48,11 +50,12 @@ QtObject {
     readonly property bool destructive: root.severity === "destructive" || root.errorText !== "" || root.requiresConnection
     readonly property string confirmName: root.targetName === "" ? root.name : root.targetName
     readonly property bool canRun: root.open && !root.measuring && root.contextCurrent()
+        && (!root.previewSelected || root.previewEligible)
         && (!root.destructive || root.typed === root.confirmName)
         && (!root.requiresConnection || root.typedConnection.trim() === root.name)
 
     signal impactRequested(string name, string sql, var context)
-    signal runConfirmed(string name, string sql, var confirmation)
+    signal runConfirmed(string name, string sql, var confirmation, bool preview)
 
     function contextCurrent() {
         if (root.dataSourceController === null) return true;
@@ -74,6 +77,8 @@ QtObject {
         root.targetName = "";
         root.requiresConnection = false;
         root.expectedContext = query ? query.expectedContext : null;
+        root.previewEligible = false;
+        root.previewSelected = query ? query.preview === true : false;
         root.queryContext = query ? query.clientContext : "standalone";
         root.serial += 1;
         root.clientContext = root.queryContext + ".impact." + String(root.serial);
@@ -89,6 +94,7 @@ QtObject {
         root.severity = event.severity;
         root.targetName = event.confirmationTarget || "";
         root.requiresConnection = event.requiresConnection === true;
+        root.previewEligible = event.previewEligible === true;
         root.statements = KvLists.listOf(event.statements).filter(s => s.severity !== "read");
     }
 
@@ -111,7 +117,7 @@ QtObject {
         root.open = false;
         const confirmation = root.destructive || root.requiresConnection
             ? { connection: root.typedConnection.trim(), target: root.typed } : ({});
-        root.runConfirmed(root.name, root.sql, confirmation);
+        root.runConfirmed(root.name, root.sql, confirmation, root.previewSelected);
     }
 
     function cancel() { root.open = false; }

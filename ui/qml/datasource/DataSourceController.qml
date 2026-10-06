@@ -76,7 +76,7 @@ Item {
     }
     readonly property DataSourceImpactController impact: DataSourceImpactController {
         dataSourceController: root
-        onRunConfirmed: (name, text, confirmation) => root.queries.begin(name, text, true, root.lastQuery ? root.lastQuery.maxRows : 0, confirmation, root.pendingDatabase)
+        onRunConfirmed: (name, text, confirmation, preview) => root.queries.begin(name, text, true, root.lastQuery ? root.lastQuery.maxRows : 0, confirmation, root.pendingDatabase, preview)
     }
 
     readonly property DataSourceOdbcController odbc: DataSourceOdbcController {
@@ -96,6 +96,10 @@ Item {
             root.saveRequested(profile);
         }
         onSecretNeeded: operation => root.secrets.request("query", operation)
+    }
+
+    readonly property DataSourcePreviewController previews: DataSourcePreviewController {
+        dataSourceController: root
     }
 
     readonly property DataSourceCatalogController catalog: DataSourceCatalogController {
@@ -191,8 +195,12 @@ Item {
         const operation = secrets.takePending();
         if (operation === null) return;
         secretRequired = false;
+        if (operation.method === "query" && operation.preview === true) {
+            panelVisible = false;
+            testMessage = "";
+        }
         if (operation.method === "query") queries.begin(operation.name, operation.sql, operation.confirmWrite,
-            operation.maxRows, operation.confirmation, operation.database);
+            operation.maxRows, operation.confirmation, operation.database, operation.preview);
         else if (operation.method === "destroy") discovery.destroyProfile(operation.name, operation.data, operation.confirmation);
         else catalog.begin(operation.method, operation.name);
     }
@@ -284,8 +292,8 @@ Item {
     function introspectProfile(name) { catalog.begin("introspect", name); }
 
     // Executar `text` na conexao `name` (o console no editor).
-    function runOn(name, text, confirmWrite, maxRows, confirmation) {
-        queries.begin(name, text, confirmWrite, maxRows, confirmation);
+    function runOn(name, text, confirmWrite, maxRows, confirmation, preview) {
+        queries.begin(name, text, confirmWrite, maxRows, confirmation, "", preview);
     }
 
     function handleIntrospected(name, ok, schemas, collections, message, needsSecret, token) {

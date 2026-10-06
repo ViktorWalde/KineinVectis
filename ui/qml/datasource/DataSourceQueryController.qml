@@ -46,6 +46,7 @@ QtObject {
     }
 
     function invalidate() {
+        if (root.dataSourceController !== null && root.dataSourceController.previews) root.dataSourceController.previews.discard();
         root.generation += 1;
         root.lastQuery = null;
         root.querying = false;
@@ -60,7 +61,7 @@ QtObject {
         }
     }
 
-    function begin(name, text, confirmed, maxRows, confirmation, database) {
+    function begin(name, text, confirmed, maxRows, confirmation, database, preview) {
         if (name === "" || text.trim() === "") return;
         const profile = root.dataSourceController.profileByName(name);
         if (profile === null) {
@@ -73,9 +74,10 @@ QtObject {
         }
         root.dataSourceController.impact.cancel();
         root.dataSourceController.odbc.cancel();
+        root.dataSourceController.previews.discard();
         root.serial += 1;
         const context = { clientContext: String(root.generation) + ":" + String(root.serial),
-                          expectedContext: { workspace: root.workspaceRoot, profile: Object.assign({}, profile) } };
+                          expectedContext: { workspace: root.workspaceRoot, profile: Object.assign({}, profile) }, preview: preview === true };
         root.lastQuery = Object.assign({}, context, { name: name, sql: text, confirmWrite: confirmed === true,
             maxRows: maxRows || 0, profileKey: root.profileKey(profile), confirmation: confirmation || null, database: database || "" });
         root.pendingDatabase = database || "";
@@ -89,8 +91,17 @@ QtObject {
         return root.current() && event.name === root.lastQuery.name && event.clientContext === root.lastQuery.clientContext;
     }
 
+    function accepted(operation) {
+        if (!root.matches(operation)) {
+            if (operation.preview === true) root.dataSourceController.previews.cancelExecutionRequested(operation.jobId);
+            return;
+        }
+        root.lastQuery = Object.assign({}, root.lastQuery, { jobId: operation.jobId });
+    }
+
     function handleOutcome(outcome) {
         if (!root.matches(outcome)) return;
+        root.dataSourceController.previews.finished(outcome);
         if (outcome.confirmationSql !== undefined) {
             if (outcome.confirmationSql !== root.lastQuery.sql) return;
             root.fail(outcome.message || "", "WRITE_CONFIRMATION_REQUIRED", outcome);
@@ -102,8 +113,10 @@ QtObject {
         root.dataSourceController.secretRequired = outcome.secretRequired === true;
         if (outcome.success === true) {
             const profile = root.lastQuery.expectedContext.profile;
-            root.lastQuery = Object.assign({}, root.lastQuery, { wrote: outcome.access === "write" || outcome.affected !== undefined && outcome.affected !== null });
-            root.status = DataSourceKinds.querySummary(outcome, profile.engine || "postgres");
+            const wrote = outcome.previewOutcome !== undefined ? outcome.previewOutcome === "committed"
+                : outcome.access === "write" || outcome.affected !== undefined && outcome.affected !== null;
+            root.lastQuery = Object.assign({}, root.lastQuery, { wrote: wrote });
+            root.status = outcome.previewOutcome !== undefined ? outcome.message : DataSourceKinds.querySummary(outcome, profile.engine || "postgres");
             if (root.pendingDatabase !== "") {
                 const created = DataSourceKinds.cloneProfile(profile);
                 created.name = profile.name + "-" + root.pendingDatabase;

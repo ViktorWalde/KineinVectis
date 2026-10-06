@@ -30,8 +30,8 @@ class Core:
     def read_errors(self):
         self.errors.extend(self.process.stderr)
 
-    def wait(self, predicate):
-        deadline = time.monotonic() + 30
+    def wait(self, predicate, timeout=30):
+        deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             try:
                 value = self.inbox.get(timeout=0.1)
@@ -51,7 +51,7 @@ class Core:
         self.process.stdin.flush()
         return self.wait(lambda value: value.get("id") == identifier)
 
-    def event(self, name, context=None):
+    def event(self, name, context=None, *, timeout=30):
         method = "event.datasource." + name
         def matches(value):
             return value.get("method") == method and (
@@ -59,7 +59,7 @@ class Core:
         for index, value in enumerate(self.events):
             if matches(value):
                 return self.events.pop(index)["params"]
-        return self.wait(matches)["params"]
+        return self.wait(matches, timeout)["params"]
 
     def query(self, name, sql, password=None, confirmed=False, *, context=None, confirmation=None, max_rows=None):
         params = {"name": name, "sql": sql, "confirmWrite": confirmed}

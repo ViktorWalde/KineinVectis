@@ -164,16 +164,19 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
         method == QStringLiteral("datasource.impact") ||
         method == QStringLiteral("datasource.test") ||
         method == QStringLiteral("datasource.introspect") ||
-        method == QStringLiteral("datasource.destroy"))
+        method == QStringLiteral("datasource.destroy") ||
+        method == QStringLiteral("datasource.preview.decide"))
     {
         m_pendingDataSourceQueries.insert(
-            id, {{QStringLiteral("name"), params.value(QStringLiteral("name")).toString()},
-                 {QStringLiteral("sql"), params.value(QStringLiteral("sql")).toString()},
-                 {QStringLiteral("confirmWrite"),
-                  params.value(QStringLiteral("confirmWrite")).toBool()},
-                 {QStringLiteral("maxRows"), params.value(QStringLiteral("maxRows")).toInt()},
-                 {QStringLiteral("clientContext"),
-                  params.value(QStringLiteral("clientContext")).toString()}});
+            id,
+            {{QStringLiteral("name"), params.value(QStringLiteral("name")).toString()},
+             {QStringLiteral("sql"), params.value(QStringLiteral("sql")).toString()},
+             {QStringLiteral("confirmWrite"),
+              params.value(QStringLiteral("confirmWrite")).toBool()},
+             {QStringLiteral("maxRows"), params.value(QStringLiteral("maxRows")).toInt()},
+             {QStringLiteral("previewId"), params.value(QStringLiteral("previewId")).toString()},
+             {QStringLiteral("clientContext"),
+              params.value(QStringLiteral("clientContext")).toString()}});
     }
     const QJsonValue path = method == QStringLiteral("fs.copy")
                                 ? params.value(QStringLiteral("to"))

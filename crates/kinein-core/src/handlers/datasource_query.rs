@@ -7,7 +7,7 @@
 //! A UI pergunta e reenvia — pelo codigo, nunca pelo texto.
 
 use kinein_protocol::{
-    DataSourceQueriedEvent, DataSourceQueryParams, DataSourceTestAccepted, JobRisk, JsonRpcError,
+    DataSourceQueriedEvent, DataSourceQueryAccepted, DataSourceQueryParams, JobRisk, JsonRpcError,
     JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
@@ -52,36 +52,21 @@ impl Core {
         let statements = classification::classify(profile.engine, &request.sql);
         // Classifica TODO o lote: uma leitura inicial nao pode esconder um
         // COMMIT que encerra o READ ONLY e uma remocao de dados logo depois.
-        let write = statements
-            .iter()
-            .any(|s| s.severity != kinein_protocol::SqlImpactSeverity::Read);
-        if let Err(rejection) = policy::check_context(
-            &root,
-            &profile,
-            request.expected_context.as_ref(),
-            request.client_context.as_deref(),
-        ) {
-            return rejection.response(
-                request_id,
-                &profile.name,
-                request.client_context.as_deref(),
-            );
-        }
-        // Politica seletiva em desenvolvimento (0.156.0); producao exige
-        // aviso em toda escrita, e somente leitura recusa antes da senha/job.
-        if let Err(rejection) = policy::check_query(
-            &profile,
-            &statements,
-            request.confirm_write,
-            request.confirmation.as_ref(),
-        ) {
-            return rejection.query_response(
-                request_id,
-                &profile,
-                &statements,
-                request.client_context.as_deref(),
-            );
-        }
+        let write = statements.is_empty()
+            || statements
+                .iter()
+                .any(|s| s.severity != kinein_protocol::SqlImpactSeverity::Read);
+        let preview_sql = match query_permission(&root, &profile, &request, &statements) {
+            Ok(sql) => sql,
+            Err(rejection) => {
+                return rejection.query_response(
+                    request_id,
+                    &profile,
+                    &statements,
+                    request.client_context.as_deref(),
+                );
+            }
+        };
         if let Err(response) = self.require_odbc_driver(&root, &profile, request_id.clone()) {
             return *response;
         }
@@ -92,17 +77,69 @@ impl Core {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "datasource.query");
         };
+        let preview = match self.reserve_preview(&request, preview_sql) {
+            Ok(preview) => preview,
+            Err(rejection) => {
+                return rejection.response(
+                    request_id,
+                    &profile.name,
+                    request.client_context.as_deref(),
+                );
+            }
+        };
         let title = format!(
             "{} em {}",
             if write { "Escrever" } else { "Consultar" },
             profile.name
         );
         let risk = if write { JobRisk::Medium } else { JobRisk::Low };
-        let job_id = jobs.spawn("datasource", title, risk, false, move |ctx| {
-            run_query_job(ctx, profile, secret.as_ref(), request, &statements, write)
+        let accepted_name = profile.name.clone();
+        let accepted_context = request.client_context.clone();
+        let accepted_preview = request.preview;
+        let job_id = jobs.spawn("datasource", title, risk, request.preview, move |ctx| {
+            run_query_job(
+                ctx,
+                profile,
+                secret.as_ref(),
+                request,
+                &statements,
+                write,
+                preview,
+            )
         });
-        JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
+        JsonRpcResponse::success(
+            request_id,
+            json!(DataSourceQueryAccepted {
+                job_id,
+                name: accepted_name,
+                client_context: accepted_context,
+                preview: accepted_preview
+            }),
+        )
     }
+}
+
+fn query_permission(
+    root: &std::path::Path,
+    profile: &kinein_protocol::DataSourceProfile,
+    request: &DataSourceQueryParams,
+    statements: &[kinein_protocol::SqlStatementImpact],
+) -> Result<Option<String>, policy::Rejection> {
+    policy::check_context(
+        root,
+        profile,
+        request.expected_context.as_ref(),
+        request.client_context.as_deref(),
+    )
+    .and_then(|()| {
+        policy::check_query(
+            profile,
+            statements,
+            request.confirm_write,
+            request.confirmation.as_ref(),
+        )
+    })
+    .and_then(|()| super::datasource_preview::validate(profile, request))
 }
 
 /// Medição/execução esperam no worker; o despacho continua livre.
@@ -113,26 +150,29 @@ fn run_query_job(
     request: DataSourceQueryParams,
     statements: &[kinein_protocol::SqlStatementImpact],
     write: bool,
+    preview: Option<super::datasource_preview::Prepared>,
 ) -> JobOutcome {
     let max_rows = query::clamp_rows(request.max_rows);
     let preflight = (!request.confirm_write || profile.production)
         && crate::datasource::confirm::needs_measurement(statements);
-    let sql = request.sql;
+    let sql = &request.sql;
     if preflight {
-        let measured = crate::datasource::measurement::statements(&profile, secret, &sql);
+        let measured = crate::datasource::measurement::statements(&profile, secret, sql);
         if let Err(rejection) = policy::check_query(
             &profile,
             &measured,
             request.confirm_write,
             request.confirmation.as_ref(),
         ) {
+            drop(preview);
             ctx.emit_event(
                 "event.datasource.queried",
                 json!(DataSourceQueriedEvent {
                     job_id: ctx.id().to_owned(),
                     name: profile.name,
-                    confirmation_sql: Some(sql),
+                    confirmation_sql: Some(sql.clone()),
                     client_context: request.client_context,
+                    access: kinein_protocol::DataSourceQueryAccess::Write,
                     message: Some(rejection.message.to_owned()),
                     ..DataSourceQueriedEvent::default()
                 }),
@@ -140,7 +180,17 @@ fn run_query_job(
             return JobOutcome::Failed;
         }
     }
-    let resultado = query::run(&profile, secret, &sql, max_rows);
+    if let Some(preview) = preview {
+        return crate::datasource::preview_postgres::run(
+            ctx,
+            &profile,
+            secret,
+            &request,
+            preview.lease,
+            &preview.sql,
+        );
+    }
+    let resultado = query::run(&profile, secret, sql, max_rows);
     let mut event = evento_da_consulta(ctx, profile.name, resultado);
     event.client_context = request.client_context;
     event.access = if write {
@@ -190,6 +240,7 @@ fn evento_da_consulta(
                 confirmation_sql: None,
                 client_context: None,
                 access: kinein_protocol::DataSourceQueryAccess::Read,
+                preview_outcome: None,
             }
         }
         Err((message, secret_required)) => {

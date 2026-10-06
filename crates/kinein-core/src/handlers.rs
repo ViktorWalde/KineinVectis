@@ -17,6 +17,7 @@ pub mod datasource_destroy;
 pub mod datasource_discover;
 pub mod datasource_impact;
 pub mod datasource_odbc;
+pub mod datasource_preview;
 pub mod datasource_query;
 pub mod debug;
 pub mod draft;

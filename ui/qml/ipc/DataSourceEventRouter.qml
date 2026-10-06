@@ -49,12 +49,15 @@ Item {
         function onDataSourceQueried(outcome) {
             root.dataSourceController.handleQueried(outcome);
         }
+        function onDataSourceQueryAccepted(operation) { root.dataSourceController.queries.accepted(operation); }
+        function onDataSourcePreviewed(event) { root.dataSourceController.previews.prepared(event); }
 
         function onDataSourceOperationFailed(method, message, code, operation) {
             if (method === "datasource.query") root.dataSourceController.handleFailed(method, message, code, operation);
             else if (method === "datasource.test" || method === "datasource.introspect") root.dataSourceController.handleFailed(method, message, code, operation);
             else if (method === "datasource.destroy") root.dataSourceController.discovery.handleFailed(method, message, code, operation);
             else if (method === "datasource.impact") root.dataSourceController.impact.handleFailed(message, operation, code);
+            else if (method === "datasource.preview.decide") root.dataSourceController.previews.failed(message, operation);
         }
 
         function onDataSourceImpactMeasured(impact) {
@@ -82,7 +85,7 @@ Item {
         }
 
         function onRequestFailed(method, message, code) {
-            if (["datasource.query", "datasource.impact", "datasource.test", "datasource.introspect", "datasource.destroy"].indexOf(method) >= 0) return;
+            if (["datasource.query", "datasource.impact", "datasource.test", "datasource.introspect", "datasource.destroy", "datasource.preview.decide"].indexOf(method) >= 0) return;
             root.dataSourceController.handleFailed(method, message, code);
             root.dataSourceController.discovery.handleFailed(method, message);
         }

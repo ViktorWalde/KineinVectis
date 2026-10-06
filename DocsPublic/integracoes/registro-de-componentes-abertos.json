@@ -425,6 +425,67 @@
         "Cargo deny license/advisory/source audit; Rust/C++/QML gates"
       ],
       "decision": "DocsPublic/decisoes-adr/ADR-0007-odbc-com-consentimento.md"
+    },
+    {
+      "id": "postgres-preview-stream",
+      "name": "tokio-postgres / tokio / futures-util",
+      "role": "Streaming PostgreSQL transaction preview inside the existing job worker",
+      "adoptionMode": "A",
+      "integration": "Published Rust crates linked by kinein-core; one current-thread runtime only for the preview job. The IPC dispatcher and Core::new do not require an application runtime. Configuration and verified TLS are shared with synchronous operations.",
+      "upstream": {
+        "repository": "https://github.com/sfackler/rust-postgres",
+        "runtime": "https://github.com/tokio-rs/tokio",
+        "streamUtilities": "https://github.com/rust-lang/futures-rs",
+        "documentation": "https://docs.rs/tokio-postgres/0.7.18/tokio_postgres/"
+      },
+      "version": {
+        "selected": "tokio-postgres 0.7.18; tokio 1.53.1; futures-util 0.3.34",
+        "pin": "Existing Cargo.lock versions/checksums; direct workspace constraints 0.7, 1 and 0.3",
+        "reason": "Already transitive dependencies of existing database drivers. Direct declarations enable simple_query_raw streaming and one-use decision channels; no new crate or resolved version was added."
+      },
+      "checksums": {
+        "tokio-postgres": "a528f7d280f6d5b9cd149635c8705b0dd049754bc67d81d31fa25169a93809d3",
+        "tokio": "202caea871b69668250d242070849eb495be178ed697a3e98aebce5bc81a0bed",
+        "futures-util": "0d50a92467f8ba5dd6e3ee5d4bd04d73ab2e4e1c44474a0674821dfce14b79bc"
+      },
+      "license": {
+        "spdx": "MIT AND (MIT OR Apache-2.0)",
+        "accepted": true,
+        "source": "Published manifests installed in Cargo registry; tokio is MIT, tokio-postgres and futures-util are MIT OR Apache-2.0. Existing deny policy unchanged."
+      },
+      "maintenance": {
+        "statusAtReview": "Pinned published releases from the official rust-postgres, Tokio and Rust futures projects. APIs and licenses checked against the resolved local sources; this entry makes no claim that they are the latest upstream versions.",
+        "reviewedAt": "2026-10-06"
+      },
+      "runtimeSecurity": {
+        "telemetry": false,
+        "network": true,
+        "shellExecution": false,
+        "secretsAccess": true,
+        "userContentUpload": false,
+        "nativeCode": false,
+        "notes": "SQL and credentials go only to the selected PostgreSQL endpoint, as in the existing driver. No telemetry or unrelated content upload. Credential/configuration objects stay in the worker; driver allocations do not guarantee zeroization of every internal copy."
+      },
+      "cost": {
+        "addedCrates": 0,
+        "notes": "Cargo.lock changes only the three dependency names in kinein-core. No permanent runtime, pool or extra process. Limits apply to retained samples, not every driver frame allocation. Hostname resolution uses the Tokio blocking pool; runtime Drop may wait beyond the connect future timeout if system DNS/NSS stalls. Preview capacity stays held; the lifecycle correction is required in roadmap 59 section 7 before closure."
+      },
+      "scopeControls": [
+        "Typed public context checked before credentials and jobs; production/read-only policy remains active",
+        "Up to four live previews per core, one per workspace/profile name; capacity held through finalization",
+        "Connection and transaction owned by the worker; registry stores only public context and one-use decision channel",
+        "Shared verified TLS configuration requires TLS and never falls back to plaintext",
+        "15 s total query budget, 60 s decision, 12 s finalize; server statement/lock/idle transaction limits",
+        "128 columns, 16 KiB cells, 8 MiB retained sample, bounded maxRows; stream drains all rows and retains NULL",
+        "Context loss cancels pending decisions; accepted COMMIT is not revocable and lost replies are reported as unknown"
+      ],
+      "verification": [
+        "Unit tests for strict params, lexer/RETURNING, capacity, expiry, one-use decisions, revoked context and TLS mode",
+        "QML stale context, cancel, expiry, accepted decision and unknown outcome harness",
+        "Real PostgreSQL commit/rollback, deferred constraint refusal, lock/expiry/retention limits and FATAL/EOF during COMMIT",
+        "Cargo deny plus complete Rust/C++/QML gates and MSRV 1.88 --locked"
+      ],
+      "decision": "DocsPublic/decisoes-adr/ADR-0008-previa-postgresql-no-worker.md"
     }
   ]
 }

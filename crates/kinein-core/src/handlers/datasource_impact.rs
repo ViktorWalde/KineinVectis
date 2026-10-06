@@ -73,6 +73,9 @@ impl Core {
             let confirmation_target = (severity == kinein_protocol::SqlImpactSeverity::Destructive
                 || requires_connection)
                 .then(|| policy::confirm_target(&profile, &statements));
+            let preview_eligible = profile.engine == kinein_protocol::DataSourceEngine::Postgres
+                && !profile.read_only
+                && crate::datasource::preview_sql::executed_sql(&request.sql).is_some();
             let event = DataSourceImpactEvent {
                 job_id: ctx.id().to_owned(),
                 name: profile.name.clone(),
@@ -82,6 +85,7 @@ impl Core {
                 client_context: request.client_context,
                 confirmation_target,
                 requires_connection,
+                preview_eligible,
             };
             ctx.emit_event("event.datasource.impact", json!(event));
             JobOutcome::Success

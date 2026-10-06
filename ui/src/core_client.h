@@ -202,6 +202,7 @@ public:
     // job de contagens so' de leitura; a resposta chega por evento.
     Q_INVOKABLE void dataSourceImpact(const QString& name, const QString& password,
                                       const QString& sql, const QVariantMap& context = {});
+    Q_INVOKABLE void dataSourcePreviewDecide(const QVariantMap& operation);
 
     // Observabilidade: o Grafana que observa este projeto. A licenca dele
     // (AGPL-3.0) decide a FORMA — a IDE CONVERSA, nunca embute.
@@ -433,6 +434,8 @@ signals:
                                    const QString& code, const QVariantMap& operation);
     /// O impacto medido: `severity`, `sql` e cada instrucao com alvo e linhas.
     void dataSourceImpactMeasured(const QVariantMap& impact);
+    void dataSourceQueryAccepted(const QVariantMap& operation);
+    void dataSourcePreviewed(const QVariantMap& preview);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.
     void dataSourceTested(const QString& name, bool ok, const QString& serverVersion,
@@ -659,6 +662,7 @@ private:
     void handleErrorOccurred(QProcess::ProcessError error);
     void handleResponseLine(const QByteArray& line);
     void handleNotification(const QString& method, const QJsonObject& params);
+    bool handleDataSourceNotification(const QString& method, const QJsonObject& params);
     bool handleRunnerNotification(const QString& method, const QJsonObject& params);
     bool handleFileSystemNotification(const QString& method, const QJsonObject& params);
     bool handleTerminalNotification(const QString& method, const QJsonObject& params);

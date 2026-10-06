@@ -205,6 +205,9 @@ pub struct DataSourceQueryParams {
     /// Names typed for production removals or an unknown operation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confirmation: Option<crate::DataSourceConfirmation>,
+    /// Execute an eligible `PostgreSQL` write in a transaction awaiting a decision.
+    #[serde(default)]
+    pub preview: bool,
 }
 
 /// Payload of `event.datasource.queried`.
@@ -247,6 +250,9 @@ pub struct DataSourceQueriedEvent {
     /// Engine path used, even when zero rows changed or the operation failed.
     #[serde(default)]
     pub access: crate::DataSourceQueryAccess,
+    /// Real final transaction outcome, only for a preview query.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preview_outcome: Option<crate::DataSourcePreviewOutcome>,
 }
 
 /// Result payload for `datasource.list`.

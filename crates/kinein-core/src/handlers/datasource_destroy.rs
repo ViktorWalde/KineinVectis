@@ -89,6 +89,7 @@ impl Core {
             client_context: request.client_context.clone(),
         };
         self.odbc.revoke(root, &profile.name);
+        self.previews.revoke(root, &profile.name);
         if !request.data {
             return catalogo(
                 request_id,

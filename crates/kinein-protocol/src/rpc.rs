@@ -155,6 +155,8 @@ pub enum JsonRpcErrorCode {
     ReadOnlyViolation,
     /// The project or public profile changed after the UI prepared the operation.
     DataSourceContextChanged,
+    /// Preview is ineligible, occupied, not ready, expired or already decided.
+    DataSourcePreviewUnavailable,
 }
 
 #[cfg(test)]

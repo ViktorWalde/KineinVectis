@@ -11,6 +11,16 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolo `0.159.0` — **Prévia PostgreSQL** (validada no checkout;
+  aceite no 40.7 §7.223). Uma instrução INSERT/UPDATE/DELETE elegível pode
+  executar dentro de transação pendente, com amostra RETURNING, confirmação
+  única ou rollback e prazo de 60 segundos. Contexto alterado descarta a
+  decisão pendente; COMMIT aceito tem desfecho real, incluindo resultado
+  desconhecido se a resposta se perder. Avisos explicam sequências e efeitos
+  externos que não são revertidos. Corrigido TLS obrigatório que podia cair
+  em conexão sem cifra e a grade que interpretava dados como texto formatado.
+  Desenho, diagrama e limites em arquitetura/37.
+
 - Protocolo `0.158.0` — **Banco: produção, somente leitura e contexto**
   (validado no checkout, aceite no 40.7 §7.222). Produção pede aviso
   para toda escrita e nomes completos nas remoções/alterações globais.

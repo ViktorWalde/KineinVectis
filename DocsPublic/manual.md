@@ -931,8 +931,38 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   digite o alvo conhecido, ou a conexão quando nenhum alvo foi identificado.
 
   **Cancelar**, Esc ou clicar fora deixam o banco intacto. A confirmação
-  reenvia o comando exibido. A prévia não reserva nem congela os dados;
-  transação com prévia ainda não está disponível.
+  reenvia o comando exibido. A contagem do aviso não reserva nem congela os
+  dados; outra conexão pode alterar o alcance antes da execução.
+
+- **Executar com prévia no PostgreSQL** (protocolo `0.159.0`). No console,
+  o botão **Executar com prévia…** usa a seleção ou a instrução do cursor,
+  como Ctrl+Enter. O aviso também oferece essa opção quando o core considera
+  elegível uma única instrução direta `INSERT`, `UPDATE` ou `DELETE`.
+  O aviso vem antes da escrita, inclusive no perfil Desenvolvimento.
+
+  Ao clicar **Executar prévia**, a instrução é executada em uma transação
+  PostgreSQL pendente. A janela mostra o destino, o SQL solicitado e o
+  efetivamente executado, as linhas retornadas e o total afetado. A IDE
+  acrescenta `RETURNING *` quando não há uma cláusula RETURNING explícita.
+  A amostra é limitada; seu tamanho não reduz quantas linhas o comando altera.
+  Valores e nomes de colunas aparecem literalmente, incluindo marcação HTML.
+
+  **Desfazer (ROLLBACK)** recebe o foco inicial. Enter nesse botão, Esc,
+  clique fora ou expiração do prazo de 60 segundos desfazem as alterações
+  transacionais ainda pendentes. **Confirmar (COMMIT)** envia uma decisão
+  única; aguarde a resposta do PostgreSQL. Trocar projeto, consulta ou perfil
+  também descarta uma prévia ainda sem decisão. Depois de o COMMIT ser aceito,
+  fechar ou cancelar não garante interrompê-lo.
+
+  **É uma escrita real.** Sequências consumidas e efeitos externos de funções
+  ou triggers não são recuperados por rollback. Locks podem durar até a
+  decisão; há limites de tempo para conexão, consulta e finalização.
+  Lotes, DDL, controle manual de transação e comandos fora desse recorte não
+  têm prévia. Somente leitura continua recusando qualquer escrita.
+
+  Se a resposta se perder durante COMMIT, a IDE informa **resultado
+  desconhecido**. Confira os dados em outra conexão antes de repetir o comando.
+  Um erro normal do servidor que recusa COMMIT é apresentado como falha.
 
 - **Outro banco (ODBC)** (protocolo `0.157.0`). Escolha o DSN no formulário;
   **Atualizar** consulta o registro do unixODBC, sem conectar. Host, porta
@@ -1018,6 +1048,8 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
 e confere a cadeia **e** o nome do host — para um servidor com certificado
 próprio, aponte o PEM no campo que aparece. Não existe "cifra sem conferir":
 é a opção que dá sensação de segurança sem a garantia.
+TLS verificado também exige que o servidor use TLS: desde a correção da
+`0.159.0`, conexão comum e prévia recusam fallback para conexão sem cifra.
 
 ### Abrir um projeto pelo terminal
 

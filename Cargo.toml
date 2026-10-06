@@ -51,6 +51,10 @@ tree-sitter-python = "=0.25.0"
 # detalhe de implementacao, e o codigo deste repositorio segue sincrono.
 # Sem TLS de proposito: conexao cifrada e' decisao de outra fatia.
 postgres = "0.19"
+# Streaming PostgreSQL previews use the already locked driver/runtime in a job.
+tokio-postgres = "0.7"
+tokio = { version = "1", features = ["rt", "time", "sync", "macros"] }
+futures-util = { version = "0.3", default-features = false, features = ["std", "async-await"] }
 # Cliente HTTP SINCRONO do dominio `grafana` (DocsPublic/integracoes/37 §2). Medido
 # em 2026-09-04: MIT OR Apache-2.0, e SEM as features padrao sao +5 crates
 # novas (http, httparse, ureq, ureq-proto, utf8-zero), todas MIT OR Apache-2.0.

@@ -44,10 +44,14 @@ impl Core {
             Ok(value) => value,
             Err(response) => return *response,
         };
-        let cancelled = self
-            .jobs
-            .as_ref()
-            .is_some_and(|manager| manager.cancel(&parsed.job_id));
+        let cancelled = !self.previews.decided_job(&parsed.job_id)
+            && self
+                .jobs
+                .as_ref()
+                .is_some_and(|manager| manager.cancel(&parsed.job_id));
+        if cancelled {
+            self.previews.cancel_job(&parsed.job_id);
+        }
         JsonRpcResponse::success(
             request_id,
             json!(JobCancelResult {

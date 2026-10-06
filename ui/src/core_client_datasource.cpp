@@ -146,11 +146,20 @@ void CoreClient::dataSourceQuery(const QString& name, const QString& password, c
     if (confirmWrite) {
         params.insert(QStringLiteral("confirmWrite"), true);
     }
+    if (context.value(QStringLiteral("preview")).toBool()) {
+        params.insert(QStringLiteral("preview"), true);
+    }
     appendOperationContext(params, context);
     if (!confirmation.isEmpty()) {
         params.insert(QStringLiteral("confirmation"), QJsonObject::fromVariantMap(confirmation));
     }
     sendRequest(QStringLiteral("datasource.query"), params);
+}
+
+void CoreClient::dataSourcePreviewDecide(const QVariantMap& operation)
+{
+    sendRequest(QStringLiteral("datasource.preview.decide"),
+                QJsonObject::fromVariantMap(operation));
 }
 
 void CoreClient::dataSourceImpact(const QString& name, const QString& password, const QString& sql,
@@ -220,9 +229,15 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
             result.value(QStringLiteral("command")).toString());
         return true;
     }
+    if (method == QStringLiteral("datasource.query")) {
+        emit dataSourceQueryAccepted(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("datasource.preview.decide")) {
+        return true;
+    }
     if (method == QStringLiteral("datasource.test") ||
-        method == QStringLiteral("datasource.introspect") ||
-        method == QStringLiteral("datasource.query"))
+        method == QStringLiteral("datasource.introspect"))
     {
         // O teste responde com o JOB; o veredito chega depois, por evento.
         emit dataSourceTestAccepted(result.value(QStringLiteral("jobId")).toString());

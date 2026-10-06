@@ -35,6 +35,7 @@ Row {
                 horizontalAlignment: root.grid.numeric[headerCell.index] ? Text.AlignRight : Text.AlignLeft
                 text: headerCell.modelData.label !== undefined
                       ? headerCell.modelData.label : headerCell.modelData.key
+                textFormat: Text.PlainText
                 color: Theme.textPrimary
                 font.family: root.grid.mono ? Theme.monoFont : ""
                 font.pixelSize: Theme.fontSizeCaption

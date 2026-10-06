@@ -56,7 +56,16 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 /// autenticacao pior de entender que "faltou a senha".
 #[must_use]
 pub fn config_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> Config {
-    let mut config = Config::new();
+    async_config_for(profile, secret).into()
+}
+
+/// Common configuration for synchronous operations and streaming previews.
+#[must_use]
+pub fn async_config_for(
+    profile: &DataSourceProfile,
+    secret: Option<&Secret>,
+) -> tokio_postgres::Config {
+    let mut config = tokio_postgres::Config::new();
     if profile.host.starts_with('/') {
         config.host_path(&profile.host);
     } else {
@@ -66,6 +75,10 @@ pub fn config_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> Confi
         .port(profile.port)
         .dbname(&profile.database)
         .user(&profile.user)
+        .ssl_mode(match profile.tls.unwrap_or_default() {
+            DataSourceTls::Disable => postgres::config::SslMode::Disable,
+            DataSourceTls::Require => postgres::config::SslMode::Require,
+        })
         .connect_timeout(CONNECT_TIMEOUT);
     if let Some(secret) = secret
         && !secret.is_empty()
@@ -73,6 +86,37 @@ pub fn config_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> Confi
         config.password(secret.expose());
     }
     config
+}
+
+/// Opens a streaming connection; the returned task drives it inside the job runtime.
+pub async fn connect_async(
+    profile: &DataSourceProfile,
+    secret: Option<&Secret>,
+) -> Result<
+    (
+        tokio_postgres::Client,
+        tokio::task::JoinHandle<Result<(), postgres::Error>>,
+    ),
+    ConnectionFailure,
+> {
+    let config = async_config_for(profile, secret);
+    match profile.tls.unwrap_or_default() {
+        DataSourceTls::Disable => {
+            let (client, connection) = config
+                .connect(NoTls)
+                .await
+                .map_err(|error| failure_from(&error))?;
+            Ok((client, tokio::spawn(connection)))
+        }
+        DataSourceTls::Require => {
+            let tls = MakeRustlsConnect::new(tls_config(profile.ca_file.as_deref())?);
+            let (client, connection) = config
+                .connect(tls)
+                .await
+                .map_err(|error| failure_from(&error))?;
+            Ok((client, tokio::spawn(connection)))
+        }
+    }
 }
 
 /// Abre a conexao pela politica de TLS do perfil.
@@ -276,194 +320,5 @@ pub fn describe(error: &dyn Error) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use kinein_protocol::DataSourceEngine;
-    use std::fmt;
-
-    use kinein_protocol::SecretSource;
-    use postgres::config::Host;
-
-    use super::*;
-
-    /// Dubles de erro com cadeia, para exercitar `describe` sem servidor.
-    #[derive(Debug)]
-    struct Topo;
-    #[derive(Debug)]
-    struct Causa;
-    #[derive(Debug)]
-    struct Eco;
-    #[derive(Debug)]
-    struct EcoCausa;
-
-    impl fmt::Display for Topo {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.write_str("error connecting to server")
-        }
-    }
-    impl fmt::Display for Causa {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.write_str("Connection refused (os error 111)")
-        }
-    }
-    impl fmt::Display for Eco {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.write_str("mesma frase")
-        }
-    }
-    impl fmt::Display for EcoCausa {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.write_str("mesma frase")
-        }
-    }
-
-    impl Error for Topo {
-        fn source(&self) -> Option<&(dyn Error + 'static)> {
-            Some(&Causa)
-        }
-    }
-    impl Error for Causa {}
-    impl Error for Eco {
-        fn source(&self) -> Option<&(dyn Error + 'static)> {
-            Some(&EcoCausa)
-        }
-    }
-    impl Error for EcoCausa {}
-
-    fn perfil(host: &str) -> DataSourceProfile {
-        DataSourceProfile {
-            production: false,
-            read_only: false,
-            engine: DataSourceEngine::Postgres,
-            name: "local".to_owned(),
-            host: host.to_owned(),
-            port: 5432,
-            database: "app".to_owned(),
-            user: "postgres".to_owned(),
-            secret_source: SecretSource::Automatic,
-            secret_variable: None,
-            sample_size: None,
-            tls: None,
-            ca_file: None,
-        }
-    }
-
-    /// O caso que a pergunta do autor em 2026-09-04 destravou: um `PostgreSQL`
-    /// local por socket, sem senha nenhuma.
-    #[test]
-    fn host_com_barra_vira_socket_unix() {
-        let config = config_for(&perfil("/var/run/postgresql"), None);
-        match config.get_hosts() {
-            [Host::Unix(caminho)] => assert_eq!(caminho.to_str(), Some("/var/run/postgresql")),
-            outro => panic!("host de socket virou {outro:?}"),
-        }
-        assert!(config.get_password().is_none(), "socket nao leva senha");
-    }
-
-    #[test]
-    fn host_comum_continua_tcp() {
-        let config = config_for(&perfil("db.example.com"), None);
-        match config.get_hosts() {
-            [Host::Tcp(nome)] => assert_eq!(nome, "db.example.com"),
-            outro => panic!("host TCP virou {outro:?}"),
-        }
-        assert_eq!(config.get_ports(), [5432]);
-        assert_eq!(config.get_dbname(), Some("app"));
-        assert_eq!(config.get_user(), Some("postgres"));
-    }
-
-    /// Senha VAZIA nao e' o mesmo que ausencia de senha: mandar `""` faz o
-    /// servidor responder falha de autenticacao, que e' pior de entender.
-    #[test]
-    fn senha_vazia_nao_e_enviada() {
-        let vazia = Secret::new("");
-        assert!(
-            config_for(&perfil("localhost"), Some(&vazia))
-                .get_password()
-                .is_none()
-        );
-
-        let cheia = Secret::new("hunter2");
-        assert_eq!(
-            config_for(&perfil("localhost"), Some(&cheia)).get_password(),
-            Some(b"hunter2".as_slice())
-        );
-    }
-
-    /// A cadeia de causas e' o que separa "servidor nao subiu" de "caminho do
-    /// socket errado" — ver o cabecalho de [`describe`].
-    /// A cadeia de causas e' o que separa "servidor nao subiu" de "caminho do
-    /// socket errado" — ver o cabecalho de [`describe`].
-    #[test]
-    fn descricao_inclui_a_causa_e_nao_repete() {
-        assert_eq!(
-            describe(&Topo),
-            "error connecting to server: Connection refused (os error 111)"
-        );
-        // Causa que so' repete o topo nao vira eco.
-        assert_eq!(describe(&Eco), "mesma frase");
-    }
-
-    /// A decisao de PEDIR A SENHA, com os valores REAIS capturados do
-    /// `PostgreSQL` 18.6 desta maquina em 2026-09-04.
-    ///
-    /// Nenhum deles foi inventado: cada linha saiu do `event.datasource.tested`
-    /// exercitando o binario do core contra um servidor de verdade. Fixture
-    /// inventada e' como os dois bugs do `probe.rs` sobreviveram
-    /// (`DocsPublic/roadmaps/38` §3).
-    #[test]
-    fn so_pede_senha_quando_pedir_senha_resolve() {
-        // Senha errada: o servidor respondeu 28P01. Perguntar RESOLVE.
-        assert!(secret_required(
-            Some("28P01"),
-            "db error: FATAL: autenticação do tipo senha falhou para o usuário \"app\""
-        ));
-
-        // O servidor pediu senha e a configuracao nao tinha nenhuma. Erro do
-        // DRIVER, sem SQLSTATE — e a frase e' dele, nao do servidor.
-        assert!(secret_required(
-            None,
-            "invalid configuration: password missing"
-        ));
-
-        // `peer` falhou / papel inexistente: 28000. Perguntar NAO resolve, e
-        // abrir um dialogo de senha aqui so' atrapalharia.
-        assert!(!secret_required(
-            Some("28000"),
-            "db error: FATAL: A autenticação do tipo peer falhou para o usuário \"naoexiste\""
-        ));
-
-        // Servidor fora do ar nao e' problema de credencial.
-        assert!(!secret_required(
-            None,
-            "error connecting to server: Connection refused (os error 111)"
-        ));
-    }
-
-    /// A mensagem do servidor e' LOCALIZADA; o `SQLSTATE` nao.
-    ///
-    /// Este teste existe para que ninguem "simplifique" a regra casando por
-    /// texto: na maquina do autor o servidor responde em portugues, e a mesma
-    /// falha em ingles diria "password authentication failed".
-    #[test]
-    fn a_decisao_nao_depende_do_idioma_do_servidor() {
-        assert!(secret_required(
-            Some("28P01"),
-            "password authentication failed"
-        ));
-        assert!(secret_required(
-            Some("28P01"),
-            "autenticação do tipo senha falhou"
-        ));
-        assert!(secret_required(Some("28P01"), ""));
-    }
-
-    /// Sem timeout, host errado atras de um firewall que engole pacote
-    /// bloquearia por minutos.
-    #[test]
-    fn ha_timeout_de_conexao() {
-        assert_eq!(
-            config_for(&perfil("localhost"), None).get_connect_timeout(),
-            Some(&CONNECT_TIMEOUT)
-        );
-    }
-}
+#[path = "connection_tests.rs"]
+mod tests;

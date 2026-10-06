@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); restante a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); restante a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -251,7 +251,7 @@ Ver 40.7 §7.206–§7.209.
    - Toda escrita pede o aviso, mesmo a comum, e a destrutiva pede o nome da
      **conexão** além do alvo.
    - Uma opção "somente leitura" recusa qualquer escrita no core.
-3. **Transação com prévia** (PostgreSQL). Uma opção no aviso: executar dentro
+3. **Transação com prévia — feito (40.7 §7.223)** (PostgreSQL). Uma opção no aviso: executar dentro
    de `BEGIN`, mostrar as linhas afetadas e só então **confirmar (COMMIT)** ou
    **desfazer (ROLLBACK)**.
 4. **Mongo usa a mesma política de confirmação** (decisão de 2026-10-04).
@@ -334,15 +334,21 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** produção/somente leitura e contexto (§5.10;
-protocolo 0.158.0), com provas reais/visuais e gates registrados no
-40.7 §7.222. ODBC permanece aceito no §7.221, commit local fa32f51.
-Não repita essas fatias sem risco concreto.
+**Última fatia concluída:** prévia PostgreSQL (§5.11; protocolo 0.159.0),
+com provas reais/visuais, gates completos e estritos e limites registrados
+no 40.7 §7.223. Confira git log para o commit local. Produção/somente leitura
+permanecem aceitas no §7.222 (c4d8779), e ODBC no §7.221 (fa32f51).
+Não repita provas aceitas sem risco concreto.
 
-**Ordem das próximas fatias:** transação com prévia PostgreSQL (§5.3 e
-desenho §5.11), menus/árvore viva (§5.1), console (§5.2) e grade
-(§5.4), com prova real conforme §5.6. MySQL/MariaDB é alvo do §5.7; não está
-no enum de motores atual. O passo 8 vem depois.
+**Fatia atual:** profundidade do editor como no terminal, pedido do autor
+em 2026-10-06 e desenho anterior ao código no §7. A comparação inicial
+registrou 24 linhas de código na janela de 1400×875. Aplicar o desenho
+comum preservando dimensões, foco e digitação, com prova visual e commit próprio.
+
+**Ordem das próximas fatias:** profundidade do editor (§7), menus/árvore viva
+(§5.1), console (§5.2) e grade (§5.4), com prova real conforme §5.6.
+MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
+vem depois e inclui a correção do limite DNS/NSS registrado no §7.
 
 Prompt de continuidade (conferir estado e log antes de usar):
 
@@ -361,8 +367,11 @@ Leia o aceite do §7.221: protocolo 0.157.0, ODBC concluído e validado.
 ODBC está no commit local fa32f51. Produção/somente leitura/contexto
 (protocolo 0.158.0) estão validados no §7.222. Confira git log/status para
 localizar o commit e preservar qualquer trabalho posterior. Não repita
-provas aceitas sem risco concreto. Próxima fatia: prévia PostgreSQL (§5.11),
-com contrato aditivo na próxima versão do protocolo antes do código.
+provas aceitas sem risco concreto. Prévia PostgreSQL (§5.11), protocolo
+0.159.0, está concluída e validada (§7.223). Confira git log e preserve
+qualquer trabalho posterior. Atual: analise/aplique profundidade do editor
+como no terminal (pedido do autor em 2026-10-06, §7), com prova visual e
+commit próprio.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
 rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido
@@ -370,9 +379,9 @@ pedem confirmação. A medição silenciosa protege filtro que pega todos.
 O console Mongo usa um comando por linha, com JSON estrito; preserve
 a forma antiga de leitura e o tratamento de Extended JSON.
 
-Siga transação com prévia (§5.3 e §5.11), menus/árvore viva (§5.1),
-console (§5.2), grade (§5.4) e motores
-nativos restantes (§5.7). Uma fatia por commit, contrato antes do código.
+Após o relevo do editor, siga menus/árvore viva (§5.1), console (§5.2),
+grade (§5.4) e motores nativos restantes (§5.7). Uma fatia por commit,
+contrato antes do código.
 ODBC nunca baixa driver; preserve o gesto de carregar e a revogação da sessão.
 
 PT-BR na documentação/UI; identificadores em inglês; regras no core.
@@ -744,6 +753,31 @@ aumento do download é medido e registrado; a aba Web tem de passar no gate
 Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
 
 ## 7. Pente fino e fechamento
+
+**Achado técnico da prévia a fechar nesta revisão:** resolver DNS/NSS
+bloqueante do Tokio pode atrasar o Drop do runtime além do timeout da future
+de conexão. O registro mantém a capacidade ocupada e o IPC fica livre, mas
+o prazo não é teto absoluto do job com hostname. Reproduzir com resolvedor
+controlado da prova e resolver duração/cancelamento sem acumular threads ou
+processos órfãos; conferir também o caminho PostgreSQL ordinário.
+
+**Pedido do autor em 2026-10-06:** depois de concluir a correção em curso da
+prévia PostgreSQL, analisar e aplicar na área de edição de código o relevo
+que já separa o conteúdo do terminal (40.7 §7.217). Conferir os fundos,
+bordas, gutter, abas e sobreposições com o editor em uso; preservar espaço
+útil, contraste, foco e digitação. Prova na janela real, comparação com o
+terminal e gates antes do commit da fatia visual. Esse pedido entra após
+a correção atual, mantendo o restante do Banco e do fechamento na fila.
+
+**Análise antes do código da fatia visual:** o editor ainda usa
+`backgroundEditor` = `background1`, por isso texto e moldura não se separam.
+O terminal usa bandeja `surface1` e poço `background0`, com borda discreta
+e sombra interna. Extrair esse desenho para um componente Kv comum;
+aplicá-lo à superfície do editor, incluindo gutter, com as abas na bandeja.
+Conservar as dimensões e margens existentes, sem acrescentar efeitos GPU,
+timers ou camadas de input. Não alterar globalmente o token
+`backgroundEditor`, usado também em outras áreas. Verificar Markdown
+lado a lado, símbolos, overlays e terminais na mesma janela.
 
 - **AppImage, depois de todo o pente fino** (decisões do autor, 2026-10-04).
   - **O tamanho não importa; o consumo de recurso no dia a dia sim.** Medir
