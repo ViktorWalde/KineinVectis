@@ -467,13 +467,25 @@ leases e jobs próprios, sem incorporar runtime/código dessas ferramentas.
 
 ### 5.2 Console que ajuda
 
-- **Completar nomes** de tabelas e colunas a partir da estrutura já lida, e
-  palavras-chave. Isso funciona sem servidor de linguagem.
+- **LSP obrigatório por decisão do autor em 2026-10-07.** Completar tabelas,
+  colunas e palavras-chave usando ferramentas existentes e o cliente LSP
+  já integrado. MongoDB precisa de coleções/campos/operadores; SQLite e
+  InfluxDB 3 precisam de provedor compatível com seus dialetos. Um LSP pode
+  atender vários bancos quando isso for comprovado. O plano anterior de
+  completion própria e LSP SQL opcional foi substituído por essa decisão.
 - **Histórico de consultas** por conexão (as últimas N), reabrível no
   console.
-- **O LSP de SQL fica como opção registrada.** O candidato é o **Postgres
-  Language Server** (Supabase, Rust, MIT). O sqls (Go, MIT) é multi-motor, e
-  o sql-language-server (Node) fica fora.
+- **Arquitetura antes da integração:**
+  [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e
+  [ADR-0009](../decisoes-adr/ADR-0009-banco-e-linguagem-por-provedores.md).
+  Adaptador de banco e provedor LSP são independentes; instâncias isoladas
+  por conexão, atualização pelo usuário e compatibilidade por capacidade.
+  Candidatos pesquisados: Postgres Language Server, syntaqlite e servidor
+  oficial MongoDB, com provas externas delimitadas no 38 §8. A IDE ainda
+  não os integra. MySQL/MariaDB e linguagem InfluxDB 3 exigem seleção/prova;
+  sqls não declara release estável, e Flux LSP arquivado não atende InfluxDB 3.
+  Runtime Node externo pode ser avaliado para ferramenta original, como
+  no MongoDB; isso não incorpora host VS Code à IDE.
 
 ### 5.3 Segurança em camadas
 
@@ -568,6 +580,21 @@ orquestra". Ficam assim:
 - a IDE não baixa driver sozinha. Um driver é código nativo de terceiros, e
   carregá-lo é gesto explícito, com aviso (§7, segurança).
 
+**Ampliação esclarecida pelo autor em 2026-10-07:** incluir **InfluxDB 3
+nativo**, sem ODBC, e suporte LSP de **MongoDB moderno**, SQLite e dialetos
+SQL. MongoDB 3.x não é requisito de legado. A instalação/atualização do
+banco e do LSP fica com o usuário. Não fixar versão de servidor ao teste;
+detectar capacidades/compatibilidade e conter erro no adaptador/instância.
+Drivers atuais são bibliotecas compiladas no core: sua atualização ainda
+depende de atualizar o core. Não prometer compatibilidade com qualquer
+protocolo futuro. Donos, fronteiras, migração e provas estão no 38.
+
+"Nativos completos" significa recursos suportados pelo motor: transação,
+prévia e edição por chave primária não são capacidades universais.
+InfluxDB 3 usa SQL/InfluxQL para consulta e API de escrita própria; não
+atribuir a ele as operações PostgreSQL. O LSP correto ainda é pendência,
+independente da integração de acesso nativo.
+
 ### 5.8 A fatia retomada e o próximo prompt (atualizado em 2026-10-07)
 
 A arquitetura do Banco, com diagramas, donos e limites, está no
@@ -576,7 +603,7 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** Desconectar (§5.1.5, 40.7 §7.231), protocolo
+**Última fatia de produto concluída:** Desconectar (§5.1.5, 40.7 §7.231), protocolo
 `0.163.0`. Drena trabalhos e drivers, revoga prévia sem decisão/consentimento
 ODBC, preserva perfil/rascunho e descarta resposta antiga do console.
 PostgreSQL/MongoDB reais e gestos SQLite na janela da IDE provados. Gates
@@ -602,15 +629,27 @@ KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
 de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
 completos e estritos verdes. Confira git log para o commit local.
 
-**Próxima fatia:** restante de ações/árvore viva (§5.1): localizar objeto
-do console.
-Vínculo console/conexão, identidades, seleção, menus, modelos, ações com
-impacto e releitura após execução já estão validados
-(§5.12/§5.1.1–§5.1.5); continuar sobre essa base.
-O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
-(§5.4), com prova real conforme §5.6.
-MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
-vem depois e inclui a correção do limite DNS/NSS registrado no §7.
+**Desenho registrado:** modularidade de Banco/LSP, atualização pelo usuário,
+MongoDB moderno e InfluxDB 3 nativo, no 40.7 §7.232 e no
+[38](../arquitetura/38-provedores-de-banco-e-linguagem.md). Sem mudança de
+produto/protocolo; provas de ferramentas externas não são integração na IDE.
+
+**Próxima fatia executável:** descritores/contratos de provedores sobre os
+donos atuais (38 D1), depois instâncias/contexto e integração LSP (D2–D5).
+LSP SQL passou a ser obrigatório: não implementar completion de catálogo
+própria antes dessas ferramentas. InfluxDB 3 exige adaptador nativo e
+provedor de linguagem comprovado (D6–D7), com perfil/ID extensível.
+
+**Restante do passo 7:** localizar objeto do console (§5.1), histórico
+(§5.2), carregar mais/ordenar/copiar/exportar/editar por chave primária
+(§5.4), MySQL/MariaDB nativo (§5.7), aviso com `UPDATE FROM` e TLS
+`verify-full` (§5.6), além das integrações LSP/InfluxDB acima.
+Vínculos, identidades, seleção, menus, modelos, impacto, releitura e
+desconexão já estão validados (§5.12/§5.1.1–§5.1.5); continuar sobre essa
+base. As onze pendências contadas antes da ampliação não são onze commits
+nem garantia de encerramento na fatia 11. O passo fecha quando todos os
+critérios forem aceitos. O passo 8 vem depois, incluindo o limite DNS/NSS
+registrado no §7; AppImage só após esse pente fino.
 
 Prompt de continuidade (conferir estado e log antes de usar):
 
@@ -626,7 +665,7 @@ cumprir os critérios do passo 8.
 
 Comece com git status --short --branch e git log -5; preserve todo trabalho
 local. Leia 00-comece-aqui, o cabeçalho e a fila do 40, a última entrada
-do 40.7, o 59 §2/§5/§7, arquitetura/37 e o contrato arquitetura/03.
+do 40.7, o 59 §2/§5/§7, arquitetura/37/38, ADR-0009 e o contrato arquitetura/03.
 Confira PROTOCOL_VERSION no código. Preserve as proteções do 40.7 §7.220.
 Leia o aceite do §7.221: protocolo 0.157.0, ODBC concluído e validado.
 ODBC está no commit local fa32f51. Produção/somente leitura/contexto
@@ -646,8 +685,10 @@ está aceito no §7.230, mantendo 0.162.0; usa o formulário existente, com prov
 de cancelamento/criação e rascunho intacto. Não refaça essa entrada.
 Desconexão está aceita no §7.231, protocolo 0.163.0, com PostgreSQL/MongoDB
 reais e rascunho preservado na IDE. Não refaça leases/barreira, shutdown
-MongoDB nem descarte de pedidos antigos do console. Atual: localizar objeto
-do console (§5.1). Não refaça os menus/seleção.
+MongoDB nem descarte de pedidos antigos do console. Desenho modular registrado
+no §7.232, arquitetura/38 e ADR-0009; ainda sem integração de
+produto. Atual: D1, descritores e contratos, depois D2, instâncias LSP por
+conexão. Não refaça menus/seleção, popup LSP ou transporte do cliente.
 Leia os donos, limites e o desenho antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
@@ -656,8 +697,16 @@ pedem confirmação. A medição silenciosa protege filtro que pega todos.
 O console Mongo usa um comando por linha, com JSON estrito; preserve
 a forma antiga de leitura e o tratamento de Extended JSON.
 
-Após o relevo do editor, siga menus/árvore viva (§5.1), console (§5.2),
-grade (§5.4) e motores nativos restantes (§5.7). Uma fatia por commit,
+A decisão esclarecida em 2026-10-07 torna LSP SQL obrigatório, com ferramentas
+existentes para PostgreSQL, SQLite, MongoDB moderno e InfluxDB 3 SQL/InfluxQL.
+Não há requisito MongoDB 3.x. O usuário instala/atualiza banco e LSP; a IDE
+negocia capacidades e contém incompatibilidade na instância/adaptador.
+Um LSP pode atender vários bancos, se comprovado. InfluxDB 3 é nativo, sem
+ODBC; seu LSP ainda precisa de seleção/prova. Não usar Flux LSP arquivado.
+Não implementar parser ou completion semântica próprios. Siga D1–D7 no 38,
+preservando localizar objeto (§5.1), histórico (§5.2), grade (§5.4),
+MySQL/MariaDB (§5.7) e provas finais (§5.6). Não interpretar a contagem antiga
+de onze pendências como onze commits até o fechamento. Uma fatia por commit,
 contrato antes do código.
 ODBC nunca baixa driver; preserve o gesto de carregar e a revogação da sessão.
 

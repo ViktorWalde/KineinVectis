@@ -29,6 +29,12 @@
 > o gate. Debug/release reconstruídos após detectar headers de sistema
 > mais novos; abertura sem avisos e launcher hardened/core release atual
 > conferidos. Banco permanece no passo 7; pente fino ainda pendente.
+> Em 2026-10-07 o autor tornou LSP SQL obrigatório e esclareceu MongoDB
+> moderno/InfluxDB 3 nativo, com ferramentas atualizadas pelo usuário.
+> Arquitetura modular registrada no §7.232,
+> [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e ADR-0009;
+> descritores, instâncias por conexão e integrações ainda pendentes.
+> O protocolo continua `0.163.0`; as provas externas não habilitam LSP no produto.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
@@ -36,6 +42,7 @@
 > - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.163.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
 >   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.231.
+>   A decisão modular de Banco/LSP está no §7.232, ainda sem código de produto.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -98,9 +105,9 @@
 >     leitura e contexto validados (§7.222, c4d8779). Prévia PostgreSQL
 >     concluída e validada (`0.159.0`; §7.223, 59 §5.11).
 >     Profundidade do editor como no terminal validada (§7.224; autor,
->     2026-10-06), com a mesma área útil. Atual: menus/árvore viva, com
->     proteção do vínculo entre console e conexão, depois console/grade
->     e motores restantes. **Base dos consoles/árvore e abas de execução
+>     2026-10-06), com a mesma área útil. Atual: modularidade de Banco/LSP,
+>     depois localizar objeto, histórico/grade e motores restantes.
+>     **Base dos consoles/árvore e abas de execução
 >     aceita** (`0.160.0`, 40.7 §7.225): vínculos sem colisão, extração da
 >     instrução no core, chaves seguras e uma aba por execução, com PTY novo
 >     a cada tentativa. A retomada conferiu e completou o trabalho local,
@@ -112,7 +119,8 @@
 >     execução aceita** no §7.229 (`0.162.0`), com erro parcial preservado.
 >     **Novo banco no menu aceito** no §7.230, pelo formulário existente.
 >     **Desconexão aceita** no §7.231 (`0.163.0`), aguardando drivers e
->     conservando rascunho. Próximo no 59 §5.1: localizar objeto do console.
+>     conservando rascunho. Próximo: descritores/contratos de provedores e
+>     instâncias LSP por conexão (38 D1–D2); localizar objeto continua na fila.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >
@@ -455,8 +463,14 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 [59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.231 concluídas,
 com desenvolvimento reunido na main (§7.227). Relevo do editor, modelos/ações
 e releitura após execução já estão aceitos, assim como Novo banco no menu
-e desconexão com encerramento dos drivers. Próxima: localizar objeto do console (§5.1);
-depois console/grade e motores restantes. O roteiro está no 59 §5.8.
+e desconexão com encerramento dos drivers. Decisão modular registrada no
+§7.232, [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e ADR-0009:
+LSP obrigatório, MongoDB moderno e InfluxDB 3 nativo, ferramentas atualizadas
+pelo usuário. Integrações não implementadas; protocolo permanece `0.163.0`.
+Próxima: descritores/contratos (D1), instâncias/contexto LSP (D2) e ferramentas
+por dialeto. Localizar objeto, histórico, grade, MySQL/MariaDB e provas finais
+continuam pendentes. A contagem antiga de onze itens não fixa o número de
+commits até o fechamento. O roteiro está no 59 §5.8 e no 38 §9.
 O pente fino é o passo 8 e ainda não começou.
 A lista datada abaixo preserva o histórico das dívidas anteriores.
 

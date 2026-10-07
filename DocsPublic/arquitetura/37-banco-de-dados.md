@@ -9,6 +9,10 @@
 > O aceite e as provas desta fatia ficam no [40.7](../roadmaps/40.7-registro-das-entregas.md).
 > Este documento explica o desenho e os limites; não encerra o passo 7.
 
+O [desenho 38](38-provedores-de-banco-e-linguagem.md), decidido em 2026-10-07,
+planeja expansão por adaptadores e provedores LSP, MongoDB moderno e InfluxDB 3
+nativo. É PLANO: o estado de execução descrito aqui permanece a base atual.
+
 ## 1. O que foi retomado
 
 A sessão de 2026-10-04 parou durante a troca do formulário de PostgreSQL

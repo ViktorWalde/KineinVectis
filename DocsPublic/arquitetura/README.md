@@ -26,3 +26,7 @@ ARCHITECTURE.md                  as regras: camadas, corte por responsabilidade,
 
 [37 — Banco de dados](37-banco-de-dados.md): consulta, confirmação, MongoDB,
 padrões por motor, limites e provas reproduzíveis, com diagramas.
+
+[38 — Provedores de banco e de linguagem](38-provedores-de-banco-e-linguagem.md):
+PLANO de expansão modular, seleção de LSP, atualização de ferramentas,
+isolamento por conexão e migração sobre os donos atuais.
