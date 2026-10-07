@@ -71,6 +71,99 @@ fn database(dir: &std::path::Path) -> String {
 }
 
 #[test]
+fn structural_queries_invalidate_the_catalogue_but_reads_and_dml_do_not() {
+    let (mut c, dir) = scenario("catalogue-refresh");
+    let path = database(&dir);
+    let saved = c.rpc(
+        "datasource.save",
+        json!({"profile": {
+            "name": "arquivo", "engine": "sqlite", "host": "", "port": 0,
+            "database": path, "user": ""
+        }}),
+    );
+    assert!(saved.error.is_none());
+    for (sql, expected) in [
+        ("CREATE TABLE \"objeto; DROP\"(id INTEGER)", true),
+        ("ALTER TABLE \"objeto; DROP\" ADD COLUMN valor TEXT", true),
+        ("SELECT 'CREATE TABLE falsa; DROP TABLE leituras'", false),
+        ("INSERT INTO \"objeto; DROP\" VALUES (1, 'CREATE')", false),
+    ] {
+        let accepted = c.rpc(
+            "datasource.query",
+            json!({"name": "arquivo", "sql": sql, "clientContext": "catalogue-proof"}),
+        );
+        assert!(accepted.error.is_none(), "{:?}", accepted.error);
+        let event = c.queried();
+        assert_eq!(event["success"], true, "{event}");
+        assert_eq!(
+            event["catalogUpdate"],
+            if expected { "reload" } else { "none" },
+            "{event}"
+        );
+        assert_eq!(event["clientContext"], "catalogue-proof");
+    }
+    let refused = c.rpc(
+        "datasource.query",
+        json!({"name": "arquivo", "sql": "DROP TABLE \"objeto; DROP\""}),
+    );
+    assert_eq!(
+        refused.error.unwrap().code,
+        JsonRpcErrorCode::WriteConfirmationRequired
+    );
+    let accepted = c.rpc(
+        "datasource.query",
+        json!({"name": "arquivo", "sql": "DROP TABLE \"objeto; DROP\"", "confirmWrite": true}),
+    );
+    assert!(accepted.error.is_none());
+    let event = c.queried();
+    assert_eq!(event["success"], true, "{event}");
+    assert_eq!(event["catalogUpdate"], "reload");
+    let connection = rusqlite::Connection::open(path).unwrap();
+    assert!(
+        connection
+            .prepare("SELECT * FROM \"objeto; DROP\"")
+            .is_err()
+    );
+    let count: u32 = connection
+        .query_row("SELECT count(*) FROM leituras", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(count, 3);
+}
+
+#[test]
+fn partially_failed_sqlite_batch_still_invalidates_committed_ddl() {
+    let (mut c, dir) = scenario("catalogue-partial");
+    let path = database(&dir);
+    assert!(
+        c.rpc(
+            "datasource.save",
+            json!({"profile": {
+                "name": "arquivo", "engine": "sqlite", "host": "", "port": 0,
+                "database": path, "user": ""
+            }})
+        )
+        .error
+        .is_none()
+    );
+    let accepted = c.rpc(
+        "datasource.query",
+        json!({"name": "arquivo", "sql":
+        "CREATE TABLE parcial(id INTEGER); INSERT INTO inexistente VALUES (1)"}),
+    );
+    assert!(accepted.error.is_none());
+    let event = c.queried();
+    assert_eq!(event["success"], false, "{event}");
+    assert_eq!(event["catalogUpdate"], "reload");
+    assert!(event["message"].as_str().unwrap().contains("inexistente"));
+    let connection = rusqlite::Connection::open(path).unwrap();
+    assert!(connection.prepare("SELECT * FROM parcial").is_ok());
+    let count: u32 = connection
+        .query_row("SELECT count(*) FROM leituras", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(count, 3);
+}
+
+#[test]
 fn sqlite_query_reads_refuses_unconfirmed_writes_and_writes_when_confirmed() {
     let (mut c, dir) = scenario("sqlite");
     let salvo = c.rpc(

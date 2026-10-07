@@ -190,9 +190,15 @@ fn run_query_job(
             &preview.sql,
         );
     }
+    let catalog_invalidated = classification::invalidates_catalog(profile.engine, statements);
     let resultado = query::run(&profile, secret, sql, max_rows);
     let mut event = evento_da_consulta(ctx, profile.name, resultado);
     event.client_context = request.client_context;
+    event.catalog_update = if catalog_invalidated && !event.secret_required {
+        kinein_protocol::DataSourceCatalogUpdate::Reload
+    } else {
+        kinein_protocol::DataSourceCatalogUpdate::None
+    };
     event.access = if write {
         kinein_protocol::DataSourceQueryAccess::Write
     } else {
@@ -241,6 +247,7 @@ fn evento_da_consulta(
                 client_context: None,
                 access: kinein_protocol::DataSourceQueryAccess::Read,
                 preview_outcome: None,
+                catalog_update: kinein_protocol::DataSourceCatalogUpdate::None,
             }
         }
         Err((message, secret_required)) => {

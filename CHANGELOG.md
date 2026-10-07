@@ -11,6 +11,12 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolo `0.162.0` — **Releitura do catálogo após execução**
+  (validada no checkout; 40.7 §7.229): alterações de estrutura pedem releitura
+  da conexão correspondente. Invalidações durante uma leitura são agrupadas;
+  resultados antigos/duplicados não iniciam leituras. Falha parcial pode
+  pedir releitura, conservando o erro da consulta.
+
 - Protocolo `0.161.0` — **Modelos do catálogo e ações com impacto**
   (validados no checkout; 40.7 §7.228): SELECT e modelos INSERT/UPDATE gerados
   pelo core chegam ao console como inserções que podem ser desfeitas,

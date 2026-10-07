@@ -18,7 +18,8 @@ acrescentou testes de despacho e corrigiu o caminho das alterações que,
 apesar de terem filtro, atingem todos os registros.
 
 O Banco continua sendo uma janela acoplada, com árvore e resultados.
-O console é um arquivo do editor: `.kinein/consoles/*.sql` ou `*.mongo`.
+O console é um arquivo do editor: `.kinein/consoles/v1/*.sql` ou `*.mongo`.
+Consoles antigos preservam seu arquivo e vínculo quando não há ambiguidade.
 A composição dos slots e o foco pertencem à [casca](36-casca-da-ide.md).
 O diálogo edita ou cria conexões; ele não substitui o console.
 
@@ -54,7 +55,8 @@ Os caminhos são relativos à raiz do repositório.
 
 | Responsabilidade | Dono |
 | --- | --- |
-| Perfis e mensagens tipadas | `crates/kinein-protocol/src/datasource.rs`, `crates/kinein-protocol/src/datasource_impact.rs` |
+| Perfis e catálogo tipados | `crates/kinein-protocol/src/datasource.rs` |
+| Consulta e impacto tipados | `crates/kinein-protocol/src/datasource_query.rs`, `crates/kinein-protocol/src/datasource_impact.rs` |
 | Persistir, normalizar e validar perfil | `crates/kinein-core/src/datasource/mod.rs`, `crates/kinein-core/src/datasource/store.rs` |
 | Política de segredo e conexão PostgreSQL | `crates/kinein-core/src/datasource/secret.rs`, `crates/kinein-core/src/datasource/connection.rs` |
 | Léxico SQL comum, fronteiras e leitura do lote inteiro | `crates/kinein-core/src/datasource/sql_syntax.rs` |
@@ -659,8 +661,9 @@ A fila e o prompt de retomada ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
 Prévia PostgreSQL (§9) e profundidade do editor aceitas no 40.7 §7.223/224.
 Base de console/árvore aceita no 40.7 §7.225; primeira fatia de ações no
-§7.226. Modelos do catálogo e ações com impacto aceitos no §7.228. Seguir
-releitura automática após DDL, desconectar e localizar o objeto do console;
+§7.226. Modelos do catálogo e ações com impacto aceitos no §7.228;
+releitura automática após execução aceita no §7.229. Seguir desconectar,
+localizar o objeto do console e Novo banco no submenu;
 depois completion, histórico e grade no passo 7. O pente fino e o AppImage
 seguem a ordem do 59 §7.
 
@@ -690,3 +693,28 @@ desfazer. Para aba nova, espera a carga, confere novamente o contexto e
 descarta a fila ao trocar de workspace ou falhar a leitura. Não executa
 nem grava diretamente o arquivo. EditorController conserva seus donos e
 tamanho anterior; não absorve esta responsabilidade.
+
+### Releitura após execução (2026-10-06, aceita no 40.7 §7.229)
+
+`classification::invalidates_catalog` aproveita os impactos já produzidos
+no core. Alteração estrutural ou instrução relacional desconhecida, escrita
+válida Mongo e operação ODBC que não é leitura invalidam o catálogo após
+tentativa de execução. O evento `queried.catalogUpdate: reload` não afirma
+commit: pode acompanhar erro de lote parcialmente aplicado. Recusa de
+política/preflight, senha necessária e prévia pendente não geram esse sinal.
+
+DataSourceQueryController confere token/perfil/workspace e consome resultado
+terminal uma vez antes de encaminhar a invalidação. DataSourceCatalogController
+usa a introspecção atual: se ocupada, guarda uma invalidação por conexão e
+faz uma leitura posterior, descartando o snapshot anterior. Perfil/workspace
+alterados descartam a fila; necessidade de credencial impede retry automático.
+O resultado/erro da consulta permanece independente da releitura, e a árvore
+conserva a seleção por identidade ou retorna à conexão se o objeto sumir.
+
+Não há polling nem observação de bancos externos. DML relacional conhecido
+não relê estrutura; efeitos indiretos ou alterações fora da IDE usam F5.
+No Mongo a amostra de campos pode mudar após escrita. A ponte C++ transporta
+o mapa do evento sem assinatura nova. Contratos de execução ficam em
+`crates/kinein-protocol/src/datasource_query.rs`, separados de perfis/catálogo
+e reexportados pela mesma API pública. Desenho e referências no 59 §5.1.3;
+provas automatizadas e na IDE real no 40.7 §7.229.

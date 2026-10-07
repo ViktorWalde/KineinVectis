@@ -100,13 +100,14 @@ QtObject {
     }
 
     function handleOutcome(outcome) {
-        if (!root.matches(outcome)) return;
+        if (!root.matches(outcome) || root.lastQuery.finished === true) return;
         root.dataSourceController.previews.finished(outcome);
         if (outcome.confirmationSql !== undefined) {
             if (outcome.confirmationSql !== root.lastQuery.sql) return;
             root.fail(outcome.message || "", "WRITE_CONFIRMATION_REQUIRED", outcome);
             return;
         }
+        root.lastQuery = Object.assign({}, root.lastQuery, { finished: true });
         root.querying = false;
         root.columns = outcome.success === true ? (outcome.columns || []) : [];
         root.rows = outcome.success === true ? (outcome.rows || []) : [];
@@ -130,6 +131,7 @@ QtObject {
             root.status = outcome.message || qsTr("A consulta falhou.");
             if (outcome.secretRequired === true) root.secretNeeded(Object.assign({}, root.lastQuery));
         }
+        if (outcome.catalogUpdate === "reload") root.dataSourceController.catalog.invalidate(outcome.name);
     }
 
     function fail(message, code, operation) {

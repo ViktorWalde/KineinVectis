@@ -12,6 +12,7 @@ QtObject {
     property int selectionGeneration: 0
     property var pending: DataSourceMap.copy()
     property var structureKeys: DataSourceMap.copy()
+    property var invalidated: DataSourceMap.copy()
     property string lastTest: ""
 
     signal testRequested(string name, var context)
@@ -39,6 +40,7 @@ QtObject {
         root.generation += 1;
         root.pending = DataSourceMap.copy();
         root.structureKeys = DataSourceMap.copy();
+        root.invalidated = DataSourceMap.copy();
         root.lastTest = "";
     }
 
@@ -54,6 +56,11 @@ QtObject {
             delete next[id];
         }
         root.pending = next;
+        const invalidated = DataSourceMap.copy(root.invalidated);
+        for (const name of Object.keys(invalidated)) {
+            if (!root.current(invalidated[name])) delete invalidated[name];
+        }
+        root.invalidated = invalidated;
         const structures = DataSourceMap.copy(root.dataSourceController.structures);
         for (const name of Object.keys(structures)) {
             if (DataSourceMap.get(root.structureKeys, name) !== root.key(root.dataSourceController.profileByName(name))) delete structures[name];
@@ -79,10 +86,33 @@ QtObject {
             root.lastTest = context.clientContext;
             root.testRequested(name, context);
         } else {
+            root.takeInvalidation(name);
             controller.readingNames = DataSourceMap.copy(controller.readingNames, { [name]: true });
             if (controller.draft.name === name) controller.reading = true;
             root.introspectRequested(name, context);
         }
+    }
+
+    function invalidate(name) {
+        const operation = DataSourceMap.get(root.pending, "introspect:" + name);
+        if (root.current(operation)) {
+            root.invalidated = DataSourceMap.copy(root.invalidated, { [name]: operation });
+        } else root.begin("introspect", name);
+    }
+
+    function takeInvalidation(name) {
+        const operation = DataSourceMap.get(root.invalidated, name);
+        const next = DataSourceMap.copy(root.invalidated);
+        delete next[name];
+        root.invalidated = next;
+        return operation;
+    }
+
+    function resumeInvalidation(name, needsSecret) {
+        const operation = root.takeInvalidation(name);
+        if (needsSecret || !root.current(operation)) return false;
+        root.begin("introspect", name);
+        return true;
     }
 
     function matches(method, event) {
@@ -119,6 +149,7 @@ QtObject {
         if (!operation) return;
         const controller = root.dataSourceController;
         controller.readingNames = DataSourceMap.copy(controller.readingNames, { [name]: false });
+        if (root.resumeInvalidation(name, needsSecret)) return;
         root.structureKeys = DataSourceMap.copy(root.structureKeys, { [name]: root.key(operation.expectedContext.profile) });
         controller.structures = DataSourceMap.copy(controller.structures, { [name]: ok ? { schemas: schemas, collections: collections }
             : { schemas: [], collections: [], failed: message } });
@@ -145,6 +176,7 @@ QtObject {
         else {
             if (controller.draft.name === event.name) controller.reading = false;
             controller.readingNames = DataSourceMap.copy(controller.readingNames, { [event.name]: false });
+            if (root.resumeInvalidation(event.name, code === "SECRET_REQUIRED")) return;
         }
         if (sameSelection && controller.draft.name === event.name) {
             controller.testMessage = message;

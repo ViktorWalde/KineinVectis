@@ -64,10 +64,13 @@ Item {
         if (c.queryStatus.indexOf("4 linha(s) afetada(s)") !== 0 || c.queryColumns.length !== 0) failures += 64;
 
         // A falha do motor vira texto; a senha pedida abre o campo.
+        c.runOn(c.draft.name, "SELECT * FROM x", false);
         c.handleQueried(root.outcome({ success: false, message: "relation \"x\" does not exist", secretRequired: false }));
         if (c.queryStatus.indexOf("relation") !== 0 || c.secretRequired) failures += 128;
+        c.runOn(c.draft.name, "SELECT 1", false);
         c.handleQueried(root.outcome({ success: false, message: "senha", secretRequired: true }));
         if (!c.secretRequired) failures += 256;
+        c.runOn(c.draft.name, "SELECT 1", false);
         c.handleFailed("datasource.query", "a variavel nao esta definida", "SECRET_REQUIRED", c.lastQuery);
         if (!c.secretRequired || c.errorText !== "") failures += 512;
         // Outra recusa continua sendo erro de produto.

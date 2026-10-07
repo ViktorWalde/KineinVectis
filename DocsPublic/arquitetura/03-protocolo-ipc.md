@@ -1,5 +1,11 @@
 # 03 — Protocolo IPC
 
+> **0.162.0 (2026-10-06, validado no checkout; 40.7 §7.229).**
+> `event.datasource.queried.catalogUpdate: none | reload` pede releitura do
+> catálogo da conexão correlacionada. Ausente significa none. Pode acompanhar falha
+> de execução parcial; não afirma sucesso/commit. Sem método/evento novo;
+> a ponte leva o mapa inteiro. Desenho e provas no 59 §5.1.3.
+
 > **0.161.0 (2026-10-06, validado no checkout; 40.7 §7.228).**
 > Catálogo: `DataSourceTable.statements?` e `MongoCollection.statements?`
 > levam `{ select, insert?, update?, clear?, remove? }`, gerados no core.
@@ -4605,7 +4611,8 @@ event.datasource.previewed     { jobId, name, clientContext, previewId, expiresI
                                  columns: [string], rows: [[string | null]], affected, truncated, elapsedMs } (0.159.0)
 event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
                                  rowCount, affected?, truncated, elapsedMs, message?, secretRequired, confirmationSql?, clientContext?, access,
-                                 previewOutcome?: committed | rolledBack | expired | cancelled | failed | unknown }
+                                 previewOutcome?: committed | rolledBack | expired | cancelled | failed | unknown,
+                                 catalogUpdate: none | reload } (catalogUpdate desde 0.162.0; ausente = none)
 event.datasource.created       { jobId, success, profile?, message }                          (0.124.0)
 event.datasource.destroyed     { jobId, success, message, profiles?, clientContext? }                          (0.129.0)
 ```
@@ -4652,6 +4659,16 @@ COMMIT confere o perfil salvo novamente e a decisão só é aceita uma vez.
 SQLSTATE em FATAL não basta para afirmar recusa: perda de resposta de COMMIT
 é `unknown`. Sequências e efeitos externos não são recuperados por rollback.
 O ciclo, streaming e orçamentos estão no [37 §9](37-banco-de-dados.md).
+
+**Releitura após execução (`0.162.0`).** `catalogUpdate: reload` indica que
+o catálogo pode estar desatualizado: alteração estrutural/instrução relacional
+desconhecida, escrita válida Mongo ou operação ODBC que não é leitura.
+O campo ausente equivale a `none`, para eventos de versões anteriores.
+O sinal pode acompanhar erro de lote parcialmente aplicado; não afirma
+commit. Recusa de política/preflight, senha necessária e prévia não o geram.
+A UI confere contexto, consome o resultado terminal uma vez e agrupa
+invalidações enquanto a introspecção está ocupada. Mudanças externas e
+efeitos indiretos ainda usam F5. Donos e limites no [37](37-banco-de-dados.md).
 
 A execução mantém o texto do autor (`simple_query`/`execute_batch`), e
 `affected` é o que o motor contou (SQLite: a última instrução). Células são

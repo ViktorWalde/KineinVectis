@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); ações da árvore aceitas (§7.226) e modelos/ações com impacto aceitos (§7.228); demais ações, console, grade e motores restantes a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); ações da árvore aceitas (§7.226) e modelos/ações com impacto aceitos (§7.228); releitura após execução aceita (§7.229); demais ações, console, grade e motores restantes a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -230,11 +230,15 @@ Protocolo permanece `0.160.0`. Aceite dos gates registrado no diário.
 leitura/modelos preserva rascunho e permite desfazer. Esvaziar/remover usam
 o aviso existente. ODBC conserva a leitura do driver; Mongo usa sua gramática.
 
+**Releitura após execução concluída e validada em 2026-10-06**
+(40.7 §7.229, protocolo `0.162.0`; desenho no §5.1.3). CREATE/ALTER/DROP
+atualizam a árvore sem F5; erro de lote parcialmente aplicado conserva
+a mensagem e relê o catálogo. Invalidações ocupadas são agrupadas.
+
 **Ainda pendentes desta seção:** “Novo banco…” no submenu, localizar o
-objeto do console, desconectar com descarte real da sessão e atualizar o
-catálogo após DDL. Detecção de mudança estrutural precisa de contrato no
-core; não duplicar geração/interpretação de instruções no QML. A lista
-abaixo conserva o escopo completo, incluindo o que já foi feito.
+objeto do console e desconectar com descarte real da sessão. Não duplicar
+geração/interpretação de instruções no QML. A lista abaixo conserva o
+escopo completo, incluindo o que já foi feito.
 
 - **Barra da janela**, como na referência JetBrains:
   - **+** com submenu de motores, cada um com ícone colorido, e "Desta
@@ -304,8 +308,49 @@ cancelar não escreve e confirmar passa pela política/contexto do core.
 Somente leitura desabilita essas ações na apresentação e continua sendo
 recusado no core. As provas cobrem delimitadores, nomes hostis, modelos
 incompletos, visões/Mongo/ODBC, leitura real SQLite, buffer sujo/desfazer,
-respostas antigas e cancelamento/confirmar na tela. Refresh após DDL,
-desconectar e localizar continuam na fatia seguinte.
+respostas antigas e cancelamento/confirmar na tela. A releitura após DDL
+foi aceita depois, no §5.1.3; desconectar e localizar seguem na fila atual.
+
+#### 5.1.3 Desenho da releitura após execução (2026-10-06)
+
+**Implementado e validado no 40.7 §7.229.** O desenho abaixo foi registrado
+antes do código; o contrato final usa enum none/reload.
+
+Base aceita antes da fatia: main 7c69830, protocolo 0.161.0. A fatia acrescenta
+`catalogUpdate: none | reload` ao evento `datasource.queried` no protocolo
+0.162.0; ausente significa none. Nenhum método/evento novo e nenhuma
+assinatura C++ nova: o mapa do evento já atravessa a ponte inteiro.
+
+`classification::invalidates_catalog` reutiliza os impactos existentes:
+CREATE/ALTER/DROP e instruções desconhecidas nos relacionais; escrita válida
+no Mongo (coleções/campos podem mudar); toda operação ODBC não reconhecida
+como leitura. Não há parser SQL no QML nem novo executor. O sinal sai após
+a tentativa de execução e pode acompanhar erro: um lote SQLite pode ter
+aplicado DDL antes de falhar. Significa reler, não afirmar commit ou sucesso.
+Recusa de política/preflight, senha necessária e prévia pendente não invalidam.
+Leitura e DML relacional conhecidos não pedem introspecção; alterações
+externas/efeitos indiretos continuam cobertos por F5, sem watcher/polling.
+
+DataSourceQueryController confere token/destino, consome cada resultado
+terminal uma vez e passa somente o aviso ao catálogo atual. O catálogo
+agrupa invalidações da mesma conexão durante uma leitura numa única
+releitura posterior, descartando o snapshot anterior. Perfil/workspace
+alterados descartam a fila; falha de credencial não dispara retry automático.
+Resultado da consulta, foco, buffer e seleção estável da árvore permanecem
+com seus donos atuais. Desconectar/localizar/Novo banco ficam para depois.
+
+Provas: léxico real com comentários/literais/nomes delimitados, despacho
+SQLite CREATE/ALTER/DROP e lote parcialmente aplicado, compatibilidade do
+evento antigo, resultado duplicado/antigo, coalescência e troca de contexto,
+falha de catálogo/credencial. Antes/depois na IDE real sem F5, dois bancos
+com nomes parecidos, dados vizinhos intactos e gates completos/estritos.
+
+Referências MODE-D, consultadas em 2026-10-06: [DataGrip 2026.2, Auto sync](https://www.jetbrains.com/help/datagrip/data-sources-and-drivers-dialog.html)
+invalida a árvore após DDL; [SQLite, sqlite3_exec](https://www.sqlite.org/c3ref/exec.html)
+para o lote no primeiro erro; [PostgreSQL 18, Simple Query](https://www.postgresql.org/docs/18/protocol-flow.html)
+permite transações explícitas dentro de um lote; [MongoDB, coleções](https://www.mongodb.com/docs/manual/core/databases-and-collections/)
+descreve criação implícita e campos variáveis. A adaptação usa o core e o
+catálogo próprios, sem importar runtime/código dessas ferramentas.
 
 ### 5.2 Console que ajuda
 
@@ -418,11 +463,13 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** modelos do catálogo e ações com impacto
-(§5.1.2, protocolo `0.161.0`, 40.7 §7.228). Instruções são geradas no core;
-modelos preservam o buffer sujo e desfazer. Esvaziar/remover usam o aviso
-existente, com cancelamento/confirmar provados na IDE real. Gates completos
-e estritos, 128 harnesses por Qt 6.10/6.4. A primeira fatia da árvore, barra,
+**Última fatia concluída:** releitura após execução (§5.1.3, protocolo
+`0.162.0`, 40.7 §7.229). CREATE/ALTER/DROP e lote parcialmente aplicado
+provados na IDE real sem F5; contexto, resultado duplicado, coalescência e
+credencial cobertos. Gates completos/estritos, 1007 testes Rust e 129 harnesses
+por Qt 6.10/6.4, com C++ anterior reutilizado por hashes idênticos.
+Modelos/ações com impacto permanecem aceitos no §7.228: geração no core,
+buffer sujo/desfazer e aviso existente. A primeira fatia da árvore, barra,
 seleção e menus permanece aceita no §7.226; integração na main no §7.227. Consoles
 seguros e reutilização das abas continuam aceitos no §7.225 (d116b43).
 Prévia PostgreSQL permanece aceita no §7.223 (fbf3294). Produção/somente leitura
@@ -435,10 +482,11 @@ KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
 de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
 completos e estritos verdes. Confira git log para o commit local.
 
-**Fatia atual:** restante de ações/árvore viva (§5.1): refresh após DDL,
-desconectar/localizar objeto e “Novo banco…” no submenu. Vínculo
-console/conexão, identidades, seleção, menus, modelos e ações com impacto
-já estão validados (§5.12/§5.1.1–§5.1.2); continuar sobre essa base.
+**Próxima fatia:** restante de ações/árvore viva (§5.1): desconectar
+com descarte real da sessão, localizar objeto e “Novo banco…” no submenu.
+Vínculo console/conexão, identidades, seleção, menus, modelos, ações com
+impacto e releitura após execução já estão validados
+(§5.12/§5.1.1–§5.1.3); continuar sobre essa base.
 O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
 (§5.4), com prova real conforme §5.6.
 MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
@@ -471,9 +519,11 @@ com prova visual, gates completos e estritos e commit próprio. Consoles
 seguros e abas de execução estão aceitos no §7.225, protocolo 0.160.0.
 Barra, menus, seleção/atalhos locais e releitura estão aceitos no §7.226.
 Modelos do catálogo e ações com impacto estão aceitos no §7.228, protocolo
-0.161.0. Não refaça geração, confirmação nem inserção no buffer.
-Atual: refresh após DDL, desconectar, localizar objeto e Novo banco no
-submenu (§5.1). Não refaça os menus/seleção.
+0.161.0. Releitura após execução está aceita no §7.229, protocolo
+0.162.0, incluindo falha parcial e coalescência. Não refaça geração,
+confirmação, inserção no buffer nem refresh automático.
+Atual: desconectar com descarte real da sessão, localizar objeto e Novo banco
+no submenu (§5.1). Não refaça os menus/seleção.
 Leia os donos, limites e o desenho antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
@@ -801,8 +851,9 @@ níveis e no arquivo, FIFO, criação concorrente; newline no nome; literais
 multilinha/dollar quotes/comentários e Unicode; contexto alterado e respostas
 fora de ordem; nomes especiais na árvore. Repetir gestos reais de console,
 produção/prévia quando afetados, só janela da IDE, XDG isolado e limpeza.
-Todos os gates completos/estritos antes do commit. Depois implementar os menus,
-ações e atualização automática do §5.1; passo 7 continua aberto.
+Todos os gates completos/estritos antes do commit. Menus, ações e atualização
+automática do §5.1 foram aceitos depois no 40.7 §7.226/§7.228/§7.229.
+O passo 7 continua aberto; a fila atual está no §5.8.
 
 ## 6. Grafana: visualização web dentro da IDE
 

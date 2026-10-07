@@ -911,6 +911,13 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   ODBC oferece a leitura fornecida pelo driver, sem modelos de escrita.
   Sem conexões, “Criar conexão…” e Alt+Insert (com foco no Banco) abrem o
   mesmo menu de motores. Os ícones usam a cor de cada motor nos dois docks.
+- **A árvore acompanha mudanças de estrutura.** Depois de criar, alterar
+  ou remover objetos pelo console, a IDE relê o catálogo da conexão
+  correspondente. No MongoDB, escritas também atualizam coleções e campos
+  amostrados. O resultado da consulta permanece visível. Se um lote aplicar
+  parte das instruções e depois falhar, a árvore pode atualizar mesmo com
+  o erro na tela. Para mudanças feitas fora da IDE ou efeitos indiretos,
+  use F5 com foco na árvore ou o botão de releitura.
 - **Ver os dados de uma tabela:** **clique duplo** nela, ou o ícone ▦ que
   aparece com o mouse em cima da linha. As primeiras **200 linhas**
   (`SELECT * FROM … LIMIT 200`; no MongoDB, `coleção.find({})`) aparecem na **seção
