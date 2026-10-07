@@ -112,6 +112,36 @@ passo 8 registrada. Runtime, motores, linguagem e grade têm seus próprios
 aceites na tabela; sua ausência não mantém o passo 7 indefinidamente aberto.
 Incidente de perda de dados, crash ou bloqueio diário continua furando a fila.
 
+### 2.2 Frentes paralelas autorizadas — 2026-10-07
+
+O autor pediu mais agentes com a mesma capacidade desta sessão, no máximo
+dois adicionais. Duas frentes de implementação foram abertas sobre
+`78f3ea2`, em worktrees separados; o agente anterior foi reutilizado para
+revisão preparatória. Mesmo modelo/esforço herdados, sem novas delegações.
+
+| Dono | Recorte atual | Entrega esperada |
+| --- | --- | --- |
+| Principal | Passo 7 e validação Qt 6.10 | Perfil de verificação alinhado, revisão de contratos/D1a.4 e integração/commits das frentes |
+| Agente passo 13 | Histórico limitado por conexão, reabrível no console | Desenho anterior ao código, persistência/contexto/rascunho provados, patch próprio |
+| Agente passo 14 | Copiar célula/linha e exportar resultado carregado em CSV | Formatação/snapshot/limites e escrita sem sobrescrita provados, patch próprio |
+| Agente anterior | Revisão preparatória do passo 8/D1b | Donos de processo/pipes/coleta, dependências e critérios; sem ativar runtime |
+
+Passos 13/14 avançam sobre os consumidores atuais, enquanto 8–12 conservam
+suas dependências. Cada frente entrega uma fatia, não o passo inteiro:
+localizar objeto, paginação/ordenação/edição da grade ficam em recortes
+seguintes. Qt 6.10, sem ações GNOME; provas GUI finais coordenadas pelo
+principal. Só o principal integra e commita depois dos gates. Fiação/
+registros de módulos, contrato IPC e hosts comuns são reconciliados em
+sequência; ninguém trabalha diretamente na árvore de outro agente.
+
+**Interrupção solicitada pelo autor nesta sessão:** as implementações foram
+suspensas antes da integração. Histórico e grade têm contratos/código parcial,
+patches WIP e notas nos seus worktrees; nenhuma entrega nova é declarada aceita.
+Principal preserva dois testes negativos de negociação/erros que reproduzem
+os achados da revisão D1b, com correção ainda pendente, e a edição não validada
+do orquestrador para retirar Qt 6.4. Retomar pelos handoffs, não iniciar gate
+completo esperando uma árvore já verde. D1a.4 continua pendente.
+
 ## 3. Containers acoplados
 
 **Inspiração:** o Docker Desktop, adaptado ao estilo JetBrains da IDE. É a

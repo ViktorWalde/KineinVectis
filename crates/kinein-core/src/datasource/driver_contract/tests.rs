@@ -286,3 +286,64 @@ fn remote_error_mapping_discards_external_text_and_preserves_uncertainty() {
             .contains("PRIVATE_CREDENTIAL")
     );
 }
+
+#[test]
+fn unknown_or_failed_execution_never_requests_a_credential_retry() {
+    for reason in [
+        FailureReason::SecretRequired,
+        FailureReason::ReadOnly,
+        FailureReason::ContextChanged,
+        FailureReason::Timeout,
+        FailureReason::ExecutionFailed,
+    ] {
+        let mapped = public_error(&Error {
+            code: -32000,
+            message: "PRIVATE_CREDENTIAL_MUST_NOT_ESCAPE".to_owned(),
+            data: Some(Failure {
+                reason,
+                outcome: OperationOutcome::Unknown,
+            }),
+        });
+        assert_eq!(mapped.code, JsonRpcErrorCode::InternalError, "{reason:?}");
+        assert!(mapped.message.contains("indeterminado"));
+        assert!(!mapped.message.contains("credencial"));
+        assert!(!mapped.message.contains("PRIVATE_CREDENTIAL"));
+        assert_eq!(
+            mapped.details.as_ref().unwrap()["driverReason"],
+            json!(reason)
+        );
+        assert_eq!(
+            mapped.details.as_ref().unwrap()["outcome"],
+            json!("unknown")
+        );
+    }
+    let mapped = public_error(&Error {
+        code: -32000,
+        message: "PRIVATE_CREDENTIAL_MUST_NOT_ESCAPE".to_owned(),
+        data: Some(Failure {
+            reason: FailureReason::SecretRequired,
+            outcome: OperationOutcome::Failed,
+        }),
+    });
+    assert_eq!(mapped.code, JsonRpcErrorCode::InternalError);
+    assert!(mapped.message.contains("comandos anteriores"));
+    assert!(!mapped.message.contains("PRIVATE_CREDENTIAL"));
+}
+
+#[test]
+fn a_pending_operation_must_leave_room_for_a_control_request() {
+    let mut response = peer();
+    response.limits.in_flight = 1;
+    assert_eq!(
+        negotiate(&response, "native.postgres", "postgres"),
+        Err(HandshakeFailure::InvalidLimits)
+    );
+    response.limits.in_flight = 2;
+    assert_eq!(
+        negotiate(&response, "native.postgres", "postgres")
+            .unwrap()
+            .limits
+            .in_flight,
+        2
+    );
+}

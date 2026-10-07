@@ -1,5 +1,11 @@
 # 07 — Fluxo e responsabilidades dos gates
 
+> **Perfil vigente (autor, 2026-10-07):** desenvolvimento/validação focam
+> Qt 6.10. O orquestrador executa qmllint, harnesses, CTest e abertura locais;
+> `verificar-qml-qt64.sh` e `verificar-qml-logica-qt64.sh` saem da sequência
+> obrigatória. Seus scripts/provas ficam históricos para o pacote anterior.
+> Check barato de invariantes AppImage continua sem gerar pacote/rodar Qt 6.4.
+
 Este documento descreve **como** os gates se relacionam e qual código é dono
 de cada responsabilidade. Para saber o que cada reprovação significa e como
 corrigi-la, consulte o catálogo

@@ -1,5 +1,14 @@
 # 40 — Onde o projeto está, e por onde continuar
 
+> **Sessão interrompida pelo autor em 2026-10-07:** implementação suspensa
+> após abrir duas frentes paralelas (59 §2.2). Última base aceita
+> `78f3ea2`; histórico (passo 13) e cópia/exportação (passo 14) estão em
+> worktrees separados, parciais e ainda não integrados. Na árvore principal,
+> dois testes negativos novos de `driver_contract` falham de propósito contra
+> o comportamento anterior; correção pendente. O gate Qt 6.10 foi editado,
+> ainda sem validação final. Conferir alterações locais e handoffs antes de
+> retomar; a última prova completa verde é a D1a.3, no 40.7 §7.237.
+
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
 >

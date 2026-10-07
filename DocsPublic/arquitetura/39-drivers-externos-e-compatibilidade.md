@@ -217,7 +217,7 @@ permissão, suporte do servidor ou capacidade efetiva da operação.
 | Campo de `limits` | Teto local inicial | Regra |
 | --- | --- | --- |
 | `messageBytes` | 1 MiB | JSON UTF-8 serializado, sem terminador; mínimo negociável 1 KiB |
-| `inFlight` | 8 | Pedidos ainda sem resposta terminal por instância |
+| `inFlight` | 8 | Pedidos ainda sem resposta terminal por instância; mínimo 2 para permitir um pedido de controle |
 | `rows` | 10.000 | Mesmo teto público atual; não altera a preferência de 500 |
 | `columns` | 128 | Dimensão máxima de uma linha |
 | `cellBytes` | 16 KiB | UTF-8 de uma célula; excesso não vira valor cortado íntegro |
@@ -228,6 +228,12 @@ Negociação toma o menor valor de cada campo; zero ou combinação em que uma
 célula excede mensagem/retenção é inválida. O orçamento recebido nunca eleva
 o teto local. D1b aplica esses valores antes de alocar/reter mensagens e
 chunks; esta fatia prova negociação, não execução limitada de um processo.
+**Revisão preparatória D1b em 2026-10-07:** mínimo `inFlight` 2; um pedido
+de prévia/consulta ainda pendente não pode impedir sua decisão/cancelamento,
+que também é pedido contado. O ator futuro reserva um slot para controle,
+limitando pedidos comuns a `inFlight - 1`; não exclui controles da contagem.
+Prazos/encerramento ainda precisam de prova no runtime, não são garantidos
+por essa negociação pura.
 Fila local terá 16 operações aguardando, inicialização 5 s e encerramento
 5 s. Esses prazos não são garantias de desligamento; o runtime precisará
 provar coleta real. Prazo de decisão de prévia permanece 60 s, no dono atual.
@@ -246,6 +252,13 @@ repassa `message` livre ou campos desconhecidos do adaptador à UI/log;
 texto explícito e não autoriza repetição. A perda de transporte depois de
 enviar escrita continua sendo responsabilidade do runtime, que deve inferir
 desfecho indeterminado mesmo sem resposta de erro do adaptador.
+
+**Precedência de desfecho (revisão, 2026-10-07):** `outcome: unknown` ou
+`reason: outcomeUnknown` retorna erro genérico com resultado indeterminado,
+antes de mapear motivo. Nunca recebe código que ofereça nova credencial ou
+repreparo. `secretRequired` só recebe `SECRET_REQUIRED` com `notStarted`;
+com `failed` vira erro genérico, sem sugerir reenvio nem rollback de comandos
+anteriores de um lote. Motivo tipado original permanece nos detalhes públicos.
 
 `datasource/driver_contract.rs` monta o pedido, aceita a resposta limitada,
 confere correlação/versão/identidade/recursos e fornece o mapeamento público.

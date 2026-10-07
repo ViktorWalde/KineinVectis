@@ -1,5 +1,10 @@
 # 04 — Os gates que dizem "não"
 
+> **Perfil vigente (2026-10-07):** foco Qt 6.10, por orientação do autor.
+> G0.2/G0.3 do Qt 6.4 permanecem scripts legados; não são executados pelo
+> orquestrador nem exigidos nas próximas fatias. Lint, harnesses e CTest
+> locais continuam obrigatórios; provas antigas abaixo conservam suas datas.
+
 `bash scripts/verificar.sh` roda tudo em sequência e **para no primeiro
 erro**. `--rapido` pula o build release e os smokes ("o binário abre"), não a
 compilação da UI de debug, que roda antes dos lints. `--estrito` combina com

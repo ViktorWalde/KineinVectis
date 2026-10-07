@@ -10,6 +10,10 @@
 #   scripts/verificar.sh --rapido   # rapido: lint + testes + C++ (sem builds finais/smokes)
 #   scripts/verificar.sh --estrito  # combina com os dois: NAO PROVADO reprova
 #
+# PERFIL ATUAL (autor, 2026-10-07): Qt local 6.10. Os gates Qt 6.4 do
+# AppImage anterior ficam legados e fora desta sequencia; qmllint, CTest,
+# harnesses e abertura locais continuam obrigatorios. Nao muda SDK/CMake.
+#
 # NAO PROVADO (2026-10-01, scripts/unproven.py). Gate que verifica a integracao
 # com o AMBIENTE (QEMU, debugpy, kit cross, Qt 6.4 em container) e nao tem a
 # ferramenta nesta maquina registra o que nao provou, em vez de reprovar (seria
@@ -153,10 +157,6 @@ passo "scripts/check_identifier_language.py" \
     "Reprova identificador novo em portugues (Rust, C++, QML, Python, shell); legado so' desce."
 python3 scripts/check_identifier_language.py
 
-passo "scripts/verificar-qml-qt64.sh" \
-    "Recusa parte que o Qt 6.4 do AppImage nunca cria num arquivo com pragma Bound."
-bash scripts/verificar-qml-qt64.sh
-
 passo "scripts/verificar-qml-fiacao.sh" \
     "Detecta bindings QML auto-referentes que entregariam valores nulos ou errados."
 bash scripts/verificar-qml-fiacao.sh
@@ -228,10 +228,6 @@ bash scripts/verificar-transicao-workspace.sh
 passo "scripts/verificar-qml-logica.sh" \
     "Executa em modo headless a logica real dos controllers e componentes QML."
 scripts/verificar-qml-logica.sh
-
-passo "scripts/verificar-qml-logica-qt64.sh" \
-    "Roda os mesmos harnesses QML no Qt 6.4 do AppImage (container Debian 12)."
-bash scripts/verificar-qml-logica-qt64.sh
 
 if [ "$modo" = "completo" ]; then
     # "Compila" e "abre" sao afirmacoes diferentes (2026-09-10: dois builds
