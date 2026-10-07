@@ -1,5 +1,12 @@
 # 53 — Arquitetura executável da 0.3.6: a casca da IDE em torno do editor
 
+> **Continuidade revisada pelo autor em 2026-10-07:** o fechamento atual
+> segue o [59 §2](59-fechamento-da-0.3.9.md), com Banco dividido nos passos
+> 7–15 e pente fino no 16, último da 0.3.9. Foco Qt 6.10; requisitos/provas
+> Qt 6.4 deste desenho permanecem históricos e não regem as próximas fatias.
+> Novo AppImage está adiado; possível lançamento após a 0.4.0 é intenção,
+> ainda sem decisão de publicação (59 §8).
+
 > **Classe: PLANO / ARQUITETURA.** Escrito em 2026-10-01, a pedido do autor:
 > *"estruturar toda a documentação de arquitetura antes de qualquer código"*.
 > O [roadmap 49](49-frontend-0.3.6-e-sequencia-0.5.md) diz **o quê** e **por
@@ -641,6 +648,11 @@ separando a 0.4.5 a partir daí — o autor ainda decide. Em 2026-10-02 (noite)
 o autor disse que está **pensando em lançar tudo isso junto com a 0.4** —
 intenção registrada, não decisão; a ordem de trabalho segue: os retornos
 visuais dele, o resto da 0.3.9 (53 §5.8) e então a 0.4 (roadmap 52).
+
+**Esclarecimento em 2026-10-07:** o autor considera publicar novo AppImage
+após finalizar a 0.4.0. A ordem de desenvolvimento permanece 0.3.9, pente
+fino como último passo, depois 0.4; publicação não condiciona esse fechamento.
+Qt 6.10 é o foco atual. Plano e handoff vigentes no 59 §2.1/§8.
 
 ```text
 0.3.6  LIMPEZA E BASE

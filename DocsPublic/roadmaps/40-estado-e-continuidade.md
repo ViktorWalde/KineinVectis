@@ -71,9 +71,12 @@
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
 >   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.231.
 >   A decisão modular de Banco/LSP está no §7.232 e a base D1 no §7.234.
->   A unificação do Qt foi reafirmada pelo autor em 2026-10-07: desenvolvimento,
->   testes e AppImage na mesma release estável recente; alvo pesquisado Qt 6.12.
->   Plano no 59 §7, depois de Banco; builds atuais ainda usam 6.10.2/6.4.2.
+>   Revisão mais recente do autor em 2026-10-07: foco **Qt 6.10**, checkout
+>   6.10.2; Qt do AppImage anterior fora das próximas provas. Plano 6.12
+>   substituído; orquestrador legado ainda contém chamadas Qt 6.4 a alinhar.
+>   Antigo passo 7 dividido em 7–15; pente fino é o passo 16, último da 0.3.9.
+>   Novo AppImage fora deste fechamento; autor considera após a 0.4.0,
+>   intenção ainda sem decisão de publicação (59 §2.1/§8; 40.7 §7.238).
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -129,7 +132,7 @@
 >        padrão.
 >     4. Pente fino.
 >
->     Feitos: passos 1–6 e o 5b do 59 §2. **Atual: passo 7, Banco** —
+>     Feitos: passos 1–6 e o 5b do 59 §2. **Atual: passo 7, contratos/perfis** —
 >     escrita MongoDB, confirmação seletiva e formulário concluídos
 >     (40.7 §7.220; arquitetura [37](../arquitetura/37-banco-de-dados.md)).
 >     ODBC concluído e validado (40.7 §7.221; ADR-0007). Produção, somente
@@ -152,11 +155,12 @@
 >     **Desconexão aceita** no §7.231 (`0.163.0`), aguardando drivers e
 >     conservando rascunho. **Descritores D1 entregues** no §7.234
 >     (`0.164.0`). D1a.1–D1a.3 aceitas (§7.235–§7.237); próximo:
->     perfil extensível/migração D1a.4, depois runtime D1b (39/40);
+>     perfil extensível/migração D1a.4, depois runtime D1b (arquitetura/39 e 40);
 >     instâncias LSP por conexão seguem
 >     em D2. Localizar objeto continua na fila.
->     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
->     com QtWebEngine atual, só depois do pente fino.
+>     O handoff está no 59 §2.1 e o prompt no §5.8. Runtime, extração,
+>     linguagem, motores, console, grade e provas ocupam os passos 8–15.
+>     O pente fino é o passo 16; AppImage futuro no 59 §8, fora do fechamento.
 >
 >     Depois disso, a 0.4 é inteira dos embarcados.
 > - **Próximo:** fechar a 0.3.9 pelo [`59`](59-fechamento-da-0.3.9.md); depois a 0.4
@@ -493,7 +497,7 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 
 ## 4. O que está aberto
 
-**Fila atual da 0.3.9 (2026-10-07):** passo 7 do
+**Fila atual da 0.3.9 (reorganizada em 2026-10-07):** passo 7 do
 [59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.231 concluídas,
 com desenvolvimento reunido na main (§7.227). Relevo do editor, modelos/ações
 e releitura após execução já estão aceitos, assim como Novo banco no menu
@@ -505,13 +509,16 @@ Revisão antes do código registrada no §7.233,
 [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) e ADR-0010:
 driver em processo com contrato negociado, seleção de instalação por perfil,
 preservação de arquivos futuros e escrita sem retry automático.
-Registro D1 entregue em `0.164.0` (§7.234). Próxima: contratos/perfis/limites
-(D1a), runtime/extração de drivers (D1b–D1d)
-e instâncias/contexto LSP (D2), conforme as dependências do 39 §8.
-Localizar objeto, histórico, grade, MySQL/MariaDB e provas finais
-continuam pendentes. A contagem antiga de onze itens não fixa o número de
-commits até o fechamento. O roteiro está no 59 §5.8 e no 38 §9.
-O pente fino é o passo 8 e ainda não começou.
+Registro D1 entregue em `0.164.0` (§7.234); D1a.1–D1a.3 aceitas
+(§7.235–§7.237), negociação/guardião puros, sem runtime externo.
+Próxima: D1a.4, formato extensível/migração, encerrando o passo 7 com suas
+provas. O antigo restante do Banco está dividido nos passos 8–15 do 59 §2:
+runtime, extração dos drivers, LSP, InfluxDB, MySQL/MariaDB, console/histórico,
+grade e bateria final. Dependências técnicas permanecem no 39 §8.
+Handoff no 59 §2.1; um passo pode exigir mais de um commit.
+O pente fino é o passo 16, último da 0.3.9, e ainda não começou.
+Foco Qt 6.10. AppImage adiado, fora dos critérios de encerramento; possível
+lançamento após a 0.4.0 continua intenção do autor (59 §8).
 A lista datada abaixo preserva o histórico das dívidas anteriores.
 
 ```text

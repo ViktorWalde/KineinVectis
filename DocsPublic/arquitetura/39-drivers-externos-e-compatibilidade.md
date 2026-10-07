@@ -455,7 +455,10 @@ escrita; resposta tardia; commit com confirmação perdida sem repetição;
 prévia mantida na mesma conexão; fim real de processos/auxiliares; TLS,
 somente leitura e consentimento ODBC; arquivo futuro/perfil desconhecido
 preservados. Provar concorrência vizinha e `core.ping` durante as esperas.
-Passo 7 continua aberto até aceitar recursos e migrações necessários.
+Esses critérios estão distribuídos nos passos 7–15 do 59 §2, por revisão
+do autor em 2026-10-07. Passo 7 fecha contratos/perfis; runtime/extrações
+e linguagem têm aceites próprios nos passos seguintes. Pente fino é o
+passo 16, último da 0.3.9; AppImage fica adiado no 59 §8.
 
 ## 9. Revisão do desenho — 2026-10-07
 

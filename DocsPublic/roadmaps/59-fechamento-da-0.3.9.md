@@ -6,6 +6,14 @@
 > [`40`](40-estado-e-continuidade.md). Cada item, ao ser entregue, ganha a data e
 > o parágrafo do 40.7 que o prova; nenhum item sai daqui sem isso.
 
+> **Revisão do autor em 2026-10-07:** o antigo passo 7 foi dividido nos
+> passos 7–15 (§2); o pente fino é o passo 16, último da 0.3.9.
+> Desenvolvimento e próximas provas focam **Qt 6.10** (checkout 6.10.2).
+> Qt 6.4 do AppImage anterior sai do alvo de validação desta continuidade;
+> não há migração para 6.12 planejada aqui. Novo AppImage fica fora do
+> fechamento da 0.3.9; o autor considera lançá-lo após a 0.4.0, ainda sem
+> decisão de publicação. Detalhes de empacotamento futuro no §8.
+
 ## 1. A decisão (o autor, 2026-10-03, noite)
 
 A série 0.3.6–0.3.9 reorganizou a casca da IDE. Ela **não se encerra** no estado
@@ -41,11 +49,18 @@ pop-up.
 | Toolchain e Python (abrem abaixo do widget do topo) | São contextuais ao widget. |
 | Embarcados | Fica como está até a 0.4, que o redesenha. |
 
-## 2. A ordem (consolidada com o autor em 2026-10-03, noite)
+## 2. A ordem (reorganizada por pedido do autor em 2026-10-07)
+
+Os passos 1–6 conservam as entregas aceitas. O antigo Banco completo
+deixa de ser um único passo aberto: seu restante ocupa 7–15, mantendo
+o escopo na 0.3.9. Os números D1–D7/D1a–D1d continuam identificando as
+fatias técnicas dos documentos 38/39; não são outra numeração de passos.
+Um passo pode exigir vários commits, cada um com contrato e prova próprios.
 
 Cada passo termina com:
 
-- a **prova na tela real, com o mouse e o teclado do autor**;
+- a **prova na tela real, com o mouse e o teclado do autor**, quando houver
+  comportamento de interface; contrato puro exige provas no seu consumidor;
 - os gates verdes;
 - o registro no 40.7.
 
@@ -57,9 +72,45 @@ Cada passo termina com:
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | feito (40.7 §7.215), com os campos de texto refeitos e o menu que não deixa o mouse atravessar |
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
-| 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); ações da árvore aceitas (§7.226) e modelos/ações com impacto aceitos (§7.228); releitura após execução aceita (§7.229); Novo banco no menu aceito (§7.230); demais ações, console, grade e motores restantes a fazer |
-| 8 | **Pente fino e fechamento** (§7) | a fazer |
+| 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
+| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | atual: D1 e D1a.1–D1a.3 aceitas (§7.234–§7.237); falta D1a.4, formato/migração e preservação de perfis desconhecidos |
+| 8 | **Supervisão de processos e ponte externa** (39 D1b) | a fazer: handshake, limites de envelope/pipes/fila, isolamento e encerramento real; depende do 7 |
+| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | a fazer em fatias separadas: PostgreSQL com impacto/prévia, SQLite, MongoDB; depende do 8 |
+| 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
+| 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
+| 12 | **MySQL/MariaDB nativo** (§5.7) | a fazer: biblioteca mantida sobre a mesma ponte, catálogo/consulta/segurança, LSP SQL compatível e gestos reais; ODBC existente permanece aceito |
+| 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | a fazer: localizar objeto, histórico por conexão e conveniências restantes; identidade/rascunho/execução atuais já aceitos |
+| 14 | **Grade de dados** (§5.4) | a fazer em fatias: carregar mais/ordenar, copiar/exportar e edição por chave primária |
+| 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14 |
+| 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage |
+
+### 2.1 Handoff do passo 7 — 2026-10-07
+
+Base integrada: `main`, D1a.2 em `b29c549` e D1a.3 em `53fa4ac`, IPC UI/core
+`0.164.0`, API externa 1.0. D1 registra os quatro motores; D1a.1 protege o
+catálogo e escreve atomicamente; D1a.2 negocia identidade/recursos/limites e
+mapeia erros; D1a.3 define mensagens operacionais e valida streams puros.
+Nenhum runtime externo/LSP novo ativado, seleção de instalação persistida
+ou migração extensível aceita. Provas atuais no 40.7 §7.234–§7.237.
+
+**Próxima fatia do passo 7: D1a.4.** Ler 39 §5, store/perfis/validação e
+descritores antes de desenhar o formato. Migrar schema 1 de forma explícita,
+atômica e verificável; preservar perfis/opções de provedores ausentes sem
+transformá-los em lista vazia gravável. Separar IDs de motor/adaptador/
+instalação e schema público, mantendo segredo fora do arquivo. Fixtures
+legadas/futuras/desconhecidas e migração recusada sem escrita são critérios
+de aceite; não iniciar processo nesta fatia.
+
+**Foco de validação:** Qt 6.10.2 local, Rust/Clippy, sete CTest, qmllint e
+harnesses locais; abertura/gestos pertinentes nos presets atuais. As provas
+Qt 6.4 já concluídas permanecem no histórico. O orquestrador legado ainda
+contém chamadas Qt 6.4: alinhar esse perfil antes da próxima execução
+completa; não usar o AppImage antigo como critério nem trocar SDK para 6.12.
+
+O passo 7 termina com contrato/perfil/migração aceitos e a continuidade do
+passo 8 registrada. Runtime, motores, linguagem e grade têm seus próprios
+aceites na tabela; sua ausência não mantém o passo 7 indefinidamente aberto.
+Incidente de perda de dados, crash ou bloqueio diário continua furando a fila.
 
 ## 3. Containers acoplados
 
@@ -540,7 +591,7 @@ A fatia 7.220 provou PostgreSQL e MongoDB reais em 2026-10-05: leitura,
 escrita, senha pedida/recusada e aviso com DROP. Os gestos de console e
 confirmação passaram na janela da IDE; a prova automatizada está em
 `testar-banco-real.py`. A IDE cria PostgreSQL em contêiner por **Criar banco…**.
-Para completar a bateria do passo 7, faltam:
+Para completar a bateria do Banco no passo 15, faltam:
 
 - o aviso com `UPDATE … FROM`;
 - TLS `verify-full` (configuração).
@@ -575,7 +626,8 @@ escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
 É a forma que cobre "a escolha do usuário" sem a IDE manter um driver por
 banco.
 
-**Decidido pelo autor em 2026-10-04: vale, e entra no passo 7.** Nas palavras
+**Decidido pelo autor em 2026-10-04: vale, e entrou no antigo passo 7
+(agora dividido nos passos 7–15; MySQL/MariaDB no 12).** Nas palavras
 dele: "os nativos e os por plugins que o usuário quiser usar, e a IDE apenas
 orquestra". Ficam assim:
 
@@ -692,32 +744,37 @@ LSP SQL passou a ser obrigatório: não implementar completion de catálogo
 própria antes dessas ferramentas. InfluxDB 3 exige adaptador nativo e
 provedor de linguagem comprovado (D6–D7), com perfil/ID extensível.
 
-**Restante do passo 7:** localizar objeto do console (§5.1), histórico
+**Restante do Banco, distribuído nos passos 8–15 (§2):** localizar objeto do console (§5.1), histórico
 (§5.2), carregar mais/ordenar/copiar/exportar/editar por chave primária
 (§5.4), MySQL/MariaDB nativo (§5.7), aviso com `UPDATE FROM` e TLS
 `verify-full` (§5.6), além das integrações LSP/InfluxDB acima.
 Vínculos, identidades, seleção, menus, modelos, impacto, releitura e
 desconexão já estão validados (§5.12/§5.1.1–§5.1.5); continuar sobre essa
 base. As onze pendências contadas antes da ampliação não são onze commits
-nem garantia de encerramento na fatia 11. O passo fecha quando todos os
-critérios forem aceitos. O passo 8 vem depois, incluindo o limite DNS/NSS
-registrado no §7; AppImage só após esse pente fino.
+nem garantia de encerramento na fatia 11. Cada passo fecha com seus próprios
+critérios; o 7 fecha com D1a.4, o 15 com a bateria cruzada do Banco.
+O pente fino é o passo 16, incluindo revisão das demais áreas; DNS/NSS
+entra na bateria do 15. AppImage está adiado e fora do fechamento (§8).
 
 Prompt de continuidade (conferir estado e log antes de usar):
 
 ```text
-Kinein Vectis — continuar o fechamento da 0.3.9, passo 7 (Banco).
+Kinein Vectis — continuar a 0.3.9, passo 7 (contratos/perfis), fatia D1a.4.
 Use a main em /home/hugh/KineinVectis. Em 2026-10-06 o autor pediu reunir
 frontend e core nesse checkout: os sete commits até b31aa89 foram incorporados
 por fast-forward. Não abra outra divisão para o frontend.
-O autor autorizou concluir Banco e pente fino e gerar/validar AppImage final.
+O autor autorizou concluir o plano da 0.3.9. A revisão de 2026-10-07 divide
+o antigo Banco nos passos 7–15; pente fino é o passo 16, último da versão.
+Foco Qt 6.10 (checkout 6.10.2); ignorar Qt 6.4 do AppImage anterior nesta
+continuidade. Não migrar para 6.12. Novo AppImage está fora deste fechamento;
+o autor pensa em lançá-lo após a 0.4.0, ainda sem decisão de publicação.
 A integração antecipada em main e a retirada da divisão substituem a ordem
-anterior, por pedido explícito nessa sessão. Sem push. Não empacote antes de
-cumprir os critérios do passo 8.
+anterior, por pedido explícito nessa sessão. Sem push/empacotamento.
 
 Comece com git status --short --branch e git log -5; preserve todo trabalho
 local. Leia 00-comece-aqui, o cabeçalho e a fila do 40, a última entrada
-do 40.7, o 59 §2/§5/§7, arquitetura/37/38, ADR-0009 e o contrato arquitetura/03.
+do 40.7, o 59 §2.1/§5.8/§7, arquitetura/37/38/39/40, ADR-0009/0010
+e o contrato arquitetura/03.
 Confira PROTOCOL_VERSION no código. Preserve as proteções do 40.7 §7.220.
 Leia o aceite do §7.221: protocolo 0.157.0, ODBC concluído e validado.
 ODBC está no commit local fa32f51. Produção/somente leitura/contexto
@@ -779,10 +836,10 @@ HOME real, XDG isolado; bancos de teste em contêineres no loopback, com limpeza
 Todos os gates verdes antes do commit local. Nunca push.
 Registre em 40.7, 59, 40, CHANGELOG, manual e arquitetura.
 
-Após o Banco, passo 8 inteiro: revisão minuciosa das outras áreas que
+Após os passos 7–15, passo 16 inteiro: revisão minuciosa das outras áreas que
 o autor relatou em 2026-10-05, além de segurança, bugs e desempenho.
-O critério é consumo de recurso no uso diário. O AppImage é a última etapa,
-com Qt estável atual e caminho acelerado da aba Web; não o faça antes.
+O critério é consumo de recurso no uso diário, com Qt 6.10. AppImage não é
+critério de encerramento da 0.3.9; seu planejamento futuro está no §8.
 Ao concluir de fato a 0.3.9, desative o timer local de retomada autorizado
 pelo autor e registre o fechamento. Limite de uso não encerra a tarefa.
 ```
@@ -847,8 +904,8 @@ Todos os gates verdes antes do commit local, sem push.
 **Continuação atualizada:** esta fatia não encerra o passo 7. Produção/
 somente leitura e prévia PostgreSQL já foram aceitas (§7.222–§7.223).
 MySQL/MariaDB nativo, árvore viva, completion e ampliação da grade seguem
-a fila do §5.8. Reempacotar AppImage permanece
-no fim do passo 8; a dependência unixODBC deve ser tratada nessa etapa.
+a fila do §5.8 e os passos 8–15 do §2. AppImage foi adiado (§8);
+a dependência unixODBC será tratada quando houver nova fatia de pacote.
 
 ### 5.10 Desenho da próxima fatia: produção e somente leitura — 2026-10-06
 
@@ -1287,11 +1344,15 @@ Levantado no código e na máquina; a próxima sessão começa daqui.
 - Grafana real: a imagem `docker.io/grafana/grafana:11.2.0` já está no
   podman, na porta 3000.
 
-**O AppImage** (Qt 6.4, Debian 12) passa a levar o QtWebEngine 6.4. O
-aumento do download é medido e registrado; a aba Web tem de passar no gate
-Qt 6.4 (`verificar-qml-qt64`, `verificar-qml-logica-qt64`).
+**Prova histórica do AppImage** (Qt 6.4, Debian 12): incluiu QtWebEngine 6.4,
+com tamanho e compatibilidade registrados no §7.219. Desde a revisão de
+2026-10-07, os gates Qt 6.4 não são alvo das próximas fatias; foco Qt 6.10.
 
 ## 7. Pente fino e fechamento
+
+**Passo 16, último da 0.3.9 (revisão do autor, 2026-10-07).** Começa após
+os critérios dos passos 7–15. Foco Qt 6.10, sem migração de SDK ou prova do
+AppImage antigo. A geração de novo pacote está fora deste fechamento (§8).
 
 **Correção solicitada durante Banco (2026-10-06; validada no 40.7 §7.225):** o ▶ do
 arquivo criava outra aba a cada tentativa. Manter uma aba por arquivo,
@@ -1311,7 +1372,7 @@ duplicada, render/fechamento atrasados, fechar/reabrir, clique duplo, erro e
 troca de projeto. Executar processos reais e repetir o gesto na janela da
 IDE; shell interativo continua independente. Gates completos antes do commit.
 
-**Achado técnico da prévia a fechar nesta revisão:** resolver DNS/NSS
+**Achado técnico da prévia a fechar no passo 15, antes desta revisão:** resolver DNS/NSS
 bloqueante do Tokio pode atrasar o Drop do runtime além do timeout da future
 de conexão. O registro mantém a capacidade ocupada e o IPC fica livre, mas
 o prazo não é teto absoluto do job com hostname. Reproduzir com resolvedor
@@ -1352,80 +1413,10 @@ timers ou camadas de input. Não alterar globalmente o token
 `backgroundEditor`, usado também em outras áreas. Verificar Markdown
 lado a lado, símbolos, overlays e terminais na mesma janela.
 
-- **AppImage, depois de todo o pente fino** (decisões do autor, 2026-10-04).
-  - **Unificação reafirmada em 2026-10-07:** usar uma única release de Qt
-    no desenvolvimento, CI, testes e pacote. A instalação local foi conferida
-    com `qmake6 -query QT_VERSION` (6.10.2); o runner do pacote, com
-    `dpkg-query` no contêiner (6.4.2). CMake ainda exige mínimo 6.4.
-    A migração permanece após Banco, sem trocar SDK/build/gates nesta D1.
-    - Alvo da pesquisa nesta data: **Qt 6.12**, estável desde 2026-09-30
-      ([anúncio oficial](https://www.qt.io/blog/qt-6.12-released)). Reconfirmar
-      o patch estável disponível ao executar a fatia e fixar a toolchain
-      reproduzível nos ambientes de build/teste/pacote.
-      Selecionar o SDK explicitamente no CMake e conferir a versão carregada
-      nos testes, evitando que um ambiente resolva outro Qt do sistema.
-    - Para o frontend, avaliar o [hot reload de QML](https://www.qt.io/blog/hot-reload-in-qt-6.12)
-      no fluxo de desenvolvimento e recursos estáveis de Qt Quick/modelos.
-      Revisar APIs e componentes existentes antes de adotar substitutos;
-      recursos em Labs/Technology Preview não entram como requisito do produto.
-    - Conferir QtWebEngine e plugins compatíveis com a release escolhida;
-      reconstruir todos os presets em diretórios novos e provar editor,
-      terminal, painéis, X11/Wayland, aba Web e consumo de CPU/RSS.
-      Aposentar o alvo 6.4 e seus contornos depois da prova na versão nova.
-  - **O tamanho não importa; o consumo de recurso no dia a dia sim.** Medir
-    RSS/PSS e CPU parados e em uso, com e sem a aba Web.
-  - **Qt atual no pacote.** O checkout usa o Qt 6.10.2, mas o AppImage é
-    montado no Debian 12 e leva o Qt **6.4.2** do sistema. É esse 6.4 que
-    tem o defeito dos avisos "is neither a QObject" (40.7 §7.219).
-    - A correção é montar o pacote com o Qt estável mais recente, com o
-      QtWebEngine, a partir dos binários oficiais (aqtinstall ou o
-      instalador da Qt).
-    - Conferir a baseline glibc/ABI dos binários oficiais escolhidos contra
-      a base do builder (Ubuntu 24.04, abaixo); a versão nova ainda exige prova.
-    - Depois, o gate Qt 6.4 (`verificar-qml-qt64`,
-      `verificar-qml-logica-qt64`) passa a valer para a versão nova; rever
-      o que hoje só existe para o 6.4.
-  - **Alvo de compatibilidade** (o autor, 2026-10-04): as distros recentes.
-    - **Ubuntu 24.04 LTS em diante** e derivadas. O 22.04 fica de fora.
-    - **Fedora atual e a anterior** (hoje 43 e 42).
-    - **Debian 13.**
-    - **Arch** (rolante).
-    - O pacote é montado na distro MAIS ANTIGA do alvo. O mínimo é o Ubuntu
-      24.04 (glibc 2.39); Debian 13, Fedora 42/43 e Arch têm glibc igual ou
-      mais nova.
-    - Builder em **Ubuntu 24.04**, com o **Qt estável mais recente** dos
-      binários oficiais (alvo pesquisado em 2026-10-07: 6.12; os builds
-      atuais continuam 6.10.2/6.4.2). Decisão do
-      autor: priorizar recursos da release estável recente; o selo LTS
-      não exige escolher uma release anterior. Selecionar QtWebEngine
-      compatível com o SDK, e Rust estável atual.
-    - Provar o AppImage em contêineres Ubuntu 24.04, Debian 13, Fedora 43 e
-      Arch.
-  - **Gate Qt 6.4 aposentado** (o autor: "prosseguir com a modernização").
-    Compilar do código-fonte passa a exigir a **mesma versão de Qt do
-    AppImage** (a estável mais recente, pelo instalador oficial ou
-    aqtinstall), para o código poder usar o que ela traz.
-    - Saem `verificar-qml-qt64`, `verificar-qml-logica-qt64` e o contêiner
-      `Containerfile.qml64`.
-    - Sai também o que só existe para o 6.4: o `createObject` no lugar do
-      `Loader` do `ShellEnvironmentOverlays`, o `action` da aba Web e os
-      contornos marcados "Qt 6.4" no código.
-    - O `contribuindo/` e o manual dizem a versão mínima nova.
-  - **Caminho acelerado para a aba Web.** Hoje o hook portátil força
-    `QT_QUICK_BACKEND=software` para não depender do driver da máquina, e o
-    Chromium roda sem GPU ("Using Supported QSG Backend: no").
-    - O backend do Qt Quick não troca com a IDE aberta.
-    - A proposta: tentar o OpenGL/RHI por padrão, com detecção e queda
-      automática para software quando a máquina não aguenta (e um modo
-      seguro por variável, como hoje).
-    - Medir o primeiro quadro e a RSS nos dois modos antes de decidir o
-      padrão.
-  - **`runtime-x86_64` fixado numa release com tag**, em vez do canal
-    `continuous`, que mudou sem aviso.
 - **Primeira abertura e a segurança da aba Web.** As proteções da view
   (configurações, permissões) só existem quando a view nasce, e ela nasce sob
   demanda: não tocam a abertura. O que roda na abertura é só o
-  `AA_ShareOpenGLContexts`, e o A/B dele está na lista acima.
+  `AA_ShareOpenGLContexts`, e o A/B dele está na lista abaixo.
 - **Terminal com reflow:** ao alargar, as linhas antigas continuam quebradas
   na largura estreita (visto com a janela do Grafana voltando ao tamanho).
   Terminais modernos refazem a quebra.
@@ -1450,9 +1441,8 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
     mudou (`hostKeyChanged`).
   - **Caminhos:** o espelho remoto e o deploy não escapam da pasta (`..`,
     link simbólico, caminho absoluto).
-  - **Cadeia de suprimento:** `cargo deny`, hashes fixados, e o runtime do
-    AppImage tirado do canal `continuous`, que mudou sem aviso em 2026-10-04
-    (o SHA fixado não bateu e o build recusou). Fixar uma release com tag.
+  - **Cadeia de suprimento:** `cargo deny` e hashes fixados. O runtime do
+    futuro AppImage será tratado na fatia de pacote do §8.
   - **ODBC:** driver é código nativo de terceiros. A IDE carrega o que a
     pessoa instalou, com aviso, e nunca baixa driver.
 - **Shift+F10** abre o menu de contexto no terminal e na árvore; Executar fica
@@ -1493,3 +1483,39 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
     tela, e não um defeito.
 - **Fechamento:** o 40, o 57 e o CHANGELOG dizem "0.3.9 encerrada", com a
   lista de provas.
+
+
+## 8. AppImage futuro — fora do fechamento da 0.3.9
+
+**Orientação do autor em 2026-10-07:** focar Qt 6.10 agora e ignorar o Qt do
+AppImage anterior. A versão em desenvolvimento é a 0.3.9; isso não exige
+publicar um pacote ao encerrá-la. O autor está considerando lançar novo
+AppImage após finalizar a 0.4.0. É intenção registrada, não decisão de data,
+versão final do pacote ou autorização de publicação. Reconfirmar quando
+essa fatia for aberta; não empacotar nesta continuidade.
+
+O plano anterior de migrar para Qt 6.12 e exigir prova Qt 6.4 foi substituído
+pelo foco atual Qt 6.10. Provas antigas do pacote continuam históricas.
+O código ainda contém mínimo CMake/contornos e scripts do alvo antigo;
+aposentá-los será uma fatia concreta, com provas e documentação, não efeito
+automático desta revisão de planejamento.
+
+Requisitos guardados para a futura fatia de pacote:
+
+- Preservar os alvos definidos pelo autor em 2026-10-04: Ubuntu 24.04 LTS
+  e posteriores/derivadas, Debian 13, Fedora atual e anterior, Arch.
+  Reconfirmar as versões e provar o pacote nesses ambientes ao abrir a fatia.
+- Builder baseado em Ubuntu 24.04, o alvo mais antigo; fixar SDK,
+  QtWebEngine/plugins e Rust reproduzíveis, conferir ABI/glibc dos binários
+  escolhidos e usar o Qt adotado pelo projeto.
+- Provar abertura, editor, terminal, painéis, X11/Wayland e aba Web no pacote
+  efetivamente gerado. Checkout Qt 6.10 não substitui essa prova de pacote.
+- Conferir dependência unixODBC, plugins/rpaths e caminhos de bibliotecas.
+- Medir primeiro quadro, CPU/RSS/PSS com e sem Web, incluindo a avaliação
+  do caminho acelerado e do modo seguro de software. Prioridade do autor:
+  consumo de recursos no uso diário, acima do tamanho do download.
+- Fixar o runtime AppImage em release com tag e hash, preservando a recusa
+  de artefato divergente; o canal continuous anterior mudou em 2026-10-04.
+
+Esses itens não prolongam o passo 16 nem mantêm a 0.3.9 aberta após seus
+próprios critérios. Release, tag, push e publicação continuam ações separadas.

@@ -19,7 +19,8 @@
 ## 1. Escopo decidido
 
 A IDE orquestra ferramentas existentes. O suporte de linguagem de Banco
-entra no passo 7 como requisito, usando o cliente LSP existente: completar
+entra no fechamento da 0.3.9 como requisito (passos 10–11 do 59 §2), usando
+o cliente LSP existente: completar
 tabelas, colunas, palavras-chave e, no MongoDB, coleções, campos e operadores.
 O alvo inclui PostgreSQL, SQLite, MongoDB moderno, MySQL/MariaDB e InfluxDB 3
 nativo, sem ODBC para este último. MongoDB 3.x não é requisito de legado.
@@ -360,10 +361,12 @@ O [39 §9](39-drivers-externos-e-compatibilidade.md#9-revisão-do-desenho--2026-
 registra a revisão anterior ao código, achados e correções no plano.
 
 Cada linha pode exigir mais de um commit. D0 não habilita recurso no produto.
-O passo 7 também conserva localizar objeto, histórico por conexão, grade,
-MySQL/MariaDB nativo, aviso `UPDATE FROM` e prova TLS `verify-full`.
-As onze pendências contadas antes da ampliação não significam onze commits
-nem que a décima primeira encerra o passo. Passo 8 e AppImage vêm depois.
+Reorganização do autor em 2026-10-07: D1/D1a ficam no passo 7, D1b no 8,
+D1c/D1d no 9, D2–D5 no 10 e D6–D7 no 11 do
+[59 §2](../roadmaps/59-fechamento-da-0.3.9.md#2-a-ordem-reorganizada-por-pedido-do-autor-em-2026-10-07).
+MySQL/MariaDB, console/localizar/histórico, grade e provas finais ficam nos
+passos 12–15. As onze pendências antigas não fixam número de commits.
+Pente fino é o passo 16, último da 0.3.9; AppImage foi adiado (59 §8).
 
 Aceite da expansão: acrescentar outro descritor/adaptador com prova sem
 novo ramo por marca no editor; provar dois motores que compartilham provedor
