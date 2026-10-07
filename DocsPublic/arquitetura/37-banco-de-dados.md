@@ -662,8 +662,8 @@ A fila e o prompt de retomada ficam no
 Prévia PostgreSQL (§9) e profundidade do editor aceitas no 40.7 §7.223/224.
 Base de console/árvore aceita no 40.7 §7.225; primeira fatia de ações no
 §7.226. Modelos do catálogo e ações com impacto aceitos no §7.228;
-releitura automática após execução aceita no §7.229. Seguir desconectar,
-localizar o objeto do console e Novo banco no submenu;
+releitura automática após execução aceita no §7.229 e Novo banco no menu
+aceito no §7.230. Seguir desconectar e localizar o objeto do console;
 depois completion, histórico e grade no passo 7. O pente fino e o AppImage
 seguem a ordem do 59 §7.
 
@@ -718,3 +718,18 @@ o mapa do evento sem assinatura nova. Contratos de execução ficam em
 `crates/kinein-protocol/src/datasource_query.rs`, separados de perfis/catálogo
 e reexportados pela mesma API pública. Desenho e referências no 59 §5.1.3;
 provas automatizadas e na IDE real no 40.7 §7.229.
+
+### Novo banco no menu (2026-10-06, aceito no 40.7 §7.230)
+
+DatabaseTreeActions oferece `database.create` no menu comum de +/Alt+Insert
+e estado vazio. Fecha o menu antes de emitir a intenção; DatabaseWindow
+encaminha ao ShellLeftWindowHost, que chama DataSourceController.openCreation.
+O controller limpa senha/erro e usa a abertura/refresh existentes, sem trocar
+perfil/rascunho nem iniciar criação. Não há pedido IPC novo; protocolo 0.162.0.
+
+DataSourcePanelHost recebe a intenção por Connections e troca a face do
+DataSourcePanel existente. Fechar ou mudar workspace devolve a face de
+conexão. DataSourceDiscoveryController conserva os pedidos e o progresso de
+criação; o editor e o resultado de consulta conservam seus donos.
+No servidor só fica disponível para o rascunho idêntico ao PostgreSQL salvo
+e sem readOnly; o core mantém a recusa efetiva. Desenho no 59 §5.1.4.

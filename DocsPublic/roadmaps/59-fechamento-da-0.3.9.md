@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); ações da árvore aceitas (§7.226) e modelos/ações com impacto aceitos (§7.228); releitura após execução aceita (§7.229); demais ações, console, grade e motores restantes a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); ações da árvore aceitas (§7.226) e modelos/ações com impacto aceitos (§7.228); releitura após execução aceita (§7.229); Novo banco no menu aceito (§7.230); demais ações, console, grade e motores restantes a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -235,8 +235,13 @@ o aviso existente. ODBC conserva a leitura do driver; Mongo usa sua gramática.
 atualizam a árvore sem F5; erro de lote parcialmente aplicado conserva
 a mensagem e relê o catálogo. Invalidações ocupadas são agrupadas.
 
-**Ainda pendentes desta seção:** “Novo banco…” no submenu, localizar o
-objeto do console e desconectar com descarte real da sessão. Não duplicar
+**Novo banco no menu concluído e validado em 2026-10-06**
+(40.7 §7.230; desenho no §5.1.4). +/Alt+Insert/estado vazio abrem a criação
+existente; abrir/cancelar não escreve. Criação SQLite e preservação do
+rascunho provadas na IDE real. Protocolo permanece 0.162.0.
+
+**Ainda pendentes desta seção:** localizar o objeto do console e
+desconectar com descarte real da sessão. Não duplicar
 geração/interpretação de instruções no QML. A lista abaixo conserva o
 escopo completo, incluindo o que já foi feito.
 
@@ -352,6 +357,41 @@ permite transações explícitas dentro de um lote; [MongoDB, coleções](https:
 descreve criação implícita e campos variáveis. A adaptação usa o core e o
 catálogo próprios, sem importar runtime/código dessas ferramentas.
 
+#### 5.1.4 Desenho de Novo banco no menu (2026-10-06)
+
+**Implementado e validado no 40.7 §7.230.** O desenho abaixo foi registrado
+antes do código; protocolo permanece 0.162.0.
+
+Base aceita: main 86d52de, protocolo 0.162.0. Esta fatia acrescenta
+“Novo banco…” ao +/Alt+Insert/estado vazio do Banco. Abre a face Criar banco
+do diálogo existente, que já oferece arquivo SQLite, servidor PostgreSQL/Mongo
+em contêiner e banco dentro de PostgreSQL. Abrir o diálogo não cria nada.
+Protocolo, motores, executores e geração de SQL não mudam.
+
+DatabaseTreeActions emite creationRequested, DatabaseWindow encaminha e
+ShellLeftWindowHost chama DataSourceController.openCreation. O controller
+limpa segredo/erro, abre pelo caminho atual e emite a intenção de criação.
+DataSourcePanelHost troca só a face visual; fechar/trocar workspace devolve
+a face de conexão. Perfil/rascunho e texto do editor são preservados;
+“No servidor” usa o perfil PostgreSQL salvo indicado no diálogo. Rascunho
+alterado e somente leitura não habilitam essa opção; o core conserva sua
+recusa. O formulário e os pedidos de criação existentes continuam sendo
+os donos, inclusive quando uma criação já está em andamento.
+
+Provas: antes/depois do item ausente, despacho único e contexto inválido,
+composição real de menu/foco/diálogo, senha descartada, fechamento/reabertura
+em conexão e opção No servidor apenas no contexto permitido. GUI real com
+menu e teclado: abrir/cancelar sem arquivo novo, criar um SQLite descartável
+pelo botão existente, perfil/arquivo e catálogo conferidos; editor intacto.
+Desconectar e localizar objeto ficam nas próximas fatias.
+
+Referências MODE-D consultadas em 2026-10-06:
+[DataGrip 2026.2, Database Explorer](https://www.jetbrains.com/help/datagrip/database-explorer.html)
+usa New/Alt+Insert e ações no menu da árvore;
+[Qt 6.10, Connections](https://doc.qt.io/qt-6.10/qml-qtqml-connections.html)
+documenta o encaminhamento por target. A adaptação liga intenção ao diálogo
+da Kinein; não importa código/runtime dessas ferramentas.
+
 ### 5.2 Console que ajuda
 
 - **Completar nomes** de tabelas e colunas a partir da estrutura já lida, e
@@ -463,11 +503,14 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** releitura após execução (§5.1.3, protocolo
-`0.162.0`, 40.7 §7.229). CREATE/ALTER/DROP e lote parcialmente aplicado
-provados na IDE real sem F5; contexto, resultado duplicado, coalescência e
-credencial cobertos. Gates completos/estritos, 1007 testes Rust e 129 harnesses
-por Qt 6.10/6.4, com C++ anterior reutilizado por hashes idênticos.
+**Última fatia concluída:** Novo banco no menu (§5.1.4, 40.7 §7.230),
+protocolo mantido em `0.162.0`. Menu/foco e reabertura em conexão cobertos;
+SQLite temporário criado pelo botão existente, sem escrita ao abrir/cancelar
+e com rascunho do editor intacto. Gates completos/estritos: 130 harnesses por
+Qt 6.10/6.4 e sete CTest atuais; 1007 testes Rust/Clippy e lint C++ anteriores
+reutilizados por hashes idênticos. Releitura após execução permanece aceita
+no §7.229: CREATE/ALTER/DROP e lote parcialmente aplicado na IDE real sem F5;
+contexto, resultado duplicado, coalescência e credencial cobertos.
 Modelos/ações com impacto permanecem aceitos no §7.228: geração no core,
 buffer sujo/desfazer e aviso existente. A primeira fatia da árvore, barra,
 seleção e menus permanece aceita no §7.226; integração na main no §7.227. Consoles
@@ -483,10 +526,10 @@ de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
 completos e estritos verdes. Confira git log para o commit local.
 
 **Próxima fatia:** restante de ações/árvore viva (§5.1): desconectar
-com descarte real da sessão, localizar objeto e “Novo banco…” no submenu.
+com descarte real da sessão e localizar objeto.
 Vínculo console/conexão, identidades, seleção, menus, modelos, ações com
 impacto e releitura após execução já estão validados
-(§5.12/§5.1.1–§5.1.3); continuar sobre essa base.
+(§5.12/§5.1.1–§5.1.4); continuar sobre essa base.
 O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
 (§5.4), com prova real conforme §5.6.
 MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
@@ -521,9 +564,11 @@ Barra, menus, seleção/atalhos locais e releitura estão aceitos no §7.226.
 Modelos do catálogo e ações com impacto estão aceitos no §7.228, protocolo
 0.161.0. Releitura após execução está aceita no §7.229, protocolo
 0.162.0, incluindo falha parcial e coalescência. Não refaça geração,
-confirmação, inserção no buffer nem refresh automático.
-Atual: desconectar com descarte real da sessão, localizar objeto e Novo banco
-no submenu (§5.1). Não refaça os menus/seleção.
+confirmação, inserção no buffer nem refresh automático. Novo banco no menu
+está aceito no §7.230, mantendo 0.162.0; usa o formulário existente, com prova
+de cancelamento/criação e rascunho intacto. Não refaça essa entrada.
+Atual: desconectar com descarte real da sessão e localizar objeto (§5.1).
+Não refaça os menus/seleção.
 Leia os donos, limites e o desenho antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro

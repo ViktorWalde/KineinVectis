@@ -147,6 +147,7 @@ Item {
             root.dataSourceController.editDraft("engine", engine);
             root.dataSourceController.open();
         }
+        onCreationRequested: root.dataSourceController.openCreation()
         onCandidateChosen: index => {
             root.dataSourceController.discovery.adopt(index);
             root.dataSourceController.open();

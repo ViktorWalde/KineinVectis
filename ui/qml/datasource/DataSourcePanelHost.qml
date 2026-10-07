@@ -12,7 +12,15 @@ KvPanelFrame {
     panelWidth: 820
     panelHeight: 600
 
+    readonly property Connections controllerEvents: Connections {
+        target: root.controller
+        function onCreationRequested() { contentPanel.face = "create"; }
+        function onPanelVisibleChanged() { if (!root.controller.panelVisible) contentPanel.face = "connection"; }
+        function onWorkspaceRootChanged() { contentPanel.face = "connection"; }
+    }
+
     DataSourcePanel {
+        id: contentPanel
         anchors.fill: parent
 
         profiles: root.controller ? root.controller.profiles : []

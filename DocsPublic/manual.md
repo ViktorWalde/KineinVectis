@@ -869,7 +869,7 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
 
 ```text
 ┌ Banco                        × ┐   ×  fechar a janela
-│ +  ⟳  ▢  ▦  recolher           │   +  conexão por motor / desta máquina
+│ +  ⟳  ▢  ▦  recolher           │   +  conexão / desta máquina / novo banco
 │ ▾ loja                  SQLite │   ⟳  reler a estrutura selecionada
 │   ▾ clientes         4 colunas │   ▢  console · ▦ dados
 │       id               INTEGER │
@@ -899,7 +899,10 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   Shift+F10 abre o menu do objeto; Escape devolve o foco. Com foco na árvore,
   Shift+F10 abre esse menu; fora dela, continua sendo Executar.
 - **Barra e menus.** O + escolhe PostgreSQL, SQLite, MongoDB ou ODBC antes
-  de abrir o formulário; “Desta máquina…” relê a descoberta local. Console,
+  de abrir o formulário; “Desta máquina…” relê a descoberta local.
+  “Novo banco…” abre o formulário de criação, inicialmente em SQLite.
+  Abrir ou cancelar não cria arquivo nem conexão; a criação depende do
+  botão explícito do formulário. Console,
   dados e recolher tudo usam a seleção da árvore. O menu da conexão oferece
   console, releitura, edição e cópia do nome; o de uma tabela/coleção oferece
   dados, console com SELECT, modelos SELECT/INSERT/UPDATE, releitura e cópia
@@ -1087,8 +1090,12 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   responde **Nesta máquina**; à direita o veredito do teste e o formulário.
   **Testar**, **Remover…** (o perfil e, se pedido, os dados) e **Salvar**
   (salva e fecha). **Conectar banco** prepara uma conexão existente;
-  **Criar banco…** cria SQLite, sobe um servidor em contêiner ou cria um banco
-  no PostgreSQL selecionado. Motor, origem da senha e TLS usam seletores
+  **Criar banco…** abre as opções para criar SQLite, subir um servidor em
+  contêiner ou criar um banco no PostgreSQL selecionado. **No servidor**
+  exige uma conexão PostgreSQL salva, sem alterações pendentes e com
+  escrita permitida. Fechar a criação e reabrir uma conexão devolve o
+  formulário de conexão; o texto aberto no editor permanece intacto.
+  Motor, origem da senha e TLS usam seletores
   segmentados: Tab percorre seletores, campos e botões; as setas mudam
   a opção disponível e pulam as desabilitadas. A troca de motor adota seus
   padrões e preserva valores personalizados.

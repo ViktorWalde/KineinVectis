@@ -65,6 +65,7 @@ Item {
     signal queryRequested(string name, string password, string sql, bool confirmWrite, int maxRows, var context, var confirmation)
     // Menu, paleta e Ctrl+Alt+J pedem a JANELA do Banco (o shell a abre do lado do icone).
     signal windowRequested()
+    signal creationRequested()
 
     // Descoberta e criacao (0.124.0): filho com dono proprio; adocao volta aqui.
     readonly property alias discovery: discoveryController
@@ -151,6 +152,15 @@ Item {
     function open() {
         panelVisible = true;
         refreshCatalog();
+    }
+
+    function openCreation() {
+        if (root.workspaceRoot === "") return;
+        root.clearSecret();
+        root.secretRequired = false;
+        root.errorText = "";
+        root.open();
+        root.creationRequested();
     }
 
     // Um perfil vindo da descoberta (vai ao formulario para o autor

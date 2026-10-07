@@ -17,16 +17,19 @@
 > com prova de buffer/desfazer, cancelamento e confirmação na IDE real.
 > A releitura após execução está concluída e validada no protocolo
 > `0.162.0` (§7.229), incluindo lote parcialmente aplicado e atualização
-> da árvore sem F5 na IDE real. 1007 testes Rust e 129 harnesses por Qt
-> 6.10/6.4 aprovados; gates completos/estritos com C++ anterior reutilizado
-> por hashes idênticos. Banco permanece no passo 7; pente fino ainda pendente.
+> da árvore sem F5 na IDE real. Novo banco no menu também está concluído
+> (§7.230), sem alterar o protocolo: abertura/cancelamento sem escrita,
+> criação SQLite e rascunho preservado provados na IDE real. 130 harnesses
+> por Qt 6.10/6.4 e sete CTest aprovados; gates completos/estritos com os
+> 1007 testes Rust/Clippy e lint C++ anteriores reutilizados por hashes
+> idênticos. Banco permanece no passo 7; pente fino ainda pendente.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
 > - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.162.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.229.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.230.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -101,7 +104,8 @@
 >     §7.228 (`0.161.0`): instruções geradas no core, inserção sem perder
 >     rascunho, esvaziar/remover pelo aviso existente. **Releitura após
 >     execução aceita** no §7.229 (`0.162.0`), com erro parcial preservado.
->     Próximo no 59 §5.1: desconectar, localizar objeto e Novo banco no submenu.
+>     **Novo banco no menu aceito** no §7.230, pelo formulário existente.
+>     Próximo no 59 §5.1: desconectar e localizar objeto.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >
@@ -441,10 +445,10 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 ## 4. O que está aberto
 
 **Fila atual da 0.3.9 (2026-10-06):** passo 7 do
-[59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.229 concluídas,
+[59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.230 concluídas,
 com desenvolvimento reunido na main (§7.227). Relevo do editor, modelos/ações
-e releitura após execução já estão aceitos. Próxima: desenhar desconectar
-com descarte real da sessão, localizar objeto e Novo banco no submenu (§5.1);
+e releitura após execução já estão aceitos, assim como Novo banco no menu.
+Próxima: desenhar desconectar com descarte real da sessão e localizar objeto (§5.1);
 depois console/grade e motores restantes. O roteiro está no 59 §5.8.
 O pente fino é o passo 8 e ainda não começou.
 A lista datada abaixo preserva o histórico das dívidas anteriores.

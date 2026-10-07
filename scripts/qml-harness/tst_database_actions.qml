@@ -30,6 +30,7 @@ Item {
         onTableDataRequested: (connection, engine, schema, table, readSql) => root.requests.push(["data", connection, engine, schema, table, readSql])
         onNewRequested: engine => root.requests.push(["new", engine])
         onDiscoveryRequested: root.requests.push(["discover"])
+        onCreationRequested: root.requests.push(["create"])
     }
     Connections {
         target: bankController
@@ -106,12 +107,19 @@ Item {
         root.check(root.requests.length === 0, "menu inválido não age");
 
         treeActions.showNew();
-        root.check(root.actionsList() === "new.postgres new.sqlite new.mongo new.odbc database.discover", "só motores existentes");
+        root.check(root.actionsList() === "new.postgres new.sqlite new.mongo new.odbc database.discover database.create", "motores existentes e Novo banco no menu");
         treeActions.activateMenu("new.mongo");
         root.check(JSON.stringify(root.requests.pop()) === JSON.stringify(["new", "mongo"]), "motor escolhido");
         treeActions.showNew();
+        treeActions.activateMenu("database.create");
+        root.check(JSON.stringify(root.requests.pop()) === JSON.stringify(["create"]), "Novo banco usa intenção de criação");
+        treeActions.activateMenu("database.create");
+        root.check(root.requests.length === 0, "menu fechado não duplica criação");
+        treeActions.showNew();
         bankController.workspaceRoot = "/outro";
         root.check(!treeActions.menuOpen && tree.selectedKey === "" && Object.keys(tree.expanded).length === 0, "workspace limpa seleção e menu");
+        treeActions.activateMenu("database.create");
+        root.check(root.requests.length === 0, "menu de outro workspace não abre criação");
 
         bankController.profiles = [profile("a"), profile("__proto__")];
         root.key(Qt.Key_End);

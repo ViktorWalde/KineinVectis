@@ -41,6 +41,7 @@ Rectangle {
     signal tableDataRequested(string connection, string engine, string schema, string table, string readSql)
     signal editRequested(string name)
     signal newRequested(string engine)
+    signal creationRequested()
     signal candidateChosen(int index)
     signal closeRequested()
 
@@ -86,6 +87,7 @@ Rectangle {
         onTableDataRequested: (connection, engine, schema, table, readSql) =>
             root.tableDataRequested(connection, engine, schema, table, readSql)
         onNewRequested: engine => root.newRequested(engine)
+        onCreationRequested: root.creationRequested()
         onDiscoveryRequested: {
             root.resultsOpen = false;
             root.controller.discovery.discover();

@@ -26,6 +26,7 @@ QtObject {
     signal tableDataRequested(string connection, string engine, string schema, string table, string readSql)
     signal newRequested(string engine)
     signal discoveryRequested()
+    signal creationRequested()
 
     function contextFor(row) {
         if (!row || !root.controller) return "";
@@ -62,6 +63,7 @@ QtObject {
                 icon: DataSourceKinds.engineIcon(engine), iconColor: DataSourceKinds.engineColor(engine), enabled: true }));
             items.push({ separator: true, label: "", action: "", enabled: false });
             items.push({ label: qsTr("Desta máquina…"), action: "database.discover", icon: "search", enabled: true });
+            items.push({ label: qsTr("Novo banco…"), action: "database.create", icon: "add", enabled: root.workspace !== "" });
             return items;
         }
         const row = root.menuRow;
@@ -98,6 +100,7 @@ QtObject {
             return;
         }
         if (action === "database.discover") { root.discoveryRequested(); return; }
+        if (action === "database.create" && root.workspace !== "") { root.creationRequested(); return; }
         if (action === "database.collapse") { root.treeModel.collapseAll(); return; }
         if (!row || root.contextFor(row) === "") return;
         if (action === "database.refresh" && root.canRefresh(row)) root.controller.introspectProfile(row.connection);

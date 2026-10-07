@@ -170,7 +170,8 @@ Item {
                 command: root.createCommand
                 message: root.createMessage
                 ok: root.createOk
-                serverProfileNamed: root.savedSelected && root.draft !== null && DataSourceKinds.isPostgres(root.draft.engine)
+                serverProfileNamed: root.draftSaved && root.draft !== null && DataSourceKinds.isPostgres(root.draft.engine)
+                                    && root.draft.readOnly !== true
                 serverProfileName: root.selectedName
                 onCreateSqliteRequested: (name, path) => root.createSqliteRequested(name, path)
                 onCreateServerRequested: (engine, name, port) => root.createServerRequested(engine, name, port)
