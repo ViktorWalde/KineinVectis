@@ -10,8 +10,8 @@ use kinein_protocol::{FsEntry, FsEntryKind};
 
 use super::confine::{TransferKind, confine, confine_file, new_child_path, transfer_paths};
 use super::copy_ops::open_source;
-use super::publish::{publish_noreplace, temp_sibling};
-use super::{FsError, MAX_READ_BYTES};
+use super::publish::publish_noreplace;
+use super::{FsError, MAX_READ_BYTES, atomic_write};
 
 /// Lists a directory inside the workspace root.
 ///
@@ -216,36 +216,6 @@ pub fn write_file_if_unchanged(
     }
     atomic_write(&file, content.as_bytes())?;
     Ok((file, content.len() as u64))
-}
-
-/// Grava `bytes` em `target` de forma ATÔMICA (rede de segurança da fatia S1,
-/// ver `DocsPublic/seguranca/23`): escreve num arquivo temporário no MESMO diretório, faz
-/// `fsync`, e `rename` por cima do alvo. Como o `rename` no mesmo filesystem
-/// é atômico, um crash/kill no meio da escrita nunca deixa o alvo truncado ou
-/// zerado — ele fica com o conteúdo ANTIGO ou o NOVO, jamais pela metade.
-fn atomic_write(target: &Path, bytes: &[u8]) -> Result<(), FsError> {
-    let io_err = |path: &Path, source: io::Error| FsError::Io {
-        path: path.display().to_string(),
-        source,
-    };
-    let temp = temp_sibling(target);
-
-    let mut file = fs::File::create(&temp).map_err(|source| io_err(&temp, source))?;
-    if let Err(source) = file.write_all(bytes) {
-        drop(fs::remove_file(&temp));
-        return Err(io_err(&temp, source));
-    }
-    // `fsync` garante que os bytes chegaram ao disco antes do rename.
-    if let Err(source) = file.sync_all() {
-        drop(fs::remove_file(&temp));
-        return Err(io_err(&temp, source));
-    }
-    drop(file); // fecha o handle antes do rename.
-
-    fs::rename(&temp, target).map_err(|source| {
-        drop(fs::remove_file(&temp));
-        io_err(target, source)
-    })
 }
 
 /// Renames or moves a file or directory inside the workspace root.

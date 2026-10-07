@@ -123,10 +123,25 @@ Rectangle {
 
     // ---- a arvore -----------------------------------------------------------
 
+    Text {
+        id: catalogueError
+
+        anchors.top: headerRow.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: Theme.spacingSmall
+        text: root.controller ? root.controller.errorText || "" : ""
+        textFormat: Text.PlainText
+        visible: text !== ""
+        wrapMode: Text.WordWrap
+        color: Theme.errorSoft
+        font.pixelSize: Theme.fontSizeSmall
+    }
+
     DatabaseTreeView {
         id: treeView
 
-        anchors.top: headerRow.bottom
+        anchors.top: catalogueError.visible ? catalogueError.bottom : headerRow.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.right: parent.right

@@ -148,6 +148,7 @@ flowchart LR
   n_core_dap --> n_core_stderr_tail
   n_core_datasource --> n_core_container
   n_core_datasource --> n_core_db
+  n_core_datasource --> n_core_fsops
   n_core_datasource --> n_core_jobs
   n_core_datasource --> n_core_tools
   n_core_flash --> n_core_build
@@ -212,7 +213,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-43 módulos, 81 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+43 módulos, 82 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -232,7 +233,7 @@ flowchart LR
 | `container` | tools | Containers como dominio NATIVO: |
 | `coverage` | process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | lsp, python, run, stderr_tail | Subsistema de debug: |
-| `datasource` | container, db, jobs, tools | Fontes de dados: |
+| `datasource` | container, db, fsops, jobs, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `flash` | build | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | — | Buffer formatting by orchestrating the project's own formatters. |

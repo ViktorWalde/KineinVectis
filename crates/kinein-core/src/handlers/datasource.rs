@@ -5,9 +5,8 @@
 //! vive no dominio, nao aqui.
 
 use kinein_protocol::{
-    DataSourceIntrospectParams, DataSourceListParams, DataSourceListResult, DataSourceProfile,
-    DataSourceRemoveParams, DataSourceSaveParams, DataSourceTestAccepted, DataSourceTestParams,
-    DataSourceWriteResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    DataSourceIntrospectParams, DataSourceProfile, DataSourceTestAccepted, DataSourceTestParams,
+    JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -53,108 +52,6 @@ impl Core {
                 Some(self.datasource_introspect_response(request_id, params))
             }
             _ => None,
-        }
-    }
-
-    /// `datasource.list` — os perfis salvos neste workspace, ordenados.
-    fn datasource_list_response(
-        &self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "datasource.list");
-        };
-        if let Err(response) = parse_params::<DataSourceListParams>(
-            request_id.as_ref(),
-            params,
-            "datasource.list nao aceita parametros",
-        ) {
-            return *response;
-        }
-        let profiles = crate::datasource::list(&root);
-        let resultado = DataSourceListResult {
-            providers: crate::datasource::providers::list(),
-            console_bindings: crate::datasource::console::bindings(&root, &profiles),
-            workspace: root.display().to_string(),
-            profiles,
-        };
-        JsonRpcResponse::success(request_id, json!(resultado))
-    }
-
-    /// `datasource.save` — cria ou substitui o perfil de mesmo nome.
-    fn datasource_save_response(
-        &self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "datasource.save");
-        };
-        let request = match parse_params::<DataSourceSaveParams>(
-            request_id.as_ref(),
-            params,
-            "datasource.save exige { profile }",
-        ) {
-            Ok(request) => request,
-            Err(response) => return *response,
-        };
-        match crate::datasource::save(&root, &request.profile) {
-            Ok(profiles) => {
-                self.previews.revoke(&root, &request.profile.name);
-                JsonRpcResponse::success(
-                    request_id,
-                    json!(DataSourceWriteResult {
-                        providers: crate::datasource::providers::list(),
-                        console_bindings: crate::datasource::console::bindings(&root, &profiles),
-                        workspace: root.display().to_string(),
-                        profiles
-                    }),
-                )
-            }
-            Err(mensagem) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(JsonRpcErrorCode::InvalidParams, mensagem, None),
-            ),
-        }
-    }
-
-    /// `datasource.remove` — tira o perfil do catalogo.
-    ///
-    /// Remover o que nao existe devolve sucesso com o catalogo atual: a UI nao
-    /// precisa tratar "ja tinha sumido" como erro.
-    fn datasource_remove_response(
-        &self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "datasource.remove");
-        };
-        let request = match parse_params::<DataSourceRemoveParams>(
-            request_id.as_ref(),
-            params,
-            "datasource.remove exige { name }",
-        ) {
-            Ok(request) => request,
-            Err(response) => return *response,
-        };
-        self.odbc.revoke(&root, &request.name);
-        self.previews.revoke(&root, &request.name);
-        match crate::datasource::remove(&root, &request.name) {
-            Ok(profiles) => JsonRpcResponse::success(
-                request_id,
-                json!(DataSourceWriteResult {
-                    providers: crate::datasource::providers::list(),
-                    console_bindings: crate::datasource::console::bindings(&root, &profiles),
-                    workspace: root.display().to_string(),
-                    profiles
-                }),
-            ),
-            Err(mensagem) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(JsonRpcErrorCode::InternalError, mensagem, None),
-            ),
         }
     }
 
@@ -318,7 +215,13 @@ impl Core {
         root: &std::path::Path,
         name: &str,
     ) -> Result<DataSourceProfile, Box<JsonRpcResponse>> {
-        crate::datasource::list(root)
+        crate::datasource::try_list(root)
+            .map_err(|message| {
+                Box::new(JsonRpcResponse::failure(
+                    None,
+                    JsonRpcError::new(JsonRpcErrorCode::InternalError, message, None),
+                ))
+            })?
             .into_iter()
             .find(|candidato| candidato.name == name)
             .ok_or_else(|| {

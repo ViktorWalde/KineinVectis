@@ -66,3 +66,36 @@ const SEARCH_SKIP_DIRS: &[&str] = &[
     "build",
     "node_modules",
 ];
+
+/// Writes and synchronizes an exclusive sibling before replacing the target.
+/// Shared by editor saves and workspace catalogues; callers validate paths.
+///
+/// # Errors
+/// Failure to create, write, synchronize or publish the temporary file.
+pub(crate) fn atomic_write(target: &std::path::Path, bytes: &[u8]) -> Result<(), FsError> {
+    use std::{fs, io, io::Write, path::Path};
+
+    let io_err = |path: &Path, source: io::Error| FsError::Io {
+        path: path.display().to_string(),
+        source,
+    };
+    let temp = publish::temp_sibling(target);
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temp)
+        .map_err(|source| io_err(&temp, source))?;
+    if let Err(source) = file.write_all(bytes) {
+        drop(fs::remove_file(&temp));
+        return Err(io_err(&temp, source));
+    }
+    if let Err(source) = file.sync_all() {
+        drop(fs::remove_file(&temp));
+        return Err(io_err(&temp, source));
+    }
+    drop(file);
+    fs::rename(&temp, target).map_err(|source| {
+        drop(fs::remove_file(&temp));
+        io_err(target, source)
+    })
+}

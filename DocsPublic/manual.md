@@ -875,6 +875,12 @@ direita e ela passa a abrir à direita (veja "Janelas acopladas" na seção 2).
 Só existe com um projeto aberto, porque o perfil mora no projeto
 (`.kinein/datasources.json`).
 
+Se esse arquivo estiver inválido, tiver um formato que a IDE ainda não
+conhece ou exceder 1 MiB, a IDE preserva seu conteúdo e recusa salvar,
+remover ou criar bancos. O projeto continua abrindo. Corrija o arquivo ou
+use uma versão compatível antes de alterar conexões; a mensagem não exibe
+o conteúdo do arquivo. Perfis em formato reconhecido são salvos atomicamente.
+
 ```text
 ┌ Banco                        × ┐   ×  fechar a janela
 │ +  ⟳  ▢  ▦  recolher           │   +  conexão / desta máquina / novo banco

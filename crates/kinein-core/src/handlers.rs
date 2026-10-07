@@ -12,6 +12,7 @@ pub mod configaction;
 pub mod container;
 pub mod coverage;
 pub mod datasource;
+mod datasource_catalogue;
 pub mod datasource_console;
 pub mod datasource_destroy;
 pub mod datasource_discover;

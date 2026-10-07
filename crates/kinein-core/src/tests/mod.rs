@@ -19,6 +19,7 @@ mod datasource_policy;
 mod datasource_providers;
 mod datasource_query;
 mod datasource_session;
+mod datasource_store;
 mod debug;
 mod debug_attach;
 mod debug_inspect;

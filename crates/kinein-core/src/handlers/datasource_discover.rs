@@ -62,6 +62,9 @@ impl Core {
             Ok(pedido) => pedido,
             Err(response) => return *response,
         };
+        if let Err(message) = crate::datasource::ensure_writable(&root) {
+            return invalid(request_id, message);
+        }
         match pedido.what {
             DataSourceCreateKind::SqliteFile { name, path } => {
                 let criado = create::sqlite_file(&root, &name, path.as_deref())

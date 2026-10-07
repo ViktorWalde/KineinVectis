@@ -612,7 +612,14 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia de produto concluída:** D1 (40.7 §7.234), protocolo `0.164.0`.
+**Última fatia concluída:** D1a.1 (40.7 §7.235), mantendo `0.164.0`.
+Catálogo inválido/futuro e campos duplicados são recusados sem sobrescrita;
+escrita atômica compartilhada, teto de 1 MiB e aviso na janela do Banco.
+Gates completos/estritos em continuação, 1019 testes Rust, sete CTest e 132
+harnesses por Qt; recusa real de criação SQLite, arquivo idêntico e texto do
+console preservado na IDE. D1a segue aberta para formato/migração e contrato.
+
+**D1 anterior aceita:** registro dos provedores (40.7 §7.234), `0.164.0`.
 O core fornece os descritores dos quatro motores atuais ao formulário/menu
 pelo fluxo de perfis existente. Gates completos/estritos em continuação,
 1014 testes Rust, 132 harnesses em cada Qt 6.10/6.4 e prova com mouse/teclado
@@ -661,6 +668,9 @@ driver ou LSP novo carregado; perfis/contextos anteriores preservados.
 
 **Próxima fatia executável:** contratos de perfil/processo e limites (D1a),
 com preservação/migração antes de runtime ou seleção persistida de ferramenta.
+A proteção do schema 1 já foi aceita em D1a.1 (§5.13, 40.7 §7.235);
+não refaça essa correção. Falta o formato extensível com migração e os
+contratos/fixtures do processo externo.
 Ponte/extração de drivers em D1b–D1d; instâncias/contexto e integração LSP
 (D2–D5) seguem as dependências do 39 §8.
 LSP SQL passou a ser obrigatório: não implementar completion de catálogo
@@ -1062,6 +1072,42 @@ produção/prévia quando afetados, só janela da IDE, XDG isolado e limpeza.
 Todos os gates completos/estritos antes do commit. Menus, ações e atualização
 automática do §5.1 foram aceitos depois no 40.7 §7.226/§7.228/§7.229.
 O passo 7 continua aberto; a fila atual está no §5.8.
+
+### 5.13 D1a.1 — preservar o catálogo antes de estender o formato (2026-10-07)
+
+Desenho anterior à correção, sobre D1 em `00bcac2`. O teste de regressão
+confirmou que salvar um perfil substitui um arquivo inválido por uma lista
+nova. Esta primeira parte de D1a corrige esse defeito no schema 1; formato
+extensível, migração e contratos de processos continuam nas partes seguintes.
+
+`datasource/store.rs` diferencia ausência de erro de leitura, JSON inválido,
+schema desconhecido e conteúdo não reconhecido. Campos extras e motor não
+reconhecido protegem o arquivo inteiro nesta versão. Ausência permite criar;
+os demais estados recusam salvar/remover. Nenhum conteúdo bruto de arquivo
+entra no erro público. O arquivo reconhecido conserva valores e formato.
+
+`datasource/mod.rs` mantém a lista compatível para consumidores internos,
+mas fornece leitura com erro ao handler e propaga falhas em todas as escritas.
+`handlers/datasource.rs` responde com os erros existentes, sem novo método,
+campo, código ou versão IPC. Criação verifica o catálogo antes de criar
+SQLite ou iniciar container; destruição verifica antes de efeitos no banco.
+As opções extensíveis de provedores ausentes ainda não são interpretadas.
+O handler de catálogo (listar/salvar/remover) ganha arquivo próprio
+`handlers/datasource_catalogue.rs`, separado de teste/introspecção e segredo;
+as rotas e regras permanecem nos donos atuais.
+
+`DatabaseWindow.qml` exibe o erro já recebido pelo controller acima da árvore,
+para que catálogo protegido não pareça ausência normal de conexões. A janela
+usa o texto existente e não interpreta schema nem acrescenta estado IPC.
+
+A gravação compartilha `fsops::atomic_write`: temporário exclusivo no mesmo
+diretório, sincronização e rename, sem outro mecanismo de persistência.
+Limite de leitura/gravação do catálogo: 1 MiB, com recusa sem truncamento.
+Provas: arquivo inválido/futuro/extra intacto após salvar/remover/criar,
+ausência e schema 1 legado aceitos, erro sem vazamento de conteúdo, escrita
+atômica e roundtrip; dispatch real e recusa no formulário da IDE. Escritores
+externos não participam do mutex do core; esta fatia não promete compare-and-
+swap entre processos nem atomicidade entre configuração e efeitos no banco.
 
 ## 6. Grafana: visualização web dentro da IDE
 

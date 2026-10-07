@@ -4641,6 +4641,15 @@ PostgreSQL. Sem descritor recebido, edição/salvamento no formulário aguardam
 a lista, sem inventar um provedor. Migração de perfis, processo/erros/limites,
 instâncias e LSP seguem no [39](39-drivers-externos-e-compatibilidade.md).
 
+**Catálogo protegido (D1a.1, sem mudança do wire).** Arquivo ausente permite
+criar perfis; erro de leitura, JSON inválido, schema/opções não reconhecidos,
+entrada não regular ou arquivo acima de 1 MiB impedem sobrescrita.
+`datasource.list` responde `INTERNAL_ERROR` nesse caso, em vez de sucesso com
+lista vazia. Salvar/remover e criar/destruir recusam antes de seus efeitos;
+usam os códigos existentes e mensagem pública sem conteúdo bruto do arquivo.
+Schema 1 reconhecido mantém o formato e usa publicação atômica compartilhada.
+O projeto continua abrindo; perfil extensível/migração permanecem no 39.
+
 ```text
 event.datasource.tested        { jobId, name, ok, message, clientContext?, ... }
 event.datasource.disconnected  { jobId, name, clientContext, success, message }

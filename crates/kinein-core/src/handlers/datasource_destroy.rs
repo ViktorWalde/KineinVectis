@@ -36,6 +36,12 @@ impl Core {
             Ok(request) => request,
             Err(response) => return *response,
         };
+        if let Err(message) = crate::datasource::ensure_writable(&root) {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(JsonRpcErrorCode::InternalError, message, None),
+            );
+        }
         let Some(profile) = crate::datasource::list(&root)
             .into_iter()
             .find(|p| p.name == request.name)

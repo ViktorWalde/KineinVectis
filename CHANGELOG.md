@@ -11,6 +11,12 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- **Catálogo de conexões protegido** (D1a.1, 40.7 §7.235; protocolo
+  mantido em `0.164.0`): arquivo inválido, futuro, com opções desconhecidas
+  ou campos duplicados é preservado. Salvar/remover e criar bancos são
+  recusados antes dos efeitos; o Banco mostra a mensagem. Perfis válidos
+  usam escrita atômica e limite de 1 MiB. Formato extensível segue na fila.
+
 - Protocolo `0.164.0` — **Registro de provedores do Banco** (D1,
   40.7 §7.234): formulário e menu usam os descritores dos quatro motores
   atuais fornecidos pelo core. Campos de rede, DSN, credenciais, TLS e amostra

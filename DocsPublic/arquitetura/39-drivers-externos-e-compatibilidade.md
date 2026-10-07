@@ -210,8 +210,11 @@ opções para uma versão antiga com perda silenciosa. Trocar executável não
 autoriza migrar permanentemente o perfil por efeito do handshake.
 
 Migração precede a primeira persistência com IDs extensíveis/instalações.
-O store atual aceita schema 1, devolve vazio para arquivo inválido/desconhecido
-e grava com `fs::write`; isso é estado do código, não a garantia alvo.
+Antes de D1a.1, o store aceitava schema 1, devolvia vazio para arquivo
+inválido/desconhecido e gravava com `fs::write`. A primeira correção preserva
+esse schema, recusa arquivo não reconhecido/não regular e aplica teto de
+1 MiB e escrita atômica compartilhada. A leitura pública responde erro,
+sem sucesso com lista vazia. Formato extensível e migração ainda são alvo.
 O novo loader distingue ausência, arquivo inválido, schema futuro e perfil
 indisponível. Somente formato reconhecido e validado pode ser salvo/migrado,
 por escrita atômica; arquivo futuro/inválido permanece intacto e somente leitura.

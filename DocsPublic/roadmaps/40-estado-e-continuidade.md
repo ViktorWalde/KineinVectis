@@ -43,6 +43,13 @@
 > Arquivo de perfis e contextos atuais preservados. As provas externas
 > não habilitam LSP no produto. Próxima fatia: D1a, contratos de processo,
 > limites e preservação/migração de perfis, antes da ponte externa.
+> D1a.1 concluída no §7.235, sem alterar `0.164.0`: catálogo inválido/futuro
+> protegido, campos duplicados recusados, teto de 1 MiB e escrita atômica
+> compartilhada com arquivos. Erro aparece no Banco; criação SQLite recusada
+> e arquivo intacto provados na IDE. 1019 testes Rust, sete CTest e 132
+> harnesses por Qt 6.10.2/6.4.2; gates completos/estritos em continuação,
+> com análise C++ reaproveitada somente para fontes/configuração idênticos.
+> D1a continua aberta para perfil extensível/migração e contrato externo.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),

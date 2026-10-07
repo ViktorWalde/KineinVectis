@@ -87,12 +87,28 @@ pub const DEFAULT_PORT: u16 = 5432;
 /// Le o catalogo do workspace, ja ordenado por nome.
 #[must_use]
 pub fn list(root: &Path) -> Vec<DataSourceProfile> {
-    let Ok(_guard) = CATALOG_WRITES.lock() else {
-        return Vec::new();
-    };
-    let mut profiles = store::load(root);
+    try_list(root).unwrap_or_default()
+}
+
+/// Le o catalogo sem confundir arquivo protegido com lista vazia.
+///
+/// # Errors
+/// Falha de leitura, formato desconhecido/invalido ou mutex indisponivel.
+pub fn try_list(root: &Path) -> Result<Vec<DataSourceProfile>, String> {
+    let _guard = CATALOG_WRITES
+        .lock()
+        .map_err(|_| "O catálogo não está disponível para leitura.".to_owned())?;
+    let mut profiles = store::load(root)?;
     profiles.sort_by(|a, b| a.name.cmp(&b.name));
-    profiles
+    Ok(profiles)
+}
+
+/// Verifica o formato antes de criar/remover dados que exigem salvar o perfil.
+///
+/// # Errors
+/// Os mesmos erros de [`try_list`]; nao testa permissoes de escrita futuras.
+pub fn ensure_writable(root: &Path) -> Result<(), String> {
+    try_list(root).map(|_| ())
 }
 
 /// Valida um perfil vindo da UI.
@@ -161,7 +177,7 @@ pub fn save(root: &Path, profile: &DataSourceProfile) -> Result<Vec<DataSourcePr
     let _guard = CATALOG_WRITES
         .lock()
         .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
-    let mut profiles = store::load(root);
+    let mut profiles = store::load(root)?;
     let normalizado = normalize(profile);
     match profiles
         .iter()
@@ -187,7 +203,7 @@ pub fn remove(root: &Path, name: &str) -> Result<Vec<DataSourceProfile>, String>
     let _guard = CATALOG_WRITES
         .lock()
         .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
-    let mut profiles = store::load(root);
+    let mut profiles = store::load(root)?;
     profiles.retain(|profile| profile.name != name);
     profiles.sort_by(|a, b| a.name.cmp(&b.name));
     store::save(root, &profiles)?;
@@ -206,7 +222,7 @@ pub fn remove_unchanged(
     let _guard = CATALOG_WRITES
         .lock()
         .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
-    let mut profiles = store::load(root);
+    let mut profiles = store::load(root)?;
     if !profiles.iter().any(|profile| profile == expected) {
         return Ok(None);
     }
