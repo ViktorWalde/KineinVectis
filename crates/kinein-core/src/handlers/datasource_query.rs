@@ -77,6 +77,15 @@ impl Core {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "datasource.query");
         };
+        let activity = match self.begin_datasource_operation(
+            &root,
+            &profile.name,
+            request.client_context.as_deref(),
+            request_id.clone(),
+        ) {
+            Ok(activity) => activity,
+            Err(response) => return *response,
+        };
         let preview = match self.reserve_preview(&request, preview_sql) {
             Ok(preview) => preview,
             Err(rejection) => {
@@ -97,6 +106,7 @@ impl Core {
         let accepted_context = request.client_context.clone();
         let accepted_preview = request.preview;
         let job_id = jobs.spawn("datasource", title, risk, request.preview, move |ctx| {
+            let _activity = activity;
             run_query_job(
                 ctx,
                 profile,

@@ -63,6 +63,11 @@ QtObject {
 
     function isConsole(path) { return root.connectionFor(path) !== ""; }
 
+    function discard(name) {
+        if (root.pendingOpen !== null && root.pendingOpen.name === name) root.pendingOpen = null;
+        if (root.pendingStatement !== null && root.pendingStatement.name === name) root.pendingStatement = null;
+    }
+
     // Só igualdade com caminhos calculados pelo core. Colisão recusa por padrão.
     function connectionFor(path) {
         if (root.dataSourceController === null) return "";
@@ -116,6 +121,11 @@ QtObject {
     function runFromEditor(path, text, cursor, selectionStart, selectionEnd, preview) {
         const name = root.connectionFor(path);
         if (name === "") return false;
+        if (root.dataSourceController.sessions.busy(name)) {
+            root.dataSourceController.queryStatus = qsTr("A conexão está desconectando; aguarde o encerramento.");
+            root.resultsRequested();
+            return true;
+        }
         const operation = root.operation(name);
         if (!root.current(operation)) {
             root.dataSourceController.queryStatus = qsTr("Salve as alterações da conexão antes de executar.");

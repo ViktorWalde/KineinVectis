@@ -11,6 +11,13 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolo `0.163.0` — **Desconectar pelo menu do Banco**
+  (40.7 §7.231): aguarda os trabalhos e o encerramento dos drivers do
+  destino, revoga prévia sem decisão e consentimento ODBC, preservando
+  perfil e rascunho. Escrita/COMMIT já aceitos conservam seu desfecho.
+  Respostas antigas do console não reconectam depois; outro banco continua
+  disponível. F5 ou nova consulta explícita usam o fluxo habitual.
+
 - **Novo banco no menu do Banco** (40.7 §7.230, protocolo mantido em
   `0.162.0`): +/Alt+Insert abrem a criação existente, sem criar ao abrir ou
   cancelar. Perfil, rascunho e editor são preservados; No servidor exige

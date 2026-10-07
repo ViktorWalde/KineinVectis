@@ -37,6 +37,7 @@ QtObject {
 
     function canRefresh(row) {
         return row !== null && root.contextFor(row) !== ""
+            && !root.controller.sessions.busy(row.connection)
             && DataSourceMap.get(root.controller.readingNames, row.connection) !== true;
     }
 
@@ -75,6 +76,7 @@ QtObject {
         }
         items.push({ label: qsTr("Ler estrutura de novo"), action: "database.refresh", icon: "refresh", shortcut: "F5", enabled: root.canRefresh(row) });
         if (DataSourceKinds.isConnection(row.kind)) items.push({ label: qsTr("Editar conexão…"), action: "database.edit", icon: "settings", enabled: true });
+        if (DataSourceKinds.isConnection(row.kind)) items.push({ label: qsTr("Desconectar"), action: "database.disconnect", icon: "close", enabled: !root.controller.sessions.busy(row.connection) });
         const statements = row.statements || ({});
         const profile = root.controller.profileByName(row.connection);
         if (DataSourceKinds.hasData(row.kind)) {
@@ -122,6 +124,7 @@ QtObject {
             }
         }
         else if (action === "database.edit" && DataSourceKinds.isConnection(row.kind)) root.editRequested(row.connection);
+        else if (action === "database.disconnect" && DataSourceKinds.isConnection(row.kind)) root.controller.sessions.begin(row.connection);
         else if (action === "database.data" && DataSourceKinds.hasData(row.kind)) root.tableDataRequested(row.connection, row.engine, row.schema || "", row.table, row.readSql || "");
         else if (action === "database.copy") Clipboard.setText(row.name);
     }

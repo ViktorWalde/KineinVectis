@@ -54,6 +54,58 @@ fn challenge(core: &mut crate::Core, method: &str) -> Value {
 }
 
 #[test]
+fn disconnect_revokes_consent_and_blocks_authorization_until_the_worker_exits() {
+    let (mut core, root) = scenario("disconnect");
+    let (sender, receiver) = std::sync::mpsc::channel();
+    core.enable_lsp(sender);
+    let details = challenge(&mut core, "datasource.query");
+    let approval = json!({"name":"outro","identity":details["identity"],"workspace":root});
+    assert!(
+        rpc(&mut core, "datasource.odbc.authorize", approval.clone())
+            .error
+            .is_none()
+    );
+    let profile = crate::datasource::list(&root).pop().unwrap();
+    assert!(core.odbc.required(&root, &profile).unwrap().is_none());
+    let worker = core.datasource_activity.begin(&root, "outro").unwrap();
+    let closing = rpc(
+        &mut core,
+        "datasource.disconnect",
+        json!({"name":"outro",
+        "clientContext":"disconnect.odbc", "expectedContext":{"workspace":root,"profile":profile}}),
+    );
+    assert!(closing.error.is_none());
+    assert!(core.odbc.required(&root, &profile).unwrap().is_some());
+    assert_eq!(
+        rpc(&mut core, "datasource.odbc.authorize", approval.clone())
+            .error
+            .unwrap()
+            .code,
+        JsonRpcErrorCode::InvalidRequest
+    );
+    drop(worker);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        assert!(std::time::Instant::now() < deadline);
+        let event = receiver
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .unwrap();
+        if event.method == "event.datasource.disconnected" {
+            assert_eq!(event.params.unwrap()["success"], true);
+            break;
+        }
+    }
+    assert!(core.odbc.required(&root, &profile).unwrap().is_some());
+    assert!(
+        rpc(&mut core, "datasource.odbc.authorize", approval)
+            .error
+            .is_none()
+    );
+    assert!(core.odbc.required(&root, &profile).unwrap().is_none());
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn driver_consent_is_required_before_query_and_does_not_override_write_confirmation() {
     let (mut core, root) = scenario("recusa");
     for method in ["datasource.test", "datasource.introspect"] {

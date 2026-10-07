@@ -100,7 +100,7 @@ Item {
         });
         root.check(!treeActions.menuOpen && tree.selectedRow.kind === "connection" && tree.selectedRow.connection === "a|b", "objeto removido fecha menu e seleciona conexão");
         treeActions.showRow(tree.selectedKey);
-        root.check(root.actionsList() === "database.console database.refresh database.edit database.copy", "ações da conexão");
+        root.check(root.actionsList() === "database.console database.refresh database.edit database.disconnect database.copy", "ações da conexão incluem desconexão real");
         bankController.profiles = bankController.profiles.map(item => Object.assign({}, item, item.name === "a|b" ? { database: "outro" } : {}));
         root.check(!treeActions.menuOpen, "perfil diferente fecha menu");
         treeActions.activateMenu("database.edit");

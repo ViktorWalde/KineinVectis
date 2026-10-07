@@ -61,6 +61,11 @@ impl Core {
             Ok(profile) => profile,
             Err(response) => return com_id(*response, request_id),
         };
+        let _activity =
+            match self.begin_datasource_operation(&root, &profile.name, None, request_id.clone()) {
+                Ok(activity) => activity,
+                Err(response) => return *response,
+            };
         match self.odbc.authorize(&root, &profile, &request.identity) {
             Ok(()) => JsonRpcResponse::success(
                 request_id,

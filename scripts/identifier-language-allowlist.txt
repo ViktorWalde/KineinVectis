@@ -99,6 +99,9 @@ odbc preallocate autocommit executescript
 fetchone
 # 2026-10-06: APIs oficiais tokio::sync::oneshot e crate futures_util (stream de prévia)
 oneshot util
+# 2026-10-07: std::sync::Condvar, tipo oficial da biblioteca padrão Rust
+# (condition variable; espera por leases sem manter o mutex adquirido).
+condvar
 # 2026-10-06: unittest, biblioteca oficial de testes da biblioteca padrão Python.
 unittest
 

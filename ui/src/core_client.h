@@ -204,6 +204,7 @@ public:
     Q_INVOKABLE void dataSourceImpact(const QString& name, const QString& password,
                                       const QString& sql, const QVariantMap& context = {});
     Q_INVOKABLE void dataSourcePreviewDecide(const QVariantMap& operation);
+    Q_INVOKABLE void dataSourceDisconnect(const QString& name, const QVariantMap& context);
 
     // Observabilidade: o Grafana que observa este projeto. A licenca dele
     // (AGPL-3.0) decide a FORMA — a IDE CONVERSA, nunca embute.
@@ -438,6 +439,8 @@ signals:
     /// O impacto medido: `severity`, `sql` e cada instrucao com alvo e linhas.
     void dataSourceImpactMeasured(const QVariantMap& impact);
     void dataSourceQueryAccepted(const QVariantMap& operation);
+    void dataSourceDisconnectAccepted(const QVariantMap& operation);
+    void dataSourceDisconnected(const QVariantMap& outcome);
     void dataSourcePreviewed(const QVariantMap& preview);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.

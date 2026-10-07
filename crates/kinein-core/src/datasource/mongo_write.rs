@@ -9,24 +9,12 @@ use std::time::Instant;
 
 use kinein_protocol::{DataSourceProfile, SqlImpactSeverity, SqlStatementImpact};
 use mongodb::bson::Document;
-use mongodb::sync::{Client, Collection};
 
 use super::mongo::{self, MongoFailure};
+use super::mongo_client::Connection;
 use super::mongo_command::{MongoCommand, MongoOp};
 use super::query::QueryResult;
 use super::secret::Secret;
-
-fn collection(
-    profile: &DataSourceProfile,
-    secret: Option<&Secret>,
-    name: &str,
-) -> Result<Collection<Document>, MongoFailure> {
-    let client = Client::with_options(mongo::options_for(profile, secret))
-        .map_err(|e| mongo::describe(&e, &profile.host))?;
-    Ok(client
-        .database(mongo::database_for(profile))
-        .collection(name))
-}
 
 /// Executa uma escrita ja' confirmada; `affected` e' o que o servidor contou
 /// (documentos inseridos, alterados, apagados, ou os que a colecao tinha).
@@ -38,7 +26,10 @@ pub fn execute(
     secret: Option<&Secret>,
     command: MongoCommand,
 ) -> Result<QueryResult, MongoFailure> {
-    let target = collection(profile, secret, &command.collection)?;
+    let client = Connection::connect(profile, secret)?;
+    let target = client
+        .database(mongo::database_for(profile))
+        .collection::<Document>(&command.collection);
     let fail = |e: mongodb::error::Error| mongo::describe(&e, &profile.host);
     let start = Instant::now();
     let affected = match command.op {
@@ -119,7 +110,10 @@ pub fn measure(
         statement.rows = u64::try_from(command.documents.len()).ok();
         return statement;
     }
-    let counted = collection(profile, secret, &command.collection).and_then(|target| {
+    let counted = Connection::connect(profile, secret).and_then(|client| {
+        let target = client
+            .database(mongo::database_for(profile))
+            .collection::<Document>(&command.collection);
         let fail = |e: mongodb::error::Error| mongo::describe(&e, &profile.host);
         // Total EXATO: com o estimado, um filtro que pega a colecao inteira
         // podia escapar da promocao a destrutivo por diferenca de contagem.

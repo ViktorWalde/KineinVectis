@@ -47,6 +47,11 @@ Item {
     }
 
     Connections {
+        target: root.dataSourceController ? root.dataSourceController.sessions : null
+        function onRequested(name, context) { root.coreClient.dataSourceDisconnect(name, context); }
+    }
+
+    Connections {
         target: root.dataSourceController ? root.dataSourceController.odbc : null
 
         function onSourcesRequested() { root.coreClient.dataSourceOdbcSources(); }

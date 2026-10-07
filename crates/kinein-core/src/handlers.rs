@@ -19,6 +19,7 @@ pub mod datasource_impact;
 pub mod datasource_odbc;
 pub mod datasource_preview;
 pub mod datasource_query;
+pub mod datasource_session;
 pub mod debug;
 pub mod draft;
 pub mod format;

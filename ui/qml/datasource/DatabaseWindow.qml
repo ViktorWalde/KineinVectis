@@ -75,6 +75,7 @@ Rectangle {
         profiles: root.controller ? root.controller.profiles : []
         structures: root.controller ? root.controller.structures : ({})
         readingNames: root.controller ? root.controller.readingNames : ({})
+        sessionStates: root.controller ? root.controller.sessions.states : ({})
     }
 
     DatabaseTreeActions {

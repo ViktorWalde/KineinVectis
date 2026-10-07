@@ -69,7 +69,17 @@ impl Core {
             );
         }
         let token = request.client_context.clone();
-        let mut response = self.execute_destroy(request_id, &root, &profile, &mut request);
+        let activity = match self.begin_datasource_operation(
+            &root,
+            &profile.name,
+            request.client_context.as_deref(),
+            request_id.clone(),
+        ) {
+            Ok(activity) => activity,
+            Err(response) => return *response,
+        };
+        let mut response =
+            self.execute_destroy(request_id, &root, &profile, &mut request, activity);
         if let Some(result) = response.result.as_mut().and_then(Value::as_object_mut) {
             result.insert("clientContext".to_owned(), json!(token));
         }
@@ -82,11 +92,13 @@ impl Core {
         root: &std::path::Path,
         profile: &kinein_protocol::DataSourceProfile,
         request: &mut DataSourceDestroyParams,
+        activity: crate::datasource::activity::Operation,
     ) -> JsonRpcResponse {
         let operation = DestroyContext {
             root: root.to_path_buf(),
             profile: profile.clone(),
             client_context: request.client_context.clone(),
+            _activity: activity,
         };
         self.odbc.revoke(root, &profile.name);
         self.previews.revoke(root, &profile.name);
@@ -262,6 +274,7 @@ fn catalogo(
 
 #[derive(Debug)]
 struct DestroyContext {
+    _activity: crate::datasource::activity::Operation,
     root: std::path::PathBuf,
     profile: kinein_protocol::DataSourceProfile,
     client_context: Option<String>,

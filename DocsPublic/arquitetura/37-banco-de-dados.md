@@ -663,7 +663,7 @@ Prévia PostgreSQL (§9) e profundidade do editor aceitas no 40.7 §7.223/224.
 Base de console/árvore aceita no 40.7 §7.225; primeira fatia de ações no
 §7.226. Modelos do catálogo e ações com impacto aceitos no §7.228;
 releitura automática após execução aceita no §7.229 e Novo banco no menu
-aceito no §7.230. Seguir desconectar e localizar o objeto do console;
+aceito no §7.230. Desconexão aceita no §7.231. Seguir localizar o objeto do console;
 depois completion, histórico e grade no passo 7. O pente fino e o AppImage
 seguem a ordem do 59 §7.
 
@@ -733,3 +733,51 @@ conexão. DataSourceDiscoveryController conserva os pedidos e o progresso de
 criação; o editor e o resultado de consulta conservam seus donos.
 No servidor só fica disponível para o rascunho idêntico ao PostgreSQL salvo
 e sem readOnly; o core mantém a recusa efetiva. Desenho no 59 §5.1.4.
+
+### Desconexão e ciclo dos drivers (2026-10-07, 0.163.0)
+
+`datasource.disconnect` exige workspace/perfil/token e não recebe senha.
+O aceite cria um job; o evento `disconnected` só confirma sucesso depois de
+liberar os trabalhadores daquele workspace/nome. Conexões comuns vivem por
+operação. A prévia PostgreSQL (§9) mantém um driver vivo enquanto aguarda
+decisão; limpar a árvore não encerra essa sessão.
+
+| Responsabilidade | Dono |
+| --- | --- |
+| Contrato obrigatório e evento terminal | `crates/kinein-protocol/src/datasource_session.rs` |
+| Leases por destino e barreira de encerramento | `crates/kinein-core/src/datasource/activity.rs` |
+| Contexto, revogação e job de espera | `crates/kinein-core/src/handlers/datasource_session.rs` |
+| Encerramento síncrono do pool MongoDB | `crates/kinein-core/src/datasource/mongo_client.rs` |
+| Intenção/estado visual, sem driver ou buffer | `ui/qml/datasource/DataSourceSessionController.qml` |
+| Descarte do catálogo após confirmação | `DataSourceCatalogController.detach` |
+| Descarte de abertura/extração pendente, preservando vínculos | `DataSourceConsoleController.discard` |
+
+Cada operação reserva uma lease antes de lançar seu trabalhador. Desconectar
+recusa novos testes/leituras/consultas/impactos/remoções nesse destino, revoga
+a autorização ODBC e a prévia pendente pelos donos existentes e espera num
+job. A Condvar libera o mutex durante a espera; o despacho e outros destinos
+continuam livres. Decisão de prévia já aceita conserva seu desfecho;
+escrita comum já aceita pode concluir. Não há promessa de cancelamento
+instantâneo ou rollback dessa escrita. A barreira sai antes do evento final.
+
+O driver MongoDB 3.9.0 limpa o pool em segundo plano ao sofrer Drop. O guard
+comum ao teste/catálogo/leitura/escrita/impacto aguarda `shutdown().run()`.
+Ele nasce antes de cursores/sessões, que saem primeiro, inclusive em erro.
+Não se retém cliente em outro dono nem se cria um executor novo.
+
+O controller invalida pedidos/credencial/retry do destino, mas conserva o
+catálogo enquanto aguarda. Só o evento correspondente retira seu snapshot;
+perfil e texto do console permanecem. Token/job/perfil/workspace antigos
+não alteram o estado. A linha mostra desconectando… e depois desconectado;
+F5 ou nova consulta explícita usam os caminhos existentes. Outro catálogo
+e seu pedido pendente continuam independentes. A abertura/extração pendente
+do console desse destino é descartada antes do pedido de desconexão;
+Ctrl+Enter enquanto encerra não reserva extração. Assim, uma resposta antiga
+não inicia consulta depois do evento terminal nem reconecta sem novo gesto.
+
+Prova reproduzível: `python3 scripts/testar-banco-real.py --disconnect`.
+Usa imagens locais PostgreSQL 16/MongoDB 7, loopback, containers e XDG
+temporários; não baixa driver/imagem. psql confere espera da consulta,
+ROLLBACK pendente, COMMIT já aceito e ausência de sessões do core; currentOp
+confere o pool MongoDB fechado em todos os caminhos. Perfis e consoles
+mantêm bytes/texto. Desenho no 59 §5.1.5; registro no 40.7 §7.231.

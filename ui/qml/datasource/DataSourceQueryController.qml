@@ -45,7 +45,7 @@ QtObject {
         if (!root.current() || editing && root.profileKey(controller.draft) !== root.lastQuery.profileKey) root.invalidate();
     }
 
-    function invalidate() {
+    function invalidate(name) {
         if (root.dataSourceController !== null && root.dataSourceController.previews) root.dataSourceController.previews.discard();
         root.generation += 1;
         root.lastQuery = null;
@@ -56,13 +56,18 @@ QtObject {
         root.status = "";
         root.pendingDatabase = "";
         if (root.dataSourceController !== null) {
-            root.dataSourceController.impact.cancel();
-            root.dataSourceController.odbc.cancel();
+            if (name === undefined || root.dataSourceController.impact.name === name) root.dataSourceController.impact.cancel();
+            if (name === undefined || root.dataSourceController.odbc.pending && root.dataSourceController.odbc.pending.name === name) root.dataSourceController.odbc.cancel();
         }
     }
 
     function begin(name, text, confirmed, maxRows, confirmation, database, preview) {
         if (name === "" || text.trim() === "") return;
+        if (root.dataSourceController.sessions.busy(name)) {
+            root.status = qsTr("A conexão está desconectando; aguarde o encerramento.");
+            return;
+        }
+        root.dataSourceController.sessions.forget(name);
         const profile = root.dataSourceController.profileByName(name);
         if (profile === null) {
             root.status = qsTr("Salve a conexão antes de executar.");

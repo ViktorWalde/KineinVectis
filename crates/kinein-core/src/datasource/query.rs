@@ -269,8 +269,7 @@ pub fn run_mongo(
     if command.op.writes() {
         return super::mongo_write::execute(profile, secret, command);
     }
-    let client = mongodb::sync::Client::with_options(mongo::options_for(profile, secret))
-        .map_err(|e| mongo::describe(&e, &profile.host))?;
+    let client = super::mongo_client::Connection::connect(profile, secret)?;
     let inicio = Instant::now();
     let cursor = client
         .database(mongo::database_for(profile))

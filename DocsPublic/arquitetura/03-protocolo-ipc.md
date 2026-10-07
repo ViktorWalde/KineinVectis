@@ -1,5 +1,14 @@
 # 03 — Protocolo IPC
 
+> **0.163.0 (2026-10-07, validado no checkout; 40.7 §7.231).**
+> `datasource.disconnect { name, expectedContext, clientContext }` responde
+> `{ jobId, name, clientContext }`; `event.datasource.disconnected` traz
+> `{ jobId, name, clientContext, success, message }` após drenar trabalhadores
+> do destino. Revoga prévia pendente e consentimento ODBC, preserva perfil e
+> dados. Operações já aceitas podem concluir; novos pedidos são recusados
+> enquanto o encerramento aguarda esses trabalhadores.
+> Não recebe senha e não promete desfazer escrita comum já em execução.
+
 > **0.162.0 (2026-10-06, validado no checkout; 40.7 §7.229).**
 > `event.datasource.queried.catalogUpdate: none | reload` pede releitura do
 > catálogo da conexão correlacionada. Ausente significa none. Pode acompanhar falha
@@ -3291,7 +3300,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 182 métodos roteados — a lista inteira
+## Os 183 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3351,6 +3360,7 @@ datasource.introspect
 datasource.list
 datasource.query
 datasource.preview.decide
+datasource.disconnect
 datasource.remove
 datasource.save
 datasource.test
@@ -3528,7 +3538,7 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 59 eventos emitidos — a lista inteira
+## Os 60 eventos emitidos — a lista inteira
 
 > **2026-10-03:** a lista estava atrás do código — sete eventos entraram sem
 > chegar aqui (`coverage.finished`, `python.stubs`, `remote.deployed`,
@@ -3559,6 +3569,7 @@ event.datasource.impact
 event.datasource.introspected
 event.datasource.queried
 event.datasource.previewed
+event.datasource.disconnected
 event.datasource.tested
 
 event.debug.continued
@@ -4597,13 +4608,15 @@ datasource.impact    { name, password?, sql, clientContext?, expectedContext? } 
 datasource.introspect { name, password?, clientContext?, expectedContext? }     -> aceite + job
 datasource.query      { name, password?, sql, maxRows?, confirmWrite?, clientContext?, expectedContext?, confirmation?, preview? } -> { jobId, name, clientContext?, preview } + job (0.159.0)
 datasource.preview.decide { previewId, decision, name, clientContext, expectedContext } -> { jobId } + queried com desfecho (0.159.0)
+datasource.disconnect  { name, clientContext, expectedContext } -> { jobId, name, clientContext } + job (0.163.0)
 ```
 
-Teste, impacto, catálogo, consulta e decisão de prévia exigem workspace
+Teste, impacto, catálogo, consulta, decisão de prévia e desconexão exigem workspace
 aberto; o perfil mora no projeto.
 
 ```text
 event.datasource.tested        { jobId, name, ok, message, clientContext?, ... }
+event.datasource.disconnected  { jobId, name, clientContext, success, message }
 event.datasource.impact        { jobId, name, sql, severity, clientContext?, confirmationTarget?, requiresConnection, previewEligible,
                                  statements: [{ text, kind, targets, column?, filter?, severity, rows?, totalRows?, note? }] }  (0.158.0)
 event.datasource.introspected  { jobId, name, schemas | collections, clientContext?, ... }
@@ -4633,6 +4646,18 @@ A UI atual sempre os envia. Produção pede aviso em qualquer escrita;
 remoção/alteração global/impacto desconhecido exigem `confirmation` com nomes
 exatos. `readOnly` recusa escrita mesmo confirmada. O léxico comum confere o
 lote inteiro e CTE, além da proteção nativa de leitura. Detalhes no 37 §8.
+
+**Desconectar (`0.163.0`).** Contexto/token são obrigatórios; campos extras,
+inclusive password, são recusados. O aceite ainda não significa encerrado.
+O job aguarda todas as operações reservadas para workspace/nome, depois
+libera a barreira e emite `disconnected`. Enquanto espera, novos trabalhos
+desse destino e nova autorização ODBC são recusados. Revoga consentimento
+ODBC e prévia pendente; COMMIT já aceito é aguardado, não revogado. Perfil,
+arquivos e dados permanecem. Operações comuns já aceitas podem concluir;
+não se promete rollback nem interrupção imediata do driver. O pool MongoDB
+é encerrado explicitamente antes de liberar sua operação. Outro destino e
+o despacho continuam livres. Próximo pedido explícito após o evento usa
+o fluxo normal de conexão. Donos e provas no 37, desenho no 59 §5.1.5.
 
 **Executar o que o autor escreveu (`0.121.0`, `../roadmaps/35` §7.4).** A
 classificação do lote inteiro pelo léxico comum decide o caminho —

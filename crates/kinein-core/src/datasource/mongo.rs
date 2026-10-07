@@ -23,9 +23,9 @@ use kinein_protocol::{DataSourceProfile, MongoCollection, MongoField};
 use mongodb::{
     bson::{Bson, Document, doc},
     options::{ClientOptions, Credential, ServerAddress},
-    sync::Client,
 };
 
+use super::mongo_client::Connection;
 use super::mongo_infer::Inference;
 use super::secret::Secret;
 
@@ -171,8 +171,7 @@ pub fn probe_server(
     profile: &DataSourceProfile,
     secret: Option<&Secret>,
 ) -> Result<String, MongoFailure> {
-    let client = Client::with_options(options_for(profile, secret))
-        .map_err(|e| describe(&e, &profile.host))?;
+    let client = Connection::connect(profile, secret)?;
     let banco = client.database(database_for(profile));
     let resposta = banco
         .run_command(doc! { "buildInfo": 1 })
@@ -199,8 +198,7 @@ pub fn read_structure(
     profile: &DataSourceProfile,
     secret: Option<&Secret>,
 ) -> Result<Vec<MongoCollection>, MongoFailure> {
-    let client = Client::with_options(options_for(profile, secret))
-        .map_err(|e| describe(&e, &profile.host))?;
+    let client = Connection::connect(profile, secret)?;
     let banco = client.database(database_for(profile));
     let amostra = profile
         .sample_size

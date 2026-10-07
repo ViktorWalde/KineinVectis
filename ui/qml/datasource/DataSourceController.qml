@@ -103,6 +103,11 @@ Item {
         dataSourceController: root
     }
 
+    readonly property DataSourceSessionController sessions: DataSourceSessionController {
+        dataSourceController: root
+        workspaceRoot: root.workspaceRoot
+    }
+
     readonly property DataSourceCatalogController catalog: DataSourceCatalogController {
         dataSourceController: root
         workspaceRoot: root.workspaceRoot

@@ -240,8 +240,12 @@ a mensagem e relê o catálogo. Invalidações ocupadas são agrupadas.
 existente; abrir/cancelar não escreve. Criação SQLite e preservação do
 rascunho provadas na IDE real. Protocolo permanece 0.162.0.
 
-**Ainda pendentes desta seção:** localizar o objeto do console e
-desconectar com descarte real da sessão. Não duplicar
+**Desconexão concluída e validada em 2026-10-07**
+(40.7 §7.231, protocolo `0.163.0`; desenho no §5.1.5). Aguarda trabalhos
+e drivers, revoga prévia pendente/consentimento ODBC e conserva perfil e
+rascunho. Resposta antiga do console não reconecta; outro destino fica livre.
+
+**Ainda pendente desta seção:** localizar o objeto do console. Não duplicar
 geração/interpretação de instruções no QML. A lista abaixo conserva o
 escopo completo, incluindo o que já foi feito.
 
@@ -314,7 +318,7 @@ Somente leitura desabilita essas ações na apresentação e continua sendo
 recusado no core. As provas cobrem delimitadores, nomes hostis, modelos
 incompletos, visões/Mongo/ODBC, leitura real SQLite, buffer sujo/desfazer,
 respostas antigas e cancelamento/confirmar na tela. A releitura após DDL
-foi aceita depois, no §5.1.3; desconectar e localizar seguem na fila atual.
+foi aceita depois, no §5.1.3; desconexão no §5.1.5 e localizar segue na fila atual.
 
 #### 5.1.3 Desenho da releitura após execução (2026-10-06)
 
@@ -391,6 +395,75 @@ usa New/Alt+Insert e ações no menu da árvore;
 [Qt 6.10, Connections](https://doc.qt.io/qt-6.10/qml-qtqml-connections.html)
 documenta o encaminhamento por target. A adaptação liga intenção ao diálogo
 da Kinein; não importa código/runtime dessas ferramentas.
+
+#### 5.1.5 Desenho da desconexão (2026-10-06, antes do código)
+
+**Implementado e validado em 2026-10-07; provas e aceite no 40.7 §7.231.**
+O texto abaixo conserva o desenho anterior ao código.
+
+Base main 2a0b1a6, protocolo 0.162.0. As conexões comuns vivem por operação;
+a prévia PostgreSQL mantém transação/driver num job. Desconectar preserva
+perfil, arquivos e buffer do console. Não remove banco/container nem apaga
+dados. A confirmação do encerramento exige que os trabalhadores do destino
+tenham liberado suas conexões; limpar apenas o catálogo não basta.
+
+Contrato aditivo planejado 0.163.0: datasource.disconnect recebe name,
+expectedContext e clientContext obrigatórios; responde jobId/name/token.
+event.datasource.disconnected devolve jobId/name/token/success/message depois
+da espera. Não recebe senha. Perfil/workspace diferentes recusam o pedido.
+
+Um registro de atividade no domínio acompanha leases por workspace/nome,
+reservadas antes de lançar teste, introspecção, consulta, medição de impacto
+e remoção com trabalho assíncrono. A desconexão reserva uma barreira que
+recusa novas operações desse destino e espera fora do despacho até todas
+as leases saírem, inclusive caminhos de erro. Outro destino continua livre.
+Revoga a autorização ODBC e a prévia pendente pelos donos existentes.
+Decisão de prévia já aceita conserva seu desfecho e é aguardada; uma escrita
+comum já aceita não é interrompida e pode concluir. Não há promessa de
+rollback para escrita comum nem de cancelamento instantâneo do driver.
+
+A auditoria do driver MongoDB 3.9.0 (`src/action/shutdown.rs`, dependência
+fixada em Cargo.lock) confirmou que Drop limpa o pool em segundo plano.
+Um guard comum aos caminhos existentes de teste/catálogo/leitura/escrita/
+impacto aguardará `Client::shutdown().run()` depois de liberar cursores;
+nenhuma lease será encerrada antes disso. A prova real verificará por
+`currentOp` que não restam conexões com appName kinein-vectis.
+
+DataSourceSessionController guarda só contexto/estado visual da intenção.
+Descarta credencial/pedidos de retry e respostas antigas apenas do destino;
+o catálogo permanece visível enquanto encerra. Só no evento correspondente
+remove seu snapshot e a árvore volta à conexão. Mostra desconectando…,
+desconectado ou erro na própria linha. Nova leitura explícita conecta pelo
+caminho existente. Eventos de outra conexão/perfil/workspace não alteram
+o estado; seleção e texto do editor continuam com seus donos atuais.
+Menu da conexão ganha Desconectar; releitura/execução são bloqueadas durante
+essa intenção. Localizar objeto continua na fatia posterior.
+
+**Revisão da retomada em 2026-10-07, antes da correção:** uma extração
+`datasource.console.statement` ainda pendente pode responder depois do evento
+de desconexão e iniciar outra consulta. O dono dos consoles descartará os
+pedidos públicos do destino ao desconectar, conservando vínculos e buffers;
+pedidos de outra conexão permanecem. Ctrl+Enter durante o encerramento não
+reserva uma extração que possa executar depois. O harness provará a resposta atrasada
+após o encerramento e a conservação do pedido vizinho antes da alteração.
+
+Provas planejadas: antes/depois do menu ausente, leases/barreira/isolamento,
+despacho sem workspace/contexto/perfil válido, liberação depois de falhas,
+correlação UI e evento antes do aceite, rascunho/perfil preservados,
+respostas antigas e novo pedido após fechar. PostgreSQL real: consulta em
+andamento aguardada, prévia pendente desfeita, dados e sessões conferidos
+independentemente; SQLite real na IDE e texto sujo intacto. Gates estritos,
+Qt 6.10/6.4, builds e abertura, sem aumentar limites/baselines.
+
+Referências MODE-D consultadas em 2026-10-06:
+[DataGrip 2026.2, Deactivate](https://www.jetbrains.com/help/datagrip/database-explorer.html)
+fecha a conexão selecionada e conserva sua configuração;
+[Rust std 1.99, Condvar::wait_while](https://doc.rust-lang.org/std/sync/struct.Condvar.html#method.wait_while)
+documenta espera condicionada e mutex liberado durante a espera (API estável
+anterior ao toolchain 1.96.1 do projeto);
+[PostgreSQL 16, cancelamento](https://www.postgresql.org/docs/16/protocol-flow.html#PROTOCOL-FLOW-CANCELING-REQUESTS)
+exige aguardar a resposta, mesmo após pedir cancelamento. A adaptação usa
+leases e jobs próprios, sem incorporar runtime/código dessas ferramentas.
 
 ### 5.2 Console que ajuda
 
@@ -495,7 +568,7 @@ orquestra". Ficam assim:
 - a IDE não baixa driver sozinha. Um driver é código nativo de terceiros, e
   carregá-lo é gesto explícito, com aviso (§7, segurança).
 
-### 5.8 A fatia retomada e o próximo prompt (atualizado em 2026-10-06)
+### 5.8 A fatia retomada e o próximo prompt (atualizado em 2026-10-07)
 
 A arquitetura do Banco, com diagramas, donos e limites, está no
 [37](../arquitetura/37-banco-de-dados.md). A escrita MongoDB, a confirmação
@@ -503,12 +576,16 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** Novo banco no menu (§5.1.4, 40.7 §7.230),
-protocolo mantido em `0.162.0`. Menu/foco e reabertura em conexão cobertos;
-SQLite temporário criado pelo botão existente, sem escrita ao abrir/cancelar
-e com rascunho do editor intacto. Gates completos/estritos: 130 harnesses por
-Qt 6.10/6.4 e sete CTest atuais; 1007 testes Rust/Clippy e lint C++ anteriores
-reutilizados por hashes idênticos. Releitura após execução permanece aceita
+**Última fatia concluída:** Desconectar (§5.1.5, 40.7 §7.231), protocolo
+`0.163.0`. Drena trabalhos e drivers, revoga prévia sem decisão/consentimento
+ODBC, preserva perfil/rascunho e descarta resposta antiga do console.
+PostgreSQL/MongoDB reais e gestos SQLite na janela da IDE provados. Gates
+completos/estritos em continuação, com hashes conferidos: 1012 testes Rust,
+Clippy, clang-format/clang-tidy 21 sem exceção, 131 harnesses em cada Qt
+6.10/6.4, sete CTest nos três builds e abertura/33 superfícies em cada um.
+Debug/release reconstruídos após o gate detectar objetos anteriores aos
+headers do sistema. Launcher confirmado com UI hardened e core release
+atuais. Novo banco no menu permanece aceito no §7.230; releitura após execução permanece aceita
 no §7.229: CREATE/ALTER/DROP e lote parcialmente aplicado na IDE real sem F5;
 contexto, resultado duplicado, coalescência e credencial cobertos.
 Modelos/ações com impacto permanecem aceitos no §7.228: geração no core,
@@ -525,11 +602,11 @@ KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
 de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
 completos e estritos verdes. Confira git log para o commit local.
 
-**Próxima fatia:** restante de ações/árvore viva (§5.1): desconectar
-com descarte real da sessão e localizar objeto.
+**Próxima fatia:** restante de ações/árvore viva (§5.1): localizar objeto
+do console.
 Vínculo console/conexão, identidades, seleção, menus, modelos, ações com
 impacto e releitura após execução já estão validados
-(§5.12/§5.1.1–§5.1.4); continuar sobre essa base.
+(§5.12/§5.1.1–§5.1.5); continuar sobre essa base.
 O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
 (§5.4), com prova real conforme §5.6.
 MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
@@ -567,8 +644,10 @@ Modelos do catálogo e ações com impacto estão aceitos no §7.228, protocolo
 confirmação, inserção no buffer nem refresh automático. Novo banco no menu
 está aceito no §7.230, mantendo 0.162.0; usa o formulário existente, com prova
 de cancelamento/criação e rascunho intacto. Não refaça essa entrada.
-Atual: desconectar com descarte real da sessão e localizar objeto (§5.1).
-Não refaça os menus/seleção.
+Desconexão está aceita no §7.231, protocolo 0.163.0, com PostgreSQL/MongoDB
+reais e rascunho preservado na IDE. Não refaça leases/barreira, shutdown
+MongoDB nem descarte de pedidos antigos do console. Atual: localizar objeto
+do console (§5.1). Não refaça os menus/seleção.
 Leia os donos, limites e o desenho antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro

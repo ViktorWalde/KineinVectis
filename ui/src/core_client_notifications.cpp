@@ -43,6 +43,10 @@ bool CoreClient::handleDataSourceNotification(const QString& method, const QJson
         emit dataSourcePreviewed(params.toVariantMap());
         return true;
     }
+    if (method == QStringLiteral("event.datasource.disconnected")) {
+        emit dataSourceDisconnected(params.toVariantMap());
+        return true;
+    }
     if (method == QStringLiteral("event.datasource.tested")) {
         emit dataSourceTested(params.value(QStringLiteral("name")).toString(),
                               params.value(QStringLiteral("ok")).toBool(false),

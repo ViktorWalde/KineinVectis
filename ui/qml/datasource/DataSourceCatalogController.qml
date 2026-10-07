@@ -70,6 +70,11 @@ QtObject {
 
     function begin(method, name) {
         const controller = root.dataSourceController;
+        if (controller.sessions.busy(name)) {
+            controller.errorText = qsTr("A conexão está desconectando; aguarde o encerramento.");
+            return;
+        }
+        controller.sessions.forget(name);
         const profile = controller.profileByName(name);
         if (!profile || controller.draft.name === name && root.key(controller.draft) !== root.key(profile)) {
             controller.errorText = qsTr("Salve as alterações da conexão antes de conectar.");
@@ -98,6 +103,29 @@ QtObject {
         if (root.current(operation)) {
             root.invalidated = DataSourceMap.copy(root.invalidated, { [name]: operation });
         } else root.begin("introspect", name);
+    }
+
+    function detach(name, clearSnapshot) {
+        const next = DataSourceMap.copy(root.pending);
+        for (const id of Object.keys(next)) {
+            if (next[id].name === name) delete next[id];
+        }
+        root.pending = next;
+        root.takeInvalidation(name);
+        const controller = root.dataSourceController;
+        controller.readingNames = DataSourceMap.copy(controller.readingNames, { [name]: false });
+        if (controller.draft.name === name) {
+            controller.testing = false;
+            controller.reading = false;
+            if (clearSnapshot) { controller.schemas = []; controller.collections = []; }
+        }
+        if (!clearSnapshot) return;
+        const structures = DataSourceMap.copy(controller.structures);
+        delete structures[name];
+        controller.structures = structures;
+        const keys = DataSourceMap.copy(root.structureKeys);
+        delete keys[name];
+        root.structureKeys = keys;
     }
 
     function takeInvalidation(name) {

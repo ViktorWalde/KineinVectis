@@ -166,6 +166,7 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
         method == QStringLiteral("datasource.introspect") ||
         method == QStringLiteral("datasource.destroy") ||
         method == QStringLiteral("datasource.preview.decide") ||
+        method == QStringLiteral("datasource.disconnect") ||
         method == QStringLiteral("datasource.console") ||
         method == QStringLiteral("datasource.console.statement"))
     {

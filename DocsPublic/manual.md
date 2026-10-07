@@ -904,7 +904,7 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   Abrir ou cancelar não cria arquivo nem conexão; a criação depende do
   botão explícito do formulário. Console,
   dados e recolher tudo usam a seleção da árvore. O menu da conexão oferece
-  console, releitura, edição e cópia do nome; o de uma tabela/coleção oferece
+  console, releitura, edição, Desconectar e cópia do nome; o de uma tabela/coleção oferece
   dados, console com SELECT, modelos SELECT/INSERT/UPDATE, releitura e cópia
   do nome literal, conforme o motor. Um modelo é acrescentado e selecionado
   no console sem executar nem substituir seu texto não salvo; Ctrl+Z desfaz
@@ -914,6 +914,16 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   ODBC oferece a leitura fornecida pelo driver, sem modelos de escrita.
   Sem conexões, “Criar conexão…” e Alt+Insert (com foco no Banco) abrem o
   mesmo menu de motores. Os ícones usam a cor de cada motor nos dois docks.
+- **Desconectar uma conexão.** No menu da conexão, escolha Desconectar.
+  A linha mostra “desconectando…” enquanto os trabalhos em andamento
+  terminam; novos pedidos desse banco não iniciam durante o encerramento. Uma prévia
+  PostgreSQL sem decisão é desfeita. Uma escrita ou COMMIT já aceitos podem
+  concluir. Depois aparece “desconectado” e o catálogo é retirado da árvore.
+  O perfil, os dados e o texto não salvo do console são preservados; outros
+  bancos continuam disponíveis. Pedidos pendentes do console desse destino
+  são descartados, sem executar depois do encerramento. F5, Ler a estrutura ou uma nova consulta
+  reconectam pelo fluxo habitual. ODBC exige novamente o gesto de carregar
+  o driver. Fechar a janela acoplada pelo × só oculta a janela.
 - **A árvore acompanha mudanças de estrutura.** Depois de criar, alterar
   ou remover objetos pelo console, a IDE relê o catálogo da conexão
   correspondente. No MongoDB, escritas também atualizam coleções e campos

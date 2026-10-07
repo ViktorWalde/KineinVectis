@@ -170,6 +170,13 @@ void CoreClient::dataSourcePreviewDecide(const QVariantMap& operation)
                 QJsonObject::fromVariantMap(operation));
 }
 
+void CoreClient::dataSourceDisconnect(const QString& name, const QVariantMap& context)
+{
+    QJsonObject params{{QStringLiteral("name"), name}};
+    appendOperationContext(params, context);
+    sendRequest(QStringLiteral("datasource.disconnect"), params);
+}
+
 void CoreClient::dataSourceImpact(const QString& name, const QString& password, const QString& sql,
                                   const QVariantMap& context)
 {
@@ -247,6 +254,10 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
         return true;
     }
     if (method == QStringLiteral("datasource.preview.decide")) {
+        return true;
+    }
+    if (method == QStringLiteral("datasource.disconnect")) {
+        emit dataSourceDisconnectAccepted(result.toVariantMap());
         return true;
     }
     if (method == QStringLiteral("datasource.test") ||

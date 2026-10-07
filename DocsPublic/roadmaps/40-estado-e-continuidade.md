@@ -3,7 +3,7 @@
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
 >
-> **O estado, em 2026-10-06 (leia isto; o resto do cabeçalho é histórico):**
+> **O estado, em 2026-10-07 (leia isto; o resto do cabeçalho é histórico):**
 >
 > O desenvolvimento voltou à `main` em `/home/hugh/KineinVectis`, por pedido
 > do autor em 2026-10-06. Os sete commits até `b31aa89` foram incorporados
@@ -19,17 +19,23 @@
 > `0.162.0` (§7.229), incluindo lote parcialmente aplicado e atualização
 > da árvore sem F5 na IDE real. Novo banco no menu também está concluído
 > (§7.230), sem alterar o protocolo: abertura/cancelamento sem escrita,
-> criação SQLite e rascunho preservado provados na IDE real. 130 harnesses
-> por Qt 6.10/6.4 e sete CTest aprovados; gates completos/estritos com os
-> 1007 testes Rust/Clippy e lint C++ anteriores reutilizados por hashes
-> idênticos. Banco permanece no passo 7; pente fino ainda pendente.
+> criação SQLite e rascunho preservado provados na IDE real. Desconexão
+> concluída e validada em `0.163.0` (§7.231): trabalhos/drivers aguardados,
+> prévia indecisa e consentimento ODBC revogados, perfil/rascunho preservados;
+> resposta antiga do console não reconecta. PostgreSQL/MongoDB reais e
+> gestos SQLite na IDE provados. 1012 testes Rust, Clippy e análise C++
+> atuais; 131 harnesses por Qt 6.10/6.4 e sete CTest nos três builds.
+> Gates completos/estritos em continuação com hashes idênticos, sem editar
+> o gate. Debug/release reconstruídos após detectar headers de sistema
+> mais novos; abertura sem avisos e launcher hardened/core release atual
+> conferidos. Banco permanece no passo 7; pente fino ainda pendente.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.162.0` validado,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.163.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.230.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.231.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -105,7 +111,8 @@
 >     rascunho, esvaziar/remover pelo aviso existente. **Releitura após
 >     execução aceita** no §7.229 (`0.162.0`), com erro parcial preservado.
 >     **Novo banco no menu aceito** no §7.230, pelo formulário existente.
->     Próximo no 59 §5.1: desconectar e localizar objeto.
+>     **Desconexão aceita** no §7.231 (`0.163.0`), aguardando drivers e
+>     conservando rascunho. Próximo no 59 §5.1: localizar objeto do console.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >
@@ -444,11 +451,11 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 
 ## 4. O que está aberto
 
-**Fila atual da 0.3.9 (2026-10-06):** passo 7 do
-[59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.230 concluídas,
+**Fila atual da 0.3.9 (2026-10-07):** passo 7 do
+[59](59-fechamento-da-0.3.9.md). Fatias 40.7 §7.220–§7.231 concluídas,
 com desenvolvimento reunido na main (§7.227). Relevo do editor, modelos/ações
-e releitura após execução já estão aceitos, assim como Novo banco no menu.
-Próxima: desenhar desconectar com descarte real da sessão e localizar objeto (§5.1);
+e releitura após execução já estão aceitos, assim como Novo banco no menu
+e desconexão com encerramento dos drivers. Próxima: localizar objeto do console (§5.1);
 depois console/grade e motores restantes. O roteiro está no 59 §5.8.
 O pente fino é o passo 8 e ainda não começou.
 A lista datada abaixo preserva o histórico das dívidas anteriores.

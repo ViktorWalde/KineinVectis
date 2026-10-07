@@ -29,6 +29,7 @@ QtObject {
     }
     property var structures: DataSourceMap.copy()
     property var readingNames: DataSourceMap.copy()
+    property var sessionStates: DataSourceMap.copy()
     property var expanded: DataSourceMap.copy()
 
     readonly property var rows: root.buildRows()
@@ -184,7 +185,8 @@ QtObject {
         for (const profile of root.profiles) {
             const key = root.key(["c", profile.name]);
             const policy = DataSourceKinds.policyLabel(profile);
-            out.push(root.row(key, 0, "connection", profile.name, DataSourceKinds.engineName(profile.engine) + (policy ? " · " + policy : ""), true,
+            const session = DataSourceMap.get(root.sessionStates, profile.name);
+            out.push(root.row(key, 0, "connection", profile.name, DataSourceKinds.engineName(profile.engine) + (policy ? " · " + policy : "") + (session ? " · " + session.text : ""), true,
                               { connection: profile.name, engine: profile.engine, production: profile.production === true }));
             if (root.isExpanded(key)) root.structureRows(out, profile);
         }

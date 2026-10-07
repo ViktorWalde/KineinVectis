@@ -36,6 +36,9 @@ impl Core {
             "datasource.remove" => Some(self.datasource_remove_response(request_id, params)),
             "datasource.test" => Some(self.datasource_test_response(request_id, params)),
             "datasource.query" => Some(self.datasource_query_response(request_id, params)),
+            "datasource.disconnect" => {
+                Some(self.datasource_disconnect_response(request_id, params))
+            }
             "datasource.preview.decide" => {
                 Some(self.datasource_preview_decide_response(request_id, params))
             }
@@ -208,7 +211,17 @@ impl Core {
             return jobs_unavailable_response(request_id, "datasource.test");
         };
         let titulo = format!("Testar {}", profile.name);
+        let activity = match self.begin_datasource_operation(
+            &root,
+            &profile.name,
+            request.client_context.as_deref(),
+            request_id.clone(),
+        ) {
+            Ok(activity) => activity,
+            Err(response) => return *response,
+        };
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
+            let _activity = activity;
             // O MOTOR decide quem responde. Um so' `datasource.test` para os
             // dois: a UI nao precisa saber com qual banco esta falando para
             // pedir um teste.
@@ -365,7 +378,17 @@ impl Core {
             return jobs_unavailable_response(request_id, "datasource.introspect");
         };
         let titulo = format!("Ler {}", profile.name);
+        let activity = match self.begin_datasource_operation(
+            &root,
+            &profile.name,
+            request.client_context.as_deref(),
+            request_id.clone(),
+        ) {
+            Ok(activity) => activity,
+            Err(response) => return *response,
+        };
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
+            let _activity = activity;
             // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. `schemas` e' a
             // arvore `esquema -> tabela -> coluna` dos motores relacionais;
             // `collections` e' a do `MongoDB`, onde campo nao e' coluna. A UI
