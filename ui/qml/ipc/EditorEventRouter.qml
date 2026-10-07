@@ -5,6 +5,7 @@ Item {
 
     property var coreClient: null
     property var editorController: null
+    property var editorAppendController: null
     property var lspStatusController: null
 
     visible: false
@@ -14,6 +15,7 @@ Item {
 
         function onFileLoaded(path, content) {
             root.editorController.handleFileLoaded(path, content);
+            if (root.editorAppendController !== null) root.editorAppendController.loaded(path);
         }
 
         function onExternalFileLoaded(path, content) {
@@ -144,6 +146,7 @@ Item {
         }
 
         function onRequestFailed(method, message) {
+            if (method === "fs.read" && root.editorAppendController !== null) root.editorAppendController.cancel();
             if (method === "lsp.semanticTokens") {
                 root.editorController.highlight.handleSemanticTokensFailed(message);
                 return;

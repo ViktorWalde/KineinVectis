@@ -69,7 +69,6 @@ ListView {
 
     Keys.onPressed: event => root.handleKey(event)
 
-    signal consoleRequested(string name)
     signal editRequested(string name)
     signal tableDataRequested(string connection, string engine, string schema, string table, string readSql)
 
@@ -236,7 +235,7 @@ ListView {
                 iconName: "terminal"
                 iconSize: 14
                 tooltip: qsTr("Abrir o console SQL no editor")
-                onClicked: { root.selectRow(treeRow.modelData); root.consoleRequested(treeRow.modelData.connection); }
+                onClicked: { root.selectRow(treeRow.modelData); root.actions.dispatch("database.console", treeRow.modelData); }
             }
 
             KvIconButton {

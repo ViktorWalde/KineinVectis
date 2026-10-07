@@ -402,6 +402,7 @@ O editor nao conhece servidor de linguagem: pede ao core, que sobe um servidor p
 ```mermaid
 flowchart LR
   subgraph QML["ui/qml"]
+    n_ui_qml_editor_EditorAppendController_qml["EditorAppendController"]
     n_ui_qml_editor_EditorController_qml["EditorController"]
     n_ui_qml_workspace_LspStatusController_qml["LspStatusController"]
     n_ui_qml_ipc_EditorRequestRouter_qml["ipc/EditorRequestRouter"]
@@ -436,6 +437,7 @@ flowchart LR
   end
   n_tools_editor[/"clangd · rust-analyzer · pyright/basedpyright"/]
   n_ui_qml_editor_EditorController_qml --> n_ui_qml_ipc_EditorRequestRouter_qml
+  n_ui_qml_ipc_EditorEventRouter_qml -.-> n_ui_qml_editor_EditorAppendController_qml
   n_ui_qml_ipc_EditorEventRouter_qml -.-> n_ui_qml_editor_EditorController_qml
   n_ui_qml_ipc_EditorEventRouter_qml -.-> n_ui_qml_workspace_LspStatusController_qml
   n_ui_qml_ipc_EditorRequestRouter_qml --> n_ui_src_core_client_requests_cpp
@@ -466,6 +468,7 @@ flowchart LR
 
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
+| controller | `ui/qml/editor/EditorAppendController.qml` | Append a prepared instruction using native editing, after opening its file. |
 | controller | `ui/qml/editor/EditorController.qml` |  |
 | controller | `ui/qml/workspace/LspStatusController.qml` | O ESTADO DOS SERVIDORES DE LINGUAGEM para a barra de status (Etapa 2, F2). |
 | roteador | `ui/qml/ipc/EditorRequestRouter.qml` | Espelho do EditorEventRouter. |
@@ -1110,6 +1113,7 @@ Credenciais atravessam o roteador uma vez e nao ficam: a senha vai no `datasourc
 flowchart LR
   subgraph QML["ui/qml"]
     n_ui_qml_datasource_DataSourceController_qml["DataSourceController"]
+    n_ui_qml_editor_EditorAppendController_qml["EditorAppendController"]
     n_ui_qml_grafana_GrafanaController_qml["GrafanaController"]
     n_ui_qml_ipc_DataSourceRequestRouter_qml["ipc/DataSourceRequestRouter"]
     n_ui_qml_ipc_DataSourceEventRouter_qml["ipc/DataSourceEventRouter"]
@@ -1125,13 +1129,11 @@ flowchart LR
   end
   subgraph IPC["JSON-RPC"]
     n_ipc_datasource(["datasource.* · 15"])
-    n_ipc_fs(["fs.* · 1"])
     n_ipc_grafana(["grafana.* · 4"])
     n_ipc_job(["job.* · 1"])
   end
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_datasource_rs["handlers/datasource.rs"]
-    n_crates_kinein_core_src_handlers_fs_rs["handlers/fs.rs"]
     n_crates_kinein_core_src_handlers_grafana_rs["handlers/grafana.rs"]
     n_crates_kinein_core_src_handlers_jobs_rs["handlers/jobs.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
@@ -1143,6 +1145,7 @@ flowchart LR
   end
   n_tools_data[/"PostgreSQL/SQLite/... · Grafana"/]
   n_ui_qml_datasource_DataSourceController_qml --> n_ui_qml_ipc_DataSourceRequestRouter_qml
+  n_ui_qml_editor_EditorAppendController_qml --> n_ui_qml_ipc_DataSourceRequestRouter_qml
   n_ui_qml_grafana_GrafanaController_qml --> n_ui_qml_ipc_GrafanaRequestRouter_qml
   n_ui_qml_ipc_DataSourceEventRouter_qml -.-> n_ui_qml_datasource_DataSourceController_qml
   n_ui_qml_ipc_DataSourceRequestRouter_qml --> n_ui_src_core_client_datasource_cpp
@@ -1157,15 +1160,11 @@ flowchart LR
   n_ui_src_core_client_grafana_cpp -.-> n_ui_qml_ipc_GrafanaEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_DataSourceEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_GrafanaEventRouter_qml
-  n_ui_src_core_client_requests_cpp --> n_ipc_fs
   n_ui_src_core_client_requests_cpp --> n_ipc_job
   n_ipc_datasource --> n_crates_kinein_core_src_handlers_datasource_rs
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_datasource
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_jobs
   n_crates_kinein_core_src_handlers_datasource_rs --> n_core_rpc
-  n_ipc_fs --> n_crates_kinein_core_src_handlers_fs_rs
-  n_crates_kinein_core_src_handlers_fs_rs --> n_core_jobs
-  n_crates_kinein_core_src_handlers_fs_rs --> n_core_rpc
   n_ipc_grafana --> n_crates_kinein_core_src_handlers_grafana_rs
   n_crates_kinein_core_src_handlers_grafana_rs --> n_core_datasource
   n_crates_kinein_core_src_handlers_grafana_rs --> n_core_grafana
@@ -1182,6 +1181,7 @@ flowchart LR
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
 | controller | `ui/qml/datasource/DataSourceController.qml` | Estado de fontes de dados; regras/validacao sao do core. |
+| controller | `ui/qml/editor/EditorAppendController.qml` | Append a prepared instruction using native editing, after opening its file. |
 | controller | `ui/qml/grafana/GrafanaController.qml` | Estado da OBSERVABILIDADE (etapa 27 do roadmaps/35). |
 | roteador | `ui/qml/ipc/DataSourceRequestRouter.qml` | Espelho do DataSourceEventRouter: |
 | roteador | `ui/qml/ipc/DataSourceEventRouter.qml` | Roteia as respostas de datasource.* do CoreClient para o controller. |
@@ -1193,12 +1193,11 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | handler Rust | `crates/kinein-core/src/handlers/datasource.rs` | Handler dos pedidos datasource.* (impl Core). |
-| handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
 | handler Rust | `crates/kinein-core/src/handlers/grafana.rs` | Handler dos pedidos grafana.* (impl Core). |
 | handler Rust | `crates/kinein-core/src/handlers/jobs.rs` | Handlers for job.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (21): `datasource.console`, `datasource.console.statement`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.preview.decide`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.read`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`, `job.cancel`.
+Métodos IPC (20): `datasource.console`, `datasource.console.statement`, `datasource.create`, `datasource.destroy`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.preview.decide`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`, `job.cancel`.
 
 ### Containers
 

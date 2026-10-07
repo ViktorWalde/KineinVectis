@@ -58,7 +58,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra um Grafana 11.2.0 real, com a aba Web endurecida. O AppImage com o QtWebEngine foi testado (121 MB) e **só volta depois do pente fino** (decisão do autor) |
-| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); menus, console, grade e motores restantes a fazer |
+| 7 | **Banco completo** (§5.1–§5.7), com o MongoDB lendo e escrevendo | escrita MongoDB, confirmação seletiva e formulário concluídos (40.7 §7.220, 2026-10-05); ODBC concluído e validado (§5.9; 40.7 §7.221); produção/somente leitura e contexto validados (§5.10; 40.7 §7.222); prévia PostgreSQL validada (§5.11; 40.7 §7.223); base segura dos consoles/árvore aceita (§5.12; 40.7 §7.225); ações da árvore aceitas (§7.226) e modelos/ações com impacto aceitos (§7.228); demais ações, console, grade e motores restantes a fazer |
 | 8 | **Pente fino e fechamento** (§7) | a fazer |
 
 ## 3. Containers acoplados
@@ -225,13 +225,16 @@ descoberta local; estado vazio clicável/Alt+Insert; cores por motor e menu
 fora do recorte nos dois docks. Console/edição/consulta usam os donos atuais.
 Protocolo permanece `0.160.0`. Aceite dos gates registrado no diário.
 
+**Modelos e ações com impacto concluídos e validados em 2026-10-06**
+(40.7 §7.228, protocolo `0.161.0`; desenho no §5.1.2). Abrir console com
+leitura/modelos preserva rascunho e permite desfazer. Esvaziar/remover usam
+o aviso existente. ODBC conserva a leitura do driver; Mongo usa sua gramática.
+
 **Ainda pendentes desta seção:** “Novo banco…” no submenu, localizar o
-objeto do console, abrir console com SELECT/modelos SELECT/INSERT/UPDATE,
-esvaziar/remover objetos com aviso de impacto, desconectar com descarte
-real da sessão e atualizar o catálogo após DDL. SQL/modelos e detecção de
-mudança estrutural precisam de contrato no core; não duplicar o gerador
-existente de leitura da tabela no QML. A lista abaixo conserva o escopo
-completo da seção, incluindo o que já foi feito.
+objeto do console, desconectar com descarte real da sessão e atualizar o
+catálogo após DDL. Detecção de mudança estrutural precisa de contrato no
+core; não duplicar geração/interpretação de instruções no QML. A lista
+abaixo conserva o escopo completo, incluindo o que já foi feito.
 
 - **Barra da janela**, como na referência JetBrains:
   - **+** com submenu de motores, cada um com ícone colorido, e "Desta
@@ -275,6 +278,34 @@ nomes, invalidação de perfil/workspace, releitura ocupada e ações por tipo;
 GUI real com clique direito, teclado, releitura de uma tabela criada fora da
 IDE, dois bancos homônimos e dock estreito. Lint, fiação, arquitetura,
 harnesses nos Qt 6.10/6.4, build e abertura sem diagnósticos obrigatórios.
+
+#### 5.1.2 Desenho dos modelos e ações com impacto (2026-10-06)
+
+**Desenho anterior ao código, implementado e aceito no 40.7 §7.228.**
+O texto abaixo conserva o contrato planejado.
+
+Base: main reunida em 39e6e71, protocolo 0.160.0. O contrato será aditivo
+no 0.161.0: tabelas/coleções do catálogo recebem `statements` produzidas
+por um dono puro no core. SELECT, INSERT, UPDATE, esvaziar e remover usam
+nomes reais delimitados; valores/filtro dos modelos são espaços a preencher
+e não executam enquanto incompletos. Visões só oferecem leitura e remoção.
+Mongo usa a gramática existente; ODBC só oferece a leitura já produzida
+pelo driver, sem inventar um dialeto de escrita.
+
+A árvore transporta os textos; QML não compõe SQL. Ver dados reutiliza a
+leitura do catálogo. Abrir console em tabela/modelo acrescenta a instrução
+ao buffer, preservando o texto não salvo e permitindo desfazer; não executa.
+Um dono pequeno no editor espera a carga apenas quando a aba não existe e
+descarta pedidos na troca de workspace. O vínculo/contexto de abertura
+continua pertencendo ao core e ao controller dos consoles.
+
+Esvaziar/remover encaminham o texto ao aviso de impacto já existente;
+cancelar não escreve e confirmar passa pela política/contexto do core.
+Somente leitura desabilita essas ações na apresentação e continua sendo
+recusado no core. As provas cobrem delimitadores, nomes hostis, modelos
+incompletos, visões/Mongo/ODBC, leitura real SQLite, buffer sujo/desfazer,
+respostas antigas e cancelamento/confirmar na tela. Refresh após DDL,
+desconectar e localizar continuam na fatia seguinte.
 
 ### 5.2 Console que ajuda
 
@@ -387,10 +418,12 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** primeira fatia de ações da árvore (§5.1.1),
-mantendo protocolo 0.160.0. Barra, menu por objeto/motor, seleção, atalhos
-locais e releitura foram validados nos Qt 6.10/6.4 e na IDE real, nos dois
-docks. Aceite, achados e limites no 40.7 §7.226; confira git log. Consoles
+**Última fatia concluída:** modelos do catálogo e ações com impacto
+(§5.1.2, protocolo `0.161.0`, 40.7 §7.228). Instruções são geradas no core;
+modelos preservam o buffer sujo e desfazer. Esvaziar/remover usam o aviso
+existente, com cancelamento/confirmar provados na IDE real. Gates completos
+e estritos, 128 harnesses por Qt 6.10/6.4. A primeira fatia da árvore, barra,
+seleção e menus permanece aceita no §7.226; integração na main no §7.227. Consoles
 seguros e reutilização das abas continuam aceitos no §7.225 (d116b43).
 Prévia PostgreSQL permanece aceita no §7.223 (fbf3294). Produção/somente leitura
 permanecem aceitas no §7.222 (c4d8779), e ODBC no §7.221 (fa32f51).
@@ -402,10 +435,10 @@ KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
 de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
 completos e estritos verdes. Confira git log para o commit local.
 
-**Fatia atual:** restante de ações/árvore viva (§5.1): geração de instruções
-no core e ações com impacto, depois desconectar/localizar objeto e refresh
-após DDL. Vínculo console/conexão, identidades, seleção, menus e releitura
-já estão validados (§5.12/§5.1.1); continuar sobre essa base.
+**Fatia atual:** restante de ações/árvore viva (§5.1): refresh após DDL,
+desconectar/localizar objeto e “Novo banco…” no submenu. Vínculo
+console/conexão, identidades, seleção, menus, modelos e ações com impacto
+já estão validados (§5.12/§5.1.1–§5.1.2); continuar sobre essa base.
 O desenho e o contrato antecedem o código. Depois console (§5.2) e grade
 (§5.4), com prova real conforme §5.6.
 MySQL/MariaDB é alvo do §5.7; não está no enum de motores atual. O passo 8
@@ -437,8 +470,10 @@ qualquer trabalho posterior. O relevo do editor está validado (§7.224),
 com prova visual, gates completos e estritos e commit próprio. Consoles
 seguros e abas de execução estão aceitos no §7.225, protocolo 0.160.0.
 Barra, menus, seleção/atalhos locais e releitura estão aceitos no §7.226.
-Atual: geração de instruções no core e ações com impacto, depois desconectar,
-localizar objeto e refresh após DDL (§5.1). Não refaça os menus/seleção.
+Modelos do catálogo e ações com impacto estão aceitos no §7.228, protocolo
+0.161.0. Não refaça geração, confirmação nem inserção no buffer.
+Atual: refresh após DDL, desconectar, localizar objeto e Novo banco no
+submenu (§5.1). Não refaça os menus/seleção.
 Leia os donos, limites e o desenho antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro

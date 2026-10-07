@@ -902,13 +902,18 @@ Só existe com um projeto aberto, porque o perfil mora no projeto
   de abrir o formulário; “Desta máquina…” relê a descoberta local. Console,
   dados e recolher tudo usam a seleção da árvore. O menu da conexão oferece
   console, releitura, edição e cópia do nome; o de uma tabela/coleção oferece
-  dados, console da conexão, releitura e cópia do nome literal. Abrir console
-  conserva o arquivo existente; ainda não insere um SELECT do objeto.
+  dados, console com SELECT, modelos SELECT/INSERT/UPDATE, releitura e cópia
+  do nome literal, conforme o motor. Um modelo é acrescentado e selecionado
+  no console sem executar nem substituir seu texto não salvo; Ctrl+Z desfaz
+  a inserção. Preencha valores e filtro antes de executar INSERT/UPDATE.
+  Esvaziar/remover abrem o aviso de impacto; cancelar não escreve. Somente
+  leitura desabilita essas ações. Visões não oferecem modelos de alteração;
+  ODBC oferece a leitura fornecida pelo driver, sem modelos de escrita.
   Sem conexões, “Criar conexão…” e Alt+Insert (com foco no Banco) abrem o
   mesmo menu de motores. Os ícones usam a cor de cada motor nos dois docks.
 - **Ver os dados de uma tabela:** **clique duplo** nela, ou o ícone ▦ que
   aparece com o mouse em cima da linha. As primeiras **200 linhas**
-  (`SELECT * FROM … LIMIT 200`; no MongoDB, `coleção {}`) aparecem na **seção
+  (`SELECT * FROM … LIMIT 200`; no MongoDB, `coleção.find({})`) aparecem na **seção
   de dados, embaixo da árvore, na mesma janela** — o contexto não se espalha
   por outros painéis. A divisória entre árvore e dados arrasta; o × da seção a
   fecha e devolve o espaço à árvore e à lista "Nesta máquina".

@@ -106,7 +106,8 @@ QtObject {
         for (const table of tables) {
             const parts = prefix.concat([table.name]);
             const key = root.key(parts);
-            const extra = Object.assign({ table: table.name, readSql: table.readSql || "" }, context);
+            const extra = Object.assign({ table: table.name, statements: table.statements || ({}),
+                readSql: table.statements ? table.statements.select : table.readSql || "" }, context);
             out.push(root.row(key, depth, DataSourceKinds.tableKind(table.kind), table.name,
                               root.plural(table.columns.length, qsTr("1 coluna"), qsTr("%1 colunas")), true, extra));
             if (root.isExpanded(key)) root.columnRows(out, parts, depth + 1, table, extra);
@@ -129,7 +130,8 @@ QtObject {
         for (const collection of collections) {
             const parts = prefix.concat([collection.name]);
             const key = root.key(parts);
-            const extra = Object.assign({ table: collection.name }, context);
+            const extra = Object.assign({ table: collection.name, statements: collection.statements || ({}),
+                readSql: collection.statements ? collection.statements.select : "" }, context);
             out.push(root.row(key, 1, DataSourceKinds.collectionKind(collection.kind), collection.name, root.collectionDetail(collection), true, extra));
             if (!root.isExpanded(key) || collection.fields === undefined) continue;
             for (const field of collection.fields) {

@@ -90,6 +90,7 @@ pub fn read_structure(
                 kind: if tipo == "VIEW" { "view" } else { "table" }.to_owned(),
                 columns: Vec::new(),
                 read_sql: None,
+                statements: None,
             });
         }
     }
@@ -114,6 +115,7 @@ pub fn read_structure(
         }
     }
 
+    super::object_statements::populate(kinein_protocol::DataSourceEngine::Postgres, &mut schemas);
     Ok(schemas)
 }
 

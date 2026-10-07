@@ -25,6 +25,7 @@ Item {
         controller: bankController
         treeModel: tree
         onConsoleRequested: name => root.requests.push(["console", name])
+        onConsoleStatementRequested: (name, text) => root.requests.push(["console", name, text])
         onEditRequested: name => root.requests.push(["edit", name])
         onTableDataRequested: (connection, engine, schema, table, readSql) => root.requests.push(["data", connection, engine, schema, table, readSql])
         onNewRequested: engine => root.requests.push(["new", engine])
@@ -71,7 +72,7 @@ Item {
         treeActions.showRow(first.key);
         tree.select(other.key);
         treeActions.activateMenu("database.console");
-        root.check(JSON.stringify(root.requests.pop()) === JSON.stringify(["console", "a|b"]), "menu preso à chave, não à seleção seguinte");
+        root.check(JSON.stringify(root.requests.pop()) === JSON.stringify(["console", "a|b", "SELECT driver"]), "console usa leitura da chave do menu, não da seleção seguinte");
 
         tree.select(first.key);
         treeActions.dispatch("database.refresh", tree.selectedRow);

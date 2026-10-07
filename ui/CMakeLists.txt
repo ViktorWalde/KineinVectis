@@ -402,6 +402,7 @@ set_source_files_properties(qml/editor/EditorController.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/editor/EditorSurfaceBridge.qml PROPERTIES QT_RESOURCE_ALIAS EditorSurfaceBridge.qml)
 set_source_files_properties(qml/editor/EditorDocumentController.qml PROPERTIES QT_RESOURCE_ALIAS EditorDocumentController.qml)
 set_source_files_properties(qml/editor/EditorExternalPreviewController.qml PROPERTIES QT_RESOURCE_ALIAS EditorExternalPreviewController.qml)
+set_source_files_properties(qml/editor/EditorAppendController.qml PROPERTIES QT_RESOURCE_ALIAS EditorAppendController.qml)
 set_source_files_properties(qml/editor/EditorOpenDocuments.qml PROPERTIES QT_RESOURCE_ALIAS EditorOpenDocuments.qml)
 set_source_files_properties(qml/editor/MarkdownPreviewPane.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownPreviewPane.qml)
 set_source_files_properties(qml/editor/MarkdownModeBar.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownModeBar.qml)
@@ -819,6 +820,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorSurfaceBridge.qml
         qml/editor/EditorDocumentController.qml
         qml/editor/EditorExternalPreviewController.qml
+        qml/editor/EditorAppendController.qml
         qml/editor/EditorOpenDocuments.qml
         qml/editor/MarkdownPreviewPane.qml
         qml/editor/MarkdownModeBar.qml

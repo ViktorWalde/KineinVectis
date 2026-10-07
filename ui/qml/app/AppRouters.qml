@@ -37,6 +37,7 @@ Item {
     EditorEventRouter {
         coreClient: root.domains.coreClient
         editorController: root.domains.editorController
+        editorAppendController: insertions
         lspStatusController: root.domains.lspStatusController
     }
 
@@ -146,6 +147,15 @@ Item {
     DataSourceRequestRouter {
         coreClient: root.domains.coreClient
         dataSourceController: root.domains.dataSourceController
+        editorAppendController: insertions
+    }
+
+    EditorAppendController {
+        id: insertions
+        documentController: root.domains.editorController.documentController
+        surfaceBridge: root.domains.editorController.documentController.surfaceBridge
+        function contextIsCurrent(operation) { return root.domains.dataSourceController.consoles.current(operation); }
+        onReadFileRequested: path => root.domains.coreClient.readFile(path)
     }
 
     GrafanaEventRouter {

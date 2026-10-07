@@ -39,6 +39,11 @@ QtObject {
         return isOdbc(engine) ? "ODBC" : (isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "Mongo" : "PG"));
     }
 
+    function statementName(engine, operation) {
+        if (isMongo(engine)) return operation === "select" ? "find" : (operation === "insert" ? "insertOne" : "updateMany");
+        return operation.toUpperCase();
+    }
+
     function policyLabel(profile) {
         if (!profile) return "";
         const labels = [];

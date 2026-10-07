@@ -385,7 +385,7 @@ crates/kinein-core/src/datasource/mongo.rs	resposta	2
 crates/kinein-core/src/datasource/mongo.rs	saida	3
 crates/kinein-core/src/datasource/mongo.rs	senha	1
 crates/kinein-core/src/datasource/mongo.rs	temporais	1
-crates/kinein-core/src/datasource/mongo.rs	tipo	5
+crates/kinein-core/src/datasource/mongo.rs	tipo	2
 crates/kinein-core/src/datasource/mongo.rs	tudo	7
 crates/kinein-core/src/datasource/mongo.rs	usuario	4
 crates/kinein-core/src/datasource/mongo.rs	validador	2

@@ -8,6 +8,7 @@ Item {
 
     property var coreClient: null
     property var dataSourceController: null
+    property var editorAppendController: null
 
     visible: false
 
@@ -66,8 +67,9 @@ Item {
         function onStatementRequested(operation) { root.coreClient.dataSourceConsoleStatement(operation); }
 
         function onOpenFileRequested(path) {
-            root.coreClient.readFile(path);
+            root.editorAppendController.request(path, "");
         }
+        function onAppendRequested(path, text, operation) { root.editorAppendController.request(path, text, operation); }
     }
 
     // O impacto de uma escrita (0.150.0) e' do filho `impact`: medir antes de

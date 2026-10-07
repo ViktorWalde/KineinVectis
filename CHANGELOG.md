@@ -11,6 +11,13 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- Protocolo `0.161.0` — **Modelos do catálogo e ações com impacto**
+  (validados no checkout; 40.7 §7.228): SELECT e modelos INSERT/UPDATE gerados
+  pelo core chegam ao console como inserções que podem ser desfeitas,
+  conservando alterações não salvas. Esvaziar/remover reutilizam a
+  confirmação existente. ODBC conserva o SELECT do driver; QML deixa de
+  montar consultas de leitura. Desenvolvimento reunido na main (§7.227).
+
 - **Ações da árvore do Banco** (40.7 §7.226, protocolo mantido em
   `0.160.0`): barra de releitura/console/dados/recolher, menu de motores,
   menu de contexto e seleção por teclado que sobrevive à releitura.

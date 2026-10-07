@@ -1,5 +1,4 @@
 import QtQuick
-import KineinVectis
 
 // O CONSOLE SQL NO EDITOR (2026-10-03, decisao do autor: "editar/criar
 // comandos SQL no proprio campo que ja' e' usado para desenvolver codigo").
@@ -18,6 +17,7 @@ QtObject {
 
     signal consoleRequested(string name, var context)
     signal openFileRequested(string path)
+    signal appendRequested(string path, string text, var operation)
     signal resultsRequested()
 
     property var bindings: []
@@ -97,15 +97,19 @@ QtObject {
                 === root.dataSourceController.queries.profileKey(pending.expectedContext.profile);
     }
 
-    function open(name) {
+    function open(name, text) {
         root.pendingOpen = root.operation(name);
+        if (root.pendingOpen !== null && text) root.pendingOpen.text = text;
         if (root.pendingOpen !== null) root.consoleRequested(name, root.pendingOpen);
     }
 
     function handleResolved(response) {
         if (!root.matches(root.pendingOpen, response) || root.connectionFor(response.path) !== response.name) return;
+        const operation = root.pendingOpen;
+        const text = operation.text || "";
         root.pendingOpen = null;
-        root.openFileRequested(response.path);
+        if (text !== "") root.appendRequested(response.path, text, operation);
+        else root.openFileRequested(response.path);
     }
 
     // O core escolhe a instrução. Nenhuma regex da UI interpreta SQL.
@@ -150,18 +154,8 @@ QtObject {
 
     // Clique duplo numa tabela da arvore: as primeiras linhas dela.
     function tableData(connection, engine, schema, table, readSql) {
-        if (DataSourceKinds.isOdbc(engine)) {
-            if (!readSql) {
-                root.dataSourceController.queryStatus = qsTr("O driver não forneceu uma leitura para esta tabela. Use o console.");
-            } else root.dataSourceController.runOn(connection, readSql, false, 200);
-            root.resultsRequested();
-            return;
-        }
-        const quote = name => "\"" + name.replace(/"/g, "\"\"") + "\"";
-        const sql = DataSourceKinds.isMongo(engine) ? table + " {}"
-                  : "SELECT * FROM " + (DataSourceKinds.isSqlite(engine) || schema === "" ? "" : quote(schema) + ".")
-                    + quote(table) + " LIMIT 200";
-        root.dataSourceController.runOn(connection, sql, false);
+        if (!readSql) root.dataSourceController.queryStatus = qsTr("Leia a estrutura de novo para obter a instrução deste objeto.");
+        else root.dataSourceController.runOn(connection, readSql, false, 200);
         root.resultsRequested();
     }
 }

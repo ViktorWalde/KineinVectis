@@ -12,13 +12,16 @@
 > da árvore foram validadas no 40.7 §7.225–§7.226. Confira
 > branch, log e alterações locais antes de retomar, para não reimplementar
 > MongoDB, ODBC, proteção de produção ou prévia PostgreSQL.
+> A integração está registrada no §7.227. Modelos do catálogo e ações com
+> impacto estão concluídos e validados no protocolo `0.161.0` (§7.228),
+> com prova de buffer/desfazer, cancelamento e confirmação na IDE real.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.160.0` validado,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.161.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
->   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.226.
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.228.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -89,8 +92,10 @@
 >     a cada tentativa. A retomada conferiu e completou o trabalho local,
 >     sem duplicar os motores existentes. **Primeira fatia de ações**
 >     aceita no §7.226: barra, seleção por teclado, menu de contexto,
->     releitura e motores. Próximo no 59 §5.1: geração no core, ações com
->     impacto, desconectar e atualização automática após DDL.
+>     releitura e motores. **Modelos e ações com impacto aceitos** no
+>     §7.228 (`0.161.0`): instruções geradas no core, inserção sem perder
+>     rascunho, esvaziar/remover pelo aviso existente. Próximo no 59 §5.1:
+>     atualização automática após DDL, desconectar e localizar objeto.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >

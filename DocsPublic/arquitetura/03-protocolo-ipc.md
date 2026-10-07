@@ -1,5 +1,12 @@
 # 03 — Protocolo IPC
 
+> **0.161.0 (2026-10-06, validado no checkout; 40.7 §7.228).**
+> Catálogo: `DataSourceTable.statements?` e `MongoCollection.statements?`
+> levam `{ select, insert?, update?, clear?, remove? }`, gerados no core.
+> Preparar um texto não o executa. INSERT/UPDATE têm espaços a preencher;
+> ODBC só leva a leitura do driver. Campos ausentes conservam a decodificação
+> do catálogo anterior. Nenhum método/evento novo; desenho no 59 §5.1.2.
+
 > **0.160.0 (2026-10-06, validado no checkout; 40.7 §7.225).**
 > Console: identidades fornecidas pelo core, criação sem symlinks/substituição
 > e extração de instrução com offsets UTF-16 no core. Contrato ao final deste
@@ -4715,8 +4722,10 @@ convite; o segundo pede outra credencial. Por isso `authRefused` existe desde a
 `0.136.0` — e a UI deriva o que mostra dele, nunca do texto de `message`.
 
 **O Grafana nunca é embutido** — licença AGPL, decisão registrada em
-`../roadmaps/40` §5. A integração é HTTP, o cliente é o `ureq`, e os dashboards
-**abrem no navegador do sistema**. O que justifica o domínio existir é o
+`../roadmaps/40` §5. A integração é HTTP e o cliente é o `ureq`. Desde a `0.154.0`, os dashboards
+**também abrem na aba Web opcional da IDE**, desligada por padrão
+(40.7 §7.218–§7.219). Desligada, a IDE não carrega o motor web; o navegador
+do sistema continua disponível. O que justifica o domínio existir é o
 `GrafanaMatch`: o cruzamento entre o datasource do Grafana e o perfil de banco
 do projeto, que é a pergunta que nenhuma das duas ferramentas responde sozinha.
 
@@ -4743,7 +4752,7 @@ caminho de virar processo órfão.
 
 ## Console e árvore (0.160.0, desenho e aceite em 2026-10-06)
 
-Ainda não aceito. datasource.list/save/remove devolvem também workspace e
+Aceito no 40.7 §7.225. datasource.list/save/remove devolvem também workspace e
 consoleBindings: lista de {name, paths}, calculada pelo core. paths contém o
 console novo e, quando sem colisão, o console legado. Não há leitura de dados
 ou senha nessa derivação. datasource.console aceita clientContext e
@@ -4757,4 +4766,4 @@ de qualquer conexão/job; detalhes de falha contêm só nome/token públicos.
 A UI conserva preview no pedido local, valida token/contexto da resposta e
 passa statement para datasource.query existente. Não se adiciona autorização
 de escrita nem se persiste o texto nesta chamada. Limite: 1 MiB de texto.
-Desenho e provas requeridas no roadmap 59 §5.12.
+Desenho no roadmap 59 §5.12; provas e limites no 40.7 §7.225.

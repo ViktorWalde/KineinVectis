@@ -135,6 +135,7 @@ Item {
         menuLayer: root.menuLayer
         onVisibleChanged: if (visible) root.dataSourceController.refreshCatalog()
         onConsoleRequested: name => root.dataSourceController.consoles.open(name)
+        onConsoleStatementRequested: (name, text) => root.dataSourceController.consoles.open(name, text)
         onTableDataRequested: (connection, engine, schema, table, readSql) =>
             root.dataSourceController.consoles.tableData(connection, engine, schema, table, readSql)
         onEditRequested: name => {

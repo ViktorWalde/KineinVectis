@@ -72,6 +72,8 @@ Os caminhos são relativos à raiz do repositório.
 | Identidade, expansão e seleção da árvore | `ui/qml/datasource/DataSourceTree.qml` |
 | Contexto do menu e despacho das ações existentes | `ui/qml/datasource/DatabaseTreeActions.qml` |
 | Barra, árvore visual e menu na camada da janela | `ui/qml/datasource/DatabaseToolbar.qml`, `ui/qml/datasource/DatabaseTreeView.qml`, `ui/qml/datasource/DatabaseWindow.qml` |
+| Instruções dos objetos do catálogo | `crates/kinein-core/src/datasource/object_statements.rs` |
+| Acrescentar modelos ao buffer sem substituir edições | `ui/qml/editor/EditorAppendController.qml` |
 | Credencial vinculada ao destino e retomada pública | `ui/qml/datasource/DataSourceSecretController.qml` |
 | Consulta e descarte de resposta antiga | `ui/qml/datasource/DataSourceQueryController.qml` |
 | Pedidos de teste e catálogo por destino | `ui/qml/datasource/DataSourceCatalogController.qml` |
@@ -657,6 +659,34 @@ A fila e o prompt de retomada ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
 Prévia PostgreSQL (§9) e profundidade do editor aceitas no 40.7 §7.223/224.
 Base de console/árvore aceita no 40.7 §7.225; primeira fatia de ações no
-§7.226. Seguir geração de instruções no core, ações com impacto, desconectar
-e releitura automática após DDL; depois console, completion e grade no passo 7. O pente fino e o
-AppImage seguem a ordem do 59 §7.
+§7.226. Modelos do catálogo e ações com impacto aceitos no §7.228. Seguir
+releitura automática após DDL, desconectar e localizar o objeto do console;
+depois completion, histórico e grade no passo 7. O pente fino e o AppImage
+seguem a ordem do 59 §7.
+
+### Modelos e ações com impacto (2026-10-06, aceitos no 40.7 §7.228)
+
+No protocolo 0.161.0, tabelas e coleções recebem `statements` do core.
+`object_statements` delimita nomes de esquema/tabela/coluna e produz
+SELECT, modelos incompletos INSERT/UPDATE e esvaziar/remover. SQLite esvazia
+com DELETE; PostgreSQL com TRUNCATE. Visões só recebem leitura/remoção.
+Mongo confere os nomes pela gramática existente e não oferece alteração
+para visões/séries temporais. ODBC conserva a leitura do driver e não
+recebe dialeto de escrita inventado. Valores e filtro dos modelos devem
+ser preenchidos no editor; os placeholders deixam o texto incompleto.
+
+DataSourceTree transporta instruções do catálogo. Ver dados e console usam
+a mesma leitura; o controller não monta mais SELECT em JavaScript.
+DatabaseTreeActions envia modelos ao console e esvaziar/remover à consulta
+normal não confirmada. O core recusa essas escritas antes da execução, e
+o fluxo existente abre/mede/confirma o impacto, com contexto e políticas.
+O menu apenas desabilita escrita em perfis somente leitura; a recusa efetiva
+continua no core.
+
+EditorAppendController vive na composição AppRouters e recebe o documento
+e sua ponte existentes. Abas abertas não são relidas: texto sujo é conservado.
+Uma inserção nativa no fim do buffer seleciona apenas o modelo e permite
+desfazer. Para aba nova, espera a carga, confere novamente o contexto e
+descarta a fila ao trocar de workspace ou falhar a leitura. Não executa
+nem grava diretamente o arquivo. EditorController conserva seus donos e
+tamanho anterior; não absorve esta responsabilidade.

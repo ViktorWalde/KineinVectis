@@ -80,15 +80,18 @@ pub fn read_structure(
             kind: if tipo == "view" { "view" } else { "table" }.to_owned(),
             name: nome,
             read_sql: None,
+            statements: None,
         });
     }
 
     // UM esquema, chamado `main`, que e' como o proprio SQLite chama o banco
     // principal. Inventar outro nome faria a tela mentir sobre o motor.
-    Ok(vec![DataSourceSchema {
+    let mut schemas = vec![DataSourceSchema {
         name: "main".to_owned(),
         tables: tabelas,
-    }])
+    }];
+    super::object_statements::populate(kinein_protocol::DataSourceEngine::Sqlite, &mut schemas);
+    Ok(schemas)
 }
 
 /// Colunas de uma tabela, na ordem em que foram declaradas.

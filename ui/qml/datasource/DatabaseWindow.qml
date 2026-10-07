@@ -37,6 +37,7 @@ Rectangle {
     }
 
     signal consoleRequested(string name)
+    signal consoleStatementRequested(string name, string text)
     signal tableDataRequested(string connection, string engine, string schema, string table, string readSql)
     signal editRequested(string name)
     signal newRequested(string engine)
@@ -80,6 +81,7 @@ Rectangle {
         controller: root.controller
         treeModel: tree
         onConsoleRequested: name => root.consoleRequested(name)
+        onConsoleStatementRequested: (name, text) => root.consoleStatementRequested(name, text)
         onEditRequested: name => root.editRequested(name)
         onTableDataRequested: (connection, engine, schema, table, readSql) =>
             root.tableDataRequested(connection, engine, schema, table, readSql)
@@ -137,7 +139,6 @@ Rectangle {
             menu.menuY = point.y;
             treeActions.showRow(key);
         }
-        onConsoleRequested: name => root.consoleRequested(name)
         onEditRequested: name => root.editRequested(name)
         onTableDataRequested: (connection, engine, schema, table, readSql) =>
             root.tableDataRequested(connection, engine, schema, table, readSql)

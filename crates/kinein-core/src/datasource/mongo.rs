@@ -234,13 +234,14 @@ pub fn read_structure(
 fn read_collection(
     banco: &mongodb::sync::Database,
     nome: &str,
-    tipo: &str,
+    kind: &str,
     opcoes: &Document,
     amostra: u32,
 ) -> MongoCollection {
     let mut colecao = MongoCollection {
         name: nome.to_owned(),
-        kind: tipo.to_owned(),
+        kind: kind.to_owned(),
+        statements: super::object_statements::mongo(nome, kind),
         ..MongoCollection::default()
     };
     ler_temporal(opcoes, &mut colecao);
@@ -257,7 +258,7 @@ fn read_collection(
     // verdade seria executar o pipeline inteiro so' para preencher um numero.
     // Sem a contagem, o `$sample` sobre uma visao e' sempre o caminho caro, e
     // dizer isso e' mais honesto que omitir.
-    let e_visao = tipo == "view";
+    let e_visao = kind == "view";
     if !e_visao {
         colecao.document_count = banco
             .collection::<Document>(nome)

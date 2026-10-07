@@ -46,6 +46,7 @@ pub fn read_structure(
                 kind: kind.to_lowercase(),
                 columns: Vec::new(),
                 read_sql: Some(read_sql),
+                statements: None,
             },
         );
     }
@@ -88,7 +89,9 @@ pub fn read_structure(
             .tables
             .push(table);
     }
-    Ok(schemas.into_values().collect())
+    let mut schemas: Vec<_> = schemas.into_values().collect();
+    super::object_statements::populate(kinein_protocol::DataSourceEngine::Odbc, &mut schemas);
+    Ok(schemas)
 }
 
 fn value(row: &[Option<String>], index: usize) -> String {

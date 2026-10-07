@@ -54,6 +54,7 @@ pub mod mongo;
 pub mod mongo_command;
 pub mod mongo_infer;
 pub mod mongo_write;
+pub mod object_statements;
 pub mod odbc;
 pub mod odbc_catalog;
 pub mod odbc_query;
