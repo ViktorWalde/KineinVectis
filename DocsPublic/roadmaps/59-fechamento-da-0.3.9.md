@@ -612,7 +612,13 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** D1a.1 (40.7 §7.235), mantendo `0.164.0`.
+**Última fatia concluída:** D1a.2 (40.7 §7.236): negociação externa pura,
+API própria 1.0, identidade/recursos/limites e erros públicos sem texto livre.
+IPC UI/core permanece `0.164.0`. Gates completos/estritos em continuação,
+1034 testes Rust, sete CTest e 132 harnesses por Qt. Não inicia processo ou
+banco; fluxo operacional e perfil extensível/migração ainda pendentes.
+
+**D1a.1 anterior aceita (40.7 §7.235), mantendo `0.164.0`:**
 Catálogo inválido/futuro e campos duplicados são recusados sem sobrescrita;
 escrita atômica compartilhada, teto de 1 MiB e aviso na janela do Banco.
 Gates completos/estritos em continuação, 1019 testes Rust, sete CTest e 132
@@ -669,8 +675,9 @@ driver ou LSP novo carregado; perfis/contextos anteriores preservados.
 **Próxima fatia executável:** contratos de perfil/processo e limites (D1a),
 com preservação/migração antes de runtime ou seleção persistida de ferramenta.
 A proteção do schema 1 já foi aceita em D1a.1 (§5.13, 40.7 §7.235);
-não refaça essa correção. Falta o formato extensível com migração e os
-contratos/fixtures do processo externo.
+não refaça essa correção. A inicialização/erros/limites puros já estão aceitos
+em D1a.2 (§5.14, 40.7 §7.236). Próximos: fluxo operacional D1a.3 e formato
+extensível com migração D1a.4, antes de aplicar o contrato no transporte.
 Ponte/extração de drivers em D1b–D1d; instâncias/contexto e integração LSP
 (D2–D5) seguem as dependências do 39 §8.
 LSP SQL passou a ser obrigatório: não implementar completion de catálogo
@@ -1108,6 +1115,35 @@ ausência e schema 1 legado aceitos, erro sem vazamento de conteúdo, escrita
 atômica e roundtrip; dispatch real e recusa no formulário da IDE. Escritores
 externos não participam do mutex do core; esta fatia não promete compare-and-
 swap entre processos nem atomicidade entre configuração e efeitos no banco.
+
+### 5.14 D1a.2 — negociação externa tipada (desenho, 2026-10-07)
+
+Sobre D1a.1 em `1a9b10f`, antes do código: fechar o primeiro recorte do
+contrato externo no 39 §4.4. `kinein-protocol/src/driver.rs` e seus módulos
+definem API/faixas, limites, inicialização e resposta/erro numéricos. Os
+pedidos reutilizam o envelope atual; o IPC UI/core permanece `0.164.0`.
+`datasource/driver_contract.rs` é serviço puro de construção, negociação,
+correlação e erro público. Fixtures JSON versionadas são consumidas pelos
+testes reais desses donos, incluindo major/minor, recursos, teto local,
+resposta ambígua, segredo no erro remoto e wire UI preservado.
+
+Medir a ausência dos tipos/negociação antes da implementação; provar
+desserialização estrita de pedidos, adição de campos de resposta, menor
+orçamento e ausência de efeitos de processo/banco. Rust/Clippy e gates de
+arquitetura/fiação/documentação devem passar. Fontes/configuração C++ e QML
+não mudam; suas provas de D1a.1 só podem ser reutilizadas com diff vazio.
+
+Esta fatia não ativa instalação nem runtime, não persiste IDs, não migra
+schema e não define ainda o fluxo de chunks/decisão operacional. Esses
+contratos e o perfil extensível continuam em D1a antes da ponte D1b.
+
+**Aceite (40.7 §7.236):** sete testes de protocolo e oito do core, incluindo
+prova negativa de arrays posicionais aceita por serde antes da correção.
+Exigir objeto antes de decodificar elimina essa ambiguidade sem duplicar
+campos. Gate completo/estrito em continuação passou com 1034 testes Rust,
+Clippy/cargo-deny, sete CTest e 132 harnesses em cada Qt. Fontes/configuração
+C++ idênticos à prova D1; análise estática reutilizada sob essa condição.
+Debug/release abriram em 345/336 ms, 33 superfícies sem avisos cada.
 
 ## 6. Grafana: visualização web dentro da IDE
 

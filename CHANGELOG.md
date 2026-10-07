@@ -11,6 +11,11 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- **Negociação de adaptadores externos** (D1a.2, 40.7 §7.236): contrato
+  tipado de API própria `1.0`, identidade, recursos e limites; erros numéricos
+  viram mensagens públicas sem expor texto do adaptador. Implementação pura,
+  sem iniciar processo ou banco; IPC UI/core permanece `0.164.0`.
+
 - **Catálogo de conexões protegido** (D1a.1, 40.7 §7.235; protocolo
   mantido em `0.164.0`): arquivo inválido, futuro, com opções desconhecidas
   ou campos duplicados é preservado. Salvar/remover e criar bancos são

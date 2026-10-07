@@ -30,6 +30,7 @@ mod datasource_session;
 mod debug;
 mod diagnostic;
 mod draft;
+pub mod driver;
 mod format;
 mod fs;
 mod git;

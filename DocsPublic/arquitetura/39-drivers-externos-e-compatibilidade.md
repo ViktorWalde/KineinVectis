@@ -8,7 +8,9 @@
 > [ADR-0010](../decisoes-adr/ADR-0010-drivers-em-processos-versionados.md).
 > Complementa o [38](38-provedores-de-banco-e-linguagem.md), sem substituir
 > seus registros, cliente LSP ou contratos de execução já aceitos no
-> [37](37-banco-de-dados.md). Nenhum processo/contrato abaixo está implementado.
+> [37](37-banco-de-dados.md). D1a.1 protege o catálogo e D1a.2 implementa
+> negociação/erros puros (§4.4; 40.7 §7.235–§7.236). Processos externos,
+> fluxo operacional e migração de perfis continuam pendentes.
 
 ## 1. Objetivo e limite da atualização independente
 
@@ -173,8 +175,9 @@ O processo não devolve credencial nem pode pedir que o core execute SQL por ele
 | Prévia e decisão | Capacidade opcional; conexão/transação ficam no adaptador, autorização/decisão no core |
 | Cancelar/encerrar | Identificador da operação/sessão, resposta terminal e liberação real de recursos |
 
-Nenhum nome nessa tabela é método público implementado. A D1a define mensagens,
-erros e limites em documento de contrato antes de acrescentar tipos ao produto.
+Nenhum nome nessa tabela é método público registrado no dispatcher da IDE.
+A D1a define mensagens, erros e limites em documento de contrato antes de
+acrescentar tipos ao produto; a inicialização pura já está no §4.4.
 Geração de modelos/instruções reutiliza os módulos atuais; só atravessa o
 processo quando precisa do driver. Não criar endpoints para capacidades sem
 consumidor, consultas RPC genéricas nem callback de execução vindo do plugin.
@@ -184,6 +187,78 @@ permissões observadas, política do perfil e recursos conhecidos pelo core.
 Versão desconhecida não ativa recurso dependente de versão. Operação negada
 mantém contexto e explicação pública; não rebaixa TLS nem tenta credencial
 alternativa. A matriz publicada separará versões testadas de suporte alegado.
+
+### 4.4 D1a.2 — contrato de inicialização e erros (2026-10-07)
+
+Primeiro recorte tipado do contrato externo, anterior ao runtime. Os tipos
+ficam em `kinein-protocol::driver`, com API própria **1.0**. A versão IPC
+UI/core continua `0.164.0`; nenhum `driver.*` é registrado no dispatcher da
+IDE. O envelope de pedido reutiliza `JsonRpcRequest`. Respostas externas
+usam `jsonrpc: "2.0"`, `id` e exatamente um entre `result` e `error`; o erro
+tem `code` numérico, `message` e `data` opcional. Não reutiliza o erro textual
+UI nem interpreta `details` como `data`. Batch e callbacks não entram aqui.
+
+`driver.initialize` recebe `{ api: { min, max }, limits }`; cada versão é
+`{ major, minor }`. A faixa é fechada, pertence a um único major e tem mínimo
+menor ou igual ao máximo. O core negocia o maior minor comum. A resposta
+tem `api`, `adapterId`, `adapterVersion`, `driverVersion` opcional, `engines`,
+`operations` e `limits`. O core confere a identidade escolhida e o motor,
+sem escolher substituto. Campos adicionais da resposta são ignorados;
+parâmetros, versões e orçamento têm formato fechado. Operação desconhecida,
+repetida ou obrigatória ausente recusa essa instalação.
+
+Operações conhecidas: `open`, `test`, `introspect`, `query`, `impact`,
+`preview`, `decide`, `cancel`, `close` e `shutdown`. Exceto `impact`,
+`preview` e `decide`, todas são obrigatórias para o backend deste recorte.
+Prévia e decisão devem ser anunciadas juntas. O anúncio não comprova
+permissão, suporte do servidor ou capacidade efetiva da operação.
+
+| Campo de `limits` | Teto local inicial | Regra |
+| --- | --- | --- |
+| `messageBytes` | 1 MiB | JSON UTF-8 serializado, sem terminador; mínimo negociável 1 KiB |
+| `inFlight` | 8 | Pedidos ainda sem resposta terminal por instância |
+| `rows` | 10.000 | Mesmo teto público atual; não altera a preferência de 500 |
+| `columns` | 128 | Dimensão máxima de uma linha |
+| `cellBytes` | 16 KiB | UTF-8 de uma célula; excesso não vira valor cortado íntegro |
+| `retainedBytes` | 8 MiB | Total retido de uma operação, incluindo seu catálogo/amostra |
+| `catalogueItems` | 5.000 | Soma dos objetos/colunas/campos retidos, não por chunk |
+
+Negociação toma o menor valor de cada campo; zero ou combinação em que uma
+célula excede mensagem/retenção é inválida. O orçamento recebido nunca eleva
+o teto local. D1b aplica esses valores antes de alocar/reter mensagens e
+chunks; esta fatia prova negociação, não execução limitada de um processo.
+Fila local terá 16 operações aguardando, inicialização 5 s e encerramento
+5 s. Esses prazos não são garantias de desligamento; o runtime precisará
+provar coleta real. Prazo de decisão de prévia permanece 60 s, no dono atual.
+
+Erro de aplicação usa `code: -32000` e `data: { reason, outcome }`.
+`reason`: `incompatibleApi`, `unsupportedOperation`, `secretRequired`,
+`readOnly`, `contextChanged`, `busy`, `cancelled`, `timeout`,
+`connectionFailed`, `executionFailed`, `limitExceeded` ou `outcomeUnknown`.
+`outcome`: `notStarted`, `failed` ou `unknown`. Falha confirmada não promete
+desfazer comandos anteriores de um lote. Erros padrão JSON-RPC numéricos
+podem omitir `data`; motivo novo desconhecido não é interpretado.
+
+O core mapeia somente motivos tipados para erros UI existentes. Nunca
+repassa `message` livre ou campos desconhecidos do adaptador à UI/log;
+`Debug` do erro também omite essa mensagem. Desfecho desconhecido recebe
+texto explícito e não autoriza repetição. A perda de transporte depois de
+enviar escrita continua sendo responsabilidade do runtime, que deve inferir
+desfecho indeterminado mesmo sem resposta de erro do adaptador.
+
+`datasource/driver_contract.rs` monta o pedido, aceita a resposta limitada,
+confere correlação/versão/identidade/recursos e fornece o mapeamento público.
+Fixtures JSON v1 e testes provam major incompatível, minor aditiva, campos
+extras de resposta, orçamento reduzido, resposta ambígua/antiga e segredo
+ausente do erro público. Nada abre banco, carrega senha ou inicia programa.
+Formato extensível/migração de perfis e mensagens operacionais vêm nos
+recortes seguintes de D1a; D1b ainda não pode iniciar só com este handshake.
+
+**Aceite:** 40.7 §7.236. Desserialização exige objetos em todas as camadas,
+recusando arrays posicionais, campos duplicados e envelopes ambíguos. Sete
+testes do protocolo e oito do negociador usam fixtures e casos adversos;
+gates completos/estritos passaram com 1034 testes Rust. Não há transporte
+externo nem garantia de prazo/coleta de processos nesta implementação pura.
 
 ## 5. Configuração, perfis e escolha de versão
 
@@ -333,7 +408,7 @@ Complemento à fila D0–D7 do 38; numeração não significa um commit por linh
 | Fatia | Entrega e dependência |
 | --- | --- |
 | D1 | Registro dos quatro motores e descritores consumidos pelo formulário/menu em `0.164.0`; 40.7 §7.234. Nenhum processo externo ou LSP ativado |
-| D1a | Contratos de processo/erros/limites e perfil extensível; migração/preservação antes de persistir IDs de ferramenta |
+| D1a | Proteção do catálogo e negociação/erros puros aceitos (§7.235–§7.236); fluxo operacional e perfil extensível/migração ainda necessários antes de persistir IDs de ferramenta |
 | D1b | Base de processo compartilhada e ponte externa; handshake sem segredo, fila limitada, encerramento e isolamento provados |
 | D1c | Migrar PostgreSQL, incluindo impacto e prévia com conexão/transação reais, para o processo escolhido |
 | D1d | Migrar SQLite e depois MongoDB, cada um em sua fatia com recursos atuais e versões aceitas preservados |
@@ -382,9 +457,9 @@ de produto nem implementação concluída.
 | Completion/catálogo poderiam duplicar gramática e consulta | Cliente LSP e snapshot únicos; adaptadores só exportam formatos aceitos |
 
 Desenho revisado e suficiente para iniciar **a fatia de contratos**, antes
-de runtime/migração. D1a precisa fechar números de orçamento, mensagens e
-fixtures com consumidores reais; nenhuma implementação pode assumir que
-estão negociados hoje. Seleção LSP InfluxDB e catálogo vivo/adaptação MongoDB
+de runtime/migração. D1a.2 já fecha números e fixtures da inicialização pura;
+as mensagens operacionais, o formato de perfis e a aplicação dos limites no
+transporte ainda precisam de aceite. Seleção LSP InfluxDB e catálogo vivo/adaptação MongoDB
 continuam pendências concretas do 38, sem um parser próprio como atalho.
 
 ## 10. Fontes primárias consultadas em 2026-10-07

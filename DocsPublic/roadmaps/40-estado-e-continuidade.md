@@ -49,7 +49,15 @@
 > e arquivo intacto provados na IDE. 1019 testes Rust, sete CTest e 132
 > harnesses por Qt 6.10.2/6.4.2; gates completos/estritos em continuação,
 > com análise C++ reaproveitada somente para fontes/configuração idênticos.
-> D1a continua aberta para perfil extensível/migração e contrato externo.
+> D1a.2 concluída no §7.236: API externa própria 1.0, negociação de
+> identidade/recursos/limites e erros públicos sem texto livre do adaptador.
+> Contratos exigem objetos JSON; arrays posicionais e envelopes ambíguos
+> são recusados. IPC UI/core continua `0.164.0`, sem transporte externo.
+> Gates completos/estritos em continuação: 1034 testes Rust, sete CTest e
+> 132 harnesses por Qt 6.10.2/6.4.2; debug/release em 345/336 ms e 33
+> superfícies sem avisos. C++ reaproveitado só com fontes/configuração iguais.
+> Próximo: fluxo operacional D1a.3 e perfil extensível/migração D1a.4,
+> antes do runtime D1b. Passo 7 permanece aberto.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),

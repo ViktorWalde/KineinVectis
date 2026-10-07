@@ -48,6 +48,7 @@ pub mod console_statement;
 pub mod create;
 pub mod destroy;
 pub mod discover;
+pub mod driver_contract;
 pub mod impact;
 pub mod introspect;
 pub mod measurement;
