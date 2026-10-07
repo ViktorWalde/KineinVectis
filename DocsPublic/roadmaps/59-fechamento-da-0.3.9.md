@@ -486,6 +486,11 @@ leases e jobs próprios, sem incorporar runtime/código dessas ferramentas.
   sqls não declara release estável, e Flux LSP arquivado não atende InfluxDB 3.
   Runtime Node externo pode ser avaliado para ferramenta original, como
   no MongoDB; isso não incorpora host VS Code à IDE.
+  Revisão após pesquisa do IntelliJ, anterior ao código, no
+  [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) e ADR-0010:
+  processos adaptadores com API negociada permitem trocar o driver sem
+  recompilar a IDE, após migração aceita. Contratos/perfis antes do runtime;
+  cliente LSP e operações atuais são reaproveitados.
 
 ### 5.3 Segurança em camadas
 
@@ -586,8 +591,12 @@ SQL. MongoDB 3.x não é requisito de legado. A instalação/atualização do
 banco e do LSP fica com o usuário. Não fixar versão de servidor ao teste;
 detectar capacidades/compatibilidade e conter erro no adaptador/instância.
 Drivers atuais são bibliotecas compiladas no core: sua atualização ainda
-depende de atualizar o core. Não prometer compatibilidade com qualquer
-protocolo futuro. Donos, fronteiras, migração e provas estão no 38.
+depende de atualizar o core. O alvo revisto antes do código no
+[39](../arquitetura/39-drivers-externos-e-compatibilidade.md) move essas
+bibliotecas para processos escolhíveis com API negociada. A independência
+exige extração/prova por motor, ainda pendentes. Não prometer compatibilidade
+com qualquer protocolo futuro. Donos, fronteiras, migração e provas estão
+no 38/39; ODBC mantém o caminho aceito.
 
 "Nativos completos" significa recursos suportados pelo motor: transação,
 prévia e edição por chave primária não são capacidades universais.
@@ -634,8 +643,15 @@ MongoDB moderno e InfluxDB 3 nativo, no 40.7 §7.232 e no
 [38](../arquitetura/38-provedores-de-banco-e-linguagem.md). Sem mudança de
 produto/protocolo; provas de ferramentas externas não são integração na IDE.
 
+**Revisão anterior ao código:** após pesquisa do IntelliJ/Database Navigator,
+o 39 e ADR-0010 definem atualização independente também do driver, com API
+de processo, perfis preservados e migração gradual. Revisão de donos/falhas
+registrada no 39 §9 e 40.7 §7.233. Sem implementação nessa entrega.
+
 **Próxima fatia executável:** descritores/contratos de provedores sobre os
-donos atuais (38 D1), depois instâncias/contexto e integração LSP (D2–D5).
+donos atuais (38 D1) e contratos de perfil/processo (D1a), antes de runtime.
+Ponte/extração de drivers em D1b–D1d; instâncias/contexto e integração LSP
+(D2–D5) seguem as dependências do 39 §8.
 LSP SQL passou a ser obrigatório: não implementar completion de catálogo
 própria antes dessas ferramentas. InfluxDB 3 exige adaptador nativo e
 provedor de linguagem comprovado (D6–D7), com perfil/ID extensível.
@@ -687,9 +703,11 @@ Desconexão está aceita no §7.231, protocolo 0.163.0, com PostgreSQL/MongoDB
 reais e rascunho preservado na IDE. Não refaça leases/barreira, shutdown
 MongoDB nem descarte de pedidos antigos do console. Desenho modular registrado
 no §7.232, arquitetura/38 e ADR-0009; ainda sem integração de
-produto. Atual: D1, descritores e contratos, depois D2, instâncias LSP por
-conexão. Não refaça menus/seleção, popup LSP ou transporte do cliente.
-Leia os donos, limites e o desenho antes do código.
+produto. A revisão posterior, antes do código, está no §7.233,
+arquitetura/39 e ADR-0010. Atual: D1/D1a, descritores, perfis e contratos;
+runtime/extração de drivers em D1b–D1d, contexto LSP em D2 conforme o 39 §8.
+Não refaça menus/seleção, popup LSP ou transporte do cliente. Leia os donos,
+limites, revisão e dependências antes do código.
 
 A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
 rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido
@@ -699,11 +717,15 @@ a forma antiga de leitura e o tratamento de Extended JSON.
 
 A decisão esclarecida em 2026-10-07 torna LSP SQL obrigatório, com ferramentas
 existentes para PostgreSQL, SQLite, MongoDB moderno e InfluxDB 3 SQL/InfluxQL.
-Não há requisito MongoDB 3.x. O usuário instala/atualiza banco e LSP; a IDE
-negocia capacidades e contém incompatibilidade na instância/adaptador.
+Não há requisito MongoDB 3.x. O usuário instala/atualiza banco, adaptador e
+LSP; a IDE negocia capacidades e contém incompatibilidade na instância/adaptador.
 Um LSP pode atender vários bancos, se comprovado. InfluxDB 3 é nativo, sem
 ODBC; seu LSP ainda precisa de seleção/prova. Não usar Flux LSP arquivado.
-Não implementar parser ou completion semântica próprios. Siga D1–D7 no 38,
+Não implementar parser ou completion semântica próprios. O alvo de driver
+externo no 39 é independente do LSP e reutiliza bibliotecas/APIs mantidas.
+Sem retry de escrita ou fallback automático após falha; prévia mantém a
+mesma conexão/transação e desconexão aguarda recursos reais.
+Siga D1–D7 e D1a–D1d no 38/39,
 preservando localizar objeto (§5.1), histórico (§5.2), grade (§5.4),
 MySQL/MariaDB (§5.7) e provas finais (§5.6). Não interpretar a contagem antiga
 de onze pendências como onze commits até o fechamento. Uma fatia por commit,

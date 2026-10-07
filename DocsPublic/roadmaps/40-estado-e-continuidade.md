@@ -34,6 +34,10 @@
 > Arquitetura modular registrada no §7.232,
 > [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e ADR-0009;
 > descritores, instâncias por conexão e integrações ainda pendentes.
+> Após a pesquisa do IntelliJ, o desenho foi revisto antes do código
+> (§7.233): [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) e
+> ADR-0010 definem drivers em processos com API negociada; perfis/contratos
+> precedem o runtime e a extração gradual dos drivers atuais.
 > O protocolo continua `0.163.0`; as provas externas não habilitam LSP no produto.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
@@ -120,7 +124,8 @@
 >     **Novo banco no menu aceito** no §7.230, pelo formulário existente.
 >     **Desconexão aceita** no §7.231 (`0.163.0`), aguardando drivers e
 >     conservando rascunho. Próximo: descritores/contratos de provedores e
->     instâncias LSP por conexão (38 D1–D2); localizar objeto continua na fila.
+>     perfis/processos (38 D1/D1a e 39); instâncias LSP por conexão seguem
+>     em D2. Localizar objeto continua na fila.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
 >
@@ -467,8 +472,13 @@ e desconexão com encerramento dos drivers. Decisão modular registrada no
 §7.232, [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e ADR-0009:
 LSP obrigatório, MongoDB moderno e InfluxDB 3 nativo, ferramentas atualizadas
 pelo usuário. Integrações não implementadas; protocolo permanece `0.163.0`.
-Próxima: descritores/contratos (D1), instâncias/contexto LSP (D2) e ferramentas
-por dialeto. Localizar objeto, histórico, grade, MySQL/MariaDB e provas finais
+Revisão antes do código registrada no §7.233,
+[39](../arquitetura/39-drivers-externos-e-compatibilidade.md) e ADR-0010:
+driver em processo com contrato negociado, seleção de instalação por perfil,
+preservação de arquivos futuros e escrita sem retry automático.
+Próxima: descritores/contratos (D1/D1a), runtime/extração de drivers (D1b–D1d)
+e instâncias/contexto LSP (D2), conforme as dependências do 39 §8.
+Localizar objeto, histórico, grade, MySQL/MariaDB e provas finais
 continuam pendentes. A contagem antiga de onze itens não fixa o número de
 commits até o fechamento. O roteiro está no 59 §5.8 e no 38 §9.
 O pente fino é o passo 8 e ainda não começou.

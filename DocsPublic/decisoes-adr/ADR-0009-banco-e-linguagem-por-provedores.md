@@ -77,3 +77,14 @@ provedor de linguagem sem retirar seu driver nem perder consoles. A
 migração de perfil só grava depois da validação integral e não elimina
 dados que um adaptador ausente ainda não entende. O passo 7 só fecha com
 os critérios do [59](../roadmaps/59-fechamento-da-0.3.9.md), não com D0.
+
+## Complemento em 2026-10-07 — atualização independente dos drivers
+
+Após a pesquisa do IntelliJ e o pedido de desenhar/revisar antes do código,
+o [ADR-0010](ADR-0010-drivers-em-processos-versionados.md) torna processo
+adaptador com API versionada a fronteira alvo do acesso nativo. Substitui
+somente o adiamento dessa fronteira: bibliotecas internas permanecem como
+transição até a extração aceita por motor. LSP, política, jobs, leases,
+catálogo e UI conservam as responsabilidades decididas acima. Desenho,
+dependências e revisão no [39](../arquitetura/39-drivers-externos-e-compatibilidade.md).
+Não houve implementação nem mudança do protocolo nesta revisão.

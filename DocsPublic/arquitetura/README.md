@@ -30,3 +30,7 @@ padrões por motor, limites e provas reproduzíveis, com diagramas.
 [38 — Provedores de banco e de linguagem](38-provedores-de-banco-e-linguagem.md):
 PLANO de expansão modular, seleção de LSP, atualização de ferramentas,
 isolamento por conexão e migração sobre os donos atuais.
+
+[39 — Drivers externos e compatibilidade de versões](39-drivers-externos-e-compatibilidade.md):
+PLANO revisto antes do código: adaptadores em processos escolhíveis, API
+negociada, perfis preservados, falhas de escrita, transação e migração gradual.

@@ -12,6 +12,9 @@
 O [desenho 38](38-provedores-de-banco-e-linguagem.md), decidido em 2026-10-07,
 planeja expansão por adaptadores e provedores LSP, MongoDB moderno e InfluxDB 3
 nativo. É PLANO: o estado de execução descrito aqui permanece a base atual.
+O [39](39-drivers-externos-e-compatibilidade.md) detalha a revisão anterior
+ao código: drivers em processos atualizáveis, contratos negociados e
+migração gradual. A extração ainda não ocorreu no produto.
 
 ## 1. O que foi retomado
 

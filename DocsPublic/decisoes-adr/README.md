@@ -14,6 +14,8 @@ ADR-0007-odbc-com-consentimento.md         DSN local, driver nativo e consentime
 ADR-0008-previa-postgresql-no-worker.md   streaming, transação e decisão única no worker
 ADR-0009-banco-e-linguagem-por-provedores.md acesso ao banco e LSP independentes,
                                            ferramentas externas e expansão modular
+ADR-0010-drivers-em-processos-versionados.md atualização de drivers sem recompilar a IDE,
+                                            processo adaptador e contrato negociado
 ```
 
 O ADR-0006 (`exmex`) saiu do repositório com a simulação em 2026-09-12

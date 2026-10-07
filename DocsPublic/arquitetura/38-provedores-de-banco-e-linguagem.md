@@ -9,6 +9,12 @@
 > execução atual no [37](37-banco-de-dados.md), fila no
 > [59 §5](../roadmaps/59-fechamento-da-0.3.9.md).
 
+> **Revisão anterior ao código, 2026-10-07, base `0214927`:** após a pesquisa
+> do IntelliJ, atualização independente passa a incluir o driver em processo
+> adaptador, conforme o [39](39-drivers-externos-e-compatibilidade.md) e o
+> [ADR-0010](../decisoes-adr/ADR-0010-drivers-em-processos-versionados.md).
+> Drivers internos são a transição; LSP e acesso continuam independentes.
+
 ## 1. Escopo decidido
 
 A IDE orquestra ferramentas existentes. O suporte de linguagem de Banco
@@ -18,8 +24,8 @@ O alvo inclui PostgreSQL, SQLite, MongoDB moderno, MySQL/MariaDB e InfluxDB 3
 nativo, sem ODBC para este último. MongoDB 3.x não é requisito de legado.
 ODBC conserva seu caminho genérico e seu consentimento de sessão.
 
-O usuário instala e atualiza servidores de banco e LSPs. A IDE não os baixa,
-congela ou atualiza silenciosamente. Versões citadas neste documento são
+O usuário instala e atualiza servidores de banco, adaptadores externos e LSPs.
+A IDE não os baixa, congela ou atualiza silenciosamente. Versões citadas são
 revisões pesquisadas/testadas, não versões obrigatórias do produto.
 Uma instalação usada em projetos existentes e uma versão mais recente usada
 em projetos novos podem coexistir: o caminho da ferramenta é uma escolha
@@ -37,6 +43,7 @@ e a extensão `.sql` não bastam para escolher o servidor.
 | Perfis e enum fechado `postgres/sqlite/mongo/odbc` | `crates/kinein-protocol/src/datasource.rs` |
 | Validar/persistir perfis, obter segredo | `crates/kinein-core/src/datasource/mod.rs`, `store.rs`, `secret.rs` |
 | Drivers, catálogo e execução | `crates/kinein-core/src/datasource/connection.rs`, `sqlite.rs`, `mongo.rs`, `query.rs`, `introspect.rs` |
+| Processos, jobs e eventos | `crates/kinein-core/src/process.rs`, `stderr_tail.rs`, `jobs/context.rs`, `runtime.rs`; limites da reutilização no 39 §7 |
 | Política, impacto, prévia e barreira de desconexão | `crates/kinein-core/src/datasource/policy.rs`, `measurement.rs`, `preview.rs`, `activity.rs` |
 | Vincular console à conexão e extrair instrução | `crates/kinein-core/src/datasource/console.rs`, `console_statement.rs` |
 | Descrever servidores C/C++, Rust e Python | `crates/kinein-core/src/lsp/registry.rs` |
@@ -63,11 +70,15 @@ flowchart TB
   binding --> drivers["Registro de adaptadores de banco"]
   binding --> languages["Registro de provedores de linguagem"]
   drivers --> policy["Política / segredo / impacto / leases existentes"]
-  policy --> native["Adaptador nativo: biblioteca ou API oficial"]
+  policy --> bridge["Ponte tipada + processo adaptador selecionado"]
+  bridge --> native["Driver nativo: biblioteca ou API oficial no processo"]
+  policy --> internal["Backend interno atual durante a migração"]
   policy --> odbc["ODBC com consentimento existente"]
   native --> database[("Banco escolhido pelo usuário")]
+  internal --> database
   odbc --> database
   native --> catalog["Snapshot de catálogo no core"]
+  internal --> catalog
   languages --> instances["Instâncias LSP por conexão e configuração"]
   instances --> transport["Transporte / sincronização LSP existentes"]
   transport --> external["Ferramenta LSP instalada pelo usuário"]
@@ -96,6 +107,11 @@ a chamada ao adaptador. Acrescentar um banco significa registrar seu
 adaptador e provas; não espalhar `if engine` pelos controllers e handlers.
 O formulário recebe campos tipados e capacidades do core, sem executar
 expressões nem carregar componentes QML fornecidos por terceiros.
+
+A fronteira alvo do driver é processo externo com API versionada, detalhada
+no 39. O registro permite implementação interna durante a migração, sempre
+com um backend por operação. A biblioteca mantida e os objetos de conexão/
+transação ficam no adaptador externo; autorização e decisão continuam no core.
 
 ### 3.2 Provedor de linguagem
 
@@ -127,9 +143,10 @@ PostgreSQL por padrão nem sobrescrever a lista com vazio.
 Vínculos e nomes seguros dos consoles continuam pertencendo ao código atual.
 
 Essa é extensibilidade do domínio Banco, sem antecipar o roadmap de plugins
-da 0.5. LSPs são processos externos. Adaptadores nativos inicialmente usam
-bibliotecas/APIs já existentes; eventual driver instalável terá processo
-separado e contrato versionado, definido quando houver consumidor concreto.
+da 0.5. LSPs e adaptadores de acesso alvo são processos externos independentes.
+Drivers atuais ficam internos somente durante a migração; o consumidor do
+contrato de acesso é o serviço Banco existente. D1a define perfis/API de
+processo, D1b a ponte e D1c/D1d a extração de drivers, conforme o 39 §8.
 Não haverá ABI Rust dinâmica, importação de host VS Code nem runtime de
 extensões dentro de Qt. A prova MongoDB abaixo usa somente o servidor
 extraído do artefato oficial, não executa a extensão.
@@ -219,11 +236,13 @@ prova; o driver Rust 3.9.0 não significa servidor MongoDB 3.9.
 O alvo InfluxDB é a geração 3; versão patch fica a cargo do usuário.
 
 Essa fronteira reduz regressões e contém falhas; não garante que um protocolo
-futuro incompatível funcione sem adaptação. As crates dos drivers nativos
-atuais são compiladas no core: atualizar essas bibliotecas requer atualizar
-o core. Atualizar o servidor do banco ou o LSP é independente enquanto seus
-contratos forem compatíveis. Essa distinção deve permanecer explícita na UI
-de ferramentas e no manual, sem prometer driver substituível que não existe.
+futuro incompatível funcione sem adaptação. Hoje as crates dos drivers nativos
+são compiladas no core: atualizar essas bibliotecas requer atualizar o core.
+O alvo revisto no 39 desloca essas dependências para adaptadores selecionáveis,
+com API negociada, que podem ser atualizados sem recompilar a IDE. Isso exige
+D1a–D1d e prova por motor; ainda não existe no produto. UI/manual distinguem
+versões do servidor, driver, adaptador, contrato e LSP, sem prometer todos os
+recursos de uma versão desconhecida nem reenvio automático após falha.
 
 ## 6. Contrato de integração previsto
 
@@ -323,12 +342,20 @@ não recriar servidor, parser ou mecanismo de armazenamento.
 | --- | --- |
 | D0 — este desenho | Donos, associação banco/LSP, atualização independente, limites e candidatos com provas delimitadas |
 | D1 — descritores e contratos | Registro interno sobre os motores atuais; identidade/contexto tipados; preservar wire/perfis existentes; contrato aditivo antes do runtime |
+| D1a — contratos de processo e perfil | Negociação/erros/limites do adaptador; perfil extensível e migração/preservação, conforme o 39 |
+| D1b — ponte de acesso externa | Base de processo compartilhada, handshake, pipes/fila limitados e encerramento real; sem novo executor completo |
+| D1c/D1d — drivers substituíveis | PostgreSQL com impacto/prévia; depois SQLite e MongoDB, extraindo implementação existente para processos escolhíveis |
 | D2 — instâncias de linguagem | Reusar transporte/sync, selecionar por vínculo, correlacionar versões, isolar configurações/segredos e integrar desconexão; dois destinos simultâneos |
 | D3 — PostgreSQL | Ferramenta externa escolhida pelo usuário; sugestões de tabela/coluna/palavra-chave na IDE, catálogo vivo, TLS e nenhuma execução por LSP |
 | D4 — SQLite | Provedor SQLite com catálogo offline atualizado, completion e navegação reais, arquivos/buffer preservados |
 | D5 — MongoDB | Provedor externo oficial ou alternativa comprovada; compatibilidade com console atual, campos/coleções e duas versões modernas reais |
 | D6 — InfluxDB 3 nativo | Perfil versionado/ID extensível, API nativa, catálogo/consulta/grade e política por capacidade; sem ODBC |
 | D7 — linguagem InfluxDB 3 | Selecionar e provar ferramenta existente compatível com SQL/InfluxQL; ausência de candidato não conta como conclusão |
+
+Dependências: D1a antes de D1b; D1b antes de D1c/D1d e D6. D2 depende dos
+contextos D1/D1a, podendo avançar sem esperar toda a extração de drivers.
+O [39 §9](39-drivers-externos-e-compatibilidade.md#9-revisão-do-desenho--2026-10-07)
+registra a revisão anterior ao código, achados e correções no plano.
 
 Cada linha pode exigir mais de um commit. D0 não habilita recurso no produto.
 O passo 7 também conserva localizar objeto, histórico por conexão, grade,
@@ -349,6 +376,11 @@ e as provas externas de D0 não substituem esses critérios.
 ## 10. Referências e modos de reaproveitamento
 
 Fontes primárias consultadas em 2026-10-07:
+
+- **IntelliJ/Database Navigator, MODE-D**: comportamento oficial e código
+  aberto do plugin separados; revisões, arquivos, licença e tradução para
+  processos nativos no [39 §2/§10](39-drivers-externos-e-compatibilidade.md).
+  Não importar JDBC/JVM/PSI nem duplicar completion interna no lugar do LSP.
 
 - **Code OSS, MODE-D, MIT**, revisão
   `50f37bcc26c75b91937883a8974c969af300d4d4`:
