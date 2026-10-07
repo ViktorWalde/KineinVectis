@@ -612,11 +612,18 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia concluída:** D1a.2 (40.7 §7.236): negociação externa pura,
+**Última fatia concluída:** D1a.3 (40.7 §7.237): contrato operacional e
+guardião puro de contexto/sequência/terminal, alvos de decisão/cancelamento
+e limites cumulativos. Agente adicional em worktree isolado; revisão,
+integração e commits pelo principal. Gate completo/estrito em continuação,
+1056 testes Rust, sete CTest e 132 harnesses por Qt; debug/release em
+351/352 ms, 33 superfícies limpas cada. Sem runtime externo nem LSP novo.
+
+**D1a.2 anterior aceita (40.7 §7.236):** negociação externa pura,
 API própria 1.0, identidade/recursos/limites e erros públicos sem texto livre.
 IPC UI/core permanece `0.164.0`. Gates completos/estritos em continuação,
 1034 testes Rust, sete CTest e 132 harnesses por Qt. Não inicia processo ou
-banco; fluxo operacional e perfil extensível/migração ainda pendentes.
+banco; fluxo operacional aceito em D1a.3, perfil extensível/migração pendente.
 
 **D1a.1 anterior aceita (40.7 §7.235), mantendo `0.164.0`:**
 Catálogo inválido/futuro e campos duplicados são recusados sem sobrescrita;
@@ -672,12 +679,13 @@ registrada no 39 §9 e 40.7 §7.233. Sem implementação nessa entrega.
 atuais, descritores no fluxo de perfis, formulário/menu consumidores. Nenhum
 driver ou LSP novo carregado; perfis/contextos anteriores preservados.
 
-**Próxima fatia executável:** contratos de perfil/processo e limites (D1a),
+**Próxima fatia executável:** perfil extensível e migração (D1a.4),
 com preservação/migração antes de runtime ou seleção persistida de ferramenta.
 A proteção do schema 1 já foi aceita em D1a.1 (§5.13, 40.7 §7.235);
 não refaça essa correção. A inicialização/erros/limites puros já estão aceitos
-em D1a.2 (§5.14, 40.7 §7.236). Próximos: fluxo operacional D1a.3 e formato
-extensível com migração D1a.4, antes de aplicar o contrato no transporte.
+em D1a.2 (§5.14, 40.7 §7.236); mensagens e guardião operacional em D1a.3
+(§5.15, 40.7 §7.237). Falta o formato extensível com migração D1a.4,
+antes de aplicar o contrato no transporte.
 Ponte/extração de drivers em D1b–D1d; instâncias/contexto e integração LSP
 (D2–D5) seguem as dependências do 39 §8.
 LSP SQL passou a ser obrigatório: não implementar completion de catálogo
@@ -734,7 +742,8 @@ no §7.232, arquitetura/38 e ADR-0009; ainda sem integração de
 produto. A revisão posterior, antes do código, está no §7.233,
 arquitetura/39 e ADR-0010. D1 entregue no §7.234, protocolo 0.164.0:
 providers em datasource.list/save/remove, campos e motores do formulário/menu
-vindos do core; não refaça esse registro. Atual: D1a, perfis/contratos/limites;
+vindos do core; não refaça esse registro. Atual: D1a.4, formato/migração de
+perfis; proteção, negociação e guardião puros já aceitos em D1a.1–D1a.3;
 runtime/extração de drivers em D1b–D1d, contexto LSP em D2 conforme o 39 §8.
 Não refaça menus/seleção, popup LSP ou transporte do cliente. Leia os donos,
 limites, revisão e dependências antes do código.
@@ -1144,6 +1153,36 @@ campos. Gate completo/estrito em continuação passou com 1034 testes Rust,
 Clippy/cargo-deny, sete CTest e 132 harnesses em cada Qt. Fontes/configuração
 C++ idênticos à prova D1; análise estática reutilizada sob essa condição.
 Debug/release abriram em 345/336 ms, 33 superfícies sem avisos cada.
+
+### 5.15 D1a.3 — fluxo operacional externo (desenho, 2026-10-07)
+
+Sobre a negociação aceita em `b29c549`: integrar a fatia do agente adicional,
+isolada de D1a.2. Desenho anterior ao código no
+[40](../arquitetura/40-contrato-operacional-de-drivers.md): mensagens tipadas
+de abrir/testar/introspectar/consultar/impacto/prévia/decidir/cancelar/fechar/
+encerrar, chunks e resposta terminal, com API externa 1.0 e IPC UI preservado.
+
+Guardião puro valida contexto completo, sequência contígua, terminal único,
+orçamentos cumulativos e forma dos resultados. Não retém as linhas do
+resultado, não autoriza escrita nem inicia transporte. Decisão/cancelamento
+devem ecoar o alvo; dados do catálogo não podem fornecer instruções executáveis.
+Entrada byte a byte limita o payload antes da decodificação; D1b ainda deve
+limitar o envelope completo antes de extrair esse payload. Donos atuais
+conservam autorização e construção/publicação do snapshot.
+
+Provar fixtures consumidas pelos tipos, objetos operacionais obrigatórios,
+mensagens antigas/duplicadas, contexto vizinho, terminal duplo,
+largura/célula/orçamento cumulativo, prévia e alvos incorretos. Validar o
+conjunto integrado com Rust/Clippy e gates estritos; fontes UI permanecem
+iguais. Depois fechar perfil extensível/migração D1a.4, antes do runtime D1b.
+
+**Aceite (40.7 §7.237):** sete testes operacionais do protocolo e 15 do core
+passaram após integração. Gate completo/estrito em continuação verde com
+1056 testes Rust, Clippy/cargo-deny, sete CTest e 132 harnesses em cada Qt
+6.10.2/6.4.2. Debug/release em 351/352 ms, 33 superfícies sem avisos cada;
+terminal 32 ms. Análise estática C++ reaproveitada somente com fontes e
+configuração idênticos à prova D1. Sem transporte, execução/rollback externos,
+instalação ou migração de perfis. Próximo recorte D1a.4; passo 7 aberto.
 
 ## 6. Grafana: visualização web dentro da IDE
 

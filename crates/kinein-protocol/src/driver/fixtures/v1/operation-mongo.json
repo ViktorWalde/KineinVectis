@@ -1,0 +1,33 @@
+{
+  "context": {
+    "instanceId": "instance-workspace-profile-installation",
+    "sessionId": "session-1",
+    "generation": 7,
+    "operationId": "operation-1"
+  },
+  "sequence": 0,
+  "payload": {
+    "kind": "catalogue",
+    "schemas": [],
+    "collections": [
+      {
+        "name": "events",
+        "kind": "collection",
+        "declared": false,
+        "sampled": 2,
+        "fields": [
+          {
+            "path": "meta.source",
+            "depth": 1,
+            "types": [
+              "null",
+              "string"
+            ],
+            "presence": 0.5,
+            "required": false
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -34,3 +34,7 @@ isolamento por conexão e migração sobre os donos atuais.
 [39 — Drivers externos e compatibilidade de versões](39-drivers-externos-e-compatibilidade.md):
 PLANO revisto antes do código: adaptadores em processos escolhíveis, API
 negociada, perfis preservados, falhas de escrita, transação e migração gradual.
+
+[40 — Contrato operacional de drivers](40-contrato-operacional-de-drivers.md):
+D1a.3, mensagens de operações, chunks e terminal; contexto e budgets
+validados por serviço puro, antes do runtime de processo externo.

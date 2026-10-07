@@ -1,8 +1,10 @@
 # 03 — Protocolo IPC
 
-> **Contrato externo separado (2026-10-07, D1a.2; 40.7 §7.236).**
+> **Contrato externo separado (2026-10-07, D1a.2/D1a.3; 40.7 §7.236–§7.237).**
 > A API de adaptadores em `kinein-protocol::driver` começa em `1.0`, com
 > negociação e erro numérico descritos no [39 §4.4](39-drivers-externos-e-compatibilidade.md#44-d1a2--contrato-de-inicialização-e-erros-2026-10-07).
+> Mensagens operacionais e validação pura D1a.3 estão no
+> [40](40-contrato-operacional-de-drivers.md); não representam execução externa.
 > Não acrescenta métodos ao dispatcher UI/core nem altera sua versão
 > `0.164.0`; o transporte de processos ainda depende de D1b.
 

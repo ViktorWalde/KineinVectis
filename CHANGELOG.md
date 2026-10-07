@@ -11,6 +11,12 @@ A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
 no checkout, não em nenhum pacote publicado.
 
+- **Contrato operacional dos adaptadores** (D1a.3, 40.7 §7.237): mensagens
+  de operação, catálogo, resultados, prévia e decisão na API externa `1.0`.
+  Validação pura recusa contexto/ordem/alvo incorretos e excesso cumulativo
+  de dados, preservando NULL e texto vazio. Runtime e migração de perfis
+  seguem na fila; IPC UI/core permanece `0.164.0`.
+
 - **Negociação de adaptadores externos** (D1a.2, 40.7 §7.236): contrato
   tipado de API própria `1.0`, identidade, recursos e limites; erros numéricos
   viram mensagens públicas sem expor texto do adaptador. Implementação pura,

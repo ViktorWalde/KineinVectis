@@ -5,6 +5,7 @@
 mod api;
 mod error;
 mod object;
+pub mod operation;
 mod response;
 
 pub use api::*;

@@ -56,8 +56,13 @@
 > Gates completos/estritos em continuação: 1034 testes Rust, sete CTest e
 > 132 harnesses por Qt 6.10.2/6.4.2; debug/release em 345/336 ms e 33
 > superfícies sem avisos. C++ reaproveitado só com fontes/configuração iguais.
-> Próximo: fluxo operacional D1a.3 e perfil extensível/migração D1a.4,
-> antes do runtime D1b. Passo 7 permanece aberto.
+> D1a.3 concluída no §7.237, com um agente adicional autorizado e worktree
+> isolado: mensagens operacionais e guardião puro de contexto, sequência,
+> terminal, alvos e orçamento cumulativo. 1056 testes Rust, sete CTest e
+> 132 harnesses por Qt; gate completo/estrito em continuação verde.
+> Debug/release em 351/352 ms, 33 superfícies sem avisos cada, GNOME preservado.
+> Próximo: perfil extensível/migração D1a.4, antes do runtime D1b.
+> Nenhuma execução externa ou integração LSP nova; passo 7 permanece aberto.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
@@ -146,7 +151,8 @@
 >     **Novo banco no menu aceito** no §7.230, pelo formulário existente.
 >     **Desconexão aceita** no §7.231 (`0.163.0`), aguardando drivers e
 >     conservando rascunho. **Descritores D1 entregues** no §7.234
->     (`0.164.0`). Próximo: perfis/processos/limites (D1a e 39);
+>     (`0.164.0`). D1a.1–D1a.3 aceitas (§7.235–§7.237); próximo:
+>     perfil extensível/migração D1a.4, depois runtime D1b (39/40);
 >     instâncias LSP por conexão seguem
 >     em D2. Localizar objeto continua na fila.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,

@@ -1,0 +1,33 @@
+{
+  "method": "driver.open",
+  "params": {
+    "context": {
+      "instanceId": "instance-workspace-profile-installation",
+      "sessionId": null,
+      "generation": 7,
+      "operationId": "operation-1"
+    },
+    "engine": "postgres",
+    "options": {
+      "schemaVersion": 1,
+      "fields": {
+        "host": "localhost",
+        "port": 5432,
+        "tls": true
+      }
+    },
+    "restrictions": {
+      "readOnly": true,
+      "limits": {
+        "messageBytes": 1048576,
+        "inFlight": 8,
+        "rows": 10000,
+        "columns": 128,
+        "cellBytes": 16384,
+        "retainedBytes": 8388608,
+        "catalogueItems": 5000
+      }
+    },
+    "credential": "PRIVATE_CREDENTIAL_FIXTURE"
+  }
+}

@@ -9,8 +9,9 @@
 > Complementa o [38](38-provedores-de-banco-e-linguagem.md), sem substituir
 > seus registros, cliente LSP ou contratos de execução já aceitos no
 > [37](37-banco-de-dados.md). D1a.1 protege o catálogo e D1a.2 implementa
-> negociação/erros puros (§4.4; 40.7 §7.235–§7.236). Processos externos,
-> fluxo operacional e migração de perfis continuam pendentes.
+> negociação/erros puros (§4.4; 40.7 §7.235–§7.236). D1a.3 acrescenta
+> mensagens e validação operacional pura (§4.5). Processos externos e
+> migração de perfis continuam pendentes.
 
 ## 1. Objetivo e limite da atualização independente
 
@@ -251,14 +252,34 @@ confere correlação/versão/identidade/recursos e fornece o mapeamento público
 Fixtures JSON v1 e testes provam major incompatível, minor aditiva, campos
 extras de resposta, orçamento reduzido, resposta ambígua/antiga e segredo
 ausente do erro público. Nada abre banco, carrega senha ou inicia programa.
-Formato extensível/migração de perfis e mensagens operacionais vêm nos
-recortes seguintes de D1a; D1b ainda não pode iniciar só com este handshake.
+Mensagens operacionais estão na D1a.3 (§4.5); formato extensível/migração
+de perfis seguem na D1a.4. D1b ainda não pode iniciar só com este handshake.
 
 **Aceite:** 40.7 §7.236. Desserialização exige objetos em todas as camadas,
 recusando arrays posicionais, campos duplicados e envelopes ambíguos. Sete
 testes do protocolo e oito do negociador usam fixtures e casos adversos;
 gates completos/estritos passaram com 1034 testes Rust. Não há transporte
 externo nem garantia de prazo/coleta de processos nesta implementação pura.
+
+### 4.5 D1a.3 — contrato e validação operacional pura (2026-10-07)
+
+O [40](40-contrato-operacional-de-drivers.md) fecha pedidos, chunks,
+prévia/decisão/cancelamento e terminais da API externa 1.0 antes do runtime.
+Tipos em `driver/operation.rs` reutilizam modelos de resultados e decisões
+atuais. Credencial transitória só cabe em abrir; Debug a omite. Nenhum desses
+métodos é registrado no dispatcher UI/core, que permanece `0.164.0`.
+
+`datasource/driver_stream.rs` valida contexto completo, sequência contígua,
+terminal único e limites cumulativos sem reter linhas/catálogo. Confere
+alvos exatos de decisão/cancelamento e coerência da prévia; recusa dimensões,
+células ou catálogo inválidos antes de mudar estado. NULL e texto vazio são
+distintos. Catálogo externo não fornece instruções executáveis ao core.
+
+Sete testes operacionais do protocolo e 15 do guardião passaram na árvore
+integrada. D1b ainda precisa limitar o envelope antes de extrair o payload,
+aplicar autorização, fila/prazos e supervisionar/coletar processos reais.
+Aceite de decisão e publicação/merge do snapshot conservam seus donos;
+validação pura não comprova conexão, commit/rollback ou atualização externa.
 
 ## 5. Configuração, perfis e escolha de versão
 
@@ -408,7 +429,7 @@ Complemento à fila D0–D7 do 38; numeração não significa um commit por linh
 | Fatia | Entrega e dependência |
 | --- | --- |
 | D1 | Registro dos quatro motores e descritores consumidos pelo formulário/menu em `0.164.0`; 40.7 §7.234. Nenhum processo externo ou LSP ativado |
-| D1a | Proteção do catálogo e negociação/erros puros aceitos (§7.235–§7.236); fluxo operacional e perfil extensível/migração ainda necessários antes de persistir IDs de ferramenta |
+| D1a | Proteção do catálogo, negociação/erros e fluxo operacional puros (§7.235–§7.237); perfil extensível/migração D1a.4 ainda necessário antes de persistir IDs de ferramenta |
 | D1b | Base de processo compartilhada e ponte externa; handshake sem segredo, fila limitada, encerramento e isolamento provados |
 | D1c | Migrar PostgreSQL, incluindo impacto e prévia com conexão/transação reais, para o processo escolhido |
 | D1d | Migrar SQLite e depois MongoDB, cada um em sua fatia com recursos atuais e versões aceitas preservados |
@@ -458,8 +479,9 @@ de produto nem implementação concluída.
 
 Desenho revisado e suficiente para iniciar **a fatia de contratos**, antes
 de runtime/migração. D1a.2 já fecha números e fixtures da inicialização pura;
-as mensagens operacionais, o formato de perfis e a aplicação dos limites no
-transporte ainda precisam de aceite. Seleção LSP InfluxDB e catálogo vivo/adaptação MongoDB
+as mensagens operacionais e seu guardião puro estão na D1a.3. Formato de
+perfis e aplicação dos limites no transporte seguem pendentes. Seleção LSP
+InfluxDB e catálogo vivo/adaptação MongoDB
 continuam pendências concretas do 38, sem um parser próprio como atalho.
 
 ## 10. Fontes primárias consultadas em 2026-10-07

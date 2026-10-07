@@ -1,0 +1,17 @@
+{
+  "context": {
+    "instanceId": "instance-workspace-profile-installation",
+    "sessionId": "session-1",
+    "generation": 7,
+    "operationId": "operation-1"
+  },
+  "sequence": 1,
+  "payload": {
+    "kind": "previewReady",
+    "previewId": "preview-1",
+    "executedSql": "UPDATE sample SET value=1 RETURNING value",
+    "expiresInSeconds": 60,
+    "affected": 3,
+    "truncated": true
+  }
+}

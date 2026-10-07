@@ -1,0 +1,24 @@
+{
+  "context": {
+    "instanceId": "instance-workspace-profile-installation",
+    "sessionId": "session-1",
+    "generation": 7,
+    "operationId": "operation-1"
+  },
+  "sequence": 0,
+  "payload": {
+    "kind": "rows",
+    "columns": [
+      "null_value",
+      "empty_text",
+      "utf8"
+    ],
+    "rows": [
+      [
+        null,
+        "",
+        "ação"
+      ]
+    ]
+  }
+}
