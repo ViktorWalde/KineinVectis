@@ -12,6 +12,10 @@ Item {
     id: root
 
     property var draft: null
+    property var providers: []
+    readonly property var provider: root.draft
+        ? DataSourceKinds.providerFor(root.providers, root.draft.engine) : null
+    readonly property bool credentials: DataSourceKinds.hasProfileFeature(root.provider, "credentials")
 
     property var odbcSources: []
     property bool odbcLoading: false
@@ -25,8 +29,7 @@ Item {
     // `SQLite` e' um ARQUIVO: nao tem servidor, porta, usuario nem senha.
     // Mostrar esses campos vazios seria pedir ao autor que preenchesse o que
     // nao existe — que e' como a maioria das IDEs trata SQLite.
-    readonly property bool arquivo:
-        root.draft ? DataSourceKinds.isSqlite(root.draft.engine) : false
+    readonly property bool fileConnection: root.provider !== null && root.provider.connectionKind === "file"
 
     // O MongoDB tem servidor e porta como o Postgres, mas NAO exige usuario —
     // um servidor local sem autenticacao e' o caso comum de desenvolvimento. E
@@ -34,16 +37,15 @@ Item {
     // porque nele a estrutura e' INFERIDA e o custo dessa inferencia e' uma
     // escolha do autor.
     //
-    // VEM DE FORA, e nao de uma comparacao local com o motor do rascunho: o
-    // controller ja' responde essa pergunta para escolher a VISAO da
-    // estrutura, e duas copias da mesma derivacao divergem em silencio — o
-    // gate de duplicacao pegou a segunda no mesmo dia em que ela nasceu.
-    property bool mongo: false
-    readonly property bool postgres: root.draft !== null && DataSourceKinds.isPostgres(root.draft.engine)
-    readonly property bool odbc: root.draft !== null && DataSourceKinds.isOdbc(root.draft.engine)
+    // Campos vêm do descritor do core; não inferir suporte pelo nome do motor.
+    readonly property bool mongo: DataSourceKinds.hasProfileFeature(root.provider, "sampling")
+    readonly property bool verifiedTls: DataSourceKinds.hasProfileFeature(root.provider, "verifiedTls")
+    readonly property bool odbc: root.provider !== null && root.provider.connectionKind === "dsn"
+    readonly property bool server: root.provider !== null && root.provider.connectionKind === "server"
     readonly property string tls: root.draft ? (root.draft.tls || "disable") : "disable"
 
     implicitHeight: coluna.implicitHeight
+    enabled: root.providers.length > 0
 
     Column {
         id: coluna
@@ -59,18 +61,22 @@ Item {
             font.pixelSize: Theme.fontSizeCaption
         }
 
+        Text {
+            width: parent.width
+            visible: root.provider === null
+            text: root.providers.length === 0 ? qsTr("Aguardando os motores disponíveis…")
+                : qsTr("Este motor está indisponível. Escolha um motor disponível para editar.")
+            wrapMode: Text.WordWrap
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeCaption
+        }
+
         // Padrao novo (2026-10-04): o seletor segmentado no lugar dos chips
         // em fonte mono; "SQLite (arquivo)" virou "SQLite" (pedido do autor).
         KvSegmentedControl {
             width: parent.width
             current: root.draft ? root.draft.engine : "postgres"
-            options: [
-                { value: "postgres", label: qsTr("PostgreSQL"), icon: DataSourceKinds.engineIcon("postgres"),
-                  tooltip: qsTr("PostgreSQL e TimescaleDB") },
-                { value: "sqlite", label: qsTr("SQLite"), icon: DataSourceKinds.engineIcon("sqlite") },
-                { value: "mongo", label: qsTr("MongoDB"), icon: DataSourceKinds.engineIcon("mongo") },
-                { value: "odbc", label: qsTr("Outro (ODBC)"), tooltip: qsTr("Driver instalado e DSN registrado no unixODBC") }
-            ]
+            options: DataSourceKinds.providerOptions(root.providers)
             onSelected: value => root.fieldEdited("engine", value)
         }
 
@@ -125,7 +131,7 @@ Item {
 
         DataSourceField {
             width: parent.width
-            visible: root.arquivo
+            visible: root.fileConnection
             label: qsTr("Arquivo .db")
             placeholder: qsTr("caminho do banco SQLite neste projeto")
             value: root.draft ? root.draft.database : ""
@@ -134,7 +140,7 @@ Item {
 
         DataSourceField {
             width: parent.width
-            visible: !root.arquivo && !root.odbc
+            visible: root.server
             label: root.mongo ? qsTr("Host") : qsTr("Host ou diretório de socket")
             placeholder: root.mongo ? qsTr("localhost, ou db.exemplo.com") : qsTr("/var/run/postgresql, ou db.exemplo.com")
             value: root.draft ? root.draft.host : ""
@@ -143,7 +149,7 @@ Item {
 
         Row {
             width: parent.width
-            visible: !root.arquivo && !root.odbc
+            visible: root.server
             spacing: Theme.spacingSmall
 
             DataSourceField {
@@ -188,7 +194,7 @@ Item {
 
         DataSourceField {
             width: parent.width
-            visible: !root.arquivo
+            visible: root.credentials
             label: root.mongo ? qsTr("Usuário (vazio = sem autenticação)") : qsTr("Usuário")
             placeholder: qsTr("o papel que conecta")
             value: root.draft ? root.draft.user : ""
@@ -197,7 +203,7 @@ Item {
 
         Text {
             width: parent.width
-            visible: !root.arquivo
+            visible: root.credentials
             text: qsTr("De onde vem a senha")
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
@@ -205,7 +211,7 @@ Item {
 
         KvSegmentedControl {
             width: parent.width
-            visible: !root.arquivo
+            visible: root.credentials
             current: root.secretSource
             options: [
                 { value: "automatic", label: qsTr("Automático") },
@@ -217,7 +223,7 @@ Item {
 
         Text {
             width: parent.width
-            visible: !root.arquivo
+            visible: root.credentials
             wrapMode: Text.WordWrap
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
@@ -239,7 +245,7 @@ Item {
 
         DataSourceField {
             width: parent.width
-            visible: !root.arquivo && root.secretSource === "environment"
+            visible: root.credentials && root.secretSource === "environment"
             label: qsTr("Variável de ambiente")
             placeholder: root.odbc ? "DB_PASSWORD" : "PGPASSWORD"
             value: root.draft ? (root.draft.secretVariable || "") : ""
@@ -251,7 +257,7 @@ Item {
         // conferir" aqui.
         KvSegmentedControl {
             width: parent.width
-            visible: root.postgres
+            visible: root.verifiedTls
             current: root.tls === "require" ? "require" : "disable"
             options: [
                 { value: "disable", label: qsTr("Sem TLS") },
@@ -263,7 +269,7 @@ Item {
 
         DataSourceField {
             width: parent.width
-            visible: root.postgres && root.tls === "require"
+            visible: root.verifiedTls && root.tls === "require"
             label: qsTr("Certificado (PEM) em que confiar — vazio = raízes públicas")
             placeholder: "/etc/ssl/certs/meu-postgres.pem"
             value: root.draft ? (root.draft.caFile || "") : ""

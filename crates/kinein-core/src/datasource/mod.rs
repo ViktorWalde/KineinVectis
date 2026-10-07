@@ -66,6 +66,7 @@ pub mod preview;
 pub mod preview_postgres;
 mod preview_rows;
 pub mod preview_sql;
+pub mod providers;
 pub mod query;
 pub mod secret;
 pub mod sql_syntax;
@@ -74,7 +75,7 @@ mod store;
 
 use std::path::Path;
 
-use kinein_protocol::{DataSourceEngine, DataSourceProfile};
+use kinein_protocol::{DataSourceConnectionKind, DataSourceEngine, DataSourceProfile};
 
 pub use secret::{Secret, SecretPlan};
 
@@ -109,10 +110,11 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
     // nem usuario; exigir os tres seria pedir ao autor que preenchesse o que
     // nao existe — e deixar campos vazios na tela e' a forma como a maioria
     // das IDEs trata SQLite (decisao do autor, 2026-09-04).
-    if profile.engine == DataSourceEngine::Odbc {
+    let provider = providers::descriptor(profile.engine);
+    if provider.connection_kind == DataSourceConnectionKind::Dsn {
         return odbc::validate_dsn(&profile.database);
     }
-    if profile.engine == DataSourceEngine::Sqlite {
+    if provider.connection_kind == DataSourceConnectionKind::File {
         return if profile.database.trim().is_empty() {
             Err("informe o caminho do arquivo .db".to_owned())
         } else {

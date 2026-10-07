@@ -28,10 +28,10 @@ Item {
             root.dataSourceController.odbc.handleRequired(method, details);
         }
 
-        function onDataSourceListResolved(profiles, bindings, workspace) {
+        function onDataSourceListResolved(profiles, bindings, workspace, providers) {
             if (workspace !== root.dataSourceController.workspaceRoot) return;
             root.dataSourceController.consoles.catalogue(bindings, workspace);
-            root.dataSourceController.handleList(profiles);
+            root.dataSourceController.handleList(profiles, providers);
         }
 
         function onDataSourceConsoleResolved(operation) {

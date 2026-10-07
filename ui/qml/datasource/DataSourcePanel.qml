@@ -19,6 +19,7 @@ Item {
     id: root
 
     property var profiles: []
+    property var providers: []
     property string selectedName: ""
     property var draft: null
     property var odbcSources: []
@@ -68,6 +69,8 @@ Item {
     property string face: "connection"
     readonly property bool draftNamed: root.draft !== null && root.draft.name !== ""
     readonly property bool savedSelected: root.selectedName !== ""
+    readonly property bool providerAvailable: root.draft !== null
+        && DataSourceKinds.providerFor(root.providers, root.draft.engine) !== null
     readonly property bool draftSaved: root.profiles.some(profile => profile.name === root.selectedName
         && JSON.stringify(DataSourceKinds.cloneProfile(profile)) === JSON.stringify(root.draft))
 
@@ -153,7 +156,7 @@ Item {
                 width: parent.width
                 visible: root.face === "connection"
                 draft: root.draft
-                mongo: root.documentEngine
+                providers: root.providers
                 odbcSources: root.odbcSources
                 odbcLoading: root.odbcLoading
                 odbcMessage: root.odbcMessage
@@ -220,7 +223,7 @@ Item {
             activeFocusOnTab: true
             compact: true
             text: root.testing ? qsTr("Testando…") : qsTr("Testar")
-            enabled: root.draftSaved && !root.testing
+            enabled: root.providerAvailable && root.draftSaved && !root.testing
             onClicked: root.testRequested()
         }
 
@@ -246,7 +249,7 @@ Item {
             compact: true
             primary: true
             text: qsTr("Salvar")
-            enabled: root.draftNamed
+            enabled: root.providerAvailable && root.draftNamed
             onClicked: {
                 root.saveRequested();
                 root.closeRequested();

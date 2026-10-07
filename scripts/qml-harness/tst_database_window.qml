@@ -46,7 +46,8 @@ Item {
         repeat: true
         onTriggered: {
             if (root.stage === 0) {
-                bankController.profiles = [Object.assign(DataSourceKinds.emptyProfile(), { name: "loja" })];
+                bankController.handleList([Object.assign(DataSourceKinds.emptyProfile(), { name: "loja" })],
+                    ["postgres", "sqlite", "mongo", "odbc"].map(engine => ({ engine: engine })));
                 for (let index = 0; index < root.children.length; index++) {
                     if (typeof root.children[index].restorePreviousFocus === "function") root.popup = root.children[index];
                 }

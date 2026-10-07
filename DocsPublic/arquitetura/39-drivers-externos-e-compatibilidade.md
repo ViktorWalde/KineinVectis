@@ -329,7 +329,7 @@ Complemento à fila D0–D7 do 38; numeração não significa um commit por linh
 
 | Fatia | Entrega e dependência |
 | --- | --- |
-| D1 | Descritores internos sobre motores atuais e contrato público aditivo, conforme o 38 |
+| D1 | Registro dos quatro motores e descritores consumidos pelo formulário/menu em `0.164.0`; 40.7 §7.234. Nenhum processo externo ou LSP ativado |
 | D1a | Contratos de processo/erros/limites e perfil extensível; migração/preservação antes de persistir IDs de ferramenta |
 | D1b | Base de processo compartilhada e ponte externa; handshake sem segredo, fila limitada, encerramento e isolamento provados |
 | D1c | Migrar PostgreSQL, incluindo impacto e prévia com conexão/transação reais, para o processo escolhido |

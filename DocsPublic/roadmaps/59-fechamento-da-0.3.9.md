@@ -612,7 +612,14 @@ seletiva e o formulário estão concluídos, com gate completo e estrito
 verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
 O passo 7 continua aberto.
 
-**Última fatia de produto concluída:** Desconectar (§5.1.5, 40.7 §7.231), protocolo
+**Última fatia de produto concluída:** D1 (40.7 §7.234), protocolo `0.164.0`.
+O core fornece os descritores dos quatro motores atuais ao formulário/menu
+pelo fluxo de perfis existente. Gates completos/estritos em continuação,
+1014 testes Rust, 132 harnesses em cada Qt 6.10/6.4 e prova com mouse/teclado
+na sessão gráfica real. Perfis preservados; catálogo e linha SQLite lidos
+na IDE. Drivers externos e LSP continuam pendentes; próxima fatia D1a.
+
+**Desconexão anterior aceita:** Desconectar (§5.1.5, 40.7 §7.231), protocolo
 `0.163.0`. Drena trabalhos e drivers, revoga prévia sem decisão/consentimento
 ODBC, preserva perfil/rascunho e descarta resposta antiga do console.
 PostgreSQL/MongoDB reais e gestos SQLite na janela da IDE provados. Gates
@@ -648,8 +655,12 @@ o 39 e ADR-0010 definem atualização independente também do driver, com API
 de processo, perfis preservados e migração gradual. Revisão de donos/falhas
 registrada no 39 §9 e 40.7 §7.233. Sem implementação nessa entrega.
 
-**Próxima fatia executável:** descritores/contratos de provedores sobre os
-donos atuais (38 D1) e contratos de perfil/processo (D1a), antes de runtime.
+**D1 entregue (40.7 §7.234, `0.164.0`):** registro sobre os quatro motores
+atuais, descritores no fluxo de perfis, formulário/menu consumidores. Nenhum
+driver ou LSP novo carregado; perfis/contextos anteriores preservados.
+
+**Próxima fatia executável:** contratos de perfil/processo e limites (D1a),
+com preservação/migração antes de runtime ou seleção persistida de ferramenta.
 Ponte/extração de drivers em D1b–D1d; instâncias/contexto e integração LSP
 (D2–D5) seguem as dependências do 39 §8.
 LSP SQL passou a ser obrigatório: não implementar completion de catálogo
@@ -704,7 +715,9 @@ reais e rascunho preservado na IDE. Não refaça leases/barreira, shutdown
 MongoDB nem descarte de pedidos antigos do console. Desenho modular registrado
 no §7.232, arquitetura/38 e ADR-0009; ainda sem integração de
 produto. A revisão posterior, antes do código, está no §7.233,
-arquitetura/39 e ADR-0010. Atual: D1/D1a, descritores, perfis e contratos;
+arquitetura/39 e ADR-0010. D1 entregue no §7.234, protocolo 0.164.0:
+providers em datasource.list/save/remove, campos e motores do formulário/menu
+vindos do core; não refaça esse registro. Atual: D1a, perfis/contratos/limites;
 runtime/extração de drivers em D1b–D1d, contexto LSP em D2 conforme o 39 §8.
 Não refaça menus/seleção, popup LSP ou transporte do cliente. Leia os donos,
 limites, revisão e dependências antes do código.
@@ -1219,6 +1232,25 @@ timers ou camadas de input. Não alterar globalmente o token
 lado a lado, símbolos, overlays e terminais na mesma janela.
 
 - **AppImage, depois de todo o pente fino** (decisões do autor, 2026-10-04).
+  - **Unificação reafirmada em 2026-10-07:** usar uma única release de Qt
+    no desenvolvimento, CI, testes e pacote. A instalação local foi conferida
+    com `qmake6 -query QT_VERSION` (6.10.2); o runner do pacote, com
+    `dpkg-query` no contêiner (6.4.2). CMake ainda exige mínimo 6.4.
+    A migração permanece após Banco, sem trocar SDK/build/gates nesta D1.
+    - Alvo da pesquisa nesta data: **Qt 6.12**, estável desde 2026-09-30
+      ([anúncio oficial](https://www.qt.io/blog/qt-6.12-released)). Reconfirmar
+      o patch estável disponível ao executar a fatia e fixar a toolchain
+      reproduzível nos ambientes de build/teste/pacote.
+      Selecionar o SDK explicitamente no CMake e conferir a versão carregada
+      nos testes, evitando que um ambiente resolva outro Qt do sistema.
+    - Para o frontend, avaliar o [hot reload de QML](https://www.qt.io/blog/hot-reload-in-qt-6.12)
+      no fluxo de desenvolvimento e recursos estáveis de Qt Quick/modelos.
+      Revisar APIs e componentes existentes antes de adotar substitutos;
+      recursos em Labs/Technology Preview não entram como requisito do produto.
+    - Conferir QtWebEngine e plugins compatíveis com a release escolhida;
+      reconstruir todos os presets em diretórios novos e provar editor,
+      terminal, painéis, X11/Wayland, aba Web e consumo de CPU/RSS.
+      Aposentar o alvo 6.4 e seus contornos depois da prova na versão nova.
   - **O tamanho não importa; o consumo de recurso no dia a dia sim.** Medir
     RSS/PSS e CPU parados e em uso, com e sem a aba Web.
   - **Qt atual no pacote.** O checkout usa o Qt 6.10.2, mas o AppImage é
@@ -1227,8 +1259,8 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
     - A correção é montar o pacote com o Qt estável mais recente, com o
       QtWebEngine, a partir dos binários oficiais (aqtinstall ou o
       instalador da Qt).
-    - Esses binários são compilados para uma glibc antiga e rodam na base do
-      builder (Ubuntu 24.04, abaixo).
+    - Conferir a baseline glibc/ABI dos binários oficiais escolhidos contra
+      a base do builder (Ubuntu 24.04, abaixo); a versão nova ainda exige prova.
     - Depois, o gate Qt 6.4 (`verificar-qml-qt64`,
       `verificar-qml-logica-qt64`) passa a valer para a versão nova; rever
       o que hoje só existe para o 6.4.
@@ -1241,9 +1273,11 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
       24.04 (glibc 2.39); Debian 13, Fedora 42/43 e Arch têm glibc igual ou
       mais nova.
     - Builder em **Ubuntu 24.04**, com o **Qt estável mais recente** dos
-      binários oficiais (hoje o 6.10.x; o do sistema é 6.4). Decisão do
-      autor: os melhores recursos estáveis, não o LTS. O QtWebEngine é da
-      mesma versão, e o Rust é o estável atual.
+      binários oficiais (alvo pesquisado em 2026-10-07: 6.12; os builds
+      atuais continuam 6.10.2/6.4.2). Decisão do
+      autor: priorizar recursos da release estável recente; o selo LTS
+      não exige escolher uma release anterior. Selecionar QtWebEngine
+      compatível com o SDK, e Rust estável atual.
     - Provar o AppImage em contêineres Ubuntu 24.04, Debian 13, Fedora 43 e
       Arch.
   - **Gate Qt 6.4 aposentado** (o autor: "prosseguir com a modernização").

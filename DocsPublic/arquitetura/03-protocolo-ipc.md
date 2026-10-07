@@ -1,5 +1,11 @@
 # 03 — Protocolo IPC
 
+> **0.164.0 (2026-10-07, validado no checkout, D1; 40.7 §7.234).**
+> `datasource.list/save/remove` acrescentam `providers`, descritores dos
+> quatro adaptadores atuais. Formulário e menu recebem seleção/campos do
+> core, sem conexão, segredo ou carregamento de ferramenta. Perfis e contexto
+> de operação permanecem iguais; não habilita runtime externo nem LSP.
+
 > **0.163.0 (2026-10-07, validado no checkout; 40.7 §7.231).**
 > `datasource.disconnect { name, expectedContext, clientContext }` responde
 > `{ jobId, name, clientContext }`; `event.datasource.disconnected` traz
@@ -4600,7 +4606,7 @@ datasource.destroy    { name, data?, password?, clientContext?, expectedContext?
 datasource.odbc.sources {}                     -> { sources: [{ dsn, driver, identity }] } (0.157.0; sem carregar driver)
 datasource.odbc.authorize { name, identity, workspace } -> { name, identity, workspace } (0.157.0; consentimento em memória)
 datasource.console    { name }                -> { path, created }   (0.149.0; arquivo em .kinein/consoles/)
-datasource.list       {}                      -> { profiles: [DataSourceProfile] }
+datasource.list       {}                      -> { profiles: [DataSourceProfile], workspace, consoleBindings, providers: [DataSourceProviderDescriptor] } (0.164.0)
 datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult
 datasource.test       { name, password?, clientContext?, expectedContext? }     -> DataSourceTestAccepted   (job)
@@ -4613,6 +4619,27 @@ datasource.disconnect  { name, clientContext, expectedContext } -> { jobId, name
 
 Teste, impacto, catálogo, consulta, decisão de prévia e desconexão exigem workspace
 aberto; o perfil mora no projeto.
+
+**Descritores de provedores (`0.164.0`, D1, contrato anterior ao código).**
+`datasource.list/save/remove` acrescentam `providers`, em ordem de apresentação.
+O formulário e o menu de conexão consomem esse campo pelo CoreClient/roteador existentes; nenhum
+segundo método/cliente é criado. Cada `DataSourceProviderDescriptor` tem `id`
+(identidade da implementação), `engine` (valor atual do perfil),
+`connectionKind: server | file | dsn` e `profileFeatures`, lista tipada com
+`credentials | verifiedTls | sampling`. Esses são campos que a implementação
+atual aceita; não são permissões efetivas de uma conexão, nem capacidades LSP.
+Os IDs transitórios são `builtin.postgres`, `builtin.sqlite`, `builtin.mongo`
+e `system.odbc`. Nenhum executável é selecionado, carregado ou sondado nessa
+leitura; versão de servidor não é inferida. A lista contém somente os quatro
+motores implementados. LSPs pesquisados e InfluxDB ainda não entram nela.
+
+`DataSourceProfile`, seus valores de `engine` e o arquivo schema 1 permanecem
+iguais. Não há ID de ferramenta persistido nesta fatia. O formulário deriva
+seleção e campos dos descritores; seus rótulos/padrões de preenchimento
+continuam com dono único na UI. Motor desconhecido não adota os padrões
+PostgreSQL. Sem descritor recebido, edição/salvamento no formulário aguardam
+a lista, sem inventar um provedor. Migração de perfis, processo/erros/limites,
+instâncias e LSP seguem no [39](39-drivers-externos-e-compatibilidade.md).
 
 ```text
 event.datasource.tested        { jobId, name, ok, message, clientContext?, ... }

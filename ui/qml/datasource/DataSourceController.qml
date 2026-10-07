@@ -10,6 +10,7 @@ Item {
 
     property string workspaceRoot: ""
     property var profiles: []
+    property var providers: []
     property string selectedName: ""
     property bool panelVisible: false
     property string errorText: ""
@@ -128,6 +129,7 @@ Item {
 
     onWorkspaceRootChanged: {
         profiles = [];
+        providers = [];
         selectedName = "";
         draft = emptyDraft();
         clearSecret();
@@ -288,7 +290,9 @@ Item {
 
     function testProfile(name) { catalog.begin("test", name); }
 
-    function handleList(newProfiles) {
+    function handleList(newProfiles, newProviders) {
+        // Descoberta/remocao de dados tambem atualizam perfis, sem metadata.
+        if (newProviders !== undefined) providers = newProviders;
         profiles = newProfiles;
         errorText = "";
         // Salvar um perfil novo seleciona ele: e' o que o autor acabou de

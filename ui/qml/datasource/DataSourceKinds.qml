@@ -32,7 +32,7 @@ QtObject {
     }
 
     function engineName(engine) {
-        return isOdbc(engine) ? "Outro banco (ODBC)" : (isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "MongoDB" : "PostgreSQL"));
+        return isOdbc(engine) ? "Outro banco (ODBC)" : (isSqlite(engine) ? "SQLite" : (isMongo(engine) ? "MongoDB" : (isPostgres(engine) ? "PostgreSQL" : qsTr("Motor indisponível"))));
     }
 
     function engineShort(engine) {
@@ -57,7 +57,24 @@ QtObject {
     function defaultsFor(engine) {
         if (isMongo(engine)) return { host: "localhost", port: 27017, database: "test" };
         if (isSqlite(engine) || isOdbc(engine)) return { host: "", port: 0, database: "" };
-        return { host: "/var/run/postgresql", port: 5432, database: "postgres" };
+        return isPostgres(engine) ? { host: "/var/run/postgresql", port: 5432, database: "postgres" } : {};
+    }
+
+    // Descritores decidem campos/disponibilidade; esta camada so' apresenta.
+    function providerFor(providers, engine) {
+        return providers.find(provider => provider.engine === engine) || null;
+    }
+
+    function hasProfileFeature(provider, feature) {
+        return provider !== null && provider.profileFeatures.indexOf(feature) >= 0;
+    }
+
+    function providerOptions(providers) {
+        return providers.map(provider => ({ value: provider.engine,
+            label: isOdbc(provider.engine) ? qsTr("Outro (ODBC)") : engineName(provider.engine),
+            icon: isOdbc(provider.engine) ? "" : engineIcon(provider.engine),
+            tooltip: isPostgres(provider.engine) ? qsTr("PostgreSQL e TimescaleDB")
+                : (isOdbc(provider.engine) ? qsTr("Driver instalado e DSN registrado no unixODBC") : "") }));
     }
 
     // No rascunho `draft` (ja' com o motor novo), troca pelos padroes do
@@ -71,7 +88,7 @@ QtObject {
         const before = defaultsFor(fromEngine);
         const after = defaultsFor(toEngine);
         for (const key of ["host", "port", "database"]) {
-            if (draft[key] === before[key] || draft[key] === "" || draft[key] === undefined) draft[key] = after[key];
+            if (after[key] !== undefined && (draft[key] === before[key] || draft[key] === "" || draft[key] === undefined)) draft[key] = after[key];
         }
     }
 

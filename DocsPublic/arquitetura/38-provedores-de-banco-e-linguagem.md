@@ -4,7 +4,8 @@
 
 > **Classe: PLANO.** Decisão do autor esclarecida em 2026-10-07; base lida:
 > `main`, commit `33463a1`, protocolo `0.163.0`. A integração descrita aqui
-> ainda não existe no produto. A decisão está no
+> ainda não está integrada por inteiro. D1 entrega o registro de motores
+> atuais em `0.164.0`; runtime externo e LSP continuam pendentes. A decisão está no
 > [ADR-0009](../decisoes-adr/ADR-0009-banco-e-linguagem-por-provedores.md);
 > execução atual no [37](37-banco-de-dados.md), fila no
 > [59 §5](../roadmaps/59-fechamento-da-0.3.9.md).
@@ -246,13 +247,14 @@ recursos de uma versão desconhecida nem reenvio automático após falha.
 
 ## 6. Contrato de integração previsto
 
-Este é um desenho anterior ao IPC. Métodos/tipos abaixo ainda não estão no
-[03](03-protocolo-ipc.md) nem alteram o protocolo `0.163.0`.
-A fatia executável define os tipos, versão aditiva, eventos e erros primeiro.
+O desenho foi escrito antes do IPC, em `0.163.0`. D1 acrescenta descritores
+a `datasource.list/save/remove` no [03](03-protocolo-ipc.md), `0.164.0`,
+com consumidores no formulário e menu existentes. A superfície de linguagem
+abaixo continua prevista; sua fatia define tipos/eventos/erros antes do código.
 
 | Superfície prevista | Finalidade e correlação |
 | --- | --- |
-| `datasource.providers` | Descritores públicos de adaptadores/LSPs, compatibilidade, campos e disponibilidade; sem conectar nem instalar |
+| `datasource.list/save/remove.providers` | D1: descritores dos quatro adaptadores atuais, modelo de endereço e opções de perfil, sem conectar/carregar. Seleções/compatibilidade de ferramentas e LSP virão com consumidores próprios |
 | `datasource.language.attach` | Validar perfil/caminho/contexto e reservar job de inicialização; aceitar `{ jobId }`, sem bloquear o despacho |
 | `event.datasource.language.attached` | Resultado correlacionado por job/contexto: `sessionId`, provedor, dialeto, geração e recursos efetivos ou falha tipada |
 | `lsp.*` existente | Acrescentar contexto opcional da sessão de Banco e versão do documento; ecoar contexto nas respostas/eventos; conservar clientes de linguagens atuais |
@@ -341,7 +343,7 @@ não recriar servidor, parser ou mecanismo de armazenamento.
 | Fatia | Entrega verificável |
 | --- | --- |
 | D0 — este desenho | Donos, associação banco/LSP, atualização independente, limites e candidatos com provas delimitadas |
-| D1 — descritores e contratos | Registro interno sobre os motores atuais; identidade/contexto tipados; preservar wire/perfis existentes; contrato aditivo antes do runtime |
+| D1 — descritores e contratos | Registro dos quatro motores e formulário/menu consumidores em `0.164.0`; contexto de operação existente preservado; perfis/wire anteriores mantidos. Entrega no 40.7 §7.234 |
 | D1a — contratos de processo e perfil | Negociação/erros/limites do adaptador; perfil extensível e migração/preservação, conforme o 39 |
 | D1b — ponte de acesso externa | Base de processo compartilhada, handshake, pipes/fila limitados e encerramento real; sem novo executor completo |
 | D1c/D1d — drivers substituíveis | PostgreSQL com impacto/prévia; depois SQLite e MongoDB, extraindo implementação existente para processos escolhíveis |

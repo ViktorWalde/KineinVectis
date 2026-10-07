@@ -410,7 +410,7 @@ signals:
     void setupListResolved(const QString& distroName, const QString& family,
                            const QVariantList& tools);
     void dataSourceListResolved(const QVariantList& profiles, const QVariantList& consoleBindings,
-                                const QString& workspace);
+                                const QString& workspace, const QVariantList& providers);
     void dataSourceOdbcSourcesResolved(const QVariantList& sources);
     void dataSourceOdbcAuthorized(const QString& name, const QString& identity,
                                   const QString& workspace);

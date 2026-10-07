@@ -854,6 +854,14 @@ MongoDB      colecao -> documento, e a tela dele e' OUTRA
 Outro (ODBC) DSN registrado no unixODBC; driver instalado pela pessoa
 ```
 
+No checkout com protocolo `0.164.0`, formulário e menu mostram os motores
+disponíveis informados pelo core. Os campos acompanham o motor: arquivo no
+SQLite, DSN no ODBC, rede no PostgreSQL/MongoDB, amostra no MongoDB e TLS
+verificado no PostgreSQL. Se a lista ainda não chegou ou o motor não está
+disponível, o formulário aguarda e Salvar permanece desabilitado.
+Os perfis já salvos mantêm seu formato. A integração SQL LSP e a escolha de
+drivers externos ainda estão em desenvolvimento; esta entrega não os ativa.
+
 O MongoDB tem uma forma de exibição própria de propósito: uma coluna de tabela
 garante que existe em toda linha, tem um tipo e não aninha, e **nenhuma das três
 vale para um documento**. Desenhar documento como linha faria a tela afirmar três

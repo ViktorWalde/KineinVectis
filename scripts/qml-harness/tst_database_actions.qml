@@ -54,6 +54,7 @@ Item {
     function actionsList() { return treeActions.entries().filter(item => item.enabled).map(item => item.action).join(" "); }
 
     Component.onCompleted: {
+        bankController.providers = ["postgres", "sqlite", "mongo", "odbc"].map(engine => ({ engine: engine }));
         const profile = name => Object.assign(DataSourceKinds.emptyProfile(), { name: name, engine: "odbc", host: "", database: "fonte" });
         bankController.profiles = [profile("a|b"), profile("a"), profile("__proto__")];
         bankController.structures = DataSourceMap.copy(null, {

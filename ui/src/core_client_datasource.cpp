@@ -214,7 +214,8 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
         emit dataSourceListResolved(
             result.value(QStringLiteral("profiles")).toArray().toVariantList(),
             result.value(QStringLiteral("consoleBindings")).toArray().toVariantList(),
-            result.value(QStringLiteral("workspace")).toString());
+            result.value(QStringLiteral("workspace")).toString(),
+            result.value(QStringLiteral("providers")).toArray().toVariantList());
         return true;
     }
     if (method == QStringLiteral("datasource.console")) {

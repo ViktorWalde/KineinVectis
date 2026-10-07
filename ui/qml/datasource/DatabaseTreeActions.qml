@@ -18,6 +18,7 @@ QtObject {
     readonly property string liveContext: root.contextFor(root.menuRow)
     onLiveContextChanged: if (root.menuOpen && root.menuKind === "row" && root.liveContext !== root.menuContext) root.menuOpen = false
     readonly property string workspace: root.controller ? root.controller.workspaceRoot : ""
+    readonly property var providers: root.controller ? root.controller.providers : []
     onWorkspaceChanged: root.menuOpen = false
 
     signal consoleRequested(string name)
@@ -59,7 +60,7 @@ QtObject {
 
     function entries() {
         if (root.menuKind === "new") {
-            const items = ["postgres", "sqlite", "mongo", "odbc"].map(engine => ({
+            const items = root.providers.map(provider => provider.engine).map(engine => ({
                 label: DataSourceKinds.engineName(engine) + "…", action: "new." + engine,
                 icon: DataSourceKinds.engineIcon(engine), iconColor: DataSourceKinds.engineColor(engine), enabled: true }));
             items.push({ separator: true, label: "", action: "", enabled: false });
@@ -98,7 +99,7 @@ QtObject {
     function dispatch(action, row) {
         if (action.indexOf("new.") === 0) {
             const engine = action.slice(4);
-            if (["postgres", "sqlite", "mongo", "odbc"].indexOf(engine) >= 0) root.newRequested(engine);
+            if (DataSourceKinds.providerFor(root.providers, engine) !== null) root.newRequested(engine);
             return;
         }
         if (action === "database.discover") { root.discoveryRequested(); return; }

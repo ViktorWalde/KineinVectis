@@ -179,6 +179,9 @@ pub enum DataSourceTls {
 #[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataSourceListResult {
+    /// Metadata of implemented adapters; listing never connects or loads tools.
+    #[serde(default)]
+    pub providers: Vec<crate::DataSourceProviderDescriptor>,
     /// Saved profiles, ordered by name.
     pub profiles: Vec<DataSourceProfile>,
     /// Workspace whose catalogue was read.
@@ -212,6 +215,9 @@ pub struct DataSourceRemoveParams {
 #[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataSourceWriteResult {
+    /// Same adapter metadata as `datasource.list`, for the connection form.
+    #[serde(default)]
+    pub providers: Vec<crate::DataSourceProviderDescriptor>,
     /// The catalogue after the write, ordered by name.
     pub profiles: Vec<DataSourceProfile>,
     /// Workspace whose catalogue was read.

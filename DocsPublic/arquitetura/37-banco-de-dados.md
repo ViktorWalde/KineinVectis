@@ -65,6 +65,7 @@ Os caminhos são relativos à raiz do repositório.
 | Perfis e catálogo tipados | `crates/kinein-protocol/src/datasource.rs` |
 | Consulta e impacto tipados | `crates/kinein-protocol/src/datasource_query.rs`, `crates/kinein-protocol/src/datasource_impact.rs` |
 | Persistir, normalizar e validar perfil | `crates/kinein-core/src/datasource/mod.rs`, `crates/kinein-core/src/datasource/store.rs` |
+| Descrever adaptadores implementados e campos do formulário | `crates/kinein-core/src/datasource/providers.rs`, `crates/kinein-protocol/src/datasource_provider.rs` |
 | Política de segredo e conexão PostgreSQL | `crates/kinein-core/src/datasource/secret.rs`, `crates/kinein-core/src/datasource/connection.rs` |
 | Léxico SQL comum, fronteiras e leitura do lote inteiro | `crates/kinein-core/src/datasource/sql_syntax.rs` |
 | Classificar por motor e construir contagens | `crates/kinein-core/src/datasource/classification.rs`, `crates/kinein-core/src/datasource/impact.rs` |
@@ -740,6 +741,23 @@ conexão. DataSourceDiscoveryController conserva os pedidos e o progresso de
 criação; o editor e o resultado de consulta conservam seus donos.
 No servidor só fica disponível para o rascunho idêntico ao PostgreSQL salvo
 e sem readOnly; o core mantém a recusa efetiva. Desenho no 59 §5.1.4.
+
+### Descritores dos motores atuais (2026-10-07, 0.164.0)
+
+O registro `datasource/providers.rs` descreve os quatro adaptadores existentes.
+`datasource.list/save/remove` levam seus descritores tipados pelo mesmo
+CoreClient e roteador de perfis. O formulário e o menu de conexão recebem
+essa lista; campos de endereço, credenciais, TLS verificado e amostra seguem
+o descritor. Motor ausente não habilita Salvar nem adota padrões PostgreSQL.
+Leitura de metadata não resolve segredo, conecta, instala ou carrega driver.
+
+Identidade da implementação é distinta do motor: `builtin.postgres`,
+`builtin.sqlite`, `builtin.mongo` e `system.odbc` descrevem o backend atual.
+Não são IDs de instâncias nem seleções de ferramentas. Contextos públicos e
+arquivo de perfis schema 1 conservam o formato. O formulário mantém seus
+padrões de preenchimento no dono UI existente; validação permanece no core.
+Os descritores não declaram permissões efetivas, versão de servidor nem
+recursos LSP. A extração para processos e linguagem segue o 38/39.
 
 ### Desconexão e ciclo dos drivers (2026-10-07, 0.163.0)
 

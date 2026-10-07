@@ -24,6 +24,7 @@ KvPanelFrame {
         anchors.fill: parent
 
         profiles: root.controller ? root.controller.profiles : []
+        providers: root.controller ? root.controller.providers : []
         odbcSources: root.controller ? root.controller.odbc.sources : []
         odbcLoading: root.controller ? root.controller.odbc.loading : false
         odbcMessage: root.controller ? root.controller.odbc.message : ""

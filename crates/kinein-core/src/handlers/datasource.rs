@@ -74,6 +74,7 @@ impl Core {
         }
         let profiles = crate::datasource::list(&root);
         let resultado = DataSourceListResult {
+            providers: crate::datasource::providers::list(),
             console_bindings: crate::datasource::console::bindings(&root, &profiles),
             workspace: root.display().to_string(),
             profiles,
@@ -104,6 +105,7 @@ impl Core {
                 JsonRpcResponse::success(
                     request_id,
                     json!(DataSourceWriteResult {
+                        providers: crate::datasource::providers::list(),
                         console_bindings: crate::datasource::console::bindings(&root, &profiles),
                         workspace: root.display().to_string(),
                         profiles
@@ -143,6 +145,7 @@ impl Core {
             Ok(profiles) => JsonRpcResponse::success(
                 request_id,
                 json!(DataSourceWriteResult {
+                    providers: crate::datasource::providers::list(),
                     console_bindings: crate::datasource::console::bindings(&root, &profiles),
                     workspace: root.display().to_string(),
                     profiles

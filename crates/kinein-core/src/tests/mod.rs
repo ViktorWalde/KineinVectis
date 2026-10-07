@@ -16,6 +16,7 @@ mod datasource_discover;
 mod datasource_impact;
 mod datasource_odbc;
 mod datasource_policy;
+mod datasource_providers;
 mod datasource_query;
 mod datasource_session;
 mod debug;

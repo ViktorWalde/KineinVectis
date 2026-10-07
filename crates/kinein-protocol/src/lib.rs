@@ -24,6 +24,7 @@ mod datasource_impact;
 mod datasource_odbc;
 mod datasource_policy;
 mod datasource_preview;
+mod datasource_provider;
 mod datasource_query;
 mod datasource_session;
 mod debug;
@@ -69,6 +70,7 @@ pub use datasource_impact::*;
 pub use datasource_odbc::*;
 pub use datasource_policy::*;
 pub use datasource_preview::*;
+pub use datasource_provider::*;
 pub use datasource_query::*;
 pub use datasource_session::*;
 pub use debug::*;
@@ -103,4 +105,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.163.0";
+pub const PROTOCOL_VERSION: &str = "0.164.0";

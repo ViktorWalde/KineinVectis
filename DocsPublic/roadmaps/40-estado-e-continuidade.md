@@ -33,20 +33,27 @@
 > moderno/InfluxDB 3 nativo, com ferramentas atualizadas pelo usuário.
 > Arquitetura modular registrada no §7.232,
 > [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e ADR-0009;
-> descritores, instâncias por conexão e integrações ainda pendentes.
+> instâncias por conexão e integrações ainda pendentes.
 > Após a pesquisa do IntelliJ, o desenho foi revisto antes do código
 > (§7.233): [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) e
 > ADR-0010 definem drivers em processos com API negociada; perfis/contratos
 > precedem o runtime e a extração gradual dos drivers atuais.
-> O protocolo continua `0.163.0`; as provas externas não habilitam LSP no produto.
+> D1 entrega o registro dos quatro motores atuais, protocolo `0.164.0`
+> (§7.234): descritores no fluxo de perfis, consumidos pelo formulário/menu.
+> Arquivo de perfis e contextos atuais preservados. As provas externas
+> não habilitam LSP no produto. Próxima fatia: D1a, contratos de processo,
+> limites e preservação/migração de perfis, antes da ponte externa.
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.163.0` validado,
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.164.0` validado,
 >   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
 >   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.231.
->   A decisão modular de Banco/LSP está no §7.232, ainda sem código de produto.
+>   A decisão modular de Banco/LSP está no §7.232 e a base D1 no §7.234.
+>   A unificação do Qt foi reafirmada pelo autor em 2026-10-07: desenvolvimento,
+>   testes e AppImage na mesma release estável recente; alvo pesquisado Qt 6.12.
+>   Plano no 59 §7, depois de Banco; builds atuais ainda usam 6.10.2/6.4.2.
 >   A arquitetura da casca para quem chega, com diagramas, está em
 >   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
 >   - **F0–F5 completas.** A F5 (§7.201, §7.204) comparou espaço de código
@@ -123,8 +130,9 @@
 >     execução aceita** no §7.229 (`0.162.0`), com erro parcial preservado.
 >     **Novo banco no menu aceito** no §7.230, pelo formulário existente.
 >     **Desconexão aceita** no §7.231 (`0.163.0`), aguardando drivers e
->     conservando rascunho. Próximo: descritores/contratos de provedores e
->     perfis/processos (38 D1/D1a e 39); instâncias LSP por conexão seguem
+>     conservando rascunho. **Descritores D1 entregues** no §7.234
+>     (`0.164.0`). Próximo: perfis/processos/limites (D1a e 39);
+>     instâncias LSP por conexão seguem
 >     em D2. Localizar objeto continua na fila.
 >     O prompt está no 59 §5.8. O passo 8 vem depois; o AppImage,
 >     com QtWebEngine atual, só depois do pente fino.
@@ -471,12 +479,13 @@ e releitura após execução já estão aceitos, assim como Novo banco no menu
 e desconexão com encerramento dos drivers. Decisão modular registrada no
 §7.232, [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e ADR-0009:
 LSP obrigatório, MongoDB moderno e InfluxDB 3 nativo, ferramentas atualizadas
-pelo usuário. Integrações não implementadas; protocolo permanece `0.163.0`.
+pelo usuário. Integrações LSP ainda não implementadas; registro D1 em `0.164.0`.
 Revisão antes do código registrada no §7.233,
 [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) e ADR-0010:
 driver em processo com contrato negociado, seleção de instalação por perfil,
 preservação de arquivos futuros e escrita sem retry automático.
-Próxima: descritores/contratos (D1/D1a), runtime/extração de drivers (D1b–D1d)
+Registro D1 entregue em `0.164.0` (§7.234). Próxima: contratos/perfis/limites
+(D1a), runtime/extração de drivers (D1b–D1d)
 e instâncias/contexto LSP (D2), conforme as dependências do 39 §8.
 Localizar objeto, histórico, grade, MySQL/MariaDB e provas finais
 continuam pendentes. A contagem antiga de onze itens não fixa o número de
