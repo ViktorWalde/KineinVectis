@@ -115,6 +115,39 @@ A referência funcional de cliente de banco continua sendo o **DBeaver**, não o
 IntelliJ Community — que não tem Database Tools (é Ultimate), verificado em
 2026-07-17.
 
+### 4.1 Incluir DataGrip ou DBeaver na IDE? (pergunta do autor, 2026-10-08)
+
+**DataGrip: não.** É proprietário. Desde 2025-10-01 é gratuito só para uso
+não comercial, e o contrato desse uso (Toolbox Subscription Agreement for
+Non-Commercial Use, versão 3.0 de 2025-12-16, §3.2(B)) proíbe reproduzir,
+modificar, distribuir ou transferir o produto, dar acesso a terceiros e fazer
+engenharia reversa. Não entra no pacote nem como componente. Continua valendo
+como referência de comportamento (MODE-D), lendo a documentação pública, como
+o 59 já faz.
+
+**DBeaver Community: a licença permite, a forma não serve.** É Apache-2.0,
+então redistribuir seria possível com licença e NOTICE, sem usar a marca. Mas
+ele é Java/Eclipse RCP (EPL-2.0) e precisa de uma JVM e de drivers JDBC
+baixados sob demanda, cada um com sua licença. Não se embute numa janela
+Qt/QML: seria uma segunda aplicação, com segundo cadastro de conexões e
+guarda de senha própria, fora da regra de que a IDE nunca guarda senha
+(`../seguranca/40`) e da camada de prévia e impacto do Banco. O JDBC já foi
+recusado pelo peso (59 §5.7). Fontes NoSQL adicionais ficam na edição PRO,
+que é paga.
+
+**O que é compatível, se um dia valer:** orquestrar o DBeaver que a pessoa já
+instalou, como qualquer ferramenta externa. A linha de comando aceita
+`-con "driver=…|host=…|database=…|name=…"` para abrir uma conexão, sem
+senha, que o próprio DBeaver pede. A Kinein não distribui nada. É uma ideia,
+**não uma decisão**: cobriria pela porta de saída o que foi adiado em
+2026-10-08 (MySQL nativo, edição na grade; 59 §2.3).
+
+Fontes, consultadas em 2026-10-08:
+[DataGrip grátis para uso não comercial](https://blog.jetbrains.com/datagrip/2025/10/01/datagrip-is-now-free-for-non-commercial-use/),
+[contrato não comercial da JetBrains](https://www.jetbrains.com/legal/docs/toolbox/license_non-commercial/),
+[DBeaver, licença](https://dbeaver.io/about/),
+[DBeaver, parâmetros de linha de comando](https://dbeaver.com/docs/dbeaver/22.3/Command-Line).
+
 ## 5. O que ainda NÃO foi medido
 
 ```text

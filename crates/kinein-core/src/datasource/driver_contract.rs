@@ -184,6 +184,9 @@ fn repeated<T: PartialEq>(values: &[T]) -> bool {
 }
 
 /// Intersects budgets without raising local ceilings or accepting zero limits.
+///
+/// `inFlight` needs at least two slots: a pending preview or query must still
+/// leave room for its own decision or cancellation, which also counts.
 pub fn negotiate_limits(peer: Limits) -> Result<Limits, HandshakeFailure> {
     let limits = Limits {
         message_bytes: LIMITS.message_bytes.min(peer.message_bytes),
@@ -195,7 +198,7 @@ pub fn negotiate_limits(peer: Limits) -> Result<Limits, HandshakeFailure> {
         catalogue_items: LIMITS.catalogue_items.min(peer.catalogue_items),
     };
     if limits.message_bytes < 1024
-        || limits.in_flight == 0
+        || limits.in_flight < 2
         || limits.rows == 0
         || limits.columns == 0
         || limits.cell_bytes == 0
@@ -209,7 +212,20 @@ pub fn negotiate_limits(peer: Limits) -> Result<Limits, HandshakeFailure> {
     Ok(limits)
 }
 
+/// Public text when the database result cannot be established.
+const OUTCOME_UNKNOWN: &str = "Não foi possível confirmar o resultado no banco. O resultado é \
+    indeterminado; a operação não será repetida automaticamente.";
+
+/// Public text when a started operation failed after earlier commands could apply.
+const FAILED_AFTER_START: &str = "A operação falhou depois de iniciada; comandos anteriores \
+    de um lote podem ter sido aplicados e não serão repetidos nem desfeitos automaticamente.";
+
 /// Maps only known machine data; adapter message text never leaves this boundary.
+///
+/// The outcome decides first: an unknown result never receives a code that
+/// offers a new credential or a new preparation, and a failure after start
+/// only keeps those codes when nothing ran (`notStarted`). The original typed
+/// reason stays in the public details.
 #[must_use]
 pub fn public_error(error: &Error) -> JsonRpcError {
     let Some(data) = error.data.as_ref().filter(|_| error.code == -32000) else {
@@ -219,7 +235,29 @@ pub fn public_error(error: &Error) -> JsonRpcError {
             None,
         );
     };
-    let (code, message) = match data.reason {
+    let outcome = if data.reason == FailureReason::OutcomeUnknown {
+        OperationOutcome::Unknown
+    } else {
+        data.outcome
+    };
+    let (code, message) = match (outcome, data.reason) {
+        (OperationOutcome::Unknown, _) => (JsonRpcErrorCode::InternalError, OUTCOME_UNKNOWN),
+        (
+            OperationOutcome::Failed,
+            FailureReason::SecretRequired | FailureReason::ContextChanged,
+        ) => (JsonRpcErrorCode::InternalError, FAILED_AFTER_START),
+        (_, reason) => reason_error(reason),
+    };
+    JsonRpcError::new(
+        code,
+        message,
+        Some(json!({"driverReason":data.reason,"outcome":outcome})),
+    )
+}
+
+/// Existing UI code and text for one typed reason, before outcome precedence.
+const fn reason_error(reason: FailureReason) -> (JsonRpcErrorCode, &'static str) {
+    match reason {
         FailureReason::SecretRequired => (
             JsonRpcErrorCode::SecretRequired,
             "O banco exige uma credencial para esta sessão.",
@@ -261,28 +299,8 @@ pub fn public_error(error: &Error) -> JsonRpcError {
             JsonRpcErrorCode::InternalError,
             "A operação excedeu um limite negociado com o adaptador.",
         ),
-        FailureReason::OutcomeUnknown => (
-            JsonRpcErrorCode::InternalError,
-            "Não foi possível confirmar o resultado no banco.",
-        ),
-    };
-    let outcome = if data.reason == FailureReason::OutcomeUnknown {
-        OperationOutcome::Unknown
-    } else {
-        data.outcome
-    };
-    let message = if outcome == OperationOutcome::Unknown {
-        format!(
-            "{message} O resultado é indeterminado; a operação não será repetida automaticamente."
-        )
-    } else {
-        message.to_owned()
-    };
-    JsonRpcError::new(
-        code,
-        message,
-        Some(json!({"driverReason":data.reason,"outcome":outcome})),
-    )
+        FailureReason::OutcomeUnknown => (JsonRpcErrorCode::InternalError, OUTCOME_UNKNOWN),
+    }
 }
 
 #[cfg(test)]

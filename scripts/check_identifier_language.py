@@ -32,7 +32,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ALLOWLIST = ROOT / "scripts" / "identifier-language-allowlist.txt"
 BASELINE = ROOT / "scripts" / "identifier-language-baseline.txt"
-DICTIONARIES = (Path("/usr/share/dict/american-english"), Path("/usr/share/dict/words"))
+# Todos os que existirem, unidos (2026-10-08). O `wamerican` do Debian traz as
+# variantes britanicas (`cancelled`, `catalogue`); no Arch elas moram so' no
+# `british-english`, e ler apenas o americano reprovava seis palavras inglesas. O
+# gate recusa portugues, nao impoe a grafia americana.
+DICTIONARIES = (
+    Path("/usr/share/dict/american-english"),
+    Path("/usr/share/dict/british-english"),
+    Path("/usr/share/dict/words"),
+)
 MIN_WORD = 4
 
 SUFFIXES = {
@@ -46,16 +54,18 @@ WORD = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+")
 
 
 def load_english() -> set[str]:
+    words: set[str] = set()
     for path in DICTIONARIES:
         if path.exists():
-            words = set()
             for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
                 word = line.strip().lower()
                 if word.isascii() and word.isalpha():
                     words.add(word.removesuffix("'s"))
-            return words
-    sys.exit("erro: dicionario de ingles ausente (/usr/share/dict/american-english);"
-             " instale o pacote wamerican")
+    if words:
+        return words
+    sys.exit("erro: dicionario de ingles ausente (/usr/share/dict/american-english"
+             " ou /usr/share/dict/words); instale o pacote words (Arch, Fedora) ou"
+             " wamerican (Debian/Ubuntu) — scripts/instalar-ambiente.sh ja' o inclui")
 
 
 def load_allowlist() -> set[str]:

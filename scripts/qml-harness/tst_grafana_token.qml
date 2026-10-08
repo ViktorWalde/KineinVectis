@@ -162,9 +162,9 @@ Item {
         // DESATUALIZADO", pedir de novo nao apaga o que ja' estava ali.
         root.conferir(controlador.version !== "9.9.9",
                       "a resposta da instancia antiga foi aceita como medida da nova");
-        root.conferir(controlador.state.content === "stale",
+        root.conferir(controlador.panelState.content === "stale",
                       "o resultado da instancia anterior nao foi marcado como velho: "
-                      + controlador.state.content);
+                      + controlador.panelState.content);
 
         // TOKEN RECUSADO PELA SONDA (protocolo 0.136.0). Este caminho nao e'
         // o do `SECRET_REQUIRED`: o servidor RESPONDEU, e disse que a
@@ -179,9 +179,9 @@ Item {
         });
         root.conferir(!controlador.hasSessionToken,
                       "o token recusado pela sonda ficou em memoria");
-        root.conferir(controlador.state.auth === "failed",
+        root.conferir(controlador.panelState.auth === "failed",
                       "recusa na sonda nao virou estado de falha: "
-                      + controlador.state.auth);
+                      + controlador.panelState.auth);
         root.conferir(controlador.primaryAction.kind === "provideToken",
                       "sem caminho de volta depois da recusa: "
                       + controlador.primaryAction.kind);
@@ -191,8 +191,8 @@ Item {
         controlador.handleProfile({ url: "http://g.lab:3000", tokenSource: "none" }, true);
         controlador.probe();
         controlador.handleProbed({ reachable: true, authenticated: false, version: "11.2.0" });
-        root.conferir(controlador.state.auth === "not_required",
-                      "sem token virou recusa: " + controlador.state.auth);
+        root.conferir(controlador.panelState.auth === "not_required",
+                      "sem token virou recusa: " + controlador.panelState.auth);
 
         // PEDIR TOKEN NAO E' TER MEDIDO. O core recusa `SECRET_REQUIRED` ao
         // resolver a POLITICA, antes de falar com o Grafana: carimbar hora
@@ -204,8 +204,8 @@ Item {
         controlador.handleFailed("grafana.probe", "token exigido", "SECRET_REQUIRED");
         root.conferir(controlador.probedAt === 0,
                       "o pedido de token virou medida: probedAt=" + controlador.probedAt);
-        root.conferir(controlador.state.probe === "unknown",
-                      "pedir token contou como sonda que falhou: " + controlador.state.probe);
+        root.conferir(controlador.panelState.probe === "unknown",
+                      "pedir token contou como sonda que falhou: " + controlador.panelState.probe);
 
         Qt.exit(root.falhas === 0 ? 0 : 1);
     }

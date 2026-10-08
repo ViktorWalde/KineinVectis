@@ -1,8 +1,9 @@
 # 04 — Os gates que dizem "não"
 
-> **Perfil vigente (2026-10-07):** foco Qt 6.10, por orientação do autor.
-> G0.2/G0.3 do Qt 6.4 permanecem scripts legados; não são executados pelo
-> orquestrador nem exigidos nas próximas fatias. Lint, harnesses e CTest
+> **Perfil vigente (2026-10-07):** o Qt local do sistema, por orientação do
+> autor — desde a migração para Arch Linux na mesma data, Qt 6.12.0 (antes
+> 6.10). G0.2/G0.3 do Qt 6.4 permanecem scripts legados; não são executados
+> pelo orquestrador nem exigidos nas próximas fatias. Lint, harnesses e CTest
 > locais continuam obrigatórios; provas antigas abaixo conservam suas datas.
 
 `bash scripts/verificar.sh` roda tudo em sequência e **para no primeiro

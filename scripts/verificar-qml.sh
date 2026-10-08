@@ -215,5 +215,35 @@ if declarados:
 PYCHECK
 
 echo "== qmllint (estrito: zero warnings) =="
-"$QMLLINT" -W 0 @"$RSP"
-echo "QML verificado: tudo limpo."
+# O RELATORIO SAI DO JSON, NAO DO TEXTO (2026-10-08). No qmllint 6.12 parte dos
+# avisos `id-shadows-member` entra na contagem do `-W 0` (saida 255) e NAO e'
+# impressa no modo texto: o gate reprovava sem dizer onde. O JSON traz todos.
+report="$(mktemp "${TMPDIR:-/tmp}/kinein-qmllint.XXXXXX")"
+trap 'rm -f "$report"' EXIT
+if "$QMLLINT" -W 0 --json "$report" @"$RSP" >/dev/null 2>&1; then
+    echo "QML verificado: tudo limpo."
+    exit 0
+fi
+python3 - "$report" "$REPO_ROOT" <<'PYREPORT'
+import json, sys
+from pathlib import Path
+
+report, root = Path(sys.argv[1]), sys.argv[2] + "/"
+try:
+    files = json.loads(report.read_text(encoding="utf-8")).get("files", [])
+except (OSError, ValueError):
+    files = []
+count = 0
+for entry in files:
+    name = entry.get("filename", "?").removeprefix(root)
+    for warning in entry.get("warnings", []):
+        count += 1
+        print(f"{warning.get('type', '?')}: {name}:{warning.get('line', '?')}:"
+              f"{warning.get('column', '?')}: {warning.get('message', '')}"
+              f" [{warning.get('id', '?')}]", file=sys.stderr)
+if count == 0:
+    print("erro: o qmllint reprovou sem relatorio legivel; rode-o a mao com o .rsp.",
+          file=sys.stderr)
+print(f"erro: qmllint com {count} achado(s).", file=sys.stderr)
+PYREPORT
+exit 1

@@ -32,13 +32,13 @@ Item {
 
     // D2.2 (DocsPublic/roadmaps/24): scrollback sintetico; estado/coalescencia vivem no
     // controller dedicado para serem testados fora da superficie visual.
-    property alias scrollOffset: scrollController.scrollOffset
+    property alias scrollOffset: terminalScrollController.scrollOffset
     readonly property int pendingScrollOffset:
-        scrollController.pendingScrollOffset
+        terminalScrollController.pendingScrollOffset
     readonly property int awaitingScrollOffset:
-        scrollController.awaitingScrollOffset
+        terminalScrollController.awaitingScrollOffset
     readonly property string renderedSessionId:
-        scrollController.renderedSessionId
+        terminalScrollController.renderedSessionId
 
     focus: true
     readonly property TerminalInputController input: actions.input
@@ -59,7 +59,7 @@ Item {
     // rolar (0 = terminal recém-aberto, "não rolar" é o correto).
     readonly property int gridRows: (render && render.rows) ? render.rows : 0
     readonly property int gridCols: (render && render.cols) ? render.cols : 0
-    readonly property int scrollbackMax: scrollController.scrollbackMax
+    readonly property int scrollbackMax: terminalScrollController.scrollbackMax
     readonly property bool scrollIndicatorVisible: terminalViewport.scrollIndicatorVisible
     readonly property bool scrollIndicatorScrollable: terminalViewport.scrollIndicatorScrollable
     readonly property real terminalContentWidth: terminalViewport.contentWidth
@@ -72,15 +72,15 @@ Item {
             pendingRows = 0;
             lastRequestedCols = 0;
             lastRequestedRows = 0;
-            selectionController.clear();
+            terminalSelectionController.clear();
             Qt.callLater(panel.recomputeSize);
         }
-        scrollController.handleRender(render);
-        selectionController.handleCoreSelection(render && render.selectionId ? String(render.selectionId) : "");
+        terminalScrollController.handleRender(render);
+        terminalSelectionController.handleCoreSelection(render && render.selectionId ? String(render.selectionId) : "");
     }
 
     function queueScroll(next) {
-        scrollController.queueScroll(next);
+        terminalScrollController.queueScroll(next);
     }
 
     // R1 (DocsPublic/roadmaps/26 §4.6): a ÚNICA fonte de métricas de célula. Antes o
@@ -106,7 +106,7 @@ Item {
     property int lastRequestedRows: 0
 
     TerminalSelectionController {
-        id: selectionController
+        id: terminalSelectionController
 
         lines: panel.lines
         metrics: cellMetrics
@@ -117,7 +117,7 @@ Item {
     }
 
     TerminalScrollController {
-        id: scrollController
+        id: terminalScrollController
 
         onScrollRequested: function(offset) {
             panel.scrollRequested(offset);
@@ -189,7 +189,7 @@ Item {
     function snapToBottom() {
         // O controller emite o retorno ao vivo sincronamente; o byte de input
         // só é enviado depois pelo chamador.
-        scrollController.snapToBottom();
+        terminalScrollController.snapToBottom();
     }
 
     function performTerminalAction(action) {
@@ -201,8 +201,8 @@ Item {
         sessionId: panel.sessionId
         applicationCursor: panel.applicationCursor
         bracketedPaste: panel.bracketedPaste
-        selectionController: selectionController
-        scrollController: scrollController
+        selectionController: terminalSelectionController
+        scrollController: terminalScrollController
         terminalActive: panel.terminalActive
         canSelectAll: panel.sessionAvailable && panel.runtimeController
                       && !panel.runtimeController.isFinishedRun(panel.sessionId)
@@ -228,7 +228,7 @@ Item {
         anchors.fill: parent
         lines: panel.lines
         cursor: panel.cursor
-        selectionController: selectionController
+        selectionController: terminalSelectionController
         metrics: cellMetrics
         terminalActive: panel.terminalActive
         scrollOffset: panel.scrollOffset
@@ -253,9 +253,9 @@ Item {
         z: 1100
         available: panel.visible && !panel.input.pastePending
         sessionId: panel.sessionId
-        canCopy: selectionController.hasSelection
+        canCopy: terminalSelectionController.hasSelection
         canPaste: panel.terminalActive && panel.clipboardHasText
-        canSelectVisible: selectionController.hasSelectableContent
+        canSelectVisible: terminalSelectionController.hasSelectableContent
         canSelectAll: actions.canSelectAll
         canUseSession: panel.terminalActive
         canClearScrollback: panel.terminalActive && panel.scrollbackMax > 0
@@ -278,7 +278,7 @@ Item {
         enabled: !terminalMenu.open && !panel.input.pastePending
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: function(event) {
-            const lines = scrollController.linesFromWheel(
+            const lines = terminalScrollController.linesFromWheel(
                     event.angleDelta.y, event.pixelDelta.y, panel.lineHeight);
             if (lines === 0) {
                 return;

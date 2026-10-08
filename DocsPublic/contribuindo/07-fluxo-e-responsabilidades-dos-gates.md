@@ -1,7 +1,8 @@
 # 07 — Fluxo e responsabilidades dos gates
 
-> **Perfil vigente (autor, 2026-10-07):** desenvolvimento/validação focam
-> Qt 6.10. O orquestrador executa qmllint, harnesses, CTest e abertura locais;
+> **Perfil vigente (autor, 2026-10-07):** desenvolvimento/validação usam o
+> Qt local do sistema — Arch Linux desde a mesma data, Qt 6.12.0 (antes 6.10).
+> O orquestrador executa qmllint, harnesses, CTest e abertura locais;
 > `verificar-qml-qt64.sh` e `verificar-qml-logica-qt64.sh` saem da sequência
 > obrigatória. Seus scripts/provas ficam históricos para o pacote anterior.
 > Check barato de invariantes AppImage continua sem gerar pacote/rodar Qt 6.4.

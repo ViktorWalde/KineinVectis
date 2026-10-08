@@ -133,7 +133,7 @@ void TypingHarness::begin()
 
     m_clock.start();
     m_quietTimer.setInterval(10);
-    connect(&m_quietTimer, &QTimer::timeout, this, [this]() {
+    connect(&m_quietTimer, &QTimer::timeout, this, [this] {
         const qint64 sinceFrame =
             m_clock.nsecsElapsed() - m_lastFrameNs.load(std::memory_order_acquire);
         if (sinceFrame < static_cast<qint64>(m_quietMs) * 1000000) {
@@ -156,7 +156,7 @@ void TypingHarness::begin()
     // nao numa metrica de poucos milissegundos.
     connect(
         m_window, &QQuickWindow::frameSwapped, this,
-        [this]() {
+        [this] {
             const qint64 now = m_clock.nsecsElapsed();
             m_lastFrameNs.store(now, std::memory_order_release);
             const qint64 sentAt = m_keySentNs.exchange(-1, std::memory_order_acq_rel);
@@ -168,13 +168,13 @@ void TypingHarness::begin()
         },
         Qt::DirectConnection);
 
-    QTimer::singleShot(m_timeoutMs, this, [this]() {
+    QTimer::singleShot(m_timeoutMs, this, [this] {
         fail(QStringLiteral("timeout apos %1 ms (amostras=%2)")
                  .arg(m_timeoutMs)
                  .arg(m_samples.size()));
     });
 
-    connect(m_client, &CoreClient::workspaceChanged, this, [this]() { onWorkspaceOpened(); });
+    connect(m_client, &CoreClient::workspaceChanged, this, [this] { onWorkspaceOpened(); });
     connect(m_client, &CoreClient::fileLoaded, this, [this](const QString& path, const QString&) {
         if (path == m_file) {
             onFileLoaded();
@@ -185,7 +185,7 @@ void TypingHarness::begin()
     // e o sendRequest DESCARTA em silencio o que chega antes de Running. Abrir o
     // workspace aqui direto nao falharia — simplesmente nao aconteceria nada.
     // Espera-se `connected` (o ping do core respondeu).
-    connect(m_client, &CoreClient::statusChanged, this, [this]() { onConnected(); });
+    connect(m_client, &CoreClient::statusChanged, this, [this] { onConnected(); });
     onConnected();
 }
 
@@ -211,7 +211,7 @@ void TypingHarness::onWorkspaceOpened()
 
 void TypingHarness::onFileLoaded()
 {
-    waitForQuiet([this]() {
+    waitForQuiet([this] {
         const QString text = editorText();
         if (text.isEmpty()) {
             fail(QStringLiteral("editor vazio apos fs.read"));
@@ -251,7 +251,7 @@ void TypingHarness::scheduleNextKey()
         report();
         return;
     }
-    waitForQuiet([this]() { sendKey(); });
+    waitForQuiet([this] { sendKey(); });
 }
 
 void TypingHarness::sendKey()

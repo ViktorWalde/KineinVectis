@@ -1,13 +1,14 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **Sessão interrompida pelo autor em 2026-10-07:** implementação suspensa
-> após abrir duas frentes paralelas (59 §2.2). Última base aceita
-> `78f3ea2`; histórico (passo 13) e cópia/exportação (passo 14) estão em
-> worktrees separados, parciais e ainda não integrados. Na árvore principal,
-> dois testes negativos novos de `driver_contract` falham de propósito contra
-> o comportamento anterior; correção pendente. O gate Qt 6.10 foi editado,
-> ainda sem validação final. Conferir alterações locais e handoffs antes de
-> retomar; a última prova completa verde é a D1a.3, no 40.7 §7.237.
+> **Retomada em 2026-10-08, em ambiente novo (Arch Linux):** o autor migrou
+> o desenvolvimento em 2026-10-07 pelas versões estáveis mais recentes: Qt
+> 6.12.0, clang 23, GCC 16, CMake 4.4; Rust 1.96.1 fixado. Checkout em
+> `/home/hugh/Projects/KineinVectis`. A correção pendente do WIP `1ebd7ad`
+> está feita e o gate foi alinhado às ferramentas novas (40.7 §7.240).
+> Os worktrees dos passos 13/14 ficaram na máquina anterior e **não estão
+> neste clone**. O autor adiou MySQL/MariaDB nativo e a edição na grade, e
+> manteve Rust, Qt e o ritual (§7.241; 59 §2.3). Próximo: D1a.4, que fecha o
+> passo 7; depois o passo 7b, QML para desenvolver a IDE nela mesma (59 §2.4).
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
@@ -175,8 +176,9 @@
 > - **Próximo:** fechar a 0.3.9 pelo [`59`](59-fechamento-da-0.3.9.md); depois a 0.4
 >   (embarcados, [`52`](52-arquitetura-executavel-da-0.4.md)). Onde cada versão começa no
 >   código: [`58`](58-onde-cada-versao-comeca-no-codigo.md).
-> - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15 nem
->   no Ubuntu 26.04 / Qt 6.10 / clang 21 do autor (a exceção do clang-tidy só
+> - **Gate:** desde 2026-10-08, no Arch / Qt 6.12.0 / clang 23 / GCC 16 do
+>   autor (40.7 §7.240); antes, sem vermelho conhecido no Ubuntu 24.04 /
+>   Qt 6.4.2 / gdb 15 nem no Ubuntu 26.04 / Qt 6.10 / clang 21 (a exceção do clang-tidy só
 >   vale no 18 desde o 40.7 §7.153); o que a máquina não prova sai como NÃO
 >   PROVADO ([`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md)).
 > - **Versões até a 1.0** e o que ainda é proposta:
@@ -523,10 +525,13 @@ Registro D1 entregue em `0.164.0` (§7.234); D1a.1–D1a.3 aceitas
 Próxima: D1a.4, formato extensível/migração, encerrando o passo 7 com suas
 provas. O antigo restante do Banco está dividido nos passos 8–15 do 59 §2:
 runtime, extração dos drivers, LSP, InfluxDB, MySQL/MariaDB, console/histórico,
-grade e bateria final. Dependências técnicas permanecem no 39 §8.
+grade e bateria final. Em 2026-10-08 o autor adiou para versão futura o
+MySQL/MariaDB nativo (passo 12) e a edição na grade por chave primária: o Banco
+da 0.3.9 foca os bancos de uso em embarcados (59 §2.3). Dependências técnicas permanecem no 39 §8.
 Handoff no 59 §2.1; um passo pode exigir mais de um commit.
 O pente fino é o passo 16, último da 0.3.9, e ainda não começou.
-Foco Qt 6.10. AppImage adiado, fora dos critérios de encerramento; possível
+Qt local do sistema: Arch Linux desde 2026-10-07, Qt 6.12.0 medido (antes
+o foco era Qt 6.10, na máquina anterior). AppImage adiado, fora dos critérios de encerramento; possível
 lançamento após a 0.4.0 continua intenção do autor (59 §8).
 A lista datada abaixo preserva o histórico das dívidas anteriores.
 

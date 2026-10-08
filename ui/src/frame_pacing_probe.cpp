@@ -84,14 +84,14 @@ void installFramePacingProbe(QGuiApplication& app, QQmlApplicationEngine& engine
     log->clock.start();
     QObject::connect(
         window, &QQuickWindow::beforeSynchronizing, window,
-        [log]() {
+        [log] {
             const std::scoped_lock<std::mutex> guard(log->lock);
             log->syncStartNs = log->clock.nsecsElapsed();
         },
         Qt::DirectConnection);
     QObject::connect(
         window, &QQuickWindow::afterRendering, window,
-        [log]() {
+        [log] {
             const std::scoped_lock<std::mutex> guard(log->lock);
             if (log->syncStartNs >= 0) {
                 log->costsMs.push_back(
@@ -102,7 +102,7 @@ void installFramePacingProbe(QGuiApplication& app, QQmlApplicationEngine& engine
         Qt::DirectConnection);
     QObject::connect(
         window, &QQuickWindow::frameSwapped, window,
-        [log]() {
+        [log] {
             const std::scoped_lock<std::mutex> guard(log->lock);
             const qint64 now = log->clock.nsecsElapsed();
             if (log->lastSwapNs >= 0) {
@@ -115,7 +115,7 @@ void installFramePacingProbe(QGuiApplication& app, QQmlApplicationEngine& engine
         },
         Qt::DirectConnection);
     const bool exitAfter = qEnvironmentVariableIsSet("KINEIN_PERF_EXIT");
-    QTimer::singleShot(seconds * 1000, &app, [log, exitAfter]() {
+    QTimer::singleShot(seconds * 1000, &app, [log, exitAfter] {
         report(*log);
         if (exitAfter) {
             QCoreApplication::quit();

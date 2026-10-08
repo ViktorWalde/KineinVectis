@@ -10,9 +10,11 @@
 #   scripts/verificar.sh --rapido   # rapido: lint + testes + C++ (sem builds finais/smokes)
 #   scripts/verificar.sh --estrito  # combina com os dois: NAO PROVADO reprova
 #
-# PERFIL ATUAL (autor, 2026-10-07): Qt local 6.10. Os gates Qt 6.4 do
-# AppImage anterior ficam legados e fora desta sequencia; qmllint, CTest,
-# harnesses e abertura locais continuam obrigatorios. Nao muda SDK/CMake.
+# PERFIL ATUAL (autor, 2026-10-07): o Qt local do sistema. Na mesma data o
+# desenvolvimento migrou para Arch Linux, pelas versoes estaveis mais recentes
+# (Qt 6.12.0 medido; antes 6.10 no Ubuntu). Os gates Qt 6.4 do AppImage
+# anterior ficam legados e fora desta sequencia; qmllint, CTest, harnesses e
+# abertura locais continuam obrigatorios. Nao muda SDK/CMake.
 #
 # NAO PROVADO (2026-10-01, scripts/unproven.py). Gate que verifica a integracao
 # com o AMBIENTE (QEMU, debugpy, kit cross, Qt 6.4 em container) e nao tem a

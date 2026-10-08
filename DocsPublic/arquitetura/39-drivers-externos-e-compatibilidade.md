@@ -34,7 +34,7 @@ implementações no produto; InfluxDB 3 usará sua API nativa. O trabalho novo
 de banco ou gerenciador de pacotes. Instalação e atualização continuam
 explícitas e a cargo do usuário. ODBC conserva o caminho e consentimento
 aceitos no ADR-0007; sua transferência de processo seria outra decisão.
-MySQL/MariaDB nativo, ainda na fila do roadmap 59, usará essa mesma fronteira
+MySQL/MariaDB nativo, adiado em 2026-10-08 para versão futura (59 §2.3), usará essa mesma fronteira
 com biblioteca compatível comprovada; não ganha caminho especial na UI.
 
 ## 2. Lições verificadas no IntelliJ e no plugin Community
@@ -259,6 +259,11 @@ antes de mapear motivo. Nunca recebe código que ofereça nova credencial ou
 repreparo. `secretRequired` só recebe `SECRET_REQUIRED` com `notStarted`;
 com `failed` vira erro genérico, sem sugerir reenvio nem rollback de comandos
 anteriores de um lote. Motivo tipado original permanece nos detalhes públicos.
+`contextChanged` segue a mesma regra (o código `DATA_SOURCE_CONTEXT_CHANGED`
+pede "prepare novamente", e repreparar um lote iniciado repetiria comandos
+já aplicados): só com `notStarted`. `inFlight` negociado abaixo de 2 recusa
+a instalação (`InvalidLimits`). Implementado em `driver_contract.rs`
+(`public_error`, `negotiate_limits`); aceite no 40.7 §7.240.
 
 `datasource/driver_contract.rs` monta o pedido, aceita a resposta limitada,
 confere correlação/versão/identidade/recursos e fornece o mapeamento público.

@@ -50,7 +50,7 @@ void installStartupPerfMarker(QGuiApplication& app, QQmlApplicationEngine& engin
     const bool exitAfter = qEnvironmentVariableIsSet("KINEIN_PERF_EXIT");
     QObject::connect(
         window, &QQuickWindow::frameSwapped, &app,
-        [&perfTimer, exitAfter, printMarker, markerFile]() {
+        [&perfTimer, exitAfter, printMarker, markerFile] {
             const QString line =
                 QStringLiteral("KINEIN_PERF first_frame_ms=%1").arg(perfTimer.elapsed());
             if (printMarker) {
@@ -96,8 +96,8 @@ void installScreenshotHook(QGuiApplication& app, QQmlApplicationEngine& engine)
     if (!sizeEnv.isEmpty()) {
         const QList<QByteArray> sizeParts = sizeEnv.split('x');
         if (sizeParts.size() == 2) {
-            const int shotWidth = sizeParts[0].toInt();
-            const int shotHeight = sizeParts[1].toInt();
+            const int shotWidth = sizeParts.constFirst().toInt();
+            const int shotHeight = sizeParts.constLast().toInt();
             if (shotWidth >= 640 && shotHeight >= 400) {
                 window->resize(shotWidth, shotHeight);
             }
@@ -107,8 +107,8 @@ void installScreenshotHook(QGuiApplication& app, QQmlApplicationEngine& engine)
     const QString path = QString::fromUtf8(screenshotEnv);
     QObject::connect(
         window, &QQuickWindow::frameSwapped, &app,
-        [window, path, delayMs, exitAfter]() {
-            QTimer::singleShot(delayMs, window, [window, path, exitAfter]() {
+        [window, path, delayMs, exitAfter] {
+            QTimer::singleShot(delayMs, window, [window, path, exitAfter] {
                 const QImage image = window->grabWindow();
                 const bool saved = image.save(path);
                 qInfo().noquote().nospace()
@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
     engine.addImportPath(QStringLiteral("qrc:/"));
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
-        []() { QCoreApplication::exit(1); }, Qt::QueuedConnection);
+        [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.load(QUrl(QStringLiteral("qrc:/KineinVectis/qml/Main.qml")));
 
     installStartupPerfMarker(app, engine, perfTimer);

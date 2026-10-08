@@ -312,23 +312,23 @@ Item {
     // A medicao headless (KINEIN_STARTUP_COMMANDS) passa pelo mesmo dispatcher.
     StartupCommands {
         coreClient: root.coreClient
-        commandDispatcher: commandDispatcher
+        commandDispatcher: root.commandDispatcher
     }
 
     CommandDispatcher {
         id: commandDispatcher
 
         coreClient: root.coreClient
-        debugController: debugController
-        editorController: editorController
-        gitController: gitController
-        jobsController: jobsController
-        projectTree: projectTree
-        runtimeController: runtimeController
-        settingsController: settingsController
-        searchController: searchController
-        searchEverywhereController: searchEverywhereController
-        configActionController: configActionController
+        debugController: root.debugController
+        editorController: root.editorController
+        gitController: root.gitController
+        jobsController: root.jobsController
+        projectTree: root.projectTree
+        runtimeController: root.runtimeController
+        settingsController: root.settingsController
+        searchController: root.searchController
+        searchEverywhereController: root.searchEverywhereController
+        configActionController: root.configActionController
         libraryController: environment.libraryController
         dataSourceController: environment.dataSourceController
         grafanaController: environment.grafanaController
@@ -346,8 +346,8 @@ Item {
 
         workspaceRoot: root.coreClient.workspaceRoot
         editorSurface: root.workspaceHost.editorSurface
-        diagnosticsController: diagnosticsController
-        settingsController: settingsController
+        diagnosticsController: root.diagnosticsController
+        settingsController: root.settingsController
         // Pedido ao core mora no EditorRequestRouter. O que fica aqui e fiacao
         // de controller para HOST — nao e IPC, e so o Main.qml enxerga os dois.
         onGoToLineDialogOpenRequested: function(prefill) {

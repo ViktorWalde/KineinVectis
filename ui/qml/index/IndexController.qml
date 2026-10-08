@@ -34,12 +34,12 @@ Item {
 
     // A busca por nome da aba Simbolos (E3-2) mora aqui como filho: o
     // indice e' o mesmo e o arquivo ativo ja' chega por setActivePath.
-    readonly property alias symbols: symbols
+    readonly property alias symbols: symbolsController
 
     visible: false
 
     SymbolsController {
-        id: symbols
+        id: symbolsController
 
         activeAbsolutePath: root.contextPath
         activeRelativePath: root.workspaceRoot !== ""
@@ -58,7 +58,7 @@ Item {
         progressSymbols = 0;
         contextPath = "";
         fileContext = ({});
-        symbols.clear();
+        symbolsController.clear();
         if (workspaceRoot !== "") {
             stats = ({ state: "building" });
             statusRequested();
@@ -69,9 +69,9 @@ Item {
         stats = newStats === undefined || newStats === null ? ({}) : newStats;
     }
 
-    function handleProgress(files, symbols) {
+    function handleProgress(files, symbolCount) {
         progressFiles = files;
-        progressSymbols = symbols;
+        progressSymbols = symbolCount;
         if (!building) {
             stats = ({ state: "building" });
         }
@@ -86,8 +86,8 @@ Item {
         }
         // Uma busca feita com o indice ainda lendo volta incompleta: com o
         // indice pronto, a mesma pergunta e' refeita sozinha.
-        if (ready && symbols.active) {
-            symbols.requestNow();
+        if (ready && symbolsController.active) {
+            symbolsController.requestNow();
         }
     }
 

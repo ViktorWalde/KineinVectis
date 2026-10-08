@@ -150,7 +150,7 @@ Rectangle {
     // ---- os alvos, a acao primaria e as secoes ------------------------------
 
     Column {
-        id: top
+        id: targetsColumn
 
         anchors.top: headerRow.bottom
         anchors.topMargin: Theme.spacingSmall
@@ -204,7 +204,7 @@ Rectangle {
     }
 
     RemoteSectionPages {
-        anchors.top: top.bottom
+        anchors.top: targetsColumn.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.right: parent.right

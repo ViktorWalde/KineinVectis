@@ -36,21 +36,21 @@ import KineinVectis
 FocusScope {
     id: root
 
-    property alias text: input.text
+    property alias text: textInput.text
     property string placeholder: ""
     // O rotulo flutuante (opcional): dentro do campo, sobe no foco/texto.
     property string label: ""
     // Mono para codigo, caminho, nome de alvo; texto de interface sem.
     property bool codeFont: true
     property int pixelSize: Theme.fontSizeBody
-    property alias echoMode: input.echoMode
-    property alias readOnly: input.readOnly
-    property alias validator: input.validator
-    property alias inputMethodHints: input.inputMethodHints
-    property alias maximumLength: input.maximumLength
-    property alias horizontalAlignment: input.horizontalAlignment
-    property alias cursorPosition: input.cursorPosition
-    property alias selectedText: input.selectedText
+    property alias echoMode: textInput.echoMode
+    property alias readOnly: textInput.readOnly
+    property alias validator: textInput.validator
+    property alias inputMethodHints: textInput.inputMethodHints
+    property alias maximumLength: textInput.maximumLength
+    property alias horizontalAlignment: textInput.horizontalAlignment
+    property alias cursorPosition: textInput.cursorPosition
+    property alias selectedText: textInput.selectedText
     // Icone a esquerda (busca, filtro) e o × que limpa.
     property string iconName: ""
     property bool clearable: false
@@ -58,7 +58,7 @@ FocusScope {
     property bool error: false
     property color fill: root.readOnly ? Theme.background2 : Theme.background0
     // A entrada, para o raro uso que precisa dela (posicao do cursor, etc.).
-    readonly property alias input: input
+    readonly property alias input: textInput
 
     signal edited(string text)
     signal accepted()
@@ -66,30 +66,30 @@ FocusScope {
     signal keyPressed(var event)
 
     readonly property bool hovered: hover.hovered
-    readonly property bool focused: input.activeFocus
+    readonly property bool focused: textInput.activeFocus
     readonly property bool hasLabel: root.label !== ""
     // O rotulo sobe com foco ou texto.
-    readonly property bool floated: root.focused || input.text !== "" || input.preeditText !== ""
+    readonly property bool floated: root.focused || textInput.text !== "" || textInput.preeditText !== ""
 
     function selectAll() {
-        input.selectAll();
+        textInput.selectAll();
     }
 
     function clear() {
-        input.clear();
+        textInput.clear();
         root.edited("");
     }
 
     // O gesto do menu de contexto (TextMenuController). Colar e recortar
     // passam pelo `textEdited` da entrada, como se fossem digitados.
     function runMenuAction(action, selectionStart, selectionEnd) {
-        input.forceActiveFocus();
-        if (selectionEnd > selectionStart) input.select(selectionStart, selectionEnd);
+        textInput.forceActiveFocus();
+        if (selectionEnd > selectionStart) textInput.select(selectionStart, selectionEnd);
         switch (action) {
-        case "cut": input.cut(); break;
-        case "copy": input.copy(); break;
-        case "paste": input.paste(); break;
-        case "selectAll": input.selectAll(); break;
+        case "cut": textInput.cut(); break;
+        case "copy": textInput.copy(); break;
+        case "paste": textInput.paste(); break;
+        case "selectAll": textInput.selectAll(); break;
         case "clear": root.clear(); break;
         }
     }
@@ -172,7 +172,7 @@ FocusScope {
     Text {
         id: floatingLabel
 
-        x: input.x
+        x: textInput.x
         y: root.floated ? 5 : (root.height - height) / 2
         // A largura que sobra, desfeita a escala: o rotulo longo termina em
         // reticencias em vez de passar da borda.
@@ -200,7 +200,7 @@ FocusScope {
     }
 
     TextInput {
-        id: input
+        id: textInput
 
         anchors.left: leading.visible ? leading.right : parent.left
         anchors.leftMargin: leading.visible ? Theme.spacingSmall : Theme.spacingMedium
@@ -233,8 +233,8 @@ FocusScope {
             acceptedButtons: Qt.RightButton
             cursorShape: Qt.IBeamCursor
             onPressed: (mouse) => {
-                input.forceActiveFocus();
-                const scene = input.mapToItem(null, mouse.x, mouse.y);
+                textInput.forceActiveFocus();
+                const scene = textInput.mapToItem(null, mouse.x, mouse.y);
                 TextMenuController.openFor(root, scene.x, scene.y, Clipboard.text() !== "");
             }
         }
@@ -248,15 +248,15 @@ FocusScope {
         // so' aparece com o rotulo ja' no alto.
         Text {
             anchors.fill: parent
-            anchors.leftMargin: input.text === "" ? 0 : Theme.spacingSmall
+            anchors.leftMargin: textInput.text === "" ? 0 : Theme.spacingSmall
             verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: input.horizontalAlignment
-            opacity: input.text === "" && input.preeditText === "" && (!root.hasLabel || root.focused) ? 1 : 0
+            horizontalAlignment: textInput.horizontalAlignment
+            opacity: textInput.text === "" && textInput.preeditText === "" && (!root.hasLabel || root.focused) ? 1 : 0
             text: root.placeholder
             color: Theme.textMuted
             elide: Text.ElideRight
-            font.family: input.font.family
-            font.pixelSize: input.font.pixelSize
+            font.family: textInput.font.family
+            font.pixelSize: textInput.font.pixelSize
 
             Behavior on opacity {
                 NumberAnimation { duration: Theme.motionFast }
@@ -273,8 +273,8 @@ FocusScope {
 
         anchors.right: parent.right
         anchors.rightMargin: root.clearable ? 3 : 0
-        anchors.verticalCenter: input.verticalCenter
-        readonly property bool shown: root.clearable && input.text !== "" && !root.readOnly
+        anchors.verticalCenter: textInput.verticalCenter
+        readonly property bool shown: root.clearable && textInput.text !== "" && !root.readOnly
         width: root.clearable ? Math.min(22, root.height - 6) : 0
         height: width
         opacity: clearButton.shown ? 1 : 0
@@ -286,7 +286,7 @@ FocusScope {
         focusOnClick: false
         onClicked: {
             root.clear();
-            input.forceActiveFocus();
+            textInput.forceActiveFocus();
         }
 
         Behavior on opacity {

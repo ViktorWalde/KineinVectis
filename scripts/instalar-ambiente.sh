@@ -74,6 +74,9 @@ echo "distro detectada: $DISTRO"
 # Desde 2026-10-01 tambem o plugin SVG do Qt (sem ele os icones da arvore
 # saem "Unsupported image format" — o G0.4 pegou num Ubuntu limpo) e o
 # runtime dos sanitizers do clang (compiler-rt), que o preset estrito linka.
+# Desde 2026-10-08 o dicionario de ingles (`words`; `wamerican` no Debian): o
+# gate de idioma dos identificadores le' /usr/share/dict, e o Arch limpo nao
+# o tem (o Ubuntu trazia por padrao, por isso faltou ate a troca de maquina).
 # ---------------------------------------------------------------------------
 instalar_arch() {
     executar sudo pacman -S --needed --noconfirm \
@@ -81,7 +84,7 @@ instalar_arch() {
         clang compiler-rt lldb gdb \
         qt6-base qt6-declarative qt6-tools qt6-svg \
         rustup unixodbc \
-        ripgrep fd
+        ripgrep fd words
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo pacman -S --needed --noconfirm shellcheck
     fi
@@ -97,7 +100,7 @@ instalar_debian() {
         qml6-module-qtqml-models qml6-module-qtquick \
         qml6-module-qtquick-controls qml6-module-qtquick-layouts \
         qml6-module-qtquick-window libqt6svg6 \
-        ripgrep fd-find unixodbc-dev
+        ripgrep fd-find unixodbc-dev wamerican
     # O runtime dos sanitizers (ASan/UBSan do clang) que o preset
     # linux-clang-debug-strict linka. Sem ele: "cannot find
     # libclang_rt.asan-x86_64.a" (medido no Ubuntu 24.04, 2026-10-01). Chamada
@@ -135,7 +138,7 @@ instalar_fedora() {
         clang clang-tools-extra compiler-rt lldb gdb \
         qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel qt6-qtsvg \
         $pacotes_rust \
-        ripgrep fd-find unixODBC-devel
+        ripgrep fd-find unixODBC-devel words
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo dnf install -y ShellCheck
     fi

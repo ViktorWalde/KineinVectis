@@ -95,13 +95,13 @@ Item {
         "agora": root.agora
     })
 
-    readonly property var state: regras.stateFor(root.facts)
-    readonly property var primaryAction: acoes.primaryFor(root.state, root.facts)
-    readonly property bool setupExpanded: acoes.setupExpanded(root.state)
-    readonly property bool authVisible: acoes.authVisible(root.state)
-    readonly property string contentPhrase: acoes.contentPhrase(root.state, root.facts)
+    readonly property var panelState: regras.stateFor(root.facts)
+    readonly property var primaryAction: acoes.primaryFor(root.panelState, root.facts)
+    readonly property bool setupExpanded: acoes.setupExpanded(root.panelState)
+    readonly property bool authVisible: acoes.authVisible(root.panelState)
+    readonly property string contentPhrase: acoes.contentPhrase(root.panelState, root.facts)
     readonly property string statusPhrase:
-        acoes.statusPhrase(root.state, root.facts, root.primaryAction.hint, regras)
+        acoes.statusPhrase(root.panelState, root.facts, root.primaryAction.hint, regras)
 
     Timer {
         // Meio minuto: a frase mais curta fala em minutos, entao nunca se

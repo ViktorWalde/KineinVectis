@@ -34,7 +34,7 @@ Rectangle {
     readonly property real minimumWidth: 280
 
     ContainerRows {
-        id: rowsModel
+        id: containerRows
 
         containers: root.controller ? root.controller.containers : []
         images: root.controller ? root.controller.images : []
@@ -43,7 +43,7 @@ Rectangle {
 
     readonly property var selectedRow: {
         const id = root.controller ? root.controller.selectedId : "";
-        return id === "" ? null : (rowsModel.rows.find(r => rowsModel.isContainer(r) && r.id === id) || null);
+        return id === "" ? null : (containerRows.rows.find(r => containerRows.isContainer(r) && r.id === id) || null);
     }
 
     // ---- cabecalho: titulo, o motor, atualizar, fechar ---------------------
@@ -172,10 +172,10 @@ Rectangle {
         anchors.topMargin: Theme.spacingXSmall
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: detailDivider.visible ? detailDivider.top : footer.top
+        anchors.bottom: detailDivider.visible ? detailDivider.top : footerArea.top
         anchors.margins: Theme.spacingXSmall
         controller: root.controller
-        rowsModel: rowsModel
+        rowsModel: containerRows
     }
 
     // ---- o escolhido -----------------------------------------------------------
@@ -197,7 +197,7 @@ Rectangle {
     ContainerDetail {
         id: detail
 
-        anchors.bottom: footer.top
+        anchors.bottom: footerArea.top
         anchors.bottomMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.right: parent.right
@@ -213,7 +213,7 @@ Rectangle {
     // ---- compose do projeto ------------------------------------------------------
 
     Item {
-        id: footer
+        id: footerArea
 
         anchors.bottom: parent.bottom
         anchors.left: parent.left

@@ -13,6 +13,12 @@
 > não há migração para 6.12 planejada aqui. Novo AppImage fica fora do
 > fechamento da 0.3.9; o autor considera lançá-lo após a 0.4.0, ainda sem
 > decisão de publicação. Detalhes de empacotamento futuro no §8.
+>
+> **Ambiente, mesma data (noite):** o autor migrou o desenvolvimento para
+> **Arch Linux**, "a fim de ter as ferramentas em versões estáveis mais
+> atualizadas". O Qt local passou a ser o do sistema, **6.12.0** medido;
+> isso substitui o foco 6.10.2 acima para as próximas provas (40.7 §7.240).
+> Continua valendo: Qt 6.4 fora da validação, sem AppImage neste fechamento.
 
 ## 1. A decisão (o autor, 2026-10-03, noite)
 
@@ -74,13 +80,14 @@ Cada passo termina com:
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
 | 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | atual: D1 e D1a.1–D1a.3 aceitas (§7.234–§7.237); falta D1a.4, formato/migração e preservação de perfis desconhecidos |
+| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | a fazer logo depois do 7 (autor, 2026-10-08): reconhecer `.qml`, realce, `qmlls` com o build dir do projeto, `qmlformat`, outline e folding |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | a fazer: handshake, limites de envelope/pipes/fila, isolamento e encerramento real; depende do 7 |
 | 9 | **Extrair os drivers atuais** (39 D1c/D1d) | a fazer em fatias separadas: PostgreSQL com impacto/prévia, SQLite, MongoDB; depende do 8 |
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
 | 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
-| 12 | **MySQL/MariaDB nativo** (§5.7) | a fazer: biblioteca mantida sobre a mesma ponte, catálogo/consulta/segurança, LSP SQL compatível e gestos reais; ODBC existente permanece aceito |
+| 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | a fazer: localizar objeto, histórico por conexão e conveniências restantes; identidade/rascunho/execução atuais já aceitos |
-| 14 | **Grade de dados** (§5.4) | a fazer em fatias: carregar mais/ordenar, copiar/exportar e edição por chave primária |
+| 14 | **Grade de dados** (§5.4) | a fazer em fatias: carregar mais/ordenar e copiar/exportar; edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14 |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage |
 
@@ -101,7 +108,8 @@ instalação e schema público, mantendo segredo fora do arquivo. Fixtures
 legadas/futuras/desconhecidas e migração recusada sem escrita são critérios
 de aceite; não iniciar processo nesta fatia.
 
-**Foco de validação:** Qt 6.10.2 local, Rust/Clippy, sete CTest, qmllint e
+**Foco de validação:** Qt local (6.12.0 no Arch desde a revisão do topo;
+6.10.2 quando este parágrafo foi escrito), Rust/Clippy, sete CTest, qmllint e
 harnesses locais; abertura/gestos pertinentes nos presets atuais. As provas
 Qt 6.4 já concluídas permanecem no histórico. O orquestrador legado ainda
 contém chamadas Qt 6.4: alinhar esse perfil antes da próxima execução
@@ -141,6 +149,66 @@ Principal preserva dois testes negativos de negociação/erros que reproduzem
 os achados da revisão D1b, com correção ainda pendente, e a edição não validada
 do orquestrador para retirar Qt 6.4. Retomar pelos handoffs, não iniciar gate
 completo esperando uma árvore já verde. D1a.4 continua pendente.
+
+**Retomada em 2026-10-08 (40.7 §7.240):** a correção dos dois testes e o
+perfil do orquestrador foram concluídos e validados no Arch/Qt 6.12. Os
+worktrees das frentes dos passos 13 e 14 ficaram na máquina anterior; quando
+esses passos chegarem, recomeçam pelos contratos aqui descritos, salvo se o
+autor trouxer os patches.
+
+### 2.3 Banco com foco em embarcados — decisão do autor, 2026-10-08
+
+Pergunta do autor: quão utilizável fica a 0.3.9, profissionalmente, se o foco
+da IDE é embarcados e eles só chegam na 0.4? A análise apontou que o Banco
+cresceu de um passo para nove e que parte dele é cliente de banco genérico,
+terreno em que DataGrip e DBeaver já existem. Decisão, nas palavras dele: "a
+parte genérica deixa para alguma versão futura então, vamos fazer bem feito
+a conexão e orquestração dos bancos de dados que são o foco de uso em
+sistemas embarcados".
+
+| Fica na 0.3.9 | Sai para versão futura (sem número) |
+| --- | --- |
+| Passos 7–11: contratos/perfis, ponte de processos, extração dos drivers, instâncias/LSP de PostgreSQL/SQLite/MongoDB e InfluxDB 3 nativo | Passo 12, MySQL/MariaDB nativo; o ODBC aceito continua cobrindo esses bancos |
+| Passo 13: console, localizar objeto e histórico | Do passo 14, a edição de célula por chave primária (§5.4) |
+| Passo 14: carregar mais/ordenar e copiar/exportar (telemetria sai em CSV) | |
+| Passos 15–16: provas finais (sem os itens adiados) e pente fino | |
+
+O critério é o uso em embarcados: SQLite no dispositivo e na borda, InfluxDB 3
+para séries temporais de telemetria, PostgreSQL (e TimescaleDB) e MongoDB no
+backend que recebe os dados. Os números dos passos não mudam, para não
+renumerar entregas nem citações; o 12 fica marcado como adiado. Os itens
+adiados não ganham versão por esta decisão. Inclusão de DataGrip ou DBeaver
+na IDE: análise de licença e de forma na [integracoes/37](../integracoes/37-banco-e-observabilidade.md) §4.1.
+
+### 2.4 QML na 0.3.9, para usar a IDE no próprio projeto — decisão do autor, 2026-10-08
+
+Pedido do autor ao passar a usar o atalho de desenvolvimento: "vamos colocar
+o LSP do QML também agora na 0.3.9, se não como eu uso a IDE para desenvolver
+ela mesma? Como as fatias do banco de dados reduziram, dá para integrar todo
+o necessário do QML". Medido no mesmo dia: o core reconhece só C, C++, Rust e
+Python (`lang/registry.rs`); `.qml` abre como texto puro, e o QML é cerca de
+um terço do código deste repositório (406 arquivos).
+
+**Escopo do passo 7b**, com desenho escrito antes do código:
+
+1. `.qml` reconhecido no registro de linguagens do core.
+2. Realce de QML no editor: tipos, propriedades, `id`, sinais/handlers e o
+   JavaScript embutido.
+3. `qmlls` pelo gerenciador de LSP existente, recebendo o diretório de build
+   do preset ativo (`-b`), sem configuração manual: diagnósticos, completar,
+   ir para definição e hover.
+4. `qmlformat` no formatador existente.
+5. Outline e folding: pelo LSP ou pela gramática tree-sitter de QML, conforme
+   a auditoria de licença.
+
+`qmlls` e `qmlformat` são ferramentas do Qt executadas como processo, sem
+ligação com o código da IDE; a adoção passa pelo checklist de
+`integracoes/README.md`. **Aceite:** abrir este repositório na IDE e editar
+um `.qml` com realce, diagnóstico do `qmlls` e ir para definição entre
+arquivos do módulo, provado com o mouse e o teclado do autor; gates verdes.
+
+**Ordem:** depois da D1a.4, que fecha o passo 7, e antes do passo 8, para
+que os passos seguintes já sejam feitos com a IDE em uso diário.
 
 ## 3. Containers acoplados
 
@@ -599,7 +667,8 @@ leases e jobs próprios, sem incorporar runtime/código dessas ferramentas.
 - **Copiar:** célula ou linha, em TSV ou CSV.
 - **Exportar** o resultado para CSV.
 - **Editar célula** numa tabela com chave primária: gera o `UPDATE … WHERE pk`,
-  que respeita a política de confirmação e de alcance do §5.3.
+  que respeita a política de confirmação e de alcance do §5.3. **Adiado pelo
+  autor em 2026-10-08 (§2.3)**, para versão futura sem número.
 
 ### 5.5 MongoDB completo
 
@@ -657,7 +726,8 @@ escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
 banco.
 
 **Decidido pelo autor em 2026-10-04: vale, e entrou no antigo passo 7
-(agora dividido nos passos 7–15; MySQL/MariaDB no 12).** Nas palavras
+(agora dividido nos passos 7–15; MySQL/MariaDB no 12, adiado em 2026-10-08,
+§2.3).** Nas palavras
 dele: "os nativos e os por plugins que o usuário quiser usar, e a IDE apenas
 orquestra". Ficam assim:
 
@@ -775,8 +845,9 @@ própria antes dessas ferramentas. InfluxDB 3 exige adaptador nativo e
 provedor de linguagem comprovado (D6–D7), com perfil/ID extensível.
 
 **Restante do Banco, distribuído nos passos 8–15 (§2):** localizar objeto do console (§5.1), histórico
-(§5.2), carregar mais/ordenar/copiar/exportar/editar por chave primária
-(§5.4), MySQL/MariaDB nativo (§5.7), aviso com `UPDATE FROM` e TLS
+(§5.2), carregar mais/ordenar/copiar/exportar (§5.4; a edição por chave
+primária e o MySQL/MariaDB nativo do §5.7 foram adiados em 2026-10-08,
+§2.3), aviso com `UPDATE FROM` e TLS
 `verify-full` (§5.6), além das integrações LSP/InfluxDB acima.
 Vínculos, identidades, seleção, menus, modelos, impacto, releitura e
 desconexão já estão validados (§5.12/§5.1.1–§5.1.5); continuar sobre essa
@@ -790,13 +861,14 @@ Prompt de continuidade (conferir estado e log antes de usar):
 
 ```text
 Kinein Vectis — continuar a 0.3.9, passo 7 (contratos/perfis), fatia D1a.4.
-Use a main em /home/hugh/KineinVectis. Em 2026-10-06 o autor pediu reunir
+Use a main em /home/hugh/Projects/KineinVectis (Arch Linux desde 2026-10-07;
+o checkout anterior era /home/hugh/KineinVectis). Em 2026-10-06 o autor pediu reunir
 frontend e core nesse checkout: os sete commits até b31aa89 foram incorporados
 por fast-forward. Não abra outra divisão para o frontend.
 O autor autorizou concluir o plano da 0.3.9. A revisão de 2026-10-07 divide
 o antigo Banco nos passos 7–15; pente fino é o passo 16, último da versão.
-Foco Qt 6.10 (checkout 6.10.2); ignorar Qt 6.4 do AppImage anterior nesta
-continuidade. Não migrar para 6.12. Novo AppImage está fora deste fechamento;
+Qt local do sistema (Arch, 6.12.0, clang 23, GCC 16); ignorar Qt 6.4 do AppImage
+anterior nesta continuidade. Novo AppImage está fora deste fechamento;
 o autor pensa em lançá-lo após a 0.4.0, ainda sem decisão de publicação.
 A integração antecipada em main e a retirada da divisão substituem a ordem
 anterior, por pedido explícito nessa sessão. Sem push/empacotamento.
@@ -852,8 +924,11 @@ externo no 39 é independente do LSP e reutiliza bibliotecas/APIs mantidas.
 Sem retry de escrita ou fallback automático após falha; prévia mantém a
 mesma conexão/transação e desconexão aguarda recursos reais.
 Siga D1–D7 e D1a–D1d no 38/39,
-preservando localizar objeto (§5.1), histórico (§5.2), grade (§5.4),
-MySQL/MariaDB (§5.7) e provas finais (§5.6). Não interpretar a contagem antiga
+preservando localizar objeto (§5.1), histórico (§5.2), grade (§5.4) e
+provas finais (§5.6). MySQL/MariaDB nativo e edição por chave primária foram
+adiados pelo autor em 2026-10-08 (§2.3): não implementar nesta versão.
+A correção pendente do WIP 1ebd7ad (desfecho/slot de controle) está no 40.7
+§7.240; os worktrees dos passos 13/14 ficaram na máquina anterior. Não interpretar a contagem antiga
 de onze pendências como onze commits até o fechamento. Uma fatia por commit,
 contrato antes do código.
 ODBC nunca baixa driver; preserve o gesto de carregar e a revogação da sessão.

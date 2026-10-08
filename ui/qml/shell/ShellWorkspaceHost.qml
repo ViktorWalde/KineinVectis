@@ -96,7 +96,7 @@ Item {
     }
 
     // O trilho e' dado: quem monta os overlays de ambiente le' esta lista.
-    readonly property alias toolWindows: railEntries
+    readonly property alias toolWindows: railToolWindows
 
     ShellLayout {
         anchors.fill: parent
@@ -109,7 +109,7 @@ Item {
 
         // As entradas do trilho sao DADO (V3): uma entrada no `ToolWindows`.
         ToolWindows {
-            id: railEntries
+            id: railToolWindows
 
             shellController: root.shellController
             embeddedController: root.embeddedController
@@ -132,13 +132,13 @@ Item {
             expanded: root.shellController.railExpanded
             onWidthChanged: root.updatePanelLimits()
             onExpandedToggled: root.shellController.toggleRail()
-            entries: railEntries.leftEntries
+            entries: railToolWindows.leftEntries
             order: root.shellController.savedOrder("rail")
             partnerReorder: rightSide.reorder
             onEntryMoved: (id, dropIndex, visibleIds) => root.shellController.moveInBar(
                               "rail", visibleIds, id, dropIndex)
             onEntryTransferred: (id, i, ids) => root.shellController.moveRailEntryToSide(id, "right", i, ids)
-            onActivated: id => railEntries.activate(id)
+            onActivated: id => railToolWindows.activate(id)
             // "⋯ Mais" e o botao direito abrem o painel de areas.
             onContextMenuRequested: function(id, menuX, menuY) {
                 const pos = mapToItem(root, menuX + Theme.spacingMedium, menuY);
@@ -357,7 +357,7 @@ Item {
             visible: root.workspaceOpen
             height: parent.height
             shellController: root.shellController
-            railEntries: railEntries
+            railEntries: railToolWindows
             partnerReorder: sideBar.reorder
         }
     }
@@ -367,7 +367,7 @@ Item {
 
         anchors.fill: parent
         z: 200
-        toolWindows: railEntries
+        toolWindows: railToolWindows
         shellController: root.shellController
     }
 

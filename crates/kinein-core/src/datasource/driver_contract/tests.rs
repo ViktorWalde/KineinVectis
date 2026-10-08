@@ -317,17 +317,23 @@ fn unknown_or_failed_execution_never_requests_a_credential_retry() {
             json!("unknown")
         );
     }
-    let mapped = public_error(&Error {
-        code: -32000,
-        message: "PRIVATE_CREDENTIAL_MUST_NOT_ESCAPE".to_owned(),
-        data: Some(Failure {
-            reason: FailureReason::SecretRequired,
-            outcome: OperationOutcome::Failed,
-        }),
-    });
-    assert_eq!(mapped.code, JsonRpcErrorCode::InternalError);
-    assert!(mapped.message.contains("comandos anteriores"));
-    assert!(!mapped.message.contains("PRIVATE_CREDENTIAL"));
+    for reason in [FailureReason::SecretRequired, FailureReason::ContextChanged] {
+        let mapped = public_error(&Error {
+            code: -32000,
+            message: "PRIVATE_CREDENTIAL_MUST_NOT_ESCAPE".to_owned(),
+            data: Some(Failure {
+                reason,
+                outcome: OperationOutcome::Failed,
+            }),
+        });
+        assert_eq!(mapped.code, JsonRpcErrorCode::InternalError, "{reason:?}");
+        assert!(mapped.message.contains("comandos anteriores"));
+        assert!(!mapped.message.contains("PRIVATE_CREDENTIAL"));
+        assert_eq!(
+            mapped.details.as_ref().unwrap()["driverReason"],
+            json!(reason)
+        );
+    }
 }
 
 #[test]

@@ -15,7 +15,12 @@ Checks: >-
   -hicpp-magic-numbers,
   -modernize-use-trailing-return-type,
   -readability-magic-numbers,
-  -readability-identifier-length
+  -readability-identifier-length,
+  -readability-trailing-comma
+# readability-trailing-comma (novo no clang-tidy 23, 2026-10-08): fora porque o
+# layout das listas tem dono, o clang-format (FormatStyle: file). O check marca
+# a lista que o clang-format quebrou por largura, e a virgula final faz o
+# clang-format passar a um item por linha: dois donos para o mesmo fato.
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^(crates|ui|templates|cmake)/.*'
 FormatStyle: file

@@ -1,3 +1,4 @@
+.pragma library
 // A FAMILIA DE ICONES da IDE (0.3.9, reformulacao pedida pelo autor: "icons
 // melhores visualmente"; antes "estao muito fracos"). Um desenho por nome, em
 // SVG path, no grid 24x24 — o KvIcon escala para 16, 20, 24 ou 28 px e pinta
@@ -16,7 +17,6 @@
 // `shape(name)` devolve { stroke, fill } (fill pode ser "") ou null para quem
 // nao e' desta familia (os tipos de arquivo moram no KvFileIconGlyphs.js).
 // Nenhum desenho copia marca registrada nem conjunto de terceiros.
-.pragma library
 
 // Circulo como path: dois arcos de meia volta.
 function circle(cx, cy, r) {

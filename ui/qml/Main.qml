@@ -10,8 +10,8 @@ Window {
     minimumHeight: 500
     visible: true
     flags: Qt.Window | Qt.FramelessWindowHint
-    title: coreClient.workspaceName !== ""
-           ? coreClient.workspaceName + " — Kinein Vectis"
+    title: core.workspaceName !== ""
+           ? core.workspaceName + " — Kinein Vectis"
            : "Kinein Vectis"
     color: Theme.frame
     WindowBackdrop { anchors.fill: parent }
@@ -30,7 +30,7 @@ Window {
     // na mesma pasta sao duas donas do `.kinein/` — a ultima a fechar apaga o
     // que a outra gravou, sem erro e sem aviso.
     SingleInstanceGuard {
-        workspacePath: coreClient.workspaceRoot
+        workspacePath: core.workspaceRoot
 
         onActivationRequested: function (token) {
             // MELHOR ESFORCO, E DITO COMO TAL. No Wayland quem decide e' o
@@ -45,17 +45,17 @@ Window {
     }
 
     CoreClient {
-        id: coreClient
+        id: core
     }
 
     AppDomains {
         id: domains
 
-        coreClient: coreClient
-        workspaceHost: workspaceHost
-        shellOverlays: shellOverlays
-        folderPicker: folderPicker
-        workspaceUiResetter: workspaceUiResetter
+        coreClient: core
+        workspaceHost: shellWorkspaceHost
+        shellOverlays: overlays
+        folderPicker: folderPickerDialog
+        workspaceUiResetter: uiResetter
         hostWidth: root.width
         hostHeight: root.height
     }
@@ -76,7 +76,7 @@ Window {
     }
 
     WorkspaceUiResetter {
-        id: workspaceUiResetter
+        id: uiResetter
 
         debugController: domains.debugController
         gitController: domains.gitController
@@ -88,20 +88,20 @@ Window {
         searchEverywhereController: domains.searchEverywhereController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
-        bottomPanelHost: workspaceHost
+        bottomPanelHost: shellWorkspaceHost
     }
 
     FolderPickerDialog {
-        id: folderPicker
+        id: folderPickerDialog
 
         anchors.fill: parent
-        homePath: coreClient.homeDir
+        homePath: core.homeDir
         recentProjects: domains.recentWorkspacesController.visibleWorkspaces
         onBrowseRequested: function(path) {
-            coreClient.browseWorkspaceFolders(path);
+            core.browseWorkspaceFolders(path);
         }
         onOpenRequested: function(path) {
-            coreClient.openWorkspace(path);
+            core.openWorkspace(path);
         }
         // Escolha de pasta para outro fim (o SDK do kit, 2026-09-17): o
         // caminho volta ao dono que pediu, sem abrir workspace.
@@ -109,19 +109,19 @@ Window {
             domains.toolchainController.handlePickedPath(purpose, path);
         }
         onCreateFolderRequested: function(parent, name) {
-            coreClient.createWorkspaceFolder(parent, name);
+            core.createWorkspaceFolder(parent, name);
         }
         onCreateProjectRequested: function(parent, name, templateId) {
-            coreClient.createWorkspaceProject(parent, name, templateId);
+            core.createWorkspaceProject(parent, name, templateId);
         }
     }
 
     Component.onCompleted: {
-        coreClient.start();
+        core.start();
     }
 
     Connections {
-        target: coreClient
+        target: core
 
         function onFormatCapabilitiesListed(formatters) {
             domains.editorController.applyFormatCapabilities(formatters);
@@ -132,22 +132,22 @@ Window {
         }
 
         function onConnectedChanged() {
-            if (coreClient.connected && domains.workspaceController.toolsList.length === 0) {
-                coreClient.detectTools();
+            if (core.connected && domains.workspaceController.toolsList.length === 0) {
+                core.detectTools();
             }
-            if (coreClient.connected) {
-                coreClient.settingsGet();
+            if (core.connected) {
+                core.settingsGet();
                 domains.recentWorkspacesController.listRequested();
                 // Os catalogos de formatters e do Executar/Depurar sao
                 // estaticos: pedir uma vez por conexao basta. A UI nao mantem
                 // lista propria (0.61.0; run.capabilities 0.107.0).
-                coreClient.formatCapabilities();
-                coreClient.runCapabilities();
+                core.formatCapabilities();
+                core.runCapabilities();
             }
         }
 
         function onWorkspaceChanged() {
-            coreClient.settingsGet();
+            core.settingsGet();
         }
     }
 
@@ -184,7 +184,7 @@ Window {
         embeddedController: domains.embeddedController
         setupController: domains.setupController
         containerController: domains.containerController
-        workspaceOpen: coreClient.workspaceRoot !== ""
+        workspaceOpen: core.workspaceRoot !== ""
     }
 
     ShellHeaderHost {
@@ -193,7 +193,7 @@ Window {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        coreClient: coreClient
+        coreClient: core
         shellController: domains.shellController
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
@@ -220,23 +220,23 @@ Window {
         windowEdgesFlush: windowChromeController.maximized
                           || root.visibility === Window.FullScreen
         onConfigMenuRequested: function(menuX, menuY) {
-            const pos = header.mapToItem(shellOverlays, menuX, menuY);
+            const pos = header.mapToItem(overlays, menuX, menuY);
             domains.runConfigController.openConfigMenu(pos.x, pos.y);
         }
         onToolchainMenuRequested: function(menuX, menuY) {
-            const pos = header.mapToItem(shellOverlays, menuX, menuY);
+            const pos = header.mapToItem(overlays, menuX, menuY);
             domains.toolchainController.openMenu(pos.x, pos.y, true);
         }
         onAppMenuRequested: function(key, menuX, menuY, items) {
             if (key === "") {
-                shellOverlays.closeAppMenu();
+                overlays.closeAppMenu();
                 return;
             }
-            const pos = header.mapToItem(shellOverlays, menuX, menuY);
-            shellOverlays.openAppMenu(pos.x, pos.y, items);
+            const pos = header.mapToItem(overlays, menuX, menuY);
+            overlays.openAppMenu(pos.x, pos.y, items);
         }
-        onAboutRequested: shellOverlays.openAboutDialog()
-        onManualRequested: shellOverlays.openManualDialog()
+        onAboutRequested: overlays.openAboutDialog()
+        onManualRequested: overlays.openManualDialog()
         onMinimizeRequested: windowChromeController.minimize()
         onMaximizeRestoreRequested: windowChromeController.toggleMaximized()
         onCloseWindowRequested: windowChromeController.closeWindow()
@@ -244,12 +244,12 @@ Window {
     }
 
     ShellWorkspaceHost {
-        id: workspaceHost
+        id: shellWorkspaceHost
 
         settingsController: domains.settingsController
         onShellMenuRequested: function(menuX, menuY, items) {
-            const pos = workspaceHost.mapToItem(shellOverlays, menuX, menuY);
-            shellOverlays.openAppMenu(pos.x, pos.y, items);
+            const pos = shellWorkspaceHost.mapToItem(overlays, menuX, menuY);
+            overlays.openAppMenu(pos.x, pos.y, items);
         }
 
         anchors.top: header.bottom
@@ -279,34 +279,34 @@ Window {
         embeddedController: domains.embeddedController
         remoteController: domains.remoteController
         toolchainController: domains.toolchainController
-        workspaceOpen: coreClient.workspaceRoot !== ""
-        workspaceRoot: coreClient.workspaceRoot
-        workspaceName: coreClient.workspaceName
-        workspaceKind: coreClient.workspaceKind
-        workspaceBuildSystems: coreClient.workspaceBuildSystems
-        testing: coreClient.testing
-        terminalActive: coreClient.terminalActive
-        running: coreClient.running
-        logLinesModel: coreClient.logLines
+        workspaceOpen: core.workspaceRoot !== ""
+        workspaceRoot: core.workspaceRoot
+        workspaceName: core.workspaceName
+        workspaceKind: core.workspaceKind
+        workspaceBuildSystems: core.workspaceBuildSystems
+        testing: core.testing
+        terminalActive: core.terminalActive
+        running: core.running
+        logLinesModel: core.logLines
         toolsList: domains.workspaceController.toolsList
         onListDirRequested: function(path) {
-            coreClient.listDir(path);
+            core.listDir(path);
         }
         onReadFileRequested: function(path) {
-            coreClient.readFile(path);
+            core.readFile(path);
         }
-        onOpenWorkspacePathRequested: path => coreClient.openWorkspace(path)
-        onCloseWorkspaceRequested: coreClient.closeWorkspace()
-        onToolsDetectionRequested: coreClient.detectTools()
+        onOpenWorkspacePathRequested: path => core.openWorkspace(path)
+        onCloseWorkspaceRequested: core.closeWorkspace()
+        onToolsDetectionRequested: core.detectTools()
         // A faixa de saude do projeto: cada alvo e' um gesto de um clique.
         onHealthActionRequested: function(target) {
             if (target === "scan") {
-                coreClient.scanEnvironment();
+                core.scanEnvironment();
             } else if (target === "cmakeConfigure") {
                 domains.shellController.showTab("jobs");
-                coreClient.cmakeConfigure();
+                core.cmakeConfigure();
             } else if (target === "cargoMetadata") {
-                coreClient.cargoMetadata();
+                core.cargoMetadata();
             } else if (target === "pythonEnvironment") {
                 domains.shellController.showTab("jobs");
                 domains.pythonController.createEnvironment();
@@ -318,7 +318,7 @@ Window {
             }
         }
         onCreateProjectRequested: function(templateId) {
-            folderPicker.openCreateProject(coreClient.homeDir, templateId);
+            folderPickerDialog.openCreateProject(core.homeDir, templateId);
         }
         onSettingsRequested: domains.settingsController.openDialog()
         // F5: o proximo passo de um problema. "Acoes" abre o arquivo na
@@ -329,7 +329,7 @@ Window {
                 domains.editorController.openDiagnostic(file, line, column);
                 domains.editorController.requestCodeActions();
             } else if (kind === "health") {
-                workspaceHost.healthActionRequested(target);
+                shellWorkspaceHost.healthActionRequested(target);
             }
         }
     }
@@ -340,7 +340,7 @@ Window {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        coreClient: coreClient
+        coreClient: core
         shellController: domains.shellController
         indexController: domains.indexController
         activeJobController: domains.activeJobController
@@ -350,7 +350,7 @@ Window {
     }
 
     ShellOverlays {
-        id: shellOverlays
+        id: overlays
 
         // Overlay global acima do header (z=100) e de toda a workspace. O z
         // interno de um popup não escapa do stacking context do pai.
@@ -366,7 +366,7 @@ Window {
         runConfigController: domains.runConfigController
         gitController: domains.gitController
         settingsController: domains.settingsController
-        toolWindows: workspaceHost.toolWindows
+        toolWindows: shellWorkspaceHost.toolWindows
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
         remoteController: domains.remoteController

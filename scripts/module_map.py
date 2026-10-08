@@ -356,6 +356,19 @@ class Chain:
     missing: list[str] = field(default_factory=list)
 
 
+CORE_CLIENT_ID = re.compile(r"\bCoreClient\s*\{\s*id:\s*(\w+)")
+
+
+def core_client_calls(text: str) -> set[str]:
+    """Metodos do CoreClient chamados no QML: pela propriedade `coreClient` e,
+    no arquivo que o instancia, pelo `id` dele (2026-10-08: o `Main.qml` passou
+    a chamar `core`, porque o qmllint 6.12 recusa id com nome de propriedade;
+    sem isto o mapa dizia "so' pela ponte C++" de metodos que o QML envia)."""
+    names = {"coreClient"} | set(CORE_CLIENT_ID.findall(text))
+    pattern = r"(?<![\w])(?:[\w.]*\.)?(?:" + "|".join(sorted(names)) + r")\.(\w+)\("
+    return set(re.findall(pattern, text))
+
+
 def resolve(context: Context, functions, owners, by_file, modules: set[str]) -> Chain:
     chain = Chain()
     for router in context.routers:
@@ -375,7 +388,7 @@ def resolve(context: Context, functions, owners, by_file, modules: set[str]) -> 
                     chain.links.add((rel(found), rel(path), False))
                 else:
                     chain.links.add((rel(path), rel(found), True))
-        for call in set(re.findall(r"coreClient\.(\w+)\(", text)):
+        for call in core_client_calls(text):
             if call in functions:
                 cpp_path, methods = functions[call]
                 chain.cpp_files.add(cpp_path)
@@ -558,13 +571,13 @@ def render() -> tuple[str, list[str]]:
     for path in sorted(QML.rglob("*.qml")):
         if path.parent == QML / "ipc":
             continue
-        for call in set(re.findall(r"coreClient\.(\w+)\(", read(path))):
+        for call in core_client_calls(read(path)):
             if call in functions:
                 for method in functions[call][1] & all_methods:
                     if method not in covered:
                         direct[method].add(rel(path))
     called_from_qml = {call for path in QML.rglob("*.qml")
-                       for call in re.findall(r"coreClient\.(\w+)\(", read(path))}
+                       for call in core_client_calls(read(path))}
     cpp_only = {method for name, (_, methods) in functions.items() if name not in called_from_qml
                 for method in methods} & all_methods - covered - set(direct)
     nobody = all_methods - covered - set(direct) - cpp_only

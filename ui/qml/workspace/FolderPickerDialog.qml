@@ -11,8 +11,8 @@ Item {
     // ele cortava o topo do cartao alto da 0.3.9), abaixo das dicas.
     z: 500
 
-    property alias currentPath: controller.currentPath
-    property alias homePath: controller.homePath
+    property alias currentPath: folderPickerController.currentPath
+    property alias homePath: folderPickerController.homePath
     // Os recentes da tela inicial, na coluna de locais do "Abrir projeto".
     property var recentProjects: []
 
@@ -25,7 +25,7 @@ Item {
     function open(startPath) {
         picker.visible = true;
         picker.forceActiveFocus();
-        controller.open(startPath);
+        folderPickerController.open(startPath);
     }
 
     // Escolher uma pasta para OUTRO fim (o SDK do kit): o mesmo navegador,
@@ -33,16 +33,16 @@ Item {
     function openFor(purpose, startPath) {
         picker.visible = true;
         picker.forceActiveFocus();
-        controller.openFor(purpose, startPath);
+        folderPickerController.openFor(purpose, startPath);
     }
 
     // `templateId` vazio: a pessoa escolhe a linguagem e o ecossistema.
     function openCreateProject(startPath, templateId) {
         picker.visible = true;
         picker.forceActiveFocus();
-        controller.open(startPath);
-        controller.chooseTemplate(templateId);
-        controller.beginCreateProject();
+        folderPickerController.open(startPath);
+        folderPickerController.chooseTemplate(templateId);
+        folderPickerController.beginCreateProject();
     }
 
     // Abrir ou criar: a mesma porta, com a intencao de quem pediu. Os dois
@@ -52,11 +52,11 @@ Item {
     // pastas" que nao sao projeto).
     function openWith(intent, startPath) {
         if (intent === "createProject") {
-            openCreateProject(controller.homePath, "");
-        } else if (controller.homePath !== "") {
+            openCreateProject(folderPickerController.homePath, "");
+        } else if (folderPickerController.homePath !== "") {
             picker.visible = true;
             picker.forceActiveFocus();
-            controller.openFor("workspace", controller.homePath, startPath);
+            folderPickerController.openFor("workspace", folderPickerController.homePath, startPath);
         } else {
             open(startPath);
         }
@@ -64,7 +64,7 @@ Item {
 
     function close() {
         picker.visible = false;
-        controller.close();
+        folderPickerController.close();
     }
 
     // Esc fecha, como nos outros dialogos (pente fino 0.3.9: o seletor so'
@@ -76,20 +76,20 @@ Item {
     }
 
     function setListing(path, parent, entries, places) {
-        controller.setListing(path, parent, entries, places);
+        folderPickerController.setListing(path, parent, entries, places);
     }
 
     function showError(message) {
         picker.visible = true;
-        controller.showError(message);
+        folderPickerController.showError(message);
     }
 
     function selectAfterRefresh(path) {
-        controller.selectAfterRefresh(path);
+        folderPickerController.selectAfterRefresh(path);
     }
 
     FolderPickerController {
-        id: controller
+        id: folderPickerController
 
         onBrowseRequested: function(path) {
             picker.browseRequested(path);
@@ -142,7 +142,7 @@ Item {
         opacity: picker.entrance
         anchors.centerIn: parent
         anchors.verticalCenterOffset: 8 * (1 - picker.entrance)
-        controller: controller
+        controller: folderPickerController
         maxAvailableWidth: parent.width - 80
         maxAvailableHeight: parent.height - 80
         recentProjects: picker.recentProjects

@@ -11,7 +11,7 @@ Item {
     property alias selectedPath: selection.selectedPath
     property alias selectedKind: selection.selectedKind
     property alias selectedPaths: selection.selectedPaths
-    property alias fileClipboard: fileClipboard
+    property alias fileClipboard: projectFileClipboard
     property bool createDialogVisible: false
     property string createDialogKind: "file"
     property string createDialogParentPath: ""
@@ -65,7 +65,7 @@ Item {
     }
 
     ProjectFileClipboard {
-        id: fileClipboard
+        id: projectFileClipboard
         tree: root
         clipboard: root.clipboard
         onCopyPathRequested: function(from, to) { root.copyPathRequested(from, to); }
@@ -132,7 +132,7 @@ Item {
         entryDeleteVisible = false;
         entryDeleteError = "";
         entryDeleteMethod = "";
-        fileClipboard.clear();
+        projectFileClipboard.clear();
     }
 
     function selectEntry(path, kind, modifiers = Qt.NoModifier) {
@@ -374,23 +374,23 @@ Item {
     function handleFileCreated(path) { results.fileCreated(path); }
     function handleDirectoryCreated(path) { results.directoryCreated(path); }
     function handlePathRenamed(from, to) {
-        if (fileClipboard.pending && fileClipboard.cut
-                && from === fileClipboard.source && to === fileClipboard.destination) {
-            const kind = fileClipboard.sourceKind;
-            fileClipboard.moved(from, to);
+        if (projectFileClipboard.pending && projectFileClipboard.cut
+                && from === projectFileClipboard.source && to === projectFileClipboard.destination) {
+            const kind = projectFileClipboard.sourceKind;
+            projectFileClipboard.moved(from, to);
             results.pathRenamed(from, to, kind);
         } else {
             results.pathRenamed(from, to, entryRenameKind);
         }
     }
-    function handlePathCopied(from, to) { fileClipboard.copied(from, to); }
+    function handlePathCopied(from, to) { projectFileClipboard.copied(from, to); }
     function handleCopyFailed(to, message) {
-        fileClipboard.requestFailed("fs.copy", message, to);
+        projectFileClipboard.requestFailed("fs.copy", message, to);
     }
     function handlePathDeleted(path) { results.pathDeleted(path); }
     function handleExternalChanges(changes) { results.externalChanges(changes); }
     function handleRequestFailed(method, message) {
-        if (!fileClipboard.requestFailed(method, message)) results.requestFailed(method, message);
+        if (!projectFileClipboard.requestFailed(method, message)) results.requestFailed(method, message);
     }
 
     ProjectTreeResults {

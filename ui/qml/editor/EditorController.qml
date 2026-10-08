@@ -14,8 +14,8 @@ Item {
     property alias filesModel: documents.filesModel
     property alias documentController: documents
     property alias recentFiles: documents.recentFiles
-    property alias completionModel: completionController.completionModel
-    property alias usagesModel: language.usagesModel
+    property alias completionModel: editorCompletionController.completionModel
+    property alias usagesModel: editorLanguageController.usagesModel
     property alias currentTab: documents.currentTab
     property alias currentDocId: documents.currentDocId
     property alias currentReadOnly: documents.currentReadOnly
@@ -23,29 +23,29 @@ Item {
     property alias externalDeleted: documents.currentExternalDeleted
     property alias externalMessage: documents.currentExternalMessage
     property string watchError: ""
-    readonly property alias externalPreview: externalPreview
-    property alias loadingEditorText: surfaceBridge.loadingText
-    property alias cursorSummary: surfaceBridge.cursorSummary
+    readonly property alias externalPreview: editorExternalPreviewController
+    property alias loadingEditorText: editorSurfaceBridge.loadingText
+    property alias cursorSummary: editorSurfaceBridge.cursorSummary
     // D1 (DocsPublic/roadmaps/24): alias para a property PRÓPRIA do controller, nunca para o
     // `visible` do Item — este EditorController é invisível (é controller), e
     // `Item.visible` de um filho lê a visibilidade EFETIVA, que fica presa em
     // false sob pai invisível. Era essa a causa do popup nunca abrir.
-    property alias completionVisible: completionController.popupVisible
-    property alias completionIndex: completionController.index
-    property alias hoverVisible: language.hoverVisible
-    property alias hoverText: language.hoverText
-    property alias usagesVisible: language.usagesVisible
-    property alias renameDialogVisible: language.renameDialogVisible
-    property alias renameError: language.renameError
-    property alias workspaceEditPreviewVisible: language.workspaceEditPreviewVisible
-    property alias workspaceEditTransactionId: language.workspaceEditTransactionId
-    property alias workspaceEditTitle: language.workspaceEditTitle
-    property alias workspaceEditFiles: language.workspaceEditFiles
-    property alias workspaceEditCount: language.workspaceEditCount
-    property alias workspaceEditError: language.workspaceEditError
-    property alias actionsModel: language.actionsModel
-    property alias actionsVisible: language.actionsVisible
-    property alias actionsIndex: language.actionsIndex
+    property alias completionVisible: editorCompletionController.popupVisible
+    property alias completionIndex: editorCompletionController.index
+    property alias hoverVisible: editorLanguageController.hoverVisible
+    property alias hoverText: editorLanguageController.hoverText
+    property alias usagesVisible: editorLanguageController.usagesVisible
+    property alias renameDialogVisible: editorLanguageController.renameDialogVisible
+    property alias renameError: editorLanguageController.renameError
+    property alias workspaceEditPreviewVisible: editorLanguageController.workspaceEditPreviewVisible
+    property alias workspaceEditTransactionId: editorLanguageController.workspaceEditTransactionId
+    property alias workspaceEditTitle: editorLanguageController.workspaceEditTitle
+    property alias workspaceEditFiles: editorLanguageController.workspaceEditFiles
+    property alias workspaceEditCount: editorLanguageController.workspaceEditCount
+    property alias workspaceEditError: editorLanguageController.workspaceEditError
+    property alias actionsModel: editorLanguageController.actionsModel
+    property alias actionsVisible: editorLanguageController.actionsVisible
+    property alias actionsIndex: editorLanguageController.actionsIndex
     property bool goToLineVisible: false
     // D1b (DocsPublic/roadmaps/24): Find/Replace no arquivo. Mesma regra do D1 — alias para
     // a property PRÓPRIA do controller, nunca para o `visible` do Item.
@@ -59,17 +59,17 @@ Item {
     property alias findInvalidRegex: findController.invalidRegex
     property alias findMatchCount: findController.matchCount
     property alias findCurrentDisplay: findController.currentDisplay
-    property alias syntaxVersion: highlight.syntaxVersion
-    property alias semanticVersion: highlight.semanticVersion
-    property alias syntaxLanguage: highlight.syntaxLanguage
-    property alias syntaxHasErrors: highlight.syntaxHasErrors
-    property alias syntaxOutline: highlight.syntaxOutline
-    property alias syntaxLocals: highlight.syntaxLocals
+    property alias syntaxVersion: editorHighlightController.syntaxVersion
+    property alias semanticVersion: editorHighlightController.semanticVersion
+    property alias syntaxLanguage: editorHighlightController.syntaxLanguage
+    property alias syntaxHasErrors: editorHighlightController.syntaxHasErrors
+    property alias syntaxOutline: editorHighlightController.syntaxOutline
+    property alias syntaxLocals: editorHighlightController.syntaxLocals
     // O dono da camada de linguagem, exposto por nome: os roteadores IPC falam
     // com ELE, nao com um repasse daqui. Fachada de pass-through foi
     // justamente o que engordou este arquivo ate 1.070 linhas.
-    readonly property alias language: language
-    readonly property alias highlight: highlight
+    readonly property alias language: editorLanguageController
+    readonly property alias highlight: editorHighlightController
 
     signal readFileRequested(string path)
     signal writeFileRequested(string path, string content, string expectedContent)
@@ -90,7 +90,7 @@ Item {
     visible: false
 
     EditorSurfaceBridge {
-        id: surfaceBridge
+        id: editorSurfaceBridge
 
         editorSurface: root.editorSurface
     }
@@ -99,7 +99,7 @@ Item {
         id: documents
 
         workspaceRoot: root.workspaceRoot
-        surfaceBridge: surfaceBridge
+        surfaceBridge: editorSurfaceBridge
         onReadFileRequested: function(path) {
             root.readFileRequested(path);
         }
@@ -113,18 +113,18 @@ Item {
     }
 
     EditorExternalPreviewController {
-        id: externalPreview
+        id: editorExternalPreviewController
 
         workspaceRoot: root.workspaceRoot
         documentController: documents
     }
 
     EditorTextController {
-        id: textController
+        id: editorTextController
 
-        surfaceBridge: surfaceBridge
+        surfaceBridge: editorSurfaceBridge
         onIndentRequested: function(line, column, trigger) {
-            textController.noteIndentRequest(root.currentFilePath(), root.syntaxVersion);
+            editorTextController.noteIndentRequest(root.currentFilePath(), root.syntaxVersion);
             root.indentRequested(root.currentFilePath(), root.syntaxVersion, line, column,
                                  trigger);
         }
@@ -138,16 +138,16 @@ Item {
         id: diagnosticNavigation
 
         diagnosticsController: root.diagnosticsController
-        textController: textController
+        textController: editorTextController
         onFocusRequested: root.focusEditor()
     }
 
     EditorCompletionController {
-        id: completionController
+        id: editorCompletionController
 
-        surfaceBridge: surfaceBridge
+        surfaceBridge: editorSurfaceBridge
         documentController: documents
-        textController: textController
+        textController: editorTextController
         localItems: root.syntaxLocals
         onCompletionRequested: function(path, content, line, column) {
             root.completionRequested(path, content, line, column);
@@ -158,12 +158,12 @@ Item {
     // que este arquivo AINDA implementava inline, enquanto ja delegava
     // documentos, texto, completion e find.
     EditorLanguageController {
-        id: language
+        id: editorLanguageController
 
-        surfaceBridge: surfaceBridge
+        surfaceBridge: editorSurfaceBridge
         documentController: documents
-        textController: textController
-        completionController: completionController
+        textController: editorTextController
+        completionController: editorCompletionController
         editorSurface: root.editorSurface
         onFocusEditorRequested: root.focusEditor()
     }
@@ -171,9 +171,9 @@ Item {
     // Realce: Tree-sitter e semantic tokens, com os dois relogios de versao.
     // Separado do `language` porque persegue a DIGITACAO, e nao um gesto.
     EditorHighlightController {
-        id: highlight
+        id: editorHighlightController
 
-        surfaceBridge: surfaceBridge
+        surfaceBridge: editorSurfaceBridge
         documentController: documents
         editorSurface: root.editorSurface
     }
@@ -184,7 +184,7 @@ Item {
         id: persistence
 
         workspaceRoot: root.workspaceRoot
-        surfaceBridge: surfaceBridge
+        surfaceBridge: editorSurfaceBridge
         documentController: documents
         filesModel: documents.filesModel
         autoSaveEnabled: root.settingsController === null ? true : root.settingsController.autoSave
@@ -198,25 +198,25 @@ Item {
     EditorFormatController {
         id: format
 
-        surfaceBridge: surfaceBridge
+        surfaceBridge: editorSurfaceBridge
         documentController: documents
-        completionController: completionController
+        completionController: editorCompletionController
         settingsController: root.settingsController
         editorSurface: root.editorSurface
         onFormatRequested: function(path, content) {
             root.formatRequested(path, content);
         }
         onDismissOverlaysRequested: {
-            completionController.dismiss();
-            language.hoverVisible = false;
+            editorCompletionController.dismiss();
+            editorLanguageController.hoverVisible = false;
         }
     }
 
     EditorFindController {
         id: findController
 
-        surfaceBridge: surfaceBridge
-        textController: textController
+        surfaceBridge: editorSurfaceBridge
+        textController: editorTextController
         readOnly: documents.currentReadOnly
         // Os matches viram spans de realce no editor (todas as ocorrências,
         // a atual mais forte) — o highlighter é quem pinta.
@@ -243,7 +243,7 @@ Item {
 
     function openFindMode(replace) {
         if (replace ? !editableFileOpen() : currentFilePath() === "" || !editorReady()) return;
-        completionController.dismiss();
+        editorCompletionController.dismiss();
         hoverVisible = false;
         findController.open(replace);
         findBarOpenRequested();
@@ -305,28 +305,28 @@ Item {
     }
 
     function editorReady() {
-        return surfaceBridge.ready();
+        return editorSurfaceBridge.ready();
     }
 
     function editorText() {
-        return surfaceBridge.text();
+        return editorSurfaceBridge.text();
     }
 
     function focusEditor() {
-        surfaceBridge.focusEditor();
+        editorSurfaceBridge.focusEditor();
     }
 
     // Cada dono limpa o SEU estado; este arquivo so limpa o que e dele
     // (format-on-save pendente e o aviso do watcher).
     function clear() {
         documents.clear();
-        completionController.clear();
+        editorCompletionController.clear();
         findController.close();
-        language.clear();
-        highlight.clear();
+        editorLanguageController.clear();
+        editorHighlightController.clear();
         format.clear();
         watchError = "";
-        externalPreview.reset();
+        editorExternalPreviewController.reset();
     }
 
     function storeCurrentEditor() {
@@ -334,7 +334,7 @@ Item {
     }
 
     function selectDocument(docId) {
-        completionController.dismiss();
+        editorCompletionController.dismiss();
         persistence.flushAutoSave(); // F3: a aba que sai vai ao disco antes.
         documents.selectDocument(docId);
         // D1b: o buffer trocou — os offsets dos matches eram do texto ANTIGO.
@@ -423,126 +423,126 @@ Item {
     // funcoes, 12 sinais, dois models e dois timers —, nao o nome do gesto.
     // Quem quiser o dono direto usa `editorController.language`.
     function requestDefinition() {
-        language.requestDefinition();
+        editorLanguageController.requestDefinition();
     }
 
     function requestHover() {
-        language.requestHover();
+        editorLanguageController.requestHover();
     }
 
     function handleHoverResolved(content) {
-        language.handleHoverResolved(content);
+        editorLanguageController.handleHoverResolved(content);
     }
 
     function requestUsages() {
-        language.requestUsages();
+        editorLanguageController.requestUsages();
     }
 
     function handleReferencesResolved(references) {
-        language.handleReferencesResolved(references);
+        editorLanguageController.handleReferencesResolved(references);
     }
 
     function requestSwitchSourceHeader() {
-        language.requestSwitchSourceHeader();
+        editorLanguageController.requestSwitchSourceHeader();
     }
 
     function handleSwitchSourceHeader(path) {
-        language.handleSwitchSourceHeader(path);
+        editorLanguageController.handleSwitchSourceHeader(path);
     }
 
     function requestCodeActions() {
-        language.requestCodeActions();
+        editorLanguageController.requestCodeActions();
     }
 
     function handleCodeActionsResolved(actions) {
-        language.handleCodeActionsResolved(actions);
+        editorLanguageController.handleCodeActionsResolved(actions);
     }
 
     function moveActions(delta) {
-        language.moveActions(delta);
+        editorLanguageController.moveActions(delta);
     }
 
     function applyCodeAction(index) {
-        language.applyCodeAction(index);
+        editorLanguageController.applyCodeAction(index);
     }
 
     function applySelectedAction() {
-        language.applySelectedAction();
+        editorLanguageController.applySelectedAction();
     }
 
     function dismissActions() {
-        language.dismissActions();
+        editorLanguageController.dismissActions();
     }
 
     function openRenameDialog() {
-        language.openRenameDialog();
+        editorLanguageController.openRenameDialog();
     }
 
     function confirmRename(name) {
-        language.confirmRename(name);
+        editorLanguageController.confirmRename(name);
     }
 
     function handleRenameApplied(files) {
-        language.handleRenameApplied(files);
+        editorLanguageController.handleRenameApplied(files);
     }
 
     function handleWorkspaceEditPreview(transactionId, title, files, edits) {
-        language.handleWorkspaceEditPreview(transactionId, title, files, edits);
+        editorLanguageController.handleWorkspaceEditPreview(transactionId, title, files, edits);
     }
 
     function applyWorkspaceEdit() {
-        language.applyWorkspaceEdit();
+        editorLanguageController.applyWorkspaceEdit();
     }
 
     function cancelWorkspaceEdit() {
-        language.cancelWorkspaceEdit();
+        editorLanguageController.cancelWorkspaceEdit();
     }
 
     function handleWorkspaceEditApplied(files) {
-        language.handleWorkspaceEditApplied(files);
+        editorLanguageController.handleWorkspaceEditApplied(files);
     }
 
     function handleWorkspaceEditCancelled() {
-        language.handleWorkspaceEditCancelled();
+        editorLanguageController.handleWorkspaceEditCancelled();
     }
 
     function resetWorkspaceEditPreview() {
-        language.resetWorkspaceEditPreview();
+        editorLanguageController.resetWorkspaceEditPreview();
     }
 
     function refreshSemanticTokens() {
-        highlight.refreshSemanticTokens();
+        editorHighlightController.refreshSemanticTokens();
     }
 
     function handleSemanticTokensResolved(path, version, tokens) {
-        highlight.handleSemanticTokensResolved(path, version, tokens);
+        editorHighlightController.handleSemanticTokensResolved(path, version, tokens);
     }
 
     function refreshSyntaxTree() {
-        highlight.refreshSyntaxTree();
+        editorHighlightController.refreshSyntaxTree();
     }
 
     function handleSyntaxTreeResolved(path, version, syntaxLanguageId, hasErrors,
                                       highlights, foldingRanges, outline, locals) {
-        highlight.handleSyntaxTreeResolved(path, version, syntaxLanguageId, hasErrors,
+        editorHighlightController.handleSyntaxTreeResolved(path, version, syntaxLanguageId, hasErrors,
                                            highlights, foldingRanges, outline, locals);
     }
 
     function requestCompletion() {
-        language.hoverVisible = false;
-        completionController.requestCompletion();
+        editorLanguageController.hoverVisible = false;
+        editorCompletionController.requestCompletion();
     }
 
     function acceptCompletion() {
-        completionController.accept();
+        editorCompletionController.accept();
     }
 
     function moveCompletion(delta) {
-        completionController.move(delta);
+        editorCompletionController.move(delta);
     }
 
     function handleCompletionResolved(items, isIncomplete) {
-        completionController.handleResolved(items, isIncomplete);
+        editorCompletionController.handleResolved(items, isIncomplete);
     }
 
     // --- Sessao e rascunho ---------------------------------------------
@@ -566,25 +566,25 @@ Item {
 
     function duplicateLine() {
         if (editableFileOpen()) {
-            textController.lines.duplicateLineOrSelection();
+            editorTextController.lines.duplicateLineOrSelection();
         }
     }
 
     function moveLineUp() {
         if (editableFileOpen()) {
-            textController.lines.moveLines(-1);
+            editorTextController.lines.moveLines(-1);
         }
     }
 
     function moveLineDown() {
         if (editableFileOpen()) {
-            textController.lines.moveLines(1);
+            editorTextController.lines.moveLines(1);
         }
     }
 
     function deleteLine() {
         if (editableFileOpen()) {
-            textController.lines.deleteCurrentLine();
+            editorTextController.lines.deleteCurrentLine();
         }
     }
 
@@ -594,17 +594,17 @@ Item {
         if (!editableFileOpen()) {
             return;
         }
-        textController.lines.toggleLineComment(commentRules.tokenFor(editorSurface.language));
+        editorTextController.lines.toggleLineComment(commentRules.tokenFor(editorSurface.language));
     }
 
     function openGoToLine() {
         if (!editableFileOpen()) {
             return;
         }
-        completionController.dismiss();
+        editorCompletionController.dismiss();
         hoverVisible = false;
         goToLineVisible = true;
-        goToLineDialogOpenRequested(String(textController.cursorLineColumn().line));
+        goToLineDialogOpenRequested(String(editorTextController.cursorLineColumn().line));
     }
 
     function confirmGoToLine(value) {
@@ -615,7 +615,7 @@ Item {
             return;
         }
         const column = match[2] !== undefined ? parseInt(match[2]) : 1;
-        textController.goToLine(parseInt(match[1]), column);
+        editorTextController.goToLine(parseInt(match[1]), column);
     }
 
     function cancelGoToLine() {
@@ -631,11 +631,11 @@ Item {
     //
     // Os gestos COM guarda (duplicar, mover, apagar linha) ficaram: eles
     // decidem se o arquivo esta' editavel antes de agir, e isso e' decisao.
-    readonly property alias textEditing: textController
+    readonly property alias textEditing: editorTextController
 
     function expandSelection() {
         if (editableFileOpen()) {
-            textController.expandSelection();
+            editorTextController.expandSelection();
         }
     }
 
@@ -645,7 +645,7 @@ Item {
     // E1: a correcao estrutural da indentacao. As travas moram no
     // EditorTextController, que e' quem sabe o que o fallback aplicou.
     function handleIndentResolved(path, version, level) {
-        return textController.handleIndentAnswer(path, version, level);
+        return editorTextController.handleIndentAnswer(path, version, level);
     }
 
     // Navegar entre diagnosticos tem dono proprio; ver
@@ -660,20 +660,20 @@ Item {
 
     function shrinkSelection() {
         if (editableFileOpen()) {
-            textController.shrinkSelection();
+            editorTextController.shrinkSelection();
         }
     }
 
     function handleTextEdited(text) {
-        if (!surfaceBridge.loadingText && surfaceBridge.acceptEdit(text) && documents.markCurrentModified(text)) {
+        if (!editorSurfaceBridge.loadingText && editorSurfaceBridge.acceptEdit(text) && documents.markCurrentModified(text)) {
             // Cada dono reage a edicao com o que e dele. Este arquivo so
             // ORQUESTRA: quem invalida realce e o `highlight`, quem esconde o
             // hover e o `language`, quem agenda rascunho e o `persistence`.
-            highlight.invalidateForEdit();
-            language.hoverVisible = false;
+            editorHighlightController.invalidateForEdit();
+            editorLanguageController.hoverVisible = false;
             changeDebounce.restart();
             persistence.scheduleDraftSave(); // M-S1: rascunho do buffer sujo.
-            completionController.handleTextEdited();
+            editorCompletionController.handleTextEdited();
             // D1b: o texto mudou → os offsets dos matches envelheceram.
             // Debounce para não revarrer o arquivo a cada tecla.
             if (findController.barVisible) {
@@ -744,7 +744,7 @@ Item {
         if (!editableFileOpen()) {
             return;
         }
-        textController.goToLine(Number(line), Number(column));
+        editorTextController.goToLine(Number(line), Number(column));
         focusEditor();
     }
 
@@ -752,9 +752,9 @@ Item {
     // linguagem trata os `lsp.*`, o completion trata o dele, e o que sobra —
     // format-on-save — e desta casa, porque envolve o SALVAR.
     function handleRequestFailed(method, message) {
-        language.handleRequestFailed(method, message);
+        editorLanguageController.handleRequestFailed(method, message);
         if (method === "lsp.completion") {
-            completionController.handleFailed();
+            editorCompletionController.handleFailed();
         }
         if (method === "format.text") {
             format.handleFormatFailed();
@@ -769,7 +769,7 @@ Item {
         onTriggered: {
             const path = root.currentFilePath();
             if (path !== "" && !root.currentReadOnly && root.editorReady()) {
-                root.fileChangedNotificationRequested(path, surfaceBridge.text());
+                root.fileChangedNotificationRequested(path, editorSurfaceBridge.text());
                 root.refreshSemanticTokens();
             }
         }
