@@ -448,6 +448,7 @@ mod tests {
             sample_size: None,
             tls: None,
             ca_file: None,
+            installation: None,
         };
         let opcoes = options_for(&perfil, Some(&Secret::new("segredo")));
         // Porta zero vira o padrao do motor, e nao uma conexao na porta 0.
@@ -482,6 +483,7 @@ mod tests {
             sample_size: None,
             tls: None,
             ca_file: None,
+            installation: None,
         };
         assert!(options_for(&perfil, None).credential.is_none());
     }

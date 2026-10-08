@@ -1,6 +1,7 @@
 //! Formato 2, migracao e preservacao, sem disco: o store prova a escrita.
 
 use super::*;
+use kinein_protocol::DataSourceTls;
 
 const LEGACY_FIXTURE: &str = include_str!("../fixtures/profiles/v1-legacy.json");
 const MIXED_FIXTURE: &str = include_str!("../fixtures/profiles/v2-mixed.json");
@@ -285,4 +286,51 @@ fn the_written_file_holds_where_the_secret_comes_from_never_a_secret() {
             "{key}"
         );
     }
+}
+
+#[test]
+fn the_ide_installation_is_read_written_and_refused_where_not_offered() {
+    // 0.167.0 (39 §6.2.1): `{ kind: "ide" }` so' onde o motor oferece o
+    // adaptador da IDE (hoje o SQLite); outra forma ou outro motor deixam o
+    // perfil indisponivel e preservado, como antes.
+    let text = r#"{"schemaVersion": 2, "profiles": [
+      {"name": "estacao", "engine": "sqlite", "adapter": "builtin.sqlite",
+       "installation": {"kind": "ide"},
+       "options": {"schemaVersion": 1, "fields": {"path": "dados/estacao.db"}}},
+      {"name": "oficina", "engine": "sqlite", "adapter": "builtin.sqlite",
+       "options": {"schemaVersion": 1, "fields": {"path": "dados/oficina.db"}}},
+      {"name": "servidor", "engine": "postgres", "adapter": "builtin.postgres",
+       "installation": {"kind": "ide"},
+       "options": {"schemaVersion": 1, "fields": {"host": "db", "port": 5432, "database": "a", "user": "u"}}},
+      {"name": "estranho", "engine": "sqlite", "adapter": "builtin.sqlite",
+       "installation": {"kind": "ide", "path": "/tmp/adaptador"},
+       "options": {"schemaVersion": 1, "fields": {"path": "x.db"}}}
+    ]}"#;
+    let catalogue = parse_current(text).unwrap();
+    assert_eq!(
+        by_name(&catalogue, "estacao").installation,
+        Some(DataSourceInstallation::Ide {})
+    );
+    assert_eq!(by_name(&catalogue, "oficina").installation, None);
+    let unavailable: Vec<_> = catalogue
+        .unavailable()
+        .into_iter()
+        .map(|p| (p.name, p.reason))
+        .collect();
+    assert_eq!(
+        unavailable,
+        vec![
+            ("estranho".to_owned(), Reason::UnsupportedInstallation),
+            ("servidor".to_owned(), Reason::UnsupportedInstallation),
+        ]
+    );
+    // A escrita leva a escolha, e a releitura e' o mesmo catalogo.
+    let written = serialize(&catalogue).unwrap();
+    assert!(written.contains(r#""installation": {"#), "{written}");
+    let again = parse_current(&written).unwrap();
+    assert!(same_catalogue(&catalogue, &again));
+    assert_eq!(
+        by_name(&again, "estacao").installation,
+        Some(DataSourceInstallation::Ide {})
+    );
 }

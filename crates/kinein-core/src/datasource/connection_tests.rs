@@ -65,6 +65,7 @@ fn profile(host: &str) -> DataSourceProfile {
         sample_size: None,
         tls: None,
         ca_file: None,
+        installation: None,
     }
 }
 

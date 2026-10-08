@@ -77,6 +77,8 @@ impl Core {
         };
         self.odbc.revoke(&root, &request.name);
         self.previews.revoke(&root, &request.name);
+        // O adaptador externo do perfil e' encerrado e colhido (passo 9a.2).
+        self.adapters.close(&root, &request.name);
         let name = request.name.clone();
         let token = request.client_context.clone();
         let job_id = jobs.spawn(

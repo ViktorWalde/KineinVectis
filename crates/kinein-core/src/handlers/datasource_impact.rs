@@ -76,9 +76,15 @@ impl Core {
         };
         // O motor abre o arquivo do SQLite a partir do projeto (37).
         let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
+        let adapters = self.adapters.clone();
         let job_id = jobs.spawn("datasource", title, JobRisk::Low, false, move |ctx| {
             let _activity = activity;
-            let statements = measurement::statements(&profile, secret.as_ref(), &request.sql);
+            // O perfil do adaptador da IDE mede por ele (passo 9a.2).
+            let statements = if profile.installation.is_some() {
+                adapters.impact(&root, &profile, &request.sql)
+            } else {
+                measurement::statements(&profile, secret.as_ref(), &request.sql)
+            };
             let severity = impact::overall(&statements);
             let requires_connection =
                 profile.production && confirm::needs_confirmation(&statements);

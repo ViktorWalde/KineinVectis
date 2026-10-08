@@ -162,6 +162,22 @@ pub struct DataSourceProfile {
     /// server; absent = the public roots.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ca_file: Option<String>,
+    /// Which adapter runs this profile (`0.167.0`): absent is the built-in
+    /// one; `{ kind: "ide" }` is the external adapter installed with the IDE.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub installation: Option<DataSourceInstallation>,
+}
+
+/// An installation the person chose for a profile (`0.167.0`, step 9a.2).
+///
+/// A struct variant on purpose: serde ignores extra fields of an internally
+/// tagged UNIT variant even with `deny_unknown_fields`, and a future choice
+/// carrying a `path` must never be read as the IDE adapter.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase", deny_unknown_fields)]
+pub enum DataSourceInstallation {
+    /// The external adapter built with the IDE, next to `kinein-core`.
+    Ide {},
 }
 
 /// TLS policy of a `PostgreSQL` profile.
@@ -435,3 +451,29 @@ crate::driver::object_serde!(
     MongoField,
     MongoCollection
 );
+
+#[cfg(test)]
+mod tests {
+    use super::DataSourceInstallation;
+
+    #[test]
+    fn the_installation_choice_is_a_closed_form() {
+        // 0.167.0: `{ kind: "ide" }` vai e volta; campo a mais (um `path` de
+        // uma escolha futura) e tipo desconhecido sao recusados, nunca lidos
+        // como o adaptador da IDE.
+        let ide: DataSourceInstallation = serde_json::from_str(r#"{"kind":"ide"}"#).unwrap();
+        assert_eq!(ide, DataSourceInstallation::Ide {});
+        assert_eq!(serde_json::to_string(&ide).unwrap(), r#"{"kind":"ide"}"#);
+        for wrong in [
+            r#"{"kind":"ide","path":"/tmp/x"}"#,
+            r#"{"kind":"path"}"#,
+            "{}",
+            r#""ide""#,
+        ] {
+            assert!(
+                serde_json::from_str::<DataSourceInstallation>(wrong).is_err(),
+                "{wrong}"
+            );
+        }
+    }
+}

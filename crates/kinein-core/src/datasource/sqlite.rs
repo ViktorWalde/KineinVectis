@@ -226,6 +226,7 @@ mod tests {
             sample_size: None,
             tls: None,
             ca_file: None,
+            installation: None,
         }
     }
 

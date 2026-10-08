@@ -109,6 +109,9 @@ Item {
         const clone = c.cloneProfile(c.draft);
         if (clone.tls !== "require" || clone.caFile !== "/etc/ssl/db.pem" || clone.password !== undefined) failures += 4096;
         if (c.emptyDraft().tls !== "disable") failures += 8192;
+        // O adaptador escolhido atravessa o clone; ausente, nao aparece.
+        const ide = c.cloneProfile({ name: "e", engine: "sqlite", database: "x.db", installation: { kind: "ide" } });
+        if (!ide.installation || ide.installation.kind !== "ide" || c.cloneProfile(c.draft).installation !== undefined) failures += 262144;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

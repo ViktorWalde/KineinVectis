@@ -601,6 +601,38 @@ motor (§5.2). Depois vêm o PostgreSQL, com impacto e prévia, e o MongoDB.
   até o terminal da prévia), provado contra um servidor real em container.
 - **9c — MongoDB.**
 
+#### 6.2.1 9a.2 — a escolha no perfil e o consumidor no core (desenho, 2026-10-08)
+
+> **Feita em 2026-10-08 (40.7 §7.257)**, sem o formulário, que é o 9a.3.
+
+- **Perfil (formato 2):** `installation` ausente é o interno; `{ "kind":
+  "ide" }` é o adaptador da IDE, aceito só nos motores cujo descritor o
+  oferece (hoje, o SQLite). Qualquer outra forma continua tornando o perfil
+  indisponível (`unsupportedInstallation`), preservado como antes.
+- **IPC `0.167.0`:** `DataSourceProfile.installation?` (`{ kind: "ide" }`;
+  ausente = interno) e `DataSourceProviderDescriptor.installations`
+  (`["builtin"]` ou `["builtin", "ide"]`). Salvar `ide` num motor que não o
+  oferece responde `INVALID_PARAMS`.
+- **Executável:** `kinein-adapter-<motor>` na pasta do `kinein-core`
+  (`current_exe`). Ausente, a operação falha com o caminho procurado; nada é
+  procurado no projeto nem no `PATH`.
+- **Instância:** uma por projeto + perfil inteiro + instalação, criada no
+  primeiro uso (handshake, `driver.open` com `readOnly` do perfil) e
+  reaproveitada. Encerrada (`close`, `shutdown`, coleta) ao desconectar, ao
+  salvar ou remover o perfil, ao trocar de projeto; o `Drop` mata e colhe.
+- **Operações:** teste, catálogo, consulta e impacto vão ao adaptador; o core
+  continua dono de toda a política antes (contexto, somente leitura,
+  confirmação) e das instruções do catálogo (`object_statements`, aplicado
+  depois do merge dos chunks por esquema). Prévia não é oferecida a perfil
+  externo nesta fatia.
+- **Erros:** a mensagem do banco (1.1) vira o `message` do evento, depois de
+  limitada a 2 KiB e sem caracteres de controle; sem ela, o texto público da
+  classificação. Desfecho desconhecido mantém o texto de desfecho incerto.
+- **Provas:** pelo despacho real do `Core`, nos testes do crate do adaptador
+  (onde o binário existe): teste, catálogo com instruções do core, consulta,
+  escrita, somente leitura, erro com a mensagem limitada, impacto, troca do
+  perfil encerrando a instância, binário ausente.
+
 ## 7. Reaproveitamento e donos conferidos
 
 | Responsabilidade | Dono atual e evolução |

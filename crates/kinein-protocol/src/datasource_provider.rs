@@ -38,6 +38,18 @@ pub struct DataSourceProviderDescriptor {
     pub connection_kind: DataSourceConnectionKind,
     /// Supported profile options, not negotiated database or LSP capabilities.
     pub profile_features: Vec<DataSourceProfileFeature>,
+    /// Adapters the person can choose for this engine (`0.167.0`).
+    pub installations: Vec<DataSourceInstallationKind>,
+}
+
+/// One adapter choice offered by a provider descriptor.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DataSourceInstallationKind {
+    /// The adapter compiled into the core (absent `installation`).
+    Builtin,
+    /// The external adapter installed with the IDE.
+    Ide,
 }
 
 /// Why a saved profile is preserved but cannot be used by this version.

@@ -65,6 +65,7 @@ impl Core {
         match crate::datasource::save(&root, &request.profile) {
             Ok(profiles) => {
                 self.previews.revoke(&root, &request.profile.name);
+                self.adapters.close(&root, &request.profile.name);
                 JsonRpcResponse::success(
                     request_id,
                     json!(DataSourceWriteResult {
@@ -112,6 +113,7 @@ impl Core {
                 if let Some(history) = &self.query_history {
                     history.clear(&root, &request.name).ok();
                 }
+                self.adapters.close(&root, &request.name);
                 JsonRpcResponse::success(
                     request_id,
                     json!(DataSourceWriteResult {

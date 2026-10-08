@@ -299,5 +299,6 @@ fn profile(path: &str, read_only: bool) -> DataSourceProfile {
         sample_size: None,
         tls: None,
         ca_file: None,
+        installation: None,
     }
 }

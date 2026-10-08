@@ -1,5 +1,31 @@
 # 40 — Onde o projeto está, e por onde continuar
 
+> **HANDOFF PARA O WINDOWS (2026-10-08, à noite). Leia isto primeiro.** O
+> autor está migrando o sistema de desenvolvimento do Arch para o Windows, por
+> necessidade de um projeto que pode virar fonte de renda. O plano está no
+> [60](60-windows-e-edicao-especial.md): adaptar a IDE para rodar no Windows,
+> fechar a 0.3.9, fazer a 0.4.0 e, depois dela, a edição especial Windows +
+> WSL2 para embarcados e USB.
+>
+> **Último commit no Arch:** o 9a.2 (40.7 §7.257). Nesse dia entraram 14a,
+> 14b, 13a, 13b, o SQLite relativo ao projeto, o estilo QML (7b.4), 9a.1 e
+> 9a.2 (40.7 §7.250–§7.257).
+>
+> **O que falta na 0.3.9**, já com o corte de escopo do autor (59 §2.3):
+> 1. 9a.3, o campo "Adaptador: interno · o da IDE" no formulário.
+> 2. A fatia dos containers (59, 16b), com as seis correções do topo deste
+>    documento e o "Remover" que pergunta pelos volumes.
+> 3. 15, as provas finais do Banco.
+> 4. 16, o pente fino.
+>
+> **No Windows, comece pelo 60 §3:** medir o build do core e da UI, decidir
+> como os gates rodam lá (Git Bash, WSL ou reescrita) e qual é a prova de
+> tela, e listar o que quebra (o 60 §2 traz o que hoje é Linux). Só então
+> retomar a fila acima.
+>
+> **Pendente do autor:** o aceite com mouse e teclado de 7, 7b, 14a, 14b, 13a
+> e 13b; o 9a.3 terá o seu.
+
 > **Retomada em 2026-10-08, em ambiente novo (Arch Linux):** o autor migrou
 > o desenvolvimento em 2026-10-07 pelas versões estáveis mais recentes: Qt
 > 6.12.0, clang 23, GCC 16, CMake 4.4; Rust 1.96.1 fixado. Checkout em
@@ -41,11 +67,36 @@
 > **Feito depois das decisões:** SQLite relativo ao projeto (§7.252), o
 > `.qmlformat.ini` (§7.253) e o **passo 13** (§7.254–§7.255, IPC `0.166.0`):
 > localizar a conexão do console e o histórico de consultas fora do projeto.
+> **Containers (investigação de 2026-10-08, a pedido do autor):** funciona
+> nesta máquina (Docker CLI 29.8.2 no contexto `podman-rootless`, Podman
+> 6.1.3), mas há seis defeitos, a corrigir numa fatia própria **logo depois do
+> 9a.2** (decisão do autor):
+> 1. "Apagar os dados" deixa o volume do banco (`rm` sem `-v`).
+> 2. Docker que não responde não cai no Podman, e a dica manda `sudo
+>    systemctl` mesmo com o socket do Podman.
+> 3. Falha do motor aparece como lista vazia, e "Criar banco em contêiner"
+>    segue habilitado.
+> 4. `container.list`/`images` rodam no laço e travam o core (32 s com motor
+>    inalcançável).
+> 5. O rótulo mostra a versão do cliente Docker, não o motor Podman.
+> 6. "Criar banco" sugere a porta 5432 já ocupada.
+>
+> Há também um teste de compose que chama o Docker real (`detect()` em vez
+> do detector injetado). **Decisão do autor:** o "Remover" da janela
+> Containers pergunta na confirmação, com o tamanho dos volumes anônimos:
+> "Remover com os volumes" ou "Só o container". "Apagar os dados" no Banco
+> apaga os volumes sempre.
+>
+> **Segundo corte de escopo (autor, 2026-10-08 à noite; 59 §2.3).** A 0.3.9
+> fecha com o 9a, os containers, o 15 e o 16. O 9b/9c (PostgreSQL e MongoDB
+> externos), o 10 (LSP por conexão) e o 11 (InfluxDB 3) vão para uma versão
+> futura do Banco, e a 0.4 vem logo depois.
+>
 > Aceite com mouse e teclado do autor pendente. **Passo 9 em curso** (39
 > §6.2): 9a.1 feita (§7.256), o binário `kinein-adapter-sqlite` falando a API
 > 1.1. Próximo: 9a.2 (a escolha de instalação no perfil e o core roteando para
-> o adaptador), 9a.3 (formulário), depois PostgreSQL e MongoDB; passos 10, 11,
-> 15 e 16.
+> o adaptador), 9a.3 (formulário), a fatia dos containers, o 15 e o 16; depois,
+> a 0.4.
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

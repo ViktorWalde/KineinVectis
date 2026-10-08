@@ -82,13 +82,14 @@ Cada passo termina com:
 | 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse/teclado do autor pendente para a árvore com indisponíveis; handoff do 8 no §2.1 |
 | 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse/teclado do autor pendente. Estilo QML decidido pelo autor em 2026-10-08: sem formatação em massa, `.qmlformat.ini` explícito (7b.4, 40.7 §7.253) |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | feito (40.7 §7.248): base de processo de longa vida e ponte do adaptador, provadas contra um adaptador falso; o LSP migrou para a mesma base (§7.249) |
-| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | desbloqueado (autor, 2026-10-08; 39 §5.2); fatias no 39 §6.2: 9a (adaptador SQLite, escolha no perfil, formulário), 9b PostgreSQL com impacto/prévia, 9c MongoDB; o interno segue padrão até o aceite por motor. 9a.1 feita (40.7 §7.256): o adaptador SQLite e a API 1.1 com a mensagem do banco |
-| 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
-| 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
+| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | na 0.3.9 só o 9a (39 §6.2): 9a.1 feita (40.7 §7.256), o adaptador SQLite e a API 1.1; 9a.2 feita (§7.257), a escolha no perfil e o core usando o adaptador; **9a.3 a fazer**, o campo no formulário. 9b/9c (PostgreSQL e MongoDB) **adiados** (autor, 2026-10-08; §2.3, segundo corte) |
+| 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | **adiado** (autor, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
+| 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | **adiado** (autor, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
+| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (40, topo) | a fazer, logo depois do 9a (decisão do autor): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, porta livre no "Criar banco", "Apagar os dados" e o "Remover" (que pergunta) com os volumes |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -199,6 +200,22 @@ sistemas embarcados".
 | Passo 13: console, localizar objeto e histórico | Do passo 14, a edição de célula por chave primária (§5.4) |
 | Passo 14: carregar mais/ordenar e copiar/exportar (telemetria sai em CSV) | |
 | Passos 15–16: provas finais (sem os itens adiados) e pente fino | |
+
+**Segundo corte, também do autor, em 2026-10-08 à noite** ("desse jeito a
+0.3.9 vai ser gigante"; respondido como pergunta). A 0.3.9 fecha com o 9a
+(SQLite pelo adaptador externo, de ponta a ponta, com o formulário), a
+correção dos containers, as provas finais (15) e o pente fino (16). Vão para
+uma versão futura do Banco, sem número, como o MySQL:
+
+- o 9b/9c, a extração do PostgreSQL (com a prévia transacional) e do MongoDB;
+- o 10, instâncias e LSP por conexão;
+- o 11, InfluxDB 3 nativo e a linguagem dele.
+
+Os dois últimos dependiam de ferramentas que o autor instalaria. A ponte do
+passo 8, o contrato 1.1 e o adaptador SQLite ficam como base deles. A 0.4
+(embarcados) começa logo depois.
+Logo depois, o autor anunciou a mudança para Windows e o plano até a edição
+especial ([60](60-windows-e-edicao-especial.md)).
 
 O critério é o uso em embarcados: SQLite no dispositivo e na borda, InfluxDB 3
 para séries temporais de telemetria, PostgreSQL (e TimescaleDB) e MongoDB no

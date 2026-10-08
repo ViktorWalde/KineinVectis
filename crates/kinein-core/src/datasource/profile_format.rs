@@ -10,16 +10,18 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use kinein_protocol::driver::deserialize_object;
-use kinein_protocol::driver::operation::{OptionValue, PublicOptions};
+use kinein_protocol::driver::operation::PublicOptions;
 use kinein_protocol::{
-    DataSourceEngine as Engine, DataSourceProfile, DataSourceTls, DataSourceUnavailableProfile,
-    DataSourceUnavailableReason as Reason, SecretSource,
+    DataSourceEngine as Engine, DataSourceInstallation, DataSourceProfile,
+    DataSourceUnavailableProfile, DataSourceUnavailableReason as Reason, SecretSource,
 };
 use serde::de::{IgnoredAny, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::value::RawValue;
 
 use super::providers;
+pub(super) use options::options_for;
+use options::{read_options, to_profile};
 
 /// Schema que esta versao escreve.
 pub(super) const CURRENT: u32 = 2;
@@ -224,6 +226,8 @@ struct WriteRecord<'a> {
     secret_source: SecretSource,
     #[serde(skip_serializing_if = "Option::is_none")]
     secret_variable: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    installation: Option<DataSourceInstallation>,
     options: PublicOptions,
 }
 
@@ -236,6 +240,7 @@ fn write_record(profile: &DataSourceProfile) -> WriteRecord<'_> {
         read_only: profile.read_only,
         secret_source: profile.secret_source,
         secret_variable: profile.secret_variable.as_deref(),
+        installation: profile.installation,
         options: PublicOptions {
             schema_version: OPTIONS_VERSION,
             fields: options_for(profile),
@@ -256,13 +261,17 @@ fn classify(raw: Box<RawValue>) -> Option<Entry> {
         Some(_) if keys.iter().any(|k| !RECORD_FIELDS.contains(&k.as_str())) => {
             Some(Reason::UnsupportedOptions)
         }
-        Some(_) if record.installation.is_some() => Some(Reason::UnsupportedInstallation),
-        Some(engine) => match read_options(&record.options)? {
-            Ok(fields) => match to_profile(&base(&record, engine), engine, &fields) {
-                Ok(profile) => return Some(Entry::Usable(profile)),
-                Err(reason) => Some(reason),
-            },
-            Err(reason) => Some(reason),
+        Some(engine) => match (
+            installation(&record, engine),
+            read_options(&record.options)?,
+        ) {
+            (Ok(chosen), Ok(fields)) => {
+                match to_profile(&base(&record, engine, chosen), engine, &fields) {
+                    Ok(profile) => return Some(Entry::Usable(profile)),
+                    Err(reason) => Some(reason),
+                }
+            }
+            (Err(reason), _) | (Ok(_), Err(reason)) => Some(reason),
         },
     };
     reason.map(|reason| {
@@ -278,33 +287,12 @@ fn classify(raw: Box<RawValue>) -> Option<Entry> {
     })
 }
 
-/// As opcoes v1 de um adaptador atual; `None` protege o arquivo (chave
-/// repetida no envelope), `Err` deixa so' o perfil indisponivel.
-fn read_options(raw: &RawValue) -> Option<Result<BTreeMap<String, OptionValue>, Reason>> {
-    #[derive(Deserialize)]
-    struct Version {
-        #[serde(rename = "schemaVersion")]
-        version: u32,
-    }
-    let keys = unique_keys(raw.get())?;
-    if keys.iter().any(|k| k != "schemaVersion" && k != "fields") {
-        return Some(Err(Reason::UnsupportedOptions));
-    }
-    let Some(Version { version }) = object(raw.get()) else {
-        return Some(Err(Reason::InvalidOptions));
-    };
-    if version != OPTIONS_VERSION {
-        return Some(Err(Reason::UnsupportedOptions));
-    }
-    Some(
-        object::<PublicOptions>(raw.get())
-            .map(|options| options.fields)
-            .ok_or(Reason::InvalidOptions),
-    )
-}
-
 /// O perfil so' com o que e' do core; o endereco vem das opcoes.
-fn base(record: &Record, engine: Engine) -> DataSourceProfile {
+fn base(
+    record: &Record,
+    engine: Engine,
+    installation: Option<DataSourceInstallation>,
+) -> DataSourceProfile {
     DataSourceProfile {
         name: record.name.clone(),
         engine,
@@ -319,117 +307,21 @@ fn base(record: &Record, engine: Engine) -> DataSourceProfile {
         sample_size: None,
         tls: None,
         ca_file: None,
+        installation,
     }
 }
 
-/// As chaves que cada adaptador atual aceita, schema de opcoes 1.
-const fn allowed(engine: Engine) -> &'static [&'static str] {
-    match engine {
-        Engine::Postgres => &["host", "port", "database", "user", "tls", "caFile"],
-        Engine::Sqlite => &["path"],
-        Engine::Mongo => &["host", "port", "database", "user", "sampleSize"],
-        Engine::Odbc => &["dsn", "user"],
-    }
-}
-
-fn options_for(profile: &DataSourceProfile) -> BTreeMap<String, OptionValue> {
-    let mut fields = BTreeMap::new();
-    let mut text = |key: &str, value: &str| {
-        fields.insert(key.to_owned(), OptionValue::Text(value.to_owned()));
+/// A instalacao do registro: ausente e' o interno; `{ kind: "ide" }` so' nos
+/// motores que oferecem o adaptador da IDE. Outra forma torna o perfil
+/// indisponivel (preservado, como antes do `0.167.0`).
+fn installation(record: &Record, engine: Engine) -> Result<Option<DataSourceInstallation>, Reason> {
+    let Some(raw) = record.installation.as_deref() else {
+        return Ok(None);
     };
-    match profile.engine {
-        Engine::Postgres | Engine::Mongo => {
-            text("host", &profile.host);
-            text("database", &profile.database);
-            text("user", &profile.user);
-        }
-        Engine::Sqlite => text("path", &profile.database),
-        Engine::Odbc => {
-            text("dsn", &profile.database);
-            text("user", &profile.user);
-        }
-    }
-    match profile.engine {
-        Engine::Postgres => {
-            if profile.tls == Some(DataSourceTls::Require) {
-                text("tls", "require");
-            }
-            if let Some(ca) = &profile.ca_file {
-                text("caFile", ca);
-            }
-            fields.insert(
-                "port".to_owned(),
-                OptionValue::Integer(i64::from(profile.port)),
-            );
-        }
-        Engine::Mongo => {
-            fields.insert(
-                "port".to_owned(),
-                OptionValue::Integer(i64::from(profile.port)),
-            );
-            if let Some(sample) = profile.sample_size {
-                fields.insert(
-                    "sampleSize".to_owned(),
-                    OptionValue::Integer(i64::from(sample)),
-                );
-            }
-        }
-        Engine::Sqlite | Engine::Odbc => {}
-    }
-    fields
-}
-
-fn to_profile(
-    base: &DataSourceProfile,
-    engine: Engine,
-    fields: &BTreeMap<String, OptionValue>,
-) -> Result<DataSourceProfile, Reason> {
-    if fields
-        .keys()
-        .any(|k| !allowed(engine).contains(&k.as_str()))
-    {
-        return Err(Reason::UnsupportedOptions);
-    }
-    let text = |key: &str| match fields.get(key) {
-        None => Ok(None),
-        Some(OptionValue::Text(value)) => Ok(Some(value.clone())),
-        Some(_) => Err(Reason::InvalidOptions),
-    };
-    let integer = |key: &str| match fields.get(key) {
-        None => Ok(None),
-        Some(OptionValue::Integer(value)) => Ok(Some(*value)),
-        Some(_) => Err(Reason::InvalidOptions),
-    };
-    let database = match engine {
-        Engine::Sqlite => text("path")?,
-        Engine::Odbc => text("dsn")?,
-        Engine::Postgres | Engine::Mongo => text("database")?,
-    };
-    let tls = match text("tls")?.as_deref() {
-        None | Some("disable") => None,
-        Some("require") => Some(DataSourceTls::Require),
-        Some(_) => return Err(Reason::InvalidOptions),
-    };
-    Ok(DataSourceProfile {
-        name: base.name.clone(),
-        engine,
-        production: base.production,
-        read_only: base.read_only,
-        host: text("host")?.unwrap_or_default(),
-        port: integer("port")?
-            .map_or(Ok(0), u16::try_from)
-            .map_err(|_| Reason::InvalidOptions)?,
-        database: database.unwrap_or_default(),
-        user: text("user")?.unwrap_or_default(),
-        secret_source: base.secret_source,
-        secret_variable: base.secret_variable.clone(),
-        sample_size: integer("sampleSize")?
-            .map(u32::try_from)
-            .transpose()
-            .map_err(|_| Reason::InvalidOptions)?,
-        tls,
-        ca_file: text("caFile")?,
-    })
+    object::<DataSourceInstallation>(raw.get())
+        .filter(|chosen| providers::offers(engine, *chosen))
+        .map(Some)
+        .ok_or(Reason::UnsupportedInstallation)
 }
 
 /// Decodifica um objeto JSON, recusando a forma posicional (array).
@@ -477,7 +369,7 @@ fn identity(value: &str) -> bool {
 }
 
 /// O nome do motor como o `DataSourceEngine` o serializa — um dono so'.
-fn engine_id(engine: Engine) -> String {
+pub(super) fn engine_id(engine: Engine) -> String {
     serde_json::to_value(engine)
         .ok()
         .and_then(|value| value.as_str().map(str::to_owned))
@@ -487,6 +379,8 @@ fn engine_id(engine: Engine) -> String {
 fn known_engine(id: &str) -> Option<Engine> {
     serde_json::from_value(serde_json::Value::String(id.to_owned())).ok()
 }
+
+mod options;
 
 #[cfg(test)]
 mod tests;

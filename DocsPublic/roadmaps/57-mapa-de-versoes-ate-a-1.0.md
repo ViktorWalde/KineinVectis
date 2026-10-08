@@ -67,6 +67,7 @@ Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
 | 0.3.9 | EM CURSO (2026-10-07): passos 1–6 feitos; base do Banco e D1a.1–D1a.3 aceitas (40.7 §7.220–§7.237). Atual: passo 7/D1a.4. Restante dividido em passos 8–15; pente fino no 16, último. AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4); provas no Qt local (6.12.0) | [`59`](59-fechamento-da-0.3.9.md) §2/§2.1/§7; 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | 0.4.0–0.4.4 | PLANEJADA | embarcados | contexto efetivo, diagnóstico ao salvar, cross ponta a ponta, tamanho por símbolo, cache, gravar e depurar com SVD; **PlatformIO como cidadão de tier 1** nas cinco jornadas e **emuladores como alvo** (QEMU, Renode, QEMU da Espressif) — decisões de 2026-10-01 | [`52`](52-arquitetura-executavel-da-0.4.md) §11 | as cinco jornadas J1–J5 provadas (52 §1, §10) |
+| edição especial | PLANEJADA (autor, 2026-10-08) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
 | 0.5.x | PLANEJADA | ambiente e capacidades | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md) | por fatia; corte de release pela evidência (49 §6) |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
@@ -129,6 +130,9 @@ Não está copiado aqui — está no dono, e é lá que se lê:
   (IA fora da IDE, simulação fora do produto, Python nativo, licenças proibidas…);
 - 0.4 em diante: sem Lua antes nem depois da 1.0, alvo Linux nativo, o modelo
   semântico detecta deriva e não resolve versão: [`47`](47-estrutura-da-v0.3.md) §10.2.
+  O alvo Linux nativo foi revisto pelo autor em 2026-10-08: Windows entra,
+  com uma edição especial Windows + WSL2 depois da 0.4.0
+  ([`60`](60-windows-e-edicao-especial.md)).
 
 ## 6. Decisões deste mapa
 

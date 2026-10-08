@@ -8,6 +8,15 @@
 > Não acrescenta métodos ao dispatcher UI/core nem altera sua versão
 > `0.164.0`; o transporte de processos ainda depende de D1b.
 
+> **0.167.0 (2026-10-08, contrato anterior ao código, passo 9a.2).**
+> `DataSourceProfile` ganha `installation?`: ausente é o adaptador interno;
+> `{ kind: "ide" }` é o adaptador externo construído com a IDE, ao lado do
+> `kinein-core` (39 §5.2 e §6.2.1). `DataSourceProviderDescriptor` ganha
+> `installations` (`["builtin"]` ou `["builtin", "ide"]`). Salvar `ide` num
+> motor que não o oferece responde `INVALID_PARAMS`. Os métodos não mudam: o
+> perfil com a instalação da IDE roda teste, catálogo, consulta e impacto
+> pelo adaptador, com as mesmas respostas e eventos.
+
 > **0.166.0 (2026-10-08, contrato anterior ao código, passo 13b).**
 > `datasource.history { name }` devolve o histórico de consultas da conexão;
 > `datasource.history.clear { name }` o apaga. O histórico é do core e fica

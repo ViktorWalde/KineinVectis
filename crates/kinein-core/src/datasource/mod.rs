@@ -51,6 +51,7 @@ pub mod discover;
 pub mod driver_contract;
 pub mod driver_process;
 pub mod driver_stream;
+pub mod external;
 pub mod history;
 pub mod impact;
 pub mod introspect;
@@ -162,6 +163,13 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
     // nem usuario; exigir os tres seria pedir ao autor que preenchesse o que
     // nao existe — e deixar campos vazios na tela e' a forma como a maioria
     // das IDEs trata SQLite (decisao do autor, 2026-09-04).
+    // O adaptador escolhido precisa existir para o motor (`0.167.0`).
+    if profile
+        .installation
+        .is_some_and(|installation| !providers::offers(profile.engine, installation))
+    {
+        return Err("este motor nao tem o adaptador da IDE; use o interno".to_owned());
+    }
     let provider = providers::descriptor(profile.engine);
     if provider.connection_kind == DataSourceConnectionKind::Dsn {
         return odbc::validate_dsn(&profile.database);
@@ -331,6 +339,7 @@ fn normalize(profile: &DataSourceProfile) -> DataSourceProfile {
             .map(str::trim)
             .filter(|valor| !valor.is_empty())
             .map(str::to_owned),
+        installation: profile.installation,
     }
 }
 
@@ -367,6 +376,7 @@ mod tests {
             sample_size: None,
             tls: None,
             ca_file: None,
+            installation: None,
         }
     }
 

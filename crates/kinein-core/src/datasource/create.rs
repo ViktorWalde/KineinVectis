@@ -104,6 +104,7 @@ pub fn sqlite_file(
         sample_size: None,
         tls: None,
         ca_file: None,
+        installation: None,
     })
 }
 
@@ -151,6 +152,7 @@ pub fn container_server(
                 sample_size: None,
                 tls: None,
                 ca_file: None,
+                installation: None,
             },
         ),
         DataSourceEngine::Mongo => (
@@ -177,6 +179,7 @@ pub fn container_server(
                 sample_size: None,
                 tls: None,
                 ca_file: None,
+                installation: None,
             },
         ),
         DataSourceEngine::Odbc => {

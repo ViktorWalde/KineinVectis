@@ -108,7 +108,7 @@ QtObject {
 
 
     function cloneProfile(source) {
-        return {
+        const profile = {
             engine: source.engine || "postgres",
             name: source.name,
             host: source.host,
@@ -123,6 +123,10 @@ QtObject {
             tls: source.tls || "disable",
             caFile: source.caFile || ""
         };
+        // O adaptador escolhido (`0.167.0`, passo 9a.2) atravessa a edicao: sem
+        // isto, salvar pela tela voltaria o perfil ao adaptador interno.
+        if (source.installation) profile.installation = { kind: source.installation.kind };
+        return profile;
     }
 
 

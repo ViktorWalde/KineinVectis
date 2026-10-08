@@ -515,7 +515,10 @@ Fechadas, e detalhadas em
   atalhos e layout em dados, sem execução;
 - **o alvo é Linux nativo.** Não é pendência de portabilidade, é o escopo —
   handles do Windows e ferramentas equivalentes ficam fora por plataforma, e o
-  equivalente nativo (`/proc/<pid>/fd`) já existe;
+  equivalente nativo (`/proc/<pid>/fd`) já existe. **Revisto pelo autor em
+  2026-10-08:** a IDE passa a ser adaptada para rodar no Windows, e há uma
+  edição especial para Windows + WSL2 depois da 0.4.0
+  ([60](60-windows-e-edicao-especial.md));
 - **o modelo semântico profundo detecta DERIVA, e não resolve versão.** Quem
   resolve é o `cargo`, o `uv`, o `conan`, o `west`; a IDE roda a ferramenta do
   ecossistema e mostra o que ela decidiu. Em C++ o que quebra é ABI, e isso é

@@ -105,7 +105,11 @@ impl Core {
         let accepted_preview = request.preview;
         // O motor abre o arquivo do SQLite a partir do projeto (37).
         let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
-        let history = self.history_target(&root, &profile.name, &request.sql);
+        let env = QueryEnv {
+            history: self.history_target(&root, &profile.name, &request.sql),
+            adapters: self.adapters.clone(),
+            root: root.clone(),
+        };
         let job_id = jobs.spawn("datasource", title, risk, request.preview, move |ctx| {
             let _activity = activity;
             run_query_job(
@@ -115,7 +119,7 @@ impl Core {
                 request,
                 &statements,
                 preview,
-                history,
+                env,
             )
         });
         JsonRpcResponse::success(
@@ -153,6 +157,14 @@ fn query_permission(
     .and_then(|()| super::datasource_preview::validate(profile, request))
 }
 
+/// O que o job leva alem do pedido: onde anotar o historico e como falar com
+/// o adaptador da IDE (passo 9a.2).
+struct QueryEnv {
+    history: Option<HistoryTarget>,
+    adapters: crate::datasource::external::Adapters,
+    root: std::path::PathBuf,
+}
+
 /// O lote escreve? Todo ele: uma leitura inicial não esconde um COMMIT que
 /// encerra o READ ONLY e uma remoção de dados logo depois.
 fn writes(statements: &[kinein_protocol::SqlStatementImpact]) -> bool {
@@ -171,7 +183,7 @@ fn run_query_job(
     request: DataSourceQueryParams,
     statements: &[kinein_protocol::SqlStatementImpact],
     preview: Option<super::datasource_preview::Prepared>,
-    history: Option<HistoryTarget>,
+    env: QueryEnv,
 ) -> JobOutcome {
     let write = writes(statements);
     let max_rows = query::clamp_rows(request.max_rows);
@@ -179,7 +191,11 @@ fn run_query_job(
         && crate::datasource::confirm::needs_measurement(statements);
     let sql = &request.sql;
     if preflight {
-        let measured = crate::datasource::measurement::statements(&profile, secret, sql);
+        let measured = if profile.installation.is_some() {
+            env.adapters.impact(&env.root, &profile, sql)
+        } else {
+            crate::datasource::measurement::statements(&profile, secret, sql)
+        };
         if let Err(rejection) = policy::check_query(
             &profile,
             &measured,
@@ -213,7 +229,13 @@ fn run_query_job(
         );
     }
     let catalog_invalidated = classification::invalidates_catalog(profile.engine, statements);
-    let resultado = query::run(&profile, secret, sql, max_rows);
+    let resultado = if profile.installation.is_some() {
+        env.adapters
+            .query(&env.root, &profile, sql, max_rows)
+            .map_err(|failure| (failure.message, failure.secret_required))
+    } else {
+        query::run(&profile, secret, sql, max_rows)
+    };
     let mut event = evento_da_consulta(ctx, profile.name, resultado);
     event.client_context = request.client_context;
     event.catalog_update = if catalog_invalidated && !event.secret_required {
@@ -241,7 +263,7 @@ fn run_query_job(
             None
         },
     });
-    if let (Some(history), Some(ran)) = (history, ran) {
+    if let (Some(history), Some(ran)) = (env.history, ran) {
         history.record(ctx, &ran);
     }
     ctx.emit_event("event.datasource.queried", json!(event));

@@ -78,6 +78,8 @@ pub struct Core {
     /// O historico de consultas do Banco (passo 13b); `None`, o padrao, nao
     /// grava nada ([`Core::enable_query_history`]).
     query_history: Option<datasource::history::History>,
+    /// Os adaptadores externos da IDE e as instancias abertas (passo 9a.2).
+    adapters: datasource::external::Adapters,
     fswatch: Option<fswatch::WorkspaceWatcher>,
     syntax: lang::SyntaxTreeService,
     /// O indice do projeto inteiro (pilar 0 do roadmaps/42): construido por um
@@ -137,6 +139,7 @@ impl Core {
             previews: datasource::preview::Session::default(),
             datasource_activity: datasource::activity::Session::default(),
             query_history: None,
+            adapters: datasource::external::Adapters::beside_core(),
             fswatch: None,
             syntax: lang::SyntaxTreeService::default(),
             index: Arc::new(Mutex::new(index::ProjectIndex::default())),

@@ -125,6 +125,7 @@ impl Core {
         };
         // O motor abre o arquivo do SQLite a partir do projeto (37).
         let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
+        let adapters = self.adapters.clone();
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
             let _activity = activity;
             // O MOTOR decide quem responde. Um so' `datasource.test` para os
@@ -135,6 +136,10 @@ impl Core {
             // tem SQLSTATE — o campo simplesmente nao vai no evento dele, e a
             // UI ja' decide pelo `secretRequired`, nunca pelo texto.
             let mut event = match profile.engine {
+                // O adaptador da IDE (passo 9a.2) responde por ele.
+                _ if profile.installation.is_some() => {
+                    test_result(ctx, &profile, adapters.test(&root, &profile))
+                }
                 kinein_protocol::DataSourceEngine::Odbc => test_result(
                     ctx,
                     &profile,
@@ -213,6 +218,13 @@ impl Core {
                 ))
             }),
         }
+    }
+
+    /// Os adaptadores externos que este core usa. O padrao e' a pasta do
+    /// `kinein-core`; os testes do crate do adaptador apontam para a do build.
+    pub fn use_adapters(&mut self, adapters: crate::datasource::external::Adapters) {
+        self.adapters.close_all();
+        self.adapters = adapters;
     }
 
     /// Acha o perfil salvo, ou a resposta que explica que ele nao existe.
@@ -299,9 +311,10 @@ impl Core {
             Err(response) => return *response,
         };
         let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
+        let adapters = self.adapters.clone();
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
             let _activity = activity;
-            let mut event = introspection_event(ctx, &profile, secret.as_ref());
+            let mut event = introspection_event(ctx, &profile, secret.as_ref(), (&adapters, &root));
             event["clientContext"] = json!(request.client_context);
             let ok = event["ok"].as_bool().unwrap_or(false);
             ctx.emit_event("event.datasource.introspected", event);
@@ -321,6 +334,7 @@ fn introspection_event(
     ctx: &crate::jobs::JobContext,
     profile: &DataSourceProfile,
     secret: Option<&crate::datasource::Secret>,
+    (adapters, root): (&crate::datasource::external::Adapters, &std::path::Path),
 ) -> Value {
     // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. `schemas` e' a
     // arvore `esquema -> tabela -> coluna` dos motores relacionais;
@@ -345,7 +359,10 @@ fn introspection_event(
             }),
         }
     } else {
-        let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
+        let resultado = if profile.installation.is_some() {
+            // O catalogo vem do adaptador da IDE; as instrucoes, do core.
+            adapters.introspect(root, profile)
+        } else if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
             crate::datasource::odbc_catalog::read_structure(profile, secret)
         } else if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
             crate::datasource::sqlite::read_structure(profile)
