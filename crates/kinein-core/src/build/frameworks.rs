@@ -133,7 +133,7 @@ mod tests {
             zephyr_board(&raiz, &west).as_deref(),
             Some("esp32_devkitc/esp32/procpu")
         );
-        std::fs::write(&west, "#!/bin/sh\nexit 0\n").unwrap();
+        crate::write_executable(&west, "#!/bin/sh\nexit 0\n");
         std::fs::remove_file(raiz.join("build/CMakeCache.txt")).unwrap();
         assert_eq!(zephyr_board(&raiz, &west), None);
         let _ = std::fs::remove_dir_all(&raiz);

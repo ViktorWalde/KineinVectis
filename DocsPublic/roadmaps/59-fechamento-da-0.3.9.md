@@ -80,7 +80,7 @@ Cada passo termina com:
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
 | 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse/teclado do autor pendente para a árvore com indisponíveis; handoff do 8 no §2.1 |
-| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | a fazer logo depois do 7 (autor, 2026-10-08): reconhecer `.qml`, realce, `qmlls` com o build dir do projeto, `qmlformat`, outline e folding |
+| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | atual: 7b.1 (`qmlls` com o build do projeto) feita no 40.7 §7.245; faltam 7b.2 (realce próprio do QML) e 7b.3 (`qmlformat`) |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | a fazer: handshake, limites de envelope/pipes/fila, isolamento e encerramento real; depende do 7 |
 | 9 | **Extrair os drivers atuais** (39 D1c/D1d) | a fazer em fatias separadas: PostgreSQL com impacto/prévia, SQLite, MongoDB; depende do 8 |
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
@@ -212,9 +212,13 @@ na IDE: análise de licença e de forma na [integracoes/37](../integracoes/37-ba
 Pedido do autor ao passar a usar o atalho de desenvolvimento: "vamos colocar
 o LSP do QML também agora na 0.3.9, se não como eu uso a IDE para desenvolver
 ela mesma? Como as fatias do banco de dados reduziram, dá para integrar todo
-o necessário do QML". Medido no mesmo dia: o core reconhece só C, C++, Rust e
-Python (`lang/registry.rs`); `.qml` abre como texto puro, e o QML é cerca de
-um terço do código deste repositório (406 arquivos).
+o necessário do QML". O QML é cerca de um terço do código deste repositório
+(406 arquivos). **Medição corrigida no mesmo dia:** a primeira leitura olhou só
+o registro tree-sitter do core (C, C++, Rust e Python) e concluiu que `.qml`
+abria como texto puro. Errado: o realce em C++ (`editor_highlighter_rules.cpp`)
+já trata `.qml` como JavaScript, com `property`, `readonly`, `required`,
+`signal` e `import`. Falta o LSP, as construções próprias do QML e a
+estrutura.
 
 **Escopo do passo 7b**, com desenho escrito antes do código:
 
@@ -236,6 +240,35 @@ arquivos do módulo, provado com o mouse e o teclado do autor; gates verdes.
 
 **Ordem:** depois da D1a.4, que fecha o passo 7, e antes do passo 8, para
 que os passos seguintes já sejam feitos com a IDE em uso diário.
+
+**Desenho (2026-10-08), antes do código.** Duas fatias, cada uma estendendo um
+mecanismo que já existe:
+
+- **7b.1, core.** (1) A busca de ferramentas além do `PATH`
+  (`tools/search_dirs.rs`) passa a incluir os diretórios de ferramentas do Qt
+  das distros (`/usr/lib/qt6/bin` no Arch, `/usr/lib/x86_64-linux-gnu/qt6/bin`
+  no Debian/Ubuntu, `/usr/lib64/qt6/bin` no Fedora), onde moram o `qmlls` e o
+  `qmlformat`. (2) As duas entram em `tools/known.rs`. (3) O `qmlls` é o
+  servidor principal `qml` do `lsp/registry.rs`, para `.qml`; o core passa
+  `-b <diretório de build>` do projeto CMake configurado, para o `qmlls` achar
+  os tipos dos módulos do próprio projeto; sem build, sobe sem `-b` e conhece
+  só os módulos do Qt. Nenhum método IPC novo: os pedidos `lsp.*` já são por
+  arquivo. **Feita em 2026-10-08 (40.7 §7.245).**
+- **7b.3, formatação.** O `qmlformat` não lê stdin (medido no 6.12: só aceita
+  arquivo), e o formatador da IDE é por stdin/stdout. Entra com um modo próprio:
+  o buffer num arquivo temporário privado e o `.qmlformat.ini` do projeto
+  passado por `-s`, para valer o estilo do projeto.
+- **7b.2, UI.** Regras de realce próprias do QML (tipo antes de `{`, `id:`,
+  nome de binding, handler `onAlgo:`, `pragma`, `alias`, `component`, `enum`);
+  `.js` continua nas regras de JavaScript.
+
+`qmlls` e `qmlformat` vêm com o Qt que o usuário instalou (pacote
+`qt6-declarative`/`qt6-tools` ou equivalente) e rodam como processo, como o
+clangd: não entram no registro de componentes, que guarda o que a IDE liga
+ou empacota. **Aceite:** teste com servidor falso provando `-b`; exercício
+com o `qmlls` real dando diagnóstico de um `.qml` com erro; foto no display
+virtual de um `.qml` deste repositório; aceite do autor com mouse e teclado,
+que fica pendente.
 
 ## 3. Containers acoplados
 

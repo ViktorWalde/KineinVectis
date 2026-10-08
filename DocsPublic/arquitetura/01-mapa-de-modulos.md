@@ -156,6 +156,7 @@ flowchart LR
   n_core_grafana --> n_core_datasource
   n_core_handlers --> n_core_build
   n_core_handlers --> n_core_cdb
+  n_core_handlers --> n_core_cmake
   n_core_handlers --> n_core_configaction
   n_core_handlers --> n_core_container
   n_core_handlers --> n_core_coverage
@@ -213,7 +214,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-43 módulos, 82 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+43 módulos, 83 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -241,7 +242,7 @@ flowchart LR
 | `fswatch` | lsp | Debounced, workspace-confined observation of external file-system changes. |
 | `git` | — | Git orquestrado sobre o binario git. |
 | `grafana` | datasource | Observabilidade: |
-| `handlers` | build, cdb, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
+| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
 | `index` | cdb, cmake, fswatch, lang, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |

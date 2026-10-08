@@ -417,6 +417,8 @@ mod tests {
                 "espflash",
                 "ripgrep",
                 "fd",
+                "qmlls",
+                "qmlformat",
                 "claude",
                 "codex"
             ]

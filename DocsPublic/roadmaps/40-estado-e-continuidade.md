@@ -10,8 +10,9 @@
 > manteve Rust, Qt e o ritual (§7.241; 59 §2.3). **Passo 7 feito** (§7.243–§7.244,
 > IPC `0.165.0`): perfis no formato 2, migração e preservação, e a árvore do
 > Banco mostrando os indisponíveis. **Pendente do autor:** o aceite com mouse e
-> teclado (roteiro no §7.244). Próximo: passo 7b, QML para desenvolver a IDE
-> nela mesma (59 §2.4); depois o passo 8 (handoff no 59 §2.1).
+> teclado (roteiro no §7.244). **Passo 7b em curso** (59 §2.4): `qmlls` com o
+> build do projeto feito (§7.245); faltam o realce próprio do QML e o
+> `qmlformat`. Depois, o passo 8 (handoff no 59 §2.1).
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

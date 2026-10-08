@@ -387,6 +387,10 @@ impl Core {
         ) {
             self.reload_index_context();
         }
+        // O qmlls segue o build: um configure novo pode ter criado o diretorio.
+        if notification.method == "event.cmake.finished" {
+            self.on_cmake_finished_for_qml();
+        }
         // O indice terminou (em job): as pastas que ele caminhou entram no
         // watcher, para o incremento alcancar o projeto INTEIRO.
         if notification.method == "event.index.finished" {

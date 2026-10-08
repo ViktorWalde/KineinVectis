@@ -398,7 +398,10 @@ mod tests {
             ["tests/a.py::test_x"]
         );
 
-        std::fs::write(&falso, "#!/bin/sh\necho 'no tests ran in 0.01s'\nexit 5\n").unwrap();
+        // Regravar pelo `write_executable`, nunca abrindo o executavel para
+        // escrita AQUI: um `fork` de outro teste herdaria o descritor e o
+        // `exec` daria ETXTBSY (falhou assim no gate de 2026-10-08).
+        crate::write_executable(&falso, "#!/bin/sh\necho 'no tests ran in 0.01s'\nexit 5\n");
         let casos = super::discover_tests(
             &dir,
             kinein_protocol::ProjectKind::Python,
@@ -409,7 +412,7 @@ mod tests {
         .unwrap();
         assert!(casos.is_empty(), "exit 5 = sem testes, nao erro");
 
-        std::fs::write(&falso, "#!/bin/sh\necho 'erro de coleta' >&2\nexit 2\n").unwrap();
+        crate::write_executable(&falso, "#!/bin/sh\necho 'erro de coleta' >&2\nexit 2\n");
         let erro = super::discover_tests(
             &dir,
             kinein_protocol::ProjectKind::Python,

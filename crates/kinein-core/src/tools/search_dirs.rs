@@ -14,6 +14,8 @@
 //!                                            (IDF_TOOLS_PATH sobrescreve)
 //! ~/.cargo/bin, ~/.local/bin                 rustup/cargo install, pipx
 //! /opt/<algo>/bin                            tarballs da Arm, Bootlin, SDKs
+//! /usr/lib/qt6/bin e equivalentes            ferramentas do Qt das distros
+//!                                            (qmlls, qmlformat; 2026-10-08)
 //! ```
 //!
 //! Puro: recebe a raiz do usuario e as duas variaveis ja' lidas por quem
@@ -35,11 +37,11 @@ pub fn install_root(home: &Path) -> PathBuf {
 /// deteccao sem reiniciar nada.
 #[must_use]
 pub fn installed_bin_dirs(root: &Path) -> Vec<PathBuf> {
-    let mut saida = Vec::new();
+    let mut dirs = Vec::new();
     for versao in subpastas_ate(root, 2) {
-        empurrar(&mut saida, versao.join("bin"));
+        push_existing(&mut dirs, versao.join("bin"));
     }
-    saida
+    dirs
 }
 
 /// Os diretorios `bin` de toolchain que existem sob `home` ALEM da pasta da IDE.
@@ -52,31 +54,44 @@ pub fn extra_search_dirs(
     xpacks_store: Option<&Path>,
     idf_tools: Option<&Path>,
 ) -> Vec<PathBuf> {
-    let mut saida = Vec::new();
+    let mut dirs = Vec::new();
     // 1. xpm: @xpack-dev-tools/<nome>/<versao>/.content/bin
     let store = xpacks_store.map_or_else(|| home.join(".local/xPacks"), Path::to_path_buf);
     for versao in subpastas_ate(&store.join("@xpack-dev-tools"), 2) {
-        empurrar(&mut saida, versao.join(".content/bin"));
-        empurrar(&mut saida, versao.join("bin"));
+        push_existing(&mut dirs, versao.join(".content/bin"));
+        push_existing(&mut dirs, versao.join("bin"));
     }
     // 2. ESP-IDF: tools/<nome>/<versao>/<nome>/bin
     let esp = idf_tools.map_or_else(|| home.join(".espressif/tools"), Path::to_path_buf);
     for pasta in subpastas_ate(&esp, 3) {
-        empurrar(&mut saida, pasta.join("bin"));
+        push_existing(&mut dirs, pasta.join("bin"));
     }
     // 3. o que rustup/cargo/pipx instalam para o usuario
-    empurrar(&mut saida, home.join(".cargo/bin"));
-    empurrar(&mut saida, home.join(".local/bin"));
+    push_existing(&mut dirs, home.join(".cargo/bin"));
+    push_existing(&mut dirs, home.join(".local/bin"));
     // 4. tarballs desempacotados em /opt
     for pasta in subpastas_ate(Path::new("/opt"), 1) {
-        empurrar(&mut saida, pasta.join("bin"));
+        push_existing(&mut dirs, pasta.join("bin"));
     }
-    saida
+    // 5. ferramentas do Qt das distros, fora do PATH (59 §2.4)
+    for dir in QT_TOOL_DIRS {
+        push_existing(&mut dirs, PathBuf::from(dir));
+    }
+    dirs
 }
 
-fn empurrar(saida: &mut Vec<PathBuf>, dir: PathBuf) {
-    if dir.is_dir() && !saida.contains(&dir) {
-        saida.push(dir);
+/// Onde as distros poem as ferramentas do Qt 6 (`qmlls`, `qmlformat`), fora do
+/// `PATH`: Arch, Debian/Ubuntu por arquitetura e Fedora.
+const QT_TOOL_DIRS: [&str; 4] = [
+    "/usr/lib/qt6/bin",
+    "/usr/lib/x86_64-linux-gnu/qt6/bin",
+    "/usr/lib/aarch64-linux-gnu/qt6/bin",
+    "/usr/lib64/qt6/bin",
+];
+
+fn push_existing(dirs: &mut Vec<PathBuf>, dir: PathBuf) {
+    if dir.is_dir() && !dirs.contains(&dir) {
+        dirs.push(dir);
     }
 }
 

@@ -63,6 +63,10 @@ printf 'def test_soma():\n    assert 1 + 1 == 2\n' > "$raiz/tests/test_gera.py"
 # Um pyproject.toml faz o workspace ser Python TAMBEM (cmake por fora): o
 # python.status resolve o interpretador desta maquina e diz se ha' ambiente.
 printf '[project]\nname = "exercitacao"\nversion = "0.1.0"\n' > "$raiz/pyproject.toml"
+# Um .qml com uma propriedade que nao existe (59 §2.4, 2026-10-08): o qmlls
+# REAL, achado fora do PATH (/usr/lib/qt6/bin), tem de apontar `widht`.
+mkdir -p "$raiz/ui"
+printf 'import QtQuick\n\nItem {\n    widht: 10\n}\n' > "$raiz/ui/Erro.qml"
 # Uma compile_commands.json escrita a mao, na forma `command` do padrao do
 # clang: e' o que o contexto de compilador por arquivo le, e o que prova que o
 # job do indice carrega o contexto (nos testes de unidade nao ha' job).
@@ -144,18 +148,20 @@ resposta="$(
         # O gerenciador que LE o disco: a raiz do projeto como "sysroot" e'
         # uma pasta que existe e nao tem usr/include — o veredito diz isso.
         printf '{"jsonrpc":"2.0","id":25,"method":"toolchain.inspectSysroot","params":{"path":"%s"}}\n' "$raiz"
-        sleep 1
+        # Ler o .qml abre o documento no qmlls; o diagnostico chega em evento.
+        printf '{"jsonrpc":"2.0","id":28,"method":"fs.read","params":{"path":"%s/ui/Erro.qml"}}\n' "$raiz"
+        sleep 5
     } | XDG_CONFIG_HOME="$raiz/config" "$binario" 2>/dev/null
 )"
 
-falhou=0
+failed=0
 verifica() {
     local id="$1" nome="$2" esperado="$3"
     local linha
     linha="$(printf '%s\n' "$resposta" | grep -o "\"id\":$id,.*" | head -1)"
     if [ -z "$linha" ]; then
         echo "  ✗ $nome: o core nao respondeu" >&2
-        falhou=1
+        failed=1
         return
     fi
     case "$linha" in
@@ -165,7 +171,7 @@ verifica() {
             ;;
         *'"error"'*)
             echo "  ✗ $nome: $linha" >&2
-            falhou=1
+            failed=1
             return
             ;;
     esac
@@ -174,7 +180,7 @@ verifica() {
         *)
             echo "  ✗ $nome: respondeu sem encontrar \`$esperado\`" >&2
             echo "     $linha" >&2
-            falhou=1
+            failed=1
             ;;
     esac
 }
@@ -247,7 +253,7 @@ if command -v ruff >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ruff" ]; then
         echo "  ok quality.run de Python (o ruff real apontou o F401 do gera.py)"
     else
         echo "  ✗ quality.run de Python: o F401 do gera.py nao chegou como event.quality.diagnostic" >&2
-        falhou=1
+        failed=1
     fi
 else
     record_unproven "exercitacao" "format.text/quality.run de Python" "sem ruff nesta maquina"
@@ -262,14 +268,14 @@ if command -v python3 >/dev/null 2>&1; then
         echo "  ok run.script de um .py (a saida do programa chegou no terminal da execucao)"
     else
         echo "  ✗ run.script de um .py: a saida do gera.py nao chegou no event.terminal.render" >&2
-        falhou=1
+        failed=1
     fi
     verifica 23 "test.run de Python (aceito como job)" '"jobId"'
     if printf '%s\n' "$resposta" | grep -q '"event.test.started".*-m pytest -v'; then
         echo "  ok test.run de Python (python -m pytest -v com o interpretador do projeto)"
     else
         echo "  ✗ test.run de Python: o event.test.started nao mostra 'python -m pytest -v'" >&2
-        falhou=1
+        failed=1
     fi
     # Com pytest no ambiente o finished traz os totais; sem ele, o erro NOMEIA o
     # pytest e o passo para instalar no ambiente. Qualquer outra coisa reprova.
@@ -278,7 +284,7 @@ if command -v python3 >/dev/null 2>&1; then
     else
         echo "  ✗ test.run de Python: o event.test.finished nem trouxe totais nem orientou a instalar o pytest" >&2
         printf '%s\n' "$resposta" | grep '"event.test.finished"' >&2
-        falhou=1
+        failed=1
     fi
 else
     record_unproven "exercitacao" "run.script/test.run de Python" "sem python3 nesta maquina"
@@ -291,7 +297,7 @@ if command -v ctest >/dev/null 2>&1 && command -v cmake >/dev/null 2>&1; then
     else
         echo "  ✗ test.discover: o ctest real nao listou com sucesso" >&2
         printf '%s\n' "$resposta" | grep '"event.test.discovered"' >&2
-        falhou=1
+        failed=1
     fi
 fi
 if command -v python3 >/dev/null 2>&1; then
@@ -300,14 +306,31 @@ if command -v python3 >/dev/null 2>&1; then
     else
         echo "  ✗ test.discover de Python: nem arvore nem o passo do pytest" >&2
         printf '%s\n' "$resposta" | grep '"event.test.discovered"' >&2
-        falhou=1
+        failed=1
     fi
 fi
 verifica 24 "toolchain.installable (o catalogo pinado, com sha256 e a pasta da IDE)" '"installRoot"'
 verifica 24 "toolchain.installable (a Arm GNU 15.2.rel1 com o sha256 publicado)" '"sha256":"597893282ac8c6ab1a4073977f2362990184599643b4c5ee34870a8215783a16"'
 verifica 25 "toolchain.inspectSysroot (uma pasta sem usr/include e' dita vazia)" '"verdict":"vazia para o compilador'
+qmlls_real=""
+for candidate in "$(command -v qmlls || true)" /usr/lib/qt6/bin/qmlls \
+    /usr/lib/x86_64-linux-gnu/qt6/bin/qmlls /usr/lib64/qt6/bin/qmlls; do
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+        qmlls_real="$candidate"
+        break
+    fi
+done
+if [ -z "$qmlls_real" ]; then
+    record_unproven "exercitacao" "lsp de QML (qmlls)" "qmlls ausente nesta maquina"
+elif printf '%s\n' "$resposta" | grep '"event.lsp.diagnostics"' | grep 'Erro.qml' | grep -q 'widht'; then
+    echo "  ok lsp de QML (o qmlls real apontou a propriedade inexistente no Erro.qml)"
+else
+    echo "  ✗ lsp de QML: o qmlls real ($qmlls_real) nao diagnosticou o Erro.qml" >&2
+    printf '%s\n' "$resposta" | grep '"event.lsp' >&2
+    failed=1
+fi
 
-if [ "$falhou" -ne 0 ]; then
+if [ "$failed" -ne 0 ]; then
     echo
     echo "✗ exercitacao: uma ferramenta real recusou o que o core pediu" >&2
     echo "  Teste de unidade com binario FALSO nao pega isto — foi assim que" >&2

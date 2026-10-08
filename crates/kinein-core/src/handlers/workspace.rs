@@ -289,6 +289,8 @@ impl Core {
         // E o basedpyright aprende o INTERPRETADOR do projeto (fatia 2 da
         // cadeia Python): sem ele, completar e tipos vem da stdlib errada.
         self.configure_python_lsp(&root);
+        // E o qmlls aprende o build do projeto, para achar os modulos QML dele.
+        self.configure_qml_lsp(&root);
         // M-S1: store local de rascunhos, uma por workspace (DocsPublic/seguranca/23).
         self.drafts = self
             .global_storage

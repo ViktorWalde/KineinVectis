@@ -85,6 +85,17 @@ impl Default for ServerRegistry {
                     language_id: "python",
                     settings: Value::Null,
                 },
+                // QML (59 §2.4, 2026-10-08): o qmlls do Qt do usuario. O
+                // diretorio de build do projeto chega como `-b` pelo Core
+                // (`configure_qml_lsp`), para ele achar os modulos do projeto.
+                ServerSpec {
+                    key: "qml",
+                    language: "qml",
+                    command: "qmlls".to_owned(),
+                    args: Vec::new(),
+                    language_id: "qml",
+                    settings: Value::Null,
+                },
             ],
         }
     }
@@ -214,6 +225,7 @@ pub(super) fn language_for_path(path: &Path) -> Option<&'static str> {
         "c" | "h" | "cc" | "cpp" | "cxx" | "hpp" | "hh" | "ipp" => Some("cpp"),
         "rs" => Some("rust"),
         "py" | "pyi" | "pyw" => Some("python"),
+        "qml" => Some("qml"),
         _ => None,
     }
 }

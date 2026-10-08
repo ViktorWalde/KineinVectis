@@ -37,6 +37,7 @@ pub mod probe;
 pub mod project;
 pub mod python;
 pub mod python_stubs;
+pub mod qml;
 pub mod remote;
 pub mod remote_command;
 pub mod remote_directories;

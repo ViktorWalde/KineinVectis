@@ -467,6 +467,22 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
     // distro — nao e palpite. (Claude Code tambem tem instalador nativo; a
     // sugestao aponta um caminho que funciona em qualquer distro, e o core
     // nunca a executa.)
+    // QML, 2026-10-08 (59 §2.4): o language server e o formatador vem com o
+    // Qt do usuario e moram fora do PATH nas distros (search_dirs).
+    ToolSpec {
+        id: "qmlls",
+        display_name: "qmlls (language server QML)",
+        binary: "qmlls",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "qmlformat",
+        display_name: "qmlformat (formatador QML)",
+        binary: "qmlformat",
+        alternative_binary: None,
+        install_command: None,
+    },
     ToolSpec {
         id: "claude",
         display_name: "Claude Code",
