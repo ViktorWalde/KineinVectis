@@ -80,7 +80,7 @@ Cada passo termina com:
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
 | 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse/teclado do autor pendente para a árvore com indisponíveis; handoff do 8 no §2.1 |
-| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse/teclado do autor pendente. Estilo QML decidido pelo autor em 2026-10-08: `.qmlformat.ini` perto do atual (7b.4, a fazer) |
+| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse/teclado do autor pendente. Estilo QML decidido pelo autor em 2026-10-08: sem formatação em massa, `.qmlformat.ini` explícito (7b.4, 40.7 §7.253) |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | feito (40.7 §7.248): base de processo de longa vida e ponte do adaptador, provadas contra um adaptador falso; o LSP migrou para a mesma base (§7.249) |
 | 9 | **Extrair os drivers atuais** (39 D1c/D1d) | desbloqueado (autor, 2026-10-08; 39 §5.2): adaptadores compilados neste repositório, ao lado do `kinein-core`, escolhidos no formulário da conexão. A fazer em fatias: PostgreSQL com impacto/prévia, SQLite, MongoDB |
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
@@ -259,12 +259,16 @@ mecanismo que já existe:
   o buffer num arquivo temporário privado e o `.qmlformat.ini` do projeto
   passado por `-s`, para valer o estilo do projeto. **Feita em 2026-10-08
   (40.7 §7.247).**
-- **7b.4, estilo deste repositório (decisão do autor, 2026-10-08).** Um
-  `.qmlformat.ini` na raiz, ajustado para chegar o mais perto do estilo atual
-  (recuo de 4, largura, espaçamento entre objetos e funções; sem reordenar
-  propriedades). O que restar de diferença entra num commit só de formatação,
-  sem lógica, provado pelo gate inteiro. A partir dele, o QML novo sai no
-  estilo do arquivo.
+- **7b.4, estilo deste repositório (decisão do autor, 2026-10-08, revista
+  na mesma noite).** Primeiro o autor escolheu um `.qmlformat.ini` perto do
+  estilo atual e um commit só de formatação. A medição antes do código
+  mostrou que nenhuma opção evita as duas mudanças que o `qmlformat` sempre
+  faz (corpo de `if` de uma linha vai para a linha de baixo; objeto literal
+  abre uma chave por linha): 479 de 543 arquivos mudariam, e 18 passariam do
+  limite da catraca de arquitetura só por formatação. Com esse dado, o autor
+  decidiu **não formatar em massa**. Fica o `.qmlformat.ini` explícito na
+  raiz (o padrão do 6.12 com quebra de linha unix), para quem formatar um
+  arquivo. **Feita em 2026-10-08 (40.7 §7.253).**
 - **7b.2, UI.** Regras de realce próprias do QML (tipo antes de `{`, `id:`,
   nome de binding, handler `onAlgo:`, `pragma`, `alias`, `component`, `enum`);
   `.js` continua nas regras de JavaScript. **Feita em 2026-10-08 (40.7 §7.246).**

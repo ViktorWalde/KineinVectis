@@ -117,6 +117,12 @@ inválidos (`InvalidParams`), ferramenta ausente (`ToolNotFound`).
 - Nomes: `<Dominio><Papel>.qml` (`GitWindow`, `GitViewerPane`,
   `SymbolsController`, `SymbolResultsList`). Registro nas **duas** listas
   do `ui/CMakeLists.txt`.
+- **Formatação:** o QML daqui **não** é formatado em massa pelo `qmlformat`
+  (decisão do autor, 2026-10-08): o estilo é o que está nos arquivos.
+  Formatar tudo mudaria 479 de 543 arquivos e deixaria 18 acima do limite da
+  catraca de arquitetura só por formatação. O `.qmlformat.ini` da raiz deixa
+  explícito o que a IDE usa se alguém formatar um arquivo; não formate um
+  arquivo inteiro numa fatia que não é de formatação.
 
 ### Modelo de harness
 

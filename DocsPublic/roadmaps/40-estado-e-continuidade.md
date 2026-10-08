@@ -12,9 +12,11 @@
 > Banco mostrando os indisponíveis. **Pendente do autor:** o aceite com mouse e
 > teclado (roteiro no §7.244). **Passo 7b feito** (59 §2.4; §7.245–§7.247):
 > `qmlls` com o build do projeto, realce próprio do QML e `qmlformat`.
-> **Estilo QML decidido pelo autor (2026-10-08):** `.qmlformat.ini` o mais
-> perto do estilo atual; o que restar de diferença vai num commit só de
-> formatação (59 §2.4, 7b.4). **Passo 8 feito** (§7.248): base de processo e
+> **Estilo QML decidido pelo autor (2026-10-08), revisto na mesma noite:**
+> o repositório **não** é formatado em massa. A medição mostrou que o
+> `qmlformat` mudaria 479 de 543 arquivos e deixaria 18 acima da catraca de
+> arquitetura só por formatação; o `.qmlformat.ini` da raiz fica explícito
+> para quem formatar um arquivo (59 §2.4, 7b.4; contribuindo/08). **Passo 8 feito** (§7.248): base de processo e
 > ponte do adaptador provadas contra um adaptador falso. **Passo 14 feito**
 > (§7.250–§7.251): a grade do Banco ordena, carrega mais, copia e exporta
 > CSV. Aceite com mouse e teclado do autor pendente para 7, 7b, 14a e 14b.
@@ -33,9 +35,9 @@
 >   hoje resolve a partir do diretório do core, o que é defeito (37; 59
 >   passo 15).
 >
-> **Ordem a seguir:** SQLite relativo ao projeto (fatia pequena do passo 15),
-> estilo QML (7b.4), passo 13 (localizar e histórico), passo 9 (extração,
-> PostgreSQL primeiro), passos 10, 11, 15 e 16.
+> **Feito depois das decisões:** SQLite relativo ao projeto (§7.252) e o
+> `.qmlformat.ini` (§7.253). **Ordem a seguir:** passo 13 (localizar e
+> histórico), passo 9 (extração, PostgreSQL primeiro), passos 10, 11, 15 e 16.
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
