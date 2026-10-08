@@ -41,9 +41,12 @@ QString EditorHighlighter::languageForPath(const QString& filePath)
     if (suffix == QStringLiteral("toml")) {
         return QStringLiteral("toml");
     }
-    if (suffix == QStringLiteral("qml") || suffix == QStringLiteral("js") ||
-        suffix == QStringLiteral("mjs"))
-    {
+    // QML tem regras proprias desde 2026-10-08 (59 §2.4): tipos, bindings e
+    // handlers, alem do JavaScript que ele embute.
+    if (suffix == QStringLiteral("qml")) {
+        return QStringLiteral("qml");
+    }
+    if (suffix == QStringLiteral("js") || suffix == QStringLiteral("mjs")) {
         return QStringLiteral("js");
     }
     if (suffix == QStringLiteral("json")) {
@@ -128,7 +131,9 @@ void EditorHighlighter::rebuildRules()
         m_blockFormat = commentFormat;
         m_hasBlockSpans = true;
     }
-    else if (m_language == QStringLiteral("cpp") || m_language == QStringLiteral("js")) {
+    else if (m_language == QStringLiteral("cpp") || m_language == QStringLiteral("js") ||
+             m_language == QStringLiteral("qml"))
+    {
         if (m_language == QStringLiteral("cpp")) {
             addRule(keywordPattern({QStringLiteral("auto"),      QStringLiteral("bool"),
                                     QStringLiteral("break"),     QStringLiteral("case"),
@@ -238,6 +243,27 @@ void EditorHighlighter::rebuildRules()
                                     QStringLiteral("undefined"),  QStringLiteral("var"),
                                     QStringLiteral("while")}),
                     keywordFormat);
+        }
+        if (m_language == QStringLiteral("qml")) {
+            addRule(keywordPattern({QStringLiteral("alias"), QStringLiteral("as"),
+                                    QStringLiteral("component"), QStringLiteral("enum"),
+                                    QStringLiteral("pragma")}),
+                    keywordFormat);
+            // Nome de binding no inicio da linha (`width:`, `anchors.fill:`),
+            // nunca o `::` de um nome qualificado.
+            addRule(
+                QRegularExpression(QStringLiteral(R"(^\s*\K[a-z_][A-Za-z0-9_.]*(?=\s*:(?!:)))")),
+                metaFormat);
+            // Handler de sinal: `onClicked:`, `onWidthChanged:`.
+            addRule(QRegularExpression(QStringLiteral(R"(\bon[A-Z][A-Za-z0-9_]*(?=\s*:))")),
+                    stdlibFormat);
+            // Tipo de objeto (`Item {`) e tipo de propriedade declarada
+            // (`property real largura`).
+            addRule(QRegularExpression(QStringLiteral(R"(\b[A-Z][A-Za-z0-9_]*(?=\s*\{))")),
+                    typeFormat);
+            addRule(
+                QRegularExpression(QStringLiteral(R"((?<=\bproperty\s)[A-Za-z_][A-Za-z0-9_.<>]*)")),
+                typeFormat);
         }
         addRule(numberPattern(), numberFormat);
         addRule(doubleQuoteString(), stringFormat);

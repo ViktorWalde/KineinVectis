@@ -16,6 +16,7 @@ QtObject {
         "cpp": "//",
         "rust": "//",
         "js": "//",
+        "qml": "//",
         "python": "#",
         "shell": "#",
         "cmake": "#",

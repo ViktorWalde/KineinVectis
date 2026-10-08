@@ -19,6 +19,7 @@
 #   abrir      "Abrir projeto": o seletor no modo de abrir
 #   banco      janela do Banco com uma conexao e dois perfis preservados que
 #              esta versao nao usa (D1a.4, 2026-10-08)
+#   qml        um .qml aberto no editor, com o realce proprio do QML (59 §2.4)
 #
 # Uso: bash scripts/capturar-telas.sh [BINARIO] [PASTA_DE_SAIDA]
 #   BINARIO         padrao build/dev-local/ui/kinein-vectis
@@ -69,6 +70,7 @@ scene_commands() {
         criar) echo "workspace.createProject" ;;
         abrir) echo "workspace.open" ;;
         banco) echo "datasource.list" ;;
+        qml) echo "" ;;
         *) return 1 ;;
     esac
 }
@@ -87,6 +89,41 @@ scene_files() {
    "installation": {"id": "pg-adapter-2"},
    "options": {"schemaVersion": 1, "fields": {"host": "localhost", "port": 5432, "database": "a", "user": "b"}}}
 ]}
+JSON
+            ;;
+        qml)
+            mkdir -p "$project/ui"
+            cat >"$project/ui/Painel.qml" <<'QML'
+pragma ComponentBehavior: Bound
+import QtQuick
+
+// Um painel de exemplo para a foto do realce.
+Item {
+    id: root
+
+    property real largura: 320
+    readonly property alias titulo: rotulo.text
+    signal escolhido(string nome)
+
+    Text {
+        id: rotulo
+        anchors.centerIn: parent
+        text: qsTr("Sensores")
+        font.pixelSize: 14
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.escolhido(rotulo.text)
+    }
+
+    function dobro(valor) {
+        return valor * 2;
+    }
+}
+QML
+            cat >"$project/.kinein/session.json" <<'JSON'
+{"schemaVersion": 1, "openFiles": ["src/main.cpp", "ui/Painel.qml"], "activeFile": "ui/Painel.qml"}
 JSON
             ;;
     esac

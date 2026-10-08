@@ -11,7 +11,7 @@
 > IPC `0.165.0`): perfis no formato 2, migração e preservação, e a árvore do
 > Banco mostrando os indisponíveis. **Pendente do autor:** o aceite com mouse e
 > teclado (roteiro no §7.244). **Passo 7b em curso** (59 §2.4): `qmlls` com o
-> build do projeto feito (§7.245); faltam o realce próprio do QML e o
+> build do projeto (§7.245) e realce próprio do QML (§7.246) feitos; falta o
 > `qmlformat`. Depois, o passo 8 (handoff no 59 §2.1).
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
