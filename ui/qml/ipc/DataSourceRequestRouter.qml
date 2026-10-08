@@ -47,6 +47,12 @@ Item {
     }
 
     Connections {
+        target: root.dataSourceController ? root.dataSourceController.history : null
+        function onListRequested(name) { root.coreClient.dataSourceHistory(name); }
+        function onClearRequested(name) { root.coreClient.dataSourceHistoryClear(name); }
+    }
+
+    Connections {
         target: root.dataSourceController ? root.dataSourceController.exports : null
         function onDirectoryRequested(path) { root.coreClient.exportDirectory(path); }
         function onFileRequested(path, content) { root.coreClient.exportFile(path, content); }

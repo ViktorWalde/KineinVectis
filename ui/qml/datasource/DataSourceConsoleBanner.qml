@@ -7,6 +7,8 @@ Rectangle {
     id: root
     property var profile: null
     signal previewRequested()
+    // O historico da conexao (passo 13b): o ponto e' onde o menu abre.
+    signal historyRequested(real x, real y)
     readonly property string policy: DataSourceKinds.policyLabel(root.profile)
     visible: root.profile !== null
     height: visible ? 28 : 0
@@ -15,7 +17,7 @@ Rectangle {
     Text {
         anchors.fill: parent
         anchors.leftMargin: Theme.spacingSmall
-        anchors.rightMargin: previewButton.visible ? previewButton.width + 2 * Theme.spacingSmall : Theme.spacingSmall
+        anchors.rightMargin: buttons.width + 2 * Theme.spacingSmall
         verticalAlignment: Text.AlignVCenter
         textFormat: Text.PlainText
         text: root.profile ? qsTr("Console · %1 · %2%3").arg(root.profile.name)
@@ -26,14 +28,29 @@ Rectangle {
         elide: Text.ElideMiddle
     }
 
-    KvButton {
-        id: previewButton
+    Row {
+        id: buttons
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
-        compact: true
-        text: qsTr("Executar com prévia…")
-        visible: root.profile !== null && DataSourceKinds.isPostgres(root.profile.engine) && root.profile.readOnly !== true
-        onClicked: root.previewRequested()
+        spacing: Theme.spacingXSmall
+
+        KvButton {
+            id: historyButton
+            compact: true
+            text: qsTr("Histórico")
+            tooltip: qsTr("As últimas instruções executadas nesta conexão")
+            onClicked: {
+                const point = historyButton.mapToItem(root, 0, historyButton.height);
+                root.historyRequested(point.x, point.y);
+            }
+        }
+
+        KvButton {
+            compact: true
+            text: qsTr("Executar com prévia…")
+            visible: root.profile !== null && DataSourceKinds.isPostgres(root.profile.engine) && root.profile.readOnly !== true
+            onClicked: root.previewRequested()
+        }
     }
 }

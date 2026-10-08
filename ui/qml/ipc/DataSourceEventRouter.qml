@@ -54,6 +54,11 @@ Item {
             root.dataSourceController.handleQueried(outcome);
         }
         function onDataSourceQueryAccepted(operation) { root.dataSourceController.queries.accepted(operation); }
+        // O historico de consultas (passo 13b).
+        function onDataSourceHistoryListed(name, entries) {
+            root.dataSourceController.history.handleListed(name, entries);
+        }
+        function onDataSourceHistoryCleared(name) { root.dataSourceController.history.handleCleared(name); }
         // A exportacao em CSV (passo 14b): canal proprio, fora da arvore.
         function onExportSucceeded(method, path) { root.dataSourceController.exports.handleSucceeded(method, path); }
         function onExportFailed(method, path, message) {

@@ -16,6 +16,7 @@ mod datasource_catalogue;
 pub mod datasource_console;
 pub mod datasource_destroy;
 pub mod datasource_discover;
+pub mod datasource_history;
 pub mod datasource_impact;
 pub mod datasource_odbc;
 pub mod datasource_preview;

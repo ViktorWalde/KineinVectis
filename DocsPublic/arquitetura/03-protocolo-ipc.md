@@ -8,6 +8,13 @@
 > Não acrescenta métodos ao dispatcher UI/core nem altera sua versão
 > `0.164.0`; o transporte de processos ainda depende de D1b.
 
+> **0.166.0 (2026-10-08, contrato anterior ao código, passo 13b).**
+> `datasource.history { name }` devolve o histórico de consultas da conexão;
+> `datasource.history.clear { name }` o apaga. O histórico é do core e fica
+> fora do projeto, no estado do usuário (59 §5.2.1). Aditivo: nenhum método
+> existente muda; `datasource.remove` passa a apagar também o histórico do
+> perfil removido.
+
 > **0.165.0 (2026-10-08, contrato anterior ao código, D1a.4).**
 > `datasource.list/save/remove` acrescentam `unavailable`: perfis preservados
 > que esta versão não sabe usar (motor ou adaptador desconhecido, instalação
@@ -3322,7 +3329,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 183 métodos roteados — a lista inteira
+## Os 185 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3383,6 +3390,8 @@ datasource.list
 datasource.query
 datasource.preview.decide
 datasource.disconnect
+datasource.history
+datasource.history.clear
 datasource.remove
 datasource.save
 datasource.test
@@ -4631,7 +4640,21 @@ datasource.introspect { name, password?, clientContext?, expectedContext? }     
 datasource.query      { name, password?, sql, maxRows?, confirmWrite?, clientContext?, expectedContext?, confirmation?, preview? } -> { jobId, name, clientContext?, preview } + job (0.159.0)
 datasource.preview.decide { previewId, decision, name, clientContext, expectedContext } -> { jobId } + queried com desfecho (0.159.0)
 datasource.disconnect  { name, clientContext, expectedContext } -> { jobId, name, clientContext } + job (0.163.0)
+datasource.history    { name }                -> { name, entries: [DataSourceHistoryEntry] }  (0.166.0)
+datasource.history.clear { name }             -> { name }                                     (0.166.0)
 ```
+
+**Histórico de consultas (`0.166.0`, passo 13b).** O core anota cada
+`datasource.query` que rodou (o job terminou, com sucesso ou falha do motor);
+recusa antes do job não entra. `DataSourceHistoryEntry { sql, at, outcome,
+rows? }`: `at` em segundos desde a época (UTC), `outcome` é `ok | failed`,
+`rows` são as linhas lidas ou afetadas quando o motor as diz. A mais recente
+vem primeiro; a repetição imediata do mesmo texto atualiza a do topo; no
+máximo 100 por conexão, e texto acima de 64 KiB não entra. Exigem workspace
+aberto; nome sem perfil salvo responde `INVALID_PARAMS`. O arquivo fica em
+`$XDG_STATE_HOME/kinein-vectis/datasource-history/` (sem a variável,
+`~/.local/state`), um por projeto, nunca no projeto; um arquivo ilegível fica
+intacto e o histórico daquele projeto aparece vazio.
 
 Teste, impacto, catálogo, consulta, decisão de prévia e desconexão exigem workspace
 aberto; o perfil mora no projeto.

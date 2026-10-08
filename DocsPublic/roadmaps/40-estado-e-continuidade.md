@@ -35,9 +35,11 @@
 >   hoje resolve a partir do diretório do core, o que é defeito (37; 59
 >   passo 15).
 >
-> **Feito depois das decisões:** SQLite relativo ao projeto (§7.252) e o
-> `.qmlformat.ini` (§7.253). **Ordem a seguir:** passo 13 (localizar e
-> histórico), passo 9 (extração, PostgreSQL primeiro), passos 10, 11, 15 e 16.
+> **Feito depois das decisões:** SQLite relativo ao projeto (§7.252), o
+> `.qmlformat.ini` (§7.253) e o **passo 13** (§7.254–§7.255, IPC `0.166.0`):
+> localizar a conexão do console e o histórico de consultas fora do projeto.
+> Aceite com mouse e teclado do autor pendente. **Ordem a seguir:** passo 9
+> (extração, PostgreSQL primeiro), passos 10, 11, 15 e 16.
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

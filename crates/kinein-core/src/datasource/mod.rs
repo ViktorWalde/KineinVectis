@@ -51,6 +51,7 @@ pub mod discover;
 pub mod driver_contract;
 pub mod driver_process;
 pub mod driver_stream;
+pub mod history;
 pub mod impact;
 pub mod introspect;
 pub mod measurement;
@@ -89,6 +90,23 @@ static CATALOG_WRITES: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 /// Porta padrao do `PostgreSQL`, usada quando o perfil nao informa outra.
 pub const DEFAULT_PORT: u16 = 5432;
+
+/// O SHA-256 em hexadecimal minusculo: o desafio do ODBC e o nome do arquivo
+/// do historico de consultas.
+#[must_use]
+pub(crate) fn hex_digest(hash: sha2::Sha256) -> String {
+    use sha2::Digest;
+    const HEX: &[u8] = b"0123456789abcdef";
+    hash.finalize()
+        .iter()
+        .flat_map(|byte| {
+            [
+                char::from(HEX[(byte >> 4) as usize]),
+                char::from(HEX[(byte & 15) as usize]),
+            ]
+        })
+        .collect()
+}
 
 /// Le o catalogo do workspace, ja ordenado por nome.
 #[must_use]

@@ -132,20 +132,7 @@ fn challenge(root: &Path, profile: &DataSourceProfile, driver: &str) -> String {
     hash.update(serde_json::to_vec(profile).unwrap_or_default());
     hash.update([0]);
     hash.update(driver.as_bytes());
-    finish_hash(hash)
-}
-
-fn finish_hash(hash: Sha256) -> String {
-    const HEX: &[u8] = b"0123456789abcdef";
-    hash.finalize()
-        .iter()
-        .flat_map(|byte| {
-            [
-                char::from(HEX[(byte >> 4) as usize]),
-                char::from(HEX[(byte & 15) as usize]),
-            ]
-        })
-        .collect()
+    super::hex_digest(hash)
 }
 
 fn manager() -> Result<&'static Environment, String> {
@@ -222,7 +209,7 @@ fn driver_identity(dsn: &str, driver: &str, library: &str) -> String {
         hash.update(value.as_bytes());
         hash.update([0]);
     }
-    finish_hash(hash)
+    super::hex_digest(hash)
 }
 
 /// Nao propaga o texto arbitrario do driver: ele pode repetir a senha/DSN.

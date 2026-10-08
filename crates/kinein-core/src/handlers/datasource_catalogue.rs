@@ -106,16 +106,23 @@ impl Core {
         self.odbc.revoke(&root, &request.name);
         self.previews.revoke(&root, &request.name);
         match crate::datasource::remove(&root, &request.name) {
-            Ok(profiles) => JsonRpcResponse::success(
-                request_id,
-                json!(DataSourceWriteResult {
-                    providers: crate::datasource::providers::list(),
-                    console_bindings: crate::datasource::console::bindings(&root, &profiles),
-                    workspace: root.display().to_string(),
-                    unavailable: unavailable_after_write(&root),
-                    profiles
-                }),
-            ),
+            Ok(profiles) => {
+                // O historico do perfil removido vai junto (`0.166.0`). Um
+                // arquivo ilegivel fica intacto; a remocao do perfil vale.
+                if let Some(history) = &self.query_history {
+                    history.clear(&root, &request.name).ok();
+                }
+                JsonRpcResponse::success(
+                    request_id,
+                    json!(DataSourceWriteResult {
+                        providers: crate::datasource::providers::list(),
+                        console_bindings: crate::datasource::console::bindings(&root, &profiles),
+                        workspace: root.display().to_string(),
+                        unavailable: unavailable_after_write(&root),
+                        profiles
+                    }),
+                )
+            }
             Err(message) => JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(JsonRpcErrorCode::InternalError, message, None),

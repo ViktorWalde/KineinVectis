@@ -993,6 +993,17 @@ o conteúdo do arquivo. Perfis em formato reconhecido são salvos atomicamente.
   selecione explicitamente a instrução. A seleção ainda passa pela política
   de escrita, produção e somente leitura. Trocar de conexão/projeto durante
   o pedido descarta a resposta antiga.
+- **Histórico de consultas** (desde 2026-10-08). O botão **Histórico**, no
+  cabeçalho do console, lista as últimas instruções que **rodaram** naquela
+  conexão, a mais recente primeiro, com a hora e um aviso nas que falharam.
+  Escolher uma a insere no fim do console, selecionada e sem executar
+  (`Ctrl+Z` desfaz). **Limpar histórico…** pede confirmação no próprio menu.
+  O histórico fica fora do projeto, em `~/.local/state/kinein-vectis/`
+  (ou `$XDG_STATE_HOME`), só legível por você, e nunca vai ao Git: o SQL pode
+  conter senha. Guarda até 100 instruções por conexão; remover a conexão
+  apaga o histórico dela.
+- **Localizar a conexão do console:** com um console aberto no editor, o
+  ícone de alvo na barra do Banco escolhe a conexão dele na árvore.
 - **Cores no SQL** (desde 2026-10-03). Qualquer `.sql` (o console também) ganha
   cores:
   - palavras-chave em qualquer caixa (`select` e `SELECT`);

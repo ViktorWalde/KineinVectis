@@ -7,12 +7,13 @@
 //! A UI pergunta e reenvia — pelo codigo, nunca pelo texto.
 
 use kinein_protocol::{
-    DataSourceQueriedEvent, DataSourceQueryAccepted, DataSourceQueryParams, JobRisk, JsonRpcError,
-    JsonRpcErrorCode, JsonRpcResponse,
+    DataSourceHistoryOutcome, DataSourceQueriedEvent, DataSourceQueryAccepted,
+    DataSourceQueryParams, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
 use super::datasource::com_id;
+use super::datasource_history::{HistoryTarget, Ran};
 use crate::Core;
 use crate::datasource::{classification, policy, query};
 use crate::jobs::JobOutcome;
@@ -52,10 +53,7 @@ impl Core {
         let statements = classification::classify(profile.engine, &request.sql);
         // Classifica TODO o lote: uma leitura inicial nao pode esconder um
         // COMMIT que encerra o READ ONLY e uma remocao de dados logo depois.
-        let write = statements.is_empty()
-            || statements
-                .iter()
-                .any(|s| s.severity != kinein_protocol::SqlImpactSeverity::Read);
+        let write = writes(&statements);
         let preview_sql = match query_permission(&root, &profile, &request, &statements) {
             Ok(sql) => sql,
             Err(rejection) => {
@@ -107,6 +105,7 @@ impl Core {
         let accepted_preview = request.preview;
         // O motor abre o arquivo do SQLite a partir do projeto (37).
         let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
+        let history = self.history_target(&root, &profile.name, &request.sql);
         let job_id = jobs.spawn("datasource", title, risk, request.preview, move |ctx| {
             let _activity = activity;
             run_query_job(
@@ -115,8 +114,8 @@ impl Core {
                 secret.as_ref(),
                 request,
                 &statements,
-                write,
                 preview,
+                history,
             )
         });
         JsonRpcResponse::success(
@@ -154,16 +153,27 @@ fn query_permission(
     .and_then(|()| super::datasource_preview::validate(profile, request))
 }
 
-/// Medição/execução esperam no worker; o despacho continua livre.
+/// O lote escreve? Todo ele: uma leitura inicial não esconde um COMMIT que
+/// encerra o READ ONLY e uma remoção de dados logo depois.
+fn writes(statements: &[kinein_protocol::SqlStatementImpact]) -> bool {
+    statements.is_empty()
+        || statements
+            .iter()
+            .any(|s| s.severity != kinein_protocol::SqlImpactSeverity::Read)
+}
+
+/// Medição/execução esperam no worker; o despacho continua livre. O que
+/// RODOU vai ao histórico, quando ligado; recusa, prévia e falta de senha não.
 fn run_query_job(
     ctx: &crate::jobs::JobContext,
     profile: kinein_protocol::DataSourceProfile,
     secret: Option<&crate::datasource::Secret>,
     request: DataSourceQueryParams,
     statements: &[kinein_protocol::SqlStatementImpact],
-    write: bool,
     preview: Option<super::datasource_preview::Prepared>,
+    history: Option<HistoryTarget>,
 ) -> JobOutcome {
+    let write = writes(statements);
     let max_rows = query::clamp_rows(request.max_rows);
     let preflight = (!request.confirm_write || profile.production)
         && crate::datasource::confirm::needs_measurement(statements);
@@ -217,6 +227,23 @@ fn run_query_job(
         kinein_protocol::DataSourceQueryAccess::Read
     };
     let ok = event.success;
+    let ran = (!event.secret_required).then(|| Ran {
+        outcome: if ok {
+            DataSourceHistoryOutcome::Ok
+        } else {
+            DataSourceHistoryOutcome::Failed
+        },
+        rows: if ok {
+            event
+                .affected
+                .or_else(|| u64::try_from(event.row_count).ok())
+        } else {
+            None
+        },
+    });
+    if let (Some(history), Some(ran)) = (history, ran) {
+        history.record(ctx, &ran);
+    }
     ctx.emit_event("event.datasource.queried", json!(event));
     if ok {
         JobOutcome::Success

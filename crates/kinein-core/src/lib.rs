@@ -75,6 +75,9 @@ pub struct Core {
     odbc: datasource::odbc::Session,
     previews: datasource::preview::Session,
     datasource_activity: datasource::activity::Session,
+    /// O historico de consultas do Banco (passo 13b); `None`, o padrao, nao
+    /// grava nada ([`Core::enable_query_history`]).
+    query_history: Option<datasource::history::History>,
     fswatch: Option<fswatch::WorkspaceWatcher>,
     syntax: lang::SyntaxTreeService,
     /// O indice do projeto inteiro (pilar 0 do roadmaps/42): construido por um
@@ -128,6 +131,7 @@ impl Core {
             odbc: datasource::odbc::Session::default(),
             previews: datasource::preview::Session::default(),
             datasource_activity: datasource::activity::Session::default(),
+            query_history: None,
             fswatch: None,
             syntax: lang::SyntaxTreeService::default(),
             index: Arc::new(Mutex::new(index::ProjectIndex::default())),

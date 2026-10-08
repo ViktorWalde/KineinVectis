@@ -149,6 +149,9 @@ pub fn run_stdio() -> Result<(), CoreError> {
     // Persistencia local (rascunhos + historico global) so no processo real: o
     // caminho do estado global entra por aqui e nunca e' deduzido la dentro.
     core.enable_persistence(crate::settings::global_dir());
+    // O historico de consultas do Banco fica no estado do usuario, fora do
+    // projeto (passo 13b; decisao do autor em 2026-10-08).
+    core.enable_query_history(crate::datasource::history::History::in_user_state());
 
     let stdout = io::stdout();
     let mut writer = stdout.lock();

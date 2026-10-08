@@ -203,6 +203,8 @@ set_source_files_properties(qml/datasource/DataSourcePreviewController.qml PROPE
 set_source_files_properties(qml/datasource/DataSourcePreviewDialog.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePreviewDialog.qml)
 set_source_files_properties(qml/datasource/DataSourceQueryController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceQueryController.qml)
 set_source_files_properties(qml/datasource/DataSourceExportController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceExportController.qml)
+set_source_files_properties(qml/datasource/DataSourceHistoryController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceHistoryController.qml)
+set_source_files_properties(qml/datasource/DataSourceHistoryMenu.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceHistoryMenu.qml)
 set_source_files_properties(qml/datasource/DataSourceSessionController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceSessionController.qml)
 set_source_files_properties(qml/datasource/DataSourceCatalogController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceCatalogController.qml)
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
@@ -625,6 +627,8 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourcePreviewDialog.qml
         qml/datasource/DataSourceQueryController.qml
         qml/datasource/DataSourceExportController.qml
+        qml/datasource/DataSourceHistoryController.qml
+        qml/datasource/DataSourceHistoryMenu.qml
         qml/datasource/DataSourceSessionController.qml
         qml/datasource/DataSourceCatalogController.qml
         qml/datasource/DataSourceList.qml

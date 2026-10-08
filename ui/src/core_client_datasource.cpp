@@ -177,6 +177,16 @@ void CoreClient::dataSourceDisconnect(const QString& name, const QVariantMap& co
     sendRequest(QStringLiteral("datasource.disconnect"), params);
 }
 
+void CoreClient::dataSourceHistory(const QString& name)
+{
+    sendRequest(QStringLiteral("datasource.history"), {{QStringLiteral("name"), name}});
+}
+
+void CoreClient::dataSourceHistoryClear(const QString& name)
+{
+    sendRequest(QStringLiteral("datasource.history.clear"), {{QStringLiteral("name"), name}});
+}
+
 void CoreClient::exportDirectory(const QString& path)
 {
     sendExport(QStringLiteral("fs.createDirectory"), {{QStringLiteral("path"), path}});
@@ -212,8 +222,27 @@ void CoreClient::dataSourceImpact(const QString& name, const QString& password, 
     sendRequest(QStringLiteral("datasource.impact"), params);
 }
 
+// O historico de consultas (0.166.0) num elo proprio da cadeia de despacho.
+bool CoreClient::dispatchDataSourceHistoryResult(const QString& method, const QJsonObject& result)
+{
+    const QString name = result.value(QStringLiteral("name")).toString();
+    if (method == QStringLiteral("datasource.history")) {
+        emit dataSourceHistoryListed(
+            name, result.value(QStringLiteral("entries")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("datasource.history.clear")) {
+        emit dataSourceHistoryCleared(name);
+        return true;
+    }
+    return false;
+}
+
 bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObject& result)
 {
+    if (dispatchDataSourceHistoryResult(method, result)) {
+        return true;
+    }
     if (method == QStringLiteral("datasource.odbc.sources")) {
         emit dataSourceOdbcSourcesResolved(
             result.value(QStringLiteral("sources")).toArray().toVariantList());

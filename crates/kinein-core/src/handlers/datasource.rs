@@ -51,6 +51,9 @@ impl Core {
             "datasource.introspect" => {
                 Some(self.datasource_introspect_response(request_id, params))
             }
+            "datasource.history" | "datasource.history.clear" => {
+                Some(self.datasource_history_response(method, request_id, params))
+            }
             _ => None,
         }
     }

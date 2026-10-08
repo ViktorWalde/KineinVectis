@@ -118,6 +118,25 @@ Item {
             root.dataSourceController.consoles.runFromEditor(root.editorController.currentFilePath(), surface.text,
                 surface.cursorPosition, surface.selectionStart, surface.selectionEnd, true);
         }
+        onHistoryRequested: (x, y) => {
+            const point = consoleBanner.mapToItem(root, x, y);
+            historyMenu.menuX = point.x;
+            historyMenu.menuY = point.y;
+            root.dataSourceController.history.open(root.dataSourceController.consoles.activeConnection);
+            root.historyOpen = true;
+        }
+    }
+
+    // O HISTORICO da conexao do console (passo 13b), por cima do editor.
+    property bool historyOpen: false
+    DataSourceHistoryMenu {
+        id: historyMenu
+        anchors.fill: parent
+        z: 100
+        visible: root.historyOpen && root.dataSourceController !== null
+        history: root.dataSourceController ? root.dataSourceController.history : null
+        onDismissRequested: root.historyOpen = false
+        onStatementChosen: sql => root.dataSourceController.consoles.open(root.dataSourceController.history.name, sql)
     }
 
     EditorPane {

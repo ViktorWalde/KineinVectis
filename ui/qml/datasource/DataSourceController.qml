@@ -82,6 +82,11 @@ Item {
         onRunConfirmed: (name, text, confirmation, preview) => root.queries.begin(name, text, true, root.lastQuery ? root.lastQuery.maxRows : 0, confirmation, root.pendingDatabase, preview)
     }
 
+    // O historico de consultas da conexao (passo 13b), que o core guarda.
+    readonly property DataSourceHistoryController history: DataSourceHistoryController {
+        workspaceRoot: root.workspaceRoot
+    }
+
     // Exportar o resultado em CSV (passo 14b), pelo canal proprio da ponte.
     readonly property DataSourceExportController exports: DataSourceExportController {
         workspaceRoot: root.workspaceRoot
@@ -354,6 +359,7 @@ Item {
         }
         if (method.indexOf("datasource.odbc.") === 0) return odbc.handleFailed(method, message);
         if (method === "datasource.impact") return impact.handleFailed(message, operation, code);
+        if (method.indexOf("datasource.history") === 0) return history.handleFailed(message);
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;

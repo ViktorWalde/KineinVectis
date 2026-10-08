@@ -208,6 +208,10 @@ public:
     // EXPORTAR o resultado do Banco (passo 14b): `fs.createDirectory` e
     // `fs.createFile` com resposta propria (`exportSucceeded`/`exportFailed`),
     // que a arvore do projeto nao ve; o conteudo nao vai ao log.
+    // O historico de consultas da conexao (datasource.history, 0.166.0): o
+    // core anota o que rodou e guarda fora do projeto.
+    Q_INVOKABLE void dataSourceHistory(const QString& name);
+    Q_INVOKABLE void dataSourceHistoryClear(const QString& name);
     Q_INVOKABLE void exportDirectory(const QString& path);
     Q_INVOKABLE void exportFile(const QString& path, const QString& content);
 
@@ -440,6 +444,9 @@ signals:
     void dataSourceDestroyed(bool success, const QString& message, const QVariantList& profiles,
                              const QString& clientContext);
     void dataSourceQueried(const QVariantMap& outcome);
+    /// O historico da conexao, a mais recente primeiro.
+    void dataSourceHistoryListed(const QString& name, const QVariantList& entries);
+    void dataSourceHistoryCleared(const QString& name);
     /// Um passo da exportacao (`fs.createDirectory`/`fs.createFile`) e o
     /// caminho como foi PEDIDO.
     void exportSucceeded(const QString& method, const QString& path);
@@ -696,6 +703,7 @@ private:
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);
+    bool dispatchDataSourceHistoryResult(const QString& method, const QJsonObject& result);
     void handleDataSourceFailure(const QString& method, const QJsonObject& error,
                                  const QVariantMap& requestQuery);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);

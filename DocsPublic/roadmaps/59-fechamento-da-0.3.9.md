@@ -86,7 +86,7 @@ Cada passo termina com:
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
 | 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
-| 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | 13a feita (40.7 §7.254): localizar a conexão do console ativo; aceite com mouse/teclado do autor pendente. 13b a fazer: histórico por conexão gravado fora do projeto (§5.2) |
+| 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
@@ -729,6 +729,33 @@ nada interpreta SQL na UI.
   processos adaptadores com API negociada permitem trocar o driver sem
   recompilar a IDE, após migração aceita. Contratos/perfis antes do runtime;
   cliente LSP e operações atuais são reaproveitados.
+
+#### 5.2.1 Desenho do histórico de consultas (passo 13b, 2026-10-08), antes do código
+
+Decisão do autor (40, topo): gravado fora do projeto, no estado do usuário,
+separado por projeto, nunca em `.kinein/` nem no Git, com "Limpar histórico".
+
+- **Dono: o core**, que executa. Cada `datasource.query` que **rodou** (o job
+  terminou, com sucesso ou falha do motor) vira uma entrada: texto, hora,
+  desfecho (`ok`/`failed`), linhas lidas ou afetadas. Recusa antes do job
+  (confirmação, somente leitura, contexto mudado) não entra: nada rodou. A
+  repetição imediata do mesmo texto (o "Carregar mais") atualiza a entrada do
+  topo em vez de criar outra.
+- **Onde:** `$XDG_STATE_HOME/kinein-vectis/datasource-history/<hash>.json`
+  (sem `XDG_STATE_HOME`, `~/.local/state`), um arquivo por projeto; `<hash>` é
+  o SHA-256 do caminho canônico da raiz, e o arquivo guarda o caminho para
+  conferir. Pasta `0700`, arquivo `0600`, escrita atômica, teto de 100
+  entradas por conexão e de 64 KiB por texto (o texto maior não entra).
+- **Protocolo (aditivo, `0.166.0`):** `datasource.history { name }` →
+  `{ name, entries: [{ sql, at, outcome, rows? }] }`, a mais recente
+  primeiro; `datasource.history.clear { name }` → `{ name }`. Remover o perfil
+  também apaga o histórico dele.
+- **UI:** no cabeçalho do console, o botão "Histórico" abre a lista da
+  conexão (texto numa linha, hora, desfecho). Escolher insere a instrução no
+  fim do console pelo caminho dos modelos (selecionada, desfazível, sem
+  executar). "Limpar histórico" pede confirmação no próprio menu.
+- **Não faz:** busca no histórico, histórico entre projetos, sincronizar entre
+  máquinas.
 
 ### 5.3 Segurança em camadas
 

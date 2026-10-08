@@ -79,7 +79,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 183 métodos IPC roteados pelo core.
+Medido: 185 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -152,6 +152,7 @@ flowchart LR
   n_core_datasource --> n_core_fsops
   n_core_datasource --> n_core_jobs
   n_core_datasource --> n_core_owned_child
+  n_core_datasource --> n_core_settings
   n_core_datasource --> n_core_stderr_tail
   n_core_datasource --> n_core_tools
   n_core_flash --> n_core_build
@@ -204,6 +205,7 @@ flowchart LR
   n_core_python --> n_core_run
   n_core_rpc --> n_core_dap
   n_core_run --> n_core_python
+  n_core_runtime --> n_core_datasource
   n_core_runtime --> n_core_rpc
   n_core_runtime --> n_core_settings
   n_core_serial --> n_core_build
@@ -219,7 +221,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-44 módulos, 87 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+44 módulos, 89 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -239,7 +241,7 @@ flowchart LR
 | `container` | tools | Containers como dominio NATIVO: |
 | `coverage` | process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | lsp, python, run, stderr_tail | Subsistema de debug: |
-| `datasource` | container, db, fsops, jobs, owned_child, stderr_tail, tools | Fontes de dados: |
+| `datasource` | container, db, fsops, jobs, owned_child, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `flash` | build | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | — | Buffer formatting by orchestrating the project's own formatters. |
@@ -263,7 +265,7 @@ flowchart LR
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
 | `run` | python | O que "Executar" roda, e como se mostra. |
 | `runconfig` | — | Run configurations por workspace (.kinein/runconfigs.json). |
-| `runtime` | rpc, settings | Habilitacao dos servicos externos e configuracao dos servidores LSP do Core. |
+| `runtime` | datasource, rpc, settings | Habilitacao dos servicos externos e configuracao dos servidores LSP do Core. |
 | `serial` | build, toolchain | Portas seriais USB: |
 | `settings` | — | Settings persistidos em dois níveis (settings.*). |
 | `setup` | tools | Como instalar o que falta — passo a passo OFICIAL, para a distro detectada. |
@@ -277,7 +279,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 183 métodos roteados pelo core, 153 seguem o caminho padrão
+Dos 185 métodos roteados pelo core, 155 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 30 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -1137,7 +1139,7 @@ flowchart LR
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
   end
   subgraph IPC["JSON-RPC"]
-    n_ipc_datasource(["datasource.* · 16"])
+    n_ipc_datasource(["datasource.* · 18"])
     n_ipc_fs(["fs.* · 2"])
     n_ipc_grafana(["grafana.* · 4"])
     n_ipc_job(["job.* · 1"])
@@ -1215,7 +1217,7 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/jobs.rs` | Handlers for job.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (23): `datasource.console`, `datasource.console.statement`, `datasource.create`, `datasource.destroy`, `datasource.disconnect`, `datasource.discover`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.preview.decide`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.createDirectory`, `fs.createFile`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`, `job.cancel`.
+Métodos IPC (25): `datasource.console`, `datasource.console.statement`, `datasource.create`, `datasource.destroy`, `datasource.disconnect`, `datasource.discover`, `datasource.history`, `datasource.history.clear`, `datasource.impact`, `datasource.introspect`, `datasource.list`, `datasource.odbc.authorize`, `datasource.odbc.sources`, `datasource.preview.decide`, `datasource.query`, `datasource.remove`, `datasource.save`, `datasource.test`, `fs.createDirectory`, `fs.createFile`, `grafana.forget`, `grafana.get`, `grafana.probe`, `grafana.save`, `job.cancel`.
 
 ### Containers
 
