@@ -103,6 +103,32 @@ QtObject {
         return order;
     }
 
+    // COPIAR e EXPORTAR (passo 14b, 59 §5.4.1): um campo de texto delimitado
+    // no formato do RFC 4180 — aspas quando ha' separador, aspas ou quebra de
+    // linha; aspas internas dobradas. NULL vira campo VAZIO e o texto vazio
+    // vira `""`: quem le o arquivo ainda distingue os dois.
+    function delimitedField(value, separator) {
+        if (isNull(value)) return "";
+        const text = String(value);
+        if (text === "") return "\"\"";
+        if (text.indexOf(separator) < 0 && !/["\r\n]/.test(text)) return text;
+        return "\"" + text.replace(/"/g, "\"\"") + "\"";
+    }
+
+    // Uma linha da grade (objeto ou lista) nas colunas dadas.
+    function delimitedRow(columns, row, separator) {
+        return columns.map((column, index) => delimitedField(cellOf(row, column, index), separator)).join(separator);
+    }
+
+    // O cabecalho e as linhas, na ordem dada (a da tela); cada registro
+    // termina em CRLF, como o RFC 4180 pede.
+    function delimitedText(columns, rows, separator) {
+        const lines = [columns.map(column => delimitedField(column.label !== undefined ? column.label : column.key,
+                                                            separator)).join(separator)];
+        for (let r = 0; r < rows.length; r++) lines.push(delimitedRow(columns, rows[r], separator));
+        return lines.join("\r\n") + "\r\n";
+    }
+
     // As larguras finais (revistas em 2026-10-03, pedido do autor: "melhorar
     // o dimensionamento da tabela"):
     //   - cada coluna na largura NATURAL (o maior texto, medido);

@@ -37,6 +37,46 @@ Item {
     readonly property string sortNote: grid.sorting.order !== null && root.lastQuery !== null
                                        && root.lastQuery.truncated === true
                                        ? qsTr("Ordem só nas %1 carregadas").arg(root.lastQuery.rowCount) : ""
+    // COPIAR e EXPORTAR (passo 14b): o resultado da ultima acao fica na barra
+    // de baixo, no lugar da nota da ordem, ate' as linhas mudarem.
+    property string actionNote: ""
+    property bool actionFailed: false
+    // A linha escolhida como linha de `rows`: ela segue a linha quando a
+    // ordem muda (a grade fala da linha como aparece).
+    property int selectedSource: -1
+    readonly property bool hasRows: grid.rows.length > 0 && grid.columns.length > 0
+                                    && !root.querying && !root.failed
+
+    GridRules {
+        id: delimited
+    }
+
+    Connections {
+        target: root.controller ? root.controller.exports : null
+        function onFinished(message, ok) { root.note(message, !ok); }
+    }
+
+    function note(message, failure) {
+        root.actionNote = message;
+        root.actionFailed = failure === true;
+    }
+
+    // Tudo na ORDEM DA TELA: o que se copia e' o que se ve.
+    function copyRow(index) {
+        Clipboard.setText(delimited.delimitedRow(grid.columns, grid.sorting.shownRows[index], "\t"));
+        root.note(qsTr("Linha copiada (TSV)."));
+    }
+
+    function copyAll() {
+        Clipboard.setText(delimited.delimitedText(grid.columns, grid.sorting.shownRows, ","));
+        root.note(qsTr("%1 linha(s) copiada(s) em CSV.").arg(grid.rows.length));
+    }
+
+    function exportAll() {
+        root.note(qsTr("Exportando…"));
+        root.controller.exports.begin(root.lastQuery.name, delimited.delimitedText(grid.columns, grid.sorting.shownRows, ","),
+                                      grid.rows.length, new Date());
+    }
 
     Item {
         id: statusRow
@@ -59,7 +99,7 @@ Item {
         Text {
             anchors.left: statusIcon.right
             anchors.leftMargin: Theme.spacingXSmall
-            anchors.right: closeButton.left
+            anchors.right: actions.visible ? actions.left : closeButton.left
             anchors.rightMargin: Theme.spacingXSmall
             anchors.verticalCenter: parent.verticalCenter
             text: root.lastQuery === null ? qsTr("Dados")
@@ -75,6 +115,32 @@ Item {
             color: root.failed ? Theme.errorSoft : (root.mustConfirm ? Theme.warningSoft : Theme.textSecondary)
             font.pixelSize: Theme.fontSizeCaption
             elide: Text.ElideRight
+        }
+
+        // A janela e' estreita: copiar e exportar sao icones com dica.
+        Row {
+            id: actions
+
+            anchors.right: closeButton.left
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.hasRows
+
+            KvIconButton {
+                compact: true
+                iconName: "copy"
+                iconSize: 12
+                tooltip: qsTr("Copiar as linhas carregadas em CSV, na ordem da tela")
+                onClicked: root.copyAll()
+            }
+
+            KvIconButton {
+                compact: true
+                iconName: "download"
+                iconSize: 12
+                enabled: root.controller !== null && !root.controller.exports.busy
+                tooltip: qsTr("Exportar as linhas carregadas em CSV para %1/ no projeto").arg(DataSourceKinds.exportDirectory)
+                onClicked: root.exportAll()
+            }
         }
 
         KvIconButton {
@@ -145,11 +211,24 @@ Item {
         // Uma escrita nao devolve linhas — ela as afeta (o status diz quantas).
         emptyText: root.querying || root.mustConfirm ? ""
                    : (root.lastQuery !== null && root.lastQuery.wrote === true ? qsTr("Instrução executada.") : qsTr("Sem linhas."))
+        // Clique escolhe a linha (e da' o teclado a' grade); Ctrl+C a copia.
+        selectable: true
+        selectedIndex: grid.sorting.displayIndex(root.selectedSource)
+        onRowClicked: index => {
+            root.selectedSource = grid.sorting.sourceIndex(index);
+            grid.forceActiveFocus();
+        }
+        onCopyRequested: index => root.copyRow(index)
+        onRowsChanged: {
+            root.selectedSource = -1;
+            root.note("");
+        }
     }
 
-    // A BARRA DE BAIXO (passo 14): o aviso de que a ordem vale so' para as
-    // linhas carregadas e o CARREGAR MAIS, que repete a mesma leitura com o
-    // teto seguinte. So' aparece quando ha' o que dizer ou carregar.
+    // A BARRA DE BAIXO (passo 14): o resultado de copiar/exportar, ou o aviso
+    // de que a ordem vale so' para as linhas carregadas, e o CARREGAR MAIS,
+    // que repete a mesma leitura com o teto seguinte. So' aparece quando ha'
+    // o que dizer ou carregar.
     Item {
         id: moreRow
 
@@ -158,18 +237,31 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         height: moreButton.implicitHeight
-        visible: (root.nextCeiling > 0 || root.sortNote !== "") && !root.querying && !root.failed
+        visible: (root.nextCeiling > 0 || root.sortNote !== "" || root.actionNote !== "")
+                 && !root.querying && !root.failed
 
         Text {
+            id: noteText
+
             anchors.left: parent.left
             anchors.right: moreButton.visible ? moreButton.left : parent.right
             anchors.rightMargin: Theme.spacingXSmall
             anchors.verticalCenter: parent.verticalCenter
-            text: root.sortNote
+            text: root.actionNote !== "" ? root.actionNote : root.sortNote
             textFormat: Text.PlainText
-            color: Theme.textMuted
+            color: root.actionFailed ? Theme.errorSoft : Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
             elide: Text.ElideRight
+
+            // Cortada (o caminho exportado e' longo): o texto inteiro ao pairar.
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                onContainsMouseChanged: {
+                    if (containsMouse && noteText.truncated) TooltipController.showFor(noteText, noteText.text, "right");
+                    else TooltipController.hideFor(noteText);
+                }
+            }
         }
 
         KvButton {

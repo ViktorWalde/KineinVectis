@@ -87,6 +87,20 @@ Item {
         if (JSON.stringify(rules.sortedOrder([["b"], ["a"]], { key: "x" }, 0, "asc", false)) !== "[1,0]")
             failures += 262144;
 
+        // texto delimitado (RFC 4180): aspas so' quando precisa, aspas
+        // dobradas, NULL vazio e texto vazio `""`, CRLF no fim de cada registro
+        if (rules.delimitedField("abc", ",") !== "abc" || rules.delimitedField(null, ",") !== ""
+            || rules.delimitedField("", ",") !== "\"\"" || rules.delimitedField("a,b", ",") !== "\"a,b\""
+            || rules.delimitedField("a,b", "\t") !== "a,b" || rules.delimitedField("a\tb", "\t") !== "\"a\tb\""
+            || rules.delimitedField("diz \"oi\"", ",") !== "\"diz \"\"oi\"\"\""
+            || rules.delimitedField("l1\nl2", ",") !== "\"l1\nl2\"" || rules.delimitedField("x\r", ",") !== "\"x\r\""
+            || rules.delimitedField(7, ",") !== "7") failures += 1048576;
+        const csvColumns = [{ key: "id", label: "id" }, { key: "note" }];
+        const csv = rules.delimitedText(csvColumns, [{ id: "1", note: "a,b" }, ["2", null], { id: "3", note: "" }], ",");
+        if (csv !== "id,note\r\n1,\"a,b\"\r\n2,\r\n3,\"\"\r\n"
+            || rules.delimitedText(csvColumns, [], ",") !== "id,note\r\n"
+            || rules.delimitedRow(csvColumns, ["4", "x y"], "\t") !== "4\tx y") failures += 2097152;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

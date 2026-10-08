@@ -3154,7 +3154,6 @@ ui/qml/components/KvDataGrid.qml	bruto	2
 ui/qml/components/KvDataGrid.qml	cabecalho	2
 ui/qml/components/KvDataGrid.qml	celula	7
 ui/qml/components/KvDataGrid.qml	corpo	9
-ui/qml/components/KvDataGrid.qml	evento	8
 ui/qml/components/KvDataGrid.qml	fundo	3
 ui/qml/components/KvDataGrid.qml	indice	3
 ui/qml/components/KvDataGrid.qml	linhas	2

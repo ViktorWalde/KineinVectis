@@ -177,6 +177,30 @@ void CoreClient::dataSourceDisconnect(const QString& name, const QVariantMap& co
     sendRequest(QStringLiteral("datasource.disconnect"), params);
 }
 
+void CoreClient::exportDirectory(const QString& path)
+{
+    sendExport(QStringLiteral("fs.createDirectory"), {{QStringLiteral("path"), path}});
+}
+
+void CoreClient::exportFile(const QString& path, const QString& content)
+{
+    sendExport(QStringLiteral("fs.createFile"),
+               {{QStringLiteral("path"), path}, {QStringLiteral("content"), content}});
+}
+
+// O pedido marcado pelo id: a resposta volta por `exportSucceeded`/
+// `exportFailed`, e o core parado responde na hora, para a tela nao esperar.
+void CoreClient::sendExport(const QString& method, const QJsonObject& params)
+{
+    const qint64 id = sendRequest(method, params, true);
+    if (id < 0) {
+        emit exportFailed(method, params.value(QStringLiteral("path")).toString(),
+                          QStringLiteral("o core nao esta rodando"));
+        return;
+    }
+    m_pendingExports.insert(id);
+}
+
 void CoreClient::dataSourceImpact(const QString& name, const QString& password, const QString& sql,
                                   const QVariantMap& context)
 {

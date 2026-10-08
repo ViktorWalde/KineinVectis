@@ -24,10 +24,12 @@
 > conexão, "Adaptador: interno · o da IDE · outro caminho"; o interno segue
 > como padrão até o autor aceitar a troca de cada motor. Enquanto isso, os
 > passos 13 e 14 (console e grade), que não dependem disso, avançam.
-> **Passo 14a feito** (§7.250): a grade do Banco ordena pelo cabeçalho e
-> carrega mais; aceite com mouse e teclado do autor pendente. Próximo: 14b
-> (copiar e exportar). Achado para o passo 15: perfil SQLite com caminho
-> relativo resolve contra o diretório do core, não contra o projeto.
+> **Passo 14 feito** (§7.250–§7.251): a grade do Banco ordena pelo
+> cabeçalho, carrega mais, copia (linha em TSV, resultado em CSV) e exporta
+> CSV para `exportacoes/` no projeto; aceite com mouse e teclado do autor
+> pendente. Próximo: passo 13 (console: localizar objeto e histórico). Achado
+> para o passo 15: perfil SQLite com caminho relativo resolve contra o
+> diretório do core, não contra o projeto.
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

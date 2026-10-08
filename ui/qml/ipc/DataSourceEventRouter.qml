@@ -54,6 +54,11 @@ Item {
             root.dataSourceController.handleQueried(outcome);
         }
         function onDataSourceQueryAccepted(operation) { root.dataSourceController.queries.accepted(operation); }
+        // A exportacao em CSV (passo 14b): canal proprio, fora da arvore.
+        function onExportSucceeded(method, path) { root.dataSourceController.exports.handleSucceeded(method, path); }
+        function onExportFailed(method, path, message) {
+            root.dataSourceController.exports.handleFailed(method, path, message);
+        }
         function onDataSourceDisconnectAccepted(operation) { root.dataSourceController.sessions.accepted(operation); }
         function onDataSourceDisconnected(outcome) { root.dataSourceController.sessions.finished(outcome); }
         function onDataSourcePreviewed(event) { root.dataSourceController.previews.prepared(event); }

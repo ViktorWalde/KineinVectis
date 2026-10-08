@@ -10,6 +10,8 @@
 #include <QJsonDocument>
 #include <QStandardPaths>
 
+#include <utility>
+
 namespace kinein {
 
 void CoreClient::start()
@@ -98,6 +100,14 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
     }
     // O destrutor desconecta os sinais antes de fechar limpo, entao qualquer
     // handleFinished aqui e uma saida INESPERADA com a IDE viva.
+    //
+    // Uma exportacao pendente nao fica esperando a resposta que nao vem: sem
+    // isto a tela do Banco ficava em "Exportando..." para sempre.
+    const QSet<qint64> exports = std::exchange(m_pendingExports, {});
+    for (const qint64 id : exports) {
+        emit exportFailed(m_pendingMethods.value(id), m_pendingPaths.value(id),
+                          QStringLiteral("o core parou antes de responder"));
+    }
     m_pendingMethods.clear();
     m_pendingPaths.clear();
     m_pendingRemoteDirectoryNames.clear();
@@ -151,11 +161,11 @@ void CoreClient::handleErrorOccurred(QProcess::ProcessError error)
     }
 }
 
-void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
+qint64 CoreClient::sendRequest(const QString& method, const QJsonObject& params, bool quiet)
 {
     if (m_process.state() != QProcess::Running) {
         appendLog(QStringLiteral("ignorando %1: core nao esta rodando").arg(method));
-        return;
+        return -1;
     }
 
     const qint64 id = m_nextRequestId++;
@@ -199,16 +209,20 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
     };
     const QByteArray payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
     // Teclas/paste podem conter senhas sem um campo chamado "password".
-    if (method != QStringLiteral("lsp.didChange") &&
-        method != QStringLiteral("syntaxTree.update") &&
-        method != QStringLiteral("terminal.input") &&
-        method != QStringLiteral("datasource.console.statement"))
+    if (quiet) {
+        appendLog(QStringLiteral("-> %1 (conteudo omitido)").arg(method));
+    }
+    else if (method != QStringLiteral("lsp.didChange") &&
+             method != QStringLiteral("syntaxTree.update") &&
+             method != QStringLiteral("terminal.input") &&
+             method != QStringLiteral("datasource.console.statement"))
     {
         const QByteArray registered =
             QJsonDocument(kinein::redactSecrets(request)).toJson(QJsonDocument::Compact);
         appendLog(QStringLiteral("-> %1").arg(QString::fromUtf8(registered.left(200).trimmed())));
     }
     m_process.write(payload);
+    return id;
 }
 
 QString CoreClient::resolveCoreBinary()

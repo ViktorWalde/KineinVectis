@@ -87,7 +87,7 @@ Cada passo termina com:
 | 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | a fazer: localizar objeto, histórico por conexão e conveniências restantes; identidade/rascunho/execução atuais já aceitos |
-| 14 | **Grade de dados** (§5.4) | 14a feita (40.7 §7.250): ordenar e carregar mais; aceite com mouse/teclado do autor pendente. 14b a fazer: copiar/exportar. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
+| 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14; perfil SQLite com caminho relativo ao projeto (achado na 14a, 40.7 §7.250) |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage |
 
@@ -748,11 +748,21 @@ consulta já traz `truncated` e `access`, que o controlador ainda não guarda.
   NULL vira campo vazio e texto vazio vira `""`, então a distinção sobrevive.
   Copiar uma célula avulsa exige seleção por célula e fica para depois.
 - **Exportar:** "Exportar CSV" grava `exportacoes/<conexão>-<AAAAMMDD-HHMMSS>.csv`
-  dentro do projeto pelo `fs.createFile` existente, que recusa sobrescrever
-  e confina ao projeto; o status diz o caminho gravado. **A rever antes da
-  14b** (achado na 14a, 40.7 §7.250): a resposta do `fs.createFile` é da
-  árvore do projeto, que abre o arquivo criado ou reabre o diálogo de criar
-  com o erro.
+  dentro do projeto pelo `fs.createDirectory` e `fs.createFile` existentes,
+  que recusam sobrescrever e confinam ao projeto; o status diz o caminho
+  gravado e quantas linhas. **Revisto em 2026-10-08, antes da 14b** (achado
+  na 14a, 40.7 §7.250): a resposta desses métodos é da árvore do projeto, que
+  abre o arquivo criado no editor ou reabre o diálogo de criar com o erro.
+  Por isso a ponte C++ marca pelo id os pedidos da exportação e devolve
+  sinais próprios (`exportSucceeded`/`exportFailed`); a árvore não os vê. O
+  IPC não muda. A pasta pode já existir, e o core não distingue esse caso por
+  código: a falha da pasta não é relatada, e o pedido do arquivo diz a
+  verdade (pasta ausente, permissão, nome repetido). O nome da conexão é
+  saneado (`[A-Za-z0-9._-]`; o resto vira `-`).
+- **Onde ficam:** "Copiar CSV" e "Exportar CSV" são ícones na linha de status
+  dos dados (a janela é estreita); o resultado da ação aparece na barra de
+  baixo, no lugar da nota da ordem, até a próxima consulta. A seleção de
+  linha (clique) segue a linha quando a ordem muda.
 - **Carregar mais:** quando o resultado veio cortado e o caminho foi de
   leitura, "Carregar mais" reexecuta a **mesma** leitura com o dobro do teto
   (500, 1.000, … até 10.000). Uma escrita nunca é reexecutada: o botão não

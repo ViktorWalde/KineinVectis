@@ -27,6 +27,9 @@ Item {
     // entender por "abrir". Separado de escolher: escolher e' de graca,
     // abrir pode lancar um navegador.
     signal rowActivated(int index)
+    // COPIAR a linha escolhida (Ctrl+C, passo 14b): a grade pede, quem e'
+    // dono das linhas decide o formato e fala com a area de transferencia.
+    signal copyRequested(int index)
 
     // TECLADO (§5.2 da especificacao do Grafana: "selecao e teclado").
     //
@@ -70,21 +73,24 @@ Item {
 
     Keys.onUpPressed: root.stepSelection(-1)
     Keys.onDownPressed: root.stepSelection(1)
-    Keys.onPressed: evento => {
+    Keys.onPressed: event => {
         if (!root.selectable || root.rows.length === 0) {
             return;
         }
-        if (evento.key === Qt.Key_Home) {
+        if (event.key === Qt.Key_Home) {
             root.stepSelection(-root.rows.length);
-            evento.accepted = true;
-        } else if (evento.key === Qt.Key_End) {
+            event.accepted = true;
+        } else if (event.key === Qt.Key_End) {
             root.stepSelection(root.rows.length);
-            evento.accepted = true;
-        } else if (evento.key === Qt.Key_Return || evento.key === Qt.Key_Enter) {
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (root.selectedIndex >= 0) {
                 root.rowActivated(root.selectedIndex);
-                evento.accepted = true;
+                event.accepted = true;
             }
+        } else if (event.matches(StandardKey.Copy) && root.selectedIndex >= 0) {
+            root.copyRequested(root.selectedIndex);
+            event.accepted = true;
         }
     }
 

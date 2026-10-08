@@ -47,6 +47,12 @@ Item {
     }
 
     Connections {
+        target: root.dataSourceController ? root.dataSourceController.exports : null
+        function onDirectoryRequested(path) { root.coreClient.exportDirectory(path); }
+        function onFileRequested(path, content) { root.coreClient.exportFile(path, content); }
+    }
+
+    Connections {
         target: root.dataSourceController ? root.dataSourceController.sessions : null
         function onRequested(name, context) { root.coreClient.dataSourceDisconnect(name, context); }
     }

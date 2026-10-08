@@ -205,6 +205,11 @@ public:
                                       const QString& sql, const QVariantMap& context = {});
     Q_INVOKABLE void dataSourcePreviewDecide(const QVariantMap& operation);
     Q_INVOKABLE void dataSourceDisconnect(const QString& name, const QVariantMap& context);
+    // EXPORTAR o resultado do Banco (passo 14b): `fs.createDirectory` e
+    // `fs.createFile` com resposta propria (`exportSucceeded`/`exportFailed`),
+    // que a arvore do projeto nao ve; o conteudo nao vai ao log.
+    Q_INVOKABLE void exportDirectory(const QString& path);
+    Q_INVOKABLE void exportFile(const QString& path, const QString& content);
 
     // Observabilidade: o Grafana que observa este projeto. A licenca dele
     // (AGPL-3.0) decide a FORMA — a IDE CONVERSA, nunca embute.
@@ -435,6 +440,10 @@ signals:
     void dataSourceDestroyed(bool success, const QString& message, const QVariantList& profiles,
                              const QString& clientContext);
     void dataSourceQueried(const QVariantMap& outcome);
+    /// Um passo da exportacao (`fs.createDirectory`/`fs.createFile`) e o
+    /// caminho como foi PEDIDO.
+    void exportSucceeded(const QString& method, const QString& path);
+    void exportFailed(const QString& method, const QString& path, const QString& message);
     void dataSourceOperationFailed(const QString& method, const QString& message,
                                    const QString& code, const QVariantMap& operation);
     /// O impacto medido: `severity`, `sql` e cada instrucao com alvo e linhas.
@@ -712,7 +721,11 @@ private:
     void setTerminalActive(bool active);
     void setScanningEnvironment(bool scanning);
     void setRecovering(bool recovering);
-    void sendRequest(const QString& method, const QJsonObject& params);
+    // O id do pedido, ou -1 com o core parado. `quiet`: o log leva so' o
+    // metodo (o conteudo da exportacao sao dados do banco).
+    qint64 sendRequest(const QString& method, const QJsonObject& params, bool quiet = false);
+    void sendExport(const QString& method, const QJsonObject& params);
+    void finishExport(const QString& method, const QString& path, const QJsonObject& response);
     void appendLog(const QString& line);
     void appendErrorLog(const QString& line);
     void setStatus(const QString& status, bool connected);
@@ -742,6 +755,7 @@ private:
     QHash<qint64, QString> m_pendingPaths;
     QHash<qint64, QString> m_pendingRemoteDirectoryNames;
     QHash<qint64, QVariantMap> m_pendingDataSourceQueries;
+    QSet<qint64> m_pendingExports;
     bool m_connected = false;
     bool m_building = false;
     bool m_testing = false;

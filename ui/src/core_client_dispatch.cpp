@@ -6,6 +6,23 @@
 
 namespace kinein {
 
+// O passo da exportacao do Banco volta so' pelos sinais dela: a resposta
+// comum de `fs.create*` e' da arvore do projeto.
+void CoreClient::finishExport(const QString& method, const QString& path,
+                              const QJsonObject& response)
+{
+    if (!response.contains(QStringLiteral("error"))) {
+        emit exportSucceeded(method, path);
+        return;
+    }
+    const QString message = response.value(QStringLiteral("error"))
+                                .toObject()
+                                .value(QStringLiteral("message"))
+                                .toString();
+    appendLog(QStringLiteral("erro do core em %1: %2").arg(method, message));
+    emit exportFailed(method, path, message);
+}
+
 void CoreClient::handleResponseLine(const QByteArray& line)
 {
     QJsonParseError parseError{};
@@ -28,6 +45,9 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     const QString requestPath = m_pendingPaths.take(id);
     const QString requestRemoteName = m_pendingRemoteDirectoryNames.take(id);
     const QVariantMap requestQuery = m_pendingDataSourceQueries.take(id);
+    // A exportacao do Banco usa `fs.create*`, cuja resposta comum e' da arvore
+    // do projeto (abre o arquivo, ou o dialogo de criar com o erro).
+    const bool exportRequest = m_pendingExports.remove(id);
 
     if (method != QStringLiteral("lsp.didChange") &&
         method != QStringLiteral("lsp.semanticTokens") &&
@@ -37,6 +57,11 @@ void CoreClient::handleResponseLine(const QByteArray& line)
         method != QStringLiteral("datasource.console.statement"))
     {
         appendLog(QStringLiteral("<- %1").arg(QString::fromUtf8(line.left(200))));
+    }
+
+    if (exportRequest) {
+        finishExport(method, requestPath, response);
+        return;
     }
 
     if (response.contains(QStringLiteral("error"))) {

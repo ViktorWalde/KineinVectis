@@ -150,6 +150,18 @@ QtObject {
         return next > query.rowCount ? next : 0;
     }
 
+    // EXPORTAR (passo 14b, roadmaps/59 §5.4.1): onde o CSV nasce, dentro do
+    // projeto. O nome da conexao e' saneado (o resto vira `-`, sem ponto no
+    // comeco); a hora local fecha o nome, e o core recusa sobrescrever.
+    readonly property string exportDirectory: "exportacoes"
+    function exportPath(connection, date) {
+        const safe = String(connection).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^[-.]+|-+$/g, "");
+        const two = value => String(value).padStart(2, "0");
+        const stamp = String(date.getFullYear()) + two(date.getMonth() + 1) + two(date.getDate()) + "-"
+            + two(date.getHours()) + two(date.getMinutes()) + two(date.getSeconds());
+        return exportDirectory + "/" + (safe === "" ? "dados" : safe) + "-" + stamp + ".csv";
+    }
+
     function isTimeseries(kind) {
         return kind === "timeseries";
     }

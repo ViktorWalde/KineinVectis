@@ -954,8 +954,17 @@ o conteúdo do arquivo. Perfis em formato reconhecido são salvos atomicamente.
   leitura com o dobro do teto (400, 800, … até 10.000; a dica do botão diz
   qual). **Clicar no nome de uma
   coluna** ordena as linhas carregadas: crescente, decrescente e de volta à
-  ordem original; números comparam como números e `null` fica por último. A divisória entre árvore e dados arrasta; o × da seção a
-  fecha e devolve o espaço à árvore e à lista "Nesta máquina".
+  ordem original; números comparam como números e `null` fica por último.
+  A divisória entre árvore e dados arrasta; o × da seção a fecha e devolve o
+  espaço à árvore e à lista "Nesta máquina".
+- **Copiar e exportar os dados.** Clique numa linha para escolhê-la e use
+  **Ctrl+C**: ela vai para a área de transferência separada por tabulação,
+  pronta para colar numa planilha. Os ícones ao lado do × copiam todas as
+  linhas carregadas em **CSV** (com o cabeçalho) ou as **exportam** para
+  `exportacoes/<conexão>-<data-hora>.csv` dentro do projeto. Os dois seguem a
+  ordem da tela. No CSV, `null` vira campo vazio e texto vazio vira `""`, então
+  a diferença continua visível. A exportação nunca sobrescreve um arquivo, e o
+  pé dos dados diz o caminho gravado ou o motivo da falha.
 - **O console SQL é um arquivo do editor.** O ▢ ao lado da conexão abre
   seu arquivo em `.kinein/consoles/v1/` (`.mongo` no MongoDB) como uma **aba comum
   do editor** — realce, desfazer, buscar e salvar sozinho, tudo o que o editor

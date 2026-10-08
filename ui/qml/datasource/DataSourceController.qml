@@ -82,6 +82,11 @@ Item {
         onRunConfirmed: (name, text, confirmation, preview) => root.queries.begin(name, text, true, root.lastQuery ? root.lastQuery.maxRows : 0, confirmation, root.pendingDatabase, preview)
     }
 
+    // Exportar o resultado em CSV (passo 14b), pelo canal proprio da ponte.
+    readonly property DataSourceExportController exports: DataSourceExportController {
+        workspaceRoot: root.workspaceRoot
+    }
+
     readonly property DataSourceOdbcController odbc: DataSourceOdbcController {
         dataSourceController: root
         workspaceRoot: root.workspaceRoot
