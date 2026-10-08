@@ -105,6 +105,8 @@ impl Core {
         let accepted_name = profile.name.clone();
         let accepted_context = request.client_context.clone();
         let accepted_preview = request.preview;
+        // O motor abre o arquivo do SQLite a partir do projeto (37).
+        let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
         let job_id = jobs.spawn("datasource", title, risk, request.preview, move |ctx| {
             let _activity = activity;
             run_query_job(

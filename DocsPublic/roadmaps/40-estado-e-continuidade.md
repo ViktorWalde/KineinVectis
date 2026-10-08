@@ -12,24 +12,30 @@
 > Banco mostrando os indisponíveis. **Pendente do autor:** o aceite com mouse e
 > teclado (roteiro no §7.244). **Passo 7b feito** (59 §2.4; §7.245–§7.247):
 > `qmlls` com o build do projeto, realce próprio do QML e `qmlformat`.
-> **Decisão pendente do autor:** o estilo QML deste repositório (o `qmlformat`
-> padrão muda 46–125 linhas por arquivo; adotar, criar `.qmlformat.ini` ou não
-> formatar QML; §7.247). **Passo 8 feito** (§7.248): base de processo e ponte
-> do adaptador provadas contra um adaptador falso. Próximo: passo 9, extrair
-> os drivers atuais para processos (39 D1c/D1d), que **aguarda decisão do
-> autor**: a ADR-0010 diz que a pessoa escolhe a instalação do adaptador por
-> conexão e proíbe downloader, mas não diz de onde ele vem nem onde é
-> escolhido. **Proposta do agente:** os adaptadores são compilados neste
-> repositório e instalados ao lado do `kinein-core`; no formulário da
-> conexão, "Adaptador: interno · o da IDE · outro caminho"; o interno segue
-> como padrão até o autor aceitar a troca de cada motor. Enquanto isso, os
-> passos 13 e 14 (console e grade), que não dependem disso, avançam.
-> **Passo 14 feito** (§7.250–§7.251): a grade do Banco ordena pelo
-> cabeçalho, carrega mais, copia (linha em TSV, resultado em CSV) e exporta
-> CSV para `exportacoes/` no projeto; aceite com mouse e teclado do autor
-> pendente. Próximo: passo 13 (console: localizar objeto e histórico). Achado
-> para o passo 15: perfil SQLite com caminho relativo resolve contra o
-> diretório do core, não contra o projeto.
+> **Estilo QML decidido pelo autor (2026-10-08):** `.qmlformat.ini` o mais
+> perto do estilo atual; o que restar de diferença vai num commit só de
+> formatação (59 §2.4, 7b.4). **Passo 8 feito** (§7.248): base de processo e
+> ponte do adaptador provadas contra um adaptador falso. **Passo 14 feito**
+> (§7.250–§7.251): a grade do Banco ordena, carrega mais, copia e exporta
+> CSV. Aceite com mouse e teclado do autor pendente para 7, 7b, 14a e 14b.
+>
+> **Decisões do autor em 2026-10-08, à noite** (respondidas como perguntas):
+>
+> - **Passo 9:** os adaptadores externos são compilados neste repositório e
+>   instalados ao lado do `kinein-core`; no formulário da conexão,
+>   "Adaptador: interno · o da IDE · outro caminho"; o interno segue padrão
+>   até o autor aceitar a troca de cada motor (39 §5.2). O passo 9 está
+>   desbloqueado.
+> - **Histórico de consultas (passo 13):** gravado fora do projeto, no estado
+>   do usuário, separado por projeto, nunca no Git, com "Limpar histórico"
+>   (59 §5.2).
+> - **SQLite com caminho relativo:** resolvido a partir da pasta do projeto;
+>   hoje resolve a partir do diretório do core, o que é defeito (37; 59
+>   passo 15).
+>
+> **Ordem a seguir:** SQLite relativo ao projeto (fatia pequena do passo 15),
+> estilo QML (7b.4), passo 13 (localizar e histórico), passo 9 (extração,
+> PostgreSQL primeiro), passos 10, 11, 15 e 16.
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

@@ -120,6 +120,8 @@ impl Core {
             Ok(activity) => activity,
             Err(response) => return *response,
         };
+        // O motor abre o arquivo do SQLite a partir do projeto (37).
+        let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
             let _activity = activity;
             // O MOTOR decide quem responde. Um so' `datasource.test` para os
@@ -293,55 +295,10 @@ impl Core {
             Ok(activity) => activity,
             Err(response) => return *response,
         };
+        let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
             let _activity = activity;
-            // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. `schemas` e' a
-            // arvore `esquema -> tabela -> coluna` dos motores relacionais;
-            // `collections` e' a do `MongoDB`, onde campo nao e' coluna. A UI
-            // escolhe a visao por QUAL das duas chegou — forcar o Mongo na
-            // primeira faria a tela afirmar que todo documento tem o campo,
-            // que ele tem um tipo so' e que nao ha' aninhamento.
-            let mut event = if profile.engine == kinein_protocol::DataSourceEngine::Mongo {
-                match crate::datasource::mongo::read_structure(&profile, secret.as_ref()) {
-                    Ok(collections) => json!({
-                        "jobId": ctx.id(),
-                        "name": profile.name,
-                        "ok": true,
-                        "collections": collections,
-                    }),
-                    Err(falha) => json!({
-                        "jobId": ctx.id(),
-                        "name": profile.name,
-                        "ok": false,
-                        "message": falha.message,
-                        "secretRequired": falha.secret_required,
-                    }),
-                }
-            } else {
-                let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
-                    crate::datasource::odbc_catalog::read_structure(&profile, secret.as_ref())
-                } else if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
-                    crate::datasource::sqlite::read_structure(&profile)
-                } else {
-                    crate::datasource::introspect::read_structure(&profile, secret.as_ref())
-                };
-                match &resultado {
-                    Ok(schemas) => json!({
-                        "jobId": ctx.id(),
-                        "name": profile.name,
-                        "ok": true,
-                        "schemas": schemas,
-                    }),
-                    Err(falha) => json!({
-                        "jobId": ctx.id(),
-                        "name": profile.name,
-                        "ok": false,
-                        "message": falha.message,
-                        "sqlState": falha.sql_state,
-                        "secretRequired": falha.secret_required,
-                    }),
-                }
-            };
+            let mut event = introspection_event(ctx, &profile, secret.as_ref());
             event["clientContext"] = json!(request.client_context);
             let ok = event["ok"].as_bool().unwrap_or(false);
             ctx.emit_event("event.datasource.introspected", event);
@@ -353,6 +310,61 @@ impl Core {
         });
 
         JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
+    }
+}
+
+/// O evento de `datasource.introspect` a partir do motor do perfil.
+fn introspection_event(
+    ctx: &crate::jobs::JobContext,
+    profile: &DataSourceProfile,
+    secret: Option<&crate::datasource::Secret>,
+) -> Value {
+    // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. `schemas` e' a
+    // arvore `esquema -> tabela -> coluna` dos motores relacionais;
+    // `collections` e' a do `MongoDB`, onde campo nao e' coluna. A UI
+    // escolhe a visao por QUAL das duas chegou — forcar o Mongo na
+    // primeira faria a tela afirmar que todo documento tem o campo,
+    // que ele tem um tipo so' e que nao ha' aninhamento.
+    if profile.engine == kinein_protocol::DataSourceEngine::Mongo {
+        match crate::datasource::mongo::read_structure(profile, secret) {
+            Ok(collections) => json!({
+                "jobId": ctx.id(),
+                "name": profile.name,
+                "ok": true,
+                "collections": collections,
+            }),
+            Err(falha) => json!({
+                "jobId": ctx.id(),
+                "name": profile.name,
+                "ok": false,
+                "message": falha.message,
+                "secretRequired": falha.secret_required,
+            }),
+        }
+    } else {
+        let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Odbc {
+            crate::datasource::odbc_catalog::read_structure(profile, secret)
+        } else if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
+            crate::datasource::sqlite::read_structure(profile)
+        } else {
+            crate::datasource::introspect::read_structure(profile, secret)
+        };
+        match &resultado {
+            Ok(schemas) => json!({
+                "jobId": ctx.id(),
+                "name": profile.name,
+                "ok": true,
+                "schemas": schemas,
+            }),
+            Err(falha) => json!({
+                "jobId": ctx.id(),
+                "name": profile.name,
+                "ok": false,
+                "message": falha.message,
+                "sqlState": falha.sql_state,
+                "secretRequired": falha.secret_required,
+            }),
+        }
     }
 }
 

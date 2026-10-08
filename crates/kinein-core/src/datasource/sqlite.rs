@@ -25,10 +25,44 @@
 //! coluna`), com um unico esquema chamado `main`, que e' como o proprio
 //! `SQLite` chama o banco principal. A UI nao ganha um segundo formato.
 
-use kinein_protocol::{DataSourceColumn, DataSourceProfile, DataSourceSchema, DataSourceTable};
+use std::path::{Path, PathBuf};
+
+use kinein_protocol::{
+    DataSourceColumn, DataSourceEngine, DataSourceProfile, DataSourceSchema, DataSourceTable,
+};
 use rusqlite::Connection;
 
 use super::connection::ConnectionFailure;
+
+/// O arquivo que o motor abre.
+///
+/// O caminho RELATIVO e' a partir da raiz do projeto (decisao do autor,
+/// 2026-10-08; `arquitetura/37`), para um perfil versionado no repositorio
+/// servir em qualquer maquina; o absoluto fica.
+#[must_use]
+pub fn file_path(root: &Path, database: &str) -> PathBuf {
+    let path = Path::new(database.trim());
+    if path.is_absolute() || path.as_os_str().is_empty() {
+        path.to_path_buf()
+    } else {
+        root.join(path)
+    }
+}
+
+/// O perfil que vai ao MOTOR.
+///
+/// So' o arquivo do `SQLite` muda; o perfil guardado, comparado com o
+/// contexto da UI e devolvido a ela, continua como a pessoa o escreveu.
+/// Antes, o relativo era aberto contra o diretorio corrente do core (achado
+/// no `roadmaps/40.7` §7.250).
+#[must_use]
+pub fn engine_profile(root: &Path, profile: &DataSourceProfile) -> DataSourceProfile {
+    let mut engine = profile.clone();
+    if engine.engine == DataSourceEngine::Sqlite {
+        engine.database = file_path(root, &profile.database).display().to_string();
+    }
+    engine
+}
 
 /// Teto de tabelas lidas, pelo mesmo motivo do lado `PostgreSQL`.
 const MAX_TABLES: usize = 5_000;

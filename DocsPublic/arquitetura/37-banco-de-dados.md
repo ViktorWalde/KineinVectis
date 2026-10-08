@@ -681,6 +681,13 @@ No protocolo 0.161.0, tabelas e coleções recebem `statements` do core.
 `object_statements` delimita nomes de esquema/tabela/coluna e produz
 SELECT, modelos incompletos INSERT/UPDATE e esvaziar/remover. SQLite esvazia
 com DELETE; PostgreSQL com TRUNCATE. Visões só recebem leitura/remoção.
+Caminho de arquivo SQLite (decisão do autor, 2026-10-08): o caminho
+relativo no perfil é resolvido a partir da raiz do projeto aberto, para um
+perfil versionado no repositório funcionar em qualquer máquina; o absoluto
+segue como está. O perfil guarda o que a pessoa escreveu: a resolução é feita
+no uso, não gravada. Antes, o relativo era resolvido contra o diretório
+corrente do core (achado no 40.7 §7.250).
+
 A leitura não leva `LIMIT` no texto (2026-10-08, 59 §5.4.1): quem limita é
 o `maxRows` do pedido, como no ODBC, e o core diz quando cortou; com o limite
 no texto, o "Carregar mais" da grade nunca aparecia na leitura da árvore.

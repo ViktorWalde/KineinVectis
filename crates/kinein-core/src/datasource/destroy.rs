@@ -49,8 +49,7 @@ pub enum DestroyPlan {
 pub fn plan(root: &Path, profile: &DataSourceProfile, container_exists: bool) -> DestroyPlan {
     match profile.engine {
         DataSourceEngine::Sqlite => {
-            let path = Path::new(&profile.database);
-            let absolute = if path.is_absolute() { path.to_path_buf() } else { root.join(path) };
+            let absolute = super::sqlite::file_path(root, &profile.database);
             let inside = absolute
                 .canonicalize()
                 .ok()

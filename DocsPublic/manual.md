@@ -859,6 +859,9 @@ disponíveis informados pelo core. Os campos acompanham o motor: arquivo no
 SQLite, DSN no ODBC, rede no PostgreSQL/MongoDB, amostra no MongoDB e TLS
 verificado no PostgreSQL. Se a lista ainda não chegou ou o motor não está
 disponível, o formulário aguarda e Salvar permanece desabilitado.
+No SQLite, um caminho **relativo** (por exemplo `dados/estacao.db`) é a partir
+da pasta do projeto: o perfil versionado com o projeto funciona em qualquer
+máquina. Um caminho absoluto continua valendo como está.
 Os perfis já salvos mantêm seu formato. A integração SQL LSP e a escolha de
 drivers externos ainda estão em desenvolvimento; esta entrega não os ativa.
 

@@ -80,15 +80,15 @@ Cada passo termina com:
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
 | 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse/teclado do autor pendente para a árvore com indisponíveis; handoff do 8 no §2.1 |
-| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse/teclado do autor e a decisão do estilo QML deste repositório pendentes (40 §4) |
+| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse/teclado do autor pendente. Estilo QML decidido pelo autor em 2026-10-08: `.qmlformat.ini` perto do atual (7b.4, a fazer) |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | feito (40.7 §7.248): base de processo de longa vida e ponte do adaptador, provadas contra um adaptador falso; o LSP migrou para a mesma base (§7.249) |
-| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | **aguarda decisão do autor** (40, topo): de onde vem o adaptador externo e onde a pessoa o escolhe. Depois, em fatias: PostgreSQL com impacto/prévia, SQLite, MongoDB |
+| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | desbloqueado (autor, 2026-10-08; 39 §5.2): adaptadores compilados neste repositório, ao lado do `kinein-core`, escolhidos no formulário da conexão. A fazer em fatias: PostgreSQL com impacto/prévia, SQLite, MongoDB |
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
 | 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | a fazer: localizar objeto, histórico por conexão e conveniências restantes; identidade/rascunho/execução atuais já aceitos |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
-| 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14; perfil SQLite com caminho relativo ao projeto (achado na 14a, 40.7 §7.250) |
+| 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -259,6 +259,12 @@ mecanismo que já existe:
   o buffer num arquivo temporário privado e o `.qmlformat.ini` do projeto
   passado por `-s`, para valer o estilo do projeto. **Feita em 2026-10-08
   (40.7 §7.247).**
+- **7b.4, estilo deste repositório (decisão do autor, 2026-10-08).** Um
+  `.qmlformat.ini` na raiz, ajustado para chegar o mais perto do estilo atual
+  (recuo de 4, largura, espaçamento entre objetos e funções; sem reordenar
+  propriedades). O que restar de diferença entra num commit só de formatação,
+  sem lógica, provado pelo gate inteiro. A partir dele, o QML novo sai no
+  estilo do arquivo.
 - **7b.2, UI.** Regras de realce próprias do QML (tipo antes de `{`, `id:`,
   nome de binding, handler `onAlgo:`, `pragma`, `alias`, `component`, `enum`);
   `.js` continua nas regras de JavaScript. **Feita em 2026-10-08 (40.7 §7.246).**
@@ -684,7 +690,10 @@ leases e jobs próprios, sem incorporar runtime/código dessas ferramentas.
   atender vários bancos quando isso for comprovado. O plano anterior de
   completion própria e LSP SQL opcional foi substituído por essa decisão.
 - **Histórico de consultas** por conexão (as últimas N), reabrível no
-  console.
+  console. **Decisão do autor (2026-10-08):** gravado fora do projeto, no
+  estado do usuário (`$XDG_STATE_HOME`), separado por projeto, nunca em
+  `.kinein/` nem no Git, com "Limpar histórico". O SQL pode conter senha; por
+  isso ele não viaja com o repositório.
 - **Arquitetura antes da integração:**
   [38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e
   [ADR-0009](../decisoes-adr/ADR-0009-banco-e-linguagem-por-provedores.md).

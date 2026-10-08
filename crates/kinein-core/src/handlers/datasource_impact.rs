@@ -74,6 +74,8 @@ impl Core {
             Ok(activity) => activity,
             Err(response) => return *response,
         };
+        // O motor abre o arquivo do SQLite a partir do projeto (37).
+        let profile = crate::datasource::sqlite::engine_profile(&root, &profile);
         let job_id = jobs.spawn("datasource", title, JobRisk::Low, false, move |ctx| {
             let _activity = activity;
             let statements = measurement::statements(&profile, secret.as_ref(), &request.sql);

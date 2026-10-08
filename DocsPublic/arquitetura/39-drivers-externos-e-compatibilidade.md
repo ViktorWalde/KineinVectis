@@ -341,6 +341,23 @@ Editar opções exige o validador compatível do provedor. Senhas/tokens nunca
 viram campos novos de perfil ou descritor. Valores e vínculos atuais
 `postgres/sqlite/mongo/odbc` sobrevivem; migração não conecta nem atualiza banco.
 
+### 5.2 Origem e escolha do adaptador (decisão do autor, 2026-10-08)
+
+O §5 diz que a pessoa escolhe a instalação por conexão e o ADR-0010 proíbe
+downloader; faltava dizer de onde o adaptador vem e onde se escolhe.
+Decidido pelo autor:
+
+- **De onde vem:** cada adaptador externo é construído neste repositório e
+  instalado ao lado do `kinein-core` (a mesma pasta do binário; no pacote,
+  junto dele). Essa é a instalação "da IDE". O registro de ferramentas a
+  reconhece por esse lugar, nunca por arquivo achado na pasta do projeto.
+- **Onde se escolhe:** no formulário da conexão, "Adaptador: interno · o da
+  IDE · outro caminho". Interno é o driver embutido de hoje; o da IDE é o
+  executável ao lado do core; outro caminho é um executável que a pessoa
+  aponta no registro de ferramentas (atualizar sem trocar a IDE).
+- **Padrão:** o interno, por motor, até o autor aceitar a troca daquele
+  motor pelos critérios do §8. Nenhuma troca automática.
+
 ### 5.1 D1a.4 — formato 2 dos perfis e migração (desenho, 2026-10-08)
 
 > **Implementado** em 2026-10-08: core na D1a.4a (40.7 §7.243) e a árvore do
