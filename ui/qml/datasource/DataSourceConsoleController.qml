@@ -21,6 +21,10 @@ QtObject {
     signal resultsRequested()
 
     property var bindings: []
+    // O arquivo ativo do editor (a casca o liga) e a conexao dele, se for um
+    // console: o cabecalho do console e o "localizar" da arvore leem daqui.
+    property string activePath: ""
+    readonly property string activeConnection: root.connectionFor(root.activePath)
     property var pendingOpen: null
     property var pendingStatement: null
     property int generation: 0

@@ -88,6 +88,7 @@ const shapes = {
     "more": { stroke: "", fill: circle(6, 12, 1.7) + circle(12, 12, 1.7) + circle(18, 12, 1.7) },
     "refresh": { stroke: "M20 12A8 8 0 1 1 17.65 6.35L20 8.6 M20 4.5v4.1h-4.1", fill: "" },
     "search": { stroke: circle(10.5, 10.5, 6.5) + "M15.5 15.5L20 20", fill: "" },
+    "locate": { stroke: circle(12, 12, 6.5) + "M12 2.5v4 M12 17.5v4 M2.5 12h4 M17.5 12h4", fill: "" },
     "pin": { stroke: "M9 3h6M10 3.5V9l-3 4v1.5h10V13l-3-4V3.5M12 14.5V21", fill: "" },
     "eye": { stroke: eyeOutline + circle(12, 12, 3), fill: "" },
     "eye-off": { stroke: eyeOutline + "M4 4l16 16", fill: "" },

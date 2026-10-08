@@ -178,6 +178,23 @@ Item {
         bankController.handleList(bankController.profiles, undefined, []);
         root.check(!treeActions.menuOpen && root.requests.length === 0, "lista nova fecha a confirmação");
 
+        // LOCALIZAR (passo 13a): so' um arquivo de console de conexao salva
+        // escolhe; um arquivo comum nao mexe na selecao.
+        bankController.consoles.catalogue([{ name: "__proto__", paths: ["/outro/.kinein/consoles/v1/p.sql"] }],
+                                          bankController.workspaceRoot);
+        tree.select(tree.key(["c", "a"]));
+        bankController.consoles.activePath = "/outro/src/main.cpp";
+        treeActions.dispatch("database.locate", null);
+        root.check(bankController.consoles.activeConnection === "" && tree.selectedRow.connection === "a",
+                   "arquivo comum não localiza nada");
+        bankController.consoles.activePath = "/outro/.kinein/consoles/v1/p.sql";
+        treeActions.dispatch("database.locate", null);
+        root.check(bankController.consoles.activeConnection === "__proto__"
+                   && tree.selectedKey === tree.key(["c", "__proto__"]), "console escolhe a própria conexão");
+        // A conexao do console saiu do catalogo: nada a localizar.
+        bankController.profiles = [profile("a")];
+        root.check(bankController.consoles.activeConnection === "", "console sem perfil salvo não localiza");
+
         if (root.failures) console.error("FALHAS " + root.failures);
         Qt.exit(root.failures === 0 ? 0 : 1);
     }

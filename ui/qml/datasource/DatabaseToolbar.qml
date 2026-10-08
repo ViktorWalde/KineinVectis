@@ -67,6 +67,14 @@ Column {
         }
         KvIconButton {
             compact: true
+            iconName: "locate"
+            tooltip: qsTr("Localizar a conexão do console ativo")
+            enabled: root.actions !== null && root.actions.controller !== null
+                     && root.actions.controller.consoles.activeConnection !== ""
+            onClicked: root.actions.dispatch("database.locate", null)
+        }
+        KvIconButton {
+            compact: true
             iconName: "collapse"
             tooltip: qsTr("Recolher tudo")
             enabled: root.actions !== null && root.actions.treeModel.rows.some(row => row.expanded)

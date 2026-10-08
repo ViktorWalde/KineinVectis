@@ -119,6 +119,13 @@ QtObject {
         if (action === "database.discover") { root.discoveryRequested(); return; }
         if (action === "database.create" && root.workspace !== "") { root.creationRequested(); return; }
         if (action === "database.collapse") { root.treeModel.collapseAll(); return; }
+        // LOCALIZAR (passo 13a): a conexao do console ativo vira a selecao; a
+        // arvore rola ate' ela. Nao expande nem rele. Sem console ativo, a
+        // chave nao existe e o `select` nao mexe na selecao.
+        if (action === "database.locate") {
+            if (root.controller) root.treeModel.select(root.treeModel.key(["c", root.controller.consoles.activeConnection]));
+            return;
+        }
         if (!row || root.contextFor(row) === "") return;
         if (DataSourceKinds.isUnavailable(row.kind)) {
             // Remover pede confirmacao: o menu reabre com a pergunta, no lugar.

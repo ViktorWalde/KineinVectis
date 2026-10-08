@@ -86,10 +86,10 @@ Cada passo termina com:
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
 | 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
-| 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | a fazer: localizar objeto, histórico por conexão e conveniências restantes; identidade/rascunho/execução atuais já aceitos |
+| 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | 13a feita (40.7 §7.254): localizar a conexão do console ativo; aceite com mouse/teclado do autor pendente. 13b a fazer: histórico por conexão gravado fora do projeto (§5.2) |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
-| 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage |
+| 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
 
@@ -465,7 +465,7 @@ rascunho provadas na IDE real. Protocolo permanece 0.162.0.
 e drivers, revoga prévia pendente/consentimento ODBC e conserva perfil e
 rascunho. Resposta antiga do console não reconecta; outro destino fica livre.
 
-**Ainda pendente desta seção:** localizar o objeto do console. Não duplicar
+**Localizar o objeto do console:** desenho no §5.1.6 (2026-10-08). Não duplicar
 geração/interpretação de instruções no QML. A lista abaixo conserva o
 escopo completo, incluindo o que já foi feito.
 
@@ -684,6 +684,21 @@ anterior ao toolchain 1.96.1 do projeto);
 [PostgreSQL 16, cancelamento](https://www.postgresql.org/docs/16/protocol-flow.html#PROTOCOL-FLOW-CANCELING-REQUESTS)
 exige aguardar a resposta, mesmo após pedir cancelamento. A adaptação usa
 leases e jobs próprios, sem incorporar runtime/código dessas ferramentas.
+
+#### 5.1.6 Desenho de localizar o objeto do console (2026-10-08, antes do código)
+
+O "objeto do console" é a conexão do arquivo de console ativo no editor. O
+vínculo é o que o core já calcula (`connectionFor`, igualdade de caminho);
+nada interpreta SQL na UI.
+
+- `DataSourceConsoleController` ganha `activePath` (o arquivo ativo do
+  editor, dado pela casca) e `activeConnection` (a conexão desse arquivo, ou
+  vazio). O cabeçalho do console passa a ler `activeConnection`: um dono só.
+- Barra da janela do Banco: ícone "Localizar a conexão do console ativo",
+  ligado só quando a aba ativa é console de uma conexão salva. O clique
+  escolhe a conexão na árvore, que rola até ela; não expande nem relê.
+- Não faz: localizar a tabela sob o cursor (exigiria interpretar o texto na
+  UI ou um método novo no core; fica com o LSP do passo 10).
 
 ### 5.2 Console que ajuda
 

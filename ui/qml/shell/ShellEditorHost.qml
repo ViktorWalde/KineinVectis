@@ -97,13 +97,22 @@ Item {
         editorController: root.editorController
     }
 
+    // O arquivo ativo vai ao dono dos consoles (passo 13a): dali saem o
+    // cabecalho do console e o "localizar" da janela do Banco.
+    Binding {
+        target: root.dataSourceController ? root.dataSourceController.consoles : null
+        property: "activePath"
+        value: root.editorController.currentFilePath()
+        when: root.dataSourceController !== null
+    }
+
     DataSourceConsoleBanner {
         id: consoleBanner
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         profile: root.dataSourceController === null ? null : root.dataSourceController.profileByName(
-            root.dataSourceController.consoles.connectionFor(root.editorController.currentFilePath()))
+            root.dataSourceController.consoles.activeConnection)
         onPreviewRequested: {
             const surface = editorPane.editorSurface;
             root.dataSourceController.consoles.runFromEditor(root.editorController.currentFilePath(), surface.text,
