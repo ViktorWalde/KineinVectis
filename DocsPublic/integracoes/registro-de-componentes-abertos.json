@@ -339,9 +339,9 @@
     {
       "id": "rustix",
       "name": "rustix",
-      "role": "Safe `access(2)` for the `serial` domain: tells whether the user can read and write a serial device node WITHOUT opening it (opening asserts DTR/RTS on most USB-UART bridges and resets the board)",
+      "role": "Safe `access(2)` for the `serial` domain: tells whether the user can read and write a serial device node WITHOUT opening it (opening asserts DTR/RTS on most USB-UART bridges and resets the board); and process-group signals for the long-lived adapter base (owned_child)",
       "adoptionMode": "A",
-      "integration": "Rust crate linked only by kinein-core, one call site in serial.rs (`rustix::fs::access`). Declared with default-features = false and features [\"std\", \"fs\"]. Chosen over a stat()-based check because access(2) honours POSIX ACLs, which is how udev's TAG+=\"uaccess\" grants the seat user access without any group; a mode-bit heuristic would report `root:dialout 0660` as writable for a user outside dialout, or as denied for a user covered by the ACL.",
+      "integration": "Rust crate linked only by kinein-core, one call site in serial.rs (`rustix::fs::access`). Declared with default-features = false and features [\"std\", \"fs\", \"process\"]; since 2026-10-08 a second call site in owned_child.rs (`rustix::process::kill_process_group`) ends a long-lived adapter process group, so a helper in the group cannot outlive the close (D1b.1, arquitetura/39 §6.1). Chosen over a stat()-based check because access(2) honours POSIX ACLs, which is how udev's TAG+=\"uaccess\" grants the seat user access without any group; a mode-bit heuristic would report `root:dialout 0660` as writable for a user outside dialout, or as denied for a user covered by the ACL.",
       "upstream": {
         "repository": "https://github.com/bytecodealliance/rustix",
         "documentation": "https://docs.rs/rustix"

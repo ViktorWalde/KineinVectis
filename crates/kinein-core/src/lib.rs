@@ -29,6 +29,7 @@ pub mod jobs;
 pub mod lang;
 pub mod library;
 pub mod lsp;
+pub mod owned_child;
 pub mod probe;
 pub mod process;
 pub mod project;

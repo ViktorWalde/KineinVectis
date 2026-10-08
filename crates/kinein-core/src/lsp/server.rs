@@ -26,7 +26,7 @@ use super::framing::{read_message, write_locked_message};
 use super::parse::published_diagnostics;
 use super::registry::ServerSpec;
 use super::types::LspError;
-use crate::stderr_tail::{CAPACIDADE_PADRAO, StderrTail};
+use crate::stderr_tail::{DEFAULT_CAPACITY, StderrTail};
 use kinein_protocol::JsonRpcRequest;
 
 /// Estado de um servidor em execucao.
@@ -151,7 +151,7 @@ pub(super) fn spawn_server(
     // not found" e o rust-analyzer conta o indice — antes ia para /dev/null.
     let stderr = StderrTail::spawn(
         stderr,
-        CAPACIDADE_PADRAO,
+        DEFAULT_CAPACITY,
         Some(log_collector(spec.key, &events)),
     );
 

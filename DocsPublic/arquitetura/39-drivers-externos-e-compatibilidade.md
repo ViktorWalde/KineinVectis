@@ -480,6 +480,62 @@ exige fechamento próprio; PID do proxy não prova desligamento. Processos de
 outros perfis não são atingidos. Alteração do executável no disco é detectada
 na resolução/reinício e não provoca substituição automática do processo vivo.
 
+
+### 6.1 D1b — supervisão do processo do adaptador (desenho, 2026-10-08)
+
+> **Implementado** em 2026-10-08 (40.7 §7.248): base `owned_child.rs` e ponte
+> `datasource/driver_process.rs`, provadas contra o adaptador falso. A
+> migração do LSP para a mesma base fica como segunda fatia da base.
+
+Desenho anterior ao código, sobre o contrato da D1a (§4.4, `40`) e o handoff do
+passo 8 (59 §2.1). Duas fatias, cada uma com seu consumidor real:
+
+**D1b.1 — base de processo de longa vida (`crate::owned_child`).** Dona única
+do processo, do stdin, da cauda do stderr (`StderrTail`, limitada) e das
+threads leitoras. O stdout é entregue a uma função do dono do protocolo, que
+roda numa thread da base, porque o enquadramento muda (linhas JSON aqui,
+`Content-Length` no LSP). Regras:
+
+- **Ambiente explícito:** `env_clear` e só a lista permitida (`PATH`, `HOME`,
+  `LANG`, `LC_ALL`, `TZ`, `TMPDIR`, `XDG_RUNTIME_DIR`); nenhuma variável de
+  banco herdada de outro perfil.
+- **Grupo de processos próprio** (`process_group(0)`): encerrar alcança os
+  descendentes, como um daemon auxiliar; PID do filho não prova desligamento.
+- **Encerrar com prazo:** fecha o stdin, espera até o prazo, manda `SIGTERM`
+  ao grupo, espera um intervalo curto, `SIGKILL` no grupo, colhe o processo e
+  junta as threads leitoras. O resultado diz o que aconteceu (`graceful`,
+  `terminated`, `killed`) e se os leitores terminaram; só "colhido e leitores
+  juntos" conta como encerrado.
+- Nenhuma espera ocupa o despacho: quem chama decide em que thread encerra.
+
+**D1b.2 — ponte do adaptador (`datasource/driver_process.rs`).** Usa a base e o
+contrato puro existente:
+
+1. **Quadro limitado antes do parse:** cada linha é lida com teto de
+   `messageBytes` (1 MiB antes da negociação); linha maior, inválida ou com
+   id desconhecido é violação de protocolo, que encerra a instância.
+2. **Handshake** com `initialize_request`/`accept_initialize` e prazo de 5 s,
+   sem segredo; recusa encerra e colhe só aquela instância.
+3. **Fila e slots:** até 16 operações aguardando; no máximo `inFlight - 1`
+   pedidos comuns ao mesmo tempo, e um slot sempre livre para decisão,
+   cancelamento, fechamento e encerramento.
+4. **Roteamento:** resposta por id pendente; `driver.chunk` pelo `operationId`
+   do contexto, validado pelo `StreamGuard` do pedido; erro pelo
+   `public_error`, nunca texto livre.
+5. **Queda do transporte:** EOF ou morte com pedidos pendentes termina cada um
+   com o desfecho certo: `notStarted` para o que nem foi escrito; para o que
+   foi escrito, `unknown` quando a operação pode escrever (`query`, `preview`,
+   `decide`) e falha nos demais. Nada é repetido.
+6. **Encerramento:** `driver.shutdown` pelo slot de controle, até 5 s pela
+   resposta, e então o encerramento da base, também com prazo; sem
+   confirmação, a instância não é dada como livre.
+
+**Prova antes de qualquer driver real (passo 9):** um adaptador falso
+(`scripts/fake_driver_adapter.py`, como o `fake_lsp_server.py`) com modos:
+normal, handshake lento, linha acima do teto, queda depois de uma escrita,
+resposta tardia, stderr volumoso e um processo filho que sobreviveria ao
+pai. Nenhum método IPC novo; a ponte não é ligada aos perfis nesta fatia.
+
 ## 7. Reaproveitamento e donos conferidos
 
 | Responsabilidade | Dono atual e evolução |

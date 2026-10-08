@@ -14,7 +14,9 @@
 > `qmlls` com o build do projeto, realce próprio do QML e `qmlformat`.
 > **Decisão pendente do autor:** o estilo QML deste repositório (o `qmlformat`
 > padrão muda 46–125 linhas por arquivo; adotar, criar `.qmlformat.ini` ou não
-> formatar QML; §7.247). Próximo: passo 8 (handoff no 59 §2.1).
+> formatar QML; §7.247). **Passo 8 feito** (§7.248): base de processo e ponte
+> do adaptador provadas contra um adaptador falso. Próximo: passo 9, extrair
+> os drivers atuais para processos (39 D1c/D1d).
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

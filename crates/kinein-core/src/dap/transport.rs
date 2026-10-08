@@ -110,7 +110,7 @@ impl Transport {
         };
         let stderr = StderrTail::spawn(
             stderr,
-            crate::stderr_tail::CAPACIDADE_PADRAO,
+            crate::stderr_tail::DEFAULT_CAPACITY,
             Some(coletor(events)),
         );
         let transport = Self::Process { child, stderr };

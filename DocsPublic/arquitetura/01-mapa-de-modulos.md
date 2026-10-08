@@ -109,6 +109,7 @@ flowchart LR
   n_core_library[library]:::cycle
   n_core_lsp[lsp]
   n_core_outcome[outcome]
+  n_core_owned_child[owned_child]
   n_core_probe[probe]
   n_core_process[process]
   n_core_project[project]
@@ -150,6 +151,8 @@ flowchart LR
   n_core_datasource --> n_core_db
   n_core_datasource --> n_core_fsops
   n_core_datasource --> n_core_jobs
+  n_core_datasource --> n_core_owned_child
+  n_core_datasource --> n_core_stderr_tail
   n_core_datasource --> n_core_tools
   n_core_flash --> n_core_build
   n_core_fswatch --> n_core_lsp
@@ -195,6 +198,7 @@ flowchart LR
   n_core_lsp --> n_core_cmake
   n_core_lsp --> n_core_fsops
   n_core_lsp --> n_core_stderr_tail
+  n_core_owned_child --> n_core_stderr_tail
   n_core_project --> n_core_tools
   n_core_python --> n_core_run
   n_core_rpc --> n_core_dap
@@ -214,7 +218,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-43 módulos, 83 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+44 módulos, 86 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -234,7 +238,7 @@ flowchart LR
 | `container` | tools | Containers como dominio NATIVO: |
 | `coverage` | process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | lsp, python, run, stderr_tail | Subsistema de debug: |
-| `datasource` | container, db, fsops, jobs, tools | Fontes de dados: |
+| `datasource` | container, db, fsops, jobs, owned_child, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `flash` | build | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | — | Buffer formatting by orchestrating the project's own formatters. |
@@ -249,6 +253,7 @@ flowchart LR
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
 | `lsp` | cmake, fsops, stderr_tail | Subsistema LSP: |
 | `outcome` | — | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
+| `owned_child` | stderr_tail | A base prova o que diz: |
 | `probe` | — | Sondas de debug conectadas: |
 | `process` | — | Synchronous line streaming for child processes. |
 | `project` | tools | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |

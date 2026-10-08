@@ -24,7 +24,7 @@ use std::{
 
 /// Quantas linhas a cauda guarda por padrao. Cabe numa mensagem de erro e
 /// ainda mostra o traceback inteiro de um `python -m debugpy` que morreu.
-pub const CAPACIDADE_PADRAO: usize = 64;
+pub const DEFAULT_CAPACITY: usize = 64;
 
 /// Acima disto a linha e' cortada com marcador: um filho em loop escrevendo
 /// sem `\n` nao pode encher a memoria do core.
@@ -184,7 +184,7 @@ mod tests {
     #[test]
     fn empty_tail_leaves_the_message_alone() {
         let (leitura, escrita) = pipe();
-        let cauda = StderrTail::spawn(leitura, CAPACIDADE_PADRAO, None);
+        let cauda = StderrTail::spawn(leitura, DEFAULT_CAPACITY, None);
         drop(escrita);
         assert_eq!(cauda.anexar("falhou", "stderr"), "falhou");
         assert_eq!(cauda.tail(), "");
@@ -193,7 +193,7 @@ mod tests {
     #[test]
     fn attaches_the_tail_under_a_title() {
         let (leitura, mut escrita) = pipe();
-        let cauda = StderrTail::spawn(leitura, CAPACIDADE_PADRAO, None);
+        let cauda = StderrTail::spawn(leitura, DEFAULT_CAPACITY, None);
         write!(escrita, "Traceback\r\nModuleNotFoundError: x\n").unwrap();
         drop(escrita);
         esperar(|| cauda.tail().contains("ModuleNotFound"));
@@ -210,7 +210,7 @@ mod tests {
         let dono = Arc::clone(&vistas);
         let cauda = StderrTail::spawn(
             leitura,
-            CAPACIDADE_PADRAO,
+            DEFAULT_CAPACITY,
             Some(Box::new(move |linha: &str| {
                 dono.lock().unwrap().push(linha.len());
             })),

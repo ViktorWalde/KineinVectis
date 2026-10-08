@@ -23,7 +23,7 @@ use std::{
 };
 
 use super::DebugError;
-use crate::stderr_tail::{CAPACIDADE_PADRAO, StderrTail};
+use crate::stderr_tail::{DEFAULT_CAPACITY, StderrTail};
 
 /// Quanto se espera pela porta do servidor antes de desistir.
 ///
@@ -71,7 +71,7 @@ impl DebugServer {
                 message: format!("o servidor de debug `{command}` subiu sem stderr utilizavel"),
             });
         };
-        let stderr = StderrTail::spawn(stderr, CAPACIDADE_PADRAO, None);
+        let stderr = StderrTail::spawn(stderr, DEFAULT_CAPACITY, None);
         let mut server = Self { child, stderr };
         if let Err(error) = server.wait_for_port(remote_target) {
             // O erro ja' explica — e leva o que o servidor disse. O processo
