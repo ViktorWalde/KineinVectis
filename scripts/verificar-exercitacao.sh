@@ -33,11 +33,10 @@ cd "$(dirname "$0")/.." || exit 1
 
 echo "== exercitacao (o core contra as ferramentas reais) =="
 
+# Sempre, e nao so' quando o binario falta (2026-10-08): um core ANTIGO
+# provaria o codigo de ontem. Incremental, custa menos de 1 s sem mudanca.
+cargo build -q -p kinein-core || exit 1
 binario="target/debug/kinein-core"
-if [ ! -x "$binario" ]; then
-    echo "-> compilando o core para exercitar"
-    cargo build -q -p kinein-core || exit 1
-fi
 
 raiz="$(mktemp -d)"
 trap 'rm -rf "$raiz"' EXIT

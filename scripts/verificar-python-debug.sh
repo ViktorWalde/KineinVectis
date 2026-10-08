@@ -23,11 +23,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 # A porta do MicroPython (40 §7.39) vem ANTES da guarda do debugpy: so'
 # precisa do core e de um mpremote falso — prova sem placa e sem interpretador.
-binario="target/debug/kinein-core"
-if [ ! -x "$binario" ]; then
-    echo "-> compilando o core para o ciclo"
-    cargo build -q -p kinein-core
-fi
+# Sempre, e nao so' quando o binario falta (2026-10-08): um core ANTIGO
+# provaria o codigo de ontem. Incremental, custa menos de 1 s sem mudanca.
+cargo build -q -p kinein-core
 echo "== a porta escolhida chega ao mpremote (run.start/run.script { device }) =="
 python3 scripts/verificar_micropython_porta.py
 
