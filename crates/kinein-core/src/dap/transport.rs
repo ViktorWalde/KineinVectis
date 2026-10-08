@@ -130,7 +130,7 @@ impl Transport {
 /// Cada linha do stderr do adaptador sai como `event.debug.output` com a
 /// categoria `adapter` — o mesmo evento que o DAP `output` usa, para a aba
 /// Debug mostrar sem canal novo.
-fn coletor(events: &EventSender) -> crate::stderr_tail::Coletor {
+fn coletor(events: &EventSender) -> crate::stderr_tail::LineSink {
     let events = events.clone();
     Box::new(move |linha: &str| {
         send_event(

@@ -51,7 +51,13 @@ fn only_the_allowed_and_explicit_variables_reach_the_process() {
     let mut command = script(&dir, "env | sort");
     command.env("PGPASSWORD", "NAO_PODE_VAZAR");
     let (out, reader) = capture();
-    let child = OwnedChild::spawn(command, &[("KINEIN_INSTANCIA", "a1")], reader).unwrap();
+    let child = OwnedChild::spawn(
+        command,
+        Env::Allowlist(&[("KINEIN_INSTANCIA", "a1")]),
+        None,
+        reader,
+    )
+    .unwrap();
     let closed = child.close(Duration::from_secs(2));
     assert!(closed.collected(), "{closed:?}");
     let env = out.lock().unwrap().clone();
@@ -74,7 +80,13 @@ fn only_the_allowed_and_explicit_variables_reach_the_process() {
 fn eof_on_stdin_ends_a_cooperative_process_gracefully() {
     let dir = dir("eof");
     let (out, reader) = capture();
-    let child = OwnedChild::spawn(script(&dir, "cat; echo fim"), &[], reader).unwrap();
+    let child = OwnedChild::spawn(
+        script(&dir, "cat; echo fim"),
+        Env::Allowlist(&[]),
+        None,
+        reader,
+    )
+    .unwrap();
     let closed = child.close(Duration::from_secs(2));
     assert_eq!(closed.ending, Ending::Graceful);
     assert!(closed.collected());
@@ -85,14 +97,21 @@ fn eof_on_stdin_ends_a_cooperative_process_gracefully() {
 fn a_process_that_ignores_eof_gets_term_and_then_kill() {
     let dir = dir("term");
     let (_out, reader) = capture();
-    let child = OwnedChild::spawn(script(&dir, "sleep 60"), &[], reader).unwrap();
+    let child =
+        OwnedChild::spawn(script(&dir, "sleep 60"), Env::Allowlist(&[]), None, reader).unwrap();
     let closed = child.close(Duration::from_millis(100));
     assert_eq!(closed.ending, Ending::Terminated);
     assert!(closed.collected(), "{closed:?}");
 
     // Ignorar o TERM e' herdado pelo `sleep`: so' o KILL resolve.
     let (_out, reader) = capture();
-    let child = OwnedChild::spawn(script(&dir, "trap '' TERM; sleep 60"), &[], reader).unwrap();
+    let child = OwnedChild::spawn(
+        script(&dir, "trap '' TERM; sleep 60"),
+        Env::Allowlist(&[]),
+        None,
+        reader,
+    )
+    .unwrap();
     let closed = child.close(Duration::from_millis(100));
     assert_eq!(closed.ending, Ending::Killed);
     assert!(closed.collected(), "{closed:?}");
@@ -108,7 +127,7 @@ fn a_descendant_in_the_group_does_not_survive_the_close() {
         pid_file.display()
     );
     let (_out, reader) = capture();
-    let child = OwnedChild::spawn(script(&dir, &body), &[], reader).unwrap();
+    let child = OwnedChild::spawn(script(&dir, &body), Env::Allowlist(&[]), None, reader).unwrap();
     let deadline = Instant::now() + Duration::from_secs(5);
     while !pid_file.exists() && Instant::now() < deadline {
         thread::sleep(Duration::from_millis(10));
@@ -137,7 +156,8 @@ fn the_stderr_tail_is_kept_for_the_owner_to_decide() {
     let (_out, reader) = capture();
     let child = OwnedChild::spawn(
         script(&dir, "echo 'motivo da falha' >&2; cat > /dev/null"),
-        &[],
+        Env::Allowlist(&[]),
+        None,
         reader,
     )
     .unwrap();

@@ -29,7 +29,7 @@ use std::{
 
 use rustix::process::{Pid, Signal, kill_process_group};
 
-use crate::stderr_tail::{DEFAULT_CAPACITY, StderrTail};
+use crate::stderr_tail::{DEFAULT_CAPACITY, LineSink, StderrTail};
 
 /// Variaveis que um processo de longa vida herda; o resto vem explicito.
 pub const ALLOWED_ENV: [&str; 7] = [
@@ -47,6 +47,31 @@ const TERMINATE_GRACE: Duration = Duration::from_millis(500);
 
 /// Prazo para a thread leitora terminar depois da coleta.
 const READER_GRACE: Duration = Duration::from_secs(2);
+
+/// O ambiente do processo.
+#[derive(Debug, Clone, Copy)]
+pub enum Env<'a> {
+    /// So' [`ALLOWED_ENV`] e as variaveis dadas: processo com credencial
+    /// (adaptador de banco).
+    Allowlist(&'a [(&'a str, &'a str)]),
+    /// O ambiente do core inteiro: ferramenta de desenvolvimento sem
+    /// credencial (language server), que precisa de `CARGO_HOME` e afins.
+    Inherit,
+}
+
+/// Mata o grupo do processo de qualquer thread, sem colher nem esperar: para
+/// a thread leitora que descobre uma falha e nao pode encerrar a si mesma.
+#[derive(Debug, Clone, Copy)]
+pub struct GroupKiller(Option<Pid>);
+
+impl GroupKiller {
+    /// `SIGKILL` no grupo; a coleta fica com o dono do [`OwnedChild`].
+    pub fn kill(self) {
+        if let Some(group) = self.0 {
+            kill_process_group(group, Signal::KILL).ok();
+        }
+    }
+}
 
 /// Como o processo terminou.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -78,9 +103,11 @@ impl Closed {
     }
 }
 
-/// Um processo filho de longa vida, com dono unico.
+/// Um processo filho de longa vida, com dono unico. Sem [`OwnedChild::close`],
+/// o `Drop` mata o grupo e colhe o processo: nada fica orfao nem zumbi.
 #[derive(Debug)]
 pub struct OwnedChild {
+    closed: bool,
     child: Child,
     group: Option<Pid>,
     stdin: Option<ChildStdin>,
@@ -89,24 +116,28 @@ pub struct OwnedChild {
 }
 
 impl OwnedChild {
-    /// Sobe `command` com o ambiente permitido mais `env`, grupo proprio e os
-    /// tres pipes; o stdout vai para `read_stdout`, numa thread desta base.
+    /// Sobe `command` com o ambiente pedido, grupo proprio e os tres pipes; o
+    /// stdout vai para `read_stdout`, numa thread desta base, e cada linha do
+    /// stderr para `stderr_lines`, quando o dono quer.
     ///
     /// # Errors
     /// Falha do `spawn` (executavel ausente, permissao) ou pipe indisponivel.
     pub fn spawn(
         mut command: Command,
-        env: &[(&str, &str)],
+        env: Env<'_>,
+        stderr_lines: Option<LineSink>,
         read_stdout: impl FnOnce(ChildStdout) + Send + 'static,
     ) -> io::Result<Self> {
-        command.env_clear();
-        for name in ALLOWED_ENV {
-            if let Some(value) = std::env::var_os(name) {
+        if let Env::Allowlist(extra) = env {
+            command.env_clear();
+            for name in ALLOWED_ENV {
+                if let Some(value) = std::env::var_os(name) {
+                    command.env(name, value);
+                }
+            }
+            for (name, value) in extra {
                 command.env(name, value);
             }
-        }
-        for (name, value) in env {
-            command.env(name, value);
         }
         command
             .process_group(0)
@@ -122,9 +153,10 @@ impl OwnedChild {
             drop(child.wait());
             return Err(io::Error::other("pipe do processo indisponivel"));
         };
-        let stderr = StderrTail::spawn(stderr, DEFAULT_CAPACITY, None);
+        let stderr = StderrTail::spawn(stderr, DEFAULT_CAPACITY, stderr_lines);
         let reader = thread::spawn(move || read_stdout(stdout));
         Ok(Self {
+            closed: false,
             child,
             group,
             stdin: Some(stdin),
@@ -138,10 +170,28 @@ impl OwnedChild {
         self.stdin.as_mut()
     }
 
+    /// Entrega o stdin ao dono do protocolo, que escreve de varias threads.
+    /// Fechar a ponta dele e' o EOF que [`OwnedChild::close`] daria.
+    pub const fn take_stdin(&mut self) -> Option<ChildStdin> {
+        self.stdin.take()
+    }
+
     /// A cauda limitada do stderr; o dono decide se ela pode sair.
     #[must_use]
     pub fn stderr_tail(&self) -> String {
         self.stderr.tail()
+    }
+
+    /// A mesma cauda, para uma thread do dono anexar a um erro.
+    #[must_use]
+    pub fn stderr_handle(&self) -> StderrTail {
+        self.stderr.clone()
+    }
+
+    /// Mata o grupo de outra thread; ver [`GroupKiller`].
+    #[must_use]
+    pub const fn killer(&self) -> GroupKiller {
+        GroupKiller(self.group)
     }
 
     /// O processo ja' saiu? Nao bloqueia.
@@ -170,6 +220,7 @@ impl OwnedChild {
         // enquanto o grupo existe, entao o sinal so' alcanca o que restou.
         self.signal_group(Signal::KILL);
         let reader_joined = self.reader.take().is_none_or(join_until);
+        self.closed = true;
         Closed {
             ending,
             status,
@@ -181,6 +232,15 @@ impl OwnedChild {
         if let Some(group) = self.group {
             // ESRCH: o grupo ja' acabou, que e' o resultado esperado.
             kill_process_group(group, signal).ok();
+        }
+    }
+}
+
+impl Drop for OwnedChild {
+    fn drop(&mut self) {
+        if !self.closed {
+            self.signal_group(Signal::KILL);
+            drop(self.child.wait());
         }
     }
 }

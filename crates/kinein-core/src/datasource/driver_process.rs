@@ -29,7 +29,7 @@ use super::driver_contract::{
     self, HandshakeFailure, INITIALIZE_TIMEOUT_MS, LIMITS, Negotiated, QUEUE_CAPACITY,
     SHUTDOWN_TIMEOUT_MS,
 };
-use crate::owned_child::{Closed, OwnedChild};
+use crate::owned_child::{Closed, Env, OwnedChild};
 
 /// Espera pelo EOF de um adaptador que falhou no handshake, antes do TERM.
 const FAILED_START_GRACE: Duration = Duration::from_millis(200);
@@ -186,7 +186,7 @@ impl DriverProcess {
             message_bytes: AtomicUsize::new(LIMITS.message_bytes as usize),
         });
         let reader_shared = Arc::clone(&shared);
-        let child = OwnedChild::spawn(command, env, move |stdout| {
+        let child = OwnedChild::spawn(command, Env::Allowlist(env), None, move |stdout| {
             read_loop(stdout, &reader_shared);
         })
         .map_err(StartFailure::Spawn)?;

@@ -484,8 +484,9 @@ na resolução/reinício e não provoca substituição automática do processo v
 ### 6.1 D1b — supervisão do processo do adaptador (desenho, 2026-10-08)
 
 > **Implementado** em 2026-10-08 (40.7 §7.248): base `owned_child.rs` e ponte
-> `datasource/driver_process.rs`, provadas contra o adaptador falso. A
-> migração do LSP para a mesma base fica como segunda fatia da base.
+> `datasource/driver_process.rs`, provadas contra o adaptador falso. O LSP
+> migrou para a mesma base em seguida (40.7 §7.249): os dois consumidores
+> reais que o §7 exige.
 
 Desenho anterior ao código, sobre o contrato da D1a (§4.4, `40`) e o handoff do
 passo 8 (59 §2.1). Duas fatias, cada uma com seu consumidor real:

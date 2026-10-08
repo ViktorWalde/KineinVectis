@@ -197,6 +197,7 @@ flowchart LR
   n_core_library --> n_core_configaction
   n_core_lsp --> n_core_cmake
   n_core_lsp --> n_core_fsops
+  n_core_lsp --> n_core_owned_child
   n_core_lsp --> n_core_stderr_tail
   n_core_owned_child --> n_core_stderr_tail
   n_core_project --> n_core_tools
@@ -218,7 +219,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-44 módulos, 86 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+44 módulos, 87 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -251,7 +252,7 @@ flowchart LR
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
-| `lsp` | cmake, fsops, stderr_tail | Subsistema LSP: |
+| `lsp` | cmake, fsops, owned_child, stderr_tail | Subsistema LSP: |
 | `outcome` | — | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | stderr_tail | A base prova o que diz: |
 | `probe` | — | Sondas de debug conectadas: |

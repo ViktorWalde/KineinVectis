@@ -10,12 +10,11 @@ use std::{
     collections::HashMap,
     io::BufReader,
     path::Path,
-    process::{Child, ChildStdin, ChildStdout},
+    process::{ChildStdin, ChildStdout},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
     },
-    thread,
     time::{Duration, Instant},
 };
 
@@ -26,9 +25,10 @@ use super::PendingResponses;
 use super::diagnostics_merge::MergedDiagnostics;
 use super::framing::{read_message, write_locked_message};
 use super::registry::ServerSpec;
-use super::server::{answer_server_request, spawn_reader_thread};
+use super::server::{answer_server_request, run_reader};
 use super::types::LspError;
 use super::uri::uri_for_path;
+use crate::owned_child::GroupKiller;
 use crate::stderr_tail::StderrTail;
 
 /// Tempo maximo aguardando a resposta de `initialize` de um servidor.
@@ -37,9 +37,8 @@ const INITIALIZE_TIMEOUT: Duration = Duration::from_secs(15);
 /// O que a thread do handshake leva.
 pub(super) struct HandshakeParts {
     pub(super) spec: ServerSpec,
-    pub(super) stdout: ChildStdout,
     pub(super) stdin: Arc<Mutex<ChildStdin>>,
-    pub(super) child: Arc<Mutex<Child>>,
+    pub(super) killer: GroupKiller,
     pub(super) ready: Arc<AtomicBool>,
     pub(super) failed: Arc<Mutex<Option<String>>>,
     pub(super) stopping: Arc<AtomicBool>,
@@ -53,13 +52,14 @@ pub(super) struct HandshakeParts {
 
 /// `initialize` -> `initialized` -> configuracao -> thread leitora, fora do
 /// laco; no fim `ready` + `running`, ou `failed` com o stderr e o filho morto.
-pub(super) fn spawn_handshake_thread(parts: HandshakeParts) {
-    thread::spawn(move || {
+/// O handshake e, se ele der certo, o laco de leitura: roda na thread leitora
+/// do `OwnedChild`, que a junta ao encerrar.
+pub(super) fn run_handshake(parts: HandshakeParts, stdout: ChildStdout) {
+    {
         let HandshakeParts {
             spec,
-            stdout,
             stdin,
-            child,
+            killer,
             ready,
             failed,
             stopping,
@@ -78,24 +78,24 @@ pub(super) fn spawn_handshake_thread(parts: HandshakeParts) {
                 if let Ok(mut l) = legend.lock() {
                     *l = types;
                 }
-                spawn_reader_thread(
-                    spec.key,
-                    reader,
-                    Arc::clone(&stdin),
-                    events.clone(),
-                    pending,
-                    diagnostics,
-                    Arc::new(spec.settings.clone()),
-                    merged,
-                    stderr,
-                    Arc::clone(&stopping),
-                );
                 ready.store(true, Ordering::SeqCst);
-                // Encerrado durante o handshake: `running` contradiria o
-                // `stopped` que o core ja' anunciou.
+                // Encerrado pelo core durante o handshake: nao anunciar um
+                // `running` depois do `stopped` que o core ja' anunciou.
                 if !stopping.load(Ordering::SeqCst) {
                     emit_status(&events, spec.key, "running", None);
                 }
+                run_reader(
+                    spec.key,
+                    reader,
+                    &stdin,
+                    &events,
+                    &pending,
+                    &diagnostics,
+                    &spec.settings,
+                    &merged,
+                    &stderr,
+                    &stopping,
+                );
             }
             Err(_) if stopping.load(Ordering::SeqCst) => {
                 // O core matou o filho no meio do `initialize`: nao e' falha
@@ -108,17 +108,15 @@ pub(super) fn spawn_handshake_thread(parts: HandshakeParts) {
                     }
                     other => other.to_string(),
                 };
-                if let Ok(mut c) = child.lock() {
-                    drop(c.kill());
-                    drop(c.wait());
-                }
+                // Mata o grupo; a coleta fica com o dono do `OwnedChild`.
+                killer.kill();
                 if let Ok(mut f) = failed.lock() {
                     *f = Some(message.clone());
                 }
                 emit_status(&events, spec.key, "failed", Some(&message));
             }
         }
-    });
+    }
 }
 
 /// `event.lsp.status { language, status, message? }` a partir de uma thread.

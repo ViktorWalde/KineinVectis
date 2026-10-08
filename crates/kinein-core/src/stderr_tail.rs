@@ -30,8 +30,8 @@ pub const DEFAULT_CAPACITY: usize = 64;
 /// sem `\n` nao pode encher a memoria do core.
 const LINHA_MAXIMA: usize = 4096;
 
-/// Coletor de linha ao vivo: recebe a linha ja' limpa (sem `\n`, truncada).
-pub type Coletor = Box<dyn Fn(&str) + Send + 'static>;
+/// Coletor de linha ao vivo (`LineSink`): recebe a linha ja' limpa (sem `\n`, truncada).
+pub type LineSink = Box<dyn Fn(&str) + Send + 'static>;
 
 /// A cauda do stderr de um filho, viva enquanto o pipe estiver aberto.
 #[derive(Debug, Clone)]
@@ -47,7 +47,7 @@ impl StderrTail {
     pub fn spawn(
         stderr: impl Read + Send + 'static,
         capacidade: usize,
-        coletor: Option<Coletor>,
+        coletor: Option<LineSink>,
     ) -> Self {
         let capacidade = capacidade.max(1);
         let linhas = Arc::new(Mutex::new(VecDeque::with_capacity(capacidade)));

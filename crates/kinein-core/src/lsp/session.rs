@@ -400,9 +400,11 @@ fn kill_child(handle: &super::server::ServerHandle) {
     handle
         .stopping
         .store(true, std::sync::atomic::Ordering::SeqCst);
-    if let Ok(mut child) = handle.child.lock() {
-        drop(child.kill());
-        drop(child.wait());
+    // TERM e, se preciso, KILL no GRUPO, com coleta e leitor junto: um filho
+    // do servidor (proc-macro do rust-analyzer) nao sobrevive mais ao pai.
+    let owned = handle.child.lock().ok().and_then(|mut slot| slot.take());
+    if let Some(owned) = owned {
+        let _closed = owned.close(std::time::Duration::ZERO);
     }
 }
 

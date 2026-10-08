@@ -9,10 +9,11 @@ use std::{
     collections::HashMap,
     io::{self, BufReader},
     path::Path,
-    process::{Child, ChildStdin, ChildStdout, Command, Stdio},
+    process::{ChildStdin, ChildStdout, Command},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
+        mpsc,
     },
     thread,
     time::Duration,
@@ -26,14 +27,16 @@ use super::framing::{read_message, write_locked_message};
 use super::parse::published_diagnostics;
 use super::registry::ServerSpec;
 use super::types::LspError;
-use crate::stderr_tail::{DEFAULT_CAPACITY, StderrTail};
+use crate::owned_child::{Env, OwnedChild};
+use crate::stderr_tail::StderrTail;
 use kinein_protocol::JsonRpcRequest;
 
 /// Estado de um servidor em execucao.
 pub(super) struct ServerHandle {
-    /// O processo. Num `Mutex` porque a thread do handshake o mata quando o
-    /// `initialize` falha, e o manager o mata no `kill_server`.
-    pub(super) child: Arc<Mutex<Child>>,
+    /// O processo, com dono unico (`OwnedChild`): o `kill_server` o encerra e
+    /// colhe; um handle esquecido o mata e colhe no `Drop`. A thread do
+    /// handshake so' tem o `GroupKiller`.
+    pub(super) child: Mutex<Option<OwnedChild>>,
     /// `true` depois do `initialized` (Etapa 2 F6, 2026-09-18): ate' la' o
     /// handshake corre NUMA THREAD e o laco nao espera os 15 s do
     /// rust-analyzer — pedidos e sincronizacao antes disso voltam
@@ -106,81 +109,69 @@ pub(super) fn spawn_server(
             ));
         }
     }
-    let mut child = command
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|error| {
-            if error.kind() == io::ErrorKind::NotFound {
-                LspError::MissingServer {
-                    command: spec.command.clone(),
-                }
-            } else {
-                LspError::ServerFailed {
-                    command: spec.command.clone(),
-                    message: error.to_string(),
-                }
+    // O processo e' do `OwnedChild` (D1b, 39 §6.1): grupo proprio, para o
+    // encerramento alcancar os filhos (o proc-macro do rust-analyzer, o node
+    // do basedpyright), e coleta com o leitor junto. Ambiente herdado: um
+    // language server nao carrega credencial e precisa de `CARGO_HOME` e afins.
+    // O stdout vai para a thread da base, que espera as partes do handshake
+    // (montadas depois do spawn) e segue no laco de leitura ali mesmo.
+    let (parts_sender, parts) = mpsc::channel::<super::handshake::HandshakeParts>();
+    let mut owned = OwnedChild::spawn(
+        command,
+        Env::Inherit,
+        Some(log_collector(spec.key, &events)),
+        move |stdout| {
+            if let Ok(parts) = parts.recv() {
+                super::handshake::run_handshake(parts, stdout);
             }
-        })?;
-
-    let Some(stdin) = child.stdin.take() else {
-        drop(child.kill());
+        },
+    )
+    .map_err(|error| {
+        if error.kind() == io::ErrorKind::NotFound {
+            LspError::MissingServer {
+                command: spec.command.clone(),
+            }
+        } else {
+            LspError::ServerFailed {
+                command: spec.command.clone(),
+                message: error.to_string(),
+            }
+        }
+    })?;
+    let Some(stdin) = owned.take_stdin() else {
         return Err(LspError::ServerFailed {
             command: spec.command.clone(),
             message: "stdin indisponivel".to_owned(),
         });
     };
-    let Some(stdout) = child.stdout.take() else {
-        drop(child.kill());
-        return Err(LspError::ServerFailed {
-            command: spec.command.clone(),
-            message: "stdout indisponivel".to_owned(),
-        });
-    };
-    let Some(stderr) = child.stderr.take() else {
-        drop(child.kill());
-        return Err(LspError::ServerFailed {
-            command: spec.command.clone(),
-            message: "stderr indisponivel".to_owned(),
-        });
-    };
-    // O stderr do servidor (2026-09-17): cada linha vira `event.lsp.log` e a
-    // cauda entra no `initialize` que falha e no `status: exited` (a thread
-    // leitora fica com um clone). E' onde o clangd diz "compile_commands.json
-    // not found" e o rust-analyzer conta o indice — antes ia para /dev/null.
-    let stderr = StderrTail::spawn(
-        stderr,
-        DEFAULT_CAPACITY,
-        Some(log_collector(spec.key, &events)),
-    );
+    // A cauda do stderr (2026-09-17) entra no `initialize` que falha e no
+    // `status: exited`; cada linha ja' vira `event.lsp.log` pelo coletor.
+    let stderr = owned.stderr_handle();
 
-    // O handshake corre numa THREAD (Etapa 2 F6): o `initialize` do
+    // O handshake corre na thread leitora (Etapa 2 F6): o `initialize` do
     // rust-analyzer leva segundos num projeto grande, e ate' 2026-09-18 o
     // laco do core esperava por ele — a IDE inteira muda. O handle volta ja',
     // marcado `starting`; a thread marca `ready` e emite `running`, ou emite
-    // `failed` com o stderr e mata o filho.
+    // `failed` com o stderr e mata o grupo.
     let stdin = Arc::new(Mutex::new(stdin));
     let initialize = super::handshake::initialize_request(root);
     if let Err(error) = write_locked_message(&stdin, &initialize) {
-        drop(child.kill());
-        drop(child.wait());
         return Err(LspError::ServerFailed {
             command: spec.command.clone(),
             message: format!("falha no initialize: {error}"),
         });
     }
-    let child = Arc::new(Mutex::new(child));
+    let killer = owned.killer();
+    let child = Mutex::new(Some(owned));
     let ready = Arc::new(AtomicBool::new(false));
     let failed = Arc::new(Mutex::new(None));
     let stopping = Arc::new(AtomicBool::new(false));
     let semantic_token_types = Arc::new(Mutex::new(Vec::new()));
     let diagnostics_by_uri = Arc::new(Mutex::new(HashMap::new()));
-    super::handshake::spawn_handshake_thread(super::handshake::HandshakeParts {
+    drop(parts_sender.send(super::handshake::HandshakeParts {
         spec: spec.clone(),
-        stdout,
         stdin: Arc::clone(&stdin),
-        child: Arc::clone(&child),
+        killer,
         ready: Arc::clone(&ready),
         failed: Arc::clone(&failed),
         stopping: Arc::clone(&stopping),
@@ -190,7 +181,7 @@ pub(super) fn spawn_server(
         pending,
         merged,
         stderr,
-    });
+    }));
     Ok(ServerHandle {
         child,
         ready,
@@ -221,7 +212,7 @@ impl ServerHandle {
 
 /// Cada linha do stderr do servidor sai como `event.lsp.log { language,
 /// line }` (protocolo 0.111.0): a aba IDE mostra; nada e' interpretado.
-fn log_collector(key: &'static str, events: &super::EventSender) -> crate::stderr_tail::Coletor {
+fn log_collector(key: &'static str, events: &super::EventSender) -> crate::stderr_tail::LineSink {
     let events = events.clone();
     Box::new(move |linha: &str| {
         drop(events.send(JsonRpcRequest::notification(
@@ -231,37 +222,39 @@ fn log_collector(key: &'static str, events: &super::EventSender) -> crate::stder
     })
 }
 
+/// O laco de leitura de um servidor pronto; roda na thread leitora da base,
+/// que o `OwnedChild` junta ao encerrar.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn spawn_reader_thread(
+pub(super) fn run_reader(
     key: &'static str,
     mut reader: BufReader<ChildStdout>,
-    stdin: Arc<Mutex<ChildStdin>>,
-    events: super::EventSender,
-    pending: PendingResponses,
-    diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
-    settings: Arc<Value>,
-    merged: MergedDiagnostics,
-    stderr: StderrTail,
-    stopping: Arc<AtomicBool>,
+    stdin: &Arc<Mutex<ChildStdin>>,
+    events: &super::EventSender,
+    pending: &PendingResponses,
+    diagnostics_by_uri: &Arc<Mutex<HashMap<String, Value>>>,
+    settings: &Value,
+    merged: &MergedDiagnostics,
+    stderr: &StderrTail,
+    stopping: &AtomicBool,
 ) {
-    thread::spawn(move || {
+    {
         while let Ok(Some(message)) = read_message(&mut reader) {
-            if route_response(&message, &pending) {
+            if route_response(&message, pending) {
                 continue;
             }
-            answer_server_request(&message, &stdin, &settings);
+            answer_server_request(&message, stdin, settings);
 
             if message.get("method").and_then(Value::as_str)
                 == Some("textDocument/publishDiagnostics")
                 && let Some(params) = message.get("params")
             {
-                cache_diagnostics(&diagnostics_by_uri, params);
+                cache_diagnostics(diagnostics_by_uri, params);
                 // O que ESTE servidor publicou entra no cache fundido, e o
                 // evento que sai leva a uniao com os outros servidores da
                 // linguagem — a UI substitui por arquivo, e dois eventos
                 // parciais se apagariam um ao outro.
                 if let Some((path, diagnostics)) = published_diagnostics(params) {
-                    let event = diagnostics_merge::record(&merged, key, &path, diagnostics);
+                    let event = diagnostics_merge::record(merged, key, &path, diagnostics);
                     if events.send(event).is_err() {
                         break;
                     }
@@ -286,7 +279,7 @@ pub(super) fn spawn_reader_thread(
             "event.lsp.status",
             Some(params),
         )));
-    });
+    }
 }
 
 fn route_response(message: &Value, pending: &PendingResponses) -> bool {

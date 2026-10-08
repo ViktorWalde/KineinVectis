@@ -25,6 +25,11 @@ struct Setup {
 }
 
 fn setup(name: &str, configured: bool) -> Setup {
+    setup_with(name, configured, "")
+}
+
+/// `prelude` roda no script antes do `exec`: um auxiliar sobe no mesmo grupo.
+fn setup_with(name: &str, configured: bool, prelude: &str) -> Setup {
     let root = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-qml-{name}", std::process::id()));
@@ -50,7 +55,7 @@ fn setup(name: &str, configured: bool) -> Setup {
     crate::write_executable(
         bin.join("qmlls"),
         format!(
-            "#!/bin/sh\nprintf '%s\\n' \"$@\" > '{}'\nexec {} '{}' '{}'\n",
+            "#!/bin/sh\n{prelude}\nprintf '%s\\n' \"$@\" > '{}'\nexec {} '{}' '{}'\n",
             args_file.display(),
             super::lsp_server::python3(),
             super::lsp_server::fake_server().display(),
@@ -169,4 +174,31 @@ fn a_finished_configure_restarts_qmlls_with_the_new_build() {
     setup.open_main_qml();
     let build = setup.root.join(".kinein/build").display().to_string();
     assert_eq!(setup.args_when(|args| !args.is_empty()), ["-b", &build]);
+}
+
+#[test]
+fn closing_the_workspace_takes_the_server_helpers_with_it() {
+    // O servidor sobe um auxiliar no mesmo grupo (como o proc-macro do
+    // rust-analyzer); antes do `OwnedChild` so' o pai morria (D1b, 39 §6.1).
+    let pid_file = std::env::temp_dir().join(format!("{}-qml-helper.pid", std::process::id()));
+    drop(std::fs::remove_file(&pid_file));
+    let prelude = format!("sleep 60 &\necho $! > '{}'", pid_file.display());
+    let mut setup = setup_with("auxiliar", false, &prelude);
+    setup.open_main_qml();
+    setup.did_open();
+    let pid = std::fs::read_to_string(&pid_file).unwrap();
+    let proc_dir = PathBuf::from(format!("/proc/{}", pid.trim()));
+    assert!(proc_dir.exists(), "o auxiliar devia estar vivo");
+    let closed = setup
+        .core
+        .handle_request(&JsonRpcRequest::new(3_i64, "workspace.close", None));
+    assert!(closed.response().error.is_none(), "workspace.close falhou");
+    let deadline = Instant::now() + DEADLINE;
+    while proc_dir.exists() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert!(
+        !proc_dir.exists(),
+        "o auxiliar do servidor sobreviveu ao fechamento"
+    );
 }
