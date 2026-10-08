@@ -3156,6 +3156,13 @@ event.debug.continued {}                   (um por retomada, deduplicado)
 event.debug.finished  { exitCode? }        (exatamente um por sessao)
 ```
 
+**`line` é sempre uma linha inteira (2026-10-08, 40.7 §7.256).** O adaptador
+DAP pode entregar uma linha do programa em vários eventos `output` (o debugpy,
+sob carga, mandou "resultado" e " 5\n"). O core junta os pedaços por
+categoria até a quebra de linha. O que ficou sem quebra sai quando o programa
+para (`stopped`), termina (`exited`/`terminated`) ou o fluxo do adaptador
+acaba. Nada muda no formato do evento.
+
 **`category: "rtt"` (`0.118.0`, D1 do `roadmaps/41`)** é o console da placa
 pelo RTT/defmt do probe-rs: cada canal que o adaptador anuncia
 (`probe-rs-rtt-channel-config { channelNumber, channelName, dataFormat }`)

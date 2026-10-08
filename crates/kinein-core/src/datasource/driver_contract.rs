@@ -10,7 +10,8 @@ use serde_json::json;
 /// Adapter API understood by this core; not the UI IPC version.
 pub const API: ApiRange = ApiRange {
     min: Version { major: 1, minor: 0 },
-    max: Version { major: 1, minor: 0 },
+    // 1.1 (2026-10-08): `Failure.engineMessage`, a mensagem do banco (39 §4.4).
+    max: Version { major: 1, minor: 1 },
 };
 
 /// Local ceilings; a peer can lower these but cannot raise them.

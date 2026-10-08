@@ -44,14 +44,21 @@ pub enum OperationOutcome {
     Unknown,
 }
 
-/// Allowlisted machine-readable information, with no free-form strings.
+/// Allowlisted machine-readable information; the only text is the bounded
+/// database message of API 1.1.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(remote = "Self")]
+#[serde(remote = "Self", rename_all = "camelCase")]
 pub struct Failure {
     /// Stable public classification.
     pub reason: FailureReason,
     /// Established result, or explicit uncertainty.
     pub outcome: OperationOutcome,
+    /// API 1.1: the DATABASE's own message (never the adapter's prose), sent
+    /// only when the negotiated minor is 1 or more. The core keeps at most
+    /// 2 KiB of it, replaces control characters other than newline and tab,
+    /// and the UI shows it as plain text, marked as coming from the database.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine_message: Option<String>,
 }
 
 /// JSON-RPC numeric error for the private adapter pipe.

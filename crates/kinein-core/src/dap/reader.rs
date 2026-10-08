@@ -18,6 +18,7 @@ use std::{
 use kinein_protocol::JsonRpcRequest;
 use serde_json::{Value, json};
 
+use super::output_lines::OutputLines;
 use super::session::REQUEST_TIMEOUT;
 use super::wire::{Pending, Wire};
 use crate::lsp::EventSender;
@@ -38,22 +39,35 @@ pub(super) fn spawn_reader(
     let stopped_thread = Arc::clone(stopped_thread);
     thread::spawn(move || {
         let exit_code = Arc::new(Mutex::new(None));
+        let mut output = OutputLines::default();
         let mut reader = BufReader::new(stdout);
         while let Ok(Some(message)) = read_message(&mut reader) {
+            let event = message.get("event").and_then(Value::as_str);
             match message.get("type").and_then(Value::as_str) {
                 Some("response") => deliver_response(&wire.pending, &message),
-                Some("event") => handle_adapter_event(
-                    &message,
-                    &wire,
-                    &events,
-                    &alive,
-                    &stopped_thread,
-                    &exit_code,
-                    &initialized,
-                ),
+                // A saida junta pedacos em linhas inteiras (output_lines.rs).
+                Some("event") if event == Some("output") => {
+                    output.push(&events, message.get("body").unwrap_or(&Value::Null));
+                }
+                Some("event") => {
+                    // Parou ou acabou: a linha pela metade sai antes.
+                    if matches!(event, Some("stopped" | "exited" | "terminated")) {
+                        output.flush(&events);
+                    }
+                    handle_adapter_event(
+                        &message,
+                        &wire,
+                        &events,
+                        &alive,
+                        &stopped_thread,
+                        &exit_code,
+                        &initialized,
+                    );
+                }
                 _ => {}
             }
         }
+        output.flush(&events);
         // EOF/erro: destrava quem espera resposta e fecha a sessao uma vez.
         if let Ok(mut guard) = wire.pending.lock() {
             guard.clear();
@@ -93,7 +107,6 @@ fn handle_adapter_event(
     let body = message.get("body").cloned().unwrap_or(Value::Null);
     match name {
         "initialized" => drop(initialized.send(())),
-        "output" => emit_output(events, &body),
         "stopped" => {
             let thread_id = body.get("threadId").and_then(Value::as_i64).unwrap_or(0);
             let reason = body
@@ -186,27 +199,6 @@ fn handle_adapter_event(
             }
         }
         _ => {}
-    }
-}
-
-/// Emite `event.debug.output` linha a linha (telemetry e ignorada).
-fn emit_output(events: &EventSender, body: &Value) {
-    let category = body
-        .get("category")
-        .and_then(Value::as_str)
-        .unwrap_or("console");
-    if category == "telemetry" {
-        return;
-    }
-    let Some(output) = body.get("output").and_then(Value::as_str) else {
-        return;
-    };
-    for line in output.lines() {
-        send_event(
-            events,
-            "event.debug.output",
-            json!({ "category": category, "line": line }),
-        );
     }
 }
 

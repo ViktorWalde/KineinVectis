@@ -196,6 +196,7 @@ da Kinein.
 | `kinein-core` | dispatch JSON-RPC, estado da sessão e os serviços de domínio. É o cérebro; é o mais testável. |
 | `kinein-config` | modelo de configuração strict-by-default. |
 | `kinein-cli` | lib (`kinein_cli`) que gera requests JSON-RPC + binário fino. |
+| `kinein-adapter-sqlite` | o adaptador **externo** do SQLite (API de drivers 1.1 por stdio), construído aqui e instalado ao lado do `kinein-core`; reusa o motor SQLite do core ([39 §6.2](39-drivers-externos-e-compatibilidade.md)). |
 | `ui/` (C++/Qt) | frontend Qt/QML; sobe o `kinein-core` como processo filho via `CoreClient`. |
 
 Esta é a base mínima. A visão-alvo (specs) prevê ~18 crates; a Seção 6 descreve

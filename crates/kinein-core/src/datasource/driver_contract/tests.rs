@@ -73,6 +73,25 @@ fn intersection_selects_latest_shared_minor_when_both_ranges_span_revisions() {
 }
 
 #[test]
+fn a_one_point_one_adapter_negotiates_the_engine_message_minor() {
+    // 1.1 traz `Failure.engineMessage` (39 §4.4); um adaptador 1.0 continua
+    // aceito, so' sem a mensagem.
+    let mut response = peer();
+    response.api = ApiRange {
+        min: Version { major: 1, minor: 1 },
+        max: Version { major: 1, minor: 2 },
+    };
+    let negotiated = negotiate(&response, "native.postgres", "postgres").unwrap();
+    assert_eq!(negotiated.api, Version { major: 1, minor: 1 });
+    response.api = ApiRange {
+        min: Version { major: 1, minor: 0 },
+        max: Version { major: 1, minor: 0 },
+    };
+    let negotiated = negotiate(&response, "native.postgres", "postgres").unwrap();
+    assert_eq!(negotiated.api, Version { major: 1, minor: 0 });
+}
+
+#[test]
 fn no_intersection_or_invalid_range_refuses_only_selected_adapter() {
     for (range, expected) in [
         (
@@ -83,9 +102,10 @@ fn no_intersection_or_invalid_range_refuses_only_selected_adapter() {
             HandshakeFailure::IncompatibleApi,
         ),
         (
+            // Acima do 1.1 que este core entende (39 §4.4).
             ApiRange {
-                min: Version { major: 1, minor: 1 },
-                max: Version { major: 1, minor: 2 },
+                min: Version { major: 1, minor: 2 },
+                max: Version { major: 1, minor: 3 },
             },
             HandshakeFailure::IncompatibleApi,
         ),
@@ -265,6 +285,7 @@ fn remote_error_mapping_discards_external_text_and_preserves_uncertainty() {
             data: Some(Failure {
                 reason,
                 outcome: OperationOutcome::NotStarted,
+                engine_message: None,
             }),
         };
         let mapped = public_error(&remote);
@@ -302,6 +323,7 @@ fn unknown_or_failed_execution_never_requests_a_credential_retry() {
             data: Some(Failure {
                 reason,
                 outcome: OperationOutcome::Unknown,
+                engine_message: None,
             }),
         });
         assert_eq!(mapped.code, JsonRpcErrorCode::InternalError, "{reason:?}");
@@ -324,6 +346,7 @@ fn unknown_or_failed_execution_never_requests_a_credential_retry() {
             data: Some(Failure {
                 reason,
                 outcome: OperationOutcome::Failed,
+                engine_message: None,
             }),
         });
         assert_eq!(mapped.code, JsonRpcErrorCode::InternalError, "{reason:?}");

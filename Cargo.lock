@@ -1130,6 +1130,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "kinein-adapter-sqlite"
+version = "0.3.5"
+dependencies = [
+ "kinein-core",
+ "kinein-protocol",
+ "rusqlite",
+ "serde_json",
+]
+
+[[package]]
 name = "kinein-cli"
 version = "0.3.5"
 dependencies = [

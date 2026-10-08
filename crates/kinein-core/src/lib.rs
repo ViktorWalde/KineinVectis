@@ -102,6 +102,11 @@ pub struct Core {
     /// as variaveis de SDK (`IDF_PATH`…) deixam de ser lidas, para o teste
     /// ser hermetico.
     home_override: Option<PathBuf>,
+    /// A descoberta do Banco sonda as portas e sockets reais da maquina;
+    /// `false` so' nos testes, que nao podem depender de um banco que a pessoa
+    /// deixou rodando (achado em 2026-10-08: um `PostgreSQL` em container de
+    /// outro projeto, no `127.0.0.1:5432`, derrubou o teste da descoberta).
+    probe_local_servers: bool,
     /// Store local de rascunhos (autosave), aberta por-workspace (DocsPublic/seguranca/23).
     drafts: Option<db::DraftStore>,
     /// Raiz do estado GLOBAL quando a persistência está ligada; `None` — o
@@ -148,6 +153,7 @@ impl Core {
             global_storage: None,
             deferred: None,
             home_override: None,
+            probe_local_servers: true,
         }
     }
 

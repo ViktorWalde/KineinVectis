@@ -208,6 +208,16 @@ sem escolher substituto. Campos adicionais da resposta são ignorados;
 parâmetros, versões e orçamento têm formato fechado. Operação desconhecida,
 repetida ou obrigatória ausente recusa essa instalação.
 
+**API 1.1 — a mensagem do banco (decisão do autor, 2026-10-08).** O 1.0 não
+deixa texto do adaptador chegar à tela, e quem usa um cliente de banco perde
+a causa do erro (`no such table: nada`). O 1.1 é aditivo: `Failure` ganha
+`engineMessage` opcional, a mensagem do **banco** (não do adaptador), só
+quando o minor negociado é 1. O core a conserva em até 2 KiB (corta em
+fronteira de caractere, com `…`) e troca caracteres de controle, menos quebra
+de linha e tabulação, por espaço; a tela a mostra como texto puro, marcada
+como vinda do banco. `message` continua sem ir à tela nem ao log. Vale para
+qualquer instalação; um adaptador 1.0 continua aceito, só sem a mensagem.
+
 Operações conhecidas: `open`, `test`, `introspect`, `query`, `impact`,
 `preview`, `decide`, `cancel`, `close` e `shutdown`. Exceto `impact`,
 `preview` e `decide`, todas são obrigatórias para o backend deste recorte.
@@ -553,6 +563,43 @@ contrato puro existente:
 normal, handshake lento, linha acima do teto, queda depois de uma escrita,
 resposta tardia, stderr volumoso e um processo filho que sobreviveria ao
 pai. Nenhum método IPC novo; a ponte não é ligada aos perfis nesta fatia.
+
+### 6.2 Passo 9 — extração dos drivers, em fatias (desenho, 2026-10-08)
+
+Desenho escrito antes do código, sobre a decisão do §5.2 e a ponte do §6.1.
+
+**Ordem.** O §8 manda migrar o PostgreSQL primeiro (D1c). A infraestrutura
+que toda extração precisa (o binário adaptador, a escolha de instalação no
+perfil e o consumidor no core) é provada antes com o SQLite, o único motor
+que roda de ponta a ponta dentro do gate, sem servidor. Isso **não** troca o
+padrão de nenhum motor: o interno continua padrão até o aceite do autor por
+motor (§5.2). Depois vêm o PostgreSQL, com impacto e prévia, e o MongoDB.
+
+- **9a.1 — o adaptador SQLite.** Crate `kinein-adapter-sqlite`, binário do
+  mesmo nome, construído neste repositório e instalado ao lado do
+  `kinein-core`. Fala a API 1.0 do §4.4 e do 40: `initialize`, `open`,
+  `test`, `introspect`, `query`, `impact`, `close`, `shutdown`; recusa
+  `preview`/`decide` (não existem no SQLite). Reusa as funções do motor que
+  o core já tem (abrir sem criar, leitura `READ_ONLY`, teto de linhas,
+  catálogo), sem segunda implementação. Provado pela ponte do passo 8
+  (`DriverProcess`) e pelo `StreamGuard`, sem o core usá-lo ainda.
+  **Feita em 2026-10-08 (40.7 §7.256).**
+- **9a.2 — a escolha no perfil e o consumidor no core.** O campo
+  `installation` do formato 2 deixa de ser reservado: ausente é o interno;
+  `{ "kind": "ide" }` é o executável ao lado do core. O IPC ganha o campo no
+  `DataSourceProfile` (protocolo `0.167.0`). Perfil com instalação da IDE
+  roda teste, catálogo, consulta e impacto pelo adaptador: uma instância por
+  projeto + perfil + instalação, aberta no primeiro uso e encerrada ao
+  desconectar, ao trocar de projeto ou ao mudar o perfil.
+- **9a.3 — o formulário.** "Adaptador: interno · o da IDE" no formulário da
+  conexão; foto no display virtual; aceite do autor.
+- **"Outro caminho"** não mora no perfil do projeto: um repositório traria um
+  perfil apontando para um executável dele, e abrir o projeto o executaria
+  (§5). Ele entra numa fatia própria, pelo registro de ferramentas do
+  usuário, e o perfil referencia só o id dessa instalação.
+- **9b — PostgreSQL** com impacto e prévia (a transação fica no adaptador
+  até o terminal da prévia), provado contra um servidor real em container.
+- **9c — MongoDB.**
 
 ## 7. Reaproveitamento e donos conferidos
 

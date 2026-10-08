@@ -26,6 +26,7 @@ flowchart LR
   n_crates_kinein_protocol["<b>crates/kinein-protocol</b><br/>os tipos de mensagem do IPC (contrato unico, serde)"]
   n_crates_kinein_config["<b>crates/kinein-config</b><br/>leitura e validacao das configuracoes do usuario"]
   n_crates_kinein_cli["<b>crates/kinein-cli</b><br/>gera UM pedido JSON-RPC por invocacao, para scripts e smokes"]
+  n_crates_kinein_adapter_sqlite["<b>crates/kinein-adapter-sqlite</b><br/>o adaptador EXTERNO do SQLite: API de drivers 1.1 por stdio (39 §6.2)"]
   n_schemas["<b>schemas</b><br/>o formato dos arquivos persistidos (JSON Schema)"]
   n_scripts["<b>scripts</b><br/>os gates e as provas; ninguem importa estes arquivos"]
   n_packaging["<b>packaging</b><br/>o AppImage: junta ui + core num pacote portavel"]
@@ -35,6 +36,8 @@ flowchart LR
   n_crates_kinein_core -->|"Cargo"| n_crates_kinein_protocol
   n_crates_kinein_core -->|"Cargo"| n_crates_kinein_config
   n_crates_kinein_cli -->|"Cargo"| n_crates_kinein_protocol
+  n_crates_kinein_adapter_sqlite -->|"Cargo"| n_crates_kinein_protocol
+  n_crates_kinein_adapter_sqlite -->|"Cargo"| n_crates_kinein_core
   n_crates_kinein_core -->|"contrato do arquivo"| n_schemas
   n_scripts -->|"le o 03 (lista canonica)"| n_DocsPublic
   n_scripts -->|"sobe o core real"| n_crates_kinein_core
@@ -49,6 +52,8 @@ flowchart LR
 | `crates/kinein-core` | `crates/kinein-protocol` | dependencia Cargo | o formato de cada mensagem tem um dono so', compartilhado com a CLI |
 | `crates/kinein-core` | `crates/kinein-config` | dependencia Cargo | ler e validar configuracao nao e' trabalho de cada dominio |
 | `crates/kinein-cli` | `crates/kinein-protocol` | dependencia Cargo | a CLI monta pedidos com os MESMOS tipos que o core le |
+| `crates/kinein-adapter-sqlite` | `crates/kinein-protocol` | dependencia Cargo | o adaptador fala a API de drivers com os MESMOS tipos que o core confere |
+| `crates/kinein-adapter-sqlite` | `crates/kinein-core` | dependencia Cargo | o adaptador reusa o motor SQLite do core, sem segunda implementacao (39 §6.2) |
 | `crates/kinein-core` | `schemas` | o formato persistido e' documentado pelo schema | arquivo que o usuario guarda precisa de contrato fora do codigo |
 | `scripts` | `DocsPublic` | o verificar_fiacao_ipc.py le o 03-protocolo-ipc.md | o documento do protocolo nao pode divergir dos metodos roteados |
 | `scripts` | `crates/kinein-core` | os gates sobem o binario do core e falam JSON-RPC com ele | prova contra o core REAL, nao contra um falso |

@@ -47,6 +47,8 @@ fn cenario(nome: &str, com_motor: bool) -> Cenario {
         dir.join("bin"),
     ));
     core.enable_lsp(sender);
+    // Hermetico: o banco que a pessoa deixou rodando nao e' candidato do teste.
+    core.probe_local_servers = false;
     let mut c = Cenario {
         core,
         events: receiver,

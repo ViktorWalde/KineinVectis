@@ -12,6 +12,7 @@
 
 mod adapter;
 pub mod gdb_pick;
+mod output_lines;
 mod parse;
 mod reader;
 mod server;

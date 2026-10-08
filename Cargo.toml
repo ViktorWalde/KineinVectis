@@ -5,6 +5,7 @@ members = [
     "crates/kinein-protocol",
     "crates/kinein-config",
     "crates/kinein-cli",
+    "crates/kinein-adapter-sqlite",
 ]
 
 [workspace.package]
@@ -23,6 +24,7 @@ publish = false
 
 [workspace.dependencies]
 kinein-protocol = { path = "crates/kinein-protocol" }
+kinein-core = { path = "crates/kinein-core" }
 kinein-config = { path = "crates/kinein-config" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["raw_value"] }

@@ -39,8 +39,12 @@ impl Core {
             return *response;
         }
         let detector = self.detector.clone();
+        let probe_servers = self.probe_local_servers;
         self.defer_work(request_id, move |request_id| {
-            JsonRpcResponse::success(request_id, json!(discover::discover(&root, &detector)))
+            JsonRpcResponse::success(
+                request_id,
+                json!(discover::discover(&root, &detector, probe_servers)),
+            )
         })
     }
 

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","id":1,"method":"driver.initialize","params":{"api":{"min":{"major":1,"minor":0},"max":{"major":1,"minor":0}},"limits":{"messageBytes":1048576,"inFlight":8,"rows":10000,"columns":128,"cellBytes":16384,"retainedBytes":8388608,"catalogueItems":5000}}}
+{"jsonrpc":"2.0","id":1,"method":"driver.initialize","params":{"api":{"min":{"major":1,"minor":0},"max":{"major":1,"minor":1}},"limits":{"messageBytes":1048576,"inFlight":8,"rows":10000,"columns":128,"cellBytes":16384,"retainedBytes":8388608,"catalogueItems":5000}}}

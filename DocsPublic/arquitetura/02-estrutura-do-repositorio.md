@@ -121,7 +121,9 @@ kinein-vectis/
 │   │      toolchain serial container project index
 │   │
 │   ├── kinein-config/src/lib.rs
-│   └── kinein-cli/src/          main.rs lib.rs commands.rs error.rs
+│   ├── kinein-cli/src/          main.rs lib.rs commands.rs error.rs
+│   └── kinein-adapter-sqlite/   adaptador externo do SQLite (39 §6.2): lib.rs
+│                                engine.rs budget.rs main.rs; tests/protocol.rs
 │
 ├── ui/
 │   ├── CMakeLists.txt           qt_add_qml_module: o QML_FILES e' a lista do que
@@ -165,13 +167,15 @@ kinein-vectis/
 teste em `crates/kinein-core/src/tests/workspace.rs` — não é arquivo numa pasta
 de scaffold, e não há mecanismo de template externo.
 
-## 2. Os quatro crates, e por que são quatro
+## 2. Os cinco crates, e por que são cinco
 
 ```text
-kinein-core       toda a logica: build, run, debug, LSP, git, terminal, fs, jobs
-kinein-protocol   os TIPOS do contrato. Um modulo por dominio, re-exportado plano
-kinein-config     configuracao tipada
-kinein-cli        cliente fino do protocolo; nao replica o core
+kinein-core            toda a logica: build, run, debug, LSP, git, terminal, fs, jobs
+kinein-protocol        os TIPOS do contrato. Um modulo por dominio, re-exportado plano
+kinein-config          configuracao tipada
+kinein-cli             cliente fino do protocolo; nao replica o core
+kinein-adapter-sqlite  adaptador EXTERNO do SQLite (2026-10-08, 39 §6.2): um
+                       processo por conexao, falando a API de drivers por stdio
 ```
 
 O core é o cérebro. Começar por Rust foi o que evitou que a lógica da IDE

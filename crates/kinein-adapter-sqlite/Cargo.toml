@@ -1,0 +1,28 @@
+[package]
+name = "kinein-adapter-sqlite"
+description = "External SQLite adapter of Kinein Vectis, speaking the driver API 1.1 over stdio"
+keywords = ["ide", "sqlite", "adapter"]
+categories = ["development-tools"]
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+# O motor SQLite que o core ja' tem (abrir sem criar, leitura READ_ONLY,
+# teto, catalogo, medicao): o adaptador o reusa, sem segunda implementacao
+# (arquitetura/39 §6.2). Mover esse codigo para um crate proprio e tira-lo do
+# core faz parte do aceite do motor pelo autor.
+kinein-core.workspace = true
+kinein-protocol.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+rusqlite.workspace = true
+
+[lints]
+workspace = true

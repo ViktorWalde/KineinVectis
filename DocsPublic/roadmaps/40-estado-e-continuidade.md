@@ -31,6 +31,9 @@
 > - **Histórico de consultas (passo 13):** gravado fora do projeto, no estado
 >   do usuário, separado por projeto, nunca no Git, com "Limpar histórico"
 >   (59 §5.2).
+> - **Mensagem do banco pelo adaptador externo:** aparece na tela, limitada
+>   a 2 KiB e como texto puro, pela API 1.1 aditiva (39 §4.4); antes, o
+>   contrato 1.0 só deixava a classificação.
 > - **SQLite com caminho relativo:** resolvido a partir da pasta do projeto;
 >   hoje resolve a partir do diretório do core, o que é defeito (37; 59
 >   passo 15).
@@ -38,8 +41,11 @@
 > **Feito depois das decisões:** SQLite relativo ao projeto (§7.252), o
 > `.qmlformat.ini` (§7.253) e o **passo 13** (§7.254–§7.255, IPC `0.166.0`):
 > localizar a conexão do console e o histórico de consultas fora do projeto.
-> Aceite com mouse e teclado do autor pendente. **Ordem a seguir:** passo 9
-> (extração, PostgreSQL primeiro), passos 10, 11, 15 e 16.
+> Aceite com mouse e teclado do autor pendente. **Passo 9 em curso** (39
+> §6.2): 9a.1 feita (§7.256), o binário `kinein-adapter-sqlite` falando a API
+> 1.1. Próximo: 9a.2 (a escolha de instalação no perfil e o core roteando para
+> o adaptador), 9a.3 (formulário), depois PostgreSQL e MongoDB; passos 10, 11,
+> 15 e 16.
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

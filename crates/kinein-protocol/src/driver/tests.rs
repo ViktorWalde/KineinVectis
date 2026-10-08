@@ -150,3 +150,45 @@ fn object_contracts_reject_positional_arrays_at_every_initialization_layer() {
     ]);
     assert!(serde_json::from_value::<InitializeResult>(array).is_err());
 }
+
+#[test]
+fn the_engine_message_of_api_one_point_one_is_optional_and_strict() {
+    // 1.1 (39 §4.4): a mensagem do BANCO vai no `data`; ausente, o fio e' o
+    // mesmo do 1.0; campo adicional numa RESPOSTA e' ignorado (39 §4.4).
+    let with_message = json!({
+        "jsonrpc": "2.0", "id": 9,
+        "error": { "code": -32000, "message": "adapter prose",
+                   "data": { "reason": "executionFailed", "outcome": "failed",
+                             "engineMessage": "no such table: nada" } }
+    });
+    let reply: Reply<Value> = serde_json::from_value(with_message.clone()).unwrap();
+    let Reply::Failure { error, .. } = &reply else {
+        panic!("expected a failure");
+    };
+    let data = error.data.as_ref().unwrap();
+    assert_eq!(data.reason, FailureReason::ExecutionFailed);
+    assert_eq!(data.engine_message.as_deref(), Some("no such table: nada"));
+    assert_eq!(serde_json::to_value(&reply).unwrap(), with_message);
+
+    let old: Reply<Value> = serde_json::from_str(FAILURE).unwrap();
+    let Reply::Failure { error, .. } = &old else {
+        panic!("expected a failure");
+    };
+    assert_eq!(error.data.as_ref().unwrap().engine_message, None);
+    assert!(
+        !serde_json::to_string(&old)
+            .unwrap()
+            .contains("engineMessage")
+    );
+
+    let mut later = with_message;
+    later["error"]["data"]["hint"] = json!("x");
+    let Reply::Failure { error, .. } = serde_json::from_value::<Reply<Value>>(later).unwrap()
+    else {
+        panic!("expected a failure");
+    };
+    assert_eq!(
+        error.data.unwrap().engine_message.as_deref(),
+        Some("no such table: nada")
+    );
+}

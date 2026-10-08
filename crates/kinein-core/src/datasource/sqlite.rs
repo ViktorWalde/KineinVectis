@@ -67,6 +67,13 @@ pub fn engine_profile(root: &Path, profile: &DataSourceProfile) -> DataSourcePro
 /// Teto de tabelas lidas, pelo mesmo motivo do lado `PostgreSQL`.
 const MAX_TABLES: usize = 5_000;
 
+/// A versao do `SQLite` embutido, sem abrir arquivo: o que o adaptador
+/// externo anuncia no handshake (`driverVersion`, passo 9a.1).
+#[must_use]
+pub fn embedded_version() -> String {
+    format!("SQLite {}", rusqlite::version())
+}
+
 /// Abre o arquivo e devolve a versao do `SQLite` embutido.
 ///
 /// # Errors

@@ -54,9 +54,20 @@ const MAX_FILES: usize = 50;
 const SQLITE_HEADER: &[u8] = b"SQLite format 3\0";
 
 /// Tudo que respondeu, servidores primeiro, depois containers, depois arquivos.
+///
+/// `probe_servers` sonda as portas e sockets REAIS da maquina; os testes o
+/// desligam, porque um banco que a pessoa deixou rodando nao e' do teste.
 #[must_use]
-pub fn discover(root: &Path, detector: &ToolDetector) -> DataSourceDiscoverResult {
-    let mut candidates = local_servers();
+pub fn discover(
+    root: &Path,
+    detector: &ToolDetector,
+    probe_servers: bool,
+) -> DataSourceDiscoverResult {
+    let mut candidates = if probe_servers {
+        local_servers()
+    } else {
+        Vec::new()
+    };
     let engine = container::detect_with(detector);
     if let Some(engine) = engine.as_ref() {
         let listed = container::list(engine, true);
