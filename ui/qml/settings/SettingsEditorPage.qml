@@ -156,7 +156,7 @@ Column {
             SettingsToggleRow {
                 width: parent.width
                 label: qsTr("Formatar ao salvar")
-                hint: qsTr("Ctrl+S formata (rustfmt, clang-format, ruff) e então salva")
+                hint: qsTr("Ctrl+S formata (rustfmt, clang-format, ruff, qmlformat) e então salva")
                 checked: root.settings !== null && root.settings.formatOnSave
                 fromProject: root.fromProject("formatOnSave")
                 onToggled: root.settings.settingChanged("formatOnSave", !root.settings.formatOnSave)

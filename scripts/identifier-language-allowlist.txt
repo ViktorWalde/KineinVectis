@@ -29,7 +29,7 @@ instantiate instantiated
 # AUTOGEN/AUTOMOC do CMake (alvos `<alvo>_autogen` que o moc gera)
 autogen
 qverify qcompare qtest guiless qint qsizetype qobject qgetenv qputenv qqmlregistration
-qtquick qmllint qmlls qmake invokable rehighlight tooltip popup viewport rect scrollbar
+qtquick qmllint qmlls qmlformat qmake invokable rehighlight tooltip popup viewport rect scrollbar
 spacer frameless antialiasing demi btoa atob stringify
 canonicalize fileno unlink mkdir mkpath chmod geteuid setsid isatty fcntl rdwr
 cloexec nonblock rdonly nofollow noreplace openat renameat errno sockaddr

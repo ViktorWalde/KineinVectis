@@ -81,8 +81,7 @@ impl Core {
             .detector
             .find_in_path(kind.id())
             .unwrap_or_else(|| std::path::PathBuf::from(kind.id()));
-        let command = format::formatter_command(kind, &program, &root, &file);
-        match format::run_formatter(command, kind.id(), &parsed.text) {
+        match format::format_text(kind, &program, &root, &file, &parsed.text) {
             Ok(text) => {
                 let changed = text != parsed.text;
                 JsonRpcResponse::success(

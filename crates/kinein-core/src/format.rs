@@ -11,8 +11,9 @@
 
 use std::{
     io::{self, Write},
-    path::Path,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
+    sync::atomic::{AtomicU64, Ordering},
     thread,
 };
 
@@ -27,6 +28,9 @@ pub enum FormatterKind {
     /// resolved from the working directory; the same tool the chain uses for
     /// lint).
     Ruff,
+    /// `qmlformat`, for QML (59 §2.4, 2026-10-08). It reads files only, so it
+    /// goes through [`format_text`] with a private temporary copy.
+    QmlFormat,
 }
 
 impl FormatterKind {
@@ -38,6 +42,7 @@ impl FormatterKind {
             Self::Rustfmt => "rustfmt",
             Self::ClangFormat => "clang-format",
             Self::Ruff => "ruff",
+            Self::QmlFormat => "qmlformat",
         }
     }
 }
@@ -47,9 +52,10 @@ impl FormatterKind {
 /// `format.capabilities` publica isto para a UI. Uma segunda lista em qualquer
 /// lugar (inclusive no QML) diverge desta por construção — foi exatamente o que
 /// aconteceu até o protocolo 0.61.0.
-const FORMATTER_EXTENSIONS: [(FormatterKind, &[&str]); 3] = [
+const FORMATTER_EXTENSIONS: [(FormatterKind, &[&str]); 4] = [
     (FormatterKind::Rustfmt, &["rs"]),
     (FormatterKind::Ruff, &["py", "pyi"]),
+    (FormatterKind::QmlFormat, &["qml"]),
     (
         FormatterKind::ClangFormat,
         &["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx"],
@@ -113,8 +119,81 @@ pub fn formatter_command(kind: FormatterKind, program: &Path, root: &Path, path:
             command.arg("--stdin-filename");
             command.arg(path);
         }
+        // O estilo do projeto vai por `-s`: a busca por pasta do qmlformat
+        // partiria da copia temporaria, nao do arquivo real.
+        FormatterKind::QmlFormat => {
+            if let Some(settings) = qmlformat_settings(root, path) {
+                command.arg("-s").arg(settings);
+            }
+        }
     }
     command
+}
+
+/// Formata `text` como o arquivo `path` do projeto `root`.
+///
+/// E' a entrada unica dos formatters. Os de stdin seguem por [`run_formatter`];
+/// o `qmlformat`, que so' le arquivo (medido no Qt 6.12), recebe o buffer numa
+/// pasta privada criada agora (0700, nunca reaproveitada) e apagada em seguida.
+/// O arquivo do projeto nunca e' tocado.
+///
+/// # Errors
+/// Os mesmos de [`run_formatter`], e falha de E/S da copia temporaria.
+pub fn format_text(
+    kind: FormatterKind,
+    program: &Path,
+    root: &Path,
+    path: &Path,
+    text: &str,
+) -> Result<String, FormatError> {
+    let mut command = formatter_command(kind, program, root, path);
+    if kind != FormatterKind::QmlFormat {
+        return run_formatter(command, kind.id(), text);
+    }
+    let tool = kind.id();
+    let dir = private_dir().map_err(|source| FormatError::Io { tool, source })?;
+    let name = path
+        .file_name()
+        .map_or_else(|| "buffer.qml".into(), ToOwned::to_owned);
+    let copy = dir.join(name);
+    let result = std::fs::write(&copy, text)
+        .map_err(|source| FormatError::Io { tool, source })
+        .and_then(|()| {
+            command.arg(&copy);
+            run_formatter(command, tool, "")
+        });
+    drop(std::fs::remove_dir_all(&dir));
+    result
+}
+
+/// O `.qmlformat.ini` mais perto do arquivo, sem sair do projeto.
+fn qmlformat_settings(root: &Path, path: &Path) -> Option<PathBuf> {
+    path.ancestors()
+        .skip(1)
+        .take_while(|dir| dir.starts_with(root))
+        .map(|dir| dir.join(".qmlformat.ini"))
+        .find(|candidate| candidate.is_file())
+}
+
+/// Uma pasta nova, so' deste usuario, para a copia que o formatter le.
+fn private_dir() -> io::Result<PathBuf> {
+    use std::os::unix::fs::DirBuilderExt;
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    for _ in 0..16 {
+        let candidate = std::env::temp_dir().join(format!(
+            "kinein-format-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        match std::fs::DirBuilder::new().mode(0o700).create(&candidate) {
+            Ok(()) => return Ok(candidate),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error),
+        }
+    }
+    Err(io::Error::other(
+        "nenhuma pasta temporaria livre para o formatter",
+    ))
 }
 
 /// Failure while formatting a buffer.
@@ -224,8 +303,69 @@ mod tests {
                 "extensao de {name} deveria usar clang-format"
             );
         }
+        assert_eq!(
+            formatter_for_path(Path::new("ui/Painel.qml")),
+            Some(FormatterKind::QmlFormat)
+        );
         assert_eq!(formatter_for_path(Path::new("nota.txt")), None);
         assert_eq!(formatter_for_path(Path::new("Makefile")), None);
+    }
+
+    /// O qmlformat so' le arquivo: o buffer vai para uma copia privada, o
+    /// estilo do projeto entra por `-s`, e a copia some depois.
+    #[test]
+    fn qmlformat_reads_a_private_copy_with_the_project_style() {
+        let root = std::env::temp_dir().join(format!("kinein-qmlformat-{}", std::process::id()));
+        drop(std::fs::remove_dir_all(&root));
+        std::fs::create_dir_all(root.join("ui/sub")).unwrap();
+        let real = root.join("ui/sub/Painel.qml");
+        std::fs::write(&real, "ORIGINAL_NO_DISCO\n").unwrap();
+        let fake = root.join("qmlformat-falso");
+        // Imprime os argumentos e o arquivo recebido, como o qmlformat imprime
+        // o resultado no stdout.
+        crate::write_executable(
+            &fake,
+            "#!/bin/sh\nfor a in \"$@\"; do last=\"$a\"; done\necho \"ARGS:$*\"\ncat \"$last\"\n",
+        );
+        let out =
+            super::format_text(FormatterKind::QmlFormat, &fake, &root, &real, "Item {}\n").unwrap();
+        assert!(out.ends_with("Item {}\n"), "{out}");
+        assert!(
+            !out.contains(" -s "),
+            "sem .qmlformat.ini nao ha' -s: {out}"
+        );
+        let copy = out
+            .lines()
+            .next()
+            .unwrap()
+            .rsplit(' ')
+            .next()
+            .unwrap()
+            .to_owned();
+        assert!(
+            copy.ends_with("/Painel.qml") && !copy.starts_with(root.to_str().unwrap()),
+            "{copy}"
+        );
+        assert!(
+            !std::path::Path::new(&copy).exists(),
+            "a copia temporaria sobrou"
+        );
+
+        std::fs::write(root.join("ui/.qmlformat.ini"), "[General]\n").unwrap();
+        let out =
+            super::format_text(FormatterKind::QmlFormat, &fake, &root, &real, "Item {}\n").unwrap();
+        let settings = root.join("ui/.qmlformat.ini");
+        assert!(out.contains(&format!("-s {}", settings.display())), "{out}");
+        // Um .qmlformat.ini FORA do projeto nunca vale.
+        assert_eq!(
+            super::qmlformat_settings(&root.join("ui"), &root.join("Painel.qml")),
+            None
+        );
+        assert_eq!(
+            std::fs::read_to_string(&real).unwrap(),
+            "ORIGINAL_NO_DISCO\n"
+        );
+        drop(std::fs::remove_dir_all(&root));
     }
 
     #[test]

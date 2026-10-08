@@ -150,6 +150,8 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":25,"method":"toolchain.inspectSysroot","params":{"path":"%s"}}\n' "$raiz"
         # Ler o .qml abre o documento no qmlls; o diagnostico chega em evento.
         printf '{"jsonrpc":"2.0","id":28,"method":"fs.read","params":{"path":"%s/ui/Erro.qml"}}\n' "$raiz"
+        # E o qmlformat REAL formata o buffer pela copia privada (59 §2.4).
+        printf '{"jsonrpc":"2.0","id":29,"method":"format.text","params":{"path":"%s/ui/Erro.qml","text":"import QtQuick\\nItem{  width:10 }\\n"}}\n' "$raiz"
         sleep 5
     } | XDG_CONFIG_HOME="$raiz/config" "$binario" 2>/dev/null
 )"
@@ -312,6 +314,8 @@ fi
 verifica 24 "toolchain.installable (o catalogo pinado, com sha256 e a pasta da IDE)" '"installRoot"'
 verifica 24 "toolchain.installable (a Arm GNU 15.2.rel1 com o sha256 publicado)" '"sha256":"597893282ac8c6ab1a4073977f2362990184599643b4c5ee34870a8215783a16"'
 verifica 25 "toolchain.inspectSysroot (uma pasta sem usr/include e' dita vazia)" '"verdict":"vazia para o compilador'
+verifica 29 "format.text de QML (o qmlformat real, pela copia privada)" '"formatter":"qmlformat"'
+verifica 29 "format.text de QML (o buffer volta formatado)" 'width: 10'
 qmlls_real=""
 for candidate in "$(command -v qmlls || true)" /usr/lib/qt6/bin/qmlls \
     /usr/lib/x86_64-linux-gnu/qt6/bin/qmlls /usr/lib64/qt6/bin/qmlls; do
