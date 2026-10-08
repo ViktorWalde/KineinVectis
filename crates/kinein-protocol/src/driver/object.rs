@@ -84,4 +84,4 @@ macro_rules! object_serde {
     )+};
 }
 
-pub(super) use object_serde;
+pub(crate) use object_serde;

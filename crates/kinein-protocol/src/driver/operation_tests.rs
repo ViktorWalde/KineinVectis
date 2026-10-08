@@ -187,3 +187,37 @@ fn public_options_refuse_a_repeated_field_name() {
         OptionValue::Integer(5432)
     );
 }
+
+#[test]
+fn catalogue_nodes_from_an_adapter_refuse_positional_arrays() {
+    // Hipotese herdada da revisao D1b (40.7 §7.239): os nos do catalogo
+    // usam os tipos do IPC, que aceitariam a forma posicional. Um campo como
+    // posicao, e nao como nome, deixa o adaptador trocar `sampled` por
+    // `declared` sem que o core perceba.
+    let mut chunk: Value =
+        serde_json::from_str(include_str!("fixtures/v1/operation-mongo.json")).unwrap();
+    assert!(serde_json::from_value::<Chunk>(chunk.clone()).is_ok());
+    chunk["payload"]["collections"][0]["fields"][0] =
+        json!(["meta.source", 1, ["null", "string"], 0.5, false]);
+    assert!(
+        serde_json::from_value::<Chunk>(chunk.clone()).is_err(),
+        "campo posicional"
+    );
+    chunk["payload"]["collections"][0] = json!(["events", "collection", false, 2, []]);
+    assert!(
+        serde_json::from_value::<Chunk>(chunk).is_err(),
+        "colecao posicional"
+    );
+
+    let relational = json!({
+        "context": {"instanceId": "i", "sessionId": "s", "generation": 1, "operationId": "o"},
+        "sequence": 0,
+        "payload": {"kind": "catalogue", "collections": [], "schemas": [
+            {"name": "public", "tables": [["clientes", "table", []]]}
+        ]}
+    });
+    assert!(
+        serde_json::from_value::<Chunk>(relational).is_err(),
+        "tabela posicional"
+    );
+}

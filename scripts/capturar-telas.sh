@@ -17,6 +17,8 @@
 #   remoto     painel de ambiente do Remote (overlay do trilho)
 #   criar      "Criar Projeto": o seletor no modo de criar, linguagem por escolher
 #   abrir      "Abrir projeto": o seletor no modo de abrir
+#   banco      janela do Banco com uma conexao e dois perfis preservados que
+#              esta versao nao usa (D1a.4, 2026-10-08)
 #
 # Uso: bash scripts/capturar-telas.sh [BINARIO] [PASTA_DE_SAIDA]
 #   BINARIO         padrao build/dev-local/ui/kinein-vectis
@@ -66,7 +68,27 @@ scene_commands() {
         remoto) echo "remote.list" ;;
         criar) echo "workspace.createProject" ;;
         abrir) echo "workspace.open" ;;
+        banco) echo "datasource.list" ;;
         *) return 1 ;;
+    esac
+}
+
+# Arquivos que so' uma cena precisa; as outras fotos continuam iguais.
+scene_files() {
+    case "$1" in
+        banco)
+            cat >"$project/.kinein/datasources.json" <<'JSON'
+{"schemaVersion": 2, "profiles": [
+  {"name": "bordo", "engine": "influxdb3", "adapter": "native.influxdb3",
+   "options": {"schemaVersion": 1, "fields": {"url": "http://localhost:8181"}}},
+  {"name": "estacao", "engine": "sqlite", "adapter": "builtin.sqlite",
+   "options": {"schemaVersion": 1, "fields": {"path": "estacao.db"}}},
+  {"name": "externo", "engine": "postgres", "adapter": "builtin.postgres",
+   "installation": {"id": "pg-adapter-2"},
+   "options": {"schemaVersion": 1, "fields": {"host": "localhost", "port": 5432, "database": "a", "user": "b"}}}
+]}
+JSON
+            ;;
     esac
 }
 
@@ -141,6 +163,7 @@ for scene in $scenes; do
         run_dir="$work_dir/$scene-$size"
         mkdir -p "$run_dir"
         make_project
+        scene_files "$scene"
         for name in config data cache state runtime; do
             mkdir -p "$run_dir/xdg-$name"
         done

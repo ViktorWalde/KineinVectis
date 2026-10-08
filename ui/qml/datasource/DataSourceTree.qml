@@ -21,6 +21,8 @@ QtObject {
     id: root
 
     property var profiles: []
+    // Preservados que esta versao nao usa (D1a.4): nome, motor e motivo.
+    property var unavailable: []
     property string workspaceRoot: ""
     onWorkspaceRootChanged: {
         root.selectedKey = "";
@@ -189,6 +191,11 @@ QtObject {
             out.push(root.row(key, 0, "connection", profile.name, DataSourceKinds.engineName(profile.engine) + (policy ? " · " + policy : "") + (session ? " · " + session.text : ""), true,
                               { connection: profile.name, engine: profile.engine, production: profile.production === true }));
             if (root.isExpanded(key)) root.structureRows(out, profile);
+        }
+        for (const item of root.unavailable) {
+            out.push(root.row(root.key(["u", item.name]), 0, "unavailable", item.name,
+                              DataSourceKinds.unavailableReason(item.reason, item.engine),
+                              false, { connection: item.name, engine: item.engine, reason: item.reason }));
         }
         return out;
     }

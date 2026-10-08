@@ -17,6 +17,7 @@ Item {
         id: tree
         workspaceRoot: bankController.workspaceRoot
         profiles: bankController.profiles
+        unavailable: bankController.unavailableProfiles
         structures: bankController.structures
         readingNames: bankController.readingNames
     }
@@ -35,6 +36,7 @@ Item {
     Connections {
         target: bankController
         function onIntrospectRequested(name, password, context) { root.requests.push(["refresh", name, context]); }
+        function onRemoveRequested(name) { root.requests.push(["remove", name]); }
     }
     DatabaseTreeView {
         id: view
@@ -145,6 +147,37 @@ Item {
         const event = { key: Qt.Key_Tab, modifiers: 0, accepted: true };
         view.handleKey(event);
         root.check(!event.accepted, "Tab segue para o ciclo de foco");
+
+        // Perfil preservado (D1a.4): o menu so' oferece remover do catalogo,
+        // e remover pede confirmacao no proprio menu antes do pedido ao core.
+        bankController.handleList(bankController.profiles, undefined,
+            [{ name: "bordo", engine: "influxdb3", adapter: "native.influxdb3", reason: "unknownProvider" }]);
+        const unavailableKey = tree.key(["u", "bordo"]);
+        root.requests = [];
+        treeActions.showRow(unavailableKey);
+        root.check(treeActions.menuOpen && root.actionsList() === "database.forget database.copy",
+                   "indisponível só remove ou copia: " + root.actionsList());
+        treeActions.activateMenu("database.forget");
+        root.check(treeActions.menuOpen && treeActions.menuKind === "forget"
+                   && root.actionsList() === "database.forget.confirm database.forget.cancel"
+                   && root.requests.length === 0, "remover pede confirmação antes do pedido");
+        treeActions.activateMenu("database.forget.cancel");
+        root.check(!treeActions.menuOpen && root.requests.length === 0, "cancelar não remove");
+        treeActions.showRow(unavailableKey);
+        treeActions.activateMenu("database.forget");
+        treeActions.activateMenu("database.forget.confirm");
+        root.check(JSON.stringify(root.requests) === JSON.stringify([["remove", "bordo"]]) && !treeActions.menuOpen,
+                   "confirmar remove pelo pedido existente: " + JSON.stringify(root.requests));
+        // Um nome que o core nao listou como indisponivel nunca vira remocao.
+        root.requests = [];
+        bankController.forgetUnavailable("a");
+        root.check(root.requests.length === 0, "só remove indisponível listado");
+        // A lista mudou entre abrir e confirmar: o menu fecha sem agir.
+        treeActions.showRow(unavailableKey);
+        treeActions.activateMenu("database.forget");
+        bankController.handleList(bankController.profiles, undefined, []);
+        root.check(!treeActions.menuOpen && root.requests.length === 0, "lista nova fecha a confirmação");
+
         if (root.failures) console.error("FALHAS " + root.failures);
         Qt.exit(root.failures === 0 ? 0 : 1);
     }

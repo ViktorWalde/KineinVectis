@@ -73,6 +73,7 @@ Rectangle {
         workspaceRoot: root.controller ? root.controller.workspaceRoot : ""
 
         profiles: root.controller ? root.controller.profiles : []
+        unavailable: root.controller ? root.controller.unavailableProfiles : []
         structures: root.controller ? root.controller.structures : ({})
         readingNames: root.controller ? root.controller.readingNames : ({})
         sessionStates: root.controller ? root.controller.sessions.states : ({})

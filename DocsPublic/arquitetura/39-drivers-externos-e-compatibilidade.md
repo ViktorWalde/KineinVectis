@@ -343,8 +343,8 @@ viram campos novos de perfil ou descritor. Valores e vínculos atuais
 
 ### 5.1 D1a.4 — formato 2 dos perfis e migração (desenho, 2026-10-08)
 
-> **Core implementado** em 2026-10-08 (D1a.4a, 40.7 §7.243); a árvore do
-> Banco mostrando os indisponíveis é a D1a.4b.
+> **Implementado** em 2026-10-08: core na D1a.4a (40.7 §7.243) e a árvore do
+> Banco mostrando os indisponíveis na D1a.4b (§7.244).
 
 Desenho escrito antes do código. O problema medido: o schema 1 guarda
 `DataSourceProfile` fechado (`deny_unknown_fields`) com `engine` em enum

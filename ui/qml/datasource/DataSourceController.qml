@@ -10,6 +10,7 @@ Item {
 
     property string workspaceRoot: ""
     property var profiles: []
+    property var unavailableProfiles: []
     property var providers: []
     property string selectedName: ""
     property bool panelVisible: false
@@ -129,6 +130,7 @@ Item {
 
     onWorkspaceRootChanged: {
         profiles = [];
+        unavailableProfiles = [];
         providers = [];
         selectedName = "";
         draft = emptyDraft();
@@ -275,6 +277,12 @@ Item {
         saveRequested(cloneProfile(draft));
     }
 
+    // Tirar do catalogo um perfil indisponivel: o gesto explicito que o core
+    // aceita (39 §5.1). So' nomes que o core listou como indisponiveis.
+    function forgetUnavailable(name) {
+        if (unavailableProfiles.some(item => item.name === name)) removeRequested(name);
+    }
+
     function remove() {
         if (selectedName !== "") {
             removeRequested(selectedName);
@@ -290,9 +298,12 @@ Item {
 
     function testProfile(name) { catalog.begin("test", name); }
 
-    function handleList(newProfiles, newProviders) {
+    function handleList(newProfiles, newProviders, newUnavailable) {
         // Descoberta/remocao de dados tambem atualizam perfis, sem metadata.
         if (newProviders !== undefined) providers = newProviders;
+        // Perfis preservados que esta versao nao usa (0.165.0, D1a.4): so'
+        // nome, motor, adaptador e motivo; nenhuma opcao chega aqui.
+        if (newUnavailable !== undefined) unavailableProfiles = newUnavailable;
         profiles = newProfiles;
         errorText = "";
         // Salvar um perfil novo seleciona ele: e' o que o autor acabou de

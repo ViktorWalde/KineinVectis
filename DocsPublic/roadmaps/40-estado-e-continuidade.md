@@ -7,10 +7,11 @@
 > está feita e o gate foi alinhado às ferramentas novas (40.7 §7.240).
 > Os worktrees dos passos 13/14 ficaram na máquina anterior e **não estão
 > neste clone**. O autor adiou MySQL/MariaDB nativo e a edição na grade, e
-> manteve Rust, Qt e o ritual (§7.241; 59 §2.3). D1a.4a feita no core
-> (§7.243, IPC `0.165.0`); próximo: D1a.4b (a árvore mostra os perfis
-> indisponíveis), que fecha o passo 7; depois o passo 7b, QML para desenvolver
-> a IDE nela mesma (59 §2.4).
+> manteve Rust, Qt e o ritual (§7.241; 59 §2.3). **Passo 7 feito** (§7.243–§7.244,
+> IPC `0.165.0`): perfis no formato 2, migração e preservação, e a árvore do
+> Banco mostrando os indisponíveis. **Pendente do autor:** o aceite com mouse e
+> teclado (roteiro no §7.244). Próximo: passo 7b, QML para desenvolver a IDE
+> nela mesma (59 §2.4); depois o passo 8 (handoff no 59 §2.1).
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

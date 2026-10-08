@@ -16,7 +16,7 @@ QtObject {
     readonly property var selectedRow: root.treeModel ? root.treeModel.selectedRow : null
     readonly property var menuRow: root.treeModel ? root.treeModel.rows.find(item => item.key === root.menuKey) || null : null
     readonly property string liveContext: root.contextFor(root.menuRow)
-    onLiveContextChanged: if (root.menuOpen && root.menuKind === "row" && root.liveContext !== root.menuContext) root.menuOpen = false
+    onLiveContextChanged: if (root.menuOpen && root.menuKind !== "new" && root.liveContext !== root.menuContext) root.menuOpen = false
     readonly property string workspace: root.controller ? root.controller.workspaceRoot : ""
     readonly property var providers: root.controller ? root.controller.providers : []
     onWorkspaceChanged: root.menuOpen = false
@@ -31,6 +31,11 @@ QtObject {
 
     function contextFor(row) {
         if (!row || !root.controller) return "";
+        // O indisponivel nao tem perfil: a identidade e' o nome que o core listou.
+        if (DataSourceKinds.isUnavailable(row.kind)) {
+            const listed = root.controller.unavailableProfiles.find(item => item.name === row.connection);
+            return listed ? JSON.stringify([root.controller.workspaceRoot, "unavailable", listed.name, listed.reason]) : "";
+        }
         const profile = root.controller.profileByName(row.connection);
         if (!profile) return "";
         return JSON.stringify([root.controller.workspaceRoot, root.controller.queries.profileKey(profile)]);
@@ -70,6 +75,15 @@ QtObject {
         }
         const row = root.menuRow;
         if (!row || root.liveContext !== root.menuContext) return [];
+        if (root.menuKind === "forget") {
+            return [{ label: qsTr("Remover «%1» do catálogo").arg(row.connection), action: "database.forget.confirm", icon: "delete", enabled: true },
+                    { label: qsTr("Cancelar"), action: "database.forget.cancel", icon: "close", enabled: true }];
+        }
+        if (DataSourceKinds.isUnavailable(row.kind)) {
+            return [{ label: qsTr("Remover do catálogo…"), action: "database.forget", icon: "delete", enabled: true },
+                    { separator: true, label: "", action: "", enabled: false },
+                    { label: qsTr("Copiar nome"), action: "database.copy", icon: "copy", enabled: true }];
+        }
         const items = [];
         if (DataSourceKinds.hasData(row.kind)) items.push({ label: qsTr("Ver dados"), action: "database.data", icon: "table", enabled: true });
         if (DataSourceKinds.isConnection(row.kind) || DataSourceKinds.hasData(row.kind)) {
@@ -106,6 +120,17 @@ QtObject {
         if (action === "database.create" && root.workspace !== "") { root.creationRequested(); return; }
         if (action === "database.collapse") { root.treeModel.collapseAll(); return; }
         if (!row || root.contextFor(row) === "") return;
+        if (DataSourceKinds.isUnavailable(row.kind)) {
+            // Remover pede confirmacao: o menu reabre com a pergunta, no lugar.
+            if (action === "database.forget") {
+                root.menuKind = "forget";
+                root.menuKey = row.key;
+                root.menuContext = root.contextFor(row);
+                root.menuOpen = true;
+            } else if (action === "database.forget.confirm") root.controller.forgetUnavailable(row.connection);
+            else if (action === "database.copy") Clipboard.setText(row.name);
+            return;
+        }
         if (action === "database.refresh" && root.canRefresh(row)) root.controller.introspectProfile(row.connection);
         else if (action === "database.console" && (DataSourceKinds.isConnection(row.kind) || DataSourceKinds.hasData(row.kind))) {
             if (DataSourceKinds.hasData(row.kind) && row.readSql) root.consoleStatementRequested(row.connection, row.readSql);

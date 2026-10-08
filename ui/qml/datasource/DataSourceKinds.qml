@@ -152,11 +152,23 @@ QtObject {
 
     function kindIcon(kind) {
         return ({ schema: "schema", table: "table", view: "eye", collection: "documents",
-                  timeseries: "observability", read: "refresh", failed: "warning" })[kind] || "";
+                  timeseries: "observability", read: "refresh", failed: "warning",
+                  unavailable: "warning" })[kind] || "";
+    }
+
+    // Por que o perfil esta' preservado sem uso (0.165.0): o motivo tipado,
+    // curto para caber na coluna da arvore; nunca conteudo do arquivo.
+    function unavailableReason(reason, engine) {
+        if (reason === "unknownProvider") return qsTr("%1 sem suporte").arg(engine);
+        return ({ unsupportedInstallation: qsTr("instalação externa"),
+                  unsupportedOptions: qsTr("opções mais novas"),
+                  invalidOptions: qsTr("opções inválidas") })[reason] || qsTr("indisponível");
     }
 
     // Tem linhas para mostrar na secao de dados (clique duplo na arvore)?
     function isConnection(kind) { return kind === "connection"; }
+    // Perfil preservado que esta versao nao usa (0.165.0, D1a.4).
+    function isUnavailable(kind) { return kind === "unavailable"; }
 
     function hasData(kind) {
         return ["table", "view", "collection", "timeseries"].indexOf(kind) >= 0;

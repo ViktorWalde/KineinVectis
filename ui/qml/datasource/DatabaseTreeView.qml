@@ -173,7 +173,7 @@ ListView {
             name: treeRow.connection ? DataSourceKinds.engineIcon(treeRow.modelData.engine)
                                      : DataSourceKinds.kindIcon(treeRow.modelData.kind)
             iconColor: treeRow.connection ? DataSourceKinds.engineColor(treeRow.modelData.engine) : Theme.iconDefault
-            warning: treeRow.modelData.kind === "failed"
+            warning: treeRow.modelData.kind === "failed" || DataSourceKinds.isUnavailable(treeRow.modelData.kind)
         }
 
         Text {
@@ -184,7 +184,8 @@ ListView {
             anchors.verticalCenter: parent.verticalCenter
             text: treeRow.modelData.name
             textFormat: Text.PlainText
-            color: treeRow.action ? Theme.accent : Theme.textPrimary
+            color: treeRow.action ? Theme.accent
+                 : (DataSourceKinds.isUnavailable(treeRow.modelData.kind) ? Theme.textMuted : Theme.textPrimary)
             font.family: treeRow.leaf && !treeRow.action ? Theme.monoFont : Theme.uiFont
             font.pixelSize: Theme.fontSizeSmall
             font.weight: treeRow.connection ? Font.DemiBold : Font.Normal

@@ -10,6 +10,7 @@ mod response;
 
 pub use api::*;
 pub use error::*;
+pub(crate) use object::object_serde;
 pub use object::{deserialize_object, deserialize_unique_map};
 pub use response::*;
 

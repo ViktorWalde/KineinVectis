@@ -79,7 +79,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
-| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | atual: D1 e D1a.1–D1a.3 aceitas (§7.234–§7.237); D1a.4a (formato 2, migração e preservação no core, `0.165.0`) feita no §7.243; falta a D1a.4b, a árvore mostrando os indisponíveis |
+| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse/teclado do autor pendente para a árvore com indisponíveis; handoff do 8 no §2.1 |
 | 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | a fazer logo depois do 7 (autor, 2026-10-08): reconhecer `.qml`, realce, `qmlls` com o build dir do projeto, `qmlformat`, outline e folding |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | a fazer: handshake, limites de envelope/pipes/fila, isolamento e encerramento real; depende do 7 |
 | 9 | **Extrair os drivers atuais** (39 D1c/D1d) | a fazer em fatias separadas: PostgreSQL com impacto/prévia, SQLite, MongoDB; depende do 8 |
@@ -119,6 +119,33 @@ O passo 7 termina com contrato/perfil/migração aceitos e a continuidade do
 passo 8 registrada. Runtime, motores, linguagem e grade têm seus próprios
 aceites na tabela; sua ausência não mantém o passo 7 indefinidamente aberto.
 Incidente de perda de dados, crash ou bloqueio diário continua furando a fila.
+
+**Fechamento do passo 7 (2026-10-08, 40.7 §7.243–§7.244):** D1a.4a (formato 2,
+migração e preservação no core, IPC `0.165.0`) e D1a.4b (a árvore do Banco
+mostra os indisponíveis; remover pede confirmação no menu) feitas. Provas no
+display virtual e em harness; **o aceite com o mouse e o teclado do autor fica
+pendente** (roteiro no 40.7 §7.244).
+
+**Handoff do passo 8 (D1b), sobre a base `0.165.0`:** supervisionar o processo
+do adaptador com o contrato já fixado. O que a revisão D1b (§7.239) e as fatias
+D1a deixaram como requisito, nesta ordem:
+
+1. **Dono único dos processos e pipes:** quem inicia o adaptador é dono do
+   stdin/stdout/stderr e dos leitores; encerrar coleta processo, auxiliares e
+   threads de leitura de verdade, com prova (não basta o prazo de 5 s).
+2. **Limites antes de alocar:** mensagem até `messageBytes` lida com teto,
+   fila local de 16 operações, `inFlight - 1` pedidos comuns e um slot
+   reservado para decisão/cancelamento (39 §4.4).
+3. **Desfecho na queda do transporte:** perda do processo depois de enviar
+   escrita vira resultado indeterminado no core, sem resposta do adaptador e
+   sem repetir (39 §4.4, precedência de desfecho).
+4. **Handshake sem segredo e com prazo** (`initialize` 5 s), recusando
+   adaptador incompatível sem afetar os outros perfis.
+5. **Prova com adaptador falso** (como o `fake_lsp_server.py`) antes de extrair
+   qualquer driver real (passo 9): pipes saturados, resposta tardia, célula
+   grande, encerramento e `core.ping` durante as esperas.
+
+O passo 7b (QML) vem antes do passo 8, por decisão do autor (§2.4).
 
 ### 2.2 Frentes paralelas autorizadas — 2026-10-07
 

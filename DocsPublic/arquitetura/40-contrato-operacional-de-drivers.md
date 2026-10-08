@@ -148,7 +148,10 @@ parse de dialeto, IPC novo, migração ou persistência nesta fatia.
 worktree separado; o principal revisou e integrou após `b29c549`. Sete
 testes operacionais do protocolo e 15 do core passaram na árvore principal.
 Regressão real de Context como array posicional falhou antes da correção;
-desserialização comum exige objeto para os tipos operacionais novos.
+desserialização comum exige objeto para os tipos operacionais novos. Os nós
+de catálogo reaproveitados do IPC (colunas, tabelas, esquemas, coleções e
+campos) ficaram de fora e aceitavam a forma posicional até 2026-10-08, quando
+um teste reproduziu e eles passaram ao mesmo decodificador (40.7 §7.244).
 
 Gate completo/estrito em continuação verde: 1056 testes Rust, Clippy com
 todos os targets/features, cargo-deny, arquitetura, documentos, ferramentas

@@ -91,6 +91,26 @@ Item {
             && tree.rows.some(item => item.connection === "constructor" && item.kind === "status"), "nomes especiais conservados");
         failures += check(DataSourceMap.get({}, "constructor") === undefined, "leitura só de propriedade própria");
 
+        // Preservados que esta versao nao usa (0.165.0, D1a.4): depois das
+        // conexoes, com motor e motivo, sem abrir estrutura.
+        tree.expanded = DataSourceMap.copy();
+        tree.structures = DataSourceMap.copy();
+        tree.readingNames = DataSourceMap.copy();
+        tree.profiles = [{ name: "pg", engine: "postgres" }];
+        tree.unavailable = [{ name: "bordo", engine: "influxdb3", adapter: "native.influxdb3", reason: "unknownProvider" },
+                            { name: "externo", engine: "postgres", adapter: "builtin.postgres", reason: "unsupportedInstallation" }];
+        const last = tree.rows[tree.rows.length - 1];
+        failures += check(tree.rows.length === 3 && tree.rows[0].kind === "connection"
+                          && tree.rows[1].kind === "unavailable" && last.name === "externo",
+                          "indisponíveis depois das conexões: " + names());
+        failures += check(tree.rows[1].detail === "influxdb3 sem suporte" && last.detail === "instalação externa",
+                          "motivo curto e legível: " + tree.rows[1].detail);
+        failures += check(tree.rows[1].expandable === false && tree.rows[1].connection === "bordo"
+                          && !DataSourceKinds.isConnection(tree.rows[1].kind), "indisponível não abre nem conecta");
+        tree.toggle(tree.rows[1].key);
+        failures += check(tree.rows.length === 3, "alternar não cria filhos");
+        failures += check(DataSourceKinds.unavailableReason("futuro", "x") === "indisponível", "motivo novo não quebra");
+
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }
