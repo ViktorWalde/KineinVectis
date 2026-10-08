@@ -79,7 +79,7 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
-| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | atual: D1 e D1a.1–D1a.3 aceitas (§7.234–§7.237); falta D1a.4, formato/migração e preservação de perfis desconhecidos |
+| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | atual: D1 e D1a.1–D1a.3 aceitas (§7.234–§7.237); D1a.4a (formato 2, migração e preservação no core, `0.165.0`) feita no §7.243; falta a D1a.4b, a árvore mostrando os indisponíveis |
 | 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | a fazer logo depois do 7 (autor, 2026-10-08): reconhecer `.qml`, realce, `qmlls` com o build dir do projeto, `qmlformat`, outline e folding |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | a fazer: handshake, limites de envelope/pipes/fila, isolamento e encerramento real; depende do 7 |
 | 9 | **Extrair os drivers atuais** (39 D1c/D1d) | a fazer em fatias separadas: PostgreSQL com impacto/prévia, SQLite, MongoDB; depende do 8 |

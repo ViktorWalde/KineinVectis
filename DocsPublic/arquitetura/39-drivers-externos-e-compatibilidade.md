@@ -341,6 +341,77 @@ Editar opções exige o validador compatível do provedor. Senhas/tokens nunca
 viram campos novos de perfil ou descritor. Valores e vínculos atuais
 `postgres/sqlite/mongo/odbc` sobrevivem; migração não conecta nem atualiza banco.
 
+### 5.1 D1a.4 — formato 2 dos perfis e migração (desenho, 2026-10-08)
+
+> **Core implementado** em 2026-10-08 (D1a.4a, 40.7 §7.243); a árvore do
+> Banco mostrando os indisponíveis é a D1a.4b.
+
+Desenho escrito antes do código. O problema medido: o schema 1 guarda
+`DataSourceProfile` fechado (`deny_unknown_fields`) com `engine` em enum
+fechado; um único perfil de motor desconhecido torna o arquivo inteiro
+inválido e o catálogo do projeto fica somente leitura. O primeiro
+consumidor concreto do formato extensível é o InfluxDB 3 (passo 11).
+
+**Formato 2.** Envelope `{ schemaVersion: 2, profiles: [...] }`. Cada
+perfil separa o que é do core do que é do adaptador:
+
+| Campo | Dono | Regra |
+| --- | --- | --- |
+| `name` | core | identidade única no projeto, como hoje |
+| `engine` | core | id do motor (`postgres`, `sqlite`, `mongo`, `odbc`; futuros como `influxdb3`), `[a-z0-9._-]`, até 64 |
+| `adapter` | core | id da implementação (`builtin.postgres`…), distinto do motor |
+| `installation` | core | opcional, reservado para D1b (instalação escolhida pelo usuário); nesta versão, presente torna o perfil indisponível |
+| `production`, `readOnly` | core | política, como hoje |
+| `secretSource`, `secretVariable` | core | de onde vem a senha; nunca a senha |
+| `options` | adaptador | `PublicOptions` do contrato do driver (`schemaVersion` + `fields` texto/booleano/inteiro) |
+
+Opções v1 dos adaptadores atuais: PostgreSQL `host`, `port`, `database`,
+`user`, `tls`, `caFile`; SQLite `path`; MongoDB `host`, `port`,
+`database`, `user`, `sampleSize`; ODBC `dsn`, `user`. A conversão para o
+`DataSourceProfile` do IPC fica num único dono; a UI continua recebendo o
+mesmo tipo para os perfis disponíveis.
+
+**Leitura.** Ausente: catálogo vazio e gravável. Schema 1: lido como hoje e
+convertido em memória, sem gravar nada. Schema 2: envelope estrito; cada
+perfil vira **disponível** (motor, adaptador e opções reconhecidos e
+válidos) ou **indisponível** (motor ou adaptador desconhecido, instalação
+presente, `options.schemaVersion` não suportado, chave ou valor de opção
+recusado). O indisponível guarda o texto JSON original byte a byte
+(`RawValue`; um `Value` intermediário perderia a recusa de chave duplicada
+nos campos conhecidos), que nunca vai para a UI, log ou processo; a UI recebe só nome, motor, adaptador e motivo. Perfil sem
+nome, nome repetido, envelope inválido ou schema 3+ continuam tornando o
+arquivo somente leitura e intacto (D1a.1).
+
+**Escrita e migração.** Toda gravação escreve schema 2. A primeira gravação
+sobre um arquivo schema 1 é a migração, disparada pelo gesto do usuário
+(salvar ou remover um perfil), nunca pela leitura: copia os bytes originais
+para `.kinein/datasources.schema1.json`, grava o schema 2 por escrita
+atômica e relê; se a releitura não reproduzir o mesmo catálogo, restaura os
+bytes originais e responde erro. Campos que o motor não usa e que o schema 1
+aceitava (o `host` de um SQLite, a amostra de um PostgreSQL, a CA fora do
+PostgreSQL) não migram: a cópia schema 1 os conserva, e a verificação
+compara o perfil efetivo de cada motor. Indisponíveis são regravados com o
+JSON original. Salvar um perfil com o nome de um indisponível é recusado;
+removê-lo, pelo gesto explícito, é permitido. Se a cópia schema 1 já existir
+com outro conteúdo, a migração é recusada sem escrita, para não apagar uma
+cópia anterior.
+
+**Contrato.** `datasource.list`, `save` e `remove` ganham `unavailable:
+[{ name, engine, adapter, reason }]`, aditivo; `reason`:
+`unknownProvider`, `unsupportedInstallation`, `unsupportedOptions` (chave ou
+`schemaVersion` que esta versão não conhece, no perfil ou nas opções) ou
+`invalidOptions` (chave conhecida com valor recusado). IPC `0.165.0`, com o `arquitetura/03` antes do core. A
+árvore do Banco mostra o indisponível esmaecido, com o motivo, sem
+conectar nem editar; remover usa o fluxo existente.
+
+**Aceite:** fixtures v1 legado (os quatro motores, TLS, CA, amostra,
+variável de segredo), v2 atual, v2 com motor desconhecido, com instalação,
+com opções futuras, schema 3 e inválido; v1 lido igual a hoje; migração
+grava v2 + cópia v1 idêntica e relê igual; falha simulada na verificação
+restaura o original; indisponível preservado ao salvar outro perfil; nome
+colidindo recusado; segredo ausente do arquivo; nenhum processo iniciado.
+Harness da árvore com o indisponível; prova na tela pelo autor.
+
 ## 6. Execução, falhas e atualização
 
 Política e correlação continuam no core, antes de resolver segredo, reservar

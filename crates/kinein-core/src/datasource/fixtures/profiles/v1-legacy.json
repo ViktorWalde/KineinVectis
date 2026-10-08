@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "name": "dsn-fabrica",
+      "engine": "odbc",
+      "production": false,
+      "readOnly": true,
+      "host": "",
+      "port": 0,
+      "database": "FabricaDSN",
+      "user": "leitor",
+      "secretSource": "prompt"
+    },
+    {
+      "name": "estacao-local",
+      "engine": "sqlite",
+      "production": false,
+      "readOnly": false,
+      "host": "localhost",
+      "port": 5432,
+      "database": "dados/estacao.db",
+      "user": "",
+      "secretSource": "automatic",
+      "sampleSize": 50
+    },
+    {
+      "name": "sensores",
+      "engine": "mongo",
+      "production": false,
+      "readOnly": false,
+      "host": "127.0.0.1",
+      "port": 27017,
+      "database": "iot",
+      "user": "",
+      "secretSource": "automatic",
+      "sampleSize": 200
+    },
+    {
+      "name": "telemetria",
+      "engine": "postgres",
+      "production": true,
+      "readOnly": false,
+      "host": "db.local",
+      "port": 5433,
+      "database": "tsdb",
+      "user": "kv",
+      "secretSource": "environment",
+      "secretVariable": "PGPASSWORD_TELEMETRIA",
+      "tls": "require",
+      "caFile": "certs/ca.pem"
+    }
+  ]
+}

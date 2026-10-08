@@ -68,6 +68,7 @@ pub mod preview;
 pub mod preview_postgres;
 mod preview_rows;
 pub mod preview_sql;
+mod profile_format;
 pub mod providers;
 pub mod query;
 pub mod secret;
@@ -77,7 +78,9 @@ mod store;
 
 use std::path::Path;
 
-use kinein_protocol::{DataSourceConnectionKind, DataSourceEngine, DataSourceProfile};
+use kinein_protocol::{
+    DataSourceConnectionKind, DataSourceEngine, DataSourceProfile, DataSourceUnavailableProfile,
+};
 
 pub use secret::{Secret, SecretPlan};
 
@@ -97,12 +100,24 @@ pub fn list(root: &Path) -> Vec<DataSourceProfile> {
 /// # Errors
 /// Falha de leitura, formato desconhecido/invalido ou mutex indisponivel.
 pub fn try_list(root: &Path) -> Result<Vec<DataSourceProfile>, String> {
+    try_listing(root).map(|(profiles, _)| profiles)
+}
+
+/// Os perfis usaveis e os preservados que esta versao nao usa (D1a.4).
+///
+/// # Errors
+/// Os mesmos erros de [`try_list`].
+pub fn try_listing(
+    root: &Path,
+) -> Result<(Vec<DataSourceProfile>, Vec<DataSourceUnavailableProfile>), String> {
     let _guard = CATALOG_WRITES
         .lock()
         .map_err(|_| "O catálogo não está disponível para leitura.".to_owned())?;
-    let mut profiles = store::load(root)?;
+    let catalogue = store::load(root)?.catalogue;
+    let unavailable = catalogue.unavailable();
+    let mut profiles = catalogue.profiles;
     profiles.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(profiles)
+    Ok((profiles, unavailable))
 }
 
 /// Verifica o formato antes de criar/remover dados que exigem salvar o perfil.
@@ -179,18 +194,31 @@ pub fn save(root: &Path, profile: &DataSourceProfile) -> Result<Vec<DataSourcePr
     let _guard = CATALOG_WRITES
         .lock()
         .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
-    let mut profiles = store::load(root)?;
-    let normalizado = normalize(profile);
-    match profiles
-        .iter()
-        .position(|existente| existente.name == normalizado.name)
-    {
-        Some(indice) => profiles[indice] = normalizado,
-        None => profiles.push(normalizado),
+    let mut catalogue = store::load(root)?.catalogue;
+    let normalized = normalize(profile);
+    // O preservado guarda opcoes que esta versao nao entende: substitui-lo
+    // apagaria o que o autor configurou noutra versao (D1a.4).
+    if catalogue.is_preserved(&normalized.name) {
+        return Err(format!(
+            "já existe um perfil indisponível chamado `{}`; remova-o ou use outro nome",
+            normalized.name
+        ));
     }
+    match catalogue
+        .profiles
+        .iter()
+        .position(|existente| existente.name == normalized.name)
+    {
+        Some(indice) => catalogue.profiles[indice] = normalized,
+        None => catalogue.profiles.push(normalized),
+    }
+    store::save(root, &catalogue)?;
+    Ok(sorted(catalogue.profiles))
+}
+
+fn sorted(mut profiles: Vec<DataSourceProfile>) -> Vec<DataSourceProfile> {
     profiles.sort_by(|a, b| a.name.cmp(&b.name));
-    store::save(root, &profiles)?;
-    Ok(profiles)
+    profiles
 }
 
 /// Remove o perfil de nome `name`. Remover o que nao existe NAO e' erro.
@@ -205,11 +233,14 @@ pub fn remove(root: &Path, name: &str) -> Result<Vec<DataSourceProfile>, String>
     let _guard = CATALOG_WRITES
         .lock()
         .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
-    let mut profiles = store::load(root)?;
-    profiles.retain(|profile| profile.name != name);
-    profiles.sort_by(|a, b| a.name.cmp(&b.name));
-    store::save(root, &profiles)?;
-    Ok(profiles)
+    let mut catalogue = store::load(root)?.catalogue;
+    catalogue.profiles.retain(|profile| profile.name != name);
+    // O gesto explicito de remover vale tambem para o indisponivel.
+    catalogue
+        .preserved
+        .retain(|preserved| preserved.public.name != name);
+    store::save(root, &catalogue)?;
+    Ok(sorted(catalogue.profiles))
 }
 
 /// Remove o perfil original de um job sem apagar uma substituição de mesmo nome.
@@ -224,14 +255,15 @@ pub fn remove_unchanged(
     let _guard = CATALOG_WRITES
         .lock()
         .map_err(|_| "O catálogo não está disponível para escrita.".to_owned())?;
-    let mut profiles = store::load(root)?;
-    if !profiles.iter().any(|profile| profile == expected) {
+    let mut catalogue = store::load(root)?.catalogue;
+    if !catalogue.profiles.iter().any(|profile| profile == expected) {
         return Ok(None);
     }
-    profiles.retain(|profile| profile.name != expected.name);
-    profiles.sort_by(|a, b| a.name.cmp(&b.name));
-    store::save(root, &profiles)?;
-    Ok(Some(profiles))
+    catalogue
+        .profiles
+        .retain(|profile| profile.name != expected.name);
+    store::save(root, &catalogue)?;
+    Ok(Some(sorted(catalogue.profiles)))
 }
 
 /// Tira espaco das bordas dos campos de texto.
@@ -440,5 +472,36 @@ mod tests {
         save(&root, &profile("local")).unwrap();
         assert!(root.join(".kinein/datasources.json").exists());
         assert!(!root.join(".kinein/kinein.db").exists());
+    }
+
+    #[test]
+    fn a_preserved_profile_keeps_its_name_until_the_author_removes_it() {
+        let root = temp_root("preservado");
+        std::fs::create_dir_all(root.join(".kinein")).unwrap();
+        std::fs::write(
+            store::path_for(&root),
+            include_str!("fixtures/profiles/v2-mixed.json"),
+        )
+        .unwrap();
+        let (_, unavailable) = try_listing(&root).unwrap();
+        assert!(unavailable.iter().any(|p| p.name == "bordo"));
+
+        let message = save(&root, &profile("bordo")).unwrap_err();
+        assert!(message.contains("indisponível"), "{message}");
+        assert!(
+            try_listing(&root)
+                .unwrap()
+                .1
+                .iter()
+                .any(|p| p.name == "bordo")
+        );
+
+        remove(&root, "bordo").unwrap();
+        let (profiles, unavailable) = try_listing(&root).unwrap();
+        assert!(!unavailable.iter().any(|p| p.name == "bordo"));
+        assert_eq!(unavailable.len(), 4);
+        save(&root, &profile("bordo")).unwrap();
+        assert!(try_list(&root).unwrap().iter().any(|p| p.name == "bordo"));
+        assert_eq!(profiles.len(), 1);
     }
 }

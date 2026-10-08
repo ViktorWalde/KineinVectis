@@ -52,7 +52,8 @@ decisão/cancelamento referenciam uma operação alvo explicitamente.
 
 Pedidos são fechados: desconhecidos e campos de autoridade adicionais são
 recusados. `options` separa `schemaVersion` e mapa de valores públicos
-tipados (texto, booleano, inteiro), sem shell/código nem senha. O schema do
+tipados (texto, booleano, inteiro), sem shell/código nem senha; chave
+repetida no mapa é recusada desde 2026-10-08 (40.7 §7.243). O schema do
 adaptador validará nomes/valores na fatia de perfis D1a.4; ser desserializável
 não autoriza abrir banco. `restrictions` carrega `readOnly` e os limites
 negociados. `credential` é texto transitório enviado somente após política

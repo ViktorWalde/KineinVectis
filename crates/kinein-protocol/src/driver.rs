@@ -10,7 +10,7 @@ mod response;
 
 pub use api::*;
 pub use error::*;
-pub use object::deserialize_object;
+pub use object::{deserialize_object, deserialize_unique_map};
 pub use response::*;
 
 #[cfg(test)]

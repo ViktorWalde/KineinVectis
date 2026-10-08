@@ -57,6 +57,7 @@ pub struct PublicOptions {
     /// Adapter-owned option schema, independent of the API and profile file.
     pub schema_version: u32,
     /// Typed public fields; deserialization alone does not authorize opening.
+    #[serde(deserialize_with = "crate::driver::deserialize_unique_map")]
     pub fields: BTreeMap<String, OptionValue>,
 }
 

@@ -8,6 +8,14 @@
 > Não acrescenta métodos ao dispatcher UI/core nem altera sua versão
 > `0.164.0`; o transporte de processos ainda depende de D1b.
 
+> **0.165.0 (2026-10-08, contrato anterior ao código, D1a.4).**
+> `datasource.list/save/remove` acrescentam `unavailable`: perfis preservados
+> que esta versão não sabe usar (motor ou adaptador desconhecido, instalação
+> externa, opções futuras ou inválidas), só com `name`, `engine`, `adapter` e
+> `reason`. Aditivo: quem não lê o campo continua recebendo `profiles` como
+> antes. O arquivo `.kinein/datasources.json` passa ao formato 2, migrado na
+> primeira gravação (39 §5.1).
+
 > **0.164.0 (2026-10-07, validado no checkout, D1; 40.7 §7.234).**
 > `datasource.list/save/remove` acrescentam `providers`, descritores dos
 > quatro adaptadores atuais. Formulário e menu recebem seleção/campos do
@@ -4614,7 +4622,7 @@ datasource.destroy    { name, data?, password?, clientContext?, expectedContext?
 datasource.odbc.sources {}                     -> { sources: [{ dsn, driver, identity }] } (0.157.0; sem carregar driver)
 datasource.odbc.authorize { name, identity, workspace } -> { name, identity, workspace } (0.157.0; consentimento em memória)
 datasource.console    { name }                -> { path, created }   (0.149.0; arquivo em .kinein/consoles/)
-datasource.list       {}                      -> { profiles: [DataSourceProfile], workspace, consoleBindings, providers: [DataSourceProviderDescriptor] } (0.164.0)
+datasource.list       {}                      -> { profiles: [DataSourceProfile], workspace, consoleBindings, providers: [DataSourceProviderDescriptor], unavailable: [DataSourceUnavailableProfile] } (0.165.0)
 datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult
 datasource.test       { name, password?, clientContext?, expectedContext? }     -> DataSourceTestAccepted   (job)
@@ -4657,6 +4665,18 @@ lista vazia. Salvar/remover e criar/destruir recusam antes de seus efeitos;
 usam os códigos existentes e mensagem pública sem conteúdo bruto do arquivo.
 Schema 1 reconhecido mantém o formato e usa publicação atômica compartilhada.
 O projeto continua abrindo; perfil extensível/migração permanecem no 39.
+
+**Perfis indisponíveis e formato 2 (`0.165.0`, D1a.4).** `DataSourceWriteResult`
+e o resultado de `datasource.list` ganham `unavailable`, lista de
+`DataSourceUnavailableProfile { name, engine, adapter, reason }`, ordenada por
+nome; `reason` é `unknownProvider | unsupportedInstallation |
+unsupportedOptions | invalidOptions`. Nenhuma opção, valor ou texto do arquivo
+atravessa o fio: o perfil fica preservado no disco, sem conectar nem editar.
+`datasource.save` com o nome de um indisponível responde `INVALID_PARAMS`;
+`datasource.remove` o remove. Ler nunca grava; a primeira gravação sobre um
+arquivo schema 1 migra para o formato 2 com cópia
+`.kinein/datasources.schema1.json` e releitura verificada (39 §5.1). Os
+métodos, os códigos de erro e `DataSourceProfile` não mudam.
 
 ```text
 event.datasource.tested        { jobId, name, ok, message, clientContext?, ... }

@@ -172,3 +172,18 @@ fn ready_and_terminal_preserve_unknown_commit_outcome() {
         terminal
     );
 }
+
+#[test]
+fn public_options_refuse_a_repeated_field_name() {
+    // A map would keep the last value silently; the first one could be what the
+    // author reviewed. Bytes, not a Value: a Value already lost the duplicate.
+    let text = r#"{"schemaVersion":1,"fields":{"host":"reviewed","host":"other"}}"#;
+    assert!(serde_json::from_str::<PublicOptions>(text).is_err());
+    let unique = r#"{"schemaVersion":1,"fields":{"host":"reviewed","port":5432}}"#;
+    assert_eq!(
+        serde_json::from_str::<PublicOptions>(unique)
+            .unwrap()
+            .fields["port"],
+        OptionValue::Integer(5432)
+    );
+}

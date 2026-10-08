@@ -26,8 +26,8 @@ impl Core {
         ) {
             return *response;
         }
-        let profiles = match crate::datasource::try_list(&root) {
-            Ok(profiles) => profiles,
+        let (profiles, unavailable) = match crate::datasource::try_listing(&root) {
+            Ok(listing) => listing,
             Err(message) => {
                 return JsonRpcResponse::failure(
                     request_id,
@@ -40,6 +40,7 @@ impl Core {
             console_bindings: crate::datasource::console::bindings(&root, &profiles),
             workspace: root.display().to_string(),
             profiles,
+            unavailable,
         };
         JsonRpcResponse::success(request_id, json!(result))
     }
@@ -70,6 +71,7 @@ impl Core {
                         providers: crate::datasource::providers::list(),
                         console_bindings: crate::datasource::console::bindings(&root, &profiles),
                         workspace: root.display().to_string(),
+                        unavailable: unavailable_after_write(&root),
                         profiles
                     }),
                 )
@@ -110,6 +112,7 @@ impl Core {
                     providers: crate::datasource::providers::list(),
                     console_bindings: crate::datasource::console::bindings(&root, &profiles),
                     workspace: root.display().to_string(),
+                    unavailable: unavailable_after_write(&root),
                     profiles
                 }),
             ),
@@ -119,4 +122,14 @@ impl Core {
             ),
         }
     }
+}
+
+/// Os preservados depois de uma gravacao ja' aceita. Uma releitura que falhe
+/// agora nao desfaz a gravacao; a proxima listagem diz o estado.
+fn unavailable_after_write(
+    root: &std::path::Path,
+) -> Vec<kinein_protocol::DataSourceUnavailableProfile> {
+    crate::datasource::try_listing(root)
+        .map(|(_, unavailable)| unavailable)
+        .unwrap_or_default()
 }

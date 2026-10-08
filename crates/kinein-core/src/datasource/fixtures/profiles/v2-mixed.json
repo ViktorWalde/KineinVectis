@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "profiles": [
+    {
+      "name": "bordo",
+      "engine": "influxdb3",
+      "adapter": "native.influxdb3",
+      "production": false,
+      "readOnly": false,
+      "secretSource": "environment",
+      "secretVariable": "INFLUX_TOKEN",
+      "options": {"schemaVersion": 1, "fields": {"url": "http://localhost:8181", "database": "telemetria"}}
+    },
+    {
+      "name": "com-campo-futuro",
+      "engine": "postgres",
+      "adapter": "builtin.postgres",
+      "pool": {"max": 4},
+      "options": {"schemaVersion": 1, "fields": {"host": "localhost", "port": 5432, "database": "a", "user": "b"}}
+    },
+    {
+      "name": "externo",
+      "engine": "postgres",
+      "adapter": "builtin.postgres",
+      "installation": {"id": "pg-adapter-2"},
+      "options": {"schemaVersion": 1, "fields": {"host": "localhost", "port": 5432, "database": "a", "user": "b"}}
+    },
+    {
+      "name": "opcoes-futuras",
+      "engine": "sqlite",
+      "adapter": "builtin.sqlite",
+      "options": {"schemaVersion": 2, "fields": {"path": "a.db", "wal": true}}
+    },
+    {
+      "name": "porta-errada",
+      "engine": "postgres",
+      "adapter": "builtin.postgres",
+      "options": {"schemaVersion": 1, "fields": {"host": "localhost", "port": 70000, "database": "a", "user": "b"}}
+    },
+    {
+      "name": "telemetria",
+      "engine": "postgres",
+      "adapter": "builtin.postgres",
+      "production": true,
+      "readOnly": false,
+      "secretSource": "environment",
+      "secretVariable": "PGPASSWORD_TELEMETRIA",
+      "options": {"schemaVersion": 1, "fields": {"caFile": "certs/ca.pem", "database": "tsdb", "host": "db.local", "port": 5433, "tls": "require", "user": "kv"}}
+    }
+  ]
+}

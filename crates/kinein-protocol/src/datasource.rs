@@ -184,6 +184,9 @@ pub struct DataSourceListResult {
     pub providers: Vec<crate::DataSourceProviderDescriptor>,
     /// Saved profiles, ordered by name.
     pub profiles: Vec<DataSourceProfile>,
+    /// Preserved profiles this version cannot use (0.165.0), ordered by name.
+    #[serde(default)]
+    pub unavailable: Vec<crate::DataSourceUnavailableProfile>,
     /// Workspace whose catalogue was read.
     pub workspace: String,
     /// Core-owned console identities; paths must be matched exactly.
@@ -220,6 +223,9 @@ pub struct DataSourceWriteResult {
     pub providers: Vec<crate::DataSourceProviderDescriptor>,
     /// The catalogue after the write, ordered by name.
     pub profiles: Vec<DataSourceProfile>,
+    /// Preserved profiles this version cannot use (0.165.0), ordered by name.
+    #[serde(default)]
+    pub unavailable: Vec<crate::DataSourceUnavailableProfile>,
     /// Workspace whose catalogue was read.
     pub workspace: String,
     /// Core-owned console identities; paths must be matched exactly.

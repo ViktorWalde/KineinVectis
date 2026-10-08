@@ -25,7 +25,7 @@ publish = false
 kinein-protocol = { path = "crates/kinein-protocol" }
 kinein-config = { path = "crates/kinein-config" }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["raw_value"] }
 # SQLite vendorizado (feature bundled): sem dep de sistema, reprodutível.
 # Rede de segurança de dados (DocsPublic/23). FFI C fica na dependência.
 rusqlite = { version = "0.32", features = ["bundled"] }

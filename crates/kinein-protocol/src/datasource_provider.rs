@@ -39,3 +39,31 @@ pub struct DataSourceProviderDescriptor {
     /// Supported profile options, not negotiated database or LSP capabilities.
     pub profile_features: Vec<DataSourceProfileFeature>,
 }
+
+/// Why a saved profile is preserved but cannot be used by this version.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DataSourceUnavailableReason {
+    /// Engine or adapter identity this core does not implement.
+    UnknownProvider,
+    /// The profile names an external installation, which needs the runtime.
+    UnsupportedInstallation,
+    /// A field or option schema version this core does not know.
+    UnsupportedOptions,
+    /// A known option holds a value its adapter refuses.
+    InvalidOptions,
+}
+
+/// Public identity of a preserved profile; its options never cross the wire.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceUnavailableProfile {
+    /// Workspace-unique profile name.
+    pub name: String,
+    /// Engine identity as written in the file (validated characters only).
+    pub engine: String,
+    /// Adapter identity as written in the file (validated characters only).
+    pub adapter: String,
+    /// Fixed public reason, never file content.
+    pub reason: DataSourceUnavailableReason,
+}
