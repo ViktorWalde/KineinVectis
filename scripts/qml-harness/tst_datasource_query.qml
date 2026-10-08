@@ -1,5 +1,7 @@
 import QtQuick
 import "../../ui/qml/datasource"
+// O singleton so' e' singleton pelo modulo; o diretorio o veria como tipo.
+import KineinVectis as Kv
 
 // A consulta (0.121.0): o DataSourceController REAL com o roteador falso.
 //
@@ -12,14 +14,14 @@ import "../../ui/qml/datasource"
 Item {
     id: root
 
-    property var pedidos: []
+    property var requests: []
     property string queryText: ""
 
     DataSourceController {
         id: c
 
-        onQueryRequested: function(name, password, sql, confirmWrite) {
-            root.pedidos.push({ name: name, password: password, sql: sql, confirmWrite: confirmWrite });
+        onQueryRequested: function(name, password, sql, confirmWrite, maxRows) {
+            root.requests.push({ name: name, password: password, sql: sql, confirmWrite: confirmWrite, maxRows: maxRows });
         }
     }
 
@@ -37,7 +39,7 @@ Item {
         c.editDraft("name", "local");
         root.queryText = "   ";
         c.runOn(c.draft.name, root.queryText, false);
-        if (root.pedidos.length !== 0 || c.querying) failures += 1;
+        if (root.requests.length !== 0 || c.querying) failures += 1;
 
         // O pedido leva a senha da sessao e confirmWrite falso.
         c.handleList([c.cloneProfile(c.draft)]);
@@ -45,13 +47,36 @@ Item {
         c.sessionPassword = "s3nha";
         root.queryText = "SELECT id FROM t";
         c.runOn(c.draft.name, root.queryText);
-        if (root.pedidos.length !== 1 || !c.querying || root.pedidos[0].password !== "s3nha"
-                || root.pedidos[0].confirmWrite !== false || root.pedidos[0].name !== "local") failures += 2;
+        if (root.requests.length !== 1 || !c.querying || root.requests[0].password !== "s3nha"
+                || root.requests[0].confirmWrite !== false || root.requests[0].name !== "local") failures += 2;
 
         // O resultado vira grade e status.
         c.handleQueried(root.outcome({ success: true, columns: ["id", "nome"], rows: [["1", "a"], ["2", null]], rowCount: 2, truncated: true, elapsedMs: 3 }));
         if (c.querying || c.queryColumns.length !== 2 || c.queryRows.length !== 2 || c.queryRows[1][1] !== null) failures += 4;
         if (c.queryStatus.indexOf("2 linha(s)") !== 0 || c.queryStatus.indexOf("teto") < 0) failures += 8;
+
+        // CARREGAR MAIS (passo 14): sem `access` nao ha' leitura provada, nada
+        // a carregar; a leitura cortada repete o MESMO texto com o dobro do teto.
+        if (Kv.DataSourceKinds.nextRowCeiling(c.lastQuery) !== 0) failures += 16384;
+        c.runOn(c.draft.name, "SELECT id FROM t", false, 500);
+        c.handleQueried(root.outcome({ success: true, columns: ["id"], rows: [["1"]], rowCount: 500, truncated: true, access: "read", elapsedMs: 3 }));
+        c.queries.loadMore();
+        const more = root.requests[root.requests.length - 1];
+        if (root.requests.length !== 3 || more.sql !== "SELECT id FROM t" || more.maxRows !== 1000
+                || more.confirmWrite !== false || !c.querying) failures += 32768;
+        // Ja' pedindo: um segundo clique nao duplica a leitura.
+        c.queries.loadMore();
+        if (root.requests.length !== 3) failures += 65536;
+        // O teto do contrato e' o fim; inteira, escrita ou previa nao repetem.
+        c.handleQueried(root.outcome({ success: true, columns: ["id"], rows: [["1"]], rowCount: 1000, truncated: true, access: "read", elapsedMs: 3 }));
+        if (Kv.DataSourceKinds.nextRowCeiling(c.lastQuery) !== 2000
+                || Kv.DataSourceKinds.nextRowCeiling(Object.assign({}, c.lastQuery, { rowCount: 8000 })) !== 10000
+                || Kv.DataSourceKinds.nextRowCeiling(Object.assign({}, c.lastQuery, { rowCount: 10000 })) !== 0
+                || Kv.DataSourceKinds.nextRowCeiling(Object.assign({}, c.lastQuery, { truncated: false })) !== 0
+                || Kv.DataSourceKinds.nextRowCeiling(Object.assign({}, c.lastQuery, { access: "write" })) !== 0
+                || Kv.DataSourceKinds.nextRowCeiling(Object.assign({}, c.lastQuery, { preview: true })) !== 0
+                || Kv.DataSourceKinds.nextRowCeiling(null) !== 0) failures += 131072;
+        root.requests = root.requests.slice(0, 1);
 
         // A escrita: recusa pelo CODIGO abre a confirmacao; o reenvio vai com true.
         root.queryText = "DELETE FROM t";
@@ -59,7 +84,7 @@ Item {
         c.handleFailed("datasource.query", "esta instrucao ESCREVE", "WRITE_CONFIRMATION_REQUIRED", c.lastQuery);
         if (c.querying || !c.writeConfirmationRequired || c.errorText !== "" || c.queryStatus.indexOf("ESCREVE") < 0) failures += 16;
         c.runOn(c.draft.name, root.queryText, true);
-        if (root.pedidos.length !== 3 || root.pedidos[2].confirmWrite !== true || c.writeConfirmationRequired) failures += 32;
+        if (root.requests.length !== 3 || root.requests[2].confirmWrite !== true || c.writeConfirmationRequired) failures += 32;
         c.handleQueried(root.outcome({ success: true, columns: [], rows: [], rowCount: 0, affected: 4, truncated: false, elapsedMs: 1 }));
         if (c.queryStatus.indexOf("4 linha(s) afetada(s)") !== 0 || c.queryColumns.length !== 0) failures += 64;
 

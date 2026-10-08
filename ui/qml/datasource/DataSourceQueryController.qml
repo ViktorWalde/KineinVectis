@@ -92,6 +92,15 @@ QtObject {
         root.requested(name, text, confirmed === true, maxRows || 0, context, confirmation || ({}));
     }
 
+    // CARREGAR MAIS: a MESMA leitura de novo, com o teto seguinte; escrita
+    // nunca e' repetida por aqui (DataSourceKinds.nextRowCeiling da' 0). O
+    // `begin` troca a `lastQuery`, entao um segundo clique, ja' pedindo, da' 0.
+    function loadMore() {
+        const ceiling = DataSourceKinds.nextRowCeiling(root.lastQuery);
+        if (ceiling === 0) return;
+        root.begin(root.lastQuery.name, root.lastQuery.sql, false, ceiling, null, "", false);
+    }
+
     function matches(event) {
         return root.current() && event.name === root.lastQuery.name && event.clientContext === root.lastQuery.clientContext;
     }
@@ -121,7 +130,8 @@ QtObject {
             const profile = root.lastQuery.expectedContext.profile;
             const wrote = outcome.previewOutcome !== undefined ? outcome.previewOutcome === "committed"
                 : outcome.access === "write" || outcome.affected !== undefined && outcome.affected !== null;
-            root.lastQuery = Object.assign({}, root.lastQuery, { wrote: wrote });
+            root.lastQuery = Object.assign({}, root.lastQuery, { wrote: wrote, truncated: outcome.truncated === true,
+                                                                 access: outcome.access, rowCount: outcome.rowCount });
             root.status = outcome.previewOutcome !== undefined ? outcome.message : DataSourceKinds.querySummary(outcome, profile.engine || "postgres");
             if (root.pendingDatabase !== "") {
                 const created = DataSourceKinds.cloneProfile(profile);

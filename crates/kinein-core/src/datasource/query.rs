@@ -382,7 +382,7 @@ mod tests {
         assert_eq!(clamp_rows(Some(1_000_000)), MAX_ROWS);
     }
 
-    fn perfil_sqlite(caminho: &std::path::Path) -> DataSourceProfile {
+    fn sqlite_profile(caminho: &std::path::Path) -> DataSourceProfile {
         DataSourceProfile {
             production: false,
             read_only: false,
@@ -400,7 +400,7 @@ mod tests {
         }
     }
 
-    fn banco_temporario(nome: &str) -> std::path::PathBuf {
+    fn temporary_database(nome: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join("kinein-datasource-query");
         std::fs::create_dir_all(&dir).unwrap();
         let caminho = dir.join(format!("{}-{nome}.db", std::process::id()));
@@ -415,8 +415,8 @@ mod tests {
 
     #[test]
     fn sqlite_reads_with_a_ceiling_and_writes_with_a_count() {
-        let caminho = banco_temporario("leitura");
-        let mut profile = perfil_sqlite(&caminho);
+        let caminho = temporary_database("leitura");
+        let mut profile = sqlite_profile(&caminho);
         let r = run_sqlite(
             &profile,
             "SELECT id, placa, valor, bruto FROM leituras ORDER BY id",
@@ -466,6 +466,35 @@ mod tests {
         assert!(ruim.message.contains("lugar_nenhum"), "{}", ruim.message);
     }
 
+    /// A leitura que a arvore gera nao pode limitar no texto: com 201 linhas
+    /// e o teto de 200 do clique duplo, o core precisa VER o corte, senao a
+    /// grade nunca oferece "Carregar mais" (59 §5.4.1).
+    #[test]
+    fn the_generated_table_read_leaves_the_ceiling_to_the_request() {
+        let path = temporary_database("teto");
+        rusqlite::Connection::open(&path)
+            .unwrap()
+            .execute_batch(
+                "CREATE TABLE amostras (n INTEGER); \
+                 WITH RECURSIVE s(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM s WHERE i < 201) \
+                 INSERT INTO amostras SELECT i FROM s;",
+            )
+            .unwrap();
+        let mut schemas = vec![kinein_protocol::DataSourceSchema {
+            name: "main".to_owned(),
+            tables: vec![kinein_protocol::DataSourceTable {
+                name: "amostras".to_owned(),
+                kind: "table".to_owned(),
+                ..kinein_protocol::DataSourceTable::default()
+            }],
+        }];
+        super::super::object_statements::populate(DataSourceEngine::Sqlite, &mut schemas);
+        let select = &schemas[0].tables[0].statements.as_ref().unwrap().select;
+        let result = run_sqlite(&sqlite_profile(&path), select, 200).unwrap();
+        assert_eq!(result.rows.len(), 200, "{select}");
+        assert!(result.truncated, "o texto limitou antes do teto: {select}");
+    }
+
     #[test]
     fn mongo_text_is_collection_plus_json_filter_and_documents_become_a_table() {
         let docs = vec![
@@ -489,7 +518,7 @@ mod tests {
             host: "localhost".to_owned(),
             port: 1,
             database: "db".to_owned(),
-            ..perfil_sqlite(std::path::Path::new("x"))
+            ..sqlite_profile(std::path::Path::new("x"))
         };
         assert!(
             run_mongo(&profile, None, "", 10)

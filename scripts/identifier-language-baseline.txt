@@ -71,7 +71,6 @@ crates/kinein-core/src/cmake/mod.rs	houve	1
 crates/kinein-core/src/cmake/mod.rs	ignorado	2
 crates/kinein-core/src/cmake/mod.rs	ignorados	2
 crates/kinein-core/src/cmake/mod.rs	iguais	3
-crates/kinein-core/src/cmake/mod.rs	lidos	5
 crates/kinein-core/src/cmake/mod.rs	limpa	3
 crates/kinein-core/src/cmake/mod.rs	linha	2
 crates/kinein-core/src/cmake/mod.rs	linkar	1
@@ -175,7 +174,6 @@ crates/kinein-core/src/configaction/remover.rs	palavra	4
 crates/kinein-core/src/configaction/remover.rs	parte	2
 crates/kinein-core/src/configaction/remover.rs	pedida	3
 crates/kinein-core/src/configaction/remover.rs	pedidas	7
-crates/kinein-core/src/configaction/remover.rs	plano	2
 crates/kinein-core/src/configaction/remover.rs	posicao	2
 crates/kinein-core/src/configaction/remover.rs	primeiro	2
 crates/kinein-core/src/configaction/remover.rs	proxima	2
@@ -212,7 +210,6 @@ crates/kinein-core/src/configaction/rigor.rs	padrao	7
 crates/kinein-core/src/configaction/rigor.rs	parametros	12
 crates/kinein-core/src/configaction/rigor.rs	pedido	3
 crates/kinein-core/src/configaction/rigor.rs	pedidos	6
-crates/kinein-core/src/configaction/rigor.rs	plano	8
 crates/kinein-core/src/configaction/rigor.rs	posicao	4
 crates/kinein-core/src/configaction/rigor.rs	quando	1
 crates/kinein-core/src/configaction/rigor.rs	recusado	1
@@ -269,7 +266,6 @@ crates/kinein-core/src/dap/adapter.rs	pedido	10
 crates/kinein-core/src/dap/adapter.rs	remoto	3
 crates/kinein-core/src/dap/adapter.rs	variante	3
 crates/kinein-core/src/dap/gdb_pick.rs	escolha	2
-crates/kinein-core/src/dap/gdb_pick.rs	outro	3
 crates/kinein-core/src/dap/mod.rs	guardado	3
 crates/kinein-core/src/dap/mod.rs	pedido	2
 crates/kinein-core/src/dap/parse.rs	expansivel	3
@@ -277,21 +273,17 @@ crates/kinein-core/src/dap/parse.rs	registradores	2
 crates/kinein-core/src/dap/parse.rs	tipo	5
 crates/kinein-core/src/dap/parse.rs	vazio	3
 crates/kinein-core/src/dap/server.rs	anexar	1
-crates/kinein-core/src/dap/server.rs	capacidade	2
 crates/kinein-core/src/dap/server.rs	decorrido	2
 crates/kinein-core/src/dap/server.rs	erro	9
 crates/kinein-core/src/dap/server.rs	inicio	2
 crates/kinein-core/src/dap/server.rs	mudo	2
-crates/kinein-core/src/dap/server.rs	padrao	2
 crates/kinein-core/src/dap/server.rs	vivo	2
 crates/kinein-core/src/dap/session.rs	anexar	1
 crates/kinein-core/src/dap/target.rs	alvo	4
 crates/kinein-core/src/dap/target.rs	arquivo	2
 crates/kinein-core/src/dap/target.rs	pacote	2
-crates/kinein-core/src/dap/transport.rs	capacidade	1
-crates/kinein-core/src/dap/transport.rs	coletor	3
+crates/kinein-core/src/dap/transport.rs	coletor	2
 crates/kinein-core/src/dap/transport.rs	linha	2
-crates/kinein-core/src/dap/transport.rs	padrao	1
 crates/kinein-core/src/datasource/connection.rs	adicionados	2
 crates/kinein-core/src/datasource/connection.rs	atual	3
 crates/kinein-core/src/datasource/connection.rs	caminho	2
@@ -332,7 +324,6 @@ crates/kinein-core/src/datasource/mod.rs	existente	2
 crates/kinein-core/src/datasource/mod.rs	indice	2
 crates/kinein-core/src/datasource/mod.rs	mensagem	1
 crates/kinein-core/src/datasource/mod.rs	mesmo	1
-crates/kinein-core/src/datasource/mod.rs	normalizado	4
 crates/kinein-core/src/datasource/mod.rs	ordenado	1
 crates/kinein-core/src/datasource/mod.rs	porta	3
 crates/kinein-core/src/datasource/mod.rs	reprova	1
@@ -370,7 +361,6 @@ crates/kinein-core/src/datasource/mongo.rs	inferencia	5
 crates/kinein-core/src/datasource/mongo.rs	internas	1
 crates/kinein-core/src/datasource/mongo.rs	interno	3
 crates/kinein-core/src/datasource/mongo.rs	lidas	1
-crates/kinein-core/src/datasource/mongo.rs	lidos	4
 crates/kinein-core/src/datasource/mongo.rs	lista	4
 crates/kinein-core/src/datasource/mongo.rs	obrigatoriedade	1
 crates/kinein-core/src/datasource/mongo.rs	obrigatorios	2
@@ -422,7 +412,6 @@ crates/kinein-core/src/datasource/mongo_infer.rs	itens	2
 crates/kinein-core/src/datasource/mongo_infer.rs	mesmo	2
 crates/kinein-core/src/datasource/mongo_infer.rs	mostra	1
 crates/kinein-core/src/datasource/mongo_infer.rs	ocorrencias	1
-crates/kinein-core/src/datasource/mongo_infer.rs	para	1
 crates/kinein-core/src/datasource/mongo_infer.rs	ponto	1
 crates/kinein-core/src/datasource/mongo_infer.rs	prefixo	2
 crates/kinein-core/src/datasource/mongo_infer.rs	presenca	4
@@ -437,7 +426,6 @@ crates/kinein-core/src/datasource/mongo_infer.rs	vira	1
 crates/kinein-core/src/datasource/mongo_infer.rs	vistos	11
 crates/kinein-core/src/datasource/query.rs	abrir	1
 crates/kinein-core/src/datasource/query.rs	aplicar	3
-crates/kinein-core/src/datasource/query.rs	banco	2
 crates/kinein-core/src/datasource/query.rs	caminho	8
 crates/kinein-core/src/datasource/query.rs	celula	4
 crates/kinein-core/src/datasource/query.rs	celulas	2
@@ -459,12 +447,10 @@ crates/kinein-core/src/datasource/query.rs	mensagem	2
 crates/kinein-core/src/datasource/query.rs	mensagens	2
 crates/kinein-core/src/datasource/query.rs	outro	2
 crates/kinein-core/src/datasource/query.rs	palavra	2
-crates/kinein-core/src/datasource/query.rs	perfil	3
 crates/kinein-core/src/datasource/query.rs	resto	6
 crates/kinein-core/src/datasource/query.rs	resultado	18
 crates/kinein-core/src/datasource/query.rs	ruim	3
 crates/kinein-core/src/datasource/query.rs	tabela	3
-crates/kinein-core/src/datasource/query.rs	temporario	2
 crates/kinein-core/src/datasource/query.rs	teto	6
 crates/kinein-core/src/datasource/query.rs	texto	5
 crates/kinein-core/src/datasource/secret.rs	ambiente	3
@@ -476,7 +462,6 @@ crates/kinein-core/src/datasource/secret.rs	mandar	1
 crates/kinein-core/src/datasource/secret.rs	nenhuma	1
 crates/kinein-core/src/datasource/secret.rs	nomeada	1
 crates/kinein-core/src/datasource/secret.rs	padrao	1
-crates/kinein-core/src/datasource/secret.rs	para	1
 crates/kinein-core/src/datasource/secret.rs	pede	1
 crates/kinein-core/src/datasource/secret.rs	perfil	6
 crates/kinein-core/src/datasource/secret.rs	quando	1
@@ -513,30 +498,18 @@ crates/kinein-core/src/datasource/sqlite.rs	tabelas	6
 crates/kinein-core/src/datasource/sqlite.rs	tipo	2
 crates/kinein-core/src/datasource/sqlite.rs	vazio	1
 crates/kinein-core/src/datasource/sqlite.rs	versao	1
-crates/kinein-core/src/datasource/store.rs	arquivo	1
-crates/kinein-core/src/datasource/store.rs	ausente	1
-crates/kinein-core/src/datasource/store.rs	catalogo	2
 crates/kinein-core/src/datasource/store.rs	chave	2
-crates/kinein-core/src/datasource/store.rs	desconhecido	1
 crates/kinein-core/src/datasource/store.rs	filho	2
 crates/kinein-core/src/datasource/store.rs	grava	1
 crates/kinein-core/src/datasource/store.rs	gravado	2
-crates/kinein-core/src/datasource/store.rs	invalido	1
 crates/kinein-core/src/datasource/store.rs	itens	2
 crates/kinein-core/src/datasource/store.rs	mapa	2
 crates/kinein-core/src/datasource/store.rs	minuscula	4
 crates/kinein-core/src/datasource/store.rs	nada	1
-crates/kinein-core/src/datasource/store.rs	para	1
 crates/kinein-core/src/datasource/store.rs	pareca	1
-crates/kinein-core/src/datasource/store.rs	perfil	4
-crates/kinein-core/src/datasource/store.rs	perfis	3
 crates/kinein-core/src/datasource/store.rs	proibida	2
 crates/kinein-core/src/datasource/store.rs	proibidas	2
 crates/kinein-core/src/datasource/store.rs	segredo	1
-crates/kinein-core/src/datasource/store.rs	vazio	2
-crates/kinein-core/src/datasource/store.rs	vira	1
-crates/kinein-core/src/datasource/store.rs	viram	1
-crates/kinein-core/src/db/mod.rs	para	2
 crates/kinein-core/src/flash/firmware.rs	acha	5
 crates/kinein-core/src/flash/firmware.rs	arquivo	6
 crates/kinein-core/src/flash/firmware.rs	binario	2
@@ -625,7 +598,6 @@ crates/kinein-core/src/grafana/client.rs	entrada	1
 crates/kinein-core/src/grafana/client.rs	estranho	1
 crates/kinein-core/src/grafana/client.rs	fechada	1
 crates/kinein-core/src/grafana/client.rs	fonte	1
-crates/kinein-core/src/grafana/client.rs	lidos	2
 crates/kinein-core/src/grafana/client.rs	mensagem	6
 crates/kinein-core/src/grafana/client.rs	mentira	5
 crates/kinein-core/src/grafana/client.rs	pedido	3
@@ -664,11 +636,9 @@ crates/kinein-core/src/grafana/mod.rs	nada	1
 crates/kinein-core/src/grafana/mod.rs	nomeada	1
 crates/kinein-core/src/grafana/mod.rs	normalizado	3
 crates/kinein-core/src/grafana/mod.rs	outro	5
-crates/kinein-core/src/grafana/mod.rs	para	1
 crates/kinein-core/src/grafana/mod.rs	pede	1
 crates/kinein-core/src/grafana/mod.rs	pelo	1
 crates/kinein-core/src/grafana/mod.rs	perfil	10
-crates/kinein-core/src/grafana/mod.rs	plano	2
 crates/kinein-core/src/grafana/mod.rs	porta	11
 crates/kinein-core/src/grafana/mod.rs	projeto	1
 crates/kinein-core/src/grafana/mod.rs	recusado	2
@@ -705,7 +675,6 @@ crates/kinein-core/src/handlers/build_size.rs	unico	4
 crates/kinein-core/src/handlers/cmake.rs	arquivo	2
 crates/kinein-core/src/handlers/cmake.rs	confirmados	3
 crates/kinein-core/src/handlers/cmake.rs	escolher	2
-crates/kinein-core/src/handlers/cmake.rs	lidos	3
 crates/kinein-core/src/handlers/cmake.rs	origem	3
 crates/kinein-core/src/handlers/cmake.rs	pedido	2
 crates/kinein-core/src/handlers/cmake.rs	vazio	2
@@ -726,10 +695,10 @@ crates/kinein-core/src/handlers/coverage.rs	resultado	2
 crates/kinein-core/src/handlers/datasource.rs	bruto	2
 crates/kinein-core/src/handlers/datasource.rs	candidato	2
 crates/kinein-core/src/handlers/datasource.rs	falha	14
-crates/kinein-core/src/handlers/datasource.rs	mensagem	6
+crates/kinein-core/src/handlers/datasource.rs	mensagem	2
 crates/kinein-core/src/handlers/datasource.rs	recusa	3
 crates/kinein-core/src/handlers/datasource.rs	resposta	3
-crates/kinein-core/src/handlers/datasource.rs	resultado	6
+crates/kinein-core/src/handlers/datasource.rs	resultado	4
 crates/kinein-core/src/handlers/datasource.rs	titulo	4
 crates/kinein-core/src/handlers/datasource.rs	variavel	2
 crates/kinein-core/src/handlers/datasource.rs	versao	2
@@ -762,7 +731,6 @@ crates/kinein-core/src/handlers/debug.rs	medir	1
 crates/kinein-core/src/handlers/debug.rs	outro	2
 crates/kinein-core/src/handlers/debug.rs	programa	4
 crates/kinein-core/src/handlers/debug.rs	versao	1
-crates/kinein-core/src/handlers/draft.rs	para	2
 crates/kinein-core/src/handlers/grafana.rs	alcancou	2
 crates/kinein-core/src/handlers/grafana.rs	evento	3
 crates/kinein-core/src/handlers/grafana.rs	mensagem	6
@@ -934,7 +902,6 @@ crates/kinein-core/src/handlers/toolchain_install.rs	raiz	18
 crates/kinein-core/src/handlers/toolchain_install.rs	recomendada	4
 crates/kinein-core/src/handlers/toolchain_install.rs	resultado	2
 crates/kinein-core/src/handlers/toolchain_install.rs	titulo	2
-crates/kinein-core/src/handlers/toolchain_install.rs	ultimo	3
 crates/kinein-core/src/index/context/cargo.rs	alvo	8
 crates/kinein-core/src/index/context/cargo.rs	alvos	3
 crates/kinein-core/src/index/context/cargo.rs	pacote	6
@@ -1003,7 +970,6 @@ crates/kinein-core/src/index/mod.rs	indexar	3
 crates/kinein-core/src/index/mod.rs	indice	18
 crates/kinein-core/src/index/mod.rs	inicio	4
 crates/kinein-core/src/index/mod.rs	itens	2
-crates/kinein-core/src/index/mod.rs	lidos	4
 crates/kinein-core/src/index/mod.rs	linguagem	5
 crates/kinein-core/src/index/mod.rs	manter	4
 crates/kinein-core/src/index/mod.rs	maximo	2
@@ -1094,7 +1060,6 @@ crates/kinein-core/src/library/mod.rs	detectada	4
 crates/kinein-core/src/library/mod.rs	ligada	2
 crates/kinein-core/src/library/mod.rs	ligados	2
 crates/kinein-core/src/library/mod.rs	linhagem	2
-crates/kinein-core/src/library/mod.rs	plano	12
 crates/kinein-core/src/library/mod.rs	prefixos	5
 crates/kinein-core/src/library/mod.rs	raiz	9
 crates/kinein-core/src/lsp/diagnostics_merge.rs	caminho	5
@@ -1107,13 +1072,10 @@ crates/kinein-core/src/lsp/diagnostics_merge.rs	uniao	2
 crates/kinein-core/src/lsp/handshake.rs	anexar	1
 crates/kinein-core/src/lsp/registry.rs	companheiros	5
 crates/kinein-core/src/lsp/server.rs	atual	2
-crates/kinein-core/src/lsp/server.rs	capacidade	2
 crates/kinein-core/src/lsp/server.rs	cauda	3
 crates/kinein-core/src/lsp/server.rs	chave	2
-crates/kinein-core/src/lsp/server.rs	coletor	1
 crates/kinein-core/src/lsp/server.rs	itens	2
 crates/kinein-core/src/lsp/server.rs	linha	2
-crates/kinein-core/src/lsp/server.rs	padrao	2
 crates/kinein-core/src/lsp/server.rs	secao	3
 crates/kinein-core/src/lsp/session.rs	falhou	4
 crates/kinein-core/src/lsp/session.rs	vivo	3
@@ -1191,7 +1153,6 @@ crates/kinein-core/src/project/esp.rs	linha	5
 crates/kinein-core/src/project/esp.rs	numero	5
 crates/kinein-core/src/project/esp.rs	objeto	5
 crates/kinein-core/src/project/esp.rs	padrao	1
-crates/kinein-core/src/project/esp.rs	planos	2
 crates/kinein-core/src/project/esp.rs	proximo	3
 crates/kinein-core/src/project/esp.rs	raiz	2
 crates/kinein-core/src/project/esp.rs	setor	4
@@ -1223,7 +1184,6 @@ crates/kinein-core/src/project/sdk.rs	padroes	2
 crates/kinein-core/src/project/sdk.rs	procurar	2
 crates/kinein-core/src/project/sdk.rs	raiz	2
 crates/kinein-core/src/project/sdk.rs	requisitos	1
-crates/kinein-core/src/project/sdk.rs	versoes	2
 crates/kinein-core/src/python/debug.rs	caminho	3
 crates/kinein-core/src/python/debug.rs	corpo	2
 crates/kinein-core/src/python/debug.rs	dica	1
@@ -1294,7 +1254,6 @@ crates/kinein-core/src/remote/discover.rs	expandir	2
 crates/kinein-core/src/remote/discover.rs	fonte	2
 crates/kinein-core/src/remote/discover.rs	identidades	2
 crates/kinein-core/src/remote/discover.rs	igual	1
-crates/kinein-core/src/remote/discover.rs	lidos	6
 crates/kinein-core/src/remote/discover.rs	linha	8
 crates/kinein-core/src/remote/discover.rs	nivel	5
 crates/kinein-core/src/remote/discover.rs	novos	2
@@ -1467,7 +1426,6 @@ crates/kinein-core/src/setup/mod.rs	lista	4
 crates/kinein-core/src/setup/mod.rs	maquina	1
 crates/kinein-core/src/setup/mod.rs	nenhum	1
 crates/kinein-core/src/setup/mod.rs	normalizar	4
-crates/kinein-core/src/setup/mod.rs	para	1
 crates/kinein-core/src/setup/mod.rs	passo	9
 crates/kinein-core/src/setup/mod.rs	todo	1
 crates/kinein-core/src/setup/mod.rs	unicos	1
@@ -1513,9 +1471,9 @@ crates/kinein-core/src/size.rs	texto	8
 crates/kinein-core/src/size.rs	vazia	1
 crates/kinein-core/src/stderr_tail.rs	anexar	3
 crates/kinein-core/src/stderr_tail.rs	bruto	7
-crates/kinein-core/src/stderr_tail.rs	capacidade	14
+crates/kinein-core/src/stderr_tail.rs	capacidade	10
 crates/kinein-core/src/stderr_tail.rs	cauda	17
-crates/kinein-core/src/stderr_tail.rs	coletor	6
+crates/kinein-core/src/stderr_tail.rs	coletor	4
 crates/kinein-core/src/stderr_tail.rs	condicao	2
 crates/kinein-core/src/stderr_tail.rs	corte	4
 crates/kinein-core/src/stderr_tail.rs	dono	2
@@ -1527,7 +1485,6 @@ crates/kinein-core/src/stderr_tail.rs	leitura	8
 crates/kinein-core/src/stderr_tail.rs	limpar	2
 crates/kinein-core/src/stderr_tail.rs	linha	10
 crates/kinein-core/src/stderr_tail.rs	linhas	13
-crates/kinein-core/src/stderr_tail.rs	padrao	4
 crates/kinein-core/src/stderr_tail.rs	texto	5
 crates/kinein-core/src/stderr_tail.rs	titulo	1
 crates/kinein-core/src/test/discover.rs	caso	2
@@ -1709,7 +1666,6 @@ crates/kinein-core/src/tests/datasource_query.rs	erro	3
 crates/kinein-core/src/tests/datasource_query.rs	invalido	2
 crates/kinein-core/src/tests/datasource_query.rs	outro	2
 crates/kinein-core/src/tests/datasource_query.rs	perfis	7
-crates/kinein-core/src/tests/datasource_query.rs	plano	2
 crates/kinein-core/src/tests/datasource_query.rs	prazo	2
 crates/kinein-core/src/tests/datasource_query.rs	recusa	2
 crates/kinein-core/src/tests/datasource_query.rs	vazio	2
@@ -1768,7 +1724,6 @@ crates/kinein-core/src/tests/frameworks.rs	executavel	5
 crates/kinein-core/src/tests/frameworks.rs	falso	3
 crates/kinein-core/src/tests/frameworks.rs	fixado	3
 crates/kinein-core/src/tests/frameworks.rs	linhas	23
-crates/kinein-core/src/tests/frameworks.rs	para	3
 crates/kinein-core/src/tests/frameworks.rs	prazo	2
 crates/kinein-core/src/tests/frameworks.rs	serializar	4
 crates/kinein-core/src/tests/frameworks.rs	sucesso	8
@@ -1800,7 +1755,6 @@ crates/kinein-core/src/tests/grafana.rs	grava	1
 crates/kinein-core/src/tests/grafana.rs	gravado	3
 crates/kinein-core/src/tests/grafana.rs	instancia	1
 crates/kinein-core/src/tests/grafana.rs	invalido	1
-crates/kinein-core/src/tests/grafana.rs	lido	4
 crates/kinein-core/src/tests/grafana.rs	nada	2
 crates/kinein-core/src/tests/grafana.rs	nomeia	1
 crates/kinein-core/src/tests/grafana.rs	parece	1
@@ -1912,7 +1866,6 @@ crates/kinein-core/src/tests/lsp_server.rs	resposta	2
 crates/kinein-core/src/tests/lsp_server.rs	saida	3
 crates/kinein-core/src/tests/lsp_server.rs	secao	2
 crates/kinein-core/src/tests/lsp_server.rs	serializar	1
-crates/kinein-core/src/tests/lsp_server.rs	ultimo	2
 crates/kinein-core/src/tests/mod.rs	cheia	2
 crates/kinein-core/src/tests/mod.rs	linhas	10
 crates/kinein-core/src/tests/mod.rs	sessao	3
@@ -1929,7 +1882,6 @@ crates/kinein-core/src/tests/project.rs	explicita	2
 crates/kinein-core/src/tests/project.rs	nada	9
 crates/kinein-core/src/tests/project.rs	novo	2
 crates/kinein-core/src/tests/project.rs	padrao	2
-crates/kinein-core/src/tests/project.rs	plano	2
 crates/kinein-core/src/tests/project.rs	raiz	33
 crates/kinein-core/src/tests/project.rs	receita	15
 crates/kinein-core/src/tests/project.rs	regioes	2
@@ -2098,7 +2050,6 @@ crates/kinein-core/src/tests/syntax.rs	escopos	2
 crates/kinein-core/src/tests/syntax.rs	esperado	2
 crates/kinein-core/src/tests/syntax.rs	fonte	3
 crates/kinein-core/src/tests/syntax.rs	itens	2
-crates/kinein-core/src/tests/syntax.rs	plano	4
 crates/kinein-core/src/tests/syntax.rs	saida	4
 crates/kinein-core/src/tests/terminal.rs	aberto	13
 crates/kinein-core/src/tests/terminal.rs	abertos	4
@@ -2270,7 +2221,6 @@ crates/kinein-core/src/toolchain/mod.rs	repetir	1
 crates/kinein-core/src/toolchain/mod.rs	resolvido	1
 crates/kinein-core/src/toolchain/mod.rs	resultado	2
 crates/kinein-core/src/toolchain/store.rs	antigo	4
-crates/kinein-core/src/toolchain/store.rs	lidos	6
 crates/kinein-core/src/toolchain/sysroot.rs	conta	2
 crates/kinein-core/src/toolchain/sysroot.rs	entradas	2
 crates/kinein-core/src/toolchain/sysroot.rs	linha	2
@@ -2285,13 +2235,11 @@ crates/kinein-core/src/tools/mod.rs	outro	4
 crates/kinein-core/src/tools/mod.rs	raiz	4
 crates/kinein-core/src/tools/mod.rs	serializar	1
 crates/kinein-core/src/tools/search_dirs.rs	atual	4
-crates/kinein-core/src/tools/search_dirs.rs	empurrar	8
 crates/kinein-core/src/tools/search_dirs.rs	entradas	2
 crates/kinein-core/src/tools/search_dirs.rs	filhas	3
 crates/kinein-core/src/tools/search_dirs.rs	nivel	2
 crates/kinein-core/src/tools/search_dirs.rs	proximo	3
 crates/kinein-core/src/tools/search_dirs.rs	raiz	2
-crates/kinein-core/src/tools/search_dirs.rs	saida	14
 crates/kinein-core/src/tools/search_dirs.rs	subpastas	5
 crates/kinein-core/src/tools/search_dirs.rs	versao	5
 crates/kinein-core/src/workspace/create.rs	pacote	2
@@ -2320,7 +2268,6 @@ scripts/fake_lsp_server.py	resultado	2
 scripts/fake_lsp_server.py	saida	10
 scripts/fake_lsp_server.py	tamanho	4
 scripts/fake_lsp_server.py	vazio	3
-scripts/fake_lsp_server.py	versoes	3
 scripts/fixture_terminal_geometria.py	barra	2
 scripts/fixture_terminal_geometria.py	codigo	2
 scripts/fixture_terminal_geometria.py	completo	2
@@ -2386,7 +2333,6 @@ scripts/medir-core.py	resultado	10
 scripts/medir-core.py	tamanho	6
 scripts/medir-core.py	texto	2
 scripts/medir-core.py	ultima	5
-scripts/medir-core.py	ultimo	3
 scripts/medir-core.py	uteis	6
 scripts/medir-core.py	valida	2
 scripts/medir-core.py	versao	5
@@ -2430,21 +2376,17 @@ scripts/qml-harness/tst_container.qml	listas	3
 scripts/qml-harness/tst_container.qml	parado	5
 scripts/qml-harness/tst_container.qml	pedidos	12
 scripts/qml-harness/tst_container.qml	rodando	6
-scripts/qml-harness/tst_container.qml	ultimo	4
 scripts/qml-harness/tst_coverage.qml	pedidos	7
 scripts/qml-harness/tst_datasource.qml	enviado	5
 scripts/qml-harness/tst_datasource.qml	enviados	7
 scripts/qml-harness/tst_datasource.qml	padrao	3
 scripts/qml-harness/tst_datasource_discovery.qml	consultas	4
 scripts/qml-harness/tst_datasource_discovery.qml	pedidos	15
-scripts/qml-harness/tst_datasource_query.qml	pedidos	9
 scripts/qml-harness/tst_debug_inspect.qml	pedidos	12
-scripts/qml-harness/tst_debug_python.qml	abas	3
 scripts/qml-harness/tst_debug_python.qml	depurar	6
 scripts/qml-harness/tst_debug_python.qml	pedidos	6
 scripts/qml-harness/tst_debug_python.qml	programas	9
 scripts/qml-harness/tst_debug_python.qml	tipos	3
-scripts/qml-harness/tst_editor_autosave.qml	abas	2
 scripts/qml-harness/tst_editor_autosave.qml	cedo	2
 scripts/qml-harness/tst_editor_autosave.qml	documentos	2
 scripts/qml-harness/tst_editor_autosave.qml	falhas	11
@@ -2463,7 +2405,6 @@ scripts/qml-harness/tst_editor_indent.qml	bloco	3
 scripts/qml-harness/tst_editor_indent.qml	comentario	3
 scripts/qml-harness/tst_editor_indent.qml	fechador	2
 scripts/qml-harness/tst_editor_indent.qml	repete	3
-scripts/qml-harness/tst_editor_language.qml	abas	5
 scripts/qml-harness/tst_editor_language.qml	aplicado	3
 scripts/qml-harness/tst_editor_language.qml	aplicados	6
 scripts/qml-harness/tst_editor_language.qml	atual	7
@@ -2490,7 +2431,6 @@ scripts/qml-harness/tst_editor_persistence.qml	disparar	2
 scripts/qml-harness/tst_editor_persistence.qml	documentos	2
 scripts/qml-harness/tst_editor_persistence.qml	falhas	5
 scripts/qml-harness/tst_editor_persistence.qml	falsos	2
-scripts/qml-harness/tst_editor_persistence.qml	lidos	5
 scripts/qml-harness/tst_editor_persistence.qml	limpar	2
 scripts/qml-harness/tst_editor_persistence.qml	pontefalsa	2
 scripts/qml-harness/tst_editor_persistence.qml	rascunhos	5
@@ -2602,7 +2542,6 @@ scripts/qml-harness/tst_grafana_token.qml	indice	4
 scripts/qml-harness/tst_grafana_token.qml	mensagem	2
 scripts/qml-harness/tst_grafana_token.qml	perfil	5
 scripts/qml-harness/tst_grafana_token.qml	perfis	4
-scripts/qml-harness/tst_grafana_token.qml	ultimo	8
 scripts/qml-harness/tst_grafana_token.qml	vazou	3
 scripts/qml-harness/tst_grid_rules.qml	cabe	3
 scripts/qml-harness/tst_grid_rules.qml	encolhe	5
@@ -2656,7 +2595,6 @@ scripts/qml-harness/tst_project_tree_keys.qml	indice	5
 scripts/qml-harness/tst_project_tree_keys.qml	intencao	35
 scripts/qml-harness/tst_project_tree_keys.qml	linhas	2
 scripts/qml-harness/tst_project_tree_keys.qml	mensagem	4
-scripts/qml-harness/tst_project_tree_keys.qml	para	3
 scripts/qml-harness/tst_project_tree_keys.qml	pausa	1
 scripts/qml-harness/tst_project_tree_keys.qml	prefixo	3
 scripts/qml-harness/tst_project_tree_keys.qml	recuar	4
@@ -2722,12 +2660,10 @@ scripts/qml-harness/tst_terminal_geometry_overlay.qml	campo	2
 scripts/qml-harness/tst_terminal_geometry_overlay.qml	esperado	10
 scripts/qml-harness/tst_terminal_geometry_overlay.qml	estado	10
 scripts/qml-harness/tst_terminal_geometry_overlay.qml	estavel	2
-scripts/qml-harness/tst_terminal_geometry_overlay.qml	ultimo	10
 scripts/qml-harness/tst_terminal_metrics.qml	igual	6
 scripts/qml-harness/tst_terminal_metrics.qml	largura	2
 scripts/qml-harness/tst_terminal_metrics.qml	meio	4
 scripts/qml-harness/tst_terminal_metrics.qml	quase	6
-scripts/qml-harness/tst_tests_output.qml	abas	3
 scripts/qml-harness/tst_tests_output.qml	descobertas	3
 scripts/qml-harness/tst_tool_windows.qml	mensagem	2
 scripts/qml-harness/tst_tool_windows.qml	painel	3
@@ -2873,7 +2809,6 @@ scripts/testar_grafana_real.py	sondar	5
 scripts/testar_grafana_real.py	titulo	2
 scripts/testar_grafana_real.py	tolerar	3
 scripts/testar_grafana_real.py	tudo	2
-scripts/testar_grafana_real.py	ultimo	3
 scripts/testar_grafana_real.py	usuario	5
 scripts/testar_remote_ssh.py	achadas	5
 scripts/testar_remote_ssh.py	baixo	3
@@ -2944,11 +2879,9 @@ scripts/verificar-docs.sh	linhas	5
 scripts/verificar-docs.sh	rastreados	2
 scripts/verificar-docs.sh	reclamacao	2
 scripts/verificar-docs.sh	teste	2
-scripts/verificar-embarcado.sh	binario	1
 scripts/verificar-exercitacao.sh	binario	1
 scripts/verificar-exercitacao.sh	configurado	2
 scripts/verificar-exercitacao.sh	esperado	1
-scripts/verificar-exercitacao.sh	falhou	10
 scripts/verificar-exercitacao.sh	linha	1
 scripts/verificar-exercitacao.sh	raiz	1
 scripts/verificar-exercitacao.sh	resposta	2
@@ -2965,7 +2898,6 @@ scripts/verificar-links-docs.sh	numero	1
 scripts/verificar-links-docs.sh	quebrados	5
 scripts/verificar-links-docs.sh	texto	2
 scripts/verificar-links-docs.sh	verificados	3
-scripts/verificar-python-debug.sh	binario	1
 scripts/verificar-python-debug.sh	interpretador	2
 scripts/verificar-qml-fiacao.sh	abre	2
 scripts/verificar-qml-fiacao.sh	achados	5
@@ -3084,7 +3016,6 @@ scripts/verificar_fiacao_ipc.py	pedidos	2
 scripts/verificar_fiacao_ipc.py	protocolo	5
 scripts/verificar_fiacao_ipc.py	raiz	6
 scripts/verificar_fiacao_ipc.py	resto	2
-scripts/verificar_fiacao_ipc.py	rota	2
 scripts/verificar_fiacao_ipc.py	roteados	5
 scripts/verificar_fiacao_ipc.py	soltos	3
 scripts/verificar_fiacao_ipc.py	sufixo	2
@@ -3245,7 +3176,6 @@ ui/qml/configaction/ConfigActionPreview.qml	campo	4
 ui/qml/configaction/ConfigActionPreview.qml	texto	2
 ui/qml/configaction/ConfigActionsDialog.qml	biblioteca	1
 ui/qml/configaction/ConfigActionsDialog.qml	escopo	9
-ui/qml/configaction/ConfigActionsDialog.qml	plano	1
 ui/qml/configaction/ConfigActionsDialog.qml	rotulo	4
 ui/qml/container/ContainerController.qml	emulado	2
 ui/qml/container/ContainerController.qml	versao	2
@@ -3256,7 +3186,6 @@ ui/qml/datasource/DataSourceCreateBox.qml	imagem	2
 ui/qml/datasource/DataSourceCreateBox.qml	interna	3
 ui/qml/datasource/DataSourceDestroyBox.qml	coluna	2
 ui/qml/datasource/DataSourceDestroyBox.qml	fechar	2
-ui/qml/datasource/DataSourceForm.qml	arquivo	9
 ui/qml/datasource/DataSourceForm.qml	coluna	2
 ui/qml/datasource/DataSourceList.qml	coluna	2
 ui/qml/datasource/DataSourceList.qml	rodape	2
@@ -3354,7 +3283,6 @@ ui/qml/embedded/EmbeddedKitImportView.qml	linhas	2
 ui/qml/embedded/EmbeddedKitImportView.qml	proposta	2
 ui/qml/embedded/EmbeddedKitView.qml	alvo	2
 ui/qml/embedded/EmbeddedKitView.qml	campo	8
-ui/qml/embedded/EmbeddedPanel.qml	abas	3
 ui/qml/embedded/EmbeddedPanel.qml	cabecalho	3
 ui/qml/embedded/EmbeddedPanel.qml	conteudo	3
 ui/qml/embedded/EmbeddedPanel.qml	erro	2
@@ -3480,7 +3408,6 @@ ui/qml/ipc/GitRequestRouter.qml	arquivo	5
 ui/qml/ipc/GitRequestRouter.qml	bloqueado	5
 ui/qml/ipc/GitRequestRouter.qml	sujo	5
 ui/qml/ipc/SearchRequestRouter.qml	caminho	3
-ui/qml/jobs/ActiveJobController.qml	ultimo	4
 ui/qml/jobs/ProblemRules.qml	ausente	1
 ui/qml/jobs/ProblemRules.qml	configur	1
 ui/qml/jobs/ProblemRules.qml	encontrad	1
@@ -3505,7 +3432,6 @@ ui/qml/panels/bottom/TerminalGeometryOverlay.qml	estado	7
 ui/qml/panels/bottom/TerminalGeometryOverlay.qml	guia	6
 ui/qml/panels/bottom/TerminalGeometryOverlay.qml	leitura	3
 ui/qml/panels/bottom/TerminalGeometryOverlay.qml	linha	4
-ui/qml/panels/bottom/TerminalGeometryOverlay.qml	ultimo	3
 ui/qml/panels/bottom/TestsPanel.qml	botao	3
 ui/qml/panels/bottom/TestsPanel.qml	cabecalho	2
 ui/qml/panels/bottom/TestsPanel.qml	linha	9
@@ -3536,7 +3462,6 @@ ui/qml/project/ProjectTreeKeyRules.qml	indice	40
 ui/qml/project/ProjectTreeKeyRules.qml	linha	11
 ui/qml/project/ProjectTreeKeyRules.qml	linhas	34
 ui/qml/project/ProjectTreeKeyRules.qml	nada	15
-ui/qml/project/ProjectTreeKeyRules.qml	para	12
 ui/qml/project/ProjectTreeKeyRules.qml	passo	4
 ui/qml/project/ProjectTreeKeyRules.qml	pausa	2
 ui/qml/project/ProjectTreeKeyRules.qml	prefixo	3
@@ -3560,7 +3485,6 @@ ui/qml/project/ProjectTreeKeyboard.qml	indice	16
 ui/qml/project/ProjectTreeKeyboard.qml	intencao	8
 ui/qml/project/ProjectTreeKeyboard.qml	linha	5
 ui/qml/project/ProjectTreeKeyboard.qml	linhas	15
-ui/qml/project/ProjectTreeKeyboard.qml	para	2
 ui/qml/project/ProjectTreeKeyboard.qml	pelo	2
 ui/qml/project/ProjectTreeKeyboard.qml	prefixo	6
 ui/qml/project/ProjectTreeKeyboard.qml	procurar	2
@@ -3579,7 +3503,6 @@ ui/qml/remote/RemoteController.qml	linha	2
 ui/qml/remote/RemoteDiscovery.qml	alvo	2
 ui/qml/remote/RemoteDiscovery.qml	chaves	3
 ui/qml/remote/RemoteDiscovery.qml	coluna	3
-ui/qml/remote/RemoteDiscovery.qml	lidos	2
 ui/qml/remote/RemoteDiscovery.qml	linha	4
 ui/qml/remote/RemoteDiscovery.qml	porta	2
 ui/qml/remote/RemoteDiscovery.qml	quem	2
@@ -3601,7 +3524,6 @@ ui/qml/search/SearchController.qml	saida	5
 ui/qml/search/SearchController.qml	seguinte	3
 ui/qml/search/SearchEverywhereController.qml	absolutos	4
 ui/qml/search/SearchEverywhereController.qml	caminho	6
-ui/qml/search/SearchEverywhereController.qml	plano	7
 ui/qml/setup/SetupPanel.qml	comando	2
 ui/qml/setup/SetupPanel.qml	linha	4
 ui/qml/setup/SetupPanel.qml	lista	3

@@ -16,7 +16,18 @@
 > padrão muda 46–125 linhas por arquivo; adotar, criar `.qmlformat.ini` ou não
 > formatar QML; §7.247). **Passo 8 feito** (§7.248): base de processo e ponte
 > do adaptador provadas contra um adaptador falso. Próximo: passo 9, extrair
-> os drivers atuais para processos (39 D1c/D1d).
+> os drivers atuais para processos (39 D1c/D1d), que **aguarda decisão do
+> autor**: a ADR-0010 diz que a pessoa escolhe a instalação do adaptador por
+> conexão e proíbe downloader, mas não diz de onde ele vem nem onde é
+> escolhido. **Proposta do agente:** os adaptadores são compilados neste
+> repositório e instalados ao lado do `kinein-core`; no formulário da
+> conexão, "Adaptador: interno · o da IDE · outro caminho"; o interno segue
+> como padrão até o autor aceitar a troca de cada motor. Enquanto isso, os
+> passos 13 e 14 (console e grade), que não dependem disso, avançam.
+> **Passo 14a feito** (§7.250): a grade do Banco ordena pelo cabeçalho e
+> carrega mais; aceite com mouse e teclado do autor pendente. Próximo: 14b
+> (copiar e exportar). Achado para o passo 15: perfil SQLite com caminho
+> relativo resolve contra o diretório do core, não contra o projeto.
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.

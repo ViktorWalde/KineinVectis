@@ -66,6 +66,7 @@ set_source_files_properties(qml/components/KvPanelHeader.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/components/KvVerdict.qml PROPERTIES QT_RESOURCE_ALIAS KvVerdict.qml)
 set_source_files_properties(qml/components/KvDataGrid.qml PROPERTIES QT_RESOURCE_ALIAS KvDataGrid.qml)
 set_source_files_properties(qml/components/KvDataGridHeader.qml PROPERTIES QT_RESOURCE_ALIAS KvDataGridHeader.qml)
+set_source_files_properties(qml/components/KvDataGridSort.qml PROPERTIES QT_RESOURCE_ALIAS KvDataGridSort.qml)
 set_source_files_properties(qml/components/GridRules.qml PROPERTIES QT_RESOURCE_ALIAS GridRules.qml)
 set_source_files_properties(qml/components/KvBarButton.qml PROPERTIES QT_RESOURCE_ALIAS KvBarButton.qml)
 set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
@@ -484,6 +485,7 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvVerdict.qml
         qml/components/KvDataGrid.qml
         qml/components/KvDataGridHeader.qml
+        qml/components/KvDataGridSort.qml
         qml/components/GridRules.qml
         qml/components/KvBarButton.qml
         qml/components/KvTooltip.qml

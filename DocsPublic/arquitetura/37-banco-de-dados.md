@@ -681,6 +681,9 @@ No protocolo 0.161.0, tabelas e coleções recebem `statements` do core.
 `object_statements` delimita nomes de esquema/tabela/coluna e produz
 SELECT, modelos incompletos INSERT/UPDATE e esvaziar/remover. SQLite esvazia
 com DELETE; PostgreSQL com TRUNCATE. Visões só recebem leitura/remoção.
+A leitura não leva `LIMIT` no texto (2026-10-08, 59 §5.4.1): quem limita é
+o `maxRows` do pedido, como no ODBC, e o core diz quando cortou; com o limite
+no texto, o "Carregar mais" da grade nunca aparecia na leitura da árvore.
 Mongo confere os nomes pela gramática existente e não oferece alteração
 para visões/séries temporais. ODBC conserva a leitura do driver e não
 recebe dialeto de escrita inventado. Valores e filtro dos modelos devem

@@ -30,6 +30,13 @@ Item {
     // layout: a mensagem do SQLite traz `\n` e o elide nao corta texto com
     // quebra (2026-10-03, achado na tela real).
     readonly property bool failed: root.lastQuery !== null && root.lastQuery.failed === true && !root.querying
+    // O teto seguinte de uma leitura cortada (0 = nada a carregar).
+    readonly property int nextCeiling: DataSourceKinds.nextRowCeiling(root.lastQuery)
+    // Ordenada E cortada: a ordem vale so' para o que ja' veio (59 §5.4.1).
+    // Fica na barra de baixo: no fim da linha de status, o corte a escondia.
+    readonly property string sortNote: grid.sorting.order !== null && root.lastQuery !== null
+                                       && root.lastQuery.truncated === true
+                                       ? qsTr("Ordem só nas %1 carregadas").arg(root.lastQuery.rowCount) : ""
 
     Item {
         id: statusRow
@@ -128,12 +135,54 @@ Item {
         anchors.top: sqlLine.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        maxHeight: Math.max(40, root.height - statusRow.height - sqlLine.height)
+        maxHeight: Math.max(40, root.height - statusRow.height - sqlLine.height
+                                - (moreRow.visible ? moreRow.height + Theme.spacingXSmall : 0))
+        // Clique no cabecalho ordena as linhas carregadas (passo 14).
+        sortable: true
         // O core manda o nome da coluna; a grade quer { key, label }.
         columns: root.controller ? root.controller.queryColumns.map(name => ({ key: name, label: name })) : []
         rows: root.controller ? root.controller.queryRows : []
         // Uma escrita nao devolve linhas — ela as afeta (o status diz quantas).
         emptyText: root.querying || root.mustConfirm ? ""
                    : (root.lastQuery !== null && root.lastQuery.wrote === true ? qsTr("Instrução executada.") : qsTr("Sem linhas."))
+    }
+
+    // A BARRA DE BAIXO (passo 14): o aviso de que a ordem vale so' para as
+    // linhas carregadas e o CARREGAR MAIS, que repete a mesma leitura com o
+    // teto seguinte. So' aparece quando ha' o que dizer ou carregar.
+    Item {
+        id: moreRow
+
+        anchors.top: grid.bottom
+        anchors.topMargin: Theme.spacingXSmall
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: moreButton.implicitHeight
+        visible: (root.nextCeiling > 0 || root.sortNote !== "") && !root.querying && !root.failed
+
+        Text {
+            anchors.left: parent.left
+            anchors.right: moreButton.visible ? moreButton.left : parent.right
+            anchors.rightMargin: Theme.spacingXSmall
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.sortNote
+            textFormat: Text.PlainText
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeCaption
+            elide: Text.ElideRight
+        }
+
+        KvButton {
+            id: moreButton
+
+            anchors.right: parent.right
+            visible: root.nextCeiling > 0
+            compact: true
+            // Curto: a janela do Banco e' estreita e a nota divide a barra.
+            text: qsTr("Carregar mais")
+            tooltip: qsTr("Repete a mesma leitura com teto de %1 linhas; a ordem e as larguras ficam.")
+                     .arg(Number(root.nextCeiling).toLocaleString(Qt.locale(), "f", 0))
+            onClicked: root.controller.queries.loadMore()
+        }
     }
 }

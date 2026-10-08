@@ -137,6 +137,19 @@ QtObject {
             .arg(outcome.truncated ? qsTr(" — teto atingido") : "").arg(outcome.elapsedMs);
     }
 
+    // CARREGAR MAIS (passo 14 da 0.3.9, roadmaps/59 §5.4.1): o teto seguinte
+    // de uma LEITURA que o teto cortou, o dobro do anterior ate' o maximo do
+    // contrato (arquitetura/03: `maxRows` 500 por padrao, 10.000 no maximo).
+    // Cortada, ela devolveu exatamente o teto, entao `rowCount` E' o teto.
+    // 0 = nada a carregar: escrita, previa, resultado inteiro ou o maximo.
+    readonly property int maxQueryRows: 10000
+    function nextRowCeiling(query) {
+        if (query === null || query === undefined || query.truncated !== true || query.access !== "read"
+                || query.preview === true || query.wrote === true) return 0;
+        const next = Math.min(maxQueryRows, 2 * query.rowCount);
+        return next > query.rowCount ? next : 0;
+    }
+
     function isTimeseries(kind) {
         return kind === "timeseries";
     }

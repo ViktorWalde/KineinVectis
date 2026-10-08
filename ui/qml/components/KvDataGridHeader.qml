@@ -5,7 +5,8 @@ import KineinVectis
 // O CABECALHO da grade comum (saiu do KvDataGrid em 2026-10-03, quando ganhou
 // a alca de largura): o nome de cada coluna, a direita nas de numero, e na
 // borda direita a alca — arrastar muda a largura, clique duplo volta ao
-// natural. As larguras e o que foi arrastado sao do KvDataGrid (`grid`).
+// natural. As larguras e o que foi arrastado sao do KvDataGrid (`grid`); na
+// grade que ordena, o clique no nome alterna a ordem e o icone diz o sentido.
 Row {
     id: root
 
@@ -23,14 +24,18 @@ Row {
             required property var modelData
             required property int index
 
+            // A coluna da ordem: "asc", "desc" ou "" (passo 14 da 0.3.9).
+            readonly property string direction: root.grid.sortable && root.grid.sorting.column === index
+                                                ? root.grid.sorting.direction : ""
+
             width: root.grid.widths[index]
             height: root.grid.rowHeight
-            color: Theme.surface2
+            color: sortArea.containsMouse ? Theme.surfaceSelected : Theme.surface2
 
             Text {
                 anchors.fill: parent
                 anchors.leftMargin: 5
-                anchors.rightMargin: 5
+                anchors.rightMargin: headerCell.direction === "" ? 5 : 5 + sortIcon.width + 2
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: root.grid.numeric[headerCell.index] ? Text.AlignRight : Text.AlignLeft
                 text: headerCell.modelData.label !== undefined
@@ -41,6 +46,30 @@ Row {
                 font.pixelSize: Theme.fontSizeCaption
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
+            }
+
+            KvIcon {
+                id: sortIcon
+
+                anchors.right: parent.right
+                anchors.rightMargin: 5
+                anchors.verticalCenter: parent.verticalCenter
+                visible: headerCell.direction !== ""
+                size: 10
+                name: root.grid.sorting.gridRules.isDescending(headerCell.direction) ? "chevron-down" : "chevron-up"
+                active: true
+            }
+
+            // O clique no NOME ordena (so' na grade que ordena); a alca, por
+            // cima, continua sendo da largura.
+            MouseArea {
+                id: sortArea
+
+                anchors.fill: parent
+                enabled: root.grid.sortable
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.grid.sorting.toggle(headerCell.index)
             }
 
             // A ALCA de largura, na borda direita do cabecalho: arrastar

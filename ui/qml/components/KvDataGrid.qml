@@ -90,9 +90,29 @@ Item {
 
     // A largura que a pessoa ARRASTOU em cada coluna ({indice: px}); clique
     // duplo na alca volta a coluna ao natural. Colunas novas (outra consulta)
-    // comecam do natural.
+    // comecam do natural e na ordem original; as MESMAS colunas de novo (o
+    // "Carregar mais" do Banco) mantem a largura e a ordem.
     property var overrides: ({})
-    onColumnsChanged: root.overrides = ({})
+    property string columnKeys: ""
+    onColumnsChanged: {
+        const keys = JSON.stringify(root.columns.map(column => column.key));
+        if (keys === root.columnKeys) return;
+        root.columnKeys = keys;
+        root.overrides = ({});
+        root.sorting.reset();
+    }
+
+    // ORDENAR pelo clique no cabecalho (passo 14 da 0.3.9), so' onde ligado.
+    // `selectedIndex` e os sinais falam da linha COMO ELA APARECE;
+    // `sorting.sourceIndex`/`displayIndex` traduzem para `rows`.
+    property bool sortable: false
+    readonly property KvDataGridSort sorting: KvDataGridSort {
+        enabled: root.sortable
+        rows: root.rows
+        columns: root.columns
+        numeric: root.numeric
+        gridRules: rules
+    }
 
     function resizeColumn(index, width) {
         const next = Object.assign({}, root.overrides);
@@ -190,7 +210,7 @@ Item {
             spacing: 1
 
             Repeater {
-                model: root.rows
+                model: root.sorting.shownRows
 
                 delegate: Row {
                     id: gridRow

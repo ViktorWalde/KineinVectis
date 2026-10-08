@@ -2,7 +2,8 @@ import QtQuick
 import "../../ui/qml/components"
 
 // As regras puras da grade comum (Etapa 2 F8): largura por conteudo com
-// piso e teto, a sobra distribuida, `null`, linha como objeto ou array.
+// piso e teto, a sobra distribuida, `null`, linha como objeto ou array; e a
+// ordenacao do passo 14 da 0.3.9 (59 §5.4.1).
 Item {
     id: root
 
@@ -55,6 +56,36 @@ Item {
         if (encolhe[0] + encolhe[1] > 400 || encolhe[0] < rules.shrinkFloor || encolhe[1] < rules.shrinkFloor) failures += 256;
         const rola = rules.columnWidths(largas, linhasLargas, 100);
         if (rola[0] !== rules.shrinkFloor || rola[1] !== rules.shrinkFloor) failures += 512;
+
+        // ordenar: o ciclo do clique, e a ordem estavel com NULL por ultimo
+        const cycle = rules.nextSort(-1, "", 2);
+        const descending = rules.nextSort(2, "asc", 2);
+        const back = rules.nextSort(2, "desc", 2);
+        const other = rules.nextSort(2, "desc", 0);
+        if (cycle.column !== 2 || cycle.direction !== "asc" || descending.direction !== "desc"
+            || back.column !== -1 || back.direction !== "" || other.column !== 0
+            || other.direction !== "asc") failures += 16384;
+        // numero como numero ("10" depois de "9"); empate fica na ordem original
+        const sortRows = [{ n: "10", t: "b" }, { n: null, t: "a" }, { n: "9", t: "b" },
+                          { n: "-1", t: null }, { n: "9", t: "c" }];
+        const byNumber = rules.sortedOrder(sortRows, { key: "n" }, 0, "asc", true);
+        if (JSON.stringify(byNumber) !== "[3,2,4,0,1]") failures += 32768;
+        // decrescente inverte os valores, mas o NULL continua por ultimo e o
+        // empate (os dois "9") continua na ordem original
+        const byNumberDescending = rules.sortedOrder(sortRows, { key: "n" }, 0, "desc", true);
+        if (JSON.stringify(byNumberDescending) !== "[0,2,4,3,1]") failures += 65536;
+        // texto compara como texto ("10" antes de "9"); sem direcao, a ordem original
+        const asText = rules.sortedOrder([{ n: "9" }, { n: "10" }], { key: "n" }, 0, "asc", false);
+        const textDescending = rules.sortedOrder(sortRows, { key: "t" }, 1, "desc", false);
+        if (JSON.stringify(asText) !== "[1,0]" || JSON.stringify(textDescending) !== "[4,0,2,1,3]"
+            || JSON.stringify(rules.sortedOrder(sortRows, { key: "n" }, 0, "", true)) !== "[0,1,2,3,4]"
+            || rules.sortedOrder([], { key: "n" }, 0, "asc", true).length !== 0) failures += 131072;
+        // dois NULL no decrescente: continuam na ordem original entre si
+        const twoNulls = rules.sortedOrder([{ n: null }, { n: "1" }, { n: null }], { key: "n" }, 0, "desc", true);
+        if (JSON.stringify(twoNulls) !== "[1,0,2]") failures += 524288;
+        // linha como lista (a que vem do C++), pela posicao da coluna
+        if (JSON.stringify(rules.sortedOrder([["b"], ["a"]], { key: "x" }, 0, "asc", false)) !== "[1,0]")
+            failures += 262144;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

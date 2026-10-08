@@ -947,9 +947,14 @@ o conteúdo do arquivo. Perfis em formato reconhecido são salvos atomicamente.
   use F5 com foco na árvore ou o botão de releitura.
 - **Ver os dados de uma tabela:** **clique duplo** nela, ou o ícone ▦ que
   aparece com o mouse em cima da linha. As primeiras **200 linhas**
-  (`SELECT * FROM … LIMIT 200`; no MongoDB, `coleção.find({})`) aparecem na **seção
-  de dados, embaixo da árvore, na mesma janela** — o contexto não se espalha
-  por outros painéis. A divisória entre árvore e dados arrasta; o × da seção a
+  (`SELECT * FROM …`; no MongoDB, `coleção.find({})`; o limite é o teto da
+  IDE, não um `LIMIT` no texto) aparecem na **seção de dados, embaixo da
+  árvore, na mesma janela** — o contexto não se espalha por outros painéis.
+  Se a tabela tem mais, **Carregar mais**, no pé dos dados, repete a mesma
+  leitura com o dobro do teto (400, 800, … até 10.000; a dica do botão diz
+  qual). **Clicar no nome de uma
+  coluna** ordena as linhas carregadas: crescente, decrescente e de volta à
+  ordem original; números comparam como números e `null` fica por último. A divisória entre árvore e dados arrasta; o × da seção a
   fecha e devolve o espaço à árvore e à lista "Nesta máquina".
 - **O console SQL é um arquivo do editor.** O ▢ ao lado da conexão abre
   seu arquivo em `.kinein/consoles/v1/` (`.mongo` no MongoDB) como uma **aba comum

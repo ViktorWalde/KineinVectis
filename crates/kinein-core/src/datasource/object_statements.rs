@@ -43,7 +43,9 @@ fn relational(
         format!("{}.{}", quote(schema)?, quote(&table.name)?)
     };
     let mut result = DataSourceStatements {
-        select: format!("SELECT * FROM {object} LIMIT 200;"),
+        // Sem LIMIT no texto: o teto e' o `maxRows` do pedido, e so' assim o
+        // core ve o corte e a grade oferece "Carregar mais" (59 §5.4.1).
+        select: format!("SELECT * FROM {object};"),
         remove: Some(format!(
             "DROP {} {object};",
             if table.kind == "view" {

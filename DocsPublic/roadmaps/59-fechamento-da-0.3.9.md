@@ -82,13 +82,13 @@ Cada passo termina com:
 | 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse/teclado do autor pendente para a árvore com indisponíveis; handoff do 8 no §2.1 |
 | 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse/teclado do autor e a decisão do estilo QML deste repositório pendentes (40 §4) |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | feito (40.7 §7.248): base de processo de longa vida e ponte do adaptador, provadas contra um adaptador falso; o LSP migrou para a mesma base (§7.249) |
-| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | a fazer em fatias separadas: PostgreSQL com impacto/prévia, SQLite, MongoDB; depende do 8 |
+| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | **aguarda decisão do autor** (40, topo): de onde vem o adaptador externo e onde a pessoa o escolhe. Depois, em fatias: PostgreSQL com impacto/prévia, SQLite, MongoDB |
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | a fazer: vínculo por conexão e ferramentas existentes com linguagem/catálogo vivos; D2 pode avançar após os contextos do 7, sem esperar toda a extração do 9 |
 | 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | a fazer: API nativa sobre a ponte do 8; LSP SQL/InfluxQL existente selecionado e provado sobre as instâncias do 10 |
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | a fazer: localizar objeto, histórico por conexão e conveniências restantes; identidade/rascunho/execução atuais já aceitos |
-| 14 | **Grade de dados** (§5.4) | a fazer em fatias: carregar mais/ordenar e copiar/exportar; edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
-| 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14 |
+| 14 | **Grade de dados** (§5.4) | 14a feita (40.7 §7.250): ordenar e carregar mais; aceite com mouse/teclado do autor pendente. 14b a fazer: copiar/exportar. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
+| 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14; perfil SQLite com caminho relativo ao projeto (achado na 14a, 40.7 §7.250) |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -730,6 +730,40 @@ leases e jobs próprios, sem incorporar runtime/código dessas ferramentas.
 - **Editar célula** numa tabela com chave primária: gera o `UPDATE … WHERE pk`,
   que respeita a política de confirmação e de alcance do §5.3. **Adiado pelo
   autor em 2026-10-08 (§2.3)**, para versão futura sem número.
+
+#### 5.4.1 Desenho do passo 14 (2026-10-08), antes do código
+
+Só UI; nenhum método ou campo IPC novo. Os fatos medidos: o core usa 500
+linhas por padrão e 10.000 de teto (`datasource/query.rs`); o evento de
+consulta já traz `truncated` e `access`, que o controlador ainda não guarda.
+
+- **Ordenar:** o `KvDataGrid` ganha `sortable`, opcional e ligado só na grade
+  do Banco. O clique no cabeçalho alterna crescente, decrescente e a ordem
+  original; ordena só as linhas **carregadas**, de forma estável; coluna
+  numérica compara como número; NULL fica sempre por último. O cabeçalho
+  mostra ▲/▼, e o status diz que a ordem vale para as linhas carregadas.
+- **Copiar:** com uma linha selecionada, Ctrl+C copia a linha em TSV; o botão
+  "Copiar CSV" copia as linhas carregadas com o cabeçalho. Formato do RFC
+  4180: aspas quando o campo tem separador, aspas ou quebra; aspas dobradas.
+  NULL vira campo vazio e texto vazio vira `""`, então a distinção sobrevive.
+  Copiar uma célula avulsa exige seleção por célula e fica para depois.
+- **Exportar:** "Exportar CSV" grava `exportacoes/<conexão>-<AAAAMMDD-HHMMSS>.csv`
+  dentro do projeto pelo `fs.createFile` existente, que recusa sobrescrever
+  e confina ao projeto; o status diz o caminho gravado. **A rever antes da
+  14b** (achado na 14a, 40.7 §7.250): a resposta do `fs.createFile` é da
+  árvore do projeto, que abre o arquivo criado ou reabre o diálogo de criar
+  com o erro.
+- **Carregar mais:** quando o resultado veio cortado e o caminho foi de
+  leitura, "Carregar mais" reexecuta a **mesma** leitura com o dobro do teto
+  (500, 1.000, … até 10.000). Uma escrita nunca é reexecutada: o botão não
+  aparece. Achado na tela ao provar: o clique duplo na tabela rodava
+  `SELECT … LIMIT 200;`, o texto limitava antes do teto e o core nunca via o
+  corte. A leitura gerada perde o `LIMIT` e fica como a do ODBC (37): a UI
+  manda `maxRows: 200`, o core corta e diz que cortou, e o botão leva a 400,
+  800, … até 10.000.
+
+Regras puras (ordenação e texto delimitado) no `GridRules.qml`, com harness;
+foto da grade no display virtual; aceite do autor com mouse e teclado.
 
 ### 5.5 MongoDB completo
 

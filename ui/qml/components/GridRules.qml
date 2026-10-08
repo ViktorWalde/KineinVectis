@@ -69,6 +69,40 @@ QtObject {
         return seen > 0;
     }
 
+    // ORDENAR (passo 14 da 0.3.9, 59 §5.4.1): o clique no cabecalho alterna
+    // crescente, decrescente e a ordem original; outra coluna comeca crescente.
+    function nextSort(column, direction, clicked) {
+        if (column !== clicked) return { column: clicked, direction: "asc" };
+        if (direction === "asc") return { column: clicked, direction: "desc" };
+        return { column: -1, direction: "" };
+    }
+
+    // O sentido decrescente: dono unico (a ordem e o icone do cabecalho).
+    function isDescending(direction) {
+        return direction === "desc";
+    }
+
+    // A ordem em que as linhas CARREGADAS aparecem, como indices de `rows`.
+    // Estavel por construcao (o empate desempata pelo indice, sem depender do
+    // `sort` do motor JS); coluna de numeros compara como numero; NULL fica
+    // sempre por ultimo, nos dois sentidos, como "NULLS LAST".
+    function sortedOrder(rows, column, index, direction, numeric) {
+        const order = [];
+        for (let r = 0; r < rows.length; r++) order.push(r);
+        if (direction !== "asc" && direction !== "desc") return order;
+        const sign = isDescending(direction) ? -1 : 1;
+        const values = order.map(r => cellOf(rows[r], column, index));
+        order.sort((a, b) => {
+            const nullA = isNull(values[a]);
+            const nullB = isNull(values[b]);
+            if (nullA || nullB) return nullA === nullB ? a - b : (nullA ? 1 : -1);
+            const compared = numeric ? Number(values[a]) - Number(values[b])
+                                     : String(values[a]).localeCompare(String(values[b]));
+            return compared !== 0 ? sign * compared : a - b;
+        });
+        return order;
+    }
+
     // As larguras finais (revistas em 2026-10-03, pedido do autor: "melhorar
     // o dimensionamento da tabela"):
     //   - cada coluna na largura NATURAL (o maior texto, medido);
