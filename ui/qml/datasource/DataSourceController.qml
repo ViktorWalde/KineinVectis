@@ -270,11 +270,16 @@ Item {
     // perfil tem `deny_unknown_fields`, e um campo extra seria recusado).
     function cloneProfile(source) { return DataSourceKinds.cloneProfile(source); }
 
+    // `installation` chega como o tipo escolhido ("builtin"/"ide"), nao como o
+    // objeto do perfil: quem decide a forma e' o DataSourceKinds (9a.3).
     function editDraft(field, value) {
         const updated = cloneProfile(draft);
-        updated[field] = value;
+        const provider = DataSourceKinds.providerFor(providers, field === "engine" ? value : updated.engine);
+        if (field === "installation") DataSourceKinds.chooseInstallation(updated, provider, value);
+        else updated[field] = value;
         if (field === "engine" && value !== draft.engine) {
             DataSourceKinds.adoptDefaults(updated, draft.engine, value);
+            DataSourceKinds.chooseInstallation(updated, provider, DataSourceKinds.installationOf(updated));
             clearSecret();
         }
         draft = updated;

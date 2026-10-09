@@ -54,7 +54,7 @@ O nome do preset de **configure** e o de **build** diferem nos dois
 usar o nome de configure no `--build`.
 
 O core de release para medir a IDE de verdade:
-`cargo build --release -p kinein-core` e
+`cargo build --release -p kinein-core -p kinein-adapter-sqlite` e
 `KINEIN_CORE_BIN=$PWD/target/release/kinein-core ./build/<preset>/ui/kinein-vectis`.
 
 ## Rodar o gate

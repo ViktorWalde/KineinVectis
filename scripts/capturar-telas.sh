@@ -19,6 +19,8 @@
 #   abrir      "Abrir projeto": o seletor no modo de abrir
 #   banco      janela do Banco com uma conexao e dois perfis preservados que
 #              esta versao nao usa (D1a.4, 2026-10-08)
+#   banco-adaptador  o formulario de uma conexao SQLite que usa o adaptador
+#              da IDE, com o campo "Adaptador" (9a.3, 2026-10-09)
 #   qml        um .qml aberto no editor, com o realce proprio do QML (59 §2.4)
 #
 # Uso: bash scripts/capturar-telas.sh [BINARIO] [PASTA_DE_SAIDA]
@@ -70,6 +72,7 @@ scene_commands() {
         criar) echo "workspace.createProject" ;;
         abrir) echo "workspace.open" ;;
         banco) echo "datasource.list" ;;
+        banco-adaptador) echo "datasource.list=estacao" ;;
         qml) echo "" ;;
         *) return 1 ;;
     esac
@@ -88,6 +91,15 @@ scene_files() {
   {"name": "externo", "engine": "postgres", "adapter": "builtin.postgres",
    "installation": {"id": "pg-adapter-2"},
    "options": {"schemaVersion": 1, "fields": {"host": "localhost", "port": 5432, "database": "a", "user": "b"}}}
+]}
+JSON
+            ;;
+        banco-adaptador)
+            cat >"$project/.kinein/datasources.json" <<'JSON'
+{"schemaVersion": 2, "profiles": [
+  {"name": "estacao", "engine": "sqlite", "adapter": "builtin.sqlite",
+   "installation": {"kind": "ide"},
+   "options": {"schemaVersion": 1, "fields": {"path": "estacao.db"}}}
 ]}
 JSON
             ;;

@@ -92,6 +92,28 @@ QtObject {
         }
     }
 
+    // QUAL ADAPTADOR roda o perfil (9a.3, arquitetura/39 §6.2.2). O descritor
+    // diz o que o motor oferece; sem `installations` (core antes do 0.167.0),
+    // so' o interno. Tipo que esta versao nao conhece nao vira opcao.
+    function installationOf(profile) {
+        return profile && profile.installation ? profile.installation.kind : "builtin";
+    }
+
+    function installationOptions(provider) {
+        const labels = { builtin: qsTr("Interno"), ide: qsTr("O da IDE") };
+        const kinds = provider && provider.installations ? provider.installations : ["builtin"];
+        return kinds.filter(kind => labels[kind] !== undefined).map(kind => ({ value: kind, label: labels[kind] }));
+    }
+
+    // Ausente = interno; o da IDE e' `{ kind: "ide" }`. O que o motor nao
+    // oferece cai para o interno: trocar SQLite por PostgreSQL com o da IDE
+    // faria o `save` responder INVALID_PARAMS.
+    function chooseInstallation(profile, provider, kind) {
+        const offered = installationOptions(provider).some(option => option.value === kind);
+        if (offered && kind !== "builtin") profile.installation = { kind: kind };
+        else delete profile.installation;
+    }
+
     function emptyProfile() {
         return Object.assign({
             engine: "postgres",

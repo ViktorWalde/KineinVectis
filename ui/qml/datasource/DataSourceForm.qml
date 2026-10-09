@@ -80,6 +80,13 @@ Item {
             onSelected: value => root.fieldEdited("engine", value)
         }
 
+        DataSourceAdapterField {
+            width: parent.width
+            provider: root.provider
+            current: DataSourceKinds.installationOf(root.draft)
+            onSelected: kind => root.fieldEdited("installation", kind)
+        }
+
         DataSourceField {
             width: parent.width
             label: qsTr("Nome")

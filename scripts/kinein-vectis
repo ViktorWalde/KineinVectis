@@ -45,7 +45,7 @@ if [ -z "$UI_BIN" ]; then
     exit 1
 fi
 if [ ! -x "$CORE_BIN" ]; then
-    echo "erro: core nao compilado. Rode: cargo build --release -p kinein-core" >&2
+    echo "erro: core nao compilado. Rode: cargo build --release -p kinein-core -p kinein-adapter-sqlite" >&2
     exit 1
 fi
 

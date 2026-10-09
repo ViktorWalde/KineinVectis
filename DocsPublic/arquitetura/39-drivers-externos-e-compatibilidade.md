@@ -592,7 +592,8 @@ motor (§5.2). Depois vêm o PostgreSQL, com impacto e prévia, e o MongoDB.
   projeto + perfil + instalação, aberta no primeiro uso e encerrada ao
   desconectar, ao trocar de projeto ou ao mudar o perfil.
 - **9a.3 — o formulário.** "Adaptador: interno · o da IDE" no formulário da
-  conexão; foto no display virtual; aceite do autor.
+  conexão; foto no display virtual; aceite do autor. **Feita em 2026-10-09
+  (40.7 §7.259; desenho no §6.2.2).**
 - **"Outro caminho"** não mora no perfil do projeto: um repositório traria um
   perfil apontando para um executável dele, e abrir o projeto o executaria
   (§5). Ele entra numa fatia própria, pelo registro de ferramentas do
@@ -632,6 +633,48 @@ motor (§5.2). Depois vêm o PostgreSQL, com impacto e prévia, e o MongoDB.
   (onde o binário existe): teste, catálogo com instruções do core, consulta,
   escrita, somente leitura, erro com a mensagem limitada, impacto, troca do
   perfil encerrando a instância, binário ausente.
+
+#### 6.2.2 9a.3 — o formulário (desenho, 2026-10-09)
+
+> **Feita em 2026-10-09 (40.7 §7.259)**; o aceite com mouse e teclado é do
+> autor.
+
+Sem contrato novo: o IPC `0.167.0` já leva `installation` no perfil e
+`installations` no descritor. A fatia é a tela, o que ela precisa para o
+aceite e a foto.
+
+- **Onde:** no formulário da conexão, logo abaixo do seletor de motor, o
+  rótulo "Adaptador" e um seletor segmentado "Interno · O da IDE", com uma
+  linha de explicação: o interno roda dentro do core; o da IDE é o
+  `kinein-adapter-<motor>` ao lado do core, num processo à parte. Aparece só
+  quando o descritor do motor oferece mais de uma instalação (hoje o
+  SQLite); descritor sem `installations` conta como só o interno.
+- **Quem decide:** o `DataSourceKinds` (dono único do perfil na UI) ganha a
+  leitura da escolha (`installationOf`), as opções vindas do descritor
+  (`installationOptions`) e a regra de troca (`chooseInstallation`):
+  "builtin" remove o campo, "ide" grava `{ kind: "ide" }`, e uma escolha que
+  o motor não oferece é ignorada.
+- **Troca de motor:** a escolha que o motor novo não oferece cai para o
+  interno no rascunho. Sem isso, trocar SQLite com "O da IDE" por
+  PostgreSQL faria o `save` responder `INVALID_PARAMS`.
+- **Componente:** `DataSourceAdapterField.qml`, porque o formulário está em
+  279 de 300 linhas.
+- **Build:** o gate compila em release o `kinein-adapter-sqlite` junto do
+  `kinein-core` (hoje só o core), e o launcher do checkout diz como
+  compilar os dois. Sem isso, o atalho do autor sobe o core de
+  `target/release` sem o adaptador ao lado, e "O da IDE" falha no aceite.
+- **Foto:** cena `banco-adaptador` no `capturar-telas.sh`, com o formulário
+  aberto num perfil SQLite que usa o adaptador da IDE. O comando
+  `datasource.list=<nome>`, só para a medição headless (como o
+  `probe.list=<aba>`), abre a janela do Banco com esse perfil em edição,
+  como o "Editar" da árvore.
+- **Provas:** harness com o formulário e o controller reais: o campo
+  aparece só no SQLite, a escolha vai ao rascunho e ao `save`, voltar ao
+  interno tira o campo, trocar de motor derruba a escolha que o motor novo
+  não oferece, descritor antigo esconde o campo. Mutações de cada regra.
+- **Fora:** "outro caminho" (§6.2, fatia própria pelo registro de
+  ferramentas); mostrar o adaptador na árvore; o aceite com mouse e
+  teclado, que é do autor.
 
 ## 7. Reaproveitamento e donos conferidos
 

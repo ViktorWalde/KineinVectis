@@ -69,7 +69,13 @@ produzidos na mesma transação.
 ```bash
 cargo build --release -p kinein-core     # uso diário
 cargo build -p kinein-core               # debug, para desenvolvimento
+cargo build --release -p kinein-adapter-sqlite  # o adaptador SQLite "da IDE"
 ```
+
+O `kinein-adapter-sqlite` é o adaptador externo do SQLite, escolhido no
+formulário da conexão como "Adaptador: O da IDE". O core o procura só na
+própria pasta (`target/release` ao lado do `kinein-core`); sem ele, a conexão
+que o escolheu falha dizendo onde procurou. O gate completo compila os dois.
 
 ### 2. UI Qt/QML
 

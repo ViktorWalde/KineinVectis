@@ -182,6 +182,12 @@ Item {
             return true;
         case "datasource.list":
             dataSourceController.windowRequested();
+            // `=<nome>` (so' a foto headless, 9a.3): o formulario dessa
+            // conexao, como o "Editar" da arvore.
+            if (arg !== "") {
+                dataSourceController.select(arg);
+                dataSourceController.open();
+            }
             return true;
         case "remote.list":
             remoteController.open();

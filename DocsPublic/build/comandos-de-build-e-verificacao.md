@@ -121,7 +121,7 @@ scripts/verificar-fiacao-ipc.sh              # metodo sem cliente, evento sem tr
                                              # chamador (2026-09-18)
 cmake --build --preset dev-local             # UI debug (KINEIN_PRESET_DEBUG)
 scripts/verificar-binario-abre.sh --preset dev-local          # o binario que saiu do build ABRE
-cargo build --release -p kinein-core
+cargo build --release -p kinein-core -p kinein-adapter-sqlite  # o adaptador fica ao lado do core
 cmake --build --preset dev-local-release     # UI release (KINEIN_PRESET_RELEASE)
 scripts/verificar-binario-abre.sh --preset dev-local-release  # idem, release
 ```

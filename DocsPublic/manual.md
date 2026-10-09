@@ -862,8 +862,16 @@ disponível, o formulário aguarda e Salvar permanece desabilitado.
 No SQLite, um caminho **relativo** (por exemplo `dados/estacao.db`) é a partir
 da pasta do projeto: o perfil versionado com o projeto funciona em qualquer
 máquina. Um caminho absoluto continua valendo como está.
-Os perfis já salvos mantêm seu formato. A integração SQL LSP e a escolha de
-drivers externos ainda estão em desenvolvimento; esta entrega não os ativa.
+Os perfis já salvos mantêm seu formato. A integração SQL LSP ainda está em
+desenvolvimento; esta entrega não a ativa.
+
+**Adaptador** (no checkout com protocolo `0.167.0`, 2026-10-09): no SQLite, o
+formulário oferece **Interno · O da IDE**. Interno é o driver dentro do core,
+e continua o padrão. O da IDE é o `kinein-adapter-sqlite`, instalado ao lado
+do core, que atende a conexão num processo à parte, com o mesmo teste,
+catálogo, consulta e impacto. Se ele não estiver lá, a operação falha dizendo
+onde a IDE procurou; nada é procurado no projeto nem no `PATH`. Os outros
+motores, por enquanto, só têm o interno, e o campo não aparece neles.
 
 O MongoDB tem uma forma de exibição própria de propósito: uma coluna de tabela
 garante que existe em toda linha, tem um tipo e não aninha, e **nenhuma das três

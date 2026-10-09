@@ -195,6 +195,7 @@ set_source_files_properties(qml/ipc/EmbeddedRequestRouter.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
 set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanelHost.qml)
 set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceForm.qml)
+set_source_files_properties(qml/datasource/DataSourceAdapterField.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceAdapterField.qml)
 set_source_files_properties(qml/datasource/DataSourceDsnPicker.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDsnPicker.qml)
 set_source_files_properties(qml/datasource/DataSourceDriverDialog.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceDriverDialog.qml)
 set_source_files_properties(qml/datasource/DataSourceOdbcController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceOdbcController.qml)
@@ -619,6 +620,7 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourcePanel.qml
         qml/datasource/DataSourcePanelHost.qml
         qml/datasource/DataSourceForm.qml
+        qml/datasource/DataSourceAdapterField.qml
         qml/datasource/DataSourceDsnPicker.qml
         qml/datasource/DataSourceDriverDialog.qml
         qml/datasource/DataSourceOdbcController.qml

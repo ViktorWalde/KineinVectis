@@ -243,9 +243,12 @@ if [ "$modo" = "completo" ]; then
         "Abre pela linha de comando num pty: volta em < 300 ms e nao imprime nada (como code .)."
     python3 scripts/check_terminal_quiet.py --preset "$preset_debug"
 
-    passo "cargo build --release -p kinein-core" \
-        "Compila o core Rust em release, como sera consumido pela distribuicao."
-    cargo build --release -p kinein-core
+    # O adaptador SQLite mora AO LADO do core (arquitetura/39 §5.2): sem ele
+    # em target/release, o launcher sobe o core sem o "Adaptador: o da IDE"
+    # (achado no 9a.3, 2026-10-09). O debug vem do `cargo test --workspace`.
+    passo "cargo build --release -p kinein-core -p kinein-adapter-sqlite" \
+        "Compila o core Rust e o adaptador SQLite em release, como serao consumidos pela distribuicao."
+    cargo build --release -p kinein-core -p kinein-adapter-sqlite
 
     passo "cmake --build --preset $preset_release" \
         "Compila a UI release; ela inicia o core como processo separado."
