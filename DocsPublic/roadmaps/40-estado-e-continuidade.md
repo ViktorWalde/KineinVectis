@@ -16,11 +16,9 @@
 > - a W3a (§7.264): **a IDE abre nativa no Windows**.
 >
 > **O critério agora é "impecável"** (decisão do autor, 60 §3): paridade com o
-> Linux por domínio, com a tabela e as decisões abertas D7–D10 no 60 §3.3. Com
-> as decisões, o plano por domínio vira fatias. As pendências já conhecidas
-> são a W2b (os testes do core no Windows: 787 passam, 109 falham), a W3b (os
-> testes C++ e o MSVC estrito) e o ambiente do Visual Studio para o build
-> C/C++. O trabalho acontece no branch `porte-windows`, no clone
+> Linux por domínio. A tabela, as decisões D7–D10 e as fatias, em ordem, estão
+> no 60 §3.3. A próxima é a W3b (os testes C++ e o MSVC estrito); depois vem
+> a W4, o gate do Windows. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

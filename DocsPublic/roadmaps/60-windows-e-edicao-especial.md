@@ -324,22 +324,42 @@ separa o domínio da paridade com o Linux.
 | Gate | clippy e testes rodados à mão | `scripts/verificar-windows.ps1` (W4, D8) |
 | Distribuição | — | o pacote do Windows (D9) |
 
-**Decisões pedidas ao autor** (abertas):
+**As decisões do autor (2026-10-09, à noite, respondidas como perguntas):**
 
-- **D7, FFI do Windows.** O core é `forbid(unsafe_code)`. Job Object, rename
-  sem sobrescrever atômico e a lista de portas `COMx` pedem a API do Windows.
-  As saídas: um crate pequeno e próprio que confina o `unsafe` atrás de uma
-  API segura; crates de terceiros já auditados (licença pelo `deny.toml`); ou
-  ficar só na biblioteca padrão, com os limites ditos.
-- **D8, o gate no Windows.** O que roda nativo no Windows (compilação,
-  testes, clippy, C++, `qmllint`) e o que roda uma vez no WSL, como as
-  verificações que não dependem do sistema (docs, links, mapa, arquitetura,
-  idioma). Isso estende a D2.
-- **D9, a distribuição no Windows.** Zip portátil, instalador ou MSIX, e se
-  isso entra no porte ou fica para o lançamento.
-- **D10, embarcados e depuração no Windows.** Se entram no porte agora, com a
-  placa como `COMx` nativo, ou se continuam na edição especial (§4), que trata
-  o atrito Windows + WSL2 com USB.
+- **D7, FFI do Windows:** um crate próprio, pequeno, que confina o `unsafe`
+  atrás de uma API segura e testada. Ele usa o `windows-sys`, que já está no
+  `Cargo.lock` (+0 crates). O core continua `forbid(unsafe_code)` e só chama
+  essa API.
+- **D8, o gate no Windows:** um `scripts/verificar-windows.ps1` roda nativo
+  no Windows tudo o que depende do sistema: build, testes, clippy, C++ com o
+  MSVC estrito, `ctest`, `qmllint` e o smoke com foto. O que não depende do
+  sistema (docs, links, mapa, catraca, shellcheck) roda uma vez no WSL,
+  disparado pelo mesmo comando. Isso estende a D2.
+- **D9, a distribuição:** um zip portátil agora, feito com o `windeployqt`
+  mais o core e o adaptador, com um smoke que o abre e fotografa. Instalador
+  ou MSIX ficam para o lançamento, que só sai a pedido do autor.
+- **D10, embarcados e depuração:** entram no porte, nativos. A placa como
+  `COMx`, os gravadores e um adaptador de depuração no Windows. A ponte
+  Windows + WSL2 com `usbipd` continua sendo a edição especial (§4).
+
+**As fatias, nesta ordem.** O gate vem primeiro, para verificar as outras:
+
+1. **W3b:** os testes C++ da UI no Windows e as opções estritas do MSVC.
+2. **W4:** o `verificar-windows.ps1` (D8).
+3. **W5:** o crate de FFI (D7): Job Object, rename sem sobrescrever e a lista
+   de portas `COMx`. O `platform/windows.rs` passa a usá-lo.
+4. **W2b:** os testes do core verdes no Windows. Os que usam ferramenta falsa
+   em `sh` ganham o equivalente Windows; `#[cfg(unix)]` só para o que é de
+   Unix.
+5. **W6:** build C/C++ no Windows: achar o Visual Studio e rodar no ambiente
+   dele; CMake, Ninja e LLVM; o catálogo do Setup com `winget`.
+6. **W7:** Python no Windows.
+7. **W8:** Banco no Windows: os consoles e o ODBC.
+8. **W9:** containers e Remote SSH no Windows.
+9. **W10:** embarcados e depuração nativos (D10).
+10. **W11:** o zip portátil (D9).
+11. **W12:** o aceite do autor com mouse e teclado. O controle da tela pelo
+    agente pede o "Computer use" ligado no app.
 
 ## 4. A edição especial (depois da 0.4.0)
 
