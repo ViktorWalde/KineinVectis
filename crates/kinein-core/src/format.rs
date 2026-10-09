@@ -177,7 +177,6 @@ fn qmlformat_settings(root: &Path, path: &Path) -> Option<PathBuf> {
 
 /// Uma pasta nova, so' deste usuario, para a copia que o formatter le.
 fn private_dir() -> io::Result<PathBuf> {
-    use std::os::unix::fs::DirBuilderExt;
     static NEXT: AtomicU64 = AtomicU64::new(0);
     for _ in 0..16 {
         let candidate = std::env::temp_dir().join(format!(
@@ -185,7 +184,7 @@ fn private_dir() -> io::Result<PathBuf> {
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed)
         ));
-        match std::fs::DirBuilder::new().mode(0o700).create(&candidate) {
+        match crate::platform::owner_only_dir_builder().create(&candidate) {
             Ok(()) => return Ok(candidate),
             Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
             Err(error) => return Err(error),

@@ -43,13 +43,18 @@ odbc-api.workspace = true
 # Simulacao por conceito (arquitetura/34): avalia a formula que o usuario digita
 # e, antes disso, diz QUAIS variaveis ela usa — que e' o que a checagem de
 # conceito precisa e um compilador nao daria. ADR-0006.
-# Portas seriais USB (DocsPublic/integracoes/38 §6, E1): `access(2)` sem abrir a porta.
-rustix.workspace = true
 tokio-postgres-rustls = { version = "0.14", default-features = false, features = ["webpki-roots", "ring"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
 webpki-roots = "1"
 rustls-pki-types = { version = "1", features = ["std"] }
 trash = "=5.2.5"
+
+# O que so' existe no Unix (60 §3.2, W1): o `platform/unix.rs` e' o unico
+# usuario fora dos dominios que ainda nao rodam no Windows (serial, consoles do
+# Banco). Portas seriais USB (DocsPublic/integracoes/38 §6, E1): `access(2)` sem
+# abrir a porta; grupo de processo (owned_child); `openat` sem seguir link.
+[target.'cfg(unix)'.dependencies]
+rustix.workspace = true
 
 [lints]
 workspace = true

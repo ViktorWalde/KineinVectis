@@ -5,8 +5,6 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use rustix::fs::{CWD, RenameFlags, renameat_with};
-
 use super::FsError;
 
 /// Hidden, unique sibling on the same filesystem as the destination.
@@ -22,15 +20,15 @@ pub(super) fn temp_sibling(target: &Path) -> PathBuf {
 
 /// Atomically publishes `source` at `target`, refusing even a late collision.
 pub(super) fn publish_noreplace(source: &Path, target: &Path) -> Result<(), FsError> {
-    renameat_with(CWD, source, CWD, target, RenameFlags::NOREPLACE).map_err(|error| {
-        if error == rustix::io::Errno::EXIST {
+    crate::platform::rename_noreplace(source, target).map_err(|error| {
+        if error.kind() == std::io::ErrorKind::AlreadyExists {
             FsError::AlreadyExists {
                 path: target.display().to_string(),
             }
         } else {
             FsError::Io {
                 path: target.display().to_string(),
-                source: error.into(),
+                source: error,
             }
         }
     })

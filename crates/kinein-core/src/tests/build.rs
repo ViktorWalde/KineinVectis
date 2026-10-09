@@ -195,6 +195,7 @@ fn build_run_starts_a_job_and_finishes_successfully() {
 
 /// Roda um `build.run` e devolve as linhas do job (comando e saida) e o
 /// sucesso — filtrando pelo jobId, porque o indice tambem emite jobs.
+#[cfg(unix)]
 fn roda_build(
     core: &mut crate::Core,
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,

@@ -73,24 +73,25 @@ const SEARCH_SKIP_DIRS: &[&str] = &[
 /// # Errors
 /// Failure to create, write, synchronize or publish the temporary file.
 pub(crate) fn atomic_write(target: &std::path::Path, bytes: &[u8]) -> Result<(), FsError> {
-    write_atomically(target, bytes, None)
+    write_atomically(target, bytes, false)
 }
 
-/// [`atomic_write`] for private data (`0600` from creation): the temporary
-/// file is never readable by others, not even before the rename.
+/// [`atomic_write`] for private data (`0600` from creation; on Windows, the
+/// folder ACL, see `platform::owner_only_file`): the temporary file is never
+/// readable by others, not even before the rename.
 ///
 /// # Errors
 /// The same as [`atomic_write`].
 pub(crate) fn atomic_write_private(target: &std::path::Path, bytes: &[u8]) -> Result<(), FsError> {
-    write_atomically(target, bytes, Some(0o600))
+    write_atomically(target, bytes, true)
 }
 
 fn write_atomically(
     target: &std::path::Path,
     bytes: &[u8],
-    mode: Option<u32>,
+    owner_only: bool,
 ) -> Result<(), FsError> {
-    use std::{fs, io, io::Write, os::unix::fs::OpenOptionsExt, path::Path};
+    use std::{fs, io, io::Write, path::Path};
 
     let io_err = |path: &Path, source: io::Error| FsError::Io {
         path: path.display().to_string(),
@@ -99,8 +100,8 @@ fn write_atomically(
     let temp = publish::temp_sibling(target);
     let mut options = fs::OpenOptions::new();
     options.write(true).create_new(true);
-    if let Some(mode) = mode {
-        options.mode(mode);
+    if owner_only {
+        crate::platform::owner_only_file(&mut options);
     }
     let mut file = options
         .open(&temp)

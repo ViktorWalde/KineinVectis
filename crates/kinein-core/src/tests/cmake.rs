@@ -196,6 +196,7 @@ fn cmake_status_stays_quiet_when_there_is_nothing_to_diagnose() {
 /// o `cmake.status` o devolve; com `preset` no pedido (o kit), e' ele.
 /// Espera o ciclo de um `cmake.configure`: devolve o `event.cmake.started`
 /// e as linhas de saida do job ate' o `finished` com sucesso.
+#[cfg(unix)]
 fn espera_configure(
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
 ) -> (serde_json::Value, Vec<String>) {
@@ -219,6 +220,7 @@ fn espera_configure(
     }
 }
 
+#[cfg(unix)]
 fn status_de(core: &mut crate::Core, id: i64) -> serde_json::Value {
     core.handle_request(&JsonRpcRequest::new(id, "cmake.status", None))
         .response()

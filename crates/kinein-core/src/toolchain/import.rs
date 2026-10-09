@@ -686,6 +686,7 @@ mod tests {
     /// e a evidencia lista as outras; o sysroot e' o que o gcc declara; sem
     /// toolchain nenhuma, a proposta e' vazia com a dica do setup.sh.
     #[test]
+    #[cfg(unix)]
     fn a_zephyr_sdk_proposes_the_arm_toolchain_and_lists_the_others() {
         let sdk = raiz("zephyr");
         std::fs::write(sdk.join("sdk_version"), "1.0.1\n").unwrap();

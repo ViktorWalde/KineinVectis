@@ -327,6 +327,7 @@ fn pytest_workspace(nome: &str, corpo_do_python: Option<&str>) -> std::path::Pat
 
 /// Abre `dir`, pede `test.run` (com `filter`) e devolve os eventos do job ate
 /// o `event.test.finished`, e este.
+#[cfg(unix)]
 fn run_tests_and_collect(
     dir: &std::path::Path,
     filter: Option<&str>,
@@ -499,6 +500,7 @@ fn test_run_in_a_micropython_project_stays_on_the_host() {
 }
 
 /// Pede `test.discover` e espera o `event.test.discovered` desse job.
+#[cfg(unix)]
 fn discover_and_wait(
     core: &mut crate::Core,
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
@@ -625,6 +627,7 @@ fn tests_are_discovered_and_one_runs_by_its_exact_id() {
 
 /// Workspace `CMake` com a CDB em `build/` e um core cuja busca de
 /// ferramentas e' so' a pasta `bin` do workspace (D6, clang-tidy).
+#[cfg(unix)]
 fn cpp_quality_fixture(
     name: &str,
     com_cdb: bool,

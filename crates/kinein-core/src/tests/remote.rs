@@ -4,15 +4,14 @@
 //! o deploy com `rsync` falso e, sem ele, `scp`; e o `remote.command` puro,
 //! com o `host:porta` para o kit.
 
-use std::{
-    path::{Path, PathBuf},
-    sync::mpsc,
-    time::Duration,
-};
+#[cfg(unix)]
+use std::{path::Path, time::Duration};
+use std::{path::PathBuf, sync::mpsc};
 
 use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::{Value, json};
 
+#[cfg(unix)]
 fn executavel(caminho: &Path, corpo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
     crate::write_executable(caminho, corpo);
@@ -21,6 +20,8 @@ fn executavel(caminho: &Path, corpo: &str) {
 struct Cenario {
     core: crate::Core,
     root: PathBuf,
+    // Lido so' pelos testes de Unix (ssh falso em shell).
+    #[cfg_attr(not(unix), allow(dead_code))]
     events: mpsc::Receiver<JsonRpcRequest>,
 }
 
@@ -51,6 +52,7 @@ fn cenario(nome: &str) -> Cenario {
 }
 
 impl Cenario {
+    #[cfg(unix)]
     fn bin(&self) -> PathBuf {
         self.root.parent().unwrap().join("bin")
     }
@@ -68,6 +70,7 @@ impl Cenario {
         r.result.unwrap()
     }
 
+    #[cfg(unix)]
     fn evento(&self, nome: &str) -> Value {
         let prazo = std::time::Instant::now() + Duration::from_secs(20);
         while std::time::Instant::now() < prazo {

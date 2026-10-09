@@ -289,7 +289,9 @@ pub(super) fn stream_command(
 mod tests {
     use super::parse::{parse_cargo_case, parse_ctest_case, parse_pytest_case};
     use super::runners::regex_literal;
-    use super::{CaseStatus, Selection, TestEvent, stream_command};
+    use super::{CaseStatus, Selection};
+    #[cfg(unix)]
+    use super::{TestEvent, stream_command};
 
     /// `testId` vence `filter`; vazios e espacos nao contam.
     #[test]

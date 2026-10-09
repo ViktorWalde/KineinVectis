@@ -168,7 +168,9 @@ pub fn stream_command_lines_cancelable(
 mod tests {
     use std::process::Command;
 
-    use super::{ProcessError, stream_command_lines, stream_command_lines_cancelable};
+    #[cfg(unix)]
+    use super::stream_command_lines_cancelable;
+    use super::{ProcessError, stream_command_lines};
 
     #[cfg(unix)]
     #[test]

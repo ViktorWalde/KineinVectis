@@ -264,6 +264,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn copy_directory_refuses_descendant_and_nested_symlink() {
         let root = temp_root("copy-directory");
         let source = root.join("src");
@@ -331,6 +332,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn rename_does_not_replace_dangling_symlink() {
         let root = temp_root("rename-symlink-collision");
         let source = root.join("origem.txt");

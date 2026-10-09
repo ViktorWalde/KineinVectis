@@ -161,6 +161,7 @@ fn executavel(caminho: &std::path::Path, corpo: &str) {
 /// Um core com jobs cuja busca de ferramentas e' SO' `dir/bin`, com `dir`
 /// aberto e o indice terminado (o indice mede a versao do Python — o que os
 /// testes provam depois e' o que EXECUTAR faz, sem esse ruido).
+#[cfg(unix)]
 fn core_aberto_em(
     dir: &std::path::Path,
 ) -> (crate::Core, std::sync::mpsc::Receiver<JsonRpcRequest>) {
@@ -187,6 +188,7 @@ fn core_aberto_em(
 }
 
 /// As linhas que a execucao mostrou ate' fechar com sucesso.
+#[cfg(unix)]
 fn saida_ate_terminar(
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
     resposta: &kinein_protocol::JsonRpcResponse,
@@ -200,6 +202,7 @@ fn saida_ate_terminar(
     linhas
 }
 
+#[cfg(unix)]
 fn run_script(core: &mut crate::Core, path: &std::path::Path) -> kinein_protocol::JsonRpcResponse {
     core.handle_request(&JsonRpcRequest::new(
         61_i64,

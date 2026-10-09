@@ -14,7 +14,6 @@
 use std::{
     collections::BTreeMap,
     fs,
-    os::unix::fs::{DirBuilderExt, PermissionsExt},
     path::{Path, PathBuf},
     sync::Mutex,
     time::{SystemTime, UNIX_EPOCH},
@@ -173,12 +172,11 @@ impl History {
     /// A pasta existe e so' o dono entra, mesmo se ja' existia mais aberta.
     fn private_dir(&self) -> Result<(), String> {
         let describe = |error: std::io::Error| format!("{}: {error}", self.dir.display());
-        fs::DirBuilder::new()
+        crate::platform::owner_only_dir_builder()
             .recursive(true)
-            .mode(0o700)
             .create(&self.dir)
             .map_err(describe)?;
-        fs::set_permissions(&self.dir, fs::Permissions::from_mode(0o700)).map_err(describe)
+        crate::platform::restrict_dir_to_owner(&self.dir).map_err(describe)
     }
 }
 

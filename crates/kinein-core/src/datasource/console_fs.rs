@@ -1,10 +1,37 @@
 //! Descriptor-relative console creation and inspection; no symlink traversal.
+//!
+//! So' existe no Unix: a garantia de nao seguir link depende de `openat`. No
+//! Windows os consoles do Banco ainda nao sao suportados (DocsPublic/roadmaps/60
+//! §1: o Banco vem depois do porte), e as tres funcoes dizem isso.
+#[cfg(unix)]
 use rustix::fs::{
     AtFlags, Mode, OFlags, RenameFlags, mkdirat, open, openat, renameat_with, unlinkat,
 };
+#[cfg(unix)]
+use std::io::Write;
+#[cfg(unix)]
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::{fs::File, io::Write, path::Path};
+use std::{fs::File, path::Path};
 
+#[cfg(windows)]
+const NOT_ON_WINDOWS: &str = "Os consoles do Banco ainda não são suportados no Windows.";
+
+#[cfg(windows)]
+pub(super) fn directory(_root: &Path, _versioned: bool, _create: bool) -> Result<File, String> {
+    Err(NOT_ON_WINDOWS.into())
+}
+
+#[cfg(windows)]
+pub(super) fn inspect(_directory: &File, _name: &str) -> Result<bool, String> {
+    Err(NOT_ON_WINDOWS.into())
+}
+
+#[cfg(windows)]
+pub(super) fn create(_directory: &File, _name: &str, _header: &str) -> Result<bool, String> {
+    Err(NOT_ON_WINDOWS.into())
+}
+
+#[cfg(unix)]
 pub(super) fn directory(root: &Path, versioned: bool, create: bool) -> Result<File, String> {
     let mut current = File::from(
         open(
@@ -39,6 +66,7 @@ pub(super) fn directory(root: &Path, versioned: bool, create: bool) -> Result<Fi
     Ok(current)
 }
 
+#[cfg(unix)]
 pub(super) fn inspect(directory: &File, name: &str) -> Result<bool, String> {
     let descriptor = match openat(
         directory,
@@ -61,6 +89,7 @@ pub(super) fn inspect(directory: &File, name: &str) -> Result<bool, String> {
     Ok(true)
 }
 
+#[cfg(unix)]
 pub(super) fn create(directory: &File, name: &str, header: &str) -> Result<bool, String> {
     static SERIAL: AtomicU64 = AtomicU64::new(0);
     let sequence = SERIAL.fetch_add(1, Ordering::Relaxed);

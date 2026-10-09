@@ -35,6 +35,7 @@ pub mod job;
 pub mod monitor;
 
 use std::collections::BTreeMap;
+#[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 use std::process::Command;
@@ -222,7 +223,23 @@ pub fn acesso_de(no: &Path) -> SerialAccess {
     acesso(no, Path::new("/etc/group"))
 }
 
+/// No Windows a serial ainda nao e' suportada (DocsPublic/roadmaps/60 §1:
+/// embarcados vem depois do porte). A porta nao e' aberta, e o veredito diz isso.
+#[cfg(windows)]
+fn acesso(no: &Path, _etc_group: &Path) -> SerialAccess {
+    SerialAccess {
+        readable_writable: false,
+        mode: "?".to_owned(),
+        group: None,
+        hint: Some(format!(
+            "{}: a porta serial ainda não é suportada no Windows.",
+            no.display()
+        )),
+    }
+}
+
 /// `access(2)` para o veredito; `stat` para explicar o veredito.
+#[cfg(unix)]
 fn acesso(no: &Path, etc_group: &Path) -> SerialAccess {
     let readable_writable = rustix::fs::access(
         no,
@@ -264,6 +281,7 @@ fn acesso(no: &Path, etc_group: &Path) -> SerialAccess {
 }
 
 /// `crw-rw----`, como o `ls -l` imprime.
+#[cfg(unix)]
 pub(crate) fn modo_simbolico(mode: u32) -> String {
     let tipo = match mode & 0o170_000 {
         0o020_000 => 'c',
@@ -284,6 +302,7 @@ pub(crate) fn modo_simbolico(mode: u32) -> String {
 }
 
 /// `name:x:gid:members` — sem `getgrgid`, que e' FFI.
+#[cfg(unix)]
 fn nome_do_grupo(etc_group: &Path, gid: u32) -> Option<String> {
     let texto = std::fs::read_to_string(etc_group).ok()?;
     texto.lines().find_map(|linha| {

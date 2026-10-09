@@ -52,6 +52,7 @@ pub mod workspace;
 pub use runtime::{run_json_lines, run_stdio};
 
 mod outcome;
+mod platform;
 
 use std::{
     path::{Path, PathBuf},

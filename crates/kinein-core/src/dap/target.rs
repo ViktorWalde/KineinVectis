@@ -151,11 +151,15 @@ fn single_binary(mut binaries: Vec<PathBuf>, location: &str) -> Result<PathBuf, 
 
 #[cfg(test)]
 mod tests {
-    use std::path::{Path, PathBuf};
+    #[cfg(unix)]
+    use std::path::Path;
+    use std::path::PathBuf;
 
     use kinein_protocol::ProjectKind;
 
-    use super::{DebugError, resolve_program};
+    #[cfg(unix)]
+    use super::DebugError;
+    use super::resolve_program;
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()

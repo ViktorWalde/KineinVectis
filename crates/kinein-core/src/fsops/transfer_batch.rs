@@ -199,6 +199,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn preflight_checks_every_source_before_first_copy() {
         let root = temp_root("symlink");
         fs::write(root.join("good.txt"), "good").unwrap();
@@ -342,6 +343,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn import_rejects_symlinked_ancestor_before_copying_any_item() {
         let root = temp_root("import-symlink");
         let external = root.with_extension("external");

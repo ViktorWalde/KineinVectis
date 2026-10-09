@@ -132,13 +132,17 @@ instalar_fedora() {
     if command -v rustup >/dev/null 2>&1; then
         pacotes_rust=""
     fi
+    # `xz` e `gawk`: a imagem do Fedora no WSL2 vem sem os dois (medido em
+    # 2026-10-09, 60 §2.1), e no Arch eles sao do sistema base. Os testes do
+    # instalador de toolchain extraem `.tar.xz` pelo `tar -J`; a catraca do
+    # `verificar-arquitetura.sh` le a linha de base com `awk`.
     # shellcheck disable=SC2086
     executar sudo dnf install -y \
         @development-tools git cmake ninja-build \
         clang clang-tools-extra compiler-rt lldb gdb \
         qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel qt6-qtsvg \
         $pacotes_rust \
-        ripgrep fd-find unixODBC-devel words
+        ripgrep fd-find unixODBC-devel words xz gawk
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo dnf install -y ShellCheck
     fi

@@ -115,6 +115,7 @@ flowchart LR
   n_core_lsp[lsp]
   n_core_outcome[outcome]
   n_core_owned_child[owned_child]
+  n_core_platform[platform]
   n_core_probe[probe]
   n_core_process[process]
   n_core_project[project]
@@ -157,10 +158,13 @@ flowchart LR
   n_core_datasource --> n_core_fsops
   n_core_datasource --> n_core_jobs
   n_core_datasource --> n_core_owned_child
+  n_core_datasource --> n_core_platform
   n_core_datasource --> n_core_settings
   n_core_datasource --> n_core_stderr_tail
   n_core_datasource --> n_core_tools
   n_core_flash --> n_core_build
+  n_core_format --> n_core_platform
+  n_core_fsops --> n_core_platform
   n_core_fswatch --> n_core_lsp
   n_core_grafana --> n_core_datasource
   n_core_handlers --> n_core_build
@@ -205,6 +209,7 @@ flowchart LR
   n_core_lsp --> n_core_fsops
   n_core_lsp --> n_core_owned_child
   n_core_lsp --> n_core_stderr_tail
+  n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
   n_core_project --> n_core_tools
   n_core_python --> n_core_run
@@ -226,7 +231,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-44 módulos, 89 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+45 módulos, 93 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -246,11 +251,11 @@ flowchart LR
 | `container` | tools | Containers como dominio NATIVO: |
 | `coverage` | process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | lsp, python, run, stderr_tail | Subsistema de debug: |
-| `datasource` | container, db, fsops, jobs, owned_child, settings, stderr_tail, tools | Fontes de dados: |
+| `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `flash` | build | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
-| `format` | — | Buffer formatting by orchestrating the project's own formatters. |
-| `fsops` | — | File system operations confined to the open workspace root. |
+| `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
+| `fsops` | platform | File system operations confined to the open workspace root. |
 | `fswatch` | lsp | Debounced, workspace-confined observation of external file-system changes. |
 | `git` | — | Git orquestrado sobre o binario git. |
 | `grafana` | datasource | Observabilidade: |
@@ -261,7 +266,8 @@ flowchart LR
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
 | `lsp` | cmake, fsops, owned_child, stderr_tail | Subsistema LSP: |
 | `outcome` | — | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
-| `owned_child` | stderr_tail | A base prova o que diz: |
+| `owned_child` | platform, stderr_tail | A base prova o que diz: |
+| `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
 | `probe` | — | Sondas de debug conectadas: |
 | `process` | — | Synchronous line streaming for child processes. |
 | `project` | tools | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |

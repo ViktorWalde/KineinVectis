@@ -18,29 +18,24 @@
 //! - **encerrar com prazo e dizer o que houve:** stdin fechado, espera,
 //!   `SIGTERM` no grupo, espera curta, `SIGKILL` no grupo, coleta. So'
 //!   "colhido e leitor junto" conta como encerrado.
+//!
+//! O grupo e o ambiente que muda por sistema moram em `crate::platform`
+//! (60 §3.2): no Windows nao ha' `SIGTERM`, e o encerramento vai do EOF direto
+//! ao `kill` da arvore.
 
 use std::{
     io,
-    os::unix::process::CommandExt,
     process::{Child, ChildStdin, ChildStdout, Command, ExitStatus, Stdio},
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
 
-use rustix::process::{Pid, Signal, kill_process_group};
-
+use crate::platform::{self, Group};
 use crate::stderr_tail::{DEFAULT_CAPACITY, LineSink, StderrTail};
 
-/// Variaveis que um processo de longa vida herda; o resto vem explicito.
-pub const ALLOWED_ENV: [&str; 7] = [
-    "PATH",
-    "HOME",
-    "LANG",
-    "LC_ALL",
-    "TZ",
-    "TMPDIR",
-    "XDG_RUNTIME_DIR",
-];
+/// Variaveis que um processo de longa vida herda; o resto vem explicito. A
+/// lista muda por sistema (`platform::INHERITED_ENV`).
+pub const ALLOWED_ENV: &[&str] = platform::INHERITED_ENV;
 
 /// Espera depois do `SIGTERM`, antes do `SIGKILL`.
 const TERMINATE_GRACE: Duration = Duration::from_millis(500);
@@ -62,13 +57,13 @@ pub enum Env<'a> {
 /// Mata o grupo do processo de qualquer thread, sem colher nem esperar: para
 /// a thread leitora que descobre uma falha e nao pode encerrar a si mesma.
 #[derive(Debug, Clone, Copy)]
-pub struct GroupKiller(Option<Pid>);
+pub struct GroupKiller(Option<Group>);
 
 impl GroupKiller {
     /// `SIGKILL` no grupo; a coleta fica com o dono do [`OwnedChild`].
     pub fn kill(self) {
         if let Some(group) = self.0 {
-            kill_process_group(group, Signal::KILL).ok();
+            platform::kill_group(group);
         }
     }
 }
@@ -109,7 +104,7 @@ impl Closed {
 pub struct OwnedChild {
     closed: bool,
     child: Child,
-    group: Option<Pid>,
+    group: Option<Group>,
     stdin: Option<ChildStdin>,
     stderr: StderrTail,
     reader: Option<JoinHandle<()>>,
@@ -139,13 +134,13 @@ impl OwnedChild {
                 command.env(name, value);
             }
         }
+        platform::own_group(&mut command);
         command
-            .process_group(0)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         let mut child = command.spawn()?;
-        let group = i32::try_from(child.id()).ok().and_then(Pid::from_raw);
+        let group = platform::group_of(&child);
         let (Some(stdin), Some(stdout), Some(stderr)) =
             (child.stdin.take(), child.stdout.take(), child.stderr.take())
         else {
@@ -207,18 +202,19 @@ impl OwnedChild {
         let mut status = wait_until(&mut self.child, grace);
         if status.is_none() {
             ending = Ending::Terminated;
-            self.signal_group(Signal::TERM);
-            status = wait_until(&mut self.child, TERMINATE_GRACE);
+            if self.terminate_group() {
+                status = wait_until(&mut self.child, TERMINATE_GRACE);
+            }
         }
         if status.is_none() {
             ending = Ending::Killed;
-            self.signal_group(Signal::KILL);
+            self.kill_group();
             status = self.child.wait().ok();
         }
         // O lider saiu; um descendente no mesmo grupo ainda pode viver (e
         // segurar o stdout aberto). No Linux o PGID nao e' reaproveitado
         // enquanto o grupo existe, entao o sinal so' alcanca o que restou.
-        self.signal_group(Signal::KILL);
+        self.kill_group();
         let reader_joined = self.reader.take().is_none_or(join_until);
         self.closed = true;
         Closed {
@@ -228,10 +224,14 @@ impl OwnedChild {
         }
     }
 
-    fn signal_group(&self, signal: Signal) {
+    /// O pedido gentil ao grupo; `false` quando o sistema nao tem um.
+    fn terminate_group(&self) -> bool {
+        self.group.is_some_and(platform::terminate_group)
+    }
+
+    fn kill_group(&self) {
         if let Some(group) = self.group {
-            // ESRCH: o grupo ja' acabou, que e' o resultado esperado.
-            kill_process_group(group, signal).ok();
+            platform::kill_group(group);
         }
     }
 }
@@ -239,7 +239,7 @@ impl OwnedChild {
 impl Drop for OwnedChild {
     fn drop(&mut self) {
         if !self.closed {
-            self.signal_group(Signal::KILL);
+            self.kill_group();
             drop(self.child.wait());
         }
     }

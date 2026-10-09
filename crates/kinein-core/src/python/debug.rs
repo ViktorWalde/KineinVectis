@@ -63,8 +63,10 @@ pub fn debugpy_available(interpreter: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
     use std::path::Path;
 
+    #[cfg(unix)]
     use super::debugpy_available;
 
     #[cfg(unix)]

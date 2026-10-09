@@ -41,6 +41,7 @@ fn fs_methods_require_open_workspace() {
 }
 
 #[test]
+#[cfg(unix)]
 fn fs_external_preview_reads_only_selected_text_without_importing() {
     let base =
         std::env::temp_dir().join(format!("kinein-fs-external-preview-{}", std::process::id()));

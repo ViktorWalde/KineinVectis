@@ -176,7 +176,12 @@ pub fn inspect(root: &Path, name: &str, path: &Path) -> Result<(), String> {
     Ok(())
 }
 
+// Os consoles so' existem no Unix (console_fs.rs); no Windows eles respondem
+// "nao suportado", e estes testes nao se aplicam. Dois atributos, e nao
+// `cfg(all(test, unix))`: o clippy so' reconhece modulo de teste (e libera o
+// `unwrap`, clippy.toml) pelo `#[cfg(test)]` exato.
 #[cfg(test)]
+#[cfg(unix)]
 mod tests {
     use super::{ensure, file_stem};
     use kinein_protocol::{DataSourceEngine, DataSourceProfile, SecretSource};

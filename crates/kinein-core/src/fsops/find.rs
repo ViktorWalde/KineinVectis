@@ -131,7 +131,9 @@ fn strip_cwd_prefix(line: &str) -> &str {
 mod tests {
     use std::{fs, path::PathBuf};
 
-    use super::{find_files_with_binary, strip_cwd_prefix};
+    use super::find_files_with_binary;
+    #[cfg(unix)]
+    use super::strip_cwd_prefix;
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()

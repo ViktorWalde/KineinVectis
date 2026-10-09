@@ -164,32 +164,44 @@ Linux são a prova disso. O que difere por sistema mora num lugar só. No core
 sistema, e os domínios chamam o `platform`, sem `cfg` espalhado. Na UI vale o
 mesmo: um arquivo por sistema atrás do cabeçalho que já existe.
 
-**W1, o core compila no Windows.**
+**W1, o core compila no Windows.** Revisto ao implementar (2026-10-09): o
+workspace tem `unsafe_code = "forbid"` e o core, `#![forbid(unsafe_code)]`.
+Toda chamada direta à API do Windows (Job Object, `MoveFileExW`) é `unsafe`,
+então o Windows usa só a biblioteca padrão. Não entra `windows-sys` e nenhum
+contrato é relaxado. Um Job Object continua possível se o autor decidir um
+crate de FFI próprio.
 
-- `Cargo.toml`: o `rustix` passa para `[target.'cfg(unix)'.dependencies]`. O
-  `windows-sys` 0.61 entra em `[target.'cfg(windows)'.dependencies]`; ele já
-  está no `Cargo.lock` como transitiva, então são +0 crates (MIT OR
-  Apache-2.0).
-- `platform::fs`:
+- `Cargo.toml`: o `rustix` passa para `[target.'cfg(unix)'.dependencies]`.
+- `platform` (`mod.rs` com a API; `unix.rs` com o código de antes, movido;
+  `windows.rs`):
   - publicar sem sobrescrever: no Linux, o `renameat2` com `NOREPLACE` de
-    hoje; no Windows, o `MoveFileExW` sem `MOVEFILE_REPLACE_EXISTING`, que
-    falha com `ERROR_ALREADY_EXISTS` e é atômico no mesmo volume;
-  - abrir arquivo e criar pasta privada: no Linux, `0600`/`0700`; no Windows,
-    a D3;
-  - copiar a permissão: no Linux, o modo; no Windows, só o somente-leitura.
-- `platform::process`, o grupo do processo. No Linux, o `process_group(0)` e o
-  sinal no grupo de hoje. No Windows, um Job Object com
-  `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, com o filho associado logo depois do
-  `spawn`. O Windows não tem `SIGTERM` para um processo sem console, então lá
-  o encerramento vai do EOF no stdin direto ao `TerminateJobObject`
-  (`Ending::Killed`). Limite: um neto criado entre o `spawn` e a associação
-  escapa do job.
+    hoje. No Windows, o arquivo vai por `hard_link`, que falha se o destino
+    existe, seguido da remoção da origem. A pasta vai por `rename`, depois de
+    conferir que o destino não existe. Limite: um arquivo criado no destino
+    entre a conferência e o `rename` de uma pasta seria substituído;
+  - abrir sem seguir link (o motor de cópia): no Linux, o `openat` com
+    `O_NOFOLLOW` a partir de `/`. No Windows, cada nó é aberto com
+    `FILE_FLAG_OPEN_REPARSE_POINT` e conferido no próprio handle, que recusa
+    link, junção e qualquer ponto de reparse. Limite: uma pasta já conferida
+    pode ser trocada por junção antes de o filho ser aberto;
+  - arquivo e pasta privados: no Linux, `0600`/`0700`; no Windows, a D3;
+  - escrita para o dono, ao limpar uma cópia interrompida: no Linux, `u+rwx`;
+    no Windows, sem o somente-leitura;
+  - o grupo do processo: no Linux, o `process_group(0)` e o sinal no grupo de
+    hoje. No Windows, a árvore de processos, encerrada por `taskkill /T /F`, e
+    o filho sem janela de console. Não há `SIGTERM` para um processo sem
+    janela, então o encerramento vai do EOF no stdin direto ao `taskkill`
+    (`Ending::Killed`). Limite: um descendente cujo pai já saiu não está mais
+    na árvore e escapa.
 - O ambiente permitido (`ALLOWED_ENV`) passa a depender do sistema. No Windows
   ele leva `PATH`, `SystemRoot`, `windir`, `TEMP`, `TMP`, `USERPROFILE`,
   `APPDATA`, `LOCALAPPDATA`, `ComSpec` e `PATHEXT`; sem `SystemRoot`, muito
   programa do Windows não sobe.
 - `serial`: a checagem de permissão do dispositivo é de Unix. No Windows o
   domínio responde "não suportado no Windows" até a fatia de embarcados.
+- Os consoles do Banco (`datasource/console_fs.rs`) dependem do `openat` para
+  não seguir link. No Windows eles respondem "não suportado" até a fatia do
+  Banco, em vez de existirem com uma garantia mais fraca.
 - PostgreSQL por socket Unix: só no Unix; no Windows, TCP.
 - Prova: `cargo clippy --workspace --all-targets` e `cargo test --workspace`
   verdes no Linux (WSL) e no Windows. Os testes que só fazem sentido no Unix
@@ -208,7 +220,22 @@ mesmo: um arquivo por sistema atrás do cabeçalho que já existe.
 - O shell do terminal: no Unix, o `SHELL`, senão `/bin/bash`. No Windows, o
   `pwsh.exe`, senão o `powershell.exe`, senão o `%ComSpec%`; o `portable-pty`
   usa o ConPTY.
-- Prova: teste de unidade por sistema para cada função do `platform`.
+- Achados dos testes da W1 no Windows (40.7 §7.262), que entram aqui:
+  - **o `canonicalize` devolve `\\?\C:\...`**, e nesse formato `/` não é
+    separador. A raiz do projeto sai assim do `workspace.open`, e todo
+    caminho que a UI manda com `/` cai fora do projeto. A correção é um
+    `platform::canonicalize` que tira o prefixo quando o caminho cabe sem ele;
+  - **caminho relativo gravado com `\`**: a sessão (`workspace/session.rs`)
+    gravaria `src\main.rs`, e o mesmo projeto aberto no Linux não acharia o
+    arquivo. Caminho relativo em formato persistido e no protocolo usa `/`
+    nos dois sistemas;
+  - o `owned_child` no Windows ganha teste próprio (um processo com filho,
+    encerrado pelo `taskkill`). Os de hoje usam processos falsos em `sh`;
+  - os testes que falham no Windows por infraestrutura passam a rodar ou
+    ficam `#[cfg(unix)]` com o motivo: ferramenta falsa em `sh`, `python3`
+    ausente ou asserção que compara caminho com `/`.
+- Prova: teste de unidade por sistema para cada função do `platform`, e o
+  `cargo test --workspace` verde no Windows.
 
 **W3, a UI compila e abre no Windows.**
 

@@ -1,6 +1,7 @@
 //! O historico prova o que promete: ordem, repeticao, tetos, separacao por
 //! projeto e por conexao, arquivo estranho intacto e permissoes privadas.
 
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
 use super::*;
@@ -32,9 +33,15 @@ fn newest_first_and_an_immediate_repeat_updates_the_top() {
             Some(1),
         )
         .unwrap();
-    // As pastas que o core cria ja' nascem so' do dono, a mae inclusive.
-    let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o777;
-    assert_eq!(mode(state.parent().unwrap()), 0o700);
+    // As pastas que o core cria ja' nascem so' do dono, a mae inclusive. No
+    // Windows quem garante isso e' a ACL da pasta do usuario (60 §3.1, D3).
+    #[cfg(unix)]
+    {
+        let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode(state.parent().unwrap()), 0o700);
+    }
+    #[cfg(not(unix))]
+    let _ = &state;
     history
         .record(
             &project,
@@ -153,6 +160,7 @@ fn connections_and_projects_are_separate_and_clear_is_per_connection() {
 }
 
 #[test]
+#[cfg(unix)]
 fn the_same_project_by_a_symlink_shares_the_history() {
     let (project, _, history) = dirs("link");
     let link = project.with_file_name("atalho");
@@ -211,6 +219,7 @@ fn an_unreadable_or_foreign_file_stays_intact() {
 }
 
 #[test]
+#[cfg(unix)]
 fn the_folder_and_the_file_are_private() {
     let (project, state, history) = dirs("privado");
     // A pasta ja' existia mais aberta: passa a ser so' do dono.

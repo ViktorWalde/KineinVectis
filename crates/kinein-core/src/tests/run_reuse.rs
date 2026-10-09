@@ -61,6 +61,7 @@ impl Drop for Fixture {
 }
 
 #[test]
+#[cfg(unix)]
 fn canonical_file_identity_survives_retries_but_pty_ids_do_not() {
     let mut fixture = Fixture::new("reuse-script");
     std::fs::create_dir(fixture.root.join("other")).unwrap();

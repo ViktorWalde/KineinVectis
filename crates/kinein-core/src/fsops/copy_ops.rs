@@ -4,11 +4,10 @@ use std::{
     ffi::{OsStr, OsString},
     fs,
     io::{self, Read, Write},
-    os::unix::{ffi::OsStrExt, fs::PermissionsExt},
-    path::{Component, Path, PathBuf},
+    path::{Path, PathBuf},
 };
 
-use rustix::fs::{Dir, Mode, OFlags, openat};
+use crate::platform::{self, NoFollow};
 
 use super::FsError;
 use super::confine::{TransferKind, transfer_paths};
@@ -114,44 +113,27 @@ pub(super) fn open_source(source: &Path) -> Result<fs::File, FsError> {
             path: source.display().to_string(),
         });
     }
-    let mut current = fs::File::open("/").map_err(|source_error| FsError::Io {
-        path: "/".to_string(),
-        source: source_error,
-    })?;
-    for component in source.components() {
-        let Component::Normal(name) = component else {
-            if matches!(component, Component::RootDir | Component::CurDir) {
-                continue;
-            }
-            return Err(FsError::InvalidFileName {
-                path: source.display().to_string(),
-            });
-        };
-        current = open_child(&current, name, source)?;
-    }
-    Ok(current)
+    platform::open_nofollow(source).map_err(|error| nofollow_error(error, source))
 }
 
-fn open_child(parent: &fs::File, name: &OsStr, path: &Path) -> Result<fs::File, FsError> {
-    let descriptor = openat(
-        parent,
-        name,
-        OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
-        Mode::empty(),
-    )
-    .map_err(|error| {
-        if error == rustix::io::Errno::LOOP {
-            FsError::UnsupportedEntry {
-                path: path.display().to_string(),
-            }
-        } else {
-            FsError::Io {
-                path: path.display().to_string(),
-                source: error.into(),
-            }
-        }
-    })?;
-    Ok(fs::File::from(descriptor))
+/// Abre o filho `name` da pasta `parent`, aberta em `parent_path`.
+fn open_child(
+    parent: &fs::File,
+    parent_path: &Path,
+    name: &OsStr,
+    path: &Path,
+) -> Result<fs::File, FsError> {
+    platform::open_child_nofollow(parent, parent_path, name)
+        .map_err(|error| nofollow_error(error, path))
+}
+
+fn nofollow_error(error: NoFollow, path: &Path) -> FsError {
+    let path = path.display().to_string();
+    match error {
+        NoFollow::Link => FsError::UnsupportedEntry { path },
+        NoFollow::InvalidPath => FsError::InvalidFileName { path },
+        NoFollow::Io(source) => FsError::Io { path, source },
+    }
 }
 
 fn copyable_metadata<C: Fn() -> bool>(
@@ -201,7 +183,7 @@ fn scan_open_entry<C: Fn() -> bool>(
     let mut total = 0u64;
     for name in child_names(descriptor, source)? {
         let child_path = source.join(&name);
-        let child = open_child(descriptor, &name, &child_path)?;
+        let child = open_child(descriptor, source, &name, &child_path)?;
         total = total.saturating_add(scan_open_entry(&child, &child_path, depth + 1, cancel)?);
     }
     Ok(total)
@@ -211,19 +193,10 @@ fn scan_open_entry<C: Fn() -> bool>(
 /// chamador abre um filho de cada vez, e uma pasta enorme nao acumula
 /// descritores abertos.
 fn child_names(descriptor: &fs::File, source: &Path) -> Result<Vec<OsString>, FsError> {
-    let io_error = |error: rustix::io::Errno| FsError::Io {
+    platform::child_names(descriptor, source).map_err(|error| FsError::Io {
         path: source.display().to_string(),
-        source: error.into(),
-    };
-    let mut names = Vec::new();
-    for entry in Dir::read_from(descriptor).map_err(io_error)? {
-        let entry = entry.map_err(io_error)?;
-        let name = OsStr::from_bytes(entry.file_name().to_bytes());
-        if name != OsStr::new(".") && name != OsStr::new("..") {
-            names.push(name.to_os_string());
-        }
-    }
-    Ok(names)
+        source: error,
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -282,7 +255,7 @@ where
         })?;
         for name in child_names(descriptor, source)? {
             let child_path = source.join(&name);
-            let child = open_child(descriptor, &name, &child_path)?;
+            let child = open_child(descriptor, source, &name, &child_path)?;
             copy_entry(
                 &child,
                 &child_path,
@@ -318,9 +291,10 @@ fn make_directories_writable(path: &Path) {
     if !metadata.is_dir() {
         return;
     }
-    let mut permissions = metadata.permissions();
-    permissions.set_mode(permissions.mode() | 0o700);
-    drop(fs::set_permissions(path, permissions));
+    drop(fs::set_permissions(
+        path,
+        platform::owner_writable(metadata.permissions()),
+    ));
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries.flatten() {
             make_directories_writable(&entry.path());

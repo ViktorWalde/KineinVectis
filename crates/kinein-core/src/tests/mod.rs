@@ -9,8 +9,12 @@ mod cmake;
 mod cmake_model;
 mod configaction;
 mod container;
+// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
+#[cfg(unix)]
 mod coverage;
 mod datasource;
+// Os consoles do Banco ainda nao rodam no Windows (console_fs.rs).
+#[cfg(unix)]
 mod datasource_console;
 mod datasource_discover;
 mod datasource_history;
@@ -26,8 +30,12 @@ mod debug;
 mod debug_attach;
 mod debug_inspect;
 mod dispatch;
+// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
+#[cfg(unix)]
 mod flash_proposal;
 mod format;
+// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
+#[cfg(unix)]
 mod frameworks;
 mod fs;
 mod git;
@@ -37,6 +45,8 @@ mod index_context;
 mod jobs;
 mod lsp;
 mod lsp_companion;
+// O servidor falso destes testes e' um script de shell (so' Unix).
+#[cfg(unix)]
 mod lsp_deferred;
 mod lsp_qml;
 mod lsp_server;
@@ -44,14 +54,20 @@ mod lsp_stderr;
 mod project;
 mod python;
 mod remote;
+// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
+#[cfg(unix)]
 mod remote_mirror;
 mod rigor;
 mod run;
 mod run_reuse;
 mod runconfig;
 mod runners;
+// A serial ainda nao roda no Windows (60 §1); os testes dela sao de Unix.
+#[cfg(unix)]
 mod serial;
+#[cfg(unix)]
 mod serial_files;
+#[cfg(unix)]
 mod serial_identify;
 mod settings;
 mod syntax;

@@ -66,11 +66,15 @@ pub fn async_config_for(
     secret: Option<&Secret>,
 ) -> tokio_postgres::Config {
     let mut config = tokio_postgres::Config::new();
+    // Socket Unix so' existe no Unix; no Windows o PostgreSQL e' sempre TCP.
+    #[cfg(unix)]
     if profile.host.starts_with('/') {
         config.host_path(&profile.host);
     } else {
         config.host(&profile.host);
     }
+    #[cfg(not(unix))]
+    config.host(&profile.host);
     config
         .port(profile.port)
         .dbname(&profile.database)

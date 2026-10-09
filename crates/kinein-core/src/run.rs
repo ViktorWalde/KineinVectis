@@ -159,7 +159,7 @@ pub(crate) fn is_executable(path: &Path) -> bool {
 
 /// Non-Unix platforms have no execute bit; nothing is auto-runnable.
 #[cfg(not(unix))]
-pub(crate) fn is_executable(_path: &Path) -> bool {
+pub(crate) const fn is_executable(_path: &Path) -> bool {
     false
 }
 

@@ -8,8 +8,10 @@
 > §1).
 >
 > **Onde está o porte:** medido (60 §2.1) e desenhado (60 §3: as decisões
-> D1–D4 e as fatias W1–W5). O próximo passo é a W1, o core compilando no
-> Windows. O trabalho acontece no branch `porte-windows`, no clone
+> D1–D4 e as fatias W1–W5). **A W1 está feita** (40.7 §7.262): o core compila
+> no Windows, com o clippy limpo lá e o gate rápido do Linux verde. O próximo
+> passo é a W2: as pastas do usuário, o shell, o prefixo `\\?\` e os testes
+> verdes no Windows. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

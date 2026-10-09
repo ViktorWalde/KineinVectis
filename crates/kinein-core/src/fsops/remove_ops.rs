@@ -56,7 +56,11 @@ pub fn delete(root: &Path, path: &Path) -> Result<PathBuf, FsError> {
     Ok(target)
 }
 
+// A lixeira dos testes e' a do freedesktop (`XDG_DATA_HOME` isolado) e os
+// links sao do Unix; no Windows a lixeira e' a do sistema, sem estes testes.
+// Dois atributos: o clippy so' reconhece modulo de teste pelo `#[cfg(test)]`.
 #[cfg(test)]
+#[cfg(unix)]
 mod tests {
     use std::{
         env, fs,

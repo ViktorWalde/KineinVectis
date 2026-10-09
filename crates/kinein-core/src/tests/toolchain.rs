@@ -555,6 +555,7 @@ fn buildroot_tree(bin: &Path) -> PathBuf {
     host
 }
 
+#[cfg(unix)]
 fn set_kit(core: &mut Core, id: i64, params: Value) -> Value {
     core.handle_request(&JsonRpcRequest::new(id, "toolchain.setKit", Some(params)))
         .response()
@@ -717,6 +718,7 @@ fn the_kit_toolchain_file_reaches_cmake_unless_the_preset_declares_one() {
 /// Os firmwares (C5) vem no mesmo catalogo, com `kind: firmware`, como se
 /// gravam, e o arquivo onde vao ficar; num projeto C (STM32) nenhum e'
 /// recomendado.
+#[cfg(unix)]
 fn firmwares_no_catalogo(toolchains: &[Value], raiz: &Path) {
     let esp32 = toolchains
         .iter()
@@ -737,6 +739,7 @@ fn firmwares_no_catalogo(toolchains: &[Value], raiz: &Path) {
     assert_eq!(arm_kind(toolchains), "toolchain");
 }
 
+#[cfg(unix)]
 fn arm_kind(toolchains: &[Value]) -> String {
     toolchains
         .iter()

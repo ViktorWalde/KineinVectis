@@ -464,6 +464,7 @@ pub(super) fn stream_command(
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
     use super::BuildEvent;
 
     /// Perfil de rigor do ruff (fatia Python 2): a IDE so' escolhe regras quando
