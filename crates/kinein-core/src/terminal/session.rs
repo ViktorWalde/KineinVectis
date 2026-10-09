@@ -110,11 +110,12 @@ impl TerminalManager {
         }
     }
 
-    /// Opens the user's shell (from `$SHELL`) inside a real PTY at `root`.
+    /// Opens the user's shell (`platform::default_shell`: `$SHELL` on Unix,
+    /// `pwsh`/`powershell`/`%ComSpec%` on Windows) inside a real PTY at `root`.
     /// Returns `(id, shell)` — o `id` identifica a sessão nos comandos e
     /// eventos seguintes (D2.3).
     pub fn open(&mut self, root: &Path) -> Result<(String, String), TerminalError> {
-        let shell = std::env::var("SHELL").unwrap_or_else(|_absent| "/bin/bash".to_owned());
+        let shell = crate::platform::default_shell();
         let id = self.open_with_shell(root, &shell)?;
         Ok((id, shell))
     }
@@ -506,7 +507,7 @@ mod tests {
             .join(format!("{}-{test_name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        dir.canonicalize().unwrap()
+        crate::platform::canonicalize(&dir).unwrap()
     }
 
     #[test]

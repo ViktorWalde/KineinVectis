@@ -78,11 +78,10 @@ pub fn capabilities() -> (Vec<&'static str>, Vec<&'static str>) {
 /// Shell-like label used only for display in the Run panel and events.
 #[must_use]
 pub fn script_display_command(root: &Path, interpreter: &str, script: &Path) -> String {
-    let display_path = script
-        .strip_prefix(root)
-        .unwrap_or(script)
-        .display()
-        .to_string();
+    let display_path = script.strip_prefix(root).map_or_else(
+        |_| script.display().to_string(),
+        crate::platform::portable_relative,
+    );
     format!("{interpreter} -- '{}'", display_path.replace('\'', "'\\''"))
 }
 
@@ -180,7 +179,7 @@ mod tests {
             .join(format!("{}-{test_name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        dir.canonicalize().unwrap()
+        crate::platform::canonicalize(&dir).unwrap()
     }
 
     /// O catalogo que a UI recebe e' a decisao do `run.script`: toda extensao

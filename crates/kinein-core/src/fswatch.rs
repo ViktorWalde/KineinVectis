@@ -372,7 +372,7 @@ mod tests {
             std::env::temp_dir().join(format!("kinein-watch-integration-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).unwrap();
-        let root = root.canonicalize().unwrap();
+        let root = crate::platform::canonicalize(&root).unwrap();
         let target = root.join("external.txt");
         let (sender, receiver) = mpsc::channel();
         let watcher = WorkspaceWatcher::new(&root, sender).unwrap();

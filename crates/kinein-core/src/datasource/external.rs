@@ -156,17 +156,14 @@ impl Adapters {
         let program = self
             .dir
             .as_ref()
-            .map(|dir| dir.join(format!("kinein-adapter-{engine}")))
+            .map(|dir| dir.join(adapter_file(&engine)))
             .filter(|path| path.is_file())
             .ok_or_else(|| {
                 format!(
                     "o adaptador da IDE para {engine} nao esta' instalado ao lado do core ({})",
                     self.dir.as_ref().map_or_else(
                         || "pasta do core desconhecida".to_owned(),
-                        |dir| dir
-                            .join(format!("kinein-adapter-{engine}"))
-                            .display()
-                            .to_string()
+                        |dir| dir.join(adapter_file(&engine)).display().to_string()
                     )
                 )
             })?;
@@ -207,6 +204,12 @@ impl Adapters {
             Err(failure) => Err(failure.message),
         }
     }
+}
+
+/// O nome do arquivo do adaptador de `engine`: `kinein-adapter-<motor>`, com o
+/// `.exe` no Windows (achado em 2026-10-09, 60 §2).
+fn adapter_file(engine: &str) -> String {
+    format!("kinein-adapter-{engine}{}", std::env::consts::EXE_SUFFIX)
 }
 
 /// Encerra numa thread: o `shutdown` espera o adaptador sair e ser colhido.

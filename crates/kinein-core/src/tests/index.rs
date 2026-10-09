@@ -317,7 +317,7 @@ fn cancelling_leaves_the_index_failed_with_the_reason() {
 /// proprio `workspace.open`, e `index.symbols` responde `ready`.
 #[test]
 fn opening_a_workspace_builds_the_index_and_symbols_answer() {
-    let raiz = projeto("despacho").canonicalize().unwrap();
+    let raiz = crate::platform::canonicalize(&projeto("despacho")).unwrap();
     let mut core = core_with_empty_search_path("index");
     let vazio = core.handle_request(&JsonRpcRequest::new(1_i64, "index.status", Some(json!({}))));
     assert_eq!(vazio.response().result.as_ref().unwrap()["state"], "idle");
@@ -353,7 +353,7 @@ fn opening_a_workspace_builds_the_index_and_symbols_answer() {
 fn files_born_in_unopened_folders_reach_the_index_through_the_watcher() {
     use std::time::{Duration, Instant};
 
-    let raiz = projeto("watcher").canonicalize().unwrap();
+    let raiz = crate::platform::canonicalize(&projeto("watcher")).unwrap();
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut core = core_with_empty_search_path("index-watcher");
     core.enable_lsp(sender);

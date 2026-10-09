@@ -24,10 +24,11 @@ struct PersistedWorkspace {
 
 /// Opens a directory as workspace and persists `.kinein/workspace.json`.
 pub fn open_workspace(path: &Path) -> Result<WorkspaceInfo, WorkspaceError> {
-    let root = fs::canonicalize(path).map_err(|source| WorkspaceError::InvalidRoot {
-        path: path.display().to_string(),
-        source,
-    })?;
+    let root =
+        crate::platform::canonicalize(path).map_err(|source| WorkspaceError::InvalidRoot {
+            path: path.display().to_string(),
+            source,
+        })?;
 
     if !root.is_dir() {
         return Err(WorkspaceError::NotADirectory {
@@ -55,10 +56,11 @@ pub fn open_workspace(path: &Path) -> Result<WorkspaceInfo, WorkspaceError> {
 
 /// Lists child directories for the IDE-owned workspace picker.
 pub fn browse_directories(path: &Path) -> Result<WorkspaceBrowseResult, WorkspaceError> {
-    let directory = fs::canonicalize(path).map_err(|source| WorkspaceError::InvalidRoot {
-        path: path.display().to_string(),
-        source,
-    })?;
+    let directory =
+        crate::platform::canonicalize(path).map_err(|source| WorkspaceError::InvalidRoot {
+            path: path.display().to_string(),
+            source,
+        })?;
 
     if !directory.is_dir() {
         return Err(WorkspaceError::NotADirectory {
@@ -86,11 +88,12 @@ pub fn browse_directories(path: &Path) -> Result<WorkspaceBrowseResult, Workspac
             })?;
 
         if metadata.is_dir() {
-            let canonical_path =
-                fs::canonicalize(&path).map_err(|source| WorkspaceError::ListDirectory {
+            let canonical_path = crate::platform::canonicalize(&path).map_err(|source| {
+                WorkspaceError::ListDirectory {
                     path: path.display().to_string(),
                     source,
-                })?;
+                }
+            })?;
             // A pasta de projeto vem marcada (0.147.0): o seletor mostra o
             // ecossistema antes de abrir. Sao stats na pasta filha, sem ler.
             // Todos os sistemas (0.152.0): o hibrido aparece como hibrido.
@@ -175,7 +178,10 @@ mod tests {
         assert_eq!(workspace.kind, ProjectKind::Python);
         assert_eq!(
             workspace.root,
-            dir.canonicalize().unwrap().display().to_string()
+            crate::platform::canonicalize(&dir)
+                .unwrap()
+                .display()
+                .to_string()
         );
 
         let raw = fs::read_to_string(metadata_path(&dir)).unwrap();
@@ -208,7 +214,10 @@ mod tests {
 
         assert_eq!(
             result.path,
-            dir.canonicalize().unwrap().display().to_string()
+            crate::platform::canonicalize(&dir)
+                .unwrap()
+                .display()
+                .to_string()
         );
         assert!(result.parent.is_some());
         let names = result

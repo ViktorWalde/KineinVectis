@@ -39,7 +39,7 @@ fn workspace_with_tools(name: &str, binarios: &[&str]) -> (PathBuf, PathBuf) {
         let caminho = bin.join(binario);
         crate::write_executable(&caminho, "#!/bin/sh\necho 1.0\n");
     }
-    (root.canonicalize().unwrap(), bin)
+    (crate::platform::canonicalize(&root).unwrap(), bin)
 }
 
 /// Um core cujo detector le APENAS o `bin` falso: a maquina real nao entra.

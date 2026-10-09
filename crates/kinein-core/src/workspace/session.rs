@@ -114,11 +114,14 @@ pub fn load_session(root: &Path) -> Option<WorkspaceSession> {
     })
 }
 
-/// Relativiza `path` ao root quando ele e um arquivo existente confinado.
+/// Relativiza `path` ao root quando ele e um arquivo existente confinado. O
+/// relativo vai com `/` nos dois sistemas (D5, 60 §3.1): a sessao mora no
+/// projeto e pode ir para o Git. Na volta, o `confine_file` canoniza e
+/// normaliza o separador.
 fn relative_inside_root(root: &Path, path: &Path) -> Option<String> {
     let absolute = fsops::confine_file(root, path).ok()?;
     let relative = absolute.strip_prefix(root).ok()?;
-    Some(relative.display().to_string())
+    Some(crate::platform::portable_relative(relative))
 }
 
 #[cfg(test)]
@@ -135,7 +138,7 @@ mod tests {
         std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
         std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
         std::fs::write(dir.join("src/lib.rs"), "pub fn x() {}\n").unwrap();
-        dir.canonicalize().unwrap()
+        crate::platform::canonicalize(&dir).unwrap()
     }
 
     #[test]

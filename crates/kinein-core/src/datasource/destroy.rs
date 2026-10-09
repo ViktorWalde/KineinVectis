@@ -50,10 +50,9 @@ pub fn plan(root: &Path, profile: &DataSourceProfile, container_exists: bool) ->
     match profile.engine {
         DataSourceEngine::Sqlite => {
             let absolute = super::sqlite::file_path(root, &profile.database);
-            let inside = absolute
-                .canonicalize()
+            let inside = crate::platform::canonicalize(&absolute)
                 .ok()
-                .zip(root.canonicalize().ok())
+                .zip(crate::platform::canonicalize(root).ok())
                 .is_some_and(|(file, root)| file.starts_with(&root));
             if inside {
                 DestroyPlan::SqliteFile { path: absolute }

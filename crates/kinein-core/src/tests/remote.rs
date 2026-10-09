@@ -32,7 +32,7 @@ fn cenario(nome: &str) -> Cenario {
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(base.join("bin")).unwrap();
     std::fs::create_dir_all(base.join("ws/build")).unwrap();
-    let base = base.canonicalize().unwrap();
+    let base = crate::platform::canonicalize(&base).unwrap();
     let (sender, receiver) = mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
         base.join("bin"),
@@ -421,7 +421,7 @@ fn cenario_descoberta(nome: &str) -> (crate::Core, PathBuf) {
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(base.join("bin")).unwrap();
     std::fs::create_dir_all(base.join("home/.ssh")).unwrap();
-    let base = base.canonicalize().unwrap();
+    let base = crate::platform::canonicalize(&base).unwrap();
     let core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
         base.join("bin"),
     ))

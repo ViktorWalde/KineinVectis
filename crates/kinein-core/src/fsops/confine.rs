@@ -19,7 +19,7 @@ pub(super) enum TransferKind {
 
 /// Canonicalizes `path` and ensures it stays inside `root`.
 pub(super) fn confine(root: &Path, path: &Path) -> Result<PathBuf, FsError> {
-    let canonical = fs::canonicalize(path).map_err(|source| FsError::InvalidPath {
+    let canonical = crate::platform::canonicalize(path).map_err(|source| FsError::InvalidPath {
         path: path.display().to_string(),
         source,
     })?;

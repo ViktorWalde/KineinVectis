@@ -18,7 +18,7 @@ pub mod detect;
 pub mod esp;
 pub mod sdk;
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use kinein_protocol::{Framework, FrameworkInfo, ProjectModel, TargetModel};
 
@@ -45,7 +45,7 @@ pub fn model(root: &Path, kit_chip: Option<&str>) -> ProjectModel {
     let ambiente = sdk::Ambiente {
         var: &var,
         binario: &binario,
-        home: std::env::var_os("HOME").map(PathBuf::from),
+        home: crate::platform::home_dir(),
     };
     model_in(root, kit_chip, &ambiente)
 }

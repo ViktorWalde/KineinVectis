@@ -42,7 +42,7 @@ fn setup_with(name: &str, configured: bool, prelude: &str) -> Setup {
         std::fs::create_dir_all(root.join(".kinein/build")).unwrap();
         std::fs::write(root.join(".kinein/build/CMakeCache.txt"), "# teste\n").unwrap();
     }
-    let root = root.canonicalize().unwrap();
+    let root = crate::platform::canonicalize(&root).unwrap();
     let args_file = root.join("qmlls-args.txt");
     let log = root.join("qml-wire.jsonl");
 

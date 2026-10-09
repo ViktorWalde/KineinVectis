@@ -65,29 +65,18 @@ pub fn workspace_path(root: &Path) -> PathBuf {
     root.join(".kinein").join("settings.json")
 }
 
-/// Base de estado do XDG: `$XDG_STATE_HOME`, senão `$HOME/.local/state`.
-/// O que a IDE guarda da pessoa e nao e' configuracao (o historico de
-/// consultas do Banco, passo 13b).
+/// Base de estado: `$XDG_STATE_HOME`, senão `$HOME/.local/state`; no
+/// Windows, `%LOCALAPPDATA%` (`platform::state_home`). O que a IDE guarda da
+/// pessoa e nao e' configuracao (o historico de consultas do Banco, passo 13b).
 #[must_use]
 pub(crate) fn state_home() -> PathBuf {
-    if let Some(xdg) = std::env::var_os("XDG_STATE_HOME")
-        && !xdg.is_empty()
-    {
-        return PathBuf::from(xdg);
-    }
-    let home = std::env::var_os("HOME").unwrap_or_default();
-    PathBuf::from(home).join(".local").join("state")
+    crate::platform::state_home()
 }
 
-/// Base de config do XDG: `$XDG_CONFIG_HOME`, senão `$HOME/.config`.
+/// Base de config: `$XDG_CONFIG_HOME`, senão `$HOME/.config`; no Windows,
+/// `%APPDATA%` (`platform::config_home`).
 fn config_home() -> PathBuf {
-    if let Some(xdg) = std::env::var_os("XDG_CONFIG_HOME")
-        && !xdg.is_empty()
-    {
-        return PathBuf::from(xdg);
-    }
-    let home = std::env::var_os("HOME").unwrap_or_default();
-    PathBuf::from(home).join(".config")
+    crate::platform::config_home()
 }
 
 fn read_values(path: &Path) -> SettingsValues {

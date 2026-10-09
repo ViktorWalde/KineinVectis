@@ -34,7 +34,7 @@ fn scenario(name: &str, extra: &[&str]) -> Scenario {
     std::fs::create_dir_all(&root).unwrap();
     std::fs::write(root.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
     std::fs::write(root.join("app.py"), "import os\n").unwrap();
-    let root = root.canonicalize().unwrap();
+    let root = crate::platform::canonicalize(&root).unwrap();
     let log = root.join("principal.jsonl");
 
     let (sender, receiver) = mpsc::channel::<JsonRpcRequest>();

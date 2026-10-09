@@ -251,7 +251,7 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
         r#"{"version": 6, "configurePresets": [{"name": "meu-local"}]}"#,
     )
     .unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
 
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(

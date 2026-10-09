@@ -101,7 +101,7 @@ mod tests {
     fn permanent_remove_deletes_link_not_target() {
         let base = temp_root("delete-link");
         fs::create_dir_all(base.join("workspace")).unwrap();
-        let root = base.join("workspace").canonicalize().unwrap();
+        let root = crate::platform::canonicalize(&base.join("workspace")).unwrap();
         let target = base.join("outside.txt");
         let link = root.join("link.txt");
         fs::write(&target, "preservar").unwrap();
@@ -115,7 +115,7 @@ mod tests {
     #[test]
     fn trash_rejects_root_and_outside() {
         let base = temp_root("trash-confine");
-        let root = base.canonicalize().unwrap();
+        let root = crate::platform::canonicalize(&base).unwrap();
         let outside = root.parent().unwrap();
         assert!(matches!(
             move_to_trash(&root, &root),

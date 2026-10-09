@@ -67,7 +67,7 @@ fn fake_adapter(listener: TcpListener, refuse: bool) -> thread::JoinHandle<Vec<V
 #[test]
 fn attach_replays_breakpoints_and_detaches_without_a_local_interpreter() {
     let (mut core, root) = core("flow");
-    let file = root.join("service.py").canonicalize().unwrap();
+    let file = crate::platform::canonicalize(&root.join("service.py")).unwrap();
     let stored = core.handle_request(&JsonRpcRequest::new(
         2_i64,
         "debug.setBreakpoints",

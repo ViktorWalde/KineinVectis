@@ -195,7 +195,7 @@ pub fn sources() -> Result<Vec<DataSourceOdbcSource>, String> {
 
 fn driver_identity(dsn: &str, driver: &str, library: &str) -> String {
     let path = Path::new(library);
-    let canonical = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+    let canonical = crate::platform::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
     let metadata = canonical.metadata().ok();
     let modified = metadata.as_ref().and_then(|m| m.modified().ok());
     let size = metadata.as_ref().map(std::fs::Metadata::len);

@@ -2,3 +2,12 @@ allow-unwrap-in-tests = true
 allow-expect-in-tests = true
 allow-panic-in-tests = true
 allow-print-in-tests = true
+
+# Porte para o Windows (DocsPublic/roadmaps/60 §3.2, W2, 2026-10-09): no Windows
+# o canonicalize do std devolve `\\?\C:\...`, onde `/` nao e' separador, e a
+# raiz do projeto nessa forma recusaria todo caminho que a UI manda. O core
+# canoniza por um lugar so'; so' o `platform` chama o do std.
+disallowed-methods = [
+    { path = "std::fs::canonicalize", reason = "use crate::platform::canonicalize (no Windows o std devolve \\\\?\\C:\\...)" },
+    { path = "std::path::Path::canonicalize", reason = "use crate::platform::canonicalize (no Windows o std devolve \\\\?\\C:\\...)" },
+]

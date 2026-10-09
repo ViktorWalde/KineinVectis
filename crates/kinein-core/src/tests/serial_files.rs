@@ -36,7 +36,7 @@ fn cenario(nome: &str) -> Cenario {
     std::fs::create_dir_all(dir.join("ws")).unwrap();
     let porta = dir.join("ttyUSB0");
     std::fs::write(&porta, "").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     let porta = dir.join("ttyUSB0");
     let (sender, receiver) = mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(

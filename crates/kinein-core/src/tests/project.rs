@@ -20,10 +20,10 @@ use crate::project::sdk::Ambiente;
 use crate::project::{artifacts, detect, esp, model_in, sdk};
 
 fn fixtures() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../scripts/fixtures/projetos")
-        .canonicalize()
-        .unwrap()
+    crate::platform::canonicalize(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scripts/fixtures/projetos"),
+    )
+    .unwrap()
 }
 
 fn temp_dir(name: &str) -> PathBuf {
@@ -556,7 +556,7 @@ fn the_model_reads_the_recipe_and_the_partitions_it_used_to_only_locate() {
 /// no handler que o modelo e o `size` se encontram.
 #[test]
 fn build_size_reports_the_esp_idf_app_partition_as_the_flash_region() {
-    let raiz = temp_dir("size-esp").canonicalize().unwrap();
+    let raiz = crate::platform::canonicalize(&temp_dir("size-esp")).unwrap();
     std::fs::copy(
         fixtures().join("esp-idf/CMakeLists.txt"),
         raiz.join("CMakeLists.txt"),

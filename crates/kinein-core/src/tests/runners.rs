@@ -173,7 +173,7 @@ fn python_quality_fixture(
     std::fs::create_dir_all(dir.join("bin")).unwrap();
     std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
     std::fs::write(dir.join("app.py"), "import os\nx=1\n").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
         dir.join("bin"),
@@ -322,7 +322,7 @@ fn pytest_workspace(nome: &str, corpo_do_python: Option<&str>) -> std::path::Pat
         std::fs::create_dir_all(py.parent().unwrap()).unwrap();
         crate::write_executable(&py, corpo);
     }
-    dir.canonicalize().unwrap()
+    crate::platform::canonicalize(&dir).unwrap()
 }
 
 /// Abre `dir`, pede `test.run` (com `filter`) e devolve os eventos do job ate
@@ -643,7 +643,7 @@ fn cpp_quality_fixture(
     std::fs::create_dir_all(dir.join("bin")).unwrap();
     std::fs::write(dir.join("CMakeLists.txt"), "project(x CXX)\n").unwrap();
     std::fs::write(dir.join("a.cpp"), "int main() { int x; return x; }\n").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     if com_cdb {
         std::fs::create_dir_all(dir.join("build")).unwrap();
         std::fs::write(

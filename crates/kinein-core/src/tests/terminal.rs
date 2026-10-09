@@ -35,7 +35,7 @@ fn temp_root(nome: &str) -> std::path::PathBuf {
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
-    dir.canonicalize().unwrap()
+    crate::platform::canonicalize(&dir).unwrap()
 }
 
 /// Core com terminal habilitado e um workspace aberto. Devolve o receptor de

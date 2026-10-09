@@ -107,12 +107,13 @@ const fn ordem(framework: Framework) -> u8 {
     }
 }
 
+/// O relativo vai com `/` nos dois sistemas (D5, 60 §3.1); fora da raiz, o
+/// absoluto nativo.
 fn relativo(root: &Path, caminho: &Path) -> String {
-    caminho
-        .strip_prefix(root)
-        .unwrap_or(caminho)
-        .to_string_lossy()
-        .into_owned()
+    caminho.strip_prefix(root).map_or_else(
+        |_| caminho.to_string_lossy().into_owned(),
+        crate::platform::portable_relative,
+    )
 }
 
 fn ler(caminho: &Path) -> Option<String> {

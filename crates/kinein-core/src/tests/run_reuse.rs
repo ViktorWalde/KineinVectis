@@ -16,7 +16,7 @@ impl Fixture {
     fn new(tag: &str) -> Self {
         let root = std::env::temp_dir().join(format!("kinein-run-{tag}-{}", std::process::id()));
         std::fs::create_dir_all(&root).unwrap();
-        let root = root.canonicalize().unwrap();
+        let root = crate::platform::canonicalize(&root).unwrap();
         let (sender, events) = mpsc::channel();
         let mut core = core_with_empty_search_path(tag);
         core.enable_lsp(sender);

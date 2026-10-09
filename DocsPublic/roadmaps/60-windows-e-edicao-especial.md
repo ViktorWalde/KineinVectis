@@ -155,6 +155,16 @@ eles compilam e dizem "não suportado no Windows" onde dependem de Unix.
 - **D4, a instância única no Windows.** Usa um named pipe, pelo `QLocalServer`
   e o `QLocalSocket` (Qt Network, ligado só no Windows), com o mesmo protocolo
   de texto.
+- **D5, caminho no protocolo e em arquivo** (2026-10-09, durante a W2): o
+  caminho **relativo** ao projeto usa `/` nos dois sistemas. Isso vale para
+  sessão, perfil, chave do índice, resultado de busca e sugestão que vai para o
+  `CMakeLists.txt`, e é o que vai para o Git. O caminho **absoluto** fica
+  nativo (`C:\dev\...`). O dono é o `platform::portable_relative`, com o
+  `platform::from_portable` na volta.
+- **D6, Python no Windows** (2026-10-09): o Python 3.14 do python.org fica
+  instalado no Windows do autor, para os testes que usam servidores e
+  adaptadores falsos em Python. Lá o nome é `python`; o `python3` do Windows é
+  o atalho da Microsoft Store.
 
 ### 3.2 As fatias
 
@@ -207,7 +217,8 @@ crate de FFI próprio.
   verdes no Linux (WSL) e no Windows. Os testes que só fazem sentido no Unix
   ganham `#[cfg(unix)]` e ficam listados no 40.7.
 
-**W2, o core acerta o Windows.**
+**W2, o core acerta o Windows.** Dividida em W2a, a parte de produto, feita em
+2026-10-09 (40.7 §7.263), e W2b, os testes verdes no Windows.
 
 - `platform::dirs`. A home vem do `HOME`, e no Windows do `USERPROFILE`. Config
   e estado seguem o XDG no Linux; no Windows ficam em `%APPDATA%` e

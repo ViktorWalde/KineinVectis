@@ -168,7 +168,7 @@ mod tests {
             .join(format!("{}-{name}", std::process::id()));
         drop(fs::remove_dir_all(&root));
         fs::create_dir_all(&root).unwrap();
-        root.canonicalize().unwrap()
+        crate::platform::canonicalize(&root).unwrap()
     }
 
     fn pair(from: &std::path::Path, to: &std::path::Path) -> FsCopyParams {

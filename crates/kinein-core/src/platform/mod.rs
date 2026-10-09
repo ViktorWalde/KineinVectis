@@ -21,7 +21,7 @@ use std::{
     ffi::{OsStr, OsString},
     fs::{DirBuilder, File, OpenOptions, Permissions},
     io,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Child, Command},
 };
 
@@ -33,6 +33,79 @@ use unix as imp;
 mod windows;
 #[cfg(windows)]
 use windows as imp;
+
+/// O caminho absoluto e canonico de `path`, com os links resolvidos.
+///
+/// No Unix e' o `std::fs::canonicalize`. No Windows o std devolve a forma
+/// "verbatim" (`\\?\C:\x`, `\\?\UNC\s\c\x`), onde `/` nao e' separador: a UI
+/// manda caminho com `/`, e a raiz do projeto nessa forma recusaria todos. Aqui
+/// o prefixo sai sempre que o caminho cabe sem ele (menos de 260 caracteres,
+/// nenhum nome reservado como `CON`, nenhum nome terminado em ponto ou espaco);
+/// quando nao cabe, fica como o std devolveu. E' o unico lugar do core que
+/// chama o `canonicalize` do std (`clippy.toml`, `disallowed-methods`).
+///
+/// # Errors
+/// O caminho nao existe ou nao pode ser lido.
+pub(crate) fn canonicalize(path: &Path) -> io::Result<PathBuf> {
+    imp::canonicalize(path)
+}
+
+/// A pasta pessoal do usuario: `$HOME` no Unix, `%USERPROFILE%` no Windows
+/// (que nao define `HOME`). `None` quando nao ha uma.
+#[must_use]
+pub(crate) fn home_dir() -> Option<PathBuf> {
+    imp::home_dir()
+}
+
+/// Onde mora a configuracao do usuario. No Unix, o XDG: `$XDG_CONFIG_HOME`,
+/// senao `~/.config`. No Windows, `%APPDATA%` (a pasta que acompanha o perfil).
+#[must_use]
+pub(crate) fn config_home() -> PathBuf {
+    imp::config_home()
+}
+
+/// Onde mora o estado do usuario que nao e' configuracao (o historico do
+/// Banco). No Unix, `$XDG_STATE_HOME`, senao `~/.local/state`. No Windows,
+/// `%LOCALAPPDATA%` (a pasta desta maquina, que nao acompanha o perfil).
+#[must_use]
+pub(crate) fn state_home() -> PathBuf {
+    imp::state_home()
+}
+
+/// Os nomes de arquivo que `binary` pode ter numa pasta do `PATH`. No Unix,
+/// so' ele. No Windows, com cada extensao do `%PATHEXT%` (`.com`, `.exe`,
+/// `.bat`, `.cmd` quando ele nao esta' definido), nessa ordem; um nome que ja'
+/// tem extensao fica como veio.
+#[must_use]
+pub(crate) fn executable_names(binary: &str) -> Vec<String> {
+    imp::executable_names(binary)
+}
+
+/// O shell que o terminal da IDE abre. No Unix, o `$SHELL`, senao
+/// `/bin/bash`. No Windows, o primeiro que existir no `PATH` entre `pwsh.exe`
+/// (PowerShell 7) e `powershell.exe`, senao o `%ComSpec%` (o `cmd.exe`); o
+/// `portable-pty` o roda no `ConPTY`.
+#[must_use]
+pub(crate) fn default_shell() -> String {
+    imp::default_shell()
+}
+
+/// Um caminho RELATIVO em texto, com `/` nos dois sistemas (decisao D5 do
+/// autor, 60 §3.1): e' o que vai para arquivo do projeto, para o Git e para o
+/// protocolo, e o mesmo projeto aberto no outro sistema o le igual. Caminho
+/// absoluto continua nativo e nao passa por aqui. No Unix e' o texto de
+/// sempre (`display`); no Windows, `\` vira `/`.
+#[must_use]
+pub(crate) fn portable_relative(path: &Path) -> String {
+    imp::portable_relative(path)
+}
+
+/// O texto relativo de [`portable_relative`] de volta a caminho do sistema,
+/// para juntar a uma raiz sem misturar separadores.
+#[must_use]
+pub(crate) fn from_portable(text: &str) -> PathBuf {
+    imp::from_portable(text)
+}
 
 /// Por que um no' nao pode ser aberto sem seguir link.
 #[derive(Debug)]

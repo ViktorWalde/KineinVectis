@@ -280,11 +280,10 @@ fn sqlite_files(root: &Path) -> Vec<DataSourceCandidate> {
                     pending.push((path, depth + 1));
                 }
             } else if kind.is_file() && has_sqlite_extension(&path) && is_sqlite_file(&path) {
-                let relative = path
-                    .strip_prefix(root)
-                    .unwrap_or(&path)
-                    .display()
-                    .to_string();
+                let relative = path.strip_prefix(root).map_or_else(
+                    |_| path.display().to_string(),
+                    crate::platform::portable_relative,
+                );
                 let size = fs::metadata(&path).map_or(0, |m| m.len());
                 let stem = path
                     .file_stem()

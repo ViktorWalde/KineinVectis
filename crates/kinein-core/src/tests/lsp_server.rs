@@ -46,7 +46,7 @@ pub(super) fn fake_server() -> PathBuf {
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .join("scripts/fake_lsp_server.py");
-    let script = script.canonicalize().unwrap_or(script);
+    let script = crate::platform::canonicalize(&script).unwrap_or(script);
     assert!(
         script.is_file(),
         "scripts/fake_lsp_server.py ausente em {}",
@@ -57,16 +57,19 @@ pub(super) fn fake_server() -> PathBuf {
 
 /// `python3` e requisito do gate deste repositorio (4 das 13 verificacoes o
 /// usam). Faltar e' FALHA, nunca teste pulado: teste que pula nao prova nada.
+/// No Windows o nome e' `python`: o `python3` de la' e' o atalho da Microsoft
+/// Store, nao o interpretador (60 §3.1, D6).
 pub(super) fn python3() -> &'static str {
-    let ok = std::process::Command::new("python3")
+    let name = if cfg!(windows) { "python" } else { "python3" };
+    let ok = std::process::Command::new(name)
         .arg("--version")
         .output()
         .is_ok_and(|output| output.status.success());
     assert!(
         ok,
-        "python3 nao encontrado; ele e requisito do gate (scripts/instalar-ambiente.sh)"
+        "{name} nao encontrado; ele e requisito do gate (scripts/instalar-ambiente.sh)"
     );
-    "python3"
+    name
 }
 
 fn harness(name: &str) -> Harness {
@@ -92,7 +95,7 @@ fn harness(name: &str) -> Harness {
         root.join(".venv/bin/python"),
         "#!/bin/sh\necho Python 3.13.0\n",
     );
-    let root = root.canonicalize().unwrap();
+    let root = crate::platform::canonicalize(&root).unwrap();
     let log = root.join("lsp-wire.jsonl");
 
     let (sender, receiver) = mpsc::channel::<JsonRpcRequest>();
@@ -649,7 +652,7 @@ fn the_python_server_is_the_detected_binary_with_stdio() {
     )
     .unwrap();
     std::fs::write(base.join("ws/app.py"), "x = 1\n").unwrap();
-    let base = base.canonicalize().unwrap();
+    let base = crate::platform::canonicalize(&base).unwrap();
     let log = base.join("lsp-wire.jsonl");
     let args = base.join("args.txt");
     crate::write_executable(

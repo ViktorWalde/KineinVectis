@@ -116,7 +116,7 @@ mod tests {
             fs::remove_dir_all(&root).unwrap();
         }
         fs::create_dir_all(&root).unwrap();
-        root.canonicalize().unwrap()
+        crate::platform::canonicalize(&root).unwrap()
     }
 
     #[test]
@@ -159,11 +159,9 @@ mod tests {
         let mut tocados = arquivos
             .iter()
             .map(|absoluto| {
-                std::path::Path::new(absoluto)
-                    .strip_prefix(&root)
-                    .unwrap()
-                    .display()
-                    .to_string()
+                crate::platform::portable_relative(
+                    std::path::Path::new(absoluto).strip_prefix(&root).unwrap(),
+                )
             })
             .collect::<Vec<_>>();
         tocados.sort();

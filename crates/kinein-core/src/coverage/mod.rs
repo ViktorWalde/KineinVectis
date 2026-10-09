@@ -147,12 +147,14 @@ impl Report {
     /// As linhas de um arquivo (caminho exato, ou o mesmo canonico).
     #[must_use]
     pub fn lines(&self, file: &str) -> CoverageLinesResult {
-        let canonico = std::fs::canonicalize(file).ok();
+        let canonico = crate::platform::canonicalize(Path::new(file)).ok();
         let achado = self.files.get(file).or_else(|| {
             let alvo = canonico.as_deref()?;
             self.files
                 .iter()
-                .find(|(f, _)| std::fs::canonicalize(f).ok().as_deref() == Some(alvo))
+                .find(|(f, _)| {
+                    crate::platform::canonicalize(Path::new(f)).ok().as_deref() == Some(alvo)
+                })
                 .map(|(_, l)| l)
         });
         let Some(linhas) = achado else {

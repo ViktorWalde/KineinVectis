@@ -10,7 +10,7 @@ use std::{
         fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt},
         process::CommandExt,
     },
-    path::{Component, Path},
+    path::{Component, Path, PathBuf},
     process::{Child, Command},
 };
 
@@ -33,6 +33,52 @@ pub(super) const INHERITED_ENV: &[&str] = &[
     "TMPDIR",
     "XDG_RUNTIME_DIR",
 ];
+
+// O unico uso permitido do `canonicalize` do std (clippy.toml).
+#[allow(clippy::disallowed_methods)]
+pub(super) fn canonicalize(path: &Path) -> io::Result<PathBuf> {
+    fs::canonicalize(path)
+}
+
+pub(super) fn home_dir() -> Option<PathBuf> {
+    std::env::var_os("HOME").map(PathBuf::from)
+}
+
+/// `$<xdg>` nao vazio, senao `$HOME/<fallback>`: o que o `settings.rs` fazia.
+fn xdg_or_home(xdg: &str, fallback: &[&str]) -> PathBuf {
+    if let Some(dir) = std::env::var_os(xdg)
+        && !dir.is_empty()
+    {
+        return PathBuf::from(dir);
+    }
+    let mut path = PathBuf::from(std::env::var_os("HOME").unwrap_or_default());
+    path.extend(fallback);
+    path
+}
+
+pub(super) fn config_home() -> PathBuf {
+    xdg_or_home("XDG_CONFIG_HOME", &[".config"])
+}
+
+pub(super) fn state_home() -> PathBuf {
+    xdg_or_home("XDG_STATE_HOME", &[".local", "state"])
+}
+
+pub(super) fn executable_names(binary: &str) -> Vec<String> {
+    vec![binary.to_owned()]
+}
+
+pub(super) fn default_shell() -> String {
+    std::env::var("SHELL").unwrap_or_else(|_absent| "/bin/bash".to_owned())
+}
+
+pub(super) fn portable_relative(path: &Path) -> String {
+    path.display().to_string()
+}
+
+pub(super) fn from_portable(text: &str) -> PathBuf {
+    PathBuf::from(text)
+}
 
 pub(super) fn open_nofollow(path: &Path) -> Result<File, NoFollow> {
     let mut current = File::open("/").map_err(NoFollow::Io)?;

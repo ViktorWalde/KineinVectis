@@ -172,9 +172,7 @@ impl Core {
 
     /// O `$HOME` que vale para as pastas padrao dos SDKs.
     pub(crate) fn sdk_home(&self) -> Option<PathBuf> {
-        self.home_override
-            .clone()
-            .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
+        self.home_override.clone().or_else(platform::home_dir)
     }
 
     /// Handles one already parsed JSON-RPC request.

@@ -89,19 +89,15 @@ mod tests {
             fs::remove_dir_all(&dir).unwrap();
         }
         fs::create_dir_all(&dir).unwrap();
-        dir.canonicalize().unwrap()
+        crate::platform::canonicalize(&dir).unwrap()
     }
 
     fn visitados(root: &std::path::Path) -> Vec<String> {
         let mut vistos = Vec::new();
         let parou = walk_text_files(root, |arquivo| {
-            vistos.push(
-                arquivo
-                    .strip_prefix(root)
-                    .unwrap_or(arquivo)
-                    .display()
-                    .to_string(),
-            );
+            vistos.push(crate::platform::portable_relative(
+                arquivo.strip_prefix(root).unwrap_or(arquivo),
+            ));
             false
         })
         .unwrap();

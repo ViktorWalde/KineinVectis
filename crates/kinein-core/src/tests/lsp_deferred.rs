@@ -28,7 +28,7 @@ fn workspace(nome: &str) -> PathBuf {
     std::fs::create_dir_all(root.join("src")).unwrap();
     std::fs::write(root.join("Cargo.toml"), "[package]\nname = \"demo\"\n").unwrap();
     std::fs::write(root.join("src/main.rs"), "fn main() {}\n").unwrap();
-    root.canonicalize().unwrap()
+    crate::platform::canonicalize(&root).unwrap()
 }
 
 /// Um envoltorio que liga o atraso do hover no servidor falso.

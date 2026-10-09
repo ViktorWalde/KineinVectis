@@ -163,7 +163,7 @@ fn arquivos_de_fonte(root: &Path) -> Vec<String> {
                 .is_some_and(|e| FONTES.contains(&e.to_ascii_lowercase().as_str()))
             && let Ok(relativo) = caminho.strip_prefix(root)
         {
-            achados.push(relativo.display().to_string());
+            achados.push(crate::platform::portable_relative(relativo));
         }
     });
     achados.sort();
@@ -179,7 +179,7 @@ fn diretorios(root: &Path) -> Vec<String> {
             && let Ok(relativo) = caminho.strip_prefix(root)
             && !relativo.as_os_str().is_empty()
         {
-            achados.push(relativo.display().to_string());
+            achados.push(crate::platform::portable_relative(relativo));
         }
     });
     achados.sort();

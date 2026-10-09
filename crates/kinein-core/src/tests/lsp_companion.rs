@@ -39,7 +39,7 @@ fn dupla(name: &str) -> Dupla {
     std::fs::create_dir_all(&root).unwrap();
     std::fs::write(root.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
     std::fs::write(root.join("app.py"), "import os\n").unwrap();
-    let root = root.canonicalize().unwrap();
+    let root = crate::platform::canonicalize(&root).unwrap();
     let log_principal = root.join("principal.jsonl");
     let log_companheiro = root.join("companheiro.jsonl");
 
@@ -389,7 +389,7 @@ fn the_core_registers_ruff_as_a_companion_when_the_binary_is_detected() {
             log.display()
         ),
     );
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     let (sender, receiver) = mpsc::channel::<JsonRpcRequest>();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
         dir.join("bin"),

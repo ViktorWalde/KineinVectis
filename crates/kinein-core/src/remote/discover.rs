@@ -99,7 +99,7 @@ fn ler(
 fn rotular(caminho: &Path, home: &Path) -> String {
     caminho.strip_prefix(home).map_or_else(
         |_| caminho.to_string_lossy().into_owned(),
-        |resto| format!("~/{}", resto.to_string_lossy()),
+        |resto| format!("~/{}", crate::platform::portable_relative(resto)),
     )
 }
 

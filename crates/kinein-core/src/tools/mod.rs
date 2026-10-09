@@ -81,7 +81,7 @@ impl ToolDetector {
     /// IDE vem logo depois dele.
     #[must_use]
     pub fn from_environment() -> Self {
-        let home = env::var_os("HOME").map(PathBuf::from);
+        let home = crate::platform::home_dir();
         let extra_dirs = home.as_ref().map_or_else(Vec::new, |home| {
             let xpacks = env::var_os("XPACKS_STORE_FOLDER").map(PathBuf::from);
             let idf = env::var_os("IDF_TOOLS_PATH").map(PathBuf::from);
@@ -235,9 +235,10 @@ impl ToolDetector {
     /// Where `binary` lives on the search path, if anywhere. `pub(crate)` for
     /// the domains that pick between binaries (`container`: docker vs podman).
     pub(crate) fn find_in_path(&self, binary: &str) -> Option<PathBuf> {
+        let names = crate::platform::executable_names(binary);
         self.search_dirs()
             .into_iter()
-            .map(|directory| directory.join(binary))
+            .flat_map(|directory| names.iter().map(move |name| directory.join(name)))
             .find(|candidate| is_executable(candidate))
     }
 

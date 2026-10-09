@@ -337,7 +337,7 @@ fn regras_de_sonda(rules_dirs: &[PathBuf]) -> Vec<String> {
     // conta duas vezes.
     let mut vistas: Vec<PathBuf> = Vec::new();
     for dir in rules_dirs {
-        let real = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.clone());
+        let real = crate::platform::canonicalize(dir).unwrap_or_else(|_| dir.clone());
         if vistas.contains(&real) {
             continue;
         }

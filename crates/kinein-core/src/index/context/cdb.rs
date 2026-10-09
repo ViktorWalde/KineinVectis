@@ -104,7 +104,7 @@ pub(super) fn parse_cdb(texto: &str) -> HashMap<PathBuf, Unidade> {
         // mas a do Ninja/Meson pode escrever `../src/a.cpp` relativo ao
         // `directory`, e a consulta chega pelo caminho do editor.
         let chave = PathBuf::from(absoluto(dir, file));
-        let chave = std::fs::canonicalize(&chave).unwrap_or(chave);
+        let chave = crate::platform::canonicalize(&chave).unwrap_or(chave);
         unidades.insert(chave, unidade);
     }
     unidades
@@ -132,8 +132,10 @@ pub(super) fn cmakelists_mais_novo(
             }
             let lista = d.join("CMakeLists.txt");
             if modificado_em(&lista).is_some_and(|em| em > cdb_em) {
-                let relativo = lista.strip_prefix(root).unwrap_or(&lista);
-                return Some(relativo.display().to_string());
+                return Some(lista.strip_prefix(root).map_or_else(
+                    |_| lista.display().to_string(),
+                    crate::platform::portable_relative,
+                ));
             }
             dir = d.parent();
         }

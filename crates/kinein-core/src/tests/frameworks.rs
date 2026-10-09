@@ -17,10 +17,10 @@ use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::{Value, json};
 
 fn fixtures() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../scripts/fixtures/projetos")
-        .canonicalize()
-        .unwrap()
+    crate::platform::canonicalize(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scripts/fixtures/projetos"),
+    )
+    .unwrap()
 }
 
 struct Cenario {
@@ -52,7 +52,7 @@ fn cenario(nome: &str, fixture: &str) -> Cenario {
             std::fs::copy(entrada.path(), destino).unwrap();
         }
     }
-    let base = base.canonicalize().unwrap();
+    let base = crate::platform::canonicalize(&base).unwrap();
     let root = base.join("projeto");
     let (sender, receiver) = mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(

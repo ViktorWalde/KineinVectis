@@ -45,7 +45,8 @@ pub fn file_path(root: &Path, database: &str) -> PathBuf {
     if path.is_absolute() || path.as_os_str().is_empty() {
         path.to_path_buf()
     } else {
-        root.join(path)
+        // O relativo do perfil e' portavel (`/`, D5): o perfil mora no projeto.
+        root.join(crate::platform::from_portable(database.trim()))
     }
 }
 

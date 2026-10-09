@@ -30,10 +30,10 @@ const FLASHER_ARGS: &str = r#"{
 }"#;
 
 fn fixtures() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../scripts/fixtures/projetos")
-        .canonicalize()
-        .unwrap()
+    crate::platform::canonicalize(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scripts/fixtures/projetos"),
+    )
+    .unwrap()
 }
 
 struct Cenario {
@@ -64,7 +64,7 @@ fn cenario(nome: &str, com_receita: bool) -> Cenario {
         std::fs::create_dir_all(dir.join("build/partition_table")).unwrap();
         std::fs::write(dir.join("build/flasher_args.json"), FLASHER_ARGS).unwrap();
     }
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     let (sender, receiver) = mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
         dir.join("bin"),

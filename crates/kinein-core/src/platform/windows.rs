@@ -40,6 +40,123 @@ pub(super) const INHERITED_ENV: &[&str] = &[
     "LOCALAPPDATA",
 ];
 
+/// A variavel de ambiente `name`, quando definida e nao vazia.
+fn var_dir(name: &str) -> Option<PathBuf> {
+    std::env::var_os(name)
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+}
+
+pub(super) fn home_dir() -> Option<PathBuf> {
+    var_dir("USERPROFILE").or_else(|| var_dir("HOME"))
+}
+
+pub(super) fn config_home() -> PathBuf {
+    var_dir("APPDATA")
+        .or_else(|| home_dir().map(|home| home.join("AppData").join("Roaming")))
+        .unwrap_or_default()
+}
+
+pub(super) fn state_home() -> PathBuf {
+    var_dir("LOCALAPPDATA")
+        .or_else(|| home_dir().map(|home| home.join("AppData").join("Local")))
+        .unwrap_or_default()
+}
+
+pub(super) fn executable_names(binary: &str) -> Vec<String> {
+    if Path::new(binary).extension().is_some() {
+        return vec![binary.to_owned()];
+    }
+    let pathext = std::env::var("PATHEXT").unwrap_or_else(|_| ".COM;.EXE;.BAT;.CMD".to_owned());
+    pathext
+        .split(';')
+        .filter(|ext| !ext.is_empty())
+        .map(|ext| format!("{binary}{}", ext.to_ascii_lowercase()))
+        .collect()
+}
+
+pub(super) fn default_shell() -> String {
+    let in_path = |name: &str| {
+        std::env::var_os("PATH").and_then(|paths| {
+            std::env::split_paths(&paths)
+                .map(|dir| dir.join(name))
+                .find(|candidate| candidate.is_file())
+        })
+    };
+    in_path("pwsh.exe")
+        .or_else(|| in_path("powershell.exe"))
+        .map(|shell| shell.display().to_string())
+        .or_else(|| std::env::var("ComSpec").ok())
+        .unwrap_or_else(|| "cmd.exe".to_owned())
+}
+
+pub(super) fn portable_relative(path: &Path) -> String {
+    path.display().to_string().replace('\\', "/")
+}
+
+pub(super) fn from_portable(text: &str) -> PathBuf {
+    PathBuf::from(text.replace('/', "\\"))
+}
+
+/// O limite classico de caminho do Windows (`MAX_PATH`), contando o terminador.
+const MAX_PATH: usize = 260;
+
+// O unico uso permitido do `canonicalize` do std (clippy.toml).
+#[allow(clippy::disallowed_methods)]
+pub(super) fn canonicalize(path: &Path) -> io::Result<PathBuf> {
+    let verbatim = fs::canonicalize(path)?;
+    Ok(without_verbatim(&verbatim).unwrap_or(verbatim))
+}
+
+/// `\\?\C:\x` vira `C:\x`, e `\\?\UNC\s\c\x` vira `\\s\c\x`, quando o caminho
+/// cabe sem o prefixo. `None` quando ele precisa do prefixo, ou nao e' UTF-8.
+fn without_verbatim(path: &Path) -> Option<PathBuf> {
+    let text = path.to_str()?;
+    let plain = if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{rest}")
+    } else {
+        let rest = text.strip_prefix(r"\\?\")?;
+        let [letter, b':', b'\\', ..] = rest.as_bytes() else {
+            return None;
+        };
+        if !letter.is_ascii_alphabetic() {
+            return None;
+        }
+        rest.to_owned()
+    };
+    let fits = plain.len() < MAX_PATH
+        && Path::new(&plain)
+            .components()
+            .all(|component| match component {
+                Component::Normal(name) => plain_name(name),
+                _ => true,
+            });
+    fits.then(|| PathBuf::from(plain))
+}
+
+/// Um nome que o Windows le igual com e sem o prefixo: sem ponto ou espaco no
+/// fim e sem nome de dispositivo reservado (`CON`, `NUL`, `COM1`, ...).
+fn plain_name(name: &OsStr) -> bool {
+    let Some(name) = name.to_str() else {
+        return false;
+    };
+    if name.ends_with('.') || name.ends_with(' ') {
+        return false;
+    }
+    let stem = name
+        .split('.')
+        .next()
+        .unwrap_or(name)
+        .trim_end()
+        .to_ascii_uppercase();
+    let device = matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || matches!(
+            stem.as_bytes(),
+            [b'C', b'O', b'M', b'1'..=b'9'] | [b'L', b'P', b'T', b'1'..=b'9']
+        );
+    !device
+}
+
 /// Abre `path` sem seguir ponto de reparse e confere, no handle aberto, que ele
 /// nao e' um. Um ponto de reparse que nao e' link (um arquivo de nuvem sem
 /// copia local, por exemplo) tambem e' recusado: melhor recusar que seguir.
@@ -158,4 +275,61 @@ pub(super) fn kill_group(group: GroupId) {
             .stderr(Stdio::null())
             .status(),
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::{Path, PathBuf};
+
+    use super::without_verbatim;
+
+    fn plain(text: &str) -> Option<PathBuf> {
+        without_verbatim(Path::new(text))
+    }
+
+    #[test]
+    fn a_drive_path_loses_the_prefix() {
+        assert_eq!(
+            plain(r"\\?\C:\dev\Kinein Vectis\src"),
+            Some(PathBuf::from(r"C:\dev\Kinein Vectis\src"))
+        );
+    }
+
+    #[test]
+    fn a_network_share_loses_the_prefix() {
+        assert_eq!(
+            plain(r"\\?\UNC\servidor\pasta\x.rs"),
+            Some(PathBuf::from(r"\\servidor\pasta\x.rs"))
+        );
+    }
+
+    #[test]
+    fn what_needs_the_prefix_keeps_it() {
+        assert_eq!(plain(r"\\?\C:\dev\con.txt"), None, "nome reservado");
+        assert_eq!(plain(r"\\?\C:\dev\COM1"), None, "nome reservado");
+        assert_eq!(plain(r"\\?\C:\dev\fim."), None, "ponto no fim");
+        assert_eq!(plain(r"\\?\C:\dev\fim "), None, "espaco no fim");
+        assert_eq!(plain(r"\\?\Volume{1234}\x"), None, "volume sem letra");
+        let long = format!(r"\\?\C:\{}", "a".repeat(300));
+        assert_eq!(plain(&long), None, "passa do MAX_PATH");
+    }
+
+    #[test]
+    fn a_name_that_only_looks_reserved_is_plain() {
+        assert_eq!(
+            plain(r"\\?\C:\dev\console\COM10\nul2"),
+            Some(PathBuf::from(r"C:\dev\console\COM10\nul2"))
+        );
+    }
+
+    #[test]
+    fn the_canonical_form_of_a_real_folder_has_no_prefix() {
+        let dir = std::env::temp_dir();
+        let canonical = super::canonicalize(&dir).unwrap();
+        assert!(
+            !canonical.to_string_lossy().starts_with(r"\\?\"),
+            "{canonical:?}"
+        );
+        assert!(canonical.is_absolute());
+    }
 }

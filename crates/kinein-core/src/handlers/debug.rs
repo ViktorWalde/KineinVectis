@@ -220,7 +220,7 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        let Ok(file) = Path::new(&parsed.file).canonicalize() else {
+        let Ok(file) = crate::platform::canonicalize(Path::new(&parsed.file)) else {
             return invalid_debug_params(
                 request_id,
                 &format!("arquivo nao encontrado: {}", parsed.file),

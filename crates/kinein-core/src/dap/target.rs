@@ -167,7 +167,7 @@ mod tests {
             .join(format!("{}-{test_name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        dir.canonicalize().unwrap()
+        crate::platform::canonicalize(&dir).unwrap()
     }
 
     #[cfg(unix)]

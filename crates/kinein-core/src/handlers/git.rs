@@ -440,7 +440,7 @@ fn confined_existing_file(
     request_id: Option<&Value>,
     raw: &str,
 ) -> Result<std::path::PathBuf, Box<JsonRpcResponse>> {
-    let Ok(path) = Path::new(raw).canonicalize() else {
+    let Ok(path) = crate::platform::canonicalize(Path::new(raw)) else {
         return Err(Box::new(JsonRpcResponse::failure(
             request_id.cloned(),
             JsonRpcError::new(
@@ -472,7 +472,7 @@ fn confine_paths(root: &std::path::PathBuf, paths: &[String]) -> Result<Vec<Stri
     let mut confined = Vec::with_capacity(paths.len());
     for raw in paths {
         let path = Path::new(raw);
-        let inside = match path.canonicalize() {
+        let inside = match crate::platform::canonicalize(path) {
             Ok(canonical) => canonical.starts_with(root),
             Err(_missing) => {
                 path.is_absolute()

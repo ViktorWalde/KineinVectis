@@ -31,7 +31,7 @@ pub fn create_directory(parent: &Path, name: &str) -> Result<PathBuf, WorkspaceE
         path: target.display().to_string(),
         source,
     })?;
-    fs::canonicalize(&target).map_err(|source| WorkspaceError::InvalidRoot {
+    crate::platform::canonicalize(&target).map_err(|source| WorkspaceError::InvalidRoot {
         path: target.display().to_string(),
         source,
     })
@@ -162,10 +162,11 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
 }
 
 fn canonical_directory(path: &Path) -> Result<PathBuf, WorkspaceError> {
-    let directory = fs::canonicalize(path).map_err(|source| WorkspaceError::InvalidRoot {
-        path: path.display().to_string(),
-        source,
-    })?;
+    let directory =
+        crate::platform::canonicalize(path).map_err(|source| WorkspaceError::InvalidRoot {
+            path: path.display().to_string(),
+            source,
+        })?;
 
     if !directory.is_dir() {
         return Err(WorkspaceError::NotADirectory {

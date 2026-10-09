@@ -23,7 +23,7 @@ fn git_repo(test_name: &str) -> PathBuf {
         &root,
         &["config", "user.email", "kinein-test@example.invalid"],
     );
-    root.canonicalize().unwrap()
+    crate::platform::canonicalize(&root).unwrap()
 }
 
 fn run_git(root: &Path, args: &[&str]) -> String {

@@ -6,23 +6,20 @@
 //! home already contains those folders. The root stays reachable from the
 //! path bar (`/`), and is the one place offered when there is no home.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
 use kinein_protocol::WorkspaceBrowsePlace;
 
 /// Quick places for the current user, read from `$HOME`.
 #[must_use]
 pub fn browse_places() -> Vec<WorkspaceBrowsePlace> {
-    let home = std::env::var_os("HOME").map(PathBuf::from);
+    let home = crate::platform::home_dir();
     places_from(home.as_deref())
 }
 
 fn places_from(home: Option<&Path>) -> Vec<WorkspaceBrowsePlace> {
     let home = home
-        .and_then(|home| fs::canonicalize(home).ok())
+        .and_then(|home| crate::platform::canonicalize(home).ok())
         .filter(|home| home.is_dir());
     let (id, path) = home
         .as_ref()
@@ -53,7 +50,10 @@ mod tests {
         assert_eq!(places[0].id, "home");
         assert_eq!(
             places[0].path,
-            fs::canonicalize(&home).unwrap().display().to_string()
+            crate::platform::canonicalize(&home)
+                .unwrap()
+                .display()
+                .to_string()
         );
         fs::remove_dir_all(&home).unwrap();
     }

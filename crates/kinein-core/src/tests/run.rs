@@ -149,7 +149,7 @@ fn python_run_workspace(nome: &str) -> std::path::PathBuf {
     std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
     std::fs::write(dir.join("tools/gera.py"), "print('x')\n").unwrap();
     std::fs::write(dir.join("main.py"), "print('main')\n").unwrap();
-    dir.canonicalize().unwrap()
+    crate::platform::canonicalize(&dir).unwrap()
 }
 
 #[cfg(unix)]
@@ -339,7 +339,7 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     // main.py que importa `machine`: a evidencia do project.model.
     std::fs::write(dir.join("main.py"), "import machine\nprint('led')\n").unwrap();
     std::fs::write(dir.join("util.py"), "def f():\n    pass\n").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     // Um interpretador do host EXISTE — e nao e' usado: a placa e' o alvo.
     executavel(
         &dir.join(".venv/bin/python"),
@@ -441,7 +441,7 @@ fn run_device_is_exclusive_with_command_and_never_blank() {
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(dir.join("bin")).unwrap();
     std::fs::write(dir.join("main.py"), "import machine\n").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     executavel(
         &dir.join("bin/mpremote"),
         "#!/bin/sh\necho \"mpremote-falso $*\"\n",

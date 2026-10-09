@@ -127,7 +127,10 @@ fn workspace_browse_returns_directory_entries() {
 
     assert_eq!(
         result["path"],
-        dir.canonicalize().unwrap().display().to_string()
+        crate::platform::canonicalize(&dir)
+            .unwrap()
+            .display()
+            .to_string()
     );
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0]["name"], "src");

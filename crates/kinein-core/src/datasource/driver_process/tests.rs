@@ -16,11 +16,12 @@ use super::*;
 use crate::owned_child::Ending;
 
 fn adapter(mode: &str, extra: Option<&Path>) -> Command {
-    let script = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../scripts/fake_driver_adapter.py")
-        .canonicalize()
-        .expect("scripts/fake_driver_adapter.py");
-    let mut command = Command::new("python3");
+    let script = crate::platform::canonicalize(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scripts/fake_driver_adapter.py"),
+    )
+    .expect("scripts/fake_driver_adapter.py");
+    // No Windows o interpretador e' `python` (60 §3.1, D6).
+    let mut command = Command::new(if cfg!(windows) { "python" } else { "python3" });
     command.arg(script).arg(mode);
     if let Some(path) = extra {
         command.arg(path);

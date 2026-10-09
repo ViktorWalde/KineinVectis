@@ -248,7 +248,7 @@ fn a_python_target_needs_the_project_interpreter_with_debugpy() {
     )
     .unwrap();
     std::fs::write(dir.join("tools/gera.py"), "print('x')\n").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     let gera = dir.join("tools/gera.py");
     let abrir = || {
         let (sender, _receiver) = std::sync::mpsc::channel();
@@ -323,7 +323,7 @@ fn a_dying_adapter_leaves_its_stderr_in_the_error_and_as_events() {
     std::fs::create_dir_all(dir.join(".venv/bin")).unwrap();
     std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
     std::fs::write(dir.join("main.py"), "print('x')\n").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     let python = dir.join(".venv/bin/python");
     crate::write_executable(
         &python,
@@ -385,7 +385,7 @@ fn debug_start_without_program_uses_the_python_entry_point() {
     std::fs::create_dir_all(dir.join("pacote")).unwrap();
     std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
     std::fs::write(dir.join("pacote/__main__.py"), "").unwrap();
-    let dir = dir.canonicalize().unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
     let (sender, _receiver) = std::sync::mpsc::channel();
     let mut core = core_with_empty_search_path("debug-python-entrada");
     core.enable_lsp(sender);

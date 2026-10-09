@@ -100,7 +100,7 @@ fn zephyr_sdk(path: &Path) -> Option<KitImport> {
             if !gcc.is_file() {
                 continue;
             }
-            let real = std::fs::canonicalize(&gcc).unwrap_or(gcc);
+            let real = crate::platform::canonicalize(&gcc).unwrap_or(gcc);
             if toolchains.iter().any(|(_, g)| *g == real) {
                 continue;
             }

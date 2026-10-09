@@ -183,7 +183,7 @@ impl History {
 /// O caminho canonico da raiz: o mesmo projeto aberto por outro caminho
 /// (link simbolico) cai no mesmo historico.
 fn workspace_key(root: &Path) -> String {
-    root.canonicalize()
+    crate::platform::canonicalize(root)
         .unwrap_or_else(|_| root.to_path_buf())
         .display()
         .to_string()

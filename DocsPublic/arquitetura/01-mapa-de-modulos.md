@@ -140,16 +140,20 @@ flowchart LR
   n_core_build --> n_core_process
   n_core_build --> n_core_toolchain
   n_core_cargo --> n_core_toolchain
+  n_core_cmake --> n_core_platform
   n_core_cmake --> n_core_toolchain
   n_core_configaction --> n_core_cdb
   n_core_configaction --> n_core_cmake
   n_core_configaction --> n_core_fsops
   n_core_configaction --> n_core_library
+  n_core_configaction --> n_core_platform
   n_core_configaction --> n_core_runconfig
   n_core_container --> n_core_tools
+  n_core_coverage --> n_core_platform
   n_core_coverage --> n_core_process
   n_core_coverage --> n_core_python
   n_core_dap --> n_core_lsp
+  n_core_dap --> n_core_platform
   n_core_dap --> n_core_python
   n_core_dap --> n_core_run
   n_core_dap --> n_core_stderr_tail
@@ -166,6 +170,7 @@ flowchart LR
   n_core_format --> n_core_platform
   n_core_fsops --> n_core_platform
   n_core_fswatch --> n_core_lsp
+  n_core_fswatch --> n_core_platform
   n_core_grafana --> n_core_datasource
   n_core_handlers --> n_core_build
   n_core_handlers --> n_core_cdb
@@ -183,6 +188,7 @@ flowchart LR
   n_core_handlers --> n_core_jobs
   n_core_handlers --> n_core_library
   n_core_handlers --> n_core_lsp
+  n_core_handlers --> n_core_platform
   n_core_handlers --> n_core_probe
   n_core_handlers --> n_core_process
   n_core_handlers --> n_core_project
@@ -201,6 +207,7 @@ flowchart LR
   n_core_index --> n_core_cmake
   n_core_index --> n_core_fswatch
   n_core_index --> n_core_lang
+  n_core_index --> n_core_platform
   n_core_index --> n_core_python
   n_core_jobs --> n_core_lsp
   n_core_library --> n_core_cmake
@@ -211,27 +218,37 @@ flowchart LR
   n_core_lsp --> n_core_stderr_tail
   n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
+  n_core_project --> n_core_platform
   n_core_project --> n_core_tools
   n_core_python --> n_core_run
+  n_core_remote --> n_core_platform
   n_core_rpc --> n_core_dap
+  n_core_run --> n_core_platform
   n_core_run --> n_core_python
+  n_core_runconfig --> n_core_platform
   n_core_runtime --> n_core_datasource
   n_core_runtime --> n_core_rpc
   n_core_runtime --> n_core_settings
   n_core_serial --> n_core_build
+  n_core_serial --> n_core_platform
   n_core_serial --> n_core_toolchain
+  n_core_settings --> n_core_platform
   n_core_setup --> n_core_tools
   n_core_terminal --> n_core_lsp
+  n_core_terminal --> n_core_platform
   n_core_test --> n_core_build
   n_core_test --> n_core_process
   n_core_test --> n_core_python
+  n_core_toolchain --> n_core_platform
   n_core_toolchain --> n_core_tools
+  n_core_tools --> n_core_platform
   n_core_workspace --> n_core_fsops
+  n_core_workspace --> n_core_platform
   n_core_workspace --> n_core_python
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-45 módulos, 93 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+45 módulos, 110 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -245,22 +262,22 @@ flowchart LR
 | `build` | cdb, cmake, process, toolchain | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
 | `cdb` | — | Descoberta e diagnóstico da compilation database do C/C++. |
-| `cmake` | toolchain | Servico CMake: |
+| `cmake` | platform, toolchain | Servico CMake: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
-| `configaction` | cdb, cmake, fsops, library, runconfig | Configuration Actions: |
+| `configaction` | cdb, cmake, fsops, library, platform, runconfig | Configuration Actions: |
 | `container` | tools | Containers como dominio NATIVO: |
-| `coverage` | process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
-| `dap` | lsp, python, run, stderr_tail | Subsistema de debug: |
+| `coverage` | platform, process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
+| `dap` | lsp, platform, python, run, stderr_tail | Subsistema de debug: |
 | `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `flash` | build | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
-| `fswatch` | lsp | Debounced, workspace-confined observation of external file-system changes. |
+| `fswatch` | lsp, platform | Debounced, workspace-confined observation of external file-system changes. |
 | `git` | — | Git orquestrado sobre o binario git. |
 | `grafana` | datasource | Observabilidade: |
-| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
-| `index` | cdb, cmake, fswatch, lang, python | O indice proprio do projeto INTEIRO: |
+| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
+| `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
@@ -270,23 +287,23 @@ flowchart LR
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
 | `probe` | — | Sondas de debug conectadas: |
 | `process` | — | Synchronous line streaming for child processes. |
-| `project` | tools | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
+| `project` | platform, tools | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
 | `python` | run | O dominio python: |
-| `remote` | — | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
+| `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
-| `run` | python | O que "Executar" roda, e como se mostra. |
-| `runconfig` | — | Run configurations por workspace (.kinein/runconfigs.json). |
+| `run` | platform, python | O que "Executar" roda, e como se mostra. |
+| `runconfig` | platform | Run configurations por workspace (.kinein/runconfigs.json). |
 | `runtime` | datasource, rpc, settings | Habilitacao dos servicos externos e configuracao dos servidores LSP do Core. |
-| `serial` | build, toolchain | Portas seriais USB: |
-| `settings` | — | Settings persistidos em dois níveis (settings.*). |
+| `serial` | build, platform, toolchain | Portas seriais USB: |
+| `settings` | platform | Settings persistidos em dois níveis (settings.*). |
 | `setup` | tools | Como instalar o que falta — passo a passo OFICIAL, para a distro detectada. |
 | `size` | — | O tamanho de um ELF: |
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
-| `terminal` | lsp | Terminal profissional: |
+| `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, process, python | Test execution with streamed, per-case results. |
-| `toolchain` | tools | Toolchain: |
-| `tools` | — | External tool detection. |
-| `workspace` | fsops, python | Workspace opening, project kind detection, and metadata persistence. |
+| `toolchain` | platform, tools | Toolchain: |
+| `tools` | platform | External tool detection. |
+| `workspace` | fsops, platform, python | Workspace opening, project kind detection, and metadata persistence. |
 
 ## Cobertura: todo método IPC tem um lugar
 
@@ -634,6 +651,7 @@ flowchart LR
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_git_rs["handlers/git.rs"]
     n_core_jobs[jobs]
+    n_core_platform[platform]
     n_core_rpc[rpc]
   end
   n_tools_git[/"git"/]
@@ -647,6 +665,7 @@ flowchart LR
   n_ui_src_core_client_requests_git_cpp --> n_ipc_git
   n_ipc_git --> n_crates_kinein_core_src_handlers_git_rs
   n_crates_kinein_core_src_handlers_git_rs --> n_core_jobs
+  n_crates_kinein_core_src_handlers_git_rs --> n_core_platform
   n_crates_kinein_core_src_handlers_git_rs --> n_core_rpc
   CORE -.->|processos| n_tools_git
 ```
@@ -812,6 +831,7 @@ flowchart LR
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_debug_rs["handlers/debug.rs"]
     n_core_dap[dap]
+    n_core_platform[platform]
     n_core_python[python]
     n_core_rpc[rpc]
     n_core_toolchain[toolchain]
@@ -826,6 +846,7 @@ flowchart LR
   n_ui_src_core_client_requests_debug_cpp --> n_ipc_debug
   n_ipc_debug --> n_crates_kinein_core_src_handlers_debug_rs
   n_crates_kinein_core_src_handlers_debug_rs --> n_core_dap
+  n_crates_kinein_core_src_handlers_debug_rs --> n_core_platform
   n_crates_kinein_core_src_handlers_debug_rs --> n_core_python
   n_crates_kinein_core_src_handlers_debug_rs --> n_core_rpc
   n_crates_kinein_core_src_handlers_debug_rs --> n_core_toolchain
@@ -969,6 +990,7 @@ flowchart LR
     n_crates_kinein_core_src_handlers_toolchain_install_rs["handlers/toolchain_install.rs"]
     n_core_flash[flash]
     n_core_jobs[jobs]
+    n_core_platform[platform]
     n_core_project[project]
     n_core_rpc[rpc]
     n_core_toolchain[toolchain]
@@ -990,6 +1012,7 @@ flowchart LR
   n_ipc_toolchain --> n_crates_kinein_core_src_handlers_toolchain_install_rs
   n_crates_kinein_core_src_handlers_toolchain_install_rs --> n_core_flash
   n_crates_kinein_core_src_handlers_toolchain_install_rs --> n_core_jobs
+  n_crates_kinein_core_src_handlers_toolchain_install_rs --> n_core_platform
   n_crates_kinein_core_src_handlers_toolchain_install_rs --> n_core_project
   n_crates_kinein_core_src_handlers_toolchain_install_rs --> n_core_rpc
   n_crates_kinein_core_src_handlers_toolchain_install_rs --> n_core_toolchain

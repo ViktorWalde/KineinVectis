@@ -222,7 +222,7 @@ impl ProjectIndex {
             let Ok(relativo) = caminho.strip_prefix(&self.root) else {
                 continue;
             };
-            let chave = relativo.to_string_lossy().into_owned();
+            let chave = crate::platform::portable_relative(relativo);
             if caminho.is_file() {
                 if let Some(arquivo) =
                     indexar_arquivo(&self.root, caminho, extractor, &mut self.skipped)
@@ -358,11 +358,10 @@ fn caminhar(
 }
 
 fn relativo(root: &Path, caminho: &Path) -> String {
-    caminho
-        .strip_prefix(root)
-        .unwrap_or(caminho)
-        .to_string_lossy()
-        .into_owned()
+    caminho.strip_prefix(root).map_or_else(
+        |_| caminho.to_string_lossy().into_owned(),
+        crate::platform::portable_relative,
+    )
 }
 
 /// Classifica, le e parseia UM arquivo. Todo arquivo entra (contado); so' os

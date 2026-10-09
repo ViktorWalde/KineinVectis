@@ -41,7 +41,7 @@ fn cenario(nome: &str) -> Cenario {
     )
     .unwrap();
     std::fs::write(base.join("pi/sensor/CMakeLists.txt"), "project(sensor C)\n").unwrap();
-    let base = base.canonicalize().unwrap();
+    let base = crate::platform::canonicalize(&base).unwrap();
     let (sender, receiver) = mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
         base.join("bin"),

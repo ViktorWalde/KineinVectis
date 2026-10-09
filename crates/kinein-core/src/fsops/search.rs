@@ -73,11 +73,10 @@ fn search_file(
         return false;
     };
 
-    let relative = file
-        .strip_prefix(root)
-        .unwrap_or(file)
-        .display()
-        .to_string();
+    let relative = file.strip_prefix(root).map_or_else(
+        |_| file.display().to_string(),
+        crate::platform::portable_relative,
+    );
 
     // TODAS as ocorrencias, nao so a primeira de cada linha.
     //
@@ -183,7 +182,7 @@ mod tests {
             fs::remove_dir_all(&dir).unwrap();
         }
         fs::create_dir_all(&dir).unwrap();
-        dir.canonicalize().unwrap()
+        crate::platform::canonicalize(&dir).unwrap()
     }
 
     #[test]

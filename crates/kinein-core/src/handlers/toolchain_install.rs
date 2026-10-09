@@ -42,7 +42,7 @@ impl Core {
         self.detector
             .install_root()
             .map(Path::to_path_buf)
-            .or_else(|| std::env::var_os("HOME").map(|h| tools::install_root(Path::new(&h))))
+            .or_else(|| crate::platform::home_dir().map(|h| tools::install_root(&h)))
     }
 
     /// Nao exige workspace: o catalogo e a pasta sao desta maquina. Com um

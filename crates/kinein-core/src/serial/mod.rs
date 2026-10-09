@@ -171,7 +171,7 @@ fn descrever(ambiente: &Ambiente<'_>, nome: &str, mm_rodando: bool) -> Option<Se
 /// guarda o `bInterfaceNumber` da interface que atravessou. Sem `idVendor`
 /// acima, nao e' USB — e nao entra na lista.
 fn identidade(device: &Path) -> Option<Identidade> {
-    let mut dir = std::fs::canonicalize(device).ok()?;
+    let mut dir = crate::platform::canonicalize(device).ok()?;
     let mut id = Identidade {
         driver: std::fs::read_link(device.join("driver"))
             .ok()

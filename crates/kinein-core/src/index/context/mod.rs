@@ -141,7 +141,8 @@ impl CompileContext {
     }
 
     fn contexto_c(&self, absoluto: &Path, ctx: &mut FileContext) {
-        let chave = std::fs::canonicalize(absoluto).unwrap_or_else(|_| absoluto.to_path_buf());
+        let chave =
+            crate::platform::canonicalize(absoluto).unwrap_or_else(|_| absoluto.to_path_buf());
         // O inverso: que targets do CMake compilam este arquivo (file-api).
         if let Some(modelo) = &self.cmake {
             ctx.targets = modelo
