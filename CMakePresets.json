@@ -7,6 +7,14 @@
     {
       "configurePreset": "linux-clang-release-hardened",
       "name": "release-hardened"
+    },
+    {
+      "configurePreset": "windows-msvc-debug",
+      "name": "windows-msvc-debug"
+    },
+    {
+      "configurePreset": "windows-msvc-release",
+      "name": "windows-msvc-release"
     }
   ],
   "cmakeMinimumRequired": {
@@ -60,6 +68,38 @@
       "displayName": "Release",
       "generator": "Ninja",
       "name": "release"
+    },
+    {
+      "binaryDir": "${sourceDir}/build/windows-msvc-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      },
+      "condition": {
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows",
+        "type": "equals"
+      },
+      "displayName": "Windows MSVC Debug",
+      "generator": "Ninja",
+      "name": "windows-msvc-debug"
+    },
+    {
+      "binaryDir": "${sourceDir}/build/windows-msvc-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      },
+      "condition": {
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows",
+        "type": "equals"
+      },
+      "displayName": "Windows MSVC Release",
+      "generator": "Ninja",
+      "name": "windows-msvc-release"
     }
   ],
   "testPresets": [

@@ -135,10 +135,18 @@ sem aviso de QML no Qt 6.11.2.
 ## 3. O porte (desenho de 2026-10-09)
 
 Os dois primeiros itens do plano de 2026-10-08 estão resolvidos: a medição é o
-§2.1, e o modo dos gates é a D2. O terceiro é o critério de pronto do porte: o
-autor abre um projeto, edita, usa o terminal, compila e usa o Git na IDE, no
-Windows. Banco, containers e embarcados vêm depois, na ordem do §1. No porte,
-eles compilam e dizem "não suportado no Windows" onde dependem de Unix.
+§2.1, e o modo dos gates é a D2.
+
+**O critério de pronto mudou em 2026-10-09, à noite.** O autor decidiu: "já
+vamos fazer essa compatibilidade ser impecável, fazer algo meia boca ou
+incompleto nem compensa ser feito". O critério anterior era o mínimo (abrir,
+editar, terminal, compilar e Git), com Banco, containers e embarcados dizendo
+"não suportado no Windows". Agora vale **paridade com o Linux**: cada domínio
+faz no Windows o que faz no Linux. "Não suportado" só fica onde a coisa não
+existe no Windows, e isso é dito. Teste `#[cfg(unix)]` só vale para o que é de
+Unix; o resto ganha equivalente Windows. Os stubs da W1 (serial, consoles do
+Banco) passam a ser dívida do porte. O plano por domínio, com as decisões
+que ele pede, é o §3.3.
 
 ### 3.1 As decisões do autor (2026-10-09, respondidas como perguntas)
 
@@ -267,6 +275,12 @@ crate de FFI próprio.
   QML) e a foto da janela real. Na foto, o agente opera a tela com o mouse e o
   teclado do autor, que autorizou isso em 2026-10-09.
 
+W3a feita em 2026-10-09 (40.7 §7.264): a UI compila com MSVC e abre no
+Windows. Ficaram para a W3b os dois testes C++ que não compilam lá
+(`tst_single_instance` usa `poll.h`; `tst_clipboard_files` recebe uma flag de
+GCC) e as opções estritas para o MSVC, que o `KineinStrictOptions.cmake` só
+tem para Clang e GCC.
+
 **W4, o gate do Windows (D2).** O `scripts/verificar-windows.ps1` roda:
 
 - `cargo fmt --check`;
@@ -285,6 +299,47 @@ Windows sai do §2.1 e vai para o `contribuindo/02`, para ter um dono só.
 Cada fatia é um commit no branch `porte-windows`, com o gate do Linux verde no
 WSL e o build do Windows medido. Os commits não sobem para o GitHub sem
 pedido do autor.
+
+### 3.3 Paridade por domínio (o critério "impecável", 2026-10-09)
+
+Estado medido no Windows em 2026-10-09, depois da W3a. "Falta" é o que
+separa o domínio da paridade com o Linux.
+
+| Domínio | No Windows hoje | Falta |
+| --- | --- | --- |
+| Projeto, árvore, arquivos | abre, lista, copia, renomeia, apaga (W1, W2a) | encerrar a árvore de processos sem escapar descendente (Job Object, D7) |
+| Editor, índice, busca | o índice lê o projeto (1629 arquivos na foto) | os testes do observador de arquivos (`notify`) que falham no Windows |
+| Terminal | abre `pwsh` no ConPTY (W2a) | testes próprios do Windows; o uso real com mouse e teclado |
+| Build C/C++ | o CMake e o `cl` existem, mas dentro do Visual Studio | achar o VS (`vswhere`) e rodar o build no ambiente dele; CMake, Ninja e LLVM (`clangd`, `clang-format`, `clang-tidy`) fora do `PATH` |
+| Build Rust, testes, Git | Cargo detectado; Git funciona | `core.autocrlf` do Git para Windows nos testes |
+| LSP | busca de executável com `PATHEXT` (W2a) | provar `clangd`, `rust-analyzer`, `basedpyright`, `qmlls` e `ruff` no Windows |
+| Depuração | — | um adaptador DAP no Windows (`lldb-dap`, CodeLLDB, `gdb` do MSYS2), D10 |
+| Python | o `python3` do `PATHEXT` cai no atalho da Store | `python`/`py`, venv com `Scripts\`, `debugpy` |
+| Banco | SQLite, PostgreSQL por TCP, MongoDB | os consoles (stub na W1) com garantia equivalente; ODBC do Windows |
+| Containers | — | Docker Desktop ou Podman no Windows |
+| Remote SSH | — | o OpenSSH do Windows; sem `rsync`, o `scp` que o domínio já tem |
+| Embarcados | a serial é stub (W1) | portas `COMx` (listar, permissão, monitor); `esptool`, `probe-rs`, `picotool`, `dfu-util`; D10 |
+| Ambiente e Setup | o catálogo de instalação fala `dnf`/`apt`/`pacman` | `winget` no catálogo; pastas de toolchain do Windows |
+| UI | abre (W3a); instância única por named pipe (D4) | os testes C++ e as opções estritas do MSVC (W3b); o foco da janela pedida por outra instância |
+| Gate | clippy e testes rodados à mão | `scripts/verificar-windows.ps1` (W4, D8) |
+| Distribuição | — | o pacote do Windows (D9) |
+
+**Decisões pedidas ao autor** (abertas):
+
+- **D7, FFI do Windows.** O core é `forbid(unsafe_code)`. Job Object, rename
+  sem sobrescrever atômico e a lista de portas `COMx` pedem a API do Windows.
+  As saídas: um crate pequeno e próprio que confina o `unsafe` atrás de uma
+  API segura; crates de terceiros já auditados (licença pelo `deny.toml`); ou
+  ficar só na biblioteca padrão, com os limites ditos.
+- **D8, o gate no Windows.** O que roda nativo no Windows (compilação,
+  testes, clippy, C++, `qmllint`) e o que roda uma vez no WSL, como as
+  verificações que não dependem do sistema (docs, links, mapa, arquitetura,
+  idioma). Isso estende a D2.
+- **D9, a distribuição no Windows.** Zip portátil, instalador ou MSIX, e se
+  isso entra no porte ou fica para o lançamento.
+- **D10, embarcados e depuração no Windows.** Se entram no porte agora, com a
+  placa como `COMx` nativo, ou se continuam na edição especial (§4), que trata
+  o atrito Windows + WSL2 com USB.
 
 ## 4. A edição especial (depois da 0.4.0)
 

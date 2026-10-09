@@ -232,11 +232,18 @@ QString CoreClient::resolveCoreBinary()
         return fromEnv;
     }
 
+    // O nome do arquivo muda por sistema: no Windows o core e' `.exe`
+    // (DocsPublic/roadmaps/60 §3.2, W3). O `findExecutable` do fim ja' sabe.
+#ifdef Q_OS_WIN
+    const QString core = QStringLiteral("kinein-core.exe");
+#else
+    const QString core = QStringLiteral("kinein-core");
+#endif
     const QStringList candidates{
-        QCoreApplication::applicationDirPath() + QStringLiteral("/kinein-core"),
-        QDir::currentPath() + QStringLiteral("/target/debug/kinein-core"),
-        QDir::currentPath() + QStringLiteral("/../target/debug/kinein-core"),
-        QDir::currentPath() + QStringLiteral("/../../target/debug/kinein-core"),
+        QCoreApplication::applicationDirPath() + QLatin1Char('/') + core,
+        QDir::currentPath() + QStringLiteral("/target/debug/") + core,
+        QDir::currentPath() + QStringLiteral("/../target/debug/") + core,
+        QDir::currentPath() + QStringLiteral("/../../target/debug/") + core,
     };
     for (const QString& candidate : candidates) {
         if (QFileInfo::exists(candidate)) {

@@ -38,6 +38,16 @@ add_library(kinein-ui-puro OBJECT
 )
 kinein_enable_strict_compiler_options(kinein-ui-puro)
 target_link_libraries(kinein-ui-puro PUBLIC Qt6::Core)
+# O fio da instancia unica muda por sistema (DocsPublic/roadmaps/60 §3.2, W3):
+# socket de dominio Unix, ou named pipe pelo Qt Network no Windows (decisao D4
+# do autor). O Network so' entra no Windows.
+if(WIN32)
+    find_package(Qt6 REQUIRED COMPONENTS Network)
+    target_sources(kinein-ui-puro PRIVATE src/single_instance_windows.cpp)
+    target_link_libraries(kinein-ui-puro PUBLIC Qt6::Network)
+else()
+    target_sources(kinein-ui-puro PRIVATE src/single_instance_unix.cpp)
+endif()
 target_include_directories(kinein-ui-puro PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 qt_add_executable(kinein-vectis
@@ -965,6 +975,9 @@ set_source_files_properties(
 target_include_directories(kinein-vectis PRIVATE src)
 
 target_link_libraries(kinein-vectis PRIVATE kinein-ui-puro Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+# No Windows, subsistema grafico: abrir pelo Iniciar nao abre um console junto,
+# e o terminal devolve o prompt sem o `fork` do Unix (60 §3.2, W3).
+set_target_properties(kinein-vectis PROPERTIES WIN32_EXECUTABLE TRUE)
 # A versao vem do `project(... VERSION ...)`: escrita a mao no main.cpp, ela
 # ficou em 0.1.0 enquanto o projeto estava em 0.2.0, e nada reprovava.
 target_compile_definitions(kinein-vectis PRIVATE KINEIN_VERSION="${PROJECT_VERSION}")

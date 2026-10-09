@@ -16,23 +16,3 @@ include(KineinStrictOptions)
 include(CTest)
 
 add_subdirectory(ui)
-
-include(FetchContent)
-FetchContent_Declare(
-    sqlite3
-             GIT_REPOSITORY https://github.com/sqlite/sqlite
-    GIT_TAG version-3.53.4
-)
-         FetchContent_MakeAvailable(sqlite3)
-
-include(FetchContent)
-FetchContent_Declare(
-    asio
-             GIT_REPOSITORY https://github.com/chriskohlhoff/asio
-    GIT_TAG asio-1-38-2
-)
-         FetchContent_MakeAvailable(asio)
-
-find_package(fmt CONFIG REQUIRED)
-
-find_package(fmt CONFIG REQUIRED)

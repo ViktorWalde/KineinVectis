@@ -7,9 +7,11 @@
 #include "single_instance.h"
 #include "typing_perf_harness.h"
 #include <QTextStream>
-#include <fcntl.h>
 #include <span>
+#ifdef Q_OS_UNIX
+#include <fcntl.h>
 #include <unistd.h>
+#endif
 
 #include <QDir>
 #include <QElapsedTimer>
@@ -175,8 +177,7 @@ int main(int argc, char* argv[])
         // Antes do QGuiApplication de proposito: se alguem ja' responde por
         // esta pasta, nem a UI nem o core chegam a subir.
         const QString canonicalFolder = QFileInfo{request.folder}.canonicalFilePath();
-        const QString socket =
-            kinein::socketPathFor(qEnvironmentVariable("XDG_RUNTIME_DIR"), canonicalFolder);
+        const QString socket = kinein::socketPathFor(kinein::runtimeDirectory(), canonicalFolder);
         // O TOKEN DO XDG E' A UNICA AUTORIZACAO que o compositor Wayland
         // aceita para uma janela subir por pedido de outro processo. O
         // terminal o poe no ambiente quando sabe fazer isso; quando nao poe,
@@ -198,6 +199,11 @@ int main(int argc, char* argv[])
     // validacao e do encaminhamento, que sao as unicas respostas que pertencem
     // ao terminal (erro de caminho, "ja' aberto"). Antes do QGuiApplication de
     // proposito: nenhuma thread do Qt existe ainda, e o fork e' seguro.
+    //
+    // SO' NO UNIX (DocsPublic/roadmaps/60 §3.2, W3). No Windows o executavel e'
+    // de subsistema grafico (`WIN32_EXECUTABLE`): o terminal ja' devolve o
+    // prompt, sem `fork`, e nao ha' terminal para soltar.
+#ifdef Q_OS_UNIX
     const bool alreadyDetached = qEnvironmentVariable("KINEIN_DETACHED") == QLatin1String("1");
     if (kinein::cli::shouldDetach(request, isatty(STDERR_FILENO) == 1, alreadyDetached)) {
         const pid_t child = fork();
@@ -223,6 +229,7 @@ int main(int argc, char* argv[])
         }
         // fork falhou (filho < 0): segue ligado ao terminal, como antes.
     }
+#endif
 
     kinein::installQtMessageLog();
 

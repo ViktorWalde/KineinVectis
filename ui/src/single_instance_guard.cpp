@@ -1,20 +1,6 @@
 #include "single_instance_guard.h"
 
 #include <QFileInfo>
-#include <QSocketNotifier>
-
-namespace {
-
-/// O diretorio de runtime da sessao, ou vazio.
-///
-/// Vazio e' um caso real (container magro, sessao sem systemd) e nao um erro:
-/// a IDE segue sem a coordenacao, abrindo janela como sempre abriu.
-QString runtimeDirectory()
-{
-    return qEnvironmentVariable("XDG_RUNTIME_DIR");
-}
-
-} // namespace
 
 namespace kinein {
 
@@ -72,9 +58,7 @@ void SingleInstanceGuard::claim()
         m_socketPath.clear();
         return;
     }
-    m_notifier = std::make_unique<QSocketNotifier>(m_listenFd, QSocketNotifier::Read);
-    connect(m_notifier.get(), &QSocketNotifier::activated, this,
-            &SingleInstanceGuard::serveIncoming);
+    m_notifier = kinein::watchIncoming(m_listenFd, [this] { serveIncoming(); });
 }
 
 void SingleInstanceGuard::serveIncoming()

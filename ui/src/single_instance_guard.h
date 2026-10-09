@@ -3,7 +3,6 @@
 #include "single_instance.h"
 
 #include <QObject>
-#include <QSocketNotifier>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
@@ -22,7 +21,8 @@
 //
 // O QUE ELE NAO FAZ: decidir. Todas as decisoes — nome do socket, forma da
 // mensagem, conferencia do caminho — vivem no `single_instance`, sem Qt GUI e
-// com teste proprio. Aqui ha' descritor, notificador e ciclo de vida.
+// com teste proprio. Aqui ha' descritor, a escuta (`watchIncoming`, que muda
+// por sistema) e ciclo de vida.
 namespace kinein {
 
 class SingleInstanceGuard : public QObject
@@ -64,10 +64,10 @@ private:
     QString m_workspacePath;
     QString m_socketPath;
     int m_listenFd = -1;
-    // DONO EXPLICITO, e nao filho do Qt: o notificador nasce e morre com o
-    // descritor que ele observa, e amarrar isso ao ciclo de vida do QObject
-    // pai deixaria um notificador apontando para um fd ja' fechado.
-    std::unique_ptr<QSocketNotifier> m_notifier;
+    // DONO EXPLICITO, e nao filho do Qt: a escuta nasce e morre com o
+    // descritor que ela observa, e amarrar isso ao ciclo de vida do QObject
+    // pai deixaria uma escuta apontando para um fd ja' fechado.
+    std::unique_ptr<QObject> m_notifier;
 };
 
 } // namespace kinein

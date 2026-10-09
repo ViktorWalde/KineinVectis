@@ -8,11 +8,19 @@
 > §1).
 >
 > **Onde está o porte:** medido (60 §2.1) e desenhado (60 §3: as decisões
-> D1–D6 e as fatias W1–W5). **Feitas:** a W1 (40.7 §7.262), com o core
-> compilando no Windows, e a W2a (§7.263), com a raiz sem `\\?\`, o caminho
-> relativo com `/` (D5), as pastas do usuário, o shell e o `.exe`. O próximo
-> passo é a W2b, os testes verdes no Windows (787 passam, 109 falham, já
-> classificados no §7.263). Depois vêm a W3 (a UI) e a W4 (o gate do Windows). O trabalho acontece no branch `porte-windows`, no clone
+> D1–D6 e as fatias W1–W5). **Feitas:**
+>
+> - a W1 (40.7 §7.262): o core compila no Windows;
+> - a W2a (§7.263): a raiz sem `\\?\`, o caminho relativo com `/` (D5), as
+>   pastas do usuário, o shell e o `.exe`;
+> - a W3a (§7.264): **a IDE abre nativa no Windows**.
+>
+> **O critério agora é "impecável"** (decisão do autor, 60 §3): paridade com o
+> Linux por domínio, com a tabela e as decisões abertas D7–D10 no 60 §3.3. Com
+> as decisões, o plano por domínio vira fatias. As pendências já conhecidas
+> são a W2b (os testes do core no Windows: 787 passam, 109 falham), a W3b (os
+> testes C++ e o MSVC estrito) e o ambiente do Visual Studio para o build
+> C/C++. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

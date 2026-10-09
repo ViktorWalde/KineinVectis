@@ -1,7 +1,10 @@
 #pragma once
 
+#include <QObject>
 #include <QString>
 
+#include <functional>
+#include <memory>
 #include <optional>
 
 // UMA JANELA POR PASTA (P0, decisao do autor em 2026-09-26).
@@ -33,7 +36,31 @@
 // "janela pronta" na barra, e nao foco. O que este arquivo garante em qualquer
 // ambiente e' o que importa: NAO abrir a segunda janela, e dizer no terminal o
 // que aconteceu. O foco e' o melhor esforco por cima disso.
+//
+// UM FIO POR SISTEMA (DocsPublic/roadmaps/60 §3.2, W3). O protocolo e as
+// decisoes (nome, mensagem, conferencia do caminho) sao estes, iguais nos dois
+// sistemas, e moram no `single_instance.cpp`. O transporte muda: socket de
+// dominio Unix no `single_instance_unix.cpp`; no Windows, named pipe pelo
+// `QLocalServer`, so' do proprio usuario (`single_instance_windows.cpp`, decisao
+// D4 do autor). Ali o "descritor" das funcoes abaixo e' so' um numero que
+// identifica o servidor.
 namespace kinein {
+
+/// Onde os sockets desta sessao moram, ou vazio quando nao ha' onde.
+///
+/// No Unix e' o `XDG_RUNTIME_DIR`; vazio e' um caso real (container magro,
+/// sessao sem systemd) e nao um erro: a IDE segue sem a coordenacao, abrindo
+/// janela como sempre abriu. No Windows e' um prefixo com o nome do usuario,
+/// porque o pipe e' da maquina inteira.
+[[nodiscard]] QString runtimeDirectory();
+
+/// Chama `onReady` quando alguem conecta no descritor de `listenFor`.
+///
+/// O objeto devolvido e' o dono da escuta: destrui-lo a encerra. Ele deve
+/// morrer ANTES do descritor (`releaseSocket`). `nullptr` quando nao ha' o que
+/// observar.
+[[nodiscard]] std::unique_ptr<QObject> watchIncoming(int listenFd,
+                                                     const std::function<void()>& onReady);
 
 /// O caminho do socket desta pasta, ou vazio quando nao da' para ter um.
 ///
