@@ -4,6 +4,13 @@
 > à noite. Cada fatia ainda tem desenho próprio antes do código, no documento
 > dono, como sempre.
 
+> **SUSPENSO pelo autor em 2026-10-09** (40.7 §7.258): "não vou mais para
+> ambiente Windows no momento". O desenvolvimento segue no Arch, o alvo
+> continua Linux nativo ([47](47-estrutura-da-v0.3.md) §10.2) e a fila é a da
+> 0.3.9 e depois a 0.4, sem a adaptação ao Windows na frente. Este plano e o
+> levantamento do §2 ficam guardados para quando o autor o retomar; a
+> contagem do §2 é de 2026-10-08 e precisa ser refeita nesse dia.
+
 ## 1. A decisão
 
 O autor está migrando o sistema operacional de desenvolvimento para Windows,

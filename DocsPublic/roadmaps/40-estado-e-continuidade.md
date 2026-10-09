@@ -1,27 +1,25 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **HANDOFF PARA O WINDOWS (2026-10-08, à noite). Leia isto primeiro.** O
-> autor está migrando o sistema de desenvolvimento do Arch para o Windows, por
-> necessidade de um projeto que pode virar fonte de renda. O plano está no
-> [60](60-windows-e-edicao-especial.md): adaptar a IDE para rodar no Windows,
-> fechar a 0.3.9, fazer a 0.4.0 e, depois dela, a edição especial Windows +
-> WSL2 para embarcados e USB.
+> **Retomada em 2026-10-09, no Arch. Leia isto primeiro.** O autor
+> **suspendeu a migração para o Windows**: "não vou mais para ambiente Windows
+> no momento" (40.7 §7.258). O desenvolvimento segue nesta máquina (Arch, Qt
+> 6.12, clang 23), o alvo continua Linux nativo e o
+> [60](60-windows-e-edicao-especial.md) fica guardado como plano suspenso,
+> sem fatia na fila. O handoff para o Windows de 2026-10-08 está no histórico
+> do Git (`c9c9f04`).
 >
-> **Último commit no Arch:** o 9a.2 (40.7 §7.257). Nesse dia entraram 14a,
-> 14b, 13a, 13b, o SQLite relativo ao projeto, o estilo QML (7b.4), 9a.1 e
-> 9a.2 (40.7 §7.250–§7.257).
+> **Último commit:** o 9a.2 (40.7 §7.257). Em 2026-10-08 entraram 14a, 14b,
+> 13a, 13b, o SQLite relativo ao projeto, o estilo QML (7b.4), 9a.1 e 9a.2
+> (40.7 §7.250–§7.257).
 >
 > **O que falta na 0.3.9**, já com o corte de escopo do autor (59 §2.3):
 > 1. 9a.3, o campo "Adaptador: interno · o da IDE" no formulário.
-> 2. A fatia dos containers (59, 16b), com as seis correções do topo deste
->    documento e o "Remover" que pergunta pelos volumes.
+> 2. A fatia dos containers (59, 16b), com as seis correções abaixo e o
+>    "Remover" que pergunta pelos volumes.
 > 3. 15, as provas finais do Banco.
 > 4. 16, o pente fino.
 >
-> **No Windows, comece pelo 60 §3:** medir o build do core e da UI, decidir
-> como os gates rodam lá (Git Bash, WSL ou reescrita) e qual é a prova de
-> tela, e listar o que quebra (o 60 §2 traz o que hoje é Linux). Só então
-> retomar a fila acima.
+> Depois, a 0.4 (embarcados, [52](52-arquitetura-executavel-da-0.4.md)).
 >
 > **Pendente do autor:** o aceite com mouse e teclado de 7, 7b, 14a, 14b, 13a
 > e 13b; o 9a.3 terá o seu.
