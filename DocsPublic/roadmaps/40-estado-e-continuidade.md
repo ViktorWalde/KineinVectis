@@ -1,30 +1,39 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **Retomada em 2026-10-09, no Arch. Leia isto primeiro.** O autor
-> **suspendeu a migração para o Windows**: "não vou mais para ambiente Windows
-> no momento" (40.7 §7.258). O desenvolvimento segue nesta máquina (Arch, Qt
-> 6.12, clang 23), o alvo continua Linux nativo e o
-> [60](60-windows-e-edicao-especial.md) fica guardado como plano suspenso,
-> sem fatia na fila. O handoff para o Windows de 2026-10-08 está no histórico
-> do Git (`c9c9f04`).
+> **HANDOFF PARA O WINDOWS 11 PRO (2026-10-09). Leia isto primeiro.** O
+> autor retomou a migração que suspendera mais cedo no mesmo dia: "por eu tocar um
+> projeto de integração TA/TI vou precisar estar usando Windows 11 Pro" (40.7
+> §7.260). O plano volta a valer: [60](60-windows-e-edicao-especial.md), na
+> ordem do §1 (adaptar a IDE ao Windows, fechar a 0.3.9, a 0.4.0 e a edição
+> especial Windows + WSL2). O alvo do desenvolvimento passa a ser o Windows
+> 11 Pro.
 >
-> **Feito em 2026-10-09:** o 9a.3 (40.7 §7.259), o campo "Adaptador: Interno
-> · O da IDE" no formulário do SQLite; o gate passou a compilar o
-> `kinein-adapter-sqlite` em release ao lado do core. Com ele, o 9a está
-> fechado. Em 2026-10-08 entraram 14a, 14b, 13a, 13b, o SQLite relativo ao
-> projeto, o estilo QML (7b.4), 9a.1 e 9a.2 (40.7 §7.250–§7.257).
+> **Último commit no Arch:** o 9a.3 (40.7 §7.259), o campo "Adaptador:
+> Interno · O da IDE" no formulário do SQLite; com ele o 9a está fechado, e o
+> gate passou a compilar o `kinein-adapter-sqlite` em release ao lado do core.
+> Antes, a suspensão do mesmo dia (§7.258) e, em 2026-10-08, 14a, 14b, 13a, 13b,
+> o SQLite relativo ao projeto, o estilo QML (7b.4), 9a.1 e 9a.2
+> (§7.250–§7.257).
+>
+> **No Windows, comece pelo 60 §3:** clonar, medir o build do core e da UI,
+> decidir como os gates rodam lá (Git Bash, WSL ou reescrita) e qual é a
+> prova de tela (o Xvfb não existe no Windows), e listar o que quebra. O 60
+> §2 traz o que hoje é Linux, incluindo o nome do adaptador sem `.exe`
+> (achado em 2026-10-09). Só então retomar a fila abaixo.
 >
 > **O que falta na 0.3.9**, já com o corte de escopo do autor (59 §2.3):
-> 1. **Próximo:** a fatia dos containers (59, 16b), com as seis correções
->    abaixo e o "Remover" que pergunta pelos volumes. Desenho antes do
->    código, no dono dos containers.
+> 1. A fatia dos containers (59, 16b), com as seis correções abaixo e o
+>    "Remover" que pergunta pelos volumes. Desenho antes do código, no dono
+>    dos containers; no Windows, Docker Desktop ou Podman (60 §4).
 > 2. 15, as provas finais do Banco.
 > 3. 16, o pente fino.
 >
-> Depois, a 0.4 (embarcados, [52](52-arquitetura-executavel-da-0.4.md)).
+> Depois, a 0.4 (embarcados, [52](52-arquitetura-executavel-da-0.4.md)) e a
+> edição especial.
 >
 > **Pendente do autor:** o aceite com mouse e teclado de 7, 7b, 14a, 14b, 13a,
-> 13b e 9a.3 (roteiro do 9a.3 no 40.7 §7.259).
+> 13b e 9a.3 (roteiro do 9a.3 no 40.7 §7.259). Feito no Arch antes da troca,
+> ou no Windows depois que a IDE rodar lá (60 §3).
 
 > **Retomada em 2026-10-08, em ambiente novo (Arch Linux):** o autor migrou
 > o desenvolvimento em 2026-10-07 pelas versões estáveis mais recentes: Qt

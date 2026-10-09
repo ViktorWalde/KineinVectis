@@ -65,9 +65,9 @@ Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
 | 0.3.6 | FEITA NO CHECKOUT (2026-10-03) | limpeza e base | G0 (gates antes do código — feito), terminal mudo, passeio por superfícies, inventário F0, layout versionado | [`53`](53-arquitetura-executavel-da-0.3.6.md) §11, [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §4 | gate completo, passeio sem aviso no AppImage, telas nas três larguras (53 §11) |
 | 0.3.7 | FEITA NO CHECKOUT (2026-10-03) | navegação | trilho por áreas, painel de baixo contextual | 53 §5.4–§5.5 | idem |
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
-| 0.3.9 | EM CURSO (2026-10-09): passos 1–8, 9a, 13 e 14 feitos (40.7 §7.220–§7.259); 9b/9c, 10, 11 e 12 adiados pelo autor (59 §2.3). Restam os containers (16b), as provas finais (15) e o pente fino (16), último. AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4); provas no Qt local (6.12.0) | [`59`](59-fechamento-da-0.3.9.md) §2/§2.1/§7; 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
+| 0.3.9 | EM CURSO (2026-10-09): passos 1–8, 9a, 13 e 14 feitos (40.7 §7.220–§7.259); 9b/9c, 10, 11 e 12 adiados pelo autor (59 §2.3). Restam os containers (16b), as provas finais (15) e o pente fino (16), último, depois de a IDE rodar no Windows 11 Pro (60 §1). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4); provas no Qt local (6.12.0) | [`59`](59-fechamento-da-0.3.9.md) §2/§2.1/§7; 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | 0.4.0–0.4.4 | PLANEJADA | embarcados | contexto efetivo, diagnóstico ao salvar, cross ponta a ponta, tamanho por símbolo, cache, gravar e depurar com SVD; **PlatformIO como cidadão de tier 1** nas cinco jornadas e **emuladores como alvo** (QEMU, Renode, QEMU da Espressif) — decisões de 2026-10-01 | [`52`](52-arquitetura-executavel-da-0.4.md) §11 | as cinco jornadas J1–J5 provadas (52 §1, §10) |
-| edição especial | SUSPENSA (autor, 2026-10-09; planejada em 2026-10-08) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4), quando o autor retomar |
+| edição especial | PLANEJADA (autor, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
 | 0.5.x | PLANEJADA | ambiente e capacidades | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md) | por fatia; corte de release pela evidência (49 §6) |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
@@ -132,8 +132,9 @@ Não está copiado aqui — está no dono, e é lá que se lê:
   semântico detecta deriva e não resolve versão: [`47`](47-estrutura-da-v0.3.md) §10.2.
   O alvo Linux nativo foi revisto pelo autor em 2026-10-08: Windows entra,
   com uma edição especial Windows + WSL2 depois da 0.4.0
-  ([`60`](60-windows-e-edicao-especial.md)). Em 2026-10-09 o autor suspendeu
-  essa revisão: o alvo continua Linux nativo até ele retomar o 60.
+  ([`60`](60-windows-e-edicao-especial.md)). Em 2026-10-09 o autor a
+  suspendeu e a retomou no mesmo dia: o desenvolvimento vai para o Windows 11
+  Pro, por um projeto de integração TA/TI.
 
 ## 6. Decisões deste mapa
 

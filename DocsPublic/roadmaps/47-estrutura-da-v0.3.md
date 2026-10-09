@@ -518,9 +518,9 @@ Fechadas, e detalhadas em
   equivalente nativo (`/proc/<pid>/fd`) já existe. **Revisto pelo autor em
   2026-10-08:** a IDE passa a ser adaptada para rodar no Windows, e há uma
   edição especial para Windows + WSL2 depois da 0.4.0
-  ([60](60-windows-e-edicao-especial.md)). **Suspenso pelo autor em
-  2026-10-09:** o desenvolvimento segue no Arch e o alvo continua Linux
-  nativo até ele retomar o 60;
+  ([60](60-windows-e-edicao-especial.md)). Em 2026-10-09 o autor suspendeu
+  e, no mesmo dia, retomou essa revisão: o desenvolvimento vai para o
+  Windows 11 Pro, por um projeto de integração TA/TI (40.7 §7.258, §7.260);
 - **o modelo semântico profundo detecta DERIVA, e não resolve versão.** Quem
   resolve é o `cargo`, o `uv`, o `conan`, o `west`; a IDE roda a ferramenta do
   ecossistema e mostra o que ela decidiu. Em C++ o que quebra é ABI, e isso é

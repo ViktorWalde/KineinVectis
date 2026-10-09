@@ -4,12 +4,12 @@
 > à noite. Cada fatia ainda tem desenho próprio antes do código, no documento
 > dono, como sempre.
 
-> **SUSPENSO pelo autor em 2026-10-09** (40.7 §7.258): "não vou mais para
-> ambiente Windows no momento". O desenvolvimento segue no Arch, o alvo
-> continua Linux nativo ([47](47-estrutura-da-v0.3.md) §10.2) e a fila é a da
-> 0.3.9 e depois a 0.4, sem a adaptação ao Windows na frente. Este plano e o
-> levantamento do §2 ficam guardados para quando o autor o retomar; a
-> contagem do §2 é de 2026-10-08 e precisa ser refeita nesse dia.
+> **EM VIGOR de novo desde 2026-10-09** (40.7 §7.260). No mesmo dia o autor
+> o suspendeu ("não vou mais para ambiente Windows no momento", §7.258) e o
+> retomou: "por eu tocar um projeto de integração TA/TI vou precisar estar
+> usando Windows 11 Pro". O ambiente de desenvolvimento passa a ser o
+> **Windows 11 Pro**. Entre as duas decisões, o 9a.3 foi feito no Arch
+> (§7.259); o §1 e o §2 abaixo já contam com ele.
 
 ## 1. A decisão
 
@@ -24,9 +24,9 @@ A ordem:
 
 1. **Adaptar a IDE para rodar no Windows**, o suficiente para o autor
    continuar desenvolvendo a própria IDE nela, em paralelo à migração.
-2. **Fechar a 0.3.9**: 9a.3 (o campo "Adaptador" no formulário), a fatia dos
-   containers (16b), as provas finais (15) e o pente fino (16)
-   ([59](59-fechamento-da-0.3.9.md) §2). O corte de escopo de 2026-10-08 já
+2. **Fechar a 0.3.9**: a fatia dos containers (16b), as provas finais (15) e
+   o pente fino (16) ([59](59-fechamento-da-0.3.9.md) §2). O 9a.3 foi feito
+   no Arch em 2026-10-09 (40.7 §7.259). O corte de escopo de 2026-10-08 já
    tirou da 0.3.9 o 9b/9c, o 10 e o 11 (59 §2.3).
 3. **A 0.4.0**: embarcados ([52](52-arquitetura-executavel-da-0.4.md)).
 4. **A edição especial**, depois da 0.4.0: resolver o atrito do Windows com o
@@ -53,6 +53,9 @@ fechada.
   - 31 trechos com `cfg(unix)` ou `cfg(target_os)` fora de testes.
   - Caminhos `/dev/tty*` em `build/engine.rs`, `dap/server.rs`,
     `flash/{mod,frameworks}.rs` e `handlers/run.rs`.
+  - O adaptador da IDE é procurado como `kinein-adapter-<motor>` ao lado do
+    core (`datasource/external.rs`), sem `std::env::consts::EXE_SUFFIX`: no
+    Windows o `.exe` não seria achado (conferido em 2026-10-09).
   - O terminal usa `portable-pty` (que tem ConPTY no Windows) e
     `alacritty_terminal`.
 - **Estado e segurança:** XDG (`settings.rs`, o histórico do Banco em
@@ -61,7 +64,9 @@ fechada.
   Windows: `%APPDATA%`/`%LOCALAPPDATA%`, ACL e Job Objects, a desenhar.
 - **UI (C++/Qt):** `single_instance.cpp` e `main.cpp` têm código de Unix.
 - **Gates e provas:** 42 scripts `bash` em `scripts/`; provas de tela com
-  Xvfb e `xdotool`; empacotamento AppImage em `packaging/appimage`.
+  Xvfb e `xdotool`; empacotamento AppImage em `packaging/appimage`. O passo
+  release do `verificar.sh` compila também o `kinein-adapter-sqlite`
+  (2026-10-09), e o launcher do checkout (`scripts/kinein-vectis`) é `sh`.
 - **Ambiente:** hoje Arch com Qt 6.12, clang 23 e GCC 16. No Windows: Qt para
   MSVC ou MinGW e Rust com o alvo MSVC, a decidir na primeira fatia.
 

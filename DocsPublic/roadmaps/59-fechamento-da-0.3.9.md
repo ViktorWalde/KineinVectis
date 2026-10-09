@@ -215,8 +215,9 @@ Os dois últimos dependiam de ferramentas que o autor instalaria. A ponte do
 passo 8, o contrato 1.1 e o adaptador SQLite ficam como base deles. A 0.4
 (embarcados) começa logo depois.
 Logo depois, o autor anunciou a mudança para Windows e o plano até a edição
-especial ([60](60-windows-e-edicao-especial.md)); em 2026-10-09 a suspendeu,
-e a 0.3.9 segue no Arch pela fila acima (40.7 §7.258).
+especial ([60](60-windows-e-edicao-especial.md)). Em 2026-10-09 a suspendeu
+(40.7 §7.258) e, no mesmo dia, a retomou para o Windows 11 Pro (§7.260): o
+que falta da 0.3.9 segue depois de a IDE rodar lá (60 §1).
 
 O critério é o uso em embarcados: SQLite no dispositivo e na borda, InfluxDB 3
 para séries temporais de telemetria, PostgreSQL (e TimescaleDB) e MongoDB no
