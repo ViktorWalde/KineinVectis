@@ -11,6 +11,12 @@
 > **Windows 11 Pro**. Entre as duas decisões, o 9a.3 foi feito no Arch
 > (§7.259); o §1 e o §2 abaixo já contam com ele.
 
+> **Ordem revista em 2026-10-09, à noite** (40.7 §7.261): primeiro o porte,
+> depois a organização da documentação (e da arquitetura, se a medição
+> pedir), e só então o fechamento da 0.3.9. O §1 já está na ordem nova. O §2.1
+> traz a medição feita no Windows; o §3, as decisões D1–D4 e as fatias
+> W1–W5; o §6, o ponto de partida da organização.
+
 ## 1. A decisão
 
 O autor está migrando o sistema operacional de desenvolvimento para Windows,
@@ -22,15 +28,30 @@ e WSL2 com a IDE, para parte de embarcados e comunicação USB".
 
 A ordem:
 
-1. **Adaptar a IDE para rodar no Windows**, o suficiente para o autor
-   continuar desenvolvendo a própria IDE nela, em paralelo à migração.
-2. **Fechar a 0.3.9**: a fatia dos containers (16b), as provas finais (15) e
+1. **Adaptar a IDE para rodar no Windows** (o porte, §3), o suficiente para o
+   autor continuar desenvolvendo a própria IDE nela, sem perder o Linux: o
+   mesmo código compila e roda nos dois, e o gate do Linux continua verde.
+2. **Organizar a documentação por contexto e, se a medição pedir, a
+   arquitetura** (§6), para que uma pessoa ou um agente de IA leia só o que
+   vai mexer.
+3. **Fechar a 0.3.9**: a fatia dos containers (16b), as provas finais (15) e
    o pente fino (16) ([59](59-fechamento-da-0.3.9.md) §2). O 9a.3 foi feito
    no Arch em 2026-10-09 (40.7 §7.259). O corte de escopo de 2026-10-08 já
    tirou da 0.3.9 o 9b/9c, o 10 e o 11 (59 §2.3).
-3. **A 0.4.0**: embarcados ([52](52-arquitetura-executavel-da-0.4.md)).
-4. **A edição especial**, depois da 0.4.0: resolver o atrito do Windows com o
+4. **A 0.4.0**: embarcados ([52](52-arquitetura-executavel-da-0.4.md)).
+5. **A edição especial**, depois da 0.4.0: resolver o atrito do Windows com o
    WSL2 na IDE, para embarcados e comunicação USB.
+
+O item 2 é decisão do autor em 2026-10-09, à noite: "depois de fazer a IDE
+rodar no windows, vamos também já melhorar a arquitetura do projeto
+atualmente, ainda mais no quesito documentação, para os agentes de IA,
+inclusive você, não ficar lendo partes desnecessárias onde não vai mexer", e
+"separar a documentação por contexto, deixar tudo explícito e bem separado".
+Ele vinha depois da 0.3.9; na mesma noite o autor aceitou trazê-lo para antes,
+porque as fatias que faltam na 0.3.9 também pagam o custo de leitura ("pode
+seguir assim com essa rota eficiente que me apontou e recomendou também").
+Sem prazo: "mesmo que atrase não precisamos ter pressa. Não fiz nenhuma
+promessa de entrega para 0.4".
 
 Isto revê a decisão antiga de "alvo Linux nativo"
 ([47](47-estrutura-da-v0.3.md) §10.2, [57](57-mapa-de-versoes-ate-a-1.0.md)).
@@ -70,18 +91,162 @@ fechada.
 - **Ambiente:** hoje Arch com Qt 6.12, clang 23 e GCC 16. No Windows: Qt para
   MSVC ou MinGW e Rust com o alvo MSVC, a decidir na primeira fatia.
 
-## 3. A primeira fatia no Windows (a desenhar lá)
+### 2.1 Medido no Windows em 2026-10-09, no `668d890`
 
-Medir antes de mudar, como no resto do projeto:
+**Ambiente.** Windows 11 Pro 26300; Visual Studio Community 2026 (MSVC 14.51,
+e o CMake 4.3.1 e o Ninja 1.13.2 que vêm com ele; Windows SDK 10.0.26100);
+Rust 1.96.1 `x86_64-pc-windows-msvc`; Qt 6.12.0 `msvc2022_64` em `C:\Qt`. O
+Qt veio pelo aqtinstall do commit `076e165` do repositório oficial: a 3.3.0 do
+PyPI não acha o 6.11 em diante, porque a Qt mudou a estrutura do repositório
+de download. O clone fica em `C:\dev\KineinVectis`, com `core.autocrlf=false`
+local: o repositório não tem regra de fim de linha e o Git para Windows
+converteria os scripts `bash` para CRLF. O Linux de referência passa a ser o
+Fedora 44 no WSL2. Lá o `instalar-ambiente.sh --extras` fecha (com o
+`fmt-devel` à parte, ver D1), o core, o adaptador e a UI compilam e a UI sobe
+sem aviso de QML no Qt 6.11.2.
 
-1. Clonar e compilar o core (`cargo build`, `cargo test`) e a UI no Windows.
-   O que quebra vira a lista de fatias, por dono (core, UI, gates).
-2. Decidir como os gates rodam lá: Git Bash, WSL ou reescrita dos scripts
-   críticos, e qual é o equivalente da prova de tela (o Xvfb não existe no
-   Windows).
-3. O mínimo para o autor usar a IDE no Windows: abrir projeto, editar,
-   terminal, build, Git. Banco, containers e embarcados vêm depois, na ordem
-   do §1.
+**O que quebra.**
+
+- `cargo check --workspace --all-targets`: só o `kinein-core` falha, com 29
+  erros na biblioteca (85 contando os testes). Os 29, por causa:
+  - permissão `0600`/`0700`: `fsops/mod.rs`, `format.rs`,
+    `datasource/history.rs` e `fsops/copy_ops.rs`, que copia o modo;
+  - `rustix::fs` (publicar sem sobrescrever, `Errno`): `fsops/publish.rs`,
+    `fsops/copy_ops.rs` e `datasource/console_fs.rs`;
+  - grupo de processo e sinais: `owned_child.rs`;
+  - permissão do dispositivo serial (`mode`, `gid`): `serial/mod.rs`;
+  - nome de arquivo em bytes: `fsops/copy_ops.rs`;
+  - PostgreSQL por socket Unix (`host_path`): `datasource/connection.rs`.
+- CMake da UI: acha o Qt e o MSVC e para só no `find_package(fmt)` (D1). Com um
+  `fmt` vazio, só para medir, o build para no `ui/src/single_instance.cpp`
+  (`sys/socket.h`). Ele está na `kinein-ui-puro`, de que todo o resto depende:
+  13 de 925 passos.
+
+**O que compila, mas faria a coisa errada no Windows.**
+
+- As pastas do usuário vêm de `HOME` e do XDG, e o Windows não define `HOME`:
+  `settings.rs`, `datasource/history.rs`, `remote/mirror.rs`,
+  `handlers/remote_mirror.rs`, `lib.rs`, `project/mod.rs`,
+  `workspace/places.rs`, `tools/mod.rs` e `handlers/toolchain_install.rs`.
+- O shell do terminal é o `SHELL`, senão `/bin/bash` (`terminal/session.rs`).
+- A UI procura o `kinein-core` sem `.exe` (`core_client_process.cpp`), e o
+  `main.cpp` solta o terminal com `fork` e `setsid`.
+
+## 3. O porte (desenho de 2026-10-09)
+
+Os dois primeiros itens do plano de 2026-10-08 estão resolvidos: a medição é o
+§2.1, e o modo dos gates é a D2. O terceiro é o critério de pronto do porte: o
+autor abre um projeto, edita, usa o terminal, compila e usa o Git na IDE, no
+Windows. Banco, containers e embarcados vêm depois, na ordem do §1. No porte,
+eles compilam e dizem "não suportado no Windows" onde dependem de Unix.
+
+### 3.1 As decisões do autor (2026-10-09, respondidas como perguntas)
+
+- **D1, o CMake.** Saem as linhas 20–38 do `CMakeLists.txt` da raiz: o
+  `FetchContent` do `sqlite3` e do `asio` e o `find_package(fmt)`, que aparece
+  duas vezes. Nenhum alvo as usa. Elas vieram dos commits `84cf382`, `fa6d2c1`,
+  `fe2e5b4` e `424c574` (2026-09-04, configaction).
+- **D2, os gates.** O `scripts/verificar.sh` completo continua no Linux, o
+  Fedora 44 do WSL2, e é a referência. No Windows entra um gate curto,
+  `scripts/verificar-windows.ps1` (W4).
+- **D3, a privacidade no Windows.** O papel do `0600`/`0700` fica com a ACL da
+  pasta do usuário: `%APPDATA%` e `%LOCALAPPDATA%` só dão acesso ao usuário, ao
+  SYSTEM e aos Administradores. Não há ACL por arquivo.
+- **D4, a instância única no Windows.** Usa um named pipe, pelo `QLocalServer`
+  e o `QLocalSocket` (Qt Network, ligado só no Windows), com o mesmo protocolo
+  de texto.
+
+### 3.2 As fatias
+
+A regra vale para todas: o comportamento no Linux não muda, e os testes do
+Linux são a prova disso. O que difere por sistema mora num lugar só. No core
+é `crates/kinein-core/src/platform/`, com a API no `mod.rs` e um arquivo por
+sistema, e os domínios chamam o `platform`, sem `cfg` espalhado. Na UI vale o
+mesmo: um arquivo por sistema atrás do cabeçalho que já existe.
+
+**W1, o core compila no Windows.**
+
+- `Cargo.toml`: o `rustix` passa para `[target.'cfg(unix)'.dependencies]`. O
+  `windows-sys` 0.61 entra em `[target.'cfg(windows)'.dependencies]`; ele já
+  está no `Cargo.lock` como transitiva, então são +0 crates (MIT OR
+  Apache-2.0).
+- `platform::fs`:
+  - publicar sem sobrescrever: no Linux, o `renameat2` com `NOREPLACE` de
+    hoje; no Windows, o `MoveFileExW` sem `MOVEFILE_REPLACE_EXISTING`, que
+    falha com `ERROR_ALREADY_EXISTS` e é atômico no mesmo volume;
+  - abrir arquivo e criar pasta privada: no Linux, `0600`/`0700`; no Windows,
+    a D3;
+  - copiar a permissão: no Linux, o modo; no Windows, só o somente-leitura.
+- `platform::process`, o grupo do processo. No Linux, o `process_group(0)` e o
+  sinal no grupo de hoje. No Windows, um Job Object com
+  `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, com o filho associado logo depois do
+  `spawn`. O Windows não tem `SIGTERM` para um processo sem console, então lá
+  o encerramento vai do EOF no stdin direto ao `TerminateJobObject`
+  (`Ending::Killed`). Limite: um neto criado entre o `spawn` e a associação
+  escapa do job.
+- O ambiente permitido (`ALLOWED_ENV`) passa a depender do sistema. No Windows
+  ele leva `PATH`, `SystemRoot`, `windir`, `TEMP`, `TMP`, `USERPROFILE`,
+  `APPDATA`, `LOCALAPPDATA`, `ComSpec` e `PATHEXT`; sem `SystemRoot`, muito
+  programa do Windows não sobe.
+- `serial`: a checagem de permissão do dispositivo é de Unix. No Windows o
+  domínio responde "não suportado no Windows" até a fatia de embarcados.
+- PostgreSQL por socket Unix: só no Unix; no Windows, TCP.
+- Prova: `cargo clippy --workspace --all-targets` e `cargo test --workspace`
+  verdes no Linux (WSL) e no Windows. Os testes que só fazem sentido no Unix
+  ganham `#[cfg(unix)]` e ficam listados no 40.7.
+
+**W2, o core acerta o Windows.**
+
+- `platform::dirs`. A home vem do `HOME`, e no Windows do `USERPROFILE`. Config
+  e estado seguem o XDG no Linux; no Windows ficam em `%APPDATA%` e
+  `%LOCALAPPDATA%`. O cache segue o XDG no Linux; no Windows fica em
+  `%LOCALAPPDATA%\kinein-vectis\cache`. Os lugares do §2.1 passam a chamar
+  este módulo.
+- Executáveis com `std::env::consts::EXE_SUFFIX`: o adaptador
+  (`datasource/external.rs`) e a busca de ferramentas no `PATH` (medir o
+  `tools/mod.rs` contra o `PATHEXT`).
+- O shell do terminal: no Unix, o `SHELL`, senão `/bin/bash`. No Windows, o
+  `pwsh.exe`, senão o `powershell.exe`, senão o `%ComSpec%`; o `portable-pty`
+  usa o ConPTY.
+- Prova: teste de unidade por sistema para cada função do `platform`.
+
+**W3, a UI compila e abre no Windows.**
+
+- A D1 no `CMakeLists.txt`, e os presets `windows-msvc-debug` e
+  `windows-msvc-release` no `CMakePresets.json` (Ninja, `cl`, condição
+  `hostSystemName == Windows`).
+- `single_instance`: o transporte vira um arquivo por sistema. O
+  `single_instance_unix.cpp` é o de hoje; o `single_instance_windows.cpp` é a
+  D4. O protocolo de texto fica onde está.
+- `main.cpp`: o `fork`/`setsid` que solta o terminal fica só no Unix. No
+  Windows o executável é de subsistema gráfico (`WIN32_EXECUTABLE`), e o
+  terminal já devolve o prompt.
+- A UI procura o `kinein-core` com `.exe`.
+- Um lançador, `scripts/kinein-vectis.ps1`, par do `scripts/kinein-vectis`: põe
+  o `bin` do Qt no `PATH` do processo e acha o core. Não há `windeployqt` no
+  checkout.
+- Prova: o smoke sem janela (`QT_QPA_PLATFORM=offscreen`, 20 s, sem aviso de
+  QML) e a foto da janela real. Na foto, o agente opera a tela com o mouse e o
+  teclado do autor, que autorizou isso em 2026-10-09.
+
+**W4, o gate do Windows (D2).** O `scripts/verificar-windows.ps1` roda:
+
+- `cargo fmt --check`;
+- `cargo clippy --workspace --all-targets -D warnings`;
+- `cargo test --workspace`;
+- o build da UI com o preset `windows-msvc-debug`;
+- o smoke da W3.
+
+O `verificar.sh` completo continua no WSL, no mesmo commit.
+
+**W5, o critério de pronto.** O autor abre um projeto, edita, usa o terminal,
+compila e usa o Git na IDE no Windows. A partir daí, os aceites pendentes (7,
+7b, 14a, 14b, 13a, 13b, 9a.3) podem ser feitos lá. Nessa hora o ambiente do
+Windows sai do §2.1 e vai para o `contribuindo/02`, para ter um dono só.
+
+Cada fatia é um commit no branch `porte-windows`, com o gate do Linux verde no
+WSL e o build do Windows medido. Os commits não sobem para o GitHub sem
+pedido do autor.
 
 ## 4. A edição especial (depois da 0.4.0)
 
@@ -103,3 +268,51 @@ medidas.
 Contrato e desenho no documento dono antes do código; uma fatia por commit com
 o gate verde; registro datado no 40.7 dizendo o que provou e o que não fez; o
 aceite com mouse e teclado do autor.
+
+## 6. A organização da documentação (depois do porte, antes da 0.3.9)
+
+**Classe: PLANO, sem desenho ainda.** O desenho é feito depois do porte, num
+documento próprio, que passa a ser o dono desta seção. Aqui ficam o objetivo e
+o ponto de partida medido.
+
+**O objetivo do autor** (§1, item 2): separar a documentação por contexto,
+explícita e bem separada, para que uma pessoa ou um agente de IA leia só o que
+vai mexer. Se a medição pedir, a arquitetura também.
+
+**O ponto de partida, medido em 2026-10-09 no `668d890`** (arquivos versionados):
+
+```text
+codigo, sem Markdown     206752 linhas
+  Rust (crates/)         110412 linhas em 414 arquivos
+  QML (ui/ e harness)     71982 linhas em 548 arquivos
+  scripts .sh e .py       13917 linhas em 85 arquivos
+  C++ (ui/)               10441 linhas em 67 arquivos
+Markdown                  96008 linhas em 153 arquivos
+  40.7, o registro        12007 linhas, 710 KB
+  03, o protocolo IPC      4914 linhas, 275 KB
+  59, a 0.3.9              1805 linhas
+  40, o estado             1581 linhas, 415 delas no cabecalho, antes do §1
+```
+
+O autor estimava "quase 190 mil linhas de código"; a medida, sem Markdown, dá
+206752.
+
+**O que se viu nesta sessão** (o agente que fez o porte, 2026-10-09):
+
+- Para saber onde o projeto está, a ordem de leitura do `contribuindo/05`
+  passa por 00, o cabeçalho do 40, o 40.7 recente, o roadmap da versão e o
+  `ARCHITECTURE.md` antes do primeiro arquivo de código.
+- O 40.7 é grande demais para um agente ler de uma vez, e só se consegue lê-lo
+  por trechos.
+- A ordem das versões aparecia, com pequenas diferenças, no cabeçalho do 40, no
+  57, no 59, no 47 e no 60.
+
+**O que o desenho precisa responder** (nada decidido):
+
+- Quais são os contextos: plataforma, core por domínio, UI, banco, embarcados,
+  gates.
+- O que cada contexto obriga a ler, e o que dispensa.
+- Como o 40.7 se divide sem reescrever o LOG (por exemplo, por versão), e o
+  cabeçalho do 40 se reduz ao handoff.
+- Que gate prova a separação: o `verificar-docs.sh` e o
+  `verificar-links-docs.sh` já existem e seriam estendidos, não duplicados.

@@ -217,7 +217,8 @@ passo 8, o contrato 1.1 e o adaptador SQLite ficam como base deles. A 0.4
 Logo depois, o autor anunciou a mudança para Windows e o plano até a edição
 especial ([60](60-windows-e-edicao-especial.md)). Em 2026-10-09 a suspendeu
 (40.7 §7.258) e, no mesmo dia, a retomou para o Windows 11 Pro (§7.260): o
-que falta da 0.3.9 segue depois de a IDE rodar lá (60 §1).
+que falta da 0.3.9 segue depois do porte e da organização da documentação
+(60 §1, ordem revista na mesma noite, §7.261).
 
 O critério é o uso em embarcados: SQLite no dispositivo e na borda, InfluxDB 3
 para séries temporais de telemetria, PostgreSQL (e TimescaleDB) e MongoDB no

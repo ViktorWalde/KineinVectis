@@ -1,12 +1,17 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **HANDOFF PARA O WINDOWS 11 PRO (2026-10-09). Leia isto primeiro.** O
-> autor retomou a migração que suspendera mais cedo no mesmo dia: "por eu tocar um
-> projeto de integração TA/TI vou precisar estar usando Windows 11 Pro" (40.7
-> §7.260). O plano volta a valer: [60](60-windows-e-edicao-especial.md), na
-> ordem do §1 (adaptar a IDE ao Windows, fechar a 0.3.9, a 0.4.0 e a edição
-> especial Windows + WSL2). O alvo do desenvolvimento passa a ser o Windows
-> 11 Pro.
+> **HANDOFF NO WINDOWS 11 PRO (2026-10-09, noite). Leia isto primeiro.** O
+> desenvolvimento passou para o Windows 11 Pro (40.7 §7.260), e o autor revisou
+> a ordem (§7.261). Agora ela é: **o porte da IDE para o Windows → a
+> organização da documentação, e da arquitetura se a medição pedir → fechar a
+> 0.3.9 → a 0.4 → a edição especial** ([60](60-windows-e-edicao-especial.md)
+> §1).
+>
+> **Onde está o porte:** medido (60 §2.1) e desenhado (60 §3: as decisões
+> D1–D4 e as fatias W1–W5). O próximo passo é a W1, o core compilando no
+> Windows. O trabalho acontece no branch `porte-windows`, no clone
+> `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
+> (D2).
 >
 > **Último commit no Arch:** o 9a.3 (40.7 §7.259), o campo "Adaptador:
 > Interno · O da IDE" no formulário do SQLite; com ele o 9a está fechado, e o
@@ -15,13 +20,8 @@
 > o SQLite relativo ao projeto, o estilo QML (7b.4), 9a.1 e 9a.2
 > (§7.250–§7.257).
 >
-> **No Windows, comece pelo 60 §3:** clonar, medir o build do core e da UI,
-> decidir como os gates rodam lá (Git Bash, WSL ou reescrita) e qual é a
-> prova de tela (o Xvfb não existe no Windows), e listar o que quebra. O 60
-> §2 traz o que hoje é Linux, incluindo o nome do adaptador sem `.exe`
-> (achado em 2026-10-09). Só então retomar a fila abaixo.
->
-> **O que falta na 0.3.9**, já com o corte de escopo do autor (59 §2.3):
+> **O que falta na 0.3.9**, depois do porte e da organização, já com o corte
+> de escopo do autor (59 §2.3):
 > 1. A fatia dos containers (59, 16b), com as seis correções abaixo e o
 >    "Remover" que pergunta pelos volumes. Desenho antes do código, no dono
 >    dos containers; no Windows, Docker Desktop ou Podman (60 §4).
