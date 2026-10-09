@@ -11,14 +11,17 @@
 // vivem no `main`, onde ha' sistema operacional e compositor.
 #include "single_instance.h"
 
+#include <QEventLoop>
 #include <QFileInfo>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <QtTest>
 
 #include <thread>
 
-#include <poll.h>
+#ifdef Q_OS_UNIX
 #include <unistd.h>
+#endif
 
 using kinein::answerIsMine;
 using kinein::encodeRequest;
@@ -30,16 +33,24 @@ using kinein::socketPathFor;
 
 namespace {
 
-// O listener de produção é não bloqueante e o QSocketNotifier só chama
-// acceptOne quando há conexão pronta. O teste em thread precisa da mesma
-// condição; chamá-lo antes do connect devolve EAGAIN e mede só o scheduler.
-std::optional<kinein::Request> acceptAfterReadable(int fd, const QString& workspace)
+// O DONO ESPERA PELO MESMO CAMINHO DA PRODUCAO: a escuta do `watchIncoming`
+// (o QSocketNotifier no Unix, o sinal do QLocalServer no Windows) e so' entao
+// o `acceptOne`. Chama-lo antes da conexao chegar mediria o scheduler, nao o
+// protocolo. Quem chega roda numa thread, com o laco de eventos do dono aqui.
+std::optional<kinein::Request> acceptWhenReady(int fd, const QString& workspace)
 {
-    pollfd event{.fd = fd, .events = POLLIN, .revents = 0};
-    if (::poll(&event, 1, 1000) <= 0 || (event.revents & POLLIN) == 0) {
+    QEventLoop loop;
+    bool ready = false;
+    const std::unique_ptr<QObject> watcher = kinein::watchIncoming(fd, [&] {
+        ready = true;
+        loop.quit();
+    });
+    if (!watcher) {
         return std::nullopt;
     }
-    return kinein::acceptOne(fd, workspace);
+    QTimer::singleShot(3000, &loop, &QEventLoop::quit);
+    loop.exec();
+    return ready ? kinein::acceptOne(fd, workspace) : std::nullopt;
 }
 
 } // namespace
@@ -173,11 +184,11 @@ void TestSingleInstance::a_live_owner_answers_and_the_newcomer_steps_aside()
     const int ownerFd = kinein::listenFor(socket);
     QVERIFY2(ownerFd >= 0, "nao consegui escutar no socket");
 
-    std::optional<kinein::Request> received;
-    std::thread server([&] { received = acceptAfterReadable(ownerFd, project); });
-
-    const bool handedOff = kinein::handOff(socket, project, QStringLiteral("token-do-terminal"));
-    server.join();
+    bool handedOff = false;
+    std::thread newcomer(
+        [&] { handedOff = kinein::handOff(socket, project, QStringLiteral("token-do-terminal")); });
+    const std::optional<kinein::Request> received = acceptWhenReady(ownerFd, project);
+    newcomer.join();
 
     QVERIFY2(handedOff, "o recem-chegado devia sair, e nao abrir outra janela");
     QVERIFY(received.has_value());
@@ -196,22 +207,24 @@ void TestSingleInstance::an_owner_of_another_folder_says_no_right_away()
     const int ownerFd = kinein::listenFor(socket);
     QVERIFY(ownerFd >= 0);
 
-    std::optional<kinein::Request> received;
-    std::thread server(
-        [&] { received = acceptAfterReadable(ownerFd, QStringLiteral("/home/alguem/OUTRA")); });
-
     // O QUE SE MEDE e' "respondeu ANTES do prazo", e nao um numero de
     // milissegundos. Por isso o prazo aqui e' folgado de proposito: com o
     // limite colado no tempo real, o teste piscava quando a maquina estava
     // ocupada — visto em 2026-09-26, com o clang-tidy rodando ao lado. Teste
     // que falha ao acaso ensina a ignorar teste.
     constexpr int kGenerousTimeoutMs = 3000;
-    QElapsedTimer clock;
-    clock.start();
-    const bool handedOff = kinein::handOff(socket, QStringLiteral("/home/alguem/projeto"),
-                                           QString{}, kGenerousTimeoutMs);
-    const qint64 elapsedMs = clock.elapsed();
-    server.join();
+    bool handedOff = true;
+    qint64 elapsedMs = 0;
+    std::thread newcomer([&] {
+        QElapsedTimer clock;
+        clock.start();
+        handedOff = kinein::handOff(socket, QStringLiteral("/home/alguem/projeto"), QString{},
+                                    kGenerousTimeoutMs);
+        elapsedMs = clock.elapsed();
+    });
+    const std::optional<kinein::Request> received =
+        acceptWhenReady(ownerFd, QStringLiteral("/home/alguem/OUTRA"));
+    newcomer.join();
 
     QVERIFY2(!handedOff, "pasta diferente tem de abrir janela nova");
     QVERIFY(!received.has_value());
@@ -223,6 +236,10 @@ void TestSingleInstance::an_owner_of_another_folder_says_no_right_away()
 
 // Depois de um crash sobra o arquivo do socket sem ninguem atras dele. Deixar
 // a coordenacao quebrada ate' o proximo reboot seria pior que assumir o lugar.
+//
+// NO WINDOWS NAO HA' ORFAO: o pipe some com o ultimo handle, crash inclusive.
+// O que se prova la' e' o equivalente — o dono que saiu libera o nome na hora,
+// e o seguinte assume sem esperar nada.
 void TestSingleInstance::an_orphan_socket_is_taken_over()
 {
     QTemporaryDir runtime;
@@ -232,12 +249,18 @@ void TestSingleInstance::an_orphan_socket_is_taken_over()
 
     const int deadFd = kinein::listenFor(socket);
     QVERIFY(deadFd >= 0);
+#ifdef Q_OS_UNIX
     // O processo morre sem limpar: o descritor fecha, o ARQUIVO fica.
     ::close(deadFd);
     QVERIFY(QFileInfo::exists(socket));
+#else
+    // Enquanto o dono vive, o nome e' dele: ninguem assume.
+    QCOMPARE(kinein::listenFor(socket), -1);
+    kinein::releaseSocket(deadFd, socket);
+#endif
 
     const int freshFd = kinein::listenFor(socket);
-    QVERIFY2(freshFd >= 0, "o socket orfao impediu a janela nova de assumir");
+    QVERIFY2(freshFd >= 0, "o lugar do dono que saiu nao foi assumido");
     kinein::releaseSocket(freshFd, socket);
     QVERIFY(!QFileInfo::exists(socket));
 }

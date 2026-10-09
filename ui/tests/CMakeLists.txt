@@ -28,6 +28,19 @@ function(kinein_add_cpp_test nome)
     add_dependencies(kinein-cpp-tests "${nome}")
     # Sem display: o teste mede decisao, nao pixel.
     set_tests_properties("${nome}" PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    # No Windows o executavel acha as DLLs pelo PATH: as do Qt e, no Debug com
+    # ASan, o runtime dele, que mora ao lado do `cl`. Sem isto cada teste morre
+    # com 0xC0000135 e o sistema abre uma janela de erro por teste (medido em
+    # 2026-10-09, 60 §3.2, W3b).
+    if(WIN32)
+        get_filename_component(kinein_compiler_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+        set_property(
+            TEST "${nome}"
+            APPEND PROPERTY ENVIRONMENT_MODIFICATION
+                "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>"
+                "PATH=path_list_prepend:${kinein_compiler_dir}"
+        )
+    endif()
 endfunction()
 
 kinein_add_cpp_test(tst_cli_args)
@@ -44,9 +57,10 @@ target_sources(tst_clipboard_files PRIVATE ../src/clipboard.cpp ../src/clipboard
 target_link_libraries(tst_clipboard_files PRIVATE Qt6::Gui Qt6::Qml)
 set_target_properties(tst_clipboard_files PROPERTIES AUTOMOC ON)
 # O MOC do Qt 6.10 usa CTAD em codigo gerado e o Clang recente o diagnostica
-# sob -Werror. A excecao vale so para as duas unidades que incluem esse MOC.
+# sob -Werror. A excecao vale so para as duas unidades que incluem esse MOC, e
+# so' para Clang e GCC: o MSVC nao tem essa flag e a recusa (60 §3.2, W3b).
 set_source_files_properties(
     tst_clipboard_files.cpp
     "${CMAKE_CURRENT_BINARY_DIR}/tst_clipboard_files_autogen/mocs_compilation.cpp"
-    PROPERTIES COMPILE_OPTIONS -Wno-ctad-maybe-unsupported
+    PROPERTIES COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:Clang,GNU>:-Wno-ctad-maybe-unsupported>"
 )

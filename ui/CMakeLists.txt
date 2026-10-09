@@ -962,13 +962,20 @@ foreach(KINEIN_UI_SOURCE IN LISTS KINEIN_UI_SOURCES)
         set_property(
             SOURCE "${KINEIN_UI_SOURCE}"
             APPEND PROPERTY COMPILE_OPTIONS
-                -w
+                "$<$<CXX_COMPILER_ID:Clang,GNU>:-w>"
+                "$<$<CXX_COMPILER_ID:MSVC>:/wd4702>"
         )
     endif()
 endforeach()
+# No MSVC a excecao e' um aviso so', e nao todos (medido em 2026-10-09, 60 §3.2,
+# W3b): o codigo gerado compila sob /W4 /WX e so' acusa o C4702 ("codigo
+# inalcancavel"), que nasce DENTRO dos cabecalhos do Qt (qjsengine.h,
+# qvariant.h) instanciados por ele. O `-w` la' viraria `/w`, que cala tudo e
+# ainda gera um aviso D9025 por fonte.
 set_source_files_properties(
     "${CMAKE_CURRENT_BINARY_DIR}/kinein-vectis_autogen/mocs_compilation.cpp"
-    PROPERTIES COMPILE_OPTIONS -w
+    PROPERTIES COMPILE_OPTIONS
+        "$<$<CXX_COMPILER_ID:Clang,GNU>:-w>;$<$<CXX_COMPILER_ID:MSVC>:/wd4702>"
 )
 
 # The generated qmltyperegistrations.cpp includes headers by base name.
