@@ -162,7 +162,7 @@ fn descrever(ambiente: &Ambiente<'_>, nome: &str, mm_rodando: bool) -> Option<Se
         serial: identidade.serial,
         interface: identidade.interface,
         driver: identidade.driver,
-        access: acesso(&no, ambiente.etc_group),
+        access: measured_access(&no, ambiente.etc_group),
         modem_manager: props.map(|p| modem_manager(&p, mm_rodando)),
     })
 }
@@ -220,13 +220,13 @@ fn by_id(dev: &Path, nome: &str) -> Option<String> {
 /// abrir o que vai falhar por permissao resetaria a placa por nada.
 #[must_use]
 pub fn acesso_de(no: &Path) -> SerialAccess {
-    acesso(no, Path::new("/etc/group"))
+    measured_access(no, Path::new("/etc/group"))
 }
 
 /// No Windows a serial ainda nao e' suportada (DocsPublic/roadmaps/60 §1:
 /// embarcados vem depois do porte). A porta nao e' aberta, e o veredito diz isso.
 #[cfg(windows)]
-fn acesso(no: &Path, _etc_group: &Path) -> SerialAccess {
+fn measured_access(no: &Path, _etc_group: &Path) -> SerialAccess {
     SerialAccess {
         readable_writable: false,
         mode: "?".to_owned(),
@@ -240,7 +240,7 @@ fn acesso(no: &Path, _etc_group: &Path) -> SerialAccess {
 
 /// `access(2)` para o veredito; `stat` para explicar o veredito.
 #[cfg(unix)]
-fn acesso(no: &Path, etc_group: &Path) -> SerialAccess {
+fn measured_access(no: &Path, etc_group: &Path) -> SerialAccess {
     let readable_writable = rustix::fs::access(
         no,
         rustix::fs::Access::READ_OK | rustix::fs::Access::WRITE_OK,

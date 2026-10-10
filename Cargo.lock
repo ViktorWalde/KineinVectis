@@ -1162,6 +1162,7 @@ dependencies = [
  "futures-util",
  "kinein-config",
  "kinein-protocol",
+ "kinein-sys",
  "mongodb",
  "notify",
  "odbc-api",
@@ -1193,6 +1194,13 @@ version = "0.3.5"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "kinein-sys"
+version = "0.3.5"
+dependencies = [
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

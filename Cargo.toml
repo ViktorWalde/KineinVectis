@@ -6,6 +6,7 @@ members = [
     "crates/kinein-config",
     "crates/kinein-cli",
     "crates/kinein-adapter-sqlite",
+    "crates/kinein-sys",
 ]
 
 [workspace.package]
@@ -26,6 +27,7 @@ publish = false
 kinein-protocol = { path = "crates/kinein-protocol" }
 kinein-core = { path = "crates/kinein-core" }
 kinein-config = { path = "crates/kinein-config" }
+kinein-sys = { path = "crates/kinein-sys" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["raw_value"] }
 # SQLite vendorizado (feature bundled): sem dep de sistema, reprodutível.

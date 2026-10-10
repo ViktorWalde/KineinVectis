@@ -197,6 +197,7 @@ da Kinein.
 | `kinein-config` | modelo de configuração strict-by-default. |
 | `kinein-cli` | lib (`kinein_cli`) que gera requests JSON-RPC + binário fino. |
 | `kinein-adapter-sqlite` | o adaptador **externo** do SQLite (API de drivers 1.1 por stdio), construído aqui e instalado ao lado do `kinein-core`; reusa o motor SQLite do core ([39 §6.2](39-drivers-externos-e-compatibilidade.md)). |
+| `kinein-sys` | o **único** código com `unsafe` do projeto (decisão D7 do autor, 2026-10-09, [roadmap 60](../roadmaps/60-windows-e-edicao-especial.md) §3.1): a API do Windows atrás de uma interface segura, com `SAFETY` em cada bloco. Vazio no Unix. Os outros crates continuam `forbid(unsafe_code)`. |
 | `ui/` (C++/Qt) | frontend Qt/QML; sobe o `kinein-core` como processo filho via `CoreClient`. |
 
 Esta é a base mínima. A visão-alvo (specs) prevê ~18 crates; a Seção 6 descreve

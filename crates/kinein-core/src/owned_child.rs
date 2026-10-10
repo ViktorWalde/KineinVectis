@@ -56,13 +56,15 @@ pub enum Env<'a> {
 
 /// Mata o grupo do processo de qualquer thread, sem colher nem esperar: para
 /// a thread leitora que descobre uma falha e nao pode encerrar a si mesma.
-#[derive(Debug, Clone, Copy)]
+///
+/// `Clone` e nao `Copy`: no Windows o grupo e' um Job Object compartilhado.
+#[derive(Debug, Clone)]
 pub struct GroupKiller(Option<Group>);
 
 impl GroupKiller {
     /// `SIGKILL` no grupo; a coleta fica com o dono do [`OwnedChild`].
     pub fn kill(self) {
-        if let Some(group) = self.0 {
+        if let Some(group) = &self.0 {
             platform::kill_group(group);
         }
     }
@@ -185,8 +187,8 @@ impl OwnedChild {
 
     /// Mata o grupo de outra thread; ver [`GroupKiller`].
     #[must_use]
-    pub const fn killer(&self) -> GroupKiller {
-        GroupKiller(self.group)
+    pub fn killer(&self) -> GroupKiller {
+        GroupKiller(self.group.clone())
     }
 
     /// O processo ja' saiu? Nao bloqueia.
@@ -226,11 +228,11 @@ impl OwnedChild {
 
     /// O pedido gentil ao grupo; `false` quando o sistema nao tem um.
     fn terminate_group(&self) -> bool {
-        self.group.is_some_and(platform::terminate_group)
+        self.group.as_ref().is_some_and(platform::terminate_group)
     }
 
     fn kill_group(&self) {
-        if let Some(group) = self.group {
+        if let Some(group) = &self.group {
             platform::kill_group(group);
         }
     }

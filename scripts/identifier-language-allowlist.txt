@@ -115,3 +115,12 @@ serializer deserializer
 # 2026-10-07: atributo oficial serde(untagged), para opções escalares públicas
 # de driver (texto/booleano/inteiro), sem nomes de variante no wire.
 untagged
+
+# 2026-10-09: o dicionario do Fedora (words-3.0, o linux.words) nao traz estes
+# termos, e o do Arch traz; listados aqui, o gate da' o mesmo veredito nas duas
+# distros (DocsPublic/roadmaps/40.7 §7.269).
+sqlite urls stdio inbox debian website mongodb plugin plugins unicode http https
+screenshot suse linux tarball javascript toolbar emoji username ubuntu sourcing
+# 2026-10-09: nomes da API do Windows (windows-sys) que o porte usa: o Job Object,
+# o Toolhelp32 (o snapshot das threads), o MoveFileExW, o PATHEXT e o reparse point.
+jobobject threadentry snapthread toolhelp movefile pathext reparse

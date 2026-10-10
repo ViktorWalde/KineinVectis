@@ -1,5 +1,6 @@
-//! A implementacao Windows do [`super`]: o equivalente sem `unsafe`, so' com a
-//! biblioteca padrao (60 §3.2, W1). O limite de cada funcao esta' dito no
+//! A implementacao Windows do [`super`]: a biblioteca padrao e, para o que so'
+//! a API do Windows faz (Job Object, rename sem sobrescrever), o `kinein-sys`,
+//! que confina o `unsafe` (60 §3.1, D7). O limite de cada funcao esta' dito no
 //! `mod.rs`, ao lado da API.
 
 use std::{
@@ -11,7 +12,8 @@ use std::{
         process::CommandExt,
     },
     path::{Component, Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Child, Command},
+    sync::Arc,
 };
 
 use super::NoFollow;
@@ -24,8 +26,12 @@ const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
 const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
 /// O processo filho nao abre janela de console.
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+/// O processo filho nasce parado, ate' ser retomado.
+const CREATE_SUSPENDED: u32 = 0x0000_0004;
 
-pub(super) type GroupId = u32;
+/// O job do filho, compartilhado entre o dono e quem so' mata
+/// (`owned_child::GroupKiller`).
+pub(super) type GroupId = Arc<kinein_sys::Job>;
 
 pub(super) const INHERITED_ENV: &[&str] = &[
     "PATH",
@@ -207,18 +213,7 @@ pub(super) fn child_names(_dir: &File, dir_path: &Path) -> io::Result<Vec<OsStri
 }
 
 pub(super) fn rename_noreplace(from: &Path, to: &Path) -> io::Result<()> {
-    if fs::symlink_metadata(from)?.is_dir() {
-        match fs::symlink_metadata(to) {
-            Ok(_) => return Err(io::Error::from(io::ErrorKind::AlreadyExists)),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            Err(error) => return Err(error),
-        }
-        return fs::rename(from, to);
-    }
-    // O `hard_link` falha com `AlreadyExists` se `to` existe: e' ele que
-    // garante o "sem sobrescrever" para arquivo.
-    fs::hard_link(from, to)?;
-    fs::remove_file(from)
+    kinein_sys::rename_noreplace(from, to)
 }
 
 // Nada a fazer no Windows (D3); `const` so' aqui, como no `terminate_group`.
@@ -241,40 +236,34 @@ pub(super) fn owner_writable(mut permissions: Permissions) -> Permissions {
     permissions
 }
 
+/// O filho nasce SUSPENSO: ele entra no job antes da primeira instrucao, e
+/// nenhum neto pode nascer fora dele (`group_of` o retoma).
 pub(super) fn own_group(command: &mut Command) {
-    command.creation_flags(CREATE_NO_WINDOW);
+    command.creation_flags(CREATE_NO_WINDOW | CREATE_SUSPENDED);
 }
 
-// Sempre `Some` aqui; a assinatura e' a do Unix, onde o PID pode nao caber.
-#[allow(clippy::unnecessary_wraps)]
 pub(super) fn group_of(child: &Child) -> Option<GroupId> {
-    Some(child.id())
+    let job = kinein_sys::Job::new().and_then(|job| job.assign(child).map(|()| job));
+    // O filho nasceu suspenso: ele e' retomado SEMPRE, com job ou sem, senao
+    // nunca roda. Sem retomar, o job o mata, para a falha aparecer na hora
+    // (o pipe fecha) em vez de um processo parado para sempre.
+    if kinein_sys::resume_process(child.id()).is_err()
+        && let Ok(job) = &job
+    {
+        drop(job.terminate());
+    }
+    job.ok().map(Arc::new)
 }
 
 // Poderia ser `const` so' aqui; no Unix ela manda um sinal, e o `mod.rs` que
 // a chama e' o mesmo para os dois sistemas.
 #[allow(clippy::missing_const_for_fn)]
-pub(super) fn terminate_group(_group: GroupId) -> bool {
+pub(super) fn terminate_group(_group: &GroupId) -> bool {
     false
 }
 
-pub(super) fn kill_group(group: GroupId) {
-    let taskkill = std::env::var_os("SystemRoot").map_or_else(
-        || PathBuf::from("taskkill.exe"),
-        |root| Path::new(&root).join("System32").join("taskkill.exe"),
-    );
-    // Enquanto o `Child` do dono existe, ele segura o handle do processo e o
-    // PID nao e' reaproveitado: o `/PID` acerta o processo certo, vivo ou nao.
-    drop(
-        Command::new(taskkill)
-            .args(["/T", "/F", "/PID"])
-            .arg(group.to_string())
-            .creation_flags(CREATE_NO_WINDOW)
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status(),
-    );
+pub(super) fn kill_group(group: &GroupId) {
+    drop(group.terminate());
 }
 
 #[cfg(test)]

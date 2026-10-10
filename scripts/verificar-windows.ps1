@@ -29,142 +29,143 @@ scripts\verificar-windows.ps1
 scripts\verificar-windows.ps1 -Foto -Linux
 #>
 param(
-    [switch]$Foto,
+    # -Foto e' o nome do projeto para a captura da tela (contribuindo/01).
+    [Alias('Foto')][switch]$Screenshot,
     [switch]$Linux,
     [string]$Distro = 'FedoraLinux-44'
 )
 
 $ErrorActionPreference = 'Continue'
-$raiz = Split-Path -Parent $PSScriptRoot
-Set-Location $raiz
-$falhas = New-Object System.Collections.Generic.List[string]
+$root = Split-Path -Parent $PSScriptRoot
+Set-Location $root
+$failures = New-Object System.Collections.Generic.List[string]
 
-function Passo([string]$nome, [scriptblock]$acao) {
-    Write-Host "== $nome =="
+function Step([string]$name, [scriptblock]$action) {
+    Write-Host "== $name =="
     $global:LASTEXITCODE = 0
-    & $acao
+    & $action
     if ($LASTEXITCODE -ne 0) {
-        $script:falhas.Add($nome)
-        Write-Host "FALHOU: $nome (codigo $LASTEXITCODE)" -ForegroundColor Red
+        $script:failures.Add($name)
+        Write-Host "FALHOU: $name (codigo $LASTEXITCODE)" -ForegroundColor Red
     } else {
         Write-Host 'ok' -ForegroundColor Green
     }
 }
 
-function Falha([string]$motivo) {
-    Write-Host $motivo -ForegroundColor Red
+function Fail([string]$reason) {
+    Write-Host $reason -ForegroundColor Red
     $global:LASTEXITCODE = 1
 }
 
 # --- ambiente ---------------------------------------------------------------
 # O Visual Studio e' achado pelo vswhere, que mora fora do PATH; o
 # Launch-VsDevShell.ps1 o chama pelo nome, por isso a pasta dele entra antes.
-$instalador = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer'
-$vswhere = Join-Path $instalador 'vswhere.exe'
+$installer = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer'
+$vswhere = Join-Path $installer 'vswhere.exe'
 $vs = $null
 if (Test-Path $vswhere) {
     $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
 }
-Passo 'ambiente' {
-    if (-not $vs) { Falha 'Visual Studio com o "Desenvolvimento para desktop com C++" nao encontrado.'; return }
-    $env:Path = "$instalador;$env:Path"
+Step 'ambiente' {
+    if (-not $vs) { Fail 'Visual Studio com o "Desenvolvimento para desktop com C++" nao encontrado.'; return }
+    $env:Path = "$installer;$env:Path"
     & (Join-Path $vs 'Common7\Tools\Launch-VsDevShell.ps1') -Arch amd64 -HostArch amd64 -SkipAutomaticLocation | Out-Null
-    Set-Location $raiz
+    Set-Location $root
     if (-not $env:CMAKE_PREFIX_PATH -or -not (Test-Path (Join-Path $env:CMAKE_PREFIX_PATH 'bin\qtpaths.exe'))) {
-        Falha 'CMAKE_PREFIX_PATH deve apontar para o Qt MSVC (ex.: C:\Qt\6.12.0\msvc2022_64).'; return
+        Fail 'CMAKE_PREFIX_PATH deve apontar para o Qt MSVC (ex.: C:\Qt\6.12.0\msvc2022_64).'; return
     }
-    foreach ($ferramenta in 'cl', 'cmake', 'ninja', 'cargo', 'python', 'wsl') {
-        if (-not (Get-Command $ferramenta -ErrorAction SilentlyContinue)) { Falha "ferramenta ausente: $ferramenta"; return }
+    foreach ($tool in 'cl', 'cmake', 'ninja', 'cargo', 'python', 'wsl') {
+        if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { Fail "ferramenta ausente: $tool"; return }
     }
     $global:LASTEXITCODE = 0
 }
-if ($falhas.Count -gt 0) { Write-Host 'Sem ambiente, o resto mediria a maquina e nao o codigo.' -ForegroundColor Red; exit 1 }
+if ($failures.Count -gt 0) { Write-Host 'Sem ambiente, o resto mediria a maquina e nao o codigo.' -ForegroundColor Red; exit 1 }
 
 $qtBin = Join-Path $env:CMAKE_PREFIX_PATH 'bin'
 $clDir = Split-Path (Get-Command cl).Source
-$build = Join-Path $raiz 'build\windows-msvc-debug'
+$build = Join-Path $root 'build\windows-msvc-debug'
 
 # --- rust ---------------------------------------------------------------------
-Passo 'cargo fmt --all --check' { cargo fmt --all --check }
-Passo 'cargo clippy --workspace --all-targets --all-features -- -D warnings' {
+Step 'cargo fmt --all --check' { cargo fmt --all --check }
+Step 'cargo clippy --workspace --all-targets --all-features -- -D warnings' {
     cargo clippy --workspace --all-targets --all-features -- -D warnings
 }
-Passo 'cargo test --workspace --all-features --no-fail-fast' {
+Step 'cargo test --workspace --all-features --no-fail-fast' {
     cargo test --workspace --all-features --no-fail-fast
 }
 
 # --- c++ ----------------------------------------------------------------------
-Passo 'cmake --preset windows-msvc-debug' { cmake --preset windows-msvc-debug | Out-Null }
-Passo 'cmake --build --preset windows-msvc-debug' { cmake --build --preset windows-msvc-debug }
-Passo 'ctest' { ctest --test-dir $build --output-on-failure --timeout 120 }
+Step 'cmake --preset windows-msvc-debug' { cmake --preset windows-msvc-debug | Out-Null }
+Step 'cmake --build --preset windows-msvc-debug' { cmake --build --preset windows-msvc-debug }
+Step 'ctest' { ctest --test-dir $build --output-on-failure --timeout 120 }
 
 # --- smoke --------------------------------------------------------------------
 # O executavel acha as DLLs do Qt e o runtime do ASan (ao lado do cl) pelo PATH.
-function Abrir-Ide([hashtable]$ambiente, [string[]]$argumentos) {
-    $antes = @{}
-    foreach ($chave in $ambiente.Keys) {
-        $antes[$chave] = [Environment]::GetEnvironmentVariable($chave)
-        [Environment]::SetEnvironmentVariable($chave, $ambiente[$chave])
+function Start-Ide([hashtable]$environment, [string[]]$arguments) {
+    $previous = @{}
+    foreach ($key in $environment.Keys) {
+        $previous[$key] = [Environment]::GetEnvironmentVariable($key)
+        [Environment]::SetEnvironmentVariable($key, $environment[$key])
     }
     $exe = Join-Path $build 'ui\kinein-vectis.exe'
-    if ($argumentos) {
-        $processo = Start-Process -FilePath $exe -ArgumentList $argumentos -WorkingDirectory $raiz -PassThru
+    if ($arguments) {
+        $process = Start-Process -FilePath $exe -ArgumentList $arguments -WorkingDirectory $root -PassThru
     } else {
-        $processo = Start-Process -FilePath $exe -WorkingDirectory $raiz -PassThru
+        $process = Start-Process -FilePath $exe -WorkingDirectory $root -PassThru
     }
-    foreach ($chave in $antes.Keys) { [Environment]::SetEnvironmentVariable($chave, $antes[$chave]) }
-    return $processo
+    foreach ($key in $previous.Keys) { [Environment]::SetEnvironmentVariable($key, $previous[$key]) }
+    return $process
 }
 
-Passo 'cargo build -p kinein-core -p kinein-adapter-sqlite' { cargo build -p kinein-core -p kinein-adapter-sqlite }
+Step 'cargo build -p kinein-core -p kinein-adapter-sqlite' { cargo build -p kinein-core -p kinein-adapter-sqlite }
 # O core sobe depois do QML: no Debug com ASan isso levou 52 s de CPU (medido
 # em 2026-10-09). O smoke espera o core ate' 120 s, olhando a cada meio segundo:
 # ele mede "subiu", nao "subiu rapido".
-Passo 'smoke (a IDE sobe, o core e filho, nada fica orfao)' {
-    $caminho = "$qtBin;$clDir;$env:Path"
-    $ide = Abrir-Ide @{ Path = $caminho; QT_QPA_PLATFORM = 'offscreen' } @()
-    $relogio = [Diagnostics.Stopwatch]::StartNew()
-    $filhos = @()
-    while ($relogio.Elapsed.TotalSeconds -lt 120 -and -not $ide.HasExited -and $filhos.Count -eq 0) {
+Step 'smoke (a IDE sobe, o core e filho, nada fica orfao)' {
+    $searchPath = "$qtBin;$clDir;$env:Path"
+    $ide = Start-Ide @{ Path = $searchPath; QT_QPA_PLATFORM = 'offscreen' } @()
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    $children = @()
+    while ($clock.Elapsed.TotalSeconds -lt 120 -and -not $ide.HasExited -and $children.Count -eq 0) {
         Start-Sleep -Milliseconds 500
-        $filhos = @(Get-CimInstance Win32_Process -Filter "Name='kinein-core.exe'" | Where-Object { $_.ParentProcessId -eq $ide.Id })
+        $children = @(Get-CimInstance Win32_Process -Filter "Name='kinein-core.exe'" | Where-Object { $_.ParentProcessId -eq $ide.Id })
     }
-    if ($ide.HasExited) { Falha "a IDE saiu sozinha (codigo $($ide.ExitCode))"; return }
-    Write-Host "core subiu em $([int]$relogio.Elapsed.TotalSeconds) s"
+    if ($ide.HasExited) { Fail "a IDE saiu sozinha (codigo $($ide.ExitCode))"; return }
+    Write-Host "core subiu em $([int]$clock.Elapsed.TotalSeconds) s"
     Stop-Process -Id $ide.Id -Force
     Start-Sleep -Seconds 2
-    if ($filhos.Count -eq 0) { Falha 'o kinein-core.exe nao subiu como filho da IDE'; return }
-    $orfaos = @(Get-Process -Id ($filhos | ForEach-Object { $_.ProcessId }) -ErrorAction SilentlyContinue)
-    if ($orfaos.Count -gt 0) { Falha 'o kinein-core.exe ficou orfao depois de a IDE fechar'; return }
+    if ($children.Count -eq 0) { Fail 'o kinein-core.exe nao subiu como filho da IDE'; return }
+    $orphans = @(Get-Process -Id ($children | ForEach-Object { $_.ProcessId }) -ErrorAction SilentlyContinue)
+    if ($orphans.Count -gt 0) { Fail 'o kinein-core.exe ficou orfao depois de a IDE fechar'; return }
     $global:LASTEXITCODE = 0
 }
 
-if ($Foto) {
-    Passo 'foto (a janela real, pela propria IDE)' {
+if ($Screenshot) {
+    Step 'foto (a janela real, pela propria IDE)' {
         $png = Join-Path $build 'foto-windows.png'
         Remove-Item $png -ErrorAction SilentlyContinue
-        $ide = Abrir-Ide @{
+        $ide = Start-Ide @{
             Path = "$qtBin;$clDir;$env:Path"; KINEIN_SCREENSHOT = $png; KINEIN_SCREENSHOT_DELAY_MS = '7000'
             KINEIN_SCREENSHOT_SIZE = '1600x1000'; KINEIN_PERF_EXIT = '1'
-        } @($raiz)
-        if (-not $ide.WaitForExit(180000)) { Stop-Process -Id $ide.Id -Force; Falha 'a foto nao saiu em 180 s'; return }
-        if (-not (Test-Path $png)) { Falha 'a IDE saiu sem gravar a foto'; return }
+        } @($root)
+        if (-not $ide.WaitForExit(180000)) { Stop-Process -Id $ide.Id -Force; Fail 'a foto nao saiu em 180 s'; return }
+        if (-not (Test-Path $png)) { Fail 'a IDE saiu sem gravar a foto'; return }
         Write-Host "foto: $png"
         $global:LASTEXITCODE = 0
     }
 }
 
 # --- agnostico e Linux (WSL) --------------------------------------------------
-$raizWsl = (wsl -d $Distro -- wslpath -a $raiz.Replace('\', '/')) | Select-Object -First 1
-Passo "agnostico (WSL $Distro)" { wsl -d $Distro --cd $raizWsl -- bash scripts/verificar-agnostico.sh }
+$wslRoot = (wsl -d $Distro -- wslpath -a $root.Replace('\', '/')) | Select-Object -First 1
+Step "agnostico (WSL $Distro)" { wsl -d $Distro --cd $wslRoot -- bash scripts/verificar-agnostico.sh }
 if ($Linux) {
-    Passo "gate do Linux (espelho no WSL $Distro)" { wsl -d $Distro --cd $raizWsl -- bash scripts/espelhar-no-wsl.sh }
+    Step "gate do Linux (espelho no WSL $Distro)" { wsl -d $Distro --cd $wslRoot -- bash scripts/espelhar-no-wsl.sh }
 }
 
-if ($falhas.Count -gt 0) {
+if ($failures.Count -gt 0) {
     Write-Host ''
     Write-Host 'FALHOU em:' -ForegroundColor Red
-    $falhas | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    $failures | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
     exit 1
 }
 Write-Host 'gate do Windows: tudo verde' -ForegroundColor Green

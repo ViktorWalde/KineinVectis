@@ -160,12 +160,17 @@ pub(super) fn group_of(child: &Child) -> Option<GroupId> {
     i32::try_from(child.id()).ok().and_then(Pid::from_raw)
 }
 
-pub(super) fn terminate_group(group: GroupId) -> bool {
+// Por referencia, e nao por valor: a assinatura e' a do Windows, onde o grupo
+// e' um `Arc` do Job Object (W5), e o `mod.rs` que a chama e' um so'.
+#[allow(clippy::trivially_copy_pass_by_ref)]
+pub(super) fn terminate_group(group: &GroupId) -> bool {
     // ESRCH: o grupo ja' acabou, que e' o resultado esperado.
-    kill_process_group(group, Signal::TERM).ok();
+    kill_process_group(*group, Signal::TERM).ok();
     true
 }
 
-pub(super) fn kill_group(group: GroupId) {
-    kill_process_group(group, Signal::KILL).ok();
+// Por referencia pelo mesmo motivo do `terminate_group`.
+#[allow(clippy::trivially_copy_pass_by_ref)]
+pub(super) fn kill_group(group: &GroupId) {
+    kill_process_group(*group, Signal::KILL).ok();
 }

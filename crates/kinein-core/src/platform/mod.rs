@@ -159,11 +159,9 @@ pub(crate) fn child_names(dir: &File, dir_path: &Path) -> io::Result<Vec<OsStrin
 /// Move `from` para `to` sem nunca sobrescrever: com `to` existente, falha com
 /// [`io::ErrorKind::AlreadyExists`].
 ///
-/// No Unix e' um `renameat2` com `RENAME_NOREPLACE`, atomico. No Windows, um
-/// arquivo e' publicado por `hard_link` (que falha se `to` existe) seguido da
-/// remocao de `from`; uma pasta, por `rename` depois de conferir que `to` nao
-/// existe. Limite no Windows: uma pasta criada em `to` entre a conferencia e o
-/// `rename` faz o `rename` falhar, mas um ARQUIVO criado ali seria substituido.
+/// Atomico nos dois sistemas: no Unix e' um `renameat2` com `RENAME_NOREPLACE`;
+/// no Windows, um `MoveFileExW` sem `MOVEFILE_REPLACE_EXISTING` (`kinein-sys`,
+/// W5), para arquivo e para pasta.
 ///
 /// # Errors
 /// [`io::ErrorKind::AlreadyExists`] se `to` existe; o erro do sistema no resto.
@@ -208,13 +206,16 @@ pub(crate) fn owner_writable(permissions: Permissions) -> Permissions {
 /// (`SystemRoot`, `windir`, `ComSpec`, `PATHEXT`) e as pastas do usuario.
 pub(crate) const INHERITED_ENV: &[&str] = imp::INHERITED_ENV;
 
-/// O grupo de um processo filho: encerra-lo alcanca os descendentes.
-#[derive(Debug, Clone, Copy)]
+/// O grupo de um processo filho: encerra-lo alcanca os descendentes. No Unix e'
+/// o PGID; no Windows, um Job Object compartilhado (por isso `Clone`, e nao
+/// `Copy`).
+#[derive(Debug, Clone)]
 pub(crate) struct Group(imp::GroupId);
 
 /// Faz `command` criar o proprio grupo. No Unix e' o `process_group(0)`. No
-/// Windows o grupo e' a arvore de processos (ver [`kill_group`]), e o filho nao
-/// abre janela de console.
+/// Windows o filho nasce suspenso e sem janela de console; o [`group_of`] o
+/// poe num Job Object e so' entao o retoma, entao nenhum descendente nasce
+/// fora do job.
 pub(crate) fn own_group(command: &mut Command) {
     imp::own_group(command);
 }
@@ -228,13 +229,14 @@ pub(crate) fn group_of(child: &Child) -> Option<Group> {
 /// Pede ao grupo que termine (`SIGTERM` no Unix) e diz se esse pedido existe
 /// neste sistema. No Windows nao existe para um processo sem janela, e a
 /// resposta e' `false`: o chamador passa direto para [`kill_group`].
-pub(crate) fn terminate_group(group: Group) -> bool {
-    imp::terminate_group(group.0)
+pub(crate) fn terminate_group(group: &Group) -> bool {
+    imp::terminate_group(&group.0)
 }
 
-/// Mata o grupo, sem colher. No Unix e' `SIGKILL` no grupo. No Windows e'
-/// `taskkill /T /F`, que mata o processo e a arvore dele. Limite no Windows: um
-/// descendente cujo pai ja' saiu nao esta' mais na arvore e escapa.
-pub(crate) fn kill_group(group: Group) {
-    imp::kill_group(group.0);
+/// Mata o grupo, sem colher. No Unix e' `SIGKILL` no grupo. No Windows e' o
+/// `TerminateJobObject`, que alcanca todo descendente, inclusive o que perdeu
+/// o pai; e fechar o ultimo handle do job mata o que sobrar
+/// (`KILL_ON_JOB_CLOSE`), ate' num crash do core.
+pub(crate) fn kill_group(group: &Group) {
+    imp::kill_group(&group.0);
 }

@@ -56,5 +56,10 @@ trash = "=5.2.5"
 [target.'cfg(unix)'.dependencies]
 rustix.workspace = true
 
+# O par do `rustix` no Windows: Job Object e rename sem sobrescrever, atras de
+# uma API segura (60 §3.1, D7; o core continua `forbid(unsafe_code)`).
+[target.'cfg(windows)'.dependencies]
+kinein-sys.workspace = true
+
 [lints]
 workspace = true

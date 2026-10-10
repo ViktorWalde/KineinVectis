@@ -1362,7 +1362,7 @@ crates/kinein-core/src/serial/job.rs	tentativa	3
 crates/kinein-core/src/serial/job.rs	terminou	5
 crates/kinein-core/src/serial/job.rs	texto	3
 crates/kinein-core/src/serial/job.rs	ultimas	1
-crates/kinein-core/src/serial/mod.rs	acesso	4
+crates/kinein-core/src/serial/mod.rs	acesso	1
 crates/kinein-core/src/serial/mod.rs	alvo	4
 crates/kinein-core/src/serial/mod.rs	ambiente	15
 crates/kinein-core/src/serial/mod.rs	atributo	7

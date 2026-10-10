@@ -1,0 +1,58 @@
+[package]
+name = "kinein-sys"
+description = "The only unsafe code in Kinein Vectis: the Windows API behind a safe interface"
+keywords = ["ide", "windows", "ffi"]
+categories = ["development-tools", "os::windows-apis"]
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+# A API do Windows (DocsPublic/roadmaps/60 §3.1, decisao D7 do autor). Medido em
+# 2026-10-09: o `windows-sys` 0.61 ja' estava no Cargo.lock como transitiva;
+# +0 crates. MIT OR Apache-2.0. So' as features que este crate chama.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_JobObjects",
+    "Win32_System_Threading",
+] }
+
+# As lints do workspace, COPIADAS: o Cargo nao combina `workspace = true` com
+# uma tabela propria. A diferenca e' de proposito e so' esta: `unsafe_code` e'
+# `deny` (o workspace usa `forbid`, que nenhum `allow` derruba) e o modulo do
+# Windows o libera; e todo bloco `unsafe` tem de dizer, no `SAFETY`, por que a
+# chamada e' valida.
+[lints.rust]
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+warnings = { level = "deny", priority = -2 }
+missing_docs = "deny"
+missing_debug_implementations = "deny"
+unreachable_pub = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+dbg_macro = "deny"
+print_stdout = "warn"
+print_stderr = "warn"
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+multiple_crate_versions = "allow"
+undocumented_unsafe_blocks = "deny"
+multiple_unsafe_ops_per_block = "deny"

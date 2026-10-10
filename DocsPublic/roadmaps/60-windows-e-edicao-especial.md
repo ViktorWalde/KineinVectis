@@ -345,8 +345,22 @@ separa o domínio da paridade com o Linux.
 
 1. **W3b:** os testes C++ da UI no Windows e as opções estritas do MSVC.
 2. **W4:** o `verificar-windows.ps1` (D8).
-3. **W5:** o crate de FFI (D7): Job Object, rename sem sobrescrever e a lista
-   de portas `COMx`. O `platform/windows.rs` passa a usá-lo.
+3. **W5:** o crate de FFI (D7), `crates/kinein-sys`, desenhado e feito em
+   2026-10-09 (40.7 §7.269). Ele substitui o `taskkill` e o `hard_link` da W1:
+   - É o único lugar do projeto com `unsafe`. As lints são as do workspace,
+     com `unsafe_code = "deny"` (e não `forbid`), liberado só no módulo do
+     Windows, e com `undocumented_unsafe_blocks`: todo bloco tem o seu
+     `SAFETY`. No Linux ele compila vazio.
+   - `Job`: Job Object com `KILL_ON_JOB_CLOSE`. O filho nasce suspenso
+     (`CREATE_SUSPENDED`), entra no job e só então é retomado, então nenhum
+     neto escapa. Isso fecha o limite da W1.
+   - `rename_noreplace`: `MoveFileExW` sem `MOVEFILE_REPLACE_EXISTING`,
+     atômico no mesmo volume, como o `renameat2` do Linux. Isso fecha o
+     limite da pasta da W1.
+   - O `platform/windows.rs` passa a usá-los. O `GroupKiller` deixa de ser
+     `Copy`, porque o job não é copiável.
+   - A lista de portas `COMx` vai para a W10, onde tem usuário (ARCHITECTURE
+     §8: mecanismo sem usuário é pior que nenhum).
 4. **W2b:** os testes do core verdes no Windows. Os que usam ferramenta falsa
    em `sh` ganham o equivalente Windows; `#[cfg(unix)]` só para o que é de
    Unix.
@@ -377,9 +391,10 @@ scripts\verificar-windows.ps1 -Linux    # + o verificar.sh no espelho do WSL
 
 O catálogo do que cada etapa mede está no `contribuindo/04`. O espelho do
 `-Linux` mora em `~/.local/share/kinein-vectis/espelho-windows`, dentro do WSL,
-e é descartável. No Fedora, o `verificar.sh` para na etapa do idioma (o
-dicionário do sistema, 40.7 §7.262). Formate o C++ com o `clang-format` do
-Fedora: o Windows ainda não tem o LLVM (W6).
+e é descartável. No Fedora, o `verificar.sh --rapido` passa inteiro desde a
+W5 (40.7 §7.269); os 6 itens NÃO PROVADOS são ferramentas ausentes no WSL.
+Formate o C++ com o `clang-format` do Fedora: o Windows ainda não tem o LLVM
+(W6).
 
 **Os presets do Windows.**
 

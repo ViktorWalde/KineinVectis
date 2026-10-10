@@ -31,7 +31,9 @@
 >
 > 1. Leia o 60 §3.4, o roteiro de trabalho e as armadilhas.
 > 2. Rode `scripts\verificar-windows.ps1` para ver o estado.
-> 3. Siga a ordem do 60 §3.3: W5 (o crate de FFI, D7), W2b e W6–W12. O trabalho acontece no branch `porte-windows`, no clone
+> 3. Siga a ordem do 60 §3.3. A W5 está feita (40.7 §7.269): o `kinein-sys`,
+>    com o Job Object e o rename atômico. As próximas são a W2b (os testes do
+>    core verdes no Windows) e depois W6–W12. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

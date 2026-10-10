@@ -5,14 +5,16 @@
 # Windows 11 Pro, e o `scripts/verificar-windows.ps1` roda nativo la' tudo o
 # que depende do sistema: build, testes, clippy, C++, smoke. O que NAO depende
 # do sistema — documentacao, links, mapa de modulos, catraca de arquitetura,
-# shellcheck, as verificacoes de texto do QML e da fiacao — continua em bash, e
-# roda aqui, no WSL, sobre o PROPRIO checkout do Windows (`/mnt/c/...`): nao ha'
-# copia para sincronizar, entao nao ha' copia velha para enganar.
+# o lint dos scripts, as verificacoes de texto do QML e da fiacao — continua em
+# bash, e roda aqui, no WSL, sobre o PROPRIO checkout do Windows (`/mnt/c/...`):
+# nao ha' copia para sincronizar, entao nao ha' copia velha para enganar.
 #
-# Fora daqui, de proposito: o `check_identifier_language.py`. O veredito dele
-# depende do dicionario do sistema — o do Fedora reprova o mesmo codigo que o
-# do Arch aprova (medido em 2026-10-09, roadmaps/40.7 §7.262). O gate completo
-# do Linux continua sendo o `verificar.sh` (`verificar-windows.ps1 -Linux`).
+# O `check_identifier_language.py` ficou de fora ate' 2026-10-09 (roadmaps/40.7
+# §7.262): o veredito dele dependia do dicionario do sistema, e o do Fedora nao
+# traz termos que o do Arch traz (`sqlite`, `stdio`, `linux`...). A allowlist
+# passou a listar esses termos (40.7 §7.269), e o veredito ficou o mesmo nas
+# duas distros. O gate completo do Linux continua sendo o `verificar.sh`
+# (`verificar-windows.ps1 -Linux`).
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
@@ -28,34 +30,35 @@ if [ -f "$HOME/.cargo/env" ]; then
     . "$HOME/.cargo/env"
 fi
 
-falhas=()
+failures=()
 
-passo() {
+step() {
     echo "== $* =="
     if "$@"; then
         echo "ok"
     else
-        falhas+=("$*")
+        failures+=("$*")
         echo "FALHOU: $*"
     fi
 }
 
-passo bash scripts/verificar-docs.sh
-passo bash scripts/verificar-links-docs.sh
-passo python3 scripts/module_map.py --check
-passo bash scripts/verificar-arquitetura.sh
-passo bash scripts/verificar-shell.sh
-passo bash scripts/verificar-qml-fiacao.sh
-passo bash scripts/verificar-qml-propriedades.sh
-passo bash scripts/verificar-qml-mortas.sh
-passo bash scripts/verificar-qml-duplicacao.sh
-passo bash scripts/verificar-qml-tokens.sh
-passo bash scripts/verificar-qml-alcance.sh
-passo bash scripts/verificar-fiacao-ipc.sh
-passo bash scripts/verificar-atalhos.sh
+step bash scripts/verificar-docs.sh
+step bash scripts/verificar-links-docs.sh
+step python3 scripts/module_map.py --check
+step bash scripts/verificar-arquitetura.sh
+step python3 scripts/check_identifier_language.py
+step bash scripts/verificar-shell.sh
+step bash scripts/verificar-qml-fiacao.sh
+step bash scripts/verificar-qml-propriedades.sh
+step bash scripts/verificar-qml-mortas.sh
+step bash scripts/verificar-qml-duplicacao.sh
+step bash scripts/verificar-qml-tokens.sh
+step bash scripts/verificar-qml-alcance.sh
+step bash scripts/verificar-fiacao-ipc.sh
+step bash scripts/verificar-atalhos.sh
 
-if [ "${#falhas[@]}" -gt 0 ]; then
-    printf '✗ agnostico FALHOU em: %s\n' "${falhas[@]}"
+if [ "${#failures[@]}" -gt 0 ]; then
+    printf '✗ agnostico FALHOU em: %s\n' "${failures[@]}"
     exit 1
 fi
 echo "✓ agnostico: tudo verde"

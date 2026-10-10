@@ -18,34 +18,34 @@
 #   scripts/espelhar-no-wsl.sh --so-espelhar
 set -euo pipefail
 
-origem="$(cd "$(dirname "$0")/.." && pwd)"
-espelho="${KINEIN_ESPELHO:-$HOME/.local/share/kinein-vectis/espelho-windows}"
+checkout="$(cd "$(dirname "$0")/.." && pwd)"
+mirror="${KINEIN_MIRROR:-$HOME/.local/share/kinein-vectis/espelho-windows}"
 
-git config --global --get-all safe.directory 2>/dev/null | grep -qxF "$origem" ||
-    git config --global --add safe.directory "$origem"
+git config --global --get-all safe.directory 2>/dev/null | grep -qxF "$checkout" ||
+    git config --global --add safe.directory "$checkout"
 
-ramo="$(git -C "$origem" branch --show-current)"
-primeira=0
-if [ ! -d "$espelho/.git" ]; then
-    mkdir -p "$(dirname "$espelho")"
-    git clone -q "$origem" "$espelho"
-    primeira=1
+branch="$(git -C "$checkout" branch --show-current)"
+first_run=0
+if [ ! -d "$mirror/.git" ]; then
+    mkdir -p "$(dirname "$mirror")"
+    git clone -q "$checkout" "$mirror"
+    first_run=1
 fi
 
-cd "$espelho"
+cd "$mirror"
 git reset -q --hard
 git clean -q -fd -- crates ui scripts DocsPublic
-git fetch -q "$origem" "$ramo"
-git switch -q -C "$ramo" FETCH_HEAD
+git fetch -q "$checkout" "$branch"
+git switch -q -C "$branch" FETCH_HEAD
 # O diff nao commitado; `filemode=false` porque no `/mnt/c` todo arquivo
 # aparece com permissao 777.
-git -c core.filemode=false -C "$origem" diff --binary HEAD | git apply --allow-empty
-git -c core.filemode=false -C "$origem" ls-files --others --exclude-standard -z |
-    while IFS= read -r -d '' arquivo; do
-        mkdir -p "$(dirname "$arquivo")"
-        cp "$origem/$arquivo" "$arquivo"
+git -c core.filemode=false -C "$checkout" diff --binary HEAD | git apply --allow-empty
+git -c core.filemode=false -C "$checkout" ls-files --others --exclude-standard -z |
+    while IFS= read -r -d '' file; do
+        mkdir -p "$(dirname "$file")"
+        cp "$checkout/$file" "$file"
     done
-echo "espelho: $espelho no $ramo @ $(git rev-parse --short HEAD)"
+echo "espelho: $mirror no $branch @ $(git rev-parse --short HEAD)"
 
 if [ "${1:-}" = "--so-espelhar" ]; then
     exit 0
@@ -55,7 +55,7 @@ if [ -f "$HOME/.cargo/env" ]; then
     . "$HOME/.cargo/env"
 fi
 # Na primeira vez o espelho ainda nao tem os presets locais nem os build dirs.
-if [ "$primeira" -eq 1 ]; then
+if [ "$first_run" -eq 1 ]; then
     ./scripts/instalar-ambiente.sh
 fi
 exec ./scripts/verificar.sh --rapido
