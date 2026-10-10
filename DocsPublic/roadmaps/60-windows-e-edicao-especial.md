@@ -485,7 +485,33 @@ do fim da W2b (40.7 §7.270):
        CDB e o modelo do file-api com a saída de verdade do Windows. Os
        substitutos do `clang-tidy`, da CDB e do `cmake_model`. E o teste do
        perfil de rigor, que pula sem o `cmake` e o `cc` no `PATH` e hoje não
-       prova nada no Windows;
+       prova nada no Windows. **Contrato escrito em 2026-10-10, medido:** a
+       CDB que o MSVC gera de verdade usa a forma `command`, com o `cl.exe`
+       em caminho curto 8.3 (`C:\PROGRA~1\...`) e as flags do MSVC
+       (`/DWIN32 /TP /EHsc ... -c`). O `clang-tidy` do VS é o LLVM 22.1.3, e
+       não há `clangd`. Entrega em quatro partes:
+       - **W6b1, a CDB do Windows.** Pela especificação da CDB, a forma
+         `command` segue as regras de shell do sistema. O leitor de hoje
+         segue as do POSIX, em que `\` escapa, e no Windows ele comeria as
+         barras do caminho do `cl.exe`. O `platform::split_command_line`
+         passa a dividir pelas regras do C runtime da Microsoft no Windows,
+         e pelas do POSIX no Unix, como antes. O leitor reconhece as flags do
+         MSVC (`/I`, `/D`, `/external:I`, `/std:`, `/Fo`, também com `-`)
+         quando o compilador é o `cl` ou o `clang-cl`. Com outro compilador,
+         `/D...` continua sendo caminho. Substituto: a CDB do MSVC nas duas
+         formas;
+       - **W6b2, qualidade e rigor:** o `clang-tidy` do VS sobre a CDB do
+         MSVC, com os substitutos dos dois testes da qualidade. O teste do
+         rigor roda com o VS no Windows, e no Windows reprova em vez de pular
+         quando o VS falta. O aviso dele passa a ser `[[deprecated]]`, que é
+         aviso nos três compiladores sem depender de `-Wall`;
+       - **W6b3, o `cmake_model` do Windows:** o reply do file-api gerado
+         pelo CMake de verdade num projeto pequeno. O modelo lê o alvo, o
+         `.exe`, as fontes e o grupo de compilação do MSVC. São os três
+         substitutos do `cmake_model`;
+       - **W6b4, o `clangd`:** o VS daqui não o traz. A prova pede o LLVM
+         instalado (`winget install LLVM.LLVM`), e instalar é decisão do
+         autor.
      - **W6c, Setup e kits:** o `winget` no catálogo do Setup, os kits e as
        pastas de toolchain do Windows, os caminhos de biblioteca (vcpkg, o
        Qt do `CMAKE_PREFIX_PATH`, o Visual Studio) e o Make sem `bear`.
