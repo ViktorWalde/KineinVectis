@@ -453,6 +453,39 @@ do fim da W2b (40.7 §7.270):
 6. **W6:** build C/C++ no Windows: achar o Visual Studio e rodar no ambiente
    dele; CMake, Ninja e LLVM; o catálogo do Setup com `winget`. Os 16
    adiados da W6 ganham os substitutos do Windows (D14).
+   - **Medido em 2026-10-10, nesta máquina.** Fora do ambiente do Visual
+     Studio, nada de C/C++ está no `PATH`: nem `cmake`, `ninja`, `cl`,
+     `clang*`, `gcc`, `make` ou `bear`. Só o `winget` está. O Visual Studio
+     18 Community, achado pelo `vswhere`, traz:
+     - o `cmake.exe` em `Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin`;
+     - o `ninja.exe` em `...\CMake\Ninja`;
+     - o `clang-format` e o `clang-tidy` em `VC\Tools\Llvm\x64\bin`, sem
+       `clangd` e sem `clang-cl`.
+
+     Não há LLVM avulso. Sem o ambiente do `vcvars64.bat`, o `cl` não acha o
+     `INCLUDE` nem o `LIB`. O gerador padrão do CMake no Windows é o do
+     Visual Studio, que é multiconfiguração e NÃO gera o
+     `compile_commands.json`, a CDB de que o índice e o `clangd` dependem.
+   - **Dividida em três**, cada uma com contrato e commit próprios:
+     - **W6a, o build CMake no ambiente do Visual Studio.** O módulo `msvc`
+       acha a instalação pelo `vswhere`. Ele captura uma vez o ambiente do
+       `vcvars64.bat`, rodando `cmd /D /C call ... && set`, e o aplica a quem
+       roda o CMake, o `ctest` e o Ninja (configure, build e testes). As
+       pastas de ferramenta do Visual Studio (CMake, Ninja, LLVM) entram na
+       busca do detector. O configure ganha `CMAKE_GENERATOR=Ninja` quando o
+       usuário não escolheu gerador: o preset que escolhe gerador continua
+       valendo, porque o preset vence a variável. O Run de um projeto CMake
+       acha o `.exe` do build. No Unix nada muda. Substitutos (D14): o
+       executável único do CMake, o configure com o preset padrão e o
+       `ctest` de verdade. A prova de ponta a ponta é um projeto C++ de
+       verdade, configurado, compilado e executado pelo core no Windows;
+     - **W6b, LLVM e qualidade:** `clangd`, `clang-format` e `clang-tidy` do
+       Visual Studio, do LLVM avulso (`Program Files\LLVM`) e do `winget`. A
+       CDB e o modelo do file-api com a saída de verdade do Windows. Os
+       substitutos do `clang-tidy`, da CDB e do `cmake_model`;
+     - **W6c, Setup e kits:** o `winget` no catálogo do Setup, os kits e as
+       pastas de toolchain do Windows, os caminhos de biblioteca (vcpkg, o
+       Qt do `CMAKE_PREFIX_PATH`, o Visual Studio) e o Make sem `bear`.
 7. **W7:** Python no Windows. Os 18 adiados ganham os substitutos (D14), e
    as duas fixtures do `tests/python.rs` que gravam em `{reg}` sem aspas são
    corrigidas.
