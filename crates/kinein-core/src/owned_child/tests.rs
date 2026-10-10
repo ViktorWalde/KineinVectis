@@ -200,11 +200,16 @@ fn a_descendant_in_the_group_does_not_survive_the_close() {
     );
     let (_out, reader) = capture();
     let child = OwnedChild::spawn(command, Env::Allowlist(&[]), None, reader).unwrap();
+    // Espera o CONTEUDO, e nao so' o arquivo: ele nasce vazio e o pid chega
+    // depois (no Windows a janela apareceu no gate de 2026-10-10).
     let deadline = Instant::now() + Duration::from_secs(5);
-    while !pid_file.exists() && Instant::now() < deadline {
+    let helper = loop {
+        let text = std::fs::read_to_string(&pid_file).unwrap_or_default();
+        if !text.trim().is_empty() || Instant::now() >= deadline {
+            break text;
+        }
         thread::sleep(Duration::from_millis(10));
-    }
-    let helper = std::fs::read_to_string(&pid_file).unwrap();
+    };
     assert!(
         alive(&helper),
         "o auxiliar devia estar vivo antes do encerramento"

@@ -585,6 +585,22 @@ pub(crate) fn sh_save_background_pid(file: &std::path::Path) -> String {
     }
 }
 
+/// Mata o processo `pid` (do sistema), para um teste limpar o que deixou vivo.
+#[cfg(test)]
+pub(crate) fn kill_process(pid: &str) {
+    let pid = pid.trim();
+    let output = if cfg!(windows) {
+        std::process::Command::new("taskkill")
+            .args(["/F", "/PID", pid])
+            .output()
+    } else {
+        std::process::Command::new("kill")
+            .args(["-9", pid])
+            .output()
+    };
+    drop(output);
+}
+
 /// O processo `pid` (do sistema) ainda existe.
 #[cfg(test)]
 pub(crate) fn process_alive(pid: &str) -> bool {

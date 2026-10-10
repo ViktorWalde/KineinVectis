@@ -19,8 +19,8 @@
 > Linux por domínio. A tabela, as decisões D7–D10 e as fatias, em ordem, estão
 > no 60 §3.3.
 >
-> **Onde parou (2026-10-10):** as fatias W1, W2a, W2b, W3a, W3b, W4 e W5
-> estão feitas (40.7 §7.261 a §7.270). O `scripts\verificar-windows.ps1`
+> **Onde parou (2026-10-10):** as fatias W1, W2a, W2b, W2c, W3a, W3b, W4 e
+> W5 estão feitas (40.7 §7.261 a §7.271). O `scripts\verificar-windows.ps1`
 > ficou todo verde pela primeira vez depois da W2b: testes Rust, o preset
 > estrito do MSVC com ASan, `ctest`, o smoke, a foto e o agnóstico no WSL. O
 > `verificar.sh` do Linux segue verde no espelho. Os 82 testes de domínios
@@ -40,9 +40,9 @@
 >    §7.270): o `cargo test --workspace` está verde no Windows, com 82 testes
 >    adiados e contados por fatia. O autor decidiu D11 a D14 em 2026-10-10
 >    (60 §3.3): o Run e o `run.script` ficam como estão; cancelar um job
->    passa a matar a árvore (a fatia W2c, a próxima); e cada teste adiado
->    volta com um substituto do Windows na fatia dona dele. Depois da W2c
->    vêm a W6 (build C/C++ no Windows) e as W7–W12. O trabalho acontece no branch `porte-windows`, no clone
+>    passa a matar a árvore (a W2c, feita: 40.7 §7.271); e cada teste
+>    adiado volta com um substituto do Windows na fatia dona dele. A
+>    próxima é a W6 (build C/C++ no Windows), depois as W7–W12. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

@@ -307,7 +307,7 @@ o Linux.
 
 | Domínio | No Windows hoje | Falta |
 | --- | --- | --- |
-| Projeto, árvore, arquivos | abre, lista, copia, renomeia, apaga (W1, W2a); a árvore de processos morre com o Job Object (W5); a junção é recusada como link (W2b) | a lixeira do Windows sem teste próprio; cancelar um job mata só o filho direto, no Linux também (decisão do autor, 40.7 §7.270) |
+| Projeto, árvore, arquivos | abre, lista, copia, renomeia, apaga (W1, W2a); a árvore de processos morre com o Job Object (W5); a junção é recusada como link (W2b); cancelar um job mata a árvore, nos dois sistemas (W2c) | a lixeira do Windows sem teste próprio |
 | Editor, índice, busca | o índice lê o projeto; os testes do índice e do observador passam no Windows (W2b) | o uso real (W12) |
 | Terminal | abre `pwsh` no ConPTY e responde às perguntas do terminal, sem o que o ConPTY não começava; os testes passam no Windows (W2b) | o uso real com mouse e teclado (W12) |
 | Build C/C++ | o CMake e o `cl` existem, mas dentro do Visual Studio | achar o VS (`vswhere`) e rodar o build no ambiente dele; CMake, Ninja e LLVM (`clangd`, `clang-format`, `clang-tidy`) fora do `PATH` |
@@ -433,9 +433,23 @@ do fim da W2b (40.7 §7.270):
      `run.script` como ficaram. A D13 abre a W2c. A D14 diz como os 82
      adiados voltam.
 5. **W2c (D13):** cancelar um job mata a árvore de processos, nos dois
-   sistemas. O job nasce no grupo (`platform::own_group` e `group_of`), e o
-   cancelamento usa o `kill_group`. A prova é um teste com neto, nos dois
-   sistemas, e a mutação do `kill_group` vazio.
+   sistemas. Feita em 2026-10-10 (40.7 §7.271). Contrato escrito antes do
+   código:
+   - o job do `process::stream_command_lines_cancelable` nasce no grupo
+     (`platform::own_group` e `group_of`), e o cancelamento usa o
+     `kill_group`. Sem grupo (o sistema recusou o job), fica o `kill` do
+     filho, como hoje;
+   - **o job que termina sozinho solta o grupo.** No Linux, os descendentes
+     que o processo deixou vivos de propósito (o servidor do `sccache`, o
+     daemon do Gradle) seguem vivos. No Windows, o Job Object com
+     `KILL_ON_JOB_CLOSE` os mataria quando o handle fechasse. Então o
+     `kinein-sys` ganha o `Job::release`, que tira o `KILL_ON_JOB_CLOSE`, e o
+     `platform::release_group` o chama no Windows; no Unix ele não faz nada.
+     Os dois sistemas ficam iguais;
+   - **provas, nos dois sistemas:** cancelar mata o neto; terminar sozinho
+     deixa vivo o neto posto em segundo plano. No `kinein-sys`, um job solto
+     não mata o neto ao fechar. Mutações: o `kill_group` vazio reprova a
+     primeira prova, e o `release_group` vazio reprova a segunda no Windows.
 6. **W6:** build C/C++ no Windows: achar o Visual Studio e rodar no ambiente
    dele; CMake, Ninja e LLVM; o catálogo do Setup com `winget`. Os 16
    adiados da W6 ganham os substitutos do Windows (D14).

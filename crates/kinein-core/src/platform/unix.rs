@@ -195,3 +195,8 @@ pub(super) fn terminate_group(group: &GroupId) -> bool {
 pub(super) fn kill_group(group: &GroupId) {
     kill_process_group(*group, Signal::KILL).ok();
 }
+
+// Por referencia, e nao `const`, pela assinatura do Windows, onde soltar o
+// grupo e' uma chamada ao sistema; o `mod.rs` que a chama e' um so'.
+#[allow(clippy::trivially_copy_pass_by_ref, clippy::missing_const_for_fn)]
+pub(super) fn release_group(_group: &GroupId) {}

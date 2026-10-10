@@ -223,6 +223,7 @@ flowchart LR
   n_core_lsp --> n_core_stderr_tail
   n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
+  n_core_process --> n_core_platform
   n_core_project --> n_core_platform
   n_core_project --> n_core_tools
   n_core_python --> n_core_run
@@ -254,7 +255,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-46 módulos, 112 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+46 módulos, 113 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -293,7 +294,7 @@ flowchart LR
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
 | `probe` | — | Sondas de debug conectadas: |
-| `process` | — | Synchronous line streaming for child processes. |
+| `process` | platform | Synchronous line streaming for child processes. |
 | `project` | platform, tools | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
 | `python` | run | O dominio python: |
 | `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |

@@ -275,3 +275,13 @@ pub(crate) fn terminate_group(group: &Group) -> bool {
 pub(crate) fn kill_group(group: &Group) {
     imp::kill_group(&group.0);
 }
+
+/// Solta o grupo cujo processo principal terminou sozinho: os descendentes que
+/// ele deixou vivos de proposito (o servidor do `sccache`, o daemon do Gradle)
+/// seguem vivos. No Unix nao ha' o que fazer, porque esquecer um grupo de
+/// processo nao mata ninguem. No Windows, tira o `KILL_ON_JOB_CLOSE` do Job,
+/// que senao os mataria quando o handle fechasse (D13,
+/// DocsPublic/roadmaps/60 §3.3, W2c).
+pub(crate) fn release_group(group: &Group) {
+    imp::release_group(&group.0);
+}

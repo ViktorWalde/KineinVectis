@@ -373,6 +373,11 @@ pub(super) fn kill_group(group: &GroupId) {
     drop(group.terminate());
 }
 
+pub(super) fn release_group(group: &GroupId) {
+    // Se o sistema recusar, o job segue armado: o pior caso e' o de antes.
+    drop(group.release());
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::{Path, PathBuf};

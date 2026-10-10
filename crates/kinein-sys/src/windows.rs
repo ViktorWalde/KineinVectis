@@ -100,6 +100,36 @@ impl Job {
         Ok(())
     }
 
+    /// Solta o job: tira o `KILL_ON_JOB_CLOSE`, e fechar o handle deixa os
+    /// processos dele vivos.
+    ///
+    /// E' o fim do job cujo processo principal terminou sozinho: o que ele
+    /// deixou rodando de proposito (o servidor do `sccache`, o daemon do
+    /// Gradle) segue vivo, como segue no Unix depois de um grupo de processo
+    /// (DocsPublic/roadmaps/60 §3.3, W2c).
+    ///
+    /// # Errors
+    /// O sistema recusou a nova configuracao; o job continua armado.
+    pub fn release(&self) -> io::Result<()> {
+        // SAFETY: a estrutura e' so' de inteiros e ponteiros; zero e' um valor
+        // valido para todos os campos, e sem `LimitFlags` nenhum limite vale.
+        let limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { zeroed() };
+        // SAFETY: o handle e' um job valido; o ponteiro aponta para a estrutura
+        // do tipo e do tamanho que a classe pede, viva durante a chamada.
+        let ok = unsafe {
+            SetInformationJobObject(
+                self.handle.as_raw_handle(),
+                JobObjectExtendedLimitInformation,
+                ptr::from_ref(&limits).cast::<c_void>(),
+                size_u32::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>(),
+            )
+        };
+        if ok == 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(())
+    }
+
     /// Mata todo processo do job, sem esperar.
     ///
     /// # Errors
@@ -301,6 +331,45 @@ mod tests {
             assert!(Instant::now() < deadline, "o neto sobreviveu ao job");
             std::thread::sleep(Duration::from_millis(100));
         }
+    }
+
+    /// O filho cria um NETO e sai; o job SOLTO fecha e o neto segue vivo,
+    /// como o servidor que um build deixa de proposito.
+    #[test]
+    fn a_released_job_leaves_its_processes_alive_when_closed() {
+        let marker = temp_dir("job-solto").join("neto.pid");
+        let script = format!(
+            "$p = Start-Process -FilePath ping -ArgumentList '-n','60','127.0.0.1' -WindowStyle Hidden -PassThru; Set-Content -Path '{}' -Value $p.Id",
+            marker.display()
+        );
+        let job = Job::new().unwrap();
+        let mut child = Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .stdout(Stdio::null())
+            .spawn()
+            .unwrap();
+        job.assign(&child).unwrap();
+        child.wait().unwrap();
+        let deadline = Instant::now() + Duration::from_secs(20);
+        let grandchild = loop {
+            if let Ok(text) = fs::read_to_string(&marker)
+                && let Ok(pid) = text.trim().parse::<u32>()
+            {
+                break pid;
+            }
+            assert!(Instant::now() < deadline, "o neto nao nasceu");
+            std::thread::sleep(Duration::from_millis(100));
+        };
+        job.release().unwrap();
+        drop(job);
+        std::thread::sleep(Duration::from_secs(1));
+        let survived = alive(grandchild);
+        drop(
+            Command::new("taskkill")
+                .args(["/F", "/PID", &grandchild.to_string()])
+                .output(),
+        );
+        assert!(survived, "o job solto matou o neto ao fechar");
     }
 
     fn alive(pid: u32) -> bool {

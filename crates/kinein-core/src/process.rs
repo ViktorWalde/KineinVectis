@@ -92,8 +92,11 @@ pub fn stream_command_lines(
 /// when the pipe finally closes.
 const CANCEL_DRAIN_DEADLINE: Duration = Duration::from_secs(2);
 
-/// Like [`stream_command_lines`], but kills the child when `cancel` flips to
-/// `true`, so long jobs (build, quality) can be cancelled.
+/// Like [`stream_command_lines`], but kills the child's whole process tree
+/// when `cancel` flips to `true`, so long jobs (build, quality) can be
+/// cancelled.
+///
+/// A job that ends on its own leaves alone what it left running.
 ///
 /// The loop polls the output channel, the cancel flag and the child's exit; it
 /// never blocks waiting on lingering grandchildren, so cancel returns promptly.
@@ -106,8 +109,13 @@ pub fn stream_command_lines_cancelable(
     command.stdin(Stdio::null());
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());
+    // O job nasce num grupo: cancelar mata a arvore inteira, e nao so' o filho
+    // (D13, DocsPublic/roadmaps/60 §3.3, W2c). No Windows o filho nasce
+    // suspenso e o `group_of` o retoma; ele tem de vir logo depois do spawn.
+    crate::platform::own_group(&mut command);
 
     let mut child = command.spawn().map_err(ProcessError::Spawn)?;
+    let group = crate::platform::group_of(&child);
 
     let (sender, receiver) = mpsc::channel::<(&'static str, String)>();
     if let Some(stdout) = child.stdout.take() {
@@ -147,7 +155,11 @@ pub fn stream_command_lines_cancelable(
         }
 
         if !killed && cancel.load(Ordering::SeqCst) {
-            drop(child.kill());
+            match &group {
+                Some(group) => crate::platform::kill_group(group),
+                // Sem grupo (o sistema recusou o job): ao menos o filho.
+                None => drop(child.kill()),
+            }
             killed = true;
         }
         if exited.is_none()
@@ -161,7 +173,13 @@ pub fn stream_command_lines_cancelable(
         }
     }
 
-    exited.map_or_else(|| child.wait().map_err(ProcessError::Wait), Ok)
+    let status = exited.map_or_else(|| child.wait().map_err(ProcessError::Wait), Ok);
+    // Terminou sozinho: o que ele deixou rodando de proposito segue vivo, nos
+    // dois sistemas.
+    if !killed && let Some(group) = &group {
+        crate::platform::release_group(group);
+    }
+    status
 }
 
 #[cfg(test)]
@@ -221,5 +239,91 @@ mod tests {
             "o cancel deve matar o processo em vez de esperar o sleep inteiro"
         );
         assert!(!status.success());
+    }
+
+    /// O pid do neto que o script grava em `file`, esperando ele aparecer.
+    fn wait_for_pid(file: &std::path::Path) -> String {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        loop {
+            if let Ok(text) = std::fs::read_to_string(file)
+                && !text.trim().is_empty()
+            {
+                return text;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "o neto nao gravou o pid"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+    }
+
+    fn pid_file(name: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir()
+            .join("kinein-core-tests")
+            .join(format!("{}-process-{name}", std::process::id()));
+        drop(std::fs::remove_dir_all(&dir));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir.join("neto.pid")
+    }
+
+    /// Cancelar mata a ARVORE: o neto que o filho pos em segundo plano morre
+    /// junto, e nao so' o filho (D13, DocsPublic/roadmaps/60 §3.3, W2c).
+    #[test]
+    fn cancel_kills_the_grandchild_too() {
+        use std::sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        };
+
+        let file = pid_file("cancela-neto");
+        let command = crate::sh_command(&format!(
+            "sleep 60 &\n{}\nsleep 60",
+            crate::sh_save_background_pid(&file)
+        ));
+        let cancel = Arc::new(AtomicBool::new(false));
+        let flipper = Arc::clone(&cancel);
+        let watched = file.clone();
+        let canceller = std::thread::spawn(move || {
+            wait_for_pid(&watched);
+            flipper.store(true, Ordering::SeqCst);
+        });
+
+        let status =
+            stream_command_lines_cancelable(command, &cancel, &mut |_stream, _line| {}).unwrap();
+        canceller.join().unwrap();
+        assert!(!status.success());
+
+        let pid = wait_for_pid(&file);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while crate::process_alive(&pid) && std::time::Instant::now() < deadline {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        let survived = crate::process_alive(&pid);
+        crate::kill_process(&pid);
+        assert!(!survived, "o neto sobreviveu ao cancelamento");
+    }
+
+    /// Terminar sozinho SOLTA o grupo: o neto posto em segundo plano segue
+    /// vivo, como o servidor que um build deixa de proposito. No Windows, sem
+    /// o `release_group`, o Job o mataria ao fechar.
+    #[test]
+    fn a_normal_exit_leaves_a_background_grandchild_alive() {
+        let file = pid_file("solta-neto");
+        let command = crate::sh_command(&format!(
+            "sleep 30 >/dev/null 2>&1 &\n{}",
+            crate::sh_save_background_pid(&file)
+        ));
+        let never = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+
+        let status =
+            stream_command_lines_cancelable(command, &never, &mut |_stream, _line| {}).unwrap();
+        assert!(status.success());
+
+        let pid = wait_for_pid(&file);
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        let survived = crate::process_alive(&pid);
+        crate::kill_process(&pid);
+        assert!(survived, "o fim normal do job matou o neto");
     }
 }
