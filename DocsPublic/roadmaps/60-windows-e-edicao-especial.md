@@ -501,7 +501,9 @@ do fim da W2b (40.7 §7.270):
          quando o compilador é o `cl` ou o `clang-cl`. Com outro compilador,
          `/D...` continua sendo caminho. Substituto: a CDB do MSVC nas duas
          formas;
-       - **W6b2, qualidade e rigor:** o `clang-tidy` do VS sobre a CDB do
+       - **W6b2, qualidade e rigor** (feita em 2026-10-10, 40.7 §7.274;
+         achou e corrigiu dois defeitos: o `clang-tidy` do VS sem checks e o
+         Relaxado sem efeito no Windows): o `clang-tidy` do VS sobre a CDB do
          MSVC, com os substitutos dos dois testes da qualidade. O teste do
          rigor roda com o VS no Windows, e no Windows reprova em vez de pular
          quando o VS falta. O aviso dele passa a ser `[[deprecated]]`, que é

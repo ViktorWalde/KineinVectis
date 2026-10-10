@@ -127,11 +127,24 @@ mod imp {
         // `/U`: o `set` sai em UTF-16, e um caminho com acento chega inteiro.
         // `raw_arg`: o `cmd` nao entende as aspas escapadas com `\"` que o
         // `std` poria; com `/S`, ele tira so' o primeiro e o ultimo `"`.
+        // O `vcvars64.bat` chama o `vswhere` pelo nome: a pasta do instalador
+        // entra no `PATH` antes, como no `verificar-windows.ps1`.
+        let mut path = std::env::var_os("PATH").unwrap_or_default();
+        if let Some(installer) = std::env::var_os("ProgramFiles(x86)") {
+            let mut with_installer = PathBuf::from(installer)
+                .join("Microsoft Visual Studio")
+                .join("Installer")
+                .into_os_string();
+            with_installer.push(";");
+            with_installer.push(&path);
+            path = with_installer;
+        }
         let output = Command::new("cmd")
             .raw_arg(format!(
                 "/U /D /S /C \"call \"{}\" >nul 2>&1 && set\"",
                 vcvars.display()
             ))
+            .env("PATH", path)
             .output()
             .ok()?;
         if !output.status.success() {

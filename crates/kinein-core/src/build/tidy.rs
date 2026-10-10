@@ -63,6 +63,22 @@ pub fn cdb_sources(cdb_dir: &Path) -> Vec<PathBuf> {
     arquivos
 }
 
+/// Os checks quando o projeto nao tem `.clang-tidy`: o padrao do LLVM.
+///
+/// Medido em 2026-10-10: o `clang-tidy` do Visual Studio vem com so'
+/// `clang-diagnostic-*`, que conta como nenhum check ("No checks enabled"), e
+/// o das distros vem com este. Passar o padrao do LLVM deixa o resultado igual,
+/// seja qual for o `clang-tidy` instalado (60 §3.3, W6b2). Com `.clang-tidy`,
+/// manda o do projeto: o `--checks` se somaria ao dele.
+const DEFAULT_CHECKS: &str = "clang-diagnostic-*,clang-analyzer-*";
+
+/// O projeto declara a configuracao do `clang-tidy` na raiz.
+fn project_has_config(root: &Path) -> bool {
+    [".clang-tidy", "_clang-tidy"]
+        .iter()
+        .any(|name| root.join(name).is_file())
+}
+
 pub(super) fn run_clang_tidy(
     root: &Path,
     tools: &QualityTools,
@@ -78,11 +94,18 @@ pub(super) fn run_clang_tidy(
                 .to_owned(),
         });
     };
-    let cdb_dir = root.join(dir);
+    // O rotulo da CDB e' relativo com `/` (D5); o caminho e' o do sistema.
+    let cdb_dir = root.join(crate::platform::from_portable(dir));
     if let Some(script) = &tools.run_clang_tidy {
         let mut command = Command::new(script);
         command.arg("-p").arg(&cdb_dir).arg("-quiet");
+        if !project_has_config(root) {
+            command.arg(format!("-checks={DEFAULT_CHECKS}"));
+        }
         command.current_dir(root);
+        // No Windows, o clang-tidy acha os cabecalhos do MSVC pelo mesmo
+        // ambiente do `cl` (60 §3.3, W6b2).
+        crate::msvc::apply_environment(&mut command);
         return stream_command(
             command,
             &format!("run-clang-tidy -p {dir} -quiet"),
@@ -107,8 +130,13 @@ pub(super) fn run_clang_tidy(
         });
     }
     let mut command = Command::new(clang_tidy);
-    command.arg("-p").arg(&cdb_dir).args(&arquivos);
+    command.arg("-p").arg(&cdb_dir);
+    if !project_has_config(root) {
+        command.arg(format!("--checks={DEFAULT_CHECKS}"));
+    }
+    command.args(&arquivos);
     command.current_dir(root);
+    crate::msvc::apply_environment(&mut command);
     stream_command(
         command,
         &format!("clang-tidy -p {dir} ({} arquivos)", arquivos.len()),

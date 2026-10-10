@@ -60,7 +60,10 @@ pub(super) fn rigor_arguments(profile: RigorProfile, has_flag: bool) -> Vec<Stri
 /// e o `--compile-no-warning-as-error` nasceram ali)? Versao ilegivel = nao.
 #[must_use]
 fn supports_warning_as_error(program: &Path) -> bool {
-    Command::new(program)
+    let mut command = Command::new(program);
+    // No Windows o `cmake` e' o do Visual Studio, fora do `PATH` (60 §3.3).
+    crate::msvc::apply_environment(&mut command);
+    command
         .arg("--version")
         .output()
         .ok()

@@ -322,6 +322,90 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
     assert!(status.get("preset").is_none(), "{status}");
 }
 
+/// O `clang-tidy` de verdade, o do Visual Studio, sobre a CDB de verdade do
+/// MSVC (60 §3.3, W6b2): o `return x` de uma variavel sem valor vira o aviso
+/// do analisador do clang, com arquivo e linha.
+#[test]
+#[cfg(windows)]
+fn the_real_clang_tidy_checks_the_real_msvc_cdb() {
+    use std::sync::{Arc, atomic::AtomicBool};
+
+    use kinein_protocol::{ProjectKind, RigorProfile};
+
+    let dir = cmake_workspace("msvc-clang-tidy");
+    drop(std::fs::remove_dir_all(dir.join(".kinein")));
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(tidy CXX)\nadd_executable(tidy main.cpp)\n",
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("main.cpp"),
+        "int main() {\n  int x;\n  return x;\n}\n",
+    )
+    .unwrap();
+    let root = crate::platform::canonicalize(&dir).unwrap();
+    let toolchain = crate::toolchain::Toolchain::resolve(&root, &[]);
+    let cancel = Arc::new(AtomicBool::new(false));
+    let mut lines = Vec::new();
+    let built = crate::build::run_build(
+        &root,
+        ProjectKind::Cmake,
+        RigorProfile::Balanced,
+        &toolchain,
+        &crate::build::BuildTools::default(),
+        &cancel,
+        &mut |event| {
+            if let crate::build::BuildEvent::Output { line, .. } = event {
+                lines.push(line);
+            }
+        },
+    )
+    .expect("o build roda");
+    assert!(built.success, "{lines:#?}");
+
+    let clang_tidy = crate::msvc::tool_dirs()
+        .into_iter()
+        .map(|dir| dir.join("clang-tidy.exe"))
+        .find(|path| path.is_file())
+        .expect("o Visual Studio traz o clang-tidy");
+    let tools = crate::build::QualityTools {
+        clang_tidy: Some(clang_tidy),
+        ..crate::build::QualityTools::default()
+    };
+    let mut diagnostics = Vec::new();
+    let mut output = Vec::new();
+    crate::build::run_quality(
+        &root,
+        ProjectKind::Cmake,
+        RigorProfile::Balanced,
+        &toolchain,
+        &tools,
+        &cancel,
+        &mut |event| match event {
+            crate::build::BuildEvent::Diagnostic(diagnostic) => diagnostics.push(diagnostic),
+            crate::build::BuildEvent::Output { line, .. } => output.push(line),
+            crate::build::BuildEvent::Started { .. } => {}
+        },
+    )
+    .expect("o clang-tidy roda");
+    let undefined = diagnostics
+        .iter()
+        .find(|diagnostic| {
+            diagnostic.message.contains("garbage") || diagnostic.message.contains("uninitialized")
+        })
+        .unwrap_or_else(|| panic!("{diagnostics:#?}\n{output:#?}"));
+    assert!(
+        undefined
+            .file
+            .as_deref()
+            .map(std::path::Path::new)
+            .is_some_and(|file| file.ends_with("main.cpp")),
+        "{undefined:?}"
+    );
+    assert_eq!(undefined.line, Some(3), "{undefined:?}");
+}
+
 /// De ponta a ponta no Windows (60 §3.3, W6a): um projeto C++ de verdade,
 /// configurado e compilado pelo core no ambiente do Visual Studio, com o
 /// Ninja (que gera a CDB), e executado pelo comando padrao do Run, que roda

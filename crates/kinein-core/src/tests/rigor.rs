@@ -14,11 +14,26 @@ use kinein_protocol::{ProjectKind, RigorProfile};
 use crate::build::{BuildEvent, BuildTools, run_build};
 use crate::toolchain::Toolchain;
 
+/// A ferramenta existe, procurada como o build a procura: no Windows, no
+/// ambiente do Visual Studio (60 §3.3, W6a).
 fn tool_exists(name: &str) -> bool {
-    std::process::Command::new(name)
-        .arg("--version")
-        .output()
-        .is_ok()
+    let mut command = std::process::Command::new(name);
+    crate::msvc::apply_environment(&mut command);
+    command.arg("--version").output().is_ok()
+}
+
+/// O compilador de C da maquina: o `cl` do Visual Studio no Windows.
+const C_COMPILER: &str = if cfg!(windows) { "cl" } else { "cc" };
+
+/// Sem `cmake` ou compilador, o teste nao prova nada. No Windows o gate exige
+/// o Visual Studio, que traz os dois: la' faltar e' falha, e nao pulo.
+fn tools_present() -> bool {
+    let present = tool_exists("cmake") && tool_exists(C_COMPILER);
+    assert!(
+        present || !cfg!(windows),
+        "o gate do Windows exige o Visual Studio, que traz o cmake e o cl"
+    );
+    present
 }
 
 fn project(name: &str, project_wants_werror: bool) -> std::path::PathBuf {
@@ -37,9 +52,14 @@ fn project(name: &str, project_wants_werror: bool) -> std::path::PathBuf {
         ),
     )
     .unwrap();
+    // Um deslocamento maior que o tipo: aviso nos tres compiladores no nivel
+    // PADRAO, sem `-Wall` (`-Wshift-count-overflow` no GCC e no Clang, C4293
+    // no MSVC). Medido em 2026-10-10: com o `cmake_minimum_required` 3.24 o
+    // CMake nao poe mais o `/W3` (CMP0092), o `cl` fica no `/W1`, e o
+    // `#warning` de antes nao e' aviso no C do MSVC (60 §3.3, W6b2).
     std::fs::write(
         root.join("main.c"),
-        "#warning \"aviso de teste\"\nint main(void) { return 0; }\n",
+        "int main(void) { return (1 << 40) != 0; }\n",
     )
     .unwrap();
     root
@@ -69,7 +89,7 @@ fn build(root: &Path, profile: RigorProfile) -> (bool, Vec<String>) {
 
 #[test]
 fn changing_the_profile_with_the_project_open_changes_the_c_build() {
-    if !tool_exists("cmake") || !tool_exists("cc") {
+    if !tools_present() {
         eprintln!("NAO PROVADO: cmake ou cc ausente nesta maquina");
         return;
     }
@@ -77,7 +97,7 @@ fn changing_the_profile_with_the_project_open_changes_the_c_build() {
 
     // Estrito: o aviso vira erro e o build para.
     let (ok, _) = build(&root, RigorProfile::Strict);
-    assert!(!ok, "no Estrito o #warning deveria parar o build");
+    assert!(!ok, "no Estrito o aviso deveria parar o build");
 
     // Equilibrado, SEM fechar nada: o build reconfigura e passa.
     let (ok, lines) = build(&root, RigorProfile::Balanced);
@@ -97,7 +117,7 @@ fn changing_the_profile_with_the_project_open_changes_the_c_build() {
 
 #[test]
 fn relaxed_wins_even_when_the_project_asks_for_werror() {
-    if !tool_exists("cmake") || !tool_exists("cc") {
+    if !tools_present() {
         eprintln!("NAO PROVADO: cmake ou cc ausente nesta maquina");
         return;
     }

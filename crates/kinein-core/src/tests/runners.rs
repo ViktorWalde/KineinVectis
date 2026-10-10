@@ -655,14 +655,13 @@ fn cpp_quality_fixture(
     let dir = crate::platform::canonicalize(&dir).unwrap();
     if com_cdb {
         std::fs::create_dir_all(dir.join("build")).unwrap();
-        std::fs::write(
-            dir.join("build/compile_commands.json"),
-            format!(
-                r#"[{{"directory":"{d}","file":"{d}/a.cpp","command":"c++ -c a.cpp"}}]"#,
-                d = dir.display()
-            ),
-        )
-        .unwrap();
+        // Pelo serde_json: o `\` do caminho do Windows precisa de escape.
+        let cdb = json!([{
+            "directory": dir.display().to_string(),
+            "file": dir.join("a.cpp").display().to_string(),
+            "command": "c++ -c a.cpp",
+        }]);
+        std::fs::write(dir.join("build/compile_commands.json"), cdb.to_string()).unwrap();
     }
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
@@ -684,10 +683,6 @@ fn cpp_quality_fixture(
 /// `arquivo:linha:coluna: warning: … [check]` viram diagnosticos. Sem CDB,
 /// a falha diz "configure"; sem clang-tidy, nomeia a ferramenta.
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
-)]
 fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
     let _serial = crate::serializar_executaveis();
 
@@ -757,10 +752,6 @@ fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
 /// Com o script `run-clang-tidy` (o do LLVM), ele vence: `-p build -quiet`,
 /// sem lista de arquivos.
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
-)]
 fn quality_run_on_cpp_prefers_run_clang_tidy() {
     let _serial = crate::serializar_executaveis();
 
@@ -810,10 +801,14 @@ fn quality_run_on_cpp_prefers_run_clang_tidy() {
             _ => {}
         }
     }
+    // Sem `.clang-tidy` no projeto, vai o padrao do LLVM (o do Visual Studio
+    // nao habilita check nenhum sozinho; 60 §3.3, W6b2).
     assert!(
-        linhas
-            .iter()
-            .any(|l| l == &format!("run-tidy-falso -p {} -quiet", dir.join("build").display())),
+        linhas.iter().any(|l| l
+            == &format!(
+                "run-tidy-falso -p {} -quiet -checks=clang-diagnostic-*,clang-analyzer-*",
+                dir.join("build").display()
+            )),
         "{linhas:?}"
     );
 }

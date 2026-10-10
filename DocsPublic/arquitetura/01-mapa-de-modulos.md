@@ -143,6 +143,7 @@ flowchart LR
   n_core_build --> n_core_cdb
   n_core_build --> n_core_cmake
   n_core_build --> n_core_msvc
+  n_core_build --> n_core_platform
   n_core_build --> n_core_process
   n_core_build --> n_core_toolchain
   n_core_cargo --> n_core_toolchain
@@ -260,7 +261,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 117 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 118 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -271,7 +272,7 @@ flowchart LR
 
 | Domínio | Depende de | Cabeçalho |
 | --- | --- | --- |
-| `build` | cdb, cmake, msvc, process, toolchain | Build execution with streamed output and structured diagnostics. |
+| `build` | cdb, cmake, msvc, platform, process, toolchain | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
 | `cdb` | platform | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | msvc, platform, toolchain | Servico CMake: |
