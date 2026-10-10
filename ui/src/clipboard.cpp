@@ -1,6 +1,7 @@
 #include "clipboard.h"
 
 #include <QClipboard>
+#include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QMimeData>
@@ -96,7 +97,9 @@ QStringList Clipboard::localFilePathsFromUrls(const QVariantList& urls) const
             return {};
         }
         const QString path = url.toLocalFile();
-        if (!path.startsWith(QLatin1Char('/'))) {
+        // Absoluto no sistema: `/...` no Unix, `C:/...` no Windows (o teste
+        // por `/` recusava todo arquivo do Windows; 60 §3.2, W3b).
+        if (!QDir::isAbsolutePath(path)) {
             return {};
         }
         paths.append(path);
@@ -118,7 +121,7 @@ QString Clipboard::localDirectoryPathFromUrls(const QVariantList& urls) const
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 QUrl Clipboard::localFileUrl(const QString& path) const
 {
-    return path.startsWith(QLatin1Char('/')) ? QUrl::fromLocalFile(path) : QUrl{};
+    return QDir::isAbsolutePath(path) ? QUrl::fromLocalFile(path) : QUrl{};
 }
 
 bool Clipboard::hasFiles() const

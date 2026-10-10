@@ -18,10 +18,23 @@ bool isWebScheme(const QString& scheme)
     return scheme == QLatin1String("http") || scheme == QLatin1String("https");
 }
 
+// A raiz e o alvo passam pelo MESMO caminho. No Windows o `absoluteFilePath`
+// poe a letra do drive (`/casa/p` vira `C:/casa/p`), e o documento ja' a
+// recebia pelo `absolutePath`: so' a raiz ficava sem, e nada cabia dentro
+// dela (medido em 2026-10-09, DocsPublic/roadmaps/60 §3.2, W3b).
 QString normalize(const QString& path)
 {
-    return QDir::cleanPath(path);
+    return QDir::cleanPath(QFileInfo(path).absoluteFilePath());
 }
+
+// O sistema de arquivos do Windows nao diferencia maiusculas: `C:/Dev/p` e
+// `c:/dev/p` sao a mesma pasta, e o escopo tem de concordar com ele.
+constexpr Qt::CaseSensitivity kPathCase =
+#ifdef Q_OS_WIN
+    Qt::CaseInsensitive;
+#else
+    Qt::CaseSensitive;
+#endif
 
 } // namespace
 
@@ -76,14 +89,14 @@ bool insideRoot(const QString& absolutePath, const QString& root)
     }
     const QString cleanRoot = normalize(root);
     const QString target = normalize(absolutePath);
-    if (target == cleanRoot) {
+    if (target.compare(cleanRoot, kPathCase) == 0) {
         return true;
     }
     // A barra no fim importa: `/casa/projeto` NAO pode autorizar
     // `/casa/projeto-de-outro`.
     const QString prefix =
         cleanRoot.endsWith(QLatin1Char('/')) ? cleanRoot : cleanRoot + QLatin1Char('/');
-    return target.startsWith(prefix);
+    return target.startsWith(prefix, kPathCase);
 }
 
 namespace {

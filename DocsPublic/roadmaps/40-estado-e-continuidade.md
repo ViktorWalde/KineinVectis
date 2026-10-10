@@ -19,19 +19,18 @@
 > Linux por domínio. A tabela, as decisões D7–D10 e as fatias, em ordem, estão
 > no 60 §3.3.
 >
-> **Onde parou (save point de 2026-10-09, 40.7 §7.266):** a W3b está pela
-> metade. O MSVC estrito e o ASan valem, com o build sem aviso. Três testes
-> C++ ainda falham no Windows: `tst_markdown_policy`, `tst_qt_message_log` e
-> `tst_clipboard_files`.
+> **Onde parou:** a W3b está fechada (40.7 §7.266, §7.267). O MSVC estrito e o
+> ASan valem, e os 7 testes C++ passam no Windows. No caminho saíram dois
+> defeitos de produto do Windows: o colar de arquivos e o escopo do preview
+> de Markdown.
 >
 > **Para continuar:**
 >
 > 1. Leia o 60 §3.4, o roteiro de trabalho: os dois checkouts, os comandos de
 >    verificação do Windows e do Linux, e as armadilhas.
-> 2. Termine a W3b pelos três testes.
-> 3. Siga para a W4, o `scripts/verificar-windows.ps1`, que transforma o
->    §3.4 em comando.
-> 4. Depois, na ordem do 60 §3.3: W5, W2b, W6–W12. O trabalho acontece no branch `porte-windows`, no clone
+> 2. Faça a W4, o `scripts/verificar-windows.ps1`, que transforma o §3.4 em
+>    comando.
+> 3. Depois, na ordem do 60 §3.3: W5, W2b, W6–W12. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

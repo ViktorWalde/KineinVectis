@@ -8,6 +8,8 @@
 // que quiser da maquina de quem o abre.
 #include "markdown_policy.h"
 
+#include <QDir>
+#include <QFileInfo>
 #include <QtTest>
 
 using kinein::markdown::decideLink;
@@ -19,6 +21,14 @@ using kinein::markdown::rewriteRefusedImages;
 namespace {
 const QString kRoot = QStringLiteral("/casa/projeto");
 const QString kDoc = QStringLiteral("/casa/projeto/docs/guia.md");
+
+// O caminho que a politica devolve: absoluto NO SISTEMA. No Unix e' o proprio
+// texto; no Windows ganha a letra do drive (`C:/casa/...`), como todo caminho
+// que o `QFileInfo` resolve (60 §3.2, W3b).
+QString local(const QString& path)
+{
+    return QDir::cleanPath(QFileInfo(path).absoluteFilePath());
+}
 } // namespace
 
 class TestMarkdownPolicy : public QObject
@@ -52,11 +62,11 @@ void TestMarkdownPolicy::relative_resolves_from_the_document_folder()
 {
     const auto decision = decideLink(QStringLiteral("outro.md"), kDoc, kRoot);
     QCOMPARE(decision.kind, LinkKind::LocalFile);
-    QCOMPARE(decision.target, QStringLiteral("/casa/projeto/docs/outro.md"));
+    QCOMPARE(decision.target, local(QStringLiteral("/casa/projeto/docs/outro.md")));
 
     const auto upwards = decideLink(QStringLiteral("../README.md"), kDoc, kRoot);
     QCOMPARE(upwards.kind, LinkKind::LocalFile);
-    QCOMPARE(upwards.target, QStringLiteral("/casa/projeto/README.md"));
+    QCOMPARE(upwards.target, local(QStringLiteral("/casa/projeto/README.md")));
 }
 
 void TestMarkdownPolicy::dot_dot_does_not_escape_silently()
@@ -91,7 +101,7 @@ void TestMarkdownPolicy::a_similar_prefix_is_not_the_same_project()
     QCOMPARE(sibling.kind, LinkKind::Refused);
     const auto stillInside = decideLink(QStringLiteral("../outra/a.md"), kDoc, kRoot);
     QCOMPARE(stillInside.kind, LinkKind::LocalFile);
-    QCOMPARE(stillInside.target, QStringLiteral("/casa/projeto/outra/a.md"));
+    QCOMPARE(stillInside.target, local(QStringLiteral("/casa/projeto/outra/a.md")));
 }
 
 void TestMarkdownPolicy::web_opens_outside_and_only_http_and_https()
@@ -145,7 +155,7 @@ void TestMarkdownPolicy::a_local_image_outside_the_project_is_not_read()
 {
     QVERIFY(decideResource(QStringLiteral("img/diagrama.png"), kDoc, kRoot, false).allowed);
     QCOMPARE(decideResource(QStringLiteral("img/diagrama.png"), kDoc, kRoot, false).path,
-             QStringLiteral("/casa/projeto/docs/img/diagrama.png"));
+             local(QStringLiteral("/casa/projeto/docs/img/diagrama.png")));
     QVERIFY(!decideResource(QStringLiteral("../../.ssh/id_rsa"), kDoc, kRoot, false).allowed);
     QVERIFY(!decideResource(QStringLiteral("file:///etc/shadow"), kDoc, kRoot, false).allowed);
 }
@@ -154,7 +164,7 @@ void TestMarkdownPolicy::an_anchor_in_a_file_link_is_not_part_of_the_path()
 {
     const auto decision = decideLink(QStringLiteral("outro.md#secao"), kDoc, kRoot);
     QCOMPARE(decision.kind, LinkKind::LocalFile);
-    QCOMPARE(decision.target, QStringLiteral("/casa/projeto/docs/outro.md"));
+    QCOMPARE(decision.target, local(QStringLiteral("/casa/projeto/docs/outro.md")));
 }
 
 void TestMarkdownPolicy::a_refused_image_never_reaches_the_renderer()

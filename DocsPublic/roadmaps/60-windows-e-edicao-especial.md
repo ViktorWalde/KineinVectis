@@ -276,10 +276,9 @@ crate de FFI próprio.
   teclado do autor, que autorizou isso em 2026-10-09.
 
 W3a feita em 2026-10-09 (40.7 §7.264): a UI compila com MSVC e abre no
-Windows. Ficaram para a W3b os dois testes C++ que não compilam lá
-(`tst_single_instance` usa `poll.h`; `tst_clipboard_files` recebe uma flag de
-GCC) e as opções estritas para o MSVC, que o `KineinStrictOptions.cmake` só
-tem para Clang e GCC.
+Windows. W3b feita no mesmo dia (§7.266, §7.267): o MSVC estrito, o ASan e os
+7 testes C++ verdes no Windows, com dois defeitos de produto corrigidos (o
+colar de arquivos e o escopo do Markdown).
 
 **W4, o gate do Windows (D2).** O `scripts/verificar-windows.ps1` roda:
 

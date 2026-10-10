@@ -17,11 +17,21 @@ private slots:
 
 void TestQtMessageLog::warning_goes_to_file_and_debug_does_not()
 {
+#ifdef Q_OS_WIN
+    // O Windows nao le `XDG_CACHE_HOME`: a pasta de cache vem da API do
+    // sistema, e o teste escreveria no cache REAL do usuario. O modo de teste
+    // do Qt a desvia para uma pasta so' de teste (60 §3.2, W3b).
+    QStandardPaths::setTestModeEnabled(true);
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation);
+    QFile::remove(base + QStringLiteral("/kinein-vectis/logs/kinein-ui-erros.txt"));
+#else
     QTemporaryDir cache;
     QVERIFY(cache.isValid());
     qputenv("XDG_CACHE_HOME", cache.path().toUtf8());
+    const QString base = cache.path();
+#endif
     QCOMPARE(kinein::diagnosticLogPath(),
-             cache.path() + QStringLiteral("/kinein-vectis/logs/kinein-ui-erros.txt"));
+             base + QStringLiteral("/kinein-vectis/logs/kinein-ui-erros.txt"));
 
     kinein::installQtMessageLog();
     qWarning("aviso de teste 1234");
