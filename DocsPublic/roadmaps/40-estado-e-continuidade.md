@@ -27,6 +27,10 @@
 > ainda não portados aparecem como ignorados no Windows, contados por fatia
 > na catraca `verificar-adiados-windows.sh`.
 >
+> **Prazo (estimativa do autor em 2026-10-10, sem promessa):** cerca de dois
+> meses até terminar o porte, organizar a documentação (60 §6) e fechar a
+> 0.3.9.
+>
 > **Para continuar:**
 >
 > 1. Leia o 60 §3.4, o roteiro de trabalho e as armadilhas.
@@ -34,9 +38,11 @@
 > 3. Siga a ordem do 60 §3.3. A W5 está feita (40.7 §7.269): o `kinein-sys`,
 >    com o Job Object e o rename atômico. A W2b também está feita (40.7
 >    §7.270): o `cargo test --workspace` está verde no Windows, com 82 testes
->    adiados e contados por fatia. A próxima é a W6 (build C/C++ no Windows),
->    depois W7–W12. Antes dela, há duas decisões para o autor, no item da W2b
->    do 60 §3.3: o Run pelo PowerShell e o cancelamento de job. O trabalho acontece no branch `porte-windows`, no clone
+>    adiados e contados por fatia. O autor decidiu D11 a D14 em 2026-10-10
+>    (60 §3.3): o Run e o `run.script` ficam como estão; cancelar um job
+>    passa a matar a árvore (a fatia W2c, a próxima); e cada teste adiado
+>    volta com um substituto do Windows na fatia dona dele. Depois da W2c
+>    vêm a W6 (build C/C++ no Windows) e as W7–W12. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

@@ -342,6 +342,28 @@ o Linux.
   `COMx`, os gravadores e um adaptador de depuração no Windows. A ponte
   Windows + WSL2 com `usbipd` continua sendo a edição especial (§4).
 
+**As decisões do autor de 2026-10-10**, respondidas com "sim" às perguntas
+do fim da W2b (40.7 §7.270):
+
+- **D11, o Run no Windows:** pelo PowerShell com `-EncodedCommand`
+  (`platform::shell_command`). É o papel do `sh -lc` do Linux. O `cmd /C`
+  não serve, porque quebraria todo comando com aspas.
+- **D12, o `run.script` no Windows:** o `.sh` e o `.bash` rodam no bash do
+  Git for Windows; o `.ps1` roda no PowerShell com `-File`, sob a política de
+  execução do usuário; o `.cmd` e o `.bat` rodam no `cmd`; o `.zsh` fica fora
+  do catálogo do Windows (`platform::script_command`).
+- **D13, cancelar um job mata a árvore, nos dois sistemas.** Hoje
+  `process::stream_command_lines_cancelable` mata só o filho direto, e um
+  build cancelado deixa os compiladores rodando. O job passa a usar o grupo,
+  o Job Object no Windows e o PGID no Linux, como o `OwnedChild` já faz. É a
+  fatia W2c.
+- **D14, teste adiado ganha substituto do Windows.** Tirar o `ignore` não
+  basta. A fatia dona do domínio escreve, para cada teste adiado, o teste
+  que prova a mesma coisa no Windows, com a ferramenta e o formato do Windows
+  (o `Scripts\python.exe` do venv, a `COMx`, o reply do CMake com `C:/`). O
+  teste do Linux continua como está. A linha da fatia na catraca desce quando
+  o substituto existe e passa.
+
 **As fatias, nesta ordem.** O gate vem primeiro, para verificar as outras:
 
 1. **W3b:** os testes C++ da UI no Windows e as opções estritas do MSVC.
@@ -393,7 +415,8 @@ o Linux.
      `#[cfg_attr(windows, ignore = "W<n>: <motivo>")]`. O teste aparece como
      ignorado, com o motivo e a fatia que o devolve. Uma catraca conta esses
      adiamentos, e a contagem só desce. `#[cfg(unix)]` fica só para o que é
-     de Unix por natureza.
+     de Unix por natureza. Desde a D14, a fatia que devolve um adiado escreve
+     o substituto do Windows; tirar o `ignore` não basta.
    - **O `owned_child` ganha os testes do Windows**: o neto morre com o job,
      o ambiente só leva o que a lista permite, e o leitor vê o fim.
    - **Pronto quando:** `cargo test --workspace` verde no Windows, com os
@@ -406,20 +429,27 @@ o Linux.
      todos corrigidos: a URI do LSP, o Run, o `run.script`, o terminal que não
      começava, os caminhos misturados e o comando mostrado do Banco. Acharam
      também um defeito do portable-pty, contornado. A lista está no 40.7.
-   - **Para o autor decidir:**
-     - o Run no Windows pelo PowerShell com `-EncodedCommand`, e o mapa do
-       `run.script` (`.sh` no bash do Git, `.ps1` no PowerShell sob a
-       política do usuário, `.cmd`/`.bat` no `cmd`, sem `.zsh`);
-     - cancelar um job mata só o filho direto, no Linux também. A proposta é
-       usar o grupo (Job, PGID), como o `OwnedChild` já usa.
-5. **W6:** build C/C++ no Windows: achar o Visual Studio e rodar no ambiente
-   dele; CMake, Ninja e LLVM; o catálogo do Setup com `winget`.
-6. **W7:** Python no Windows.
-7. **W8:** Banco no Windows: os consoles e o ODBC.
-8. **W9:** containers e Remote SSH no Windows.
-9. **W10:** embarcados e depuração nativos (D10).
-10. **W11:** o zip portátil (D9).
-11. **W12:** o aceite do autor com mouse e teclado. O controle da tela pelo
+   - **Decidido pelo autor em 2026-10-10:** D11 e D12 confirmam o Run e o
+     `run.script` como ficaram. A D13 abre a W2c. A D14 diz como os 82
+     adiados voltam.
+5. **W2c (D13):** cancelar um job mata a árvore de processos, nos dois
+   sistemas. O job nasce no grupo (`platform::own_group` e `group_of`), e o
+   cancelamento usa o `kill_group`. A prova é um teste com neto, nos dois
+   sistemas, e a mutação do `kill_group` vazio.
+6. **W6:** build C/C++ no Windows: achar o Visual Studio e rodar no ambiente
+   dele; CMake, Ninja e LLVM; o catálogo do Setup com `winget`. Os 16
+   adiados da W6 ganham os substitutos do Windows (D14).
+7. **W7:** Python no Windows. Os 18 adiados ganham os substitutos (D14), e
+   as duas fixtures do `tests/python.rs` que gravam em `{reg}` sem aspas são
+   corrigidas.
+8. **W8:** Banco no Windows: os consoles e o ODBC. Os 4 adiados ganham os
+   substitutos (D14).
+9. **W9:** containers e Remote SSH no Windows. Os 11 adiados ganham os
+   substitutos (D14).
+10. **W10:** embarcados e depuração nativos (D10). Os 33 adiados ganham os
+    substitutos (D14).
+11. **W11:** o zip portátil (D9).
+12. **W12:** o aceite do autor com mouse e teclado. O controle da tela pelo
     agente pede o "Computer use" ligado no app.
 
 ### 3.4 Como trabalhar no porte
@@ -479,6 +509,8 @@ pasta do `cl`, que tem o runtime dele. O log de avisos da UI fica em
   `#[cfg_attr(windows, ignore = "W<n>: <o que falta> (60 §3.3)")]`. O
   `#[cfg(unix)]` fica para o que é de Unix por natureza, com o motivo ao lado.
   A catraca (`verificar-adiados-windows.sh`) conta os dois, e eles só descem.
+  Pela D14, quem devolve um adiado escreve o teste substituto do Windows, que
+  prova a mesma coisa com a ferramenta e o formato do Windows.
 - Teste de LSP com servidor falso espera o servidor como a UI espera
   (`RESYNC`, `warm_up`): a graça do handshake no core é de 300 ms.
 
