@@ -135,6 +135,64 @@ pub(super) fn program_invocation(path: &str) -> String {
     format!("& '{}'", path.replace('\'', "''"))
 }
 
+/// As regras do C runtime da Microsoft (`CommandLineToArgvW`): espaco fora de
+/// aspas separa; `"` abre e fecha; dentro de aspas, `""` e' uma aspa; `\` e'
+/// literal, salvo antes de `"`: `2n` barras e uma aspa dao `n` barras e a aspa
+/// delimita, `2n+1` dao `n` barras e uma aspa literal.
+pub(super) fn split_command_line(line: &str) -> Vec<String> {
+    let chars: Vec<char> = line.chars().collect();
+    let mut args = Vec::new();
+    let mut current = String::new();
+    let mut quoted = false;
+    let mut started = false;
+    let mut i = 0;
+    while i < chars.len() {
+        match chars[i] {
+            '\\' => {
+                let first = i;
+                while i < chars.len() && chars[i] == '\\' {
+                    i += 1;
+                }
+                let count = i - first;
+                if chars.get(i) == Some(&'"') {
+                    current.extend(std::iter::repeat_n('\\', count / 2));
+                    if count % 2 == 1 {
+                        current.push('"');
+                        i += 1;
+                    }
+                } else {
+                    current.extend(std::iter::repeat_n('\\', count));
+                }
+                started = true;
+                continue;
+            }
+            '"' if quoted && chars.get(i + 1) == Some(&'"') => {
+                current.push('"');
+                i += 1;
+            }
+            '"' => {
+                quoted = !quoted;
+                started = true;
+            }
+            ' ' | '\t' if !quoted => {
+                if started {
+                    args.push(std::mem::take(&mut current));
+                    started = false;
+                }
+            }
+            other => {
+                current.push(other);
+                started = true;
+            }
+        }
+        i += 1;
+    }
+    if started {
+        args.push(current);
+    }
+    args
+}
+
 pub(super) fn shell_command(command: &str) -> (String, Vec<String>) {
     // `$?` e' lido logo depois do comando, antes de qualquer outra instrucao.
     let script = format!(
@@ -486,6 +544,35 @@ mod tests {
         assert_eq!(
             super::program_label(Path::new(r"C:\x\esptool.py")),
             "esptool.py"
+        );
+    }
+
+    /// Os exemplos da documentacao da Microsoft ("Parsing C++ command-line
+    /// arguments"), e a linha de verdade que o `CMake` escreveu na CDB do MSVC
+    /// nesta maquina (60 §3.3, W6b1).
+    #[test]
+    fn the_command_line_is_split_by_the_windows_rules() {
+        let split = super::split_command_line;
+        assert_eq!(split(r#""a b c" d e"#), ["a b c", "d", "e"]);
+        assert_eq!(split(r#""ab\"c" "\\" d"#), [r#"ab"c"#, r"\", "d"]);
+        assert_eq!(split(r#"a\\\b d"e f"g h"#), [r"a\\\b", "de fg", "h"]);
+        assert_eq!(split(r#"a\\\"b c d"#), [r#"a\"b"#, "c", "d"]);
+        assert_eq!(split(r#"a\\\\"b c" d e"#), [r"a\\b c", "d", "e"]);
+        assert_eq!(split(r#"a"b"" c d"#), [r#"ab" c d"#]);
+        assert_eq!(
+            split(
+                r"C:\PROGRA~1\MICROS~1\18\COMMUN~1\VC\Tools\MSVC\1451~1.362\bin\Hostx64\x64\cl.exe  /nologo /TP /DWIN32 /FdCMakeFiles\ola.dir\ /FS -c C:\x\main.cpp"
+            ),
+            [
+                r"C:\PROGRA~1\MICROS~1\18\COMMUN~1\VC\Tools\MSVC\1451~1.362\bin\Hostx64\x64\cl.exe",
+                "/nologo",
+                "/TP",
+                "/DWIN32",
+                r"/FdCMakeFiles\ola.dir\",
+                "/FS",
+                "-c",
+                r"C:\x\main.cpp",
+            ]
         );
     }
 

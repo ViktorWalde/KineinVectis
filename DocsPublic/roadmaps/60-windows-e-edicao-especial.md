@@ -490,7 +490,8 @@ do fim da W2b (40.7 §7.270):
        em caminho curto 8.3 (`C:\PROGRA~1\...`) e as flags do MSVC
        (`/DWIN32 /TP /EHsc ... -c`). O `clang-tidy` do VS é o LLVM 22.1.3, e
        não há `clangd`. Entrega em quatro partes:
-       - **W6b1, a CDB do Windows.** Pela especificação da CDB, a forma
+       - **W6b1, a CDB do Windows** (feita em 2026-10-10, 40.7 §7.273).
+         Pela especificação da CDB, a forma
          `command` segue as regras de shell do sistema. O leitor de hoje
          segue as do POSIX, em que `\` escapa, e no Windows ele comeria as
          barras do caminho do `cl.exe`. O `platform::split_command_line`

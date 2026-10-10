@@ -98,6 +98,15 @@ pub(crate) fn program_label(program: &Path) -> String {
     imp::program_label(program)
 }
 
+/// Divide a linha de comando de uma CDB nos argumentos, pelas regras de shell
+/// do sistema, como a especificacao da `compile_commands.json` manda: no Unix,
+/// as do POSIX (`\` escapa); no Windows, as do C runtime da Microsoft, em que
+/// `\` e' literal e o caminho do `cl.exe` chega inteiro (60 §3.3, W6b1).
+#[must_use]
+pub(crate) fn split_command_line(line: &str) -> Vec<String> {
+    imp::split_command_line(line)
+}
+
 /// A linha que executa o programa `path` no shell do [`shell_command`]. No
 /// Unix, o caminho entre aspas simples (`'...'`, com o `'` escapado). No
 /// Windows, `& '...'`: no PowerShell um texto entre aspas e' so' um texto, e o

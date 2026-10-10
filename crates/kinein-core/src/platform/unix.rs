@@ -82,6 +82,45 @@ pub(super) fn program_invocation(path: &str) -> String {
     format!("'{}'", path.replace('\'', "'\\''"))
 }
 
+// O divisor de antes (o do leitor da CDB), movido sem mudar.
+pub(super) fn split_command_line(line: &str) -> Vec<String> {
+    let mut args = Vec::new();
+    let mut current = String::new();
+    let mut quote: Option<char> = None;
+    let mut escaped = false;
+    let mut started = false;
+    for c in line.chars() {
+        if escaped {
+            current.push(c);
+            escaped = false;
+            continue;
+        }
+        match (c, quote) {
+            ('\\', Some('\'')) => current.push(c),
+            ('\\', _) => escaped = true,
+            (q, None) if q == '\'' || q == '"' => {
+                quote = Some(q);
+                started = true;
+            }
+            (q, Some(a)) if q == a => quote = None,
+            (' ' | '\t', None) => {
+                if started || !current.is_empty() {
+                    args.push(std::mem::take(&mut current));
+                    started = false;
+                }
+            }
+            _ => {
+                current.push(c);
+                started = true;
+            }
+        }
+    }
+    if started || !current.is_empty() {
+        args.push(current);
+    }
+    args
+}
+
 pub(super) fn shell_command(command: &str) -> (String, Vec<String>) {
     ("sh".to_owned(), vec!["-lc".to_owned(), command.to_owned()])
 }

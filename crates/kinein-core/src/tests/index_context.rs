@@ -36,18 +36,18 @@ fn temp_dir(name: &str) -> PathBuf {
     crate::platform::canonicalize(&dir).unwrap()
 }
 
-fn escrever(caminho: &Path, conteudo: &str) {
+fn put_file(caminho: &Path, conteudo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
     crate::write_executable(caminho, conteudo);
 }
 
 /// Um executavel que imprime `saida` e sai com 0.
 fn script(caminho: &Path, saida: &str) -> PathBuf {
-    escrever(caminho, &format!("#!/bin/sh\ncat <<'FIM'\n{saida}\nFIM\n"));
+    put_file(caminho, &format!("#!/bin/sh\ncat <<'FIM'\n{saida}\nFIM\n"));
     caminho.to_path_buf()
 }
 
-fn sem_ferramentas() -> Ferramentas {
+fn no_tools() -> Ferramentas {
     Ferramentas::default()
 }
 
@@ -60,40 +60,44 @@ fn datar(caminho: &Path, quando: SystemTime) {
         .unwrap();
 }
 
+/// A CDB do GCC nas duas formas. Roda nos dois sistemas (o GCC do MinGW
+/// tambem escreve esta forma): so' o include de sistema e' o do sistema.
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "W6: a CDB do fixture e' de Linux (-isystem /usr/include); a do Windows vem do compilador real (60 §3.3)"
-)]
 fn cdb_units_are_read_in_both_forms_with_flags_split_and_paths_resolved() {
-    let raiz = temp_dir("cdb");
-    escrever(&raiz.join("CMakeLists.txt"), "project(x)\n");
-    escrever(&raiz.join("src/a.cpp"), "int a() { return 1; }\n");
-    escrever(&raiz.join("src/b.c"), "int b(void) { return 2; }\n");
-    escrever(&raiz.join("src/b.h"), "int b(void);\n");
-    escrever(&raiz.join("src/solto.cpp"), "int solto() { return 3; }\n");
-    let build = raiz.join("build");
+    let root = temp_dir("cdb");
+    put_file(&root.join("CMakeLists.txt"), "project(x)\n");
+    put_file(&root.join("src/a.cpp"), "int a() { return 1; }\n");
+    put_file(&root.join("src/b.c"), "int b(void) { return 2; }\n");
+    put_file(&root.join("src/b.h"), "int b(void);\n");
+    put_file(&root.join("src/solto.cpp"), "int solto() { return 3; }\n");
+    let build = root.join("build");
+    let system_include = if cfg!(windows) {
+        "C:/msys64/ucrt64/include/qt6"
+    } else {
+        "/usr/include/qt6"
+    };
     let cdb = json!([
         {
             "directory": build.display().to_string(),
             "arguments": ["/usr/bin/c++", "-DQT_CORE_LIB", "-D", "NIVEL=2", "-I", "../src",
-                          "-isystem", "/usr/include/qt6", "-std=gnu++23", "-o",
+                          "-isystem", system_include, "-std=gnu++23", "-o",
                           "a.o", "-c", "../src/a.cpp"],
             "file": "../src/a.cpp",
             "output": "CMakeFiles/x.dir/src/a.cpp.o"
         },
         {
             "directory": build.display().to_string(),
-            "command": format!("/usr/bin/cc -DNOME=\"a b\" -I{r}/src -iquote inc -std=c11 -c {r}/src/b.c -o b.o",
-                               r = raiz.display()),
-            "file": raiz.join("src/b.c").display().to_string()
+            "command": format!("/usr/bin/cc -DNOME=\"a b\" -I{s} -iquote inc -std=c11 -c {b} -o b.o",
+                               s = root.join("src").display(),
+                               b = root.join("src").join("b.c").display()),
+            "file": root.join("src/b.c").display().to_string()
         }
     ]);
-    escrever(
+    put_file(
         &build.join("compile_commands.json"),
         &serde_json::to_string(&cdb).unwrap(),
     );
-    let ctx = CompileContext::load(&raiz, &sem_ferramentas());
+    let ctx = CompileContext::load(&root, &no_tools());
     let resumo = ctx.summary();
     assert_eq!(resumo.cdb_directory.as_deref(), Some("build"));
     assert_eq!(resumo.cdb_entries, 2);
@@ -101,50 +105,50 @@ fn cdb_units_are_read_in_both_forms_with_flags_split_and_paths_resolved() {
     assert_eq!(resumo.cargo_packages, 0, "sem cargo injetado, nada roda");
 
     // A forma `arguments`, com `file` RELATIVO ao directory.
-    let a = ctx.for_file(&raiz, Path::new("src/a.cpp"), "cpp");
-    let unidade = a.unit.expect("a.cpp esta' na CDB");
-    assert_eq!(unidade.compiler, "/usr/bin/c++");
-    assert_eq!(unidade.directory, build.display().to_string());
-    assert_eq!(unidade.standard.as_deref(), Some("gnu++23"));
+    let a = ctx.for_file(&root, Path::new("src/a.cpp"), "cpp");
+    let unit = a.unit.expect("a.cpp esta' na CDB");
+    assert_eq!(unit.compiler, "/usr/bin/c++");
+    assert_eq!(unit.directory, build.display().to_string());
+    assert_eq!(unit.standard.as_deref(), Some("gnu++23"));
     assert_eq!(
-        unidade.includes,
+        unit.includes,
         vec![
             build.join("../src").display().to_string(),
-            "/usr/include/qt6".to_owned()
+            system_include.to_owned()
         ],
         "-I separado resolve contra o directory; -isystem absoluto fica"
     );
-    assert_eq!(unidade.defines, vec!["QT_CORE_LIB", "NIVEL=2"]);
+    assert_eq!(unit.defines, vec!["QT_CORE_LIB", "NIVEL=2"]);
     assert_eq!(
-        unidade.output.as_deref(),
+        unit.output.as_deref(),
         Some("CMakeFiles/x.dir/src/a.cpp.o"),
         "o campo output vence o -o (aqui diferentes de proposito)"
     );
-    assert_eq!(unidade.arguments.len(), 13);
+    assert_eq!(unit.arguments.len(), 13);
     assert_eq!(a.source.as_deref(), Some("compile_commands.json em build"));
     assert!(a.hint.is_none());
 
     // A forma `command`: aspas agrupam, -D colado, -I colado, -o vira output.
-    let b = ctx.for_file(&raiz, &raiz.join("src/b.c"), "c");
-    let unidade = b.unit.expect("b.c esta' na CDB");
-    assert_eq!(unidade.compiler, "/usr/bin/cc");
-    assert_eq!(unidade.defines, vec!["NOME=a b"]);
-    assert_eq!(unidade.standard.as_deref(), Some("c11"));
+    let b = ctx.for_file(&root, &root.join("src/b.c"), "c");
+    let unit = b.unit.expect("b.c esta' na CDB");
+    assert_eq!(unit.compiler, "/usr/bin/cc");
+    assert_eq!(unit.defines, vec!["NOME=a b"]);
+    assert_eq!(unit.standard.as_deref(), Some("c11"));
     assert_eq!(
-        unidade.includes,
+        unit.includes,
         vec![
-            raiz.join("src").display().to_string(),
+            root.join("src").display().to_string(),
             build.join("inc").display().to_string()
         ]
     );
-    assert_eq!(unidade.output.as_deref(), Some("b.o"));
+    assert_eq!(unit.output.as_deref(), Some("b.o"));
 
-    // Cabecalho: nao e' unidade, e a dica diz por que.
-    let h = ctx.for_file(&raiz, Path::new("src/b.h"), "c");
+    // Cabecalho: nao e' unit, e a dica diz por que.
+    let h = ctx.for_file(&root, Path::new("src/b.h"), "c");
     assert!(h.unit.is_none());
     assert!(h.hint.as_deref().unwrap().contains("cabecalho"), "{h:?}");
     // Fonte fora da CDB, CDB em dia: nenhum alvo o compila.
-    let solto = ctx.for_file(&raiz, Path::new("src/solto.cpp"), "cpp");
+    let solto = ctx.for_file(&root, Path::new("src/solto.cpp"), "cpp");
     assert!(solto.unit.is_none());
     assert!(
         solto
@@ -155,15 +159,98 @@ fn cdb_units_are_read_in_both_forms_with_flags_split_and_paths_resolved() {
         "{solto:?}"
     );
     // Outra linguagem: nada a dizer.
-    let sh = ctx.for_file(&raiz, Path::new("go.sh"), "other");
+    let sh = ctx.for_file(&root, Path::new("go.sh"), "other");
     assert!(sh.unit.is_none() && sh.hint.is_none() && sh.source.is_none());
+}
+
+/// A CDB do MSVC (60 §3.3, W6b1): com o `cl` ou o `clang-cl`, as flags dele
+/// valem com `/` ou `-`, coladas ou no argumento seguinte. Na forma
+/// `arguments` nao ha' divisao de linha, e o teste roda nos dois sistemas.
+#[test]
+fn an_msvc_cdb_is_read_with_the_msvc_flags() {
+    let root = temp_dir("cdb-msvc");
+    put_file(&root.join("CMakeLists.txt"), "project(x)\n");
+    put_file(&root.join("src/a.cpp"), "int a() { return 1; }\n");
+    let build = root.join("build");
+    let system_include = if cfg!(windows) {
+        "C:/Qt/6.12.0/msvc2022_64/include"
+    } else {
+        "/opt/qt/include"
+    };
+    let cdb = json!([{
+        "directory": build.display().to_string(),
+        "arguments": ["C:/VS/VC/Tools/MSVC/bin/Hostx64/x64/cl.exe", "/nologo", "/TP",
+                      "/DWIN32", "-D", "NIVEL=2", "/I", "../src", "/external:I", system_include,
+                      "/std:c++20", "-MDd", "/FoCMakeFiles/x.dir/a.cpp.obj", "-c", "../src/a.cpp"],
+        "file": "../src/a.cpp"
+    }]);
+    put_file(
+        &build.join("compile_commands.json"),
+        &serde_json::to_string(&cdb).unwrap(),
+    );
+    let ctx = CompileContext::load(&root, &no_tools());
+    let unit = ctx
+        .for_file(&root, Path::new("src/a.cpp"), "cpp")
+        .unit
+        .expect("a.cpp esta' na CDB");
+    assert_eq!(unit.defines, vec!["WIN32", "NIVEL=2"]);
+    assert_eq!(unit.standard.as_deref(), Some("c++20"));
+    assert_eq!(
+        unit.includes,
+        vec![
+            build.join("../src").display().to_string(),
+            system_include.to_owned()
+        ]
+    );
+    assert_eq!(unit.output.as_deref(), Some("CMakeFiles/x.dir/a.cpp.obj"));
+}
+
+/// A forma `command` que o `CMake` escreveu de verdade nesta maquina, com o
+/// `cl.exe` em caminho curto: no Windows a linha segue as regras do C runtime
+/// da Microsoft, e as barras chegam inteiras (60 §3.3, W6b1).
+#[test]
+#[cfg(windows)]
+fn the_real_msvc_command_form_keeps_its_backslashes() {
+    let root = temp_dir("cdb-msvc-command");
+    put_file(&root.join("CMakeLists.txt"), "project(x)\n");
+    put_file(&root.join("main.cpp"), "int main() { return 0; }\n");
+    let build = root.join("build");
+    let main = root.join("main.cpp").display().to_string();
+    let cl = r"C:\PROGRA~1\MICROS~1\18\COMMUN~1\VC\Tools\MSVC\1451~1.362\bin\Hostx64\x64\cl.exe";
+    let cdb = json!([{
+        "directory": build.display().to_string().replace('\\', "/"),
+        "command": format!(
+            r"{cl}  /nologo /TP /DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -MDd /FoCMakeFiles\ola.dir\main.cpp.obj /FdCMakeFiles\ola.dir\ /FS -c {main}"
+        ),
+        "file": main.replace('\\', "/"),
+        "output": "CMakeFiles/ola.dir/main.cpp.obj"
+    }]);
+    put_file(
+        &build.join("compile_commands.json"),
+        &serde_json::to_string(&cdb).unwrap(),
+    );
+    let ctx = CompileContext::load(&root, &no_tools());
+    let unit = ctx
+        .for_file(&root, Path::new("main.cpp"), "cpp")
+        .unit
+        .expect("main.cpp esta' na CDB");
+    assert_eq!(unit.compiler, cl);
+    assert_eq!(unit.defines, vec!["WIN32", "_WINDOWS"]);
+    assert_eq!(
+        unit.output.as_deref(),
+        Some("CMakeFiles/ola.dir/main.cpp.obj")
+    );
+    assert_eq!(
+        unit.arguments.last().map(String::as_str),
+        Some(main.as_str())
+    );
 }
 
 #[test]
 fn without_a_cdb_every_c_file_gets_the_configure_hint() {
     let raiz = temp_dir("sem-cdb");
-    escrever(&raiz.join("main.c"), "int main(void) { return 0; }\n");
-    let ctx = CompileContext::load(&raiz, &sem_ferramentas());
+    put_file(&raiz.join("main.c"), "int main(void) { return 0; }\n");
+    let ctx = CompileContext::load(&raiz, &no_tools());
     assert_eq!(ctx.summary().cdb_entries, 0);
     let m = ctx.for_file(&raiz, Path::new("main.c"), "c");
     assert!(
@@ -183,20 +270,20 @@ fn a_newer_cmakelists_in_a_subfolder_marks_the_cdb_stale() {
     let raiz = temp_dir("subpasta");
     let ontem = SystemTime::now() - Duration::from_secs(86_400);
     let anteontem = ontem - Duration::from_secs(86_400);
-    escrever(&raiz.join("CMakeLists.txt"), "add_subdirectory(ui)\n");
-    escrever(
+    put_file(&raiz.join("CMakeLists.txt"), "add_subdirectory(ui)\n");
+    put_file(
         &raiz.join("ui/CMakeLists.txt"),
         "add_executable(ui src/main.cpp src/novo.cpp)\n",
     );
-    escrever(&raiz.join("ui/src/main.cpp"), "int main() {}\n");
-    escrever(&raiz.join("ui/src/novo.cpp"), "int novo() { return 1; }\n");
+    put_file(&raiz.join("ui/src/main.cpp"), "int main() {}\n");
+    put_file(&raiz.join("ui/src/novo.cpp"), "int novo() { return 1; }\n");
     let build = raiz.join("build");
     let cdb = json!([{
         "directory": build.join("ui").display().to_string(),
         "arguments": ["c++", "-c", raiz.join("ui/src/main.cpp").display().to_string()],
         "file": raiz.join("ui/src/main.cpp").display().to_string()
     }]);
-    escrever(
+    put_file(
         &build.join("compile_commands.json"),
         &serde_json::to_string(&cdb).unwrap(),
     );
@@ -204,7 +291,7 @@ fn a_newer_cmakelists_in_a_subfolder_marks_the_cdb_stale() {
     datar(&build.join("compile_commands.json"), ontem);
     datar(&raiz.join("ui/CMakeLists.txt"), SystemTime::now());
 
-    let ctx = CompileContext::load(&raiz, &sem_ferramentas());
+    let ctx = CompileContext::load(&raiz, &no_tools());
     let resumo = ctx.summary();
     assert!(resumo.cdb_stale, "{resumo:?}");
     assert_eq!(
@@ -229,11 +316,11 @@ fn a_newer_cmakelists_in_a_subfolder_marks_the_cdb_stale() {
     // Com o ui/CMakeLists.txt mais velho que a CDB, nada envelhece — nem um
     // CMakeLists.txt novo ACIMA da raiz (a subida para na raiz do workspace).
     datar(&raiz.join("ui/CMakeLists.txt"), anteontem);
-    escrever(
+    put_file(
         &raiz.parent().unwrap().join("CMakeLists.txt"),
         "project(alheio)\n",
     );
-    let ctx = CompileContext::load(&raiz, &sem_ferramentas());
+    let ctx = CompileContext::load(&raiz, &no_tools());
     assert!(!ctx.summary().cdb_stale, "{:?}", ctx.summary());
 }
 
@@ -275,7 +362,7 @@ fn metadata_de_dois_pacotes(raiz: &Path) -> String {
 fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
     let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("cargo");
-    escrever(
+    put_file(
         &raiz.join("Cargo.toml"),
         "[workspace]\nmembers = [\"tools/gen\"]\n",
     );
@@ -361,7 +448,7 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
     );
 
     // Sem cargo injetado: o Cargo.toml existe, mas a IDE nao roda nada e diz.
-    let sem = CompileContext::load(&raiz, &sem_ferramentas());
+    let sem = CompileContext::load(&raiz, &no_tools());
     assert_eq!(sem.summary().cargo_targets, 0);
     let (nada, dica, _) = {
         let c = sem.for_file(&raiz, Path::new("src/main.rs"), "rust");
@@ -374,7 +461,7 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
     );
 
     // Cargo que falha: sem panico, sem alvos.
-    escrever(&raiz.join("bin/cargo"), "#!/bin/sh\nexit 101\n");
+    put_file(&raiz.join("bin/cargo"), "#!/bin/sh\nexit 101\n");
     let quebrado = CompileContext::load(&raiz, &ferramentas);
     assert_eq!(quebrado.summary().cargo_targets, 0);
 }
@@ -387,7 +474,7 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
 fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system() {
     let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("python");
-    escrever(&raiz.join("tools/gera.py"), "def gera():\n    pass\n");
+    put_file(&raiz.join("tools/gera.py"), "def gera():\n    pass\n");
     let sistema = script(&raiz.join("bin/python3"), "Python 9.9.9");
     let py = |rel: &str| {
         let caminho = raiz.join(rel).join("bin/python");
@@ -396,7 +483,7 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
     };
 
     // 1. Nada: None, e o arquivo Python recebe a dica.
-    let ctx = CompileContext::load(&raiz, &sem_ferramentas());
+    let ctx = CompileContext::load(&raiz, &no_tools());
     assert!(ctx.summary().python_interpreter.is_none());
     let g = ctx.for_file(&raiz, Path::new("tools/gera.py"), "python");
     assert!(g.python.is_none());
@@ -423,7 +510,7 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
     assert_eq!(g.source.as_deref(), Some("interpretador por sistema"));
 
     // 3. poetry.lock + poetry que responde um ambiente existente: vence o sistema.
-    escrever(&raiz.join("poetry.lock"), "");
+    put_file(&raiz.join("poetry.lock"), "");
     let ambiente_poetry = raiz.join("caches/virtualenvs/app-py3.12");
     py("caches/virtualenvs/app-py3.12");
     let poetry = script(
@@ -500,8 +587,8 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
 #[test]
 fn index_context_answers_through_the_dispatcher() {
     let raiz = temp_dir("despacho");
-    escrever(&raiz.join("src/main.c"), "int main(void) { return 0; }\n");
-    escrever(&raiz.join("tools/gera.py"), "def gera():\n    pass\n");
+    put_file(&raiz.join("src/main.c"), "int main(void) { return 0; }\n");
+    put_file(&raiz.join("tools/gera.py"), "def gera():\n    pass\n");
     let mut core = core_with_empty_search_path("index-context");
     let sem = core.handle_request(&JsonRpcRequest::new(
         1_i64,
@@ -568,7 +655,7 @@ fn index_context_answers_through_the_dispatcher() {
 #[test]
 fn the_context_is_reloaded_after_configure_and_after_a_manifest_change() {
     let raiz = temp_dir("recarga");
-    escrever(&raiz.join("src/main.c"), "int main(void) { return 0; }\n");
+    put_file(&raiz.join("src/main.c"), "int main(void) { return 0; }\n");
     let mut core = core_with_empty_search_path("index-context-recarga");
     let aberto = core.handle_request(&JsonRpcRequest::new(
         1_i64,
@@ -592,7 +679,7 @@ fn the_context_is_reloaded_after_configure_and_after_a_manifest_change() {
         "arguments": ["cc", "-std=c17", "-c", raiz.join("src/main.c").display().to_string()],
         "file": raiz.join("src/main.c").display().to_string()
     }]);
-    escrever(
+    put_file(
         &raiz.join("build/compile_commands.json"),
         &serde_json::to_string(&cdb).unwrap(),
     );
@@ -616,7 +703,7 @@ fn the_context_is_reloaded_after_configure_and_after_a_manifest_change() {
     // Um evento que nao e' de build nao recarrega: a CDB reescrita fica velha
     // no contexto ate' o proximo configure ou Cargo.toml.
     let cdb2 = json!([]);
-    escrever(
+    put_file(
         &raiz.join("build/compile_commands.json"),
         &serde_json::to_string(&cdb2).unwrap(),
     );

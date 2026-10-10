@@ -43,8 +43,11 @@
 >    passa a matar a árvore (a W2c, feita: 40.7 §7.271); e cada teste
 >    adiado volta com um substituto do Windows na fatia dona dele. A W6 foi
 >    dividida em três (60 §3.3). A W6a está feita (40.7 §7.272): um projeto
->    C++ de verdade compila com o MSVC e roda pelo core. A próxima é a W6b
->    (LLVM e qualidade), depois a W6c e as W7–W12. O trabalho acontece no branch `porte-windows`, no clone
+>    C++ de verdade compila com o MSVC e roda pelo core. A W6b está dividida
+>    em quatro partes, e a W6b1 está feita (40.7 §7.273): a CDB do MSVC é
+>    lida como no Linux. A próxima é a W6b2 (qualidade e rigor), depois a
+>    W6b3, a W6b4 (o `clangd`, que espera o autor decidir instalar o LLVM), a
+>    W6c e as W7–W12. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

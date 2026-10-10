@@ -45,7 +45,7 @@ pub(super) fn parse_cdb(texto: &str) -> HashMap<PathBuf, Unidade> {
                     entrada
                         .get("command")
                         .and_then(Value::as_str)
-                        .map(dividir_comando)
+                        .map(crate::platform::split_command_line)
                         .unwrap_or_default()
                 },
                 |lista| {
@@ -59,7 +59,7 @@ pub(super) fn parse_cdb(texto: &str) -> HashMap<PathBuf, Unidade> {
         if arguments.is_empty() {
             continue;
         }
-        let mut unidade = Unidade {
+        let mut unit = Unidade {
             compiler: arguments[0].clone(),
             directory: directory.to_owned(),
             standard: None,
@@ -71,10 +71,31 @@ pub(super) fn parse_cdb(texto: &str) -> HashMap<PathBuf, Unidade> {
                 .map(str::to_owned),
             arguments: arguments.clone(),
         };
+        let msvc = msvc_driver(&arguments[0]);
         let mut i = 1;
         while i < arguments.len() {
             let arg = &arguments[i];
             let proximo = arguments.get(i + 1);
+            if msvc && let Some((flag, attached)) = msvc_flag(arg) {
+                let value = if attached.is_empty() {
+                    i += 1;
+                    proximo.cloned()
+                } else {
+                    Some(attached.to_owned())
+                };
+                if let Some(value) = value {
+                    match flag {
+                        MsvcFlag::Include => unit.includes.push(absolute(dir, &value)),
+                        MsvcFlag::Define => unit.defines.push(value),
+                        MsvcFlag::Standard => unit.standard = Some(value),
+                        MsvcFlag::Output => {
+                            unit.output.get_or_insert(value);
+                        }
+                    }
+                }
+                i += 1;
+                continue;
+            }
             // `-Ifoo` colado, ou `-I foo` em dois argumentos (o segundo
             // consome o proximo).
             let mut pega = |prefixo: &str| -> Option<String> {
@@ -90,22 +111,22 @@ pub(super) fn parse_cdb(texto: &str) -> HashMap<PathBuf, Unidade> {
                 .or_else(|| pega("-iquote"))
                 .or_else(|| pega("-I"))
             {
-                unidade.includes.push(absoluto(dir, &v));
+                unit.includes.push(absolute(dir, &v));
             } else if let Some(v) = pega("-D") {
-                unidade.defines.push(v);
+                unit.defines.push(v);
             } else if let Some(v) = arg.strip_prefix("-std=") {
-                unidade.standard = Some(v.to_owned());
+                unit.standard = Some(v.to_owned());
             } else if let Some(v) = pega("-o") {
-                unidade.output.get_or_insert(v);
+                unit.output.get_or_insert(v);
             }
             i += 1;
         }
-        // A chave e' o caminho REAL: a CDB do CMake escreve `file` absoluto,
+        // A chave e' o caminho REAL: a CDB do CMake escreve `file` absolute,
         // mas a do Ninja/Meson pode escrever `../src/a.cpp` relativo ao
         // `directory`, e a consulta chega pelo caminho do editor.
-        let chave = PathBuf::from(absoluto(dir, file));
+        let chave = PathBuf::from(absolute(dir, file));
         let chave = crate::platform::canonicalize(&chave).unwrap_or(chave);
-        unidades.insert(chave, unidade);
+        unidades.insert(chave, unit);
     }
     unidades
 }
@@ -147,51 +168,50 @@ fn modificado_em(caminho: &Path) -> Option<SystemTime> {
     std::fs::metadata(caminho).ok()?.modified().ok()
 }
 
-fn absoluto(dir: &Path, caminho: &str) -> String {
+/// O compilador da unidade e' o do MSVC (`cl`) ou o `clang-cl`: as flags dele
+/// comecam por `/` ou `-` (60 §3.3, W6b1). Com outro compilador, um `/D...`
+/// e' caminho, e nao flag.
+fn msvc_driver(compiler: &str) -> bool {
+    let name = compiler
+        .rsplit(['/', '\\'])
+        .next()
+        .unwrap_or(compiler)
+        .to_ascii_lowercase();
+    let stem = name.strip_suffix(".exe").unwrap_or(&name);
+    stem == "cl" || stem == "clang-cl"
+}
+
+/// O que uma flag do MSVC diz da unidade.
+#[derive(Debug, Clone, Copy)]
+enum MsvcFlag {
+    Include,
+    Define,
+    Standard,
+    Output,
+}
+
+/// As flags do MSVC, com `/` ou `-`: a inclusao (`I`, `external:I`, `imsvc`),
+/// a definicao (`D`), o padrao (`std:`) e a saida (`Fo`). Devolve o tipo e o
+/// valor colado, vazio quando ele vem no argumento seguinte.
+fn msvc_flag(arg: &str) -> Option<(MsvcFlag, &str)> {
+    let rest = arg.strip_prefix('/').or_else(|| arg.strip_prefix('-'))?;
+    [
+        ("external:I", MsvcFlag::Include),
+        ("imsvc", MsvcFlag::Include),
+        ("I", MsvcFlag::Include),
+        ("D", MsvcFlag::Define),
+        ("std:", MsvcFlag::Standard),
+        ("Fo", MsvcFlag::Output),
+    ]
+    .into_iter()
+    .find_map(|(name, flag)| rest.strip_prefix(name).map(|value| (flag, value)))
+}
+
+fn absolute(dir: &Path, caminho: &str) -> String {
     let p = Path::new(caminho);
     if p.is_absolute() {
         caminho.to_owned()
     } else {
         dir.join(p).display().to_string()
     }
-}
-
-/// Divide uma `command` como um shell dividiria: espaco separa, aspas
-/// simples/duplas agrupam, `\` escapa fora de aspas simples.
-fn dividir_comando(comando: &str) -> Vec<String> {
-    let mut args = Vec::new();
-    let mut atual = String::new();
-    let mut aspas: Option<char> = None;
-    let mut escapado = false;
-    let mut tem = false;
-    for c in comando.chars() {
-        if escapado {
-            atual.push(c);
-            escapado = false;
-            continue;
-        }
-        match (c, aspas) {
-            ('\\', Some('\'')) => atual.push(c),
-            ('\\', _) => escapado = true,
-            (q, None) if q == '\'' || q == '"' => {
-                aspas = Some(q);
-                tem = true;
-            }
-            (q, Some(a)) if q == a => aspas = None,
-            (' ' | '\t', None) => {
-                if tem || !atual.is_empty() {
-                    args.push(std::mem::take(&mut atual));
-                    tem = false;
-                }
-            }
-            _ => {
-                atual.push(c);
-                tem = true;
-            }
-        }
-    }
-    if tem || !atual.is_empty() {
-        args.push(atual);
-    }
-    args
 }
