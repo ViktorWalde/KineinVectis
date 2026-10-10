@@ -434,20 +434,27 @@ mod tests {
     /// id exato roda so' ele. Sem cmake na maquina, o teste nao prova nada e
     /// diz isso.
     #[test]
-    #[cfg_attr(
-        windows,
-        ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
-    )]
     fn ctest_discovery_and_exact_run_against_the_real_ctest() {
         use std::process::Command;
-        let cmake = Command::new("cmake")
+        // No Windows, o cmake e o ctest vem do Visual Studio, com o ambiente
+        // dele e o Ninja, como no produto (60 §3.3, W6a).
+        let tool = |name: &str| {
+            let mut command = Command::new(name);
+            crate::msvc::apply_environment(&mut command);
+            command
+        };
+        let cmake = tool("cmake")
             .arg("--version")
             .output()
             .is_ok_and(|o| o.status.success());
-        let ctest = Command::new("ctest")
+        let ctest = tool("ctest")
             .arg("--version")
             .output()
             .is_ok_and(|o| o.status.success());
+        assert!(
+            cmake && ctest || !cfg!(windows),
+            "o gate do Windows exige o Visual Studio, que traz o cmake e o ctest"
+        );
         if !cmake || !ctest {
             eprintln!("cmake/ctest ausentes: descoberta do ctest NAO provada aqui");
             return;
@@ -460,11 +467,14 @@ mod tests {
         std::fs::write(
             root.join("CMakeLists.txt"),
             "cmake_minimum_required(VERSION 3.24)\nproject(t NONE)\nenable_testing()\n\
-             add_test(NAME Core COMMAND true)\nadd_test(NAME CoreParsing COMMAND true)\n\
-             add_test(NAME Broken.Case COMMAND false)\n",
+             add_test(NAME Core COMMAND ${CMAKE_COMMAND} -E true)\n\
+             add_test(NAME CoreParsing COMMAND ${CMAKE_COMMAND} -E true)\n\
+             add_test(NAME Broken.Case COMMAND ${CMAKE_COMMAND} -E false)\n",
         )
         .unwrap();
-        let configurado = Command::new("cmake")
+        let mut configure = tool("cmake");
+        crate::msvc::prefer_ninja(&mut configure, false);
+        let configurado = configure
             .args(["-S", ".", "-B", ".kinein/build"])
             .current_dir(&root)
             .output()

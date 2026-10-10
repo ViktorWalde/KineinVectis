@@ -127,3 +127,6 @@ jobobject threadentry snapthread toolhelp movefile pathext reparse
 # 2026-10-10: o shell do Windows (PowerShell) e o nome dos comandos dele
 # (cmdlet), que o Run e o run.script do Windows usam (60 §3.3, W2b).
 powershell cmdlet
+# 2026-10-10: as ferramentas do Visual Studio que o build C/C++ do Windows usa
+# (o compilador MSVC, o vcvars64.bat e o vswhere; 60 §3.3, W6a).
+msvc vcvars vswhere

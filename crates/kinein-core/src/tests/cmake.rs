@@ -223,10 +223,6 @@ fn status_de(core: &mut crate::Core, id: i64) -> serde_json::Value {
 }
 
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
-)]
 fn configure_picks_the_project_default_preset_and_status_reports_it() {
     let dir = cmake_workspace("preset-automatico");
     std::fs::create_dir_all(dir.join("bin")).unwrap();
@@ -324,4 +320,67 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
     );
     let status = status_de(&mut core, 97);
     assert!(status.get("preset").is_none(), "{status}");
+}
+
+/// De ponta a ponta no Windows (60 §3.3, W6a): um projeto C++ de verdade,
+/// configurado e compilado pelo core no ambiente do Visual Studio, com o
+/// Ninja (que gera a CDB), e executado pelo comando padrao do Run, que roda
+/// no PowerShell (D11). Nada de C/C++ esta' no `PATH` do teste.
+#[test]
+#[cfg(windows)]
+fn a_real_cpp_project_builds_with_msvc_and_runs() {
+    use std::sync::{Arc, atomic::AtomicBool};
+
+    use kinein_protocol::{ProjectKind, RigorProfile};
+
+    let dir = cmake_workspace("msvc-ponta-a-ponta");
+    drop(std::fs::remove_dir_all(dir.join(".kinein")));
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(ola CXX)\nadd_executable(ola main.cpp)\n",
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("main.cpp"),
+        "#include <iostream>\nint main() { std::cout << \"ola do msvc\" << std::endl; }\n",
+    )
+    .unwrap();
+    let root = crate::platform::canonicalize(&dir).unwrap();
+
+    let toolchain = crate::toolchain::Toolchain::resolve(&root, &[]);
+    let cancel = Arc::new(AtomicBool::new(false));
+    let mut lines = Vec::new();
+    let outcome = crate::build::run_build(
+        &root,
+        ProjectKind::Cmake,
+        RigorProfile::Balanced,
+        &toolchain,
+        &crate::build::BuildTools::default(),
+        &cancel,
+        &mut |event| {
+            if let crate::build::BuildEvent::Output { line, .. } = event {
+                lines.push(line);
+            }
+        },
+    )
+    .expect("o build roda");
+    assert!(outcome.success, "{lines:#?}");
+    assert!(
+        crate::cmake::build_dir(&root)
+            .join("compile_commands.json")
+            .is_file(),
+        "o Ninja gera a CDB; o gerador do Visual Studio nao: {lines:#?}"
+    );
+
+    let command = crate::run::default_command(ProjectKind::Cmake, &root).unwrap();
+    assert!(command.starts_with("& '"), "{command}");
+    let (shell, args) = crate::platform::shell_command(&command);
+    let output = std::process::Command::new(shell)
+        .args(args)
+        .output()
+        .unwrap();
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("ola do msvc"),
+        "{command}: {output:?}"
+    );
 }

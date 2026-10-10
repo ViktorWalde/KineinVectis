@@ -192,6 +192,7 @@ pub fn ctest_entries(ctest: &Path, build_dir: &Path, cancel: &Arc<AtomicBool>) -
     c.arg("--test-dir")
         .arg(build_dir)
         .arg("--show-only=json-v1");
+    crate::msvc::apply_environment(&mut c);
     let mut texto = String::new();
     let _ = process::stream_command_lines_cancelable(c, cancel, &mut |stream, linha| {
         if stream == "stdout" {

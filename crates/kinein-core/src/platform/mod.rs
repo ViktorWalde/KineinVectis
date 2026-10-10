@@ -98,6 +98,15 @@ pub(crate) fn program_label(program: &Path) -> String {
     imp::program_label(program)
 }
 
+/// A linha que executa o programa `path` no shell do [`shell_command`]. No
+/// Unix, o caminho entre aspas simples (`'...'`, com o `'` escapado). No
+/// Windows, `& '...'`: no PowerShell um texto entre aspas e' so' um texto, e o
+/// `&` o executa (com o `'` dobrado).
+#[must_use]
+pub(crate) fn program_invocation(path: &str) -> String {
+    imp::program_invocation(path)
+}
+
 /// O programa e os argumentos que rodam `command` como o usuario o digitaria:
 /// pelo shell do sistema, com o ambiente de login.
 ///

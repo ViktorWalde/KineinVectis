@@ -132,7 +132,7 @@ fn cmake_binary_command(root: &Path) -> Result<String, RunError> {
                       compile antes (Ctrl+F9)"
                 .to_owned(),
         }),
-        [single] => Ok(format!("'{}'", single.replace('\'', "'\\''"))),
+        [single] => Ok(crate::platform::program_invocation(single)),
         _multiple => Err(RunError::NoDefaultCommand {
             message: format!(
                 "mais de um executavel em .kinein/build ({}); \
@@ -170,10 +170,12 @@ pub(crate) fn is_executable(path: &Path) -> bool {
     std::fs::metadata(path).is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
 }
 
-/// Non-Unix platforms have no execute bit; nothing is auto-runnable.
-#[cfg(not(unix))]
-pub(crate) const fn is_executable(_path: &Path) -> bool {
-    false
+/// No Windows nao ha' bit de execucao: executavel e' o `.exe`, que e' o que o
+/// build do `CMake` gera (60 §3.3, W6a).
+#[cfg(windows)]
+pub(crate) fn is_executable(path: &Path) -> bool {
+    path.extension()
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("exe"))
 }
 
 #[cfg(test)]
@@ -250,22 +252,22 @@ mod tests {
         ));
     }
 
+    /// O executavel do build e' o que o sistema executa: no Unix o arquivo com
+    /// bit de execucao, no Windows o `.exe` (60 §3.3, W6a). O comando e' o
+    /// do shell do Run (D11).
     #[test]
-    #[cfg_attr(
-        windows,
-        ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
-    )]
     fn default_command_finds_single_cmake_executable() {
         let root = temp_root("cmake-bin");
         let build = root.join(".kinein").join("build");
         std::fs::create_dir_all(build.join("CMakeFiles")).unwrap();
         crate::write_executable(build.join("CMakeFiles/ignorado"), "#!/bin/sh\n");
 
-        let binary = build.join("app");
-        crate::write_executable(&binary, "#!/bin/sh\n");
+        let binary = crate::write_executable(build.join("app"), "#!/bin/sh\n");
 
         let command = default_command(ProjectKind::Cmake, &root).unwrap();
-        assert!(command.contains("app"));
-        assert!(command.starts_with('\''));
+        assert_eq!(
+            command,
+            crate::platform::program_invocation(&binary.display().to_string())
+        );
     }
 }

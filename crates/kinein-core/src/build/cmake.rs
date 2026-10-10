@@ -56,6 +56,7 @@ pub(super) fn run_cmake_build(
 
     let mut build = Command::new(program_for_role(toolchain, ToolchainRole::Cmake, "cmake"));
     build.arg("--build").arg(&build_dir);
+    crate::msvc::apply_environment(&mut build);
 
     stream_command(
         build,

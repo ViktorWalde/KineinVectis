@@ -69,6 +69,7 @@ pub(super) fn ctest_command(root: &Path, selection: Selection<'_>) -> (Command, 
         .arg(&build_dir)
         .arg("--output-on-failure")
         .current_dir(root);
+    crate::msvc::apply_environment(&mut command);
     let mut display = String::from("ctest --output-on-failure");
     match selection {
         Selection::All => {}

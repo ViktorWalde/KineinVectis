@@ -184,6 +184,11 @@ pub fn configure_command(
     // O que o framework acrescenta (`-DPICO_SDK_PATH`, bloco E do 41): depois
     // do kit, para um `-D` do kit nao ser sobreposto em silencio.
     command.args(extra);
+    // No Windows: o ambiente do Visual Studio, e o Ninja quando ninguem
+    // escolheu gerador (o do Visual Studio nao gera a CDB). Fora dele, nada.
+    let generator_chosen = command.get_args().any(|arg| arg == "-G");
+    crate::msvc::prefer_ninja(&mut command, generator_chosen);
+    crate::msvc::apply_environment(&mut command);
     command
 }
 

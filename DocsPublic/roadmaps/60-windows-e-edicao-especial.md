@@ -310,8 +310,8 @@ o Linux.
 | Projeto, árvore, arquivos | abre, lista, copia, renomeia, apaga (W1, W2a); a árvore de processos morre com o Job Object (W5); a junção é recusada como link (W2b); cancelar um job mata a árvore, nos dois sistemas (W2c) | a lixeira do Windows sem teste próprio |
 | Editor, índice, busca | o índice lê o projeto; os testes do índice e do observador passam no Windows (W2b) | o uso real (W12) |
 | Terminal | abre `pwsh` no ConPTY e responde às perguntas do terminal, sem o que o ConPTY não começava; os testes passam no Windows (W2b) | o uso real com mouse e teclado (W12) |
-| Build C/C++ | o CMake e o `cl` existem, mas dentro do Visual Studio | achar o VS (`vswhere`) e rodar o build no ambiente dele; CMake, Ninja e LLVM (`clangd`, `clang-format`, `clang-tidy`) fora do `PATH` |
-| Build Rust, testes, Git, Run | Cargo detectado; Git funciona, e os testes fixam o `core.autocrlf`; o Run roda pelo PowerShell, e o `run.script` roda `.sh` no bash do Git, `.ps1`, `.cmd` e `.bat` (W2b) | o Run de um projeto CMake achar o `.exe` (W6) |
+| Build C/C++ | o core acha o Visual Studio, roda o CMake no ambiente dele com o Ninja e a CDB, e o Run executa o `.exe` (W6a) | o LLVM (`clangd`, `clang-format`, `clang-tidy`) e a qualidade (W6b); o `winget`, os kits e os caminhos de biblioteca (W6c) |
+| Build Rust, testes, Git, Run | Cargo detectado; Git funciona, e os testes fixam o `core.autocrlf`; o Run roda pelo PowerShell, e o `run.script` roda `.sh` no bash do Git, `.ps1`, `.cmd` e `.bat` (W2b); o Run de um projeto CMake acha o `.exe` (W6a) | — |
 | LSP | busca de executável com `PATHEXT` (W2a); a URI `file:///C:/...` certa (W2b) | provar `clangd`, `rust-analyzer`, `basedpyright`, `qmlls` e `ruff` de verdade no Windows |
 | Depuração | — | um adaptador DAP no Windows (`lldb-dap`, CodeLLDB, `gdb` do MSYS2), D10 |
 | Python | o `python3` do `PATHEXT` cai no atalho da Store | `python`/`py`, venv com `Scripts\`, `debugpy` |
@@ -467,7 +467,8 @@ do fim da W2b (40.7 §7.270):
      Visual Studio, que é multiconfiguração e NÃO gera o
      `compile_commands.json`, a CDB de que o índice e o `clangd` dependem.
    - **Dividida em três**, cada uma com contrato e commit próprios:
-     - **W6a, o build CMake no ambiente do Visual Studio.** O módulo `msvc`
+     - **W6a, o build CMake no ambiente do Visual Studio** (feita em
+       2026-10-10, 40.7 §7.272). O módulo `msvc`
        acha a instalação pelo `vswhere`. Ele captura uma vez o ambiente do
        `vcvars64.bat`, rodando `cmd /D /C call ... && set`, e o aplica a quem
        roda o CMake, o `ctest` e o Ninja (configure, build e testes). As
@@ -482,7 +483,9 @@ do fim da W2b (40.7 §7.270):
      - **W6b, LLVM e qualidade:** `clangd`, `clang-format` e `clang-tidy` do
        Visual Studio, do LLVM avulso (`Program Files\LLVM`) e do `winget`. A
        CDB e o modelo do file-api com a saída de verdade do Windows. Os
-       substitutos do `clang-tidy`, da CDB e do `cmake_model`;
+       substitutos do `clang-tidy`, da CDB e do `cmake_model`. E o teste do
+       perfil de rigor, que pula sem o `cmake` e o `cc` no `PATH` e hoje não
+       prova nada no Windows;
      - **W6c, Setup e kits:** o `winget` no catálogo do Setup, os kits e as
        pastas de toolchain do Windows, os caminhos de biblioteca (vcpkg, o
        Qt do `CMAKE_PREFIX_PATH`, o Visual Studio) e o Make sem `bear`.

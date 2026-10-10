@@ -150,6 +150,7 @@ pub fn discover_tests(
                 .arg(&build_dir)
                 .arg("-N")
                 .current_dir(root);
+            crate::msvc::apply_environment(&mut c);
             (c, "ctest -N".to_owned())
         }
         ProjectKind::Python => {

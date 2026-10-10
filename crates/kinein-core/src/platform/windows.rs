@@ -131,6 +131,10 @@ pub(super) fn program_label(program: &Path) -> String {
     name.map_or_else(String::new, |name| name.to_string_lossy().into_owned())
 }
 
+pub(super) fn program_invocation(path: &str) -> String {
+    format!("& '{}'", path.replace('\'', "''"))
+}
+
 pub(super) fn shell_command(command: &str) -> (String, Vec<String>) {
     // `$?` e' lido logo depois do comando, antes de qualquer outra instrucao.
     let script = format!(

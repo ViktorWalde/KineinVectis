@@ -82,11 +82,14 @@ impl ToolDetector {
     #[must_use]
     pub fn from_environment() -> Self {
         let home = crate::platform::home_dir();
-        let extra_dirs = home.as_ref().map_or_else(Vec::new, |home| {
+        let mut extra_dirs = home.as_ref().map_or_else(Vec::new, |home| {
             let xpacks = env::var_os("XPACKS_STORE_FOLDER").map(PathBuf::from);
             let idf = env::var_os("IDF_TOOLS_PATH").map(PathBuf::from);
             extra_search_dirs(home, xpacks.as_deref(), idf.as_deref())
         });
+        // No Windows, o CMake, o Ninja e o LLVM que o Visual Studio traz, fora
+        // do `PATH` (60 §3.3, W6a); fora dele, nada.
+        extra_dirs.extend(crate::msvc::tool_dirs());
         Self {
             search_path: env::var_os("PATH"),
             extra_dirs,

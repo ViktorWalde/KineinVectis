@@ -117,6 +117,7 @@ flowchart LR
   n_core_lang[lang]
   n_core_library[library]:::cycle
   n_core_lsp[lsp]
+  n_core_msvc[msvc]
   n_core_outcome[outcome]
   n_core_owned_child[owned_child]
   n_core_platform[platform]
@@ -141,10 +142,12 @@ flowchart LR
   n_core_workspace[workspace]
   n_core_build --> n_core_cdb
   n_core_build --> n_core_cmake
+  n_core_build --> n_core_msvc
   n_core_build --> n_core_process
   n_core_build --> n_core_toolchain
   n_core_cargo --> n_core_toolchain
   n_core_cdb --> n_core_platform
+  n_core_cmake --> n_core_msvc
   n_core_cmake --> n_core_platform
   n_core_cmake --> n_core_toolchain
   n_core_configaction --> n_core_cdb
@@ -244,10 +247,12 @@ flowchart LR
   n_core_terminal --> n_core_platform
   n_core_test --> n_core_build
   n_core_test --> n_core_cmake
+  n_core_test --> n_core_msvc
   n_core_test --> n_core_process
   n_core_test --> n_core_python
   n_core_toolchain --> n_core_platform
   n_core_toolchain --> n_core_tools
+  n_core_tools --> n_core_msvc
   n_core_tools --> n_core_platform
   n_core_workspace --> n_core_fsops
   n_core_workspace --> n_core_platform
@@ -255,7 +260,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-46 módulos, 113 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 117 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -266,10 +271,10 @@ flowchart LR
 
 | Domínio | Depende de | Cabeçalho |
 | --- | --- | --- |
-| `build` | cdb, cmake, process, toolchain | Build execution with streamed output and structured diagnostics. |
+| `build` | cdb, cmake, msvc, process, toolchain | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
 | `cdb` | platform | Descoberta e diagnóstico da compilation database do C/C++. |
-| `cmake` | platform, toolchain | Servico CMake: |
+| `cmake` | msvc, platform, toolchain | Servico CMake: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, runconfig | Configuration Actions: |
 | `container` | tools | Containers como dominio NATIVO: |
@@ -290,6 +295,7 @@ flowchart LR
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
 | `lsp` | cmake, fsops, owned_child, stderr_tail | Subsistema LSP: |
+| `msvc` | — | O Visual Studio do Windows, para o build de C/C++. |
 | `outcome` | — | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
@@ -308,9 +314,9 @@ flowchart LR
 | `size` | — | O tamanho de um ELF: |
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
-| `test` | build, cmake, process, python | Test execution with streamed, per-case results. |
+| `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
 | `toolchain` | platform, tools | Toolchain: |
-| `tools` | platform | External tool detection. |
+| `tools` | msvc, platform | External tool detection. |
 | `workspace` | fsops, platform, python | Workspace opening, project kind detection, and metadata persistence. |
 
 ## Cobertura: todo método IPC tem um lugar

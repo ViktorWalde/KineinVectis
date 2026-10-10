@@ -78,6 +78,10 @@ pub(super) fn program_label(program: &Path) -> String {
         .map_or_else(String::new, |name| name.to_string_lossy().into_owned())
 }
 
+pub(super) fn program_invocation(path: &str) -> String {
+    format!("'{}'", path.replace('\'', "'\\''"))
+}
+
 pub(super) fn shell_command(command: &str) -> (String, Vec<String>) {
     ("sh".to_owned(), vec!["-lc".to_owned(), command.to_owned()])
 }
