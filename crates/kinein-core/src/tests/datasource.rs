@@ -373,6 +373,10 @@ fn perfil_antigo_sem_campos_novos_continua_valido() {
 /// devolve o caminho; chamar de novo nao apaga o que se escreveu; perfil que
 /// nao existe e' erro de parametro.
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W8: o console do Banco e' stub no Windows desde a W1; a garantia equivalente e' da W8 (60 §3.3)"
+)]
 fn the_profile_console_is_created_once_through_dispatch() {
     let dir = workspace("console");
     let mut core = core_with_empty_search_path("datasource-console");

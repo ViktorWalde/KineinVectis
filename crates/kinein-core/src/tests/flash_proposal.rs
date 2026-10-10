@@ -118,7 +118,10 @@ impl Cenario {
 /// o esptool falso recebe EXATAMENTE os argv da receita, com o arquivo com
 /// espaco inteiro.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn the_proposal_becomes_a_run_configuration_that_run_start_executes() {
     let mut c = cenario("ciclo", true);
     c.esptool_falso();
@@ -184,7 +187,10 @@ fn the_proposal_becomes_a_run_configuration_that_run_start_executes() {
 /// (`INVALID_REQUEST`), sem receita (`INVALID_REQUEST`), sem esptool
 /// (`TOOL_NOT_FOUND`), motor desconhecido (`INVALID_PARAMS`), campo desconhecido.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn refusals_name_the_missing_piece_and_save_nothing() {
     let mut c = cenario("recusas", true);
     let sem_esptool = c
@@ -228,7 +234,10 @@ fn refusals_name_the_missing_piece_and_save_nothing() {
 /// A flash que a placa relatou (E5) menor que a receita vira aviso, nao
 /// recusa: quem grava e' o usuario, informado.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn a_smaller_reported_flash_is_a_warning() {
     let mut c = cenario("aviso", true);
     c.esptool_falso();
@@ -262,7 +271,10 @@ fn a_smaller_reported_flash_is_a_warning() {
 /// verdade pelo `run.start` com o esptool falso. O que nao foi baixado, ou
 /// nao e' firmware, e' recusado antes de compor a linha.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn a_downloaded_firmware_is_flashed_by_the_page_line_and_runs() {
     let mut c = cenario("firmware", false);
     c.esptool_falso();

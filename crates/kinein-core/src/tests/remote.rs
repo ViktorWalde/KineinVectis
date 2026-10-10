@@ -4,14 +4,12 @@
 //! o deploy com `rsync` falso e, sem ele, `scp`; e o `remote.command` puro,
 //! com o `host:porta` para o kit.
 
-#[cfg(unix)]
 use std::{path::Path, time::Duration};
 use std::{path::PathBuf, sync::mpsc};
 
 use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::{Value, json};
 
-#[cfg(unix)]
 fn executavel(caminho: &Path, corpo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
     crate::write_executable(caminho, corpo);
@@ -52,7 +50,6 @@ fn cenario(nome: &str) -> Cenario {
 }
 
 impl Cenario {
-    #[cfg(unix)]
     fn bin(&self) -> PathBuf {
         self.root.parent().unwrap().join("bin")
     }
@@ -70,7 +67,6 @@ impl Cenario {
         r.result.unwrap()
     }
 
-    #[cfg(unix)]
     fn evento(&self, nome: &str) -> Value {
         let prazo = std::time::Instant::now() + Duration::from_secs(20);
         while std::time::Instant::now() < prazo {
@@ -142,7 +138,10 @@ fn the_catalogue_saves_without_secrets_sorted_by_name() {
 /// arquitetura, kernel e as ferramentas (rsync ausente). Sem `ssh` no PATH a
 /// recusa e' sincrona; alvo desconhecido idem.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("probe");
@@ -231,7 +230,10 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
 /// composta pelo core, com o `-p`/`-i` do perfil. PURA — nada roda aqui, e a
 /// UI so' executa depois de mostrar a linha e receber um gesto explicito.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("copy-id");
@@ -270,7 +272,10 @@ fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
 /// pi@host:~/kinein/<projeto>/`; sem rsync, `scp -P 2222 -i <chave> -r`.
 /// Origem inexistente e' recusa sincrona.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn deploy_prefers_rsync_and_falls_back_to_scp() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("deploy");
@@ -474,7 +479,10 @@ fn discover_lists_the_machines_aliases_without_a_workspace_open() {
 }
 
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn resolve_asks_openssh_for_the_effective_summary_and_hides_the_proxy_command() {
     let _serial = crate::serializar_executaveis();
     let (mut core, base) = cenario_descoberta("resolve");
@@ -520,7 +528,10 @@ fn resolve_asks_openssh_for_the_effective_summary_and_hides_the_proxy_command() 
 }
 
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anything() {
     let _serial = crate::serializar_executaveis();
     let (mut core, base) = cenario_descoberta("resolve-opcao");
@@ -547,7 +558,10 @@ fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anyth
 }
 
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn resolve_repeats_what_ssh_complained_instead_of_inventing_a_summary() {
     let _serial = crate::serializar_executaveis();
     let (mut core, base) = cenario_descoberta("resolve-recusa");

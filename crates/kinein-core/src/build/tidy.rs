@@ -124,22 +124,24 @@ mod tests {
 
     #[test]
     fn the_sources_come_from_the_cdb_without_repeats_or_ghosts() {
-        let raiz = std::env::temp_dir().join(format!("kinein-tidy-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&raiz);
-        std::fs::create_dir_all(raiz.join("build")).unwrap();
-        std::fs::write(raiz.join("a.cpp"), "").unwrap();
-        std::fs::write(raiz.join("b.c"), "").unwrap();
-        let cdb = format!(
-            r#"[{{"directory":"{r}","file":"{r}/a.cpp","command":"c++ a.cpp"}},
-                {{"directory":"{r}","file":"b.c","command":"cc b.c"}},
-                {{"directory":"{r}","file":"{r}/a.cpp","command":"c++ -DX a.cpp"}},
-                {{"directory":"{r}","file":"{r}/nao.cpp","command":"c++ nao.cpp"}}]"#,
-            r = raiz.display()
-        );
-        std::fs::write(raiz.join("build/compile_commands.json"), cdb).unwrap();
-        let fontes = cdb_sources(&raiz.join("build"));
-        assert_eq!(fontes, vec![raiz.join("a.cpp"), raiz.join("b.c")]);
-        assert!(cdb_sources(&raiz.join("nao")).is_empty());
-        let _ = std::fs::remove_dir_all(&raiz);
+        let root = std::env::temp_dir().join(format!("kinein-tidy-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("build")).unwrap();
+        std::fs::write(root.join("a.cpp"), "").unwrap();
+        std::fs::write(root.join("b.c"), "").unwrap();
+        // Pelo serde_json: o `\` do caminho do Windows precisa de escape no JSON.
+        let r = root.display().to_string();
+        let em = |name: &str| root.join(name).display().to_string();
+        let cdb = serde_json::json!([
+            {"directory": r, "file": em("a.cpp"), "command": "c++ a.cpp"},
+            {"directory": r, "file": "b.c", "command": "cc b.c"},
+            {"directory": r, "file": em("a.cpp"), "command": "c++ -DX a.cpp"},
+            {"directory": r, "file": em("nao.cpp"), "command": "c++ nao.cpp"},
+        ]);
+        std::fs::write(root.join("build/compile_commands.json"), cdb.to_string()).unwrap();
+        let fontes = cdb_sources(&root.join("build"));
+        assert_eq!(fontes, vec![root.join("a.cpp"), root.join("b.c")]);
+        assert!(cdb_sources(&root.join("nao")).is_empty());
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

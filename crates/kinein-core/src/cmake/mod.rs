@@ -512,7 +512,7 @@ mod tests {
         assert!(arguments.contains(&"-S".to_owned()));
         assert!(arguments.contains(&"-DCMAKE_EXPORT_COMPILE_COMMANDS=ON".to_owned()));
         let build_index = arguments.iter().position(|arg| arg == "-B").unwrap();
-        assert!(arguments[build_index + 1].ends_with(".kinein/build"));
+        assert!(std::path::Path::new(&arguments[build_index + 1]).ends_with(".kinein/build"));
     }
 
     #[test]

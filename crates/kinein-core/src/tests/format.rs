@@ -2,7 +2,7 @@
 
 use serde_json::json;
 
-use super::core_with_empty_search_path;
+use super::{core_with_empty_search_path, under};
 use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 
 fn workspace_dir(test_name: &str) -> std::path::PathBuf {
@@ -51,7 +51,7 @@ fn format_text_formats_a_rust_buffer_with_rustfmt() {
         3_i64,
         "format.text",
         Some(json!({
-            "path": format!("{root}/src/main.rs"),
+            "path": under(&root, "src/main.rs"),
             "text": "fn main(   ){ let x=1;println!(\"{x}\") ; }",
         })),
     ));
@@ -59,7 +59,7 @@ fn format_text_formats_a_rust_buffer_with_rustfmt() {
     assert_eq!(result["formatter"], "rustfmt");
     assert_eq!(result["changed"], true);
     assert!(
-        result["path"].as_str().unwrap().ends_with("src/main.rs"),
+        std::path::Path::new(result["path"].as_str().unwrap()).ends_with("src/main.rs"),
         "path ecoado: {}",
         result["path"]
     );
@@ -78,7 +78,7 @@ fn format_text_reports_unchanged_buffers() {
         4_i64,
         "format.text",
         Some(json!({
-            "path": format!("{root}/src/main.rs"),
+            "path": under(&root, "src/main.rs"),
             "text": "fn main() {}\n",
         })),
     ));
@@ -96,7 +96,7 @@ fn format_text_rejects_extensions_without_formatter() {
     let outcome = core.handle_request(&JsonRpcRequest::new(
         5_i64,
         "format.text",
-        Some(json!({ "path": format!("{root}/notas.txt"), "text": "texto" })),
+        Some(json!({ "path": under(&root, "notas.txt"), "text": "texto" })),
     ));
     let error = outcome.response().error.as_ref().unwrap();
     assert_eq!(error.code, JsonRpcErrorCode::InvalidParams);
@@ -152,8 +152,9 @@ fn format_text_formats_a_python_buffer_with_ruff() {
     crate::write_executable(
         bin.join("ruff"),
         format!(
-            "#!/bin/sh\necho \"$@\" > {reg}\npwd >> {reg}\ncat >> {reg}\nprintf 'formatado\\n'\n",
-            reg = registro.display()
+            "#!/bin/sh\necho \"$@\" > '{reg}'\n{pwd} >> '{reg}'\ncat >> '{reg}'\nprintf 'formatado\\n'\n",
+            reg = registro.display(),
+            pwd = crate::SH_PWD,
         ),
     );
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(&bin));
@@ -162,7 +163,7 @@ fn format_text_formats_a_python_buffer_with_ruff() {
         7_i64,
         "format.text",
         Some(json!({
-            "path": format!("{root}/pacote/app.py"),
+            "path": under(&root, "pacote/app.py"),
             "text": "def  f( a,b ):\n  return a+b\n",
         })),
     ));
@@ -174,7 +175,7 @@ fn format_text_formats_a_python_buffer_with_ruff() {
     let mut linhas = recebeu.lines();
     assert_eq!(
         linhas.next().unwrap(),
-        format!("format --stdin-filename {root}/pacote/app.py"),
+        format!("format --stdin-filename {}", under(&root, "pacote/app.py")),
         "o nome do arquivo decide a configuracao (ruff.toml mais proximo)"
     );
     assert_eq!(linhas.next().unwrap(), root, "corre no root do workspace");
@@ -194,7 +195,7 @@ fn format_text_formats_a_python_buffer_with_ruff() {
             8_i64,
             "format.text",
             Some(json!({
-                "path": format!("{root}/pacote/app.py"),
+                "path": under(&root, "pacote/app.py"),
                 "text": "def  f( a,b ):\n  return a+b\n",
             })),
         ));

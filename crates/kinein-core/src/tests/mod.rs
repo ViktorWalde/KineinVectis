@@ -9,12 +9,8 @@ mod cmake;
 mod cmake_model;
 mod configaction;
 mod container;
-// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
-#[cfg(unix)]
 mod coverage;
 mod datasource;
-// Os consoles do Banco ainda nao rodam no Windows (console_fs.rs).
-#[cfg(unix)]
 mod datasource_console;
 mod datasource_discover;
 mod datasource_history;
@@ -30,12 +26,8 @@ mod debug;
 mod debug_attach;
 mod debug_inspect;
 mod dispatch;
-// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
-#[cfg(unix)]
 mod flash_proposal;
 mod format;
-// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
-#[cfg(unix)]
 mod frameworks;
 mod fs;
 mod git;
@@ -45,8 +37,6 @@ mod index_context;
 mod jobs;
 mod lsp;
 mod lsp_companion;
-// O servidor falso destes testes e' um script de shell (so' Unix).
-#[cfg(unix)]
 mod lsp_deferred;
 mod lsp_qml;
 mod lsp_server;
@@ -54,20 +44,18 @@ mod lsp_stderr;
 mod project;
 mod python;
 mod remote;
-// Ferramentas falsas em shell (so' Unix), em todos os testes do arquivo.
-#[cfg(unix)]
 mod remote_mirror;
 mod rigor;
 mod run;
 mod run_reuse;
 mod runconfig;
 mod runners;
-// A serial ainda nao roda no Windows (60 §1); os testes dela sao de Unix.
+// A descoberta da serial do Linux (sysfs, udev, grupos e bits de modo) e' de
+// Unix por natureza; a do Windows (COMx) nasce na W10 com testes proprios
+// (60 §3.3).
 #[cfg(unix)]
 mod serial;
-#[cfg(unix)]
 mod serial_files;
-#[cfg(unix)]
 mod serial_identify;
 mod settings;
 mod syntax;
@@ -207,6 +195,15 @@ fn without_login_shell_noise(lines: Vec<String>) -> Vec<String> {
         }
     }
     lines.collect()
+}
+
+/// O caminho de `relative` (com `/`) dentro de `root`, na forma do sistema:
+/// o que a UI manda e o que o core devolve (D5, DocsPublic/roadmaps/60 §3.1).
+fn under(root: &str, relative: &str) -> String {
+    std::path::Path::new(root)
+        .join(crate::platform::from_portable(relative))
+        .display()
+        .to_string()
 }
 
 fn core_with_empty_search_path(test_name: &str) -> Core {

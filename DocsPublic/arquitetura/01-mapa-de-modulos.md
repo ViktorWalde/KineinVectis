@@ -104,6 +104,7 @@ flowchart LR
   n_core_dap[dap]
   n_core_datasource[datasource]
   n_core_db[db]
+  n_core_fake_exe[fake_exe]
   n_core_flash[flash]
   n_core_format[format]
   n_core_fsops[fsops]
@@ -143,6 +144,7 @@ flowchart LR
   n_core_build --> n_core_process
   n_core_build --> n_core_toolchain
   n_core_cargo --> n_core_toolchain
+  n_core_cdb --> n_core_platform
   n_core_cmake --> n_core_platform
   n_core_cmake --> n_core_toolchain
   n_core_configaction --> n_core_cdb
@@ -240,6 +242,7 @@ flowchart LR
   n_core_terminal --> n_core_lsp
   n_core_terminal --> n_core_platform
   n_core_test --> n_core_build
+  n_core_test --> n_core_cmake
   n_core_test --> n_core_process
   n_core_test --> n_core_python
   n_core_toolchain --> n_core_platform
@@ -251,7 +254,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-45 módulos, 110 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+46 módulos, 112 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -264,7 +267,7 @@ flowchart LR
 | --- | --- | --- |
 | `build` | cdb, cmake, process, toolchain | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
-| `cdb` | — | Descoberta e diagnóstico da compilation database do C/C++. |
+| `cdb` | platform | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | platform, toolchain | Servico CMake: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, runconfig | Configuration Actions: |
@@ -273,6 +276,7 @@ flowchart LR
 | `dap` | lsp, platform, python, run, stderr_tail | Subsistema de debug: |
 | `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
+| `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
 | `flash` | build | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
@@ -303,7 +307,7 @@ flowchart LR
 | `size` | — | O tamanho de um ELF: |
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
-| `test` | build, process, python | Test execution with streamed, per-case results. |
+| `test` | build, cmake, process, python | Test execution with streamed, per-case results. |
 | `toolchain` | platform, tools | Toolchain: |
 | `tools` | platform | External tool detection. |
 | `workspace` | fsops, platform, python | Workspace opening, project kind detection, and metadata persistence. |
@@ -730,6 +734,7 @@ flowchart LR
     n_core_coverage[coverage]
     n_core_fsops[fsops]
     n_core_jobs[jobs]
+    n_core_platform[platform]
     n_core_project[project]
     n_core_python[python]
     n_core_rpc[rpc]
@@ -770,6 +775,7 @@ flowchart LR
   n_crates_kinein_core_src_handlers_coverage_rs --> n_core_toolchain
   n_ipc_run --> n_crates_kinein_core_src_handlers_run_rs
   n_crates_kinein_core_src_handlers_run_rs --> n_core_fsops
+  n_crates_kinein_core_src_handlers_run_rs --> n_core_platform
   n_crates_kinein_core_src_handlers_run_rs --> n_core_project
   n_crates_kinein_core_src_handlers_run_rs --> n_core_python
   n_crates_kinein_core_src_handlers_run_rs --> n_core_rpc

@@ -473,6 +473,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W7: o venv do Windows tem Scripts\\python.exe, nao bin/python (60 §3.3)"
+    )]
     fn default_command_says_what_it_looked_for() {
         let root = raiz("padrao");
         let sem = default_command(&root, None).unwrap_err().to_string();

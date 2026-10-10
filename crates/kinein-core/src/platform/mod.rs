@@ -90,6 +90,41 @@ pub(crate) fn default_shell() -> String {
     imp::default_shell()
 }
 
+/// O nome do programa como o usuario o digita, para mostrar um comando: o
+/// nome do arquivo, e no Windows sem a extensao de executavel (`podman.exe`
+/// vira `podman`).
+#[must_use]
+pub(crate) fn program_label(program: &Path) -> String {
+    imp::program_label(program)
+}
+
+/// O programa e os argumentos que rodam `command` como o usuario o digitaria:
+/// pelo shell do sistema, com o ambiente de login.
+///
+/// No Unix, `sh -lc`. No Windows, o PowerShell (o `pwsh.exe`, senao o
+/// `powershell.exe`, que vem com o sistema) com `-EncodedCommand`: o comando
+/// vai em base64 e chega intacto. O `cmd /C` nao serviria, porque o
+/// portable-pty escapa as aspas do argumento com `\"`, que o `cmd.exe` nao
+/// entende. O codigo de saida do ultimo programa nativo passa adiante, e um
+/// cmdlet que falha sai com 1 (DocsPublic/roadmaps/60 §3.3, W2b).
+#[must_use]
+pub(crate) fn shell_command(command: &str) -> (String, Vec<String>) {
+    imp::shell_command(command)
+}
+
+/// O programa e os argumentos que rodam o arquivo `script` com o
+/// `interpreter` que o `run::script_interpreter` escolheu. No Unix, o
+/// interpretador do `PATH` com `--`. No Windows, o `bash` e' o do Git for
+/// Windows (nunca o do `PATH`, que e' o lancador do WSL), o `powershell` roda
+/// com `-File` sob a politica de execucao do usuario, e o `cmd` com `/D /C`.
+/// O erro diz o que falta instalar.
+pub(crate) fn script_command(
+    interpreter: &str,
+    script: &Path,
+) -> Result<(String, Vec<String>), String> {
+    imp::script_command(interpreter, script)
+}
+
 /// Um caminho RELATIVO em texto, com `/` nos dois sistemas (decisao D5 do
 /// autor, 60 §3.1): e' o que vai para arquivo do projeto, para o Git e para o
 /// protocolo, e o mesmo projeto aberto no outro sistema o le igual. Caminho

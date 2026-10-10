@@ -301,17 +301,18 @@ pedido do autor.
 
 ### 3.3 Paridade por domínio (o critério "impecável", 2026-10-09)
 
-Estado medido no Windows em 2026-10-09, depois da W3a. "Falta" é o que
-separa o domínio da paridade com o Linux.
+Estado medido no Windows em 2026-10-09, depois da W3a, e atualizado em
+2026-10-10, depois da W2b. "Falta" é o que separa o domínio da paridade com
+o Linux.
 
 | Domínio | No Windows hoje | Falta |
 | --- | --- | --- |
-| Projeto, árvore, arquivos | abre, lista, copia, renomeia, apaga (W1, W2a) | encerrar a árvore de processos sem escapar descendente (Job Object, D7) |
-| Editor, índice, busca | o índice lê o projeto (1629 arquivos na foto) | os testes do observador de arquivos (`notify`) que falham no Windows |
-| Terminal | abre `pwsh` no ConPTY (W2a) | testes próprios do Windows; o uso real com mouse e teclado |
+| Projeto, árvore, arquivos | abre, lista, copia, renomeia, apaga (W1, W2a); a árvore de processos morre com o Job Object (W5); a junção é recusada como link (W2b) | a lixeira do Windows sem teste próprio; cancelar um job mata só o filho direto, no Linux também (decisão do autor, 40.7 §7.270) |
+| Editor, índice, busca | o índice lê o projeto; os testes do índice e do observador passam no Windows (W2b) | o uso real (W12) |
+| Terminal | abre `pwsh` no ConPTY e responde às perguntas do terminal, sem o que o ConPTY não começava; os testes passam no Windows (W2b) | o uso real com mouse e teclado (W12) |
 | Build C/C++ | o CMake e o `cl` existem, mas dentro do Visual Studio | achar o VS (`vswhere`) e rodar o build no ambiente dele; CMake, Ninja e LLVM (`clangd`, `clang-format`, `clang-tidy`) fora do `PATH` |
-| Build Rust, testes, Git | Cargo detectado; Git funciona | `core.autocrlf` do Git para Windows nos testes |
-| LSP | busca de executável com `PATHEXT` (W2a) | provar `clangd`, `rust-analyzer`, `basedpyright`, `qmlls` e `ruff` no Windows |
+| Build Rust, testes, Git, Run | Cargo detectado; Git funciona, e os testes fixam o `core.autocrlf`; o Run roda pelo PowerShell, e o `run.script` roda `.sh` no bash do Git, `.ps1`, `.cmd` e `.bat` (W2b) | o Run de um projeto CMake achar o `.exe` (W6) |
+| LSP | busca de executável com `PATHEXT` (W2a); a URI `file:///C:/...` certa (W2b) | provar `clangd`, `rust-analyzer`, `basedpyright`, `qmlls` e `ruff` de verdade no Windows |
 | Depuração | — | um adaptador DAP no Windows (`lldb-dap`, CodeLLDB, `gdb` do MSYS2), D10 |
 | Python | o `python3` do `PATHEXT` cai no atalho da Store | `python`/`py`, venv com `Scripts\`, `debugpy` |
 | Banco | SQLite, PostgreSQL por TCP, MongoDB | os consoles (stub na W1) com garantia equivalente; ODBC do Windows |
@@ -319,8 +320,8 @@ separa o domínio da paridade com o Linux.
 | Remote SSH | — | o OpenSSH do Windows; sem `rsync`, o `scp` que o domínio já tem |
 | Embarcados | a serial é stub (W1) | portas `COMx` (listar, permissão, monitor); `esptool`, `probe-rs`, `picotool`, `dfu-util`; D10 |
 | Ambiente e Setup | o catálogo de instalação fala `dnf`/`apt`/`pacman` | `winget` no catálogo; pastas de toolchain do Windows |
-| UI | abre (W3a); instância única por named pipe (D4) | os testes C++ e as opções estritas do MSVC (W3b); o foco da janela pedida por outra instância |
-| Gate | clippy e testes rodados à mão | `scripts/verificar-windows.ps1` (W4, D8) |
+| UI | abre (W3a); instância única por named pipe (D4); os testes C++ com o MSVC estrito (W3b) | o foco da janela pedida por outra instância; a fronteira de caminhos com o Qt, que fala `/` (W12) |
+| Gate | `scripts/verificar-windows.ps1` (W4); a catraca dos adiados (W2b) | ficar todo verde no Windows |
 | Distribuição | — | o pacote do Windows (D9) |
 
 **As decisões do autor (2026-10-09, à noite, respondidas como perguntas):**
@@ -361,9 +362,56 @@ separa o domínio da paridade com o Linux.
      `Copy`, porque o job não é copiável.
    - A lista de portas `COMx` vai para a W10, onde tem usuário (ARCHITECTURE
      §8: mecanismo sem usuário é pior que nenhum).
-4. **W2b:** os testes do core verdes no Windows. Os que usam ferramenta falsa
-   em `sh` ganham o equivalente Windows; `#[cfg(unix)]` só para o que é de
-   Unix.
+4. **W2b:** os testes do core verdes no Windows. Contrato escrito em
+   2026-10-09, antes do código, sobre a medição do gate da W5: 787 passando e
+   109 falhando no `kinein-core`.
+   - **O executável falso (56 das 109).** Os testes gravam a ferramenta falsa
+     com `crate::write_executable`, que no Unix chama o `install -m 755`
+     (contra o `ETXTBSY`), e o `install` não existe no Windows. No Windows,
+     o helper grava o script e, ao lado, um `.exe` de passagem: um programa
+     Rust pequeno, compilado pelo `rustc` uma vez por rodada, que roda o
+     script ao lado com o interpretador do shebang. O `sh` e o `bash` são os
+     do Git for Windows, achados pelo `git --exec-path`, e nunca o `bash` do
+     `PATH`, que no Windows é o lançador do WSL. O script é o mesmo nos dois
+     sistemas. O `.exe` é o que o Windows acha como acharia a ferramenta de
+     verdade: pelo `PATHEXT` do `find_in_path`, e pelo `.exe` que o
+     `Command` acrescenta a um caminho sem extensão. O gate do Windows passa a
+     exigir o Git for Windows na etapa de ambiente.
+   - **Caminhos (cerca de 25).** Pela D5, o caminho absoluto é nativo. O teste
+     que monta o esperado com `/` (`root.join("src/main.rs")`) muda para
+     `join` por componente. Quando o produto devolve `/` misturado com `\`, o
+     defeito é do produto e é corrigido nele.
+   - **Ferramentas do Unix chamadas direto (cerca de 10):** `sh -c`, `tr`,
+     `sleep`, `/bin/sh`, e comandos de bash mandados ao terminal, que no
+     Windows é o PowerShell. Cada teste ganha o equivalente do Windows, ou o
+     `sh` do Git pelo mesmo helper, conforme o que ele prova.
+   - **Git:** o `core.autocrlf=true` do Git for Windows troca o fim de linha
+     dos arquivos dos testes. O repositório do teste fixa o `autocrlf` dele.
+   - **O que é de um domínio de fatia posterior** (o Python com `Scripts\`
+     na W7, os consoles do Banco na W8, o Remote na W9, a gravação e o DAP na
+     W10, os caminhos de biblioteca na W6) fica com
+     `#[cfg_attr(windows, ignore = "W<n>: <motivo>")]`. O teste aparece como
+     ignorado, com o motivo e a fatia que o devolve. Uma catraca conta esses
+     adiamentos, e a contagem só desce. `#[cfg(unix)]` fica só para o que é
+     de Unix por natureza.
+   - **O `owned_child` ganha os testes do Windows**: o neto morre com o job,
+     o ambiente só leva o que a lista permite, e o leitor vê o fim.
+   - **Pronto quando:** `cargo test --workspace` verde no Windows, com os
+     adiados listados no 40.7; o gate do Linux no espelho continua verde; e
+     o `verificar-windows.ps1` fica todo verde pela primeira vez.
+   - **Feita em 2026-10-10 (40.7 §7.270).** O `cargo test --workspace`
+     está verde no Windows: no `kinein-core`, 896 passando e 82 adiados,
+     sendo 16 da W6, 18 da W7, 4 da W8, 11 da W9 e 33 da W10. O Linux segue
+     verde no espelho. Os testes acharam seis defeitos do produto no Windows,
+     todos corrigidos: a URI do LSP, o Run, o `run.script`, o terminal que não
+     começava, os caminhos misturados e o comando mostrado do Banco. Acharam
+     também um defeito do portable-pty, contornado. A lista está no 40.7.
+   - **Para o autor decidir:**
+     - o Run no Windows pelo PowerShell com `-EncodedCommand`, e o mapa do
+       `run.script` (`.sh` no bash do Git, `.ps1` no PowerShell sob a
+       política do usuário, `.cmd`/`.bat` no `cmd`, sem `.zsh`);
+     - cancelar um job mata só o filho direto, no Linux também. A proposta é
+       usar o grupo (Job, PGID), como o `OwnedChild` já usa.
 5. **W6:** build C/C++ no Windows: achar o Visual Studio e rodar no ambiente
    dele; CMake, Ninja e LLVM; o catálogo do Setup com `winget`.
 6. **W7:** Python no Windows.
@@ -409,6 +457,30 @@ Formate o C++ com o `clang-format` do Fedora: o Windows ainda não tem o LLVM
 `target\debug`. Antes, ponha no `PATH` o `bin` do Qt e, no preset com ASan, a
 pasta do `cl`, que tem o runtime dele. O log de avisos da UI fica em
 `%LOCALAPPDATA%\cache\kinein-vectis\logs`.
+
+**Teste que roda nos dois sistemas (desde a W2b).**
+
+- Ferramenta falsa: `crate::write_executable(caminho, "#!/bin/sh\n...")`, e
+  use o caminho que ele DEVOLVE. No Windows ele é o `.exe` de passagem, que
+  roda o script no `sh` do Git for Windows. Um `sh -c` solto vira
+  `crate::sh_command(...)`.
+- Dentro do script, caminho do Windows vai entre aspas simples (`'{}'`):
+  sem aspas, o `sh` come o `\`. O `pwd` é `crate::SH_PWD`, e o pid de um
+  processo em segundo plano é `crate::sh_save_background_pid`, conferido por
+  `crate::process_alive`.
+- Para medir ambiente ou pid do sistema, use uma fixture em Python: o `sh` do
+  MSYS acrescenta variáveis e fala pid do MSYS.
+- O caminho esperado é nativo (D5). Monte-o por componente
+  (`root.join("src").join("main.rs")`), com o `under(root, "src/main.rs")` do
+  `tests/mod.rs`, ou compare com `Path::ends_with`, que olha componente.
+- JSON com caminho se escreve pelo `serde_json`, nunca por `format!`: o `\`
+  precisa de escape.
+- Teste de domínio de fatia posterior:
+  `#[cfg_attr(windows, ignore = "W<n>: <o que falta> (60 §3.3)")]`. O
+  `#[cfg(unix)]` fica para o que é de Unix por natureza, com o motivo ao lado.
+  A catraca (`verificar-adiados-windows.sh`) conta os dois, e eles só descem.
+- Teste de LSP com servidor falso espera o servidor como a UI espera
+  (`RESYNC`, `warm_up`): a graça do handshake no core é de 300 ms.
 
 **Armadilhas medidas nesta sessão:**
 

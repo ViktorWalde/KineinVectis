@@ -124,3 +124,6 @@ screenshot suse linux tarball javascript toolbar emoji username ubuntu sourcing
 # 2026-10-09: nomes da API do Windows (windows-sys) que o porte usa: o Job Object,
 # o Toolhelp32 (o snapshot das threads), o MoveFileExW, o PATHEXT e o reparse point.
 jobobject threadentry snapthread toolhelp movefile pathext reparse
+# 2026-10-10: o shell do Windows (PowerShell) e o nome dos comandos dele
+# (cmdlet), que o Run e o run.script do Windows usam (60 §3.3, W2b).
+powershell cmdlet

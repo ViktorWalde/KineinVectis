@@ -72,6 +72,27 @@ pub(super) fn default_shell() -> String {
     std::env::var("SHELL").unwrap_or_else(|_absent| "/bin/bash".to_owned())
 }
 
+pub(super) fn program_label(program: &Path) -> String {
+    program
+        .file_name()
+        .map_or_else(String::new, |name| name.to_string_lossy().into_owned())
+}
+
+pub(super) fn shell_command(command: &str) -> (String, Vec<String>) {
+    ("sh".to_owned(), vec!["-lc".to_owned(), command.to_owned()])
+}
+
+#[allow(clippy::unnecessary_wraps)] // a assinatura e' a do Windows, que pode faltar o Git
+pub(super) fn script_command(
+    interpreter: &str,
+    script: &Path,
+) -> Result<(String, Vec<String>), String> {
+    Ok((
+        interpreter.to_owned(),
+        vec!["--".to_owned(), script.display().to_string()],
+    ))
+}
+
 pub(super) fn portable_relative(path: &Path) -> String {
     path.display().to_string()
 }

@@ -18,6 +18,9 @@ fn git_repo(test_name: &str) -> PathBuf {
     let _ = std::fs::remove_dir_all(&root);
     std::fs::create_dir_all(&root).unwrap();
     run_git(&root, &["init", "-q"]);
+    // O Git for Windows liga o `core.autocrlf` no config do sistema e troca o
+    // fim de linha dos arquivos do teste; o repositorio do teste fixa o dele.
+    run_git(&root, &["config", "core.autocrlf", "false"]);
     run_git(&root, &["config", "user.name", "Kinein Test"]);
     run_git(
         &root,
@@ -614,6 +617,7 @@ fn git_pull_and_push_run_as_jobs_against_a_local_remote() {
             repo.to_str().unwrap(),
         ],
     );
+    run_git(&repo, &["config", "core.autocrlf", "false"]);
     run_git(&repo, &["config", "user.name", "Kinein Test"]);
     run_git(
         &repo,
@@ -653,6 +657,7 @@ fn git_pull_and_push_run_as_jobs_against_a_local_remote() {
             peer.to_str().unwrap(),
         ],
     );
+    run_git(&peer, &["config", "core.autocrlf", "false"]);
     run_git(&peer, &["config", "user.name", "Peer Test"]);
     run_git(&peer, &["config", "user.email", "peer@example.invalid"]);
     std::fs::write(peer.join("pulled.txt"), "from peer\n").unwrap();

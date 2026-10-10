@@ -120,8 +120,9 @@ fn a_fresh_workspace_is_fully_automatic() {
         .iter()
         .find(|selecao| selecao["role"] == "cxxCompiler")
         .unwrap();
-    assert!(
-        cxx["resolvedPath"].as_str().unwrap().ends_with("/clang++"),
+    assert_eq!(
+        crate::platform::program_label(std::path::Path::new(cxx["resolvedPath"].as_str().unwrap())),
+        "clang++",
         "o automatico descreve o primeiro detectado: {cxx}"
     );
 }
@@ -321,7 +322,7 @@ fn a_linux_cross_compiler_without_a_sysroot_gets_the_hint() {
     crate::write_executable(
         bin.join("aarch64-linux-gnu-gcc"),
         format!(
-            "#!/bin/sh\nif [ \"$1\" = -print-sysroot ]; then echo {}; else echo 16.1.1; fi\n",
+            "#!/bin/sh\nif [ \"$1\" = -print-sysroot ]; then echo '{}'; else echo 16.1.1; fi\n",
             sysroot.display()
         ),
     );
@@ -365,7 +366,10 @@ fn a_linux_cross_compiler_without_a_sysroot_gets_the_hint() {
 /// ausente e' recusa ANTES de baixar. Nada aqui toca a rede: o download
 /// real e' o teste do dominio (`toolchain::install`), com um servidor local.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: o catalogo e os kits de toolchain no Windows sao da W6 (60 §3.3)"
+)]
 fn the_install_catalogue_is_visible_before_any_click_and_refuses_what_it_must() {
     let (root, bin) = workspace_with_tools("instalavel", &["cmake", "tar"]);
     // Um .ioc (a fixture real do STM32Cube): o project.model deduz a familia
@@ -475,7 +479,10 @@ fn the_install_catalogue_is_visible_before_any_click_and_refuses_what_it_must() 
 /// ferramentas e' refeito e o `toolchain.get` lista o compilador que nasceu
 /// na pasta da IDE — sem reiniciar, sem `tools.detect` a mao.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: o catalogo e os kits de toolchain no Windows sao da W6 (60 §3.3)"
+)]
 fn an_installed_toolchain_becomes_a_candidate_on_the_next_toolchain_get() {
     let (root, bin) = workspace_with_tools("instalada-vira-candidato", &["cmake"]);
     let raiz = bin.parent().unwrap().join("toolchains");
@@ -542,7 +549,6 @@ fn an_installed_toolchain_becomes_a_candidate_on_the_next_toolchain_get() {
 
 /// Uma arvore Buildroot minima ao lado do `bin` falso: gcc do triple, o
 /// sysroot com headers e libs, e o toolchainfile.cmake.
-#[cfg(unix)]
 fn buildroot_tree(bin: &Path) -> PathBuf {
     let host = bin.parent().unwrap().join("br/output/host");
     let gcc = host.join("bin/aarch64-buildroot-linux-gnu-gcc");
@@ -555,7 +561,6 @@ fn buildroot_tree(bin: &Path) -> PathBuf {
     host
 }
 
-#[cfg(unix)]
 fn set_kit(core: &mut Core, id: i64, params: Value) -> Value {
     core.handle_request(&JsonRpcRequest::new(id, "toolchain.setKit", Some(params)))
         .response()
@@ -569,7 +574,10 @@ fn set_kit(core: &mut Core, id: i64, params: Value) -> Value {
 /// propoe um kit de uma arvore Buildroot SEM gravar nada; um caminho relativo
 /// e' recusado antes de ler qualquer coisa.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: o catalogo e os kits de toolchain no Windows sao da W6 (60 §3.3)"
+)]
 fn a_kit_is_proposed_from_an_sdk_without_writing_anything() {
     let (root, bin) = workspace_with_tools("importar-kit", &["cmake"]);
     let mut core = core_with_path(&bin);
@@ -649,7 +657,10 @@ fn a_kit_is_proposed_from_an_sdk_without_writing_anything() {
 /// `toolchainFile`: ele vira `-DCMAKE_TOOLCHAIN_FILE` no configure quando o
 /// preset nao declara um; `""` limpa; e o do PRESET vence o do kit.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: o catalogo e os kits de toolchain no Windows sao da W6 (60 §3.3)"
+)]
 fn the_kit_toolchain_file_reaches_cmake_unless_the_preset_declares_one() {
     let (root, bin) = workspace_with_tools("kit-toolchain-file", &["cmake"]);
     let mut core = core_with_path(&bin);
@@ -718,7 +729,6 @@ fn the_kit_toolchain_file_reaches_cmake_unless_the_preset_declares_one() {
 /// Os firmwares (C5) vem no mesmo catalogo, com `kind: firmware`, como se
 /// gravam, e o arquivo onde vao ficar; num projeto C (STM32) nenhum e'
 /// recomendado.
-#[cfg(unix)]
 fn firmwares_no_catalogo(toolchains: &[Value], raiz: &Path) {
     let esp32 = toolchains
         .iter()
@@ -739,7 +749,6 @@ fn firmwares_no_catalogo(toolchains: &[Value], raiz: &Path) {
     assert_eq!(arm_kind(toolchains), "toolchain");
 }
 
-#[cfg(unix)]
 fn arm_kind(toolchains: &[Value]) -> String {
     toolchains
         .iter()

@@ -52,6 +52,10 @@ fn fixture(label: &str) -> (crate::Core, std::path::PathBuf, Value, String) {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W8: o console do Banco e' stub no Windows desde a W1; a garantia equivalente e' da W8 (60 §3.3)"
+)]
 fn a_statement_is_resolved_without_execution_and_respects_utf16() {
     let (mut core, root, context, path) = fixture("utf16");
     let text = "-- header\nSELECT '😀;\n\nDELETE FROM t';\nSELECT 2;";
@@ -102,6 +106,10 @@ fn a_statement_is_resolved_without_execution_and_respects_utf16() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W8: o console do Banco e' stub no Windows desde a W1; a garantia equivalente e' da W8 (60 §3.3)"
+)]
 fn stale_destinations_and_wrong_paths_are_refused_before_extracting() {
     let (mut core, root, context, path) = fixture("context");
     let params = json!({"name": "loja", "path": path, "text": "SELECT 1;", "cursor": 0,

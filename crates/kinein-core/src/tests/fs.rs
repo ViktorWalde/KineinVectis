@@ -2,7 +2,7 @@
 
 use serde_json::json;
 
-use super::core_with_empty_search_path;
+use super::{core_with_empty_search_path, under};
 use kinein_protocol::JsonRpcRequest;
 
 #[test]
@@ -41,7 +41,6 @@ fn fs_methods_require_open_workspace() {
 }
 
 #[test]
-#[cfg(unix)]
 fn fs_external_preview_reads_only_selected_text_without_importing() {
     let base =
         std::env::temp_dir().join(format!("kinein-fs-external-preview-{}", std::process::id()));
@@ -52,7 +51,12 @@ fn fs_external_preview_reads_only_selected_text_without_importing() {
     std::fs::create_dir_all(&external).unwrap();
     let file = external.join("arquivo.txt");
     std::fs::write(&file, "texto externo\n").unwrap();
+    // Link para ARQUIVO no Windows pede privilegio (Modo de Desenvolvedor); a
+    // recusa de ponto de reparse no Windows e' provada com juncao, no
+    // `platform` (60 §3.3, W2b).
+    #[cfg(unix)]
     let link = external.join("link.txt");
+    #[cfg(unix)]
     std::os::unix::fs::symlink(&file, &link).unwrap();
     let binary = external.join("binary.bin");
     std::fs::write(&binary, [0xff, 0x00]).unwrap();
@@ -78,7 +82,10 @@ fn fs_external_preview_reads_only_selected_text_without_importing() {
     assert_eq!(std::fs::read_to_string(&file).unwrap(), "texto externo\n");
     assert!(!workspace.join("arquivo.txt").exists());
 
-    for (id, path) in [(32, &link), (33, &binary), (34, &large), (35, &external)] {
+    let rejected_paths = [(33, &binary), (34, &large), (35, &external)].into_iter();
+    #[cfg(unix)]
+    let rejected_paths = rejected_paths.chain([(32, &link)]);
+    for (id, path) in rejected_paths {
         let rejected = core.handle_request(&JsonRpcRequest::new(
             id,
             "fs.readExternal",
@@ -190,7 +197,7 @@ fn fs_list_read_write_cycle_inside_workspace() {
     assert_eq!(entries[1]["name"], "src");
     assert_eq!(entries[1]["kind"], "directory");
 
-    let file_path = format!("{root}/src/main.rs");
+    let file_path = under(&root, "src/main.rs");
     let read = core.handle_request(&JsonRpcRequest::new(
         23_i64,
         "fs.read",
@@ -280,7 +287,7 @@ fn fs_create_file_creates_once_and_stays_inside_workspace() {
         .as_str()
         .unwrap()
         .to_owned();
-    let file_path = format!("{root}/src/lib.rs");
+    let file_path = under(&root, "src/lib.rs");
 
     let created = core.handle_request(&JsonRpcRequest::new(
         31_i64,
@@ -288,13 +295,13 @@ fn fs_create_file_creates_once_and_stays_inside_workspace() {
         Some(json!({ "path": file_path, "content": "pub fn answer() -> u8 { 42 }\n" })),
     ));
     let result = created.response().result.as_ref().unwrap();
-    assert_eq!(result["path"], format!("{root}/src/lib.rs"));
+    assert_eq!(result["path"], under(&root, "src/lib.rs"));
     assert_eq!(result["bytesWritten"], 29);
 
     let duplicate = core.handle_request(&JsonRpcRequest::new(
         32_i64,
         "fs.createFile",
-        Some(json!({ "path": format!("{root}/src/lib.rs") })),
+        Some(json!({ "path": under(&root, "src/lib.rs") })),
     ));
     assert_eq!(
         duplicate.response().error.as_ref().unwrap().code,
@@ -304,7 +311,7 @@ fn fs_create_file_creates_once_and_stays_inside_workspace() {
     let escape = core.handle_request(&JsonRpcRequest::new(
         33_i64,
         "fs.createFile",
-        Some(json!({ "path": format!("{root}/../escape.rs") })),
+        Some(json!({ "path": under(&root, "../escape.rs") })),
     ));
     assert_eq!(
         escape.response().error.as_ref().unwrap().code,
@@ -331,7 +338,7 @@ fn fs_create_directory_creates_once_and_stays_inside_workspace() {
         .as_str()
         .unwrap()
         .to_owned();
-    let directory_path = format!("{root}/src/features");
+    let directory_path = under(&root, "src/features");
 
     let created = core.handle_request(&JsonRpcRequest::new(
         35_i64,
@@ -340,13 +347,13 @@ fn fs_create_directory_creates_once_and_stays_inside_workspace() {
     ));
     assert_eq!(
         created.response().result.as_ref().unwrap()["path"],
-        format!("{root}/src/features")
+        under(&root, "src/features")
     );
 
     let duplicate = core.handle_request(&JsonRpcRequest::new(
         36_i64,
         "fs.createDirectory",
-        Some(json!({ "path": format!("{root}/src/features") })),
+        Some(json!({ "path": under(&root, "src/features") })),
     ));
     assert_eq!(
         duplicate.response().error.as_ref().unwrap().code,
@@ -356,7 +363,7 @@ fn fs_create_directory_creates_once_and_stays_inside_workspace() {
     let escape = core.handle_request(&JsonRpcRequest::new(
         37_i64,
         "fs.createDirectory",
-        Some(json!({ "path": format!("{root}/../outside") })),
+        Some(json!({ "path": under(&root, "../outside") })),
     ));
     assert_eq!(
         escape.response().error.as_ref().unwrap().code,
@@ -389,21 +396,21 @@ fn fs_rename_and_delete_stay_inside_workspace() {
         41_i64,
         "fs.rename",
         Some(json!({
-            "from": format!("{root}/src/old.rs"),
-            "to": format!("{root}/src/new.rs"),
+            "from": under(&root, "src/old.rs"),
+            "to": under(&root, "src/new.rs"),
         })),
     ));
     let result = renamed.response().result.as_ref().unwrap();
-    assert_eq!(result["from"], format!("{root}/src/old.rs"));
-    assert_eq!(result["to"], format!("{root}/src/new.rs"));
-    assert!(std::path::Path::new(&format!("{root}/src/new.rs")).exists());
+    assert_eq!(result["from"], under(&root, "src/old.rs"));
+    assert_eq!(result["to"], under(&root, "src/new.rs"));
+    assert!(std::path::Path::new(&under(&root, "src/new.rs")).exists());
 
     let escape = core.handle_request(&JsonRpcRequest::new(
         42_i64,
         "fs.rename",
         Some(json!({
-            "from": format!("{root}/src/new.rs"),
-            "to": format!("{root}/../escape.rs"),
+            "from": under(&root, "src/new.rs"),
+            "to": under(&root, "../escape.rs"),
         })),
     ));
     assert_eq!(
@@ -414,13 +421,13 @@ fn fs_rename_and_delete_stay_inside_workspace() {
     let deleted = core.handle_request(&JsonRpcRequest::new(
         43_i64,
         "fs.delete",
-        Some(json!({ "path": format!("{root}/src/new.rs") })),
+        Some(json!({ "path": under(&root, "src/new.rs") })),
     ));
     assert_eq!(
         deleted.response().result.as_ref().unwrap()["path"],
-        format!("{root}/src/new.rs")
+        under(&root, "src/new.rs")
     );
-    assert!(!std::path::Path::new(&format!("{root}/src/new.rs")).exists());
+    assert!(!std::path::Path::new(&under(&root, "src/new.rs")).exists());
 
     let escape_delete = core.handle_request(&JsonRpcRequest::new(
         44_i64,
@@ -470,8 +477,8 @@ fn fs_copy_uses_workspace_and_keeps_source() {
     let root = opened.response().result.as_ref().unwrap()["root"]
         .as_str()
         .unwrap();
-    let source = format!("{root}/original.txt");
-    let target = format!("{root}/copia.txt");
+    let source = under(root, "original.txt");
+    let target = under(root, "copia.txt");
     let copied = core.handle_request(&JsonRpcRequest::new(
         402_i64,
         "fs.copy",
@@ -507,8 +514,8 @@ fn fs_copy_batch_and_import_use_existing_job_manager_when_services_are_enabled()
     let root = opened.response().result.as_ref().unwrap()["root"]
         .as_str()
         .unwrap();
-    let source = format!("{root}/origem.bin");
-    let target = format!("{root}/copia.bin");
+    let source = under(root, "origem.bin");
+    let target = under(root, "copia.bin");
     let deferred = core.handle_request(&JsonRpcRequest::new(
         411_i64,
         "fs.copy",
@@ -527,8 +534,8 @@ fn fs_copy_batch_and_import_use_existing_job_manager_when_services_are_enabled()
     assert_eq!(std::fs::metadata(&source).unwrap().len(), 2 * 1024 * 1024);
 
     std::fs::write(dir.join("outro.txt"), "segundo").unwrap();
-    let batch_target = format!("{root}/lote.bin");
-    let second_target = format!("{root}/lote.txt");
+    let batch_target = under(root, "lote.bin");
+    let second_target = under(root, "lote.txt");
     let deferred = core.handle_request(&JsonRpcRequest::new(
         412_i64,
         "fs.transferBatch",
@@ -536,7 +543,7 @@ fn fs_copy_batch_and_import_use_existing_job_manager_when_services_are_enabled()
             "operation": "copy",
             "items": [
                 { "from": source, "to": batch_target },
-                { "from": format!("{root}/outro.txt"), "to": second_target }
+                { "from": under(root, "outro.txt"), "to": second_target }
             ]
         })),
     ));
@@ -558,7 +565,7 @@ fn fs_copy_batch_and_import_use_existing_job_manager_when_services_are_enabled()
     std::fs::create_dir(&external).unwrap();
     let external_source = external.join("arquivo externo.txt");
     std::fs::write(&external_source, "externo").unwrap();
-    let import_target = format!("{root}/importado.txt");
+    let import_target = under(root, "importado.txt");
     let deferred = core.handle_request(&JsonRpcRequest::new(
         413_i64,
         "fs.transferBatch",

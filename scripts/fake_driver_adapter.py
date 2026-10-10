@@ -58,7 +58,8 @@ def main():
             sys.stderr.write(f"linha de diagnostico {index}\n")
         sys.stderr.flush()
     if MODE == "helper":
-        helper = subprocess.Popen(["sleep", "60"])
+        # O proprio Python, e nao o `sleep`: o Windows nao tem `sleep`.
+        helper = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
         with open(sys.argv[2], "w", encoding="utf-8") as pid_file:
             pid_file.write(str(helper.pid))
     if MODE == "ignore_shutdown":

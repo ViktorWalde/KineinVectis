@@ -160,6 +160,9 @@ fn connections_and_projects_are_separate_and_clear_is_per_connection() {
 }
 
 #[test]
+// De Unix aqui: link simbolico no Windows pede privilegio (Modo de
+// Desenvolvedor); la', a recusa de ponto de reparse e' provada com juncao, no
+// `platform::windows` (60 §3.3, W2b).
 #[cfg(unix)]
 fn the_same_project_by_a_symlink_shares_the_history() {
     let (project, _, history) = dirs("link");
@@ -219,6 +222,8 @@ fn an_unreadable_or_foreign_file_stays_intact() {
 }
 
 #[test]
+// De Unix por natureza: bits de modo. No Windows a privacidade vem da ACL da
+// pasta do usuario (D3, 60 §3.1).
 #[cfg(unix)]
 fn the_folder_and_the_file_are_private() {
     let (project, state, history) = dirs("privado");

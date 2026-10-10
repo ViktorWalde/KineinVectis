@@ -19,21 +19,24 @@
 > Linux por domínio. A tabela, as decisões D7–D10 e as fatias, em ordem, estão
 > no 60 §3.3.
 >
-> **Onde parou:** a W3b está fechada (40.7 §7.266, §7.267). O MSVC estrito e o
-> ASan valem, e os 7 testes C++ passam no Windows. No caminho saíram dois
-> defeitos de produto do Windows: o colar de arquivos e o escopo do preview
-> de Markdown.
->
-> A W4 também está feita (40.7 §7.268): `scripts\verificar-windows.ps1` é o
-> gate do Windows. Hoje ele só fica vermelho no `cargo test`, que é a W2b.
+> **Onde parou (2026-10-10):** as fatias W1, W2a, W2b, W3a, W3b, W4 e W5
+> estão feitas (40.7 §7.261 a §7.270). O `scripts\verificar-windows.ps1`
+> ficou todo verde pela primeira vez depois da W2b: testes Rust, o preset
+> estrito do MSVC com ASan, `ctest`, o smoke, a foto e o agnóstico no WSL. O
+> `verificar.sh` do Linux segue verde no espelho. Os 82 testes de domínios
+> ainda não portados aparecem como ignorados no Windows, contados por fatia
+> na catraca `verificar-adiados-windows.sh`.
 >
 > **Para continuar:**
 >
 > 1. Leia o 60 §3.4, o roteiro de trabalho e as armadilhas.
 > 2. Rode `scripts\verificar-windows.ps1` para ver o estado.
 > 3. Siga a ordem do 60 §3.3. A W5 está feita (40.7 §7.269): o `kinein-sys`,
->    com o Job Object e o rename atômico. As próximas são a W2b (os testes do
->    core verdes no Windows) e depois W6–W12. O trabalho acontece no branch `porte-windows`, no clone
+>    com o Job Object e o rename atômico. A W2b também está feita (40.7
+>    §7.270): o `cargo test --workspace` está verde no Windows, com 82 testes
+>    adiados e contados por fatia. A próxima é a W6 (build C/C++ no Windows),
+>    depois W7–W12. Antes dela, há duas decisões para o autor, no item da W2b
+>    do 60 §3.3: o Run pelo PowerShell e o cancelamento de job. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

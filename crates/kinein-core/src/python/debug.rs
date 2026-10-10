@@ -63,13 +63,10 @@ pub fn debugpy_available(interpreter: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(unix)]
     use std::path::Path;
 
-    #[cfg(unix)]
     use super::debugpy_available;
 
-    #[cfg(unix)]
     fn executavel(dir: &Path, nome: &str, corpo: &str) -> std::path::PathBuf {
         let caminho = dir.join(nome);
         crate::write_executable(&caminho, corpo);
@@ -79,7 +76,10 @@ mod tests {
     /// Um "python" que aceita o import, outro que o recusa como o `CPython`
     /// (exit 1 com `No module named debugpy`), e um que nao existe.
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+    )]
     fn the_import_probe_reports_presence_absence_and_a_missing_interpreter() {
         let dir = std::env::temp_dir()
             .join("kinein-core-tests")

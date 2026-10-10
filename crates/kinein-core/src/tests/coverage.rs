@@ -77,10 +77,12 @@ impl Cenario {
     }
 }
 
+/// O texto vai no formato do `printf` do falso: o `\` do caminho do Windows
+/// precisa de escape, senao o `printf` o le' como sequencia (`\U`, `\t`).
 fn lcov(arquivo: &Path) -> String {
     format!(
         "SF:{f}\\nDA:1,2\\nDA:2,0\\nDA:3,1\\nend_of_record\\n",
-        f = arquivo.display()
+        f = arquivo.display().to_string().replace('\\', "\\\\")
     )
 }
 
@@ -88,7 +90,6 @@ fn lcov(arquivo: &Path) -> String {
 /// kit recebe `llvm-cov --lcov --output-path <root>/.kinein/coverage.lcov`, o
 /// resumo por arquivo sai no evento e `coverage.lines` da' as linhas.
 #[test]
-#[cfg(unix)]
 fn rust_coverage_runs_cargo_llvm_cov_and_the_lines_reach_the_editor() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("rust");
@@ -186,7 +187,10 @@ fn rust_coverage_runs_cargo_llvm_cov_and_the_lines_reach_the_editor() {
 /// do projeto; sem o modulo, o passo de instalar no ambiente. C/C++: recusa
 /// antes do job, dizendo por que.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn python_coverage_uses_the_project_interpreter_and_cpp_is_refused() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("python");

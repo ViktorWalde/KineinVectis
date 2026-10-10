@@ -61,6 +61,9 @@ impl Drop for Fixture {
 }
 
 #[test]
+// De Unix aqui: link simbolico no Windows pede privilegio (Modo de
+// Desenvolvedor); la', a recusa de ponto de reparse e' provada com juncao, no
+// `platform::windows` (60 §3.3, W2b).
 #[cfg(unix)]
 fn canonical_file_identity_survives_retries_but_pty_ids_do_not() {
     let mut fixture = Fixture::new("reuse-script");
@@ -128,7 +131,7 @@ fn rejects_a_second_live_execution_before_spawn() {
             .count(),
         1
     );
-    let next = fixture.run("run.start", json!({"command": "printf 'nova\\n'"}));
+    let next = fixture.run("run.start", json!({"command": "echo nova"}));
     fixture.finish(&next);
 }
 
@@ -136,27 +139,26 @@ fn rejects_a_second_live_execution_before_spawn() {
 fn config_command_and_workspace_have_separate_stable_identities() {
     let mut fixture = Fixture::new("reuse-config");
     let config =
-        crate::runconfig::save(&fixture.root, None, "Minha configuração", "printf 'v1\\n'")
-            .unwrap();
+        crate::runconfig::save(&fixture.root, None, "Minha configuração", "echo v1").unwrap();
     let id = config.active_id.as_ref().unwrap();
     let first = fixture.run("run.start", json!({}));
     fixture.finish(&first);
-    crate::runconfig::save(&fixture.root, Some(id), "Outro nome", "printf 'v2\\n'").unwrap();
+    crate::runconfig::save(&fixture.root, Some(id), "Outro nome", "echo v2").unwrap();
     let again = fixture.run("run.start", json!({}));
     fixture.finish(&again);
     assert_eq!(first["executionKey"], again["executionKey"]);
     assert_ne!(first["command"], again["command"]);
-    let command = fixture.run("run.start", json!({"command": "printf 'v2\\n'"}));
+    let command = fixture.run("run.start", json!({"command": "echo v2"}));
     fixture.finish(&command);
     assert_ne!(again["executionKey"], command["executionKey"]);
-    let repeated = fixture.run("run.start", json!({"command": "printf 'v2\\n'"}));
+    let repeated = fixture.run("run.start", json!({"command": "echo v2"}));
     fixture.finish(&repeated);
     assert_eq!(command["executionKey"], repeated["executionKey"]);
-    let other = fixture.run("run.start", json!({"command": "printf 'v3\\n'"}));
+    let other = fixture.run("run.start", json!({"command": "echo v3"}));
     fixture.finish(&other);
     assert_ne!(command["executionKey"], other["executionKey"]);
     let mut workspace = Fixture::new("reuse-other-workspace");
-    let elsewhere = workspace.run("run.start", json!({"command": "printf 'v2\\n'"}));
+    let elsewhere = workspace.run("run.start", json!({"command": "echo v2"}));
     workspace.finish(&elsewhere);
     assert_ne!(command["executionKey"], elsewhere["executionKey"]);
 }

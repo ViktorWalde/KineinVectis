@@ -464,7 +464,6 @@ pub(super) fn stream_command(
 
 #[cfg(test)]
 mod tests {
-    #[cfg(unix)]
     use super::BuildEvent;
 
     /// Perfil de rigor do ruff (fatia Python 2): a IDE so' escolhe regras quando
@@ -515,13 +514,9 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    #[cfg(unix)]
     #[test]
     fn stream_command_emits_output_and_diagnostics() {
-        use std::process::Command;
-
-        let mut command = Command::new("sh");
-        command.arg("-c").arg(concat!(
+        let command = crate::sh_command(concat!(
             "echo 'linha normal'; ",
             "echo 'main.c:3:1: error: algo errado' 1>&2; ",
             "exit 2"

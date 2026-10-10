@@ -128,6 +128,10 @@ fn projeto(name: &str, com_toolchains: bool) -> PathBuf {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W6: o reply do fixture e' de Linux (/usr/include, /usr/bin/c++); o do Windows vem do CMake real (60 §3.3)"
+)]
 fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() {
     let raiz = projeto("modelo", true);
     let modelo = CmakeModel::load(&raiz.join(".kinein/build")).expect("reply legivel");
@@ -217,6 +221,10 @@ fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() 
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W6: o reply do fixture e' de Linux (/usr/include, /usr/bin/c++); o do Windows vem do CMake real (60 §3.3)"
+)]
 fn cmake_targets_list_carries_the_model_and_hides_utilities() {
     let raiz = projeto("targets", true);
     let mut core = core_with_empty_search_path("cmake-model-targets");
@@ -272,6 +280,10 @@ fn cmake_targets_list_carries_the_model_and_hides_utilities() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W6: o reply do fixture e' de Linux (/usr/include, /usr/bin/c++); o do Windows vem do CMake real (60 §3.3)"
+)]
 fn index_context_falls_back_to_the_file_api_unit_and_always_names_the_targets() {
     let raiz = projeto("contexto", true);
     let mut core = core_with_empty_search_path("cmake-model-contexto");

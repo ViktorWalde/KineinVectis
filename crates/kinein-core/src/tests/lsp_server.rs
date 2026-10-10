@@ -30,11 +30,24 @@ use kinein_protocol::JsonRpcRequest;
 /// Prazo maximo esperando uma mensagem aparecer no log do servidor falso.
 const DEADLINE: Duration = Duration::from_secs(10);
 
+/// De quanto em quanto tempo o teste re-sincroniza o documento, como a UI.
+///
+/// O core so' manda o `didOpen` a um servidor PRONTO, e espera o handshake
+/// por 300 ms (`lsp::session::HANDSHAKE_GRACE`). O servidor que passa disso
+/// recebe o documento quando a UI re-sincroniza, ao ver `running`. No
+/// Windows, com a suite em paralelo, o servidor falso passa da graca (60
+/// §3.3, W2b); enquanto espera o `didOpen`, o teste faz o papel da UI e le' o
+/// arquivo de novo. Com o documento ja' aberto, ler de novo nao manda nada (o
+/// core pula o conteudo identico).
+const RESYNC: Duration = Duration::from_millis(500);
+
 /// Um core com LSP ligado, workspace aberto e o servidor de Rust FALSIFICADO.
 struct Harness {
     core: Core,
     root: PathBuf,
     log: PathBuf,
+    /// O ultimo `fs.read`, que o [`Harness::wait_for`] repete como a UI.
+    last_read: Option<Value>,
     /// Ponta receptora dos eventos que o CORE emite. Segurar e obrigatorio —
     /// sem ela, todo `send` falharia e a thread leitora do servidor morreria
     /// calada —, e [`Harness::wait_for_event`] a consome.
@@ -123,6 +136,7 @@ fn harness(name: &str) -> Harness {
         core,
         root,
         log,
+        last_read: None,
         events: receiver,
     }
 }
@@ -134,6 +148,9 @@ impl Harness {
     }
 
     fn ok(&mut self, method: &str, params: Value) -> Value {
+        if method == "fs.read" {
+            self.last_read = Some(params.clone());
+        }
         let outcome = self.call(method, params);
         let response = outcome.response();
         assert!(response.error.is_none(), "{method}: {:?}", response.error);
@@ -141,11 +158,11 @@ impl Harness {
     }
 
     fn main_rs(&self) -> String {
-        self.root.join("src/main.rs").display().to_string()
+        self.root.join("src").join("main.rs").display().to_string()
     }
 
     fn main_cpp(&self) -> String {
-        self.root.join("src/main.cpp").display().to_string()
+        self.root.join("src").join("main.cpp").display().to_string()
     }
 
     /// Empurra pelo LOOP REAL o mesmo evento que o job do configure emite.
@@ -190,9 +207,18 @@ impl Harness {
     ///
     /// Esperar por PRAZO (e nao contar mensagens) e a mesma regra das sondas:
     /// resposta e evento nao tem ordem garantida entre si (arquitetura/04 §6).
-    fn wait_for(&self, method: &str, occurrence: usize) -> Value {
+    fn wait_for(&mut self, method: &str, occurrence: usize) -> Value {
         let deadline = Instant::now() + DEADLINE;
+        let mut resync = Instant::now() + RESYNC;
         while Instant::now() < deadline {
+            if method == "textDocument/didOpen"
+                && Instant::now() >= resync
+                && let Some(params) = self.last_read.clone()
+            {
+                // O arquivo pode ter sido apagado de proposito: erro aqui nao conta.
+                drop(self.call("fs.read", params));
+                resync = Instant::now() + RESYNC;
+            }
             let found: Vec<Value> = self
                 .messages()
                 .into_iter()
@@ -362,6 +388,9 @@ fn reopening_a_closed_document_restarts_at_version_one() {
 fn a_server_response_crosses_the_wire_and_becomes_a_protocol_type() {
     let mut harness = harness("definition");
     let path = harness.main_rs();
+    // O servidor pronto antes do pedido, como a UI o faz (o `RESYNC`).
+    harness.ok("fs.read", json!({ "path": &path }));
+    harness.wait_for("textDocument/didOpen", 0);
 
     let result = harness.ok(
         "lsp.definition",
@@ -482,6 +511,10 @@ fn closing_after_a_configure_tells_the_ui_to_resync() {
 /// `null` para o que nao existe. Sem isto o basedpyright indexaria a stdlib
 /// do Python do PATH e o completar mentiria.
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o venv do Windows tem Scripts\\python.exe, nao bin/python (60 §3.3)"
+)]
 fn the_python_server_receives_the_project_interpreter() {
     let mut h = harness("python-interpretador");
     // O Core configurou o python ao abrir o workspace; o harness trocou o
@@ -638,7 +671,10 @@ fn the_python_server_receives_the_board_stubs_path_after_they_are_installed() {
 /// `basedpyright-langserver` falso na pasta de busca do detector grava os
 /// argumentos e encaminha para o servidor falso.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn the_python_server_is_the_detected_binary_with_stdio() {
     let base = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -682,6 +718,7 @@ fn the_python_server_is_the_detected_binary_with_stdio() {
         core,
         root: ws.clone(),
         log,
+        last_read: None,
         events: receiver,
     };
     let app = ws.join("app.py");

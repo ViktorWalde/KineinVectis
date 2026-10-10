@@ -102,7 +102,7 @@ fn encontrar(root: &Path) -> Option<(String, PathBuf)> {
         let diretorio = if relativo.is_empty() {
             root.to_path_buf()
         } else {
-            root.join(relativo)
+            root.join(crate::platform::from_portable(relativo))
         };
         let arquivo = diretorio.join(ARQUIVO);
         arquivo.is_file().then(|| {

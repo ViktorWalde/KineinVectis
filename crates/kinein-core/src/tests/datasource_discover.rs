@@ -133,7 +133,10 @@ fn create_sqlite_file_saves_the_profile_and_refuses_to_overwrite() {
     let perfil = r.result.unwrap()["profile"].clone();
     assert_eq!(perfil["engine"], "sqlite");
     let caminho = perfil["database"].as_str().unwrap().to_owned();
-    assert!(caminho.ends_with("data/notas.sqlite"), "{caminho}");
+    assert!(
+        std::path::Path::new(&caminho).ends_with("data/notas.sqlite"),
+        "{caminho}"
+    );
     assert!(
         std::fs::read(&caminho)
             .unwrap()

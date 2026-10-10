@@ -193,10 +193,7 @@ pub fn container_server(
     command.args(&args);
     let shown = format!(
         "{} {}",
-        engine
-            .binary
-            .file_name()
-            .map_or_else(String::new, |n| n.to_string_lossy().to_string()),
+        crate::platform::program_label(&engine.binary),
         args.join(" ")
     );
     Ok((command, shown, profile))
@@ -221,7 +218,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let profile = sqlite_file(&dir, "app", None).unwrap();
         assert_eq!(profile.engine, DataSourceEngine::Sqlite);
-        assert!(profile.database.ends_with("data/app.sqlite"));
+        assert!(Path::new(&profile.database).ends_with("data/app.sqlite"));
         let bytes = std::fs::read(&profile.database).unwrap();
         assert!(bytes.starts_with(b"SQLite format 3\0"));
         assert!(

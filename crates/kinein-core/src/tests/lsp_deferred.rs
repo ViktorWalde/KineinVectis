@@ -33,20 +33,41 @@ fn workspace(nome: &str) -> PathBuf {
 
 /// Um envoltorio que liga o atraso do hover no servidor falso.
 fn slow_server(root: &std::path::Path, delay_ms: u32) -> PathBuf {
-    let script = root.join("lsp-lento.sh");
+    // O caminho que o sistema roda: no Windows, o `.exe` de passagem.
     crate::write_executable(
-        &script,
+        root.join("lsp-lento.sh"),
         format!(
-            "#!/bin/sh\nFAKE_LSP_HOVER_DELAY_MS={delay_ms} exec {} {} \"$@\"\n",
+            "#!/bin/sh\nFAKE_LSP_HOVER_DELAY_MS={delay_ms} exec {} '{}' \"$@\"\n",
             python3(),
             fake_server().display()
         ),
-    );
-    script
+    )
+}
+
+/// Sobe o servidor e espera o handshake antes do pedido medido, como a UI,
+/// que so' pede hover ou rename a um servidor `running`. No Windows, com a
+/// suite em paralelo, a subida passa da graca de 300 ms do core, e o pedido
+/// voltaria "ainda esta subindo" (60 §3.3, W2b).
+fn warm_up(core: &mut crate::Core, path: &str, log: &std::path::Path) {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        drop(core.handle_request(&JsonRpcRequest::new(
+            90_i64,
+            "fs.read",
+            Some(json!({ "path": path })),
+        )));
+        if std::fs::read_to_string(log)
+            .unwrap_or_default()
+            .contains("\"textDocument/didOpen\"")
+        {
+            return;
+        }
+        assert!(Instant::now() < deadline, "o servidor nao ficou pronto");
+        std::thread::sleep(Duration::from_millis(200));
+    }
 }
 
 #[test]
-#[cfg(unix)]
 fn a_slow_hover_does_not_block_the_loop_and_answers_later_through_the_channel() {
     let _serial = crate::serializar_executaveis();
     let root = workspace("lento");
@@ -68,10 +89,11 @@ fn a_slow_hover_does_not_block_the_loop_and_answers_later_through_the_channel() 
         Some(json!({ "path": root.to_str().unwrap() })),
     ));
     assert!(opened.response().error.is_none());
-    let main_rs = root.join("src/main.rs").display().to_string();
+    let main_rs = root.join("src").join("main.rs").display().to_string();
+    warm_up(&mut core, &main_rs, &log);
 
-    // O hover volta ADIADO na hora (o servidor sobe e recebe o pedido; a
-    // espera e' de outra thread).
+    // O hover volta ADIADO na hora (o servidor recebe o pedido; a espera e'
+    // de outra thread).
     let t0 = Instant::now();
     let hover = core.handle_request(&JsonRpcRequest::new(
         2_i64,
@@ -119,7 +141,6 @@ fn a_slow_hover_does_not_block_the_loop_and_answers_later_through_the_channel() 
 
 /// Sem o canal, a espera e' inline — o comportamento dos demais testes.
 #[test]
-#[cfg(unix)]
 fn without_the_channel_the_hover_is_answered_inline() {
     let _serial = crate::serializar_executaveis();
     let root = workspace("inline");
@@ -139,7 +160,8 @@ fn without_the_channel_the_hover_is_answered_inline() {
         Some(json!({ "path": root.to_str().unwrap() })),
     ));
     assert!(opened.response().error.is_none());
-    let main_rs = root.join("src/main.rs").display().to_string();
+    let main_rs = root.join("src").join("main.rs").display().to_string();
+    warm_up(&mut core, &main_rs, &log);
     let hover = core.handle_request(&JsonRpcRequest::new(
         2_i64,
         "lsp.hover",
@@ -158,7 +180,6 @@ fn without_the_channel_the_hover_is_answered_inline() {
 /// canal — ela roda com `&mut Core` e devolve a previa da transacao com o
 /// edit que o servidor mandou.
 #[test]
-#[cfg(unix)]
 fn a_slow_rename_waits_off_the_loop_and_finishes_in_a_continuation() {
     let _serial = crate::serializar_executaveis();
     let root = workspace("rename-lento");
@@ -170,11 +191,10 @@ fn a_slow_rename_waits_off_the_loop_and_finishes_in_a_continuation() {
     core.enable_lsp(events);
     core.enable_deferred_responses(responses);
     core.enable_continuations(continuations);
-    let script = root.join("lsp-rename-lento.sh");
-    crate::write_executable(
-        &script,
+    let script = crate::write_executable(
+        root.join("lsp-rename-lento.sh"),
         format!(
-            "#!/bin/sh\nFAKE_LSP_RENAME_DELAY_MS=3000 exec {} {} \"$@\"\n",
+            "#!/bin/sh\nFAKE_LSP_RENAME_DELAY_MS=3000 exec {} '{}' \"$@\"\n",
             python3(),
             fake_server().display()
         ),
@@ -190,7 +210,8 @@ fn a_slow_rename_waits_off_the_loop_and_finishes_in_a_continuation() {
         Some(json!({ "path": root.to_str().unwrap() })),
     ));
     assert!(opened.response().error.is_none());
-    let main_rs = root.join("src/main.rs").display().to_string();
+    let main_rs = root.join("src").join("main.rs").display().to_string();
+    warm_up(&mut core, &main_rs, &log);
 
     let t0 = Instant::now();
     let rename = core.handle_request(&JsonRpcRequest::new(

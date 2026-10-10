@@ -4,7 +4,9 @@
 //! para ele: quem quiser grid, cursor ou modo VT passa por aqui, e ninguém mais
 //! constrói um `Term` na mão.
 
-use alacritty_terminal::event::VoidListener;
+use std::sync::{Arc, Mutex};
+
+use alacritty_terminal::event::{Event, EventListener};
 use alacritty_terminal::grid::Dimensions;
 use alacritty_terminal::index::{Column, Line, Point, Side};
 use alacritty_terminal::selection::{Selection, SelectionType};
@@ -55,6 +57,26 @@ const DEFAULT_CURSOR_STYLE: CursorStyle = CursorStyle {
     blinking: true,
 };
 
+/// O que o emulador RESPONDE ao processo: o relatório de cursor (DSR 6), os
+/// atributos do terminal (DA) e os outros pedidos que o `alacritty_terminal`
+/// resolve sozinho chegam como `Event::PtyWrite`, e voltam pelo PTY (a thread
+/// leitora do `session` os escreve). Sem resposta, o `ConPTY` do Windows nem
+/// começa: ao subir, ele pergunta o cursor (`ESC[6n`) e espera
+/// (DocsPublic/roadmaps/60 §3.3, W2b). No Linux, quem pergunta o cursor ou
+/// os atributos ficava esperando à toa.
+#[derive(Clone, Default)]
+pub(super) struct Replies(Arc<Mutex<Vec<u8>>>);
+
+impl EventListener for Replies {
+    fn send_event(&self, event: Event) {
+        if let Event::PtyWrite(text) = event
+            && let Ok(mut pending) = self.0.lock()
+        {
+            pending.extend_from_slice(text.as_bytes());
+        }
+    }
+}
+
 /// Snapshot terminal mantido sob um único lock para grid e cursor não
 /// divergirem entre a leitura do PTY e a emissão de um frame.
 ///
@@ -63,9 +85,10 @@ const DEFAULT_CURSOR_STYLE: CursorStyle = CursorStyle {
 /// tela alternada, mouse, reflow, wide chars e DECSCUSR inclusos. O PTY continua
 /// sendo o `portable-pty`; nada do `tty`/`event_loop` da crate é usado.
 pub(super) struct TerminalState {
-    pub(super) term: Term<VoidListener>,
+    pub(super) term: Term<Replies>,
     pub(super) selection_id: String,
     processor: Processor,
+    replies: Replies,
 }
 
 impl TerminalState {
@@ -75,11 +98,22 @@ impl TerminalState {
             default_cursor_style: DEFAULT_CURSOR_STYLE,
             ..Config::default()
         };
+        let replies = Replies::default();
         Self {
-            term: Term::new(config, &GridSize::new(rows, cols), VoidListener),
+            term: Term::new(config, &GridSize::new(rows, cols), replies.clone()),
             selection_id: String::new(),
             processor: Processor::new(),
+            replies,
         }
+    }
+
+    /// As respostas que o processo pediu desde a última chamada.
+    pub(super) fn take_replies(&self) -> Vec<u8> {
+        self.replies
+            .0
+            .lock()
+            .map(|mut pending| std::mem::take(&mut *pending))
+            .unwrap_or_default()
     }
 
     pub(super) fn process(&mut self, bytes: &[u8]) {

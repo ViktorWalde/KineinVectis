@@ -195,7 +195,6 @@ fn build_run_starts_a_job_and_finishes_successfully() {
 
 /// Roda um `build.run` e devolve as linhas do job (comando e saida) e o
 /// sucesso — filtrando pelo jobId, porque o indice tambem emite jobs.
-#[cfg(unix)]
 fn roda_build(
     core: &mut crate::Core,
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
@@ -236,7 +235,10 @@ fn roda_build(
 /// os argv e grava a CDB, como o real) e `make` a seco sem ele — com a linha
 /// que diz o passo. Um Makefile ao lado de um `CMakeLists` continua `CMake`.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
+)]
 fn a_plain_makefile_builds_with_bear_when_it_exists_and_says_so_when_not() {
     let base = std::env::temp_dir()
         .join("kinein-core-tests")

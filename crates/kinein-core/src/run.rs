@@ -48,7 +48,21 @@ impl Error for RunError {}
 /// **Fonte unica** com `script_interpreter` e com `run.capabilities`: a UI
 /// nao mantem lista propria (a mesma regra do `format.capabilities`, que
 /// nasceu de duas listas divergindo em silencio).
+#[cfg(unix)]
 const SHELL_SCRIPTS: [(&str, &str); 3] = [("sh", "bash"), ("bash", "bash"), ("zsh", "zsh")];
+
+/// No Windows (60 §3.3, W2b): o `.sh` e o `.bash` rodam no bash do Git for
+/// Windows; os scripts do proprio sistema, no PowerShell e no `cmd`. O `zsh`
+/// nao existe la'. Quem resolve o nome no programa e' o
+/// `platform::script_command`.
+#[cfg(windows)]
+const SHELL_SCRIPTS: [(&str, &str); 5] = [
+    ("sh", "bash"),
+    ("bash", "bash"),
+    ("ps1", "powershell"),
+    ("cmd", "cmd"),
+    ("bat", "cmd"),
+];
 
 /// Extensoes que `run.script` entrega ao Python do projeto (`handlers/run`).
 pub const PYTHON_SCRIPTS: [&str; 1] = ["py"];
@@ -189,7 +203,11 @@ mod tests {
     #[test]
     fn the_published_catalogue_matches_the_decision() {
         let (runnable, debuggable) = capabilities();
-        assert_eq!(runnable, ["sh", "bash", "zsh", "py"]);
+        if cfg!(windows) {
+            assert_eq!(runnable, ["sh", "bash", "ps1", "cmd", "bat", "py"]);
+        } else {
+            assert_eq!(runnable, ["sh", "bash", "zsh", "py"]);
+        }
         assert_eq!(debuggable, ["py"]);
         for ext in &runnable {
             let caminho = PathBuf::from(format!("x.{ext}"));
@@ -233,7 +251,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
+    )]
     fn default_command_finds_single_cmake_executable() {
         let root = temp_root("cmake-bin");
         let build = root.join(".kinein").join("build");

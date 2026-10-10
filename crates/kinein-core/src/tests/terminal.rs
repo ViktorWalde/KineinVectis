@@ -218,17 +218,20 @@ fn selection_isolated_between_live_sessions_and_invalidated_by_resize() {
 }
 
 /// Saída conhecida e processo vivo, sem startup/prompt do shell do usuário.
+///
+/// Em Python, que e' requisito do gate nos dois sistemas: o `/bin/sh` nao
+/// existe no Windows, e o `sh` do Git e' do MSYS (60 §3.3, W2b).
 fn terminal_com_saida(core: &mut crate::Core, raiz: &std::path::Path, texto: &str) -> String {
     core.terminal
         .as_mut()
         .unwrap()
         .open_command(
             raiz,
-            "/bin/sh",
+            super::lsp_server::python3(),
             &[
                 "-c".to_owned(),
-                "printf '%s' \"$1\"; exec sleep 30".to_owned(),
-                "fixture-terminal".to_owned(),
+                "import sys, time\nsys.stdout.write(sys.argv[1])\nsys.stdout.flush()\ntime.sleep(30)"
+                    .to_owned(),
                 texto.to_owned(),
             ],
         )
@@ -601,6 +604,19 @@ fn resize_reaches_the_live_session_and_shows_up_in_the_next_render() {
     assert!(rolado.response().error.is_none());
 }
 
+/// Cinco linhas, `<prefix>-01` a `<prefix>-final`, pelo shell padrao. No
+/// Windows ele e' o PowerShell, onde o `echo` de varios argumentos ja' poe um
+/// por linha.
+fn five_lines(prefix: &str) -> String {
+    if cfg!(windows) {
+        format!("echo {prefix}-01 {prefix}-02 {prefix}-03 {prefix}-04 {prefix}-final\n")
+    } else {
+        format!(
+            "printf '{prefix}-01\\n{prefix}-02\\n{prefix}-03\\n{prefix}-04\\n{prefix}-%s\\n' final\n"
+        )
+    }
+}
+
 /// Limpar histórico é estado do emulador, não um comando escrito no shell.
 /// O método novo precisa zerar o buffer e publicar imediatamente a nova
 /// verdade, preservando o conteúdo que ainda está no grid visível.
@@ -622,10 +638,7 @@ fn clear_scrollback_reaches_only_the_requested_live_session() {
     let escrito = core.handle_request(&JsonRpcRequest::new(
         921_i64,
         "terminal.input",
-        Some(json!({
-            "id": id,
-            "data": "printf 'linha-01\\nlinha-02\\nlinha-03\\nlinha-04\\nlinha-%s\\n' final\n"
-        })),
+        Some(json!({ "id": id, "data": five_lines("linha") })),
     ));
     assert!(escrito.response().error.is_none());
 
@@ -654,10 +667,7 @@ fn clear_scrollback_reaches_only_the_requested_live_session() {
     let escrito_segundo = core.handle_request(&JsonRpcRequest::new(
         924_i64,
         "terminal.input",
-        Some(json!({
-            "id": segundo_id,
-            "data": "printf 'outra-01\\noutra-02\\noutra-03\\noutra-04\\noutra-%s\\n' final\n"
-        })),
+        Some(json!({ "id": segundo_id, "data": five_lines("outra") })),
     ));
     assert!(escrito_segundo.response().error.is_none());
     let outro_historico =

@@ -21,6 +21,10 @@ use crate::lsp;
 
 const DEADLINE: Duration = Duration::from_secs(10);
 
+/// O teste re-sincroniza o documento como a UI; o motivo esta' no `RESYNC`
+/// do `tests/lsp_server.rs`.
+const RESYNC: Duration = Duration::from_millis(500);
+
 struct Dupla {
     core: crate::Core,
     root: PathBuf,
@@ -102,6 +106,15 @@ impl Dupla {
         self.root.join("app.py").display().to_string()
     }
 
+    /// Le' o app.py de novo, como a UI ao ver o servidor `running`.
+    fn resync(&mut self) {
+        let params = json!({ "path": self.app() });
+        drop(
+            self.core
+                .handle_request(&JsonRpcRequest::new(9_i64, "fs.read", Some(params))),
+        );
+    }
+
     fn mensagens(log: &PathBuf) -> Vec<Value> {
         std::fs::read_to_string(log)
             .unwrap_or_default()
@@ -110,14 +123,21 @@ impl Dupla {
             .collect()
     }
 
-    fn espera_no_wire(log: &PathBuf, method: &str) -> Value {
+    /// Espera `method` no wire de `log`. Esperando o `didOpen`, re-sincroniza
+    /// o app.py como a UI (o motivo esta' no `RESYNC`).
+    fn espera_no_wire(&mut self, log: &PathBuf, method: &str) -> Value {
         let deadline = Instant::now() + DEADLINE;
+        let mut resync = Instant::now() + RESYNC;
         while Instant::now() < deadline {
             if let Some(m) = Self::mensagens(log)
                 .into_iter()
                 .find(|m| m.get("method").and_then(Value::as_str) == Some(method))
             {
                 return m;
+            }
+            if method == "textDocument/didOpen" && Instant::now() >= resync {
+                self.resync();
+                resync = Instant::now() + RESYNC;
             }
             std::thread::sleep(Duration::from_millis(20));
         }
@@ -126,10 +146,18 @@ impl Dupla {
 
     /// As mensagens dos `event.lsp.diagnostics` de app.py, na ordem, ate' um
     /// deles satisfazer `pronto` (ou o prazo acabar — falha).
-    fn diagnosticos_ate(&self, pronto: impl Fn(&[String]) -> bool) -> Vec<Vec<String>> {
+    ///
+    /// Enquanto espera, re-sincroniza o app.py como a UI; o motivo esta' no
+    /// `RESYNC` do `tests/lsp_server.rs`.
+    fn diagnosticos_ate(&mut self, pronto: impl Fn(&[String]) -> bool) -> Vec<Vec<String>> {
         let deadline = Instant::now() + DEADLINE;
+        let mut resync = Instant::now() + RESYNC;
         let mut vistos = Vec::new();
         while Instant::now() < deadline {
+            if Instant::now() >= resync {
+                self.resync();
+                resync = Instant::now() + RESYNC;
+            }
             match self.events.recv_timeout(Duration::from_millis(50)) {
                 Ok(event) if event.method == "event.lsp.diagnostics" => {
                     let params = event.params.unwrap();
@@ -179,8 +207,8 @@ const RUFF: &str = "ruff: diagnostico falso";
 fn both_servers_get_the_text_and_their_diagnostics_are_merged_into_one_event() {
     let mut d = dupla("fusao");
     d.ok("fs.read", json!({ "path": d.app() }));
-    let aberto_principal = Dupla::espera_no_wire(&d.log_principal, "textDocument/didOpen");
-    let aberto_companheiro = Dupla::espera_no_wire(&d.log_companheiro, "textDocument/didOpen");
+    let aberto_principal = d.espera_no_wire(&d.log_principal.clone(), "textDocument/didOpen");
+    let aberto_companheiro = d.espera_no_wire(&d.log_companheiro.clone(), "textDocument/didOpen");
     assert_eq!(
         aberto_companheiro["params"]["textDocument"]["text"],
         aberto_principal["params"]["textDocument"]["text"],
@@ -207,9 +235,9 @@ fn both_servers_get_the_text_and_their_diagnostics_are_merged_into_one_event() {
         "lsp.didChange",
         json!({ "path": d.app(), "content": "import os\nimport sys\n" }),
     );
-    let mudou = Dupla::espera_no_wire(&d.log_companheiro, "textDocument/didChange");
+    let mudou = d.espera_no_wire(&d.log_companheiro.clone(), "textDocument/didChange");
     assert_eq!(mudou["params"]["textDocument"]["version"], 2);
-    Dupla::espera_no_wire(&d.log_principal, "textDocument/didChange");
+    d.espera_no_wire(&d.log_principal.clone(), "textDocument/didChange");
     let vistos = d.diagnosticos_ate(|m| m.len() == 2);
     assert_eq!(
         vistos.last().unwrap(),
@@ -260,7 +288,7 @@ fn code_actions_of_both_servers_come_in_one_list_and_the_companion_one_applies()
         .collect();
     assert_eq!(titulos, ["pyright: corrigir", "ruff: corrigir"], "{acoes}");
     // O contexto de cada consulta leva os diagnosticos DAQUELE servidor.
-    let consulta_ruff = Dupla::espera_no_wire(&d.log_companheiro, "textDocument/codeAction");
+    let consulta_ruff = d.espera_no_wire(&d.log_companheiro.clone(), "textDocument/codeAction");
     let contexto = consulta_ruff["params"]["context"]["diagnostics"]
         .as_array()
         .unwrap();
@@ -383,7 +411,7 @@ fn the_core_registers_ruff_as_a_companion_when_the_binary_is_detected() {
     crate::write_executable(
         &wrapper,
         format!(
-            "#!/bin/sh\nexec {} {} {} --publica ruff\n",
+            "#!/bin/sh\nexec {} '{}' '{}' --publica ruff\n",
             python3(),
             fake_server().display(),
             log.display()
@@ -465,6 +493,6 @@ fn removing_the_companion_clears_only_its_diagnostics_and_close_reaches_both() {
     d.ok("fs.read", json!({ "path": d.app() }));
     d.diagnosticos_ate(|m| m.len() == 2);
     d.ok("fs.delete", json!({ "path": d.app() }));
-    Dupla::espera_no_wire(&d.log_principal, "textDocument/didClose");
-    Dupla::espera_no_wire(&d.log_companheiro, "textDocument/didClose");
+    d.espera_no_wire(&d.log_principal.clone(), "textDocument/didClose");
+    d.espera_no_wire(&d.log_companheiro.clone(), "textDocument/didClose");
 }

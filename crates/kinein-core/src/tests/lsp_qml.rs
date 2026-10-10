@@ -16,6 +16,10 @@ use crate::lsp;
 
 const DEADLINE: Duration = Duration::from_secs(10);
 
+/// O teste re-sincroniza o `.qml` como a UI; o motivo esta' no `RESYNC` do
+/// `tests/lsp_server.rs`.
+const RESYNC: Duration = Duration::from_millis(500);
+
 struct Setup {
     core: crate::Core,
     root: PathBuf,
@@ -81,7 +85,7 @@ fn setup_with(name: &str, configured: bool, prelude: &str) -> Setup {
 
 impl Setup {
     fn open_main_qml(&mut self) {
-        let path = self.root.join("ui/Main.qml").display().to_string();
+        let path = self.root.join("ui").join("Main.qml").display().to_string();
         let outcome = self.core.handle_request(&JsonRpcRequest::new(
             2_i64,
             "fs.read",
@@ -110,9 +114,14 @@ impl Setup {
         panic!("o qmlls nao subiu com os argumentos esperados; ultimos: {last:?}");
     }
 
-    fn did_open(&self) -> Value {
+    fn did_open(&mut self) -> Value {
         let deadline = Instant::now() + DEADLINE;
+        let mut resync = Instant::now() + RESYNC;
         while Instant::now() < deadline {
+            if Instant::now() >= resync {
+                self.open_main_qml();
+                resync = Instant::now() + RESYNC;
+            }
             let body = std::fs::read_to_string(&self.log).unwrap_or_default();
             if let Some(message) = body
                 .lines()
@@ -131,7 +140,12 @@ impl Setup {
 fn a_configured_project_gives_qmlls_its_build_directory() {
     let mut setup = setup("b", true);
     setup.open_main_qml();
-    let build = setup.root.join(".kinein/build").display().to_string();
+    let build = setup
+        .root
+        .join(".kinein")
+        .join("build")
+        .display()
+        .to_string();
     assert_eq!(setup.args_when(|args| !args.is_empty()), ["-b", &build]);
     let document = &setup.did_open()["params"]["textDocument"];
     assert_eq!(document["languageId"], "qml");
@@ -172,7 +186,12 @@ fn a_finished_configure_restarts_qmlls_with_the_new_build() {
     let mut out = Vec::new();
     crate::runtime::drain_loop_events(&mut setup.core, &mut out, &inbox).unwrap();
     setup.open_main_qml();
-    let build = setup.root.join(".kinein/build").display().to_string();
+    let build = setup
+        .root
+        .join(".kinein")
+        .join("build")
+        .display()
+        .to_string();
     assert_eq!(setup.args_when(|args| !args.is_empty()), ["-b", &build]);
 }
 
@@ -182,23 +201,22 @@ fn closing_the_workspace_takes_the_server_helpers_with_it() {
     // rust-analyzer); antes do `OwnedChild` so' o pai morria (D1b, 39 §6.1).
     let pid_file = std::env::temp_dir().join(format!("{}-qml-helper.pid", std::process::id()));
     drop(std::fs::remove_file(&pid_file));
-    let prelude = format!("sleep 60 &\necho $! > '{}'", pid_file.display());
+    let prelude = format!("sleep 60 &\n{}", crate::sh_save_background_pid(&pid_file));
     let mut setup = setup_with("auxiliar", false, &prelude);
     setup.open_main_qml();
     setup.did_open();
     let pid = std::fs::read_to_string(&pid_file).unwrap();
-    let proc_dir = PathBuf::from(format!("/proc/{}", pid.trim()));
-    assert!(proc_dir.exists(), "o auxiliar devia estar vivo");
+    assert!(crate::process_alive(&pid), "o auxiliar devia estar vivo");
     let closed = setup
         .core
         .handle_request(&JsonRpcRequest::new(3_i64, "workspace.close", None));
     assert!(closed.response().error.is_none(), "workspace.close falhou");
     let deadline = Instant::now() + DEADLINE;
-    while proc_dir.exists() && Instant::now() < deadline {
+    while crate::process_alive(&pid) && Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(20));
     }
     assert!(
-        !proc_dir.exists(),
+        !crate::process_alive(&pid),
         "o auxiliar do servidor sobreviveu ao fechamento"
     );
 }

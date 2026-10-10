@@ -250,6 +250,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W9: o espelho do Remote usa rsync e o cache XDG; o Remote no Windows e' da W9 (60 §3.3)"
+    )]
     fn the_cache_follows_an_absolute_xdg_cache_home_only() {
         let home = Path::new("/home/u");
         assert_eq!(
@@ -286,6 +290,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W9: o espelho do Remote usa rsync e o cache XDG; o Remote no Windows e' da W9 (60 §3.3)"
+    )]
     fn rsync_lines_carry_excludes_transport_and_direction() {
         let transport = ssh_transport(&pi(), Path::new("/home/u/.cache/kinein-vectis/remote"));
         assert_eq!(

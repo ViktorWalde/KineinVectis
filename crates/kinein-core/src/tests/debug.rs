@@ -232,7 +232,10 @@ fn evaluate_guards_empty_expression_and_missing_session() {
 /// quando o interpretador nao tem o modulo. O adaptador real e' provado pelo
 /// gate (verificar-python-debug.sh); aqui sao os desvios que o precedem.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn a_python_target_needs_the_project_interpreter_with_debugpy() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -314,7 +317,10 @@ fn a_python_target_needs_the_project_interpreter_with_debugpy() {
 /// `initialize`" sem causa. O "adaptador" e' o interpretador falso: passa no
 /// `import debugpy` e, chamado como `-m debugpy.adapter`, reclama e sai.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: a depuracao no Windows (adaptador DAP, executavel .exe) e' da W10 (D10, 60 §3.3)"
+)]
 fn a_dying_adapter_leaves_its_stderr_in_the_error_and_as_events() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")

@@ -61,6 +61,10 @@ fn datar(caminho: &Path, quando: SystemTime) {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W6: a CDB do fixture e' de Linux (-isystem /usr/include); a do Windows vem do compilador real (60 §3.3)"
+)]
 fn cdb_units_are_read_in_both_forms_with_flags_split_and_paths_resolved() {
     let raiz = temp_dir("cdb");
     escrever(&raiz.join("CMakeLists.txt"), "project(x)\n");
@@ -234,26 +238,31 @@ fn a_newer_cmakelists_in_a_subfolder_marks_the_cdb_stale() {
 }
 
 fn metadata_de_dois_pacotes(raiz: &Path) -> String {
-    let r = raiz.display();
+    // Como o cargo de verdade escreve: o caminho nativo do sistema.
+    let em = |rel: &str| {
+        raiz.join(crate::platform::from_portable(rel))
+            .display()
+            .to_string()
+    };
     json!({
         "packages": [
             {
                 "name": "app", "edition": "2024",
-                "manifest_path": format!("{r}/Cargo.toml"),
+                "manifest_path": em("Cargo.toml"),
                 "features": {"serial": [], "async": [], "default": []},
                 "targets": [
-                    {"name": "app", "kind": ["lib"], "src_path": format!("{r}/src/lib.rs")},
-                    {"name": "app-cli", "kind": ["bin"], "src_path": format!("{r}/src/main.rs")},
-                    {"name": "tool", "kind": ["bin"], "src_path": format!("{r}/src/bin/tool/main.rs")},
-                    {"name": "build-script-build", "kind": ["custom-build"], "src_path": format!("{r}/build.rs")}
+                    {"name": "app", "kind": ["lib"], "src_path": em("src/lib.rs")},
+                    {"name": "app-cli", "kind": ["bin"], "src_path": em("src/main.rs")},
+                    {"name": "tool", "kind": ["bin"], "src_path": em("src/bin/tool/main.rs")},
+                    {"name": "build-script-build", "kind": ["custom-build"], "src_path": em("build.rs")}
                 ]
             },
             {
                 "name": "gen", "edition": "2021",
-                "manifest_path": format!("{r}/tools/gen/Cargo.toml"),
+                "manifest_path": em("tools/gen/Cargo.toml"),
                 "features": {},
                 "targets": [
-                    {"name": "gen", "kind": ["bin"], "src_path": format!("{r}/tools/gen/src/main.rs")}
+                    {"name": "gen", "kind": ["bin"], "src_path": em("tools/gen/src/main.rs")}
                 ]
             }
         ],
@@ -348,7 +357,7 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
     );
     assert_eq!(
         detalhe.src_path,
-        raiz.join("src/lib.rs").display().to_string()
+        raiz.join("src").join("lib.rs").display().to_string()
     );
 
     // Sem cargo injetado: o Cargo.toml existe, mas a IDE nao roda nada e diz.
@@ -371,6 +380,10 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o venv do Windows tem Scripts\\python.exe, nao bin/python (60 §3.3)"
+)]
 fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system() {
     let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("python");

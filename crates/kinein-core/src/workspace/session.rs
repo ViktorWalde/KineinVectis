@@ -144,8 +144,8 @@ mod tests {
     #[test]
     fn session_roundtrip_stores_relative_and_returns_absolute() {
         let root = workspace_dir("roundtrip");
-        let main = root.join("src/main.rs").display().to_string();
-        let lib = root.join("src/lib.rs").display().to_string();
+        let main = root.join("src").join("main.rs").display().to_string();
+        let lib = root.join("src").join("lib.rs").display().to_string();
 
         let saved = save_session(&root, &[main.clone(), lib.clone()], Some(&lib)).unwrap();
         assert_eq!(saved, 2);
@@ -162,11 +162,11 @@ mod tests {
     #[test]
     fn load_filters_files_that_no_longer_exist() {
         let root = workspace_dir("filter");
-        let main = root.join("src/main.rs").display().to_string();
-        let lib = root.join("src/lib.rs").display().to_string();
+        let main = root.join("src").join("main.rs").display().to_string();
+        let lib = root.join("src").join("lib.rs").display().to_string();
         save_session(&root, &[main.clone(), lib.clone()], Some(&lib)).unwrap();
 
-        std::fs::remove_file(root.join("src/lib.rs")).unwrap();
+        std::fs::remove_file(root.join("src").join("lib.rs")).unwrap();
         let session = load_session(&root).unwrap();
         assert_eq!(session.open_files, vec![main]);
         assert_eq!(session.active_file, None);
@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn save_skips_paths_outside_the_root() {
         let root = workspace_dir("outside");
-        let main = root.join("src/main.rs").display().to_string();
+        let main = root.join("src").join("main.rs").display().to_string();
         let saved = save_session(&root, &[main.clone(), "/etc/hostname".to_owned()], None).unwrap();
         assert_eq!(saved, 1);
         assert_eq!(load_session(&root).unwrap().open_files, vec![main]);

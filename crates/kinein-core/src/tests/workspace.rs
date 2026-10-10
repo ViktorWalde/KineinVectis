@@ -1,8 +1,10 @@
 //! Workspace lifecycle dispatch (`workspace.*`).
 
+use std::path::Path;
+
 use serde_json::json;
 
-use super::core_with_empty_search_path;
+use super::{core_with_empty_search_path, under};
 use kinein_protocol::JsonRpcRequest;
 
 #[test]
@@ -266,8 +268,8 @@ fn workspace_session_roundtrips_through_open() {
         72_i64,
         "workspace.saveSession",
         Some(json!({
-            "openFiles": [format!("{root}/src/main.rs"), format!("{root}/src/lib.rs")],
-            "activeFile": format!("{root}/src/lib.rs"),
+            "openFiles": [under(&root, "src/main.rs"), under(&root, "src/lib.rs")],
+            "activeFile": under(&root, "src/lib.rs"),
         })),
     ));
     assert_eq!(saved.response().result.as_ref().unwrap()["files"], 2);
@@ -283,13 +285,9 @@ fn workspace_session_roundtrips_through_open() {
     let session = reopened.response().result.as_ref().unwrap()["session"].clone();
     let files = session["openFiles"].as_array().unwrap();
     assert_eq!(files.len(), 2);
-    assert!(files[0].as_str().unwrap().ends_with("src/main.rs"));
-    assert!(
-        session["activeFile"]
-            .as_str()
-            .unwrap()
-            .ends_with("src/lib.rs")
-    );
+    // Por componente: o caminho volta nativo (D5), com `\` no Windows.
+    assert!(Path::new(files[0].as_str().unwrap()).ends_with("src/main.rs"));
+    assert!(Path::new(session["activeFile"].as_str().unwrap()).ends_with("src/lib.rs"));
 }
 
 #[test]
@@ -307,12 +305,18 @@ fn workspace_from_0_2_keeps_session_settings_and_project_files() {
     // Formatos persistidos pela 0.2: metadata do workspace em 0.2.0,
     // sessao e settings em schema 1. A abertura pode atualizar metadata
     // derivada, mas nao deve perder abas, preferencias ou codigo do projeto.
+    // Pelo serde_json: o `\` do caminho do Windows precisa de escape no JSON.
     std::fs::write(
         dir.join(".kinein/workspace.json"),
-        format!(
-            "{{\"schemaVersion\":\"0.2.0\",\"name\":\"legacy\",\"root\":\"{}\",\"kind\":\"rustCargo\",\"markers\":[\"Cargo.toml\"],\"capabilities\":{{\"buildSystems\":[\"cargo\"]}}}}",
-            dir.display()
-        ),
+        json!({
+            "schemaVersion": "0.2.0",
+            "name": "legacy",
+            "root": dir.display().to_string(),
+            "kind": "rustCargo",
+            "markers": ["Cargo.toml"],
+            "capabilities": { "buildSystems": ["cargo"] },
+        })
+        .to_string(),
     )
     .unwrap();
     let session = r#"{"schemaVersion":1,"openFiles":["src/main.rs"],"activeFile":"src/main.rs"}"#;
@@ -327,7 +331,7 @@ fn workspace_from_0_2_keeps_session_settings_and_project_files() {
         Some(json!({ "path": dir.to_str().unwrap() })),
     ));
     let result = opened.response().result.as_ref().unwrap();
-    let main = dir.join("src/main.rs").display().to_string();
+    let main = dir.join("src").join("main.rs").display().to_string();
     assert_eq!(result["kind"], "rustCargo");
     assert_eq!(result["session"]["openFiles"], json!([main]));
     assert_eq!(result["session"]["activeFile"], main);

@@ -7,20 +7,17 @@
 use std::{
     collections::HashMap,
     fmt,
-    io::{Read, Write},
+    io::Write,
     path::Path,
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
     },
-    thread,
-    time::Duration,
 };
 
 use alacritty_terminal::grid::Scroll;
-use kinein_protocol::{JsonRpcRequest, TerminalMouseEvent, TerminalMouseModifiers};
-use portable_pty::{Child, ChildKiller, CommandBuilder, MasterPty, PtySize, native_pty_system};
-use serde_json::json;
+use kinein_protocol::{TerminalMouseEvent, TerminalMouseModifiers};
+use portable_pty::{ChildKiller, CommandBuilder, MasterPty, PtySize, native_pty_system};
 
 use super::error::TerminalError;
 use super::input::{
@@ -31,21 +28,20 @@ use super::state::{GridSize, TerminalState};
 use super::{EventSender, MAX_SESSIONS};
 
 mod selection;
+mod threads;
 
 /// Linhas de histórico (scrollback) mantidas pelo emulador.
 const SCROLLBACK: usize = 5000;
 /// Tamanho inicial do grid até a UI mandar o primeiro `resize`.
 const DEFAULT_ROWS: u16 = 24;
 const DEFAULT_COLS: u16 = 80;
-/// Tamanho de cada leitura do PTY, em bytes.
-const READ_CHUNK_BYTES: usize = 8192;
-/// Cadência máxima de render (~30fps): coalesce rajadas de saída.
-const FRAME: Duration = Duration::from_millis(33);
 
 /// Sessão de shell viva: PTY, emulador e handles de escrita/controle.
 struct Session {
     master: Box<dyn MasterPty + Send>,
-    writer: Box<dyn Write + Send>,
+    /// Compartilhado com a thread leitora, que escreve as respostas do
+    /// emulador (`TerminalState::take_replies`).
+    writer: Arc<Mutex<Box<dyn Write + Send>>>,
     state: Arc<Mutex<TerminalState>>,
     // `wait()` bloqueia numa thread dedicada. O killer clonado pelo
     // `portable-pty` permite encerrar a sessão sem disputar um mutex com essa
@@ -171,10 +167,9 @@ impl TerminalManager {
         // O slave é do processo filho; soltamos a nossa ponta.
         drop(pair.slave);
 
-        let writer = pair
-            .master
-            .take_writer()
-            .map_err(|error| process(format!("stdin do terminal indisponivel: {error}")))?;
+        let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|error| {
+            process(format!("stdin do terminal indisponivel: {error}"))
+        })?));
         let reader = pair
             .master
             .try_clone_reader()
@@ -189,7 +184,7 @@ impl TerminalManager {
         let killer = child.clone_killer();
         let dirty = Arc::new(AtomicBool::new(false));
 
-        self.spawn_reader(&id, reader, &state, &dirty);
+        self.spawn_reader(&id, reader, &state, &dirty, &writer);
         self.spawn_emitter(&id, &state, &dirty, &running);
         self.spawn_waiter(&id, child, &running);
 
@@ -204,81 +199,6 @@ impl TerminalManager {
             },
         );
         Ok(id)
-    }
-
-    /// Thread leitora: bytes crus do PTY → `parser.process` → marca sujo.
-    fn spawn_reader(
-        &self,
-        id: &str,
-        mut reader: Box<dyn Read + Send>,
-        state: &Arc<Mutex<TerminalState>>,
-        dirty: &Arc<AtomicBool>,
-    ) {
-        let state = Arc::clone(state);
-        let dirty = Arc::clone(dirty);
-        let events = self.events.clone();
-        let id = id.to_owned();
-        thread::spawn(move || {
-            let mut buffer = [0_u8; READ_CHUNK_BYTES];
-            while let Ok(bytes_read) = reader.read(&mut buffer) {
-                if bytes_read == 0 {
-                    break;
-                }
-                let bytes = &buffer[..bytes_read];
-                if let Ok(mut state) = state.lock() {
-                    state.process(bytes);
-                }
-                dirty.store(true, Ordering::SeqCst);
-            }
-            // EOF: garante o render do estado final antes do `closed`.
-            emit_render(&events, &id, &state);
-        });
-    }
-
-    /// Thread emissora: a cada FRAME, se sujo, manda o grid pra UI (throttle).
-    fn spawn_emitter(
-        &self,
-        id: &str,
-        state: &Arc<Mutex<TerminalState>>,
-        dirty: &Arc<AtomicBool>,
-        running: &Arc<AtomicBool>,
-    ) {
-        let state = Arc::clone(state);
-        let dirty = Arc::clone(dirty);
-        let running = Arc::clone(running);
-        let events = self.events.clone();
-        let id = id.to_owned();
-        thread::spawn(move || {
-            while running.load(Ordering::SeqCst) {
-                thread::sleep(FRAME);
-                if dirty.swap(false, Ordering::SeqCst) {
-                    emit_render(&events, &id, &state);
-                }
-            }
-        });
-    }
-
-    /// Thread waiter: espera o shell sair, zera `running` e emite `closed`.
-    fn spawn_waiter(
-        &self,
-        id: &str,
-        mut child: Box<dyn Child + Send + Sync>,
-        running: &Arc<AtomicBool>,
-    ) {
-        let running = Arc::clone(running);
-        let events = self.events.clone();
-        let id = id.to_owned();
-        thread::spawn(move || {
-            let code = child
-                .wait()
-                .ok()
-                .and_then(|status| i32::try_from(status.exit_code()).ok());
-            running.store(false, Ordering::SeqCst);
-            drop(events.send(JsonRpcRequest::notification(
-                "event.terminal.closed",
-                Some(json!({ "id": id, "exitCode": code })),
-            )));
-        });
     }
 
     /// Forwards raw `data` (bytes/teclas) to the shell PTY da sessão `id`.
@@ -298,10 +218,15 @@ impl TerminalManager {
         if !session.running.load(Ordering::SeqCst) {
             return Err(TerminalError::NotOpen);
         }
-        session
+        let mut writer = session
             .writer
+            .lock()
+            .map_err(|_poisoned| TerminalError::Process {
+                message: "o terminal travou numa escrita anterior".to_owned(),
+            })?;
+        writer
             .write_all(bytes)
-            .and_then(|()| session.writer.flush())
+            .and_then(|()| writer.flush())
             .map_err(|source| TerminalError::Process {
                 message: format!("falha ao escrever no terminal: {source}"),
             })
@@ -464,12 +389,9 @@ impl TerminalManager {
     pub fn close(&mut self, id: &str) -> Result<(), TerminalError> {
         let mut session = self.sessions.remove(id).ok_or(TerminalError::NotOpen)?;
         session.running.store(false, Ordering::SeqCst);
-        session
-            .killer
-            .kill()
-            .map_err(|source| TerminalError::Process {
-                message: format!("falha ao fechar o terminal: {source}"),
-            })
+        killed(session.killer.kill()).map_err(|source| TerminalError::Process {
+            message: format!("falha ao fechar o terminal: {source}"),
+        })
     }
 
     /// Mata TODAS as sessões (fechar workspace, shutdown do core).
@@ -479,6 +401,23 @@ impl TerminalManager {
             drop(self.close(&id));
         }
     }
+}
+
+#[cfg(unix)]
+const fn killed(result: std::io::Result<()>) -> std::io::Result<()> {
+    result
+}
+
+/// O `WinChildKiller::kill` do portable-pty 0.9.0 inverte o resultado do
+/// `TerminateProcess`: devolve `Err` quando matou (com o ultimo erro do
+/// sistema, que e' de uma chamada anterior) e `Ok` quando nao conseguiu, o que
+/// so' acontece com o processo ja' morto. O resultado nao diz nada, e nos dois
+/// casos o shell nao esta' vivo; o resto do console morre quando a sessao
+/// solta o `ConPTY` (DocsPublic/roadmaps/60 §3.3, W2b).
+#[cfg(windows)]
+#[allow(clippy::unnecessary_wraps)] // a assinatura e' a do Unix
+fn killed(_result: std::io::Result<()>) -> std::io::Result<()> {
+    Ok(())
 }
 
 impl Drop for TerminalManager {

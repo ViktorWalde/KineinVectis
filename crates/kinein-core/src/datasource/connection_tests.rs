@@ -72,6 +72,7 @@ fn profile(host: &str) -> DataSourceProfile {
 /// O caso que a pergunta do autor em 2026-09-04 destravou: um `PostgreSQL`
 /// local por socket, sem senha nenhuma.
 #[test]
+// De Unix por natureza: o socket local do PostgreSQL.
 #[cfg(unix)]
 fn leading_slash_selects_unix_socket() {
     let config = config_for(&profile("/var/run/postgresql"), None);

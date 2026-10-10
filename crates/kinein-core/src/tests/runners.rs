@@ -258,8 +258,9 @@ fn quality_run_lints_python_with_the_detected_ruff() {
     crate::write_executable(
         dir.join("bin/ruff"),
         format!(
-            "#!/bin/sh\necho \"$@\" > {reg}\npwd >> {reg}\nprintf 'app.py:1:8: F401 [*] `os` imported but unused\\napp.py:2:1: E999 SyntaxError: nao\\nFound 2 errors.\\n'\nexit 1\n",
-            reg = registro.display()
+            "#!/bin/sh\necho \"$@\" > '{reg}'\n{pwd} >> '{reg}'\nprintf 'app.py:1:8: F401 [*] `os` imported but unused\\napp.py:2:1: E999 SyntaxError: nao\\nFound 2 errors.\\n'\nexit 1\n",
+            reg = registro.display(),
+            pwd = crate::SH_PWD,
         ),
     );
 
@@ -303,7 +304,6 @@ fn quality_run_lints_python_with_the_detected_ruff() {
 
 /// Workspace Python com um teste, e um `.venv/bin/python` falso com `corpo`
 /// quando dado.
-#[cfg(unix)]
 fn pytest_workspace(nome: &str, corpo_do_python: Option<&str>) -> std::path::PathBuf {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -327,7 +327,6 @@ fn pytest_workspace(nome: &str, corpo_do_python: Option<&str>) -> std::path::Pat
 
 /// Abre `dir`, pede `test.run` (com `filter`) e devolve os eventos do job ate
 /// o `event.test.finished`, e este.
-#[cfg(unix)]
 fn run_tests_and_collect(
     dir: &std::path::Path,
     filter: Option<&str>,
@@ -374,7 +373,10 @@ fn run_tests_and_collect(
 /// criar o ambiente; com interpretador mas sem o modulo pytest NAQUELE
 /// ambiente, diz como instalar nele (nao num Python qualquer).
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn test_run_without_python_or_pytest_says_how_to_install() {
     // Escreve um executavel e o roda: sem este lock corre com os
     // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
@@ -405,7 +407,10 @@ fn test_run_without_python_or_pytest_says_how_to_install() {
 /// vira `event.test.case` — o resumo curto (estado na frente) nao conta duas
 /// vezes — e o total vai no `finished`.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn test_run_runs_pytest_with_the_project_interpreter() {
     let dir = pytest_workspace(
         "com-pytest",
@@ -476,7 +481,10 @@ fn test_run_runs_pytest_with_the_project_interpreter() {
 /// Num projeto `MicroPython` o Executar vai para a placa, mas o pytest fica no
 /// HOST: `test.run` usa o interpretador do projeto, nunca o mpremote.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn test_run_in_a_micropython_project_stays_on_the_host() {
     let dir = pytest_workspace(
         "micropython",
@@ -500,7 +508,6 @@ fn test_run_in_a_micropython_project_stays_on_the_host() {
 }
 
 /// Pede `test.discover` e espera o `event.test.discovered` desse job.
-#[cfg(unix)]
 fn discover_and_wait(
     core: &mut crate::Core,
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
@@ -537,7 +544,10 @@ fn discover_and_wait(
 /// passa esse id POSICIONAL ao pytest (nao `-k`), e o `testId` vence o
 /// `filter`. Sem pytest no ambiente, o discover diz como instalar nele.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn tests_are_discovered_and_one_runs_by_its_exact_id() {
     use std::time::{Duration, Instant};
 
@@ -627,7 +637,6 @@ fn tests_are_discovered_and_one_runs_by_its_exact_id() {
 
 /// Workspace `CMake` com a CDB em `build/` e um core cuja busca de
 /// ferramentas e' so' a pasta `bin` do workspace (D6, clang-tidy).
-#[cfg(unix)]
 fn cpp_quality_fixture(
     name: &str,
     com_cdb: bool,
@@ -675,7 +684,10 @@ fn cpp_quality_fixture(
 /// `arquivo:linha:coluna: warning: … [check]` viram diagnosticos. Sem CDB,
 /// a falha diz "configure"; sem clang-tidy, nomeia a ferramenta.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
+)]
 fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
     let _serial = crate::serializar_executaveis();
 
@@ -745,7 +757,10 @@ fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
 /// Com o script `run-clang-tidy` (o do LLVM), ele vence: `-p build -quiet`,
 /// sem lista de arquivos.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
+)]
 fn quality_run_on_cpp_prefers_run_clang_tidy() {
     let _serial = crate::serializar_executaveis();
 

@@ -87,21 +87,27 @@ impl Core {
             );
         }
         let Some(interpreter) = run::script_interpreter(&script) else {
+            let (runnable, _debuggable) = run::capabilities();
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "run.script aceita scripts .sh, .bash, .zsh ou .py",
+                    format!("run.script aceita scripts .{}", runnable.join(", .")),
                     Some(json!({ "path": parsed.path })),
                 ),
             );
         };
         let command = run::script_display_command(&root, interpreter, &script);
-        let args = vec!["--".to_owned(), script.display().to_string()];
+        let (program, args) = match crate::platform::script_command(interpreter, &script) {
+            Ok(found) => found,
+            Err(message) => {
+                return run_error_response(request_id, &run::RunError::Process { message });
+            }
+        };
         self.start_in_terminal(
             request_id,
             &root,
-            interpreter,
+            &program,
             &args,
             command,
             &json!(["script", root, script]),
@@ -250,8 +256,8 @@ impl Core {
         };
 
         // Como o autor digitaria: pelo shell, com o ambiente de login.
-        let args = vec!["-lc".to_owned(), command.clone()];
-        self.start_in_terminal(request_id, root, "sh", &args, command, &identity)
+        let (shell, args) = crate::platform::shell_command(&command);
+        self.start_in_terminal(request_id, root, &shell, &args, command, &identity)
     }
 
     /// Abre `program args` numa sessao de terminal (PTY) na raiz do workspace

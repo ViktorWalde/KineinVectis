@@ -74,12 +74,7 @@ fn cmake_status_and_presets_work_without_jobs() {
     let result = status.response().result.as_ref().unwrap().clone();
     assert_eq!(result["configured"], false);
     assert_eq!(result["hasCompileCommands"], false);
-    assert!(
-        result["buildDir"]
-            .as_str()
-            .unwrap()
-            .ends_with(".kinein/build")
-    );
+    assert!(std::path::Path::new(result["buildDir"].as_str().unwrap()).ends_with(".kinein/build"));
 
     let presets = core.handle_request(&JsonRpcRequest::new(85_i64, "cmake.presets.list", None));
     let listed = presets.response().result.as_ref().unwrap()["presets"]
@@ -196,7 +191,6 @@ fn cmake_status_stays_quiet_when_there_is_nothing_to_diagnose() {
 /// o `cmake.status` o devolve; com `preset` no pedido (o kit), e' ele.
 /// Espera o ciclo de um `cmake.configure`: devolve o `event.cmake.started`
 /// e as linhas de saida do job ate' o `finished` com sucesso.
-#[cfg(unix)]
 fn espera_configure(
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
 ) -> (serde_json::Value, Vec<String>) {
@@ -220,7 +214,6 @@ fn espera_configure(
     }
 }
 
-#[cfg(unix)]
 fn status_de(core: &mut crate::Core, id: i64) -> serde_json::Value {
     core.handle_request(&JsonRpcRequest::new(id, "cmake.status", None))
         .response()
@@ -230,7 +223,10 @@ fn status_de(core: &mut crate::Core, id: i64) -> serde_json::Value {
 }
 
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
+)]
 fn configure_picks_the_project_default_preset_and_status_reports_it() {
     let dir = cmake_workspace("preset-automatico");
     std::fs::create_dir_all(dir.join("bin")).unwrap();

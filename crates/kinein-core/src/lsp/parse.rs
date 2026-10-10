@@ -488,6 +488,8 @@ fn flatten_markup(value: &Value) -> Option<String> {
 mod tests {
     use serde_json::json;
 
+    use super::super::uri::{demo_path, demo_uri};
+
     use super::{
         MAX_COMPLETION_ITEMS, completion_items, decode_semantic_tokens, definition_location,
         diagnostics_notification, hover_content, published_diagnostics, reference_locations,
@@ -535,7 +537,7 @@ mod tests {
     #[test]
     fn publish_diagnostics_becomes_kinein_event() {
         let params = json!({
-            "uri": "file:///tmp/demo/src/main.rs",
+            "uri": demo_uri("src/main.rs"),
             "diagnostics": [{
                 "range": { "start": { "line": 4, "character": 8 }, "end": {} },
                 "severity": 1,
@@ -548,7 +550,7 @@ mod tests {
 
         assert_eq!(event.method, "event.lsp.diagnostics");
         let event_params = event.params.unwrap();
-        assert_eq!(event_params["path"], "/tmp/demo/src/main.rs");
+        assert_eq!(event_params["path"], demo_path("src/main.rs"));
         assert_eq!(event_params["diagnostics"][0]["source"], "lsp");
         assert_eq!(event_params["diagnostics"][0]["line"], 5);
         assert_eq!(event_params["diagnostics"][0]["column"], 9);
@@ -561,7 +563,7 @@ mod tests {
     #[test]
     fn publish_diagnostics_keeps_full_range_and_code() {
         let params = json!({
-            "uri": "file:///tmp/demo/src/main.rs",
+            "uri": demo_uri("src/main.rs"),
             "diagnostics": [
                 {
                     "range": {
@@ -602,13 +604,13 @@ mod tests {
     #[test]
     fn definition_location_accepts_location_array() {
         let result = json!([{
-            "uri": "file:///tmp/demo/src/lib.rs",
+            "uri": demo_uri("src/lib.rs"),
             "range": { "start": { "line": 9, "character": 4 }, "end": {} },
         }]);
 
         let location = definition_location(&result).unwrap();
 
-        assert_eq!(location.path, "/tmp/demo/src/lib.rs");
+        assert_eq!(location.path, demo_path("src/lib.rs"));
         assert_eq!(location.line, 10);
         assert_eq!(location.column, 5);
     }
@@ -616,7 +618,7 @@ mod tests {
     #[test]
     fn definition_location_accepts_location_link() {
         let result = json!([{
-            "targetUri": "file:///tmp/demo/src/main.cpp",
+            "targetUri": demo_uri("src/main.cpp"),
             "targetSelectionRange": {
                 "start": { "line": 2, "character": 11 },
                 "end": {},
@@ -625,7 +627,7 @@ mod tests {
 
         let location = definition_location(&result).unwrap();
 
-        assert_eq!(location.path, "/tmp/demo/src/main.cpp");
+        assert_eq!(location.path, demo_path("src/main.cpp"));
         assert_eq!(location.line, 3);
         assert_eq!(location.column, 12);
     }
@@ -701,18 +703,18 @@ mod tests {
     fn reference_locations_parses_location_array() {
         let result = json!([
             {
-                "uri": "file:///tmp/demo/src/main.rs",
+                "uri": demo_uri("src/main.rs"),
                 "range": { "start": { "line": 0, "character": 3 }, "end": {} },
             },
             {
-                "uri": "file:///tmp/demo/src/lib.rs",
+                "uri": demo_uri("src/lib.rs"),
                 "range": { "start": { "line": 7, "character": 0 }, "end": {} },
             },
         ]);
         let references = reference_locations(&result);
 
         assert_eq!(references.len(), 2);
-        assert_eq!(references[0].path, "/tmp/demo/src/main.rs");
+        assert_eq!(references[0].path, demo_path("src/main.rs"));
         assert_eq!(references[0].line, 1);
         assert_eq!(references[0].column, 4);
         assert!(reference_locations(&json!(null)).is_empty());
@@ -722,7 +724,7 @@ mod tests {
     fn workspace_edit_plan_parses_changes_map() {
         let result = json!({
             "changes": {
-                "file:///tmp/demo/src/main.rs": [
+                demo_uri("src/main.rs"): [
                     {
                         "range": {
                             "start": { "line": 0, "character": 3 },
@@ -736,7 +738,7 @@ mod tests {
         let plan = workspace_edit_plan(&result).unwrap();
 
         assert_eq!(plan.files.len(), 1);
-        assert_eq!(plan.files[0].path, "/tmp/demo/src/main.rs");
+        assert_eq!(plan.files[0].path, demo_path("src/main.rs"));
         assert_eq!(plan.files[0].edits[0].new_text, "start");
         assert_eq!(plan.files[0].edits[0].end_character, 7);
         assert_eq!(plan.edit_count(), 1);
@@ -747,7 +749,7 @@ mod tests {
         let result = json!({
             "documentChanges": [
                 {
-                    "textDocument": { "uri": "file:///tmp/demo/src/lib.rs", "version": 4 },
+                    "textDocument": { "uri": demo_uri("src/lib.rs"), "version": 4 },
                     "edits": [
                         {
                             "range": {
@@ -763,7 +765,7 @@ mod tests {
         let plan = workspace_edit_plan(&result).unwrap();
 
         assert_eq!(plan.files.len(), 1);
-        assert_eq!(plan.files[0].path, "/tmp/demo/src/lib.rs");
+        assert_eq!(plan.files[0].path, demo_path("src/lib.rs"));
         assert_eq!(plan.edit_count(), 1);
     }
 

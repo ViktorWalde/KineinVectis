@@ -470,7 +470,11 @@ mod tests {
     /// --sysroot, `SDKTARGETSYSROOT`, `OECORE_NATIVE_SYSROOT` (com o
     /// `OEToolchainConfig.cmake` dentro) e `TARGET_PREFIX`; os binarios estao
     /// no PATH que o script monta. Tanto o arquivo quanto a pasta servem.
+    ///
+    /// O SDK do Yocto e' de host Linux por natureza: o script de ambiente e os
+    /// binarios dele nao rodam no Windows (60 §3.3, W2b).
     #[test]
+    #[cfg(unix)]
     fn a_yocto_sdk_is_read_by_sourcing_its_environment_script() {
         let sdk = raiz("yocto");
         let nativo = sdk.join("sysroots/x86_64-pokysdk-linux");
@@ -549,7 +553,11 @@ mod tests {
     /// Uma arvore Buildroot na forma documentada, dada por `output/`, por
     /// `output/host` ou pela raiz da arvore: gcc/g++/gdb do triple, o sysroot
     /// em host/<triple>/sysroot e o toolchainfile.cmake.
+    ///
+    /// A arvore do Buildroot e' de host Linux por natureza: o `output/host` dela
+    /// nao roda no Windows (60 §3.3, W2b).
     #[test]
+    #[cfg(unix)]
     fn a_buildroot_tree_is_read_from_output_or_host() {
         let arvore = raiz("buildroot");
         let host = arvore.join("output/host");
@@ -627,7 +635,7 @@ mod tests {
         executavel(
             &pasta.join("bin/aarch64-buildroot-linux-gnu-gcc"),
             &format!(
-                "#!/bin/sh\n[ \"$1\" = -print-sysroot ] && echo {}\n",
+                "#!/bin/sh\n[ \"$1\" = -print-sysroot ] && echo '{}'\n",
                 sysroot.display()
             ),
         );
@@ -657,7 +665,12 @@ mod tests {
         let kit = import(&arm).unwrap();
         assert_eq!(
             kit.sysroot.as_deref(),
-            Some(arm.join("aarch64-none-linux-gnu/libc").to_str().unwrap())
+            Some(
+                arm.join("aarch64-none-linux-gnu")
+                    .join("libc")
+                    .to_str()
+                    .unwrap()
+            )
         );
         executavel(
             &arm.join("bin/aarch64-none-linux-gnu-gcc"),
@@ -666,7 +679,12 @@ mod tests {
         let kit = import(&arm).unwrap();
         assert_eq!(
             kit.sysroot.as_deref(),
-            Some(arm.join("aarch64-none-linux-gnu/libc").to_str().unwrap())
+            Some(
+                arm.join("aarch64-none-linux-gnu")
+                    .join("libc")
+                    .to_str()
+                    .unwrap()
+            )
         );
 
         let nada = raiz("nada");
@@ -686,7 +704,10 @@ mod tests {
     /// e a evidencia lista as outras; o sysroot e' o que o gcc declara; sem
     /// toolchain nenhuma, a proposta e' vazia com a dica do setup.sh.
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+    )]
     fn a_zephyr_sdk_proposes_the_arm_toolchain_and_lists_the_others() {
         let sdk = raiz("zephyr");
         std::fs::write(sdk.join("sdk_version"), "1.0.1\n").unwrap();
@@ -703,7 +724,7 @@ mod tests {
         executavel(
             &sdk.join("gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc"),
             &format!(
-                "#!/bin/sh\n[ \"$1\" = -print-sysroot ] && echo {}\n",
+                "#!/bin/sh\n[ \"$1\" = -print-sysroot ] && echo '{}'\n",
                 libc.display()
             ),
         );
@@ -720,6 +741,7 @@ mod tests {
             "#!/bin/sh\nexit 1\n",
         );
         // O link de bisectability na raiz e' a MESMA toolchain.
+        #[cfg(unix)]
         std::os::unix::fs::symlink(sdk.join("gnu/arm-zephyr-eabi"), sdk.join("arm-zephyr-eabi"))
             .unwrap();
 

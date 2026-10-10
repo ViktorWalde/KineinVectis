@@ -74,9 +74,13 @@ Step 'ambiente' {
     if (-not $env:CMAKE_PREFIX_PATH -or -not (Test-Path (Join-Path $env:CMAKE_PREFIX_PATH 'bin\qtpaths.exe'))) {
         Fail 'CMAKE_PREFIX_PATH deve apontar para o Qt MSVC (ex.: C:\Qt\6.12.0\msvc2022_64).'; return
     }
-    foreach ($tool in 'cl', 'cmake', 'ninja', 'cargo', 'python', 'wsl') {
+    foreach ($tool in 'cl', 'cmake', 'ninja', 'cargo', 'python', 'wsl', 'git') {
         if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { Fail "ferramenta ausente: $tool"; return }
     }
+    # Os testes do core rodam as ferramentas falsas no sh do Git for Windows
+    # (crates/kinein-core/src/fake_exe.rs, 60 3.3 W2b); o bash do PATH e' o do WSL.
+    $gitRoot = Split-Path (Split-Path (Split-Path (git --exec-path)))
+    if (-not (Test-Path (Join-Path $gitRoot 'bin\sh.exe'))) { Fail "sem o sh do Git for Windows em $gitRoot\bin"; return }
     $global:LASTEXITCODE = 0
 }
 if ($failures.Count -gt 0) { Write-Host 'Sem ambiente, o resto mediria a maquina e nao o codigo.' -ForegroundColor Red; exit 1 }

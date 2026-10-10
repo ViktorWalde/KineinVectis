@@ -46,6 +46,7 @@ step bash scripts/verificar-docs.sh
 step bash scripts/verificar-links-docs.sh
 step python3 scripts/module_map.py --check
 step bash scripts/verificar-arquitetura.sh
+step bash scripts/verificar-adiados-windows.sh
 step python3 scripts/check_identifier_language.py
 step bash scripts/verificar-shell.sh
 step bash scripts/verificar-qml-fiacao.sh

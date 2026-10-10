@@ -65,10 +65,10 @@ fn run_start_executes_command_and_emits_events() {
     let started = core.handle_request(&JsonRpcRequest::new(
         45_i64,
         "run.start",
-        Some(json!({ "command": "printf 'executado\\n'" })),
+        Some(json!({ "command": "echo executado" })),
     ));
     let result = started.response().result.as_ref().unwrap();
-    assert_eq!(result["command"], "printf 'executado\\n'");
+    assert_eq!(result["command"], "echo executado");
     let terminal_id = result["terminalId"].as_str().unwrap().to_owned();
 
     let (linhas, saida) =
@@ -138,7 +138,6 @@ fn run_script_confines_path_and_bypasses_shell_interpolation() {
 
 /// Workspace Python da fatia 3 (pyproject, `tools/gera.py`, `main.py`, uma
 /// pasta `bin` para as ferramentas falsas), canonizado.
-#[cfg(unix)]
 fn python_run_workspace(nome: &str) -> std::path::PathBuf {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -152,7 +151,6 @@ fn python_run_workspace(nome: &str) -> std::path::PathBuf {
     crate::platform::canonicalize(&dir).unwrap()
 }
 
-#[cfg(unix)]
 fn executavel(caminho: &std::path::Path, corpo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
     crate::write_executable(caminho, corpo);
@@ -161,7 +159,6 @@ fn executavel(caminho: &std::path::Path, corpo: &str) {
 /// Um core com jobs cuja busca de ferramentas e' SO' `dir/bin`, com `dir`
 /// aberto e o indice terminado (o indice mede a versao do Python — o que os
 /// testes provam depois e' o que EXECUTAR faz, sem esse ruido).
-#[cfg(unix)]
 fn core_aberto_em(
     dir: &std::path::Path,
 ) -> (crate::Core, std::sync::mpsc::Receiver<JsonRpcRequest>) {
@@ -188,7 +185,6 @@ fn core_aberto_em(
 }
 
 /// As linhas que a execucao mostrou ate' fechar com sucesso.
-#[cfg(unix)]
 fn saida_ate_terminar(
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
     resposta: &kinein_protocol::JsonRpcResponse,
@@ -202,7 +198,6 @@ fn saida_ate_terminar(
     linhas
 }
 
-#[cfg(unix)]
 fn run_script(core: &mut crate::Core, path: &std::path::Path) -> kinein_protocol::JsonRpcResponse {
     core.handle_request(&JsonRpcRequest::new(
         61_i64,
@@ -217,7 +212,10 @@ fn run_script(core: &mut crate::Core, path: &std::path::Path) -> kinein_protocol
 /// .venv, busca vazia), executar um `.py` ou apertar Executar erra dizendo o
 /// que fazer — nao cai num `python` qualquer.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn python_without_an_interpreter_says_what_to_do() {
     let dir = python_run_workspace("sem-interpretador");
     let (mut core, _receiver) = core_aberto_em(&dir);
@@ -245,7 +243,10 @@ fn python_without_an_interpreter_says_what_to_do() {
 /// `main.py`; e executar NAO mede a versao do Python (custo do status, nao do
 /// botao).
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn python_files_run_with_the_project_interpreter() {
     let dir = python_run_workspace("venv");
     let chamadas = dir.join("chamadas.txt");
@@ -288,7 +289,10 @@ fn python_files_run_with_the_project_interpreter() {
 /// Projeto do uv (`uv.lock`) com o uv detectado: o arquivo e o botao Executar
 /// passam por `uv run python` — o uv sincroniza o ambiente antes de rodar.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+)]
 fn python_projects_of_uv_run_through_uv() {
     let dir = python_run_workspace("uv");
     executavel(
@@ -328,7 +332,10 @@ fn python_projects_of_uv_run_through_uv() {
 /// pyproject.toml. Sem mpremote na maquina, o erro diz o que instalar em vez
 /// de rodar um `import machine` no Python do desktop.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -433,7 +440,10 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
 /// metodos — "campo ausente" e' o mpremote escolhendo, "campo vazio" seria
 /// `mpremote connect '' run` falhando longe de quem errou.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn run_device_is_exclusive_with_command_and_never_blank() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")

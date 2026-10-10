@@ -223,6 +223,10 @@ passo "scripts/verificar-arquitetura.sh" \
     "Aplica limites por categoria de arquivo e impede crescimento da divida de tamanho."
 bash scripts/verificar-arquitetura.sh
 
+passo "scripts/verificar-adiados-windows.sh" \
+    "Conta os testes adiados no Windows por fatia e os cfg(unix); os dois so' descem."
+bash scripts/verificar-adiados-windows.sh
+
 passo "scripts/verificar-transicao-workspace.sh" \
     "Garante que a troca do estado por workspace continua com um unico dono."
 bash scripts/verificar-transicao-workspace.sh

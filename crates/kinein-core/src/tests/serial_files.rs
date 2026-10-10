@@ -7,7 +7,6 @@
 //! o risco por acao; e o cancelamento matando o processo.
 
 use std::{
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     sync::mpsc,
     time::Duration,
@@ -118,7 +117,10 @@ impl Cenario {
 /// `list`: a linha com `:` (a raiz), o parser sobre a saida real, o risco
 /// medio (interrompe o programa da placa, nao escreve).
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn listing_reads_the_real_output_and_is_a_medium_risk_job() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("ls");
@@ -167,7 +169,10 @@ fn listing_reads_the_real_output_and_is_a_medium_risk_job() {
 /// que existe, `rm`/`mkdir` sao alto risco — e cada um leva o `:` do lado
 /// certo.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn get_put_rm_and_mkdir_build_their_lines_and_writes_are_high_risk() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("cp");
@@ -228,7 +233,10 @@ fn get_put_rm_and_mkdir_build_their_lines_and_writes_are_high_risk() {
 /// A primeira conexao morre no raw REPL (medido no ESP32 real): o job
 /// repete UMA vez, e a segunda vale. A terceira nunca acontece.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn a_raw_repl_failure_is_retried_once() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("retry");
@@ -269,7 +277,10 @@ fn a_raw_repl_failure_is_retried_once() {
 /// O erro da tela e' a linha `mpremote: …` (sem o prefixo), como o
 /// mpremote a escreve para um arquivo que nao existe na placa.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn the_error_is_the_mpremote_line() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("erro");
@@ -289,7 +300,10 @@ fn the_error_is_the_mpremote_line() {
 
 /// Tudo que e' recusado ANTES de tocar a porta — e nenhum job nasce.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn refusals_happen_before_the_port_is_touched() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("recusas");
@@ -335,14 +349,20 @@ fn refusals_happen_before_the_port_is_touched() {
     // Root ignora o modo 0444: o pedido passaria e o teste nao provaria nada
     // (e criaria o job que a assercao final proibe). Mesma guarda do
     // serial_identify.rs.
-    std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o444)).unwrap();
-    if rustix::process::geteuid().is_root() {
-        eprintln!("rodando como root: a prova de permissao nao vale");
-    } else {
-        let erro = c.files(json!({ "action": "list" })).error.unwrap();
-        assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
+    // O no' so'-leitura e' permissao de Unix (bits de modo); a recusa de uma
+    // COMx ocupada no Windows e' da W10.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o444)).unwrap();
+        if rustix::process::geteuid().is_root() {
+            eprintln!("rodando como root: a prova de permissao nao vale");
+        } else {
+            let erro = c.files(json!({ "action": "list" })).error.unwrap();
+            assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
+        }
+        std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o644)).unwrap();
     }
-    std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o644)).unwrap();
 
     // Sem mpremote.
     std::fs::remove_file(c.dir.join("bin/mpremote")).unwrap();
@@ -367,7 +387,10 @@ fn refusals_happen_before_the_port_is_touched() {
 
 /// Cancelar o job MATA o mpremote e o desfecho diz "cancelada".
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn cancelling_the_job_kills_mpremote() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("cancela");

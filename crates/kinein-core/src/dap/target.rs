@@ -151,13 +151,11 @@ fn single_binary(mut binaries: Vec<PathBuf>, location: &str) -> Result<PathBuf, 
 
 #[cfg(test)]
 mod tests {
-    #[cfg(unix)]
     use std::path::Path;
     use std::path::PathBuf;
 
     use kinein_protocol::ProjectKind;
 
-    #[cfg(unix)]
     use super::DebugError;
     use super::resolve_program;
 
@@ -170,13 +168,15 @@ mod tests {
         crate::platform::canonicalize(&dir).unwrap()
     }
 
-    #[cfg(unix)]
     fn write_executable(path: &Path) {
         crate::write_executable(path, "#!/bin/sh\n");
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: a depuracao no Windows (adaptador DAP, executavel .exe) e' da W10 (D10, 60 §3.3)"
+    )]
     fn cargo_target_wants_exactly_one_extensionless_executable() {
         let root = temp_root("cargo");
         let debug_dir = root.join("target").join("debug");
@@ -204,7 +204,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: a depuracao no Windows (adaptador DAP, executavel .exe) e' da W10 (D10, 60 §3.3)"
+    )]
     fn cmake_target_reuses_the_build_dir_scan() {
         let root = temp_root("cmake");
         let build = root.join(".kinein").join("build");

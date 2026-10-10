@@ -430,12 +430,19 @@ mod tests {
         let storage = dir.join("recent.json");
         let legacy_root = dir.join("legacy");
         std::fs::create_dir_all(&legacy_root).unwrap();
+        // Pelo serde_json, e nao por `format!`: o `\` do caminho do Windows
+        // precisa de escape no JSON.
         std::fs::write(
             &storage,
-            format!(
-                "{{\"schemaVersion\":0,\"workspaces\":[{{\"name\":\"legacy\",\"root\":\"{}\",\"lastOpenedAt\":7}}]}}",
-                legacy_root.display()
-            ),
+            serde_json::json!({
+                "schemaVersion": 0,
+                "workspaces": [{
+                    "name": "legacy",
+                    "root": legacy_root.display().to_string(),
+                    "lastOpenedAt": 7,
+                }],
+            })
+            .to_string(),
         )
         .unwrap();
 

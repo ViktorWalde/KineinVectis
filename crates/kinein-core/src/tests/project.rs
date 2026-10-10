@@ -336,6 +336,10 @@ fn sdk_requirements_are_found_only_by_env_default_folder_or_binary() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W10: artefato e receita de gravacao de embarcado; no Windows e' da W10 (60 §3.3)"
+)]
 fn artifacts_come_from_the_build_dirs_newest_first_and_the_cargo_elf_has_no_extension() {
     let raiz = temp_dir("artefatos");
     let build = raiz.join("build");
@@ -416,6 +420,10 @@ const FLASHER_ARGS: &str = r#"{
 }"#;
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W10: artefato e receita de gravacao de embarcado; no Windows e' da W10 (60 §3.3)"
+)]
 fn the_flash_recipe_is_read_with_names_offsets_encryption_and_absolute_paths() {
     let receita = esp::flash_recipe(FLASHER_ARGS, Path::new("/proj/build")).unwrap();
     assert_eq!(receita.chip.as_deref(), Some("esp32"));

@@ -7,7 +7,6 @@
 //! o processo.
 
 use std::{
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     sync::mpsc,
     time::Duration,
@@ -84,7 +83,10 @@ impl Cenario {
 /// O caminho feliz: comando com a porta e o `--after hard-reset`, parser
 /// sobre a v5, sugestao de kit pela tabela do project.model, job com sucesso.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("v5");
@@ -138,7 +140,10 @@ fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
 /// Uma v4 nao conhece `flash-id`: o job cai para `flash_id` e o comando
 /// ecoado no evento e' o segundo.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn a_v4_esptool_gets_the_underscore_command_on_retry() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("v4");
@@ -168,7 +173,10 @@ fn a_v4_esptool_gets_the_underscore_command_on_retry() {
 /// A recusa vem ANTES de abrir a porta: no' inexistente, sem permissao,
 /// sem esptool, campo desconhecido — e nenhum job nasce.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn refusals_happen_before_the_port_is_opened() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("recusas");
@@ -196,16 +204,22 @@ fn refusals_happen_before_the_port_is_opened() {
     // pedido NAO e' feito: ele passaria, criaria um job, e a assercao de
     // "nenhum job" abaixo reprovava por um motivo que nao e' defeito
     // (medido em 2026-10-01, num container de CI que roda como root).
-    std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o444)).unwrap();
-    if rustix::process::geteuid().is_root() {
-        eprintln!("rodando como root: a prova de permissao nao vale");
-    } else {
-        let resposta = c.identify(json!({ "device": porta }));
-        let erro = resposta.error.expect("sem permissao recusa");
-        assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
-        assert!(erro.message.contains("r--r--r--"), "{erro:?}");
+    // O no' so'-leitura e' permissao de Unix (bits de modo); a recusa de uma
+    // COMx ocupada no Windows e' da W10.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o444)).unwrap();
+        if rustix::process::geteuid().is_root() {
+            eprintln!("rodando como root: a prova de permissao nao vale");
+        } else {
+            let resposta = c.identify(json!({ "device": porta }));
+            let erro = resposta.error.expect("sem permissao recusa");
+            assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
+            assert!(erro.message.contains("r--r--r--"), "{erro:?}");
+        }
+        std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o644)).unwrap();
     }
-    std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o644)).unwrap();
 
     // Nenhum job foi criado por nenhuma recusa.
     let jobs = c
@@ -221,7 +235,10 @@ fn refusals_happen_before_the_port_is_opened() {
 /// O esptool que nao acha placa fala e sai com erro: `success: false`, o
 /// erro e' o que ele disse, e nao ha' identidade nem sugestao.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn a_failing_esptool_reports_its_last_lines() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("falha");
@@ -247,7 +264,10 @@ fn a_failing_esptool_reports_its_last_lines() {
 /// Cancelar o job MATA o esptool (que aqui dormiria 30 s) e o desfecho diz
 /// "cancelada" — nao "expirou".
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn cancelling_the_job_kills_esptool() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("cancela");

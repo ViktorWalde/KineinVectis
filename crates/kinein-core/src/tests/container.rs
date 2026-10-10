@@ -27,9 +27,9 @@ fn temp_dir(name: &str) -> PathBuf {
     dir
 }
 
-fn binario_falso(dir: &Path, nome: &str, corpo: &str) {
-    let caminho = dir.join(nome);
-    crate::write_executable(&caminho, format!("#!/bin/sh\n{corpo}\n"));
+/// Devolve o caminho que o sistema acha: no Windows, o `.exe` de passagem.
+fn binario_falso(dir: &Path, nome: &str, corpo: &str) -> PathBuf {
+    crate::write_executable(dir.join(nome), format!("#!/bin/sh\n{corpo}\n"))
 }
 
 /// O que o `podman-docker` faz em 2026-09-12: aviso em stderr, versao do podman
@@ -41,17 +41,17 @@ echo "podman version 5.8.4""#;
 fn the_podman_docker_shim_is_recognised_as_podman_and_the_real_podman_is_preferred() {
     let dir = temp_dir("shim");
     binario_falso(&dir, "docker", SHIM);
-    binario_falso(&dir, "podman", r#"echo "podman version 5.8.4""#);
+    let podman = binario_falso(&dir, "podman", r#"echo "podman version 5.8.4""#);
     let engine = detect_with(&ToolDetector::with_search_path(&dir)).unwrap();
     assert_eq!(engine.kind, ContainerEngine::Podman);
     assert!(engine.emulated);
-    assert_eq!(engine.binary, dir.join("podman"));
+    assert_eq!(engine.binary, podman);
 }
 
 #[test]
 fn a_real_docker_is_docker_and_wins_over_podman_on_the_same_path() {
     let dir = temp_dir("docker");
-    binario_falso(
+    let docker = binario_falso(
         &dir,
         "docker",
         r#"echo "Docker version 28.3.2, build 578ccf6""#,
@@ -60,7 +60,7 @@ fn a_real_docker_is_docker_and_wins_over_podman_on_the_same_path() {
     let engine = detect_with(&ToolDetector::with_search_path(&dir)).unwrap();
     assert_eq!(engine.kind, ContainerEngine::Docker);
     assert!(!engine.emulated);
-    assert_eq!(engine.binary, dir.join("docker"));
+    assert_eq!(engine.binary, docker);
 }
 
 #[test]

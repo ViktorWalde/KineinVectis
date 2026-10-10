@@ -145,6 +145,10 @@ fn disconnect_checks_workspace_profile_and_token_without_requesting_secrets() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W8: o console do Banco e' stub no Windows desde a W1; a garantia equivalente e' da W8 (60 §3.3)"
+)]
 fn disconnect_drains_an_accepted_write_blocks_new_work_and_preserves_files() {
     let (mut core, root, context, receiver) = scenario("drain");
     let console = rpc(&mut core, "datasource.console", json!({"name":"bank"}))

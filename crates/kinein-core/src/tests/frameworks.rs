@@ -147,7 +147,10 @@ impl Cenario {
 /// Sem ativacao nenhuma, a recusa diz o passo (e o EIM). O "Gravar" com o
 /// motor `idf.py` compoe a mesma ativacao com `-p <porta> flash`.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("idf", "esp-idf");
@@ -240,7 +243,10 @@ fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
 /// `CMakeCache`. O "Gravar" padrao e' `west flash -d build` (o modelo sugere
 /// `west`). Sem west, a recusa diz o passo.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn zephyr_builds_with_west_and_the_board_from_west_config() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("zephyr", "zephyr");
@@ -290,7 +296,10 @@ fn zephyr_builds_with_west_and_the_board_from_west_config() {
 /// e' `pio run`, o "Gravar" e' `pio run -t upload --upload-port <porta>` —
 /// e o pio vence ate' um `CMakeLists` do ESP-IDF ao lado.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn platformio_is_a_project_kind_built_and_uploaded_by_pio() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("pio", "platformio");
@@ -346,7 +355,10 @@ fn platformio_is_a_project_kind_built_and_uploaded_by_pio() {
 /// tanto no `build.run` quanto no `cmake.configure` — quando o SDK esta' na
 /// pasta padrao (`~/pico/pico-sdk`); sem SDK, o `CMake` roda como sempre.
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+)]
 fn pico_sdk_adds_the_sdk_path_to_the_cmake_configure() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("pico", "pico-sdk");

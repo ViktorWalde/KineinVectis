@@ -204,6 +204,10 @@ mod tests {
     /// O servidor que MORRE antes de abrir a porta vira erro na hora, com o
     /// status — nao cinco segundos de espera por uma porta que nunca vem.
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: o servidor de depuracao sobe por sh -c (QEMU, OpenOCD); o do Windows e' da W10 (D10, 60 §3.3)"
+    )]
     fn server_that_exits_early_is_reported_with_its_status() {
         let erro = DebugServer::spawn(
             Path::new("/tmp"),
@@ -220,6 +224,10 @@ mod tests {
     /// e' o `could not load kernel` do QEMU, o `Error: no device found` do
     /// `OpenOCD`. Sem isso o status era um sintoma sem causa.
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: o servidor de depuracao sobe por sh -c (QEMU, OpenOCD); o do Windows e' da W10 (D10, 60 §3.3)"
+    )]
     fn stderr_of_a_dead_server_is_in_the_message() {
         let erro = DebugServer::spawn(
             Path::new("/tmp"),
@@ -251,6 +259,10 @@ mod tests {
     /// "servidor" e' um `sleep` e quem abre a porta e' o teste — o que se
     /// prova e' a espera, nao o QEMU.
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: o servidor de depuracao sobe por sh -c (QEMU, OpenOCD); o do Windows e' da W10 (D10, 60 §3.3)"
+    )]
     fn open_port_ends_the_wait() {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let address = listener.local_addr().unwrap();

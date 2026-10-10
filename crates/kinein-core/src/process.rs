@@ -168,15 +168,12 @@ pub fn stream_command_lines_cancelable(
 mod tests {
     use std::process::Command;
 
-    #[cfg(unix)]
     use super::stream_command_lines_cancelable;
     use super::{ProcessError, stream_command_lines};
 
-    #[cfg(unix)]
     #[test]
     fn streams_stdout_and_stderr_lines_then_returns_status() {
-        let mut command = Command::new("sh");
-        command.arg("-c").arg("echo saida; echo erro 1>&2; exit 3");
+        let command = crate::sh_command("echo saida; echo erro 1>&2; exit 3");
 
         let mut lines = Vec::new();
         let status = stream_command_lines(command, &mut |stream, line| {
@@ -198,7 +195,6 @@ mod tests {
         assert!(matches!(error, ProcessError::Spawn(_)));
     }
 
-    #[cfg(unix)]
     #[test]
     fn cancel_kills_a_running_child_quickly() {
         use std::sync::{
@@ -214,8 +210,7 @@ mod tests {
             flipper.store(true, Ordering::SeqCst);
         });
 
-        let mut command = Command::new("sh");
-        command.arg("-c").arg("sleep 30");
+        let command = crate::sh_command("sleep 30");
 
         let start = Instant::now();
         let status =

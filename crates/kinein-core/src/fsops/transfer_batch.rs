@@ -199,6 +199,9 @@ mod tests {
     }
 
     #[test]
+    // De Unix aqui: link simbolico no Windows pede privilegio (Modo de
+    // Desenvolvedor); la', a recusa de ponto de reparse e' provada com juncao, no
+    // `platform::windows` (60 §3.3, W2b).
     #[cfg(unix)]
     fn preflight_checks_every_source_before_first_copy() {
         let root = temp_root("symlink");
@@ -343,6 +346,9 @@ mod tests {
     }
 
     #[test]
+    // De Unix aqui: link simbolico no Windows pede privilegio (Modo de
+    // Desenvolvedor); la', a recusa de ponto de reparse e' provada com juncao, no
+    // `platform::windows` (60 §3.3, W2b).
     #[cfg(unix)]
     fn import_rejects_symlinked_ancestor_before_copying_any_item() {
         let root = temp_root("import-symlink");

@@ -529,6 +529,10 @@ mod tests {
     /// esptool: tudo da receita, porta entre aspas, arquivo com espaco entre
     /// aspas, cifrada avisada, e a linha e' a da v5.
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: a linha de gravacao fala /dev/tty e caminho de Linux; a do Windows (COMx) e' da W10 (60 §3.3)"
+    )]
     fn esptool_line_comes_from_the_recipe_and_the_chosen_port() {
         let mut m = modelo("espressif", Some("esptool"), Some("esp32c3"));
         m.artifacts = ProjectArtifacts {
@@ -578,6 +582,10 @@ mod tests {
     /// `--no-stub` quando a receita diz; flash da placa menor que a receita
     /// avisa; o `esptool.py` serve.
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: a linha de gravacao fala /dev/tty e caminho de Linux; a do Windows (COMx) e' da W10 (60 §3.3)"
+    )]
     fn esptool_refusals_and_variants() {
         let mut m = modelo("espressif", Some("esptool"), None);
         let acha_tool = acha(&["esptool.py"]);
@@ -625,6 +633,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W10: a linha de gravacao fala /dev/tty e caminho de Linux; a do Windows (COMx) e' da W10 (60 §3.3)"
+    )]
     fn probe_rs_picotool_and_dfu_util_lines() {
         let mut m = modelo("stm32", Some("probe-rs"), Some("STM32F401CC"));
         m.artifacts.elf = vec![

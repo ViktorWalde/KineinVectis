@@ -176,7 +176,7 @@ pub fn run_tests(
             if let Selection::Exact(id) = selection
                 && let Some(resultado) = frameworks::run_inner_case(
                     Path::new("ctest"),
-                    &root.join(".kinein/build"),
+                    &crate::cmake::build_dir(root),
                     id,
                     cancel,
                     sink,
@@ -290,7 +290,6 @@ mod tests {
     use super::parse::{parse_cargo_case, parse_ctest_case, parse_pytest_case};
     use super::runners::regex_literal;
     use super::{CaseStatus, Selection};
-    #[cfg(unix)]
     use super::{TestEvent, stream_command};
 
     /// `testId` vence `filter`; vazios e espacos nao contam.
@@ -346,11 +345,12 @@ mod tests {
         assert_eq!(d, "cargo test tests::alpha -- --exact");
 
         let (c, d) = super::runners::ctest_command(root, Selection::Exact("Broken.Case"));
+        let build = crate::cmake::build_dir(root).display().to_string();
         assert_eq!(
             args_de(&c),
             [
                 "--test-dir",
-                "/w/.kinein/build",
+                build.as_str(),
                 "--output-on-failure",
                 "-R",
                 "^Broken\\.Case$"
@@ -367,7 +367,10 @@ mod tests {
     /// (um id que aparece no stderr — o pytest escreve avisos la' — nao e'
     /// teste), e o exit 5 do pytest ("no tests ran") e' lista vazia, nao erro.
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
+    )]
     fn pytest_discovery_reads_stdout_only_and_treats_exit_5_as_empty() {
         // Este teste ESCREVE um executavel e o roda; sem o lock do crate ele
         // corre com os outros que fazem o mesmo e o `exec` do filho volta
@@ -431,7 +434,10 @@ mod tests {
     /// id exato roda so' ele. Sem cmake na maquina, o teste nao prova nada e
     /// diz isso.
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
+    )]
     fn ctest_discovery_and_exact_run_against_the_real_ctest() {
         use std::process::Command;
         let cmake = Command::new("cmake")
@@ -625,13 +631,9 @@ mod tests {
         assert!(parse_ctest_case("Test project /tmp/build").is_none());
     }
 
-    #[cfg(unix)]
     #[test]
     fn stream_command_tallies_cases_from_output() {
-        use std::process::Command;
-
-        let mut command = Command::new("sh");
-        command.arg("-c").arg(concat!(
+        let command = crate::sh_command(concat!(
             "echo 'running 2 tests'; ",
             "echo 'test a ... ok'; ",
             "echo 'test b ... FAILED'; ",

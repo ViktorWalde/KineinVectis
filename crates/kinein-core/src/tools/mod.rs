@@ -338,10 +338,9 @@ mod tests {
         dir
     }
 
-    #[cfg(unix)]
-    fn write_fake_tool(dir: &std::path::Path, name: &str, script_body: &str) {
-        let path = dir.join(name);
-        crate::write_executable(&path, format!("#!/bin/sh\n{script_body}\n"));
+    /// Devolve o caminho que o sistema acha: no Windows, o `.exe` de passagem.
+    fn write_fake_tool(dir: &std::path::Path, name: &str, script_body: &str) -> PathBuf {
+        crate::write_executable(dir.join(name), format!("#!/bin/sh\n{script_body}\n"))
     }
 
     #[test]
@@ -441,7 +440,6 @@ mod tests {
         assert!(info.message.is_some());
     }
 
-    #[cfg(unix)]
     #[test]
     fn install_suggestion_does_not_depend_on_the_distribution() {
         // Ter (ou nao ter) `pacman` no PATH nao pode mudar a sugestao: essa era
@@ -471,7 +469,6 @@ mod tests {
         );
     }
 
-    #[cfg(unix)]
     #[test]
     fn ai_clis_are_detected_exactly_like_any_other_tool() {
         // A fatia so esta certa enquanto o core NAO tiver ramo por programa.
@@ -483,7 +480,7 @@ mod tests {
         let dir = temp_bin_dir("ai-cli-like-any-other");
         // Os dois fakes ecoam o MESMO texto de proposito: o que se compara e o
         // TRATAMENTO (mesmo probe, mesma estrutura), nao o conteudo.
-        write_fake_tool(&dir, "claude", "echo 'ferramenta 9.9.9'");
+        let claude_path = write_fake_tool(&dir, "claude", "echo 'ferramenta 9.9.9'");
         write_fake_tool(&dir, "cargo", "echo 'ferramenta 9.9.9'");
         let detector = ToolDetector::with_search_path(&dir);
 
@@ -498,13 +495,9 @@ mod tests {
         assert_eq!(claude.status, cargo.status);
         assert_eq!(claude.version, cargo.version);
         assert!(claude.suggested_install.is_none());
-        assert_eq!(
-            claude.path.as_deref(),
-            Some(dir.join("claude").to_str().unwrap())
-        );
+        assert_eq!(claude.path.as_deref(), claude_path.to_str());
     }
 
-    #[cfg(unix)]
     #[test]
     fn fd_detection_accepts_fdfind_binary_name() {
         let _guard = exec_lock();
@@ -522,7 +515,9 @@ mod tests {
         assert!(
             info.path
                 .as_deref()
-                .is_some_and(|path| path.ends_with("fdfind"))
+                .is_some_and(
+                    |path| crate::platform::program_label(std::path::Path::new(path)) == "fdfind"
+                )
         );
     }
 
@@ -537,7 +532,6 @@ mod tests {
     /// corrida e' o retry de [`EXEC_BUSY_ATTEMPTS`] no `probe_version`; o
     /// escopo deste lock NAO deve crescer para tapar o buraco — isso esconderia
     /// o defeito em vez de corrigi-lo.
-    #[cfg(unix)]
     static EXEC_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
     /// Toma o [`EXEC_LOCK`] ignorando envenenamento.
@@ -546,33 +540,27 @@ mod tests {
     /// seguintes com `PoisonError` — a cascata que fez uma falha virar duas em
     /// 2026-07-16 e escondeu qual teste era o real. O dado protegido e' `()`:
     /// nao ha estado corrompido a preservar.
-    #[cfg(unix)]
     fn exec_lock() -> std::sync::MutexGuard<'static, ()> {
         EXEC_LOCK
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    #[cfg(unix)]
     #[test]
     fn detected_tool_reports_path_and_version() {
         let _guard = exec_lock();
         let dir = temp_bin_dir("detected");
-        write_fake_tool(&dir, "cargo", "echo 'cargo 1.99.0 (fake)'");
+        let cargo_path = write_fake_tool(&dir, "cargo", "echo 'cargo 1.99.0 (fake)'");
         let detector = ToolDetector::with_search_path(&dir);
 
         let info = detector.detect(&FAKE_SPEC);
 
         assert_eq!(info.status, ToolStatus::Detected);
         assert_eq!(info.version.as_deref(), Some("cargo 1.99.0 (fake)"));
-        assert_eq!(
-            info.path.as_deref(),
-            Some(dir.join("cargo").to_str().unwrap())
-        );
+        assert_eq!(info.path.as_deref(), cargo_path.to_str());
         assert!(info.suggested_install.is_none());
     }
 
-    #[cfg(unix)]
     #[test]
     fn broken_tool_reports_failed_with_human_message() {
         let _guard = exec_lock();
@@ -628,7 +616,6 @@ mod tests {
     /// Era a segunda metade do §0.2h: a primeira falha morria segurando o
     /// mutex, e a proxima virava `PoisonError` — uma falha real virava duas, e
     /// a cascata escondia qual era a verdadeira.
-    #[cfg(unix)]
     #[test]
     fn poisoned_exec_lock_does_not_cascade() {
         let poisoner = std::thread::spawn(|| {
@@ -677,7 +664,7 @@ mod tests {
         let rel: Vec<String> = dirs
             .iter()
             .filter(|d| d.starts_with(&home))
-            .map(|d| d.strip_prefix(&home).unwrap().display().to_string())
+            .map(|d| crate::platform::portable_relative(d.strip_prefix(&home).unwrap()))
             .collect();
         assert_eq!(
             rel,
@@ -708,7 +695,6 @@ mod tests {
     /// seguinte — sem isso, "Instalar" exigiria reiniciar a IDE para valer.
     /// E ela vem DEPOIS do PATH: o que o usuario escolheu vence.
     #[test]
-    #[cfg(unix)]
     fn the_install_root_is_read_on_every_lookup() {
         // Escreve um executavel e o roda: sem este lock corre com os
         // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
@@ -722,19 +708,16 @@ mod tests {
         assert_eq!(detector.find_in_path("arm-none-eabi-gcc"), None);
 
         // A toolchain nasce DEPOIS: a mesma instancia a encontra.
-        let bin = raiz.join("arm-gnu-arm-none-eabi/15.2.rel1/bin");
+        let bin = raiz
+            .join("arm-gnu-arm-none-eabi")
+            .join("15.2.rel1")
+            .join("bin");
         std::fs::create_dir_all(&bin).unwrap();
-        crate::write_executable(bin.join("arm-none-eabi-gcc"), "#!/bin/sh\n");
-        assert_eq!(
-            detector.find_in_path("arm-none-eabi-gcc"),
-            Some(bin.join("arm-none-eabi-gcc"))
-        );
+        let installed = crate::write_executable(bin.join("arm-none-eabi-gcc"), "#!/bin/sh\n");
+        assert_eq!(detector.find_in_path("arm-none-eabi-gcc"), Some(installed));
 
         // O PATH vence a pasta da IDE.
-        crate::write_executable(path_dir.join("arm-none-eabi-gcc"), "#!/bin/sh\n");
-        assert_eq!(
-            detector.find_in_path("arm-none-eabi-gcc"),
-            Some(path_dir.join("arm-none-eabi-gcc"))
-        );
+        let no_path = crate::write_executable(path_dir.join("arm-none-eabi-gcc"), "#!/bin/sh\n");
+        assert_eq!(detector.find_in_path("arm-none-eabi-gcc"), Some(no_path));
     }
 }

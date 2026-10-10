@@ -342,7 +342,8 @@ mod tests {
             .unwrap()
             .to_owned();
         assert!(
-            copy.ends_with("/Painel.qml") && !copy.starts_with(root.to_str().unwrap()),
+            std::path::Path::new(&copy).file_name() == Some(std::ffi::OsStr::new("Painel.qml"))
+                && !copy.starts_with(root.to_str().unwrap()),
             "{copy}"
         );
         assert!(
@@ -353,7 +354,7 @@ mod tests {
         std::fs::write(root.join("ui/.qmlformat.ini"), "[General]\n").unwrap();
         let out =
             super::format_text(FormatterKind::QmlFormat, &fake, &root, &real, "Item {}\n").unwrap();
-        let settings = root.join("ui/.qmlformat.ini");
+        let settings = root.join("ui").join(".qmlformat.ini");
         assert!(out.contains(&format!("-s {}", settings.display())), "{out}");
         // Um .qmlformat.ini FORA do projeto nunca vale.
         assert_eq!(
@@ -367,10 +368,20 @@ mod tests {
         drop(std::fs::remove_dir_all(&root));
     }
 
+    /// Um formatador falso em `sh`, que roda nos dois sistemas (no Windows,
+    /// pelo `.exe` de passagem do `crate::write_executable`).
+    fn fake_formatter(name: &str, body: &str) -> Command {
+        let dir = std::env::temp_dir().join(format!("kinein-format-fake-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        Command::new(crate::write_executable(
+            dir.join(name),
+            format!("#!/bin/sh\n{body}\n"),
+        ))
+    }
+
     #[test]
     fn run_formatter_pipes_stdin_to_stdout() {
-        let mut command = Command::new("tr");
-        command.args(["a-z", "A-Z"]);
+        let command = fake_formatter("maiusculas", "tr a-z A-Z");
         let formatted = run_formatter(command, "tr", "abc\n").unwrap();
         assert_eq!(formatted, "ABC\n");
     }
@@ -384,8 +395,7 @@ mod tests {
 
     #[test]
     fn failure_exit_carries_stderr() {
-        let mut command = Command::new("sh");
-        command.args(["-c", "echo estilo invalido >&2; exit 3"]);
+        let command = fake_formatter("falha", "echo estilo invalido >&2; exit 3");
         let error = run_formatter(command, "sh", "abc").unwrap_err();
         match error {
             FormatError::Failed { tool, stderr } => {

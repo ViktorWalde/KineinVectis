@@ -75,7 +75,8 @@ impl GroupKiller {
 pub enum Ending {
     /// Saiu sozinho dentro do prazo, depois do EOF no stdin.
     Graceful,
-    /// Saiu com o `SIGTERM` no grupo.
+    /// Saiu com o `SIGTERM` no grupo. So' no Unix: o Windows nao tem pedido
+    /// gentil ao grupo, e de [`Ending::Graceful`] vai direto a [`Ending::Killed`].
     Terminated,
     /// Precisou do `SIGKILL` no grupo.
     Killed,

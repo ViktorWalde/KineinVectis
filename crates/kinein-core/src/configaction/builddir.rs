@@ -185,7 +185,12 @@ mod tests {
 
         let message = repair(&root).unwrap();
 
-        assert!(message.contains(".kinein/build"));
+        // A mensagem mostra o caminho como o sistema o escreve.
+        let build_dir = std::path::Path::new(".kinein").join("build");
+        assert!(
+            message.contains(&build_dir.display().to_string()),
+            "{message}"
+        );
         assert!(!root.join(".kinein/build").exists());
         assert!(repair(&root).is_err());
         assert!(repair_plan(&root).is_err());

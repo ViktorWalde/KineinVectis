@@ -81,19 +81,126 @@ pub(super) fn executable_names(binary: &str) -> Vec<String> {
         .collect()
 }
 
+fn in_path(name: &str) -> Option<PathBuf> {
+    std::env::var_os("PATH").and_then(|paths| {
+        std::env::split_paths(&paths)
+            .map(|dir| dir.join(name))
+            .find(|candidate| candidate.is_file())
+    })
+}
+
 pub(super) fn default_shell() -> String {
-    let in_path = |name: &str| {
-        std::env::var_os("PATH").and_then(|paths| {
-            std::env::split_paths(&paths)
-                .map(|dir| dir.join(name))
-                .find(|candidate| candidate.is_file())
-        })
-    };
     in_path("pwsh.exe")
         .or_else(|| in_path("powershell.exe"))
         .map(|shell| shell.display().to_string())
         .or_else(|| std::env::var("ComSpec").ok())
         .unwrap_or_else(|| "cmd.exe".to_owned())
+}
+
+/// O PowerShell do `PATH`; sem ele, o do sistema, que todo Windows tem.
+fn powershell() -> String {
+    in_path("pwsh.exe")
+        .or_else(|| in_path("powershell.exe"))
+        .or_else(|| {
+            var_dir("SystemRoot").map(|root| {
+                root.join("System32")
+                    .join("WindowsPowerShell")
+                    .join("v1.0")
+                    .join("powershell.exe")
+            })
+        })
+        .map_or_else(
+            || "powershell.exe".to_owned(),
+            |shell| shell.display().to_string(),
+        )
+}
+
+pub(super) fn program_label(program: &Path) -> String {
+    let executable = program.extension().is_some_and(|ext| {
+        let ext = format!(".{}", ext.to_string_lossy());
+        std::env::var("PATHEXT")
+            .unwrap_or_else(|_| ".COM;.EXE;.BAT;.CMD".to_owned())
+            .split(';')
+            .any(|known| known.eq_ignore_ascii_case(&ext))
+    });
+    let name = if executable {
+        program.file_stem()
+    } else {
+        program.file_name()
+    };
+    name.map_or_else(String::new, |name| name.to_string_lossy().into_owned())
+}
+
+pub(super) fn shell_command(command: &str) -> (String, Vec<String>) {
+    // `$?` e' lido logo depois do comando, antes de qualquer outra instrucao.
+    let script = format!(
+        "$global:LASTEXITCODE = 0\n{command}\n$kineinOk = $?\n\
+         if ($LASTEXITCODE) {{ exit $LASTEXITCODE }}\nif (-not $kineinOk) {{ exit 1 }}\n"
+    );
+    let utf16: Vec<u8> = script.encode_utf16().flat_map(u16::to_le_bytes).collect();
+    (
+        powershell(),
+        vec![
+            "-NoLogo".to_owned(),
+            "-EncodedCommand".to_owned(),
+            base64(&utf16),
+        ],
+    )
+}
+
+/// O `bash.exe` do Git for Windows, achado a partir do `git.exe` do `PATH`
+/// (`<git>\cmd\git.exe` ou `<git>\bin\git.exe`): a raiz do Git e' a pasta que
+/// tem `bin\bash.exe` e `usr\bin`.
+fn git_bash() -> Option<PathBuf> {
+    let git = in_path("git.exe")?;
+    git.ancestors().skip(1).find_map(|dir| {
+        let bash = dir.join("bin").join("bash.exe");
+        (bash.is_file() && dir.join("usr").join("bin").is_dir()).then_some(bash)
+    })
+}
+
+pub(super) fn script_command(
+    interpreter: &str,
+    script: &Path,
+) -> Result<(String, Vec<String>), String> {
+    let script = script.display().to_string();
+    match interpreter {
+        "bash" => git_bash()
+            .map(|bash| (bash.display().to_string(), vec!["--".to_owned(), script]))
+            .ok_or_else(|| {
+                "o script precisa do bash do Git for Windows, e o git.exe nao esta' no PATH"
+                    .to_owned()
+            }),
+        "powershell" => Ok((
+            powershell(),
+            vec!["-NoLogo".to_owned(), "-File".to_owned(), script],
+        )),
+        "cmd" => Ok((
+            std::env::var("ComSpec").unwrap_or_else(|_| "cmd.exe".to_owned()),
+            vec!["/D".to_owned(), "/C".to_owned(), script],
+        )),
+        other => Err(format!("interpretador sem equivalente no Windows: {other}")),
+    }
+}
+
+/// Base64 padrao (RFC 4648, com `=`), o que o `-EncodedCommand` le.
+fn base64(bytes: &[u8]) -> String {
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut text = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for chunk in bytes.chunks(3) {
+        let triple = chunk.iter().enumerate().fold(0_u32, |acc, (index, byte)| {
+            acc | u32::from(*byte) << (16 - 8 * index)
+        });
+        for position in 0..4 {
+            if position <= chunk.len() {
+                let index = (triple >> (18 - 6 * position)) & 0x3F;
+                text.push(char::from(ALPHABET[index as usize]));
+            } else {
+                text.push('=');
+            }
+        }
+    }
+    text
 }
 
 pub(super) fn portable_relative(path: &Path) -> String {
@@ -320,5 +427,102 @@ mod tests {
             "{canonical:?}"
         );
         assert!(canonical.is_absolute());
+    }
+
+    /// Uma juncao (o link de pasta que o Windows cria sem privilegio) no meio
+    /// do caminho e' ponto de reparse: o `open_nofollow` recusa, e o mesmo
+    /// arquivo pela pasta real abre. E' a prova, no Windows, do que os testes
+    /// de symlink provam no Unix (60 §3.3, W2b).
+    #[test]
+    fn a_junction_in_the_path_is_refused_and_the_real_folder_opens() {
+        let base = std::env::temp_dir().join(format!("kinein-juncao-{}", std::process::id()));
+        drop(std::fs::remove_dir_all(&base));
+        let real = base.join("real");
+        std::fs::create_dir_all(&real).unwrap();
+        std::fs::write(real.join("a.txt"), "x").unwrap();
+        let link = base.join("juncao");
+        let made = std::process::Command::new("cmd")
+            .args(["/D", "/C", "mklink", "/J"])
+            .arg(&link)
+            .arg(&real)
+            .output()
+            .unwrap();
+        assert!(
+            made.status.success(),
+            "{}",
+            String::from_utf8_lossy(&made.stderr)
+        );
+        assert!(matches!(
+            super::open_nofollow(&link.join("a.txt")),
+            Err(super::NoFollow::Link)
+        ));
+        assert!(matches!(
+            super::open_nofollow(&link),
+            Err(super::NoFollow::Link)
+        ));
+        assert!(super::open_nofollow(&real.join("a.txt")).is_ok());
+        // O `remove_dir_all` do `std` nao segue a juncao: so' ela sai.
+        drop(std::fs::remove_dir_all(&base));
+    }
+
+    /// O nome que se digita: sem a extensao de executavel, em qualquer caixa;
+    /// o que nao e' executavel fica com a extensao.
+    #[test]
+    fn the_program_label_is_what_the_user_types() {
+        assert_eq!(
+            super::program_label(Path::new(r"C:\Program Files\RedHat\Podman\podman.exe")),
+            "podman"
+        );
+        assert_eq!(super::program_label(Path::new(r"C:\x\idf.CMD")), "idf");
+        assert_eq!(
+            super::program_label(Path::new(r"C:\x\esptool.py")),
+            "esptool.py"
+        );
+    }
+
+    /// Os vetores da RFC 4648 §10.
+    #[test]
+    fn base64_follows_the_rfc() {
+        for (plain, encoded) in [
+            ("", ""),
+            ("f", "Zg=="),
+            ("fo", "Zm8="),
+            ("foo", "Zm9v"),
+            ("foob", "Zm9vYg=="),
+            ("fooba", "Zm9vYmE="),
+            ("foobar", "Zm9vYmFy"),
+        ] {
+            assert_eq!(super::base64(plain.as_bytes()), encoded);
+        }
+    }
+
+    fn run(command: &str) -> std::process::Output {
+        let (shell, args) = super::shell_command(command);
+        std::process::Command::new(shell)
+            .args(args)
+            .output()
+            .unwrap()
+    }
+
+    /// O comando chega intacto, com aspas duplas e simples, e o codigo de
+    /// saida do programa nativo passa adiante.
+    #[test]
+    fn the_shell_command_carries_quotes_and_the_exit_code() {
+        let output = run(r#"Write-Output "aspas ""duplas"" e 'simples'"; cmd /c exit 7"#);
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout).trim(),
+            r#"aspas "duplas" e 'simples'"#
+        );
+        assert_eq!(output.status.code(), Some(7));
+    }
+
+    /// Um cmdlet que falha sai com 1; um comando que da' certo sai com 0.
+    #[test]
+    fn a_failing_cmdlet_exits_with_one_and_success_with_zero() {
+        assert_eq!(
+            run("Get-Item 'C:\\nao\\existe\\mesmo'").status.code(),
+            Some(1)
+        );
+        assert_eq!(run("Write-Output ok").status.code(), Some(0));
     }
 }

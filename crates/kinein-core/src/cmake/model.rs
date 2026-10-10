@@ -46,7 +46,7 @@ pub struct Target {
 /// Uma fonte de um target.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Source {
-    /// Caminho absoluto.
+    /// Caminho absolute.
     pub path: PathBuf,
     /// Gerada pelo build (moc, rcc, ...).
     pub generated: bool,
@@ -89,7 +89,7 @@ pub struct Toolchain {
 /// O modelo inteiro de um build dir configurado com a query.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CmakeModel {
-    /// Build dir lido, absoluto.
+    /// Build dir lido, absolute.
     pub build_dir: PathBuf,
     /// Pasta de fonte do projeto, absoluta.
     pub source_dir: PathBuf,
@@ -117,11 +117,11 @@ impl CmakeModel {
         let source_dir = codemodel
             .pointer("/paths/source")
             .and_then(Value::as_str)
-            .map_or_else(|| build_dir.to_path_buf(), PathBuf::from);
+            .map_or_else(|| build_dir.to_path_buf(), |p| native(Path::new(p)));
         let build_abs = codemodel
             .pointer("/paths/build")
             .and_then(Value::as_str)
-            .map_or_else(|| build_dir.to_path_buf(), PathBuf::from);
+            .map_or_else(|| build_dir.to_path_buf(), |p| native(Path::new(p)));
         let mut targets = Vec::new();
         for entrada in codemodel
             .pointer("/configurations/0/targets")
@@ -227,19 +227,22 @@ fn read_json(path: &Path) -> Option<Value> {
 }
 
 /// `base/caminho` sem os `.` que o file-api escreve (`paths.source: "."`).
-fn absoluto(base: &Path, caminho: &str) -> PathBuf {
+fn absolute(base: &Path, caminho: &str) -> PathBuf {
     let p = Path::new(caminho);
-    let mut saida = if p.is_absolute() {
-        PathBuf::new()
+    if p.is_absolute() {
+        native(p)
     } else {
-        base.to_path_buf()
-    };
-    for componente in p.components() {
-        if componente != std::path::Component::CurDir {
-            saida.push(componente);
-        }
+        native(&base.join(p))
     }
-    saida
+}
+
+/// O caminho do file-api na forma do sistema, componente a componente e sem
+/// os `.`. O `CMake` escreve `/` tambem no Windows (`C:/x/.kinein/build`), e o
+/// core fala o caminho nativo (D5, DocsPublic/roadmaps/60 §3.3, W2b).
+fn native(path: &Path) -> PathBuf {
+    path.components()
+        .filter(|component| *component != std::path::Component::CurDir)
+        .collect()
 }
 
 fn strings(valor: Option<&Value>, campo: &str) -> Vec<String> {
@@ -266,12 +269,12 @@ fn ler_target(detalhe: &Value, source_dir: &Path, build_dir: &Path) -> Option<Ta
         .to_owned();
     let artifacts = strings(detalhe.get("artifacts"), "path")
         .iter()
-        .map(|p| absoluto(build_dir, p))
+        .map(|p| absolute(build_dir, p))
         .collect();
     let target_source = detalhe
         .pointer("/paths/source")
         .and_then(Value::as_str)
-        .map_or_else(|| source_dir.to_path_buf(), |p| absoluto(source_dir, p));
+        .map_or_else(|| source_dir.to_path_buf(), |p| absolute(source_dir, p));
     let sources = detalhe
         .get("sources")
         .and_then(Value::as_array)
@@ -279,7 +282,7 @@ fn ler_target(detalhe: &Value, source_dir: &Path, build_dir: &Path) -> Option<Ta
         .flatten()
         .filter_map(|s| {
             Some(Source {
-                path: absoluto(source_dir, s.get("path").and_then(Value::as_str)?),
+                path: absolute(source_dir, s.get("path").and_then(Value::as_str)?),
                 generated: s.get("isGenerated").and_then(Value::as_bool) == Some(true),
                 compile_group: s
                     .get("compileGroupIndex")
@@ -305,7 +308,7 @@ fn ler_target(detalhe: &Value, source_dir: &Path, build_dir: &Path) -> Option<Ta
                 .map(str::to_owned),
             includes: strings(g.get("includes"), "path")
                 .iter()
-                .map(|p| absoluto(source_dir, p).display().to_string())
+                .map(|p| absolute(source_dir, p).display().to_string())
                 .collect(),
             defines: strings(g.get("defines"), "define"),
             fragments: strings(g.get("compileCommandFragments"), "fragment"),
@@ -363,4 +366,35 @@ fn ler_toolchains(valor: &Value) -> Vec<Toolchain> {
             })
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    /// O reply do `CMake` no Windows escreve `/`; o modelo devolve o caminho
+    /// nativo, e o `.` some.
+    #[test]
+    #[cfg(windows)]
+    fn a_cmake_path_with_forward_slashes_comes_back_native() {
+        let build = super::native(Path::new("C:/x/.kinein/build"));
+        assert_eq!(build, std::path::PathBuf::from(r"C:\x\.kinein\build"));
+        assert_eq!(
+            super::absolute(&build, "./sub/app.exe"),
+            std::path::PathBuf::from(r"C:\x\.kinein\build\sub\app.exe")
+        );
+        assert_eq!(
+            super::absolute(&build, "C:/Qt/6.12.0/msvc2022_64/include"),
+            std::path::PathBuf::from(r"C:\Qt\6.12.0\msvc2022_64\include")
+        );
+    }
+
+    #[test]
+    fn a_relative_path_is_resolved_against_the_base_without_dots() {
+        let base = Path::new("raiz").join("build");
+        assert_eq!(
+            super::absolute(&base, "./gen/moc.cpp"),
+            base.join("gen").join("moc.cpp")
+        );
+    }
 }

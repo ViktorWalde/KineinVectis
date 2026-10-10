@@ -516,8 +516,14 @@ pub(crate) static EXECUTAVEIS: std::sync::Mutex<()> = std::sync::Mutex::new(());
 /// executavel e' OUTRO processo (`install -m 755`). Nenhum `fork` deste
 /// processo herda um descritor do executavel, e a classe some — inclusive
 /// com `cargo test` em paralelo.
+///
+/// Devolve o caminho a executar: no Unix, o proprio `path`.
 #[cfg(test)]
-pub(crate) fn write_executable(path: impl AsRef<std::path::Path>, contents: impl AsRef<[u8]>) {
+#[cfg(unix)]
+pub(crate) fn write_executable(
+    path: impl AsRef<std::path::Path>,
+    contents: impl AsRef<[u8]>,
+) -> std::path::PathBuf {
     let path = path.as_ref();
     let staging = path.with_file_name(format!(
         ".{}.staging",
@@ -534,6 +540,87 @@ pub(crate) fn write_executable(path: impl AsRef<std::path::Path>, contents: impl
         .expect("roda o install");
     assert!(status.success(), "install -m 755 {} falhou", path.display());
     drop(std::fs::remove_file(&staging));
+    path.to_path_buf()
+}
+
+#[cfg(test)]
+#[cfg(windows)]
+mod fake_exe;
+
+/// O `pwd` de um script de teste em `sh`, no formato de caminho do sistema. No
+/// Windows o `sh` e' o do Git (MSYS), cujo `pwd` diz `/c/...`; o `-W` diz
+/// `C:/...`, e o `sed` troca as barras.
+#[cfg(test)]
+pub(crate) const SH_PWD: &str = if cfg!(windows) {
+    "pwd -W | sed 's|/|\\\\|g'"
+} else {
+    "pwd"
+};
+
+/// Um `Command` que roda `body` em `sh` nos dois sistemas: o script vai para
+/// um arquivo proprio, e no Windows roda pelo `.exe` de passagem.
+#[cfg(test)]
+pub(crate) fn sh_command(body: &str) -> std::process::Command {
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-sh-command", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("cria a pasta dos scripts");
+    let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    std::process::Command::new(write_executable(
+        dir.join(format!("script-{n}")),
+        format!("#!/bin/sh\n{body}\n"),
+    ))
+}
+
+/// A linha de `sh` que grava em `file` o pid DO SISTEMA do ultimo processo
+/// posto em segundo plano. No Windows o `$!` e' o pid do MSYS; o do Windows
+/// esta' em `/proc/<pid>/winpid`.
+#[cfg(test)]
+pub(crate) fn sh_save_background_pid(file: &std::path::Path) -> String {
+    if cfg!(windows) {
+        format!("cat /proc/$!/winpid > '{}'", file.display())
+    } else {
+        format!("echo $! > '{}'", file.display())
+    }
+}
+
+/// O processo `pid` (do sistema) ainda existe.
+#[cfg(test)]
+pub(crate) fn process_alive(pid: &str) -> bool {
+    let pid = pid.trim();
+    if cfg!(windows) {
+        let filter = format!("PID eq {pid}");
+        std::process::Command::new("tasklist")
+            .args(["/FI", &filter, "/NH", "/FO", "CSV"])
+            .output()
+            .is_ok_and(|output| {
+                String::from_utf8_lossy(&output.stdout).contains(&format!("\"{pid}\""))
+            })
+    } else {
+        std::path::Path::new(&format!("/proc/{pid}")).exists()
+    }
+}
+
+/// O mesmo contrato no Windows, onde nao ha' `ETXTBSY`: o `std` abre arquivo
+/// sem heranca de handle, e nenhum filho herda o descritor de escrita.
+///
+/// O Windows nao executa script; o que comeca com `#!` ganha, ao lado, o
+/// `.exe` de passagem do [`fake_exe`], e e' o caminho dele que volta.
+#[cfg(test)]
+#[cfg(windows)]
+pub(crate) fn write_executable(
+    path: impl AsRef<std::path::Path>,
+    contents: impl AsRef<[u8]>,
+) -> std::path::PathBuf {
+    let path = path.as_ref();
+    let contents = contents.as_ref();
+    std::fs::write(path, contents).expect("grava o executavel de teste");
+    if contents.starts_with(b"#!") {
+        fake_exe::beside(path)
+    } else {
+        path.to_path_buf()
+    }
 }
 
 /// Toma o lock dos executaveis TOLERANDO veneno.

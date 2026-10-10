@@ -1,0 +1,10 @@
+# Testes do core ADIADOS no Windows, por fatia, e os #[cfg(unix)] do Rust
+# (DocsPublic/roadmaps/60 §3.3, W2b). Lido por scripts/verificar-adiados-windows.sh.
+# So' desce: a fatia que devolve testes desce a linha dela no mesmo commit.
+# <chave> <quantidade>
+W6 16
+W7 18
+W8 4
+W9 11
+W10 33
+cfg(unix) 53

@@ -349,7 +349,10 @@ mod tests {
     /// um binario mudo nao vira caso. E o caso de dentro roda pelo binario,
     /// com o filtro do framework, a partir do `json-v1` de um ctest falso.
     #[test]
-    #[cfg(unix)]
+    #[cfg_attr(
+        windows,
+        ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
+    )]
     fn binaries_are_asked_for_their_cases_and_one_case_runs_by_the_binary() {
         use super::{Framework, SEP, discover_inner_cases, list_cases, run_inner_case};
         use crate::test::TestEvent;

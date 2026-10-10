@@ -62,6 +62,10 @@ fn status(core: &mut Core) -> Value {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv) e' da W7 (60 §3.3)"
+)]
 fn status_tells_the_truth_in_the_three_states() {
     let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("status");
@@ -181,6 +185,10 @@ fn create_environment_refuses_with_a_reason_what_the_machine_lacks() {
 /// passa a apontar o ambiente novo. O mesmo `uv` falso, mandado nao criar o
 /// interpretador, produz `success: false` mesmo saindo com 0.
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv) e' da W7 (60 §3.3)"
+)]
 fn the_job_runs_the_detected_uv_and_the_context_follows_the_new_environment() {
     let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("job");
@@ -297,6 +305,10 @@ fn the_job_runs_the_detected_uv_and_the_context_follows_the_new_environment() {
 /// status passa a dizer onde os stubs estao. Sem sugestao nem pedido, recusa
 /// dizendo o que fixar.
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv) e' da W7 (60 §3.3)"
+)]
 fn the_board_stubs_are_suggested_installed_into_typings_and_reported() {
     let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("stubs");

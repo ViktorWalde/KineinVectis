@@ -264,6 +264,9 @@ mod tests {
     }
 
     #[test]
+    // De Unix aqui: link simbolico no Windows pede privilegio (Modo de
+    // Desenvolvedor); la', a recusa de ponto de reparse e' provada com juncao, no
+    // `platform::windows` (60 §3.3, W2b).
     #[cfg(unix)]
     fn copy_directory_refuses_descendant_and_nested_symlink() {
         let root = temp_root("copy-directory");
@@ -332,6 +335,9 @@ mod tests {
     }
 
     #[test]
+    // De Unix aqui: link simbolico no Windows pede privilegio (Modo de
+    // Desenvolvedor); la', a recusa de ponto de reparse e' provada com juncao, no
+    // `platform::windows` (60 §3.3, W2b).
     #[cfg(unix)]
     fn rename_does_not_replace_dangling_symlink() {
         let root = temp_root("rename-symlink-collision");

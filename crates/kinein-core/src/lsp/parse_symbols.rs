@@ -140,6 +140,8 @@ pub(super) fn workspace_symbols(result: &Value) -> Vec<LspSymbolInfo> {
 mod tests {
     use serde_json::json;
 
+    use super::super::uri::{demo_path, demo_uri};
+
     use super::{document_symbols, workspace_symbols};
 
     #[test]
@@ -197,7 +199,7 @@ mod tests {
                 "kind": 23,
                 "containerName": "geometria",
                 "location": {
-                    "uri": "file:///w/src/lib.rs",
+                    "uri": demo_uri("src/lib.rs"),
                     "range": { "start": { "line": 2, "character": 11 },
                                "end": { "line": 2, "character": 16 } },
                 },
@@ -214,7 +216,7 @@ mod tests {
         assert_eq!(symbols.len(), 1);
         assert_eq!(symbols[0].name, "Ponto");
         assert_eq!(symbols[0].kind, "struct");
-        assert_eq!(symbols[0].path, "/w/src/lib.rs");
+        assert_eq!(symbols[0].path, demo_path("src/lib.rs"));
         assert_eq!(symbols[0].line, 3);
         assert_eq!(symbols[0].column, 12);
         assert_eq!(symbols[0].container.as_deref(), Some("geometria"));

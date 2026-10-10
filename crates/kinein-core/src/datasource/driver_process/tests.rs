@@ -275,13 +275,15 @@ fn a_helper_in_the_adapter_group_does_not_outlive_the_shutdown() {
     )
     .expect("handshake");
     let pid = std::fs::read_to_string(&pid_file).unwrap();
-    let proc_dir = PathBuf::from(format!("/proc/{}", pid.trim()));
-    assert!(proc_dir.exists(), "o auxiliar devia estar vivo");
+    assert!(crate::process_alive(&pid), "o auxiliar devia estar vivo");
     let (confirmed, closed) = driver.shutdown(&context("shutdown"));
     assert!(confirmed && closed.collected(), "{closed:?}");
     let deadline = Instant::now() + Duration::from_secs(2);
-    while proc_dir.exists() && Instant::now() < deadline {
+    while crate::process_alive(&pid) && Instant::now() < deadline {
         thread::sleep(Duration::from_millis(10));
     }
-    assert!(!proc_dir.exists(), "o auxiliar sobreviveu ao encerramento");
+    assert!(
+        !crate::process_alive(&pid),
+        "o auxiliar sobreviveu ao encerramento"
+    );
 }

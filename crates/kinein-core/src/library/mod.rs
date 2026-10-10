@@ -374,6 +374,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "W6: os caminhos de biblioteca sao os de Linux (/usr/lib/cmake); os do Windows (vcpkg, Qt, Visual Studio) sao da W6 (60 §3.3)"
+    )]
     fn search_paths_are_absolute() {
         for caminho in availability::search_paths() {
             assert!(

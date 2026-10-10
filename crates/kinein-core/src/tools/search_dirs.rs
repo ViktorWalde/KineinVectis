@@ -56,19 +56,19 @@ pub fn extra_search_dirs(
 ) -> Vec<PathBuf> {
     let mut dirs = Vec::new();
     // 1. xpm: @xpack-dev-tools/<nome>/<versao>/.content/bin
-    let store = xpacks_store.map_or_else(|| home.join(".local/xPacks"), Path::to_path_buf);
+    let store = xpacks_store.map_or_else(|| home.join(".local").join("xPacks"), Path::to_path_buf);
     for versao in subpastas_ate(&store.join("@xpack-dev-tools"), 2) {
-        push_existing(&mut dirs, versao.join(".content/bin"));
+        push_existing(&mut dirs, versao.join(".content").join("bin"));
         push_existing(&mut dirs, versao.join("bin"));
     }
     // 2. ESP-IDF: tools/<nome>/<versao>/<nome>/bin
-    let esp = idf_tools.map_or_else(|| home.join(".espressif/tools"), Path::to_path_buf);
+    let esp = idf_tools.map_or_else(|| home.join(".espressif").join("tools"), Path::to_path_buf);
     for pasta in subpastas_ate(&esp, 3) {
         push_existing(&mut dirs, pasta.join("bin"));
     }
     // 3. o que rustup/cargo/pipx instalam para o usuario
-    push_existing(&mut dirs, home.join(".cargo/bin"));
-    push_existing(&mut dirs, home.join(".local/bin"));
+    push_existing(&mut dirs, home.join(".cargo").join("bin"));
+    push_existing(&mut dirs, home.join(".local").join("bin"));
     // 4. tarballs desempacotados em /opt
     for pasta in subpastas_ate(Path::new("/opt"), 1) {
         push_existing(&mut dirs, pasta.join("bin"));

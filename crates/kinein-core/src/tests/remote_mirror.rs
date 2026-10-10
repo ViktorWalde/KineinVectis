@@ -130,7 +130,10 @@ fn abrir_espelho(c: &mut Cenario) -> PathBuf {
 }
 
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("abrir");
@@ -229,7 +232,10 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
 }
 
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn a_remote_folder_with_spaces_is_accepted_and_relative_paths_are_not() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("espaco");
@@ -265,7 +271,10 @@ fn a_remote_folder_with_spaces_is_accepted_and_relative_paths_are_not() {
 }
 
 #[test]
-#[cfg(unix)]
+#[cfg_attr(
+    windows,
+    ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
+)]
 fn saving_in_a_mirror_pushes_and_sync_moves_both_ways() {
     let _serial = crate::serializar_executaveis();
     let mut c = cenario("sync");

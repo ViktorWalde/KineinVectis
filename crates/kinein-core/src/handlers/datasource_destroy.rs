@@ -176,10 +176,7 @@ impl Core {
         command.args(["rm", "-f", name]);
         let shown = format!(
             "{} rm -f {name}",
-            motor
-                .binary
-                .file_name()
-                .map_or_else(String::new, |n| n.to_string_lossy().to_string())
+            crate::platform::program_label(&motor.binary)
         );
         let mostrado = shown.clone();
         let job_id = jobs.spawn(
