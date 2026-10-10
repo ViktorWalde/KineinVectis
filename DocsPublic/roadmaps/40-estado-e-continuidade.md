@@ -24,13 +24,14 @@
 > defeitos de produto do Windows: o colar de arquivos e o escopo do preview
 > de Markdown.
 >
+> A W4 também está feita (40.7 §7.268): `scripts\verificar-windows.ps1` é o
+> gate do Windows. Hoje ele só fica vermelho no `cargo test`, que é a W2b.
+>
 > **Para continuar:**
 >
-> 1. Leia o 60 §3.4, o roteiro de trabalho: os dois checkouts, os comandos de
->    verificação do Windows e do Linux, e as armadilhas.
-> 2. Faça a W4, o `scripts/verificar-windows.ps1`, que transforma o §3.4 em
->    comando.
-> 3. Depois, na ordem do 60 §3.3: W5, W2b, W6–W12. O trabalho acontece no branch `porte-windows`, no clone
+> 1. Leia o 60 §3.4, o roteiro de trabalho e as armadilhas.
+> 2. Rode `scripts\verificar-windows.ps1` para ver o estado.
+> 3. Siga a ordem do 60 §3.3: W5 (o crate de FFI, D7), W2b e W6–W12. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >

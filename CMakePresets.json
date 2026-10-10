@@ -13,6 +13,10 @@
       "name": "windows-msvc-debug"
     },
     {
+      "configurePreset": "windows-msvc-dev",
+      "name": "windows-msvc-dev"
+    },
+    {
       "configurePreset": "windows-msvc-release",
       "name": "windows-msvc-release"
     }
@@ -84,6 +88,23 @@
       "displayName": "Windows MSVC Debug",
       "generator": "Ninja",
       "name": "windows-msvc-debug"
+    },
+    {
+      "binaryDir": "${sourceDir}/build/windows-msvc-dev",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "KINEIN_ENABLE_SANITIZERS": "OFF"
+      },
+      "condition": {
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows",
+        "type": "equals"
+      },
+      "displayName": "Windows MSVC Dev (debug sem ASan, para o dia a dia)",
+      "generator": "Ninja",
+      "name": "windows-msvc-dev"
     },
     {
       "binaryDir": "${sourceDir}/build/windows-msvc-release",

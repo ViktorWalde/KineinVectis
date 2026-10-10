@@ -360,53 +360,40 @@ separa o domínio da paridade com o Linux.
 11. **W12:** o aceite do autor com mouse e teclado. O controle da tela pelo
     agente pede o "Computer use" ligado no app.
 
-### 3.4 Como trabalhar no porte hoje (até a W4)
+### 3.4 Como trabalhar no porte
 
-Este é o roteiro que a sessão de 2026-10-09 usou. A W4 o transforma no
-`scripts/verificar-windows.ps1`; até lá, ele mora aqui.
+**Onde.** O trabalho é no Windows, em `C:\dev\KineinVectis`, branch
+`porte-windows`. O Linux de referência é o Fedora 44 do WSL2 (usuário `hugh`,
+`sudo` sem senha). O CMake acha o Qt pelo `CMAKE_PREFIX_PATH` do usuário, que
+aponta para `C:\Qt\6.12.0\msvc2022_64`.
 
-**Os dois checkouts.** O trabalho é no Windows, em `C:\dev\KineinVectis`,
-branch `porte-windows`. O Linux de referência é o Fedora 44 do WSL2, em
-`~/dev/KineinVectis` (usuário `hugh`, `sudo` sem senha). O Fedora não tem
-trabalho próprio; ele recebe o estado do Windows assim:
-
-```text
-cd ~/dev/KineinVectis
-git reset -q --hard && git clean -q -fd -- crates ui scripts DocsPublic
-git fetch -q /mnt/c/dev/KineinVectis porte-windows
-git switch -q -C porte-windows FETCH_HEAD
-git -c core.filemode=false -C /mnt/c/dev/KineinVectis diff --binary HEAD | git apply
-# e os arquivos novos ainda nao commitados (git ls-files --others), copiados a mao
-```
-
-**Verificar no Windows** (PowerShell, no ambiente do Visual Studio):
+**Verificar (desde a W4).** Um comando, no PowerShell, da raiz do checkout:
 
 ```text
-& 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 -SkipAutomaticLocation
-cargo clippy --workspace --all-targets          # zero aviso
-cargo test -p kinein-core --no-fail-fast         # W2b: ainda ha' falhas, ver 40.7
-cmake --preset windows-msvc-debug
-cmake --build --preset windows-msvc-debug        # /W4 /WX /sdl: zero aviso
-ctest --test-dir build\windows-msvc-debug --output-on-failure --timeout 120
+scripts\verificar-windows.ps1           # Windows nativo + o lado agnostico no WSL
+scripts\verificar-windows.ps1 -Foto     # + a foto da janela real
+scripts\verificar-windows.ps1 -Linux    # + o verificar.sh no espelho do WSL
 ```
 
-O `CMAKE_PREFIX_PATH` do usuário já aponta para `C:\Qt\6.12.0\msvc2022_64`.
+O catálogo do que cada etapa mede está no `contribuindo/04`. O espelho do
+`-Linux` mora em `~/.local/share/kinein-vectis/espelho-windows`, dentro do WSL,
+e é descartável. No Fedora, o `verificar.sh` para na etapa do idioma (o
+dicionário do sistema, 40.7 §7.262). Formate o C++ com o `clang-format` do
+Fedora: o Windows ainda não tem o LLVM (W6).
 
-**Abrir a IDE no Windows.** Rode da raiz do checkout, onde o core é achado
-em `target\debug`. Antes, ponha no `PATH` o `bin` do Qt e a pasta do `cl`, que
-tem o runtime do ASan do Debug. Para a foto da janela:
-`KINEIN_SCREENSHOT=<png>`, `KINEIN_SCREENSHOT_DELAY_MS=7000`,
-`KINEIN_SCREENSHOT_SIZE=1600x1000` e `KINEIN_PERF_EXIT=1`. Depois:
-`build\windows-msvc-debug\ui\kinein-vectis.exe C:\dev\KineinVectis`. O log de
-avisos da UI fica em `%LOCALAPPDATA%\cache\kinein-vectis\logs`.
+**Os presets do Windows.**
 
-**Verificar no Linux.** Rode o `./scripts/verificar.sh --rapido`. No Fedora ele
-para na etapa do idioma, por causa do dicionário do sistema (40.7 §7.262).
-As etapas seguintes rodam uma a uma, como o `verificar.sh` as chama: as
-`verificar-qml-*`, `fiacao-ipc`, `exercitacao`, `embarcado`, `python-debug`,
-`clangd-cross`, `atalhos`, `docs`, `python3 scripts/module_map.py --check`,
-`links-docs`, `bash scripts/verificar-arquitetura.sh`, `transicao-workspace`
-e `qml-logica`. Formate o C++ com o `clang-format` do Fedora antes.
+- `windows-msvc-debug`: o do gate, com o MSVC estrito e o ASan. Com ASan, a
+  UI leva perto de um minuto para carregar o QML e subir o core (52 s de CPU,
+  medidos em 2026-10-09).
+- `windows-msvc-dev`: o debug do dia a dia, sem ASan, como o `dev-local` do
+  Linux.
+- `windows-msvc-release`.
+
+**Abrir a IDE.** Rode da raiz do checkout, onde o core é achado em
+`target\debug`. Antes, ponha no `PATH` o `bin` do Qt e, no preset com ASan, a
+pasta do `cl`, que tem o runtime dele. O log de avisos da UI fica em
+`%LOCALAPPDATA%\cache\kinein-vectis\logs`.
 
 **Armadilhas medidas nesta sessão:**
 
