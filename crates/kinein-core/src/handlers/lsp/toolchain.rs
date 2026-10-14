@@ -19,7 +19,11 @@ impl Core {
         let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
         let args = toolchain.clangd_args();
         let refs: Vec<&str> = args.iter().map(String::as_str).collect();
-        self.use_language_server_command("cpp", "clangd", &refs);
+        let command = self
+            .detector
+            .find_in_path("clangd")
+            .map_or_else(|| "clangd".to_owned(), |path| path.display().to_string());
+        self.use_language_server_command("cpp", &command, &refs);
         self.configure_rust_lsp_from_toolchain(toolchain.target_triple());
     }
 

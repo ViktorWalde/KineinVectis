@@ -4,7 +4,7 @@
 > à noite. Cada fatia ainda tem desenho próprio antes do código, no documento
 > dono, como sempre.
 
-> **EM VIGOR de novo desde 2026-10-09** (40.7 §7.260). No mesmo dia o autor
+> **Histórico de 2026-10-09** (40.7 §7.260). No mesmo dia o autor
 > o suspendeu ("não vou mais para ambiente Windows no momento", §7.258) e o
 > retomou: "por eu tocar um projeto de integração TA/TI vou precisar estar
 > usando Windows 11 Pro". O ambiente de desenvolvimento passa a ser o
@@ -17,16 +17,23 @@
 > traz a medição feita no Windows; o §3, as decisões D1–D4 e as fatias
 > W1–W5; o §6, o ponto de partida da organização.
 
+> **Decisão posterior, 2026-10-14:** o autor voltará ao Linux, com Ubuntu
+> 26.04 LTS, após fechar a W6b4 neste checkout. A compatibilidade Windows
+> restante será retomada em VM. A prioridade passa a ser o fechamento da
+> 0.3.9, na ordem do [59](59-fechamento-da-0.3.9.md) §2. O §1 abaixo guarda
+> a decisão anterior como histórico; a ordem vigente está no
+> [40](40-estado-e-continuidade.md).
+
 ## 1. A decisão
 
-O autor está migrando o sistema operacional de desenvolvimento para Windows,
-por necessidade de um projeto que pode se tornar fonte de renda. Nas palavras
-dele: "nesse meio tempo podemos adaptar a IDE para multiplataforma e usá-la no
+Em 2026-10-08, o autor estava migrando o sistema operacional de desenvolvimento
+para Windows, por necessidade de um projeto que pode se tornar fonte de renda.
+Nas palavras dele: "nesse meio tempo podemos adaptar a IDE para multiplataforma e usá-la no
 Windows, finalizando a 0.3.9, vamos para a 0.4.0 e, finalizando ela, vamos ter
 uma 'special edition' onde vamos buscar resolver o problema/atrito do Windows
 e WSL2 com a IDE, para parte de embarcados e comunicação USB".
 
-A ordem:
+A ordem decidida então:
 
 1. **Adaptar a IDE para rodar no Windows** (o porte, §3), o suficiente para o
    autor continuar desenvolvendo a própria IDE nela, sem perder o Linux: o
@@ -53,7 +60,7 @@ seguir assim com essa rota eficiente que me apontou e recomendou também").
 Sem prazo: "mesmo que atrase não precisamos ter pressa. Não fiz nenhuma
 promessa de entrega para 0.4".
 
-Isto revê a decisão antiga de "alvo Linux nativo"
+Naquele momento, isso revia a decisão antiga de "alvo Linux nativo"
 ([47](47-estrutura-da-v0.3.md) §10.2, [57](57-mapa-de-versoes-ate-a-1.0.md)).
 Rust, Qt, o ritual e os gates continuam (decisão do autor de 2026-10-08,
 40.7 §7.241).
@@ -310,9 +317,9 @@ o Linux.
 | Projeto, árvore, arquivos | abre, lista, copia, renomeia, apaga (W1, W2a); a árvore de processos morre com o Job Object (W5); a junção é recusada como link (W2b); cancelar um job mata a árvore, nos dois sistemas (W2c) | a lixeira do Windows sem teste próprio |
 | Editor, índice, busca | o índice lê o projeto; os testes do índice e do observador passam no Windows (W2b) | o uso real (W12) |
 | Terminal | abre `pwsh` no ConPTY e responde às perguntas do terminal, sem o que o ConPTY não começava; os testes passam no Windows (W2b) | o uso real com mouse e teclado (W12) |
-| Build C/C++ | o core acha o Visual Studio, roda o CMake no ambiente dele com o Ninja e a CDB, e o Run executa o `.exe` (W6a) | o LLVM (`clangd`, `clang-format`, `clang-tidy`) e a qualidade (W6b); o `winget`, os kits e os caminhos de biblioteca (W6c) |
+| Build C/C++ | o core acha o Visual Studio, roda o CMake no ambiente dele com o Ninja e a CDB, e o Run executa o `.exe` (W6a); a CDB, o modelo CMake, o rigor e o LLVM instalado funcionam no Windows (W6b) | o `winget` no Setup, os kits e os caminhos de biblioteca (W6c) |
 | Build Rust, testes, Git, Run | Cargo detectado; Git funciona, e os testes fixam o `core.autocrlf`; o Run roda pelo PowerShell, e o `run.script` roda `.sh` no bash do Git, `.ps1`, `.cmd` e `.bat` (W2b); o Run de um projeto CMake acha o `.exe` (W6a) | — |
-| LSP | busca de executável com `PATHEXT` (W2a); a URI `file:///C:/...` certa (W2b) | provar `clangd`, `rust-analyzer`, `basedpyright`, `qmlls` e `ruff` de verdade no Windows |
+| LSP | busca de executável com `PATHEXT` (W2a); a URI `file:///C:/...` certa (W2b); `clangd` real sobre a CDB do MSVC, com diagnósticos e consultas (W6b4) | provar `rust-analyzer`, `basedpyright`, `qmlls` e `ruff` de verdade no Windows |
 | Depuração | — | um adaptador DAP no Windows (`lldb-dap`, CodeLLDB, `gdb` do MSYS2), D10 |
 | Python | o `python3` do `PATHEXT` cai no atalho da Store | `python`/`py`, venv com `Scripts\`, `debugpy` |
 | Banco | SQLite, PostgreSQL por TCP, MongoDB | os consoles (stub na W1) com garantia equivalente; ODBC do Windows |
@@ -462,7 +469,8 @@ do fim da W2b (40.7 §7.270):
      - o `clang-format` e o `clang-tidy` em `VC\Tools\Llvm\x64\bin`, sem
        `clangd` e sem `clang-cl`.
 
-     Não há LLVM avulso. Sem o ambiente do `vcvars64.bat`, o `cl` não acha o
+     Na medição de 2026-10-10 não havia LLVM avulso; o autor instalou o 23.1.3
+     em 2026-10-14 (W6b4). Sem o ambiente do `vcvars64.bat`, o `cl` não acha o
      `INCLUDE` nem o `LIB`. O gerador padrão do CMake no Windows é o do
      Visual Studio, que é multiconfiguração e NÃO gera o
      `compile_commands.json`, a CDB de que o índice e o `clangd` dependem.
@@ -513,9 +521,10 @@ do fim da W2b (40.7 §7.270):
          pelo CMake de verdade num projeto pequeno. O modelo lê o alvo, o
          `.exe`, as fontes e o grupo de compilação do MSVC. São os três
          substitutos do `cmake_model`;
-       - **W6b4, o `clangd`:** o VS daqui não o traz. A prova pede o LLVM
-         instalado (`winget install LLVM.LLVM`), e instalar é decisão do
-         autor.
+       - **W6b4, o `clangd`** (feita em 2026-10-14, 40.7 §7.277): o autor
+         instalou o LLVM 23.1.3. O detector acha `ProgramFiles\LLVM\bin` e os
+         links do winget, e o LSP executa o caminho detectado. A prova usa o
+         `clangd` real sobre a CDB do MSVC (60 §3.6).
      - **W6c, Setup e kits:** o `winget` no catálogo do Setup, os kits e as
        pastas de toolchain do Windows, os caminhos de biblioteca (vcpkg, o
        Qt do `CMAKE_PREFIX_PATH`, o Visual Studio) e o Make sem `bear`.
@@ -534,7 +543,8 @@ do fim da W2b (40.7 §7.270):
 
 ### 3.4 Como trabalhar no porte
 
-**Onde.** O trabalho é no Windows, em `C:\dev\KineinVectis`, branch
+**Onde (para retomar o porte na VM).** O trabalho desta rodada foi no Windows,
+em `C:\dev\KineinVectis`, branch
 `porte-windows`. O Linux de referência é o Fedora 44 do WSL2 (usuário `hugh`,
 `sudo` sem senha). O CMake acha o Qt pelo `CMAKE_PREFIX_PATH` do usuário, que
 aponta para `C:\Qt\6.12.0\msvc2022_64`.
@@ -549,10 +559,9 @@ scripts\verificar-windows.ps1 -Linux    # + o verificar.sh no espelho do WSL
 
 O catálogo do que cada etapa mede está no `contribuindo/04`. O espelho do
 `-Linux` mora em `~/.local/share/kinein-vectis/espelho-windows`, dentro do WSL,
-e é descartável. No Fedora, o `verificar.sh --rapido` passa inteiro desde a
-W5 (40.7 §7.269); os 6 itens NÃO PROVADOS são ferramentas ausentes no WSL.
-Formate o C++ com o `clang-format` do Fedora: o Windows ainda não tem o LLVM
-(W6).
+e é descartável. Na prova da W6b3, o `verificar.sh --rapido` passou no
+Fedora; cinco itens ficaram NÃO PROVADOS por ferramentas ausentes no WSL
+(40.7 §7.276). O Windows passou a ter LLVM 23.1.3 na W6b4 (§3.6).
 
 **Os presets do Windows.**
 
@@ -641,6 +650,59 @@ continuam e também rodam no Windows. A W6 ficou com 7 adiados. O bloqueio
 de dependência encontrado no gate foi corrigido separadamente (§7.275).
 O roteiro de verificação desta máquina usa `RUST_TEST_THREADS=4` no Windows;
 os dois testes que apresentaram timeouts e seus limites foram preservados.
+
+### 3.6 W6b4 — LLVM instalado e clangd real sobre a CDB do MSVC (2026-10-14)
+
+**Autorização:** o autor instalou o LLVM pelo comando indicado e pediu para
+seguir em 2026-10-14. Medido: `C:\Program Files\LLVM\bin\clangd.exe` é o
+23.1.3, alvo `x86_64-pc-windows-msvc`. Esta sessão ainda tem o `PATH` anterior
+à instalação. O detector só acrescenta o LLVM do VS, que não traz clangd;
+`configure_clangd_from_toolchain` passa o nome `clangd`, mesmo quando o
+detector encontrou a ferramenta fora do `PATH`.
+
+**Desenho antes do código:**
+
+- **`tools/search_dirs.rs` e `tools/mod.rs`:** estender o mecanismo de busca
+  existente com `ProgramFiles\LLVM\bin` e os links de comandos do winget
+  (`LOCALAPPDATA\Microsoft\WinGet\Links`). Entram depois do `PATH` e das
+  toolchains gerenciadas; o LLVM avulso precede o do VS. A função que recebe
+  essas duas raízes é pura e tem provas com diretórios temporários. A busca
+  fixa dos testes continua isolada do ambiente da máquina.
+- **`handlers/lsp/toolchain.rs`:** resolver o executável pelo detector, como
+  Python e QML já fazem, e entregar esse caminho ao LSP com os argumentos do
+  kit. Sem ferramenta detectada, manter o nome para o erro estruturado.
+- **`tests/clangd_windows.rs`:** configurar e compilar pelo core um projeto
+  C++20/MSVC com define e include próprios, `<vector>` e `<windows.h>`.
+  Abrir pelo Core/LSP real, conferir diagnóstico sem erro, hover, navegação
+  e completion; enviar um buffer com erro e depois repará-lo, observando
+  ambos os diagnósticos. O cenário usa o detector de ambiente com o `PATH`
+  ainda sem LLVM e não injeta o caminho do servidor. O ambiente do VS no
+  spawn só será alterado se a prova real mostrar necessidade.
+- **Provas:** regressões antes da correção, mutações da busca e da seleção
+  do executável, gate Windows com quatro threads e gate Linux no espelho.
+  O protocolo e a UI permanecem iguais. Setup, kits e os sete adiados W6
+  restantes continuam na W6c.
+
+Referências oficiais: [instalação do clangd](https://clangd.llvm.org/installation)
+e [cabeçalhos de sistema](https://clangd.llvm.org/guides/system-headers).
+O servidor original é integrado pelo LSP existente; não se cria outro
+cliente, executor de processo ou índice.
+
+**Medido no Windows:** o projeto C++20 foi compilado pelo core com MSVC e a
+CDB gerada contém `cl.exe`, `-DAPP=1` e o include do projeto. O `clangd` 23.1.3
+abriu a CDB, achou `<vector>`, `<windows.h>` e `<app.h>` e devolveu diagnóstico
+limpo, definição em `app.h`, hover em `answer`, completion de `front` e o erro
+de `missing_name`; ao reparar o buffer, os diagnósticos ficaram vazios. Não
+foi preciso alterar o ambiente do processo LSP. A mutação para executar apenas
+`clangd` reprovou com “não foi encontrado no PATH”; inverter a ordem LLVM
+avulso/winget reprovou o teste do detector. Ambas foram restauradas.
+
+O gate `scripts\verificar-windows.ps1 -Linux`, com quatro threads de teste no
+Windows, passou: 920 testes do core no Windows (73 adiados), 1006 no espelho
+Fedora, sete testes C++ em cada sistema e smoke nativo. Cinco provas de
+ambiente continuam NÃO PROVADAS no Fedora por ferramentas ausentes (40.7
+§7.277). O porte restante fica para a VM, conforme a decisão de 2026-10-14
+registrada no início deste plano.
 
 ## 4. A edição especial (depois da 0.4.0)
 

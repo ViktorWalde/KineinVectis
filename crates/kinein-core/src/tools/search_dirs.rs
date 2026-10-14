@@ -80,6 +80,27 @@ pub fn extra_search_dirs(
     dirs
 }
 
+/// Instalacoes usuais do LLVM no Windows, fora do PATH da sessao atual.
+/// A lista e' pura: o chamador fornece as raizes lidas do ambiente.
+#[cfg(any(windows, test))]
+#[must_use]
+pub fn windows_llvm_dirs(
+    program_files: Option<&Path>,
+    local_app_data: Option<&Path>,
+) -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    if let Some(root) = program_files {
+        push_existing(&mut dirs, root.join("LLVM").join("bin"));
+    }
+    if let Some(root) = local_app_data {
+        push_existing(
+            &mut dirs,
+            root.join("Microsoft").join("WinGet").join("Links"),
+        );
+    }
+    dirs
+}
+
 /// Onde as distros poem as ferramentas do Qt 6 (`qmlls`, `qmlformat`), fora do
 /// `PATH`: Arch, Debian/Ubuntu por arquitetura e Fedora.
 const QT_TOOL_DIRS: [&str; 4] = [

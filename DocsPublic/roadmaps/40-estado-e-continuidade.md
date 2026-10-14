@@ -1,11 +1,14 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **HANDOFF NO WINDOWS 11 PRO (2026-10-14). Leia isto primeiro.** O
-> desenvolvimento passou para o Windows 11 Pro (40.7 §7.260), e o autor revisou
-> a ordem (§7.261). Agora ela é: **o porte da IDE para o Windows → a
-> organização da documentação, e da arquitetura se a medição pedir → fechar a
-> 0.3.9 → a 0.4 → a edição especial** ([60](60-windows-e-edicao-especial.md)
-> §1).
+> **HANDOFF PARA O RETORNO AO LINUX (2026-10-14). Leia isto primeiro.** O autor
+> vai formatar a máquina e desenvolver no **Ubuntu 26.04 LTS**. A W6b4 é a
+> última fatia do porte tratada neste checkout Windows; o restante da
+> compatibilidade Windows será feito depois numa VM. A próxima frente é
+> **fechar a 0.3.9**, começando pela 16b (containers), depois as provas do
+> Banco (15) e o pente fino (16), conforme o [59](59-fechamento-da-0.3.9.md)
+> §2. A organização documental e a edição especial permanecem planejadas,
+> sem bloquear a 0.3.9. A ordem anterior, de 2026-10-09, está registrada no
+> [60](60-windows-e-edicao-especial.md) §1.
 >
 > **Onde está o porte:** medido (60 §2.1) e desenhado (60 §3: as decisões
 > D1–D6 e as fatias W1–W5). **Feitas:**
@@ -20,7 +23,7 @@
 > no 60 §3.3.
 >
 > **Onde parou (2026-10-14):** as fatias W1, W2a, W2b, W2c, W3a, W3b, W4,
-> W5, W6a, W6b1, W6b2 e W6b3 estão feitas (40.7 §7.261 a §7.276).
+> W5, W6a, W6b1, W6b2, W6b3 e W6b4 estão feitas (40.7 §7.261 a §7.277).
 > O `scripts\verificar-windows.ps1`
 > ficou todo verde pela primeira vez depois da W2b: testes Rust, o preset
 > estrito do MSVC com ASan, `ctest`, o smoke, a foto e o agnóstico no WSL. O
@@ -32,7 +35,12 @@
 > meses até terminar o porte, organizar a documentação (60 §6) e fechar a
 > 0.3.9.
 >
-> **Para continuar:**
+> **Para retomar após instalar o Ubuntu:** verificar o checkout e as
+> ferramentas/Qt reais da nova máquina, rodar `scripts/verificar.sh --rapido`
+> e seguir o 59 §2 pela 16b. A validação feita no Fedora 44 do WSL documenta
+> este checkout, não substitui a prova no Ubuntu.
+>
+> **Histórico do porte para quando voltar à VM:**
 >
 > 1. Leia o 60 §3.4, o roteiro de trabalho e as armadilhas.
 > 2. Rode `scripts\verificar-windows.ps1` para ver o estado.
@@ -48,18 +56,20 @@
 >    em quatro partes. A W6b1 (a CDB do MSVC, 40.7 §7.273) e a W6b2 (o
 >    `clang-tidy` e o rigor de verdade no Windows, 40.7 §7.274) estão feitas.
 >    A W6b3 também está feita (40.7 §7.276): os três substitutos do modelo
->    usam o reply e a CDB reais do MSVC. A próxima é a W6b4 (o `clangd`, que
->    espera o autor decidir instalar o LLVM), depois a W6c e as
->    W7–W12. O trabalho acontece no branch `porte-windows`, no clone
+>    usam o reply e a CDB reais do MSVC. A W6b4 está feita (40.7 §7.277): o
+>    autor instalou LLVM 23.1.3 e o `clangd` real foi provado sobre a CDB do
+>    MSVC, com diagnósticos e consultas. O porte pausado continua pela W6c,
+>    depois as W7–W12. Este checkout está no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
 >
-> **Última prova (2026-10-14):** `RUST_TEST_THREADS=4` no Windows e
-> `scripts\verificar-windows.ps1 -Linux` verde. A concorrência padrão
-> encontrou timeouts em dois testes existentes; esses testes e seus limites
-> de tempo foram preservados (40.7 §7.276). No Linux, cinco provas de ambiente seguem
-> NÃO PROVADAS por ferramentas ausentes. O bloqueio do `rustls` foi corrigido
-> separadamente (40.7 §7.275).
+> **Última prova (W6b4, 2026-10-14):** com `RUST_TEST_THREADS=4`,
+> `scripts\verificar-windows.ps1 -Linux` terminou verde: 920 testes do core
+> passaram no Windows (73 adiados), 1006 no Fedora do WSL e sete testes C++ em
+> cada lado. Cinco provas de ambiente seguem NÃO PROVADAS por ferramentas
+> ausentes no WSL (40.7 §7.277). A concorrência padrão já tinha encontrado
+> timeouts em dois testes existentes; seus limites foram preservados (§7.276).
+> A prova no Ubuntu 26.04 LTS ainda depende da instalação naquela máquina.
 >
 > **Último commit no Arch:** o 9a.3 (40.7 §7.259), o campo "Adaptador:
 > Interno · O da IDE" no formulário do SQLite; com ele o 9a está fechado, e o

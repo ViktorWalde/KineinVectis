@@ -20,6 +20,12 @@
 > isso substitui o foco 6.10.2 acima para as próximas provas (40.7 §7.240).
 > Continua valendo: Qt 6.4 fora da validação, sem AppImage neste fechamento.
 
+> **Retomada decidida em 2026-10-14:** depois de fechar a W6b4 do porte
+> Windows, o autor voltará ao Linux em Ubuntu 26.04 LTS e seguirá com esta
+> 0.3.9. A próxima fatia é a 16b (containers), seguida de 15 e 16 (§2).
+> Versões e disponibilidade de Qt e ferramentas no Ubuntu serão medidas após
+> a instalação; as medições anteriores do Arch e do Fedora/WSL são históricas.
+
 ## 1. A decisão (o autor, 2026-10-03, noite)
 
 A série 0.3.6–0.3.9 reorganizou a casca da IDE. Ela **não se encerra** no estado

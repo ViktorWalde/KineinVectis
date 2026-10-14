@@ -5,6 +5,8 @@
 
 mod build;
 mod cargo;
+#[cfg(windows)]
+mod clangd_windows;
 mod cmake;
 mod cmake_model;
 #[cfg(windows)]

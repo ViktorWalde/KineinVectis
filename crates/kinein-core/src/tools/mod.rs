@@ -15,6 +15,8 @@ mod known;
 pub mod search_dirs;
 
 pub use search_dirs::install_root;
+#[cfg(windows)]
+use search_dirs::windows_llvm_dirs;
 use search_dirs::{extra_search_dirs, installed_bin_dirs};
 
 use std::{
@@ -87,8 +89,13 @@ impl ToolDetector {
             let idf = env::var_os("IDF_TOOLS_PATH").map(PathBuf::from);
             extra_search_dirs(home, xpacks.as_deref(), idf.as_deref())
         });
-        // No Windows, o CMake, o Ninja e o LLVM que o Visual Studio traz, fora
-        // do `PATH` (60 §3.3, W6a); fora dele, nada.
+        // O LLVM avulso/winget precede o LLVM parcial do Visual Studio.
+        #[cfg(windows)]
+        extra_dirs.extend(windows_llvm_dirs(
+            env::var_os("ProgramFiles").as_deref().map(Path::new),
+            env::var_os("LOCALAPPDATA").as_deref().map(Path::new),
+        ));
+        // No Windows, CMake, Ninja e LLVM do Visual Studio fora do PATH.
         extra_dirs.extend(crate::msvc::tool_dirs());
         Self {
             search_path: env::var_os("PATH"),
@@ -320,6 +327,50 @@ mod tests {
     use kinein_protocol::ToolStatus;
 
     use super::{KNOWN_TOOLS, ToolDetector, ToolSpec};
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_llvm_locations_exist_in_order_and_find_the_installed_clangd() {
+        let root = temp_bin_dir("windows-llvm-locations");
+        let program_files = root.join("Program Files");
+        let local = root.join("Local AppData");
+        let llvm_bin = program_files.join("LLVM").join("bin");
+        let command_links = local.join("Microsoft").join("WinGet").join("Links");
+        fs::create_dir_all(&llvm_bin).unwrap();
+        fs::create_dir_all(&command_links).unwrap();
+        let dirs = super::search_dirs::windows_llvm_dirs(Some(&program_files), Some(&local));
+        assert_eq!(dirs, vec![llvm_bin.clone(), command_links.clone()]);
+
+        let expected = crate::write_executable(llvm_bin.join("clangd"), "#!/bin/sh\nexit 0\n");
+        let linked_tool =
+            crate::write_executable(command_links.join("clangd"), "#!/bin/sh\nexit 0\n");
+        let detector = ToolDetector {
+            search_path: Some(std::ffi::OsString::new()),
+            extra_dirs: dirs,
+            install_root: None,
+        };
+        assert_eq!(detector.find_in_path("clangd"), Some(expected));
+        assert_eq!(
+            ToolDetector {
+                extra_dirs: vec![command_links],
+                ..detector.clone()
+            }
+            .find_in_path("clangd"),
+            Some(linked_tool)
+        );
+
+        let user_bin = root.join("user-bin");
+        fs::create_dir_all(&user_bin).unwrap();
+        let user_tool = crate::write_executable(user_bin.join("clangd"), "#!/bin/sh\nexit 0\n");
+        assert_eq!(
+            ToolDetector {
+                search_path: Some(std::env::join_paths([user_bin]).unwrap()),
+                ..detector
+            }
+            .find_in_path("clangd"),
+            Some(user_tool)
+        );
+    }
 
     const FAKE_SPEC: ToolSpec = ToolSpec {
         id: "cargo",
