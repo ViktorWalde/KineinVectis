@@ -506,9 +506,10 @@ do fim da W2b (40.7 §7.270):
          Relaxado sem efeito no Windows): o `clang-tidy` do VS sobre a CDB do
          MSVC, com os substitutos dos dois testes da qualidade. O teste do
          rigor roda com o VS no Windows, e no Windows reprova em vez de pular
-         quando o VS falta. O aviso dele passa a ser `[[deprecated]]`, que é
-         aviso nos três compiladores sem depender de `-Wall`;
-       - **W6b3, o `cmake_model` do Windows:** o reply do file-api gerado
+         quando o VS falta. O aviso dele é o deslocamento `1 << 40`, que
+         avisa no nível padrão dos três compiladores (40.7 §7.274);
+       - **W6b3, o `cmake_model` do Windows** (feita em 2026-10-14,
+         40.7 §7.276): o reply do file-api gerado
          pelo CMake de verdade num projeto pequeno. O modelo lê o alvo, o
          `.exe`, as fontes e o grupo de compilação do MSVC. São os três
          substitutos do `cmake_model`;
@@ -605,6 +606,41 @@ pasta do `cl`, que tem o runtime dele. O log de avisos da UI fica em
   redirecionado. O registro (o `PATH` do usuário) não é.
 - Um teste C++ sem as DLLs no `PATH` morre com `0xC0000135`, e o Windows abre
   uma janela de erro por teste. O CMake dos testes agora põe o `PATH`.
+
+### 3.5 W6b3 — desenho fino da prova do modelo CMake (2026-10-14)
+
+Retomada do trabalho local deixado após a W6b2: os três testes do
+`tests/cmake_model.rs` já estavam reativados e havia uma prova do reply real
+em `tests/cmake.rs`. Medido nesta retomada: os quatro testes sintéticos e a
+prova real passam no Windows, mas os sintéticos ainda usam compiladores e
+flags GNU. Pela D14, eles precisam de substitutos com o formato do MSVC.
+
+- **`tests/cmake_model.rs`:** manter as provas sintéticas do Linux e os
+  caminhos esperados montados por componente, para rodarem nos dois sistemas.
+- **`tests/cmake_model_windows.rs`:** reunir a prova real do Windows e os
+  três substitutos. Cada cenário configura e compila pelo core um projeto
+  C/C++ com executável, biblioteca estática, alvo utilitário, cabeçalho e
+  fonte gerada. O primeiro verifica `.exe`/`.pdb`/`.lib`, fontes, grupos,
+  dependências e `toolchains-v1`; o segundo consulta `cmake.targets.list` e
+  verifica o filtro do utilitário; o terceiro consulta `index.context` sem
+  CDB e depois com a CDB real, provando a precedência sem perder os alvos.
+- **Catraca:** a W6 desce de 10 para 7 depois que os três substitutos passam.
+- **Provas:** testes nativos, mutações dirigidas da leitura do modelo e do
+  fallback do índice, gate do Windows e gate do Linux no espelho do WSL.
+  Não há mudança de IPC nem de tela. LLVM/`clangd`, Setup e kits continuam
+  nas W6b4/W6c; nenhuma instalação faz parte desta fatia.
+
+Referência: [`cmake-file-api(7)` do CMake 4.3](https://cmake.org/cmake/help/v4.3/manual/cmake-file-api.7.html),
+`codemodel` v2 (artefatos relativos ao build, fontes relativas à raiz e
+grupos de compilação) e `toolchains` v1. A prova usa o reply produzido pela
+ferramenta instalada, sem copiar a implementação de outro cliente.
+
+**Feita em 2026-10-14:** as provas e o resultado dos gates estão no 40.7
+§7.276. Os três substitutos usam o reply e a CDB reais; os sintéticos GNU
+continuam e também rodam no Windows. A W6 ficou com 7 adiados. O bloqueio
+de dependência encontrado no gate foi corrigido separadamente (§7.275).
+O roteiro de verificação desta máquina usa `RUST_TEST_THREADS=4` no Windows;
+os dois testes que apresentaram timeouts e seus limites foram preservados.
 
 ## 4. A edição especial (depois da 0.4.0)
 

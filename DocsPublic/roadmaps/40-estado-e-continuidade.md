@@ -1,6 +1,6 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **HANDOFF NO WINDOWS 11 PRO (2026-10-09, noite). Leia isto primeiro.** O
+> **HANDOFF NO WINDOWS 11 PRO (2026-10-14). Leia isto primeiro.** O
 > desenvolvimento passou para o Windows 11 Pro (40.7 §7.260), e o autor revisou
 > a ordem (§7.261). Agora ela é: **o porte da IDE para o Windows → a
 > organização da documentação, e da arquitetura se a medição pedir → fechar a
@@ -19,11 +19,12 @@
 > Linux por domínio. A tabela, as decisões D7–D10 e as fatias, em ordem, estão
 > no 60 §3.3.
 >
-> **Onde parou (2026-10-10):** as fatias W1, W2a, W2b, W2c, W3a, W3b, W4 e
-> W5 estão feitas (40.7 §7.261 a §7.271). O `scripts\verificar-windows.ps1`
+> **Onde parou (2026-10-14):** as fatias W1, W2a, W2b, W2c, W3a, W3b, W4,
+> W5, W6a, W6b1, W6b2 e W6b3 estão feitas (40.7 §7.261 a §7.276).
+> O `scripts\verificar-windows.ps1`
 > ficou todo verde pela primeira vez depois da W2b: testes Rust, o preset
 > estrito do MSVC com ASan, `ctest`, o smoke, a foto e o agnóstico no WSL. O
-> `verificar.sh` do Linux segue verde no espelho. Os 82 testes de domínios
+> `verificar.sh` do Linux segue verde no espelho. Os 73 testes de domínios
 > ainda não portados aparecem como ignorados no Windows, contados por fatia
 > na catraca `verificar-adiados-windows.sh`.
 >
@@ -46,11 +47,19 @@
 >    C++ de verdade compila com o MSVC e roda pelo core. A W6b está dividida
 >    em quatro partes. A W6b1 (a CDB do MSVC, 40.7 §7.273) e a W6b2 (o
 >    `clang-tidy` e o rigor de verdade no Windows, 40.7 §7.274) estão feitas.
->    A próxima é a W6b3 (o `cmake_model` do Windows), depois a W6b4 (o
->    `clangd`, que espera o autor decidir instalar o LLVM), a W6c e as
+>    A W6b3 também está feita (40.7 §7.276): os três substitutos do modelo
+>    usam o reply e a CDB reais do MSVC. A próxima é a W6b4 (o `clangd`, que
+>    espera o autor decidir instalar o LLVM), depois a W6c e as
 >    W7–W12. O trabalho acontece no branch `porte-windows`, no clone
 > `C:\dev\KineinVectis`. O gate completo do Linux roda no Fedora 44 do WSL2
 > (D2).
+>
+> **Última prova (2026-10-14):** `RUST_TEST_THREADS=4` no Windows e
+> `scripts\verificar-windows.ps1 -Linux` verde. A concorrência padrão
+> encontrou timeouts em dois testes existentes; esses testes e seus limites
+> de tempo foram preservados (40.7 §7.276). No Linux, cinco provas de ambiente seguem
+> NÃO PROVADAS por ferramentas ausentes. O bloqueio do `rustls` foi corrigido
+> separadamente (40.7 §7.275).
 >
 > **Último commit no Arch:** o 9a.3 (40.7 §7.259), o campo "Adaptador:
 > Interno · O da IDE" no formulário do SQLite; com ele o 9a está fechado, e o

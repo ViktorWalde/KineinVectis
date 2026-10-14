@@ -39,13 +39,17 @@ fn escrever(caminho: &Path, conteudo: &str) {
 /// um utilitario, e a toolchains-v1 (quando `com_toolchains`).
 fn projeto(name: &str, com_toolchains: bool) -> PathBuf {
     let raiz = temp_dir(name);
-    let build = raiz.join(".kinein/build");
+    let build = raiz.join(crate::platform::from_portable(".kinein/build"));
     escrever(&raiz.join("CMakeLists.txt"), "project(app)\n");
-    escrever(&raiz.join("src/main.cpp"), "int main() { return 0; }\n");
-    escrever(&raiz.join("src/u.c"), "int u(void) { return 1; }\n");
-    escrever(&raiz.join("src/u2.c"), "int u2(void) { return 2; }\n");
-    escrever(&raiz.join("include/app.h"), "int main();\n");
-    escrever(&raiz.join("tools/solto.cpp"), "int solto() { return 2; }\n");
+    for (file, content) in [
+        ("src/main.cpp", "int main() { return 0; }\n"),
+        ("src/u.c", "int u(void) { return 1; }\n"),
+        ("src/u2.c", "int u2(void) { return 2; }\n"),
+        ("include/app.h", "int main();\n"),
+        ("tools/solto.cpp", "int solto() { return 2; }\n"),
+    ] {
+        escrever(&raiz.join(crate::platform::from_portable(file)), content);
+    }
     let reply = build.join(".cmake/api/v1/reply");
     let r = raiz.display();
     escrever(
@@ -128,15 +132,15 @@ fn projeto(name: &str, com_toolchains: bool) -> PathBuf {
 }
 
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "W6: o reply do fixture e' de Linux (/usr/include, /usr/bin/c++); o do Windows vem do CMake real (60 §3.3)"
-)]
 fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() {
     let raiz = projeto("modelo", true);
-    let modelo = CmakeModel::load(&raiz.join(".kinein/build")).expect("reply legivel");
+    let modelo = CmakeModel::load(&raiz.join(crate::platform::from_portable(".kinein/build")))
+        .expect("reply legivel");
     assert_eq!(modelo.source_dir, raiz);
-    assert_eq!(modelo.build_dir, raiz.join(".kinein/build"));
+    assert_eq!(
+        modelo.build_dir,
+        raiz.join(crate::platform::from_portable(".kinein/build"))
+    );
     let nomes: Vec<&str> = modelo.targets.iter().map(|t| t.name.as_str()).collect();
     assert_eq!(nomes, vec!["app", "util", "all_gen"]);
 
@@ -144,7 +148,7 @@ fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() 
     assert_eq!(app.kind, "EXECUTABLE");
     assert_eq!(
         app.artifacts,
-        vec![raiz.join(".kinein/build/app")],
+        vec![raiz.join(crate::platform::from_portable(".kinein/build/app"))],
         "absoluto ao build dir"
     );
     assert_eq!(app.source_dir, raiz);
@@ -156,7 +160,10 @@ fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() 
     assert_eq!(app.link_language.as_deref(), Some("CXX"));
     assert_eq!(app.sources.len(), 3);
     let gerada = app.sources.iter().find(|s| s.generated).unwrap();
-    assert_eq!(gerada.path, raiz.join(".kinein/build/gen/moc.cpp"));
+    assert_eq!(
+        gerada.path,
+        raiz.join(crate::platform::from_portable(".kinein/build/gen/moc.cpp"))
+    );
     let cabecalho = app
         .sources
         .iter()
@@ -170,7 +177,9 @@ fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() 
         grupo.includes,
         vec![
             raiz.join("include").display().to_string(),
-            "/usr/include/qt6".to_owned()
+            raiz.join(crate::platform::from_portable("/usr/include/qt6"))
+                .display()
+                .to_string()
         ]
     );
     assert_eq!(grupo.defines, vec!["APP=1"]);
@@ -185,13 +194,15 @@ fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() 
     );
     assert_eq!(
         util.artifacts,
-        vec![raiz.join(".kinein/build/src/libutil.a")]
+        vec![raiz.join(crate::platform::from_portable(
+            ".kinein/build/src/libutil.a"
+        ))]
     );
 
     // O inverso: arquivo -> targets; cabecalho incluso; fora de todo target = vazio.
     let donos = |rel: &str| -> Vec<String> {
         modelo
-            .targets_for(&raiz.join(rel))
+            .targets_for(&raiz.join(crate::platform::from_portable(rel)))
             .iter()
             .map(|t| t.name.clone())
             .collect()
@@ -200,11 +211,13 @@ fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() 
     assert_eq!(donos("include/app.h"), vec!["app"]);
     assert_eq!(donos("src/u.c"), vec!["util"]);
     assert!(donos("tools/solto.cpp").is_empty());
-    let (t, g) = modelo.compile_group_for(&raiz.join("src/u.c")).unwrap();
+    let (t, g) = modelo
+        .compile_group_for(&raiz.join(crate::platform::from_portable("src/u.c")))
+        .unwrap();
     assert_eq!((t.name.as_str(), g.language.as_str()), ("util", "C"));
     assert!(
         modelo
-            .compile_group_for(&raiz.join("include/app.h"))
+            .compile_group_for(&raiz.join(crate::platform::from_portable("include/app.h")))
             .is_none(),
         "cabecalho nao tem grupo"
     );
@@ -221,10 +234,6 @@ fn the_model_reads_targets_sources_groups_artifacts_and_resolves_dependencies() 
 }
 
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "W6: o reply do fixture e' de Linux (/usr/include, /usr/bin/c++); o do Windows vem do CMake real (60 §3.3)"
-)]
 fn cmake_targets_list_carries_the_model_and_hides_utilities() {
     let raiz = projeto("targets", true);
     let mut core = core_with_empty_search_path("cmake-model-targets");
@@ -248,7 +257,9 @@ fn cmake_targets_list_carries_the_model_and_hides_utilities() {
     assert_eq!(app["kind"], "executable");
     assert_eq!(
         app["artifacts"][0],
-        raiz.join(".kinein/build/app").display().to_string()
+        raiz.join(crate::platform::from_portable(".kinein/build/app"))
+            .display()
+            .to_string()
     );
     assert_eq!(app["sources"], 2, "main.cpp e app.h; a gerada nao conta");
     assert_eq!(app["generatedSources"], 1);
@@ -280,10 +291,6 @@ fn cmake_targets_list_carries_the_model_and_hides_utilities() {
 }
 
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "W6: o reply do fixture e' de Linux (/usr/include, /usr/bin/c++); o do Windows vem do CMake real (60 §3.3)"
-)]
 fn index_context_falls_back_to_the_file_api_unit_and_always_names_the_targets() {
     let raiz = projeto("contexto", true);
     let mut core = core_with_empty_search_path("cmake-model-contexto");
@@ -322,13 +329,17 @@ fn index_context_falls_back_to_the_file_api_unit_and_always_names_the_targets() 
     assert_eq!(unidade["standard"], "gnu++20");
     assert_eq!(
         unidade["directory"],
-        raiz.join(".kinein/build").display().to_string()
+        raiz.join(crate::platform::from_portable(".kinein/build"))
+            .display()
+            .to_string()
     );
     assert_eq!(
         unidade["includes"],
         json!([
             raiz.join("include").display().to_string(),
-            "/usr/include/qt6"
+            raiz.join(crate::platform::from_portable("/usr/include/qt6"))
+                .display()
+                .to_string()
         ])
     );
     assert_eq!(unidade["defines"], json!(["APP=1"]));
@@ -367,11 +378,11 @@ fn index_context_falls_back_to_the_file_api_unit_and_always_names_the_targets() 
 
     // COM a CDB no mesmo build dir: a CDB vence a unidade; os targets ficam.
     escrever(
-        &raiz.join(".kinein/build/compile_commands.json"),
+        &raiz.join(crate::platform::from_portable(".kinein/build/compile_commands.json")),
         &json!([{
-            "directory": raiz.join(".kinein/build").display().to_string(),
-            "arguments": ["/usr/bin/c++", "-std=c++17", "-c", raiz.join("src/main.cpp").display().to_string()],
-            "file": raiz.join("src/main.cpp").display().to_string()
+            "directory": raiz.join(crate::platform::from_portable(".kinein/build")).display().to_string(),
+            "arguments": ["/usr/bin/c++", "-std=c++17", "-c", raiz.join(crate::platform::from_portable("src/main.cpp")).display().to_string()],
+            "file": raiz.join(crate::platform::from_portable("src/main.cpp")).display().to_string()
         }])
         .to_string(),
     );

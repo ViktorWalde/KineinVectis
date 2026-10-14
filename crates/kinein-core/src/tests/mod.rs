@@ -7,6 +7,8 @@ mod build;
 mod cargo;
 mod cmake;
 mod cmake_model;
+#[cfg(windows)]
+mod cmake_model_windows;
 mod configaction;
 mod container;
 mod coverage;
