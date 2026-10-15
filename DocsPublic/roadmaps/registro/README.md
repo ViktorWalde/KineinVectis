@@ -13,8 +13,10 @@
 40.7.3-a-casca-da-0.3.6-a-0.3.9.md               §7.153–§7.219 2026-10-01 a 10-04
 40.7.4-o-banco-da-0.3.9.md                       §7.220–§7.260 2026-10-05 a 10-09
 40.7.5-o-porte-para-o-windows.md                 §7.261–§7.277 2026-10-09 a 10-14
+40-o-estado-ate-2026-10-15.md                    o 40 inteiro, antes de voltar a ter só o estado
 ```
 
 A tabela que manda é a do [40.7](../40.7-registro-das-entregas.md), e o gate
 a confere contra estes arquivos. A fase aberta (§7.278 em diante) continua
-no próprio 40.7.
+no próprio 40.7. Uma citação "40 §4.1" ou "40 §8" anterior a 2026-10-15 se lê
+no `40-o-estado-ate-2026-10-15.md`.

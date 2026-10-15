@@ -727,9 +727,9 @@ aceite com mouse e teclado do autor.
 
 ## 6. A organização da documentação (depois do porte, antes da 0.3.9)
 
-**Classe: PLANO, sem desenho ainda.** O desenho é feito depois do porte, num
-documento próprio, que passa a ser o dono desta seção. Aqui ficam o objetivo e
-o ponto de partida medido.
+**Desenhada em 2026-10-15 no [61](61-organizacao-da-documentacao.md)**, que
+é o dono desde então; o texto abaixo é o ponto de partida de 2026-10-09,
+guardado como estava.
 
 **O objetivo do autor** (§1, item 2): separar a documentação por contexto,
 explícita e bem separada, para que uma pessoa ou um agente de IA leia só o que

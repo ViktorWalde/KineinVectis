@@ -185,10 +185,13 @@ for name, number, target in dead_citations:
 # somando o indice e as partes; a tabela do indice diz a primeira e a ultima
 # entrada de cada parte, e nenhuma parte fica fora dela; toda citacao
 # "40.7 §7.N" (ou a antiga "40 §7.N") aponta uma entrada que existe; e os
-# teto que impede o deposito: a fase aberta em 1500 linhas.
+# tetos que impedem o deposito: a fase aberta em 1500 linhas e o cabecalho do
+# 40 (antes da primeira secao "## ") em 60.
 REGISTRY_INDEX = pathlib.Path("DocsPublic/roadmaps/40.7-registro-das-entregas.md")
 REGISTRY_DIR = pathlib.Path("DocsPublic/roadmaps/registro")
+STATE = pathlib.Path("DocsPublic/roadmaps/40-estado-e-continuidade.md")
 OPEN_PHASE_MAX = 1500
+STATE_HEADER_MAX = 60
 ENTRY = re.compile(r"^### 7\.(\d+)\b", re.M)
 PART_ROW = re.compile(r"^\| §7\.(\d+)–§7\.(\d+) \|[^|\n]*\| \[[^\]]*\]\((registro/[^)\s]+)\) \|$", re.M)
 ENTRY_CITATION = re.compile(r"(?<![\d.])40(?:\.7)? §7\.(\d+)")
@@ -228,6 +231,12 @@ if open_lines > OPEN_PHASE_MAX:
     registry_failures.append(
         f"a fase aberta do 40.7 tem {open_lines} linhas (teto {OPEN_PHASE_MAX}):"
         " feche a parte seguinte em roadmaps/registro/ (40.7, regra de fechamento)")
+state_lines = STATE.read_text(encoding="utf-8").split("\n")
+state_header = next((i for i, line in enumerate(state_lines) if line.startswith("## ")), len(state_lines))
+if state_header > STATE_HEADER_MAX:
+    registry_failures.append(
+        f"o cabecalho do 40 tem {state_header} linhas antes da primeira secao (teto"
+        f" {STATE_HEADER_MAX}): o handoff diz onde estamos; o resto vai para o dono ou o registro")
 cited = 0
 for name in arquivos:
     try:

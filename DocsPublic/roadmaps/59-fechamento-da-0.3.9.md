@@ -95,7 +95,7 @@ Cada passo termina com:
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
-| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (40, topo) | a fazer, logo depois do 9a (decisão do autor): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, porta livre no "Criar banco", "Apagar os dados" e o "Remover" (que pergunta) com os volumes |
+| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | a fazer, logo depois do 9a (decisão do autor): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, porta livre no "Criar banco", "Apagar os dados" e o "Remover" (que pergunta) com os volumes |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -306,6 +306,39 @@ ou empacota. **Aceite:** teste com servidor falso provando `-b`; exercício
 com o `qmlls` real dando diagnóstico de um `.qml` com erro; foto no display
 virtual de um `.qml` deste repositório; aceite do autor com mouse e teclado,
 que fica pendente.
+
+### 2.5 Passo 16b — os containers: os seis defeitos e o "Remover" (2026-10-08)
+
+Transcrito do cabeçalho do 40 em 2026-10-15, que era onde morava
+([61](61-organizacao-da-documentacao.md) §3.3); este é o dono. O desenho fino
+da fatia é escrito aqui, antes do código.
+
+**Investigação de 2026-10-08, a pedido do autor:** funciona na máquina de
+então (Docker CLI 29.8.2 no contexto `podman-rootless`, Podman 6.1.3), mas
+há seis defeitos, a corrigir numa fatia própria **logo depois do 9a.2**
+(decisão do autor):
+
+1. "Apagar os dados" deixa o volume do banco (`rm` sem `-v`).
+2. Docker que não responde não cai no Podman, e a dica manda `sudo
+   systemctl` mesmo com o socket do Podman.
+3. Falha do motor aparece como lista vazia, e "Criar banco em contêiner"
+   segue habilitado.
+4. `container.list`/`images` rodam no laço e travam o core (32 s com motor
+   inalcançável).
+5. O rótulo mostra a versão do cliente Docker, não o motor Podman.
+6. "Criar banco" sugere a porta 5432 já ocupada.
+
+Há também um teste de compose que chama o Docker real (`detect()` em vez do
+detector injetado). **Decisão do autor:** o "Remover" da janela Containers
+pergunta na confirmação, com o tamanho dos volumes anônimos: "Remover com os
+volumes" ou "Só o container". "Apagar os dados" no Banco apaga os volumes
+sempre.
+
+**Ao retomar, no Ubuntu 26.04 (2026-10-15 em diante):** a investigação foi
+feita no Arch. Medir de novo nesta máquina antes de desenhar: qual motor
+existe (Docker, Podman ou os dois), qual contexto o CLI usa, e quais dos
+seis ainda se reproduzem. No Windows, o motor seria Docker Desktop ou Podman
+([60](60-windows-e-edicao-especial.md) §4); o porte está pausado.
 
 ## 3. Containers acoplados
 
@@ -758,7 +791,7 @@ nada interpreta SQL na UI.
 
 #### 5.2.1 Desenho do histórico de consultas (passo 13b, 2026-10-08), antes do código
 
-Decisão do autor (40, topo): gravado fora do projeto, no estado do usuário,
+Decisão do autor (no topo do 40 em 2026-10-08; hoje no [registro](registro/40-o-estado-ate-2026-10-15.md)): gravado fora do projeto, no estado do usuário,
 separado por projeto, nunca em `.kinein/` nem no Git, com "Limpar histórico".
 
 - **Dono: o core**, que executa. Cada `datasource.query` que **rodou** (o job

@@ -30,7 +30,9 @@
 > **Atualização 2026-09-16:** attach do debugpy por `connect {host, port}`
 > entregue e validado no fluxo DAP existente (40 §7.38). Isso não fecha P6:
 > contexto SSH, deploy, execução remota e mapeamento de caminhos continuam
-> pendentes. A sequência vigente de implementação continua em 40 §4.1.
+> pendentes. A sequência de então estava no 40 §4.1 (hoje no
+> [registro](registro/40-o-estado-ate-2026-10-15.md)); a vigente está no
+> [40](40-estado-e-continuidade.md) §4.
 
 ## 0. O escopo, em famílias — e as placas que definem "pronto"
 

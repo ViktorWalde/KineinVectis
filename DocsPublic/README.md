@@ -119,12 +119,12 @@ fonte viva.
 mudar X → olhe aqui", ritual de uma mudança e o gate.
 
 Para localizar os arquivos de cada domínio, use [contribuindo.md](contribuindo.md)
-§3. Para a ordem de execução, use o [roadmap 40](roadmaps/40-estado-e-continuidade.md)
-§4.1: Etapa 1 de backend/toolchains (fechada em 2026-09-18) e Etapa 2 de
-UX/UI/HUD (F0–F8 feitas em 2026-09-18; resta o fechamento, 40 §4.2.2). **O que ainda falta, por
-classe — fatia de código / prova com hardware / só o autor — está no §4.2
-do mesmo roadmap**, e o estado da Etapa 2 fatia a fatia no
-[roadmap 43](roadmaps/43-etapa2-hud-ui-ux.md) §7.
+§3. **O que vem a seguir** está no [roadmap 40](roadmaps/40-estado-e-continuidade.md):
+o handoff no topo e, no §4, a próxima fatia de cada frente com o documento
+dono da ordem. **O que cada contexto lê** está no
+[`00-comece-aqui.md`](00-comece-aqui.md) §5. As ordens de setembro (Etapas 1
+e 2, o panorama do 40 §4.2) são registro desde 2026-10-15, em
+[`roadmaps/registro/`](roadmaps/registro/README.md).
 
 ## Estrutura
 
