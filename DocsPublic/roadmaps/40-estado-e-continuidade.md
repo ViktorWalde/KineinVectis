@@ -17,10 +17,16 @@
 > 4.2.3, Python 3.14.4; **sem Rust** (`rust-toolchain.toml` fixa 1.96.1), e
 > por isso o gate completo ainda não rodou nesta máquina.
 >
-> **Próximo passo:** com o Rust instalado (o autor decide como, 05 do
-> contribuindo), rodar `scripts/verificar.sh --rapido` e implementar a 16b,
-> já medida e desenhada no [59](59-fechamento-da-0.3.9.md) §2.5.1–§2.5.2
-> (fatias 16b.1, 16b.2 e 16b.3). Depois 15 e 16 (59 §2), e a 0.4 (57).
+> **Próximo passo:** a 16b, medida e desenhada no
+> [59](59-fechamento-da-0.3.9.md) §2.5.1–§2.5.2 (fatias 16b.1–16b.3).
+> **A 16b.1 está ESCRITA e NÃO COMPILADA, fora de commit** (2026-10-15, sem
+> Rust na máquina): `container/probe.rs` (novo), `container/{mod,parse}.rs`,
+> `handlers/{container,datasource_destroy}.rs`, `datasource/{destroy,discover}.rs`,
+> os testes `tests/{container,datasource_discover}.rs`, o protocolo
+> (`ContainerStatus` + `0.168.0`), o `ContainerController.qml`, o
+> `tst_container.qml` e o contrato no 03, 03.1 e 59. Confira com `git status`
+> e `git diff`; compile, teste, rode o gate rápido e só então faça o commit.
+> Depois 15 e 16 (59 §2), e a 0.4 (57).
 >
 > **Em curso:** a organização da documentação
 > ([61](61-organizacao-da-documentacao.md) §4). **Pausado:** o porte para o
