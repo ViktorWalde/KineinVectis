@@ -130,3 +130,8 @@ powershell cmdlet
 # 2026-10-10: as ferramentas do Visual Studio que o build C/C++ do Windows usa
 # (o compilador MSVC, o vcvars64.bat e o vswhere; 60 §3.3, W6a).
 msvc vcvars vswhere
+# 2026-10-15: ingles legitimo que o `wamerican`/`wbritish` do Ubuntu 26.04 nao
+# traz e o `words` do Arch trazia; o gate so' os viu nesta maquina (40.7
+# §7.283). `atomically` (fsops), `canceller` (grafia britanica, process.rs),
+# `consts` (constantes, a palavra-chave do Rust/C++) e `emplace` (API do C++).
+atomically canceller consts emplace

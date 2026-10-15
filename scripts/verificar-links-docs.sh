@@ -29,14 +29,14 @@ CODIGO_EM_LINHA = re.compile(r"`[^`]*`")
 LINK = re.compile(r'\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
 EXTERNO = ("http://", "https://", "mailto:", "#")
 
-arquivos = sorted(set(subprocess.run(
+markdown_files = sorted(set(subprocess.run(
     ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
     capture_output=True, text=True, check=True
 ).stdout.rstrip("\0").split("\0")))
 
 quebrados = []
 verificados = 0
-for nome in arquivos:
+for nome in markdown_files:
     caminho = pathlib.Path(nome)
     try:
         texto = caminho.read_text(encoding="utf-8")
@@ -238,7 +238,7 @@ if state_header > STATE_HEADER_MAX:
         f"o cabecalho do 40 tem {state_header} linhas antes da primeira secao (teto"
         f" {STATE_HEADER_MAX}): o handoff diz onde estamos; o resto vai para o dono ou o registro")
 cited = 0
-for name in arquivos:
+for name in markdown_files:
     try:
         text = pathlib.Path(name).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):

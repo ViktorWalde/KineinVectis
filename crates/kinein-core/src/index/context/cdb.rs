@@ -75,11 +75,11 @@ pub(super) fn parse_cdb(texto: &str) -> HashMap<PathBuf, Unidade> {
         let mut i = 1;
         while i < arguments.len() {
             let arg = &arguments[i];
-            let proximo = arguments.get(i + 1);
+            let next_arg = arguments.get(i + 1);
             if msvc && let Some((flag, attached)) = msvc_flag(arg) {
                 let value = if attached.is_empty() {
                     i += 1;
-                    proximo.cloned()
+                    next_arg.cloned()
                 } else {
                     Some(attached.to_owned())
                 };
@@ -101,7 +101,7 @@ pub(super) fn parse_cdb(texto: &str) -> HashMap<PathBuf, Unidade> {
             let mut pega = |prefixo: &str| -> Option<String> {
                 if arg == prefixo {
                     i += 1;
-                    return proximo.cloned();
+                    return next_arg.cloned();
                 }
                 arg.strip_prefix(prefixo)
                     .filter(|r| !r.is_empty())
