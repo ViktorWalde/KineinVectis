@@ -5,6 +5,12 @@
 //! ciclo de vida e compose sao JOBS com `event.container.finished`; logs e
 //! shell abrem NUMA ABA DE TERMINAL pelo mesmo `open_command` do dominio
 //! `terminal` — nada e' reimplementado.
+//!
+//! O motor e' escolhido pelo `select_with` (o que responde ao `ps`, com
+//! prazo) e com o detector do `Core` (16b.1, `roadmaps/59` §2.5.2): o que
+//! pergunta ao motor roda fora do laco — `status`, `list` e `images` pelo
+//! `defer_work`, `action` e `compose` dentro do job. So' o `open` escolhe no
+//! laco, porque a aba de terminal nasce dele; a sonda tem prazo.
 
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -17,7 +23,7 @@ use kinein_protocol::{
 use serde_json::{Value, json};
 
 use crate::Core;
-use crate::container::{self, Engine};
+use crate::container::{self, Engine, EngineFailure};
 use crate::jobs::JobOutcome;
 use crate::rpc::{
     jobs_unavailable_response, no_workspace_response, parse_params, terminal_error_response,
@@ -38,8 +44,8 @@ impl Core {
     ) -> Option<JsonRpcResponse> {
         match method {
             "container.status" => Some(self.container_status_response(request_id, params)),
-            "container.list" => Some(Self::container_list_response(request_id, params)),
-            "container.images" => Some(Self::container_images_response(request_id, params)),
+            "container.list" => Some(self.container_list_response(request_id, params)),
+            "container.images" => Some(self.container_images_response(request_id, params)),
             "container.action" => Some(self.container_action_response(request_id, params)),
             "container.open" => Some(self.container_open_response(request_id, params)),
             "container.compose" => Some(self.container_compose_response(request_id, params)),
@@ -61,20 +67,24 @@ impl Core {
         ) {
             return *response;
         }
-        // `podman info` + `version` levam ~2,4 s nesta maquina (40 §7.64):
-        // fora do laco, como o tools.detect (F6-b).
-        let engine = container::detect();
+        // `podman info` + `version` levam ~2,4 s numa maquina (40 §7.64), e
+        // a escolha pergunta `ps` a cada motor: fora do laco, como o
+        // tools.detect (F6-b).
+        let detector = self.detector.clone();
         let root = self.workspace_root();
         self.defer_work(request_id, move |request_id| {
+            let selected = container::select_with(&detector);
             JsonRpcResponse::success(
                 request_id,
-                json!(container::status(engine.as_ref(), root.as_deref())),
+                json!(container::status(selected.as_ref(), root.as_deref())),
             )
         })
     }
 
-    /// `container.list` — os containers, parados inclusive por padrao.
+    /// `container.list` — os containers, parados inclusive por padrao. Fora
+    /// do laco: um motor inalcancavel travava o core (32 s, defeito 4).
     fn container_list_response(
+        &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -86,16 +96,22 @@ impl Core {
             Ok(pedido) => pedido,
             Err(response) => return *response,
         };
-        match container::detect() {
-            Some(engine) => {
-                JsonRpcResponse::success(request_id, json!(container::list(&engine, pedido.all)))
+        let detector = self.detector.clone();
+        self.defer_work(request_id, move |request_id| {
+            match container::answering(&detector) {
+                None => no_engine_response(request_id, "container.list"),
+                Some(Err(failure)) => engine_failure_response(request_id, &failure, ""),
+                Some(Ok(engine)) => match container::list(&engine, pedido.all) {
+                    Ok(listing) => JsonRpcResponse::success(request_id, json!(listing)),
+                    Err(failure) => engine_failure_response(request_id, &failure, ""),
+                },
             }
-            None => no_engine_response(request_id, "container.list"),
-        }
+        })
     }
 
-    /// `container.images` — as imagens locais.
+    /// `container.images` — as imagens locais, fora do laco como o `list`.
     fn container_images_response(
+        &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -106,10 +122,17 @@ impl Core {
         ) {
             return *response;
         }
-        match container::detect() {
-            Some(engine) => JsonRpcResponse::success(request_id, json!(container::images(&engine))),
-            None => no_engine_response(request_id, "container.images"),
-        }
+        let detector = self.detector.clone();
+        self.defer_work(request_id, move |request_id| {
+            match container::answering(&detector) {
+                None => no_engine_response(request_id, "container.images"),
+                Some(Err(failure)) => engine_failure_response(request_id, &failure, ""),
+                Some(Ok(engine)) => match container::images(&engine) {
+                    Ok(images) => JsonRpcResponse::success(request_id, json!(images)),
+                    Err(failure) => engine_failure_response(request_id, &failure, ""),
+                },
+            }
+        })
     }
 
     /// `container.action` — start/stop/restart/rm como JOB cancelavel.
@@ -126,23 +149,35 @@ impl Core {
             Ok(pedido) => pedido,
             Err(response) => return *response,
         };
-        let Some(engine) = container::detect() else {
+        if container::detect_with(&self.detector).is_none() {
             return no_engine_response(request_id, "container.action");
-        };
+        }
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "container.action");
         };
-        let verbo = pedido.action.verb().to_owned();
+        let detector = self.detector.clone();
+        let verb = pedido.action.verb().to_owned();
         let risco = match pedido.action {
             kinein_protocol::ContainerAction::Remove => JobRisk::High,
             _ => JobRisk::Medium,
         };
-        let titulo = format!("{} {}", verbo, pedido.id);
-        let command = container::action_command(&engine, pedido.action, &pedido.id);
-        let alvo = pedido.id;
-        let job_id = jobs.spawn("container", titulo, risco, true, move |ctx| {
-            run_and_report(ctx, command, &verbo, &alvo)
-        });
+        let titulo = format!("{} {}", verb, pedido.id);
+        let action = pedido.action;
+        let target = pedido.id;
+        let job_id =
+            jobs.spawn(
+                "container",
+                titulo,
+                risco,
+                true,
+                move |ctx| match container::select_with(&detector) {
+                    Some((engine, _)) => {
+                        let command = container::action_command(&engine, action, &target);
+                        run_and_report(ctx, command, &verb, &target)
+                    }
+                    None => report_no_engine(ctx, &verb, &target),
+                },
+            );
         JsonRpcResponse::success(request_id, json!(ContainerActionAccepted { job_id }))
     }
 
@@ -164,7 +199,7 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "container.open");
         };
-        let Some(engine) = container::detect() else {
+        let Some((engine, _)) = container::select_with(&self.detector) else {
             return no_engine_response(request_id, "container.open");
         };
         let (programa, args) = container::open_program_args(&engine, pedido.mode, &pedido.id);
@@ -214,7 +249,7 @@ impl Core {
                 ),
             );
         }
-        let Some(engine) = container::detect() else {
+        let Some(engine) = container::detect_with(&self.detector) else {
             return no_engine_response(request_id, "container.compose");
         };
         let Some(compose_tool) = container::compose_tool(&engine) else {
@@ -231,20 +266,27 @@ impl Core {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "container.compose");
         };
-        let verbo = match pedido.action {
+        let verb = match pedido.action {
             kinein_protocol::ComposeAction::Up => "compose up",
             kinein_protocol::ComposeAction::Down => "compose down",
         }
         .to_owned();
-        let alvo = pedido
+        let target = pedido
             .file
             .clone()
             .unwrap_or_else(|| "compose (padrao)".to_owned());
-        let command =
-            container::compose_command(&compose_tool, pedido.action, pedido.file.as_deref(), &root);
-        let titulo = format!("{verbo} {alvo}");
+        let titulo = format!("{verb} {target}");
+        let detector = self.detector.clone();
+        let (action, file) = (pedido.action, pedido.file);
         let job_id = jobs.spawn("container", titulo, JobRisk::Medium, true, move |ctx| {
-            run_and_report(ctx, command, &verbo, &alvo)
+            // O motor que responde pode ser outro que o primeiro do PATH (o
+            // Docker negando, o Podman ao lado): o compose e' o dele.
+            let tool = container::select_with(&detector)
+                .filter(|(_, check)| check.ok)
+                .and_then(|(engine, _)| container::compose_tool(&engine))
+                .unwrap_or(compose_tool);
+            let command = container::compose_command(&tool, action, file.as_deref(), &root);
+            run_and_report(ctx, command, &verb, &target)
         });
         JsonRpcResponse::success(request_id, json!(ContainerActionAccepted { job_id }))
     }
@@ -255,6 +297,51 @@ const fn engine_name(engine: &Engine) -> &'static str {
         ContainerEngine::Docker => "docker",
         ContainerEngine::Podman => "podman",
     }
+}
+
+/// O motor existe e nao respondeu: erro com a dica e a saida crua, que a
+/// janela mostra — nunca uma lista vazia (defeito 3). `antes` diz o que
+/// deixou de ser feito (o Banco: "nada foi apagado"), ou vem vazio.
+pub(crate) fn engine_failure_response(
+    request_id: Option<Value>,
+    failure: &EngineFailure,
+    antes: &str,
+) -> JsonRpcResponse {
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(
+            JsonRpcErrorCode::ToolNotFound,
+            format!(
+                "{antes}o {} nao respondeu: {}",
+                match failure.engine {
+                    ContainerEngine::Docker => "Docker",
+                    ContainerEngine::Podman => "Podman",
+                },
+                failure.hint
+            ),
+            Some(json!({
+                "engine": failure.engine,
+                "reachable": false,
+                "hint": failure.hint,
+                "rawOutput": failure.raw_output,
+            })),
+        ),
+    )
+}
+
+/// O motor sumiu entre o aceite e o job: o termino diz por que.
+fn report_no_engine(ctx: &crate::jobs::JobContext, verb: &str, target: &str) -> JobOutcome {
+    ctx.emit_event(
+        "event.container.finished",
+        json!(ContainerFinishedEvent {
+            job_id: ctx.id().to_owned(),
+            action: verb.to_owned(),
+            target: target.to_owned(),
+            ok: false,
+            message: "nenhum motor de container (docker ou podman) no PATH".to_owned(),
+        }),
+    );
+    JobOutcome::Failed
 }
 
 fn no_engine_response(request_id: Option<Value>, method: &str) -> JsonRpcResponse {
@@ -273,8 +360,8 @@ fn no_engine_response(request_id: Option<Value>, method: &str) -> JsonRpcRespons
 fn run_and_report(
     ctx: &crate::jobs::JobContext,
     command: std::process::Command,
-    verbo: &str,
-    alvo: &str,
+    verb: &str,
+    target: &str,
 ) -> JobOutcome {
     let cancel: Arc<AtomicBool> = ctx.cancellation();
     let mut ultimas: Vec<String> = Vec::new();
@@ -302,8 +389,8 @@ fn run_and_report(
         "event.container.finished",
         json!(ContainerFinishedEvent {
             job_id: ctx.id().to_owned(),
-            action: verbo.to_owned(),
-            target: alvo.to_owned(),
+            action: verb.to_owned(),
+            target: target.to_owned(),
             ok,
             message: ultimas.join("\n"),
         }),

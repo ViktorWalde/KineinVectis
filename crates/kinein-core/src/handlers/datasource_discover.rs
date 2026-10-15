@@ -51,7 +51,7 @@ impl Core {
     /// `datasource.create` — um arquivo `SQLite` (imediato) ou um servidor em
     /// container (job, com o comando de volta).
     pub(crate) fn datasource_create_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -85,35 +85,61 @@ impl Core {
                 }
             }
             DataSourceCreateKind::ContainerServer { engine, name, port } => {
-                self.create_container_server_response(request_id, &root, engine, &name, port)
+                self.create_container_server_response(request_id, root, engine, name, port)
             }
         }
     }
 
-    /// A metade "servidor em container" do `datasource.create`: acha o motor,
-    /// monta o comando pinado e sobe o job.
+    /// A metade "servidor em container" do `datasource.create`: escolhe o
+    /// motor que RESPONDE, fora do laco (16b.1, roadmaps/59 §2.5.2), e sobe
+    /// o job no laco.
     fn create_container_server_response(
+        &mut self,
+        request_id: Option<Value>,
+        root: std::path::PathBuf,
+        engine: kinein_protocol::DataSourceEngine,
+        name: String,
+        port: u16,
+    ) -> JsonRpcResponse {
+        let detector = self.detector.clone();
+        self.defer_then(
+            request_id,
+            move || crate::container::answering(&detector),
+            move |core, request_id, selected| match selected {
+                None => JsonRpcResponse::failure(
+                    request_id,
+                    JsonRpcError::new(
+                        JsonRpcErrorCode::ToolNotFound,
+                        "nenhum motor de container (docker ou podman) no PATH — sem ele nao ha' como subir um servidor",
+                        Some(json!({ "method": "datasource.create" })),
+                    ),
+                ),
+                Some(Err(failure)) => super::container::engine_failure_response(
+                    request_id,
+                    &failure,
+                    "o servidor nao foi criado: ",
+                ),
+                Some(Ok(motor)) => {
+                    core.spawn_server_job(request_id, &root, &motor, engine, &name, port)
+                }
+            },
+        )
+    }
+
+    /// Monta o comando pinado com o motor escolhido e sobe o job.
+    fn spawn_server_job(
         &self,
         request_id: Option<Value>,
         root: &std::path::Path,
+        motor: &crate::container::Engine,
         engine: kinein_protocol::DataSourceEngine,
         name: &str,
         port: u16,
     ) -> JsonRpcResponse {
-        let Some(motor) = crate::container::detect_with(&self.detector) else {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::ToolNotFound,
-                    "nenhum motor de container (docker ou podman) no PATH — sem ele nao ha' como subir um servidor",
-                    Some(json!({ "method": "datasource.create" })),
-                ),
-            );
-        };
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "datasource.create");
         };
-        let (command, shown, profile) = match create::container_server(&motor, engine, name, port) {
+        let (command, shown, profile) = match create::container_server(motor, engine, name, port) {
             Ok(tudo) => tudo,
             Err(mensagem) => return invalid(request_id, mensagem),
         };

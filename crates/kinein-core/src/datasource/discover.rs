@@ -69,8 +69,9 @@ pub fn discover(
         Vec::new()
     };
     let engine = container::detect_with(detector);
-    if let Some(engine) = engine.as_ref() {
-        let listed = container::list(engine, true);
+    // Motor que nao responde nao lista nada aqui; o porque e' do 16b.2
+    // (`containerHint`, roadmaps/59 §2.5.2).
+    if let Some(Ok(listed)) = engine.as_ref().map(|engine| container::list(engine, true)) {
         candidates.extend(listed.containers.iter().filter_map(container_candidate));
     }
     candidates.extend(sqlite_files(root));

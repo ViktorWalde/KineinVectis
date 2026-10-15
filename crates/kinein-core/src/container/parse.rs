@@ -26,7 +26,7 @@ fn objetos(texto: &str) -> Vec<Value> {
     }
     aparado
         .lines()
-        .filter_map(|linha| serde_json::from_str::<Value>(linha.trim()).ok())
+        .filter_map(|line| serde_json::from_str::<Value>(line.trim()).ok())
         .filter(Value::is_object)
         .collect()
 }
@@ -119,8 +119,8 @@ fn estado(objeto: &Value) -> String {
 
 /// Os containers de uma saida de `ps`.
 #[must_use]
-pub fn containers(saida: &str) -> Vec<ContainerInfo> {
-    objetos(saida)
+pub fn containers(output: &str) -> Vec<ContainerInfo> {
+    objetos(output)
         .iter()
         .filter_map(|objeto| {
             let id = texto(objeto, &["Id", "ID"]);
@@ -149,8 +149,8 @@ pub fn containers(saida: &str) -> Vec<ContainerInfo> {
 
 /// As imagens de uma saida de `images`.
 #[must_use]
-pub fn images(saida: &str) -> Vec<ImageInfo> {
-    objetos(saida)
+pub fn images(output: &str) -> Vec<ImageInfo> {
+    objetos(output)
         .iter()
         .filter_map(|objeto| {
             let id = texto(objeto, &["Id", "ID"]);
@@ -191,23 +191,23 @@ pub fn images(saida: &str) -> Vec<ImageInfo> {
 /// vem depois da ultima `/`, porque `localhost:5000/x:1` tem dois-pontos no
 /// registro. Sem nome, `<none>`/`<none>`, como o proprio motor imprime.
 fn repo_e_tag_do_nome(objeto: &Value) -> (String, String) {
-    let nome = ["Names", "RepoTags"]
+    let name = ["Names", "RepoTags"]
         .iter()
         .filter_map(|chave| objeto.get(*chave))
         .filter_map(|v| v.as_array())
         .filter_map(|lista| lista.first())
         .find_map(Value::as_str)
         .unwrap_or("");
-    if nome.is_empty() {
+    if name.is_empty() {
         return ("<none>".to_owned(), "<none>".to_owned());
     }
-    let inicio_do_nome = nome.rfind('/').map_or(0, |i| i + 1);
-    nome[inicio_do_nome..].rfind(':').map_or_else(
-        || (nome.to_owned(), "latest".to_owned()),
+    let inicio_do_nome = name.rfind('/').map_or(0, |i| i + 1);
+    name[inicio_do_nome..].rfind(':').map_or_else(
+        || (name.to_owned(), "latest".to_owned()),
         |i| {
             (
-                nome[..inicio_do_nome + i].to_owned(),
-                nome[inicio_do_nome + i + 1..].to_owned(),
+                name[..inicio_do_nome + i].to_owned(),
+                name[inicio_do_nome + i + 1..].to_owned(),
             )
         },
     )
@@ -216,11 +216,11 @@ fn repo_e_tag_do_nome(objeto: &Value) -> (String, String) {
 /// Remove sequencias de escape ANSI — o mesmo remedio do `probe.rs`.
 #[must_use]
 pub fn strip_ansi(texto: &str) -> String {
-    let mut saida = String::with_capacity(texto.len());
+    let mut output = String::with_capacity(texto.len());
     let mut chars = texto.chars();
     while let Some(c) = chars.next() {
         if c != '\u{1b}' {
-            saida.push(c);
+            output.push(c);
             continue;
         }
         for seguinte in chars.by_ref() {
@@ -229,5 +229,56 @@ pub fn strip_ansi(texto: &str) -> String {
             }
         }
     }
-    saida
+    output
+}
+
+/// O nome e a versao do servidor em `version --format '{{json .Server}}'`.
+///
+/// O Docker Engine diz `Platform.Name` "Docker Engine - Community" e o
+/// componente "Engine"; o Podman servindo a API do Docker diz "Podman Engine"
+/// nos dois. Vale o primeiro componente que se chama "Podman Engine", senao o
+/// `Platform.Name`, senao o nome do primeiro componente.
+#[must_use]
+pub fn server_identity(output: &str) -> (Option<String>, Option<String>) {
+    let Ok(server) = serde_json::from_str::<Value>(output.trim()) else {
+        return (None, None);
+    };
+    let components = server
+        .get("Components")
+        .and_then(Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or_default();
+    let name_of = |v: &Value| {
+        v.get("Name")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|n| !n.is_empty())
+            .map(ToOwned::to_owned)
+    };
+    let name = components
+        .iter()
+        .filter_map(name_of)
+        .find(|n| n.contains("Podman"))
+        .or_else(|| server.get("Platform").and_then(name_of))
+        .or_else(|| components.first().and_then(name_of));
+    let version = server
+        .get("Version")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .map(ToOwned::to_owned);
+    (name, version)
+}
+
+/// A versao na linha do `--version`: "Docker version 29.9.1, build dfc520d"
+/// da' `29.9.1`; "podman version 5.7.0" da' `5.7.0`.
+#[must_use]
+pub fn cli_version(line: &str) -> Option<String> {
+    let mut words = line.split_whitespace();
+    words.find(|p| p.eq_ignore_ascii_case("version"))?;
+    words
+        .next()
+        .map(|v| v.trim_end_matches(','))
+        .filter(|v| !v.is_empty())
+        .map(ToOwned::to_owned)
 }

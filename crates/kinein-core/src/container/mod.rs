@@ -24,9 +24,12 @@
 //! real quando o `docker` e' o shim.
 
 pub mod parse;
+pub mod probe;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+pub use probe::{Asked, answering, select_with};
 
 use kinein_protocol::{
     ComposeAction, ContainerAction, ContainerEngine, ContainerImagesResult, ContainerInfo,
@@ -82,40 +85,12 @@ impl Engine {
     }
 }
 
-/// Detecta o motor pelo `PATH` do processo.
-#[must_use]
-pub fn detect() -> Option<Engine> {
-    detect_with(&ToolDetector::from_environment())
-}
-
-/// Detecta o motor com o detector dado (o teste passa um `PATH` falso).
+/// O primeiro motor do `PATH`, SEM perguntar se responde: so' para o que
+/// nao fala com o motor (o comando que aparece antes de rodar). Quem vai
+/// falar com ele usa [`select_with`], que pergunta com prazo.
 #[must_use]
 pub fn detect_with(detector: &ToolDetector) -> Option<Engine> {
-    let docker = detector.find_in_path("docker");
-    let podman = detector.find_in_path("podman");
-    match (docker, podman) {
-        (Some(docker), podman) => {
-            if is_podman_shim(&docker) {
-                Some(Engine {
-                    kind: ContainerEngine::Podman,
-                    binary: podman.unwrap_or(docker),
-                    emulated: true,
-                })
-            } else {
-                Some(Engine {
-                    kind: ContainerEngine::Docker,
-                    binary: docker,
-                    emulated: false,
-                })
-            }
-        }
-        (None, Some(podman)) => Some(Engine {
-            kind: ContainerEngine::Podman,
-            binary: podman,
-            emulated: false,
-        }),
-        (None, None) => None,
-    }
+    probe::candidates(detector).into_iter().next()
 }
 
 /// `docker --version` do shim escreve o aviso em stderr e "podman version" em
@@ -132,13 +107,48 @@ fn is_podman_shim(docker: &Path) -> bool {
         })
 }
 
-/// Saida de um comando curto: stdout aparado, ou `None` se falhou.
+/// Saida de um comando curto, com prazo: stdout aparado, ou `None`.
 fn pergunta(engine: &Engine, args: &[&str]) -> Option<String> {
-    let saida = engine.command().args(args).output().ok()?;
-    saida
-        .status
-        .success()
-        .then(|| String::from_utf8_lossy(&saida.stdout).trim().to_owned())
+    let reply = probe::ask(engine, args);
+    reply.ok.then(|| reply.stdout.trim().to_owned())
+}
+
+/// O motor nao respondeu a `list`/`images`: a dica e a saida crua, para
+/// virar erro em vez de lista vazia (defeito 3, `roadmaps/59` §2.5.2).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EngineFailure {
+    /// O motor que falhou.
+    pub engine: ContainerEngine,
+    /// O passo oficial.
+    pub hint: String,
+    /// O que o motor disse (ou o estouro do prazo).
+    pub raw_output: String,
+}
+
+impl EngineFailure {
+    /// A falha a partir da resposta do motor.
+    #[must_use]
+    pub fn from_asked(engine: &Engine, asked: &Asked) -> Self {
+        Self {
+            engine: engine.kind,
+            hint: hint_for(engine, asked),
+            raw_output: asked.reason(),
+        }
+    }
+}
+
+/// O endpoint do contexto ativo do `docker` (o socket que ele usa).
+fn docker_endpoint(engine: &Engine) -> Option<String> {
+    pergunta(
+        engine,
+        &[
+            "context",
+            "inspect",
+            "--format",
+            "{{(index .Endpoints \"docker\").Host}}",
+        ],
+    )
+    .filter(|s| !s.is_empty())
 }
 
 /// O arquivo de compose que a ferramenta pegaria sozinha em `root`, relativo
@@ -151,16 +161,24 @@ pub fn compose_file_in(root: &Path) -> Option<String> {
         .map(|nome| (*nome).to_owned())
 }
 
-/// O estado do motor: existe, que versao, rootless, socket, responde, compose
-/// — e, com um workspace aberto, o arquivo de compose que o projeto tem.
+/// O estado do motor: existe, quem atende e em que versao, rootless, socket,
+/// responde, compose.
+///
+/// Com um workspace aberto, tambem o arquivo de compose que o projeto tem.
+/// `selected` e' o que [`select_with`] escolheu, com a sonda.
 #[must_use]
-pub fn status(engine: Option<&Engine>, workspace_root: Option<&Path>) -> ContainerStatus {
+pub fn status(
+    selected: Option<&(Engine, Asked)>,
+    workspace_root: Option<&Path>,
+) -> ContainerStatus {
     let compose_file = workspace_root.and_then(compose_file_in);
-    let Some(engine) = engine else {
+    let Some((engine, check)) = selected else {
         return ContainerStatus {
             engine: None,
             binary: None,
             version: None,
+            client_version: None,
+            server_name: None,
             emulated: false,
             rootless: None,
             socket: None,
@@ -177,50 +195,48 @@ pub fn status(engine: Option<&Engine>, workspace_root: Option<&Path>) -> Contain
         };
     };
 
-    let version = pergunta(engine, &["version", "--format", "{{.Client.Version}}"]);
+    let reachable = check.ok;
+    let (server_name, version) = if reachable {
+        probe::server_identity(engine)
+    } else {
+        (None, None)
+    };
+    let client_version = probe::client_version(engine);
+    // `info` so' com o motor respondendo: mudo, cada uma gastaria o prazo.
+    let info = |template: &str| {
+        if reachable {
+            pergunta(engine, &["info", "--format", template])
+        } else {
+            None
+        }
+    };
     let (rootless, socket) = match engine.kind {
         ContainerEngine::Podman => (
-            pergunta(engine, &["info", "--format", "{{.Host.Security.Rootless}}"])
-                .and_then(|v| v.parse::<bool>().ok()),
-            pergunta(engine, &["info", "--format", "{{.Host.RemoteSocket.Path}}"])
-                .filter(|s| !s.is_empty()),
+            info("{{.Host.Security.Rootless}}").and_then(|v| v.parse::<bool>().ok()),
+            info("{{.Host.RemoteSocket.Path}}").filter(|s| !s.is_empty()),
         ),
         ContainerEngine::Docker => (
-            pergunta(engine, &["info", "--format", "{{json .SecurityOptions}}"])
-                .map(|v| v.contains("rootless")),
-            pergunta(
-                engine,
-                &[
-                    "context",
-                    "inspect",
-                    "--format",
-                    "{{(index .Endpoints \"docker\").Host}}",
-                ],
-            )
-            .filter(|s| !s.is_empty()),
+            info("{{json .SecurityOptions}}").map(|v| v.contains("rootless")),
+            docker_endpoint(engine),
         ),
     };
 
-    // `ps` e' a pergunta que decide: daemon de pe' E este usuario autorizado.
-    let sonda = engine
-        .command()
-        .args(["ps", "--format", "{{.ID}}"])
-        .output();
-    let (reachable, raw_output) = match sonda {
-        Ok(saida) => (
-            saida.status.success(),
-            parse::strip_ansi(&String::from_utf8_lossy(&saida.stderr)),
-        ),
-        Err(erro) => (false, erro.to_string()),
+    // `ps` (a sonda do `select_with`) e' a pergunta que decide: daemon de pe'
+    // E este usuario autorizado.
+    let raw_output = if reachable {
+        check.stderr.clone()
+    } else {
+        check.reason()
     };
-
     let compose = compose_tool(engine);
-    let hint = (!reachable).then(|| hint_for(engine, &raw_output));
+    let hint = (!reachable).then(|| hint_for(engine, check));
 
     ContainerStatus {
         engine: Some(engine.kind),
         binary: Some(engine.binary.display().to_string()),
         version,
+        client_version,
+        server_name,
         emulated: engine.emulated,
         rootless,
         socket,
@@ -251,38 +267,59 @@ pub fn compose_tool(engine: &Engine) -> Option<String> {
 }
 
 /// O passo oficial quando o motor nao responde. Nunca um `sudo` que a IDE rode.
-fn hint_for(engine: &Engine, stderr: &str) -> String {
-    let baixo = stderr.to_ascii_lowercase();
+///
+/// O `docker` cujo contexto aponta o socket do Podman (`podman.sock`) nao tem
+/// daemon do Docker para ligar: a dica e' a do socket do Podman (defeito 2).
+fn hint_for(engine: &Engine, asked: &Asked) -> String {
+    let baixo = asked.stderr.to_ascii_lowercase();
+    let deadline_note = if asked.timed_out {
+        format!(
+            "o `ps` nao respondeu em {} s. ",
+            probe::ASK_DEADLINE.as_secs()
+        )
+    } else {
+        String::new()
+    };
     match engine.kind {
-        ContainerEngine::Docker if baixo.contains("permission denied") => {
+        ContainerEngine::Docker if !asked.timed_out && baixo.contains("permission denied") => {
             "o daemon esta' de pe' mas este usuario nao pode usar o socket. Passo oficial: \
              `sudo usermod -aG docker $USER` e sair/entrar da sessao — ou o modo rootless do \
-             Docker. A IDE nao roda isso."
+             Docker, ou o Podman (rootless, sem grupo). A IDE nao roda isso."
                 .to_owned()
         }
-        ContainerEngine::Docker => {
-            "o daemon nao respondeu. Passo oficial: `sudo systemctl enable --now docker` (e \
-             `systemctl status docker` para ver por que parou). A IDE nao roda isso."
-                .to_owned()
-        }
+        ContainerEngine::Docker => match docker_endpoint(engine) {
+            Some(endpoint) if endpoint.contains("podman") => format!(
+                "{deadline_note}o contexto do Docker aponta o socket do Podman ({endpoint}), e ele nao \
+                 respondeu. Passo oficial: `systemctl --user enable --now podman.socket`. A IDE \
+                 nao roda isso."
+            ),
+            _ => format!(
+                "{deadline_note}o daemon nao respondeu. Passo oficial: `sudo systemctl enable --now \
+                 docker` (e `systemctl status docker` para ver por que parou). A IDE nao roda \
+                 isso."
+            ),
+        },
         ContainerEngine::Podman => format!(
-            "o podman nao respondeu ao `ps`. Rootless nao precisa de daemon; veja a saida crua. \
-             Para a API por socket: `systemctl --user enable --now podman.socket`. Saida: {}",
-            stderr.trim()
+            "{deadline_note}o podman nao respondeu ao `ps`. Rootless nao precisa de daemon; veja a saida \
+             crua. Para a API por socket: `systemctl --user enable --now podman.socket`. Saida: {}",
+            asked.reason()
         ),
     }
 }
 
-/// Os containers, parados inclusive quando `all`.
-#[must_use]
-pub fn list(engine: &Engine, all: bool) -> ContainerListResult {
-    let mut command = engine.command();
-    command.arg("ps");
+/// Os containers, parados inclusive quando `all`. O motor que nao responde e'
+/// erro, nunca "nenhum container" (defeito 3).
+pub fn list(engine: &Engine, all: bool) -> Result<ContainerListResult, EngineFailure> {
+    let mut args = vec!["ps"];
     if all {
-        command.arg("-a");
+        args.push("-a");
     }
-    command.args(engine.json_format_args());
-    let (stdout, stderr) = run_capturing(command);
+    args.extend(engine.json_format_args());
+    let reply = probe::ask(engine, &args);
+    if !reply.ok {
+        return Err(EngineFailure::from_asked(engine, &reply));
+    }
+    let (stdout, stderr) = (reply.stdout, reply.stderr);
     let containers: Vec<ContainerInfo> = parse::containers(&stdout);
     let hint = containers.is_empty().then(|| {
         if stdout.trim().is_empty() || stdout.trim() == "[]" {
@@ -294,40 +331,33 @@ pub fn list(engine: &Engine, all: bool) -> ContainerListResult {
                 .to_owned()
         }
     });
-    ContainerListResult {
+    Ok(ContainerListResult {
         containers,
         engine: Some(engine.kind),
         raw_output: raw(&stdout, &stderr),
         hint,
-    }
+    })
 }
 
-/// As imagens locais.
-#[must_use]
-pub fn images(engine: &Engine) -> ContainerImagesResult {
-    let mut command = engine.command();
-    command.arg("images").args(engine.json_format_args());
-    let (stdout, stderr) = run_capturing(command);
+/// As imagens locais; o motor que nao responde e' erro, como no [`list`].
+pub fn images(engine: &Engine) -> Result<ContainerImagesResult, EngineFailure> {
+    let mut args = vec!["images"];
+    args.extend(engine.json_format_args());
+    let reply = probe::ask(engine, &args);
+    if !reply.ok {
+        return Err(EngineFailure::from_asked(engine, &reply));
+    }
+    let (stdout, stderr) = (reply.stdout, reply.stderr);
     let images = parse::images(&stdout);
     let hint = images
         .is_empty()
         .then(|| "nenhuma imagem local.".to_owned());
-    ContainerImagesResult {
+    Ok(ContainerImagesResult {
         images,
         engine: Some(engine.kind),
         raw_output: raw(&stdout, &stderr),
         hint,
-    }
-}
-
-fn run_capturing(mut command: Command) -> (String, String) {
-    match command.output() {
-        Ok(saida) => (
-            String::from_utf8_lossy(&saida.stdout).into_owned(),
-            parse::strip_ansi(&String::from_utf8_lossy(&saida.stderr)),
-        ),
-        Err(erro) => (String::new(), erro.to_string()),
-    }
+    })
 }
 
 /// stderr do shim entra na saida crua, mas o aviso repetido nao vira ruido:

@@ -57,14 +57,14 @@ Item {
         if (controller.engineFound || controller.engineLabel !== "") failures += 256;
 
         // A lista: a acao oferecida depende do ESTADO declarado pelo motor.
-        const rodando = { id: "27b17e15d40c", names: ["postgres-dev", "pg"], image: "docker.io/library/postgres:16-alpine",
+        const running = { id: "27b17e15d40c", names: ["postgres-dev", "pg"], image: "docker.io/library/postgres:16-alpine",
                           state: "running", status: "Up 3 minutes", ports: ["0.0.0.0:5433->5432/tcp"] };
         const parado = { id: "fdd8de359c22", names: ["timescaledb"], image: "docker.io/timescale/timescaledb:latest-pg16",
                          state: "exited", status: "Exited (0) 2 weeks ago", ports: [] };
-        controller.handleContainers([rodando, parado], "podman", "", "");
+        controller.handleContainers([running, parado], "podman", "", "");
         if (!controller.containerFound || controller.listBusy) failures += 512;
-        if (!controller.isRunning(rodando) || controller.isRunning(parado)) failures += 1024;
-        if (controller.containerSummary(rodando)
+        if (!controller.isRunning(running) || controller.isRunning(parado)) failures += 1024;
+        if (controller.containerSummary(running)
                 !== "postgres-dev, pg · docker.io/library/postgres:16-alpine · 0.0.0.0:5433->5432/tcp") failures += 2048;
         // Sem nome, o id curto; sem portas, nada de "undefined".
         if (controller.containerSummary({ id: "abcdef0123456789", image: "x" }) !== "abcdef012345 · x") failures += 4096;
@@ -144,7 +144,7 @@ Item {
 
         // E3-6: o filtro por nome/imagem/id, a linha escolhida POR ID (o
         // indice muda a cada refresh) e o alvo das acoes.
-        controller.handleContainers([rodando, parado], "podman", "", "");
+        controller.handleContainers([running, parado], "podman", "", "");
         if (controller.visibleContainers.length !== 2 || controller.selected !== null) failures += 536870912;
         controller.select("fdd8de359c22");
         if (controller.selectedId !== "fdd8de359c22" || controller.selectedTarget !== "timescaledb"
@@ -155,7 +155,7 @@ Item {
         if (controller.selectedIndex !== -1 || controller.selected !== null || controller.selectedTarget !== "") failures += 4294967296;
         controller.setFilter("");
         // A lista volta e a escolha (por id) volta com ela, no indice novo.
-        controller.handleContainers([parado, rodando], "podman", "", "");
+        controller.handleContainers([parado, running], "podman", "", "");
         if (controller.selectedIndex !== 0 || controller.selectedTarget !== "timescaledb") failures += 8589934592;
         // As linhas da janela (estado, nome, portas) sao do ContainerRows:
         // tst_container_rows prova.
@@ -171,6 +171,24 @@ Item {
         controller.act("db", "start");
         controller.handleFailed("container.action", "recusado");
         if (controller.isPending("db")) failures += 274877906944;
+
+        // 16b.1 (defeito 5, roadmaps/59 §2.5.2): o docker CLI servido pelo
+        // Podman diz o Podman, com a versao do servidor; o Docker Engine de
+        // verdade continua Docker; sem servidor, a versao e' a do CLI.
+        controller.handleStatus({ engine: "docker", version: "6.1.3", clientVersion: "29.8.2",
+                                  serverName: "Podman Engine", reachable: true, emulated: false });
+        if (controller.engineLabel !== "Podman 6.1.3 (pelo docker CLI 29.8.2)") failures += 549755813888;
+        controller.handleStatus({ engine: "docker", version: "29.9.1", clientVersion: "29.9.1",
+                                  serverName: "Docker Engine - Community", reachable: true });
+        if (controller.engineLabel !== "Docker 29.9.1") failures += 1099511627776;
+        controller.handleStatus({ engine: "docker", clientVersion: "29.9.1", reachable: false });
+        if (controller.engineLabel !== "Docker (CLI 29.9.1)") failures += 2199023255552;
+
+        // 16b.1 (defeito 3): a lista que falhou nao fica mostrando a anterior.
+        controller.handleContainers([running], "docker", "", "");
+        controller.handleFailed("container.list", "o Docker nao respondeu: permission denied");
+        if (controller.containers.length !== 0 || controller.errorText.indexOf("permission denied") < 0)
+            failures += 4398046511104;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

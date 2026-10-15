@@ -95,7 +95,7 @@ Cada passo termina com:
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
-| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | a fazer, logo depois do 9a (decisão do autor): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, porta livre no "Criar banco", "Apagar os dados" e o "Remover" (que pergunta) com os volumes |
+| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. A fazer: 16b.2 (porta livre no "Criar banco", desligado com motivo) e 16b.3 (o "Remover" que pergunta, com os volumes) |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -374,8 +374,8 @@ aditivo: nenhum campo some, nenhum método muda de nome.
 | --- | --- | --- | --- |
 | 1 | `handlers/datasource_destroy.rs`: `rm -f <nome>` | `rm -f -v <nome>`: o `-v` leva os volumes **anônimos** do container (o `VOLUME` das imagens `postgres` e `mongo`), não os nomeados; Docker e Podman aceitam | teste do comando montado; na máquina, `volume ls` antes/depois de criar e apagar |
 | 2 | `container::detect_with` escolhe o `docker` sempre que ele existe e não é o shim; `hint_for` só conhece "permission denied" e "sudo systemctl" | `container::select`: na ordem `docker`, `podman`, o primeiro cujo `ps` responde dentro do prazo; nenhum responde, fica o primeiro com a dica dele. A dica olha o endpoint do contexto: socket do Podman (`podman.sock`) manda `systemctl --user enable --now podman.socket`, nunca `sudo systemctl` | binários falsos no `PATH` (como os testes de hoje): docker negando e podman respondendo escolhe podman; os dois negando fica docker com a dica certa; contexto com socket do Podman dá a dica do Podman |
-| 3 | `container::list`/`images` ignoram o `status` do processo; o `discover` anuncia o motor sem saber se responde | saída diferente de zero vira **erro** JSON-RPC (`ToolNotFound` com `data: { engine, reachable: false, hint, rawOutput }`), que a janela já mostra no `errorText`; o `discover` só preenche `containerEngine` quando o motor responde, e ganha `containerHint` (por que não) — o "Criar banco" desliga e diz o motivo | teste: docker falso que sai 1 com "permission denied" → erro com a dica, não lista vazia; `discover` com o mesmo docker → `containerEngine` vazio e `containerHint` |
-| 4 | `container.list`/`images` (e `action`/`open`/`compose`, que chamam `detect`) rodam no laço; nenhuma pergunta ao motor tem prazo | `list`/`images` vão para o `defer_work`, como o `status`; toda pergunta curta ao motor (`ps`, `version`, `info`, `context`) passa por um helper com prazo de 5 s que mata o filho no estouro e diz "não respondeu em 5 s" | docker falso que dorme 30 s: o `ps` volta em ~5 s com a frase, e um `core.ping` enviado logo depois do `container.list` responde antes dele |
+| 3 | `container::list`/`images` ignoram o `status` do processo; o `discover` anuncia o motor sem saber se responde | saída diferente de zero vira **erro** JSON-RPC (`ToolNotFound` com `details: { engine, reachable: false, hint, rawOutput }`), que a janela já mostra no `errorText`; o `discover` só preenche `containerEngine` quando o motor responde, e ganha `containerHint` (por que não) — o "Criar banco" desliga e diz o motivo | teste: docker falso que sai 1 com "permission denied" → erro com a dica, não lista vazia; `discover` com o mesmo docker → `containerEngine` vazio e `containerHint` |
+| 4 | `container.list`/`images` (e `action`/`open`/`compose`, que chamam `detect`) rodam no laço; nenhuma pergunta ao motor tem prazo | `list`/`images` vão para o `defer_work`, como o `status`; `action` e `compose` escolhem o motor dentro do job; só o `open` escolhe no laço (a aba nasce dele), limitado pelo prazo; toda pergunta curta ao motor (`ps`, `version`, `info`, `context`) passa por um helper com prazo de 5 s que mata a árvore do processo no estouro e diz "não respondeu em 5 s" | docker falso que dorme 30 s: o `ps` volta em ~5 s com a frase, e um `core.ping` enviado logo depois do `container.list` responde antes dele |
 | 5 | `status()` pergunta `{{.Client.Version}}`, a versão do CLI | perguntar o **servidor**: `version --format {{json .Server}}`; o nome do componente (`Podman Engine` ou `Engine`) vira o campo novo `serverName`, e `version` passa a ser a do servidor (a do cliente fica em `clientVersion`). O rótulo diz "Podman 6.1.3 (pelo docker CLI)" quando o CLI é Docker e o servidor é Podman | docker falso que devolve o JSON de servidor do Podman → `serverName` "Podman Engine"; o rótulo QML no harness |
 | 6 | `DataSourceCreateBox.qml` sugere a porta interna (5432/27017) | o `discover` devolve `suggestedPorts: { postgres, mongo }`, a primeira porta livre no loopback a partir da padrão (teste de `bind` em `127.0.0.1`, até 20 tentativas); o formulário usa como valor inicial. O `datasource.create` recusa porta ocupada antes do `run`, com a porta e a sugestão | teste com um `TcpListener` segurando a porta: a sugestão pula para a seguinte, e o `create` recusa com `INVALID_PARAMS` |
 
@@ -394,12 +394,45 @@ clique duplo de hoje. "Apagar os dados" no Banco usa sempre o `-v` (#1).
 passa pelo motor da máquina. Ele passa a usar o detector do `Core` (o mesmo
 que o `discover` já recebe), e o teste injeta o `PATH` falso.
 
-**As fatias:** 16b.1 no core, os defeitos 1–5 e o teste do compose
-(`0.168.0`); 16b.2, o defeito 6 e o "Criar banco" desligado com motivo, no
+**O Banco também usa o motor que responde (decisão do autor, 2026-10-15, na
+16b.1).** Achado na leitura do diff da 16b.1, antes de compilar, e medido em
+2026-10-15 com o Podman 5.7.0 instalado: `docker ps` nega o socket e `podman
+ps` responde. Nessa combinação, `datasource.create` e `datasource.destroy`
+escolhiam o `docker` pelo `detect_with` (o primeiro do `PATH`, sem
+perguntar): o "Criar banco" falharia no `run`, e o "Apagar os dados", com o
+`list` falhando, concluía que o container não existia — apagava o perfil e,
+num PostgreSQL, seguia para o `DROP DATABASE`, deixando o container e o
+volume no disco (o defeito 1 por outro caminho). A correção:
+
+- os dois escolhem pelo `select_with`, fora do laço pelo `defer_then` (a
+  escolha numa thread; o job nasce no laço, com o `Core`). O despacho do
+  `datasource.*` passa a `&mut self`, como o do `lsp.*`;
+- `create` com motor que não responde: `TOOL_NOT_FOUND` com a dica e
+  `details: { engine, reachable: false, hint, rawOutput }`, antes do `run`;
+- `destroy` só pergunta ao motor quando apaga os dados (`data: true`) de um
+  PostgreSQL ou MongoDB — SQLite e ODBC não dependem dele. Motor que não
+  responde, ou `list` que falha: o mesmo erro, e **nada é apagado**, nem o
+  perfil ("não dá para saber se o servidor é um container da IDE"). Sem
+  motor nenhum no `PATH`, segue como antes: não há container da IDE;
+- o `clientVersion` do `status` vem do `--version`, que não fala com o
+  servidor: com o motor mudo, o `docker version` gastaria mais 5 s;
+- o `discover` (o `containerEngine`, o `containerHint` e a porta livre)
+  continua na 16b.2.
+
+Prova: binários falsos com o `docker` negando e o `podman` respondendo — o
+`create` monta `podman run`, e o `destroy` remove com `podman rm -f -v`; só
+o `docker` negando — o `destroy` de um PostgreSQL responde o erro e o perfil
+fica. Na máquina, com o Podman: "Criar banco", `podman volume ls`, "Apagar
+os dados", `podman volume ls` de novo.
+
+**As fatias:** 16b.1 no core, os defeitos 1–5, o teste do compose e o motor
+que responde no `create`/`destroy` do Banco (`0.168.0`); 16b.2, o defeito 6
+e o "Criar banco" desligado com motivo, no
 core e na UI; 16b.3, o "Remover" com volumes. Cada uma com o gate rápido
 verde e foto antes/depois no Xvfb das telas que muda. **Precisa:** o Rust
 instalado nesta máquina; para a prova real, o usuário no grupo `docker` (ou
-o Podman instalado), decisão do autor.
+o Podman instalado), decisão do autor. Em 2026-10-15 o autor instalou o
+Rust 1.96.1 e o Podman 5.7.0; o usuário continua fora do grupo `docker`.
 
 ## 3. Containers acoplados
 

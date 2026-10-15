@@ -2849,8 +2849,9 @@ container.open    { id, mode }             -> { id, command }      (aba de termi
 container.compose { action, file? }        -> { jobId }            (job; up|down; exige workspace
                                                                      E arquivo de compose, ou `file`)
 
-ContainerStatus   engine? (docker|podman), binary?, version?, emulated, rootless?,
-                  socket?, reachable, compose?, composeFile?, hint?, rawOutput
+ContainerStatus   engine? (docker|podman), binary?, version? (do servidor),
+                  clientVersion?, serverName?, emulated, rootless?, socket?,
+                  reachable, compose?, composeFile?, hint?, rawOutput
 ContainerInfo     id, names[], image, state, status, ports[], created
 ImageInfo         id, repository, tag, size, created
 
@@ -2872,14 +2873,36 @@ verificada contra um Docker Engine real (esta máquina não tem um); a do Podman
 
 **`status` é a tela de "ativar a ferramenta".** Sem motor: o passo de
 instalação da distro. Motor que não responde: `permission denied` no socket →
-grupo `docker` e relogar; daemon parado → `systemctl enable --now docker`;
-Podman → a saída crua e o `podman.socket` do usuário. A IDE **imprime** o
-comando; nunca roda `sudo`.
+grupo `docker` e relogar (ou o Podman, sem grupo); contexto do `docker`
+apontando o socket do Podman (`podman.sock`) → `systemctl --user enable --now
+podman.socket`; daemon parado → `systemctl enable --now docker`; Podman → a
+saída crua e o `podman.socket` do usuário. A IDE **imprime** o comando; nunca
+roda `sudo`.
+
+**O motor é o que RESPONDE (`0.168.0`, 16b.1, `roadmaps/59` §2.5.2).** Na
+ordem `docker`, `podman`, vale o primeiro cujo `ps` responde; nenhum
+responde, vale o primeiro, com a dica dele. Toda pergunta curta ao motor
+(`ps`, `version`, `info`, `context`) tem prazo de 5 s e, no estouro, a
+árvore do processo morre e a resposta diz "não respondeu em 5 s".
+`status`, `list` e `images` rodam fora do laço; `action` e `compose`
+escolhem o motor dentro do job. `version` é a versão de quem **atende** o
+CLI (`docker version --format '{{json .Server}}'`): um `docker` cujo contexto
+aponta o Podman diz `serverName: "Podman Engine"` e a versão do Podman; a do
+CLI fica em `clientVersion`, mesmo com o servidor fora.
+
+**Motor que não responde é erro, nunca lista vazia (`0.168.0`).** `list` e
+`images` com o motor negando ou mudo respondem `TOOL_NOT_FOUND` com a dica na
+mensagem e `details: { engine, reachable: false, hint, rawOutput }`. Antes, o
+`ps` negado devolvia stdout vazio e a tela dizia "nenhum container neste
+motor" (medido em 2026-10-15 com o Docker 29.9.1 negando o socket).
 
 **`action` e `compose` são jobs** (`JobRisk::Medium`; `remove` é `High`): cada
 linha do motor vai para `event.job.output`, cancelar mata o filho, e o
 `event.container.finished` leva as últimas linhas como motivo. `rm` vai **sem
-`-f`**: remover o que roda é dois gestos (parar, remover), de propósito.
+`-f`**: remover o que roda é dois gestos (parar, remover), de propósito. O
+"Apagar os dados" do Banco (`datasource.destroy`) é outro caminho e usa `rm
+-f -v`: o `-v` leva os volumes anônimos, onde a imagem guarda os dados
+(`0.168.0`).
 `compose up` é `-d` — um job que nunca termina não é job; a saída viva mora
 na aba de logs.
 
@@ -3738,6 +3761,18 @@ intacto e o histórico daquele projeto aparece vazio.
 
 Teste, impacto, catálogo, consulta, decisão de prévia e desconexão exigem workspace
 aberto; o perfil mora no projeto.
+
+**O motor do servidor em container é o que responde (`0.168.0`, 16b.1,
+`roadmaps/59` §2.5.2).** `datasource.create { kind: containerServer }` e
+`datasource.destroy` escolhem o motor como o domínio `container.*` (o
+primeiro, na ordem `docker`, `podman`, cujo `ps` responde), fora do laço.
+Motor que existe e não responde: `create` responde `TOOL_NOT_FOUND` com a
+dica e `details: { engine, reachable: false, hint, rawOutput }`, antes do
+`run`. `destroy` só pergunta ao motor com `data: true` num PostgreSQL ou
+MongoDB; motor que não responde, ou `ps` que falha, é o mesmo erro, e nada
+é apagado, nem o perfil — não dá para saber se o servidor é um container
+da IDE. Sem motor no `PATH`, não há container da IDE e o plano segue sem
+ele. O container do servidor sai com `rm -f -v` (os volumes anônimos).
 
 **Descritores de provedores (`0.164.0`, D1, contrato anterior ao código).**
 `datasource.list/save/remove` acrescentam `providers`, em ordem de apresentação.

@@ -28,8 +28,8 @@ fn temp_dir(name: &str) -> PathBuf {
 }
 
 /// Devolve o caminho que o sistema acha: no Windows, o `.exe` de passagem.
-fn binario_falso(dir: &Path, nome: &str, corpo: &str) -> PathBuf {
-    crate::write_executable(dir.join(nome), format!("#!/bin/sh\n{corpo}\n"))
+fn fake_binary(dir: &Path, name: &str, corpo: &str) -> PathBuf {
+    crate::write_executable(dir.join(name), format!("#!/bin/sh\n{corpo}\n"))
 }
 
 /// O que o `podman-docker` faz em 2026-09-12: aviso em stderr, versao do podman
@@ -40,8 +40,8 @@ echo "podman version 5.8.4""#;
 #[test]
 fn the_podman_docker_shim_is_recognised_as_podman_and_the_real_podman_is_preferred() {
     let dir = temp_dir("shim");
-    binario_falso(&dir, "docker", SHIM);
-    let podman = binario_falso(&dir, "podman", r#"echo "podman version 5.8.4""#);
+    fake_binary(&dir, "docker", SHIM);
+    let podman = fake_binary(&dir, "podman", r#"echo "podman version 5.8.4""#);
     let engine = detect_with(&ToolDetector::with_search_path(&dir)).unwrap();
     assert_eq!(engine.kind, ContainerEngine::Podman);
     assert!(engine.emulated);
@@ -51,12 +51,12 @@ fn the_podman_docker_shim_is_recognised_as_podman_and_the_real_podman_is_preferr
 #[test]
 fn a_real_docker_is_docker_and_wins_over_podman_on_the_same_path() {
     let dir = temp_dir("docker");
-    let docker = binario_falso(
+    let docker = fake_binary(
         &dir,
         "docker",
         r#"echo "Docker version 28.3.2, build 578ccf6""#,
     );
-    binario_falso(&dir, "podman", r#"echo "podman version 5.8.4""#);
+    fake_binary(&dir, "podman", r#"echo "podman version 5.8.4""#);
     let engine = detect_with(&ToolDetector::with_search_path(&dir)).unwrap();
     assert_eq!(engine.kind, ContainerEngine::Docker);
     assert!(!engine.emulated);
@@ -66,7 +66,7 @@ fn a_real_docker_is_docker_and_wins_over_podman_on_the_same_path() {
 #[test]
 fn only_podman_or_nothing() {
     let dir = temp_dir("so-podman");
-    binario_falso(&dir, "podman", r#"echo "podman version 5.8.4""#);
+    fake_binary(&dir, "podman", r#"echo "podman version 5.8.4""#);
     let engine = detect_with(&ToolDetector::with_search_path(&dir)).unwrap();
     assert_eq!(
         (engine.kind, engine.emulated),
@@ -255,13 +255,13 @@ fn the_compose_file_is_the_first_the_tool_would_pick_up() {
         Some("compose.yaml"),
         "compose.yaml ganha de compose.yml e do docker-compose.yml, como nas duas ferramentas"
     );
-    for nome in ["podman-compose.yml", "container-compose.yml"] {
-        let dir = temp_dir(&format!("compose-{nome}"));
-        std::fs::write(dir.join(nome), "services: {}\n").unwrap();
+    for name in ["podman-compose.yml", "container-compose.yml"] {
+        let dir = temp_dir(&format!("compose-{name}"));
+        std::fs::write(dir.join(name), "services: {}\n").unwrap();
         assert_eq!(
             compose_file_in(&dir).as_deref(),
-            Some(nome),
-            "{nome}: o podman-compose acha"
+            Some(name),
+            "{name}: o podman-compose acha"
         );
     }
     let so_pasta = temp_dir("compose-pasta");
@@ -306,13 +306,13 @@ fn status_reports_the_compose_file_and_compose_refuses_without_one() {
         "container.compose",
         Some(json!({ "action": "up" })),
     ));
-    let erro = recusa
+    let error = recusa
         .response()
         .error
         .clone()
         .expect("sem arquivo, recusa");
-    assert_eq!(erro.code, JsonRpcErrorCode::InvalidParams);
-    assert!(erro.message.contains("compose.yaml"), "{}", erro.message);
+    assert_eq!(error.code, JsonRpcErrorCode::InvalidParams);
+    assert!(error.message.contains("compose.yaml"), "{}", error.message);
 
     std::fs::write(dir.join("compose.yml"), "services: {}\n").unwrap();
     let status = core.handle_request(&JsonRpcRequest::new(
@@ -322,4 +322,191 @@ fn status_reports_the_compose_file_and_compose_refuses_without_one() {
     ));
     let result = status.response().result.clone().unwrap();
     assert_eq!(result["composeFile"], "compose.yml", "{result}");
+}
+
+/// Um `docker` falso que NEGA o socket, como o Docker CE 29.9.1 do Ubuntu
+/// 26.04 com o usuario fora do grupo (medido em 2026-10-15): o `--version`
+/// e a linha do cliente respondem, o resto sai 1 com "permission denied".
+const DOCKER_DENYING: &str = r#"case "$1" in
+  --version) echo "Docker version 29.9.1, build dfc520d" ;;
+  version) echo "29.9.1"; echo "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock" >&2; exit 1 ;;
+  context) echo "unix:///var/run/docker.sock" ;;
+  *) echo "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock" >&2; exit 1 ;;
+esac"#;
+
+/// Um `podman` falso que responde, sem nenhum container.
+const PODMAN_ANSWERING: &str = r#"case "$1" in
+  --version) echo "podman version 5.7.0" ;;
+  version) echo "5.7.0" ;;
+  ps) echo "[]" ;;
+  images) echo "[]" ;;
+  info) echo "true" ;;
+  *) exit 0 ;;
+esac"#;
+
+/// Defeito 2 (16b): o `docker` que nega nao ganha do `podman` que responde.
+#[test]
+fn a_denying_docker_does_not_win_over_a_podman_that_answers() {
+    let dir = temp_dir("escolha");
+    fake_binary(&dir, "docker", DOCKER_DENYING);
+    let podman = fake_binary(&dir, "podman", PODMAN_ANSWERING);
+    let (engine, check) =
+        crate::container::select_with(&ToolDetector::with_search_path(&dir)).expect("ha' motor");
+    assert_eq!(engine.kind, ContainerEngine::Podman);
+    assert_eq!(engine.binary, podman);
+    assert!(check.ok);
+}
+
+/// Defeitos 2 e 3: so' o `docker` que nega — o status diz por que e da' o
+/// passo do grupo; o `list` vira ERRO com a dica, e nao "nenhum container".
+#[test]
+fn a_denying_docker_alone_is_reported_and_its_list_is_an_error() {
+    let dir = temp_dir("negando");
+    fake_binary(&dir, "docker", DOCKER_DENYING);
+    let detector = ToolDetector::with_search_path(&dir);
+    let selected = crate::container::select_with(&detector).expect("ha' motor");
+    assert_eq!(selected.0.kind, ContainerEngine::Docker);
+    assert!(!selected.1.ok);
+
+    let status = crate::container::status(Some(&selected), None);
+    assert!(!status.reachable);
+    assert_eq!(status.client_version.as_deref(), Some("29.9.1"));
+    assert_eq!(status.version, None, "sem servidor, sem versao de servidor");
+    let hint = status.hint.expect("dica");
+    assert!(hint.contains("usermod -aG docker"), "{hint}");
+    assert!(
+        status.raw_output.contains("permission denied"),
+        "{}",
+        status.raw_output
+    );
+
+    let failure = crate::container::list(&selected.0, true).expect_err("negado e' erro");
+    assert!(failure.hint.contains("usermod"), "{}", failure.hint);
+    assert!(failure.raw_output.contains("permission denied"));
+    assert!(crate::container::images(&selected.0).is_err());
+}
+
+/// Defeito 2: o contexto do `docker` aponta o socket do Podman, que nao
+/// responde. A dica e' a do socket do Podman — nunca `sudo systemctl`.
+#[test]
+fn a_docker_context_on_the_podman_socket_gets_the_podman_hint() {
+    let dir = temp_dir("contexto-podman");
+    fake_binary(
+        &dir,
+        "docker",
+        r#"case "$1" in
+  --version) echo "Docker version 29.8.2, build 1" ;;
+  context) echo "unix:///run/user/1000/podman/podman.sock" ;;
+  *) echo "Cannot connect to the Docker daemon at unix:///run/user/1000/podman/podman.sock" >&2; exit 1 ;;
+esac"#,
+    );
+    let selected =
+        crate::container::select_with(&ToolDetector::with_search_path(&dir)).expect("motor");
+    let hint = crate::container::status(Some(&selected), None)
+        .hint
+        .expect("dica");
+    assert!(hint.contains("podman.socket"), "{hint}");
+    assert!(!hint.contains("sudo systemctl"), "{hint}");
+}
+
+/// Defeito 5: um `docker` cujo servidor e' o Podman diz o Podman, com a
+/// versao DELE, e nao a do CLI.
+#[test]
+fn a_docker_cli_served_by_podman_is_labelled_as_podman() {
+    let dir = temp_dir("servidor-podman");
+    fake_binary(
+        &dir,
+        "docker",
+        r#"case "$1" in
+  --version) echo "Docker version 29.8.2, build 1" ;;
+  version)
+    case "$3" in
+      *Server*) echo '{"Platform":{"Name":""},"Components":[{"Name":"Podman Engine","Version":"6.1.3"}],"Version":"6.1.3"}' ;;
+      *) echo "29.8.2" ;;
+    esac ;;
+  ps) exit 0 ;;
+  *) exit 0 ;;
+esac"#,
+    );
+    let selected =
+        crate::container::select_with(&ToolDetector::with_search_path(&dir)).expect("motor");
+    let status = crate::container::status(Some(&selected), None);
+    assert!(status.reachable);
+    assert_eq!(status.server_name.as_deref(), Some("Podman Engine"));
+    assert_eq!(status.version.as_deref(), Some("6.1.3"));
+    assert_eq!(status.client_version.as_deref(), Some("29.8.2"));
+}
+
+/// O JSON do servidor do Docker Engine de verdade: o nome vem da plataforma.
+#[test]
+fn the_docker_engine_server_json_names_the_engine() {
+    let (name, version) = parse::server_identity(
+        r#"{"Platform":{"Name":"Docker Engine - Community"},"Components":[{"Name":"Engine","Version":"29.9.1"},{"Name":"containerd","Version":"v2.1.4"}],"Version":"29.9.1"}"#,
+    );
+    assert_eq!(name.as_deref(), Some("Docker Engine - Community"));
+    assert_eq!(version.as_deref(), Some("29.9.1"));
+    assert_eq!(parse::server_identity("null"), (None, None));
+    assert_eq!(parse::server_identity("lixo"), (None, None));
+}
+
+/// A versao do CLI sai do `--version`, que nao fala com o servidor.
+#[test]
+fn the_cli_version_comes_from_the_version_flag_line() {
+    assert_eq!(
+        parse::cli_version("Docker version 29.9.1, build dfc520d").as_deref(),
+        Some("29.9.1")
+    );
+    assert_eq!(
+        parse::cli_version("podman version 5.7.0").as_deref(),
+        Some("5.7.0")
+    );
+    assert_eq!(parse::cli_version("sem versao aqui"), None);
+}
+
+/// Defeito 4: a pergunta ao motor tem prazo. Um motor que dorme e' morto, e a
+/// resposta diz que estourou — o core nao fica esperando.
+#[test]
+fn a_question_that_hangs_is_killed_at_the_deadline() {
+    let dir = temp_dir("prazo");
+    let slow = fake_binary(&dir, "docker", "sleep 30");
+    let start = std::time::Instant::now();
+    let reply = crate::container::probe::ask_command(
+        std::process::Command::new(slow),
+        std::time::Duration::from_millis(300),
+    );
+    assert!(reply.timed_out);
+    assert!(!reply.ok);
+    assert!(
+        reply.reason().contains("nao respondeu"),
+        "{}",
+        reply.reason()
+    );
+    assert!(
+        start.elapsed() < std::time::Duration::from_secs(5),
+        "voltou em {:?}",
+        start.elapsed()
+    );
+}
+
+/// Defeito 3 pelo despacho: `container.list` com o motor negando responde ERRO,
+/// com a dica nos dados; o core usa o PATH dele, nao o da maquina.
+#[test]
+fn container_list_with_a_denying_engine_is_an_error_with_the_hint() {
+    use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
+    use serde_json::json;
+
+    let dir = temp_dir("lista-negada");
+    fake_binary(&dir, "docker", DOCKER_DENYING);
+    let mut core = crate::Core::with_detector(ToolDetector::with_search_path(&dir));
+    let reply = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "container.list",
+        Some(json!({})),
+    ));
+    let error = reply.response().error.clone().expect("negado e' erro");
+    assert_eq!(error.code, JsonRpcErrorCode::ToolNotFound);
+    assert!(error.message.contains("usermod"), "{}", error.message);
+    let details = error.details.expect("details");
+    assert_eq!(details["reachable"], false);
+    assert_eq!(details["engine"], "docker");
 }

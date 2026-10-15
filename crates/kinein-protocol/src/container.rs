@@ -33,9 +33,19 @@ pub struct ContainerStatus {
     /// The executable the core will run (`podman`, `docker`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub binary: Option<String>,
-    /// Client version string.
+    /// Version of whoever SERVES the CLI (since `0.168.0`): the Docker Engine,
+    /// or the Podman behind a `docker` context. Only when the engine answers.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+    /// Version of the CLI itself (`docker`/`podman`), even when the server
+    /// does not answer (since `0.168.0`; before, this was `version`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_version: Option<String>,
+    /// Name of the server (`Docker Engine - Community`, `Podman Engine`,
+    /// `Podman`), so a `docker` CLI talking to Podman is labelled as Podman
+    /// (since `0.168.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub server_name: Option<String>,
     /// `docker` on the `PATH` is the `podman-docker` shim: it prints
     /// *"Emulate Docker CLI using podman"* on stderr and answers as Podman.
     pub emulated: bool,

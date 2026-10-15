@@ -21,12 +21,20 @@ Item {
     readonly property bool engineFound: status.engine !== undefined && status.engine !== null
                                         && status.engine !== ""
     readonly property bool reachable: status.reachable === true
+    // Quem ATENDE, nao so' o CLI (16b.1, roadmaps/59 §2.5.2, defeito 5): um
+    // `docker` cujo contexto aponta o Podman diz Podman, com a versao dele.
+    // `version` e' a do servidor desde o 0.168.0; sem servidor, a do CLI.
     readonly property string engineLabel: {
         if (!engineFound) return "";
-        const nome = status.engine === "podman" ? "Podman" : "Docker";
-        const versao = status.version !== undefined && status.version !== "" ? " " + status.version : "";
-        const emulado = status.emulated === true ? qsTr(" (o `docker` do PATH é o shim do Podman)") : "";
-        return nome + versao + emulado;
+        const asText = v => v !== undefined && v !== null ? String(v) : "";
+        const name = status.engine === "podman" ? "Podman" : "Docker";
+        const version = asText(status.version) !== "" ? " " + status.version : "";
+        const client = asText(status.clientVersion);
+        const emulated = status.emulated === true ? qsTr(" (o `docker` do PATH é o shim do Podman)") : "";
+        if (status.engine === "docker" && asText(status.serverName).indexOf("Podman") >= 0)
+            return "Podman" + version + qsTr(" (pelo docker CLI%1)").arg(client !== "" ? " " + client : "");
+        if (version !== "") return name + version + emulated;
+        return name + (client !== "" ? qsTr(" (CLI %1)").arg(client) : "") + emulated;
     }
     property bool statusBusy: false
     // O compose e' do PROJETO: a ferramenta e' da maquina (`status.compose`),
@@ -171,6 +179,11 @@ Item {
             statusBusy = false;
         } else if (method === "container.list") {
             listBusy = false;
+            // O motor nao respondeu: a lista anterior nao fica fingindo que
+            // ainda vale (16b.1, defeito 3); o motivo vai no errorText.
+            containers = [];
+            containersRaw = "";
+            containersHint = "";
         } else if (method === "container.images") {
             imagesBusy = false;
         } else if (method !== "container.action" && method !== "container.open"

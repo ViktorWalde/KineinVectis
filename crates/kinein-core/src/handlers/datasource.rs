@@ -18,7 +18,7 @@ use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params}
 impl Core {
     /// Roteia os metodos `datasource.*`.
     pub(crate) fn datasource_request_response(
-        &self,
+        &mut self,
         method: &str,
         request_id: Option<Value>,
         params: Option<&Value>,

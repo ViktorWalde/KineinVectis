@@ -13,15 +13,17 @@ use kinein_protocol::{
 use serde_json::{Value, json};
 
 use crate::Core;
+use crate::container::{self, Engine, EngineFailure};
 use crate::datasource::destroy::{self, DestroyPlan};
 use crate::datasource::query;
 use crate::jobs::JobOutcome;
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
+use crate::tools::ToolDetector;
 
 impl Core {
     /// `datasource.destroy` — o perfil e, se pedido, os dados.
     pub(crate) fn datasource_destroy_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -84,12 +86,38 @@ impl Core {
             Ok(activity) => activity,
             Err(response) => return *response,
         };
-        let mut response =
-            self.execute_destroy(request_id, &root, &profile, &mut request, activity);
-        if let Some(result) = response.result.as_mut().and_then(Value::as_object_mut) {
-            result.insert("clientContext".to_owned(), json!(token));
+        // O plano so' pergunta ao motor quando apaga os dados de um servidor;
+        // a escolha e a lista rodam fora do laco (16b.1, roadmaps/59 §2.5.2).
+        if !(request.data && destroy::depends_on_container(profile.engine)) {
+            let response =
+                self.execute_destroy(request_id, &root, &profile, &mut request, activity, None);
+            return with_client_context(response, token.as_deref());
         }
-        response
+        let detector = self.detector.clone();
+        let container_name = format!("kinein-{}", profile.name);
+        self.defer_then(
+            request_id,
+            move || server_container(&detector, &container_name),
+            move |core, request_id, container_engine| match container_engine {
+                Ok(container_engine) => with_client_context(
+                    core.execute_destroy(
+                        request_id,
+                        &root,
+                        &profile,
+                        &mut request,
+                        activity,
+                        container_engine,
+                    ),
+                    token.as_deref(),
+                ),
+                Err(failure) => super::container::engine_failure_response(
+                    request_id,
+                    &failure,
+                    "nada foi apagado, nem o perfil: sem o motor nao da' para saber se o \
+                     container_engine e' um container da IDE. ",
+                ),
+            },
+        )
     }
 
     fn execute_destroy(
@@ -99,6 +127,7 @@ impl Core {
         profile: &kinein_protocol::DataSourceProfile,
         request: &mut DataSourceDestroyParams,
         activity: crate::datasource::activity::Operation,
+        container_engine: Option<Engine>,
     ) -> JsonRpcResponse {
         let operation = DestroyContext {
             root: root.to_path_buf(),
@@ -115,17 +144,7 @@ impl Core {
                 None,
             );
         }
-        // O container existe? So' vale perguntar ao motor quando ha' um.
-        let engine = crate::container::detect_with(&self.detector);
-        let container_name = format!("kinein-{}", profile.name);
-        let container_exists = engine.as_ref().is_some_and(|e| {
-            crate::container::list(e, true).containers.iter().any(|c| {
-                c.names
-                    .iter()
-                    .any(|n| n == &container_name || n == &format!("/{container_name}"))
-            })
-        });
-        match destroy::plan(root, profile, container_exists) {
+        match destroy::plan(root, profile, container_engine.is_some()) {
             DestroyPlan::ProfileOnly { note } => catalogo(
                 request_id,
                 crate::datasource::remove(root, &profile.name),
@@ -143,7 +162,7 @@ impl Core {
                 ),
             },
             DestroyPlan::Container { name } => {
-                self.destroy_container_response(request_id, operation, engine, &name)
+                self.destroy_container_response(request_id, operation, container_engine, &name)
             }
             DestroyPlan::PostgresDrop {
                 maintenance,
@@ -158,12 +177,15 @@ impl Core {
         }
     }
 
-    /// O container do servidor: `rm -f`, como job.
+    /// O container do servidor: `rm -f -v`, como job. O `-v` leva os volumes
+    /// ANONIMOS (o `VOLUME` das imagens `postgres` e `mongo`), onde moram os
+    /// dados; sem ele "Apagar os dados" deixava o banco no disco (defeito 1,
+    /// roadmaps/59 §2.5.2). Volume nomeado fica: nao foi a IDE que o criou.
     fn destroy_container_response(
         &self,
         request_id: Option<Value>,
         operation: DestroyContext,
-        engine: Option<crate::container::Engine>,
+        engine: Option<Engine>,
         name: &str,
     ) -> JsonRpcResponse {
         let Some(motor) = engine else {
@@ -173,10 +195,11 @@ impl Core {
             return jobs_unavailable_response(request_id, "datasource.destroy");
         };
         let mut command = std::process::Command::new(&motor.binary);
-        command.args(["rm", "-f", name]);
+        command.args(destroy::CONTAINER_REMOVE_ARGS).arg(name);
         let shown = format!(
-            "{} rm -f {name}",
-            crate::platform::program_label(&motor.binary)
+            "{} {} {name}",
+            crate::platform::program_label(&motor.binary),
+            destroy::CONTAINER_REMOVE_ARGS.join(" ")
         );
         let mostrado = shown.clone();
         let job_id = jobs.spawn(
@@ -333,4 +356,29 @@ fn fechar(
     } else {
         JobOutcome::Failed
     }
+}
+
+/// O `clientContext` do pedido volta no resultado (`0.158.0`).
+fn with_client_context(mut response: JsonRpcResponse, token: Option<&str>) -> JsonRpcResponse {
+    if let Some(result) = response.result.as_mut().and_then(Value::as_object_mut) {
+        result.insert("clientContext".to_owned(), json!(token));
+    }
+    response
+}
+
+/// O container `kinein-<perfil>` no motor que responde: `Ok(Some(motor))`
+/// quando ele existe; `Ok(None)` sem motor no `PATH` (nao ha' container da
+/// IDE) ou sem o container; `Err` quando o motor existe e nao responde —
+/// nunca "nao existe" por falta de resposta (16b.1, roadmaps/59 §2.5.2).
+fn server_container(detector: &ToolDetector, name: &str) -> Result<Option<Engine>, EngineFailure> {
+    let Some(selected) = container::answering(detector) else {
+        return Ok(None);
+    };
+    let engine = selected?;
+    let exists = container::list(&engine, true)?.containers.iter().any(|c| {
+        c.names
+            .iter()
+            .any(|n| n == name || n.strip_prefix('/') == Some(name))
+    });
+    Ok(exists.then_some(engine))
 }

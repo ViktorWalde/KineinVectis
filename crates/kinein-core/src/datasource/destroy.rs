@@ -5,7 +5,7 @@
 //!
 //! - `SQLite`: o arquivo (so' dentro do workspace; fora dele, recusa — a
 //!   IDE nao apaga arquivo que nao e' do projeto);
-//! - servidor em container (`kinein-<name>` existe no motor): `rm -f` do
+//! - servidor em container (`kinein-<name>` existe no motor): `rm -f -v` do
 //!   container, como job;
 //! - banco DENTRO de um `PostgreSQL` (o perfil aponta para um banco que nao
 //!   e' o de manutencao): `DROP DATABASE "<banco>"` pelo banco `postgres`
@@ -90,6 +90,21 @@ pub fn plan(root: &Path, profile: &DataSourceProfile, container_exists: bool) ->
         }
     }
 }
+
+/// O plano depende de o motor ter `kinein-<name>`? So' num servidor.
+///
+/// `SQLite` e ODBC decidem sem perguntar ao motor (16b.1, `roadmaps/59`
+/// §2.5.2). Espelha os bracos de [`plan`] que olham `container_exists`.
+#[must_use]
+pub const fn depends_on_container(engine: DataSourceEngine) -> bool {
+    !matches!(engine, DataSourceEngine::Sqlite | DataSourceEngine::Odbc)
+}
+
+/// Os argumentos do motor para apagar o container do servidor, antes do nome.
+///
+/// `rm -f -v`: o `-v` leva os volumes anonimos, onde a imagem guarda os dados
+/// (defeito 1 do 16b, `roadmaps/59` §2.5.2); Docker e Podman aceitam os tres.
+pub const CONTAINER_REMOVE_ARGS: [&str; 3] = ["rm", "-f", "-v"];
 
 /// A instrucao do `DROP DATABASE`, com o nome entre aspas duplas (escapadas).
 #[must_use]

@@ -12,7 +12,7 @@ use std::{path::PathBuf, sync::mpsc, time::Duration};
 use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::{Value, json};
 
-struct Cenario {
+struct Scenario {
     core: crate::Core,
     events: mpsc::Receiver<JsonRpcRequest>,
     dir: PathBuf,
@@ -31,7 +31,7 @@ JSON
 esac
 "#;
 
-fn cenario(nome: &str, com_motor: bool) -> Cenario {
+fn scenario(nome: &str, com_motor: bool) -> Scenario {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-dsdiscover-{nome}", std::process::id()));
@@ -49,7 +49,7 @@ fn cenario(nome: &str, com_motor: bool) -> Cenario {
     core.enable_lsp(sender);
     // Hermetico: o banco que a pessoa deixou rodando nao e' candidato do teste.
     core.probe_local_servers = false;
-    let mut c = Cenario {
+    let mut c = Scenario {
         core,
         events: receiver,
         dir,
@@ -59,7 +59,7 @@ fn cenario(nome: &str, com_motor: bool) -> Cenario {
     c
 }
 
-impl Cenario {
+impl Scenario {
     fn rpc(&mut self, method: &str, params: Value) -> kinein_protocol::JsonRpcResponse {
         self.core
             .handle_request(&JsonRpcRequest::new(9_i64, method, Some(params)))
@@ -67,7 +67,7 @@ impl Cenario {
             .clone()
     }
 
-    fn evento(&self, nome: &str) -> Value {
+    fn event(&self, nome: &str) -> Value {
         let prazo = std::time::Instant::now() + Duration::from_secs(20);
         while std::time::Instant::now() < prazo {
             if let Ok(e) = self.events.recv_timeout(Duration::from_millis(50))
@@ -89,7 +89,7 @@ fn arquivo_sqlite(caminho: &std::path::Path) {
 
 #[test]
 fn discover_lists_the_database_container_and_the_workspace_sqlite_files() {
-    let mut c = cenario("lista", true);
+    let mut c = scenario("lista", true);
     arquivo_sqlite(&c.dir.join("data/app.sqlite"));
     arquivo_sqlite(&c.dir.join("target/lixo.sqlite"));
 
@@ -124,7 +124,7 @@ fn discover_lists_the_database_container_and_the_workspace_sqlite_files() {
 
 #[test]
 fn create_sqlite_file_saves_the_profile_and_refuses_to_overwrite() {
-    let mut c = cenario("sqlite", false);
+    let mut c = scenario("sqlite", false);
     let r = c.rpc(
         "datasource.create",
         json!({ "kind": "sqliteFile", "name": "notas" }),
@@ -143,8 +143,8 @@ fn create_sqlite_file_saves_the_profile_and_refuses_to_overwrite() {
             .starts_with(b"SQLite format 3\0")
     );
 
-    let lista = c.rpc("datasource.list", json!({}));
-    assert_eq!(lista.result.unwrap()["profiles"][0]["name"], "notas");
+    let listing = c.rpc("datasource.list", json!({}));
+    assert_eq!(listing.result.unwrap()["profiles"][0]["name"], "notas");
 
     let de_novo = c.rpc(
         "datasource.create",
@@ -176,7 +176,7 @@ fn create_sqlite_file_saves_the_profile_and_refuses_to_overwrite() {
 
 #[test]
 fn create_container_server_runs_the_pinned_command_and_saves_the_profile() {
-    let mut c = cenario("servidor", true);
+    let mut c = scenario("servidor", true);
     let r = c.rpc(
         "datasource.create",
         json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": 5433 }),
@@ -189,7 +189,7 @@ fn create_container_server_runs_the_pinned_command_and_saves_the_profile() {
         "podman run -d --name kinein-dev -p 127.0.0.1:5433:5432 -e POSTGRES_HOST_AUTH_METHOD=trust docker.io/library/postgres:16"
     );
 
-    let criado = c.evento("event.datasource.created");
+    let criado = c.event("event.datasource.created");
     assert_eq!(criado["success"], true, "{criado}");
     assert_eq!(criado["profile"]["name"], "dev");
     assert_eq!(criado["profile"]["port"], 5433);
@@ -199,8 +199,8 @@ fn create_container_server_runs_the_pinned_command_and_saves_the_profile() {
     assert!(argv.contains("-p 127.0.0.1:5433:5432"), "{argv}");
     assert!(argv.contains("postgres:16"), "{argv}");
 
-    let lista = c.rpc("datasource.list", json!({}));
-    assert_eq!(lista.result.unwrap()["profiles"][0]["name"], "dev");
+    let listing = c.rpc("datasource.list", json!({}));
+    assert_eq!(listing.result.unwrap()["profiles"][0]["name"], "dev");
 
     let sqlite = c.rpc(
         "datasource.create",
@@ -211,7 +211,7 @@ fn create_container_server_runs_the_pinned_command_and_saves_the_profile() {
 
 #[test]
 fn create_container_server_without_an_engine_is_tool_not_found() {
-    let mut c = cenario("sem-motor", false);
+    let mut c = scenario("sem-motor", false);
     let r = c.rpc(
         "datasource.create",
         json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": 27017 }),
@@ -228,13 +228,100 @@ fn create_container_server_without_an_engine_is_tool_not_found() {
     );
 }
 
+/// Um `docker` que NEGA o socket, como o Docker CE 29.9.1 do Ubuntu 26.04
+/// com o usuario fora do grupo `docker` (medido em 2026-10-15).
+const DOCKER_DENYING: &str = r#"
+case "$1" in
+  --version) echo "Docker version 29.9.1, build dfc520d" ;;
+  context) echo "unix:///var/run/docker.sock" ;;
+  *) echo "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock" >&2; exit 1 ;;
+esac
+"#;
+
+/// 16b.1 (`roadmaps/59` §2.5.2): o Banco usa o motor que RESPONDE. Com o
+/// `docker` negando ao lado do `podman`, o `create` e o `destroy` vao pelo
+/// `podman`; so' com o `docker` negando, o `destroy` de um servidor responde
+/// o erro com a dica e NADA e' apagado, nem o perfil — antes, o `list` que
+/// falhava virava "o container nao existe" e o `PostgreSQL` ia para o
+/// `DROP DATABASE`, deixando o container e o volume.
+#[test]
+fn create_and_destroy_use_the_engine_that_answers() {
+    let mut c = scenario("motor-que-responde", true);
+    crate::write_executable(
+        c.dir.join("bin/docker"),
+        format!("#!/bin/sh\n{DOCKER_DENYING}"),
+    );
+
+    let r = c.rpc(
+        "datasource.create",
+        json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": 5433 }),
+    );
+    assert!(r.error.is_none(), "{:?}", r.error);
+    let command = r.result.unwrap()["command"].clone();
+    assert!(
+        command.as_str().unwrap().starts_with("podman run "),
+        "{command}"
+    );
+    assert_eq!(c.event("event.datasource.created")["success"], true);
+
+    c.rpc(
+        "datasource.save",
+        json!({ "profile": { "name": "pg", "engine": "postgres", "host": "127.0.0.1",
+        "port": 5433, "database": "postgres", "user": "postgres" } }),
+    );
+    let r = c.rpc("datasource.destroy", json!({ "name": "pg", "data": true }));
+    assert!(r.error.is_none(), "{:?}", r.error);
+    assert_eq!(r.result.unwrap()["command"], "podman rm -f -v kinein-pg");
+    assert_eq!(c.event("event.datasource.destroyed")["success"], true);
+
+    // So' o `docker` que nega: nada se apaga, e a dica diz o passo.
+    std::fs::remove_file(c.dir.join("bin/podman")).unwrap();
+    c.rpc(
+        "datasource.save",
+        json!({ "profile": { "name": "pg2", "engine": "postgres", "host": "127.0.0.1",
+        "port": 5434, "database": "app", "user": "postgres" } }),
+    );
+    let r = c.rpc("datasource.destroy", json!({ "name": "pg2", "data": true }));
+    let error = r.error.expect("motor negando e' erro, nao DROP DATABASE");
+    assert_eq!(error.code, JsonRpcErrorCode::ToolNotFound);
+    assert!(
+        error.message.contains("nada foi apagado"),
+        "{}",
+        error.message
+    );
+    assert!(error.message.contains("usermod"), "{}", error.message);
+    assert_eq!(error.details.expect("details")["reachable"], false);
+    let listing = c.rpc("datasource.list", json!({})).result.unwrap();
+    assert!(
+        listing["profiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|p| p["name"] == "pg2"),
+        "o perfil fica: {listing}"
+    );
+
+    let r = c.rpc(
+        "datasource.create",
+        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": 27018 }),
+    );
+    let error = r.error.expect("motor negando e' erro antes do run");
+    assert_eq!(error.code, JsonRpcErrorCode::ToolNotFound);
+    assert!(
+        error.message.contains("o servidor nao foi criado"),
+        "{}",
+        error.message
+    );
+}
+
 /// `datasource.destroy` (0.129.0): sem `data`, so' o perfil; com `data`, o
 /// arquivo `SQLite` do workspace some (fora dele fica, com a nota), o
-/// container `kinein-<nome>` leva `rm -f` (job + evento) e o perfil sai; um
+/// container `kinein-<nome>` leva `rm -f -v` (job + evento; o `-v` leva os
+/// volumes anonimos, onde a imagem guarda os dados) e o perfil sai; um
 /// Mongo de servidor so' perde o perfil, com a nota.
 #[test]
 fn destroy_removes_the_profile_and_optionally_the_data() {
-    let mut c = cenario("destroy", true);
+    let mut c = scenario("destroy", true);
     // SQLite criado pela IDE: com data, o arquivo some.
     let criado = c.rpc(
         "datasource.create",
@@ -280,7 +367,7 @@ fn destroy_removes_the_profile_and_optionally_the_data() {
     );
     let _ = std::fs::remove_file(&fora);
 
-    // Servidor em container (o podman falso lista `kinein-pg`): rm -f + perfil fora.
+    // Servidor em container (o podman falso lista `kinein-pg`): rm -f -v + perfil fora.
     c.rpc(
         "datasource.save",
         json!({ "profile": { "name": "pg", "engine": "postgres", "host": "127.0.0.1",
@@ -289,16 +376,17 @@ fn destroy_removes_the_profile_and_optionally_the_data() {
     let r = c.rpc("datasource.destroy", json!({ "name": "pg", "data": true }));
     assert!(r.error.is_none(), "{:?}", r.error);
     let resultado = r.result.unwrap();
-    assert_eq!(resultado["command"], "podman rm -f kinein-pg");
-    let evento = c.evento("event.datasource.destroyed");
-    assert_eq!(evento["success"], true, "{evento}");
+    assert_eq!(resultado["command"], "podman rm -f -v kinein-pg");
+    let event = c.event("event.datasource.destroyed");
+    assert_eq!(event["success"], true, "{event}");
     assert!(
         std::fs::read_to_string(c.dir.join("bin/rm.argv"))
             .unwrap()
-            .contains("-f kinein-pg")
+            .contains("rm -f -v kinein-pg"),
+        "sem o -v o volume do banco fica no disco (defeito 1 do 16b)"
     );
     assert!(
-        evento["profiles"]
+        event["profiles"]
             .as_array()
             .unwrap()
             .iter()
