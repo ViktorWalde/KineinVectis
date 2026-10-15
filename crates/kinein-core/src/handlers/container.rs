@@ -300,25 +300,18 @@ const fn engine_name(engine: &Engine) -> &'static str {
 }
 
 /// O motor existe e nao respondeu: erro com a dica e a saida crua, que a
-/// janela mostra — nunca uma lista vazia (defeito 3). `antes` diz o que
+/// janela mostra — nunca uma lista vazia (defeito 3). `prefix` diz o que
 /// deixou de ser feito (o Banco: "nada foi apagado"), ou vem vazio.
 pub(crate) fn engine_failure_response(
     request_id: Option<Value>,
     failure: &EngineFailure,
-    antes: &str,
+    prefix: &str,
 ) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(
             JsonRpcErrorCode::ToolNotFound,
-            format!(
-                "{antes}o {} nao respondeu: {}",
-                match failure.engine {
-                    ContainerEngine::Docker => "Docker",
-                    ContainerEngine::Podman => "Podman",
-                },
-                failure.hint
-            ),
+            format!("{prefix}{}", failure.message()),
             Some(json!({
                 "engine": failure.engine,
                 "reachable": false,

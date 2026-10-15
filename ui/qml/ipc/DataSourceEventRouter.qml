@@ -82,8 +82,9 @@ Item {
             root.dataSourceController.impact.handleMeasured(impact);
         }
 
-        function onDataSourceDiscovered(candidates, containerEngine, hint) {
-            root.dataSourceController.discovery.handleDiscovered(candidates, containerEngine, hint);
+        function onDataSourceDiscovered(candidates, containerEngine, hint, containerHint, suggestedPorts) {
+            root.dataSourceController.discovery.handleDiscovered(candidates, containerEngine, hint,
+                                                                 containerHint, suggestedPorts);
         }
 
         function onDataSourceCreateResolved(profile, jobId, command) {

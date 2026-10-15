@@ -3727,7 +3727,7 @@ Domínio da etapa 26/27 (`../roadmaps/35` §9), ampliado no passo 7 do 59.
 A arquitetura e os fluxos estão no [37](37-banco-de-dados.md).
 
 ```text
-datasource.discover   {}                      -> { candidates: [DataSourceCandidate], containerEngine?, hint? }  (0.124.0)
+datasource.discover   {}                      -> { candidates: [DataSourceCandidate], containerEngine?, containerHint?, suggestedPorts?: { postgres?, mongo? }, hint? }  (0.124.0; 0.169.0)
 datasource.create     { kind: sqliteFile, name, path? } -> { profile }                                       (0.124.0)
                       { kind: containerServer, engine, name, port } -> { jobId, command }  + event.datasource.created
 datasource.destroy    { name, data?, password?, clientContext?, expectedContext?, confirmation? } -> { profiles, note?, clientContext? } | { jobId, command, clientContext? } + event.datasource.destroyed (0.158.0)
@@ -3773,6 +3773,17 @@ MongoDB; motor que não responde, ou `ps` que falha, é o mesmo erro, e nada
 é apagado, nem o perfil — não dá para saber se o servidor é um container
 da IDE. Sem motor no `PATH`, não há container da IDE e o plano segue sem
 ele. O container do servidor sai com `rm -f -v` (os volumes anônimos).
+
+**O "Criar banco" diz o motor e a porta (`0.169.0`, 16b.2, `roadmaps/59`
+§2.5.2).** `datasource.discover` escolhe o motor como o `create` (o que
+responde ao `ps`): `containerEngine` só vem quando ele responde e lista; sem
+ele vem `containerHint`, o motivo ("o Podman não respondeu: <dica>", ou sem
+Podman/Docker no `PATH`). `suggestedPorts` traz, por motor, a primeira porta
+de 20 a partir da padrão (5432, 27017) em que um `bind` em `127.0.0.1`
+funciona; sem nenhuma livre, o motor fica de fora. `datasource.create {
+kind: containerServer }` recusa a porta em que o `bind` falha, antes de
+escolher o motor: `INVALID_PARAMS` com a porta e a primeira livre depois
+dela.
 
 **Descritores de provedores (`0.164.0`, D1, contrato anterior ao código).**
 `datasource.list/save/remove` acrescentam `providers`, em ordem de apresentação.

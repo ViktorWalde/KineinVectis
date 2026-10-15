@@ -183,8 +183,11 @@ Item {
         case "datasource.list":
             dataSourceController.windowRequested();
             // `=<nome>` (so' a foto headless, 9a.3): o formulario dessa
-            // conexao, como o "Editar" da arvore.
-            if (arg !== "") {
+            // conexao, como o "Editar" da arvore. `=+criar` (so' a foto,
+            // 16b.2): o "Criar banco"; nome de perfil nao aceita `+`.
+            if (arg === "+criar") {
+                dataSourceController.openCreation();
+            } else if (arg !== "") {
                 dataSourceController.select(arg);
                 dataSourceController.open();
             }

@@ -101,6 +101,11 @@ impl Core {
         name: String,
         port: u16,
     ) -> JsonRpcResponse {
+        // A porta ocupada recusa ANTES de perguntar ao motor: o `run` so'
+        // falharia depois de baixar a imagem (16b.2, roadmaps/59 §2.5.2).
+        if let Err(message) = create::ensure_port_free(port) {
+            return invalid(request_id, message);
+        }
         let detector = self.detector.clone();
         self.defer_then(
             request_id,

@@ -284,7 +284,9 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
         emit dataSourceDiscovered(
             result.value(QStringLiteral("candidates")).toArray().toVariantList(),
             result.value(QStringLiteral("containerEngine")).toString(),
-            result.value(QStringLiteral("hint")).toString());
+            result.value(QStringLiteral("hint")).toString(),
+            result.value(QStringLiteral("containerHint")).toString(),
+            result.value(QStringLiteral("suggestedPorts")).toObject().toVariantMap());
         return true;
     }
     if (method == QStringLiteral("datasource.destroy")) {

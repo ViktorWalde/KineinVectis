@@ -12,6 +12,9 @@ Item {
 
     property bool canServe: false
     property string containerEngine: ""
+    // Sem motor que responda, o porque; e a porta livre por motor (16b.2).
+    property string containerHint: ""
+    property var suggestedPorts: ({})
     property bool creating: false
     property string command: ""
     property string message: ""
@@ -27,6 +30,12 @@ Item {
     property string kind: "sqlite"
     property string name: ""
     property string port: ""
+    // A porta que vai no pedido com o campo vazio: a livre que o core mediu,
+    // senao a padrao do motor.
+    readonly property string suggestedPort: {
+        const suggested = Number(suggestedPorts[kind]);
+        return suggested > 0 ? String(suggested) : (kind === "mongo" ? "27017" : "5432");
+    }
 
     // O que acontece: frase para o SQLite, o COMANDO (em caixa de codigo)
     // para o que roda num servidor.
@@ -40,7 +49,7 @@ Item {
         const motor = containerEngine || "podman";
         const imagem = kind === "mongo" ? "docker.io/library/mongo:7" : "docker.io/library/postgres:16";
         const interna = kind === "mongo" ? 27017 : 5432;
-        const p = port !== "" ? port : String(interna);
+        const p = port !== "" ? port : suggestedPort;
         const auth = kind === "mongo" ? "" : " -e POSTGRES_HOST_AUTH_METHOD=trust";
         return motor + " run -d --name kinein-" + (name || "<nome>") + " -p 127.0.0.1:" + p + ":" + interna + auth + " " + imagem;
     }
@@ -76,9 +85,9 @@ Item {
 
         Text {
             width: parent.width
-            visible: !root.canServe
+            visible: !root.canServe && root.containerHint !== ""
             wrapMode: Text.WordWrap
-            text: qsTr("Sem Podman/Docker no PATH não há como subir um servidor em container.")
+            text: root.containerHint
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
         }
@@ -99,7 +108,7 @@ Item {
                 width: 110
                 visible: root.kind === "postgres" || root.kind === "mongo"
                 label: qsTr("Porta (loopback)")
-                placeholder: root.kind === "mongo" ? "27017" : "5432"
+                placeholder: root.suggestedPort
                 numeric: true
                 value: root.port
                 onEdited: text => root.port = text

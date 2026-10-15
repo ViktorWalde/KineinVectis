@@ -51,12 +51,35 @@ pub struct DataSourceCandidate {
 pub struct DataSourceDiscoverResult {
     /// What answered, servers first, then containers, then files.
     pub candidates: Vec<DataSourceCandidate>,
-    /// The container engine consulted, if any.
+    /// The container engine that ANSWERED, if any (since `0.169.0`, only one
+    /// whose `ps` answers; before, the first on the `PATH`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub container_engine: Option<ContainerEngine>,
+    /// Why no container engine is offered (since `0.169.0`): the engine's
+    /// own hint when it does not answer, or that there is none on the `PATH`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub container_hint: Option<String>,
+    /// The first free loopback port per server engine, from its default
+    /// (since `0.169.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub suggested_ports: Option<DataSourceSuggestedPorts>,
     /// What to do when the list is empty (or short).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hint: Option<String>,
+}
+
+/// The first loopback port where a `bind` worked, per server engine,
+/// searched from the engine's default (`5432`, `27017`) up to 20 ports.
+/// An engine with no free port in that range is absent.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceSuggestedPorts {
+    /// For `PostgreSQL`, from `5432`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub postgres: Option<u16>,
+    /// For `MongoDB`, from `27017`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mongo: Option<u16>,
 }
 
 /// What `datasource.create` makes.

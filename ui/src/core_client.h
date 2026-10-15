@@ -429,8 +429,11 @@ signals:
     void dataSourceConsoleStatementResolved(const QVariantMap& operation);
     void dataSourceTestAccepted(const QString& jobId);
     /// `candidates` com o perfil pronto de cada um; `hint` quando vazio.
+    /// `containerEngine` so' com o motor que responde, `containerHint` o
+    /// porque sem ele, `suggestedPorts` a porta livre por motor (0.169.0).
     void dataSourceDiscovered(const QVariantList& candidates, const QString& containerEngine,
-                              const QString& hint);
+                              const QString& hint, const QString& containerHint,
+                              const QVariantMap& suggestedPorts);
     /// `profile` preenchido = criado na hora (SQLite); `jobId` = servidor
     /// subindo, com o `command` exato para a tela mostrar.
     void dataSourceCreateResolved(const QVariantMap& profile, const QString& jobId,

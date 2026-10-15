@@ -68,31 +68,45 @@ pub fn discover(
     } else {
         Vec::new()
     };
-    let engine = container::detect_with(detector);
-    // Motor que nao responde nao lista nada aqui; o porque e' do 16b.2
-    // (`containerHint`, roadmaps/59 §2.5.2).
-    if let Some(Ok(listed)) = engine.as_ref().map(|engine| container::list(engine, true)) {
-        candidates.extend(listed.containers.iter().filter_map(container_candidate));
-    }
+    // O motor que RESPONDE, como o `create` (16b.2, roadmaps/59 §2.5.2): sem
+    // ele, o "Criar banco" desliga e o `containerHint` diz por que.
+    let (container_engine, container_hint) = match container::answering(detector) {
+        None => (None, Some(NO_ENGINE.to_owned())),
+        Some(Err(failure)) => (None, Some(failure.message())),
+        Some(Ok(engine)) => match container::list(&engine, true) {
+            Ok(listed) => {
+                candidates.extend(listed.containers.iter().filter_map(container_candidate));
+                (Some(engine.kind), None)
+            }
+            Err(failure) => (None, Some(failure.message())),
+        },
+    };
     candidates.extend(sqlite_files(root));
     let hint = candidates.is_empty().then(|| {
-        if engine.is_some() {
+        if container_engine.is_some() {
             "Nenhum servidor no loopback, nenhum contêiner de banco e nenhum .sqlite no \
              projeto. \"Criar banco\" cria um arquivo SQLite ou sobe um PostgreSQL/MongoDB em \
              contêiner."
                 .to_owned()
         } else {
-            "Nenhum servidor no loopback e nenhum .sqlite no projeto. Sem Podman/Docker no \
-             PATH não há como subir um servidor em contêiner; \"Criar banco\" cria um SQLite."
-                .to_owned()
+            format!(
+                "Nenhum servidor no loopback e nenhum .sqlite no projeto. {} \"Criar banco\" \
+                 cria um SQLite.",
+                container_hint.as_deref().unwrap_or(NO_ENGINE)
+            )
         }
     });
     DataSourceDiscoverResult {
         candidates,
-        container_engine: engine.map(|e| e.kind),
+        container_engine,
+        container_hint,
+        suggested_ports: Some(super::create::suggested_ports()),
         hint,
     }
 }
+
+/// Sem motor no `PATH`: o motivo do "Criar banco" desligado.
+const NO_ENGINE: &str = "Sem Podman/Docker no PATH não há como subir um servidor em contêiner.";
 
 /// O usuario desta sessao: e' o papel que o `peer` do socket aceita.
 fn local_user() -> String {

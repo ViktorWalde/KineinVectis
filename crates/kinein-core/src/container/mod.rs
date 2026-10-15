@@ -126,6 +126,16 @@ pub struct EngineFailure {
 }
 
 impl EngineFailure {
+    /// A frase para a tela: "o Podman nao respondeu: <a dica>".
+    #[must_use]
+    pub fn message(&self) -> String {
+        let name = match self.engine {
+            ContainerEngine::Docker => "Docker",
+            ContainerEngine::Podman => "Podman",
+        };
+        format!("o {name} nao respondeu: {}", self.hint)
+    }
+
     /// A falha a partir da resposta do motor.
     #[must_use]
     pub fn from_asked(engine: &Engine, asked: &Asked) -> Self {

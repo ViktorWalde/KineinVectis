@@ -21,6 +21,8 @@
 #              esta versao nao usa (D1a.4, 2026-10-08)
 #   banco-adaptador  o formulario de uma conexao SQLite que usa o adaptador
 #              da IDE, com o campo "Adaptador" (9a.3, 2026-10-09)
+#   banco-criar  o "Criar banco" com o motor desta maquina: o comando que
+#              vai rodar, a porta e, sem motor que responda, o motivo (16b.2)
 #   qml        um .qml aberto no editor, com o realce proprio do QML (59 §2.4)
 #
 # Uso: bash scripts/capturar-telas.sh [BINARIO] [PASTA_DE_SAIDA]
@@ -73,6 +75,7 @@ scene_commands() {
         abrir) echo "workspace.open" ;;
         banco) echo "datasource.list" ;;
         banco-adaptador) echo "datasource.list=estacao" ;;
+        banco-criar) echo "datasource.list=+criar" ;;
         qml) echo "" ;;
         *) return 1 ;;
     esac

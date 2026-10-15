@@ -21,10 +21,11 @@
 > `arm-none-eabi-gcc` e `debugpy`). A UI compila; abri-la ainda não foi
 > medido.
 >
-> **Próximo passo:** a 16b.2 ([59](59-fechamento-da-0.3.9.md) §2.5.2: a
-> porta livre, o "Criar banco" desligado com motivo, o `discover` só com
-> motor que responde), depois 16b.3, 15 e 16 (59 §2), e a 0.4 (57). A 16b.1
-> está feita (40.7 §7.284), depois da catraca do idioma no Ubuntu (§7.283).
+> **Próximo passo:** a 16b.3 ([59](59-fechamento-da-0.3.9.md) §2.5.2: o
+> "Remover" da janela Containers pergunta "com os volumes (N, X MB)" ou "só
+> o container"; método novo `container.volumes`), depois 15 e 16 (59 §2), e
+> a 0.4 (57). Feitas hoje: a catraca do idioma no Ubuntu (40.7 §7.283), a
+> 16b.1 (§7.284) e a 16b.2 (§7.285).
 >
 > **Em curso:** a organização da documentação
 > ([61](61-organizacao-da-documentacao.md) §4). **Pausado:** o porte para o
@@ -37,7 +38,7 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.168.0 (crates/kinein-protocol, medido em 2026-10-15; o
+protocolo   0.169.0 (crates/kinein-protocol, medido em 2026-10-15; o
             historico das versoes e' o arquitetura/03)
 metodos     185 roteados e 60 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)

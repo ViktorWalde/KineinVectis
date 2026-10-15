@@ -95,7 +95,7 @@ Cada passo termina com:
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
-| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. A fazer: 16b.2 (porta livre no "Criar banco", desligado com motivo) e 16b.3 (o "Remover" que pergunta, com os volumes) |
+| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. A fazer: 16b.3 (o "Remover" que pergunta, com os volumes) |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -433,6 +433,48 @@ verde e foto antes/depois no Xvfb das telas que muda. **Precisa:** o Rust
 instalado nesta máquina; para a prova real, o usuário no grupo `docker` (ou
 o Podman instalado), decisão do autor. Em 2026-10-15 o autor instalou o
 Rust 1.96.1 e o Podman 5.7.0; o usuário continua fora do grupo `docker`.
+
+**O desenho fino da 16b.2 (2026-10-15, antes do código).** Os defeitos 3 (a
+metade do `discover`) e 6, e o "Criar banco" desligado com motivo. Protocolo
+`0.169.0`, aditivo.
+
+- **Core, `discover`:** escolhe o motor pelo `answering`, como o Banco já faz
+  desde a 16b.1. `containerEngine` só vem quando o motor responde e o `ps`
+  lista; senão vem `containerHint`, o motivo: "o Podman não respondeu: <a
+  dica>" ou "sem Podman/Docker no PATH". O `hint` de lista vazia continua o
+  mesmo campo, com a frase dita pelo motivo.
+- **Core, a porta:** `datasource::create::free_loopback_port(from)`, a
+  primeira porta de `from` a `from + 19` em que um `bind` em `127.0.0.1`
+  funciona (o listener é solto na hora). O `discover` devolve
+  `suggestedPorts: { postgres, mongo }`, a partir de 5432 e 27017 (sem porta
+  livre nas 20, o campo do motor fica de fora). O `datasource.create` com
+  `containerServer` recusa a porta em que o `bind` falha, ANTES de escolher o
+  motor: `INVALID_PARAMS` "a porta 5432 já está em uso no loopback; livre:
+  5433" (a sugestão é a primeira livre depois da pedida).
+- **C++:** o `dataSourceDiscovered` ganha `containerHint` (texto) e
+  `suggestedPorts` (mapa), no `core_client.h` e no
+  `core_client_datasource.cpp`; o `DataSourceEventRouter.qml` repassa.
+- **QML:** o `DataSourceDiscoveryController` guarda `containerHint` e
+  `suggestedPorts`; o `defaultPort(engine)` passa a dar a sugerida (a padrão
+  só sem sugestão). O `DataSourcePanelHost` → `DataSourcePanel` →
+  `DataSourceCreateBox` levam os dois. No formulário, sem motor, a frase fixa
+  "Sem Podman/Docker no PATH…" dá lugar ao `containerHint`; a porta vazia
+  mostra a sugerida no campo (placeholder) e no comando montado, e é ela que
+  vai no pedido.
+- **Provas:** teste do `free_loopback_port` com um `TcpListener` segurando
+  uma porta efêmera (a sugestão pula para outra); `discover` com o `docker`
+  negando → sem `containerEngine`, com `containerHint` que cita o grupo
+  `docker`, e com `suggestedPorts`; `create` numa porta segura por um
+  listener → `INVALID_PARAMS` com a porta e a livre; o harness
+  `tst_datasource_discovery` com o motivo e a porta sugerida; mutações (o
+  `discover` voltando ao `detect_with`, e o `create` sem a recusa); foto do
+  "Criar banco" no Xvfb antes e depois.
+- **A foto:** a cena `banco-criar` do `capturar-telas.sh` abre o "Criar
+  banco" pelo `datasource.list=+criar` (gancho só da foto, como o `=<nome>`
+  da 9a.3; nome de perfil não aceita `+`). Medido antes, em 2026-10-15, com o
+  Docker negando e o Podman respondendo: a aba PostgreSQL mostra `$ docker
+  run ... -p 127.0.0.1:5432:5432`, e o core sobe pelo Podman desde a 16b.1 —
+  a tela mostra um comando que não é o que roda, numa porta sem conferir.
 
 ## 3. Containers acoplados
 

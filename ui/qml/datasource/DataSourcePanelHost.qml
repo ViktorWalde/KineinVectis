@@ -44,6 +44,8 @@ KvPanelFrame {
         discoverHint: root.controller ? root.controller.discovery.hint : ""
         canServe: root.controller ? root.controller.discovery.canServe : false
         containerEngine: root.controller ? root.controller.discovery.containerEngine : ""
+        containerHint: root.controller ? root.controller.discovery.containerHint : ""
+        suggestedPorts: root.controller ? root.controller.discovery.suggestedPorts : ({})
         creating: root.controller ? root.controller.discovery.creating : false
         createCommand: root.controller ? root.controller.discovery.createCommand : ""
         createMessage: root.controller ? root.controller.discovery.createMessage : ""

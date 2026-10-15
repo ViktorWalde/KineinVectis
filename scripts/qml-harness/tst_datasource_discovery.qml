@@ -10,7 +10,7 @@ Item {
     id: root
     width: 100; height: 100
 
-    property var pedidos: []
+    property var requests: []
     property var salvos: []
     property var consultas: []
 
@@ -20,16 +20,16 @@ Item {
         DataSourceController {
             id: fontes
 
-            onListRequested: root.pedidos.push("list")
+            onListRequested: root.requests.push("list")
             onSaveRequested: profile => root.salvos.push(profile)
             onQueryRequested: (name, password, sql, confirmWrite) =>
                 root.consultas.push({ name: name, sql: sql, confirmWrite: confirmWrite })
 
-            discovery.onDiscoverRequested: root.pedidos.push("discover")
-            discovery.onCreateSqliteRequested: (name, path) => root.pedidos.push("sqlite:" + name)
+            discovery.onDiscoverRequested: root.requests.push("discover")
+            discovery.onCreateSqliteRequested: (name, path) => root.requests.push("sqlite:" + name)
             discovery.onCreateServerRequested: (engine, name, port) =>
-                root.pedidos.push("server:" + engine + ":" + name + ":" + port)
-            discovery.onDestroyRequested: (name, data) => root.pedidos.push("destroy:" + name + ":" + data)
+                root.requests.push("server:" + engine + ":" + name + ":" + port)
+            discovery.onDestroyRequested: (name, data) => root.requests.push("destroy:" + name + ":" + data)
         }
     }
 
@@ -39,7 +39,7 @@ Item {
 
         // abrir descobre
         fontes.open();
-        if (root.pedidos.indexOf("discover") < 0 || !d.discovering) failures += 1;
+        if (root.requests.indexOf("discover") < 0 || !d.discovering) failures += 1;
         d.handleDiscovered([
             { kind: "container", label: "container kinein-pg", detail: "Up", running: true,
               profile: { name: "kinein-pg", engine: "postgres", host: "127.0.0.1", port: 5433,
@@ -56,17 +56,17 @@ Item {
             || root.salvos.length !== 0) failures += 4;
 
         // criar SQLite: vem pronto e salvo -> relista e seleciona
-        const antes = root.pedidos.length;
+        const antes = root.requests.length;
         d.createSqlite("notas", "");
-        if (root.pedidos[root.pedidos.length - 1] !== "sqlite:notas" || !d.creating) failures += 8;
+        if (root.requests[root.requests.length - 1] !== "sqlite:notas" || !d.creating) failures += 8;
         d.handleCreateResolved({ name: "notas", engine: "sqlite", host: "", port: 0,
                                  database: "/w/data/notas.sqlite", user: "", secretSource: "automatic" }, "", "");
         if (d.creating || !d.createOk || fontes.selectedName !== "notas" || fontes.draft.engine !== "sqlite"
-            || root.pedidos.indexOf("list", antes) < 0) failures += 16;
+            || root.requests.indexOf("list", antes) < 0) failures += 16;
 
         // servidor em container: job + comando; o perfil chega no evento
         d.createServer("postgres", "dev", 0);
-        if (root.pedidos[root.pedidos.length - 1] !== "server:postgres:dev:5432") failures += 32;
+        if (root.requests[root.requests.length - 1] !== "server:postgres:dev:5432") failures += 32;
         d.handleCreateResolved({}, "job_9", "podman run -d --name kinein-dev ...");
         if (!d.creating || d.createCommand.indexOf("podman run") !== 0) failures += 64;
         d.handleCreated(true, { name: "dev", engine: "postgres", host: "127.0.0.1", port: 5432,
@@ -102,7 +102,7 @@ Item {
                            { name: "b", engine: "postgres", host: "h", port: 5432, database: "postgres", user: "u" }]);
         fontes.select("a");
         d.destroyProfile("a", true);
-        if (root.pedidos[root.pedidos.length - 1] !== "destroy:a:true" || !d.destroying) failures += 8192;
+        if (root.requests[root.requests.length - 1] !== "destroy:a:true" || !d.destroying) failures += 8192;
         d.handleDestroyResolved([{ name: "b", engine: "postgres", host: "h", port: 5432, database: "postgres", user: "u" }], true, "", "", "", d.pendingDestroy.clientContext);
         if (d.destroying || !d.destroyOk || fontes.profiles.length !== 1 || fontes.selectedName !== "") failures += 16384;
         d.destroyProfile("b", true);
@@ -118,6 +118,16 @@ Item {
         d.destroyProfile("y", true);
         d.handleFailed("datasource.destroy", "nao ha perfil", "INVALID_PARAMS", d.pendingDestroy);
         if (d.destroying || d.destroyOk || d.destroyMessage !== "nao ha perfil") failures += 262144;
+
+        // 16b.2 (roadmaps/59 §2.5.2): sem motor que responda, o porque; a
+        // porta livre que o core mediu vai no pedido quando o campo fica vazio.
+        d.handleDiscovered([], "", "", "o Docker nao respondeu: usermod", { postgres: 5434, mongo: 27017 });
+        if (d.canServe || d.containerHint.indexOf("usermod") < 0 || d.defaultPort("postgres") !== 5434)
+            failures += 524288;
+        d.handleDiscovered([], "podman", "", "", { postgres: 5434 });
+        d.createServer("postgres", "livre", 0);
+        if (!d.canServe || d.containerHint !== "" || d.defaultPort("mongo") !== 27017
+            || root.requests[root.requests.length - 1] !== "server:postgres:livre:5434") failures += 1048576;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

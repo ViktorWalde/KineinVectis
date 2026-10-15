@@ -25,6 +25,10 @@ Item {
     property bool discovering: false
     property string containerEngine: ""
     property string hint: ""
+    // Sem motor que responda, o porque (0.169.0, 16b.2): o "Criar banco"
+    // mostra no lugar do servidor em contêiner. E a porta livre por motor.
+    property string containerHint: ""
+    property var suggestedPorts: ({})
 
     // A criacao em curso: o comando que o core rodou (para a tela mostrar) e
     // o desfecho.
@@ -53,10 +57,12 @@ Item {
         discoverRequested();
     }
 
-    function handleDiscovered(newCandidates, engine, newHint) {
+    function handleDiscovered(newCandidates, engine, newHint, engineHint, ports) {
         candidates = newCandidates === undefined || newCandidates === null ? [] : newCandidates;
         containerEngine = engine === undefined ? "" : engine;
         hint = newHint === undefined ? "" : newHint;
+        containerHint = engineHint === undefined || engineHint === null ? "" : engineHint;
+        suggestedPorts = ports === undefined || ports === null ? ({}) : ports;
         discovering = false;
     }
 
@@ -69,11 +75,13 @@ Item {
         profileReady(candidates[index].profile, false);
     }
 
-    // A porta padrao de cada motor com servidor, para o formulario de criacao.
+    // A porta padrao de cada motor com servidor, para o formulario de criacao;
+    // a livre que o core mediu vem antes (16b.2).
     readonly property var defaultPorts: ({ postgres: 5432, mongo: 27017 })
 
     function defaultPort(engine) {
-        return defaultPorts[engine] || 5432;
+        const suggested = Number(suggestedPorts[engine]);
+        return suggested > 0 ? suggested : (defaultPorts[engine] || 5432);
     }
 
     function createSqlite(name, path) {

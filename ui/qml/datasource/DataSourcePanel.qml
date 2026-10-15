@@ -41,6 +41,8 @@ Item {
     property string discoverHint: ""
     property bool canServe: false
     property string containerEngine: ""
+    property string containerHint: ""
+    property var suggestedPorts: ({})
     property bool creating: false
     property string createCommand: ""
     property string createMessage: ""
@@ -169,6 +171,8 @@ Item {
                 visible: root.face === "create"
                 canServe: root.canServe
                 containerEngine: root.containerEngine
+                containerHint: root.containerHint
+                suggestedPorts: root.suggestedPorts
                 creating: root.creating
                 command: root.createCommand
                 message: root.createMessage

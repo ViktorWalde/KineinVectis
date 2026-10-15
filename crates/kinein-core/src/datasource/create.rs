@@ -19,13 +19,71 @@ use std::{
     process::Command,
 };
 
-use kinein_protocol::{DataSourceEngine, DataSourceProfile, SecretSource};
+use kinein_protocol::{
+    DataSourceEngine, DataSourceProfile, DataSourceSuggestedPorts, SecretSource,
+};
 
 use crate::container::Engine;
 
 /// Imagens pinadas: o que a IDE sobe e' dito, nao `latest`.
 const POSTGRES_IMAGE: &str = "docker.io/library/postgres:16";
 const MONGO_IMAGE: &str = "docker.io/library/mongo:7";
+
+/// As portas padrao dos servidores, de onde a sugestao parte.
+const POSTGRES_PORT: u16 = 5432;
+const MONGO_PORT: u16 = 27017;
+/// Quantas portas se tentam a partir da pedida (16b.2, `roadmaps/59` §2.5.2).
+const PORT_ATTEMPTS: u16 = 20;
+
+/// A porta aceita um `bind` em `127.0.0.1`? O listener e' solto na hora.
+///
+/// No Linux, um servidor ouvindo em `0.0.0.0` ou em `[::]` na mesma porta
+/// tambem faz o `bind` falhar: e' o que o `-p 127.0.0.1:<porta>` encontraria.
+#[must_use]
+pub fn loopback_port_free(port: u16) -> bool {
+    port != 0 && bind_loopback(port).is_ok()
+}
+
+fn bind_loopback(port: u16) -> std::io::Result<std::net::TcpListener> {
+    std::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, port))
+}
+
+/// A primeira porta livre no loopback de `from` em diante, em ate' 20.
+#[must_use]
+pub fn free_loopback_port(from: u16) -> Option<u16> {
+    (0..PORT_ATTEMPTS)
+        .filter_map(|step| from.checked_add(step))
+        .find(|&port| loopback_port_free(port))
+}
+
+/// O que o `discover` sugere no "Criar banco": a primeira porta livre a
+/// partir da padrao de cada motor (defeito 6 do 16b).
+#[must_use]
+pub fn suggested_ports() -> DataSourceSuggestedPorts {
+    DataSourceSuggestedPorts {
+        postgres: free_loopback_port(POSTGRES_PORT),
+        mongo: free_loopback_port(MONGO_PORT),
+    }
+}
+
+/// A porta pedida aceita o `bind`? Ocupada, a mensagem diz a livre seguinte —
+/// antes do `run`, que falharia depois de baixar a imagem.
+///
+/// # Errors
+/// A mensagem que o autor le, com a porta e a sugestao.
+pub fn ensure_port_free(port: u16) -> Result<(), String> {
+    // So' "em uso" recusa: uma porta abaixo de 1024 nega o `bind` a quem
+    // nao e' root, e quem decide se o motor pode e' o motor.
+    let in_use = port != 0
+        && bind_loopback(port).is_err_and(|error| error.kind() == std::io::ErrorKind::AddrInUse);
+    if !in_use {
+        return Ok(());
+    }
+    Err(port.checked_add(1).and_then(free_loopback_port).map_or_else(
+        || format!("a porta {port} ja' esta' em uso no loopback, e as {PORT_ATTEMPTS} seguintes tambem"),
+        |free| format!("a porta {port} ja' esta' em uso no loopback; livre: {free}"),
+    ))
+}
 
 /// Um nome de perfil/container: letras, digitos, `-` e `_`, ate' 40.
 ///
@@ -202,6 +260,23 @@ pub fn container_server(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Defeito 6 do 16b: a porta segura por outro processo nao e' sugerida, e
+    /// o `create` a recusa dizendo a livre; solta, ela volta a valer.
+    #[test]
+    fn a_port_in_use_is_skipped_and_refused_with_the_free_one() {
+        let held = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let port = held.local_addr().unwrap().port();
+        assert!(!loopback_port_free(port));
+        let suggested = free_loopback_port(port).expect("uma livre nas 20 seguintes");
+        assert!(suggested > port, "{suggested} <= {port}");
+        let message = ensure_port_free(port).unwrap_err();
+        assert!(message.contains(&port.to_string()), "{message}");
+        assert!(message.contains("livre:"), "{message}");
+        drop(held);
+        assert!(ensure_port_free(port).is_ok());
+        assert!(ensure_port_free(0).is_ok(), "zero e' do `container_server`");
+    }
 
     #[test]
     fn names_are_plain() {

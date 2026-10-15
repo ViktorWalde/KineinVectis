@@ -1646,7 +1646,6 @@ crates/kinein-core/src/tests/datasource_discover.rs	arquivos	4
 crates/kinein-core/src/tests/datasource_discover.rs	caminho	9
 crates/kinein-core/src/tests/datasource_discover.rs	candidatos	6
 crates/kinein-core/src/tests/datasource_discover.rs	criado	7
-crates/kinein-core/src/tests/datasource_discover.rs	falso	1
 crates/kinein-core/src/tests/datasource_discover.rs	inexistente	2
 crates/kinein-core/src/tests/datasource_discover.rs	invalido	2
 crates/kinein-core/src/tests/datasource_discover.rs	novo	2
@@ -2384,7 +2383,6 @@ scripts/qml-harness/tst_datasource.qml	enviado	5
 scripts/qml-harness/tst_datasource.qml	enviados	7
 scripts/qml-harness/tst_datasource.qml	padrao	3
 scripts/qml-harness/tst_datasource_discovery.qml	consultas	4
-scripts/qml-harness/tst_datasource_discovery.qml	pedidos	15
 scripts/qml-harness/tst_debug_inspect.qml	pedidos	12
 scripts/qml-harness/tst_debug_python.qml	abas	3
 scripts/qml-harness/tst_debug_python.qml	depurar	6
@@ -3193,7 +3191,7 @@ ui/qml/datasource/DataSourceController.qml	encontrado	3
 ui/qml/datasource/DataSourceController.qml	limpo	4
 ui/qml/datasource/DataSourceCreateBox.qml	coluna	2
 ui/qml/datasource/DataSourceCreateBox.qml	imagem	2
-ui/qml/datasource/DataSourceCreateBox.qml	interna	3
+ui/qml/datasource/DataSourceCreateBox.qml	interna	2
 ui/qml/datasource/DataSourceDestroyBox.qml	coluna	2
 ui/qml/datasource/DataSourceDestroyBox.qml	fechar	2
 ui/qml/datasource/DataSourceForm.qml	coluna	2

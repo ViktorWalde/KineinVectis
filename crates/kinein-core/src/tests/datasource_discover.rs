@@ -18,7 +18,7 @@ struct Scenario {
     dir: PathBuf,
 }
 
-const PODMAN_FALSO: &str = r#"
+const FAKE_PODMAN: &str = r#"
 case "$1" in
   --version|version) echo "podman version 5.7.0" ;;
   ps) cat <<'JSON'
@@ -40,7 +40,7 @@ fn scenario(nome: &str, com_motor: bool) -> Scenario {
     std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
     if com_motor {
         let podman = dir.join("bin/podman");
-        crate::write_executable(&podman, format!("#!/bin/sh\n{PODMAN_FALSO}"));
+        crate::write_executable(&podman, format!("#!/bin/sh\n{FAKE_PODMAN}"));
     }
     let (sender, receiver) = mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
@@ -78,6 +78,16 @@ impl Scenario {
         }
         panic!("{nome} nao chegou");
     }
+}
+
+/// Uma porta livre no loopback agora: o teste nao depende do que a maquina
+/// tem rodando em 5433 ou 27017 (o `create` recusa porta ocupada, 16b.2).
+fn free_port() -> u16 {
+    std::net::TcpListener::bind(("127.0.0.1", 0))
+        .unwrap()
+        .local_addr()
+        .unwrap()
+        .port()
 }
 
 fn arquivo_sqlite(caminho: &std::path::Path) {
@@ -177,26 +187,32 @@ fn create_sqlite_file_saves_the_profile_and_refuses_to_overwrite() {
 #[test]
 fn create_container_server_runs_the_pinned_command_and_saves_the_profile() {
     let mut c = scenario("servidor", true);
+    let port = free_port();
     let r = c.rpc(
         "datasource.create",
-        json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": 5433 }),
+        json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": port }),
     );
     assert!(r.error.is_none(), "{:?}", r.error);
     let resultado = r.result.unwrap();
     assert!(resultado["jobId"].is_string());
     assert_eq!(
         resultado["command"],
-        "podman run -d --name kinein-dev -p 127.0.0.1:5433:5432 -e POSTGRES_HOST_AUTH_METHOD=trust docker.io/library/postgres:16"
+        format!(
+            "podman run -d --name kinein-dev -p 127.0.0.1:{port}:5432 -e POSTGRES_HOST_AUTH_METHOD=trust docker.io/library/postgres:16"
+        )
     );
 
     let criado = c.event("event.datasource.created");
     assert_eq!(criado["success"], true, "{criado}");
     assert_eq!(criado["profile"]["name"], "dev");
-    assert_eq!(criado["profile"]["port"], 5433);
+    assert_eq!(criado["profile"]["port"], port);
     assert_eq!(criado["profile"]["user"], "postgres");
 
     let argv = std::fs::read_to_string(c.dir.join("bin/run.argv")).unwrap();
-    assert!(argv.contains("-p 127.0.0.1:5433:5432"), "{argv}");
+    assert!(
+        argv.contains(&format!("-p 127.0.0.1:{port}:5432")),
+        "{argv}"
+    );
     assert!(argv.contains("postgres:16"), "{argv}");
 
     let listing = c.rpc("datasource.list", json!({}));
@@ -214,7 +230,7 @@ fn create_container_server_without_an_engine_is_tool_not_found() {
     let mut c = scenario("sem-motor", false);
     let r = c.rpc(
         "datasource.create",
-        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": 27017 }),
+        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": free_port() }),
     );
     assert_eq!(r.error.unwrap().code, JsonRpcErrorCode::ToolNotFound);
     let d = c.rpc("datasource.discover", json!({}));
@@ -254,7 +270,7 @@ fn create_and_destroy_use_the_engine_that_answers() {
 
     let r = c.rpc(
         "datasource.create",
-        json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": 5433 }),
+        json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": free_port() }),
     );
     assert!(r.error.is_none(), "{:?}", r.error);
     let command = r.result.unwrap()["command"].clone();
@@ -303,7 +319,7 @@ fn create_and_destroy_use_the_engine_that_answers() {
 
     let r = c.rpc(
         "datasource.create",
-        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": 27018 }),
+        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": free_port() }),
     );
     let error = r.error.expect("motor negando e' erro antes do run");
     assert_eq!(error.code, JsonRpcErrorCode::ToolNotFound);
@@ -428,5 +444,57 @@ fn destroy_removes_the_profile_and_optionally_the_data() {
     assert_eq!(
         inexistente.error.unwrap().code,
         JsonRpcErrorCode::InvalidParams
+    );
+}
+
+/// 16b.2 (`roadmaps/59` §2.5.2): o `discover` so' anuncia o motor que
+/// responde — com o `docker` negando, sem `containerEngine` e com o motivo no
+/// `containerHint`; com o `podman` ao lado, o `podman` e nenhum motivo. As
+/// portas sugeridas vem sempre; o `create` recusa a porta ocupada antes do
+/// `run`, dizendo a livre.
+#[test]
+fn discover_offers_only_an_engine_that_answers_and_a_free_port() {
+    let mut c = scenario("so-o-que-responde", false);
+    crate::write_executable(
+        c.dir.join("bin/docker"),
+        format!("#!/bin/sh\n{DOCKER_DENYING}"),
+    );
+    let d = c.rpc("datasource.discover", json!({})).result.unwrap();
+    assert!(d.get("containerEngine").is_none(), "{d}");
+    let reason = d["containerHint"].as_str().expect("o motivo");
+    assert!(reason.contains("Docker nao respondeu"), "{reason}");
+    assert!(reason.contains("usermod"), "{reason}");
+    let postgres = d["suggestedPorts"]["postgres"].as_u64();
+    assert!(
+        postgres.is_none_or(|p| (5432..5452).contains(&p)),
+        "{}",
+        d["suggestedPorts"]
+    );
+
+    crate::write_executable(
+        c.dir.join("bin/podman"),
+        format!("#!/bin/sh\n{FAKE_PODMAN}"),
+    );
+    let d = c.rpc("datasource.discover", json!({})).result.unwrap();
+    assert_eq!(d["containerEngine"], "podman", "{d}");
+    assert!(d.get("containerHint").is_none(), "{d}");
+
+    let held = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let port = held.local_addr().unwrap().port();
+    let r = c.rpc(
+        "datasource.create",
+        json!({ "kind": "containerServer", "engine": "postgres", "name": "ocupada", "port": port }),
+    );
+    let error = r.error.expect("porta ocupada e' recusa");
+    assert_eq!(error.code, JsonRpcErrorCode::InvalidParams);
+    assert!(
+        error.message.contains(&port.to_string()),
+        "{}",
+        error.message
+    );
+    assert!(error.message.contains("livre:"), "{}", error.message);
+    assert!(
+        !c.dir.join("bin/run.argv").exists(),
+        "nada rodou: a recusa vem antes do motor"
     );
 }
