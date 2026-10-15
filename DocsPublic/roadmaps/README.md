@@ -2,7 +2,10 @@
 
 **Comece pelo [`40-estado-e-continuidade.md`](40-estado-e-continuidade.md)**:
 é a fila viva (§4) e as decisões que não se reabrem (§5); o registro de cada
-fatia entregue mora no [`40.7-registro-das-entregas.md`](40.7-registro-das-entregas.md).
+fatia entregue mora no [`40.7-registro-das-entregas.md`](40.7-registro-das-entregas.md),
+que é o índice das partes fechadas em [`registro/`](registro/README.md) e a fase aberta.
+**O que cada contexto lê** está no [`00-comece-aqui.md`](../00-comece-aqui.md) §5
+([61](61-organizacao-da-documentacao.md)).
 A ordem das versões até a 1.0, separando decidido de proposto, está no
 [`57-mapa-de-versoes-ate-a-1.0.md`](57-mapa-de-versoes-ate-a-1.0.md). A Etapa 1 seguiu a ordem do
 [`42-trilha-profunda-embarcados.md`](42-trilha-profunda-embarcados.md); a
@@ -44,7 +47,10 @@ mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia
 59-fechamento-da-0.3.9.md            o que falta para encerrar a 0.3.9 (janelas acopladas, banco completo, Grafana web, pente fino)
 60-windows-e-edicao-especial.md       o Windows 11 Pro: adaptar a IDE, fechar 0.3.9 e 0.4.0, edição especial Windows + WSL2
-40.7-registro-das-entregas.md       LOG: cada fatia entregue, datada, com prova
+61-organizacao-da-documentacao.md     a documentação por contexto: o registro em partes,
+                                   o 40 só com o estado, o 03 sem o histórico no caminho
+40.7-registro-das-entregas.md       LOG: o índice do registro e a fase aberta
+registro/                          LOG: as partes fechadas do 40.7 e o 40 até 2026-10-15
 53-arquitetura-executavel-da-0.3.6.md arquitetura da 0.3.6: casca, terminal mudo, zero aviso
 52-arquitetura-executavel-da-0.4.md arquitetura da 0.4: donos, fluxos, contratos
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas

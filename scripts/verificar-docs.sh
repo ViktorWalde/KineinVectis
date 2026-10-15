@@ -37,7 +37,10 @@ LOGS = ("DocsPrivate/ContextoIA.md",)
 # `DocsPrivate/legado/` inteira e' registro de decisao: os numeros la dentro descrevem
 # o que era verdade quando o documento valia. Cobrar veracidade de um documento
 # legado seria pedir que ele mentisse menos sobre um alvo que nao existe mais.
-DIRS_LOG = ("DocsPrivate/diario/", "DocsPublic/decisoes-adr/", "DocsPrivate/legado/")
+# `DocsPublic/roadmaps/registro/` (2026-10-15, roadmaps/61 §3.6): as partes fechadas
+# do 40.7 e o 40 ate' 2026-10-15, transcritos; registro do dia, como as ADRs.
+DIRS_LOG = ("DocsPrivate/diario/", "DocsPublic/decisoes-adr/", "DocsPrivate/legado/",
+            "DocsPublic/roadmaps/registro/")
 
 rastreados = [x for x in subprocess.run(
     ["git", "ls-files"], capture_output=True, text=True).stdout.split("\n") if x]

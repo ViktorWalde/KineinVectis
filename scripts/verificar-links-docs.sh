@@ -177,15 +177,83 @@ for name, number, target in dead_code_paths:
 for name, number, target in dead_citations:
     print(f"✗ citacao morta em {name}:{number}: {target}", file=sys.stderr)
 
-if quebrados or dead_citations or missing_from_index or private_mentions or dead_code_paths:
+# O REGISTRO EM PARTES (2026-10-15, roadmaps/61 §3.2 e §3.6). O 40.7 chegou a
+# 12952 linhas e so' se lia por trechos; as fases fechadas foram para
+# roadmaps/registro/ e o 40.7 ficou indice + fase aberta. A citacao "40.7
+# §7.N" continua sendo o endereco, e mover texto entre arquivos e' exatamente
+# o que a quebra em silencio. Confere: cada `### 7.N` existe uma vez so',
+# somando o indice e as partes; a tabela do indice diz a primeira e a ultima
+# entrada de cada parte, e nenhuma parte fica fora dela; toda citacao
+# "40.7 §7.N" (ou a antiga "40 §7.N") aponta uma entrada que existe; e os
+# teto que impede o deposito: a fase aberta em 1500 linhas.
+REGISTRY_INDEX = pathlib.Path("DocsPublic/roadmaps/40.7-registro-das-entregas.md")
+REGISTRY_DIR = pathlib.Path("DocsPublic/roadmaps/registro")
+OPEN_PHASE_MAX = 1500
+ENTRY = re.compile(r"^### 7\.(\d+)\b", re.M)
+PART_ROW = re.compile(r"^\| §7\.(\d+)–§7\.(\d+) \|[^|\n]*\| \[[^\]]*\]\((registro/[^)\s]+)\) \|$", re.M)
+ENTRY_CITATION = re.compile(r"(?<![\d.])40(?:\.7)? §7\.(\d+)")
+registry_failures = []
+entries = {}
+index_text = REGISTRY_INDEX.read_text(encoding="utf-8")
+parts = sorted(REGISTRY_DIR.glob("40.7.*.md"))
+for document in [REGISTRY_INDEX] + parts:
+    for match in ENTRY.finditer(document.read_text(encoding="utf-8")):
+        number = int(match.group(1))
+        if number in entries:
+            registry_failures.append(
+                f"entrada 7.{number} duplicada: {entries[number]} e {document}")
+        entries.setdefault(number, str(document))
+listed = set()
+for first, last, target in PART_ROW.findall(index_text):
+    part = REGISTRY_INDEX.parent / target
+    listed.add(part.resolve())
+    if not part.exists():
+        continue  # o link morto ja' foi acusado acima
+    numbers = [int(n) for n in ENTRY.findall(part.read_text(encoding="utf-8"))]
+    if not numbers or (numbers[0], numbers[-1]) != (int(first), int(last)):
+        found = f"§7.{numbers[0]}–§7.{numbers[-1]}" if numbers else "nenhuma entrada"
+        registry_failures.append(
+            f"a tabela do 40.7 diz §7.{first}–§7.{last} para {target}; o arquivo tem {found}")
+for part in parts:
+    if part.resolve() not in listed:
+        registry_failures.append(f"parte do registro fora da tabela do 40.7: {part}")
+closed = [n for n, where in entries.items() if where != str(REGISTRY_INDEX)]
+open_entries = [n for n, where in entries.items() if where == str(REGISTRY_INDEX)]
+if closed and open_entries and min(open_entries) <= max(closed):
+    registry_failures.append(
+        f"a fase aberta do 40.7 tem a entrada 7.{min(open_entries)}, anterior ao fim das partes fechadas")
+open_marker = index_text.find("\n## A fase aberta")
+open_lines = index_text[open_marker:].count("\n") if open_marker >= 0 else index_text.count("\n")
+if open_lines > OPEN_PHASE_MAX:
+    registry_failures.append(
+        f"a fase aberta do 40.7 tem {open_lines} linhas (teto {OPEN_PHASE_MAX}):"
+        " feche a parte seguinte em roadmaps/registro/ (40.7, regra de fechamento)")
+cited = 0
+for name in arquivos:
+    try:
+        text = pathlib.Path(name).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        continue
+    for number, line in enumerate(text.split("\n"), start=1):
+        for entry in ENTRY_CITATION.findall(line):
+            cited += 1
+            if int(entry) not in entries:
+                registry_failures.append(f"citacao a entrada inexistente em {name}:{number}: 7.{entry}")
+
+for failure in registry_failures:
+    print(f"✗ registro: {failure}", file=sys.stderr)
+
+if quebrados or dead_citations or missing_from_index or private_mentions or dead_code_paths or registry_failures:
     print(f"\n✗ links de documentacao FALHOU ({len(quebrados)} links,"
           f" {len(dead_citations)} citacoes, {len(missing_from_index)} fora do indice,"
           f" {len(private_mentions)} mencoes a documento interno,"
-          f" {len(dead_code_paths)} caminhos de codigo)", file=sys.stderr)
+          f" {len(dead_code_paths)} caminhos de codigo,"
+          f" {len(registry_failures)} no registro)", file=sys.stderr)
     sys.exit(1)
 
 print(f"links de documentacao: {verificados} links relativos e {citations} citacoes"
       " de caminho, nenhum morto; todo documento no indice da sua pasta;"
       " nenhuma mencao a documento interno;"
-      f" {anchored_docs} documento(s) ancorado(s) sem caminho de codigo morto.")
+      f" {anchored_docs} documento(s) ancorado(s) sem caminho de codigo morto;"
+      f" registro com {len(entries)} entradas em {len(parts)} partes e {cited} citacoes resolvidas.")
 PY
