@@ -340,6 +340,67 @@ existe (Docker, Podman ou os dois), qual contexto o CLI usa, e quais dos
 seis ainda se reproduzem. No Windows, o motor seria Docker Desktop ou Podman
 ([60](60-windows-e-edicao-especial.md) §4); o porte está pausado.
 
+#### 2.5.1 Medido no Ubuntu 26.04, 2026-10-15
+
+Docker CE 29.9.1 instalado, daemon ativo (`docker.service` e
+`docker.socket`), socket `/var/run/docker.sock` do grupo `docker`, e o
+usuário **fora** do grupo; Compose v5.6.0; Podman não instalado (5.7.0 no
+repositório). O que o core vê hoje, comando a comando:
+
+```text
+docker --version                       0    19 ms  "Docker version 29.9.1"
+docker version --format {{.Client...}}  1    18 ms  "29.9.1" no stdout + permission denied
+docker ps --format {{.ID}}              1    19 ms  permission denied ... docker.sock
+docker images --format ...              1    20 ms  permission denied
+docker compose version                  0    59 ms  "Docker Compose version v5.6.0"
+```
+
+O que isso faz na tela, lido no código: o `status()` acerta (`reachable:
+false`, a dica do `usermod`), mas o `container::list` não olha o código de
+saída: stdout vazio vira "nenhum container neste motor" (o **defeito 3**
+reproduzido aqui, por outra causa: permissão, não motor parado). O
+`datasource.discover` diz `containerEngine: "docker"`, e o "Criar banco"
+habilita PostgreSQL e MongoDB num motor que vai negar o `run`. O 32 s do
+**defeito 4** não se reproduz aqui (a negação é imediata); ele vem de motor
+inalcançável (contexto apontando um socket morto), e a causa continua no
+código: `container.list`/`images` rodam no laço, sem prazo.
+
+#### 2.5.2 O desenho (antes do código)
+
+Cada defeito, com a causa no código e a correção. Protocolo `0.168.0`,
+aditivo: nenhum campo some, nenhum método muda de nome.
+
+| # | Causa no código | Correção | Prova |
+| --- | --- | --- | --- |
+| 1 | `handlers/datasource_destroy.rs`: `rm -f <nome>` | `rm -f -v <nome>`: o `-v` leva os volumes **anônimos** do container (o `VOLUME` das imagens `postgres` e `mongo`), não os nomeados; Docker e Podman aceitam | teste do comando montado; na máquina, `volume ls` antes/depois de criar e apagar |
+| 2 | `container::detect_with` escolhe o `docker` sempre que ele existe e não é o shim; `hint_for` só conhece "permission denied" e "sudo systemctl" | `container::select`: na ordem `docker`, `podman`, o primeiro cujo `ps` responde dentro do prazo; nenhum responde, fica o primeiro com a dica dele. A dica olha o endpoint do contexto: socket do Podman (`podman.sock`) manda `systemctl --user enable --now podman.socket`, nunca `sudo systemctl` | binários falsos no `PATH` (como os testes de hoje): docker negando e podman respondendo escolhe podman; os dois negando fica docker com a dica certa; contexto com socket do Podman dá a dica do Podman |
+| 3 | `container::list`/`images` ignoram o `status` do processo; o `discover` anuncia o motor sem saber se responde | saída diferente de zero vira **erro** JSON-RPC (`ToolNotFound` com `data: { engine, reachable: false, hint, rawOutput }`), que a janela já mostra no `errorText`; o `discover` só preenche `containerEngine` quando o motor responde, e ganha `containerHint` (por que não) — o "Criar banco" desliga e diz o motivo | teste: docker falso que sai 1 com "permission denied" → erro com a dica, não lista vazia; `discover` com o mesmo docker → `containerEngine` vazio e `containerHint` |
+| 4 | `container.list`/`images` (e `action`/`open`/`compose`, que chamam `detect`) rodam no laço; nenhuma pergunta ao motor tem prazo | `list`/`images` vão para o `defer_work`, como o `status`; toda pergunta curta ao motor (`ps`, `version`, `info`, `context`) passa por um helper com prazo de 5 s que mata o filho no estouro e diz "não respondeu em 5 s" | docker falso que dorme 30 s: o `ps` volta em ~5 s com a frase, e um `core.ping` enviado logo depois do `container.list` responde antes dele |
+| 5 | `status()` pergunta `{{.Client.Version}}`, a versão do CLI | perguntar o **servidor**: `version --format {{json .Server}}`; o nome do componente (`Podman Engine` ou `Engine`) vira o campo novo `serverName`, e `version` passa a ser a do servidor (a do cliente fica em `clientVersion`). O rótulo diz "Podman 6.1.3 (pelo docker CLI)" quando o CLI é Docker e o servidor é Podman | docker falso que devolve o JSON de servidor do Podman → `serverName` "Podman Engine"; o rótulo QML no harness |
+| 6 | `DataSourceCreateBox.qml` sugere a porta interna (5432/27017) | o `discover` devolve `suggestedPorts: { postgres, mongo }`, a primeira porta livre no loopback a partir da padrão (teste de `bind` em `127.0.0.1`, até 20 tentativas); o formulário usa como valor inicial. O `datasource.create` recusa porta ocupada antes do `run`, com a porta e a sugestão | teste com um `TcpListener` segurando a porta: a sugestão pula para a seguinte, e o `create` recusa com `INVALID_PARAMS` |
+
+**O "Remover" que pergunta** (decisão do autor, §2.5 acima). Método novo
+`container.volumes { id }` → `{ volumes: [{ name, anonymous, sizeBytes? }] }`,
+fora do laço: os volumes vêm do `inspect` (`Mounts` do tipo `volume`;
+anônimo é o nome de 64 hexadecimais) e o tamanho do `system df -v --format
+json`, quando o motor o dá (sem tamanho, a pergunta mostra só os nomes). O
+`container.action` aceita `volumes: true` só com `remove`, e vira `rm -v`.
+Na janela, o segundo clique do Remover abre a confirmação com "Remover com
+os volumes (N, X MB)" e "Só o container"; sem volume anônimo, segue o
+clique duplo de hoje. "Apagar os dados" no Banco usa sempre o `-v` (#1).
+
+**O teste do compose que chama o Docker real:** o
+`container_compose_response` chama `container::detect()`, e o teste dele
+passa pelo motor da máquina. Ele passa a usar o detector do `Core` (o mesmo
+que o `discover` já recebe), e o teste injeta o `PATH` falso.
+
+**As fatias:** 16b.1 no core, os defeitos 1–5 e o teste do compose
+(`0.168.0`); 16b.2, o defeito 6 e o "Criar banco" desligado com motivo, no
+core e na UI; 16b.3, o "Remover" com volumes. Cada uma com o gate rápido
+verde e foto antes/depois no Xvfb das telas que muda. **Precisa:** o Rust
+instalado nesta máquina; para a prova real, o usuário no grupo `docker` (ou
+o Podman instalado), decisão do autor.
+
 ## 3. Containers acoplados
 
 **Inspiração:** o Docker Desktop, adaptado ao estilo JetBrains da IDE. É a

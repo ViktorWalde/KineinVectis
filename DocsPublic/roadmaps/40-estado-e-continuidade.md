@@ -18,9 +18,9 @@
 > por isso o gate completo ainda não rodou nesta máquina.
 >
 > **Próximo passo:** com o Rust instalado (o autor decide como, 05 do
-> contribuindo), rodar `scripts/verificar.sh --rapido` e começar a 16b pelo
-> [59](59-fechamento-da-0.3.9.md) §2.5, medindo de novo o motor de
-> containers desta máquina. Depois 15 e 16 (59 §2), e a 0.4 (57).
+> contribuindo), rodar `scripts/verificar.sh --rapido` e implementar a 16b,
+> já medida e desenhada no [59](59-fechamento-da-0.3.9.md) §2.5.1–§2.5.2
+> (fatias 16b.1, 16b.2 e 16b.3). Depois 15 e 16 (59 §2), e a 0.4 (57).
 >
 > **Em curso:** a organização da documentação
 > ([61](61-organizacao-da-documentacao.md) §4). **Pausado:** o porte para o
