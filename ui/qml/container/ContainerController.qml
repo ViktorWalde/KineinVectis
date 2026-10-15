@@ -95,7 +95,8 @@ Item {
     signal statusRequested()
     signal listRequested(bool all)
     signal imagesRequested()
-    signal actionRequested(string id, string action)
+    signal actionRequested(string id, string action, bool volumes)
+    signal volumesRequested(string id)
     signal openRequested(string id, string mode)
     signal composeRequested(string action, string file)
 
@@ -186,6 +187,13 @@ Item {
             containersHint = "";
         } else if (method === "container.images") {
             imagesBusy = false;
+        } else if (method === "container.volumes") {
+            // A pergunta falhou: o Remover volta a confirmar sem a escolha,
+            // e o motivo aparece. A resposta nao diz o alvo: todos voltam.
+            const answered = {};
+            Object.keys(volumesAsking).forEach(t => answered[t] = []);
+            volumesAsking = ({});
+            volumes = Object.assign({}, volumes, answered);
         } else if (method !== "container.action" && method !== "container.open"
                    && method !== "container.compose") {
             return;
@@ -204,10 +212,57 @@ Item {
         return pending[target] !== undefined;
     }
 
-    function act(id, action) {
+    // `volumes` so' com "remove": `rm -v`, os volumes anonimos (16b.3).
+    function act(id, action, volumes) {
         errorText = "";
         pending = Object.assign({}, pending, { [id]: action });
-        actionRequested(id, action);
+        actionRequested(id, action, volumes === true);
+    }
+
+    // O "Remover" que pergunta (16b.3, roadmaps/59 §2.5.2): os volumes de cada
+    // alvo ({ alvo: [volumes] }); sem a chave, a pergunta ainda nao voltou.
+    property var volumes: ({})
+    property var volumesAsking: ({})
+    // A linha pede a pergunta ao detalhe, onde ela cabe.
+    property string removeAsked: ""
+
+    function requestVolumes(target) {
+        const known = Object.assign({}, volumes);
+        delete known[target];
+        volumes = known;
+        volumesAsking = Object.assign({}, volumesAsking, { [target]: true });
+        volumesRequested(target);
+    }
+
+    function handleVolumes(target, list) {
+        const asking = Object.assign({}, volumesAsking);
+        delete asking[target];
+        volumesAsking = asking;
+        volumes = Object.assign({}, volumes, { [target]: list === undefined || list === null ? [] : list });
+    }
+
+    function volumesKnown(target) {
+        return volumes[target] !== undefined;
+    }
+
+    // Os anonimos de `target` (os que o `rm -v` leva): quantos e quanto; o
+    // tamanho fica -1 quando algum veio sem ele.
+    function removeChoice(target) {
+        const anonymous = (volumes[target] || []).filter(v => v.anonymous === true);
+        const sized = anonymous.every(v => v.sizeBytes !== undefined);
+        const bytes = anonymous.reduce((sum, v) => sum + Number(v.sizeBytes || 0), 0);
+        return { anonymous: anonymous.length, bytes: sized ? bytes : -1 };
+    }
+
+    function removeWithVolumesText(target) {
+        const choice = removeChoice(target);
+        const size = choice.bytes >= 0 ? ", " + formatSize(choice.bytes) : "";
+        return qsTr("Remover com os volumes (%1%2)").arg(choice.anonymous).arg(size);
+    }
+
+    function askRemove(rowId, target) {
+        select(rowId);
+        removeAsked = target;
     }
 
     function openLogs(id) {

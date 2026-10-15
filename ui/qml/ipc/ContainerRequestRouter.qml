@@ -25,8 +25,12 @@ Item {
             root.coreClient.containerImages();
         }
 
-        function onActionRequested(id, action) {
-            root.coreClient.containerAction(id, action);
+        function onActionRequested(id, action, volumes) {
+            root.coreClient.containerAction(id, action, volumes);
+        }
+
+        function onVolumesRequested(id) {
+            root.coreClient.containerVolumes(id);
         }
 
         function onOpenRequested(id, mode) {

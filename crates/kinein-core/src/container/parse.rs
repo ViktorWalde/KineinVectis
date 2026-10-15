@@ -282,3 +282,77 @@ pub fn cli_version(line: &str) -> Option<String> {
         .filter(|v| !v.is_empty())
         .map(ToOwned::to_owned)
 }
+
+/// Os volumes montados num container, do `inspect --format '{{json
+/// .Mounts}}'`: so' os do tipo `volume` (bind e tmpfs nao sao do motor).
+#[must_use]
+pub fn mounted_volumes(output: &str) -> Vec<String> {
+    let Ok(Value::Array(mounts)) = serde_json::from_str::<Value>(output.trim()) else {
+        return Vec::new();
+    };
+    mounts
+        .iter()
+        .filter(|mount| mount.get("Type").and_then(Value::as_str) == Some("volume"))
+        .filter_map(|mount| mount.get("Name").and_then(Value::as_str))
+        .filter(|name| !name.is_empty())
+        .map(ToOwned::to_owned)
+        .collect()
+}
+
+/// Anonimo e' o volume que o motor batizou: 64 hexadecimais. Vale para os
+/// dois motores; o `"Anonymous": true` do `volume inspect` e' so' do Podman.
+#[must_use]
+pub fn is_anonymous_volume(name: &str) -> bool {
+    name.len() == 64 && name.bytes().all(|b| b.is_ascii_hexdigit())
+}
+
+/// O tamanho de cada volume na tabela de `system df -v`.
+///
+/// A secao "Local Volumes space usage:", linhas `<nome> <links> <tamanho>`. O JSON verboso
+/// nao existe no Podman 5.7 ("cannot combine --format and --verbose",
+/// medido em 2026-10-15); a tabela e' a mesma do Docker.
+#[must_use]
+pub fn volume_sizes(output: &str) -> std::collections::HashMap<String, u64> {
+    let mut sizes = std::collections::HashMap::new();
+    let mut in_volumes = false;
+    for line in output.lines().map(str::trim) {
+        if line.contains("usage:") {
+            in_volumes = line.starts_with("Local Volumes");
+            continue;
+        }
+        if !in_volumes || line.starts_with("VOLUME NAME") {
+            continue;
+        }
+        if let [name, _links, size] = line.split_whitespace().collect::<Vec<_>>().as_slice()
+            && let Some(bytes) = human_size(size)
+        {
+            sizes.insert((*name).to_owned(), bytes);
+        }
+    }
+    sizes
+}
+
+/// "40.08MB" da' 40.080.000: unidades DECIMAIS, como o `HumanSize` que o
+/// Docker e o Podman usam nessa tabela. Inteiro, sem `f64`.
+#[must_use]
+pub fn human_size(text: &str) -> Option<u64> {
+    let text = text.trim();
+    let (number, unit) = text.split_at(text.find(|c: char| c.is_ascii_alphabetic())?);
+    let multiplier: u64 = match unit {
+        "B" => 1,
+        "kB" | "KB" => 1_000,
+        "MB" => 1_000_000,
+        "GB" => 1_000_000_000,
+        "TB" => 1_000_000_000_000,
+        "PB" => 1_000_000_000_000_000,
+        _ => return None,
+    };
+    let (whole, fraction) = number.split_once('.').unwrap_or((number, ""));
+    let mut bytes = whole.parse::<u64>().ok()?.checked_mul(multiplier)?;
+    if !fraction.is_empty() {
+        let scale = 10_u64.checked_pow(u32::try_from(fraction.len()).ok()?)?;
+        let part = fraction.parse::<u64>().ok()?.checked_mul(multiplier)? / scale;
+        bytes = bytes.checked_add(part)?;
+    }
+    Some(bytes)
+}

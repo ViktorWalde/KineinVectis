@@ -117,10 +117,18 @@ Row {
             onClicked: {
                 if (!root.confirmRemove) {
                     root.confirmRemove = true;
+                    root.controller.requestVolumes(root.row.target);
                     return;
                 }
                 root.confirmRemove = false;
-                root.controller.act(root.row.target, "remove");
+                // 16b.3: com volume anonimo, ou sem a resposta ainda, a
+                // pergunta "com os volumes / so' o container" mora no detalhe.
+                if (!root.controller.volumesKnown(root.row.target)
+                        || root.controller.removeChoice(root.row.target).anonymous > 0) {
+                    root.controller.askRemove(root.row.id, root.row.target);
+                    return;
+                }
+                root.controller.act(root.row.target, "remove", false);
             }
         }
     }

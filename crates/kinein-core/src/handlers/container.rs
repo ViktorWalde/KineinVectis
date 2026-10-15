@@ -18,7 +18,8 @@ use std::sync::atomic::AtomicBool;
 use kinein_protocol::{
     ContainerActionAccepted, ContainerActionParams, ContainerComposeParams, ContainerEngine,
     ContainerFinishedEvent, ContainerImagesParams, ContainerListParams, ContainerOpenParams,
-    ContainerOpenResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    ContainerOpenResult, ContainerVolumesParams, ContainerVolumesResult, JobRisk, JsonRpcError,
+    JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -46,6 +47,7 @@ impl Core {
             "container.status" => Some(self.container_status_response(request_id, params)),
             "container.list" => Some(self.container_list_response(request_id, params)),
             "container.images" => Some(self.container_images_response(request_id, params)),
+            "container.volumes" => Some(self.container_volumes_response(request_id, params)),
             "container.action" => Some(self.container_action_response(request_id, params)),
             "container.open" => Some(self.container_open_response(request_id, params)),
             "container.compose" => Some(self.container_compose_response(request_id, params)),
@@ -135,20 +137,73 @@ impl Core {
         })
     }
 
+    /// `container.volumes` — os volumes que o container monta, com o tamanho
+    /// quando o motor o da' (16b.3): a pergunta do "Remover". Fora do laco.
+    fn container_volumes_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let query = match parse_params::<ContainerVolumesParams>(
+            request_id.as_ref(),
+            params,
+            "container.volumes requer o campo id",
+        ) {
+            Ok(query) => query,
+            Err(response) => return *response,
+        };
+        let detector = self.detector.clone();
+        self.defer_work(request_id, move |request_id| {
+            match container::answering(&detector) {
+                None => no_engine_response(request_id, "container.volumes"),
+                Some(Err(failure)) => engine_failure_response(request_id, &failure, ""),
+                Some(Ok(engine)) => match container::volumes::volumes(&engine, &query.id) {
+                    Ok(volumes) => JsonRpcResponse::success(
+                        request_id,
+                        json!(ContainerVolumesResult {
+                            id: query.id,
+                            volumes
+                        }),
+                    ),
+                    Err(reason) => JsonRpcResponse::failure(
+                        request_id,
+                        JsonRpcError::new(
+                            JsonRpcErrorCode::InvalidParams,
+                            format!("container.volumes {}: {reason}", query.id),
+                            None,
+                        ),
+                    ),
+                },
+            }
+        })
+    }
+
     /// `container.action` — start/stop/restart/rm como JOB cancelavel.
     fn container_action_response(
         &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let pedido = match parse_params::<ContainerActionParams>(
+        let query = match parse_params::<ContainerActionParams>(
             request_id.as_ref(),
             params,
             "container.action requer os campos id e action (start|stop|restart|remove)",
         ) {
-            Ok(pedido) => pedido,
+            Ok(query) => query,
             Err(response) => return *response,
         };
+        // `rm -v` so' faz sentido no `remove` (16b.3): parar "com os volumes"
+        // nao existe, e aceitar calado esconderia o engano de quem pediu.
+        if query.volumes && query.action != kinein_protocol::ContainerAction::Remove {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    "container.action: `volumes` so' vale com `remove`",
+                    None,
+                ),
+            );
+        }
         if container::detect_with(&self.detector).is_none() {
             return no_engine_response(request_id, "container.action");
         }
@@ -156,14 +211,14 @@ impl Core {
             return jobs_unavailable_response(request_id, "container.action");
         };
         let detector = self.detector.clone();
-        let verb = pedido.action.verb().to_owned();
-        let risco = match pedido.action {
+        let verb = query.action.verb().to_owned();
+        let risco = match query.action {
             kinein_protocol::ContainerAction::Remove => JobRisk::High,
             _ => JobRisk::Medium,
         };
-        let titulo = format!("{} {}", verb, pedido.id);
-        let action = pedido.action;
-        let target = pedido.id;
+        let titulo = format!("{} {}", verb, query.id);
+        let (action, volumes) = (query.action, query.volumes);
+        let target = query.id;
         let job_id =
             jobs.spawn(
                 "container",
@@ -172,7 +227,7 @@ impl Core {
                 true,
                 move |ctx| match container::select_with(&detector) {
                     Some((engine, _)) => {
-                        let command = container::action_command(&engine, action, &target);
+                        let command = container::action_command(&engine, action, &target, volumes);
                         run_and_report(ctx, command, &verb, &target)
                     }
                     None => report_no_engine(ctx, &verb, &target),

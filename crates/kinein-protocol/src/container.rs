@@ -197,6 +197,43 @@ pub struct ContainerActionParams {
     pub id: String,
     /// What to do with it.
     pub action: ContainerAction,
+    /// Only with `remove` (since `0.170.0`): `rm -v`, which also removes the
+    /// container's ANONYMOUS volumes (named ones stay).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub volumes: bool,
+}
+
+/// Parameters for `container.volumes` (since `0.170.0`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ContainerVolumesParams {
+    /// Container id or name.
+    pub id: String,
+}
+
+/// One volume mounted in a container.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ContainerVolume {
+    /// The volume name (64 hex characters when anonymous).
+    pub name: String,
+    /// Created for the container by the image's `VOLUME` (or `-v <path>`):
+    /// `rm -v` takes it. A named volume is not.
+    pub anonymous: bool,
+    /// Size from the engine's `system df -v` table (decimal units, 4
+    /// significant digits), when the engine reports it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size_bytes: Option<u64>,
+}
+
+/// Result payload for `container.volumes`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ContainerVolumesResult {
+    /// The container asked about, echoed so the UI matches the answer.
+    pub id: String,
+    /// The volumes mounted in the container, in `inspect` order.
+    pub volumes: Vec<ContainerVolume>,
 }
 
 /// Accepted: the job id to follow (`event.container.finished`).

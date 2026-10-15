@@ -21,11 +21,11 @@
 > `arm-none-eabi-gcc` e `debugpy`). A UI compila; abri-la ainda não foi
 > medido.
 >
-> **Próximo passo:** a 16b.3 ([59](59-fechamento-da-0.3.9.md) §2.5.2: o
-> "Remover" da janela Containers pergunta "com os volumes (N, X MB)" ou "só
-> o container"; método novo `container.volumes`), depois 15 e 16 (59 §2), e
-> a 0.4 (57). Feitas hoje: a catraca do idioma no Ubuntu (40.7 §7.283), a
-> 16b.1 (§7.284) e a 16b.2 (§7.285).
+> **Próximo passo:** o passo 15, as provas finais do Banco
+> ([59](59-fechamento-da-0.3.9.md) §2 e §5.6), depois o 16 (pente fino) e a
+> 0.4 (57). A 16b está fechada: a catraca do idioma no Ubuntu (40.7
+> §7.283), 16b.1 (§7.284), 16b.2 (§7.285) e 16b.3 (§7.286), todas em
+> 2026-10-15.
 >
 > **Em curso:** a organização da documentação
 > ([61](61-organizacao-da-documentacao.md) §4). **Pausado:** o porte para o
@@ -38,9 +38,9 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.169.0 (crates/kinein-protocol, medido em 2026-10-15; o
+protocolo   0.170.0 (crates/kinein-protocol, medido em 2026-10-15; o
             historico das versoes e' o arquitetura/03)
-metodos     185 roteados e 60 eventos (os titulos do arquitetura/03, que o
+metodos     186 roteados e 60 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   137 tst_*.qml em scripts/qml-harness (medido em 2026-10-15)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);

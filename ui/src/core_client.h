@@ -301,7 +301,11 @@ public:
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
     Q_INVOKABLE void containerImages();
-    Q_INVOKABLE void containerAction(const QString& id, const QString& action);
+    /// `volumes` so' com `remove` (0.170.0): `rm -v`, os volumes anonimos.
+    Q_INVOKABLE void containerAction(const QString& id, const QString& action,
+                                     bool volumes = false);
+    /// Os volumes que o container monta, para o "Remover" que pergunta.
+    Q_INVOKABLE void containerVolumes(const QString& id);
     Q_INVOKABLE void containerOpen(const QString& id, const QString& mode);
     Q_INVOKABLE void containerCompose(const QString& action, const QString& file);
     Q_INVOKABLE void configActionList(bool includeHiddenByScope = false);
@@ -557,6 +561,7 @@ signals:
                             const QString& rawOutput, const QString& hint);
     void containerImagesResolved(const QVariantList& images, const QString& hint);
     void containerActionAccepted(const QString& jobId);
+    void containerVolumesResolved(const QString& id, const QVariantList& volumes);
     void containerTerminalOpened(const QString& id, const QString& command);
     void containerFinished(const QVariantMap& event);
     void configActionsListed(const QVariantList& actions, const QStringList& activeBuildSystems);

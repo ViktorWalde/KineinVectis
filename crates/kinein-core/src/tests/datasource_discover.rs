@@ -82,12 +82,13 @@ impl Scenario {
 
 /// Uma porta livre no loopback agora: o teste nao depende do que a maquina
 /// tem rodando em 5433 ou 27017 (o `create` recusa porta ocupada, 16b.2).
-fn free_port() -> u16 {
-    std::net::TcpListener::bind(("127.0.0.1", 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
+/// FORA da faixa efemera do Linux (32768 em diante): medida por `bind` em
+/// `:0`, a porta voltava para a faixa, e um `bind` paralelo ou uma conexao de
+/// saida a pegava antes do `create` — 5 falhas em 40 rodadas (2026-10-15).
+/// Cada teste usa a sua faixa de 20 (`slot`).
+fn free_port(slot: u16) -> u16 {
+    crate::datasource::create::free_loopback_port(21_000 + slot * 20)
+        .expect("uma porta livre na faixa do teste")
 }
 
 fn arquivo_sqlite(caminho: &std::path::Path) {
@@ -187,7 +188,7 @@ fn create_sqlite_file_saves_the_profile_and_refuses_to_overwrite() {
 #[test]
 fn create_container_server_runs_the_pinned_command_and_saves_the_profile() {
     let mut c = scenario("servidor", true);
-    let port = free_port();
+    let port = free_port(1);
     let r = c.rpc(
         "datasource.create",
         json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": port }),
@@ -230,7 +231,7 @@ fn create_container_server_without_an_engine_is_tool_not_found() {
     let mut c = scenario("sem-motor", false);
     let r = c.rpc(
         "datasource.create",
-        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": free_port() }),
+        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": free_port(2) }),
     );
     assert_eq!(r.error.unwrap().code, JsonRpcErrorCode::ToolNotFound);
     let d = c.rpc("datasource.discover", json!({}));
@@ -270,7 +271,7 @@ fn create_and_destroy_use_the_engine_that_answers() {
 
     let r = c.rpc(
         "datasource.create",
-        json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": free_port() }),
+        json!({ "kind": "containerServer", "engine": "postgres", "name": "dev", "port": free_port(3) }),
     );
     assert!(r.error.is_none(), "{:?}", r.error);
     let command = r.result.unwrap()["command"].clone();
@@ -319,7 +320,7 @@ fn create_and_destroy_use_the_engine_that_answers() {
 
     let r = c.rpc(
         "datasource.create",
-        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": free_port() }),
+        json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": free_port(4) }),
     );
     let error = r.error.expect("motor negando e' erro antes do run");
     assert_eq!(error.code, JsonRpcErrorCode::ToolNotFound);

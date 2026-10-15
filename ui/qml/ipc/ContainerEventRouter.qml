@@ -29,6 +29,10 @@ Item {
             root.containerController.handleImages(images, hint);
         }
 
+        function onContainerVolumesResolved(id, volumes) {
+            root.containerController.handleVolumes(id, volumes);
+        }
+
         function onContainerFinished(event) {
             root.containerController.handleFinished(event);
         }

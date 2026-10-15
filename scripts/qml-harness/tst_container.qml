@@ -20,6 +20,8 @@ Item {
     property var acoes: []
     property var aberturas: []
     property var composes: []
+    property var volumeRequests: []
+    property var removalsWithVolumes: []
 
     ContainerController {
         id: controller
@@ -27,7 +29,8 @@ Item {
         onStatusRequested: root.statusPedidos += 1
         onListRequested: function(all) { root.listaPedidos += 1; root.ultimoAll = all; }
         onImagesRequested: root.imagensPedidos += 1
-        onActionRequested: function(id, action) { root.acoes.push(id + ":" + action); }
+        onActionRequested: function(id, action, volumes) { root.acoes.push(id + ":" + action); if (volumes) root.removalsWithVolumes.push(id); }
+        onVolumesRequested: function(id) { root.volumeRequests.push(id); }
         onOpenRequested: function(id, mode) { root.aberturas.push(id + ":" + mode); }
         onWindowRequested: root.windowRequests += 1
         onComposeRequested: function(action, file) { root.composes.push(action + ":" + file); }
@@ -189,6 +192,29 @@ Item {
         controller.handleFailed("container.list", "o Docker nao respondeu: permission denied");
         if (controller.containers.length !== 0 || controller.errorText.indexOf("permission denied") < 0)
             failures += 4398046511104;
+
+        // 16b.3 (roadmaps/59 §2.5.2): o Remover pergunta pelos volumes. Antes
+        // da resposta, nada se sabe; com ela, o anonimo e o tamanho dele.
+        controller.requestVolumes("db");
+        if (root.volumeRequests[root.volumeRequests.length - 1] !== "db" || controller.volumesKnown("db"))
+            failures += 8796093022208;
+        controller.handleVolumes("db", [{ name: "d2166cfeffc45c97b48fe9b7852ac84468a9e6f5be78e027be8f6153229f8834", anonymous: true, sizeBytes: 40080000 },
+                                        { name: "dados-do-banco", anonymous: false, sizeBytes: 2000000 }]);
+        const choice = controller.removeChoice("db");
+        if (!controller.volumesKnown("db") || choice.anonymous !== 1 || choice.bytes !== 40080000
+            || controller.removeWithVolumesText("db") !== "Remover com os volumes (1, 40.1 MB)")
+            failures += 17592186044416;
+        controller.handleVolumes("web", [{ name: "d2166cfeffc45c97b48fe9b7852ac84468a9e6f5be78e027be8f6153229f8834", anonymous: true }]);
+        if (controller.removeWithVolumesText("web") !== "Remover com os volumes (1)") failures += 35184372088832;
+        controller.act("db", "remove", true);
+        if (root.removalsWithVolumes.indexOf("db") < 0) failures += 70368744177664;
+        // A pergunta falhou: o Remover volta a confirmar, sem a escolha.
+        controller.requestVolumes("x");
+        controller.handleFailed("container.volumes", "no such container");
+        if (!controller.volumesKnown("x") || controller.removeChoice("x").anonymous !== 0) failures += 140737488355328;
+        // A linha leva a pergunta ao detalhe, que escolhe a linha.
+        controller.askRemove("abc123", "db");
+        if (controller.removeAsked !== "db" || controller.selectedId !== "abc123") failures += 281474976710656;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

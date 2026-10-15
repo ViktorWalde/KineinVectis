@@ -2409,7 +2409,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 185 métodos roteados — a lista inteira
+## Os 186 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -2450,6 +2450,7 @@ container.images
 container.list
 container.open
 container.status
+container.volumes
 
 core.ping
 core.shutdown
@@ -2844,7 +2845,9 @@ máquina `docker` é o shim `podman-docker`, medido em 2026-09-12.
 container.status  {}                       -> ContainerStatus
 container.list    { all? = true }          -> { containers, engine, rawOutput, hint? }
 container.images  {}                       -> { images, engine, rawOutput, hint? }
-container.action  { id, action }           -> { jobId }            (job; start|stop|restart|remove)
+container.action  { id, action, volumes? } -> { jobId }            (job; start|stop|restart|remove;
+                                                                     volumes só com remove, 0.170.0)
+container.volumes { id }                   -> { id, volumes: [ContainerVolume] }   (0.170.0)
 container.open    { id, mode }             -> { id, command }      (aba de terminal; logs|shell)
 container.compose { action, file? }        -> { jobId }            (job; up|down; exige workspace
                                                                      E arquivo de compose, ou `file`)
@@ -2854,6 +2857,7 @@ ContainerStatus   engine? (docker|podman), binary?, version? (do servidor),
                   reachable, compose?, composeFile?, hint?, rawOutput
 ContainerInfo     id, names[], image, state, status, ports[], created
 ImageInfo         id, repository, tag, size, created
+ContainerVolume   name, anonymous, sizeBytes?
 
 event.container.finished { jobId, action, target, ok, message }
 ```
@@ -2905,6 +2909,15 @@ linha do motor vai para `event.job.output`, cancelar mata o filho, e o
 (`0.168.0`).
 `compose up` é `-d` — um job que nunca termina não é job; a saída viva mora
 na aba de logs.
+
+**O "Remover" pergunta pelos volumes (`0.170.0`, 16b.3, `roadmaps/59`
+§2.5.2).** `container.volumes { id }` responde fora do laço, pelo motor que
+responde (mudo é o erro da 16b.1): os `Mounts` do tipo `volume` do
+`inspect`, `anonymous` quando o nome tem 64 hexadecimais, e `sizeBytes` da
+tabela de texto do `system df -v` (decimal, 4 algarismos; o JSON verboso não
+existe no Podman 5.7), ausente quando o motor não o dá. `container.action`
+com `volumes: true` só vale com `remove`, e vira `rm -v` (os anônimos do
+container; os nomeados ficam); com outra ação, `INVALID_PARAMS`.
 
 **O compose é do PROJETO, e o core diz se ele existe (`0.108.0`,
 2026-09-13).** A ferramenta é da máquina (`compose`); o arquivo é do workspace
@@ -3781,9 +3794,11 @@ ele vem `containerHint`, o motivo ("o Podman não respondeu: <dica>", ou sem
 Podman/Docker no `PATH`). `suggestedPorts` traz, por motor, a primeira porta
 de 20 a partir da padrão (5432, 27017) em que um `bind` em `127.0.0.1`
 funciona; sem nenhuma livre, o motor fica de fora. `datasource.create {
-kind: containerServer }` recusa a porta em que o `bind` falha, antes de
-escolher o motor: `INVALID_PARAMS` com a porta e a primeira livre depois
-dela.
+kind: containerServer }` recusa a porta em que o `bind` falha com "em uso"
+duas vezes, com 50 ms entre elas (um `fork` de outra thread herda o socket
+de teste até o `exec`, e a primeira resposta pode ser falsa; 40.7 §7.286),
+antes de escolher o motor: `INVALID_PARAMS` com a porta e a primeira livre
+depois dela.
 
 **Descritores de provedores (`0.164.0`, D1, contrato anterior ao código).**
 `datasource.list/save/remove` acrescentam `providers`, em ordem de apresentação.

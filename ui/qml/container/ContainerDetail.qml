@@ -22,11 +22,32 @@ Item {
     property bool confirmRemove: false
     onRowChanged: root.confirmRemove = false
 
-    // O segundo clique do Remover tem prazo (o mesmo da linha).
+    // O "Remover" que pergunta (16b.3, roadmaps/59 §2.5.2): armado, com volume
+    // anonimo, a escolha "com os volumes" ou "so' o container".
+    readonly property bool volumesKnown: root.row !== null && root.controller !== null
+                                         && root.controller.volumesKnown(root.row.target)
+    readonly property int anonymousVolumes: root.volumesKnown
+                                            ? root.controller.removeChoice(root.row.target).anonymous : 0
+    readonly property bool asksVolumes: root.confirmRemove && root.anonymousVolumes > 0
+
+    // O segundo clique do Remover tem prazo (o mesmo da linha); com a
+    // escolha, o dobro: sao duas frases para ler.
     Timer {
-        interval: Theme.motionProgress * 4
+        interval: Theme.motionProgress * (root.asksVolumes ? 8 : 4)
         running: root.confirmRemove
         onTriggered: root.confirmRemove = false
+    }
+
+    // A linha leva a pergunta para ca' (a linha nao tem largura para ela).
+    Connections {
+        target: root.controller
+        function onRemoveAskedChanged() {
+            if (root.row !== null && root.controller.removeAsked !== ""
+                    && root.controller.removeAsked === root.row.target) {
+                root.controller.removeAsked = "";
+                root.confirmRemove = true;
+            }
+        }
     }
 
     implicitHeight: column.implicitHeight
@@ -197,20 +218,47 @@ Item {
                 onClicked: root.controller.openShell(root.row.target)
             }
 
-            // Remover arma no primeiro clique; o segundo, dentro do prazo, age.
+            // Remover arma no primeiro clique e pergunta pelos volumes; o
+            // segundo, dentro do prazo, age. Antes da resposta, nada se
+            // confirma: o clique removeria so' o container (o defeito 1).
             KvButton {
                 compact: true
                 danger: true
+                visible: !root.asksVolumes
                 iconName: root.confirmRemove ? "check" : "trash"
-                text: root.confirmRemove ? qsTr("Confirmar remoção") : qsTr("Remover")
-                enabled: !root.running
+                text: !root.confirmRemove ? qsTr("Remover")
+                      : (root.volumesKnown ? qsTr("Confirmar remoção") : qsTr("verificando volumes…"))
+                enabled: !root.running && (!root.confirmRemove || root.volumesKnown)
                 onClicked: {
                     if (!root.confirmRemove) {
                         root.confirmRemove = true;
+                        root.controller.requestVolumes(root.row.target);
                         return;
                     }
                     root.confirmRemove = false;
-                    root.controller.act(root.row.target, "remove");
+                    root.controller.act(root.row.target, "remove", false);
+                }
+            }
+
+            KvButton {
+                compact: true
+                danger: true
+                visible: root.asksVolumes
+                iconName: "trash"
+                text: root.asksVolumes ? root.controller.removeWithVolumesText(root.row.target) : ""
+                onClicked: {
+                    root.confirmRemove = false;
+                    root.controller.act(root.row.target, "remove", true);
+                }
+            }
+
+            KvButton {
+                compact: true
+                visible: root.asksVolumes
+                text: qsTr("Só o container")
+                onClicked: {
+                    root.confirmRemove = false;
+                    root.controller.act(root.row.target, "remove", false);
                 }
             }
         }

@@ -183,20 +183,31 @@ fn motor(kind: ContainerEngine) -> Engine {
 
 #[test]
 fn commands_are_built_as_the_cli_expects_and_rm_is_never_forced() {
+    let args_of = |command: std::process::Command| -> Vec<String> {
+        command
+            .get_args()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect()
+    };
     let rm = action_command(
         &motor(ContainerEngine::Podman),
         ContainerAction::Remove,
         "pg",
+        false,
     );
-    let args: Vec<String> = rm
-        .get_args()
-        .map(|a| a.to_string_lossy().into_owned())
-        .collect();
     assert_eq!(
-        args,
+        args_of(rm),
         vec!["rm", "pg"],
         "remover o que roda e' dois gestos, de proposito"
     );
+    // 16b.3: "Remover com os volumes" e' `rm -v`, ainda sem `-f`.
+    let with_volumes = action_command(
+        &motor(ContainerEngine::Podman),
+        ContainerAction::Remove,
+        "pg",
+        true,
+    );
+    assert_eq!(args_of(with_volumes), vec!["rm", "-v", "pg"]);
 
     let (programa, args) = open_program_args(
         &motor(ContainerEngine::Docker),
@@ -509,4 +520,102 @@ fn container_list_with_a_denying_engine_is_an_error_with_the_hint() {
     let details = error.details.expect("details");
     assert_eq!(details["reachable"], false);
     assert_eq!(details["engine"], "docker");
+}
+
+/// A saida REAL do `podman system df -v` (Podman 5.7.0, 2026-10-15), com um
+/// volume anonimo de um `postgres:16` ligado por 8 s e outro vazio.
+const PODMAN_DF_V: &str = concat!(
+    "Images space usage:\n",
+    "\n",
+    "REPOSITORY                  TAG         IMAGE ID      CREATED     SIZE        SHARED SIZE  UNIQUE SIZE  CONTAINERS\n",
+    "docker.io/library/postgres  16          275447c94b11  9 days      458.5MB     0B           458.5MB      1\n",
+    "\n",
+    "Containers space usage:\n",
+    "\n",
+    "CONTAINER ID  IMAGE         COMMAND     LOCAL VOLUMES  SIZE        CREATED             STATUS      NAMES\n",
+    "f32c40955dbd  275447c94b11  postgres    1              0B          Less than a second  created     kv-measure\n",
+    "\n",
+    "Local Volumes space usage:\n",
+    "\n",
+    "VOLUME NAME                                                       LINKS       SIZE\n",
+    "c145a933acd6f92f5cfb66ab56248af47950c62c2100fdce59764b004987fb4c  0           0B\n",
+    "d2166cfeffc45c97b48fe9b7852ac84468a9e6f5be78e027be8f6153229f8834  1           40.08MB\n",
+    "\n",
+);
+
+/// 16b.3: o tamanho de cada volume sai da tabela (o JSON verboso nao existe
+/// no Podman 5.7), em unidades decimais; o anonimo e' o de 64 hexadecimais.
+#[test]
+fn volume_sizes_come_from_the_df_table_in_decimal_units() {
+    let sizes = parse::volume_sizes(PODMAN_DF_V);
+    assert_eq!(sizes.len(), 2, "{sizes:?}");
+    assert_eq!(
+        sizes.get("d2166cfeffc45c97b48fe9b7852ac84468a9e6f5be78e027be8f6153229f8834"),
+        Some(&40_080_000)
+    );
+    assert_eq!(
+        sizes.get("c145a933acd6f92f5cfb66ab56248af47950c62c2100fdce59764b004987fb4c"),
+        Some(&0)
+    );
+    assert_eq!(parse::human_size("458.5MB"), Some(458_500_000));
+    assert_eq!(parse::human_size("1.2GB"), Some(1_200_000_000));
+    assert_eq!(parse::human_size("12kB"), Some(12_000));
+    assert_eq!(parse::human_size("lixo"), None);
+    assert!(parse::is_anonymous_volume(
+        "d2166cfeffc45c97b48fe9b7852ac84468a9e6f5be78e027be8f6153229f8834"
+    ));
+    assert!(!parse::is_anonymous_volume("dados-do-banco"));
+    assert!(
+        !parse::is_anonymous_volume(&"z".repeat(64)),
+        "64 letras quaisquer nao e' o nome que o motor gera"
+    );
+    let mounts = parse::mounted_volumes(
+        r#"[{"Type":"bind","Source":"/home/x","Destination":"/x"},{"Type":"volume","Name":"c145a933acd6f92f5cfb66ab56248af47950c62c2100fdce59764b004987fb4c","Destination":"/var/lib/postgresql/data"}]"#,
+    );
+    assert_eq!(
+        mounts,
+        vec!["c145a933acd6f92f5cfb66ab56248af47950c62c2100fdce59764b004987fb4c"]
+    );
+}
+
+/// 16b.3 pelo despacho: `container.volumes` diz o anonimo com o tamanho e o
+/// nomeado sem `anonymous`; `volumes` com outra acao que nao `remove` e'
+/// recusado antes de qualquer job.
+#[test]
+fn container_volumes_lists_the_anonymous_one_with_its_size() {
+    use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
+    use serde_json::json;
+
+    let dir = temp_dir("volumes");
+    fake_binary(
+        &dir,
+        "podman",
+        r#"case "$1" in
+  --version) echo "podman version 5.7.0" ;;
+  ps) echo "[]" ;;
+  inspect) echo '[{"Type":"volume","Name":"d2166cfeffc45c97b48fe9b7852ac84468a9e6f5be78e027be8f6153229f8834"},{"Type":"volume","Name":"dados-do-banco"}]' ;;
+  system) printf 'Local Volumes space usage:\n\nVOLUME NAME  LINKS  SIZE\nd2166cfeffc45c97b48fe9b7852ac84468a9e6f5be78e027be8f6153229f8834  1  40.08MB\ndados-do-banco  1  2MB\n' ;;
+  *) exit 0 ;;
+esac"#,
+    );
+    let mut core = crate::Core::with_detector(ToolDetector::with_search_path(&dir));
+    let reply = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "container.volumes",
+        Some(json!({ "id": "kinein-pg" })),
+    ));
+    let result = reply.response().result.clone().expect("volumes");
+    assert_eq!(result["volumes"][0]["anonymous"], true, "{result}");
+    assert_eq!(result["volumes"][0]["sizeBytes"], 40_080_000, "{result}");
+    assert_eq!(result["volumes"][1]["name"], "dados-do-banco", "{result}");
+    assert_eq!(result["volumes"][1]["anonymous"], false, "{result}");
+
+    let refused = core.handle_request(&JsonRpcRequest::new(
+        2_i64,
+        "container.action",
+        Some(json!({ "id": "kinein-pg", "action": "stop", "volumes": true })),
+    ));
+    let error = refused.response().error.clone().expect("so' com remove");
+    assert_eq!(error.code, JsonRpcErrorCode::InvalidParams);
+    assert!(error.message.contains("remove"), "{}", error.message);
 }

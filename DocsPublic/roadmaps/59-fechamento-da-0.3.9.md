@@ -95,7 +95,7 @@ Cada passo termina com:
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
-| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. A fazer: 16b.3 (o "Remover" que pergunta, com os volumes) |
+| 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. 16b.3 feita (§7.286, IPC `0.170.0`): o "Remover" pergunta "com os volumes (N, X MB)" ou "só o container". **A 16b está fechada** |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -380,10 +380,11 @@ aditivo: nenhum campo some, nenhum método muda de nome.
 | 6 | `DataSourceCreateBox.qml` sugere a porta interna (5432/27017) | o `discover` devolve `suggestedPorts: { postgres, mongo }`, a primeira porta livre no loopback a partir da padrão (teste de `bind` em `127.0.0.1`, até 20 tentativas); o formulário usa como valor inicial. O `datasource.create` recusa porta ocupada antes do `run`, com a porta e a sugestão | teste com um `TcpListener` segurando a porta: a sugestão pula para a seguinte, e o `create` recusa com `INVALID_PARAMS` |
 
 **O "Remover" que pergunta** (decisão do autor, §2.5 acima). Método novo
-`container.volumes { id }` → `{ volumes: [{ name, anonymous, sizeBytes? }] }`,
+`container.volumes { id }` → `{ id, volumes: [{ name, anonymous, sizeBytes? }] }`,
 fora do laço: os volumes vêm do `inspect` (`Mounts` do tipo `volume`;
-anônimo é o nome de 64 hexadecimais) e o tamanho do `system df -v --format
-json`, quando o motor o dá (sem tamanho, a pergunta mostra só os nomes). O
+anônimo é o nome de 64 hexadecimais) e o tamanho do `system df -v`, quando
+o motor o dá (sem tamanho, a pergunta mostra só a contagem; o JSON não serve
+no Podman 5.7, medido no desenho fino da 16b.3, abaixo). O
 `container.action` aceita `volumes: true` só com `remove`, e vira `rm -v`.
 Na janela, o segundo clique do Remover abre a confirmação com "Remover com
 os volumes (N, X MB)" e "Só o container"; sem volume anônimo, segue o
@@ -475,6 +476,67 @@ metade do `discover`) e 6, e o "Criar banco" desligado com motivo. Protocolo
   Docker negando e o Podman respondendo: a aba PostgreSQL mostra `$ docker
   run ... -p 127.0.0.1:5432:5432`, e o core sobe pelo Podman desde a 16b.1 —
   a tela mostra um comando que não é o que roda, numa porta sem conferir.
+
+**O desenho fino da 16b.3 (2026-10-15, antes do código).** O "Remover" da
+janela Containers pergunta, com os volumes (decisão do autor, §2.5).
+Protocolo `0.170.0`, aditivo.
+
+**Medido no Podman 5.7.0 desta máquina, 2026-10-15** (um `postgres:16` ligado
+por 8 s, que inicializa o diretório de dados):
+
+```text
+inspect --format '{{json .Mounts}}'  [{"Type":"volume","Name":"<64 hex>",
+                                       "Destination":"/var/lib/postgresql/data",...}]
+volume inspect                       "Anonymous": true (so' o Podman diz assim)
+system df -v --format json           ERRO: "cannot combine --format and --verbose"
+system df --format json              so' o total por tipo, sem volume a volume
+system df -v (texto), 0,05 s         "Local Volumes space usage:" / VOLUME NAME
+                                     LINKS SIZE / "<64 hex>  1  40.08MB"
+unshare du -sb <Mountpoint>, 0,02 s  40084577 (exato)
+du -sb <Mountpoint>                  "Permission denied" e 0: os arquivos sao do
+                                     uid mapeado do container
+```
+
+O desenho anterior (tamanho pelo `system df -v --format json`) não vale no
+Podman 5.7. Vale a tabela de texto do `system df -v`, que o Docker também
+imprime com o mesmo cabeçalho (não medido: o Docker desta máquina nega o
+socket). Os tamanhos são decimais com 4 algarismos (`40.08MB` =
+40.080.000 bytes, para 40.084.577 reais): servem para a pergunta, não para
+contabilidade. Sem a seção, ou sem a linha do volume, o volume vem sem
+tamanho e a pergunta mostra só a contagem.
+
+- **Core, `container.volumes { id }`** → `{ id, volumes: [{ name, anonymous,
+  sizeBytes? }] }`, fora do laço (`defer_work`), pelo motor que responde
+  (`answering`; mudo é o erro da 16b.1). Os volumes vêm do `inspect` (`Mounts`
+  do tipo `volume`); anônimo é o nome de 64 hexadecimais (vale para os dois
+  motores; o `Anonymous` do Podman não existe no Docker). O tamanho, da
+  tabela do `system df -v`, lida por `parse::volume_sizes`.
+- **Core, `container.action`** aceita `volumes: true` só com `remove`, e vira
+  `rm -v <id>`; com outra ação, `INVALID_PARAMS`. Sem o campo, o `rm` de hoje.
+- **C++:** `containerVolumes(id)` e o sinal `containerVolumesResolved(id,
+  volumes)`; o `containerAction` ganha o `volumes` (padrão `false`).
+- **QML, o controller:** `volumesOf(target)` (lista ou `undefined` enquanto
+  pergunta), `requestVolumes(target)` e `removeChoice(target)`, que diz
+  `{ anonymous, bytes }` dos anônimos; `act(target, "remove", volumes)`.
+- **QML, a pergunta:** o primeiro clique do Remover arma, como hoje, e pede
+  os volumes. No detalhe (`ContainerDetail`), armado e com volume anônimo, o
+  botão vira dois: "Remover com os volumes (N, X MB)" e "Só o container";
+  sem volume anônimo, "Confirmar remoção" de hoje; enquanto a resposta não
+  chega, "verificando volumes…", desligado (o clique que viesse antes
+  removeria só o container e deixaria o volume, o defeito 1). Com a
+  escolha, o armado dura o dobro (7,2 s): são duas frases para ler. Na linha
+  (`ContainerRowActions`), o segundo clique com volume anônimo não remove:
+  escolhe a linha e arma o detalhe, onde a pergunta mora — a linha não tem
+  largura para duas frases.
+- **Provas:** o parser da tabela com a saída real acima; `container.volumes`
+  com um `podman` falso (`inspect` com um volume nomeado e um anônimo, `system
+  df -v` com o tamanho do anônimo); `container.action` com `volumes: true` →
+  `rm -v`, e `volumes` com `stop` → `INVALID_PARAMS`; o harness
+  `tst_container` com a escolha e o desligado enquanto pergunta; mutações (o
+  `-v` saindo, o anônimo virando nomeado, o botão sem o desligado); no
+  Podman real, um container parado com volume anônimo: "Remover com os
+  volumes" e `podman volume ls` vazio; "Só o container" e o volume fica;
+  fotos no Xvfb da pergunta.
 
 ## 3. Containers acoplados
 

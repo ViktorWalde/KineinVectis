@@ -25,6 +25,7 @@
 
 pub mod parse;
 pub mod probe;
+pub mod volumes;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -387,9 +388,20 @@ fn raw(stdout: &str, stderr: &str) -> String {
 /// O comando de uma acao de ciclo de vida. `rm` SEM `-f`: remover o que esta'
 /// rodando e' decisao em dois gestos (parar, depois remover), de proposito.
 #[must_use]
-pub fn action_command(engine: &Engine, action: ContainerAction, id: &str) -> Command {
+pub fn action_command(
+    engine: &Engine,
+    action: ContainerAction,
+    id: &str,
+    volumes: bool,
+) -> Command {
     let mut command = engine.command();
-    command.arg(action.verb()).arg(id);
+    command.arg(action.verb());
+    // `rm -v`: os volumes ANONIMOS do container vao junto (16b.3); quem
+    // chama so' liga com `remove`.
+    if volumes {
+        command.arg("-v");
+    }
+    command.arg(id);
     command
 }
 

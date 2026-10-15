@@ -74,9 +74,18 @@ pub fn suggested_ports() -> DataSourceSuggestedPorts {
 pub fn ensure_port_free(port: u16) -> Result<(), String> {
     // So' "em uso" recusa: uma porta abaixo de 1024 nega o `bind` a quem
     // nao e' root, e quem decide se o motor pode e' o motor.
-    let in_use = port != 0
-        && bind_loopback(port).is_err_and(|error| error.kind() == std::io::ErrorKind::AddrInUse);
-    if !in_use {
+    let in_use =
+        || bind_loopback(port).is_err_and(|error| error.kind() == std::io::ErrorKind::AddrInUse);
+    // Um `fork` de outra thread entre um `bind` e o `exec` dela herda o
+    // socket ate' o `exec` (o CLOEXEC so' fecha ali): por um instante a porta
+    // parece ocupada sem estar. Medido nos testes em paralelo (15 recusas
+    // falsas em 60 rodadas, 2026-10-15); a segunda pergunta, 50 ms depois,
+    // desfaz o engano.
+    if port == 0 || !in_use() {
+        return Ok(());
+    }
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    if !in_use() {
         return Ok(());
     }
     Err(port.checked_add(1).and_then(free_loopback_port).map_or_else(
@@ -265,7 +274,10 @@ mod tests {
     /// o `create` a recusa dizendo a livre; solta, ela volta a valer.
     #[test]
     fn a_port_in_use_is_skipped_and_refused_with_the_free_one() {
-        let held = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        // Fora da faixa efemera (32768 em diante): solta, a porta nao volta
+        // para outro `bind` em `:0` no meio do teste.
+        let start = free_loopback_port(23_000).expect("uma porta livre");
+        let held = std::net::TcpListener::bind(("127.0.0.1", start)).unwrap();
         let port = held.local_addr().unwrap().port();
         assert!(!loopback_port_free(port));
         let suggested = free_loopback_port(port).expect("uma livre nas 20 seguintes");

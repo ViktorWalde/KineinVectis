@@ -27,10 +27,19 @@ void CoreClient::containerImages()
     sendRequest(QStringLiteral("container.images"), QJsonObject{});
 }
 
-void CoreClient::containerAction(const QString& id, const QString& action)
+void CoreClient::containerAction(const QString& id, const QString& action, bool volumes)
 {
-    sendRequest(QStringLiteral("container.action"),
-                QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("action"), action}});
+    QJsonObject params{{QStringLiteral("id"), id}, {QStringLiteral("action"), action}};
+    // Ausente e' o `rm` de sempre; o core recusa `volumes` fora do `remove`.
+    if (volumes) {
+        params.insert(QStringLiteral("volumes"), true);
+    }
+    sendRequest(QStringLiteral("container.action"), params);
+}
+
+void CoreClient::containerVolumes(const QString& id)
+{
+    sendRequest(QStringLiteral("container.volumes"), QJsonObject{{QStringLiteral("id"), id}});
 }
 
 void CoreClient::containerOpen(const QString& id, const QString& mode)
@@ -68,6 +77,12 @@ bool CoreClient::dispatchContainerResult(const QString& method, const QJsonObjec
         emit containerImagesResolved(
             result.value(QStringLiteral("images")).toArray().toVariantList(),
             result.value(QStringLiteral("hint")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("container.volumes")) {
+        emit containerVolumesResolved(
+            result.value(QStringLiteral("id")).toString(),
+            result.value(QStringLiteral("volumes")).toArray().toVariantList());
         return true;
     }
     if (method == QStringLiteral("container.action") ||
