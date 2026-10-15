@@ -3,10 +3,19 @@
 
 Every identifier in Rust, C++, QML/JS, Python and shell is split into words
 (camelCase, PascalCase, snake_case, SCREAMING_CASE). Each word of 4+ letters
-must be in the system English dictionary or in the project allowlist of
-technical terms (scripts/identifier-language-allowlist.txt). Comments and
-string literals are stripped first: comments and on-screen text are Portuguese
-by rule, and are not identifiers.
+must be in the project VOCABULARY of English words
+(scripts/identifier-language-vocabulary.txt) or in the allowlist of technical
+terms (scripts/identifier-language-allowlist.txt), or be an inflection of one
+of them. Comments and string literals are stripped first: comments and
+on-screen text are Portuguese by rule, and are not identifiers.
+
+Same verdict on every distro (roadmaps/59 §2.6, 2026-10-15). Until then the
+system dictionary decided: the Arch `words` accepts `lidos`, `plano` and
+`para`, the Ubuntu `wamerican` does not, and one commit passed on one distro
+and failed on the other. The system dictionary now only SUGGESTS: a new word
+outside the vocabulary fails everywhere, and when this machine's dictionary
+knows it, the message says `--accept <word>`, which writes it to the
+vocabulary, where review sees it in the diff.
 
 Legacy: the Portuguese names that existed on 2026-10-01 are frozen in
 scripts/identifier-language-baseline.txt (file, word, count). A ratchet, like
@@ -17,6 +26,9 @@ Usage:
     check_identifier_language.py                    # gate
     check_identifier_language.py --report           # unknown words with counts
     check_identifier_language.py --update-baseline  # rewrite (only shrinks)
+    check_identifier_language.py --accept WORD...   # English word -> vocabulary
+    check_identifier_language.py --init-vocabulary  # once: vocabulary from the
+                                                    # system dictionary
 """
 from __future__ import annotations
 
@@ -32,6 +44,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ALLOWLIST = ROOT / "scripts" / "identifier-language-allowlist.txt"
 BASELINE = ROOT / "scripts" / "identifier-language-baseline.txt"
+VOCABULARY = ROOT / "scripts" / "identifier-language-vocabulary.txt"
+# Inflections the vocabulary may lack (plural, -ed, -ing).
+INFLECTIONS = ("s", "es", "ed", "ing", "er", "ers", "able")
 # Todos os que existirem, unidos (2026-10-08). O `wamerican` do Debian traz as
 # variantes britanicas (`cancelled`, `catalogue`); no Arch elas moram so' no
 # `british-english`, e ler apenas o americano reprovava seis palavras inglesas. O
@@ -66,6 +81,33 @@ def load_english() -> set[str]:
     sys.exit("erro: dicionario de ingles ausente (/usr/share/dict/american-english"
              " ou /usr/share/dict/words); instale o pacote words (Arch, Fedora) ou"
              " wamerican (Debian/Ubuntu) — scripts/instalar-ambiente.sh ja' o inclui")
+
+
+def load_vocabulary() -> set[str]:
+    if not VOCABULARY.exists():
+        sys.exit(f"erro: {VOCABULARY.relative_to(ROOT)} ausente; gere uma vez com --init-vocabulary")
+    return {line.strip() for line in VOCABULARY.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")}
+
+
+def write_vocabulary(words: set[str]) -> None:
+    lines = ["# O ingles aceito nos identificadores (59 §2.6, desde 2026-10-15): o MESMO",
+             "# em toda distro. Uma palavra por linha, ordenada. Acrescente com",
+             "# `check_identifier_language.py --accept <palavra>` (so' o que o dicionario",
+             "# de ingles da maquina reconhece); termo tecnico vai para a allowlist."]
+    VOCABULARY.write_text("\n".join(lines + sorted(words)) + "\n", encoding="utf-8")
+
+
+def is_known(word: str, known: set[str]) -> bool:
+    return word in known or any(word.endswith(s) and word[: -len(s)] in known for s in INFLECTIONS)
+
+
+def local_english() -> set[str]:
+    """O dicionario DESTA maquina, so' para sugerir; vazio se nao houver."""
+    try:
+        return load_english()
+    except SystemExit:
+        return set()
 
 
 def load_allowlist() -> set[str]:
@@ -298,15 +340,13 @@ def load_baseline() -> dict[tuple[str, str], int]:
     return frozen
 
 
-def main() -> int:
-    report = "--report" in sys.argv
-    update = "--update-baseline" in sys.argv
-    english = load_english()
-    allowed = load_allowlist()
+def scan(vocabulary: set[str], allowed: set[str]):
+    """As palavras fora do vocabulario (e das inflexoes dele) e da allowlist."""
     unknown: Counter[str] = Counter()
     per_file: Counter[tuple[str, str]] = Counter()
     where: dict[str, set[str]] = defaultdict(set)
     unreadable: list[str] = []
+    used: set[str] = set()
     for path in tracked_files():
         text = path.read_text(encoding="utf-8", errors="ignore")
         kind = SUFFIXES[path.suffix]
@@ -324,16 +364,54 @@ def main() -> int:
                      for ident in IDENT.findall(line)]
         rel = str(path.relative_to(ROOT))
         for lineno, ident in pairs:
-                for word in words_of(ident):
-                    if len(word) < MIN_WORD or word in english or word in allowed:
-                        continue
-                    # Inflections the dictionary may lack (plural, -ed, -ing).
-                    if any(word.endswith(s) and word[: -len(s)] in english
-                           for s in ("s", "es", "ed", "ing", "er", "ers", "able")):
-                        continue
-                    unknown[word] += 1
-                    where[word].add(f"{rel}:{lineno}")
-                    per_file[(rel, word)] += 1
+            for word in words_of(ident):
+                if len(word) < MIN_WORD:
+                    continue
+                used.add(word)
+                if word in allowed or is_known(word, vocabulary):
+                    continue
+                unknown[word] += 1
+                where[word].add(f"{rel}:{lineno}")
+                per_file[(rel, word)] += 1
+    return unknown, per_file, where, unreadable, used
+
+
+def accept(words: list[str]) -> int:
+    local = local_english()
+    vocabulary = load_vocabulary()
+    refused = [w for w in words if not is_known(w.lower(), local)]
+    if refused:
+        print("erro: o dicionario de ingles desta maquina nao reconhece: "
+              + ", ".join(refused) + ". Traduza; termo tecnico (sigla, nome de"
+              " ferramenta) vai para scripts/identifier-language-allowlist.txt com o motivo.",
+              file=sys.stderr)
+        return 1
+    write_vocabulary(vocabulary | {w.lower() for w in words})
+    print(f"vocabulario: {', '.join(sorted(w.lower() for w in words))} acrescentada(s)")
+    return 0
+
+
+def init_vocabulary() -> int:
+    if VOCABULARY.exists() and "--force" not in sys.argv:
+        print(f"erro: {VOCABULARY.relative_to(ROOT)} ja' existe (--force para refazer)",
+              file=sys.stderr)
+        return 1
+    local = local_english()
+    _, _, _, _, used = scan(set(), set())
+    known = {w for w in used if is_known(w, local)}
+    write_vocabulary(known)
+    print(f"vocabulario: {len(known)} palavras")
+    return 0
+
+
+def main() -> int:
+    if "--accept" in sys.argv:
+        return accept(sys.argv[sys.argv.index("--accept") + 1:])
+    if "--init-vocabulary" in sys.argv:
+        return init_vocabulary()
+    report = "--report" in sys.argv
+    update = "--update-baseline" in sys.argv
+    unknown, per_file, where, unreadable, _ = scan(load_vocabulary(), load_allowlist())
     if unreadable:
         print(f"erro: o gate nao aprova o que nao consegue ler (Python {sys.version.split()[0]}):",
               file=sys.stderr)
@@ -364,11 +442,20 @@ def main() -> int:
               f" {sum(per_file.values())} ocorrencias")
         return 0
     if grown:
+        local = local_english()
         print("erro: identificador fora do ingles (contribuindo/08: identificadores"
               " sempre em ingles). Novo ou acima da linha de base:", file=sys.stderr)
+        english_here: set[str] = set()
         for rel, word in grown[:40]:
             locs = sorted(loc for loc in where[word] if loc.startswith(rel + ":"))[:3]
             print(f"  {', '.join(locs)}: `{word}`", file=sys.stderr)
+            if is_known(word, local):
+                english_here.add(word)
+        if english_here:
+            print("  Ingles para o dicionario desta maquina, mas fora do vocabulario do"
+                  " repositorio (o mesmo em toda distro): se for ingles mesmo,"
+                  " `python3 scripts/check_identifier_language.py --accept "
+                  + " ".join(sorted(english_here)) + "`.", file=sys.stderr)
         print("  Traduza o nome. Se for termo tecnico ingles legitimo (sigla, nome"
               " de ferramenta), acrescente-o a scripts/identifier-language-allowlist.txt"
               " com o motivo.", file=sys.stderr)

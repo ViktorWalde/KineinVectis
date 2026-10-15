@@ -73,9 +73,10 @@ echo "distro detectada: $DISTRO"
 # Desde 2026-10-01 tambem o plugin SVG do Qt (sem ele os icones da arvore
 # saem "Unsupported image format" — o G0.4 pegou num Ubuntu limpo) e o
 # runtime dos sanitizers do clang (compiler-rt), que o preset estrito linka.
-# Desde 2026-10-08 o dicionario de ingles (`words`; `wamerican` no Debian): o
-# gate de idioma dos identificadores le' /usr/share/dict, e o Arch limpo nao
-# o tem (o Ubuntu trazia por padrao, por isso faltou ate a troca de maquina).
+# Desde 2026-10-08 o dicionario de ingles (`words`; `wamerican` no Debian).
+# Desde 2026-10-15 o gate de idioma decide pelo vocabulario do repositorio (o
+# mesmo em toda distro, 59 §2.6); o dicionario so' sugere o `--accept` e gera
+# o vocabulario, e o gate roda sem ele.
 # Desde 2026-10-15 (59 §2.6, a mesma maquina em toda distro): o `xvfb` e o
 # `xdotool` (as fotos e a prova com clique no Xvfb) e o `shellcheck`, que
 # saiu do `--extras` porque o `verificar.sh` o cobra; o Podman entra no

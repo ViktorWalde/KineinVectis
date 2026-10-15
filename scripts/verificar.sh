@@ -156,7 +156,8 @@ passo "scripts/verificar-qml.sh" \
 scripts/verificar-qml.sh
 
 passo "scripts/check_identifier_language.py" \
-    "Reprova identificador novo em portugues (Rust, C++, QML, Python, shell); legado so' desce."
+    "Reprova identificador novo em portugues (Rust, C++, QML, Python, shell); legado so' desce; o mesmo veredito em toda distro."
+python3 scripts/test_identifier_language.py
 python3 scripts/check_identifier_language.py
 
 passo "scripts/verificar-qml-fiacao.sh" \

@@ -21,11 +21,10 @@
 > `arm-none-eabi-gcc` e `debugpy`). A UI compila; abri-la ainda não foi
 > medido.
 >
-> **Próximo passo:** o 16c, a reprodutibilidade entre distros
-> ([59](59-fechamento-da-0.3.9.md) §2.6: R1, o `rust-analyzer` pelo
-> `rust-toolchain.toml` e o instalador; R2, o gate de idioma pelo vocabulário
-> do repositório), pedido do autor antes do passo 15 (provas finais do
-> Banco, 59 §5.6); depois o 16 (pente fino) e a 0.4 (57). A 16b está fechada: a catraca do idioma no Ubuntu (40.7
+> **Próximo passo:** o passo 15, as provas finais do Banco
+> ([59](59-fechamento-da-0.3.9.md) §2 e §5.6); depois o 16 (pente fino) e a
+> 0.4 (57). Feito em 2026-10-15: a 16b (40.7 §7.283–§7.286) e o 16c, a
+> reprodutibilidade entre distros (§7.287–§7.288, 59 §2.6). A 16b está fechada: a catraca do idioma no Ubuntu (40.7
 > §7.283), 16b.1 (§7.284), 16b.2 (§7.285) e 16b.3 (§7.286), todas em
 > 2026-10-15.
 >

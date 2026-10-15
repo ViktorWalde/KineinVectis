@@ -20,9 +20,19 @@ capítulo é o que o gate **não** cobra e o revisor cobra.
   - **Desde 2026-10-01 a regra tem gate**: `scripts/check_identifier_language.py`
     (no `verificar.sh`) quebra cada identificador de Rust, C++, QML/JS, Python e
     shell em palavras e exige que cada uma (de 4 letras ou mais) esteja no
-    dicionário de inglês do sistema ou em `scripts/identifier-language-allowlist.txt`
-    (siglas e nomes de ferramenta, nunca palavra portuguesa). Comentários e
-    strings ficam de fora. O Python embutido em heredoc de script também é lido.
+    vocabulário do repositório, `scripts/identifier-language-vocabulary.txt`,
+    ou em `scripts/identifier-language-allowlist.txt` (siglas e nomes de
+    ferramenta, nunca palavra portuguesa). Comentários e strings ficam de fora.
+    O Python embutido em heredoc de script também é lido.
+  - **O mesmo veredito em toda distro (desde 2026-10-15,
+    [59](../roadmaps/59-fechamento-da-0.3.9.md) §2.6).** Até então decidia o
+    dicionário do sistema, e o `words` do Arch aceita `lidos` e `plano`, que o
+    `wamerican` do Ubuntu não aceita. Agora o dicionário só sugere: palavra
+    nova fora do vocabulário reprova em toda máquina, e, se o dicionário dela
+    a reconhece, a mensagem diz `--accept <palavra>`, que a grava no
+    vocabulário — a revisão vê a palavra no diff. O
+    `scripts/test_identifier_language.py` prova o veredito igual sem
+    dicionário e com um que aceita `plano`.
   - **O legado é catraca**, em `scripts/identifier-language-baseline.txt`
     (arquivo, palavra, contagem): só desce. A estimativa anterior, de "cerca
     de 70 identificadores", estava errada. Medido em 2026-10-01: **17.862

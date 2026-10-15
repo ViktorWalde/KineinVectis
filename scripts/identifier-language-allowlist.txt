@@ -135,3 +135,6 @@ msvc vcvars vswhere
 # §7.283). `atomically` (fsops), `canceller` (grafia britanica, process.rs),
 # `consts` (constantes, a palavra-chave do Rust/C++) e `emplace` (API do C++).
 atomically canceller consts emplace
+# 2026-10-15: nomes da biblioteca padrao do Python que o teste do gate de
+# idioma usa (scripts/test_identifier_language.py).
+contextlib getvalue
