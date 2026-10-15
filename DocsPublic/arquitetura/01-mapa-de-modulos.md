@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 185 métodos IPC roteados pelo core.
+Medido: 186 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -323,7 +323,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 185 métodos roteados pelo core, 155 seguem o caminho padrão
+Dos 186 métodos roteados pelo core, 156 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 30 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -1289,7 +1289,7 @@ flowchart LR
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
   end
   subgraph IPC["JSON-RPC"]
-    n_ipc_container(["container.* · 6"])
+    n_ipc_container(["container.* · 7"])
   end
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_container_rs["handlers/container.rs"]
@@ -1326,7 +1326,7 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | handler Rust | `crates/kinein-core/src/handlers/container.rs` | Handler for container.* requests (impl Core). |
 
-Métodos IPC (6): `container.action`, `container.compose`, `container.images`, `container.list`, `container.open`, `container.status`.
+Métodos IPC (7): `container.action`, `container.compose`, `container.images`, `container.list`, `container.open`, `container.status`, `container.volumes`.
 
 ### Python
 

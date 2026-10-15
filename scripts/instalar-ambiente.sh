@@ -4,9 +4,8 @@
 #
 # Uso:
 #   scripts/instalar-ambiente.sh              # instala o conjunto base
-#   scripts/instalar-ambiente.sh --extras     # + shellcheck e cargo-deny
-#                                             #   (degraus da escada de rigor,
-#                                             #   DocsPublic/arquitetura/06-modo-estrito.md)
+#   scripts/instalar-ambiente.sh --extras     # + Podman (o motor de containers
+#                                             #   rootless, sem grupo `docker`)
 #   scripts/instalar-ambiente.sh --dry-run    # so mostra o que seria executado
 #
 # Distros suportadas: Arch/CachyOS (pacman, alvo principal), Debian/Ubuntu/
@@ -77,6 +76,11 @@ echo "distro detectada: $DISTRO"
 # Desde 2026-10-08 o dicionario de ingles (`words`; `wamerican` no Debian): o
 # gate de idioma dos identificadores le' /usr/share/dict, e o Arch limpo nao
 # o tem (o Ubuntu trazia por padrao, por isso faltou ate a troca de maquina).
+# Desde 2026-10-15 (59 §2.6, a mesma maquina em toda distro): o `xvfb` e o
+# `xdotool` (as fotos e a prova com clique no Xvfb) e o `shellcheck`, que
+# saiu do `--extras` porque o `verificar.sh` o cobra; o Podman entra no
+# `--extras`. Nomes medidos no Ubuntu 26.04; os do Arch e do Fedora sao os
+# pacotes oficiais de la', nao medidos nesta data.
 # ---------------------------------------------------------------------------
 instalar_arch() {
     executar sudo pacman -S --needed --noconfirm \
@@ -84,9 +88,10 @@ instalar_arch() {
         clang compiler-rt lldb gdb \
         qt6-base qt6-declarative qt6-tools qt6-svg \
         rustup unixodbc \
-        ripgrep fd words
+        ripgrep fd words \
+        xorg-server-xvfb xdotool shellcheck
     if [ "$EXTRAS" -eq 1 ]; then
-        executar sudo pacman -S --needed --noconfirm shellcheck
+        executar sudo pacman -S --needed --noconfirm podman
     fi
 }
 
@@ -100,7 +105,8 @@ instalar_debian() {
         qml6-module-qtqml-models qml6-module-qtquick \
         qml6-module-qtquick-controls qml6-module-qtquick-layouts \
         qml6-module-qtquick-window libqt6svg6 \
-        ripgrep fd-find unixodbc-dev wamerican
+        ripgrep fd-find unixodbc-dev wamerican \
+        xvfb xdotool shellcheck
     # O runtime dos sanitizers (ASan/UBSan do clang) que o preset
     # linux-clang-debug-strict linka. Sem ele: "cannot find
     # libclang_rt.asan-x86_64.a" (medido no Ubuntu 24.04, 2026-10-01). Chamada
@@ -111,8 +117,7 @@ instalar_debian() {
         echo "       da versao do seu clang (clang --version) para o preset com sanitizers"
     fi
     if [ "$EXTRAS" -eq 1 ]; then
-        executar sudo apt-get install -y shellcheck
-        echo "aviso: cargo-deny no Debian/Ubuntu vem via 'cargo install cargo-deny'"
+        executar sudo apt-get install -y podman
     fi
     echo "aviso: no Debian/Ubuntu o rustup oficial vem de https://rustup.rs"
     echo "       (rust-analyzer entra como componente: rustup component add rust-analyzer)"
@@ -142,9 +147,10 @@ instalar_fedora() {
         clang clang-tools-extra compiler-rt lldb gdb \
         qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel qt6-qtsvg \
         $pacotes_rust \
-        ripgrep fd-find unixODBC-devel words xz gawk
+        ripgrep fd-find unixODBC-devel words xz gawk \
+        xorg-x11-server-Xvfb xdotool ShellCheck
     if [ "$EXTRAS" -eq 1 ]; then
-        executar sudo dnf install -y ShellCheck
+        executar sudo dnf install -y podman
     fi
 }
 
@@ -283,7 +289,7 @@ fi
 
 echo ""
 echo "== verificacao =="
-faltando=0
+missing=0
 # A lista abaixo = o que o `KNOWN_TOOLS` do core detecta (o painel Ferramentas
 # da IDE reporta exatamente isto) MAIS o que os gates exigem.
 #
@@ -303,7 +309,7 @@ for ferramenta in git cmake ninja gcc g++ clang clang++ clangd clang-format \
             echo "  ok      rust-analyzer"
         else
             echo "  FALTA   rust-analyzer (proxy existe, componente nao)"
-            faltando=1
+            missing=1
         fi
         continue
     fi
@@ -311,7 +317,7 @@ for ferramenta in git cmake ninja gcc g++ clang clang++ clangd clang-format \
         echo "  ok      $ferramenta"
     else
         echo "  FALTA   $ferramenta"
-        faltando=1
+        missing=1
     fi
 done
 # fd chama-se fdfind no Debian/Ubuntu; o core aceita os dois nomes.
@@ -319,13 +325,55 @@ if command -v fd >/dev/null 2>&1 || command -v fdfind >/dev/null 2>&1; then
     echo "  ok      fd/fdfind"
 else
     echo "  FALTA   fd/fdfind"
-    faltando=1
+    missing=1
 fi
 if command -v qmake6 >/dev/null 2>&1 || [ -x /usr/lib/qt6/bin/qmllint ]; then
     echo "  ok      qt6"
 else
     echo "  FALTA   qt6"
-    faltando=1
+    missing=1
+fi
+# O que os gates e as fotos usam, alem do core (59 §2.6): o runtime `qml` dos
+# harnesses, o Xvfb e o xdotool das fotos, o shellcheck do `verificar.sh`.
+if command -v qml6 >/dev/null 2>&1 || command -v qml >/dev/null 2>&1 \
+    || [ -x /usr/lib/qt6/bin/qml ]; then
+    echo "  ok      qml (runtime dos harnesses)"
+else
+    echo "  FALTA   qml (runtime dos harnesses)"
+    missing=1
+fi
+for tool in xvfb-run xdotool shellcheck; do
+    if command -v "$tool" >/dev/null 2>&1; then
+        echo "  ok      $tool"
+    else
+        echo "  FALTA   $tool"
+        missing=1
+    fi
+done
+
+# O clang LINKA? (59 §2.6, medido em 2026-09-16 e de novo em 2026-10-15.) O
+# clang escolhe o GCC mais novo de /usr/lib/gcc/<alvo>/ para achar a
+# libstdc++ — no Ubuntu 26.04, o 16, que veio com o `gfortran-16` SEM a
+# libstdc++ dele. O `clang++` existe, o "ok" acima e' verdade, e o preset
+# `linux-clang-debug-strict` nao configura ("cannot find -lstdc++"). So' um
+# link de verdade prova; falhando, o `clang++ -v` diz qual GCC ele escolheu.
+if command -v clang++ >/dev/null 2>&1; then
+    link_dir="$(mktemp -d)"
+    printf 'int main() { return 0; }\n' >"$link_dir/vazio.cpp"
+    if clang++ "$link_dir/vazio.cpp" -o "$link_dir/vazio" >/dev/null 2>&1; then
+        echo "  ok      clang++ linka (a libstdc++ do GCC que ele escolhe)"
+    else
+        chosen_gcc="$(clang++ -v -x c++ /dev/null -fsyntax-only 2>&1 \
+            | sed -n 's/^Selected GCC installation: //p' | head -n1)"
+        gcc_version="${chosen_gcc##*/}"
+        echo "  FALTA   clang++ nao linka: ele escolhe o GCC $gcc_version ($chosen_gcc), sem a libstdc++ dele"
+        case "$DISTRO" in
+            debian) echo "          sudo apt-get install libstdc++-$gcc_version-dev" ;;
+            *) echo "          instale a libstdc++ de desenvolvimento do GCC $gcc_version" ;;
+        esac
+        missing=1
+    fi
+    rm -rf "$link_dir"
 fi
 
 # ---------------------------------------------------------------------------
@@ -391,7 +439,7 @@ fi
 # antes do gate completo passar.
 echo ""
 echo "== configuracao dos build dirs =="
-if [ "$faltando" -ne 0 ]; then
+if [ "$missing" -ne 0 ]; then
     echo "  pulado (ambiente incompleto)"
 elif [ "$DRY_RUN" -eq 1 ]; then
     echo "+ cmake --preset linux-clang-debug-strict"
@@ -442,7 +490,7 @@ case "$rustc_do_shell" in
 esac
 
 echo ""
-if [ "$faltando" -ne 0 ]; then
+if [ "$missing" -ne 0 ]; then
     echo "ambiente INCOMPLETO (itens FALTA acima). Apos resolver:"
 elif [ -n "$fora_do_path" ]; then
     # NAO dizer "completo" aqui: o passo seguinte e' `scripts/verificar.sh`, que

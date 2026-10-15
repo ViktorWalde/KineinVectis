@@ -2286,7 +2286,6 @@ scripts/fixture_terminal_geometria.py	topo	2
 scripts/fixture_terminal_geometria.py	unidades	2
 scripts/instalar-ambiente.sh	alvo	1
 scripts/instalar-ambiente.sh	executar	1
-scripts/instalar-ambiente.sh	faltando	5
 scripts/instalar-ambiente.sh	ferramenta	2
 scripts/instalar-ambiente.sh	instalador	1
 scripts/instalar-ambiente.sh	instalar	3

@@ -7,10 +7,16 @@ O ambiente local deve refletir o modo de segurança máximo do projeto.
 `scripts/instalar-ambiente.sh` instala todas as dependências abaixo com
 detecção de distro (pacman no Arch/CachyOS — alvo principal —, apt no
 Debian/Ubuntu, dnf no Fedora), aceita `--dry-run` (só mostra os comandos) e
-`--extras` (shellcheck, degrau da escada de rigor de
-[`06-modo-estrito.md`](../arquitetura/06-modo-estrito.md); o `cargo-deny` saiu de `--extras`
-em 2026-08-30 e virou dependência BASE, porque o gate passou a depender dele), e termina verificando ferramenta por
-ferramenta o mesmo conjunto que o ToolDetector do core reporta. Depois dele:
+`--extras` (o Podman, o motor de containers rootless; o `cargo-deny` saiu de
+`--extras` em 2026-08-30 e o `shellcheck` em 2026-10-15, porque o gate depende
+dos dois), e termina verificando ferramenta por ferramenta o mesmo conjunto que
+o ToolDetector do core reporta, mais o que os gates usam (o runtime `qml`, o
+`xvfb-run`, o `xdotool`, o `shellcheck`) e um LINK de verdade com o `clang++`:
+o clang escolhe o GCC mais novo de `/usr/lib/gcc/<alvo>/`, e no Ubuntu 26.04 o
+16 vem sem a `libstdc++` dele — a verificação diz o pacote que falta
+([59](../roadmaps/59-fechamento-da-0.3.9.md) §2.6). O `rust-analyzer` vem do
+`rust-toolchain.toml`: o rustup instala os componentes que ele lista no
+primeiro `cargo` dentro do repositório (medido no rustup 1.29.1). Depois dele:
 `cmake --preset dev-local && cmake --preset dev-local-release` e
 `scripts/verificar.sh`. Lembrete: build dir de outra distro é lixo — apagar e
 reconfigurar: o CMake guarda caminhos absolutos da distro no cache.

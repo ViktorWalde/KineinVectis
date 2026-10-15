@@ -96,6 +96,7 @@ Cada passo termina com:
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
 | 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. 16b.3 feita (§7.286, IPC `0.170.0`): o "Remover" pergunta "com os volumes (N, X MB)" ou "só o container". **A 16b está fechada** |
+| 16c | **Reprodutibilidade entre distros** (§2.6; pedido do autor em 2026-10-15: "evitar o 'na minha máquina funciona'", antes do 15) | R1 feita (40.7 §7.287): o `rust-analyzer` pelo `rust-toolchain.toml` e as lacunas do `instalar-ambiente.sh`. A fazer: R2, o gate de idioma com o vocabulário do repositório |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
@@ -537,6 +538,73 @@ tamanho e a pergunta mostra só a contagem.
   Podman real, um container parado com volume anônimo: "Remover com os
   volumes" e `podman volume ls` vazio; "Só o container" e o volume fica;
   fotos no Xvfb da pergunta.
+
+### 2.6 Passo 16c — reprodutibilidade entre distros (2026-10-15)
+
+**O pedido (o autor, 2026-10-15):** "vamos evitar conflitos também entre
+distros, para evitar o 'na minha máquina funciona'", e fazer isso antes do
+passo 15. A primeira sessão no Ubuntu 26.04 (40.7 §7.283–§7.286) encontrou
+quatro lugares onde o resultado dependia da máquina, todos medidos:
+
+1. **O LSP de Rust.** A IDE abre o próprio repositório, mas o Project
+   Health diz "rust-analyzer ausente": o `rust-toolchain.toml` fixa só
+   `rustfmt` e `clippy`, e o proxy `~/.cargo/bin/rust-analyzer` existe sem o
+   componente. Quem instalou o Rust pelo rustup.rs fica sem LSP.
+2. **O gate de idioma.** O `check_identifier_language.py` decide "é inglês"
+   pelo dicionário do sistema: o `words` do Arch aceita `lidos`, `plano` e
+   `para`, o `wamerican` do Ubuntu não (§7.283). O mesmo commit passa numa
+   distro e reprova na outra, e um `--update-baseline` no Arch apaga da linha
+   de base os 48 pares que o Ubuntu cobra.
+3. **O que falta instalar.** O `instalar-ambiente.sh` não traz `xvfb` nem
+   `xdotool` (as fotos e a prova com clique), nem o Podman, e só traz o
+   `shellcheck` com `--extras`.
+4. **A armadilha do clang.** O clang 21 escolhe o GCC mais novo de
+   `/usr/lib/gcc/x86_64-linux-gnu/` — aqui o 16, que veio com o `gfortran-16`
+   e sem a `libstdc++` dele —, e o preset `linux-clang-debug-strict` não
+   configura (`cannot find -lstdc++`). A verificação do instalador diz "ok
+   clang++" porque só olha se o binário existe.
+
+**R1 — o ambiente igual (antes do R2, porque destrava o LSP de Rust):**
+
+- `rust-toolchain.toml` com `components = ["rustfmt", "clippy",
+  "rust-analyzer"]`: o rustup instala o que o arquivo lista, então todo
+  checkout recebe o mesmo LSP, na versão da toolchain fixada. A prova mede se
+  o rustup 1.29.1 acrescenta o componente sozinho a uma toolchain já
+  instalada; se não, o instalador já roda o `rustup component add`.
+- `instalar-ambiente.sh`, nas três famílias (Arch, Debian/Ubuntu, Fedora):
+  `xvfb` e `xdotool` no conjunto base (as fotos do gate de telas e a prova
+  com clique); o `shellcheck` sai do `--extras` e entra na base, porque o
+  `verificar.sh` o cobra; o Podman no `--extras` (o motor rootless, sem
+  grupo `docker`). Os nomes dos pacotes são os de cada distro.
+- A verificação do instalador compila e LINKA um programa vazio com o
+  `clang++`. Falhando, lê o "Selected GCC installation" do `clang++ -v` e
+  diz o pacote da `libstdc++` daquela versão (`libstdc++-16-dev` no
+  Debian/Ubuntu), em vez de "ok".
+- Prova: o `--dry-run` nesta máquina mostra os pacotes novos; a checagem do
+  link passa aqui e reprova com um GCC sem `libstdc++` (um diretório falso
+  passado por `--gcc-install-dir`); o `shellcheck` do gate continua verde.
+
+**R2 — o gate de idioma igual em toda distro:**
+
+- O inglês aceito passa a ser um arquivo do repositório,
+  `scripts/identifier-language-vocabulary.txt`: as palavras (4 letras ou
+  mais) que os identificadores usam hoje e que o gate aceita como inglês,
+  geradas uma vez nesta máquina (o dicionário menor, o mais estrito). Cerca
+  de 2.900 palavras, medido em 2026-10-15. O gate decide pelo vocabulário,
+  pela allowlist e pelas inflexões deles, nunca pelo dicionário do sistema.
+- Palavra nova fora do vocabulário reprova em toda máquina. A mensagem diz se
+  o dicionário DESTA máquina a reconhece: se for inglês, `--accept <palavra>`
+  a grava no vocabulário, e a revisão a vê no diff do commit; se não, a
+  tradução ou a allowlist com motivo, como hoje.
+- A linha de base e o `--update-baseline` passam a dar o mesmo resultado em
+  toda distro (a contagem não depende mais do dicionário).
+- Prova: o veredito desta árvore é o mesmo antes e depois (as mesmas 15.567
+  ocorrências congeladas); o mesmo veredito sem dicionário nenhum e com um
+  dicionário que aceita `plano`; mutações (um identificador português novo
+  reprova; uma palavra inglesa nova reprova com a sugestão do `--accept`; o
+  gate voltando a ler o dicionário do sistema reprova o teste sem
+  dicionário). O [contribuindo/04](../contribuindo/04-os-gates-que-dizem-nao.md)
+  troca a linha do dicionário do Ubuntu por "independente".
 
 ## 3. Containers acoplados
 
