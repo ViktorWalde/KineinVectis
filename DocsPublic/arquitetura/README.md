@@ -10,6 +10,9 @@ ARCHITECTURE.md                  as regras: camadas, corte por responsabilidade,
 03-protocolo-ipc.md               o contrato JSON-RPC entre UI e core: todos os
                                  métodos, eventos e tipos, por domínio, com a
                                  versão em que cada um entrou
+03.1-notas-por-versao-do-protocolo.md  o que cada versão do protocolo acrescentou,
+                                 da mais nova para a mais antiga (a nota nova
+                                 entra no topo)
 04-boot-e-comunicacao.md         como UI e core sobem, falam e se recuperam
 06-modo-estrito.md                o rigor de compilação (Rust/C++/QML)
 15-divida-de-engenharia-e-refatoracao.md   dívida e refatoração (registro)

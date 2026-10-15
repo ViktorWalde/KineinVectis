@@ -197,7 +197,7 @@ rápido vermelho. Sem push/tag/release sem o mantenedor.
 
 | O que mudou | Onde escrever |
 | --- | --- |
-| Contrato IPC | `arquitetura/03` (changelog no topo **e** a seção do domínio) |
+| Contrato IPC | `arquitetura/03.1` (a nota da versão, no topo) **e** `arquitetura/03` (a seção do domínio) |
 | O que o usuário vê/faz | `manual.md` (seção da área; atalhos na tabela) |
 | O estado do projeto | `roadmaps/40` (números do cabeçalho; a fila §4) |
 | O registro da fatia | `roadmaps/40.7` (uma entrada `### 7.N`, datada) |
