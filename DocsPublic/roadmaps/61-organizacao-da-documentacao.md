@@ -5,6 +5,9 @@
 > 2026-10-15, no Ubuntu 26.04 LTS, antes de mover qualquer arquivo; cada
 > fatia abaixo diz o que prova e entra no registro (40.7) ao terminar.
 
+> **Situação em 2026-10-15:** O1–O5 feitas (40.7 §7.278–§7.281). O que
+> fica de fora está no §5, sem decisão.
+
 ## 1. O pedido
 
 Do autor, em 2026-10-09 (60 §1): "separar a documentação por contexto,

@@ -8,16 +8,19 @@ vai revisar o que um agente entregou.
 ## O que o agente precisa receber antes de tocar em código
 
 1. **O prompt de entrada** com o estado real: versão do protocolo, os
-   números do `40` (cabeçalho), o roadmap da etapa e a fatia; as regras
+   números do `40` (o handoff e o §1), o roadmap da etapa e a fatia; as regras
    inegociáveis; o que ele pode e não pode fazer na máquina. O conteúdo
    desse prompt já está escrito: [`00-comece-aqui.md`](../00-comece-aqui.md)
    + o [03](03-o-ritual-de-uma-fatia.md) + o roadmap da versão + o `40`.
-2. **A ordem de leitura** (desde 2026-10-01): [`00-comece-aqui.md`](../00-comece-aqui.md)
-   → `40` cabeçalho e §4 → as entregas recentes no `40.7` → o roadmap da
-   versão (o [mapa de versões](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md)
-   diz qual) → `arquitetura/01-mapa-de-modulos.md` (o contexto da mudança)
-   → `arquitetura/ARCHITECTURE.md` → os arquivos da área. Um agente
-   que começa pelo código repete o que já foi descartado.
+2. **A ordem de leitura** (revista em 2026-10-15, [61](../roadmaps/61-organizacao-da-documentacao.md)):
+   [`00-comece-aqui.md`](../00-comece-aqui.md) §2 → o handoff e o §4 do `40`
+   → a linha do contexto da mudança no 00 §5.1 (a seção dele no
+   `arquitetura/01`, os documentos da linha e só os domínios dela no `03`)
+   → `arquitetura/ARCHITECTURE.md` §5 e §8 → os arquivos da área. A fase
+   aberta do `40.7` (as últimas entregas) entra quando a fatia continua uma
+   anterior; as partes fechadas do registro, só pela entrada citada. Um
+   agente que começa pelo código repete o que já foi descartado; um que lê
+   tudo gasta a sessão antes do código.
 3. **As regras que ele não pode "otimizar"** (todas nasceram de incidente):
 
 ```text
