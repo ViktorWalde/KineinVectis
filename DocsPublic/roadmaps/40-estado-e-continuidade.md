@@ -28,12 +28,15 @@
 > §7.283), 16b.1 (§7.284), 16b.2 (§7.285) e 16b.3 (§7.286), todas em
 > 2026-10-15.
 >
-> **Em curso:** a organização da documentação
-> ([61](61-organizacao-da-documentacao.md) §4). **Pausado:** o porte para o
+> **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
+> 0.3.9 e a 0.4 sozinho, fatia por fatia, sem push; SDKs no usuário, sem
+> placa, sem AppImage. A organização da documentação (61 §4, O1–O5) está
+> feita; ela continua junto de cada fatia. **Pausado:** o porte para o
 > Windows, na W6b4, a retomar numa VM (60 §3.3).
 >
-> **Pendente do autor:** o aceite com mouse e teclado de 7, 7b, 14a, 14b,
-> 13a, 13b e 9a.3; os roteiros estão nas entradas do 40.7 de cada um
+> **Aceites com mouse e teclado** de 7, 7b, 14a, 14b, 13a, 13b e 9a.3:
+> delegados ao agente no modo autônomo (`xdotool` no Xvfb, registrados como
+> do agente), no passo 16; os roteiros estão nas entradas do 40.7 de cada um
 > (§7.244, §7.247, §7.250, §7.251, §7.254, §7.255 e §7.259).
 
 ## 1. O estado, em números
@@ -237,6 +240,20 @@ embarcados: deducao          `probe-rs info` SUGERE, o usuario CONFIRMA; a IDE
                              nunca escolhe o chip calada (2026-09-11)
 embarcados: templates        catalogo CURADO com fonte e licenca, nunca
                              linker script adivinhado (2026-09-11)
+modo autonomo (2026-10-15)   o autor PAUSA o desenvolvimento da IDE (projetos de
+                             portfolio; CLion e Rider no dia a dia) e AUTORIZA o
+                             agente a fechar a 0.3.9 e a 0.4 sozinho, com mouse e
+                             teclado no Xvfb (o aceite fica dito como do agente);
+                             SDKs fora do apt no usuario, sem sudo (ESP-IDF,
+                             Zephyr, pico-sdk, QEMU Espressif, Renode,
+                             PlatformIO); SEM placa (o que nao tem emulador fica
+                             NAO PROVADO); SEM AppImage; sem push, tag, release;
+                             organizar a documentacao junto, sem pular
+0.4: C1 ao salvar            LIGADO por padrao em C/C++ com CDB; Rust so' com
+                             `cargo check` quando o rust-analyzer nao esta'
+                             ativo (52 §13.1, 2026-10-15)
+0.4: perifericos (SVD)       aba da area Embarcados (52 §13.2, 2026-10-15)
+0.4: delta de tamanho        so' do ultimo build (52 §13.3, 2026-10-15)
 ```
 
 ## 7. O registro das entregas

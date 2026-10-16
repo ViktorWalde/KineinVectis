@@ -565,14 +565,17 @@ Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
 
 ## 13. Decisões do autor ainda abertas
 
-1. C1 ligado por padrão para C/C++? (proposta: sim, com CDB; Rust por padrão
-   só `cargo check` quando o rust-analyzer não está ativo, para não duplicar o
-   flycheck)
-2. Onde fica o painel de periféricos: aba da área Embarcados (proposta) ou
-   janela à direita ao lado de Símbolos?
-3. Delta de tamanho guardado só do último build (proposta) ou histórico curto?
+1. C1 ligado por padrão para C/C++? **Decidida (2026-10-15): sim, com CDB**;
+   Rust por padrão só `cargo check` quando o rust-analyzer não está ativo,
+   para não duplicar o flycheck.
+2. Onde fica o painel de periféricos? **Decidida (2026-10-15): aba da área
+   Embarcados.**
+3. Delta de tamanho? **Decidida (2026-10-15): só do último build.**
 4. Quais placas definem "pronto" para a 0.4 (o 42 §0 lista famílias; confirmar
    com o que o autor tem na mesa)? **Em parte respondida (2026-10-01):** o que
    um emulador cobre prova-se nele (§10.1); a placa real confirma o que o
-   emulador não cobre (sonda, gravação física). Quais placas físicas continua
-   aberto.
+   emulador não cobre (sonda, gravação física). **Em 2026-10-15, sem placa:**
+   o autor pausou o desenvolvimento e autorizou o fechamento autônomo da 0.4
+   ([40](40-estado-e-continuidade.md) §5, "modo autonomo"); o que só a placa
+   prova fica NÃO PROVADO, dito. Sem AppImage (a prova de artefato do §10
+   fica não feita por decisão do autor).
