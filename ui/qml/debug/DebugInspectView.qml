@@ -60,7 +60,7 @@ Rectangle {
                     active: root.inspect && root.inspect.selectedScope === modelData.name
                     tooltip: modelData.expensive === true
                              ? qsTr("Escopo caro (o adaptador le todos os registradores): um clique por vez")
-                             : qsTr("Mostrar as variaveis de %1").arg(modelData.name)
+                             : qsTr("Mostrar as variáveis de %1").arg(modelData.name)
                     onToggled: root.inspect.selectScope(modelData.name)
                 }
             }

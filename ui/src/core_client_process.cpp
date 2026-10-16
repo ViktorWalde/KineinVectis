@@ -22,8 +22,8 @@ void CoreClient::start()
 
     const QString binary = resolveCoreBinary();
     if (binary.isEmpty()) {
-        setStatus(QStringLiteral("kinein-core nao encontrado"), false);
-        appendErrorLog(QStringLiteral("erro: kinein-core nao foi encontrado. Compile com "
+        setStatus(QStringLiteral("kinein-core não encontrado"), false);
+        appendErrorLog(QStringLiteral("erro: kinein-core não foi encontrado. Compile com "
                                       "'cargo build -p kinein-core' ou defina KINEIN_CORE_BIN."));
         return;
     }
@@ -93,7 +93,7 @@ void CoreClient::handleStderr()
 void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     if (exitStatus == QProcess::NormalExit) {
-        appendLog(QStringLiteral("core finalizou: saida normal, codigo %1").arg(exitCode));
+        appendLog(QStringLiteral("core finalizou: saída normal, código %1").arg(exitCode));
     }
     else {
         appendErrorLog(QStringLiteral("core finalizou: crash"));
@@ -144,7 +144,7 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
     if (m_recoveryAttempts > kMaxAttempts) {
         setRecovering(false);
         appendErrorLog(QStringLiteral(
-            "core caiu repetidamente; recuperacao pausada. Veja o log e reabra o projeto."));
+            "core caiu repetidamente; recuperação pausada. Veja o log e reabra o projeto."));
         setStatus(QStringLiteral("core caiu repetidamente"), false);
         return;
     }
@@ -164,7 +164,7 @@ void CoreClient::handleErrorOccurred(QProcess::ProcessError error)
 qint64 CoreClient::sendRequest(const QString& method, const QJsonObject& params, bool quiet)
 {
     if (m_process.state() != QProcess::Running) {
-        appendLog(QStringLiteral("ignorando %1: core nao esta rodando").arg(method));
+        appendLog(QStringLiteral("ignorando %1: core não está rodando").arg(method));
         return -1;
     }
 
@@ -210,7 +210,7 @@ qint64 CoreClient::sendRequest(const QString& method, const QJsonObject& params,
     const QByteArray payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
     // Teclas/paste podem conter senhas sem um campo chamado "password".
     if (quiet) {
-        appendLog(QStringLiteral("-> %1 (conteudo omitido)").arg(method));
+        appendLog(QStringLiteral("-> %1 (conteúdo omitido)").arg(method));
     }
     else if (method != QStringLiteral("lsp.didChange") &&
              method != QStringLiteral("syntaxTree.update") &&

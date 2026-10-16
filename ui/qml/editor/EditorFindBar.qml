@@ -51,7 +51,7 @@ Rectangle {
     // numa frase só, do jeito que o VS Code faz.
     readonly property string statusText: {
         if (invalidRegex) {
-            return qsTr("Regex invalida");
+            return qsTr("Regex inválida");
         }
         if (query === "") {
             return "";

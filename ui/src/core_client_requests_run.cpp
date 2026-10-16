@@ -165,7 +165,7 @@ bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& res
         m_runTerminalId = terminalId;
         setRunning(true);
     }
-    appendLog(QStringLiteral("execucao iniciada (%1): %2").arg(terminalId, command));
+    appendLog(QStringLiteral("execução iniciada (%1): %2").arg(terminalId, command));
     emit runStarted(command, terminalId, executionKey, workspace);
     return true;
 }

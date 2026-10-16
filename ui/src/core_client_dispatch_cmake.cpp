@@ -98,7 +98,7 @@ bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObjec
     if (method == QStringLiteral("event.cmake.finished")) {
         const bool success = params.value(QStringLiteral("success")).toBool();
         appendLog(QStringLiteral("cmake configure finalizado (sucesso: %1)")
-                      .arg(success ? QStringLiteral("sim") : QStringLiteral("nao")));
+                      .arg(success ? QStringLiteral("sim") : QStringLiteral("não")));
         emit cmakeConfigureFinished(success);
         if (m_workspaceBuildSystems.contains(QStringLiteral("cmake"))) {
             cmakeStatus();

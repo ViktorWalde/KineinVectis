@@ -66,7 +66,7 @@ Item {
 
         // Um runner que nem correu: o `error` do core E' o resumo, e vai para a saida.
         jobs.handleTestFinished(false, 0, 0, 0, "pytest ausente: instale-o NO ambiente do projeto");
-        if (jobs.testSummary.indexOf("nao rodou") < 0 || jobs.testSummary.indexOf("pytest ausente") < 0) failures += 256;
+        if (jobs.testSummary.indexOf("não rodou") < 0 || jobs.testSummary.indexOf("pytest ausente") < 0) failures += 256;
         if (jobs.testOutputModel.get(jobs.testOutputModel.count - 1).line.indexOf("pytest ausente") < 0) failures += 512;
 
         // A saida tem teto (nao cresce sem fim numa suite grande).
@@ -100,7 +100,7 @@ Item {
         jobs.runOneTest("", "");
         if (root.umSo.length !== 1) failures += 16777216;
         jobs.handleTestsDiscovered({ success: false, error: "pytest ausente: instale-o NO ambiente do projeto" });
-        if (jobs.discoveredModel.count !== 0 || jobs.testSummary.indexOf("nao listou: pytest ausente") !== 0) failures += 33554432;
+        if (jobs.discoveredModel.count !== 0 || jobs.testSummary.indexOf("não listou: pytest ausente") !== 0) failures += 33554432;
 
         // Executar: shells e .py; nao pastas, nao .txt.
         if (!tree.isRunnableScript("/tmp/proj/tools/gera.py", "file")) failures += 4096;

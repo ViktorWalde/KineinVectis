@@ -122,7 +122,7 @@ Item {
         discoveredItemsModel.clear();
         if (outcome.success !== true) {
             discoverRunner = "";
-            testSummary = qsTr("nao listou: %1").arg(outcome.error);
+            testSummary = qsTr("não listou: %1").arg(outcome.error);
             appendTestLine(String(outcome.error));
             return;
         }
@@ -212,8 +212,8 @@ Item {
 
     function handleBuildFinished(success, exitCode) {
         appendBuildLine(success
-                        ? qsTr("== build concluido com sucesso ==")
-                        : qsTr("== build falhou (codigo %1) ==").arg(exitCode));
+                        ? qsTr("== build concluído com sucesso ==")
+                        : qsTr("== build falhou (código %1) ==").arg(exitCode));
         if (!success && problemItemsModel.count > 0) {
             showTabRequested("problems");
         }
@@ -248,7 +248,7 @@ Item {
     // ausentes, tipo sem runner): e' a mensagem do core, com o passo a dar.
     function handleTestFinished(success, passed, failed, ignored, error) {
         if (error !== undefined && error !== "") {
-            testSummary = qsTr("nao rodou: %1").arg(error);
+            testSummary = qsTr("não rodou: %1").arg(error);
             appendTestLine(error);
             return;
         }

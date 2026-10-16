@@ -363,8 +363,8 @@ Item {
         if (kind === "run" || kind === "debugpy") {
             runConfigRequested(result.name, result.command);
             lastOutcome = kind === "debugpy"
-                ? qsTr("configuracao \"%1\" salva; attach em %2").arg(result.name).arg(result.remoteTarget || "")
-                : qsTr("configuracao \"%1\" salva").arg(result.name);
+                ? qsTr("configuração \"%1\" salva; attach em %2").arg(result.name).arg(result.remoteTarget || "")
+                : qsTr("configuração \"%1\" salva").arg(result.name);
         } else if (kind === "debugServer") {
             kitRemoteRequested(result.remoteTarget || "", result.command);
             lastOutcome = qsTr("kit: remoteTarget %1 e debugServer gravados").arg(result.remoteTarget || "");

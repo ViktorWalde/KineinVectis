@@ -142,7 +142,7 @@ void TestCliArgs::the_disk_says_what_is_wrong()
     // Inexistente: recusa NOMEANDO o caminho, e sem criar nada.
     const QString missing = root.filePath(QStringLiteral("nao-existe"));
     const QString error = validateFolder(missing);
-    QVERIFY(error.contains(QStringLiteral("nao existe")));
+    QVERIFY(error.contains(QStringLiteral("não existe")));
     QVERIFY(error.contains(missing));
     QVERIFY2(!QFileInfo::exists(missing), "validar NAO pode criar a pasta que faltava");
 

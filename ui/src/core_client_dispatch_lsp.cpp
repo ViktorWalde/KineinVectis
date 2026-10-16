@@ -63,7 +63,7 @@ bool CoreClient::handleLspNotification(const QString& method, const QJsonObject&
         // so entao o `didOpen` seguinte chega ao servidor com as flags novas.
         const int count = params.value(QStringLiteral("count")).toInt(0);
         const QString language = params.value(QStringLiteral("language")).toString();
-        appendLog(QStringLiteral("lsp %1: %2 documento(s) fechado(s) apos o configure")
+        appendLog(QStringLiteral("lsp %1: %2 documento(s) fechado(s) após o configure")
                       .arg(language)
                       .arg(count));
         emit lspDocumentsClosed(language, count);

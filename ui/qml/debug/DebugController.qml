@@ -375,7 +375,7 @@ Item {
         currentLine = 0;
         clearInspection();
         inspectController.clear();
-        appendLine(qsTr("== debug finalizado (codigo %1) ==").arg(exitCode),
+        appendLine(qsTr("== debug finalizado (código %1) ==").arg(exitCode),
                    exitCode === 0 ? "info" : "stderr");
     }
 

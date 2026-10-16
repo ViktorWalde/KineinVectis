@@ -27,14 +27,14 @@ QString helpText()
         "  kinein .               idem, explicito\n"
         "  kinein <pasta>         abre essa pasta (caminho relativo vale)\n"
         "  kinein --help          mostra isto e sai, sem subir a IDE\n"
-        "  kinein --version       mostra a versao e sai, sem subir a IDE\n"
+        "  kinein --version       mostra a versão e sai, sem subir a IDE\n"
         "  kinein -w, --wait      espera a janela fechar antes de devolver\n"
         "                         o terminal (para usar como editor)\n"
         "  kinein --verbose       mantem o terminal ligado e mostra o log\n"
-        "                         da IDE (diagnostico)\n"
+        "                         da IDE (diagnóstico)\n"
         "\n"
-        "Pasta vazia abre normalmente: a IDE nao exige manifesto nem cria nada\n"
-        "por conta propria. Caminho que nao existe e' recusado com o motivo, em\n"
+        "Pasta vazia abre normalmente: a IDE não exige manifesto nem cria nada\n"
+        "por conta própria. Caminho que não existe é recusado com o motivo, em\n"
         "vez de abrir sem projeto.\n"
         "\n"
         "Pelo terminal, a IDE abre e o prompt volta na hora, sem imprimir nada.\n");
@@ -80,7 +80,7 @@ Arguments parse(const QStringList& arguments, const QString& currentDirectory)
             // Opcao desconhecida e' recusa, nao algo a ignorar: ignorar faria a
             // IDE abrir fingindo que entendeu o que a pessoa pediu.
             return refusal(
-                QStringLiteral("nao conheco a opcao `%1`. Veja `kinein --help`.").arg(raw));
+                QStringLiteral("não conheço a opção `%1`. Veja `kinein --help`.").arg(raw));
         }
         if (!folder.isEmpty()) {
             // Varias raizes e' decisao aberta na §7 da especificacao, nao um
@@ -118,13 +118,13 @@ QString validateFolder(const QString& folder)
     if (!info.exists()) {
         // NAO criar: quem pede para abrir nao pediu para criar, e um erro de
         // digitacao criaria lixo com nome errado.
-        return QStringLiteral("nao existe: %1").arg(folder);
+        return QStringLiteral("não existe: %1").arg(folder);
     }
     if (!info.isDir()) {
-        return QStringLiteral("isto e' um arquivo, e a IDE abre uma PASTA: %1").arg(folder);
+        return QStringLiteral("isto é um arquivo, e a IDE abre uma PASTA: %1").arg(folder);
     }
     if (!info.isReadable()) {
-        return QStringLiteral("sem permissao de leitura em: %1").arg(folder);
+        return QStringLiteral("sem permissão de leitura em: %1").arg(folder);
     }
     return QString{};
 }

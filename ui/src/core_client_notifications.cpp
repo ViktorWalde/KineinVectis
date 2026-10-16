@@ -236,7 +236,7 @@ bool CoreClient::handleRunnerNotification(const QString& method, const QJsonObje
     }
     if (method == QStringLiteral("event.quality.started")) {
         const QString command = params.value(QStringLiteral("command")).toString();
-        appendLog(QStringLiteral("analise iniciada: %1").arg(command));
+        appendLog(QStringLiteral("análise iniciada: %1").arg(command));
         emit qualityStarted(command);
         return true;
     }

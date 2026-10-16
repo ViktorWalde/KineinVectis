@@ -36,7 +36,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingMedium
-        text: root.operationTitle === "" ? qsTr("Revisar alteracoes") : root.operationTitle
+        text: root.operationTitle === "" ? qsTr("Revisar alterações") : root.operationTitle
         color: Theme.textPrimary
         font.pixelSize: Theme.fontSizeLarge
         font.bold: true
@@ -52,7 +52,7 @@ Rectangle {
         anchors.topMargin: Theme.spacingXSmall
         anchors.leftMargin: Theme.spacingMedium
         anchors.rightMargin: Theme.spacingMedium
-        text: qsTr("%1 arquivo(s), %2 edit(s). Nenhuma alteracao foi gravada ainda.")
+        text: qsTr("%1 arquivo(s), %2 edit(s). Nenhuma alteração foi gravada ainda.")
               .arg(root.files.length).arg(root.editCount)
         color: Theme.textSecondary
         font.pixelSize: Theme.fontSizeSmall
@@ -159,7 +159,7 @@ Rectangle {
         KvButton {
             compact: true
             primary: true
-            text: qsTr("Aplicar alteracoes")
+            text: qsTr("Aplicar alterações")
             onClicked: root.applyRequested()
         }
     }

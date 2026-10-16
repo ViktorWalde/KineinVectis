@@ -29,7 +29,7 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     const QJsonDocument document = QJsonDocument::fromJson(line, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
         appendErrorLog(
-            QStringLiteral("resposta invalida do core: %1").arg(parseError.errorString()));
+            QStringLiteral("resposta inválida do core: %1").arg(parseError.errorString()));
         return;
     }
 

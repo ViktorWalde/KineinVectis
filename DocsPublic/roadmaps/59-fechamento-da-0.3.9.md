@@ -2173,7 +2173,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | feito em 2026-10-16 (§7.1.6; 40.7 §7.300): tudo no orçamento; o atributo só com a aba Web ligada; a medida da digitação de volta | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | feito em 2026-10-16 (§7.1.7; 40.7 §7.301): o fluxo C++/CMake e os Containers passaram; F5, F6 e F10 (o Ctrl+B num cabeçalho do sistema) corrigidos; F8 era o `xdotool` (as teclas F vão pelo XTEST agora) | 16.7 |
 | F7: o automático da toolchain diz o que o projeto usa (decisão do autor, 2026-10-16) | feito em 2026-10-16 (§7.1.7.1; 40.7 §7.302): o cache do CMake do projeto, chip neutro, protocolo 0.172.0 | 16.7b |
-| F9: os textos da UI sem acento (15 `qsTr`, ~25 em `ui/src`) | pendente | 16.7c |
+| F9: os textos da UI sem acento (15 `qsTr`, ~25 em `ui/src`) | feito em 2026-10-16 (§7.1.7.2; 40.7 §7.303) | 16.7c |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
 
 Regras de cada fatia: o desenho fino aqui antes do código, foto antes e
@@ -2827,6 +2827,33 @@ um teste de comentário que nunca casava (o código saiu). No Xvfb, o projeto
 de fluxo: chip "Automática", menu com "G++ · do projeto", "Unix Makefiles ·
 do projeto" e, no compilador C (o projeto é só CXX), "o CMake escolhe ao
 configurar"; a barra diz IPC 0.172.0. Manual e `arquitetura/36` atualizados.
+
+##### 7.1.7.2 16.7c — os textos da UI com acento (desenho, 2026-10-16, antes do código)
+
+**Medido em 2026-10-16** com o léxico da 16.5a (o `acentos.py` do
+rascunho, que só toca o que está DENTRO de literal e fora de comentário):
+15 textos `qsTr` em 9 arquivos QML ("== build concluido com sucesso ==",
+"Revisar alteracoes", "Regex invalida"...) e os literais de `ui/src` que a
+pessoa lê: o `--help` e os erros da linha de comando (`cli_args.cpp`), as
+mensagens do processo do core ("kinein-core nao encontrado", "core caiu
+repetidamente; recuperacao pausada"), as do `CoreClient` ("resposta
+invalida do core", "execucao iniciada") e as do harness de digitação.
+
+**O desenho:** o mesmo da 16.5a: só literal, revisado linha a linha antes de
+gravar; chaves de estado (`"atencao"` no HUD do Remoto, `"exportacoes"` no
+catálogo) e nomes de variável de ambiente não mudam, porque são
+identificadores, não texto. Os testes que conferem esses textos
+(`tst_cli_args`, harnesses QML) mudam junto, e o gate os roda.
+
+**Provas planejadas:** a varredura de novo, zerada nos textos; `tst_cli_args`
+e os harnesses verdes; no Xvfb, o "== build concluído com sucesso ==" no
+painel Build.
+
+**Resultado (2026-10-16).** Como desenhado: 15 `qsTr` em 9 arquivos QML e
+25 literais em `ui/src`, revisados um a um; a varredura de novo dá zero; o
+`tst_cli_args` confere "não existe". No Xvfb, o Ctrl+F9 termina com "==
+build concluído com sucesso =="; o `kinein --help` diz "mostra a versão e
+sai" e "a IDE não exige manifesto".
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

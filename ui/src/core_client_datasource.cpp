@@ -205,7 +205,7 @@ void CoreClient::sendExport(const QString& method, const QJsonObject& params)
     const qint64 id = sendRequest(method, params, true);
     if (id < 0) {
         emit exportFailed(method, params.value(QStringLiteral("path")).toString(),
-                          QStringLiteral("o core nao esta rodando"));
+                          QStringLiteral("o core não está rodando"));
         return;
     }
     m_pendingExports.insert(id);

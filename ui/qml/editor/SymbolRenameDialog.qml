@@ -42,7 +42,7 @@ Rectangle {
         spacing: Theme.spacingSmall
 
         Text {
-            text: qsTr("Renomear simbolo")
+            text: qsTr("Renomear símbolo")
             color: Theme.textPrimary
             font.pixelSize: Theme.fontSizeBody
             font.bold: true

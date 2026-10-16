@@ -122,7 +122,7 @@ private:
 void TypingHarness::begin()
 {
     if (m_workspace.isEmpty() || m_file.isEmpty()) {
-        fail(QStringLiteral("KINEIN_PERF_TYPING_WORKSPACE e _FILE sao obrigatorios"));
+        fail(QStringLiteral("KINEIN_PERF_TYPING_WORKSPACE e _FILE são obrigatórios"));
         return;
     }
 
@@ -169,7 +169,7 @@ void TypingHarness::begin()
         Qt::DirectConnection);
 
     QTimer::singleShot(m_timeoutMs, this, [this] {
-        fail(QStringLiteral("timeout apos %1 ms (amostras=%2)")
+        fail(QStringLiteral("timeout após %1 ms (amostras=%2)")
                  .arg(m_timeoutMs)
                  .arg(m_samples.size()));
     });
@@ -214,7 +214,7 @@ void TypingHarness::onFileLoaded()
     waitForQuiet([this] {
         const QString text = editorText();
         if (text.isEmpty()) {
-            fail(QStringLiteral("editor vazio apos fs.read"));
+            fail(QStringLiteral("editor vazio após fs.read"));
             return;
         }
         // Conta quebras de linha, igual ao `fixture_lines` do medir-core.py:
@@ -320,7 +320,7 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
     }
     auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().constFirst());
     if (window == nullptr) {
-        fail(QStringLiteral("root object nao e QQuickWindow"));
+        fail(QStringLiteral("root object não é QQuickWindow"));
         return;
     }
     // Alcanca os ids do Main.qml sem exigir objectName na UI de producao:
@@ -338,7 +338,7 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
     QObject* editor =
         domains == nullptr ? nullptr : domains->property("editorController").value<QObject*>();
     if (client == nullptr || editor == nullptr) {
-        fail(QStringLiteral("coreClient/domains.editorController nao encontrados no contexto"));
+        fail(QStringLiteral("coreClient/domains.editorController não encontrados no contexto"));
         return;
     }
     // Dono e o parent-child do Qt: `app` destroi o harness junto com a

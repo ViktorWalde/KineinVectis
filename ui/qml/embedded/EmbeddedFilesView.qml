@@ -73,7 +73,7 @@ Item {
             width: parent.width
             wrapMode: Text.WordWrap
             visible: root.files && root.files.busy
-            text: qsTr("falando com o mpremote… (o programa da placa e' interrompido)")
+            text: qsTr("falando com o mpremote… (o programa da placa é interrompido)")
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeSmall
         }

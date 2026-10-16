@@ -371,7 +371,7 @@ Item {
 
     function rejectDirtyOperation() {
         remoteOperationRunning = false;
-        lastMutationError = qsTr("Salve todas as abas modificadas antes desta operacao Git.");
+        lastMutationError = qsTr("Salve todas as abas modificadas antes desta operação Git.");
     }
 
     // O diff de um commit vai para o painel da direita da HUD (2026-09-18);
