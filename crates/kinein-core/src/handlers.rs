@@ -59,3 +59,4 @@ pub mod toolchain_import;
 pub mod toolchain_install;
 pub mod tools;
 pub mod workspace;
+pub mod workspace_trust;

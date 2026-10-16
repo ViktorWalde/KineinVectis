@@ -11,6 +11,7 @@
 //! - [`create`]: criacao de pastas e projetos a partir de templates;
 //! - [`session`]: abas abertas/aba ativa por workspace (`session.json`).
 //! - [`recent`]: histórico global versionado para Start Screen/menu Arquivo.
+//! - [`trust`]: a confiança no projeto, guardada fora dele (16.4b).
 
 mod create;
 mod detect;
@@ -19,6 +20,7 @@ mod open;
 mod places;
 mod recent;
 mod session;
+mod trust;
 
 pub use create::{create_directory, create_project};
 pub use detect::detect_project;
@@ -31,6 +33,7 @@ pub use recent::{
     set_recent_workspace_pinned_in,
 };
 pub use session::{load_session, save_session, session_path};
+pub use trust::{is_trusted_in, trust_in, trust_path_in};
 
 /// Directory created inside the workspace root for Kinein Vectis metadata.
 pub const WORKSPACE_DIR: &str = ".kinein";

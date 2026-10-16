@@ -6,8 +6,6 @@
 //! sabem" e' uma responsabilidade — chamada ao abrir o workspace e a cada
 //! `toolchain.set`/`toolchain.setKit`.
 
-use serde_json::{Value, json};
-
 use crate::Core;
 
 impl Core {
@@ -37,13 +35,17 @@ impl Core {
     /// `rust-analyzer` no `workspace/configuration` e no
     /// `didChangeConfiguration`. Vale na PROXIMA subida; um servidor vivo e'
     /// reiniciado, porque o alvo muda o que ele compila.
+    ///
+    /// A mesma configuracao leva a confianca no projeto (16.4b): sem ela, as
+    /// `initializationOptions` desligam build scripts, macros procedurais e o
+    /// `cargo check` ao salvar ([`super::super::workspace_trust::rust_analyzer_config`]).
     pub(crate) fn configure_rust_lsp_from_toolchain(&mut self, target_triple: Option<&str>) {
-        let settings = target_triple.filter(|t| !t.trim().is_empty()).map_or(
-            Value::Null,
-            |triple| json!({ "rust-analyzer": { "cargo": { "target": triple } } }),
-        );
+        let trusted = self.workspace.as_ref().is_some_and(|open| open.trusted);
+        let (settings, options) =
+            super::super::workspace_trust::rust_analyzer_config(target_triple, trusted);
         if let Some(lsp) = self.lsp.as_mut() {
             lsp.use_server_settings("rust", settings);
+            lsp.use_server_init_options("rust", options);
             if lsp.is_running("rust") {
                 lsp.restart_language("rust");
             }

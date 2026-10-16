@@ -399,7 +399,10 @@ impl Core {
             Err(response) => return *response,
         };
         match workspace::create_project(Path::new(&params.parent), &params.name, params.template) {
-            Ok(opened) => {
+            Ok(mut opened) => {
+                // O projeto que a IDE criou nasce confiavel (16.4b).
+                opened.trusted = true;
+                self.remember_trust(&opened.root);
                 self.activate_workspace(&opened);
                 JsonRpcResponse::success(request_id, json!(opened))
             }
@@ -421,7 +424,8 @@ impl Core {
             Err(response) => return *response,
         };
         match workspace::open_workspace(Path::new(&params.path)) {
-            Ok(opened) => {
+            Ok(mut opened) => {
+                opened.trusted = self.root_is_trusted(&opened.root);
                 self.activate_workspace(&opened);
                 // Recupera buffers não salvos que sobreviveram a um crash
                 // da UI (DocsPublic/seguranca/23). Só o `open` recupera: um

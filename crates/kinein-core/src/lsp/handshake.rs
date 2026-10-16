@@ -155,9 +155,10 @@ fn finish_handshake(spec: &ServerSpec, stdin: &Arc<Mutex<ChildStdin>>) -> Result
     Ok(())
 }
 
-/// Monta o request `initialize` com as capabilities do cliente Kinein.
-pub(super) fn initialize_request(root: &Path) -> Value {
-    json!({
+/// Monta o request `initialize` com as capabilities do cliente Kinein e, quando
+/// ha', as `initializationOptions` do servidor.
+pub(super) fn initialize_request(root: &Path, init_options: &Value) -> Value {
+    let mut request = json!({
         "jsonrpc": "2.0",
         "id": 1,
         "method": "initialize",
@@ -210,7 +211,11 @@ pub(super) fn initialize_request(root: &Path) -> Value {
                 ),
             }],
         }
-    })
+    });
+    if !init_options.is_null() {
+        request["params"]["initializationOptions"] = init_options.clone();
+    }
+    request
 }
 
 /// Aguarda a resposta do `initialize` e extrai a legend de semantic tokens.

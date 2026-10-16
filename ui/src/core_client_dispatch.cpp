@@ -205,7 +205,12 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
             result.value(QStringLiteral("places")).toArray().toVariantList());
         return true;
     }
+    if (method == QStringLiteral("workspace.trust")) {
+        setWorkspaceTrusted(result.value(QStringLiteral("trusted")).toBool());
+        return true;
+    }
     if (method == QStringLiteral("workspace.close")) {
+        setWorkspaceTrusted(false);
         m_workspaceRoot.clear();
         m_workspaceName.clear();
         m_workspaceKind.clear();
@@ -251,6 +256,9 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     }
     // M4.3: lembra o root para recuperar de um crash futuro.
     m_lastWorkspaceRoot = m_workspaceRoot;
+    // 16.4b: a confianca chega ANTES do workspaceChanged, para a faixa de
+    // saude decidir o configure automatico ja' sabendo dela.
+    setWorkspaceTrusted(result.value(QStringLiteral("trusted")).toBool());
     emit workspaceChanged();
     // Um espelho remoto (0.122.0) diz de quem e'; vazio = workspace comum.
     emit remoteMirrorChanged(result.value(QStringLiteral("remote")).toObject().toVariantMap());

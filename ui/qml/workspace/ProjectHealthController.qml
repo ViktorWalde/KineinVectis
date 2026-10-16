@@ -17,6 +17,9 @@ Item {
     // UMA vez por workspace; falha devolve o aviso acionavel (sem loop).
     property bool autoConfigureAttempted: false
     property bool autoConfigureFailed: false
+    // 16.4b (roadmaps/59 §7.1.4): so' com a confianca da pessoa o configure
+    // automatico roda o CMake do projeto. Vem do core (fora do projeto).
+    property bool workspaceTrusted: false
     property bool cargoMetadataFailed: false
     property string cargoMetadataError: ""
     // O ambiente Python (bloco B do roadmaps/41): o PythonController diz se
@@ -80,12 +83,25 @@ Item {
         cdbStale = stale === true;
         cdbStaleBecause = cdbStale && staleBecause !== undefined
                 && staleBecause !== null ? staleBecause : "";
-        if (hasBuildSystem("cmake") && !configured
-                && !autoConfigureAttempted) {
+        configureIfTrusted();
+        update();
+    }
+
+    // A confianca chegou (ou saiu): o configure que esperava por ela roda.
+    function handleTrust(trusted) {
+        workspaceTrusted = trusted;
+        configureIfTrusted();
+        update();
+    }
+
+    // O configure automatico executa o CMakeLists.txt do projeto: sem a
+    // confianca, so' o "Configurar" da faixa (um gesto) o roda.
+    function configureIfTrusted() {
+        if (workspaceTrusted && hasBuildSystem("cmake") && cmakeStatusKnown
+                && !cmakeConfigured && !autoConfigureAttempted) {
             autoConfigureAttempted = true;
             autoConfigureRequested();
         }
-        update();
     }
 
     function handleCmakeFinished(success) {
@@ -241,6 +257,14 @@ Item {
             apply("warning",
                   qsTr("ferramentas ausentes: %1").arg(missing.join(", ")),
                   qsTr("Ferramentas"), "tools");
+            return;
+        }
+        const heldBack = hasBuildSystem("cargo")
+                || (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured);
+        if (!workspaceTrusted && heldBack) {
+            apply("info",
+                  qsTr("projeto ainda não confiável: o CMake e os build scripts não rodam sozinhos"),
+                  qsTr("Confiar neste projeto"), "trust");
             return;
         }
         if (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured) {

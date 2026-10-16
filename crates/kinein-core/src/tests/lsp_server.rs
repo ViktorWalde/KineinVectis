@@ -276,6 +276,32 @@ fn the_core_completes_the_initialize_handshake() {
 }
 
 /// `fs.read` abre o documento no servidor — o caminho real da IDE.
+/// 16.4b (`roadmaps/59` §7.1.4): num projeto nao confiavel o rust-analyzer
+/// sobe sem build scripts, sem macros procedurais e sem `cargo check` ao
+/// salvar — no `initialize`, antes de carregar o projeto; depois do
+/// `workspace.trust` ele sobe de novo, completo.
+#[test]
+fn a_project_not_yet_trusted_starts_rust_analyzer_without_project_code() {
+    let mut harness = harness("trust");
+    harness.ok("fs.read", json!({ "path": harness.main_rs() }));
+    let first = harness.wait_for("initialize", 0);
+    let options = &first["params"]["initializationOptions"];
+    assert_eq!(options["cargo"]["buildScripts"]["enable"], false, "{first}");
+    assert_eq!(options["procMacro"]["enable"], false);
+    assert_eq!(options["checkOnSave"], false);
+    harness.wait_for("initialized", 0);
+
+    assert_eq!(harness.ok("workspace.trust", json!({}))["trusted"], true);
+    // A UI reabre os documentos no `event.lsp.restarted`; aqui, o teste.
+    harness.wait_for_event("event.lsp.restarted");
+    harness.ok("fs.read", json!({ "path": harness.main_rs() }));
+    let second = harness.wait_for("initialize", 1);
+    assert!(
+        second["params"].get("initializationOptions").is_none(),
+        "{second}"
+    );
+}
+
 #[test]
 fn reading_a_file_opens_the_document_in_the_server() {
     let mut harness = harness("didopen");

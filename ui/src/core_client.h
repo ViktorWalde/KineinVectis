@@ -32,6 +32,8 @@ class CoreClient : public QObject
     Q_PROPERTY(QString workspaceName READ workspaceName NOTIFY workspaceChanged)
     Q_PROPERTY(QString workspaceKind READ workspaceKind NOTIFY workspaceChanged)
     Q_PROPERTY(QStringList workspaceBuildSystems READ workspaceBuildSystems NOTIFY workspaceChanged)
+    // 16.4b: so' com a confianca da pessoa a IDE roda codigo do projeto sozinha.
+    Q_PROPERTY(bool workspaceTrusted READ workspaceTrusted NOTIFY workspaceTrustedChanged)
     Q_PROPERTY(QString homeDir READ homeDir CONSTANT)
     // KINEIN_STARTUP_COMMANDS (Etapa 2, medicao): ids da paleta, separados por virgula,
     // executados depois de o workspace abrir. Vazio sem a env.
@@ -59,6 +61,7 @@ public:
     [[nodiscard]] QString workspaceName() const;
     [[nodiscard]] QString workspaceKind() const;
     [[nodiscard]] QStringList workspaceBuildSystems() const;
+    [[nodiscard]] bool workspaceTrusted() const;
     [[nodiscard]] static QString homeDir();
     [[nodiscard]] static QStringList startupCommands();
     [[nodiscard]] static QString errorLogFile();
@@ -83,6 +86,7 @@ public:
     Q_INVOKABLE void createWorkspaceProject(const QString& parent, const QString& name,
                                             const QString& templateId);
     Q_INVOKABLE void closeWorkspace();
+    Q_INVOKABLE void trustWorkspace();
     Q_INVOKABLE void saveSession(const QStringList& openFiles, const QString& activeFile);
     Q_INVOKABLE void listDir(const QString& path);
     Q_INVOKABLE void readFile(const QString& path);
@@ -385,6 +389,7 @@ signals:
     void statusChanged();
     void logChanged();
     void workspaceChanged();
+    void workspaceTrustedChanged();
     void recentWorkspacesResolved(const QVariantList& workspaces);
     void workspaceBrowseListed(const QString& path, const QString& parent,
                                const QVariantList& entries, const QVariantList& places);
@@ -733,6 +738,7 @@ private:
     void setTesting(bool testing);
     void setAnalyzing(bool analyzing);
     void setRunning(bool running);
+    void setWorkspaceTrusted(bool trusted);
     void setDebugging(bool debugging);
     void setTerminalActive(bool active);
     void setScanningEnvironment(bool scanning);
@@ -756,6 +762,7 @@ private:
     QString m_workspaceName;
     QString m_workspaceKind;
     QStringList m_workspaceBuildSystems;
+    bool m_workspaceTrusted = false;
     // O preset do kit ativo, como a tela o pediu por toolchain.get ("" = padrao).
     QString m_kitPreset;
     // M4.3: recuperacao de crash do core. m_lastWorkspaceRoot sobrevive ao

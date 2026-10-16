@@ -35,13 +35,19 @@ Item {
         function onFileSaved(path) {
             // Auto-setup: salvar CMakeLists/Presets pela
             // IDE reconfigura sozinho (job na aba Jobs, sem roubar foco).
-            if (root.coreClient.workspaceBuildSystems.indexOf("cmake") < 0) {
+            // 16.4b: reconfigurar executa o CMake do projeto; so' com confianca.
+            if (root.coreClient.workspaceBuildSystems.indexOf("cmake") < 0
+                    || !root.coreClient.workspaceTrusted) {
                 return;
             }
             if (path.endsWith("/CMakeLists.txt")
                     || path.endsWith("/CMakePresets.json")) {
                 root.coreClient.cmakeConfigure();
             }
+        }
+
+        function onWorkspaceTrustedChanged() {
+            root.projectHealthController.handleTrust(root.coreClient.workspaceTrusted);
         }
 
         function onCargoMetadataResolved(packages) {

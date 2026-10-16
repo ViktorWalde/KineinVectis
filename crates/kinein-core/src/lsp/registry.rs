@@ -32,6 +32,10 @@ pub(super) struct ServerSpec {
     /// E' assim que o basedpyright recebe `python.pythonPath` — o
     /// interpretador do projeto (2026-09-12).
     pub(super) settings: Value,
+    /// As `initializationOptions` do `initialize`, lidas ANTES de o servidor
+    /// carregar o projeto. E' por aqui que o rust-analyzer de um projeto nao
+    /// confiavel sobe sem build scripts nem macros procedurais (16.4b).
+    pub(super) init_options: Value,
 }
 
 /// Tabela de servidores por linguagem.
@@ -63,6 +67,7 @@ impl Default for ServerRegistry {
                     args: vec!["--background-index".to_owned(), "--clang-tidy".to_owned()],
                     language_id: "cpp",
                     settings: Value::Null,
+                    init_options: Value::Null,
                 },
                 ServerSpec {
                     key: "rust",
@@ -71,6 +76,7 @@ impl Default for ServerRegistry {
                     args: Vec::new(),
                     language_id: "rust",
                     settings: Value::Null,
+                    init_options: Value::Null,
                 },
                 // Python (cadeia do roadmaps/41 bloco B, fatia 2, 2026-09-12):
                 // basedpyright pelo PyPI, `--stdio`; o interpretador do projeto
@@ -84,6 +90,7 @@ impl Default for ServerRegistry {
                     args: vec!["--stdio".to_owned()],
                     language_id: "python",
                     settings: Value::Null,
+                    init_options: Value::Null,
                 },
                 // QML (59 §2.4, 2026-10-08): o qmlls do Qt do usuario. O
                 // diretorio de build do projeto chega como `-b` pelo Core
@@ -95,6 +102,7 @@ impl Default for ServerRegistry {
                     args: Vec::new(),
                     language_id: "qml",
                     settings: Value::Null,
+                    init_options: Value::Null,
                 },
             ],
         }
@@ -176,6 +184,15 @@ impl ServerRegistry {
         true
     }
 
+    /// Troca as `initializationOptions` de `key`; valem na PROXIMA subida.
+    pub(super) fn set_init_options(&mut self, key: &str, options: Value) -> bool {
+        let Some(spec) = self.specs.iter_mut().find(|spec| spec.key == key) else {
+            return false;
+        };
+        spec.init_options = options;
+        true
+    }
+
     /// Registra (ou substitui) um companheiro de `language`. `false` quando a
     /// linguagem nao tem principal ou `key` colide com o de um principal.
     pub(super) fn add_companion(
@@ -205,6 +222,7 @@ impl ServerRegistry {
             args: args.iter().map(|argument| (*argument).to_owned()).collect(),
             language_id,
             settings: Value::Null,
+            init_options: Value::Null,
         });
         true
     }

@@ -283,6 +283,7 @@ impl Core {
     ) -> JsonRpcResponse {
         self.fs_request_response(method, request_id.clone(), params)
             .or_else(|| self.recent_workspace_response(method, request_id.clone(), params))
+            .or_else(|| self.workspace_trust_response(method, request_id.clone()))
             .or_else(|| self.cargo_request_response(method, request_id.clone(), params))
             .or_else(|| self.git_request_response(method, request_id.clone(), params))
             .or_else(|| self.runconfig_request_response(method, request_id.clone(), params))

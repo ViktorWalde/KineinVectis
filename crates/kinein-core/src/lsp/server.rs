@@ -154,7 +154,7 @@ pub(super) fn spawn_server(
     // marcado `starting`; a thread marca `ready` e emite `running`, ou emite
     // `failed` com o stderr e mata o grupo.
     let stdin = Arc::new(Mutex::new(stdin));
-    let initialize = super::handshake::initialize_request(root);
+    let initialize = super::handshake::initialize_request(root, &spec.init_options);
     if let Err(error) = write_locked_message(&stdin, &initialize) {
         return Err(LspError::ServerFailed {
             command: spec.command.clone(),

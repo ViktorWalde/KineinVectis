@@ -47,6 +47,9 @@ pub fn open_workspace(path: &Path) -> Result<WorkspaceInfo, WorkspaceError> {
         kind,
         markers,
         capabilities,
+        // A confianca nunca vem do projeto: quem a decide e' o Core, pelo
+        // arquivo FORA dele (16.4b, `workspace/trust.rs`).
+        trusted: false,
     };
 
     persist(&root, &workspace)?;

@@ -68,6 +68,7 @@ mod terminal;
 mod toolchain;
 mod tools;
 mod workspace;
+mod workspace_trust;
 
 use crate::Core;
 use crate::tools::ToolDetector;

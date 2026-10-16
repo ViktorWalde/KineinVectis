@@ -374,6 +374,7 @@ set_source_files_properties(qml/workspace/RecentWorkspaceRow.qml PROPERTIES QT_R
 set_source_files_properties(qml/workspace/StartScreen.qml PROPERTIES QT_RESOURCE_ALIAS StartScreen.qml)
 set_source_files_properties(qml/workspace/WelcomeWave.qml PROPERTIES QT_RESOURCE_ALIAS WelcomeWave.qml)
 set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthController.qml)
+set_source_files_properties(qml/workspace/ProjectHealthActions.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthActions.qml)
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
@@ -801,6 +802,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/StartScreen.qml
         qml/workspace/WelcomeWave.qml
         qml/workspace/ProjectHealthController.qml
+        qml/workspace/ProjectHealthActions.qml
         qml/workspace/WorkspaceUiResetter.qml
         qml/jobs/JobsController.qml
         qml/runtime/RuntimeController.qml

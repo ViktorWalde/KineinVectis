@@ -2437,6 +2437,54 @@ confiável. Isto é uma consequência do requisito, não uma decisão nova; se o
 autor preferir outro modelo, a troca é num lugar só. Provas: o mesmo
 projeto hostil, antes e depois, pelos marcadores; harness da faixa.
 
+**16.4b — o desenho fino (2026-10-16, antes do código).**
+
+- **Onde mora a confiança:** `trusted-projects.json` no armazenamento global
+  da IDE (o mesmo `global_storage` do `recent-workspaces.json`), pelo
+  caminho canônico da raiz; nada dentro do projeto conta. Sem armazenamento
+  global (os testes do core), a confiança vive na memória do processo.
+- **Contrato (protocolo `0.171.0`):** o resultado do `workspace.open` (e do
+  `workspace.createProject`) ganha `trusted: bool`; método novo
+  `workspace.trust {}` → `{ trusted: true }`, que grava a raiz aberta e
+  reinicia o rust-analyzer se ele estiver vivo, já com o carregamento
+  completo. Projeto criado pela IDE nasce confiável.
+- **O que a confiança libera:** (1) o configure automático do CMake (a faixa
+  de saúde, e o reconfigure ao salvar `CMakeLists.txt`/presets); (2) o
+  rust-analyzer completo. Sem confiança ele sobe com
+  `initializationOptions` (e `settings`, para o `workspace/configuration`)
+  `cargo.buildScripts.enable = false`, `procMacro.enable = false` e
+  `checkOnSave = false` (o `cargo check` também roda os build scripts): o
+  realce, a navegação e o completar continuam; o que depende de build
+  script ou macro procedural fica de fora até o clique.
+- **A faixa de saúde:** projeto não confiável com algo desligado diz o quê
+  ("este projeto ainda não é confiável: o CMake e os build scripts não rodam
+  sozinhos") e oferece "Confiar neste projeto". Compilar, Executar, Testar e
+  o "Configurar" da faixa continuam funcionando sem a confiança: são o gesto.
+- **Provas:** testes do core (a confiança fora do projeto: um
+  `trusted-projects.json` dentro do `.kinein/` não conta; o `workspace.trust`
+  grava e o reabrir lembra; o rust-analyzer falso recebe as
+  `initializationOptions` desligadas sem confiança e completas depois do
+  `workspace.trust`); harness da faixa (sem confiança não pede o configure
+  automático e oferece o gesto; depois do gesto, pede); a fiação IPC; e o
+  projeto hostil no Xvfb, antes (os dois marcadores) e depois (nenhum, até o
+  clique em "Confiar neste projeto", e os dois depois dele).
+
+**16.4b feita em 2026-10-16 (40.7 §7.296).** No Xvfb, o projeto hostil novo:
+aberto e com o `main.rs` aberto por 45 s, nenhum marcador, nenhuma pasta de
+build e o rust-analyzer sem o servidor de proc-macros; a faixa dizia
+"projeto ainda não confiável" com "Confiar neste projeto". Um clique: o
+configure rodou (`cmake-configure-rodou`), o rust-analyzer subiu de novo com
+o servidor de proc-macros e rodou o `build.rs` (`build-rs-rodou`); a
+confiança ficou em `trusted-projects.json` do estado global, e o
+`.kinein/workspace.json` do projeto grava `trusted: false`. Duas decisões
+de implementação: a configuração do rust-analyzer tem um dono só (o alvo do
+kit e a confiança juntos, `rust_analyzer_config`), e o despacho das ações
+da faixa saiu do `Main.qml` para o `ProjectHealthActions.qml` (o `Main.qml`
+estava no limite e ganhava o alvo "trust"). **Para o autor:** os projetos
+abertos antes desta versão começam sem confiança; neste repositório, o
+rust-analyzer fica sem as macros procedurais (o `serde` derive) até o clique,
+uma vez por projeto.
+
 **16.4c — o resto da lista.** A aba Web só abre fora `http`/`https` (o resto
 é ignorado, com aviso); a redação de credenciais com valores reais (a senha
 do banco e o token do Grafana no log do core e da UI); caminhos do espelho e

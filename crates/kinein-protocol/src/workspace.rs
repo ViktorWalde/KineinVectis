@@ -100,6 +100,19 @@ pub struct WorkspaceInfo {
     pub markers: Vec<String>,
     /// All actionable project systems found in the same detection pass.
     pub capabilities: WorkspaceCapabilities,
+    /// Whether the person trusted this project (`0.171.0`): only then does the
+    /// IDE run project code on its own (`CMake` configure, build scripts and
+    /// procedural macros in rust-analyzer). Kept outside the project.
+    #[serde(default)]
+    pub trusted: bool,
+}
+
+/// Result of `workspace.trust` (`0.171.0`).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceTrustResult {
+    /// Always `true`: the open workspace is trusted from now on.
+    pub trusted: bool,
 }
 
 /// Parameters for `workspace.open`.
@@ -319,6 +332,7 @@ mod tests {
             capabilities: WorkspaceCapabilities {
                 build_systems: vec![BuildSystem::Cargo],
             },
+            trusted: false,
         };
         let value = serde_json::to_value(workspace).unwrap();
 

@@ -3,6 +3,7 @@
 #include "qt_message_log.h"
 
 #include <QDir>
+#include <QJsonObject>
 
 namespace kinein {
 
@@ -70,6 +71,27 @@ QString CoreClient::workspaceName() const
 QString CoreClient::workspaceKind() const
 {
     return m_workspaceKind;
+}
+
+bool CoreClient::workspaceTrusted() const
+{
+    return m_workspaceTrusted;
+}
+
+void CoreClient::setWorkspaceTrusted(bool trusted)
+{
+    if (m_workspaceTrusted == trusted) {
+        return;
+    }
+    m_workspaceTrusted = trusted;
+    emit workspaceTrustedChanged();
+}
+
+// 16.4b (roadmaps/59 §7.1.4): o gesto que libera o CMake automatico e o
+// rust-analyzer completo. A confianca fica fora do projeto, no core.
+void CoreClient::trustWorkspace()
+{
+    sendRequest(QStringLiteral("workspace.trust"), QJsonObject{});
 }
 
 QStringList CoreClient::workspaceBuildSystems() const

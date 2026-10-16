@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 186 métodos IPC roteados pelo core.
+Medido: 187 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -323,8 +323,8 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 186 métodos roteados pelo core, 157 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 29 estão aqui,
+Dos 187 métodos roteados pelo core, 157 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 30 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -334,9 +334,9 @@ nomeados, para nada ficar invisível:
 | --- | --- |
 | `build.run` | `ui/qml/app/AppDomains.qml` |
 | `cargo.check` | `ui/qml/command/CommandDispatcher.qml` |
-| `cargo.metadata` | `ui/qml/Main.qml`, `ui/qml/command/CommandDispatcher.qml` |
+| `cargo.metadata` | `ui/qml/command/CommandDispatcher.qml`, `ui/qml/workspace/ProjectHealthActions.qml` |
 | `coverage.run` | `ui/qml/app/AppDomains.qml` |
-| `environment.scan` | `ui/qml/Main.qml` |
+| `environment.scan` | `ui/qml/workspace/ProjectHealthActions.qml` |
 | `format.capabilities` | `ui/qml/Main.qml` |
 | `lsp.restart` | `ui/qml/command/CommandDispatcher.qml`, `ui/qml/shell/ShellHeaderHost.qml` |
 | `quality.run` | `ui/qml/app/AppDomains.qml` |
@@ -352,6 +352,7 @@ nomeados, para nada ficar invisível:
 | `workspace.recent.list` | `ui/qml/app/AppDomains.qml` |
 | `workspace.recent.pin` | `ui/qml/app/AppDomains.qml` |
 | `workspace.recent.remove` | `ui/qml/app/AppDomains.qml` |
+| `workspace.trust` | `ui/qml/workspace/ProjectHealthActions.qml` |
 
 **Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `remote.status`, `runConfig.list`, `tools.status`.
 
@@ -377,6 +378,7 @@ flowchart LR
     n_ui_qml_ipc_WorkspaceEventRouter_qml["ipc/WorkspaceEventRouter"]
   end
   subgraph CPP["ui/src"]
+    n_ui_src_core_client_cpp["core_client.cpp"]
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_dispatch_cmake_cpp["core_client_dispatch_cmake.cpp"]
     n_ui_src_core_client_log_cpp["core_client_log.cpp"]
@@ -408,6 +410,7 @@ flowchart LR
   n_ui_qml_ipc_WorkspaceEventRouter_qml -.-> n_ui_qml_workspace_RecentWorkspacesController_qml
   n_ui_qml_ipc_WorkspaceEventRouter_qml -.-> n_ui_qml_workspace_WorkspaceController_qml
   n_ui_qml_ipc_WorkspaceEventRouter_qml --> n_ui_src_core_client_requests_cpp
+  n_ui_src_core_client_cpp -.-> n_ui_qml_ipc_WorkspaceEventRouter_qml
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_WorkspaceEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_WorkspaceEventRouter_qml
   n_ui_src_core_client_log_cpp -.-> n_ui_qml_ipc_WorkspaceEventRouter_qml
@@ -440,6 +443,7 @@ flowchart LR
 | controller | `ui/qml/workspace/WorkspaceController.qml` |  |
 | roteador | `ui/qml/ipc/ProjectTreeRequestRouter.qml` | Leva ao core o que a arvore de projeto pede: |
 | roteador | `ui/qml/ipc/WorkspaceEventRouter.qml` |  |
+| ponte C++ | `ui/src/core_client.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch_cmake.cpp` | Dispatch do dominio CMake/build (ARCHITECTURE.md §5). |
 | ponte C++ | `ui/src/core_client_log.cpp` |  |

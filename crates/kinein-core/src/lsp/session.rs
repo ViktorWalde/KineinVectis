@@ -149,6 +149,13 @@ impl LspManager {
         self.registry.set_settings(language, settings)
     }
 
+    /// As `initializationOptions` do servidor de `language`, na PROXIMA subida
+    /// (16.4b: o rust-analyzer de um projeto nao confiavel). `false` quando a
+    /// linguagem nao existe.
+    pub fn use_server_init_options(&mut self, language: &str, options: Value) -> bool {
+        self.registry.set_init_options(language, options)
+    }
+
     /// Poe um COMPANHEIRO ao lado do principal de `language` (o `ruff server`
     /// ao lado do basedpyright): mesmo texto, diagnosticos fundidos, code
     /// actions na mesma lista. Registrar de novo troca o executavel sem

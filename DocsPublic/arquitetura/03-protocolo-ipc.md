@@ -324,6 +324,20 @@ workspace, retornando o mesmo payload de `workspace.open`.
 `workspace.status` responde `{ "workspace": <objeto acima> | null }`.
 `workspace.close` responde `{ "status": "ok", "closed": <root | null> }`.
 
+**Confiança no projeto** (protocolo `0.171.0`, 16.4b do `roadmaps/59`
+§7.1.4): o objeto do workspace traz `trusted: bool`. A confiança é um gesto
+da pessoa, `workspace.trust {}` → `{ trusted: true }`, guardado em
+`trusted-projects.json` no estado global da IDE, pelo caminho canônico da
+raiz; nada dentro do projeto a declara (o `.kinein/workspace.json` grava
+sempre `false`). O projeto criado pelo `workspace.createProject` nasce
+confiável. Sem confiança, o rust-analyzer sobe com as
+`initializationOptions` (e o `workspace/configuration`)
+`cargo.buildScripts.enable = false`, `procMacro.enable = false` e
+`checkOnSave = false`; o `workspace.trust` o derruba (`event.lsp.restarted`)
+para subir completo. A UI não roda o configure automático do CMake nem o
+reconfigure ao salvar `CMakeLists.txt` sem a confiança; os gestos
+(Configurar, Compilar, Executar) continuam valendo.
+
 **Sessão por workspace** (protocolo `0.24.0`, fatia M1.5): a
 resposta de `workspace.open` ganha o campo opcional
 `session: { openFiles: ["/abs/..."], activeFile? }`, presente apenas quando
@@ -2417,7 +2431,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 186 métodos roteados — a lista inteira
+## Os 187 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -2656,6 +2670,7 @@ workspace.recent.pin
 workspace.recent.remove
 workspace.saveSession
 workspace.status
+workspace.trust
 ```
 
 ## Os 60 eventos emitidos — a lista inteira

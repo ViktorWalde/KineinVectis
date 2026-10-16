@@ -16,6 +16,9 @@ Item {
         id: controller
 
         workspaceRoot: "/tmp/proj"
+        // O comportamento de projeto confiavel; o nao confiavel e' do
+        // tst_project_trust (16.4b).
+        workspaceTrusted: true
         workspaceKind: "cmake"
         workspaceBuildSystems: ["cmake"]
         toolsList: [

@@ -299,24 +299,7 @@ Window {
         onCloseWorkspaceRequested: core.closeWorkspace()
         onToolsDetectionRequested: core.detectTools()
         // A faixa de saude do projeto: cada alvo e' um gesto de um clique.
-        onHealthActionRequested: function(target) {
-            if (target === "scan") {
-                core.scanEnvironment();
-            } else if (target === "cmakeConfigure") {
-                domains.shellController.showTab("jobs");
-                core.cmakeConfigure();
-            } else if (target === "cargoMetadata") {
-                core.cargoMetadata();
-            } else if (target === "pythonEnvironment") {
-                domains.shellController.showTab("jobs");
-                domains.pythonController.createEnvironment();
-            } else if (target === "pythonStubs") {
-                domains.shellController.showTab("jobs");
-                domains.pythonController.installStubs();
-            } else if (target !== "") {
-                domains.shellController.showTab(target);
-            }
-        }
+        onHealthActionRequested: target => healthActions.perform(target)
         onCreateProjectRequested: function(templateId) {
             folderPickerDialog.openCreateProject(core.homeDir, templateId);
         }
@@ -332,6 +315,14 @@ Window {
                 shellWorkspaceHost.healthActionRequested(target);
             }
         }
+    }
+
+    ProjectHealthActions {
+        id: healthActions
+
+        coreClient: core
+        shellController: domains.shellController
+        pythonController: domains.pythonController
     }
 
     ShellStatusHost {

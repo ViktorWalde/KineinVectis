@@ -80,6 +80,7 @@ ambiguous
 amend
 amended
 analysis
+analyzer
 analyzing
 ancestor
 ancestors

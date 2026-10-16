@@ -382,6 +382,7 @@ mod tests {
             kind: ProjectKind::Unknown,
             markers: Vec::new(),
             capabilities: WorkspaceCapabilities::default(),
+            trusted: false,
         }
     }
 
