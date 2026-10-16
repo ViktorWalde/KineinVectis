@@ -2167,7 +2167,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Shift+F10 | feito: `GlobalShortcuts.qml` (Executar), menu local no terminal e na árvore do Banco | — |
 | Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | feitos pelo agente (40 §5, "modo autonomo"), com os defeitos F1, F3 e F4 corrigidos (§7.1.1; 40.7 §7.292) | 16.1 |
 | PageUp/PageDown no editor | feito (§7.1.2; 40.7 §7.293) | 16.2 |
-| Terminal com reflow ao alargar | pendente | 16.3 |
+| Terminal com reflow ao alargar | feito (§7.1.3; 40.7 §7.294) | 16.3 |
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | pendente: falta o teste que tenta quebrar, item por item | 16.4 |
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | pendentes | 16.5 |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
@@ -2324,6 +2324,51 @@ fim. O `EditorViewport.qml` entrou na lista do módulo no `ui/CMakeLists.txt`
 (sem isso a IDE não abria: "EditorViewport is not a type"), e o
 `xvfb_ide.py` passou a falhar com o log quando a IDE morre ao abrir, em vez
 de esperar para sempre pela janela.
+
+#### 7.1.3 16.3 — o terminal que não refluía ao alargar (desenho, 2026-10-16, antes do código)
+
+**Medido.** O core reflui certo: pelo JSON-RPC, uma linha de 100 caracteres
+em 40 colunas ocupa 3 linhas, e em 120 volta a uma. Na IDE (Xvfb 1366×768),
+uma linha de 160 caracteres quebra em 114 + 46; estreitando a janela para
+760 e voltando a 1366, ela vira UMA linha cortada na borda direita. Um core
+gravador entre a UI e o core (`KINEIN_CORE_BIN`) mostrou os pedidos:
+`terminal.resize` 115 → 40 → **124**, onde cabiam 115 (e ~50 em vez de 40).
+
+**Causa.** O `TerminalPanel.recomputeSize` roda no sinal de mudança da
+largura do viewport, mas lê `terminalContentWidth`, uma propriedade DERIVADA
+dessa largura que ainda não foi reavaliada naquele instante: todo pedido sai
+com a largura ANTERIOR (um harness de rascunho com o painel real mostrou
+largura 970 → 400 lida como 970, depois 1100 → 1000 lidas como 400 e 1100).
+Ao alargar, o passo anterior é o intermediário, com o slot da esquerda ainda
+estreito, e o grid fica 9 colunas mais largo que a tela. Há um segundo
+defeito na coalescência: se o tamanho volta ao que o core já tem dentro dos
+33 ms, o `return` antecipado deixa o intermediário pendente, e o timer o
+envia (o harness mandou 133 com a largura final de 1000).
+
+**Desenho.** `TerminalResizeController.qml` (novo), a política do pedido,
+fora da superfície visual (como o `TerminalScrollController`, para o harness
+não depender do `TerminalViewport`, que usa o `DebugFlags` do C++):
+`measure(largura, altura)` com as métricas da mesma instância do texto
+(R1.4), a coalescência de 33 ms, e a volta ao tamanho já pedido descarta o
+pendente; `reset()` na troca de sessão. O painel passa
+`terminalViewport.contentWidth`/`contentHeight`, lidos na fonte, e perde a
+derivada, os quatro contadores e o timer.
+
+**Prova.** Harness `tst_terminal_resize.qml` com o controller e o
+`TerminalMetrics` reais: o primeiro tamanho sai; um intermediário seguido da
+volta ao tamanho do core não sai; de vários, só o último; outra sessão pede
+de novo. Mutação: sem o descarte na volta, reprova. No Xvfb com o core
+gravador: o mesmo roteiro, com os pedidos e a foto da linha de 160
+caracteres quebrada em 114 + 46 depois de alargar.
+
+**Feito em 2026-10-16 (40.7 §7.294).** Pedidos depois: 115 → 48 → 115
+(antes: 115 → 40 → 124). Com um `cat` segurando o terminal, a linha de 160
+caracteres volta a 114 + 46 ao alargar (antes ficava numa linha só, cortada
+na borda). Com o prompt do bash na tela, a segunda parte some ao alargar: é
+o readline, que no SIGWINCH sobe as linhas que o prompt ocupava na largura
+ANTIGA e apaga até o fim da tela; o grid do core está certo (o mesmo
+roteiro com o `cat` o mostra), e terminais que refluem têm o mesmo efeito
+com o bash.
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

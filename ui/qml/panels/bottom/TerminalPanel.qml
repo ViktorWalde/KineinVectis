@@ -62,16 +62,11 @@ Item {
     readonly property int scrollbackMax: terminalScrollController.scrollbackMax
     readonly property bool scrollIndicatorVisible: terminalViewport.scrollIndicatorVisible
     readonly property bool scrollIndicatorScrollable: terminalViewport.scrollIndicatorScrollable
-    readonly property real terminalContentWidth: terminalViewport.contentWidth
     onRenderChanged: {
         const nextSessionId = render && render.id !== undefined
                 ? String(render.id) : "";
         if (nextSessionId !== renderedSessionId) {
-            resizeFlush.stop();
-            pendingCols = 0;
-            pendingRows = 0;
-            lastRequestedCols = 0;
-            lastRequestedRows = 0;
+            resizeController.reset();
             terminalSelectionController.clear();
             Qt.callLater(panel.recomputeSize);
         }
@@ -98,12 +93,7 @@ Item {
     }
 
     readonly property TerminalMetrics metrics: cellMetrics
-    readonly property real charWidth: cellMetrics.cellWidth
     readonly property real lineHeight: cellMetrics.cellHeight
-    property int pendingCols: 0
-    property int pendingRows: 0
-    property int lastRequestedCols: 0
-    property int lastRequestedRows: 0
 
     TerminalSelectionController {
         id: terminalSelectionController
@@ -138,47 +128,18 @@ Item {
         recomputeSize();
     }
 
+    // A largura e a altura lidas no viewport, a FONTE: uma propriedade
+    // derivada dele ainda nao foi reavaliada quando o sinal chega, e o pedido
+    // saia com a largura anterior (16.3; TerminalResizeController.qml).
     function recomputeSize() {
-        if (charWidth <= 0 || lineHeight <= 0
-                || terminalContentWidth <= 0
-                || terminalViewport.contentHeight <= 0) {
-            return;
-        }
-        // R1.4: o resize consome a mesma instância que o texto e o cursor. Se
-        // ele contasse células por conta própria, o grid pedido ao core poderia
-        // não ser o grid desenhado.
-        const cols = Math.max(2, cellMetrics.columnsIn(terminalContentWidth));
-        const rows = Math.max(2, cellMetrics.rowsIn(
-            terminalViewport.contentHeight));
-        // Math.floor/Math.max chegam ao cache AOT como double. Comparar pela
-        // distancia inteira evita -Wfloat-equal no C++ gerado pelo Qt.
-        if (Math.abs(cols - lastRequestedCols) < 0.5
-                && Math.abs(rows - lastRequestedRows) < 0.5) {
-            return;
-        }
-        pendingCols = cols;
-        pendingRows = rows;
-        if (!resizeFlush.running) {
-            resizeFlush.start();
-        }
+        resizeController.measure(terminalViewport.contentWidth, terminalViewport.contentHeight);
     }
 
-    // Splitters e maximize podem gerar dezenas de eventos de geometria por
-    // segundo. Um terminal nativo tambem coalesce resize: evita serializar um
-    // grid completo para cada pixel durante o arrasto e preserva fluidez.
-    Timer {
-        id: resizeFlush
+    TerminalResizeController {
+        id: resizeController
 
-        interval: 33
-        repeat: false
-        onTriggered: {
-            if (panel.pendingCols <= 0 || panel.pendingRows <= 0) {
-                return;
-            }
-            panel.lastRequestedCols = panel.pendingCols;
-            panel.lastRequestedRows = panel.pendingRows;
-            panel.resizeRequested(panel.pendingCols, panel.pendingRows);
-        }
+        metrics: cellMetrics
+        onResizeRequested: (cols, rows) => panel.resizeRequested(cols, rows)
     }
 
     function openContextMenu(x, y) {

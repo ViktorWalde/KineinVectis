@@ -343,6 +343,7 @@ set_source_files_properties(qml/panels/bottom/SearchReplaceBar.qml PROPERTIES QT
 set_source_files_properties(qml/panels/bottom/TerminalGeometryOverlay.qml PROPERTIES QT_RESOURCE_ALIAS TerminalGeometryOverlay.qml)
 set_source_files_properties(qml/panels/bottom/TerminalMetrics.qml PROPERTIES QT_RESOURCE_ALIAS TerminalMetrics.qml)
 set_source_files_properties(qml/panels/bottom/TerminalScrollController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalScrollController.qml)
+set_source_files_properties(qml/panels/bottom/TerminalResizeController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalResizeController.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSelectionController.qml)
 set_source_files_properties(qml/panels/bottom/TerminalInputController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalInputController.qml)
 set_source_files_properties(qml/panels/bottom/TerminalActionsController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalActionsController.qml)
@@ -770,6 +771,7 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/TerminalGeometryOverlay.qml
         qml/panels/bottom/TerminalMetrics.qml
         qml/panels/bottom/TerminalScrollController.qml
+        qml/panels/bottom/TerminalResizeController.qml
         qml/panels/bottom/TerminalSelectionController.qml
         qml/panels/bottom/TerminalInputController.qml
         qml/panels/bottom/TerminalActionsController.qml
