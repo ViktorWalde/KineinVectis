@@ -29,6 +29,8 @@ Item {
     // maximizar devolve o tamanho escolhido. Ate' aqui os limites eram
     // constantes (220–420), e o rodape do Git estourava a 1024 px (F0).
     property real explorerPreferredWidth: 280
+    // A largura de cada janela do slot da esquerda (16.5b): ShellDocks.swapLeftWidth.
+    property var leftWidths: ({})
     property real bottomPreferredHeight: 260
     property real outlineWidth: 220
     // O minimo do painel da esquerda, DECLARADO por quem esta' nele
@@ -98,7 +100,7 @@ Item {
     property bool applyingLayout: false
 
     // O que a pessoa abre e fecha tambem e' layout (R5: "volta como estava").
-    onLeftWindowChanged: layoutStateChanged()
+    onLeftWindowChanged: { docks.swapLeftWidth(leftWindow); layoutStateChanged(); }
     onRightWindowChanged: layoutStateChanged()
     onShowExplorerChanged: {
         focusMode.panelOpened(showExplorer);

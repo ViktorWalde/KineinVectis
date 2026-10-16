@@ -29,6 +29,14 @@ QtObject {
         shown = true;
     }
 
+    // O texto do dono mudou com o tooltip aberto (o "Atualizar" que era
+    // "testa o endereco…", 16.5b): troca no lugar; vazio, esconde.
+    function updateFor(item, message) {
+        if (!root.shown || root.owner !== item) return;
+        if (message === "") hideFor(item);
+        else text = message;
+    }
+
     function hideFor(item) {
         if (item && owner && owner !== item) {
             return;

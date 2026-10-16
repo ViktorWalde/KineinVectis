@@ -119,6 +119,10 @@ QtObject {
         if (action === "database.discover") { root.discoveryRequested(); return; }
         if (action === "database.create" && root.workspace !== "") { root.creationRequested(); return; }
         if (action === "database.collapse") { root.treeModel.collapseAll(); return; }
+        // ↻ e F5 releem o CATALOGO tambem (16.5b, F2 da 16.1): um
+        // `datasources.json` editado fora da IDE nao gera evento (o watcher
+        // ignora o `.kinein/`). Ler o catalogo e' um arquivo local.
+        if (action === "database.refresh" && root.controller) root.controller.listRequested();
         // LOCALIZAR (passo 13a): a conexao do console ativo vira a selecao; a
         // arvore rola ate' ela. Nao expande nem rele. Sem console ativo, a
         // chave nao existe e o `select` nao mexe na selecao.

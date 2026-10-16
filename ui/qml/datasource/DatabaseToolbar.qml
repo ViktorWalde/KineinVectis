@@ -23,6 +23,7 @@ Column {
             font.weight: Font.DemiBold
         }
         KvIconButton {
+            activeFocusOnTab: true
             compact: true
             iconName: "close"
             tooltip: qsTr("Fechar a janela do Banco")
@@ -34,6 +35,7 @@ Column {
         height: 24
         spacing: Theme.spacingXSmall
         KvIconButton {
+            activeFocusOnTab: true
             id: addButton
             compact: true
             iconName: "add"
@@ -44,13 +46,15 @@ Column {
             }
         }
         KvIconButton {
+            activeFocusOnTab: true
             compact: true
             iconName: "refresh"
-            tooltip: qsTr("Ler estrutura de novo (F5)")
-            enabled: root.actions !== null && root.actions.canRefresh(root.actions.selectedRow)
+            tooltip: qsTr("Ler de novo as conexões e a estrutura (F5)")
+            enabled: root.actions !== null && root.actions.controller !== null
             onClicked: root.actions.dispatch("database.refresh", root.actions.selectedRow)
         }
         KvIconButton {
+            activeFocusOnTab: true
             compact: true
             iconName: "terminal"
             tooltip: qsTr("Abrir console da conexão")
@@ -59,6 +63,7 @@ Column {
             onClicked: root.actions.dispatch("database.console", root.actions.selectedRow)
         }
         KvIconButton {
+            activeFocusOnTab: true
             compact: true
             iconName: "table"
             tooltip: qsTr("Ver dados")
@@ -66,6 +71,7 @@ Column {
             onClicked: root.actions.dispatch("database.data", root.actions.selectedRow)
         }
         KvIconButton {
+            activeFocusOnTab: true
             compact: true
             iconName: "locate"
             tooltip: qsTr("Localizar a conexão do console ativo")
@@ -74,6 +80,7 @@ Column {
             onClicked: root.actions.dispatch("database.locate", null)
         }
         KvIconButton {
+            activeFocusOnTab: true
             compact: true
             iconName: "collapse"
             tooltip: qsTr("Recolher tudo")

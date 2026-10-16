@@ -57,7 +57,7 @@ QtObject {
     // O retrato gravado (schema 1). `rail`, `bottom.pinned` e `order` sao
     // campos opcionais e aditivos do mesmo schema.
     function snapshot(shell) {
-        return {
+        const layout = {
             schemaVersion: 1,
             leftWindow: shell.leftWindow,
             leftVisible: shell.showExplorer,
@@ -74,16 +74,33 @@ QtObject {
             rail: shell.railState,
             order: shell.barOrders
         };
+        // A largura de cada janela da esquerda (16.5b): so' quando diz algo
+        // alem da janela posta (que ja' esta' em `explorer`) — aditivo.
+        const widths = shell.docks ? shell.docks.leftWidthsNow() : {};
+        if (Object.keys(widths).length > 1) layout.sizes.left = widths;
+        return layout;
     }
 
     // Os valores a aplicar, partindo dos atuais: campo ausente ou estranho
     // fica no que ja' estava. Devolve {propriedade: valor} do ShellController.
+    // A largura de cada janela da esquerda (16.5b): so' as janelas que o slot
+    // conhece, cada uma nos limites de sempre.
+    function decodeLeftWidths(value, shell) {
+        const widths = {};
+        if (value === undefined || value === null || typeof value !== "object") return widths;
+        for (const name of listOf(shell.leftWindows)) {
+            if (typeof value[name] === "number") widths[name] = clamp(value[name], 160, 1200);
+        }
+        return widths;
+    }
+
     function decode(layout, shell) {
         const sizes = layout.sizes !== undefined && layout.sizes !== null ? layout.sizes : {};
         const bottom = layout.bottom !== undefined && layout.bottom !== null ? layout.bottom : {};
         const rail = layout.rail !== undefined && layout.rail !== null ? layout.rail : {};
         const values = {
             explorerPreferredWidth: clamp(numberOr(sizes.explorer, shell.explorerPreferredWidth), 160, 1200),
+            leftWidths: decodeLeftWidths(sizes.left, shell),
             outlineWidth: clamp(numberOr(sizes.outline, shell.outlineWidth), 160, 420),
             rightPreferredWidth: clamp(numberOr(sizes.right, shell.rightPreferredWidth), 220, 640),
             bottomPreferredHeight: clamp(numberOr(sizes.bottom, shell.bottomPreferredHeight), 120, 1200),

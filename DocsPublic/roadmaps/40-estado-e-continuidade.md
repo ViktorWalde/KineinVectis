@@ -22,14 +22,12 @@
 > a dirigiram no Xvfb (2026-10-16). O rustup daqui não tem toolchain padrão
 > (59 §7.1.1, F3): o comando `rustup default 1.96.1` está com o autor.
 >
-> **Próximo passo:** a 16.5 (as dívidas: `Flickable` além do fim, mensagens
-> sem acento, o slot da esquerda, o Tab do Banco, o tooltip do `KvButton`, o
-> catálogo editado fora da IDE) e as fatias seguintes do passo 16
-> ([59](59-fechamento-da-0.3.9.md) §7.1);
+> **Próximo passo:** a 16.6 (desempenho: primeiro quadro, RSS e o A/B do
+> `AA_ShareOpenGLContexts`), a 16.7 (caça a bugs por fluxos inteiros, com F5 e
+> F6 da 16.1) e a 16.8 (o fechamento) ([59](59-fechamento-da-0.3.9.md) §7.1);
 > depois a 0.4 ([52](52-arquitetura-executavel-da-0.4.md) §11). Feito: a 16b
 > (40.7 §7.283–§7.286), o 16c (§7.287–§7.288) e o passo 15 (§7.289–§7.291),
-> em 2026-10-15; a 16.1 a 16.3 (§7.292–§7.294) e a 16.4 (§7.295–§7.297), em
-> 2026-10-16. **Confiança no projeto (16.4b):** cada projeto
+> em 2026-10-15; a 16.1 a 16.5 (§7.292–§7.299), em 2026-10-16. **Confiança no projeto (16.4b):** cada projeto
 > aberto antes dela pede um clique em "Confiar neste projeto" (a faixa de
 > saúde) para o CMake configurar sozinho e o rust-analyzer usar build
 > scripts e macros procedurais. A 16b está fechada: a catraca do idioma no Ubuntu (40.7
@@ -53,7 +51,7 @@ protocolo   0.171.0 (crates/kinein-protocol, medido em 2026-10-16; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 60 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   142 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
+harnesses   145 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1143 no Ubuntu 26.04 (gate rápido de 2026-10-16,

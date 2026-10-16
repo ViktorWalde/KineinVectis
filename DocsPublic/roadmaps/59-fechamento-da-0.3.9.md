@@ -2169,7 +2169,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | PageUp/PageDown no editor | feito (§7.1.2; 40.7 §7.293) | 16.2 |
 | Terminal com reflow ao alargar | feito (§7.1.3; 40.7 §7.294) | 16.3 |
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | feito em 2026-10-16 (§7.1.4; 40.7 §7.295–§7.297): injeção no Remoto, `known_hosts` regravável, espelho por marcador clonado, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open`, origem do deploy fora do projeto, credencial na URL do Grafana | 16.4a, 16.4b, 16.4c |
-| Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | medidas em 2026-10-16 (§7.1.5): o `Flickable` não reproduz no Qt 6.10 (fica); as mensagens, feitas (16.5a, 40.7 §7.298); o resto na 16.5b | 16.5a, 16.5b |
+| Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | feito em 2026-10-16 (§7.1.5): o `Flickable` não reproduz no Qt 6.10 (fica, medido); as mensagens (16.5a, 40.7 §7.298); largura por janela, ↻ que relê o catálogo, Tab da barra do Banco e o tooltip (16.5b, §7.299) | 16.5a, 16.5b |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | pendente; pelo `xdotool` no Xvfb | 16.7 |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
@@ -2561,7 +2561,34 @@ um por um (os dados de entrada dos testes não mudam).
 
 **O resto (16.5b):** a largura única do slot da esquerda, a barra do Banco
 fora do ciclo de Tab, o tooltip antigo do `KvButton` e o catálogo editado
-fora da IDE (F2 da 16.1).
+fora da IDE (F2 da 16.1). Desenho (antes do código):
+
+- **Largura por janela.** O `explorerPreferredWidth` continua sendo a largura
+  da janela POSTA (tudo que já o lê fica igual); o `ShellDocks` guarda a de
+  cada janela em `shell.leftWidths` e troca na mudança de `leftWindow` (a
+  janela sem largura própria herda a atual). O layout grava
+  `sizes.left: { janela: largura }`; aplicar um layout só anota quem está
+  posta. O `ShellController` (391 de 400 linhas) ganha duas.
+- **O ↻ do Banco relê o catálogo.** O watcher do core ignora o `.kinein/`
+  (de propósito: é estado da IDE), então um `datasources.json` editado fora
+  não gera evento. O ↻ (e o F5) passa a pedir também a lista de conexões,
+  uma leitura de arquivo local, e vale sem linha selecionada; com uma
+  conexão selecionada, relê a estrutura dela como antes.
+- **A barra do Banco no Tab.** Os seis botões ganham `activeFocusOnTab`; o
+  `KvIconButton` já trata Espaço e Enter.
+- **O tooltip que acompanha.** O `TooltipController.showFor` guardava o texto
+  do momento do hover; o `KvButton` e o `KvIconButton` avisam a troca
+  (`updateFor`), e o tooltip aberto muda no lugar (vazio, esconde).
+
+Provas: harnesses com os componentes reais (`tst_left_slot_widths`,
+`tst_database_toolbar`, `tst_tooltip_update`), uma mutação por item, e a
+foto no Xvfb do slot da esquerda com o Banco largo e o Projeto estreito.
+
+**16.5b feita em 2026-10-16 (40.7 §7.299).** Um ajuste no caminho: o retrato
+do layout grava `sizes.left` só quando ele diz algo além da janela posta
+(que já está em `explorer`), para o layout de antes voltar idêntico (o
+`tst_shell_panel_limits` compara o retrato de ida e volta). **As dívidas do
+passo 16 (16.5) estão fechadas.**
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

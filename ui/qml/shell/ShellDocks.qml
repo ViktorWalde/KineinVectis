@@ -14,6 +14,31 @@ QtObject {
 
     property var shell: null
 
+    // A largura do slot da esquerda e' DE CADA JANELA (16.5b, roadmaps/59
+    // §7.1.5): alargar o Banco nao alarga o Projeto. `explorerPreferredWidth`
+    // segue sendo a da janela posta; trocar de janela guarda a dela em
+    // `shell.leftWidths` e devolve a da outra (sem largura propria, herda a
+    // atual). Aplicando um layout gravado, so' anota quem esta' posta.
+    property string leftWidthOwner: ""
+
+    function swapLeftWidth(next) {
+        const shell = root.shell;
+        const from = root.leftWidthOwner !== "" ? root.leftWidthOwner : "explorer";
+        root.leftWidthOwner = next;
+        if (shell.applyingLayout || from === next) return;
+        const widths = Object.assign({}, shell.leftWidths);
+        widths[from] = Math.round(shell.explorerPreferredWidth);
+        shell.leftWidths = widths;
+        if (widths[next] !== undefined) shell.explorerPreferredWidth = widths[next];
+    }
+
+    // O mapa com a largura da janela posta agora: e' o que se grava.
+    function leftWidthsNow() {
+        const widths = Object.assign({}, root.shell.leftWidths);
+        widths[root.shell.leftWindow] = Math.round(root.shell.explorerPreferredWidth);
+        return widths;
+    }
+
     // O slot de um lado tem o que mostrar agora (o host liga o `visible`).
     // Sem projeto, nenhum: a tela de boas-vindas e' so' de boas-vindas
     // (decisao do autor, 2026-10-03).

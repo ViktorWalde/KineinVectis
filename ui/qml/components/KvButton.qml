@@ -13,6 +13,7 @@ Rectangle {
     // O tooltip aparece tambem com o botao DESLIGADO — e' ai' que ele diz
     // o porque (E3-6: "abra um projeto — a aba de terminal e' do projeto").
     property string tooltip: ""
+    onTooltipChanged: TooltipController.updateFor(root, root.tooltip)
 
     signal clicked()
 

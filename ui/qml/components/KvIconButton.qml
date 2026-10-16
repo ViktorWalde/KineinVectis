@@ -53,6 +53,7 @@ Rectangle {
     Accessible.role: Accessible.Button
     Accessible.name: accessibleName
     Keys.onSpacePressed: root.clicked()
+    onTooltipChanged: TooltipController.updateFor(root, root.tooltip)
     Keys.onReturnPressed: root.clicked()
 
     KvIcon {
