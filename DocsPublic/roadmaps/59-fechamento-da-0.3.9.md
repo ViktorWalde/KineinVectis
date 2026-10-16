@@ -97,7 +97,7 @@ Cada passo termina com:
 | 15 | **Provas finais do Banco** (§5.6; desenho em §5.6.1) | **feito** (2026-10-15): 15a já estava feita (§7.252); 15b, a resolução de nomes com prazo (§7.289); 15c, o aviso com `UPDATE … FROM` (§7.290); 15d, a bateria real com TLS verify-full, nome por resolvedor, concorrência, SQLite e os critérios cruzados dos passos 7–14 (§7.291, 266 verificações) |
 | 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. 16b.3 feita (§7.286, IPC `0.170.0`): o "Remover" pergunta "com os volumes (N, X MB)" ou "só o container". **A 16b está fechada** |
 | 16c | **Reprodutibilidade entre distros** (§2.6; pedido do autor em 2026-10-15: "evitar o 'na minha máquina funciona'", antes do 15) | feito: R1 (40.7 §7.287), o `rust-analyzer` pelo `rust-toolchain.toml` e as lacunas do `instalar-ambiente.sh`; R2 (§7.288), o gate de idioma pelo vocabulário do repositório |
-| 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
+| 16 | **Pente fino e fechamento da 0.3.9** (§7; auditoria e fatias 16.1–16.8 no §7.1) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
 
@@ -2153,6 +2153,30 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
     tela, e não um defeito.
 - **Fechamento:** o 40, o 57 e o CHANGELOG dizem "0.3.9 encerrada", com a
   lista de provas.
+
+### 7.1 A auditoria e as fatias do passo 16 (2026-10-15, antes do código)
+
+Cada item acima, conferido no registro e no código nesta data (modo
+autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
+
+| Item do §7 | Situação, medida | Fatia |
+| --- | --- | --- |
+| Uma aba por arquivo no ▶ | feito (40.7 §7.225) | — |
+| DNS/NSS da prévia | feito (§7.289, passo 15b) | — |
+| Relevo do editor | feito (§7.224) | — |
+| Shift+F10 | feito: `GlobalShortcuts.qml` (Executar), menu local no terminal e na árvore do Banco | — |
+| Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | pendentes; delegados ao agente (40 §5, "modo autonomo") | 16.1 |
+| PageUp/PageDown no editor | pendente: não moveu o cursor nem o viewport (§7.224) | 16.2 |
+| Terminal com reflow ao alargar | pendente | 16.3 |
+| Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | pendente: falta o teste que tenta quebrar, item por item | 16.4 |
+| Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton` | pendentes | 16.5 |
+| Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
+| Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento | pendente; pelo `xdotool` no Xvfb | 16.7 |
+| Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
+
+Regras de cada fatia: o desenho fino aqui antes do código, foto antes e
+depois no Xvfb para o que muda na tela, o gate rápido verde e a entrada no
+40.7. Os gestos são do `xdotool` e ficam ditos como do agente, não do autor.
 
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
