@@ -57,6 +57,8 @@ QtObject {
     signal newlineRequested()
     signal closerBraceRequested()
     signal smartHomeRequested(bool extendSelection)
+    // 16.2: PageUp (-1) / PageDown (+1); quem rola faz a conta (EditorViewport).
+    signal pageRequested(int direction, bool extendSelection)
 
     // Unico ponto de entrada. true = tecla CONSUMIDA (o chamador marca
     // event.accepted). A ordem dos testes e' significativa e esta' descrita
@@ -69,6 +71,17 @@ QtObject {
             return true;
         }
         if (handleTypingKey(event)) {
+            return true;
+        }
+        // 16.2: o TextEdit do Qt Quick ignora a pagina. Um popup aberto fecha:
+        // o cursor vai sair do lugar dele. Ctrl/Alt+Page seguem adiante.
+        if ((event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown)
+                && (event.modifiers === Qt.NoModifier
+                    || event.modifiers === Qt.ShiftModifier)) {
+            if (root.completionVisible) root.completionDismissRequested();
+            if (root.actionsVisible) root.actionsDismissRequested();
+            root.pageRequested(event.key === Qt.Key_PageDown ? 1 : -1,
+                               event.modifiers === Qt.ShiftModifier);
             return true;
         }
         if (root.actionsVisible) {

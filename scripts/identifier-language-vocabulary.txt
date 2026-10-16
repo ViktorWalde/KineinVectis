@@ -1118,6 +1118,7 @@ globals
 glyph
 glyphs
 gnome
+goal
 goes
 gone
 good

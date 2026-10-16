@@ -144,6 +144,16 @@ KvInsetSurface {
         onCloserBraceRequested: root.closerBraceRequested()
         onSmartHomeRequested: extendSelection =>
             root.smartHomeRequested(extendSelection)
+        onPageRequested: (direction, extend) => viewport.page(direction, extend)
+    }
+
+    // Seguir o cursor e a pagina (16.2): ver EditorViewport.qml.
+    EditorViewport {
+        id: viewport
+
+        flick: editorFlick
+        textEdit: textEditor
+        lineHeight: root.editorLineHeight
     }
 
     Text {
@@ -204,19 +214,6 @@ KvInsetSurface {
         contentHeight: textEditor.contentHeight + 20
         boundsBehavior: Flickable.StopAtBounds
 
-        function ensureVisible(rect) {
-            if (contentX >= rect.x) {
-                contentX = rect.x;
-            } else if (contentX + width <= rect.x + rect.width) {
-                contentX = rect.x + rect.width - width;
-            }
-            if (contentY >= rect.y) {
-                contentY = rect.y;
-            } else if (contentY + height <= rect.y + rect.height) {
-                contentY = rect.y + rect.height - height;
-            }
-        }
-
         EditorLineHighlights {
             width: Math.max(editorFlick.contentWidth, editorFlick.width)
             active: root.hasOpenFile
@@ -256,7 +253,7 @@ KvInsetSurface {
             selectByMouse: true
             readOnly: root.readOnly
             tabStopDistance: 4 * 8
-            onCursorRectangleChanged: editorFlick.ensureVisible(cursorRectangle)
+            onCursorRectangleChanged: viewport.ensureVisible(cursorRectangle)
             onTextChanged: root.textEdited(text)
             Keys.onPressed: function(event) {
                 if (root.readOnly) { event.accepted = false; return; }

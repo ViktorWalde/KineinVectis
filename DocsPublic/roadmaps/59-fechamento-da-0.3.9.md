@@ -2166,7 +2166,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Relevo do editor | feito (§7.224) | — |
 | Shift+F10 | feito: `GlobalShortcuts.qml` (Executar), menu local no terminal e na árvore do Banco | — |
 | Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | feitos pelo agente (40 §5, "modo autonomo"), com os defeitos F1, F3 e F4 corrigidos (§7.1.1; 40.7 §7.292) | 16.1 |
-| PageUp/PageDown no editor | pendente: não moveu o cursor nem o viewport (§7.224) | 16.2 |
+| PageUp/PageDown no editor | feito (§7.1.2; 40.7 §7.293) | 16.2 |
 | Terminal com reflow ao alargar | pendente | 16.3 |
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | pendente: falta o teste que tenta quebrar, item por item | 16.4 |
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | pendentes | 16.5 |
@@ -2276,6 +2276,54 @@ autosave ligado (decisão do autor): toda edição é desfeita pela própria IDE
 A formatação (`qmlformat`, Ctrl+Alt+L) ficou fora: reformataria o arquivo
 inteiro (7b.4, sem formatação em massa) e já tem a prova da 7b.3.
 
+
+#### 7.1.2 16.2 — PageUp/PageDown no editor (desenho, 2026-10-16, antes do código)
+
+**Medido.** O `TextEdit` do Qt Quick não trata PageUp/PageDown: o
+`QQuickTextControl` não tem página (o `QWidgetTextControl` a calcula pela
+área de rolagem, o `QAbstractScrollArea`, que o Quick não tem), e a tecla
+volta ignorada. O `EditorTypingController.route` também não a consome. Nem o
+cursor nem a tela se movem (40.7 §7.224, no release anterior também).
+
+**Desenho.** Como o Home inteligente (E3): o `EditorTypingController` diz o
+que a tecla significa; quem rola faz a geometria.
+
+- `route`: PageUp/PageDown sem modificador ou com Shift emitem
+  `pageRequested(direction, extendSelection)` (−1 ou +1) e são consumidas;
+  com Ctrl ou Alt seguem adiante. Um popup de completar ou de ações aberto
+  fecha antes, porque o cursor vai sair do lugar dele.
+- `EditorViewport.qml` (novo): "o que a tela mostra". Recebe o
+  `ensureVisible` que hoje mora no `Flickable` do `EditorTextSurface` (a
+  mesma pergunta) e ganha a página. A conta (`pageTarget`) é pura: a página
+  é o número de linhas inteiras visíveis (no mínimo uma); a tela anda uma
+  página, presa entre o topo e o fim; o cursor anda a mesma página, na mesma
+  altura da tela, preso na primeira e na última linha. No fim do arquivo a
+  tela para e o cursor vai à última linha, como no JetBrains e no QTextEdit.
+  O `page` aplica: `contentY`, depois o cursor por `positionAt(x do cursor,
+  y)`; com Shift, `moveCursorSelection`, que estende a seleção.
+- `EditorTextSurface` (295 de 300 linhas): perde o `ensureVisible` e só liga
+  o `EditorViewport` ao `Flickable` e ao `TextEdit`. O corte é pela
+  responsabilidade (geometria de rolagem, sem pintura), e deixa o arquivo
+  visual menor.
+
+**Prova.** Harness `tst_editor_paging.qml`, com o `EditorTypingController` e o
+`EditorViewport` reais e dublês do `Flickable` e do `TextEdit`: o pedido para
+PageDown e Shift+PageUp, nada para Ctrl+PageDown, o popup que fecha; a
+página no meio, no fim, no começo com Shift e num arquivo menor que a tela;
+o `ensureVisible` que veio da superfície. Mutações: sem o caso no `route`;
+a tela sem o limite do fim. No Xvfb, um arquivo de 300 linhas: PageDown
+duas vezes e Shift+PageUp, conferidos pela linha:coluna da barra de status
+e pela foto.
+
+**Feito em 2026-10-16 (40.7 §7.293).** No Xvfb, 300 linhas e 33 visíveis:
+antes (o HEAD da 16.1), PageDown deixou o cursor em 3:11 e a tela na linha
+1; depois, 3:11 → 36:11 → 69:11 com a tela andando junto (topo 1 → 34 →
+67), Shift+PageUp volta a 36:11 com a seleção, e do fim (Ctrl+End, linha
+301) PageUp vai a 268:1 e dois PageDown voltam a 301:1 com a tela parada no
+fim. O `EditorViewport.qml` entrou na lista do módulo no `ui/CMakeLists.txt`
+(sem isso a IDE não abria: "EditorViewport is not a type"), e o
+`xvfb_ide.py` passou a falhar com o log quando a IDE morre ao abrir, em vez
+de esperar para sempre pela janela.
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

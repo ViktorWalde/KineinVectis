@@ -454,6 +454,7 @@ set_source_files_properties(qml/editor/EditorExternalChangeController.qml PROPER
 set_source_files_properties(qml/editor/EditorJumpController.qml PROPERTIES QT_RESOURCE_ALIAS EditorJumpController.qml)
 set_source_files_properties(qml/editor/EditorRecentFiles.qml PROPERTIES QT_RESOURCE_ALIAS EditorRecentFiles.qml)
 set_source_files_properties(qml/editor/EditorTypingController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTypingController.qml)
+set_source_files_properties(qml/editor/EditorViewport.qml PROPERTIES QT_RESOURCE_ALIAS EditorViewport.qml)
 set_source_files_properties(qml/editor/EditorLineHighlights.qml PROPERTIES QT_RESOURCE_ALIAS EditorLineHighlights.qml)
 set_source_files_properties(qml/editor/EditorDiagnosticTooltip.qml PROPERTIES QT_RESOURCE_ALIAS EditorDiagnosticTooltip.qml)
 set_source_files_properties(qml/editor/EditorHoverPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorHoverPopup.qml)
@@ -878,6 +879,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorJumpController.qml
         qml/editor/EditorRecentFiles.qml
         qml/editor/EditorTypingController.qml
+        qml/editor/EditorViewport.qml
         qml/editor/EditorLineHighlights.qml
         qml/editor/EditorDiagnosticTooltip.qml
         qml/editor/EditorHoverPopup.qml

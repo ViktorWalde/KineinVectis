@@ -101,6 +101,12 @@ class Ide:
             self.app = subprocess.Popen([str(self.ui), str(self.project)], env=env,
                                         stdout=log, stderr=log)
         time.sleep(self.settle)
+        if self.app.poll() is not None:
+            # Morreu na abertura (um tipo QML que nao carregou, por exemplo):
+            # o `--sync` abaixo esperaria para sempre por uma janela.
+            tail = self.log.read_text(errors="replace")[-2000:]
+            code = self.stop()
+            raise RuntimeError(f"a IDE saiu com {code} ao abrir:\n{tail}")
         # A janela ocupa a tela inteira, como o script de fotos faz.
         self.xdo("search", "--sync", "--onlyvisible", "--class", "kinein", "windowsize",
                  "%@", width, height, check=False)
