@@ -46,6 +46,7 @@ def main():
     parser.add_argument("--policy", action="store_true", help="também prova produção, somente leitura e contexto (0.158.0)")
     parser.add_argument("--preview", action="store_true", help="também prova prévia PostgreSQL e TLS obrigatório (0.159.0)")
     parser.add_argument("--disconnect", action="store_true", help="também prova desconexão, prévia e pools MongoDB (0.163.0)")
+    parser.add_argument("--final", action="store_true", help="também prova TLS verify-full, nome por resolvedor, UPDATE FROM, concorrência e SQLite (passo 15d)")
     args = parser.parse_args()
     directory = Path(tempfile.mkdtemp(prefix="kinein-banco-prova-"))
     containers = []
@@ -147,6 +148,9 @@ def main():
               "MongoDB: remover colecao com ponto")
         core.query(mongo["name"],
             'sensores.insertMany([{"placa":"esp32","v":1},{"placa":"pico","v":2},{"placa":"esp32","v":3}])')
+        if args.final:
+            from datasource_final_proof import exercise
+            exercise(core, project, pg, password, containers, check, command, ready)
         if args.policy:
             from datasource_policy_proof import exercise
             exercise(core, project, pg, mongo, password, containers, check, command)
@@ -187,8 +191,10 @@ def main():
             if core:
                 core.close()
         finally:
+            # `-v`: os volumes anonimos das imagens vao junto. Sem ele a prova
+            # deixava tres volumes orfaos por rodada (medido em 2026-10-15, 15d).
             for name in reversed(containers):
-                subprocess.run(["podman", "rm", "-f", name], capture_output=True, check=False)
+                subprocess.run(["podman", "rm", "-f", "-v", name], capture_output=True, check=False)
             if args.metadata:
                 # O resumo de limpeza continua disponivel sem senha nem dados do banco.
                 args.metadata.write_text(json.dumps({"cleaned": True, "containers": containers}))

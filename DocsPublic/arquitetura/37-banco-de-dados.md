@@ -596,6 +596,10 @@ célula hostil, erro SQL, lock_timeout, expiração real de 60 s, constraint
 diferida que recusa COMMIT e duas perdas de resposta durante COMMIT.
 A última mata somente o backend dentro do contêiner descartável da prova,
 confere recuperação e saldo por outra conexão; nunca usa banco do autor.
+`--final` (passo 15d, 2026-10-15) acrescenta TLS `verify-full` com uma CA de
+teste (nome certo conecta; pelo IP e com outra CA, recusa), o perfil por nome
+pelo resolvedor com prazo, o aviso de `UPDATE … FROM`, dois jobs no mesmo
+perfil e o SQLite do arquivo à leitura.
 `--ui` conserva esse ambiente até o fechamento normal da janela e limpa
 os contêineres/projeto/XDG. O aceite completo fica no 40.7, sem tratar uma
 prova intermediária como fechamento do passo 7.

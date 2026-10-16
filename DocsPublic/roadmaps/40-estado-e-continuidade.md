@@ -21,10 +21,11 @@
 > `arm-none-eabi-gcc` e `debugpy`). A UI compila; abri-la ainda não foi
 > medido.
 >
-> **Próximo passo:** o passo 15, as provas finais do Banco
-> ([59](59-fechamento-da-0.3.9.md) §2 e §5.6); depois o 16 (pente fino) e a
-> 0.4 (57). Feito em 2026-10-15: a 16b (40.7 §7.283–§7.286) e o 16c, a
-> reprodutibilidade entre distros (§7.287–§7.288, 59 §2.6). A 16b está fechada: a catraca do idioma no Ubuntu (40.7
+> **Próximo passo:** o passo 16, o pente fino e o fechamento da 0.3.9
+> ([59](59-fechamento-da-0.3.9.md) §7), com os aceites com mouse e teclado;
+> depois a 0.4 ([52](52-arquitetura-executavel-da-0.4.md) §11). Feito em
+> 2026-10-15: a 16b (40.7 §7.283–§7.286), o 16c (§7.287–§7.288) e o passo 15
+> (§7.289–§7.291). A 16b está fechada: a catraca do idioma no Ubuntu (40.7
 > §7.283), 16b.1 (§7.284), 16b.2 (§7.285) e 16b.3 (§7.286), todas em
 > 2026-10-15.
 >

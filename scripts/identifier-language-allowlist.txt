@@ -141,3 +141,5 @@ contextlib getvalue
 # 2026-10-15: o parametro do libpq e do tokio-postgres que leva o IP ja'
 # resolvido (passo 15b, datasource/resolve.rs).
 hostaddr hostaddrs
+# 2026-10-15: a ferramenta de certificados da prova de TLS (datasource_final_proof.py).
+openssl
