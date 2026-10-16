@@ -35,6 +35,7 @@ add_library(kinein-ui-puro OBJECT
     src/markdown_policy.cpp
     src/log_redaction.cpp
     src/single_instance.cpp
+    src/startup_web.cpp
 )
 kinein_enable_strict_compiler_options(kinein-ui-puro)
 target_link_libraries(kinein-ui-puro PUBLIC Qt6::Core)
@@ -910,6 +911,8 @@ qt_add_qml_module(kinein-vectis
         src/core_client.h
         src/debug_flags.cpp
         src/debug_flags.h
+        src/web_support.cpp
+        src/web_support.h
         src/core_client_dispatch.cpp
         src/core_client_notifications.cpp
         src/core_client_dispatch_cmake.cpp

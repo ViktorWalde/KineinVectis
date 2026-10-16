@@ -1542,6 +1542,7 @@ maxima
 maximize
 maximized
 maximum
+mean
 means
 meanwhile
 measure
@@ -2538,6 +2539,7 @@ summarize
 summarizes
 summary
 super
+support
 supported
 supports
 suppressed

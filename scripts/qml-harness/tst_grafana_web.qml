@@ -75,8 +75,17 @@ Item {
         page.ensureView();
         failures += check(page.view === null, "endereco remoto nao cria view");
 
-        // Ligada e local: cria a view, ou diz o que instalar (sem o modulo).
+        // Ligada e local, mas sem o contexto compartilhado desta abertura
+        // (16.6): nenhuma view, e a aba diz que vale na proxima abertura.
         page.baseUrl = "http://localhost:3000";
+        page.contextShared = false;
+        page.ensureView();
+        failures += check(page.view === null && page.loadError.indexOf("próxima abertura") >= 0,
+                          "sem contexto compartilhado: " + page.loadError);
+        page.contextShared = true;
+        page.loadError = "";
+
+        // Ligada e local: cria a view, ou diz o que instalar (sem o modulo).
         page.ensureView();
         failures += check(page.view !== null || page.loadError.indexOf("qml6-module-qtwebengine") >= 0,
                           "ligada: view ou o pacote a instalar");

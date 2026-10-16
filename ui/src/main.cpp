@@ -2,6 +2,7 @@
 
 #include "cli_args.h"
 #include "qt_message_log.h"
+#include "startup_web.h"
 
 #include "frame_pacing_probe.h"
 #include "single_instance.h"
@@ -238,9 +239,16 @@ int main(int argc, char* argv[])
 
     // A aba Web do Grafana (roadmaps/59 §6.1) cria a WebEngineView so' quando
     // a opcao esta' ligada, pelo plugin QML: o QtWebEngine exige o contexto
-    // OpenGL compartilhado ANTES do QGuiApplication. Desligada, nao custa nada
-    // — nada do modulo web e' linkado nem carregado.
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    // OpenGL compartilhado ANTES do QGuiApplication. O contexto compartilhado
+    // custa ~13 ms e ~9 MiB com GL de verdade (A/B de 2026-10-16, 59 §7.1.6):
+    // so' com a opcao ligada (a do projeto da linha de comando vence a global).
+    const QString workspaceSettings = request.action == kinein::cli::Action::Open
+                                          ? QDir(QFileInfo{request.folder}.canonicalFilePath())
+                                                .filePath(QStringLiteral(".kinein/settings.json"))
+                                          : QString();
+    if (kinein::wantsWebView(kinein::globalSettingsFile(), workspaceSettings)) {
+        QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    }
 
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("Kinein Vectis"));

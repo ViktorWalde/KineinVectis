@@ -2170,7 +2170,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Terminal com reflow ao alargar | feito (§7.1.3; 40.7 §7.294) | 16.3 |
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | feito em 2026-10-16 (§7.1.4; 40.7 §7.295–§7.297): injeção no Remoto, `known_hosts` regravável, espelho por marcador clonado, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open`, origem do deploy fora do projeto, credencial na URL do Grafana | 16.4a, 16.4b, 16.4c |
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | feito em 2026-10-16 (§7.1.5): o `Flickable` não reproduz no Qt 6.10 (fica, medido); as mensagens (16.5a, 40.7 §7.298); largura por janela, ↻ que relê o catálogo, Tab da barra do Banco e o tooltip (16.5b, §7.299) | 16.5a, 16.5b |
-| Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
+| Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | feito em 2026-10-16 (§7.1.6; 40.7 §7.300): tudo no orçamento; o atributo só com a aba Web ligada; a medida da digitação de volta | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | pendente; pelo `xdotool` no Xvfb | 16.7 |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
 
@@ -2589,6 +2589,78 @@ do layout grava `sizes.left` só quando ele diz algo além da janela posta
 (que já está em `explorer`), para o layout de antes voltar idêntico (o
 `tst_shell_panel_limits` compara o retrato de ida e volta). **As dívidas do
 passo 16 (16.5) estão fechadas.**
+
+#### 7.1.6 16.6 — desempenho (plano, 2026-10-16, antes de medir)
+
+O que o §7 pede: o primeiro quadro (orçamento de 400 ms; 247 ms em
+2026-10-03), o RSS, e o A/B do `AA_ShareOpenGLContexts` com N≥5 na mesma
+cena, com a regra já escrita: se custar, ligar só quando a opção
+`grafanaWebView` estiver ligada (lida antes do `QGuiApplication`).
+
+Como: binários release (`build/dev-local-release` e `target/release`), boot
+sem projeto, HOME e XDG temporários, nenhum outro trabalho pesado na máquina
+(o gate parado). A = a UI como está; B = a mesma com a linha do atributo
+tirada (só para medir, não vai para o repositório). Intercalados (A, B, B,
+A…), N = 7 por variante, em duas plataformas: `xcb` num Xvfb (GL de verdade,
+pelo llvmpipe) e `offscreen`. O primeiro quadro pelo marcador
+`KINEIN_PERF_MARKER_FILE` (do início do `main` ao primeiro `frameSwapped`),
+o RSS máximo pelo `/usr/bin/time`. E o `scripts/medir-performance.sh` inteiro,
+para comparar com os números do `roadmaps/21`.
+
+**Medido em 2026-10-16** (Ubuntu 26.04, Qt 6.10.2, binários release; com o
+CLion, o Rider e o Firefox do autor abertos, carga média ~7 — os números
+absolutos são desta máquina nesse estado; o A/B intercalado é justo). Duas
+rodadas, N = 7 cada, deram o mesmo:
+
+```text
+                      primeiro quadro (mediana, faixa)   RSS máximo (mediana)
+offscreen  com atributo   302–303 ms (296–314)              137,9 MiB
+offscreen  sem atributo   302–304 ms (298–311)              137,8–137,9 MiB
+xcb (GL)   com atributo   670–672 ms (662–708)              266,2–266,9 MiB
+xcb (GL)   sem atributo   657–658 ms (649–670)              257,3–257,5 MiB
+```
+
+O atributo custa ~13 ms e ~9 MiB quando há GL de verdade (no `offscreen`, nada).
+Pela regra já escrita, **ele passa a ser ligado só quando a opção
+`grafanaWebView` está ligada**. Desenho: `ui/src/startup_web.{h,cpp}` lê a
+opção (o `settings.json` global e, com uma pasta na linha de comando, o do
+projeto, que vence) antes do `QGuiApplication`; um singleton QML
+`WebSupport.contextShared` diz se o contexto foi compartilhado nesta
+abertura; ligada a opção com a IDE aberta, a aba Web diz "vale na próxima
+abertura da IDE" em vez de criar a view (sem o contexto, o QtWebEngine não
+desenha). Provas: um teste do ctest para a leitura (ausente, global, projeto
+vencendo, JSON inválido); o harness da aba Web com o contexto desligado; e o
+A/B de novo com a opção desligada e ligada. O primeiro quadro offscreen
+(~300 ms) está dentro do orçamento de 400 ms; o xcb com llvmpipe (~660 ms)
+não tem orçamento próprio (é GL em software).
+
+**16.6 feita em 2026-10-16 (40.7 §7.300).** Com a mudança, o mesmo binário
+com a opção desligada contra ligada (N = 7, intercalado): RSS 257,4 contra
+266,4 MiB no xcb (o atributo agora só com a opção); o primeiro quadro nessa
+rodada ficou igual (673 contra 674 ms; as duas rodadas anteriores tinham dado
+13–15 ms: a diferença de tempo some no ruído desta carga, a de memória não).
+O `medir-performance.sh` inteiro (release, N = 5, a mesma carga) contra o
+orçamento do `roadmaps/21`:
+
+```text
+                                      medido 2026-10-16    orçamento
+UI primeiro quadro (offscreen)        321 ms               400 ms
+UI RSS (boot vazio, offscreen)        150 MB               200 MB
+core RSS em regime                    47 MB                60 MB
+workspace.open (este repositório)     16,6 ms              —
+Tree-sitter incremental (+1 char)     33,2 ms              400 ms
+terminal rajada → marcador (p95)      33,2 ms              —
+clangd primeiro token / quente        209,6 / 0,8 ms       —
+digitação tecla→quadro (40 teclas)    8,1 ms (p95 9,4)     16 ms (p95 20)
+```
+
+Dois achados no caminho: a medida da digitação saía "n/d" calada desde
+2026-10-08 (b924f64 renomeou o id `coreClient` para `core` no `Main.qml`, e o
+`typing_perf_harness.cpp` ainda procurava o antigo): corrigido. E o
+rust-analyzer deu "n/d (sem token útil em 90 s)": o projeto de prova do
+script fica fora deste repositório, e o rustup desta máquina não tem
+toolchain padrão (o F3, §7.1.1) — é ambiente, resolvido pelo `rustup default`
+que está com o autor.
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

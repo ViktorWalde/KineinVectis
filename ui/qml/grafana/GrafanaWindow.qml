@@ -187,6 +187,7 @@ Rectangle {
         anchors.margins: Theme.spacingSmall
         visible: root.visible && root.tab === "web"
         webEnabled: root.webEnabled
+        contextShared: WebSupport.contextShared
         baseUrl: root.baseUrl
         onEnableRequested: {
             root.settings.setGrafanaWebView(true);

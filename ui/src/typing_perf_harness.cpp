@@ -330,7 +330,10 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
         fail(QStringLiteral("sem contexto QML no root"));
         return;
     }
-    auto* client = qobject_cast<CoreClient*>(ctx->objectForName(QStringLiteral("coreClient")));
+    // O id do CoreClient no Main.qml e' `core` desde 2026-10-08 (b924f64); o
+    // harness procurava `coreClient` e a medida da digitacao saia "n/d" calada
+    // (achado na 16.6, roadmaps/59 §7.1.6).
+    auto* client = qobject_cast<CoreClient*>(ctx->objectForName(QStringLiteral("core")));
     QObject* domains = ctx->objectForName(QStringLiteral("domains"));
     QObject* editor =
         domains == nullptr ? nullptr : domains->property("editorController").value<QObject*>();

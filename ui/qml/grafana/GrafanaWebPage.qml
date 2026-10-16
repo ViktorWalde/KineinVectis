@@ -18,6 +18,8 @@ Item {
 
     // A configuracao `grafanaWebView` (SettingsController).
     property bool webEnabled: false
+    // O contexto OpenGL compartilhado desta abertura (WebSupport, 16.6).
+    property bool contextShared: true
     // O endereco salvo do Grafana do projeto.
     property string baseUrl: ""
 
@@ -56,6 +58,12 @@ Item {
 
     function ensureView() {
         if (root.view !== null || !root.visible || !root.webEnabled || !root.baseIsLocal) return;
+        // O contexto OpenGL compartilhado so' e' ligado na abertura com a
+        // opcao ligada (16.6): sem ele o QtWebEngine nao desenha.
+        if (!root.contextShared) {
+            root.loadError = qsTr("A aba Web vale na próxima abertura da IDE: a opção foi ligada com ela aberta. Enquanto isso, use Abrir no navegador.");
+            return;
+        }
         try {
             // Os manipuladores moram NA string: o enum
             // WebEngineNavigationRequest so' existe no escopo do import.
