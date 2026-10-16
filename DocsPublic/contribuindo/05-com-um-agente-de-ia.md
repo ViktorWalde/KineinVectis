@@ -21,7 +21,8 @@ divergir daqui, este documento vence, e os dois se corrigem no mesmo gesto.
 2. **A ordem de leitura** (revista em 2026-10-15, [61](../roadmaps/61-organizacao-da-documentacao.md)):
    [`00-comece-aqui.md`](../00-comece-aqui.md) §2 → o handoff e o §4 do `40`
    → a linha do contexto da mudança no 00 §5.1 (a seção dele no
-   `arquitetura/01`, os documentos da linha e só os domínios dela no `03`)
+   `arquitetura/01`, os documentos da linha, o `03` e só os arquivos dos
+   domínios dela em `arquitetura/03-dominios/`)
    → `arquitetura/ARCHITECTURE.md` §5 e §8 → os arquivos da área. A fase
    aberta do `40.7` (as últimas entregas) entra quando a fatia continua uma
    anterior; as partes fechadas do registro, só pela entrada citada. Um

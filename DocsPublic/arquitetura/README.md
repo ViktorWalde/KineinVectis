@@ -7,9 +7,12 @@ ARCHITECTURE.md                  as regras: camadas, corte por responsabilidade,
                                  catraca, gates nascidos de falha silenciosa
 01-mapa-de-modulos.md                quem fala com quem, por quê e como (GERADO, com gate)
 02-estrutura-do-repositorio.md       o que mora em cada pasta do repositório
-03-protocolo-ipc.md               o contrato JSON-RPC entre UI e core: todos os
-                                 métodos, eventos e tipos, por domínio, com a
-                                 versão em que cada um entrou
+03-protocolo-ipc.md               o contrato JSON-RPC entre UI e core: o formato
+                                 base, as listas canônicas de métodos e eventos,
+                                 as regras e a tabela dos domínios
+03-dominios/                      um arquivo por domínio do protocolo (desde
+                                 2026-10-16): métodos, tipos e a versão em que
+                                 cada um entrou; leia só o da mudança
 03.1-notas-por-versao-do-protocolo.md  o que cada versão do protocolo acrescentou,
                                  da mais nova para a mais antiga (a nota nova
                                  entra no topo)

@@ -141,6 +141,47 @@ como já trata as ADRs: número lá dentro é do dia em que foi escrito.
 
 Cada verificação nova é provada por mutação antes do commit.
 
+### 3.7 O 03 por domínio (O6, desenho em 2026-10-16, antes de mover)
+
+**Medido em 2026-10-16:** o 03 tem 4.096 linhas (~57 mil tokens). Os
+domínios estão em títulos de dois níveis: de `workspace.*` a `job.*` em
+`###`, de `library.*` a `grafana.*` em `##`, e a seção "Jobs" se estende
+por 1.189 linhas porque as listas canônicas, as regras e nove domínios vêm
+depois dela. Quem mexe em `toolchain.*` hoje precisa achar a seção por busca
+e ler um arquivo de 57 mil tokens para ter certeza de que não há outra.
+
+**O que os gates leem (conferido no código nessa data):** o
+`verificar_fiacao_ipc.py` lê só a lista canônica de métodos ("Os N métodos
+roteados", o bloco `text` logo abaixo) do `03-protocolo-ipc.md`; o
+`module_map.py` só confere que esse gate lê o 03. O gate de links corta as
+âncoras (`#secao`) e exige que cada pasta com README o tenha como índice.
+Nada lê as seções de domínio.
+
+**O desenho:**
+
+1. **O 03 fica com o que é de todos:** objetivo, transporte, formato base
+   (request, response, error, event, o `Diagnostic` comum), a nota da IA
+   externa removida, as duas listas canônicas (o gate não muda), as regras e
+   uma tabela nova "Os domínios": prefixo → arquivo.
+2. **Cada domínio vai para `arquitetura/03-dominios/<prefixo>.md`**, com um
+   cabeçalho de duas linhas (o domínio e o link de volta ao 03) e o texto
+   movido sem mudar uma linha, inclusive o nível dos títulos. As seções de
+   um mesmo prefixo vão juntas (`build.size` e `build.run`; as três de
+   `toolchain.*`; as quatro do Remoto; o "Console e árvore" no
+   `datasource`; as duas do `syntaxTree`; o `event.lsp.documentsClosed` no
+   `lsp`; `tools.*` e `environment.scan` em `tools`).
+3. **`03-dominios/README.md`** é o índice da pasta (o gate pede), e o 00
+   §5.1 passa a ligar a coluna "Domínios no 03" aos arquivos.
+4. **As citações antigas** ("03 §Toolchain", links com âncora para o 03)
+   continuam achando o caminho pela tabela do item 1; as do 00, do
+   `contribuindo/05` e do `CLAUDE.md` são atualizadas.
+
+**Prova:** um script compara, linha a linha, o 03 de antes com a
+concatenação do 03 de depois e dos arquivos de domínio, descontados os
+cabeçalhos novos e a tabela: nenhuma linha perdida, duplicada ou mudada; o
+gate de fiação, o de links e o `verificar-docs.sh` verdes; o tamanho do que
+um contexto lê, medido antes e depois.
+
 ## 4. As fatias
 
 | # | Fatia | Prova |
@@ -150,8 +191,8 @@ Cada verificação nova é provada por mutação antes do commit.
 | O3 | O 40 só com o estado (§3.3), o 59 §2.5 e o dono de cada ordem (§3.4) | o texto que saiu do 40 está inteiro no registro; mutação do teto do cabeçalho |
 | O4 | O 03 sem o histórico no caminho (§3.5) | as 949 linhas idênticas no 03.1; o `verificar-fiacao-ipc.sh` lê a lista canônica (onde o Rust estiver instalado) |
 | O5 | O mapa de contextos no 00 §5 e a ordem de leitura do `contribuindo/05` (§3.1) | os links do mapa existem (gate) |
-| O6 | O 03 dividido por domínio (decisão do autor, 2026-10-16): o 03 fica com as regras, as listas canônicas que o gate lê e o índice; cada domínio no seu arquivo. Desenho em §3.7 antes de mover | os gates de fiação e de links verdes; o texto movido idêntico ao de antes (comparação por linha) |
-| O7 | Um arquivo curto de entrada para agentes na raiz, o `CLAUDE.md` (decisão do autor, 2026-10-16): aponta o 00, o 40 e o `contribuindo/05` e repete as regras que não se otimizam | o gate de links; o Claude Code o carrega sozinho |
+| O6 | O 03 dividido por domínio (decisão do autor, 2026-10-16): o 03 fica com as regras, as listas canônicas que o gate lê e o índice; cada domínio no seu arquivo. Desenho em §3.7 antes de mover. **Feita em 2026-10-16 (40.7 §7.306)** | os gates de fiação e de links verdes; o texto movido idêntico ao de antes (comparação por linha) |
+| O7 | Um arquivo curto de entrada para agentes na raiz, o `CLAUDE.md` (decisão do autor, 2026-10-16): aponta o 00, o 40 e o `contribuindo/05` e repete as regras que não se otimizam. **Feita em 2026-10-16 (40.7 §7.305)** | o gate de links; o Claude Code o carrega sozinho |
 
 ## 5. O que fica de fora, por enquanto
 

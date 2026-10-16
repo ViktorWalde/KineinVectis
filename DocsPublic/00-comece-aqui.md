@@ -134,24 +134,26 @@ o que não vai mexer ([`roadmaps/61`](roadmaps/61-organizacao-da-documentacao.md
 Os contextos de código são os do mapa de módulos (`CONTEXTS` em
 `scripts/module_map.py`); cada um tem uma seção "Contextos" no
 [`arquitetura/01`](arquitetura/01-mapa-de-modulos.md), que é sempre a primeira
-leitura dele. No [`arquitetura/03`](arquitetura/03-protocolo-ipc.md), leia só
-as seções dos domínios da linha.
+leitura dele. Do protocolo, leia o [`arquitetura/03`](arquitetura/03-protocolo-ipc.md)
+(o formato base, as listas e as regras) e só os arquivos dos domínios da
+linha, em [`arquitetura/03-dominios/`](arquitetura/03-dominios/README.md)
+(um por domínio desde 2026-10-16).
 
 | Contexto | Leia, além do 01 | Domínios no 03 |
 | --- | --- | --- |
-| Workspace e árvore | [`especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md`](especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md) | `workspace.*`, `fs.*`, `draft.*` |
-| Editor e LSP | [`arquitetura/32`](arquitetura/32-editor-por-responsabilidade.md), [`especificacoes/editor-e-inteligencia-de-linguagem.md`](especificacoes/editor-e-inteligencia-de-linguagem.md); o motor semântico só se for ele: [`roadmaps/56`](roadmaps/56-motor-semantico-profundo-cpp-rust.md) | `lsp.*`, `syntaxTree.*`, `format.*` |
-| Busca, índice e símbolos | [`arquitetura/33`](arquitetura/33-busca-no-projeto.md) | `fs.search`, `fs.findFiles`, `index.*` |
-| Git | — | `git.*` |
-| Executar, terminal, build e testes | [`especificacoes/fluxos-de-produto-build-run-debug.md`](especificacoes/fluxos-de-produto-build-run-debug.md), [`especificacoes/terminal-ergonomia-0.3.md`](especificacoes/terminal-ergonomia-0.3.md) | `run.*`, `terminal.*`, `build.*`, `quality.*`, `test.*`, `job.*`, `coverage.*` |
-| Depuração (DAP) | [`especificacoes/fluxos-de-produto-build-run-debug.md`](especificacoes/fluxos-de-produto-build-run-debug.md) | `debug.*` |
-| Embarcados | [`roadmaps/52`](roadmaps/52-arquitetura-executavel-da-0.4.md) (a 0.4), [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md), [`especificacoes/embarcados-targets-flash-serial-qemu.md`](especificacoes/embarcados-targets-flash-serial-qemu.md), [`integracoes/36`](integracoes/36-ferramentas-de-embarcados.md) | `probe.*`, `serial.*`, `project.*` |
-| Toolchains e kits | [`integracoes/39`](integracoes/39-toolchains-por-alvo.md), [`build/22`](build/22-compilacao-c-cpp-rust.md) | `toolchain.*`, `cmake.*`, `cargo.*`, `runConfig.*` |
-| Remote SSH | [`especificacoes/remote-ssh-ui-hud.md`](especificacoes/remote-ssh-ui-hud.md) | `remote.*` |
-| Banco e observabilidade | [`arquitetura/37`](arquitetura/37-banco-de-dados.md), [`38`](arquitetura/38-provedores-de-banco-e-linguagem.md), [`39`](arquitetura/39-drivers-externos-e-compatibilidade.md), [`40`](arquitetura/40-contrato-operacional-de-drivers.md); os adiados pelo autor no [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.3 (registro) | `datasource.*`, `grafana.*` |
-| Containers | [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.5 (o 16b) e §3 | `container.*` |
-| Python | [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md) §9 | `python.*` |
-| Configuração, biblioteca, setup | [`especificacoes/fluxo-duplo-e-acoes-de-configuracao.md`](especificacoes/fluxo-duplo-e-acoes-de-configuracao.md) | `configAction.*`, `library.*`, `setup.*`, `settings.*`, `command.*` |
+| Workspace e árvore | [`especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md`](especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md) | [`workspace.*`](arquitetura/03-dominios/workspace.md), [`fs.*`](arquitetura/03-dominios/fs.md), [`draft.*`](arquitetura/03-dominios/draft.md) |
+| Editor e LSP | [`arquitetura/32`](arquitetura/32-editor-por-responsabilidade.md), [`especificacoes/editor-e-inteligencia-de-linguagem.md`](especificacoes/editor-e-inteligencia-de-linguagem.md); o motor semântico só se for ele: [`roadmaps/56`](roadmaps/56-motor-semantico-profundo-cpp-rust.md) | [`lsp.*`](arquitetura/03-dominios/lsp.md), [`syntaxTree.*`](arquitetura/03-dominios/syntaxTree.md), [`format.*`](arquitetura/03-dominios/format.md) |
+| Busca, índice e símbolos | [`arquitetura/33`](arquitetura/33-busca-no-projeto.md) | [`fs.search`](arquitetura/03-dominios/fs-busca.md), [`fs.findFiles`](arquitetura/03-dominios/fs-busca.md), [`index.*`](arquitetura/03-dominios/index.md) |
+| Git | — | [`git.*`](arquitetura/03-dominios/git.md) |
+| Executar, terminal, build e testes | [`especificacoes/fluxos-de-produto-build-run-debug.md`](especificacoes/fluxos-de-produto-build-run-debug.md), [`especificacoes/terminal-ergonomia-0.3.md`](especificacoes/terminal-ergonomia-0.3.md) | [`run.*`](arquitetura/03-dominios/run.md), [`terminal.*`](arquitetura/03-dominios/terminal.md), [`build.*`](arquitetura/03-dominios/build.md), [`quality.*`](arquitetura/03-dominios/quality.md), [`test.*`](arquitetura/03-dominios/test.md), [`job.*`](arquitetura/03-dominios/job.md), [`coverage.*`](arquitetura/03-dominios/coverage.md) |
+| Depuração (DAP) | [`especificacoes/fluxos-de-produto-build-run-debug.md`](especificacoes/fluxos-de-produto-build-run-debug.md) | [`debug.*`](arquitetura/03-dominios/debug.md) |
+| Embarcados | [`roadmaps/52`](roadmaps/52-arquitetura-executavel-da-0.4.md) (a 0.4), [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md), [`especificacoes/embarcados-targets-flash-serial-qemu.md`](especificacoes/embarcados-targets-flash-serial-qemu.md), [`integracoes/36`](integracoes/36-ferramentas-de-embarcados.md) | [`probe.*`](arquitetura/03-dominios/probe.md), [`serial.*`](arquitetura/03-dominios/serial.md), [`project.*`](arquitetura/03-dominios/project.md) |
+| Toolchains e kits | [`integracoes/39`](integracoes/39-toolchains-por-alvo.md), [`build/22`](build/22-compilacao-c-cpp-rust.md) | [`toolchain.*`](arquitetura/03-dominios/toolchain.md), [`cmake.*`](arquitetura/03-dominios/cmake.md), [`cargo.*`](arquitetura/03-dominios/cargo.md), [`runConfig.*`](arquitetura/03-dominios/runConfig.md) |
+| Remote SSH | [`especificacoes/remote-ssh-ui-hud.md`](especificacoes/remote-ssh-ui-hud.md) | [`remote.*`](arquitetura/03-dominios/remote.md) |
+| Banco e observabilidade | [`arquitetura/37`](arquitetura/37-banco-de-dados.md), [`38`](arquitetura/38-provedores-de-banco-e-linguagem.md), [`39`](arquitetura/39-drivers-externos-e-compatibilidade.md), [`40`](arquitetura/40-contrato-operacional-de-drivers.md); os adiados pelo autor no [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.3 (registro) | [`datasource.*`](arquitetura/03-dominios/datasource.md), [`grafana.*`](arquitetura/03-dominios/grafana.md) |
+| Containers | [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.5 (o 16b) e §3 | [`container.*`](arquitetura/03-dominios/container.md) |
+| Python | [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md) §9 | [`python.*`](arquitetura/03-dominios/python.md) |
+| Configuração, biblioteca, setup | [`especificacoes/fluxo-duplo-e-acoes-de-configuracao.md`](especificacoes/fluxo-duplo-e-acoes-de-configuracao.md) | [`configAction.*`](arquitetura/03-dominios/configAction.md), [`library.*`](arquitetura/03-dominios/library.md), [`setup.*`](arquitetura/03-dominios/setup.md), [`settings.*`](arquitetura/03-dominios/settings.md), [`command.*`](arquitetura/03-dominios/command.md) |
 
 Os contextos que não são domínio do core:
 

@@ -14,8 +14,9 @@ caminho; o conteúdo mora nos donos, e eles vencem se divergirem daqui.
    o estado de hoje, a próxima fatia e o que espera o autor; o §5 traz as
    decisões dele, que não se reabrem.
 3. A linha do contexto da mudança no 00 §5.1: a seção dele no
-   `arquitetura/01`, os documentos da linha e só os domínios dela no
-   `arquitetura/03`.
+   `arquitetura/01`, os documentos da linha, o `arquitetura/03` (formato base,
+   listas, regras) e só os arquivos dos domínios dela em
+   `arquitetura/03-dominios/`.
 4. O roadmap da versão em curso (o 40 diz qual) e
    [`DocsPublic/contribuindo/05-com-um-agente-de-ia.md`](DocsPublic/contribuindo/05-com-um-agente-de-ia.md).
 
