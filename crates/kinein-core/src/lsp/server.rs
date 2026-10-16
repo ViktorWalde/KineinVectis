@@ -254,7 +254,15 @@ pub(super) fn run_reader(
                 // linguagem — a UI substitui por arquivo, e dois eventos
                 // parciais se apagariam um ao outro.
                 if let Some((path, diagnostics)) = published_diagnostics(params) {
-                    let event = diagnostics_merge::record(merged, key, &path, diagnostics);
+                    let Some(event) = diagnostics_merge::record_while_running(
+                        merged,
+                        key,
+                        &path,
+                        diagnostics,
+                        stopping,
+                    ) else {
+                        break;
+                    };
                     if events.send(event).is_err() {
                         break;
                     }

@@ -130,6 +130,7 @@ armed
 array
 arrays
 arrived
+arrives
 arrow
 artifact
 artifacts

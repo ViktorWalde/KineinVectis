@@ -1055,7 +1055,6 @@ crates/kinein-core/src/lsp/diagnostics_merge.rs	caminho	5
 crates/kinein-core/src/lsp/diagnostics_merge.rs	evento	4
 crates/kinein-core/src/lsp/diagnostics_merge.rs	eventos	10
 crates/kinein-core/src/lsp/diagnostics_merge.rs	mensagem	2
-crates/kinein-core/src/lsp/diagnostics_merge.rs	mensagens	8
 crates/kinein-core/src/lsp/diagnostics_merge.rs	servidor	11
 crates/kinein-core/src/lsp/diagnostics_merge.rs	uniao	2
 crates/kinein-core/src/lsp/handshake.rs	anexar	1

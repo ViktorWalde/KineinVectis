@@ -13,7 +13,10 @@
 
 use std::{
     collections::{BTreeMap, HashMap},
-    sync::{Arc, Mutex},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use kinein_protocol::{Diagnostic, JsonRpcRequest};
@@ -26,6 +29,10 @@ pub(super) type MergedDiagnostics =
     Arc<Mutex<HashMap<String, BTreeMap<&'static str, Vec<Diagnostic>>>>>;
 
 /// Grava o que `key` publicou para `path` e devolve o evento com a uniao.
+///
+/// So' os testes a usam hoje: a thread leitora usa [`record_while_running`],
+/// que descarta o que chega de um servidor ja' parado.
+#[cfg(test)]
 pub(super) fn record(
     merged: &MergedDiagnostics,
     key: &'static str,
@@ -35,6 +42,39 @@ pub(super) fn record(
     let Ok(mut cache) = merged.lock() else {
         return diagnostics_notification(path, &diagnostics);
     };
+    record_locked(&mut cache, key, path, diagnostics)
+}
+
+/// Como [`record`], para a thread leitora de um servidor: o que chega depois
+/// de ele ser parado e esquecido nao volta a tela (`None`).
+///
+/// A conferencia e' DENTRO da trava: o `kill_server` liga o `stopping` antes
+/// do `forget`, entao uma gravacao que entra depois dele ve o `stopping` e e'
+/// descartada, e a que entrou antes e' apagada pelo proprio `forget`. Fora da
+/// trava, um `publishDiagnostics` que estava no buffer quando o servidor
+/// morreu era gravado DEPOIS do `forget` (40.7 §7.309).
+pub(super) fn record_while_running(
+    merged: &MergedDiagnostics,
+    key: &'static str,
+    path: &str,
+    diagnostics: Vec<Diagnostic>,
+    stopping: &AtomicBool,
+) -> Option<JsonRpcRequest> {
+    let Ok(mut cache) = merged.lock() else {
+        return Some(diagnostics_notification(path, &diagnostics));
+    };
+    if stopping.load(Ordering::SeqCst) {
+        return None;
+    }
+    Some(record_locked(&mut cache, key, path, diagnostics))
+}
+
+fn record_locked(
+    cache: &mut HashMap<String, BTreeMap<&'static str, Vec<Diagnostic>>>,
+    key: &'static str,
+    path: &str,
+    diagnostics: Vec<Diagnostic>,
+) -> JsonRpcRequest {
     let por_servidor = cache.entry(path.to_owned()).or_default();
     if diagnostics.is_empty() {
         por_servidor.remove(key);
@@ -81,7 +121,9 @@ fn union(por_servidor: &BTreeMap<&'static str, Vec<Diagnostic>>) -> Vec<Diagnost
 mod tests {
     use std::sync::{Arc, Mutex};
 
-    use super::{MergedDiagnostics, clear, forget, record};
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    use super::{MergedDiagnostics, clear, forget, record, record_while_running};
     use kinein_protocol::{Diagnostic, DiagnosticSeverity, DiagnosticSource};
 
     fn diag(mensagem: &str) -> Diagnostic {
@@ -104,7 +146,7 @@ mod tests {
         }
     }
 
-    fn mensagens(evento: &kinein_protocol::JsonRpcRequest) -> Vec<String> {
+    fn messages(evento: &kinein_protocol::JsonRpcRequest) -> Vec<String> {
         evento.params.as_ref().unwrap()["diagnostics"]
             .as_array()
             .unwrap()
@@ -128,17 +170,17 @@ mod tests {
         let e1 = record(&merged, "python", "/p/a.py", vec![diag("pyright")]);
         assert_eq!(e1.method, "event.lsp.diagnostics");
         assert_eq!(caminho(&e1), "/p/a.py");
-        assert_eq!(mensagens(&e1), ["pyright"]);
+        assert_eq!(messages(&e1), ["pyright"]);
         let e2 = record(&merged, "python-ruff", "/p/a.py", vec![diag("ruff")]);
         assert_eq!(
-            mensagens(&e2),
+            messages(&e2),
             ["pyright", "ruff"],
             "a uniao, principal primeiro"
         );
         let e3 = record(&merged, "python", "/p/a.py", Vec::new());
-        assert_eq!(mensagens(&e3), ["ruff"], "o pyright limpou; o ruff fica");
+        assert_eq!(messages(&e3), ["ruff"], "o pyright limpou; o ruff fica");
         let e4 = record(&merged, "python-ruff", "/p/a.py", Vec::new());
-        assert!(mensagens(&e4).is_empty());
+        assert!(messages(&e4).is_empty());
         assert!(
             merged.lock().unwrap().is_empty(),
             "arquivo sem nada sai do cache"
@@ -146,7 +188,7 @@ mod tests {
         // Outro arquivo nao se mistura.
         record(&merged, "python", "/p/a.py", vec![diag("a")]);
         let eb = record(&merged, "python-ruff", "/p/b.py", vec![diag("b")]);
-        assert_eq!(mensagens(&eb), ["b"]);
+        assert_eq!(messages(&eb), ["b"]);
     }
 
     /// Esquecer um servidor devolve um evento por arquivo em que ele falava,
@@ -162,9 +204,9 @@ mod tests {
         eventos.sort_by_key(caminho);
         assert_eq!(eventos.len(), 2, "a.py e b.py; c.py nao tinha ruff");
         assert_eq!(caminho(&eventos[0]), "/p/a.py");
-        assert_eq!(mensagens(&eventos[0]), ["pyright"]);
+        assert_eq!(messages(&eventos[0]), ["pyright"]);
         assert_eq!(caminho(&eventos[1]), "/p/b.py");
-        assert!(mensagens(&eventos[1]).is_empty(), "b.py fica limpo na tela");
+        assert!(messages(&eventos[1]).is_empty(), "b.py fica limpo na tela");
         assert_eq!(merged.lock().unwrap().len(), 2, "a.py e c.py continuam");
         assert!(
             forget(&merged, "python-ruff").is_empty(),
@@ -172,5 +214,35 @@ mod tests {
         );
         clear(&merged);
         assert!(merged.lock().unwrap().is_empty());
+    }
+
+    /// O servidor parado e esquecido: o que a thread leitora ainda tinha no
+    /// buffer nao volta (40.7 §7.309); antes de parar, grava como sempre.
+    #[test]
+    fn a_publish_that_arrives_after_the_server_stopped_is_dropped() {
+        let merged: MergedDiagnostics = Arc::new(Mutex::new(std::collections::HashMap::default()));
+        let stopping = AtomicBool::new(false);
+        record(&merged, "python", "/p/a.py", vec![diag("pyright")]);
+        let live = record_while_running(
+            &merged,
+            "python-ruff",
+            "/p/a.py",
+            vec![diag("ruff")],
+            &stopping,
+        );
+        assert_eq!(messages(&live.unwrap()), ["pyright", "ruff"]);
+        stopping.store(true, Ordering::SeqCst);
+        let gone = forget(&merged, "python-ruff");
+        assert_eq!(messages(&gone[0]), ["pyright"]);
+        let late = record_while_running(
+            &merged,
+            "python-ruff",
+            "/p/a.py",
+            vec![diag("ruff atrasado")],
+            &stopping,
+        );
+        assert!(late.is_none(), "o atrasado nao vira evento");
+        let next = record(&merged, "python", "/p/a.py", vec![diag("pyright")]);
+        assert_eq!(messages(&next), ["pyright"], "e nao ficou no cache");
     }
 }
