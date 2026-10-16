@@ -24,6 +24,7 @@
 
 pub mod contacts;
 pub mod discover;
+pub mod guard;
 pub mod mirror;
 pub mod parse;
 mod store;
@@ -77,7 +78,8 @@ pub fn validate(target: &RemoteTarget) -> Result<(), String> {
     if target.port == Some(0) {
         return Err("a porta SSH nao pode ser 0".to_owned());
     }
-    Ok(())
+    // O que vai ao `ssh` e ao shell: a MESMA regra do uso (16.4a).
+    guard::usable(target)
 }
 
 fn normalize(target: &RemoteTarget) -> RemoteTarget {
@@ -244,7 +246,11 @@ pub fn ssh_copy_id_line(target: &RemoteTarget) -> String {
         partes.push(key.clone());
     }
     partes.push(destination(target));
-    partes.join(" ")
+    partes
+        .iter()
+        .map(|part| guard::path_word(part))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// A falha do `ssh` em palavras que dizem o proximo passo.
@@ -321,7 +327,7 @@ pub fn deploy_dir(target: &RemoteTarget, project: &str) -> String {
 #[must_use]
 pub fn ensure_dest_command(target: &RemoteTarget, dest: &str) -> Vec<String> {
     let mut args = ssh_args(target, true);
-    args.push(format!("mkdir -p {dest}"));
+    args.push(format!("mkdir -p {}", guard::path_word(dest)));
     args
 }
 
@@ -334,7 +340,9 @@ pub fn deploy_command(
     dest: &str,
     use_rsync: bool,
 ) -> (String, Vec<String>) {
-    let destino = format!("{}:{}/", destination(target), dest);
+    // Sem `-s` no deploy: o shell REMOTO le' o destino (e expande o `~`),
+    // por isso ele vai pela guarda.
+    let destino = format!("{}:{}/", destination(target), guard::path_word(dest));
     // Uma PASTA vai com o CONTEUDO (2026-10-04, achado contra um sshd real):
     // sem isso `build/app` chegava em `<deploy>/build/app`, e o "Programa no
     // alvo (relativo a pasta de deploy)" `app` nao existia. A barra final do
@@ -354,7 +362,8 @@ pub fn deploy_command(
             e.push(format!("-p {port}"));
         }
         if let Some(key) = &target.identity_file {
-            e.push(format!("-i {key}"));
+            // O `-e` e' uma string que o `rsync` divide por espaco (16.4a).
+            e.push(format!("-i {}", guard::shell_word(key)));
         }
         (
             "rsync".to_owned(),
@@ -410,7 +419,12 @@ pub fn ssh_shell_line(target: &RemoteTarget, remote_command: Option<&str>) -> St
     if remote_command.is_some() {
         partes.push("-tt".to_owned());
     }
-    partes.extend(ssh_args(target, false));
+    // A linha roda por `sh -c`: cada argumento pela guarda (16.4a).
+    partes.extend(
+        ssh_args(target, false)
+            .iter()
+            .map(|arg| guard::path_word(arg)),
+    );
     if let Some(cmd) = remote_command {
         partes.push(quote(cmd));
     }
@@ -420,8 +434,10 @@ pub fn ssh_shell_line(target: &RemoteTarget, remote_command: Option<&str>) -> St
 /// O comando remoto de cada tipo. `program` e' o caminho NO ALVO.
 #[must_use]
 pub fn remote_command(kind: RemoteCommandKind, program: &str, port: u16) -> Option<String> {
+    // O shell REMOTO le' o caminho: pela guarda, com o `~/` de fora (16.4a).
+    let program = guard::path_word(program);
     match kind {
-        RemoteCommandKind::Run => Some(program.to_owned()),
+        RemoteCommandKind::Run => Some(program),
         RemoteCommandKind::DebugServer => Some(format!("gdbserver :{port} {program}")),
         RemoteCommandKind::Debugpy => Some(format!(
             "python3 -m debugpy --listen 0.0.0.0:{port} --wait-for-client {program}"

@@ -48,6 +48,7 @@ mod lsp_stderr;
 mod project;
 mod python;
 mod remote;
+mod remote_guard;
 mod remote_mirror;
 mod rigor;
 mod run;

@@ -807,7 +807,7 @@ mod tests {
     fn the_install_root_is_read_on_every_lookup() {
         // Escreve um executavel e o roda: sem este lock corre com os
         // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
-        let _serial = crate::serializar_executaveis();
+        let _serial = crate::serialize_executables();
         let base = temp_bin_dir("install-root");
         let path_dir = base.join("path");
         let raiz = base.join("toolchains");

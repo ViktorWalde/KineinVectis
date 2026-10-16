@@ -360,7 +360,7 @@ fn metadata_de_dois_pacotes(raiz: &Path) -> String {
 
 #[test]
 fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let raiz = temp_dir("cargo");
     put_file(
         &raiz.join("Cargo.toml"),
@@ -472,7 +472,7 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
     ignore = "W7: o venv do Windows tem Scripts\\python.exe, nao bin/python (60 §3.3)"
 )]
 fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let raiz = temp_dir("python");
     put_file(&raiz.join("tools/gera.py"), "def gera():\n    pass\n");
     let sistema = script(&raiz.join("bin/python3"), "Python 9.9.9");

@@ -103,6 +103,23 @@ impl Core {
             Ok(scan) => scan,
             Err(reason) => return error_response(request_id, reason),
         };
+        // Uma chave JA' gravada para o host: acrescentar outra anularia o
+        // aviso de identidade mudada do `ssh`, que aceita qualquer linha que
+        // case (16.4a, `roadmaps/59` §7.1.4). Confiar e' so' o primeiro
+        // contato.
+        if self.already_known(&scan) {
+            return error_response(
+                request_id,
+                format!(
+                    "o {} já tem uma chave para {}; a IDE não acrescenta outra. Se a placa foi \
+                     reinstalada, confira com quem a administra e remova a antiga com \
+                     `ssh-keygen -R {}`",
+                    scan.file.display(),
+                    scan.host,
+                    scan.host
+                ),
+            );
+        }
         // So' o que a pessoa VIU: uma chave que nao estava na tela nao entra.
         let lines: Vec<String> = scan
             .keys
@@ -140,6 +157,23 @@ impl Core {
             return Err(Box::new(no_workspace_response(request_id.cloned(), method)));
         };
         target_or_error(&root, request_id, name)
+    }
+
+    /// O `known_hosts` ja' tem linha para o host? `ssh-keygen -F` le' tambem
+    /// as linhas em hash. Sem o arquivo, nao.
+    fn already_known(&self, scan: &Scan) -> bool {
+        let Some(keygen) = self.detector.find_in_path("ssh-keygen") else {
+            return false;
+        };
+        scan.file.is_file()
+            && Command::new(keygen)
+                .arg("-F")
+                .arg(&scan.host)
+                .arg("-f")
+                .arg(&scan.file)
+                .stderr(Stdio::null())
+                .output()
+                .is_ok_and(|found| found.status.success() && !found.stdout.trim_ascii().is_empty())
     }
 
     /// `ssh -G` (onde gravar, o host e a porta efetivos), `ssh-keyscan` (as

@@ -13,7 +13,7 @@ use kinein_protocol::JsonRpcRequest;
 fn run_start_requires_workspace_and_enabled_manager() {
     // Escreve um executavel e o roda: sem este lock corre com os
     // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut core = core_with_empty_search_path("run-no-workspace");
     let denied = core.handle_request(&JsonRpcRequest::new(40_i64, "run.start", None));
     assert!(denied.response().error.is_some());

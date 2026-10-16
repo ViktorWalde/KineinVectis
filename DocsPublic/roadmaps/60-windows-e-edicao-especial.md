@@ -533,8 +533,12 @@ do fim da W2b (40.7 §7.270):
    corrigidas.
 8. **W8:** Banco no Windows: os consoles e o ODBC. Os 4 adiados ganham os
    substitutos (D14).
-9. **W9:** containers e Remote SSH no Windows. Os 11 adiados ganham os
-   substitutos (D14).
+9. **W9:** containers e Remote SSH no Windows. Os 13 adiados ganham os
+   substitutos (D14). Os dois mais novos (16.4a, 2026-10-16, `59` §7.1.4)
+   são da guarda do Remoto: o deploy com aspas e a confiança no
+   `known_hosts`, que precisam do `ssh`, `rsync` e `ssh-keygen` falsos
+   rodando; os outros três testes da guarda não executam processo e rodam
+   no Windows.
 10. **W10:** embarcados e depuração nativos (D10). Os 33 adiados ganham os
     substitutos (D14).
 11. **W11:** o zip portátil (D9).

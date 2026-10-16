@@ -69,7 +69,7 @@ fn warm_up(core: &mut crate::Core, path: &str, log: &std::path::Path) {
 
 #[test]
 fn a_slow_hover_does_not_block_the_loop_and_answers_later_through_the_channel() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let root = workspace("lento");
     let log = root.join("wire.jsonl");
     let (events, _inbox) = mpsc::channel::<JsonRpcRequest>();
@@ -142,7 +142,7 @@ fn a_slow_hover_does_not_block_the_loop_and_answers_later_through_the_channel() 
 /// Sem o canal, a espera e' inline — o comportamento dos demais testes.
 #[test]
 fn without_the_channel_the_hover_is_answered_inline() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let root = workspace("inline");
     let log = root.join("wire.jsonl");
     let (events, _inbox) = mpsc::channel::<JsonRpcRequest>();
@@ -181,7 +181,7 @@ fn without_the_channel_the_hover_is_answered_inline() {
 /// edit que o servidor mandou.
 #[test]
 fn a_slow_rename_waits_off_the_loop_and_finishes_in_a_continuation() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let root = workspace("rename-lento");
     let log = root.join("wire.jsonl");
     let (events, _inbox) = mpsc::channel::<JsonRpcRequest>();

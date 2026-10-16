@@ -1091,6 +1091,7 @@ flowchart LR
     n_crates_kinein_core_src_lib_rs["lib.rs"]
     n_core_build[build]
     n_core_jobs[jobs]
+    n_core_platform[platform]
     n_core_process[process]
     n_core_remote[remote]
     n_core_rpc[rpc]
@@ -1129,6 +1130,7 @@ flowchart LR
   n_crates_kinein_core_src_handlers_remote_discover_rs --> n_core_rpc
   n_ipc_remote --> n_crates_kinein_core_src_handlers_remote_mirror_rs
   n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_jobs
+  n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_platform
   n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_process
   n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_remote
   n_crates_kinein_core_src_handlers_remote_mirror_rs --> n_core_rpc

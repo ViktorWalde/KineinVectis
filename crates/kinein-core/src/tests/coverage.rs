@@ -91,7 +91,7 @@ fn lcov(arquivo: &Path) -> String {
 /// resumo por arquivo sai no evento e `coverage.lines` da' as linhas.
 #[test]
 fn rust_coverage_runs_cargo_llvm_cov_and_the_lines_reach_the_editor() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("rust");
     std::fs::write(
         c.root.join("Cargo.toml"),
@@ -192,7 +192,7 @@ fn rust_coverage_runs_cargo_llvm_cov_and_the_lines_reach_the_editor() {
     ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv, debugpy) e' da W7 (60 §3.3)"
 )]
 fn python_coverage_uses_the_project_interpreter_and_cpp_is_refused() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("python");
     std::fs::write(
         c.root.join("pyproject.toml"),

@@ -67,7 +67,7 @@ fn status(core: &mut Core) -> Value {
     ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv) e' da W7 (60 §3.3)"
 )]
 fn status_tells_the_truth_in_the_three_states() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let raiz = temp_dir("status");
     escrever(&raiz.join("pyproject.toml"), "[project]\nname = \"demo\"\n");
     escrever(&raiz.join("requirements.txt"), "");
@@ -190,7 +190,7 @@ fn create_environment_refuses_with_a_reason_what_the_machine_lacks() {
     ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv) e' da W7 (60 §3.3)"
 )]
 fn the_job_runs_the_detected_uv_and_the_context_follows_the_new_environment() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let raiz = temp_dir("job");
     escrever(&raiz.join("pyproject.toml"), "[project]\nname = \"demo\"\n");
     escrever(&raiz.join("app.py"), "def main():\n    pass\n");
@@ -310,7 +310,7 @@ fn the_job_runs_the_detected_uv_and_the_context_follows_the_new_environment() {
     ignore = "W7: o Python do projeto no Windows (venv com Scripts\\, uv) e' da W7 (60 §3.3)"
 )]
 fn the_board_stubs_are_suggested_installed_into_typings_and_reported() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let raiz = temp_dir("stubs");
     escrever(
         &raiz.join("main.py"),

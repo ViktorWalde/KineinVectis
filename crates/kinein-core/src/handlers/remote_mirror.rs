@@ -116,7 +116,21 @@ impl Core {
     /// O espelho que o workspace aberto e', se for um.
     pub(crate) fn current_mirror(&self) -> Option<RemoteMirror> {
         self.workspace_root()
-            .and_then(|root| mirror::read_marker(&root))
+            .and_then(|root| self.trusted_mirror(&root))
+    }
+
+    /// O marcador so' vale DENTRO do cache da IDE, onde o `remote.open` cria o
+    /// espelho. Um repositorio clonado que traga `.kinein/remote-mirror.json`
+    /// nao vira espelho: o autosave empurraria cada arquivo gravado para o
+    /// host dele (16.4a, `roadmaps/59` §7.1.4).
+    fn trusted_mirror(&self, root: &Path) -> Option<RemoteMirror> {
+        let cache = mirror::cache_root(&self.cache_home()?);
+        let cache = crate::platform::canonicalize(&cache).unwrap_or(cache);
+        let root = crate::platform::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+        if !root.starts_with(&cache) {
+            return None;
+        }
+        mirror::read_marker(&root).filter(|found| remote::guard::check_host(&found.host).is_ok())
     }
 
     /// A pasta de cache: `$XDG_CACHE_HOME` ou `<home>/.cache`; com o `$HOME`
@@ -165,11 +179,10 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "remote.open");
         };
-        let Some(target) = remote::find(&root, &parsed.name) else {
-            return error_response(
-                request_id,
-                format!("nao ha' alvo remoto chamado `{}`", parsed.name),
-            );
+        let target = match super::remote::target_or_error(&root, request_id.as_ref(), &parsed.name)
+        {
+            Ok(target) => target,
+            Err(response) => return *response,
         };
         let remote_path = parsed.path.trim().trim_end_matches('/').to_owned();
         if !remote::valid_remote_dir(&remote_path) {
@@ -239,7 +252,7 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "remote.sync");
         };
-        let Some(espelho) = mirror::read_marker(&root) else {
+        let Some(espelho) = self.trusted_mirror(&root) else {
             return error_response(
                 request_id,
                 "este projeto nao e' um espelho remoto — abra uma pasta do alvo pelo painel Remoto",
@@ -296,7 +309,7 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return;
         };
-        let Some(espelho) = mirror::read_marker(&root) else {
+        let Some(espelho) = self.trusted_mirror(&root) else {
             return;
         };
         let Ok(rel) = path.strip_prefix(&root) else {
@@ -335,6 +348,7 @@ impl Core {
             program: None,
             deploy_source: None,
         });
+        remote::guard::usable(&target)?;
         let (rsync, transport) = self.rsync_and_transport(&target)?;
         let jobs = self
             .jobs

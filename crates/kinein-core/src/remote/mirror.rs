@@ -125,16 +125,22 @@ pub fn ssh_transport(target: &RemoteTarget, control_dir: &Path) -> String {
         e.push(format!("-p {port}"));
     }
     if let Some(key) = &target.identity_file {
-        e.push(format!("-i {key}"));
+        // O `-e` e' uma string que o `rsync` divide por espaco (16.4a).
+        e.push(format!("-i {}", super::guard::shell_word(key)));
     }
     // OpenSSH expands `%C` to 40 hex chars and appends a temporary suffix
     // while creating the control socket. A long XDG/HOME path can exceed
     // Linux's AF_UNIX path limit and make an otherwise valid rsync fail.
     // Keep a margin; the plain SSH transport remains fully functional.
     let socket_len = control_dir.as_os_str().as_encoded_bytes().len() + 5 + 40 + 18;
-    if socket_len <= 100 {
+    // Uma aspa na pasta do cache nao cabe no `-e`: sem o socket compartilhado.
+    let quoted = control_dir.to_string_lossy().contains(['\'', '"']);
+    if socket_len <= 100 && !quoted {
         e.push("-o ControlMaster=auto".to_owned());
-        e.push(format!("-o ControlPath={}/ssh-%C", control_dir.display()));
+        e.push(format!(
+            "-o {}",
+            super::guard::shell_word(&format!("ControlPath={}/ssh-%C", control_dir.display()))
+        ));
         e.push("-o ControlPersist=60".to_owned());
     }
     e.join(" ")

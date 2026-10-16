@@ -646,7 +646,7 @@ pub(crate) fn write_executable(
 /// com `PoisonError` — uma corrida virava cinco falhas, e a primeira ficava
 /// escondida no meio delas. Visto no gate em 2026-09-24.
 #[cfg(test)]
-pub(crate) fn serializar_executaveis() -> std::sync::MutexGuard<'static, ()> {
+pub(crate) fn serialize_executables() -> std::sync::MutexGuard<'static, ()> {
     EXECUTAVEIS
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)

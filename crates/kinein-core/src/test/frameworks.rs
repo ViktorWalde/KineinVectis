@@ -358,7 +358,7 @@ mod tests {
         use super::{Framework, SEP, discover_inner_cases, list_cases, run_inner_case};
         use crate::test::TestEvent;
 
-        let _serial = crate::serializar_executaveis();
+        let _serial = crate::serialize_executables();
 
         let raiz = std::env::temp_dir().join(format!("kinein-frameworks-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&raiz);

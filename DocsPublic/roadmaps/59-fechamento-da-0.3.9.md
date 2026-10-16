@@ -2168,7 +2168,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | feitos pelo agente (40 §5, "modo autonomo"), com os defeitos F1, F3 e F4 corrigidos (§7.1.1; 40.7 §7.292) | 16.1 |
 | PageUp/PageDown no editor | feito (§7.1.2; 40.7 §7.293) | 16.2 |
 | Terminal com reflow ao alargar | feito (§7.1.3; 40.7 §7.294) | 16.3 |
-| Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | pendente: falta o teste que tenta quebrar, item por item | 16.4 |
+| Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | medido em 2026-10-16 (§7.1.4): injeção no Remoto, `known_hosts` regravável, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open` | 16.4a, 16.4b, 16.4c |
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | pendentes | 16.5 |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | pendente; pelo `xdotool` no Xvfb | 16.7 |
@@ -2369,6 +2369,81 @@ o readline, que no SIGWINCH sobe as linhas que o prompt ocupava na largura
 ANTIGA e apaga até o fim da tela; o grid do core está certo (o mesmo
 roteiro com o `cat` o mostra), e terminais que refluem têm o mesmo efeito
 com o bash.
+
+#### 7.1.4 16.4 — a segurança da casca, com teste que tenta quebrar (desenho, 2026-10-16, antes do código)
+
+**Medido nesta data**, num projeto hostil de rascunho aberto na IDE (Xvfb,
+HOME isolado), cada caminho deixando um arquivo-marcador:
+
+| O que o projeto traz | O que aconteceu |
+| --- | --- |
+| `CMakeLists.txt` com `execute_process(COMMAND touch …)` | **rodou só de abrir o projeto**: a faixa de saúde configura sozinha o CMake não configurado (`ProjectHealthController.handleCmakeStatus` → `autoConfigureRequested`, desde 2026-07-14) |
+| `build.rs` que grava um arquivo | **rodou ao abrir o `main.rs`**: o rust-analyzer roda os build scripts e o servidor de proc-macros do projeto |
+| `.kinein/remotes.json` com host `-oProxyCommand=touch …` | não rodou (nenhum gesto no Remoto); lido sem validação |
+
+E pela leitura do código:
+
+- `remote::validate` só roda ao SALVAR pelo painel; o `remotes.json` de um
+  projeto clonado chega sem validação a `ssh`, `rsync`, `scp`, `ssh -G`,
+  `ssh-keyscan` e à linha que o `remote.command` arma para `sh -c`. Host ou
+  usuário começando com `-` viram opção do `ssh` (`-oProxyCommand=…`
+  executa comando ao conectar); `;`, `$()` e espaço no host quebram a linha
+  do `sh -c`; o `-e` do `rsync` (`ssh -p P -i K`) é uma string que o próprio
+  `rsync` divide por espaço, e uma `identityFile` como `k -oProxyCommand=…`
+  vira opção.
+- `remote.trustHost` ACRESCENTA a chave ao `known_hosts` sem olhar se o host
+  já tem uma. Com a identidade do servidor mudada, gravar a nova anula o
+  aviso "REMOTE HOST IDENTIFICATION HAS CHANGED" (o `ssh` aceita qualquer
+  linha que case), o contrário do "nunca sobrescreve a que mudou".
+- A aba Web manda ao `Qt.openUrlExternally` TODA navegação que não é local,
+  de qualquer esquema: um `file:///…/x.desktop` numa página chegaria ao
+  `xdg-open`.
+
+**16.4a — o Remoto.** Uma validação só, `remote::usable`, no salvar E no uso
+(`target_or_error`, o `find` do espelho e o marcador do espelho): host não
+vazio, sem `-` no começo, só `[A-Za-z0-9._:%-]` ou `[IPv6]`; usuário só
+`[A-Za-z0-9._-]`, sem `-` no começo; `identityFile`, `deployDir`, `program`
+e `deploySource` sem caractere de controle, e a chave sem `'`/`"`. O alvo
+inválido continua listado (o arquivo da pessoa não perde nada), mas todo
+comando o recusa com o motivo. As linhas de texto (`-e` do `rsync`, a linha
+do `sh -c`, o `ssh-copy-id`) passam cada argumento por aspas POSIX quando
+ele tem algo fora do conjunto seguro. O `trustHost` recusa quando o
+`known_hosts` já tem chave para o host (`ssh-keygen -F`), com o caminho:
+conferir com quem administra a placa e `ssh-keygen -R`. Provas: testes que
+tentam quebrar — um `remotes.json` com cada valor hostil, e o `ssh` falso que
+deixa marcador se for executado; a linha do `-e` com espaço na chave; o
+`known_hosts` com uma chave diferente para o host continua igual.
+
+**16.4a feita em 2026-10-16 (40.7 §7.295).** Além do desenho, a leitura
+achou mais duas: o `deployDir` ia sem aspas ao `mkdir -p` e ao destino do
+`rsync` (o shell remoto o lê: `/opt/x; rm -rf ~` rodaria na placa), e o
+marcador do espelho (`.kinein/remote-mirror.json`) fazia de QUALQUER pasta
+um espelho: um repositório clonado que o trouxesse empurraria, pelo
+autosave, cada arquivo gravado para o host do marcador. O `deployDir` e o
+programa vão pela mesma guarda (`path_word`); o marcador só vale dentro do
+cache da IDE.
+
+**16.4b — o projeto não confiável.** O requisito do autor (59 §7, "abrir um
+repositório de terceiros não executa nada sem gesto explícito") vale para
+o que a medição achou fora do `.kinein/`. Desenho: confiança por projeto,
+guardada FORA dele (no diretório de dados da IDE, pelo caminho canônico),
+para um repositório clonado não se declarar confiável. Sem confiança: o
+CMake não configura sozinho e o rust-analyzer sobe sem build scripts e sem
+proc-macros (`cargo.buildScripts.enable` e `procMacro.enable` falsos); a
+faixa de saúde diz por quê e oferece "Confiar neste projeto" (um clique,
+uma vez). Gestos explícitos (Compilar, Executar, Configurar) continuam
+valendo sem a confiança: são o gesto. Projeto criado pela IDE nasce
+confiável. Isto é uma consequência do requisito, não uma decisão nova; se o
+autor preferir outro modelo, a troca é num lugar só. Provas: o mesmo
+projeto hostil, antes e depois, pelos marcadores; harness da faixa.
+
+**16.4c — o resto da lista.** A aba Web só abre fora `http`/`https` (o resto
+é ignorado, com aviso); a redação de credenciais com valores reais (a senha
+do banco e o token do Grafana no log do core e da UI); caminhos do espelho e
+do deploy (`..`, link simbólico, absoluto); ODBC (carrega só o driver que a
+pessoa instalou, com aviso, nunca baixa); a cadeia de suprimento (`cargo
+deny` no gate, `Cargo.lock` com hashes). Cada item com o teste que tenta
+quebrar, ou a prova de que já existe.
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

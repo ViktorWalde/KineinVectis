@@ -3553,6 +3553,22 @@ campos; a ponte ganhou `toolchainSetKitRemote`) ou
 workspace remoto, LSP do outro lado, mapeamento de caminhos, `sshd` local
 no gate — o `RemoteContext` inteiro do 28 §4 segue no `42` §P6.
 
+**A guarda (2026-10-16, 16.4a do `roadmaps/59` §7.1.4; sem mudança de
+forma).** O `remotes.json` pode vir de um projeto clonado, então a regra do
+`remote.save` vale também no USO: `probe`, `deploy`, `command`, `hostKey`,
+`trustHost`, `open` e a sincronização recusam com `INVALID_REQUEST` ("não
+pode ser usado: <motivo>") o alvo cujo host não é nome, IPv4 ou `[IPv6]`
+ou começa com `-`, cujo usuário sai de `[A-Za-z0-9._-]` ou começa com `-`,
+cuja chave tem aspas ou começa com `-`, ou com caractere de controle em
+chave, pasta, programa ou origem. O `remote.list` continua listando todos.
+As linhas de texto (`command` do `remote.command`, o `-e` do `rsync`, o
+`mkdir` remoto, o destino do deploy) põem entre aspas simples o argumento
+fora de `[A-Za-z0-9_@%+=:,./-]`, com o `~/` do começo fora delas. O
+`remote.trustHost` recusa quando o `known_hosts` já tem chave para o host
+(`ssh-keygen -F`): confiar é só o primeiro contato. O marcador
+`.kinein/remote-mirror.json` só faz de uma pasta um espelho dentro do cache
+da IDE (`<cache>/kinein-vectis/remote/`), onde o `remote.open` o cria.
+
 ### Descobrir e explicar (`0.132.0`, fatia R0.5)
 
 Fonte: [`remote-ssh-ui-hud.md`](../especificacoes/remote-ssh-ui-hud.md) §6.1 e

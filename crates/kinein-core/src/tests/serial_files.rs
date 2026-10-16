@@ -122,7 +122,7 @@ impl Cenario {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn listing_reads_the_real_output_and_is_a_medium_risk_job() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("ls");
     c.mpremote_falso(&format!("printf '%s' '{LS_REAL}'\n"));
     let porta = c.porta.display().to_string();
@@ -174,7 +174,7 @@ fn listing_reads_the_real_output_and_is_a_medium_risk_job() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn get_put_rm_and_mkdir_build_their_lines_and_writes_are_high_risk() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("cp");
     c.abrir_workspace();
     c.mpremote_falso("exit 0\n");
@@ -238,7 +238,7 @@ fn get_put_rm_and_mkdir_build_their_lines_and_writes_are_high_risk() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn a_raw_repl_failure_is_retried_once() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("retry");
     let marca = c.dir.join("primeira");
     c.mpremote_falso(&format!(
@@ -282,7 +282,7 @@ fn a_raw_repl_failure_is_retried_once() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn the_error_is_the_mpremote_line() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("erro");
     c.mpremote_falso(
         "echo 'cp :nao.py ./nao.py'\necho 'mpremote: cp: nao.py: No such file or directory.' >&2\nexit 1\n",
@@ -305,7 +305,7 @@ fn the_error_is_the_mpremote_line() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn refusals_happen_before_the_port_is_touched() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("recusas");
     c.mpremote_falso("exit 0\n");
     let porta = c.porta.display().to_string();
@@ -392,7 +392,7 @@ fn refusals_happen_before_the_port_is_touched() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn cancelling_the_job_kills_mpremote() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("cancela");
     c.mpremote_falso("echo 'ls :'\nexec sleep 30\n");
     let job_id = c.files(json!({ "action": "list" })).result.unwrap()["jobId"]

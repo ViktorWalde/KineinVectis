@@ -46,12 +46,23 @@ pub(super) fn target_or_error(
     request_id: Option<&Value>,
     name: &str,
 ) -> Result<RemoteTarget, Box<JsonRpcResponse>> {
-    remote::find(root, name).ok_or_else(|| {
+    let target = remote::find(root, name).ok_or_else(|| {
         Box::new(error_response(
             request_id.cloned(),
             format!("nao ha' alvo remoto chamado `{name}` — salve-o no painel Remoto"),
         ))
-    })
+    })?;
+    // O `remotes.json` pode vir de um projeto clonado: a guarda vale no USO,
+    // nao so' no salvar do painel (16.4a, roadmaps/59 §7.1.4).
+    remote::guard::usable(&target).map_err(|reason| {
+        Box::new(error_response(
+            request_id.cloned(),
+            format!(
+                "o alvo `{name}` de .kinein/remotes.json não pode ser usado: {reason} — corrija no painel Remoto"
+            ),
+        ))
+    })?;
+    Ok(target)
 }
 
 /// O que o deploy vai rodar: origem local, pasta no alvo, programa e se e'

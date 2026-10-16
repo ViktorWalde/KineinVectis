@@ -10,20 +10,20 @@ use std::{path::PathBuf, sync::mpsc};
 use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::{Value, json};
 
-fn executavel(caminho: &Path, corpo: &str) {
+pub(super) fn write_tool(caminho: &Path, corpo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
     crate::write_executable(caminho, corpo);
 }
 
-struct Cenario {
+pub(super) struct Scenario {
     core: crate::Core,
-    root: PathBuf,
+    pub(super) root: PathBuf,
     // Lido so' pelos testes de Unix (ssh falso em shell).
     #[cfg_attr(not(unix), allow(dead_code))]
     events: mpsc::Receiver<JsonRpcRequest>,
 }
 
-fn cenario(nome: &str) -> Cenario {
+pub(super) fn scenario(nome: &str) -> Scenario {
     let base = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-remote-{nome}", std::process::id()));
@@ -36,7 +36,7 @@ fn cenario(nome: &str) -> Cenario {
         base.join("bin"),
     ));
     core.enable_lsp(sender);
-    let mut c = Cenario {
+    let mut c = Scenario {
         core,
         root: base.join("ws"),
         events: receiver,
@@ -49,25 +49,25 @@ fn cenario(nome: &str) -> Cenario {
     c
 }
 
-impl Cenario {
-    fn bin(&self) -> PathBuf {
+impl Scenario {
+    pub(super) fn bin(&self) -> PathBuf {
         self.root.parent().unwrap().join("bin")
     }
 
-    fn rpc(&mut self, method: &str, params: Value) -> kinein_protocol::JsonRpcResponse {
+    pub(super) fn rpc(&mut self, method: &str, params: Value) -> kinein_protocol::JsonRpcResponse {
         self.core
             .handle_request(&JsonRpcRequest::new(2_i64, method, Some(params)))
             .response()
             .clone()
     }
 
-    fn ok(&mut self, method: &str, params: Value) -> Value {
+    pub(super) fn ok(&mut self, method: &str, params: Value) -> Value {
         let r = self.rpc(method, params);
         assert!(r.error.is_none(), "{method}: {:?}", r.error);
         r.result.unwrap()
     }
 
-    fn evento(&self, nome: &str) -> Value {
+    pub(super) fn event(&self, nome: &str) -> Value {
         let prazo = std::time::Instant::now() + Duration::from_secs(20);
         while std::time::Instant::now() < prazo {
             if let Ok(e) = self.events.recv_timeout(Duration::from_millis(50))
@@ -93,7 +93,7 @@ impl Cenario {
 /// nao tem nada que pareca segredo.
 #[test]
 fn the_catalogue_saves_without_secrets_sorted_by_name() {
-    let mut c = cenario("catalogo");
+    let mut c = scenario("catalogo");
     assert_eq!(c.ok("remote.list", json!({}))["targets"], json!([]));
     c.ok(
         "remote.save",
@@ -143,8 +143,8 @@ fn the_catalogue_saves_without_secrets_sorted_by_name() {
     ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
 )]
 fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
-    let _serial = crate::serializar_executaveis();
-    let mut c = cenario("probe");
+    let _serial = crate::serialize_executables();
+    let mut c = scenario("probe");
     c.salvar_pi();
     let sem_ssh = c.rpc("remote.probe", json!({ "name": "pi" }));
     assert!(sem_ssh.error.unwrap().message.contains("openssh-client"));
@@ -152,7 +152,7 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
     assert!(desconhecido.error.unwrap().message.contains("`outro`"));
 
     let registro = c.bin().join("ssh.args");
-    executavel(
+    write_tool(
         &c.bin().join("ssh"),
         &format!(
             "#!/bin/sh\nprintf '%s\\n' \"$@\" > '{r}'\nprintf 'aarch64\\nLinux 6.6.31+rpt-rpi-v8\\ngdbserver=/usr/bin/gdbserver\\npython3=/usr/bin/python3\\nrsync=\\n'\n",
@@ -163,7 +163,7 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
     assert!(aceito["command"].as_str().unwrap().contains(
         "-o BatchMode=yes -o ConnectTimeout=5 -p 2222 -i /home/u/.ssh/pi pi@192.168.0.42"
     ));
-    let ev = c.evento("event.remote.probed");
+    let ev = c.event("event.remote.probed");
     assert_eq!(ev["success"], true, "{ev}");
     assert_eq!(ev["name"], "pi");
     assert_eq!(ev["arch"], "aarch64");
@@ -197,12 +197,12 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
     assert!(args[9].starts_with("uname -m; uname -sr;"), "{}", args[9]);
 
     // A chave recusada: o evento diz `ssh-copy-id`.
-    executavel(
+    write_tool(
         &c.bin().join("ssh"),
         "#!/bin/sh\necho 'pi@192.168.0.42: Permission denied (publickey).' >&2\nexit 255\n",
     );
     c.ok("remote.probe", json!({ "name": "pi" }));
-    let ev = c.evento("event.remote.probed");
+    let ev = c.event("event.remote.probed");
     assert_eq!(ev["success"], false);
     assert!(
         ev["error"]
@@ -216,12 +216,12 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
     assert_eq!(ev["failure"], "authentication", "{ev}");
 
     // Sonda que passa nao pode carregar falha nenhuma.
-    executavel(
+    write_tool(
         &c.bin().join("ssh"),
         "#!/bin/sh\nprintf 'aarch64\\nLinux 6.6\\ngdbserver=\\npython3=\\nrsync=\\n'\n",
     );
     c.ok("remote.probe", json!({ "name": "pi" }));
-    let ok = c.evento("event.remote.probed");
+    let ok = c.event("event.remote.probed");
     assert_eq!(ok["success"], true);
     assert!(ok.get("failure").is_none(), "{ok}");
 }
@@ -235,13 +235,13 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
     ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
 )]
 fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
-    let _serial = crate::serializar_executaveis();
-    let mut c = cenario("copy-id");
+    let _serial = crate::serialize_executables();
+    let mut c = scenario("copy-id");
     c.salvar_pi();
     let registro = c.bin().parent().unwrap().join("copyid.argv");
     // Se alguem rodar `ssh` ou `ssh-copy-id` por engano, este arquivo aparece.
     for nome in ["ssh", "ssh-copy-id"] {
-        executavel(
+        write_tool(
             &c.bin().join(nome),
             &format!("#!/bin/sh\nprintf 'rodou' >> {}\n", registro.display()),
         );
@@ -277,8 +277,8 @@ fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
     ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
 )]
 fn deploy_prefers_rsync_and_falls_back_to_scp() {
-    let _serial = crate::serializar_executaveis();
-    let mut c = cenario("deploy");
+    let _serial = crate::serialize_executables();
+    let mut c = scenario("deploy");
     c.salvar_pi();
     let sem_nada = c.rpc("remote.deploy", json!({ "name": "pi" }));
     assert!(
@@ -290,7 +290,7 @@ fn deploy_prefers_rsync_and_falls_back_to_scp() {
     );
 
     let registro = c.bin().join("deploy.args");
-    executavel(
+    write_tool(
         &c.bin().join("rsync"),
         &format!(
             "#!/bin/sh\nprintf '%s\\n' \"$@\" > '{r}'\necho enviado\n",
@@ -304,7 +304,7 @@ fn deploy_prefers_rsync_and_falls_back_to_scp() {
             .unwrap()
             .contains("rsync -az --delete -e ssh -p 2222 -i /home/u/.ssh/pi")
     );
-    let ev = c.evento("event.remote.deployed");
+    let ev = c.event("event.remote.deployed");
     assert_eq!(ev["success"], true, "{ev}");
     assert_eq!(ev["source"], c.root.join("build").display().to_string());
     assert_eq!(ev["dest"], "~/kinein/ws");
@@ -326,7 +326,7 @@ fn deploy_prefers_rsync_and_falls_back_to_scp() {
 
     // Sem rsync: scp, com a pasta de destino dada.
     std::fs::remove_file(c.bin().join("rsync")).unwrap();
-    executavel(
+    write_tool(
         &c.bin().join("scp"),
         &format!(
             "#!/bin/sh\nprintf '%s\\n' \"$@\" > '{r}'\necho 'ssh: connect to host 192.168.0.42 port 2222: Connection timed out' >&2\nexit 1\n",
@@ -334,7 +334,7 @@ fn deploy_prefers_rsync_and_falls_back_to_scp() {
         ),
     );
     c.ok("remote.deploy", json!({ "name": "pi", "dest": "/opt/app" }));
-    let ev = c.evento("event.remote.deployed");
+    let ev = c.event("event.remote.deployed");
     assert_eq!(ev["success"], false);
     assert!(ev["error"].as_str().unwrap().contains("5 s"), "{ev}");
     let args: Vec<String> = std::fs::read_to_string(&registro)
@@ -361,7 +361,7 @@ fn deploy_prefers_rsync_and_falls_back_to_scp() {
 /// debugpy e shell; programa relativo vai para dentro do deployDir.
 #[test]
 fn remote_command_composes_the_ssh_line_and_the_kit_target() {
-    let mut c = cenario("command");
+    let mut c = scenario("command");
     c.salvar_pi();
     let run = c.ok(
         "remote.command",
@@ -484,10 +484,10 @@ fn discover_lists_the_machines_aliases_without_a_workspace_open() {
     ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
 )]
 fn resolve_asks_openssh_for_the_effective_summary_and_hides_the_proxy_command() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let (mut core, base) = cenario_descoberta("resolve");
     let registro = base.join("ssh.argv");
-    executavel(
+    write_tool(
         &base.join("bin/ssh"),
         &format!(
             "#!/bin/sh\nprintf '%s\\n' \"$*\" > {}\n\
@@ -533,10 +533,10 @@ fn resolve_asks_openssh_for_the_effective_summary_and_hides_the_proxy_command() 
     ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
 )]
 fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anything() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let (mut core, base) = cenario_descoberta("resolve-opcao");
     let registro = base.join("ssh.argv");
-    executavel(
+    write_tool(
         &base.join("bin/ssh"),
         &format!("#!/bin/sh\nprintf 'rodou' > {}\n", registro.display()),
     );
@@ -563,9 +563,9 @@ fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anyth
     ignore = "W9: o Remote no Windows (OpenSSH do sistema, sem rsync) e' da W9 (60 §3.3)"
 )]
 fn resolve_repeats_what_ssh_complained_instead_of_inventing_a_summary() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let (mut core, base) = cenario_descoberta("resolve-recusa");
-    executavel(
+    write_tool(
         &base.join("bin/ssh"),
         "#!/bin/sh\necho 'Bad configuration option: naoexiste' >&2\nexit 255\n",
     );
@@ -589,7 +589,7 @@ fn resolve_repeats_what_ssh_complained_instead_of_inventing_a_summary() {
 /// executado nem salvo. O "configurar servidor" sem formulario da R0.5.
 #[test]
 fn parse_command_proposes_a_profile_without_running_or_saving_anything() {
-    let mut c = cenario("parse");
+    let mut c = scenario("parse");
     let fora = c.ok(
         "remote.parseCommand",
         json!({ "command": "ssh -p 2222 -i ~/.ssh/pi pi@192.168.0.42" }),

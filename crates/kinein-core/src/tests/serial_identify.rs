@@ -88,7 +88,7 @@ impl Cenario {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("v5");
     c.esptool_falso(&format!(
         "#!/bin/sh\necho \"argv: $*\"\nprintf '%s' '{}'\n",
@@ -145,7 +145,7 @@ fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn a_v4_esptool_gets_the_underscore_command_on_retry() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("v4");
     c.esptool_falso(
         "#!/bin/sh\ncase \"$*\" in\n  *flash-id) echo \"esptool.py: error: argument operation: \
@@ -178,7 +178,7 @@ fn a_v4_esptool_gets_the_underscore_command_on_retry() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn refusals_happen_before_the_port_is_opened() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("recusas");
     let porta = c.porta.display().to_string();
 
@@ -240,7 +240,7 @@ fn refusals_happen_before_the_port_is_opened() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn a_failing_esptool_reports_its_last_lines() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("falha");
     c.esptool_falso(
         "#!/bin/sh\necho 'Connecting......'\necho 'A fatal error occurred: Failed to connect \
@@ -269,7 +269,7 @@ fn a_failing_esptool_reports_its_last_lines() {
     ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
 )]
 fn cancelling_the_job_kills_esptool() {
-    let _serial = crate::serializar_executaveis();
+    let _serial = crate::serialize_executables();
     let mut c = cenario("cancela");
     c.esptool_falso("#!/bin/sh\necho 'Connecting......'\nexec sleep 30\n");
     let porta = c.porta.display().to_string();
