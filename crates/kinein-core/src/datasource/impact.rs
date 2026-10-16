@@ -101,7 +101,7 @@ pub fn classify(statement: &str) -> SqlStatementImpact {
         kind = "read";
     } else if is(0, "delete") {
         kind = "delete";
-        let at = if is(1, "from") { 2 } else { 1 };
+        let at = delete_target_at(&list);
         targets.push(word(at).to_owned());
         filter = where_clause(statement, &list, at + 1);
     } else if is(0, "update") {
@@ -111,13 +111,7 @@ pub fn classify(statement: &str) -> SqlStatementImpact {
             "update"
         };
         // `UPDATE ONLY t` (PostgreSQL) e `UPDATE OR REPLACE t` (SQLite).
-        let at = if is(1, "or") {
-            3
-        } else if is(1, "only") {
-            2
-        } else {
-            1
-        };
+        let at = update_target_at(&list);
         targets.push(word(at).to_owned());
         filter = where_clause(statement, &list, at + 1);
     } else if is(0, "truncate") {
@@ -237,6 +231,94 @@ fn where_clause(statement: &str, list: &[Word<'_>], from: usize) -> String {
         .to_owned()
 }
 
+/// Onde esta' o alvo de um `DELETE`: depois do `FROM` e do `ONLY` opcionais.
+fn delete_target_at(list: &[Word<'_>]) -> usize {
+    let mut at = 1;
+    if list.get(at).is_some_and(|w| w.is("from")) {
+        at += 1;
+    }
+    if list.get(at).is_some_and(|w| w.is("only")) {
+        at += 1;
+    }
+    at
+}
+
+/// Onde esta' o alvo de um `UPDATE`: `UPDATE ONLY t`, `UPDATE OR REPLACE t`.
+fn update_target_at(list: &[Word<'_>]) -> usize {
+    if list.get(1).is_some_and(|w| w.is("or")) {
+        3
+    } else if list.get(1).is_some_and(|w| w.is("only")) {
+        2
+    } else {
+        1
+    }
+}
+
+/// O alvo com o apelido e as fontes de um `UPDATE … FROM` ou `DELETE …
+/// USING` (passo 15c, `roadmaps/59` §5.6.1). A contagem precisa dos dois:
+/// sem as fontes, `SELECT count(*) FROM t WHERE t.id = s.id` e' recusado
+/// pelo servidor (a tabela `s` nao esta' no `FROM`), e sem o apelido o filtro
+/// `x.id = 1` de um `UPDATE t AS x` tambem.
+struct Shape {
+    /// `t`, `t AS x` ou `t x`.
+    target: String,
+    /// O texto do `FROM` (UPDATE) ou do `USING` (DELETE), quando ha'.
+    sources: Option<String>,
+}
+
+fn shape(statement: &SqlStatementImpact) -> Option<Shape> {
+    let text = statement.text.as_str();
+    let parsed = sql_syntax::lex(text);
+    if !parsed.valid {
+        return None;
+    }
+    let list = words(text, &parsed.masked);
+    let top = |from: usize, keys: &[&str]| {
+        list.iter()
+            .enumerate()
+            .skip(from)
+            .find(|(_, w)| w.depth == 0 && keys.iter().any(|k| w.is(k)))
+            .map(|(i, _)| i)
+    };
+    let (at, target_end, sources_key) = if statement.kind == "update" {
+        let at = update_target_at(&list);
+        let set = top(at + 1, &["set"])?;
+        (at, set, top(set + 1, &["from"]))
+    } else {
+        let at = delete_target_at(&list);
+        let end = top(at + 1, &["using", "where", "returning"]);
+        (at, end.unwrap_or(list.len()), top(at + 1, &["using"]))
+    };
+    // So' `t`, `t x` ou `t AS x`: outra coisa no lugar do alvo nao se conta.
+    let names = list.get(at..target_end)?;
+    let simple = match names {
+        [name] => plain_target(name.text),
+        [name, alias] => plain_target(name.text) && plain_target(alias.text),
+        [name, as_word, alias] => {
+            plain_target(name.text) && as_word.is("as") && plain_target(alias.text)
+        }
+        _ => false,
+    };
+    if !simple {
+        return None;
+    }
+    let end_of = |i: usize| list.get(i).map_or(text.len(), |w| w.start);
+    let target = text[names[0].start..end_of(target_end)].trim().to_owned();
+    let sources = sources_key.map(|key| {
+        let stop = top(key + 1, &["where", "returning"]);
+        let begin = list[key].start + list[key].text.len();
+        text[begin..end_of(stop.unwrap_or(list.len()))]
+            .trim()
+            .trim_end_matches(';')
+            .trim()
+            .to_owned()
+    });
+    Some(Shape {
+        target,
+        sources: sources.filter(|s| !s.is_empty()),
+    })
+}
+
 /// O texto inteiro, instrucao por instrucao.
 #[must_use]
 pub fn classify_all(sql: &str) -> Vec<SqlStatementImpact> {
@@ -263,13 +345,22 @@ pub fn count_queries(statement: &SqlStatementImpact) -> Option<(String, Option<S
         return None;
     }
     match statement.kind.as_str() {
+        // Com fontes (`UPDATE … FROM`, `DELETE … USING`), conta as linhas do
+        // ALVO que o filtro alcanca: o `EXISTS` nao deixa o join que repete
+        // linhas inflar a contagem (15c).
         "delete" | "update" => {
-            let total = format!("SELECT count(*) FROM {target}");
-            if statement.filter.is_empty() {
-                Some((total, None))
-            } else {
-                Some((format!("{total} WHERE {}", statement.filter), Some(total)))
-            }
+            let shape = shape(statement)?;
+            let total = format!("SELECT count(*) FROM {}", shape.target);
+            let filter = &statement.filter;
+            let condition = match (&shape.sources, filter.is_empty()) {
+                (None, true) => return Some((total, None)),
+                (None, false) => format!("WHERE {filter}"),
+                (Some(sources), true) => format!("WHERE EXISTS (SELECT 1 FROM {sources})"),
+                (Some(sources), false) => {
+                    format!("WHERE EXISTS (SELECT 1 FROM {sources} WHERE {filter})")
+                }
+            };
+            Some((format!("{total} {condition}"), Some(total)))
         }
         "truncate" | "dropTable" => {
             let all = statement
@@ -416,5 +507,49 @@ mod tests {
         assert!(schema.ends_with("table_schema = 'audit'"));
         assert!(count_queries(&one("drop database loja")).is_none());
         assert!(count_queries(&one("insert into t values (1)")).is_none());
+    }
+
+    /// 15c: `UPDATE … FROM` e `DELETE … USING` contam as linhas do alvo que o
+    /// filtro alcanca, com as fontes num `EXISTS`; o apelido do alvo vem
+    /// junto; o `FROM` de subconsulta nao e' fonte.
+    #[test]
+    fn joins_and_aliases_count_the_target_rows_the_filter_reaches() {
+        let (hit, total) =
+            count_queries(&one("UPDATE t SET v = s.v FROM s WHERE t.id = s.id")).unwrap();
+        assert_eq!(
+            hit,
+            "SELECT count(*) FROM t WHERE EXISTS (SELECT 1 FROM s WHERE t.id = s.id)"
+        );
+        assert_eq!(total.as_deref(), Some("SELECT count(*) FROM t"));
+
+        let (hit, _) = count_queries(&one(
+            "delete from t using s, u where t.id = s.id and s.k = u.k returning t.id;",
+        ))
+        .unwrap();
+        assert_eq!(
+            hit,
+            "SELECT count(*) FROM t WHERE EXISTS (SELECT 1 FROM s, u WHERE t.id = s.id and s.k = u.k)"
+        );
+
+        let (hit, total) = count_queries(&one("UPDATE t AS x SET v = 1 WHERE x.id = 2")).unwrap();
+        assert_eq!(hit, "SELECT count(*) FROM t AS x WHERE x.id = 2");
+        assert_eq!(total.as_deref(), Some("SELECT count(*) FROM t AS x"));
+
+        let everything = one("UPDATE t SET v = s.v FROM s");
+        assert_eq!(everything.severity, SqlImpactSeverity::Destructive);
+        let (hit, _) = count_queries(&everything).unwrap();
+        assert_eq!(hit, "SELECT count(*) FROM t WHERE EXISTS (SELECT 1 FROM s)");
+
+        let (sub, none) = count_queries(&one(
+            "update t set x = (select max(y) from u where u.k = 1)",
+        ))
+        .unwrap();
+        assert_eq!(sub, "SELECT count(*) FROM t");
+        assert!(none.is_none(), "o FROM da subconsulta nao e' fonte");
+
+        let only = one("DELETE FROM ONLY t WHERE id = 1");
+        assert_eq!(only.targets, vec!["t"]);
+        let (hit, _) = count_queries(&only).unwrap();
+        assert_eq!(hit, "SELECT count(*) FROM t WHERE id = 1");
     }
 }
