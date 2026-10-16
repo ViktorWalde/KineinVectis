@@ -95,6 +95,30 @@ fn host_name_selects_tcp() {
     assert_eq!(config.get_user(), Some("postgres"));
 }
 
+/// 15b: os enderecos resolvidos viram pares `host`/`hostaddr`, na ordem do
+/// resolvedor; o nome continua em todos (e' ele que o TLS verifica), e o
+/// driver nao pergunta o nome de novo.
+#[test]
+fn resolved_addresses_become_host_and_hostaddr_pairs() {
+    let mut config = async_config_for(&profile("db.example.com"), None);
+    let addresses = [
+        IpAddr::from([0, 0, 0, 0, 0, 0, 0, 1]),
+        IpAddr::from([127, 0, 0, 1]),
+    ];
+    with_addresses(&mut config, "db.example.com", &addresses);
+    assert_eq!(config.get_hostaddrs(), addresses);
+    assert_eq!(config.get_hosts().len(), 2);
+    for host in config.get_hosts() {
+        let tokio_postgres::config::Host::Tcp(name) = host else {
+            panic!("virou socket: {host:?}");
+        };
+        assert_eq!(name, "db.example.com");
+    }
+    let mut socket = async_config_for(&profile("/var/run/postgresql"), None);
+    with_addresses(&mut socket, "/var/run/postgresql", &[]);
+    assert!(socket.get_hostaddrs().is_empty());
+}
+
 /// Senha VAZIA nao e' o mesmo que ausencia de senha: mandar `""` faz o
 /// servidor responder falha de autenticacao, que e' pior de entender.
 #[test]

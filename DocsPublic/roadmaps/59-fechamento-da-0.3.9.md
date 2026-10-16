@@ -94,7 +94,7 @@ Cada passo termina com:
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
 | 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
-| 15 | **Provas finais do Banco** (§5.6) | a fazer: UPDATE FROM, TLS verify-full, DNS/NSS e regressões dos motores integrados, concorrência/contexto/segredos; critérios cruzados dos passos 7–14. Perfil SQLite com caminho relativo resolvido a partir do projeto (achado na 14a, 40.7 §7.250; decisão do autor em 2026-10-08) |
+| 15 | **Provas finais do Banco** (§5.6; desenho em §5.6.1) | 15b feita (40.7 §7.289), a resolução de nomes com prazo (DNS/NSS). A fazer: 15c, o aviso com `UPDATE … FROM`; 15d, a bateria real (TLS verify-full, motores integrados, concorrência/contexto/segredos, critérios cruzados dos passos 7–14). 15a, o perfil SQLite com caminho relativo ao projeto, já estava feita (40.7 §7.252, 2026-10-08) |
 | 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. 16b.3 feita (§7.286, IPC `0.170.0`): o "Remover" pergunta "com os volumes (N, X MB)" ou "só o container". **A 16b está fechada** |
 | 16c | **Reprodutibilidade entre distros** (§2.6; pedido do autor em 2026-10-15: "evitar o 'na minha máquina funciona'", antes do 15) | feito: R1 (40.7 §7.287), o `rust-analyzer` pelo `rust-toolchain.toml` e as lacunas do `instalar-ambiente.sh`; R2 (§7.288), o gate de idioma pelo vocabulário do repositório |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
@@ -1185,7 +1185,87 @@ contexto e desfecho desconhecido foram provados contra PostgreSQL real e
 na IDE, no 40.7 §7.223. TLS obrigatório também foi corrigido e provado contra
 servidor sem TLS nessa fatia; isso não substitui a prova de `verify-full`.
 
-As imagens `postgres:16-alpine` e `mongo:7` já estão no podman local.
+As imagens `postgres:16-alpine` e `mongo:7` estavam no podman local da máquina Arch; nesta (Ubuntu 26.04, 2026-10-15) não.
+
+#### 5.6.1 O desenho do passo 15 (2026-10-15, antes do código)
+
+Medido nesta data, no Ubuntu 26.04, antes de desenhar. O passo 15 vira
+quatro fatias; cada uma com o gate rápido verde e o registro no 40.7.
+
+**15a — o SQLite com caminho relativo ao projeto: já feito.** A correção
+entrou em 2026-10-08 (`7d2cc18`, 40.7 §7.252): `sqlite::engine_profile`
+resolve o relativo a partir da raiz do projeto, e
+`tests/datasource_sqlite_path.rs` o prova. A linha do passo 15 no §2 ainda o
+listava como pendente; foi corrigida.
+
+**15b — a resolução de nomes com prazo (o limite do resolvedor do
+[37](../arquitetura/37-banco-de-dados.md) §"Orçamentos e desfechos").**
+
+- Medido: o `tokio-postgres` 0.7.18 resolve o `host` pelo `lookup_host` do
+  Tokio (o `getaddrinfo` do sistema numa thread bloqueante do runtime), sem
+  prazo: o `connect_timeout` de 5 s cobre só o TCP. Com um resolvedor que não
+  responde — `unshare -rm` e um `/etc/resolv.conf` com `nameserver
+  10.255.255.1`, `timeout:3 attempts:2`, sem sudo —, o `getaddrinfo` trava
+  12,01 s; com os padrões do glibc, ~20 s. O `Drop` do runtime da prévia
+  espera essa thread, e o caminho síncrono (`postgres::Config::connect`, do
+  teste, da consulta e do catálogo) espera também.
+- Correção: o core resolve o nome antes do driver, numa thread PRÓPRIA (fora
+  do pool do Tokio), com prazo de 5 s, e entrega os endereços ao driver pelo
+  `hostaddr` — um par `host`/`hostaddr` por endereço, na ordem do
+  `getaddrinfo`. O `host` continua sendo o nome que o TLS verifica, e o
+  driver tenta os endereços em ordem, como antes (o `localhost` que dá `::1`
+  e depois `127.0.0.1` continua caindo no IPv4). IP literal não passa pelo
+  resolvedor; socket Unix (`/…`) também não.
+- As threads que estouram o prazo terminam sozinhas quando o `getaddrinfo`
+  volta. Para não acumularem, no máximo 4 resoluções pendentes no processo; a
+  quinta é recusada na hora ("o resolvedor de nomes do sistema não respondeu;
+  4 resoluções ainda pendentes").
+- A prévia aguarda a resolução de forma assíncrona (o resultado chega por um
+  canal), então o cancelamento continua respondendo durante a espera, e o
+  prazo da future de conexão passa de 6 s para 11 s (5 s de resolução + 5 s
+  de socket + 1 s de folga); o 37 atualiza a tabela de orçamentos.
+- Prova: testes com um resolvedor injetado que dorme (volta no prazo com a
+  frase; a quinta pendente é recusada; terminada, a vaga volta); e o core real
+  dentro do `unshare` com o resolvedor que não responde: o teste de conexão e
+  a prévia de um perfil com host por nome terminam em ~5 s com a frase, e o
+  `core.ping` responde no meio.
+
+**15c — o aviso com `UPDATE … FROM` e `DELETE … USING`.**
+
+- Medido no código: o impacto conta as linhas atingidas com `SELECT count(*)
+  FROM <alvo> WHERE <filtro>`. Num `UPDATE t SET v = s.v FROM s WHERE t.id =
+  s.id`, isso vira `SELECT count(*) FROM t WHERE t.id = s.id`, que o
+  PostgreSQL recusa (a tabela `s` não está no `FROM`); o job guarda o erro
+  cru como nota, e a promoção a `destructive` do filtro que pega tudo nunca
+  acontece. O mesmo vale para `DELETE FROM t USING s WHERE …` e para o alvo
+  com apelido (`UPDATE t AS x …`).
+- Correção, só no core e sem mudar o protocolo: o `count_queries` lê do texto
+  da instrução o alvo com o apelido e as fontes do `FROM` (UPDATE) ou do
+  `USING` (DELETE), e conta as linhas do ALVO que o filtro alcança:
+  `SELECT count(*) FROM <alvo com apelido> WHERE EXISTS (SELECT 1 FROM
+  <fontes> WHERE <filtro>)` — o join que duplica linhas não infla a
+  contagem. O total continua `SELECT count(*) FROM <alvo>`.
+- Prova: testes das contagens montadas (FROM, USING, apelido, sem WHERE, e o
+  `WHERE` de subconsulta que não conta); no PostgreSQL real, a contagem de um
+  `UPDATE … FROM` que pega uma linha e de outro que pega todas (este vira
+  `destructive`).
+
+**15d — a bateria real do Banco.** Contra PostgreSQL 16 e MongoDB 7 em
+contêiner no Podman (as imagens são baixadas na prova; esta máquina não as
+tinha), pelo `scripts/testar-banco-real.py` e pelas provas acima:
+
+- TLS: com o rustls, o `tls: require` já verifica a CA (`caFile`) e o nome do
+  servidor — o `verify-full` do libpq. Prova com uma CA de teste e um
+  certificado para `localhost`: conecta pelo nome certo; recusa pelo IP (o
+  nome não bate) e com outra CA.
+- Os motores integrados (PostgreSQL, SQLite pelo adaptador, MongoDB): leitura,
+  escrita, senha pedida e recusada, avisos (DROP, `UPDATE … FROM`), prévia
+  transacional; concorrência (dois jobs no mesmo perfil), contexto
+  (perfil/projeto trocado no meio) e segredos (a senha não aparece em log,
+  disco, evento nem `ps`).
+- Os critérios cruzados dos passos 7–14: o que cada um prometeu e pode ser
+  provado sem mouse; o aceite com mouse e teclado continua do autor (o
+  handoff do [40](40-estado-e-continuidade.md), "Pendente do autor").
 
 ### 5.7 "Todos os bancos": a pergunta do autor (2026-10-04), para decidir
 

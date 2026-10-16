@@ -531,24 +531,29 @@ correção e verifica o resultado desenhado, sem abrir URLs.
 
 | Recurso | Limite desta implementação |
 | --- | --- |
-| Conexão | 5 s no socket do driver; timeout de 6 s na future de conexão |
+| Resolução do nome | 5 s, numa thread própria fora do Tokio; no máximo 4 pendentes no processo (desde 2026-10-15, passo 15b) |
+| Conexão | 5 s no socket do driver; timeout de 11 s na future de conexão da prévia (5 s de resolução + 5 s de socket + 1 s) |
 | Consulta | statement_timeout 10 s, lock_timeout 1 s, 15 s totais no worker |
 | Decisão | 60 s após a amostra ficar pronta |
 | Transação ociosa | idle_in_transaction_session_timeout 65 s no servidor |
 | COMMIT/ROLLBACK | 12 s no cliente; statement_timeout local continua valendo |
 | Amostra | maxRows: padrão 500, máximo 10.000; 128 colunas, 16 KiB por célula, 8 MiB de células retidas |
 
-**Limite do resolvedor ainda a tratar:** host com nome usa DNS/NSS bloqueante
-no pool do Tokio. A future de conexão pode vencer em 6 s, mas o Drop do
-runtime espera esse trabalho terminar; o evento terminal do job pode chegar
-mais tarde se o resolvedor do sistema travar. O laço IPC continua livre e a
-reserva permanece ocupada, limitando o total de prévias em limpeza. Não
-apresentar esse timeout como teto absoluto de duração do job com DNS.
-Os fontes resolvidos de `tokio-postgres`/Tokio confirmam esse caminho; a
-[documentação de Runtime](https://docs.rs/tokio/latest/tokio/runtime/struct.Runtime.html)
-explica a espera de tarefas bloqueantes no encerramento. Corrigir e provar
-esse ciclo na revisão de recursos/segurança antes do fechamento da 0.3.9;
-não trocar por shutdown_background que permita acumular resoluções órfãs.
+**O resolvedor de nomes (passo 15b, 2026-10-15, `datasource/resolve.rs`).**
+Até então o `tokio-postgres` resolvia o host pelo `lookup_host` do Tokio, sem
+prazo, e o Drop do runtime da prévia esperava essa thread: medido com um
+resolvedor que não responde (padrões do glibc), o prazo de 6 s da conexão
+estourava e o evento só chegava em 10,01 s; o teste de conexão (caminho
+síncrono) levava 10,01 s. Agora o core resolve o nome antes do driver, numa
+thread própria com prazo de 5 s, e o driver recebe os endereços pelo
+`hostaddr` (um par `host`/`hostaddr` por endereço; o `host` é o nome que o
+TLS verifica, e os endereços são tentados em ordem). A prévia aguarda a
+resolução por um canal, sem prender o runtime. A thread que estoura o prazo
+termina quando o `getaddrinfo` volta; no máximo 4 ficam pendentes, e a quinta
+resolução é recusada na hora. Com o mesmo resolvedor, a prévia e o teste de
+conexão terminam em 5,00 s, com "o resolvedor de nomes do sistema não
+respondeu em 5 s" (40.7 §7.289). IP literal e socket Unix não passam pelo
+resolvedor.
 
 O stream drena todas as linhas e usa o total do comando do servidor, mesmo
 quando só retém uma amostra. NULL permanece nulo. Erro SQL, limite de

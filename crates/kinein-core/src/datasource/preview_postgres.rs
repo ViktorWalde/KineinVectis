@@ -146,7 +146,8 @@ async fn run_async(
     executed_sql: &str,
 ) -> Result<(Outcome, QueryResult), Failure> {
     let (mut client, driver) = tokio::select! {
-        result = timeout(Duration::from_secs(6), connect_async(profile, secret)) => result
+        // 5 s do resolvedor de nomes + 5 s do socket + 1 s de folga (15b).
+        result = timeout(Duration::from_secs(11), connect_async(profile, secret)) => result
             .map_err(|_| Failure::public("A conexão da prévia excedeu o prazo.", Outcome::Failed))??,
         () = interrupted(ctx, lease) => return Err(Failure::public("A prévia foi cancelada antes da conexão.", Outcome::Cancelled)),
     };

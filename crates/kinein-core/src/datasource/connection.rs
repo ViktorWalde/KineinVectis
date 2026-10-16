@@ -25,6 +25,7 @@
 //! sensacao de seguranca sem a garantia.
 
 use std::error::Error;
+use std::net::IpAddr;
 use std::time::Duration;
 
 use kinein_protocol::{DataSourceProfile, DataSourceTls};
@@ -33,6 +34,7 @@ use rustls::RootCertStore;
 use rustls_pki_types::{CertificateDer, pem::PemObject};
 use tokio_postgres_rustls::MakeRustlsConnect;
 
+use super::resolve;
 use super::secret::Secret;
 
 /// Quanto esperar por uma conexao antes de desistir.
@@ -92,6 +94,29 @@ pub fn async_config_for(
     config
 }
 
+/// Os enderecos que o resolvedor achou viram pares `host`/`hostaddr`: o driver
+/// conecta no IP sem perguntar o nome de novo (o `lookup_host` dele nao tem
+/// prazo), e o `host` continua sendo o nome que o TLS verifica. Um par por
+/// endereco, na ordem do resolvedor, e o driver tenta um depois do outro
+/// (passo 15b, `roadmaps/59` §5.6.1).
+fn with_addresses(config: &mut tokio_postgres::Config, host: &str, addresses: &[IpAddr]) {
+    for (index, address) in addresses.iter().enumerate() {
+        if index > 0 {
+            config.host(host);
+        }
+        config.hostaddr(*address);
+    }
+}
+
+/// A falha do lado do cliente (sem `SQLSTATE`), com a frase do resolvedor.
+const fn client_failure(message: String) -> ConnectionFailure {
+    ConnectionFailure {
+        message,
+        sql_state: None,
+        secret_required: false,
+    }
+}
+
 /// Opens a streaming connection; the returned task drives it inside the job runtime.
 pub async fn connect_async(
     profile: &DataSourceProfile,
@@ -103,7 +128,12 @@ pub async fn connect_async(
     ),
     ConnectionFailure,
 > {
-    let config = async_config_for(profile, secret);
+    let addresses = resolve::system()
+        .addresses_async(&profile.host, profile.port)
+        .await
+        .map_err(client_failure)?;
+    let mut config = async_config_for(profile, secret);
+    with_addresses(&mut config, &profile.host, &addresses);
     match profile.tls.unwrap_or_default() {
         DataSourceTls::Disable => {
             let (client, connection) = config
@@ -132,7 +162,12 @@ pub fn connect(
     profile: &DataSourceProfile,
     secret: Option<&Secret>,
 ) -> Result<Client, ConnectionFailure> {
-    let config = config_for(profile, secret);
+    let addresses = resolve::system()
+        .addresses(&profile.host, profile.port)
+        .map_err(client_failure)?;
+    let mut config = async_config_for(profile, secret);
+    with_addresses(&mut config, &profile.host, &addresses);
+    let config: Config = config.into();
     match profile.tls.unwrap_or_default() {
         DataSourceTls::Disable => config.connect(NoTls).map_err(|error| failure_from(&error)),
         DataSourceTls::Require => {

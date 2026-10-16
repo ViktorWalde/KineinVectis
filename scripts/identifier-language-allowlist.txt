@@ -138,3 +138,6 @@ atomically canceller consts emplace
 # 2026-10-15: nomes da biblioteca padrao do Python que o teste do gate de
 # idioma usa (scripts/test_identifier_language.py).
 contextlib getvalue
+# 2026-10-15: o parametro do libpq e do tokio-postgres que leva o IP ja'
+# resolvido (passo 15b, datasource/resolve.rs).
+hostaddr hostaddrs

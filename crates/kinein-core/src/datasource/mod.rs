@@ -74,6 +74,7 @@ pub mod preview_sql;
 mod profile_format;
 pub mod providers;
 pub mod query;
+pub mod resolve;
 pub mod secret;
 pub mod sql_syntax;
 pub mod sqlite;
