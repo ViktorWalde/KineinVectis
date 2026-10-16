@@ -93,9 +93,13 @@ Item {
             root.coreClient.browseWorkspaceFolders(root.folderPicker.currentPath);
         }
 
+        // As versoes das ferramentas dependem do projeto (o rustup escolhe a
+        // toolchain pelo diretorio): o core as mede de novo na raiz dele
+        // (16.1, F4; roadmaps/59 §7.1.1).
         function onWorkspaceChanged() {
             root.folderPicker.close();
             root.workspaceController.handleWorkspaceChanged();
+            root.coreClient.detectTools();
         }
 
         function onRecentWorkspacesResolved(workspaces) {

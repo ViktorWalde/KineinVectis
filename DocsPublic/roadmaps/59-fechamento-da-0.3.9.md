@@ -85,19 +85,19 @@ Cada passo termina com:
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
 | 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
-| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse/teclado do autor pendente para a árvore com indisponíveis; handoff do 8 no §2.1 |
-| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse/teclado do autor pendente. Estilo QML decidido pelo autor em 2026-10-08: sem formatação em massa, `.qmlformat.ini` explícito (7b.4, 40.7 §7.253) |
+| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1, 40.7 §7.292); handoff do 8 no §2.1 |
+| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse e teclado feito pelo agente na 16.1, neste repositório (§7.1.1, 40.7 §7.292). Estilo QML decidido pelo autor em 2026-10-08: sem formatação em massa, `.qmlformat.ini` explícito (7b.4, 40.7 §7.253) |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | feito (40.7 §7.248): base de processo de longa vida e ponte do adaptador, provadas contra um adaptador falso; o LSP migrou para a mesma base (§7.249) |
-| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | na 0.3.9 só o 9a (39 §6.2): 9a.1 feita (40.7 §7.256), o adaptador SQLite e a API 1.1; 9a.2 feita (§7.257), a escolha no perfil e o core usando o adaptador; 9a.3 feita (§7.259), o campo "Adaptador" no formulário, com aceite com mouse/teclado do autor pendente; **o 9a está fechado**. 9b/9c (PostgreSQL e MongoDB) **adiados** (autor, 2026-10-08; §2.3, segundo corte) |
+| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | na 0.3.9 só o 9a (39 §6.2): 9a.1 feita (40.7 §7.256), o adaptador SQLite e a API 1.1; 9a.2 feita (§7.257), a escolha no perfil e o core usando o adaptador; 9a.3 feita (§7.259), o campo "Adaptador" no formulário, com o aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1); **o 9a está fechado**. 9b/9c (PostgreSQL e MongoDB) **adiados** (autor, 2026-10-08; §2.3, segundo corte) |
 | 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | **adiado** (autor, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
 | 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | **adiado** (autor, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
 | 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
-| 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse/teclado do autor pendente |
-| 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse/teclado do autor pendente. Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
+| 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1) |
+| 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1). Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6; desenho em §5.6.1) | **feito** (2026-10-15): 15a já estava feita (§7.252); 15b, a resolução de nomes com prazo (§7.289); 15c, o aviso com `UPDATE … FROM` (§7.290); 15d, a bateria real com TLS verify-full, nome por resolvedor, concorrência, SQLite e os critérios cruzados dos passos 7–14 (§7.291, 266 verificações) |
 | 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. 16b.3 feita (§7.286, IPC `0.170.0`): o "Remover" pergunta "com os volumes (N, X MB)" ou "só o container". **A 16b está fechada** |
 | 16c | **Reprodutibilidade entre distros** (§2.6; pedido do autor em 2026-10-15: "evitar o 'na minha máquina funciona'", antes do 15) | feito: R1 (40.7 §7.287), o `rust-analyzer` pelo `rust-toolchain.toml` e as lacunas do `instalar-ambiente.sh`; R2 (§7.288), o gate de idioma pelo vocabulário do repositório |
-| 16 | **Pente fino e fechamento da 0.3.9** (§7; auditoria e fatias 16.1–16.8 no §7.1) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
+| 16 | **Pente fino e fechamento da 0.3.9** (§7; auditoria e fatias 16.1–16.8 no §7.1) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. 16.1 feita (40.7 §7.292, 2026-10-16): os aceites de 7, 7b, 9a.3, 13a, 13b, 14a e 14b, e os defeitos F1, F3 e F4 corrigidos. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
 ### 2.1 Handoff do passo 7 — 2026-10-07
 
@@ -2165,18 +2165,116 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | DNS/NSS da prévia | feito (§7.289, passo 15b) | — |
 | Relevo do editor | feito (§7.224) | — |
 | Shift+F10 | feito: `GlobalShortcuts.qml` (Executar), menu local no terminal e na árvore do Banco | — |
-| Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | pendentes; delegados ao agente (40 §5, "modo autonomo") | 16.1 |
+| Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | feitos pelo agente (40 §5, "modo autonomo"), com os defeitos F1, F3 e F4 corrigidos (§7.1.1; 40.7 §7.292) | 16.1 |
 | PageUp/PageDown no editor | pendente: não moveu o cursor nem o viewport (§7.224) | 16.2 |
 | Terminal com reflow ao alargar | pendente | 16.3 |
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | pendente: falta o teste que tenta quebrar, item por item | 16.4 |
-| Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton` | pendentes | 16.5 |
+| Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | pendentes | 16.5 |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
-| Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento | pendente; pelo `xdotool` no Xvfb | 16.7 |
+| Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | pendente; pelo `xdotool` no Xvfb | 16.7 |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
 
 Regras de cada fatia: o desenho fino aqui antes do código, foto antes e
 depois no Xvfb para o que muda na tela, o gate rápido verde e a entrada no
 40.7. Os gestos são do `xdotool` e ficam ditos como do agente, não do autor.
+
+#### 7.1.1 16.1 — os aceites com mouse e teclado (2026-10-15)
+
+O instrumento: `scripts/xvfb_ide.py`, a IDE de `build/dev-local` num Xvfb
+1366×768 com HOME e XDG temporários, dirigida pelo `xdotool` (o X entrega o
+evento à janela como faria um mouse) e fotografada pelo XCB. Projetos de
+prova em diretório temporário; o PostgreSQL e o MongoDB, contêineres
+descartáveis no Podman 5.7.0.
+
+| Aceite | O que o gesto fez | Resultado |
+| --- | --- | --- |
+| 7 (catálogo antigo, D1a) | abrir um projeto com o `datasources.json` no formato 1, editar o perfil `legado` e clicar Salvar | passou: o `datasources.schema1.json` nasceu idêntico byte a byte ao original (`cmp`) e o catálogo foi a formato 2 com `legado`; a janela fechou pelo × com saída 0 |
+| 9a.3 (o adaptador da IDE) | trocar o adaptador do SQLite para "O da IDE", salvar, Testar; trocar o motor para PostgreSQL e voltar | passou, menos o veredito de sucesso, que não aparece (achado F1) |
+| 13a (localizar o objeto) | o ⌖ da barra do Banco com o console aberto, com um e com dois perfis | passou: a árvore abre e seleciona o perfil do console |
+| 13b (histórico) | abrir o histórico, clicar uma consulta e rodar com Ctrl+Enter | passou: a consulta volta ao console e roda |
+| 14a (grade de trabalho) | `SELECT *` de 600 linhas, "carregar mais", ordenar pelo cabeçalho duas vezes, Ctrl+End | passou |
+| 14b (copiar e exportar) | copiar a seleção, colar no console, desfazer, exportar | passou: o arquivo exportado no projeto; sem seleção, a ação se apaga |
+| 7b (QML neste repositório) | abrir este repositório, abrir `ui/qml/datasource/DataSourcePanelHost.qml` pela árvore, Ctrl+B em `DataSourcePanel`, escrever `naoExiste: 1`, passar o mouse no marcador, Ctrl+Z, Ctrl+/ duas vezes, fechar pelo × | passou (2026-10-16): realce de QML (`pragma`, `import`, tipos, `id`, bindings, handlers); o `qmlls` com `-b .kinein/build` (o build que a própria IDE configurou); Ctrl+B abre `DataSourcePanel.qml` na linha do `Item`; o diagnóstico "Could not find property" no marcador da linha; Ctrl+/ comenta e descomenta; saída 0, sem `qmlls` nem core sobrando e o `git status` igual ao de antes |
+
+**Achados.**
+
+- **F1, defeito: o teste que dá certo não mostra nada.** O core responde
+  `ok: true` com `serverVersion` e sem `message`
+  (`handlers/datasource.rs`, `test_result`); o veredito do painel só aparece
+  com `testing`, `secretRequired` ou `testMessage` não vazio
+  (`DataSourcePanel.qml`, desde o 5a08b34, 2026-10-03). Clicar Testar num
+  perfil que conecta pisca "Conectando..." e volta ao formulário vazio, como
+  se nada tivesse acontecido. Os harnesses usam o controller e nunca a
+  visibilidade do painel, por isso não pegaram.
+- **F2, menor: edição externa do catálogo.** Um `datasources.json` mudado
+  fora da IDE só aparece ao reabrir a janela do Banco; o ↻ da barra relê a
+  estrutura do banco (F5), não o catálogo. Não impede o uso; vai para as
+  dívidas da 16.5 como nota, sem correção nesta fatia.
+- **F3, reprodutibilidade: o rustup sem toolchain padrão.** O
+  `instalar-ambiente.sh` (R1, §2.6) instala o rustup com
+  `--default-toolchain none`; este repositório tem `rust-toolchain.toml` e
+  funciona, mas qualquer outro projeto Cargo aberto na IDE dá, no Project
+  Health, "cargo metadata falhou: ... run 'rustup default stable'". Medido
+  no projeto de prova do aceite 7. Correção nesta fatia: o instalador fixa
+  `rustup default <canal do rust-toolchain.toml>` quando não há padrão, e
+  não mexe num padrão que a pessoa já escolheu.
+- **F4, defeito: o Project Health diz "ferramentas ausentes: cargo, rustc,
+  rust-analyzer" neste repositório.** Medido no aceite 7b: o
+  `probe_version` roda `cargo --version` no diretório do PROCESSO da IDE
+  (o `$HOME` de quem abre pelo menu; aqui, o diretório do driver), não no
+  do projeto. Os três são proxies do rustup, que escolhem a toolchain pelo
+  diretório: sem toolchain padrão (o F3), fora de um `rust-toolchain.toml`
+  eles falham, e a faixa acusa ausência num projeto em que o build, o
+  `cargo metadata` e o rust-analyzer funcionam (todos rodam na raiz do
+  projeto). Correção nesta fatia, desenho abaixo.
+- **F5, polimento: Ctrl+B sem destino fica mudo.** No primeiro Ctrl+B o
+  `qmlls` ainda subia (a IDE tinha acabado de configurar o
+  `.kinein/build`), a resposta veio vazia e `dispatchLspResult` a descarta
+  sem aviso. O JetBrains diz "não há declaração para ir". Vai para o
+  polimento da 16.7.
+- **F6, polimento: o completar abre depois de um número.** Escrever
+  `naoExiste: 1` abriu a lista com `Int16Array` (o `qmlls` casa o "1"). Vai
+  para a 16.7.
+- **Não é defeito:** o "Buscar em tudo" (Ctrl+Shift+N) respondeu "fd não foi
+  encontrado no PATH": o `fd` é dependência declarada (o instalador o traz;
+  `fs/find.rs` tenta `fd` e `fdfind`), e o `fd-find` ainda não foi instalado
+  nesta máquina (o comando do `apt` está com o autor). O autosave gravou a
+  edição em disco no meio do aceite: é a decisão do autor de 2026-09-18 (o
+  Ctrl+Z também é gravado, e o disco voltou ao HEAD).
+
+**Desenho da correção do F4.** O `ToolDetector` ganha o diretório do probe
+(`probing_in`), e o `--version` roda nele quando existe. `tools.detect`,
+`environment.scan` e a releitura depois de instalar uma toolchain passam a
+raiz do projeto aberto: a versão que a faixa mostra é a que o build daquele
+projeto vai usar. Sem projeto, o diretório do processo, como hoje. A UI
+pede `tools.detect` de novo quando o projeto muda (`workspaceChanged`),
+porque a resposta depende dele; são os mesmos ~1,4 s numa thread, fora do
+laço. A procura do binário (o `PATH`) não muda. Prova: teste com uma
+ferramenta falsa que só responde dentro de um diretório com um marcador
+(como o proxy do rustup com o `rust-toolchain.toml`), detectada como
+`detected` com o diretório e `failed` sem ele; mutação (sem o
+`current_dir`) reprova; foto no Xvfb deste repositório sem a faixa.
+
+**Desenho da correção do F1.** O veredito de sucesso passa a ser mostrado
+(`root.testOk` entra na condição de visibilidade). Mostrar abre um segundo
+risco: o "conectou" ficar na tela depois de a pessoa mudar o formulário, e
+continuar lá se ela salvar sem testar de novo, falando de uma configuração
+que nunca foi testada. Por isso `DataSourceController.editDraft` apaga o
+veredito de SUCESSO (`testOk`, `serverVersion`, `testedName`) a cada
+edição; a mensagem de falha e o pedido de senha ficam como estão (o campo
+de senha mora no veredito, e apagá-lo no meio da digitação de outro campo
+perderia a operação pendente). Prova: harness novo
+`tst_datasource_verdict.qml` com o `DataSourcePanelHost` real e o
+controller real: sucesso visível com a versão; editar um campo apaga;
+falha com mensagem continua visível; e as mutações (sem o `testOk` na
+condição; sem a limpeza no `editDraft`) reprovam. Foto antes (a de hoje,
+`10-testar-depois`) e depois no Xvfb.
+
+**O roteiro do aceite 7b.** O diretório real deste repositório, com o
+autosave ligado (decisão do autor): toda edição é desfeita pela própria IDE
+(Ctrl+Z, Ctrl+/ de novo), e o `git status` do fim é comparado ao do começo.
+A formatação (`qmlformat`, Ctrl+Alt+L) ficou fora: reformataria o arquivo
+inteiro (7b.4, sem formatação em massa) e já tem a prova da 7b.3.
 
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9

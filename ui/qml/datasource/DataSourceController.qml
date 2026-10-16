@@ -283,6 +283,11 @@ Item {
             clearSecret();
         }
         draft = updated;
+        // O "conectou" fala do perfil testado; mudado o formulario, ele nao
+        // vale mais (16.1, F1). Falha e pedido de senha ficam.
+        testedName = "";
+        testOk = false;
+        serverVersion = "";
     }
 
     // O core recusa `secretVariable` vazia? Nao — ele a normaliza para

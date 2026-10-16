@@ -9,7 +9,7 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-15). Leia isto primeiro.**
+> **HANDOFF (2026-10-16). Leia isto primeiro.**
 >
 > **Máquina:** Ubuntu 26.04 LTS, checkout `/home/hugh/KineinVectis`, branch
 > `main`, que contém o `porte-windows` (fast-forward local em 2026-10-15,
@@ -18,14 +18,15 @@
 > 5.7.0; o Docker 29.9.1 nega o socket (usuário fora do grupo). O
 > `CMakeUserPresets.json` local foi gerado como o `instalar-ambiente.sh` faz;
 > o gate rápido passa, com 5 NÃO PROVADO (sem `fd`, monitor serial,
-> `arm-none-eabi-gcc` e `debugpy`). A UI compila; abri-la ainda não foi
-> medido.
+> `arm-none-eabi-gcc` e `debugpy`). A UI compila e abre: os aceites da 16.1
+> a dirigiram no Xvfb (2026-10-16). O rustup daqui não tem toolchain padrão
+> (59 §7.1.1, F3): o comando `rustup default 1.96.1` está com o autor.
 >
-> **Próximo passo:** o passo 16, o pente fino e o fechamento da 0.3.9
-> ([59](59-fechamento-da-0.3.9.md) §7), com os aceites com mouse e teclado;
-> depois a 0.4 ([52](52-arquitetura-executavel-da-0.4.md) §11). Feito em
-> 2026-10-15: a 16b (40.7 §7.283–§7.286), o 16c (§7.287–§7.288) e o passo 15
-> (§7.289–§7.291). A 16b está fechada: a catraca do idioma no Ubuntu (40.7
+> **Próximo passo:** a 16.2 (PageUp/PageDown no editor) e as fatias
+> seguintes do passo 16 ([59](59-fechamento-da-0.3.9.md) §7.1); depois a 0.4
+> ([52](52-arquitetura-executavel-da-0.4.md) §11). Feito: a 16b (40.7
+> §7.283–§7.286), o 16c (§7.287–§7.288) e o passo 15 (§7.289–§7.291), em
+> 2026-10-15; a 16.1 (§7.292), em 2026-10-16. A 16b está fechada: a catraca do idioma no Ubuntu (40.7
 > §7.283), 16b.1 (§7.284), 16b.2 (§7.285) e 16b.3 (§7.286), todas em
 > 2026-10-15.
 >
@@ -36,9 +37,8 @@
 > Windows, na W6b4, a retomar numa VM (60 §3.3).
 >
 > **Aceites com mouse e teclado** de 7, 7b, 14a, 14b, 13a, 13b e 9a.3:
-> delegados ao agente no modo autônomo (`xdotool` no Xvfb, registrados como
-> do agente), no passo 16; os roteiros estão nas entradas do 40.7 de cada um
-> (§7.244, §7.247, §7.250, §7.251, §7.254, §7.255 e §7.259).
+> feitos pelo agente na 16.1 (`scripts/xvfb_ide.py`, 40.7 §7.292), com três
+> defeitos corrigidos; o autor não os repetiu.
 
 ## 1. O estado, em números
 
@@ -47,11 +47,11 @@ protocolo   0.170.0 (crates/kinein-protocol, medido em 2026-10-15; o
             historico das versoes e' o arquitetura/03)
 metodos     186 roteados e 60 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   137 tst_*.qml em scripts/qml-harness (medido em 2026-10-15)
+harnesses   139 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
-            §7.277); 1133 no Ubuntu 26.04 (gate rápido de 2026-10-15,
-            §7.284).
+            §7.277); 1143 no Ubuntu 26.04 (gate rápido de 2026-10-16,
+            §7.292).
 ```
 
 Os comandos que medem estão no

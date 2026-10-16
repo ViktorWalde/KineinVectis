@@ -143,3 +143,6 @@ contextlib getvalue
 hostaddr hostaddrs
 # 2026-10-15: a ferramenta de certificados da prova de TLS (datasource_final_proof.py).
 openssl
+# 2026-10-16: o servidor X virtual e a API do Pillow (`ImageGrab.grab(xdisplay=)`,
+# `getpixel`) que o driver dos aceites usa (scripts/xvfb_ide.py, 16.1).
+xvfb xdisplay getpixel

@@ -232,6 +232,14 @@ if command -v rustup >/dev/null 2>&1 || [ "$DRY_RUN" -eq 1 ]; then
     # rust-analyzer` existe mesmo sem o componente — um `command -v` sozinho
     # diria "ok" para um binario que nao roda.
     executar rustup component add --toolchain "$CANAL_RUST" rustfmt clippy rust-analyzer
+    # O rustup acima nasce com `--default-toolchain none`. Sem toolchain
+    # PADRAO, todo projeto Cargo sem `rust-toolchain.toml` falha com "rustup
+    # default stable" — na IDE, no Project Health de qualquer outro projeto
+    # (medido em 2026-10-15; 16.1, F3, roadmaps/59 §7.1.1). O padrao que a
+    # pessoa ja' escolheu fica.
+    if ! rustup default >/dev/null 2>&1; then
+        executar rustup default "$CANAL_RUST"
+    fi
     # `cargo-deny` NAO e' extra: o gate depende dele desde 2026-08-30
     # (scripts/verificar-deny.sh). Vem por `cargo install` porque nenhuma das
     # distros-alvo o empacota. `--locked` para reproduzir o build do autor dele.

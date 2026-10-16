@@ -71,6 +71,11 @@ pub struct ToolDetector {
     extra_dirs: Vec<PathBuf>,
     /// A pasta da IDE (`toolchains/<id>/<versao>/bin`), lida a cada busca.
     install_root: Option<PathBuf>,
+    /// Onde o `--version` roda: a raiz do projeto aberto. Os proxies do
+    /// rustup escolhem a toolchain pelo diretorio (`rust-toolchain.toml`);
+    /// sem isto, a versao seria a do diretorio do processo da IDE (16.1, F4,
+    /// `roadmaps/59` §7.1.1).
+    probe_dir: Option<PathBuf>,
 }
 
 impl ToolDetector {
@@ -101,6 +106,7 @@ impl ToolDetector {
             search_path: env::var_os("PATH"),
             extra_dirs,
             install_root: home.map(|home| install_root(&home)),
+            probe_dir: None,
         }
     }
 
@@ -111,7 +117,17 @@ impl ToolDetector {
             search_path: Some(search_path.into()),
             extra_dirs: Vec::new(),
             install_root: None,
+            probe_dir: None,
         }
+    }
+
+    /// O mesmo detector, com o `--version` rodando em `dir` (a raiz do
+    /// projeto); `None` volta ao diretorio do processo. A procura do binario
+    /// nao muda: so' a resposta de quem decide a versao pelo diretorio.
+    #[must_use]
+    pub fn probing_in(mut self, dir: Option<PathBuf>) -> Self {
+        self.probe_dir = dir.filter(|dir| dir.is_dir());
+        self
     }
 
     /// A pasta onde a IDE instala toolchains — para um teste apontar uma
@@ -212,7 +228,7 @@ impl ToolDetector {
                 suggested_install: suggestion(),
                 message: Some(format!("{} nao foi encontrado no PATH.", spec.display_name)),
             },
-            |path| match probe_version(&path) {
+            |path| match probe_version(&path, self.probe_dir.as_deref()) {
                 Ok(version) => ToolInfo {
                     id: spec.id.to_owned(),
                     display_name: spec.display_name.to_owned(),
@@ -289,9 +305,14 @@ const EXEC_BUSY_ATTEMPTS: u32 = 20;
 /// Espera entre duas tentativas de exec apos `ETXTBSY` (total <= 200 ms).
 const EXEC_BUSY_BACKOFF: Duration = Duration::from_millis(10);
 
-fn probe_version(path: &Path) -> Result<String, String> {
+fn probe_version(path: &Path, dir: Option<&Path>) -> Result<String, String> {
     for remaining in (0..EXEC_BUSY_ATTEMPTS).rev() {
-        match Command::new(path).arg("--version").output() {
+        let mut command = Command::new(path);
+        command.arg("--version");
+        if let Some(dir) = dir {
+            command.current_dir(dir);
+        }
+        match command.output() {
             Ok(output) if output.status.success() => {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 return stdout
@@ -687,6 +708,40 @@ mod tests {
         let info = ToolDetector::with_search_path(&dir).detect(&FAKE_SPEC);
 
         assert_eq!(info.status, ToolStatus::Detected);
+    }
+
+    /// 16.1, F4: o `--version` roda na raiz do projeto. A ferramenta falsa
+    /// so' responde num diretorio com o marcador, como o proxy do rustup sem
+    /// toolchain padrao so' responde onde ha' um `rust-toolchain.toml`.
+    #[test]
+    fn the_version_probe_runs_in_the_project_directory() {
+        let _guard = exec_lock();
+        let dir = temp_bin_dir("probe-dir");
+        write_fake_tool(
+            &dir,
+            "cargo",
+            "[ -f rust-toolchain.toml ] && echo 'cargo 1.96.1 (fake)' || exit 1",
+        );
+        let project = temp_bin_dir("probe-dir-project");
+        fs::write(project.join("rust-toolchain.toml"), "[toolchain]\n").unwrap();
+
+        let outside = ToolDetector::with_search_path(&dir).detect(&FAKE_SPEC);
+        assert_eq!(outside.status, ToolStatus::Failed);
+
+        let inside = ToolDetector::with_search_path(&dir)
+            .probing_in(Some(project.clone()))
+            .detect(&FAKE_SPEC);
+        assert_eq!(inside.status, ToolStatus::Detected);
+        assert_eq!(inside.version.as_deref(), Some("cargo 1.96.1 (fake)"));
+
+        let gone = ToolDetector::with_search_path(&dir)
+            .probing_in(Some(project.join("nao-existe")))
+            .detect(&FAKE_SPEC);
+        assert_eq!(
+            gone.status,
+            ToolStatus::Failed,
+            "diretorio que sumiu: o do processo"
+        );
     }
 
     #[test]

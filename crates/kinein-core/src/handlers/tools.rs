@@ -31,7 +31,7 @@ impl Core {
     /// — a UI o pede na abertura, e o laco ficava parado esse tempo antes de
     /// qualquer outra resposta. Sem o canal (testes), inline como antes.
     pub(crate) fn tools_detect_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let detector = self.detector.clone();
+        let detector = self.project_detector();
         let registry = Arc::clone(&self.tool_registry);
         self.defer_work(request_id, move |request_id| {
             let tools = detector.detect_all();
@@ -54,7 +54,14 @@ impl Core {
     /// Refaz a deteccao e publica no registro — para quando o disco mudou
     /// por acao da propria IDE (uma toolchain instalada na pasta dela).
     pub(crate) fn refresh_tool_registry(&self) {
-        set_tool_registry(&self.tool_registry, self.detector.detect_all());
+        set_tool_registry(&self.tool_registry, self.project_detector().detect_all());
+    }
+
+    /// O detector com o `--version` na raiz do projeto aberto: a versao que
+    /// a faixa mostra e' a que o build dele usa (16.1, F4, `roadmaps/59`
+    /// §7.1.1). A presenca (`detect_all_presence`) nao roda nada e nao muda.
+    fn project_detector(&self) -> crate::tools::ToolDetector {
+        self.detector.clone().probing_in(self.workspace_root())
     }
 
     /// As ferramentas detectadas, varrendo o PATH so na primeira vez.
@@ -86,7 +93,7 @@ impl Core {
             return jobs_unavailable_response(request_id, "environment.scan");
         };
 
-        let detector = self.detector.clone();
+        let detector = self.project_detector();
         let registry = Arc::clone(&self.tool_registry);
         let job_id = jobs.spawn(
             "environment.scan",

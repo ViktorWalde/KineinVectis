@@ -323,8 +323,8 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 186 métodos roteados pelo core, 156 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 30 estão aqui,
+Dos 186 métodos roteados pelo core, 157 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 29 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -345,7 +345,6 @@ nomeados, para nada ficar invisível:
 | `settings.set` | `ui/qml/app/AppDomains.qml` |
 | `test.discover` | `ui/qml/app/AppDomains.qml` |
 | `test.run` | `ui/qml/app/AppDomains.qml` |
-| `tools.detect` | `ui/qml/Main.qml`, `ui/qml/app/AppDomains.qml`, `ui/qml/command/CommandDispatcher.qml`, `ui/qml/shell/ShellHeaderHost.qml` |
 | `workspace.close` | `ui/qml/Main.qml`, `ui/qml/command/CommandDispatcher.qml`, `ui/qml/shell/ShellHeaderHost.qml` |
 | `workspace.createFolder` | `ui/qml/Main.qml` |
 | `workspace.createProject` | `ui/qml/Main.qml` |
@@ -388,6 +387,7 @@ flowchart LR
     n_ipc_cmake(["cmake.* · 1"])
     n_ipc_command(["command.* · 1"])
     n_ipc_fs(["fs.* · 9"])
+    n_ipc_tools(["tools.* · 1"])
     n_ipc_workspace(["workspace.* · 1"])
   end
   subgraph CORE["crates/kinein-core"]
@@ -415,6 +415,7 @@ flowchart LR
   n_ui_src_core_client_requests_cpp --> n_ipc_cmake
   n_ui_src_core_client_requests_cpp --> n_ipc_command
   n_ui_src_core_client_requests_cpp --> n_ipc_fs
+  n_ui_src_core_client_requests_cpp --> n_ipc_tools
   n_ui_src_core_client_requests_cpp --> n_ipc_workspace
   n_ipc_cmake --> n_crates_kinein_core_src_handlers_cmake_rs
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_cdb
@@ -425,6 +426,7 @@ flowchart LR
   n_crates_kinein_core_src_handlers_fs_rs --> n_core_jobs
   n_crates_kinein_core_src_handlers_fs_rs --> n_core_rpc
   n_ipc_command --> n_crates_kinein_core_src_lib_rs
+  n_ipc_tools --> n_crates_kinein_core_src_lib_rs
   n_ipc_workspace --> n_crates_kinein_core_src_lib_rs
   n_crates_kinein_core_src_lib_rs --> n_core_tools
   CORE -.->|processos| n_tools_workspace
@@ -447,7 +449,7 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (12): `cmake.configure`, `command.list`, `fs.copy`, `fs.createDirectory`, `fs.createFile`, `fs.delete`, `fs.list`, `fs.read`, `fs.rename`, `fs.transferBatch`, `fs.trash`, `workspace.browse`.
+Métodos IPC (13): `cmake.configure`, `command.list`, `fs.copy`, `fs.createDirectory`, `fs.createFile`, `fs.delete`, `fs.list`, `fs.read`, `fs.rename`, `fs.transferBatch`, `fs.trash`, `tools.detect`, `workspace.browse`.
 
 ### Editor e inteligencia de linguagem (LSP)
 

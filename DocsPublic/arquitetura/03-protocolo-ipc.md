@@ -147,6 +147,14 @@ Implementado no protocolo `0.2.0`. `tools.detect` sempre executa a detecção e
 atualiza o registro interno; `tools.status` responde com o último resultado
 conhecido (detectando na primeira chamada).
 
+Desde 2026-10-16 (16.1, F4 do `roadmaps/59` §7.1.1), o probe de versão
+(`--version`) roda na raiz do projeto aberto, quando há um: os proxies do
+rustup (`cargo`, `rustc`, `rust-analyzer`) escolhem a toolchain pelo
+diretório, e a versão informada é a que o build daquele projeto usa. Sem
+projeto, roda no diretório do processo. A procura do binário não muda, e o
+contrato também não; a UI pede `tools.detect` de novo a cada troca de
+projeto. O mesmo vale para `environment.scan`.
+
 Inventário atual: cargo, rustc, rustup, rust-analyzer, cmake, ninja, git,
 clangd, clang, clang++ (`id: clangxx`), gcc, g++ (`id: gxx`), gdb, lldb,
 ripgrep (`rg`) e fd/fdfind.

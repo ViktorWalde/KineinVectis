@@ -140,10 +140,13 @@ Item {
             width: faceScroll.width
             spacing: Theme.spacingSmall
 
+            // O sucesso tambem aparece: o core manda so' a versao, sem
+            // mensagem (16.1, F1; 59 §7.1.1).
             DataSourceVerdict {
+                objectName: "dataSourceVerdict"
                 width: parent.width
                 visible: root.face === "connection"
-                         && (root.testing || root.secretRequired || root.testMessage !== "")
+                         && (root.testing || root.testOk || root.secretRequired || root.testMessage !== "")
                 testing: root.testing
                 ok: root.testOk
                 serverVersion: root.serverVersion

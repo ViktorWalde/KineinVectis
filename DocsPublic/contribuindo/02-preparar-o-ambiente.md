@@ -85,6 +85,15 @@ lista, um por um, está em [04](04-os-gates-que-dizem-nao.md).
 | `KINEIN_CORE_BIN=<caminho>` | qual core a UI sobe (o release, ou um logger de IPC) |
 | `XDG_CONFIG_HOME=<pasta>` | isola as configurações (`settings.json` é achatado: `{"schemaVersion":1,"railExpanded":true}`) |
 
+Para um fluxo inteiro com mouse e teclado (os aceites da 16.1),
+`scripts/xvfb_ide.py` sobe a IDE de `build/dev-local` num Xvfb próprio, com
+HOME e XDG temporários, e dá `click`, `key`, `type`, `shot` e
+`close_window` (fecha pelo ×, como a pessoa faria, e devolve a saída) pelo
+`xdotool`. Ele precisa de `Xvfb`, `xdotool` e do Pillow. O gesto é real (o X
+o entrega à janela), mas quem o faz é o agente, e o registro diz isso. Num
+projeto de verdade o autosave grava cada edição: desfaça pela própria IDE e
+compare o `git status` do fim com o do começo.
+
 ## O que nunca fazer no checkout
 
 - `git checkout -- <arquivo>` para "desfazer": se o arquivo tinha
