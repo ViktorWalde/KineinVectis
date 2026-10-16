@@ -15,7 +15,8 @@ Item {
         // Os outros sinais que o roteador ouve (sem eles, o Connections avisa).
         signal statusChanged()
         signal cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
-                                   string cdbStaleBecause, string preset)
+                                   string cdbStaleBecause, string preset, var presetChoices,
+                                   string presetChoicesFile)
         signal cmakeConfigureFinished(bool success)
         signal fileSaved(string path)
         signal cargoMetadataResolved(var packages)

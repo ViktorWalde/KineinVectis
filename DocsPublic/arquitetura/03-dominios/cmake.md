@@ -29,7 +29,12 @@ explícito tem precedência).
   preset como sempre e `presetSource` ausente. Antes, o configure automático
   de um projeto com presets rodava SEM preset. No sucesso o core anota o
   preset em `<buildDir>/.kinein-preset` (o `CMakeCache.txt` não o guarda) e
-  o `cmake.status` o devolve.
+  o `cmake.status` o devolve. **Desde o `0.174.0` (a 0.4.0b, `roadmaps/52`
+  §14.2), sem preset pedido a ordem é:** o anotado no build dir, se ainda
+  existe entre os presets do projeto (`presetSource: "buildDir"`) → o ÚNICO
+  preset que vale do primeiro arquivo que tem algum → **vários: o configure é
+  recusado com `INVALID_PARAMS`**, dizendo o arquivo e os nomes, e nenhum job
+  roda. O "primeiro da lista" do P0 deixou de ser escolhido pela pessoa.
 - `cmake.presets.list {}` → `{ presets: [{ name, displayName? }] }` —
   configure presets não ocultos de `CMakePresets.json` +
   `CMakeUserPresets.json`, na ordem dos arquivos; JSON inválido → erro
@@ -52,7 +57,10 @@ explícito tem precedência).
   id, versão e includes implícitos por linguagem — vale a partir do próximo
   configure.
 - `cmake.status {}` → `{ configured, hasCompileCommands, buildDir, preset? (0.115.0),
-  cdbDirectory?, cdbStale?, cdbStaleBecause? }` — stat de
+  cdbDirectory?, cdbStale?, cdbStaleBecause?, presetChoices[]?,
+  presetChoicesFile? (0.174.0) }` — `presetChoices` são os nomes quando um
+  configure sem preset seria recusado por haver vários, e a UI pergunta
+  pela faixa de saúde em vez de configurar sozinha; stat de
   `CMakeCache.txt`/`compile_commands.json`, mais o **diagnóstico da compilation
   database** (protocolo `0.62.0`).
 - **`hasCompileCommands` e `cdbDirectory` não são a mesma pergunta**, e confundi-

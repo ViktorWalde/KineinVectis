@@ -418,8 +418,11 @@ signals:
     void formatCapabilitiesListed(const QVariantList& formatters);
     void runCapabilitiesListed(const QVariantList& runnable, const QVariantList& debuggable);
     void cmakePresetsResolved(const QVariantList& presets);
+    /// `presetChoices` (0.174.0): os presets entre os quais a pessoa escolhe,
+    /// quando o configure sem preset seria recusado por haver varios.
     void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
-                             const QString& cdbStaleBecause, const QString& preset);
+                             const QString& cdbStaleBecause, const QString& preset,
+                             const QStringList& presetChoices, const QString& presetChoicesFile);
     void cmakeConfigureFinished(bool success);
     /// `origin` diz de onde os nomes vieram: "fileApi" (confirmados por um
     /// configure), "source" (lidos do CMakeLists) ou "none".

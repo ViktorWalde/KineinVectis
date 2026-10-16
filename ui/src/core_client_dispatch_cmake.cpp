@@ -43,11 +43,17 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
         // `cdbStale`/`cdbStaleBecause` sao OMITIDOS pelo core quando falsos
         // (skip_serializing_if no kinein-protocol), entao ausente vira false /
         // string vazia — que e' exatamente o que a UI deve mostrar.
+        QStringList choices;
+        const QJsonArray choiceArray = result.value(QStringLiteral("presetChoices")).toArray();
+        for (const QJsonValue choice : choiceArray) {
+            choices.append(choice.toString());
+        }
         emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
                                  result.value(QStringLiteral("hasCompileCommands")).toBool(),
                                  result.value(QStringLiteral("cdbStale")).toBool(),
                                  result.value(QStringLiteral("cdbStaleBecause")).toString(),
-                                 result.value(QStringLiteral("preset")).toString());
+                                 result.value(QStringLiteral("preset")).toString(), choices,
+                                 result.value(QStringLiteral("presetChoicesFile")).toString());
         return true;
     }
     if (method == QStringLiteral("cmake.presets.list")) {

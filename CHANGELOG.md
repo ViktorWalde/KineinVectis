@@ -16,6 +16,11 @@ em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
   `compile_commands.json`, o file-api do CMake, o cache do CMake ou o kit);
   as flags reais vencem a escolha, e nada é suposto. Pairar sobre o
   contexto na barra de status mostra isso.
+- Protocolo `0.174.0` — **O preset do configure, sem palpite** (0.4.0b,
+  40.7 §7.308): sem kit, vale o preset do último configure (mesmo depois de
+  reabrir a IDE; antes o reconfigure podia trocar de preset calado), senão o
+  único do projeto; com vários, a faixa de saúde pergunta e o **Escolher
+  preset…** abre a lista.
 
 ## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
 

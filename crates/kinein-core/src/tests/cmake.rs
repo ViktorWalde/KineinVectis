@@ -191,7 +191,7 @@ fn cmake_status_stays_quiet_when_there_is_nothing_to_diagnose() {
 /// o `cmake.status` o devolve; com `preset` no pedido (o kit), e' ele.
 /// Espera o ciclo de um `cmake.configure`: devolve o `event.cmake.started`
 /// e as linhas de saida do job ate' o `finished` com sucesso.
-fn espera_configure(
+fn wait_configure(
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
 ) -> (serde_json::Value, Vec<String>) {
     let mut inicio = serde_json::Value::Null;
@@ -274,7 +274,7 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
         Some(json!({})),
     ));
     assert!(aceito.response().error.is_none());
-    let (inicio, saida) = espera_configure(&receiver);
+    let (inicio, saida) = wait_configure(&receiver);
     assert_eq!(inicio["preset"], "meu-local");
     assert_eq!(inicio["presetSource"], "CMakeUserPresets.json");
     assert_eq!(inicio["command"], "cmake configure --preset meu-local");
@@ -295,7 +295,7 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
         Some(json!({ "preset": "projeto" })),
     ));
     assert!(aceito.response().error.is_none());
-    let (inicio, _) = espera_configure(&receiver);
+    let (inicio, _) = wait_configure(&receiver);
     assert_eq!(inicio["preset"], "projeto");
     assert_eq!(inicio["presetSource"], "kit");
     let status = status_de(&mut core, 95);
@@ -311,7 +311,7 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
         Some(json!({})),
     ));
     assert!(aceito.response().error.is_none());
-    let (inicio, saida) = espera_configure(&receiver);
+    let (inicio, saida) = wait_configure(&receiver);
     assert_eq!(inicio["preset"], serde_json::Value::Null);
     assert_eq!(inicio["command"], "cmake configure");
     assert!(
@@ -320,6 +320,127 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
     );
     let status = status_de(&mut core, 97);
     assert!(status.get("preset").is_none(), "{status}");
+}
+
+/// Um `CMakePresets.json` com um oculto e os nomes dados.
+fn presets(names: &[&str]) -> String {
+    let items: Vec<String> = names
+        .iter()
+        .map(|name| format!(r#"{{"name": "{name}"}}"#))
+        .collect();
+    format!(
+        r#"{{"version": 6, "configurePresets": [{{"name": "base", "hidden": true}}, {}]}}"#,
+        items.join(", ")
+    )
+}
+
+/// O preset do configure automatico (0.4.0b, `roadmaps/52` §14.2): com
+/// varios presets e nada anotado, o configure sem preset e' RECUSADO, sem job,
+/// e o `cmake.status` diz entre quais escolher; escolhido um (o kit), ele fica
+/// anotado e passa a valer no configure sem preset (`buildDir`); se some dos
+/// presets, a pergunta volta.
+#[test]
+fn several_presets_ask_and_the_recorded_one_wins_until_it_vanishes() {
+    let dir = cmake_workspace("preset-varios");
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    let cmake = dir.join("bin/cmake");
+    crate::write_executable(
+        &cmake,
+        "#!/bin/sh\necho \"cmake-falso $*\"\nwhile [ $# -gt 0 ]; do [ \"$1\" = -B ] && \
+         { mkdir -p \"$2\"; : > \"$2/CMakeCache.txt\"; }; shift; done\nexit 0\n",
+    );
+    std::fs::write(
+        dir.join("CMakePresets.json"),
+        presets(&["debug", "release"]),
+    )
+    .unwrap();
+    let dir = crate::platform::canonicalize(&dir).unwrap();
+
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        80_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let fixed = core.handle_request(&JsonRpcRequest::new(
+        81_i64,
+        "toolchain.set",
+        Some(json!({ "role": "cmake", "id": "cmake" })),
+    ));
+    assert!(fixed.response().error.is_none());
+
+    let status = status_de(&mut core, 82);
+    assert_eq!(
+        status["presetChoices"],
+        json!(["debug", "release"]),
+        "{status}"
+    );
+    assert_eq!(status["presetChoicesFile"], "CMakePresets.json");
+    let refused = core.handle_request(&JsonRpcRequest::new(
+        83_i64,
+        "cmake.configure",
+        Some(json!({})),
+    ));
+    let error = refused
+        .response()
+        .error
+        .clone()
+        .expect("vários presets: recusa");
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+    assert!(
+        error.message.contains("debug, release"),
+        "{}",
+        error.message
+    );
+    let deadline = std::time::Instant::now() + std::time::Duration::from_millis(300);
+    while let Some(left) = deadline.checked_duration_since(std::time::Instant::now()) {
+        if let Ok(event) = receiver.recv_timeout(left) {
+            assert_ne!(event.method, "event.cmake.started", "a recusa nao roda job");
+        }
+    }
+
+    let accepted = core.handle_request(&JsonRpcRequest::new(
+        84_i64,
+        "cmake.configure",
+        Some(json!({ "preset": "release" })),
+    ));
+    assert!(accepted.response().error.is_none());
+    wait_configure(&receiver);
+    let status = status_de(&mut core, 85);
+    assert_eq!(status["preset"], "release");
+    assert!(status.get("presetChoices").is_none(), "{status}");
+
+    let again = core.handle_request(&JsonRpcRequest::new(
+        86_i64,
+        "cmake.configure",
+        Some(json!({})),
+    ));
+    assert!(again.response().error.is_none());
+    let (start, _) = wait_configure(&receiver);
+    assert_eq!(start["preset"], "release");
+    assert_eq!(start["presetSource"], "buildDir");
+
+    std::fs::write(dir.join("CMakePresets.json"), presets(&["debug", "rel2"])).unwrap();
+    let status = status_de(&mut core, 87);
+    assert_eq!(
+        status["presetChoices"],
+        json!(["debug", "rel2"]),
+        "{status}"
+    );
+    let refused = core.handle_request(&JsonRpcRequest::new(
+        88_i64,
+        "cmake.configure",
+        Some(json!({})),
+    ));
+    assert!(
+        refused.response().error.is_some(),
+        "o anotado sumiu: a pergunta volta"
+    );
 }
 
 /// O `clang-tidy` de verdade, o do Visual Studio, sobre a CDB de verdade do

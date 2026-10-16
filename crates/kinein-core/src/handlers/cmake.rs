@@ -113,13 +113,11 @@ impl Core {
             return jobs_unavailable_response(request_id, "cmake.configure");
         };
 
-        // O preset (P0 do 40 §4.1, 2026-09-17): o pedido (o kit ativo, que a
-        // UI manda) > o padrao do projeto (CMakeUserPresets, depois
-        // CMakePresets, o primeiro nao oculto que vale no Linux) > nenhum.
-        // Antes o configure automatico rodava SEM preset num projeto que os
-        // tem — e o CMakeLists que exige um (cmake_minimum_required + presets
-        // com toolchain file) falhava ou configurava outra coisa.
-        let (preset, preset_origem) = escolher_preset(&root, parsed.preset);
+        // O preset: o pedido, o anotado, o unico, ou a recusa (52 §14.2).
+        let (preset, preset_origem) = match choose_preset(&root, parsed.preset) {
+            Ok(choice) => choice,
+            Err(refusal) => return invalid_params(request_id, refusal),
+        };
         // A toolchain e resolvida AQUI, na thread do loop, e vai pronta para o
         // job: um job nao alcanca o `Core` (arquitetura/04 §3), e resolver la
         // dentro exigiria o `ToolDetector`, que e estado do core.
@@ -269,6 +267,12 @@ impl Core {
             Err(response) => return *response,
         };
         let status = cmake::status(&root);
+        // Os presets entre os quais a pessoa escolhe, quando o configure sem
+        // preset seria recusado (52 §14.2).
+        let (preset_choices, preset_choices_file) = match choose_default(&root) {
+            Err((file, names)) => (names, Some(file.to_owned())),
+            Ok(_) => (Vec::new(), None),
+        };
         // O diagnostico da CDB e' mais amplo que o `has_compile_commands`: este
         // olha so o build dir da IDE, e o clangd acha base em `build/` e nos
         // diretorios pai sozinho. Um projeto Meson funciona com
@@ -284,22 +288,52 @@ impl Core {
                 cdb_directory: cdb.directory,
                 cdb_stale: cdb.stale,
                 cdb_stale_because: cdb.stale_because,
+                preset_choices,
+                preset_choices_file,
             }),
         )
     }
 }
 
-/// O preset do configure (P0): o pedido (o kit ativo, `"kit"`) vence; senao
-/// o padrao do projeto, com o arquivo de onde veio; senao nenhum.
-fn escolher_preset(
-    root: &std::path::Path,
-    pedido: Option<String>,
-) -> (Option<String>, Option<&'static str>) {
-    pedido.filter(|p| !p.trim().is_empty()).map_or_else(
-        || {
-            cmake::default_preset(root)
-                .map_or((None, None), |(p, arquivo)| (Some(p), Some(arquivo)))
-        },
-        |p| (Some(p), Some("kit")),
+/// A recusa do configure sem preset (vários, nada anotado), sem job.
+fn invalid_params(request_id: Option<Value>, message: String) -> JsonRpcResponse {
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
     )
+}
+
+/// O preset escolhido e de onde veio (`presetSource`).
+type PresetChoice = (Option<String>, Option<&'static str>);
+
+/// O preset do configure (52 §14.2): o pedido (o kit ativo, `"kit"`) vence;
+/// senao o padrao ([`choose_default`]); com varios, a recusa diz quais.
+fn choose_preset(root: &std::path::Path, request: Option<String>) -> Result<PresetChoice, String> {
+    if let Some(preset) = request.filter(|p| !p.trim().is_empty()) {
+        return Ok((Some(preset), Some("kit")));
+    }
+    choose_default(root).map_err(|(file, names)| {
+        format!(
+            "o projeto tem {} presets de configure em {file} ({}): escolha um",
+            names.len(),
+            names.join(", ")
+        )
+    })
+}
+
+/// Sem pedido: o preset do ultimo configure que deu certo, anotado no build
+/// dir, se ainda existe entre os presets do projeto (`"buildDir"`) — senao o
+/// unico do projeto, com o arquivo; sem presets, nenhum; com varios, o
+/// arquivo e os nomes, para a pessoa escolher.
+fn choose_default(root: &std::path::Path) -> Result<PresetChoice, (&'static str, Vec<String>)> {
+    if let Some(recorded) = cmake::status(root).preset
+        && cmake::list_presets(root).is_ok_and(|presets| presets.iter().any(|p| p.name == recorded))
+    {
+        return Ok((Some(recorded), Some("buildDir")));
+    }
+    match cmake::default_preset(root) {
+        cmake::PresetDefault::Absent => Ok((None, None)),
+        cmake::PresetDefault::One(preset, file) => Ok((Some(preset), Some(file))),
+        cmake::PresetDefault::Several(file, names) => Err((file, names)),
+    }
 }

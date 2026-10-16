@@ -60,7 +60,6 @@ crates/kinein-core/src/cmake/mod.rs	encontrados	5
 crates/kinein-core/src/cmake/mod.rs	entra	2
 crates/kinein-core/src/cmake/mod.rs	entrada	4
 crates/kinein-core/src/cmake/mod.rs	entradas	2
-crates/kinein-core/src/cmake/mod.rs	escolhido	2
 crates/kinein-core/src/cmake/mod.rs	fila	3
 crates/kinein-core/src/cmake/mod.rs	fonte	1
 crates/kinein-core/src/cmake/mod.rs	gerado	1
@@ -673,12 +672,9 @@ crates/kinein-core/src/handlers/build_size.rs	regiao	2
 crates/kinein-core/src/handlers/build_size.rs	relatorio	3
 crates/kinein-core/src/handlers/build_size.rs	tabela	2
 crates/kinein-core/src/handlers/build_size.rs	unico	4
-crates/kinein-core/src/handlers/cmake.rs	arquivo	2
 crates/kinein-core/src/handlers/cmake.rs	confirmados	3
-crates/kinein-core/src/handlers/cmake.rs	escolher	2
 crates/kinein-core/src/handlers/cmake.rs	lidos	3
 crates/kinein-core/src/handlers/cmake.rs	origem	3
-crates/kinein-core/src/handlers/cmake.rs	pedido	2
 crates/kinein-core/src/handlers/cmake.rs	vazio	2
 crates/kinein-core/src/handlers/container.rs	erro	2
 crates/kinein-core/src/handlers/container.rs	linha	4
@@ -1533,7 +1529,6 @@ crates/kinein-core/src/tests/build.rs	sistemas	3
 crates/kinein-core/src/tests/build.rs	sucesso	4
 crates/kinein-core/src/tests/cmake.rs	aberto	6
 crates/kinein-core/src/tests/cmake.rs	aceito	6
-crates/kinein-core/src/tests/cmake.rs	espera	4
 crates/kinein-core/src/tests/cmake.rs	externo	6
 crates/kinein-core/src/tests/cmake.rs	fixado	3
 crates/kinein-core/src/tests/cmake.rs	inicio	13

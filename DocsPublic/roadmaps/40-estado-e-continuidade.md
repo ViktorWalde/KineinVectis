@@ -26,10 +26,11 @@
 > lançamento** (o pacote único da 0.3.6–0.3.9 é do autor; 57). O
 > [59](59-fechamento-da-0.3.9.md) virou registro; o que ficou aberto está no
 > §4. **Próximo passo:** a 0.4.0, a fundação
-> ([52](52-arquitetura-executavel-da-0.4.md) §11 e §14): a 0.4.0a, o contexto
-> efetivo com a origem, está feita (40.7 §7.307); seguem o preset no
-> configure automático, o diagnóstico do compilador ao salvar, L6/L7 e o
-> `compiledb` do PlatformIO, cada desenho no 52 §14 antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
+> ([52](52-arquitetura-executavel-da-0.4.md) §11 e §14): a 0.4.0a (o
+> contexto efetivo com a origem) e a 0.4.0b (o preset do configure: o
+> anotado, o único, ou a pergunta) estão feitas (40.7 §7.307–§7.308); seguem
+> o diagnóstico do compilador ao salvar, L6/L7 e o `compiledb` do
+> PlatformIO, cada desenho no 52 §14 antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
 > antes dela pede um clique em "Confiar neste projeto" (a faixa de saúde).
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
@@ -48,7 +49,7 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.173.0 (crates/kinein-protocol, medido em 2026-10-16; o
+protocolo   0.174.0 (crates/kinein-protocol, medido em 2026-10-16; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 60 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)

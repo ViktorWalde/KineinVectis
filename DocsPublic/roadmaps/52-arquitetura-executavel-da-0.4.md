@@ -652,3 +652,70 @@ o kit; sem CDB, o cache do CMake e o kit; ninguém dizendo nada e nada
 suposto), o `tst_index.qml` com o detalhe, 7 mutações reprovando; no Xvfb,
 o projeto de fluxo sem CDB mostra ao pairar "compilador /usr/bin/c++ (do
 cache do CMake)", e a barra diz IPC 0.173.0 (40.7 §7.307).
+
+### 14.2 0.4.0b — o preset do configure automático: o anotado, o único, ou a pergunta (§5.1, passo 5; 2026-10-16)
+
+**Medido no checkout (2026-10-16).** O P0 de 2026-09-17 (40.7 §7.46) já fez
+o configure automático usar um preset: o do kit que a tela escolheu (a ponte
+C++ guarda o último `toolchain.get` e o manda, `presetSource: "kit"`), senão
+o **primeiro** `configurePresets` não oculto de `CMakeUserPresets.json`,
+senão de `CMakePresets.json` (`cmake::default_preset`). O §5.1 deste plano,
+escrito depois (2026-10-01), pede outra coisa para o caso de vários: "com
+UM preset não oculto, o configure automático usa esse preset; com vários,
+pergunta pela faixa de saúde, sem adivinhar". E há um defeito que o desenho
+achou: o kit da tela só vive na sessão da ponte. Reaberta a IDE, o
+reconfigure ao salvar um `CMakeLists.txt` (e o botão Reconfigurar) volta ao
+"primeiro preset" e pode trocar o preset de um build já configurado, em
+silêncio. O preset do último configure que deu certo já fica anotado no
+build dir (`.kinein-preset`) e ninguém o lê para escolher. O próprio modelo
+de projeto C++ da IDE cria dois presets (Debug e Release), então a pergunta
+vai aparecer em todo projeto novo: é o que o VS Code faz no primeiro
+configure.
+
+**O desenho:**
+
+1. **A precedência do configure sem preset pedido** (dono:
+   `handlers/cmake.rs`, `escolher_preset`): o pedido (o kit da tela) →
+   o anotado no build dir, se ainda existe entre os presets do projeto
+   (`presetSource: "buildDir"`) → o único preset não oculto do primeiro
+   arquivo que tem algum (`CMakeUserPresets.json`, depois `CMakePresets.json`)
+   → **vários: o configure é recusado com `INVALID_PARAMS`** dizendo o
+   arquivo e os nomes. Nenhum job roda, nada é suposto.
+2. **Protocolo 0.174.0 (aditivo):** `cmake.status` ganha `presetChoices`
+   (os nomes, quando o configure sem preset seria recusado por haver
+   vários) e `presetChoicesFile`; `presetSource` ganha `"buildDir"`.
+   `cmake::default_preset` passa a dizer "nenhum", "um" ou "vários" (um tipo
+   no lugar da `Option`).
+3. **UI, a faixa de saúde pergunta:** com `presetChoices`, o
+   `ProjectHealthController` não dispara o configure automático e mostra
+   "o projeto tem N presets de configure (arquivo): escolha um", com o
+   botão "Escolher preset…". O botão abre o menu suspenso que a casca já tem
+   (o `AppMenuPopup`) com um item por preset; escolher um faz o que o
+   seletor de kit da área Embarcados faz (`ToolchainController.selectPreset`)
+   e configura (`cmake.configure`), e o Jobs aparece.
+4. **Quem não muda:** o preset do kit continua vencendo; projeto sem
+   presets configura sem preset; o configure explícito com preset também.
+
+**Provas planejadas:** testes do core (o anotado vence o padrão e é ignorado
+se sumiu dos presets; um só; vários recusam o configure sem job e aparecem
+no `cmake.status`; o kit vence tudo; o `CMakeUserPresets` antes do
+`CMakePresets`); harness do `ProjectHealthController` (com escolhas, nada de
+configure automático e a faixa certa) e do menu de presets (o item configura
+com o preset); mutações; no Xvfb, um projeto do modelo C++ da IDE (dois
+presets): a faixa, o menu, o configure com o escolhido, e depois de reabrir
+o reconfigure usando o anotado.
+
+**Resultado (2026-10-16).** Como desenhado. A geometria do menu ficou com a
+própria faixa (`ProjectHealthBanner.menuSpace`: o ponto logo abaixo do
+botão), porque a `ShellWorkspaceHost` estava no teto de 400 linhas; o item
+escolhido passa pela `ShellHeaderHost.executeMenuAction` (prefixo
+`cmake.preset:`), que já é quem executa as ações do menu compartilhado.
+Provas: o teste unitário do `default_preset` (um, vários, o arquivo do
+usuário vencendo, o inválido não escondendo o do projeto) e o integrado
+`several_presets_ask_and_the_recorded_one_wins_until_it_vanishes`; o
+`tst_preset_choice.qml` com o controller e a faixa reais; 6 mutações
+reprovando; no Xvfb, um projeto com `debug` e `release`: a faixa, o menu
+abaixo do botão, o configure com `release` (Ninja, `CMAKE_BUILD_TYPE=Release`,
+anotado), e, reaberto numa sessão nova e confiada, o reconfigure ao salvar
+o `CMakeLists.txt` com `params {}` saindo com `preset: "release"` e
+`presetSource: "buildDir"` (IPC gravado), IPC 0.174.0 (40.7 §7.308).

@@ -63,6 +63,15 @@ Rectangle {
             }
             return;
         }
+        // O preset escolhido na faixa de saude (0.4.0b): vira o kit ativo, como
+        // no seletor da area Embarcados, e configura com ele.
+        const presetPrefix = "cmake.preset:";
+        if (action.indexOf(presetPrefix) === 0) {
+            root.toolchainController.selectPreset(action.substring(presetPrefix.length));
+            root.shellController.showTab("jobs");
+            root.coreClient.cmakeConfigure();
+            return;
+        }
         const bottomAction = /^bottom\.(pin|unpin):(.+)$/.exec(action);
         if (bottomAction !== null) {
             root.shellController.setBottomPinned(bottomAction[2], bottomAction[1] === "pin");

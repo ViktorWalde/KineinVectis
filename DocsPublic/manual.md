@@ -1426,9 +1426,14 @@ aparecem à vista (num projeto Cargo, Cargo e Depurador); os outros ficam em
 
 **O kit manda no configure e nos servidores.** Com um kit ativo, o configure
 (automático ao abrir, ou o botão Configurar) usa o preset dele; sem kit, o
-preset padrão do projeto — o primeiro do seu `CMakeUserPresets.json`, senão
-do `CMakePresets.json` — e a aba IDE diz qual (`preset de: kit |
-CMakeUserPresets.json | CMakePresets.json`). O `targetTriple` do kit vai ao
+preset com que o projeto foi configurado da última vez; sem isso, o **único**
+preset do seu `CMakeUserPresets.json`, senão do `CMakePresets.json`. Com
+vários (o modelo C++ da IDE traz Debug e Release), a IDE **não escolhe por
+você** (desde 2026-10-16): a faixa de saúde diz "o projeto tem N presets de
+configure" e o botão **Escolher preset…** abre a lista; o escolhido configura
+e fica valendo nas próximas vezes, mesmo depois de reabrir a IDE. A aba IDE
+diz de onde veio (`preset de: kit | buildDir | CMakeUserPresets.json |
+CMakePresets.json`). O `targetTriple` do kit vai ao
 `cargo build` e ao rust-analyzer (que reinicia ao trocar de kit); o
 compilador cross vai ao clangd. **Escolher o preset** (desde 2026-09-18):
 num projeto com `CMakePresets.json`, o painel de Embarcados → Alvo do kit

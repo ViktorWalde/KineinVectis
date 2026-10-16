@@ -39,6 +39,11 @@ Item {
     // aqui isso vira o mesmo aviso acionavel que o auto-configure ja tem.
     property bool cdbStale: false
     property string cdbStaleBecause: ""
+    // Os presets entre os quais a pessoa escolhe (0.4.0b, roadmaps/52 §14.2):
+    // com varios e nada anotado, o core recusa o configure sem preset, e a
+    // faixa pergunta em vez de configurar sozinha.
+    property var presetChoices: []
+    property string presetChoicesFile: ""
 
     property bool active: false
     property string status: "idle"
@@ -62,6 +67,8 @@ Item {
         cargoMetadataError = "";
         cdbStale = false;
         cdbStaleBecause = "";
+        presetChoices = [];
+        presetChoicesFile = "";
         update();
     }
     onWorkspaceKindChanged: update()
@@ -76,10 +83,12 @@ Item {
     onPythonStubsMessageChanged: update()
     Component.onCompleted: update()
 
-    function handleCmakeStatus(configured, stale, staleBecause, preset) {
+    function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile) {
         cmakeStatusKnown = true;
         cmakeConfigured = configured;
         cmakePreset = preset === undefined || preset === null ? "" : preset;
+        presetChoices = choices === undefined || choices === null ? [] : choices;
+        presetChoicesFile = choicesFile === undefined || choicesFile === null ? "" : choicesFile;
         cdbStale = stale === true;
         cdbStaleBecause = cdbStale && staleBecause !== undefined
                 && staleBecause !== null ? staleBecause : "";
@@ -98,7 +107,7 @@ Item {
     // confianca, so' o "Configurar" da faixa (um gesto) o roda.
     function configureIfTrusted() {
         if (workspaceTrusted && hasBuildSystem("cmake") && cmakeStatusKnown
-                && !cmakeConfigured && !autoConfigureAttempted) {
+                && !cmakeConfigured && !autoConfigureAttempted && presetChoices.length === 0) {
             autoConfigureAttempted = true;
             autoConfigureRequested();
         }
@@ -215,6 +224,13 @@ Item {
         return missing;
     }
 
+    // O menu do "Escolher preset…": um item por preset; escolher configura
+    // com ele (ShellHeaderHost.executeMenuAction, prefixo "cmake.preset:").
+    function presetMenuItems() {
+        return presetChoices.map(name => ({ label: name, action: "cmake.preset:" + name,
+                                            icon: "", enabled: true, shortcut: "" }));
+    }
+
     function apply(newStatus, newMessage, newActionLabel, newActionTarget) {
         status = newStatus;
         message = newMessage;
@@ -265,6 +281,14 @@ Item {
             apply("info",
                   qsTr("projeto ainda não confiável: o CMake e os build scripts não rodam sozinhos"),
                   qsTr("Confiar neste projeto"), "trust");
+            return;
+        }
+        if (hasBuildSystem("cmake") && cmakeStatusKnown && presetChoices.length > 0
+                && (!cmakeConfigured || cdbStale)) {
+            apply("warning",
+                  qsTr("o projeto tem %1 presets de configure (%2): escolha um")
+                      .arg(presetChoices.length).arg(presetChoicesFile),
+                  qsTr("Escolher preset…"), "cmakePresetChoice");
             return;
         }
         if (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured) {

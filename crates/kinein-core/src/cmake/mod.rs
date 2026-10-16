@@ -73,15 +73,26 @@ pub fn record_preset(root: &Path, preset: Option<&str>) {
     }
 }
 
+/// O que os presets do projeto dizem ao configure sem preset pedido.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PresetDefault {
+    /// O projeto nao tem presets que valham: configure sem preset.
+    Absent,
+    /// Um so': ele, com o arquivo de onde veio (a evidencia).
+    One(String, &'static str),
+    /// Varios no mesmo arquivo: ninguem escolhe pela pessoa (52 §14.2).
+    Several(&'static str, Vec<String>),
+}
+
 /// O preset PADRAO do projeto, quando nem o pedido nem o kit dizem um.
 ///
-/// P0 do 40 §4.1 (2026-09-17): o primeiro `configurePresets` nao oculto de
+/// Os `configurePresets` nao ocultos do primeiro arquivo que tem algum:
 /// `CMakeUserPresets.json` (a escolha do usuario para ESTA maquina vence),
-/// senao de `CMakePresets.json`, pulando os que uma `condition` exclui
-/// no Linux. `None` = o projeto nao tem presets: configure sem preset, como
-/// sempre. A escolha vem com a evidencia (o arquivo de onde saiu).
+/// senao `CMakePresets.json`, pulando os que uma `condition` exclui no
+/// Linux. Ate' 2026-10-16 (P0, 40.7 §7.46) valia o PRIMEIRO da lista; desde a
+/// 0.4.0b, com varios, a UI pergunta (`roadmaps/52` §14.2).
 #[must_use]
-pub fn default_preset(root: &Path) -> Option<(String, &'static str)> {
+pub fn default_preset(root: &Path) -> PresetDefault {
     for file in ["CMakeUserPresets.json", "CMakePresets.json"] {
         let Ok(body) = fs::read_to_string(root.join(file)) else {
             continue;
@@ -92,19 +103,21 @@ pub fn default_preset(root: &Path) -> Option<(String, &'static str)> {
         let Some(items) = value.get("configurePresets").and_then(Value::as_array) else {
             continue;
         };
-        let escolhido = items.iter().find(|item| {
-            item.get("hidden").and_then(Value::as_bool) != Some(true)
-                && item.get("name").and_then(Value::as_str).is_some()
-                && condition_allows_linux(item.get("condition"))
-        });
-        if let Some(name) = escolhido
-            .and_then(|i| i.get("name"))
-            .and_then(Value::as_str)
-        {
-            return Some((name.to_owned(), file));
+        let mut names: Vec<String> = items
+            .iter()
+            .filter(|item| {
+                item.get("hidden").and_then(Value::as_bool) != Some(true)
+                    && condition_allows_linux(item.get("condition"))
+            })
+            .filter_map(|item| item.get("name").and_then(Value::as_str).map(str::to_owned))
+            .collect();
+        match names.len() {
+            0 => {}
+            1 => return PresetDefault::One(names.remove(0), file),
+            _ => return PresetDefault::Several(file, names),
         }
     }
-    None
+    PresetDefault::Absent
 }
 
 /// A `condition` de um preset (cmake-presets(7)): so' as formas que dizem
@@ -466,8 +479,8 @@ mod tests {
     use std::path::PathBuf;
 
     use super::{
-        configure_command, default_preset, list_presets, list_targets, record_preset, status,
-        targets_from_source, write_file_api_query,
+        PresetDefault, configure_command, default_preset, list_presets, list_targets,
+        record_preset, status, targets_from_source, write_file_api_query,
     };
     use crate::toolchain::Toolchain;
 
@@ -681,28 +694,42 @@ mod tests {
         assert!(list_targets(&empty).is_empty());
     }
 
-    /// O preset padrao (P0, 2026-09-17): o do usuario (`CMakeUserPresets`)
-    /// vence o do projeto; ocultos e os que uma `condition` exclui no Linux
-    /// nao contam; sem presets, nenhum. E o preset usado fica anotado no build
-    /// dir para o `cmake.status` dizer com que a IDE configurou.
+    /// O preset padrao (P0, 2026-09-17; 0.4.0b, 2026-10-16): o arquivo do
+    /// usuario (`CMakeUserPresets`) vence o do projeto; ocultos e os que uma
+    /// `condition` exclui no Linux nao contam; sem presets, nenhum; um so',
+    /// ele; varios, a lista para a pessoa escolher. E o preset usado fica
+    /// anotado no build dir para o `cmake.status` dizer com que a IDE
+    /// configurou.
     #[test]
     fn the_default_preset_prefers_the_user_file_and_skips_hidden_or_foreign_ones() {
         let root = temp_root("preset-padrao");
-        assert_eq!(default_preset(&root), None);
-        std::fs::write(
-            root.join("CMakePresets.json"),
-            r#"{"version": 6, "configurePresets": [
+        assert_eq!(default_preset(&root), PresetDefault::Absent);
+        let project_presets = r#"{"version": 6, "configurePresets": [
                 {"name": "base", "hidden": true},
                 {"name": "windows", "condition": {"type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows"}},
                 {"name": "desligado", "condition": {"type": "const", "value": false}},
-                {"name": "linux-clang", "condition": {"type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows"}},
-                {"name": "outro"}
-            ]}"#,
+                {"name": "linux-clang", "condition": {"type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows"}}
+            ]}"#;
+        std::fs::write(root.join("CMakePresets.json"), project_presets).unwrap();
+        assert_eq!(
+            default_preset(&root),
+            PresetDefault::One("linux-clang".to_owned(), "CMakePresets.json")
+        );
+        std::fs::write(
+            root.join("CMakePresets.json"),
+            project_presets.replace(
+                "\n            ]}",
+                ",\n                {\"name\": \"outro\"}\n            ]}",
+            ),
         )
         .unwrap();
         assert_eq!(
             default_preset(&root),
-            Some(("linux-clang".to_owned(), "CMakePresets.json"))
+            PresetDefault::Several(
+                "CMakePresets.json",
+                vec!["linux-clang".to_owned(), "outro".to_owned()]
+            ),
+            "dois que valem: ninguem escolhe pela pessoa"
         );
         std::fs::write(
             root.join("CMakeUserPresets.json"),
@@ -711,14 +738,11 @@ mod tests {
         .unwrap();
         assert_eq!(
             default_preset(&root),
-            Some(("dev-local".to_owned(), "CMakeUserPresets.json"))
+            PresetDefault::One("dev-local".to_owned(), "CMakeUserPresets.json")
         );
         // Um arquivo de usuario invalido nao esconde o do projeto.
         std::fs::write(root.join("CMakeUserPresets.json"), "{ nao e json").unwrap();
-        assert_eq!(
-            default_preset(&root).map(|p| p.0),
-            Some("linux-clang".to_owned())
-        );
+        assert!(matches!(default_preset(&root), PresetDefault::Several(..)));
 
         // O preset usado: anotado so' com CMakeCache (configurado) — e apagado
         // quando o configure seguinte roda sem preset.

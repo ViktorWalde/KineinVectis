@@ -42,20 +42,18 @@ Item {
     signal openWorkspacePathRequested(string path)
     signal closeWorkspaceRequested()
     signal toolsDetectionRequested()
-    // A acao da faixa de saude vai inteira para o Main (scan, configure...).
     signal healthActionRequested(string target)
     signal problemNextStepRequested(string kind, string target, string file, int line, int column)
     signal createProjectRequested(string templateId)
     signal settingsRequested()
-    // Menus do trilho e das abas (0.3.7): o Main abre o menu compartilhado.
+    // Menus do trilho e das abas (0.3.7) e o "Escolher preset…" da faixa de
+    // saude (0.4.0b): o Main abre o menu compartilhado. O resto da faixa vai
+    // inteiro para o Main (healthActionRequested: scan, configure...).
     signal shellMenuRequested(real menuX, real menuY, var items)
 
     onWidthChanged: if (root.shellController) root.shellController.updateViewport(width, height)
     onHeightChanged: if (root.shellController) root.shellController.updateViewport(width, height)
-    Component.onCompleted: {
-        root.shellController.updateViewport(width, height);
-        updatePanelLimits();
-    }
+    Component.onCompleted: { root.shellController.updateViewport(width, height); updatePanelLimits(); }
 
     // Limites dos paineis (53 §4.4): o trilho e o minimo de cada slot.
     function updatePanelLimits() {
@@ -197,7 +195,9 @@ Item {
                 status: root.projectHealthController.status
                 message: root.projectHealthController.message
                 actionLabel: root.projectHealthController.actionLabel
-                onActionRequested: root.healthActionRequested(root.projectHealthController.actionTarget)
+                menuSpace: root
+                onActionRequested: (x, y) => root.projectHealthController.actionTarget === "cmakePresetChoice" ? root.shellMenuRequested(x, y, root.projectHealthController.presetMenuItems())
+                                                                                                            : root.healthActionRequested(root.projectHealthController.actionTarget)
                 onDismissRequested: root.projectHealthController.dismiss()
             }
 

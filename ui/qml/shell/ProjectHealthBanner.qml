@@ -9,7 +9,10 @@ Rectangle {
     property string message: ""
     property string actionLabel: ""
 
-    signal actionRequested()
+    // O ponto logo abaixo do botao, no espaco de `menuSpace`: onde abre um menu
+    // que o botao pede (o "Escolher preset…" da 0.4.0b).
+    property Item menuSpace: null
+    signal actionRequested(real menuX, real menuY)
     signal dismissRequested()
 
     height: visible ? 34 : 0
@@ -76,7 +79,10 @@ Rectangle {
         compact: true
         visible: root.actionLabel !== ""
         text: root.actionLabel
-        onClicked: root.actionRequested()
+        onClicked: {
+            const point = actionButton.mapToItem(root.menuSpace, 0, actionButton.height);
+            root.actionRequested(point.x, point.y);
+        }
     }
 
     KvIconButton {

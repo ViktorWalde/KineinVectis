@@ -128,6 +128,14 @@ pub struct CmakeStatusResult {
     /// Which build file made the database stale, when `cdbStale`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cdb_stale_because: Option<String>,
+    /// The configure presets the person chooses among (`0.174.0`): present
+    /// when a `cmake.configure` without a preset would be refused because the
+    /// project has several and nothing was recorded.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub preset_choices: Vec<String>,
+    /// The presets file `presetChoices` came from.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset_choices_file: Option<String>,
 }
 
 #[cfg(test)]
@@ -179,6 +187,8 @@ mod tests {
             cdb_directory: Some("build".to_owned()),
             cdb_stale: true,
             cdb_stale_because: Some("CMakeLists.txt".to_owned()),
+            preset_choices: Vec::new(),
+            preset_choices_file: None,
         })
         .unwrap();
 
@@ -208,6 +218,8 @@ mod tests {
             cdb_directory: None,
             cdb_stale: false,
             cdb_stale_because: None,
+            preset_choices: Vec::new(),
+            preset_choices_file: None,
         })
         .unwrap();
 
