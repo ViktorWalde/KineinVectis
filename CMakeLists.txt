@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.25)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(kinein-vectis VERSION 0.3.5 LANGUAGES CXX)
+project(kinein-vectis VERSION 0.3.9 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 

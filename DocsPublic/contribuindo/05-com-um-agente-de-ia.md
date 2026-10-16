@@ -7,6 +7,12 @@ vai revisar o que um agente entregou.
 
 ## O que o agente precisa receber antes de tocar em código
 
+**A entrada já está na raiz** (desde 2026-10-16, [61](../roadmaps/61-organizacao-da-documentacao.md)
+§4, O7): o [`CLAUDE.md`](../../CLAUDE.md), que o Claude Code carrega sozinho
+ao abrir o repositório, aponta esta ordem de leitura e repete as regras do
+item 3. Outro agente recebe o mesmo arquivo no prompt. Ele só aponta: se
+divergir daqui, este documento vence, e os dois se corrigem no mesmo gesto.
+
 1. **O prompt de entrada** com o estado real: versão do protocolo, os
    números do `40` (o handoff e o §1), o roadmap da etapa e a fatia; as regras
    inegociáveis; o que ele pode e não pode fazer na máquina. O conteúdo

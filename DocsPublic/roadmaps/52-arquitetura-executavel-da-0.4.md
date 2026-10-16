@@ -550,7 +550,12 @@ Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
 0.4.3  gravar/depurar: sonda no kit, OpenOCD por VID:PID, SVD leitura e
        debug.writeMemory (§5.8); PlatformIO depurar; Renode como
        debugServer (§10.1)
-0.4.4  editor: L2, L3, L5 (§5.11) e o fechamento da versão
+0.4.4  editor: L2, L3, L5 (§5.11)
+0.4.5  Banco para embarcados (decisão do autor, 2026-10-16): o LSP por
+       conexão (o passo 10 do 59 §2.3: instâncias isoladas, Postgres
+       Language Server, syntaqlite, o servidor do MongoDB; arquitetura/38) e
+       o InfluxDB 3 nativo com a linguagem dele (o passo 11); e o fechamento
+       da versão, com o AppImage (só com a 0.4 finalizada)
 ```
 
 ## 12. Pontos de rollback
@@ -579,3 +584,7 @@ Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
    ([40](40-estado-e-continuidade.md) §5, "modo autonomo"); o que só a placa
    prova fica NÃO PROVADO, dito. Sem AppImage (a prova de artefato do §10
    fica não feita por decisão do autor).
+5. **Decidida (2026-10-16):** o Banco para embarcados (o LSP por conexão e o
+   InfluxDB 3 nativo, adiados na 0.3.9) volta dentro da 0.4, no fim (0.4.5);
+   o AppImage sai só com a 0.4 finalizada, e então a prova de artefato do §10
+   vale para ele.

@@ -150,12 +150,15 @@ Cada verificação nova é provada por mutação antes do commit.
 | O3 | O 40 só com o estado (§3.3), o 59 §2.5 e o dono de cada ordem (§3.4) | o texto que saiu do 40 está inteiro no registro; mutação do teto do cabeçalho |
 | O4 | O 03 sem o histórico no caminho (§3.5) | as 949 linhas idênticas no 03.1; o `verificar-fiacao-ipc.sh` lê a lista canônica (onde o Rust estiver instalado) |
 | O5 | O mapa de contextos no 00 §5 e a ordem de leitura do `contribuindo/05` (§3.1) | os links do mapa existem (gate) |
+| O6 | O 03 dividido por domínio (decisão do autor, 2026-10-16): o 03 fica com as regras, as listas canônicas que o gate lê e o índice; cada domínio no seu arquivo. Desenho em §3.7 antes de mover | os gates de fiação e de links verdes; o texto movido idêntico ao de antes (comparação por linha) |
+| O7 | Um arquivo curto de entrada para agentes na raiz, o `CLAUDE.md` (decisão do autor, 2026-10-16): aponta o 00, o 40 e o `contribuindo/05` e repete as regras que não se otimizam | o gate de links; o Claude Code o carrega sozinho |
 
 ## 5. O que fica de fora, por enquanto
 
-- **Dividir o 03 por domínio** (um arquivo por `dominio.*`). Pouparia mais
-  leitura, mas o `verificar_fiacao_ipc.py` e o `module_map.py` leem o 03;
-  é fatia própria, com o gate mudado antes. Proposta, sem decisão.
+- **Dividir o 03 por domínio:** saiu daqui em 2026-10-16, decidido pelo
+  autor; é a O6 (§4). Medido nessa data: 4.096 linhas (~57 mil tokens), com
+  domínios em títulos de dois níveis (uma seção "Jobs" de 1.189 linhas leva
+  nove domínios dentro).
 - **Enxugar o 59.** As seções dos passos feitos (§3–§6, §5.8–§5.15) são o
   desenho do que já está no código. Ao fechar a 0.3.9, o 59 inteiro vira
   registro, como o 51 virou depois da 0.3.5; não vale reescrevê-lo antes.

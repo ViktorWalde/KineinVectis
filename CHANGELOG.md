@@ -9,8 +9,9 @@ em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 
 A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
-no checkout, não em nenhum pacote publicado: o lançamento (tag, release e
-pacote) é do autor, que considera publicá-lo depois da 0.4.0 (59 §8).
+no checkout, não em nenhum pacote publicado: o lançamento (tag e release) é
+do autor, e o AppImage só sai com a 0.4 finalizada (decisão de 2026-10-16).
+O binário diz `0.3.9` desde 2026-10-16 (`kinein --version` e a tela inicial).
 
 - **0.3.9 encerrada** (2026-10-16, roadmaps 59 §7.1.8, 40.7 §7.304). As
   provas: os passos 7–16 com registro (40.7 §7.243–§7.303); os aceites com
