@@ -70,16 +70,17 @@ Item {
 
         controller.handleResolved(root.selecoes(), root.candidatos());
 
-        // O resumo mostra o que vai ser USADO — C++ e gerador; e segue os
-        // sistemas do projeto (F6-b): so' Cargo nao fala de C++.
+        // O resumo diz o que foi FIXADO e um nome neutro para o automatico
+        // (autor, 2026-10-16, 59 §7.1.7.1); segue os sistemas do projeto
+        // (F6-b): so' Cargo nao fala de C++.
         if (controller.summary() !== "G++ · Ninja") failures += 4;
-        if (controller.summary(["cargo"]) !== "Cargo · automática") failures += 4;
-        if (controller.summary(["cargo", "cmake"]) !== "Cargo · G++ · Ninja · automática") failures += 4;
+        if (controller.summary(["cargo"]) !== "Automática") failures += 4;
+        if (controller.summary(["cargo", "cmake"]) !== "G++ · Ninja · automática") failures += 4;
         if (controller.labelFor("cxxCompiler") !== "G++") failures += 8;
-        // ESCOLHA AUTOMATICA NAO E' MAIS "nao sei": ela diz QUAL, e diz que
-        // foi o core que escolheu. Sem isso o autor nao tem como discordar de
-        // uma decisao que nem sabe que foi tomada.
-        if (controller.labelFor("cCompiler") !== "Clang · automático") failures += 16;
+        // O menu diz QUAL: nos papeis do CMake, o que o cache do projeto diz;
+        // nos que a IDE roda direto, o que o core escolheu.
+        if (controller.labelFor("cCompiler") !== "Clang · do projeto") failures += 16;
+        if (controller.labelFor("cargo") !== "Cargo · automático") failures += 16;
         if (!controller.isAutomatic("cCompiler")) failures += 131072;
         if (controller.isAutomatic("cxxCompiler")) failures += 262144;
 
@@ -132,6 +133,14 @@ Item {
             [{ role: "cxxCompiler", id: "gxx" }],
             [{ role: "cxxCompiler", id: "clangxx", label: "Clang++" }]);
         if (controller.labelFor("cxxCompiler") !== "gxx (ausente)") failures += 1024;
+        // O automatico do CMake sem candidato que case: o caminho do cache; e,
+        // antes do primeiro configure, quem escolhe e' o CMake.
+        controller.handleResolved(
+            [{ role: "cxxCompiler", resolvedPath: "/opt/x/bin/c++", automatic: true },
+             { role: "cCompiler", automatic: true }], []);
+        if (controller.labelFor("cxxCompiler") !== "/opt/x/bin/c++ · do projeto") failures += 1024;
+        if (controller.labelFor("cCompiler") !== "o CMake escolhe ao configurar") failures += 1024;
+        if (controller.summary() !== "Automática") failures += 1024;
 
         // Erro de OUTRO dominio nao acende o erro deste menu.
         controller.handleFailed("git.status", "nada a ver");

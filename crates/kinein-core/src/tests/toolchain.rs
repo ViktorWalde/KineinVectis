@@ -115,16 +115,108 @@ fn a_fresh_workspace_is_fully_automatic() {
             "nada pode nascer fixado: {selecao}"
         );
     }
-    // O `resolvedPath` do automatico e' informacao para a UI, nao fixacao.
-    let cxx = selecoes
-        .iter()
-        .find(|selecao| selecao["role"] == "cxxCompiler")
-        .unwrap();
+    // O `resolvedPath` do automatico e' informacao para a UI, nao fixacao:
+    // o do `cmake` e' o detectado; o do compilador, so' o que o cache do
+    // projeto disser (16.7b), e aqui ainda nao ha' cache.
+    let selection_for = |name: &str| {
+        selecoes
+            .iter()
+            .find(|selecao| selecao["role"] == name)
+            .unwrap()
+            .clone()
+    };
     assert_eq!(
-        crate::platform::program_label(std::path::Path::new(cxx["resolvedPath"].as_str().unwrap())),
-        "clang++",
-        "o automatico descreve o primeiro detectado: {cxx}"
+        crate::platform::program_label(std::path::Path::new(
+            selection_for("cmake")["resolvedPath"].as_str().unwrap()
+        )),
+        "cmake"
     );
+    let cxx = selection_for("cxxCompiler");
+    assert!(
+        cxx.get("resolvedPath").is_none() && cxx.get("effectiveId").is_none(),
+        "sem configure, o compilador nao e' suposto: {cxx}"
+    );
+}
+
+/// O automatico dos papeis do `CMake` e' o que o cache do projeto diz (autor,
+/// 2026-10-16, `roadmaps/59` §7.1.7.1): antes do configure, nada; depois, o
+/// compilador e o gerador que o `CMake` gravou, casados com os candidatos
+/// pelo arquivo, e nunca o primeiro detectado. A escolha fixada vence; o que
+/// a IDE roda direto (o `cargo`) segue com o primeiro detectado.
+#[test]
+fn the_automatic_cmake_roles_read_the_project_cache() {
+    // Escreve executaveis: sem este lock o `exec` de outro teste volta
+    // ETXTBSY (ver lib.rs).
+    let _serial = crate::serialize_executables();
+    let (root, bin) = workspace_with_tools(
+        "cache",
+        &[
+            "clang", "clang++", "gcc", "g++", "ninja", "make", "cmake", "cargo",
+        ],
+    );
+    let mut core = core_with_path(&bin);
+    open(&mut core, &root);
+    let role = |result: &Value, name: &str| {
+        result["selections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|selection| selection["role"] == name)
+            .unwrap()
+            .clone()
+    };
+
+    let before = call(&mut core, "toolchain.get", &json!({}));
+    for name in ["cCompiler", "cxxCompiler", "generator"] {
+        let selection = role(&before, name);
+        assert!(
+            selection.get("resolvedPath").is_none() && selection.get("effectiveId").is_none(),
+            "sem cache, nada suposto: {selection}"
+        );
+    }
+    assert_eq!(role(&before, "cargo")["effectiveId"], "cargo");
+
+    let build = root.join(".kinein/build");
+    std::fs::create_dir_all(&build).unwrap();
+    std::fs::write(
+        build.join("CMakeCache.txt"),
+        format!(
+            "# cache\n// Path to a program.\nCMAKE_CXX_COMPILER:FILEPATH={}\n\
+             CMAKE_C_COMPILER:FILEPATH=/opt/fora/bin/cc\n\
+             CMAKE_GENERATOR:INTERNAL=Unix Makefiles\n\
+             CMAKE_MAKE_PROGRAM:FILEPATH={}\n",
+            bin.join(".").join("g++").display(),
+            bin.join("make").display()
+        ),
+    )
+    .unwrap();
+    let after = call(&mut core, "toolchain.get", &json!({}));
+    let cxx = role(&after, "cxxCompiler");
+    assert_eq!(
+        cxx["effectiveId"], "gxx",
+        "o mesmo arquivo do g++ detectado: {cxx}"
+    );
+    assert!(cxx["automatic"].as_bool().unwrap(), "{cxx}");
+    let generator = role(&after, "generator");
+    assert_eq!(generator["effectiveId"], "Unix Makefiles", "{generator}");
+    assert_eq!(
+        generator["resolvedPath"],
+        bin.join("make").display().to_string()
+    );
+    let c = role(&after, "cCompiler");
+    assert_eq!(c["resolvedPath"], "/opt/fora/bin/cc");
+    assert!(
+        c.get("effectiveId").is_none(),
+        "fora dos candidatos, so' o caminho: {c}"
+    );
+
+    call(
+        &mut core,
+        "toolchain.set",
+        &json!({ "role": "cxxCompiler", "id": "clangxx" }),
+    );
+    let pinned = call(&mut core, "toolchain.get", &json!({}));
+    assert_eq!(role(&pinned, "cxxCompiler")["effectiveId"], "clangxx");
 }
 
 /// So se oferece o que existe NESTA maquina.

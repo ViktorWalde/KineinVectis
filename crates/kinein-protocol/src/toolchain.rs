@@ -103,9 +103,16 @@ pub struct ToolchainSelection {
     ///
     /// Ausente quando a escolha e automatica e o binario nao foi encontrado —
     /// a UI mostra isso como "nao detectado" em vez de fingir que ha kit.
+    /// Desde o `0.172.0`, no automatico dos papeis que o `CMake` decide
+    /// (`cCompiler`, `cxxCompiler`, `generator`), e' o que o `CMakeCache.txt`
+    /// do projeto diz (o compilador; o programa do gerador), ausente antes do
+    /// primeiro configure.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resolved_path: Option<String>,
     /// Id do que sera' USADO — a escolha do autor, ou a que o core fez por ele.
+    /// Nos papeis do `CMake`, desde o `0.172.0`, o candidato detectado que e'
+    /// o mesmo arquivo do cache do projeto (ou o gerador do cache); ausente
+    /// sem cache ou sem candidato que case.
     ///
     /// POR QUE E' SEPARADO DE [`Self::id`] (2026-09-04). `id` continua sendo
     /// "o que o AUTOR fixou", e ausencia ali continua significando "nao fixei

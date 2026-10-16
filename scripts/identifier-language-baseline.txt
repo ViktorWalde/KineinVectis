@@ -2162,7 +2162,6 @@ crates/kinein-core/src/toolchain/mod.rs	campo	2
 crates/kinein-core/src/toolchain/mod.rs	candidato	4
 crates/kinein-core/src/toolchain/mod.rs	detectado	13
 crates/kinein-core/src/toolchain/mod.rs	detectados	3
-crates/kinein-core/src/toolchain/mod.rs	disponiveis	5
 crates/kinein-core/src/toolchain/mod.rs	encontrado	2
 crates/kinein-core/src/toolchain/mod.rs	escolhas	2
 crates/kinein-core/src/toolchain/mod.rs	escolhida	2
@@ -3519,9 +3518,7 @@ ui/qml/shell/HeaderRunWidget.qml	acoes	3
 ui/qml/shell/ShellEnvironmentOverlays.qml	comando	4
 ui/qml/shell/StatusBarJobWidget.qml	preenchido	1
 ui/qml/shell/StatusBarJobWidget.qml	trilho	4
-ui/qml/toolchain/ToolchainController.qml	algum	3
 ui/qml/toolchain/ToolchainController.qml	alvo	3
-ui/qml/toolchain/ToolchainController.qml	automatico	3
 ui/qml/toolchain/ToolchainController.qml	entrada	4
 ui/qml/toolchain/ToolchainController.qml	limpo	6
 ui/qml/toolchain/ToolchainController.qml	linhas	9

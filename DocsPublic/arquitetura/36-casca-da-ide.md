@@ -45,7 +45,7 @@ rebaixado (§1.2.1), dentro das bandejas das abas.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ [K] ☰  │ projeto ▾ │ main ③ │ Clang++ · Ninja ▾ │ ⋯      ▷ ⏹ ⌘   _ □ ✕ │ ← topo (38 px)
+│ [K] ☰  │ projeto ▾ │ main ③ │ Automática ▾      │ ⋯      ▷ ⏹ ⌘   _ □ ✕ │ ← topo (38 px)
 │                                                                          │   AppMenuBar + TopHeaderBar
 │ ┌──┐ ╭──────────────┬────────────────────────────┬─────────────╮ ┌──┐   │
 │ │▣ │ │ slot da      │ abas do editor             │ slot da     │ │▤ │   │

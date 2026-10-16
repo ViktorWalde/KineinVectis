@@ -2172,7 +2172,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | feito em 2026-10-16 (§7.1.5): o `Flickable` não reproduz no Qt 6.10 (fica, medido); as mensagens (16.5a, 40.7 §7.298); largura por janela, ↻ que relê o catálogo, Tab da barra do Banco e o tooltip (16.5b, §7.299) | 16.5a, 16.5b |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | feito em 2026-10-16 (§7.1.6; 40.7 §7.300): tudo no orçamento; o atributo só com a aba Web ligada; a medida da digitação de volta | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | feito em 2026-10-16 (§7.1.7; 40.7 §7.301): o fluxo C++/CMake e os Containers passaram; F5, F6 e F10 (o Ctrl+B num cabeçalho do sistema) corrigidos; F8 era o `xdotool` (as teclas F vão pelo XTEST agora) | 16.7 |
-| F7: o automático da toolchain diz o que o projeto usa (decisão do autor, 2026-10-16) | pendente; desenho em §7.1.7.1 antes do código | 16.7b |
+| F7: o automático da toolchain diz o que o projeto usa (decisão do autor, 2026-10-16) | feito em 2026-10-16 (§7.1.7.1; 40.7 §7.302): o cache do CMake do projeto, chip neutro, protocolo 0.172.0 | 16.7b |
 | F9: os textos da UI sem acento (15 `qsTr`, ~25 em `ui/src`) | pendente | 16.7c |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
 
@@ -2757,6 +2757,76 @@ Shift+F10 e Ctrl+F2, e na tela o Ctrl+F9 compila ("[100%] Built target
 app") e o Shift+F10 executa ("ola do fluxo" no terminal "▶ app ✓"). F10: o Ctrl+B em
 `std::cout` abre `iostream` somente leitura na linha 65. Ficam a 16.7b (F7)
 e a 16.7c (F9).
+
+##### 7.1.7.1 16.7b — o automático da toolchain lê o projeto (desenho, 2026-10-16, antes do código)
+
+**A decisão (autor, 2026-10-16, 40 §5):** "manter um nome neutro e o
+funcionamento automático de ler o que de fato está no projeto que for
+aberto, e não suposições".
+
+**O que é suposição hoje (lido no código em 2026-10-16).** Sem escolha
+fixada, o `Toolchain::resolve_kit` dá a cada papel o primeiro candidato
+detectado como `effectiveId` e `resolvedPath` (a mescla de 2026-09-04). Para
+os papéis que a IDE RODA direto (depurador, monitor serial, `cargo`,
+`cmake`), isso é a verdade: é o binário que vai rodar. Para os três que o
+CMake decide (`cCompiler`, `cxxCompiler`, `generator`), não: o
+`cmake_arguments` só passa o que foi fixado, e o CMake escolhe pelas regras
+dele (`CC`/`CXX`, `cc`/`c++` no `PATH`, `CMAKE_GENERATOR` ou `Unix
+Makefiles`), guardando a escolha no `CMakeCache.txt` para sempre. O chip
+dizia "Clang++ · Ninja · automática" num projeto que compila com GCC e Make.
+Correção do texto do F7 acima: o `--query-driver` do clangd só entra para
+compilador cross (os nativos são excluídos em `clangd_args`), então o clangd
+nativo não era afetado; afetados são o chip, o menu, a dica de sysroot e o
+prefixo das binutils, que leem o efetivo.
+
+**O desenho:**
+
+1. **Core, `toolchain/project.rs` (novo):** lê o `.kinein/build/CMakeCache.txt`
+   (o build dir é único, `cmake::build_dir`): `CMAKE_C_COMPILER`,
+   `CMAKE_CXX_COMPILER`, `CMAKE_GENERATOR` e `CMAKE_MAKE_PROGRAM`. Sem cache,
+   nada.
+2. **`resolve_kit`, só os três papéis do CMake, só sem escolha fixada:**
+   `resolvedPath` = o que o cache diz (o compilador; para o gerador, o
+   `CMAKE_MAKE_PROGRAM`); `effectiveId` = o candidato detectado cujo caminho
+   canônico é o mesmo do cache (`/usr/bin/c++` → `x86_64-linux-gnu-g++-15` =
+   o do `g++` → `gxx`), ou, no gerador, o nome do cache quando o catálogo o
+   conhece (`Unix Makefiles`). Sem candidato que case, `effectiveId` fica
+   ausente e o `resolvedPath` diz o caminho. Projeto sem cache (nunca
+   configurado, ou só Cargo): os dois ausentes — nada de candidato. Os
+   outros papéis seguem a mescla de 2026-09-04.
+3. **Protocolo 0.172.0 (semântica, sem campo novo):** no automático dos três
+   papéis do CMake, `resolvedPath`/`effectiveId` passam a ser o que o cache
+   do projeto diz, ausentes antes do primeiro configure. Nota no 03.1 e o
+   parágrafo do `resolvedPath` no 03.
+4. **UI, nome neutro:** o chip do cabeçalho diz "Automática" quando nenhum
+   papel do resumo foi fixado; com algum fixado, os fixados e " · automática"
+   para os outros. O que o projeto usa vai no menu da toolchain, papel a
+   papel: "G++ · do projeto" (lido do cache), o caminho cru quando o
+   catálogo não o conhece, e "o CMake escolhe ao configurar" antes do
+   primeiro configure.
+5. **Atualização:** nada novo. O menu já pede o `toolchain.get` ao abrir
+   (`openMenu`), e o chip neutro não depende do cache.
+
+**Provas planejadas:** testes do core (cache com `c++` que é o `g++`
+detectado → `gxx`; cache com um compilador fora dos candidatos → só o
+caminho; sem cache → ausentes; escolha fixada vence o cache; o gerador do
+cache; os papéis de fora do CMake intactos); harness do chip e do menu com o
+`ToolchainController` real; no Xvfb, o projeto de fluxo (GCC e Make no
+cache) com o chip "Automática" e o menu dizendo G++ e Unix Makefiles do
+projeto; mutações.
+
+**Resultado (2026-10-16).** Como desenhado. O `toolchain/project.rs` lê o
+cache; o `resolve_kit` usa-o só nos três papéis, sem escolha fixada; o
+`ToolchainController` dá o chip neutro e o "· do projeto" no menu, cujo
+subtítulo deixou de dizer "Automático segue o PATH". Testes do core (o
+`a_fresh_workspace_is_fully_automatic` passou a esperar o compilador
+ausente sem cache, e o `the_automatic_cmake_roles_read_the_project_cache`
+cobre cache, caminho fora dos candidatos, gerador, escolha fixada e o
+`cargo`) e o `tst_toolchain.qml`; cinco mutações reprovam, e a sexta mostrou
+um teste de comentário que nunca casava (o código saiu). No Xvfb, o projeto
+de fluxo: chip "Automática", menu com "G++ · do projeto", "Unix Makefiles ·
+do projeto" e, no compilador C (o projeto é só CXX), "o CMake escolhe ao
+configurar"; a barra diz IPC 0.172.0. Manual e `arquitetura/36` atualizados.
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

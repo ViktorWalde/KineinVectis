@@ -185,8 +185,9 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   nas IDEs JetBrains. *Projeto* — o nome do projeto, o que ele é (Cargo +
   CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —
   a branch, ↑↓ e o contador de alterações; o clique abre a janela do Git.
-  *Toolchain* (desde 2026-10-02) — o que o build vai usar ("Clang++ · Ninja ·
-  automática", "Cargo"); o clique abre o seletor por papel, para baixo. Numa
+  *Toolchain* (desde 2026-10-02) — o que você fixou ("G++ · Ninja"), ou o
+  nome neutro "Automática" quando nada foi fixado (desde 2026-10-16); o
+  clique abre o seletor por papel, para baixo, que diz o que o projeto usa. Numa
   janela estreita ele encurta e, sem espaço, sai antes de apertar o resto.
   *Python* (desde 2026-10-02, projetos Python) — o interpretador que vale
   (".venv · 3.14", "sistema · 3.14 ⚠"); o clique mostra caminho, origem,
@@ -1410,11 +1411,15 @@ Sem escolha, o `PATH` decide, que é o comportamento de sempre. A escolha é do
 **kit**, e um kit é um preset mais o sysroot e o *triple* do alvo — é assim que
 compilação cruzada e embarcados entram sem um segundo mecanismo.
 
-A IDE escolhe automaticamente quando dá, e **mostra que escolheu**.
+A IDE escolhe automaticamente quando dá, e **mostra o que vale**.
 
 O seletor abre pelo widget *Toolchain* da barra principal (ou Ambiente →
-Toolchain e kits…). Cada papel é uma linha com o que está valendo — "· automático"
-quando quem escolheu foi a IDE; clique para ver as opções detectadas nesta
+Toolchain e kits…). Cada papel é uma linha com o que está valendo. Nos
+compiladores e no gerador, o automático é o que o **projeto** usa — o que o
+CMake gravou no cache dele ao configurar ("G++ · do projeto"; antes do
+primeiro configure, "o CMake escolhe ao configurar"), e não um palpite
+(desde 2026-10-16). Nos papéis que a IDE roda direto (CMake, Cargo,
+depurador), "· automático" diz qual ela achou no PATH. Clique para ver as opções detectadas nesta
 máquina, com **Automático (PATH)** sempre primeiro. Os papéis do seu projeto
 aparecem à vista (num projeto Cargo, Cargo e Depurador); os outros ficam em
 **Outros papéis**.

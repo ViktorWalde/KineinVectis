@@ -323,11 +323,17 @@ Item {
         if (selection.id !== undefined) {
             return labelOf(role, selection.id);
         }
-        // AUTOMATICO NAO E' MAIS "nao sei": desde 2026-09-04 o core escolhe o
-        // primeiro candidato e diz qual. A palavra "automático" sozinha
-        // escondia justamente a informacao que o autor precisa para discordar.
+        // O automatico diz o que vai ser usado (2026-09-04). Nos papeis do
+        // CMake e' o que o cache do projeto diz, e antes do configure quem
+        // escolhe e' o CMake (autor, 2026-10-16; 59 §7.1.7.1).
+        const fromProject = ["cCompiler", "cxxCompiler", "generator"].indexOf(role) >= 0;
         if (selection.effectiveId !== undefined) {
-            return labelOf(role, selection.effectiveId) + qsTr(" · automático");
+            return labelOf(role, selection.effectiveId)
+                    + (fromProject ? qsTr(" · do projeto") : qsTr(" · automático"));
+        }
+        if (fromProject) {
+            return selection.resolvedPath !== undefined
+                    ? selection.resolvedPath + qsTr(" · do projeto") : qsTr("o CMake escolhe ao configurar");
         }
         return qsTr("nenhum detectado");
     }
@@ -338,13 +344,11 @@ Item {
         return selection !== null && selection.automatic === true;
     }
 
-    // Resumo curto para a barra de status.
-    //
-    // Antes mostrava SO' o que o autor tinha fixado, e num projeto novo dizia
-    // apenas "automática" — verdadeiro e inutil. Agora diz o que vai ser
-    // USADO, marcando quando a escolha nao foi dele.
-    // Os papeis que a barra de status resume seguem os SISTEMAS do projeto
-    // (F6-b, 2026-09-18): um projeto so' de Cargo dizia "Clang++ · Ninja".
+    // Resumo curto para o chip do cabecalho: o que o autor FIXOU, e um nome
+    // neutro para o resto (autor, 2026-10-16): o automatico dizia "Clang++ ·
+    // Ninja" num projeto que compila com GCC e Make (59 §7.1.7, F7). O que o
+    // projeto usa esta' no menu, papel a papel (`labelFor`). Os papeis seguem
+    // os SISTEMAS do projeto (F6-b, 2026-09-18).
     function summaryRoles(buildSystems) {
         const systems = buildSystems === undefined || buildSystems === null ? [] : buildSystems;
         const roles = [];
@@ -358,26 +362,22 @@ Item {
     function summary(buildSystems) {
         const partes = [];
         const papeis = summaryRoles(buildSystems);
-        let algumAutomatico = false;
+        let anyAutomatic = false;
         for (let index = 0; index < papeis.length; ++index) {
             const selection = selectionFor(papeis[index]);
             if (selection === null) {
                 continue;
             }
-            const id = selection.id !== undefined
-                     ? selection.id : selection.effectiveId;
-            if (id === undefined) {
+            if (selection.id === undefined) {
+                anyAutomatic = true;
                 continue;
             }
-            partes.push(labelOf(papeis[index], id));
-            if (selection.automatic === true) {
-                algumAutomatico = true;
-            }
+            partes.push(labelOf(papeis[index], selection.id));
         }
         if (partes.length === 0) {
-            return qsTr("nenhuma detectada");
+            return anyAutomatic ? qsTr("Automática") : qsTr("nenhuma detectada");
         }
-        return partes.join(" · ") + (algumAutomatico ? qsTr(" · automática") : "");
+        return partes.join(" · ") + (anyAutomatic ? qsTr(" · automática") : "");
     }
 
     // `below`: o menu abre para BAIXO do ponto (o chip do cabecalho, 0.3.8).

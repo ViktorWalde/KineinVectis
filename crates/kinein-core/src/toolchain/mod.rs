@@ -25,12 +25,15 @@
 //! - [`store`]: `.kinein/toolchain.json`, com `schemaVersion`;
 //! - `arguments`: a escolha expressa em argumentos de `cmake`/`clangd`;
 //! - [`install`], [`import`], [`sysroot`]: o provedor de instalacao, o kit
-//!   importado de um SDK e a leitura do sysroot (2026-09-13).
+//!   importado de um SDK e a leitura do sysroot (2026-09-13);
+//! - `project`: o que o cache do `CMake` do projeto diz, o automatico dos
+//!   compiladores e do gerador (2026-10-16).
 
 mod arguments;
 mod catalog;
 pub mod import;
 pub mod install;
+mod project;
 mod store;
 pub mod sysroot;
 
@@ -76,11 +79,12 @@ impl Toolchain {
         let kits = store::load(root);
         let kit = kits.get(preset).cloned().unwrap_or_default();
         let escolhas = kit.selections;
+        let project_cache = project::ProjectCache::read(root);
         let mut candidates = Vec::new();
         let mut selections = Vec::new();
 
         for role in ToolchainRole::all() {
-            let disponiveis = detectados(*role, tools);
+            let available = detectados(*role, tools);
             let escolhido = escolhas
                 .get(role.as_str())
                 .filter(|id| catalog::is_known(*role, id))
@@ -90,9 +94,9 @@ impl Toolchain {
                 // Automatico: nada e fixado, e o `PATH` decide na hora de
                 // executar. O caminho do primeiro detectado entra so como
                 // INFORMACAO para a UI dizer o que vai acontecer.
-                || disponiveis.first().and_then(|entry| entry.path.clone()),
+                || available.first().and_then(|entry| entry.path.clone()),
                 |id| {
-                    disponiveis
+                    available
                         .iter()
                         .find(|entry| entry.id == *id)
                         .and_then(|entry| entry.path.clone())
@@ -107,7 +111,16 @@ impl Toolchain {
             let automatic = escolhido.is_none();
             let effective_id = escolhido
                 .clone()
-                .or_else(|| disponiveis.first().map(|entry| entry.id.clone()));
+                .or_else(|| available.first().map(|entry| entry.id.clone()));
+            // Os papeis que o `CMake` decide: o automatico e' o que o cache do
+            // projeto diz, nunca um candidato suposto (autor, 2026-10-16;
+            // `roadmaps/59` §7.1.7.1). Antes do primeiro configure, nada.
+            let (resolved_path, effective_id) =
+                if automatic && project::ProjectCache::decides(*role) {
+                    project_cache.automatic(*role, &available)
+                } else {
+                    (resolved_path, effective_id)
+                };
 
             selections.push(ToolchainSelection {
                 role: *role,
@@ -116,7 +129,7 @@ impl Toolchain {
                 effective_id,
                 automatic,
             });
-            candidates.extend(disponiveis);
+            candidates.extend(available);
         }
 
         Self {

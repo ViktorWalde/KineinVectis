@@ -142,7 +142,7 @@ Item {
                 Text {
                     width: parent.width
                     bottomPadding: Theme.spacingSmall
-                    text: qsTr("O que o build vai usar. Automático segue o PATH; escolher fixa.")
+                    text: qsTr("O que o build vai usar. Automático é o que o projeto usa (o cache do CMake) ou o que está no PATH; escolher fixa.")
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontSizeSmall
                     wrapMode: Text.WordWrap
