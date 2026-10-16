@@ -213,6 +213,68 @@ pub struct FileContext {
     /// outside every cargo target; no interpreter).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hint: Option<String>,
+    /// What applies to the file, value by value, with where each value came
+    /// from (`0.173.0`, `roadmaps/52` §14.1). Absent for languages without a
+    /// compiler context.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub effective: Option<EffectiveContext>,
+}
+
+/// Where an effective value came from: a closed vocabulary, never free text.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ContextOrigin {
+    /// The `compile_commands.json` unit (the flags the build really uses).
+    Cdb,
+    /// The `CMake` file-api model, when there is no CDB.
+    CmakeFileApi,
+    /// What the project's `CMakeCache.txt` records (`0.172.0`).
+    CmakeCache,
+    /// What the person set in the kit.
+    Kit,
+}
+
+/// One effective value and its origin.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SourcedValue {
+    /// The value as the owner states it.
+    pub value: String,
+    /// Who stated it.
+    pub origin: ContextOrigin,
+}
+
+/// The kit that applies to the file.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KitRef {
+    /// The kit's preset name; empty is the default kit.
+    pub preset: String,
+}
+
+/// The effective context of a file (`0.173.0`): derived on every question
+/// from the owners, never stored. A missing field means no owner states it.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EffectiveContext {
+    /// The compiler that applies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compiler: Option<SourcedValue>,
+    /// The language standard (`-std=`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub standard: Option<SourcedValue>,
+    /// The target triple.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<SourcedValue>,
+    /// The system root.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sysroot: Option<SourcedValue>,
+    /// Where the unit's `-I`/`-D` came from.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flags_origin: Option<ContextOrigin>,
+    /// The kit that applies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kit: Option<KitRef>,
 }
 
 /// Parameters for `index.context`.

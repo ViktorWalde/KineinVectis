@@ -26,11 +26,16 @@
 
 mod cargo;
 mod cdb;
+mod effective;
+
+pub use effective::{KitFacts, complete_with_kit};
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use kinein_protocol::{CargoUnit, CompileUnit, ContextSummary, FileContext, PythonEnv};
+use kinein_protocol::{
+    CargoUnit, CompileUnit, ContextOrigin, ContextSummary, FileContext, PythonEnv,
+};
 
 use self::cargo::AlvoCargo;
 use self::cdb::Unidade;
@@ -119,6 +124,7 @@ impl CompileContext {
             targets: Vec::new(),
             source: None,
             hint: None,
+            effective: None,
         };
         match language {
             "c" | "cpp" => self.contexto_c(&absoluto, &mut ctx),
@@ -165,6 +171,10 @@ impl CompileContext {
                 output: u.output.clone(),
                 arguments: u.arguments.clone(),
             });
+            ctx.effective = ctx
+                .unit
+                .as_ref()
+                .map(|unit| effective::from_unit(unit, ContextOrigin::Cdb, None));
             ctx.source = self
                 .cdb_directory
                 .as_ref()
@@ -219,26 +229,29 @@ impl CompileContext {
         let Some(modelo) = &self.cmake else {
             return false;
         };
-        let Some((target, grupo)) = modelo.compile_group_for(chave) else {
+        let Some((target, group)) = modelo.compile_group_for(chave) else {
             return false;
         };
-        let compilador = modelo.compiler_for(&grupo.language);
-        let standard = grupo
+        let compilador = modelo.compiler_for(&group.language);
+        let standard = group
             .fragments
             .iter()
             .find_map(|f| f.strip_prefix("-std=").map(str::to_owned))
-            .or_else(|| grupo.standard.clone());
+            .or_else(|| group.standard.clone());
         ctx.unit = Some(CompileUnit {
             compiler: compilador.map_or_else(
-                || format!("({} do kit)", grupo.language),
+                || format!("({} do kit)", group.language),
                 |c| c.path.clone(),
             ),
             directory: modelo.build_dir.display().to_string(),
             standard,
-            includes: grupo.includes.clone(),
-            defines: grupo.defines.clone(),
+            includes: group.includes.clone(),
+            defines: group.defines.clone(),
             output: None,
-            arguments: grupo.fragments.clone(),
+            arguments: group.fragments.clone(),
+        });
+        ctx.effective = ctx.unit.as_ref().map(|unit| {
+            effective::from_unit(unit, ContextOrigin::CmakeFileApi, group.sysroot.as_deref())
         });
         ctx.source = Some(format!(
             "file-api codemodel-v2 (target {}), sem compile_commands.json",

@@ -29,7 +29,10 @@ IndexSymbol  name, kind, path (relativo a raiz), language, line, endLine,
              container?
 FileContext  path (absoluto), language (c|cpp|rust|python|other), unit?, crate?,
              python?, targets[] (0.96.0: os targets do CMake que compilam ou
-             listam o arquivo), source?, hint?
+             listam o arquivo), source?, hint?, effective? (0.173.0)
+EffectiveContext (0.173.0) compiler?, standard?, target?, sysroot? — cada um
+             { value, origin } —, flagsOrigin?, kit? { preset }
+origin       cdb | cmakeFileApi | cmakeCache | kit
 CompileUnit  compiler, directory, standard?, includes[] (absolutos), defines[],
              output?, arguments[]
 CargoUnit    package, target, kind (lib|bin|test|bench|example|custom-build…),
@@ -37,6 +40,19 @@ CargoUnit    package, target, kind (lib|bin|test|bench|example|custom-build…),
 PythonEnv    interpreter, version?, origin (VIRTUAL_ENV|.venv|venv|env|poetry|
              sistema), warning?
 ```
+
+**O contexto efetivo, com a origem de cada valor (0.173.0, a 0.4.0a do
+`roadmaps/52` §14.1).** O `effective` diz o que vale para o arquivo e de onde
+veio, como dado. A precedência é a do 52 §4.3, "o valor vem do dono": as
+flags reais vencem a escolha. `compiler`: o da unidade (`cdb` ou
+`cmakeFileApi`), senão o fixado no kit (`kit`), senão o que o cache do CMake
+do projeto registra (`cmakeCache`, a 16.7b). `standard`: o `-std=` da
+unidade. `target`: o `--target=`/`-target` da unidade, senão o
+`targetTriple` do kit. `sysroot`: o `--sysroot` da unidade (ou o do
+file-api), senão o do kit. `flagsOrigin` diz de onde vêm os `-I`/`-D`. O kit
+que vale é o do último configure (o preset anotado no build dir), senão o
+padrão (`preset` vazio). Sem fonte, o campo fica ausente: nada de padrão
+suposto. Rust: só `target` (do kit) e o `kit`; a edição já está no `crate`.
 
 **O contexto de compilador (0.95.0).** O índice diz *o que há* em cada
 arquivo; o contexto diz *com que* ele é compilado — e é carregado no mesmo

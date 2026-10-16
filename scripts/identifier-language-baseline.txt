@@ -757,7 +757,6 @@ crates/kinein-core/src/handlers/index.rs	parado	2
 crates/kinein-core/src/handlers/index.rs	pedido	10
 crates/kinein-core/src/handlers/index.rs	progresso	2
 crates/kinein-core/src/handlers/index.rs	raiz	6
-crates/kinein-core/src/handlers/index.rs	resposta	2
 crates/kinein-core/src/handlers/index.rs	sistema	1
 crates/kinein-core/src/handlers/index.rs	titulo	2
 crates/kinein-core/src/handlers/index.rs	trocar	3
@@ -935,7 +934,6 @@ crates/kinein-core/src/index/context/mod.rs	compilador	2
 crates/kinein-core/src/index/context/mod.rs	contexto	4
 crates/kinein-core/src/index/context/mod.rs	exato	2
 crates/kinein-core/src/index/context/mod.rs	ferramentas	5
-crates/kinein-core/src/index/context/mod.rs	grupo	8
 crates/kinein-core/src/index/context/mod.rs	modelo	6
 crates/kinein-core/src/index/context/mod.rs	novo	1
 crates/kinein-core/src/index/context/mod.rs	pacotes	5
@@ -2515,7 +2513,7 @@ scripts/qml-harness/tst_grid_rules.qml	rola	3
 scripts/qml-harness/tst_index.qml	aberto	5
 scripts/qml-harness/tst_index.qml	busca	19
 scripts/qml-harness/tst_index.qml	contexto	9
-scripts/qml-harness/tst_index.qml	indice	73
+scripts/qml-harness/tst_index.qml	indice	4
 scripts/qml-harness/tst_index.qml	pedidos	31
 scripts/qml-harness/tst_index.qml	simbolos	6
 scripts/qml-harness/tst_kv_data_grid_teclado.qml	abertas	3

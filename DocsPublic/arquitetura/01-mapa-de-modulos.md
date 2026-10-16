@@ -580,6 +580,7 @@ flowchart LR
     n_crates_kinein_core_src_handlers_index_rs["handlers/index.rs"]
     n_crates_kinein_core_src_handlers_lsp_mod_rs["handlers/lsp/mod.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
+    n_core_cmake[cmake]
     n_core_index[index]
     n_core_jobs[jobs]
     n_core_lsp[lsp]
@@ -615,6 +616,7 @@ flowchart LR
   n_crates_kinein_core_src_handlers_fs_rs --> n_core_jobs
   n_crates_kinein_core_src_handlers_fs_rs --> n_core_rpc
   n_ipc_index --> n_crates_kinein_core_src_handlers_index_rs
+  n_crates_kinein_core_src_handlers_index_rs --> n_core_cmake
   n_crates_kinein_core_src_handlers_index_rs --> n_core_index
   n_crates_kinein_core_src_handlers_index_rs --> n_core_jobs
   n_crates_kinein_core_src_handlers_index_rs --> n_core_python

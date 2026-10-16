@@ -144,10 +144,36 @@ Item {
         if (c.unit !== undefined) partes.push(qsTr("diretório %1").arg(c.unit.directory));
         if (c.crate !== undefined) partes.push(qsTr("alvo %1 · %2").arg(c.crate.target).arg(c.crate.manifest));
         if (c.python !== undefined) partes.push(c.python.interpreter);
+        const effectiveLines = effectiveParts(c.effective, c.unit !== undefined);
+        for (let i = 0; i < effectiveLines.length; i++) partes.push(effectiveLines[i]);
         if (c.source !== undefined) partes.push(c.source);
         if (c.hint !== undefined) partes.push(c.hint);
         if (c.python !== undefined && c.python.warning !== undefined) partes.push(c.python.warning);
         return partes.join(" — ");
+    }
+
+    // O efetivo com a origem (0.4.0a, roadmaps/52 §14.1): o que vale e de onde
+    // veio. O compilador da unidade ja' esta' no resumo; sem unidade, ele vem
+    // do kit ou do cache do CMake e entra aqui.
+    function originLabel(origin) {
+        switch (origin) {
+        case "cdb": return qsTr("da compile_commands.json");
+        case "cmakeFileApi": return qsTr("do file-api do CMake");
+        case "cmakeCache": return qsTr("do cache do CMake");
+        case "kit": return qsTr("do kit");
+        }
+        return "";
+    }
+
+    function effectiveParts(effective, hasUnit) {
+        const lines = [];
+        if (effective === undefined || effective === null) return lines;
+        const sourced = (label, field) => qsTr("%1 %2 (%3)").arg(label).arg(field.value).arg(originLabel(field.origin));
+        if (!hasUnit && effective.compiler !== undefined) lines.push(sourced(qsTr("compilador"), effective.compiler));
+        if (effective.target !== undefined) lines.push(sourced(qsTr("alvo"), effective.target));
+        if (effective.sysroot !== undefined) lines.push(sourced(qsTr("sysroot"), effective.sysroot));
+        if (effective.kit !== undefined && effective.kit.preset !== "") lines.push(qsTr("kit %1").arg(effective.kit.preset));
+        return lines;
     }
 
     function baseName(caminho) {

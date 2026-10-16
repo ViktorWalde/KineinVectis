@@ -5,6 +5,18 @@ mudança, com data, medida e prova, está em
 `DocsPublic/roadmaps/40.7-registro-das-entregas.md`; a situação de cada versão,
 em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 
+## 0.4 — em desenvolvimento (não lançada)
+
+Embarcados com os compiladores e ecossistemas por baixo (roadmaps 52 e 57),
+em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
+
+- Protocolo `0.173.0` — **O contexto efetivo, com a origem de cada valor**
+  (0.4.0a, 40.7 §7.307): o `index.context` diz o compilador, o padrão, o
+  alvo e o sysroot que valem para o arquivo e de onde cada um veio (a
+  `compile_commands.json`, o file-api do CMake, o cache do CMake ou o kit);
+  as flags reais vencem a escolha, e nada é suposto. Pairar sobre o
+  contexto na barra de status mostra isso.
+
 ## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
 
 A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem

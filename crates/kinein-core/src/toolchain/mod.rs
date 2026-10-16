@@ -43,6 +43,12 @@ use kinein_protocol::{
     ToolInfo, ToolStatus, ToolchainCandidate, ToolchainResult, ToolchainRole, ToolchainSelection,
 };
 
+/// O projeto tem um kit com este nome (o preset)?
+#[must_use]
+pub fn has_kit(root: &Path, preset: &str) -> bool {
+    store::load(root).contains_key(preset)
+}
+
 /// A toolchain de um workspace, ja cruzada com o que existe na maquina.
 #[derive(Debug, Clone)]
 pub struct Toolchain {
@@ -165,6 +171,17 @@ impl Toolchain {
             rust_targets: None,
             sysroot_hint: None,
         }
+    }
+
+    /// O caminho que o resultado diz para um papel, fixado ou automatico (no
+    /// automatico dos papeis do `CMake`, o do cache do projeto, mesmo sem
+    /// candidato que case com ele).
+    #[must_use]
+    pub fn resolved_path(&self, role: ToolchainRole) -> Option<&str> {
+        self.selections
+            .iter()
+            .find(|selection| selection.role == role)
+            .and_then(|selection| selection.resolved_path.as_deref())
     }
 
     /// Id escolhido para um papel; `None` quando e automatico.

@@ -588,3 +588,67 @@ Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
    InfluxDB 3 nativo, adiados na 0.3.9) volta dentro da 0.4, no fim (0.4.5);
    o AppImage sai só com a 0.4 finalizada, e então a prova de artefato do §10
    vale para ele.
+
+## 14. O desenho fino das fatias (escrito antes do código de cada uma)
+
+Cada fatia da §11 ganha aqui, antes do código, o que foi medido no checkout,
+o desenho e as provas; o resultado vai ao 40.7. A ordem dentro da 0.4.0
+segue o 58 §4.4: o contexto efetivo primeiro, porque o C1, o inspector e a
+deriva leem dele.
+
+### 14.1 0.4.0a — o contexto efetivo com a origem de cada valor (§4; 2026-10-16)
+
+**Medido no checkout (2026-10-16).** O `index.context` devolve o
+`FileContext` com a unidade de compilação (`unit`, da CDB ou do file-api do
+CMake), o alvo do cargo, o interpretador Python, os targets do CMake, uma
+`source` em texto e uma `hint`. O que falta (58 §4.4): o kit e o alvo
+efetivos e a origem de cada valor como dado. O kit tem dono (`toolchain`):
+desde a 16.7b ele também diz o compilador que o cache do CMake do projeto
+registra. O consumidor na tela é a barra de status ("contexto: c++ ·
+gnu++20 · 0 -I · 0 -D", e o detalhe ao pairar), sem tela nova.
+
+**O desenho:**
+
+1. **Protocolo 0.173.0 (aditivo):** o `FileContext` ganha `effective`
+   (opcional), com `compiler`, `standard`, `target` e `sysroot`, cada um
+   `{ value, origin }`, o `flagsOrigin` (de onde vêm os `-I`/`-D` da
+   unidade) e o `kit` (`{ preset }`, o kit que vale). `origin` é um
+   vocabulário fechado: `cdb`, `cmakeFileApi`, `cmakeCache`, `kit`. O
+   `cmakeCache` é novo diante da lista do §4.3 (é o que a 16.7b passou a
+   ler, e o §4.3 era proposta); `cargoMetadata`, `projectModel` e `default`
+   ficam de fora até um valor precisar deles.
+2. **A precedência é a do §4.3, "o valor vem do dono":** as flags reais
+   vencem a escolha. Compilador: o da unidade (`cdb` ou `cmakeFileApi`),
+   senão o fixado no kit (`kit`), senão o do cache do CMake (`cmakeCache`).
+   `standard`: o `-std=` da unidade. `target`: o `--target=`/`-target` da
+   unidade, senão o `targetTriple` do kit. `sysroot`: o `--sysroot` da
+   unidade (ou o do file-api), senão o do kit. Sem fonte, o campo fica
+   ausente: nada de padrão suposto (a regra da 16.7b).
+3. **O kit que vale** é o do último configure (o preset anotado no build
+   dir, `cmake::status`), senão o padrão. É o mesmo kit cujas escolhas o
+   configure usou.
+4. **Donos:** o `index/context` preenche o que a unidade sabe (ele sabe se
+   ela veio da CDB ou do file-api); uma função pura nova,
+   `index/context/effective.rs`, completa com os fatos do kit, que o
+   handler do `index.context` resolve pelo `Toolchain::resolve_kit` (o dono
+   do kit). Nenhum valor é guardado: é derivado a cada pergunta.
+5. **UI:** o detalhe da barra (`IndexController.contextDetail`) diz o
+   efetivo com a origem ("alvo arm-none-eabi, do kit"; "sysroot …, da
+   compile_commands.json"). O resumo não muda.
+
+**Provas planejadas:** testes puros do `effective.rs` (cada precedência e
+cada ausência); teste integrado do `index.context` com uma CDB que traz
+`--target`/`--sysroot`, com um kit que fixa sysroot e alvo, e com o cache do
+CMake sem CDB; harness do `IndexController` (o detalhe com a origem; campo
+ausente não vira "undefined"); mutações; no Xvfb, o detalhe ao pairar.
+
+**Resultado (2026-10-16).** Como desenhado, com uma correção antes do
+código: o vocabulário de `origin` ficou só com os quatro valores que algum
+dono diz hoje (`cargoMetadata`, `projectModel` e `default` esperam um valor
+que precise deles). O `effective.rs` é puro (a unidade e o kit entram como
+dado); o handler resolve o kit pelo dono e completa. Provas: 3 testes puros,
+3 pelo despacho real (a CDB com `--target=` e `--sysroot` separado vencendo
+o kit; sem CDB, o cache do CMake e o kit; ninguém dizendo nada e nada
+suposto), o `tst_index.qml` com o detalhe, 7 mutações reprovando; no Xvfb,
+o projeto de fluxo sem CDB mostra ao pairar "compilador /usr/bin/c++ (do
+cache do CMake)", e a barra diz IPC 0.173.0 (40.7 §7.307).

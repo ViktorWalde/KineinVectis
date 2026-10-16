@@ -38,6 +38,7 @@ mod git;
 mod grafana;
 mod index;
 mod index_context;
+mod index_effective;
 mod jobs;
 mod lsp;
 mod lsp_companion;

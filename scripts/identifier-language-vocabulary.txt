@@ -148,6 +148,7 @@ assignment
 assignments
 assistant
 assume
+assumed
 asynchronous
 atomic
 attach
@@ -301,6 +302,7 @@ call
 called
 calling
 calls
+came
 camel
 campos
 canal
@@ -2423,6 +2425,7 @@ sorted
 sorting
 sorts
 source
+sourced
 sources
 sourcing
 space

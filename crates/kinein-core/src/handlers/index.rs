@@ -11,14 +11,14 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
 
 use kinein_protocol::{
-    FileContext, IndexContextParams, IndexProgressEvent, IndexState, IndexStatusParams,
-    IndexSymbolsParams, IndexSymbolsResult, JobRisk, JsonRpcRequest, JsonRpcResponse,
-    ToolchainRole,
+    EffectiveContext, FileContext, IndexContextParams, IndexProgressEvent, IndexState,
+    IndexStatusParams, IndexSymbolsParams, IndexSymbolsResult, JobRisk, JsonRpcRequest,
+    JsonRpcResponse, ToolchainRole,
 };
 use serde_json::{Value, json};
 
 use crate::Core;
-use crate::index::context::{CompileContext, Ferramentas};
+use crate::index::context::{CompileContext, Ferramentas, KitFacts, complete_with_kit};
 use crate::index::{self, ProjectIndex};
 use crate::jobs::JobOutcome;
 use crate::rpc::{no_workspace_response, parse_params};
@@ -131,7 +131,7 @@ impl Core {
                 .as_ref()
                 .map(|c| c.for_file(&root, caminho, language))
         });
-        let resposta = contexto.unwrap_or_else(|| FileContext {
+        let mut response = contexto.unwrap_or_else(|| FileContext {
             path: root.join(caminho).display().to_string(),
             language: language.to_owned(),
             unit: None,
@@ -140,8 +140,48 @@ impl Core {
             targets: Vec::new(),
             source: None,
             hint: Some("o contexto do projeto ainda está sendo carregado".to_owned()),
+            effective: None,
         });
-        JsonRpcResponse::success(request_id, json!(resposta))
+        // O que a unidade nao disse vem do kit que vale (52 §14.1).
+        if matches!(language, "c" | "cpp" | "rust") {
+            let kit = self.kit_facts(&root, language);
+            complete_with_kit(
+                response
+                    .effective
+                    .get_or_insert_with(EffectiveContext::default),
+                &kit,
+            );
+        }
+        JsonRpcResponse::success(request_id, json!(response))
+    }
+
+    /// O kit que vale para o arquivo: o do preset do ultimo configure, quando
+    /// o projeto tem um kit com esse nome, senao o padrao — o mesmo cujas
+    /// escolhas o configure usou (`handlers/cmake.rs`).
+    fn kit_facts(&self, root: &Path, language: &str) -> KitFacts {
+        let preset = crate::cmake::status(root)
+            .preset
+            .filter(|preset| crate::toolchain::has_kit(root, preset))
+            .unwrap_or_default();
+        let toolchain =
+            crate::toolchain::Toolchain::resolve_kit(root, &self.detected_tools(), &preset);
+        let role = match language {
+            "c" => Some(ToolchainRole::CCompiler),
+            "cpp" => Some(ToolchainRole::CxxCompiler),
+            _ => None,
+        };
+        KitFacts {
+            pinned_compiler: role
+                .and_then(|role| toolchain.program_for(role))
+                .map(|path| path.display().to_string()),
+            cache_compiler: role
+                .filter(|role| toolchain.chosen(*role).is_none())
+                .and_then(|role| toolchain.resolved_path(role))
+                .map(str::to_owned),
+            target_triple: toolchain.target_triple().map(str::to_owned),
+            sysroot: toolchain.sysroot().map(str::to_owned),
+            preset,
+        }
     }
 
     /// O que o contexto pode EXECUTAR nesta maquina: o cargo do kit efetivo,
