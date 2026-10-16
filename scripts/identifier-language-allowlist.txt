@@ -146,3 +146,7 @@ openssl
 # 2026-10-16: o servidor X virtual e a API do Pillow (`ImageGrab.grab(xdisplay=)`,
 # `getpixel`) que o driver dos aceites usa (scripts/xvfb_ide.py, 16.1).
 xvfb xdisplay getpixel
+# 2026-10-16: as teclas do driver dos aceites pelo XTEST (scripts/xvfb_ide.py,
+# 16.7, F8): a API do ctypes (`CDLL`, `argtypes`, `restype`, `c_ubyte`,
+# `c_uint`, `c_ulong`) e o vocabulario do X (`keycode`, `keysym`, `libXtst`).
+ctypes cdll argtypes restype ubyte uint ulong keycode keysym xtst

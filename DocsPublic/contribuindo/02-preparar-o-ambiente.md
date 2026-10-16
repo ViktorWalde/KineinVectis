@@ -89,7 +89,10 @@ Para um fluxo inteiro com mouse e teclado (os aceites da 16.1),
 `scripts/xvfb_ide.py` sobe a IDE de `build/dev-local` num Xvfb próprio, com
 HOME e XDG temporários, e dá `click`, `key`, `type`, `shot` e
 `close_window` (fecha pelo ×, como a pessoa faria, e devolve a saída) pelo
-`xdotool`. Ele precisa de `Xvfb`, `xdotool` e do Pillow. O gesto é real (o X
+`xdotool`; as teclas (`key`) vão pelo XTEST, com o keycode do próprio
+servidor: o `xdotool` 3.20160805 manda `Alt_L` junto de toda tecla F, e
+`ctrl+F9` virava a troca de terminal Ctrl+Alt+F9 (59 §7.1.7, F8). Ele
+precisa de `Xvfb`, `xdotool`, `libXtst` e do Pillow. O gesto é real (o X
 o entrega à janela), mas quem o faz é o agente, e o registro diz isso. Num
 projeto de verdade o autosave grava cada edição: desfaça pela própria IDE e
 compare o `git status` do fim com o do começo.

@@ -71,9 +71,11 @@ Item {
     }
 
     // Converte linha/coluna em offset contando os "\n". Linha alem do fim do
-    // arquivo para na ultima quebra encontrada, em vez de estourar.
-    function applyPending() {
-        if (!surfaceReady() || pendingPath === "") {
+    // arquivo para na ultima quebra encontrada, em vez de estourar. Com
+    // `path`, so' aplica se o destino guardado e' daquele arquivo.
+    function applyPending(path) {
+        if (!surfaceReady() || pendingPath === ""
+                || (path !== undefined && path !== pendingPath)) {
             return;
         }
         const text = surfaceBridge.text();

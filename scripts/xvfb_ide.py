@@ -32,6 +32,46 @@ def _first_existing(*candidates: Path) -> Path:
     return candidates[0]
 
 
+_MODIFIERS = {"ctrl": "Control_L", "control": "Control_L", "shift": "Shift_L",
+              "alt": "Alt_L", "super": "Super_L"}
+
+
+def _press_combo(display: str, combo: str) -> None:
+    """Modificadores na ordem, a tecla, e a soltura ao contrário (XTEST)."""
+    import ctypes
+
+    x11 = ctypes.CDLL("libX11.so.6")
+    xtst = ctypes.CDLL("libXtst.so.6")
+    x11.XOpenDisplay.restype = ctypes.c_void_p
+    x11.XOpenDisplay.argtypes = [ctypes.c_char_p]
+    x11.XStringToKeysym.restype = ctypes.c_ulong
+    x11.XStringToKeysym.argtypes = [ctypes.c_char_p]
+    x11.XKeysymToKeycode.restype = ctypes.c_ubyte
+    x11.XKeysymToKeycode.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
+    x11.XFlush.argtypes = [ctypes.c_void_p]
+    x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+    xtst.XTestFakeKeyEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int,
+                                       ctypes.c_ulong]
+    connection = x11.XOpenDisplay(display.encode())
+    if not connection:
+        raise RuntimeError(f"sem conexão com o display {display}")
+    try:
+        codes = []
+        for name in combo.split("+"):
+            symbol = x11.XStringToKeysym(_MODIFIERS.get(name.lower(), name).encode())
+            code = x11.XKeysymToKeycode(connection, symbol) if symbol else 0
+            if not code:
+                raise RuntimeError(f"tecla desconhecida no display {display}: {name}")
+            codes.append(code)
+        for code in codes:
+            xtst.XTestFakeKeyEvent(connection, code, 1, 0)
+        for code in reversed(codes):
+            xtst.XTestFakeKeyEvent(connection, code, 0, 0)
+        x11.XFlush(connection)
+    finally:
+        x11.XCloseDisplay(connection)
+
+
 class Ide:
     """Uma sessão da IDE num Xvfb próprio."""
 
@@ -134,7 +174,15 @@ class Ide:
         time.sleep(pause)
 
     def key(self, *keys: str, pause: float = 0.5) -> None:
-        self.xdo("key", "--delay", "60", *keys)
+        """Aperta cada combinação (`ctrl+shift+F9`) pelo XTEST, por keycode.
+
+        O `xdotool key` (3.20160805) manda `Alt_L` junto de toda tecla F no
+        mapa do Xvfb: `ctrl+F9` virava Ctrl+Alt+F9, a troca de terminal que o
+        servidor consome, e o atalho "não disparava" (59 §7.1.7, F8).
+        """
+        for combo in keys:
+            _press_combo(self.display, combo)
+            time.sleep(0.06)
         time.sleep(pause)
 
     def type(self, text: str, pause: float = 0.5) -> None:

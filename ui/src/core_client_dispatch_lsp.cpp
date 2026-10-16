@@ -75,11 +75,11 @@ bool CoreClient::handleLspNotification(const QString& method, const QJsonObject&
 bool CoreClient::dispatchLspResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("lsp.definition")) {
-        const QString path = result.value(QStringLiteral("path")).toString();
-        if (!path.isEmpty()) {
-            emit lspDefinitionResolved(path, result.value(QStringLiteral("line")).toInt(1),
-                                       result.value(QStringLiteral("column")).toInt(1));
-        }
+        // Sem destino tambem vai: quem pediu (o Ctrl+B) diz que nao ha', em vez
+        // de ficar mudo (16.7, F5).
+        emit lspDefinitionResolved(result.value(QStringLiteral("path")).toString(),
+                                   result.value(QStringLiteral("line")).toInt(1),
+                                   result.value(QStringLiteral("column")).toInt(1));
         return true;
     }
     if (method == QStringLiteral("lsp.hover")) {

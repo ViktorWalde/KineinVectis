@@ -303,8 +303,8 @@ Item {
         jump.request(file, line, column);
     }
 
-    function jumpToPending() {
-        jump.applyPending();
+    function jumpToPending(path) {
+        jump.applyPending(path);
     }
 
     function currentFilePath() {

@@ -44,6 +44,8 @@ Item {
         if (!consume(path) || documentController === null) return;
         errorMessage = "";
         documentController.handleExternalFileLoaded(path, content);
+        // O Ctrl+B que trouxe o arquivo leva o cursor ao destino (16.7, F10).
+        documentController.jumpToPending(path);
     }
 
     function handleFailed(path, message) {

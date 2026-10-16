@@ -2171,7 +2171,9 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | feito em 2026-10-16 (§7.1.4; 40.7 §7.295–§7.297): injeção no Remoto, `known_hosts` regravável, espelho por marcador clonado, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open`, origem do deploy fora do projeto, credencial na URL do Grafana | 16.4a, 16.4b, 16.4c |
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | feito em 2026-10-16 (§7.1.5): o `Flickable` não reproduz no Qt 6.10 (fica, medido); as mensagens (16.5a, 40.7 §7.298); largura por janela, ↻ que relê o catálogo, Tab da barra do Banco e o tooltip (16.5b, §7.299) | 16.5a, 16.5b |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | feito em 2026-10-16 (§7.1.6; 40.7 §7.300): tudo no orçamento; o atributo só com a aba Web ligada; a medida da digitação de volta | 16.6 |
-| Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | pendente; pelo `xdotool` no Xvfb | 16.7 |
+| Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | feito em 2026-10-16 (§7.1.7; 40.7 §7.301): o fluxo C++/CMake e os Containers passaram; F5, F6 e F10 (o Ctrl+B num cabeçalho do sistema) corrigidos; F8 era o `xdotool` (as teclas F vão pelo XTEST agora) | 16.7 |
+| F7: o automático da toolchain diz o que o projeto usa (decisão do autor, 2026-10-16) | pendente; desenho em §7.1.7.1 antes do código | 16.7b |
+| F9: os textos da UI sem acento (15 `qsTr`, ~25 em `ui/src`) | pendente | 16.7c |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
 
 Regras de cada fatia: o desenho fino aqui antes do código, foto antes e
@@ -2661,6 +2663,100 @@ rust-analyzer deu "n/d (sem token útil em 90 s)": o projeto de prova do
 script fica fora deste repositório, e o rustup desta máquina não tem
 toolchain padrão (o F3, §7.1.1) — é ambiente, resolvido pelo `rustup default`
 que está com o autor.
+
+#### 7.1.7 16.7 — caça a bugs por fluxos inteiros (desenho, 2026-10-16, antes do código)
+
+**Os dois polimentos da 16.1, primeiro:**
+
+- **F5, Ctrl+B sem destino fica mudo.** O `dispatchLspResult` descarta a
+  resposta de `lsp.definition` sem caminho. Passa a emitir o sinal também
+  vazio; o `EditorEventRouter` mostra, no popup de hover que já aparece no
+  cursor, "nenhuma declaração para ir daqui" (o hover some sozinho). O
+  `EditorController` (congelado por decisão do autor, 40 §2) não muda.
+- **F6, o completar abre depois de um número.** O disparo automático (depois
+  de caractere de palavra, `.` ou `:`) passa a ignorar a palavra que começa
+  com dígito e o `.` logo depois de um dígito (`1`, `3.14`, `0x1F`). Com
+  Ctrl+Espaço, abre como antes.
+
+**Os fluxos**, no Xvfb, com o `xdotool`, num projeto de rascunho:
+
+1. **C++/CMake:** abrir, confiar, configurar, compilar com um erro, ver o
+   erro nos Problemas, ir até a linha pelo clique, corrigir, recompilar,
+   executar.
+2. **Rust/Cargo:** abrir, compilar com erro, Problemas, corrigir, executar.
+3. **Containers:** a janela com o Podman desta máquina.
+4. **Remoto:** um alvo `localhost` sem `sshd` na porta: a sondagem diz por
+   quê.
+
+Cada defeito achado vira correção nesta fatia quando é pequeno e local, ou
+entrada nomeada para o autor quando não é.
+
+**Os fluxos, rodados em 2026-10-16 (antes das correções).** Projeto C++/CMake
+novo com um `;` faltando: a faixa pediu a confiança; um clique configurou; o
+"Compilar" do martelo mostrou o erro nos Problemas (`src/main.cpp:5 expected
+';' before 'return'`, e o clangd o mesmo na linha 6 com "Ações"); o clique no
+problema abriu o arquivo na linha; o `;` digitado foi salvo; o build passou
+("build concluído com sucesso") e o "Executar" mostrou "ola do fluxo" num
+terminal "▶ app ✓". A janela de Containers diz "Podman 5.7.0 · rootless" e o
+que o Podman daquele HOME tem (o HOME do Xvfb é isolado, sem as imagens da
+máquina). Achados:
+
+- **F7: o seletor diz "Clang++ · Ninja", o CMake usa GCC e Makefiles.** Com
+  a toolchain "automática", o resumo mostra o primeiro candidato detectado
+  (o `resolvedPath` informativo do protocolo 0.64.0, 03) como "o que vai ser
+  usado"; mas o `cmake_arguments` só passa o que foi FIXADO, e o CMake fica
+  com os padrões dele (`Unix Makefiles`, `c++` → GCC). Leem esse efetivo
+  suposto o chip, o menu, a dica de sysroot e o prefixo das binutils; o
+  `--query-driver` do clangd só entra para compilador cross, e o nativo não
+  é afetado (corrigido em 2026-10-16, ao desenhar a 16.7b).
+  **Decisão do autor (2026-10-16):** "manter um nome neutro e o
+  funcionamento automático de ler o que de fato está no projeto que for
+  aberto, e não suposições". O automático passa a dizer o que o build do
+  projeto usa (o cache do CMake do preset), e nada antes de ele existir; o
+  rótulo é neutro. Fatia própria, 16.7b (§7.1.7.1), desenho antes do código.
+- **F8: Ctrl+F9, Ctrl+Shift+F9 e Shift+F10 não disparavam no Xvfb. Causa
+  achada, e não é da IDE.** O autor autorizou o teclado e o mouse dele
+  (2026-10-16); antes disso, o `xev` no mesmo Xvfb mostrou a causa: o
+  `xdotool` 3.20160805 manda `Alt_L` junto de TODA tecla F (`xdotool key
+  ctrl+F9` chega como Control_L, Alt_L, F9; `shift+F10`, como Shift_L,
+  Alt_L, F10; `F9`, como Alt_L, F9). Ctrl+Alt+F9 é a troca de terminal
+  virtual (`XF86Switch_VT_9`), que o servidor X consome: a IDE nem recebe o
+  F9. O log do `QShortcutMap` (`qt.gui.shortcutmap`) confirma: Ctrl+F9 não
+  chega, e Shift+F10 chega como Alt+Shift+F10. O Alt+F12 funcionava porque
+  o Alt já estava no atalho. Correção no instrumento: o `xvfb_ide.py` passa
+  a apertar teclas pelo XTEST com os keycodes do próprio servidor (sem a
+  busca de símbolo do `xdotool`), e os três atalhos são conferidos de novo
+  com ele. O teclado real não foi preciso: no Wayland do autor, o
+  `/dev/uinput` é só do root e o `xdotool` não alcança janela nativa.
+
+- **F9: a UI ainda fala sem acento.** O "Compilar" terminou com "== build
+  concluido com sucesso ==": a 16.5a acentuou as mensagens do CORE, e a UI
+  ficou de fora. Medido em 2026-10-16 com o mesmo léxico da 16.5a: 15 textos
+  `qsTr` em 9 arquivos QML e ~25 literais em `ui/src` (o `--help` e os
+  erros da linha de comando, as mensagens do processo do core). Fatia
+  própria, 16.7c, com os testes que conferem esses textos.
+
+- **F10: o Ctrl+B num cabeçalho do sistema não abre nada, calado.** No
+  `std::cout`, o clangd responde `/usr/include/c++/16/iostream:65`; o
+  editor pede o arquivo pelo `fs.read`, que só lê dentro do projeto
+  (`INVALID_PARAMS`, "está fora do projeto aberto"), e a tela não muda
+  (IPC gravado em 2026-10-16). O caminho para fora já existe: o
+  `fs.readExternal` (0.142.0) abre a aba somente leitura do arquivo solto no
+  editor. Correção, pequena e local: o pedido de leitura do editor com um
+  caminho absoluto fora da raiz vai pela prévia externa (o
+  `EditorRequestRouter`), e o destino guardado do salto vale também quando a
+  aba externa chega (o `EditorExternalPreviewController`). Sem método novo
+  no protocolo, e a escrita continua confinada ao projeto.
+
+**Resultado (2026-10-16).** F5 e F6 corrigidos (o desenho acima), com
+harness e mutação; no Xvfb, o Ctrl+B num `0` mostra "Nenhuma declaração
+para ir a partir daqui." no popup de hover, que some sozinho; `int a = 1` e
+`double b = 3.` não abrem o completar, e `std::` abre. F8: com as teclas pelo
+XTEST, o `qt.gui.shortcutmap` dá `ExactMatch` para Ctrl+F9, Ctrl+Shift+F9,
+Shift+F10 e Ctrl+F2, e na tela o Ctrl+F9 compila ("[100%] Built target
+app") e o Shift+F10 executa ("ola do fluxo" no terminal "▶ app ✓"). F10: o Ctrl+B em
+`std::cout` abre `iostream` somente leitura na linha 65. Ficam a 16.7b (F7)
+e a 16.7c (F9).
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

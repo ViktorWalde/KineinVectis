@@ -447,6 +447,7 @@ colors
 cols
 column
 columns
+combo
 come
 comes
 comm

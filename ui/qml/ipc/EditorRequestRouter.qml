@@ -20,7 +20,10 @@ Item {
         target: root.editorController
 
         function onReadFileRequested(path) {
-            root.coreClient.readFile(path);
+            // Fora da raiz (o Ctrl+B num cabecalho do sistema), a aba somente
+            // leitura do fs.readExternal: o fs.read recusa (16.7, F10).
+            if (!root.editorController.externalPreview.open(path))
+                root.coreClient.readFile(path);
         }
 
 

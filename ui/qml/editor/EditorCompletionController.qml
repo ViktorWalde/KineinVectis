@@ -273,10 +273,17 @@ Item {
             if (position <= 0) {
                 return;
             }
-            const previous = root.surfaceBridge.editorSurface.text.charAt(
-                        position - 1);
-            const willOpen = root.rules.isWordChar(previous)
-                    || previous === "." || previous === ":";
+            const text = root.surfaceBridge.editorSurface.text;
+            const previous = text.charAt(position - 1);
+            // Numero nao pede completar (16.7, F6: `1` abria `Int16Array`): nem a
+            // palavra que comeca com digito, nem o `.` logo depois de uma
+            // (`3.`, mas `vec2.` abre).
+            const end = previous === "." ? position - 1 : position;
+            let start = end;
+            while (start > 0 && root.rules.isWordChar(text.charAt(start - 1))) start--;
+            const numeric = start < end && /[0-9]/.test(text.charAt(start));
+            const willOpen = !numeric && (root.rules.isWordChar(previous)
+                    || previous === "." || previous === ":");
             if (willOpen) {
                 root.requestCompletion();
             }

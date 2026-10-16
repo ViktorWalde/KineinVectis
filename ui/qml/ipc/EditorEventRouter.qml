@@ -92,6 +92,11 @@ Item {
         }
 
         function onLspDefinitionResolved(path, line, column) {
+            // Sem destino: o aviso no popup de hover, que some sozinho (16.7, F5).
+            if (path === "") {
+                root.editorController.handleHoverResolved(qsTr("Nenhuma declaração para ir a partir daqui."));
+                return;
+            }
             root.editorController.openDiagnostic(path, line, column);
         }
 
