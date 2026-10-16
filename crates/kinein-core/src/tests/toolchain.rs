@@ -157,7 +157,7 @@ fn only_detected_candidates_are_offered() {
     let erro = recusa.response().error.as_ref().unwrap();
     assert_eq!(erro.code, JsonRpcErrorCode::InvalidParams);
     assert!(
-        erro.message.contains("nao foi detectado"),
+        erro.message.contains("não foi detectado"),
         "{}",
         erro.message
     );
@@ -460,7 +460,7 @@ fn the_install_catalogue_is_visible_before_any_click_and_refuses_what_it_must() 
     ));
     let erro = de_novo.response().error.clone().unwrap();
     assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
-    assert!(erro.message.contains("ja' esta' instalada"), "{erro:?}");
+    assert!(erro.message.contains("já está instalada"), "{erro:?}");
 
     // Sem `tar` no PATH falso: TOOL_NOT_FOUND antes de qualquer download.
     std::fs::remove_file(bin.join("tar")).unwrap();
@@ -641,7 +641,7 @@ fn a_kit_is_proposed_from_an_sdk_without_writing_anything() {
         (&json!(true), &json!(true), &json!(true))
     );
     assert!(
-        r["verdict"].as_str().unwrap().starts_with("utilizavel"),
+        r["verdict"].as_str().unwrap().starts_with("utilizável"),
         "{r}"
     );
     // Um sysroot que nao existe nao e' erro: e' um relatorio que diz isso.

@@ -171,7 +171,7 @@ impl CompileContext {
                 .map(|d| format!("compile_commands.json em {d}"));
             if let Some(porque) = &self.cdb_stale_because {
                 ctx.hint = Some(format!(
-                    "a compile_commands.json e' mais velha que {porque}: reconfigure para as flags \
+                    "a compile_commands.json é mais velha que {porque}: reconfigure para as flags \
                      voltarem a valer"
                 ));
             }
@@ -191,17 +191,17 @@ impl CompileContext {
         ctx.hint = Some(
             match (&self.cdb_directory, e_cabecalho, &self.cdb_stale_because) {
                 (_, true, _) => {
-                    "cabecalho: nao tem unidade de compilacao propria; o clangd deduz as \
+                    "cabecalho: não tem unidade de compilação própria; o clangd deduz as \
                                   flags pela unidade que o inclui"
                         .to_owned()
                 }
                 (None, false, _) => {
                     "sem compile_commands.json: configure o projeto (cmake) para a IDE saber \
-                            como cada arquivo e' compilado"
+                            como cada arquivo é compilado"
                         .to_owned()
                 }
                 (Some(dir), false, Some(porque)) => format!(
-                    "arquivo fora da compile_commands.json em {dir}, que e' mais velha que {porque}: \
+                    "arquivo fora da compile_commands.json em {dir}, que é mais velha que {porque}: \
                  reconfigure"
                 ),
                 (Some(dir), false, None) => {
@@ -250,10 +250,10 @@ impl CompileContext {
     fn contexto_rust(&self, absoluto: &Path, ctx: &mut FileContext) {
         let Some(alvo) = self.alvo_de(absoluto) else {
             ctx.hint = Some(if self.alvos.is_empty() {
-                "sem `cargo metadata`: o cargo nao rodou (ausente, ou o Cargo.toml nao esta' na raiz)"
+                "sem `cargo metadata`: o cargo não rodou (ausente, ou o Cargo.toml não está na raiz)"
                     .to_owned()
             } else {
-                "arquivo fora de todo alvo do cargo: nenhum `mod` chega ate' ele, ou e' de um pacote \
+                "arquivo fora de todo alvo do cargo: nenhum `mod` chega até ele, ou é de um pacote \
                  fora do workspace"
                     .to_owned()
             });

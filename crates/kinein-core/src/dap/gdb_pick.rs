@@ -100,7 +100,7 @@ impl ElfMachine {
                 "instale o GDB da Espressif (xtensa-esp-elf-gdb / riscv32-esp-elf-gdb, pelo ESP-IDF) ou o gdb-multiarch (apt install gdb-multiarch)"
             }
             _ => {
-                "instale o gdb-multiarch (apt install gdb-multiarch) ou o arm-none-eabi-gdb da Arm; no Arch e no Fedora o gdb do sistema ja' e' multiarquitetura"
+                "instale o gdb-multiarch (apt install gdb-multiarch) ou o arm-none-eabi-gdb da Arm; no Arch e no Fedora o gdb do sistema já é multiarquitetura"
             }
         }
     }
@@ -211,7 +211,7 @@ pub fn pick_gdb_with(
             id: (*candidate).to_owned(),
             path: path.clone(),
             reason: format!(
-                "o ELF e' {}: usando {candidate}{}",
+                "o ELF é {}: usando {candidate}{}",
                 machine.label(),
                 refused_phrase(&refused)
             ),
@@ -219,7 +219,7 @@ pub fn pick_gdb_with(
     }
     GdbPick::Unavailable {
         message: format!(
-            "o ELF e' {} e nenhum gdb desta maquina serve para ele{}; {}",
+            "o ELF é {} e nenhum gdb desta máquina serve para ele{}; {}",
             machine.label(),
             refused_phrase(&refused),
             machine.install_hint()
@@ -233,7 +233,7 @@ fn refused_phrase(refused: &[&str]) -> String {
         return String::new();
     }
     format!(
-        " ({} encontrado, mas nao carrega o DAP do gdb ou nao fala esta arquitetura)",
+        " ({} encontrado, mas não carrega o DAP do gdb ou não fala esta arquitetura)",
         refused.join(", ")
     )
 }

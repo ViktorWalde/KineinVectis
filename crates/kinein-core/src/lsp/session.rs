@@ -283,12 +283,12 @@ impl LspManager {
             self.emit_status(key, "restarting");
             self.emit_restarted(key);
             return Err(LspError::Transport {
-                message: format!("servidor {key} reiniciado apos {MAX_TIMEOUT_STREAK} timeouts"),
+                message: format!("servidor {key} reiniciado após {MAX_TIMEOUT_STREAK} timeouts"),
             });
         }
         let Some(handle) = self.servers.get(key) else {
             return Err(LspError::Transport {
-                message: format!("servidor {key} nao esta em execucao"),
+                message: format!("servidor {key} não está em execução"),
             });
         };
         if !handle.is_ready() {

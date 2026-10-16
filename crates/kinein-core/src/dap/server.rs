@@ -68,7 +68,7 @@ impl DebugServer {
         let Some(stderr) = child.stderr.take() else {
             drop(child.kill());
             return Err(DebugError::Adapter {
-                message: format!("o servidor de debug `{command}` subiu sem stderr utilizavel"),
+                message: format!("o servidor de debug `{command}` subiu sem stderr utilizável"),
             });
         };
         let stderr = StderrTail::spawn(stderr, DEFAULT_CAPACITY, None);
@@ -113,7 +113,7 @@ impl DebugServer {
             if started.elapsed() >= PORT_TIMEOUT {
                 return Err(DebugError::Adapter {
                     message: format!(
-                        "o servidor de debug nao abriu {remote_target} em {} s",
+                        "o servidor de debug não abriu {remote_target} em {} s",
                         PORT_TIMEOUT.as_secs()
                     ),
                 });
@@ -141,7 +141,7 @@ pub(super) fn socket_address(remote_target: &str) -> Result<std::net::SocketAddr
         .and_then(|mut addresses| addresses.next())
         .ok_or_else(|| DebugError::Adapter {
             message: format!(
-                "remoteTarget `{remote_target}` nao e' host:porta; e' o que o servidor de \
+                "remoteTarget `{remote_target}` não é host:porta; é o que o servidor de \
                  debug precisa para a IDE esperar a porta abrir"
             ),
         })

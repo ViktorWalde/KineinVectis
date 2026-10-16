@@ -33,13 +33,11 @@ const METACARACTERES: [char; 10] = [';', '|', '&', '`', '>', '<', '\n', '\r', '(
 pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), String> {
     let limpa = linha.trim().trim_start_matches("$ ").trim();
     if limpa.is_empty() {
-        return Err(
-            "cole a linha `ssh` que voce ja' usa (ex.: ssh -p 2222 pi@10.0.0.7)".to_owned(),
-        );
+        return Err("cole a linha `ssh` que você já usa (ex.: ssh -p 2222 pi@10.0.0.7)".to_owned());
     }
     if let Some(c) = limpa.chars().find(|c| METACARACTERES.contains(c)) {
         return Err(format!(
-            "a linha tem `{c}`, que so' faz sentido para um shell — cole apenas o comando `ssh`"
+            "a linha tem `{c}`, que só faz sentido para um shell — cole apenas o comando `ssh`"
         ));
     }
     let mut tokens = tokenizar(limpa).into_iter().peekable();
@@ -60,7 +58,7 @@ pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), Str
         match token.as_str() {
             "-p" => porta = Some(valor(&mut tokens, "-p", &mut fonte, "porta")?),
             "-i" => chave = Some(valor(&mut tokens, "-i", &mut fonte, "chave")?),
-            "-l" => usuario = Some(valor(&mut tokens, "-l", &mut fonte, "usuario")?),
+            "-l" => usuario = Some(valor(&mut tokens, "-l", &mut fonte, "usuário")?),
             "-o" => {
                 let (campo, valor) = opcao(&mut tokens)?;
                 match campo.as_str() {
@@ -69,7 +67,7 @@ pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), Str
                     "identityfile" => chave = Some(valor),
                     outro => {
                         return Err(format!(
-                            "o perfil nao modela `-o {outro}` — deixe essa opcao no \
+                            "o perfil não modela `-o {outro}` — deixe essa opção no \
                              `~/.ssh/config` e escolha o alias aqui"
                         ));
                     }
@@ -78,7 +76,7 @@ pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), Str
             }
             outro if outro.starts_with('-') => {
                 return Err(format!(
-                    "o perfil nao modela `{outro}` — se a conexao depende dele, deixe-a \
+                    "o perfil não modela `{outro}` — se a conexão depende dele, deixe-a \
                      no `~/.ssh/config` e escolha o alias aqui"
                 ));
             }
@@ -86,14 +84,14 @@ pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), Str
             outro => {
                 return Err(format!(
                     "`{outro}` viria depois do destino, o que faria disto um COMANDO no \
-                     alvo — um perfil guarda so' como chegar"
+                     alvo — um perfil guarda só como chegar"
                 ));
             }
         }
     }
 
     let destino =
-        destino.ok_or_else(|| "faltou o destino (`host` ou `usuario@host`)".to_owned())?;
+        destino.ok_or_else(|| "faltou o destino (`host` ou `usuário@host`)".to_owned())?;
     let (do_destino, host) = match destino.split_once('@') {
         Some((u, h)) => (Some(u.to_owned()), h.to_owned()),
         None => (None, destino),
@@ -102,7 +100,7 @@ pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), Str
         return Err("faltou o host depois do `@`".to_owned());
     }
     if do_destino.is_some() {
-        fonte.push("usuario do `usuario@host`".to_owned());
+        fonte.push("usuário do `usuário@host`".to_owned());
     }
     fonte.push(format!("host `{host}` da linha colada"));
 
@@ -111,7 +109,7 @@ pub fn parse_ssh_command(linha: &str) -> Result<(RemoteTarget, Vec<String>), Str
             p.parse::<u16>()
                 .ok()
                 .filter(|p| *p > 0)
-                .ok_or_else(|| format!("porta invalida: `{p}`"))?,
+                .ok_or_else(|| format!("porta inválida: `{p}`"))?,
         ),
         None => None,
     };
@@ -163,7 +161,7 @@ fn valor<I: Iterator<Item = String>>(
 fn opcao<I: Iterator<Item = String>>(tokens: &mut I) -> Result<(String, String), String> {
     let bruto = tokens
         .next()
-        .ok_or_else(|| "`-o` ficou sem opcao".to_owned())?;
+        .ok_or_else(|| "`-o` ficou sem opção".to_owned())?;
     let (campo, valor) = bruto
         .split_once('=')
         .ok_or_else(|| format!("`-o {bruto}` sem `=`: escreva `-o Chave=valor`"))?;
@@ -280,8 +278,8 @@ mod tests {
             ("   ", "cole a linha"),
             ("ssh", "faltou o destino"),
             ("ssh -p", "`-p` ficou sem valor"),
-            ("ssh -p abc pi@h", "porta invalida"),
-            ("ssh -p 0 pi@h", "porta invalida"),
+            ("ssh -p abc pi@h", "porta inválida"),
+            ("ssh -p 0 pi@h", "porta inválida"),
             ("ssh pi@", "faltou o host"),
             ("ssh -o Port 2022 pi@h", "sem `=`"),
         ] {

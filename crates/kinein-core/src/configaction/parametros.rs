@@ -41,14 +41,14 @@ const FONTES: [&str; 8] = ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx"];
 pub(super) fn describe(name: &str) -> &'static str {
     match name {
         "target" => {
-            "O alvo do CMake que recebe a mudanca — um executavel ou uma biblioteca \
+            "O alvo do CMake que recebe a mudanca — um executável ou uma biblioteca \
                      declarada no seu CMakeLists."
         }
         "visibility" => {
-            "PRIVATE: so' este alvo usa. PUBLIC: quem linkar neste alvo tambem \
-                         herda. INTERFACE: so' quem linkar, nao ele mesmo."
+            "PRIVATE: só este alvo usa. PUBLIC: quem linkar neste alvo também \
+                         herda. INTERFACE: só quem linkar, não ele mesmo."
         }
-        "sources" | "source" => "Arquivos de codigo que passam a ser compilados dentro do alvo.",
+        "sources" | "source" => "Arquivos de código que passam a ser compilados dentro do alvo.",
         "directory" | "directories" => {
             "Diretorio de headers que o compilador passa a \
                      procurar (-I)."
@@ -57,30 +57,30 @@ pub(super) fn describe(name: &str) -> &'static str {
             "Nome do pacote como o CMake o conhece — o mesmo que vai no \
                       find_package()."
         }
-        "name" => "Nome que identifica o que esta sendo criado.",
-        "repository" => "URL do repositorio git de onde a dependencia e' baixada.",
+        "name" => "Nome que identifica o que está sendo criado.",
+        "repository" => "URL do repositório git de onde a dependencia é baixada.",
         "tag" => {
             "Tag ou commit FIXO. Nunca um branch: `main` muda sob os seus pes e \
                   transforma um build que passava em um que falha."
         }
         "libraries" => {
             "Alvos de link, como `fmt::fmt` — o nome que a biblioteca exporta, \
-                        nao o nome do arquivo."
+                        não o nome do arquivo."
         }
-        "standard" => "Versao do padrao C++ que o projeto exige (11, 14, 17, 20, 23, 26).",
+        "standard" => "Versão do padrão C++ que o projeto exige (11, 14, 17, 20, 23, 26).",
         "werror" => {
-            "ON transforma todo aviso em erro. Num projeto que ja' tem avisos, isso \
+            "ON transforma todo aviso em erro. Num projeto que já tem avisos, isso \
                      para o build inteiro — ligue depois de limpar."
         }
         "sanitizers" => {
-            "Verificacoes em tempo de execucao. `address` pega acesso invalido de \
-                         memoria; `undefined` pega comportamento indefinido. Custam \
-                         desempenho: sao para teste, nao para release."
+            "Verificações em tempo de execução. `address` pega acesso inválido de \
+                         memória; `undefined` pega comportamento indefinido. Custam \
+                         desempenho: são para teste, não para release."
         }
         "chip" => "O chip da placa, como o probe-rs o chama (ex.: STM32F401RETx).",
-        "edition" => "Edition do Rust — muda regras da linguagem, nao a versao do compilador.",
-        "features" | "enables" => "Features que este item liga por padrao.",
-        "version" => "Versao pedida. Vazio aceita qualquer uma que o sistema tenha.",
+        "edition" => "Edition do Rust — muda regras da linguagem, não a versão do compilador.",
+        "features" | "enables" => "Features que este item liga por padrão.",
+        "version" => "Versão pedida. Vazio aceita qualquer uma que o sistema tenha.",
         "command" => "A linha que a IDE executa. Ela roda na raiz do projeto, no seu shell.",
         _ => "",
     }

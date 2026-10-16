@@ -35,7 +35,7 @@ impl HistoryTarget {
             self.history
                 .record(&self.root, &self.name, &self.sql, ran.outcome, ran.rows)
         {
-            ctx.emit_output(&format!("historico nao gravado: {message}"));
+            ctx.emit_output(&format!("histórico não gravado: {message}"));
         }
     }
 }

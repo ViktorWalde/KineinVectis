@@ -48,7 +48,7 @@ pub fn read(mut cursor: impl Cursor, max_rows: u32) -> Result<QueryResult, Conne
                 batch
                     .at_as_str(col, 0)
                     .map(|s| s.map(str::to_owned))
-                    .map_err(|_| failure("texto UTF-8 invalido"))
+                    .map_err(|_| failure("texto UTF-8 inválido"))
             })
             .collect::<Result<Vec<_>, _>>()?;
         // Reserva de Vec inclui capacidade que pode dobrar; conta tambem

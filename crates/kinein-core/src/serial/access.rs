@@ -117,7 +117,7 @@ fn canal_serial(port: &SerialPortInfo, grupos: &[String], tags: &str) -> AccessC
         device: Some(port.device.clone()),
         ok: acesso.readable_writable,
         detail: format!(
-            "{} e' {}{}; voce {} do grupo",
+            "{} é {}{}; você {} do grupo",
             port.device,
             acesso.mode,
             grupo
@@ -126,7 +126,7 @@ fn canal_serial(port: &SerialPortInfo, grupos: &[String], tags: &str) -> AccessC
             if no_grupo {
                 "faz parte"
             } else {
-                "nao faz parte"
+                "não faz parte"
             }
         ),
         problem: None,
@@ -136,7 +136,7 @@ fn canal_serial(port: &SerialPortInfo, grupos: &[String], tags: &str) -> AccessC
     if acesso.readable_writable {
         if !no_grupo && por_acl {
             canal.distro_did_it = Some(
-                "o udev deu acesso ao usuario da sessao pela tag `uaccess` (ACL no no'), sem \
+                "o udev deu acesso ao usuário da sessão pela tag `uaccess` (ACL no no'), sem \
                  grupo nenhum"
                     .to_owned(),
             );
@@ -155,12 +155,12 @@ fn canal_serial(port: &SerialPortInfo, grupos: &[String], tags: &str) -> AccessC
                 SetupStep {
                     explanation: format!(
                         "Entra no grupo `{g}`, dono do no'. Vale para toda porta serial desta \
-                         maquina."
+                         máquina."
                     ),
                     command: format!("sudo usermod -a -G {g} $USER"),
                 },
                 SetupStep {
-                    explanation: "Saia e entre na sessao (re-login): o grupo novo so' vale para \
+                    explanation: "Saia e entre na sessão (re-login): o grupo novo só vale para \
                                   processos iniciados depois."
                         .to_owned(),
                     command: "id -nG".to_owned(),
@@ -173,8 +173,8 @@ fn canal_serial(port: &SerialPortInfo, grupos: &[String], tags: &str) -> AccessC
             steps: vec![
                 SetupStep {
                     explanation: format!(
-                        "O no' nao pertence a um grupo de usuarios; uma regra udev com `uaccess` \
-                         da' acesso ao usuario da sessao grafica a esta ponte ({}:{}), como o \
+                        "O no' não pertence a um grupo de usuários; uma regra udev com `uaccess` \
+                         da' acesso ao usuário da sessão grafica a esta ponte ({}:{}), como o \
                          70-uaccess.rules do systemd faz para outros dispositivos.",
                         port.vid, port.pid
                     ),
@@ -184,7 +184,7 @@ fn canal_serial(port: &SerialPortInfo, grupos: &[String], tags: &str) -> AccessC
                     ),
                 },
                 SetupStep {
-                    explanation: "Recarrega as regras e as aplica ao que ja' esta' plugado."
+                    explanation: "Recarrega as regras e as aplica ao que já está plugado."
                         .to_owned(),
                     command: "sudo udevadm control --reload && sudo udevadm trigger".to_owned(),
                 },
@@ -210,12 +210,12 @@ fn canal_modem_manager(
         detail: format!(
             "ModemManager {}; a porta {} candidata (ID_MM_CANDIDATE) e {} regra de ignorar",
             if running {
-                "esta' rodando"
+                "está rodando"
             } else {
-                "nao esta' rodando"
+                "não está rodando"
             },
-            if candidate { "e'" } else { "nao e'" },
-            if ignored { "tem" } else { "nao tem" }
+            if candidate { "é" } else { "não é" },
+            if ignored { "tem" } else { "não tem" }
         ),
         problem: None,
         fix: None,
@@ -224,13 +224,13 @@ fn canal_modem_manager(
     if !ameaca {
         if ignored {
             canal.distro_did_it =
-                Some("uma regra udev ja' marca esta ponte com ID_MM_DEVICE_IGNORE".to_owned());
+                Some("uma regra udev já marca esta ponte com ID_MM_DEVICE_IGNORE".to_owned());
         }
         return canal;
     }
     canal.problem = Some(
         "o ModemManager pode abrir esta porta por alguns segundos depois de plugar, e a \
-         gravacao/monitor falham enquanto ele a segura"
+         gravação/monitor falham enquanto ele a segura"
             .to_owned(),
     );
     canal.fix = Some(AccessFix {
@@ -239,7 +239,7 @@ fn canal_modem_manager(
                 explanation: format!(
                     "Uma regra udev diz ao ModemManager para ignorar esta ponte ({}:{}). O \
                      numero 77 a poe ANTES do 80-mm-candidate.rules, que marca toda tty como \
-                     candidata — e' a forma das regras que o proprio pacote instala.",
+                     candidata — é a forma das regras que o próprio pacote instala.",
                     port.vid, port.pid
                 ),
                 command: format!(
@@ -248,7 +248,7 @@ fn canal_modem_manager(
                 ),
             },
             SetupStep {
-                explanation: "Recarrega as regras e as aplica ao que ja' esta' plugado; a \
+                explanation: "Recarrega as regras e as aplica ao que já está plugado; a \
                               propriedade nova aparece no `udevadm info`."
                     .to_owned(),
                 command: "sudo udevadm control --reload && sudo udevadm trigger".to_owned(),
@@ -289,7 +289,7 @@ fn canal_sonda(rules_dirs: &[PathBuf]) -> AccessChannel {
             .collect();
         if !da_distro.is_empty() {
             canal.distro_did_it = Some(format!(
-                "a distro ja' instalou: {}",
+                "a distro já instalou: {}",
                 da_distro
                     .iter()
                     .map(|s| s.as_str())
@@ -300,7 +300,7 @@ fn canal_sonda(rules_dirs: &[PathBuf]) -> AccessChannel {
         return canal;
     }
     canal.problem = Some(
-        "sem regra udev, uma sonda (ST-Link, J-Link, CMSIS-DAP, o USB-JTAG do ESP32-C3/S3) so' \
+        "sem regra udev, uma sonda (ST-Link, J-Link, CMSIS-DAP, o USB-JTAG do ESP32-C3/S3) só \
          abre como root"
             .to_owned(),
     );
@@ -308,15 +308,15 @@ fn canal_sonda(rules_dirs: &[PathBuf]) -> AccessChannel {
         steps: vec![
             SetupStep {
                 explanation: "Baixa o 69-probe-rs.rules do probe.rs para /etc/udev/rules.d (a \
-                              pagina manda baixar o arquivo e po-lo la'; o comando e' a \
-                              transcricao)."
+                              página manda baixar o arquivo e po-lo lá; o comando é a \
+                              transcrição)."
                     .to_owned(),
                 command: "curl -fsSL https://probe.rs/files/69-probe-rs.rules | sudo tee \
                           /etc/udev/rules.d/69-probe-rs.rules >/dev/null"
                     .to_owned(),
             },
             SetupStep {
-                explanation: "\"to ensure new rules are used\" — como a pagina escreve.".to_owned(),
+                explanation: "\"to ensure new rules are used\" — como a página escreve.".to_owned(),
                 command: "sudo udevadm control --reload".to_owned(),
             },
             SetupStep {

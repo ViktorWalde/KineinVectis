@@ -153,7 +153,7 @@ fn pico_sdk(amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
             amb,
             "picotool",
             "picotool",
-            "git clone https://github.com/raspberrypi/picotool && cmake/ninja (BSD-3); o Fedora nao empacota",
+            "git clone https://github.com/raspberrypi/picotool && cmake/ninja (BSD-3); o Fedora não empacota",
         ),
     ]
 }
@@ -186,7 +186,7 @@ fn cargo_embedded(info: &FrameworkInfo, amb: &Ambiente<'_>) -> Vec<SdkRequiremen
             path: None,
             found: false,
             hint: Some(format!(
-                "rustup target add {triple} (nao medido pelo modelo; o setup mede)"
+                "rustup target add {triple} (não medido pelo modelo; o setup mede)"
             )),
         });
     }

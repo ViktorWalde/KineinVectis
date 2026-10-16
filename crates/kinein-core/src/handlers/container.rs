@@ -65,7 +65,7 @@ impl Core {
         if let Err(response) = parse_params::<ContainerImagesParams>(
             request_id.as_ref(),
             params,
-            "container.status nao aceita parametros",
+            "container.status não aceita parametros",
         ) {
             return *response;
         }
@@ -93,7 +93,7 @@ impl Core {
         let pedido = match parse_params::<ContainerListParams>(
             request_id.as_ref(),
             params,
-            "container.list aceita so' o campo opcional `all`",
+            "container.list aceita só o campo opcional `all`",
         ) {
             Ok(pedido) => pedido,
             Err(response) => return *response,
@@ -120,7 +120,7 @@ impl Core {
         if let Err(response) = parse_params::<ContainerImagesParams>(
             request_id.as_ref(),
             params,
-            "container.images nao aceita parametros",
+            "container.images não aceita parametros",
         ) {
             return *response;
         }
@@ -199,7 +199,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "container.action: `volumes` so' vale com `remove`",
+                    "container.action: `volumes` só vale com `remove`",
                     None,
                 ),
             );
@@ -298,7 +298,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "o projeto nao tem arquivo de compose (compose.yaml, docker-compose.yml, \
+                    "o projeto não tem arquivo de compose (compose.yaml, docker-compose.yml, \
                      container-compose.yml...); crie um na raiz ou passe `file`",
                     Some(json!({ "root": root.display().to_string() })),
                 ),
@@ -329,7 +329,7 @@ impl Core {
         let target = pedido
             .file
             .clone()
-            .unwrap_or_else(|| "compose (padrao)".to_owned());
+            .unwrap_or_else(|| "compose (padrão)".to_owned());
         let titulo = format!("{verb} {target}");
         let detector = self.detector.clone();
         let (action, file) = (pedido.action, pedido.file);
@@ -427,8 +427,8 @@ fn run_and_report(
         Ok(status) => status.success(),
         Err(erro) => {
             ultimas.push(match erro {
-                crate::process::ProcessError::Spawn(e) => format!("nao foi possivel iniciar: {e}"),
-                crate::process::ProcessError::Wait(e) => format!("nao foi possivel esperar: {e}"),
+                crate::process::ProcessError::Spawn(e) => format!("não foi possível iniciar: {e}"),
+                crate::process::ProcessError::Wait(e) => format!("não foi possível esperar: {e}"),
             });
             false
         }

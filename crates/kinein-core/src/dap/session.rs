@@ -106,7 +106,7 @@ impl DapSession {
                 // tem arquivo para dar — e nao ha' servidor de debug para Python.
                 let Some(program) = target.program_path() else {
                     return Err(DebugError::Adapter {
-                        message: "o servidor de debug do kit precisa de um executavel; o alvo e' \
+                        message: "o servidor de debug do kit precisa de um executável; o alvo é \
                                   um modulo Python"
                             .to_owned(),
                     });
@@ -115,7 +115,7 @@ impl DapSession {
             }
             (Some(_), None) => {
                 return Err(DebugError::Adapter {
-                    message: "o kit declara debugServer sem remoteTarget: a IDE nao saberia \
+                    message: "o kit declara debugServer sem remoteTarget: a IDE não saberia \
                               a que porta conectar"
                         .to_owned(),
                 });
@@ -259,7 +259,7 @@ impl DapSession {
             .and_then(|thread| thread.get("id"))
             .and_then(Value::as_i64)
             .ok_or_else(|| DebugError::Adapter {
-                message: "o adapter nao listou threads para pausar".to_owned(),
+                message: "o adapter não listou threads para pausar".to_owned(),
             })?;
         self.wire
             .request("pause", &json!({ "threadId": thread }), REQUEST_TIMEOUT)?;
@@ -412,7 +412,7 @@ impl DapSession {
             self.wire
                 .wait_response(start_command, launch_seq, &launch_receiver, Duration::ZERO)?;
             return Err(DebugError::Adapter {
-                message: "o adapter nao publicou o evento initialized".to_owned(),
+                message: "o adapter não publicou o evento initialized".to_owned(),
             });
         }
         for (file, lines) in breakpoints {

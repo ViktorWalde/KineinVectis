@@ -525,7 +525,7 @@ mod tests {
             run_mongo(&profile, None, "", 10)
                 .unwrap_err()
                 .message
-                .contains("escreva a colecao")
+                .contains("escreva a coleção")
         );
         assert!(
             run_mongo(&profile, None, "col nao-json", 10)

@@ -295,7 +295,7 @@ fn quality_run_lints_python_with_the_detected_ruff() {
     assert_eq!(f401["severity"], "warning");
     let mensagem = f401["message"].as_str().unwrap();
     assert!(
-        mensagem.contains("F401") && mensagem.contains("corrigivel"),
+        mensagem.contains("F401") && mensagem.contains("corrigível"),
         "{f401}"
     );
     assert_eq!(diagnosticos[1]["severity"], "error");

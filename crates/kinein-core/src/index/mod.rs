@@ -289,7 +289,7 @@ pub fn build(root: &Path, cancel: &AtomicBool, progress: &dyn Fn(u64, u64)) -> P
     caminhar(root, root, cancel, &mut extractor, &mut indice, progress);
     if cancel.load(Ordering::SeqCst) {
         indice.state = IndexState::Failed;
-        indice.error = Some("indexacao cancelada".to_owned());
+        indice.error = Some("indexação cancelada".to_owned());
     } else {
         indice.state = IndexState::Ready;
     }
@@ -321,7 +321,7 @@ fn caminhar(
         let Ok(entradas) = std::fs::read_dir(&dir) else {
             indice
                 .skipped
-                .push(relativo(root, &dir) + " (pasta ilegivel)");
+                .push(relativo(root, &dir) + " (pasta ilegível)");
             continue;
         };
         indice.folder_paths.push(dir.clone());
@@ -395,7 +395,7 @@ fn indexar_arquivo(
         });
     }
     let Ok(conteudo) = std::fs::read_to_string(caminho) else {
-        skipped.push(format!("{path} (nao e' UTF-8 legivel)"));
+        skipped.push(format!("{path} (não é UTF-8 legível)"));
         return Some(IndexedFile {
             path,
             language: language.to_owned(),

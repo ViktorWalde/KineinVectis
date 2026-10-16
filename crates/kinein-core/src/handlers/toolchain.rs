@@ -68,7 +68,7 @@ impl Core {
         let parsed = match parse_params::<ToolchainSetParams>(
             request_id.as_ref(),
             params,
-            "toolchain.set requer role (id ausente volta para automatico)",
+            "toolchain.set requer role (id ausente volta para automático)",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -200,7 +200,7 @@ fn dica_de_sysroot(id: &str, cc: &Path) -> Option<String> {
         format!("sysroot `{sysroot}` sem usr/include")
     };
     Some(format!(
-        "o compilador cross `{id}` nao traz o sistema alvo ({onde}): aponte um sysroot no kit — \
+        "o compilador cross `{id}` não traz o sistema alvo ({onde}): aponte um sysroot no kit — \
          copiado da placa (rsync de /usr/include e /usr/lib), o tarball da Bootlin, ou o SDK \
          Yocto/Buildroot"
     ))

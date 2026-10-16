@@ -230,7 +230,7 @@ pub(super) fn script_command(
         "bash" => git_bash()
             .map(|bash| (bash.display().to_string(), vec!["--".to_owned(), script]))
             .ok_or_else(|| {
-                "o script precisa do bash do Git for Windows, e o git.exe nao esta' no PATH"
+                "o script precisa do bash do Git for Windows, e o git.exe não está no PATH"
                     .to_owned()
             }),
         "powershell" => Ok((

@@ -68,7 +68,7 @@ impl Core {
             if parsed.program.is_some() {
                 return invalid_debug_params(
                     request_id,
-                    "program e connect sao mutuamente exclusivos",
+                    "program e connect são mutuamente exclusivos",
                 );
             }
             endpoint.host = endpoint.host.trim().to_owned();
@@ -82,7 +82,7 @@ impl Core {
             {
                 return invalid_debug_params(
                     request_id,
-                    "connect requer host valido e port entre 1 e 65535",
+                    "connect requer host válido e port entre 1 e 65535",
                 );
             }
             dap::DebugTarget::PythonAttach(endpoint)
@@ -93,7 +93,7 @@ impl Core {
                     if !path.is_file() {
                         return invalid_debug_params(
                             request_id,
-                            &format!("programa nao encontrado: {}", path.display()),
+                            &format!("programa não encontrado: {}", path.display()),
                         );
                     }
                     dap::DebugTarget::Program(path)
@@ -223,14 +223,14 @@ impl Core {
         let Ok(file) = crate::platform::canonicalize(Path::new(&parsed.file)) else {
             return invalid_debug_params(
                 request_id,
-                &format!("arquivo nao encontrado: {}", parsed.file),
+                &format!("arquivo não encontrado: {}", parsed.file),
             );
         };
         if !file.starts_with(&workspace.root) {
             return invalid_debug_params(request_id, "arquivo fora do projeto aberto");
         }
         let Some(file) = file.to_str().map(str::to_owned) else {
-            return invalid_debug_params(request_id, "caminho de arquivo invalido");
+            return invalid_debug_params(request_id, "caminho de arquivo inválido");
         };
 
         let Some(manager) = self.debug.as_mut() else {
@@ -276,7 +276,7 @@ impl Core {
             Err(response) => return *response,
         };
         if parsed.expression.trim().is_empty() {
-            return invalid_debug_params(request_id, "debug.evaluate requer expression nao vazia");
+            return invalid_debug_params(request_id, "debug.evaluate requer expression não vazia");
         }
         let Some(manager) = self.debug.as_mut() else {
             return debug_unavailable_response(request_id, "debug.evaluate");
@@ -344,7 +344,7 @@ impl Core {
         if parsed.memory_reference.trim().is_empty() || parsed.count == 0 {
             return invalid_debug_params(
                 request_id,
-                "debug.readMemory requer memoryReference nao vazio e count > 0",
+                "debug.readMemory requer memoryReference não vazio e count > 0",
             );
         }
         let Some(manager) = self.debug.as_ref() else {
@@ -373,7 +373,7 @@ impl Core {
         if parsed.memory_reference.trim().is_empty() || parsed.instruction_count == 0 {
             return invalid_debug_params(
                 request_id,
-                "debug.disassemble requer memoryReference nao vazio e instructionCount > 0",
+                "debug.disassemble requer memoryReference não vazio e instructionCount > 0",
             );
         }
         let Some(manager) = self.debug.as_ref() else {

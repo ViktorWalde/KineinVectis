@@ -165,7 +165,7 @@ pub fn resolve(model: &ProjectModel, home: Option<&Path>) -> Result<Option<Engin
                 framework: framework.to_owned(),
                 message: sdk(id)
                     .and_then(|s| s.hint.clone())
-                    .unwrap_or_else(|| format!("`{id}` nao esta' nesta maquina")),
+                    .unwrap_or_else(|| format!("`{id}` não está nesta máquina")),
             })
     };
     if tem(Framework::PlatformIo) {
@@ -179,7 +179,7 @@ pub fn resolve(model: &ProjectModel, home: Option<&Path>) -> Result<Option<Engin
             message: sdk("esp-idf")
                 .and_then(|s| s.hint.clone())
                 .unwrap_or_default()
-                + " — ou instale pelo EIM (`eim install`), que deixa o activate_idf_<versao>.sh em ~/.espressif/tools",
+                + " — ou instale pelo EIM (`eim install`), que deixa o activate_idf_<versão>.sh em ~/.espressif/tools",
         })?;
         return Ok(Some(Engine::EspIdf { activation }));
     }

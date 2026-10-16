@@ -92,7 +92,7 @@ pub fn rodar(
         Ok(status) => status.success(),
         Err(error) => {
             let texto = match error {
-                process::ProcessError::Spawn(e) => format!("{nome} nao pode ser iniciado: {e}"),
+                process::ProcessError::Spawn(e) => format!("{nome} não pode ser iniciado: {e}"),
                 process::ProcessError::Wait(e) => format!("falha aguardando o {nome}: {e}"),
             };
             ctx.emit_output(&texto);

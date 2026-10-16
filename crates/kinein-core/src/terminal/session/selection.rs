@@ -12,7 +12,7 @@ impl TerminalManager {
         }
         let session = self.live(id)?;
         let mut state = session.state.lock().map_err(|_| TerminalError::Process {
-            message: "estado do terminal indisponivel para selecionar".to_owned(),
+            message: "estado do terminal indisponível para selecionar".to_owned(),
         })?;
         state.select_all(selection_id);
         emit_locked_render(&self.events, id, &state);
@@ -28,7 +28,7 @@ impl TerminalManager {
     ) -> Result<Option<String>, TerminalError> {
         let session = self.live(id)?;
         let state = session.state.lock().map_err(|_| TerminalError::Process {
-            message: "estado do terminal indisponivel para copiar".to_owned(),
+            message: "estado do terminal indisponível para copiar".to_owned(),
         })?;
         Ok(state.copy_selection(selection_id))
     }

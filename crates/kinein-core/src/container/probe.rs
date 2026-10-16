@@ -49,7 +49,7 @@ impl Asked {
     pub fn reason(&self) -> String {
         if self.timed_out {
             format!(
-                "nao respondeu em {} s (o processo foi encerrado)",
+                "não respondeu em {} s (o processo foi encerrado)",
                 ASK_DEADLINE.as_secs()
             )
         } else {
@@ -109,8 +109,8 @@ pub(crate) fn ask_command(command: Command, deadline: Duration) -> Asked {
             ok: false,
             stdout: String::new(),
             stderr: match error {
-                crate::process::ProcessError::Spawn(e) => format!("nao foi possivel iniciar: {e}"),
-                crate::process::ProcessError::Wait(e) => format!("nao foi possivel esperar: {e}"),
+                crate::process::ProcessError::Spawn(e) => format!("não foi possível iniciar: {e}"),
+                crate::process::ProcessError::Wait(e) => format!("não foi possível esperar: {e}"),
             },
             timed_out: false,
         },

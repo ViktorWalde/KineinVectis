@@ -302,7 +302,7 @@ fn the_error_is_the_mpremote_line() {
 #[test]
 #[cfg_attr(
     windows,
-    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) sao da W10 (D10, 60 §3.3)"
+    ignore = "W10: embarcados no Windows (COMx, gravadores, frameworks) são da W10 (D10, 60 §3.3)"
 )]
 fn refusals_happen_before_the_port_is_touched() {
     let _serial = crate::serialize_executables();
@@ -321,7 +321,7 @@ fn refusals_happen_before_the_port_is_touched() {
         ),
         (
             json!({ "action": "put", "path": "a.py", "local": c.dir.join("nao.py").display().to_string() }),
-            "nao ha' arquivo",
+            "não há arquivo",
         ),
         (
             json!({ "action": "get", "path": "a.py", "local": "a.py" }),
@@ -426,8 +426,8 @@ fn cancelling_the_job_kills_mpremote() {
     let evento = c.desfecho();
     assert!(
         inicio.elapsed() < Duration::from_secs(10),
-        "o sleep nao foi morto"
+        "o sleep não foi morto"
     );
     assert_eq!(evento["success"], false);
-    assert_eq!(evento["error"], "operacao cancelada");
+    assert_eq!(evento["error"], "operação cancelada");
 }

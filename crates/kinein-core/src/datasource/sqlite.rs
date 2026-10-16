@@ -186,7 +186,7 @@ pub(super) fn abrir_com(
     // o autor pediria um teste e ganharia um arquivo.
     if !std::path::Path::new(caminho).is_file() {
         return Err(ConnectionFailure {
-            message: format!("{caminho}: arquivo nao encontrado"),
+            message: format!("{caminho}: arquivo não encontrado"),
             sql_state: None,
             secret_required: false,
         });
@@ -303,8 +303,8 @@ mod tests {
         let caminho = dir.join("nao-existe.db");
 
         let erro = probe_file(&perfil(caminho.to_str().unwrap())).unwrap_err();
-        assert!(erro.message.contains("nao encontrado"), "{}", erro.message);
-        assert!(!caminho.exists(), "o teste de conexao CRIOU o arquivo");
+        assert!(erro.message.contains("não encontrado"), "{}", erro.message);
+        assert!(!caminho.exists(), "o teste de conexão CRIOU o arquivo");
         assert!(!erro.secret_required, "SQLite nao tem senha para pedir");
     }
 

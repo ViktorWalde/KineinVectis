@@ -56,13 +56,13 @@ pub(super) fn propose(
     {
         return Err(FlashError::UnknownEngine {
             engine: format!(
-                "{pedido} (o firmware {} grava-se por {}, como a pagina da placa manda)",
+                "{pedido} (o firmware {} grava-se por {}, como a página da placa manda)",
                 imagem.label, imagem.engine
             ),
         });
     }
     let mut source = vec![format!(
-        "motor: {} (a pagina do firmware no micropython.org)",
+        "motor: {} (a página do firmware no micropython.org)",
         imagem.engine
     )];
     let mut warnings = Vec::new();
@@ -107,7 +107,7 @@ fn esptool(
         .offset
         .as_deref()
         .ok_or_else(|| FlashError::NoArtifact {
-            message: format!("o catalogo nao diz o offset de {}", imagem.label),
+            message: format!("o catalogo não diz o offset de {}", imagem.label),
         })?;
     let arquivo = imagem.file.display().to_string();
     let mut partes = vec![esptool];
@@ -118,7 +118,7 @@ fn esptool(
         partes.push(chip.to_owned());
         if let Some(kit) = model.target.chip.as_deref().filter(|k| *k != chip) {
             warnings.push(format!(
-                "o kit diz chip {kit} e este firmware e' para {chip}: confira a placa antes de gravar"
+                "o kit diz chip {kit} e este firmware é para {chip}: confira a placa antes de gravar"
             ));
         }
     }
@@ -140,13 +140,13 @@ fn esptool(
         tamanho_legivel(imagem.size_bytes)
     ));
     source.push(format!(
-        "offset: {offset} (a pagina da placa no micropython.org)"
+        "offset: {offset} (a página da placa no micropython.org)"
     ));
     source.push(format!(
         "porta: {device} (escolhida no painel de Embarcados)"
     ));
     warnings.push(format!(
-        "primeira instalacao do MicroPython nesta placa? a pagina manda apagar a flash antes: \
+        "primeira instalação do MicroPython nesta placa? a página manda apagar a flash antes: \
          {} --port {} erase-flash",
         partes[0],
         quote(device)
@@ -180,7 +180,7 @@ fn picotool(
     ));
     source.push(
         "modo: -f forca o BOOTSEL pelo USB; -x executa depois — o mesmo que copiar o .uf2 \
-         para o drive RPI-RP2, como a pagina manda"
+         para o drive RPI-RP2, como a página manda"
             .to_owned(),
     );
     Ok(format!("{picotool} load -f -x {}", quote(&arquivo)))

@@ -40,7 +40,7 @@ pub const FIRMWARE: &[Entrada] = &[
             chip: Some("esp32"),
         }),
         id: "micropython-esp32-generic",
-        label: "MicroPython — ESP32_GENERIC (ESP32 classico, .bin)",
+        label: "MicroPython — ESP32_GENERIC (ESP32 clássico, .bin)",
         version: "v1.29.0",
         family: "espressif",
         url: "https://micropython.org/resources/firmware/ESP32_GENERIC-20260824-v1.29.0.bin",

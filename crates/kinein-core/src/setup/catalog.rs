@@ -59,7 +59,7 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "postgresql",
         name: "PostgreSQL",
-        summary: "Banco relacional. E' o servidor a que o painel de banco da IDE se conecta.",
+        summary: "Banco relacional. É o servidor a que o painel de banco da IDE se conecta.",
         website: "https://www.postgresql.org/download/linux/",
         probe_binary: "psql",
     },
@@ -67,7 +67,7 @@ pub(super) static TOOLS: &[Tool] = &[
         id: "timescaledb",
         name: "TimescaleDB",
         summary: "Extensao do PostgreSQL para series temporais. Fala o mesmo protocolo, \
-                  entao o mesmo perfil de conexao serve.",
+                  então o mesmo perfil de conexão serve.",
         website: "https://www.tigerdata.com/docs/self-hosted/latest/install/installation-linux",
         probe_binary: "timescaledb-tune",
     },
@@ -78,7 +78,7 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "pipx",
         name: "pipx",
-        summary: "Instala ferramentas Python isoladas, cada uma no proprio ambiente. E' o \
+        summary: "Instala ferramentas Python isoladas, cada uma no próprio ambiente. É o \
                   caminho oficial do uv, do ruff e do poetry numa distro que segue a PEP 668.",
         website: "https://pipx.pypa.io/stable/how-to/install-pipx.html",
         probe_binary: "pipx",
@@ -86,7 +86,7 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "uv",
         name: "uv",
-        summary: "Ambientes e pacotes Python, rapido. E' com ele que a IDE cria o .venv do \
+        summary: "Ambientes e pacotes Python, rápido. É com ele que a IDE cria o .venv do \
                   projeto num clique (`uv venv .venv`).",
         website: "https://docs.astral.sh/uv/getting-started/installation/",
         probe_binary: "uv",
@@ -94,7 +94,7 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "ruff",
         name: "ruff",
-        summary: "Lint e formato de Python num programa so'. Na IDE vira diagnostico, correcao \
+        summary: "Lint e formato de Python num programa só. Na IDE vira diagnóstico, correção \
                   (Alt+Enter) e formatar.",
         website: "https://docs.astral.sh/ruff/installation/",
         probe_binary: "ruff",
@@ -102,7 +102,7 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "basedpyright",
         name: "basedpyright",
-        summary: "Language server de Python (completar, ir para definicao, tipos, rename). \
+        summary: "Language server de Python (completar, ir para definição, tipos, rename). \
                   Pelo PyPI, sem Node; a IDE o sobe com o interpretador do projeto.",
         website: "https://docs.basedpyright.com/latest/installation/command-line-and-language-server/",
         probe_binary: "basedpyright-langserver",
@@ -111,7 +111,7 @@ pub(super) static TOOLS: &[Tool] = &[
         id: "bear",
         name: "Bear",
         summary: "Gera o compile_commands.json de um Makefile puro interceptando o compilador \
-                  (`bear -- make`): e' o que faz o clangd entender um projeto sem CMake. \
+                  (`bear -- make`): é o que faz o clangd entender um projeto sem CMake. \
                   O build da IDE o usa sozinho quando ele existe.",
         website: "https://github.com/rizsotto/Bear",
         probe_binary: "bear",
@@ -120,7 +120,7 @@ pub(super) static TOOLS: &[Tool] = &[
         id: "grafana",
         name: "Grafana",
         summary: "Paineis e graficos sobre os dados. A IDE conversa com ele por HTTP API — \
-                  nunca embutido, porque o Grafana e' AGPL.",
+                  nunca embutido, porque o Grafana é AGPL.",
         website: "https://grafana.com/docs/grafana/latest/setup-grafana/installation/",
         probe_binary: "grafana",
     },
@@ -137,17 +137,17 @@ static PG_REDHAT: &[Step] = &[
         command: "sudo dnf install -y postgresql-server postgresql-contrib",
     },
     Step {
-        explanation: "Cria o diretorio de dados do banco (so' na primeira vez).",
+        explanation: "Cria o diretório de dados do banco (só na primeira vez).",
         command: "sudo postgresql-setup --initdb",
     },
     Step {
-        explanation: "Sobe o servico e faz ele subir junto com a maquina.",
+        explanation: "Sobe o serviço e faz ele subir junto com a máquina.",
         command: "sudo systemctl enable --now postgresql.service",
     },
 ];
 
 static PG_DEBIAN: &[Step] = &[Step {
-    explanation: "Instala o PostgreSQL que vem na sua distribuicao.",
+    explanation: "Instala o PostgreSQL que vem na sua distribuição.",
     command: "sudo apt install -y postgresql",
 }];
 
@@ -159,50 +159,50 @@ static PG_DEBIAN: &[Step] = &[Step {
 
 static TS_DEBIAN: &[Step] = &[
     Step {
-        explanation: "Ferramentas que o repositorio precisa para ser configurado.",
+        explanation: "Ferramentas que o repositório precisa para ser configurado.",
         command: "sudo apt install -y gnupg postgresql-common apt-transport-https lsb-release wget",
     },
     Step {
-        explanation: "Configura o repositorio oficial do PostgreSQL.",
+        explanation: "Configura o repositório oficial do PostgreSQL.",
         command: "sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh",
     },
     Step {
-        explanation: "Acrescenta o repositorio do TimescaleDB.",
+        explanation: "Acrescenta o repositório do TimescaleDB.",
         command: "echo \"deb https://packagecloud.io/timescale/timescaledb/debian/ \
                   $(lsb_release -c -s) main\" | sudo tee /etc/apt/sources.list.d/timescaledb.list",
     },
     Step {
-        explanation: "Instala a chave que assina esse repositorio.",
+        explanation: "Instala a chave que assina esse repositório.",
         command: "wget --quiet -O - https://packagecloud.io/timescale/timescaledb/gpgkey \
                   | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/timescaledb.gpg",
     },
     Step {
-        explanation: "Atualiza a lista de pacotes e instala a extensao.",
+        explanation: "Atualiza a lista de pacotes e instala a extensão.",
         command: "sudo apt update && sudo apt install -y timescaledb-2-postgresql-18 \
                   postgresql-client-18",
     },
     Step {
-        explanation: "Ajusta a configuracao do PostgreSQL para series temporais e reinicia.",
+        explanation: "Ajusta a configuração do PostgreSQL para series temporais e reinicia.",
         command: "sudo timescaledb-tune && sudo systemctl restart postgresql",
     },
 ];
 
 static TS_REDHAT: &[Step] = &[
     Step {
-        explanation: "Acrescenta o repositorio oficial do `PostgreSQL` (o PGDG).",
+        explanation: "Acrescenta o repositório oficial do `PostgreSQL` (o PGDG).",
         command: "sudo dnf install -y \
                   https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %{rhel})-x86_64/pgdg-redhat-repo-latest.noarch.rpm",
     },
     Step {
-        explanation: "Instala a extensao e o `PostgreSQL` correspondente.",
+        explanation: "Instala a extensão e o `PostgreSQL` correspondente.",
         command: "sudo dnf install -y timescaledb-2-postgresql-18 postgresql18",
     },
     Step {
-        explanation: "Cria o diretorio de dados do banco.",
+        explanation: "Cria o diretório de dados do banco.",
         command: "sudo /usr/pgsql-18/bin/postgresql-18-setup initdb",
     },
     Step {
-        explanation: "Ajusta a configuracao para series temporais e sobe o servico.",
+        explanation: "Ajusta a configuração para series temporais e sobe o serviço.",
         command: "sudo timescaledb-tune --pg-config=/usr/pgsql-18/bin/pg_config \
                   && sudo systemctl enable --now postgresql-18",
     },
@@ -216,28 +216,28 @@ static TS_REDHAT: &[Step] = &[
 
 static GRAFANA_DEBIAN: &[Step] = &[
     Step {
-        explanation: "Ferramentas que o repositorio precisa.",
+        explanation: "Ferramentas que o repositório precisa.",
         command: "sudo apt-get install -y apt-transport-https wget gnupg",
     },
     Step {
-        explanation: "Cria o diretorio das chaves e baixa a chave oficial do Grafana.",
+        explanation: "Cria o diretório das chaves e baixa a chave oficial do Grafana.",
         command: "sudo mkdir -p /etc/apt/keyrings && sudo wget -O \
                   /etc/apt/keyrings/grafana.asc https://apt.grafana.com/gpg-full.key",
     },
     Step {
-        explanation: "Acrescenta o repositorio estavel do Grafana.",
+        explanation: "Acrescenta o repositório estável do Grafana.",
         command: "echo \"deb [signed-by=/etc/apt/keyrings/grafana.asc] \
                   https://apt.grafana.com stable main\" | sudo tee -a \
                   /etc/apt/sources.list.d/grafana.list",
     },
     Step {
-        explanation: "Atualiza a lista de pacotes e instala a edicao OSS.",
+        explanation: "Atualiza a lista de pacotes e instala a edição OSS.",
         command: "sudo apt-get update && sudo apt-get install -y grafana",
     },
 ];
 
 static GRAFANA_REDHAT: &[Step] = &[Step {
-    explanation: "Instala a edicao OSS a partir do repositorio RPM do Grafana.",
+    explanation: "Instala a edição OSS a partir do repositório RPM do Grafana.",
     command: "sudo dnf install -y grafana",
 }];
 
@@ -279,13 +279,13 @@ static PIPX_DEBIAN: &[Step] = &[
 ];
 
 static UV_ANY: &[Step] = &[Step {
-    explanation: "Instala o uv para o seu usuario, isolado, via pipx (a fonte tambem oferece \
+    explanation: "Instala o uv para o seu usuário, isolado, via pipx (a fonte também oferece \
                   `curl -LsSf https://astral.sh/uv/install.sh | sh`).",
     command: "pipx install uv",
 }];
 
 static RUFF_ANY: &[Step] = &[Step {
-    explanation: "Instala o ruff para o seu usuario, isolado, via pipx (a fonte tambem oferece \
+    explanation: "Instala o ruff para o seu usuário, isolado, via pipx (a fonte também oferece \
                   `uv tool install ruff@latest`).",
     command: "pipx install ruff",
 }];
@@ -301,8 +301,8 @@ static RUFF_SUSE: &[Step] = &[Step {
 }];
 
 static BASEDPYRIGHT_ANY: &[Step] = &[Step {
-    explanation: "Instala o basedpyright para o seu usuario via uv (precisa do uv; a fonte \
-                  tambem oferece `pip install basedpyright`).",
+    explanation: "Instala o basedpyright para o seu usuário via uv (precisa do uv; a fonte \
+                  também oferece `pip install basedpyright`).",
     command: "uv tool install basedpyright",
 }];
 

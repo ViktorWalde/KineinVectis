@@ -38,7 +38,7 @@ impl Core {
         if let Err(response) = parse_params::<ProbeListParams>(
             request_id.as_ref(),
             params,
-            "probe.list nao aceita parametros",
+            "probe.list não aceita parametros",
         ) {
             return *response;
         }

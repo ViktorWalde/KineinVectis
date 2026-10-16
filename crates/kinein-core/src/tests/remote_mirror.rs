@@ -145,7 +145,7 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
             .error
             .unwrap()
             .message
-            .contains("nao e' um espelho")
+            .contains("não é um espelho")
     );
     assert!(
         c.rpc(

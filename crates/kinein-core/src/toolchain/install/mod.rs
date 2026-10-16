@@ -96,18 +96,18 @@ impl std::fmt::Display for InstallError {
         match self {
             Self::AlreadyInstalled(p) => write!(
                 f,
-                "ja' existe uma toolchain em {} — apague a pasta para reinstalar",
+                "já existe uma toolchain em {} — apague a pasta para reinstalar",
                 p.display()
             ),
             Self::Download(m) => write!(f, "download falhou: {m}"),
             Self::Checksum { expected, actual } => write!(
                 f,
-                "o SHA-256 do arquivo baixado ({actual}) NAO e' o publicado pela fonte ({expected}); \
+                "o SHA-256 do arquivo baixado ({actual}) NAO é o publicado pela fonte ({expected}); \
                  nada foi desempacotado — o release pode ter mudado ou o download veio corrompido"
             ),
             Self::Extract(m) => write!(f, "desempacotar falhou: {m}"),
             Self::Io(e) => write!(f, "disco: {e}"),
-            Self::Cancelled => write!(f, "instalacao cancelada; nada ficou fora do .part"),
+            Self::Cancelled => write!(f, "instalação cancelada; nada ficou fora do .part"),
         }
     }
 }
@@ -196,7 +196,7 @@ pub fn install(
         extract(tar, &arquivo, &extraido, sink)?;
         if !extraido.join("bin").is_dir() {
             return Err(InstallError::Extract(
-                "o tarball nao trouxe uma pasta bin/ no topo (depois de tirar a pasta de topo)"
+                "o tarball não trouxe uma pasta bin/ no topo (depois de tirar a pasta de topo)"
                     .to_owned(),
             ));
         }
@@ -245,7 +245,7 @@ fn download(
         }
         let n = leitor
             .read(&mut bloco)
-            .map_err(|erro| InstallError::Download(format!("a conexao caiu: {erro}")))?;
+            .map_err(|erro| InstallError::Download(format!("a conexão caiu: {erro}")))?;
         if n == 0 {
             break;
         }
@@ -294,7 +294,7 @@ fn extract(
         ),
     });
     let saida = comando.output().map_err(|erro| {
-        InstallError::Extract(format!("nao consegui executar {}: {erro}", tar.display()))
+        InstallError::Extract(format!("não consegui executar {}: {erro}", tar.display()))
     })?;
     if !saida.status.success() {
         return Err(InstallError::Extract(format!(
@@ -635,7 +635,7 @@ mod tests {
         )
         .unwrap_err();
         assert!(
-            matches!(&erro, InstallError::Extract(m) if m.contains("nao consegui executar")),
+            matches!(&erro, InstallError::Extract(m) if m.contains("não consegui executar")),
             "{erro}"
         );
         assert!(!raiz.join("teste-arm-none-eabi/1.0").exists());

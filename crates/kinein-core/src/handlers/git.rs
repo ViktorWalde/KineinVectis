@@ -339,7 +339,7 @@ impl Core {
             Err(response) => return *response,
         };
         if parsed.message.trim().is_empty() {
-            return invalid_git_params(request_id, "a mensagem do commit nao pode ser vazia");
+            return invalid_git_params(request_id, "a mensagem do commit não pode ser vazia");
         }
         match git::commit(&root, &parsed.message, parsed.amend) {
             Ok(status) => JsonRpcResponse::success(request_id, json!(status)),
@@ -419,14 +419,14 @@ fn validate_branch(
     if branch.trim().is_empty() {
         return Err(Box::new(invalid_git_params(
             request_id.cloned(),
-            "o nome da branch nao pode ser vazio",
+            "o nome da branch não pode ser vazio",
         )));
     }
     match git::branch_name_valid(root, branch) {
         Ok(true) => Ok(()),
         Ok(false) => Err(Box::new(invalid_git_params(
             request_id.cloned(),
-            "nome de branch invalido",
+            "nome de branch inválido",
         ))),
         Err(error) => Err(Box::new(git_error_response(request_id.cloned(), &error))),
     }
@@ -445,7 +445,7 @@ fn confined_existing_file(
             request_id.cloned(),
             JsonRpcError::new(
                 JsonRpcErrorCode::InvalidParams,
-                format!("arquivo nao encontrado: {raw}"),
+                format!("arquivo não encontrado: {raw}"),
                 None,
             ),
         )));
@@ -467,7 +467,7 @@ fn confined_existing_file(
 /// nesse caso vale a checagem lexical (absoluto, dentro do root, sem "..").
 fn confine_paths(root: &std::path::PathBuf, paths: &[String]) -> Result<Vec<String>, String> {
     if paths.is_empty() {
-        return Err("paths nao pode ser vazio".to_owned());
+        return Err("paths não pode ser vazio".to_owned());
     }
     let mut confined = Vec::with_capacity(paths.len());
     for raw in paths {

@@ -105,7 +105,7 @@ impl Transport {
         let (Some(stdin), Some(stdout), Some(stderr)) = pipes else {
             // O `Child` cai aqui e mata o processo.
             return Err(DebugError::Adapter {
-                message: "adapter subiu sem stdin/stdout/stderr utilizaveis".to_owned(),
+                message: "adapter subiu sem stdin/stdout/stderr utilizáveis".to_owned(),
             });
         };
         let stderr = StderrTail::spawn(

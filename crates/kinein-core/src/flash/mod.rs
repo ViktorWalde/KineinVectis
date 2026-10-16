@@ -87,10 +87,10 @@ impl std::fmt::Display for FlashError {
             | Self::NoDevice { message } => f.write_str(message),
             Self::UnknownEngine { engine } => write!(
                 f,
-                "motor de gravacao `{engine}` desconhecido: use esptool, probe-rs, picotool ou dfu-util"
+                "motor de gravação `{engine}` desconhecido: use esptool, probe-rs, picotool ou dfu-util"
             ),
             Self::MissingTool { tool, hint } => {
-                write!(f, "{tool} nao esta' nesta maquina: {hint}")
+                write!(f, "{tool} não está nesta máquina: {hint}")
             }
         }
     }
@@ -148,7 +148,7 @@ pub fn propose(
                 .flash_engine
                 .as_deref()
                 .ok_or_else(|| FlashError::NoEngine {
-                    message: "o modelo do projeto nao sugere motor de gravacao (sem chip/familia \
+                    message: "o modelo do projeto não sugere motor de gravação (sem chip/familia \
                           reconhecidos): fixe o chip no kit ou escolha o motor na tela"
                         .to_owned(),
                 })?;
@@ -213,7 +213,7 @@ fn esptool_binary(find_tool: &FindTool<'_>) -> Result<String, FlashError> {
         .map(|p| quote(&p.display().to_string()))
         .ok_or_else(|| FlashError::MissingTool {
             tool: "esptool".to_owned(),
-            hint: "pipx install esptool (o painel de instalacao mostra o passo)".to_owned(),
+            hint: "pipx install esptool (o painel de instalação mostra o passo)".to_owned(),
         })
 }
 
@@ -225,7 +225,7 @@ fn chosen_port(device: Option<&str>) -> Result<&str, FlashError> {
         .filter(|d| !d.is_empty())
         .ok_or_else(|| FlashError::NoDevice {
             message: "escolha a porta no painel de Embarcados (chip \"Executar\" na porta): \
-                      gravar na placa errada e' pior que um clique"
+                      gravar na placa errada é pior que um clique"
                 .to_owned(),
         })
 }
@@ -245,7 +245,7 @@ fn esptool(
         .as_ref()
         .filter(|r| !r.files.is_empty())
         .ok_or_else(|| FlashError::NoArtifact {
-            message: "sem receita de gravacao: o ESP-IDF escreve build/flasher_args.json no \
+            message: "sem receita de gravação: o ESP-IDF escreve build/flasher_args.json no \
                       build — compile o projeto primeiro"
                 .to_owned(),
         })?;
@@ -421,20 +421,20 @@ fn dfu_util(
     if model.target.family.as_deref() != Some("stm32") {
         return Err(FlashError::NoArtifact {
             message: format!(
-                "dfu-util so' tem tabela para STM32 (flash em {STM32_FLASH_BASE}); a familia \
-                 deste projeto e' {} — sem tabela, sem comando adivinhado",
+                "dfu-util só tem tabela para STM32 (flash em {STM32_FLASH_BASE}); a familia \
+                 deste projeto é {} — sem tabela, sem comando adivinhado",
                 model.target.family.as_deref().unwrap_or("desconhecida")
             ),
         });
     }
     let dfu = tool(find_tool, "dfu-util", "pacote `dfu-util` da distro")?;
     let bin = mais_novo(&model.artifacts.bin).ok_or_else(|| FlashError::NoArtifact {
-        message: "sem .bin nas pastas de build: gere o binario cru (objcopy -O binary) no build"
+        message: "sem .bin nas pastas de build: gere o binário cru (objcopy -O binary) no build"
             .to_owned(),
     })?;
     source.push(format!("imagem: {bin} (o .bin mais novo do build)"));
     source.push(format!(
-        "destino: alt 0, {STM32_FLASH_BASE} (inicio da flash interna STM32), :leave sai do DFU"
+        "destino: alt 0, {STM32_FLASH_BASE} (início da flash interna STM32), :leave sai do DFU"
     ));
     Ok(format!(
         "{dfu} -a 0 -s {STM32_FLASH_BASE}:leave -D {}",
@@ -730,7 +730,7 @@ mod tests {
         let erro = propose(&m, Some("avrdude"), None, None, None, None, &acha(&[])).unwrap_err();
         assert_eq!(
             erro.to_string(),
-            "motor de gravacao `avrdude` desconhecido: use esptool, probe-rs, picotool ou dfu-util"
+            "motor de gravação `avrdude` desconhecido: use esptool, probe-rs, picotool ou dfu-util"
         );
         assert_eq!(quote("it's"), "'it'\\''s'");
         assert_eq!(tamanho_legivel(2 * 1024 * 1024), "2MB");

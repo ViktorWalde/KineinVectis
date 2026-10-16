@@ -103,8 +103,8 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     },
     ActionDefinition {
         id: "cmake.addExecutable",
-        title: "Adicionar executavel",
-        description: "Declara um target de executavel com as fontes informadas.",
+        title: "Adicionar executável",
+        description: "Declara um target de executável com as fontes informadas.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Targets",
         risk: ConfigActionRisk::Medium,
@@ -122,7 +122,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     },
     ActionDefinition {
         id: "cmake.addStaticLibrary",
-        title: "Adicionar biblioteca estatica",
+        title: "Adicionar biblioteca estática",
         description: "Declara um target STATIC com as fontes informadas.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Targets",
@@ -138,7 +138,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.addSourceToTarget",
         title: "Adicionar fonte a um target",
-        description: "Acrescenta arquivos a um target ja declarado.",
+        description: "Acrescenta arquivos a um target já declarado.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Targets",
         risk: ConfigActionRisk::Medium,
@@ -158,7 +158,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.addIncludeDirectory",
         title: "Adicionar include dir",
-        description: "Acrescenta um diretorio de cabecalhos ao target.",
+        description: "Acrescenta um diretório de cabecalhos ao target.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Intermediate",
         risk: ConfigActionRisk::Medium,
@@ -178,7 +178,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.findPackage",
         title: "Encontrar um pacote instalado",
-        description: "Declara find_package para uma biblioteca ja instalada no sistema.",
+        description: "Declara find_package para uma biblioteca já instalada no sistema.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Intermediate",
         risk: ConfigActionRisk::Low,
@@ -186,14 +186,14 @@ static DEFINITIONS: [ActionDefinition; 25] = [
         effect: ConfigActionEffect::Edit,
         params: &[
             ("package", "Pacote", true, "fmt"),
-            ("version", "Versao minima", false, "12.2.0"),
+            ("version", "Versão minima", false, "12.2.0"),
         ],
         docs: &[("officialDoc", "CMake: find_package", "cmake.find_package")],
     },
     ActionDefinition {
         id: "cmake.fetchContent",
-        title: "Baixar uma dependencia na versao fixada",
-        description: "Declara FetchContent com a tag PINADA quando o pacote nao esta no sistema.",
+        title: "Baixar uma dependencia na versão fixada",
+        description: "Declara FetchContent com a tag PINADA quando o pacote não está no sistema.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Intermediate",
         risk: ConfigActionRisk::Medium,
@@ -234,7 +234,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.removeTargetLinkLibraries",
         title: "Remover bibliotecas do target",
-        description: "Tira os alvos do target_link_libraries; se nao sobrar nenhum, tira a chamada.",
+        description: "Tira os alvos do target_link_libraries; se não sobrar nenhum, tira a chamada.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Intermediate",
         risk: ConfigActionRisk::Medium,
@@ -257,8 +257,8 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     // ou gerar firmware pela IDE.
     ActionDefinition {
         id: "cmake.setCxxStandard",
-        title: "Fixar o padrao C++",
-        description: "Define CMAKE_CXX_STANDARD, exige o padrao e desliga as extensoes GNU.",
+        title: "Fixar o padrão C++",
+        description: "Define CMAKE_CXX_STANDARD, exige o padrão e desliga as extensões GNU.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Rigor",
         risk: ConfigActionRisk::Medium,
@@ -285,7 +285,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.enableSanitizers",
         title: "Ligar sanitizers",
-        description: "Acrescenta -fsanitize no compilar E no linkar; pega erro de memoria em teste.",
+        description: "Acrescenta -fsanitize no compilar E no linkar; pega erro de memória em teste.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Rigor",
         risk: ConfigActionRisk::Medium,
@@ -311,7 +311,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
         title: "Paralelizar com OpenMP",
         description: "find_package(OpenMP) e link do OpenMP::OpenMP_CXX — calculo em varios nucleos.",
         scope: ConfigActionScope::Cmake,
-        category: "CMake Simulacao",
+        category: "CMake Simulação",
         risk: ConfigActionRisk::Medium,
         affects: CMAKELISTS_ONLY,
         effect: ConfigActionEffect::Edit,
@@ -352,7 +352,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.inspectCache",
         title: "Inspecionar o cache do CMake",
-        description: "Mostra as variaveis do CMakeCache.txt do build dir da IDE.",
+        description: "Mostra as variáveis do CMakeCache.txt do build dir da IDE.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Advanced",
         risk: ConfigActionRisk::Low,
@@ -368,7 +368,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.repairBuildDir",
         title: "Reparar build dir obsoleto",
-        description: "Remove .kinein/build para o proximo configure nascer limpo.",
+        description: "Remove .kinein/build para o próximo configure nascer limpo.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Advanced",
         risk: ConfigActionRisk::High,
@@ -377,7 +377,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
         params: &[],
         docs: &[(
             "kineinGuide",
-            "Kinein: diretorio de build unico",
+            "Kinein: diretório de build único",
             "kinein.build_dir",
         )],
     },
@@ -392,7 +392,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
         effect: ConfigActionEffect::Edit,
         params: &[
             ("name", "Crate", true, "serde"),
-            ("version", "Versao", true, "1.0"),
+            ("version", "Versão", true, "1.0"),
             ("features", "Features", false, "derive"),
         ],
         docs: &[(
@@ -412,7 +412,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
         effect: ConfigActionEffect::Edit,
         params: &[
             ("name", "Crate", true, "proptest"),
-            ("version", "Versao", true, "1.0"),
+            ("version", "Versão", true, "1.0"),
             ("features", "Features", false, ""),
         ],
         docs: &[(
@@ -451,7 +451,7 @@ static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cargo.check",
         title: "Rodar cargo check",
-        description: "Compila sem gerar binario e joga os erros na aba Problemas.",
+        description: "Compila sem gerar binário e joga os erros na aba Problemas.",
         scope: ConfigActionScope::Cargo,
         category: "Cargo Basic",
         risk: ConfigActionRisk::Low,

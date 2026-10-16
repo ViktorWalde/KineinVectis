@@ -406,7 +406,7 @@ fn remote_command_composes_the_ssh_line_and_the_kit_target() {
         sem_programa["command"]
             .as_str()
             .unwrap()
-            .contains("<binario>")
+            .contains("<binário>")
     );
     assert!(
         sem_programa["source"]
@@ -550,7 +550,7 @@ fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anyth
         .clone();
     let erro = r.error.unwrap();
     assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
-    assert!(erro.message.contains("opcao"), "{}", erro.message);
+    assert!(erro.message.contains("opção"), "{}", erro.message);
     assert!(
         !registro.exists(),
         "recusa tem de vir ANTES de rodar processo"

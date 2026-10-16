@@ -57,7 +57,7 @@ pub(super) fn remove_target_link_libraries(
     if removidas == 0 {
         return Err(ConfigActionError::NotApplicable {
             reason: format!(
-                "{} nao esta linkada em {target} no {CMAKELISTS}",
+                "{} não está linkada em {target} no {CMAKELISTS}",
                 pedidas.join(", ")
             ),
         });
@@ -225,6 +225,6 @@ mod tests {
     fn remover_o_que_nao_esta_linkado_e_recusado() {
         let root = root_com("target_link_libraries(app PRIVATE fmt::fmt)\n", "ausente");
         let erro = remove_target_link_libraries(&root, &params("app", "zlib::zlib")).unwrap_err();
-        assert!(format!("{erro}").contains("nao esta linkada"), "{erro}");
+        assert!(format!("{erro}").contains("não está linkada"), "{erro}");
     }
 }

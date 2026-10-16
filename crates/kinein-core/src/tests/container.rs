@@ -488,7 +488,7 @@ fn a_question_that_hangs_is_killed_at_the_deadline() {
     assert!(reply.timed_out);
     assert!(!reply.ok);
     assert!(
-        reply.reason().contains("nao respondeu"),
+        reply.reason().contains("não respondeu"),
         "{}",
         reply.reason()
     );

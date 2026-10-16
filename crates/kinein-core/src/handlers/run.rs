@@ -146,8 +146,8 @@ impl Core {
                 .map(|mpremote| PythonLauncher::mpremote(mpremote, device))
                 .ok_or_else(|| run::RunError::NoDefaultCommand {
                     message: "projeto MicroPython: o arquivo roda na placa pelo mpremote, que \
-                              nao esta' nesta maquina (pipx install mpremote — o painel de \
-                              instalacao mostra o passo)"
+                              não está nesta máquina (pipx install mpremote — o painel de \
+                              instalação mostra o passo)"
                         .to_owned(),
                 });
         }
@@ -216,7 +216,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "run.start: device so' vale sem command (a porta e' do lancador padrao \
+                    "run.start: device só vale sem command (a porta é do lancador padrão \
                      do MicroPython; um comando explicito roda como foi escrito)",
                     None,
                 ),

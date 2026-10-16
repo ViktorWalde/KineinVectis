@@ -22,7 +22,7 @@ impl Core {
         if let Err(response) = parse_params::<DataSourceListParams>(
             request_id.as_ref(),
             params,
-            "datasource.list nao aceita parametros",
+            "datasource.list não aceita parametros",
         ) {
             return *response;
         }

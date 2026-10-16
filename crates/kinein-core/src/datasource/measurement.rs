@@ -101,5 +101,5 @@ fn count(
         .first()
         .and_then(|row| row.first().cloned().flatten())
         .and_then(|cell| cell.trim().parse::<u64>().ok())
-        .ok_or_else(|| "o motor nao devolveu a contagem".to_owned())
+        .ok_or_else(|| "o motor não devolveu a contagem".to_owned())
 }

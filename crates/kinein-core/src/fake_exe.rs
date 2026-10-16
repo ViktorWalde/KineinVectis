@@ -65,12 +65,12 @@ fn git_root() -> PathBuf {
     let output = Command::new("git")
         .arg("--exec-path")
         .output()
-        .expect("os testes com executavel falso pedem o Git for Windows no PATH");
+        .expect("os testes com executável falso pedem o Git for Windows no PATH");
     let exec_path = PathBuf::from(String::from_utf8_lossy(&output.stdout).trim());
     exec_path
         .ancestors()
         .nth(3)
-        .expect("o --exec-path do Git tem tres niveis acima")
+        .expect("o --exec-path do Git tem três níveis acima")
         .to_path_buf()
 }
 
@@ -124,10 +124,10 @@ fn program() -> &'static Path {
             .arg(&exe)
             .arg(&source)
             .output()
-            .expect("os testes com executavel falso pedem o rustc no PATH");
+            .expect("os testes com executável falso pedem o rustc no PATH");
         assert!(
             output.status.success(),
-            "o rustc nao compilou o programa de passagem: {}",
+            "o rustc não compilou o programa de passagem: {}",
             String::from_utf8_lossy(&output.stderr)
         );
         exe

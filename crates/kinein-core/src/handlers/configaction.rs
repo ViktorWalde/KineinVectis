@@ -91,7 +91,7 @@ impl Core {
         let parsed = match parse_params::<ConfigActionApplyParams>(
             request_id.as_ref(),
             params,
-            "configAction.apply requer o campo id (params e expected sao opcionais)",
+            "configAction.apply requer o campo id (params e expected são opcionais)",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -132,7 +132,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InternalError,
-                    format!("a acao {id} aponta para o metodo desconhecido {method}"),
+                    format!("a ação {id} aponta para o método desconhecido {method}"),
                     None,
                 ),
             );

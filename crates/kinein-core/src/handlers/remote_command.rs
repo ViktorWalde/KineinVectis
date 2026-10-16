@@ -123,8 +123,8 @@ impl Core {
                 format!("{}/{p}", remote::deploy_dir(&target, &projeto))
             }
             (_, None) => {
-                source.push("programa: <binario> dentro de deployDir — edite".to_owned());
-                format!("{}/<binario>", remote::deploy_dir(&target, &projeto))
+                source.push("programa: <binário> dentro de deployDir — edite".to_owned());
+                format!("{}/<binário>", remote::deploy_dir(&target, &projeto))
             }
         };
         let port = parsed.port.unwrap_or(match parsed.kind {

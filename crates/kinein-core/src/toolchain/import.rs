@@ -50,7 +50,7 @@ use kinein_protocol::KitImport;
 /// Le `path` e propoe um kit; `Err` diz o que nao foi reconhecido.
 pub fn import(path: &Path) -> Result<KitImport, String> {
     if !path.exists() {
-        return Err(format!("{} nao existe", path.display()));
+        return Err(format!("{} não existe", path.display()));
     }
     if let Some(script) = environment_setup(path) {
         return yocto(&script);
@@ -67,7 +67,7 @@ pub fn import(path: &Path) -> Result<KitImport, String> {
         return Ok(kit);
     }
     Err(format!(
-        "{} nao e' um SDK que eu reconheca: procurei um environment-setup-* (Yocto), um \
+        "{} não é um SDK que eu reconheca: procurei um environment-setup-* (Yocto), um \
          host/bin/<triple>-gcc com host/<triple>/sysroot (Buildroot), sdk_version + \
          cmake/Zephyr-sdkConfig.cmake (Zephyr SDK) e um bin/<triple>-gcc (pasta de toolchain)",
         path.display()
@@ -223,10 +223,10 @@ printf 'GDB_PATH=%s\n' "$(command -v "${GDB%% *}" 2>/dev/null)"
         .arg("sh")
         .arg(script)
         .output()
-        .map_err(|e| format!("nao consegui executar sh: {e}"))?;
+        .map_err(|e| format!("não consegui executar sh: {e}"))?;
     if !saida.status.success() {
         return Err(format!(
-            "o script {} nao pode ser carregado pelo sh (saiu com {}): {}",
+            "o script {} não pode ser carregado pelo sh (saiu com {}): {}",
             script.display(),
             saida.status,
             String::from_utf8_lossy(&saida.stderr).trim()
@@ -264,7 +264,7 @@ printf 'GDB_PATH=%s\n' "$(command -v "${GDB%% *}" 2>/dev/null)"
     let gdb = var("GDB_PATH");
     if c_compiler.is_none() {
         return Err(format!(
-            "o script {} nao exporta um CC que o sh encontre no PATH dele — e' um \
+            "o script {} não exporta um CC que o sh encontre no PATH dele — é um \
              environment-setup de SDK Yocto?",
             script.display()
         ));
@@ -280,8 +280,8 @@ printf 'GDB_PATH=%s\n' "$(command -v "${GDB%% *}" 2>/dev/null)"
         target_triple,
         toolchain_file,
         hint: Some(
-            "o CC do SDK ja' leva --sysroot; com o OEToolchainConfig.cmake no kit, o configure \
-             e' o do SDK (o do preset vence se houver)"
+            "o CC do SDK já leva --sysroot; com o OEToolchainConfig.cmake no kit, o configure \
+             é o do SDK (o do preset vence se houver)"
                 .to_owned(),
         ),
     })
@@ -355,8 +355,8 @@ fn buildroot(host: &Path) -> KitImport {
         target_triple: triple,
         toolchain_file,
         hint: Some(
-            "o toolchainfile.cmake do Buildroot ja' fixa compiladores e sysroot; com ele no \
-             kit, o configure e' o do Buildroot"
+            "o toolchainfile.cmake do Buildroot já fixa compiladores e sysroot; com ele no \
+             kit, o configure é o do Buildroot"
                 .to_owned(),
         ),
     }
@@ -540,14 +540,14 @@ mod tests {
         // Um script que nao exporta CC nao e' um SDK: erro que diz isso.
         std::fs::write(sdk.join("environment-setup-vazio"), "export FOO=1\n").unwrap();
         let erro = import(&sdk.join("environment-setup-vazio")).unwrap_err();
-        assert!(erro.contains("nao exporta um CC"), "{erro}");
+        assert!(erro.contains("não exporta um CC"), "{erro}");
         // Com DOIS scripts na pasta a IDE nao escolhe: aponte o arquivo.
         let erro = import(&sdk).unwrap_err();
-        assert!(erro.contains("nao e' um SDK que eu reconheca"), "{erro}");
+        assert!(erro.contains("não é um SDK que eu reconheca"), "{erro}");
         // Um script que falha ao carregar: o erro traz o status.
         std::fs::write(sdk.join("environment-setup-quebrado"), "exit 7\n").unwrap();
         let erro = import(&sdk.join("environment-setup-quebrado")).unwrap_err();
-        assert!(erro.contains("nao pode ser carregado"), "{erro}");
+        assert!(erro.contains("não pode ser carregado"), "{erro}");
     }
 
     /// Uma arvore Buildroot na forma documentada, dada por `output/`, por
@@ -694,7 +694,7 @@ mod tests {
             erro.contains("Yocto") && erro.contains("Buildroot") && erro.contains("Zephyr"),
             "{erro}"
         );
-        assert!(import(&nada.join("x")).unwrap_err().contains("nao existe"));
+        assert!(import(&nada.join("x")).unwrap_err().contains("não existe"));
     }
 
     /// Um Zephyr SDK na forma do sdk-ng (lida no setup.sh e no

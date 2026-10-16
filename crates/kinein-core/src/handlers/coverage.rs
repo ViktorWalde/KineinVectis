@@ -39,7 +39,7 @@ impl Core {
         if let Err(response) = parse_params::<CoverageRunParams>(
             request_id.as_ref(),
             params,
-            "coverage.run nao aceita parametros",
+            "coverage.run não aceita parametros",
         ) {
             return *response;
         }
@@ -55,8 +55,8 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidRequest,
-                    "cobertura so' para Rust (cargo-llvm-cov) e Python (coverage.py) por \
-                     enquanto; C/C++ exige compilar com --coverage, o que e' decisao sua no build",
+                    "cobertura só para Rust (cargo-llvm-cov) e Python (coverage.py) por \
+                     enquanto; C/C++ exige compilar com --coverage, o que é decisao sua no build",
                     Some(json!({ "kind": kind })),
                 ),
             );

@@ -89,7 +89,7 @@ pub(super) fn run_clang_tidy(
     let Some(dir) = cdb.directory.as_deref() else {
         return Err(BuildError::ToolMissing {
             tool: "compile_commands.json".to_owned(),
-            hint: "sem compilation database nao ha' clang-tidy (ele chutaria as flags): \
+            hint: "sem compilation database não há clang-tidy (ele chutaria as flags): \
                    configure o CMake (Configurar) ou compile o Makefile com o bear"
                 .to_owned(),
         });
@@ -126,7 +126,7 @@ pub(super) fn run_clang_tidy(
     if arquivos.is_empty() {
         return Err(BuildError::ToolMissing {
             tool: "compile_commands.json".to_owned(),
-            hint: format!("a CDB em {dir} nao lista nenhum arquivo existente: reconfigure"),
+            hint: format!("a CDB em {dir} não lista nenhum arquivo existente: reconfigure"),
         });
     }
     let mut command = Command::new(clang_tidy);

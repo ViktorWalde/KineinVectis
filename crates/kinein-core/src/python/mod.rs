@@ -74,23 +74,23 @@ pub fn status(root: &Path, tools: &PythonTools, criadores: &CriadoresDeAmbiente)
         // O uv cria o ambiente mesmo sem python3 no PATH: ele baixa um Python
         // (docs.astral.sh/uv/concepts/python-versions, 2026-09-12).
         (None, Some(PythonEnvironmentTool::Uv)) => Some(
-            "nenhum Python no PATH, mas ha' uv: crie o ambiente (.venv) com ele — o uv baixa um \
+            "nenhum Python no PATH, mas há uv: crie o ambiente (.venv) com ele — o uv baixa um \
              Python se preciso"
                 .to_owned(),
         ),
         (None, _) => Some(
-            "nenhum Python encontrado: instale o python3 da sua distro (o painel de instalacao \
+            "nenhum Python encontrado: instale o python3 da sua distro (o painel de instalação \
              mostra o passo oficial)"
                 .to_owned(),
         ),
         (Some(e), Some(PythonEnvironmentTool::Uv)) if e.origin == "sistema" => Some(
-            "o projeto usa o Python do SISTEMA: crie um ambiente proprio (.venv) com o uv — um \
+            "o projeto usa o Python do SISTEMA: crie um ambiente próprio (.venv) com o uv — um \
              clique, o comando aparece no job"
                 .to_owned(),
         ),
         (Some(e), Some(PythonEnvironmentTool::Venv)) if e.origin == "sistema" => Some(
-            "o projeto usa o Python do SISTEMA: crie um ambiente proprio (.venv) com `python3 -m \
-             venv`; o uv (mais rapido) esta' no painel de instalacao"
+            "o projeto usa o Python do SISTEMA: crie um ambiente próprio (.venv) com `python3 -m \
+             venv`; o uv (mais rápido) está no painel de instalação"
                 .to_owned(),
         ),
         _ => None,

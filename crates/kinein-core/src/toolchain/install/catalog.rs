@@ -128,7 +128,7 @@ pub const CATALOGO: &[Entrada] = &[
         url: "https://github.com/arm/arm-toolchain/releases/download/release-23.1.0-ATfE/ATfE-23.1.0-Linux-x86_64.tar.xz",
         size_bytes: 213_607_916,
         sha256: "a7be511613af15151c93961ad39c8cf9ae6889a453c8b547f42f4051a416dc8e",
-        license: "Apache-2.0 WITH LLVM-exception (LICENSE.TXT do repositorio)",
+        license: "Apache-2.0 WITH LLVM-exception (LICENSE.TXT do repositório)",
         source: "GitHub release, arquivo .sha256, lido em 2026-09-13",
     },
     Entrada {

@@ -208,7 +208,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "lsp.workspaceSymbols requer uma query nao vazia",
+                    "lsp.workspaceSymbols requer uma query não vazia",
                     None,
                 ),
             );

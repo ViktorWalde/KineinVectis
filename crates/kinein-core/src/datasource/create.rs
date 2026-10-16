@@ -89,8 +89,8 @@ pub fn ensure_port_free(port: u16) -> Result<(), String> {
         return Ok(());
     }
     Err(port.checked_add(1).and_then(free_loopback_port).map_or_else(
-        || format!("a porta {port} ja' esta' em uso no loopback, e as {PORT_ATTEMPTS} seguintes tambem"),
-        |free| format!("a porta {port} ja' esta' em uso no loopback; livre: {free}"),
+        || format!("a porta {port} já está em uso no loopback, e as {PORT_ATTEMPTS} seguintes também"),
+        |free| format!("a porta {port} já está em uso no loopback; livre: {free}"),
     ))
 }
 
@@ -106,7 +106,7 @@ pub fn validate_name(name: &str) -> Result<(), String> {
         .chars()
         .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
     {
-        return Err("o nome so' pode ter letras, digitos, `-` e `_`".to_owned());
+        return Err("o nome só pode ter letras, digitos, `-` e `_`".to_owned());
     }
     Ok(())
 }
@@ -141,13 +141,13 @@ pub fn sqlite_file(
     let file = sqlite_path(root, name, path);
     if file.exists() {
         return Err(format!(
-            "{} ja' existe — criar por cima seria perder o que ha' nele",
+            "{} já existe — criar por cima seria perder o que há nele",
             file.display()
         ));
     }
     if let Some(parent) = file.parent() {
         std::fs::create_dir_all(parent)
-            .map_err(|e| format!("nao foi possivel criar {}: {e}", parent.display()))?;
+            .map_err(|e| format!("não foi possível criar {}: {e}", parent.display()))?;
     }
     // Abrir com CREATE grava o cabecalho; sem uma escrita o arquivo ficaria
     // com zero bytes e o `discover` (que le o cabecalho) nao o veria.
@@ -250,10 +250,10 @@ pub fn container_server(
             },
         ),
         DataSourceEngine::Odbc => {
-            return Err("ODBC conecta a DSN existentes; nao cria servidores".to_owned());
+            return Err("ODBC conecta a DSN existentes; não cria servidores".to_owned());
         }
         DataSourceEngine::Sqlite => {
-            return Err("SQLite e' um arquivo: use `sqliteFile`".to_owned());
+            return Err("SQLite é um arquivo: use `sqliteFile`".to_owned());
         }
     };
     let mut command = Command::new(&engine.binary);
@@ -275,9 +275,12 @@ mod tests {
     #[test]
     fn a_port_in_use_is_skipped_and_refused_with_the_free_one() {
         // Fora da faixa efemera (32768 em diante): solta, a porta nao volta
-        // para outro `bind` em `:0` no meio do teste.
-        let start = free_loopback_port(23_000).expect("uma porta livre");
-        let held = std::net::TcpListener::bind(("127.0.0.1", start)).unwrap();
+        // para outro `bind` em `:0` no meio do teste. Segura no MESMO gesto que
+        // acha: sondar e depois prender deixava outro teste em paralelo pegar a
+        // porta no meio (`AddrInUse`, visto duas vezes em 2026-10-16).
+        let held = (23_000..23_400)
+            .find_map(|port| std::net::TcpListener::bind(("127.0.0.1", port)).ok())
+            .expect("uma porta livre");
         let port = held.local_addr().unwrap().port();
         assert!(!loopback_port_free(port));
         let suggested = free_loopback_port(port).expect("uma livre nas 20 seguintes");
@@ -311,7 +314,7 @@ mod tests {
         assert!(
             sqlite_file(&dir, "app", None)
                 .unwrap_err()
-                .contains("ja' existe")
+                .contains("já existe")
         );
         let _ = std::fs::remove_dir_all(&dir);
     }

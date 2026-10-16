@@ -390,7 +390,7 @@ pub(super) fn unsupported_kind_response(
         JsonRpcError::new(
             JsonRpcErrorCode::InvalidRequest,
             format!(
-                "{action} ainda nao e suportado para projetos do tipo {}",
+                "{action} ainda não é suportado para projetos do tipo {}",
                 build::project_kind_name(kind)
             ),
             None,

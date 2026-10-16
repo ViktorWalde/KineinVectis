@@ -310,7 +310,7 @@ fn cancelling_leaves_the_index_failed_with_the_reason() {
     let parado = AtomicBool::new(true);
     let indice = index::build(&raiz, &parado, &|_, _| {});
     assert_eq!(indice.state, IndexState::Failed);
-    assert_eq!(indice.error.as_deref(), Some("indexacao cancelada"));
+    assert_eq!(indice.error.as_deref(), Some("indexação cancelada"));
 }
 
 /// Pelo despacho real: sem jobs (como nos testes) o indice e' construido no

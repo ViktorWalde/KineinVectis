@@ -35,7 +35,7 @@ impl Core {
         if let Err(response) = parse_params::<SetupListParams>(
             request_id.as_ref(),
             params,
-            "setup.list nao aceita parametros",
+            "setup.list não aceita parametros",
         ) {
             return *response;
         }

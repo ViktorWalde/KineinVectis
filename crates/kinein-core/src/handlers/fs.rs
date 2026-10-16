@@ -65,7 +65,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "fs.replace requer query nao vazia",
+                    "fs.replace requer query não vazia",
                     None,
                 ),
             );
@@ -120,7 +120,7 @@ impl Core {
                         request_id,
                         JsonRpcError::new(
                             JsonRpcErrorCode::InvalidParams,
-                            "fs.search requer query nao vazia",
+                            "fs.search requer query não vazia",
                             None,
                         ),
                     );
@@ -156,7 +156,7 @@ impl Core {
                         request_id,
                         JsonRpcError::new(
                             JsonRpcErrorCode::InvalidParams,
-                            "fs.findFiles requer query nao vazia",
+                            "fs.findFiles requer query não vazia",
                             None,
                         ),
                     );

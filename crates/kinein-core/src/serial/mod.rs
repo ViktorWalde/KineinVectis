@@ -89,7 +89,7 @@ pub fn list_in(ambiente: &Ambiente<'_>) -> SerialListResult {
         .filter_map(|nome| descrever(ambiente, &nome, mm_rodando))
         .collect();
     let hint = ports.is_empty().then(|| {
-        "nenhuma porta serial USB (ttyUSB*/ttyACM*) apareceu. Placa desligada, cabo so' de \
+        "nenhuma porta serial USB (ttyUSB*/ttyACM*) apareceu. Placa desligada, cabo só de \
          carga, ou a ponte precisa de driver — `lsusb` mostra o que o USB ve."
             .to_owned()
     });
@@ -257,16 +257,16 @@ fn measured_access(no: &Path, etc_group: &Path) -> SerialAccess {
         group.as_ref().map_or_else(
             || {
                 format!(
-                    "{} e' {mode} e voce nao consegue ler nem escrever. Falta regra udev ou \
-                     grupo; a IDE nao roda como root.",
+                    "{} é {mode} e você não consegue ler nem escrever. Falta regra udev ou \
+                     grupo; a IDE não roda como root.",
                     no.display()
                 )
             },
             |g| {
                 format!(
-                    "{} e' {mode} do grupo `{g}` e voce nao esta' nele (nem uma ACL te cobre). \
-                     Passo oficial: `sudo usermod -aG {g} $USER` e sair/entrar da sessao. A IDE \
-                     nao roda isso.",
+                    "{} é {mode} do grupo `{g}` e você não está nele (nem uma ACL te cobre). \
+                     Passo oficial: `sudo usermod -aG {g} $USER` e sair/entrar da sessão. A IDE \
+                     não roda isso.",
                     no.display()
                 )
             },
@@ -377,33 +377,33 @@ pub fn familia(vid: &str, pid: &str) -> Option<&'static str> {
             pid.to_ascii_lowercase().as_str(),
         ) {
             ("303a", "1001") => {
-                "Espressif USB Serial/JTAG — o proprio chip (S3/C3/C6/H2/C5/P4): serial E JTAG no mesmo cabo"
+                "Espressif USB Serial/JTAG — o próprio chip (S3/C3/C6/H2/C5/P4): serial E JTAG no mesmo cabo"
             }
             ("303a", "1002") => "Espressif USB Bridge — serial + JTAG externo",
             ("10c4", "ea60") => {
-                "ponte USB-UART CP210x — o chip do outro lado nao se le pelo USB; a identidade vem pelo canal"
+                "ponte USB-UART CP210x — o chip do outro lado não se le pelo USB; a identidade vem pelo canal"
             }
             ("1a86", "7523") => {
-                "ponte USB-UART CH340 — o chip do outro lado nao se le pelo USB; a identidade vem pelo canal"
+                "ponte USB-UART CH340 — o chip do outro lado não se le pelo USB; a identidade vem pelo canal"
             }
             ("1a86", "55d4") => {
-                "ponte USB-UART CH9102 — o chip do outro lado nao se le pelo USB; a identidade vem pelo canal"
+                "ponte USB-UART CH9102 — o chip do outro lado não se le pelo USB; a identidade vem pelo canal"
             }
             ("0403", "6001" | "6014" | "6015") => {
-                "ponte USB-UART FTDI — o chip do outro lado nao se le pelo USB; a identidade vem pelo canal"
+                "ponte USB-UART FTDI — o chip do outro lado não se le pelo USB; a identidade vem pelo canal"
             }
             ("0403", "6010") => {
-                "FTDI FT2232 (JTAG + UART; e' o do ESP-Prog) — a UART costuma ser a interface 01"
+                "FTDI FT2232 (JTAG + UART; é o do ESP-Prog) — a UART costuma ser a interface 01"
             }
             ("0483", "374b" | "374e" | "374f" | "3752" | "3753" | "3754" | "3757") => {
-                "ST-Link com porta serial virtual — a depuracao vai pelo probe-rs, nao por aqui"
+                "ST-Link com porta serial virtual — a depuração vai pelo probe-rs, não por aqui"
             }
             ("2e8a", "000c") => {
                 "Raspberry Pi Debug Probe — a UART da placa-alvo (o SWD vai pelo probe-rs)"
             }
-            ("2e8a", "0009" | "000a") => "Pico SDK stdio USB — o firmware do usuario falando CDC",
+            ("2e8a", "0009" | "000a") => "Pico SDK stdio USB — o firmware do usuário falando CDC",
             ("2e8a", "0005") => "MicroPython no RP2040 — o REPL",
-            ("1d50", "6018") => "Black Magic Probe — servidor GDB pela propria serial",
+            ("1d50", "6018") => "Black Magic Probe — servidor GDB pela própria serial",
             _ => return None,
         },
     )

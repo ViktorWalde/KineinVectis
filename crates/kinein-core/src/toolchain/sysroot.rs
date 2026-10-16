@@ -27,24 +27,24 @@ pub fn inspect(path: &Path) -> SysrootReport {
     let pkgconfig_files = if exists { conta_pc(path) } else { 0 };
     let libc = if exists { libc(path) } else { None };
     let verdict = if !exists {
-        "a pasta nao existe".to_owned()
+        "a pasta não existe".to_owned()
     } else if usr_include && (usr_lib || lib) {
         match (&libc, pkgconfig_files) {
             (Some(c), 0) => format!(
-                "utilizavel: headers e bibliotecas ({c}); sem .pc — o pkg-config nao vai achar bibliotecas de terceiros"
+                "utilizável: headers e bibliotecas ({c}); sem .pc — o pkg-config não vai achar bibliotecas de terceiros"
             ),
             (Some(c), n) => {
-                format!("utilizavel: headers, bibliotecas ({c}) e {n} .pc para o pkg-config")
+                format!("utilizável: headers, bibliotecas ({c}) e {n} .pc para o pkg-config")
             }
-            (None, _) => "utilizavel: headers e bibliotecas; libc nao identificada".to_owned(),
+            (None, _) => "utilizável: headers e bibliotecas; libc não identificada".to_owned(),
         }
     } else if usr_include {
-        "so' headers (usr/include): compila, nao linka — falta usr/lib ou lib".to_owned()
+        "só headers (usr/include): compila, não linka — falta usr/lib ou lib".to_owned()
     } else if usr_lib || lib {
-        "so' bibliotecas: linka, nao compila — falta usr/include".to_owned()
+        "só bibliotecas: linka, não compila — falta usr/include".to_owned()
     } else {
         "vazia para o compilador: sem usr/include, usr/lib e lib (o sysroot de distro do \
-         Fedora e' assim; copie o da placa ou use o tarball da Bootlin/Arm)"
+         Fedora é assim; copie o da placa ou use o tarball da Bootlin/Arm)"
             .to_owned()
     };
     SysrootReport {
@@ -161,7 +161,7 @@ mod tests {
         assert!(r.verdict.contains("Bootlin"), "{}", r.verdict);
         let r = inspect(&dir.join("nao-existe"));
         assert!(!r.exists);
-        assert_eq!(r.verdict, "a pasta nao existe");
+        assert_eq!(r.verdict, "a pasta não existe");
     }
 
     /// Uma raiz copiada da placa (Raspberry Pi OS): multiarch, glibc pela
@@ -194,10 +194,10 @@ mod tests {
             vec!["lib/aarch64-linux-gnu", "usr/lib/aarch64-linux-gnu"],
             "python3.11 nao e' um triple"
         );
-        assert_eq!(r.pkgconfig_files, 2, "so' .pc conta");
+        assert_eq!(r.pkgconfig_files, 2, "só .pc conta");
         assert_eq!(r.libc.as_deref(), Some("glibc 2.36"));
         assert!(
-            r.verdict.starts_with("utilizavel") && r.verdict.contains("2 .pc"),
+            r.verdict.starts_with("utilizável") && r.verdict.contains("2 .pc"),
             "{}",
             r.verdict
         );
@@ -217,14 +217,14 @@ mod tests {
 
         let so_headers = raiz("so-headers");
         std::fs::create_dir_all(so_headers.join("usr/include")).unwrap();
-        assert!(inspect(&so_headers).verdict.starts_with("so' headers"));
+        assert!(inspect(&so_headers).verdict.starts_with("só headers"));
         let so_libs = raiz("so-libs");
         std::fs::create_dir_all(so_libs.join("lib")).unwrap();
-        assert!(inspect(&so_libs).verdict.starts_with("so' bibliotecas"));
+        assert!(inspect(&so_libs).verdict.starts_with("só bibliotecas"));
         // usr/include + lib (sem usr/lib): uma raiz minima ainda linka.
         std::fs::create_dir_all(so_libs.join("usr/include")).unwrap();
         assert!(
-            inspect(&so_libs).verdict.starts_with("utilizavel"),
+            inspect(&so_libs).verdict.starts_with("utilizável"),
             "{}",
             inspect(&so_libs).verdict
         );

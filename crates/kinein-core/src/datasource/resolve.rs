@@ -126,7 +126,7 @@ impl Resolver {
 
     fn expired(&self, host: &str) -> String {
         format!(
-            "o resolvedor de nomes do sistema nao respondeu em {} s para {}",
+            "o resolvedor de nomes do sistema não respondeu em {} s para {}",
             self.deadline.as_secs(),
             host.trim()
         )
@@ -143,7 +143,7 @@ impl Resolver {
         let slot = Slot(Arc::clone(&self.pending));
         if taken >= self.max_pending {
             return Err(format!(
-                "o resolvedor de nomes do sistema nao esta' respondendo: {} resolucoes ainda \
+                "o resolvedor de nomes do sistema não está respondendo: {} resoluções ainda \
                  pendentes; tente de novo em instantes",
                 self.max_pending
             ));
@@ -157,14 +157,14 @@ impl Resolver {
                 let _slot = slot;
                 deliver(match lookup(&host, port) {
                     Ok(found) if found.is_empty() => {
-                        Err(format!("{host}: o nome nao resolveu para nenhum endereco"))
+                        Err(format!("{host}: o nome não resolveu para nenhum endereco"))
                     }
                     Ok(found) => Ok(dedup(found)),
-                    Err(error) => Err(format!("{host}: nome nao resolvido ({error})")),
+                    Err(error) => Err(format!("{host}: nome não resolvido ({error})")),
                 });
             })
             .map(drop)
-            .map_err(|error| format!("nao foi possivel resolver {shown}: {error}"))
+            .map_err(|error| format!("não foi possível resolver {shown}: {error}"))
     }
 }
 
@@ -227,7 +227,7 @@ mod tests {
         let resolver = Resolver::new(fake, Duration::from_millis(200), 2);
         let start = std::time::Instant::now();
         let error = resolver.addresses("lento.exemplo", 5432).unwrap_err();
-        assert!(error.contains("nao respondeu"), "{error}");
+        assert!(error.contains("não respondeu"), "{error}");
         assert!(
             start.elapsed() < Duration::from_secs(1),
             "{:?}",
@@ -255,7 +255,7 @@ mod tests {
         let error = runtime
             .block_on(resolver.addresses_async("lento.exemplo", 5432))
             .unwrap_err();
-        assert!(error.contains("nao respondeu"), "{error}");
+        assert!(error.contains("não respondeu"), "{error}");
         assert!(start.elapsed() < Duration::from_secs(1));
         let ordered = Resolver::new(fake, Duration::from_secs(1), 2);
         assert_eq!(

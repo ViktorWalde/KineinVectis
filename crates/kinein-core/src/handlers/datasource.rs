@@ -207,13 +207,13 @@ impl Core {
                     .map(Some)
                     .ok_or_else(|| {
                         recusa(format!(
-                            "a variavel `{variavel}` nao esta definida (ou esta vazia)"
+                            "a variável `{variavel}` não está definida (ou está vazia)"
                         ))
                     })
             }
             SecretPlan::AskUser => password.map(Secret::new).map(Some).ok_or_else(|| {
                 recusa(format!(
-                    "o perfil `{}` pede a senha a cada sessao",
+                    "o perfil `{}` pede a senha a cada sessão",
                     profile.name
                 ))
             }),
@@ -246,7 +246,7 @@ impl Core {
                     None,
                     JsonRpcError::new(
                         JsonRpcErrorCode::InvalidParams,
-                        format!("nao ha perfil chamado `{name}`"),
+                        format!("não há perfil chamado `{name}`"),
                         None,
                     ),
                 ))

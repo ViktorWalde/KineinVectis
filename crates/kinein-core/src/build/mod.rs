@@ -147,11 +147,11 @@ impl fmt::Display for BuildError {
             Self::Unsupported { kind } => {
                 write!(
                     formatter,
-                    "build ainda nao e suportado para projetos do tipo {kind}"
+                    "build ainda não é suportado para projetos do tipo {kind}"
                 )
             }
             Self::ToolMissing { tool, hint } => {
-                write!(formatter, "{tool} nao foi detectado nesta maquina: {hint}")
+                write!(formatter, "{tool} não foi detectado nesta máquina: {hint}")
             }
             Self::Spawn { command, source } => {
                 write!(formatter, "falha ao iniciar '{command}': {source}")
@@ -327,7 +327,7 @@ pub fn run_quality(
             let Some(ruff) = ruff else {
                 return Err(BuildError::ToolMissing {
                     tool: "ruff".to_owned(),
-                    hint: "instale o ruff (o painel de instalacao mostra o passo oficial: pipx \
+                    hint: "instale o ruff (o painel de instalação mostra o passo oficial: pipx \
                            install ruff)"
                         .to_owned(),
                 });

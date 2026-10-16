@@ -77,7 +77,7 @@ impl Core {
             request_id,
             JsonRpcError::new(
                 JsonRpcErrorCode::InternalError,
-                "storage global nao esta habilitado neste loop do core",
+                "storage global não está habilitado neste loop do core",
                 Some(json!({ "method": method })),
             ),
         )
@@ -93,7 +93,7 @@ impl Core {
         if let Err(response) = parse_params::<RecentWorkspacesParams>(
             request_id.as_ref(),
             params,
-            "workspace.recent.list nao aceita campos",
+            "workspace.recent.list não aceita campos",
         ) {
             return *response;
         }
@@ -167,7 +167,7 @@ impl Core {
         if let Err(response) = parse_params::<RecentWorkspacesParams>(
             request_id.as_ref(),
             params,
-            "workspace.recent.clear nao aceita campos",
+            "workspace.recent.clear não aceita campos",
         ) {
             return *response;
         }

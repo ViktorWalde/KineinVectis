@@ -134,7 +134,7 @@ impl EngineFailure {
             ContainerEngine::Docker => "Docker",
             ContainerEngine::Podman => "Podman",
         };
-        format!("o {name} nao respondeu: {}", self.hint)
+        format!("o {name} não respondeu: {}", self.hint)
     }
 
     /// A falha a partir da resposta do motor.
@@ -198,8 +198,8 @@ pub fn status(
             compose_file,
             hint: Some(
                 "nenhum motor de container no PATH. No Fedora, `sudo dnf install podman` (rootless, \
-                 sem daemon); o Docker Engine vem do repositorio oficial em docs.docker.com. A IDE \
-                 nao roda isso."
+                 sem daemon); o Docker Engine vem do repositório oficial em docs.docker.com. A IDE \
+                 não roda isso."
                     .to_owned(),
             ),
             raw_output: String::new(),
@@ -285,7 +285,7 @@ fn hint_for(engine: &Engine, asked: &Asked) -> String {
     let baixo = asked.stderr.to_ascii_lowercase();
     let deadline_note = if asked.timed_out {
         format!(
-            "o `ps` nao respondeu em {} s. ",
+            "o `ps` não respondeu em {} s. ",
             probe::ASK_DEADLINE.as_secs()
         )
     } else {
@@ -293,25 +293,25 @@ fn hint_for(engine: &Engine, asked: &Asked) -> String {
     };
     match engine.kind {
         ContainerEngine::Docker if !asked.timed_out && baixo.contains("permission denied") => {
-            "o daemon esta' de pe' mas este usuario nao pode usar o socket. Passo oficial: \
-             `sudo usermod -aG docker $USER` e sair/entrar da sessao — ou o modo rootless do \
-             Docker, ou o Podman (rootless, sem grupo). A IDE nao roda isso."
+            "o daemon está de pé mas este usuário não pode usar o socket. Passo oficial: \
+             `sudo usermod -aG docker $USER` e sair/entrar da sessão — ou o modo rootless do \
+             Docker, ou o Podman (rootless, sem grupo). A IDE não roda isso."
                 .to_owned()
         }
         ContainerEngine::Docker => match docker_endpoint(engine) {
             Some(endpoint) if endpoint.contains("podman") => format!(
-                "{deadline_note}o contexto do Docker aponta o socket do Podman ({endpoint}), e ele nao \
+                "{deadline_note}o contexto do Docker aponta o socket do Podman ({endpoint}), e ele não \
                  respondeu. Passo oficial: `systemctl --user enable --now podman.socket`. A IDE \
-                 nao roda isso."
+                 não roda isso."
             ),
             _ => format!(
-                "{deadline_note}o daemon nao respondeu. Passo oficial: `sudo systemctl enable --now \
-                 docker` (e `systemctl status docker` para ver por que parou). A IDE nao roda \
+                "{deadline_note}o daemon não respondeu. Passo oficial: `sudo systemctl enable --now \
+                 docker` (e `systemctl status docker` para ver por que parou). A IDE não roda \
                  isso."
             ),
         },
         ContainerEngine::Podman => format!(
-            "{deadline_note}o podman nao respondeu ao `ps`. Rootless nao precisa de daemon; veja a saida \
+            "{deadline_note}o podman não respondeu ao `ps`. Rootless não precisa de daemon; veja a saida \
              crua. Para a API por socket: `systemctl --user enable --now podman.socket`. Saida: {}",
             asked.reason()
         ),
@@ -335,10 +335,10 @@ pub fn list(engine: &Engine, all: bool) -> Result<ContainerListResult, EngineFai
     let hint = containers.is_empty().then(|| {
         if stdout.trim().is_empty() || stdout.trim() == "[]" {
             "nenhum container neste motor. `compose up` ou `run` cria um; sem `all`, os parados \
-             nao aparecem."
+             não aparecem."
                 .to_owned()
         } else {
-            "o motor respondeu e o formato nao foi reconhecido — a saida crua esta' abaixo."
+            "o motor respondeu e o formato não foi reconhecido — a saida crua está abaixo."
                 .to_owned()
         }
     });

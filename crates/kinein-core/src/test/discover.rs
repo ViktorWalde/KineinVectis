@@ -226,7 +226,7 @@ pub fn discover_tests(
             sink(TestEvent::Output {
                 stream: "stdout",
                 line: format!(
-                    "{} caso(s) de gtest/Catch2 dentro dos binarios do ctest",
+                    "{} caso(s) de gtest/Catch2 dentro dos binários do ctest",
                     internos.len()
                 ),
             });

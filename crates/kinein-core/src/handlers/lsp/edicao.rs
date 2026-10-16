@@ -69,7 +69,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "lsp.rename requer um novo nome nao vazio",
+                    "lsp.rename requer um novo nome não vazio",
                     None,
                 ),
             );
@@ -196,8 +196,8 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "a consulta de code actions expirou ou o indice e invalido; \
-                     peca as acoes novamente",
+                    "a consulta de code actions expirou ou o índice e inválido; \
+                     peca as ações novamente",
                     Some(json!({ "path": parsed.path, "actionIndex": parsed.action_index })),
                 ),
             );

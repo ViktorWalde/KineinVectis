@@ -248,13 +248,13 @@ pub fn run_inner_case(
     let Some(entrada) = entradas.iter().find(|e| e.name == teste) else {
         return Some(Err(TestError::ToolMissing {
             tool: teste.to_owned(),
-            hint: format!("o ctest nao lista o teste `{teste}` — reconfigure/recompile"),
+            hint: format!("o ctest não lista o teste `{teste}` — reconfigure/recompile"),
         }));
     };
     let Some(exe) = entrada.command.first() else {
         return Some(Err(TestError::ToolMissing {
             tool: teste.to_owned(),
-            hint: "o teste do ctest nao tem comando".to_owned(),
+            hint: "o teste do ctest não tem comando".to_owned(),
         }));
     };
     let framework =

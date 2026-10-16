@@ -234,9 +234,9 @@ fn family_says_what_the_link_is_never_the_chip_behind_a_bridge() {
     assert!(
         familia("10c4", "EA60")
             .unwrap()
-            .contains("nao se le pelo USB")
+            .contains("não se le pelo USB")
     );
-    assert!(familia("303a", "1001").unwrap().contains("proprio chip"));
+    assert!(familia("303a", "1001").unwrap().contains("próprio chip"));
     assert!(familia("0483", "374b").unwrap().contains("ST-Link"));
     assert!(familia("2e8a", "000c").unwrap().contains("Debug Probe"));
     assert_eq!(familia("dead", "beef"), None);

@@ -204,7 +204,7 @@ pub fn list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
         let body =
             fs::read_to_string(&path).map_err(|error| format!("falha lendo {file}: {error}"))?;
         let value: Value =
-            serde_json::from_str(&body).map_err(|error| format!("{file} invalido: {error}"))?;
+            serde_json::from_str(&body).map_err(|error| format!("{file} inválido: {error}"))?;
         let Some(items) = value.get("configurePresets").and_then(Value::as_array) else {
             continue;
         };

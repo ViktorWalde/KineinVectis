@@ -81,9 +81,9 @@ impl std::fmt::Display for CoverageError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Unsupported { kind, hint } => {
-                write!(f, "cobertura nao suportada para {kind}: {hint}")
+                write!(f, "cobertura não suportada para {kind}: {hint}")
             }
-            Self::ToolMissing { tool, hint } => write!(f, "{tool} nao esta' nesta maquina: {hint}"),
+            Self::ToolMissing { tool, hint } => write!(f, "{tool} não está nesta máquina: {hint}"),
             Self::Failed { command, status } => write!(f, "`{command}` saiu com {status}"),
             Self::Io(e) => write!(f, "{e}"),
         }
@@ -271,7 +271,7 @@ pub fn run(
         other => {
             return Err(CoverageError::Unsupported {
                 kind: format!("{other:?}").to_lowercase(),
-                hint: "C/C++ exige compilar com `--coverage` (gcov/lcov) — nao entra sem a sua \
+                hint: "C/C++ exige compilar com `--coverage` (gcov/lcov) — não entra sem a sua \
                        decisao no build; Rust usa cargo-llvm-cov, Python o coverage.py"
                     .to_owned(),
             });

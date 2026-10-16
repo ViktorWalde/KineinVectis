@@ -64,7 +64,7 @@ pub fn replace(
     if estourou_limite {
         return Err(FsError::ReplaceLimit {
             message: format!(
-                "substituicao excede os limites de {MAX_REPLACE_FILES} arquivos, \
+                "substituição excede os limites de {MAX_REPLACE_FILES} arquivos, \
                  {MAX_REPLACEMENTS} ocorrencias ou {MAX_REPLACE_BYTES} bytes"
             ),
         });

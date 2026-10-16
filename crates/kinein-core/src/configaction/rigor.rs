@@ -91,7 +91,7 @@ pub(super) fn cxx_standard(
     let before = read_required(root, CMAKELISTS)?;
     if before.contains("CMAKE_CXX_STANDARD") {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("{CMAKELISTS} ja define CMAKE_CXX_STANDARD"),
+            reason: format!("{CMAKELISTS} já define CMAKE_CXX_STANDARD"),
         });
     }
     let padrao = match optional_param(params, "standard") {
@@ -110,7 +110,7 @@ pub(super) fn cxx_standard(
     // sucesso, o arquivo mudava, e a compilacao continuava igual.
     let after = insert_after_minimum_required(&before, &bloco);
     Ok(ActionPlan::edit(
-        format!("Fixa o padrao C++{padrao}, exigido e sem extensoes GNU"),
+        format!("Fixa o padrão C++{padrao}, exigido e sem extensões GNU"),
         PlannedFile {
             path: CMAKELISTS.to_owned(),
             before: Some(before),
@@ -201,7 +201,7 @@ pub(super) fn hex_and_bin(
         "add_custom_command(TARGET {target} POST_BUILD\n\
          \x20   COMMAND ${{CMAKE_OBJCOPY}} -O ihex $<TARGET_FILE:{target}> {target}.hex\n\
          \x20   COMMAND ${{CMAKE_OBJCOPY}} -O binary $<TARGET_FILE:{target}> {target}.bin\n\
-         \x20   COMMENT \"Gerando {target}.hex e {target}.bin para gravacao\"\n\
+         \x20   COMMENT \"Gerando {target}.hex e {target}.bin para gravação\"\n\
          )\n"
     );
     Ok(edit_plan(
@@ -231,7 +231,7 @@ pub(super) fn cargo_embedded_target(
     let caminho = root.join(".cargo").join("config.toml");
     if caminho.exists() {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("{CARGO_CONFIG} ja existe; edite-o a mao para nao perder o conteudo"),
+            reason: format!("{CARGO_CONFIG} já existe; edite-o a mao para não perder o conteúdo"),
         });
     }
     let conteudo = format!(
@@ -269,7 +269,7 @@ fn validar_padrao(raw: &str) -> Result<String, ConfigActionError> {
     }
     Err(ConfigActionError::InvalidParam {
         name: "standard",
-        reason: format!("padrao C++ invalido: use um de {}", ACEITOS.join(", ")),
+        reason: format!("padrão C++ inválido: use um de {}", ACEITOS.join(", ")),
     })
 }
 
@@ -304,7 +304,7 @@ fn validar_sanitizers(raw: &str) -> Result<String, ConfigActionError> {
     if pedidos.contains(&"address") && pedidos.contains(&"thread") {
         return Err(ConfigActionError::InvalidParam {
             name: "sanitizers",
-            reason: "address e thread nao podem ser ligados juntos".to_owned(),
+            reason: "address e thread não podem ser ligados juntos".to_owned(),
         });
     }
     Ok(pedidos.join(","))
@@ -322,7 +322,7 @@ fn validar_triple(raw: &str) -> Result<String, ConfigActionError> {
     } else {
         Err(ConfigActionError::InvalidParam {
             name: "target",
-            reason: "triple invalido (ex.: thumbv7em-none-eabihf)".to_owned(),
+            reason: "triple inválido (ex.: thumbv7em-none-eabihf)".to_owned(),
         })
     }
 }
@@ -424,7 +424,7 @@ mod tests {
         )
         .unwrap_err();
         assert!(
-            format!("{erro}").contains("nao podem ser ligados juntos"),
+            format!("{erro}").contains("não podem ser ligados juntos"),
             "{erro}"
         );
 
@@ -491,6 +491,6 @@ mod tests {
             &parametros(&[("target", "thumbv7em-none-eabihf"), ("chip", "X")]),
         )
         .unwrap_err();
-        assert!(format!("{erro}").contains("ja existe"), "{erro}");
+        assert!(format!("{erro}").contains("já existe"), "{erro}");
     }
 }

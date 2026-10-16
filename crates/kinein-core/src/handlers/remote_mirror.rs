@@ -79,7 +79,7 @@ impl SyncPlan {
                 Ok(s) if s.success() => changed.extend(mirror::parse_itemized(&saida)),
                 Ok(_) => return Err(remote::describe_ssh_failure(&self.target, &saida)),
                 Err(crate::process::ProcessError::Spawn(e)) => {
-                    return Err(format!("nao pude iniciar o rsync: {e}"));
+                    return Err(format!("não pude iniciar o rsync: {e}"));
                 }
                 Err(crate::process::ProcessError::Wait(e)) => {
                     return Err(format!("falha esperando o rsync: {e}"));
@@ -149,7 +149,7 @@ impl Core {
         let rsync = self
             .detector
             .find_in_path("rsync")
-            .ok_or_else(|| "nao achei `rsync` no PATH — instale-o (e no alvo tambem)".to_owned())?;
+            .ok_or_else(|| "não achei `rsync` no PATH — instale-o (e no alvo também)".to_owned())?;
         let cache = self
             .cache_home()
             .ok_or_else(|| "sem HOME: não sei onde guardar o espelho".to_owned())?;
@@ -255,7 +255,7 @@ impl Core {
         let Some(espelho) = self.trusted_mirror(&root) else {
             return error_response(
                 request_id,
-                "este projeto nao e' um espelho remoto — abra uma pasta do alvo pelo painel Remoto",
+                "este projeto não é um espelho remoto — abra uma pasta do alvo pelo painel Remoto",
             );
         };
         let rels: Vec<String> = match parsed.paths {
@@ -295,7 +295,7 @@ impl Core {
         if let Err(response) = parse_params::<RemoteStatusParams>(
             request_id.as_ref(),
             params,
-            "remote.status nao aceita parametros",
+            "remote.status não aceita parametros",
         ) {
             return *response;
         }
@@ -358,7 +358,7 @@ impl Core {
         let jobs = self
             .jobs
             .as_ref()
-            .ok_or_else(|| "jobs indisponiveis".to_owned())?;
+            .ok_or_else(|| "jobs indisponíveis".to_owned())?;
         let plan = SyncPlan {
             rsync,
             target,

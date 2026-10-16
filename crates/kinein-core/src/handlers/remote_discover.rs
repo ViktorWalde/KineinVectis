@@ -31,8 +31,8 @@ fn recusa_do_ssh(host: &str, stderr: &[u8]) -> String {
     let texto = String::from_utf8_lossy(stderr);
     let motivo = texto.lines().map(str::trim).find(|l| !l.is_empty());
     motivo.map_or_else(
-        || format!("o `ssh` nao reconheceu `{host}`"),
-        |linha| format!("o `ssh` nao aceitou `{host}`: {linha}"),
+        || format!("o `ssh` não reconheceu `{host}`"),
+        |linha| format!("o `ssh` não aceitou `{host}`: {linha}"),
     )
 }
 
@@ -65,7 +65,7 @@ impl Core {
         if let Err(response) = parse_params::<RemoteDiscoverParams>(
             request_id.as_ref(),
             params,
-            "remote.discover nao aceita parametros",
+            "remote.discover não aceita parametros",
         ) {
             return *response;
         }
@@ -74,7 +74,7 @@ impl Core {
         let Some(home) = self.sdk_home() else {
             return error_response(
                 request_id,
-                "sem HOME: nao sei onde procurar o `~/.ssh/config`",
+                "sem HOME: não sei onde procurar o `~/.ssh/config`",
             );
         };
         JsonRpcResponse::success(request_id, json!(remote::discover::aliases(&home)))
@@ -128,7 +128,7 @@ impl Core {
         let Some(ssh) = self.detector.find_in_path("ssh") else {
             return error_response(
                 request_id,
-                "nao achei `ssh` no PATH — instale o openssh-client",
+                "não achei `ssh` no PATH — instale o openssh-client",
             );
         };
         // O mesmo arquivo que a descoberta leu: o OpenSSH nao honra `$HOME`
@@ -150,7 +150,7 @@ impl Core {
                 )),
             ),
             Ok(fim) => error_response(request_id, recusa_do_ssh(&parsed.host, &fim.stderr)),
-            Err(erro) => error_response(request_id, format!("nao pude rodar `ssh -G`: {erro}")),
+            Err(erro) => error_response(request_id, format!("não pude rodar `ssh -G`: {erro}")),
         }
     }
 }

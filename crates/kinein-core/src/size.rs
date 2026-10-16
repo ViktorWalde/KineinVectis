@@ -251,7 +251,7 @@ pub fn region_from_partition(
         .iter()
         .find(|p| p.kind == "app" && p.offset == app_offset)?;
     Some(Region {
-        name: format!("{} (particao app @0x{:x})", particao.name, particao.offset),
+        name: format!("{} (partição app @0x{:x})", particao.name, particao.offset),
         used: app_image_bytes,
         size: u64::from(particao.size),
     })
@@ -301,7 +301,7 @@ Total              216";
         ];
         // A receita aponta a app em 0x110000 (OTA): e' a ota_0, nao a factory.
         let r = region_from_partition(&particoes, 0x11_0000, 200_000).unwrap();
-        assert_eq!(r.name, "ota_0 (particao app @0x110000)");
+        assert_eq!(r.name, "ota_0 (partição app @0x110000)");
         assert_eq!((r.used, r.size), (200_000, 0x10_0000));
         // Offset que nao e' de particao app: nenhuma regiao, nenhum palpite.
         assert!(region_from_partition(&particoes, 0x9000, 10).is_none());

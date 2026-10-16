@@ -52,7 +52,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    format!("nao ha perfil chamado {}", request.name),
+                    format!("não há perfil chamado {}", request.name),
                     None,
                 ),
             );
@@ -113,8 +113,8 @@ impl Core {
                 Err(failure) => super::container::engine_failure_response(
                     request_id,
                     &failure,
-                    "nada foi apagado, nem o perfil: sem o motor nao da' para saber se o \
-                     container_engine e' um container da IDE. ",
+                    "nada foi apagado, nem o perfil: sem o motor não da' para saber se o \
+                     container_engine é um container da IDE. ",
                 ),
             },
         )
@@ -325,7 +325,7 @@ fn fechar(
             ),
             Err(e) => (
                 false,
-                format!("os dados sumiram, mas o perfil nao saiu: {e}"),
+                format!("os dados sumiram, mas o perfil não saiu: {e}"),
                 None,
             ),
         }

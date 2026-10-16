@@ -76,7 +76,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::ToolNotFound,
-                    "nenhum monitor serial nesta maquina: instale tio, picocom, minicom, \
+                    "nenhum monitor serial nesta máquina: instale tio, picocom, minicom, \
                      espflash ou mpremote — ou fixe um no papel `serialMonitor` do kit",
                     Some(json!({ "method": "serial.monitor" })),
                 ),
@@ -149,7 +149,7 @@ impl Core {
         if let Err(response) = parse_params::<SerialListParams>(
             request_id.as_ref(),
             params,
-            "serial.list nao aceita parametros",
+            "serial.list não aceita parametros",
         ) {
             return *response;
         }
@@ -193,8 +193,8 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::ToolNotFound,
-                    "esptool nao esta' nesta maquina: `pipx install esptool` (o painel de \
-                     instalacao mostra o passo oficial)",
+                    "esptool não está nesta máquina: `pipx install esptool` (o painel de \
+                     instalação mostra o passo oficial)",
                     Some(json!({ "tool": "esptool" })),
                 ),
             );
@@ -228,7 +228,7 @@ impl Core {
 fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::JobOutcome {
     let mut tentativa = rodar(ctx, esptool, device, identify::FLASH_ID_V5);
     if !tentativa.sucesso && identify::unknown_subcommand(&tentativa.raw) && !ctx.is_cancelled() {
-        ctx.emit_output("a ferramenta nao conhece `flash-id`: tentando `flash_id` (esptool v4)");
+        ctx.emit_output("a ferramenta não conhece `flash-id`: tentando `flash_id` (esptool v4)");
         tentativa = rodar(ctx, esptool, device, identify::FLASH_ID_V4);
     }
     let identity = identify::parse_flash_id(&tentativa.raw);
@@ -237,10 +237,10 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
     let error = if success {
         None
     } else if ctx.is_cancelled() {
-        Some("identificacao cancelada".to_owned())
+        Some("identificação cancelada".to_owned())
     } else if tentativa.expirou {
         Some(format!(
-            "o esptool nao respondeu em {} s: a placa esta' plugada nesta porta e sem outro \
+            "o esptool não respondeu em {} s: a placa está plugada nesta porta e sem outro \
              programa (monitor serial, ModemManager) segurando-a?",
             IDENTIFY_TIMEOUT.as_secs()
         ))
@@ -295,7 +295,7 @@ pub(super) fn porta_pronta(
             request_id.cloned(),
             JsonRpcError::new(
                 JsonRpcErrorCode::InvalidParams,
-                format!("{method}: `{device}` nao existe nesta maquina"),
+                format!("{method}: `{device}` não existe nesta máquina"),
                 Some(json!({ "device": device })),
             ),
         )));
@@ -308,7 +308,7 @@ pub(super) fn porta_pronta(
                 JsonRpcErrorCode::InvalidRequest,
                 acesso
                     .hint
-                    .unwrap_or_else(|| format!("sem permissao de leitura/escrita em {device}")),
+                    .unwrap_or_else(|| format!("sem permissão de leitura/escrita em {device}")),
                 Some(json!({ "device": device, "mode": acesso.mode })),
             ),
         )));

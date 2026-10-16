@@ -2169,7 +2169,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | PageUp/PageDown no editor | feito (§7.1.2; 40.7 §7.293) | 16.2 |
 | Terminal com reflow ao alargar | feito (§7.1.3; 40.7 §7.294) | 16.3 |
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | feito em 2026-10-16 (§7.1.4; 40.7 §7.295–§7.297): injeção no Remoto, `known_hosts` regravável, espelho por marcador clonado, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open`, origem do deploy fora do projeto, credencial na URL do Grafana | 16.4a, 16.4b, 16.4c |
-| Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | pendentes | 16.5 |
+| Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | medidas em 2026-10-16 (§7.1.5): o `Flickable` não reproduz no Qt 6.10 (fica); as mensagens, feitas (16.5a, 40.7 §7.298); o resto na 16.5b | 16.5a, 16.5b |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | pendente; pelo `xdotool` no Xvfb | 16.7 |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
@@ -2534,6 +2534,34 @@ gravado. Mutações de cada um.
 com os testes do desenho e cinco mutações; ODBC e cadeia de suprimento
 ficam com as provas que já tinham (os testes do `datasource/odbc.rs` e o
 `cargo deny` do gate). **A segurança da casca (16.4) está fechada.**
+
+#### 7.1.5 16.5 — as dívidas (medidas em 2026-10-16)
+
+**`Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`).**
+Medido no Qt 6.10.2, num rascunho: um `Flickable` e um `ListView` rolados até
+o fim, com o conteúdo encolhendo, voltam sozinhos aos limites (1800 → 300);
+encolhendo DURANTE um `flick()`, o movimento para 50 ms depois e a posição
+fica certa. Com o `returnToBounds()` no `onContentHeightChanged` (o conserto
+de 2026-10-04 no Remoto e nas Configurações), o mesmo roteiro fica 450 ms em
+movimento. O defeito não se reproduz no Qt desta máquina, e a varredura dos
+outros 23 não tem evidência que a justifique: **não entra**. Os dois
+consertos ficam (foram provados na tela, no Qt de então).
+
+**Mensagens do core sem acento.** Medido: 347 literais de produção em 128
+arquivos (o "cerca de 60" de 2026-10-04 era o que tinha aparecido na tela),
+656 contando os que atravessam linhas. **16.5a**, mecânica e revisável: um
+mini-léxico de Rust acha os literais de verdade (fora de comentários, raw
+strings, chars e do módulo de testes) e troca, por lista, as palavras sem
+acento (`nao` → `não`, `versao` → `versão`, `-cao` → `-ção`…). As formas com
+apóstrofo (`e'`, `esta'`, `ja'`) só quando o apóstrofo fecha a palavra (as
+aspas de shell e o `E'…'` do SQL ficam); `esta` só vira verbo pelo contexto
+(`não esta`, `esta sendo`…); os `{…}` do format ficam; depois de "não", o `e`
+é o verbo. Os testes que comparavam a frase antiga passam a comparar a nova,
+um por um (os dados de entrada dos testes não mudam).
+
+**O resto (16.5b):** a largura única do slot da esquerda, a barra do Banco
+fora do ciclo de Tab, o tooltip antigo do `KvButton` e o catálogo editado
+fora da IDE (F2 da 16.1).
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

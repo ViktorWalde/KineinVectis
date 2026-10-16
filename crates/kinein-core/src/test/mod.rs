@@ -125,7 +125,7 @@ impl fmt::Display for TestError {
             Self::Unsupported { kind } => {
                 write!(
                     formatter,
-                    "execucao de testes ainda nao e suportada para projetos do tipo {kind}"
+                    "execução de testes ainda não é suportada para projetos do tipo {kind}"
                 )
             }
             Self::Spawn { command, source } => {

@@ -169,7 +169,7 @@ fn local_servers() -> Vec<DataSourceCandidate> {
         found.push(DataSourceCandidate {
             kind: DataSourceCandidateKind::LocalServer,
             label: "PostgreSQL local (porta)".to_owned(),
-            detail: "127.0.0.1:5432 aceitou conexao".to_owned(),
+            detail: "127.0.0.1:5432 aceitou conexão".to_owned(),
             running: true,
             profile: profile(
                 DataSourceEngine::Postgres,
@@ -185,7 +185,7 @@ fn local_servers() -> Vec<DataSourceCandidate> {
         found.push(DataSourceCandidate {
             kind: DataSourceCandidateKind::LocalServer,
             label: "MongoDB local".to_owned(),
-            detail: "127.0.0.1:27017 aceitou conexao".to_owned(),
+            detail: "127.0.0.1:27017 aceitou conexão".to_owned(),
             running: true,
             profile: profile(
                 DataSourceEngine::Mongo,

@@ -85,7 +85,7 @@ impl Wire {
         let Ok(response) = receiver.recv_timeout(timeout) else {
             self.forget(seq);
             return Err(DebugError::Adapter {
-                message: format!("o adapter nao respondeu a `{command}`"),
+                message: format!("o adapter não respondeu a `{command}`"),
             });
         };
         if response.get("success").and_then(Value::as_bool) == Some(true) {

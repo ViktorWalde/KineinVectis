@@ -154,7 +154,7 @@ fn lsp_navigation_reports_unavailable_without_lsp_manager() {
     let error = outcome.response().error.as_ref().unwrap();
 
     assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InternalError);
-    assert_eq!(error.message, "LSP nao esta habilitado neste loop do core");
+    assert_eq!(error.message, "LSP não está habilitado neste loop do core");
 }
 
 #[test]
@@ -235,7 +235,7 @@ fn lsp_apply_code_action_requires_workspace_and_manager() {
     );
     assert_eq!(
         unavailable_error.message,
-        "LSP nao esta habilitado neste loop do core"
+        "LSP não está habilitado neste loop do core"
     );
 }
 

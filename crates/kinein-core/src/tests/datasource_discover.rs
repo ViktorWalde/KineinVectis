@@ -322,10 +322,10 @@ fn create_and_destroy_use_the_engine_that_answers() {
         "datasource.create",
         json!({ "kind": "containerServer", "engine": "mongo", "name": "docs", "port": free_port(4) }),
     );
-    let error = r.error.expect("motor negando e' erro antes do run");
+    let error = r.error.expect("motor negando é erro antes do run");
     assert_eq!(error.code, JsonRpcErrorCode::ToolNotFound);
     assert!(
-        error.message.contains("o servidor nao foi criado"),
+        error.message.contains("o servidor não foi criado"),
         "{}",
         error.message
     );
@@ -463,7 +463,7 @@ fn discover_offers_only_an_engine_that_answers_and_a_free_port() {
     let d = c.rpc("datasource.discover", json!({})).result.unwrap();
     assert!(d.get("containerEngine").is_none(), "{d}");
     let reason = d["containerHint"].as_str().expect("o motivo");
-    assert!(reason.contains("Docker nao respondeu"), "{reason}");
+    assert!(reason.contains("Docker não respondeu"), "{reason}");
     assert!(reason.contains("usermod"), "{reason}");
     let postgres = d["suggestedPorts"]["postgres"].as_u64();
     assert!(

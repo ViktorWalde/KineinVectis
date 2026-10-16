@@ -52,7 +52,7 @@ impl Core {
         if let Err(response) = parse_params::<IndexStatusParams>(
             request_id.as_ref(),
             params,
-            "index.status nao aceita parametros",
+            "index.status não aceita parametros",
         ) {
             return *response;
         }
@@ -139,7 +139,7 @@ impl Core {
             python: None,
             targets: Vec::new(),
             source: None,
-            hint: Some("o contexto do projeto ainda esta' sendo carregado".to_owned()),
+            hint: Some("o contexto do projeto ainda está sendo carregado".to_owned()),
         });
         JsonRpcResponse::success(request_id, json!(resposta))
     }

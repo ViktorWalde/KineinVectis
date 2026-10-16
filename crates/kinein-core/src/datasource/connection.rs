@@ -186,14 +186,14 @@ fn tls_config(ca_file: Option<&str>) -> Result<rustls::ClientConfig, ConnectionF
         let certificados = CertificateDer::pem_file_iter(caminho)
             .and_then(std::iter::Iterator::collect::<Result<Vec<_>, _>>)
             .map_err(|erro| ConnectionFailure {
-                message: format!("nao li o certificado `{caminho}`: {erro}"),
+                message: format!("não li o certificado `{caminho}`: {erro}"),
                 sql_state: None,
                 secret_required: false,
             })?;
         let (adicionados, _) = roots.add_parsable_certificates(certificados);
         if adicionados == 0 {
             return Err(ConnectionFailure {
-                message: format!("`{caminho}` nao tem nenhum certificado PEM utilizavel"),
+                message: format!("`{caminho}` não tem nenhum certificado PEM utilizável"),
                 sql_state: None,
                 secret_required: false,
             });

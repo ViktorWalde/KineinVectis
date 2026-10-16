@@ -381,7 +381,7 @@ fn staged_paths(root: &Path) -> Result<Vec<String>, GitError> {
         ],
     )?;
     let body = String::from_utf8(stdout).map_err(|error| GitError::Failed {
-        message: format!("git diff retornou um path que nao e UTF-8 valido: {error}"),
+        message: format!("git diff retornou um path que não é UTF-8 válido: {error}"),
     })?;
     Ok(body
         .split('\0')
@@ -481,7 +481,7 @@ fn spawn_error(error: &std::io::Error) -> GitError {
         GitError::MissingGit
     } else {
         GitError::Failed {
-            message: format!("git nao pode ser executado: {error}"),
+            message: format!("git não pode ser executado: {error}"),
         }
     }
 }

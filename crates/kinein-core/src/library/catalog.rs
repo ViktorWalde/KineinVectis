@@ -76,7 +76,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "fmt",
         name: "fmt",
-        summary: "Formatacao de texto segura e rapida; e a base do std::format do C++20.",
+        summary: "Formatação de texto segura e rapida; e a base do std::format do C++20.",
         category: "Texto",
         license: "MIT",
         pinned_version: "12.2.0",
@@ -93,8 +93,8 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "spdlog",
         name: "spdlog",
-        summary: "Log rapido, com niveis e destinos (arquivo, console) configuraveis.",
-        category: "Diagnostico",
+        summary: "Log rápido, com níveis e destinos (arquivo, console) configuráveis.",
+        category: "Diagnóstico",
         license: "MIT",
         pinned_version: "v1.17.0",
         released_at: "2026-01-04",
@@ -121,7 +121,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "catch2",
         name: "Catch2",
-        summary: "Framework de teste unitario; o teste e uma funcao, sem classe nem macro de registro.",
+        summary: "Framework de teste unitario; o teste e uma função, sem classe nem macro de registro.",
         category: "Teste",
         license: "BSL-1.0",
         pinned_version: "v3.16.0",
@@ -135,7 +135,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "googletest",
         name: "GoogleTest",
-        summary: "Framework de teste e de mock; o mais comum em base de codigo grande.",
+        summary: "Framework de teste e de mock; o mais comum em base de código grande.",
         category: "Teste",
         license: "BSD-3-Clause",
         pinned_version: "v1.18.0",
@@ -149,8 +149,8 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "cli11",
         name: "CLI11",
-        summary: "Parser de linha de comando: opcoes, subcomandos e validacao, em um header.",
-        category: "Aplicacao",
+        summary: "Parser de linha de comando: opções, subcomandos e validação, em um header.",
+        category: "Aplicação",
         license: "BSD-3-Clause",
         pinned_version: "v2.7.2",
         released_at: "2026-08-02",
@@ -163,7 +163,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "benchmark",
         name: "Google Benchmark",
-        summary: "Micro-benchmark com estatistica: mede funcao, nao o programa inteiro.",
+        summary: "Micro-benchmark com estatística: mede função, não o programa inteiro.",
         category: "Desempenho",
         license: "Apache-2.0",
         pinned_version: "v1.9.5",
@@ -177,8 +177,8 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "boost",
         name: "Boost",
-        summary: "Colecao de bibliotecas revisadas por pares; varias viraram std:: depois.",
-        category: "Colecao",
+        summary: "Coleção de bibliotecas revisadas por pares; varias viraram std:: depois.",
+        category: "Coleção",
         license: "BSL-1.0",
         pinned_version: "boost-1.92.0",
         released_at: "2026-08-12",
@@ -196,13 +196,13 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
         // dele FORAM adotadas — filesystem, optional, variant, any,
         // shared_ptr, thread e chrono estao no std:: por causa disso.
         standard_lineage: Some(
-            "revisao formal por pares; filesystem/optional/variant/shared_ptr viraram std::",
+            "revisão formal por pares; filesystem/optional/variant/shared_ptr viraram std::",
         ),
     },
     LibraryDefinition {
         id: "asio",
         name: "Asio",
-        summary: "Rede e I/O assincrono: sockets, timers e o modelo de execucao por trás deles.",
+        summary: "Rede e I/O assincrono: sockets, timers e o modelo de execução por trás deles.",
         category: "Rede",
         license: "BSL-1.0",
         pinned_version: "asio-1-38-2",
@@ -216,7 +216,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "abseil",
         name: "Abseil",
-        summary: "Utilitarios do Google que preenchem lacunas da biblioteca padrao.",
+        summary: "Utilitarios do Google que preenchem lacunas da biblioteca padrão.",
         category: "Utilitarios",
         license: "Apache-2.0",
         pinned_version: "20260817.0",
@@ -230,7 +230,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "zlib",
         name: "zlib",
-        summary: "Compressao DEFLATE; a base de gzip, PNG e de metade da internet.",
+        summary: "Compressão DEFLATE; a base de gzip, PNG e de metade da internet.",
         category: "Dados",
         license: "Zlib",
         pinned_version: "v1.3.2",
@@ -250,7 +250,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
         // the code and documentation in SQLite has been dedicated to the
         // public domain by the authors." Nao e' uma licenca permissiva —
         // e' ausencia de licenca, que e' ainda menos restritivo.
-        license: "Dominio publico",
+        license: "Dominio público",
         pinned_version: "version-3.53.4",
         released_at: "2026-07-24",
         package_name: "SQLite3",
@@ -262,8 +262,8 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "eigen",
         name: "Eigen",
-        summary: "Algebra linear: matrizes, vetores e solvers numericos, so' em cabecalho.",
-        category: "Matematica",
+        summary: "Algebra linear: matrizes, vetores e solvers numéricos, só em cabecalho.",
+        category: "Matemática",
         // ATENCAO, e a ressalva e' o motivo de este campo existir: MPL-2.0
         // e' copyleft FRACO, classe diferente das permissivas do resto do
         // catalogo. Verificado no COPYING.README: "Eigen is primarily
@@ -282,9 +282,9 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "glm",
         name: "GLM",
-        summary: "Matematica de grafico: vetor, matriz e quaternion com a mesma \
+        summary: "Matemática de grafico: vetor, matriz e quaternion com a mesma \
                   sintaxe do GLSL.",
-        category: "Matematica",
+        category: "Matemática",
         // ATENCAO, e a ressalva importa: o `copying.txt` oferece DUAS licencas
         // — "The Happy Bunny License (Modified MIT License)" e "The MIT
         // License" — e quem usa escolhe. A MIT e' a saida limpa; a Happy Bunny
@@ -302,7 +302,7 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "libpqxx",
         name: "libpqxx",
-        summary: "Cliente C++ oficial do PostgreSQL: consulta, transacao e tipos \
+        summary: "Cliente C++ oficial do PostgreSQL: consulta, transação e tipos \
                   com RAII.",
         category: "Banco de dados",
         // O COPYING traz o texto da BSD 3-Clause SEM escrever o nome dela no

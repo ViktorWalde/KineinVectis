@@ -302,9 +302,9 @@ fn a_downloaded_firmware_is_flashed_by_the_page_line_and_runs() {
     // Ainda nao baixado: recusa que diz como baixar. Uma toolchain no lugar
     // de um firmware: recusa. Id desconhecido: recusa.
     for (id, trecho) in [
-        ("micropython-esp32-generic", "ainda nao foi baixado"),
-        ("arm-gnu-arm-none-eabi", "nao um firmware"),
-        ("nao-existe", "nao esta' no catalogo"),
+        ("micropython-esp32-generic", "ainda não foi baixado"),
+        ("arm-gnu-arm-none-eabi", "não um firmware"),
+        ("nao-existe", "não está no catalogo"),
     ] {
         let erro = c
             .proposta(json!({ "device": "/dev/ttyUSB0", "firmware": id }))

@@ -111,7 +111,7 @@ pub(super) fn read_optional(
 /// Le um arquivo obrigatorio, com mensagem de dominio quando ele falta.
 pub(super) fn read_required(root: &Path, relative: &str) -> Result<String, ConfigActionError> {
     read_optional(root, relative)?.ok_or_else(|| ConfigActionError::NotApplicable {
-        reason: format!("{relative} nao existe neste projeto"),
+        reason: format!("{relative} não existe neste projeto"),
     })
 }
 
@@ -179,7 +179,7 @@ mod tests {
         let root = temp_root("read");
         assert_eq!(read_optional(&root, "Cargo.toml").unwrap(), None);
         let error = read_required(&root, "Cargo.toml").unwrap_err();
-        assert!(error.to_string().contains("Cargo.toml nao existe"));
+        assert!(error.to_string().contains("Cargo.toml não existe"));
     }
 
     #[test]

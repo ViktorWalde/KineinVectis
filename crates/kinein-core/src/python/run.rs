@@ -238,8 +238,8 @@ pub fn default_command(root: &Path, launcher: Option<&PythonLauncher>) -> Result
         Some(EntryPoint::Module(pacote)) if matches!(launcher, PythonLauncher::Mpremote { .. }) => {
             Err(RunError::NoDefaultCommand {
                 message: format!(
-                    "projeto MicroPython sem main.py na raiz (o ponto de entrada achado e' o \
-                     pacote `{pacote}`, que a placa nao roda com -m); clique com o direito \
+                    "projeto MicroPython sem main.py na raiz (o ponto de entrada achado é o \
+                     pacote `{pacote}`, que a placa não roda com -m); clique com o direito \
                      num .py e escolha Executar"
                 ),
             })

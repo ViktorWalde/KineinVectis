@@ -35,11 +35,11 @@ impl fmt::Display for TerminalError {
                 formatter,
                 "limite de {MAX_SESSIONS} terminais abertos atingido"
             ),
-            Self::NotOpen => write!(formatter, "sessao de terminal inexistente ou encerrada"),
-            Self::InvalidSelection => write!(formatter, "identidade de selecao invalida"),
+            Self::NotOpen => write!(formatter, "sessão de terminal inexistente ou encerrada"),
+            Self::InvalidSelection => write!(formatter, "identidade de seleção inválida"),
             Self::MouseUnimplemented => write!(
                 formatter,
-                "gesto de mouse ainda nao implementado: so a roda esta ativa"
+                "gesto de mouse ainda não implementado: só a roda está ativa"
             ),
             Self::Process { message } => write!(formatter, "{message}"),
         }

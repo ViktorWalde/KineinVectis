@@ -54,7 +54,7 @@ pub fn validate(
         return Err("o caminho na placa vai sem `:` na frente — a IDE o acrescenta".to_owned());
     }
     if path.contains('\n') || path.contains('\r') {
-        return Err("o caminho na placa nao pode ter quebra de linha".to_owned());
+        return Err("o caminho na placa não pode ter quebra de linha".to_owned());
     }
     if action != SerialFilesAction::List && path.is_empty() {
         return Err(format!(
@@ -66,7 +66,7 @@ pub fn validate(
         SerialFilesAction::Get | SerialFilesAction::Put => {
             let Some(local) = local else {
                 return Err(format!(
-                    "`{}` exige o campo local (o arquivo nesta maquina)",
+                    "`{}` exige o campo local (o arquivo nesta máquina)",
                     if action == SerialFilesAction::Get {
                         "get"
                     } else {
@@ -76,7 +76,7 @@ pub fn validate(
             };
             if action == SerialFilesAction::Put && !local.is_file() {
                 return Err(format!(
-                    "nao ha' arquivo em {} para enviar a placa",
+                    "não há arquivo em {} para enviar a placa",
                     local.display()
                 ));
             }
@@ -86,7 +86,7 @@ pub fn validate(
                 && !pasta.is_dir()
             {
                 return Err(format!(
-                    "a pasta {} nao existe para receber o arquivo",
+                    "a pasta {} não existe para receber o arquivo",
                     pasta.display()
                 ));
             }

@@ -158,7 +158,7 @@ pub fn ensure_writable(root: &Path) -> Result<(), String> {
 /// Devolve a primeira falha encontrada, na ordem em que o formulario e' lido.
 pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
     if profile.name.trim().is_empty() {
-        return Err("de um nome ao perfil — e' por ele que a IDE o mostra".to_owned());
+        return Err("de um nome ao perfil — é por ele que a IDE o mostra".to_owned());
     }
     // CADA MOTOR COBRA O QUE ELE PEDE. Um arquivo `.db` nao tem host, porta
     // nem usuario; exigir os tres seria pedir ao autor que preenchesse o que
@@ -169,7 +169,7 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
         .installation
         .is_some_and(|installation| !providers::offers(profile.engine, installation))
     {
-        return Err("este motor nao tem o adaptador da IDE; use o interno".to_owned());
+        return Err("este motor não tem o adaptador da IDE; use o interno".to_owned());
     }
     let provider = providers::descriptor(profile.engine);
     if provider.connection_kind == DataSourceConnectionKind::Dsn {
@@ -183,7 +183,7 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
         };
     }
     if profile.host.trim().is_empty() {
-        return Err("informe o host (use `localhost` para um banco nesta maquina)".to_owned());
+        return Err("informe o host (use `localhost` para um banco nesta máquina)".to_owned());
     }
     // O MONGO NAO EXIGE USUARIO. Um servidor local sem autenticacao habilitada
     // e' o caso comum de desenvolvimento, e exigir o campo seria a IDE pedindo
@@ -197,14 +197,14 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
     }
     if profile.port == 0 {
         return Err(format!(
-            "porta invalida — o padrao do `PostgreSQL` e' {DEFAULT_PORT}"
+            "porta inválida — o padrão do `PostgreSQL` é {DEFAULT_PORT}"
         ));
     }
     if profile.database.trim().is_empty() {
         return Err("informe o nome do banco".to_owned());
     }
     if profile.user.trim().is_empty() {
-        return Err("informe o usuario que conecta".to_owned());
+        return Err("informe o usuário que conecta".to_owned());
     }
     Ok(())
 }

@@ -188,7 +188,7 @@ fn validate_child_name(name: &str, kind: NameKind) -> Result<&str, WorkspaceErro
     if trimmed == "." || trimmed == ".." || trimmed.contains('/') || trimmed.contains('\\') {
         return Err(WorkspaceError::InvalidName {
             name: name.to_owned(),
-            reason: "use apenas o nome, nao um caminho".to_owned(),
+            reason: "use apenas o nome, não um caminho".to_owned(),
         });
     }
     if kind == NameKind::Project {
@@ -361,7 +361,7 @@ mod tests {
         let error = create_directory(&dir, "../escape").unwrap_err();
 
         assert!(error.is_invalid_path());
-        assert!(error.to_string().contains("nao um caminho"));
+        assert!(error.to_string().contains("não um caminho"));
     }
 
     #[test]

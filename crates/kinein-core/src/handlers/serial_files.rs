@@ -58,7 +58,7 @@ impl Core {
         {
             return recusa(
                 request_id,
-                &format!("nao consegui criar {}: {erro}", pasta.display()),
+                &format!("não consegui criar {}: {erro}", pasta.display()),
                 &pedido,
             );
         }
@@ -81,8 +81,8 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::ToolNotFound,
-                    "mpremote nao esta' nesta maquina: `pipx install mpremote` (o painel de \
-                     instalacao mostra o passo oficial)",
+                    "mpremote não está nesta máquina: `pipx install mpremote` (o painel de \
+                     instalação mostra o passo oficial)",
                     Some(json!({ "tool": "mpremote" })),
                 ),
             );
@@ -181,7 +181,7 @@ fn executar(
     let mut tentativa = job::rodar(ctx, mpremote, args, FILES_TIMEOUT, "mpremote");
     if !tentativa.sucesso && files::raw_repl_failed(&tentativa.raw) && !ctx.is_cancelled() {
         ctx.emit_output(
-            "a placa nao deixou entrar no raw REPL (o programa dela ocupa a UART): tentando de novo",
+            "a placa não deixou entrar no raw REPL (o programa dela ocupa a UART): tentando de novo",
         );
         let primeira = tentativa.raw;
         tentativa = job::rodar(ctx, mpremote, args, FILES_TIMEOUT, "mpremote");
@@ -192,10 +192,10 @@ fn executar(
     let error = if success {
         None
     } else if ctx.is_cancelled() {
-        Some("operacao cancelada".to_owned())
+        Some("operação cancelada".to_owned())
     } else if tentativa.expirou {
         Some(format!(
-            "o mpremote nao respondeu em {} s: a placa esta' plugada nesta porta e sem outro \
+            "o mpremote não respondeu em {} s: a placa está plugada nesta porta e sem outro \
              programa (monitor serial, REPL) segurando-a?",
             FILES_TIMEOUT.as_secs()
         ))

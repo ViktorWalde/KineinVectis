@@ -606,9 +606,9 @@ fn build_size_reports_the_esp_idf_app_partition_as_the_flash_region() {
             r["name"]
                 .as_str()
                 .unwrap()
-                .starts_with("factory (particao app")
+                .starts_with("factory (partição app")
         })
-        .unwrap_or_else(|| panic!("sem regiao da particao: {regioes:?}"));
+        .unwrap_or_else(|| panic!("sem regiao da partição: {regioes:?}"));
     assert_eq!(app["used"], 123_456);
     assert_eq!(app["size"], 1024 * 1024);
 }

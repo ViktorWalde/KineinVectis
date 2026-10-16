@@ -245,7 +245,7 @@ pub fn run_formatter(
     let Some(mut stdin) = child.stdin.take() else {
         return Err(FormatError::Io {
             tool,
-            source: io::Error::other("stdin do formatter indisponivel"),
+            source: io::Error::other("stdin do formatter indisponível"),
         });
     };
 

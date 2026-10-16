@@ -77,7 +77,7 @@ pub(super) fn describe(
         (
             ConfigActionState::HiddenByScope,
             Some(format!(
-                "{} nao esta ativo neste projeto",
+                "{} não está ativo neste projeto",
                 match action.scope {
                     ConfigActionScope::Cmake => "CMake",
                     ConfigActionScope::Cargo => "Cargo",
@@ -138,10 +138,10 @@ fn evaluate(
 ) -> (ConfigActionState, Option<String>) {
     match action.scope {
         ConfigActionScope::Cmake if facts.cmakelists.is_none() => {
-            return partial("CMakeLists.txt nao existe na raiz do projeto");
+            return partial("CMakeLists.txt não existe na raiz do projeto");
         }
         ConfigActionScope::Cargo if facts.cargo_toml.is_none() => {
-            return partial("Cargo.toml nao existe na raiz do projeto");
+            return partial("Cargo.toml não existe na raiz do projeto");
         }
         _ => {}
     }
@@ -151,13 +151,13 @@ fn evaluate(
             let text = facts.cmakelists.as_deref().unwrap_or_default();
             if cmakelists::exports_compile_commands(text) {
                 already_applied(format!(
-                    "o CMakeLists.txt ja define {}",
+                    "o CMakeLists.txt já define {}",
                     cmakelists::EXPORT_COMPILE_COMMANDS
                 ))
             } else if facts.has_cdb {
                 available()
             } else {
-                recommended("sem compilation database, o clangd nao resolve includes")
+                recommended("sem compilation database, o clangd não resolve includes")
             }
         }
         // As acoes de REGIME de compilacao (2026-09-04): cada uma sabe dizer
@@ -167,26 +167,26 @@ fn evaluate(
         "cmake.setCxxStandard" => marca_no_cmakelists(
             facts,
             "CMAKE_CXX_STANDARD",
-            "o CMakeLists.txt ja fixa o padrao C++",
+            "o CMakeLists.txt já fixa o padrão C++",
         ),
         "cmake.strictWarnings" => {
-            marca_no_cmakelists(facts, "-Wpedantic", "este projeto ja liga avisos rigorosos")
+            marca_no_cmakelists(facts, "-Wpedantic", "este projeto já liga avisos rigorosos")
         }
         "cmake.enableSanitizers" => {
-            marca_no_cmakelists(facts, "-fsanitize", "este projeto ja liga sanitizers")
+            marca_no_cmakelists(facts, "-fsanitize", "este projeto já liga sanitizers")
         }
         "cmake.enableOpenMP" => marca_no_cmakelists(
             facts,
             "OpenMP::OpenMP_CXX",
-            "este projeto ja linka o OpenMP",
+            "este projeto já linka o OpenMP",
         ),
         "cmake.generateHexBin" => marca_no_cmakelists(
             facts,
             "CMAKE_OBJCOPY",
-            "este projeto ja gera .hex/.bin depois do build",
+            "este projeto já gera .hex/.bin depois do build",
         ),
         "cargo.embeddedTarget" if facts.cargo_config => {
-            already_applied(".cargo/config.toml ja existe neste projeto".to_owned())
+            already_applied(".cargo/config.toml já existe neste projeto".to_owned())
         }
         "cmake.createDebugPreset" => preset_state(facts, "debug"),
         "cmake.createReleasePreset" => preset_state(facts, "release"),
@@ -198,13 +198,13 @@ fn evaluate(
             partial("nenhum target declarado no CMakeLists.txt")
         }
         "cmake.inspectCache" if !facts.configured => {
-            partial("o configure ainda nao rodou nesta IDE")
+            partial("o configure ainda não rodou nesta IDE")
         }
         "cmake.repairBuildDir" => {
             if facts.configured {
                 facts.stale.clone().map_or_else(available, recommended)
             } else {
-                unavailable("nao ha diretorio de build da IDE para remover".to_owned())
+                unavailable("não há diretório de build da IDE para remover".to_owned())
             }
         }
         _ => available(),
@@ -217,7 +217,7 @@ fn preset_state(facts: &WorkspaceFacts, name: &str) -> (ConfigActionState, Optio
         .as_deref()
         .is_some_and(|text| presets::has_preset(text, name));
     if exists {
-        already_applied(format!("o preset {name} ja existe em CMakePresets.json"))
+        already_applied(format!("o preset {name} já existe em CMakePresets.json"))
     } else {
         available()
     }

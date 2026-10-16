@@ -49,7 +49,7 @@ pub(super) fn create_configure_preset(
         Some(text) => serde_json::from_str::<Value>(text).map_err(|error| {
             ConfigActionError::UnsupportedShape {
                 path: CMAKE_PRESETS.to_owned(),
-                reason: format!("JSON invalido ({error})"),
+                reason: format!("JSON inválido ({error})"),
             }
         })?,
     };
@@ -57,7 +57,7 @@ pub(super) fn create_configure_preset(
     let Some(object) = document.as_object_mut() else {
         return Err(ConfigActionError::UnsupportedShape {
             path: CMAKE_PRESETS.to_owned(),
-            reason: "a raiz do arquivo nao e um objeto JSON".to_owned(),
+            reason: "a raiz do arquivo não é um objeto JSON".to_owned(),
         });
     };
     object
@@ -70,7 +70,7 @@ pub(super) fn create_configure_preset(
     let Some(presets) = presets.as_array_mut() else {
         return Err(ConfigActionError::UnsupportedShape {
             path: CMAKE_PRESETS.to_owned(),
-            reason: "configurePresets nao e um array".to_owned(),
+            reason: "configurePresets não é um array".to_owned(),
         });
     };
     if presets
@@ -78,7 +78,7 @@ pub(super) fn create_configure_preset(
         .any(|preset| preset.get("name").and_then(Value::as_str) == Some(name))
     {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("o preset {name} ja existe em {CMAKE_PRESETS}"),
+            reason: format!("o preset {name} já existe em {CMAKE_PRESETS}"),
         });
     }
     presets.push(preset_value(name, display_name, build_type));
@@ -108,7 +108,7 @@ pub(super) fn create_configure_preset(
     } else {
         plan = plan.with_note(
             "O arquivo e reescrito formatado (2 espacos, chaves em ordem alfabetica); \
-             o diff acima ja mostra o resultado exato."
+             o diff acima já mostra o resultado exato."
                 .to_owned(),
         );
     }

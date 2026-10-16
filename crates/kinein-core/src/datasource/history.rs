@@ -141,10 +141,10 @@ impl History {
             Err(error) => return Err(format!("{}: {error}", path.display())),
         };
         let file: HistoryFile = serde_json::from_str(&body)
-            .map_err(|error| format!("{}: historico ilegivel ({error})", path.display()))?;
+            .map_err(|error| format!("{}: histórico ilegível ({error})", path.display()))?;
         if file.schema_version != SCHEMA_VERSION || file.workspace != workspace {
             return Err(format!(
-                "{}: historico de outra versao ou de outro projeto",
+                "{}: histórico de outra versão ou de outro projeto",
                 path.display()
             ));
         }

@@ -44,7 +44,7 @@ impl Core {
         if let Err(response) = parse_params::<LibraryListParams>(
             request_id.as_ref(),
             params,
-            "library.list nao aceita parametros",
+            "library.list não aceita parametros",
         ) {
             return *response;
         }

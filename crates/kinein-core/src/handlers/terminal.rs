@@ -51,7 +51,7 @@ impl Core {
         let parsed = match parse_params::<TerminalSelectionParams>(
             request_id.as_ref(),
             params,
-            "selecao requer id e selectionId",
+            "seleção requer id e selectionId",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,

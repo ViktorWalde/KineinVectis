@@ -101,11 +101,11 @@ impl fmt::Display for WorkspaceError {
             Self::InvalidRoot { path, source } => {
                 write!(
                     formatter,
-                    "nao foi possivel abrir o projeto em {path}: {source}"
+                    "não foi possível abrir o projeto em {path}: {source}"
                 )
             }
             Self::NotADirectory { path } => {
-                write!(formatter, "o caminho {path} nao e um diretorio")
+                write!(formatter, "o caminho {path} não é um diretório")
             }
             Self::Persist { path, source } => {
                 write!(
@@ -114,22 +114,22 @@ impl fmt::Display for WorkspaceError {
                 )
             }
             Self::ListDirectory { path, source } => {
-                write!(formatter, "falha ao listar diretorio {path}: {source}")
+                write!(formatter, "falha ao listar diretório {path}: {source}")
             }
             Self::InvalidName { name, reason } => {
-                write!(formatter, "nome invalido {name}: {reason}")
+                write!(formatter, "nome inválido {name}: {reason}")
             }
             Self::AlreadyExists { path } => {
-                write!(formatter, "o caminho {path} ja existe")
+                write!(formatter, "o caminho {path} já existe")
             }
             Self::CreateDirectory { path, source } => {
-                write!(formatter, "falha ao criar diretorio {path}: {source}")
+                write!(formatter, "falha ao criar diretório {path}: {source}")
             }
             Self::WriteTemplate { path, source } => {
                 write!(formatter, "falha ao gravar template em {path}: {source}")
             }
             Self::MissingTool { tool } => {
-                write!(formatter, "{tool} nao foi encontrado no PATH")
+                write!(formatter, "{tool} não foi encontrado no PATH")
             }
             Self::ToolFailed {
                 command,
@@ -138,7 +138,7 @@ impl fmt::Display for WorkspaceError {
             } => {
                 write!(
                     formatter,
-                    "{command} falhou com codigo {exit_code:?}: {message}"
+                    "{command} falhou com código {exit_code:?}: {message}"
                 )
             }
             Self::Serialize(error) => {

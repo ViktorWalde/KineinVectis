@@ -41,7 +41,7 @@ impl Core {
         if request.sql.trim().is_empty() {
             return JsonRpcResponse::failure(
                 request_id,
-                JsonRpcError::new(JsonRpcErrorCode::InvalidParams, "escreva a instrucao", None),
+                JsonRpcError::new(JsonRpcErrorCode::InvalidParams, "escreva a instrução", None),
             );
         }
         let profile = match Self::find_profile(&root, &request.name) {

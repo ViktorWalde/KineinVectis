@@ -22,7 +22,7 @@ pub fn run_metadata(
         .args(["metadata", "--format-version", "1", "--no-deps"])
         .current_dir(root)
         .output()
-        .map_err(|error| format!("cargo nao pode ser executado: {error}"))?;
+        .map_err(|error| format!("cargo não pode ser executado: {error}"))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(format!(
@@ -37,7 +37,7 @@ pub fn run_metadata(
 /// Resume o JSON do `cargo metadata` no payload do protocolo.
 pub fn parse_metadata(body: &str) -> Result<CargoMetadataResult, String> {
     let value: Value =
-        serde_json::from_str(body).map_err(|error| format!("metadata invalido: {error}"))?;
+        serde_json::from_str(body).map_err(|error| format!("metadata inválido: {error}"))?;
 
     let mut packages = Vec::new();
     for package in value
@@ -137,7 +137,7 @@ mod tests {
 
     #[test]
     fn parse_rejects_invalid_json_with_human_message() {
-        let error = parse_metadata("nao é json").unwrap_err();
-        assert!(error.contains("metadata invalido"));
+        let error = parse_metadata("não é json").unwrap_err();
+        assert!(error.contains("metadata inválido"));
     }
 }

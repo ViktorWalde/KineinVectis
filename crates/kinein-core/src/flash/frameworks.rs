@@ -46,18 +46,18 @@ pub(super) fn propose(
         ("idf.py" | "idf", Some(Engine::EspIdf { activation })) => {
             let porta = device.ok_or_else(|| FlashError::NoDevice {
                 message: "escolha a porta no painel de Embarcados: o idf.py autodetecta, mas \
-                          gravar na placa errada e' pior que um clique"
+                          gravar na placa errada é pior que um clique"
                     .to_owned(),
             })?;
             source.push(format!(
-                "ambiente: . {} (a ativacao do ESP-IDF, como o Get Started manda)",
+                "ambiente: . {} (a ativação do ESP-IDF, como o Get Started manda)",
                 activation.display()
             ));
             source.push(format!(
                 "porta: {porta} (escolhida no painel de Embarcados)"
             ));
             source.push(
-                "o que grava: o build/ do idf.py (bootloader, tabela de particoes, app)".to_owned(),
+                "o que grava: o build/ do idf.py (bootloader, tabela de partições, app)".to_owned(),
             );
             (
                 "idf.py",
@@ -75,7 +75,7 @@ pub(super) fn propose(
                 .push("o que grava: build/ pelo runner do board (west flash -d build)".to_owned());
             if device.is_some() {
                 warnings.push(
-                    "o west grava pelo runner do board (sonda/USB), nao pela porta escolhida; \
+                    "o west grava pelo runner do board (sonda/USB), não pela porta escolhida; \
                      para um runner serial acrescente `--dev-id`/`--runner` a linha"
                         .to_owned(),
                 );
@@ -96,7 +96,7 @@ pub(super) fn propose(
                 source.push("porta: a que o pio detectar (sem --upload-port)".to_owned());
             }
             source
-                .push("o que grava: o env padrao do platformio.ini (pio run -t upload)".to_owned());
+                .push("o que grava: o env padrão do platformio.ini (pio run -t upload)".to_owned());
             ("platformio", linha)
         }
         ("platformio" | "pio", _) => return Err(sem_framework("PlatformIO", model, "pio")),
@@ -126,7 +126,7 @@ fn sem_framework(framework: &str, model: &ProjectModel, sdk: &str) -> FlashError
     FlashError::MissingTool {
         tool: framework.to_owned(),
         hint: if model.frameworks.is_empty() {
-            format!("este projeto nao e' {framework} (o modelo nao achou o marcador)")
+            format!("este projeto não é {framework} (o modelo não achou o marcador)")
         } else {
             hint
         },
@@ -184,7 +184,7 @@ mod tests {
         match propose(&modelo(), "idf.py", Some("/dev/ttyUSB0"), None) {
             Err(FlashError::MissingTool { tool, hint }) => {
                 assert_eq!(tool, "ESP-IDF");
-                assert!(hint.contains("nao e' ESP-IDF"), "{hint}");
+                assert!(hint.contains("não é ESP-IDF"), "{hint}");
             }
             outro => panic!("{outro:?}"),
         }

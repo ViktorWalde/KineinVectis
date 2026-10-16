@@ -222,7 +222,7 @@ fn chip_do_framework(info: &FrameworkInfo) -> Option<(String, String)> {
             Some((
                 chip.to_owned(),
                 format!(
-                    "{} (platform {plataforma}; familia, nao o chip exato)",
+                    "{} (platform {plataforma}; familia, não o chip exato)",
                     info.evidence
                 ),
             ))
@@ -299,7 +299,7 @@ fn motores(
             );
         }
         Some(Framework::MicroPython) => {
-            return (Some("esptool"), Some("serial"), None, Some("motores: firmware pelo esptool/UF2; REPL pelo mpremote; sem depurador (MicroPython nao tem DAP)".to_owned()));
+            return (Some("esptool"), Some("serial"), None, Some("motores: firmware pelo esptool/UF2; REPL pelo mpremote; sem depurador (MicroPython não tem DAP)".to_owned()));
         }
         _ => {}
     }
@@ -329,7 +329,7 @@ fn motores(
             Some("serial"),
             Some("probe-rs"),
             Some(
-                "motores: probe-rs por SWD (ST-Link); dfu-util e' a alternativa sem sonda"
+                "motores: probe-rs por SWD (ST-Link); dfu-util é a alternativa sem sonda"
                     .to_owned(),
             ),
         ),

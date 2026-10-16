@@ -45,7 +45,7 @@ impl Core {
                         request_id,
                         JsonRpcError::new(
                             JsonRpcErrorCode::InvalidParams,
-                            format!("programa nao encontrado: {}", path.display()),
+                            format!("programa não encontrado: {}", path.display()),
                             None,
                         ),
                     );
@@ -56,7 +56,7 @@ impl Core {
                 alvo.program_path()
                     .map(std::path::Path::to_path_buf)
                     .ok_or_else(|| dap::DebugError::NoTarget {
-                        message: "o alvo e' um modulo Python, nao um ELF".to_owned(),
+                        message: "o alvo é um modulo Python, não um ELF".to_owned(),
                     })
             }) {
                 Ok(program) => program,

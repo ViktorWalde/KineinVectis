@@ -129,7 +129,7 @@ impl fmt::Display for LspError {
                 write!(formatter, "nenhum servidor LSP suporta o arquivo {path}")
             }
             Self::MissingServer { command } => {
-                write!(formatter, "{command} nao foi encontrado no PATH")
+                write!(formatter, "{command} não foi encontrado no PATH")
             }
             Self::ServerFailed { command, message } => {
                 write!(formatter, "falha ao iniciar {command}: {message}")
@@ -137,11 +137,11 @@ impl fmt::Display for LspError {
             Self::Starting { key } => {
                 write!(
                     formatter,
-                    "o servidor {key} ainda esta subindo — tente em instantes"
+                    "o servidor {key} ainda está subindo — tente em instantes"
                 )
             }
             Self::Timeout { method } => {
-                write!(formatter, "{method} nao respondeu a tempo")
+                write!(formatter, "{method} não respondeu a tempo")
             }
             Self::RequestFailed { method, message } => {
                 write!(formatter, "{method} falhou: {message}")

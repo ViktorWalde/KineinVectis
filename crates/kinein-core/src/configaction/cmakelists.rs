@@ -75,7 +75,7 @@ pub(super) fn enable_compile_commands(
     let before = read_required(root, CMAKELISTS)?;
     if exports_compile_commands(&before) {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("{CMAKELISTS} ja define {EXPORT_COMPILE_COMMANDS}"),
+            reason: format!("{CMAKELISTS} já define {EXPORT_COMPILE_COMMANDS}"),
         });
     }
 
@@ -90,7 +90,7 @@ pub(super) fn enable_compile_commands(
         },
     )
     .with_note(
-        "Vale na proxima configuracao do CMake; rode 'Configurar' para o clangd \
+        "Vale na próxima configuração do CMake; rode 'Configurar' para o clangd \
          receber as flags novas."
             .to_owned(),
     ))
@@ -123,7 +123,7 @@ fn add_target(
     let before = read_required(root, CMAKELISTS)?;
     if declared_targets(&before).contains(&name) {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("o target {name} ja esta declarado no {CMAKELISTS}"),
+            reason: format!("o target {name} já está declarado no {CMAKELISTS}"),
         });
     }
 
@@ -283,7 +283,7 @@ pub(super) fn existing_target(
     if !declared.contains(&target) {
         return Err(ConfigActionError::NotApplicable {
             reason: format!(
-                "o target {target} nao esta declarado no {CMAKELISTS} (declarados: {})",
+                "o target {target} não está declarado no {CMAKELISTS} (declarados: {})",
                 if declared.is_empty() {
                     "nenhum".to_owned()
                 } else {
@@ -366,7 +366,7 @@ fn validate_target_name(raw: &str) -> Result<String, ConfigActionError> {
     if name.is_empty() {
         return Err(ConfigActionError::InvalidParam {
             name: param,
-            reason: "o nome do target nao pode ser vazio".to_owned(),
+            reason: "o nome do target não pode ser vazio".to_owned(),
         });
     }
     if !name
@@ -418,7 +418,7 @@ pub(super) fn one_argument(raw: &str, name: &'static str) -> Result<String, Conf
     if valores.len() != 1 {
         return Err(ConfigActionError::InvalidParam {
             name,
-            reason: format!("esperado um valor so', veio {}", valores.len()),
+            reason: format!("esperado um valor só, veio {}", valores.len()),
         });
     }
     Ok(valores.remove(0))
@@ -438,7 +438,7 @@ fn validate_arguments(raw: &str, name: &'static str) -> Result<Vec<String>, Conf
         if value.contains(['"', '(', ')', '$', '\\', ';']) {
             return Err(ConfigActionError::InvalidParam {
                 name,
-                reason: format!("{value} tem caractere que a IDE nao escreve em CMake"),
+                reason: format!("{value} tem caractere que a IDE não escreve em CMake"),
             });
         }
     }

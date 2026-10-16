@@ -86,7 +86,7 @@ impl fmt::Display for RegistryError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
-            "query {} de {} invalida: {}",
+            "query {} de {} inválida: {}",
             self.query,
             self.language.as_str(),
             self.source

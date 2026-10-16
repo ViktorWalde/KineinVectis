@@ -469,7 +469,7 @@ fn run_device_is_exclusive_with_command_and_never_blank() {
     let erro = contradicao.error.unwrap();
     assert_eq!(erro.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
     assert!(
-        erro.message.contains("device so' vale sem command"),
+        erro.message.contains("device só vale sem command"),
         "{erro:?}"
     );
 

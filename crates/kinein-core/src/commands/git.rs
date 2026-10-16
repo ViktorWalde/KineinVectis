@@ -42,9 +42,9 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
         },
         CommandDescriptor {
             id: "git.log".to_owned(),
-            title: "Git: Historico".to_owned(),
+            title: "Git: Histórico".to_owned(),
             category: "Git".to_owned(),
-            description: "Abre o historico de commits na aba Git (diff por clique)".to_owned(),
+            description: "Abre o histórico de commits na aba Git (diff por clique)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
             internal: false,

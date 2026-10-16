@@ -149,7 +149,7 @@ impl OwnedChild {
         else {
             drop(child.kill());
             drop(child.wait());
-            return Err(io::Error::other("pipe do processo indisponivel"));
+            return Err(io::Error::other("pipe do processo indisponível"));
         };
         let stderr = StderrTail::spawn(stderr, DEFAULT_CAPACITY, stderr_lines);
         let reader = thread::spawn(move || read_stdout(stdout));

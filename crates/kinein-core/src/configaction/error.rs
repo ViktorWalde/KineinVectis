@@ -87,21 +87,21 @@ impl fmt::Display for ConfigActionError {
             }
             Self::OutOfScope { id } => write!(
                 formatter,
-                "a acao {id} nao pertence a nenhum build system ativo deste projeto"
+                "a ação {id} não pertence a nenhum build system ativo deste projeto"
             ),
             Self::MissingParam { name } => {
                 write!(
                     formatter,
-                    "o parametro obrigatorio '{name}' nao foi enviado"
+                    "o parametro obrigatório '{name}' não foi enviado"
                 )
             }
             Self::InvalidParam { name, reason } => {
-                write!(formatter, "parametro '{name}' invalido: {reason}")
+                write!(formatter, "parametro '{name}' inválido: {reason}")
             }
             Self::NotApplicable { reason } => formatter.write_str(reason),
             Self::UnsupportedShape { path, reason } => write!(
                 formatter,
-                "{path} tem uma forma que a IDE nao edita com seguranca: {reason}"
+                "{path} tem uma forma que a IDE não edita com seguranca: {reason}"
             ),
             Self::Fs(error) => write!(formatter, "{error}"),
         }

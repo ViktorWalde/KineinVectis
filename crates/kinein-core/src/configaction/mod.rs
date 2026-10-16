@@ -233,7 +233,7 @@ fn build_plan(
         "cargo.setEdition" => cargotoml::set_edition(root, params),
         "cargo.check" => Ok(
             ActionPlan::effect("Roda cargo check --workspace --all-targets").with_note(
-                "Nao altera arquivo nenhum. Os erros aparecem na aba Problemas, \
+                "Não altera arquivo nenhum. Os erros aparecem na aba Problemas, \
              pelo mesmo caminho do clippy."
                     .to_owned(),
             ),

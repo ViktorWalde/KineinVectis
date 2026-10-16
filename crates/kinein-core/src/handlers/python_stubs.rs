@@ -55,7 +55,7 @@ impl Core {
                     request_id,
                     JsonRpcError::new(
                         JsonRpcErrorCode::InvalidRequest,
-                        "o modelo do projeto nao diz a placa: identifique-a pelo canal ou fixe o \
+                        "o modelo do projeto não diz a placa: identifique-a pelo canal ou fixe o \
                          chip no kit — ou peca `port` (esp32, rp2, stm32, nrf) e `board` no pedido",
                         Some(json!({ "method": "python.stubs" })),
                     ),
@@ -77,8 +77,8 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::ToolNotFound,
-                    "nem `uv` nem um interpretador Python nesta maquina para instalar os stubs \
-                     (o painel de instalacao mostra o passo do uv)",
+                    "nem `uv` nem um interpretador Python nesta máquina para instalar os stubs \
+                     (o painel de instalação mostra o passo do uv)",
                     Some(json!({ "tool": "uv" })),
                 ),
             );
@@ -131,7 +131,7 @@ fn instalar(
         Ok(status) => status.success(),
         Err(erro) => {
             ctx.emit_output(&match erro {
-                crate::process::ProcessError::Spawn(e) => format!("nao foi possivel iniciar: {e}"),
+                crate::process::ProcessError::Spawn(e) => format!("não foi possível iniciar: {e}"),
                 crate::process::ProcessError::Wait(e) => format!("falha aguardando: {e}"),
             });
             false
@@ -143,7 +143,7 @@ fn instalar(
             .is_some_and(|raiz| stubs::installed(raiz).is_some());
     if ok && !success {
         ctx.emit_output(&format!(
-            "o instalador terminou sem erro, mas {} nao tem nenhum .pyi",
+            "o instalador terminou sem erro, mas {} não tem nenhum .pyi",
             target.display()
         ));
     }

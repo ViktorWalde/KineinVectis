@@ -327,7 +327,7 @@ pub(super) fn workspace_edit_plan(result: &Value) -> Result<WorkspaceEditPlan, L
             if change.get("kind").and_then(Value::as_str).is_some() {
                 return Err(LspError::RequestFailed {
                     method: "textDocument/rename",
-                    message: "rename que cria/renomeia/apaga arquivos ainda nao e suportado"
+                    message: "rename que cria/renomeia/apaga arquivos ainda não é suportado"
                         .to_owned(),
                 });
             }
@@ -424,7 +424,7 @@ fn file_edits_from_value(
     edits: &Value,
 ) -> Result<FileEdits, LspError> {
     let path = path_for_uri(uri).ok_or_else(|| LspError::Transport {
-        message: format!("uri de rename invalida: {uri}"),
+        message: format!("uri de rename inválida: {uri}"),
     })?;
     let raw = edits.as_array().ok_or_else(|| LspError::Transport {
         message: format!("edits de rename invalidos para {path}"),

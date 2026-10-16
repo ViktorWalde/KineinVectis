@@ -63,7 +63,7 @@ impl fmt::Display for WatchError {
                 "watcher nativo falhou ({native}) e fallback por polling falhou ({fallback})"
             ),
             Self::Directory { path, source } => {
-                write!(formatter, "nao foi possivel observar {path}: {source}")
+                write!(formatter, "não foi possível observar {path}: {source}")
             }
         }
     }

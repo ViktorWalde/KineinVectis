@@ -247,13 +247,13 @@ pub fn validate_host(host: &str) -> Result<(), String> {
         return Err("informe o alias ou host a resolver".to_owned());
     }
     if host.starts_with('-') {
-        return Err("o host nao pode comecar com `-`: o ssh leria como opcao".to_owned());
+        return Err("o host não pode comecar com `-`: o ssh leria como opção".to_owned());
     }
     if host.len() > 255 {
         return Err("host longo demais para um alias de SSH".to_owned());
     }
     if host.contains(char::is_whitespace) || host.contains('@') {
-        return Err("o host nao leva usuario nem espaco — o usuario tem campo proprio".to_owned());
+        return Err("o host não leva usuário nem espaco — o usuário tem campo próprio".to_owned());
     }
     if host.chars().any(char::is_control) {
         return Err("o host tem caractere de controle".to_owned());

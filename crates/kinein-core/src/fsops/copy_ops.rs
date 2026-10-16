@@ -146,7 +146,7 @@ fn copyable_metadata<C: Fn() -> bool>(
     if depth > 256 {
         return Err(FsError::InvalidPath {
             path: source.display().to_string(),
-            source: io::Error::other("copia excedeu 256 niveis de pastas"),
+            source: io::Error::other("copia excedeu 256 níveis de pastas"),
         });
     }
     let metadata = descriptor.metadata().map_err(|error| FsError::Io {

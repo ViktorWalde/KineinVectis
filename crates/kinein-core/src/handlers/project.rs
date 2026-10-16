@@ -35,7 +35,7 @@ impl Core {
         if let Err(response) = parse_params::<ProjectModelParams>(
             request_id.as_ref(),
             params,
-            "project.model nao aceita parametros",
+            "project.model não aceita parametros",
         ) {
             return *response;
         }

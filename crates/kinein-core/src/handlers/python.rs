@@ -135,7 +135,7 @@ impl Core {
         if let Err(response) = parse_params::<PythonStatusParams>(
             request_id.as_ref(),
             params,
-            "python.status nao aceita parametros",
+            "python.status não aceita parametros",
         ) {
             return *response;
         }
@@ -197,11 +197,11 @@ impl Core {
                     kinein_protocol::JsonRpcErrorCode::InvalidParams,
                     match tool {
                         PythonEnvironmentTool::Uv => {
-                            "o uv nao foi detectado nesta maquina (o painel de instalacao mostra o \
+                            "o uv não foi detectado nesta máquina (o painel de instalação mostra o \
                              passo oficial); ou peca tool = venv"
                         }
                         PythonEnvironmentTool::Venv => {
-                            "nenhum python3 detectado nesta maquina para criar o ambiente"
+                            "nenhum python3 detectado nesta máquina para criar o ambiente"
                         }
                     },
                     Some(json!({ "method": "python.createEnvironment", "tool": tool })),
@@ -238,7 +238,7 @@ fn criar_ambiente(
         Ok(status) => status.success(),
         Err(erro) => {
             ctx.emit_output(&match erro {
-                crate::process::ProcessError::Spawn(e) => format!("nao foi possivel iniciar: {e}"),
+                crate::process::ProcessError::Spawn(e) => format!("não foi possível iniciar: {e}"),
                 crate::process::ProcessError::Wait(e) => format!("falha aguardando: {e}"),
             });
             false
@@ -247,7 +247,7 @@ fn criar_ambiente(
     let success = ok && destino.join("bin").join("python").is_file();
     if ok && !success {
         ctx.emit_output(&format!(
-            "a ferramenta terminou sem erro, mas {} nao existe",
+            "a ferramenta terminou sem erro, mas {} não existe",
             destino.join("bin/python").display()
         ));
     }

@@ -152,7 +152,7 @@ fn create_environment_refuses_with_a_reason_what_the_machine_lacks() {
         Some(json!({ "tool": "uv" })),
     ));
     let erro = sem_uv.response().error.clone().unwrap();
-    assert!(erro.message.contains("uv nao foi detectado"), "{erro:?}");
+    assert!(erro.message.contains("uv não foi detectado"), "{erro:?}");
     let sem_python = core.handle_request(&JsonRpcRequest::new(
         5_i64,
         "python.createEnvironment",

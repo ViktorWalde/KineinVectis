@@ -38,8 +38,8 @@ fn sections(text: &str) -> Result<Vec<Section>, ConfigActionError> {
     if text.contains("\"\"\"") || text.contains("'''") {
         return Err(ConfigActionError::UnsupportedShape {
             path: CARGO_TOML.to_owned(),
-            reason: "ha string multilinha (\"\"\" ou ''') e a IDE nao consegue \
-                     distinguir cabecalho de secao dentro dela"
+            reason: "há string multilinha (\"\"\" ou ''') e a IDE não consegue \
+                     distinguir cabecalho de seção dentro dela"
                 .to_owned(),
         });
     }
@@ -174,7 +174,7 @@ pub(super) fn add_dependency(
     let lines: Vec<&str> = before.lines().collect();
     if declares_key(&lines, &found, section, &name) {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("{name} ja esta em [{section}] do {CARGO_TOML}"),
+            reason: format!("{name} já está em [{section}] do {CARGO_TOML}"),
         });
     }
 
@@ -199,7 +199,7 @@ pub(super) fn add_dependency(
         },
     )
     .with_note(
-        "A versao nao e resolvida na rede: a IDE escreve exatamente o que voce \
+        "A versão não é resolvida na rede: a IDE escreve exatamente o que você \
          informou. Rode 'cargo check' para o Cargo baixar e travar a dependencia."
             .to_owned(),
     ))
@@ -222,7 +222,7 @@ pub(super) fn add_feature(
     let lines: Vec<&str> = before.lines().collect();
     if declares_key(&lines, &found, "features", &name) {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("a feature {name} ja existe em [features] do {CARGO_TOML}"),
+            reason: format!("a feature {name} já existe em [features] do {CARGO_TOML}"),
         });
     }
 
@@ -261,7 +261,7 @@ pub(super) fn set_edition(
     if !found.iter().any(|section| section.name == "package") {
         return Err(ConfigActionError::NotApplicable {
             reason: format!(
-                "{CARGO_TOML} nao tem [package] (workspace virtual nao declara edition)"
+                "{CARGO_TOML} não tem [package] (workspace virtual não declara edition)"
             ),
         });
     }
@@ -295,7 +295,7 @@ pub(super) fn set_edition(
         Some((index, _)) => {
             if lines[index].trim() == entry {
                 return Err(ConfigActionError::NotApplicable {
-                    reason: format!("o pacote ja usa a edition {edition}"),
+                    reason: format!("o pacote já usa a edition {edition}"),
                 });
             }
             let mut after = String::with_capacity(before.len());
@@ -317,7 +317,7 @@ pub(super) fn set_edition(
         },
     )
     .with_note(
-        "Trocar de edition pode exigir ajustes no codigo; rode 'cargo check' depois.".to_owned(),
+        "Trocar de edition pode exigir ajustes no código; rode 'cargo check' depois.".to_owned(),
     ))
 }
 
@@ -376,7 +376,7 @@ fn validate_version(raw: &str) -> Result<String, ConfigActionError> {
     if !valid {
         return Err(ConfigActionError::InvalidParam {
             name: "version",
-            reason: "caractere fora do vocabulario de versao do Cargo".to_owned(),
+            reason: "caractere fora do vocabulario de versão do Cargo".to_owned(),
         });
     }
     Ok(version.to_owned())
@@ -402,7 +402,7 @@ fn validate_feature_value(raw: &str, param: &'static str) -> Result<String, Conf
     } else {
         Err(ConfigActionError::InvalidParam {
             name: param,
-            reason: format!("{raw} nao e um valor de feature valido"),
+            reason: format!("{raw} não é um valor de feature válido"),
         })
     }
 }

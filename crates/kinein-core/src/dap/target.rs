@@ -68,8 +68,8 @@ pub fn resolve_program(kind: ProjectKind, root: &Path) -> Result<DebugTarget, De
         | ProjectKind::Make
         | ProjectKind::PlatformIo
         | ProjectKind::Unknown => Err(DebugError::NoTarget {
-            message: "este tipo de projeto ainda nao tem alvo de debug automatico; \
-                          informe o executavel em debug.start { program }"
+            message: "este tipo de projeto ainda não tem alvo de debug automático; \
+                          informe o executável em debug.start { program }"
                 .to_owned(),
         }),
     }
@@ -132,12 +132,12 @@ fn single_binary(mut binaries: Vec<PathBuf>, location: &str) -> Result<PathBuf, 
     binaries.sort();
     match binaries.as_slice() {
         [] => Err(DebugError::NoTarget {
-            message: format!("nenhum executavel em {location}; compile antes (Ctrl+F9)"),
+            message: format!("nenhum executável em {location}; compile antes (Ctrl+F9)"),
         }),
         [single] => Ok(single.clone()),
         _multiple => Err(DebugError::NoTarget {
             message: format!(
-                "mais de um executavel em {location} ({}); \
+                "mais de um executável em {location} ({}); \
                  informe o alvo em debug.start {{ program }}",
                 binaries
                     .iter()
@@ -200,7 +200,7 @@ mod tests {
 
         write_executable(&debug_dir.join("outro"));
         let error = resolve_program(ProjectKind::RustCargo, &root).unwrap_err();
-        assert!(error.to_string().contains("mais de um executavel"));
+        assert!(error.to_string().contains("mais de um executável"));
     }
 
     #[test]

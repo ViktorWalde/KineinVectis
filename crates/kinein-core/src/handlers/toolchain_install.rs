@@ -53,7 +53,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InternalError,
-                    "sem $HOME: nao sei onde a IDE instala toolchains",
+                    "sem $HOME: não sei onde a IDE instala toolchains",
                     None,
                 ),
             );
@@ -106,7 +106,7 @@ impl Core {
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
                     format!(
-                        "`{}` nao esta' no catalogo de toolchains instalaveis (toolchain.installable lista os ids)",
+                        "`{}` não está no catalogo de toolchains instaláveis (toolchain.installable lista os ids)",
                         parsed.id
                     ),
                     None,
@@ -125,7 +125,7 @@ impl Core {
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidRequest,
                     format!(
-                        "{} {} ja' esta' instalada em {}",
+                        "{} {} já está instalada em {}",
                         entrada.label,
                         entrada.version,
                         install::install_dir(&raiz, entrada).display()
@@ -147,7 +147,7 @@ impl Core {
                         request_id,
                         JsonRpcError::new(
                             JsonRpcErrorCode::ToolNotFound,
-                            "`tar` nao esta' nesta maquina — o pacote `tar` da distro desempacota a toolchain",
+                            "`tar` não está nesta máquina — o pacote `tar` da distro desempacota a toolchain",
                             Some(json!({ "tool": "tar" })),
                         ),
                     );
@@ -171,16 +171,16 @@ impl Core {
     /// desconhecido, nao e' firmware, ainda nao baixado.
     pub(crate) fn firmware_image(&self, id: &str) -> Result<crate::flash::FirmwareImage, String> {
         let e = install::entrada(id)
-            .ok_or_else(|| format!("`{id}` nao esta' no catalogo (toolchain.installable)"))?;
+            .ok_or_else(|| format!("`{id}` não está no catalogo (toolchain.installable)"))?;
         let fw = e
             .firmware
             .filter(|_| e.kind == Kind::Firmware)
-            .ok_or_else(|| format!("`{id}` e' uma toolchain, nao um firmware"))?;
+            .ok_or_else(|| format!("`{id}` é uma toolchain, não um firmware"))?;
         let raiz = self.toolchain_install_root().ok_or("sem $HOME")?;
         let file = install::installed_path(&raiz, e);
         if !file.is_file() {
             return Err(format!(
-                "{} {} ainda nao foi baixado: instale-o pelo catalogo (toolchain.install)",
+                "{} {} ainda não foi baixado: instale-o pelo catalogo (toolchain.install)",
                 e.label, e.version
             ));
         }
@@ -270,7 +270,7 @@ fn instalar(
                 )
             } else {
                 format!(
-                    "instalada em {} — o detector ja' a enxerga; fixe-a no kit se quiser",
+                    "instalada em {} — o detector já a enxerga; fixe-a no kit se quiser",
                     destino.display()
                 )
             });

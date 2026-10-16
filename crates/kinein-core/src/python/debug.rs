@@ -33,7 +33,7 @@ pub fn debugpy_available(interpreter: &Path) -> Result<(), String> {
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("nao consegui executar {}: {e}", interpreter.display()))?;
+        .map_err(|e| format!("não consegui executar {}: {e}", interpreter.display()))?;
     let inicio = std::time::Instant::now();
     let status = loop {
         match child.try_wait() {
@@ -44,7 +44,7 @@ pub fn debugpy_available(interpreter: &Path) -> Result<(), String> {
             Ok(None) => {
                 drop(child.kill());
                 return Err(format!(
-                    "{} nao respondeu ao `import debugpy` em {}s",
+                    "{} não respondeu ao `import debugpy` em {}s",
                     interpreter.display(),
                     PRAZO.as_secs()
                 ));
@@ -115,6 +115,6 @@ mod tests {
         );
 
         let erro = debugpy_available(&dir.join("nao-existe")).unwrap_err();
-        assert!(erro.contains("nao consegui executar"), "{erro}");
+        assert!(erro.contains("não consegui executar"), "{erro}");
     }
 }

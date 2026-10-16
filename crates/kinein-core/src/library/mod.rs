@@ -112,7 +112,7 @@ pub fn plan(root: Option<&Path>, id: &str, target: &str) -> Result<LibraryPlan, 
         return Err(format!("biblioteca desconhecida: {id}"));
     };
     if target.trim().is_empty() {
-        return Err("o alvo do CMake nao pode ser vazio".to_owned());
+        return Err("o alvo do CMake não pode ser vazio".to_owned());
     }
 
     // JA' LIGADA? Entao o plano e' o INVERSO. Sem isto a unica saida do autor
@@ -136,7 +136,7 @@ pub fn plan(root: Option<&Path>, id: &str, target: &str) -> Result<LibraryPlan, 
             steps: vec![LibraryStep {
                 action_id: "cmake.removeTargetLinkLibraries".to_owned(),
                 summary: format!(
-                    "Remove {} de {target} — a biblioteca ja esta ligada neste projeto",
+                    "Remove {} de {target} — a biblioteca já está ligada neste projeto",
                     entry.targets.join(", ")
                 ),
                 params: BTreeMap::from([
@@ -158,7 +158,7 @@ pub fn plan(root: Option<&Path>, id: &str, target: &str) -> Result<LibraryPlan, 
         steps.push(LibraryStep {
             action_id: "cmake.findPackage".to_owned(),
             summary: format!(
-                "find_package({} CONFIG REQUIRED) — o pacote esta instalado nesta maquina",
+                "find_package({} CONFIG REQUIRED) — o pacote está instalado nesta máquina",
                 entry.package_name
             ),
             params: BTreeMap::from([("package".to_owned(), entry.package_name.to_owned())]),
@@ -173,8 +173,8 @@ pub fn plan(root: Option<&Path>, id: &str, target: &str) -> Result<LibraryPlan, 
             // reprodutivel fora desta maquina. O resumo diz o caminho que
             // dispensa a URL, em vez de deixar o autor descobrir sozinho.
             summary: format!(
-                "FetchContent de {} na tag {} — o pacote nao foi encontrado no sistema. \
-                 Se voce instalar o pacote de desenvolvimento da sua distro, a IDE passa \
+                "FetchContent de {} na tag {} — o pacote não foi encontrado no sistema. \
+                 Se você instalar o pacote de desenvolvimento da sua distro, a IDE passa \
                  a usar find_package e NENHUMA URL entra no CMakeLists",
                 entry.repository, entry.pinned_version
             ),

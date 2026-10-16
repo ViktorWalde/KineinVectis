@@ -104,7 +104,7 @@ pub fn save(
     let name = name.trim();
     let command = command.trim();
     if name.is_empty() || command.is_empty() {
-        return Err("nome e comando nao podem ser vazios".to_owned());
+        return Err("nome e comando não podem ser vazios".to_owned());
     }
 
     let mut file = read_file(root);

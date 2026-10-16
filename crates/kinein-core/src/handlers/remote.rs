@@ -26,7 +26,7 @@ use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params}
 
 fn descrever_processo(erro: &crate::process::ProcessError) -> String {
     match erro {
-        crate::process::ProcessError::Spawn(e) => format!("nao pude iniciar o processo: {e}"),
+        crate::process::ProcessError::Spawn(e) => format!("não pude iniciar o processo: {e}"),
         crate::process::ProcessError::Wait(e) => format!("falha esperando o processo: {e}"),
     }
 }
@@ -49,7 +49,7 @@ pub(super) fn target_or_error(
     let target = remote::find(root, name).ok_or_else(|| {
         Box::new(error_response(
             request_id.cloned(),
-            format!("nao ha' alvo remoto chamado `{name}` — salve-o no painel Remoto"),
+            format!("não há alvo remoto chamado `{name}` — salve-o no painel Remoto"),
         ))
     })?;
     // O `remotes.json` pode vir de um projeto clonado: a guarda vale no USO,
@@ -107,7 +107,7 @@ impl Core {
         if let Err(response) = parse_params::<RemoteListParams>(
             request_id.as_ref(),
             params,
-            "remote.list nao aceita parametros",
+            "remote.list não aceita parametros",
         ) {
             return *response;
         }
@@ -211,7 +211,7 @@ impl Core {
         let Some(ssh) = self.detector.find_in_path("ssh") else {
             return error_response(
                 request_id,
-                "nao achei `ssh` no PATH — instale o openssh-client",
+                "não achei `ssh` no PATH — instale o openssh-client",
             );
         };
         let Some(jobs) = self.jobs.as_ref() else {
@@ -425,7 +425,7 @@ impl Core {
             return Err(Box::new(error_response(
                 request_id.cloned(),
                 format!(
-                    "a origem `{}` nao existe — compile antes, ou aponte outra pasta",
+                    "a origem `{}` não existe — compile antes, ou aponte outra pasta",
                     source.display()
                 ),
             )));

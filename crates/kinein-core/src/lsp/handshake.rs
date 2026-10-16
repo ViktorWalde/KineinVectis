@@ -245,7 +245,7 @@ fn wait_for_initialize(
     }
     Err(LspError::ServerFailed {
         command: command.to_owned(),
-        message: format!("{command} nao respondeu ao initialize a tempo"),
+        message: format!("{command} não respondeu ao initialize a tempo"),
     })
 }
 

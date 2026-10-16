@@ -87,7 +87,7 @@ pub(crate) fn terminal_unavailable_response(
         request_id,
         JsonRpcError::new(
             JsonRpcErrorCode::InternalError,
-            "terminal nao esta habilitado neste loop do core",
+            "terminal não está habilitado neste loop do core",
             Some(json!({ "method": method })),
         ),
     )
@@ -130,7 +130,7 @@ pub(crate) fn debug_unavailable_response(
         request_id,
         JsonRpcError::new(
             JsonRpcErrorCode::InternalError,
-            "debug nao esta habilitado neste loop do core",
+            "debug não está habilitado neste loop do core",
             Some(json!({ "method": method })),
         ),
     )
@@ -157,7 +157,7 @@ pub(crate) fn lsp_unavailable_response(request_id: Option<Value>, method: &str) 
         request_id,
         JsonRpcError::new(
             JsonRpcErrorCode::InternalError,
-            "LSP nao esta habilitado neste loop do core",
+            "LSP não está habilitado neste loop do core",
             Some(json!({ "method": method })),
         ),
     )
@@ -191,7 +191,7 @@ pub(crate) fn jobs_unavailable_response(
         request_id,
         JsonRpcError::new(
             JsonRpcErrorCode::InternalError,
-            "jobs nao estao habilitados neste loop do core",
+            "jobs não estão habilitados neste loop do core",
             Some(json!({ "method": method })),
         ),
     )

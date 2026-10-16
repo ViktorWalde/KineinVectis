@@ -39,7 +39,7 @@ pub(super) fn run_make_build(
         .make
         .clone()
         .unwrap_or_else(|| std::path::PathBuf::from("make"));
-    let sem_bear = "sem `bear` nesta maquina: o make roda, mas nao ha' compile_commands.json \
+    let sem_bear = "sem `bear` nesta máquina: o make roda, mas não há compile_commands.json \
                     para o clangd (instale o bear pelo painel Instalar ferramentas e compile \
                     de novo)";
     let (mut command, display) = tools.bear.as_ref().map_or_else(

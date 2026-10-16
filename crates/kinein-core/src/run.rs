@@ -34,7 +34,7 @@ pub enum RunError {
 impl fmt::Display for RunError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::NotRunning => write!(formatter, "nenhuma execucao aberta"),
+            Self::NotRunning => write!(formatter, "nenhuma execução aberta"),
             Self::NoDefaultCommand { message } | Self::Process { message } => {
                 write!(formatter, "{message}")
             }
@@ -113,7 +113,7 @@ pub fn default_command(kind: ProjectKind, root: &Path) -> Result<String, RunErro
         | ProjectKind::Make
         | ProjectKind::PlatformIo
         | ProjectKind::Unknown => Err(RunError::NoDefaultCommand {
-            message: "este tipo de projeto ainda nao tem comando de execucao padrao; \
+            message: "este tipo de projeto ainda não tem comando de execução padrão; \
                           digite o comando no painel Terminal"
                 .to_owned(),
         }),
@@ -128,14 +128,14 @@ fn cmake_binary_command(root: &Path) -> Result<String, RunError> {
 
     match executables.as_slice() {
         [] => Err(RunError::NoDefaultCommand {
-            message: "nenhum executavel encontrado em .kinein/build; \
+            message: "nenhum executável encontrado em .kinein/build; \
                       compile antes (Ctrl+F9)"
                 .to_owned(),
         }),
         [single] => Ok(crate::platform::program_invocation(single)),
         _multiple => Err(RunError::NoDefaultCommand {
             message: format!(
-                "mais de um executavel em .kinein/build ({}); \
+                "mais de um executável em .kinein/build ({}); \
                  digite o comando no painel Terminal",
                 executables.join(", ")
             ),

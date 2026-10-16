@@ -141,35 +141,35 @@ impl fmt::Display for FsError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidPath { path, source } => {
-                write!(formatter, "caminho invalido {path}: {source}")
+                write!(formatter, "caminho inválido {path}: {source}")
             }
             Self::OutsideRoot { path } => {
-                write!(formatter, "o caminho {path} esta fora do projeto aberto")
+                write!(formatter, "o caminho {path} está fora do projeto aberto")
             }
             Self::NotADirectory { path } => {
-                write!(formatter, "o caminho {path} nao e um diretorio")
+                write!(formatter, "o caminho {path} não é um diretório")
             }
             Self::InvalidFileName { path } => {
-                write!(formatter, "o caminho {path} nao tem nome de arquivo valido")
+                write!(formatter, "o caminho {path} não tem nome de arquivo válido")
             }
             Self::InvalidBatch { message } => formatter.write_str(message),
             Self::AlreadyExists { path } => {
-                write!(formatter, "o arquivo {path} ja existe")
+                write!(formatter, "o arquivo {path} já existe")
             }
             Self::UnsupportedEntry { path } => {
                 write!(
                     formatter,
-                    "nao e seguro copiar {path}: entrada nao e arquivo regular nem pasta"
+                    "não é seguro copiar {path}: entrada não é arquivo regular nem pasta"
                 )
             }
             Self::Cancelled { path } => write!(formatter, "copia cancelada: {path}"),
             Self::NotAFile { path } => {
-                write!(formatter, "o caminho {path} nao e um arquivo regular")
+                write!(formatter, "o caminho {path} não é um arquivo regular")
             }
             Self::WorkspaceRoot { path } => {
                 write!(
                     formatter,
-                    "o caminho {path} e a raiz do projeto e nao pode ser renomeado, copiado ou removido"
+                    "o caminho {path} e a raiz do projeto e não pode ser renomeado, copiado ou removido"
                 )
             }
             Self::TooLarge { path, size } => {
@@ -179,7 +179,7 @@ impl fmt::Display for FsError {
                 )
             }
             Self::NotText { path } => {
-                write!(formatter, "o arquivo {path} nao e texto UTF-8 valido")
+                write!(formatter, "o arquivo {path} não é texto UTF-8 válido")
             }
             Self::ChangedOnDisk { path } => {
                 write!(
@@ -194,7 +194,7 @@ impl fmt::Display for FsError {
                 write!(formatter, "falha de IO em {path}: {source}")
             }
             Self::MissingTool { tool } => {
-                write!(formatter, "{tool} nao foi encontrado no PATH")
+                write!(formatter, "{tool} não foi encontrado no PATH")
             }
             Self::ToolFailed { tool, message } => {
                 write!(formatter, "{tool} falhou: {message}")

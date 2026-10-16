@@ -40,7 +40,7 @@ pub(super) static TOOLS: &[Tool] = &[
         id: "mpremote",
         name: "mpremote",
         summary: "A ferramenta oficial do MicroPython: REPL, arquivos na placa e rodar um \
-                  .py nela — e' o Executar e o monitor de um projeto MicroPython.",
+                  .py nela — é o Executar e o monitor de um projeto MicroPython.",
         website: "https://docs.micropython.org/en/latest/reference/mpremote.html",
         probe_binary: "mpremote",
     },
@@ -56,7 +56,7 @@ pub(super) static TOOLS: &[Tool] = &[
         id: "probe-rs",
         name: "probe-rs",
         summary: "Grava, roda e depura ARM/RISC-V por uma sonda (ST-Link, J-Link, CMSIS-DAP, \
-                  o USB-JTAG dos ESP32-C3/S3): e' o adaptador DAP do kit embarcado.",
+                  o USB-JTAG dos ESP32-C3/S3): é o adaptador DAP do kit embarcado.",
         website: "https://probe.rs/docs/getting-started/installation/",
         probe_binary: "probe-rs",
     },
@@ -64,7 +64,7 @@ pub(super) static TOOLS: &[Tool] = &[
         id: "picotool",
         name: "picotool",
         summary: "A ferramenta do Raspberry Pi Pico: grava o UF2 pelo USB (BOOTSEL) e le a \
-                  placa. O pico-sdk precisa dela INSTALADA (cmake --install), nao so' no PATH.",
+                  placa. O pico-sdk precisa dela INSTALADA (cmake --install), não só no PATH.",
         website: "https://github.com/raspberrypi/picotool",
         probe_binary: "picotool",
     },
@@ -87,8 +87,8 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "picocom",
         name: "picocom",
-        summary: "Monitor serial minimo, presente em toda distro; o kit o usa quando nao \
-                  ha' tio nem espflash.",
+        summary: "Monitor serial mínimo, presente em toda distro; o kit o usa quando não \
+                  há tio nem espflash.",
         website: "https://github.com/npat-efault/picocom",
         probe_binary: "picocom",
     },
@@ -103,7 +103,7 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "qemu-embedded",
         name: "QEMU (ARM e RISC-V)",
-        summary: "Emula a placa: e' como o ciclo de embarcado da IDE e' provado SEM \
+        summary: "Emula a placa: é como o ciclo de embarcado da IDE é provado SEM \
                   hardware (lm3s6965evb com `gdb -i dap`).",
         website: "https://www.qemu.org/download/#linux",
         probe_binary: "qemu-system-arm",
@@ -131,12 +131,12 @@ pub(super) static TOOLS: &[Tool] = &[
 
 static ESPTOOL_ANY: &[Step] = &[
     Step {
-        explanation: "Cria e ativa um ambiente virtual so' para o esptool, como a pagina \
+        explanation: "Cria e ativa um ambiente virtual só para o esptool, como a página \
                       recomenda (evita o bloqueio da PEP 668 das distros novas).",
         command: "python3 -m venv ~/.local/share/esptoolenv && source ~/.local/share/esptoolenv/bin/activate",
     },
     Step {
-        explanation: "Instala do PyPI, como a pagina escreve.",
+        explanation: "Instala do PyPI, como a página escreve.",
         command: "pip install esptool",
     },
 ];
@@ -158,8 +158,8 @@ static ESPTOOL_REDHAT: &[Step] = &[Step {
 // --------------------------------------------------------------------------
 
 static MPREMOTE_ANY: &[Step] = &[Step {
-    explanation: "Instala pelo pipx, como a pagina do mpremote escreve (o pipx esta' no \
-                  catalogo, guia proprio).",
+    explanation: "Instala pelo pipx, como a página do mpremote escreve (o pipx está no \
+                  catalogo, guia próprio).",
     command: "pipx install mpremote",
 }];
 
@@ -191,19 +191,19 @@ static ESPFLASH_ARCH: &[Step] = &[Step {
 // --------------------------------------------------------------------------
 
 static PROBE_RS_ANY: &[Step] = &[Step {
-    explanation: "O instalador oficial (binario pre-compilado em ~/.cargo/bin), como a \
-                  pagina escreve.",
+    explanation: "O instalador oficial (binário pre-compilado em ~/.cargo/bin), como a \
+                  página escreve.",
     command: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh | sh",
 }];
 
 static PROBE_RS_DEBIAN: &[Step] = &[
     Step {
-        explanation: "As dependencias que a pagina lista para Debian/Ubuntu (so' fazem falta \
-                      ao compilar pelo cargo; o instalador nao precisa delas).",
+        explanation: "As dependencias que a página lista para Debian/Ubuntu (só fazem falta \
+                      ao compilar pelo cargo; o instalador não precisa delas).",
         command: "sudo apt install -y pkg-config libudev-dev cmake git",
     },
     Step {
-        explanation: "O instalador oficial, como a pagina escreve.",
+        explanation: "O instalador oficial, como a página escreve.",
         command: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh | sh",
     },
 ];
@@ -225,7 +225,7 @@ static PICOTOOL_DEBIAN: &[Step] = &[
     },
     Step {
         explanation: "Clona o pico-sdk: o CMakeLists do picotool EXIGE PICO_SDK_PATH (medido \
-                      em 2026-09-17: `PICO_SDK_PATH is not defined` sem ele; nao baixa sozinho).",
+                      em 2026-09-17: `PICO_SDK_PATH is not defined` sem ele; não baixa sozinho).",
         command: "git clone --depth 1 https://github.com/raspberrypi/pico-sdk.git ~/.local/src/pico-sdk",
     },
     Step {
@@ -237,7 +237,7 @@ static PICOTOOL_DEBIAN: &[Step] = &[
         command: "mkdir -p build && cd build && cmake .. -DPICO_SDK_PATH=$HOME/.local/src/pico-sdk && make",
     },
     Step {
-        explanation: "INSTALA — o README e' explicito: copiar o binario para o PATH nao \
+        explanation: "INSTALA — o README é explicito: copiar o binário para o PATH não \
                       basta para o pico-sdk o achar.",
         command: "sudo cmake --install .",
     },
@@ -295,7 +295,7 @@ static ARM_DEBIAN: &[Step] = &[Step {
 }];
 static ARM_REDHAT: &[Step] = &[Step {
     explanation: "packages.fedoraproject.org/pkgs/arm-none-eabi-gcc-cs, arm-none-eabi-newlib \
-                  e arm-none-eabi-binutils-cs; o gdb do Fedora ja' e' multiarch.",
+                  e arm-none-eabi-binutils-cs; o gdb do Fedora já é multiarch.",
     command: "sudo dnf install arm-none-eabi-gcc-cs arm-none-eabi-newlib arm-none-eabi-binutils-cs gdb",
 }];
 static ARM_ARCH: &[Step] = &[Step {
@@ -305,7 +305,7 @@ static ARM_ARCH: &[Step] = &[Step {
 
 static QEMU_DEBIAN: &[Step] = &[Step {
     explanation: "packages.debian.org/trixie/qemu-system-arm e qemu-system-misc (o RISC-V \
-                  esta' no `misc`).",
+                  está no `misc`).",
     command: "sudo apt install qemu-system-arm qemu-system-misc",
 }];
 static QEMU_REDHAT: &[Step] = &[Step {

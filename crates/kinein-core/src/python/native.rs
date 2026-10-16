@@ -127,7 +127,7 @@ pub fn detect(root: &Path) -> Option<PythonNativeModule> {
             "pip install -e . (o scikit-build-core chama o CMake; `uv pip \
                                 install -e .` num projeto do uv)"
         }
-        _ => "pip install -e . (compila a extensao com o compilador do sistema)",
+        _ => "pip install -e . (compila a extensão com o compilador do sistema)",
     };
     Some(PythonNativeModule {
         kind: kind.to_owned(),

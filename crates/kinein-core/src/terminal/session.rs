@@ -168,12 +168,12 @@ impl TerminalManager {
         drop(pair.slave);
 
         let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|error| {
-            process(format!("stdin do terminal indisponivel: {error}"))
+            process(format!("stdin do terminal indisponível: {error}"))
         })?));
         let reader = pair
             .master
             .try_clone_reader()
-            .map_err(|error| process(format!("stdout do terminal indisponivel: {error}")))?;
+            .map_err(|error| process(format!("stdout do terminal indisponível: {error}")))?;
 
         let state = Arc::new(Mutex::new(TerminalState::new(
             DEFAULT_ROWS,
@@ -376,7 +376,7 @@ impl TerminalManager {
         let session = self.live(id)?;
         {
             let mut state = session.state.lock().map_err(|_| TerminalError::Process {
-                message: "estado do terminal indisponivel para limpar historico".to_owned(),
+                message: "estado do terminal indisponível para limpar histórico".to_owned(),
             })?;
             state.clear_selection();
             state.term.grid_mut().clear_history();

@@ -111,7 +111,7 @@ def prova(core_bin: pathlib.Path, raiz: pathlib.Path) -> int:
         (
             "run.start",
             {"command": "echo host", "device": "/dev/ttyUSB0"},
-            "device so' vale sem command",
+            "device só vale sem command",
         ),
         ("run.start", {"device": ""}, "porta serial"),
         ("run.script", {"path": str(ws / "util.py"), "device": "  "}, "porta serial"),

@@ -141,7 +141,7 @@ pub(super) fn spawn_server(
     let Some(stdin) = owned.take_stdin() else {
         return Err(LspError::ServerFailed {
             command: spec.command.clone(),
-            message: "stdin indisponivel".to_owned(),
+            message: "stdin indisponível".to_owned(),
         });
     };
     // A cauda do stderr (2026-09-17) entra no `initialize` que falha e no

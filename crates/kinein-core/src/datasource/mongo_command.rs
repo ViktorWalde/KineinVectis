@@ -123,7 +123,7 @@ fn legacy_find(text: &str) -> Result<(&str, MongoOp, &str), String> {
 
 fn validate_name(name: &str, writes: bool) -> Result<(), String> {
     if name.is_empty() {
-        return Err("escreva a colecao — ex.: `sensores.find({\"placa\": \"esp32\"})`".to_owned());
+        return Err("escreva a coleção — ex.: `sensores.find({\"placa\": \"esp32\"})`".to_owned());
     }
     if name.len() > MAX_NAME
         || name
@@ -133,13 +133,13 @@ fn validate_name(name: &str, writes: bool) -> Result<(), String> {
         || name.ends_with('.')
     {
         return Err(format!(
-            "`{}` nao e' um nome de colecao valido (sem `$`, espaco ou controle; ate' {MAX_NAME} bytes)",
+            "`{}` não é um nome de coleção válido (sem `$`, espaco ou controle; até {MAX_NAME} bytes)",
             name.chars().take(40).collect::<String>()
         ));
     }
     if writes && name.starts_with("system.") {
         return Err(
-            "as colecoes `system.*` sao do proprio MongoDB; a IDE nao escreve nelas".to_owned(),
+            "as coleções `system.*` são do próprio MongoDB; a IDE não escreve nelas".to_owned(),
         );
     }
     Ok(())
@@ -158,7 +158,7 @@ fn parse_args(args: &str) -> Result<Vec<Bson>, String> {
     };
     items
         .into_iter()
-        .map(|item| Bson::try_from(item).map_err(|e| format!("JSON que o MongoDB nao aceita: {e}")))
+        .map(|item| Bson::try_from(item).map_err(|e| format!("JSON que o MongoDB não aceita: {e}")))
         .collect()
 }
 

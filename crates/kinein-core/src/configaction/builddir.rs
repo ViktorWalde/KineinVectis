@@ -28,8 +28,8 @@ pub(super) fn inspect_cache(root: &Path) -> Result<ActionPlan, ConfigActionError
     let cache = cmake::build_dir(root).join("CMakeCache.txt");
     let Ok(body) = fs::read_to_string(&cache) else {
         return Err(ConfigActionError::NotApplicable {
-            reason: "o CMake ainda nao foi configurado por esta IDE \
-                     (.kinein/build/CMakeCache.txt nao existe)"
+            reason: "o CMake ainda não foi configurado por esta IDE \
+                     (.kinein/build/CMakeCache.txt não existe)"
                 .to_owned(),
         });
     };
@@ -91,12 +91,12 @@ pub(super) fn repair_plan(root: &Path) -> Result<ActionPlan, ConfigActionError> 
     let build_dir = cmake::build_dir(root);
     if !build_dir.is_dir() {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("{} nao existe; nao ha o que reparar", build_dir.display()),
+            reason: format!("{} não existe; não há o que reparar", build_dir.display()),
         });
     }
     let mut plan = ActionPlan::effect(format!("Remove {} inteiro", build_dir.display()));
     plan = plan.with_note(
-        "O diretorio de build e artefato derivado: nada de codigo-fonte mora nele. \
+        "O diretório de build e artefato derivado: nada de codigo-fonte mora nele. \
          Depois disso, rode 'Configurar' para reconstruir o cache e a compilation \
          database."
             .to_owned(),
@@ -112,7 +112,7 @@ pub(super) fn repair(root: &Path) -> Result<String, ConfigActionError> {
     let build_dir = cmake::build_dir(root);
     if !build_dir.is_dir() {
         return Err(ConfigActionError::NotApplicable {
-            reason: format!("{} nao existe; nao ha o que reparar", build_dir.display()),
+            reason: format!("{} não existe; não há o que reparar", build_dir.display()),
         });
     }
     fs::remove_dir_all(&build_dir).map_err(|source| {
@@ -152,7 +152,7 @@ mod tests {
         let root = temp_root("sem-cache");
         assert!(!is_configured(&root));
         let error = inspect_cache(&root).unwrap_err();
-        assert!(error.to_string().contains("nao foi configurado"));
+        assert!(error.to_string().contains("não foi configurado"));
     }
 
     #[test]

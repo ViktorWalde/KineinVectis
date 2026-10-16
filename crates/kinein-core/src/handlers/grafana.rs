@@ -45,7 +45,7 @@ impl Core {
         if let Err(response) = parse_params::<GrafanaGetParams>(
             request_id.as_ref(),
             params,
-            "grafana.get nao aceita parametros",
+            "grafana.get não aceita parametros",
         ) {
             return *response;
         }
@@ -100,7 +100,7 @@ impl Core {
         if let Err(response) = parse_params::<GrafanaForgetParams>(
             request_id.as_ref(),
             params,
-            "grafana.forget nao aceita parametros",
+            "grafana.forget não aceita parametros",
         ) {
             return *response;
         }
@@ -200,14 +200,14 @@ impl Core {
                     .map(Some)
                     .ok_or_else(|| {
                         recusa(format!(
-                            "a variavel `{variavel}` nao esta definida (ou esta vazia)"
+                            "a variável `{variavel}` não está definida (ou está vazia)"
                         ))
                     })
             }
             SecretPlan::AskUser => token
                 .map(Secret::new)
                 .map(Some)
-                .ok_or_else(|| recusa("este Grafana pede o token a cada sessao".to_owned())),
+                .ok_or_else(|| recusa("este Grafana pede o token a cada sessão".to_owned())),
         }
     }
 }

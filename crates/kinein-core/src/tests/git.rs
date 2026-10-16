@@ -206,7 +206,7 @@ fn git_mutations_validate_params_and_repo_state() {
     ));
     let error = not_repo.response().error.as_ref().unwrap().clone();
     assert_eq!(error.code, JsonRpcErrorCode::InvalidRequest);
-    assert!(error.message.contains("nao e um repositorio"));
+    assert!(error.message.contains("não é um repositório"));
 }
 
 #[test]

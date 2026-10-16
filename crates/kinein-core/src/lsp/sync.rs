@@ -230,7 +230,7 @@ impl LspManager {
         let hash = content_hash(content);
         let Some(handle) = self.servers.get_mut(spec.key) else {
             return Err(LspError::Transport {
-                message: format!("servidor {} nao esta registrado", spec.key),
+                message: format!("servidor {} não está registrado", spec.key),
             });
         };
         // Antes do `initialized` o servidor nao pode receber o documento

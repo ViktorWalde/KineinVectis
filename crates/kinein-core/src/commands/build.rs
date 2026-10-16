@@ -29,7 +29,7 @@ pub(super) fn build_command_descriptors() -> Vec<CommandDescriptor> {
             title: "Analisar (lint)".to_owned(),
             category: "Build".to_owned(),
             description:
-                "Roda a analise de qualidade (cargo clippy / ruff / clang-tidy) e lista os avisos"
+                "Roda a análise de qualidade (cargo clippy / ruff / clang-tidy) e lista os avisos"
                     .to_owned(),
             default_shortcut: Some("Ctrl+Shift+L".to_owned()),
             requires_workspace: true,
@@ -74,7 +74,7 @@ pub(super) fn cmake_command_descriptors() -> Vec<CommandDescriptor> {
             id: "cmake.targets.list".to_owned(),
             title: "CMake: Targets".to_owned(),
             category: "CMake".to_owned(),
-            description: "Lista os targets do ultimo configure (file-api)".to_owned(),
+            description: "Lista os targets do último configure (file-api)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
             internal: false,
@@ -83,7 +83,7 @@ pub(super) fn cmake_command_descriptors() -> Vec<CommandDescriptor> {
             id: "cmake.status".to_owned(),
             title: "CMake: Estado".to_owned(),
             category: "CMake".to_owned(),
-            description: "Mostra se o projeto esta configurado e se ha compile_commands".to_owned(),
+            description: "Mostra se o projeto está configurado e se há compile_commands".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
             internal: false,
@@ -98,7 +98,7 @@ pub(super) fn cargo_command_descriptors() -> Vec<CommandDescriptor> {
             title: "Cargo: Verificar (check)".to_owned(),
             category: "Cargo".to_owned(),
             description:
-                "Roda cargo check (feedback rapido sem codegen); problemas na aba Problemas"
+                "Roda cargo check (feedback rápido sem codegen); problemas na aba Problemas"
                     .to_owned(),
             default_shortcut: None,
             requires_workspace: true,
@@ -122,7 +122,7 @@ pub(super) fn jobs_command_descriptors() -> Vec<CommandDescriptor> {
             id: "job.list".to_owned(),
             title: "Jobs".to_owned(),
             category: "Jobs".to_owned(),
-            description: "Lista os jobs (operacoes longas) conhecidos pelo core".to_owned(),
+            description: "Lista os jobs (operações longas) conhecidos pelo core".to_owned(),
             default_shortcut: None,
             requires_workspace: false,
             internal: false,
@@ -131,7 +131,7 @@ pub(super) fn jobs_command_descriptors() -> Vec<CommandDescriptor> {
             id: "job.cancel".to_owned(),
             title: "Cancelar job".to_owned(),
             category: "Jobs".to_owned(),
-            description: "Sinaliza um job em execucao para cancelar".to_owned(),
+            description: "Sinaliza um job em execução para cancelar".to_owned(),
             default_shortcut: None,
             requires_workspace: false,
             internal: false,
@@ -148,9 +148,9 @@ pub(super) fn jobs_command_descriptors() -> Vec<CommandDescriptor> {
 pub(super) fn configaction_command_descriptors() -> Vec<CommandDescriptor> {
     vec![CommandDescriptor {
         id: "configAction.list".to_owned(),
-        title: "Acoes de configuracao...".to_owned(),
+        title: "Ações de configuração...".to_owned(),
         category: "Projeto".to_owned(),
-        description: "Acoes de configuracao do projeto (CMake/Cargo) com preview e diff".to_owned(),
+        description: "Ações de configuração do projeto (CMake/Cargo) com preview e diff".to_owned(),
         default_shortcut: Some("Ctrl+Alt+P".to_owned()),
         requires_workspace: true,
         internal: false,
@@ -166,7 +166,7 @@ pub(super) fn setup_command_descriptors() -> Vec<CommandDescriptor> {
         id: "setup.list".to_owned(),
         title: "Instalar ferramentas...".to_owned(),
         category: "Projeto".to_owned(),
-        description: "Passo a passo oficial para a sua distribuicao, com a fonte junto".to_owned(),
+        description: "Passo a passo oficial para a sua distribuição, com a fonte junto".to_owned(),
         default_shortcut: Some("Ctrl+Alt+H".to_owned()),
         requires_workspace: false,
         internal: false,
@@ -230,7 +230,7 @@ pub(super) fn grafana_command_descriptors() -> Vec<CommandDescriptor> {
         id: "grafana.get".to_owned(),
         title: "Observabilidade...".to_owned(),
         category: "Projeto".to_owned(),
-        description: "O Grafana deste projeto: versao, fontes de dados e dashboards".to_owned(),
+        description: "O Grafana deste projeto: versão, fontes de dados e dashboards".to_owned(),
         // Ctrl+Alt+O de Observabilidade. O Ctrl+Alt+G, que seria o obvio, ja'
         // e' alias do F3 na UI — e atalho anunciado que faz outra coisa e' o
         // defeito que o `verificar-atalhos.sh` existe para pegar.
@@ -299,7 +299,7 @@ pub(super) fn library_command_descriptors() -> Vec<CommandDescriptor> {
         id: "library.list".to_owned(),
         title: "Bibliotecas...".to_owned(),
         category: "Projeto".to_owned(),
-        description: "Catalogo auditado: licenca, versao fixada e o que cada uma faz".to_owned(),
+        description: "Catalogo auditado: licenca, versão fixada e o que cada uma faz".to_owned(),
         // Ctrl+Alt+K, e NAO Ctrl+Alt+L: ate 2026-09-04 este comando anunciava
         // Ctrl+Alt+L, que o `format.text` tambem anunciava e que a UI liga em
         // FORMATAR. Quem apertava o atalho da paleta formatava o arquivo. Foi

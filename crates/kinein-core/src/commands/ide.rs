@@ -35,7 +35,7 @@ pub(super) fn core_command_descriptors() -> Vec<CommandDescriptor> {
             id: "tools.detect".to_owned(),
             title: "Detectar ferramentas".to_owned(),
             category: "Tools".to_owned(),
-            description: "Detecta ferramentas externas e sugere instalacao quando faltarem"
+            description: "Detecta ferramentas externas e sugere instalação quando faltarem"
                 .to_owned(),
             default_shortcut: None,
             requires_workspace: false,
@@ -45,7 +45,7 @@ pub(super) fn core_command_descriptors() -> Vec<CommandDescriptor> {
             id: "tools.status".to_owned(),
             title: "Estado das ferramentas".to_owned(),
             category: "Tools".to_owned(),
-            description: "Mostra o ultimo status conhecido das ferramentas externas".to_owned(),
+            description: "Mostra o último status conhecido das ferramentas externas".to_owned(),
             default_shortcut: None,
             requires_workspace: false,
             internal: false,
@@ -66,9 +66,9 @@ pub(super) fn settings_command_descriptors() -> Vec<CommandDescriptor> {
     vec![
         CommandDescriptor {
             id: "settings.get".to_owned(),
-            title: "Configuracoes".to_owned(),
+            title: "Configurações".to_owned(),
             category: "IDE".to_owned(),
-            description: "Abre as configuracoes (fonte do editor, format-on-save, auto-close)"
+            description: "Abre as configurações (fonte do editor, format-on-save, auto-close)"
                 .to_owned(),
             default_shortcut: Some("Ctrl+Alt+S".to_owned()),
             requires_workspace: false,
@@ -101,7 +101,7 @@ pub(super) fn settings_command_descriptors() -> Vec<CommandDescriptor> {
             id: "view.cycleFocus".to_owned(),
             title: "Proxima area".to_owned(),
             category: "IDE".to_owned(),
-            description: "Leva o teclado para a proxima area: esquerda, editor, painel de baixo"
+            description: "Leva o teclado para a próxima area: esquerda, editor, painel de baixo"
                 .to_owned(),
             default_shortcut: Some("Ctrl+F6".to_owned()),
             requires_workspace: true,
@@ -150,7 +150,7 @@ pub(super) fn workspace_command_descriptors() -> Vec<CommandDescriptor> {
             id: "workspace.browse".to_owned(),
             title: "Navegar pastas".to_owned(),
             category: "Workspace".to_owned(),
-            description: "Lista diretorios para o seletor de pastas da IDE".to_owned(),
+            description: "Lista diretórios para o seletor de pastas da IDE".to_owned(),
             default_shortcut: None,
             requires_workspace: false,
             internal: true,
@@ -193,7 +193,7 @@ pub(super) fn workspace_command_descriptors() -> Vec<CommandDescriptor> {
         },
         CommandDescriptor {
             id: "workspace.saveSession".to_owned(),
-            title: "Salvar sessao".to_owned(),
+            title: "Salvar sessão".to_owned(),
             category: "Workspace".to_owned(),
             description: "Persiste as abas abertas do projeto (.kinein/session.json)".to_owned(),
             default_shortcut: None,
@@ -209,7 +209,7 @@ pub(super) fn file_command_descriptors() -> Vec<CommandDescriptor> {
             id: "fs.list".to_owned(),
             title: "Listar pasta".to_owned(),
             category: "Files".to_owned(),
-            description: "Lista um diretorio dentro do projeto".to_owned(),
+            description: "Lista um diretório dentro do projeto".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
             internal: true,
@@ -237,7 +237,7 @@ pub(super) fn file_command_descriptors() -> Vec<CommandDescriptor> {
             id: "fs.createDirectory".to_owned(),
             title: "Nova pasta no projeto".to_owned(),
             category: "Files".to_owned(),
-            description: "Cria um novo diretorio dentro do projeto sem sobrescrever".to_owned(),
+            description: "Cria um novo diretório dentro do projeto sem sobrescrever".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
             internal: false,
@@ -255,7 +255,7 @@ pub(super) fn file_command_descriptors() -> Vec<CommandDescriptor> {
             id: "fs.rename".to_owned(),
             title: "Renomear".to_owned(),
             category: "Files".to_owned(),
-            description: "Renomeia ou move um arquivo ou diretorio dentro do projeto".to_owned(),
+            description: "Renomeia ou move um arquivo ou diretório dentro do projeto".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
             internal: false,
@@ -264,7 +264,7 @@ pub(super) fn file_command_descriptors() -> Vec<CommandDescriptor> {
             id: "fs.delete".to_owned(),
             title: "Excluir".to_owned(),
             category: "Files".to_owned(),
-            description: "Remove um arquivo ou diretorio dentro do projeto".to_owned(),
+            description: "Remove um arquivo ou diretório dentro do projeto".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
             internal: false,
@@ -307,7 +307,7 @@ pub(super) fn search_command_descriptors() -> Vec<CommandDescriptor> {
             title: "Simbolos".to_owned(),
             category: "Files".to_owned(),
             description:
-                "Abre a aba Simbolos (a direita) e busca declaracoes por nome no indice do projeto"
+                "Abre a aba Simbolos (a direita) e busca declarações por nome no índice do projeto"
                     .to_owned(),
             default_shortcut: Some("Alt+7".to_owned()),
             requires_workspace: true,

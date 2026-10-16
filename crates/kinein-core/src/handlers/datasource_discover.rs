@@ -34,7 +34,7 @@ impl Core {
         if let Err(response) = parse_params::<DataSourceDiscoverParams>(
             request_id.as_ref(),
             params,
-            "datasource.discover nao aceita parametros",
+            "datasource.discover não aceita parametros",
         ) {
             return *response;
         }
@@ -115,14 +115,14 @@ impl Core {
                     request_id,
                     JsonRpcError::new(
                         JsonRpcErrorCode::ToolNotFound,
-                        "nenhum motor de container (docker ou podman) no PATH — sem ele nao ha' como subir um servidor",
+                        "nenhum motor de container (docker ou podman) no PATH — sem ele não há como subir um servidor",
                         Some(json!({ "method": "datasource.create" })),
                     ),
                 ),
                 Some(Err(failure)) => super::container::engine_failure_response(
                     request_id,
                     &failure,
-                    "o servidor nao foi criado: ",
+                    "o servidor não foi criado: ",
                 ),
                 Some(Ok(motor)) => {
                     core.spawn_server_job(request_id, &root, &motor, engine, &name, port)
@@ -191,11 +191,11 @@ fn run_server_job(
     let ok = match crate::process::stream_command_lines_cancelable(command, &cancel, &mut on_line) {
         Ok(status) => status.success(),
         Err(crate::process::ProcessError::Spawn(e)) => {
-            ultimas.push(format!("nao foi possivel iniciar o motor: {e}"));
+            ultimas.push(format!("não foi possível iniciar o motor: {e}"));
             false
         }
         Err(crate::process::ProcessError::Wait(e)) => {
-            ultimas.push(format!("nao foi possivel esperar o motor: {e}"));
+            ultimas.push(format!("não foi possível esperar o motor: {e}"));
             false
         }
     };
@@ -212,7 +212,7 @@ fn run_server_job(
             Err(e) => (
                 false,
                 None,
-                format!("o container subiu, mas o perfil nao foi salvo: {e}"),
+                format!("o container subiu, mas o perfil não foi salvo: {e}"),
             ),
         }
     } else {

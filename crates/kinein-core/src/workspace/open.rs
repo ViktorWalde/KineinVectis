@@ -288,6 +288,6 @@ mod tests {
         let error = browse_directories(&file).unwrap_err();
 
         assert!(error.is_invalid_path());
-        assert!(error.to_string().contains("nao e um diretorio"));
+        assert!(error.to_string().contains("não é um diretório"));
     }
 }

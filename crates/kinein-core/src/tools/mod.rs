@@ -193,7 +193,7 @@ impl ToolDetector {
                         path: None,
                         version: None,
                         suggested_install: Self::suggested_install_for(spec),
-                        message: Some(format!("{} nao foi encontrado no PATH.", spec.display_name)),
+                        message: Some(format!("{} não foi encontrado no PATH.", spec.display_name)),
                     },
                     |path| ToolInfo {
                         id: spec.id.to_owned(),
@@ -226,7 +226,7 @@ impl ToolDetector {
                 path: None,
                 version: None,
                 suggested_install: suggestion(),
-                message: Some(format!("{} nao foi encontrado no PATH.", spec.display_name)),
+                message: Some(format!("{} não foi encontrado no PATH.", spec.display_name)),
             },
             |path| match probe_version(&path, self.probe_dir.as_deref()) {
                 Ok(version) => ToolInfo {
@@ -246,7 +246,7 @@ impl ToolDetector {
                     version: None,
                     suggested_install: suggestion(),
                     message: Some(format!(
-                        "{} foi encontrado mas nao respondeu ao probe de versao: {reason}",
+                        "{} foi encontrado mas não respondeu ao probe de versão: {reason}",
                         spec.display_name
                     )),
                 },
@@ -320,11 +320,11 @@ fn probe_version(path: &Path, dir: Option<&Path>) -> Result<String, String> {
                     .map(str::trim)
                     .find(|line| !line.is_empty())
                     .map(ToOwned::to_owned)
-                    .ok_or_else(|| "a ferramenta nao informou versao".to_owned());
+                    .ok_or_else(|| "a ferramenta não informou versão".to_owned());
             }
             Ok(output) => {
                 return Err(format!(
-                    "o comando de versao terminou com {}",
+                    "o comando de versão terminou com {}",
                     output.status
                 ));
             }
@@ -334,7 +334,7 @@ fn probe_version(path: &Path, dir: Option<&Path>) -> Result<String, String> {
             Err(error) => return Err(format!("falha ao executar a ferramenta: {error}")),
         }
     }
-    Err("a ferramenta seguiu ocupada para execucao (ETXTBSY)".to_owned())
+    Err("a ferramenta seguiu ocupada para execução (ETXTBSY)".to_owned())
 }
 
 #[cfg(test)]

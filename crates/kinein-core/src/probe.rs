@@ -40,7 +40,7 @@ pub fn list(program: Option<&std::path::Path>) -> ProbeListResult {
             tool_available: false,
             raw_output: String::new(),
             hint: Some(format!(
-                "{} nao foi encontrado. Instale-o ou fixe o adaptador no kit.",
+                "{} não foi encontrado. Instale-o ou fixe o adaptador no kit.",
                 executavel.display()
             )),
         };
@@ -167,30 +167,30 @@ fn hint_for(probes: &[ProbeInfo], cru: &str) -> Option<String> {
     // escolher um culpado.
     if baixo.contains("no debug probes were found") {
         return Some(
-            "nenhuma sonda conectada. Se ha uma plugada, a propria ferramenta \
-             aponta permissao: o usuario precisa de acesso ao dispositivo, o que \
-             se resolve com regra de udev — nao rodando a IDE como root."
+            "nenhuma sonda conectada. Se há uma plugada, a própria ferramenta \
+             aponta permissão: o usuário precisa de acesso ao dispositivo, o que \
+             se resolve com regra de udev — não rodando a IDE como root."
                 .to_owned(),
         );
     }
     if baixo.contains("permission") || baixo.contains("denied") || baixo.contains("udev") {
         return Some(
-            "a ferramenta viu um dispositivo mas nao pode abri-lo: falta regra de \
-             udev. Sem ela a sonda so aparece com sudo, e rodar a IDE como root \
-             nao e a solucao."
+            "a ferramenta viu um dispositivo mas não pode abri-lo: falta regra de \
+             udev. Sem ela a sonda só aparece com sudo, e rodar a IDE como root \
+             não é a solução."
                 .to_owned(),
         );
     }
     if cru.trim().is_empty() {
         return Some(
             "a ferramenta respondeu vazio. Sonda desconectada, ou cabo de dados \
-             trocado por um de so carga."
+             trocado por um de só carga."
                 .to_owned(),
         );
     }
     Some(
         "nenhuma sonda foi reconhecida na resposta da ferramenta. A saida crua \
-         esta abaixo — se ha uma sonda ali, o formato mudou e o parser precisa \
+         esta abaixo — se há uma sonda ali, o formato mudou e o parser precisa \
          acompanhar."
             .to_owned(),
     )
@@ -323,7 +323,7 @@ mod tests {
         );
         // A condicional da propria ferramenta continua sendo repassada: se HA
         // uma plugada, ai sim e' permissao.
-        assert!(dica.contains("Se ha uma plugada"), "{dica}");
+        assert!(dica.contains("Se há uma plugada"), "{dica}");
         assert!(dica.contains("root"), "{dica}");
     }
 

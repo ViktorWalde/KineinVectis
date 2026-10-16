@@ -66,17 +66,17 @@ pub fn validate(target: &RemoteTarget) -> Result<(), String> {
         return Err("de um nome ao alvo (ex.: pi)".to_owned());
     }
     if name.contains('/') || name.contains(char::is_whitespace) {
-        return Err("o nome do alvo nao pode ter barra nem espaco".to_owned());
+        return Err("o nome do alvo não pode ter barra nem espaco".to_owned());
     }
     let host = target.host.trim();
     if host.is_empty() {
         return Err("informe o host ou IP do alvo".to_owned());
     }
     if host.contains(char::is_whitespace) || host.contains('@') {
-        return Err("o host nao leva usuario nem espaco — o usuario tem campo proprio".to_owned());
+        return Err("o host não leva usuário nem espaco — o usuário tem campo próprio".to_owned());
     }
     if target.port == Some(0) {
-        return Err("a porta SSH nao pode ser 0".to_owned());
+        return Err("a porta SSH não pode ser 0".to_owned());
     }
     // O que vai ao `ssh` e ao shell: a MESMA regra do uso (16.4a).
     guard::usable(target)
@@ -606,7 +606,7 @@ mod tests {
         assert!(
             validate(&t)
                 .unwrap_err()
-                .contains("usuario tem campo proprio")
+                .contains("usuário tem campo próprio")
         );
         t.host = "h".to_owned();
         t.port = Some(0);

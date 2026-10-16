@@ -41,16 +41,16 @@ impl fmt::Display for GitError {
         match self {
             Self::MissingGit => write!(
                 formatter,
-                "git nao foi encontrado no PATH (ex.: sudo pacman -S git)"
+                "git não foi encontrado no PATH (ex.: sudo pacman -S git)"
             ),
-            Self::NotARepo => write!(formatter, "o projeto nao e um repositorio git"),
+            Self::NotARepo => write!(formatter, "o projeto não é um repositório git"),
             Self::NothingStaged => write!(
                 formatter,
                 "nada staged para commitar; marque arquivos na aba Git antes"
             ),
             Self::InvisibleStagedPaths { paths } => write!(
                 formatter,
-                "o indice contem alteracoes staged invisiveis neste projeto: {}",
+                "o índice contem alterações staged invisíveis neste projeto: {}",
                 paths.join(", ")
             ),
             Self::Failed { message } => write!(formatter, "{message}"),

@@ -160,7 +160,7 @@ impl Adapters {
             .filter(|path| path.is_file())
             .ok_or_else(|| {
                 format!(
-                    "o adaptador da IDE para {engine} nao esta' instalado ao lado do core ({})",
+                    "o adaptador da IDE para {engine} não está instalado ao lado do core ({})",
                     self.dir.as_ref().map_or_else(
                         || "pasta do core desconhecida".to_owned(),
                         |dir| dir.join(adapter_file(&engine)).display().to_string()
@@ -173,7 +173,7 @@ impl Adapters {
             &format!("kinein.{engine}"),
             &engine,
         )
-        .map_err(|failure| format!("o adaptador {} nao iniciou: {failure:?}", program.display()))?;
+        .map_err(|failure| format!("o adaptador {} não iniciou: {failure:?}", program.display()))?;
         let id = format!("{}:{}", profile.name, std::process::id());
         let limits = driver.negotiated().limits;
         let mut instance = Instance {
@@ -200,7 +200,7 @@ impl Adapters {
                 instance.session = session_id;
                 Ok(instance)
             }
-            Ok(_) => Err("o adaptador respondeu o open com outra operacao".to_owned()),
+            Ok(_) => Err("o adaptador respondeu o open com outra operação".to_owned()),
             Err(failure) => Err(failure.message),
         }
     }
@@ -273,7 +273,7 @@ impl Instance {
                 kind,
             )
             .map_err(|refusal| Failure {
-                message: format!("o adaptador nao aceitou o pedido ({refusal:?})"),
+                message: format!("o adaptador não aceitou o pedido ({refusal:?})"),
             })?;
         let mut chunks = Vec::new();
         loop {
@@ -281,7 +281,7 @@ impl Instance {
                 .events
                 .recv_timeout(OPERATION_TIMEOUT)
                 .map_err(|_| Failure {
-                    message: "o adaptador nao respondeu no prazo".to_owned(),
+                    message: "o adaptador não respondeu no prazo".to_owned(),
                 })?;
             match event {
                 Event::Chunk(raw) => {
@@ -305,10 +305,10 @@ impl Instance {
                     return Err(Failure {
                         message: match outcome {
                             OperationOutcome::NotStarted => {
-                                "o adaptador parou antes da operacao; nada rodou".to_owned()
+                                "o adaptador parou antes da operação; nada rodou".to_owned()
                             }
                             OperationOutcome::Failed | OperationOutcome::Unknown => {
-                                "o adaptador parou no meio da operacao; o resultado e' incerto"
+                                "o adaptador parou no meio da operação; o resultado é incerto"
                                     .to_owned()
                             }
                         },
@@ -382,7 +382,7 @@ impl Adapters {
             Ok((_, TerminalResult::Test { server_version })) => {
                 Ok(server_version.unwrap_or_default())
             }
-            Ok(_) => Err(failure("o adaptador respondeu outra operacao".to_owned())),
+            Ok(_) => Err(failure("o adaptador respondeu outra operação".to_owned())),
             Err(error) => Err(failure(error.message)),
         }
     }
@@ -447,7 +447,7 @@ impl Adapters {
             ..
         } = terminal
         else {
-            return Err(failure("o adaptador respondeu outra operacao".to_owned()));
+            return Err(failure("o adaptador respondeu outra operação".to_owned()));
         };
         let mut result = QueryResult {
             affected,

@@ -177,7 +177,7 @@ impl Core {
                     Err(error) => {
                         ctx.emit_output(&match &error {
                             process::ProcessError::Spawn(source) => {
-                                format!("cmake nao pode ser iniciado: {source}")
+                                format!("cmake não pode ser iniciado: {source}")
                             }
                             process::ProcessError::Wait(source) => {
                                 format!("falha aguardando o cmake: {source}")

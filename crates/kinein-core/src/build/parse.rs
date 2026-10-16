@@ -170,7 +170,7 @@ pub(super) fn parse_ruff_concise_line(line: &str) -> Option<BuildDiagnostic> {
     let message = if codigo.starts_with("SyntaxError") {
         format!("SyntaxError: {mensagem}")
     } else if let Some(fix) = mensagem.strip_prefix("[*] ") {
-        format!("{codigo}: {fix} (corrigivel: ruff check --fix)")
+        format!("{codigo}: {fix} (corrigível: ruff check --fix)")
     } else {
         format!("{codigo}: {mensagem}")
     };
@@ -249,7 +249,7 @@ mod tests {
         assert_eq!((aviso.line, aviso.column), (Some(1), Some(8)));
         assert_eq!(
             aviso.message,
-            "F401: `os` imported but unused (corrigivel: ruff check --fix)"
+            "F401: `os` imported but unused (corrigível: ruff check --fix)"
         );
 
         let sem_fix = parse_ruff_concise_line("app.py:3:1: E402 Module level import not at top")

@@ -249,13 +249,13 @@ pub fn set(
     if let Some(id) = id {
         if !catalog::is_known(role, id) {
             return Err(format!(
-                "{id} nao e um candidato conhecido para {}",
+                "{id} não é um candidato conhecido para {}",
                 role.as_str()
             ));
         }
         if !detectados(role, tools).iter().any(|entry| entry.id == id) {
             return Err(format!(
-                "{id} nao foi detectado nesta maquina; instale-o ou escolha outro"
+                "{id} não foi detectado nesta máquina; instale-o ou escolha outro"
             ));
         }
     }

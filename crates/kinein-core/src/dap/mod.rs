@@ -79,17 +79,17 @@ impl fmt::Display for DebugError {
             // mandaria o usuario instalar a ferramenta errada.
             Self::MissingAdapter { program } => write!(
                 formatter,
-                "o adaptador de debug `{program}` nao foi encontrado (lldb-dap vem no \
+                "o adaptador de debug `{program}` não foi encontrado (lldb-dap vem no \
                  pacote lldb; probe-rs e gdb tem passo a passo em Instalar ferramentas)"
             ),
             Self::AlreadyRunning => write!(
                 formatter,
-                "ja existe uma sessao de debug; pare-a antes (debug.stop)"
+                "já existe uma sessão de debug; pare-a antes (debug.stop)"
             ),
-            Self::NotRunning => write!(formatter, "nenhuma sessao de debug em execucao"),
+            Self::NotRunning => write!(formatter, "nenhuma sessão de debug em execução"),
             Self::NotStopped => write!(
                 formatter,
-                "o processo nao esta pausado; pause ou aguarde um breakpoint"
+                "o processo não está pausado; pause ou aguarde um breakpoint"
             ),
             Self::NoTarget { message }
             | Self::Adapter { message }

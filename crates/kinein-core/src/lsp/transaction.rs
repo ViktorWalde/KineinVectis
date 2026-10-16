@@ -112,12 +112,12 @@ impl fmt::Display for WorkspaceEditTransactionError {
                 actual,
             } => write!(
                 formatter,
-                "workspace edit obsoleto para {path}: versao esperada {expected}, atual {actual:?}"
+                "workspace edit obsoleto para {path}: versão esperada {expected}, atual {actual:?}"
             ),
             Self::UnknownTransaction { id } => {
                 write!(
                     formatter,
-                    "transacao de workspace edit inexistente ou expirada: {id}"
+                    "transação de workspace edit inexistente ou expirada: {id}"
                 )
             }
             Self::InvalidPlan { message } => formatter.write_str(message),

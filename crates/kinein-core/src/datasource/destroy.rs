@@ -59,24 +59,24 @@ pub fn plan(root: &Path, profile: &DataSourceProfile, container_exists: bool) ->
             } else {
                 DestroyPlan::ProfileOnly {
                     note: format!(
-                        "{} fica: esta' fora do projeto, e a IDE nao apaga arquivo que nao e' do projeto",
+                        "{} fica: está fora do projeto, e a IDE não apaga arquivo que não é do projeto",
                         absolute.display()
                     ),
                 }
             }
         }
-        DataSourceEngine::Odbc => DestroyPlan::ProfileOnly { note: "o DSN e os dados ficam: somente o perfil da IDE e' removido".to_owned() },
+        DataSourceEngine::Odbc => DestroyPlan::ProfileOnly { note: "o DSN e os dados ficam: somente o perfil da IDE é removido".to_owned() },
         _ if container_exists => DestroyPlan::Container {
             name: format!("kinein-{}", profile.name),
         },
         DataSourceEngine::Mongo => DestroyPlan::ProfileOnly {
-            note: "o banco MongoDB fica no servidor: a IDE nao apaga dados de um servidor que nao subiu"
+            note: "o banco MongoDB fica no servidor: a IDE não apaga dados de um servidor que não subiu"
                 .to_owned(),
         },
         DataSourceEngine::Postgres => {
             if profile.database.trim().is_empty() || profile.database == "postgres" {
                 DestroyPlan::ProfileOnly {
-                    note: "o servidor PostgreSQL fica: este perfil aponta para o banco de manutencao (`postgres`), que nao se apaga"
+                    note: "o servidor PostgreSQL fica: este perfil aponta para o banco de manutenção (`postgres`), que não se apaga"
                         .to_owned(),
                 }
             } else {
@@ -118,7 +118,7 @@ pub fn drop_statement(database: &str) -> String {
 /// A falha de disco, com o caminho.
 pub fn delete_sqlite_file(path: &Path) -> Result<(), String> {
     std::fs::remove_file(path)
-        .map_err(|e| format!("nao foi possivel apagar {}: {e}", path.display()))?;
+        .map_err(|e| format!("não foi possível apagar {}: {e}", path.display()))?;
     for suffix in ["-wal", "-shm"] {
         let companion = PathBuf::from(format!("{}{suffix}", path.display()));
         if companion.exists() {

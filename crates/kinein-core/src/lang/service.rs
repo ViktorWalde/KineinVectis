@@ -74,13 +74,13 @@ impl fmt::Display for SyntaxTreeError {
         match self {
             Self::TooLarge { bytes, maximum } => write!(
                 formatter,
-                "buffer de {bytes} bytes excede o limite sintatico de {maximum} bytes"
+                "buffer de {bytes} bytes excede o limite sintático de {maximum} bytes"
             ),
             Self::Registry(error) => error.fmt(formatter),
             Self::Language(error) => {
-                write!(formatter, "gramatica Tree-sitter incompativel: {error}")
+                write!(formatter, "gramática Tree-sitter incompatível: {error}")
             }
-            Self::Parse => formatter.write_str("Tree-sitter nao produziu uma arvore sintatica"),
+            Self::Parse => formatter.write_str("Tree-sitter não produziu uma árvore sintática"),
         }
     }
 }

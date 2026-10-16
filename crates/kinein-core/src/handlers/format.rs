@@ -69,7 +69,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "nenhum formatter registrado para esta extensao de arquivo",
+                    "nenhum formatter registrado para esta extensão de arquivo",
                     Some(json!({ "path": parsed.path })),
                 ),
             );
@@ -105,7 +105,7 @@ fn format_error_response(request_id: Option<Value>, error: &FormatError) -> Json
         FormatError::Spawn { tool, source } if source.kind() == io::ErrorKind::NotFound => {
             JsonRpcError::new(
                 JsonRpcErrorCode::ToolNotFound,
-                format!("{tool} nao foi encontrado no PATH"),
+                format!("{tool} não foi encontrado no PATH"),
                 Some(json!({ "tool": tool })),
             )
         }
@@ -126,7 +126,7 @@ fn format_error_response(request_id: Option<Value>, error: &FormatError) -> Json
         ),
         FormatError::NotUtf8 { tool } => JsonRpcError::new(
             JsonRpcErrorCode::InternalError,
-            format!("{tool} produziu saida que nao e UTF-8 valido"),
+            format!("{tool} produziu saida que não é UTF-8 válido"),
             Some(json!({ "tool": tool })),
         ),
     };
