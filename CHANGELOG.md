@@ -5,11 +5,70 @@ mudança, com data, medida e prova, está em
 `DocsPublic/roadmaps/40.7-registro-das-entregas.md`; a situação de cada versão,
 em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 
-## 0.3.6 a 0.3.9 — em desenvolvimento, um lançamento só (não lançada)
+## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
 
 A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
 juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
-no checkout, não em nenhum pacote publicado.
+no checkout, não em nenhum pacote publicado: o lançamento (tag, release e
+pacote) é do autor, que considera publicá-lo depois da 0.4.0 (59 §8).
+
+- **0.3.9 encerrada** (2026-10-16, roadmaps 59 §7.1.8, 40.7 §7.304). As
+  provas: os passos 7–16 com registro (40.7 §7.243–§7.303); os aceites com
+  mouse e teclado feitos pelo agente no Xvfb, com o gesto dito como dele
+  (16.1); a bateria real do Banco contra PostgreSQL (15d); o desempenho
+  dentro do orçamento do roadmaps/21 (primeiro quadro 321 ms, UI 150 MB,
+  core 47 MB, digitação 8,1 ms; 16.6); o gate completo e estrito, sem
+  NÃO PROVADO (QEMU ARM, `debugpy`, clangd cross, `fd` e monitor serial
+  provados nesta máquina); as telas nas três larguras. Adiados pelo autor,
+  sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em
+  processo externo, as instâncias e o LSP por conexão e o InfluxDB 3 nativo
+  (59 §2.3).
+
+- **O pente fino (passo 16, 2026-10-16; 40.7 §7.292–§7.303).**
+  - Protocolo `0.171.0` — **Confiar neste projeto:** abrir um repositório
+    não roda nada dele. Sem a confiança (guardada fora do projeto), o CMake
+    não configura sozinho e o rust-analyzer sobe sem build scripts, macros
+    procedurais nem `cargo check`.
+  - Protocolo `0.172.0` — **Toolchain automática com nome neutro:** o chip
+    diz "Automática"; o menu diz o compilador e o gerador que o cache do
+    CMake do projeto registra ("G++ · do projeto"), e não um palpite.
+  - Segurança da casca: o Remoto recusa alvo e caminho que injetam opção ou
+    comando no `ssh`/`rsync`; o espelho e o deploy não saem do projeto por
+    `..` ou link; o `known_hosts` não é regravado; a aba Web só manda ao
+    navegador URL `http`/`https`; o perfil do Grafana recusa usuário e
+    senha na URL.
+  - Editor: PageUp/PageDown; o Ctrl+B sem destino avisa, e num cabeçalho do
+    sistema abre a aba somente leitura na linha; o completar não abre depois
+    de número.
+  - O terminal reflui ao alargar; cada janela da esquerda guarda a sua
+    largura; o ↻ do Banco relê as conexões; a barra do Banco entra no Tab.
+  - O contexto GL compartilhado só com a aba Web ligada (sem ela, 9 MiB a
+    menos de RSS e 13–15 ms a menos no primeiro quadro, com GL de verdade).
+  - As mensagens do core e os textos da UI com acento.
+- **Provas finais do Banco (passo 15, 2026-10-15; 40.7 §7.289–§7.291):** o
+  nome do servidor resolvido com prazo, fora do Tokio; o aviso de impacto
+  conta `UPDATE … FROM` e `DELETE … USING`; a bateria real contra
+  PostgreSQL, com a senha conferida fora do log e do projeto.
+- Protocolos `0.168.0`–`0.170.0` — **Containers (16b, 2026-10-15; 40.7
+  §7.284–§7.286):** o motor que responde (Docker ou Podman), com prazo; o
+  "Criar banco" diz o motor e a porta livre; "Apagar os dados" e
+  "Remover" perguntam pelos volumes.
+- **O mesmo ambiente em toda distro (16c, 2026-10-15; 40.7 §7.287–§7.288):**
+  `scripts/instalar-ambiente.sh` e o gate de idioma com o mesmo veredito.
+- **A documentação por contexto (2026-10-15; 40.7 §7.278–§7.281):** o
+  registro em partes, o 40 só com o estado, as notas do protocolo no 03.1 e
+  o mapa do que cada contexto lê (00 §5.1).
+- **O porte para o Windows 11 (2026-10-09 a 2026-10-14; 40.7
+  §7.262–§7.277), pausado na W6b4:** o core e a UI compilam e rodam no
+  Windows (MSVC), com gate próprio, Job Object e um projeto C++ de verdade
+  com clangd. Não é alvo deste lançamento (60 §3.3).
+- Protocolos `0.165.0`–`0.167.0` — **O Banco dos passos 7–14 (2026-10-08 e
+  2026-10-09; 40.7 §7.243–§7.259):** o formato 2 dos perfis e os
+  indisponíveis na árvore; o QML para desenvolver a IDE nela (`qmlls` com o
+  build, realce, `qmlformat`); a base de processo de longa vida; ordenar,
+  carregar mais, copiar e exportar a grade; localizar a conexão do console e
+  o histórico de consultas por conexão (fora do projeto); o SQLite pelo
+  adaptador externo, escolhido no formulário.
 
 - **Contrato operacional dos adaptadores** (D1a.3, 40.7 §7.237): mensagens
   de operação, catálogo, resultados, prévia e decisão na API externa `1.0`.

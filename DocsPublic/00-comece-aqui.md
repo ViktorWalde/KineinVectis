@@ -102,7 +102,7 @@ documentação pública** (§6).
 | **O que ler para mexer num contexto, e o que dispensar?** | §5.1 abaixo |
 | **Quais versões existem até a 1.0, e o que é decidido ou proposta?** | [`roadmaps/57-mapa-de-versoes-ate-a-1.0.md`](roadmaps/57-mapa-de-versoes-ate-a-1.0.md) |
 | **Onde, no código, cada versão começa — arquivos, mecanismo a estender, primeira fatia?** | [`roadmaps/58-onde-cada-versao-comeca-no-codigo.md`](roadmaps/58-onde-cada-versao-comeca-no-codigo.md) — caminhos conferidos por gate |
-| O plano da versão em curso? | o que o [mapa de versões](roadmaps/57-mapa-de-versoes-ate-a-1.0.md) marca EM CURSO; hoje, o fechamento da 0.3.9, [`roadmaps/59-fechamento-da-0.3.9.md`](roadmaps/59-fechamento-da-0.3.9.md) |
+| O plano da versão em curso? | o que o [mapa de versões](roadmaps/57-mapa-de-versoes-ate-a-1.0.md) marca EM CURSO; hoje (desde 2026-10-16), a 0.4, [`roadmaps/52-arquitetura-executavel-da-0.4.md`](roadmaps/52-arquitetura-executavel-da-0.4.md) §11 |
 | A visão-alvo de cada área do produto? | [`especificacoes/README.md`](especificacoes/README.md) — alvo, não estado |
 | Por que uma decisão de arquitetura foi tomada? | [`decisoes-adr/`](decisoes-adr/README.md) |
 | Como montar o ambiente e compilar? | [`contribuindo/02-preparar-o-ambiente.md`](contribuindo/02-preparar-o-ambiente.md), [`build/comandos-de-build-e-verificacao.md`](build/comandos-de-build-e-verificacao.md) |
@@ -148,7 +148,7 @@ as seções dos domínios da linha.
 | Embarcados | [`roadmaps/52`](roadmaps/52-arquitetura-executavel-da-0.4.md) (a 0.4), [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md), [`especificacoes/embarcados-targets-flash-serial-qemu.md`](especificacoes/embarcados-targets-flash-serial-qemu.md), [`integracoes/36`](integracoes/36-ferramentas-de-embarcados.md) | `probe.*`, `serial.*`, `project.*` |
 | Toolchains e kits | [`integracoes/39`](integracoes/39-toolchains-por-alvo.md), [`build/22`](build/22-compilacao-c-cpp-rust.md) | `toolchain.*`, `cmake.*`, `cargo.*`, `runConfig.*` |
 | Remote SSH | [`especificacoes/remote-ssh-ui-hud.md`](especificacoes/remote-ssh-ui-hud.md) | `remote.*` |
-| Banco e observabilidade | [`arquitetura/37`](arquitetura/37-banco-de-dados.md), [`38`](arquitetura/38-provedores-de-banco-e-linguagem.md), [`39`](arquitetura/39-drivers-externos-e-compatibilidade.md), [`40`](arquitetura/40-contrato-operacional-de-drivers.md); o que falta no [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2 | `datasource.*`, `grafana.*` |
+| Banco e observabilidade | [`arquitetura/37`](arquitetura/37-banco-de-dados.md), [`38`](arquitetura/38-provedores-de-banco-e-linguagem.md), [`39`](arquitetura/39-drivers-externos-e-compatibilidade.md), [`40`](arquitetura/40-contrato-operacional-de-drivers.md); os adiados pelo autor no [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.3 (registro) | `datasource.*`, `grafana.*` |
 | Containers | [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.5 (o 16b) e §3 | `container.*` |
 | Python | [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md) §9 | `python.*` |
 | Configuração, biblioteca, setup | [`especificacoes/fluxo-duplo-e-acoes-de-configuracao.md`](especificacoes/fluxo-duplo-e-acoes-de-configuracao.md) | `configAction.*`, `library.*`, `setup.*`, `settings.*`, `command.*` |

@@ -27,8 +27,8 @@ documento: **ninguém (pessoa ou IA) pode tratar uma proposta como decisão.**
 ```mermaid
 flowchart LR
   v02["0.1–0.2<br/>MVP e teste fechado"]:::done --> v03["0.3.0–0.3.5<br/>série 0.3"]:::done
-  v03 --> v036["0.3.6–0.3.9<br/>casca e base visual"]:::now
-  v036 --> v04["0.4.x<br/>embarcados"]:::planned
+  v03 --> v036["0.3.6–0.3.9<br/>casca e base visual"]:::checkout
+  v036 --> v04["0.4.x<br/>embarcados"]:::now
   v04 --> v05["0.5.x<br/>ambiente e capacidades"]:::planned
   v05 --> v06["0.6<br/>motor do editor"]:::planned
   v06 --> v07["0.7<br/>paridade diária"]:::planned
@@ -38,6 +38,7 @@ flowchart LR
   classDef done fill:#d9d9d9,stroke:#555
   classDef now fill:#ffe08a,stroke:#b38600,stroke-width:2px
   classDef planned fill:#bfe3ff,stroke:#2a6fa8
+  classDef checkout fill:#e8e8e8,stroke:#666,stroke-dasharray:2 2
   classDef proposed fill:#ffffff,stroke:#888,stroke-dasharray:5 4
 ```
 
@@ -50,10 +51,12 @@ autor migrou para Arch Linux e o Qt local passou a 6.12.0 (59, topo). Em
 2026-10-08 adiou MySQL/MariaDB nativo e a edição na grade (59 §2.3). A 0.3.9 encerra com
 o pente fino como último passo (16 do 59 §2), após os passos menores do Banco
 (7–15). Novo AppImage fica fora desse fechamento; o autor considera lançá-lo
-após concluir a 0.4.0, ainda sem decisão de publicação (59 §8).
+após concluir a 0.4.0, ainda sem decisão de publicação (59 §8). **A 0.3.9
+foi encerrada no checkout em 2026-10-16** (59 §7.1.8, 40.7 §7.304), sem
+lançamento: as quatro etapas esperam o pacote único.
 Uso cronometrado (40.7 §7.201) continua entre as provas do passo 16.
 
-Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
+Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
 (nenhuma versão desde 2026-10-01; o que resta proposto é o critério da 1.0, §4).
 
 ## 2. Versão a versão
@@ -65,9 +68,9 @@ Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
 | 0.3.6 | FEITA NO CHECKOUT (2026-10-03) | limpeza e base | G0 (gates antes do código — feito), terminal mudo, passeio por superfícies, inventário F0, layout versionado | [`53`](53-arquitetura-executavel-da-0.3.6.md) §11, [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §4 | gate completo, passeio sem aviso no AppImage, telas nas três larguras (53 §11) |
 | 0.3.7 | FEITA NO CHECKOUT (2026-10-03) | navegação | trilho por áreas, painel de baixo contextual | 53 §5.4–§5.5 | idem |
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
-| 0.3.9 | EM CURSO (2026-10-15): passos 1–8, 9a, 13 e 14 feitos (40.7 §7.220–§7.259); 9b/9c, 10, 11 e 12 adiados pelo autor (59 §2.3). Restam os containers (16b), as provas finais (15) e o pente fino (16), último. Desde 2026-10-14 o fechamento vem antes do resto do porte (40.7 §7.277); a organização da documentação corre junto (61). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4); provas no Qt local (6.12.0) | [`59`](59-fechamento-da-0.3.9.md) §2/§2.1/§7; 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
-| porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização EM CURSO (2026-10-15) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
-| 0.4.0–0.4.4 | PLANEJADA | embarcados | contexto efetivo, diagnóstico ao salvar, cross ponta a ponta, tamanho por símbolo, cache, gravar e depurar com SVD; **PlatformIO como cidadão de tier 1** nas cinco jornadas e **emuladores como alvo** (QEMU, Renode, QEMU da Espressif) — decisões de 2026-10-01 | [`52`](52-arquitetura-executavel-da-0.4.md) §11 | as cinco jornadas J1–J5 provadas (52 §1, §10) |
+| 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pelo autor, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
+| porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização FEITA (2026-10-15, 61 §4; continua junto de cada fatia) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
+| 0.4.0–0.4.4 | EM CURSO (desde 2026-10-16, no modo autônomo do 40 §5) | embarcados | contexto efetivo, diagnóstico ao salvar, cross ponta a ponta, tamanho por símbolo, cache, gravar e depurar com SVD; **PlatformIO como cidadão de tier 1** nas cinco jornadas e **emuladores como alvo** (QEMU, Renode, QEMU da Espressif) — decisões de 2026-10-01 | [`52`](52-arquitetura-executavel-da-0.4.md) §11 | as cinco jornadas J1–J5 provadas (52 §1, §10) |
 | edição especial | PLANEJADA (autor, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
 | 0.5.x | PLANEJADA | ambiente e capacidades | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md) | por fatia; corte de release pela evidência (49 §6) |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |

@@ -45,7 +45,7 @@ mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 ```text
 57-mapa-de-versoes-ate-a-1.0.md     as versoes ate a 1.0: encerrada, em curso, planejada, proposta
 58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia
-59-fechamento-da-0.3.9.md            o que falta para encerrar a 0.3.9 (janelas acopladas, banco completo, Grafana web, pente fino)
+59-fechamento-da-0.3.9.md            o fechamento da 0.3.9, encerrada em 2026-10-16 (registro)
 60-windows-e-edicao-especial.md       o Windows 11 Pro: adaptar a IDE, fechar 0.3.9 e 0.4.0, edição especial Windows + WSL2
 61-organizacao-da-documentacao.md     a documentação por contexto: o registro em partes,
                                    o 40 só com o estado, o 03 sem o histórico no caminho

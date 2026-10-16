@@ -22,16 +22,16 @@
 > `debugpy`, clangd cross, `fd` e monitor serial provados, 40.7 §7.302). A UI
 > compila e abre: os aceites da 16.1 a dirigiram no Xvfb (2026-10-16).
 >
-> **Próximo passo:** a 16.8 (o fechamento: 40, 57, CHANGELOG e o 59 vira
-> registro, 61 §5) ([59](59-fechamento-da-0.3.9.md) §7.1);
-> depois a 0.4 ([52](52-arquitetura-executavel-da-0.4.md) §11). Feito: a 16b
-> (40.7 §7.283–§7.286), o 16c (§7.287–§7.288) e o passo 15 (§7.289–§7.291),
-> em 2026-10-15; a 16.1 a 16.7c (§7.292–§7.303), em 2026-10-16. **Confiança no projeto (16.4b):** cada projeto
-> aberto antes dela pede um clique em "Confiar neste projeto" (a faixa de
-> saúde) para o CMake configurar sozinho e o rust-analyzer usar build
-> scripts e macros procedurais. A 16b está fechada: a catraca do idioma no Ubuntu (40.7
-> §7.283), 16b.1 (§7.284), 16b.2 (§7.285) e 16b.3 (§7.286), todas em
-> 2026-10-15.
+> **A 0.3.9 está encerrada no checkout (2026-10-16, 40.7 §7.304), sem
+> lançamento** (o pacote único da 0.3.6–0.3.9 é do autor; 57). O
+> [59](59-fechamento-da-0.3.9.md) virou registro; o que ficou aberto está no
+> §4. **Próximo passo:** a 0.4.0, a fundação
+> ([52](52-arquitetura-executavel-da-0.4.md) §11): o contexto efetivo, o
+> preset no configure automático, o diagnóstico do compilador ao salvar,
+> L6/L7 e o `compiledb` do PlatformIO; o desenho de cada fatia vai ao 52
+> antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
+> antes dela pede um clique em "Confiar neste projeto" (a faixa de saúde).
+> **Esperam o autor** (§4): três propostas de 2026-10-16, sem decisão.
 >
 > **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
 > 0.3.9 e a 0.4 sozinho, fatia por fatia, sem push; SDKs no usuário, sem
@@ -87,12 +87,13 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| O fechamento da 0.3.9: 16b (containers), 15 (provas finais do Banco), 16 (pente fino) | [59](59-fechamento-da-0.3.9.md) §2; a 16b no §2.5 |
-| A organização da documentação: O3–O5 | [61](61-organizacao-da-documentacao.md) §4 |
-| As versões depois da 0.3.9: a 0.4 (embarcados) e as seguintes | [57](57-mapa-de-versoes-ate-a-1.0.md); a 0.4 no [52](52-arquitetura-executavel-da-0.4.md) |
+| A 0.4 (embarcados), em curso desde 2026-10-16: 0.4.0 a 0.4.4 | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
+| O lançamento único da 0.3.6–0.3.9 (tag, release, pacote e a versão do binário, que diz `0.3.5`) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11 |
+| Os adiados do Banco, sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c), as instâncias e o LSP por conexão (10), o InfluxDB 3 nativo (11) | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
+| PROPOSTAS de 2026-10-16, sem decisão do autor: (1) o LSP por conexão e o InfluxDB 3 nativo como fatia "Banco para embarcados", antes ou depois da 0.4; (2) um arquivo curto de entrada para agentes na raiz, apontando o 00, o 40 e o `contribuindo/05`, com as regras inegociáveis; (3) o 03 dividido por domínio, com o gate dele mudado antes (61 §5) | o autor decide; até lá nada se implementa a partir delas |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
 | A edição especial Windows + WSL2, depois da 0.4.0 | [60](60-windows-e-edicao-especial.md) §4 |
-| O AppImage novo, fora do fechamento da 0.3.9 | [59](59-fechamento-da-0.3.9.md) §8 |
+| O AppImage novo: o autor considera depois da 0.4.0, sem decisão | [59](59-fechamento-da-0.3.9.md) §8 (registro; os requisitos guardados) |
 
 As dívidas antigas, de antes da 0.3.9 (o TLS do `postgres`, o DAP com
 probe-rs, as fatias de embarcados da trilha), estão na lista datada do §4 do

@@ -1,10 +1,13 @@
 # 59 — O fechamento da 0.3.9: janelas acopladas, banco completo e pente fino
 
-> **Classe: PLANO** (`DocsPublic/README.md`). Este documento diz **o que falta**
-> para encerrar a 0.3.9 e **em que ordem**. O que já foi feito, com data e prova,
-> fica no [`40.7`](40.7-registro-das-entregas.md). O estado do projeto, no
-> [`40`](40-estado-e-continuidade.md). Cada item, ao ser entregue, ganha a data e
-> o parágrafo do 40.7 que o prova; nenhum item sai daqui sem isso.
+> **Classe: LOG desde 2026-10-16** (`DocsPublic/README.md`): a 0.3.9 foi
+> encerrada no checkout (§7.1.8, 40.7 §7.304), e este documento virou registro,
+> como o 51 depois da 0.3.5 ([61](61-organizacao-da-documentacao.md) §5).
+> **Nada daqui é fila:** o que ficou aberto (os adiados do §2.3, o AppImage do
+> §8, as propostas) está no [`40`](40-estado-e-continuidade.md) §4, com o dono
+> de cada item. Até essa data a classe era PLANO: dizia o que faltava para
+> encerrar a 0.3.9 e em que ordem; o feito, com data e prova, está no
+> [`40.7`](40.7-registro-das-entregas.md).
 
 > **Revisão do autor em 2026-10-07:** o antigo passo 7 foi dividido nos
 > passos 7–15 (§2); o pente fino é o passo 16, último da 0.3.9.
@@ -2174,7 +2177,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | feito em 2026-10-16 (§7.1.7; 40.7 §7.301): o fluxo C++/CMake e os Containers passaram; F5, F6 e F10 (o Ctrl+B num cabeçalho do sistema) corrigidos; F8 era o `xdotool` (as teclas F vão pelo XTEST agora) | 16.7 |
 | F7: o automático da toolchain diz o que o projeto usa (decisão do autor, 2026-10-16) | feito em 2026-10-16 (§7.1.7.1; 40.7 §7.302): o cache do CMake do projeto, chip neutro, protocolo 0.172.0 | 16.7b |
 | F9: os textos da UI sem acento (15 `qsTr`, ~25 em `ui/src`) | feito em 2026-10-16 (§7.1.7.2; 40.7 §7.303) | 16.7c |
-| Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | pendente | 16.8 |
+| Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | feito em 2026-10-16 (§7.1.8; 40.7 §7.304) | 16.8 |
 
 Regras de cada fatia: o desenho fino aqui antes do código, foto antes e
 depois no Xvfb para o que muda na tela, o gate rápido verde e a entrada no
@@ -2854,6 +2857,35 @@ painel Build.
 `tst_cli_args` confere "não existe". No Xvfb, o Ctrl+F9 termina com "==
 build concluído com sucesso =="; o `kinein --help` diz "mostra a versão e
 sai" e "a IDE não exige manifesto".
+
+#### 7.1.8 16.8 — o fechamento (desenho, 2026-10-16, antes de mexer nos donos)
+
+**O critério (§7):** o 40, o 57 e o CHANGELOG dizem "0.3.9 encerrada", com a
+lista de provas. **O que mais a regra pede:** o 53 §11 fecha cada etapa com
+o gate completo, o passeio sem aviso no AppImage e as telas nas três
+larguras; o AppImage saiu do fechamento (§8, decisão de 2026-10-07), então
+ficam o gate completo (`verificar.sh --completo --estrito`, agora possível
+sem NÃO PROVADO) e as telas (`scripts/capturar-telas.sh`). O 61 §5 manda o
+59 virar registro ao fechar.
+
+**Os gestos:** o CHANGELOG ganha as entregas desde o protocolo `0.164.0`
+(ele tinha parado em 2026-10-07) e o parágrafo do fechamento; o 57 marca a
+0.3.9 como feita no checkout e não lançada (a legenda dele diz que
+"ENCERRADA" é lançada), a organização como feita e a 0.4 em curso; o 40
+leva os abertos (os adiados, o AppImage, as propostas sem decisão) para o
+§4 e aponta a 0.4.0; o cabeçalho daqui diz LOG; o índice de `roadmaps/` e o
+00 §5.1 param de mandar ler o 59 como fila.
+
+**Fora:** a versão do binário (`Cargo.toml` e `CMakeLists.txt` dizem
+`0.3.5`): sobe com o lançamento, que é do autor.
+
+**Resultado (2026-10-16).** O CHANGELOG, o 57, o 40, o índice de
+`roadmaps/` e o 00 como desenhado; este cabeçalho diz LOG. As telas nas três
+larguras: as 9 cenas padrão do `capturar-telas.sh` e as 4 opcionais, 39
+fotos, nenhuma falha. O `verificar.sh --completo --estrito`: tudo verde, sem
+NÃO PROVADO; os binários debug e release abrem (329 e 315 ms até o primeiro
+quadro), sem aviso, com o passeio de 33 passos limpo (40.7 §7.304). **A
+0.3.9 está encerrada no checkout.**
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 
