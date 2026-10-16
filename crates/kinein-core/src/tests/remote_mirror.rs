@@ -19,13 +19,13 @@ fn executavel(caminho: &Path, corpo: &str) {
     crate::write_executable(caminho, corpo);
 }
 
-struct Cenario {
+struct Scenario {
     core: crate::Core,
     base: PathBuf,
     events: mpsc::Receiver<JsonRpcRequest>,
 }
 
-fn cenario(nome: &str) -> Cenario {
+fn scenario(nome: &str) -> Scenario {
     let base = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-mirror-{nome}", std::process::id()));
@@ -48,7 +48,7 @@ fn cenario(nome: &str) -> Cenario {
     ))
     .with_home(base.join("home"));
     core.enable_lsp(sender);
-    let mut c = Cenario {
+    let mut c = Scenario {
         core,
         base: base.clone(),
         events: receiver,
@@ -65,7 +65,7 @@ fn cenario(nome: &str) -> Cenario {
     c
 }
 
-impl Cenario {
+impl Scenario {
     fn rpc(&mut self, method: &str, params: Value) -> kinein_protocol::JsonRpcResponse {
         self.core
             .handle_request(&JsonRpcRequest::new(3_i64, method, Some(params)))
@@ -112,21 +112,21 @@ impl Cenario {
 }
 
 /// Abre `/home/pi/sensor` como espelho e devolve a raiz dele.
-fn abrir_espelho(c: &mut Cenario) -> PathBuf {
+fn open_mirror(c: &mut Scenario) -> PathBuf {
     c.rsync_falso();
     let aceito = c.ok(
         "remote.open",
         json!({ "name": "pi", "path": "/home/pi/sensor/" }),
     );
-    let espelho = PathBuf::from(aceito["mirror"].as_str().unwrap());
+    let mirror = PathBuf::from(aceito["mirror"].as_str().unwrap());
     let ev = c.synced();
     assert_eq!(ev["success"], true, "{ev}");
     let aberto = c.ok(
         "workspace.open",
-        json!({ "path": espelho.to_str().unwrap() }),
+        json!({ "path": mirror.to_str().unwrap() }),
     );
     assert_eq!(aberto["remote"]["name"], "pi");
-    espelho
+    mirror
 }
 
 #[test]
@@ -136,7 +136,7 @@ fn abrir_espelho(c: &mut Cenario) -> PathBuf {
 )]
 fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("abrir");
+    let mut c = scenario("abrir");
 
     // Fora de um espelho: status vazio; sync recusado; sem rsync, open recusado.
     assert!(c.ok("remote.status", json!({})).get("mirror").is_none());
@@ -176,13 +176,13 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
         "remote.open",
         json!({ "name": "pi", "path": "/home/pi/sensor/" }),
     );
-    let espelho = PathBuf::from(aceito["mirror"].as_str().unwrap());
+    let mirror = PathBuf::from(aceito["mirror"].as_str().unwrap());
     assert!(
-        espelho.starts_with(c.base.join("home/.cache/kinein-vectis/remote/pi")),
+        mirror.starts_with(c.base.join("home/.cache/kinein-vectis/remote/pi")),
         "{}",
-        espelho.display()
+        mirror.display()
     );
-    assert_eq!(espelho.file_name().unwrap(), "sensor");
+    assert_eq!(mirror.file_name().unwrap(), "sensor");
     let comando = aceito["command"].as_str().unwrap();
     // A HOME deste teste fica sob /tmp/kinein-core-tests/<pid>-..., longa
     // demais para o socket de ControlPath: o transporte cai para ssh comum.
@@ -200,7 +200,7 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
     assert_eq!(ev["success"], true, "{ev}");
     assert_eq!(ev["direction"], "pull");
     assert_eq!(ev["name"], "pi");
-    assert_eq!(ev["mirror"], espelho.display().to_string());
+    assert_eq!(ev["mirror"], mirror.display().to_string());
     let changed: Vec<&str> = ev["changed"]
         .as_array()
         .unwrap()
@@ -211,13 +211,13 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
         changed.contains(&"src/main.c") && changed.contains(&"CMakeLists.txt"),
         "{changed:?}"
     );
-    assert!(espelho.join("src/main.c").is_file());
-    assert!(espelho.join(".kinein/remote-mirror.json").is_file());
+    assert!(mirror.join("src/main.c").is_file());
+    assert!(mirror.join(".kinein/remote-mirror.json").is_file());
 
     // O workspace.open do espelho diz de quem e'; remote.status idem.
     let aberto = c.ok(
         "workspace.open",
-        json!({ "path": espelho.to_str().unwrap() }),
+        json!({ "path": mirror.to_str().unwrap() }),
     );
     assert_eq!(aberto["remote"]["name"], "pi");
     assert_eq!(aberto["remote"]["path"], "/home/pi/sensor");
@@ -225,7 +225,7 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
     assert_eq!(aberto["kind"], "cmake");
     assert_eq!(
         c.ok("remote.status", json!({}))["mirror"]["mirrorRoot"],
-        espelho.display().to_string()
+        mirror.display().to_string()
     );
     // O alvo foi copiado para o catalogo do espelho (usuario/porta/chave).
     assert_eq!(c.ok("remote.list", json!({}))["targets"][0]["port"], 2222);
@@ -238,7 +238,7 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
 )]
 fn a_remote_folder_with_spaces_is_accepted_and_relative_paths_are_not() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("espaco");
+    let mut c = scenario("espaco");
     c.rsync_falso();
     // Relativa, `~` (o `-s` nao deixa o shell remoto expandir) e quebra de
     // linha sao recusadas; espaco no nome e' aceito.
@@ -277,15 +277,15 @@ fn a_remote_folder_with_spaces_is_accepted_and_relative_paths_are_not() {
 )]
 fn saving_in_a_mirror_pushes_and_sync_moves_both_ways() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("sync");
-    let espelho = abrir_espelho(&mut c);
+    let mut c = scenario("sync");
+    let mirror = open_mirror(&mut c);
 
     // Salvar no espelho EMPURRA so' esse arquivo.
     let registro = c.base.join("bin/rsync.args");
     std::fs::write(&registro, "").unwrap();
     c.ok(
         "fs.write",
-        json!({ "path": espelho.join("src/main.c").to_str().unwrap(), "content": "int main(void) { return 1; }\n", "expectedContent": "int main(void) { return 0; }\n" }),
+        json!({ "path": mirror.join("src/main.c").to_str().unwrap(), "content": "int main(void) { return 1; }\n", "expectedContent": "int main(void) { return 0; }\n" }),
     );
     let ev = c.synced();
     assert_eq!(ev["direction"], "push", "{ev}");
@@ -295,7 +295,7 @@ fn saving_in_a_mirror_pushes_and_sync_moves_both_ways() {
     assert!(
         args.contains(&format!(
             "{}/src/main.c\npi@192.168.0.42:/home/pi/sensor/src/main.c\n",
-            espelho.display()
+            mirror.display()
         )),
         "{args}"
     );
@@ -333,7 +333,7 @@ fn saving_in_a_mirror_pushes_and_sync_moves_both_ways() {
             .any(|v| v == "NOVO.md"),
         "{ev}"
     );
-    assert!(espelho.join("NOVO.md").is_file());
+    assert!(mirror.join("NOVO.md").is_file());
     // O .kinein do espelho nunca vai para a Pi (o exclude esta' na linha; o
     // rsync falso copia tudo — o que se prova aqui e' a LINHA).
     c.ok(
@@ -370,5 +370,30 @@ fn saving_in_a_mirror_pushes_and_sync_moves_both_ways() {
             .unwrap()
             .contains("connection unexpectedly closed"),
         "{ev}"
+    );
+
+    refuses_a_link_out_of_the_mirror(&mut c, &mirror);
+}
+
+/// 16.4c: uma pasta do espelho que e' link para fora (o servidor pode
+/// cria-la no pull) nao e' empurrada nem puxada.
+fn refuses_a_link_out_of_the_mirror(c: &mut Scenario, mirror: &Path) {
+    let outside = c.base.join("fora");
+    std::fs::create_dir_all(&outside).unwrap();
+    std::fs::write(outside.join("segredo"), "x").unwrap();
+    let made = std::process::Command::new("ln")
+        .arg("-s")
+        .arg(&outside)
+        .arg(mirror.join("link"))
+        .status()
+        .is_ok_and(|status| status.success());
+    assert!(made, "ln -s");
+    let refused = c.rpc(
+        "remote.sync",
+        json!({ "direction": "push", "paths": ["link/segredo"] }),
+    );
+    assert!(
+        refused.error.unwrap().message.contains("link para fora"),
+        "o link para fora passou"
     );
 }

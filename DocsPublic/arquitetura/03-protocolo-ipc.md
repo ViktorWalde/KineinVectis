@@ -3583,6 +3583,11 @@ fora de `[A-Za-z0-9_@%+=:,./-]`, com o `~/` do começo fora delas. O
 (`ssh-keygen -F`): confiar é só o primeiro contato. O marcador
 `.kinein/remote-mirror.json` só faz de uma pasta um espelho dentro do cache
 da IDE (`<cache>/kinein-vectis/remote/`), onde o `remote.open` o cria.
+Os caminhos também não saem (16.4c): a origem do `remote.deploy`, resolvida
+com os links, tem de ficar dentro da raiz do projeto (`..`, absoluta ou link
+para fora: `INVALID_REQUEST`, "fica fora do projeto"), e os `paths` do
+`remote.sync` (e o push depois de gravar) não atravessam um link do espelho
+que aponta para fora.
 
 ### Descobrir e explicar (`0.132.0`, fatia R0.5)
 
@@ -4023,7 +4028,12 @@ event.grafana.probed  { jobId, reachable, authenticated, authRefused,
                         dataSources[], dashboards[], matches[] }
 ```
 
-**Os quatro exigem workspace aberto.**
+**Os quatro exigem workspace aberto.** Desde 2026-10-16 (16.4c do
+`roadmaps/59` §7.1.4, sem mudança de forma), o `grafana.save` recusa URL com
+credencial (`https://usuário:senha@…`): o perfil é gravado no `.kinein/` do
+projeto, e o token vai pela variável de ambiente. A aba Web só manda ao
+navegador do sistema `http`/`https`; outro esquema (`file://`, `smb://`…)
+fica.
 
 **`authenticated: false` sozinho não distingue dois estados opostos:** ninguém
 ofereceu token, e o servidor recusou o que foi oferecido. O primeiro é um

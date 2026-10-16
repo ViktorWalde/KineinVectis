@@ -430,6 +430,22 @@ impl Core {
                 ),
             )));
         }
+        // A origem nao sai do projeto (16.4c, `roadmaps/59` §7.1.4): uma
+        // absoluta, um `..` ou um link para fora mandariam ao alvo uma pasta
+        // qualquer, e o `deploySource` pode vir de um `remotes.json` clonado.
+        let inside = crate::platform::canonicalize(&source)
+            .ok()
+            .zip(crate::platform::canonicalize(root).ok())
+            .is_some_and(|(real_source, real_root)| real_source.starts_with(real_root));
+        if !inside {
+            return Err(Box::new(error_response(
+                request_id.cloned(),
+                format!(
+                    "a origem `{}` fica fora do projeto — o deploy só envia o que está dentro dele",
+                    source.display()
+                ),
+            )));
+        }
         let dest = parsed
             .dest
             .filter(|d| !d.trim().is_empty())

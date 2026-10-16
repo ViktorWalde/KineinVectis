@@ -2168,7 +2168,7 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | feitos pelo agente (40 §5, "modo autonomo"), com os defeitos F1, F3 e F4 corrigidos (§7.1.1; 40.7 §7.292) | 16.1 |
 | PageUp/PageDown no editor | feito (§7.1.2; 40.7 §7.293) | 16.2 |
 | Terminal com reflow ao alargar | feito (§7.1.3; 40.7 §7.294) | 16.3 |
-| Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | medido em 2026-10-16 (§7.1.4): injeção no Remoto, `known_hosts` regravável, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open` | 16.4a, 16.4b, 16.4c |
+| Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | feito em 2026-10-16 (§7.1.4; 40.7 §7.295–§7.297): injeção no Remoto, `known_hosts` regravável, espelho por marcador clonado, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open`, origem do deploy fora do projeto, credencial na URL do Grafana | 16.4a, 16.4b, 16.4c |
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | pendentes | 16.5 |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | pendente: medir nesta máquina | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | pendente; pelo `xdotool` no Xvfb | 16.7 |
@@ -2492,6 +2492,48 @@ do deploy (`..`, link simbólico, absoluto); ODBC (carrega só o driver que a
 pessoa instalou, com aviso, nunca baixa); a cadeia de suprimento (`cargo
 deny` no gate, `Cargo.lock` com hashes). Cada item com o teste que tenta
 quebrar, ou a prova de que já existe.
+
+**16.4c — o desenho fino (2026-10-16, antes do código).** A leitura de cada
+item restante achou:
+
+- **Aba Web:** toda navegação não local vai ao `Qt.openUrlExternally`, de
+  qualquer esquema (`file://`, `smb://`…). Correção: uma função pura
+  (`outsideUrl`) devolve a URL só quando ela é `http`/`https`; o resto é
+  ignorado. O resto da aba já está trancado (sem janelas, clipboard,
+  plugins nem `file://` local; permissões negadas).
+- **Caminhos do deploy:** o `remote.deploy` faz `root.join(source)`: uma
+  origem absoluta ou com `..`, ou um link simbólico dentro do projeto que
+  aponta para fora, manda ao alvo uma pasta qualquer (o `deploySource` pode
+  vir de um `remotes.json` clonado). Correção: a origem canônica (links
+  resolvidos) tem de estar dentro da raiz canônica; senão, recusa.
+- **Caminhos do espelho:** os caminhos relativos já recusam `..`, absoluto e
+  `.kinein`; falta o link simbólico: uma pasta do espelho que é link para
+  fora (o servidor pode criá-la no pull) faria o push ler fora do espelho.
+  Correção: o caminho canônico de cada `rel` tem de ficar dentro da raiz
+  canônica do espelho.
+- **Credenciais:** a senha do banco já foi conferida com valores reais na
+  15d (stdout e stderr do core e o projeto, 40.7 §7.291). O token do Grafana
+  só entra no cabeçalho `Authorization`, e o `Secret` tem `Debug` redigido;
+  mas a URL do perfil aceita `usuário:senha@`, que seria GRAVADA no
+  `.kinein/` do projeto e repetida nas mensagens de erro. Correção: o perfil
+  recusa URL com credencial (o token vai pela variável de ambiente).
+- **ODBC:** já provado — a descoberta não conecta, e carregar um driver
+  pede o gesto (`DRIVER_APPROVAL_REQUIRED`) antes de qualquer `SQLConnect`
+  (testes do `datasource/odbc.rs`); nada é baixado.
+- **Cadeia de suprimento:** já no gate — `cargo deny` (licenças,
+  advisories, origens só do crates.io) e o `Cargo.lock` com os checksums.
+
+**Provas:** harness da aba Web (`outsideUrl`: `file://`, `javascript:`,
+`smb://` não saem; `https://` sai); testes do core: `remote.deploy` com
+origem `../fora`, `/etc` e um link para fora, recusados, e a origem de
+dentro, aceita; o `remote.sync` com um `rel` atrás de um link para fora,
+recusado; o `grafana.save` com `https://admin:senha@…`, recusado, sem nada
+gravado. Mutações de cada um.
+
+**16.4c feita em 2026-10-16 (40.7 §7.297).** Os quatro defeitos corrigidos
+com os testes do desenho e cinco mutações; ODBC e cadeia de suprimento
+ficam com as provas que já tinham (os testes do `datasource/odbc.rs` e o
+`cargo deny` do gate). **A segurança da casca (16.4) está fechada.**
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 

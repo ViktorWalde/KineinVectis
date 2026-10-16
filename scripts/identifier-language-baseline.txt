@@ -1907,14 +1907,11 @@ crates/kinein-core/src/tests/remote.rs	salvar	6
 crates/kinein-core/src/tests/remote.rs	senha	2
 crates/kinein-core/src/tests/remote.rs	texto	7
 crates/kinein-core/src/tests/remote_mirror.rs	aberto	7
-crates/kinein-core/src/tests/remote_mirror.rs	abrir	2
 crates/kinein-core/src/tests/remote_mirror.rs	aceito	5
 crates/kinein-core/src/tests/remote_mirror.rs	caminho	3
-crates/kinein-core/src/tests/remote_mirror.rs	cenario	9
 crates/kinein-core/src/tests/remote_mirror.rs	comando	4
 crates/kinein-core/src/tests/remote_mirror.rs	corpo	2
 crates/kinein-core/src/tests/remote_mirror.rs	espaco	2
-crates/kinein-core/src/tests/remote_mirror.rs	espelho	18
 crates/kinein-core/src/tests/remote_mirror.rs	executavel	3
 crates/kinein-core/src/tests/remote_mirror.rs	falso	4
 crates/kinein-core/src/tests/remote_mirror.rs	prazo	2

@@ -227,6 +227,27 @@ pub fn safe_relative(rel: &str) -> bool {
         && !rel.starts_with(".kinein/")
 }
 
+/// O `rel` continua DENTRO do espelho depois de resolver os links.
+///
+/// 16.4c, `roadmaps/59` §7.1.4: uma pasta que e' link para fora (o servidor
+/// pode cria-la no pull) faria o push ler fora do espelho. O que ainda nao
+/// existe conta pelo ancestral que existe.
+#[must_use]
+pub fn stays_inside(root: &Path, rel: &str) -> bool {
+    let Ok(base) = crate::platform::canonicalize(root) else {
+        return false;
+    };
+    let mut path = root.join(rel.trim_matches('/'));
+    loop {
+        if let Ok(real) = crate::platform::canonicalize(&path) {
+            return real.starts_with(&base);
+        }
+        if !path.pop() {
+            return false;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -353,5 +374,32 @@ mod tests {
                 && !safe_relative(".kinein/remotes.json")
                 && !safe_relative("a/../b")
         );
+    }
+
+    /// 16.4c: dentro, e o que ainda nao existe, ficam; um link para fora (no
+    /// Unix) nao.
+    #[test]
+    fn links_out_of_the_mirror_do_not_stay_inside() {
+        let base = std::env::temp_dir()
+            .join("kinein-mirror-inside")
+            .join(std::process::id().to_string());
+        let _ = fs::remove_dir_all(&base);
+        let root = base.join("espelho");
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::create_dir_all(base.join("fora")).unwrap();
+        assert!(stays_inside(&root, "src"));
+        assert!(stays_inside(&root, "src/novo/main.c"));
+        if cfg!(unix) {
+            let made = std::process::Command::new("ln")
+                .arg("-s")
+                .arg(base.join("fora"))
+                .arg(root.join("link"))
+                .status()
+                .is_ok_and(|status| status.success());
+            assert!(made, "ln -s");
+            assert!(!stays_inside(&root, "link"));
+            assert!(!stays_inside(&root, "link/segredo"));
+        }
+        let _ = fs::remove_dir_all(&base);
     }
 }

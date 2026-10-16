@@ -69,6 +69,19 @@ pub fn validate(profile: &GrafanaProfile) -> Result<(), String> {
     if !url.starts_with("http://") && !url.starts_with("https://") {
         return Err("o endereço precisa começar com http:// ou https://".to_owned());
     }
+    // Credencial na URL (`https://admin:senha@…`) seria GRAVADA no `.kinein/`
+    // do projeto e repetida nas mensagens de erro (16.4c, `roadmaps/59`
+    // §7.1.4): o token vai pela variavel de ambiente.
+    let authority = url.split_once("://").map_or("", |(_, rest)| {
+        rest.split(['/', '?', '#']).next().unwrap_or("")
+    });
+    if authority.contains('@') {
+        return Err(
+            "o endereço não leva usuário nem senha — ele é gravado no projeto; o token vai pela \
+             variável de ambiente"
+                .to_owned(),
+        );
+    }
     if profile.token_source == GrafanaTokenSource::Environment
         && profile
             .token_variable
@@ -371,5 +384,25 @@ mod tests {
             host_e_porta("postgres://localhost:5432/kinein"),
             ("localhost".to_owned(), Some(5432))
         );
+    }
+
+    /// 16.4c: credencial na URL e' recusada (ela seria gravada no projeto);
+    /// a URL comum passa.
+    #[test]
+    fn credentials_in_the_url_are_refused() {
+        let profile = |url: &str| GrafanaProfile {
+            url: url.to_owned(),
+            token_source: GrafanaTokenSource::None,
+            token_variable: None,
+        };
+        for bad in [
+            "https://admin:senha@grafana.local",
+            "http://admin@localhost:3000/d/x",
+            "http://u:p@127.0.0.1:3000",
+        ] {
+            let error = validate(&profile(bad)).unwrap_err();
+            assert!(error.contains("usuário nem senha"), "{bad}: {error}");
+        }
+        assert!(validate(&profile("http://localhost:3000/d/abc?var=a@b")).is_ok());
     }
 }

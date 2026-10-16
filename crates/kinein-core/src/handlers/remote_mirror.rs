@@ -265,10 +265,15 @@ impl Core {
                     .iter()
                     .map(|p| p.trim_matches('/').to_owned())
                     .collect();
-                if rels.is_empty() || rels.iter().any(|r| !mirror::safe_relative(r)) {
+                if rels.is_empty()
+                    || rels
+                        .iter()
+                        .any(|r| !mirror::safe_relative(r) || !mirror::stays_inside(&root, r))
+                {
                     return error_response(
                         request_id,
-                        "paths devem ser relativos ao espelho, sem `..`, e nunca `.kinein`",
+                        "paths devem ser relativos ao espelho, sem `..`, sem link para fora, e \
+                         nunca `.kinein`",
                     );
                 }
                 rels
@@ -316,7 +321,7 @@ impl Core {
             return;
         };
         let rel = rel.to_string_lossy().replace('\\', "/");
-        if !mirror::safe_relative(&rel) {
+        if !mirror::safe_relative(&rel) || !mirror::stays_inside(&root, &rel) {
             return;
         }
         let _ = self.spawn_sync(

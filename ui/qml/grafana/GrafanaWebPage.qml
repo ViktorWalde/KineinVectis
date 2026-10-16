@@ -34,8 +34,17 @@ Item {
         return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(String(url));
     }
 
+    // So' `http`/`https` vao ao navegador (16.4c, roadmaps/59 §7.1.4): um
+    // `file://`, `smb://` ou esquema de aplicativo numa pagina chegaria ao
+    // `xdg-open`, que abre (ou executa) o que estiver la'. O resto fica.
+    function outsideUrl(url) {
+        const text = String(url);
+        return /^https?:\/\/[^\s]+$/i.test(text) ? text : "";
+    }
+
     function openOutside(url) {
-        Qt.openUrlExternally(url);
+        const outside = root.outsideUrl(url);
+        if (outside !== "") Qt.openUrlExternally(outside);
     }
 
     // Abre `url` aqui (cria a view se preciso).

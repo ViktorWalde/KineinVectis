@@ -243,3 +243,45 @@ fn a_mirror_marker_outside_the_cache_is_not_a_mirror() {
     std::thread::sleep(std::time::Duration::from_millis(500));
     assert!(!ran.exists(), "o rsync ran para o host do marcador");
 }
+
+/// 16.4c: a origem do deploy nao sai do projeto — `..`, caminho absoluto e
+/// (no Unix) um link para fora sao recusados antes de qualquer processo; a
+/// origem de dentro passa da guarda (e para na falta do `rsync`).
+#[test]
+fn the_deploy_source_never_leaves_the_project() {
+    let mut c = scenario("guarda-origem");
+    c.ok(
+        "remote.save",
+        json!({ "target": { "name": "pi", "host": "pi.local" } }),
+    );
+    let outside = c.root.parent().unwrap().join("fora");
+    std::fs::create_dir_all(&outside).unwrap();
+    std::fs::write(outside.join("segredo"), "x").unwrap();
+    let mut hostile = vec!["../fora".to_owned(), outside.display().to_string()];
+    if cfg!(unix) {
+        let made = std::process::Command::new("ln")
+            .arg("-s")
+            .arg(&outside)
+            .arg(c.root.join("link"))
+            .status()
+            .is_ok_and(|status| status.success());
+        assert!(made, "ln -s");
+        hostile.push("link".to_owned());
+    }
+    for source in &hostile {
+        let response = c.rpc("remote.deploy", json!({ "name": "pi", "source": source }));
+        let error = response.error.expect("a origem de fora passou");
+        assert!(
+            error.message.contains("fora do projeto"),
+            "{source}: {}",
+            error.message
+        );
+    }
+    let inside = c.rpc("remote.deploy", json!({ "name": "pi", "source": "build" }));
+    let error = inside.error.expect("sem rsync nem scp no PATH");
+    assert!(
+        error.message.contains("nem `rsync` nem `scp`"),
+        "{}",
+        error.message
+    );
+}

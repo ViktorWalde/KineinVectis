@@ -1118,6 +1118,7 @@ flowchart LR
   n_ui_src_core_client_requests_run_cpp --> n_ipc_runConfig
   n_ipc_remote --> n_crates_kinein_core_src_handlers_remote_rs
   n_crates_kinein_core_src_handlers_remote_rs --> n_core_jobs
+  n_crates_kinein_core_src_handlers_remote_rs --> n_core_platform
   n_crates_kinein_core_src_handlers_remote_rs --> n_core_process
   n_crates_kinein_core_src_handlers_remote_rs --> n_core_remote
   n_crates_kinein_core_src_handlers_remote_rs --> n_core_rpc

@@ -56,6 +56,15 @@ Item {
         failures += check(!page.isLocal(" http://localhost:3000"), "espaco antes");
         failures += check(!page.isLocal("http://localhost:3000x"), "porta com lixo");
 
+        // O que sai para o navegador (16.4c): so' http e https.
+        failures += check(page.outsideUrl("https://grafana.com/docs/") === "https://grafana.com/docs/", "https sai");
+        failures += check(page.outsideUrl("http://exemplo.org/x?y=1") === "http://exemplo.org/x?y=1", "http sai");
+        failures += check(page.outsideUrl("file:///home/u/x.desktop") === "", "file:// fica");
+        failures += check(page.outsideUrl("smb://servidor/share") === "", "smb:// fica");
+        failures += check(page.outsideUrl("javascript:alert(1)") === "", "javascript: fica");
+        failures += check(page.outsideUrl("vscode://abrir") === "", "esquema de aplicativo fica");
+        failures += check(page.outsideUrl("https://ok.com/\nfile:///x") === "", "quebra de linha fica");
+
         // Desligada: nenhuma view, nenhum erro — o modulo web nao foi tocado.
         page.ensureView();
         failures += check(page.view === null && page.loadError === "", "desligada nao cria view");
