@@ -2069,15 +2069,10 @@ crates/kinein-core/src/tests/workspace.rs	fechado	2
 crates/kinein-core/src/tests/workspace.rs	novo	13
 crates/kinein-core/src/tests/workspace.rs	projeto	9
 crates/kinein-core/src/tests/workspace.rs	reaberto	2
-crates/kinein-core/src/toolchain/arguments.rs	argumentos	10
-crates/kinein-core/src/toolchain/arguments.rs	arquivo	1
+crates/kinein-core/src/toolchain/arguments.rs	argumentos	5
 crates/kinein-core/src/toolchain/arguments.rs	baixo	9
-crates/kinein-core/src/toolchain/arguments.rs	caminho	2
 crates/kinein-core/src/toolchain/arguments.rs	nativos	2
-crates/kinein-core/src/toolchain/arguments.rs	processador	1
-crates/kinein-core/src/toolchain/arguments.rs	sistema	2
 crates/kinein-core/src/toolchain/arguments.rs	sufixo	2
-crates/kinein-core/src/toolchain/arguments.rs	variavel	1
 crates/kinein-core/src/toolchain/import.rs	achados	12
 crates/kinein-core/src/toolchain/import.rs	alvo	5
 crates/kinein-core/src/toolchain/import.rs	arquivo	4
@@ -2161,7 +2156,6 @@ crates/kinein-core/src/toolchain/mod.rs	gerador	2
 crates/kinein-core/src/toolchain/mod.rs	geradores	2
 crates/kinein-core/src/toolchain/mod.rs	liberado	3
 crates/kinein-core/src/toolchain/mod.rs	limpo	5
-crates/kinein-core/src/toolchain/mod.rs	maquina	31
 crates/kinein-core/src/toolchain/mod.rs	nativo	1
 crates/kinein-core/src/toolchain/mod.rs	padrao	3
 crates/kinein-core/src/toolchain/mod.rs	relido	2

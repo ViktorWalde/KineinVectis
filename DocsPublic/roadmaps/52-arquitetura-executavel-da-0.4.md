@@ -1003,3 +1003,82 @@ sysfs); os periféricos pelo SVD NÃO PROVADOS (sem SVD do LM3S6965, e o SVD
 só vai ao probe-rs). O que pede código ficou como proposta para a 0.4.3.
 **Com isto a 0.4.0 está completa** (§11): o contexto efetivo, o preset, o
 C1, a L6 (a L7 medida e dispensada), o `compiledb` do PlatformIO e a matriz.
+
+### 14.7 0.4.1a — o cross sem o host vazando, e o kit exportável como toolchain file (§5.4, C3; 2026-10-17)
+
+**Medido (2026-10-17), pelo core real** (o `toolchain.setKit` e o
+`cmake.configure`/`build.run` por stdio), com um projeto que faz
+`find_package(ZLIB)`:
+
+```text
+kit                                configure + build      find_package(ZLIB)
+arm-none-eabi (bare metal)         ok; fw.elf ARM EABI5   nada (o Generic nao
+                                                          procura no host)
+aarch64-linux-gnu, sem sysroot     ok; ELF aarch64        INC=/usr/include: e' onde
+(como o Ubuntu empacota)                                  o multiarch do Debian poe
+                                                          os cabecalhos dos :arm64
+aarch64 + sysroot (montado com     ok                     INC=/usr/include: o HOST
+links para /usr/aarch64-linux-gnu)                        vaza no build da placa
+o mesmo + MODE_*=ONLY              ok                     NOTFOUND (o certo)
+sysroot=/usr/aarch64-linux-gnu     o teste do compilador  -
+                                   falha (sem usr/include)
+```
+
+E duas medidas do `CMake` 4.2.3 que decidem o desenho: o `set()` de um
+toolchain file **vence o `-D` da linha** (pedido o `/usr/bin/gcc` na linha,
+ficou o compilador do arquivo); e o `aarch64-linux-gnu-gcc` do Ubuntu diz
+`-print-sysroot` = `/`. O kit já põe o cross na linha do configure
+(`toolchain/arguments.rs`: compiladores, `CMAKE_SYSROOT`,
+`CMAKE_SYSTEM_NAME`/`PROCESSOR`, `TRY_COMPILE` no bare metal) — o "ponta a
+ponta" da §5.4 já anda pelos dois kits; faltam o vazamento com sysroot e o
+mesmo configure fora da IDE.
+
+**O desenho:**
+
+1. **Com sysroot no kit, o host não vaza:** quando o kit tem sysroot e põe o
+   `CMake` em cross, e nem o preset nem o kit trazem toolchain file, o
+   configure passa também `CMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER` e
+   `LIBRARY`/`INCLUDE`/`PACKAGE=ONLY` — o que os `find_*` acham vem do
+   sysroot; os programas (o `protoc`, o `python` do build) continuam os do
+   host. Sem sysroot nada muda: o multiarch do Debian depende do padrão.
+2. **O kit exportável:** a ação de configuração `cmake.exportToolchainFile`
+   ("Exportar o kit como toolchain file", escopo CMake, efeito `edit`, risco
+   baixo) grava `.kinein/toolchains/<kit>.cmake` com os MESMOS valores que o
+   configure da IDE passa — um gerador só, no dono (`toolchain/arguments.rs`)
+   —, para o terminal e o CI: `cmake --toolchain .kinein/toolchains/<kit>.cmake`.
+   **A IDE não o lê:** o kit continua a fonte, e o arquivo, se lido, venceria
+   em silêncio o kit que mudasse depois (medido acima). A prévia mostra o
+   conteúdo (de novo, o diff); disponível quando o kit é cross e não tem
+   toolchain file próprio; `alreadyApplied` quando o arquivo já diz o mesmo.
+   O kit é o do configure (o do preset do último configure, se houver, senão
+   o padrão), como no contexto efetivo.
+3. **Protocolo 0.178.0 (aditivo):** a ação nova; o configure cross com
+   sysroot passa os modos (`03-dominios/configAction` e `toolchain`).
+
+**Provas planejadas:** unitários dos argumentos (com sysroot, os modos; sem,
+nenhum; com toolchain file, nenhum) e do arquivo (os mesmos valores da
+linha); o integrado da ação (sem kit cross, parcial com o motivo; a prévia
+com o conteúdo; aplicar grava; de novo, `alreadyApplied`); mutações; real: o
+arquivo exportado num `cmake --toolchain` no terminal dando o mesmo ELF
+(aarch64 e ARM) e o configure da IDE com o sysroot de teste sem o cabeçalho
+do host; no Xvfb, a ação aplicada no diálogo.
+
+**Resultado (2026-10-17).** Como desenhado. As variáveis que o kit fixa
+viraram uma lista só (`Toolchain::cmake_definitions`), de onde saem a linha
+do configure e o arquivo; o arquivo mora em `toolchain/export.rs`, o "kit
+ativo" (o mesmo do contexto efetivo) em `cmake::active_kit` — no `toolchain`
+ele criava o ciclo `cmake ↔ toolchain`, que o mapa de módulos reprovou —, e
+o plano com a prévia em `configaction/kit.rs`, que recebe o arquivo pronto do
+handler (`configaction::Inputs`: o domínio só lê a raiz). O catálogo das
+ações passou do teto de 500 linhas com a entrada nova e foi dividido por
+escopo (`catalog/cmake.rs`, `cargo.rs`, `platformio.rs`). Provas: os
+unitários (os quatro modos com sysroot; nenhum sem sysroot ou com toolchain
+file; cada `-D` da linha é um `set()` do arquivo; nome e aspas de entrada
+estranha); o integrado (parcial sem kit cross, a prévia com o arquivo novo,
+aplicar grava, `alreadyApplied`, e de novo disponível quando o kit muda);
+10 mutações reprovando. Real, pelo core: com o sysroot de teste, o configure
+da IDE deu `INC=NOTFOUND` (antes, `/usr/include`); o arquivo exportado num
+`cmake --toolchain` no terminal configurou e compilou nos três casos (ELF
+aarch64 com e sem sysroot, ARM EABI5 no bare metal), com a mesma linha de
+`find_package` da IDE. No Xvfb: a ação achada pela busca, a prévia com o
+arquivo novo, aplicada, e a lista dizendo "ativa neste projeto".

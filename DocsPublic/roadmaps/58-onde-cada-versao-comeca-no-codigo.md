@@ -69,7 +69,7 @@ em 2026-10-01; cada um tem o seu porquê escrito no próprio arquivo.
 | um comando (paleta, menu, atalho) | o descritor em `crates/kinein-core/src/commands/` (por área) e o caso no `execute` de `ui/qml/command/CommandDispatcher.qml` | um segundo dispatcher ou um `Shortcut` sem comando |
 | um setting persistido | `crates/kinein-protocol/src/settings.rs` (`SettingsValues`/`EffectiveSettings`), `crates/kinein-core/src/settings.rs`, `schemas/settings.schema.json` e o `applySettings` de `ui/qml/shell/ShellController.qml` | guardar estado de UI fora do `settings` |
 | um método IPC | a receita do `ARCHITECTURE.md` §5 | pendurar método num domínio que não é o dele |
-| uma Configuration Action | `crates/kinein-core/src/configaction/catalog.rs` (dado) e o planejador no módulo do arquivo que ela edita | registro dinâmico |
+| uma Configuration Action | a tabela do escopo dela em `crates/kinein-core/src/configaction/catalog/` (dado; `cmake.rs`, `cargo.rs`, `platformio.rs` desde 2026-10-17) e o planejador no módulo do arquivo que ela edita | registro dinâmico |
 | uma ferramenta detectada | `crates/kinein-core/src/tools/known.rs` | um segundo scanner da máquina |
 | uma receita de instalação | `crates/kinein-core/src/setup/catalog.rs` ou `crates/kinein-core/src/setup/catalog_embedded.rs` | instalar sem comando visível |
 | um language server | `crates/kinein-core/src/lsp/registry.rs` (`ServerRegistry`) | um cliente LSP próprio de linguagem |
@@ -261,7 +261,7 @@ hoje, por jornada:
 | Jornada | PlatformIO hoje | Onde está ou falta |
 | --- | --- | --- |
 | J1 abrir | detecta `platformio.ini` | `crates/kinein-core/src/project/detect.rs` |
-| J2 contexto e diagnóstico | **falta**: sem CDB, o clangd não vê o projeto | Configuration Action `pio run -t compiledb` (52 §5.10) — nova entrada em `crates/kinein-core/src/configaction/catalog.rs` |
+| J2 contexto e diagnóstico | **feito na 0.4.0e (2026-10-16)**: a ação `platformio.compiledb` | `crates/kinein-core/src/configaction/catalog/platformio.rs` e `crates/kinein-core/src/handlers/platformio.rs` (52 §14.5) |
 | J3 construir | `pio run` com diagnóstico GCC | `crates/kinein-core/src/build/frameworks.rs` |
 | J3 testar | **falta**: `runner_name` devolve `None` | `crates/kinein-core/src/test/discover.rs` (`pio test`) |
 | J3 checar | **falta** | `pio check` como provider de qualidade (proposto; dono: Quality) |

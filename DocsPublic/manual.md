@@ -828,11 +828,19 @@ Uma biblioteca só entra no catálogo depois de auditada. Duas já foram
 
 ### Ações de configuração
 
-São **26** no catálogo (18 do CMake, 7 do Cargo e 1 do PlatformIO, contadas
-em 2026-10-16), e a lista mostra as do build system do projeto. Elas
+São **27** no catálogo (19 do CMake, 7 do Cargo e 1 do PlatformIO, contadas
+em 2026-10-17), e a lista mostra as do build system do projeto. Elas
 respondem duas perguntas diferentes: *o que o projeto tem* (dependência,
 feature, edição, alvo, preset) e *como ele compila* (rigor, sanitizers,
 OpenMP, `.hex`/`.bin`, alvo embarcado, a `compile_commands.json`).
+
+**Cross com CMake** (no checkout com protocolo `0.178.0`): com um kit cross
+(o alvo em Embarcados › Kit), **Exportar o kit como toolchain file** grava
+`.kinein/toolchains/<kit>.cmake` com os mesmos valores do configure da IDE,
+para o terminal e o CI: `cmake --toolchain .kinein/toolchains/<kit>.cmake -S .
+-B build`. A IDE não lê esse arquivo — o kit continua valendo; exporte de
+novo depois de mudar o kit. Com sysroot no kit, o configure procura
+bibliotecas e cabeçalhos só nele, nunca no sistema da máquina.
 
 **PlatformIO** (no checkout com protocolo `0.177.0`): num projeto com
 `platformio.ini`, a lista traz **Gerar compile_commands.json**, recomendada

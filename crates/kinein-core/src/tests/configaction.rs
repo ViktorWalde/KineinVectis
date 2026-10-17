@@ -144,8 +144,9 @@ fn the_list_is_filtered_by_the_active_build_system() {
     // entraram em 2026-09-03 com o dominio `library` (roadmaps/35 etapa 20).
     // As cinco de REGIME de compilacao — padrao C++, avisos rigorosos,
     // sanitizers, OpenMP e .hex/.bin — entraram em 2026-09-04, de relato de
-    // uso: nao havia como deixar o compilador mais rigido pela IDE.
-    assert_eq!(ids.len(), 18, "as 18 acoes CMake");
+    // uso: nao havia como deixar o compilador mais rigido pela IDE. O kit
+    // exportavel como toolchain file entrou em 2026-10-17 (0.4.1a).
+    assert_eq!(ids.len(), 19, "as 19 acoes CMake");
     assert!(
         ids.iter().all(|id| id.starts_with("cmake.")),
         "projeto CMake nao pode ver acao Cargo: {ids:?}"
@@ -158,7 +159,7 @@ fn the_list_is_filtered_by_the_active_build_system() {
         "configAction.list",
         &json!({ "includeHiddenByScope": true }),
     );
-    assert_eq!(all_actions["actions"].as_array().unwrap().len(), 26);
+    assert_eq!(all_actions["actions"].as_array().unwrap().len(), 27);
     assert_eq!(
         action(&all_actions, "cargo.addDependency")["state"],
         "hiddenByScope"
@@ -187,7 +188,7 @@ fn a_mixed_workspace_sees_both_toolboxes() {
     open(&mut core, &dir);
 
     let list = ok(&mut core, "configAction.list", &json!({}));
-    assert_eq!(list["actions"].as_array().unwrap().len(), 25);
+    assert_eq!(list["actions"].as_array().unwrap().len(), 26);
     assert_eq!(action(&list, "cargo.addDependency")["state"], "available");
     assert_eq!(action(&list, "cmake.addExecutable")["state"], "available");
 }
@@ -551,5 +552,72 @@ fn cmake_actions_validate_target_names_and_existence() {
             .unwrap()
             .message
             .contains("sai da raiz")
+    );
+}
+
+/// 0.4.1a (`roadmaps/52` §14.7): o kit exportado como toolchain file. Sem
+/// kit cross, parcial com o motivo; com ele, a previa mostra o arquivo novo
+/// com os valores do configure, aplicar grava, e a lista diz que ja' esta
+/// feito ate' o kit mudar.
+#[test]
+fn the_kit_exports_as_a_toolchain_file_with_the_configure_values() {
+    let dir = cmake_workspace("exporta-kit");
+    let mut core = core_with_empty_search_path("configaction-exporta-kit");
+    open(&mut core, &dir);
+    let list = ok(&mut core, "configAction.list", &json!({}));
+    let export = action(&list, "cmake.exportToolchainFile");
+    assert_eq!(export["state"], "partiallyAvailable", "{export}");
+    assert!(
+        export["reason"].as_str().unwrap().contains("não é cross"),
+        "{export}"
+    );
+
+    ok(
+        &mut core,
+        "toolchain.setKit",
+        &json!({ "targetTriple": "aarch64-linux-gnu", "sysroot": "/opt/sysroots/rpi" }),
+    );
+    let list = ok(&mut core, "configAction.list", &json!({}));
+    assert_eq!(
+        action(&list, "cmake.exportToolchainFile")["state"],
+        "available"
+    );
+    let preview = ok(
+        &mut core,
+        "configAction.preview",
+        &json!({ "id": "cmake.exportToolchainFile" }),
+    );
+    let file = &preview["files"][0];
+    assert_eq!(file["path"], ".kinein/toolchains/padrao.cmake");
+    assert!(file.get("before").is_none(), "arquivo novo: {file}");
+    let after = file["after"].as_str().unwrap();
+    for line in [
+        "set(CMAKE_SYSROOT \"/opt/sysroots/rpi\")",
+        "set(CMAKE_SYSTEM_NAME \"Linux\")",
+        "set(CMAKE_SYSTEM_PROCESSOR \"aarch64\")",
+        "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE \"ONLY\")",
+    ] {
+        assert!(after.contains(line), "{line} faltou:\n{after}");
+    }
+
+    apply(&mut core, "cmake.exportToolchainFile", &json!({}));
+    let written = std::fs::read_to_string(dir.join(".kinein/toolchains/padrao.cmake")).unwrap();
+    assert_eq!(written, after);
+    let list = ok(&mut core, "configAction.list", &json!({}));
+    assert_eq!(
+        action(&list, "cmake.exportToolchainFile")["state"],
+        "alreadyApplied"
+    );
+
+    // O kit mudou: o arquivo ficou para tras, e a acao volta a valer.
+    ok(
+        &mut core,
+        "toolchain.setKit",
+        &json!({ "sysroot": "/opt/sysroots/outro" }),
+    );
+    let list = ok(&mut core, "configAction.list", &json!({}));
+    assert_eq!(
+        action(&list, "cmake.exportToolchainFile")["state"],
+        "available"
     );
 }

@@ -53,6 +53,7 @@ impl Core {
             &root,
             &workspace.capabilities.build_systems,
             parsed.include_hidden_by_scope,
+            &self.configaction_inputs(&root),
         );
         JsonRpcResponse::success(request_id, json!(result))
     }
@@ -74,7 +75,13 @@ impl Core {
             Err(response) => return *response,
         };
         let root = std::path::PathBuf::from(&workspace.root);
-        match configaction::preview(&root, &workspace.capabilities.build_systems, &parsed) {
+        let inputs = self.configaction_inputs(&root);
+        match configaction::preview(
+            &root,
+            &workspace.capabilities.build_systems,
+            &parsed,
+            &inputs,
+        ) {
             Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
             Err(error) => configaction_error_response(request_id, &error),
         }
@@ -97,11 +104,16 @@ impl Core {
             Err(response) => return *response,
         };
         let root = std::path::PathBuf::from(&workspace.root);
-        let outcome =
-            match configaction::apply(&root, &workspace.capabilities.build_systems, &parsed) {
-                Ok(outcome) => outcome,
-                Err(error) => return configaction_error_response(request_id, &error),
-            };
+        let inputs = self.configaction_inputs(&root);
+        let outcome = match configaction::apply(
+            &root,
+            &workspace.capabilities.build_systems,
+            &parsed,
+            &inputs,
+        ) {
+            Ok(outcome) => outcome,
+            Err(error) => return configaction_error_response(request_id, &error),
+        };
 
         match outcome {
             ConfigActionOutcome::Done { message, files } => JsonRpcResponse::success(
@@ -116,6 +128,17 @@ impl Core {
             ConfigActionOutcome::Job { method } => {
                 self.configaction_job_response(request_id, &parsed.id, method)
             }
+        }
+    }
+
+    /// O que as acoes precisam de outros donos (0.4.1a): o kit do configure
+    /// exportado como toolchain file, pelo `toolchain`.
+    fn configaction_inputs(&self, root: &std::path::Path) -> configaction::Inputs {
+        let kit = crate::cmake::active_kit(root);
+        let toolchain =
+            crate::toolchain::Toolchain::resolve_kit(root, &self.detected_tools(), &kit);
+        configaction::Inputs {
+            kit_export: Some(toolchain.export(&kit)),
         }
     }
 

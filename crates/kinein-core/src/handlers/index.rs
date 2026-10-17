@@ -159,10 +159,7 @@ impl Core {
     /// o projeto tem um kit com esse nome, senao o padrao — o mesmo cujas
     /// escolhas o configure usou (`handlers/cmake.rs`).
     fn kit_facts(&self, root: &Path, language: &str) -> KitFacts {
-        let preset = crate::cmake::status(root)
-            .preset
-            .filter(|preset| crate::toolchain::has_kit(root, preset))
-            .unwrap_or_default();
+        let preset = crate::cmake::active_kit(root);
         let toolchain =
             crate::toolchain::Toolchain::resolve_kit(root, &self.detected_tools(), &preset);
         let role = match language {

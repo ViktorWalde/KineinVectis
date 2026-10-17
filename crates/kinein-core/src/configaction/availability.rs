@@ -39,12 +39,15 @@ pub(super) struct WorkspaceFacts {
     pub(super) cargo_config: bool,
     /// Conteudo do `platformio.ini`, quando ele existe.
     pub(super) platformio_ini: Option<String>,
+    /// O kit exportavel: `Ok(true)` quando o arquivo ja' diz o mesmo; o
+    /// motivo quando nao ha o que exportar (0.4.1a).
+    pub(super) kit_export: Option<Result<bool, String>>,
 }
 
 impl WorkspaceFacts {
     /// Le do disco tudo que a avaliacao de estado precisa.
     #[must_use]
-    pub(super) fn measure(root: &Path) -> Self {
+    pub(super) fn measure(root: &Path, inputs: &super::Inputs) -> Self {
         let cmakelists = std::fs::read_to_string(root.join(cmakelists::CMAKELISTS)).ok();
         let targets = cmakelists
             .as_deref()
@@ -60,6 +63,14 @@ impl WorkspaceFacts {
             // sem isso ela nao teria como dizer "ja' esta feito".
             cargo_config: root.join(".cargo/config.toml").is_file(),
             platformio_ini: std::fs::read_to_string(root.join("platformio.ini")).ok(),
+            kit_export: inputs.kit_export.as_ref().map(|export| {
+                export.as_ref().map_err(Clone::clone).map(|exported| {
+                    super::plan::read_optional(root, &exported.path)
+                        .ok()
+                        .flatten()
+                        .is_some_and(|current| current == exported.contents)
+                })
+            }),
             targets,
             cmakelists,
         }
@@ -198,6 +209,14 @@ fn evaluate(
         "platformio.compiledb" if !facts.has_cdb => {
             recommended("sem compile_commands.json, o clangd não vê as flags do PlatformIO")
         }
+        "cmake.exportToolchainFile" => match &facts.kit_export {
+            Some(Ok(true)) => {
+                already_applied("o toolchain file exportado já diz o mesmo que o kit")
+            }
+            Some(Ok(false)) => available(),
+            Some(Err(reason)) => partial(reason),
+            None => partial("o kit do projeto não foi lido"),
+        },
         "cmake.createDebugPreset" => preset_state(facts, "debug"),
         "cmake.createReleasePreset" => preset_state(facts, "release"),
         "cmake.addSourceToTarget"

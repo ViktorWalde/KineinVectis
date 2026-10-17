@@ -39,6 +39,7 @@ mod cargotoml;
 mod catalog;
 mod cmakelists;
 mod error;
+mod kit;
 mod parametros;
 mod plan;
 mod presets;
@@ -74,16 +75,25 @@ pub enum ConfigActionOutcome {
     },
 }
 
+/// O que o dominio recebe de OUTROS donos, calculado pelo handler: ele so'
+/// le a raiz, e o kit e' do `toolchain` (0.4.1a).
+#[derive(Debug, Clone, Default)]
+pub struct Inputs {
+    /// O toolchain file do kit do configure, ou o motivo de nao haver um;
+    /// `None` quando ninguem o calculou.
+    pub kit_export: Option<Result<crate::toolchain::ExportedToolchain, String>>,
+}
+
 /// Lista as acoes do workspace, filtradas pelo build system ativo.
 #[must_use]
 pub fn list(
     root: &Path,
     build_systems: &[BuildSystem],
     include_hidden_by_scope: bool,
+    inputs: &Inputs,
 ) -> ConfigActionListResult {
-    let facts = WorkspaceFacts::measure(root);
+    let facts = WorkspaceFacts::measure(root, inputs);
     let actions = catalog::definitions()
-        .iter()
         .filter_map(|action| {
             let in_scope = build_systems.contains(&action.scope.build_system());
             if !in_scope && !include_hidden_by_scope {
@@ -103,9 +113,10 @@ pub fn preview(
     root: &Path,
     build_systems: &[BuildSystem],
     request: &ConfigActionPreviewParams,
+    inputs: &Inputs,
 ) -> Result<ConfigActionPreviewResult, ConfigActionError> {
     let action = resolve(&request.id, build_systems)?;
-    let plan = build_plan(root, &request.id, &request.params)?;
+    let plan = build_plan(root, &request.id, &request.params, inputs)?;
     Ok(ConfigActionPreviewResult {
         id: request.id.clone(),
         title: action.title.to_owned(),
@@ -130,6 +141,7 @@ pub fn apply(
     root: &Path,
     build_systems: &[BuildSystem],
     request: &ConfigActionApplyParams,
+    inputs: &Inputs,
 ) -> Result<ConfigActionOutcome, ConfigActionError> {
     let action = resolve(&request.id, build_systems)?;
 
@@ -141,7 +153,7 @@ pub fn apply(
         });
     }
 
-    let plan = build_plan(root, &request.id, &request.params)?;
+    let plan = build_plan(root, &request.id, &request.params, inputs)?;
 
     if action.effect == ConfigActionEffect::Inspect {
         return Ok(ConfigActionOutcome::Done {
@@ -211,9 +223,11 @@ fn build_plan(
     root: &Path,
     id: &str,
     params: &BTreeMap<String, String>,
+    inputs: &Inputs,
 ) -> Result<ActionPlan, ConfigActionError> {
     match id {
         "cmake.enableCompileCommands" => cmakelists::enable_compile_commands(root),
+        "cmake.exportToolchainFile" => kit::export_plan(root, inputs),
         "cmake.createDebugPreset" => {
             presets::create_configure_preset(root, "debug", "Debug", "Debug")
         }

@@ -17,7 +17,7 @@
 //!
 //! Escolha ausente = AUTOMATICO = exatamente o comportamento historico. Isso e'
 //! deliberado: a fatia acrescenta uma capacidade, nao muda o que ja funcionava
-//! na maquina de ninguem. Quem nunca abrir o seletor nao ve diferenca nenhuma.
+//! na machine de ninguem. Quem nunca abrir o seletor nao ve diferenca nenhuma.
 //!
 //! # Organizacao interna
 //!
@@ -31,11 +31,14 @@
 
 mod arguments;
 mod catalog;
+mod export;
 pub mod import;
 pub mod install;
 mod project;
 mod store;
 pub mod sysroot;
+
+pub use export::ExportedToolchain;
 
 use std::path::{Path, PathBuf};
 
@@ -49,7 +52,7 @@ pub fn has_kit(root: &Path, preset: &str) -> bool {
     store::load(root).contains_key(preset)
 }
 
-/// A toolchain de um workspace, ja cruzada com o que existe na maquina.
+/// A toolchain de um workspace, ja cruzada com o que existe na machine.
 #[derive(Debug, Clone)]
 pub struct Toolchain {
     /// Kit lido; vazio = o padrao do workspace.
@@ -385,7 +388,7 @@ fn preset_toolchain_file(root: &Path, preset: &str) -> Option<String> {
     None
 }
 
-/// Candidatos de um papel que existem nesta maquina, na ordem do catalogo.
+/// Candidatos de um papel que existem nesta machine, na ordem do catalogo.
 fn detectados(role: ToolchainRole, tools: &[ToolInfo]) -> Vec<ToolchainCandidate> {
     catalog::candidates_for(role)
         .iter()
@@ -447,9 +450,9 @@ mod tests {
         crate::platform::canonicalize(&dir).unwrap()
     }
 
-    /// Uma maquina que TEM o cross ARM alem dos nativos.
-    fn maquina_com_cross() -> Vec<ToolInfo> {
-        let mut tools = maquina();
+    /// Uma machine que TEM o cross ARM alem dos nativos.
+    fn machine_with_cross() -> Vec<ToolInfo> {
+        let mut tools = machine();
         tools.push(detectado("arm-none-eabi-gcc", "/usr/bin/arm-none-eabi-gcc"));
         tools.push(detectado("arm-none-eabi-gxx", "/usr/bin/arm-none-eabi-g++"));
         tools
@@ -460,7 +463,7 @@ mod tests {
     #[test]
     fn clangd_args_nativo_nao_tem_query_driver() {
         let root = temp_root("clangd-nativo");
-        let tc = Toolchain::resolve(&root, &maquina());
+        let tc = Toolchain::resolve(&root, &machine());
         let args = tc.clangd_args();
         assert_eq!(
             args,
@@ -476,13 +479,13 @@ mod tests {
         let root = temp_root("clangd-cross");
         set(
             &root,
-            &maquina_com_cross(),
+            &machine_with_cross(),
             ToolchainRole::CxxCompiler,
             Some("arm-none-eabi-gxx"),
             "",
         )
         .unwrap();
-        let args = Toolchain::resolve(&root, &maquina_com_cross()).clangd_args();
+        let args = Toolchain::resolve(&root, &machine_with_cross()).clangd_args();
         assert!(args.contains(&"--background-index".to_owned()), "{args:?}");
         assert!(
             args.iter()
@@ -498,7 +501,7 @@ mod tests {
         let root = temp_root("clangd-cross-dois");
         set(
             &root,
-            &maquina_com_cross(),
+            &machine_with_cross(),
             ToolchainRole::CCompiler,
             Some("arm-none-eabi-gcc"),
             "",
@@ -506,13 +509,13 @@ mod tests {
         .unwrap();
         set(
             &root,
-            &maquina_com_cross(),
+            &machine_with_cross(),
             ToolchainRole::CxxCompiler,
             Some("arm-none-eabi-gxx"),
             "",
         )
         .unwrap();
-        let args = Toolchain::resolve(&root, &maquina_com_cross()).clangd_args();
+        let args = Toolchain::resolve(&root, &machine_with_cross()).clangd_args();
         let driver: Vec<&String> = args
             .iter()
             .filter(|a| a.starts_with("--query-driver="))
@@ -524,7 +527,7 @@ mod tests {
         );
     }
 
-    fn maquina() -> Vec<ToolInfo> {
+    fn machine() -> Vec<ToolInfo> {
         vec![
             detectado("clang", "/usr/bin/clang"),
             detectado("clangxx", "/usr/bin/clang++"),
@@ -541,7 +544,7 @@ mod tests {
     #[test]
     fn automatic_pins_nothing_on_the_command_line() {
         let root = temp_root("automatico");
-        let toolchain = Toolchain::resolve(&root, &maquina());
+        let toolchain = Toolchain::resolve(&root, &machine());
 
         assert!(toolchain.cmake_arguments().is_empty());
         assert_eq!(toolchain.program_for(ToolchainRole::CxxCompiler), None);
@@ -554,7 +557,7 @@ mod tests {
         let root = temp_root("escolha");
         let escolhida = set(
             &root,
-            &maquina(),
+            &machine(),
             ToolchainRole::CxxCompiler,
             Some("gxx"),
             "",
@@ -562,7 +565,7 @@ mod tests {
         .unwrap();
         let com_gerador = set(
             &root,
-            &maquina(),
+            &machine(),
             ToolchainRole::Generator,
             Some("Ninja"),
             "",
@@ -587,12 +590,12 @@ mod tests {
     #[test]
     fn the_choice_survives_a_reload_and_can_be_released() {
         let root = temp_root("persiste");
-        set(&root, &maquina(), ToolchainRole::CCompiler, Some("gcc"), "").unwrap();
+        set(&root, &machine(), ToolchainRole::CCompiler, Some("gcc"), "").unwrap();
 
-        let relido = Toolchain::resolve(&root, &maquina());
+        let relido = Toolchain::resolve(&root, &machine());
         assert_eq!(relido.chosen(ToolchainRole::CCompiler), Some("gcc"));
 
-        let liberado = set(&root, &maquina(), ToolchainRole::CCompiler, None, "").unwrap();
+        let liberado = set(&root, &machine(), ToolchainRole::CCompiler, None, "").unwrap();
         assert_eq!(liberado.chosen(ToolchainRole::CCompiler), None);
         assert!(liberado.cmake_arguments().is_empty());
     }
@@ -601,7 +604,7 @@ mod tests {
     #[test]
     fn only_detected_candidates_are_offered_or_accepted() {
         let root = temp_root("detectado");
-        let toolchain = Toolchain::resolve(&root, &maquina());
+        let toolchain = Toolchain::resolve(&root, &machine());
         let resultado = toolchain.to_result();
         let geradores: Vec<&str> = resultado
             .candidates
@@ -614,30 +617,30 @@ mod tests {
         assert!(
             set(
                 &root,
-                &maquina(),
+                &machine(),
                 ToolchainRole::Generator,
                 Some("Unix Makefiles"),
                 ""
             )
             .is_err()
         );
-        assert!(set(&root, &maquina(), ToolchainRole::CCompiler, Some("tcc"), "").is_err());
+        assert!(set(&root, &machine(), ToolchainRole::CCompiler, Some("tcc"), "").is_err());
     }
 
-    /// A escolha some da maquina: a IDE nao pode fixar um caminho inexistente.
+    /// A escolha some da machine: a IDE nao pode fixar um caminho inexistente.
     #[test]
     fn a_choice_whose_tool_vanished_stops_pinning_anything() {
         let root = temp_root("sumiu");
         set(
             &root,
-            &maquina(),
+            &machine(),
             ToolchainRole::CxxCompiler,
             Some("gxx"),
             "",
         )
         .unwrap();
 
-        let sem_gxx: Vec<ToolInfo> = maquina()
+        let sem_gxx: Vec<ToolInfo> = machine()
             .into_iter()
             .map(|tool| {
                 if tool.id == "gxx" {
@@ -663,7 +666,7 @@ mod tests {
         let root = temp_root("cross");
         let kit = set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "",
             KitUpdate {
                 sysroot: Some("/opt/sysroots/arm"),
@@ -686,13 +689,115 @@ mod tests {
         assert_eq!(kit.target_triple(), Some("aarch64-unknown-linux-gnu"));
     }
 
+    /// Com sysroot, o host nao vaza nos `find_*` (0.4.1a, `roadmaps/52`
+    /// §14.7): os quatro modos entram na linha; e o toolchain file exportado
+    /// diz exatamente o que a linha diz, um `set()` por `-D`.
+    #[test]
+    fn a_sysroot_keeps_the_host_out_and_the_export_says_what_the_line_says() {
+        let root = temp_root("modos");
+        let kit = set_kit(
+            &root,
+            &machine_with_cross(),
+            "rpi 4",
+            KitUpdate {
+                sysroot: Some("/opt/sysroots/a b"),
+                target_triple: Some("aarch64-linux-gnu"),
+                ..KitUpdate::default()
+            },
+        )
+        .unwrap();
+        let arguments = kit.cmake_arguments();
+        for mode in [
+            "-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER",
+            "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
+            "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
+            "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY",
+        ] {
+            assert!(
+                arguments.contains(&mode.to_owned()),
+                "{mode}: {arguments:?}"
+            );
+        }
+        let exported = kit.export("rpi 4").unwrap();
+        assert_eq!(exported.path, ".kinein/toolchains/rpi_4.cmake");
+        let set_lines: Vec<&str> = exported
+            .contents
+            .lines()
+            .filter(|line| line.starts_with("set("))
+            .collect();
+        let line: Vec<String> = arguments
+            .iter()
+            .filter_map(|argument| argument.strip_prefix("-D"))
+            .map(|definition| {
+                let (name, value) = definition.split_once('=').unwrap();
+                format!("set({name} \"{value}\")")
+            })
+            .collect();
+        assert_eq!(set_lines, line);
+        assert!(
+            exported
+                .contents
+                .contains("cmake --toolchain .kinein/toolchains/rpi_4.cmake")
+        );
+    }
+
+    /// Sem sysroot (o multiarch do Debian), nenhum mode; com toolchain file
+    /// no kit, quem decide e' ele, e nao ha' o que exportar; kit native, idem.
+    #[test]
+    fn without_a_sysroot_or_with_a_toolchain_file_nothing_changes() {
+        let root = temp_root("sem-modos");
+        let multiarch = set_kit(
+            &root,
+            &machine(),
+            "",
+            KitUpdate {
+                target_triple: Some("aarch64-linux-gnu"),
+                ..KitUpdate::default()
+            },
+        )
+        .unwrap();
+        assert!(
+            !multiarch
+                .cmake_arguments()
+                .iter()
+                .any(|a| a.contains("FIND_ROOT_PATH_MODE")),
+            "{:?}",
+            multiarch.cmake_arguments()
+        );
+        assert!(multiarch.export("").is_ok(), "sem sysroot ainda e' cross");
+        let sdk = set_kit(
+            &root,
+            &machine(),
+            "sdk",
+            KitUpdate {
+                sysroot: Some("/opt/poky/sysroots/aarch64"),
+                target_triple: Some("aarch64-poky-linux"),
+                toolchain_file: Some("/opt/poky/toolchain.cmake"),
+                ..KitUpdate::default()
+            },
+        )
+        .unwrap();
+        assert!(
+            !sdk.cmake_arguments()
+                .iter()
+                .any(|a| a.contains("FIND_ROOT_PATH_MODE"))
+        );
+        assert!(
+            sdk.export("sdk")
+                .unwrap_err()
+                .contains("/opt/poky/toolchain.cmake")
+        );
+        let native = set_kit(&root, &machine(), "native", KitUpdate::default()).unwrap();
+        assert!(native.export("native").unwrap_err().contains("não é cross"));
+    }
+
     /// Triple que o mapa nao conhece NAO vira palpite de `CMAKE_SYSTEM_NAME`.
     #[test]
     fn unknown_triple_does_not_guess_a_system_name() {
         let root = temp_root("exotico");
         let kit = set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "",
             KitUpdate {
                 sysroot: None,
@@ -720,7 +825,7 @@ mod tests {
         let root = temp_root("kits-isolados");
         set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "cross",
             KitUpdate {
                 sysroot: Some("/opt/arm"),
@@ -732,14 +837,14 @@ mod tests {
         .unwrap();
         set(
             &root,
-            &maquina(),
+            &machine(),
             ToolchainRole::CxxCompiler,
             Some("gxx"),
             "",
         )
         .unwrap();
 
-        let padrao = Toolchain::resolve_kit(&root, &maquina(), "");
+        let padrao = Toolchain::resolve_kit(&root, &machine(), "");
         assert_eq!(
             padrao.sysroot(),
             None,
@@ -747,7 +852,7 @@ mod tests {
         );
         assert_eq!(padrao.chosen(ToolchainRole::CxxCompiler), Some("gxx"));
 
-        let cross = Toolchain::resolve_kit(&root, &maquina(), "cross");
+        let cross = Toolchain::resolve_kit(&root, &machine(), "cross");
         assert_eq!(cross.sysroot(), Some("/opt/arm"));
         assert_eq!(
             cross.chosen(ToolchainRole::CxxCompiler),
@@ -763,7 +868,7 @@ mod tests {
         let root = temp_root("preserva");
         set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "",
             KitUpdate {
                 sysroot: Some("/opt/a"),
@@ -776,7 +881,7 @@ mod tests {
 
         let so_sysroot = set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "",
             KitUpdate {
                 sysroot: Some("/opt/b"),
@@ -793,7 +898,7 @@ mod tests {
 
         let limpo = set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "",
             KitUpdate {
                 sysroot: Some("  "),
@@ -811,7 +916,7 @@ mod tests {
         let root = temp_root("baremetal");
         let bare = set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "",
             KitUpdate {
                 sysroot: None,
@@ -836,7 +941,7 @@ mod tests {
         // toolchain quebrado de verdade.
         let linux = set_kit(
             &root,
-            &maquina(),
+            &machine(),
             "",
             KitUpdate {
                 sysroot: None,

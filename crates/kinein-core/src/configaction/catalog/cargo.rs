@@ -1,0 +1,121 @@
+//! As acoes do Cargo: o `Cargo.toml`, o `.cargo/config.toml` e as run configs.
+
+use kinein_protocol::{ConfigActionEffect, ConfigActionRisk, ConfigActionScope};
+
+use super::{ActionDefinition, CARGO_CONFIG_ONLY, CARGO_ONLY, NO_FILE};
+
+pub(super) static ACTIONS: [ActionDefinition; 7] = [
+    ActionDefinition {
+        id: "cargo.embeddedTarget",
+        title: "Compilar e gravar numa placa",
+        description: "Cria .cargo/config.toml com o alvo e o runner do probe-rs; `cargo run` grava.",
+        scope: ConfigActionScope::Cargo,
+        category: "Cargo Embarcado",
+        risk: ConfigActionRisk::Medium,
+        affects: CARGO_CONFIG_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("target", "Triple do alvo", true, "thumbv7em-none-eabihf"),
+            ("chip", "Chip (probe-rs)", true, ""),
+        ],
+        docs: &[("officialDoc", "Cargo: configuration", "cargo.config")],
+    },
+    ActionDefinition {
+        id: "cargo.addDependency",
+        title: "Adicionar dependencia",
+        description: "Acrescenta uma crate em [dependencies] do Cargo.toml.",
+        scope: ConfigActionScope::Cargo,
+        category: "Cargo Dependencies",
+        risk: ConfigActionRisk::Medium,
+        affects: CARGO_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("name", "Crate", true, "serde"),
+            ("version", "Versão", true, "1.0"),
+            ("features", "Features", false, "derive"),
+        ],
+        docs: &[(
+            "officialDoc",
+            "Cargo: specifying dependencies",
+            "cargo.dependencies",
+        )],
+    },
+    ActionDefinition {
+        id: "cargo.addDevDependency",
+        title: "Adicionar dev-dependency",
+        description: "Acrescenta uma crate em [dev-dependencies] do Cargo.toml.",
+        scope: ConfigActionScope::Cargo,
+        category: "Cargo Dependencies",
+        risk: ConfigActionRisk::Medium,
+        affects: CARGO_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("name", "Crate", true, "proptest"),
+            ("version", "Versão", true, "1.0"),
+            ("features", "Features", false, ""),
+        ],
+        docs: &[(
+            "officialDoc",
+            "Cargo: development dependencies",
+            "cargo.dev_dependencies",
+        )],
+    },
+    ActionDefinition {
+        id: "cargo.addFeature",
+        title: "Adicionar feature",
+        description: "Declara uma feature em [features] do Cargo.toml.",
+        scope: ConfigActionScope::Cargo,
+        category: "Cargo Features",
+        risk: ConfigActionRisk::Medium,
+        affects: CARGO_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("name", "Feature", true, "extra"),
+            ("enables", "Habilita", false, "serde/derive"),
+        ],
+        docs: &[("officialDoc", "Cargo: features", "cargo.features")],
+    },
+    ActionDefinition {
+        id: "cargo.setEdition",
+        title: "Definir a edition",
+        description: "Troca a edition do pacote em [package] do Cargo.toml.",
+        scope: ConfigActionScope::Cargo,
+        category: "Cargo Basic",
+        risk: ConfigActionRisk::Medium,
+        affects: CARGO_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[("edition", "Edition", true, "2024")],
+        docs: &[("officialDoc", "Cargo: the edition field", "cargo.edition")],
+    },
+    ActionDefinition {
+        id: "cargo.check",
+        title: "Rodar cargo check",
+        description: "Compila sem gerar binário e joga os erros na aba Problemas.",
+        scope: ConfigActionScope::Cargo,
+        category: "Cargo Basic",
+        risk: ConfigActionRisk::Low,
+        affects: NO_FILE,
+        effect: ConfigActionEffect::Job,
+        params: &[],
+        docs: &[("officialDoc", "Cargo: cargo check", "cargo.check")],
+    },
+    ActionDefinition {
+        id: "cargo.createRunConfig",
+        title: "Criar run config",
+        description: "Salva um comando nomeado em .kinein/runconfigs.json e o ativa.",
+        scope: ConfigActionScope::Cargo,
+        category: "Run/Debug",
+        risk: ConfigActionRisk::Low,
+        affects: NO_FILE,
+        effect: ConfigActionEffect::Delegate,
+        params: &[
+            ("name", "Nome", true, "Servidor"),
+            ("command", "Comando", true, "cargo run --bin server"),
+        ],
+        docs: &[(
+            "kineinGuide",
+            "Kinein: run configurations",
+            "kinein.runconfig",
+        )],
+    },
+];

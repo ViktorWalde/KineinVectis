@@ -157,6 +157,7 @@ flowchart LR
   n_core_configaction --> n_core_library
   n_core_configaction --> n_core_platform
   n_core_configaction --> n_core_runconfig
+  n_core_configaction --> n_core_toolchain
   n_core_container --> n_core_process
   n_core_container --> n_core_tools
   n_core_coverage --> n_core_platform
@@ -262,7 +263,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 119 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 120 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -278,7 +279,7 @@ flowchart LR
 | `cdb` | platform | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | msvc, platform, toolchain | Servico CMake: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
-| `configaction` | cdb, cmake, fsops, library, platform, runconfig | Configuration Actions: |
+| `configaction` | cdb, cmake, fsops, library, platform, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |
 | `coverage` | platform, process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | lsp, platform, python, run, stderr_tail | Subsistema de debug: |
@@ -1433,6 +1434,7 @@ flowchart LR
     n_crates_kinein_core_src_handlers_library_rs["handlers/library.rs"]
     n_crates_kinein_core_src_handlers_setup_rs["handlers/setup.rs"]
     n_core_cdb[cdb]
+    n_core_cmake[cmake]
     n_core_configaction[configaction]
     n_core_library[library]
     n_core_rpc[rpc]
@@ -1471,8 +1473,10 @@ flowchart LR
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_settings
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_toolchain
   n_ipc_configAction --> n_crates_kinein_core_src_handlers_configaction_rs
+  n_crates_kinein_core_src_handlers_configaction_rs --> n_core_cmake
   n_crates_kinein_core_src_handlers_configaction_rs --> n_core_configaction
   n_crates_kinein_core_src_handlers_configaction_rs --> n_core_rpc
+  n_crates_kinein_core_src_handlers_configaction_rs --> n_core_toolchain
   n_ipc_library --> n_crates_kinein_core_src_handlers_library_rs
   n_crates_kinein_core_src_handlers_library_rs --> n_core_library
   n_crates_kinein_core_src_handlers_library_rs --> n_core_rpc

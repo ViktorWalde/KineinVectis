@@ -45,6 +45,11 @@ em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
   só aparece num projeto CMake.
 - O diagnóstico de um servidor de linguagem parado não volta mais à tela
   por um envio atrasado (40.7 §7.313).
+- Protocolo `0.178.0` — **Cross com CMake: o kit exportável e o host fora
+  do sysroot** (0.4.1a, 40.7 §7.315): a ação **Exportar o kit como toolchain
+  file** grava os valores do configure da IDE para o terminal e o CI
+  (`cmake --toolchain`); com sysroot no kit, o configure procura bibliotecas
+  e cabeçalhos só nele.
 - **A 0.4.0 completa** (2026-10-17, 40.7 §7.314): com ela, a matriz dos
   emuladores medida — o QEMU ARM grava e depura no gate; a serial dele ainda
   não aparece na IDE (proposta para a 0.4.3); o Renode e o QEMU da Espressif

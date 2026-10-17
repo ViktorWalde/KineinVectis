@@ -64,6 +64,17 @@ roda os scripts do projeto) e com o `pio` detectado (sem ele, recusa
 `cmake.configure`: os documentos C/C++ fechados para a UI reabri-los, ou o
 servidor reiniciado quando subiu sem CDB ([lsp](lsp.md)).
 
+**O kit exportável (`0.178.0`, a 0.4.1a do `roadmaps/52` §14.7).** A ação
+`cmake.exportToolchainFile`, "Exportar o kit como toolchain file": efeito
+`edit`, afeta `.kinein/toolchains/<kit>.cmake`, risco baixo. Grava os MESMOS
+valores que o configure da IDE passa pela linha (o gerador é um só, no dono
+`toolchain`), para o terminal e o CI (`cmake --toolchain <arquivo>`); **a IDE
+não lê o arquivo** — o kit continua a fonte, e um toolchain file vence o `-D`
+da linha (medido), então lê-lo deixaria o kit mudado perder em silêncio. O
+kit é o do configure (o do preset do último configure, se houver, senão o
+padrão). `partiallyAvailable` quando o kit não é cross ou já tem toolchain file;
+`alreadyApplied` quando o arquivo já diz o mesmo.
+
 O `riskExplanation` do risco `low` diz, desde `0.177.0`, "não edita fonte nem
 configuração de build; no máximo gera arquivos que se recriam (o build, a
 compile_commands.json, o .kinein)" — o "não altera nenhum arquivo" de antes

@@ -46,6 +46,19 @@ pub struct CmakeStatus {
 /// registra, e a tela precisa dizer COM QUE configurou.
 const PRESET_MARKER: &str = ".kinein-preset";
 
+/// O kit que vale para o configure e para o contexto (0.4.1a).
+///
+/// O do preset do ultimo configure, quando o projeto tem um kit com esse
+/// nome; senao o padrao (`""`). Mora aqui, e nao no `toolchain`, porque quem
+/// sabe o ultimo preset e' o `cmake` — e o `toolchain` nao depende dele.
+#[must_use]
+pub fn active_kit(root: &Path) -> String {
+    status(root)
+        .preset
+        .filter(|preset| crate::toolchain::has_kit(root, preset))
+        .unwrap_or_default()
+}
+
 /// Le o estado atual por stat dos artefatos do configure.
 #[must_use]
 pub fn status(root: &Path) -> CmakeStatus {

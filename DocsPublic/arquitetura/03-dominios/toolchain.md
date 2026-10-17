@@ -183,6 +183,16 @@ toolchains that cannot link without custom flags or linker scripts"*.
 Só entra em `Generic`. Em cross para Linux/Windows o link funciona, e forçar o
 teste a virar biblioteca **esconderia** um toolchain de verdade quebrado.
 
+**Com sysroot, o host não vaza (`0.178.0`, a 0.4.1a do `roadmaps/52` §14.7).**
+Quando o kit tem sysroot e põe o CMake em cross, e nem o preset nem o kit
+trazem toolchain file, o configure passa também
+`CMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER` e `..._LIBRARY`/`..._INCLUDE`/
+`..._PACKAGE=ONLY`. Medido em 2026-10-17 (CMake 4.2.3): com o padrão, o
+`find_package(ZLIB)` de um build com sysroot achou o `/usr/include` do host;
+com os modos, nada — o certo, porque o sysroot não tinha a zlib. Sem sysroot
+nada muda: no multiarch do Debian os cabeçalhos dos pacotes `:arm64` moram no
+`/usr/include` mesmo.
+
 `CMAKE_SYSTEM_NAME` é o que faz o CMake entrar em modo cross; o sysroot sozinho
 não muda a decisão de compilador. **Triple que o mapa não conhece não vira
 palpite:** fica sem `CMAKE_SYSTEM_NAME`, e o caminho oficial para alvos exóticos
