@@ -126,6 +126,15 @@ foi escolhida:
 5. **A documentação em inglês e alemão, e o site em inglês com versão em
    alemão**, dizendo só de passagem que o projeto vem do Brasil.
 
+**O `/ide` da Kinein ficou sem decisão** (2026-10-17), pelo que a
+documentação oficial do Claude Code mostra: o transporte (MCP por
+WebSocket em `127.0.0.1`, porta efêmera), o token novo a cada início da IDE,
+o arquivo `~/.claude/ide/<porta>.lock` e o único tool do modelo
+(`getDiagnostics`) são públicos; os campos do arquivo e as operações
+internas (abrir o diff, ler a seleção) não são, e podem mudar a cada versão
+do CLI. Seria o único contrato da Kinein sem especificação; o MCP (item 4) é
+especificação aberta. O diff no editor é o que só o `/ide` daria.
+
 ## 4. Proposta de critério para a 1.0
 
 **PROPOSTA, sem decisão do autor.** A 1.0 é a promessa de que um contrato não

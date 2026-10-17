@@ -60,8 +60,8 @@ metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
 harnesses   151 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
-            §7.277); 1158 no Ubuntu 26.04 (gate rápido de 2026-10-16,
-            §7.302).
+            §7.277); 1182 no Ubuntu 26.04 (gate rápido de 2026-10-17,
+            §7.315).
 ```
 
 Os comandos que medem estão no
