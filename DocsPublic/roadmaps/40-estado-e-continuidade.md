@@ -29,9 +29,11 @@
 > ([52](52-arquitetura-executavel-da-0.4.md) §11 e §14): feitas a 0.4.0a (o
 > contexto efetivo com a origem), a 0.4.0b (o preset do configure), a 0.4.0c
 > (o compilador checando ao salvar), a 0.4.0d (o progresso do servidor; a
-> L7 medida e dispensada) e a 0.4.0e (o `compiledb` do PlatformIO; o clangd
-> que subiu sem CDB reiniciado) (40.7 §7.307–§7.313); segue a matriz de
-> emuladores, com o desenho no 52 §14 antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
+> L7 medida e dispensada), a 0.4.0e (o `compiledb` do PlatformIO; o clangd
+> que subiu sem CDB reiniciado) e a 0.4.0f (a matriz de emuladores medida):
+> **a 0.4.0 está completa** (40.7 §7.307–§7.314). Segue a 0.4.1, o cross
+> (52 §11: o toolchain file gerado, o C2, a deriva, o `toolchain.json`
+> schema 3), cada desenho no 52 §14 antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
 > antes dela pede um clique em "Confiar neste projeto" (a faixa de saúde).
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio

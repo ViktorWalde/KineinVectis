@@ -45,6 +45,10 @@ em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
   só aparece num projeto CMake.
 - O diagnóstico de um servidor de linguagem parado não volta mais à tela
   por um envio atrasado (40.7 §7.313).
+- **A 0.4.0 completa** (2026-10-17, 40.7 §7.314): com ela, a matriz dos
+  emuladores medida — o QEMU ARM grava e depura no gate; a serial dele ainda
+  não aparece na IDE (proposta para a 0.4.3); o Renode e o QEMU da Espressif
+  ficam para a 0.4.3.
 
 ## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
 

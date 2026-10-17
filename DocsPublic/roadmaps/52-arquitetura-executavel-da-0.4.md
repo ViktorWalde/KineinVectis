@@ -510,22 +510,32 @@ que o usuário escolheu e o depura. Também é a resposta para quem não tem pla
 é o que dá para provar sem hardware.
 
 ```text
-                 QEMU (arm)         Renode              QEMU Espressif
-estado hoje      MEDIDO no gate     sem código          sem código
-                 (lm3s6965evb,
-                 gdb -i dap)
-J1–J3            não dependem de emulador (build e contexto são do host)
-J4 gravar        carrega o ELF      carrega o ELF       carrega a imagem
-                 (-kernel); gravar  (hipótese)          (hipótese)
-                 em placa real fica
-                 NÃO PROVADO
-J4 monitor       serial do emulador por pty/tcp (hipótese, a medir)
-J5 depurar       ciclo DAP inteiro  ciclo DAP inteiro   ciclo DAP inteiro
-                 (provado)          (hipótese)          (hipótese)
-J5 periféricos   pobre no           modela periféricos  periféricos do ESP32
-pelo SVD         lm3s6965 (medir)   (hipótese: o forte  (hipótese)
-                                    dele)
-sempre NÃO       sonda física, OpenOCD com placa, tempo real, consumo, rádio
+                 QEMU (arm)              Renode            QEMU Espressif
+na maquina       10.2.1 do Ubuntu 26.04, ausente           ausente (o
+(2026-10-17)     20 maquinas Cortex-M                      qemu-system-xtensa
+                                                           do Ubuntu nao tem
+                                                           a maquina esp32)
+J1–J3            nao dependem de emulador (build e contexto sao do host)
+J4 gravar        PROVADO no gate:        hipotese          hipotese
+                 carrega o ELF (-kernel)
+J4 monitor       MEDIDO fora da IDE:     hipotese          hipotese
+(a serial)       o UART0 sai por
+                 -serial tcp; com -S, o
+                 cliente ligado antes do
+                 continue recebe tudo.
+                 NA IDE, NAO: o stdout
+                 do debugServer vai para
+                 /dev/null e o pty nao
+                 esta' no sysfs
+J5 depurar       PROVADO no gate: o      hipotese          hipotese
+                 ciclo DAP inteiro
+                 (gdb -i dap, o gdb
+                 multiarch)
+J5 perifericos   NAO PROVADO: sem SVD    hipotese (o forte hipotese
+pelo SVD         do LM3S6965 na maquina, dele)
+                 e o SVD so' vai ao
+                 probe-rs, nao ao gdb
+sempre NAO       sonda fisica, OpenOCD com placa, tempo real, consumo, radio
 PROVADO sem placa
 ```
 
@@ -533,6 +543,22 @@ PROVADO sem placa
 fatia que a implementa, ou continua dita como hipótese. O emulador entra na
 matriz quando um ciclo do `scripts/verificar_embarcado.py` passar com ele;
 ferramenta ausente é NÃO PROVADO, nunca verde calado.
+
+**As medidas (2026-10-17, 0.4.0f, 52 §14.6).** O gate da noite de 16 para
+17 passou o ciclo do `lm3s6965evb` (attach, breakpoint, variável, 93 ms do
+continue ao stop). A serial, com um firmware que escreve no UART0
+(`0x4000C000`), fora da IDE: `-nographic` a põe no stdout do QEMU;
+`-serial tcp:127.0.0.1:<porta>,server=on,wait=off` abre a porta em 0,05 s e
+perde o que sai antes de alguém ligar; `wait=on` segura o QEMU até o cliente;
+com `-S` (como o `debugServer` do gate sobe), o cliente ligado antes do
+`continue` recebeu tudo em 0,41 s. O `gdb` 17.1 do Ubuntu não conhece ARM
+("unknown architecture arm"); o `gdb-multiarch` sim — e é o que o core
+escolhe (`dap/gdb_pick.rs`).
+
+**Para a 0.4.3 (proposta, não decisão):** a serial do emulador na IDE — o
+stdout do `debugServer` (o `-nographic`) num painel, em vez de `/dev/null`;
+o SVD também para o adaptador `gdb`; o Renode e o QEMU Espressif instalados
+no usuário e medidos com o mesmo ciclo.
 
 ## 11. Ordem e marcos
 
@@ -943,3 +969,37 @@ CDB com `-DPLATFORMIO=60200 -Iinclude -Isrc` em 0,9 s. No Xvfb, num projeto
 a faixa pedindo a confiança, a ação aplicada (o job em menos de 0,4 s, a
 lista relida), os erros sumindo e o Ctrl+B em `APP_VALUE` abrindo o
 `include/app.h` no `#define`.
+
+### 14.6 0.4.0f — a matriz de emuladores com o que já mede (§10.1; 2026-10-17)
+
+**O que o §11 pede:** fechar a 0.4.0 com a matriz do §10.1 "escrita com o
+que já mede" — cada célula medida nesta máquina, com data, ou dita como
+hipótese; o Renode e o QEMU Espressif como `debugServer` são da 0.4.3.
+
+**O que medir (só o QEMU ARM, que está na máquina):**
+
+1. **Disponibilidade, por comando:** `qemu-system-arm` (versão, máquinas
+   Cortex-M), `renode`, o QEMU da Espressif (`qemu-system-xtensa` com a
+   máquina `esp32`; o do Ubuntu não a tem — medir), `arm-none-eabi-gcc`,
+   `gdb`.
+2. **J4 monitor — a serial do emulador:** um firmware mínimo (a fixture com
+   uma escrita no UART0 do LM3S6965) sob `-serial tcp::<porta>,server,nowait`
+   e sob `-nographic`; ler pelo socket. E o que a IDE faz hoje com ela: o
+   `debugServer` sobe com o stdout em `/dev/null` (`dap/server.rs`), e o
+   monitor serial lista só portas do sysfs.
+3. **J5 periféricos pelo SVD no lm3s6965:** o que existe (um SVD público do
+   LM3S6965?) e o que o QEMU modela; sem SVD, a célula fica NÃO PROVADO.
+
+**O desenho:** sem código de produto. O §10.1 reescrito com as células
+medidas e datadas; o 36 (ferramentas de embarcados) com a disponibilidade;
+o que a medida pedir de código vira item da 0.4.3, não desta fatia.
+
+**Resultado (2026-10-17).** Como desenhado (§10.1, com as medidas): o QEMU
+10.2.1 com 20 máquinas Cortex-M; o Renode e o QEMU da Espressif ausentes (o
+`qemu-system-xtensa` do Ubuntu sem a `esp32`); gravar e depurar PROVADOS no
+gate; a serial MEDIDA fora da IDE (`-serial tcp`, e com `-S` nada se perde)
+e ausente NA IDE (o stdout do `debugServer` em `/dev/null`, o pty fora do
+sysfs); os periféricos pelo SVD NÃO PROVADOS (sem SVD do LM3S6965, e o SVD
+só vai ao probe-rs). O que pede código ficou como proposta para a 0.4.3.
+**Com isto a 0.4.0 está completa** (§11): o contexto efetivo, o preset, o
+C1, a L6 (a L7 medida e dispensada), o `compiledb` do PlatformIO e a matriz.

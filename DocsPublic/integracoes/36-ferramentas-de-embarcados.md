@@ -122,7 +122,11 @@ só o modo `--port`; o binário 0.32.0 é a fonte — `probe-rs dap-server --hel
 *"When omitted, the DAP server communicates over stdin/stdout"*. O §3 estava
 certo. E o `qemu-system-arm` 10.2.2 desta máquina traz 18 máquinas Cortex-M
 (`lm3s6965evb`, `mps2-an385/386/500/505`, `microbit`, `netduinoplus2`,
-`stm32vldiscovery`…): o gate tem onde rodar.
+`stm32vldiscovery`…): o gate tem onde rodar. Em 2026-10-17, no Ubuntu
+26.04: o 10.2.1, com 20 máquinas Cortex-M; o Renode e o QEMU da Espressif
+não estão na máquina, e o `qemu-system-xtensa` do Ubuntu não tem a máquina
+`esp32` (a matriz no [52](../roadmaps/52-arquitetura-executavel-da-0.4.md)
+§10.1).
 
 ## 5. O que falta medir antes de adotar
 

@@ -3,7 +3,8 @@
 Tres arquivos e nada mais — um Cortex-M3 bare-metal para a maquina
 `lm3s6965evb` do QEMU (Stellaris LM3S6965: 256 KiB de flash em `0x0`,
 64 KiB de SRAM em `0x20000000`; e' a maquina que o livro do rust-embedded usa
-no capitulo de QEMU, e existe no `qemu-system-arm` 10.2.2 desta maquina).
+no capitulo de QEMU, e existe no `qemu-system-arm` desta maquina: 10.2.2 em
+2026-09-11, 10.2.1 do Ubuntu 26.04 em 2026-10-17).
 
 ```text
 link.ld     a memoria e as secoes; nada de placa real
