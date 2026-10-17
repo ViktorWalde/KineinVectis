@@ -41,7 +41,3 @@ pesquisa/         A HIPÓTESE. Ninguém decidiu fazer. Pode nunca sair daqui,
   semânticas, modo sombra. A parte **já pronta no mercado** deste assunto
   (ccache, sccache) não está aqui: ela é alvo, e mora em
   [`../especificacoes/cache-de-compilacao.md`](../especificacoes/cache-de-compilacao.md).
-- [`02-migracao-para-csharp-dotnet.md`](02-migracao-para-csharp-dotnet.md) —
-  trocar Rust + Qt por C#/.NET 10, inteiro ou em parte (anotada a pedido do
-  autor em 2026-10-16): as réguas que a derrubariam, o tamanho medido do que
-  existe e quatro caminhos, cada um com o que falta medir.

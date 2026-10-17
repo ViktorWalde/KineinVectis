@@ -33,7 +33,7 @@
 > antes dela pede um clique em "Confiar neste projeto" (a faixa de saúde).
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
-> e a entrada `CLAUDE.md` (61, O6 e O7, feitas), e a pesquisa de C#/.NET 10.
+> e a entrada `CLAUDE.md` (61, O6 e O7, feitas); Rust e Qt mantidos.
 >
 > **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
 > 0.3.9 e a 0.4 sozinho, fatia por fatia, sem push; SDKs no usuário, sem
@@ -92,7 +92,6 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 | A 0.4 (embarcados), em curso desde 2026-10-16: 0.4.0 a 0.4.4, e a 0.4.5 com o Banco para embarcados e o fechamento | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
 | O lançamento da 0.3.6–0.3.9 (tag e release; o binário já diz `0.3.9`) e o AppImage, só com a 0.4 finalizada (autor, 2026-10-16) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
-| A migração possível para C#/.NET 10: pesquisa, sem decisão | [pesquisa/02](../pesquisa/02-migracao-para-csharp-dotnet.md) |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
 | A edição especial Windows + WSL2, depois da 0.4.0 | [60](60-windows-e-edicao-especial.md) §4 |
 | O AppImage novo: o autor considera depois da 0.4.0, sem decisão | [59](59-fechamento-da-0.3.9.md) §8 (registro; os requisitos guardados) |
@@ -280,9 +279,9 @@ documentacao para agentes    APROVADOS (2026-10-16): um arquivo curto de
                              que a proposta usava e' o de uma nota interna do
                              autor pela regra de 2026-10-01 (gate de links e
                              copia limpa)
-C#/.NET 10                   ANOTADA como pesquisa, sem decisao (2026-10-16):
-                             a migracao possivel de Rust + Qt, em
-                             pesquisa/02; a 0.4 segue em Rust e Qt
+Rust e Qt                    MANTIDOS (autor, 2026-10-08, 40.7 §7.241;
+                             reconfirmado em 2026-10-16, §7.311): a pilha do
+                             projeto nao muda
 ```
 
 ## 7. O registro das entregas
