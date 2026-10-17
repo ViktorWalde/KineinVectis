@@ -134,7 +134,8 @@ Core: crates/kinein-core/src/configaction/ (9 arquivos)
 ```
 
 **Medir:** `ls crates/kinein-core/src/configaction/` e
-`grep -c 'id: "' crates/kinein-core/src/configaction/catalog.rs`.
+`cat crates/kinein-core/src/configaction/catalog/*.rs | grep -c 'id: "'` (a
+tabela foi dividida por escopo em 2026-10-17; eram 27 ações nesse dia).
 
 **O que NÃO existe:**
 

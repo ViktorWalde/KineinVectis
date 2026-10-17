@@ -51,7 +51,12 @@ As 16 ações do MVP são as da §12 da spec de fechamento: 10 de `CMake`
 `addExecutable`, `addStaticLibrary`, `addSourceToTarget`, `addIncludeDirectory`,
 `addTargetLinkLibraries`, `inspectCache`, `repairBuildDir`) e 6 de Cargo
 (`addDependency`, `addDevDependency`, `addFeature`, `setEdition`, `check`,
-`createRunConfig`).
+`createRunConfig`). **Em 2026-10-17 são 27**, em uma tabela por escopo
+(`configaction/catalog/`): 19 de `CMake` (as 10, mais `findPackage`,
+`fetchContent`, `removeTargetLinkLibraries`, as cinco de regime —
+`setCxxStandard`, `strictWarnings`, `enableSanitizers`, `enableOpenMP`,
+`generateHexBin` — e `exportToolchainFile`), 7 de Cargo (as 6 e
+`embeddedTarget`) e 1 de `PlatformIO` (`compiledb`).
 
 **PlatformIO (`0.177.0`, a 0.4.0e do `roadmaps/52` §14.5).** O escopo
 `platformio` (o build system `platformIo`) e a ação `platformio.compiledb`,

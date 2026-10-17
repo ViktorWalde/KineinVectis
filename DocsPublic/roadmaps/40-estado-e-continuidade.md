@@ -39,6 +39,9 @@
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
 > e a entrada `CLAUDE.md` (61, O6 e O7, feitas); Rust e Qt mantidos.
+> **Decisões de 2026-10-17** (§5, "depois da 0.4.5"): depois do AppImage e
+> da divulgação da 0.4.5, o servidor MCP para agentes externos e a
+> documentação e o site em inglês e alemão; não se antecipam.
 >
 > **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
 > 0.3.9 e a 0.4 sozinho, fatia por fatia, sem push; SDKs no usuário, sem
@@ -111,7 +114,10 @@ que ainda vale, medindo antes.
 ## 5. As decisões registradas que NÃO se reabrem
 
 ```text
-IA na IDE                    fora de escopo (2026-07-17)
+IA na IDE                    fora de escopo (2026-07-17): sem painel de IA,
+                             o agente roda no terminal. So' o servidor MCP
+                             para agentes externos entra, depois da 0.4.5
+                             (ver "depois da 0.4.5", 2026-10-17)
 symbolica (CAS Rust)         PROIBIDO — fonte visivel, uso proprietario, licenca
                              a adquirir. Categoria Pylance (2026-09-05)
 Python                       ENTRA como vertical nativa — DECISAO DO AUTOR em
