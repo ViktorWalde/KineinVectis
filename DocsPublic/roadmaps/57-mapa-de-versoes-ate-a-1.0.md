@@ -78,7 +78,7 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
 | 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
-| 0.9 | PLANEJADA | distribuição e comunidade | CI pública, documentação pública, diagnóstico de falha sem telemetria, processo de release | 21 §M7 | "outra pessoa instala e contribui sem mim" (21 §M7) |
+| 0.9 | PLANEJADA; a CI pública e a porta para colaboradores antecipadas (autor, 2026-10-17, §3 item 6) | distribuição e comunidade | CI pública, documentação pública, diagnóstico de falha sem telemetria, processo de release | 21 §M7 | "outra pessoa instala e contribui sem mim" (21 §M7) |
 | 1.0 | PLANEJADA | contratos congelados | protocolo IPC e formatos persistidos versionados com migração; nada quebra sem versão major | este documento §4 | §4 — **ainda PROPOSTA** |
 
 ### 2.1 O que o código já entrega dos marcos M5–M7 (medido em 2026-10-01)
@@ -115,16 +115,21 @@ Os três pedidos de 2026-10-01 já têm dono:
 3. **Direção visual da 0.3.6–0.3.9** → 53 §13.1, com a linha de base medida
    no 58 §4.3; a task dedicada de UX/HUD a detalha.
 
-Os dois de 2026-10-17 entram **depois da 0.4.5**, que fecha com o AppImage e
-a divulgação (40 §5, "depois da 0.4.5"); a versão que os recebe ainda não
-foi escolhida:
+Os de 2026-10-17 (40 §5):
 
 4. **A Kinein como servidor MCP** para agentes externos (o Claude Code por
-   `claude mcp add`), o primeiro corte só de leitura, com o desenho antes do
-   código. Revisa, só nisto, o "IA na IDE fora de escopo" de 2026-07-17: o
-   agente segue no terminal, sem painel de IA.
-5. **A documentação em inglês e alemão, e o site em inglês com versão em
-   alemão**, dizendo só de passagem que o projeto vem do Brasil.
+   `claude mcp add`), **depois da 0.4.5**, o primeiro corte só de leitura,
+   com o desenho antes do código. Revisa, só nisto, o "IA na IDE fora de
+   escopo" de 2026-07-17: o agente segue no terminal, sem painel de IA.
+5. **A documentação em inglês, junto da 0.4.5** (a prioridade; o alemão
+   talvez na 0.5, sem decisão). O site, em outra sessão, fica em inglês, com
+   uma aba de colaboradores, dizendo só de passagem que o projeto vem do
+   Brasil.
+6. **Parte da 0.9 antecipada:** a CI pública entra agora, numa fatia curta
+   antes da 0.4.1b; a porta para novos colaboradores (modelos, labels,
+   issues de entrada em inglês) se prepara agora e se publica junto da 0.4.5.
+7. **ROS 2 na IDE**, tão bom quanto o ambiente do VS Code ou melhor,
+   orquestrando as ferramentas abertas; a versão sai de uma pesquisa medida.
 
 **O `/ide` da Kinein ficou sem decisão** (2026-10-17), pelo que a
 documentação oficial do Claude Code mostra: o transporte (MCP por

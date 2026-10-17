@@ -33,15 +33,19 @@
 > que subiu sem CDB reiniciado) e a 0.4.0f (a matriz de emuladores medida):
 > **a 0.4.0 está completa** (40.7 §7.307–§7.314). A 0.4.1, o cross, começou:
 > a 0.4.1a (o host sem vazar com sysroot; o kit exportável como toolchain
-> file, §7.315); seguem o C2 (o inspector do contexto), a deriva e o
-> `toolchain.json` schema 3 (52 §11), cada desenho no 52 §14 antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
+> file, §7.315). **A próxima fatia é a CI pública, a camada rápida** (§5,
+> "0.9 antecipada em parte"); depois, o C2 (o inspector do contexto), a
+> deriva e o `toolchain.json` schema 3 (52 §11), cada desenho no 52 §14
+> antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
 > antes dela pede um clique em "Confiar neste projeto" (a faixa de saúde).
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
 > e a entrada `CLAUDE.md` (61, O6 e O7, feitas); Rust e Qt mantidos.
-> **Decisões de 2026-10-17** (§5, "depois da 0.4.5"): depois do AppImage e
-> da divulgação da 0.4.5, o servidor MCP para agentes externos e a
-> documentação e o site em inglês e alemão; não se antecipam.
+> **Decisões de 2026-10-17** (§5): a CI pública entra numa fatia curta
+> antes da 0.4.1b; a 0.4.5 fecha com o AppImage, a divulgação, a
+> documentação em inglês e a porta para colaboradores (preparada antes);
+> depois dela, o servidor MCP; o ROS 2 entra na IDE, com a versão a decidir
+> depois da pesquisa medida.
 >
 > **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
 > 0.3.9 e a 0.4 sozinho, fatia por fatia, sem push; SDKs no usuário, sem
@@ -293,20 +297,35 @@ documentacao para agentes    APROVADOS (2026-10-16): um arquivo curto de
 Rust e Qt                    MANTIDOS (autor, 2026-10-08, 40.7 §7.241;
                              reconfirmado em 2026-10-16, §7.311): a pilha do
                              projeto nao muda
-depois da 0.4.5              (autor, 2026-10-17) A 0.4.5 fecha com o AppImage
-(2026-10-17)                 e a divulgacao da versao. DEPOIS dela: (1) a
-                             Kinein como servidor MCP para agentes externos
-                             (o Claude Code por `claude mcp add`), o que
-                             revisa, so' nisto, o "IA na IDE fora de escopo"
-                             de 2026-07-17 — o agente continua no terminal,
-                             sem painel de IA; o desenho, com o primeiro corte
-                             so' de leitura, vem antes do codigo; (2) a
-                             documentacao em ingles e alemao, e o site todo em
-                             ingles, com versao em alemao, dizendo so' de
-                             passagem que o projeto vem do Brasil. Ate' la a
-                             documentacao segue em portugues. O `/ide` da
+depois da 0.4.5              (autor, 2026-10-17) A 0.4.5 fecha com o AppImage,
+(2026-10-17)                 a divulgacao e a TRANSICAO DA DOCUMENTACAO PARA O
+                             INGLES (prioridade; o alemao talvez na 0.5, sem
+                             decisao). Ate' la a documentacao segue em
+                             portugues. DEPOIS da 0.4.5: a Kinein como
+                             servidor MCP para agentes externos (o Claude Code
+                             por `claude mcp add`), o que revisa, so' nisto, o
+                             "IA na IDE fora de escopo" de 2026-07-17 — o
+                             agente continua no terminal, sem painel de IA; o
+                             desenho, com o primeiro corte so' de leitura, vem
+                             antes do codigo. O site (outra sessao) fica em
+                             ingles, com aba de colaboradores, dizendo so' de
+                             passagem que o projeto vem do Brasil. O `/ide` da
                              Kinein (protocolo interno do Claude Code, sem
                              especificacao publica) NAO foi decidido
+0.9 antecipada em parte      (autor, 2026-10-17) A CI publica ENTRA AGORA,
+(2026-10-17)                 numa fatia curta antes da 0.4.1b, em camadas (a
+                             rapida em todo push; a UI; a pesada agendada); o
+                             gate estrito local continua a regra de cada
+                             commit. A porta para novos colaboradores (modelos
+                             de issue e PR, labels, issues de entrada em
+                             INGLES) se prepara agora e se PUBLICA junto da
+                             0.4.5, com a CI. Push, workflow e issue no GitHub
+                             sao do autor
+ROS 2                        ENTRA na IDE (autor, 2026-10-17): o ambiente ROS 2
+(2026-10-17)                 tao bom quanto o do VS Code ou melhor, orquestrando
+                             as ferramentas abertas que ja existem. Versao a
+                             decidir; antes, a pesquisa medida (o que o VS
+                             Code faz, o que a Kinein ja tem, o que falta)
 ```
 
 ## 7. O registro das entregas
