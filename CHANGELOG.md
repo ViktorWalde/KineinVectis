@@ -29,6 +29,9 @@ em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
   editor.
 - O diagnóstico de um servidor de linguagem que saiu não volta mais à tela
   (40.7 §7.309).
+- Protocolo `0.176.0` — **O que o servidor de linguagem está fazendo, na
+  barra** (0.4.0d, 40.7 §7.312): `LSP … rust · Indexing 23%` enquanto o
+  rust-analyzer ou o clangd indexam; no fim, `LSP ● N`.
 
 ## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
 

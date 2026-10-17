@@ -49,7 +49,7 @@ canônicas e as regras ficam aqui.
 | `index.*` | [`03-dominios/index.md`](03-dominios/index.md) |
 | `job.*` | [`03-dominios/job.md`](03-dominios/job.md) |
 | `library.*` | [`03-dominios/library.md`](03-dominios/library.md) |
-| `lsp.*` e `event.lsp.documentsClosed` | [`03-dominios/lsp.md`](03-dominios/lsp.md) |
+| `lsp.*`, `event.lsp.documentsClosed` e `event.lsp.progress` | [`03-dominios/lsp.md`](03-dominios/lsp.md) |
 | `probe.*` | [`03-dominios/probe.md`](03-dominios/probe.md) |
 | `project.*` | [`03-dominios/project.md`](03-dominios/project.md) |
 | `python.*` | [`03-dominios/python.md`](03-dominios/python.md) |
@@ -457,7 +457,7 @@ workspace.status
 workspace.trust
 ```
 
-## Os 60 eventos emitidos — a lista inteira
+## Os 61 eventos emitidos — a lista inteira
 
 > **2026-10-03:** a lista estava atrás do código — sete eventos entraram sem
 > chegar aqui (`coverage.finished`, `python.stubs`, `remote.deployed`,
@@ -522,6 +522,7 @@ event.job.progress
 event.lsp.diagnostics
 event.lsp.documentsClosed
 event.lsp.log
+event.lsp.progress
 event.lsp.restarted
 event.lsp.status
 

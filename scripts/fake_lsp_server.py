@@ -57,11 +57,16 @@ com codigo 3 ao receber a resposta do `workspace/configuration` — quem
 responde e' a thread leitora do core, entao ela ja' existe, e a queda chega
 como fim do stdout depois de o servidor estar de pe', sem depender de tempo.
 
+Com `--progresso` (2026-10-16, a L6 da 0.4.0d): no primeiro `didOpen`, uma
+frente de `$/progress` ("indexing"): o comeco, cinco relatos de uma vez, um
+sexto 0,3 s depois e o fim — o core deixa passar o comeco, o relato que
+respeita o intervalo e o fim.
+
 Uso (sempre indireto, pelo `Core::use_language_server_command` e pelo
 `Core::use_language_server_companion`):
 
     python3 scripts/fake_lsp_server.py /tmp/mensagens.jsonl [--publica NOME]
-                                       [--stderr N] [--morre] [--cai]
+                                       [--stderr N] [--morre] [--cai] [--progresso]
 """
 import json
 import os
@@ -74,6 +79,7 @@ PUBLICA = ARGS[ARGS.index("--publica") + 1] if "--publica" in ARGS else None
 STDERR = int(ARGS[ARGS.index("--stderr") + 1]) if "--stderr" in ARGS else 0
 MORRE = "--morre" in ARGS
 CRASH_AFTER_START = "--cai" in ARGS
+PROGRESS = "--progresso" in ARGS
 
 # Legend anunciada no initialize. O core a le em
 # `capabilities.semanticTokensProvider.legend.tokenTypes` e a usa para decodificar
@@ -112,11 +118,11 @@ def ler_mensagem(entrada):
     return json.loads(corpo.decode("utf-8"))
 
 
-def escrever(saida, message):
+def write_message(output, message):
     corpo = json.dumps(message).encode("utf-8")
-    saida.write(f"Content-Length: {len(corpo)}\r\n\r\n".encode("ascii"))
-    saida.write(corpo)
-    saida.flush()
+    output.write(f"Content-Length: {len(corpo)}\r\n\r\n".encode("ascii"))
+    output.write(corpo)
+    output.flush()
 
 
 def resultado(method, params):
@@ -197,13 +203,30 @@ def diagnostico_falso(uri):
     }
 
 
+def send_progress(output):
+    """A frente do modo --progresso; so' na primeira vez."""
+    global PROGRESS
+    PROGRESS = False
+
+    def send(value):
+        write_message(output, {"jsonrpc": "2.0", "method": "$/progress",
+                         "params": {"token": "fake/indexing", "value": value}})
+
+    send({"kind": "begin", "title": "indexing", "percentage": 0})
+    for k in range(1, 6):
+        send({"kind": "report", "message": f"{k}/6", "percentage": k * 15})
+    time.sleep(0.3)
+    send({"kind": "report", "message": "6/6", "percentage": 90})
+    send({"kind": "end"})
+
+
 def main():
     for k in range(1, STDERR + 1):
         print(f"fake-lsp stderr {k}", file=sys.stderr, flush=True)
     if MORRE:
         return 2
     entrada = sys.stdin.buffer
-    saida = sys.stdout.buffer
+    output = sys.stdout.buffer
     while True:
         message = ler_mensagem(entrada)
         if message is None:
@@ -219,7 +242,7 @@ def main():
             # configuracao ao cliente. A resposta do core entra no log como
             # qualquer mensagem (sem `method`, com este id) — e' o que o teste
             # da fatia 2 da cadeia Python confere.
-            escrever(saida, {
+            write_message(output, {
                 "jsonrpc": "2.0",
                 "id": 9001,
                 "method": "workspace/configuration",
@@ -228,21 +251,23 @@ def main():
             })
             continue
         if "id" not in message:
+            if PROGRESS and method == "textDocument/didOpen":
+                send_progress(output)
             if PUBLICA and method in ("textDocument/didOpen", "textDocument/didChange"):
                 documento = (message.get("params") or {}).get("textDocument", {})
                 uri = documento.get("uri", "")
                 VERSOES[uri] = documento.get("version")
-                escrever(saida, diagnostico_falso(uri))
+                write_message(output, diagnostico_falso(uri))
             if PUBLICA and method == "textDocument/didClose":
                 uri = (message.get("params") or {}).get("textDocument", {}).get("uri", "")
                 vazio = diagnostico_falso(uri)
                 vazio["params"]["diagnostics"] = []
-                escrever(saida, vazio)
+                write_message(output, vazio)
             continue  # notificacao: so o log importa
         if method == "shutdown":
-            escrever(saida, {"jsonrpc": "2.0", "id": message["id"], "result": None})
+            write_message(output, {"jsonrpc": "2.0", "id": message["id"], "result": None})
             continue
-        escrever(saida, {
+        write_message(output, {
             "jsonrpc": "2.0",
             "id": message["id"],
             "result": resultado(method, message.get("params") or {}),

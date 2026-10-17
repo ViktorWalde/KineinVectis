@@ -209,8 +209,9 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   linha da saída e o ✕ para cancelar (clicar no título abre a aba Jobs);
   sem job, os resumos do projeto. À direita, os **servidores de linguagem**
   (`LSP ● 2` todos rodando, `LSP … cpp` subindo, `LSP ✗ python` caiu — o
-  motivo ao pairar; antes isso só existia no log da aba IDE), o botão IDE e
-  o core.
+  motivo ao pairar; antes isso só existia no log da aba IDE; e, desde
+  2026-10-16, o que o servidor está fazendo, como `LSP … rust · Indexing
+  23%`), o botão IDE e o core.
 - **Editor e explorer** (desde 2026-09-18, Etapa 2 F3): a **aba ativa** tem
   o fundo do editor e uma borda de acento em cima; o arquivo modificado
   mostra **●** no lugar do ✕ (o ✕ volta ao pairar); o número da **linha

@@ -1071,6 +1071,7 @@ forward
 forwards
 found
 foundation
+four
 fourth
 fraction
 fragment
@@ -1770,6 +1771,7 @@ overwriting
 owned
 owner
 owners
+paced
 pacing
 package
 packages
@@ -1830,6 +1832,7 @@ peer
 pendentes
 pending
 pendulum
+percentage
 percentile
 perform
 period

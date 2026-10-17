@@ -202,6 +202,8 @@ pub(super) fn initialize_request(root: &Path, init_options: &Value) -> Value {
                     },
                 },
                 "workspace": { "symbol": {} },
+                // L6 (0.4.0d): o servidor diz o que esta' fazendo (indexando…).
+                "window": { "workDoneProgress": true },
             },
             "workspaceFolders": [{
                 "uri": uri_for_path(root),

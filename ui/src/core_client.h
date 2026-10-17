@@ -637,6 +637,10 @@ signals:
     void lspRestarted(const QString& language);
     // running | starting | failed | exited | stopped | restarting, com o motivo quando ha'.
     void lspStatusChanged(const QString& language, const QString& status, const QString& message);
+    /// L6 (0.176.0): uma frente de trabalho do servidor (indexando…);
+    /// `percentage` -1 quando o servidor nao diz.
+    void lspProgress(const QString& language, const QString& title, const QString& message,
+                     int percentage, bool done);
     void lspDocumentsClosed(const QString& language, int count);
     void fileSearchResults(const QVariantList& matches, bool truncated);
     void searchResults(const QVariantList& matches, bool truncated);

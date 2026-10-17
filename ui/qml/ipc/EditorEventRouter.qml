@@ -47,6 +47,10 @@ Item {
             }
         }
 
+        function onLspProgress(language, title, message, percentage, done) {
+            root.lspStatusController.handleProgress(language, title, message, percentage, done);
+        }
+
         function onLspRestarted(language) {
             root.editorController.highlight.forgetUnsupported();
             root.editorController.refreshSemanticTokens();

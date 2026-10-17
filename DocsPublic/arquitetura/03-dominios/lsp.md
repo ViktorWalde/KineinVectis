@@ -1,4 +1,4 @@
-# `lsp.*` e `event.lsp.documentsClosed` — o domínio no protocolo IPC
+# `lsp.*`, `event.lsp.documentsClosed` e `event.lsp.progress` — o domínio no protocolo IPC
 
 > Parte do [03](../03-protocolo-ipc.md), que tem o formato base, as listas
 > canônicas de métodos e eventos e as regras. Movido sem mudar o texto em
@@ -24,6 +24,16 @@ aberto, alterado ou salvo:
 Se o servidor não estiver instalado ou falhar no `initialize`, o core emite
 `event.lsp.status` com `status: "failed"` e mensagem humana. O MVP usa
 sincronização de documento inteiro.
+
+**O progresso do servidor (`0.176.0`, a 0.4.0d do `roadmaps/52` §14.4).** O
+cliente anuncia `window.workDoneProgress` e responde `null` ao
+`window/workDoneProgress/create`; cada `$/progress` vira `event.lsp.progress
+{ language, title, message?, percentage?, done }`. O começo e o fim de cada
+frente sempre passam; os relatos de uma mesma frente, no máximo 4 por
+segundo (o rust-analyzer manda uns 7, medido em 2026-10-16). Um servidor já
+parado não manda mais nada. O cliente NÃO anuncia `didChangeWatchedFiles`:
+medido na mesma data, o rust-analyzer vigia os arquivos sozinho quando o
+cliente não se oferece, e o clangd não pede vigilância.
 
 **Configuração do servidor (`0.99.0`).** Um `ServerSpec` pode carregar
 `settings` (JSON). Quando os há, o core envia `workspace/didChangeConfiguration

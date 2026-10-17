@@ -238,11 +238,32 @@ pub(super) fn run_reader(
     stopping: &AtomicBool,
 ) {
     {
+        let mut progress = super::progress::ProgressTracker::default();
         while let Ok(Some(message)) = read_message(&mut reader) {
             if route_response(&message, pending) {
                 continue;
             }
             answer_server_request(&message, stdin, settings);
+
+            // L6 (0.4.0d): o progresso do servidor, ritmado; parado, nada mais.
+            if message.get("method").and_then(Value::as_str) == Some("$/progress")
+                && !stopping.load(Ordering::SeqCst)
+                && let Some(mut body) = message
+                    .get("params")
+                    .and_then(|params| progress.event(params, std::time::Instant::now()))
+            {
+                body["language"] = Value::String(key.to_owned());
+                if events
+                    .send(JsonRpcRequest::notification(
+                        "event.lsp.progress",
+                        Some(body),
+                    ))
+                    .is_err()
+                {
+                    break;
+                }
+                continue;
+            }
 
             if message.get("method").and_then(Value::as_str)
                 == Some("textDocument/publishDiagnostics")

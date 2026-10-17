@@ -20,6 +20,7 @@ Item {
         signal externalFileLoadFailed(var path, var message)
         signal recovered()
         signal lspStatusChanged(var language, var status, var message)
+        signal lspProgress(var language, var title, var message, var percentage, var done)
         signal lspRestarted(var language)
         signal lspDocumentsClosed(var language, var count)
         signal fileSaved(var path)

@@ -27,6 +27,7 @@ mod handshake;
 mod manager;
 mod parse;
 mod parse_symbols;
+mod progress;
 mod query;
 mod registry;
 mod server;

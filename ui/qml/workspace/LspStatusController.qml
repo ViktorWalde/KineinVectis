@@ -12,10 +12,16 @@ Item {
     property string workspaceRoot: ""
     // { language: { status: "running|starting|failed|exited|stopped|restarting", message } }
     property var servers: ({})
+    // L6 (0.4.0d): a frente de trabalho em curso de cada servidor (indexando…),
+    // { language: { title, message, percentage } }; percentage -1 = nao disse.
+    property var progress: ({})
 
     visible: false
 
-    onWorkspaceRootChanged: servers = ({})
+    onWorkspaceRootChanged: {
+        servers = ({});
+        progress = ({});
+    }
 
     function handleStatus(language, status, message) {
         const novo = Object.assign({}, servers);
@@ -25,6 +31,30 @@ Item {
             novo[language] = { status: status, message: message || "" };
         }
         servers = novo;
+        // Um servidor que parou ou caiu nao termina a frente: ela some com ele.
+        if (status !== "running" && progress[language] !== undefined) {
+            const withoutFront = Object.assign({}, progress);
+            delete withoutFront[language];
+            progress = withoutFront;
+        }
+    }
+
+    function handleProgress(language, title, message, percentage, done) {
+        const next = Object.assign({}, progress);
+        if (done) {
+            delete next[language];
+        } else {
+            next[language] = { title: title || "", message: message || "",
+                               percentage: percentage === undefined ? -1 : percentage };
+        }
+        progress = next;
+    }
+
+    // "rust · Indexing 43%": a frente ativa, curta.
+    function progressLabel(language) {
+        const front = progress[language];
+        if (front === undefined) return "";
+        return language + " · " + front.title + (front.percentage >= 0 ? " " + front.percentage + "%" : "");
     }
 
     function languages() {
@@ -54,6 +84,10 @@ Item {
         if (ruins.length > 0) {
             return qsTr("LSP ✗ %1").arg(ruins.join(", "));
         }
+        const working = Object.keys(progress).sort();
+        if (working.length > 0) {
+            return qsTr("LSP … %1").arg(working.map(progressLabel).join(", "));
+        }
         const rodando = runningCount();
         if (rodando < total) {
             return qsTr("LSP … %1").arg(withStatus(["starting", "restarting"]).join(", "));
@@ -64,7 +98,10 @@ Item {
     function detail() {
         return languages().map(function(l) {
             const s = servers[l];
-            return l + ": " + s.status + (s.message !== "" ? " — " + s.message : "");
+            const front = progress[l];
+            const work = front === undefined ? ""
+                    : " — " + front.title + (front.message !== "" ? " (" + front.message + ")" : "");
+            return l + ": " + s.status + (s.message !== "" ? " — " + s.message : "") + work;
         }).join("\n");
     }
 

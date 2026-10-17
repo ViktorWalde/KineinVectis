@@ -41,6 +41,15 @@ bool CoreClient::handleLspNotification(const QString& method, const QJsonObject&
         emit lspStatusChanged(language, status, message);
         return true;
     }
+    if (method == QStringLiteral("event.lsp.progress")) {
+        // L6 (0.4.0d): o que o servidor esta' fazendo, ja' ritmado pelo core.
+        emit lspProgress(params.value(QStringLiteral("language")).toString(),
+                         params.value(QStringLiteral("title")).toString(),
+                         params.value(QStringLiteral("message")).toString(),
+                         params.value(QStringLiteral("percentage")).toInt(-1),
+                         params.value(QStringLiteral("done")).toBool());
+        return true;
+    }
     if (method == QStringLiteral("event.lsp.log")) {
         // O stderr do servidor, linha a linha (0.111.0): vai para a aba IDE,
         // sem interpretacao — e' o que o clangd/rust-analyzer/basedpyright

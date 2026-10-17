@@ -25,7 +25,7 @@
 | [`index.md`](index.md) | `index.*` |
 | [`job.md`](job.md) | `job.*` |
 | [`library.md`](library.md) | `library.*` |
-| [`lsp.md`](lsp.md) | `lsp.*` e `event.lsp.documentsClosed` |
+| [`lsp.md`](lsp.md) | `lsp.*`, `event.lsp.documentsClosed` e `event.lsp.progress` |
 | [`probe.md`](probe.md) | `probe.*` |
 | [`project.md`](project.md) | `project.*` |
 | [`python.md`](python.md) | `python.*` |

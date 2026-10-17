@@ -872,3 +872,59 @@ fn the_rust_server_receives_the_kit_target_and_restarts_when_it_changes() {
         "a configuracao antiga sobreviveu ao alvo limpo"
     );
 }
+
+/// L6 (0.4.0d, `roadmaps/52` §14.4): o cliente anuncia `workDoneProgress`, e o
+/// `$/progress` do servidor chega como `event.lsp.progress`, com a linguagem;
+/// dos seis relatos (cinco de uma vez, um 0,3 s depois), so' o que respeita o
+/// intervalo passa; o comeco e o fim passam sempre.
+#[test]
+fn server_progress_reaches_the_ui_paced_and_with_the_language() {
+    let mut harness = harness("progresso");
+    let script = fake_server();
+    let log = harness.log.clone();
+    assert!(harness.core.use_language_server_command(
+        "rust",
+        python3(),
+        &[
+            script.to_str().unwrap(),
+            log.to_str().unwrap(),
+            "--progresso"
+        ],
+    ));
+    harness.ok("fs.read", json!({ "path": harness.main_rs() }));
+    let initialize = harness.wait_for("initialize", 0);
+    assert_eq!(
+        initialize["params"]["capabilities"]["window"]["workDoneProgress"], true,
+        "{initialize}"
+    );
+
+    let mut progress = Vec::new();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while let Some(left) = deadline.checked_duration_since(Instant::now()) {
+        let Ok(event) = harness.events.recv_timeout(left) else {
+            break;
+        };
+        if event.method == "event.lsp.progress" {
+            let body = event.params.unwrap_or_default();
+            let done = body["done"] == true;
+            progress.push(body);
+            if done {
+                break;
+            }
+        }
+    }
+    assert_eq!(progress.len(), 3, "{progress:?}");
+    assert_eq!(
+        progress[0],
+        json!({ "language": "rust", "title": "indexing", "percentage": 0, "done": false })
+    );
+    assert_eq!(
+        progress[1]["message"], "6/6",
+        "o relato que respeita o intervalo"
+    );
+    assert_eq!(progress[1]["percentage"], 90);
+    assert_eq!(
+        progress[2],
+        json!({ "language": "rust", "title": "indexing", "done": true })
+    );
+}

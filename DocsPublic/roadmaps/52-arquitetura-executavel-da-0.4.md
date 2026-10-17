@@ -795,3 +795,66 @@ deste repositório com o Qt, 1,9 a 2,4 s (GCC 15.2), acima da régua de 1,5 s
 do §8. A régua cabe no projeto de firmware, que é o alvo da 0.4; nas
 unidades com Qt, o custo é dos cabeçalhos, e o debounce não o muda (40.7
 §7.310). A tecla→quadro não muda: a checagem roda num job, fora da UI.
+
+### 14.4 0.4.0d — o progresso do servidor na barra (L6); L7 medido e dispensado (§5.11; 2026-10-16)
+
+**Medido (2026-10-16), com uma sonda LSP direta, fora da IDE**, no projeto
+de fluxo (clangd 21.1.8) e num `cargo init` (rust-analyzer 1.96.1):
+
+```text
+                         sem as capacidades        com workDoneProgress e
+                         (como a IDE anuncia hoje)  didChangeWatchedFiles dinâmico
+clangd                   nenhum progresso           "indexing": começo, 2 relatos, fim;
+                                                    nenhum pedido de vigiar arquivo
+rust-analyzer (20 s)     nenhum progresso           13 frentes ("Fetching", "Building
+                                                    CrateGraph", "Roots Scanned",
+                                                    "Indexing", "cargo check"…), 145
+                                                    relatos (~7/s); pede para o cliente
+                                                    vigiar os arquivos (2 registros)
+```
+
+E, só com o progresso anunciado (sem o registro dinâmico), um `Cargo.toml`
+mudado por fora fez o rust-analyzer recomeçar em 0,1 s ("Fetching",
+"Indexing", "cargo check"): ele vigia sozinho quando o cliente não se
+oferece. O clangd não pede vigilância, e a CDB nova depois de um configure
+já é tratada fechando os documentos C/C++ (`roadmaps/29` §5b,
+`handlers/cmake.rs`).
+
+**A decisão de escopo, pela medida:** a **L7 sai** — anunciar
+`didChangeWatchedFiles` obrigaria a IDE a cumprir os globs que o
+rust-analyzer registra, trocando um vigia que funciona por um que teria de
+ser feito; nada medido pede isso. A **L6 entra**.
+
+**O desenho da L6:**
+
+1. **Handshake:** o cliente anuncia `window.workDoneProgress: true`; o
+   `window/workDoneProgress/create` já é respondido com `null`, que é o que a
+   especificação pede.
+2. **Core (`lsp/server.rs`, a thread leitora):** o `$/progress` de cada
+   servidor vira `event.lsp.progress { language, title, message?,
+   percentage?, done }`; começo e fim sempre passam, e os relatos de uma
+   mesma frente no máximo 4 por segundo (o rust-analyzer manda ~7). Um
+   servidor parado não manda mais nada (o `stopping`, como na §7.309).
+3. **Protocolo 0.176.0:** o evento novo, na lista canônica do 03 (61
+   eventos) e no `03-dominios/lsp.md`.
+4. **UI:** a ponte C++ emite `lspProgress`; o `LspStatusController` guarda a
+   frente ativa por linguagem, e a barra diz "LSP … rust · Indexing 43%"
+   enquanto ela dura (o detalhe ao pairar leva a mensagem); no fim, volta ao
+   "LSP ● N".
+
+**Provas planejadas:** testes do core (o `$/progress` lido de um servidor
+falso: começo, relatos limitados no tempo, fim; o servidor parado sem
+evento); a fiação do evento pelo gate; harness do `LspStatusController`
+(frente ativa, porcentagem ausente sem "undefined", fim que volta ao
+resumo); mutações; no Xvfb, um projeto Rust abrindo com a barra mostrando o
+progresso do rust-analyzer e, ao fim, "LSP ● 1".
+
+**Resultado (2026-10-16).** Como desenhado; o ritmo e a frente ficaram num
+módulo puro, `lsp/progress.rs`, que a thread leitora chama. Provas: 2 testes
+puros (começo, relatos no ritmo, fim; token numérico, frente desconhecida),
+o integrado com o servidor falso (`--progresso`: o `initialize` anuncia
+`workDoneProgress`, e dos seis relatos só o que respeita o intervalo passa),
+o `tst_lsp_progress.qml`, a fiação com 61 eventos, 5 mutações reprovando. No
+Xvfb, um projeto Rust confiado: a barra disse "LSP … rust · Fetching",
+"cargo check", "Indexing 23%" e voltou a "LSP ● 1"; IPC 0.176.0 (40.7
+§7.312).

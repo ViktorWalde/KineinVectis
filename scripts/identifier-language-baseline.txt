@@ -2205,7 +2205,6 @@ scripts/fake_lsp_server.py	corpo	6
 scripts/fake_lsp_server.py	diagnostico	3
 scripts/fake_lsp_server.py	documento	3
 scripts/fake_lsp_server.py	entrada	5
-scripts/fake_lsp_server.py	escrever	6
 scripts/fake_lsp_server.py	falso	3
 scripts/fake_lsp_server.py	linha	9
 scripts/fake_lsp_server.py	mensagem	2
@@ -2213,7 +2212,6 @@ scripts/fake_lsp_server.py	morre	2
 scripts/fake_lsp_server.py	novo	2
 scripts/fake_lsp_server.py	publica	9
 scripts/fake_lsp_server.py	resultado	2
-scripts/fake_lsp_server.py	saida	10
 scripts/fake_lsp_server.py	tamanho	4
 scripts/fake_lsp_server.py	vazio	3
 scripts/fake_lsp_server.py	versoes	3
