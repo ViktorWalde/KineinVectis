@@ -115,6 +115,17 @@ Os três pedidos de 2026-10-01 já têm dono:
 3. **Direção visual da 0.3.6–0.3.9** → 53 §13.1, com a linha de base medida
    no 58 §4.3; a task dedicada de UX/HUD a detalha.
 
+Os dois de 2026-10-17 entram **depois da 0.4.5**, que fecha com o AppImage e
+a divulgação (40 §5, "depois da 0.4.5"); a versão que os recebe ainda não
+foi escolhida:
+
+4. **A Kinein como servidor MCP** para agentes externos (o Claude Code por
+   `claude mcp add`), o primeiro corte só de leitura, com o desenho antes do
+   código. Revisa, só nisto, o "IA na IDE fora de escopo" de 2026-07-17: o
+   agente segue no terminal, sem painel de IA.
+5. **A documentação em inglês e alemão, e o site em inglês com versão em
+   alemão**, dizendo só de passagem que o projeto vem do Brasil.
+
 ## 4. Proposta de critério para a 1.0
 
 **PROPOSTA, sem decisão do autor.** A 1.0 é a promessa de que um contrato não

@@ -287,6 +287,20 @@ documentacao para agentes    APROVADOS (2026-10-16): um arquivo curto de
 Rust e Qt                    MANTIDOS (autor, 2026-10-08, 40.7 §7.241;
                              reconfirmado em 2026-10-16, §7.311): a pilha do
                              projeto nao muda
+depois da 0.4.5              (autor, 2026-10-17) A 0.4.5 fecha com o AppImage
+(2026-10-17)                 e a divulgacao da versao. DEPOIS dela: (1) a
+                             Kinein como servidor MCP para agentes externos
+                             (o Claude Code por `claude mcp add`), o que
+                             revisa, so' nisto, o "IA na IDE fora de escopo"
+                             de 2026-07-17 — o agente continua no terminal,
+                             sem painel de IA; o desenho, com o primeiro corte
+                             so' de leitura, vem antes do codigo; (2) a
+                             documentacao em ingles e alemao, e o site todo em
+                             ingles, com versao em alemao, dizendo so' de
+                             passagem que o projeto vem do Brasil. Ate' la a
+                             documentacao segue em portugues. O `/ide` da
+                             Kinein (protocolo interno do Claude Code, sem
+                             especificacao publica) NAO foi decidido
 ```
 
 ## 7. O registro das entregas
