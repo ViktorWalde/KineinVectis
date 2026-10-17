@@ -52,6 +52,7 @@ pub mod serial_files;
 pub mod settings;
 pub mod setup;
 pub mod syntax;
+pub mod syntax_check;
 pub mod terminal;
 pub mod test_discover;
 pub mod toolchain;

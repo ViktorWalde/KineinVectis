@@ -23,17 +23,18 @@ use kinein_protocol::{Diagnostic, JsonRpcRequest};
 
 use super::parse::diagnostics_notification;
 
-/// Por arquivo, a lista de cada servidor (pela chave do servidor, em ordem
-/// estavel — o principal `python` antes de `python-ruff`).
-pub(super) type MergedDiagnostics =
-    Arc<Mutex<HashMap<String, BTreeMap<&'static str, Vec<Diagnostic>>>>>;
+/// Por arquivo, a lista de cada servidor, pela chave.
+///
+/// Em ordem estavel — o principal `python` antes de `python-ruff`. A checagem
+/// do compilador ao salvar (0.4.0c) entra com a chave `compiler`.
+pub type MergedDiagnostics = Arc<Mutex<HashMap<String, BTreeMap<&'static str, Vec<Diagnostic>>>>>;
 
 /// Grava o que `key` publicou para `path` e devolve o evento com a uniao.
 ///
-/// So' os testes a usam hoje: a thread leitora usa [`record_while_running`],
-/// que descarta o que chega de um servidor ja' parado.
-#[cfg(test)]
-pub(super) fn record(
+/// A checagem do compilador ao salvar a usa (`handlers/syntax_check.rs`); a
+/// thread leitora de um servidor usa [`record_while_running`], que descarta o
+/// que chega de um servidor ja' parado.
+pub fn record(
     merged: &MergedDiagnostics,
     key: &'static str,
     path: &str,

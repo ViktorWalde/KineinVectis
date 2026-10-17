@@ -135,6 +135,7 @@ Item {
         z: 97
         formatOnSave: root.settingsController.formatOnSave
         autoSave: root.settingsController.autoSave
+        compilerCheckOnSave: root.settingsController.compilerCheckOnSave
         editorFontSize: root.settingsController.editorFontSize
         autoClosePairs: root.settingsController.autoClosePairs
         rigorProfile: root.settingsController.rigorProfile

@@ -69,6 +69,12 @@ pub struct LspManager {
 }
 
 impl LspManager {
+    /// A fusao dos diagnosticos, para quem publica fora dos servidores (a
+    /// checagem do compilador ao salvar, 0.4.0c).
+    pub(crate) fn merged_diagnostics(&self) -> MergedDiagnostics {
+        std::sync::Arc::clone(&self.merged_diagnostics)
+    }
+
     /// Cria um manager que envia notificacoes pelo canal do loop principal.
     #[must_use]
     pub fn new(events: EventSender) -> Self {

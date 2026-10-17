@@ -142,7 +142,8 @@ impl BuildDiagnostic {
 
 const fn category_for_source(source: DiagnosticSource) -> &'static str {
     match source {
-        DiagnosticSource::Build => "compiler",
+        // O build e a checagem ao salvar (`0.175.0`) sao o compilador.
+        DiagnosticSource::Build | DiagnosticSource::Compiler => "compiler",
         DiagnosticSource::Quality => "lint",
         DiagnosticSource::Lsp => "lsp",
         DiagnosticSource::Toolchain => "toolchain",

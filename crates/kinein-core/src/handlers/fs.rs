@@ -252,6 +252,8 @@ impl Core {
                         if let Some(lsp) = self.lsp.as_mut() {
                             lsp.did_save(&path, &parsed.content);
                         }
+                        // C1 (0.4.0c): o compilador do alvo checa o salvo.
+                        self.schedule_syntax_check(&root, &path);
                         // M-S1: arquivo salvo em disco → rascunho é obsoleto.
                         super::draft::clear_draft_after_save(self, &path);
                         // Num espelho remoto (P6 fatia 2), salvar EMPURRA o

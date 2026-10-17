@@ -65,6 +65,7 @@ mod serial_files;
 mod serial_identify;
 mod settings;
 mod syntax;
+mod syntax_check;
 mod terminal;
 mod toolchain;
 mod tools;

@@ -282,6 +282,7 @@ impl Core {
         if let Some(lsp) = self.lsp.as_mut() {
             lsp.set_root(Some(root.clone()));
         }
+        self.syntax_checks.clear();
         // O clangd deste workspace aprende o compilador CROSS do kit: sem o
         // `--query-driver`, um `.cpp` de bare metal fica com os cabecalhos de
         // libstdc++ do GCC ARM em vermelho (medido em 2026-09-11). Vale na
@@ -322,6 +323,7 @@ impl Core {
         if let Some(lsp) = self.lsp.as_mut() {
             lsp.set_root(None);
         }
+        self.syntax_checks.clear();
         closed
     }
 

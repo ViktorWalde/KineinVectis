@@ -18,6 +18,9 @@ pub enum DiagnosticSource {
     Lsp,
     /// Toolchain/environment checks.
     Toolchain,
+    /// The target's compiler checking a saved file (`-fsyntax-only`,
+    /// `0.175.0`).
+    Compiler,
 }
 
 /// Severity of a structured diagnostic.

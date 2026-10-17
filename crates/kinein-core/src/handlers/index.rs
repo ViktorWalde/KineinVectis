@@ -124,7 +124,7 @@ impl Core {
             return no_workspace_response(request_id, "index.context");
         };
         let caminho = Path::new(&pedido.path);
-        let language = index::linguagem_de(caminho);
+        let language = index::language_of(caminho);
         let contexto = self.index.lock().ok().and_then(|indice| {
             indice
                 .context

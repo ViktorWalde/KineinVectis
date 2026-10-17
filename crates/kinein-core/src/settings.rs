@@ -135,6 +135,10 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
         // rascunho do seguranca/23 continua sendo a rede entre um salvar e
         // outro.
         auto_save: workspace.auto_save.or(global.auto_save).unwrap_or(true),
+        compiler_check_on_save: workspace
+            .compiler_check_on_save
+            .or(global.compiler_check_on_save)
+            .unwrap_or(true),
         rigor_profile: workspace
             .rigor_profile
             .or(global.rigor_profile)
@@ -198,6 +202,13 @@ pub fn effective_rigor_profile(root: &Path) -> kinein_protocol::RigorProfile {
     resolve(&load_global(), &load_workspace(root)).rigor_profile
 }
 
+/// A checagem do compilador ao salvar vale para `root`? (0.4.0c; padrao:
+/// ligada, decisao do autor de 2026-10-15, `roadmaps/52` §13.1.)
+#[must_use]
+pub fn effective_compiler_check_on_save(root: &Path) -> bool {
+    resolve(&load_global(), &load_workspace(root)).compiler_check_on_save
+}
+
 /// Merge de `incoming` sobre `base` (campo `Some` sobrescreve; `None` mantém).
 fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
     SettingsValues {
@@ -205,6 +216,9 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         editor_font_size: incoming.editor_font_size.or(base.editor_font_size),
         auto_close_pairs: incoming.auto_close_pairs.or(base.auto_close_pairs),
         auto_save: incoming.auto_save.or(base.auto_save),
+        compiler_check_on_save: incoming
+            .compiler_check_on_save
+            .or(base.compiler_check_on_save),
         rigor_profile: incoming.rigor_profile.or(base.rigor_profile),
         explorer_width: incoming.explorer_width.or(base.explorer_width),
         context_width: incoming.context_width.or(base.context_width),

@@ -21,6 +21,14 @@ em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
   reabrir a IDE; antes o reconfigure podia trocar de preset calado), senão o
   único do projeto; com vários, a faixa de saúde pergunta e o **Escolher
   preset…** abre a lista.
+- Protocolo `0.175.0` — **O compilador do projeto checa o C/C++ salvo**
+  (0.4.0c, 40.7 §7.310): sem build, os erros dele aparecem nos Problemas ao
+  lado dos do clangd; um salvamento novo cancela a checagem anterior;
+  corrigido, o erro some. Ligado por padrão, só em projeto confiável; a
+  caixa "Checar com o compilador ao salvar (C/C++)" nas configurações do
+  editor.
+- O diagnóstico de um servidor de linguagem que saiu não volta mais à tela
+  (40.7 §7.309).
 
 ## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
 

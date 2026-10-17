@@ -100,6 +100,9 @@ pub struct Core {
     debug: Option<dap::DebugManager>,
     terminal: Option<terminal::TerminalManager>,
     jobs: Option<jobs::JobManager>,
+    /// A checagem do compilador ao salvar (0.4.0c): o job em andamento e os
+    /// arquivos citados, por unidade.
+    syntax_checks: handlers::syntax_check::SyntaxChecks,
     /// O `$HOME` que o modelo do projeto usa para as pastas padrao dos SDKs
     /// (`~/esp/esp-idf`, `~/.espressif`, `~/pico/pico-sdk`); `Some` so' nos
     /// testes, que nao podem escrever no ambiente do processo — e, com ele,
@@ -154,6 +157,7 @@ impl Core {
             debug: None,
             terminal: None,
             jobs: None,
+            syntax_checks: handlers::syntax_check::SyntaxChecks::default(),
             drafts: None,
             global_storage: None,
             deferred: None,

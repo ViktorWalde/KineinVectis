@@ -745,7 +745,6 @@ crates/kinein-core/src/handlers/index.rs	contexto	4
 crates/kinein-core/src/handlers/index.rs	ferramentas	9
 crates/kinein-core/src/handlers/index.rs	indice	26
 crates/kinein-core/src/handlers/index.rs	limite	2
-crates/kinein-core/src/handlers/index.rs	linguagem	1
 crates/kinein-core/src/handlers/index.rs	medir	1
 crates/kinein-core/src/handlers/index.rs	mudou	4
 crates/kinein-core/src/handlers/index.rs	padrao	2
@@ -959,7 +958,7 @@ crates/kinein-core/src/index/mod.rs	indice	18
 crates/kinein-core/src/index/mod.rs	inicio	4
 crates/kinein-core/src/index/mod.rs	itens	2
 crates/kinein-core/src/index/mod.rs	lidos	4
-crates/kinein-core/src/index/mod.rs	linguagem	5
+crates/kinein-core/src/index/mod.rs	linguagem	3
 crates/kinein-core/src/index/mod.rs	manter	4
 crates/kinein-core/src/index/mod.rs	maximo	2
 crates/kinein-core/src/index/mod.rs	mudou	8

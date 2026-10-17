@@ -164,6 +164,16 @@ Column {
 
             SettingsToggleRow {
                 width: parent.width
+                label: qsTr("Checar com o compilador ao salvar (C/C++)")
+                hint: qsTr("O compilador do alvo, com as flags da compile_commands.json, aponta os "
+                           + "erros do arquivo salvo nos Problemas, sem build")
+                checked: root.settings !== null && root.settings.compilerCheckOnSave
+                fromProject: root.fromProject("compilerCheckOnSave")
+                onToggled: root.settings.settingChanged("compilerCheckOnSave", !root.settings.compilerCheckOnSave)
+            }
+
+            SettingsToggleRow {
+                width: parent.width
                 label: qsTr("Fechar pares automaticamente")
                 hint: qsTr("( [ { \" ' fecham sozinhos ao digitar")
                 checked: root.settings !== null && root.settings.autoClosePairs

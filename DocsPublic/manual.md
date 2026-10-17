@@ -752,6 +752,13 @@ seções, à esquerda:
   - **Formatar ao salvar**: quando ligado, `Ctrl+S` formata o arquivo
     (rustfmt, clang-format, ruff) e **então** salva. Se o formatador falhar,
     o arquivo é salvo assim mesmo.
+  - **Checar com o compilador ao salvar (C/C++)** (desde 2026-10-16, ligado):
+    ao salvar um `.c`/`.cpp` que a `compile_commands.json` conhece, o
+    compilador **do projeto** (o do alvo, com as flags da CDB) o checa sem
+    build, e os erros dele aparecem nos Problemas junto dos do clangd, sem
+    código de regra. Salvar de novo antes de terminar cancela a checagem
+    anterior; corrigido, o erro some. Só roda em projeto confiável: a CDB diz
+    qual programa é o compilador.
   - **Fechar pares automaticamente**: liga/desliga o auto-fechamento de
     `( [ { " '` ao digitar.
 - **Interface**

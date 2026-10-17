@@ -24,6 +24,7 @@ Item {
 
     property bool formatOnSave: false
     property bool autoSave: true
+    property bool compilerCheckOnSave: true
     property int editorFontSize: 14
     property bool autoClosePairs: true
     property string rigorProfile: "strict"
@@ -34,7 +35,8 @@ Item {
     // projeto e nao tem selo).
     property var projectKeys: []
     readonly property var shownProjectKeys: root.projectKeys.filter(function(key) {
-        return ["editorFontSize", "autoSave", "formatOnSave", "autoClosePairs", "rigorProfile"].indexOf(key) >= 0;
+        return ["editorFontSize", "autoSave", "formatOnSave", "compilerCheckOnSave", "autoClosePairs",
+                "rigorProfile"].indexOf(key) >= 0;
     })
     property real maxAvailableWidth: 900
     property real maxAvailableHeight: 600

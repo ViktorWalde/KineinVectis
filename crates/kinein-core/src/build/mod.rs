@@ -10,6 +10,7 @@ pub mod engine;
 mod frameworks;
 mod make;
 mod parse;
+pub mod syntax_check;
 pub mod tidy;
 
 pub use engine::{Engine, EngineError};

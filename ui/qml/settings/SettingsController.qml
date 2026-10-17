@@ -16,6 +16,8 @@ Item {
     property bool autoClosePairs: true
     // Salvar sozinho (Etapa 2 F3, decisao do autor): ausente = ligado.
     property bool autoSave: true
+    // C1 (0.4.0c): o compilador do alvo checa o C/C++ salvo. Ligado por padrao.
+    property bool compilerCheckOnSave: true
     property int explorerWidth: 280
     property int contextWidth: 360
     property int bottomPanelHeight: 260
@@ -60,6 +62,7 @@ Item {
                 ? effective.editorFontSize : 14;
         autoClosePairs = effective.autoClosePairs !== false;
         autoSave = effective.autoSave !== false;
+        compilerCheckOnSave = effective.compilerCheckOnSave !== false;
         rigorProfile = effective.rigorProfile !== undefined
                 ? effective.rigorProfile : "strict";
         explorerWidth = effective.explorerWidth !== undefined

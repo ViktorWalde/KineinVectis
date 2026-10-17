@@ -56,6 +56,10 @@ pub struct SettingsValues {
     /// pause, on tab switch and when the editor loses focus. Absent = on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_save: Option<bool>,
+    /// Check a saved C/C++ file with the target's compiler (`-fsyntax-only`
+    /// from its `compile_commands.json` unit, `0.175.0`). Absent = on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compiler_check_on_save: Option<bool>,
     /// Rigor profile for the user's build/quality runs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rigor_profile: Option<RigorProfile>,
@@ -117,6 +121,8 @@ pub struct EffectiveSettings {
     pub auto_close_pairs: bool,
     /// Effective autosave flag.
     pub auto_save: bool,
+    /// Effective compiler-check-on-save flag (`0.175.0`).
+    pub compiler_check_on_save: bool,
     /// Effective rigor profile.
     pub rigor_profile: RigorProfile,
     /// Effective Project explorer width.

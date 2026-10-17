@@ -156,7 +156,7 @@ diagnóstico usam campos comuns:
 ```text
 Diagnostic {
   id?,
-  source: "build|quality|lsp|toolchain",
+  source: "build|quality|lsp|toolchain|compiler",
   severity: "error|warning|note",
   category?,
   message,
@@ -175,7 +175,12 @@ Diagnostic {
 
 Estado atual: build usa `source: "build"` / `category: "compiler"`;
 quality usa `source: "quality"` / `category: "lint"`; LSP usa
-`source: "lsp"` / `category: "lsp"`. `id`, `command`, `target` e `logRef` já
+`source: "lsp"` / `category: "lsp"`; a checagem do compilador ao salvar
+(`0.175.0`, a 0.4.0c do `roadmaps/52` §14.3) usa `source: "compiler"` e
+chega no mesmo `event.lsp.diagnostics`, fundida com a do servidor da
+linguagem por arquivo (a união; a lista vazia apaga só a parte dela). Ela
+só roda em projeto confiável (`workspace.trust`): o compilador vem da CDB, e
+a CDB pode ter vindo no repositório. `id`, `command`, `target` e `logRef` já
 existem no tipo de protocolo, mas ainda só aparecem quando um produtor tiver
 dado real para preencher.
 

@@ -374,7 +374,7 @@ fn indexar_arquivo(
 ) -> Option<IndexedFile> {
     let path = relativo(root, caminho);
     let meta = std::fs::metadata(caminho).ok()?;
-    let language = linguagem_de(caminho);
+    let language = language_of(caminho);
     if language == "other" {
         return Some(IndexedFile {
             path,
@@ -422,7 +422,7 @@ fn indexar_arquivo(
 /// `c`/`cpp`/`rust`/`python` pela gramatica do editor (o Python entrou em
 /// 2026-09-12, bloco B do `roadmaps/41`); o resto e' `other` — contado, nao
 /// lido.
-pub(crate) fn linguagem_de(caminho: &Path) -> &'static str {
+pub(crate) fn language_of(caminho: &Path) -> &'static str {
     SymbolExtractor::language_for(caminho).unwrap_or("other")
 }
 

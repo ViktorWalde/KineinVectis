@@ -719,3 +719,79 @@ abaixo do botão, o configure com `release` (Ninja, `CMAKE_BUILD_TYPE=Release`,
 anotado), e, reaberto numa sessão nova e confiada, o reconfigure ao salvar
 o `CMakeLists.txt` com `params {}` saindo com `preset: "release"` e
 `presetSource: "buildDir"` (IPC gravado), IPC 0.174.0 (40.7 §7.308).
+
+### 14.3 0.4.0c — o diagnóstico do compilador ao salvar, C/C++ (C1, §5.2; 2026-10-16)
+
+**Decisão do autor que vale (§13.1, 2026-10-15):** ligado por padrão em C/C++
+com CDB; Rust só com `cargo check` quando o rust-analyzer não está ativo.
+
+**Medido no checkout e na máquina (2026-10-16).** O GCC 15.2 e o clang 21.1.8
+desta máquina dão o formato clássico `arquivo:linha:coluna: error: …` com
+`-fsyntax-only` (o GCC também dá `json` e `sarif-stderr`); o
+`build/parse.rs` já lê esse formato (`parse_gcc_like_line`), e é o dono
+(§3.2): nada de leitor de JSON novo. Um `.cpp` pequeno leva 0,01 s (GCC) e
+0,02 s (clang); uma unidade com os cabeçalhos do Qt é a medida que importa, e
+entra no resultado. O autosave grava sozinho depois de uma pausa na
+digitação (`autoSave`, ligado por padrão): o C1 roda quase "enquanto se
+escreve", e o debounce com cancelamento por unidade é o que o mantém
+barato. A UI já mostra a união por arquivo do `event.lsp.diagnostics`, que a
+fusão do core monta por "servidor" (`lsp/diagnostics_merge.rs`).
+
+**O desenho:**
+
+1. **Protocolo 0.175.0 (aditivo):** `DiagnosticSource` ganha `compiler`; as
+   configurações ganham `compilerCheckOnSave` (efetivo: ligado).
+2. **`build/syntax_check.rs` (puro):** da unidade da CDB, a linha da
+   checagem: tira `-o <x>`, `-c`, `-M*` (com o argumento dos que levam um) e
+   as cores; põe `-fsyntax-only` e `-fdiagnostics-color=never`; unidade no
+   estilo do MSVC (`cl.exe`, `/Fo`) fica de fora nesta fatia (o porte para o
+   Windows está pausado). Da saída, os diagnósticos por arquivo
+   (`parse_gcc_like_line`), com caminho relativo resolvido contra o
+   `directory` da unidade.
+3. **Agendamento (`handlers/syntax_check.rs`):** depois de um `fs.write`
+   bem-sucedido de um `.c/.cc/.cpp/.cxx` com unidade na CDB e a configuração
+   ligada, **num projeto confiável** (correção feita ao implementar: a CDB
+   nomeia o compilador, e uma CDB que veio num repositório clonado poderia
+   nomear qualquer programa — salvar executaria código do projeto sem a
+   confiança da 16.4b), um job curto por unidade ("Checar `a.cpp`", risco baixo,
+   cancelável): espera 400 ms; um novo salvamento da mesma unidade CANCELA o
+   anterior (o job velho nunca sobrescreve o novo); roda com prazo de 10 s.
+   Cabeçalho sem unidade própria fica só com o LSP (§5.2, passo 2).
+4. **Fusão:** o resultado entra na mesma fusão do LSP com a chave
+   `compiler`, para cada arquivo citado e para os que a unidade citou da vez
+   anterior (é o que apaga o erro corrigido); a UI recebe a união, como já
+   recebe a do ruff com o basedpyright. Falha (compilador ausente, prazo) não
+   apaga nada: o job falha com a saída bruta; nunca "sem problemas" por
+   engano.
+5. **UI:** a caixa "Checar com o compilador ao salvar (C/C++)" nas
+   configurações do editor; os Problemas e o editor já mostram a união.
+
+**Provas planejadas:** testes puros da linha (as flags tiradas e postas, as
+duas formas `-o x`/`-ox`, `-MF x`) e da leitura (relativo resolvido, o
+arquivo incluído também); teste integrado com um compilador FALSO que ecoa o
+argv e imprime erros (o padrão `rsync_falso`): o `-fsyntax-only` vindo da
+CDB, o cancelamento entre dois salvamentos, o prazo, a configuração
+desligada, o cabeçalho sem unidade, e a fusão apagando o erro corrigido;
+harness da caixa nas configurações; mutações; no Xvfb, um erro digitado
+aparecendo nos Problemas como "compiler" antes de qualquer build, e
+sumindo ao corrigir; a medida salvar→diagnóstico (mediana e p95) numa
+unidade deste repositório com Qt, e a tecla→quadro sem regressão.
+
+**Resultado (2026-10-16).** Como desenhado, mais a trava de confiança
+(acima) e o prazo de 1 s no build de teste (o teste do prazo não segura a
+trava dos executáveis por 10 s). Provas: 3 testes puros (a linha, o
+`cl.exe` de fora, a leitura), 3 integrados com o compilador falso (o ciclo
+salvar → erro `compiler` → corrigir → apagado, e o projeto não confiável sem
+rodar; dois salvamentos numa checagem só, o cabeçalho e a configuração
+desligada; o prazo falhando o job sem apagar o erro de antes); o
+`tst_compiler_check_setting.qml`; 8 mutações reprovando. No Xvfb, o projeto
+de fluxo confiado: o erro digitado e salvo chega primeiro do clangd e depois
+do GCC do projeto, fundidos nos Problemas ("invalid conversion from ‘const
+char*’ to ‘int’", sem código de regra, ao lado do "Cannot initialize…" do
+clangd), e corrigido some dos dois (IPC gravado). **Medido** (o tempo do
+compilador, que domina; a espera de 400 ms soma): C de firmware com o
+`arm-none-eabi-gcc`, 12 ms; C++ com `<iostream>`, 220 ms; uma unidade da UI
+deste repositório com o Qt, 1,9 a 2,4 s (GCC 15.2), acima da régua de 1,5 s
+do §8. A régua cabe no projeto de firmware, que é o alvo da 0.4; nas
+unidades com Qt, o custo é dos cabeçalhos, e o debounce não o muda (40.7
+§7.310). A tecla→quadro não muda: a checagem roda num job, fora da UI.

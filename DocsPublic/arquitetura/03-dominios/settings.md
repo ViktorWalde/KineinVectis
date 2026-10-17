@@ -24,13 +24,15 @@ SettingsValues { formatOnSave?: bool, editorFontSize?: u32,
                  assistantTerminalWidth?: u32,
                  bottomPanelHeight?: u32, outlineWidth?: u32,
                  outlineCollapsed?: bool, railExpanded?: bool (0.128.0),
+                 compilerCheckOnSave?: bool (0.175.0),
                  layout?: Layout (0.146.0) }
                                           (campos ausentes = não setados)
 EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs, autoSave,
                     rigorProfile, explorerWidth, contextWidth,
                     assistantTerminalWidth,
                     bottomPanelHeight, outlineWidth, outlineCollapsed,
-                    railExpanded, layout? (0.146.0) }
+                    railExpanded, compilerCheckOnSave (0.175.0),
+                    layout? (0.146.0) }
 Layout (schemaVersion 1) { schemaVersion: 1,
                  leftWindow?: "explorer"|"git", leftVisible?: bool,
                  sizes?: { explorer?, outline?, bottom? }   (PREFERIDOS, px)
@@ -46,7 +48,10 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
 - `settings.set` faz MERGE parcial de `values` no escopo (campo ausente
   mantém o valor gravado; reverter/limpar override é pós-v1). Defaults:
   `formatOnSave=false`, `editorFontSize=14`, `autoClosePairs=true`,
-  `autoSave=true` (0.123.0, decisão do autor na Etapa 2), `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
+  `autoSave=true` (0.123.0, decisão do autor na Etapa 2),
+  `compilerCheckOnSave=true` (0.175.0: a checagem do compilador ao salvar
+  C/C++ com CDB, decisão do autor de 2026-10-15, `roadmaps/52` §13.1),
+  `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
   terminal KV ativo e Estrutura), painel inferior `260` e Estrutura expandida.
 - Erros: `NO_WORKSPACE` (set `scope=workspace` sem workspace);
   `INVALID_PARAMS` (`editorFontSize` fora de 8..=40, ou `rigorProfile`
