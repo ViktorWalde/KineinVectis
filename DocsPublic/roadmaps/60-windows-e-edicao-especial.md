@@ -539,8 +539,10 @@ do fim da W2b (40.7 §7.270):
    `known_hosts`, que precisam do `ssh`, `rsync` e `ssh-keygen` falsos
    rodando; os outros três testes da guarda não executam processo e rodam
    no Windows.
-10. **W10:** embarcados e depuração nativos (D10). Os 33 adiados ganham os
-    substitutos (D14).
+10. **W10:** embarcados e depuração nativos (D10). Os adiados ganham os
+    substitutos (D14): eram 33; em 2026-10-16 são 34, com o do `compiledb`
+    do PlatformIO (0.4.0e, `tests/platformio.rs`), que roda um `pio` falso
+    em `sh` como os demais testes de frameworks.
 11. **W11:** o zip portátil (D9).
 12. **W12:** o aceite do autor com mouse e teclado. O controle da tela pelo
     agente pede o "Computer use" ligado no app.

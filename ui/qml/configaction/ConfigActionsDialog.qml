@@ -110,30 +110,26 @@ Item {
             anchors.margins: Theme.spacingMedium
             anchors.topMargin: Theme.spacingSmall
             spacing: Theme.spacingXSmall
-            visible: root.controller.activeBuildSystems.length > 1
+            visible: root.controller.scopeChips.length > 0
 
             Repeater {
                 // Rotulo pela LINGUAGEM, nao pela ferramenta. O autor relatou
                 // em 2026-09-04 que nao achava o Cargo "sem passar pelo C/C++
                 // antes": os chips diziam "cmake" e "cargo", nomes de
                 // ferramenta que so' quem ja' sabe reconhece.
-                model: [
-                    { escopo: "", rotulo: qsTr("Tudo") },
-                    { escopo: "cmake", rotulo: qsTr("C/C++ · CMake") },
-                    { escopo: "cargo", rotulo: qsTr("Rust · Cargo") }
-                ]
+                model: root.controller.scopeChips
 
                 delegate: KvToggleChip {
-                    id: chipEscopo
+                    id: scopeChip
 
                     required property var modelData
 
                     // Sem `width`: o chip mede o proprio rotulo desde
                     // 2026-09-04. Ver o cabecalho do KvToggleChip.
                     height: 24
-                    labelText: chipEscopo.modelData.rotulo
-                    active: root.controller.scopeFilter === chipEscopo.modelData.escopo
-                    onToggled: root.controller.scopeFilter = chipEscopo.modelData.escopo
+                    labelText: scopeChip.modelData.label
+                    active: root.controller.scopeFilter === scopeChip.modelData.scope
+                    onToggled: root.controller.scopeFilter = scopeChip.modelData.scope
                 }
             }
         }

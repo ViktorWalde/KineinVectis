@@ -103,6 +103,8 @@ pub struct Core {
     /// A checagem do compilador ao salvar (0.4.0c): o job em andamento e os
     /// arquivos citados, por unidade.
     syntax_checks: handlers::syntax_check::SyntaxChecks,
+    /// O job do `compiledb` do `PlatformIO` em andamento (0.4.0e).
+    compiledb_job: Mutex<Option<String>>,
     /// O `$HOME` que o modelo do projeto usa para as pastas padrao dos SDKs
     /// (`~/esp/esp-idf`, `~/.espressif`, `~/pico/pico-sdk`); `Some` so' nos
     /// testes, que nao podem escrever no ambiente do processo — e, com ele,
@@ -158,6 +160,7 @@ impl Core {
             terminal: None,
             jobs: None,
             syntax_checks: handlers::syntax_check::SyntaxChecks::default(),
+            compiledb_job: Mutex::new(None),
             drafts: None,
             global_storage: None,
             deferred: None,
@@ -449,6 +452,7 @@ impl Core {
             // refeito (o detector le a pasta a cada busca), para o
             // toolchain.get seguinte ja' lista-la como candidato.
             "event.toolchain.installed" if success => self.refresh_tool_registry(),
+            "event.job.finished" => self.on_job_finished(notification.params.as_ref()),
             _ => {}
         }
     }

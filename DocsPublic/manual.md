@@ -828,9 +828,20 @@ Uma biblioteca só entra no catálogo depois de auditada. Duas já foram
 
 ### Ações de configuração
 
-São **18**, e elas respondem duas perguntas diferentes: *o que o projeto tem*
-(dependência, feature, edição, alvo, preset) e *como ele compila* (rigor,
-sanitizers, OpenMP, `.hex`/`.bin`, alvo embarcado).
+São **26** no catálogo (18 do CMake, 7 do Cargo e 1 do PlatformIO, contadas
+em 2026-10-16), e a lista mostra as do build system do projeto. Elas
+respondem duas perguntas diferentes: *o que o projeto tem* (dependência,
+feature, edição, alvo, preset) e *como ele compila* (rigor, sanitizers,
+OpenMP, `.hex`/`.bin`, alvo embarcado, a `compile_commands.json`).
+
+**PlatformIO** (no checkout com protocolo `0.177.0`): num projeto com
+`platformio.ini`, a lista traz **Gerar compile_commands.json**, recomendada
+enquanto o projeto não tem uma. Ela roda `pio run -t compiledb` como job (a
+saída fica em Jobs), só num projeto em que você confiou: a faixa de saúde
+oferece **Confiar neste projeto** e, sem o `pio`, cobra a ferramenta. Ao
+terminar, o C/C++ aberto passa a ver os includes e os defines do PlatformIO
+(o Ctrl+B num `#define` vai ao cabeçalho). O catálogo de bibliotecas C/C++
+só aparece num projeto CMake.
 
 **Nenhuma escreve sem prévia.** A caixa mostra o arquivo como ele ficará, e o
 botão de aceitar só vale para o que está na tela. Os campos explicam o que

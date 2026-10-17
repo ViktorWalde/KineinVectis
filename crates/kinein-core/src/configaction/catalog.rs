@@ -60,7 +60,7 @@ const NO_FILE: &[&str] = &[];
 
 const VISIBILITY_PARAM: (&str, &str, bool, &str) = ("visibility", "Visibilidade", false, "PRIVATE");
 
-static DEFINITIONS: [ActionDefinition; 25] = [
+static DEFINITIONS: [ActionDefinition; 26] = [
     ActionDefinition {
         id: "cmake.enableCompileCommands",
         title: "Habilitar compile_commands.json",
@@ -477,6 +477,22 @@ static DEFINITIONS: [ActionDefinition; 25] = [
             "kineinGuide",
             "Kinein: run configurations",
             "kinein.runconfig",
+        )],
+    },
+    ActionDefinition {
+        id: "platformio.compiledb",
+        title: "Gerar compile_commands.json",
+        description: "Roda pio run -t compiledb: o clangd passa a ver as flags do PlatformIO.",
+        scope: ConfigActionScope::Platformio,
+        category: "PlatformIO",
+        risk: ConfigActionRisk::Low,
+        affects: &["compile_commands.json"],
+        effect: ConfigActionEffect::Job,
+        params: &[],
+        docs: &[(
+            "officialDoc",
+            "PlatformIO: compilation database",
+            "platformio.compiledb",
         )],
     },
 ];

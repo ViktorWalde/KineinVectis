@@ -106,6 +106,7 @@ anywhere
 apart
 apos
 appeared
+appears
 append
 appends
 applicable
@@ -234,6 +235,7 @@ blame
 blaming
 blank
 blanks
+blind
 blink
 blinking
 blob

@@ -50,6 +50,7 @@ Item {
     }
     property var actionsById: ({})
     property var activeBuildSystems: []
+    readonly property var scopeChips: chipsFor(activeBuildSystems)
     // Filtro de escopo escolhido pelo usuario: "" = todos (spec 9.2 §6.3).
     property string scopeFilter: ""
     property string searchQuery: ""
@@ -69,6 +70,7 @@ Item {
     property bool previewLoading: false
     property string errorText: ""
     property string statusText: ""
+    property string runningJob: ""
 
     signal listRequested(bool includeHiddenByScope)
     signal previewRequested(string id, var params)
@@ -117,6 +119,7 @@ Item {
             libraryController.listRequested();
         }
         dialogVisible = true;
+        statusText = "";
         if (workspaceRoot !== "") {
             listRequested(false);
         }
@@ -155,9 +158,9 @@ Item {
     property var pendingParams: ({})
 
     // Acrescenta as bibliotecas ao fim da lista, com a MESMA lingua de estado
-    // das acoes: `alreadyApplied` quando ja' estao no projeto.
+    // das acoes (`alreadyApplied`); o catalogo e' do CMake (achado da 0.4.0e).
     function appendLibraries() {
-        if (libraryController === null) {
+        if (libraryController === null || activeBuildSystems.indexOf("cmake") < 0) {
             return;
         }
         const libs = libraryController.libraries;
@@ -178,6 +181,17 @@ Item {
                 affects: "CMakeLists.txt"
             });
         }
+    }
+
+    // Os chips de escopo pelo que o projeto TEM (0.4.0e), so' com mais de um.
+    function chipsFor(buildSystems) {
+        const known = {
+            cmake: { scope: "cmake", label: qsTr("C/C++ · CMake") },
+            cargo: { scope: "cargo", label: qsTr("Rust · Cargo") },
+            platformIo: { scope: "platformio", label: qsTr("C/C++ · PlatformIO") }
+        };
+        const chips = buildSystems.filter(id => known[id] !== undefined).map(id => known[id]);
+        return chips.length > 1 ? [{ scope: "", label: qsTr("Tudo") }].concat(chips) : [];
     }
 
     // `true` quando o id selecionado e' de uma biblioteca, nao de uma acao.
@@ -220,9 +234,8 @@ Item {
     function handleListed(actions, buildSystems) {
         const previous = selectedId;
         rawActions = actions;
-        rebuildList();
         activeBuildSystems = buildSystems;
-        statusText = "";
+        rebuildList();
         // Pedido vindo de outro dominio tem precedencia sobre a selecao
         // anterior: quem chamou `openWith` acabou de dizer o que quer ver.
         if (pendingSelection !== "") {
@@ -358,10 +371,22 @@ Item {
 
     function handleApplied(id, message, files, jobId) {
         statusText = jobId !== "" ? qsTr("%1 (job %2)").arg(message).arg(jobId) : message;
+        runningJob = jobId;
         errorText = "";
         paramValues = {};
         clearPreview();
         // O efeito mudou o disco: o estado das acoes mudou junto.
+        listRequested(false);
+    }
+
+    // O job da ultima acao de efeito `job` (0.4.0e: o `compiledb` grava a CDB
+    // no fim): a lista e' relida quando ELE termina.
+    function handleJobFinished(jobId, status) {
+        if (jobId === "" || jobId !== runningJob) {
+            return;
+        }
+        runningJob = "";
+        statusText = qsTr("job %1: %2").arg(jobId).arg(status);
         listRequested(false);
     }
 

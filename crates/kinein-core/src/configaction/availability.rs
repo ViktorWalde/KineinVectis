@@ -37,6 +37,8 @@ pub(super) struct WorkspaceFacts {
     pub(super) targets: Vec<String>,
     /// `.cargo/config.toml` existe — a acao de embarcado do Cargo ja rodou.
     pub(super) cargo_config: bool,
+    /// Conteudo do `platformio.ini`, quando ele existe.
+    pub(super) platformio_ini: Option<String>,
 }
 
 impl WorkspaceFacts {
@@ -57,6 +59,7 @@ impl WorkspaceFacts {
             // `.cargo/config.toml` e' o que a acao de embarcado do Cargo cria;
             // sem isso ela nao teria como dizer "ja' esta feito".
             cargo_config: root.join(".cargo/config.toml").is_file(),
+            platformio_ini: std::fs::read_to_string(root.join("platformio.ini")).ok(),
             targets,
             cmakelists,
         }
@@ -81,6 +84,7 @@ pub(super) fn describe(
                 match action.scope {
                     ConfigActionScope::Cmake => "CMake",
                     ConfigActionScope::Cargo => "Cargo",
+                    ConfigActionScope::Platformio => "PlatformIO",
                 }
             )),
         )
@@ -143,6 +147,9 @@ fn evaluate(
         ConfigActionScope::Cargo if facts.cargo_toml.is_none() => {
             return partial("Cargo.toml não existe na raiz do projeto");
         }
+        ConfigActionScope::Platformio if facts.platformio_ini.is_none() => {
+            return partial("platformio.ini não existe na raiz do projeto");
+        }
         _ => {}
     }
 
@@ -187,6 +194,9 @@ fn evaluate(
         ),
         "cargo.embeddedTarget" if facts.cargo_config => {
             already_applied(".cargo/config.toml já existe neste projeto".to_owned())
+        }
+        "platformio.compiledb" if !facts.has_cdb => {
+            recommended("sem compile_commands.json, o clangd não vê as flags do PlatformIO")
         }
         "cmake.createDebugPreset" => preset_state(facts, "debug"),
         "cmake.createReleasePreset" => preset_state(facts, "release"),

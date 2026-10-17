@@ -1558,7 +1558,6 @@ crates/kinein-core/src/tests/configaction.rs	inspecao	3
 crates/kinein-core/src/tests/configaction.rs	posicao	2
 crates/kinein-core/src/tests/configaction.rs	reservado	2
 crates/kinein-core/src/tests/configaction.rs	texto	10
-crates/kinein-core/src/tests/configaction.rs	todas	3
 crates/kinein-core/src/tests/configaction.rs	variavel	2
 crates/kinein-core/src/tests/container.rs	corpo	1
 crates/kinein-core/src/tests/container.rs	imagens	14
@@ -3129,9 +3128,7 @@ ui/qml/configaction/ConfigActionField.qml	sugestoes	3
 ui/qml/configaction/ConfigActionPreview.qml	campo	4
 ui/qml/configaction/ConfigActionPreview.qml	texto	2
 ui/qml/configaction/ConfigActionsDialog.qml	biblioteca	1
-ui/qml/configaction/ConfigActionsDialog.qml	escopo	9
 ui/qml/configaction/ConfigActionsDialog.qml	plano	1
-ui/qml/configaction/ConfigActionsDialog.qml	rotulo	4
 ui/qml/datasource/DataSourceController.qml	encontrado	3
 ui/qml/datasource/DataSourceController.qml	limpo	4
 ui/qml/datasource/DataSourceCreateBox.qml	coluna	2

@@ -63,6 +63,9 @@ pub(super) struct ServerHandle {
     /// Ultimo array cru de diagnostics publicado por URI, para compor o
     /// `context` de `textDocument/codeAction` sem depender da UI.
     pub(super) diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
+    /// clangd: havia uma CDB onde ele a acha ao subir ([`point_clangd_at_cdb`]).
+    /// Sem ela, uma CDB nova so' vale com o servidor reiniciado (0.4.0e).
+    pub(super) cdb_at_start: bool,
 }
 
 impl std::fmt::Debug for ServerHandle {
@@ -100,15 +103,7 @@ pub(super) fn spawn_server(
     // atualiza e' o DOCUMENTO ja aberto, que fica com a compilacao em cache.
     // A acao certa apos um configure e' reabrir os documentos abertos; reiniciar
     // o servidor joga o indice fora.
-    if spec.language == "cpp" {
-        let compile_commands = crate::cmake::build_dir(root).join("compile_commands.json");
-        if compile_commands.is_file() {
-            command.arg(format!(
-                "--compile-commands-dir={}",
-                crate::cmake::build_dir(root).display()
-            ));
-        }
-    }
+    let cdb_at_start = spec.language == "cpp" && point_clangd_at_cdb(&mut command, root);
     // O processo e' do `OwnedChild` (D1b, 39 §6.1): grupo proprio, para o
     // encerramento alcancar os filhos (o proc-macro do rust-analyzer, o node
     // do basedpyright), e coleta com o leitor junto. Ambiente herdado: um
@@ -192,7 +187,25 @@ pub(super) fn spawn_server(
         content_hashes: HashMap::new(),
         semantic_token_types,
         diagnostics_by_uri,
+        cdb_at_start,
     })
+}
+
+/// O `--compile-commands-dir` quando a CDB do configure existe; `true` quando
+/// o clangd vai ACHAR uma CDB ao subir: a do configure, ou uma na raiz ou no
+/// `build/` dela, onde ele procura sozinho. Medido em 2026-10-16 (clangd
+/// 21.1.8): sem nenhuma ao subir, a que nasce depois nao vale com o documento
+/// reaberto — na raiz, so' uns 30 s depois (o cache do "nao achei"); em
+/// `.kinein/build`, nunca.
+fn point_clangd_at_cdb(command: &mut Command, root: &Path) -> bool {
+    let build_dir = crate::cmake::build_dir(root);
+    if build_dir.join("compile_commands.json").is_file() {
+        command.arg(format!("--compile-commands-dir={}", build_dir.display()));
+        return true;
+    }
+    ["compile_commands.json", "build/compile_commands.json"]
+        .iter()
+        .any(|cdb| root.join(cdb).is_file())
 }
 
 impl ServerHandle {
@@ -274,19 +287,17 @@ pub(super) fn run_reader(
                 // evento que sai leva a uniao com os outros servidores da
                 // linguagem — a UI substitui por arquivo, e dois eventos
                 // parciais se apagariam um ao outro.
-                if let Some((path, diagnostics)) = published_diagnostics(params) {
-                    let Some(event) = diagnostics_merge::record_while_running(
+                if let Some((path, diagnostics)) = published_diagnostics(params)
+                    && !diagnostics_merge::record_while_running(
                         merged,
                         key,
                         &path,
                         diagnostics,
                         stopping,
-                    ) else {
-                        break;
-                    };
-                    if events.send(event).is_err() {
-                        break;
-                    }
+                        events,
+                    )
+                {
+                    break;
                 }
             }
         }

@@ -172,6 +172,22 @@ impl LspManager {
         fechados
     }
 
+    /// A CDB mudou (configure, `compiledb` do `PlatformIO`): o servidor que
+    /// subiu COM uma a rele' sozinho, e basta reabrir os documentos; o que
+    /// subiu sem nenhuma nao acha a nova ([`super::server`]) e e' reiniciado.
+    /// `None` = reiniciou (o `event.lsp.restarted` ja' saiu); `Some(n)` = `n`
+    /// documentos fechados.
+    pub fn refresh_compile_commands(&mut self, language: &str) -> Option<usize> {
+        let blind = self
+            .servers
+            .get(language)
+            .is_some_and(|handle| !handle.cdb_at_start);
+        if blind && self.restart_language(language) {
+            return None;
+        }
+        Some(self.close_documents(language))
+    }
+
     /// Re-sincroniza um documento que ja esta aberto nos servidores.
     ///
     /// Usado depois de um rename reescrever arquivos no disco; documentos que

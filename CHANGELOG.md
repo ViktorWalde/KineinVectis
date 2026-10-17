@@ -32,6 +32,19 @@ em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
 - Protocolo `0.176.0` — **O que o servidor de linguagem está fazendo, na
   barra** (0.4.0d, 40.7 §7.312): `LSP … rust · Indexing 23%` enquanto o
   rust-analyzer ou o clangd indexam; no fim, `LSP ● N`.
+- Protocolo `0.177.0` — **A `compile_commands.json` do PlatformIO**
+  (0.4.0e, 40.7 §7.313): num projeto com `platformio.ini`, a ação de
+  configuração **Gerar compile_commands.json** roda `pio run -t compiledb`
+  como job; o C/C++ aberto passa a ver os includes e defines do projeto. A
+  faixa de saúde pede a confiança e cobra o `pio`.
+- O clangd que subiu antes de existir uma `compile_commands.json` (o `.cpp`
+  aberto antes do primeiro configure) é reiniciado quando ela aparece; antes
+  ele seguia sem as flags (40.7 §7.313).
+- Ações de configuração: a confirmação do apply fica na tela, a lista se
+  relê quando o job da ação termina, e o catálogo de bibliotecas do CMake
+  só aparece num projeto CMake.
+- O diagnóstico de um servidor de linguagem parado não volta mais à tela
+  por um envio atrasado (40.7 §7.313).
 
 ## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
 

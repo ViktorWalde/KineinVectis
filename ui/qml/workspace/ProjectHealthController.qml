@@ -177,6 +177,10 @@ Item {
         if (kind === "make") {
             return [["make", "gmake"], ["clangd"], ["clangxx", "gxx"], ["bear"]];
         }
+        // PlatformIO (0.4.0e): o `pio` constroi e gera a CDB; o clangd a le'.
+        if (kind === "platformIo") {
+            return [["pio"], ["clangd"]];
+        }
         return [];
     }
 
@@ -189,8 +193,8 @@ Item {
             let systemGroups = [];
             if (systems[index] === "cargo") {
                 systemGroups = requiredToolGroups("rustCargo");
-            } else if (systems[index] === "cmake") {
-                systemGroups = requiredToolGroups("cmake");
+            } else if (systems[index] === "cmake" || systems[index] === "platformIo") {
+                systemGroups = requiredToolGroups(systems[index]);
             } else if (systems[index] === "make" && systems.indexOf("cmake") < 0) {
                 // Um Makefile ao lado de um CMakeLists e' do CMake: o bear so'
                 // e' exigido quando o make e' o unico build system C/C++.
@@ -275,11 +279,13 @@ Item {
                   qsTr("Ferramentas"), "tools");
             return;
         }
-        const heldBack = hasBuildSystem("cargo")
+        const heldBack = hasBuildSystem("cargo") || hasBuildSystem("platformIo")
                 || (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured);
         if (!workspaceTrusted && heldBack) {
             apply("info",
-                  qsTr("projeto ainda não confiável: o CMake e os build scripts não rodam sozinhos"),
+                  hasBuildSystem("platformIo")
+                      ? qsTr("projeto ainda não confiável: o pio, que roda os scripts do projeto, espera a sua confiança")
+                      : qsTr("projeto ainda não confiável: o CMake e os build scripts não rodam sozinhos"),
                   qsTr("Confiar neste projeto"), "trust");
             return;
         }

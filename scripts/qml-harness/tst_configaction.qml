@@ -231,6 +231,39 @@ Item {
         if (root.lastPreviewId !== "") failures += 33554432;
         if (bibliotecas.selecionada !== "zlib") failures += 67108864;
 
+        // A acao de job (0.4.0e): a confirmacao sobrevive a lista relida que
+        // o apply pede, e o estado e' relido quando o job DELA termina.
+        const listsBefore = root.listRequests;
+        controller.handleApplied("platformio.compiledb", "disparado", [], "job-7");
+        controller.handleListed(root.actionsFixture(), ["cmake"]);
+        if (controller.statusText.indexOf("job-7") < 0) failures += 4294967296;
+        controller.handleJobFinished("job-1", "success");
+        if (root.listRequests !== listsBefore + 1) failures += 8589934592;
+        controller.handleJobFinished("job-7", "success");
+        if (root.listRequests !== listsBefore + 2 || controller.statusText.indexOf("success") < 0) failures += 17179869184;
+        controller.openDialog();
+        if (controller.statusText !== "") failures += 34359738368;
+
+        // O catalogo de bibliotecas e' do CMake: um projeto so' PlatformIO nao
+        // o ve (0.4.0e).
+        controller.handleListed(root.actionsFixture(), ["platformIo"]);
+        for (let index = 0; index < controller.actionsModel.count; ++index) {
+            if (controller.isLibrary(controller.actionsModel.get(index).actionId)) {
+                failures += 2147483648;
+                break;
+            }
+        }
+
+        // Os chips de escopo pelo que o projeto TEM (0.4.0e): o PlatformIO
+        // ganha o dele; o que nao tem acoes (Python) nao vira chip; um so'
+        // escopo, nenhum chip.
+        const chips = controller.chipsFor(["cmake", "platformIo", "python"]);
+        if (chips.map(chip => chip.scope).join(",") !== ",cmake,platformio") failures += 134217728;
+        if (chips[2].label !== "C/C++ · PlatformIO") failures += 268435456;
+        if (controller.chipsFor(["cmake", "python"]).length !== 0) failures += 536870912;
+        controller.activeBuildSystems = ["cmake", "cargo"];
+        if (controller.scopeChips.length !== 3) failures += 1073741824;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

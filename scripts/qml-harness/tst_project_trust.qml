@@ -31,6 +31,17 @@ Item {
         onAutoConfigureRequested: root.configureRequests += 1
     }
 
+    // 0.4.0e: o projeto PlatformIO tambem pede o gesto (o `compiledb` roda
+    // os scripts do projeto), e cobra o `pio` antes.
+    ProjectHealthController {
+        id: pio
+
+        workspaceRoot: "/tmp/pio"
+        workspaceKind: "platformIo"
+        workspaceBuildSystems: ["platformIo"]
+        toolsList: [{ id: "clangd", status: "detected" }, { id: "pio", status: "missing" }]
+    }
+
     QtObject {
         id: fakeCore
         function trustWorkspace() { root.calls = root.calls.concat(["trust"]); }
@@ -69,6 +80,25 @@ Item {
         actions.perform("jobs");
         root.check(JSON.stringify(root.calls) === '["trust","tab:jobs","configure","tab:jobs"]',
             "despacho: " + JSON.stringify(root.calls));
+
+        root.check(pio.actionTarget === "tools" && pio.message.indexOf("pio") >= 0,
+            "sem pio, a faixa cobra a ferramenta: " + pio.message);
+        pio.toolsList = [{ id: "clangd", status: "detected" }, { id: "pio", status: "detected" }];
+        root.check(pio.active && pio.actionTarget === "trust" && pio.message.indexOf("pio") >= 0,
+            "PlatformIO pede o gesto: " + pio.message);
+        pio.handleTrust(true);
+        root.check(!pio.active, "com a confiança, nada a dizer: " + pio.message);
+        // Misto (CMakeLists do ESP-IDF ao lado): o tipo e' cmake, o MOTOR e' o
+        // pio, e ele e' cobrado.
+        pio.workspaceKind = "cmake";
+        pio.workspaceBuildSystems = ["cmake", "platformIo"];
+        pio.toolsList = [
+            { id: "cmake", status: "detected" }, { id: "ninja", status: "detected" },
+            { id: "clangd", status: "detected" }, { id: "gxx", status: "detected" },
+            { id: "pio", status: "missing" }
+        ];
+        root.check(pio.actionTarget === "tools" && pio.message.indexOf("pio") >= 0,
+            "misto: o pio e' cobrado: " + pio.message);
         Qt.exit(root.failures === 0 ? 0 : 1);
     }
 }

@@ -165,6 +165,13 @@ impl Harness {
         self.root.join("src").join("main.cpp").display().to_string()
     }
 
+    /// Uma CDB onde o clangd a acha ao subir (a raiz): o configure que a
+    /// REGERA so' reabre os documentos (0.4.0e).
+    fn with_cdb(self) -> Self {
+        std::fs::write(self.root.join("compile_commands.json"), "[]\n").unwrap();
+        self
+    }
+
     /// Empurra pelo LOOP REAL o mesmo evento que o job do configure emite.
     ///
     /// Passa pelo [`crate::runtime::drain_loop_events`], e nao por uma chamada
@@ -463,7 +470,7 @@ fn replacing_the_command_does_not_kill_a_running_server() {
 /// causa do curto-circuito por hash.
 #[test]
 fn a_successful_configure_closes_the_open_cpp_documents() {
-    let mut harness = harness("configure");
+    let mut harness = harness("configure").with_cdb();
     let cpp = harness.main_cpp();
     harness.ok("fs.read", json!({ "path": &cpp }));
     let did_open = harness.wait_for("textDocument/didOpen", 0);
@@ -518,7 +525,7 @@ fn a_configure_does_not_touch_documents_of_other_languages() {
 /// ate o usuario digitar. O evento e o gatilho da re-sincronizacao.
 #[test]
 fn closing_after_a_configure_tells_the_ui_to_resync() {
-    let mut harness = harness("configure-evento");
+    let mut harness = harness("configure-evento").with_cdb();
     harness.ok("fs.read", json!({ "path": harness.main_cpp() }));
     harness.wait_for("textDocument/didOpen", 0);
 
@@ -527,6 +534,67 @@ fn closing_after_a_configure_tells_the_ui_to_resync() {
     let event = harness.wait_for_event("event.lsp.documentsClosed");
     assert_eq!(event.params.as_ref().unwrap()["language"], "cpp");
     assert_eq!(event.params.as_ref().unwrap()["count"], 1);
+}
+
+/// 0.4.0e: o clangd que subiu SEM CDB nao acha a que nasce depois — medido
+/// com o clangd 21: na raiz, so' ~30 s depois; em `.kinein/build`, nunca. O
+/// primeiro configure (o `.cpp` aberto antes da confianca) reinicia o servidor
+/// em vez de so' fechar os documentos; a UI re-sincroniza no `restarted`.
+#[test]
+fn a_clangd_that_started_without_a_cdb_is_restarted_when_one_appears() {
+    let mut harness = harness("configure-sem-cdb");
+    harness.ok("fs.read", json!({ "path": harness.main_cpp() }));
+    harness.wait_for("textDocument/didOpen", 0);
+
+    harness.configure_finished(true);
+
+    let event = harness.wait_for_event("event.lsp.restarted");
+    assert_eq!(event.params.as_ref().unwrap()["language"], "cpp");
+    assert_eq!(harness.count_of("textDocument/didClose"), 0);
+    // O servidor novo sobe no proximo pedido, agora vendo a CDB.
+    harness.ok("fs.read", json!({ "path": harness.main_cpp() }));
+    harness.wait_for("textDocument/didOpen", 1);
+}
+
+/// 0.4.0e (`roadmaps/52` §14.5): o `compiledb` do `PlatformIO` que deu certo
+/// troca a CDB como o configure — sem CDB ao subir, o clangd e' reiniciado;
+/// com uma, os documentos C/C++ sao fechados. O job de outro dono e o
+/// `compiledb` que falhou nao mexem em nada.
+#[test]
+fn a_successful_platformio_compiledb_refreshes_clangd_like_a_configure() {
+    let finished = |job: &str, status: &str| {
+        JsonRpcRequest::notification(
+            "event.job.finished",
+            Some(json!({ "jobId": job, "status": status })),
+        )
+    };
+    let mut harness = harness("compiledb");
+    harness.ok("fs.read", json!({ "path": harness.main_cpp() }));
+    harness.wait_for("textDocument/didOpen", 0);
+    *harness.core.compiledb_job.lock().unwrap() = Some("job-9".to_owned());
+    harness
+        .core
+        .observe_notification(&finished("job-3", "success"));
+    harness
+        .core
+        .observe_notification(&finished("job-9", "failed"));
+    *harness.core.compiledb_job.lock().unwrap() = Some("job-9".to_owned());
+    harness
+        .core
+        .observe_notification(&finished("job-9", "success"));
+    let event = harness.wait_for_event("event.lsp.restarted");
+    assert_eq!(event.params.as_ref().unwrap()["language"], "cpp");
+
+    let mut again = self::harness("compiledb-de-novo").with_cdb();
+    again.ok("fs.read", json!({ "path": again.main_cpp() }));
+    again.wait_for("textDocument/didOpen", 0);
+    *again.core.compiledb_job.lock().unwrap() = Some("job-4".to_owned());
+    again
+        .core
+        .observe_notification(&finished("job-4", "success"));
+    let event = again.wait_for_event("event.lsp.documentsClosed");
+    assert_eq!(event.params.as_ref().unwrap()["count"], 1);
+    again.wait_for("textDocument/didClose", 0);
 }
 
 /// Fatia 2 da cadeia Python (2026-09-12): o servidor de Python sobe COM o

@@ -858,3 +858,88 @@ o `tst_lsp_progress.qml`, a fiação com 61 eventos, 5 mutações reprovando. No
 Xvfb, um projeto Rust confiado: a barra disse "LSP … rust · Fetching",
 "cargo check", "Indexing 23%" e voltou a "LSP ● 1"; IPC 0.176.0 (40.7
 §7.312).
+
+### 14.5 0.4.0e — o `compiledb` do PlatformIO como Configuration Action (§5.10, J2; 2026-10-16)
+
+**Decisão do autor que vale (2026-10-01):** o PlatformIO é cidadão de tier 1;
+na J2, `pio run -t compiledb` como Configuration Action (58 §4.4: "sem CDB,
+o clangd não vê o projeto").
+
+**Medido (2026-10-16).** O PlatformIO não estava na máquina; entrou no
+usuário com `pipx install platformio` (Core 6.2.0, `~/.local/bin/pio`), como
+o modo autônomo autoriza (40 §5). Num projeto mínimo `platform = native`, o
+`pio run -t compiledb` grava a `compile_commands.json` na RAIZ do projeto
+(onde o `cdb::status` já procura e o clangd acha sozinho): 5,6 s na primeira
+vez (prepara a plataforma), menos de 1 s depois. No código: o projeto
+PlatformIO já é detectado (`BuildSystem::PlatformIo`, `0.117.0`) e
+construído (`build/frameworks.rs`, `pio run`); as Configuration Actions só
+conhecem os escopos CMake e Cargo, e o efeito "job" está fixo no
+`cargo.check` (`configaction/mod.rs` devolve sempre esse método).
+
+**O desenho:**
+
+1. **Protocolo 0.177.0 (aditivo):** `ConfigActionScope` ganha `platformio`;
+   o catálogo ganha `platformio.compiledb` ("Gerar compile_commands.json",
+   efeito `job`, afeta `compile_commands.json`, risco baixo), disponível num
+   projeto PlatformIO com o `pio` detectado e recomendada quando não há CDB.
+2. **O efeito "job" deixa de ser fixo:** cada ação de job diz o seu método
+   (`cargo.check`, `platformio.compiledb`), e o handler delega a quem o
+   atende — sem executor novo.
+3. **O job (`build/frameworks.rs`, o dono do `pio`):** `pio run -t
+   compiledb` na raiz, com a saída no Jobs. No sucesso, o mesmo caminho do
+   `cmake.configure` que termina: o contexto do índice é relido (a CDB nova)
+   e os documentos C/C++ são fechados no clangd para a UI reabri-los com as
+   flags novas (`roadmaps/29` §5b).
+4. **Nada muda sem gesto:** a ação aparece na lista de ações de
+   configuração; a pessoa a aplica. Num projeto não confiável, ela recusa,
+   como o configure (o `pio` roda scripts do projeto).
+
+**Provas planejadas:** teste do catálogo e da disponibilidade (PlatformIO com
+e sem `pio`, recomendada sem CDB); integrado com um `pio` FALSO que grava a
+CDB (o argv `run -t compiledb`, o job, o contexto relido com a unidade, a
+recusa sem confiança); a ação de `cargo.check` intacta; harness da lista de
+ações se a UI mudar; mutações; real: o `pio` desta máquina no projeto
+`native`, e no Xvfb a ação aplicada, a CDB criada e o clangd vendo o
+`#include`.
+
+**Resultado (2026-10-16).** Como desenhado, com cinco correções que a prova
+na tela trouxe (40.7 §7.313):
+
+1. **O clangd que subiu sem CDB não via a nova.** Medido com uma sonda LSP
+   direta (clangd 21.1.8): a CDB que nasce na raiz depois de o clangd não
+   achar nenhuma só vale uns 30 s depois, mesmo com o documento reaberto; em
+   `.kinein/build`, nunca. O mesmo buraco existia no configure do CMake com
+   o `.cpp` aberto antes do primeiro configure (o projeto ainda não
+   confiável). O core lembra se o clangd subiu vendo uma CDB e, se não, o
+   reinicia no fim do configure e do `compiledb`
+   ([03-dominios/lsp](../arquitetura/03-dominios/lsp.md)).
+2. **A faixa de saúde não oferecia a confiança num projeto PlatformIO** — a
+   recusa mandava confiar "na faixa", que nada dizia. O PlatformIO entrou nos
+   build systems que pedem o gesto, e o `pio` e o clangd passaram a ser
+   cobrados (também no projeto misto, com o `CMakeLists` do ESP-IDF ao lado).
+3. **O diálogo das ações:** o "não altera nenhum arquivo" (o texto do risco
+   baixo e o da prévia) era falso para uma ação que grava a CDB — o risco
+   baixo diz agora o que é, e a prévia de um job diz que ele roda e o que
+   grava; a confirmação do apply era apagada pela releitura da lista que o
+   próprio apply pede (em toda ação, desde antes), e a lista não se relia
+   quando o job terminava; o catálogo de bibliotecas do CMake aparecia num
+   projeto sem CMake; os chips de escopo eram fixos (CMake e Cargo) e agora
+   saem do que o projeto tem.
+4. **A dica do contexto** num projeto PlatformIO sem CDB mandava configurar
+   com o CMake; agora aponta a ação.
+5. **Disponibilidade:** a ação aparece em todo projeto PlatformIO; sem o
+   `pio`, o `apply` recusa com `ToolNotFound` e o passo, como o `build.run`
+   (a faixa cobra antes).
+
+Provas: o integrado com o `pio` falso (recomendada sem CDB, a dica, a recusa
+sem confiança e sem `pio`, o argv `run -t compiledb` NA RAIZ, a saída no job,
+a unidade nova no contexto com o `-D`, a ação deixando de ser recomendada);
+o do clangd reiniciado sem CDB e só reaberto com ela, no configure e no
+`compiledb` (o job de outro dono e o que falhou não mexem); os harnesses
+`tst_configaction`, `tst_configaction_layout` e `tst_project_trust`; 19
+mutações do core e 10 da UI reprovando. Real: o `pio` desta máquina gerou a
+CDB com `-DPLATFORMIO=60200 -Iinclude -Isrc` em 0,9 s. No Xvfb, num projeto
+`native` com o cabeçalho em `include/`: o `'app.h' file not found` sem CDB,
+a faixa pedindo a confiança, a ação aplicada (o job em menos de 0,4 s, a
+lista relida), os erros sumindo e o Ctrl+B em `APP_VALUE` abrindo o
+`include/app.h` no `#define`.

@@ -32,6 +32,8 @@ Item {
             riskLabel: "edita configuração",
             riskExplanation: "edita um arquivo de configuração do projeto",
             state: "available",
+            effect: "edit",
+            affects: ["CMakeLists.txt"],
             docs: [{ title: "CMake: target_link_libraries" }],
             params: [
                 root.campo("target", "Alvo"),
@@ -81,6 +83,8 @@ Item {
 
         property var actionsModel: listaVazia
         property var activeBuildSystems: ["cmake", "cargo"]
+        property var scopeChips: [{ scope: "", label: "Tudo" }, { scope: "cmake", label: "C/C++ · CMake" },
+                                  { scope: "cargo", label: "Rust · Cargo" }]
         property string scopeFilter: ""
         property string searchQuery: ""
         property string errorText: ""

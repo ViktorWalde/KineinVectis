@@ -46,6 +46,7 @@ mod lsp_deferred;
 mod lsp_qml;
 mod lsp_server;
 mod lsp_stderr;
+mod platformio;
 mod project;
 mod python;
 mod remote;

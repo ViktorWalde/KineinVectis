@@ -61,6 +61,9 @@ pub struct CompileContext {
     alvos: Vec<AlvoCargo>,
     python: Option<PythonEnv>,
     cmake: Option<CmakeModel>,
+    /// `platformio.ini` na raiz: a CDB vem da acao `platformio.compiledb`
+    /// (0.4.0e), nao de um configure.
+    platformio: bool,
 }
 
 impl CompileContext {
@@ -88,6 +91,7 @@ impl CompileContext {
         }
         ctx.python = crate::python::env::python_env(root, &ferramentas.python);
         ctx.cmake = CmakeModel::load(&crate::cmake::build_dir(root));
+        ctx.platformio = root.join("platformio.ini").is_file();
         ctx
     }
 
@@ -203,6 +207,11 @@ impl CompileContext {
                 (_, true, _) => {
                     "cabecalho: não tem unidade de compilação própria; o clangd deduz as \
                                   flags pela unidade que o inclui"
+                        .to_owned()
+                }
+                (None, false, _) if self.platformio => {
+                    "sem compile_commands.json: aplique a ação \"Gerar compile_commands.json\" \
+                     (PlatformIO) para a IDE saber como cada arquivo é compilado"
                         .to_owned()
                 }
                 (None, false, _) => {

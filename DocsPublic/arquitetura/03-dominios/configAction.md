@@ -41,7 +41,8 @@ O `effect` de cada ação diz o que o `apply` faz, e por isso está no contrato:
 ```text
 edit      reescreve um arquivo de texto; o preview mostra o diff exato
 inspect   so le: o preview E o resultado, e o apply nao escreve
-job       devolve `jobId` reusando um job que ja existe (hoje: cargo.check)
+job       devolve `jobId` de um job: cargo.check, ou, desde 0.177.0, o
+          compiledb do PlatformIO
 delegate  efeito nao textual dentro do core (remover build dir, salvar run config)
 ```
 
@@ -51,6 +52,23 @@ As 16 ações do MVP são as da §12 da spec de fechamento: 10 de `CMake`
 `addTargetLinkLibraries`, `inspectCache`, `repairBuildDir`) e 6 de Cargo
 (`addDependency`, `addDevDependency`, `addFeature`, `setEdition`, `check`,
 `createRunConfig`).
+
+**PlatformIO (`0.177.0`, a 0.4.0e do `roadmaps/52` §14.5).** O escopo
+`platformio` (o build system `platformIo`) e a ação `platformio.compiledb`,
+"Gerar compile_commands.json": efeito `job`, afeta `compile_commands.json`,
+risco baixo; `recommended` quando não há CDB alcançável. O `apply` roda
+`pio run -t compiledb` na raiz como job, só em projeto confiável (o `pio`
+roda os scripts do projeto) e com o `pio` detectado (sem ele, recusa
+`ToolNotFound` com o passo, como o `build.run`); no sucesso, o contexto do
+índice é relido e o clangd passa a ver a CDB nova, como depois de um
+`cmake.configure`: os documentos C/C++ fechados para a UI reabri-los, ou o
+servidor reiniciado quando subiu sem CDB ([lsp](lsp.md)).
+
+O `riskExplanation` do risco `low` diz, desde `0.177.0`, "não edita fonte nem
+configuração de build; no máximo gera arquivos que se recriam (o build, a
+compile_commands.json, o .kinein)" — o "não altera nenhum arquivo" de antes
+era falso para o `compiledb`, e já era frouxo para o `cargo.check` (o
+`target/`) e o `createRunConfig` (o `.kinein`).
 
 **O que o core RECUSA em vez de adivinhar**, e é o comportamento certo: nome de
 target fora do padrão da CMP0037, target inexistente, fonte com `..`,

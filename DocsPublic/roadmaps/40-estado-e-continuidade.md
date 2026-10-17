@@ -28,9 +28,10 @@
 > §4. **Próximo passo:** a 0.4.0, a fundação
 > ([52](52-arquitetura-executavel-da-0.4.md) §11 e §14): feitas a 0.4.0a (o
 > contexto efetivo com a origem), a 0.4.0b (o preset do configure), a 0.4.0c
-> (o compilador checando ao salvar) e a 0.4.0d (o progresso do servidor; a
-> L7 medida e dispensada) (40.7 §7.307–§7.312); seguem o `compiledb` do
-> PlatformIO e a matriz de emuladores, cada desenho no 52 §14 antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
+> (o compilador checando ao salvar), a 0.4.0d (o progresso do servidor; a
+> L7 medida e dispensada) e a 0.4.0e (o `compiledb` do PlatformIO; o clangd
+> que subiu sem CDB reiniciado) (40.7 §7.307–§7.313); segue a matriz de
+> emuladores, com o desenho no 52 §14 antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
 > antes dela pede um clique em "Confiar neste projeto" (a faixa de saúde).
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
@@ -49,11 +50,11 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.176.0 (crates/kinein-protocol, medido em 2026-10-16; o
+protocolo   0.177.0 (crates/kinein-protocol, medido em 2026-10-16; o
             historico das versoes e' o arquitetura/03)
-metodos     187 roteados e 60 eventos (os titulos do arquitetura/03, que o
+metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   148 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
+harnesses   151 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1158 no Ubuntu 26.04 (gate rápido de 2026-10-16,

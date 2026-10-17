@@ -26,6 +26,10 @@ Rectangle {
     property bool loading: false
     // Nome do campo obrigatorio que ainda falta, ou "" quando nada falta.
     property string missingParam: ""
+    // A acao de efeito `job` nao tem diff: roda um comando, e o que ele grava
+    // vem do `affects` (0.4.0e: o `compiledb` grava a CDB).
+    property bool job: false
+    property string writes: ""
 
     radius: Theme.radius
     color: Theme.backgroundEditor
@@ -127,7 +131,11 @@ Rectangle {
               ? qsTr("Calculando o plano...")
               : (root.missingParam !== ""
                  ? qsTr("Informe: %1").arg(root.missingParam)
-                 : qsTr("Esta ação não altera arquivo nenhum."))
+                 : (root.job
+                    ? (root.writes !== ""
+                       ? qsTr("Roda como job, sem diff para mostrar: grava %1. A saída fica em Jobs.").arg(root.writes)
+                       : qsTr("Roda como job, sem diff para mostrar. A saída fica em Jobs."))
+                    : qsTr("Esta ação não altera arquivo nenhum.")))
         color: Theme.textMuted
         font.pixelSize: Theme.fontSizeSmall
         visible: root.file === null && root.reportLines.length === 0

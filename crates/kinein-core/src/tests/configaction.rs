@@ -153,14 +153,18 @@ fn the_list_is_filtered_by_the_active_build_system() {
     assert_eq!(list["activeBuildSystems"], json!(["cmake"]));
 
     // O usuario pode pedir para ver o que o escopo escondeu (spec 9.2 §25).
-    let todas = ok(
+    let all_actions = ok(
         &mut core,
         "configAction.list",
         &json!({ "includeHiddenByScope": true }),
     );
-    assert_eq!(todas["actions"].as_array().unwrap().len(), 25);
+    assert_eq!(all_actions["actions"].as_array().unwrap().len(), 26);
     assert_eq!(
-        action(&todas, "cargo.addDependency")["state"],
+        action(&all_actions, "cargo.addDependency")["state"],
+        "hiddenByScope"
+    );
+    assert_eq!(
+        action(&all_actions, "platformio.compiledb")["state"],
         "hiddenByScope"
     );
 
@@ -299,8 +303,8 @@ fn apply_refuses_when_the_file_moved_after_the_preview() {
 /// As 10 acoes `CMake` da spec de MVP §12.1, cada uma contra o arquivo real.
 #[test]
 fn every_cmake_action_has_a_verified_effect_on_disk() {
-    let dir = cmake_workspace("cmake-todas");
-    let mut core = core_with_empty_search_path("configaction-cmake-todas");
+    let dir = cmake_workspace("cmake-all_actions");
+    let mut core = core_with_empty_search_path("configaction-cmake-all_actions");
     open(&mut core, &dir);
 
     // 1. compile_commands.json — antes do primeiro target, como a doc do CMake
@@ -386,8 +390,8 @@ fn every_cmake_action_has_a_verified_effect_on_disk() {
 /// As 6 acoes Cargo da spec de MVP §12.2, cada uma contra o arquivo real.
 #[test]
 fn every_cargo_action_has_a_verified_effect_on_disk() {
-    let dir = cargo_workspace("cargo-todas");
-    let mut core = core_with_empty_search_path("configaction-cargo-todas");
+    let dir = cargo_workspace("cargo-all_actions");
+    let mut core = core_with_empty_search_path("configaction-cargo-all_actions");
     open(&mut core, &dir);
 
     // 1, 2 e 3. Dependencia, dev-dependency e feature.

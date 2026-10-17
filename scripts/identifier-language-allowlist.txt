@@ -150,3 +150,6 @@ xvfb xdisplay getpixel
 # 16.7, F8): a API do ctypes (`CDLL`, `argtypes`, `restype`, `c_ubyte`,
 # `c_uint`, `c_ulong`) e o vocabulario do X (`keycode`, `keysym`, `libXtst`).
 ctypes cdll argtypes restype ubyte uint ulong keycode keysym xtst
+# 2026-10-16: o alvo do PlatformIO que gera a compile_commands.json
+# (`pio run -t compiledb`, 0.4.0e): nome da ferramenta, nao traduzivel.
+compiledb

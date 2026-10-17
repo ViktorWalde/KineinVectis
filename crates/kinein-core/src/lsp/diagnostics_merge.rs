@@ -46,28 +46,37 @@ pub fn record(
     record_locked(&mut cache, key, path, diagnostics)
 }
 
-/// Como [`record`], para a thread leitora de um servidor: o que chega depois
-/// de ele ser parado e esquecido nao volta a tela (`None`).
+/// Como [`record`], para a thread leitora de um servidor, que ja' ENVIA o
+/// evento; o que chega depois de o servidor ser parado e esquecido nao volta
+/// a tela. `false` = a thread sai (servidor parado ou canal fechado).
 ///
 /// A conferencia e' DENTRO da trava: o `kill_server` liga o `stopping` antes
 /// do `forget`, entao uma gravacao que entra depois dele ve o `stopping` e e'
 /// descartada, e a que entrou antes e' apagada pelo proprio `forget`. Fora da
 /// trava, um `publishDiagnostics` que estava no buffer quando o servidor
-/// morreu era gravado DEPOIS do `forget` (40.7 §7.309).
+/// morreu era gravado DEPOIS do `forget` (40.7 §7.309). O ENVIO tambem e'
+/// dentro dela (0.4.0e): enviado fora, o evento gravado antes do `forget`
+/// podia chegar a UI depois do que o apaga, e o diagnostico do servidor
+/// parado voltava a tela.
 pub(super) fn record_while_running(
     merged: &MergedDiagnostics,
     key: &'static str,
     path: &str,
     diagnostics: Vec<Diagnostic>,
     stopping: &AtomicBool,
-) -> Option<JsonRpcRequest> {
+    events: &super::EventSender,
+) -> bool {
     let Ok(mut cache) = merged.lock() else {
-        return Some(diagnostics_notification(path, &diagnostics));
+        return events
+            .send(diagnostics_notification(path, &diagnostics))
+            .is_ok();
     };
     if stopping.load(Ordering::SeqCst) {
-        return None;
+        return false;
     }
-    Some(record_locked(&mut cache, key, path, diagnostics))
+    events
+        .send(record_locked(&mut cache, key, path, diagnostics))
+        .is_ok()
 }
 
 fn record_locked(
@@ -223,6 +232,7 @@ mod tests {
     fn a_publish_that_arrives_after_the_server_stopped_is_dropped() {
         let merged: MergedDiagnostics = Arc::new(Mutex::new(std::collections::HashMap::default()));
         let stopping = AtomicBool::new(false);
+        let (events, received) = std::sync::mpsc::channel();
         record(&merged, "python", "/p/a.py", vec![diag("pyright")]);
         let live = record_while_running(
             &merged,
@@ -230,8 +240,10 @@ mod tests {
             "/p/a.py",
             vec![diag("ruff")],
             &stopping,
+            &events,
         );
-        assert_eq!(messages(&live.unwrap()), ["pyright", "ruff"]);
+        assert!(live, "rodando, a thread segue");
+        assert_eq!(messages(&received.try_recv().unwrap()), ["pyright", "ruff"]);
         stopping.store(true, Ordering::SeqCst);
         let gone = forget(&merged, "python-ruff");
         assert_eq!(messages(&gone[0]), ["pyright"]);
@@ -241,8 +253,10 @@ mod tests {
             "/p/a.py",
             vec![diag("ruff atrasado")],
             &stopping,
+            &events,
         );
-        assert!(late.is_none(), "o atrasado nao vira evento");
+        assert!(!late, "parado, a thread sai");
+        assert!(received.try_recv().is_err(), "o atrasado nao vira evento");
         let next = record(&merged, "python", "/p/a.py", vec![diag("pyright")]);
         assert_eq!(messages(&next), ["pyright"], "e nao ficou no cache");
     }

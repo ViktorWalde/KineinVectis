@@ -102,6 +102,31 @@ pub fn zephyr_board(root: &Path, west: &Path) -> Option<String> {
     (saida.status.success() && !valor.is_empty()).then_some(valor)
 }
 
+/// O `compile_commands.json` do `PlatformIO`: `pio run -t compiledb` na raiz.
+///
+/// 0.4.0e, `roadmaps/52` §14.5. Medido em 2026-10-16 (Core 6.2.0): a CDB sai
+/// na RAIZ do projeto, onde o `cdb` e o clangd a acham.
+///
+/// # Errors
+///
+/// O `pio` que nao inicia ou a espera que falha ([`BuildError`]).
+pub fn run_platformio_compiledb(
+    pio: &Path,
+    root: &Path,
+    cancel: &Arc<AtomicBool>,
+    sink: &mut dyn FnMut(BuildEvent),
+) -> Result<BuildOutcome, BuildError> {
+    let mut command = Command::new(pio);
+    command.args(["run", "-t", "compiledb"]).current_dir(root);
+    stream_command(
+        command,
+        "pio run -t compiledb",
+        DiagnosticFormat::GccLike,
+        cancel,
+        sink,
+    )
+}
+
 #[cfg(test)]
 mod tests {
 

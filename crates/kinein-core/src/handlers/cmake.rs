@@ -39,7 +39,11 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return;
         };
-        let closed = lsp.close_documents(CPP_LANGUAGE);
+        // O clangd que subiu sem CDB e' reiniciado, e o `restarted` ja' leva
+        // a UI a re-sincronizar (0.4.0e).
+        let Some(closed) = lsp.refresh_compile_commands(CPP_LANGUAGE) else {
+            return;
+        };
         if closed == 0 {
             return;
         }

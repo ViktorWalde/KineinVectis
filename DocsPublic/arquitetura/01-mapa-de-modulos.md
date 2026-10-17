@@ -1418,6 +1418,7 @@ flowchart LR
     n_ui_src_core_client_dispatch_cmake_cpp["core_client_dispatch_cmake.cpp"]
     n_ui_src_core_client_dispatch_debug_cpp["core_client_dispatch_debug.cpp"]
     n_ui_src_core_client_library_cpp["core_client_library.cpp"]
+    n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
   end
   subgraph IPC["JSON-RPC"]
@@ -1462,6 +1463,7 @@ flowchart LR
   n_ui_src_core_client_dispatch_debug_cpp -.-> n_ui_qml_ipc_SettingsEventRouter_qml
   n_ui_src_core_client_library_cpp --> n_ipc_library
   n_ui_src_core_client_library_cpp -.-> n_ui_qml_ipc_LibraryEventRouter_qml
+  n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_ConfigActionEventRouter_qml
   n_ui_src_core_client_requests_cpp --> n_ipc_cmake
   n_ipc_cmake --> n_crates_kinein_core_src_handlers_cmake_rs
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_cdb
@@ -1499,6 +1501,7 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch_cmake.cpp` | Dispatch do dominio CMake/build (ARCHITECTURE.md §5). |
 | ponte C++ | `ui/src/core_client_dispatch_debug.cpp` | Dispatch do dominio DEBUG (ARCHITECTURE.md §5): |
 | ponte C++ | `ui/src/core_client_library.cpp` | Dominio de BIBLIOTECAS no lado da UI: |
+| ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | handler Rust | `crates/kinein-core/src/handlers/cmake.rs` | Handlers for cmake.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/configaction.rs` | Handlers for configAction.* requests (impl Core): |

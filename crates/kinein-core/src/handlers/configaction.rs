@@ -126,7 +126,11 @@ impl Core {
         id: &str,
         method: &str,
     ) -> JsonRpcResponse {
-        let delegated = self.cargo_request_response(method, request_id.clone(), None);
+        let delegated = if method == "platformio.compiledb" {
+            Some(self.platformio_compiledb_response(request_id.clone()))
+        } else {
+            self.cargo_request_response(method, request_id.clone(), None)
+        };
         let Some(response) = delegated else {
             return JsonRpcResponse::failure(
                 request_id,

@@ -110,6 +110,8 @@ Item {
         reportLines: root.controller.previewReport
         loading: root.controller.previewLoading
         missingParam: root.controller.missingRequiredParam()
+        job: root.action !== null && root.action.effect === "job"
+        writes: root.action !== null ? root.action.affects.join(", ") : ""
     }
 
     Column {

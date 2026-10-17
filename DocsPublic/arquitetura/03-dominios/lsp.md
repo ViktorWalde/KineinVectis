@@ -185,3 +185,16 @@ fazê-lo sozinha (o `didOpen` seria inerte e o `didClose` não existia até
 loop principal antes de ser repassado — o job roda em thread própria e não
 alcança o `Core`, mas o evento dele volta ao dono do estado
 (`DocsPublic/arquitetura/04-boot-e-comunicacao.md` §3).
+
+**Quando o clangd subiu sem CDB, ele é reiniciado** (0.4.0e, `0.177.0`). O
+recarregar sozinho só vale para a CDB que o clangd JÁ achou. Medido em
+2026-10-16 (clangd 21.1.8, sonda LSP direta): sem nenhuma ao subir, a que
+nasce depois não vale com o documento reaberto — na raiz, só uns 30 s depois
+(o cache do "não achei"); em `.kinein/build`, que ele só vê pelo
+`--compile-commands-dir` dado ao subir, nunca. O caso é comum: o `.cpp`
+aberto antes do primeiro configure (o projeto ainda não confiável) ou antes
+do `compiledb` do PlatformIO. O core lembra se o clangd subiu vendo uma CDB
+(a do configure, ou uma na raiz ou no `build/` dela); se não, o fim do
+configure — e o do job `platformio.compiledb` — o reinicia
+(`event.lsp.restarted`, que a UI já trata re-sincronizando) em vez de fechar
+os documentos.

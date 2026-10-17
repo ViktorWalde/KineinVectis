@@ -116,6 +116,15 @@ pub fn preview(
     })
 }
 
+/// O metodo que atende a acao de efeito `job` (0.4.0e: deixou de ser so' o
+/// `cargo.check`).
+fn job_method(id: &str) -> &'static str {
+    match id {
+        "platformio.compiledb" => "platformio.compiledb",
+        _ => "cargo.check",
+    }
+}
+
 /// Recalcula o plano e o grava, exigindo o snapshot visto no preview.
 pub fn apply(
     root: &Path,
@@ -128,7 +137,7 @@ pub fn apply(
         // Um job nao nasce aqui: o dominio nao alcanca o `JobManager`
         // (arquitetura/04 §3). Quem tem o canal de eventos e o handler.
         return Ok(ConfigActionOutcome::Job {
-            method: "cargo.check",
+            method: job_method(&request.id),
         });
     }
 
@@ -239,6 +248,14 @@ fn build_plan(
             ),
         ),
         "cargo.createRunConfig" => run_config_plan(root, params),
+        "platformio.compiledb" => Ok(ActionPlan::effect(
+            "Roda pio run -t compiledb na raiz do projeto",
+        )
+        .with_note(
+            "Grava compile_commands.json na raiz; o clangd passa a ver as flags do \
+             PlatformIO. Só em projeto confiável: o pio roda os scripts do projeto."
+                .to_owned(),
+        )),
         _ => Err(ConfigActionError::UnknownAction { id: id.to_owned() }),
     }
 }

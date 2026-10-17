@@ -14,7 +14,7 @@ pub mod syntax_check;
 pub mod tidy;
 
 pub use engine::{Engine, EngineError};
-pub use frameworks::zephyr_board;
+pub use frameworks::{run_platformio_compiledb, zephyr_board};
 pub use make::MakeTools;
 pub use tidy::QualityTools;
 

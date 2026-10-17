@@ -34,6 +34,7 @@ pub mod index;
 pub mod jobs;
 pub mod library;
 pub mod lsp;
+pub mod platformio;
 pub mod probe;
 pub mod project;
 pub mod python;

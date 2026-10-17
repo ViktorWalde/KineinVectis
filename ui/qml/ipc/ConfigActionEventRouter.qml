@@ -32,5 +32,9 @@ Item {
         function onRequestFailed(method, message) {
             root.configActionController.handleFailed(method, message);
         }
+
+        function onJobFinished(jobId, status) {
+            root.configActionController.handleJobFinished(jobId, status);
+        }
     }
 }

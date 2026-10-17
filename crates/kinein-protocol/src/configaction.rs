@@ -22,6 +22,9 @@ pub enum ConfigActionScope {
     Cmake,
     /// Acao de Cargo (`Cargo.toml`, run configs).
     Cargo,
+    /// Acao de `PlatformIO` (`platformio.ini`, `0.177.0`).
+    #[serde(rename = "platformio")]
+    Platformio,
 }
 
 impl ConfigActionScope {
@@ -31,6 +34,7 @@ impl ConfigActionScope {
         match self {
             Self::Cmake => BuildSystem::Cmake,
             Self::Cargo => BuildSystem::Cargo,
+            Self::Platformio => BuildSystem::PlatformIo,
         }
     }
 }
@@ -62,7 +66,10 @@ impl ConfigActionRisk {
     #[must_use]
     pub const fn explanation(self) -> &'static str {
         match self {
-            Self::Low => "não altera nenhum arquivo do seu projeto",
+            Self::Low => {
+                "não edita fonte nem configuração de build; no máximo gera arquivos que se \
+                 recriam (o build, a compile_commands.json, o .kinein)"
+            }
             Self::Medium => {
                 "edita um arquivo de configuração do projeto; a prévia mostra o diff exato antes"
             }
