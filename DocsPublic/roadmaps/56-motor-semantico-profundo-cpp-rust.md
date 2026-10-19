@@ -53,6 +53,55 @@ O Kinein deve usar:
 
 ---
 
+### 1.1 Direção de longo prazo recuperada em 2026-10-19
+
+**Pedido do autor, após o commit `8b52104` de 2026-10-17, recuperado em
+2026-10-19:** melhorar refatoração e compreensão do compilador e, ao longo
+dos anos, desenvolver um sistema profundo com a régua da JetBrains. Este
+documento é o dono dessa direção. ROS 2 é um caso de aplicação, com seu
+recorte no [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19),
+e não um segundo motor semântico. A aspiração é registrada; arquitetura
+nova, cronograma plurianual e equivalência de funcionalidades não estão
+aprovados por esse pedido.
+
+**Base conferida em 2026-10-19:** já existem rename e prévia de edições
+multi-arquivo, code actions e transação confirmável
+([contrato LSP](../arquitetura/03-dominios/lsp.md)). O pedido de code actions
+ainda usa posição: `lsp/manager.rs::code_actions_from` envia início e fim
+iguais, e `LspCodeActionsResult` expõe ações com `edit` inline. Isso limita
+as refatorações por seleção e as que dependem de resolve/comando; não se
+deve anunciar extract/inline só porque o servidor os suporta. O contexto
+efetivo com origem já está no `index/context/effective.rs` (0.4.0a); a
+checagem pelo compilador ao salvar está na 0.4.0c, e o inspector C2 é a
+próxima fatia de produto (52 §14 e §5.3). A nota datada de setembro no topo
+não representa o estado atual dessas entregas.
+
+**Caminho de evolução, por provas:**
+
+| Frente | Próximo resultado verificável | Dono e horizonte |
+| --- | --- | --- |
+| Compreensão do compilador | Explicar compilador, target, sysroot, flags e origem por arquivo; detectar deriva; comparar o que o editor usa com o build real | 0.4 em curso, [52](52-arquitetura-executavel-da-0.4.md); C2 não equivale a conhecer todos os tipos |
+| Refatoração diária | Transportar seleção/range, kinds e capacidades; estudar resolve/comandos necessários; prévia e aplicação com validação de versões e rollback | [21 §M5.1](21-roadmap-de-longo-prazo.md#m51--refactorings-por-cima-do-lsp), no agrupamento planejado da 0.7; contrato antes do código |
+| Contextos e dependências | Relacionar alvos, pacotes/crates, arquivos gerados, features, macros e toolchains; invalidar só o que mudou | Fases B–D/F deste documento, sem nova versão reservada |
+| Análises e navegação profundas | Correlacionar diagnósticos, referências, testes e dependências, com origem, validade, cancelamento e orçamento de recursos | Fases F/G; demonstrar melhoria em projetos reais antes de promover |
+| Robustez das transformações | Fixtures C++ e Rust, erros em macros/templates, arquivos alterados durante a prévia, recusa segura e build/testes depois da aplicação | Critério de cada refatoração; ganho medido, sem prometer equivalência geral à JetBrains |
+
+Os servidores já fornecem refatorações e assists; a profundidade depende
+também do cliente, do índice e do contexto correto. Referências primárias
+conferidas em 2026-10-19: [clangd](https://clangd.llvm.org/features#refactoring)
+e [assists do rust-analyzer](https://rust-analyzer.github.io/book/assists.html).
+São capacidades upstream, não uma lista de recursos entregues pela Kinein.
+
+**Fronteira ainda vigente:** a regra do 21 §M5.1 limita as transformações
+semânticas aos motores existentes; o [25](25-fundacao-semantica-pela-arvore-sintatica.md)
+mantém Tree-sitter na sintaxe, sem decidir tipos ou rename global. A Kinein
+pode aprofundar seu modelo, correlação e UX dentro dessas regras. Um motor
+próprio de tipos ou transformações semânticas além do que os servidores
+expõem seria outra decisão, precedida de pesquisa, alternativas, custo e
+um experimento que possa falhar. O pedido recuperado não foi interpretado
+como revogação dessas restrições. Confirmar essa intenção de longo prazo
+com o autor, sem bloquear o avanço atual via LSP e contexto do compilador.
+
 ## 2. O que significa “entender o projeto inteiro”
 
 “Entender o projeto inteiro” não significa manter uma AST completa de todos os arquivos aberta simultaneamente.

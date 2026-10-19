@@ -135,6 +135,13 @@ Os de 2026-10-17 (40 §5):
    issues de entrada em inglês) se prepara agora e se publica junto da 0.4.5.
 7. **ROS 2 na IDE**, tão bom quanto o ambiente do VS Code ou melhor,
    orquestrando as ferramentas abertas; a versão sai de uma pesquisa medida.
+   O pedido posterior de escopos e melhorias, recuperado em 2026-10-19,
+   está no [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19);
+   a data da pesquisa e a implementação depois da 0.4.5 não foram decididas.
+8. **Profundidade de refatoração e compreensão do compilador ao longo dos
+   anos**, com a régua JetBrains: pedido recuperado em 2026-10-19,
+   registrado no [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19).
+   Não reserva versão nem revoga a regra atual de refatoração via LSP.
 
 **O `/ide` da Kinein ficou sem decisão** (2026-10-17), pelo que a
 documentação oficial do Claude Code mostra: o transporte (MCP por

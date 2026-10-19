@@ -1,8 +1,11 @@
 # ROS 2 na Kinein Vectis — avaliação do ecossistema e da integração
 
-**Estado:** pesquisa e proposta de produto; nenhuma integração adotada por este documento.  
-**Pesquisa:** 2026-09-24 a 2026-09-25; consolidação: 2026-09-25.  
-**Horizonte:** futuro, 0.4+; não integra o escopo da 0.3 e não reserva uma versão de entrega.  
+**Estado:** direção de produto aprovada em 2026-10-17; desenho e integrações abaixo continuam propostas, sem suporte ROS 2 entregue.
+
+**Pesquisa:** 2026-09-24 a 2026-09-25; retomada e conferências pontuais: 2026-10-19 (§1.2).
+
+**Horizonte:** versão de implementação ainda não decidida; a pesquisa medida precede a escolha. O pedido de documentação foi recuperado em 2026-10-19.
+
 **Premissa:** IDE C/C++/Rust/Python, Qt/QML → JSON-RPC sobre stdio → core Rust → ferramentas como processos.
 
 ## 1. Parecer e limite da evidência
@@ -44,6 +47,68 @@ A implementação local foi examinada no HEAD `34cec5bffd25727c04dab964aacc00e78
 | Busca de manifests nesse mesmo prefixo | Não encontrados `rmw_cyclonedds_cpp`, `rmw_zenoh_cpp`, `micro_ros_agent`, `ros2trace`, `plotjuggler_ros` | Ausência em outros prefixos, containers ou máquinas |
 
 **Não foram realizados:** build de workspace ROS, teste de pub/sub, depuração ROS via Vectis, execução de plugins, captura de tráfego, simulação Gazebo, testes em rede, medição de desempenho ou teste de hardware. Os testes futuros deste documento continuam pendentes. Não há capacidade ROS 2 promovida a “pronta”.
+
+### 1.2 Decisão recuperada: escopos por ferramentas e melhorias próprias (2026-10-19)
+
+Depois do commit `8b52104` (2026-10-17), o autor pediu documentar o ROS 2
+por escopos, como embarcados, orquestrando ferramentas existentes e buscando
+as melhorias de experiência discutidas. A sessão terminou antes da escrita;
+o trecho foi fornecido novamente pelo autor em 2026-10-19. A entrada do
+ROS 2 já estava decidida no [40 §5](../roadmaps/40-estado-e-continuidade.md).
+Não houve escolha de versão, nem autorização para embutir Gazebo, RViz ou
+rqt. Implementar depois da 0.4.5 e pesquisar entre CI e 0.4.1b eram
+recomendações/perguntas da sessão, não decisões do autor.
+
+**Régua:** a Robot Developer Extensions para ROS 2 é a referência atual no
+VS Code. Sua documentação lista ambiente, tarefas colcon, launch/debug,
+caminhos C++/Python, interfaces, testes e monitor de tópicos; URDF/Xacro é
+uma extensão separada. A antiga extensão Microsoft está arquivada e aponta
+a sucessora. Conferido em 2026-10-19 nas fontes dos mantenedores:
+[RDE](https://ranchhandrobotics.com/rde-ros-2/) e
+[anúncio da sucessão](https://github.com/ms-iot/vscode-ros/issues/1306).
+Isso orienta os ensaios, sem afirmar paridade já alcançada.
+
+**Base local conferida em 2026-10-19:** `/opt/ros/lyrical` existe e o
+`dpkg-query` lista **472 pacotes `ros-lyrical-*` instalados**. Os manifests
+registram `rclcpp` 32.0.3, `rclpy` 10.0.11, `ros2launch` 0.29.9,
+`ros2cli` 0.40.9, `rviz2` 15.2.6 e `rqt_gui` 1.10.6; `colcon` está em
+`/usr/bin/colcon`. A matriz upstream confirma Ubuntu 26.04 amd64/arm64 como
+Tier 1 do Lyrical ([plataformas](https://github.com/ros2/ros2_documentation/blob/rolling/source/Releases/lyrical/supported-platforms.rst),
+consulta 2026-10-19). Não foi executado build, pub/sub, launch, debug ou
+aplicativo gráfico ROS nesta retomada.
+
+**Melhorias a perseguir por medição, dentro de R1–R5 (§14):**
+
+| Escopo | Reuso e resultado esperado | Prova antes de anunciar |
+| --- | --- | --- |
+| Ambiente único e explícito | Reconhecer pacotes em `src/`, propor underlay/overlay e aplicar o mesmo contexto aos jobs, terminal, clangd e Python; respeitar confiança e escolha quando houver ambiguidade (§2.3) | Editor, build e execução mostram os mesmos prefixos; nenhum setup global ou script avaliado só por abrir pasta |
+| C++ entre pacotes | Colcon/CMake produzem CDB; reusar `index.context` e o futuro inspector C2 para mostrar pacote, compilador, flags e origem | Navegar de consumidor para interface gerada e explicar a unidade de compilação correta após rebuild e troca de perfil |
+| Python e interfaces geradas | Alimentar interpretador/basedpyright/debugpy com os caminhos do overlay compatível | Import e navegação de mensagem gerada funcionam no editor e na execução, antes e depois do rebuild |
+| Build, testes e launch | Colcon, Jobs/Tests, run configs e DAP existentes; separar depurar o launch Python de depurar seus nós (§5) | Testes por pacote, breakpoint num nó C++ e num nó Python, encerramento sem descendentes órfãos |
+| Tópicos e bags | `ros2`/`rosbag2`, limites de volume e ferramentas externas; estudar a relação com Banco/Grafana (§6) | Consulta/gravação/replay corretos e canceláveis, com QoS, relógio e custo medidos; MCAP não vira tabela automaticamente |
+| micro-ROS | Projetos de firmware existentes, toolchains/flash/debug de Embarcados e Agent externo (§7.2) | Matriz por framework, placa, transporte e versão; sonda e flash reais exigem hardware |
+
+**CDB: medir antes de criar mecanismo.** O clangd escolhe comandos por
+arquivo e procura/configura a compilation database; não exige que todo
+workspace tenha sempre uma única CDB. No colcon, medir primeiro as bases
+por pacote e a saída agregada do handler já identificado na §1.1. Reutilizar
+essa saída se resolver o fluxo; se não resolver, comparar seleção por
+contexto e agregação, preservando diretórios, duplicatas e perfil. Não
+inventar uma única linha de flags para todos os pacotes. Fonte:
+[modelo de compile commands do clangd](https://clangd.llvm.org/design/compile-commands),
+consulta 2026-10-19.
+
+**Primeiro ensaio ainda pendente:** workspace pequeno no Lyrical com um
+pacote de interfaces, consumidor C++ e consumidor Python; medir CDB por
+pacote/agregada, caminhos Python gerados, build/teste e debug de launch/nó.
+Comparar os mesmos gestos no RDE e na Kinein, marcando o que hoje requer
+comando manual. Registrar versões, comandos, duração, falhas e lacunas; só
+então escolher a versão e o primeiro contrato. A preparação da CI e a
+0.4.1b mantêm a ordem decidida; esta atualização é documentação.
+
+O pedido de refatoração e entendimento profundo ao longo dos anos tem dono
+no [56 §1.1](../roadmaps/56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19),
+sem duplicar aqui um motor semântico específico de ROS.
 
 ## 2. O que ROS 2 acrescenta ao modelo de uma IDE
 
@@ -507,7 +572,7 @@ Cada execução do gate deve registrar: versão da Vectis, distribuição/OS/arq
 | **R5 — Rust e micro-ROS qualificados** | Gates por cliente Rust e por firmware/placa/Agent; reaproveitamento da frente Embarcados já comprovada |
 | **Estudos posteriores** | Multi-DAP, streaming volumoso e trace integrado somente quando os contratos e medições justificarem |
 
-Essa ordem expressa dependências, não datas nem alocação automática de versões. A decisão de produto recomendada é investir na integração ROS 2, com foco inicial em C++/Python, usando **RDE e Qt Creator como referências de comportamento**, **ros2cli/colcon/rosdep como ferramentas da cadeia**, e **RViz/rqt/PlotJuggler/Lichtblick/Gazebo como aplicações externas qualificadas**. A promoção de cada capacidade depende dos ensaios da §12.
+Essa ordem expressa dependências, não datas nem alocação automática de versões. A entrada do ROS 2 foi decidida pelo autor em 2026-10-17 (§1.2); o recorte inicial C++/Python continua recomendado, usando **RDE e Qt Creator como referências de comportamento**, **ros2cli/colcon/rosdep como ferramentas da cadeia**, e **RViz/rqt/PlotJuggler/Lichtblick/Gazebo como aplicações externas qualificadas**. A promoção de cada capacidade depende dos ensaios da §12.
 
 ## 15. Registro das fontes e interpretação
 

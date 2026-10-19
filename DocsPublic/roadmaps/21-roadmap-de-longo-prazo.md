@@ -560,6 +560,12 @@ navegação/refactor; Neovim para velocidade/composição.
 
 ### M5.1 — Refactorings por cima do LSP
 
+O pedido de 2026-10-17, recuperado em 2026-10-19, de aprofundar refatoração,
+compreensão do compilador e inteligência do workspace ao longo dos anos
+está no [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19).
+A direção e as lacunas atuais estão registradas lá; a restrição abaixo
+continua vigente enquanto o autor não decidir outra arquitetura.
+
 ```text
 - Já existe: rename multi-arquivo, code actions (Alt+Enter).
 - Entram: organize imports (rust-analyzer: source.organizeImports via

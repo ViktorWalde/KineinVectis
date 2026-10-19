@@ -102,6 +102,7 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em outra fatia | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19); decisão no §5 |
+| ROS 2: ensaio medido por jornadas antes de escolher versão; documentação do pedido recuperado em 2026-10-19; aprofundamento semântico de longo prazo sem versão nova reservada | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) e [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) |
 | A 0.4 (embarcados), em curso desde 2026-10-16: 0.4.0 a 0.4.4, e a 0.4.5 com o Banco para embarcados e o fechamento | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
 | O lançamento da 0.3.6–0.3.9 (tag e release; o binário já diz `0.3.9`) e o AppImage, só com a 0.4 finalizada (autor, 2026-10-16) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
@@ -326,6 +327,14 @@ ROS 2                        ENTRA na IDE (autor, 2026-10-17): o ambiente ROS 2
                              as ferramentas abertas que ja existem. Versao a
                              decidir; antes, a pesquisa medida (o que o VS
                              Code faz, o que a Kinein ja tem, o que falta)
+                             Pedido posterior recuperado em 2026-10-19:
+                             escopos por ferramentas, jornadas e melhorias;
+                             dono: integracoes/40 §1.2. Versao nao escolhida
+profundidade semantica       DIRECAO de longo prazo do autor (pedido apos o
+(recuperada 2026-10-19)       commit de 2026-10-17): refatoracao e compreensao
+                             de compilador com a regua JetBrains, ao longo
+                             dos anos. Dono: 56 §1.1; nao revoga por si a
+                             restricao de refatoracao via LSP (21 M5.1)
 ```
 
 ## 7. O registro das entregas
