@@ -100,6 +100,11 @@ M7.1 empacotamento           EXISTE   AppImage portavel com smokes (packaging/ap
 M7.2 CI publica              AUSENTE  nao ha .github/ no repositorio
 ```
 
+**Atualização de 2026-10-19:** a camada rápida da CI está preparada no
+checkout e validada localmente; a execução no GitHub e as outras camadas
+continuam pendentes. Cobertura e fronteiras no
+[contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19).
+
 ## 3. Pedidos do autor e para onde foram
 
 Os três pedidos de 2026-10-01 já têm dono:

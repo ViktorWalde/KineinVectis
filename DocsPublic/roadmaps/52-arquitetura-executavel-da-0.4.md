@@ -1082,3 +1082,56 @@ da IDE deu `INC=NOTFOUND` (antes, `/usr/include`); o arquivo exportado num
 aarch64 com e sem sysroot, ARM EABI5 no bare metal), com a mesma linha de
 `find_package` da IDE. No Xvfb: a ação achada pela busca, a prévia com o
 arquivo novo, aplicada, e a lista dizendo "ativa neste projeto".
+
+### 14.8 CI pública — a camada rápida antes da 0.4.1b (2026-10-19)
+
+**Origem:** decisão do autor de 2026-10-17, [40](40-estado-e-continuidade.md)
+§5, "0.9 antecipada em parte". **Antes, medido em 2026-10-19:** não há
+`.github/`; o orquestrador rejeita `--ci-rapida` (exit 2). O `--rapido`
+local exige os presets CMake, compila a UI e roda C++, QML e integrações;
+copiar parte dele para YAML criaria uma segunda ordem de gates.
+
+**Desenho, antes do código:**
+
+- `scripts/verificar.sh` ganha `--ci-rapida`: Rust (fmt, testes do workspace,
+  Clippy, cargo-deny) e os gates estáticos existentes de shell, AppImage,
+  identificadores, QML, IPC, atalhos, documentação, mapa, arquitetura,
+  adiados Windows e transição de workspace, na mesma ordem local. O perfil
+  não precisa de Qt nem de presets. UI compilada, harnesses e integrações
+  ficam nas camadas seguintes; o veredito distingue esta cobertura do gate
+  local. O `--rapido --estrito` continua obrigatório para cada commit.
+- `scripts/test_verification_profiles.py` executa o orquestrador real numa
+  cópia temporária, com ferramentas falsas, nos três perfis: cobertura,
+  builds/smokes, fail-fast e NÃO PROVADO estrito. Roda no começo do gate.
+- `scripts/verificar-appimage.sh --invariantes` limita a checagem às regras
+  estáticas no perfil CI; o padrão local mantém o smoke oportunista de
+  artefatos em `dist/`. Sem esse recorte, uma cópia com artefato deixaria a
+  CI rápida executar uma prova gráfica fora do escopo anunciado.
+- `.github/workflows/ci.yml`: push, pull request e disparo manual, Ubuntu
+  24.04, Rust do `rust-toolchain.toml`, cargo-deny 0.20.2 (o instalado nesta
+  máquina), pré-requisitos explícitos, cache Cargo por toolchain e lockfile,
+  permissões de leitura, cancelamento de execução obsoleta e timeout. O
+  único comando de validação é `bash scripts/verificar.sh --ci-rapida
+  --estrito`; o YAML só prepara o runner. Actions fixadas por SHA, conferidas
+  nas releases oficiais de [checkout](https://github.com/actions/checkout/releases/tag/v4.2.2)
+  e [cache](https://github.com/actions/cache/releases/tag/v4.2.3).
+- `contribuindo/07` é dono do perfil e suas fronteiras; `04` e os comandos
+  de build apontam para ele. O estado e a entrega vão ao 40 e 40.7.
+
+**Provas previstas:** perfil real nesta máquina; mutações em cópia
+temporária para provar a seleção das etapas, fail-fast e o NÃO PROVADO
+estrito; sintaxe shell e YAML; gates locais. **Fica fora:** executar ou
+publicar o workflow no GitHub (é do autor), CI de UI/integrações e matriz
+Arch, geração de AppImage, templates/labels/issues (outra fatia, publicação
+com a 0.4.5), protocolo e código do produto.
+
+**Limite medido ao preparar a publicação:** o exportador da cópia limpa
+não leva `.github/` nem os documentos de engenharia usados pelos gates.
+O workflow desta fatia valida o repositório-fonte completo; a publicação
+no espelho exige confirmar o destino com o autor, sem ampliar a allowlist
+por conta própria (contribuindo/07 §2.1).
+
+**Resultado (2026-10-19):** camada rápida preparada e validada localmente;
+gate local rápido estrito TUDO VERDE, sem NÃO PROVADO. Provas, mutações,
+limites e o que não foi feito no [40.7 §7.316](40.7-registro-das-entregas.md).
+A execução no GitHub permanece pendente; a próxima fatia do produto é C2.

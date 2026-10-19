@@ -8,7 +8,8 @@
 # Uso:
 #   scripts/verificar.sh            # completo: lint + testes + C++ + builds debug/release + o binario ABRE
 #   scripts/verificar.sh --rapido   # rapido: lint + testes + C++ (sem builds finais/smokes)
-#   scripts/verificar.sh --estrito  # combina com os dois: NAO PROVADO reprova
+#   scripts/verificar.sh --ci-rapida # Rust + gates estaticos, sem Qt/integracoes
+#   scripts/verificar.sh --estrito  # combina com os tres perfis: NAO PROVADO reprova
 #
 # PERFIL ATUAL (autor, 2026-10-07): o Qt local do sistema. Na mesma data o
 # desenvolvimento migrou para Arch Linux, pelas versoes estaveis mais recentes
@@ -34,15 +35,16 @@
 #   KINEIN_PRESET_RELEASE (padrao: dev-local-release)
 set -euo pipefail
 
-modo="completo"
+mode="completo"
 strict=0
 for arg in "$@"; do
     case "$arg" in
-        --rapido | --rapida | -r) modo="rapido" ;;
-        --completo | -c) modo="completo" ;;
+        --rapido | --rapida | -r) mode="rapido" ;;
+        --completo | -c) mode="completo" ;;
+        --ci-rapida) mode="ci-rapida" ;;
         --estrito | -e) strict=1 ;;
         *)
-            echo "uso: $0 [--rapido|--completo] [--estrito]" >&2
+            echo "uso: $0 [--rapido|--completo|--ci-rapida] [--estrito]" >&2
             exit 2
             ;;
     esac
@@ -72,39 +74,45 @@ passo() {
     echo "funcao: ${2:?cada etapa precisa de uma descricao nao vazia}"
 }
 
-# OS BUILDS SAO OS ULTIMOS PASSOS, E ERA TARDE DEMAIS PARA DESCOBRIR (2026-09-25).
-#
-# O gate reprovou com "build/dev-local-release is not a directory" depois de 25
-# minutos de clang-tidy, testes e harnesses: o preset existia no
-# `CMakeUserPresets.json`, mas o diretorio nunca tinha sido configurado nesta
-# maquina. Nada disso era sobre o codigo — e o tempo ja' tinha sido gasto.
-# Conferir os dois diretorios custa milissegundos e diz o comando que resolve.
-passo "os diretorios de build existem" \
-    "Falha em milissegundos, e nao depois de 25 minutos, quando falta configurar um preset."
-for preset in "$preset_debug" "$preset_release"; do
-    if [ ! -d "build/$preset" ]; then
-        echo "erro: build/$preset nao existe — configure com 'cmake --preset $preset'." >&2
-        exit 1
-    fi
-done
-echo "build/$preset_debug e build/$preset_release: configurados."
+passo "scripts/test_verification_profiles.py" \
+    "Prova selecao dos perfis, fail-fast e NAO PROVADO estrito sem ferramentas externas."
+python3 scripts/test_verification_profiles.py
 
-# O BUILD DE DEBUG VEM ANTES DE QUEM LE' O BUILD (2026-10-01). O qmllint le' o
-# `.qmltypes` e as copias do QML no diretorio de build; o clang-tidy e os
-# harnesses tambem dependem do que sai dele. Com o build so' no fim, o lint
-# corria contra o build de ONTEM (ou reprovava num clone novo, "configurado mas
-# NAO compilado"). Incremental, custa segundos quando nada mudou — e no modo
-# rapido tambem, porque um lint contra artefato velho e' um gate que mente.
-passo "cmake --build --preset $preset_debug" \
-    "Compila a UI de debug ANTES dos gates que leem o build (qmllint, harnesses)."
-cmake --build --preset "$preset_debug"
-export KINEIN_QML_BUILD_DIR="$raiz/build/$preset_debug"
+if [ "$mode" != "ci-rapida" ]; then
+    # OS BUILDS SAO OS ULTIMOS PASSOS, E ERA TARDE DEMAIS PARA DESCOBRIR (2026-09-25).
+    #
+    # O gate reprovou com "build/dev-local-release is not a directory" depois de 25
+    # minutos de clang-tidy, testes e harnesses: o preset existia no
+    # `CMakeUserPresets.json`, mas o diretorio nunca tinha sido configurado nesta
+    # maquina. Nada disso era sobre o codigo — e o tempo ja' tinha sido gasto.
+    # Conferir os dois diretorios custa milissegundos e diz o comando que resolve.
+    passo "os diretorios de build existem" \
+        "Falha em milissegundos, e nao depois de 25 minutos, quando falta configurar um preset."
+    for preset in "$preset_debug" "$preset_release"; do
+        if [ ! -d "build/$preset" ]; then
+            echo "erro: build/$preset nao existe — configure com 'cmake --preset $preset'." >&2
+            exit 1
+        fi
+    done
+    echo "build/$preset_debug e build/$preset_release: configurados."
+
+    # O BUILD DE DEBUG VEM ANTES DE QUEM LE' O BUILD (2026-10-01). O qmllint le' o
+    # `.qmltypes` e as copias do QML no diretorio de build; o clang-tidy e os
+    # harnesses tambem dependem do que sai dele. Com o build so' no fim, o lint
+    # corria contra o build de ONTEM (ou reprovava num clone novo, "configurado mas
+    # NAO compilado"). Incremental, custa segundos quando nada mudou — e no modo
+    # rapido tambem, porque um lint contra artefato velho e' um gate que mente.
+    passo "cmake --build --preset $preset_debug" \
+        "Compila a UI de debug ANTES dos gates que leem o build (qmllint, harnesses)."
+    cmake --build --preset "$preset_debug"
+    export KINEIN_QML_BUILD_DIR="$raiz/build/$preset_debug"
+fi
 
 passo "cargo fmt --all --check" \
     "Confere a formatacao Rust sem modificar os arquivos."
 cargo fmt --all --check
 
-passo "cargo test --workspace --all-features --no-fail-fast" \
+passo "cargo test --workspace --all-features --no-fail-fast --locked" \
     "Executa os testes Rust de todos os crates, em paralelo (a corrida de ETXTBSY foi resolvida na causa)."
 # EM PARALELO de novo desde 2026-10-03.
 #
@@ -125,11 +133,11 @@ passo "cargo test --workspace --all-features --no-fail-fast" \
 # outros nem rodam — medido em 2026-10-01, duas falhas do kinein-core
 # esconderam o resultado de kinein-protocol e kinein-config. O gate reprova
 # do mesmo jeito; so' passa a mostrar TUDO o que esta' vermelho de uma vez.
-cargo test --workspace --all-features --no-fail-fast
+cargo test --workspace --all-features --no-fail-fast --locked
 
-passo "cargo clippy --workspace --all-targets --all-features -- -D warnings" \
+passo "cargo clippy --workspace --all-targets --all-features --locked -- -D warnings" \
     "Reprova qualquer diagnostico do Clippy em codigo, testes e alvos Rust."
-cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
 passo "scripts/verificar-deny.sh" \
     "Audita licencas, vulnerabilidades, fontes e duplicacoes das dependencias Rust."
@@ -141,19 +149,25 @@ bash scripts/verificar-shell.sh
 
 passo "scripts/verificar-appimage.sh" \
     "Confere as invariantes baratas da distribuicao AppImage sem empacotar."
-bash scripts/verificar-appimage.sh
+if [ "$mode" = "ci-rapida" ]; then
+    bash scripts/verificar-appimage.sh --invariantes
+else
+    bash scripts/verificar-appimage.sh
+fi
 
-passo "scripts/verificar-cpp.sh" \
-    "Valida formatacao e analise estatica do C++ da ponte/UI."
-scripts/verificar-cpp.sh
+if [ "$mode" != "ci-rapida" ]; then
+    passo "scripts/verificar-cpp.sh" \
+        "Valida formatacao e analise estatica do C++ da ponte/UI."
+    scripts/verificar-cpp.sh
 
-passo "scripts/verificar-cpp-testes.sh" \
-    "Roda os testes C++ da UI pelo CTest; reprova se nenhum for declarado."
-bash scripts/verificar-cpp-testes.sh --preset "$preset_debug"
+    passo "scripts/verificar-cpp-testes.sh" \
+        "Roda os testes C++ da UI pelo CTest; reprova se nenhum for declarado."
+    bash scripts/verificar-cpp-testes.sh --preset "$preset_debug"
 
-passo "scripts/verificar-qml.sh" \
-    "Executa o qmllint estrito no modulo QML usando os metadados do build."
-scripts/verificar-qml.sh
+    passo "scripts/verificar-qml.sh" \
+        "Executa o qmllint estrito no modulo QML usando os metadados do build."
+    scripts/verificar-qml.sh
+fi
 
 passo "scripts/check_identifier_language.py" \
     "Reprova identificador novo em portugues (Rust, C++, QML, Python, shell); legado so' desce; o mesmo veredito em toda distro."
@@ -188,21 +202,23 @@ passo "scripts/verificar-fiacao-ipc.sh" \
     "Inspeciona referencias na cadeia IPC, do metodo/evento ao consumidor QML."
 bash scripts/verificar-fiacao-ipc.sh
 
-passo "scripts/verificar-exercitacao.sh" \
-    "Exercita o core real contra as ferramentas externas disponiveis na maquina."
-bash scripts/verificar-exercitacao.sh
+if [ "$mode" != "ci-rapida" ]; then
+    passo "scripts/verificar-exercitacao.sh" \
+        "Exercita o core real contra as ferramentas externas disponiveis na maquina."
+    bash scripts/verificar-exercitacao.sh
 
-passo "scripts/verificar-embarcado.sh" \
-    "Prova no QEMU o ciclo de depuracao embarcada sem exigir placa fisica."
-bash scripts/verificar-embarcado.sh
+    passo "scripts/verificar-embarcado.sh" \
+        "Prova no QEMU o ciclo de depuracao embarcada sem exigir placa fisica."
+    bash scripts/verificar-embarcado.sh
 
-passo "scripts/verificar-python-debug.sh" \
-    "Prova MicroPython por porta e a depuracao Python com um debugpy real."
-bash scripts/verificar-python-debug.sh
+    passo "scripts/verificar-python-debug.sh" \
+        "Prova MicroPython por porta e a depuracao Python com um debugpy real."
+    bash scripts/verificar-python-debug.sh
 
-passo "scripts/verificar-clangd-cross.sh" \
-    "Prova que o clangd encontra os cabecalhos C++ do compilador cross do kit."
-bash scripts/verificar-clangd-cross.sh
+    passo "scripts/verificar-clangd-cross.sh" \
+        "Prova que o clangd encontra os cabecalhos C++ do compilador cross do kit."
+    bash scripts/verificar-clangd-cross.sh
+fi
 
 passo "scripts/verificar-atalhos.sh" \
     "Mantem atalhos, paleta e tratamento dos itens de menu coerentes e sem colisao."
@@ -232,11 +248,13 @@ passo "scripts/verificar-transicao-workspace.sh" \
     "Garante que a troca do estado por workspace continua com um unico dono."
 bash scripts/verificar-transicao-workspace.sh
 
-passo "scripts/verificar-qml-logica.sh" \
-    "Executa em modo headless a logica real dos controllers e componentes QML."
-scripts/verificar-qml-logica.sh
+if [ "$mode" != "ci-rapida" ]; then
+    passo "scripts/verificar-qml-logica.sh" \
+        "Executa em modo headless a logica real dos controllers e componentes QML."
+    scripts/verificar-qml-logica.sh
+fi
 
-if [ "$modo" = "completo" ]; then
+if [ "$mode" = "completo" ]; then
     # "Compila" e "abre" sao afirmacoes diferentes (2026-09-10: dois builds
     # verdes que abortavam ao abrir). Roda DEPOIS do build, e para cada preset:
     # o objeto obsoleto vive na arvore, nao no fonte.
@@ -281,12 +299,16 @@ fi
 
 current_step=""
 echo ""
-if [ "$modo" = "completo" ]; then
+if [ "$mode" = "completo" ]; then
     scope="completo — builds e abertura dos presets selecionados validados"
+elif [ "$mode" = "ci-rapida" ]; then
+    scope="CI rapida — Rust e gates estaticos; sem UI compilada, harnesses ou integracoes"
 else
     scope="rapido — sem builds finais/smokes; rode --completo antes de release"
 fi
-if [ "$unproven_count" -eq 0 ]; then
+if [ "$unproven_count" -eq 0 ] && [ "$mode" = "ci-rapida" ]; then
+    echo "✓ VERDE no perfil $scope"
+elif [ "$unproven_count" -eq 0 ]; then
     echo "✓ TUDO VERDE ($scope)"
 else
     echo "✓ VERDE no que esta maquina prova ($scope)"

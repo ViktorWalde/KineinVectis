@@ -25,8 +25,19 @@
 # o roadmap 31 (simulacao fisica), onde essa colisao era decisao em aberto; a
 # simulacao saiu do produto em 2026-09-12 (DocsPublic/roadmaps/40-estado-e-continuidade.md §5).
 #
-# Uso: bash scripts/verificar-appimage.sh
+# Uso: bash scripts/verificar-appimage.sh [--invariantes]
 set -Eeuo pipefail
+
+static_only=0
+case "${1:-}" in
+    --invariantes) static_only=1 ;;
+    "") ;;
+    *) echo "uso: $0 [--invariantes]" >&2; exit 2 ;;
+esac
+if [ "$#" -gt 1 ]; then
+    echo "uso: $0 [--invariantes]" >&2
+    exit 2
+fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -147,6 +158,11 @@ fi
 
 # 6. Se ha um AppImage entregue, valide-o de verdade. Isto e oportunista de
 #    proposito: o gate nao GERA artefato, mas quando existe um, nao o ignora.
+if [ "$static_only" -eq 1 ]; then
+    echo "✓ distribuicao AppImage: invariantes ok (perfil estatico, sem smoke de artefato)"
+    exit 0
+fi
+
 DIST_DIR="${KINEIN_APPIMAGE_DIST_DIR:-$REPO_ROOT/dist}"
 # `|| true`: sem artefato, o `find` sai 1 e o `set -e` mataria o script AQUI —
 # em silencio, com exit 1 e nenhuma mensagem. Foi o que aconteceu na primeira

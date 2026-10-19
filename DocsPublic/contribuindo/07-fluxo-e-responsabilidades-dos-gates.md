@@ -91,8 +91,8 @@ não um detalhe da máquina.
 `scripts/verificar.sh` é o único dono de:
 
 - ordem e política *fail-fast*;
-- seleção entre `--rapido` e `--completo`, e o `--estrito` (§1.1), que
-  combina com os dois;
+- seleção entre `--rapido`, `--completo` e `--ci-rapida`, e o `--estrito`
+  (§1.1), que combina com os três;
 - nome e descrição curta de cada etapa;
 - presets de build escolhidos por `KINEIN_PRESET_DEBUG` e
   `KINEIN_PRESET_RELEASE`;
@@ -114,6 +114,46 @@ O orquestrador não deve conter a implementação de uma análise extensa. Se a
 regra tem lógica própria, ela ganha um gate-folha; o `verificar.sh` conserva
 somente a chamada e a descrição.
 
+### 2.1 A camada rápida da CI (2026-10-19)
+
+`bash scripts/verificar.sh --ci-rapida --estrito` usa as mesmas etapas, na
+mesma ordem, do gate local, selecionadas no próprio orquestrador. O workflow
+`.github/workflows/ci.yml` só prepara o runner e chama esse comando; não
+repete a lista de verificações em YAML.
+
+| Perfil | Cobertura |
+| --- | --- |
+| `--ci-rapida` | fmt, testes Rust e Clippy com `--locked`, cargo-deny, ShellCheck, invariantes AppImage e os gates estáticos de identificadores, QML (fiação, propriedades, mortas, duplicação, tokens e alcance), IPC, atalhos, docs, mapa, links, arquitetura, adiados Windows e transição de workspace |
+| `--rapido` | tudo acima, mais build de debug, C++, CTest, qmllint, exercitação real, QEMU, depuração Python, clangd-cross e harnesses QML |
+| `--completo` | tudo do rápido, mais os builds finais e os smokes |
+
+A CI rápida não exige Qt nem diretórios de build. O resultado diz **"VERDE
+no perfil CI rapida"**, com as exclusões, e não "TUDO VERDE". Não é prova de
+UI nem de integração e não substitui o `--rapido --estrito` de cada commit.
+O protocolo NÃO PROVADO continua valendo para qualquer etapa executada;
+`--estrito` reprova lista não vazia em qualquer perfil.
+O gate AppImage recebe `--invariantes` neste perfil: mesmo com artefato em
+`dist/`, não abre a UI. Nos modos locais, o smoke oportunista permanece.
+
+O primeiro runner é Ubuntu 24.04, com Rust do `rust-toolchain.toml`,
+cargo-deny 0.20.2, dependências de compilação (inclusive unixODBC), Python,
+Git e ShellCheck. O cache Cargo usa toolchain, manifests e lockfile; as
+actions têm SHA fixado. Dispara em push, pull request e manualmente, com
+token de leitura, timeout e cancelamento de execução obsoleta.
+
+**Ainda não provado:** execução no GitHub; a publicação é do autor
+([40](../roadmaps/40-estado-e-continuidade.md) §5). As camadas de UI,
+integrações pesadas agendadas e a matriz Arch continuam pendentes. Desenho da
+fatia no [52 §14.8](../roadmaps/52-arquitetura-executavel-da-0.4.md).
+
+**Fronteira de publicação:** este workflow valida o repositório-fonte
+completo. O `scripts/exportar-copia-limpa.sh` atual não exporta `.github/`
+nem a documentação de engenharia que o mapa e os gates conferem. Portanto,
+esta fatia não entrega CI no espelho exportado. O destino da CI pública e
+a adaptação da exportação precisam ser confirmados com o autor antes da
+publicação; a allowlist e a visibilidade não foram alteradas
+([21 §M7.3](../roadmaps/21-roadmap-de-longo-prazo.md#m73--documentação-pública-e-contribuição)).
+
 ## 3. Responsabilidade do código de cada etapa
 
 “Dono” abaixo significa o lugar que deve mudar quando a **regra de verificação**
@@ -121,6 +161,7 @@ muda. O código do produto que um gate inspeciona continua em seu domínio norma
 
 | Etapa | Dono da verificação | Responsabilidade exclusiva |
 | --- | --- | --- |
+| `test_verification_profiles.py` | `scripts/test_verification_profiles.py` | Executa o orquestrador real em cópia temporária com ferramentas falsas: fronteiras dos perfis, builds/smokes locais, fail-fast e NÃO PROVADO estrito. |
 | `cargo fmt --all --check` | configuração `rustfmt` + chamada no orquestrador | Formatação Rust, sem reescrever arquivos. |
 | `cargo test --workspace --all-features` | testes nos crates + chamada no orquestrador | Comportamento Rust isolado e integrações codificadas nos testes. |
 | `cargo clippy ... -D warnings` | lints dos crates + chamada no orquestrador | Diagnósticos estáticos Rust em todos os alvos. |

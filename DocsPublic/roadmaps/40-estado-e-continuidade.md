@@ -9,7 +9,7 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-16). Leia isto primeiro.**
+> **HANDOFF (2026-10-19). Leia isto primeiro.**
 >
 > **Máquina:** Ubuntu 26.04 LTS, checkout `/home/hugh/KineinVectis`, branch
 > `main`, que contém o `porte-windows` (fast-forward local em 2026-10-15,
@@ -17,7 +17,7 @@
 > 4.2.3, Python 3.14.4, Rust 1.96.1 (rustup), cargo-deny 0.20.2, Podman
 > 5.7.0; o Docker 29.9.1 nega o socket (usuário fora do grupo). O
 > `CMakeUserPresets.json` local foi gerado como o `instalar-ambiente.sh` faz;
-> o gate rápido passa TUDO VERDE, sem NÃO PROVADO, desde 2026-10-16 (o
+> o gate rápido passou TUDO VERDE, sem NÃO PROVADO, em 2026-10-16 (o
 > autor instalou a lista do apt e fixou o `rustup default 1.96.1`: QEMU ARM,
 > `debugpy`, clangd cross, `fd` e monitor serial provados, 40.7 §7.302). A UI
 > compila e abre: os aceites da 16.1 a dirigiram no Xvfb (2026-10-16).
@@ -25,7 +25,7 @@
 > **A 0.3.9 está encerrada no checkout (2026-10-16, 40.7 §7.304), sem
 > lançamento** (o pacote único da 0.3.6–0.3.9 é do autor; 57). O
 > [59](59-fechamento-da-0.3.9.md) virou registro; o que ficou aberto está no
-> §4. **Próximo passo:** a 0.4.0, a fundação
+> §4. **A 0.4 começou pela fundação**, a 0.4.0
 > ([52](52-arquitetura-executavel-da-0.4.md) §11 e §14): feitas a 0.4.0a (o
 > contexto efetivo com a origem), a 0.4.0b (o preset do configure), a 0.4.0c
 > (o compilador checando ao salvar), a 0.4.0d (o progresso do servidor; a
@@ -33,11 +33,12 @@
 > que subiu sem CDB reiniciado) e a 0.4.0f (a matriz de emuladores medida):
 > **a 0.4.0 está completa** (40.7 §7.307–§7.314). A 0.4.1, o cross, começou:
 > a 0.4.1a (o host sem vazar com sysroot; o kit exportável como toolchain
-> file, §7.315). **A próxima fatia é a CI pública, a camada rápida** (§5,
-> "0.9 antecipada em parte"); depois, o C2 (o inspector do contexto), a
-> deriva e o `toolchain.json` schema 3 (52 §11), cada desenho no 52 §14
-> antes do código. **Confiança no projeto (16.4b):** cada projeto aberto
-> antes dela pede um clique em "Confiar neste projeto" (a faixa de saúde).
+> file, §7.315). **CI pública:** a camada rápida está preparada no checkout
+> (52 §14.8; cobertura no contribuindo/07 §2.1), validada localmente;
+> a execução no GitHub e as camadas de UI/pesada continuam pendentes.
+> **Próxima fatia:** o C2 (o inspector do contexto); depois, deriva e schema 3
+> (52 §11), com desenho antes do código (52 §14). **Confiança:** projetos
+> abertos antes da 16.4b pedem "Confiar neste projeto" (faixa de saúde).
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
 > e a entrada `CLAUDE.md` (61, O6 e O7, feitas); Rust e Qt mantidos.
@@ -67,8 +68,7 @@ metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
 harnesses   151 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
-            §7.277); 1182 no Ubuntu 26.04 (gate rápido de 2026-10-17,
-            §7.315).
+            §7.277); 1182 no gate rápido estrito local de 2026-10-19 (§7.316).
 ```
 
 Os comandos que medem estão no
@@ -101,12 +101,12 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
+| CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em outra fatia | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19); decisão no §5 |
 | A 0.4 (embarcados), em curso desde 2026-10-16: 0.4.0 a 0.4.4, e a 0.4.5 com o Banco para embarcados e o fechamento | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
 | O lançamento da 0.3.6–0.3.9 (tag e release; o binário já diz `0.3.9`) e o AppImage, só com a 0.4 finalizada (autor, 2026-10-16) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
 | A edição especial Windows + WSL2, depois da 0.4.0 | [60](60-windows-e-edicao-especial.md) §4 |
-| O AppImage novo: o autor considera depois da 0.4.0, sem decisão | [59](59-fechamento-da-0.3.9.md) §8 (registro; os requisitos guardados) |
 
 As dívidas antigas, de antes da 0.3.9 (o TLS do `postgres`, o DAP com
 probe-rs, as fatias de embarcados da trilha), estão na lista datada do §4 do

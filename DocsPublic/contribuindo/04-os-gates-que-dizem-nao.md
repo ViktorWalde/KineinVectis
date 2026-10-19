@@ -9,7 +9,7 @@
 `bash scripts/verificar.sh` roda tudo em sequência e **para no primeiro
 erro**. `--rapido` pula o build release e os smokes ("o binário abre"), não a
 compilação da UI de debug, que roda antes dos lints. `--estrito` combina com
-os dois e reprova o que esta máquina não conseguiu provar (abaixo). Cada gate
+os três perfis e reprova o que esta máquina não conseguiu provar (abaixo). Cada gate
 existe por uma falha real, datada no `40`; quando um deles reprova, a resposta
 certa é quase sempre corrigir o código — a exceção com motivo é o último
 recurso, e fica escrita no próprio script.
@@ -18,12 +18,15 @@ Este arquivo é o catálogo de diagnóstico. O fluxo entre orquestrador,
 gates-folha, auxiliares e artefatos, além do dono de cada responsabilidade,
 está em
 [`07-fluxo-e-responsabilidades-dos-gates.md`](07-fluxo-e-responsabilidades-dos-gates.md).
+O perfil `--ci-rapida` (Rust e verificações estáticas, sem Qt) e sua cobertura
+estão no [07 §2.1](07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19).
 
-## Os três desfechos
+## Os desfechos
 
 | Saída do `verificar.sh` | O que significa | O que fazer |
 | --- | --- | --- |
 | `✓ TUDO VERDE (modo)` | todo gate rodou e passou | nada |
+| `✓ VERDE no perfil CI rapida` + escopo | passou só a camada Rust/estática; UI compilada, harnesses e integrações ficam fora | rode o gate local rápido estrito antes de commitar |
 | `✓ VERDE no que esta maquina prova (modo)` + lista `NAO PROVADO` | o código passou em tudo que rodou; os itens da lista **não rodaram** por falta de ferramenta de ambiente (QEMU, debugpy, kit cross, Podman/Docker) | instale o que a lista nomeia, ou rode onde existe; antes de release, `--estrito` |
 | `✗ FALHOU em: <etapa>` | um gate reprovou; com `--estrito`, também a lista não vazia | leia a etapa na tabela abaixo |
 
@@ -36,6 +39,7 @@ ferramenta de gate do **repositório** ausente reprova; ferramenta de
 
 | Gate | O que mede | Como ler o "não" |
 | --- | --- | --- |
+| `test_verification_profiles.py` | seleção dos perfis e propagação de falhas no orquestrador real | um perfil pulou ou executou etapa indevida, mudou os builds/smokes locais, engoliu falha ou aprovou NÃO PROVADO estrito; a prova usa ferramentas falsas e não exige Qt |
 | `cargo fmt --all --check` | formatação | rode `cargo fmt --all` |
 | `cmake --build --preset <debug>` | a UI de debug compila | roda **antes** dos lints desde 2026-10-01: o qmllint e os harnesses leem o build, e lintar contra o build de ontem é um gate que mente |
 | `cargo test --workspace --all-features --no-fail-fast` | os testes Rust (852 no core em 2026-10-03) | `--no-fail-fast`: todos os crates rodam e o vermelho aparece inteiro. **Em paralelo** de novo desde 2026-10-03 (13 s, contra cerca de 44 s em série). De 2026-09-24 a 2026-10-03 rodou em uma thread por causa da corrida de `ETXTBSY` entre escrever um executável de teste e o `fork` de outro teste. A causa foi resolvida: todo executável de teste é gravado por `crate::write_executable`, que nunca o abre para escrita no processo dos testes. Foram 25 rodadas paralelas sem falha; antes, o teste do LSP `the_rust_server_receives_the_kit_target…` e o da descoberta do pytest falhavam de vez em quando. Um teste novo que grava executável **usa o `write_executable`**. Os testes de execução descontam o que o **perfil de login** imprime (`sh -lc true`), e os de permissão não fazem o pedido quando rodam como root |

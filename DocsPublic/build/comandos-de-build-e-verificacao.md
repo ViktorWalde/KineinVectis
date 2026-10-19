@@ -18,7 +18,18 @@ compila mesmo assim, antes dos lints que leem o build):
 scripts/verificar.sh --rapido
 ```
 
-Antes de release e em CI, acrescente `--estrito` (combina com os dois modos):
+A camada rápida da CI pública usa o mesmo orquestrador, sem precisar de Qt
+ou de presets CMake:
+
+```bash
+bash scripts/verificar.sh --ci-rapida --estrito
+```
+
+O perfil, os pré-requisitos e a cobertura estão no
+[`contribuindo/07` §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19).
+Ele não substitui o gate local rápido estrito de cada commit.
+
+Antes de release e em CI, acrescente `--estrito` (combina com os três perfis):
 
 ```bash
 scripts/verificar.sh --estrito
