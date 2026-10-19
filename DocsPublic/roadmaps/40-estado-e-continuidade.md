@@ -42,11 +42,11 @@
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
 > e a entrada `CLAUDE.md` (61, O6 e O7, feitas); Rust e Qt mantidos.
-> **Decisões de 2026-10-17** (§5): a CI pública entra numa fatia curta
+> **Decisões de 2026-10-17/19** (§5): a CI pública entra numa fatia curta
 > antes da 0.4.1b; a 0.4.5 fecha com o AppImage, a divulgação, a
 > documentação em inglês e a porta para colaboradores (preparada antes);
-> depois dela, o servidor MCP; o ROS 2 entra na IDE, com a versão a decidir
-> depois da pesquisa medida.
+> depois dela, o servidor MCP e a frente ROS 2, por escopos e após pesquisa.
+> A versão do ROS 2 segue sem número definido (integracoes/40 §1.2).
 >
 > **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
 > 0.3.9 e a 0.4 sozinho, fatia por fatia, sem push; SDKs no usuário, sem
@@ -101,8 +101,9 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em outra fatia | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19); decisão no §5 |
-| ROS 2: ensaio medido por jornadas antes de escolher versão; documentação do pedido recuperado em 2026-10-19; aprofundamento semântico de longo prazo sem versão nova reservada | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) e [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) |
+| CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
+| ROS 2: frente e ensaio por jornadas depois da 0.4.5; escolher versão exata a partir da pesquisa medida (autor, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
+| Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (autor, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
 | A 0.4 (embarcados), em curso desde 2026-10-16: 0.4.0 a 0.4.4, e a 0.4.5 com o Banco para embarcados e o fechamento | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
 | O lançamento da 0.3.6–0.3.9 (tag e release; o binário já diz `0.3.9`) e o AppImage, só com a 0.4 finalizada (autor, 2026-10-16) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
@@ -330,11 +331,22 @@ ROS 2                        ENTRA na IDE (autor, 2026-10-17): o ambiente ROS 2
                              Pedido posterior recuperado em 2026-10-19:
                              escopos por ferramentas, jornadas e melhorias;
                              dono: integracoes/40 §1.2. Versao nao escolhida
+                             Esclarecido pelo autor em 2026-10-19: a frente
+                             ROS 2 e seu ensaio ficam DEPOIS da 0.4.5
 profundidade semantica       DIRECAO de longo prazo do autor (pedido apos o
 (recuperada 2026-10-19)       commit de 2026-10-17): refatoracao e compreensao
                              de compilador com a regua JetBrains, ao longo
-                             dos anos. Dono: 56 §1.1; nao revoga por si a
-                             restricao de refatoracao via LSP (21 M5.1)
+                             dos anos. Esclarecido em 2026-10-19: AUTORIZADO
+                             o estudo de algoritmos proprios COMPLEMENTARES
+                             de analise/refatoracao, sem substituir motores;
+                             refina a restricao absoluta anterior no ponto
+                             da pesquisa. Donos: 56 §1.1 e pesquisa/02
+porta de colaboracao         IDEIA documentada a pedido do autor (2026-10-19):
+(2026-10-19)                 tarefas no GitHub, cards informativos no site
+                             com botao para a issue e "Tasks realizadas".
+                             Recomendacao no contribuindo/11; nenhuma issue,
+                             configuracao GitHub ou mudanca no site nesta
+                             fatia. Publicacao segue com a 0.4.5 (ver acima)
 ```
 
 ## 7. O registro das entregas

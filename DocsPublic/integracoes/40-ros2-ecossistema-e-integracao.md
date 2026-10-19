@@ -4,7 +4,7 @@
 
 **Pesquisa:** 2026-09-24 a 2026-09-25; retomada e conferências pontuais: 2026-10-19 (§1.2).
 
-**Horizonte:** versão de implementação ainda não decidida; a pesquisa medida precede a escolha. O pedido de documentação foi recuperado em 2026-10-19.
+**Horizonte:** frente ROS 2 depois da 0.4.5, por decisão do autor em 2026-10-19; a pesquisa medida precede a escolha da versão exata.
 
 **Premissa:** IDE C/C++/Rust/Python, Qt/QML → JSON-RPC sobre stdio → core Rust → ferramentas como processos.
 
@@ -55,9 +55,10 @@ por escopos, como embarcados, orquestrando ferramentas existentes e buscando
 as melhorias de experiência discutidas. A sessão terminou antes da escrita;
 o trecho foi fornecido novamente pelo autor em 2026-10-19. A entrada do
 ROS 2 já estava decidida no [40 §5](../roadmaps/40-estado-e-continuidade.md).
-Não houve escolha de versão, nem autorização para embutir Gazebo, RViz ou
-rqt. Implementar depois da 0.4.5 e pesquisar entre CI e 0.4.1b eram
-recomendações/perguntas da sessão, não decisões do autor.
+**Esclarecimento do autor em 2026-10-19:** o ROS 2 entra **depois da
+0.4.5**. A frente e seu ensaio ficam para esse horizonte; a versão exata
+será escolhida depois da pesquisa medida. Não intercalar agora o ensaio
+entre CI e 0.4.1b. Gazebo, RViz e rqt continuam ferramentas externas.
 
 **Régua:** a Robot Developer Extensions para ROS 2 é a referência atual no
 VS Code. Sua documentação lista ambiente, tarefas colcon, launch/debug,
@@ -103,8 +104,9 @@ pacote de interfaces, consumidor C++ e consumidor Python; medir CDB por
 pacote/agregada, caminhos Python gerados, build/teste e debug de launch/nó.
 Comparar os mesmos gestos no RDE e na Kinein, marcando o que hoje requer
 comando manual. Registrar versões, comandos, duração, falhas e lacunas; só
-então escolher a versão e o primeiro contrato. A preparação da CI e a
-0.4.1b mantêm a ordem decidida; esta atualização é documentação.
+então escolher a versão e o primeiro contrato. Esse ensaio pertence à
+frente pós-0.4.5; CI e 0.4.1b mantêm a ordem decidida. Esta atualização é
+documentação, sem execução do ensaio.
 
 O pedido de refatoração e entendimento profundo ao longo dos anos tem dono
 no [56 §1.1](../roadmaps/56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19),

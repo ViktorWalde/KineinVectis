@@ -21,6 +21,7 @@
 08-convencoes-codigo-testes-commits.md   idioma (nomes em inglês, com gate), comentários, testes, commits
 09-glossario-de-identificadores.md       a tradução de cada palavra para os nomes em inglês
 10-sua-primeira-contribuicao-passo-a-passo.md  uma contribuição inteira, do clone ao commit
+11-ci-publica-e-tarefas-para-colaboradores.md  CI no repositório público, briefings de issues e ideia de cards no site
 ```
 
 ## Em uma tela
@@ -49,6 +50,7 @@ A regra que resume o método de trabalho, e que os gates cobram:
 | Trabalhar com um agente de IA | [05](05-com-um-agente-de-ia.md) | [03](03-o-ritual-de-uma-fatia.md) |
 | Só documentação | [03](03-o-ritual-de-uma-fatia.md) §"documentação" | [`../README.md`](../README.md) (o índice) |
 | Entender ou alterar os gates | [04](04-os-gates-que-dizem-nao.md) | [07](07-fluxo-e-responsabilidades-dos-gates.md) |
+| Preparar tarefas para novos colaboradores | [11](11-ci-publica-e-tarefas-para-colaboradores.md) | [03](03-o-ritual-de-uma-fatia.md) |
 
 ## O estado do projeto (para não começar do lugar errado)
 

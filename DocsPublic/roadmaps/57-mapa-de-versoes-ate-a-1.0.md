@@ -133,15 +133,24 @@ Os de 2026-10-17 (40 §5):
 6. **Parte da 0.9 antecipada:** a CI pública entra agora, numa fatia curta
    antes da 0.4.1b; a porta para novos colaboradores (modelos, labels,
    issues de entrada em inglês) se prepara agora e se publica junto da 0.4.5.
+   A recomendação de CI no repositório público e a ideia de cards no site
+   derivados das issues foram documentadas em 2026-10-19 no
+   [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md);
+   o site é outra sessão, sem requisito novo para o release.
 7. **ROS 2 na IDE**, tão bom quanto o ambiente do VS Code ou melhor,
    orquestrando as ferramentas abertas; a versão sai de uma pesquisa medida.
    O pedido posterior de escopos e melhorias, recuperado em 2026-10-19,
    está no [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19);
-   a data da pesquisa e a implementação depois da 0.4.5 não foram decididas.
+   **Esclarecido pelo autor em 2026-10-19:** a frente ROS 2 e seu ensaio
+   ficam para **depois da 0.4.5**; a versão exata continua sem número.
 8. **Profundidade de refatoração e compreensão do compilador ao longo dos
    anos**, com a régua JetBrains: pedido recuperado em 2026-10-19,
    registrado no [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19).
-   Não reserva versão nem revoga a regra atual de refatoração via LSP.
+   **Esclarecido em 2026-10-19:** estudar algoritmos próprios de análise e
+   refatoração **complementares**, sem substituir os motores. Refina a
+   restrição absoluta anterior quanto à pesquisa; hipóteses e critérios
+   no [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md).
+   Não reserva versão nem aprova uma implementação na 0.4.
 
 **O `/ide` da Kinein ficou sem decisão** (2026-10-17), pelo que a
 documentação oficial do Claude Code mostra: o transporte (MCP por

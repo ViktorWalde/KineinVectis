@@ -146,13 +146,20 @@ token de leitura, timeout e cancelamento de execução obsoleta.
 integrações pesadas agendadas e a matriz Arch continuam pendentes. Desenho da
 fatia no [52 §14.8](../roadmaps/52-arquitetura-executavel-da-0.4.md).
 
-**Fronteira de publicação:** este workflow valida o repositório-fonte
-completo. O `scripts/exportar-copia-limpa.sh` atual não exporta `.github/`
-nem a documentação de engenharia que o mapa e os gates conferem. Portanto,
-esta fatia não entrega CI no espelho exportado. O destino da CI pública e
-a adaptação da exportação precisam ser confirmados com o autor antes da
-publicação; a allowlist e a visibilidade não foram alteradas
-([21 §M7.3](../roadmaps/21-roadmap-de-longo-prazo.md#m73--documentação-pública-e-contribuição)).
+**Fronteira de publicação, esclarecida em 2026-10-19:** este workflow valida
+o repositório-fonte completo, que já é público. O exportador produz uma
+cópia de distribuição, sem `.github/` e sem parte dos documentos usados
+pelos gates; não é a fonte recomendada para receber contribuições. A dúvida
+anterior vinha de um trecho superado do 21 M7.3; o estado correto já estava
+em [DocsPublic/README](../README.md#repositório-público--cópia-de-distribuição).
+Não é necessário ampliar a exportação nem alterar visibilidade para rodar
+esta CI no repositório público. Publicação e execução continuam com o autor.
+
+A recomendação para atrair colaboradores e a ideia de cards derivados de
+issues no site estão no
+[11 — CI pública e tarefas para colaboradores](11-ci-publica-e-tarefas-para-colaboradores.md).
+É documentação para preparação futura; não implementa o site nem cria
+issues/configurações no GitHub.
 
 ## 3. Responsabilidade do código de cada etapa
 

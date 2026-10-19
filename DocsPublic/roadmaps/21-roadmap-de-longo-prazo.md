@@ -563,8 +563,9 @@ navegação/refactor; Neovim para velocidade/composição.
 O pedido de 2026-10-17, recuperado em 2026-10-19, de aprofundar refatoração,
 compreensão do compilador e inteligência do workspace ao longo dos anos
 está no [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19).
-A direção e as lacunas atuais estão registradas lá; a restrição abaixo
-continua vigente enquanto o autor não decidir outra arquitetura.
+A direção e as lacunas atuais estão registradas lá. Em 2026-10-19, o autor
+autorizou o estudo de algoritmos próprios complementares, sem substituir
+os motores; as hipóteses ficam em [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md).
 
 ```text
 - Já existe: rename multi-arquivo, code actions (Alt+Enter).
@@ -572,10 +573,12 @@ continua vigente enquanto o autor não decidir outra arquitetura.
   codeAction kind; clangd: include-cleaner actions), extract
   function/variable (rust-analyzer expõe como code action com range —
   exigirá mandar SELEÇÃO no lsp.codeActions, hoje é posição), inline.
-- Decisão de arquitetura: NADA de refactor próprio; se o server não
-  expõe, o Kinein não tem (registrar a lacuna no MANUAL). Custo real:
-  suporte a codeAction com range + applyEdit multi-arquivo mais robusto
-  (já existe base da M1.3).
+- Produto atual: refatorações pelos motores LSP; registrar lacunas no
+  manual. Custo imediato: codeAction com range e applyEdit multi-arquivo
+  mais robusto (já existe base da M1.3).
+- Refinamento do autor, 2026-10-19: estudo de análises/refatorações próprias
+  COMPLEMENTARES autorizado (56 §1.1 e pesquisa/02); sem substituir LSP
+  ou compilador. Pesquisa não é autorização automática de entrega.
 ```
 
 ### M5.2 — Git avançado (expande o MVP de M3)
@@ -746,24 +749,20 @@ falar comigo antes?"* Só faz sentido com M4 (robustez) maduro.
 
 ### M7.3 — Documentação pública e contribuição
 
-```text
-- O repositório privado continua sendo a fonte completa. Publicar por um
-  exportador allowlist para um espelho separado; nunca tornar o remoto privado
-  atual público por engano.
-- Qualquer cópia do código entregue a terceiros contém, entre arquivos
-  Markdown, somente README.md, MANUAL.md e Tutorial.md. `DocsPublic/`, roadmaps e
-  notas de agentes ficam fora da cópia (lista exata: `scripts/exportar-copia-limpa.sh`). Licenças/atribuições usam LICENSE, JSON ou
-  TXT. `.git/` e o histórico privado não entram; eventual espelho começa com
-  histórico próprio. O repositório-fonte nunca muda de visibilidade para essa
-  entrega.
-- README apresenta o produto e o status; MANUAL.md cobre somente o uso da IDE
-  e alimenta o visualizador interno; Tutorial.md cobre instalação,
-  distribuição, atualização e geração do pacote.
-- O exportador precisa de `--dry-run`, lista explícita do que entra, rejeição
-  de Markdown extra e auditoria de segredos antes de qualquer push.
-- i18n: extrair strings (qsTr já usado em toda a UI) e gerar inglês
-  como segunda língua; português continua a língua de desenvolvimento.
-```
+**Reconciliado em 2026-10-19:** o repositório já é público, conforme a API
+do GitHub e o estado em [DocsPublic/README](../README.md#repositório-público--cópia-de-distribuição).
+A antiga frase desta seção sobre fonte privada e espelho obrigatório foi
+superada. A cópia limpa é um artefato de distribuição, com regras próprias
+no mesmo dono; não é a fonte recomendada para receber PRs e executar a CI.
+Não houve mudança de visibilidade, exportação ou publicação nesta revisão.
+
+A porta para colaboradores se prepara antes e se publica com a 0.4.5
+(40 §5), junto da documentação em inglês. A recomendação de repositório,
+briefings de issues e a ideia de cards no site, incluindo "Tasks
+realizadas", têm dono no
+[contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md).
+O site pertence a outra sessão; sua apresentação não acrescenta requisito
+à IDE nem bloqueia o release. A CI técnica permanece no contribuindo/07.
 
 ### M7.4 — Diagnóstico de falhas sem telemetria
 

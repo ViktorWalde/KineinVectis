@@ -19,7 +19,7 @@ com o que a IDE se comprometeu a fazer.
 ```text
 especificacoes/   O ALVO. Alguém decidiu fazer. Diverge do código por
                   natureza, e reconcilia-se ao retomar.
-pesquisa/         A HIPÓTESE. Ninguém decidiu fazer. Pode nunca sair daqui,
+pesquisa/         A HIPÓTESE. Entrega ainda não decidida. Pode nunca sair daqui,
                   e sair daqui exige uma decisão registrada do autor.
 ```
 
@@ -41,3 +41,9 @@ pesquisa/         A HIPÓTESE. Ninguém decidiu fazer. Pode nunca sair daqui,
   semânticas, modo sombra. A parte **já pronta no mercado** deste assunto
   (ccache, sccache) não está aqui: ela é alvo, e mora em
   [`../especificacoes/cache-de-compilacao.md`](../especificacoes/cache-de-compilacao.md).
+- [`02-analise-e-refatoracao-complementares.md`](02-analise-e-refatoracao-complementares.md)
+  — estudo autorizado em 2026-10-19 de algoritmos próprios que melhorem
+  análise, agendamento e refatoração, complementando os motores existentes;
+  hipóteses, comparação, custo e critérios de fracasso, sem versão de entrega.
+  A direção do produto permanece no
+  [56 §1.1](../roadmaps/56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19).

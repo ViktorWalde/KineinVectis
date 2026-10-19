@@ -22,6 +22,7 @@ DocsPublic/contribuindo/07-fluxo-e-responsabilidades-dos-gates.md fluxo, comunic
 DocsPublic/contribuindo/08-convencoes-codigo-testes-commits.md idioma, comentários, testes, commits e onde documentar
 DocsPublic/contribuindo/09-glossario-de-identificadores.md a tradução de cada palavra para os nomes em inglês
 DocsPublic/contribuindo/10-sua-primeira-contribuicao-passo-a-passo.md uma contribuição inteira, do clone ao commit
+DocsPublic/contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md CI pública, requisitos das tarefas e proposta de cards derivados das issues
 ```
 
 A versão curta ("onde olhar para mudar o quê") é

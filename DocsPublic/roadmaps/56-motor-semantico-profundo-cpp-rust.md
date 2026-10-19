@@ -60,9 +60,10 @@ O Kinein deve usar:
 dos anos, desenvolver um sistema profundo com a régua da JetBrains. Este
 documento é o dono dessa direção. ROS 2 é um caso de aplicação, com seu
 recorte no [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19),
-e não um segundo motor semântico. A aspiração é registrada; arquitetura
-nova, cronograma plurianual e equivalência de funcionalidades não estão
-aprovados por esse pedido.
+e não um segundo motor semântico. Em 2026-10-19 o autor esclareceu que quer
+estudar análises e refatorações próprias **complementares**, como melhoria
+da IDE, mantendo os motores existentes. Não se aprovam por isso um engine
+substituto, cronograma plurianual ou equivalência de funcionalidades.
 
 **Base conferida em 2026-10-19:** já existem rename e prévia de edições
 multi-arquivo, code actions e transação confirmável
@@ -92,15 +93,20 @@ conferidas em 2026-10-19: [clangd](https://clangd.llvm.org/features#refactoring)
 e [assists do rust-analyzer](https://rust-analyzer.github.io/book/assists.html).
 São capacidades upstream, não uma lista de recursos entregues pela Kinein.
 
-**Fronteira ainda vigente:** a regra do 21 §M5.1 limita as transformações
-semânticas aos motores existentes; o [25](25-fundacao-semantica-pela-arvore-sintatica.md)
-mantém Tree-sitter na sintaxe, sem decidir tipos ou rename global. A Kinein
-pode aprofundar seu modelo, correlação e UX dentro dessas regras. Um motor
-próprio de tipos ou transformações semânticas além do que os servidores
-expõem seria outra decisão, precedida de pesquisa, alternativas, custo e
-um experimento que possa falhar. O pedido recuperado não foi interpretado
-como revogação dessas restrições. Confirmar essa intenção de longo prazo
-com o autor, sem bloquear o avanço atual via LSP e contexto do compilador.
+**Fronteira refinada pelo autor em 2026-10-19:** fica autorizado o estudo de
+algoritmos próprios de análise e refatoração que **complementem** os motores,
+sem substituí-los. Isso refina a proibição absoluta antiga do 21 §M5.1 no
+ponto da pesquisa complementar; a entrega atual continua baseada em LSP.
+O [25](25-fundacao-semantica-pela-arvore-sintatica.md) mantém Tree-sitter na
+sintaxe: não passa a decidir tipos ou rename global por esta autorização.
+
+Hipóteses, experimentos, medições e critérios de fracasso têm dono em
+[pesquisa/02 — análise e refatoração complementares](../pesquisa/02-analise-e-refatoracao-complementares.md).
+O recorte inclui correlação de contexto, agendamento/invalidação e
+assistências que combinem código e modelo do projeto. Primeiro comparar
+com o fluxo atual e com o que a ferramenta já oferece; promover algoritmo
+a produto exige resultado medido, desenho e decisão de entrega. O estudo
+não entra na fila da 0.4 nem promete pular compilação.
 
 ## 2. O que significa “entender o projeto inteiro”
 

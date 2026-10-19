@@ -1125,11 +1125,12 @@ publicar o workflow no GitHub (é do autor), CI de UI/integrações e matriz
 Arch, geração de AppImage, templates/labels/issues (outra fatia, publicação
 com a 0.4.5), protocolo e código do produto.
 
-**Limite medido ao preparar a publicação:** o exportador da cópia limpa
-não leva `.github/` nem os documentos de engenharia usados pelos gates.
-O workflow desta fatia valida o repositório-fonte completo; a publicação
-no espelho exige confirmar o destino com o autor, sem ampliar a allowlist
-por conta própria (contribuindo/07 §2.1).
+**Fronteira esclarecida em 2026-10-19:** o repositório-fonte já é público;
+é o destino recomendado da CI e dos PRs. A cópia limpa não leva `.github/`
+nem todos os documentos dos gates porque é um artefato de distribuição,
+não uma segunda fonte de contribuição. A dúvida sobre espelho vinha de
+um trecho superado do 21; ver contribuindo/07 §2.1 e
+[contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md).
 
 **Resultado (2026-10-19):** camada rápida preparada e validada localmente;
 gate local rápido estrito TUDO VERDE, sem NÃO PROVADO. Provas, mutações,
