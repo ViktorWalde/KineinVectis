@@ -1,10 +1,10 @@
 # CI pública e tarefas para colaboradores
 
 > **Classe: PLANO.** Recomendação e ideia registradas em 2026-10-19 a pedido
-> do autor. A preparação da porta de colaboração já foi decidida para antes
-> da 0.4.5, com publicação junto dela (40 §5). Cards no site são uma proposta
-> para outra sessão, não requisito novo de release. Este registro não cria
-> issues, labels, configurações no GitHub ou alterações no site.
+> do autor. Na atualização de 2026-10-19, o autor segue sozinho até a
+> 0.4.5; a porta e as tarefas entram depois dela (40 §5). Cards no site são
+> uma proposta para outra sessão, não requisito novo de release. Este registro
+> não cria issues, labels, configurações no GitHub ou alterações no site.
 
 ## 1. O lugar da colaboração
 
@@ -45,8 +45,9 @@ gestão próprio para começar.
 ## 3. A tarefa nasce no GitHub
 
 Publicar poucas tarefas revisadas e prontas para receber contribuição, em
-inglês na abertura da 0.4.5. Não transformar automaticamente cada pendência
-do roadmap em issue: várias ainda dependem de desenho ou decisão do autor.
+inglês na abertura da colaboração, após a 0.4.5. Não transformar automaticamente
+cada pendência do roadmap em issue: várias ainda dependem de desenho ou
+decisão do autor.
 
 Cada issue apta a receber colaboração deve conter:
 
@@ -133,7 +134,7 @@ cadastro de colaboradores à IDE.
    falha real, correção e logs legíveis; manter permissões adequadas a PRs.
 2. Preparar modelos, labels e poucas issues de entrada, com os campos da §3
    preenchidos e a primeira pessoa conseguindo reproduzir a validação.
-3. Publicar a porta de contribuição em inglês junto da 0.4.5, como decidido.
+3. Publicar a porta de contribuição em inglês depois da 0.4.5, como decidido.
 4. Em outra sessão, avaliar e implementar a apresentação no site. Provar
    navegação issue/PR, filtros, atualização, falha de sincronização e os
    estados concluído/cancelado/reaberto antes de anunciar automação.

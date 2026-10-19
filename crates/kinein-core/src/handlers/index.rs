@@ -135,6 +135,7 @@ impl Core {
             path: root.join(caminho).display().to_string(),
             language: language.to_owned(),
             unit: None,
+            cdb_location: None,
             cargo: None,
             python: None,
             targets: Vec::new(),

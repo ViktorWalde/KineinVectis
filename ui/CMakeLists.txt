@@ -191,6 +191,8 @@ set_source_files_properties(qml/container/ContainerDetail.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/container/ContainerRow.qml PROPERTIES QT_RESOURCE_ALIAS ContainerRow.qml)
 set_source_files_properties(qml/container/ContainerRowActions.qml PROPERTIES QT_RESOURCE_ALIAS ContainerRowActions.qml)
 set_source_files_properties(qml/index/IndexController.qml PROPERTIES QT_RESOURCE_ALIAS IndexController.qml)
+set_source_files_properties(qml/index/CompileContextFacts.qml PROPERTIES QT_RESOURCE_ALIAS CompileContextFacts.qml)
+set_source_files_properties(qml/index/CompileContextInspector.qml PROPERTIES QT_RESOURCE_ALIAS CompileContextInspector.qml)
 set_source_files_properties(qml/ipc/IndexEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexEventRouter.qml)
 set_source_files_properties(qml/ipc/IndexRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexRequestRouter.qml)
 set_source_files_properties(qml/python/PythonController.qml PROPERTIES QT_RESOURCE_ALIAS PythonController.qml)
@@ -619,6 +621,8 @@ qt_add_qml_module(kinein-vectis
         qml/container/ContainerRow.qml
         qml/container/ContainerRowActions.qml
         qml/index/IndexController.qml
+        qml/index/CompileContextFacts.qml
+        qml/index/CompileContextInspector.qml
         qml/ipc/IndexEventRouter.qml
         qml/ipc/IndexRequestRouter.qml
         qml/python/PythonController.qml

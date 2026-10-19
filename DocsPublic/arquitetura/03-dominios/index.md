@@ -41,6 +41,14 @@ PythonEnv    interpreter, version?, origin (VIRTUAL_ENV|.venv|venv|env|poetry|
              sistema), warning?
 ```
 
+**0.179.0 (0.4.1b):** `FileContext.cdbLocation? { path, line, column }`
+identifica o início do objeto da unidade efetivamente escolhida na CDB:
+caminho absoluto do JSON, linha e coluna desde 1 (coluna em unidades UTF-16,
+como o editor).
+Ausente sem unidade da CDB, inclusive no fallback file-api. A última entrada
+para o mesmo arquivo continua vencendo; a localização acompanha essa entrada.
+Permite ao inspector abrir a unidade sem procurar o nome dentro do JSON.
+
 **O contexto efetivo, com a origem de cada valor (0.173.0, a 0.4.0a do
 `roadmaps/52` §14.1).** O `effective` diz o que vale para o arquivo e de onde
 veio, como dado. A precedência é a do 52 §4.3, "o valor vem do dono": as

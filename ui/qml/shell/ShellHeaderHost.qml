@@ -24,6 +24,7 @@ Rectangle {
     property var containerController: null
     property var configActionController: null
     property var toolchainController: null
+    property var indexController: null
     property var pythonController: null
     property var recentWorkspacesController: null
     property var gitController: null
@@ -78,6 +79,7 @@ Rectangle {
             return;
         }
         switch (action) {
+        case "index.context": root.indexController.openInspector(); break;
         case "rail.restore": root.shellController.restoreRail(); break;
         case "view.areas": root.shellController.showTab("areas"); break;
         case "view.focusMode": root.shellController.focusMode.toggle(); break;

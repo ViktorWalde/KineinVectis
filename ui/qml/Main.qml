@@ -188,6 +188,7 @@ Window {
     }
 
     ShellHeaderHost {
+        indexController: domains.indexController
         id: header
 
         anchors.top: parent.top
@@ -341,6 +342,7 @@ Window {
     }
 
     ShellOverlays {
+        indexController: domains.indexController
         id: overlays
 
         // Overlay global acima do header (z=100) e de toda a workspace. O z

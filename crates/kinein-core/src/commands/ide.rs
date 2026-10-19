@@ -313,5 +313,14 @@ pub(super) fn search_command_descriptors() -> Vec<CommandDescriptor> {
             requires_workspace: true,
             internal: false,
         },
+        CommandDescriptor {
+            id: "index.context".to_owned(),
+            title: "Contexto de compilação do arquivo".to_owned(),
+            category: "Files".to_owned(),
+            description: "Explica os valores efetivos, flags e origens do arquivo ativo".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+            internal: false,
+        },
     ]
 }

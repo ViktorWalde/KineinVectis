@@ -14,6 +14,20 @@ Item {
     height: 600
 
     property int created: 0
+    property string requestedKit: "unrequested"
+    property int kitRequests: 0
+    property int editorFocuses: 0
+
+    QtObject {
+        id: editor
+        function focusEditor() { root.editorFocuses++; }
+    }
+
+    IndexController { id: index }
+    ToolchainController {
+        id: toolchain
+        onGetRequested: preset => { root.requestedKit = preset; root.kitRequests++; }
+    }
 
     Component {
         id: fakePanel
@@ -62,6 +76,9 @@ Item {
         libraryController: fakeOwner
         setupController: fakeOwner
         toolWindows: fakeToolWindows
+        indexController: index
+        toolchainController: toolchain
+        editorController: editor
     }
 
     // A vaga de cada painel, na ordem da lista (o Repeater fica entre os filhos).
@@ -110,6 +127,28 @@ Item {
         const again = slots();
         failures += check(root.created === 1, "reabrir nao recria: " + root.created);
         failures += check(again[0].panel.typed === "host.example", "o painel guardou o digitado");
+
+        const contextSlot = overlays.children.find(child => child.panel !== undefined && child.entry === undefined);
+        failures += check(contextSlot.panel === null, "inspector is lazy");
+        index.workspaceRoot = "/project";
+        index.openInspector();
+        const inspector = contextSlot.panel;
+        failures += check(inspector !== null && contextSlot.visible, "first open creates the real inspector");
+        index.closeInspector();
+        failures += check(!contextSlot.visible, "close hides the inspector");
+        index.openInspector();
+        failures += check(contextSlot.panel === inspector, "reopen reuses the inspector");
+        const previousFocuses = root.editorFocuses;
+        inspector.dismissFromKeyboard();
+        failures += check(root.editorFocuses === previousFocuses + 1 && !contextSlot.visible,
+                          "keyboard dismiss returns focus to the editor");
+        index.openInspector();
+        index.setActivePath("/project/main.cpp");
+        index.handleContext({path: "/project/main.cpp", language: "cpp", effective: {kit: {preset: "cross"}}});
+        toolchain.preset = "old";
+        index.openContextKit();
+        failures += check(root.requestedKit === "cross" && toolchain.menuVisible && root.kitRequests === 1
+                          && !contextSlot.visible, "kit navigation reaches the existing toolchain owner");
 
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);

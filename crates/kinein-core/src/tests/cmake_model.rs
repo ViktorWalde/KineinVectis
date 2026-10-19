@@ -352,7 +352,7 @@ fn index_context_falls_back_to_the_file_api_unit_and_always_names_the_targets() 
             .starts_with("file-api codemodel-v2 (target app)"),
         "{main}"
     );
-    assert!(main.get("hint").is_none());
+    assert!(main.get("hint").is_none() && main.get("cdbLocation").is_none());
     // C: o compilador de C.
     let u = contexto(&mut core, "src/u.c");
     assert_eq!(u["unit"]["compiler"], "/usr/bin/cc");

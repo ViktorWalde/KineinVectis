@@ -36,16 +36,16 @@
 > file, §7.315). **CI pública:** a camada rápida está preparada no checkout
 > (52 §14.8; cobertura no contribuindo/07 §2.1), validada localmente;
 > a execução no GitHub e as camadas de UI/pesada continuam pendentes.
-> **Próxima fatia:** o C2 (o inspector do contexto); depois, deriva e schema 3
-> (52 §11), com desenho antes do código (52 §14). **Confiança:** projetos
-> abertos antes da 16.4b pedem "Confiar neste projeto" (faixa de saúde).
+> **0.4.1b encerrada:** inspector C2 (52 §14.9, 40.7 §7.319), com gate
+> rápido estrito TUDO VERDE. **Próxima:** deriva; depois schema 3 (52 §11).
+> **Confiança:** projetos anteriores à 16.4b pedem "Confiar neste projeto".
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
 > e a entrada `CLAUDE.md` (61, O6 e O7, feitas); Rust e Qt mantidos.
 > **Decisões de 2026-10-17/19** (§5): a CI pública entra numa fatia curta
 > antes da 0.4.1b; a 0.4.5 fecha com o AppImage, a divulgação, a
-> documentação em inglês e a porta para colaboradores (preparada antes);
-> depois dela, o servidor MCP e a frente ROS 2, por escopos e após pesquisa.
+> documentação em inglês; o autor segue sozinho até ela. Depois, a porta
+> para colaboradores, o servidor MCP e a frente ROS 2, por escopos e pesquisa.
 > A versão do ROS 2 segue sem número definido (integracoes/40 §1.2).
 >
 > **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
@@ -61,14 +61,14 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.178.0 (crates/kinein-protocol, medido em 2026-10-17; o
+protocolo   0.179.0 (crates/kinein-protocol, medido em 2026-10-19; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   151 tst_*.qml em scripts/qml-harness (medido em 2026-10-16)
+harnesses   152 tst_*.qml em scripts/qml-harness (medido em 2026-10-19)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
-            §7.277); 1182 no gate rápido estrito local de 2026-10-19 (§7.316).
+            §7.277); 1184 no gate rápido estrito local de 2026-10-19 (§7.319).
 ```
 
 Os comandos que medem estão no
@@ -320,9 +320,9 @@ depois da 0.4.5              (autor, 2026-10-17) A 0.4.5 fecha com o AppImage,
                              gate estrito local continua a regra de cada
                              commit. A porta para novos colaboradores (modelos
                              de issue e PR, labels, issues de entrada em
-                             INGLES) se prepara agora e se PUBLICA junto da
-                             0.4.5, com a CI. Push, workflow e issue no GitHub
-                             sao do autor
+                             INGLES): ver "porta de colaboracao" abaixo,
+                             com a atualizacao do autor de 2026-10-19.
+                             Push, workflow e issue no GitHub sao do autor
 ROS 2                        ENTRA na IDE (autor, 2026-10-17): o ambiente ROS 2
 (2026-10-17)                 tao bom quanto o do VS Code ou melhor, orquestrando
                              as ferramentas abertas que ja existem. Versao a
@@ -346,7 +346,11 @@ porta de colaboracao         IDEIA documentada a pedido do autor (2026-10-19):
                              com botao para a issue e "Tasks realizadas".
                              Recomendacao no contribuindo/11; nenhuma issue,
                              configuracao GitHub ou mudanca no site nesta
-                             fatia. Publicacao segue com a 0.4.5 (ver acima)
+                             fatia. Atualizacao do autor em 2026-10-19:
+                             trabalha SOZINHO ate a 0.4.5; porta e tarefas
+                             para colaboradores DEPOIS dela. O prompt do
+                             site foi entregue na conversa, sem ampliar
+                             esta documentacao com implementacao do site
 ```
 
 ## 7. O registro das entregas

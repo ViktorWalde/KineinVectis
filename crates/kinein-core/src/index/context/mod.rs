@@ -34,11 +34,11 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::{
-    CargoUnit, CompileUnit, ContextOrigin, ContextSummary, FileContext, PythonEnv,
+    CargoUnit, CdbLocation, CompileUnit, ContextOrigin, ContextSummary, FileContext, PythonEnv,
 };
 
 use self::cargo::AlvoCargo;
-use self::cdb::Unidade;
+use self::cdb::CdbUnit;
 use crate::cmake::model::CmakeModel;
 
 /// O que o contexto pode EXECUTAR, e so' se estiver aqui.
@@ -55,8 +55,9 @@ pub struct Ferramentas {
 #[derive(Debug, Clone, Default)]
 pub struct CompileContext {
     cdb_directory: Option<String>,
+    cdb_path: Option<String>,
     cdb_stale_because: Option<String>,
-    unidades: HashMap<PathBuf, Unidade>,
+    unidades: HashMap<PathBuf, CdbUnit>,
     pacotes: u64,
     alvos: Vec<AlvoCargo>,
     python: Option<PythonEnv>,
@@ -73,13 +74,16 @@ impl CompileContext {
         let mut ctx = Self::default();
         let cdb = crate::cdb::status(root);
         if let Some(dir) = cdb.directory.as_deref() {
-            let caminho = root.join(dir).join("compile_commands.json");
-            if let Ok(texto) = std::fs::read_to_string(&caminho) {
+            let path = root
+                .join(if dir == "." { "" } else { dir })
+                .join("compile_commands.json");
+            if let Ok(texto) = std::fs::read_to_string(&path) {
                 ctx.unidades = cdb::parse_cdb(&texto);
+                ctx.cdb_path = Some(path.display().to_string());
                 ctx.cdb_directory = Some(dir.to_owned());
                 ctx.cdb_stale_because = cdb
                     .stale_because
-                    .or_else(|| cdb::cmakelists_mais_novo(root, &caminho, &ctx.unidades));
+                    .or_else(|| cdb::cmakelists_mais_novo(root, &path, &ctx.unidades));
             }
         }
         if root.join("Cargo.toml").is_file()
@@ -123,6 +127,7 @@ impl CompileContext {
             path: absoluto.display().to_string(),
             language: language.to_owned(),
             unit: None,
+            cdb_location: None,
             cargo: None,
             python: None,
             targets: Vec::new(),
@@ -166,6 +171,11 @@ impl CompileContext {
             .get(&chave)
             .or_else(|| self.unidades.get(absoluto))
         {
+            ctx.cdb_location = self.cdb_path.as_ref().map(|path| CdbLocation {
+                path: path.clone(),
+                line: u.line,
+                column: u.column,
+            });
             ctx.unit = Some(CompileUnit {
                 compiler: u.compiler.clone(),
                 directory: u.directory.clone(),

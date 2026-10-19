@@ -25,6 +25,7 @@ Item {
     property var setupController: null
     property var containerController: null
     property var toolchainController: null
+    property var indexController: null
     property var pythonController: null
     property bool aboutVisible: false
     property bool manualVisible: false
@@ -202,6 +203,9 @@ Item {
         setupController: root.setupController
         configActionController: root.configActionController
         runtimeController: root.runtimeController
+        indexController: root.indexController
+        editorController: root.editorController
+        toolchainController: root.toolchainController
     }
 
     AboutDialog {

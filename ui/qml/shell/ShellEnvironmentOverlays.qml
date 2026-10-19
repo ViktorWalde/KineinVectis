@@ -33,6 +33,40 @@ Item {
     // Nao e' painel de ambiente: e' o terminal onde o comando de instalacao
     // aparece. Nada roda escondido.
     property var runtimeController: null
+    property var indexController: null
+    property var toolchainController: null
+    property var editorController: null
+
+    Connections {
+        target: root.indexController
+        function onInspectorClosed() {
+            if (root.editorController !== null) root.editorController.focusEditor();
+        }
+        function onOpenKitRequested(preset) {
+            root.toolchainController.openMenu(Theme.spacingLarge, Theme.spacingLarge, true, preset);
+        }
+    }
+
+    Item {
+        id: contextSlot
+        anchors.fill: parent
+        z: 99
+        visible: root.indexController !== null && root.indexController.inspectorVisible
+        property var panel: null
+        onVisibleChanged: {
+            if (visible && panel === null) panel = contextPanel.createObject(contextSlot);
+        }
+        Component {
+            id: contextPanel
+            CompileContextInspector {
+                anchors.fill: parent
+                controller: root.indexController
+                maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+                maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+                onDismissRequested: root.indexController.closeInspector()
+            }
+        }
+    }
 
     Repeater {
         // O modelo e' a CONTAGEM, nao a lista. `overlayEntries` vem de

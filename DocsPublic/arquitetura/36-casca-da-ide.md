@@ -510,6 +510,11 @@ reabrir não recrie e que o texto digitado continue.
 
 ### 6.1 O que nasce na abertura, e como medir
 
+O inspector de compilação (0.4.1b) também nasce na primeira abertura, no
+`ShellEnvironmentOverlays`, e é reutilizado. Seu estado é do `IndexController`;
+o `CompileContextFacts` só apresenta o `FileContext` existente e a navegação
+usa o editor e o `ToolchainController`. Não é entrada nova do trilho.
+
 O primeiro quadro (o orçamento é 400 ms; 247 ms em 2026-10-03) paga tudo o
 que é **criado** antes dele, visível ou não. Um diálogo escondido custa o
 mesmo que um aberto. A regra da casca é esta: o que só serve aberto nasce na

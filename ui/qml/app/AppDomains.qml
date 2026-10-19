@@ -317,7 +317,7 @@ Item {
 
     CommandDispatcher {
         id: commandDispatcher
-
+        indexController: root.indexController
         coreClient: root.coreClient
         debugController: root.debugController
         editorController: root.editorController

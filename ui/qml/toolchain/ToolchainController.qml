@@ -381,12 +381,12 @@ Item {
     }
 
     // `below`: o menu abre para BAIXO do ponto (o chip do cabecalho, 0.3.8).
-    function openMenu(x, y, below) {
+    function openMenu(x, y, below, requestedPreset) {
         menuX = x;
         menuY = y;
         menuBelow = below === true;
         menuVisible = true;
-        getRequested(preset);
+        getRequested(requestedPreset === undefined ? preset : requestedPreset);
     }
 
     function closeMenu() {

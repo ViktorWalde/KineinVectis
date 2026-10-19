@@ -184,6 +184,18 @@ pub struct PythonEnv {
     pub warning: Option<String>,
 }
 
+/// Source of the translation unit selected from the compilation database.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CdbLocation {
+    /// Absolute compilation database path.
+    pub path: String,
+    /// Start of the selected JSON object, one-based.
+    pub line: usize,
+    /// UTF-16 code unit column, one-based, matching editor navigation.
+    pub column: usize,
+}
+
 /// Result payload for `index.context`: how ONE file is compiled/run.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -195,6 +207,9 @@ pub struct FileContext {
     /// C/C++: the translation unit from the CDB, when the file is one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unit: Option<CompileUnit>,
+    /// Exact source location of the CDB unit; absent for file-api fallback.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cdb_location: Option<CdbLocation>,
     /// Rust: the package/target that owns the file.
     #[serde(default, rename = "crate", skip_serializing_if = "Option::is_none")]
     pub cargo: Option<CargoUnit>,

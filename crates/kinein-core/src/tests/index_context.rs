@@ -726,3 +726,92 @@ fn the_context_is_reloaded_after_configure_and_after_a_manifest_change() {
         "o Cargo.toml recarrega tudo"
     );
 }
+
+/// Navigation must follow the winning object, not a filename search (the
+/// filename can occur in arguments, escaped, and in another unit).
+#[test]
+fn cdb_location_follows_last_unit_with_escaped_path_and_unicode_prefix() {
+    let root = temp_dir("cdb-location");
+    let source = root.join(r"src/ação\unit.cpp");
+    put_file(&source, "int main() {}\n");
+    let entry = |compiler: &str| {
+        json!({
+            "file": source, "directory": root,
+            "arguments": [compiler, "-c", source.to_str().unwrap()]
+        })
+        .to_string()
+    };
+    let first = entry("clang++");
+    let second = entry("g++");
+    // A non-ASCII string preceding the winning object shares its line.
+    let text = format!("[\n {first},\n \"ação🚀\", {second}\n]\n");
+    let database = root.join("compile_commands.json");
+    put_file(&database, &text);
+    let context = CompileContext::load(&root, &no_tools());
+    let answer = context.for_file(&root, &source, "cpp");
+    assert_eq!(answer.unit.unwrap().compiler, "g++");
+    let location = answer.cdb_location.unwrap();
+    assert_eq!(location.path, database.display().to_string());
+    assert_eq!((location.line, location.column), (3, 12));
+    assert!(text.lines().nth(2).unwrap().ends_with(&second));
+    assert!(
+        context
+            .for_file(&root, &root.join("src/header.hpp"), "cpp")
+            .cdb_location
+            .is_none()
+    );
+    assert!(
+        context
+            .for_file(&root, &root.join("src/missing.cpp"), "cpp")
+            .cdb_location
+            .is_none()
+    );
+}
+
+#[test]
+fn cdb_location_opens_a_compact_database_at_the_selected_object() {
+    let root = temp_dir("compact-location");
+    let entry = |file: &str| {
+        json!({"file": file, "directory": root,
+        "arguments": ["clang++", "-c", file]})
+        .to_string()
+    };
+    let first = entry("a.cpp");
+    let second = entry("b.cpp");
+    put_file(
+        &root.join("compile_commands.json"),
+        &format!("[{first},{second}]"),
+    );
+    let context = CompileContext::load(&root, &no_tools());
+    let location = context
+        .for_file(&root, &root.join("b.cpp"), "cpp")
+        .cdb_location
+        .unwrap();
+    assert_eq!(location.line, 1);
+    assert_eq!(location.column, first.encode_utf16().count() + 3);
+    let mut core = core_with_empty_search_path("compact-cdb-location");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({"path": root})),
+    ));
+    assert!(opened.response().error.is_none());
+    let reply = core.handle_request(&JsonRpcRequest::new(
+        2_i64,
+        "index.context",
+        Some(json!({"path": "b.cpp"})),
+    ));
+    assert_eq!(
+        reply.response().result.as_ref().unwrap()["cdbLocation"],
+        json!(location)
+    );
+    let mut legacy =
+        serde_json::to_value(context.for_file(&root, &root.join("b.cpp"), "cpp")).unwrap();
+    legacy.as_object_mut().unwrap().remove("cdbLocation");
+    assert!(
+        serde_json::from_value::<kinein_protocol::FileContext>(legacy)
+            .unwrap()
+            .cdb_location
+            .is_none()
+    );
+}

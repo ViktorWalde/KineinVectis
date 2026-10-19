@@ -132,7 +132,8 @@ Os de 2026-10-17 (40 §5):
    Brasil.
 6. **Parte da 0.9 antecipada:** a CI pública entra agora, numa fatia curta
    antes da 0.4.1b; a porta para novos colaboradores (modelos, labels,
-   issues de entrada em inglês) se prepara agora e se publica junto da 0.4.5.
+   issues de entrada em inglês) entra depois da 0.4.5: o autor segue sozinho
+   até ela (esclarecimento de 2026-10-19).
    A recomendação de CI no repositório público e a ideia de cards no site
    derivados das issues foram documentadas em 2026-10-19 no
    [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md);

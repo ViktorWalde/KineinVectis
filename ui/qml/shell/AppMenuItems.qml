@@ -56,7 +56,7 @@ Item {
         "help.manual": "help", "help.about": "help", "app.quit": "close", "editor.save": "save",
         "editor.saveAll": "save", "editor.gotoLine": "goto", "lsp.rename": "rename",
         "view.returnToEditor": "file", "view.cycleFocus": "chevron-down", "view.cycleFocusBack": "chevron-up",
-        "lsp.switchSourceHeader": "restore"
+        "lsp.switchSourceHeader": "restore", "index.context": "configure"
     })
 
     // Item cuja tecla mora num comando de OUTRO nome no catalogo, e as poucas
@@ -186,7 +186,8 @@ Item {
             code: [[root.item(qsTr("Formatar arquivo"), "editor.format", file),
                     root.item(qsTr("Renomear símbolo"), "lsp.rename", file),
                     root.item(qsTr("Ações de código"), "lsp.codeActions", file)],
-                   [root.item(qsTr("Alternar source/header"), "lsp.switchSourceHeader", file)]],
+                   [root.item(qsTr("Alternar source/header"), "lsp.switchSourceHeader", file),
+                    root.item(qsTr("Contexto de compilação do arquivo…"), "index.context", open && file)]],
             build: root.buildGroups(),
             run: [[root.item(qsTr("Executar"), "run.start", open && root.coreConnected && !root.running),
                    root.item(qsTr("Depurar"), "debug.start", open && root.coreConnected && !root.debugging)],
@@ -206,6 +207,7 @@ Item {
                            root.item(qsTr("Embarcados…"), "probe.list", open)],
                           [root.item(qsTr("Bibliotecas…"), "library.list", open),
                            root.item(qsTr("Toolchain e kits…"), "toolchain.get", open),
+                           root.item(qsTr("Contexto de compilação do arquivo…"), "index.context", open && file),
                            root.item(qsTr("Python do projeto…"), "python.context", open),
                            root.item(qsTr("Ações de configuração…"), "configAction.list", open),
                            root.item(qsTr("Configurar CMake"), "cmake.configure", open && root.coreConnected)],

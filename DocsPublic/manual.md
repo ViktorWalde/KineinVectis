@@ -1431,6 +1431,21 @@ a sua distro, os passos com a fonte. As regras udev de sonda e do
 ModemManager não estão aqui: são o botão **Permissões** do painel de
 Embarcados, que as mede na sua máquina.
 
+### Contexto de compilação do arquivo
+
+Com um arquivo aberto, escolha **Código → Contexto de compilação do arquivo…**
+ou o mesmo item em **Ambiente**. Na paleta, busque **Contexto de compilação**.
+O inspector mostra os valores efetivos e suas origens: compilador, padrão,
+target, sysroot, includes, defines e argumentos. O texto pode ser selecionado
+e copiado. A lista acompanha o arquivo ativo.
+
+**Abrir CDB na unidade** leva à entrada exata em `compile_commands.json`;
+fica indisponível quando o contexto vem do file-api ou não há unidade.
+**Abrir kit** abre o seletor do kit usado no contexto. Cabeçalhos e arquivos
+sem unidade explicam a ausência; os valores desconhecidos ficam como
+“não informado”. Rust mostra o pacote/alvo do Cargo; Python, o interpretador.
+Feche pelo botão, por `Esc` ou clicando fora.
+
 ### Toolchain e kits
 
 Qual executável cumpre cada papel — compilador C/C++, gerador, `cmake`, `cargo`.

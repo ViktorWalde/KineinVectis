@@ -22,6 +22,42 @@ Item {
     // resposta PARA ESSE caminho — resposta de arquivo anterior e' descartada.
     property string contextPath: ""
     property var fileContext: ({})
+    property bool inspectorVisible: false
+    readonly property alias contextFacts: contextFacts
+    readonly property bool contextLoading: contextPath !== "" && fileContext.path !== contextPath
+
+    signal openKitRequested(string preset)
+    signal inspectorClosed()
+
+    CompileContextFacts {
+        id: contextFacts
+        context: root.fileContext
+    }
+
+    function openInspector() {
+        if (workspaceRoot === "") return;
+        inspectorVisible = true;
+        if (contextPath !== "") contextRequested(contextPath);
+    }
+
+    function closeInspector() {
+        inspectorVisible = false;
+        inspectorClosed();
+    }
+
+    function openContextCdb() {
+        const location = fileContext.cdbLocation;
+        if (!location || contextLoading) return;
+        closeInspector();
+        openSymbolRequested(location.path, location.line, location.column);
+    }
+
+    function openContextKit() {
+        const kit = (fileContext.effective || {}).kit;
+        if (!kit || contextLoading) return;
+        closeInspector();
+        openKitRequested(kit.preset);
+    }
 
     readonly property string indexState: stats.state !== undefined ? stats.state : "idle"
     readonly property bool ready: indexState === "ready"
@@ -51,6 +87,7 @@ Item {
     }
 
     onWorkspaceRootChanged: {
+        inspectorVisible = false;
         // O indice e' do projeto: trocar de workspace zera a tela ate' o core
         // mandar o novo (ele comeca a construir no proprio workspace.open).
         stats = ({});
@@ -156,13 +193,7 @@ Item {
     // veio. O compilador da unidade ja' esta' no resumo; sem unidade, ele vem
     // do kit ou do cache do CMake e entra aqui.
     function originLabel(origin) {
-        switch (origin) {
-        case "cdb": return qsTr("da compile_commands.json");
-        case "cmakeFileApi": return qsTr("do file-api do CMake");
-        case "cmakeCache": return qsTr("do cache do CMake");
-        case "kit": return qsTr("do kit");
-        }
-        return "";
+        return contextFacts.originLabel(origin);
     }
 
     function effectiveParts(effective, hasUnit) {

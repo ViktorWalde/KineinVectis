@@ -21,6 +21,7 @@ Item {
     property var embeddedController: null
     property var setupController: null
     property var containerController: null
+    property var indexController: null
 
     // "open" ou "createProject": o seletor de pasta, com a intencao.
     signal folderRequested(string intent)
@@ -99,6 +100,9 @@ Item {
             return true;
         case "index.symbols":
             symbolsRequested(arg);
+            return true;
+        case "index.context":
+            indexController.openInspector();
             return true;
         case "cargo.check":
             showTabRequested("problems");

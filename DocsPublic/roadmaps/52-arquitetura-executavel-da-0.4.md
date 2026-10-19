@@ -1123,7 +1123,8 @@ temporária para provar a seleção das etapas, fail-fast e o NÃO PROVADO
 estrito; sintaxe shell e YAML; gates locais. **Fica fora:** executar ou
 publicar o workflow no GitHub (é do autor), CI de UI/integrações e matriz
 Arch, geração de AppImage, templates/labels/issues (outra fatia, publicação
-com a 0.4.5), protocolo e código do produto.
+após a 0.4.5, conforme esclarecimento posterior do autor no 40 §5),
+protocolo e código do produto.
 
 **Fronteira esclarecida em 2026-10-19:** o repositório-fonte já é público;
 é o destino recomendado da CI e dos PRs. A cópia limpa não leva `.github/`
@@ -1136,3 +1137,56 @@ um trecho superado do 21; ver contribuindo/07 §2.1 e
 gate local rápido estrito TUDO VERDE, sem NÃO PROVADO. Provas, mutações,
 limites e o que não foi feito no [40.7 §7.316](40.7-registro-das-entregas.md).
 A execução no GitHub permanece pendente; a próxima fatia do produto é C2.
+
+### 14.9 0.4.1b — inspector do contexto de compilação (2026-10-19)
+
+**Antes, medido:** o `IndexController` só resume `FileContext` no rodapé;
+`effective` já traz a origem por valor, mas a unidade não aponta sua linha
+na CDB. O menu Código é o menu de ações do editor; não existe menu de
+contexto próprio dele. O Ambiente já hospeda overlays sob demanda.
+
+**Desenho anterior ao código:**
+
+- `index.context` continua sendo a única consulta. `FileContext` ganha
+  `cdbLocation? { path, line, column }` (absoluto, coordenadas desde 1),
+  localizado pelo leitor existente, no início do objeto JSON escolhido
+  (coluna UTF-16, como a navegação do editor).
+  Duplicatas mantêm a regra atual (última unidade vence), com a localização
+  correspondente; JSON compacto e escapes não viram uma busca textual pelo
+  nome do arquivo. Protocolo 0.179.0, aditivo. File-api e ausência de unidade
+  não oferecem localização da CDB.
+- O `IndexController` mantém o ciclo abrir/fechar do inspector, acompanhando
+  o arquivo ativo e descartando respostas de outro arquivo como já faz.
+  Sem arquivo, diz isso; ao trocar de projeto, fecha e limpa. Um modelo de
+  apresentação próprio traduz os fatos recebidos, sem resolver flags ou kit.
+  Fechar devolve o foco ao editor, inclusive ao vir da paleta ou de um menu;
+  restaurar só o foco anterior poderia apontar para um popup já escondido.
+- `CompileContextInspector` nasce no primeiro uso, dentro dos overlays
+  de Ambiente (`KvPanelFrame`), sem tool window/trilho novo. Mostra caminho,
+  origem, compilador, padrão, target, sysroot, kit, targets, diretório,
+  includes, defines, saída e argumentos separados, com texto selecionável;
+  ausências e `hint` aparecem explicitamente. Rust/Python mostram os fatos
+  que o mesmo contrato já fornece, sem fingir uma unidade C/C++.
+- A paleta e os menus Código e Ambiente abrem o mesmo inspector pelo comando
+  `index.context`. “Abrir CDB na unidade” usa a navegação do editor; “Abrir
+  kit” pede o preset de `effective.kit` ao `ToolchainController` e abre seu
+  menu existente. Nenhum caminho ou kit é deduzido da frase `source`.
+  O menu recebe opcionalmente o preset a consultar, numa única requisição:
+  selecionar por consulta assíncrona e depois abrir consultaria o preset
+  anterior de novo; o harness usa o controller real para proteger esse salto.
+- Esta fatia explica o contexto **efetivo**. A comparação configurado ×
+  efetivo e os alertas persistentes pertencem à deriva (§5.9), próxima fatia;
+  schema 3 também fica depois. Sem instalação, configure ou execução nova.
+
+**Provas previstas:** contexto integrado com JSON compacto, multilinha,
+Unicode/escapes e unidade repetida; ausência de localização no fallback;
+harness de apresentação, ciclo do inspector, navegação e dispatcher; fotos
+antes/depois no Xvfb com CDB real, clique para abrir a unidade e kit;
+gates locais rápidos estritos. Resultado só após a execução.
+
+
+**Resultado (2026-10-19):** 0.4.1b encerrada no checkout. Inspector e
+navegação provados pelo core, harnesses e gestos no Xvfb; cinco mutações
+reprovaram. Gate rápido estrito TUDO VERDE, sem NÃO PROVADO. Detalhe no
+[40.7 §7.319](40.7-registro-das-entregas.md). Próxima fatia: deriva (§5.9),
+antes do schema 3.
