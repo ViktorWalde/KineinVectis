@@ -165,6 +165,9 @@ set_source_files_properties(qml/ipc/GrafanaRequestRouter.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
 set_source_files_properties(qml/embedded/EmbeddedOverviewView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedOverviewView.qml)
+set_source_files_properties(qml/embedded/EmbeddedLinuxView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedLinuxView.qml)
+set_source_files_properties(qml/embedded/EmbeddedPlatformIoView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPlatformIoView.qml)
+set_source_files_properties(qml/embedded/EmbeddedEnvironmentView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedEnvironmentView.qml)
 set_source_files_properties(qml/embedded/EmbeddedProbeView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedProbeView.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanelHost.qml)
 set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
@@ -594,6 +597,9 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedController.qml
         qml/embedded/EmbeddedPanel.qml
         qml/embedded/EmbeddedOverviewView.qml
+    qml/embedded/EmbeddedLinuxView.qml
+    qml/embedded/EmbeddedPlatformIoView.qml
+    qml/embedded/EmbeddedEnvironmentView.qml
         qml/embedded/EmbeddedProbeView.qml
         qml/embedded/EmbeddedPanelHost.qml
         qml/embedded/EmbeddedKitField.qml

@@ -8,21 +8,38 @@ Item {
 
     property var controller: null
     property var toolchainController: null
-    property string expandedRole: ""
-    property bool advancedKitVisible: false
-    readonly property string preset: root.toolchainController && root.toolchainController.preset !== ""
-                                     ? root.toolchainController.preset : qsTr("padrão")
+    property bool ready: false
+    readonly property bool linuxTarget: controller !== null && controller.projectLinux
+    property bool environmentLoaded: false
     readonly property string tab: root.controller ? root.controller.tab : "project"
     signal closeRequested()
 
-    onTabChanged: body.contentY = 0
+    Component.onCompleted: root.ready = true
+    onTabChanged: {
+        body.contentY = 0;
+        if (root.tab === "kit") root.environmentLoaded = true;
+        if (root.ready) contentTransition.restart();
+    }
+    Connections {
+        target: root.controller
+        function onWorkspaceRootChanged() { root.environmentLoaded = false; }
+    }
+    NumberAnimation {
+        id: contentTransition
+        target: content
+        property: "opacity"
+        from: 0
+        to: 1
+        duration: Theme.motionFast
+        easing.type: Theme.easingStandard
+    }
 
     KvPanelHeader {
         id: header
         anchors.top: parent.top
         width: parent.width
         title: qsTr("Embarcados")
-        subtitle: root.controller ? root.controller.boardVerdict : ""
+        subtitle: root.linuxTarget ? qsTr("SDK e alvo Linux por SSH") : root.controller ? root.controller.boardVerdict : ""
         primaryLabel: qsTr("Atualizar")
         primaryIcon: "refresh"
         primaryAccent: false
@@ -41,8 +58,8 @@ Item {
         current: root.tab
         options: [
             { value: "project", label: qsTr("Visão geral") },
-            { value: "board", label: qsTr("Placa") },
-            { value: "flash", label: qsTr("Gravar") },
+            { value: "board", label: root.linuxTarget ? qsTr("Conexões") : qsTr("Placa") },
+            { value: "flash", label: root.linuxTarget ? qsTr("Implantar") : qsTr("Gravar") },
             { value: "kit", label: qsTr("Ambiente") }
         ]
         onSelected: value => root.controller.tab = value
@@ -82,85 +99,37 @@ Item {
                 visible: root.tab === "board"
                 spacing: Theme.spacingMedium
                 EmbeddedSerialView { width: parent.width; controller: root.controller }
-                EmbeddedIdentityView { width: parent.width; controller: root.controller }
+                EmbeddedIdentityView {
+                    width: parent.width
+                    controller: root.controller
+                    visible: !root.linuxTarget && controller !== null && controller.identity.device !== ""
+                }
                 EmbeddedAccessView { width: parent.width; controller: root.controller }
                 EmbeddedFilesView { width: parent.width; controller: root.controller }
             }
 
             EmbeddedFlashView {
                 width: parent.width
-                visible: root.tab === "flash"
+                visible: root.tab === "flash" && !root.linuxTarget
                 controller: root.controller
                 firmwares: root.toolchainController ? root.toolchainController.installedFirmwares() : []
             }
 
-            Column {
+            Loader {
+                width: parent.width
+                active: root.tab === "flash" && root.linuxTarget
+                sourceComponent: EmbeddedLinuxView { controller: root.controller }
+            }
+
+            Loader {
+                id: environmentLoader
+                objectName: "embeddedEnvironmentLoader"
                 width: parent.width
                 visible: root.tab === "kit"
-                spacing: Theme.spacingMedium
-                Repeater {
-                    model: root.toolchainController ? [
-                        { key: "cCompiler", label: qsTr("Compilador C") },
-                        { key: "cxxCompiler", label: qsTr("Compilador C++") },
-                        { key: "serialMonitor", label: qsTr("Monitor serial") }
-                    ] : []
-                    ToolchainRoleRow {
-                        required property var modelData
-                        width: parent.width
-                        controller: root.toolchainController
-                        roleKey: modelData.key
-                        roleLabel: modelData.label
-                        expanded: root.expandedRole === modelData.key
-                        onToggleRequested: root.expandedRole = expanded ? "" : modelData.key
-                    }
-                }
-                EmbeddedKitView {
-                    id: kitView
-
-                    width: parent.width
-                    preset: root.preset
+                active: root.environmentLoaded || root.tab === "kit"
+                sourceComponent: EmbeddedEnvironmentView {
+                    controller: root.controller
                     toolchainController: root.toolchainController
-                    advancedVisible: root.advancedKitVisible
-                    onAdvancedToggleRequested: root.advancedKitVisible = !root.advancedKitVisible
-                }
-
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: text !== ""
-                    text: root.toolchainController ? root.toolchainController.errorText : ""
-                    color: Theme.errorSoft
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                // O que o kit ainda nao tem, dito com o remedio (integracoes/39).
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: text !== ""
-                    text: root.toolchainController ? root.toolchainController.sysrootHint : ""
-                    color: Theme.warningSoft
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: text !== ""
-                    text: root.toolchainController ? root.toolchainController.rustTargetHint() : ""
-                    color: Theme.warningSoft
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                Column {
-                    width: parent.width
-                    spacing: Theme.spacingMedium
-                    visible: root.advancedKitVisible
-                    EmbeddedProbeView { width: parent.width; controller: root.controller }
-                    EmbeddedAdapterView { width: parent.width; toolchainController: root.toolchainController }
-                    EmbeddedInstallView { width: parent.width; toolchainController: root.toolchainController }
-                    EmbeddedKitImportView { width: parent.width; toolchainController: root.toolchainController }
                 }
             }
         }
@@ -181,9 +150,8 @@ Item {
             text: qsTr("Salvar kit")
             primary: true
             compact: true
-            enabled: root.toolchainController !== null
-            onClicked: root.toolchainController.applyKit(kitView.sysroot, kitView.targetTriple,
-                                                         kitView.chip, undefined, kitView.svdFile)
+            enabled: root.toolchainController !== null && environmentLoader.item !== null
+            onClicked: (environmentLoader.item as EmbeddedEnvironmentView).applyKit()
         }
     }
 }

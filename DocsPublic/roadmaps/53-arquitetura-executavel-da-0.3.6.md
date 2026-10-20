@@ -4,8 +4,9 @@
 > segue o [59 §2](59-fechamento-da-0.3.9.md), com Banco dividido nos passos
 > 7–15 e pente fino no 16, último da 0.3.9. Foco Qt 6.10; requisitos/provas
 > Qt 6.4 deste desenho permanecem históricos e não regem as próximas fatias.
-> Novo AppImage está adiado; possível lançamento após a 0.4.0 é intenção,
-> ainda sem decisão de publicação (59 §8).
+> A intenção de pacote após a 0.4.0 foi superada em 2026-10-20: a entrega
+> 0.4 inclui o trabalho não publicado 0.3.6–0.3.9 e fecha com AppImage após a
+> **0.4.9** ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
 
 > **Classe: PLANO / ARQUITETURA.** Escrito em 2026-10-01, a pedido do autor:
 > *"estruturar toda a documentação de arquitetura antes de qualquer código"*.
@@ -635,6 +636,13 @@ mutação    cada guarda nova provada removendo-a
 ```
 
 ## 11. Ordem e trem de versões (decisão do autor, 2026-10-01)
+
+**Decisão vigente, 2026-10-20:** as etapas históricas abaixo continuam
+preservadas como ordem e registro. O agrupamento antes em aberto foi
+resolvido: o trabalho não publicado 0.3.6–0.3.9 pertence à entrega **0.4 até
+a 0.4.9**, com geração/teste do AppImage depois desse fechamento. A 0.5
+herda a base e anuncia só o delta próprio; dono no 57 §1.1. As intenções
+de pacote de outubro descritas abaixo são histórico, não a fila vigente.
 
 A série 0.3.0–0.3.5 está encerrada e divulgada. A reorganização da casca vai
 da **0.3.6 à 0.3.9**, e cada etapa só fecha com o gate completo, o passeio sem

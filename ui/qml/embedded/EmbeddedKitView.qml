@@ -12,6 +12,8 @@ Column {
 
     property string preset: ""
     property var toolchainController: null
+    property bool linuxTarget: false
+    property bool platformIo: false
     property bool advancedVisible: false
     signal advancedToggleRequested()
 
@@ -23,6 +25,7 @@ Column {
     spacing: Theme.spacingSmall
 
     Text {
+        visible: !root.platformIo || root.advancedVisible
         text: qsTr("Alvo do kit %1").arg(root.preset)
         color: Theme.textSecondary
         font.pixelSize: Theme.fontSizeSmall
@@ -60,6 +63,7 @@ Column {
     EmbeddedKitField {
         id: campoChip
 
+        visible: !root.linuxTarget && (!root.platformIo || root.advancedVisible)
         labelText: qsTr("Chip")
         placeholder: qsTr("como no `probe-rs chip list`, ex.: STM32F401CC")
         value: root.toolchainController ? root.toolchainController.chip : ""
@@ -76,16 +80,16 @@ Column {
         id: campoAlvo
 
         objectName: "embeddedTarget"
-        visible: root.advancedVisible
+        visible: root.linuxTarget || root.advancedVisible
         labelText: qsTr("Alvo")
-        placeholder: qsTr("triple, ex.: thumbv7em-none-eabihf")
+        placeholder: root.linuxTarget ? qsTr("triple, ex.: aarch64-linux-gnu") : qsTr("triple, ex.: thumbv7em-none-eabihf")
         value: root.toolchainController ? root.toolchainController.targetTriple : ""
     }
 
     EmbeddedKitField {
         id: campoSysroot
 
-        visible: root.advancedVisible
+        visible: root.linuxTarget || root.advancedVisible
         labelText: qsTr("Sysroot")
         placeholder: qsTr("raiz do sistema alvo (CMAKE_SYSROOT)")
         value: root.toolchainController ? root.toolchainController.sysroot : ""
@@ -97,7 +101,7 @@ Column {
     EmbeddedKitField {
         id: campoSvd
 
-        visible: root.advancedVisible
+        visible: root.advancedVisible && !root.linuxTarget
         labelText: qsTr("SVD")
         placeholder: qsTr("CMSIS-SVD do chip, ex.: ~/svd/esp32c3.svd (registradores de periférico no depurador)")
         value: root.toolchainController ? root.toolchainController.svdFile : ""

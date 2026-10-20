@@ -229,6 +229,7 @@ Rectangle {
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         activeConfigId: root.runConfigController.activeConfigId
+        projectFrameworkLabel: root.embeddedController ? root.embeddedController.projectFrameworkLabel : ""
         activeConfigName: root.runConfigController.activeConfigName
         configMenuOpen: root.runConfigController.configMenuVisible
         projectMenuOpen: root.headerMenu === "project"

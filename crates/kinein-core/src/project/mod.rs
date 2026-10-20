@@ -22,41 +22,31 @@ use std::path::Path;
 
 use kinein_protocol::{Framework, FrameworkInfo, ProjectModel, TargetModel};
 
-use crate::tools::ToolDetector;
-
 /// O workspace e' um projeto `MicroPython`/`CircuitPython`.
 ///
 /// Pela MESMA evidencia do `project.model` (`boot.py`/`main.py` importando
 /// `machine`/`board`, stubs em `typings/`). Quem executa e monitora Python
-/// pergunta aqui.
+/// pergunta aqui. Um exemplo aninhado não muda o transporte do projeto
+/// principal; a ordem é a mesma usada para deduzir o alvo do modelo.
 #[must_use]
 pub fn e_micropython(root: &Path) -> bool {
     detect::frameworks(root)
-        .iter()
-        .any(|f| f.framework == Framework::MicroPython)
-}
-
-/// Computa o modelo lendo o ambiente REAL do processo.
-#[must_use]
-pub fn model(root: &Path, kit_chip: Option<&str>) -> ProjectModel {
-    let detector = ToolDetector::from_environment();
-    let var = |nome: &str| std::env::var(nome).ok();
-    let binario = |nome: &str| detector.find_in_path(nome);
-    let ambiente = sdk::Ambiente {
-        var: &var,
-        binario: &binario,
-        home: crate::platform::home_dir(),
-    };
-    model_in(root, kit_chip, &ambiente)
+        .first()
+        .is_some_and(|f| f.framework == Framework::MicroPython)
 }
 
 /// Computa o modelo com o ambiente dado (o teste injeta o seu).
 #[must_use]
-pub fn model_in(root: &Path, kit_chip: Option<&str>, ambiente: &sdk::Ambiente<'_>) -> ProjectModel {
+pub fn model_in(
+    root: &Path,
+    kit_chip: Option<&str>,
+    kit_target: Option<&str>,
+    ambiente: &sdk::Environment<'_>,
+) -> ProjectModel {
     let frameworks = detect::frameworks(root);
     let sdks = sdk::requisitos(&frameworks, ambiente);
     let artifacts = artifacts::artifacts(root);
-    let target = deduzir_alvo(&frameworks, kit_chip);
+    let target = deduzir_alvo(&frameworks, kit_chip, kit_target);
     let mut hints = Vec::new();
     for req in sdks.iter().filter(|r| !r.found) {
         hints.push(format!(
@@ -92,7 +82,7 @@ pub fn model_in(root: &Path, kit_chip: Option<&str>, ambiente: &sdk::Ambiente<'_
     }
     ProjectModel {
         root: root.display().to_string(),
-        embedded: !frameworks.is_empty(),
+        embedded: !frameworks.is_empty() || target.family.as_deref() == Some("linux"),
         frameworks,
         sdks,
         artifacts,
@@ -119,54 +109,66 @@ pub const fn nome(framework: Framework) -> &'static str {
 
 /// O alvo: chip (kit > framework), familia, triple, e os motores sugeridos —
 /// cada um com a linha de evidencia.
-fn deduzir_alvo(frameworks: &[FrameworkInfo], kit_chip: Option<&str>) -> TargetModel {
-    let mut alvo = TargetModel::default();
+fn deduzir_alvo(
+    frameworks: &[FrameworkInfo],
+    kit_chip: Option<&str>,
+    kit_target: Option<&str>,
+) -> TargetModel {
+    let mut target = TargetModel::default();
     let principal = frameworks.first();
 
     // 1. O chip: o kit e' a palavra do usuario; senao o que o framework disse.
     if let Some(chip) = kit_chip.map(str::trim).filter(|c| !c.is_empty()) {
-        alvo.chip = Some(chip.to_owned());
-        alvo.evidence
+        target.chip = Some(chip.to_owned());
+        target
+            .evidence
             .push("chip: kit do projeto (toolchain.setKit)".to_owned());
     } else if let Some(info) = principal
         && let Some((chip, de)) = chip_do_framework(info)
     {
-        alvo.chip = Some(chip);
-        alvo.evidence.push(format!("chip: {de}"));
+        target.chip = Some(chip);
+        target.evidence.push(format!("chip: {de}"));
     }
 
-    // 2. O triple, quando o build system declara um.
-    if let Some(info) = principal
+    // 2. O triple do kit efetivo vence o declarado pelo framework.
+    if let Some(triple) = kit_target.map(str::trim).filter(|value| !value.is_empty()) {
+        target.triple = Some(triple.to_owned());
+        target
+            .evidence
+            .push("triple: kit do projeto (toolchain.setKit)".to_owned());
+    } else if let Some(info) = principal
         && info.framework == Framework::CargoEmbedded
         && let Some(d) = info.detail.as_deref().filter(|d| d.contains("-none-"))
     {
-        alvo.triple = Some(d.to_owned());
-        alvo.evidence.push("triple: .cargo/config.toml".to_owned());
+        target.triple = Some(d.to_owned());
+        target
+            .evidence
+            .push("triple: .cargo/config.toml".to_owned());
     }
 
     // 3. A familia, do chip ou do framework.
-    alvo.family = familia(
-        alvo.chip.as_deref(),
-        alvo.triple.as_deref(),
+    target.family = familia(
+        target.chip.as_deref(),
+        target.triple.as_deref(),
         principal.map(|f| f.framework),
     );
-    if let Some(f) = &alvo.family {
-        alvo.evidence.push(format!("familia: {f}"));
+    if let Some(f) = &target.family {
+        target.evidence.push(format!("familia: {f}"));
     }
 
     // 4. Os motores, pela familia e pelo framework.
     let (gravar, monitor, debug, porque) = motores(
-        alvo.family.as_deref(),
-        alvo.chip.as_deref(),
+        target.family.as_deref(),
+        target.chip.as_deref(),
         principal.map(|f| f.framework),
     );
-    alvo.flash_engine = gravar.map(str::to_owned);
-    alvo.monitor = monitor.map(str::to_owned);
-    alvo.debug_adapter = debug.map(str::to_owned);
+    target.flash_engine = gravar.map(str::to_owned);
+    target.monitor = monitor.map(str::to_owned);
+    target.debug_adapter = debug.map(str::to_owned);
     if let Some(p) = porque {
-        alvo.evidence.push(p);
+        target.evidence.push(p);
     }
-    alvo
+    target
 }
 
 /// O alvo que um CHIP LIDO PELO CANAL sugere (E5, `serial.identify`).
@@ -245,6 +247,13 @@ fn familia(
     triple: Option<&str>,
     framework: Option<Framework>,
 ) -> Option<String> {
+    if triple.is_some_and(|target| {
+        target
+            .split('-')
+            .any(|part| part.eq_ignore_ascii_case("linux"))
+    }) {
+        return Some("linux".to_owned());
+    }
     let baixo = chip.map(str::to_ascii_lowercase).unwrap_or_default();
     let por_chip = if baixo.starts_with("esp32") || baixo.starts_with("esp8266") {
         Some("espressif")

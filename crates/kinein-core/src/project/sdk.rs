@@ -14,28 +14,40 @@ use kinein_protocol::{Framework, FrameworkInfo, SdkRequirement};
 
 /// De onde o modelo le o ambiente. Injetavel: o teste controla variaveis e
 /// binarios sem tocar no processo (escrever env e' `unsafe`, e esta' proibido).
-pub struct Ambiente<'a> {
+pub struct Environment<'a> {
     /// `std::env::var`, ou o falso do teste.
     pub var: &'a dyn Fn(&str) -> Option<String>,
     /// Onde um binario esta' no `PATH`, ou `None`.
-    pub binario: &'a dyn Fn(&str) -> Option<PathBuf>,
+    pub binary: &'a dyn Fn(&str) -> Option<PathBuf>,
     /// `$HOME`.
     pub home: Option<PathBuf>,
 }
 
-impl std::fmt::Debug for Ambiente<'_> {
+impl std::fmt::Debug for Environment<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Ambiente")
+        f.debug_struct("Environment")
             .field("home", &self.home)
             .finish_non_exhaustive()
     }
 }
 
-/// As exigencias de todos os frameworks achados, sem repetir.
+/// As exigências dos frameworks, sem repetir. `PlatformIO` gerencia seu SDK;
+/// exemplos `MicroPython` só exigem ferramentas quando são o projeto principal.
 #[must_use]
-pub fn requisitos(frameworks: &[FrameworkInfo], ambiente: &Ambiente<'_>) -> Vec<SdkRequirement> {
+pub fn requisitos(frameworks: &[FrameworkInfo], ambiente: &Environment<'_>) -> Vec<SdkRequirement> {
     let mut lista: Vec<SdkRequirement> = Vec::new();
+    let platform_io = frameworks
+        .iter()
+        .any(|f| f.framework == Framework::PlatformIo);
+    let micro_python = frameworks
+        .first()
+        .is_some_and(|f| f.framework == Framework::MicroPython);
     for info in frameworks {
+        if platform_io && info.framework != Framework::PlatformIo
+            || info.framework == Framework::MicroPython && !micro_python
+        {
+            continue;
+        }
         for req in do_framework(info, ambiente) {
             if !lista.iter().any(|r| r.id == req.id) {
                 lista.push(req);
@@ -45,7 +57,7 @@ pub fn requisitos(frameworks: &[FrameworkInfo], ambiente: &Ambiente<'_>) -> Vec<
     lista
 }
 
-fn do_framework(info: &FrameworkInfo, amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
+fn do_framework(info: &FrameworkInfo, amb: &Environment<'_>) -> Vec<SdkRequirement> {
     match info.framework {
         Framework::EspIdf => esp_idf(info, amb),
         Framework::Zephyr => zephyr(amb),
@@ -78,7 +90,7 @@ fn do_framework(info: &FrameworkInfo, amb: &Ambiente<'_>) -> Vec<SdkRequirement>
 }
 
 /// ESP-IDF: a arvore do IDF, a toolchain do ALVO (xtensa ou riscv32) e o esptool.
-fn esp_idf(info: &FrameworkInfo, amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
+fn esp_idf(info: &FrameworkInfo, amb: &Environment<'_>) -> Vec<SdkRequirement> {
     let alvo = info
         .detail
         .as_deref()
@@ -115,7 +127,7 @@ fn esp_idf(info: &FrameworkInfo, amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
     ]
 }
 
-fn zephyr(amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
+fn zephyr(amb: &Environment<'_>) -> Vec<SdkRequirement> {
     vec![
         pasta(
             amb,
@@ -137,7 +149,7 @@ fn zephyr(amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
     ]
 }
 
-fn pico_sdk(amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
+fn pico_sdk(amb: &Environment<'_>) -> Vec<SdkRequirement> {
     vec![
         pasta(
             amb,
@@ -160,7 +172,7 @@ fn pico_sdk(amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
 
 /// Rust embarcado: probe-rs, cargo-embed e o alvo — espup para Xtensa, alvo
 /// rustup para o resto (medido pelo setup, nao aqui: e' processo).
-fn cargo_embedded(info: &FrameworkInfo, amb: &Ambiente<'_>) -> Vec<SdkRequirement> {
+fn cargo_embedded(info: &FrameworkInfo, amb: &Environment<'_>) -> Vec<SdkRequirement> {
     let triple = info.detail.clone().unwrap_or_default();
     let mut lista = vec![
         probe_rs(amb),
@@ -193,7 +205,7 @@ fn cargo_embedded(info: &FrameworkInfo, amb: &Ambiente<'_>) -> Vec<SdkRequiremen
     lista
 }
 
-fn arm_gcc(amb: &Ambiente<'_>) -> SdkRequirement {
+fn arm_gcc(amb: &Environment<'_>) -> SdkRequirement {
     binario(
         amb,
         "arm-none-eabi-gcc",
@@ -202,7 +214,7 @@ fn arm_gcc(amb: &Ambiente<'_>) -> SdkRequirement {
     )
 }
 
-fn probe_rs(amb: &Ambiente<'_>) -> SdkRequirement {
+fn probe_rs(amb: &Environment<'_>) -> SdkRequirement {
     binario(
         amb,
         "probe-rs",
@@ -213,7 +225,7 @@ fn probe_rs(amb: &Ambiente<'_>) -> SdkRequirement {
 
 /// Uma PASTA: a variavel, senao as pastas padrao sob `$HOME`.
 fn pasta(
-    amb: &Ambiente<'_>,
+    amb: &Environment<'_>,
     id: &str,
     label: &str,
     env: Option<&str>,
@@ -241,8 +253,8 @@ fn pasta(
 }
 
 /// Um BINARIO no `PATH`.
-fn binario(amb: &Ambiente<'_>, id: &str, label: &str, hint: &str) -> SdkRequirement {
-    let path = (amb.binario)(id);
+fn binario(amb: &Environment<'_>, id: &str, label: &str, hint: &str) -> SdkRequirement {
+    let path = (amb.binary)(id);
     SdkRequirement {
         id: id.to_owned(),
         label: label.to_owned(),
@@ -256,7 +268,12 @@ fn binario(amb: &Ambiente<'_>, id: &str, label: &str, hint: &str) -> SdkRequirem
 /// As toolchains da Espressif ficam em `~/.espressif/tools/<nome>/<versao>/
 /// <nome>/bin` e so' entram no PATH pelo `export.sh`: se nao estao no PATH,
 /// procurar la' e' o que evita dizer "falta" ao que esta' instalado.
-fn binario_ou_espressif(amb: &Ambiente<'_>, id: &str, label: &str, hint: &str) -> SdkRequirement {
+fn binario_ou_espressif(
+    amb: &Environment<'_>,
+    id: &str,
+    label: &str,
+    hint: &str,
+) -> SdkRequirement {
     let mut req = binario(amb, id, label, hint);
     if req.found {
         return req;

@@ -223,7 +223,13 @@ tokens de tipografia e de movimento no `Theme.qml`, catraca
 
 ### 4.4 0.4 — embarcados (o quê: [`52`](52-arquitetura-executavel-da-0.4.md); ordem: 52 §11)
 
-**Estado de partida (medido).**
+**Fronteira atualizada em 2026-10-20:** esta série fecha na **0.4.9**,
+incorpora na entrega o trabalho não publicado 0.3.6–0.3.9 e gera/testa o
+AppImage ao final ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
+As âncoras abaixo orientam a extensão dos donos existentes, sem anunciar
+implementação dos itens pendentes.
+
+**Estado de partida em 2026-10-01 (histórico; avanços no 40 e 52 §14).**
 
 ```text
 contexto de arquivo  index.context → FileContext (crates/kinein-protocol/src/index.rs):
@@ -284,7 +290,24 @@ sessão — nenhum mecanismo novo. A prova de cada emulador é um ciclo do
 receita de instalação de cada emulador novo entra no
 `crates/kinein-core/src/setup/catalog_embedded.rs`, onde o QEMU já tem a dele.
 
+**Consolidação e fechamento 0.4.6–0.4.9 — âncoras conferidas em 2026-10-20.**
+Os básicos de C e os fluxos Python podem ser fechados antes da 0.4.6;
+ela cobra a coerência final das jornadas (52 §11, §14.14–14.17).
+
+| Trabalho | Começa nos donos existentes | Prova necessária |
+| --- | --- | --- |
+| Assistente C e padrão C visual | `crates/kinein-protocol/src/workspace.rs`, `crates/kinein-core/src/workspace/create.rs`, `ui/qml/workspace/ProjectTemplateCatalog.qml`, `crates/kinein-core/src/configaction/catalog/cmake.rs` | Contrato antes de ampliar o catálogo; projeto só C criado pela UI, padrão refletido nas flags/CDB, build/run/test/debug. Dividir o criador antes de atingir a catraca |
+| Contextos PlatformIO/Linux e Python | `crates/kinein-core/src/project/detect.rs`, `crates/kinein-core/src/project/sdk.rs`, `ui/qml/embedded/EmbeddedController.qml`, `ui/qml/embedded/EmbeddedPanel.qml`; Python no 41 §3.4.1 | Finalizar o rascunho 0.4.1e, sem confundir wrapper/SDK com exemplos auxiliares; CircuitPython distinto exige contrato próprio antes do core |
+| Integrações ativáveis/desativáveis | `crates/kinein-protocol/src/settings.rs`, `crates/kinein-core/src/settings.rs`, `schemas/settings.schema.json`, `ui/qml/settings/SettingsController.qml` e páginas de settings | Uma preferência efetiva, persistida e aplicada aos caminhos UI/paleta/IPC; reconhecimento, habilitação e instalação distintos. Sem fallback silencioso de runtime |
+| Auditoria de HUD/UI/UX e painéis | `ui/qml/Theme.qml`, `ui/qml/components/`, `ui/qml/shell/`, `ui/qml/embedded/` | Prévia comparativa e feedback; depois fotos e gestos nativos em larguras comparáveis, sem avisos QML ou perda de foco/rascunho |
+| Cores semânticas, atalhos e resposta | `ui/src/editor_highlighter_palette.h`, `ui/src/editor_highlighter_tokens.cpp`, `crates/kinein-core/src/commands/`, `ui/qml/command/CommandDispatcher.qml`, `scripts/verificar-atalhos.sh`, `scripts/medir-performance.sh` | Código real por linguagem, legibilidade nos temas/estados; atalhos sem conflito e nomes coerentes; medidas antes/depois do mesmo cenário |
+| Estabilização e AppImage 0.4.9 | `scripts/verificar.sh`, `packaging/appimage/`, `Cargo.toml`, `CHANGELOG.md` | Gate completo e jornadas integradas; alinhar todos os metadados de versão e conferir o artefato instalado/executado, sem promover prova isolada a release pronta |
+
 ### 4.5 0.5 — ambiente e capacidades (o quê: [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md))
+
+Parte da base **0.4.9**; suas notas contêm somente o delta da 0.5 (57 §1.1).
+O controle básico de integrações pertence à 0.4, com refinamento e expansão
+na 0.5 (52 §14.15); não reclassificar a entrega anterior como novidade.
 
 **Estado de partida (medido).** A Library existe: domínio
 `crates/kinein-core/src/library/` (`catalog.rs` 337/500, `availability.rs`,

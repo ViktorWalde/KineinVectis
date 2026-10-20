@@ -50,7 +50,9 @@ impl Core {
         &self,
         root: &std::path::Path,
     ) -> kinein_protocol::ProjectModel {
-        let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
+        let preset = crate::cmake::active_kit(root);
+        let toolchain =
+            crate::toolchain::Toolchain::resolve_kit(root, &self.detected_tools(), &preset);
         // O ambiente do modelo e' o do CORE: os binarios pelo detector (o
         // mesmo que o build e o kit usam — antes o modelo lia o PATH do
         // processo por conta propria), o $HOME real ou o fixado pelo teste.
@@ -63,12 +65,12 @@ impl Core {
             }
         };
         let binario = |nome: &str| self.detector.find_in_path(nome);
-        let ambiente = crate::project::sdk::Ambiente {
+        let ambiente = crate::project::sdk::Environment {
             var: &var,
-            binario: &binario,
+            binary: &binario,
             home: self.sdk_home(),
         };
-        crate::project::model_in(root, toolchain.chip(), &ambiente)
+        crate::project::model_in(root, toolchain.chip(), toolchain.target_triple(), &ambiente)
     }
 
     /// O motor do framework deste projeto (bloco E): pelo modelo e pelo

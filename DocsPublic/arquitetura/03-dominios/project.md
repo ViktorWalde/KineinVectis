@@ -43,6 +43,25 @@ marcador que **decide** (`.cargo/config.toml` com o triple, não um `memory.x`
 solto) e, empatando, o mais raso. Um `CMakeLists.txt` comum **não** é
 embarcado; um `main.py` que não importa hardware **não** é MicroPython.
 
+A execução e o monitor MicroPython seguem o **primeiro framework** do
+mesmo modelo (correção de 2026-10-20, sem mudança de formato). Quando ESP-IDF
+ou PlatformIO é o principal, um exemplo MicroPython aninhado continua como
+evidência adicional, sem redirecionar scripts auxiliares para o mpremote.
+A precedência de PlatformIO acompanha `build.run`: ele gerencia o framework
+do `platformio.ini` e antecede ESP-IDF na lista; frameworks nativos e Linux
+antecedem MicroPython. `sdks` não exige um SDK ESP-IDF externo quando o
+PlatformIO é o dono, nem mpremote/esptool de um exemplo MicroPython quando
+outro framework é o principal. Os marcadores adicionais continuam visíveis.
+
+**Kit Linux em aplicação comum (correção de 2026-10-20, sem campo novo):**
+o modelo também recebe o `targetTriple` do kit efetivo (o do último configure
+com kit nomeado, senão o padrão, pelo mesmo mecanismo de `index.context`).
+O triple explícito preenche `target.triple` com evidência do kit; um alvo
+Linux define `family: linux` e `embedded: true` mesmo sem framework de imagem.
+Um CMake comum sem esse alvo continua não embarcado. Salvar kit recompõe
+`event.project.changed`; descoberta de toolchains e painel usam o mesmo
+modelo. Isso não inventa Yocto/Buildroot nem motor de flash de MCU.
+
 **O alvo tem evidência ou não tem alvo.** O chip do **kit** vence o do
 framework (é a palavra do usuário); a família vem do chip ou do triple; os
 motores vêm da família — e o ESP32 clássico (sem USB-JTAG) recebe `debugAdapter`

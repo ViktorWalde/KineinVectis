@@ -231,7 +231,6 @@ flowchart LR
   n_core_owned_child --> n_core_stderr_tail
   n_core_process --> n_core_platform
   n_core_project --> n_core_platform
-  n_core_project --> n_core_tools
   n_core_python --> n_core_run
   n_core_remote --> n_core_platform
   n_core_rpc --> n_core_dap
@@ -263,7 +262,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 120 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 119 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -304,7 +303,7 @@ flowchart LR
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
 | `probe` | — | Sondas de debug conectadas: |
 | `process` | platform | Synchronous line streaming for child processes. |
-| `project` | platform, tools | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
+| `project` | platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
 | `python` | run | O dominio python: |
 | `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
@@ -926,6 +925,7 @@ flowchart LR
     n_crates_kinein_core_src_handlers_serial_rs["handlers/serial.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
     n_core_build[build]
+    n_core_cmake[cmake]
     n_core_dap[dap]
     n_core_probe[probe]
     n_core_project[project]
@@ -955,6 +955,7 @@ flowchart LR
   n_crates_kinein_core_src_handlers_probe_rs --> n_core_toolchain
   n_ipc_project --> n_crates_kinein_core_src_handlers_project_rs
   n_crates_kinein_core_src_handlers_project_rs --> n_core_build
+  n_crates_kinein_core_src_handlers_project_rs --> n_core_cmake
   n_crates_kinein_core_src_handlers_project_rs --> n_core_project
   n_crates_kinein_core_src_handlers_project_rs --> n_core_rpc
   n_crates_kinein_core_src_handlers_project_rs --> n_core_toolchain

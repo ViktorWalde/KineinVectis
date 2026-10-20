@@ -36,7 +36,9 @@ Item {
 
         Text {
             width: parent.width
-            text: qsTr("Selecione a porta para gravar. Identificar reinicia a placa; o monitor abre em uma aba de terminal.")
+            text: root.controller && root.controller.projectLinux
+                ? qsTr("Console UART opcional do alvo Linux. Abra o monitor para acompanhar a inicialização e os logs.")
+                : qsTr("Selecione a porta para gravar. Identificar reinicia a placa; o monitor abre em uma aba de terminal.")
             wrapMode: Text.WordWrap
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeBody
@@ -98,11 +100,13 @@ Item {
                             height: 28
                             active: portCard.selected
                             enabled: portCard.modelData.access.readableWritable
-                            tooltip: qsTr("Usar esta porta para gravar e executar na placa")
+                            tooltip: root.controller.projectLinux ? qsTr("Selecionar o console UART deste alvo")
+                                : qsTr("Usar esta porta para gravar e executar na placa")
                             onToggled: root.controller.selectPort(portCard.modelData.device)
                         }
                         KvButton {
                             objectName: "embeddedIdentify"
+                            visible: !root.controller.projectLinux
                             text: qsTr("Identificar")
                             iconName: "search"
                             compact: true

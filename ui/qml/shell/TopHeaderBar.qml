@@ -19,6 +19,7 @@ Rectangle {
     property bool debugging: false
     property string workspaceName: ""
     property string workspaceKind: ""
+    property string projectFrameworkLabel: ""
     property var workspaceBuildSystems: []
     property string activeConfigId: ""
     property string activeConfigName: ""
@@ -95,6 +96,7 @@ Rectangle {
     }
 
     function workspaceSystemLabel() {
+        if (projectFrameworkLabel !== "") return projectFrameworkLabel;
         const cargo = hasBuildSystem("cargo");
         const cmake = hasBuildSystem("cmake");
         if (cargo && cmake) return "Cargo + CMake";

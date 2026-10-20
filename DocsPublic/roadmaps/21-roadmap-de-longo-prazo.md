@@ -756,8 +756,9 @@ superada. A cópia limpa é um artefato de distribuição, com regras próprias
 no mesmo dono; não é a fonte recomendada para receber PRs e executar a CI.
 Não houve mudança de visibilidade, exportação ou publicação nesta revisão.
 
-A porta para colaboradores se prepara antes e se publica com a 0.4.5
-(40 §5), junto da documentação em inglês. A recomendação de repositório,
+A porta para colaboradores se prepara antes e se publica após o fechamento
+da **0.4.9** (fronteira atualizada em 2026-10-20, 57 §1.1; 40 §5). A
+transição da documentação para inglês acompanha esse fechamento. A recomendação de repositório,
 briefings de issues e a ideia de cards no site, incluindo "Tasks
 realizadas", têm dono no
 [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md).

@@ -1517,14 +1517,35 @@ o ambiente, selecionar a placa, compilar ou revisar a gravação. MicroPython
 orienta ao editor e à execução dos scripts. Os
 detalhes do modelo e tamanho ficam em **Detalhes do projeto**.
 
+Num projeto **PlatformIO**, a Visão geral destaca as tarefas **Compilar
+projeto**, **Revisar upload**, **Conexão e monitor** e **Configurar índice
+C/C++**. Compilar usa os ambientes padrão do `platformio.ini`; revisar
+upload abre a aba Gravar no motor PlatformIO. A escolha detalhada de
+ambiente e as tarefas test/check ainda estão pendentes.
+
+Para **Yocto/Buildroot** e aplicações com **kit de alvo Linux explícito**, a jornada é Linux: **Abrir alvos SSH**, **Terminal
+do projeto** e **Revisar SDK e sysroot**. As abas passam a **Conexões** e
+**Implantar**. A construção da imagem continua no fluxo do projeto; os
+atalhos abrem os donos de terminal/Remoto. O console UART é opcional.
+
 **Placa** reúne portas, **Selecionar porta**, **Identificar**, **Monitor
 serial** e permissões; os arquivos na placa aparecem para projetos
 MicroPython. **Gravar** usa a ferramenta automática do projeto; **Alterar
 ferramenta** revela alternativas e **Gerar prévia de gravação** mostra o
 comando. Trocar porta, motor, firmware, modelo ou identificação da porta
 descarta a prévia anterior. **Ambiente** reúne os seletores C/C++ e monitor
-e o chip; os campos de alvo, sysroot, SVD, sonda, depurador, catálogo e
+e o chip nas aplicações nativas; PlatformIO e imagens Yocto/Buildroot
+explicam o gerenciamento dos compiladores pelo framework e mantêm o
+monitor, sem oferecer seletores CMake como se controlassem esse build; os campos de alvo, sysroot, SVD, sonda, depurador, catálogo e
 importação ficam nas opções avançadas, com **Salvar kit** fixo no pé.
+Para Linux, alvo, sysroot e importação do SDK ficam acessíveis diretamente;
+chip/SVD e identificação Espressif não fazem parte desse fluxo. O formulário
+Ambiente é carregado no primeiro acesso e conserva os rascunhos entre abas;
+trocar de projeto descarta o formulário anterior. Salvar o kit atualiza o
+modelo do painel; o alvo Linux explícito também é reconhecido em CMake
+sem marcador Yocto/Buildroot. O cabeçalho mostra o framework principal,
+como PlatformIO, mantendo os sistemas de build como alternativa quando
+não há framework reconhecido.
 O veredito da placa permanece no cabeçalho; uma identificação parcial é
 indicada como tal. A janela **lê**, e diz o que leu:
 

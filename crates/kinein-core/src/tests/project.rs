@@ -16,7 +16,7 @@ use serde_json::json;
 
 use super::core_with_empty_search_path;
 
-use crate::project::sdk::Ambiente;
+use crate::project::sdk::Environment;
 use crate::project::{artifacts, detect, esp, model_in, sdk};
 
 fn fixtures() -> PathBuf {
@@ -41,10 +41,10 @@ fn temp_dir(name: &str) -> PathBuf {
 fn ambiente_vazio<'a>(
     var: &'a dyn Fn(&str) -> Option<String>,
     bin: &'a dyn Fn(&str) -> Option<PathBuf>,
-) -> Ambiente<'a> {
-    Ambiente {
+) -> Environment<'a> {
+    Environment {
         var,
-        binario: bin,
+        binary: bin,
         home: None,
     }
 }
@@ -179,7 +179,7 @@ fn the_target_carries_its_evidence_and_the_kit_chip_wins_over_the_framework() {
     let amb = ambiente_vazio(&nada_var, &nada_bin);
 
     // ESP-IDF com IDF_TARGET esp32c3: familia espressif, USB-JTAG -> probe-rs.
-    let m = model_in(&fixtures().join("esp-idf"), None, &amb);
+    let m = model_in(&fixtures().join("esp-idf"), None, None, &amb);
     assert!(m.embedded);
     assert_eq!(m.target.chip.as_deref(), Some("esp32c3"));
     assert_eq!(m.target.family.as_deref(), Some("espressif"));
@@ -204,14 +204,14 @@ fn the_target_carries_its_evidence_and_the_kit_chip_wins_over_the_framework() {
 
     // O kit diz esp32 (o classico): o chip do kit vence, e o classico NAO tem
     // USB-JTAG — o modelo diz que depurar exige ESP-Prog em vez de sugerir probe-rs.
-    let m = model_in(&fixtures().join("esp-idf"), Some("esp32"), &amb);
+    let m = model_in(&fixtures().join("esp-idf"), Some("esp32"), None, &amb);
     assert_eq!(m.target.chip.as_deref(), Some("esp32"));
     assert!(m.target.evidence.iter().any(|e| e.contains("kit")));
     assert_eq!(m.target.debug_adapter, None);
     assert!(m.target.evidence.iter().any(|e| e.contains("ESP-Prog")));
 
     // STM32 pelo CubeMX: probe-rs; Pico W: rp2040 + picotool; Zephyr: west.
-    let m = model_in(&fixtures().join("stm32cube"), None, &amb);
+    let m = model_in(&fixtures().join("stm32cube"), None, None, &amb);
     assert_eq!(
         (
             m.target.chip.as_deref(),
@@ -221,27 +221,27 @@ fn the_target_carries_its_evidence_and_the_kit_chip_wins_over_the_framework() {
         (Some("STM32F401CCUx"), Some("stm32"), Some("probe-rs"))
     );
     assert_eq!(m.artifacts.linker_scripts.len(), 1);
-    let m = model_in(&fixtures().join("pico-sdk"), None, &amb);
+    let m = model_in(&fixtures().join("pico-sdk"), None, None, &amb);
     assert_eq!(
         (m.target.chip.as_deref(), m.target.flash_engine.as_deref()),
         (Some("rp2040"), Some("picotool"))
     );
-    let m = model_in(&fixtures().join("zephyr"), None, &amb);
+    let m = model_in(&fixtures().join("zephyr"), None, None, &amb);
     assert_eq!(
         (m.target.family.as_deref(), m.target.flash_engine.as_deref()),
         (Some("zephyr"), Some("west"))
     );
     // Rust: o triple vira familia cortex-m e o memory.x entra nos artefatos.
-    let m = model_in(&fixtures().join("cargo-embarcado"), None, &amb);
+    let m = model_in(&fixtures().join("cargo-embarcado"), None, None, &amb);
     assert_eq!(m.target.triple.as_deref(), Some("thumbv7em-none-eabihf"));
     assert_eq!(m.target.family.as_deref(), Some("cortex-m"));
     assert!(m.artifacts.memory_x.is_some());
     // Yocto: familia linux, sem motor de gravar (e' o pilar 6).
-    let m = model_in(&fixtures().join("yocto"), None, &amb);
+    let m = model_in(&fixtures().join("yocto"), None, None, &amb);
     assert_eq!(m.target.family.as_deref(), Some("linux"));
     assert_eq!(m.target.flash_engine, None);
     // Sem framework: nao e' embarcado e nao ha' alvo inventado.
-    let m = model_in(&temp_dir("nao-embarcado"), None, &amb);
+    let m = model_in(&temp_dir("nao-embarcado"), None, None, &amb);
     assert!(!m.embedded && m.target.family.is_none() && m.hints.is_empty());
 }
 
@@ -260,9 +260,9 @@ fn sdk_requirements_are_found_only_by_env_default_folder_or_binary() {
     let idf_str = idf.display().to_string();
     let var = move |nome: &str| (nome == "IDF_PATH").then(|| idf_str.clone());
     let bin = |nome: &str| (nome == "esptool").then(|| PathBuf::from("/x/esptool"));
-    let amb = Ambiente {
+    let amb = Environment {
         var: &var,
-        binario: &bin,
+        binary: &bin,
         home: Some(home),
     };
 
@@ -286,9 +286,9 @@ fn sdk_requirements_are_found_only_by_env_default_folder_or_binary() {
     // variavel definida e' promessa; a pasta e' o fato.
     let sumida = raiz.join("nao-existe").display().to_string();
     let var_sumida = move |nome: &str| (nome == "IDF_PATH").then(|| sumida.clone());
-    let amb_sumida = Ambiente {
+    let amb_sumida = Environment {
         var: &var_sumida,
-        binario: &nada_bin,
+        binary: &nada_bin,
         home: None,
     };
     let reqs_sumida = sdk::requisitos(&so_idf, &amb_sumida);
@@ -330,7 +330,7 @@ fn sdk_requirements_are_found_only_by_env_default_folder_or_binary() {
 
     // Sem nada: tudo falta, e os hints viram a lista do modelo.
     let vazio = ambiente_vazio(&nada_var, &nada_bin);
-    let m = model_in(&fixtures().join("zephyr"), None, &vazio);
+    let m = model_in(&fixtures().join("zephyr"), None, None, &vazio);
     assert!(m.sdks.iter().all(|r| !r.found));
     assert!(m.hints.iter().filter(|h| h.starts_with("falta ")).count() >= 3);
 }
@@ -559,7 +559,7 @@ fn the_model_reads_the_recipe_and_the_partitions_it_used_to_only_locate() {
     .unwrap();
     write_flash_build(&raiz);
     let amb = ambiente_vazio(&nada_var, &nada_bin);
-    let m = model_in(&raiz, None, &amb);
+    let m = model_in(&raiz, None, None, &amb);
     let receita = m.artifacts.flash_recipe.as_ref().unwrap();
     assert!(m.artifacts.elf.is_empty());
     assert!(

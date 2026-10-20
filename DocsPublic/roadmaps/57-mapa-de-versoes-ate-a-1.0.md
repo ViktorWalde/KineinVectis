@@ -28,7 +28,7 @@ documento: **ninguém (pessoa ou IA) pode tratar uma proposta como decisão.**
 flowchart LR
   v02["0.1–0.2<br/>MVP e teste fechado"]:::done --> v03["0.3.0–0.3.5<br/>série 0.3"]:::done
   v03 --> v036["0.3.6–0.3.9<br/>casca e base visual"]:::checkout
-  v036 --> v04["0.4.x<br/>embarcados"]:::now
+  v036 --> v04["0.4.0–0.4.9<br/>embarcados e entrega acumulada"]:::now
   v04 --> v05["0.5.x<br/>ambiente e capacidades"]:::planned
   v05 --> v06["0.6<br/>motor do editor"]:::planned
   v06 --> v07["0.7<br/>paridade diária"]:::planned
@@ -42,9 +42,11 @@ flowchart LR
   classDef proposed fill:#ffffff,stroke:#888,stroke-dasharray:5 4
 ```
 
-**Lançamento da 0.3.6–0.3.9 (decisão do autor, 2026-10-02):** as quatro saem
-juntas, num pacote só; o detalhe e o que ainda está em aberto (juntar às notas
-da 0.4) estão no [`53`](53-arquitetura-executavel-da-0.3.6.md) §11.
+**Regra vigente de lançamento (autor, 2026-10-20):** a entrega da série 0.4
+termina na **0.4.9** e inclui o trabalho não publicado da 0.3.6–0.3.9.
+O AppImage é gerado e testado somente depois desse fechamento. O §1.1
+resolve o agrupamento que ainda estava aberto no
+[`53`](53-arquitetura-executavel-da-0.3.6.md) §11.
 
 **Revisão de continuidade em 2026-10-07:** foco Qt 6.10; na mesma noite o
 autor migrou para Arch Linux e o Qt local passou a 6.12.0 (59, topo). Em
@@ -57,9 +59,46 @@ lançamento: as quatro etapas esperam o pacote único. No mesmo dia o autor
 decidiu: o binário passa a dizer 0.3.9, e o AppImage só sai com a 0.4
 finalizada (40 §5).
 Uso cronometrado (40.7 §7.201) continua entre as provas do passo 16.
+As intenções anteriores de pacote após a 0.4.0 e de fechamento na 0.4.5
+foram substituídas pela decisão vigente do §1.1; não são marcos de pacote.
 
 Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
 (nenhuma versão desde 2026-10-01; o que resta proposto é o critério da 1.0, §4).
+
+### 1.1 Fronteira da entrega 0.4.9 — decisão de 2026-10-20
+
+- A versão pública de referência continua sendo a **0.3.5**. As etapas
+  históricas **0.3.6–0.3.9**, encerradas no checkout sem pacote próprio,
+  passam a integrar as notas e o artefato da **série 0.4**, junto de todo o
+  trabalho 0.4.0–0.4.9. Preservar os números antigos nos commits e registros;
+  esta é uma correção da contabilização da entrega, sem reescrever histórico.
+- A **0.4.5 continua sendo o marco funcional de Banco para embarcados**.
+  A revisão geral de frontend, a consolidação e a estabilização prosseguem
+  até a **0.4.9**; a ordem operacional pertence ao 52 §11.
+- A conclusão da 0.4.9 exige jornadas verificadas, correções das falhas
+  encontradas, auditoria visual e funcional, gates completos e documentação
+  coerente. Então alinhar versão do binário, manifests, notas e pacote e
+  **gerar/testar o AppImage localmente**. O binário do checkout ainda diz
+  `0.3.9`; protocolo e versão de produto têm numerações independentes.
+- **Prioridade esclarecida após o handoff (2026-10-20):** eficiência e
+  fechamento completo de cada escopo, incluindo a UI/UX necessária ao uso;
+  não acumular pendências para o final. A 0.4.9 entrega a base pronta e
+  coerente. Em seguida, o autor confirmou uma **etapa especial de revisão
+  de HUD/UX/UI após concluir a 0.4.9**, para procurar componentes, estados
+  ou estilos esquecidos e incompatíveis com o padrão moderno da IDE.
+  “Edição especial” é a denominação da etapa, com versão/artefato e
+  cronograma ainda não fixados; ela não recebe pendências desta entrega.
+  Critérios por escopo no 52 §11; cobertura da revisão no 52 §14.17.
+- A **0.5 herda a base 0.4.9**. Suas notas devem listar somente mudanças
+  introduzidas na 0.5, sem apresentar trabalho da 0.3.6–0.4.9 como novidade
+  da 0.5. Aplicar a mesma regra nas séries posteriores: fechar, registrar e
+  empacotar a série antes de anunciar o delta da próxima.
+- A geração e o teste locais estão autorizados; **push, tag, release e
+  publicação continuam com o autor**. Trabalho descrito no plano não é
+  automaticamente entregue, e hardware indisponível continua NÃO PROVADO.
+- MCP, abertura da colaboração e frente ROS 2 continuam **após o fechamento
+  da 0.4**, agora 0.4.9. A transição da documentação para inglês acompanha
+  esse fechamento. A extensão não antecipa essas frentes para 0.4.6–0.4.9.
 
 ## 2. Versão a versão
 
@@ -72,9 +111,9 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
 | 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pelo autor, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização FEITA (2026-10-15, 61 §4; continua junto de cada fatia) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
-| 0.4.0–0.4.5 | EM CURSO (desde 2026-10-16, no modo autônomo do 40 §5); a 0.4.5, o Banco para embarcados de volta (autor, 2026-10-16); o AppImage só com ela finalizada | embarcados | contexto efetivo, diagnóstico ao salvar, cross ponta a ponta, tamanho por símbolo, cache, gravar e depurar com SVD; **PlatformIO como cidadão de tier 1** nas cinco jornadas e **emuladores como alvo** (QEMU, Renode, QEMU da Espressif) — decisões de 2026-10-01 | [`52`](52-arquitetura-executavel-da-0.4.md) §11 | as cinco jornadas J1–J5 provadas (52 §1, §10) |
+| 0.4.0–0.4.9 | EM CURSO; execução autônoma até a 0.4.9, com AppImage ao final (autor, 2026-10-20); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux verificadas, auditoria/gates completos, documentação e AppImage 0.4.9 testado (§1.1; 52 §10) |
 | edição especial | PLANEJADA (autor, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
-| 0.5.x | PLANEJADA | ambiente e capacidades | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md) | por fatia; corte de release pela evidência (49 §6) |
+| 0.5.x | PLANEJADA; parte da base 0.4.9, com notas só do delta 0.5 (§1.1) | ambiente e capacidades | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; refino da gestão de integrações nativas | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md) | por fatia; corte de release pela evidência (49 §6) |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
 | 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
@@ -120,19 +159,20 @@ Os três pedidos de 2026-10-01 já têm dono:
 3. **Direção visual da 0.3.6–0.3.9** → 53 §13.1, com a linha de base medida
    no 58 §4.3; a task dedicada de UX/HUD a detalha.
 
-Os de 2026-10-17 (40 §5):
+Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
+0.4.9 em 2026-10-20 (§1.1):
 
 4. **A Kinein como servidor MCP** para agentes externos (o Claude Code por
-   `claude mcp add`), **depois da 0.4.5**, o primeiro corte só de leitura,
+   `claude mcp add`), **depois da 0.4.9**, o primeiro corte só de leitura,
    com o desenho antes do código. Revisa, só nisto, o "IA na IDE fora de
    escopo" de 2026-07-17: o agente segue no terminal, sem painel de IA.
-5. **A documentação em inglês, junto da 0.4.5** (a prioridade; o alemão
+5. **A documentação em inglês, junto do fechamento da 0.4.9** (a prioridade; o alemão
    talvez na 0.5, sem decisão). O site, em outra sessão, fica em inglês, com
    uma aba de colaboradores, dizendo só de passagem que o projeto vem do
    Brasil.
 6. **Parte da 0.9 antecipada:** a CI pública entra agora, numa fatia curta
    antes da 0.4.1b; a porta para novos colaboradores (modelos, labels,
-   issues de entrada em inglês) entra depois da 0.4.5: o autor segue sozinho
+   issues de entrada em inglês) entra depois da 0.4.9: o autor segue sozinho
    até ela (esclarecimento de 2026-10-19).
    A recomendação de CI no repositório público e a ideia de cards no site
    derivados das issues foram documentadas em 2026-10-19 no
@@ -143,7 +183,8 @@ Os de 2026-10-17 (40 §5):
    O pedido posterior de escopos e melhorias, recuperado em 2026-10-19,
    está no [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19);
    **Esclarecido pelo autor em 2026-10-19:** a frente ROS 2 e seu ensaio
-   ficam para **depois da 0.4.5**; a versão exata continua sem número.
+   ficam para **depois do fechamento da 0.4, agora 0.4.9**; a versão exata
+   continua sem número.
 8. **Profundidade de refatoração e compreensão do compilador ao longo dos
    anos**, com a régua JetBrains: pedido recuperado em 2026-10-19,
    registrado no [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19).
@@ -203,3 +244,4 @@ Não está copiado aqui — está no dono, e é lá que se lê:
 | 3 | PlatformIO tier 1 e emuladores | **decidida (2026-10-01):** os dois na 0.4 | 52 §5.10, §10.1; 58 §4.4 |
 | 4 | versão mínima do gdb | **decidida (2026-10-01):** vale o ≥ 16; abaixo, degradação explicada (protocolo 0.145.0) | [`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md) |
 | 5 | qual qmllint vale | **decidida (2026-10-01):** vale o ≥ 6.5; no 6.4, NÃO PROVADO | `contribuindo/04` |
+| 6 | fronteira e contabilização da entrega | **decidida (2026-10-20):** série atual até 0.4.9, incluindo trabalho não publicado 0.3.6–0.3.9; AppImage após fechar 0.4.9; 0.5 só anuncia seu próprio delta | §1.1; execução no 52 §11 |

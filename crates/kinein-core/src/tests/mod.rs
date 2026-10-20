@@ -49,6 +49,7 @@ mod lsp_server;
 mod lsp_stderr;
 mod platformio;
 mod project;
+mod project_contexts;
 mod python;
 mod remote;
 mod remote_guard;

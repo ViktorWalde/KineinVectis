@@ -126,6 +126,7 @@ impl Core {
         ) {
             Ok(resolvida) => {
                 self.configure_clangd_from_toolchain(&root);
+                self.emit_project_changed();
                 JsonRpcResponse::success(request_id, json!(self.toolchain_result(&resolvida)))
             }
             Err(message) => JsonRpcResponse::failure(

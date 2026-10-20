@@ -91,19 +91,19 @@ fn forca(achado: &FrameworkInfo) -> u8 {
     }
 }
 
-/// O mais ESPECIFICO primeiro: um projeto ESP-IDF tambem e' `CMake`, e um
-/// `PlatformIO` pode conter um `.ioc` — quem manda e' o framework de cima.
+/// O dono do build primeiro: `PlatformIO` gerencia seus frameworks. Um
+/// exemplo `MicroPython` não sobrepõe os frameworks nativos ou Linux.
 const fn ordem(framework: Framework) -> u8 {
     match framework {
-        Framework::EspIdf => 0,
-        Framework::Zephyr => 1,
-        Framework::PicoSdk => 2,
-        Framework::PlatformIo => 3,
+        Framework::PlatformIo => 0,
+        Framework::EspIdf => 1,
+        Framework::Zephyr => 2,
+        Framework::PicoSdk => 3,
         Framework::Stm32Cube => 4,
         Framework::CargoEmbedded => 5,
-        Framework::MicroPython => 6,
-        Framework::Yocto => 7,
-        Framework::Buildroot => 8,
+        Framework::Yocto => 6,
+        Framework::Buildroot => 7,
+        Framework::MicroPython => 8,
     }
 }
 

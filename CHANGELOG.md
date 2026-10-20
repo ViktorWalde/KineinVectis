@@ -5,10 +5,28 @@ mudança, com data, medida e prova, está em
 `DocsPublic/roadmaps/40.7-registro-das-entregas.md`; a situação de cada versão,
 em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 
-## 0.4 — em desenvolvimento (não lançada)
+## 0.4.0–0.4.9 — em desenvolvimento (não lançada)
 
 Embarcados com os compiladores e ecossistemas por baixo (roadmaps 52 e 57),
-em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
+em curso desde 2026-10-16. **Decisão de 2026-10-20:** a série fecha na
+**0.4.9**, com cada escopo funcional e utilizável, revisão integrada de
+frontend e estabilização antes de gerar e testar o AppImage. Após a
+conclusão da 0.4.9, uma etapa especial de revisão
+de HUD/UX/UI procurará componentes e estilos esquecidos ou inconsistentes
+com o padrão visual moderno, sem receber pendências desta entrega. A
+entrega inclui também o trabalho não publicado
+**0.3.6–0.3.9**, registrado abaixo com seus rótulos históricos. A 0.5 herda
+essa base e anuncia somente mudanças próprias; não reapresenta esse trabalho
+como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
+O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
+pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
+
+- **Embarcados por contexto (0.4.1e, 2026-10-20):** destaque PlatformIO,
+  jornada Linux e Ambiente sob demanda. Exemplos MicroPython aninhados
+  preservam o runtime principal. O kit Linux explícito é reconhecido em
+  aplicações CMake, inclusive no cabeçalho, e salvar o kit atualiza o painel.
+  Compiladores gerenciados por PlatformIO/Yocto/Buildroot são explicados,
+  com os controles adequados ao contexto. Detalhes no roadmap 52 §14.13.
 
 - Protocolo `0.173.0` — **O contexto efetivo, com a origem de cada valor**
   (0.4.0a, 40.7 §7.307): o `index.context` diz o compilador, o padrão, o
@@ -55,12 +73,13 @@ em curso desde 2026-10-16; o AppImage sai só com ela finalizada.
   (`cmake --toolchain`); com sysroot no kit, o configure procura bibliotecas
   e cabeçalhos só nele.
 
-## 0.3.6 a 0.3.9 — encerrada no checkout em 2026-10-16, um lançamento só (não lançada)
+## 0.3.6 a 0.3.9 — etapas históricas incluídas na entrega 0.4 (não publicadas separadamente)
 
-A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
-juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
-no checkout, não em nenhum pacote publicado: o lançamento (tag e release) é
-do autor, e o AppImage só sai com a 0.4 finalizada (decisão de 2026-10-16).
+A reorganização da casca da IDE (roadmaps 53 e 57), encerrada no checkout
+em 2026-10-16. O agrupamento decidido em 2026-10-02 foi refinado pelo autor
+em 2026-10-20: as quatro etapas integram a entrega da **0.4 até a 0.4.9**.
+O que está abaixo existe no checkout, não em pacote publicado. AppImage
+somente após fechar a 0.4.9; tag/release/publicação continuam com o autor.
 O binário diz `0.3.9` desde 2026-10-16 (`kinein --version` e a tela inicial).
 
 - **0.3.9 encerrada** (2026-10-16, roadmaps 59 §7.1.8, 40.7 §7.304). As

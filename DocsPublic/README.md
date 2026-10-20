@@ -7,6 +7,13 @@ ordem de precedência quando houver conflito entre documentos.
 > regras, a tabela "pergunta → documento dono" e por onde começar. Este
 > índice é o catálogo completo; aquele é a porta.
 
+**Entrega em curso (decisão de 2026-10-20):** a série **0.4 vai até a 0.4.9**,
+inclui o trabalho não publicado da 0.3.6–0.3.9 e gera/testa o AppImage somente
+após seu fechamento. Estado e handoff no [40](roadmaps/40-estado-e-continuidade.md),
+execução no [52 §11](roadmaps/52-arquitetura-executavel-da-0.4.md#11-ordem-e-marcos),
+contabilização de versões no [57 §1.1](roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)
+e pontos de entrada no código no [58 §4.4](roadmaps/58-onde-cada-versao-comeca-no-codigo.md#44-04--embarcados-o-quê-52-ordem-52-11).
+
 ## Como a documentação está organizada (2026-09-12)
 
 Duas árvores, por decisão do autor em 2026-09-12 (sucede a decisão das três

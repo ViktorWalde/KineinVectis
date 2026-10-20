@@ -59,10 +59,9 @@ impl Core {
             );
         };
         let root = self.workspace_root();
-        let project_family = root.as_deref().and_then(|root| {
-            let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
-            crate::project::model(root, toolchain.chip()).target.family
-        });
+        let project_family = root
+            .as_deref()
+            .and_then(|root| self.compute_project_model(root).target.family);
         let recomendada = project_family
             .as_deref()
             .and_then(install::catalog::familia_do_catalogo);

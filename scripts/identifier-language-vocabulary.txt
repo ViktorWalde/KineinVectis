@@ -900,6 +900,7 @@ evict
 evidence
 exact
 exactly
+example
 exceeded
 except
 exception
@@ -1519,6 +1520,7 @@ majors
 make
 makes
 malformed
+managed
 management
 manager
 manifest
@@ -2681,6 +2683,7 @@ transfer
 transferred
 transfers
 transform
+transition
 translate
 transparent
 transport

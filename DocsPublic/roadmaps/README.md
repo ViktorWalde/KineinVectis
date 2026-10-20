@@ -41,9 +41,13 @@ O [`53-arquitetura-executavel-da-0.3.6.md`](53-arquitetura-executavel-da-0.3.6.m
 aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
 é a arquitetura da 0.4 (embarcados com compiladores e ecossistemas por baixo):
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
+**Decisão de 2026-10-20:** a série atual fecha na **0.4.9**, com auditoria
+geral de frontend antes do AppImage. A entrega incorpora o trabalho não
+publicado 0.3.6–0.3.9; a 0.5 lista somente seu próprio delta. O 52 §11
+organiza 0.4.0–0.4.9; o 57 §1.1 é o dono dessa fronteira e o 40 é o handoff.
 
 ```text
-57-mapa-de-versoes-ate-a-1.0.md     as versoes ate a 1.0: encerrada, em curso, planejada, proposta
+57-mapa-de-versoes-ate-a-1.0.md     as versoes ate a 1.0; §1.1: entrega acumulada ate 0.4.9 e delta da 0.5
 58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia
 59-fechamento-da-0.3.9.md            o fechamento da 0.3.9, encerrada em 2026-10-16 (registro)
 60-windows-e-edicao-especial.md       o Windows 11 Pro: adaptar a IDE, fechar 0.3.9 e 0.4.0, edição especial Windows + WSL2
@@ -52,7 +56,7 @@ mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 40.7-registro-das-entregas.md       LOG: o índice do registro e a fase aberta
 registro/                          LOG: as partes fechadas do 40.7 e o 40 até 2026-10-15
 53-arquitetura-executavel-da-0.3.6.md arquitetura da 0.3.6: casca, terminal mudo, zero aviso
-52-arquitetura-executavel-da-0.4.md arquitetura da 0.4: donos, fluxos, contratos
+52-arquitetura-executavel-da-0.4.md arquitetura ate 0.4.9: donos, fluxos, contratos e auditoria frontend
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
 51-plano-fechamento-0.3.5.md       plano operacional prévio: Remote, provas,
                                    KV0.3, push, release e site

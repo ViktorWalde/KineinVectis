@@ -1,8 +1,9 @@
 # CI pública e tarefas para colaboradores
 
 > **Classe: PLANO.** Recomendação e ideia registradas em 2026-10-19 a pedido
-> do autor. Na atualização de 2026-10-19, o autor segue sozinho até a
-> 0.4.5; a porta e as tarefas entram depois dela (40 §5). Cards no site são
+> do autor. O autor segue sozinho até o fechamento da 0.4, agora
+> **0.4.9** (limite atualizado em 2026-10-20, 57 §1.1); a porta e as tarefas
+> entram depois dele (40 §5). Cards no site são
 > uma proposta para outra sessão, não requisito novo de release. Este registro
 > não cria issues, labels, configurações no GitHub ou alterações no site.
 
@@ -45,7 +46,7 @@ gestão próprio para começar.
 ## 3. A tarefa nasce no GitHub
 
 Publicar poucas tarefas revisadas e prontas para receber contribuição, em
-inglês na abertura da colaboração, após a 0.4.5. Não transformar automaticamente
+inglês na abertura da colaboração, após a 0.4.9. Não transformar automaticamente
 cada pendência do roadmap em issue: várias ainda dependem de desenho ou
 decisão do autor.
 
@@ -134,7 +135,7 @@ cadastro de colaboradores à IDE.
    falha real, correção e logs legíveis; manter permissões adequadas a PRs.
 2. Preparar modelos, labels e poucas issues de entrada, com os campos da §3
    preenchidos e a primeira pessoa conseguindo reproduzir a validação.
-3. Publicar a porta de contribuição em inglês depois da 0.4.5, como decidido.
+3. Publicar a porta de contribuição em inglês depois da 0.4.9, conforme a fronteira vigente do 57 §1.1.
 4. Em outra sessão, avaliar e implementar a apresentação no site. Provar
    navegação issue/PR, filtros, atualização, falha de sincronização e os
    estados concluído/cancelado/reaberto antes de anunciar automação.

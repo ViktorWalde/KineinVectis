@@ -577,16 +577,21 @@ no usuário e medidos com o mesmo ciclo.
 
 ## 11. Ordem e marcos
 
-Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
+Dependências primeiro; os números abaixo organizam o trabalho. A entrega
+acumulada e o AppImage fecham na 0.4.9, conforme o
+[57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20).
 
 **Execução automática renovada pelo autor (2026-10-20):** concluir até a
-0.4.5 e então gerar e testar o AppImage. Cada marco inclui revisão da lógica,
+0.4.9 e então gerar e testar o AppImage, substituindo o limite anterior
+0.4.5. Cada marco inclui revisão da lógica,
 exercitação visual dos fluxos e das falhas, correção de bugs e medidas de
 desempenho. O polimento dos painéis acompanha as fatias: hierarquia clara,
 próxima ação contextual, detalhes avançados sob demanda e estados de espera,
 erro e conclusão compreensíveis. A direção visual é contemporânea, mantendo
 os componentes e os donos existentes. A prioridade é completar Embarcados,
-incluindo a distinção CPython/MicroPython/CircuitPython. A conclusão se mede
+incluindo C puro, bare metal, Linux embarcado, a distinção
+CPython/MicroPython/CircuitPython e integrações nativas ativáveis pelo
+usuário. A conclusão se mede
 pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
 
 ```text
@@ -605,9 +610,63 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
 0.4.5  Banco para embarcados (decisão do autor, 2026-10-16): o LSP por
        conexão (o passo 10 do 59 §2.3: instâncias isoladas, Postgres
        Language Server, syntaqlite, o servidor do MongoDB; arquitetura/38) e
-       o InfluxDB 3 nativo com a linguagem dele (o passo 11); e o fechamento
-       da versão, com o AppImage (só com a 0.4 finalizada)
+       o InfluxDB 3 nativo com a linguagem dele (o passo 11).
+       Marco funcional preservado; não é mais o fechamento do pacote
+0.4.6  consolidar as jornadas nativas de C, Python e embarcados, os fluxos
+       bare metal/Linux e a ativação/desativação de integrações (§14.14–14.15).
+       Fechar lacunas do inventário, sem adiar os básicos de C para a 0.5
+0.4.7  revisão integrada de qualidade do frontend (§14.16–14.17): fechar
+       inconsistências de componentes, HUD/UI/UX, painéis e navegação
+0.4.8  consolidar interação, animação, foco, acessibilidade, atalhos e
+       cores semânticas; medir resposta e desempenho, fechar regressões
+0.4.9  estabilização integrada: corrigir os bloqueadores das auditorias,
+       repetir jornadas de aceitação, gates completos, documentação e
+       versões coerentes; só então gerar e testar o AppImage final
 ```
+
+A divisão 0.4.6–0.4.9 é a organização operacional deste plano para executar
+o escopo pedido pelo autor. Não exige esperar a 0.4.6 para corrigir uma falha
+já encontrada nem interrompe o polimento por fatia. C e Python podem ser
+concluídos antes dela; 0.4.6 cobra a integração ponta a ponta. A revisão de
+qualidade do frontend ocorre **antes do pacote da 0.4.9**. Uma eventual
+etapa especial de revisão após a 0.4.9 está definida no §14.17 e não deve
+receber pendências funcionais ou de usabilidade desta série.
+
+**Saída de cada 0.4.x:** conferir a coerência entre modelo do core e estado
+mostrado, percorrer sucesso/erro/ausência/cancelamento na UI, corrigir bugs,
+medir alterações de desempenho quando aplicáveis e atualizar manual,
+contratos, estado e registro ao fim da tarefa. Função incompleta continua
+pendente; não promover suporte só porque a CLI externa já existe. Os
+inventários 41/42 e integracoes/39 delimitam a cobertura por ferramenta,
+versão e alvo; manter explícitos os casos ainda não provados.
+
+**Esclarecimento do autor após o handoff (2026-10-20):** priorizar eficiência
+e fechar cada escopo sem deixar suas pendências para trás. A 0.4.9 deve
+entregar o conjunto “redondo”, apto a receber um eventual polimento visual
+mais amplo depois. Isso exige concluir a UI/UX necessária ao uso de cada
+recurso junto de sua integração, e não concentrar correções numa etapa final.
+
+**Critério de fechamento por escopo:**
+
+- Inventariar os compromissos e lacunas no dono existente, com estado e
+  evidência de cada item; conferir o inventário antes de encerrar o marco.
+- Validar a jornada completa pela UI, do reconhecimento/configuração ao
+  resultado, incluindo falha, cancelamento, retomada e estados indisponíveis
+  pertinentes. Core, IPC, painel, paleta e terminal devem usar o mesmo
+  contexto e explicar o que acontece.
+- Corrigir no próprio escopo os bugs e dificuldades de uso encontrados;
+  mudanças de escopo dependem de decisão explícita do autor. Não reclassificar
+  uma pendência como polimento futuro para declarar o marco concluído.
+- Preservar desempenho e acessibilidade, medir as mudanças relevantes,
+  executar os gates aplicáveis e registrar provas e limitações reais.
+  A distinção já autorizada entre emulador e hardware continua valendo (§10.1).
+- Atualizar os documentos e entregar uma fatia revisável. Reusar ferramentas,
+  componentes e donos existentes; escolher verificações que cobrem o risco
+  real da mudança e evitar retrabalho ou duplicação de mecanismos.
+
+As 0.4.7–0.4.9 verificam coerência e regressões do conjunto já concluído por
+escopo. O pacote depende desse aceite integrado, sem pendências conhecidas
+que impeçam ou contradigam as jornadas assumidas para a série.
 
 ## 12. Pontos de rollback
 
@@ -633,12 +692,13 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
    emulador não cobre (sonda, gravação física). **Em 2026-10-15, sem placa:**
    o autor pausou o desenvolvimento e autorizou o fechamento autônomo da 0.4
    ([40](40-estado-e-continuidade.md) §5, "modo autonomo"); o que só a placa
-   prova fica NÃO PROVADO, dito. Sem AppImage (a prova de artefato do §10
-   fica não feita por decisão do autor).
+   prova fica NÃO PROVADO, dito. Naquela autorização não havia AppImage.
+   **Atualização de 2026-10-20:** geração e teste locais autorizados após a
+   0.4.9 (§11); a prova de artefato do §10 passa a ser obrigatória ao final.
 5. **Decidida (2026-10-16):** o Banco para embarcados (o LSP por conexão e o
-   InfluxDB 3 nativo, adiados na 0.3.9) volta dentro da 0.4, no fim (0.4.5);
-   o AppImage sai só com a 0.4 finalizada, e então a prova de artefato do §10
-   vale para ele.
+   InfluxDB 3 nativo, adiados na 0.3.9) volta dentro da 0.4, na 0.4.5.
+   **Atualização de 2026-10-20:** o fechamento da série e o AppImage são na
+   0.4.9; o marco funcional do Banco permanece na 0.4.5 (§11).
 
 ## 14. O desenho fino das fatias (escrito antes do código de cada uma)
 
@@ -1148,7 +1208,7 @@ temporária para provar a seleção das etapas, fail-fast e o NÃO PROVADO
 estrito; sintaxe shell e YAML; gates locais. **Fica fora:** executar ou
 publicar o workflow no GitHub (é do autor), CI de UI/integrações e matriz
 Arch, geração de AppImage, templates/labels/issues (outra fatia, publicação
-após a 0.4.5, conforme esclarecimento posterior do autor no 40 §5),
+após o fechamento da 0.4, agora 0.4.9, conforme o 57 §1.1),
 protocolo e código do produto.
 
 **Fronteira esclarecida em 2026-10-19:** o repositório-fonte já é público;
@@ -1468,7 +1528,8 @@ dois consumidores concretos compartilharem a mesma responsabilidade.
 corpo do dock; reutilizá-lo conserva a rolagem visual da casca.
 
 **Continuidade autorizada (2026-10-20):** o autor pediu prosseguir até a
-0.4.5 e atualizar a documentação ao concluir cada etapa. A correção desta
+0.4.5 (limite ampliado depois para 0.4.9, §11) e atualizar a documentação
+ao concluir cada etapa. A correção desta
 bancada vem primeiro; depois, retomar as fatias de produto do §11, mantendo
 provas e commits separados. Meta persistente registrada nesta conversa.
 Retomada a cada cinco horas foi solicitada, mas não está agendada: a sessão
@@ -1603,8 +1664,8 @@ Linux embarcado faz parte de Embarcados; PlatformIO fica em destaque dentro
 do painel. Não acrescentar uma segunda entrada de trilho ou uma segunda
 instância da área para o mesmo projeto.
 
-**Medido no código:** `project.target.family` já diz `linux` para
-Yocto/Buildroot. `EmbeddedOverviewView` ainda oferece a todos a sequência
+**Medido na partida da fatia:** `project.target.family` já diz `linux` para
+Yocto/Buildroot. `EmbeddedOverviewView` oferecia a todos a sequência
 ambiente → porta serial → firmware; isso induz o fluxo errado para Linux.
 `EmbeddedController` já possui frameworks, alvo, SDKs e artefatos; os comandos
 `remote.list`, `terminal.open`, `build.run` e `configAction.list` já chegam
@@ -1612,7 +1673,7 @@ aos donos. PlatformIO tem build/upload/monitor e a Configuration Action
 `platformio.compiledb`; test/check ainda pertencem à 0.4.2. Não prometer uma
 tarefa habilitada se o handler ainda não a executa.
 
-**Próxima implementação:**
+**Desenho da implementação:**
 
 - Derivar a jornada do framework principal/alvo do modelo existente. Um
   exemplo Python aninhado não pode mudar sozinho a jornada principal de um
@@ -1645,15 +1706,335 @@ estados sem ferramenta/sem alvo/em andamento; antes/depois no Xvfb e medidas
 de primeiro frame e tecla→quadro. Registrar o resultado e o próximo passo no
 handoff ao concluir a tarefa, conforme o pedido do autor de 2026-10-20.
 
-**Prévia preparada, ainda fora do código de produto (2026-10-20):**
+**Prévia inicial, antes da implementação (2026-10-20):**
 `/tmp/kinein-hud-next` contém a proposta QML, o teste de contextos e fotos
 comparáveis com dados demonstrativos para ESP-IDF/PlatformIO/Yocto. Na
 versão atual o teste falha pelo destaque inexistente e por um exemplo
 MicroPython mudar a classificação da UI; na proposta passa pelos comandos
 de build/setup, revisão sem execução, navegação SSH e campos do SDK Linux.
-O protótipo não muda o checkout nem entrega seleção de ambientes ainda.
+Naquele momento, o protótipo não mudava o checkout; a seleção detalhada
+de ambientes continua pendente.
+Na aplicação, conferir a chave real do SDK: `sdk::requisitos` entrega `pio`,
+não `platformio`. A fixture da UI deve usar a mesma chave para não aprovar
+um estado de instalação impossível no produto. A classificação MicroPython
+do painel e do despacho de execução/monitor deve seguir o framework
+principal; um exemplo aninhado não pode trocar o runtime do projeto.
+Revisão adicional do modelo: `build::engine` já dá precedência ao PlatformIO,
+mas a ordem de `detect::frameworks` ainda favorece ESP-IDF. Yocto/Buildroot
+ficam depois de MicroPython. Alinhar essa ordem ao dono efetivo: PlatformIO
+antes dos frameworks que gerencia, e todos os frameworks nativos/Linux
+antes do exemplo MicroPython. Os SDKs de PlatformIO são geridos pelo `pio`;
+os de um exemplo MicroPython não são pré-requisitos do build nativo/Linux.
+Provar ordem, alvo e requisitos com a mesma fixture mista, além do despacho
+de script auxiliar. É correção das deduções existentes, sem campo/método novo.
+Ao estender o teste do ambiente de SDK, migrar o tipo interno `Ambiente`
+para `Environment` e o callback `binario` para `binary`, no dono e nos usos:
+o gate exige identificadores novos em inglês, sem ampliar a dívida legada.
 A rodada de build/flash do wrapper EIM continua sendo provada separadamente
 no despacho Rust. Preservado o binário UI release anterior em
 `/tmp/kinein-hud-before-ui` para a comparação de desempenho nas mesmas
 condições depois da implementação; não compilar UI enquanto roda a análise
 C++ da fatia anterior.
+
+**Aplicado e fechado na 0.4.1e (2026-10-20):** destaque PlatformIO,
+jornada Linux, campos de SDK/sysroot visíveis para Linux, carregamento do
+formulário Ambiente no primeiro acesso com preservação entre abas, detalhes
+sob demanda e transição curta nas abas. A chave `pio` é a do SDK real.
+Os testes de regressão reproduziram antes as falhas de contexto/SDK da UI,
+o redirecionamento de script auxiliar para mpremote e os requisitos indevidos
+do exemplo MicroPython; após a correção os testes direcionados passaram.
+A ordem do modelo agora acompanha o dono do build e os requisitos geridos
+pelo PlatformIO. Compilação UI release passou; o fechamento integral abaixo
+supera o ponto de handoff parcial. Os gestos nativos são aceites do agente,
+separados do feedback do autor.
+
+**Revisão visual real (2026-10-20):** UI release e core atual, em Xvfb
+próprio/software a 1440×900: destaque PlatformIO em projeto também ESP-IDF,
+abas/campos Linux em Yocto, sem gravação nem implantação. Fotos locais em
+`/tmp/kinein-hud-acceptance/`; primeiro frame de 422 ms (PlatformIO) e
+425 ms (Yocto), uma amostra por projeto, sem afirmar ganho. Os processos
+continuaram vivos e sem avisos QML proibidos.
+
+**Primeiro ponto de handoff, superado pelo fechamento abaixo (2026-10-20):** a rodada do gate
+rápido passou 1193 testes Rust, Clippy, análise limpa dos 47 arquivos C++ e
+8 CTest, e parou no qmllint: `Loader.item` era tipado como `QObject` ao
+chamar `applyKit`. O cast para `EmbeddedEnvironmentView` foi aplicado;
+depois dele o build debug, qmllint estrito e os **155 harnesses QML**
+passaram. Naquele ponto ainda faltava uma execução integral verde de
+`verificar.sh --rapido` após a correção e as contradições visuais abaixo
+continuavam abertas; o fechamento abaixo registra a rodada subsequente.
+Logs locais `/tmp/kinein-hud-gate-final.log`,
+`/tmp/kinein-hud-qmllint-final.log` e `/tmp/kinein-hud-qml-final.log`.
+
+**Medida comparável, sem ganho material demonstrado (2026-10-20):** três
+rodadas por binário release, antes (0.4.1d) e depois, mesmo arquivo de
+2463 linhas/56227 bytes, 40 inserções em cada rodada, offscreen/software.
+Mediana das medianas tecla→quadro: 9,02 → 8,975 ms; mediana dos p95:
+9,86 → 9,77 ms. Ambiente com builds concorrentes, não compositor físico.
+O cenário não abre painel durante a digitação; a primeira tentativa com
+abertura no startup perdeu caracteres já na base e foi excluída por
+misturar tarefas. Dados em `/tmp/kinein-hud-performance/report.json`.
+No harness PlatformIO, os nós visuais iniciais caíram de 599 para 343
+com conteúdo contextual e carga sob demanda; isso não mede RSS nem ganho
+de latência. A versão release final foi medida novamente no fechamento:
+três rodadas por binário, mesmas 40 inserções e arquivo. Mediana das
+medianas 8,625 → 8,725 ms; mediana dos p95 9,95 → 9,84 ms, sem ganho
+material demonstrado. Dados `/tmp/kinein-hud-performance-final/report.json`;
+as amostras variam e não medem o compositor real.
+
+**Achados da primeira revisão, corrigidos nesta fatia:** o cabeçalho expunha o
+`workspace.kind` CMake quando o motor efetivo é PlatformIO. Essa precedência
+de marcadores está no contrato `workspace.*`; corrigir a apresentação do
+contexto efetivo sem mudar silenciosamente a classificação compatível.
+No Ambiente Linux, seletores automáticos C/C++ diziam que o CMake
+escolheria ao configurar: distinguir SDK/imagem gerida de aplicação CMake e
+apresentar controles relevantes. A revisão cobrou também uma aplicação CMake cross com kit Linux além
+das fixtures Yocto/Buildroot; prova de compilação e fotos no fechamento
+abaixo. Isso não anuncia implantação remota nem uma imagem Linux pronta.
+
+**Complemento antes da correção (2026-10-20):** o cabeçalho receberá o nome
+do framework principal do `EmbeddedController`, mantendo os sistemas de
+build do workspace como fallback. Não alterar `workspace.kind` nem copiar
+a detecção do core para a UI. No Ambiente, PlatformIO e imagem Yocto/Buildroot
+explicam quem gerencia seus compiladores; o seletor do compilador CMake
+permanece na aplicação CMake com SDK Linux. O aviso de alvo Rust só aparece
+no contexto Rust. Formulário e rascunhos preservam o ciclo de vida existente.
+
+O modelo hoje ignora `targetTriple` do kit e só recebe o chip; uma aplicação
+CMake com kit `aarch64-linux-gnu` aparece como projeto não embarcado. Passar
+o triple do kit efetivo, escolhido pelo mecanismo `cmake::active_kit` já
+usado pelo contexto do editor; preencher os campos existentes `target.triple`,
+`target.family` e `embedded`, com evidência. O catálogo de instalação deve
+usar o mesmo modelo computado. Após salvar kit, emitir o evento de modelo
+existente para o painel atualizar sem reabrir. Nenhum método/campo novo.
+Provar aplicação CMake sem marcador de framework, kit padrão e nomeado ativo,
+troca de triple, evento e ausência de motor de gravação MCU em Linux.
+
+**Fechamento da 0.4.1e (2026-10-20):** correções acima aplicadas; gate rápido
+estrito integral **TUDO VERDE**, sem NÃO PROVADO: **1194 Rust**, Clippy,
+47 arquivos C++ sem achados, 8 CTest, qmllint estrito e 155 harnesses QML,
+além dos ciclos reais do gate. Log `/tmp/kinein-context-gate.log`.
+O contexto/SDK da UI e o despacho de script misto falharam antes e passaram
+depois; a aplicação CMake com alvo Linux também falhou antes de propagar
+o triple. O teste do kit nomeado simula cache/preset para isolar o modelo;
+não representa um configure real desse preset.
+
+**Exercitação real adicional:** aplicação C17 por `build.run`, compilador
+`aarch64-linux-gnu-gcc` instalado, kit Linux explícito, zero diagnósticos;
+`readelf -h` confirmou ELF AArch64. O modelo não inventou framework nem
+motor de gravação de MCU. Sem execução/deploy no alvo, sem alegar SDK de
+imagem Yocto completo. Dados `/tmp/kinein-linux-context-proof/report.json`.
+UI release/core debug atualizados, Xvfb próprio/software 1440×900: fotos
+PlatformIO/Yocto em `/tmp/kinein-hud-acceptance/` e aplicação Linux em
+`/tmp/kinein-linux-context-proof/ui-shots/`, sem avisos QML proibidos.
+Compilador C do kit visível e aviso Rust ausente na aplicação Linux;
+compiladores gerenciados explicados e fora dos seletores CMake na imagem/PIO.
+Schema 3 e as jornadas seguintes permanecem no §11; escolha detalhada de
+ambientes PIO, test/check/debug e integração completa de imagem/remoto não
+foram antecipadas por esta fatia de contexto/HUD.
+
+### 14.14 Auditoria de C puro antes do fechamento — 2026-10-20
+
+**Pergunta do autor:** o ecossistema de C está completo ou ainda faltam
+básicos? A leitura do código confirma a fundação compartilhada C/C++:
+compiladores e kits cross, CMake/Make, clangd, diagnósticos ao salvar,
+clang-format, depuração e CTest. Isso não prova uma jornada de C puro.
+
+**Decisão do autor, 2026-10-20:** incluir as pendências de C na série 0.4,
+antes do fechamento da 0.4.9 (§11, limite ampliado pelo autor). A jornada
+visual deve ser prática e intuitiva,
+com configuração simples e explicação do que acontece; terminal permanece
+como escolha normal. O mesmo critério vale para bare metal e Linux embarcado.
+O assistente C e a configuração visual do padrão C entram como fatia própria;
+ajuda de parâmetros/formatação de seleção permanecem na 0.4.4 e as tarefas
+PlatformIO de testes/check na 0.4.2. O aceite é executar a tarefa pela UI;
+um comando que só funciona no terminal não encerra a integração visual.
+Detalhar a proposta no domínio existente, com contrato antes do código,
+e corrigir as lacunas funcionais encontradas nessa jornada dentro da 0.4.
+
+O autor reiterou que o ecossistema de embarcados deve ser completo na parte
+de software/ferramentas existentes: a IDE orquestra os executáveis e
+protocolos, sem reimplementar essas ferramentas. O inventário continua no
+41/42 e em integracoes/39; o critério de integração é nativo e plug and play
+quando os pré-requisitos estão disponíveis. Ausência de ferramenta,
+permissão ou alvo deve aparecer com estado e próximo passo coerentes na UI.
+
+**Lacunas medidas:** `WorkspaceProjectTemplate` só oferece `CppCmake`,
+Rust, Python e pasta vazia; a ação de padrão CMake usa
+`CMAKE_CXX_STANDARD`, sem equivalente de C. Ajuda de parâmetros e formatação
+de seleção pelo LSP são pendências da 0.4.4 (§5.11); a formatação do arquivo
+inteiro via clang-format já existe. PlatformIO test/check continuam na
+0.4.2. Não confundir uma opção configurável manualmente no CMake/CDB com
+um fluxo visual já implementado.
+
+**Primeira prova real (2026-10-20):** fixture temporária apenas C, C17
+estrito (`-std=c17`, sem extensões), com `.c`/`.h`, `_Generic` e
+`_Static_assert`. Pelo core real: `workspace.open`/trust, `build.run`,
+`run.start` (saída `c-basics: 5`, exit 0), `test.discover` e `test.run`
+(dois casos CTest passaram), `format.text` com clang-format e
+`lsp.definition`/hover entre header e implementação passaram. Um erro de
+sintaxe introduzido de propósito fez o build falhar com um diagnóstico;
+o fonte foi restaurado ao final. Evidência local em
+`/tmp/kinein-c-basics/report.json`; prova auxiliar em
+`/tmp/kinein-prove-c-basics.py`. Não cobre o assistente ausente, depuração
+de C puro nem gestos na interface. O clangd resolveu C corretamente com a
+CDB desta fixture; auditar o languageId no wire continua previsto.
+
+**Aceite adicional no fechamento da 0.4:** exercitar um projeto apenas C,
+com `.c` e `.h`, desde criar/abrir até configurar, compilar, executar,
+diagnosticar erro, navegar, formatar, descobrir/rodar testes e depurar.
+Conferir o languageId e os flags recebidos pelo clangd; o registro atual
+compartilha a chave `cpp`. Registrar as lacunas como pendentes até haver
+implementação e prova; o assistente C e a ação de padrão C precisam de
+desenho/contrato antes do código, sem substituir a jornada existente C++.
+
+### 14.15 Integrações nativas opcionais — decisão de 2026-10-20
+
+**Direção do autor:** o usuário pode ativar/desativar as integrações nativas;
+elas devem ser profundas e naturais dentro da IDE. Na 0.5 a gestão será
+refinada e integrações que ficaram de fora poderão entrar. Isso não cria
+um runtime de plugins nem altera os donos existentes de build, testes,
+execução, gravação, serial, depuração e remoto.
+
+**Desenho a concluir antes da implementação:** preferência persistida nas
+Configurações, com estado efetivo vindo do core e consumido pela UI. Usar
+os modelos de settings/capacidades existentes; contrato antes de adicionar
+campos. Distinguir reconhecimento do projeto, integração habilitada e
+ferramenta instalada: desativar não significa desinstalar nem ferramenta
+ausente. A descoberta automática apresenta o contexto sem obrigar ativação
+manual repetida; a escolha explícita do usuário prevalece.
+
+Uma preferência deve alcançar todos os caminhos do mesmo recurso, incluindo
+paleta/atalho, painel e IPC; ocultar um botão sozinho não desativa uma
+integração. Preservar visualização e controle dos jobs já iniciados, com
+regra explícita para novos pedidos. Estado, consequência e próximo passo
+devem ser claros, com opções avançadas acessíveis e terminal disponível.
+Validar persistência, reabertura, troca de workspace e ausência de contradição
+entre capacidades, ações e mensagens. **Ainda não implementado:** esta seção
+registra a direção e os critérios, sem anunciar a preferência como entregue.
+
+Desativar uma integração automática não proíbe o usuário de executar seus
+próprios comandos no terminal. Também não deve causar fallback silencioso
+para outra ferramenta: por exemplo, MicroPython desativado não pode fazer o
+mesmo script de placa rodar em CPython. Essa distinção precisa de regressão
+no core, além do estado visual da preferência.
+
+### 14.16 Navegação compacta dos painéis — prévia solicitada em 2026-10-20
+
+O autor quer visualizar alternativas para dar feedback de praticidade e
+modernização: ícones/abas recolhidas à esquerda, abrir só o conteúdo da seção
+escolhida, ou menu hambúrguer que oculta as opções. Preparar comparação
+interativa da mesma tarefa, mantendo também as abas atuais como referência
+e uma alternativa de seções recolhíveis. Seleção ativa, título da seção,
+nomes expansíveis, teclado e foco devem continuar compreensíveis.
+
+Referência MODE-D consultada: [IntelliJ IDEA 2026.2, New UI](https://www.jetbrains.com/help/idea/new-ui.html),
+em 2026-10-20: faixas de ícones com nomes opcionais, menu principal recolhível
+e apresentação progressiva das funções. O produto e os tokens existentes
+continuam sendo a base; a referência informa o padrão, sem importar seu código.
+
+A prévia deverá usar dados demonstrativos e navegação local, para comparar
+área útil e acesso às funções em ESP-IDF, PlatformIO e Linux. Caminho local
+planejado: `.kinein/design-previews/embarcados-navigation.html` (ignorado pelo
+Git). **Atualização de 2026-10-20:** arquivo criado, com quatro variantes
+e navegação local; JavaScript e 25 verificações de interação/layout por
+largura passaram em WebKitGTK a **1024, 736 e 320 px**, com Xvfb próprio/
+software. Fotos locais `/tmp/kinein-navigation-*.png`, logs
+`/tmp/kinein-navigation-test-*.log`. Preparada para apresentação na conversa;
+o autor recebeu também o comando para abrir a UI nativa. A escolha de
+layout depende do feedback, sem substituir as abas nativas nesta fatia. Não substitui a validação nativa nem anuncia um
+layout aprovado. A UI Qt continua com as abas da fatia em validação até
+incorporar o feedback. Este pedido acrescenta revisão visual ao trabalho
+em curso; os aceites funcionais e o fechamento da 0.4 continuam obrigatórios.
+
+### 14.17 Auditoria geral de frontend antes do AppImage — decisão de 2026-10-20
+
+**Decisão consolidada do autor após o handoff, em 2026-10-20:** cada
+escopo fecha eficiente, funcional e com UI/UX adequada; a 0.4.9 entrega a
+base pronta. A revisão integrada desta seção permanece antes do AppImage.
+**Após concluir a 0.4.9, haverá uma etapa especial de revisão de HUD/UX/UI**
+para procurar algo esquecido: componentes com estilo/customização antigos,
+estados ou superfícies que não tenham sido atualizados e inconsistências
+com o contexto visual moderno da IDE. O autor a chamou de “edição especial”.
+Seu objetivo é conferir a cobertura visual do conjunto pronto e corrigir
+os achados justificados, preservando as jornadas e o desempenho validados.
+Versão, identificação do artefato e cronograma dessa etapa ainda não estão
+fixados. A etapa especial não transfere para depois os bugs, as lacunas
+funcionais ou a usabilidade necessários ao aceite da 0.4.9.
+
+O autor pediu examinar toda a IDE: componentes com aparência antiga,
+comportamentos que prejudicam o uso, HUD, aproveitamento do espaço,
+estilização, animações, interações, resposta, informações, cores do editor e
+atalhos. Com a extensão até a 0.4.9, este plano coloca a auditoria nas
+0.4.7/0.4.8, **depois da consolidação funcional e antes do pacote**, mantendo
+a revisão de bugs e o polimento necessário em todas as fatias. O objetivo
+é fechar a qualidade da série; a etapa especial posterior confere se algum
+componente ou comportamento escapou dessa atualização visual. A direção é moderna e discreta:
+o usuário deve reconhecer contexto, estado e próxima ação ao olhar; a
+interface deve preservar o foco no trabalho. A praticidade JetBrains é
+referência a adaptar aos componentes e à identidade da Vectis.
+
+| Frente | Revisão e critério de aceite |
+| --- | --- |
+| Componentes e estilo | Inventariar as superfícies reais e seus estados; corrigir inconsistências de tipografia, espaçamento, controles, ícones e densidade com os tokens existentes. Aparência moderna deve acompanhar legibilidade e função |
+| Painéis e navegação | Comparar as alternativas do §14.16 com a mesma tarefa e largura; conteúdo ativo ganha área, rótulos/foco permanecem claros, avançado sob demanda. Incorporar feedback antes de generalizar a casca |
+| Informação e contexto | Mostrar só o necessário à etapa, com detalhes acessíveis. Cabeçalho, ações e mensagens devem concordar com core, ferramenta e alvo; nenhum estado “pronto” inventado pela UI |
+| Interações e animação | Transições breves que expliquem mudança, sem atrasar comando ou competir com editor. Conferir foco, teclado, hover, seleção, carga, erro, cancelamento e reabertura; respeitar preferência de movimento reduzido |
+| Resposta e desempenho | Medir primeiro quadro, abrir/trocar painéis, digitação e consumo antes/depois no mesmo cenário; examinar carga sob demanda e jobs concorrentes. Registrar amostras, ambiente e limitações, sem confundir redução de nós com ganho de latência |
+| Cores do editor/LSP | Avaliar realce semântico de variáveis, funções, tipos e diagnósticos em código C/C++, Rust e Python; distinguir símbolos com contraste legível e tonalidades confortáveis. Conferir seleção, busca, inativo e diagnósticos nos temas, sem usar apenas cor para comunicar erro |
+| Atalhos e acesso | Auditar utilidade, conflitos, nomes da paleta, localização e descoberta. Ações frequentes devem ser acessíveis; avaliar anexar/fixar painéis nos lados e novos atalhos quando houver tarefa concreta, mantendo menu, paleta e bindings coerentes |
+
+**Entrega da auditoria:** inventário com achado, reprodução, impacto e dono;
+correções em fatias revisáveis, fotos antes/depois em larguras comparáveis,
+gestos visuais e regressões funcionais pertinentes. Recursos apenas
+decorativos não encerram os aceites de usabilidade. A prévia com dados
+demonstrativos não prova a integração nativa. Registrar o que o agente
+exercitou e o que recebeu feedback do autor como evidências diferentes.
+
+Na 0.4.9, repetir as jornadas C, C++, Rust, CPython, MicroPython,
+CircuitPython, PlatformIO, MCU e Linux que foram implementadas; confrontar
+UI/IPC/core e ferramentas reais disponíveis. Revisar permissões,
+pré-requisitos ausentes e operações canceladas. Toda limitação física ou
+de ferramenta deve estar explícita na matriz de prova. Fechar bloqueadores,
+atualizar os documentos donos e aplicar o corte de entrega do 57 §1.1 antes
+de gerar e exercitar o AppImage conforme `packaging/appimage/` e §10.
+
+
+### 14.18 Painéis de trabalho e acesso ao ESP32 — pedido de 2026-10-20
+
+**Decisão do autor:** Instalar ferramentas deve ser painel acoplado; as
+janelas funcionais abertas como pop-up serão migradas para painéis. Na
+clarificação explícita, menus de seleção, dicas e confirmações continuam
+compactos. Modernizar textos, hierarquia, destaque das informações importantes
+e retorno de erro/problema com transição leve e mensagem que explique a
+causa e a próxima ação. Reusar componentes e os donos existentes, estendendo
+pontos concretos segundo open/closed; não copiar um segundo sistema de dock,
+mensagens, animação ou execução. A revisão especial após a 0.4.9 procura o
+que escapar dessa atualização, sem adiar a qualidade de cada escopo.
+
+**Bancada observada, sem entrada global:** captura solicitada do notebook em
+`/tmp/kinein-notebook-esp32-feedback.png`. A IDE detecta `/dev/ttyUSB0`,
+mas apresenta os botões desativados e várias repetições do diagnóstico.
+`stat` e `getfacl` confirmaram `root:dialout`, modo `0660`, sem ACL do
+usuário; os grupos do processo da IDE não incluem dialout. É bloqueio real
+de acesso à porta, separado de falha de reconhecimento da ponte USB.
+Nenhuma abertura serial, identificação, gravação ou alteração de permissão
+foi executada nessa conferência. A foto do desktop permanece fora do repo.
+
+**Próxima fatia de UX (antes de schema 3):** separar o veredito principal
+“placa conectada; acesso à porta bloqueado” das instruções e da evidência.
+Reutilizar o diagnóstico de `serial.access` e manter os detalhes sob demanda,
+com retorno claro ao atualizar o acesso. Identificar/monitorar continuam
+sujeitos à permissão real; não mascarar um bloqueio do sistema como sucesso.
+Inspecionar `selectPort` e os gestos antes de mudar o bloqueio de seleção:
+selecionar um destino e operar na porta têm responsabilidades diferentes.
+
+Instalar ferramentas passa de `ShellEnvironmentOverlays` para o slot de
+`ShellLeftWindowHost`, usando `ShellDocks`, layout persistido, o mesmo
+`SetupController` e as linhas `SetupToolRow`. Preservar editor/terminal,
+comandos visíveis e ausência de instalação automática. Listar as demais
+janelas funcionais por dono e migrar em fatias, com teclado, foco, estado,
+redimensionamento e erro verificados. Não anunciar todas como migradas ao
+concluir apenas Setup. Harnesses de navegação e erro, fotos nas larguras de
+uso e gate integral antes de fechar a fatia; não fechar/reiniciar a janela
+original do autor durante a implementação.

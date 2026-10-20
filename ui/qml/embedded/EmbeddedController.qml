@@ -61,7 +61,14 @@ Item {
     property bool projectBusy: false
     readonly property bool projectEmbedded: project.embedded === true
     readonly property var projectFrameworks: project.frameworks !== undefined ? project.frameworks : []
-    readonly property bool projectMicroPython: projectFrameworks.some(info => info.framework === "microPython")
+    readonly property bool projectMicroPython: projectFrameworks.length > 0 && projectFrameworks[0].framework === "microPython"
+    readonly property var projectPlatformIoInfo: projectFrameworks.find(info => info.framework === "platformIo") || null
+    readonly property bool projectPlatformIo: projectPlatformIoInfo !== null
+    readonly property bool projectLinux: projectTarget.family === "linux"
+    readonly property bool projectManagedLinux: projectLinux && projectFrameworks.length > 0
+        && ["yocto", "buildroot"].indexOf(projectFrameworks[0].framework) >= 0
+    readonly property string projectFrameworkLabel: projectFrameworks.length > 0
+        ? frameworkSummary(projectFrameworks[0]).split(" · ")[0] : projectLinux ? qsTr("Linux embarcado") : ""
     readonly property var projectSdks: project.sdks !== undefined ? project.sdks : []
     readonly property var projectHints: project.hints !== undefined ? project.hints : []
     readonly property var projectTarget: project.target !== undefined ? project.target : ({})

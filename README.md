@@ -20,6 +20,11 @@ A Vectis não tenta substituir CMake, Cargo, clangd, GDB ou os SDKs dos fabrican
 
 **[Download 0.3.5](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5) · [Discord / Comunidade](https://discord.gg/cWRkUGUmQU)**
 
+**Em desenvolvimento: série 0.4 até a 0.4.9, ainda não publicada.** A próxima
+entrega reúne também o trabalho não publicado da 0.3.6–0.3.9. O AppImage será
+gerado e testado após a estabilização da 0.4.9; veja a
+[regra de versões e entrega](DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20).
+
 ---
 
 ## Para quem vai colaborar

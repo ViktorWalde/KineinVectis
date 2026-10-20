@@ -11,10 +11,12 @@ Column {
     readonly property bool recognized: controller !== null && controller.projectEmbedded
     readonly property var missingSdks: controller ? controller.projectSdks.filter(sdk => !sdk.found) : []
     readonly property string frameworkLabel: recognized
-        ? controller.projectFrameworks.map(info => controller.frameworkSummary(info).split(" · ")[0]).join(" · ") : ""
+        ? controller.projectFrameworkLabel : ""
     readonly property string artifactLabel: controller ? controller.artifactsSummary(controller.projectArtifacts) : ""
     readonly property bool portSelected: controller !== null && controller.selectedPort !== ""
     readonly property bool microPython: controller !== null && controller.projectMicroPython
+    readonly property bool platformIo: controller !== null && controller.projectPlatformIo
+    readonly property bool linuxTarget: controller !== null && controller.projectLinux
     readonly property bool hasFirmware: controller !== null
         && (controller.projectArtifacts.flashRecipe !== undefined
             || ["elf", "bin", "hex", "uf2"].some(kind => (controller.projectArtifacts[kind] || []).length > 0))
@@ -40,14 +42,28 @@ Column {
 
     Text {
         width: parent.width
-        text: qsTr("Prepare o ambiente, escolha a placa e revise o firmware antes de gravar.")
+        text: root.linuxTarget ? qsTr("SDK, aplicação e alvo Linux, em uma jornada própria.")
+            : root.platformIo ? qsTr("Ambientes e tarefas do PlatformIO, junto ao projeto.")
+            : root.microPython ? qsTr("Prepare a conexão e execute seus scripts na placa.")
+            : qsTr("Prepare o ambiente, escolha a placa e revise o firmware antes de gravar.")
         color: Theme.textSecondary
         font.pixelSize: Theme.fontSizeSmall
         wrapMode: Text.WordWrap
     }
 
+    Loader {
+        width: parent.width
+        active: root.platformIo
+        sourceComponent: EmbeddedPlatformIoView { controller: root.controller }
+    }
+    Loader {
+        width: parent.width
+        active: root.linuxTarget
+        sourceComponent: EmbeddedLinuxView { controller: root.controller }
+    }
+
     Repeater {
-        model: [
+        model: root.platformIo || root.linuxTarget ? [] : [
             { key: "environment", title: qsTr("1  Ambiente"),
               status: !root.recognized ? qsTr("Verificar") : root.missingSdks.length > 0 ? qsTr("Incompleto") : qsTr("Detectado"),
               detail: !root.recognized ? qsTr("Abra um projeto ESP-IDF, PlatformIO, Zephyr ou outro framework compatível.")
@@ -120,7 +136,7 @@ Column {
         KvButton {
             text: qsTr("Compilar novamente")
             iconName: "build"
-            visible: root.hasFirmware && !root.microPython
+            visible: root.hasFirmware && !root.microPython && !root.platformIo && !root.linuxTarget
             enabled: root.recognized && root.missingSdks.length === 0 && !root.controller.projectBusy
             onClicked: root.controller.commandRequested("build.run")
         }
@@ -140,14 +156,13 @@ Column {
         compact: true
         onClicked: root.detailsVisible = !root.detailsVisible
     }
-    EmbeddedProjectView {
+    Loader {
         width: parent.width
-        controller: root.controller
-        visible: root.detailsVisible
-    }
-    EmbeddedSizeView {
-        width: parent.width
-        controller: root.controller
-        visible: root.detailsVisible
+        active: root.detailsVisible
+        sourceComponent: Column {
+            spacing: Theme.spacingMedium
+            EmbeddedProjectView { width: parent.width; controller: root.controller }
+            EmbeddedSizeView { width: parent.width; controller: root.controller }
+        }
     }
 }

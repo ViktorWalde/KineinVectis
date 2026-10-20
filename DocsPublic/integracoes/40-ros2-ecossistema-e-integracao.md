@@ -4,7 +4,7 @@
 
 **Pesquisa:** 2026-09-24 a 2026-09-25; retomada e conferências pontuais: 2026-10-19 (§1.2).
 
-**Horizonte:** frente ROS 2 depois da 0.4.5, por decisão do autor em 2026-10-19; a pesquisa medida precede a escolha da versão exata.
+**Horizonte:** frente ROS 2 depois do fechamento da 0.4, agora **0.4.9** (limite atualizado em 2026-10-20, roadmaps/57 §1.1); a pesquisa medida precede a escolha da versão exata.
 
 **Premissa:** IDE C/C++/Rust/Python, Qt/QML → JSON-RPC sobre stdio → core Rust → ferramentas como processos.
 
@@ -56,7 +56,9 @@ as melhorias de experiência discutidas. A sessão terminou antes da escrita;
 o trecho foi fornecido novamente pelo autor em 2026-10-19. A entrada do
 ROS 2 já estava decidida no [40 §5](../roadmaps/40-estado-e-continuidade.md).
 **Esclarecimento do autor em 2026-10-19:** o ROS 2 entra **depois da
-0.4.5**. A frente e seu ensaio ficam para esse horizonte; a versão exata
+0.4.5**. **Fronteira atualizada em 2026-10-20:** o fechamento passou à
+**0.4.9** ([57 §1.1](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
+A frente e seu ensaio ficam para depois desse fechamento; a versão exata
 será escolhida depois da pesquisa medida. Não intercalar agora o ensaio
 entre CI e 0.4.1b. Gazebo, RViz e rqt continuam ferramentas externas.
 
@@ -105,7 +107,7 @@ pacote/agregada, caminhos Python gerados, build/teste e debug de launch/nó.
 Comparar os mesmos gestos no RDE e na Kinein, marcando o que hoje requer
 comando manual. Registrar versões, comandos, duração, falhas e lacunas; só
 então escolher a versão e o primeiro contrato. Esse ensaio pertence à
-frente pós-0.4.5; CI e 0.4.1b mantêm a ordem decidida. Esta atualização é
+frente pós-0.4.9, conforme a fronteira atualizada; não entra na série 0.4. Esta atualização é
 documentação, sem execução do ensaio.
 
 O pedido de refatoração e entendimento profundo ao longo dos anos tem dono

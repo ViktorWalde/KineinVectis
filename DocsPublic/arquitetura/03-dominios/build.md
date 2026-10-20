@@ -52,7 +52,7 @@ e, se o framework tem wrapper, é ele quem compila — nada de campo novo:
 
 ```text
 PlatformIO   pio run                                     (platformio.ini; vence tudo)
-ESP-IDF      bash -c '. "$1" >/dev/null || …; shift; exec idf.py "$@"' idf <ativação> build
+ESP-IDF      bash -c '. "$1" >/dev/null || …; shift; exec idf.py "$@"' bash <ativação> build
              ativação = <esp-idf>/export.sh (IDF_PATH ou ~/esp/esp-idf) ou o mais novo
              ~/.espressif/tools/activate_idf_*.sh (EIM, v6) — as duas formas do Get Started
 Zephyr       west build -d build [-b <placa>]            placa: CACHED_BOARD do build/CMakeCache.txt,
