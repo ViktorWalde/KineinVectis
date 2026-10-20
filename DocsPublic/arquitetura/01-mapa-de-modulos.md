@@ -907,6 +907,7 @@ flowchart LR
   subgraph CPP["ui/src"]
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_dispatch_cmake_cpp["core_client_dispatch_cmake.cpp"]
+    n_ui_src_core_client_log_cpp["core_client_log.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_probe_cpp["core_client_probe.cpp"]
     n_ui_src_core_client_requests_run_cpp["core_client_requests_run.cpp"]
@@ -942,6 +943,7 @@ flowchart LR
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_requests_run_cpp
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
+  n_ui_src_core_client_log_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_probe_cpp --> n_ipc_build
   n_ui_src_core_client_probe_cpp --> n_ipc_probe
@@ -981,6 +983,7 @@ flowchart LR
 | roteador | `ui/qml/ipc/EmbeddedEventRouter.qml` | O que o core responde de probe.*, build.size e serial.* -> EmbeddedController. |
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch_cmake.cpp` | Dispatch do dominio CMake/build (ARCHITECTURE.md §5). |
+| ponte C++ | `ui/src/core_client_log.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_probe.cpp` | Dominio de embarcados no lado da UI: |
 | ponte C++ | `ui/src/core_client_requests_run.cpp` | Dominio RUN no lado da UI: |

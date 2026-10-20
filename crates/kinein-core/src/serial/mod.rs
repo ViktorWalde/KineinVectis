@@ -33,10 +33,9 @@ pub mod files;
 pub mod identify;
 pub mod job;
 pub mod monitor;
+mod permissions;
 
 use std::collections::BTreeMap;
-#[cfg(unix)]
-use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 use std::process::Command;
 
@@ -45,7 +44,7 @@ use kinein_protocol::{
 };
 
 /// De onde ler. Parametrizado para o teste montar um `/sys` e um `/dev` falsos.
-pub struct Ambiente<'a> {
+pub struct Environment<'a> {
     /// `/sys/class/tty`.
     pub sys_class_tty: &'a Path,
     /// `/dev`.
@@ -54,14 +53,16 @@ pub struct Ambiente<'a> {
     pub proc_root: &'a Path,
     /// `/etc/group` — para dar nome ao gid da porta.
     pub etc_group: &'a Path,
+    /// `/etc/passwd` — local identity, without trusting environment variables.
+    pub accounts_file: &'a Path,
     /// As propriedades udev da porta (`udevadm info -q property -n <dev>`), ou
     /// `None` quando nao ha' como perguntar.
     pub udev_props: &'a dyn Fn(&Path) -> Option<String>,
 }
 
-impl std::fmt::Debug for Ambiente<'_> {
+impl std::fmt::Debug for Environment<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Ambiente")
+        f.debug_struct("Environment")
             .field("sys_class_tty", &self.sys_class_tty)
             .field("dev", &self.dev)
             .finish_non_exhaustive()
@@ -71,22 +72,35 @@ impl std::fmt::Debug for Ambiente<'_> {
 /// Lista as portas seriais USB desta maquina.
 #[must_use]
 pub fn list() -> SerialListResult {
-    list_in(&Ambiente {
+    list_in(&Environment {
         sys_class_tty: Path::new("/sys/class/tty"),
         dev: Path::new("/dev"),
         proc_root: Path::new("/proc"),
         etc_group: Path::new("/etc/group"),
+        accounts_file: Path::new("/etc/passwd"),
         udev_props: &udevadm_properties,
     })
 }
 
-/// Lista as portas lendo do ambiente dado.
+/// Lista as portas lendo do environment dado.
 #[must_use]
-pub fn list_in(ambiente: &Ambiente<'_>) -> SerialListResult {
-    let mm_rodando = modem_manager_rodando(ambiente.proc_root);
-    let ports: Vec<SerialPortInfo> = enumerar(ambiente.sys_class_tty)
+pub fn list_in(environment: &Environment<'_>) -> SerialListResult {
+    let mm_rodando = modem_manager_rodando(environment.proc_root);
+    let names = match enumerar(environment.sys_class_tty) {
+        Ok(names) => names,
+        Err(error) => {
+            return SerialListResult {
+                ports: Vec::new(),
+                hint: Some(format!(
+                    "Não foi possível consultar as portas USB em {}: {error}. Verifique o acesso ao sistema e atualize os dispositivos.",
+                    environment.sys_class_tty.display()
+                )),
+            };
+        }
+    };
+    let ports: Vec<SerialPortInfo> = names
         .into_iter()
-        .filter_map(|nome| descrever(ambiente, &nome, mm_rodando))
+        .filter_map(|nome| descrever(environment, &nome, mm_rodando))
         .collect();
     let hint = ports.is_empty().then(|| {
         "nenhuma porta serial USB (ttyUSB*/ttyACM*) apareceu. Placa desligada, cabo só de \
@@ -98,10 +112,8 @@ pub fn list_in(ambiente: &Ambiente<'_>) -> SerialListResult {
 
 /// Os nomes `ttyUSB*`/`ttyACM*` em `/sys/class/tty`, em ordem natural
 /// (`ttyUSB2` antes de `ttyUSB10`).
-fn enumerar(sys_class_tty: &Path) -> Vec<String> {
-    let Ok(entradas) = std::fs::read_dir(sys_class_tty) else {
-        return Vec::new();
-    };
+fn enumerar(sys_class_tty: &Path) -> std::io::Result<Vec<String>> {
+    let entradas = std::fs::read_dir(sys_class_tty)?;
     let mut nomes: Vec<String> = entradas
         .filter_map(Result::ok)
         .map(|e| e.file_name().to_string_lossy().into_owned())
@@ -113,7 +125,7 @@ fn enumerar(sys_class_tty: &Path) -> Vec<String> {
             numero(n),
         )
     });
-    nomes
+    Ok(nomes)
 }
 
 fn numero(nome: &str) -> u32 {
@@ -145,14 +157,18 @@ struct Identidade {
     driver: Option<String>,
 }
 
-fn descrever(ambiente: &Ambiente<'_>, nome: &str, mm_rodando: bool) -> Option<SerialPortInfo> {
+fn descrever(
+    environment: &Environment<'_>,
+    nome: &str,
+    mm_rodando: bool,
+) -> Option<SerialPortInfo> {
     let kind = kind_for(nome)?;
-    let identidade = identidade(&ambiente.sys_class_tty.join(nome).join("device"))?;
-    let no = ambiente.dev.join(nome);
-    let props = (ambiente.udev_props)(&no).map(|texto| parse_udev_properties(&texto));
+    let identidade = identidade(&environment.sys_class_tty.join(nome).join("device"))?;
+    let no = environment.dev.join(nome);
+    let props = (environment.udev_props)(&no).map(|texto| parse_udev_properties(&texto));
     Some(SerialPortInfo {
         device: no.to_string_lossy().into_owned(),
-        by_id: by_id(ambiente.dev, nome),
+        by_id: by_id(environment.dev, nome),
         kind,
         family: familia(&identidade.vid, &identidade.pid).map(str::to_owned),
         vid: identidade.vid,
@@ -162,7 +178,12 @@ fn descrever(ambiente: &Ambiente<'_>, nome: &str, mm_rodando: bool) -> Option<Se
         serial: identidade.serial,
         interface: identidade.interface,
         driver: identidade.driver,
-        access: measured_access(&no, ambiente.etc_group),
+        access: permissions::measure(
+            &no,
+            environment.proc_root,
+            environment.accounts_file,
+            environment.etc_group,
+        ),
         modem_manager: props.map(|p| modem_manager(&p, mm_rodando)),
     })
 }
@@ -220,97 +241,12 @@ fn by_id(dev: &Path, nome: &str) -> Option<String> {
 /// abrir o que vai falhar por permissao resetaria a placa por nada.
 #[must_use]
 pub fn acesso_de(no: &Path) -> SerialAccess {
-    measured_access(no, Path::new("/etc/group"))
-}
-
-/// No Windows a serial ainda nao e' suportada (DocsPublic/roadmaps/60 §1:
-/// embarcados vem depois do porte). A porta nao e' aberta, e o veredito diz isso.
-#[cfg(windows)]
-fn measured_access(no: &Path, _etc_group: &Path) -> SerialAccess {
-    SerialAccess {
-        readable_writable: false,
-        mode: "?".to_owned(),
-        group: None,
-        hint: Some(format!(
-            "{}: a porta serial ainda não é suportada no Windows.",
-            no.display()
-        )),
-    }
-}
-
-/// `access(2)` para o veredito; `stat` para explicar o veredito.
-#[cfg(unix)]
-fn measured_access(no: &Path, etc_group: &Path) -> SerialAccess {
-    let readable_writable = rustix::fs::access(
+    permissions::measure(
         no,
-        rustix::fs::Access::READ_OK | rustix::fs::Access::WRITE_OK,
+        Path::new("/proc"),
+        Path::new("/etc/passwd"),
+        Path::new("/etc/group"),
     )
-    .is_ok();
-    let meta = std::fs::metadata(no).ok();
-    let mode = meta
-        .as_ref()
-        .map_or_else(|| "?".to_owned(), |m| modo_simbolico(m.mode()));
-    let group = meta
-        .as_ref()
-        .and_then(|m| nome_do_grupo(etc_group, m.gid()));
-    let hint = (!readable_writable).then(|| {
-        group.as_ref().map_or_else(
-            || {
-                format!(
-                    "{} é {mode} e você não consegue ler nem escrever. Falta regra udev ou \
-                     grupo; a IDE não roda como root.",
-                    no.display()
-                )
-            },
-            |g| {
-                format!(
-                    "{} é {mode} do grupo `{g}` e você não está nele (nem uma ACL te cobre). \
-                     Passo oficial: `sudo usermod -aG {g} $USER` e sair/entrar da sessão. A IDE \
-                     não roda isso.",
-                    no.display()
-                )
-            },
-        )
-    });
-    SerialAccess {
-        readable_writable,
-        mode,
-        group,
-        hint,
-    }
-}
-
-/// `crw-rw----`, como o `ls -l` imprime.
-#[cfg(unix)]
-pub(crate) fn modo_simbolico(mode: u32) -> String {
-    let tipo = match mode & 0o170_000 {
-        0o020_000 => 'c',
-        0o060_000 => 'b',
-        0o120_000 => 'l',
-        0o040_000 => 'd',
-        _ => '-',
-    };
-    let mut s = String::with_capacity(10);
-    s.push(tipo);
-    for shift in [6u32, 3, 0] {
-        let bits = (mode >> shift) & 0o7;
-        s.push(if bits & 4 != 0 { 'r' } else { '-' });
-        s.push(if bits & 2 != 0 { 'w' } else { '-' });
-        s.push(if bits & 1 != 0 { 'x' } else { '-' });
-    }
-    s
-}
-
-/// `name:x:gid:members` — sem `getgrgid`, que e' FFI.
-#[cfg(unix)]
-fn nome_do_grupo(etc_group: &Path, gid: u32) -> Option<String> {
-    let texto = std::fs::read_to_string(etc_group).ok()?;
-    texto.lines().find_map(|linha| {
-        let mut campos = linha.split(':');
-        let nome = campos.next()?;
-        let _senha = campos.next()?;
-        (campos.next()?.parse::<u32>().ok()? == gid).then(|| nome.to_owned())
-    })
 }
 
 /// `udevadm info -q property -n <dev>`; `None` quando o binario falta.

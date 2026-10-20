@@ -2038,3 +2038,118 @@ redimensionamento e erro verificados. Não anunciar todas como migradas ao
 concluir apenas Setup. Harnesses de navegação e erro, fotos nas larguras de
 uso e gate integral antes de fechar a fatia; não fechar/reiniciar a janela
 original do autor durante a implementação.
+
+### 14.19 Diagnóstico serial coerente — prioridade do backend (2026-10-20)
+
+**Ordem do autor:** corrigir primeiro o backend; a UI representa o seu
+veredito. Modernizar os componentes existentes e só criar extensões quando
+houver necessidade concreta. Testar rigorosamente sucesso, recusa e recuperação,
+inclusive para uma instalação nova, com preparação prática no painel.
+
+**Defeito medido:** a conta já consta em `dialout` em `/etc/group`, mas o
+processo da IDE ainda não tem esse grupo. O core confundia cadastro com
+credencial ativa e recomendava cadastrar novamente. Também atribuía acesso
+ao udev apenas pela presença da tag, sem provar uma ACL, e o monitor não
+revalidava a porta antes de lançar a ferramenta.
+
+**Fatia 0.4.1f, contrato antes do código:** `SerialAccess.state` no protocolo
+0.181.0 distingue acesso disponível, sessão desatualizada, cadastro necessário,
+permissão negada por outra causa, nó indisponível e plataforma sem suporte.
+Uma única avaliação alimenta listagem, diagnóstico e recusa dos três gestos
+que abrem a porta. `access(2)` continua dono do sucesso; modo, identidade do
+processo (incluindo grupo primário) e cadastro local apenas explicam a falha.
+Identidade/cadastro desconhecidos não viram afirmação de ausência no grupo.
+O cadastro local não pretende resolver identidades NSS externas.
+
+O painel oferece Preparar acesso e Verificar novamente. Selecionar uma porta
+não a abre; operações continuam dependentes de acesso. A sessão desatualizada
+recebe instrução para salvar o trabalho e sair/entrar na sessão do sistema,
+sem repetir `usermod`, prometer que reiniciar só a IDE basta ou encerrar a
+sessão automaticamente. Passos sem comando são instruções visuais. Passos
+com comando usam o terminal existente, por clique explícito: esse caminho
+envia Enter e executa a linha, não é apenas uma cópia. Nenhuma instalação,
+elevação ou alteração na placa pelo agente.
+
+**Aceite previsto:** regressões de credenciais ativas/cadastro, grupo primário,
+proprietário sem bits, informações ausentes, remoção da porta e recusa do
+monitor; harness de preparo/atualização e instrução sem execução; foto isolada
+e gate integral estrito. A migração de Setup continua no §14.18, após esta
+correção. Não declarar acesso físico resolvido sem nova medição real.
+
+Nesta mesma auditoria, distinguir falha ao ler sysfs de lista vazia e manter
+uma porta pedida que desapareceu como problema visível no diagnóstico. São
+recuperações da mesma jornada serial, sem abrir dispositivo ou mudar o sistema.
+
+**Prova parcial da implementação (2026-10-20):** 40 testes focados de serial
+passaram; harness de recuperação passou em 400/300 px, e qmllint estrito
+limpo. RPC real com o core debug confirmou `sessionRefreshRequired` em
+`/dev/ttyUSB0`; listagem, diagnóstico e recusas de identificar, monitorar e
+arquivos retornam a mesma causa, sem comando de recadastro. A conta local
+consta no grupo, o processo não. Nenhuma porta aberta ou permissão alterada.
+Dados em `/tmp/kinein-serial-recovery-proof/report.json`. Fotos nativas do
+agente em Xvfb/software a 1440×900 mostram seleção, preparo e reverificação;
+sem avisos QML proibidos, processo vivo. **Fechamento:** gate rápido estrito
+TUDO VERDE, 1200 Rust, C++ limpo, 8 CTest, qmllint e 156 harnesses, sem
+NÃO PROVADO. Log `/tmp/kinein-serial-gate-final.log`; registro no 40.7 §7.326.
+
+**Bloqueio do gate e ajuste necessário (antes do lockfile):** a auditoria
+atualizada em 2026-10-20 acusou RUSTSEC-2026-0382 (`rustls-webpki` 0.103.15)
+e RUSTSEC-2026-0381 (`webpki-roots` 1.0.9), sobre certificados emSign
+retirados de confiança. Fontes primárias conferidas:
+[webpki #546](https://github.com/rustls/webpki/pull/546) e
+[roots #133](https://github.com/rustls/webpki-roots/pull/133). Atualizar apenas
+os dois patches no lockfile para 0.103.16 e 1.0.10, sem alterar features,
+política de confiança própria ou criar exceção no cargo-deny; repetir o gate
+integral. Essa correção de dependências é necessária para fechar a fatia.
+
+**Refino de coerência da 0.4.1f:** atualizar/trocar o workspace durante uma
+consulta de acesso invalida sua resposta pendente. Preservar um único pedido
+em voo até receber e descartar a resposta antiga, impedindo que ela restaure
+um diagnóstico depois de limpar o painel. Cobrir no harness. Rótulos positivos
+nos canais auxiliares dizem Verificação concluída, pois `ModemManager.ok` não
+significa que a porta serial tenha permissão de leitura/escrita.
+O descarte mantém a consulta única enquanto o transporte existe; perda da
+conexão com o core libera essa espera e limpa o diagnóstico, pois não haverá
+resposta pendente. O roteador de eventos usa o `statusChanged` existente.
+
+### 14.20 Próxima auditoria do backend: uso concorrente da porta (2026-10-20)
+
+**Reproduzido durante a 0.4.1f, ainda não corrigido nesta fatia:** dois
+`serial.identify` na mesma porta são aceitos e executam ao mesmo tempo. Prova
+com core debug real, ferramenta falsa e arquivo temporário comum como porta,
+sem abrir dispositivo: `/tmp/kinein-serial-concurrency-audit/report.json`.
+Os dois inícios antecedem os dois términos. As travas `busy` dos controllers
+são locais a cada operação e não substituem a arbitragem no core.
+
+**Prioridade seguinte, 0.4.1g, antes de Setup/schema 3:** desenhar e implementar um
+único dono por porta, considerando aliases canônicos/by-id, identificação,
+arquivos, monitor e execução/gravação que usam o canal. Reutilizar o ciclo de
+vida dos jobs e `TerminalManager::is_open`; não criar um segundo executor ou
+um lock persistente sem recuperação. Erro deve dizer qual operação da IDE
+ocupa a porta e como encerrá-la, sem matar automaticamente trabalho existente.
+Ferramentas externas continuam responsáveis pela abertura/exclusividade do
+sistema; não prometer detectar todo processo externo por uma medição de ACL.
+
+**Aceite:** duas operações da mesma porta recusadas antes da ferramenta;
+portas diferentes independentes; liberar após sucesso, falha, cancelamento,
+saída/fechamento de terminal e troca de workspace; aliases não escapam da
+proteção. Cobrir monitor × arquivos × identificação × run/flash, não só
+desativar botões na tela. O mecanismo só fica concluído com a matriz coberta.
+A correção de permissões da 0.4.1f não prova esta exclusividade.
+
+**Pontos da inspeção para regressão na auditoria de orquestração:**
+`CoreClient::sendRequest` ignora pedido quando o processo está parado e
+`handleFinished` limpa métodos pendentes sem falha individual (exceto export).
+Verificar que nenhum controlador fica ocupado sem resposta após queda do core.
+`RuntimeController.handleTerminalOpened` consome o comando pendente na primeira
+sessão que abre; conferir a correlação com a sessão solicitada, inclusive quando
+um monitor/SSH abre ao mesmo tempo, antes de ampliar os gestos de preparação.
+A correlação de terminal também foi reproduzida em teste isolado do
+`RuntimeController` real, sem PTY nem execução: após solicitar o shell, uma
+resposta de monitor não relacionado recebeu `echo AUDIT_ONLY` com Enter;
+o shell solicitado ficou sem a linha. Evidência em
+`/tmp/kinein-terminal-correlation-audit.log`. Corrigir a correlação de resposta
+com o pedido antes de ampliar os gestos de preparação. O caso de processo
+parado ainda depende de reprodução específica. A preparação por comando da
+0.4.1f usa esse mecanismo existente; ele ainda não foi reformulado e não
+permite declarar a orquestração de terminais/portas pronta.

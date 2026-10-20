@@ -1,7 +1,7 @@
 //! E2 do `integracoes/38` §6: permissao POR CANAL.
 //!
 //! O que falta, medido, e o passo OFICIAL para cada canal. A IDE nunca roda
-//! `sudo`: cada passo e' escrito no terminal dela, como o painel de
+//! `sudo` automaticamente: cada comando depende de clique explícito no terminal, como o painel de
 //! instalacao faz.
 //!
 //! Tres canais, tres formas diferentes de "sem acesso" (38 §4.3):
@@ -36,15 +36,17 @@
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::{
-    AccessChannel, AccessChannelKind, AccessFix, SerialAccessResult, SerialPortInfo, SetupStep,
+    AccessChannel, AccessChannelKind, AccessFix, SerialAccessResult, SerialAccessState,
+    SerialPortInfo, SetupStep,
 };
 
-use super::{Ambiente, list_in, parse_udev_properties};
+use super::{Environment, list_in};
 
-const CONFERIDO_EM: &str = "2026-09-17";
-const FONTE_GRUPO: &str = "https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/establish-serial-connection.html";
-const FONTE_SONDA: &str = "https://probe.rs/docs/getting-started/probe-setup/";
-const FONTE_MM: &str =
+const CHECKED_ON: &str = "2026-09-17";
+const GROUP_CHECKED_ON: &str = "2026-10-20";
+const GROUP_SOURCE: &str = "https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/establish-serial-connection.html";
+const PROBE_SOURCE: &str = "https://probe.rs/docs/getting-started/probe-setup/";
+const MODEM_MANAGER_SOURCE: &str =
     "/usr/lib/udev/rules.d/80-mm-candidate.rules e 77-mm-*.rules (pacote ModemManager)";
 
 /// Onde as regras udev moram, na ordem em que o udev as le. As do usuario
@@ -60,11 +62,12 @@ pub const RULES_DIRS: [&str; 3] = [
 pub fn diagnose(device: Option<&str>) -> SerialAccessResult {
     let dirs: Vec<PathBuf> = RULES_DIRS.iter().map(PathBuf::from).collect();
     diagnose_in(
-        &Ambiente {
+        &Environment {
             sys_class_tty: Path::new("/sys/class/tty"),
             dev: Path::new("/dev"),
             proc_root: Path::new("/proc"),
             etc_group: Path::new("/etc/group"),
+            accounts_file: Path::new("/etc/passwd"),
             udev_props: &super::udevadm_properties,
         },
         &dirs,
@@ -72,28 +75,21 @@ pub fn diagnose(device: Option<&str>) -> SerialAccessResult {
     )
 }
 
-/// O diagnostico lendo do ambiente dado (o teste monta `/sys`, `/dev`,
+/// O diagnostico lendo do environment dado (o teste monta `/sys`, `/dev`,
 /// `/proc`, `/etc/group` e as pastas de regras falsos).
 #[must_use]
 pub fn diagnose_in(
-    ambiente: &Ambiente<'_>,
+    environment: &Environment<'_>,
     rules_dirs: &[PathBuf],
     device: Option<&str>,
 ) -> SerialAccessResult {
-    let grupos = grupos_do_usuario(ambiente.proc_root, ambiente.etc_group);
     let mut channels = Vec::new();
-    for port in list_in(ambiente)
+    for port in list_in(environment)
         .ports
         .into_iter()
         .filter(|p| device.is_none_or(|d| d == p.device))
     {
-        let props = (ambiente.udev_props)(Path::new(&port.device))
-            .map(|texto| parse_udev_properties(&texto));
-        let tags = props
-            .as_ref()
-            .and_then(|p| p.get("TAGS").cloned())
-            .unwrap_or_default();
-        channels.push(canal_serial(&port, &grupos, &tags));
+        channels.push(canal_serial(&port));
         if let Some(mm) = &port.modem_manager {
             channels.push(canal_modem_manager(
                 &port,
@@ -103,97 +99,77 @@ pub fn diagnose_in(
             ));
         }
     }
+    if let Some(device) = device.filter(|_| channels.is_empty()) {
+        channels.push(AccessChannel {
+            kind: AccessChannelKind::Serial,
+            device: Some(device.to_owned()),
+            ok: false,
+            detail: "Porta ausente da lista atual de dispositivos USB".to_owned(),
+            problem: Some("A porta selecionada não foi encontrada. Reconecte a placa e clique em Verificar novamente.".to_owned()),
+            fix: Some(AccessFix {
+                steps: vec![SetupStep {
+                    explanation: "Reconecte a placa e clique em Verificar novamente. A porta pode aparecer com outro nome; confira a seleção antes de operar.".to_owned(),
+                    command: String::new(),
+                }],
+                source_url: GROUP_SOURCE.to_owned(),
+                checked_on: GROUP_CHECKED_ON.to_owned(),
+            }),
+            distro_did_it: None,
+        });
+    }
     channels.push(canal_sonda(rules_dirs));
     SerialAccessResult { channels }
 }
 
-fn canal_serial(port: &SerialPortInfo, grupos: &[String], tags: &str) -> AccessChannel {
-    let acesso = &port.access;
-    let grupo = acesso.group.as_deref();
-    let no_grupo = grupo.is_some_and(|g| grupos.iter().any(|meu| meu == g));
-    let por_acl = tags.split(':').any(|t| t == "uaccess");
-    let mut canal = AccessChannel {
+fn canal_serial(port: &SerialPortInfo) -> AccessChannel {
+    let access = &port.access;
+    let mut channel = AccessChannel {
         kind: AccessChannelKind::Serial,
         device: Some(port.device.clone()),
-        ok: acesso.readable_writable,
+        ok: access.readable_writable,
         detail: format!(
-            "{} é {}{}; você {} do grupo",
+            "{} · {} · grupo `{}`",
             port.device,
-            acesso.mode,
-            grupo
-                .map(|g| format!(" do grupo `{g}`"))
-                .unwrap_or_default(),
-            if no_grupo {
-                "faz parte"
-            } else {
-                "não faz parte"
-            }
+            access.mode,
+            access.group.as_deref().unwrap_or("desconhecido")
         ),
-        problem: None,
+        problem: access.hint.clone(),
         fix: None,
         distro_did_it: None,
     };
-    if acesso.readable_writable {
-        if !no_grupo && por_acl {
-            canal.distro_did_it = Some(
-                "o udev deu acesso ao usuário da sessão pela tag `uaccess` (ACL no no'), sem \
-                 grupo nenhum"
-                    .to_owned(),
-            );
-        }
-        return canal;
+    if access.readable_writable {
+        return channel;
     }
-    canal.problem = Some(
-        acesso
-            .hint
-            .clone()
-            .unwrap_or_else(|| "sem leitura/escrita no no'".to_owned()),
-    );
-    canal.fix = Some(match grupo {
-        Some(g @ ("dialout" | "uucp" | "plugdev" | "tty")) => AccessFix {
-            steps: vec![
-                SetupStep {
-                    explanation: format!(
-                        "Entra no grupo `{g}`, dono do no'. Vale para toda porta serial desta \
-                         máquina."
-                    ),
-                    command: format!("sudo usermod -a -G {g} $USER"),
-                },
-                SetupStep {
-                    explanation: "Saia e entre na sessão (re-login): o grupo novo só vale para \
-                                  processos iniciados depois."
-                        .to_owned(),
-                    command: "id -nG".to_owned(),
-                },
-            ],
-            source_url: FONTE_GRUPO.to_owned(),
-            checked_on: CONFERIDO_EM.to_owned(),
-        },
-        _ => AccessFix {
-            steps: vec![
-                SetupStep {
-                    explanation: format!(
-                        "O no' não pertence a um grupo de usuários; uma regra udev com `uaccess` \
-                         da' acesso ao usuário da sessão grafica a esta ponte ({}:{}), como o \
-                         70-uaccess.rules do systemd faz para outros dispositivos.",
-                        port.vid, port.pid
-                    ),
-                    command: format!(
-                        "printf 'SUBSYSTEM==\"tty\", ATTRS{{idVendor}}==\"{}\", ATTRS{{idProduct}}==\"{}\", TAG+=\"uaccess\"\\n' | sudo tee /etc/udev/rules.d/70-kinein-serial-{}-{}.rules",
-                        port.vid, port.pid, port.vid, port.pid
-                    ),
-                },
-                SetupStep {
-                    explanation: "Recarrega as regras e as aplica ao que já está plugado."
-                        .to_owned(),
-                    command: "sudo udevadm control --reload && sudo udevadm trigger".to_owned(),
-                },
-            ],
-            source_url: "/usr/lib/udev/rules.d/70-uaccess.rules (systemd)".to_owned(),
-            checked_on: CONFERIDO_EM.to_owned(),
-        },
+    let steps = match access.state {
+        SerialAccessState::GroupRequired => vec![
+            SetupStep {
+                explanation: "Cadastre sua conta no grupo da porta. O terminal pedirá a senha de administrador; confira o resultado antes de continuar.".to_owned(),
+                command: format!("sudo usermod -a -G {} -- \"$(id -un)\"", access.group.as_deref().unwrap_or_default()),
+            },
+            SetupStep {
+                explanation: "Depois de o cadastro terminar sem erro, salve seu trabalho, saia e entre na sessão do sistema. Reabra a IDE e clique em Verificar novamente.".to_owned(),
+                command: String::new(),
+            },
+        ],
+        SerialAccessState::SessionRefreshRequired => vec![SetupStep {
+            explanation: "O cadastro já está feito. Salve seu trabalho e saia da sessão do sistema; entre novamente e reabra a IDE. Reiniciar apenas a IDE nesta mesma sessão pode manter os grupos antigos. Depois clique em Verificar novamente.".to_owned(),
+            command: String::new(),
+        }],
+        SerialAccessState::Unavailable | SerialAccessState::Unsupported => vec![SetupStep {
+            explanation: access.hint.clone().unwrap_or_default(),
+            command: String::new(),
+        }],
+        _ => vec![SetupStep {
+            explanation: "Confira a identidade e as permissões da porta no terminal. A causa pode incluir modo, ACL ou política do sistema; o cadastro em grupo não foi identificado como solução. Se necessário, peça ao administrador para revisar o acesso.".to_owned(),
+            command: format!("id && ls -l -- '{}'", port.device.replace('\'', "'\\''")),
+        }],
+    };
+    channel.fix = Some(AccessFix {
+        steps,
+        source_url: GROUP_SOURCE.to_owned(),
+        checked_on: GROUP_CHECKED_ON.to_owned(),
     });
-    canal
+    channel
 }
 
 fn canal_modem_manager(
@@ -254,8 +230,8 @@ fn canal_modem_manager(
                 command: "sudo udevadm control --reload && sudo udevadm trigger".to_owned(),
             },
         ],
-        source_url: FONTE_MM.to_owned(),
-        checked_on: CONFERIDO_EM.to_owned(),
+        source_url: MODEM_MANAGER_SOURCE.to_owned(),
+        checked_on: CHECKED_ON.to_owned(),
     });
     canal
 }
@@ -324,8 +300,8 @@ fn canal_sonda(rules_dirs: &[PathBuf]) -> AccessChannel {
                 command: "sudo udevadm trigger".to_owned(),
             },
         ],
-        source_url: FONTE_SONDA.to_owned(),
-        checked_on: CONFERIDO_EM.to_owned(),
+        source_url: PROBE_SOURCE.to_owned(),
+        checked_on: CHECKED_ON.to_owned(),
     });
     canal
 }
@@ -367,31 +343,38 @@ fn regras_de_sonda(rules_dirs: &[PathBuf]) -> Vec<String> {
     achadas
 }
 
-/// Os grupos do processo (`<proc>/self/status`, linha `Groups:`), por nome.
-fn grupos_do_usuario(proc_root: &Path, etc_group: &Path) -> Vec<String> {
-    let Ok(status) = std::fs::read_to_string(proc_root.join("self/status")) else {
-        return Vec::new();
-    };
-    let Ok(grupos) = std::fs::read_to_string(etc_group) else {
-        return Vec::new();
-    };
-    let gids: Vec<u32> = status
-        .lines()
-        .find_map(|l| l.strip_prefix("Groups:"))
-        .map(|l| {
-            l.split_whitespace()
-                .filter_map(|g| g.parse().ok())
-                .collect()
-        })
-        .unwrap_or_default();
-    grupos
-        .lines()
-        .filter_map(|linha| {
-            let mut campos = linha.split(':');
-            let nome = campos.next()?;
-            let _senha = campos.next()?;
-            let gid: u32 = campos.next()?.parse().ok()?;
-            gids.contains(&gid).then(|| nome.to_owned())
-        })
-        .collect()
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn recovery_does_not_repeat_registration_for_a_stale_session() {
+        for (state, expected_commands) in [
+            (SerialAccessState::SessionRefreshRequired, 0),
+            (SerialAccessState::GroupRequired, 1),
+            (SerialAccessState::PermissionDenied, 1),
+        ] {
+            let port: SerialPortInfo = serde_json::from_value(json!({
+                "device": "/dev/ttyUSB0", "kind": "usbUartBridge", "vid": "10c4", "pid": "ea60",
+                "access": { "state": state, "readableWritable": false, "mode": "crw-rw----", "group": "dialout", "hint": "core diagnosis" }
+            })).unwrap();
+            let channel = canal_serial(&port);
+            assert!(!channel.ok);
+            assert_eq!(channel.problem.as_deref(), Some("core diagnosis"));
+            let steps = channel.fix.unwrap().steps;
+            assert_eq!(
+                steps.iter().filter(|step| !step.command.is_empty()).count(),
+                expected_commands
+            );
+            assert_eq!(
+                steps.iter().any(|step| step.command.contains("usermod")),
+                state == SerialAccessState::GroupRequired
+            );
+            if state == SerialAccessState::SessionRefreshRequired {
+                assert!(steps[0].explanation.contains("Salve seu trabalho"));
+                assert!(steps[0].explanation.contains("sessão do sistema"));
+            }
+        }
+    }
 }

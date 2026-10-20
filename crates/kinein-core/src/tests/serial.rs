@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use kinein_protocol::SerialPortKind;
 
 use crate::serial::monitor::{DEFAULT_BAUD, command_line, escolher};
-use crate::serial::{Ambiente, familia, list_in, modo_simbolico, parse_udev_properties};
+use crate::serial::{Environment, familia, list_in, parse_udev_properties};
 use crate::toolchain::{KitUpdate, Toolchain};
 use kinein_protocol::{ToolInfo, ToolStatus, ToolchainRole};
 
@@ -34,8 +34,8 @@ fn escreve(dir: &Path, nome: &str, valor: &str) {
 /// Um `/sys` com o ESP32 clássico medido em 2026-09-11 (CP2102 em
 /// ttyUSB0) e um ttyACM0 de USB-JTAG da Espressif, mais os `ttyS*` que
 /// nao sao USB.
-fn sysfs_medido(raiz: &Path) -> PathBuf {
-    let usb = raiz.join("sys/devices/pci0000:00/usb8/8-1");
+fn sysfs_fixture(root: &Path) -> PathBuf {
+    let usb = root.join("sys/devices/pci0000:00/usb8/8-1");
     let iface = usb.join("8-1:1.0");
     let porta = iface.join("ttyUSB0");
     std::fs::create_dir_all(&porta).unwrap();
@@ -45,34 +45,34 @@ fn sysfs_medido(raiz: &Path) -> PathBuf {
     escreve(&usb, "product", "CP2102 USB to UART Bridge Controller");
     escreve(&usb, "serial", "0001");
     escreve(&iface, "bInterfaceNumber", "00");
-    let drivers = raiz.join("sys/bus/usb-serial/drivers/cp210x");
+    let drivers = root.join("sys/bus/usb-serial/drivers/cp210x");
     std::fs::create_dir_all(&drivers).unwrap();
     std::os::unix::fs::symlink(&drivers, porta.join("driver")).unwrap();
 
     // ttyACM0: o `device` e' a propria interface, sem diretorio de porta.
-    let usb2 = raiz.join("sys/devices/pci0000:00/usb1/1-2");
+    let usb2 = root.join("sys/devices/pci0000:00/usb1/1-2");
     let iface2 = usb2.join("1-2:1.0");
     std::fs::create_dir_all(&iface2).unwrap();
     escreve(&usb2, "idVendor", "303a");
     escreve(&usb2, "idProduct", "1001");
     escreve(&usb2, "product", "USB JTAG/serial debug unit");
     escreve(&iface2, "bInterfaceNumber", "00");
-    let cdc = raiz.join("sys/bus/usb/drivers/cdc_acm");
+    let cdc = root.join("sys/bus/usb/drivers/cdc_acm");
     std::fs::create_dir_all(&cdc).unwrap();
     std::os::unix::fs::symlink(&cdc, iface2.join("driver")).unwrap();
 
-    let class = raiz.join("sys/class/tty");
+    let class = root.join("sys/class/tty");
     for nome in ["ttyUSB0", "ttyACM0", "ttyS0", "ttyS1"] {
         std::fs::create_dir_all(class.join(nome)).unwrap();
     }
     std::os::unix::fs::symlink(&porta, class.join("ttyUSB0/device")).unwrap();
     std::os::unix::fs::symlink(&iface2, class.join("ttyACM0/device")).unwrap();
     // ttyS0 tem `device` sem idVendor acima: platform, nao USB.
-    let plat = raiz.join("sys/devices/platform/serial8250");
+    let plat = root.join("sys/devices/platform/serial8250");
     std::fs::create_dir_all(&plat).unwrap();
     std::os::unix::fs::symlink(&plat, class.join("ttyS0/device")).unwrap();
 
-    let dev = raiz.join("dev");
+    let dev = root.join("dev");
     std::fs::create_dir_all(dev.join("serial/by-id")).unwrap();
     std::fs::write(dev.join("ttyUSB0"), "").unwrap();
     std::fs::write(dev.join("ttyACM0"), "").unwrap();
@@ -87,41 +87,44 @@ fn sysfs_medido(raiz: &Path) -> PathBuf {
     // o batiza de `dialout`, que e' o que a dica tem de nomear.
     let gid = std::fs::metadata(dev.join("ttyUSB0")).unwrap().gid();
     std::fs::write(
-        raiz.join("group"),
+        root.join("group"),
         format!("root:x:0:\ndialout:x:{gid}:hugh\n"),
     )
     .unwrap();
     // /proc com um ModemManager vivo.
-    std::fs::create_dir_all(raiz.join("proc/1030")).unwrap();
-    std::fs::write(raiz.join("proc/1030/comm"), "ModemManager\n").unwrap();
-    raiz.to_path_buf()
+    std::fs::create_dir_all(root.join("proc/1030")).unwrap();
+    std::fs::write(root.join("proc/1030/comm"), "ModemManager\n").unwrap();
+    root.to_path_buf()
 }
 
-/// Os quatro caminhos de um `/` falso, donos das strings que o `Ambiente`
+/// Os quatro caminhos de um `/` falso, donos das strings que o `Environment`
 /// empresta.
-struct Raizes {
+struct Roots {
     class: PathBuf,
     dev: PathBuf,
     proc_root: PathBuf,
     group: PathBuf,
+    accounts_file: PathBuf,
 }
 
-impl Raizes {
-    fn em(raiz: &Path) -> Self {
+impl Roots {
+    fn em(root: &Path) -> Self {
         Self {
-            class: raiz.join("sys/class/tty"),
-            dev: raiz.join("dev"),
-            proc_root: raiz.join("proc"),
-            group: raiz.join("group"),
+            class: root.join("sys/class/tty"),
+            dev: root.join("dev"),
+            proc_root: root.join("proc"),
+            group: root.join("group"),
+            accounts_file: root.join("accounts_file"),
         }
     }
 
-    fn ambiente<'a>(&'a self, udev: &'a dyn Fn(&Path) -> Option<String>) -> Ambiente<'a> {
-        Ambiente {
+    fn environment<'a>(&'a self, udev: &'a dyn Fn(&Path) -> Option<String>) -> Environment<'a> {
+        Environment {
             sys_class_tty: &self.class,
             dev: &self.dev,
             proc_root: &self.proc_root,
             etc_group: &self.group,
+            accounts_file: &self.accounts_file,
             udev_props: udev,
         }
     }
@@ -129,13 +132,13 @@ impl Raizes {
 
 #[test]
 fn walks_up_sysfs_to_the_usb_device_and_skips_platform_ttys() {
-    let raiz = sysfs_medido(&temp_dir("sysfs"));
+    let root = sysfs_fixture(&temp_dir("sysfs"));
     let udev = |no: &Path| {
         no.ends_with("ttyUSB0")
             .then(|| "ID_MM_CANDIDATE=1\nID_USB_DRIVER=cp210x\n".to_owned())
     };
-    let raizes = Raizes::em(&raiz);
-    let resultado = list_in(&raizes.ambiente(&udev));
+    let roots = Roots::em(&root);
+    let resultado = list_in(&roots.environment(&udev));
     assert_eq!(resultado.ports.len(), 2, "ttyS* nao entra: {resultado:?}");
     assert!(resultado.hint.is_none());
 
@@ -169,8 +172,8 @@ fn walks_up_sysfs_to_the_usb_device_and_skips_platform_ttys() {
 #[test]
 fn access_is_measured_not_guessed_and_the_hint_names_the_group() {
     use std::os::unix::fs::PermissionsExt;
-    let raiz = sysfs_medido(&temp_dir("acesso"));
-    let no = raiz.join("dev/ttyUSB0");
+    let root = sysfs_fixture(&temp_dir("acesso"));
+    let no = root.join("dev/ttyUSB0");
     std::fs::set_permissions(&no, std::fs::Permissions::from_mode(0o000)).unwrap();
     // root (ou CAP_DAC_OVERRIDE) ignora modo 000; o teste so' vale para
     // usuario comum, e e' o proprio `open` que diz qual dos dois somos.
@@ -178,22 +181,26 @@ fn access_is_measured_not_guessed_and_the_hint_names_the_group() {
         return;
     }
     let udev = |_: &Path| None;
-    let raizes = Raizes::em(&raiz);
-    let ports = list_in(&raizes.ambiente(&udev)).ports;
+    let roots = Roots::em(&root);
+    let ports = list_in(&roots.environment(&udev)).ports;
     let usb = ports
         .iter()
         .find(|p| p.device.ends_with("ttyUSB0"))
         .unwrap();
     assert!(!usb.access.readable_writable);
     assert_eq!(usb.access.mode, "----------");
-    assert!(usb.access.hint.as_deref().unwrap().contains("usermod -aG"));
+    assert_eq!(
+        usb.access.state,
+        kinein_protocol::SerialAccessState::PermissionDenied
+    );
+    assert!(!usb.access.hint.as_deref().unwrap().contains("usermod"));
     assert!(!usb.access.hint.as_deref().unwrap().contains("sudo chmod"));
 
     // Modo com rw so' no GRUPO, num no' que e' NOSSO: o kernel aplica os bits
     // do dono (nenhum) e nega. A heuristica "root:dialout 0660 => olha os bits
     // do grupo" diria sim — e' exatamente a mutacao que este caso mata.
     std::fs::set_permissions(&no, std::fs::Permissions::from_mode(0o060)).unwrap();
-    let ports = list_in(&raizes.ambiente(&udev)).ports;
+    let ports = list_in(&roots.environment(&udev)).ports;
     let usb = ports
         .iter()
         .find(|p| p.device.ends_with("ttyUSB0"))
@@ -210,7 +217,7 @@ fn access_is_measured_not_guessed_and_the_hint_names_the_group() {
     // u:eu:rw ainda nega para o proprio dono), entao sem root nao ha' como
     // montar o cenario. Quem o prova e' a exercitacao contra /dev/ttyUSB0.
     std::fs::set_permissions(&no, std::fs::Permissions::from_mode(0o600)).unwrap();
-    let ports = list_in(&raizes.ambiente(&udev)).ports;
+    let ports = list_in(&roots.environment(&udev)).ports;
     let usb = ports
         .iter()
         .find(|p| p.device.ends_with("ttyUSB0"))
@@ -221,10 +228,11 @@ fn access_is_measured_not_guessed_and_the_hint_names_the_group() {
 
 #[test]
 fn empty_sys_gives_a_hint_and_no_ports() {
-    let raiz = temp_dir("vazio");
+    let root = temp_dir("vazio");
+    std::fs::create_dir_all(root.join("sys/class/tty")).unwrap();
     let udev = |_: &Path| None;
-    let raizes = Raizes::em(&raiz);
-    let resultado = list_in(&raizes.ambiente(&udev));
+    let roots = Roots::em(&root);
+    let resultado = list_in(&roots.environment(&udev));
     assert!(resultado.ports.is_empty());
     assert!(resultado.hint.as_deref().unwrap().contains("lsusb"));
 }
@@ -243,12 +251,10 @@ fn family_says_what_the_link_is_never_the_chip_behind_a_bridge() {
 }
 
 #[test]
-fn udev_properties_and_symbolic_mode() {
+fn udev_properties_ignore_unknown_lines() {
     let props = parse_udev_properties("DEVNAME=/dev/ttyUSB0\nID_MM_CANDIDATE=1\nlixo\n");
     assert_eq!(props.get("ID_MM_CANDIDATE").map(String::as_str), Some("1"));
     assert_eq!(props.len(), 2);
-    assert_eq!(modo_simbolico(0o020_660), "crw-rw----");
-    assert_eq!(modo_simbolico(0o100_755), "-rwxr-xr-x");
 }
 
 /// Uma ferramenta DETECTADA num caminho, como o `tools.detect` a descreveria.
@@ -335,14 +341,14 @@ fn monitor_command_lines_follow_each_tool_and_only_espflash_takes_the_elf() {
 
 #[test]
 fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fixed_choice() {
-    let raiz = temp_dir("monitor-escolha");
+    let root = temp_dir("monitor-escolha");
     let tools = vec![
         detectada("picocom", "/usr/bin/picocom"),
         detectada("minicom", "/usr/bin/minicom"),
         detectada("espflash", "/home/x/.cargo/bin/espflash"),
     ];
     // Sem chip: o primeiro detectado na ordem do catalogo (tio nao esta').
-    let tc = Toolchain::resolve(&raiz, &tools);
+    let tc = Toolchain::resolve(&root, &tools);
     let escolha = escolher(&tc, false, None).unwrap();
     assert_eq!(
         (escolha.id.as_str(), escolha.program.as_str()),
@@ -351,7 +357,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
 
     // Chip Espressif no kit: espflash passa a frente, sem ninguem fixar nada.
     let tc = crate::toolchain::set_kit(
-        &raiz,
+        &root,
         &tools,
         "",
         KitUpdate {
@@ -365,7 +371,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
     // Chip que NAO e' Espressif (um STM32) com espflash presente: o espflash
     // NAO passa a frente — ele so' fala com chips Espressif.
     let tc = crate::toolchain::set_kit(
-        &raiz,
+        &root,
         &tools,
         "",
         KitUpdate {
@@ -376,7 +382,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
     .unwrap();
     assert_eq!(escolher(&tc, false, None).unwrap().id, "picocom");
     let tc = crate::toolchain::set_kit(
-        &raiz,
+        &root,
         &tools,
         "",
         KitUpdate {
@@ -393,12 +399,12 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
         .filter(|t| t.id != "espflash")
         .cloned()
         .collect();
-    let tc = Toolchain::resolve(&raiz, &sem_espflash);
+    let tc = Toolchain::resolve(&root, &sem_espflash);
     assert_eq!(escolher(&tc, false, None).unwrap().id, "picocom");
 
     // O autor FIXOU minicom: vale mesmo com chip Espressif e espflash presente.
     let tc = crate::toolchain::set(
-        &raiz,
+        &root,
         &tools,
         ToolchainRole::SerialMonitor,
         Some("minicom"),
@@ -408,7 +414,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
     assert_eq!(escolher(&tc, false, None).unwrap().id, "minicom");
 
     // Nenhum monitor detectado: None, e o handler diz o que instalar.
-    let tc = Toolchain::resolve(&raiz, &[]);
+    let tc = Toolchain::resolve(&root, &[]);
     assert!(escolher(&tc, false, None).is_none());
 }
 
@@ -418,12 +424,12 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
 /// catalogo), e a escolha fixada pelo autor continua valendo.
 #[test]
 fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
-    let raiz = temp_dir("monitor-mpremote");
+    let root = temp_dir("monitor-mpremote");
     let tools = vec![
         detectada("picocom", "/usr/bin/picocom"),
         detectada("mpremote", "/home/x/.local/bin/mpremote"),
     ];
-    let tc = Toolchain::resolve(&raiz, &tools);
+    let tc = Toolchain::resolve(&root, &tools);
     // Projeto comum: picocom (primeiro do catalogo); mpremote so' com MicroPython.
     assert_eq!(escolher(&tc, false, None).unwrap().id, "picocom");
     let escolha = escolher(&tc, true, None).unwrap();
@@ -433,15 +439,15 @@ fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
     );
     // So' o mpremote na maquina: e' o efetivo mesmo fora de MicroPython.
     let so_mpremote = vec![detectada("mpremote", "/home/x/.local/bin/mpremote")];
-    let tc = Toolchain::resolve(&raiz, &so_mpremote);
+    let tc = Toolchain::resolve(&root, &so_mpremote);
     assert_eq!(escolher(&tc, false, None).unwrap().id, "mpremote");
     // MicroPython SEM mpremote: volta ao efetivo, nao falha.
     let so_picocom = vec![detectada("picocom", "/usr/bin/picocom")];
-    let tc = Toolchain::resolve(&raiz, &so_picocom);
+    let tc = Toolchain::resolve(&root, &so_picocom);
     assert_eq!(escolher(&tc, true, None).unwrap().id, "picocom");
     // Fixado picocom: vale mesmo em MicroPython com mpremote presente.
     let tc = crate::toolchain::set(
-        &raiz,
+        &root,
         &tools,
         ToolchainRole::SerialMonitor,
         Some("picocom"),
@@ -467,34 +473,32 @@ fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
 
 /// Monta `/proc/self/status` falso com os grupos dados (gids) — e' de onde
 /// o diagnostico le a que grupos o usuario pertence.
-fn proc_com_grupos(raiz: &Path, gids: &[u32]) {
-    std::fs::create_dir_all(raiz.join("proc/self")).unwrap();
+fn proc_com_grupos(root: &Path, gids: &[u32]) {
+    std::fs::create_dir_all(root.join("proc/self")).unwrap();
     let lista: Vec<String> = gids.iter().map(u32::to_string).collect();
     std::fs::write(
-        raiz.join("proc/self/status"),
+        root.join("proc/self/status"),
         format!("Name:\tkinein\nGroups:\t{} \n", lista.join(" ")),
     )
     .unwrap();
 }
 
-/// O canal `serial`: fora do grupo e sem ACL -> passo `usermod` da fonte
-/// oficial; dentro do grupo -> ok sem "distro fez"; com acesso por ACL
-/// (`TAGS=:uaccess:`) e fora do grupo -> ok E "o udev deu acesso".
+/// O canal usa a medição real; uma tag uaccess sozinha não prova uma ACL.
 #[test]
 fn serial_channel_names_the_group_step_or_credits_uaccess() {
     use std::os::unix::fs::PermissionsExt;
-    let raiz = sysfs_medido(&temp_dir("e2-serial"));
-    let no = raiz.join("dev/ttyUSB0");
+    let root = sysfs_fixture(&temp_dir("e2-serial"));
+    let no = root.join("dev/ttyUSB0");
     let gid_do_no = std::fs::metadata(&no).unwrap().gid();
-    let raizes = Raizes::em(&raiz);
+    let roots = Roots::em(&root);
     let sem_udev = |_: &Path| None;
     let sem_regras: Vec<PathBuf> = Vec::new();
 
     // Dentro do grupo (o gid do no' esta' nos grupos), no' 0600: ok, e a
     // razao e' o grupo, nao a distro.
-    proc_com_grupos(&raiz, &[gid_do_no]);
+    proc_com_grupos(&root, &[gid_do_no]);
     let r = crate::serial::access::diagnose_in(
-        &raizes.ambiente(&sem_udev),
+        &roots.environment(&sem_udev),
         &sem_regras,
         Some(no.to_str().unwrap()),
     );
@@ -508,7 +512,7 @@ fn serial_channel_names_the_group_step_or_credits_uaccess() {
         "{serial:?}"
     );
     assert!(
-        serial.detail.contains("faz parte do grupo"),
+        serial.detail.contains("grupo `dialout`"),
         "{}",
         serial.detail
     );
@@ -523,9 +527,9 @@ fn serial_channel_names_the_group_step_or_credits_uaccess() {
     // passo oficial `usermod -a -G <grupo> $USER` + re-login.
     std::fs::set_permissions(&no, std::fs::Permissions::from_mode(0o000)).unwrap();
     if std::fs::File::open(&no).is_err() {
-        proc_com_grupos(&raiz, &[]);
+        proc_com_grupos(&root, &[]);
         let r = crate::serial::access::diagnose_in(
-            &raizes.ambiente(&sem_udev),
+            &roots.environment(&sem_udev),
             &sem_regras,
             Some(no.to_str().unwrap()),
         );
@@ -533,29 +537,29 @@ fn serial_channel_names_the_group_step_or_credits_uaccess() {
         assert!(!serial.ok);
         let fix = serial.fix.as_ref().unwrap();
         // O /etc/group falso batiza o gid do no' de `dialout`.
-        assert_eq!(fix.steps[0].command, "sudo usermod -a -G dialout $USER");
-        assert!(fix.steps[1].explanation.contains("re-login"));
+        assert!(fix.steps[0].command.starts_with("id && ls -l -- "));
+        assert!(
+            !fix.steps
+                .iter()
+                .any(|step| step.command.contains("usermod"))
+        );
         assert!(fix.source_url.contains("docs.espressif.com"));
-        assert_eq!(fix.checked_on, "2026-09-17");
+        assert_eq!(fix.checked_on, "2026-10-20");
     }
     std::fs::set_permissions(&no, std::fs::Permissions::from_mode(0o600)).unwrap();
 
-    // Acesso ha' (0600, somos o dono) mas NAO pelo grupo: com a tag uaccess
-    // nas propriedades udev, o merito e' do udev.
-    proc_com_grupos(&raiz, &[]);
+    // Somos o dono: a presença da tag não prova que o acesso veio do udev.
+    proc_com_grupos(&root, &[]);
     let com_uaccess =
         |_: &Path| Some("TAGS=:uaccess:seat:systemd:\nID_MM_CANDIDATE=1\n".to_owned());
     let r = crate::serial::access::diagnose_in(
-        &raizes.ambiente(&com_uaccess),
+        &roots.environment(&com_uaccess),
         &sem_regras,
         Some(no.to_str().unwrap()),
     );
     let serial = &r.channels[0];
     assert!(serial.ok);
-    assert!(
-        serial.distro_did_it.as_deref().unwrap().contains("uaccess"),
-        "{serial:?}"
-    );
+    assert!(serial.distro_did_it.is_none(), "{serial:?}");
 }
 
 /// O canal `modemManager`: rodando + candidata + sem regra -> a regra
@@ -563,15 +567,15 @@ fn serial_channel_names_the_group_step_or_credits_uaccess() {
 /// ja' ignorada -> ok com "a regra ja' existe"; sem udevadm -> canal ausente.
 #[test]
 fn modem_manager_channel_writes_the_ignore_rule_for_this_bridge() {
-    let raiz = sysfs_medido(&temp_dir("e2-mm"));
-    proc_com_grupos(&raiz, &[]);
-    let raizes = Raizes::em(&raiz);
-    let no = raiz.join("dev/ttyUSB0");
+    let root = sysfs_fixture(&temp_dir("e2-mm"));
+    proc_com_grupos(&root, &[]);
+    let roots = Roots::em(&root);
+    let no = root.join("dev/ttyUSB0");
     let sem_regras: Vec<PathBuf> = Vec::new();
 
     let candidata = |_: &Path| Some("ID_MM_CANDIDATE=1\n".to_owned());
     let r = crate::serial::access::diagnose_in(
-        &raizes.ambiente(&candidata),
+        &roots.environment(&candidata),
         &sem_regras,
         Some(no.to_str().unwrap()),
     );
@@ -591,7 +595,7 @@ fn modem_manager_channel_writes_the_ignore_rule_for_this_bridge() {
 
     let ignorada = |_: &Path| Some("ID_MM_CANDIDATE=1\nID_MM_DEVICE_IGNORE=1\n".to_owned());
     let r = crate::serial::access::diagnose_in(
-        &raizes.ambiente(&ignorada),
+        &roots.environment(&ignorada),
         &sem_regras,
         Some(no.to_str().unwrap()),
     );
@@ -612,7 +616,7 @@ fn modem_manager_channel_writes_the_ignore_rule_for_this_bridge() {
     // "problema" — dizer qualquer um seria inventar).
     let sem_udev = |_: &Path| None;
     let r = crate::serial::access::diagnose_in(
-        &raizes.ambiente(&sem_udev),
+        &roots.environment(&sem_udev),
         &sem_regras,
         Some(no.to_str().unwrap()),
     );
@@ -629,16 +633,16 @@ fn modem_manager_channel_writes_the_ignore_rule_for_this_bridge() {
 /// a distro; `/lib` link de `/usr/lib` nao conta duas vezes.
 #[test]
 fn probe_channel_finds_rules_in_any_dir_and_credits_the_distro() {
-    let raiz = sysfs_medido(&temp_dir("e2-probe"));
-    proc_com_grupos(&raiz, &[]);
-    let raizes = Raizes::em(&raiz);
+    let root = sysfs_fixture(&temp_dir("e2-probe"));
+    proc_com_grupos(&root, &[]);
+    let roots = Roots::em(&root);
     let sem_udev = |_: &Path| None;
-    let etc = raiz.join("etc/udev/rules.d");
-    let usr = raiz.join("usr/lib/udev/rules.d");
+    let etc = root.join("etc/udev/rules.d");
+    let usr = root.join("usr/lib/udev/rules.d");
     std::fs::create_dir_all(&etc).unwrap();
     std::fs::create_dir_all(&usr).unwrap();
-    let lib = raiz.join("lib");
-    std::os::unix::fs::symlink(raiz.join("usr/lib"), &lib).unwrap();
+    let lib = root.join("lib");
+    std::os::unix::fs::symlink(root.join("usr/lib"), &lib).unwrap();
     let dirs = vec![etc.clone(), usr.clone(), lib.join("udev/rules.d")];
     let sonda = |r: &kinein_protocol::SerialAccessResult| {
         r.channels
@@ -649,7 +653,7 @@ fn probe_channel_finds_rules_in_any_dir_and_credits_the_distro() {
     };
 
     let sem = sonda(&crate::serial::access::diagnose_in(
-        &raizes.ambiente(&sem_udev),
+        &roots.environment(&sem_udev),
         &dirs,
         None,
     ));
@@ -671,7 +675,7 @@ fn probe_channel_finds_rules_in_any_dir_and_credits_the_distro() {
     std::fs::write(usr.join("60-openocd.rules"), "# fedora/ubuntu\n").unwrap();
     std::fs::write(usr.join("99-unrelated.rules"), "").unwrap();
     let distro = sonda(&crate::serial::access::diagnose_in(
-        &raizes.ambiente(&sem_udev),
+        &roots.environment(&sem_udev),
         &dirs,
         None,
     ));
@@ -693,10 +697,43 @@ fn probe_channel_finds_rules_in_any_dir_and_credits_the_distro() {
     std::fs::remove_file(usr.join("60-openocd.rules")).unwrap();
     std::fs::write(etc.join("69-probe-rs.rules"), "").unwrap();
     let usuario = sonda(&crate::serial::access::diagnose_in(
-        &raizes.ambiente(&sem_udev),
+        &roots.environment(&sem_udev),
         &dirs,
         None,
     ));
     assert!(usuario.ok && usuario.distro_did_it.is_none(), "{usuario:?}");
     assert!(usuario.detail.contains("69-probe-rs.rules"));
+}
+
+#[test]
+fn unavailable_sysfs_is_not_reported_as_a_disconnected_board() {
+    let root = temp_dir("missing-sysfs");
+    let roots = Roots::em(&root);
+    let udev = |_: &Path| None;
+    let result = list_in(&roots.environment(&udev));
+    assert!(result.ports.is_empty());
+    assert!(result.hint.unwrap().contains("Não foi possível consultar"));
+}
+
+#[test]
+fn access_keeps_a_missing_selected_port_as_a_visible_problem() {
+    let root = sysfs_fixture(&temp_dir("missing-selected-port"));
+    let roots = Roots::em(&root);
+    let udev = |_: &Path| None;
+    let result =
+        crate::serial::access::diagnose_in(&roots.environment(&udev), &[], Some("/dev/ttyUSB9"));
+    assert!(!result.channels[0].ok);
+    assert_eq!(result.channels[0].device.as_deref(), Some("/dev/ttyUSB9"));
+    assert!(
+        result.channels[0]
+            .problem
+            .as_ref()
+            .unwrap()
+            .contains("não foi encontrada")
+    );
+    assert!(
+        result.channels[0].fix.as_ref().unwrap().steps[0]
+            .command
+            .is_empty()
+    );
 }

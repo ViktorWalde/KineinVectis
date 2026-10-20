@@ -7,27 +7,35 @@ import QtQuick
 // que falta. Filho do EmbeddedController (`embeddedController.access`),
 // como `identity` e `flash`: nenhuma propriedade de repasse nova.
 //
-// A IDE nunca roda sudo. `runStep(command)` emite o comando para ser
-// ESCRITO no terminal da IDE (o mesmo caminho do painel de instalacao,
+// A IDE nunca eleva privilégios automaticamente. `runStep(command)` emite o comando para ser
+// EXECUTADO no terminal da IDE por clique explícito (o mesmo caminho do painel de instalacao,
 // ShellEnvironmentOverlays -> RuntimeController.runInNewTerminal); o prompt
 // de senha aparece la', a vista.
 Item {
     id: root
 
     property bool busy: false
+    property bool discardReply: false
     property var channels: []
+    property string focusedDevice: ""
+    readonly property var visibleChannels: focusedDevice === "" ? channels
+        : channels.filter(channel => channel.device === focusedDevice)
     property string errorText: ""
     readonly property bool diagnosed: channels.length > 0
-    readonly property int problems: countProblems(channels)
+    readonly property int problems: countProblems(visibleChannels)
 
     signal diagnoseRequested(string device)
     signal commandRequested(string command)
+    signal refreshRequested()
 
     visible: false
 
-    function clear() {
-        busy = false;
+    function clear(disconnected) {
+        // Keep a single request in flight; its reply must not revive cleared data.
+        if (disconnected === true) busy = false;
+        discardReply = busy;
         channels = [];
+        focusedDevice = "";
         errorText = "";
     }
 
@@ -38,11 +46,21 @@ Item {
         }
         busy = true;
         errorText = "";
-        diagnoseRequested(device === undefined ? "" : device);
+        channels = [];
+        focusedDevice = device === undefined ? "" : device;
+        diagnoseRequested(focusedDevice);
+    }
+
+    function recheck() {
+        if (busy) return;
+        refreshRequested();
+        diagnose(focusedDevice);
     }
 
     function handleChannels(novos) {
+        if (!busy) return;
         busy = false;
+        if (discardReply) { discardReply = false; return; }
         channels = novos === undefined || novos === null ? [] : novos;
         errorText = "";
     }
@@ -51,7 +69,9 @@ Item {
         if (method !== "serial.access") {
             return;
         }
+        if (!busy) return;
         busy = false;
+        if (discardReply) { discardReply = false; return; }
         errorText = message;
     }
 
@@ -77,7 +97,7 @@ Item {
                ? canal.fix.steps : [];
     }
 
-    // O passo vai para o terminal da IDE: escrito, visivel, com o prompt de
+    // O passo vai para o terminal da IDE com Enter, visivel, com o prompt de
     // senha do sudo la'. Nada roda escondido.
     function runStep(command) {
         if (command === undefined || command === "") {

@@ -21,6 +21,15 @@ como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
 O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
 pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
 
+- **Preparação do acesso serial (0.4.1f, 2026-10-20):** o core distingue
+  cadastro no grupo de sessão ainda desatualizada, sem recomendar recadastro
+  como solução para qualquer permissão negada. O painel oferece Preparar
+  acesso, instruções visuais, detalhes recolhidos e Verificar novamente.
+  Selecionar uma porta não a abre; o monitor agora também revalida o acesso
+  antes de iniciar. Desconexão e falha de consulta recebem diagnósticos
+  distintos. Atualizados dois patches de certificados TLS identificados pela
+  auditoria de dependências. Detalhes e limites no roadmap 52 §14.19.
+
 - **Embarcados por contexto (0.4.1e, 2026-10-20):** destaque PlatformIO,
   jornada Linux e Ambiente sob demanda. Exemplos MicroPython aninhados
   preservam o runtime principal. O kit Linux explícito é reconhecido em

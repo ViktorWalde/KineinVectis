@@ -279,6 +279,50 @@ fn refusals_happen_before_the_port_is_opened() {
     assert!(jobs["jobs"].as_array().unwrap().is_empty(), "{jobs}");
 }
 
+#[test]
+#[cfg(unix)]
+fn monitor_rechecks_access_before_selecting_or_launching_a_tool() {
+    use std::os::unix::fs::PermissionsExt;
+    let _serial = crate::serialize_executables();
+    let mut scenario = scenario("monitor-access");
+    std::fs::write(scenario.dir.join("main.py"), "print('test')\n").unwrap();
+    let opened = scenario.core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({ "path": scenario.dir })),
+    ));
+    assert!(opened.response().error.is_none(), "{opened:?}");
+    std::fs::set_permissions(&scenario.port, std::fs::Permissions::from_mode(0o400)).unwrap();
+    if !rustix::process::geteuid().is_root() {
+        let response = scenario.core.handle_request(&JsonRpcRequest::new(
+            2_i64,
+            "serial.monitor",
+            Some(json!({ "device": scenario.port })),
+        ));
+        let error = response.response().error.as_ref().unwrap();
+        assert_eq!(error.code, JsonRpcErrorCode::InvalidRequest, "{error:?}");
+        assert_eq!(error.details.as_ref().unwrap()["state"], "permissionDenied");
+    }
+    std::fs::remove_file(&scenario.port).unwrap();
+    for method in ["serial.monitor", "serial.identify", "serial.files"] {
+        let mut params = json!({ "device": scenario.port });
+        if method == "serial.files" {
+            params["action"] = json!("list");
+        }
+        let response =
+            scenario
+                .core
+                .handle_request(&JsonRpcRequest::new(3_i64, method, Some(params)));
+        let error = response.response().error.as_ref().unwrap();
+        assert_eq!(
+            error.code,
+            JsonRpcErrorCode::InvalidParams,
+            "{method}: {error:?}"
+        );
+        assert_eq!(error.details.as_ref().unwrap()["state"], "unavailable");
+    }
+}
+
 /// O esptool que nao acha placa fala e sai com erro: `success: false`, o
 /// erro e' o que ele disse, e nao ha' identidade nem sugestao.
 #[test]

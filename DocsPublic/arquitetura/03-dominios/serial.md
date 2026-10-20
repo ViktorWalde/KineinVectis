@@ -33,7 +33,7 @@ SerialIdentity  chip? (esp32c3), chipDescription?, features[], crystal?, usbMode
 
 SerialPortInfo  device, byId?, kind (usbUartBridge|usbCdc), vid, pid,
                 manufacturer?, product?, serial?, interface?, driver?, family?,
-                access { readableWritable, mode, group?, hint? },
+                access { readableWritable, state, mode, group?, hint? },
                 modemManager? { candidate, ignored, running }
 ```
 
@@ -81,9 +81,20 @@ dele é o de **gravação**). Baud ausente = 115200. Sem nenhum monitor
 instalado, `TOOL_NOT_FOUND` com o que instalar. Exige workspace (a aba nasce
 no cwd do projeto) e volta como sessão de terminal, com o comando no título.
 
-**A `hint` de acesso é o passo oficial, nunca um `sudo` que a IDE rodaria:**
-*"`/dev/ttyUSB0` é `crw-rw----` do grupo `dialout` e você não está nele …
-`sudo usermod -aG dialout $USER` e sair/entrar da sessão. A IDE não roda isso."*
+**`SerialAccess.state` (`0.181.0`):** `ready`, `sessionRefreshRequired`,
+`groupRequired`, `permissionDenied`, `unavailable` ou `unsupported`.
+`readableWritable` continua medido por `access(2)`; o estado explica o
+resultado, sem deduzir sucesso dos bits. Sessão desatualizada requer cadastro
+local confirmado no grupo dono e ausência nas credenciais do processo;
+cadastro necessário requer identidade local conhecida, grupo serial conhecido
+e bits de grupo suficientes. Proprietário sem acesso, grupo já ativo e dados
+desconhecidos recebem orientação de diagnóstico, sem recomendar cadastro
+como solução comprovada. `hint` explica a próxima ação, sem executar nada.
+Identidade vem de `Uid:`, `Gid:` e `Groups:` de `/proc/self/status`, cruzada
+com `/etc/passwd` e `/etc/group`; não resolve NSS externo. Os gestos monitor,
+identificação e arquivos reavaliam existência/acesso antes de lançar ferramenta;
+a recusa inclui `details.state`. Remoção após a conferência ainda pode ser erro
+da ferramenta; o painel permite atualizar.
 
 **`serial.identify` é a identidade PELO CANAL (E5 do `integracoes/38` §6,
 `0.112.0`)** — o único `serial.*` que ABRE a porta, e por isso um job pedido
@@ -147,13 +158,14 @@ conteúdo não regrava: o mpremote confere o hash e diz `Up to date`
 **`serial.access` é a permissão POR CANAL (E2 do `integracoes/38` §6,
 `0.114.0`)** — a fatia 4.3 redesenhada: para CADA canal, o que falta e o
 passo oficial. Não exige workspace; não roda nada. Canais: **`serial`**, por
-porta — `ok` é o `access(2)` do `serial.list`; `detail` diz o modo, o grupo
-dono e se o processo está nele (`/proc/self/status` `Groups:` × `/etc/group`);
-quando o acesso vem sem grupo e as propriedades udev trazem `TAGS=…:uaccess:…`,
-`distroDidIt` credita a ACL do udev; sem acesso, `fix` é `sudo usermod -a -G
-<grupo> $USER` + re-login (fonte: ESP-IDF *Establish Serial Connection*,
-2026-09-17) para `dialout|uucp|plugdev|tty`, ou uma regra `TAG+="uaccess"`
-para a VID:PID quando o grupo é outro. **`modemManager`**, por porta, só
+porta — `ok` e `problem` usam a mesma avaliação do `serial.list`; `detail`
+mostra modo e grupo dono. Uma tag `uaccess` sozinha não prova qual ACL deu
+acesso e não recebe crédito de causa. Sem acesso, `fix` corresponde ao
+estado: cadastro apenas em `groupRequired`; instrução para salvar e sair/entrar
+na sessão em `sessionRefreshRequired`; inspeção nos demais bloqueios.
+`SetupStep.command` vazio representa instrução sem execução; a UI não exibe
+botão de terminal para ela. Fonte do cadastro/re-login: ESP-IDF *Establish
+Serial Connection*, conferida em 2026-10-20. **`modemManager`**, por porta, só
 quando o `udevadm` respondeu — `ok` = não (rodando ∧ candidata ∧ sem regra);
 `fix` escreve `ATTRS{idVendor}=="…", ATTRS{idProduct}=="…",
 ENV{ID_MM_DEVICE_IGNORE}="1"` em `/etc/udev/rules.d/77-mm-kinein-<vid>-<pid>.rules`
@@ -165,4 +177,5 @@ canônicas iguais contam uma vez); achado fora de `/etc` é `distroDidIt`;
 nada achado → os três passos do probe.rs *Probe Setup* (baixar
 `69-probe-rs.rules`, `udevadm control --reload`, `udevadm trigger`,
 citados). Cada `fix` traz `sourceUrl` e `checkedOn`; a UI escreve o
-`command` no terminal da IDE pelo mesmo caminho do painel de instalação.
+`command` no terminal da IDE pelo mesmo caminho do painel de instalação,
+com Enter após clique explícito; o botão deve dizer que executa no terminal.

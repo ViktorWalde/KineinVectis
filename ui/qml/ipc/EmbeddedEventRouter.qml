@@ -16,6 +16,10 @@ Item {
     Connections {
         target: root.coreClient
 
+        function onStatusChanged() {
+            if (!root.coreClient.connected) root.embeddedController.access.clear(true);
+        }
+
         function onProbesResolved(probes, toolAvailable, rawOutput, hint) {
             root.embeddedController.handleProbes(probes, toolAvailable, rawOutput, hint);
         }

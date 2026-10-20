@@ -16,7 +16,7 @@ use kinein_protocol::{
 };
 use serde_json::{Value, json};
 
-use super::serial::porta_pronta;
+use super::serial::ready_port;
 use crate::rpc::{jobs_unavailable_response, parse_params};
 use crate::serial::{files, job};
 use crate::{Core, jobs};
@@ -67,7 +67,7 @@ impl Core {
         {
             return recusa(request_id, &mensagem, &pedido);
         }
-        if let Err(recusa) = porta_pronta(request_id.as_ref(), "serial.files", &pedido.device) {
+        if let Err(recusa) = ready_port(request_id.as_ref(), "serial.files", &pedido.device) {
             return *recusa;
         }
         let Some(mpremote) = pedido

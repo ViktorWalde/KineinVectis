@@ -16,11 +16,24 @@ Item {
     property bool neutral: false
     // O texto da faixa: o que foi medido quando `ok`, a falha quando nao.
     property string message: ""
+    property string heading: ""
+    property bool codeFont: true
+    property bool animateChanges: false
+    onMessageChanged: if (animateChanges && message !== "") reveal.restart()
+
+    NumberAnimation {
+        id: reveal
+        target: root
+        property: "opacity"
+        from: 0.65
+        to: 1
+        duration: Theme.motionMedium
+    }
 
     readonly property bool showsBand: !busy && (ok || message !== "")
 
     implicitHeight: busy ? andamento.implicitHeight
-                         : (showsBand ? texto.implicitHeight + 2 * Theme.spacingSmall : 0)
+                         : (showsBand ? body.implicitHeight + 2 * Theme.spacingSmall : 0)
     visible: busy || showsBand
 
     Text {
@@ -42,17 +55,29 @@ Item {
         opacity: 0.18
     }
 
-    Text {
-        id: texto
-
+    Column {
+        id: body
         x: Theme.spacingSmall
         y: Theme.spacingSmall
         width: parent.width - 2 * Theme.spacingSmall
         visible: root.showsBand
-        wrapMode: Text.WordWrap
-        text: root.message
-        color: root.ok ? Theme.textPrimary : Theme.textSecondary
-        font.family: Theme.monoFont
-        font.pixelSize: Theme.fontSizeCaption
+        spacing: Theme.spacingXSmall
+        Text {
+            width: parent.width
+            visible: root.heading !== ""
+            text: root.heading
+            wrapMode: Text.WordWrap
+            color: root.ok ? Theme.successSoft : root.neutral ? Theme.textPrimary : Theme.errorSoft
+            font.pixelSize: Theme.fontSizeSmall
+            font.weight: Font.DemiBold
+        }
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            text: root.message
+            color: root.ok ? Theme.textPrimary : Theme.textSecondary
+            font.family: root.codeFont ? Theme.monoFont : Theme.uiFont
+            font.pixelSize: root.codeFont ? Theme.fontSizeCaption : Theme.fontSizeBody
+        }
     }
 }

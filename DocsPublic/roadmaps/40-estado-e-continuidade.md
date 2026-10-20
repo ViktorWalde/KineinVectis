@@ -12,10 +12,10 @@
 > **HANDOFF (2026-10-20). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1e concluída:** HUD por contexto PlatformIO/Linux e correções de
-> modelo/SDK/execução (52 §14.13, 40.7 §7.325); base da fatia `f50030a`.
+> **0.4.1f concluída:** diagnóstico único e preparação visual do acesso
+> serial (52 §14.19, 40.7 §7.326); base da fatia `58d70b2`.
 > `eim_config.toml` e `log/` continuam locais fora da fatia.
-> Protocolo **0.180.0**, binário **0.3.9**.
+> Protocolo **0.181.0**, binário **0.3.9**.
 >
 > **Objetivo autorizado:** concluir a série até a **0.4.9**, por fatias,
 > e só então gerar/testar o **AppImage local**, sem push, tag ou publicação.
@@ -25,17 +25,17 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d e contextos 0.4.1e.
-> **Gate rápido estrito integral verde:** 1194 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **155 harnesses QML**, sem NÃO PROVADO.
-> UI debug/release e core debug compilaram; fotos nativas PlatformIO,
-> Yocto e aplicação CMake Linux conferidas (52 §14.13, 40.7 §7.325).
+> **Gate rápido estrito integral verde:** 1200 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **156 harnesses QML**, sem NÃO PROVADO.
+> UI debug/release e core debug compilaram; preparo e reverificação nativos
+> conferidos. Acesso real ainda requer atualizar a sessão (40.7 §7.326).
 >
 > **Próximo:** colher feedback da UI atual e da prévia de navegação compacta
 > (52 §14.16), preparada e validada em 1024/736/320 px. A UI Qt mantém
-> suas abas até incorporar o feedback. **Agora:** UX do acesso serial e
-> Instalar ferramentas no dock (52 §14.18); depois schema 3 e C/Python.
-> O autor recebeu o comando do build atual, com core debug e software.
-> O plano até 0.4.9 e a etapa especial posterior continuam vigentes.
+> suas abas até incorporar o feedback. **Agora:** correlação de comandos
+> e exclusividade da porta (52 §14.20); depois Setup no dock, schema 3
+> e C/Python. Falhas de concorrência reproduzidas, ainda pendentes.
+> O comando atual usa core debug/software; plano 0.4.9 e revisão posterior vigentes.
 >
 > **Escopo:** bare metal e Linux embarcado; PlatformIO em destaque dentro
 > de Embarcados; C puro com assistente/padrão C e jornada visual completa;
@@ -60,16 +60,17 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.180.0 (crates/kinein-protocol, medido em 2026-10-19; o
+protocolo   0.181.0 (crates/kinein-protocol, medido em 2026-10-20; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   155 tst_*.qml em scripts/qml-harness (medido em 2026-10-20)
+harnesses   156 tst_*.qml em scripts/qml-harness (medido em 2026-10-20)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
             2026-10-20 (§7.325), sem NÃO PROVADO.
+            1200 Rust na 0.4.1f em 2026-10-20 (§7.326), gate estrito integral verde.
 ```
 
 Os comandos que medem estão no
@@ -102,9 +103,9 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: dock e polimento da 0.4.1d fechados, gate rápido estrito verde; build ESP-IDF pelo core passou. Placa ausente na última descoberta; identificação física pendente (2026-10-20) | [52 §14.12](52-arquitetura-executavel-da-0.4.md#1412-correções-da-bancada-na-interface--desenho-em-2026-10-20) e [40.7 §7.321](40.7-registro-das-entregas.md#7321--041d-embarcados-integrado-à-hud-polimento-e-correções-da-orquestração-2026-10-20) |
+| Embarcados: diagnóstico e preparo serial 0.4.1f fechados, gate integral estrito verde. Porta CP2102 detectada; conta cadastrada, sessão sem o grupo ativo. Próximo: correlação de terminal e uso exclusivo da porta (2026-10-20) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.20 e [40.7](40.7-registro-das-entregas.md) §7.326 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
-| HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Próximo técnico: schema 3 dos kits. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
+| HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia interativa de navegação compacta criada e validada em WebKitGTK a 1024/736/320 px, preparada para feedback; depois, auditoria geral de frontend, componentes, painéis, cores do editor, atalhos, animação e desempenho antes do AppImage | [52](52-arquitetura-executavel-da-0.4.md) §14.16–14.17; agrupamento até 0.4.9 no §11 |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
 | ROS 2: frente e ensaio por jornadas depois da 0.4.9 (limite atualizado em 2026-10-20); escolher versão exata a partir da pesquisa medida (autor, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |

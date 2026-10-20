@@ -99,7 +99,6 @@ Item {
                             outlined: true
                             height: 28
                             active: portCard.selected
-                            enabled: portCard.modelData.access.readableWritable
                             tooltip: root.controller.projectLinux ? qsTr("Selecionar o console UART deste alvo")
                                 : qsTr("Usar esta porta para gravar e executar na placa")
                             onToggled: root.controller.selectPort(portCard.modelData.device)
@@ -133,13 +132,23 @@ Item {
                             onClicked: root.controller.files.list(portCard.modelData.device, "")
                         }
                     }
-                    Text {
+                    KvVerdict {
                         width: parent.width
                         visible: !portCard.modelData.access.readableWritable
-                        text: qsTr("Sem acesso: %1").arg(portCard.modelData.access.hint || portCard.modelData.access.mode)
-                        color: Theme.errorSoft
-                        font.pixelSize: Theme.fontSizeCaption
-                        wrapMode: Text.WordWrap
+                        heading: qsTr("Acesso à porta pendente")
+                        codeFont: false
+                        animateChanges: true
+                        message: portCard.modelData.access.hint || qsTr("Verifique as permissões para usar esta porta.")
+                    }
+                    KvButton {
+                        objectName: "embeddedPrepareAccess"
+                        visible: !portCard.modelData.access.readableWritable
+                        text: qsTr("Preparar acesso")
+                        iconName: "settings"
+                        compact: true
+                        primary: true
+                        enabled: !root.controller.access.busy
+                        onClicked: root.controller.access.diagnose(portCard.modelData.device)
                     }
                     Text {
                         width: parent.width

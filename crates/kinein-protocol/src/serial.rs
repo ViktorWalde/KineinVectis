@@ -20,6 +20,24 @@ pub enum SerialPortKind {
     UsbCdc,
 }
 
+/// Measured access or the recovery required before opening the device.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SerialAccessState {
+    /// Read and write access is available to this process.
+    Ready,
+    /// Local account membership exists but this session has stale groups.
+    SessionRefreshRequired,
+    /// Known local account lacks the serial group registration.
+    GroupRequired,
+    /// Access is denied without a proven group registration remedy.
+    PermissionDenied,
+    /// The device node could not be found or disappeared during inspection.
+    Unavailable,
+    /// Serial integration is unavailable on this operating system.
+    Unsupported,
+}
+
 /// Whether the current user can read and write the device node, and why not.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,6 +45,8 @@ pub struct SerialAccess {
     /// `access(2)` with read+write succeeded — honours ACLs, which is how
     /// `TAG+="uaccess"` grants the seat user access without any group.
     pub readable_writable: bool,
+    /// Core-owned diagnosis; the UI must not infer it from the hint.
+    pub state: SerialAccessState,
     /// Symbolic mode of the node, as `ls -l` prints it (`crw-rw----`).
     pub mode: String,
     /// Owning group name, when it could be resolved (`dialout`, `uucp`).

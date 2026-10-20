@@ -9,8 +9,8 @@ use std::{
 
 use kinein_protocol::{
     JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, SerialAccessParams,
-    SerialIdentifiedEvent, SerialIdentifyParams, SerialIdentifyResult, SerialListParams,
-    SerialMonitorParams, SerialMonitorResult,
+    SerialAccessState, SerialIdentifiedEvent, SerialIdentifyParams, SerialIdentifyResult,
+    SerialListParams, SerialMonitorParams, SerialMonitorResult,
 };
 use serde_json::{Value, json};
 
@@ -53,17 +53,20 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let pedido = match parse_params::<SerialMonitorParams>(
+        let request = match parse_params::<SerialMonitorParams>(
             request_id.as_ref(),
             params,
             "serial.monitor requer o campo device e aceita baud",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "serial.monitor");
         };
+        if let Err(response) = ready_port(request_id.as_ref(), "serial.monitor", &request.device) {
+            return *response;
+        }
         let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
         // Num projeto MicroPython o monitor e' o REPL do mpremote (fatia 5 da
         // cadeia Python): a evidencia vem do mesmo detector do project.model.
@@ -92,11 +95,11 @@ impl Core {
         } else {
             None
         };
-        let baud = pedido.baud.unwrap_or(monitor::DEFAULT_BAUD);
+        let baud = request.baud.unwrap_or(monitor::DEFAULT_BAUD);
         let (programa, args) = monitor::command_line(
             &escolha.id,
             &escolha.program,
-            &pedido.device,
+            &request.device,
             baud,
             elf.as_deref(),
             escolha.activation.as_deref(),
@@ -125,17 +128,17 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let pedido = match parse_params::<SerialAccessParams>(
+        let request = match parse_params::<SerialAccessParams>(
             request_id.as_ref(),
             params,
             "serial.access aceita o campo opcional device",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
         JsonRpcResponse::success(
             request_id,
-            json!(crate::serial::access::diagnose(pedido.device.as_deref())),
+            json!(crate::serial::access::diagnose(request.device.as_deref())),
         )
     }
 
@@ -170,18 +173,18 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let pedido = match parse_params::<SerialIdentifyParams>(
+        let request = match parse_params::<SerialIdentifyParams>(
             request_id.as_ref(),
             params,
             "serial.identify requer o campo device e aceita tool",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
-        if let Err(recusa) = porta_pronta(request_id.as_ref(), "serial.identify", &pedido.device) {
+        if let Err(recusa) = ready_port(request_id.as_ref(), "serial.identify", &request.device) {
             return *recusa;
         }
-        let Some(esptool) = pedido
+        let Some(esptool) = request
             .tool
             .as_deref()
             .map(PathBuf::from)
@@ -202,7 +205,7 @@ impl Core {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "serial.identify");
         };
-        let device = pedido.device;
+        let device = request.device;
         let (programa, args) = identify::command_line(&esptool, &device, identify::FLASH_ID_V5);
         let comando = identify::display(&programa, &args);
         let job_id = jobs.spawn(
@@ -311,35 +314,35 @@ fn run_identification(
 }
 
 /// A recusa ANTES de abrir a porta, comum a `serial.identify` e
-/// `serial.files`: no' inexistente (`INVALID_PARAMS`) e sem leitura/escrita
+/// `serial.files` e `serial.monitor`: no' inexistente (`INVALID_PARAMS`) e sem leitura/escrita
 /// (`INVALID_REQUEST`, com a `hint` do `serial.list`). Abrir a porta reseta
 /// ou interrompe a placa; abrir para falhar e' defeito.
-pub(super) fn porta_pronta(
+pub(super) fn ready_port(
     request_id: Option<&Value>,
     method: &str,
     device: &str,
 ) -> Result<(), Box<JsonRpcResponse>> {
     let no = Path::new(device);
-    if device.trim().is_empty() || !no.exists() {
+    let access = crate::serial::acesso_de(no);
+    if device.trim().is_empty() || access.state == SerialAccessState::Unavailable {
         return Err(Box::new(JsonRpcResponse::failure(
             request_id.cloned(),
             JsonRpcError::new(
                 JsonRpcErrorCode::InvalidParams,
                 format!("{method}: `{device}` não existe nesta máquina"),
-                Some(json!({ "device": device })),
+                Some(json!({ "device": device, "state": "unavailable" })),
             ),
         )));
     }
-    let acesso = crate::serial::acesso_de(no);
-    if !acesso.readable_writable {
+    if !access.readable_writable {
         return Err(Box::new(JsonRpcResponse::failure(
             request_id.cloned(),
             JsonRpcError::new(
                 JsonRpcErrorCode::InvalidRequest,
-                acesso
+                access
                     .hint
                     .unwrap_or_else(|| format!("sem permissão de leitura/escrita em {device}")),
-                Some(json!({ "device": device, "mode": acesso.mode })),
+                Some(json!({ "device": device, "mode": access.mode, "state": access.state })),
             ),
         )));
     }

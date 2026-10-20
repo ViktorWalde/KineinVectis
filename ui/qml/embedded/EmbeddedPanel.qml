@@ -24,6 +24,18 @@ Item {
         target: root.controller
         function onWorkspaceRootChanged() { root.environmentLoaded = false; }
     }
+    Connections {
+        target: root.controller ? root.controller.access : null
+        function onChannelsChanged() {
+            if (root.tab === "board" && root.controller.access.focusedDevice !== ""
+                && root.controller.access.diagnosed) {
+                Qt.callLater(function() {
+                    body.contentY = Math.min(accessView.mapToItem(content, 0, 0).y,
+                                            Math.max(0, body.contentHeight - body.height));
+                });
+            }
+        }
+    }
     NumberAnimation {
         id: contentTransition
         target: content
@@ -104,7 +116,7 @@ Item {
                     controller: root.controller
                     visible: !root.linuxTarget && controller !== null && controller.identity.device !== ""
                 }
-                EmbeddedAccessView { width: parent.width; controller: root.controller }
+                EmbeddedAccessView { id: accessView; width: parent.width; controller: root.controller }
                 EmbeddedFilesView { width: parent.width; controller: root.controller }
             }
 

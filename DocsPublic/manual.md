@@ -1574,21 +1574,25 @@ portas seriais   vistas pelo sysfs, SEM abrir nenhuma: quem faz a ponte
 monitor serial   um botao por porta abre tio/picocom/minicom (ou o REPL do
                  mpremote num projeto MicroPython) NUMA ABA DE TERMINAL —
                  e' um processo, como qualquer outro
-permissoes       o botao "Permissoes" mede cada canal e diz o que falta: o no'
-                 serial (grupo dono, ou a ACL que o udev deu pela tag uaccess
-                 — e' assim que voce pode ter acesso SEM estar no dialout), o
-                 ModemManager (rodando e sem regra de ignorar, ele segura a
-                 porta por segundos depois do plug) e a regra udev das sondas
-                 (a distro pode ja' ter posto a do OpenOCD/ST-Link). Para o
-                 que falta, o passo OFICIAL com a fonte e a data; "Escrever no
-                 terminal" poe o comando no terminal da IDE e o prompt de
-                 senha do sudo aparece la'. A IDE nunca roda sudo
+permissoes       "Preparar acesso" na porta mostra a preparação correspondente ao
+                 diagnóstico do core, inclusive numa instalação nova. Cadastro
+                 ausente oferece o comando no terminal; cadastro já feito com
+                 sessão antiga orienta salvar o trabalho, sair/entrar na sessão
+                 do sistema e reabrir a IDE. Reiniciar apenas a IDE pode manter
+                 os grupos antigos. "Verificar novamente" mede portas e acesso;
+                 detalhes técnicos e fonte ficam recolhidos. Selecionar a porta
+                 não exige abri-la; identificar/monitorar/arquivos conferem o
+                 acesso real antes de iniciar. O botão "Permissões" verifica
+                 todos os canais, incluindo ModemManager e regras das sondas.
+                 "Executar no terminal" envia o comando com Enter por clique
+                 explícito; comandos administrativos pedem a senha ali. A IDE
+                 não eleva privilégios nem altera a sessão automaticamente
 identidade       Identificar ao lado de cada porta pergunta ao `esptool` o que ha'
 pelo canal       do outro lado (chip, flash, MAC) — ABRE a porta e a placa
                  RESETA, por isso e' um clique, nunca automatico. O painel
                  mostra o que leu e o kit que isso sugere; "Usar chip no kit"
                  grava so' o chip. Sem esptool, a linha diz `pipx install
-                 esptool`; sem acesso a porta, o passo oficial do grupo
+                 esptool`; sem acesso à porta, abra Preparar acesso
 gravar           e' uma CONFIGURACAO DE EXECUCAO, nao um botao magico: escolha
                  a porta, (opcional) o motor — solto, o modelo do projeto decide
                  — e clique Gerar prévia de gravação. A IDE monta a linha do esptool a partir da

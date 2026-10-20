@@ -16,6 +16,7 @@ accepted
 accepts
 access
 accessible
+account
 accumulate
 accumulated
 accuse
@@ -89,6 +90,7 @@ anchor
 anchored
 anchors
 angle
+animate
 animated
 animation
 annotated
@@ -668,6 +670,7 @@ delivery
 delta
 deltas
 demo
+denial
 denied
 density
 deny
@@ -765,6 +768,7 @@ dispatcher
 display
 distance
 distinct
+distinguishes
 distribution
 divider
 dock
@@ -1922,6 +1926,7 @@ prefix
 prefixes
 prelude
 premature
+preparation
 prepare
 prepared
 presence
@@ -2055,6 +2060,8 @@ receives
 recent
 recents
 receptor
+recheck
+rechecks
 recipe
 recognised
 recognized
@@ -2091,6 +2098,7 @@ regions
 registered
 registers
 registrar
+registration
 registry
 regular
 reinterpret
@@ -2752,6 +2760,7 @@ unquote
 unreachable
 unreadable
 unrecognised
+unregistered
 unsafe
 unsigned
 unstable

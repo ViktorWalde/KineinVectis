@@ -2,149 +2,149 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Permissao por canal (E2): o veredito medido de cada canal, o problema e
-// os passos oficiais — cada passo com um botao que o ESCREVE no terminal da
-// IDE. Dono proprio pela mesma regra das outras views do painel.
-//
-// Burro: le de `controller.access`. O botao "Permissões" que pede o
-// diagnostico esta' no cabecalho das portas (EmbeddedSerialView).
+// Recovery is supplied by the core. Instructions remain visible; technical
+// evidence is optional. A terminal command runs only through an explicit click.
 Item {
     id: root
-
     property var controller: null
     readonly property var access: controller ? controller.access : null
-
-    implicitHeight: coluna.implicitHeight
+    implicitHeight: content.implicitHeight
     visible: access !== null && (access.diagnosed || access.busy || access.errorText !== "")
 
     Column {
-        id: coluna
+        id: content
+        width: parent.width
+        spacing: Theme.spacingMedium
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        spacing: Theme.spacingSmall
-
-        Text {
+        Flow {
             width: parent.width
-            wrapMode: Text.WordWrap
-            text: root.access
-                  ? (root.access.busy ? qsTr("Permissões — medindo…")
-                     : (root.access.problems === 0
-                        ? qsTr("Permissões — nada a fazer nos canais medidos")
-                        : qsTr("Permissões — %1 canal(is) precisam de um passo").arg(root.access.problems)))
-                  : ""
-            color: Theme.textSecondary
-            font.pixelSize: Theme.fontSizeSmall
-            font.bold: true
+            spacing: Theme.spacingSmall
+            Text {
+                text: root.access && root.access.focusedDevice !== ""
+                    ? qsTr("Preparação · %1").arg(root.access.focusedDevice) : qsTr("Acesso aos dispositivos")
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontSizeMedium
+                font.weight: Font.DemiBold
+                width: Math.min(implicitWidth, content.width)
+                wrapMode: Text.WrapAnywhere
+            }
+            KvButton {
+                objectName: "embeddedRecheckAccess"
+                text: qsTr("Verificar novamente")
+                iconName: "refresh"
+                compact: true
+                enabled: root.access !== null && !root.access.busy && !root.controller.portsBusy
+                onClicked: root.access.recheck()
+            }
+        }
+
+        KvVerdict {
+            width: parent.width
+            busy: root.access !== null && root.access.busy
+            busyText: qsTr("Conferindo o acesso desta sessão…")
+            heading: qsTr("Não foi possível verificar o acesso")
+            message: root.access ? root.access.errorText : ""
+            codeFont: false
+            animateChanges: true
         }
 
         Repeater {
-            model: root.access ? root.access.channels : []
-
+            model: root.access ? root.access.visibleChannels : []
             Column {
-                id: canal
-
+                id: channel
                 required property var modelData
-
-                width: coluna.width
-                spacing: Theme.spacingXSmall
+                property bool detailsVisible: false
+                width: content.width
+                spacing: Theme.spacingSmall
 
                 Text {
                     width: parent.width
                     wrapMode: Text.WordWrap
-                    text: (canal.modelData.ok ? "✓ " : "✗ ") + root.access.channelTitle(canal.modelData)
-                          + " — " + canal.modelData.detail
-                    color: canal.modelData.ok ? Theme.textPrimary : Theme.errorSoft
+                    text: (channel.modelData.ok ? qsTr("Verificação concluída · ") : qsTr("Preparação necessária · "))
+                          + root.access.channelTitle(channel.modelData)
+                    color: channel.modelData.ok ? Theme.successSoft : Theme.warningSoft
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: Font.DemiBold
+                }
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    // The focused serial diagnosis is already on the port card.
+                    visible: text !== "" && !(root.access.focusedDevice !== "" && channel.modelData.kind === "serial")
+                    text: channel.modelData.problem || ""
+                    color: Theme.textSecondary
+                    font.pixelSize: Theme.fontSizeBody
+                }
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    visible: text !== ""
+                    text: channel.modelData.distroDidIt || ""
+                    color: Theme.textSecondary
                     font.pixelSize: Theme.fontSizeSmall
                 }
 
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: canal.modelData.distroDidIt !== undefined && canal.modelData.distroDidIt !== null
-                    text: canal.modelData.distroDidIt !== undefined && canal.modelData.distroDidIt !== null
-                          ? canal.modelData.distroDidIt : ""
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: canal.modelData.problem !== undefined && canal.modelData.problem !== null
-                    text: canal.modelData.problem !== undefined && canal.modelData.problem !== null
-                          ? canal.modelData.problem : ""
-                    color: Theme.warningSoft
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                // Um passo por linha: a explicacao, o comando em mono e o botao
-                // que o escreve no terminal da IDE.
                 Repeater {
-                    model: root.access.stepsOf(canal.modelData)
-
+                    model: root.access.stepsOf(channel.modelData)
                     Column {
-                        id: passo
-
+                        id: step
                         required property var modelData
-
-                        width: canal.width
-                        spacing: 2
-
+                        width: channel.width
+                        spacing: Theme.spacingSmall
                         Text {
                             width: parent.width
                             wrapMode: Text.WordWrap
-                            text: passo.modelData.explanation
-                            color: Theme.textSecondary
-                            font.pixelSize: Theme.fontSizeCaption
+                            text: step.modelData.explanation
+                            color: Theme.textPrimary
+                            font.pixelSize: Theme.fontSizeBody
                         }
-
-                        Row {
+                        KvButton {
+                            objectName: "embeddedAccessCommand"
+                            visible: step.modelData.command !== ""
+                            text: qsTr("Executar no terminal")
+                            iconName: "terminal"
+                            compact: true
+                            tooltip: step.modelData.command
+                            onClicked: root.access.runStep(step.modelData.command)
+                        }
+                        Text {
                             width: parent.width
-                            spacing: Theme.spacingSmall
-
-                            Text {
-                                width: parent.width - escrever.width - Theme.spacingSmall
-                                anchors.verticalCenter: parent.verticalCenter
-                                wrapMode: Text.WrapAnywhere
-                                text: passo.modelData.command
-                                color: Theme.textPrimary
-                                font.family: Theme.monoFont
-                                font.pixelSize: Theme.fontSizeCaption
-                            }
-
-                            KvButton {
-                                id: escrever
-
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: qsTr("Escrever no terminal")
-                                compact: true
-                                onClicked: root.access.runStep(passo.modelData.command)
-                            }
+                            visible: channel.detailsVisible && step.modelData.command !== ""
+                            text: step.modelData.command
+                            wrapMode: Text.WrapAnywhere
+                            color: Theme.textSecondary
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fontSizeSmall
                         }
                     }
                 }
 
+                KvButton {
+                    objectName: "embeddedAccessDetails"
+                    text: channel.detailsVisible ? qsTr("Ocultar detalhes técnicos") : qsTr("Detalhes técnicos")
+                    compact: true
+                    onClicked: channel.detailsVisible = !channel.detailsVisible
+                }
                 Text {
                     width: parent.width
+                    visible: channel.detailsVisible
+                    text: channel.modelData.detail
                     wrapMode: Text.WordWrap
-                    visible: canal.modelData.fix !== undefined && canal.modelData.fix !== null
-                    text: canal.modelData.fix !== undefined && canal.modelData.fix !== null
-                          ? qsTr("fonte: %1 (conferida em %2)").arg(canal.modelData.fix.sourceUrl).arg(canal.modelData.fix.checkedOn)
-                          : ""
                     color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeMicro
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fontSizeCaption
                 }
+                Text {
+                    width: parent.width
+                    visible: channel.detailsVisible && channel.modelData.fix !== undefined
+                    text: channel.modelData.fix
+                        ? qsTr("Fonte: %1 · conferida em %2").arg(channel.modelData.fix.sourceUrl).arg(channel.modelData.fix.checkedOn) : ""
+                    wrapMode: Text.WrapAnywhere
+                    color: Theme.textMuted
+                    font.pixelSize: Theme.fontSizeCaption
+                }
+                Rectangle { width: parent.width; height: 1; color: Theme.borderSoft }
             }
-        }
-
-        Text {
-            width: parent.width
-            wrapMode: Text.WordWrap
-            visible: root.access && root.access.errorText !== ""
-            text: root.access ? root.access.errorText : ""
-            color: Theme.errorSoft
-            font.pixelSize: Theme.fontSizeCaption
         }
     }
 }

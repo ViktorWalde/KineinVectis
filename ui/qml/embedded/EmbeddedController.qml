@@ -113,6 +113,7 @@ Item {
 
     EmbeddedAccessController {
         id: accessController
+        onRefreshRequested: { root.errorText = ""; root.portsBusy = true; root.serialListRequested(); }
     }
 
     EmbeddedFilesController {
@@ -172,6 +173,7 @@ Item {
         busy = true;
         portsBusy = true;
         projectBusy = true;
+        accessController.clear();
         errorText = "";
         listRequested();
         serialListRequested();
