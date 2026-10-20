@@ -1446,6 +1446,14 @@ sem unidade explicam a ausência; os valores desconhecidos ficam como
 “não informado”. Rust mostra o pacote/alvo do Cargo; Python, o interpretador.
 Feche pelo botão, por `Esc` ou clicando fora.
 
+Quando a unidade declara um compilador, target ou sysroot diferente do kit,
+as diferenças aparecem no início da lista, com os dois valores e a evidência.
+A faixa de saúde oferece **Inspecionar** para abrir essa explicação.
+Dispensar a faixa vale para aquele arquivo e aquelas diferenças; mudar o kit
+atualiza a comparação. Nenhum valor é corrigido automaticamente. Ausência
+de informação não gera alerta, e targets distintos não provam incompatibilidade
+de ABI.
+
 ### Toolchain e kits
 
 Qual executável cumpre cada papel — compilador C/C++, gerador, `cmake`, `cargo`.

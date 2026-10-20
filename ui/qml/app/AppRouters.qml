@@ -122,6 +122,7 @@ Item {
     ToolchainEventRouter {
         coreClient: root.domains.coreClient
         toolchainController: root.domains.toolchainController
+        indexController: root.domains.indexController
     }
 
     ToolchainRequestRouter {

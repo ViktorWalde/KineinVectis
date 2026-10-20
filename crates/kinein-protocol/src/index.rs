@@ -233,6 +233,46 @@ pub struct FileContext {
     /// compiler context.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub effective: Option<EffectiveContext>,
+    /// Proven differences between the configured kit and this file's unit.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub drift: Vec<ContextDrift>,
+}
+
+/// A configured value differs from an explicit translation unit value.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ContextDrift {
+    /// Which configured value differs.
+    pub kind: ContextDriftKind,
+    /// The value configured in the applicable kit.
+    pub configured: String,
+    /// The value actually recorded for the translation unit and its source.
+    pub effective: SourcedValue,
+    /// Human-readable evidence, without claiming ABI incompatibility.
+    pub evidence: String,
+    /// A read-only next step; never applies a correction.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub action: Option<ContextDriftAction>,
+}
+
+/// Explicit per-file differences supported by the compiler context.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ContextDriftKind {
+    /// Different resolved compiler paths.
+    Compiler,
+    /// Different explicit target options.
+    Target,
+    /// Different system root paths.
+    Sysroot,
+}
+
+/// Navigation offered for a context difference.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ContextDriftAction {
+    /// Open the applicable kit without modifying it.
+    InspectKit,
 }
 
 /// Where an effective value came from: a closed vocabulary, never free text.

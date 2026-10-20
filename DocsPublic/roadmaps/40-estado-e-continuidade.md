@@ -36,8 +36,8 @@
 > file, §7.315). **CI pública:** a camada rápida está preparada no checkout
 > (52 §14.8; cobertura no contribuindo/07 §2.1), validada localmente;
 > a execução no GitHub e as camadas de UI/pesada continuam pendentes.
-> **0.4.1b encerrada:** inspector C2 (52 §14.9, 40.7 §7.319), com gate
-> rápido estrito TUDO VERDE. **Próxima:** deriva; depois schema 3 (52 §11).
+> **0.4.1b/c encerradas:** inspector e deriva (52 §14.9–14.10, 40.7 §7.319–7.320).
+> Gate rápido estrito TUDO VERDE. **Próxima:** schema 3 dos kits (52 §11).
 > **Confiança:** projetos anteriores à 16.4b pedem "Confiar neste projeto".
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
@@ -61,14 +61,14 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.179.0 (crates/kinein-protocol, medido em 2026-10-19; o
+protocolo   0.180.0 (crates/kinein-protocol, medido em 2026-10-19; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   152 tst_*.qml em scripts/qml-harness (medido em 2026-10-19)
+harnesses   153 tst_*.qml em scripts/qml-harness (medido em 2026-10-19)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
-            §7.277); 1184 no gate rápido estrito local de 2026-10-19 (§7.319).
+            §7.277); 1189 no gate rápido estrito local de 2026-10-19 (§7.320).
 ```
 
 Os comandos que medem estão no

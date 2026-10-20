@@ -50,6 +50,11 @@ pub(crate) fn canonicalize(path: &Path) -> io::Result<PathBuf> {
     imp::canonicalize(path)
 }
 
+/// Resolved path identity; unavailable paths do not establish a difference.
+pub(crate) fn same_file(left: &Path, right: &Path) -> Option<bool> {
+    Some(canonicalize(left).ok()? == canonicalize(right).ok()?)
+}
+
 /// A pasta pessoal do usuario: `$HOME` no Unix, `%USERPROFILE%` no Windows
 /// (que nao define `HOME`). `None` quando nao ha uma.
 #[must_use]

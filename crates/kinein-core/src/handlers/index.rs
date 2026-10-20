@@ -18,7 +18,9 @@ use kinein_protocol::{
 use serde_json::{Value, json};
 
 use crate::Core;
-use crate::index::context::{CompileContext, Ferramentas, KitFacts, complete_with_kit};
+use crate::index::context::{
+    CompileContext, ContextTools, KitFacts, compile_drift, complete_with_kit,
+};
 use crate::index::{self, ProjectIndex};
 use crate::jobs::JobOutcome;
 use crate::rpc::{no_workspace_response, parse_params};
@@ -142,10 +144,12 @@ impl Core {
             source: None,
             hint: Some("o contexto do projeto ainda está sendo carregado".to_owned()),
             effective: None,
+            drift: Vec::new(),
         });
         // O que a unidade nao disse vem do kit que vale (52 §14.1).
         if matches!(language, "c" | "cpp" | "rust") {
             let kit = self.kit_facts(&root, language);
+            response.drift = compile_drift(&response, &kit);
             complete_with_kit(
                 response
                     .effective
@@ -185,9 +189,9 @@ impl Core {
     /// O que o contexto pode EXECUTAR nesta maquina: o cargo do kit efetivo,
     /// o poetry e o python3 do PATH, o `VIRTUAL_ENV` da sessao. Nos testes o
     /// PATH e' vazio e nada disto existe — e nada roda.
-    pub(crate) fn index_tools(&self, root: &Path) -> Ferramentas {
+    pub(crate) fn index_tools(&self, root: &Path) -> ContextTools {
         let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
-        Ferramentas {
+        ContextTools {
             cargo: toolchain
                 .effective_program(ToolchainRole::Cargo)
                 .map(|(_, path)| PathBuf::from(path)),

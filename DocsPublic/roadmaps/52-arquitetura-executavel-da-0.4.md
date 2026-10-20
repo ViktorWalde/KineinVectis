@@ -1190,3 +1190,68 @@ navegação provados pelo core, harnesses e gestos no Xvfb; cinco mutações
 reprovaram. Gate rápido estrito TUDO VERDE, sem NÃO PROVADO. Detalhe no
 [40.7 §7.319](40.7-registro-das-entregas.md). Próxima fatia: deriva (§5.9),
 antes do schema 3.
+
+### 14.10 0.4.1c — deriva de compilação, sem correção automática (2026-10-19)
+
+**Desenho anterior ao código:** a continuação linear autorizada pelo autor.
+O inspector já explica os valores efetivos; agora compara fatos explícitos
+da unidade com os valores do kit que o último configure usou.
+
+- Protocolo 0.180.0 aditivo: `FileContext.drift[]` opcional/vazio por padrão,
+  com `{ kind, configured, effective: { value, origin }, evidence, action? }`.
+  Os kinds desta fatia são `compiler`, `target` e `sysroot`; ação `inspectKit`.
+  O core deriva a lista em `index/context`, antes de completar lacunas com o
+  kit. Não persiste diagnósticos nem lê outra CDB. Ausência de unidade ou de
+  valor explícito, e valor herdado do kit, não provam divergência.
+- O `--target` da unidade é comparado literalmente com o triple do kit:
+  o aviso fala de opções distintas, não de incompatibilidade de ABI.
+  Sysroots absolutos são comparados com links resolvidos quando disponíveis;
+  um sysroot relativo da unidade usa seu diretório de trabalho. Kit relativo
+  ou caminho não resolvido com `..` não gera conclusão. Compiladores só
+  divergem quando ambos têm identidade de arquivo resolvida; nome solto no
+  PATH e wrapper não são adivinhados. A identidade de arquivo em `platform`
+  é compartilhada com o casamento de candidatos de `toolchain/project`.
+- Medido com `clang++ -###`: opções repetidas usam o último `--target` e
+  `--sysroot`; o extrator efetivo existente passa a respeitar isso, sem
+  segundo parser. Os testes protegem as formas colada/separada e repetida.
+- O modelo do inspector apresenta as diferenças em primeiro lugar, com
+  configurado, efetivo, origem e evidência. O `ProjectHealthController`
+  recebe o mesmo `FileContext` aceito pelo índice e oferece “Inspecionar”;
+  confiança, ferramentas ausentes, configure e CDB velha mantêm precedência.
+  A dispensa distingue arquivo e conteúdo das diferenças, mas uma resposta
+  idêntica não ressuscita o aviso. Trocar arquivo/projeto limpa os dados.
+- Resposta de alteração/consulta do kit pede novamente o contexto ativo;
+  configure continua usando a recarga do índice existente. O botão só abre
+  o inspector/kit: nenhum configure, gravação ou instalação automática.
+
+**Fronteira:** esta fatia cobre deriva por arquivo de C/C++. O aviso de alvo
+Rust ausente continua no dono `toolchain.get`/`rustTargetHint`; incorporar
+fatos de instalação sem executar `rustup` por arquivo será outra fatia.
+Launcher ausente depende do schema 3/cache da sequência. Comparar triple
+inferido de compilador e compatibilidade de ABI requer evidência adicional;
+não se deduz do nome do executável. Próximo: schema 3, sem trocar a ordem.
+
+**Provas previstas:** dispatcher real com kit nomeado, divergência e acordo,
+sem unidade, flags repetidas, caminhos relativos/aliases e informação
+insuficiente; atualização após alteração de kit e configure. Harnesses de
+apresentação, prioridade/dispensa da faixa e ação de inspeção; mutações em
+cópias temporárias; fotos antes/depois e gestos no Xvfb; gate rápido estrito.
+
+**Ajuste de implementação:** a entrada de ferramentas do contexto ainda se
+chamava `Ferramentas`. Para usá-la nos testes novos sem ampliar o legado de
+identificadores em português, o tipo passa a `ContextTools` no dono e nos
+consumidores. Só o nome interno muda; baseline e contrato ficam
+inalterados.
+
+A catraca de duplicação também exige que a identidade da dispensa venha do
+próprio aviso: `apply` recebe uma chave opcional com caminho/diferenças,
+montada no ramo da deriva. A dispensa genérica não interpreta o nome da
+ação, que pertence ao despacho; nenhuma exceção nova na baseline.
+
+
+**Resultado (2026-10-19):** 0.4.1c encerrada no checkout. Comparação por
+arquivo, inspector e aviso de saúde provados com os donos reais; seis
+mutações reprovaram. Gate rápido estrito TUDO VERDE, sem NÃO PROVADO;
+1189 testes Rust, 8 C++ e 153 harnesses QML. Provas e notas de método no
+[40.7 §7.320](40.7-registro-das-entregas.md). Próxima fatia: schema 3 dos
+kits, mantendo as fronteiras acima.

@@ -76,7 +76,7 @@ Item {
 
     ProjectHealthController {
         id: projectHealthController
-
+        compileContext: indexController.fileContext
         workspaceRoot: root.coreClient.workspaceRoot
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems

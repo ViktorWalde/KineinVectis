@@ -29,7 +29,8 @@ IndexSymbol  name, kind, path (relativo a raiz), language, line, endLine,
              container?
 FileContext  path (absoluto), language (c|cpp|rust|python|other), unit?, crate?,
              python?, targets[] (0.96.0: os targets do CMake que compilam ou
-             listam o arquivo), source?, hint?, effective? (0.173.0)
+             listam o arquivo), source?, hint?, effective? (0.173.0),
+             cdbLocation? (0.179.0), drift[] (0.180.0, omitido vazio)
 EffectiveContext (0.173.0) compiler?, standard?, target?, sysroot? — cada um
              { value, origin } —, flagsOrigin?, kit? { preset }
 origin       cdb | cmakeFileApi | cmakeCache | kit
@@ -48,6 +49,17 @@ como o editor).
 Ausente sem unidade da CDB, inclusive no fallback file-api. A última entrada
 para o mesmo arquivo continua vencendo; a localização acompanha essa entrada.
 Permite ao inspector abrir a unidade sem procurar o nome dentro do JSON.
+
+**0.180.0 (0.4.1c):** `FileContext.drift[]` (omitido quando vazio) contém
+`{ kind, configured, effective: { value, origin }, evidence, action? }`.
+`kind`: `compiler`, `target` ou `sysroot`; `action`: `inspectKit` quando há
+kit. Compara somente fatos explícitos da unidade com valores configurados
+nesse kit; nenhum valor do fallback `kit` prova deriva. `target` distinto
+significa opções distintas, sem alegar incompatibilidade de ABI. Caminhos
+reconhecem aliases existentes; sysroot relativo da unidade usa `directory`.
+Compilador sem identidade resolvida, kit relativo ou caminho com `..` que
+não se resolve fica indeterminado, sem alerta. Nenhuma correção automática.
+Opções repetidas de target/sysroot usam o último valor, como o driver medido.
 
 **O contexto efetivo, com a origem de cada valor (0.173.0, a 0.4.0a do
 `roadmaps/52` §14.1).** O `effective` diz o que vale para o arquivo e de onde

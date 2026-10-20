@@ -58,20 +58,23 @@ pub(super) fn from_unit(
 /// `--flag=valor`, ou `--flag valor`.
 fn flag_value(arguments: &[String], names: &[&str]) -> Option<String> {
     let mut iter = arguments.iter();
+    let mut result = None;
     while let Some(argument) = iter.next() {
         for name in names {
             if let Some(value) = argument
                 .strip_prefix(name)
                 .and_then(|rest| rest.strip_prefix('='))
             {
-                return Some(value.to_owned());
+                result = Some(value.to_owned());
+                break;
             }
             if argument == name {
-                return iter.next().cloned();
+                result = iter.next().cloned();
+                break;
             }
         }
     }
-    None
+    result
 }
 
 /// Completa com o kit o que a unidade nao disse, e diz qual kit vale.

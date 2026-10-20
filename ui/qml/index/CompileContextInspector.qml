@@ -123,7 +123,7 @@ KvPanelFrame {
             Text {
                 width: parent.width
                 text: factRow.modelData.label + (factRow.modelData.origin ? " · " + factRow.modelData.origin : "")
-                color: Theme.textMuted
+                color: factRow.modelData.warning ? Theme.warningSoft : Theme.textMuted
                 font.pixelSize: Theme.fontSizeSmall
                 wrapMode: Text.WordWrap
                 textFormat: Text.PlainText

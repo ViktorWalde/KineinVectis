@@ -998,6 +998,7 @@ O kit diz qual compilador, sysroot e alvo valem; o core detecta, explica a orige
 ```mermaid
 flowchart LR
   subgraph QML["ui/qml"]
+    n_ui_qml_index_IndexController_qml["IndexController"]
     n_ui_qml_toolchain_ToolchainController_qml["ToolchainController"]
     n_ui_qml_ipc_ToolchainRequestRouter_qml["ipc/ToolchainRequestRouter"]
     n_ui_qml_ipc_ToolchainEventRouter_qml["ipc/ToolchainEventRouter"]
@@ -1023,6 +1024,7 @@ flowchart LR
     n_core_toolchain[toolchain]
   end
   n_tools_toolchain[/"compiladores cross · rustup"/]
+  n_ui_qml_ipc_ToolchainEventRouter_qml -.-> n_ui_qml_index_IndexController_qml
   n_ui_qml_ipc_ToolchainEventRouter_qml -.-> n_ui_qml_toolchain_ToolchainController_qml
   n_ui_qml_ipc_ToolchainRequestRouter_qml --> n_ui_src_core_client_toolchain_cpp
   n_ui_qml_toolchain_ToolchainController_qml --> n_ui_qml_ipc_ToolchainRequestRouter_qml
@@ -1048,6 +1050,7 @@ flowchart LR
 
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
+| controller | `ui/qml/index/IndexController.qml` | Estado do indice do projeto INTEIRO (pilar 0 do roadmaps/42, decisao do autor em 2026-09-12: |
 | controller | `ui/qml/toolchain/ToolchainController.qml` | Estado da toolchain do workspace (roadmap 30, etapa 5). |
 | roteador | `ui/qml/ipc/ToolchainRequestRouter.qml` | Espelho do ToolchainEventRouter: |
 | roteador | `ui/qml/ipc/ToolchainEventRouter.qml` | O que o core responde de toolchain.* -> ToolchainController. |

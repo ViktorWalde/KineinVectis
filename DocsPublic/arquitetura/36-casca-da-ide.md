@@ -514,6 +514,9 @@ O inspector de compilação (0.4.1b) também nasce na primeira abertura, no
 `ShellEnvironmentOverlays`, e é reutilizado. Seu estado é do `IndexController`;
 o `CompileContextFacts` só apresenta o `FileContext` existente e a navegação
 usa o editor e o `ToolchainController`. Não é entrada nova do trilho.
+Na 0.4.1c, as diferenças declaradas pelo mesmo contexto aparecem antes dos
+fatos. A faixa de saúde oferece “Inspecionar”, abrindo esse mesmo overlay;
+respostas de kit renovam o contexto ativo, sem outro fluxo de configuração.
 
 O primeiro quadro (o orçamento é 400 ms; 247 ms em 2026-10-03) paga tudo o
 que é **criado** antes dele, visível ou não. Um diálogo escondido custa o

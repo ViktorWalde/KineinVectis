@@ -45,6 +45,12 @@ Item {
         inspectorClosed();
     }
 
+    function refreshContext() {
+        if (contextPath === "" || workspaceRoot === "") return;
+        fileContext = ({});
+        contextRequested(contextPath);
+    }
+
     function openContextCdb() {
         const location = fileContext.cdbLocation;
         if (!location || contextLoading) return;

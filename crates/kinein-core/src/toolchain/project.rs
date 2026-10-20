@@ -113,11 +113,5 @@ impl ProjectCache {
 /// Dois caminhos para o mesmo binario (links resolvidos); sem como resolver,
 /// so' o texto igual.
 fn same_file(left: &str, right: &str) -> bool {
-    match (
-        crate::platform::canonicalize(Path::new(left)),
-        crate::platform::canonicalize(Path::new(right)),
-    ) {
-        (Ok(left), Ok(right)) => left == right,
-        _ => left == right,
-    }
+    crate::platform::same_file(Path::new(left), Path::new(right)).unwrap_or(left == right)
 }

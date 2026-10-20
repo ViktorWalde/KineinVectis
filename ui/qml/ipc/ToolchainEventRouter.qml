@@ -10,6 +10,7 @@ Item {
 
     property var coreClient: null
     property var toolchainController: null
+    property var indexController: null
 
     visible: false
 
@@ -20,6 +21,7 @@ Item {
                                      chip, presetToolchainFile) {
             root.toolchainController.handleResolved(selections, candidates, preset, sysroot,
                                                     targetTriple, chip, presetToolchainFile);
+            if (root.indexController !== null) root.indexController.refreshContext();
         }
 
         function onCmakePresetsResolved(presets) {

@@ -44,6 +44,8 @@ Item {
     // faixa pergunta em vez de configurar sozinha.
     property var presetChoices: []
     property string presetChoicesFile: ""
+    property var compileContext: ({})
+    onCompileContextChanged: update()
 
     property bool active: false
     property string status: "idle"
@@ -51,6 +53,7 @@ Item {
     property string actionLabel: ""
     property string actionTarget: ""
     property string dismissedKey: ""
+    property string noticeDetail: ""
 
     signal autoConfigureRequested()
 
@@ -133,8 +136,12 @@ Item {
     }
 
     function dismiss() {
-        dismissedKey = status + "|" + message;
+        dismissedKey = noticeKey(status, message, noticeDetail);
         update();
+    }
+
+    function noticeKey(status, message, detail) {
+        return status + "|" + message + "|" + detail;
     }
 
     function hasTool(toolId) {
@@ -235,13 +242,14 @@ Item {
                                             icon: "", enabled: true, shortcut: "" }));
     }
 
-    function apply(newStatus, newMessage, newActionLabel, newActionTarget) {
+    function apply(newStatus, newMessage, newActionLabel, newActionTarget, detail) {
         status = newStatus;
         message = newMessage;
         actionLabel = newActionLabel;
         actionTarget = newActionTarget;
+        noticeDetail = detail || "";
         active = newStatus !== "idle" && newStatus !== "ok"
-                && (newStatus + "|" + newMessage) !== dismissedKey;
+                && noticeKey(newStatus, newMessage, noticeDetail) !== dismissedKey;
     }
 
     function update() {
@@ -322,6 +330,13 @@ Item {
             apply("warning",
                   qsTr("cargo metadata falhou: %1").arg(cargoMetadataError),
                   qsTr("Tentar de novo"), "cargoMetadata");
+            return;
+        }
+        if ((compileContext.drift || []).length > 0) {
+            const path = compileContext.path || "";
+            const name = path.split(/[\\/]/).pop();
+            apply("warning", qsTr("A configuração do kit difere do build em %1").arg(name),
+                  qsTr("Inspecionar"), "compileContext", JSON.stringify([path, compileContext.drift]));
             return;
         }
         if (pythonNeedsEnvironment) {

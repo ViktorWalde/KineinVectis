@@ -7,6 +7,16 @@ QtObject {
     property var context: ({})
     readonly property var rows: buildRows()
 
+    function driftRows() {
+        const labels = {compiler: qsTr("compilador"), target: qsTr("target"), sysroot: qsTr("sysroot")};
+        return (root.context.drift || []).map(entry => ({
+            label: qsTr("Diferença de %1").arg(labels[entry.kind] || entry.kind),
+            value: qsTr("Configurado no kit: %1\nRegistrado no build: %2\n%3")
+                .arg(entry.configured).arg(entry.effective.value).arg(entry.evidence),
+            origin: root.originLabel(entry.effective.origin), warning: true
+        }));
+    }
+
     function originLabel(origin) {
         switch (origin) {
         case "cdb": return qsTr("da compile_commands.json");
@@ -18,7 +28,7 @@ QtObject {
     }
 
     function buildRows() {
-        const rows = [];
+        const rows = root.driftRows();
         const context = root.context;
         if (!context.path) return rows;
         const add = (label, value, origin) => rows.push({

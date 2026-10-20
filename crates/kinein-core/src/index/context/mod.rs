@@ -16,7 +16,7 @@
 //! ```
 //!
 //! Tudo que roda processo (cargo, poetry, `python --version`) e' INJETADO por
-//! [`Ferramentas`]: o teste passa `None` e nada da maquina entra.
+//! [`ContextTools`]: o teste passa `None` e nada da maquina entra.
 //!
 //! Um leitor por responsabilidade: [`cdb`] (a `compile_commands.json`),
 //! [`cargo`] (o `cargo metadata`), `crate::python::env` (o interpretador), e o modelo
@@ -26,8 +26,10 @@
 
 mod cargo;
 mod cdb;
+mod drift;
 mod effective;
 
+pub use drift::compile_drift;
 pub use effective::{KitFacts, complete_with_kit};
 
 use std::collections::HashMap;
@@ -43,7 +45,7 @@ use crate::cmake::model::CmakeModel;
 
 /// O que o contexto pode EXECUTAR, e so' se estiver aqui.
 #[derive(Debug, Clone, Default)]
-pub struct Ferramentas {
+pub struct ContextTools {
     /// O `cargo` a rodar para `metadata`; `None` = nao rodar.
     pub cargo: Option<PathBuf>,
     /// O que o resolvedor do interpretador Python pode executar e ler.
@@ -70,7 +72,7 @@ pub struct CompileContext {
 impl CompileContext {
     /// Carrega o contexto de `root`.
     #[must_use]
-    pub fn load(root: &Path, ferramentas: &Ferramentas) -> Self {
+    pub fn load(root: &Path, ferramentas: &ContextTools) -> Self {
         let mut ctx = Self::default();
         let cdb = crate::cdb::status(root);
         if let Some(dir) = cdb.directory.as_deref() {
@@ -134,6 +136,7 @@ impl CompileContext {
             source: None,
             hint: None,
             effective: None,
+            drift: Vec::new(),
         };
         match language {
             "c" | "cpp" => self.contexto_c(&absoluto, &mut ctx),

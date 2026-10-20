@@ -22,7 +22,7 @@ use kinein_protocol::JsonRpcRequest;
 use serde_json::json;
 
 use super::core_with_empty_search_path;
-use crate::index::context::{CompileContext, Ferramentas};
+use crate::index::context::{CompileContext, ContextTools};
 use crate::python::env::PythonTools;
 
 fn temp_dir(name: &str) -> PathBuf {
@@ -47,8 +47,8 @@ fn script(caminho: &Path, saida: &str) -> PathBuf {
     caminho.to_path_buf()
 }
 
-fn no_tools() -> Ferramentas {
-    Ferramentas::default()
+fn no_tools() -> ContextTools {
+    ContextTools::default()
 }
 
 fn datar(caminho: &Path, quando: SystemTime) {
@@ -367,9 +367,9 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
         "[workspace]\nmembers = [\"tools/gen\"]\n",
     );
     let cargo = script(&raiz.join("bin/cargo"), &metadata_de_dois_pacotes(&raiz));
-    let ferramentas = Ferramentas {
+    let ferramentas = ContextTools {
         cargo: Some(cargo),
-        ..Ferramentas::default()
+        ..ContextTools::default()
     };
     let ctx = CompileContext::load(&raiz, &ferramentas);
     let resumo = ctx.summary();
@@ -493,13 +493,13 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
     );
 
     // 2. So' o sistema: vem com aviso e com a versao medida.
-    let so_sistema = Ferramentas {
+    let so_sistema = ContextTools {
         python: PythonTools {
             python_sistema: Some(sistema),
             medir_versao: true,
             ..PythonTools::default()
         },
-        ..Ferramentas::default()
+        ..ContextTools::default()
     };
     let ctx = CompileContext::load(&raiz, &so_sistema);
     let g = ctx.for_file(&raiz, Path::new("tools/gera.py"), "python");
@@ -517,7 +517,7 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
         &raiz.join("bin/poetry"),
         &ambiente_poetry.display().to_string(),
     );
-    let com_poetry = Ferramentas {
+    let com_poetry = ContextTools {
         python: PythonTools {
             poetry: Some(poetry),
             ..so_sistema.python.clone()
@@ -555,7 +555,7 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
 
     // 5. VIRTUAL_ENV ativo vence tudo — mas so' se o interpretador existir.
     let ativo = py("ativos/outro");
-    let com_ativo = Ferramentas {
+    let com_ativo = ContextTools {
         python: PythonTools {
             virtual_env: Some(raiz.join("ativos/outro").display().to_string()),
             ..com_poetry.python.clone()
@@ -566,7 +566,7 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
     let resumo = ctx.summary();
     assert_eq!(resumo.python_origin.as_deref(), Some("VIRTUAL_ENV"));
     assert_eq!(resumo.python_interpreter.as_deref(), ativo.to_str());
-    let fantasma = Ferramentas {
+    let fantasma = ContextTools {
         python: PythonTools {
             virtual_env: Some(raiz.join("ativos/apagado").display().to_string()),
             ..com_poetry.python.clone()

@@ -11,6 +11,7 @@ QtObject {
     property var coreClient: null
     property var shellController: null
     property var pythonController: null
+    property var indexController: null
 
     function perform(target) {
         if (target === "scan") {
@@ -29,6 +30,8 @@ QtObject {
         } else if (target === "pythonStubs") {
             root.shellController.showTab("jobs");
             root.pythonController.installStubs();
+        } else if (target === "compileContext") {
+            if (root.indexController !== null) root.indexController.openInspector();
         } else if (target !== "") {
             root.shellController.showTab(target);
         }
