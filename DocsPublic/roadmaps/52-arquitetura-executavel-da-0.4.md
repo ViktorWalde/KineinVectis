@@ -458,6 +458,21 @@ do store).
 - **Não entra:** um ícone por ferramenta, um painel por provider (a Library da
   0.5 é quem organiza descoberta).
 
+**Refinamento do autor (2026-10-19):** a área Embarcados precisa de
+restilização moderna, coerente com o ecossistema embarcado e com as evoluções
+de frontend já entregues. A preparação ESP-IDF e o uso da placa precisam ter
+fluxo no frontend da IDE; a execução pelo terminal não encerra esse aceite.
+O ponto de partida medido é `EmbeddedPanel.qml`, hospedado por
+`EmbeddedPanelHost.qml`, com as views de Placa, Projeto, Gravar e Kit e seus
+controllers existentes. O desenho deve reutilizar `Theme`/`Kv*` e a
+[arquitetura de frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md),
+dar hierarquia à identidade/conexão, ambiente/projeto e próxima ação, e
+apresentar os estados de ferramenta ausente, permissão, operação em curso e
+resultado no lugar correspondente. Layout e dimensões finais dependem da
+inspeção da janela real; sem aprovação visual presumida por leitura de QML.
+O aceite pedido é na Kinein do notebook, por teclado/mouse na sessão real,
+com fotos antes/depois; Xvfb e telas internas não atendem a este aceite.
+
 ## 8. Concorrência, cancelamento e desempenho
 
 - Uma fila por unidade de compilação para C1; salvar cancela a anterior.
@@ -563,6 +578,16 @@ no usuário e medidos com o mesmo ciclo.
 ## 11. Ordem e marcos
 
 Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
+
+**Execução automática renovada pelo autor (2026-10-20):** concluir até a
+0.4.5 e então gerar e testar o AppImage. Cada marco inclui revisão da lógica,
+exercitação visual dos fluxos e das falhas, correção de bugs e medidas de
+desempenho. O polimento dos painéis acompanha as fatias: hierarquia clara,
+próxima ação contextual, detalhes avançados sob demanda e estados de espera,
+erro e conclusão compreensíveis. A direção visual é contemporânea, mantendo
+os componentes e os donos existentes. A prioridade é completar Embarcados,
+incluindo a distinção CPython/MicroPython/CircuitPython. A conclusão se mede
+pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
 
 ```text
 0.4.0  fundação: §4 contexto efetivo + origem (index.context), preset no
@@ -1255,3 +1280,380 @@ mutações reprovaram. Gate rápido estrito TUDO VERDE, sem NÃO PROVADO;
 1189 testes Rust, 8 C++ e 153 harnesses QML. Provas e notas de método no
 [40.7 §7.320](40.7-registro-das-entregas.md). Próxima fatia: schema 3 dos
 kits, mantendo as fronteiras acima.
+
+### 14.11 Bancada física do autor — ESP32 por USB/serial (2026-10-19)
+
+**Pedido anterior à preparação:** o autor conectou um ESP32 simples e
+confirmou que será o único hardware disponível. Pediu configurar ESP-IDF e
+afins e acompanhar os gestos na Kinein do notebook, usando a sessão real de
+teclado/mouse. Este aceite usa o desktop real; não usa Xvfb nem máquina
+virtual. A sequência de produto continua no schema 3 dos kits (§11).
+
+**Estado inicial medido:** conversor CP2102 em `/dev/ttyUSB0`, sem acesso
+para o usuário `hugh` (grupo `dialout`, usuário fora dele); isso identifica
+a interface, ainda não o chip. PlatformIO Core 6.2.0 presente, sem plataforma
+ESP32; ESP-IDF ainda ausente. Nenhuma janela Kinein estava aberta.
+
+**Preparação:** projeto de diagnóstico separado em
+`~/Projetos/esp32-idf-teste`, sem GPIO presumido; saída de contador pela
+serial. ESP-IDF e ferramentas oficiais no usuário, versão fixada após
+consulta às fontes oficiais; nenhuma alteração no Python do sistema ou no
+shell global. Abrir o projeto na janela real da Kinein, preparar build e CDB,
+verificar contexto e permissões pelos donos existentes. Antes de gravar,
+apresentar o firmware concreto e confirmar a substituição do conteúdo atual
+da placa. Outros chips/sondas continuam sem aceite físico; debug por JTAG
+depende da interface efetivamente identificada, sem prometer uma sonda pelo
+conversor serial.
+
+**Fontes para a instalação:** [ESP-IDF no Linux](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/linux-setup.html)
+e [EIM por linha de comando](https://docs.espressif.com/projects/idf-im-ui/en/latest/headless_usage.html),
+consultadas em 2026-10-19. Resultado somente após execução.
+
+**Retomada após perda do contexto (2026-10-19):** checkout ainda em
+`4a1f826`; a instalação EIM de `v6.1`, seu ativador e o projeto de
+diagnóstico já estão no disco. O README da bancada registra uma identificação
+anterior como ESP32-D0WD-V3 rev. 3.1, flash 4 MB; esta retomada ainda não
+repetiu essa leitura. A porta continua em `/dev/ttyUSB0`, sem acesso para
+`hugh`. A ferramenta de controle de desktop desta sessão devolveu inventário
+vazio de aplicativos e navegadores, com controle nativo desabilitado; portanto
+os gestos na sessão real continuam sem aceite. Próximo passo desta retomada:
+ativar o ambiente isolado, compilar o diagnóstico e conferir CDB/receita de
+gravação; depois resolver o acesso serial com o autor. Nenhuma gravação foi
+autorizada por este pedido de retomada.
+
+**Medição da retomada (2026-10-19):** o autor executou o comando de ACL e
+`os.access` confirmou leitura/escrita em `/dev/ttyUSB0`. O diagnóstico compilou
+com ESP-IDF v6.1 e GCC Xtensa 15.2.0: CDB com 901 unidades, aplicação de
+142192 bytes, partição de aplicação de 1 MiB; receita DIO/40 MHz/4 MB com
+bootloader em `0x1000`, tabela em `0x8000` e aplicação em `0x10000`.
+Não houve gravação nem nova identificação nesta retomada. O teste direto do
+esp-clangd revelou cinco opções GCC desconhecidas e falta de `float.h`;
+preparar `.clangd` local conforme a orientação oficial da Espressif
+(`CompilationDatabase`, remoção das opções incompatíveis e
+`BuiltinHeaders: QueryDriver`), preservando a CDB original. Fonte:
+[Espressif-IDE LSP](https://docs.espressif.com/projects/espressif-ide/en/latest/additionalfeatures/clangd_cdt_support.html),
+consultada em 2026-10-19. A ativação EIM com `$0=idf` falhou; o caminho
+legado `export.sh` também reportou ambiente/ferramentas ausentes. O build
+direto pelo ativador EIM com shell bash passou; o fluxo de build da IDE
+precisa ser verificado na janela real antes de ser declarado pronto.
+
+**Aceite na sessão real iniciado (2026-10-19):** depois de o autor
+autorizar explicitamente `xdotool`, a Kinein do checkout foi aberta no
+XWayland do desktop real (`DISPLAY=:1`, sem Xvfb, HOME/XDG reais). A captura
+da própria janela usa seu pixmap XComposite. Foram acionados pela UI:
+confiar no diagnóstico revisado, abrir Embarcados, identificar, selecionar
+os compiladores GCC/G++ Espressif
+Xtensa, reiniciar LSP, compilar pelo menu e montar prévias sem gravar.
+O botão Identificar leu ESP32-D0WD-V3 rev. 3.1, mas falhou ao iniciar o
+stub; `flash-id --no-stub --baud 115200`, digitado no terminal da própria
+Kinein, confirmou cristal 40 MHz e flash 4 MB. O build pelo menu terminou
+com `Project build complete`; o editor ficou sem erros e com um aviso de
+include não usado. A checagem avulsa do clangd ainda retorna um erro do
+tweak `SwapBinaryOperands` na macro `pdMS_TO_TICKS`, sem erro de parsing.
+
+**Ajuste local seguinte:** habilitar `CONFIG_ESPTOOLPY_NO_STUB=y` no
+diagnóstico (defaults e configuração corrente), opção do Kconfig oficial
+do ESP-IDF instalado; recompilar pelo menu e deixar a prévia `idf.py`
+selecionada. Isso prepara a receita sem gravar. O firmware continua sendo
+somente o contador serial; substituir o conteúdo da placa exige pedido
+explícito do autor.
+
+**Lacunas medidas para o frontend (§7) e a integração:**
+
+- A escolha de porta aparece como “Executar (MicroPython)” também no
+  ESP-IDF, embora a mesma seleção alimente a gravação. Identificar está
+  reduzido a ícone; o monitor serial não ficou visível na linha da porta.
+- A identidade parcial aparece junto do erro de stub, sem ação de repetir
+  pela ROM. A leitura completa pelo terminal não atualiza o estado dessa
+  view; ela não pode ser apresentada como identificação completa pela UI.
+- O kit oferece o driver genérico `xtensa-esp-elf-gcc`; a CDB usa o wrapper
+  `xtensa-esp32-elf-gcc` da mesma instalação. O inspector acusa a diferença
+  concreta. O `.clangd` local usa o driver escolhido para consultar headers;
+  isso não altera o compilador registrado na CDB nem dispensa a deriva.
+- Configure nativo produz `.kinein/build`; o build ESP-IDF produz `build/`.
+  A prévia direta `esptool` escolheu a receita de `.kinein/build`, cujos
+  binários ainda não foram compilados. A opção `idf.py` usa `build/` e é o
+  caminho preparado para esta bancada; falta alinhar os donos e validar a
+  existência dos artefatos antes de habilitar a gravação direta.
+- O build pela IDE concluiu com o ambiente EIM herdado do lançador, mas o
+  banner do `export.sh` legado reportou falha de ativação. Preferência do
+  ativador EIM e nome do shell no wrapper continuam pendentes de correção;
+  não atribuir esse sucesso a uma ativação autônoma correta.
+
+**Ponto de retomada em 2026-10-20:** recompilação pelo menu da Kinein
+concluída com sucesso após habilitar `CONFIG_ESPTOOLPY_NO_STUB=y`; a receita
+em `build/flasher_args.json` agora tem `stub=false`, e a saída do build
+mostra `--no-stub`. Aplicação de 142192 bytes; não houve gravação. Kit e
+chip ficaram salvos no projeto de diagnóstico; o lançador aceita
+`KINEIN_QPA_PLATFORM=xcb` para a sessão real com xdotool. Capturas, log da
+leitura ROM e manifesto com hashes dos binários preservados em
+`~/Projetos/esp32-idf-teste/evidencias/2026-10-19/`. Verificação documental
+e sintaxe do lançador passaram; sem mudança de código da IDE, sem commit
+ou push nesta preparação. A reformulação solicitada é detalhada no §14.12.
+
+### 14.12 Correções da bancada na interface — desenho em 2026-10-20
+
+**Pedido e limite confirmado:** o autor pediu melhorar o comportamento e a
+UX/UI de Embarcados e corrigir o ícone da IDE no alternador de janelas. Após
+esclarecer o comportamento atual, decidiu manter o botão por arquivo
+exclusivo para scripts; esta fatia não amplia execução de C/C++ por arquivo.
+
+**Antes medido:** janela real sem `_NET_WM_ICON` nem desktop id; painel de
+640×560 com todo o conteúdo rolando, ações da porta na mesma linha
+insuficiente, seleção chamada “Executar” mesmo em ESP-IDF, todos os motores
+numa linha e erro de ferramenta de sonda ocupando a aba da placa serial.
+Além disso, uma prévia pode continuar com a porta anterior depois de mudar
+a seleção. Fotos da bancada em `evidencias/2026-10-19` do diagnóstico.
+
+**Implementação prevista, sem contrato IPC novo:**
+
+- `main.cpp`, recursos Qt e lançador: publicar o ícone existente e o desktop
+  id correspondente (desenvolvimento no lançador, distribuição por padrão),
+  preservando nome da aplicação e diretórios de estado. Referência consultada
+  em 2026-10-20: [QGuiApplication](https://doc.qt.io/qt-6/qguiapplication.html),
+  propriedades `windowIcon` e `desktopFileName`.
+- `EmbeddedPanel`/host: painel integrado ao slot lateral da HUD, conforme
+  confirmação posterior do autor; substituir o popup, aproveitar os docks,
+  largura por janela e mudança de lado existentes. Cabeçalho e navegação
+  fixos, rolagem apenas no conteúdo e primeira aba com visão geral e ações
+  de preparação. Sonda e depuração ficam em Kit; Placa prioriza a serial.
+- `EmbeddedSerialView`: dispositivo em cartão, seleção com nome neutro,
+  Identificar e Monitor serial com texto e quebra de linha; arquivos e dica
+  de execução MicroPython somente quando esse framework foi reconhecido.
+- `EmbeddedFlashView`/controller: motores com quebra de linha, porta visível,
+  comando copiável, ação de gerar prévia separada da gravação; trocar porta,
+  motor, firmware ou modelo invalida a prévia e descarta resposta atrasada.
+- Corrigir os bloqueadores já medidos na preparação: ativador EIM compatível
+  com o SDK explícito e shell bash; preferir receita com imagens existentes
+  ao configure incompleto mais recente, sem apresentar caminho inexistente
+  como pronto para gravar.
+- Reusar `ToolchainRoleRow` dentro de Kit para escolher compiladores C/C++ e
+  monitor serial sem buscar outro menu. Catálogo e importação devem quebrar
+  suas ações na largura do dock. Nos testes da receita completa, a tabela
+  binária passou a existir também: manter a leitura do CSV do projeto para
+  o mapa de memória quando o artefato localizado for binário.
+- Ciclo do dock: trocar de projeto com a janela visível deve renovar a
+  descoberta; abrir o monitor conserva o painel ao lado do terminal, sem a
+  rotina antiga de fechar um popup. O host visual é dono dessa visibilidade.
+  A aba do monitor tem título curto pelo nome da ferramenta; a linha bash
+  de ativação continua como tooltip, sem ocupar toda a barra de abas.
+  Reusar o modelo de terminais e `TooltipController` para esse detalhe.
+- Incorporar à correção da bancada a recuperação de Identificar: somente
+  após o erro explícito `Failed to start stub`, repetir a leitura uma vez
+  pela ROM com `--no-stub --baud 115200`, que já funcionou nesta placa.
+  Manter cancelamento/prazo e comando final no evento existente; nenhum
+  firmware é escrito. Testar com esptool falso a recuperação e a ausência
+  de repetição para erro de conexão comum. Aceite físico ainda pendente.
+
+**Provas:** harness de prévia (troca de porta com resposta em voo), geometria
+da linha serial em largura reduzida, testes Rust dos bloqueadores, build,
+gates do projeto e antes/depois na Kinein do notebook. Verificar propriedades
+nativas do ícone na janela real. Não presumir aceite de flash/JTAG nem
+resultado de inspeção somente por leitura do QML.
+
+**Reuso auditado a pedido do autor (2026-10-20):** `KvSegmentedControl`
+já implementa escolha exclusiva com ícone, foco e setas, e substitui a
+fileira antiga de chips das abas. O dock usa `ShellDocks` e o host lateral;
+`KvPanelFrame`/`KvBackdrop` continuam próprios dos diálogos, sem participar
+desta janela integrada. `KvPanelHeader` fica fixo;
+`KvInsetSurface` serve à prévia; `KvVerdict` cobre andamento e resultado;
+`KvButton`, `KvIconButton` e `KvToggleChip` preservam as interações atuais.
+As transições existentes usam `Theme.motionFast`/`motionMedium` e
+`easingStandard`; não criar temporizadores contínuos nem outro sistema de
+animação nesta tela. `KvFloatingLayer` é o dono de tooltips/menus, não uma
+animação genérica, e continua na composição existente. O ícone nativo deve
+reusar a marca já embutida nos recursos. Só extrair componente novo quando
+dois consumidores concretos compartilharem a mesma responsabilidade.
+`FlickableScrollBar`, já usado pelas listas e painéis, também atende ao
+corpo do dock; reutilizá-lo conserva a rolagem visual da casca.
+
+**Continuidade autorizada (2026-10-20):** o autor pediu prosseguir até a
+0.4.5 e atualizar a documentação ao concluir cada etapa. A correção desta
+bancada vem primeiro; depois, retomar as fatias de produto do §11, mantendo
+provas e commits separados. Meta persistente registrada nesta conversa.
+Retomada a cada cinco horas foi solicitada, mas não está agendada: a sessão
+não expõe ferramenta de agendamento. Não confundir a meta ativa com garantia
+de reinício após limite do serviço; deixar o próximo passo concreto neste
+documento e no handoff a cada fatia.
+
+**Medição da implementação em andamento (2026-10-20):** a janela real da
+Kinein, reiniciada no XWayland do notebook, mostrou a visão geral no dock de
+400 px, as ações da porta com quebra de linha, Kit com os seletores C/C++ e
+monitor, e o comando selecionável. O botão da visão geral concluiu
+`idf.py build`; a prévia direta usa `build/flasher_args.json` e suas três
+imagens existentes, com `--no-stub`, em lugar do configure incompleto.
+`_NET_WM_ICON` contém 64×64 e `_KDE_NET_WM_DESKTOP_FILE` contém o id de
+desenvolvimento; não confundir esta propriedade com a inexistente
+`_KDE_NET_WM_DESKTOP_FILE_NAME`. Registrado o lançador no perfil do autor,
+sem sudo. A confirmação visual do alternador do KDE continua não medida.
+
+Os cliques foram enviados à janela XWayland por XSendEvent, com capturas
+XComposite da própria janela. A rodada Rust completa passou 1191 testes;
+análise C++, harnesses e fechamento do gate ainda em curso. A primeira rodada encontrou
+fixtures de gravação sem imagens, agora representando builds completos.
+Nenhum firmware gravado. A identificação com recuperação da falha do stub
+ainda é pendência separada desta fatia.
+
+**Limite da evidência visual (2026-10-20):** as capturas XComposite comprovam
+a renderização e os cliques enviados à janela por XSendEvent; o aceite
+interativo no desktop visível solicitado pelo autor continua pendente.
+
+**Revisão visual apresentada ao autor (2026-10-20):** as quatro abas foram
+renderizadas a partir dos componentes QML atuais, em 400 px, com dados
+demonstrativos da bancada e sem avisos QML. A janela completa foi capturada
+a 1440×900 com uma cópia temporária do diagnóstico, mostrando o dock ao
+lado do editor. A pedido do autor, a IDE atualizada também foi aberta no
+projeto de diagnóstico com Embarcados na Visão geral e o ESP-IDF ativado.
+Essas prévias não substituem a confirmação visual do autor nem o aceite
+físico de Identificar. Os cinco harnesses direcionados (layout, prévia,
+docks, trilho e terminais) passaram; a rodada geral está em curso.
+
+**Polimento solicitado pelo autor (2026-10-20), antes do código:** reduzir
+a interpretação exigida no primeiro contato e exercitar ações e falhas.
+No refinamento seguinte, o autor retirou o ensaio de sensor/relé: a prova
+prioriza a integração ESP-IDF/ESP32 e o frontend. Depois, conferir a cadeia
+MicroPython e CPython existente e completar lacunas medidas. O autor
+esclareceu que CircuitPython também entra; ele tem detecção e transporte
+próprios, sem ser tratado como um alias de MicroPython.
+
+- Visão geral: estado de cada etapa e uma próxima ação coerente com o que
+  falta. SDK ausente leva à preparação do ambiente; artefato ausente leva
+  à compilação. Não tratar SDK detectado como prova de compilação funcional.
+- Gravar: escolha automática explícita; motores alternativos sob demanda,
+  comando revisável e consequência de salvar/ativar descrita no botão.
+  Manter porta, avisos e resultado da proposta visíveis.
+- Kit: distinguir as escolhas usuais dos campos avançados de alvo,
+  depuração e SDK; conservar os donos e componentes atuais. Atualizar é
+  ação secundária, sem competir com a próxima ação da jornada.
+- Exercitar uma prévia seguida de nova identificação da mesma porta: a
+  capacidade da flash pode mudar os avisos da proposta. Invalidar também
+  esse contexto antes de permitir Gravar/Salvar; provar com regressão.
+- Corrigir a dica de ausência de artefatos: BIN/HEX e receita completa também
+  são artefatos; projetos MicroPython não exigem compilar firmware a cada
+  script. A visão geral deve orientar à execução no editor, sem oferecer
+  Compilar firmware para um projeto MicroPython.
+- Conferir os argumentos de `mpremote` pelo despacho real, incluindo porta
+  com espaço/apóstrofo: `run.start` monta uma linha de shell, enquanto
+  `run.script` passa argumentos diretamente. A mesma porta precisa chegar
+  inteira nos dois caminhos.
+- A identificação física continua distinta de gravar firmware. Preparar e
+  revisar um artefato concreto antes de pedir autorização para substituí-lo;
+  não usar o pedido de validação como autorização implícita de gravação.
+- O gate de fiação IPC encontrou o desktop id como se fosse método novo:
+  ele varria literais de qualquer C++ da aplicação. Restringir a extração
+  aos arquivos da ponte `core_client*` e da CLI, os donos dos pedidos, sem
+  criar exceção para esse id. Provar que um método desconhecido da ponte
+  continua sendo detectado e que um id de aplicação não vira pedido.
+- A revisão do caminho alternativo `idf.py flash` encontrou uma segunda
+  montagem do wrapper ainda com `$0=idf`, embora build/monitor já usem bash.
+  Reusar `build::engine::idf_command_args` na proposta do wrapper, preservando
+  aspas de todos os argumentos; provar com ativador e idf.py falsos que o
+  shell é bash e a porta com espaço/apóstrofo chega inteira. Não executar
+  esse teste com o gravador real ou com a placa.
+
+**Ampliação da HUD pelo autor (2026-10-20), antes da próxima fatia:**
+Embarcados abrange também Linux embarcado. A visão geral deve distinguir
+microcontroladores, Python na placa, PlatformIO e Linux/SSH, usando fatos do
+modelo e os donos atuais de build, execução, serial e remoto. Yocto/Buildroot
+não devem receber uma jornada obrigatória de porta USB e flash de MCU.
+PlatformIO precisa de acesso visual claro aos ambientes e às tarefas;
+**destaque dentro de Embarcados**, confirmado pelo autor, abrindo a mesma
+superfície integrada. A animação acompanha abertura,
+mudança de contexto e progresso com os tokens existentes; não executa
+descoberta contínua nem deve deslocar o conteúdo durante a leitura.
+
+**Estado de verificação da reformulação (2026-10-20):** implementação
+concluída no checkout (40.7 §7.321). Passaram 154 harnesses QML, as regressões de identificação/prévia,
+artefatos e argumentos MicroPython, e o ciclo real de CPython/debugpy (arquivo,
+módulo e attach; launch de arquivo em 2045 ms). Uma cópia temporária do
+diagnóstico foi compilada pelo `build.run` real, com ESP-IDF v6.1 e duas
+tarefas de build: sucesso em 69,19 s, zero diagnósticos, três imagens e
+proposta esptool com `--no-stub`. A porta nessa proposta é parâmetro de
+montagem do comando; nenhum acesso físico ocorreu. A descoberta USB da
+última rodada estava vazia, após uma rodada anterior detectar a CP2102 sem
+permissão de leitura/escrita. Não há novo aceite físico de Identificar.
+
+Na UI real em Xvfb próprio, renderização por software e estado isolado,
+foram exercitados Visão geral, Placa, Gravar sem porta (erro visível) e
+Ambiente a 1440×900; primeiro frame em 471 ms. O ativador IDF foi herdado,
+e o ambiente passou a aparecer detectado. A primeira sonda visual sem esse
+ambiente corretamente apontava ferramentas ausentes. Isso não é comparação
+de desempenho entre as duas configurações. Capturas e provas temporárias
+em `/tmp/kinein-embedded-preview/visual-final` e
+`/tmp/kinein-esp32-orchestration`. As janelas de teste já foram fechadas;
+a janela nativa do autor não foi fechada nem reiniciada nesta rodada.
+
+O build release da UI concluiu; core/adaptador release também compilaram.
+O gate rápido estrito passou TUDO VERDE: 1191 testes Rust, 8 C++ e 154 QML,
+sem NÃO PROVADO. As suites Rust foram reexecutadas após a correção final do
+wrapper `idf.py flash`. A rodada anterior
+parou numa expectativa antiga do teste uv após a correção das aspas; outra
+parou na fiação IPC confundindo desktop id com método. Ambas as causas
+foram corrigidas, com regressões. O protocolo permanece 0.180.0, sem método/evento novo.
+
+No editor real release, a prova de digitação inseriu 40 caracteres no arquivo
+de 2463 linhas/56226 bytes: mediana tecla→quadro de 9,45 ms e p95 de 13,27 ms,
+offscreen/software, com análise C++ concorrente. É uma medição do custo local,
+sem vsync, não uma alegação de ganho nem a latência no compositor do desktop.
+
+### 14.13 HUD por contexto e destaque PlatformIO — desenho em 2026-10-20
+
+**Origem:** refinamento explícito do autor depois da reformulação inicial:
+Linux embarcado faz parte de Embarcados; PlatformIO fica em destaque dentro
+do painel. Não acrescentar uma segunda entrada de trilho ou uma segunda
+instância da área para o mesmo projeto.
+
+**Medido no código:** `project.target.family` já diz `linux` para
+Yocto/Buildroot. `EmbeddedOverviewView` ainda oferece a todos a sequência
+ambiente → porta serial → firmware; isso induz o fluxo errado para Linux.
+`EmbeddedController` já possui frameworks, alvo, SDKs e artefatos; os comandos
+`remote.list`, `terminal.open`, `build.run` e `configAction.list` já chegam
+aos donos. PlatformIO tem build/upload/monitor e a Configuration Action
+`platformio.compiledb`; test/check ainda pertencem à 0.4.2. Não prometer uma
+tarefa habilitada se o handler ainda não a executa.
+
+**Próxima implementação:**
+
+- Derivar a jornada do framework principal/alvo do modelo existente. Um
+  exemplo Python aninhado não pode mudar sozinho a jornada principal de um
+  projeto CMake/PlatformIO. Não analisar `platformio.ini` no QML.
+- Visão geral para microcontrolador mantém as ações de preparação, conexão,
+  build e revisão de gravação. Python na placa orienta ao editor e ao
+  transporte adequado. Linux troca a exigência de porta/flash por ambiente,
+  imagem/aplicação e alvo remoto. Console UART continua opcional.
+- Apresentar o destaque PlatformIO com evidência do projeto e acesso às
+  tarefas dentro da mesma área. Build usa `build.run`; upload passa pela
+  prévia de `runConfig.flashProposal`; monitor usa a porta escolhida.
+  Ambientes e tarefas detalhadas exigem modelo estruturado do core, com
+  contrato antes de acrescentá-lo. O texto `detail` não vira parser na UI.
+- Para Linux, navegar para os alvos SSH e para o terminal pelos comandos
+  existentes. Geração de imagem Yocto/Buildroot não vira botão fictício:
+  distinguir suporte já disponível de orquestração ainda por implementar.
+- Transições curtas com `Theme.motionFast`/`motionMedium` e easing existente:
+  foco e posição de rolagem previsíveis, sem piscar o conteúdo durante um
+  refresh nem animar tamanho de listas continuamente.
+- Para Linux, expor alvo e sysroot e a importação do SDK nas escolhas usuais;
+  chip/SVD/sonda não são pré-requisitos do fluxo SSH. Carregar ferramentas
+  avançadas sob demanda, conservando a instância e os rascunhos entre abas
+  do mesmo projeto; trocar de workspace deve descartá-los. Medir o ganho,
+  sem chamar de otimização algo que só mudou a aparência.
+
+**Provas previstas:** harnesses da tabela de contextos (ESP-IDF, PlatformIO,
+MicroPython, Yocto, Buildroot e projeto misto), gestos que chegam ao comando
+correto e ausência de gravação implícita; geometria a 400 px e janela menor;
+estados sem ferramenta/sem alvo/em andamento; antes/depois no Xvfb e medidas
+de primeiro frame e tecla→quadro. Registrar o resultado e o próximo passo no
+handoff ao concluir a tarefa, conforme o pedido do autor de 2026-10-20.
+
+**Prévia preparada, ainda fora do código de produto (2026-10-20):**
+`/tmp/kinein-hud-next` contém a proposta QML, o teste de contextos e fotos
+comparáveis com dados demonstrativos para ESP-IDF/PlatformIO/Yocto. Na
+versão atual o teste falha pelo destaque inexistente e por um exemplo
+MicroPython mudar a classificação da UI; na proposta passa pelos comandos
+de build/setup, revisão sem execução, navegação SSH e campos do SDK Linux.
+O protótipo não muda o checkout nem entrega seleção de ambientes ainda.
+A rodada de build/flash do wrapper EIM continua sendo provada separadamente
+no despacho Rust. Preservado o binário UI release anterior em
+`/tmp/kinein-hud-before-ui` para a comparação de desempenho nas mesmas
+condições depois da implementação; não compilar UI enquanto roda a análise
+C++ da fatia anterior.

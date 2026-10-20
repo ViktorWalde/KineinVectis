@@ -38,6 +38,8 @@ Row {
 
             required property string termId
             required property string title
+            required property var model
+            readonly property string command: typeof model.command === "string" ? model.command : ""
 
             readonly property bool current: root.activeTerminalId === termChip.termId
             readonly property bool executing: root.running && root.runTerminalId === termChip.termId
@@ -48,14 +50,20 @@ Row {
             color: termChip.current ? Theme.surfaceSelected : "transparent"
             border.color: Theme.borderSoft
             border.width: 1
+            Component.onDestruction: TooltipController.hideFor(termChip)
 
             // Fica ATRÁS do conteúdo (z: -1) pra não engolir o clique do
             // ícone: selecionar e fechar são gestos diferentes na mesma aba.
             MouseArea {
                 anchors.fill: parent
                 z: -1
+                hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.selectRequested(termChip.termId)
+                onContainsMouseChanged: {
+                    if (containsMouse) TooltipController.showFor(termChip, termChip.command || termChip.title, "top");
+                    else TooltipController.hideFor(termChip);
+                }
             }
 
             Row {

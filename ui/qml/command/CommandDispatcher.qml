@@ -33,6 +33,11 @@ Item {
 
     visible: false
 
+    Connections {
+        target: root.embeddedController
+        function onCommandRequested(commandId) { root.execute(commandId); }
+    }
+
     // Diz que o id nao tem dono aqui. Ate' 2026-09-24 o `execute` terminava a
     // cadeia em silencio: comando errado na paleta, no menu ou no
     // `KINEIN_STARTUP_COMMANDS` simplesmente NAO ACONTECIA, e nada dizia por

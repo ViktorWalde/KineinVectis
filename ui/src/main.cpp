@@ -19,6 +19,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QImage>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
@@ -253,6 +254,10 @@ int main(int argc, char* argv[])
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("Kinein Vectis"));
     QGuiApplication::setOrganizationName(QStringLiteral("Kinein Vectis"));
+    QGuiApplication::setWindowIcon(
+        QIcon{QStringLiteral(":/KineinVectis/assets/icons/app/kinein-64.png")});
+    QGuiApplication::setDesktopFileName(qEnvironmentVariable(
+        "KINEIN_DESKTOP_FILE", QStringLiteral("io.github.viktorwalde.KineinVectis")));
     // Vem do CMake: escrita a mao, ela ficou em `0.1.0` enquanto o projeto
     // estava em 0.2.0 — e nada reprovava, porque ninguem a lia.
     QGuiApplication::setApplicationVersion(QLatin1String(KINEIN_VERSION));

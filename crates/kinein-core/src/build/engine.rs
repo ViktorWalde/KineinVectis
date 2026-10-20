@@ -99,6 +99,29 @@ impl std::fmt::Display for EngineError {
 /// EIM (v6), o mais novo `~/.espressif/tools/activate_idf_*.sh`.
 #[must_use]
 pub fn esp_idf_activation(sdks: &[SdkRequirement], home: Option<&Path>) -> Option<PathBuf> {
+    let sdk = sdks
+        .iter()
+        .find(|s| s.id == "esp-idf")
+        .and_then(|s| s.path.as_deref());
+    // O EIM mantém export.sh, mas instala o ambiente por um ativador próprio.
+    // Respeitar a versão do SDK escolhido, sem trocar por outra instalação.
+    if let (Some(sdk), Some(home)) = (sdk, home) {
+        let base = home.join(".espressif");
+        if let Ok(relative) = Path::new(sdk).strip_prefix(&base) {
+            let mut parts = relative.components();
+            if let (Some(version), Some(idf), None) = (parts.next(), parts.next(), parts.next())
+                && idf.as_os_str() == "esp-idf"
+            {
+                let activation = base.join("tools").join(format!(
+                    "activate_idf_{}.sh",
+                    version.as_os_str().to_string_lossy()
+                ));
+                if activation.is_file() {
+                    return Some(activation);
+                }
+            }
+        }
+    }
     let export = sdks
         .iter()
         .find(|s| s.id == "esp-idf")
@@ -141,7 +164,7 @@ pub fn idf_command_args(activation: &Path, args: &[&str]) -> Vec<String> {
     let mut lista = vec![
         "-c".to_owned(),
         IDF_WRAPPER.to_owned(),
-        "idf".to_owned(),
+        "bash".to_owned(),
         activation.display().to_string(),
     ];
     lista.extend(args.iter().map(|a| (*a).to_owned()));
@@ -328,8 +351,34 @@ mod tests {
         assert!(args[1].contains("exec idf.py"));
         assert_eq!(
             &args[2..],
-            ["idf", "/a/export.sh", "-p", "/dev/ttyUSB0", "flash"]
+            ["bash", "/a/export.sh", "-p", "/dev/ttyUSB0", "flash"]
         );
         let _ = std::fs::remove_dir_all(&raiz);
+    }
+
+    #[test]
+    fn eim_activation_matches_the_selected_sdk_and_preserves_custom_installs() {
+        let root = std::env::temp_dir().join(format!("kinein-eim-sdk-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let sdk = root.join(".espressif/v6.1/esp-idf");
+        let tools = root.join(".espressif/tools");
+        std::fs::create_dir_all(&sdk).unwrap();
+        std::fs::create_dir_all(&tools).unwrap();
+        std::fs::write(sdk.join("export.sh"), "").unwrap();
+        let matching = tools.join("activate_idf_v6.1.sh");
+        std::fs::write(&matching, "").unwrap();
+        std::fs::write(tools.join("activate_idf_v9.0.sh"), "").unwrap();
+        assert_eq!(
+            esp_idf_activation(&[req("esp-idf", sdk.to_str())], Some(&root)),
+            Some(matching)
+        );
+        let custom = root.join("custom/esp-idf");
+        std::fs::create_dir_all(&custom).unwrap();
+        std::fs::write(custom.join("export.sh"), "").unwrap();
+        assert_eq!(
+            esp_idf_activation(&[req("esp-idf", custom.to_str())], Some(&root)),
+            Some(custom.join("export.sh"))
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

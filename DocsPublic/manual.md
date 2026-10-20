@@ -234,10 +234,11 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   **Ferramentas** (quando falta um programa). O que não tem passo conhecido
   fica só com o clique que abre a linha. A aba mostra a contagem.
 - **Rail** (coluna fininha à esquerda; o `›` do pé expande com os
-  rótulos): **Projeto · Git · Embarcados · Banco · Containers · Grafana ·
-  Ferramentas**. Projeto, Git, Banco, Containers, Remoto e Grafana são
+  rótulos): **Projeto · Terminal · Símbolos · Embarcados · Banco · Containers ·
+  Remoto · Grafana · Ferramentas**. Projeto, Git, Banco, Containers, Remoto,
+  Grafana e Embarcados são
   janelas acopladas (abrem no slot do lado do ícone e ficam abertas enquanto
-  você edita); Embarcados ainda abre o painel por cima (muda na 0.4). Uma área com a janela aberta aparece no rail
+  você edita). Uma área com a janela aberta aparece no rail
   enquanto estiver aberta, mesmo que ainda não tenha uso no projeto. Busca, Build e Debug **não estão** no
   rail (desde a Etapa 3): a busca no projeto é `Ctrl+Shift+F` / a aba
   Busca; Build e Debug são o widget Executar do cabeçalho (▶ 🐞 ⋯), o
@@ -835,7 +836,7 @@ feature, edição, alvo, preset) e *como ele compila* (rigor, sanitizers,
 OpenMP, `.hex`/`.bin`, alvo embarcado, a `compile_commands.json`).
 
 **Cross com CMake** (no checkout com protocolo `0.178.0`): com um kit cross
-(o alvo em Embarcados › Kit), **Exportar o kit como toolchain file** grava
+(o alvo em Embarcados › Ambiente), **Exportar o kit como toolchain file** grava
 `.kinein/toolchains/<kit>.cmake` com os mesmos valores do configure da IDE,
 para o terminal e o CI: `cmake --toolchain .kinein/toolchains/<kit>.cmake -S .
 -B build`. A IDE não lê esse arquivo — o kit continua valendo; exporte de
@@ -1508,15 +1509,24 @@ antes de "Aplicar proposta ao kit". Nada é gravado sem o segundo clique.
 
 ### Embarcados (`Ctrl+Alt+M`, ou o chip no rail)
 
-O painel de quem escreve firmware, em **quatro abas** (desde a Etapa 3)
-com o veredito da placa no cabeçalho ("ESP32-D0WD-V3 em /dev/ttyUSB0",
-ou "1 porta(s) serial(is); nenhuma placa identificada ainda", ou
-"nenhuma placa"): **Placa** (portas seriais, identificar, permissões,
-sonda, arquivos na placa) · **Projeto** (o framework e o modelo, o tamanho
-do binário) · **Gravar** (o motor, a prévia, o firmware) · **Kit** (chip,
-alvo, sysroot, SVD, o depurador, instalar toolchain, importar de SDK —
-**Aplicar ao kit** no pé). Cada aba cabe sem rolar numa janela de 800 px.
-Ele **lê**, e diz o que leu:
+Uma janela integrada à HUD (desde 2026-10-20), no lado do ícone, com largura
+redimensionável. O editor permanece disponível. Cabeçalho e abas ficam
+fixos; só o conteúdo rola. **Visão geral** organiza ambiente, conexão e
+compilação/gravação, com uma próxima ação pelo estado do projeto: preparar
+o ambiente, selecionar a placa, compilar ou revisar a gravação. MicroPython
+orienta ao editor e à execução dos scripts. Os
+detalhes do modelo e tamanho ficam em **Detalhes do projeto**.
+
+**Placa** reúne portas, **Selecionar porta**, **Identificar**, **Monitor
+serial** e permissões; os arquivos na placa aparecem para projetos
+MicroPython. **Gravar** usa a ferramenta automática do projeto; **Alterar
+ferramenta** revela alternativas e **Gerar prévia de gravação** mostra o
+comando. Trocar porta, motor, firmware, modelo ou identificação da porta
+descarta a prévia anterior. **Ambiente** reúne os seletores C/C++ e monitor
+e o chip; os campos de alvo, sysroot, SVD, sonda, depurador, catálogo e
+importação ficam nas opções avançadas, com **Salvar kit** fixo no pé.
+O veredito da placa permanece no cabeçalho; uma identificação parcial é
+indicada como tal. A janela **lê**, e diz o que leu:
 
 ```text
 o projeto        o framework pelos marcadores dele (ESP-IDF, Zephyr, pico-sdk,
@@ -1552,7 +1562,7 @@ permissoes       o botao "Permissoes" mede cada canal e diz o que falta: o no'
                  que falta, o passo OFICIAL com a fonte e a data; "Escrever no
                  terminal" poe o comando no terminal da IDE e o prompt de
                  senha do sudo aparece la'. A IDE nunca roda sudo
-identidade       a lupa ao lado de cada porta pergunta ao `esptool` o que ha'
+identidade       Identificar ao lado de cada porta pergunta ao `esptool` o que ha'
 pelo canal       do outro lado (chip, flash, MAC) — ABRE a porta e a placa
                  RESETA, por isso e' um clique, nunca automatico. O painel
                  mostra o que leu e o kit que isso sugere; "Usar chip no kit"
@@ -1560,13 +1570,13 @@ pelo canal       do outro lado (chip, flash, MAC) — ABRE a porta e a placa
                  esptool`; sem acesso a porta, o passo oficial do grupo
 gravar           e' uma CONFIGURACAO DE EXECUCAO, nao um botao magico: escolha
                  a porta, (opcional) o motor — solto, o modelo do projeto decide
-                 — e peca a Previa. A IDE monta a linha do esptool a partir da
+                 — e clique Gerar prévia de gravação. A IDE monta a linha do esptool a partir da
                  receita que o build do ESP-IDF escreveu (flasher_args.json),
                  do probe-rs com o chip do kit e o ELF, do picotool com o UF2,
                  do dfu-util (so' STM32) — e mostra de onde veio cada pedaco e
                  o que voce deve saber antes (imagem cifrada, flash menor que
-                 a receita). "Gravar agora" roda a linha na aba de execucao;
-                 "Salvar" a guarda como configuracao ativa: dai' em diante o
+                 a receita). "Gravar na placa" roda a linha na aba de execucao;
+                 "Salvar e ativar" a guarda como configuracao ativa: dai' em diante o
                  botao Executar grava, e a linha e' editavel como qualquer
                  configuracao (e' assim que um esptool antigo troca
                  write-flash por write_flash). Sem build, a IDE diz "compile";
@@ -1592,7 +1602,7 @@ MicroPython      ha' o firmware oficial do micropython.org v1.29.0 para
                  C3/S3; `picotool load -f -x` no Pico), com o aviso de
                  apagar a flash na primeira instalacao. Nada grava sem o seu
                  clique — gravar o firmware APAGA o que esta' na placa.
-porta do         o chip "Executar" ao lado de cada porta a ESCOLHE para o
+porta do         "Selecionar porta" ao lado de cada porta a ESCOLHE para o
 Executar         Executar de um projeto MicroPython (`mpremote connect
                  <porta> run`); clicar de novo desfaz. Sem escolha, o
                  mpremote usa a primeira porta que achar. A escolha vale
@@ -1745,7 +1755,7 @@ novo projeto  Criar Projeto (tela inicial, Arquivo -> Criar projeto... ou a
 Embarcados abre o **REPL do `mpremote`** na porta do botão, e **Executar** num
 `.py` (ou o botão Executar, com o `main.py`) roda o arquivo **na placa**
 (`mpremote run`). Com mais de uma placa plugada, escolha a porta pelo chip
-**Executar** ao lado dela no painel de Embarcados: o comando vira `mpremote
+**Selecionar porta** ao lado dela no painel de Embarcados: o comando vira `mpremote
 connect <porta> run`, e a linha abaixo da lista diz qual porta está valendo.
 Sem escolha, o `mpremote` usa a primeira porta que achar. Se o `mpremote` não
 está na máquina, a aba de execução diz o que instalar em vez de rodar um

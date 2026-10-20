@@ -17,6 +17,7 @@ Item {
     // Os firmwares BAIXADOS (C5): o painel os filtra da lista de instalaveis
     // do ToolchainController — [{ id, label, version, firmware: {...} }].
     property var firmwares: []
+    property bool enginesVisible: false
 
     implicitHeight: coluna.implicitHeight
 
@@ -32,18 +33,52 @@ Item {
 
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: Theme.spacingSmall
+        spacing: Theme.spacingMedium
 
-        Row {
+        Text {
+            width: parent.width
+            text: root.controller && root.controller.selectedPort !== ""
+                  ? qsTr("Porta: %1").arg(root.controller.selectedPort)
+                  : qsTr("Nenhuma porta selecionada. Escolha uma na aba Placa se o motor usar conexão serial.")
+            wrapMode: Text.WrapAnywhere
+            color: Theme.textSecondary
+            font.pixelSize: Theme.fontSizeSmall
+        }
+
+        Text {
+            width: parent.width
+            text: qsTr("Ferramenta de gravação")
+            color: Theme.textSecondary
+            font.pixelSize: Theme.fontSizeSmall
+            font.bold: true
+        }
+
+        Flow {
             width: parent.width
             spacing: Theme.spacingSmall
-
             Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Gravar")
-                color: Theme.textSecondary
+                text: root.flash && root.flash.engine !== "" ? root.flash.engine : qsTr("Automática · escolhida pelo projeto")
+                color: Theme.textPrimary
                 font.pixelSize: Theme.fontSizeSmall
-                font.bold: true
+            }
+            KvButton {
+                text: root.enginesVisible ? qsTr("Ocultar opções") : qsTr("Alterar ferramenta")
+                compact: true
+                onClicked: root.enginesVisible = !root.enginesVisible
+            }
+        }
+
+        Flow {
+            width: parent.width
+            spacing: Theme.spacingSmall
+            visible: root.enginesVisible
+
+            KvToggleChip {
+                labelText: qsTr("Automática")
+                codeFont: false
+                height: 28
+                active: root.flash && root.flash.engine === ""
+                onToggled: root.flash.selectEngine("")
             }
 
             // O motor: vazio = o que o modelo do projeto sugere.
@@ -53,34 +88,36 @@ Item {
                 KvToggleChip {
                     required property string modelData
 
-                    // O delegate nasce sem `parent` por um instante (painel criado por
-                    // `createObject`, ver ShellEnvironmentOverlays): sem a guarda, TypeError.
-                    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
                     labelText: modelData
+                    codeFont: false
+                    height: 28
                     active: root.flash && root.flash.engine === modelData
                     tooltip: qsTr("Usar %1 como motor; solto, o modelo do projeto decide").arg(modelData)
                     onToggled: root.flash.selectEngine(modelData)
                 }
             }
 
-            KvButton {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.flash && root.flash.busy ? qsTr("montando…") : qsTr("Prévia")
-                compact: true
-                enabled: root.flash !== null && !root.flash.busy
-                onClicked: root.flash.propose(root.controller.selectedPort, root.flashBytesDaPorta())
-            }
+        }
+
+        KvButton {
+            objectName: "embeddedReviewCommand"
+            text: root.flash && root.flash.busy ? qsTr("Preparando…")
+                : root.flash && root.flash.found ? qsTr("Atualizar prévia") : qsTr("Gerar prévia de gravação")
+            primary: root.flash !== null && !root.flash.found
+            compact: true
+            enabled: root.flash !== null && !root.flash.busy
+                     && !root.controller.projectBusy && !root.controller.portsBusy
+            onClicked: root.flash.propose(root.controller.selectedPort, root.flashBytesDaPorta())
         }
 
         // Um firmware baixado no lugar dos artefatos do build (C5): a linha
         // e' a da pagina da placa. Solto, grava-se o build do projeto.
-        Row {
+        Flow {
             width: parent.width
             spacing: Theme.spacingSmall
             visible: root.firmwares.length > 0
 
             Text {
-                anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Firmware baixado:")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeCaption
@@ -92,7 +129,6 @@ Item {
                 KvToggleChip {
                     required property var modelData
 
-                    anchors.verticalCenter: parent.verticalCenter
                     labelText: modelData.firmware !== undefined ? modelData.firmware.board + " " + modelData.version : modelData.id
                     active: root.flash && root.flash.firmware === modelData.id
                     tooltip: qsTr("Gravar %1 (%2) no lugar do build; solto, grava o build do projeto").arg(modelData.label).arg(modelData.firmware !== undefined ? modelData.firmware.engine : "")
@@ -105,21 +141,30 @@ Item {
             width: parent.width
             wrapMode: Text.WordWrap
             visible: root.flash && !root.flash.found && root.flash.errorText === ""
-            text: qsTr("a linha do motor vem do modelo do projeto (receita do build, ELF/UF2) e da porta escolhida; nada roda sem o seu clique")
+            text: qsTr("A prévia mostra o comando e os arquivos que serão usados. Gerar a prévia não grava nada na placa.")
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
         }
 
-        // A linha, como vai rodar — editavel depois de salva, como qualquer
-        // configuracao de execucao.
-        Text {
+        KvInsetSurface {
             width: parent.width
-            wrapMode: Text.WrapAnywhere
+            implicitHeight: commandPreview.implicitHeight + 2 * Theme.spacingMedium
             visible: root.flash && root.flash.found
-            text: root.flash && root.flash.found ? root.flash.proposal.command : ""
-            color: Theme.textPrimary
-            font.family: Theme.monoFont
-            font.pixelSize: Theme.fontSizeSmall
+            TextEdit {
+                id: commandPreview
+                objectName: "embeddedFlashCommand"
+                x: Theme.spacingMedium
+                y: Theme.spacingMedium
+                width: parent.width - 2 * Theme.spacingMedium
+                readOnly: true
+                selectByMouse: true
+                wrapMode: TextEdit.WrapAnywhere
+                text: root.flash && root.flash.found ? root.flash.proposal.command : ""
+                color: Theme.textPrimary
+                selectionColor: Theme.accentDim
+                font.family: Theme.monoFont
+                font.pixelSize: Theme.fontSizeSmall
+            }
         }
 
         Repeater {
@@ -150,28 +195,29 @@ Item {
             }
         }
 
-        Row {
+        Flow {
             width: parent.width
             spacing: Theme.spacingSmall
             visible: root.flash && root.flash.found
 
             KvButton {
-                text: qsTr("Gravar agora")
+                text: qsTr("Gravar na placa")
                 compact: true
                 primary: true
                 onClicked: root.flash.run()
             }
 
             KvButton {
-                text: root.flash && root.flash.found
-                      ? qsTr("Salvar como \"%1\"").arg(root.flash.proposal.name) : ""
+                text: qsTr("Salvar e ativar")
+                tooltip: root.flash && root.flash.found ? root.flash.proposal.name : ""
                 compact: true
                 onClicked: root.flash.save()
             }
 
             Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("salva, vira a configuração ativa: o botão Executar grava")
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Gravar substitui o firmware da placa. Salvar e ativar também passa a usar esta gravação no botão Executar.")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeCaption
             }

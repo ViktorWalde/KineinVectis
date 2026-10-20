@@ -104,7 +104,6 @@ set_source_files_properties(qml/shell/HeaderProjectWidget.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/shell/AppMenuBar.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuBar.qml)
 set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuPopup.qml)
 set_source_files_properties(qml/shell/ToolWindows.qml PROPERTIES QT_RESOURCE_ALIAS ToolWindows.qml)
-set_source_files_properties(qml/shell/ToolWindowPanels.qml PROPERTIES QT_RESOURCE_ALIAS ToolWindowPanels.qml)
 set_source_files_properties(qml/shell/RailProjection.qml PROPERTIES QT_RESOURCE_ALIAS RailProjection.qml)
 set_source_files_properties(qml/shell/RailFacts.qml PROPERTIES QT_RESOURCE_ALIAS RailFacts.qml)
 set_source_files_properties(qml/shell/ShellLayoutCodec.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayoutCodec.qml)
@@ -165,6 +164,7 @@ set_source_files_properties(qml/ipc/GrafanaEventRouter.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/ipc/GrafanaRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaRequestRouter.qml)
 set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
+set_source_files_properties(qml/embedded/EmbeddedOverviewView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedOverviewView.qml)
 set_source_files_properties(qml/embedded/EmbeddedProbeView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedProbeView.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanelHost.qml)
 set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
@@ -532,7 +532,6 @@ qt_add_qml_module(kinein-vectis
         qml/shell/AppMenuBar.qml
         qml/shell/AppMenuPopup.qml
         qml/shell/ToolWindows.qml
-        qml/shell/ToolWindowPanels.qml
         qml/shell/RailProjection.qml
         qml/shell/RailFacts.qml
         qml/shell/ShellLayoutCodec.qml
@@ -594,6 +593,7 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/GrafanaRequestRouter.qml
         qml/embedded/EmbeddedController.qml
         qml/embedded/EmbeddedPanel.qml
+        qml/embedded/EmbeddedOverviewView.qml
         qml/embedded/EmbeddedProbeView.qml
         qml/embedded/EmbeddedPanelHost.qml
         qml/embedded/EmbeddedKitField.qml

@@ -4,7 +4,7 @@
 
 use std::{
     path::{Path, PathBuf},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use kinein_protocol::{
@@ -226,28 +226,42 @@ impl Core {
 /// O corpo do job: roda o `flash-id` (v5; cai para o `flash_id` da v4 se a
 /// ferramenta nao conhece o comando), le a saida e emite o desfecho.
 fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::JobOutcome {
-    let mut tentativa = rodar(ctx, esptool, device, identify::FLASH_ID_V5);
-    if !tentativa.sucesso && identify::unknown_subcommand(&tentativa.raw) && !ctx.is_cancelled() {
+    let deadline = Instant::now() + IDENTIFY_TIMEOUT;
+    let mut subcommand = identify::FLASH_ID_V5;
+    let mut attempt = run_identification(ctx, esptool, device, subcommand, false, deadline);
+    if !attempt.sucesso && identify::unknown_subcommand(&attempt.raw) && !ctx.is_cancelled() {
         ctx.emit_output("a ferramenta não conhece `flash-id`: tentando `flash_id` (esptool v4)");
-        tentativa = rodar(ctx, esptool, device, identify::FLASH_ID_V4);
+        subcommand = identify::FLASH_ID_V4;
+        attempt = run_identification(ctx, esptool, device, subcommand, false, deadline);
     }
-    let identity = identify::parse_flash_id(&tentativa.raw);
+    if !attempt.sucesso
+        && Instant::now() < deadline
+        && attempt.raw.contains("Failed to start stub")
+        && !ctx.is_cancelled()
+    {
+        ctx.emit_output(
+            "o stub não respondeu: repetindo a leitura pela ROM, sem stub, a 115200 baud",
+        );
+        attempt = run_identification(ctx, esptool, device, subcommand, true, deadline);
+    }
+    let identity = identify::parse_flash_id(&attempt.raw);
     let leu_chip = identity.chip.is_some();
-    let success = tentativa.sucesso && leu_chip;
+    let tool_success = attempt.sucesso;
+    let success = tool_success && leu_chip;
     let error = if success {
         None
     } else if ctx.is_cancelled() {
         Some("identificação cancelada".to_owned())
-    } else if tentativa.expirou {
+    } else if attempt.expirou {
         Some(format!(
             "o esptool não respondeu em {} s: a placa está plugada nesta porta e sem outro \
              programa (monitor serial, ModemManager) segurando-a?",
             IDENTIFY_TIMEOUT.as_secs()
         ))
-    } else if tentativa.sucesso {
+    } else if tool_success {
         Some("o esptool terminou sem dizer `Chip type:` — veja a saida crua".to_owned())
     } else {
-        Some(job::ultimas_linhas(&tentativa.raw, "esptool"))
+        Some(job::ultimas_linhas(&attempt.raw, "esptool"))
     };
     let target = identity
         .chip
@@ -258,12 +272,12 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
         json!(SerialIdentifiedEvent {
             job_id: ctx.id().to_owned(),
             device: device.to_owned(),
-            command: tentativa.comando,
+            command: attempt.comando,
             success,
             error,
             identity: leu_chip.then_some(identity),
             target,
-            raw: tentativa.raw,
+            raw: attempt.raw,
         }),
     );
     if success {
@@ -275,9 +289,25 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
 
 /// Uma execucao do esptool com o prazo de identificacao (`serial/job.rs`
 /// faz o trabalho; aqui so' a linha de comando do `flash-id`).
-fn rodar(ctx: &jobs::JobContext, esptool: &Path, device: &str, subcomando: &str) -> job::Tentativa {
-    let (_, args) = identify::command_line(esptool, device, subcomando);
-    job::rodar(ctx, esptool, &args, IDENTIFY_TIMEOUT, "esptool")
+fn run_identification(
+    ctx: &jobs::JobContext,
+    esptool: &Path,
+    device: &str,
+    subcommand: &str,
+    rom: bool,
+    deadline: Instant,
+) -> job::Tentativa {
+    let (_, mut args) = identify::command_line(esptool, device, subcommand);
+    if rom {
+        args.splice(0..0, ["--no-stub", "--baud", "115200"].map(str::to_owned));
+    }
+    job::rodar(
+        ctx,
+        esptool,
+        &args,
+        deadline.saturating_duration_since(Instant::now()),
+        "esptool",
+    )
 }
 
 /// A recusa ANTES de abrir a porta, comum a `serial.identify` e

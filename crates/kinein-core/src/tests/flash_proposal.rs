@@ -63,6 +63,13 @@ fn cenario(nome: &str, com_receita: bool) -> Cenario {
         std::fs::create_dir_all(dir.join("build/bootloader")).unwrap();
         std::fs::create_dir_all(dir.join("build/partition_table")).unwrap();
         std::fs::write(dir.join("build/flasher_args.json"), FLASHER_ARGS).unwrap();
+        for image in [
+            "bootloader/bootloader.bin",
+            "partition_table/partition-table.bin",
+            "hello world.bin",
+        ] {
+            std::fs::write(dir.join("build").join(image), b"compiled image").unwrap();
+        }
     }
     let dir = crate::platform::canonicalize(&dir).unwrap();
     let (sender, receiver) = mpsc::channel();

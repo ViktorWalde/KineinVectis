@@ -61,6 +61,7 @@ Item {
     property bool projectBusy: false
     readonly property bool projectEmbedded: project.embedded === true
     readonly property var projectFrameworks: project.frameworks !== undefined ? project.frameworks : []
+    readonly property bool projectMicroPython: projectFrameworks.some(info => info.framework === "microPython")
     readonly property var projectSdks: project.sdks !== undefined ? project.sdks : []
     readonly property var projectHints: project.hints !== undefined ? project.hints : []
     readonly property var projectTarget: project.target !== undefined ? project.target : ({})
@@ -69,10 +70,13 @@ Item {
     readonly property bool probeFound: probes.length > 0
     readonly property bool portFound: ports.length > 0
     // A aba do painel (E3-5): "board" | "project" | "flash" | "kit".
-    property string tab: "board"
+    property string tab: "project"
+    onSelectedPortChanged: flashController.invalidate()
     // O veredito do cabecalho: a placa identificada, senao o que ha' no USB.
     readonly property string boardVerdict: identityController.found
-        ? qsTr("%1 em %2").arg(identityController.identity.chip).arg(identityController.device)
+        ? qsTr("%1%2 em %3").arg(identityController.errorText !== "" ? qsTr("Identificação parcial: ") : "")
+            .arg(identityController.identity.chipDescription || identityController.identity.chip)
+            .arg(identityController.device)
         : portFound ? qsTr("%1 porta(s) serial(is); nenhuma placa identificada ainda").arg(ports.length)
         : probeFound ? qsTr("sonda %1, sem porta serial").arg(probes[0].name) : qsTr("nenhuma placa")
 
@@ -88,6 +92,10 @@ Item {
 
     EmbeddedIdentityController {
         id: identityController
+
+        onIdentityChanged: {
+            if (device === root.selectedPort) flashController.invalidate();
+        }
     }
 
     EmbeddedFlashController {
@@ -109,6 +117,8 @@ Item {
     signal projectRequested()
     signal monitorRequested(string device, int baud)
     signal sizeRequested(string program)
+    signal windowRequested()
+    signal commandRequested(string commandId)
 
     visible: false
 
@@ -136,11 +146,13 @@ Item {
         project = ({});
         projectBusy = false;
         panelVisible = false;
+        tab = "project";
     }
 
     function open() {
         panelVisible = true;
         refresh();
+        windowRequested();
     }
 
     function close() {
@@ -162,6 +174,7 @@ Item {
     // O modelo chega por evento (abrir workspace, fim de configure/build) e
     // por pedido: os dois caem aqui. Um modelo novo substitui o anterior.
     function handleProject(model) {
+        flashController.invalidate();
         project = model === undefined || model === null ? ({}) : model;
         projectBusy = false;
     }

@@ -32,6 +32,7 @@ Item {
         property string bottomTab: ""
         property bool containersWindowVisible: false
         property bool remoteWindowVisible: false
+        property bool embeddedWindowVisible: false
         function toggleExplorer() { root.calls.push("explorer"); }
         function toggleDockWindow(name) { root.calls.push("dock:" + name); }
         function toggleBottomTab(tab) { root.calls.push("tab:" + tab); }
@@ -137,11 +138,16 @@ Item {
         // a entrada carrega o painel dela. Quem monta os overlays le' esta
         // lista em vez de conhecer cada painel pelo nome.
         const comPainel = toolWindows.overlayEntries.map(function(e) { return e.id; });
-        check(comPainel.join(",") === "embedded",
+        check(comPainel.length === 0,
               "os paineis de ambiente, na ordem do trilho: " + comPainel.join(","));
         for (const e of toolWindows.overlayEntries) {
             check(e.panel !== undefined && e.panel !== null, e.id + " sem componente");
         }
+        check(porId("embedded").kind === "dock-left", "Embarcados é janela integrada");
+        check(toolWindows.activate("embedded") === true && calls[calls.length - 1] === "dock:embedded",
+              "Embarcados alterna pelo shell");
+        fakeShell.embeddedWindowVisible = true;
+        check(porId("embedded").active, "janela de Embarcados acende o trilho");
         // Explorer e Ferramentas NAO tem painel de ambiente: o primeiro e' o
         // slot esquerdo, o segundo e' aba do rodape. Dar-lhes `componente`
         // seria forcar a abstracao sobre quem nao e'.
@@ -163,7 +169,7 @@ Item {
 
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
         check(toolWindows.activate("nao.existe") === false, "id sem dono devolve false");
-        check(calls.length === 5, // explorer, tools, dock:remote, dock:observability, dock:containers
+        check(calls.length === 6, // explorer, tools e quatro janelas integradas
               "id sem dono nao pode tocar em nada");
 
         Qt.exit(failures === 0 ? 0 : 1);

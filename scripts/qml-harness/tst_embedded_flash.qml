@@ -14,8 +14,8 @@ Item {
     id: root
 
     property var pedidos: []
-    property var rodou: []
-    property var salvou: []
+    property var runCommands: []
+    property var savedConfigs: []
 
     EmbeddedController {
         id: controller
@@ -27,8 +27,8 @@ Item {
         function onProposalRequested(device, engine, flashSizeBytes, firmware) {
             root.pedidos.push(device + "|" + engine + "|" + flashSizeBytes + (firmware !== "" ? "|fw=" + firmware : ""));
         }
-        function onRunRequested(command) { root.rodou.push(command); }
-        function onSaveRequested(name, command) { root.salvou.push(name + "=" + command); }
+        function onRunRequested(command) { root.runCommands.push(command); }
+        function onSaveRequested(name, command) { root.savedConfigs.push(name + "=" + command); }
     }
 
     Component.onCompleted: {
@@ -38,7 +38,7 @@ Item {
         // Nasce vazio; sem previa nao roda nem salva.
         if (f.busy || f.found || f.engine !== "") failures += 1;
         f.run(); f.save();
-        if (root.rodou.length !== 0 || root.salvou.length !== 0) failures += 2;
+        if (root.runCommands.length !== 0 || root.savedConfigs.length !== 0) failures += 2;
 
         // A previa e' pedida com porta, motor (vazio = o modelo decide) e flash.
         f.propose("/dev/ttyUSB0", 4194304);
@@ -60,8 +60,8 @@ Item {
         f.handleProposal({ name: "Gravar (esptool)", engine: "esptool", command: "'/x/esptool' write-flash 0x0 '/p/o meu app.bin'" });
         f.run();
         f.save();
-        if (root.rodou.join(",") !== "'/x/esptool' write-flash 0x0 '/p/o meu app.bin'") failures += 128;
-        if (root.salvou.join(",") !== "Gravar (esptool)='/x/esptool' write-flash 0x0 '/p/o meu app.bin'") failures += 256;
+        if (root.runCommands.join(",") !== "'/x/esptool' write-flash 0x0 '/p/o meu app.bin'") failures += 128;
+        if (root.savedConfigs.join(",") !== "Gravar (esptool)='/x/esptool' write-flash 0x0 '/p/o meu app.bin'") failures += 256;
 
         // Trocar o motor descarta a previa (era de outro motor) e vai no pedido;
         // clicar de novo solta (o modelo decide).
@@ -80,7 +80,7 @@ Item {
         f.handleFailed("runConfig.flashProposal", "sem receita de gravacao: compile o projeto primeiro");
         if (f.busy || f.found || f.errorText.indexOf("compile") < 0) failures += 8192;
         f.run();
-        if (root.rodou.length !== 1) failures += 16384;
+        if (root.runCommands.length !== 1) failures += 16384;
 
         // O firmware baixado (C5): toggle, solta o motor (a pagina fixa o
         // motor), descarta a previa, e vai no pedido; escolher de novo desfaz.
@@ -105,6 +105,29 @@ Item {
         controller.handleProject({ embedded: true, frameworks: [{ framework: "zephyr", evidence: "prj.conf" }] });
         if (f.frameworkEngines.join(",") !== "west") failures += 4194304;
         f.handleProposal({ name: "Gravar (west)", engine: "west", command: "w" });
+
+        // Porta trocada com resposta em voo: não reaproveita a linha antiga.
+        f.propose("/dev/ttyUSB0", 0);
+        f.handleProposal({ name: "Gravar", command: "old-port" });
+        controller.selectedPort = "/dev/ttyUSB1";
+        if (f.found) failures += 8388608;
+        f.propose("/dev/ttyUSB1", 0);
+        controller.selectedPort = "/dev/ttyUSB2";
+        f.handleProposal({ name: "Gravar", command: "stale-port" });
+        if (f.found || f.busy) failures += 16777216;
+        f.run(); f.save();
+        if (root.runCommands.length !== 1 || root.savedConfigs.length !== 1) failures += 33554432;
+        f.propose(controller.selectedPort, 0);
+        f.handleProposal({ name: "Gravar", command: "current-port" });
+        if (!f.found || f.proposal.command !== "current-port") failures += 67108864;
+
+        // Identificar a mesma porta muda a capacidade que a proposta compara.
+        controller.identity.device = controller.selectedPort;
+        controller.identity.handleIdentified({ device: controller.selectedPort, success: true,
+            identity: { chip: "esp32", flashSizeBytes: 2097152 } });
+        if (f.found) failures += 134217728;
+        f.run(); f.save();
+        if (root.runCommands.length !== 1 || root.savedConfigs.length !== 1) failures += 268435456;
 
         // Trocar de workspace esquece tudo (o pai limpa o filho).
         f.selectEngine("picotool");

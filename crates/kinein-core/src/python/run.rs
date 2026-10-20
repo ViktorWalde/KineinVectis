@@ -122,7 +122,7 @@ impl PythonLauncher {
         format!(
             "{} {}",
             self.display(root),
-            aspas(&relativo.display().to_string())
+            shell_quote(&relativo.display().to_string())
         )
     }
 
@@ -131,14 +131,14 @@ impl PythonLauncher {
     #[must_use]
     pub fn shell_command(&self, args: &[&str]) -> String {
         let (program, prefix) = self.program();
-        let mut partes = vec![aspas(&program.display().to_string())];
-        partes.extend(prefix.iter().map(|p| p.to_string_lossy().into_owned()));
-        partes.extend(args.iter().map(|a| aspas(a)));
+        let mut partes = vec![shell_quote(&program.display().to_string())];
+        partes.extend(prefix.iter().map(|p| shell_quote(&p.to_string_lossy())));
+        partes.extend(args.iter().map(|a| shell_quote(a)));
         partes.join(" ")
     }
 }
 
-fn aspas(texto: &str) -> String {
+fn shell_quote(texto: &str) -> String {
     format!("'{}'", texto.replace('\'', "'\\''"))
 }
 
@@ -245,7 +245,7 @@ pub fn default_command(root: &Path, launcher: Option<&PythonLauncher>) -> Result
             })
         }
         Some(EntryPoint::Module(pacote)) => Ok(launcher.shell_command(&["-m", &pacote])),
-        Some(EntryPoint::InstalledScript(nome)) => Ok(aspas(
+        Some(EntryPoint::InstalledScript(nome)) => Ok(shell_quote(
             &root.join(".venv/bin").join(nome).display().to_string(),
         )),
         None => Err(RunError::NoDefaultCommand {
@@ -341,7 +341,7 @@ mod tests {
         );
         assert_eq!(
             uv.shell_command(&["main.py"]),
-            "'/opt/uv' run python 'main.py'"
+            "'/opt/uv' 'run' 'python' 'main.py'"
         );
         // Aspas simples no argumento sao escapadas do jeito do shell.
         assert_eq!(
@@ -364,7 +364,7 @@ mod tests {
         assert_eq!(sem_porta.display(&root), "mpremote run");
         assert_eq!(
             sem_porta.shell_command(&["main.py"]),
-            "'/x/mpremote' run 'main.py'"
+            "'/x/mpremote' 'run' 'main.py'"
         );
         let com_porta =
             PythonLauncher::mpremote(PathBuf::from("/x/mpremote"), Some("/dev/ttyUSB0"));
@@ -387,7 +387,7 @@ mod tests {
         std::fs::write(root.join("main.py"), "import machine\n").unwrap();
         assert_eq!(
             default_command(&root, Some(&sem_porta)).unwrap(),
-            "'/x/mpremote' run 'main.py'"
+            "'/x/mpremote' 'run' 'main.py'"
         );
         std::fs::remove_file(root.join("main.py")).unwrap();
         std::fs::create_dir_all(root.join("app")).unwrap();
@@ -524,7 +524,7 @@ mod tests {
         std::fs::write(root.join("app.py"), "").unwrap();
         assert_eq!(
             default_command(&root, Some(&uv)).unwrap(),
-            "'/opt/uv' run python 'app.py'"
+            "'/opt/uv' 'run' 'python' 'app.py'"
         );
     }
 }

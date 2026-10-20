@@ -30,18 +30,19 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingXSmall
 
-        Row {
+        Flow {
             width: parent.width
             spacing: Theme.spacingSmall
 
             Text {
-                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
                 text: qsTr("Toolchains instaláveis (%1, %2 recomendada(s))")
                       .arg(root.lista.length)
                       .arg(root.lista.filter(t => t.recommended === true).length)
                 color: Theme.textSecondary
                 font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
+                wrapMode: Text.WordWrap
             }
 
             KvButton {

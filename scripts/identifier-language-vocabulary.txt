@@ -41,6 +41,7 @@ admin
 admits
 adopt
 advance
+advanced
 advertise
 advice
 affected
@@ -157,6 +158,7 @@ attach
 attached
 attaches
 attacks
+attempt
 attempted
 attempts
 attribute
@@ -697,6 +699,7 @@ destinations
 destroy
 destroyed
 destroying
+destruction
 destructive
 detach
 detached
@@ -1236,6 +1239,7 @@ hybrid
 icon
 icons
 identical
+identification
 identified
 identifier
 identifiers
@@ -1597,6 +1601,7 @@ misspelled
 mistake
 mistaken
 mixed
+mock
 mode
 model
 models
@@ -1768,6 +1773,7 @@ overlays
 override
 overrides
 oversized
+overview
 overwrite
 overwriting
 owned
@@ -2049,6 +2055,7 @@ recents
 receptor
 recipe
 recognised
+recognized
 recommended
 reconcile
 record
@@ -2206,6 +2213,7 @@ reuses
 reveal
 reverse
 reversed
+review
 revision
 revisions
 revoke
@@ -2870,6 +2878,7 @@ window
 windows
 wins
 wire
+wiring
 with
 within
 without

@@ -42,7 +42,7 @@ Item {
             value: root.toolchainController ? root.toolchainController.importPath : ""
         }
 
-        Row {
+        Flow {
             width: parent.width
             spacing: Theme.spacingSmall
 

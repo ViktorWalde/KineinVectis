@@ -74,6 +74,7 @@ Item {
         if (runtime.terminalsModel.get(2).title !== "terminal1") failures += 131072;
         runtime.handleTerminalOpened("t6", "/bin/sh", "logs do container");
         if (runtime.terminalsModel.get(3).title !== "logs do container") failures += 262144;
+        if (runtime.terminalsModel.get(3).command !== "/bin/sh") failures += 4194304;
         runtime.handleTerminalRender({ id: "t1", marker: "antigo mesmo rotulo" });
         runtime.selectTerminal("t3");
         if (Object.keys(runtime.terminalRender).length !== 0) failures += 524288;

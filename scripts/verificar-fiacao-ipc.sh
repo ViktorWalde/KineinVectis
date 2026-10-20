@@ -5,4 +5,5 @@
 # sem ouvinte, sinal QML sem tratador. Nasceu no pente-fino de 2026-09-18.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
+python3 scripts/test_ipc_wiring.py
 python3 scripts/verificar_fiacao_ipc.py

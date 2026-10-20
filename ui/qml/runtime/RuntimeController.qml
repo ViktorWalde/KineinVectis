@@ -130,6 +130,7 @@ Item {
         root.terminalRenders[id] = ({});
         terminalsListModel.append({
             "termId": id,
+            "command": shell === undefined ? "" : shell,
             "title": title !== undefined && title !== "" ? title
                                                         : nextTerminalTitle()
         });

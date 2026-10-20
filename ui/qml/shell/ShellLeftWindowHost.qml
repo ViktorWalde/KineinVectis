@@ -18,6 +18,8 @@ Item {
     property var remoteController: null
     property var grafanaController: null
     property var settingsController: null
+    property var embeddedController: null
+    property var toolchainController: null
     property string workspaceName: ""
     property string workspaceRoot: ""
     // O slot da direita (ShellRightDock): a janela cujo icone esta' no trilho
@@ -35,6 +37,7 @@ Item {
         if (name === "database") return databaseWindow.minimumWidth;
         if (name === "remote") return remoteWindow.minimumWidth;
         if (name === "observability") return grafanaWindow.minimumWidth;
+        if (name === "embedded") return embeddedWindow.minimumWidth;
         return name === "containers" ? containersWindow.minimumWidth : 220;
     }
 
@@ -107,6 +110,7 @@ Item {
         else if (name === "containers") containersWindow.forceActiveFocus();
         else if (name === "remote") remoteWindow.forceActiveFocus();
         else if (name === "observability") grafanaWindow.forceActiveFocus();
+        else if (name === "embedded") embeddedWindow.forceActiveFocus();
         else explorerPanel.focusTree();
     }
 
@@ -216,6 +220,25 @@ Item {
 
         function onWindowRequested() {
             root.shellController.showDockWindow("observability");
+        }
+    }
+
+    EmbeddedPanelHost {
+        id: embeddedWindow
+
+        parent: root.slotOf("embedded")
+        anchors.fill: parent
+        visible: root.shellController.embeddedWindowVisible
+        controller: root.embeddedController
+        toolchainController: root.toolchainController
+        onCloseRequested: root.shellController.toggleDockWindow("embedded")
+    }
+
+    Connections {
+        target: root.embeddedController
+
+        function onWindowRequested() {
+            root.shellController.showDockWindow("embedded");
         }
     }
 

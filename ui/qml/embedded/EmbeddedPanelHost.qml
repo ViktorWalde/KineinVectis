@@ -2,26 +2,44 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O painel de embarcados na moldura comum (KvPanelFrame, F8). Em ABAS
-// desde a E3-5 (roadmaps/44): a moldura e' fixa em 640x560 — cada aba
-// cabe sem rolar a 800 px de janela; o que passar ROLA. Antes a coluna
-// de nove secoes ia ate' 780 e passava da janela (foto de 2026-09-19).
-KvPanelFrame {
+// Mesma instância nos slots da HUD; o shell conserva lado e largura.
+Rectangle {
     id: root
 
     property var controller: null
     property var toolchainController: null
 
-    panelWidth: 640
-    panelHeight: 560
-    contentHeight: painel.implicitHeight
+    readonly property real minimumWidth: 400
+
+    signal closeRequested()
+
+    function prepare() {
+        if (!root.visible || !root.controller || root.controller.workspaceRoot === "") return;
+        root.controller.panelVisible = true;
+        if (!root.controller.projectBusy) root.controller.refresh();
+    }
+
+    onVisibleChanged: {
+        if (!root.controller) return;
+        if (visible) root.prepare();
+        else root.controller.close();
+    }
+
+    Connections {
+        target: root.controller
+        function onWorkspaceRootChanged() { Qt.callLater(root.prepare); }
+    }
+
+    color: Theme.surface1
+    radius: Theme.radius
+    border.color: Theme.borderSoft
+    clip: true
 
     EmbeddedPanel {
-        id: painel
-
-        width: parent.width
+        anchors.fill: parent
+        anchors.margins: Theme.spacingMedium
         controller: root.controller
         toolchainController: root.toolchainController
-        onCloseRequested: root.dismissRequested()
+        onCloseRequested: root.closeRequested()
     }
 }

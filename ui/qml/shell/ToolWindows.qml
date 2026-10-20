@@ -40,8 +40,6 @@ Item {
     property var containerController: null
     property var grafanaController: null
     property var remoteController: null
-    // O painel de embarcados edita o KIT (chip, alvo, depurador).
-    property var toolchainController: null
     property var runtimeController: null
     property bool workspaceOpen: false
     // As ferramentas detectadas (tools.detect): o fato dos containers e' a
@@ -51,16 +49,6 @@ Item {
     property var projectHealthController: null
 
     visible: false
-
-    // Os PAINEIS das entradas. Cada um amarra o seu controller; o que e' igual
-    // (ancoras, z, folga da janela) fica com quem os monta. `parent` aqui e' o
-    // `Loader` do host, que preenche a janela.
-    // Os paineis de ambiente que as entradas abrem (dono proprio desde a
-    // 0.3.9: este arquivo diz QUAIS areas existem; aquele, COMO cada painel nasce).
-    readonly property ToolWindowPanels panels: ToolWindowPanels {
-        embeddedController: root.embeddedController
-        toolchainController: root.toolchainController
-    }
 
     // O GIT SAIU DO TRILHO em 2026-09-24, por observacao do autor: o widget do
     // cabecalho ja' abre o MESMO painel (`toggleBottomTab("git")`, conferido) e
@@ -112,11 +100,10 @@ Item {
             "id": "embedded", "label": qsTr("Embarcados"), "icon": "embedded",
             "tooltip": qsTr("Embarcados — placa, projeto, gravar, kit (Ctrl+Alt+M)"),
             "area": "left", "order": 30, "available": root.workspaceOpen,
-            "title": qsTr("Embarcados"), "kind": "overlay", "defaultPolicy": "contextual",
+            "title": qsTr("Embarcados"), "kind": "dock-left", "defaultPolicy": "contextual",
             "factKey": "project.embedded", "commandId": "probe.list", "shortcut": "Ctrl+Alt+M",
-            "active": root.embeddedController !== null && root.embeddedController !== undefined
-                      && root.embeddedController.panelVisible
-            ,"panel": root.panels.embeddedPanel
+            "active": root.shellController !== null && root.shellController.embeddedWindowVisible === true
+                      && root.workspaceOpen
         },
         // Ferramentas NATIVAS com atalho visual (decisao do autor, 2026-09-12;
         // a ordem e o banco em 2026-09-13): banco, containers e observabilidade
@@ -213,17 +200,6 @@ Item {
     readonly property var rightEntries: root.visibleEntries.filter(
         entry => entry.available !== false && root.sideOf(entry) === "right")
 
-    // Um dono AUSENTE e' o mesmo caso de um id sem dono: resultado observavel,
-    // nao excecao. O trilho existe antes dos controllers em teste e na abertura
-    // da janela, e chamar `open()` de um `null` derrubava a funcao inteira.
-    function openOwner(owner) {
-        if (owner === null || owner === undefined) {
-            return false;
-        }
-        owner.open();
-        return true;
-    }
-
     // As entradas que trazem painel de ambiente, na ordem do trilho.
     readonly property var overlayEntries: root.entries.filter(function(e) {
         return e.panel !== undefined;
@@ -260,7 +236,9 @@ Item {
             shellController.toggleOutline();
             return true;
         case "embedded":
-            return openOwner(embeddedController);
+            if (shellController === null || shellController === undefined) return false;
+            shellController.toggleDockWindow("embedded");
+            return true;
         case "database":
             if (shellController === null || shellController === undefined) return false;
             shellController.toggleDockWindow("database");

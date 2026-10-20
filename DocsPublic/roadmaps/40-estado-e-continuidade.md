@@ -9,7 +9,7 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-19). Leia isto primeiro.**
+> **HANDOFF (2026-10-20). Leia isto primeiro.**
 >
 > **Máquina:** Ubuntu 26.04 LTS, checkout `/home/hugh/KineinVectis`, branch
 > `main`, que contém o `porte-windows` (fast-forward local em 2026-10-15,
@@ -37,8 +37,10 @@
 > (52 §14.8; cobertura no contribuindo/07 §2.1), validada localmente;
 > a execução no GitHub e as camadas de UI/pesada continuam pendentes.
 > **0.4.1b/c encerradas:** inspector e deriva (52 §14.9–14.10, 40.7 §7.319–7.320).
-> Gate rápido estrito TUDO VERDE. **Próxima:** schema 3 dos kits (52 §11).
-> **Confiança:** projetos anteriores à 16.4b pedem "Confiar neste projeto".
+> Gate rápido estrito TUDO VERDE. **Agora:** bancada ESP32 e Embarcados
+> integrado à HUD, reformulação fechada (52 §14.12, 40.7 §7.321). Próximo: HUD por contexto,
+> Linux embarcado e destaque PlatformIO (52 §14.13), Python (41 §3.4.1),
+> depois schema 3 (52 §11). **Confiança:** projetos antigos pedem o gesto.
 > **Decisões de 2026-10-16** (§5): o Banco para embarcados volta na 0.4.5,
 > o binário diz 0.3.9, o AppImage só com a 0.4 finalizada, o 03 por domínio
 > e a entrada `CLAUDE.md` (61, O6 e O7, feitas); Rust e Qt mantidos.
@@ -48,15 +50,13 @@
 > para colaboradores, o servidor MCP e a frente ROS 2, por escopos e pesquisa.
 > A versão do ROS 2 segue sem número definido (integracoes/40 §1.2).
 >
-> **Modo autônomo (decisão do autor, 2026-10-15, §5):** o agente fecha a
-> 0.3.9 e a 0.4 sozinho, fatia por fatia, sem push; SDKs no usuário, sem
-> placa, sem AppImage. A organização da documentação (61 §4, O1–O5) está
-> feita; ela continua junto de cada fatia. **Pausado:** o porte para o
+> **Modo autônomo (renovado em 2026-10-20, §5):** o agente fecha até a
+> 0.4.5, fatia por fatia, e gera/testa o AppImage ao final, sem publicação;
+> revisa lógica, bugs, UX e desempenho do frontend em cada 0.4.x. A documentação
+> é atualizada ao fim de cada tarefa. **Pausado:** o porte para o
 > Windows, na W6b4, a retomar numa VM (60 §3.3).
 >
-> **Aceites com mouse e teclado** de 7, 7b, 14a, 14b, 13a, 13b e 9a.3:
-> feitos pelo agente na 16.1 (`scripts/xvfb_ide.py`, 40.7 §7.292), com três
-> defeitos corrigidos; o autor não os repetiu.
+> **Aceites Xvfb da 16.1:** feitos pelo agente (40.7 §7.292); o autor não os repetiu.
 
 ## 1. O estado, em números
 
@@ -65,10 +65,10 @@ protocolo   0.180.0 (crates/kinein-protocol, medido em 2026-10-19; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   153 tst_*.qml em scripts/qml-harness (medido em 2026-10-19)
+harnesses   154 tst_*.qml em scripts/qml-harness (medido em 2026-10-20)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
-            §7.277); 1189 no gate rápido estrito local de 2026-10-19 (§7.320).
+            §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
 ```
 
 Os comandos que medem estão no
@@ -101,6 +101,8 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
+| Embarcados: dock e polimento da 0.4.1d fechados, gate rápido estrito verde; build ESP-IDF pelo core passou. Placa ausente na última descoberta; identificação física pendente (2026-10-20) | [52 §14.12](52-arquitetura-executavel-da-0.4.md#1412-correções-da-bancada-na-interface--desenho-em-2026-10-20) e [40.7 §7.321](40.7-registro-das-entregas.md#7321--041d-embarcados-integrado-à-hud-polimento-e-correções-da-orquestração-2026-10-20) |
+| HUD por contexto: Linux embarcado e destaque PlatformIO dentro de Embarcados, confirmado pelo autor; implementação seguinte. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
 | ROS 2: frente e ensaio por jornadas depois da 0.4.5; escolher versão exata a partir da pesquisa medida (autor, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
 | Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (autor, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
@@ -351,6 +353,27 @@ porta de colaboracao         IDEIA documentada a pedido do autor (2026-10-19):
                              para colaboradores DEPOIS dela. O prompt do
                              site foi entregue na conversa, sem ampliar
                              esta documentacao com implementacao do site
+continuidade ate 0.4.5       AUTORIZADA pelo autor em 2026-10-20, por fatias,
+                             com documentacao atualizada a cada etapa. Primeiro
+                             a bancada ESP32 e Embarcados integrado a HUD;
+                             botao por arquivo continua exclusivo de scripts.
+                             Reuso de componentes e animacoes existentes.
+                             Retomada solicitada a cada cinco horas, ainda
+                             NAO agendada por falta de ferramenta na sessao
+modo automatico renovado     DECISAO DO AUTOR em 2026-10-20: desenvolver ate
+                             a 0.4.5 e gerar/testar o AppImage ao concluir.
+                             Em cada 0.4.x: procurar falhas de logica e bugs
+                             visuais, otimizar o frontend e melhorar os paineis
+                             para uma UX moderna, clara e intuitiva. Embarcados
+                             tem prioridade; Python inclui CPython,
+                             MicroPython e CircuitPython. Sem push/publicacao;
+                             firmware fisico ainda exige pedido especifico.
+HUD por contexto (2026-10-20) Embarcados tambem cobre Linux embarcado; a UX
+                             deve distinguir as jornadas. PlatformIO fica
+                             em DESTAQUE DENTRO DE EMBARCADOS, sem novo icone
+                             separado. Animacoes acompanham os fluxos com
+                             os componentes e tokens existentes. Atualizar
+                             a documentacao ao final de CADA tarefa.
 ```
 
 ## 7. O registro das entregas

@@ -13,6 +13,7 @@ Item {
     property string primaryIcon: ""
     property bool primaryEnabled: true
     property bool primaryBusy: false
+    property bool primaryAccent: true
 
     signal primaryRequested()
     signal closeRequested()
@@ -56,7 +57,7 @@ Item {
             objectName: "kvPanelPrimary"
 
             visible: root.primaryLabel !== ""
-            primary: true
+            primary: root.primaryAccent
             compact: true
             enabled: root.primaryEnabled && !root.primaryBusy
             text: root.primaryLabel

@@ -94,15 +94,17 @@ def metodos_do_core() -> set[str]:
     return set().union(*core_methods_by_file().values())
 
 
-def metodos_dos_clientes() -> set[str]:
+def client_methods() -> set[str]:
     """O que a ponte C++ e a CLI PEDEM, por nome, no codigo.
 
-    `#include "x.h"` casa com o mesmo padrao e nao e' pedido de IPC: a linha
-    do include e' descartada, senao o cabecalho viraria um "metodo" fantasma.
+    A ponte mora em `core_client*`; os outros C++ da UI podem conter ids de
+    aplicacao, que nao sao pedidos. `#include "x.h"` tambem nao e' IPC.
     """
     achados: set[str] = set()
     padrao = re.compile(r'"([a-z][A-Za-z]*(?:\.[a-zA-Z]+)+)"')
-    for p in arquivos("ui/src", ".cpp", ".h") + arquivos("crates/kinein-cli/src", ".rs"):
+    bridge = [p for p in arquivos("ui/src", ".cpp", ".h")
+              if p.stem.startswith("core_client")]
+    for p in bridge + arquivos("crates/kinein-cli/src", ".rs"):
         for linha in ler(p).splitlines():
             if linha.lstrip().startswith("#include"):
                 continue
@@ -219,7 +221,7 @@ def main() -> int:
     falhas: list[str] = []
 
     # 1
-    orfaos = sorted(metodos_do_core() - metodos_dos_clientes())
+    orfaos = sorted(metodos_do_core() - client_methods())
     for m in orfaos:
         if m in METODOS_SEM_CLIENTE_ACEITOS:
             continue
@@ -234,7 +236,7 @@ def main() -> int:
     # sumido da lista canonica do `03-protocolo-ipc`. So' percebemos porque
     # alguem olhou o numero.
     pedidos_sem_rota = sorted(
-        metodos_dos_clientes() - metodos_do_core() - eventos_do_core()
+        client_methods() - metodos_do_core() - eventos_do_core()
     )
     for m in pedidos_sem_rota:
         falhas.append(f"o cliente pede um metodo que o core NAO roteia: {m}")

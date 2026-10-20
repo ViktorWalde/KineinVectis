@@ -115,7 +115,6 @@ Item {
             containerController: root.containerController
             grafanaController: root.grafanaController
             remoteController: root.remoteController
-            toolchainController: root.toolchainController
             runtimeController: root.runtimeController
             workspaceOpen: root.workspaceOpen
             toolsList: root.toolsList
@@ -153,7 +152,6 @@ Item {
 
             width: visible ? root.shellController.explorerWidth : 0
             height: parent.height
-            // Sem projeto, nada; nunca a mesma janela dos dois lados.
             visible: root.shellController.docks.slotVisible("left", root.workspaceOpen)
             rightSlot: rightDock
             shellController: root.shellController
@@ -165,6 +163,8 @@ Item {
             remoteController: root.remoteController
             grafanaController: root.grafanaController
             settingsController: root.settingsController
+            embeddedController: root.embeddedController
+            toolchainController: root.toolchainController
             onMinimumWidthChanged: root.updatePanelLimits()
             onRightMinimumWidthChanged: root.updatePanelLimits()
             workspaceName: root.workspaceName

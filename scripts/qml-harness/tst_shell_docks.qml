@@ -119,6 +119,19 @@ Item {
                           "janela que nao existe nao volta; largura no teto");
         failures += check(shell.codec.decode({ rightWindow: "" }, shell).rightWindow === "", "fechado volta fechado");
 
+        // Embarcados usa o mesmo ciclo e é aceito pelo codec persistido.
+        shell.showDockWindow("embedded");
+        failures += check(shell.embeddedWindowVisible && shell.leftWindow === "embedded",
+                          "Embarcados abre no slot");
+        shell.moveRailEntryToSide("embedded", "right", 0, []);
+        failures += check(shell.rightWindow === "embedded" && !shell.showExplorer,
+                          "Embarcados acompanha o lado do ícone");
+        const embeddedLayout = shell.layoutSnapshot();
+        failures += check(shell.codec.decode(embeddedLayout, shell).rightWindow === "embedded",
+                          "Codec preserva Embarcados ao reabrir");
+        shell.toggleDockWindow("embedded");
+        failures += check(!shell.embeddedWindowVisible, "Mesmo ícone fecha Embarcados");
+
         Qt.exit(failures === 0 ? 0 : 1);
     }
 }

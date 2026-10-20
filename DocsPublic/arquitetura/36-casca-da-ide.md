@@ -72,7 +72,7 @@ rebaixado (§1.2.1), dentro das bandejas das abas.
 | Linha do topo, ao meio | `ui/qml/shell/TopHeaderBar.qml` | Os widgets de contexto: projeto, Git, toolchain, Python e o "⋯". A barra é transparente e fica por cima da `AppMenuBar` (`z: 101`). |
 | Montagem do topo | `ui/qml/shell/ShellHeaderHost.qml` | Põe a `TopHeaderBar` logo depois do fim dos menus (`menuEndX`) e antes dos controles da janela (`controlsX`). |
 | Ilha e divisórias | `ui/qml/shell/ShellLayout.qml` | Um `Rectangle` arredondado atrás de uma `Row` (slot da esquerda, centro e slot da direita), mais as divisórias de 1 px (esquerda/centro, centro/direita, editor/painel de baixo). |
-| Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco, Containers, Remoto, Grafana). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
+| Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco, Containers, Remoto, Grafana, Embarcados). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
 | Slot da direita | `ui/qml/shell/ShellRightDock.qml` | Um `Item` vazio na `Row`, com a alça de largura no vão à esquerda dele. Recebe a janela por troca de pai. |
 | De que lado cada janela abre | `ui/qml/shell/ShellDocks.qml` | Funções sobre o estado do `ShellController`: `sideOf`, `placed`, `showing`, `show`, `close`, `toggle`, `followSide`, `normalize`, `widen` (§2.3). |
 | Trilho da esquerda | `ui/qml/shell/SideRail.qml` | Ícones das áreas (34 px de largura, botões de 28 px, ícones de 20 px). |
@@ -441,10 +441,16 @@ age é a função `activate(id)`.
 
 | `kind` | Exemplos | O clique faz |
 | --- | --- | --- |
-| `dock-left` | Projeto, Banco, Containers, Remoto, Grafana | janela acoplada: abre ou fecha no slot **do lado do ícone** (`toggleDockWindow`, §2.0) |
+| `dock-left` | Projeto, Banco, Containers, Remoto, Grafana, Embarcados | janela acoplada: abre ou fecha no slot **do lado do ícone** (`toggleDockWindow`, §2.0) |
 | `dock-right` | Símbolos | recolhe/expande os Símbolos (abertos, escondem o slot da direita) |
 | `bottom` | Terminal, Ferramentas | abre o painel de baixo na aba; se ela já estiver à vista, recolhe |
-| `overlay` | Embarcados | abre o painel de ambiente do dono (`owner.open()`); vira janela na 0.4 |
+
+Embarcados passou ao dock em 2026-10-20 (52 §14.12). `EmbeddedPanelHost`
+recebe a mesma instância dos controllers ao trocar de lado. Cabeçalho e
+`KvSegmentedControl` ficam fixos; só o corpo rola. A abertura começa na visão
+geral, com ações pelos donos existentes; Placa, Gravar e Ambiente conservam as
+operações, sem modal sobre o editor. O host antigo `ToolWindowPanels` deixou
+de existir; a lista de overlays do trilho está vazia.
 
 Duas camadas filtram o que aparece:
 

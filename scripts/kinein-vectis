@@ -65,4 +65,4 @@ case "$UI_ORIGEM" in
         ;;
 esac
 
-KINEIN_CORE_BIN="$CORE_BIN" exec "$UI_BIN" "$@"
+KINEIN_DESKTOP_FILE=kinein-vectis-development KINEIN_CORE_BIN="$CORE_BIN" exec "$UI_BIN" "$@"

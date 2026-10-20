@@ -29,6 +29,8 @@ Item {
     // artefatos do build; vazio = os artefatos do build. O id vem da lista
     // de instalaveis do ToolchainController (kind "firmware", installed).
     property string firmware: ""
+    property int contextRevision: 0
+    property int requestedRevision: 0
     readonly property bool found: proposal.command !== undefined && proposal.command !== ""
     readonly property var engines: ["esptool", "probe-rs", "picotool", "dfu-util"]
     // Os frameworks do projeto (project.model.frameworks, do pai): o wrapper
@@ -49,6 +51,16 @@ Item {
         firmware = "";
         proposal = ({});
         errorText = "";
+        contextRevision += 1;
+        requestedRevision = -1;
+    }
+
+    // Uma prévia só vale para a porta, firmware e modelo que a produziram.
+    // Mantenha busy até receber a resposta em voo, para não cruzar pedidos.
+    function invalidate() {
+        contextRevision += 1;
+        proposal = ({});
+        errorText = "";
     }
 
     // Escolher o firmware e' toggle; trocar descarta a previa. O motor
@@ -56,8 +68,7 @@ Item {
     function selectFirmware(id) {
         firmware = id === firmware ? "" : id;
         engine = "";
-        proposal = ({});
-        errorText = "";
+        invalidate();
     }
 
     // O wrapper de cada framework, na ordem do modelo, sem repetir — a
@@ -76,8 +87,7 @@ Item {
     // Escolher o motor e' toggle; trocar descarta a previa (era de outro motor).
     function selectEngine(nome) {
         engine = nome === engine ? "" : nome;
-        proposal = ({});
-        errorText = "";
+        invalidate();
     }
 
     // Pede a previa. `device` e' a porta escolhida (vazia = o core decide se
@@ -88,6 +98,8 @@ Item {
             return;
         }
         busy = true;
+        requestedRevision = contextRevision;
+        proposal = ({});
         errorText = "";
         proposalRequested(device === undefined ? "" : device, engine,
                           flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware);
@@ -95,6 +107,7 @@ Item {
 
     function handleProposal(nova) {
         busy = false;
+        if (requestedRevision !== contextRevision) return;
         proposal = nova === undefined || nova === null ? ({}) : nova;
         errorText = "";
     }
@@ -106,6 +119,7 @@ Item {
             return;
         }
         busy = false;
+        if (requestedRevision !== contextRevision) return;
         proposal = ({});
         errorText = message;
     }

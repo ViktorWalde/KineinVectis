@@ -12,6 +12,8 @@ Column {
 
     property string preset: ""
     property var toolchainController: null
+    property bool advancedVisible: false
+    signal advancedToggleRequested()
 
     readonly property string chip: campoChip.text
     readonly property string targetTriple: campoAlvo.text
@@ -63,9 +65,18 @@ Column {
         value: root.toolchainController ? root.toolchainController.chip : ""
     }
 
+    KvButton {
+        objectName: "embeddedAdvancedKit"
+        text: root.advancedVisible ? qsTr("Ocultar opções avançadas") : qsTr("Opções avançadas e depuração")
+        compact: true
+        onClicked: root.advancedToggleRequested()
+    }
+
     EmbeddedKitField {
         id: campoAlvo
 
+        objectName: "embeddedTarget"
+        visible: root.advancedVisible
         labelText: qsTr("Alvo")
         placeholder: qsTr("triple, ex.: thumbv7em-none-eabihf")
         value: root.toolchainController ? root.toolchainController.targetTriple : ""
@@ -74,6 +85,7 @@ Column {
     EmbeddedKitField {
         id: campoSysroot
 
+        visible: root.advancedVisible
         labelText: qsTr("Sysroot")
         placeholder: qsTr("raiz do sistema alvo (CMAKE_SYSROOT)")
         value: root.toolchainController ? root.toolchainController.sysroot : ""
@@ -85,6 +97,7 @@ Column {
     EmbeddedKitField {
         id: campoSvd
 
+        visible: root.advancedVisible
         labelText: qsTr("SVD")
         placeholder: qsTr("CMSIS-SVD do chip, ex.: ~/svd/esp32c3.svd (registradores de periférico no depurador)")
         value: root.toolchainController ? root.toolchainController.svdFile : ""

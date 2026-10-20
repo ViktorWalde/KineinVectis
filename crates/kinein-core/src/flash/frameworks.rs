@@ -5,7 +5,7 @@
 //! idf.py      `idf.py -p PORT flash` (ESP-IDF "Start a Project": "Replace PORT
 //!             with your ESP32 board's USB port name"; sem -p ele autodetecta —
 //!             aqui a porta e' exigida, como no esptool do E4). Roda no ambiente
-//!             ativado: `bash -c '<IDF_WRAPPER>' idf <ativacao> -p PORT flash`
+//!             ativado: `bash -c '<IDF_WRAPPER>' bash <ativacao> -p PORT flash`
 //! west        `west flash -d build` (Zephyr "west flash": grava o build da
 //!             pasta com o runner do board; `--runner` fica para o usuario editar)
 //! pio         `pio run -t upload [--upload-port PORT]` (PlatformIO "pio run":
@@ -18,7 +18,7 @@
 use kinein_protocol::{FlashProposalResult, ProjectModel};
 
 use super::{FlashError, quote};
-use crate::build::engine::{Engine, IDF_WRAPPER};
+use crate::build::engine::{Engine, idf_command_args};
 
 /// Os nomes de motor que esta unidade atende (a tela os lista ao lado dos
 /// do E4); `platformio` e' a palavra do `project.model`, `pio` a do binario.
@@ -59,15 +59,12 @@ pub(super) fn propose(
             source.push(
                 "o que grava: o build/ do idf.py (bootloader, tabela de partições, app)".to_owned(),
             );
-            (
-                "idf.py",
-                format!(
-                    "bash -c {} idf {} -p {} flash",
-                    quote(IDF_WRAPPER),
-                    quote(&activation.display().to_string()),
-                    quote(porta)
-                ),
-            )
+            let args = idf_command_args(activation, &["-p", porta, "flash"])
+                .iter()
+                .map(|arg| quote(arg))
+                .collect::<Vec<_>>()
+                .join(" ");
+            ("idf.py", format!("bash {args}"))
         }
         ("idf.py" | "idf", _) => return Err(sem_framework("ESP-IDF", model, "esp-idf")),
         ("west", Some(Engine::Zephyr { west })) => {
@@ -168,10 +165,10 @@ mod tests {
             activation: PathBuf::from("/e/export.sh"),
         };
         let p = propose(&modelo(), "idf.py", Some("/dev/ttyUSB0"), Some(&idf)).unwrap();
-        assert!(p.command.starts_with("bash -c '"), "{}", p.command);
+        assert!(p.command.starts_with("bash '-c' '"), "{}", p.command);
         assert!(
             p.command
-                .ends_with("' idf '/e/export.sh' -p '/dev/ttyUSB0' flash"),
+                .ends_with("' 'bash' '/e/export.sh' '-p' '/dev/ttyUSB0' 'flash'"),
             "{}",
             p.command
         );

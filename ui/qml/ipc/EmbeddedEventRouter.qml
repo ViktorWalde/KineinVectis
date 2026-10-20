@@ -36,11 +36,9 @@ Item {
             root.embeddedController.handleSerialPorts(ports, hint);
         }
 
-        // A aba do monitor e' uma sessao de terminal como outra: o painel de
-        // embarcados fecha para ela aparecer, com o comando como titulo.
+        // O monitor é uma aba de terminal; o dock continua disponível ao lado.
         function onSerialMonitorOpened(id, command, tool) {
-            root.embeddedController.close();
-            root.runtimeController.handleTerminalOpened(id, command, command);
+            root.runtimeController.handleTerminalOpened(id, command, qsTr("Monitor serial · %1").arg(tool));
         }
 
         // Os FILHOS do EmbeddedController (identity, flash, access, files)

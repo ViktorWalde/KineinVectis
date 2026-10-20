@@ -11,7 +11,7 @@
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use kinein_protocol::ProjectArtifacts;
+use kinein_protocol::{FlashRecipe, ProjectArtifacts};
 
 /// Quantos candidatos de cada tipo o modelo carrega. Cinco e' "os recentes".
 const MAXIMO_POR_TIPO: usize = 5;
@@ -30,7 +30,7 @@ pub fn artifacts(root: &Path) -> ProjectArtifacts {
     }
     vistos.sort_by_key(|v| std::cmp::Reverse(v.0));
     for (_, caminho, tipo) in vistos {
-        let texto = caminho.display().to_string();
+        let path_text = caminho.display().to_string();
         let lista = match tipo {
             Tipo::Elf => &mut art.elf,
             Tipo::Bin => &mut art.bin,
@@ -38,16 +38,22 @@ pub fn artifacts(root: &Path) -> ProjectArtifacts {
             Tipo::Uf2 => &mut art.uf2,
             Tipo::Map => &mut art.map,
             Tipo::FlasherArgs => {
-                art.flasher_args.get_or_insert(texto);
+                art.flasher_args.get_or_insert_with(|| path_text.clone());
+                if art.flash_recipe.is_none()
+                    && let Some(recipe) = complete_flash_recipe(&caminho)
+                {
+                    art.flasher_args = Some(path_text);
+                    art.flash_recipe = Some(recipe);
+                }
                 continue;
             }
             Tipo::PartitionTable => {
-                art.partition_table.get_or_insert(texto);
+                art.partition_table.get_or_insert(path_text);
                 continue;
             }
         };
         if lista.len() < MAXIMO_POR_TIPO {
-            lista.push(texto);
+            lista.push(path_text);
         }
     }
 
@@ -65,14 +71,7 @@ pub fn artifacts(root: &Path) -> ProjectArtifacts {
     }
     art.linker_scripts = linker_scripts(root);
 
-    // ESP-IDF: o que estava so' LOCALIZADO passa a ser LIDO (segunda fatia do
-    // pilar 0). A receita resolve caminhos contra a pasta do proprio JSON.
-    art.flash_recipe = art.flasher_args.as_deref().and_then(|caminho| {
-        let caminho = Path::new(caminho);
-        let json = std::fs::read_to_string(caminho).ok()?;
-        super::esp::flash_recipe(&json, caminho.parent().unwrap_or(root))
-    });
-    art.partitions = art
+    let partition_csv = art
         .partition_table
         .as_deref()
         .filter(|p| {
@@ -80,9 +79,28 @@ pub fn artifacts(root: &Path) -> ProjectArtifacts {
                 .extension()
                 .is_some_and(|e| e.eq_ignore_ascii_case("csv"))
         })
+        .map(PathBuf::from)
+        .or_else(|| {
+            let csv = root.join("partitions.csv");
+            csv.is_file().then_some(csv)
+        });
+    art.partitions = partition_csv
         .and_then(|p| std::fs::read_to_string(p).ok())
         .map(|csv| super::esp::partition_table(&csv, super::esp::TABLE_OFFSET_PADRAO));
     art
+}
+
+// Configure também produz JSON; só um build com todas as imagens é gravável.
+// A ordem já é a dos mais recentes. A receita incompleta continua localizada
+// em flasher_args, mas não alimenta uma proposta de gravação.
+fn complete_flash_recipe(path: &Path) -> Option<FlashRecipe> {
+    let json = std::fs::read_to_string(path).ok()?;
+    let recipe = super::esp::flash_recipe(&json, path.parent()?)?;
+    (!recipe.files.is_empty()
+        && recipe.files.iter().all(|image| {
+            std::fs::metadata(&image.file).is_ok_and(|meta| meta.is_file() && meta.len() > 0)
+        }))
+    .then_some(recipe)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -212,4 +230,56 @@ fn linker_scripts(root: &Path) -> Vec<String> {
     }
     achados.sort();
     achados
+}
+
+#[cfg(test)]
+mod tests {
+    use super::artifacts;
+    use std::fs::{self, File, FileTimes};
+    use std::time::{Duration, SystemTime};
+
+    #[test]
+    fn complete_build_wins_over_newer_configure_and_missing_images_are_not_flashable() {
+        let root =
+            std::env::temp_dir().join(format!("kinein-flash-artifacts-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let build = root.join("build");
+        let configure = root.join(".kinein/build");
+        fs::create_dir_all(&build).unwrap();
+        fs::create_dir_all(&configure).unwrap();
+        let json = r#"{"flash_files":{"0x10000":"app.bin"}}"#;
+        let old = build.join("flasher_args.json");
+        let new = configure.join("flasher_args.json");
+        fs::write(&old, json).unwrap();
+        fs::write(&new, json).unwrap();
+        for (file, seconds) in [(&old, 1), (&new, 2)] {
+            File::options()
+                .write(true)
+                .open(file)
+                .unwrap()
+                .set_times(
+                    FileTimes::new()
+                        .set_modified(SystemTime::UNIX_EPOCH + Duration::from_secs(seconds)),
+                )
+                .unwrap();
+        }
+        assert!(artifacts(&root).flash_recipe.is_none());
+        fs::write(build.join("app.bin"), b"compiled image").unwrap();
+        let ready = artifacts(&root);
+        assert_eq!(ready.flasher_args.as_deref(), old.to_str());
+        assert_eq!(
+            ready.flash_recipe.unwrap().files[0].file,
+            build.join("app.bin").display().to_string()
+        );
+        fs::write(configure.join("app.bin"), b"").unwrap();
+        assert_eq!(artifacts(&root).flasher_args.as_deref(), old.to_str());
+        fs::write(configure.join("app.bin"), b"new compiled image").unwrap();
+        assert_eq!(artifacts(&root).flasher_args.as_deref(), new.to_str());
+        fs::remove_file(configure.join("app.bin")).unwrap();
+        fs::remove_file(build.join("app.bin")).unwrap();
+        let incomplete = artifacts(&root);
+        assert!(incomplete.flash_recipe.is_none());
+        assert_eq!(incomplete.flasher_args.as_deref(), new.to_str());
+        fs::remove_dir_all(root).unwrap();
+    }
 }

@@ -60,5 +60,11 @@ de partições — porque a "flash" de um ESP32 não é o `.ld`, é a partição
 `app`, e é ela que o tamanho e o "Gravar" vão consumir. Linha de CSV que não
 se lê vai em `unreadable`, nunca some.
 
+Correção da bancada ESP32 (2026-10-20, sem mudança de formato): entre receitas
+de build, `flashRecipe` usa a mais recente cujas imagens existem e não estão
+vazias. Um configure incompleto mais recente não substitui o build pronto.
+Sem receita completa, `flasherArgs` ainda localiza o JSON para inspeção, mas
+`flashRecipe` fica ausente e a gravação direta pede compilar primeiro.
+
 **Fixtures reais e mínimas** de cada framework moram em
 `scripts/fixtures/projetos/`; são elas que os testes leem.

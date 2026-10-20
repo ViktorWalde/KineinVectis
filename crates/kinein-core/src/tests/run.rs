@@ -71,10 +71,10 @@ fn run_start_executes_command_and_emits_events() {
     assert_eq!(result["command"], "echo executado");
     let terminal_id = result["terminalId"].as_str().unwrap().to_owned();
 
-    let (linhas, saida) =
+    let (linhas, exit_code) =
         terminal_run_until_closed(&receiver, &terminal_id, Duration::from_secs(10));
     assert!(linhas.iter().any(|l| l.contains("executado")), "{linhas:?}");
-    assert_eq!(saida, Some(0));
+    assert_eq!(exit_code, Some(0));
 
     // Terminou sozinho: nao ha' mais o que parar — mas a sessao ainda e' a
     // ultima aberta, e fecha-la de novo nao e' erro do autor.
@@ -117,13 +117,13 @@ fn run_script_confines_path_and_bypasses_shell_interpolation() {
     assert_eq!(result["command"], "bash -- 'scripts/check it'\\''s.sh'");
     let terminal_id = result["terminalId"].as_str().unwrap().to_owned();
 
-    let (linhas, saida) =
+    let (linhas, exit_code) =
         terminal_run_until_closed(&receiver, &terminal_id, Duration::from_secs(10));
     assert!(
         linhas.iter().any(|l| l.contains("script seguro")),
         "{linhas:?}"
     );
-    assert_eq!(saida, Some(0));
+    assert_eq!(exit_code, Some(0));
 
     let unsupported = core.handle_request(&JsonRpcRequest::new(
         49_i64,
@@ -151,7 +151,7 @@ fn python_run_workspace(nome: &str) -> std::path::PathBuf {
     crate::platform::canonicalize(&dir).unwrap()
 }
 
-fn executavel(caminho: &std::path::Path, corpo: &str) {
+fn executable(caminho: &std::path::Path, corpo: &str) {
     std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
     crate::write_executable(caminho, corpo);
 }
@@ -159,9 +159,7 @@ fn executavel(caminho: &std::path::Path, corpo: &str) {
 /// Um core com jobs cuja busca de ferramentas e' SO' `dir/bin`, com `dir`
 /// aberto e o indice terminado (o indice mede a versao do Python — o que os
 /// testes provam depois e' o que EXECUTAR faz, sem esse ruido).
-fn core_aberto_em(
-    dir: &std::path::Path,
-) -> (crate::Core, std::sync::mpsc::Receiver<JsonRpcRequest>) {
+fn open_core(dir: &std::path::Path) -> (crate::Core, std::sync::mpsc::Receiver<JsonRpcRequest>) {
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
         dir.join("bin"),
@@ -185,7 +183,7 @@ fn core_aberto_em(
 }
 
 /// As linhas que a execucao mostrou ate' fechar com sucesso.
-fn saida_ate_terminar(
+fn run_output(
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
     resposta: &kinein_protocol::JsonRpcResponse,
 ) -> Vec<String> {
@@ -218,7 +216,7 @@ fn run_script(core: &mut crate::Core, path: &std::path::Path) -> kinein_protocol
 )]
 fn python_without_an_interpreter_says_what_to_do() {
     let dir = python_run_workspace("sem-interpretador");
-    let (mut core, _receiver) = core_aberto_em(&dir);
+    let (mut core, _receiver) = open_core(&dir);
     let erro = run_script(&mut core, &dir.join("tools/gera.py"))
         .error
         .unwrap();
@@ -250,14 +248,14 @@ fn python_without_an_interpreter_says_what_to_do() {
 fn python_files_run_with_the_project_interpreter() {
     let dir = python_run_workspace("venv");
     let chamadas = dir.join("chamadas.txt");
-    executavel(
+    executable(
         &dir.join(".venv/bin/python"),
         &format!(
             "#!/bin/sh\necho \"$*\" >> {}\necho \"python-do-venv $*\"\npwd\n",
             chamadas.display()
         ),
     );
-    let (mut core, receiver) = core_aberto_em(&dir);
+    let (mut core, receiver) = open_core(&dir);
     std::fs::write(&chamadas, "").unwrap();
 
     let started = run_script(&mut core, &dir.join("tools/gera.py"));
@@ -265,7 +263,7 @@ fn python_files_run_with_the_project_interpreter() {
         started.result.as_ref().unwrap()["command"],
         ".venv/bin/python 'tools/gera.py'"
     );
-    let linhas = saida_ate_terminar(&receiver, &started);
+    let linhas = run_output(&receiver, &started);
     assert_eq!(
         linhas[0],
         format!("python-do-venv {}", dir.join("tools/gera.py").display())
@@ -277,7 +275,7 @@ fn python_files_run_with_the_project_interpreter() {
         padrao.response().result.as_ref().unwrap()["command"],
         format!("'{}' 'main.py'", dir.join(".venv/bin/python").display())
     );
-    let linhas = saida_ate_terminar(&receiver, padrao.response());
+    let linhas = run_output(&receiver, padrao.response());
     assert_eq!(linhas[0], "python-do-venv main.py");
     let registro = std::fs::read_to_string(&chamadas).unwrap();
     assert!(
@@ -295,20 +293,20 @@ fn python_files_run_with_the_project_interpreter() {
 )]
 fn python_projects_of_uv_run_through_uv() {
     let dir = python_run_workspace("uv");
-    executavel(
+    executable(
         &dir.join(".venv/bin/python"),
         "#!/bin/sh\necho nao-deveria\n",
     );
     std::fs::write(dir.join("uv.lock"), "").unwrap();
-    executavel(&dir.join("bin/uv"), "#!/bin/sh\necho \"uv-falso $*\"\n");
-    let (mut core, receiver) = core_aberto_em(&dir);
+    executable(&dir.join("bin/uv"), "#!/bin/sh\necho \"uv-falso $*\"\n");
+    let (mut core, receiver) = open_core(&dir);
 
     let started = run_script(&mut core, &dir.join("tools/gera.py"));
     assert_eq!(
         started.result.as_ref().unwrap()["command"],
         "uv run python 'tools/gera.py'"
     );
-    let linhas = saida_ate_terminar(&receiver, &started);
+    let linhas = run_output(&receiver, &started);
     assert_eq!(
         linhas[0],
         format!(
@@ -320,9 +318,12 @@ fn python_projects_of_uv_run_through_uv() {
     let padrao = core.handle_request(&JsonRpcRequest::new(66_i64, "run.start", None));
     assert_eq!(
         padrao.response().result.as_ref().unwrap()["command"],
-        format!("'{}' run python 'main.py'", dir.join("bin/uv").display())
+        format!(
+            "'{}' 'run' 'python' 'main.py'",
+            dir.join("bin/uv").display()
+        )
     );
-    let linhas = saida_ate_terminar(&receiver, padrao.response());
+    let linhas = run_output(&receiver, padrao.response());
     assert_eq!(linhas[0], "uv-falso run python main.py");
 }
 
@@ -348,13 +349,13 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     std::fs::write(dir.join("util.py"), "def f():\n    pass\n").unwrap();
     let dir = crate::platform::canonicalize(&dir).unwrap();
     // Um interpretador do host EXISTE — e nao e' usado: a placa e' o alvo.
-    executavel(
+    executable(
         &dir.join(".venv/bin/python"),
         "#!/bin/sh\necho NAO-DEVERIA\n",
     );
 
     // Sem mpremote: erro que orienta (e o host nao roda o script).
-    let (mut core, _receiver) = core_aberto_em(&dir);
+    let (mut core, _receiver) = open_core(&dir);
     let erro = run_script(&mut core, &dir.join("main.py")).error.unwrap();
     assert!(
         erro.message.contains("MicroPython") && erro.message.contains("pipx install mpremote"),
@@ -369,17 +370,17 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     assert!(erro.message.contains("mpremote"), "{erro:?}");
 
     // Com mpremote: `run <arquivo>` (auto-porta) e `connect <porta> run`.
-    executavel(
+    executable(
         &dir.join("bin/mpremote"),
         "#!/bin/sh\necho \"mpremote-falso $*\"\n",
     );
-    let (mut core, receiver) = core_aberto_em(&dir);
+    let (mut core, receiver) = open_core(&dir);
     let started = run_script(&mut core, &dir.join("util.py"));
     assert_eq!(
         started.result.as_ref().unwrap()["command"],
         "mpremote run 'util.py'"
     );
-    let linhas = saida_ate_terminar(&receiver, &started);
+    let linhas = run_output(&receiver, &started);
     assert_eq!(
         linhas[0],
         format!("mpremote-falso run {}", dir.join("util.py").display())
@@ -399,7 +400,7 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
         com_porta.result.as_ref().unwrap()["command"],
         "mpremote connect /dev/ttyUSB9 run 'util.py'"
     );
-    let linhas = saida_ate_terminar(&receiver, &com_porta);
+    let linhas = run_output(&receiver, &com_porta);
     assert_eq!(
         linhas[0],
         format!(
@@ -412,9 +413,9 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     let padrao = core.handle_request(&JsonRpcRequest::new(72_i64, "run.start", None));
     assert_eq!(
         padrao.response().result.as_ref().unwrap()["command"],
-        format!("'{}' run 'main.py'", dir.join("bin/mpremote").display())
+        format!("'{}' 'run' 'main.py'", dir.join("bin/mpremote").display())
     );
-    let linhas = saida_ate_terminar(&receiver, padrao.response());
+    let linhas = run_output(&receiver, padrao.response());
     assert_eq!(linhas[0], "mpremote-falso run main.py");
 
     // O botao Executar COM a porta escolhida na tela (0.110.0): o mesmo
@@ -427,12 +428,30 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     assert_eq!(
         padrao_com_porta.response().result.as_ref().unwrap()["command"],
         format!(
-            "'{}' connect /dev/ttyACM3 run 'main.py'",
+            "'{}' 'connect' '/dev/ttyACM3' 'run' 'main.py'",
             dir.join("bin/mpremote").display()
         )
     );
-    let linhas = saida_ate_terminar(&receiver, padrao_com_porta.response());
+    let linhas = run_output(&receiver, padrao_com_porta.response());
     assert_eq!(linhas[0], "mpremote-falso connect /dev/ttyACM3 run main.py");
+
+    // Os dois caminhos precisam conservar a porta como um argumento.
+    executable(
+        &dir.join("bin/mpremote"),
+        "#!/bin/sh\nprintf '%s\\n' \"$@\"\n",
+    );
+    let (mut core, receiver) = open_core(&dir);
+    for device in ["/dev/serial/my board", "/dev/serial/board's adapter"] {
+        let started = core.handle_request(&JsonRpcRequest::new(
+            74_i64,
+            "run.start",
+            Some(json!({ "device": device })),
+        ));
+        assert_eq!(
+            run_output(&receiver, started.response()),
+            vec!["connect", device, "run", "main.py"]
+        );
+    }
 }
 
 /// A porta e' parametro do LANCADOR PADRAO: com `command` explicito e'
@@ -452,11 +471,11 @@ fn run_device_is_exclusive_with_command_and_never_blank() {
     std::fs::create_dir_all(dir.join("bin")).unwrap();
     std::fs::write(dir.join("main.py"), "import machine\n").unwrap();
     let dir = crate::platform::canonicalize(&dir).unwrap();
-    executavel(
+    executable(
         &dir.join("bin/mpremote"),
         "#!/bin/sh\necho \"mpremote-falso $*\"\n",
     );
-    let (mut core, receiver) = core_aberto_em(&dir);
+    let (mut core, receiver) = open_core(&dir);
 
     let contradicao = core
         .handle_request(&JsonRpcRequest::new(

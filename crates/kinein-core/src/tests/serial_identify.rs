@@ -22,11 +22,11 @@ const SAIDA_V5: &str = "esptool v5.4.0\nConnected to ESP32-C3 on $PORTA:\nChip t
 struct Cenario {
     core: crate::Core,
     dir: PathBuf,
-    porta: PathBuf,
+    port: PathBuf,
     events: mpsc::Receiver<JsonRpcRequest>,
 }
 
-fn cenario(nome: &str) -> Cenario {
+fn scenario(nome: &str) -> Cenario {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-serial-identify-{nome}", std::process::id()));
@@ -46,7 +46,7 @@ fn cenario(nome: &str) -> Cenario {
     Cenario {
         core,
         dir,
-        porta,
+        port: porta,
         events: receiver,
     }
 }
@@ -56,7 +56,7 @@ fn executavel(caminho: &Path, corpo: &str) {
 }
 
 impl Cenario {
-    fn esptool_falso(&self, corpo: &str) {
+    fn fake_esptool(&self, corpo: &str) {
         executavel(&self.dir.join("bin/esptool"), corpo);
     }
 
@@ -80,6 +80,52 @@ impl Cenario {
     }
 }
 
+// A mesma v5 simulada falha por stub ou por conexão: somente o primeiro
+// caso permite uma nova tentativa ROM, dentro do pedido explícito original.
+fn check_rom_retry() {
+    for (name, error, expected_calls) in [
+        (
+            "stub-recovery",
+            "Failed to start stub flasher. There was no response.",
+            2,
+        ),
+        (
+            "connection-failure",
+            "Failed to connect: no serial data received.",
+            1,
+        ),
+    ] {
+        let mut scenario = scenario(name);
+        let calls_file = scenario.dir.join("calls.txt");
+        scenario.fake_esptool(&format!(
+            "#!/bin/sh\nprintf '%s\\n' \"$*\" >> '{}'\n\
+             case \" $* \" in\n\
+             *' --no-stub '*) echo 'Chip type: ESP32-D0WD-V3 (revision v3.1)'; \
+             echo 'Detected flash size: 4MB' ;;\n\
+             *) echo '{error}' >&2; exit 2 ;;\n\
+             esac\n",
+            calls_file.display()
+        ));
+        assert!(
+            scenario
+                .identify(json!({ "device": scenario.port.display().to_string() }))
+                .error
+                .is_none()
+        );
+        let event = scenario.identified();
+        let calls = std::fs::read_to_string(calls_file).unwrap();
+        assert_eq!(calls.lines().count(), expected_calls, "{event}");
+        assert_eq!(event["success"], expected_calls == 2, "{event}");
+        let command = event["command"].as_str().unwrap();
+        assert_eq!(command.contains("--no-stub"), expected_calls == 2);
+        if expected_calls == 2 {
+            assert!(command.contains("--baud 115200"));
+            assert_eq!(event["identity"]["chip"], "esp32");
+            assert_eq!(event["identity"]["flashSizeBytes"], 4_194_304);
+        }
+    }
+}
+
 /// O caminho feliz: comando com a porta e o `--after hard-reset`, parser
 /// sobre a v5, sugestao de kit pela tabela do project.model, job com sucesso.
 #[test]
@@ -89,12 +135,12 @@ impl Cenario {
 )]
 fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("v5");
-    c.esptool_falso(&format!(
+    let mut c = scenario("v5");
+    c.fake_esptool(&format!(
         "#!/bin/sh\necho \"argv: $*\"\nprintf '%s' '{}'\n",
         SAIDA_V5.replace("$PORTA", "/dev/x")
     ));
-    let porta = c.porta.display().to_string();
+    let porta = c.port.display().to_string();
     let resposta = c.identify(json!({ "device": porta }));
     let resultado = resposta.result.expect("aceita");
     assert!(resultado["jobId"].as_str().unwrap().starts_with("job_"));
@@ -135,6 +181,7 @@ fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
             .contains("esptool flash-id"),
         "{alvo}"
     );
+    check_rom_retry();
 }
 
 /// Uma v4 nao conhece `flash-id`: o job cai para `flash_id` e o comando
@@ -146,13 +193,13 @@ fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
 )]
 fn a_v4_esptool_gets_the_underscore_command_on_retry() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("v4");
-    c.esptool_falso(
+    let mut c = scenario("v4");
+    c.fake_esptool(
         "#!/bin/sh\ncase \"$*\" in\n  *flash-id) echo \"esptool.py: error: argument operation: \
          invalid choice: 'flash-id'\" >&2; exit 2 ;;\n  *flash_id) echo 'Chip type:          \
          ESP32-D0WD-V3 (revision v3.1)'; echo 'Detected flash size: Unknown' ;;\nesac\n",
     );
-    let porta = c.porta.display().to_string();
+    let porta = c.port.display().to_string();
     assert!(c.identify(json!({ "device": porta })).error.is_none());
     let evento = c.identified();
     assert_eq!(evento["success"], true, "{evento}");
@@ -179,14 +226,14 @@ fn a_v4_esptool_gets_the_underscore_command_on_retry() {
 )]
 fn refusals_happen_before_the_port_is_opened() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("recusas");
-    let porta = c.porta.display().to_string();
+    let mut c = scenario("recusas");
+    let porta = c.port.display().to_string();
 
     let sem_ferramenta = c.identify(json!({ "device": porta })).error.unwrap();
     assert_eq!(sem_ferramenta.code, JsonRpcErrorCode::ToolNotFound);
     assert!(sem_ferramenta.message.contains("pipx install esptool"));
 
-    c.esptool_falso("#!/bin/sh\necho nunca\n");
+    c.fake_esptool("#!/bin/sh\necho nunca\n");
     let inexistente = c
         .identify(json!({ "device": c.dir.join("ttyNAO").display().to_string() }))
         .error
@@ -209,7 +256,7 @@ fn refusals_happen_before_the_port_is_opened() {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o444)).unwrap();
+        std::fs::set_permissions(&c.port, std::fs::Permissions::from_mode(0o444)).unwrap();
         if rustix::process::geteuid().is_root() {
             eprintln!("rodando como root: a prova de permissao nao vale");
         } else {
@@ -218,7 +265,7 @@ fn refusals_happen_before_the_port_is_opened() {
             assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
             assert!(erro.message.contains("r--r--r--"), "{erro:?}");
         }
-        std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o644)).unwrap();
+        std::fs::set_permissions(&c.port, std::fs::Permissions::from_mode(0o644)).unwrap();
     }
 
     // Nenhum job foi criado por nenhuma recusa.
@@ -241,12 +288,12 @@ fn refusals_happen_before_the_port_is_opened() {
 )]
 fn a_failing_esptool_reports_its_last_lines() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("falha");
-    c.esptool_falso(
+    let mut c = scenario("falha");
+    c.fake_esptool(
         "#!/bin/sh\necho 'Connecting......'\necho 'A fatal error occurred: Failed to connect \
          to Espressif device: No serial data received.' >&2\nexit 2\n",
     );
-    let porta = c.porta.display().to_string();
+    let porta = c.port.display().to_string();
     assert!(c.identify(json!({ "device": porta })).error.is_none());
     let evento = c.identified();
     assert_eq!(evento["success"], false);
@@ -270,9 +317,9 @@ fn a_failing_esptool_reports_its_last_lines() {
 )]
 fn cancelling_the_job_kills_esptool() {
     let _serial = crate::serialize_executables();
-    let mut c = cenario("cancela");
-    c.esptool_falso("#!/bin/sh\necho 'Connecting......'\nexec sleep 30\n");
-    let porta = c.porta.display().to_string();
+    let mut c = scenario("cancela");
+    c.fake_esptool("#!/bin/sh\necho 'Connecting......'\nexec sleep 30\n");
+    let porta = c.port.display().to_string();
     let job_id = c.identify(json!({ "device": porta })).result.unwrap()["jobId"]
         .as_str()
         .unwrap()

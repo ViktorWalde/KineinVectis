@@ -2,219 +2,186 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O painel de embarcados em ABAS (Etapa 3, E3-5 — roadmaps/44 §4): o
-// cabecalho comum com o veredito da placa, e quatro abas que cabem sem
-// rolar a 800 px — Placa (portas, sonda, identidade, permissoes, arquivos
-// na placa) · Projeto (framework, modelo, tamanho) · Gravar (motor,
-// previa, firmware) · Kit (chip/alvo/sysroot/SVD, depurador, instalar,
-// importar). Antes eram nove secoes numa coluna que passava da janela.
-//
-// Burro de proposito: recebe estado e emite pedidos. A sonda e a placa vem
-// do EmbeddedController; chip, alvo, sysroot e depurador sao KIT e vem do
-// ToolchainController. Nada roda como root.
+// Janela integrada: navegação fixa, uma área de conteúdo rolável por aba.
 Item {
     id: root
 
     property var controller: null
     property var toolchainController: null
-
+    property string expandedRole: ""
+    property bool advancedKitVisible: false
     readonly property string preset: root.toolchainController && root.toolchainController.preset !== ""
-                                    ? root.toolchainController.preset : qsTr("padrão")
-    readonly property string tab: root.controller ? root.controller.tab : "board"
-
+                                     ? root.toolchainController.preset : qsTr("padrão")
+    readonly property string tab: root.controller ? root.controller.tab : "project"
     signal closeRequested()
 
-    implicitHeight: cabecalho.implicitHeight + abas.height + conteudo.implicitHeight
-                    + rodape.height + 3 * Theme.spacingSmall
+    onTabChanged: body.contentY = 0
 
     KvPanelHeader {
-        id: cabecalho
-
+        id: header
         anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
+        width: parent.width
         title: qsTr("Embarcados")
         subtitle: root.controller ? root.controller.boardVerdict : ""
-        primaryLabel: qsTr("Procurar sonda e portas")
+        primaryLabel: qsTr("Atualizar")
         primaryIcon: "refresh"
+        primaryAccent: false
         primaryEnabled: root.controller !== null
         primaryBusy: root.controller !== null && root.controller.busy
         onPrimaryRequested: root.controller.refresh()
         onCloseRequested: root.closeRequested()
     }
 
-    // As quatro abas.
-    Row {
-        id: abas
+    KvSegmentedControl {
+        id: navigation
+        objectName: "embeddedNavigation"
+        anchors.top: header.bottom
+        anchors.topMargin: Theme.spacingMedium
+        width: parent.width
+        current: root.tab
+        options: [
+            { value: "project", label: qsTr("Visão geral") },
+            { value: "board", label: qsTr("Placa") },
+            { value: "flash", label: qsTr("Gravar") },
+            { value: "kit", label: qsTr("Ambiente") }
+        ]
+        onSelected: value => root.controller.tab = value
+    }
 
-        anchors.top: cabecalho.bottom
-        anchors.topMargin: Theme.spacingSmall
-        anchors.left: parent.left
-        height: 24
-        spacing: Theme.spacingXSmall
+    Flickable {
+        id: body
+        objectName: "embeddedBody"
+        anchors.top: navigation.bottom
+        anchors.topMargin: Theme.spacingMedium
+        anchors.bottom: footer.top
+        anchors.bottomMargin: Theme.spacingSmall
+        width: parent.width
+        contentWidth: width
+        contentHeight: content.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
-        Repeater {
-            model: [
-                { key: "board", label: qsTr("Placa") },
-                { key: "project", label: qsTr("Projeto") },
-                { key: "flash", label: qsTr("Gravar") },
-                { key: "kit", label: qsTr("Kit") }
-            ]
+        Column {
+            id: content
+            width: body.width - Theme.spacingSmall
+            spacing: Theme.spacingMedium
 
-            KvToggleChip {
-                id: aba
-
-                required property var modelData
-
-                // O delegate nasce sem `parent` por um instante (painel criado por
-                // `createObject`, ver ShellEnvironmentOverlays): sem a guarda, TypeError.
-                anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-                labelText: aba.modelData.label
-                active: root.tab === aba.modelData.key
-                onToggled: root.controller.tab = aba.modelData.key
+            KvVerdict {
+                width: parent.width
+                message: root.controller ? root.controller.errorText : ""
             }
-        }
-    }
 
-    Text {
-        id: erro
+            EmbeddedOverviewView {
+                width: parent.width
+                visible: root.tab === "project"
+                controller: root.controller
+            }
 
-        anchors.top: abas.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: visible ? implicitHeight : 0
-        wrapMode: Text.WordWrap
-        visible: text !== ""
-        text: root.controller ? root.controller.errorText : ""
-        color: Theme.errorSoft
-        font.pixelSize: Theme.fontSizeCaption
-    }
-
-    Item {
-        id: conteudo
-
-        anchors.top: erro.bottom
-        anchors.topMargin: Theme.spacingSmall
-        anchors.left: parent.left
-        anchors.right: parent.right
-        implicitHeight: Math.max(placa.visible ? placa.implicitHeight : 0,
-                                 projeto.visible ? projeto.implicitHeight : 0,
-                                 gravar.visible ? gravar.implicitHeight : 0,
-                                 kit.visible ? kit.implicitHeight : 0)
-
-        // --- Placa: o que esta' no USB e o que ela e' -----------------------
-        Column {
-            id: placa
-
-            width: parent.width
-            visible: root.tab === "board"
-            spacing: Theme.spacingSmall
-
-            EmbeddedSerialView { width: parent.width; controller: root.controller }
-            EmbeddedIdentityView { width: parent.width; controller: root.controller }
-            EmbeddedAccessView { width: parent.width; controller: root.controller }
-            EmbeddedProbeView { width: parent.width; controller: root.controller }
-            EmbeddedFilesView { width: parent.width; controller: root.controller }
-        }
-
-        // --- Projeto: o modelo e o tamanho do binario -----------------------
-        Column {
-            id: projeto
-
-            width: parent.width
-            visible: root.tab === "project"
-            spacing: Theme.spacingSmall
-
-            EmbeddedProjectView { width: parent.width; controller: root.controller }
-            EmbeddedSizeView { width: parent.width; controller: root.controller }
-        }
-
-        // --- Gravar: o motor, a previa e o firmware -------------------------
-        Column {
-            id: gravar
-
-            width: parent.width
-            visible: root.tab === "flash"
-            spacing: Theme.spacingSmall
+            Column {
+                width: parent.width
+                visible: root.tab === "board"
+                spacing: Theme.spacingMedium
+                EmbeddedSerialView { width: parent.width; controller: root.controller }
+                EmbeddedIdentityView { width: parent.width; controller: root.controller }
+                EmbeddedAccessView { width: parent.width; controller: root.controller }
+                EmbeddedFilesView { width: parent.width; controller: root.controller }
+            }
 
             EmbeddedFlashView {
                 width: parent.width
+                visible: root.tab === "flash"
                 controller: root.controller
                 firmwares: root.toolchainController ? root.toolchainController.installedFirmwares() : []
             }
-        }
 
-        // --- Kit: o alvo, o depurador, instalar e importar ------------------
-        Column {
-            id: kit
-
-            width: parent.width
-            visible: root.tab === "kit"
-            spacing: Theme.spacingSmall
-
-            EmbeddedKitView {
-                id: kitView
-
+            Column {
                 width: parent.width
-                preset: root.preset
-                toolchainController: root.toolchainController
-            }
+                visible: root.tab === "kit"
+                spacing: Theme.spacingMedium
+                Repeater {
+                    model: root.toolchainController ? [
+                        { key: "cCompiler", label: qsTr("Compilador C") },
+                        { key: "cxxCompiler", label: qsTr("Compilador C++") },
+                        { key: "serialMonitor", label: qsTr("Monitor serial") }
+                    ] : []
+                    ToolchainRoleRow {
+                        required property var modelData
+                        width: parent.width
+                        controller: root.toolchainController
+                        roleKey: modelData.key
+                        roleLabel: modelData.label
+                        expanded: root.expandedRole === modelData.key
+                        onToggleRequested: root.expandedRole = expanded ? "" : modelData.key
+                    }
+                }
+                EmbeddedKitView {
+                    id: kitView
 
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                visible: text !== ""
-                text: root.toolchainController ? root.toolchainController.errorText : ""
-                color: Theme.errorSoft
-                font.pixelSize: Theme.fontSizeCaption
-            }
+                    width: parent.width
+                    preset: root.preset
+                    toolchainController: root.toolchainController
+                    advancedVisible: root.advancedKitVisible
+                    onAdvancedToggleRequested: root.advancedKitVisible = !root.advancedKitVisible
+                }
 
-            // O que o kit ainda nao tem, dito com o remedio (integracoes/39).
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                visible: text !== ""
-                text: root.toolchainController ? root.toolchainController.sysrootHint : ""
-                color: Theme.warningSoft
-                font.pixelSize: Theme.fontSizeCaption
-            }
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    visible: text !== ""
+                    text: root.toolchainController ? root.toolchainController.errorText : ""
+                    color: Theme.errorSoft
+                    font.pixelSize: Theme.fontSizeCaption
+                }
 
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                visible: text !== ""
-                text: root.toolchainController ? root.toolchainController.rustTargetHint() : ""
-                color: Theme.warningSoft
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeCaption
-            }
+                // O que o kit ainda nao tem, dito com o remedio (integracoes/39).
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    visible: text !== ""
+                    text: root.toolchainController ? root.toolchainController.sysrootHint : ""
+                    color: Theme.warningSoft
+                    font.pixelSize: Theme.fontSizeCaption
+                }
 
-            EmbeddedAdapterView { width: parent.width; toolchainController: root.toolchainController }
-            EmbeddedInstallView { width: parent.width; toolchainController: root.toolchainController }
-            EmbeddedKitImportView { width: parent.width; toolchainController: root.toolchainController }
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    visible: text !== ""
+                    text: root.toolchainController ? root.toolchainController.rustTargetHint() : ""
+                    color: Theme.warningSoft
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fontSizeCaption
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingMedium
+                    visible: root.advancedKitVisible
+                    EmbeddedProbeView { width: parent.width; controller: root.controller }
+                    EmbeddedAdapterView { width: parent.width; toolchainController: root.toolchainController }
+                    EmbeddedInstallView { width: parent.width; toolchainController: root.toolchainController }
+                    EmbeddedKitImportView { width: parent.width; toolchainController: root.toolchainController }
+                }
+            }
         }
     }
 
-    // O rodape so' da aba Kit: aplicar os campos.
-    Row {
-        id: rodape
+    FlickableScrollBar { view: body }
 
-        anchors.top: conteudo.bottom
-        anchors.topMargin: Theme.spacingSmall
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: visible ? 28 : 0
+    Item {
+        id: footer
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: visible ? applyButton.implicitHeight : 0
         visible: root.tab === "kit"
-        spacing: Theme.spacingSmall
-        layoutDirection: Qt.RightToLeft
 
         KvButton {
-            text: qsTr("Aplicar ao kit")
+            id: applyButton
+            anchors.right: parent.right
+            text: qsTr("Salvar kit")
             primary: true
             compact: true
             enabled: root.toolchainController !== null
-            // Os campos viajam juntos: string vazia LIMPA no core, e e' isso
-            // que a tela mostra — campo vazio e' kit sem aquele valor.
             onClicked: root.toolchainController.applyKit(kitView.sysroot, kitView.targetTriple,
                                                          kitView.chip, undefined, kitView.svdFile)
         }

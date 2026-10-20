@@ -2,198 +2,169 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// As portas seriais USB: o canal que TODA placa compartilha (integracoes/38
-// §2). Dono proprio pela mesma regra do EmbeddedSizeView: o painel ja' esta'
-// no limite, e listar portas e' outra responsabilidade que sonda/kit/depurador.
-//
-// Burro: le do controller. O que mostra, por porta: o no' e a identidade USB,
-// o que o VID:PID diz do ELO (nunca do chip atras de uma ponte), a permissao
-// MEDIDA pelo core com a dica quando falta, e o aviso do ModemManager quando
-// ele esta' vivo e a porta e' candidata.
-//
-// Desde 2026-09-17 a porta tambem se ESCOLHE (chip "Executar"): num projeto
-// MicroPython o Executar roda o .py na placa por `mpremote connect <porta>
-// run`, e sem escolha o mpremote pega a primeira que acha. A escolha e' do
-// controller; aqui so' se mostra e se pede.
+// Conexão e ações por dispositivo; as medidas e as operações pertencem ao core.
 Item {
     id: root
-
     property var controller: null
-
-    implicitHeight: coluna.implicitHeight
+    implicitHeight: content.implicitHeight
 
     Column {
-        id: coluna
+        id: content
+        width: parent.width
+        spacing: Theme.spacingMedium
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        spacing: Theme.spacingSmall
-
-        Row {
+        Item {
             width: parent.width
-            spacing: Theme.spacingSmall
-
+            height: permissions.implicitHeight
             Text {
+                anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Portas seriais")
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSizeSmall
-                font.bold: true
+                text: qsTr("Conexões seriais")
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontSizeLarge
+                font.weight: Font.DemiBold
             }
-
-            // E2: o que falta em cada canal (grupo/ACL, ModemManager, regra
-            // das sondas) e o passo oficial — medido, nunca suposto; nada
-            // roda sem o clique no passo.
             KvButton {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.controller && root.controller.access.busy ? qsTr("medindo…") : qsTr("Permissões")
+                id: permissions
+                anchors.right: parent.right
+                text: root.controller && root.controller.access.busy ? qsTr("Verificando…") : qsTr("Permissões")
                 compact: true
                 enabled: root.controller !== null && !root.controller.access.busy
                 onClicked: root.controller.access.diagnose("")
             }
         }
 
+        Text {
+            width: parent.width
+            text: qsTr("Selecione a porta para gravar. Identificar reinicia a placa; o monitor abre em uma aba de terminal.")
+            wrapMode: Text.WordWrap
+            color: Theme.textSecondary
+            font.pixelSize: Theme.fontSizeBody
+        }
+
         Repeater {
             model: root.controller ? root.controller.ports : []
-
-            Column {
-                id: linhaPorta
-
+            Rectangle {
+                id: portCard
                 required property var modelData
-                readonly property bool escolhida: root.controller.selectedPort === modelData.device
+                readonly property bool selected: root.controller.selectedPort === modelData.device
+                width: content.width
+                implicitHeight: portContent.implicitHeight + 2 * Theme.spacingMedium
+                radius: Theme.radiusLarge
+                color: Theme.surface1
+                border.width: 1
+                border.color: selected ? Theme.accentDim : Theme.borderSoft
 
-                width: coluna.width
-                spacing: Theme.spacingXSmall
-
-                Row {
-                    width: parent.width
+                Column {
+                    id: portContent
+                    x: Theme.spacingMedium
+                    y: Theme.spacingMedium
+                    width: parent.width - 2 * Theme.spacingMedium
                     spacing: Theme.spacingSmall
 
                     Text {
-                        width: parent.width - escolha.width - 2 * 26 - 3 * Theme.spacingSmall
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "● " + root.controller.portSummary(linhaPorta.modelData)
-                        // A escolhida veste o acento junto com o chip ativo:
-                        // dois sinais, como o KvToggleChip pede de si mesmo.
-                        color: linhaPorta.escolhida ? Theme.accent : Theme.textPrimary
+                        width: parent.width
+                        text: portCard.modelData.device
+                        color: portCard.selected ? Theme.accent : Theme.textPrimary
                         font.family: Theme.monoFont
-                        font.pixelSize: Theme.fontSizeSmall
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Font.DemiBold
                         elide: Text.ElideMiddle
                     }
-
-                    // A porta do Executar. Sem acesso nao se escolhe o que vai
-                    // falhar; a escolhida some da lista -> a escolha cai (controller).
-                    KvToggleChip {
-                        id: escolha
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        labelText: qsTr("Executar")
-                        active: linhaPorta.escolhida
-                        enabled: linhaPorta.modelData.access.readableWritable
-                        opacity: enabled ? 1.0 : 0.5
-                        tooltip: linhaPorta.escolhida
-                                 ? qsTr("Executar usa esta porta (mpremote connect %1 run); clique para desfazer").arg(linhaPorta.modelData.device)
-                                 : qsTr("Usar esta porta no Executar de um projeto MicroPython")
-                        onToggled: root.controller.selectPort(linhaPorta.modelData.device)
+                    Text {
+                        width: parent.width
+                        text: root.controller.portSummary(portCard.modelData)
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontSizeSmall
+                        wrapMode: Text.WrapAnywhere
+                    }
+                    Text {
+                        width: parent.width
+                        visible: text !== ""
+                        text: portCard.modelData.family || ""
+                        color: Theme.textMuted
+                        font.pixelSize: Theme.fontSizeCaption
+                        wrapMode: Text.WordWrap
                     }
 
-                    // Identificar PELO CANAL (E5): o esptool abre a porta e a
-                    // placa reseta — por isso e' um clique, nunca automatico.
-                    // Um pedido por vez (o esptool prende a porta).
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "search"
-                        tooltip: qsTr("Identificar o chip pelo esptool (flash-id): abre a porta e RESETA a placa")
-                        compact: true
-                        enabled: linhaPorta.modelData.access.readableWritable
-                                 && !root.controller.identity.busy
-                        onClicked: root.controller.identity.identify(linhaPorta.modelData.device)
+                    Flow {
+                        width: parent.width
+                        spacing: Theme.spacingSmall
+                        KvToggleChip {
+                            objectName: "embeddedSelectPort"
+                            labelText: portCard.selected ? qsTr("Porta selecionada") : qsTr("Selecionar porta")
+                            codeFont: false
+                            outlined: true
+                            height: 28
+                            active: portCard.selected
+                            enabled: portCard.modelData.access.readableWritable
+                            tooltip: qsTr("Usar esta porta para gravar e executar na placa")
+                            onToggled: root.controller.selectPort(portCard.modelData.device)
+                        }
+                        KvButton {
+                            objectName: "embeddedIdentify"
+                            text: qsTr("Identificar")
+                            iconName: "search"
+                            compact: true
+                            enabled: portCard.modelData.access.readableWritable && !root.controller.identity.busy
+                            tooltip: qsTr("Ler o chip pelo esptool; reinicia a placa")
+                            onClicked: root.controller.identity.identify(portCard.modelData.device)
+                        }
+                        KvButton {
+                            objectName: "embeddedMonitor"
+                            text: qsTr("Monitor serial")
+                            iconName: "terminal"
+                            compact: true
+                            enabled: portCard.modelData.access.readableWritable && !root.controller.identity.busy
+                            onClicked: root.controller.openMonitor(portCard.modelData.device)
+                        }
+                        KvButton {
+                            objectName: "embeddedFiles"
+                            text: qsTr("Arquivos na placa")
+                            iconName: "folder"
+                            compact: true
+                            visible: root.controller.projectMicroPython
+                            enabled: portCard.modelData.access.readableWritable && !root.controller.files.busy
+                            tooltip: qsTr("Acessar arquivos pelo mpremote; interrompe o programa da placa")
+                            onClicked: root.controller.files.list(portCard.modelData.device, "")
+                        }
                     }
-
-                    // Os arquivos na placa (C2): o mpremote entra no raw REPL
-                    // e interrompe o programa dela — clique, nunca automatico.
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "folder"
-                        tooltip: qsTr("Arquivos na placa (mpremote fs): interrompe o programa em execução")
-                        compact: true
-                        enabled: linhaPorta.modelData.access.readableWritable
-                                 && !root.controller.files.busy
-                        onClicked: root.controller.files.list(linhaPorta.modelData.device, "")
+                    Text {
+                        width: parent.width
+                        visible: !portCard.modelData.access.readableWritable
+                        text: qsTr("Sem acesso: %1").arg(portCard.modelData.access.hint || portCard.modelData.access.mode)
+                        color: Theme.errorSoft
+                        font.pixelSize: Theme.fontSizeCaption
+                        wrapMode: Text.WordWrap
                     }
-
-                    // O monitor abre numa aba de terminal com a ferramenta do
-                    // kit (tio/picocom/minicom/espflash). Sem acesso a porta,
-                    // nao se oferece o que vai falhar.
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "terminal"
-                        tooltip: qsTr("Monitor serial a 115200 (aba de terminal)")
-                        compact: true
-                        enabled: linhaPorta.modelData.access.readableWritable
-                        onClicked: root.controller.openMonitor(linhaPorta.modelData.device)
+                    Text {
+                        width: parent.width
+                        visible: root.controller.modemManagerWarns(portCard.modelData)
+                        text: qsTr("O ModemManager pode ocupar esta porta. Abra Permissões para verificar a configuração.")
+                        color: Theme.warningSoft
+                        font.pixelSize: Theme.fontSizeCaption
+                        wrapMode: Text.WordWrap
                     }
-                }
-
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: text !== ""
-                    text: linhaPorta.modelData.family !== undefined ? linhaPorta.modelData.family : ""
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                // A permissao e' o que o core MEDIU com access(2); a dica e' o
-                // passo oficial, nunca um `sudo` que a IDE rodaria.
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: !linhaPorta.modelData.access.readableWritable
-                    text: qsTr("sem acesso: %1").arg(
-                              linhaPorta.modelData.access.hint !== undefined
-                              ? linhaPorta.modelData.access.hint : linhaPorta.modelData.access.mode)
-                    color: Theme.errorSoft
-                    font.pixelSize: Theme.fontSizeCaption
-                }
-
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    visible: root.controller.modemManagerWarns(linhaPorta.modelData)
-                    text: qsTr("o ModemManager está ativo e pode ocupar esta porta por alguns segundos após conectar; uma regra udev com ID_MM_DEVICE_IGNORE=1 evita isso")
-                    color: Theme.warningSoft
-                    font.pixelSize: Theme.fontSizeCaption
                 }
             }
         }
-
-        // O que o Executar vai fazer com a escolha — dito aqui, onde se
-        // escolhe, e nao descoberto na aba Terminal depois do clique.
+        KvVerdict {
+            width: parent.width
+            visible: root.controller && !root.controller.portFound
+            busy: root.controller !== null && root.controller.portsBusy
+            busyText: qsTr("Procurando dispositivos…")
+            neutral: true
+            message: root.controller ? (root.controller.portsHint || qsTr("Conecte uma placa por USB e atualize os dispositivos.")) : ""
+        }
         Text {
             width: parent.width
-            wrapMode: Text.WordWrap
-            visible: root.controller && root.controller.portFound
-            text: root.controller
-                  ? (root.controller.selectedPort !== ""
-                     ? qsTr("Executar (MicroPython): mpremote connect %1 run").arg(root.controller.selectedPort)
-                     : qsTr("nenhuma porta escolhida: o Executar de MicroPython usa a primeira que o mpremote achar"))
-                  : ""
+            visible: root.controller && root.controller.projectMicroPython
+            text: root.controller && root.controller.selectedPort !== ""
+                  ? qsTr("Executar MicroPython usa %1.").arg(root.controller.selectedPort)
+                  : qsTr("MicroPython: sem seleção, o mpremote escolhe a primeira porta disponível.")
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
-        }
-
-        Text {
-            width: parent.width
             wrapMode: Text.WordWrap
-            visible: root.controller && !root.controller.portFound
-            text: root.controller
-                  ? (root.controller.portsBusy ? qsTr("procurando…")
-                     : (root.controller.portsHint !== "" ? root.controller.portsHint
-                                                         : qsTr("nenhuma porta serial USB")))
-                  : ""
-            color: Theme.textSecondary
-            font.pixelSize: Theme.fontSizeSmall
         }
     }
 }

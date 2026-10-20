@@ -195,20 +195,59 @@ A tradução para a Kinein, com a licença lida no arquivo:
 
 ### 3.4 MicroPython e CircuitPython — Python **no** microcontrolador
 
-É o cruzamento das duas decisões (Python + embarcado), e o que o ESP32 clássico
-da mesa roda hoje sem toolchain nenhum: grava-se o firmware `.bin` oficial pelo
-`esptool` e o chip vira um REPL na serial.
+É o cruzamento das duas decisões (Python + embarcado). Com firmware compatível
+instalado, o ESP32 executa os scripts sem recompilar uma aplicação C/C++.
+Instalar esse firmware é uma operação distinta, que substitui o conteúdo da
+placa; reconhecer a ponte USB não comprova o runtime instalado.
 
 | funcionalidade | ferramenta aberta | licença | forma | hoje |
 | --- | --- | --- | --- | --- |
-| falar com a placa: REPL, `run`, `exec`, `fs cp/ls/cat/rm/mkdir/tree`, `mount`, `mip install`, `edit`, `reset`, `bootloader` | **mpremote** (oficial, `pip install mpremote`; atalhos `a0`/`u0`, `id:<serial>`) | MIT (repo micropython) | processo — o REPL numa aba de terminal, o `fs` como comandos | ◐ 2026-09-13 — REPL pelo `serial.monitor` e `run` pelo Executar (`40` §7.28); `fs`/`mip`/`mount` ainda não |
-| completar/tipos do `machine`, `network`… | **micropython-stubs** (`pip install micropython-esp32-stubs --target typings`) + basedpyright com `typingsPath` | MIT (`LICENSE.md`) | passo por projeto | ✗ |
+| falar com a placa: REPL, `run`, `exec`, `fs cp/ls/cat/rm/mkdir/tree`, `mount`, `mip install`, `edit`, `reset`, `bootloader` | **mpremote** (oficial, `pip install mpremote`; atalhos `a0`/`u0`, `id:<serial>`) | MIT (repo micropython) | processo — o REPL numa aba de terminal, o `fs` como comandos | ◐ 2026-10-20 — REPL, execução e `fs` implementados (C1–C3); `mip`/`mount` sem UI própria |
+| completar/tipos do `machine`, `network`… | **micropython-stubs** (`pip install micropython-esp32-stubs --target typings`) + basedpyright com `stubPath` | MIT (`LICENSE.md`) | passo por projeto | ✓ 2026-09-17 — C4, `python.stubs` (40 §7.47) |
 | gerar stubs de uma placa | micropython-stubber | MIT | processo | ✗ |
-| firmware | `.bin`/`.uf2` oficiais; `esptool write-flash`, UF2 no Pico | MIT (firmware) | motor de gravar (E4) | ✗ |
+| firmware | `.bin`/`.uf2` oficiais; `esptool write-flash`, UF2 no Pico | MIT (firmware) | motor de gravar (E4) | ✓ catálogo e proposta, 2026-09-17 — C5; aceite físico separado |
 | compilar `.mpy` | mpy-cross | MIT | processo | ✗ |
-| CircuitPython | drive `CIRCUITPY` + **circup** (bibliotecas) | MIT | processo / cópia de arquivo | ✗ |
+| CircuitPython | volume `CIRCUITPY` ou Web Workflow; **circup** (bibliotecas), **wwshell** (arquivos por rede) | MIT | processo / cópia de arquivo | ✗ 2026-10-20 — C6 autorizado, ainda pendente; detecção atual incorretamente compartilhada com MicroPython |
 | referência de UX | **Thonny** (MIT): painel "Files on device", REPL, "Run current script on device" | MIT | ref | — |
 | referência de UX | MicroPico (VS Code) | **MPL-2.0** | ref apenas | — |
+
+#### 3.4.1 Ampliação confirmada e revisão medida em 2026-10-20
+
+O autor esclareceu que quer **CPython e CircuitPython**, além de MicroPython.
+CPython já tem ambiente, execução, pytest, LSP/ruff e debugpy nos donos atuais
+do bloco B; não criar outra cadeia paralela. A revalidação real de debugpy
+passou launch de arquivo e módulo, breakpoint, locais, avaliação, saída e
+attach com desligamento preservando o processo. MicroPython passou a prova
+de despacho por porta com ferramenta falsa; isso não comprova execução física
+no firmware atual do ESP32. A correção dos argumentos de `run.start` cobre
+portas com espaços e apóstrofos; a rodada geral e seus resultados ficam no
+52 §14.12 e no handoff.
+
+**Lacuna medida de CircuitPython:** `project/detect.rs` reconhece imports de
+`board`/`microcontroller` em `main.py`/`boot.py` como `microPython` e não
+reconhece `code.py`. `run` e `serial.monitor` acabam escolhendo `mpremote`.
+A C6 começa separando o framework no modelo e a precedência em projetos
+mistos; scripts CircuitPython nunca devem cair no interpretador do host ou
+no raw REPL do mpremote por essa classificação errada.
+
+**Transportes a implementar no dono Python/arquivos:** escolher explicitamente
+um volume montado ou um host Web Workflow, enviar arquivo do workspace com
+prévia de destino e consentimento para sobrescrita, listar o resultado e
+orquestrar bibliotecas pelo Circup. Operação longa continua sendo Job, com
+cancelamento e saída visíveis; a UI não monta linhas de shell. A senha de
+rede não entra no comando, log ou projeto: o CLI admite
+`CIRCUP_WEBWORKFLOW_PASSWORD`. Contrato IPC e desenho fino vêm antes do código
+da C6; nenhum desses itens está entregue apenas por constar neste plano.
+
+**Compatibilidade conferida nas fontes oficiais (2026-10-20):** o ESP32
+clássico não expõe volume USB `CIRCUITPY`; usa Web Workflow quando executa
+firmware CircuitPython compatível e tem rede configurada. S2/S3 com USB nativo
+têm outra possibilidade de transporte
+([guia Adafruit](https://learn.adafruit.com/circuitpython-with-esp32-quick-start)).
+Circup aceita `--path` e `--host`; wwshell vem com ele e fornece comandos de
+arquivos. A integração deve selecionar o destino, sem presumir que CP2102
+seja um volume
+([manual Circup/wwshell](https://docs.circuitpython.org/projects/circup/en/latest/)).
 
 ### 3.5 Embarcados — depurar e VER (o que o Cortex-Debug e o probe-rs mostram)
 
@@ -449,7 +488,7 @@ BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
                                             "Executar" num .py e o botao Executar
                                             (main.py) rodam `mpremote [connect <porta>]
                                             run <arquivo>`; a porta se escolhe no painel
-                                            de Embarcados (chip "Executar" por porta) e
+                                            de Embarcados ("Selecionar porta", desde 2026-10-20) e
                                             vai como `device` em run.script E run.start.
                                             Sem escolha, a primeira que o mpremote acha.
                                             Provado com mpremote falso: sem placa nesta

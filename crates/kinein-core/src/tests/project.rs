@@ -419,6 +419,19 @@ const FLASHER_ARGS: &str = r#"{
     "extra_esptool_args" : { "after" : "hard-reset", "before" : "default-reset", "stub" : true, "chip" : "esp32" }
 }"#;
 
+fn write_flash_build(root: &Path) {
+    for file in [
+        "bootloader/bootloader.bin",
+        "partition_table/partition-table.bin",
+        "hello_world.bin",
+    ] {
+        let path = root.join("build").join(file);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, b"image").unwrap();
+    }
+    std::fs::write(root.join("build/flasher_args.json"), FLASHER_ARGS).unwrap();
+}
+
 #[test]
 #[cfg_attr(
     windows,
@@ -544,11 +557,16 @@ fn the_model_reads_the_recipe_and_the_partitions_it_used_to_only_locate() {
         raiz.join("partitions.csv"),
     )
     .unwrap();
-    std::fs::create_dir_all(raiz.join("build")).unwrap();
-    std::fs::write(raiz.join("build/flasher_args.json"), FLASHER_ARGS).unwrap();
+    write_flash_build(&raiz);
     let amb = ambiente_vazio(&nada_var, &nada_bin);
     let m = model_in(&raiz, None, &amb);
     let receita = m.artifacts.flash_recipe.as_ref().unwrap();
+    assert!(m.artifacts.elf.is_empty());
+    assert!(
+        !m.hints.iter().any(|hint| hint.contains("nenhum artefato")),
+        "{:?}",
+        m.hints
+    );
     assert_eq!(receita.chip.as_deref(), Some("esp32"));
     assert!(
         receita.files[2]
@@ -575,8 +593,7 @@ fn build_size_reports_the_esp_idf_app_partition_as_the_flash_region() {
         raiz.join("partitions.csv"),
     )
     .unwrap();
-    std::fs::create_dir_all(raiz.join("build")).unwrap();
-    std::fs::write(raiz.join("build/flasher_args.json"), FLASHER_ARGS).unwrap();
+    write_flash_build(&raiz);
     // A imagem do app tem 123.456 bytes; o "ELF" e' so' um arquivo para o
     // `size` recusar — o que interessa aqui e' a regiao, nao as secoes.
     std::fs::write(raiz.join("build/hello_world.bin"), vec![0u8; 123_456]).unwrap();

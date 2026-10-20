@@ -75,7 +75,16 @@ pub fn model_in(root: &Path, kit_chip: Option<&str>, ambiente: &sdk::Ambiente<'_
                 .join(", ")
         ));
     }
-    if !frameworks.is_empty() && artifacts.elf.is_empty() && artifacts.uf2.is_empty() {
+    let needs_build = frameworks
+        .iter()
+        .any(|framework| framework.framework != Framework::MicroPython);
+    if needs_build
+        && artifacts.elf.is_empty()
+        && artifacts.bin.is_empty()
+        && artifacts.hex.is_empty()
+        && artifacts.uf2.is_empty()
+        && artifacts.flash_recipe.is_none()
+    {
         hints.push(
             "nenhum artefato de build encontrado: compile para o modelo ver ELF, imagens e mapa"
                 .to_owned(),

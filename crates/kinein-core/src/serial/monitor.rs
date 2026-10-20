@@ -19,7 +19,7 @@
 //! mpremote  mpremote connect <dev> repl       (1.29.0, `mpremote connect --help`:
 //!           `connect device next_command`; o REPL nao tem baud — e' o raw REPL
 //!           do `MicroPython` a 115200). Fatia 5 da cadeia Python, 2026-09-13
-//! idf.py    bash -c '<IDF_WRAPPER>' idf <ativacao> -p <dev> monitor
+//! idf.py    bash -c '<IDF_WRAPPER>' bash <ativacao> -p <dev> monitor
 //!           (ESP-IDF "Start a Project", 2026-09-17: `idf.py -p PORT monitor` —
 //!           o IDF Monitor decodifica o backtrace com o ELF do build; roda no
 //!           ambiente ativado, como o build). Bloco E do `roadmaps/41`

@@ -224,8 +224,8 @@ fn chosen_port(device: Option<&str>) -> Result<&str, FlashError> {
         .map(str::trim)
         .filter(|d| !d.is_empty())
         .ok_or_else(|| FlashError::NoDevice {
-            message: "escolha a porta no painel de Embarcados (chip \"Executar\" na porta): \
-                      gravar na placa errada é pior que um clique"
+            message: "escolha a porta em Embarcados › Placa usando Selecionar porta antes de \
+                      gerar a prévia de gravação"
                 .to_owned(),
         })
 }

@@ -104,6 +104,11 @@ chip sugere pelas MESMAS tabelas de família e motores do `project.model`
 (`espressif`; `esptool`/`espflash`/`probe-rs` nos chips com USB-JTAG, sem
 depurador no ESP32 clássico), com `evidence` dizendo que veio do
 `flash-id`; nada vira kit sem `toolchain.setKit`. Não exige workspace.
+Correção da bancada ESP32 (2026-10-20, formato inalterado): se o esptool
+terminar com `Failed to start stub`, a mesma identificação tenta uma vez
+`--no-stub --baud 115200`, lendo pela ROM. A saída do job explica a
+recuperação; o comando do evento é o da tentativa final. Erros genéricos,
+cancelamento e timeout não disparam essa repetição; não grava firmware.
 Recusas ANTES de abrir a porta: `device` inexistente → `INVALID_PARAMS`;
 sem leitura/escrita → `INVALID_REQUEST` com a `hint` de `serial.list`; sem
 `esptool`/`esptool.py` no PATH (ou `tool` dado) → `TOOL_NOT_FOUND` com `pipx

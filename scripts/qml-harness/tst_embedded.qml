@@ -192,9 +192,9 @@ Item {
         if (controller.projectEmbedded) failures += 1099511627776;
         if (controller.selectedPort !== "") failures += 2251799813685248;
 
-        // E3-5: o painel em abas nasce na Placa; o veredito do cabecalho diz
+        // A janela integrada nasce na visão geral; o veredito do cabeçalho diz
         // a placa identificada, senao o que ha' no USB, senao "nenhuma".
-        if (controller.tab !== "board") failures += 4503599627370496;
+        if (controller.tab !== "project") failures += 4503599627370496;
         if (controller.boardVerdict !== "nenhuma placa") failures += 9007199254740992;
         controller.handleSerialPorts([cp2102], "");
         if (controller.boardVerdict.indexOf("1 porta") !== 0) failures += 18014398509481984;

@@ -80,7 +80,7 @@ fn copiar_dir(de: &Path, para: &Path) {
     }
 }
 
-fn executavel(caminho: &Path, corpo: &str) {
+fn executable(caminho: &Path, corpo: &str) {
     if let Some(pasta) = caminho.parent() {
         std::fs::create_dir_all(pasta).unwrap();
     }
@@ -89,7 +89,7 @@ fn executavel(caminho: &Path, corpo: &str) {
 
 impl Cenario {
     fn falso(&self, nome: &str, corpo: &str) {
-        executavel(
+        executable(
             &self.base.join("bin").join(nome),
             &format!("#!/bin/sh\necho \"{nome}-falso $*\"\n{corpo}"),
         );
@@ -166,15 +166,15 @@ fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
 
     // O IDF "instalado": ~/esp/esp-idf/export.sh que poe o idf.py falso no PATH.
     let idfbin = c.base.join("idfbin");
-    executavel(
+    executable(
         &idfbin.join("idf.py"),
         "#!/bin/sh\necho \"idf.py-falso $*\"\nif [ \"$1\" = build ]; then mkdir -p build; echo '{}' > build/flasher_args.json; fi\n",
     );
     let export = c.base.join("home/esp/esp-idf/export.sh");
-    executavel(
+    executable(
         &export,
         &format!(
-            "echo 'banner do export.sh'\nexport PATH=\"{}:$PATH\"\n",
+            "[ \"$0\" = bash ] || return 1\necho 'banner do export.sh'\nexport PATH=\"{}:$PATH\"\n",
             idfbin.display()
         ),
     );
@@ -206,10 +206,10 @@ fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
         .result
         .expect("proposta");
     let comando = p["command"].as_str().unwrap();
-    assert!(comando.starts_with("bash -c '"), "{comando}");
+    assert!(comando.starts_with("bash '-c' '"), "{comando}");
     assert!(
         comando.ends_with(&format!(
-            "' idf '{}' -p '/dev/ttyUSB0' flash",
+            "' 'bash' '{}' '-p' '/dev/ttyUSB0' 'flash'",
             export.display()
         )),
         "{comando}"
@@ -229,6 +229,27 @@ fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
             .iter()
             .any(|l| l.contains("idf.py-falso -p /dev/ttyUSB0 flash")),
         "o idf.py falso nao recebeu o flash: {linhas:?}"
+    );
+    // A mesma proposta conserva a porta com espaços e apóstrofo como um argv.
+    executable(&idfbin.join("idf.py"), "#!/bin/sh\nprintf '%s\\n' \"$@\"\n");
+    let device = "/dev/serial/my board's USB";
+    let proposal = c
+        .rpc(
+            "runConfig.flashProposal",
+            json!({ "engine": "idf.py", "device": device }),
+        )
+        .result
+        .unwrap();
+    let started = c.rpc("run.start", json!({ "command": proposal["command"] }));
+    let terminal_id = started.result.as_ref().unwrap()["terminalId"]
+        .as_str()
+        .unwrap();
+    let (lines, exit_code) =
+        super::terminal_run_until_closed(&c.events, terminal_id, Duration::from_secs(15));
+    assert_eq!(exit_code, Some(0), "{lines:?}");
+    assert!(
+        lines.windows(3).any(|args| args == ["-p", device, "flash"]),
+        "{lines:?}"
     );
     // Sem -p: o esptool do E4 continua sendo o padrao (a receita do build).
     let erro = c
@@ -261,7 +282,7 @@ fn zephyr_builds_with_west_and_the_board_from_west_config() {
 
     // O west falso: `config build.board` responde SO' a placa (como o real);
     // `build` ecoa os argv e deixa o CMakeCache com a placa, como o real.
-    executavel(
+    executable(
         &c.base.join("bin/west"),
         "#!/bin/sh\nif [ \"$1 $2\" = \"config build.board\" ]; then echo nrf52840dk/nrf52840; exit 0; fi\necho \"west-falso $*\"\nif [ \"$1\" = build ]; then mkdir -p build; echo 'CACHED_BOARD:STRING=nrf52840dk/nrf52840' > build/CMakeCache.txt; fi\n",
     );
