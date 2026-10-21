@@ -2665,3 +2665,68 @@ Aceites incluem portas distintas, concorrência, cancelamento, troca de projeto,
 reconexão, configurações antigas e nova instalação. Esta fatia não fecha a
 matriz inteira nem comprova flash físico. Setup no dock/schema 3/C/Python e
 o plano até 0.4.9 permanecem na fila; nada foi transferido à etapa especial.
+
+### 14.26 0.4.1h4a — execução MicroPython participa da reserva (desenho, 2026-10-21)
+
+Base 950c8f8. A auditoria do caminho run confirma que start/script abrem o
+PTY sem claim: monitor/identify/files já usam a reserva, execução MicroPython
+não. Provar a falha por dispatch com mpremote falso e arquivo regular antes
+de alterar o produtor. Esta parte conclui a execução MicroPython; gravação
+estruturada/configuração salva e ações de ocupação são as partes seguintes
+da h4, sem marcar a matriz completa como pronta.
+
+Contrato 0.184.0 antes do core: run.start padrão e run.script .py, quando o
+lançador resolvido for Mpremote, podem recusar SERIAL_PORT_BUSY. device
+explícito reusa validação de acesso e reserva por identidade. Ausente mantém
+a seleção do mpremote; por não conhecer a porta a priori, reserva exclusiva
+global durante a operação. details ganha scope device|automatic, device null
+no caso automático; owner.automatic distingue reserva ampla de uso conhecido.
+Fora de MicroPython, comando explícito e configuração manual salva não
+reservam nada só porque a UI tem uma porta selecionada. O campo não passa
+por parsing shell nem muda a precedência existente.
+
+A reserva automática precisa de dois passos, sem pai/filho esperando o mesmo
+lock exclusivo: launch.lock compartilhado para portas explícitas, exclusivo
+para automático. Sob esse guard, sondar global.lock exclusivo; depois soltar
+a sonda para o helper tomar exclusivo e manter na ferramenta. A reserva de
+lançamento fica no core até o PTY sair. Portas explícitas preservam global
+compartilhado e o lock específico; duas portas distintas seguem independentes.
+Isso também coordena cores anteriores da h3, que já seguram global compartilhado.
+Dono desconhecido continua null; dado antigo de seleção automática não prova
+o dono de um conjunto de locks compartilhados. Token/PPID/imagem atual e
+proteção após crash continuam obrigatórios. Sem novo executor/dependência.
+
+A abertura comum do run recebe uma invocação tipada com programa, argv,
+texto mostrado e identidade; o guard opcional segue para o waiter existente.
+A decisão de reservar vem do PythonLauncher resolvido, não do nome do projeto
+repetido nem da seleção visual. Preservar comando/identidade mostrados e a
+execução manual por shell. Não lançar a ferramenta ao recusar, falhar preparo
+ou não haver ponto de entrada. Core decide e a faixa existente do Terminal
+apresenta a causa, sem novo estado duplicado no QML.
+
+Aceites: monitor bloqueia run.start/run.script; execução bloqueia jobs/monitor;
+portas distintas independentes; automático exclui qualquer porta e vice-versa;
+sucesso, saída não zero, spawn falho, stop/close/troca de workspace e crash;
+ausência/permissão de porta; comandos manuais/config salva/host Python sem
+reserva; argv com espaços/aspas literal. Reusar fixture de jobs/PTYs e estender
+sem fabricar /dev/tty* nos testes. Provar kernel/duas instâncias com ferramenta
+falsa, sem hardware, e erro visível no Terminal nativo. Mutação da reserva e
+da exclusividade global deve reprovar asserções. Depois gate rápido estrito,
+documentação e commit próprio antes de continuar a gravação.
+
+**Handoff solicitado pelo autor em 2026-10-21:** o teste inicial de dispatch
+foi executado e reprovou como esperado: com monitor ativo, run.start aceitou
+uma execução MicroPython na mesma porta. A asserção esperava SERIAL_PORT_BUSY
+e encontrou resposta de sucesso; log `/tmp/kinein-h4a-before.log`. O core da
+reserva ainda NÃO foi alterado nesta fatia. A falha está reproduzida, sem
+correção integrada e sem dispositivo aberto. O loop do teste ainda precisa
+percorrer run.script após a correção permitir passar da primeira asserção.
+
+Checkout isolado `/home/hugh/KineinVectis-worktrees/serial-lifecycle`, base
+950c8f8, com seis arquivos modificados: desenho no 52, contratos run/serial,
+nota 03.1, constante do protocolo em 0.184.0 e teste ownership_jobs. Esse
+protocolo é preparação da fatia, não a versão validada do principal (0.183.0).
+Preservar esse trabalho; continuar pela implementação do registro automático
+antes do roteamento run e dos aceites. A integração da h4a exige a suíte
+verde e seu próprio fechamento; a gravação estruturada e ocupação visual
+seguem depois dentro da h4. A ordem 0.4.2–0.4.9 está no §11 e permanece vigente.
