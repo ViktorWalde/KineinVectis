@@ -515,6 +515,13 @@ artefato       AppImage com avisos-qml.txt + Debian mínimo
 hardware       placa do autor: só leitura/monitor sem pedido; gravar com pedido
 ```
 
+**Momento do artefato, atualizado pelo autor em 2026-10-21:** as provas
+funcionais/gates continuam no fechamento da 0.4.9; o AppImage só é gerado e
+testado após a edição especial imediatamente seguinte. Revalidar as fontes
+finais dessa edição e exercitar o artefato polido com os smokes e o ambiente
+mínimo acima. Não reutilizar o gate da 0.4.9 como prova de código alterado
+depois dela. Identificação/versão do pacote ainda a definir no 57 §1.1.
+
 ### 10.1 Emuladores: o que cada um prova e o que fica NÃO PROVADO
 
 Decisão do autor (2026-10-01): os emuladores entram na 0.4 como **alvo** onde
@@ -577,13 +584,15 @@ no usuário e medidos com o mesmo ciclo.
 
 ## 11. Ordem e marcos
 
-Dependências primeiro; os números abaixo organizam o trabalho. A entrega
-acumulada e o AppImage fecham na 0.4.9, conforme o
+Dependências primeiro; os números abaixo organizam o trabalho. A série
+acumulada fecha funcionalmente na 0.4.9; a edição especial vem em seguida,
+forma a base da 0.5 em diante e precede a geração/teste do AppImage, conforme o
 [57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20).
 
-**Execução automática renovada pelo autor (2026-10-20):** concluir até a
-0.4.9 e então gerar e testar o AppImage, substituindo o limite anterior
-0.4.5. Cada marco inclui revisão da lógica,
+**Execução automática renovada pelo autor (2026-10-20; pacote atualizado em
+2026-10-21):** concluir até a 0.4.9, executar a edição especial em seguida
+e somente depois gerar/testar o AppImage local. Isso substitui o marco de
+pacote imediatamente ao fechar a 0.4.9. Cada marco inclui revisão da lógica,
 exercitação visual dos fluxos e das falhas, correção de bugs e medidas de
 desempenho. O polimento dos painéis acompanha as fatias: hierarquia clara,
 próxima ação contextual, detalhes avançados sob demanda e estados de espera,
@@ -624,15 +633,20 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
        cores semânticas; medir resposta e desempenho, fechar regressões
 0.4.9  estabilização integrada: corrigir os bloqueadores das auditorias,
        repetir jornadas de aceitação, gates completos, documentação e
-       versões coerentes; só então gerar e testar o AppImage final
+       versões coerentes; fecha a base funcional e libera a edição especial
+especial  em seguida à 0.4.9: otimização/acabamento do §14.17.1, base da
+          0.5 em diante; validar o conjunto polido antes do pacote
+AppImage  somente após concluir a edição especial: alinhar identificação/
+          metadados do artefato, gerar e testar localmente (§10)
 ```
 
 A divisão 0.4.6–0.4.9 é a organização operacional deste plano para executar
 o escopo pedido pelo autor. Não exige esperar a 0.4.6 para corrigir uma falha
 já encontrada nem interrompe o polimento por fatia. C e Python podem ser
 concluídos antes dela; 0.4.6 cobra a integração ponta a ponta. A revisão de
-qualidade do frontend ocorre **antes do pacote da 0.4.9**. Uma eventual
-etapa especial de revisão após a 0.4.9, associada à 0.5, está definida no §14.17 e não deve
+qualidade do frontend ocorre antes do fechamento funcional da 0.4.9.
+A edição especial vem imediatamente depois e antes do AppImage; está
+definida no §14.17 e não deve
 receber pendências funcionais ou de usabilidade desta série.
 
 **Pendências reafirmadas pelo autor em 2026-10-21:** todos os itens citados
@@ -642,7 +656,8 @@ na 0.4.1; assistente de projeto C puro e padrão C visual na 0.4.2; separar e
 integrar CircuitPython na 0.4.3; consolidar CPython/MicroPython/CircuitPython,
 as jornadas bare metal/Linux, preferências de ativação nativa e as demais
 janelas de trabalho em painéis até a 0.4.6. Auditorias 0.4.7–0.4.8 corrigem
-o conjunto antes do aceite/AppImage da 0.4.9. Menus, dicas e confirmações
+o conjunto antes do aceite funcional da 0.4.9. O AppImage espera a edição
+especial posterior. Menus, dicas e confirmações
 compactos permanecem conforme a decisão do autor. O aceite físico continua
 explicitamente pendente até poder ser medido; não substituí-lo por fixture.
 Nada desta lista fica para a 0.5 ou para a edição especial.
@@ -684,7 +699,7 @@ regressão integrada antes da 0.4.9; não são promessa de compatibilidade unive
 com qualquer ferramenta ou versão futura ainda não medida.
 
 **Entrada de terminal (autor, 2026-10-21):** consolidar o comando curto na
-0.4.6 e verificá-lo no pacote 0.4.9. Contrato, compatibilidade e estado em
+0.4.6 e verificá-lo no AppImage após a edição especial. Contrato, compatibilidade e estado em
 [Projetos e desktop §3](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#3-p0--abrir-pelo-terminal-e-pelo-desktop).
 
 **Saída de cada 0.4.x:** conferir a coerência entre modelo do core e estado
@@ -747,8 +762,9 @@ abaixo é plano, não lista de funcionalidades concluídas.
 | 8 | 0.4.5 | Banco para embarcados, com os limites já decididos | Aceite dos donos de Banco; sem reabrir adiamentos |
 | 9 | 0.4.6 | Consolidar C/CPython/MicroPython/CircuitPython, bare metal/Linux, integrações opcionais, janelas funcionais no dock, comando de terminal e Q3 | Inventário reconciliado com uso real e nenhum básico transferido à edição especial |
 | 10 | 0.4.7–0.4.8 | Auditoria integrada de frontend, acessibilidade e desempenho (§14.17) | Corrigir achados, fotos comparáveis e regressões; não redesenhar a disposição principal |
-| 11 | 0.4.9 | Estabilização, jornadas, gates completos, documentação/versões e AppImage local | Critério de pacote do §10/57; sem push/tag/publicação |
-| 12 | Pós-0.4.9 / edição especial da 0.5 | Otimização e acabamento do conjunto; 0.5 evolui capacidades sobre a base entregue | Não reapresentar implementação da 0.4 como novidade; ROS 2 e expansão de políticas seguem seus donos |
+| 11 | 0.4.9 | Estabilização, jornadas, gates completos e documentação/versões; fechamento funcional | Base funcional validada para a edição especial, sem gerar o pacote intermediário |
+| 12 | Imediatamente após a 0.4.9 / edição especial | Otimização e acabamento do conjunto; estabelecer a base polida da 0.5 em diante | Jornadas e gates sobre o conjunto final; nenhum básico funcional da 0.4 adiado para esta etapa |
+| 13 | Após concluir a edição especial | Alinhar identificação/metadados, gerar e testar o AppImage local com a base polida para teste de usuários | Critério de artefato do §10/57; smokes/ambiente mínimo; sem push/tag/publicação |
 
 A linha 5 pode ser intercalada às demais em fatias concluídas, **sem aguardar
 todos os marcos para começar Q2 e sem manter várias implementações pela
@@ -815,12 +831,14 @@ no §14.16 e distinguir propostas novas de decisões e de aceites nativos.
    o autor pausou o desenvolvimento e autorizou o fechamento autônomo da 0.4
    ([40](40-estado-e-continuidade.md) §5, "modo autonomo"); o que só a placa
    prova fica NÃO PROVADO, dito. Naquela autorização não havia AppImage.
-   **Atualização de 2026-10-20:** geração e teste locais autorizados após a
-   0.4.9 (§11); a prova de artefato do §10 passa a ser obrigatória ao final.
+   **Atualização de 2026-10-20/21:** geração e teste locais autorizados
+   somente após a edição especial que segue a 0.4.9 (§11); a prova de
+   artefato do §10 continua obrigatória nesse fechamento do pacote.
 5. **Decidida (2026-10-16):** o Banco para embarcados (o LSP por conexão e o
    InfluxDB 3 nativo, adiados na 0.3.9) volta dentro da 0.4, na 0.4.5.
-   **Atualização de 2026-10-20:** o fechamento da série e o AppImage são na
-   0.4.9; o marco funcional do Banco permanece na 0.4.5 (§11).
+   **Atualização de 2026-10-20/21:** fechamento funcional na 0.4.9; edição
+   especial imediatamente em seguida; AppImage somente depois dela (§11).
+   O marco funcional do Banco permanece na 0.4.5 (§11).
 
 ## 14. O desenho fino das fatias (escrito antes do código de cada uma)
 
@@ -2084,7 +2102,10 @@ os achados justificados, preservando as jornadas e o desempenho validados.
 **0.5**; identificação exata do artefato, patch e cronograma continuam sem
 definição. Instalar Ferramentas e Quality Center inicial entram na própria
 0.4.x (§11.1); a revisão especial melhora/otimiza a base e detalhes que
-escaparam. A etapa especial não transfere para depois os bugs, as lacunas
+escaparam. **Decisão posterior na mesma data:** ela vem imediatamente após
+a 0.4.9 e estabelece a base da 0.5 em diante; o AppImage só é gerado/testado
+após seu fechamento, para oferecer o conjunto polido aos usuários de teste.
+A etapa especial não transfere para depois os bugs, as lacunas
 funcionais ou a usabilidade necessários ao aceite da 0.4.9.
 
 O autor pediu examinar toda a IDE: componentes com aparência antiga,
@@ -2122,7 +2143,8 @@ UI/IPC/core e ferramentas reais disponíveis. Revisar permissões,
 pré-requisitos ausentes e operações canceladas. Toda limitação física ou
 de ferramenta deve estar explícita na matriz de prova. Fechar bloqueadores,
 atualizar os documentos donos e aplicar o corte de entrega do 57 §1.1 antes
-de gerar e exercitar o AppImage conforme `packaging/appimage/` e §10.
+da edição especial. Após validá-la, gerar e exercitar o AppImage conforme
+`packaging/appimage/` e §10, com identificação/versão do artefato alinhadas.
 
 #### 14.17.1 Direção da edição especial associada à 0.5 — 2026-10-21
 

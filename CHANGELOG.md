@@ -10,16 +10,20 @@ em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 Embarcados com os compiladores e ecossistemas por baixo (roadmaps 52 e 57),
 em curso desde 2026-10-16. **Decisão de 2026-10-20:** a série fecha na
 **0.4.9**, com cada escopo funcional e utilizável, revisão integrada de
-frontend e estabilização antes de gerar e testar o AppImage. Após a
-conclusão da 0.4.9, uma etapa especial de revisão
-de HUD/UX/UI procurará componentes e estilos esquecidos ou inconsistentes
-com o padrão visual moderno, sem receber pendências desta entrega. A
+frontend e estabilização. **Atualização de 2026-10-21:** após a conclusão
+funcional da 0.4.9, a edição especial de HUD/UX/UI vem imediatamente em
+seguida e estabelece a base polida da 0.5 em diante. Ela procurará
+componentes e estilos esquecidos ou inconsistentes com o padrão visual
+moderno, sem receber pendências funcionais desta entrega. **Só depois de
+concluir e validar essa edição especial será gerado/testado o AppImage**,
+para oferecer o conjunto polido aos usuários de teste. A
 entrega inclui também o trabalho não publicado
 **0.3.6–0.3.9**, registrado abaixo com seus rótulos históricos. A 0.5 herda
 essa base e anuncia somente mudanças próprias; não reapresenta esse trabalho
 como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
-O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
-pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
+O binário no checkout ainda diz `0.3.9`; a identificação/versão final e os
+metadados do pacote serão alinhados após a edição especial, antes de gerar
+o artefato. Nada aqui anuncia release publicada.
 
 **Planejamento atualizado em 2026-10-21, ainda sem implementação:** Instalar
 Ferramentas será reformulado junto da migração de Setup ao dock, e o Quality

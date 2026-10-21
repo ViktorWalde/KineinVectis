@@ -29,7 +29,9 @@ flowchart LR
   v02["0.1–0.2<br/>MVP e teste fechado"]:::done --> v03["0.3.0–0.3.5<br/>série 0.3"]:::done
   v03 --> v036["0.3.6–0.3.9<br/>casca e base visual"]:::checkout
   v036 --> v04["0.4.0–0.4.9<br/>embarcados e entrega acumulada"]:::now
-  v04 --> v05["0.5.x<br/>ambiente e capacidades"]:::planned
+  v04 --> special["Edição especial<br/>base polida"]:::planned
+  special --> package["AppImage local<br/>geração e testes"]:::planned
+  package --> v05["0.5.x em diante<br/>evolução sobre essa base"]:::planned
   v05 --> v06["0.6<br/>motor do editor"]:::planned
   v06 --> v07["0.7<br/>paridade diária"]:::planned
   v07 --> v08["0.8<br/>extensão declarativa"]:::planned
@@ -42,9 +44,11 @@ flowchart LR
   classDef proposed fill:#ffffff,stroke:#888,stroke-dasharray:5 4
 ```
 
-**Regra vigente de lançamento (autor, 2026-10-20):** a entrega da série 0.4
-termina na **0.4.9** e inclui o trabalho não publicado da 0.3.6–0.3.9.
-O AppImage é gerado e testado somente depois desse fechamento. O §1.1
+**Regra vigente de lançamento (autor, atualizada em 2026-10-21):** a série
+0.4 fecha funcionalmente na **0.4.9**, incluindo o trabalho não publicado
+da 0.3.6–0.3.9. Em seguida vem a **edição especial de polimento**, base da
+**0.5 em diante**. O AppImage só é gerado e testado **após concluir a edição
+especial**, para oferecer essa base polida aos usuários que a testarão. O §1.1
 resolve o agrupamento que ainda estava aberto no
 [`53`](53-arquitetura-executavel-da-0.3.6.md) §11.
 
@@ -77,8 +81,11 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   até a **0.4.9**; a ordem operacional pertence ao 52 §11.
 - A conclusão da 0.4.9 exige jornadas verificadas, correções das falhas
   encontradas, auditoria visual e funcional, gates completos e documentação
-  coerente. Então alinhar versão do binário, manifests, notas e pacote e
-  **gerar/testar o AppImage localmente**. O binário do checkout ainda diz
+  coerente. **Atualização do autor em 2026-10-21:** isso fecha o marco
+  funcional; executar a edição especial imediatamente em seguida e validar
+  o conjunto polido antes de alinhar versão do artefato, manifests/notas e
+  **gerar/testar o AppImage localmente**. Não gerar o pacote de teste entre
+  a 0.4.9 e a edição especial. O binário do checkout ainda diz
   `0.3.9`; protocolo e versão de produto têm numerações independentes.
 - **Prioridade esclarecida após o handoff (2026-10-20):** eficiência e
   fechamento completo de cada escopo, incluindo a UI/UX necessária ao uso;
@@ -87,15 +94,18 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   de HUD/UX/UI após concluir a 0.4.9**, para procurar componentes, estados
   ou estilos esquecidos e incompatíveis com o padrão moderno da IDE.
   **Atualização do autor em 2026-10-21:** edição especial associada à **0.5**,
-  com foco em otimização, acabamento e pequenos detalhes. Patch/artefato e
-  cronograma não fixados. A reformulação de Instalar Ferramentas e o
-  Quality Center inicial passam a integrar a **0.4.x**, aproveitando as
+  com foco em otimização, acabamento e pequenos detalhes. Ela vem em seguida
+  da 0.4.9, constitui a base da 0.5 em diante e **precede o AppImage**.
+  Patch/identificação do artefato e cronograma não fixados. A reformulação
+  de Instalar Ferramentas e o Quality Center inicial passam a integrar a
+  **0.4.x**, aproveitando as
   mudanças de frontend. Ela não recebe pendências desta entrega.
   Sequência no 52 §11.1; cobertura da revisão no 52 §14.17/§14.17.1.
-- A **0.5 herda a base 0.4.9**. Suas notas devem listar somente mudanças
-  introduzidas na 0.5, sem apresentar trabalho da 0.3.6–0.4.9 como novidade
-  da 0.5. Aplicar a mesma regra nas séries posteriores: fechar, registrar e
-  empacotar a série antes de anunciar o delta da próxima.
+- A **0.5 em diante herda a base 0.4.9 já aprimorada pela edição especial**.
+  As notas de cada evolução listam seu próprio delta, sem reanunciar trabalho
+  da 0.3.6–0.4.9 ou da edição especial já entregue. O pacote de teste inclui
+  essa base polida; não se exige um AppImage intermediário da 0.4.9.
+  Preservar a contabilização histórica das fatias nas notas acumuladas.
 - A geração e o teste locais estão autorizados; **push, tag, release e
   publicação continuam com o autor**. Trabalho descrito no plano não é
   automaticamente entregue, e hardware indisponível continua NÃO PROVADO.
@@ -121,10 +131,10 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
 | 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pelo autor, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização FEITA (2026-10-15, 61 §4; continua junto de cada fatia) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
-| 0.4.0–0.4.9 | EM CURSO; execução autônoma até a 0.4.9, com AppImage ao final (autor, 2026-10-20); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Instalar Ferramentas reformulado e Quality Center inicial (autor, 2026-10-21); Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11/§11.1, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux, Setup e Quality Center verificadas, auditoria/gates completos, documentação e AppImage 0.4.9 testado (§1.1; 52 §10) |
+| 0.4.0–0.4.9 | EM CURSO; fechamento funcional na 0.4.9, depois edição especial e só então AppImage (autor, 2026-10-21); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Instalar Ferramentas reformulado e Quality Center inicial (autor, 2026-10-21); Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11/§11.1, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux, Setup e Quality Center verificadas, auditoria/gates completos, documentação; artefato somente após a edição especial (§1.1; 52 §10) |
 | edição especial | PLANEJADA (autor, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
-| 0.5.x | PLANEJADA; parte da base 0.4.9, com notas só do delta 0.5 (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; inglês como idioma plenamente suportado e preparação da divulgação internacional | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
-| edição especial de HUD/UX/UI associada à 0.5 | PLANEJADA (autor, 2026-10-20/21), após fechar a 0.4.9; patch/artefato a definir | otimização e acabamento | auditoria rigorosa de consistência, densidade, tipografia, foco, acessibilidade e desempenho; pequenos achados sobre a base funcional já entregue | 52 §14.17/§14.17.1 | cenários comparáveis, métricas e correções verificadas; não confundir com a edição Windows + WSL2 do 60 |
+| edição especial de HUD/UX/UI, base da 0.5 em diante | PLANEJADA (autor, 2026-10-20/21), imediatamente após fechar a 0.4.9 e antes do AppImage; patch/identificação do artefato a definir | otimização e acabamento | auditoria rigorosa de consistência, densidade, tipografia, foco, acessibilidade e desempenho; pequenos achados sobre a base funcional já entregue | 52 §14.17/§14.17.1 | jornadas e gates do conjunto polido; depois gerar/testar AppImage, incluindo smokes e ambiente mínimo; não confundir com a edição Windows + WSL2 do 60 |
+| 0.5.x | PLANEJADA; evolui sobre a base 0.4.9 aprimorada pela edição especial, com notas do próprio delta (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; inglês como idioma plenamente suportado e preparação da divulgação internacional | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
 | 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
@@ -277,4 +287,4 @@ Não está copiado aqui — está no dono, e é lá que se lê:
 | 3 | PlatformIO tier 1 e emuladores | **decidida (2026-10-01):** os dois na 0.4 | 52 §5.10, §10.1; 58 §4.4 |
 | 4 | versão mínima do gdb | **decidida (2026-10-01):** vale o ≥ 16; abaixo, degradação explicada (protocolo 0.145.0) | [`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md) |
 | 5 | qual qmllint vale | **decidida (2026-10-01):** vale o ≥ 6.5; no 6.4, NÃO PROVADO | `contribuindo/04` |
-| 6 | fronteira e contabilização da entrega | **decidida (2026-10-20):** série atual até 0.4.9, incluindo trabalho não publicado 0.3.6–0.3.9; AppImage após fechar 0.4.9; 0.5 só anuncia seu próprio delta | §1.1; execução no 52 §11 |
+| 6 | fronteira e contabilização da entrega | **atualizada (2026-10-21):** fechamento funcional até 0.4.9, incluindo trabalho não publicado 0.3.6–0.3.9; edição especial imediatamente depois, base da 0.5 em diante; AppImage somente após validar essa base polida; notas sem reanúncio do trabalho herdado | §1.1; execução no 52 §11 |

@@ -8,8 +8,10 @@ ordem de precedência quando houver conflito entre documentos.
 > índice é o catálogo completo; aquele é a porta.
 
 **Entrega em curso (decisão de 2026-10-20):** a série **0.4 vai até a 0.4.9**,
-inclui o trabalho não publicado da 0.3.6–0.3.9 e gera/testa o AppImage somente
-após seu fechamento. Estado e handoff no [40](roadmaps/40-estado-e-continuidade.md),
+inclui o trabalho não publicado da 0.3.6–0.3.9. **Atualização de 2026-10-21:**
+fechamento funcional 0.4.9 → edição especial imediatamente em seguida, base
+polida da 0.5 em diante → geração/teste do AppImage local para usuários de
+teste. Estado e handoff no [40](roadmaps/40-estado-e-continuidade.md),
 execução no [52 §11](roadmaps/52-arquitetura-executavel-da-0.4.md#11-ordem-e-marcos),
 contabilização de versões no [57 §1.1](roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)
 e pontos de entrada no código no [58 §4.4](roadmaps/58-onde-cada-versao-comeca-no-codigo.md#44-04--embarcados-o-quê-52-ordem-52-11).
@@ -19,7 +21,7 @@ e pontos de entrada no código no [58 §4.4](roadmaps/58-onde-cada-versao-comeca
 migração de Setup ao dock e incluir o
 [Quality Center inicial](especificacoes/quality-center-e-gates.md) na 0.4.x.
 Dependências e próxima fatia no [52 §11.1](roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
-A edição especial associada à 0.5 aprimora/otimiza essa base; o inglês no
+A edição especial precede o AppImage e aprimora/otimiza essa base; o inglês no
 produto e a divulgação internacional têm marco na 0.5 (57 §3 item 11).
 O [estudo de HUD/UX ROS 2](integracoes/41-ros2-hud-ux-analise-projeto.md)
 orienta a frente posterior à 0.4.9, sem antecipar sua implementação.

@@ -16,8 +16,8 @@
 > Base `a5a4f0e`; `AppMenuBar.qml`, `eim_config.toml` e `log/` locais preservados.
 > Protocolo **0.185.0**, binário **0.3.9**.
 >
-> **Objetivo autorizado:** concluir a série até a **0.4.9**, por fatias,
-> e só então gerar/testar o **AppImage local**, sem push, tag ou publicação.
+> **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
+> só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
 > Decisão de 2026-10-20 substitui o fechamento anterior na 0.4.5. A entrega
 > 0.4 inclui o trabalho não publicado 0.3.6–0.3.9; a 0.5 herda essa base e
 > anuncia apenas seu próprio delta ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
@@ -43,8 +43,8 @@
 > ativáveis/desativáveis. Terminal como escolha; UI moderna, discreta e contextual.
 > Cada escopo fecha com UI/UX prática (52 §11, §14.14–14.17).
 > Banco **0.4.5**, consolidação **0.4.6**, qualidade **0.4.7–0.4.8**;
-> estabilização/pacote **0.4.9**; edição especial
-> associada à 0.5 otimiza/pole a base, sem receber essas entregas funcionais.
+> estabilização funcional **0.4.9**; edição especial imediatamente depois,
+> base polida da 0.5 em diante; AppImage somente após essa edição.
 >
 > **Provas:** build ESP-IDF via core e ciclo CPython/debugpy passaram;
 > C17 passou build/run/CTest/clang-format/clangd numa fixture (52 §14.14).
@@ -117,8 +117,8 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
 | ROS 2: frente e ensaio por jornadas depois da 0.4.9 (limite atualizado em 2026-10-20); escolher versão exata a partir da pesquisa medida (autor, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
 | Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (autor, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
-| Pendências do handoff confirmadas dentro da 0.4.x em 2026-10-21 (alocação no 52 §11). A 0.4 até 0.4.9: Banco na 0.4.5, consolidação nativa na 0.4.6, auditoria/polimento geral na 0.4.7–0.4.8 e estabilização/AppImage na 0.4.9 | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
-| Entrega acumulada: trabalho não publicado 0.3.6–0.3.9 pertence à 0.4 até a 0.4.9; alinhar versões/notas e gerar/testar o AppImage depois de fechar; publicação com o autor (2026-10-20) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
+| Pendências do handoff confirmadas dentro da 0.4.x em 2026-10-21 (alocação no 52 §11). Banco na 0.4.5, consolidação nativa na 0.4.6, auditoria/polimento geral na 0.4.7–0.4.8 e estabilização funcional na 0.4.9. Edição especial imediatamente em seguida; AppImage só depois dela | [52](52-arquitetura-executavel-da-0.4.md) §11/§11.1; fronteira no [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
+| Entrega acumulada: trabalho não publicado 0.3.6–0.3.9 pertence à série 0.4; edição especial sobre a 0.4.9 estabelece a base polida da 0.5 em diante. Alinhar identificação/versões/notas e gerar/testar o AppImage somente após essa edição; publicação com o autor (atualizado em 2026-10-21) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
 | A edição especial Windows + WSL2, depois da 0.4.0 | [60](60-windows-e-edicao-especial.md) §4 |
@@ -133,6 +133,14 @@ que ainda vale, medindo antes.
 ## 5. As decisões registradas que NÃO se reabrem
 
 ```text
+AppImage apos especial       DECISAO DO AUTOR em 2026-10-21: fechar a 0.4.9,
+                             executar a edicao especial imediatamente depois
+                             e so' entao gerar/testar o AppImage. A edicao
+                             especial estabelece a base polida da 0.5 em
+                             diante, para oferecer aos usuarios de teste.
+                             Substitui o pacote logo apos a 0.4.9; versao/
+                             identificacao do artefato ainda nao fixadas.
+                             Dono: 57 §1.1; execucao: 52 §11/§11.1.
 Quality Center e instalador  INCLUIDOS na 0.4.x pelo autor em 2026-10-21:
                              reformular Setup junto da migracao ao dock e
                              expor verificacoes existentes com gate local
@@ -155,7 +163,7 @@ comando curto de terminal    `kine` passa a ser a entrada principal; `kinein`
                              mantém compatibilidade. Decisão 2026-10-21;
                              contrato/estado em especificacoes/projetos-arquivos-
                              e-integracao-desktop-0.3.md §3; entrega 0.4.6,
-                             verificação no pacote 0.4.9 (52 §11).
+                             verificação no AppImage apos a edicao especial (52 §11).
 IA na IDE                    fora de escopo (2026-07-17): sem painel de IA,
                              o agente roda no terminal. So' o servidor MCP
                              para agentes externos entra, depois da 0.4.9
@@ -306,8 +314,8 @@ modo autonomo (2026-10-15)   o autor PAUSA o desenvolvimento da IDE (projetos de
                              SDKs fora do apt no usuario, sem sudo (ESP-IDF,
                              Zephyr, pico-sdk, QEMU Espressif, Renode,
                              PlatformIO); SEM placa (o que nao tem emulador fica
-                             NAO PROVADO); AppImage agora autorizado so' ao
-                             fechar 0.4.9 (2026-10-20); sem push, tag, release;
+                             NAO PROVADO); AppImage autorizado so' apos a
+                             edicao especial pos-0.4.9 (2026-10-21); sem push/tag/release;
                              organizar a documentacao junto, sem pular
 0.4: C1 ao salvar            LIGADO por padrao em C/C++ com CDB; Rust so' com
                              `cargo check` quando o rust-analyzer nao esta'
@@ -337,8 +345,9 @@ Rust e Qt                    MANTIDOS (autor, 2026-10-08, 40.7 §7.241;
                              reconfirmado em 2026-10-16, §7.311): a pilha do
                              projeto nao muda
 fechamento da 0.4            (autor, 2026-10-17; limite atualizado para
-(2026-10-20)                 0.4.9 em 2026-10-20) A 0.4.9 fecha com o AppImage,
-                             a divulgacao e a TRANSICAO DA DOCUMENTACAO PARA O
+(2026-10-20/21)              0.4.9 em 2026-10-20) A 0.4.9 fecha funcionalmente;
+                             AppImage apos a edicao especial; marco de
+                             divulgacao na 0.5 e TRANSICAO DA DOCUMENTACAO PARA O
                              INGLES (prioridade; o alemao talvez na 0.5, sem
                              decisao). Ate' la a documentacao segue em
                              portugues. DEPOIS da 0.4.9: a Kinein como
@@ -399,9 +408,9 @@ continuidade ate 0.4.9       AUTORIZADA pelo autor em 2026-10-20, por fatias,
                              Reuso de componentes e animacoes existentes.
                              Retomada solicitada a cada cinco horas, ainda
                              NAO agendada por falta de ferramenta na sessao
-modo automatico renovado     DECISAO DO AUTOR em 2026-10-20: desenvolver ate
-                             a 0.4.9 e gerar/testar o AppImage ao concluir
-                             (limite ampliado no mesmo dia, 57 §1.1).
+modo automatico renovado     DECISAO DO AUTOR em 2026-10-20/21: desenvolver ate
+                             a 0.4.9, executar a edicao especial em seguida
+                             e so' depois gerar/testar o AppImage (57 §1.1).
                              Em cada 0.4.x: procurar falhas de logica e bugs
                              visuais, otimizar o frontend e melhorar os paineis
                              para uma UX moderna, clara e intuitiva. Embarcados
@@ -439,7 +448,8 @@ auditoria geral de frontend  PEDIDO DO AUTOR em 2026-10-20: componentes,
                              animacao/interacao, resposta, informacoes,
                              cores semanticas legiveis e confortaveis,
                              atalhos/nomes/localizacao/acesso lateral.
-                             Entra ANTES do AppImage 0.4.9 (52 §14.17).
+                             Entra antes do fechamento funcional 0.4.9;
+                             AppImage apos a edicao especial (52 §14.17).
                              Previa de navegacao compacta para feedback
                              ainda pendente (52 §14.16); nao tratar como
                              layout aprovado nem como arquivo ja' entregue.

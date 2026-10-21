@@ -225,7 +225,8 @@ tokens de tipografia e de movimento no `Theme.qml`, catraca
 
 **Fronteira atualizada em 2026-10-20:** esta série fecha na **0.4.9**,
 incorpora na entrega o trabalho não publicado 0.3.6–0.3.9 e gera/testa o
-AppImage ao final ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
+AppImage após a edição especial imediatamente seguinte à 0.4.9 (atualização
+de 2026-10-21, [57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
 As âncoras abaixo orientam a extensão dos donos existentes, sem anunciar
 implementação dos itens pendentes.
 
@@ -312,11 +313,13 @@ ela cobra a coerência final das jornadas (52 §11, §14.14–14.17).
 | Integrações ativáveis/desativáveis | `crates/kinein-protocol/src/settings.rs`, `crates/kinein-core/src/settings.rs`, `schemas/settings.schema.json`, `ui/qml/settings/SettingsController.qml` e páginas de settings | Uma preferência efetiva, persistida e aplicada aos caminhos UI/paleta/IPC; reconhecimento, habilitação e instalação distintos. Sem fallback silencioso de runtime |
 | Auditoria de HUD/UI/UX e painéis | `ui/qml/Theme.qml`, `ui/qml/components/`, `ui/qml/shell/`, `ui/qml/embedded/` | Prévia comparativa e feedback; depois fotos e gestos nativos em larguras comparáveis, sem avisos QML ou perda de foco/rascunho |
 | Cores semânticas, atalhos e resposta | `ui/src/editor_highlighter_palette.h`, `ui/src/editor_highlighter_tokens.cpp`, `crates/kinein-core/src/commands/`, `ui/qml/command/CommandDispatcher.qml`, `scripts/verificar-atalhos.sh`, `scripts/medir-performance.sh` | Código real por linguagem, legibilidade nos temas/estados; atalhos sem conflito e nomes coerentes; medidas antes/depois do mesmo cenário |
-| Estabilização e AppImage 0.4.9 | `scripts/verificar.sh`, `packaging/appimage/`, `Cargo.toml`, `CHANGELOG.md` | Gate completo e jornadas integradas; alinhar todos os metadados de versão e conferir o artefato instalado/executado, sem promover prova isolada a release pronta |
+| Estabilização funcional 0.4.9 | `scripts/verificar.sh`, `Cargo.toml`, `CHANGELOG.md` | Gate completo e jornadas integradas; liberar a edição especial com a base funcional validada |
+| Edição especial e AppImage posterior | `ui/qml/Theme.qml`, `ui/qml/components/`, `scripts/verificar.sh`, `packaging/appimage/`, `Cargo.toml`, `CHANGELOG.md` | Polir/otimizar imediatamente após a 0.4.9, validar o conjunto final e só depois alinhar metadados e gerar/testar o artefato para usuários de teste; base da 0.5 em diante |
 
 ### 4.5 0.5 — ambiente e capacidades (o quê: [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md))
 
-Parte da base **0.4.9**; suas notas contêm somente o delta da 0.5 (57 §1.1).
+Parte da base **0.4.9 aprimorada pela edição especial**, após a qual se gera
+e testa o AppImage; suas notas contêm somente o delta da 0.5 (57 §1.1).
 O controle básico de integrações pertence à 0.4, com refinamento e expansão
 na 0.5 (52 §14.15); não reclassificar a entrega anterior como novidade.
 O mesmo vale para Instalar Ferramentas e Quality Center inicial (52 §11.1,

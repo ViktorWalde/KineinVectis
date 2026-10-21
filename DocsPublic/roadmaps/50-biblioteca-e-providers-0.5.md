@@ -14,6 +14,8 @@
 entram na **0.4.x**. Sua ordem está no [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
 Este plano continua dono da Library por capacidades/providers na 0.5;
 ela reutiliza e evolui a base entregue, sem outro Quality Center ou scanner.
+Essa base é a 0.4.9 aprimorada pela edição especial imediatamente seguinte;
+o AppImage só é gerado/testado após essa edição, conforme 57 §1.1.
 
 A Biblioteca deixa de ser apenas um catálogo curado de bibliotecas C/C++ e
 passa a apresentar **capacidades**: análise estática, cobertura, perfilamento,

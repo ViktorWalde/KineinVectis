@@ -637,11 +637,12 @@ mutação    cada guarda nova provada removendo-a
 
 ## 11. Ordem e trem de versões (decisão do autor, 2026-10-01)
 
-**Decisão vigente, 2026-10-20:** as etapas históricas abaixo continuam
+**Decisão vigente, atualizada em 2026-10-21:** as etapas históricas abaixo continuam
 preservadas como ordem e registro. O agrupamento antes em aberto foi
 resolvido: o trabalho não publicado 0.3.6–0.3.9 pertence à entrega **0.4 até
-a 0.4.9**, com geração/teste do AppImage depois desse fechamento. A 0.5
-herda a base e anuncia só o delta próprio; dono no 57 §1.1. As intenções
+a 0.4.9**. A edição especial de polimento vem imediatamente depois e forma
+a base da 0.5 em diante; gerar/testar o AppImage só após essa edição.
+A 0.5 anuncia só o delta próprio; dono no 57 §1.1. As intenções
 de pacote de outubro descritas abaixo são histórico, não a fila vigente.
 
 A série 0.3.0–0.3.5 está encerrada e divulgada. A reorganização da casca vai

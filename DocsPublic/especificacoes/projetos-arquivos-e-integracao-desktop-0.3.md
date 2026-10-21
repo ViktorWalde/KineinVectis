@@ -92,7 +92,8 @@ projeto não são renomeados por essa mudança da entrada de terminal.
 
 **Estado medido em 2026-10-21:** os instaladores ainda geram `kinein` a partir
 de `scripts/kinein.in`; `kine` está decidido, mas não implementado/instalado.
-Entregar a migração na consolidação 0.4.6 e conferi-la no pacote 0.4.9.
+Entregar a migração na consolidação 0.4.6 e conferi-la no AppImage gerado
+após a edição especial que segue a 0.4.9 (57 §1.1, atualizado em 2026-10-21).
 Aceitar instalação nova e atualização de instalação existente, caminhos com
 espaços/Unicode, CWD, argumentos, ajuda/versão sem iniciar UI, compatibilidade
 do nome anterior e recusa segura de conflito. A instalação no sistema do autor

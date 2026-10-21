@@ -42,7 +42,9 @@ aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-e
 é a arquitetura da 0.4 (embarcados com compiladores e ecossistemas por baixo):
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 **Decisão de 2026-10-20:** a série atual fecha na **0.4.9**, com auditoria
-geral de frontend antes do AppImage. A entrega incorpora o trabalho não
+geral de frontend. **Atualização de 2026-10-21:** a edição especial vem
+imediatamente após a 0.4.9, estabelece a base polida da 0.5 em diante e
+precede a geração/teste do AppImage. A entrega incorpora o trabalho não
 publicado 0.3.6–0.3.9; a 0.5 lista somente seu próprio delta. O 52 §11
 organiza 0.4.0–0.4.9; o 57 §1.1 é o dono dessa fronteira e o 40 é o handoff.
 

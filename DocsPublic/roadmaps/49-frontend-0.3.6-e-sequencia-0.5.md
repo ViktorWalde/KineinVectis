@@ -196,6 +196,8 @@ reformulado e Quality Center inicial passam a integrar a **0.4.x**,
 conforme [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
 A 0.5 evolui essa base, oferece inglês plenamente suportado e associa a
 edição especial ao polimento/otimização; não reanuncia a base como nova.
+O AppImage é gerado/testado somente após essa edição especial, imediatamente
+seguinte à 0.4.9 e base polida das versões 0.5 em diante (57 §1.1).
 O Environment Center e a Library completos mantêm seus escopos abaixo.
 
 | Fatia proposta | Resultado visível | Dependência |
