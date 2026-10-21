@@ -369,7 +369,7 @@ public:
     Q_INVOKABLE void runScript(const QString& path, const QString& device = QString());
     Q_INVOKABLE void runStop();
     // D2.3 (DocsPublic/roadmaps/24): multi-terminal — todo comando leva o id da sessão.
-    Q_INVOKABLE void terminalOpen(const QString& cwd = QString());
+    Q_INVOKABLE qint64 terminalOpen(const QString& cwd = QString());
     Q_INVOKABLE void terminalInput(const QString& id, const QString& data);
     Q_INVOKABLE void terminalResize(const QString& id, int cols, int rows);
     Q_INVOKABLE void terminalScroll(const QString& id, int offset);
@@ -680,7 +680,8 @@ signals:
                           const QVariantMap& workspace);
     void terminalActiveChanged();
     // D2.3: a sessão nasceu; o id identifica a aba dela daqui pra frente.
-    void terminalOpened(const QString& id, const QString& shell);
+    void terminalOpened(const QString& id, const QString& shell, qint64 requestId);
+    void terminalOpenFailed(qint64 requestId, const QString& message);
     // D2 (DocsPublic/roadmaps/24): grid renderizável do terminal (cols/rows/cursor/lines).
     // Desde a D2.3 o mapa carrega `id`: a UI roteia pro terminal certo.
     void terminalRender(const QVariantMap& render);
@@ -705,6 +706,9 @@ private:
     void handleFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void handleErrorOccurred(QProcess::ProcessError error);
     void handleResponseLine(const QByteArray& line);
+    void dispatchFailure(const QString& method, const QJsonObject& error, qint64 requestId,
+                         const QString& requestPath, const QString& requestRemoteName,
+                         const QVariantMap& requestQuery);
     void handleNotification(const QString& method, const QJsonObject& params);
     bool handleDataSourceNotification(const QString& method, const QJsonObject& params);
     bool handleRunnerNotification(const QString& method, const QJsonObject& params);
@@ -715,7 +719,7 @@ private:
     bool handleJobNotification(const QString& method, const QJsonObject& params);
     bool handleCmakeNotification(const QString& method, const QJsonObject& params);
     bool handleDebugNotification(const QString& method, const QJsonObject& params);
-    void dispatchResult(const QString& method, const QJsonObject& result);
+    void dispatchResult(const QString& method, const QJsonObject& result, qint64 requestId);
     bool dispatchFileResult(const QString& method, const QJsonObject& result);
     bool dispatchLspResult(const QString& method, const QJsonObject& result);
     bool dispatchSyntaxResult(const QString& method, const QJsonObject& result);

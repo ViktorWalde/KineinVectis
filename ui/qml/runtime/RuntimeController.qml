@@ -36,7 +36,7 @@ Item {
     property string serialDevice: ""
 
     signal showTabRequested(string tab)
-    signal terminalOpenRequested(string cwd)
+    signal terminalOpenRequested(string cwd, bool forCommand)
     signal terminalInputRequested(string id, string data)
     signal terminalResizeRequested(string id, int cols, int rows)
     signal terminalScrollRequested(string id, int offset)
@@ -65,6 +65,7 @@ Item {
     }
 
     function clearTerminals() {
+        if (pendingShell) pendingShell.cancel(qsTr("O projeto mudou. O comando pendente não foi enviado."), true);
         terminalsListModel.clear();
         root.terminalsRevision += 1;
         root.activeTerminalId = "";
@@ -122,7 +123,7 @@ Item {
         return number === 0 ? "terminal" : "terminal" + number;
     }
 
-    function handleTerminalOpened(id, shell, title) {
+    function handleTerminalOpened(id, shell, title, requestId) {
         if (indexOfTerminal(id) >= 0) {
             if (!isFinishedRun(id)) return;
             removeTerminalTab(id);
@@ -137,10 +138,10 @@ Item {
         root.terminalsRevision += 1;
         selectTerminal(id);
 
-        // A linha que esperava este terminal nascer. So' a PRIMEIRA sessao a
-        // abrir depois do pedido a recebe: a espera e' zerada aqui.
-        if (pendingShell.command !== "") {
-            terminalInputRequested(id, pendingShell.take() + "\n");
+        // Only the response to the requested shell can consume its command.
+        const command = pendingShell.take(requestId);
+        if (command !== "") {
+            terminalInputRequested(id, command + "\n");
             clearTerminalInputRequested();
         }
     }
@@ -155,13 +156,13 @@ Item {
     }
 
     function newTerminal() {
-        terminalOpenRequested("");
+        terminalOpenRequested("", false);
     }
 
     function newTerminalAt(directory) {
         if (workspaceRoot === "") return;
         showTabRequested("terminal");
-        terminalOpenRequested(directory);
+        terminalOpenRequested(directory, false);
         focusTerminalInputRequested();
     }
 
@@ -193,7 +194,7 @@ Item {
         // "Terminal 1" e "Terminal 2").
         showTabRequested("terminal");
         if (root.activeTerminalId === "") {
-            terminalOpenRequested("");
+            terminalOpenRequested("", false);
         }
         focusTerminalInputRequested();
     }
@@ -201,6 +202,7 @@ Item {
     // A linha do "Shell no terminal" quando nao ha' sessao viva: ela ESPERA o
     // terminal nascer, em vez de sumir. O porque esta' no PendingShellInput.
     property alias pendingShellInput: pendingShell.command
+    property alias shellErrorText: pendingShell.errorText
     property alias shellTimeoutMs: pendingShell.timeoutMs
 
     signal shellInputDropped(string command)
@@ -217,10 +219,13 @@ Item {
     // nunca a sessao ativa — que pode ser uma execucao ja' terminada, onde a
     // linha se perdia (achado contra um sshd real, 2026-10-04).
     function runInNewTerminal(text) {
-        pendingShell.hold(text);
+        if (!pendingShell.hold(text)) return;
         showTabRequested("terminal");
-        terminalOpenRequested("");
+        terminalOpenRequested("", true);
     }
+
+    function bindShellRequest(requestId) { pendingShell.bindRequest(requestId); }
+    function handleTerminalOpenFailed(requestId, message) { pendingShell.fail(requestId, message); }
 
     // A porta so' acompanha o LANCADOR PADRAO (command vazio): um comando
     // digitado roda como foi escrito, e o core recusa os dois juntos.
@@ -258,7 +263,10 @@ Item {
         runtime: root
     }
 
-    function handleCoreDisconnected() { runTabs.disconnected(); }
+    function handleCoreDisconnected() {
+        pendingShell.cancel(qsTr("O serviço da IDE foi desconectado. O comando pendente não foi enviado."));
+        runTabs.disconnected();
+    }
 
     /// Roteia o render pra sessão dona. Só a ABA ATIVA vira `terminalRender`
     /// (o que a tela desenha); as outras ficam guardadas e voltam na troca.
@@ -282,7 +290,7 @@ Item {
     // não está ativa, uma tecla reabre o terminal.
     function sendTerminalKey(data) {
         if (root.activeTerminalId === "") {
-            terminalOpenRequested("");
+            terminalOpenRequested("", false);
             return;
         }
         terminalInputRequested(root.activeTerminalId, data);

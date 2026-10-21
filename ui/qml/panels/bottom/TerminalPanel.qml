@@ -183,10 +183,23 @@ Item {
         input.handleKey(event);
     }
 
+    KvVerdict {
+        id: commandError
+        objectName: "terminalCommandError"
+        width: parent.width
+        heading: qsTr("Comando não enviado")
+        message: panel.runtimeController ? (panel.runtimeController.shellErrorText || "") : ""
+        codeFont: false
+        animateChanges: true
+    }
+
     TerminalViewport {
         id: terminalViewport
-
-        anchors.fill: parent
+        objectName: "terminalViewport"
+        anchors.top: commandError.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
         lines: panel.lines
         cursor: panel.cursor
         selectionController: terminalSelectionController
@@ -201,7 +214,10 @@ Item {
         onContentHeightChanged: panel.recomputeSize()
         onFocusRequested: panel.forceActiveFocus()
         onPasteRequested: panel.performTerminalAction("terminal.paste")
-        onContextMenuRequested: function(x, y) { panel.openContextMenu(x, y); }
+        onContextMenuRequested: function(x, y) {
+            const point = terminalViewport.mapToItem(panel, x, y);
+            panel.openContextMenu(point.x, point.y);
+        }
         onScrollPositionRequested: function(offset) {
             if (offset !== panel.scrollOffset) panel.queueScroll(offset);
         }
@@ -244,7 +260,9 @@ Item {
             if (lines === 0) {
                 return;
             }
-            const cell = terminalViewport.cellAt(event.x, event.y);
+            const point = terminalViewport.mapFromItem(panel, event.x, event.y);
+            if (point.y < 0 || point.y >= terminalViewport.height) return;
+            const cell = terminalViewport.cellAt(point.x, point.y);
             // O ponteiro pode estar sobre a barra ou a margem: a célula
             // reportada tem que existir na grade.
             const col = Math.max(0, Math.min(

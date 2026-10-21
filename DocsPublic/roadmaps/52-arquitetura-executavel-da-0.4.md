@@ -2121,7 +2121,7 @@ sem abrir dispositivo: `/tmp/kinein-serial-concurrency-audit/report.json`.
 Os dois inícios antecedem os dois términos. As travas `busy` dos controllers
 são locais a cada operação e não substituem a arbitragem no core.
 
-**Prioridade seguinte, 0.4.1g, antes de Setup/schema 3:** desenhar e implementar um
+**Prioridade seguinte, 0.4.1h após a correlação da 0.4.1g (§14.21), antes de Setup/schema 3:** desenhar e implementar um
 único dono por porta, considerando aliases canônicos/by-id, identificação,
 arquivos, monitor e execução/gravação que usam o canal. Reutilizar o ciclo de
 vida dos jobs e `TerminalManager::is_open`; não criar um segundo executor ou
@@ -2153,3 +2153,144 @@ com o pedido antes de ampliar os gestos de preparação. O caso de processo
 parado ainda depende de reprodução específica. A preparação por comando da
 0.4.1f usa esse mecanismo existente; ele ainda não foi reformulado e não
 permite declarar a orquestração de terminais/portas pronta.
+
+### 14.21 0.4.1g — comando associado ao terminal solicitado (2026-10-20)
+
+**Fatia anterior fechada:** 0.4.1f em `0f28695`, gate rápido estrito integral
+verde. A correlação é o primeiro bloqueador do §14.20; a exclusividade serial
+no core vem na 0.4.1h, antes de Setup/schema 3. Não marcar a matriz de portas
+como corrigida ao resolver somente o envio de comandos ao terminal.
+
+**Contrato antes do código, sem mudar o fio 0.181.0:** reutilizar o id da
+requisição JSON-RPC já criado por `CoreClient`. `terminalOpen(cwd)` passa a
+devolver esse id localmente; `terminalOpened(id, shell, requestId)` e
+`terminalOpenFailed(requestId, message)` entregam o contexto da resposta à UI.
+Os métodos e payloads do core permanecem os mesmos. O contrato da ponte vive
+no arquitetura/36 §10; o protocolo terminal aponta para ele.
+
+`PendingShellInput` continua dono único da linha, prazo e associação. O
+roteador prende o id devolvido pelo cliente ao pedido que tem comando. Só
+a resposta correspondente libera o texto com Enter. Monitor, container,
+execução, outro terminal e respostas atrasadas não consomem a linha. Um segundo
+comando enquanto o primeiro aguarda é recusado com mensagem, sem substituir
+a intenção anterior. Erro, timeout, troca de workspace ou queda do core
+cancelam a linha; ela não reaparece num terminal futuro. Pedido recusado
+antes de sair do cliente também encerra a espera.
+
+**Apresentação:** expor o erro desse fluxo no `TerminalPanel` existente por
+`KvVerdict`, preservando o grid e recalculando sua geometria. Nenhum novo
+executor, sistema de notificação ou componente paralelo. Confirmar coordenadas
+com a mensagem visível e manter os gestos normais quando não há erro.
+
+**Aceite antes do gate integral:** controller real com respostas intercaladas,
+clique duplo, falhas de id certo/errado, timeout, queda e troca de projeto;
+roteamento da ponte com os ids reais de resposta; teste visual em Xvfb/software
+com processo/porta falsos e comando inofensivo, sem sudo, instalação ou placa.
+Regenerar mapa de módulos antes de congelar a fonte para o gate. Compilar e
+verificar debug/release, qmllint, harnesses e o gate completo da fatia C++;
+nenhuma compilação de UI durante verificar-cpp.
+
+O harness de superfície usa um stub de dados de `DebugFlags`, singleton C++
+que não é carregado pelo runner QML de fontes. Ele desliga o overlay de
+diagnóstico, sem substituir controller, renderer ou transporte testados.
+O aceite nativo valida também o registro C++ real; nenhum aviso é suprimido.
+
+**Resultados fechados em 2026-10-21:** os 157 harnesses QML passaram. O novo
+`tst_shell_correlation` usa controller, roteadores e painel reais; cobre
+respostas intercaladas, repetidas e tardias, segundo clique, recusa, timeout,
+troca de projeto e desconexão. A desconexão posterior à recusa preserva a
+causa recebida. A troca de projeto limpa erro anterior sem enviar a linha.
+
+Aceite nativo do agente em Xvfb próprio/software, 1440×900, com core real e
+proxy que entrega a resposta do monitor antes da resposta do shell. Porta é
+arquivo regular temporário; monitor falso nunca abre dispositivo. O único
+comando é `printf 'CORRELATION_OK\n'`, inofensivo. O binário anterior, guardado
+antes da recompilação, enviou a linha ao monitor `t1`; a UI corrigida a enviou
+apenas ao shell solicitado `t2` (pedido JSON-RPC 29). A mesma prova distingue
+o defeito da correção, sem depender da posição visual das abas.
+Relatórios, trace e fotos em `/tmp/kinein-shell-native-proof/before/` e
+`after/`; roteiro `/tmp/kinein-shell-native-probe.py`.
+
+Em outros dois ensaios nativos, diretório de trabalho removido foi recusado
+pelo core real e a interrupção do transporte antes da resposta deixou a
+mensagem “o core parou antes de abrir o terminal” visível, sem injetar a
+linha. Fotos conferidas em `error/` e `disconnected/` na mesma pasta, sem
+avisos QML; o grid permanece abaixo da mensagem. O primeiro gate completo estrito parou na complexidade cognitiva do despacho
+C++ (27, limite 25). Antes de continuar: extrair o despacho de falhas
+para uma função privada coesa, preservando os mesmos sinais e contextos;
+não elevar limite nem suprimir diagnóstico. Revalidar o arquivo antes de
+repetir o gate completo. A separação passou pelo clang-tidy isolado e pela
+segunda rodada integral de análise C++, sem exceção. Nessa rodada também
+passaram os 1.200 Rust, 8 CTest, qmllint, 157 harnesses e integrações; o gate
+parou no smoke debug por `tst_clipboard_files` antigo, anterior à mudança de
+`libsystemd.so.0`. Binário e três objetos guardados em backup, recompilados;
+o teste passou novamente e a UI debug abriu em 385 ms, com passeio de 33
+superfícies limpo. Recusa e desconexão nativas repetidas depois da separação,
+com fotos finais conferidas. UI e core release compilados; nenhuma
+biblioteca instalada foi alterada. A rodada final do gate completo estrito
+ficou **TUDO VERDE**, sem NÃO PROVADO: 1.200 Rust, 8 CTest, qmllint e 157
+harnesses, integrações externas, builds e abertura debug/release. Log
+`/tmp/kinein-shell-full-gate-green.log`. Primeiro frame 350 ms em debug e
+346 ms em release; cada passeio de 33 superfícies terminou sem avisos.
+A prova de correlação foi repetida com UI e core release em `after-release/`
+na pasta de evidências: apenas o shell `t2` recebeu a linha, pedido 29.
+Estes números não afirmam ganho de desempenho.
+
+**Inspeção para a próxima fatia:** o comando de Gravar é repassado como texto
+para `run.start` ou salvo em run config editável; hoje não carrega identidade
+de recurso serial. A exclusividade precisa acompanhar esse fluxo sem tentar
+inferir porta por parsing de shell. Em ensaio com monitor falso, o processo
+permaneceu vivo após `workspace.open` de outro projeto; com `SIGHUP` ignorado,
+também após `terminal.close`. Relatório em
+`/tmp/kinein-monitor-lifetime-u8rjn62e/report.json`, sem dispositivo aberto;
+os processos de teste foram encerrados. Corrigir ciclo de vida e liberação
+real junto à matriz do §14.20; não declarar exclusividade pronta só por
+remover uma aba ou marcar um booleano na UI.
+
+### 14.22 0.4.1h1 — encerrar o processo antes de liberar seu recurso (desenho, 2026-10-21)
+
+Primeira parte da auditoria do §14.20, após fechar a 0.4.1g. O aceite nativo
+anterior já foi preparado em `/tmp/kinein-shell-native-proof/lifetime-before/`:
+clique de fechar, aba ainda visível e processo falso vivo; nenhuma entrada no
+monitor. O core anterior foi guardado com SHA-256 em
+`/tmp/kinein-terminal-lifetime-proof/before/`. **Ainda não
+integrada ao principal:** há protótipo com oito testes focados no checkout
+`/home/hugh/KineinVectis-worktrees/serial-lifecycle`, target próprio. A
+incorporação e o gate da fatia vêm após o fechamento da 0.4.1g. O ensaio do §14.21 mostrou monitor vivo após trocar de
+workspace e após fechar uma sessão cujo processo ignora `SIGHUP`. A matriz de
+exclusividade permanece aberta até as partes seguintes; esta parte corrige
+seu pré-requisito de ciclo de vida, sem declarar arbitragem de portas pronta.
+
+**Referência oficial conferida:** a API de
+[`Child`](https://docs.rs/portable-pty/0.9.0/portable_pty/trait.Child.html)
+fornece `try_wait` sem bloquear e `wait` bloqueante. A fonte da versão 0.9.0
+usada pelo projeto mostra que o `clone_killer` Unix só envia `SIGHUP`, ao
+contrário do `kill` no handle original, que pode forçar o término. O spawn
+Unix do PTY cria a sessão com `setsid`. A IDE deve usar esses mecanismos e a
+camada `platform` existente; nenhum executor ou terminal paralelo.
+
+**Desenho antes do código:** compartilhar o handle do filho entre fechamento
+e waiter, com exclusão mútua curta. O waiter consulta o término sem segurar
+um lock durante `wait` bloqueante. O fechamento verifica o estado sob o
+mesmo lock, evitando sinalizar um PID já coletado, e encerra o grupo próprio
+do PTY Unix; nos demais sistemas usa o handle do processo. Não remover a
+sessão quando a solicitação de término falha. Somente o término observado
+produz `event.terminal.closed`; recursos de longa duração não serão soltos
+por um booleano de UI. Preparar reader/writer antes do spawn para que falha
+nessa preparação não abandone um filho recém-criado.
+
+Trocar para outro workspace encerra os terminais do anterior no dono comum
+da transição (`activate_workspace`/`deactivate_workspace`), incluindo o
+`run_terminal`. Reabrir a mesma raiz preserva suas sessões. Uma recusa real
+de encerramento impede a troca, com erro; não afirmar que o projeto mudou
+com um processo esquecido. O fechamento de todas as sessões tenta cada uma
+e preserva as que falharam. Não cancelar indistintamente jobs globais de
+instalação ou identificação ao trocar projeto.
+
+É correção do comportamento já contratado, sem novo método, evento ou campo
+no fio 0.181.0. **Aceite:** regressões devem reprovar o código anterior;
+processo que ignora HUP, filho do wrapper, encerramento independente de outra
+sessão, saída natural, stop/drop e troca de workspace. Usar só fixtures de
+processos/portas; nenhum firmware ou arquivo de placa. Medir latência e
+conferir que a nova observação não gera espera ocupada. Depois, desenhar
+reserva por porta e metadados de execução/gravação; a matriz só fecha inteira.

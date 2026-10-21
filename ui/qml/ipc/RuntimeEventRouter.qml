@@ -12,8 +12,12 @@ Item {
     Connections {
         target: root.coreClient
 
-        function onTerminalOpened(id, shell) {
-            root.runtimeController.handleTerminalOpened(id, shell);
+        function onTerminalOpened(id, shell, requestId) {
+            root.runtimeController.handleTerminalOpened(id, shell, "", requestId);
+        }
+
+        function onTerminalOpenFailed(requestId, message) {
+            root.runtimeController.handleTerminalOpenFailed(requestId, message);
         }
 
         function onTerminalRender(render) {

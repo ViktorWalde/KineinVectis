@@ -20,6 +20,7 @@ Item {
     property var sent: []
     property string droppedLine: ""
     property int failures: 0
+    property int requestId: 0
 
     RuntimeController {
         id: runtime
@@ -29,7 +30,10 @@ Item {
         // O guarda e' de 15 s no produto; aqui encurta para o teste nao pagar
         // a espera. E' o MESMO caminho, so' que mais cedo.
         shellTimeoutMs: 60
-        onTerminalOpenRequested: root.openRequests += 1
+        onTerminalOpenRequested: function(cwd, forCommand) {
+            root.openRequests += 1;
+            if (forCommand) runtime.bindShellRequest(++root.requestId);
+        }
         onTerminalInputRequested: function(id, data) {
             root.sent.push(id + "|" + data);
         }
@@ -62,7 +66,7 @@ Item {
             runtime.runInNewTerminal("ssh pi@10.0.0.7");
             if (root.openRequests !== 2) root.failures += 32;
             if (root.sent.length !== 0) root.failures += 64;
-            runtime.handleTerminalOpened("t1", "/bin/sh");
+            runtime.handleTerminalOpened("t1", "/bin/sh", "", root.requestId);
             if (root.sent.length !== 1) root.failures += 128;
             if (root.sent[0] !== "t1|ssh pi@10.0.0.7\n") root.failures += 256;
             if (runtime.pendingShellInput !== "") root.failures += 512;
@@ -76,7 +80,7 @@ Item {
             runtime.runInNewTerminal("ssh outro@host");
             if (root.openRequests !== 3) root.failures += 8192;
             if (root.sent.length !== 1) root.failures += 2048;
-            runtime.handleTerminalOpened("t3", "/bin/sh");
+            runtime.handleTerminalOpened("t3", "/bin/sh", "", root.requestId);
             if (root.sent[1] !== "t3|ssh outro@host\n") root.failures += 4096;
 
             // E o guarda nao dispara depois de a linha ter saido.

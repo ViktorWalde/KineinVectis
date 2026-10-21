@@ -21,6 +21,12 @@ como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
 O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
 pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
 
+- **Comando no terminal solicitado (0.4.1g, 2026-10-21):** abrir um monitor
+  ao mesmo tempo já não desvia o comando destinado a um novo shell. Falha de
+  abertura, desconexão e espera expirada descartam a linha e mostram a causa
+  no painel Terminal; clique repetido não substitui o comando pendente.
+  Contrato local da ponte no arquitetura/36 §10, sem alterar o protocolo.
+
 - **Preparação do acesso serial (0.4.1f, 2026-10-20):** o core distingue
   cadastro no grupo de sessão ainda desatualizada, sem recomendar recadastro
   como solução para qualquer permissão negada. O painel oferece Preparar

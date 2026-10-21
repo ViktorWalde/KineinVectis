@@ -687,3 +687,24 @@ Todos rodam em `scripts/verificar-qml-logica.sh` (Qt 6.10) e em
 `scripts/verificar.sh`. A prova **visual** está em
 `scripts/capturar-telas.sh`, que fotografa as cenas em 1024×700, 1366×768 e
 1920×1080 num Xvfb, com projeto e HOME de teste.
+
+## 10. Associação de comando ao terminal (0.4.1g, contrato de 2026-10-20)
+
+A ponte reutiliza o id JSON-RPC existente: `CoreClient.terminalOpen(cwd)`
+devolve `requestId`; `terminalOpened(id, shell, requestId)` e
+`terminalOpenFailed(requestId, message)` preservam essa identidade até o
+`RuntimeController`. Trata-se da API local C++/QML, sem parâmetro ou campo
+novo no `terminal.open` do core.
+
+`terminalOpenRequested(cwd, forCommand)` diferencia um shell normal da
+abertura que espera uma linha. O `RuntimeRequestRouter` associa imediatamente
+o id retornado ao `PendingShellInput` nesse segundo caso. O texto só sai em
+resposta ao mesmo id. O título da aba, sua posição, o programa e a ordem de
+chegada não são identidade. Outros tipos de terminal não recebem a linha.
+
+O helper preserva um único comando pendente; outro é recusado, sem substituir
+o primeiro. Falha correspondente, timeout, troca de workspace e desconexão
+cancelam a linha. Erro de outro pedido não a cancela. O erro desse fluxo fica
+visível no `TerminalPanel` pelo `KvVerdict` existente; o viewport se redimensiona
+sem sobrepor o grid. Desenho, prova do defeito anterior e aceite da fatia no
+[52 §14.21](../roadmaps/52-arquitetura-executavel-da-0.4.md#1421-041g--comando-associado-ao-terminal-solicitado-2026-10-20).

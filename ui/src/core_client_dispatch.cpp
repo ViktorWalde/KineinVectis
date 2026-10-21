@@ -65,52 +65,62 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     }
 
     if (response.contains(QStringLiteral("error"))) {
-        const QJsonObject error = response.value(QStringLiteral("error")).toObject();
-        const QString message = error.value(QStringLiteral("message")).toString();
-        appendLog(QStringLiteral("erro do core em %1: %2").arg(method, message));
-        if (method == QStringLiteral("build.run")) {
-            setBuilding(false);
-            m_buildJobId.clear();
-        }
-        if (method == QStringLiteral("test.run")) {
-            setTesting(false);
-            m_testJobId.clear();
-        }
-        if (method == QStringLiteral("quality.run")) {
-            setAnalyzing(false);
-            m_qualityJobId.clear();
-        }
-        if (method == QStringLiteral("environment.scan")) {
-            setScanningEnvironment(false);
-            m_environmentJobId.clear();
-        }
-        if (method == QStringLiteral("fs.write")) {
-            emit fileSaveFailed(requestPath, message);
-        }
-        if (method == QStringLiteral("fs.readExternal")) {
-            emit externalFileLoadFailed(requestPath, message);
-        }
-        if (method == QStringLiteral("remote.directories")) {
-            emit remoteDirectoriesFailed(requestRemoteName, requestPath, message);
-        }
-        if (method == QStringLiteral("fs.copy")) {
-            emit pathCopyFailed(requestPath, message);
-        }
-        if (method == QStringLiteral("debug.evaluate")) {
-            // O core devolve a expressao nos `details`; sem ela a falha de um
-            // watch marcaria todos os outros.
-            emit debugEvaluateFailed(error.value(QStringLiteral("details"))
-                                         .toObject()
-                                         .value(QStringLiteral("expression"))
-                                         .toString(),
-                                     message);
-        }
-        handleDataSourceFailure(method, error, requestQuery);
-        emit requestFailed(method, message, error.value(QStringLiteral("code")).toString());
+        dispatchFailure(method, response.value(QStringLiteral("error")).toObject(), id, requestPath,
+                        requestRemoteName, requestQuery);
         return;
     }
 
-    dispatchResult(method, response.value(QStringLiteral("result")).toObject());
+    dispatchResult(method, response.value(QStringLiteral("result")).toObject(), id);
+}
+
+void CoreClient::dispatchFailure(const QString& method, const QJsonObject& error, qint64 id,
+                                 const QString& requestPath, const QString& requestRemoteName,
+                                 const QVariantMap& requestQuery)
+{
+    const QString message = error.value(QStringLiteral("message")).toString();
+    appendLog(QStringLiteral("erro do core em %1: %2").arg(method, message));
+    if (method == QStringLiteral("build.run")) {
+        setBuilding(false);
+        m_buildJobId.clear();
+    }
+    if (method == QStringLiteral("test.run")) {
+        setTesting(false);
+        m_testJobId.clear();
+    }
+    if (method == QStringLiteral("quality.run")) {
+        setAnalyzing(false);
+        m_qualityJobId.clear();
+    }
+    if (method == QStringLiteral("environment.scan")) {
+        setScanningEnvironment(false);
+        m_environmentJobId.clear();
+    }
+    if (method == QStringLiteral("fs.write")) {
+        emit fileSaveFailed(requestPath, message);
+    }
+    if (method == QStringLiteral("fs.readExternal")) {
+        emit externalFileLoadFailed(requestPath, message);
+    }
+    if (method == QStringLiteral("remote.directories")) {
+        emit remoteDirectoriesFailed(requestRemoteName, requestPath, message);
+    }
+    if (method == QStringLiteral("fs.copy")) {
+        emit pathCopyFailed(requestPath, message);
+    }
+    if (method == QStringLiteral("debug.evaluate")) {
+        // O core devolve a expressao nos `details`; sem ela a falha de um
+        // watch marcaria todos os outros.
+        emit debugEvaluateFailed(error.value(QStringLiteral("details"))
+                                     .toObject()
+                                     .value(QStringLiteral("expression"))
+                                     .toString(),
+                                 message);
+    }
+    handleDataSourceFailure(method, error, requestQuery);
+    if (method == QStringLiteral("terminal.open")) {
+        emit terminalOpenFailed(id, message);
+    }
+    emit requestFailed(method, message, error.value(QStringLiteral("code")).toString());
 }
 
 bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& result)
@@ -308,7 +318,7 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     }
 }
 
-void CoreClient::dispatchResult(const QString& method, const QJsonObject& result)
+void CoreClient::dispatchResult(const QString& method, const QJsonObject& result, qint64 requestId)
 {
     if (method == QStringLiteral("core.ping")) {
         m_protocolVersion = result.value(QStringLiteral("protocolVersion")).toString();
@@ -364,7 +374,7 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         const QString shell = result.value(QStringLiteral("shell")).toString();
         m_terminalIds.insert(id);
         setTerminalActive(!m_terminalIds.isEmpty());
-        emit terminalOpened(id, shell);
+        emit terminalOpened(id, shell, requestId);
         appendLog(QStringLiteral("terminal aberto (%1): %2").arg(id, shell));
         return;
     }

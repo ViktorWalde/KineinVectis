@@ -108,7 +108,15 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
         emit exportFailed(m_pendingMethods.value(id), m_pendingPaths.value(id),
                           QStringLiteral("o core parou antes de responder"));
     }
-    m_pendingMethods.clear();
+    const auto pendingMethods = std::exchange(m_pendingMethods, {});
+    for (auto request = pendingMethods.constBegin(); request != pendingMethods.constEnd();
+         ++request)
+    {
+        if (request.value() == QStringLiteral("terminal.open")) {
+            emit terminalOpenFailed(request.key(),
+                                    QStringLiteral("o core parou antes de abrir o terminal"));
+        }
+    }
     m_pendingPaths.clear();
     m_pendingRemoteDirectoryNames.clear();
     m_pendingDataSourceQueries.clear();

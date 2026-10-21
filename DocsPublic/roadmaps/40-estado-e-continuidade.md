@@ -9,11 +9,11 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-20). Leia isto primeiro.**
+> **HANDOFF (2026-10-21). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1f concluída:** diagnóstico único e preparação visual do acesso
-> serial (52 §14.19, 40.7 §7.326); base da fatia `58d70b2`.
+> **0.4.1g concluída:** comando associado ao terminal solicitado e falhas
+> visíveis (52 §14.21, 40.7 §7.327); base da fatia `0f28695`.
 > `eim_config.toml` e `log/` continuam locais fora da fatia.
 > Protocolo **0.181.0**, binário **0.3.9**.
 >
@@ -24,18 +24,18 @@
 > anuncia apenas seu próprio delta ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
-> cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d e contextos 0.4.1e.
-> **Gate rápido estrito integral verde:** 1200 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **156 harnesses QML**, sem NÃO PROVADO.
-> UI debug/release e core debug compilaram; preparo e reverificação nativos
-> conferidos. Acesso real ainda requer atualizar a sessão (40.7 §7.326).
+> cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
+> **Gate completo estrito integral verde:** 1200 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **157 harnesses QML**, sem NÃO PROVADO.
+> UI/core debug e release validados; correlação e falhas nativas conferidas.
+> Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
 > **Próximo:** colher feedback da UI atual e da prévia de navegação compacta
 > (52 §14.16), preparada e validada em 1024/736/320 px. A UI Qt mantém
-> suas abas até incorporar o feedback. **Agora:** correlação de comandos
-> e exclusividade da porta (52 §14.20); depois Setup no dock, schema 3
-> e C/Python. Falhas de concorrência reproduzidas, ainda pendentes.
-> O comando atual usa core debug/software; plano 0.4.9 e revisão posterior vigentes.
+> suas abas até incorporar o feedback. **Agora:** ciclo de vida dos processos
+> (0.4.1h1, 52 §14.22), protótipo em checkout isolado com 8 testes focados;
+> depois exclusividade por porta, Setup no dock, schema 3 e C/Python.
+> Orquestração serial ainda não está pronta; plano 0.4.9 e revisão posterior vigentes.
 >
 > **Escopo:** bare metal e Linux embarcado; PlatformIO em destaque dentro
 > de Embarcados; C puro com assistente/padrão C e jornada visual completa;
@@ -48,7 +48,7 @@
 >
 > **Provas:** build ESP-IDF via core e ciclo CPython/debugpy passaram;
 > C17 passou build/run/CTest/clang-format/clangd numa fixture (52 §14.14).
-> Placa ausente na última descoberta; não afirmar flash físico. CircuitPython,
+> Última medida: CP2102 com sessão sem acesso; flash físico não provado. CircuitPython,
 > preferências de integração e assistente C ainda não implementados.
 > **Operação:** aceites em Xvfb próprio/software; não dirigir entrada global
 > nem fechar a janela original. Sem sudo/instalação silenciosa ou gravação
@@ -60,17 +60,18 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.181.0 (crates/kinein-protocol, medido em 2026-10-20; o
+protocolo   0.181.0 (crates/kinein-protocol, medido em 2026-10-21; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   156 tst_*.qml em scripts/qml-harness (medido em 2026-10-20)
+harnesses   157 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
             2026-10-20 (§7.325), sem NÃO PROVADO.
             1200 Rust na 0.4.1f em 2026-10-20 (§7.326), gate estrito integral verde.
+            1200 Rust na 0.4.1g em 2026-10-21 (§7.327), gate completo estrito verde.
 ```
 
 Os comandos que medem estão no
@@ -103,7 +104,7 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: diagnóstico e preparo serial 0.4.1f fechados, gate integral estrito verde. Porta CP2102 detectada; conta cadastrada, sessão sem o grupo ativo. Próximo: correlação de terminal e uso exclusivo da porta (2026-10-20) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.20 e [40.7](40.7-registro-das-entregas.md) §7.326 |
+| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Próximo: ciclo de vida 0.4.1h1 em checkout isolado e exclusividade da porta. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.22 e [40.7](40.7-registro-das-entregas.md) §7.326–7.327 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia interativa de navegação compacta criada e validada em WebKitGTK a 1024/736/320 px, preparada para feedback; depois, auditoria geral de frontend, componentes, painéis, cores do editor, atalhos, animação e desempenho antes do AppImage | [52](52-arquitetura-executavel-da-0.4.md) §14.16–14.17; agrupamento até 0.4.9 no §11 |

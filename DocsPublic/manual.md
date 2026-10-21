@@ -681,6 +681,12 @@ shells e execuções, todas terminais de verdade:
   fecha. (Até 2026-09-18 havia uma sessão "Execução" separada, por pipes,
   sem TTY — saiu: o terminal integrado já faz tudo o que ela fazia.)
 
+Quando um painel pede **Executar no terminal** ou **Shell no terminal**, o
+comando aguarda o shell solicitado. Abrir um monitor ao mesmo tempo não
+muda seu destino. Se a abertura falhar, a conexão cair ou a espera expirar,
+a faixa **Comando não enviado** mostra a causa no Terminal. Após resolver,
+faça uma nova tentativa; a linha descartada não reaparece em outra sessão.
+
 Clique direito (ou `Shift+F10`/tecla Menu com foco no terminal) abre Copiar,
 Colar, **Selecionar Tudo**, Selecionar área visível, Limpar tela, Limpar
 histórico, Novo e Fechar. Navegue com setas e confirme com Enter. Selecionar

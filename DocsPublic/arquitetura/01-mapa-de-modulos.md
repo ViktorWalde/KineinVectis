@@ -733,6 +733,7 @@ flowchart LR
     n_ui_src_core_client_dispatch_lsp_cpp["core_client_dispatch_lsp.cpp"]
     n_ui_src_core_client_log_cpp["core_client_log.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
+    n_ui_src_core_client_process_cpp["core_client_process.cpp"]
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
     n_ui_src_core_client_requests_run_cpp["core_client_requests_run.cpp"]
   end
@@ -781,6 +782,7 @@ flowchart LR
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_CoverageEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_JobsEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
+  n_ui_src_core_client_process_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_requests_cpp --> n_ipc_terminal
   n_ui_src_core_client_requests_run_cpp --> n_ipc_run
   n_ui_src_core_client_requests_run_cpp --> n_ipc_runConfig
@@ -825,6 +827,7 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch_lsp.cpp` | Dispatch do dominio LSP (ARCHITECTURE.md §5): |
 | ponte C++ | `ui/src/core_client_log.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
+| ponte C++ | `ui/src/core_client_process.cpp` |  |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | ponte C++ | `ui/src/core_client_requests_run.cpp` | Dominio RUN no lado da UI: |
 | handler Rust | `crates/kinein-core/src/handlers/coverage.rs` | Handlers de coverage.* (impl Core). |

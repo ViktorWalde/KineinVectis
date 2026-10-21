@@ -1,55 +1,70 @@
 import QtQuick
 
-// A LINHA QUE ESPERA UM TERMINAL NASCER (2026-09-25, V4).
-//
-// O painel Remoto tem "Shell no terminal": o core devolve a linha `ssh ...` e o
-// `RuntimeController` a manda para o terminal da IDE. Com NENHUMA sessao aberta
-// — o estado normal de quem acabou de abrir a IDE — ele pedia um terminal e
-// devolvia SEM ENVIAR NADA. O autor via um terminal vazio, e o painel dizia
-// "shell aberto no terminal".
-//
-// Mora num objeto proprio, e nao em mais trinta linhas do controller, porque o
-// controller estava a uma linha do limite de 400 da catraca — e porque isto
-// tem estado proprio (a linha guardada e o prazo dela) que ninguem mais usa.
+// Owns one command waiting for its requested terminal, never the next arbitrary
+// session. The JSON-RPC request id comes from CoreClient through the router.
 QtObject {
     id: root
-
-    // A linha guardada. Vazia quando nao ha' ninguem esperando.
     property string command: ""
-
-    // Quinze segundos: se a sessao nao nasceu ate' la', a linha NAO fica
-    // guardada. Um `ssh` antigo aparecendo num terminal que o autor abriu
-    // depois, para outra coisa, seria pior que nao ter enviado. O harness
-    // encurta o prazo — e' o mesmo caminho, so' que mais cedo.
+    property var requestId: -1
+    property string errorText: ""
     property int timeoutMs: 15000
-
-    // Ninguem descobre sozinho que a linha nao foi: quem pediu precisa ouvir.
     signal dropped(string command)
 
     readonly property Timer deadline: Timer {
         interval: root.timeoutMs
         repeat: false
-        onTriggered: root.giveUp()
+        onTriggered: root.giveUp(qsTr("O terminal não abriu a tempo. O comando não foi enviado; tente novamente."))
     }
 
-    // Guarda a linha e comeca a contar.
     function hold(text) {
-        root.command = text;
-        root.deadline.restart();
+        if (text === undefined || text === null || text.trim() === "") return false;
+        if (command !== "") {
+            errorText = qsTr("Outro comando aguarda a abertura do terminal. Este comando não foi enviado; tente novamente após a abertura.");
+            dropped(text);
+            return false;
+        }
+        command = text;
+        requestId = -1;
+        errorText = "";
+        deadline.restart();
+        return true;
     }
 
-    // Entrega a linha a quem tem terminal, uma vez so'.
-    function take() {
-        const held = root.command;
-        root.command = "";
-        root.deadline.stop();
+    function bindRequest(id) {
+        if (command === "") return;
+        if (id === undefined || id === null || id < 0) {
+            giveUp(qsTr("O serviço da IDE está indisponível. O comando não foi enviado; aguarde a reconexão e tente novamente."));
+            return;
+        }
+        requestId = id;
+    }
+
+    function matches(id) {
+        return command !== "" && requestId >= 0 && id === requestId;
+    }
+
+    function release() {
+        const held = command;
+        command = "";
+        requestId = -1;
+        deadline.stop();
         return held;
     }
 
-    function giveUp() {
-        if (root.command === "") {
-            return;
-        }
-        root.dropped(root.take());
+    function take(id) { return matches(id) ? release() : ""; }
+
+    function fail(id, message) {
+        if (matches(id)) giveUp(message);
+    }
+
+    function giveUp(message) {
+        if (command === "") return;
+        errorText = message || qsTr("O comando não foi enviado ao terminal. Tente novamente.");
+        dropped(release());
+    }
+
+    function cancel(message, resetError) {
+        if (resetError) errorText = "";
+        giveUp(message);
     }
 }

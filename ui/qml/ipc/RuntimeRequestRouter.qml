@@ -20,8 +20,9 @@ Item {
     Connections {
         target: root.runtimeController
 
-        function onTerminalOpenRequested(cwd) {
-            root.coreClient.terminalOpen(cwd);
+        function onTerminalOpenRequested(cwd, forCommand) {
+            const requestId = root.coreClient.terminalOpen(cwd);
+            if (forCommand) root.runtimeController.bindShellRequest(requestId);
         }
 
         function onTerminalInputRequested(id, data) {

@@ -150,3 +150,9 @@ entrada. A UI respeita application cursor, envolve colagens com bracketed
 paste quando a aplicação o pede e continua sem interpretar a interface do
 programa. Resize de painel é coalescido antes de `terminal.resize`, evitando
 reserializar um grid por pixel durante o arrasto.
+
+**Correlação local da ponte (0.4.1g):** comandos de preparação/SSH aguardam a
+resposta do `terminal.open` solicitado, pelo id JSON-RPC existente; outra
+sessão não consome a linha. Sem alteração dos payloads deste domínio ou da
+versão 0.181.0. API C++/QML e invariantes no
+[arquitetura/36 §10](../36-casca-da-ide.md#10-associação-de-comando-ao-terminal-041g-contrato-de-2026-10-20).
