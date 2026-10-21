@@ -193,9 +193,9 @@ Item {
         if (controller.selectedPort !== "") failures += 2251799813685248;
 
         // A janela integrada nasce na visão geral; o veredito do cabeçalho diz
-        // a placa identificada, senao o que ha' no USB, senao "nenhuma".
+        // a placa identificada ou o snapshot recebido, sem supor ausência física.
         if (controller.tab !== "project") failures += 4503599627370496;
-        if (controller.boardVerdict !== "nenhuma placa") failures += 9007199254740992;
+        if (controller.boardVerdict !== "Dispositivos a verificar") failures += 9007199254740992;
         controller.handleSerialPorts([cp2102], "");
         if (controller.boardVerdict.indexOf("1 porta") !== 0) failures += 18014398509481984;
         controller.identity.identify("/dev/ttyUSB0");

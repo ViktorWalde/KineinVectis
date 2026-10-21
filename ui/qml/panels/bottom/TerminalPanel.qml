@@ -189,8 +189,10 @@ Item {
         id: commandError
         objectName: "terminalCommandError"
         width: parent.width
-        heading: panel.processNotice !== "" ? qsTr("Falha no terminal") : qsTr("Comando não enviado")
-        message: panel.processNotice || (panel.runtimeController ? (panel.runtimeController.shellErrorText || "") : "")
+        heading: panel.processNotice !== "" ? qsTr("Falha no terminal")
+                 : panel.runtimeController && panel.runtimeController.shellErrorText ? qsTr("Comando não enviado") : qsTr("Não foi possível concluir a operação")
+        message: panel.processNotice || (panel.runtimeController
+                 ? (panel.runtimeController.shellErrorText || panel.runtimeController.runErrorText || "") : "")
         codeFont: false
         animateChanges: true
     }

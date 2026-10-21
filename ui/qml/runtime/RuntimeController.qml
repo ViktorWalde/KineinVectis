@@ -26,6 +26,7 @@ Item {
     // execucao, e o desfecho da ultima.
     property alias runTerminalId: runTabs.terminalId
     readonly property bool runPending: runTabs.pending
+    property alias runErrorText: runTabs.errorText
     property string lastRunMessage: ""
     // A porta serial que o Executar leva ao core como `device` (run.start /
     // run.script, 0.110.0): num projeto MicroPython o arquivo roda na placa
@@ -220,6 +221,7 @@ Item {
     // linha se perdia (achado contra um sshd real, 2026-10-04).
     function runInNewTerminal(text) {
         if (!pendingShell.hold(text)) return;
+        runTabs.errorText = "";
         showTabRequested("terminal");
         terminalOpenRequested("", true);
     }
@@ -234,6 +236,7 @@ Item {
             return;
         }
         lastRunMessage = "";
+        if (pendingShell.command === "") pendingShell.errorText = "";
         runTabs.begin(command === "" ? activeRunName : "");
         runStartRequested(command, command === "" ? serialDevice : "");
     }
@@ -243,12 +246,14 @@ Item {
             return;
         }
         lastRunMessage = "";
+        if (pendingShell.command === "") pendingShell.errorText = "";
         runTabs.begin("");
         runScriptRequested(path, serialDevice);
     }
 
     function stopRun() {
         if (running) {
+            runTabs.errorText = "";
             runStopRequested();
         }
     }
@@ -365,10 +370,10 @@ Item {
     }
 
     function handleRequestFailed(method, message) {
-        runTabs.failed(method);
+        runTabs.failed(method, message);
         if (method === "run.start" || method === "run.script" || method === "run.stop") {
             lastRunMessage = message;
-            showTabRequested("terminal");
         }
+        showTabRequested("terminal");
     }
 }

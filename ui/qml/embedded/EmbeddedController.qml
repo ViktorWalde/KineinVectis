@@ -1,27 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// Estado do painel de embarcados (roadmaps/35 §5.7, fatia 1 — o FIO).
-//
-// Guarda o que o core respondeu ao `probe.list`: a sonda reconhecida, a saida
-// crua da ferramenta e a dica quando nao ha' nada para mostrar. NAO decide
-// nada: quem roda o probe-rs, quem le a saida e quem escolhe a dica e' o core.
-// O chip, o alvo e o depurador moram no `ToolchainController` — sao KIT, nao
-// sonda — e o painel os edita por ele.
-//
-// Desde 2026-09-11 (E1 do integracoes/38 §6) guarda tambem as PORTAS SERIAIS
-// USB do `serial.list`: o canal que toda placa compartilha, com a permissao
-// MEDIDA pelo core e o estado do ModemManager. O core nunca abre a porta para
-// responder (abrir reseta a placa), e a tela nunca deduz o chip pela ponte.
-//
-// Desde 2026-09-17 (C3 do roadmaps/41, o que faltava) guarda a PORTA
-// ESCOLHIDA: a que o Executar de um projeto MicroPython passa ao core como
-// `device` (`mpremote connect <porta> run`). E' ESCOLHA da tela, nao estado
-// do core — por isso mora aqui e nao volta por evento; o RuntimeController a
-// le por binding na composicao (AppDomains). A identidade PELO CANAL (E5,
-// `serial.identify`) e' dono proprio, filho deste: `identity`.
-//
-// Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
+// Estado apresentado de probe/serial/project: diagnóstico e identidade vêm do
+// core, sem abrir porta na descoberta ou deduzir chip por ponte USB.
+// selectedPort é intenção do usuário, repassada ao Executar do MicroPython.
+// identity/flash/access/files mantêm as operações em seus donos existentes.
+// A conexão invalida resultados acionáveis, preservando intenção e navegação.
 Item {
     id: root
 
@@ -50,6 +34,7 @@ Item {
     property var ports: []
     property string portsHint: ""
     property bool portsBusy: false
+    property bool portsMeasured: false
     // A porta que o Executar usa (`device` de run.start/run.script). Vazio =
     // nenhuma escolhida: o campo nao vai, e o mpremote pega a primeira que
     // acha. So' aponta para uma porta da LISTA ATUAL — ver handleSerialPorts.
@@ -85,7 +70,8 @@ Item {
             .arg(identityController.identity.chipDescription || identityController.identity.chip)
             .arg(identityController.device)
         : portFound ? qsTr("%1 porta(s) serial(is); nenhuma placa identificada ainda").arg(ports.length)
-        : probeFound ? qsTr("sonda %1, sem porta serial").arg(probes[0].name) : qsTr("nenhuma placa")
+        : probeFound ? qsTr("sonda %1").arg(probes[0].name)
+        : portsMeasured ? qsTr("Nenhum dispositivo listado") : qsTr("Dispositivos a verificar")
 
     // A identidade pelo canal (E5) e' dono proprio, filho deste: quem tem o
     // EmbeddedController alcanca `identity` sem propriedade de repasse.
@@ -146,6 +132,7 @@ Item {
         ports = [];
         portsHint = "";
         portsBusy = false;
+        portsMeasured = false;
         selectedPort = "";
         identityController.clear();
         flashController.clear();
@@ -283,6 +270,7 @@ Item {
         ports = newPorts === undefined ? [] : newPorts;
         portsHint = newHint === undefined ? "" : newHint;
         portsBusy = false;
+        portsMeasured = true;
         if (selectedPort !== "" && indexOfPort(selectedPort) < 0) {
             selectedPort = "";
         }
@@ -294,33 +282,41 @@ Item {
         rawOutput = newRawOutput === undefined ? "" : newRawOutput;
         hint = newHint === undefined ? "" : newHint;
         busy = false;
-        errorText = "";
     }
 
     function handleFailed(method, message) {
-        if (method === "build.size") {
-            sizeBusy = false;
-            errorText = message;
-            return;
-        }
+        identityController.handleFailed(method, message);
+        flashController.handleFailed(method, message);
+        accessController.handleFailed(method, message);
+        filesController.handleFailed(method, message);
+        const flags = { "build.size": "sizeBusy", "serial.list": "portsBusy",
+                        "project.model": "projectBusy", "probe.list": "busy" };
+        const flag = flags[method];
+        if (flag !== undefined) root[flag] = false;
         if (method === "serial.list") {
-            portsBusy = false;
-            errorText = message;
-            return;
+            portsMeasured = false;
+            ports = [];
         }
-        if (method === "serial.monitor") {
-            errorText = message;
-            return;
-        }
-        if (method === "project.model") {
-            projectBusy = false;
-            errorText = message;
-            return;
-        }
-        if (method !== "probe.list") {
-            return;
-        }
+        if (flag !== undefined || method === "serial.monitor") errorText = message;
+    }
+
+    function handleCoreDisconnected() {
+        const message = qsTr("A conexão com o serviço da IDE foi interrompida. Atualize os dispositivos após reconectar; nenhuma ação será repetida automaticamente.");
         busy = false;
+        portsBusy = false;
+        portsMeasured = false;
+        projectBusy = false;
+        sizeBusy = false;
+        ports = [];
+        probes = [];
+        project = ({});
+        sizeMeasured = false;
+        sizeRegions = [];
+        sizeSections = [];
+        identityController.clear();
+        filesController.clear();
+        flashController.disconnected();
+        accessController.clear(true);
         errorText = message;
     }
 

@@ -980,7 +980,7 @@ flowchart LR
 
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
-| controller | `ui/qml/embedded/EmbeddedController.qml` | Estado do painel de embarcados (roadmaps/35 §5.7, fatia 1 — o FIO). |
+| controller | `ui/qml/embedded/EmbeddedController.qml` | Estado apresentado de probe/serial/project: |
 | controller | `ui/qml/runtime/RuntimeController.qml` |  |
 | roteador | `ui/qml/ipc/EmbeddedRequestRouter.qml` | Espelho do EmbeddedEventRouter: |
 | roteador | `ui/qml/ipc/EmbeddedEventRouter.qml` | O que o core responde de probe.*, build.size e serial.* -> EmbeddedController. |

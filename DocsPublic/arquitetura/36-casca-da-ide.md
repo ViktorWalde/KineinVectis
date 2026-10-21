@@ -708,3 +708,11 @@ cancelam a linha. Erro de outro pedido não a cancela. O erro desse fluxo fica
 visível no `TerminalPanel` pelo `KvVerdict` existente; o viewport se redimensiona
 sem sobrepor o grid. Desenho, prova do defeito anterior e aceite da fatia no
 [52 §14.21](../roadmaps/52-arquitetura-executavel-da-0.4.md#1421-041g--comando-associado-ao-terminal-solicitado-2026-10-20).
+
+Desde a 0.4.1h2 (2026-10-21), os roteadores de Embarcados e execução recusam
+localmente pedidos quando o transporte informa desconexão, liberando a espera
+no dono existente. Perder uma conexão antes estabelecida invalida os resultados
+acionáveis de Embarcados, sem apagar intenção nem repetir ações na reconexão.
+`RunTerminalController.errorText` é separado de `lastRunMessage` (conclusão)
+e chega ao mesmo KvVerdict do Terminal. A faixa preserva a saída do programa
+e deixa a causa legível; desenho e aceites no 52 §14.23.

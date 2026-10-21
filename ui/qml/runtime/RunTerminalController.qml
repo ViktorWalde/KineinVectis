@@ -5,6 +5,8 @@ import QtQuick
 Item {
     id: root
     property var runtime: null
+    property string errorText: ""
+    property bool active: false
     property bool pending: false
     property string pendingName: ""
     property string terminalId: ""
@@ -16,6 +18,8 @@ Item {
     visible: false
 
     function clear() {
+        errorText = "";
+        active = false;
         pending = false;
         pendingName = "";
         terminalId = "";
@@ -27,12 +31,18 @@ Item {
     }
 
     function begin(name) {
+        errorText = "";
         pending = true;
         pendingName = name;
     }
 
     function disconnected() {
+        if (pending || active) {
+            errorText = errorText || qsTr("A conexão com o serviço da IDE foi interrompida. O estado da execução não pôde ser confirmado.");
+            runtime.showTabRequested("terminal");
+        }
         pending = false;
+        active = false;
         pendingName = "";
         generation++;
     }
@@ -56,6 +66,7 @@ Item {
             runtime.removeTerminalTab(id);
         }
         pending = false;
+        active = true;
         const label = pendingName !== "" ? "▶ " + pendingName : title(command);
         pendingName = "";
         const previous = tabs[key];
@@ -75,9 +86,10 @@ Item {
 
     function isFinished(id) { return outcomes[id] !== undefined; }
 
-    function closing(id) { closingTabs[id] = true; }
+    function closing(id) { errorText = ""; closingTabs[id] = true; }
 
     function finished(id, code) {
+        if (id === terminalId) active = false;
         if (closingTabs[id]) return false;
         if (isFinished(id)) return true;
         if (id !== terminalId) return false;
@@ -102,11 +114,11 @@ Item {
         if (terminalId === id) terminalId = "";
     }
 
-    function failed(method) {
+    function failed(method, message) {
+        errorText = message;
         if (method === "run.start" || method === "run.script") {
             pending = false;
             pendingName = "";
         }
-        if (method === "terminal.close") closingTabs = ({});
     }
 }

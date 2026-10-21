@@ -96,8 +96,12 @@ Item {
             spacing: Theme.spacingMedium
 
             KvVerdict {
+                objectName: "embeddedOperationError"
                 width: parent.width
+                heading: qsTr("Não foi possível concluir a operação")
                 message: root.controller ? root.controller.errorText : ""
+                codeFont: false
+                animateChanges: true
             }
 
             EmbeddedOverviewView {

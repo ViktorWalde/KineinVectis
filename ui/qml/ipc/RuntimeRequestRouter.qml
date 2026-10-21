@@ -17,6 +17,12 @@ Item {
 
     visible: false
 
+    function available(method) {
+        if (coreClient && coreClient.connected !== false) return true;
+        runtimeController.handleRequestFailed(method, qsTr("O serviço da IDE está desconectado. Aguarde a reconexão e tente novamente."));
+        return false;
+    }
+
     Connections {
         target: root.runtimeController
 
@@ -54,20 +60,20 @@ Item {
         }
 
         function onTerminalCloseRequested(id) {
-            root.coreClient.terminalClose(id);
+            if (root.available("terminal.close")) root.coreClient.terminalClose(id);
         }
 
         // `device` (0.110.0) vai como veio: vazio e' campo ausente na ponte.
         function onRunStartRequested(command, device) {
-            root.coreClient.runStart(command, device);
+            if (root.available("run.start")) root.coreClient.runStart(command, device);
         }
 
         function onRunScriptRequested(path, device) {
-            root.coreClient.runScript(path, device);
+            if (root.available("run.script")) root.coreClient.runScript(path, device);
         }
 
         function onRunStopRequested() {
-            root.coreClient.runStop();
+            if (root.available("run.stop")) root.coreClient.runStop();
         }
 
     }

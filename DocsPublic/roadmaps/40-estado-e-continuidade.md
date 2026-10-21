@@ -12,8 +12,8 @@
 > **HANDOFF (2026-10-21). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h1 concluída:** ciclo de vida e aviso tipado do terminal
-> (52 §14.22), sobre `bf65481`; registro em **40.7 §7.328**.
+> **0.4.1h2 concluída:** falhas visíveis e recuperação de transporte
+> (52 §14.23), sobre `54c061f`; registro em **40.7 §7.329**.
 > `eim_config.toml` e `log/` continuam locais fora da fatia.
 > Protocolo **0.182.0**, binário **0.3.9**.
 >
@@ -25,16 +25,16 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate rápido estrito, 0.4.1h1:** 1209 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **158 harnesses QML**, sem NÃO PROVADO.
-> UI/core debug e release validados; fechamento nativo release conferido.
+> **Último gate rápido estrito, 0.4.1h2:** 1209 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **160 harnesses QML**, sem NÃO PROVADO.
+> UI/core debug e release validados; falha e recuperação nativas conferidas.
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
 > **Próximo:** colher feedback da UI atual e da prévia de navegação compacta
 > (52 §14.16), preparada e validada em 1024/736/320 px. A UI Qt mantém
 > suas abas até incorporar o feedback. **Agora:** exclusividade por porta
-> e falhas de transporte/execução visíveis (52 §14.20–14.22). Queda do core
-> deixa operações do painel presas em ocupado, reproduzido em QML real.
+> (0.4.1h3 em checkout isolado). A queda do core pode deixar a ferramenta
+> viva; reserva deve acompanhar esse processo, corrigindo o protótipo antes de integrar.
 > Depois: Setup no dock, schema 3 e C/Python.
 > Orquestração serial ainda não está pronta; plano 0.4.9 e revisão posterior vigentes.
 >
@@ -65,7 +65,7 @@ protocolo   0.182.0 (crates/kinein-protocol, medido em 2026-10-21; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   158 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
+harnesses   160 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
@@ -105,7 +105,7 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1 fechado; próximo: exclusividade da porta e recuperação de transporte. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.22 e [40.7](40.7-registro-das-entregas.md) §7.326–7.328 |
+| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1 e recuperação visual 0.4.1h2 fechados; próximo: exclusividade da porta acompanhando a ferramenta mesmo após crash do core. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.23 e [40.7](40.7-registro-das-entregas.md) §7.326–7.329 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia interativa de navegação compacta criada e validada em WebKitGTK a 1024/736/320 px, preparada para feedback; depois, auditoria geral de frontend, componentes, painéis, cores do editor, atalhos, animação e desempenho antes do AppImage | [52](52-arquitetura-executavel-da-0.4.md) §14.16–14.17; agrupamento até 0.4.9 no §11 |

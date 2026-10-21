@@ -167,7 +167,10 @@ Item {
             busy: root.controller !== null && root.controller.portsBusy
             busyText: qsTr("Procurando dispositivos…")
             neutral: true
-            message: root.controller ? (root.controller.portsHint || qsTr("Conecte uma placa por USB e atualize os dispositivos.")) : ""
+            codeFont: false
+            message: root.controller ? (!root.controller.portsMeasured
+                ? qsTr("A lista de dispositivos precisa ser consultada. Clique em Atualizar quando a conexão estiver disponível.")
+                : root.controller.portsHint || qsTr("Nenhuma porta USB listada. Confira a conexão da placa e atualize os dispositivos.")) : ""
         }
         Text {
             width: parent.width

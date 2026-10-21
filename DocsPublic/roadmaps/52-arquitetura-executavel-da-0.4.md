@@ -2370,3 +2370,81 @@ A matriz de reserva serial do §14.20 continua aberta.
 (nesta medição), com passeio de 33 superfícies por preset, sem aviso QML.
 Logs `/tmp/kinein-lifetime-smoke-debug.log` e
 `/tmp/kinein-lifetime-smoke-release.log`.
+
+### 14.23 0.4.1h2 — falhas de transporte e execução visíveis (desenho, 2026-10-21)
+
+**Base:** `54c061f`, ciclo de vida fechado. Antes da reserva por porta,
+corrigir a regressão reproduzida no §14.22: o core desaparece, mas o painel
+continua ocupado e permite usar uma prévia de gravação do processo anterior.
+Também há recusas de run/script/stop guardadas em lastRunMessage sem consumidor
+visual. Não declarar arbitragem concluída; o desenho inicial de coordenação
+entre janelas está em `/tmp/kinein-serial-ownership-design.md`, para a parte
+seguinte com contrato próprio.
+
+**Desenho anterior ao código:** reutilizar os controllers, roteadores e
+KvVerdict. A perda da conexão termina as esperas de Embarcados, invalida
+resultados acionáveis e confirmação de escrita, e informa a interrupção.
+Preservar intenção de porta/motor/firmware e a aba visível; nenhum comando é
+reexecutado ao reconectar. O pedido feito enquanto desconectado recebe recusa
+local de transporte antes de aguardar o core. Centralizar o encaminhamento
+de erros no dono existente, sem repetir a política em cada router. A UI não
+inventa diagnóstico de hardware nem determina se o processo físico terminou.
+
+Execução tem erro separado de conclusão positiva e da saída VT do programa.
+As recusas de iniciar/parar/fechar e a perda de transporte aparecem na mesma
+faixa existente do Terminal, preservando mensagens específicas já recebidas.
+Nova tentativa/contexto limpa o erro; sucesso de programa não vira erro.
+Uma recusa de fechar não limpa as identidades de outras abas em encerramento.
+Sem alteração do fio 0.182.0 ou de ui/src nesta parte.
+
+**Aceites:** fixture do §14.22 passa sem alterar a asserção; teste dos
+controllers/routers/painel reais cobre pedidos sem conexão, queda antes/depois
+do aceite de job, confirmação descartada, prévia inválida, recuperação sem
+repetição, preservação de escolhas e erro legível sem sobrepor o grid. Foto
+nativa antes/depois com core real e falha de execução; injeção controlada de
+queda durante identificação falsa, sem dispositivo. Gate rápido estrito e
+smokes antes de fechar. Depois, reserva da porta cobrindo toda a matriz.
+
+**Refinamento antes de fechar:** o aceite nativo mostrou que, após perder a
+conexão, o cabeçalho dizia “nenhuma placa” e a lista sugeria conectar USB,
+sem uma consulta válida. Distinguir snapshot não consultado de lista recebida
+vazia, sem interpretar texto do diagnóstico ou inventar ausência física.
+Contrato local: portsMeasured só sobe ao receber serial.list e cai ao trocar
+workspace/perder conexão/falhar consulta. Cabeçalho vazio diz “nenhum dispositivo
+listado”, fato sobre a lista, nunca diagnóstico da placa. Interrompida a rodada
+do gate antes de recompilar UI; repetir com fonte congelada após essa correção.
+
+**Fechamento da 0.4.1h2 (2026-10-21):** gate rápido estrito TUDO VERDE,
+1.209 Rust, análise C++ limpa, 8 CTest, qmllint e 160 harnesses, sem NÃO PROVADO.
+Log `/tmp/kinein-h2-gate-final.log`. Smokes debug/release: 355/341 ms nesta
+medição; passeio de 33 superfícies por preset sem aviso, logs
+`/tmp/kinein-h2-smoke-{debug,release}.log`. Três mutações reprovadas em runtime:
+queda sem invalidar operações, erro de execução oculto e perda da identidade
+de outra aba em fechamento. Fontes restauradas antes da rodada final.
+
+Fotos/RPC nativos, UI/core release, em `/tmp/kinein-shell-native-proof/`:
+`run-failure-before/` versus `run-failure-final/` mostra a recusa real por
+falta de comando padrão agora visível; `identify-loss-before/` versus
+`identify-loss-final-focused/` mostra o aceite real do job falso, perda
+controlada do transporte e espera liberada com causa visível. O último usa
+atalho com foco no Xvfb, sem macro de startup repetida na recuperação. Todos
+os dispositivos são arquivos regulares e ferramentas falsas não os abrem.
+Ensaios gráficos finais sequenciais e log QML limpo. Uma tentativa paralela
+compartilhou display por corrida no helper e foi descartada; não é prova do
+produto. O runner de cenas por macro também reaplica a macro ao recuperar
+workspace; por isso o aceite final usa abertura pelo atalho.
+
+**Observação para corrigir antes de fechar a série:** a dica de Identificar
+permanece visível após o card ser destruído, inclusive três segundos depois
+no aceite final. Reproduzido visualmente no componente TooltipController
+existente; precisa de regressão de destruição/ocultação do dono e correção
+no componente comum, antes do fechamento 0.4.9, sem copiar tooltip por painel.
+
+**Próxima parte isolada, ainda não integrar:** reserva por porta no checkout
+`/home/hugh/KineinVectis-worktrees/serial-lifecycle`, base 54c061f e target
+próprio. Contrato/desenho 0.183.0 no 52 §14.24 desse checkout. O teste de
+crash encontrou ferramenta viva após matar o core e segundo início aceito
+(`/tmp/kinein-serial-owner-crash-v9erukuf/report.json`). Desenho revisto para
+reserva de lançamento no core e reserva de execução na ferramenta, com token
+e exec no mesmo binário, sem executor paralelo. Implementação/reteste ainda
+pendentes; não declarar exclusividade pronta. Main permanece no fio 0.182.0.

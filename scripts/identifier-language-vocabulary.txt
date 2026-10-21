@@ -2070,6 +2070,7 @@ recognised
 recognized
 recommended
 reconcile
+reconnect
 record
 recorded
 records

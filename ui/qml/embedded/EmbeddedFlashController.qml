@@ -63,6 +63,12 @@ Item {
         errorText = "";
     }
 
+    function disconnected() {
+        busy = false;
+        invalidate();
+        requestedRevision = -1;
+    }
+
     // Escolher o firmware e' toggle; trocar descarta a previa. O motor
     // e' o da pagina do firmware (o core recusa outro), por isso solta.
     function selectFirmware(id) {

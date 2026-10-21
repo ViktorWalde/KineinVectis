@@ -10,6 +10,7 @@ Item {
     property var coreClient: null
     property var embeddedController: null
     property var runtimeController: null
+    property bool wasConnected: false
 
     visible: false
 
@@ -17,7 +18,12 @@ Item {
         target: root.coreClient
 
         function onStatusChanged() {
-            if (!root.coreClient.connected) root.embeddedController.access.clear(true);
+            if (root.coreClient.connected) {
+                root.wasConnected = true;
+            } else if (root.wasConnected) {
+                root.wasConnected = false;
+                root.embeddedController.handleCoreDisconnected();
+            }
         }
 
         function onProbesResolved(probes, toolAvailable, rawOutput, hint) {
@@ -78,10 +84,6 @@ Item {
 
         function onRequestFailed(method, message) {
             root.embeddedController.handleFailed(method, message);
-            root.embeddedController.identity.handleFailed(method, message);
-            root.embeddedController.flash.handleFailed(method, message);
-            root.embeddedController.access.handleFailed(method, message);
-            root.embeddedController.files.handleFailed(method, message);
         }
     }
 }

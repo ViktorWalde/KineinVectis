@@ -694,6 +694,16 @@ preserva. Se o core não conseguir consultar o estado do processo, a faixa
 novamente; o aviso some quando a consulta se recupera. O diagnóstico fica
 separado do texto e do cursor do programa.
 
+Se o core recusar **Executar**, **Parar** ou **Fechar**, o Terminal mostra
+**Não foi possível concluir a operação** com a causa recebida. Uma nova
+tentativa limpa o erro anterior. Se a conexão cair durante uma execução,
+a faixa informa que seu estado não pôde ser confirmado.
+
+Em **Embarcados**, perder a conexão encerra as esperas e invalida prévias e
+confirmações de escrita. As escolhas de porta, motor, firmware e aba são
+preservadas. Após reconectar, use **Atualizar** e inicie novamente a operação
+desejada; a recuperação não repete automaticamente seus comandos.
+
 Clique direito (ou `Shift+F10`/tecla Menu com foco no terminal) abre Copiar,
 Colar, **Selecionar Tudo**, Selecionar área visível, Limpar tela, Limpar
 histórico, Novo e Fechar. Navegue com setas e confirme com Enter. Selecionar

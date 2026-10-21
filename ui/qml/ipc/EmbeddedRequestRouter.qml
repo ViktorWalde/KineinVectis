@@ -9,27 +9,33 @@ Item {
 
     visible: false
 
+    function available(method) {
+        if (coreClient && coreClient.connected !== false) return true;
+        embeddedController.handleFailed(method, qsTr("O serviço da IDE está desconectado. Aguarde a reconexão e tente novamente."));
+        return false;
+    }
+
     Connections {
         target: root.embeddedController
 
         function onListRequested() {
-            root.coreClient.probeList();
+            if (root.available("probe.list")) root.coreClient.probeList();
         }
 
         function onSizeRequested(program) {
-            root.coreClient.buildSize(program);
+            if (root.available("build.size")) root.coreClient.buildSize(program);
         }
 
         function onSerialListRequested() {
-            root.coreClient.serialList();
+            if (root.available("serial.list")) root.coreClient.serialList();
         }
 
         function onProjectRequested() {
-            root.coreClient.projectModel();
+            if (root.available("project.model")) root.coreClient.projectModel();
         }
 
         function onMonitorRequested(device, baud) {
-            root.coreClient.serialMonitor(device, baud);
+            if (root.available("serial.monitor")) root.coreClient.serialMonitor(device, baud);
         }
     }
 
@@ -41,7 +47,7 @@ Item {
         target: root.embeddedController ? root.embeddedController.identity : null
 
         function onIdentifyRequested(device) {
-            root.coreClient.serialIdentify(device);
+            if (root.available("serial.identify")) root.coreClient.serialIdentify(device);
         }
     }
 
@@ -51,7 +57,7 @@ Item {
         target: root.embeddedController ? root.embeddedController.flash : null
 
         function onProposalRequested(device, engine, flashSizeBytes, firmware) {
-            root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware);
+            if (root.available("runConfig.flashProposal")) root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware);
         }
     }
 
@@ -61,7 +67,7 @@ Item {
         target: root.embeddedController ? root.embeddedController.access : null
 
         function onDiagnoseRequested(device) {
-            root.coreClient.serialAccess(device);
+            if (root.available("serial.access")) root.coreClient.serialAccess(device);
         }
     }
 
@@ -71,7 +77,7 @@ Item {
         target: root.embeddedController ? root.embeddedController.files : null
 
         function onFilesRequested(device, action, path, local) {
-            root.coreClient.serialFiles(device, action, path, local);
+            if (root.available("serial.files")) root.coreClient.serialFiles(device, action, path, local);
         }
     }
 }
