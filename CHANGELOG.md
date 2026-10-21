@@ -21,6 +21,13 @@ como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
 O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
 pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
 
+**Planejamento atualizado em 2026-10-21, ainda sem implementação:** Instalar
+Ferramentas será reformulado junto da migração de Setup ao dock, e o Quality
+Center inicial entra na 0.4.x sobre as verificações existentes, com gate local
+simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
+associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
+têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
+
 - **Configurações preservadas (0.4.1h4b1, 2026-10-21):**
   arquivo inválido, ilegível ou com schema não suportado deixa de ser tratado
   como vazio. A IDE recusa a operação e preserva os dados; salvar usa

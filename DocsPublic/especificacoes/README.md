@@ -12,6 +12,10 @@ Após fechar a série 0.3, a reorganização da casca aprovada pelo autor entra 
 0.3.6 segundo o [roadmap 49](../roadmaps/49-frontend-0.3.6-e-sequencia-0.5.md);
 a expansão da Biblioteca por capacidades/providers fica na 0.5 segundo o
 [roadmap 50](../roadmaps/50-biblioteca-e-providers-0.5.md).
+Atualização do autor em 2026-10-21: [Instalar Ferramentas](instalar-ferramentas.md)
+reformulado e [Quality Center inicial](quality-center-e-gates.md) entram na
+0.4.x; o [52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21)
+ordena as dependências. A Library completa continua na 0.5.
 “Assistente de projeto/setup” significa wizard determinístico, não IA; logs,
 métricas locais e dados do alvo devem usar nomes do domínio. O desenho diário
 de Remote SSH está em [`remote-ssh-ui-hud.md`](remote-ssh-ui-hud.md).
@@ -35,6 +39,8 @@ grafana-ui-ux-0.3.5.md                     conexão e uso diário do Grafana
 remote-ssh-ui-hud.md                       fluxo diário e HUD do Linux remoto
 modelo-semantico-do-projeto-0.4.md         o modelo semântico do projeto (0.4+); §6 fechada
 cache-de-compilacao.md                     cache de compilação orquestrado (PLANO; nada no código)
+instalar-ferramentas.md                    Setup no dock, busca/filtros, estados e revisão de comandos (0.4.x)
+quality-center-e-gates.md                  verificações existentes, explicações, rigor e gate local (0.4.x)
 
 POR ÁREA (visão-alvo do produto)
 sistema-de-layout.md                       a tela: regiões, janelas de ferramenta, modos

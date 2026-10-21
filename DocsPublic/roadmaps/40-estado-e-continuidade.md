@@ -2,8 +2,7 @@
 
 > **Classe: ESTADO** (`DocsPublic/README.md`). Tem de ser verdade hoje; se
 > divergir do código, o código vence e este arquivo se corrige no mesmo gesto.
-> Até 2026-10-15 ele acumulava cabeçalhos de cada retomada; o texto inteiro
-> daquela data está em
+> Até 2026-10-15 acumulava cabeçalhos de cada retomada; o texto daquela data está em
 > [`registro/40-o-estado-ate-2026-10-15.md`](registro/40-o-estado-ate-2026-10-15.md),
 > e uma citação "40 §1–§4, §6 ou §8" anterior a ela se lê lá
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
@@ -14,7 +13,7 @@
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
 > **0.4.1h4b1 concluída:** configurações preservadas e confirmação pelo core
 > (52 §14.27), sobre `7cab76f`; registro em **40.7 §7.333**.
-> `eim_config.toml` e `log/` continuam locais fora da fatia.
+> Base `a5a4f0e`; `AppMenuBar.qml`, `eim_config.toml` e `log/` locais preservados.
 > Protocolo **0.185.0**, binário **0.3.9**.
 >
 > **Objetivo autorizado:** concluir a série até a **0.4.9**, por fatias,
@@ -30,21 +29,22 @@
 > UI/core debug e release validados; concorrência/crash e feedback nativo conferidos.
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
-> **Sessão encerrada a pedido do autor. Retomada:** 0.4.1h4b2, gravação nativa
+> **Handoff reorganizado (autor, 2026-10-21; 40.7 §7.334). Próxima:** 0.4.1h4b2, gravação nativa
 > com intenção tipada/schema 2, adaptação por versão/capacidade e recuperação
 > de ocupação. Usar o principal; o rascunho serial-lifecycle já foi incorporado.
-> Depois: Setup no dock/schema 3, C/Python e os demais escopos do 52 §11.
-> Feedback da navegação compacta continua aberto (52 §14.16). Orquestração
-> serial completa e flash físico ainda pendentes; não iniciar por suposição.
+> Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
+> construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
+> Quality Center: Q1 na 0.4.2; gate local/Q2–Q3 concluídos até a 0.4.6.
+> Navegação compacta aguarda feedback (52 §14.16); serial completa/flash físico pendentes.
 >
 > **Escopo:** bare metal e Linux embarcado; PlatformIO em destaque dentro
 > de Embarcados; C puro com assistente/padrão C e jornada visual completa;
 > CPython, MicroPython e CircuitPython distintos; integrações nativas
-> ativáveis/desativáveis, orquestrando ferramentas existentes. Terminal
-> continua como escolha. UI moderna, discreta, intuitiva e contextual;
-> Cada escopo fecha completo, com UI/UX prática; revisão integrada antes do
-> pacote (52 §11, §14.14–14.17). Banco **0.4.5**, consolidação **0.4.6**,
-> qualidade **0.4.7–0.4.8**, estabilização/pacote **0.4.9**; etapa especial visual após a conclusão.
+> ativáveis/desativáveis. Terminal como escolha; UI moderna, discreta e contextual.
+> Cada escopo fecha com UI/UX prática (52 §11, §14.14–14.17).
+> Banco **0.4.5**, consolidação **0.4.6**, qualidade **0.4.7–0.4.8**;
+> estabilização/pacote **0.4.9**; edição especial
+> associada à 0.5 otimiza/pole a base, sem receber essas entregas funcionais.
 >
 > **Provas:** build ESP-IDF via core e ciclo CPython/debugpy passaram;
 > C17 passou build/run/CTest/clang-format/clangd numa fixture (52 §14.14).
@@ -55,17 +55,18 @@
 > na placa sem pedido específico. Não compilar UI durante `verificar-cpp.sh`.
 > Atualizar documentação ao fim de cada tarefa; não há reinício agendado.
 > MCP/ROS 2/colaboração ficam após 0.4.9; inglês acompanha o fechamento (57).
-> Windows continua pausado na W6b4 (60 §3.3); EditorController congelado (§2).
+> Inglês no produto/divulgação: 0.5 (57 §3 item 11); Windows pausado na W6b4 (60).
+> EditorController congelado (§2). Pesquisa do autor para Embarcados aguarda envio (52 §11.1).
 
 ## 1. O estado, em números
 
 ```text
-protocolo   0.184.0 (crates/kinein-protocol, medido em 2026-10-21; o
+protocolo   0.185.0 (crates/kinein-protocol, medido em 2026-10-21; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   162 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
-testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
+harnesses   163 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
+testes      1251 Rust no gate completo estrito de 2026-10-21 (40.7 §7.333);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
@@ -109,6 +110,8 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 | --- | --- |
 | Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1, recuperação visual 0.4.1h2 e reserva de jobs/monitor 0.4.1h3 fechados. 0.4.1h4a fechada: run MicroPython reserva o canal e saúde foi corrigida. h4b1 fechada: armazenamento preservado, confirmação correlacionada, teclado e reset do perfil corrigidos. Próxima sessão: gravação estruturada e ações de ocupação com identidade verificada. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.27 e [40.7](40.7-registro-das-entregas.md) §7.326–7.333 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
+| Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
+| Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia interativa de navegação compacta criada e validada em WebKitGTK a 1024/736/320 px, preparada para feedback; depois, auditoria geral de frontend, componentes, painéis, cores do editor, atalhos, animação e desempenho antes do AppImage | [52](52-arquitetura-executavel-da-0.4.md) §14.16–14.17; agrupamento até 0.4.9 no §11 |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
@@ -130,6 +133,19 @@ que ainda vale, medindo antes.
 ## 5. As decisões registradas que NÃO se reabrem
 
 ```text
+Quality Center e instalador  INCLUIDOS na 0.4.x pelo autor em 2026-10-21:
+                             reformular Setup junto da migracao ao dock e
+                             expor verificacoes existentes com gate local
+                             simples. Ordem 52 §11.1; detalhes nas specs
+                             instalar-ferramentas e quality-center-e-gates.
+                             A edicao especial associada a 0.5 melhora/
+                             otimiza/pole detalhes da base entregue.
+ingles e divulgacao 0.5      DECISAO DO AUTOR em 2026-10-21: ingles plenamente
+                             suportado no produto, mantendo portugues;
+                             marco internacional na 0.5. Preparacao dos
+                             componentes/documentacao antes, sem alterar
+                             permissao de publicar/enviar mensagens.
+                             Dono: 57 §1.1 e §3 item 11.
 analise futura de CLI        após 0.4.9 e após revisão especial HUD/UX/UI;
                              medir utilidade nos fluxos embarcados/ROS 2,
                              sem novos comandos aprovados. Autor 2026-10-21;
@@ -436,7 +452,8 @@ eficiencia e escopo fechado  ESCLARECIMENTO DO AUTOR apos o handoff, em
                              Confirmacao posterior: "edicao especial"
                              revisa HUD/UX/UI APOS concluir a 0.4.9, buscando
                              componentes/estilos/estados esquecidos ou fora
-                             do padrao moderno. Versao/artefato e cronograma
+                             do padrao moderno. Atualizacao 2026-10-21:
+                             associada a 0.5; patch/artefato e cronograma
                              ainda nao fixados; sem transferir pendencias.
                              Criterios no 52 §11 e §14.17; fronteira no 57 §1.1.
 janelas de trabalho em dock  PEDIDO DO AUTOR em 2026-10-20: Instalar ferramentas

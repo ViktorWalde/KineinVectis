@@ -8,6 +8,13 @@
 
 ## 1. Resultado de produto
 
+**Atualização de escopo (autor, 2026-10-21):** o
+[Quality Center inicial](../especificacoes/quality-center-e-gates.md) e a
+[reformulação de Instalar Ferramentas](../especificacoes/instalar-ferramentas.md)
+entram na **0.4.x**. Sua ordem está no [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
+Este plano continua dono da Library por capacidades/providers na 0.5;
+ela reutiliza e evolui a base entregue, sem outro Quality Center ou scanner.
+
 A Biblioteca deixa de ser apenas um catálogo curado de bibliotecas C/C++ e
 passa a apresentar **capacidades**: análise estática, cobertura, perfilamento,
 segurança, dependências, embarcados etc. Cada capacidade explica sua finalidade,
@@ -139,8 +146,9 @@ Normalizar diagnósticos de um provider e provar arquivo/range, severidade,
 mensagem original, saída bruta, cancelamento e resultado obsoleto. Expandir a
 um segundo produtor, como ShellCheck ou Clang Static Analyzer, somente depois
 da paridade. Search Everywhere e comandos encontram a capacidade pelo objetivo
-e retornam à superfície correta. Quality reúne evidências existentes sem virar
-outro catálogo de ferramentas.
+e retornam à superfície correta. Quality reúne os novos resultados sobre a
+base inicial da 0.4, sem virar outro catálogo de ferramentas ou apresentar
+a base herdada como novidade.
 
 **Aceite:** um erro de build, análise ou parser preserva origem e texto bruto;
 um resultado antigo não se apresenta como atual; teclado e filtro funcionam

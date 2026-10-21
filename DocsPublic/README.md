@@ -14,6 +14,16 @@ execução no [52 §11](roadmaps/52-arquitetura-executavel-da-0.4.md#11-ordem-e-
 contabilização de versões no [57 §1.1](roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)
 e pontos de entrada no código no [58 §4.4](roadmaps/58-onde-cada-versao-comeca-no-codigo.md#44-04--embarcados-o-quê-52-ordem-52-11).
 
+**Organização atualizada (autor, 2026-10-21):** reformular
+[Instalar Ferramentas](especificacoes/instalar-ferramentas.md) junto da
+migração de Setup ao dock e incluir o
+[Quality Center inicial](especificacoes/quality-center-e-gates.md) na 0.4.x.
+Dependências e próxima fatia no [52 §11.1](roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
+A edição especial associada à 0.5 aprimora/otimiza essa base; o inglês no
+produto e a divulgação internacional têm marco na 0.5 (57 §3 item 11).
+O [estudo de HUD/UX ROS 2](integracoes/41-ros2-hud-ux-analise-projeto.md)
+orienta a frente posterior à 0.4.9, sem antecipar sua implementação.
+
 ## Como a documentação está organizada (2026-09-12)
 
 Duas árvores, por decisão do autor em 2026-09-12 (sucede a decisão das três

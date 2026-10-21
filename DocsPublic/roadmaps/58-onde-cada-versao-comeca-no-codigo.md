@@ -229,6 +229,17 @@ AppImage ao final ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-en
 As âncoras abaixo orientam a extensão dos donos existentes, sem anunciar
 implementação dos itens pendentes.
 
+**Retomada reorganizada em 2026-10-21:** h4b2 continua a próxima
+implementação; depois, Setup reformulado no dock, schema 3 e Quality Center
+inicial sobre os runners existentes. Sequência única no
+[52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21);
+os pontos abaixo são locais de extensão, não componentes novos já presentes.
+
+| Frente incluída na 0.4.x | Começa no código atual | Dono do escopo e primeira fatia |
+| --- | --- | --- |
+| Instalar Ferramentas | `ui/qml/setup/SetupController.qml`, `ui/qml/setup/SetupPanelHost.qml`, `ui/qml/setup/SetupPanel.qml`, `ui/qml/setup/SetupToolRow.qml`, `crates/kinein-core/src/setup/`, `crates/kinein-core/src/handlers/setup.rs` | [Spec do instalador](../especificacoes/instalar-ferramentas.md): migrar host e reorganizar catálogo/guia existentes, antes de ampliar contrato |
+| Quality Center inicial | `crates/kinein-core/src/handlers/build.rs`, `crates/kinein-core/src/build/tidy.rs`, `crates/kinein-core/src/test/`, `crates/kinein-core/src/settings.rs`, `ui/qml/jobs/JobsController.qml`, `ui/qml/settings/SettingsBuildPage.qml`, `ui/qml/panels/bottom/ProblemsPanel.qml`, `ui/qml/panels/bottom/TestsPanel.qml` | [Spec de Qualidade](../especificacoes/quality-center-e-gates.md): Q1 apresenta capacidades e rigor reais; Q2/Q3 acrescentam gate local/relatório, sem duplicar executor ou resultados |
+
 **Estado de partida em 2026-10-01 (histórico; avanços no 40 e 52 §14).**
 
 ```text
@@ -308,6 +319,8 @@ ela cobra a coerência final das jornadas (52 §11, §14.14–14.17).
 Parte da base **0.4.9**; suas notas contêm somente o delta da 0.5 (57 §1.1).
 O controle básico de integrações pertence à 0.4, com refinamento e expansão
 na 0.5 (52 §14.15); não reclassificar a entrega anterior como novidade.
+O mesmo vale para Instalar Ferramentas e Quality Center inicial (52 §11.1,
+autor em 2026-10-21). A Library/providers da 0.5 reutiliza seus donos.
 
 **Estado de partida (medido).** A Library existe: domínio
 `crates/kinein-core/src/library/` (`catalog.rs` 337/500, `availability.rs`,

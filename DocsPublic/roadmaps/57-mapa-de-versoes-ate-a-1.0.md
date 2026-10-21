@@ -86,9 +86,12 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   coerente. Em seguida, o autor confirmou uma **etapa especial de revisão
   de HUD/UX/UI após concluir a 0.4.9**, para procurar componentes, estados
   ou estilos esquecidos e incompatíveis com o padrão moderno da IDE.
-  “Edição especial” é a denominação da etapa, com versão/artefato e
-  cronograma ainda não fixados; ela não recebe pendências desta entrega.
-  Critérios por escopo no 52 §11; cobertura da revisão no 52 §14.17.
+  **Atualização do autor em 2026-10-21:** edição especial associada à **0.5**,
+  com foco em otimização, acabamento e pequenos detalhes. Patch/artefato e
+  cronograma não fixados. A reformulação de Instalar Ferramentas e o
+  Quality Center inicial passam a integrar a **0.4.x**, aproveitando as
+  mudanças de frontend. Ela não recebe pendências desta entrega.
+  Sequência no 52 §11.1; cobertura da revisão no 52 §14.17/§14.17.1.
 - A **0.5 herda a base 0.4.9**. Suas notas devem listar somente mudanças
   introduzidas na 0.5, sem apresentar trabalho da 0.3.6–0.4.9 como novidade
   da 0.5. Aplicar a mesma regra nas séries posteriores: fechar, registrar e
@@ -99,6 +102,13 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 - MCP, abertura da colaboração e frente ROS 2 continuam **após o fechamento
   da 0.4**, agora 0.4.9. A transição da documentação para inglês acompanha
   esse fechamento. A extensão não antecipa essas frentes para 0.4.6–0.4.9.
+- O autor estabelece a **0.5 como marco de suporte público ao inglês e de
+  divulgação internacional** (2026-10-21). Distinguir a preparação/transição
+  da documentação no fechamento da 0.4.9 da revisão de interface, mensagens,
+  tutoriais e entrada de novos usuários em inglês na 0.5, mantendo português.
+  Componentes tocados antes já usam strings traduzíveis. Divulgação em
+  Discord/GitHub é intenção de lançamento, não autorização para enviar
+  mensagens ou publicar nesta sessão; aceite em §3 item 11.
 
 ## 2. Versão a versão
 
@@ -111,9 +121,10 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
 | 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pelo autor, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização FEITA (2026-10-15, 61 §4; continua junto de cada fatia) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
-| 0.4.0–0.4.9 | EM CURSO; execução autônoma até a 0.4.9, com AppImage ao final (autor, 2026-10-20); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux verificadas, auditoria/gates completos, documentação e AppImage 0.4.9 testado (§1.1; 52 §10) |
+| 0.4.0–0.4.9 | EM CURSO; execução autônoma até a 0.4.9, com AppImage ao final (autor, 2026-10-20); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Instalar Ferramentas reformulado e Quality Center inicial (autor, 2026-10-21); Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11/§11.1, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux, Setup e Quality Center verificadas, auditoria/gates completos, documentação e AppImage 0.4.9 testado (§1.1; 52 §10) |
 | edição especial | PLANEJADA (autor, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
-| 0.5.x | PLANEJADA; parte da base 0.4.9, com notas só do delta 0.5 (§1.1) | ambiente e capacidades | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; refino da gestão de integrações nativas | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md) | por fatia; corte de release pela evidência (49 §6) |
+| 0.5.x | PLANEJADA; parte da base 0.4.9, com notas só do delta 0.5 (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; inglês como idioma plenamente suportado e preparação da divulgação internacional | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
+| edição especial de HUD/UX/UI associada à 0.5 | PLANEJADA (autor, 2026-10-20/21), após fechar a 0.4.9; patch/artefato a definir | otimização e acabamento | auditoria rigorosa de consistência, densidade, tipografia, foco, acessibilidade e desempenho; pequenos achados sobre a base funcional já entregue | 52 §14.17/§14.17.1 | cenários comparáveis, métricas e correções verificadas; não confundir com a edição Windows + WSL2 do 60 |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
 | 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
@@ -199,6 +210,22 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
    **após a 0.4.9 e após a edição especial de revisão de HUD/UX/UI**.
    Sem versão/novos comandos aprovados; dono e critérios em
    [Projetos e desktop §3.1](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#31-análise-futura-dos-comandos-da-ide-no-terminal).
+
+10. **Eficiência no frontend da 0.4.x** (autor, 2026-10-21): reformular
+    [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) junto
+    da migração para dock e incluir o
+    [Quality Center inicial](../especificacoes/quality-center-e-gates.md),
+    sobre build/lint/testes/rigor já existentes, com gate local simples.
+    Ordem no 52 §11.1; a edição especial posterior aprimora/otimiza a base.
+    Não antecipa ROS 2 ou Library/providers completos.
+11. **Inglês e divulgação na 0.5** (autor, 2026-10-21): interface e
+    mensagens essenciais traduzidas, diagnósticos/ajuda de entrada e tutoriais
+    utilizáveis em inglês, com português preservado e seleção de idioma
+    verificável. Auditar strings dos fluxos novos, pluralização, atalhos,
+    acessibilidade e expansão de texto. Provar abrir/configurar, instalar
+    ferramentas, desenvolver, executar verificações e compreender falhas
+    nos dois idiomas. Não confundir o nome inglês de um componente com
+    interface internacionalizada; publicar/divulgar depende do autor.
 
 **O `/ide` da Kinein ficou sem decisão** (2026-10-17), pelo que a
 documentação oficial do Claude Code mostra: o transporte (MCP por

@@ -600,9 +600,11 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
        salvar (§5.2), L6/L7 (§5.11); PlatformIO compiledb (§5.10, é o
        contexto); a matriz de emuladores (§10.1) escrita com o que já mede
 0.4.1  cross: toolchain file gerado (§5.4), C2 inspector (§5.3), deriva (§5.9),
-       toolchain.json schema 3; fechar reserva/recuperação serial e Setup no dock
+       fechar reserva/recuperação serial; reformular Instalar Ferramentas
+       junto do Setup no dock; depois toolchain.json schema 3
 0.4.2  construir: C7 símbolo/delta (§5.5), C5 cache (§5.6), C4 Bear (§5.7);
-       PlatformIO `pio test` e `pio check`; assistente C puro/padrão C visual
+       PlatformIO `pio test` e `pio check`; assistente C puro/padrão C visual;
+       Quality Center inicial sobre build/lint/testes existentes (Q1)
 0.4.3  gravar/depurar: sonda no kit, OpenOCD por VID:PID, SVD leitura e
        debug.writeMemory (§5.8); PlatformIO depurar; Renode como
        debugServer (§10.1); integração própria de CircuitPython (§14.14, 41 §3.4)
@@ -614,7 +616,8 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
        Marco funcional preservado; não é mais o fechamento do pacote
 0.4.6  consolidar as jornadas nativas de C, Python e embarcados, os fluxos
        bare metal/Linux e a ativação/desativação de integrações (§14.14–14.15).
-       Fechar lacunas do inventário, sem adiar os básicos de C para a 0.5
+       Fechar lacunas do inventário, sem adiar os básicos de C para a 0.5;
+       Quality Center com gate local, resultados e recuperação (Q2/Q3)
 0.4.7  revisão integrada de qualidade do frontend (§14.16–14.17): fechar
        inconsistências de componentes, HUD/UI/UX, painéis e navegação
 0.4.8  consolidar interação, animação, foco, acessibilidade, atalhos e
@@ -629,7 +632,7 @@ o escopo pedido pelo autor. Não exige esperar a 0.4.6 para corrigir uma falha
 já encontrada nem interrompe o polimento por fatia. C e Python podem ser
 concluídos antes dela; 0.4.6 cobra a integração ponta a ponta. A revisão de
 qualidade do frontend ocorre **antes do pacote da 0.4.9**. Uma eventual
-etapa especial de revisão após a 0.4.9 está definida no §14.17 e não deve
+etapa especial de revisão após a 0.4.9, associada à 0.5, está definida no §14.17 e não deve
 receber pendências funcionais ou de usabilidade desta série.
 
 **Pendências reafirmadas pelo autor em 2026-10-21:** todos os itens citados
@@ -643,6 +646,15 @@ o conjunto antes do aceite/AppImage da 0.4.9. Menus, dicas e confirmações
 compactos permanecem conforme a decisão do autor. O aceite físico continua
 explicitamente pendente até poder ser medido; não substituí-lo por fixture.
 Nada desta lista fica para a 0.5 ou para a edição especial.
+
+**Atualização do autor em 2026-10-21:** reformular Instalar Ferramentas na
+própria migração do Setup e incluir **Quality Center inicial na 0.4.x**,
+aproveitando o trabalho de frontend. Evoluir/polir a base nas versões
+seguintes. A edição especial associada à 0.5 concentra otimização,
+consistência e pequenos detalhes; não recebe essas entregas funcionais.
+Os donos de escopo são [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md)
+e [Quality Center e gates](../especificacoes/quality-center-e-gates.md).
+O §11.1 organiza a execução, sem antecipar Library/providers completos ou ROS 2.
 
 **Compatibilidade e evolução, reforço do autor em 2026-10-21:** Embarcados
 precisa atender projetos legados e novos dentro da matriz suportada, mantendo
@@ -710,6 +722,73 @@ recurso junto de sua integração, e não concentrar correções numa etapa fina
 As 0.4.7–0.4.9 verificam coerência e regressões do conjunto já concluído por
 escopo. O pacote depende desse aceite integrado, sem pendências conhecidas
 que impeçam ou contradigam as jornadas assumidas para a série.
+
+### 11.1 Fluxo de execução reorganizado — 2026-10-21
+
+**Objetivo:** fechar jornadas completas com menos retrabalho entre core e
+frontend. Agrupar alterações no mesmo host/componente quando houver uma
+dependência concreta; conservar fatias pequenas, revisáveis e com gate
+próprio. Esta organização substitui a ideia de deixar a reformulação do
+instalador ou o primeiro Quality Center para o polimento pós-0.4.9.
+
+**Estado de partida:** h4b1 concluída em `a5a4f0e`, protocolo 0.185.0,
+binário 0.3.9. h4b2 ainda não implementada nesta reorganização. A tabela
+abaixo é plano, não lista de funcionalidades concluídas.
+
+| Ordem | Marco/fatia | Dependência e entrega | Condição para seguir |
+| --- | --- | --- | --- |
+| 1 — próxima | 0.4.1h4b2: gravação/ocupação | Usar runconfig preservado e reserva serial existentes; intenção tipada/schema 2, adaptação por versão/capacidade e recuperação com identidade verificada (§14.27) | UI/core revalidam contexto, artefato e porta; sem parsing de shell salvo nem migração na abertura; matriz serial e limitações registradas |
+| 2 | 0.4.1: Setup S1/S2 | Migrar ao dock **e reformular Instalar Ferramentas na mesma frente**, com busca, filtros, categorias, estados, fonte e revisão dos comandos | Guia e acessos anteriores preservados, retorno ao editor, teclado, erro/recuperação e envio explícito ao Terminal; sem depender de ROS 2 |
+| 3 | 0.4.1: kits/schema 3 | Depois dos bloqueadores de orquestração e Setup; completar contexto e configuração dos kits no dono atual | Origem e valor efetivo coerentes, formatos legados preservados, migração somente explícita |
+| 4 | 0.4.2: construir/C + Q1 | Build/test/check PlatformIO, cache/Bear/tamanho e assistente C no escopo do marco; expor build/lint/testes já existentes no Quality Center | Cada jornada nova fecha com UI; Q1 reusa rigor, Jobs e resultados, com ferramentas ausentes explicadas |
+| 5 | 0.4.2–0.4.6: Q2/Q3 em incrementos | Depois de Q1, acrescentar gate local selecionável, execução coordenada, relatório e consolidação; usar as jornadas C/Rust/Python como casos reais | Gate passa/falha/não verifica/cancela sem falso verde; persistência, obsolescência e recuperação provadas antes da 0.4.7 |
+| 6 | 0.4.3 | Depuração/gravação, PlatformIO, emuladores e CircuitPython, conforme §11 | Identidade, permissões e runtime corretos; limites de hardware explícitos |
+| 7 | 0.4.4 | L2/L3/L5 do editor conforme §5.11 | Navegação/diagnósticos e desempenho sem regressão |
+| 8 | 0.4.5 | Banco para embarcados, com os limites já decididos | Aceite dos donos de Banco; sem reabrir adiamentos |
+| 9 | 0.4.6 | Consolidar C/CPython/MicroPython/CircuitPython, bare metal/Linux, integrações opcionais, janelas funcionais no dock, comando de terminal e Q3 | Inventário reconciliado com uso real e nenhum básico transferido à edição especial |
+| 10 | 0.4.7–0.4.8 | Auditoria integrada de frontend, acessibilidade e desempenho (§14.17) | Corrigir achados, fotos comparáveis e regressões; não redesenhar a disposição principal |
+| 11 | 0.4.9 | Estabilização, jornadas, gates completos, documentação/versões e AppImage local | Critério de pacote do §10/57; sem push/tag/publicação |
+| 12 | Pós-0.4.9 / edição especial da 0.5 | Otimização e acabamento do conjunto; 0.5 evolui capacidades sobre a base entregue | Não reapresentar implementação da 0.4 como novidade; ROS 2 e expansão de políticas seguem seus donos |
+
+A linha 5 pode ser intercalada às demais em fatias concluídas, **sem aguardar
+todos os marcos para começar Q2 e sem manter várias implementações pela
+metade**. Sua dependência funcional é Q1 e os runners envolvidos, não Banco,
+emuladores ou o catálogo completo da Library. Quando uma capacidade ainda
+não estiver integrada, mostrar sua indisponibilidade; não bloquear a
+entrega inicial para montar um framework genérico de providers.
+
+**Como reduzir retrabalho:**
+
+- Conferir Theme/Kv*, hosts, Settings, Jobs e Configuration Actions antes de
+  editar a superfície. Corrigir apenas a base comum necessária à tarefa e
+  reutilizá-la em Setup/Qualidade; não começar por um redesign global.
+- Setup, Quality Center e futuro Environment Center compartilham contexto,
+  componentes e acessos aos donos; não mantêm três cópias de toolchain,
+  disponibilidade, rigor ou configuração efetiva.
+- Validar primeiro a capacidade existente de ponta a ponta. Só depois
+  acrescentar contrato/dado novo, com consumidor, desenho fino e prova.
+- Usar strings traduzíveis nos componentes tocados, textos longos e inglês
+  nos cenários de layout desde agora. A internacionalização pública da 0.5
+  está no 57; não traduzir todo o produto no meio de uma fatia funcional.
+- Rodar verificações focadas durante o desenvolvimento; depois o gate
+  estrito da fatia. Não repetir rodada pesada sem mudança/falha nova que a
+  justifique, não compilar UI durante análise C++ e não substituir prova
+  nativa por protótipo. Antes do pacote, gate completo obrigatório.
+- Ao concluir, atualizar dono, 40/40.7 e arquivos/medidas de retomada;
+  preservar mudanças locais alheias. Próximo agente inicia pela primeira
+  linha pendente e mede o código antes de reaplicar rascunhos antigos.
+
+**Fora deste replanejamento:** implementação de produto, novo protocolo,
+flash físico, mudança de default de rigor, novos providers, hooks/CI de
+usuário ou antecipação de ROS 2. A próxima implementação continua h4b2.
+
+**Pesquisa de frontend em curso pelo autor (2026-10-21):** ele levantará
+melhorias para o painel de Embarcados e enviará os resultados. Ao recebê-los,
+registrar no dono do painel e encaixar a fatia na etapa correspondente desta
+série, conferindo dependências e implementação existente. Até o envio,
+nenhuma alternativa adicional está aprovada; isso não bloqueia h4b2 ou os
+demais trabalhos independentes. Preservar o feedback de navegação já aberto
+no §14.16 e distinguir propostas novas de decisões e de aceites nativos.
 
 ## 12. Pontos de rollback
 
@@ -2001,8 +2080,11 @@ estados ou superfícies que não tenham sido atualizados e inconsistências
 com o contexto visual moderno da IDE. O autor a chamou de “edição especial”.
 Seu objetivo é conferir a cobertura visual do conjunto pronto e corrigir
 os achados justificados, preservando as jornadas e o desempenho validados.
-Versão, identificação do artefato e cronograma dessa etapa ainda não estão
-fixados. A etapa especial não transfere para depois os bugs, as lacunas
+**Atualização de 2026-10-21:** o autor associa essa revisão especial à
+**0.5**; identificação exata do artefato, patch e cronograma continuam sem
+definição. Instalar Ferramentas e Quality Center inicial entram na própria
+0.4.x (§11.1); a revisão especial melhora/otimiza a base e detalhes que
+escaparam. A etapa especial não transfere para depois os bugs, as lacunas
 funcionais ou a usabilidade necessários ao aceite da 0.4.9.
 
 O autor pediu examinar toda a IDE: componentes com aparência antiga,
@@ -2041,6 +2123,48 @@ pré-requisitos ausentes e operações canceladas. Toda limitação física ou
 de ferramenta deve estar explícita na matriz de prova. Fechar bloqueadores,
 atualizar os documentos donos e aplicar o corte de entrega do 57 §1.1 antes
 de gerar e exercitar o AppImage conforme `packaging/appimage/` e §10.
+
+#### 14.17.1 Direção da edição especial associada à 0.5 — 2026-10-21
+
+Junção pedida pelo autor: apresentação contemporânea de ferramenta de
+engenharia, orientação compreensível para iniciantes e foco no código.
+Preservar disposição de barra superior, explorador à esquerda, abas/editor,
+ferramentas inferiores e status; continuar com Qt/QML, core Rust, Theme e
+componentes Kv*. Aproveitar superfícies por contraste discreto e identidade
+escura/âmbar, sem criar outro desktop, dashboard ou biblioteca visual.
+
+| Prioridade de auditoria | O que conferir |
+| --- | --- |
+| Legibilidade e consistência | Tipografia importante sem tamanho micro obrigatório, hierarquia, alturas, espaçamentos, ícones, raios e estados nos tokens atuais; validar densidade compacta/confortável sem aumentar tudo |
+| Navegação e foco | Aba ativa/alterada, seleção, hover, foco de teclado, atalhos descobríveis e retorno ao editor; controles de leitura não parecem ações |
+| Espaço de trabalho | Painéis com altura/largura adequadas ao conteúdo, redimensionamento, restauração e pouco ruído; nenhuma mudança estrutural compulsória |
+| Diagnósticos e Qualidade | Problema, origem, evidência, explicação e ação; navegação, revisão de correção e resultados verificáveis; polir a base do Quality Center entregue na 0.4 |
+| Ambiente e instalação | Clareza de detectado/selecionado/efetivo, disponibilidade e revisão dos comandos; polir Instalar Ferramentas já reformulado na 0.4 |
+| Interação e desempenho | Feedback de carga/falha/cancelamento/conclusão; tempos curtos pelos tokens, movimento reduzido, nenhum trabalho pesado em delegate/binding de animação |
+| Internacionalização | Português/inglês, pluralização, mensagens, nomes acessíveis e layout com expansão do texto; marco público no 57 |
+
+Faixas do estudo são **hipóteses para teste**, não alteração de tokens já
+aprovada: hover 80–120 ms, seleção 100–150 ms e expansão 140–200 ms; abas
+compactas 28–30 px e confortáveis 32–36 px. Medir e ajustar nos componentes
+atuais. Rever tremor de validação quando competir com explicação/foco;
+evitar animação contínua da árvore, código e estados de erro.
+
+Provar as superfícies relevantes a 1280×800, 1536×960 e 1920×1080, com
+100%, 125% e 150% de escala, teclado e movimento reduzido. Medir resposta
+durante build/análise e conferir QML Profiler quando houver custo de UI;
+registrar ambiente, amostras e diferenças, sem anunciar fluidez por aparência.
+
+As referências e o fluxo do instalador têm dono em
+[Instalar Ferramentas](../especificacoes/instalar-ferramentas.md). Regras,
+perfis e gates têm dono em [Quality Center](../especificacoes/quality-center-e-gates.md).
+A experiência ROS 2 foi consolidada no
+[integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md), para sua
+frente posterior; não é requisito funcional da edição especial. Expansão
+ampla de regras/hooks/CI e providers não entra como “pequeno detalhe”.
+
+Pequenos incrementos encontrados na revisão precisam de problema concreto,
+dono e aceite próprios. Não são uma fila aberta para aumentar o escopo nem
+motivo para reabrir decisões ou reescrever o shell.
 
 
 ### 14.18 Painéis de trabalho e acesso ao ESP32 — pedido de 2026-10-20

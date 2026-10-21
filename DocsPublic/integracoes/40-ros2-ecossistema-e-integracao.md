@@ -6,6 +6,13 @@
 
 **Horizonte:** frente ROS 2 depois do fechamento da 0.4, agora **0.4.9** (limite atualizado em 2026-10-20, roadmaps/57 §1.1); a pesquisa medida precede a escolha da versão exata.
 
+**Experiência de produto (autor, 2026-10-21):** configuração visual e
+Analisar Projeto no layout atual têm dono no
+[41 — HUD/UX e análise](41-ros2-hud-ux-analise-projeto.md).
+As referências de Instalar Ferramentas e o Quality Center inicial entram
+na 0.4.x em seus próprios escopos ([52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21));
+isso não antecipa a implementação ROS 2 nem altera a matriz desta pesquisa.
+
 **Premissa:** IDE C/C++/Rust/Python, Qt/QML → JSON-RPC sobre stdio → core Rust → ferramentas como processos.
 
 ## 1. Parecer e limite da evidência

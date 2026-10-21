@@ -49,7 +49,11 @@ capítulo é o que o gate **não** cobra e o revisor cobra.
     catraca de fiação IPC junto — não é `sed`.
 - **Doc-comments do protocolo** (`kinein-protocol`): inglês, porque são a
   documentação do fio para qualquer cliente.
-- **Textos da tela**: português, sempre em `qsTr("…")`, com acentos.
+- **Textos-fonte da tela**: português, sempre em `qsTr("…")`, com acentos.
+  A decisão de 2026-10-21 torna a 0.5 o marco de suporte pleno a inglês,
+  mantendo português ([57 §3 item 11](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md#3-pedidos-do-autor-e-para-onde-foram)).
+  Novos componentes já nascem traduzíveis; não concatenar fragmentos que
+  impeçam tradução/pluralização. Idioma exibido e idioma-fonte são distintos.
 
 ## Comentários: o "por quê", com data
 

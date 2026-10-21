@@ -46,6 +46,12 @@ geral de frontend antes do AppImage. A entrega incorpora o trabalho não
 publicado 0.3.6–0.3.9; a 0.5 lista somente seu próprio delta. O 52 §11
 organiza 0.4.0–0.4.9; o 57 §1.1 é o dono dessa fronteira e o 40 é o handoff.
 
+**Reorganização de 2026-10-21:** o **52 §11.1** ordena a próxima h4b2,
+Setup reformulado no dock e Quality Center inicial na própria 0.4.x.
+Specs: [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e
+[Quality Center](../especificacoes/quality-center-e-gates.md). Polimento
+especial associado à 0.5 no 52 §14.17.1; inglês/divulgação no 57 §3 item 11.
+
 ```text
 57-mapa-de-versoes-ate-a-1.0.md     as versoes ate a 1.0; §1.1: entrega acumulada ate 0.4.9 e delta da 0.5
 58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia

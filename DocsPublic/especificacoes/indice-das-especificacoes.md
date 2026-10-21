@@ -31,6 +31,11 @@
 
 ## 1. Identidade do projeto
 
+**Complemento de 2026-10-21:** [Instalar Ferramentas](instalar-ferramentas.md)
+e [Quality Center e gates](quality-center-e-gates.md) especificam as novas
+entregas de frontend da 0.4.x. A Library/providers completos permanecem na
+0.5; sequência e fronteiras no [52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
+
 ```text
 Nome completo: Kinein Vectis
 Nome curto: Kinein

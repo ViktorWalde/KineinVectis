@@ -191,17 +191,28 @@ fase dos embarcados. A 0.3.6 não anuncia esses trabalhos como prontos.
 
 ## 6. 0.5 — experiência completa sobre a casca estabilizada
 
+**Fronteira atualizada pelo autor em 2026-10-21:** Instalar Ferramentas
+reformulado e Quality Center inicial passam a integrar a **0.4.x**,
+conforme [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
+A 0.5 evolui essa base, oferece inglês plenamente suportado e associa a
+edição especial ao polimento/otimização; não reanuncia a base como nova.
+O Environment Center e a Library completos mantêm seus escopos abaixo.
+
 | Fatia proposta | Resultado visível | Dependência |
 | --- | --- | --- |
 | 0.5-A | Environment Center: contexto efetivo, origem, configuração visual e inspector de compilação | F3 e fatos do core/0.4 |
 | 0.5-B | Library por capacidades, estados de provider e dois providers de prova | catálogo atual, ToolDetector, Jobs |
-| 0.5-C | Resultados normalizados em Problems/Quality e descoberta em Search Everywhere | 0.5-B e contratos testados |
+| 0.5-C | Resultados dos novos providers em Problems/Quality e descoberta em Search Everywhere, evoluindo o Quality Center inicial da 0.4 | 0.5-B, base 0.4.9 e contratos testados |
 | 0.5-D | Refinar presets, personalização de widgets e restauração de estados novos; polir ícones e acessibilidade conforme uso real | F1–F4 e uso real |
 
 As letras são **fatias**, não versões publicadas automaticamente. O corte de
 release 0.5.x será decidido pela evidência de cada fatia. A lista longa de
 ferramentas do estudo é catálogo de candidatos, não obrigação de instalar ou
 integrar dezenas de ferramentas na primeira 0.5.
+
+Internacionalização e fronteira de lançamento têm dono no
+[57 §3 item 11](57-mapa-de-versoes-ate-a-1.0.md#3-pedidos-do-autor-e-para-onde-foram);
+a revisão especial está no [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21).
 
 ## 7. Decisões fechadas e pontos a medir
 
