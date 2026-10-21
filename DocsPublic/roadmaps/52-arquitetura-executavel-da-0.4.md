@@ -798,13 +798,18 @@ entrega inicial para montar um framework genérico de providers.
 flash físico, mudança de default de rigor, novos providers, hooks/CI de
 usuário ou antecipação de ROS 2. A próxima implementação continua h4b2.
 
-**Pesquisa de frontend em curso pelo autor (2026-10-21):** ele levantará
-melhorias para o painel de Embarcados e enviará os resultados. Ao recebê-los,
-registrar no dono do painel e encaixar a fatia na etapa correspondente desta
-série, conferindo dependências e implementação existente. Até o envio,
-nenhuma alternativa adicional está aprovada; isso não bloqueia h4b2 ou os
-demais trabalhos independentes. Preservar o feedback de navegação já aberto
-no §14.16 e distinguir propostas novas de decisões e de aceites nativos.
+**Pesquisa de frontend recebida em 2026-10-21:** consolidada no
+[rascunho de HUD/UX de Embarcados](../especificacoes/embarcados-hud-ux-0.4.md),
+com cinco imagens conceituais. A imagem 5 é a aproximação preferida pelo
+autor, ainda sujeita a refinamento/aprovação visual. Nem as imagens nem as
+soluções sugeridas são fonte da verdade ou design aprovado; evoluir a UI
+atual conforme a [regra comum de aprovação](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
+Marcos e frentes já decididos continuam; o desenho visual permanece rascunho.
+Pontos funcionais de contexto/artefatos/operação acompanham h4b2 e integrações
+0.4.1–0.4.6; hierarquia/consistência entram junto dos fluxos e na 0.4.7;
+acabamento na 0.4.8 e edição especial. Preservar o feedback do §14.16.
+Não bloqueia trabalho autorizado independente do desenho, nem permite usar
+aceite de protótipo/agente como aprovação visual do autor.
 
 ## 12. Pontos de rollback
 
@@ -2147,6 +2152,11 @@ da edição especial. Após validá-la, gerar e exercitar o AppImage conforme
 `packaging/appimage/` e §10, com identificação/versão do artefato alinhadas.
 
 #### 14.17.1 Direção da edição especial associada à 0.5 — 2026-10-21
+
+**Direção geral decidida, solução visual em rascunho:** pesquisas/imagens
+recebidas nesta data não são design final. Refinar sobre a UI real e
+registrar aprovação visual do autor, conforme
+[frontend §1.1](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
 
 Junção pedida pelo autor: apresentação contemporânea de ferramenta de
 engenharia, orientação compreensível para iniciantes e foco no código.

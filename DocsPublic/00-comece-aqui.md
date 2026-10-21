@@ -35,7 +35,9 @@ plugin de terceiros — cada "não" é uma decisão registrada
 4. **Decisão do autor não se reabre por conta própria.** Ela está registrada,
    com data, no dono (a lista está no [`40`](roadmaps/40-estado-e-continuidade.md) §5).
    Proposta não é decisão: o [mapa de versões](roadmaps/57-mapa-de-versoes-ate-a-1.0.md)
-   separa as duas.
+   separa as duas. Para os rascunhos de HUD/UX de 2026-10-21, imagens não
+   são design aprovado: a direção visual depende da aprovação do autor
+   sobre a UI atual ([frontend §1.1](especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21)).
 5. **Toda mudança passa pelo gate**, `scripts/verificar.sh`, e todo gate novo é
    provado por mutação ([`contribuindo/04`](contribuindo/04-os-gates-que-dizem-nao.md)).
 6. **Bloqueador real fura a fila.** Perda de dados, crash e bloqueio do uso

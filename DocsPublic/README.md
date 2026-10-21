@@ -26,6 +26,13 @@ produto e a divulgação internacional têm marco na 0.5 (57 §3 item 11).
 O [estudo de HUD/UX ROS 2](integracoes/41-ros2-hud-ux-analise-projeto.md)
 orienta a frente posterior à 0.4.9, sem antecipar sua implementação.
 
+**Estudos de HUD/UX são rascunhos (autor, 2026-10-21):** imagens não
+representam a UI real nem aprovam design. Evoluir a interface atual,
+com refinamento/aprovação visual do autor, conforme
+[frontend §1.1](especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
+Pesquisa de Embarcados consolidada em
+[embarcados-hud-ux-0.4.md](especificacoes/embarcados-hud-ux-0.4.md).
+
 ## Como a documentação está organizada (2026-09-12)
 
 Duas árvores, por decisão do autor em 2026-09-12 (sucede a decisão das três

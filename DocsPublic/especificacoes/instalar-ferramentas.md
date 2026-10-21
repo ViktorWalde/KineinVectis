@@ -6,6 +6,13 @@
 > [52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
 > As imagens são referências conceituais, não telas já implementadas.
 
+**Esclarecimento posterior do autor em 2026-10-21:** o desenho de frontend
+deste estudo é **rascunho**, sem aprovação visual final. Evoluir a UI real
+da IDE e seus componentes; não copiar as imagens. A imagem não demonstra
+estado do produto nem substitui a aprovação do autor. A inclusão de Setup
+na 0.4.x permanece decidida; organização, controles e acabamento propostos
+abaixo seguem a [regra comum de aprovação visual](arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
+
 ## 1. Base e referências
 
 Conferência de código em 2026-10-21: `SetupController`, `SetupPanelHost`,
@@ -42,7 +49,7 @@ embarcados e os pré-requisitos do Quality Center. A categoria ROS 2 das
 imagens só entra quando a integração pós-0.4.9 possuir dados e comandos
 verificados; reformular Setup não antecipa a frente ROS 2.
 
-| Área | Comportamento requerido |
+| Área | Proposta de organização a refinar na UI atual |
 | --- | --- |
 | Cabeçalho | Título, busca, filtro de disponibilidade e atualizar; sem excesso de controles equivalentes |
 | Ambiente | Distro e contexto reais; distinguir detectado, selecionado e efetivo; configurar abre o dono existente |

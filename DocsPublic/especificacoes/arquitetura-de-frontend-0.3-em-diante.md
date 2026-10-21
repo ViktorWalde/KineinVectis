@@ -30,6 +30,33 @@
 - Referências JetBrains, Code OSS, Zed, Lapce e NetBeans fornecem invariantes de
   UX e estratégias de teste; não fornecem arquitetura para copiar.
 
+### 1.1 Aprovação visual e referências — decisão de 2026-10-21
+
+As pesquisas e propostas de melhoria de frontend/HUD/UX recebidas em
+2026-10-21 são **rascunhos de solução**, incluindo as que já foram
+documentadas. Imagens não são fiéis à interface atual, fonte da verdade,
+especificação visual definitiva ou aprovação para copiar seu layout.
+Para a direção visual, vale a **aprovação explícita do autor**, sobre
+evoluções da UI atual: melhorar/incrementar/polir as HUDs e a experiência,
+preservando a organização e a identidade da IDE.
+
+Isso não altera a regra de evidência: código/gates demonstram o que existe;
+aprovação de uma proposta não prova detecção, integração ou compatibilidade.
+Marcos e funcionalidades expressamente incluídos no roadmap continuam
+decididos; não confundi-los com aceite de posição, controles, textos, cores
+ou densidade sugeridos por um estudo. Desenhos ainda não aprovados não
+substituem os componentes atuais como referência de implementação.
+
+Preparar uma proposta concreta e revisável a partir da UI real, com
+comparação antes/depois, e registrar refinamento/aprovação visual do autor.
+Não pedir aprovação de uma ideia abstrata nem tratar teste de protótipo ou
+aceite nativo do agente como aprovação visual dele. Trabalho funcional já
+autorizado e independente do desenho pode prosseguir.
+
+O rascunho consolidado de Embarcados, com as cinco referências e seus
+limites, está em [embarcados-hud-ux-0.4.md](embarcados-hud-ux-0.4.md).
+A imagem 5 é a aproximação preferida pelo autor, ainda não aprovada.
+
 ## 2. O que deve ser preservado da implementação atual
 
 Não há autorização para reescrever uma IDE que já funciona. Continuam sendo a

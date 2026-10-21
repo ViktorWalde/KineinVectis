@@ -16,6 +16,11 @@ Atualização do autor em 2026-10-21: [Instalar Ferramentas](instalar-ferramenta
 reformulado e [Quality Center inicial](quality-center-e-gates.md) entram na
 0.4.x; o [52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21)
 ordena as dependências. A Library completa continua na 0.5.
+**Estudos de frontend de 2026-10-21 são rascunhos visuais:** a aprovação do
+autor define a direção, sobre a UI atual, conforme a
+[regra comum](arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
+Pesquisa de Embarcados consolidada em [embarcados-hud-ux-0.4.md](embarcados-hud-ux-0.4.md);
+a imagem 5 é a aproximação preferida, ainda sujeita a refinamento/aprovação.
 “Assistente de projeto/setup” significa wizard determinístico, não IA; logs,
 métricas locais e dados do alvo devem usar nomes do domínio. O desenho diário
 de Remote SSH está em [`remote-ssh-ui-hud.md`](remote-ssh-ui-hud.md).
@@ -41,6 +46,7 @@ modelo-semantico-do-projeto-0.4.md         o modelo semântico do projeto (0.4+)
 cache-de-compilacao.md                     cache de compilação orquestrado (PLANO; nada no código)
 instalar-ferramentas.md                    Setup no dock, busca/filtros, estados e revisão de comandos (0.4.x)
 quality-center-e-gates.md                  verificações existentes, explicações, rigor e gate local (0.4.x)
+embarcados-hud-ux-0.4.md                   rascunho contextual de HUD/UX; imagens conceituais, aprovação visual pendente
 
 POR ÁREA (visão-alvo do produto)
 sistema-de-layout.md                       a tela: regiões, janelas de ferramenta, modos

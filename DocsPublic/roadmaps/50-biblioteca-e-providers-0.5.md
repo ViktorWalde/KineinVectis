@@ -17,6 +17,11 @@ ela reutiliza e evolui a base entregue, sem outro Quality Center ou scanner.
 Essa base é a 0.4.9 aprimorada pela edição especial imediatamente seguinte;
 o AppImage só é gerado/testado após essa edição, conforme 57 §1.1.
 
+Os novos estudos/imagens de frontend documentados em 2026-10-21 são
+rascunhos, conforme esclarecimento do autor. A inclusão do escopo não
+aprova um layout; evoluir a UI atual e registrar sua aprovação visual
+([frontend §1.1](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21)).
+
 A Biblioteca deixa de ser apenas um catálogo curado de bibliotecas C/C++ e
 passa a apresentar **capacidades**: análise estática, cobertura, perfilamento,
 segurança, dependências, embarcados etc. Cada capacidade explica sua finalidade,

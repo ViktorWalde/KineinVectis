@@ -101,6 +101,12 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   **0.4.x**, aproveitando as
   mudanças de frontend. Ela não recebe pendências desta entrega.
   Sequência no 52 §11.1; cobertura da revisão no 52 §14.17/§14.17.1.
+- **Esclarecimento visual do autor em 2026-10-21:** incluir uma frente no
+  roadmap não aprova o desenho sugerido. Estudos/imagens de frontend são
+  rascunhos, e a direção visual depende da aprovação dele sobre a UI atual.
+  Regra em [frontend §1.1](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21);
+  a nova pesquisa de [Embarcados](../especificacoes/embarcados-hud-ux-0.4.md)
+  foi encaixada por responsabilidade no 52 §11.1, sem alterar os marcos.
 - A **0.5 em diante herda a base 0.4.9 já aprimorada pela edição especial**.
   As notas de cada evolução listam seu próprio delta, sem reanunciar trabalho
   da 0.3.6–0.4.9 ou da edição especial já entregue. O pacote de teste inclui

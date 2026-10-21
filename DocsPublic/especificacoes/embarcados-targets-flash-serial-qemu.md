@@ -17,6 +17,14 @@
 
 ---
 
+**Rascunho de HUD/UX recebido em 2026-10-21:** a evolução do painel atual
+está consolidada em [embarcados-hud-ux-0.4.md](embarcados-hud-ux-0.4.md).
+Os mockups não representam a UI real ou um design aprovado. A direção
+visual depende da aprovação do autor sobre os componentes e o layout
+existentes, conforme a [regra comum](arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
+Este documento mantém o alvo funcional; não autoriza copiar suas telas
+conceituais nem as imagens do novo estudo como implementação definitiva.
+
 ## 0. Nota importante sobre Tree-sitter
 
 A Parte 5 descreveu editor, LSP, `clangd`, `rust-analyzer`, diagnósticos e refatoração, mas **Tree-sitter ainda não estava explícito**. Para a Kinein, ele deve entrar como uma camada própria do editor.

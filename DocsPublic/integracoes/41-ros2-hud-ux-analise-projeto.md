@@ -5,6 +5,13 @@
 > define novo IPC ou fixa sua versão. Frente e ensaio **após a 0.4.9**;
 > pesquisa técnica e matriz de suporte no [40](40-ros2-ecossistema-e-integracao.md).
 
+**UX em rascunho, esclarecimento do autor em 2026-10-21:** imagens e
+reformulações do estudo não são fiéis à UI atual nem representam design
+aprovado. Incrementar/polir a interface real, mantendo a aprovação visual
+do autor como referência de direção. Aplicar a
+[regra comum de frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21),
+sem tratar escolhas de organização abaixo como contratos já aprovados.
+
 ## 1. Princípio e fronteiras
 
 A IDE compreende e explica o projeto, mantendo código e terminal como áreas

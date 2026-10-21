@@ -200,6 +200,11 @@ O AppImage é gerado/testado somente após essa edição especial, imediatamente
 seguinte à 0.4.9 e base polida das versões 0.5 em diante (57 §1.1).
 O Environment Center e a Library completos mantêm seus escopos abaixo.
 
+**Desenho dos novos estudos ainda em rascunho (autor, 2026-10-21):** os
+marcos não aprovam mockups ou uma nova disposição de janela. Melhorar a UI
+atual e submeter a solução visual concreta a refinamento/aprovação do autor,
+conforme [frontend §1.1](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
+
 | Fatia proposta | Resultado visível | Dependência |
 | --- | --- | --- |
 | 0.5-A | Environment Center: contexto efetivo, origem, configuração visual e inspector de compilação | F3 e fatos do core/0.4 |

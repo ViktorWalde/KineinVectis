@@ -56,7 +56,7 @@
 > Atualizar documentação ao fim de cada tarefa; não há reinício agendado.
 > MCP/ROS 2/colaboração ficam após 0.4.9; inglês acompanha o fechamento (57).
 > Inglês no produto/divulgação: 0.5 (57 §3 item 11); Windows pausado na W6b4 (60).
-> EditorController congelado (§2). Pesquisa do autor para Embarcados aguarda envio (52 §11.1).
+> EditorController congelado (§2). Pesquisa de Embarcados recebida como rascunho (52 §11.1).
 
 ## 1. O estado, em números
 
@@ -113,7 +113,7 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
-| Prévia interativa de navegação compacta criada e validada em WebKitGTK a 1024/736/320 px, preparada para feedback; depois, auditoria geral de frontend, componentes, painéis, cores do editor, atalhos, animação e desempenho antes do AppImage | [52](52-arquitetura-executavel-da-0.4.md) §14.16–14.17; agrupamento até 0.4.9 no §11 |
+| Prévia de navegação compacta continua sem escolha visual aprovada. Pesquisa de Embarcados recebida em 2026-10-21: cinco imagens conceituais, com a 5 mais próxima da UI atual segundo o autor, ainda sujeita a refinamento/aprovação. Estudos de frontend são rascunhos; evoluir a UI real, sem copiar mockups. Trabalho funcional independente pode seguir | [52](52-arquitetura-executavel-da-0.4.md) §11.1/§14.16–14.17; [rascunho de Embarcados](../especificacoes/embarcados-hud-ux-0.4.md) e [regra de aprovação visual](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21) |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
 | ROS 2: frente e ensaio por jornadas depois da 0.4.9 (limite atualizado em 2026-10-20); escolher versão exata a partir da pesquisa medida (autor, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
 | Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (autor, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
@@ -133,6 +133,14 @@ que ainda vale, medindo antes.
 ## 5. As decisões registradas que NÃO se reabrem
 
 ```text
+rascunhos e aprovacao visual DECISAO DO AUTOR em 2026-10-21: estudos/imagens
+                             de frontend sao rascunhos e nao retratam a UI
+                             real nem aprovam desenho. Melhorar/incrementar/
+                             polir sobre a IDE atual; a direcao visual vem
+                             da aprovacao dele. Imagem 5 de Embarcados e' a
+                             aproximacao preferida, ainda por refinar/aprovar.
+                             Dono: frontend §1.1; pesquisa: spec
+                             embarcados-hud-ux-0.4; ordem: 52 §11.1.
 AppImage apos especial       DECISAO DO AUTOR em 2026-10-21: fechar a 0.4.9,
                              executar a edicao especial imediatamente depois
                              e so' entao gerar/testar o AppImage. A edicao

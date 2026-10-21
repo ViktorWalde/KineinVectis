@@ -5,6 +5,12 @@
 > uma funcionalidade já entregue. Ordem e dependências no
 > [52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
 
+**Frontend ainda em rascunho (autor, 2026-10-21):** inclusão funcional na
+0.4.x não significa desenho visual aprovado. Superfície, hierarquia e
+controles propostos devem evoluir a UI atual e receber refinamento/aprovação
+visual do autor, conforme a [regra comum](arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
+Nenhum mockup demonstra suporte ou define um layout final.
+
 ## 1. Resultado e limite da primeira entrega
 
 Um iniciante consegue entender e selecionar verificações compatíveis,
