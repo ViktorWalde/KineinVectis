@@ -284,6 +284,12 @@ pub(crate) fn group_of(child: &Child) -> Option<Group> {
     imp::group_of(child).map(Group)
 }
 
+/// Group of an owned, unreaped PTY child (portable-pty creates it with setsid).
+/// Windows keeps using the native process/ConPTY handle instead.
+pub(crate) fn terminal_group(pid: Option<u32>) -> Option<Group> {
+    imp::terminal_group(pid).map(Group)
+}
+
 /// Pede ao grupo que termine (`SIGTERM` no Unix) e diz se esse pedido existe
 /// neste sistema. No Windows nao existe para um processo sem janela, e a
 /// resposta e' `false`: o chamador passa direto para [`kill_group`].
@@ -296,7 +302,12 @@ pub(crate) fn terminate_group(group: &Group) -> bool {
 /// o pai; e fechar o ultimo handle do job mata o que sobrar
 /// (`KILL_ON_JOB_CLOSE`), ate' num crash do core.
 pub(crate) fn kill_group(group: &Group) {
-    imp::kill_group(&group.0);
+    drop(try_kill_group(group));
+}
+
+/// Like `kill_group`, preserving a real failure for an interactive close request.
+pub(crate) fn try_kill_group(group: &Group) -> io::Result<()> {
+    imp::try_kill_group(&group.0)
 }
 
 /// Solta o grupo cujo processo principal terminou sozinho: os descendentes que

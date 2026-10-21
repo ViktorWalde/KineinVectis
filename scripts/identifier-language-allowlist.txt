@@ -155,3 +155,6 @@ ctypes cdll argtypes restype ubyte uint ulong keycode keysym xtst
 # 2026-10-16: o alvo do PlatformIO que gera a compile_commands.json
 # (`pio run -t compiledb`, 0.4.0e): nome da ferramenta, nao traduzivel.
 compiledb
+
+# rustix Errno::SRCH: POSIX ESRCH, grupo de processo que já não existe.
+srch

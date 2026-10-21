@@ -807,6 +807,7 @@ driver
 drivers
 drop
 dropped
+dropping
 drops
 dual
 dumps
@@ -1446,6 +1447,7 @@ libraries
 library
 libs
 license
+lifetime
 lighter
 like
 limit
@@ -1710,6 +1712,7 @@ numbers
 numeric
 object
 objects
+observation
 observe
 observed
 occupied
@@ -2093,6 +2096,7 @@ refusals
 refuse
 refused
 refuses
+refusing
 region
 regions
 registered
@@ -2539,6 +2543,7 @@ structure
 structured
 structures
 stub
+stubborn
 stubs
 studio
 style

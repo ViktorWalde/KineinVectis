@@ -13,8 +13,8 @@ use kinein_protocol::{
 use serde_json::{Value, json};
 
 use crate::rpc::{
-    fs_error_response, no_workspace_response, parse_params, workspace_error_response,
-    workspace_path_error_response,
+    fs_error_response, no_workspace_response, parse_params, terminal_error_response,
+    workspace_error_response, workspace_path_error_response,
 };
 use crate::{Core, db, workspace};
 
@@ -258,7 +258,17 @@ impl Core {
     /// Regra: quem acrescentar estado por-workspace ao `Core` acrescenta a
     /// troca dele AQUI, e em lugar nenhum mais. Verificado por
     /// `scripts/verificar-transicao-workspace.sh`.
-    fn activate_workspace(&mut self, opened: &WorkspaceInfo) {
+    fn activate_workspace(
+        &mut self,
+        opened: &WorkspaceInfo,
+    ) -> Result<(), crate::terminal::TerminalError> {
+        if self
+            .workspace
+            .as_ref()
+            .is_some_and(|current| current.root != opened.root)
+        {
+            self.close_workspace_terminals()?;
+        }
         if let Some(debug) = self.debug.as_mut() {
             debug.clear();
         }
@@ -304,11 +314,23 @@ impl Core {
                 opened,
             ));
         }
+        Ok(())
     }
 
     /// Inverso de [`Self::activate_workspace`]: solta tudo que era do workspace
     /// que sai. Devolve o que estava aberto.
-    fn deactivate_workspace(&mut self) -> Option<WorkspaceInfo> {
+    fn close_workspace_terminals(&mut self) -> Result<(), crate::terminal::TerminalError> {
+        if let Some(session) = self.terminal.as_mut() {
+            session.close_all()?;
+        }
+        self.run_terminal = None;
+        Ok(())
+    }
+
+    fn deactivate_workspace(
+        &mut self,
+    ) -> Result<Option<WorkspaceInfo>, crate::terminal::TerminalError> {
+        self.close_workspace_terminals()?;
         if let Some(debug) = self.debug.as_mut() {
             debug.clear();
         }
@@ -324,19 +346,17 @@ impl Core {
             lsp.set_root(None);
         }
         self.syntax_checks.clear();
-        closed
+        Ok(closed)
     }
 
     pub(crate) fn close_workspace_response(
         &mut self,
         request_id: Option<Value>,
     ) -> JsonRpcResponse {
-        let closed = self.deactivate_workspace();
-        // A execucao e' uma sessao de terminal como as outras: fecha junto.
-        self.run_terminal = None;
-        if let Some(session) = self.terminal.as_mut() {
-            session.close_all();
-        }
+        let closed = match self.deactivate_workspace() {
+            Ok(closed) => closed,
+            Err(error) => return terminal_error_response(request_id, &error),
+        };
         JsonRpcResponse::success(
             request_id,
             json!({
@@ -405,7 +425,17 @@ impl Core {
                 // O projeto que a IDE criou nasce confiavel (16.4b).
                 opened.trusted = true;
                 self.remember_trust(&opened.root);
-                self.activate_workspace(&opened);
+                if let Err(error) = self.activate_workspace(&opened) {
+                    return terminal_error_response(
+                        request_id,
+                        &crate::terminal::TerminalError::Process {
+                            message: format!(
+                                "O projeto foi criado em {}, mas não foi possível trocar de projeto: {error}",
+                                opened.root
+                            ),
+                        },
+                    );
+                }
                 JsonRpcResponse::success(request_id, json!(opened))
             }
             Err(error) => workspace_error_response(request_id, &error),
@@ -428,7 +458,9 @@ impl Core {
         match workspace::open_workspace(Path::new(&params.path)) {
             Ok(mut opened) => {
                 opened.trusted = self.root_is_trusted(&opened.root);
-                self.activate_workspace(&opened);
+                if let Err(error) = self.activate_workspace(&opened) {
+                    return terminal_error_response(request_id, &error);
+                }
                 // Recupera buffers não salvos que sobreviveram a um crash
                 // da UI (DocsPublic/seguranca/23). Só o `open` recupera: um
                 // projeto recém-criado não tem rascunho anterior.

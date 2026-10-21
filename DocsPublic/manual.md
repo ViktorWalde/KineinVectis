@@ -687,6 +687,13 @@ muda seu destino. Se a abertura falhar, a conexão cair ou a espera expirar,
 a faixa **Comando não enviado** mostra a causa no Terminal. Após resolver,
 faça uma nova tentativa; a linha descartada não reaparece em outra sessão.
 
+A confirmação de fechamento acompanha a saída real do processo. Trocar para
+outro projeto encerra as sessões do anterior; reabrir a mesma raiz as
+preserva. Se o core não conseguir consultar o estado do processo, a faixa
+**Falha no terminal** explica o problema. Você pode solicitar o fechamento
+novamente; o aviso some quando a consulta se recupera. O diagnóstico fica
+separado do texto e do cursor do programa.
+
 Clique direito (ou `Shift+F10`/tecla Menu com foco no terminal) abre Copiar,
 Colar, **Selecionar Tudo**, Selecionar área visível, Limpar tela, Limpar
 histórico, Novo e Fechar. Navegue com setas e confirme com Enter. Selecionar

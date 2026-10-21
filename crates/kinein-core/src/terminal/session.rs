@@ -17,7 +17,7 @@ use std::{
 
 use alacritty_terminal::grid::Scroll;
 use kinein_protocol::{TerminalMouseEvent, TerminalMouseModifiers};
-use portable_pty::{ChildKiller, CommandBuilder, MasterPty, PtySize, native_pty_system};
+use portable_pty::{CommandBuilder, MasterPty, PtySize, native_pty_system};
 
 use super::error::TerminalError;
 use super::input::{
@@ -27,6 +27,7 @@ use super::render::emit_render;
 use super::state::{GridSize, TerminalState};
 use super::{EventSender, MAX_SESSIONS};
 
+mod lifecycle;
 mod selection;
 mod threads;
 
@@ -43,11 +44,11 @@ struct Session {
     /// emulador (`TerminalState::take_replies`).
     writer: Arc<Mutex<Box<dyn Write + Send>>>,
     state: Arc<Mutex<TerminalState>>,
-    // `wait()` bloqueia numa thread dedicada. O killer clonado pelo
-    // `portable-pty` permite encerrar a sessão sem disputar um mutex com essa
-    // thread (o desenho anterior deadlockava ao fechar uma aba).
-    killer: Box<dyn ChildKiller + Send + Sync>,
+    // The waiter only polls while holding this lock. A blocking wait here
+    // would deadlock close; a cloned Unix killer only sends SIGHUP.
+    child: lifecycle::SharedChild,
     running: Arc<AtomicBool>,
+    closing: bool,
 }
 
 /// Owns the shell sessions a workspace keeps open (multi-terminal, D2.3).
@@ -99,7 +100,7 @@ impl TerminalManager {
     /// Sessão viva pelo id, ou `NotOpen`.
     fn live(&self, id: &str) -> Result<&Session, TerminalError> {
         let session = self.sessions.get(id).ok_or(TerminalError::NotOpen)?;
-        if session.running.load(Ordering::SeqCst) {
+        if session.running.load(Ordering::SeqCst) && !session.closing {
             Ok(session)
         } else {
             Err(TerminalError::NotOpen)
@@ -154,6 +155,14 @@ impl TerminalManager {
             })
             .map_err(|error| process(format!("falha ao abrir o PTY: {error}")))?;
 
+        let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|error| {
+            process(format!("stdin do terminal indisponível: {error}"))
+        })?));
+        let reader = pair
+            .master
+            .try_clone_reader()
+            .map_err(|error| process(format!("stdout do terminal indisponível: {error}")))?;
+
         let mut command = CommandBuilder::new(program);
         command.args(args);
         command.cwd(root);
@@ -167,26 +176,18 @@ impl TerminalManager {
         // O slave é do processo filho; soltamos a nossa ponta.
         drop(pair.slave);
 
-        let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|error| {
-            process(format!("stdin do terminal indisponível: {error}"))
-        })?));
-        let reader = pair
-            .master
-            .try_clone_reader()
-            .map_err(|error| process(format!("stdout do terminal indisponível: {error}")))?;
-
         let state = Arc::new(Mutex::new(TerminalState::new(
             DEFAULT_ROWS,
             DEFAULT_COLS,
             SCROLLBACK,
         )));
         let running = Arc::new(AtomicBool::new(true));
-        let killer = child.clone_killer();
+        let child = Arc::new(Mutex::new(child));
         let dirty = Arc::new(AtomicBool::new(false));
 
         self.spawn_reader(&id, reader, &state, &dirty, &writer);
         self.spawn_emitter(&id, &state, &dirty, &running);
-        self.spawn_waiter(&id, child, &running);
+        self.spawn_waiter(&id, &child, &running, &state);
 
         self.sessions.insert(
             id.clone(),
@@ -194,8 +195,9 @@ impl TerminalManager {
                 master: pair.master,
                 writer,
                 state,
-                killer,
+                child,
                 running,
+                closing: false,
             },
         );
         Ok(id)
@@ -215,7 +217,7 @@ impl TerminalManager {
     /// codificação simplesmente não se aplica, porque o contrato do PTY é byte.
     fn write_bytes(&mut self, id: &str, bytes: &[u8]) -> Result<(), TerminalError> {
         let session = self.sessions.get_mut(id).ok_or(TerminalError::NotOpen)?;
-        if !session.running.load(Ordering::SeqCst) {
+        if !session.running.load(Ordering::SeqCst) || session.closing {
             return Err(TerminalError::NotOpen);
         }
         let mut writer = session
@@ -385,50 +387,41 @@ impl TerminalManager {
         Ok(())
     }
 
-    /// Kills the shell session `id`. The waiter thread reports `closed`.
+    /// Requests termination of `id`; its identity remains until exit is observed.
+    /// Repeating a close is safe, including when status observation is delayed.
     pub fn close(&mut self, id: &str) -> Result<(), TerminalError> {
-        let mut session = self.sessions.remove(id).ok_or(TerminalError::NotOpen)?;
-        session.running.store(false, Ordering::SeqCst);
-        killed(session.killer.kill()).map_err(|source| TerminalError::Process {
-            message: format!("falha ao fechar o terminal: {source}"),
-        })
+        let session = self.sessions.get_mut(id).ok_or(TerminalError::NotOpen)?;
+        lifecycle::stop(&session.child).map_err(|source| TerminalError::Process {
+            message: format!("falha ao fechar o terminal {id}: {source}"),
+        })?;
+        session.closing = true;
+        Ok(())
     }
 
     /// Mata TODAS as sessões (fechar workspace, shutdown do core).
-    pub fn close_all(&mut self) {
+    pub fn close_all(&mut self) -> Result<(), TerminalError> {
         let ids: Vec<String> = self.sessions.keys().cloned().collect();
+        let mut failure = None;
         for id in ids {
-            drop(self.close(&id));
+            if let Err(error) = self.close(&id) {
+                failure.get_or_insert(error);
+            }
         }
+        failure.map_or(Ok(()), Err)
     }
-}
-
-#[cfg(unix)]
-const fn killed(result: std::io::Result<()>) -> std::io::Result<()> {
-    result
-}
-
-/// O `WinChildKiller::kill` do portable-pty 0.9.0 inverte o resultado do
-/// `TerminateProcess`: devolve `Err` quando matou (com o ultimo erro do
-/// sistema, que e' de uma chamada anterior) e `Ok` quando nao conseguiu, o que
-/// so' acontece com o processo ja' morto. O resultado nao diz nada, e nos dois
-/// casos o shell nao esta' vivo; o resto do console morre quando a sessao
-/// solta o `ConPTY` (DocsPublic/roadmaps/60 §3.3, W2b).
-#[cfg(windows)]
-#[allow(clippy::unnecessary_wraps)] // a assinatura e' a do Unix
-fn killed(_result: std::io::Result<()>) -> std::io::Result<()> {
-    Ok(())
 }
 
 impl Drop for TerminalManager {
     fn drop(&mut self) {
         // Não deixa shell órfão no shutdown do core.
-        self.close_all();
+        drop(self.close_all());
     }
 }
 
 #[cfg(test)]
 mod tests {
+    mod lifetime;
+
     use std::path::PathBuf;
     use std::sync::mpsc;
     use std::time::Duration;
@@ -544,7 +537,7 @@ mod tests {
     /// distintos, e fechar uma NÃO derruba a outra.
     #[test]
     fn two_sessions_coexist_and_close_independently() {
-        let (sender, _receiver) = mpsc::channel();
+        let (sender, receiver) = mpsc::channel();
         let mut manager = TerminalManager::new(sender);
         let root = temp_root("multi");
 
@@ -560,6 +553,7 @@ mod tests {
         assert!(manager.is_open(&second));
 
         manager.close(&first).unwrap();
+        lifetime::wait_closed(&receiver, std::slice::from_ref(&first));
         assert!(!manager.is_open(&first));
         assert!(
             manager.is_open(&second),
@@ -568,6 +562,7 @@ mod tests {
         assert!(manager.any_open());
 
         manager.close(&second).unwrap();
+        lifetime::wait_closed(&receiver, std::slice::from_ref(&second));
         assert!(!manager.any_open());
     }
 

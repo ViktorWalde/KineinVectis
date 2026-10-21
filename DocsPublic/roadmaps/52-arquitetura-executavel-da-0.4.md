@@ -2253,10 +2253,10 @@ Primeira parte da auditoria do §14.20, após fechar a 0.4.1g. O aceite nativo
 anterior já foi preparado em `/tmp/kinein-shell-native-proof/lifetime-before/`:
 clique de fechar, aba ainda visível e processo falso vivo; nenhuma entrada no
 monitor. O core anterior foi guardado com SHA-256 em
-`/tmp/kinein-terminal-lifetime-proof/before/`. **Ainda não
-integrada ao principal:** há protótipo com oito testes focados no checkout
-`/home/hugh/KineinVectis-worktrees/serial-lifecycle`, target próprio. A
-incorporação e o gate da fatia vêm após o fechamento da 0.4.1g. O ensaio do §14.21 mostrou monitor vivo após trocar de
+`/tmp/kinein-terminal-lifetime-proof/before/`. **Concluída no principal:** desenvolvida no checkout
+`/home/hugh/KineinVectis-worktrees/serial-lifecycle`, target próprio, e
+incorporada após `bf65481`. Nove testes focados, 50 da família terminal e
+o gate rápido estrito passaram (40.7 §7.328). O ensaio do §14.21 mostrou monitor vivo após trocar de
 workspace e após fechar uma sessão cujo processo ignora `SIGHUP`. A matriz de
 exclusividade permanece aberta até as partes seguintes; esta parte corrige
 seu pré-requisito de ciclo de vida, sem declarar arbitragem de portas pronta.
@@ -2287,10 +2287,86 @@ com um processo esquecido. O fechamento de todas as sessões tenta cada uma
 e preserva as que falharam. Não cancelar indistintamente jobs globais de
 instalação ou identificação ao trocar projeto.
 
-É correção do comportamento já contratado, sem novo método, evento ou campo
-no fio 0.181.0. **Aceite:** regressões devem reprovar o código anterior;
+**Extensão contratada antes do código (0.182.0):** falha ao consultar o
+estado não equivale a término. O render da sessão ganha `notice?`, um
+`JsonRpcError` tipado existente, com código e mensagem do core. A superfície
+mostra sua mensagem no `KvVerdict` já usado pelo Terminal, preservando grid,
+cursor e saída do programa. O aviso desaparece quando a consulta volta a
+funcionar; nunca produz `terminal.closed` por si só. Não escrever diagnóstico
+no buffer VT do programa nem usar saída stderr não estruturada.
+A versão sobe antes de emitir esse campo; sem método/evento novo. O restante
+é correção do ciclo de vida já contratado. **Aceite:** regressões devem reprovar o código anterior;
 processo que ignora HUP, filho do wrapper, encerramento independente de outra
 sessão, saída natural, stop/drop e troca de workspace. Usar só fixtures de
 processos/portas; nenhum firmware ou arquivo de placa. Medir latência e
 conferir que a nova observação não gera espera ocupada. Depois, desenhar
 reserva por porta e metadados de execução/gravação; a matriz só fecha inteira.
+
+
+**Execução isolada:** base atualizada para `bf65481`, mantendo a fonte e os
+binários principais intactos durante o gate da 0.4.1g. Oito testes focados
+passaram antes desta extensão de diagnóstico. O Clippy apontou a emissão
+stderr provisória, corrigida pela extensão tipada acima, e dois ajustes de
+estilo. O uso do handle original elimina o antigo workaround do killer
+clonado Windows; a API original normaliza seu resultado. A implementação
+Windows do grupo de PTY usa fallback no handle, mantendo a assinatura comum
+(a sugestão de const dessa implementação não se aplica à função Unix).
+
+A remoção do workaround antigo reduz cfg(unix) de 52 para 51; catraca
+reduzida, sem adiar testes. O vocabulário recebe cinco palavras inglesas
+normais e SRCH, constante POSIX/rustix para grupo que já terminou.
+
+O registro da sessão também permanece após aceitar o pedido de fechamento,
+até o término observado. Isso permite repetir o fechamento se a consulta
+falhar; aceitar o pedido não apaga a identidade do processo. Os testes que
+antes só verificavam um booleano após sinalizar agora aguardam o evento real.
+
+
+**Aceites parciais, 2026-10-21:** três mutações reprovadas por asserções em
+runtime: killer fraco, ausência de fechamento na troca de workspace e aviso
+oculto pela UI. Fonte restaurada e testes repetidos verdes. Relatório
+`/tmp/kinein-lifetime-mutations.json`. RPC real com ferramenta/porta falsas:
+fechamento com HUP ignorado e troca de workspace terminaram o processo
+(`/tmp/kinein-monitor-lifetime-wcxf33ba/report.json`). Na IDE nativa, a aba
+sumiu somente após o processo sair: `lifetime-after/` na pasta de aceites do
+§14.21, comparada ao `lifetime-before/`. Sem hardware, entrada ou comando no
+monitor. Programa em primeiro plano num grupo diferente do shell também
+terminou, incluindo após manter o registro da sessão: relatório em
+`/tmp/kinein-foreground-proof-_o8937gt/report.json`.
+
+Amostra controlada do protótipo, quatro monitores falsos, cinco segundos por
+binário: CPU do core 0,2% antes e 0,6% depois de um núcleo; pedido de fechar
+até saída observada 1,60/14,56 ms. Nenhuma espera ocupada observada nesta
+amostra; há custo de observação periódica, sem alegar ganho de desempenho.
+Dados em `/tmp/kinein-lifetime-profile-lez53n0l/report.json`.
+
+A primeira rodada rápida do principal pegou uma regressão no despacho:
+reter a identidade após aceitar fechar também deixou `terminal.input`
+aceitar entrada. Correção: `closing` separado recusa novas ações imediatamente e mantém o
+handle até o fim observado. A asserção existente foi preservada; os 50
+testes da família de terminal passaram antes da rodada integral.
+
+
+**Fechamento, 2026-10-21:** gate rápido estrito TUDO VERDE, 1.209 Rust,
+158 harnesses QML, análise C++ limpa, 8 CTest, qmllint e nenhum NÃO PROVADO.
+Log `/tmp/kinein-lifetime-gate-final.log`. Core debug/release reconstruídos;
+aceite nativo repetido com UI e core release em
+`/tmp/kinein-shell-native-proof/lifetime-final-release/`: processo que ignora
+HUP terminou, aba sumiu, nenhuma entrada no monitor e log QML limpo. RPC
+release confirmou fechamento e troca de projeto em
+`/tmp/kinein-monitor-lifetime-ka1oqiq2/report.json`. Sem hardware ou gravação.
+
+**Regressão adicional reproduzida para a próxima parte:** o router/controller
+real de Embarcados mantém sete estados ocupados após queda do core
+(identificação, arquivos, prévia, sondas, portas, projeto e tamanho), sem
+mensagem. Fixture e saída em `/tmp/kinein-audit-embedded-disconnect.qml` e
+`/tmp/kinein-embedded-disconnect-audit.log`. Corrigir esperas pendentes e
+resultados acionáveis sem repetir ações após recuperação. A inspeção também
+confirmou `lastRunMessage` sem consumidor visual: expor as recusas de
+run/script/stop no componente existente antes de ampliar erros de ocupação.
+A matriz de reserva serial do §14.20 continua aberta.
+
+**Smokes finais:** debug/release chegaram ao primeiro frame em 368/348 ms
+(nesta medição), com passeio de 33 superfícies por preset, sem aviso QML.
+Logs `/tmp/kinein-lifetime-smoke-debug.log` e
+`/tmp/kinein-lifetime-smoke-release.log`.

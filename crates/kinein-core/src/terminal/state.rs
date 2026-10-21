@@ -87,6 +87,7 @@ impl EventListener for Replies {
 pub(super) struct TerminalState {
     pub(super) term: Term<Replies>,
     pub(super) selection_id: String,
+    pub(super) notice: Option<kinein_protocol::JsonRpcError>,
     processor: Processor,
     replies: Replies,
 }
@@ -102,6 +103,7 @@ impl TerminalState {
         Self {
             term: Term::new(config, &GridSize::new(rows, cols), replies.clone()),
             selection_id: String::new(),
+            notice: None,
             processor: Processor::new(),
             replies,
         }

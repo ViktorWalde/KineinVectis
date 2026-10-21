@@ -63,33 +63,37 @@ pub(super) fn emit_locked_render(events: &EventSender, id: &str, state: &Termina
         .map(|row| build_line(grid, row, cols, scrollback))
         .collect();
 
+    let mut frame = json!({
+        "id": id,
+        "selectionId": state.selection_id,
+        "cols": cols,
+        "rows": rows,
+        "cursor": {
+            "row": cursor_row.max(0),
+            "col": cursor_col,
+            "visible": cursor_visible,
+            "shape": cursor_shape_name(cursor_style.shape),
+            "blinking": cursor_style.blinking,
+        },
+        // Modos que mudam como um terminal real deve traduzir input.
+        // A UI continua burra em relacao ao TUI: apenas respeita o estado
+        // VT mantido pelo emulador ao enviar teclas e paste.
+        "alternateScreen": mode.contains(TermMode::ALT_SCREEN),
+        "applicationCursor": mode.contains(TermMode::APP_CURSOR),
+        "bracketedPaste": mode.contains(TermMode::BRACKETED_PASTE),
+        // D2.3/B2: a UI precisa dos dois pra desenhar a barra de rolagem.
+        // `scrollback` é a verdade sobre onde a view está (o emulador clampa
+        // o pedido da UI); `scrollbackMax` é quanto histórico existe.
+        "scrollback": scrollback,
+        "scrollbackMax": scrollback_max,
+        "lines": lines,
+    });
+    if let Some(notice) = &state.notice {
+        frame["notice"] = json!(notice);
+    }
     drop(events.send(JsonRpcRequest::notification(
         "event.terminal.render",
-        Some(json!({
-            "id": id,
-            "selectionId": state.selection_id,
-            "cols": cols,
-            "rows": rows,
-            "cursor": {
-                "row": cursor_row.max(0),
-                "col": cursor_col,
-                "visible": cursor_visible,
-                "shape": cursor_shape_name(cursor_style.shape),
-                "blinking": cursor_style.blinking,
-            },
-            // Modos que mudam como um terminal real deve traduzir input.
-            // A UI continua burra em relacao ao TUI: apenas respeita o estado
-            // VT mantido pelo emulador ao enviar teclas e paste.
-            "alternateScreen": mode.contains(TermMode::ALT_SCREEN),
-            "applicationCursor": mode.contains(TermMode::APP_CURSOR),
-            "bracketedPaste": mode.contains(TermMode::BRACKETED_PASTE),
-            // D2.3/B2: a UI precisa dos dois pra desenhar a barra de rolagem.
-            // `scrollback` é a verdade sobre onde a view está (o emulador clampa
-            // o pedido da UI); `scrollbackMax` é quanto histórico existe.
-            "scrollback": scrollback,
-            "scrollbackMax": scrollback_max,
-            "lines": lines,
-        })),
+        Some(frame),
     )));
 }
 

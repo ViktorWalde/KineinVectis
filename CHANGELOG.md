@@ -21,6 +21,12 @@ como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
 O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
 pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
 
+- **Ciclo de vida do terminal (0.4.1h1, 2026-10-21):** fechar
+  encerra o processo mesmo quando ignora HUP; trocar de projeto encerra as
+  sessões anteriores e permite executar no novo. Falha de fechamento preserva
+  a sessão e a execução atuais. Protocolo 0.182.0: aviso tipado do core na
+  faixa existente, com recuperação, preservando a saída do programa.
+
 - **Comando no terminal solicitado (0.4.1g, 2026-10-21):** abrir um monitor
   ao mesmo tempo já não desvia o comando destinado a um novo shell. Falha de
   abertura, desconexão e espera expirada descartam a linha e mostram a causa

@@ -18,18 +18,19 @@ use std::{
     time::Duration,
 };
 
-use kinein_protocol::JsonRpcRequest;
-use portable_pty::Child;
+use kinein_protocol::{JsonRpcError, JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::json;
 
-use super::super::render::emit_render;
+use super::super::render::{emit_locked_render, emit_render};
 use super::super::state::TerminalState;
 use super::TerminalManager;
+use super::lifecycle::{self, SharedChild};
 
 /// Tamanho de cada leitura do PTY, em bytes.
 const READ_CHUNK_BYTES: usize = 8192;
 /// Cadência máxima de render (~30fps): coalesce rajadas de saída.
 const FRAME: Duration = Duration::from_millis(33);
+const CHILD_POLL: Duration = Duration::from_millis(50);
 
 impl TerminalManager {
     /// Thread leitora: bytes crus do PTY → `parser.process` → marca sujo.
@@ -100,22 +101,69 @@ impl TerminalManager {
     pub(super) fn spawn_waiter(
         &self,
         id: &str,
-        mut child: Box<dyn Child + Send + Sync>,
+        child: &SharedChild,
         running: &Arc<AtomicBool>,
+        state: &Arc<Mutex<TerminalState>>,
     ) {
         let running = Arc::clone(running);
+        let child = Arc::clone(child);
+        let state = Arc::clone(state);
         let events = self.events.clone();
         let id = id.to_owned();
         thread::spawn(move || {
-            let code = child
-                .wait()
-                .ok()
-                .and_then(|status| i32::try_from(status.exit_code()).ok());
+            let mut warned = false;
+            let status = loop {
+                match lifecycle::poll(&child) {
+                    Ok(Some(status)) => {
+                        if warned {
+                            update_notice(&events, &id, &state, None);
+                        }
+                        break status;
+                    }
+                    Ok(None) => {
+                        if warned {
+                            update_notice(&events, &id, &state, None);
+                            warned = false;
+                        }
+                    }
+                    Err(error) => {
+                        if !warned {
+                            update_notice(
+                                &events,
+                                &id,
+                                &state,
+                                Some(JsonRpcError::new(
+                                    JsonRpcErrorCode::InternalError,
+                                    format!(
+                                        "Não foi possível consultar o estado do processo: {error}. Tente fechar esta sessão novamente."
+                                    ),
+                                    None,
+                                )),
+                            );
+                            warned = true;
+                        }
+                    }
+                }
+                thread::sleep(CHILD_POLL);
+            };
+            let code = i32::try_from(status.exit_code()).ok();
             running.store(false, Ordering::SeqCst);
             drop(events.send(JsonRpcRequest::notification(
                 "event.terminal.closed",
                 Some(json!({ "id": id, "exitCode": code })),
             )));
         });
+    }
+}
+
+fn update_notice(
+    events: &super::super::EventSender,
+    id: &str,
+    state: &Arc<Mutex<TerminalState>>,
+    notice: Option<JsonRpcError>,
+) {
+    if let Ok(mut state) = state.lock() {
+        state.notice = notice;
+        emit_locked_render(events, id, &state);
     }
 }

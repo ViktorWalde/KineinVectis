@@ -308,14 +308,17 @@ impl Core {
 
     /// Fecha a sessao da ultima execucao. Sem uma aberta, `InvalidRequest`.
     fn run_stop_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some(terminal_id) = self.run_terminal.take() else {
+        let Some(terminal_id) = self.run_terminal.clone() else {
             return run_error_response(request_id, &run::RunError::NotRunning);
         };
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "run.stop");
         };
         match session.close(&terminal_id) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
+            Ok(()) => {
+                self.run_terminal = None;
+                JsonRpcResponse::success(request_id, json!({ "status": "ok" }))
+            }
             Err(error) => terminal_error_response(request_id, &error),
         }
     }

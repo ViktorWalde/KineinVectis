@@ -109,6 +109,7 @@ mesmo tratamento de um `ls`.
 ```text
 event.terminal.render {           (throttle ~30fps; substitui event.terminal.data)
   "id": string,                  (0.44.0 — sessão dona deste grid)
+  "notice"?: { "code": string, "message": string, "details"?: object },
   "selectionId": string,         (0.131.0 — vazio se não há seleção completa válida)
   "cols": u16, "rows": u16,
   "cursor": { "row": u16, "col": u16, "visible": bool,
@@ -156,3 +157,12 @@ resposta do `terminal.open` solicitado, pelo id JSON-RPC existente; outra
 sessão não consome a linha. Sem alteração dos payloads deste domínio ou da
 versão 0.181.0. API C++/QML e invariantes no
 [arquitetura/36 §10](../36-casca-da-ide.md#10-associação-de-comando-ao-terminal-041g-contrato-de-2026-10-20).
+
+
+**Diagnóstico da sessão (`0.182.0`, 0.4.1h1):** `notice?` no render reutiliza
+`JsonRpcError`. O core emite `INTERNAL_ERROR` e uma mensagem quando não
+consegue consultar o estado do processo; mantém a sessão até confirmar sua
+saída. A UI mostra o aviso em sua faixa existente, sem alterar texto, cursor
+ou modos VT. Consulta recuperada remove o campo no próximo frame. Ausência
+de aviso não significa que o processo terminou; o término continua sendo
+`event.terminal.closed`, emitido somente quando observado.

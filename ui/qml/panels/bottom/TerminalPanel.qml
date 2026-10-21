@@ -44,6 +44,8 @@ Item {
     readonly property TerminalInputController input: actions.input
 
     readonly property var lines: (render && render.lines) ? render.lines : []
+    readonly property string processNotice: render && render.notice && render.notice.message
+        ? String(render.notice.message) : ""
     readonly property var cursor: (render && render.cursor)
             ? render.cursor : ({ row: 0, col: 0, visible: false })
     readonly property bool alternateScreen: render
@@ -187,8 +189,8 @@ Item {
         id: commandError
         objectName: "terminalCommandError"
         width: parent.width
-        heading: qsTr("Comando não enviado")
-        message: panel.runtimeController ? (panel.runtimeController.shellErrorText || "") : ""
+        heading: panel.processNotice !== "" ? qsTr("Falha no terminal") : qsTr("Comando não enviado")
+        message: panel.processNotice || (panel.runtimeController ? (panel.runtimeController.shellErrorText || "") : "")
         codeFont: false
         animateChanges: true
     }

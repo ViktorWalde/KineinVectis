@@ -424,6 +424,12 @@ pub(super) fn group_of(child: &Child) -> Option<GroupId> {
     job.ok().map(Arc::new)
 }
 
+// The Unix implementation converts the owned PTY PID to its process group.
+#[allow(clippy::missing_const_for_fn)]
+pub(super) fn terminal_group(_pid: Option<u32>) -> Option<GroupId> {
+    None
+}
+
 // Poderia ser `const` so' aqui; no Unix ela manda um sinal, e o `mod.rs` que
 // a chama e' o mesmo para os dois sistemas.
 #[allow(clippy::missing_const_for_fn)]
@@ -431,8 +437,8 @@ pub(super) fn terminate_group(_group: &GroupId) -> bool {
     false
 }
 
-pub(super) fn kill_group(group: &GroupId) {
-    drop(group.terminate());
+pub(super) fn try_kill_group(group: &GroupId) -> io::Result<()> {
+    group.terminate()
 }
 
 pub(super) fn release_group(group: &GroupId) {
