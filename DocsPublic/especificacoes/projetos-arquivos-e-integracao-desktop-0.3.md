@@ -80,6 +80,24 @@ existente já move dentro do workspace; não criar um segundo motor de rename.
 > diretório qualquer. O default de CWD é do comando curto, e a §7 o registra como
 > sugestão a confirmar.
 
+**Comando curto — decisão do autor em 2026-10-21, para a série 0.4.x:**
+`kine` substitui `kinein` como entrada principal de terminal. A mesma entrada
+atende `kine`, `kine .`, `kine caminho`, `kine --help` e `kine --version`,
+preservando o contrato de argumentos/defaults do launcher existente. A mudança
+inclui os instaladores de checkout e AppImage, ajuda, exemplos e mensagens ao
+usuário. Reusar o template/executor existente; manter `kinein` como entrada de
+compatibilidade, sem duplicar lógica nem sobrescrever comandos alheios.
+O nome do produto, binários internos, diretórios `.kinein` e formatos de
+projeto não são renomeados por essa mudança da entrada de terminal.
+
+**Estado medido em 2026-10-21:** os instaladores ainda geram `kinein` a partir
+de `scripts/kinein.in`; `kine` está decidido, mas não implementado/instalado.
+Entregar a migração na consolidação 0.4.6 e conferi-la no pacote 0.4.9.
+Aceitar instalação nova e atualização de instalação existente, caminhos com
+espaços/Unicode, CWD, argumentos, ajuda/versão sem iniciar UI, compatibilidade
+do nome anterior e recusa segura de conflito. A instalação no sistema do autor
+continua explícita; registrar o comando efetivamente disponível no manual.
+
 Contrato de produto a implementar:
 
 | Entrada | Resultado esperado |
@@ -108,6 +126,31 @@ arbitrário como projeto. Antes de reutilizar janela, resolver documentos não
 salvos pelo fluxo comum de Salvar/Descartar/Cancelar; cancelamento preserva o
 workspace. Não anunciar `--reuse-window` sem transporte entre instâncias e
 testes. A decisão final de defaults está na §7.
+
+### 3.1 Análise futura dos comandos da IDE no terminal
+
+**Pedido do autor em 2026-10-21:** avaliar a utilidade de ampliar os comandos
+de terminal da IDE para os fluxos de embarcados e ROS 2. Executar essa análise
+**depois de concluir a 0.4.9 e a etapa especial de revisão de HUD/UX/UI**
+([52 §14.17](../roadmaps/52-arquitetura-executavel-da-0.4.md#1417-auditoria-geral-de-frontend-antes-do-appimage--decisão-de-2026-10-20)).
+Sem versão definida e sem decisão de implementar novos comandos. A decisão
+sobre o nome curto `kine` permanece no §3, com escopo próprio.
+
+A análise deve inventariar o que a IDE já oferece pelo terminal e comparar
+jornadas reais com as CLIs oficiais das ferramentas já existentes. Registrar
+quais tarefas, se houver, ganham praticidade, repetibilidade ou explicação do
+ambiente ao passar pela IDE; onde não houver ganho comprovável, conservar o
+uso direto da ferramenta. O terminal integrado e as CLIs externas continuam
+opções dos usuários.
+
+Critérios para qualquer proposta resultante: reusar os adaptadores, resolução
+de ambiente, contratos e executores existentes; manter a mesma intenção na UI
+e no terminal; respeitar versões/projetos legados e o ambiente selecionado;
+mostrar comando, origem e erros úteis. Comparar descoberta/ajuda, argumentos,
+resultados/códigos de saída e cancelamento. Documentar as provas e os limites
+antes de escolher verbos ou ampliar contratos. Não criar outro resolvedor de
+dependências nem um executor paralelo. Essa análise não instala ferramentas,
+controla hardware ou anuncia suporte ROS 2 por si só.
 
 ## 4. P1–P3 — matriz obrigatória de interação com o projeto
 

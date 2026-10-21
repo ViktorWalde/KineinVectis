@@ -22,7 +22,13 @@ Item {
     property bool configMenuVisible: false
     property real configMenuX: 0
     property real configMenuY: 0
+    property bool mutationPending: false
+    property double mutationRequestId: -1
+    property bool closeEditorAfterSave: false
+    property string errorText: ""
 
+    signal mutationFailed(string message)
+    signal refreshRequested()
     signal saveRunConfigRequested(string id, string name, string command)
     signal deleteRunConfigRequested(string id)
     signal setActiveRunConfigRequested(string id)
@@ -37,11 +43,19 @@ Item {
     // Trocar de workspace fecha dialogo e menu: eles apontam para configuracoes
     // do workspace anterior.
     function clear() {
+        runConfigsListModel.clear();
+        activeConfigId = "";
+        activeConfigName = "";
+        editingConfigId = "";
         configMenuVisible = false;
         runConfigDialogVisible = false;
+        mutationPending = false;
+        mutationRequestId = -1;
+        errorText = "";
     }
 
     function handleRunConfigs(configs, activeId) {
+        errorText = "";
         runConfigsListModel.clear();
         activeConfigId = activeId !== undefined ? activeId : "";
         activeConfigName = "";
@@ -80,11 +94,14 @@ Item {
     }
 
     function chooseConfig(id) {
+        if (!beginMutation(false)) return;
         configMenuVisible = false;
         setActiveRunConfigRequested(id);
     }
 
     function openNewConfigDialog() {
+        if (mutationPending) return;
+        errorText = "";
         configMenuVisible = false;
         editingConfigId = "";
         runConfigDialogVisible = true;
@@ -92,9 +109,10 @@ Item {
     }
 
     function openEditConfigDialog() {
-        if (activeConfigId === "") {
+        if (activeConfigId === "" || mutationPending) {
             return;
         }
+        errorText = "";
         configMenuVisible = false;
         editingConfigId = activeConfigId;
         runConfigDialogVisible = true;
@@ -102,10 +120,7 @@ Item {
     }
 
     function confirmConfigDialog(name, command) {
-        if (name === "" || command === "") {
-            return;
-        }
-        runConfigDialogVisible = false;
+        if (name === "" || command === "" || !beginMutation(true)) return;
         saveRunConfigRequested(editingConfigId, name, command);
     }
 
@@ -115,8 +130,53 @@ Item {
 
     function deleteActiveConfig() {
         configMenuVisible = false;
-        if (activeConfigId !== "") {
+        if (activeConfigId !== "" && beginMutation(false)) {
             deleteRunConfigRequested(activeConfigId);
         }
     }
+    function saveConfiguration(name, command) {
+        if (name === "" || command === "" || !beginMutation(false)) return;
+        saveRunConfigRequested("", name, command);
+    }
+
+    function beginMutation(closeEditor) {
+        if (mutationPending) return false;
+        mutationPending = true;
+        mutationRequestId = -1;
+        closeEditorAfterSave = closeEditor;
+        errorText = "";
+        return true;
+    }
+
+    function bindMutation(requestId) {
+        if (!mutationPending) return;
+        mutationRequestId = requestId;
+        if (requestId < 0) handleMutationFailed(requestId, qsTr("O serviço da IDE está indisponível. Tente novamente após reconectar."));
+    }
+
+    function handleMutationFinished(requestId) {
+        if (!mutationPending || requestId !== mutationRequestId) return;
+        mutationPending = false;
+        mutationRequestId = -1;
+        if (closeEditorAfterSave) runConfigDialogVisible = false;
+    }
+
+    function handleMutationFailed(requestId, message) {
+        if (!mutationPending || requestId !== mutationRequestId) return;
+        mutationPending = false;
+        mutationRequestId = -1;
+        errorText = message;
+        mutationFailed(message);
+    }
+
+    function handleReadFailed(message) {
+        errorText = message;
+        mutationFailed(message);
+    }
+
+    function handleCoreDisconnected() {
+        if (mutationPending) handleMutationFailed(mutationRequestId,
+            qsTr("A conexão com o serviço da IDE foi interrompida. O salvamento não pôde ser confirmado; atualize a lista antes de tentar novamente."));
+    }
+
 }

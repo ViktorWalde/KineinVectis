@@ -531,6 +531,20 @@ independentes.
 
 ---
 
+**Configurações de execução:** o menu **Perfil** permite criar, escolher,
+editar ou excluir comandos salvos. **Salvar** aguarda a confirmação do core;
+se falhar, o editor mantém o nome e o comando, exibindo a causa. Se a conexão
+cair, a IDE informa que o resultado não pôde ser confirmado e não repete o
+salvamento. Use **Atualizar configurações** antes de tentar novamente.
+Tab/Shift+Tab percorrem os campos e os botões do editor.
+
+Se `.kinein/runconfigs.json` estiver ilegível, inválido ou numa versão não
+suportada, a IDE preserva o arquivo e mostra o caminho e a orientação de
+correção. A execução automática também recusa usar uma intenção que não pôde
+ler. Faça uma cópia antes de corrigir o arquivo; comandos explícitos pelo
+Terminal continuam disponíveis. A IDE não apaga nem migra configurações
+inválidas por conta própria.
+
 ### 4.1 Depurar (debugger)
 
 Funciona em C/C++ e Rust via `lldb-dap` (instalado junto com o lldb), em
@@ -1232,8 +1246,12 @@ TLS verificado também exige que o servidor use TLS: desde a correção da
 
 ### Abrir um projeto pelo terminal
 
+A mudança do comando curto para **`kine` está decidida para a série 0.4.x**,
+mas ainda não está instalada nesta etapa. Contrato e estado em
+[Projetos e desktop §3](especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#3-p0--abrir-pelo-terminal-e-pelo-desktop).
+
 Depois de instalar (o script do AppImage, ou `scripts/instalar-atalho.sh` num
-checkout), o comando curto é `kinein`:
+checkout), o comando curto atual é `kinein`:
 
 ```text
 kinein                  abre a pasta atual

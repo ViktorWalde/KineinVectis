@@ -12,10 +12,10 @@
 > **HANDOFF (2026-10-21). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4a concluída:** execução MicroPython com reserva e saúde coerente
-> (52 §14.26), sobre `e44def1`; registro em **40.7 §7.332**.
+> **0.4.1h4b1 concluída:** configurações preservadas e confirmação pelo core
+> (52 §14.27), sobre `7cab76f`; registro em **40.7 §7.333**.
 > `eim_config.toml` e `log/` continuam locais fora da fatia.
-> Protocolo **0.184.0**, binário **0.3.9**.
+> Protocolo **0.185.0**, binário **0.3.9**.
 >
 > **Objetivo autorizado:** concluir a série até a **0.4.9**, por fatias,
 > e só então gerar/testar o **AppImage local**, sem push, tag ou publicação.
@@ -25,18 +25,17 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate rápido estrito, 0.4.1h4a:** 1241 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **162 harnesses QML**, sem NÃO PROVADO.
+> **Último gate completo estrito, 0.4.1h4b1:** 1251 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **163 harnesses QML**, sem NÃO PROVADO.
 > UI/core debug e release validados; concorrência/crash e feedback nativo conferidos.
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
-> **Próximo:** colher feedback da UI atual e da prévia de navegação compacta
-> (52 §14.16), preparada e validada em 1024/736/320 px. A UI Qt mantém
-> suas abas até incorporar o feedback. **Agora:** 0.4.1h4b1, preservar configurações
-> antes da gravação nativa: falha reproduzida, correção isolada em validação (52 §14.27).
-> Checkout `../KineinVectis-worktrees/serial-lifecycle`, protocolo 0.185.0 só nele;
-> depois: gravação/ocupação, Setup no dock, schema 3 e C/Python.
-> Orquestração serial ainda não está pronta; plano 0.4.9 e revisão posterior vigentes.
+> **Sessão encerrada a pedido do autor. Retomada:** 0.4.1h4b2, gravação nativa
+> com intenção tipada/schema 2, adaptação por versão/capacidade e recuperação
+> de ocupação. Usar o principal; o rascunho serial-lifecycle já foi incorporado.
+> Depois: Setup no dock/schema 3, C/Python e os demais escopos do 52 §11.
+> Feedback da navegação compacta continua aberto (52 §14.16). Orquestração
+> serial completa e flash físico ainda pendentes; não iniciar por suposição.
 >
 > **Escopo:** bare metal e Linux embarcado; PlatformIO em destaque dentro
 > de Embarcados; C puro com assistente/padrão C e jornada visual completa;
@@ -75,6 +74,7 @@ testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             1200 Rust na 0.4.1g em 2026-10-21 (§7.327), gate completo estrito verde.
             1227 Rust na 0.4.1h3 em 2026-10-21 (§7.330), gate rápido estrito verde.
             1241 Rust na 0.4.1h4a em 2026-10-21 (§7.332), gate rápido estrito verde.
+            1251 Rust na 0.4.1h4b1 em 2026-10-21 (§7.333), gate completo estrito verde.
 ```
 
 Os comandos que medem estão no
@@ -107,7 +107,7 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1, recuperação visual 0.4.1h2 e reserva de jobs/monitor 0.4.1h3 fechados. 0.4.1h4a fechada: run MicroPython reserva o canal e saúde foi corrigida. h4b1 em validação isolada para preservar configurações. Depois: gravação estruturada e ações de ocupação com identidade verificada. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.27 e [40.7](40.7-registro-das-entregas.md) §7.326–7.332 |
+| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1, recuperação visual 0.4.1h2 e reserva de jobs/monitor 0.4.1h3 fechados. 0.4.1h4a fechada: run MicroPython reserva o canal e saúde foi corrigida. h4b1 fechada: armazenamento preservado, confirmação correlacionada, teclado e reset do perfil corrigidos. Próxima sessão: gravação estruturada e ações de ocupação com identidade verificada. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.27 e [40.7](40.7-registro-das-entregas.md) §7.326–7.333 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia interativa de navegação compacta criada e validada em WebKitGTK a 1024/736/320 px, preparada para feedback; depois, auditoria geral de frontend, componentes, painéis, cores do editor, atalhos, animação e desempenho antes do AppImage | [52](52-arquitetura-executavel-da-0.4.md) §14.16–14.17; agrupamento até 0.4.9 no §11 |
@@ -130,6 +130,16 @@ que ainda vale, medindo antes.
 ## 5. As decisões registradas que NÃO se reabrem
 
 ```text
+analise futura de CLI        após 0.4.9 e após revisão especial HUD/UX/UI;
+                             medir utilidade nos fluxos embarcados/ROS 2,
+                             sem novos comandos aprovados. Autor 2026-10-21;
+                             dono: especificacao de projetos/desktop §3.1,
+                             índice 57 §3 item 9.
+comando curto de terminal    `kine` passa a ser a entrada principal; `kinein`
+                             mantém compatibilidade. Decisão 2026-10-21;
+                             contrato/estado em especificacoes/projetos-arquivos-
+                             e-integracao-desktop-0.3.md §3; entrega 0.4.6,
+                             verificação no pacote 0.4.9 (52 §11).
 IA na IDE                    fora de escopo (2026-07-17): sem painel de IA,
                              o agente roda no terminal. So' o servidor MCP
                              para agentes externos entra, depois da 0.4.9

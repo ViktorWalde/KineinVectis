@@ -13,27 +13,27 @@ void CoreClient::runConfigList()
     sendRequest(QStringLiteral("runConfig.list"), QJsonObject{});
 }
 
-void CoreClient::runConfigSave(const QString& id, const QString& name, const QString& command)
+qint64 CoreClient::runConfigSave(const QString& id, const QString& name, const QString& command)
 {
     QJsonObject params{{QStringLiteral("name"), name}, {QStringLiteral("command"), command}};
     if (!id.isEmpty()) {
         params.insert(QStringLiteral("id"), id);
     }
-    sendRequest(QStringLiteral("runConfig.save"), params);
+    return sendRequest(QStringLiteral("runConfig.save"), params);
 }
 
-void CoreClient::runConfigDelete(const QString& id)
+qint64 CoreClient::runConfigDelete(const QString& id)
 {
-    sendRequest(QStringLiteral("runConfig.delete"), QJsonObject{{QStringLiteral("id"), id}});
+    return sendRequest(QStringLiteral("runConfig.delete"), QJsonObject{{QStringLiteral("id"), id}});
 }
 
-void CoreClient::runConfigSetActive(const QString& id)
+qint64 CoreClient::runConfigSetActive(const QString& id)
 {
     QJsonObject params;
     if (!id.isEmpty()) {
         params.insert(QStringLiteral("id"), id);
     }
-    sendRequest(QStringLiteral("runConfig.setActive"), params);
+    return sendRequest(QStringLiteral("runConfig.setActive"), params);
 }
 
 void CoreClient::runConfigFlashProposal(const QString& device, const QString& engine,

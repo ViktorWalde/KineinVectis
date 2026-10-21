@@ -154,6 +154,7 @@ assignments
 assistant
 assume
 assumed
+assuming
 asynchronous
 atomic
 attach
@@ -567,6 +568,7 @@ copying
 core
 cores
 correction
+corrupt
 corrupting
 cost
 costs

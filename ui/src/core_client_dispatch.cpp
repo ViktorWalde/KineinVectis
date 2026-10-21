@@ -120,6 +120,12 @@ void CoreClient::dispatchFailure(const QString& method, const QJsonObject& error
     if (method == QStringLiteral("terminal.open")) {
         emit terminalOpenFailed(id, message);
     }
+    if (method == QStringLiteral("runConfig.save") ||
+        method == QStringLiteral("runConfig.delete") ||
+        method == QStringLiteral("runConfig.setActive"))
+    {
+        emit runConfigMutationFailed(id, message);
+    }
     emit requestFailed(method, message, error.value(QStringLiteral("code")).toString());
 }
 
@@ -328,7 +334,7 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
     if (dispatchWorkspaceResult(method, result)) {
         return;
     }
-    if (dispatchCmakeResult(method, result) || dispatchDebugResult(method, result)) {
+    if (dispatchCmakeResult(method, result, requestId) || dispatchDebugResult(method, result)) {
         return;
     }
     if (method == QStringLiteral("tools.detect") || method == QStringLiteral("tools.status")) {

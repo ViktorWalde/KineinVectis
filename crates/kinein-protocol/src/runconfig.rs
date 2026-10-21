@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// One named run configuration of the workspace.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RunConfigInfo {
     /// Stable identifier (`cfg-1`, `cfg-2`, ...).
     pub id: String,
@@ -75,6 +75,16 @@ mod tests {
 
         assert_eq!(value["configs"][0]["id"], "cfg-1");
         assert!(value.get("activeId").is_none());
+    }
+
+    #[test]
+    fn stored_config_does_not_discard_unsupported_fields() {
+        assert!(
+            serde_json::from_value::<RunConfigInfo>(json!({
+                "id":"cfg-1", "name":"Native", "command":"echo preview", "flash":{"device":"board"}
+            }))
+            .is_err()
+        );
     }
 
     #[test]

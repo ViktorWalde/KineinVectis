@@ -244,6 +244,8 @@ Item {
         menuY: root.runConfigController.configMenuY
         configsModel: root.runConfigController.runConfigsModel
         activeConfigId: root.runConfigController.activeConfigId
+        busy: root.runConfigController.mutationPending
+        onRefreshRequested: root.runConfigController.refreshRequested()
         onDismissRequested: root.runConfigController.closeConfigMenu()
         onConfigChosen: function(id) {
             root.runConfigController.chooseConfig(id);
@@ -260,6 +262,8 @@ Item {
         z: 95
         anchors.centerIn: parent
         editing: root.runConfigController.editingConfigId !== ""
+        busy: root.runConfigController.mutationPending
+        errorText: root.runConfigController.errorText
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         onConfirmRequested: root.runConfigController.confirmConfigDialog(
                                 runConfigDialog.currentName(),

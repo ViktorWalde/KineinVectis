@@ -13,7 +13,8 @@
 
 namespace kinein {
 
-bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& result)
+bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& result,
+                                     qint64 requestId)
 {
     if (method == QStringLiteral("runConfig.list") || method == QStringLiteral("runConfig.save") ||
         method == QStringLiteral("runConfig.delete") ||
@@ -21,6 +22,9 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
     {
         emit runConfigsResolved(result.value(QStringLiteral("configs")).toArray().toVariantList(),
                                 result.value(QStringLiteral("activeId")).toString());
+        if (method != QStringLiteral("runConfig.list")) {
+            emit runConfigMutationFinished(requestId);
+        }
         return true;
     }
     if (method == QStringLiteral("runConfig.flashProposal")) {

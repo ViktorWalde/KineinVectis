@@ -184,7 +184,7 @@ Item {
     // programa" nao e "manter uma sessao de terminal".
     RunConfigController {
         id: runConfigController
-
+        onMutationFailed: runtimeController.showTabRequested("terminal")
         onRunConfigDialogOpenRequested: function(name, command) {
             root.shellOverlays.openRunConfigDialogWith(name, command);
         }
@@ -201,7 +201,7 @@ Item {
         // configuracao ativa (a aba da execucao): composicao, nao IPC.
         serialDevice: environment.embeddedController.selectedPort
         activeRunName: runConfigController.activeConfigName
-        // Pedido ao core mora no RuntimeRequestRouter; aqui, so' fiacao de host.
+        runConfigErrorText: runConfigController.errorText
         onShowTabRequested: tab => shellController.showTab(tab)
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()
@@ -218,7 +218,7 @@ Item {
         }
 
         function onSaveRequested(name, command) {
-            runConfigController.saveRunConfigRequested("", name, command);
+            runConfigController.saveConfiguration(name, command);
         }
     }
 

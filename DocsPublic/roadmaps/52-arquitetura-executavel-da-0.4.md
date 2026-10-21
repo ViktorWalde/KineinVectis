@@ -671,6 +671,10 @@ Esses requisitos pertencem às integrações e à consolidação 0.4.1–0.4.6, 
 regressão integrada antes da 0.4.9; não são promessa de compatibilidade universal
 com qualquer ferramenta ou versão futura ainda não medida.
 
+**Entrada de terminal (autor, 2026-10-21):** consolidar o comando curto na
+0.4.6 e verificá-lo no pacote 0.4.9. Contrato, compatibilidade e estado em
+[Projetos e desktop §3](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#3-p0--abrir-pelo-terminal-e-pelo-desktop).
+
 **Saída de cada 0.4.x:** conferir a coerência entre modelo do core e estado
 mostrado, percorrer sucesso/erro/ausência/cancelamento na UI, corrigir bugs,
 medir alterações de desempenho quando aplicáveis e atualizar manual,
@@ -2821,7 +2825,7 @@ Próximo: h4b1 preserva configurações, depois h4b2 integra a intenção nativa
 de gravação e ações de ocupação/recuperação. A matriz serial inteira continua
 aberta; Setup no dock/schema 3/C/Python e a sequência até a 0.4.9 seguem no §11.
 
-### 14.27 0.4.1h4b1 — preservar configurações antes da gravação nativa (desenho, 2026-10-21)
+### 14.27 0.4.1h4b1 — preservar configurações antes da gravação nativa (concluída, 2026-10-21)
 
 Pré-requisito encontrado ao conferir a h4b: runconfig::read_file transforma
 JSON inválido, erro de leitura ou schema desconhecido em lista vazia; save
@@ -2903,3 +2907,89 @@ O harness com renderização passou no Qt local, mas a busca do componente
 usando for..of sobre children não rodou no Qt 6.4. Corrigir o helper do teste
 para percorrer a lista por índice, sem mudar o componente do produto nem
 aceitar o timeout como verde. Repetir os dois runtimes após a correção.
+
+
+Integração h4b1 no principal sobre 7cab76f (2026-10-21): contratos 0.185.0
+aplicados antes do produtor. Testes focados após restaurar mutações passaram:
+12 Rust de runconfig e harness de confirmação nos Qt local/6.4. Acrescentar
+o dispatch alternativo configAction.preview/apply com arquivo corrompido
+entre prévia e aplicação: o caminho delegado também deve recusar sem perder
+bytes. Builds e aceite nativo em andamento; gate completo ainda pendente.
+Decisão de entrada curta de terminal registrada no dono de desktop §3;
+implementação separada na consolidação 0.4.6, com prova no pacote 0.4.9.
+
+
+Rechecagem nativa h4b1 confirmou a falha de teclado, sem atribuí-la ao helper:
+com foco explícito no nome, Tab levou o foco ao botão de minimizar do header;
+a digitação seguinte não chegou ao comando. Foto
+`/tmp/kinein-runconfig-native-proof/after-debug/shots/03-keyboard-navigation.png`.
+Corrigir a sequência no editor existente (nome/comando/cancelar/salvar,
+Tab/Shift+Tab), usando keyPressed/KeyNavigation já disponíveis; sem alterar
+o campo compartilhado nem criar outro editor. Provar o gesto nativo e a
+ordem nos dois Qt, mantendo a confirmação correlacionada do salvamento.
+
+
+**Fechamento de sessão solicitado pelo autor em 2026-10-21:** concluir a h4b1,
+validar, registrar e fazer o último commit, sem iniciar a h4b2 nesta sessão.
+A correção de foco ficou no editor existente; o harness reprova ao retirar
+os handlers de Tab e passou após restaurá-los. Offscreen mede a intenção de
+foco; a janela Xvfb comprova as teclas reais. Fotos nativas finais debug em
+`/tmp/kinein-runconfig-native-proof/after-final-debug/shots/`: campos preenchidos
+via Tab, retorno com Shift+Tab, recusa sem perda de bytes e salvamento após
+reparo explícito da fixture. O report final traz preserved=false porque o
+helper corrigiu a fixture e salvou intencionalmente; a asserção de preservação
+foi executada antes desse reparo. ui.log vazio, sem hardware.
+
+Os builds preliminares que saíram com 143/interrompidos não são prova de
+build concluído; repetir antes do aceite. O primeiro gate completo também
+foi interrompido durante a compilação Rust, sem veredito. A rodada final é
+`/tmp/kinein-h4b1-gate-final-v2.log`, ainda em curso. Não publicar um gate
+parcial como verde. Decisões de CLI têm dono na especificação de desktop
+§3/§3.1; a análise ampliada foi alocada após 0.4.9 e revisão especial, sem
+implementar novos comandos nesta etapa.
+
+
+A revisão final encontrou um estado antigo que o novo erro de leitura torna
+visível: RunConfigController.clear fechava a janela, mas mantinha lista/perfil
+do workspace anterior. Se a nova leitura falhasse, o header continuava com
+o perfil antigo. Acrescentar a regressão antes de corrigir; resetar também
+modelo, ativa e identidade de edição no reset já existente. Não tratar falha
+de leitura como lista válida vazia nem alterar dados do disco. A rodada v2
+teve os 1.251 Rust verdes, mas foi parada antes de prosseguir com fontes
+QML antigas; repetir o gate completo com a correção integrada.
+
+
+**Fechamento h4b1 (2026-10-21):** gate completo estrito TUDO VERDE, sem NÃO
+PROVADO: 1.251 Rust, Clippy, análise C++ limpa, 8 CTest, qmllint e 163 QML;
+builds e abertura debug/release aprovados, passeio de 33 superfícies em cada
+preset. Log `/tmp/kinein-h4b1-gate-final-v3.log`. Os logs anteriores
+interrompidos não substituem esse veredito. Qt 6.4 também passou no harness
+final de confirmação/reset, fora do gate local.
+
+Provas: cinco mutações do armazenamento/ack em
+`/tmp/kinein-h4b1-mutations.json`, mais a retirada dos handlers de foco
+(`/tmp/kinein-h4b1-mutation-focus.log`). A regressão de reset falhou antes e
+passou após a correção; foto nativa conferida em
+`/tmp/kinein-h4b1-reset-native/shots/04-new-invalid-profile.png`, ui.log vazio.
+O teste de configAction também passou com arquivo corrompido entre prévia e
+aplicação. Dois cores reais mantiveram 16 atualizações/ids distintos e
+comando manual explícito executou preservando o armazenamento inválido:
+`/tmp/kinein-runconfig-core-proof-paoh3lu3/report.json`.
+
+Fotos de erro, campos mantidos, teclado e recuperação após reparo explícito
+conferidas em `/tmp/kinein-runconfig-native-proof/after-final-debug/` e
+`after-final-release/`, logs da UI vazios. O caso anterior válido está em
+`before-valid/`: a interface fechava e o arquivo era substituído. Sem placa
+ou gravação de firmware. O guard Windows foi preservado pela fachada e
+separação de arquivos, mas compilação/aceite Windows nativo não foram feitos
+nesta máquina; o porte continua pausado conforme 60.
+
+**Sessão encerrada após este commit, a pedido do autor.** Retomar pelo
+principal: h4b2 ainda não iniciada — intenção tipada/gravação nativa/schema 2,
+com capacidades/versões do binário selecionado (incluindo esptool v4/v5),
+reserva serial pelo caminho resolvido e ações de ocupação/recuperação.
+Não interpretar comandos shell salvos; não migrar configurações na abertura.
+Depois: Setup no dock/schema 3, C e os demais escopos do §11 até a 0.4.9.
+O checkout serial-lifecycle é rascunho anterior, já incorporado; não reaplicar
+seu diff sobre o principal. Nenhuma nova etapa foi iniciada neste fechamento.
+Decisões de CLI estão no dono de desktop §3/§3.1 e no 57 §3 item 9.

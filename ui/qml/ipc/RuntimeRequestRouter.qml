@@ -84,16 +84,33 @@ Item {
     Connections {
         target: root.runConfigController
 
+        function onRefreshRequested() {
+            if (root.coreClient && root.coreClient.connected !== false) root.coreClient.runConfigList();
+            else root.runConfigController.handleReadFailed(qsTr("O serviço da IDE está desconectado."));
+        }
+
         function onSaveRunConfigRequested(id, name, command) {
-            root.coreClient.runConfigSave(id, name, command);
+            if (!root.coreClient || root.coreClient.connected === false) {
+                root.runConfigController.bindMutation(-1);
+                return;
+            }
+            root.runConfigController.bindMutation(root.coreClient.runConfigSave(id, name, command));
         }
 
         function onDeleteRunConfigRequested(id) {
-            root.coreClient.runConfigDelete(id);
+            if (!root.coreClient || root.coreClient.connected === false) {
+                root.runConfigController.bindMutation(-1);
+                return;
+            }
+            root.runConfigController.bindMutation(root.coreClient.runConfigDelete(id));
         }
 
         function onSetActiveRunConfigRequested(id) {
-            root.coreClient.runConfigSetActive(id);
+            if (!root.coreClient || root.coreClient.connected === false) {
+                root.runConfigController.bindMutation(-1);
+                return;
+            }
+            root.runConfigController.bindMutation(root.coreClient.runConfigSetActive(id));
         }
     }
 }

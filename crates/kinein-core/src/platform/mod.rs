@@ -70,6 +70,11 @@ pub(crate) fn try_lock_file(file: &File, shared: bool) -> io::Result<bool> {
     imp::try_lock_file(file, shared)
 }
 
+/// Holds a configuration mutation guard, with a bounded acquisition wait.
+pub(crate) fn configuration_lock(path: &Path) -> io::Result<File> {
+    imp::configuration_lock(path)
+}
+
 /// Replaces this single-threaded child with the tool, preserving its leases.
 pub(crate) fn exec_keep_files(
     files: Vec<File>,

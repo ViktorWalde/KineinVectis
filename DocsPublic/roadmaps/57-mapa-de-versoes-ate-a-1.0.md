@@ -194,6 +194,12 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
    no [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md).
    Não reserva versão nem aprova uma implementação na 0.4.
 
+9. **Análise dos comandos de terminal da IDE** (autor, 2026-10-21), para
+   medir o ganho de integração com ferramentas de embarcados e ROS 2,
+   **após a 0.4.9 e após a edição especial de revisão de HUD/UX/UI**.
+   Sem versão/novos comandos aprovados; dono e critérios em
+   [Projetos e desktop §3.1](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#31-análise-futura-dos-comandos-da-ide-no-terminal).
+
 **O `/ide` da Kinein ficou sem decisão** (2026-10-17), pelo que a
 documentação oficial do Claude Code mostra: o transporte (MCP por
 WebSocket em `127.0.0.1`, porta efêmera), o token novo a cada início da IDE,

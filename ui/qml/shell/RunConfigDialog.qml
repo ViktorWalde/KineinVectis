@@ -5,6 +5,8 @@ Rectangle {
     id: root
 
     property bool editing: false
+    property bool busy: false
+    property string errorText: ""
     property real maxAvailableWidth: 420
 
     signal confirmRequested()
@@ -30,6 +32,14 @@ Rectangle {
 
     function currentCommand() {
         return commandInput.text.trim();
+    }
+
+    function moveFieldFocus(event, nextItem, previousItem) {
+        const reverse = event.key === Qt.Key_Backtab
+                || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier));
+        if (event.key !== Qt.Key_Tab && !reverse) return;
+        (reverse ? previousItem : nextItem).forceActiveFocus();
+        event.accepted = true;
     }
 
     // A roda do mouse dentro da caixa nao atravessa para o codigo (o clique
@@ -63,11 +73,14 @@ Rectangle {
 
         KvTextField {
             id: nameInput
+            objectName: "runConfigName"
+            enabled: !root.busy
 
             width: parent.width
             height: 30
             codeFont: false
             onAccepted: commandInput.forceActiveFocus()
+            onKeyPressed: (event) => root.moveFieldFocus(event, commandInput, saveButton.enabled ? saveButton : cancelButton)
             Keys.onEscapePressed: root.cancelRequested()
         }
 
@@ -79,11 +92,23 @@ Rectangle {
 
         KvTextField {
             id: commandInput
+            objectName: "runConfigCommand"
+            enabled: !root.busy
 
             width: parent.width
             height: 30
             onAccepted: root.confirmRequested()
+            onKeyPressed: (event) => root.moveFieldFocus(event, cancelButton, nameInput)
             Keys.onEscapePressed: root.cancelRequested()
+        }
+
+        KvVerdict {
+            objectName: "runConfigError"
+            width: parent.width
+            message: root.errorText
+            heading: qsTr("Não foi possível salvar a configuração")
+            codeFont: false
+            animateChanges: true
         }
 
         Row {
@@ -91,15 +116,26 @@ Rectangle {
             spacing: Theme.spacingSmall
 
             KvButton {
+                id: cancelButton
+                objectName: "runConfigCancel"
+                KeyNavigation.tab: saveButton.enabled ? saveButton : nameInput
+                KeyNavigation.backtab: commandInput
+                Keys.onEscapePressed: root.cancelRequested()
                 compact: true
                 text: qsTr("Cancelar")
                 onClicked: root.cancelRequested()
             }
 
             KvButton {
+                id: saveButton
+                objectName: "runConfigSave"
+                KeyNavigation.tab: nameInput
+                KeyNavigation.backtab: cancelButton
+                Keys.onEscapePressed: root.cancelRequested()
                 compact: true
                 primary: true
-                text: qsTr("Salvar")
+                text: root.busy ? qsTr("Salvando…") : qsTr("Salvar")
+                enabled: !root.busy && nameInput.text.trim() !== "" && commandInput.text.trim() !== ""
                 onClicked: root.confirmRequested()
             }
         }

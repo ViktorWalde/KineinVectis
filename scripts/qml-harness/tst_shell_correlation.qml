@@ -33,6 +33,8 @@ Item {
         signal terminalRender(var render)
         signal terminalSelectionCopied(string id, string selectionId, string text, bool valid)
         signal terminalClosed(string id, int exitCode)
+        signal runConfigMutationFinished(double requestId)
+        signal runConfigMutationFailed(double requestId, string message)
         signal runConfigsResolved(var configs, string activeId)
         signal runStarted(string command, string terminalId, string executionKey, string workspace)
         signal runFinished(bool success, int exitCode)

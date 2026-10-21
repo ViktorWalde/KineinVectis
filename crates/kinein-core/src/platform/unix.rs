@@ -79,6 +79,25 @@ pub(super) fn try_lock_file(file: &File, shared: bool) -> io::Result<bool> {
     }
 }
 
+pub(super) fn configuration_lock(path: &Path) -> io::Result<File> {
+    use std::{
+        thread,
+        time::{Duration, Instant},
+    };
+    let file = serial_lock_file(path)?;
+    let deadline = Instant::now() + Duration::from_millis(50);
+    while !try_lock_file(&file, false)? {
+        if Instant::now() >= deadline {
+            return Err(io::Error::new(
+                io::ErrorKind::WouldBlock,
+                "outra instância está alterando as configurações; aguarde e tente novamente",
+            ));
+        }
+        thread::sleep(Duration::from_millis(1));
+    }
+    Ok(file)
+}
+
 pub(super) fn exec_keep_files(
     files: Vec<File>,
     program: &OsStr,

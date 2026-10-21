@@ -27,6 +27,12 @@ O recorte recomendado é:
 
 São preservadas as decisões de [integrações nativas](README.md), os [modos de adaptação de componentes abertos](../roadmaps/54-adaptacao-de-plugins-abertos.md) e os levantamentos de [ferramentas de embarcados](36-ferramentas-de-embarcados.md) e [toolchains por alvo](39-toolchains-por-alvo.md). ROS 2 não substitui o painel Embarcados nem desfaz a decisão de dedicar uma versão ao seu layout, atalhos e fluxo.
 
+**Análise futura de terminal (pedido de 2026-10-21):** avaliar a utilidade
+de comandos da IDE que integrem as ferramentas existentes, depois da 0.4.9
+e da revisão especial de HUD/UX/UI. Critérios e limites em
+[Projetos e desktop §3.1](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#31-análise-futura-dos-comandos-da-ide-no-terminal);
+nenhum verbo novo ou suporte ROS 2 é entregue por essa decisão de análise.
+
 ### 1.1 O que foi efetivamente verificado
 
 Foram consultados documentação oficial, repositórios dos mantenedores, arquivos de licença, manifests, código selecionado, testes selecionados e metadados do GitHub. Algumas páginas de `docs.ros.org` recusaram acesso automatizado; nesses casos foi lida a fonte pública correspondente em `ros2/ros2_documentation`. Não se usaram anúncios, estrelas ou listas de terceiros como prova de confiabilidade.

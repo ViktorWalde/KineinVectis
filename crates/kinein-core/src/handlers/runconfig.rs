@@ -87,7 +87,7 @@ impl Core {
                 // Ferramenta ausente e' TOOL_NOT_FOUND (a UI mostra o passo);
                 // motor desconhecido e' parametro invalido; o resto e' o
                 // estado do projeto (sem build, sem porta, sem motor).
-                let code = match &error {
+                let code = match error {
                     flash::FlashError::MissingTool { .. } => JsonRpcErrorCode::ToolNotFound,
                     flash::FlashError::UnknownEngine { .. } => JsonRpcErrorCode::InvalidParams,
                     _ => JsonRpcErrorCode::InvalidRequest,
@@ -108,7 +108,10 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "runConfig.list");
         };
-        let state = runconfig::load(&root);
+        let state = match runconfig::load(&root) {
+            Ok(state) => state,
+            Err(error) => return runconfig_error_response(request_id, &error),
+        };
         JsonRpcResponse::success(
             request_id,
             json!(RunConfigsResult {
@@ -142,7 +145,7 @@ impl Core {
                     active_id: state.active_id,
                 }),
             ),
-            Err(message) => invalid_runconfig_response(request_id, message),
+            Err(message) => runconfig_error_response(request_id, &message),
         }
     }
 
@@ -170,7 +173,7 @@ impl Core {
                     active_id: state.active_id,
                 }),
             ),
-            Err(message) => invalid_runconfig_response(request_id, message),
+            Err(message) => runconfig_error_response(request_id, &message),
         }
     }
 
@@ -198,15 +201,19 @@ impl Core {
                     active_id: state.active_id,
                 }),
             ),
-            Err(message) => invalid_runconfig_response(request_id, message),
+            Err(message) => runconfig_error_response(request_id, &message),
         }
     }
 }
 
-/// Erros de dominio das run configs viram `INVALID_PARAMS` com a mensagem.
-fn invalid_runconfig_response(request_id: Option<Value>, message: String) -> JsonRpcResponse {
-    JsonRpcResponse::failure(
-        request_id,
-        JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
-    )
+/// Invalid input and unreadable persisted intent keep distinct error codes.
+pub(super) fn runconfig_error_response(
+    request_id: Option<Value>,
+    error: &runconfig::RunConfigError,
+) -> JsonRpcResponse {
+    let code = match error {
+        runconfig::RunConfigError::Invalid(_) => JsonRpcErrorCode::InvalidParams,
+        runconfig::RunConfigError::Storage(_) => JsonRpcErrorCode::InvalidRequest,
+    };
+    JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
 }

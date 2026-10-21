@@ -716,3 +716,14 @@ acionáveis de Embarcados, sem apagar intenção nem repetir ações na reconex�
 `RunTerminalController.errorText` é separado de `lastRunMessage` (conclusão)
 e chega ao mesmo KvVerdict do Terminal. A faixa preserva a saída do programa
 e deixa a causa legível; desenho e aceites no 52 §14.23.
+
+
+## 11. Confirmação de configuração salva (0.4.1h4b1, contrato de 2026-10-21)
+
+Os três pedidos mutantes de runConfig devolvem o requestId já existente.
+runConfigMutationFinished(requestId) e runConfigMutationFailed(requestId, message)
+completam somente a mutação correspondente. runConfigsResolved continua sendo
+snapshot da lista; recebê-lo não confirma que o salvamento pendente ocorreu.
+O editor existente fecha apenas após confirmação correspondente; erro preserva
+nome/comando e aparece no KvVerdict. Desconexão libera espera com resultado
+não confirmado e não repete o pedido. API local C++/QML, sem novo método/evento IPC.

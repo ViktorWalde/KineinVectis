@@ -821,7 +821,6 @@ crates/kinein-core/src/handlers/remote_mirror.rs	mensagem	4
 crates/kinein-core/src/handlers/remote_mirror.rs	resultado	6
 crates/kinein-core/src/handlers/remote_mirror.rs	saida	5
 crates/kinein-core/src/handlers/remote_mirror.rs	titulo	4
-crates/kinein-core/src/handlers/run.rs	explicito	3
 crates/kinein-core/src/handlers/run.rs	invalida	3
 crates/kinein-core/src/handlers/run.rs	medir	1
 crates/kinein-core/src/handlers/run.rs	padrao	2

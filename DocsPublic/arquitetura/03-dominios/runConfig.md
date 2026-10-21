@@ -8,8 +8,8 @@
 
 Implementado no protocolo `0.27.0` (fatia M2.4). Todos exigem
 workspace aberto (qualquer kind). Persistência em `.kinein/runconfigs.json`
-com `schemaVersion` (arquivo inválido/schema desconhecido = vazio, nunca
-quebra). Uma config v1 é `{ id, name, command }` — comando shell executado
+com `schemaVersion` (ausência real = vazio; arquivo inválido ou ilegível é
+recusado sem sobrescrever dados, desde 0.185.0). Uma config v1 é `{ id, name, command }` — comando shell executado
 na raiz pelo `run.start`.
 
 - Todas as quatro operações respondem o mesmo shape:
@@ -75,3 +75,17 @@ na raiz pelo `run.start`.
   o da página: `engine` diferente → `INVALID_PARAMS`; firmware não
   baixado, id de toolchain ou desconhecido → `INVALID_REQUEST` com o passo.
   `name` é `Gravar firmware (<rótulo>)`.
+
+**Armazenamento rigoroso (0.185.0, contrato anterior ao produtor):** erro de
+leitura, JSON inválido, schema desconhecido, arquivo não regular, identidades
+duplicadas, ativa inexistente, entrada vazia ou campo não reconhecido são INVALID_REQUEST com caminho
+e orientação. Os quatro métodos preservam o conteúdo; não há reparo automático.
+Parâmetro inválido continua INVALID_PARAMS. Mutações são serializadas entre
+instâncias atualizadas, com recusa em conflito; publicação usa substituição
+atômica existente. Schema 1 permanece. run.start sem comando não cai na
+heurística se não pôde ler a configuração ativa; comando explícito continua
+independente do arquivo. ConfigAction delega ao mesmo armazenamento.
+
+O armazenamento usa o mesmo limite de leitura do editor (1 MiB em 2026-10-21).
+Leitura acima do limite é INVALID_REQUEST; atualização que o excederia é
+INVALID_PARAMS antes de publicar, preservando a configuração anterior.

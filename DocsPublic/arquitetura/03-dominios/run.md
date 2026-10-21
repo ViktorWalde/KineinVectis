@@ -97,3 +97,7 @@ se analisa shell para inferir recursos. Gravação nativa vem na próxima parte.
 Na resolução padrão MicroPython, entrada de pacote `-m` ou executável de
 `project.scripts` instalado no host é recusada com orientação para executar
 um arquivo `.py`; a intenção de placa não cai silenciosamente no CPython.
+
+**0.185.0:** sem command, erro ao ler configurações salvas é INVALID_REQUEST
+com caminho e orientação, sem fallback automático. Comando explícito não
+precisa ler o arquivo de configurações e permanece disponível para recuperação.

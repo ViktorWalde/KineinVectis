@@ -28,6 +28,7 @@ Item {
     readonly property bool runPending: runTabs.pending
     property alias runErrorText: runTabs.errorText
     property string lastRunMessage: ""
+    property string runConfigErrorText: ""
     // A porta serial que o Executar leva ao core como `device` (run.start /
     // run.script, 0.110.0): num projeto MicroPython o arquivo roda na placa
     // por `mpremote connect <porta> run`. Vazio = campo ausente = o mpremote

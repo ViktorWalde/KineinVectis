@@ -21,6 +21,15 @@ como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
 O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
 pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
 
+- **Configurações preservadas (0.4.1h4b1, 2026-10-21):**
+  arquivo inválido, ilegível ou com schema não suportado deixa de ser tratado
+  como vazio. A IDE recusa a operação e preserva os dados; salvar usa
+  publicação atômica e coordenação entre instâncias. A execução automática
+  recusa intenção ilegível; comando manual explícito continua disponível.
+  O editor aguarda a confirmação do core e mantém os campos em caso de erro.
+  Tab/Shift+Tab percorrem o formulário; trocar projeto limpa a lista e o
+  perfil anteriores mesmo quando a leitura do novo projeto falha.
+
 - **Execução MicroPython (0.4.1h4a, 2026-10-21):** reserva a porta até o
   processo encerrar, inclusive entre instâncias e após queda do core.
   Seleção automática protege todos os canais gerenciados; portas explícitas

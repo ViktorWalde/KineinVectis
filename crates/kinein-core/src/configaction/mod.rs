@@ -194,8 +194,11 @@ fn delegate(
         "cargo.createRunConfig" => {
             let name = required_param(params, "name")?;
             let command = required_param(params, "command")?;
-            crate::runconfig::save(root, None, name, command)
-                .map_err(|reason| ConfigActionError::NotApplicable { reason })?;
+            crate::runconfig::save(root, None, name, command).map_err(|error| {
+                ConfigActionError::NotApplicable {
+                    reason: error.to_string(),
+                }
+            })?;
             Ok(ConfigActionOutcome::Done {
                 message: format!("Run config '{name}' criada e ativada"),
                 files: vec![".kinein/runconfigs.json".to_owned()],
@@ -286,7 +289,12 @@ fn run_config_plan(
     if command.is_empty() {
         return Err(ConfigActionError::MissingParam { name: "command" });
     }
-    let existing = crate::runconfig::load(root).configs.len();
+    let existing = crate::runconfig::load(root)
+        .map_err(|error| ConfigActionError::NotApplicable {
+            reason: error.to_string(),
+        })?
+        .configs
+        .len();
     Ok(ActionPlan::effect(format!(
         "Salva a run config '{name}' com o comando '{command}'"
     ))

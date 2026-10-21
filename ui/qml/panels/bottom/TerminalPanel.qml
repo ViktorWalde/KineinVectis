@@ -192,7 +192,7 @@ Item {
         heading: panel.processNotice !== "" ? qsTr("Falha no terminal")
                  : panel.runtimeController && panel.runtimeController.shellErrorText ? qsTr("Comando não enviado") : qsTr("Não foi possível concluir a operação")
         message: panel.processNotice || (panel.runtimeController
-                 ? (panel.runtimeController.shellErrorText || panel.runtimeController.runErrorText || "") : "")
+                 ? (panel.runtimeController.shellErrorText || panel.runtimeController.runConfigErrorText || panel.runtimeController.runErrorText || "") : "")
         codeFont: false
         animateChanges: true
     }

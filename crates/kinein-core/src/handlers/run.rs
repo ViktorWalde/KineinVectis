@@ -241,31 +241,43 @@ impl Core {
             return response;
         }
         let root = Path::new(&workspace.root);
-        let explicito = parsed.command.filter(|command| !command.trim().is_empty());
+        let explicit_command = parsed.command.filter(|command| !command.trim().is_empty());
         // A porta e' parametro do LANCADOR PADRAO (mpremote); um comando
-        // explicito roda como foi digitado e nao tem onde recebe-la. Mandar os
+        // explicit_command roda como foi digitado e nao tem onde recebe-la. Mandar os
         // dois e' contradicao, e contradicao se recusa — nao se escolhe.
-        if explicito.is_some() && parsed.device.is_some() {
+        if explicit_command.is_some() && parsed.device.is_some() {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
                     "run.start: device só vale sem command (a porta é do lancador padrão \
-                     do MicroPython; um comando explicito roda como foi escrito)",
+                     do MicroPython; um comando explicit_command roda como foi escrito)",
                     None,
                 ),
             );
         }
         // Uma configuracao de execucao ATIVA e' um comando que o autor salvou:
-        // vence o lancador padrao e, como o comando explicito, nao recebe a
+        // vence o lancador padrao e, como o comando explicit_command, nao recebe a
         // porta. O `command` ecoado diz o que rodou.
-        let state = crate::runconfig::load(root);
+        let state = if explicit_command.is_some() {
+            crate::runconfig::RunConfigsState {
+                configs: Vec::new(),
+                active_id: None,
+            }
+        } else {
+            match crate::runconfig::load(root) {
+                Ok(state) => state,
+                Err(error) => {
+                    return super::runconfig::runconfig_error_response(request_id, &error);
+                }
+            }
+        };
         let active = state
             .configs
             .iter()
             .find(|config| Some(&config.id) == state.active_id.as_ref());
         let mut reservation = None;
-        let (command, identity) = if let Some(command) = explicito {
+        let (command, identity) = if let Some(command) = explicit_command {
             let identity = json!(["command", root, command]);
             (command, identity)
         } else if let Some(config) = active {

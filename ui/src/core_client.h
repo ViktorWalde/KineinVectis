@@ -113,9 +113,10 @@ public:
     Q_INVOKABLE void detectTools();
     Q_INVOKABLE void scanEnvironment();
     Q_INVOKABLE void runConfigList();
-    Q_INVOKABLE void runConfigSave(const QString& id, const QString& name, const QString& command);
-    Q_INVOKABLE void runConfigDelete(const QString& id);
-    Q_INVOKABLE void runConfigSetActive(const QString& id);
+    Q_INVOKABLE qint64 runConfigSave(const QString& id, const QString& name,
+                                     const QString& command);
+    Q_INVOKABLE qint64 runConfigDelete(const QString& id);
+    Q_INVOKABLE qint64 runConfigSetActive(const QString& id);
     // "Gravar" como configuracao de execucao (runConfig.flashProposal, 0.113.0): a linha do
     // motor, sem rodar; flashSizeBytes <= 0 = sem a checagem; firmware (0.116.0) = id do
     // catalogo baixado, no lugar dos artefatos do build.
@@ -576,6 +577,8 @@ signals:
     void configActionPreviewed(const QVariantMap& preview);
     void configActionApplied(const QString& id, const QString& message, const QStringList& files,
                              const QString& jobId);
+    void runConfigMutationFinished(qint64 requestId);
+    void runConfigMutationFailed(qint64 requestId, const QString& message);
     void runConfigsResolved(const QVariantList& configs, const QString& activeId);
     void flashProposalResolved(const QVariantMap& proposal);
     void scanningEnvironmentChanged();
@@ -723,7 +726,7 @@ private:
     bool dispatchFileResult(const QString& method, const QJsonObject& result);
     bool dispatchLspResult(const QString& method, const QJsonObject& result);
     bool dispatchSyntaxResult(const QString& method, const QJsonObject& result);
-    bool dispatchCmakeResult(const QString& method, const QJsonObject& result);
+    bool dispatchCmakeResult(const QString& method, const QJsonObject& result, qint64 requestId);
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);

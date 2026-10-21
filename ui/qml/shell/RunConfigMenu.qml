@@ -16,7 +16,9 @@ Item {
     property real menuY: 0
     property var configsModel
     property string activeConfigId: ""
+    property bool busy: false
 
+    signal refreshRequested()
     signal dismissRequested()
     signal configChosen(string id)
     signal newRequested()
@@ -27,24 +29,26 @@ Item {
 
     function entries() {
         const items = [{ label: qsTr("Automático"), action: root.configPrefix,
-                         icon: root.activeConfigId === "" ? "check" : "", enabled: true, shortcut: "" }];
+                         icon: root.activeConfigId === "" ? "check" : "", enabled: !root.busy, shortcut: "" }];
         const count = root.configsModel ? root.configsModel.count : 0;
         for (let index = 0; index < count; index++) {
             const config = root.configsModel.get(index);
             items.push({ label: config.name, action: root.configPrefix + config.id,
-                         icon: root.activeConfigId === config.id ? "check" : "", enabled: true, shortcut: "" });
+                         icon: root.activeConfigId === config.id ? "check" : "", enabled: !root.busy, shortcut: "" });
         }
+        items.push({ label: qsTr("Atualizar configurações"), action: "refresh", icon: "refresh", enabled: true, shortcut: "" });
         items.push({ separator: true, label: "", action: "", enabled: false });
-        items.push({ label: qsTr("Nova configuração…"), action: "new", icon: "add", enabled: true, shortcut: "" });
+        items.push({ label: qsTr("Nova configuração…"), action: "new", icon: "add", enabled: !root.busy, shortcut: "" });
         if (root.activeConfigId !== "") {
-            items.push({ label: qsTr("Editar atual…"), action: "edit", icon: "configure", enabled: true, shortcut: "" });
-            items.push({ label: qsTr("Excluir atual"), action: "delete", icon: "trash", enabled: true, shortcut: "" });
+            items.push({ label: qsTr("Editar atual…"), action: "edit", icon: "configure", enabled: !root.busy, shortcut: "" });
+            items.push({ label: qsTr("Excluir atual"), action: "delete", icon: "trash", enabled: !root.busy, shortcut: "" });
         }
         return items;
     }
 
     function dispatch(action) {
-        if (action.indexOf(root.configPrefix) === 0) root.configChosen(action.slice(root.configPrefix.length));
+        if (action === "refresh") root.refreshRequested();
+        else if (action.indexOf(root.configPrefix) === 0) root.configChosen(action.slice(root.configPrefix.length));
         else if (action === "new") root.newRequested();
         else if (action === "edit") root.editRequested();
         else if (action === "delete") root.deleteRequested();

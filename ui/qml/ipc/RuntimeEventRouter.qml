@@ -36,12 +36,23 @@ Item {
             root.runConfigController.handleRunConfigs(configs, activeId);
         }
 
+        function onRunConfigMutationFinished(requestId) {
+            root.runConfigController.handleMutationFinished(requestId);
+        }
+
+        function onRunConfigMutationFailed(requestId, message) {
+            root.runConfigController.handleMutationFailed(requestId, message);
+        }
+
         function onRunStarted(command, terminalId, executionKey, workspace) {
             root.runtimeController.handleRunStarted(command, terminalId, executionKey, workspace);
         }
 
         function onStatusChanged() {
-            if (!root.coreClient.connected) root.runtimeController.handleCoreDisconnected();
+            if (!root.coreClient.connected) {
+                root.runtimeController.handleCoreDisconnected();
+                root.runConfigController.handleCoreDisconnected();
+            }
         }
 
         function onRunFinished(success, exitCode) {
@@ -52,6 +63,7 @@ Item {
         // esta' nesta maquina", porta invalida) ia so' para o log da IDE, e a
         // aba que o Executar acabou de abrir ficava muda.
         function onRequestFailed(method, message) {
+            if (method === "runConfig.list") root.runConfigController.handleReadFailed(message);
             if (method === "terminal.selectAll" || method === "terminal.copySelection") {
                 root.runtimeController.terminalSelectionFailed();
             }

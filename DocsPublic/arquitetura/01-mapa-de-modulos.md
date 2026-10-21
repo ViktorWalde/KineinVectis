@@ -237,6 +237,7 @@ flowchart LR
   n_core_rpc --> n_core_dap
   n_core_run --> n_core_platform
   n_core_run --> n_core_python
+  n_core_runconfig --> n_core_fsops
   n_core_runconfig --> n_core_platform
   n_core_runtime --> n_core_datasource
   n_core_runtime --> n_core_rpc
@@ -263,7 +264,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 120 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 121 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -309,7 +310,7 @@ flowchart LR
 | `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
 | `run` | platform, python | O que "Executar" roda, e como se mostra. |
-| `runconfig` | platform | Run configurations por workspace (.kinein/runconfigs.json). |
+| `runconfig` | fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
 | `runtime` | datasource, rpc, settings | Habilitacao dos servicos externos e configuracao dos servidores LSP do Core. |
 | `serial` | build, platform, toolchain | Portas seriais USB: |
 | `settings` | platform | Settings persistidos em dois níveis (settings.*). |
@@ -324,8 +325,8 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 187 métodos roteados pelo core, 157 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 30 estão aqui,
+Dos 187 métodos roteados pelo core, 158 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 29 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -355,7 +356,7 @@ nomeados, para nada ficar invisível:
 | `workspace.recent.remove` | `ui/qml/app/AppDomains.qml` |
 | `workspace.trust` | `ui/qml/workspace/ProjectHealthActions.qml` |
 
-**Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `remote.status`, `runConfig.list`, `tools.status`.
+**Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `remote.status`, `tools.status`.
 
 **Sem cliente na UI** (a CLI, os gates ou nenhum): `core.shutdown`, `job.list`, `workspace.status`.
 
@@ -741,7 +742,7 @@ flowchart LR
   subgraph IPC["JSON-RPC"]
     n_ipc_coverage(["coverage.* · 1"])
     n_ipc_run(["run.* · 3"])
-    n_ipc_runConfig(["runConfig.* · 3"])
+    n_ipc_runConfig(["runConfig.* · 4"])
     n_ipc_terminal(["terminal.* · 9"])
   end
   subgraph CORE["crates/kinein-core"]
@@ -838,7 +839,7 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/runconfig.rs` | Handlers for runConfig.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/terminal.rs` | Handlers for terminal.* requests (impl Core). |
 
-Métodos IPC (16): `coverage.lines`, `run.script`, `run.start`, `run.stop`, `runConfig.delete`, `runConfig.save`, `runConfig.setActive`, `terminal.clearScrollback`, `terminal.close`, `terminal.copySelection`, `terminal.input`, `terminal.mouse`, `terminal.open`, `terminal.resize`, `terminal.scroll`, `terminal.selectAll`.
+Métodos IPC (17): `coverage.lines`, `run.script`, `run.start`, `run.stop`, `runConfig.delete`, `runConfig.list`, `runConfig.save`, `runConfig.setActive`, `terminal.clearScrollback`, `terminal.close`, `terminal.copySelection`, `terminal.input`, `terminal.mouse`, `terminal.open`, `terminal.resize`, `terminal.scroll`, `terminal.selectAll`.
 
 ### Depuracao (DAP)
 
