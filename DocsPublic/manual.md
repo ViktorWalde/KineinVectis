@@ -1684,6 +1684,19 @@ sysroot e SDK    "Ler sysroot" diz o que uma pasta contem (headers,
                  pasta de toolchain e PROPOE o kit — voce aplica
 ```
 
+**Execução MicroPython e porta ocupada (0.4.1h4a).** Executar `main.py` ou
+um arquivo `.py` usa a mesma proteção de identificação, arquivos e monitor.
+Com uma porta escolhida, outras portas continuam disponíveis. Sem escolha,
+o mpremote decide a porta; durante essa execução, a IDE reserva todos os
+canais gerenciados para evitar sobreposição. A recusa aparece no Terminal
+com a causa e o dono conhecido. Pare a execução ou feche sua aba e espere o
+encerramento para liberar. Outra instância da IDE também é considerada;
+queda do core não libera uma ferramenta que ainda esteja ativa. Comandos
+manuais e configurações salvas continuam executando o texto escolhido.
+Esta proteção ainda não cobre a gravação nativa, em implementação na parte
+seguinte. Uma entrada Python instalada no computador não é usada como
+fallback de um projeto MicroPython: execute um arquivo `.py` da placa.
+
 **O GDB certo para o ELF** (desde 2026-09-18): o `gdb` do Ubuntu não fala
 ARM, Xtensa nem RISC-V — com ele escolhido e um ELF de placa, o attach
 ficava mudo. Agora a IDE lê a arquitetura do ELF antes de subir o

@@ -600,12 +600,12 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
        salvar (§5.2), L6/L7 (§5.11); PlatformIO compiledb (§5.10, é o
        contexto); a matriz de emuladores (§10.1) escrita com o que já mede
 0.4.1  cross: toolchain file gerado (§5.4), C2 inspector (§5.3), deriva (§5.9),
-       toolchain.json schema 3
+       toolchain.json schema 3; fechar reserva/recuperação serial e Setup no dock
 0.4.2  construir: C7 símbolo/delta (§5.5), C5 cache (§5.6), C4 Bear (§5.7);
-       PlatformIO `pio test` e `pio check`
+       PlatformIO `pio test` e `pio check`; assistente C puro/padrão C visual
 0.4.3  gravar/depurar: sonda no kit, OpenOCD por VID:PID, SVD leitura e
        debug.writeMemory (§5.8); PlatformIO depurar; Renode como
-       debugServer (§10.1)
+       debugServer (§10.1); integração própria de CircuitPython (§14.14, 41 §3.4)
 0.4.4  editor: L2, L3, L5 (§5.11)
 0.4.5  Banco para embarcados (decisão do autor, 2026-10-16): o LSP por
        conexão (o passo 10 do 59 §2.3: instâncias isoladas, Postgres
@@ -631,6 +631,45 @@ concluídos antes dela; 0.4.6 cobra a integração ponta a ponta. A revisão de
 qualidade do frontend ocorre **antes do pacote da 0.4.9**. Uma eventual
 etapa especial de revisão após a 0.4.9 está definida no §14.17 e não deve
 receber pendências funcionais ou de usabilidade desta série.
+
+**Pendências reafirmadas pelo autor em 2026-10-21:** todos os itens citados
+no handoff pertencem à entrega 0.4.x. Atribuição operacional: concluir proteção
+de run/MicroPython/gravação e recuperação de ocupação, Setup no dock e schema 3
+na 0.4.1; assistente de projeto C puro e padrão C visual na 0.4.2; separar e
+integrar CircuitPython na 0.4.3; consolidar CPython/MicroPython/CircuitPython,
+as jornadas bare metal/Linux, preferências de ativação nativa e as demais
+janelas de trabalho em painéis até a 0.4.6. Auditorias 0.4.7–0.4.8 corrigem
+o conjunto antes do aceite/AppImage da 0.4.9. Menus, dicas e confirmações
+compactos permanecem conforme a decisão do autor. O aceite físico continua
+explicitamente pendente até poder ser medido; não substituí-lo por fixture.
+Nada desta lista fica para a 0.5 ou para a edição especial.
+
+**Compatibilidade e evolução, reforço do autor em 2026-10-21:** Embarcados
+precisa atender projetos legados e novos dentro da matriz suportada, mantendo
+os adaptadores de ferramenta/linguagem extensíveis. Critérios da 0.4.x:
+
+- Abrir e inspecionar não migra nem reescreve o projeto. Respeitar padrões,
+  SDKs, ambientes, lockfiles, presets e ferramentas definidos nele; mudanças
+  de formato/configuração exigem ação explícita e prévia quando houver migração.
+- Resolver a ferramenta realmente selecionada e suas capacidades/versão,
+  sem substituí-la silenciosamente pela mais nova ou pelo runtime do host.
+  Quem resolve dependências continua sendo a ferramenta oficial (§2, regra 7).
+- Adaptar sintaxe e saída no dono existente do provedor; uma versão nova não
+  deve exigir alterar o executor, o painel ou espalhar condicionais pelo core.
+  Dados de catálogo e parsers/builders puros continuam pontos de extensão.
+- Versão desconhecida ou incompatível não impede abrir arquivos. Explicar
+  quais ações não puderam ser validadas e oferecer escolha de ambiente,
+  ferramenta ou comando manual, sem fingir suporte nem descartar configuração.
+- Conferir projeto antigo/novo, ambiente existente/instalação limpa e ao menos
+  uma versão anterior/atual nos fluxos alterados. Registrar a matriz realmente
+  medida por ferramenta/versão/alvo, incluindo recusas e recuperação pela UI.
+
+A base modular não prova essa matriz sozinha. A sintaxe esptool atualmente
+fixa na linha v5 é um caso concreto a adaptar na gravação nativa; a consulta
+Python de projetos reconhecidos só pelo modelo também deve entrar nos aceites.
+Esses requisitos pertencem às integrações e à consolidação 0.4.1–0.4.6, com
+regressão integrada antes da 0.4.9; não são promessa de compatibilidade universal
+com qualquer ferramenta ou versão futura ainda não medida.
 
 **Saída de cada 0.4.x:** conferir a coerência entre modelo do core e estado
 mostrado, percorrer sucesso/erro/ausência/cancelamento na UI, corrigir bugs,
@@ -2666,7 +2705,7 @@ reconexão, configurações antigas e nova instalação. Esta fatia não fecha a
 matriz inteira nem comprova flash físico. Setup no dock/schema 3/C/Python e
 o plano até 0.4.9 permanecem na fila; nada foi transferido à etapa especial.
 
-### 14.26 0.4.1h4a — execução MicroPython participa da reserva (desenho, 2026-10-21)
+### 14.26 0.4.1h4a — execução MicroPython participa da reserva (concluída, 2026-10-21)
 
 Base 950c8f8. A auditoria do caminho run confirma que start/script abrem o
 PTY sem claim: monitor/identify/files já usam a reserva, execução MicroPython
@@ -2714,19 +2753,153 @@ falsa, sem hardware, e erro visível no Terminal nativo. Mutação da reserva e
 da exclusividade global deve reprovar asserções. Depois gate rápido estrito,
 documentação e commit próprio antes de continuar a gravação.
 
-**Handoff solicitado pelo autor em 2026-10-21:** o teste inicial de dispatch
-foi executado e reprovou como esperado: com monitor ativo, run.start aceitou
-uma execução MicroPython na mesma porta. A asserção esperava SERIAL_PORT_BUSY
-e encontrou resposta de sucesso; log `/tmp/kinein-h4a-before.log`. O core da
-reserva ainda NÃO foi alterado nesta fatia. A falha está reproduzida, sem
-correção integrada e sem dispositivo aberto. O loop do teste ainda precisa
-percorrer run.script após a correção permitir passar da primeira asserção.
+O handoff de origem está no 40.7 §7.331; a implementação/prova final abaixo
+substitui aquele ponto de retomada.
 
-Checkout isolado `/home/hugh/KineinVectis-worktrees/serial-lifecycle`, base
-950c8f8, com seis arquivos modificados: desenho no 52, contratos run/serial,
-nota 03.1, constante do protocolo em 0.184.0 e teste ownership_jobs. Esse
-protocolo é preparação da fatia, não a versão validada do principal (0.183.0).
-Preservar esse trabalho; continuar pela implementação do registro automático
-antes do roteamento run e dos aceites. A integração da h4a exige a suíte
-verde e seu próprio fechamento; a gravação estruturada e ocupação visual
-seguem depois dentro da h4. A ordem 0.4.2–0.4.9 está no §11 e permanece vigente.
+No desenvolvimento da h4a, a resolução mostrou outro ramo a conferir:
+EntryPoint::InstalledScript retorna executável do host mesmo quando o launcher
+é Mpremote. Provar com a fixture de project.scripts já existente e recusar
+esse padrão no MicroPython, como já ocorre com pacote -m. Nenhum fallback
+para executar Python do host numa intenção de placa. A fixture comum fixa
+tio no papel de monitor para manter o conflito estável; sem fixar, projeto
+MicroPython prefere o próprio mpremote como monitor. O primeiro teste do
+handoff usava esse caminho curto; a regressão definitiva deve manter monitor
+realmente vivo, arquivo de liberação ausente e ferramenta de run não chamada.
+
+Na conferência nativa da h4a apareceu contradição adicional: o cabeçalho usa
+project.model e reconhece MicroPython, enquanto ProjectHealth usa apenas o
+build system e afirma que build/run estão indisponíveis. Corrigir o controller
+existente com o reconhecimento já produzido pelo EmbeddedController, sem
+redetectar arquivos no QML. Grupos de ferramentas vazios não podem encerrar
+antes dos avisos Python. Projeto sem build detectado também não implica que
+comandos manuais ou scripts estejam proibidos. Harness deve cobrir contexto
+recebido/retirado, Python isolado e prioridade dos avisos; foto nativa depois.
+
+Implementação integrada no principal sobre e44def1. Regressões focadas:
+32 testes de reserva e 26 de run passaram, além do teste de project.scripts,
+Clippy do workspace e harness de saúde novo/existente. O novo harness também
+passou no Qt 6.4. Três mutações Rust (sem reserva, lock automático compartilhado,
+conflito só por chave) e duas de saúde (ignorar reconhecimento, retorno precoce
+sem ferramentas) reprovaram asserções; fontes restauradas e suíte focada verde.
+Core real em duas instâncias manteve a proteção após crash e liberou após
+saída da ferramenta falsa, tanto run.script automático como run.start explícito.
+Fotos nativas da recusa comparadas antes/depois, sem segunda chamada do mpremote.
+Fotos finais com o aviso de saúde corrigido também passaram, em debug e release.
+
+O gate integral da h4a encontrou outra fixture antiga:
+verificar_micropython_porta.py ainda usava /dev/ttyACM7 e /dev/ttyUSB* inexistentes.
+Trocar por arquivos regulares criados na fixture (a ferramenta falsa só ecoa
+argv), incluir recusa da porta ausente e isolar XDG_STATE_HOME. Garantir limpeza
+do core também na falha. Não criar nós em /dev nem relaxar a validação real.
+O primeiro gate passou Rust/Clippy/C++/CTest/qmllint, mas parou nessa fixture;
+não é fechamento verde. Repetir o gate após corrigir o teste de integração.
+
+
+**Fechamento h4a, 2026-10-21:** gate rápido estrito TUDO VERDE, sem NÃO
+PROVADO: 1.241 Rust, Clippy, análise C++ limpa, 8 CTest, qmllint e 162 QML.
+Log final `/tmp/kinein-h4a-gate-final-v2.log`; o primeiro log permanece como
+prova da fixture que falhou, não como gate verde. A integração Python com
+porta regular e debugpy real passou após a correção. Sem exceção nova de
+arquitetura/Windows; vocabulário técnico inglês, legado só encolheu.
+
+Provas nativas finais: `/tmp/kinein-shell-native-proof/h4a-final-debug-automatic/`
+e `/tmp/kinein-shell-native-proof/h4a-final-release-explicit/`, fotos conferidas,
+ui.log vazio, zero chamadas adicionais do mpremote na recusa. A comparação
+anterior válida está em h4a-run-busy-before-valid/h4a-run-busy-after-valid.
+Smokes debug/release: 391/362 ms nesta amostra, 33 superfícies por preset,
+sem aviso. O primeiro lançamento de QA durante o link release foi descartado
+(permissão temporária do artefato em construção); repetição esperou o build.
+
+Core release real também passou no crash de seleção automática e explícita:
+`/tmp/kinein-h4a-crash-audit-release-observed.log`. O primeiro helper assumia
+que cmdline vazio após SIGKILL já significava todos os FDs fechados; recebeu
+recusa transitória. O helper final espera liberação observada da reserva,
+sem relaxar o produtor; após a saída, a segunda operação inicia e encerra.
+Antes dela, nenhuma segunda ferramenta foi iniciada. Sem hardware/firmware.
+
+Próximo: h4b1 preserva configurações, depois h4b2 integra a intenção nativa
+de gravação e ações de ocupação/recuperação. A matriz serial inteira continua
+aberta; Setup no dock/schema 3/C/Python e a sequência até a 0.4.9 seguem no §11.
+
+### 14.27 0.4.1h4b1 — preservar configurações antes da gravação nativa (desenho, 2026-10-21)
+
+Pré-requisito encontrado ao conferir a h4b: runconfig::read_file transforma
+JSON inválido, erro de leitura ou schema desconhecido em lista vazia; save
+pode sobrescrever o conteúdo anterior, e run.start pode cair no automático
+quando uma configuração ativa não pôde ser lida. Provar por dispatch e bytes
+antes/depois. Nesta parte, ausência real continua vazia; arquivo ilegível,
+corrompido, não regular, schema desconhecido, ids duplicados/ativa inexistente
+ou entradas sem nome/comando devem ser recusados sem alterar o arquivo.
+Nada renomeia, apaga ou repara dados do usuário automaticamente. Reusar a
+gravação atômica existente e coordenar mutações entre instâncias; conflito
+é recusa explícita, não perda da atualização de outro processo. Preservar
+schema 1 nesta parte: intenção tipada/schema 2 entram na h4b2 seguinte.
+
+Contrato 0.185.0 antes do produtor: falha de armazenamento de runConfig.*
+e de seleção ativa em run.start é INVALID_REQUEST com caminho e orientação;
+parâmetro inválido continua INVALID_PARAMS. Comando explícito pode executar
+sem depender de ler configurações, mantendo a recuperação pelo Terminal.
+ConfigAction não pode sobrescrever o arquivo inválido por um caminho lateral.
+A interface representa a recusa no editor/menu de configuração; não fecha
+ou perde nome/comando enquanto o salvamento falha. Sucesso vem da resposta
+do core, não do clique; desconexão solta espera sem repetir a mutação.
+Harness, dispatch, escrita interrompida/concorrente, mutação e foto nativa.
+Sem gravação física, nova ferramenta, executor ou mudança de schema nesta parte.
+
+A coordenação precisa preservar Windows/MSRV 1.88: Unix reusa o arquivo e
+flock existentes; Windows abre o arquivo de coordenação com share_mode(0),
+sem unsafe/dependência nova. Não usar File::lock, estabilizado após o MSRV.
+Nenhum lock é removido para evitar separar inodes de duas instâncias.
+A confirmação local do editor usa requestId, como terminal.open, sem tratar
+snapshot da lista como confirmação de salvar. A migração das janelas de
+trabalho ao dock permanece no escopo já alocado; esta correção altera o
+componente existente e não cria outra janela/editor.
+
+O primeiro teste paralelo do guard detectou a janela fork/CLOEXEC já conhecida
+na reserva serial: um filho de teste ainda não executou a nova imagem e
+segura brevemente descritores herdados. Não serializar a suíte nem remover
+o lock: tentar por até 50 ms antes de recusar, preservando a coordenação
+real. Aplicar espera limitada também ao compartilhamento exclusivo Windows.
+
+O novo guard faz o Windows ultrapassar a catraca de 500 linhas de produção.
+Separar sua responsabilidade de arquivos (abertura sem reparse, enumeração,
+publicação/atributos e guard) em platform/windows/files.rs, preservando a
+fachada existente e os testes. Processos e resolução de ambiente/caminhos
+continuam no windows.rs; sem wrapper por função nem baseline maior.
+
+A primeira tentativa de foto do salvamento não exercitou o envio: Tab não
+levou a digitação ao comando e o campo ficou vazio. Descartar como prova de
+armazenamento, repetir com clique explícito no campo e conferir o comando
+persistido. Conferir a navegação de teclado do editor com foco real antes de
+atribuir a falha ao componente ou ampliar a mudança do campo compartilhado.
+
+Também recusar campos não reconhecidos dentro de cada entrada do schema 1:
+ignorar um campo de intenção e regravar apenas nome/comando perderia esse
+dado. Reusar RunConfigInfo com desserialização estrita e provar preservação;
+sem duplicar um segundo tipo de configuração só para o arquivo.
+
+Conferir na consolidação Python da 0.4.x: PythonController pede python.status
+apenas quando workspaceBuildSystems contém python; um main.py MicroPython
+reconhecido só pelo project.model pode ficar sem essa consulta e sem o aviso
+de stubs. Reusar o contexto primário já produzido pelo backend para a análise,
+sem redetectar arquivos nem tratar exemplos MicroPython aninhados como runtime
+principal. A h4a corrige a prioridade/contradição no ProjectHealth, não comprova
+essa consulta completa do ambiente. Pendência funcional dentro da 0.4.x.
+
+O erro de configuração continua pertencendo ao RunConfigController. A faixa
+já existente do Terminal o recebe por binding, sem copiar a falha para o estado
+da execução; snapshot válido limpa só esse erro, preservando falhas independentes
+de run/terminal. Confirmar também a renderização da faixa e os campos mantidos
+após falha. A lista recebida continua sem confirmar uma mutação pendente.
+
+Aplicar o limite de leitura já existente do editor (fsops::MAX_READ_BYTES,
+1 MiB em 2026-10-21) ao arquivo de configurações: leitura limitada também se
+o arquivo crescer durante a operação. Recusar publicação que produziria um
+arquivo acima desse limite, preservando o anterior. Assim o próprio save não
+cria um estado que a próxima leitura recusaria. Provar com arquivo esparso e
+atualização grande; sem limite paralelo definido só para este domínio.
+
+O harness com renderização passou no Qt local, mas a busca do componente
+usando for..of sobre children não rodou no Qt 6.4. Corrigir o helper do teste
+para percorrer a lista por índice, sem mudar o componente do produto nem
+aceitar o timeout como verde. Repetir os dois runtimes após a correção.

@@ -29,7 +29,9 @@ struct Record {
 #[derive(Debug)]
 pub(super) struct Coordination {
     pending: File,
-    _global: File,
+    _global: Option<File>,
+    _launch: Option<File>,
+    automatic: bool,
     global_path: PathBuf,
     execution_path: PathBuf,
     pending_path: PathBuf,
@@ -39,42 +41,65 @@ pub(super) struct Coordination {
 impl Coordination {
     pub(super) fn acquire(
         directory: &Path,
-        key: &str,
-        device: &str,
+        key: Option<&str>,
+        device: Option<&str>,
         owner: &Owner,
     ) -> Result<Self, JsonRpcError> {
         prepare(directory).map_err(|error| unavailable(device, &error))?;
+        // Parent launch gate stays held while the child takes its execution lock.
+        // Automatic selection never holds the same exclusive lock as its child.
+        let automatic = key.is_none();
+        let launch_path = directory.join("launch.lock");
+        let launch = crate::platform::serial_lock_file(&launch_path)
+            .map_err(|error| unavailable(device, &error))?;
+        if !lock(&launch, !automatic, &launch).map_err(|error| unavailable(device, &error))? {
+            let record = read_record(&launch).filter(|record| !automatic && !record.completed);
+            return Err(occupied(
+                device,
+                record.as_ref().map(|record| &record.owner),
+            ));
+        }
         let global_path = directory.join("global.lock");
         let global = crate::platform::serial_lock_file(&global_path)
             .map_err(|error| unavailable(device, &error))?;
-        if !lock(&global, true, &global).map_err(|error| unavailable(device, &error))? {
+        if !lock(&global, !automatic, &launch).map_err(|error| unavailable(device, &error))? {
+            // A failed shared lock identifies an automatic tool. An exclusive
+            // probe can conflict with several device owners: do not invent one.
+            let record = read_record(&launch).filter(|record| !automatic && record.owner.automatic);
             return Err(occupied(
                 device,
-                read_record(&global).as_ref().map(|record| &record.owner),
+                record.as_ref().map(|record| &record.owner),
             ));
         }
-        let mut digest = String::with_capacity(64);
-        for byte in Sha256::digest(key.as_bytes()) {
-            let _ = write!(&mut digest, "{byte:02x}");
-        }
-        let pending_path = directory.join(format!("{digest}.pending"));
-        let execution_path = directory.join(format!("{digest}.lock"));
-        let mut pending = crate::platform::serial_lock_file(&pending_path)
-            .map_err(|error| unavailable(device, &error))?;
-        if !lock(&pending, false, &pending).map_err(|error| unavailable(device, &error))? {
-            return Err(occupied(
-                device,
-                read_record(&pending).as_ref().map(|record| &record.owner),
-            ));
-        }
-        let execution = crate::platform::serial_lock_file(&execution_path)
-            .map_err(|error| unavailable(device, &error))?;
-        if !lock(&execution, false, &pending).map_err(|error| unavailable(device, &error))? {
-            return Err(occupied(
-                device,
-                read_record(&pending).as_ref().map(|record| &record.owner),
-            ));
-        }
+        let (mut pending, pending_path, execution_path, launch_guard) = if let Some(key) = key {
+            let mut digest = String::with_capacity(64);
+            for byte in Sha256::digest(key.as_bytes()) {
+                let _ = write!(&mut digest, "{byte:02x}");
+            }
+            let pending_path = directory.join(format!("{digest}.pending"));
+            let execution_path = directory.join(format!("{digest}.lock"));
+            let pending = crate::platform::serial_lock_file(&pending_path)
+                .map_err(|error| unavailable(device, &error))?;
+            if !lock(&pending, false, &pending).map_err(|error| unavailable(device, &error))? {
+                let record = read_record(&pending).filter(|record| !record.completed);
+                return Err(occupied(
+                    device,
+                    record.as_ref().map(|record| &record.owner),
+                ));
+            }
+            let execution = crate::platform::serial_lock_file(&execution_path)
+                .map_err(|error| unavailable(device, &error))?;
+            if !lock(&execution, false, &pending).map_err(|error| unavailable(device, &error))? {
+                return Err(occupied(
+                    device,
+                    read_record(&pending).as_ref().map(|record| &record.owner),
+                ));
+            }
+            drop(execution);
+            (pending, pending_path, execution_path, Some(launch))
+        } else {
+            (launch, launch_path, global_path.clone(), None)
+        };
         let token = format!(
             "{}:{}:{}",
             std::process::id(),
@@ -93,10 +118,17 @@ impl Coordination {
             },
         )
         .map_err(|error| unavailable(device, &error))?;
-        drop(execution);
+        let global_guard = if automatic {
+            drop(global);
+            None
+        } else {
+            Some(global)
+        };
         Ok(Self {
             pending,
-            _global: global,
+            _global: global_guard,
+            _launch: launch_guard,
+            automatic,
             global_path,
             execution_path,
             pending_path,
@@ -109,7 +141,15 @@ impl Coordination {
         program: &Path,
         args: &[String],
     ) -> io::Result<(PathBuf, Vec<String>)> {
-        let mut wrapped = vec!["--serial-tool".to_owned()];
+        let mut wrapped = vec![
+            "--serial-tool".to_owned(),
+            if self.automatic {
+                "automatic"
+            } else {
+                "device"
+            }
+            .to_owned(),
+        ];
         for path in [&self.global_path, &self.execution_path, &self.pending_path] {
             wrapped.push(
                 path.to_str()
@@ -185,27 +225,40 @@ fn write_record(file: &mut File, record: &Record) -> io::Result<()> {
 }
 
 pub(super) fn run(arguments: &[OsString]) -> io::Result<()> {
-    if arguments.len() < 6 || arguments[4] != "--" {
+    if arguments.len() < 7
+        || arguments[5] != "--"
+        || (arguments[0] != "automatic" && arguments[0] != "device")
+    {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             "lançamento serial interno inválido",
         ));
     }
-    let global = crate::platform::serial_lock_file(Path::new(&arguments[0]))?;
-    let execution = crate::platform::serial_lock_file(Path::new(&arguments[1]))?;
-    let mut pending = crate::platform::serial_lock_file(Path::new(&arguments[2]))?;
-    if !crate::platform::try_lock_file(&global, true)?
-        || !crate::platform::try_lock_file(&execution, false)?
-    {
+    let automatic = arguments[0] == "automatic";
+    let global = crate::platform::serial_lock_file(Path::new(&arguments[1]))?;
+    if !crate::platform::try_lock_file(&global, !automatic)? {
         return Err(io::Error::new(
             io::ErrorKind::WouldBlock,
             "o canal serial já está reservado por outra operação",
         ));
     }
+    let mut files = vec![global];
+    if !automatic {
+        let execution = crate::platform::serial_lock_file(Path::new(&arguments[2]))?;
+        if !crate::platform::try_lock_file(&execution, false)? {
+            return Err(io::Error::new(
+                io::ErrorKind::WouldBlock,
+                "o canal serial já está reservado por outra operação",
+            ));
+        }
+        files.push(execution);
+    }
+    let mut pending = crate::platform::serial_lock_file(Path::new(&arguments[3]))?;
     let mut record = read_record(&pending)
         .ok_or_else(|| io::Error::other("reserva de lançamento indisponível"))?;
     if record.completed
-        || arguments[3] != record.token.as_str()
+        || arguments[4] != record.token.as_str()
+        || record.owner.automatic != automatic
         || !crate::platform::is_parent_process(record.owner.core_pid)
     {
         return Err(io::Error::new(
@@ -216,5 +269,5 @@ pub(super) fn run(arguments: &[OsString]) -> io::Result<()> {
     record.owner.process_id = Some(std::process::id());
     write_record(&mut pending, &record)?;
     drop(pending);
-    crate::platform::exec_keep_files(vec![global, execution], &arguments[5], &arguments[6..])
+    crate::platform::exec_keep_files(files, &arguments[6], &arguments[7..])
 }

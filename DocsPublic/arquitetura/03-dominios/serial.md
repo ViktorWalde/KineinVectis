@@ -191,5 +191,14 @@ Aliases da mesma identidade conflitam; portas diferentes são independentes.
 A reserva acompanha o job ou o término observado do monitor. Falha de fechar
 ou consultar estado não libera o canal. Descobrir acesso/porta não a abre.
 Falha de coordenação é INTERNAL_ERROR; não inicia ferramenta sem proteção.
-Programas externos não participam desta reserva. Run/flash ainda precisam
+Programas externos não participam desta reserva. Gravação nativa ainda precisa
 integrar a mesma reserva; não inferir metadados analisando comando shell.
+
+**Ampliação da reserva (0.184.0):** run.start padrão/run.script .py via
+Mpremote usam o mesmo registro. Quando a ferramenta seleciona uma porta
+sozinha, a operação obtém reserva global; uma porta explícita mantém a
+reserva individual. SERIAL_PORT_BUSY acrescenta details.scope (device|automatic)
+e permite details.device null para o pedido automático; owner.automatic
+(default false ao ler metadata anterior) explica que a reserva bloqueia
+portas sem afirmar qual foi aberta pela ferramenta. Dois alvos explícitos
+distintos continuam independentes. Sem método/evento novo.

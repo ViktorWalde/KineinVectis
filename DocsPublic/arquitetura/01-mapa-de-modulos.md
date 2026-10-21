@@ -759,6 +759,7 @@ flowchart LR
     n_core_rpc[rpc]
     n_core_run[run]
     n_core_runconfig[runconfig]
+    n_core_serial[serial]
     n_core_terminal[terminal]
     n_core_toolchain[toolchain]
   end
@@ -801,6 +802,7 @@ flowchart LR
   n_crates_kinein_core_src_handlers_run_rs --> n_core_rpc
   n_crates_kinein_core_src_handlers_run_rs --> n_core_run
   n_crates_kinein_core_src_handlers_run_rs --> n_core_runconfig
+  n_crates_kinein_core_src_handlers_run_rs --> n_core_serial
   n_ipc_runConfig --> n_crates_kinein_core_src_handlers_runconfig_rs
   n_crates_kinein_core_src_handlers_runconfig_rs --> n_core_build
   n_crates_kinein_core_src_handlers_runconfig_rs --> n_core_rpc

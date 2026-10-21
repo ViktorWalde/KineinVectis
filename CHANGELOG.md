@@ -21,6 +21,15 @@ como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
 O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
 pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
 
+- **Execução MicroPython (0.4.1h4a, 2026-10-21):** reserva a porta até o
+  processo encerrar, inclusive entre instâncias e após queda do core.
+  Seleção automática protege todos os canais gerenciados; portas explícitas
+  distintas continuam independentes. Entradas instaladas no CPython não
+  viram fallback de execução na placa. O aviso de saúde passa a respeitar
+  projetos embarcados reconhecidos e não oculta avisos de ambiente/stubs em
+  projetos Python sem sistema de build. Gravação/ocupação visual seguem na
+  próxima parte; sem prova física nesta etapa.
+
 - **Reserva serial (0.4.1h3, 2026-10-21):** identificar,
   transferir arquivos e monitorar recusam sobreposição na mesma porta,
   inclusive por aliases e entre instâncias atualizadas. A reserva acompanha

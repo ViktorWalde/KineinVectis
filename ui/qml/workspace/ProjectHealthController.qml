@@ -6,6 +6,8 @@ Item {
     property string workspaceRoot: ""
     property string workspaceKind: ""
     property var workspaceBuildSystems: []
+    // Reconhecimento do modelo do core, independente de haver build system.
+    property bool projectRecognized: false
     property var toolsList: []
     property bool scanningEnvironment: false
     property bool cmakeStatusKnown: false
@@ -76,6 +78,7 @@ Item {
     }
     onWorkspaceKindChanged: update()
     onWorkspaceBuildSystemsChanged: update()
+    onProjectRecognizedChanged: update()
     onToolsListChanged: update()
     onScanningEnvironmentChanged: update()
     onPythonNeedsEnvironmentChanged: update()
@@ -261,21 +264,10 @@ Item {
             apply("busy", qsTr("verificando o ambiente do projeto..."), "", "");
             return;
         }
-        if (workspaceKind === "unknown"
-                && workspaceBuildSystems.length === 0) {
-            apply("info",
-                  qsTr("tipo de projeto não detectado; build e run indisponíveis"),
-                  "", "");
-            return;
-        }
         const groups = requiredWorkspaceToolGroups();
-        if (groups.length === 0) {
-            apply("ok", "", "", "");
-            return;
-        }
         const hasTools = toolsList !== undefined && toolsList !== null
                 && toolsList.length > 0;
-        if (!hasTools) {
+        if (groups.length > 0 && !hasTools) {
             apply("info", qsTr("ambiente ainda não verificado para este projeto"),
                   qsTr("Verificar"), "scan");
             return;
@@ -353,6 +345,11 @@ Item {
                 return;
             }
             apply("info", pythonStubsMessage, qsTr("Instalar stubs"), "pythonStubs");
+            return;
+        }
+        if (workspaceKind === "unknown" && workspaceBuildSystems.length === 0
+                && !projectRecognized) {
+            apply("info", qsTr("sistema de build não detectado; scripts e comandos manuais continuam disponíveis"), "", "");
             return;
         }
         apply("ok", "", "", "");

@@ -16,7 +16,30 @@ use crate::rpc::{
     fs_error_response, no_workspace_response, parse_params, run_error_response,
     terminal_error_response, terminal_unavailable_response,
 };
+use crate::serial::ownership::Lease;
 use crate::{Core, run};
+
+/// The resolved launch and its lifetime resource; the terminal remains the executor.
+struct Invocation {
+    program: String,
+    args: Vec<String>,
+    command: String,
+    identity: Value,
+    reservation: Option<Lease>,
+}
+
+impl Invocation {
+    fn shell(command: String, identity: Value) -> Self {
+        let (program, args) = crate::platform::shell_command(&command);
+        Self {
+            program,
+            args,
+            command,
+            identity,
+            reservation: None,
+        }
+    }
+}
 
 impl Core {
     /// Roteia os metodos `run.*`; `None` quando o metodo nao e de execucao.
@@ -107,10 +130,13 @@ impl Core {
         self.start_in_terminal(
             request_id,
             &root,
-            &program,
-            &args,
-            command,
-            &json!(["script", root, script]),
+            Invocation {
+                program,
+                args,
+                command,
+                identity: json!(["script", root, script]),
+                reservation: None,
+            },
         )
     }
 
@@ -177,13 +203,21 @@ impl Core {
             .collect();
         args.push(script.display().to_string());
         let command = launcher.script_display(root, script);
+        let reservation =
+            match self.reserve_python_launch(request_id.as_ref(), "run.script", &launcher) {
+                Ok(reservation) => reservation,
+                Err(response) => return *response,
+            };
         self.start_in_terminal(
             request_id,
             root,
-            &program.display().to_string(),
-            &args,
-            command,
-            &json!(["script", root, script]),
+            Invocation {
+                program: program.display().to_string(),
+                args,
+                command,
+                identity: json!(["script", root, script]),
+                reservation,
+            },
         )
     }
 
@@ -230,6 +264,7 @@ impl Core {
             .configs
             .iter()
             .find(|config| Some(&config.id) == state.active_id.as_ref());
+        let mut reservation = None;
         let (command, identity) = if let Some(command) = explicito {
             let identity = json!(["command", root, command]);
             (command, identity)
@@ -244,8 +279,22 @@ impl Core {
             let padrao = if workspace.kind == kinein_protocol::ProjectKind::Python
                 || crate::project::e_micropython(root)
             {
-                self.python_launcher(root, parsed.device.as_deref())
-                    .and_then(|launcher| crate::python::run::default_command(root, Some(&launcher)))
+                let launcher = match self.python_launcher(root, parsed.device.as_deref()) {
+                    Ok(launcher) => launcher,
+                    Err(error) => return run_error_response(request_id, &error),
+                };
+                let command = crate::python::run::default_command(root, Some(&launcher));
+                if command.is_ok() {
+                    reservation = match self.reserve_python_launch(
+                        request_id.as_ref(),
+                        "run.start",
+                        &launcher,
+                    ) {
+                        Ok(reservation) => reservation,
+                        Err(response) => return *response,
+                    };
+                }
+                command
             } else {
                 run::default_command(workspace.kind, root)
             };
@@ -256,8 +305,9 @@ impl Core {
         };
 
         // Como o autor digitaria: pelo shell, com o ambiente de login.
-        let (shell, args) = crate::platform::shell_command(&command);
-        self.start_in_terminal(request_id, root, &shell, &args, command, &identity)
+        let mut invocation = Invocation::shell(command, identity);
+        invocation.reservation = reservation;
+        self.start_in_terminal(request_id, root, invocation)
     }
 
     /// Abre `program args` numa sessao de terminal (PTY) na raiz do workspace
@@ -267,10 +317,7 @@ impl Core {
         &mut self,
         request_id: Option<Value>,
         root: &Path,
-        program: &str,
-        args: &[String],
-        command: String,
-        identity: &Value,
+        invocation: Invocation,
     ) -> JsonRpcResponse {
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "run.start");
@@ -289,21 +336,62 @@ impl Core {
                 ),
             );
         }
-        match session.open_command(root, program, args) {
+        let (program, args) = if let Some(reservation) = &invocation.reservation {
+            match reservation.invocation(Path::new(&invocation.program), &invocation.args) {
+                Ok((program, args)) => (program.display().to_string(), args),
+                Err(error) => {
+                    return run_error_response(
+                        request_id,
+                        &run::RunError::Process {
+                            message: format!(
+                                "Não foi possível preparar a reserva da execução: {error}"
+                            ),
+                        },
+                    );
+                }
+            }
+        } else {
+            (invocation.program, invocation.args)
+        };
+        match session.open_command_holding(root, &program, &args, invocation.reservation) {
             Ok(terminal_id) => {
                 self.run_terminal = Some(terminal_id.clone());
                 JsonRpcResponse::success(
                     request_id,
                     json!(RunStartResult {
-                        command,
+                        command: invocation.command,
                         workspace: root.display().to_string(),
-                        execution_key: identity.to_string(),
+                        execution_key: invocation.identity.to_string(),
                         terminal_id: Some(terminal_id)
                     }),
                 )
             }
             Err(error) => terminal_error_response(request_id, &error),
         }
+    }
+
+    fn reserve_python_launch(
+        &self,
+        request_id: Option<&Value>,
+        method: &str,
+        launcher: &crate::python::run::PythonLauncher,
+    ) -> Result<Option<Lease>, Box<JsonRpcResponse>> {
+        let crate::python::run::PythonLauncher::Mpremote { device, .. } = launcher else {
+            return Ok(None);
+        };
+        let reservation = if let Some(device) = device {
+            super::serial::ready_port(request_id, method, device)?;
+            self.claim_serial_port(device, method, "Execução MicroPython")
+        } else {
+            self.serial_usage.acquire_automatic(
+                method,
+                "Execução MicroPython",
+                self.workspace_root().as_deref(),
+            )
+        };
+        reservation
+            .map(Some)
+            .map_err(|error| Box::new(JsonRpcResponse::failure(request_id.cloned(), error)))
     }
 
     /// Fecha a sessao da ultima execucao. Sem uma aberta, `InvalidRequest`.

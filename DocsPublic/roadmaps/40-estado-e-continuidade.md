@@ -12,10 +12,10 @@
 > **HANDOFF (2026-10-21). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h3 concluída (`950c8f8`):** reserva serial e feedback visual
-> (52 §14.24–14.25), sobre `75330ef`; registro em **40.7 §7.330**.
+> **0.4.1h4a concluída:** execução MicroPython com reserva e saúde coerente
+> (52 §14.26), sobre `e44def1`; registro em **40.7 §7.332**.
 > `eim_config.toml` e `log/` continuam locais fora da fatia.
-> Protocolo **0.183.0**, binário **0.3.9**.
+> Protocolo **0.184.0**, binário **0.3.9**.
 >
 > **Objetivo autorizado:** concluir a série até a **0.4.9**, por fatias,
 > e só então gerar/testar o **AppImage local**, sem push, tag ou publicação.
@@ -25,17 +25,17 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate rápido estrito, 0.4.1h3:** 1227 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **161 harnesses QML**, sem NÃO PROVADO.
+> **Último gate rápido estrito, 0.4.1h4a:** 1241 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **162 harnesses QML**, sem NÃO PROVADO.
 > UI/core debug e release validados; concorrência/crash e feedback nativo conferidos.
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
 > **Próximo:** colher feedback da UI atual e da prévia de navegação compacta
 > (52 §14.16), preparada e validada em 1024/736/320 px. A UI Qt mantém
-> suas abas até incorporar o feedback. **Agora:** 0.4.1h4a, execução MicroPython:
-> teste reproduziu conflito aceito, correção ainda não implementada (52 §14.26).
-> Checkout isolado `../KineinVectis-worktrees/serial-lifecycle`, base `950c8f8`,
-> Fio 0.184.0 só preparado nele; depois: gravação/ocupação, Setup no dock, schema 3 e C/Python.
+> suas abas até incorporar o feedback. **Agora:** 0.4.1h4b1, preservar configurações
+> antes da gravação nativa: falha reproduzida, correção isolada em validação (52 §14.27).
+> Checkout `../KineinVectis-worktrees/serial-lifecycle`, protocolo 0.185.0 só nele;
+> depois: gravação/ocupação, Setup no dock, schema 3 e C/Python.
 > Orquestração serial ainda não está pronta; plano 0.4.9 e revisão posterior vigentes.
 >
 > **Escopo:** bare metal e Linux embarcado; PlatformIO em destaque dentro
@@ -61,11 +61,11 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.183.0 (crates/kinein-protocol, medido em 2026-10-21; o
+protocolo   0.184.0 (crates/kinein-protocol, medido em 2026-10-21; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   161 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
+harnesses   162 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
 testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
@@ -74,6 +74,7 @@ testes      1120 Rust no Linux (gate completo de 2026-10-09, 40.7 §7.259);
             1200 Rust na 0.4.1f em 2026-10-20 (§7.326), gate estrito integral verde.
             1200 Rust na 0.4.1g em 2026-10-21 (§7.327), gate completo estrito verde.
             1227 Rust na 0.4.1h3 em 2026-10-21 (§7.330), gate rápido estrito verde.
+            1241 Rust na 0.4.1h4a em 2026-10-21 (§7.332), gate rápido estrito verde.
 ```
 
 Os comandos que medem estão no
@@ -106,14 +107,14 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1, recuperação visual 0.4.1h2 e reserva de jobs/monitor 0.4.1h3 fechados. 0.4.1h4a iniciada em checkout isolado: conflito entre monitor e run.start MicroPython reproduzido, correção ainda pendente. Depois: gravação estruturada e ações de ocupação com identidade verificada. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.26 e [40.7](40.7-registro-das-entregas.md) §7.326–7.330 |
+| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1, recuperação visual 0.4.1h2 e reserva de jobs/monitor 0.4.1h3 fechados. 0.4.1h4a fechada: run MicroPython reserva o canal e saúde foi corrigida. h4b1 em validação isolada para preservar configurações. Depois: gravação estruturada e ações de ocupação com identidade verificada. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.27 e [40.7](40.7-registro-das-entregas.md) §7.326–7.332 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia interativa de navegação compacta criada e validada em WebKitGTK a 1024/736/320 px, preparada para feedback; depois, auditoria geral de frontend, componentes, painéis, cores do editor, atalhos, animação e desempenho antes do AppImage | [52](52-arquitetura-executavel-da-0.4.md) §14.16–14.17; agrupamento até 0.4.9 no §11 |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
 | ROS 2: frente e ensaio por jornadas depois da 0.4.9 (limite atualizado em 2026-10-20); escolher versão exata a partir da pesquisa medida (autor, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
 | Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (autor, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
-| A 0.4 até 0.4.9: Banco na 0.4.5, consolidação nativa na 0.4.6, auditoria/polimento geral na 0.4.7–0.4.8 e estabilização/AppImage na 0.4.9 | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
+| Pendências do handoff confirmadas dentro da 0.4.x em 2026-10-21 (alocação no 52 §11). A 0.4 até 0.4.9: Banco na 0.4.5, consolidação nativa na 0.4.6, auditoria/polimento geral na 0.4.7–0.4.8 e estabilização/AppImage na 0.4.9 | [52](52-arquitetura-executavel-da-0.4.md) §11; as versões seguintes no [57](57-mapa-de-versoes-ate-a-1.0.md) |
 | Entrega acumulada: trabalho não publicado 0.3.6–0.3.9 pertence à 0.4 até a 0.4.9; alinhar versões/notas e gerar/testar o AppImage depois de fechar; publicação com o autor (2026-10-20) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
@@ -395,6 +396,11 @@ C e integracoes nativas      DECISAO DO AUTOR em 2026-10-20: as pendencias
                              desativaveis pelo usuario, profundamente ligadas
                              aos fluxos da IDE; refinamento dessa gestao e
                              ampliacao do escopo na 0.5 (52 §14.14–14.15).
+evolucao e projetos legados  REFORCO DO AUTOR em 2026-10-21: modularidade e
+                             compatibilidade de projetos antigos/novos fazem
+                             parte dos aceites da 0.4.x. Matriz medida e pontos
+                             de extensao no 52 §11; abrir nao migra o projeto
+                             nem comprova suporte a toda versao de ferramenta.
 fronteira da entrega 0.4.9   DECISAO DO AUTOR em 2026-10-20: fechar a serie
                              na 0.4.9 antes do AppImage. O trabalho nao
                              publicado 0.3.6–0.3.9 entra na entrega 0.4;

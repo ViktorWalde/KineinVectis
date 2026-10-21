@@ -556,6 +556,7 @@ conversion
 convert
 converts
 cooperative
+coordinate
 coordinates
 coordination
 copied
@@ -1865,6 +1866,7 @@ permissions
 persist
 persisted
 persistence
+persistent
 persists
 peso
 phantom
@@ -2036,6 +2038,7 @@ quit
 quote
 quoted
 quotes
+race
 radio
 radius
 rail

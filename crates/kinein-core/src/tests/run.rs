@@ -386,25 +386,26 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
         format!("mpremote-falso run {}", dir.join("util.py").display())
     );
 
+    let script_port = dir.join("script-port");
+    std::fs::write(&script_port, "regular fixture").unwrap();
     let com_porta = core
         .handle_request(&JsonRpcRequest::new(
             71_i64,
             "run.script",
-            Some(
-                json!({ "path": dir.join("util.py").to_str().unwrap(), "device": "/dev/ttyUSB9" }),
-            ),
+            Some(json!({ "path": dir.join("util.py").to_str().unwrap(), "device": script_port })),
         ))
         .response()
         .clone();
     assert_eq!(
         com_porta.result.as_ref().unwrap()["command"],
-        "mpremote connect /dev/ttyUSB9 run 'util.py'"
+        format!("mpremote connect {} run 'util.py'", script_port.display())
     );
     let linhas = run_output(&receiver, &com_porta);
     assert_eq!(
         linhas[0],
         format!(
-            "mpremote-falso connect /dev/ttyUSB9 run {}",
+            "mpremote-falso connect {} run {}",
+            script_port.display(),
             dir.join("util.py").display()
         )
     );
@@ -420,38 +421,29 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
 
     // O botao Executar COM a porta escolhida na tela (0.110.0): o mesmo
     // main.py, agora por `connect <porta> run`.
+    let default_port = dir.join("default-port");
+    std::fs::write(&default_port, "regular fixture").unwrap();
     let padrao_com_porta = core.handle_request(&JsonRpcRequest::new(
         73_i64,
         "run.start",
-        Some(json!({ "device": "/dev/ttyACM3" })),
+        Some(json!({ "device": default_port })),
     ));
     assert_eq!(
         padrao_com_porta.response().result.as_ref().unwrap()["command"],
         format!(
-            "'{}' 'connect' '/dev/ttyACM3' 'run' 'main.py'",
-            dir.join("bin/mpremote").display()
+            "'{}' 'connect' '{}' 'run' 'main.py'",
+            dir.join("bin/mpremote").display(),
+            default_port.display()
         )
     );
     let linhas = run_output(&receiver, padrao_com_porta.response());
-    assert_eq!(linhas[0], "mpremote-falso connect /dev/ttyACM3 run main.py");
-
-    // Os dois caminhos precisam conservar a porta como um argumento.
-    executable(
-        &dir.join("bin/mpremote"),
-        "#!/bin/sh\nprintf '%s\\n' \"$@\"\n",
+    assert_eq!(
+        linhas[0],
+        format!(
+            "mpremote-falso connect {} run main.py",
+            default_port.display()
+        )
     );
-    let (mut core, receiver) = open_core(&dir);
-    for device in ["/dev/serial/my board", "/dev/serial/board's adapter"] {
-        let started = core.handle_request(&JsonRpcRequest::new(
-            74_i64,
-            "run.start",
-            Some(json!({ "device": device })),
-        ));
-        assert_eq!(
-            run_output(&receiver, started.response()),
-            vec!["connect", device, "run", "main.py"]
-        );
-    }
 }
 
 /// A porta e' parametro do LANCADOR PADRAO: com `command` explicito e'

@@ -26,12 +26,20 @@ struct Owner {
     core_pid: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     process_id: Option<u32>,
+    #[serde(default)]
+    automatic: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+enum Channel {
+    Device(String),
+    Automatic,
 }
 
 /// In-memory by default; only the real persisted core enables file locks.
 #[derive(Debug, Default)]
 pub(crate) struct Registry {
-    active: Mutex<BTreeMap<String, Weak<Reservation>>>,
+    active: Mutex<BTreeMap<Channel, Weak<Reservation>>>,
     directory: Option<PathBuf>,
 }
 
@@ -60,7 +68,34 @@ impl Registry {
         workspace: Option<&Path>,
     ) -> Result<Lease, JsonRpcError> {
         let key = crate::platform::serial_device_key(Path::new(device))
-            .map_err(|error| unavailable(device, &error))?;
+            .map_err(|error| unavailable(Some(device), &error))?;
+        self.claim(
+            Channel::Device(key),
+            Some(device),
+            operation,
+            title,
+            workspace,
+        )
+    }
+
+    /// The tool chooses a port: exclude all managed serial operations.
+    pub(crate) fn acquire_automatic(
+        &self,
+        operation: &str,
+        title: &str,
+        workspace: Option<&Path>,
+    ) -> Result<Lease, JsonRpcError> {
+        self.claim(Channel::Automatic, None, operation, title, workspace)
+    }
+
+    fn claim(
+        &self,
+        channel: Channel,
+        device: Option<&str>,
+        operation: &str,
+        title: &str,
+        workspace: Option<&Path>,
+    ) -> Result<Lease, JsonRpcError> {
         let mut active = self.active.lock().map_err(|_| {
             unavailable(
                 device,
@@ -68,7 +103,12 @@ impl Registry {
             )
         })?;
         active.retain(|_, reservation| reservation.strong_count() > 0);
-        if let Some(reservation) = active.get(&key).and_then(Weak::upgrade) {
+        let conflict = active.iter().find_map(|(key, reservation)| {
+            (channel == Channel::Automatic || *key == Channel::Automatic || *key == channel)
+                .then(|| reservation.upgrade())
+                .flatten()
+        });
+        if let Some(reservation) = conflict {
             return Err(occupied(device, Some(&reservation.owner)));
         }
         let owner = Owner {
@@ -77,49 +117,63 @@ impl Registry {
             workspace: workspace.map(|root| root.display().to_string()),
             core_pid: std::process::id(),
             process_id: None,
+            automatic: channel == Channel::Automatic,
+        };
+        let key = match &channel {
+            Channel::Device(key) => Some(key.as_str()),
+            Channel::Automatic => None,
         };
         let files = self
             .directory
             .as_deref()
-            .map(|directory| Coordination::acquire(directory, &key, device, &owner))
+            .map(|directory| Coordination::acquire(directory, key, device, &owner))
             .transpose()?;
         let reservation = Arc::new(Reservation { owner, files });
-        active.insert(key, Arc::downgrade(&reservation));
+        active.insert(channel, Arc::downgrade(&reservation));
         drop(active);
         Ok(Lease { reservation })
     }
 }
 
-fn occupied(device: &str, owner: Option<&Owner>) -> JsonRpcError {
+fn occupied(device: Option<&str>, owner: Option<&Owner>) -> JsonRpcError {
+    let channel = device.map_or_else(
+        || "uma porta automaticamente".to_owned(),
+        |device| format!("a porta {device}"),
+    );
     let message = owner.map_or_else(
-        || format!("A porta {device} está reservada por outra operação da IDE. Aguarde a conclusão e tente novamente."),
+        || format!("Não foi possível reservar {channel}: há outra operação serial da IDE em andamento. Aguarde sua conclusão ou escolha uma porta livre no painel Embarcados."),
         |owner| {
             let location = owner.workspace.as_deref().map_or_else(String::new, |root| format!(" no projeto {root}"));
             let window = if owner.core_pid == std::process::id() { String::new() }
                 else { " (outra instância da IDE)".to_owned() };
+            let automatic = if owner.automatic { " com seleção automática; os canais permanecem reservados até sua conclusão" } else { "" };
             let remedy = if owner.core_pid != std::process::id() {
                 "Encerre essa operação na instância que a iniciou ou aguarde a ferramenta encerrar"
             } else if owner.operation == "serial.monitor" {
                 "Feche a aba do monitor no Terminal"
+            } else if matches!(owner.operation.as_str(), "run.start" | "run.script") {
+                "Pare a execução ou feche sua aba no Terminal"
             } else {
                 "Cancele essa operação no painel Jobs ou aguarde sua conclusão"
             };
-
-            format!("A porta {device} está em uso por {}{location}{window}. {remedy} antes de tentar novamente.", owner.title)
+            format!("Não foi possível reservar {channel}: {}{location}{window} está em andamento{automatic}. {remedy} antes de tentar novamente.", owner.title)
         },
     );
     JsonRpcError::new(
         JsonRpcErrorCode::SerialPortBusy,
         message,
-        Some(json!({ "device": device, "owner": owner })),
+        Some(
+            json!({ "scope": if device.is_some() { "device" } else { "automatic" }, "device": device, "owner": owner }),
+        ),
     )
 }
 
-fn unavailable(device: &str, error: &io::Error) -> JsonRpcError {
+fn unavailable(device: Option<&str>, error: &io::Error) -> JsonRpcError {
+    let channel = device.unwrap_or("a seleção automática de porta serial");
     JsonRpcError::new(
         JsonRpcErrorCode::InternalError,
         format!(
-            "Não foi possível reservar {device} com segurança: {error}. A ferramenta não foi iniciada; confira o acesso ao estado da IDE e tente novamente."
+            "Não foi possível reservar {channel} com segurança: {error}. A ferramenta não foi iniciada; confira o acesso ao estado da IDE e tente novamente."
         ),
         Some(json!({ "device": device })),
     )

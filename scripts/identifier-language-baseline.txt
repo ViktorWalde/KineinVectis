@@ -2901,7 +2901,6 @@ scripts/verificar_fiacao_ipc.py	texto	15
 scripts/verificar_fiacao_ipc.py	titulo	9
 scripts/verificar_fiacao_ipc.py	tratador	2
 scripts/verificar_fiacao_ipc.py	tratados	7
-scripts/verificar_micropython_porta.py	ambiente	4
 scripts/verificar_micropython_porta.py	cabecalho	5
 scripts/verificar_micropython_porta.py	codigo	2
 scripts/verificar_micropython_porta.py	erro	3

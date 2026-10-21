@@ -82,3 +82,18 @@ Requer workspace aberto.
 A UI (`RuntimeController`) dá à aba o nome do comando (`▶ cargo run`) e,
 quando a sessão fecha, **mantém a aba** com o desfecho no nome (`✓` ou
 `✗ <código>`) para o autor ler a saída; fechá-la depois é só local.
+
+**Reserva MicroPython (0.184.0):** nos dois métodos, o lançador Mpremote
+reserva o canal até a saída real do PTY. device explícito revalida existência,
+acesso e identidade sem abrir tty; seleção automática mantém a escolha do
+mpremote e reserva todos os canais gerenciados enquanto não se conhece o alvo.
+Conflito é SERIAL_PORT_BUSY; details {scope: device|automatic, device: string|null,
+owner: objeto|null}, com owner.automatic indicando seleção ampla. Pare a execução
+ou feche sua aba para liberar, após a saída observada. A proteção inclui outra
+instância atualizada e ferramenta sobrevivendo ao crash do core. Comando
+explícito/configuração manual/host Python não reservam a seleção visual; não
+se analisa shell para inferir recursos. Gravação nativa vem na próxima parte.
+
+Na resolução padrão MicroPython, entrada de pacote `-m` ou executável de
+`project.scripts` instalado no host é recusada com orientação para executar
+um arquivo `.py`; a intenção de placa não cai silenciosamente no CPython.

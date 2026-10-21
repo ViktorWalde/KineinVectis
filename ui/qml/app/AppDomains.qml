@@ -56,7 +56,6 @@ Item {
     readonly property alias projectTree: projectTree
 
     visible: false
-
     WorkspaceController {
         id: workspaceController
 
@@ -77,6 +76,7 @@ Item {
     ProjectHealthController {
         id: projectHealthController
         compileContext: indexController.fileContext
+        projectRecognized: environment.embeddedController.projectEmbedded || environment.embeddedController.projectLinux
         workspaceRoot: root.coreClient.workspaceRoot
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems

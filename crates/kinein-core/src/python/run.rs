@@ -245,6 +245,15 @@ pub fn default_command(root: &Path, launcher: Option<&PythonLauncher>) -> Result
             })
         }
         Some(EntryPoint::Module(pacote)) => Ok(launcher.shell_command(&["-m", &pacote])),
+        Some(EntryPoint::InstalledScript(name))
+            if matches!(launcher, PythonLauncher::Mpremote { .. }) =>
+        {
+            Err(RunError::NoDefaultCommand {
+                message: format!(
+                    "projeto MicroPython: `{name}` está instalado no Python do computador e não é um arquivo da placa; crie main.py ou escolha Executar num arquivo .py"
+                ),
+            })
+        }
         Some(EntryPoint::InstalledScript(nome)) => Ok(shell_quote(
             &root.join(".venv/bin").join(nome).display().to_string(),
         )),
@@ -469,6 +478,11 @@ mod tests {
             entry_point(&root),
             Some(EntryPoint::InstalledScript("demo-cli".into())),
             "a ordem do arquivo decide"
+        );
+        let board = PythonLauncher::mpremote(PathBuf::from("/x/mpremote"), None);
+        assert!(
+            default_command(&root, Some(&board)).is_err(),
+            "MicroPython must not launch a host-installed entry point"
         );
     }
 

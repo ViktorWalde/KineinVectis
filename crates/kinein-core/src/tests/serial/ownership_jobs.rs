@@ -1,131 +1,14 @@
 //! Dispatch matrix with real jobs/PTYS and tools that never open the fixture port.
 use std::{
     fs,
-    path::{Path, PathBuf},
-    sync::mpsc,
+    path::Path,
     thread,
     time::{Duration, Instant},
 };
 
-use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse};
-use serde_json::{Value, json};
-
-struct Fixture {
-    core: crate::Core,
-    root: PathBuf,
-    port: PathBuf,
-    events: mpsc::Receiver<JsonRpcRequest>,
-}
-
-impl Fixture {
-    fn new(name: &str) -> Self {
-        let root = super::temp_dir(name);
-        let bin = root.join("bin");
-        fs::create_dir(&bin).unwrap();
-        let port = root.join("port");
-        fs::write(&port, "regular fixture; tools never open it").unwrap();
-        fs::write(root.join("main.py"), "print('fixture')\n").unwrap();
-        for (tool, output) in [
-            ("esptool", "Chip type: ESP32-D0WD-V3 (revision v3.1)"),
-            ("mpremote", "ls :\n       15 main.py"),
-            ("tio", "monitor fixture"),
-        ] {
-            let calls = crate::platform::program_invocation(
-                &root.join(format!("{tool}.calls")).display().to_string(),
-            );
-            let ready = crate::platform::program_invocation(
-                &root.join(format!("{tool}.ready")).display().to_string(),
-            );
-            let release = root.join(format!("{tool}.release"));
-            fs::write(&release, "release fixture").unwrap();
-            let release = crate::platform::program_invocation(&release.display().to_string());
-            let body = if tool == "tio" {
-                "trap '' HUP\nexec sleep 30".to_owned()
-            } else {
-                format!("while [ ! -f {release} ]; do sleep 0.02; done\nprintf '%s\\n' '{output}'")
-            };
-            crate::write_executable(
-                bin.join(tool),
-                format!(
-                    "#!/bin/sh\ncase \"$*\" in *version*|*--help*|*-V*) echo '{tool} v5.4.0'; exit 0;; esac\nprintf 'called\\n' >> {calls}\n: > {ready}\n{body}\n"
-                ),
-            );
-        }
-        let mut core =
-            crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(bin));
-        let (sender, events) = mpsc::channel();
-        core.enable_lsp(sender);
-        let mut fixture = Self {
-            core,
-            root,
-            port,
-            events,
-        };
-        let root = fixture.root.clone();
-        assert!(
-            fixture
-                .rpc("workspace.open", json!({"path":root}))
-                .error
-                .is_none()
-        );
-        fixture
-    }
-
-    fn rpc(&mut self, method: &str, params: Value) -> JsonRpcResponse {
-        self.core
-            .handle_request(&JsonRpcRequest::new(31_i64, method, Some(params)))
-            .response()
-            .clone()
-    }
-
-    fn identify(&mut self) -> JsonRpcResponse {
-        self.rpc(
-            "serial.identify",
-            json!({"device": self.port, "tool": self.root.join("bin/esptool")}),
-        )
-    }
-
-    fn files(&mut self) -> JsonRpcResponse {
-        self.rpc(
-            "serial.files",
-            json!({"device": self.port,"action":"list","tool":self.root.join("bin/mpremote")}),
-        )
-    }
-
-    fn monitor(&mut self) -> JsonRpcResponse {
-        self.rpc("serial.monitor", json!({"device": self.port}))
-    }
-
-    fn event(&self, method: &str, key: &str, value: &str) -> Value {
-        let deadline = Instant::now() + Duration::from_secs(4);
-        while Instant::now() < deadline {
-            if let Ok(event) = self.events.recv_timeout(Duration::from_millis(30))
-                && event.method == method
-                && let Some(params) = event.params
-                && params[key] == value
-            {
-                return params;
-            }
-        }
-        panic!("missing fixture event {method} {key}={value}");
-    }
-
-    fn finish(&self, response: JsonRpcResponse) -> Value {
-        assert!(response.error.is_none(), "{response:?}");
-        let id = response.result.unwrap()["jobId"]
-            .as_str()
-            .unwrap()
-            .to_owned();
-        self.event("event.job.finished", "jobId", &id)
-    }
-
-    fn close(&mut self, response: JsonRpcResponse) {
-        assert!(response.error.is_none(), "{response:?}");
-        let id = response.result.unwrap()["id"].as_str().unwrap().to_owned();
-        assert!(self.rpc("terminal.close", json!({"id":id})).error.is_none());
-        self.event("event.terminal.closed", "id", &id);
-    }
-}
+use super::ownership_fixture::Fixture;
+use kinein_protocol::{JsonRpcErrorCode, JsonRpcResponse};
+use serde_json::json;
 
 fn busy(response: JsonRpcResponse, operation: &str) {
     let error = response.error.expect("conflict is refused before spawn");
@@ -288,5 +171,26 @@ fn a_serial_outcome_allows_an_immediate_followup_without_waiting_for_job_finishe
             fixture.event("event.serial.files", "jobId", &id)["success"],
             true
         );
+    }
+}
+
+#[test]
+fn monitor_excludes_micropython_run_before_a_second_tool_starts() {
+    for method in ["run.start", "run.script"] {
+        let mut fixture = Fixture::new(&format!("monitor-mpy-{}", method.replace('.', "-")));
+        fs::write(fixture.root.join("main.py"), "import machine\n").unwrap();
+        let monitor = fixture.monitor();
+        assert!(monitor.error.is_none());
+        let params = if method == "run.start" {
+            json!({"device": fixture.port})
+        } else {
+            json!({"path":fixture.root.join("main.py"), "device":fixture.port})
+        };
+        let refused = fixture.rpc(method, params);
+        assert_eq!(
+            refused.error.unwrap().code,
+            JsonRpcErrorCode::SerialPortBusy
+        );
+        assert!(!fixture.root.join("mpremote.calls").exists());
     }
 }

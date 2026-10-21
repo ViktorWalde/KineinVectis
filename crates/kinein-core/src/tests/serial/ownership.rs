@@ -1,7 +1,7 @@
 //! Private regular-file fixtures: never open a tty or act on hardware.
 use std::{
     fs,
-    os::unix::fs::PermissionsExt,
+    os::unix::fs::{MetadataExt, PermissionsExt},
     path::{Path, PathBuf},
     process::{Child, Command},
     sync::{Arc, Barrier},
@@ -12,6 +12,7 @@ use std::{
 use kinein_protocol::JsonRpcErrorCode;
 
 use crate::serial::ownership::Registry;
+mod automatic;
 
 fn fixture(name: &str) -> (PathBuf, PathBuf) {
     let root = super::temp_dir(name);
@@ -114,12 +115,30 @@ fn independent_registries_use_kernel_locks_and_ignore_unlocked_stale_metadata() 
         .unwrap_err();
     assert_eq!(error.code, JsonRpcErrorCode::SerialPortBusy);
     assert!(error.message.contains("Terminal"));
+    let before: std::collections::BTreeMap<_, _> = fs::read_dir(&directory)
+        .unwrap()
+        .map(|entry| {
+            let entry = entry.unwrap();
+            (entry.path(), entry.metadata().unwrap().ino())
+        })
+        .collect();
     drop(lease);
     let files: Vec<_> = fs::read_dir(&directory)
         .unwrap()
         .map(|entry| entry.unwrap().path())
         .collect();
-    assert_eq!(files.len(), 3, "lock files must never be unlinked");
+    assert_eq!(
+        files.len(),
+        before.len(),
+        "lock files must never be unlinked"
+    );
+    for path in &files {
+        assert_eq!(
+            Some(&fs::metadata(path).unwrap().ino()),
+            before.get(path),
+            "coordination inode was replaced"
+        );
+    }
     for path in &files {
         fs::write(path, "stale invalid owner data").unwrap();
     }
