@@ -55,6 +55,40 @@ pub(crate) fn same_file(left: &Path, right: &Path) -> Option<bool> {
     Some(canonicalize(left).ok()? == canonicalize(right).ok()?)
 }
 
+/// Identity of a serial node without opening it, including aliases/hardlinks.
+pub(crate) fn serial_device_key(path: &Path) -> io::Result<String> {
+    imp::serial_device_key(path)
+}
+
+/// Opens a private coordination file, never a serial device.
+pub(crate) fn serial_lock_file(path: &Path) -> io::Result<File> {
+    imp::serial_lock_file(path)
+}
+
+/// Attempts a nonblocking advisory lock; false means another owner holds it.
+pub(crate) fn try_lock_file(file: &File, shared: bool) -> io::Result<bool> {
+    imp::try_lock_file(file, shared)
+}
+
+/// Replaces this single-threaded child with the tool, preserving its leases.
+pub(crate) fn exec_keep_files(
+    files: Vec<File>,
+    program: &OsStr,
+    args: &[OsString],
+) -> io::Result<()> {
+    imp::exec_keep_files(files, program, args)
+}
+
+/// Checks an expected parent without delivering a signal to it.
+pub(crate) fn is_parent_process(pid: u32) -> bool {
+    imp::is_parent_process(pid)
+}
+
+/// Executable image used by a serial exec shim, including a replaced binary.
+pub(crate) fn self_executable() -> io::Result<PathBuf> {
+    imp::self_executable()
+}
+
 /// A pasta pessoal do usuario: `$HOME` no Unix, `%USERPROFILE%` no Windows
 /// (que nao define `HOME`). `None` quando nao ha uma.
 #[must_use]

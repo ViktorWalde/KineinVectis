@@ -223,13 +223,13 @@ Item {
             }
         }
 
-        Text {
+        KvVerdict {
+            objectName: "flashFailure"
             width: parent.width
-            wrapMode: Text.WordWrap
-            visible: root.flash && root.flash.errorText !== ""
-            text: root.flash ? root.flash.errorText : ""
-            color: Theme.errorSoft
-            font.pixelSize: Theme.fontSizeCaption
+            heading: qsTr("Não foi possível preparar a gravação")
+            message: root.flash ? root.flash.errorText : ""
+            codeFont: false
+            animateChanges: true
         }
     }
 }

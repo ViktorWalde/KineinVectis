@@ -21,15 +21,15 @@ use crate::{jobs, process};
 
 /// O que uma execucao deixou.
 #[derive(Debug)]
-pub struct Tentativa {
+pub struct Attempt {
     /// A linha de comando, como a tela a mostra.
-    pub comando: String,
+    pub command_line: String,
     /// Tudo que a ferramenta escreveu (stdout+stderr, na ordem em que veio).
     pub raw: String,
     /// Saiu com 0.
-    pub sucesso: bool,
+    pub success: bool,
     /// O prazo venceu antes de a ferramenta sair.
-    pub expirou: bool,
+    pub timed_out: bool,
 }
 
 /// A linha de comando como a tela a mostra: programa e argumentos separados
@@ -41,82 +41,120 @@ pub fn display(program: &str, args: &[String]) -> String {
     partes.join(" ")
 }
 
-/// Roda `programa args` ecoando cada linha em `event.job.output`; `nome` e'
-/// como a ferramenta e' chamada nas mensagens ("esptool", "mpremote").
-#[must_use]
-pub fn rodar(
-    ctx: &jobs::JobContext,
-    programa: &Path,
-    args: &[String],
-    prazo: Duration,
-    nome: &str,
-) -> Tentativa {
-    let programa = programa.display().to_string();
-    let comando = display(&programa, args);
-    ctx.emit_output(&format!("$ {comando}"));
-    let mut command = std::process::Command::new(&programa);
-    command.args(args);
+/// Uses the existing process runner while the operation owns its serial lease.
+pub(crate) struct Runner<'a> {
+    context: &'a jobs::JobContext,
+    reservation: super::ownership::Lease,
+}
 
-    let parar = Arc::new(AtomicBool::new(false));
-    let expirou = Arc::new(AtomicBool::new(false));
-    let terminou = Arc::new(AtomicBool::new(false));
-    {
-        let parar = Arc::clone(&parar);
-        let expirou = Arc::clone(&expirou);
-        let terminou = Arc::clone(&terminou);
-        let cancelado = ctx.cancellation();
-        let limite = Instant::now() + prazo;
-        std::thread::spawn(move || {
-            while !terminou.load(Ordering::SeqCst) {
-                if cancelado.load(Ordering::SeqCst) {
-                    parar.store(true, Ordering::SeqCst);
-                    break;
-                }
-                if Instant::now() >= limite {
-                    expirou.store(true, Ordering::SeqCst);
-                    parar.store(true, Ordering::SeqCst);
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(50));
-            }
-        });
-    }
-    let mut raw = String::new();
-    let resultado = process::stream_command_lines_cancelable(command, &parar, &mut |_, linha| {
-        ctx.emit_output(&linha);
-        raw.push_str(&linha);
-        raw.push('\n');
-    });
-    terminou.store(true, Ordering::SeqCst);
-    let sucesso = match resultado {
-        Ok(status) => status.success(),
-        Err(error) => {
-            let texto = match error {
-                process::ProcessError::Spawn(e) => format!("{nome} não pode ser iniciado: {e}"),
-                process::ProcessError::Wait(e) => format!("falha aguardando o {nome}: {e}"),
-            };
-            ctx.emit_output(&texto);
-            raw.push_str(&texto);
-            false
+impl<'a> Runner<'a> {
+    pub(crate) const fn new(
+        context: &'a jobs::JobContext,
+        reservation: super::ownership::Lease,
+    ) -> Self {
+        Self {
+            context,
+            reservation,
         }
-    };
-    Tentativa {
-        comando,
-        raw,
-        sucesso,
-        expirou: expirou.load(Ordering::SeqCst),
+    }
+
+    pub(crate) const fn context(&self) -> &'a jobs::JobContext {
+        self.context
+    }
+
+    pub(crate) fn run(
+        &self,
+        program: &Path,
+        args: &[String],
+        timeout: Duration,
+        tool_name: &str,
+    ) -> Attempt {
+        let ctx = self.context;
+        let invocation = self.reservation.invocation(program, args);
+        let program = program.display().to_string();
+        let command_line = display(&program, args);
+        ctx.emit_output(&format!("$ {command_line}"));
+        let (executable, arguments) = match invocation {
+            Ok(invocation) => invocation,
+            Err(error) => {
+                let raw = format!("Não foi possível preparar a reserva do processo: {error}");
+                ctx.emit_output(&raw);
+                return Attempt {
+                    command_line,
+                    raw,
+                    success: false,
+                    timed_out: false,
+                };
+            }
+        };
+        let mut command = std::process::Command::new(executable);
+        command.args(arguments);
+
+        let stop = Arc::new(AtomicBool::new(false));
+        let timed_out = Arc::new(AtomicBool::new(false));
+        let finished = Arc::new(AtomicBool::new(false));
+        {
+            let stop = Arc::clone(&stop);
+            let timed_out = Arc::clone(&timed_out);
+            let finished = Arc::clone(&finished);
+            let cancelled = ctx.cancellation();
+            let deadline = Instant::now() + timeout;
+            std::thread::spawn(move || {
+                while !finished.load(Ordering::SeqCst) {
+                    if cancelled.load(Ordering::SeqCst) {
+                        stop.store(true, Ordering::SeqCst);
+                        break;
+                    }
+                    if Instant::now() >= deadline {
+                        timed_out.store(true, Ordering::SeqCst);
+                        stop.store(true, Ordering::SeqCst);
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(50));
+                }
+            });
+        }
+        let mut raw = String::new();
+        let result = process::stream_command_lines_cancelable(command, &stop, &mut |_, line| {
+            ctx.emit_output(&line);
+            raw.push_str(&line);
+            raw.push('\n');
+        });
+        finished.store(true, Ordering::SeqCst);
+        let success = match result {
+            Ok(status) => status.success(),
+            Err(error) => {
+                let text = match error {
+                    process::ProcessError::Spawn(e) => {
+                        format!("{tool_name} não pode ser iniciado: {e}")
+                    }
+                    process::ProcessError::Wait(e) => {
+                        format!("falha aguardando o {tool_name}: {e}")
+                    }
+                };
+                ctx.emit_output(&text);
+                raw.push_str(&text);
+                false
+            }
+        };
+        Attempt {
+            command_line,
+            raw,
+            success,
+            timed_out: timed_out.load(Ordering::SeqCst),
+        }
     }
 }
 
 /// As ultimas linhas nao vazias da saida: e' onde o esptool diz `A fatal
 /// error occurred: ...` e o mpremote diz `mpremote: cp: ...`.
 #[must_use]
-pub fn ultimas_linhas(raw: &str, nome: &str) -> String {
+pub fn ultimas_linhas(raw: &str, tool_name: &str) -> String {
     let linhas: Vec<&str> = raw.lines().filter(|l| !l.trim().is_empty()).collect();
     let inicio = linhas.len().saturating_sub(3);
     let cauda = linhas[inicio..].join("\n");
     if cauda.is_empty() {
-        format!("o {nome} saiu com erro sem escrever nada")
+        format!("o {tool_name} saiu com erro sem escrever nada")
     } else {
         cauda
     }

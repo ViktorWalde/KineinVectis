@@ -7,6 +7,8 @@
 //! "desconhecido" quando o udevadm nao respondeu. Nada aqui abre porta nenhuma.
 
 use std::os::unix::fs::MetadataExt;
+mod ownership;
+mod ownership_jobs;
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::SerialPortKind;

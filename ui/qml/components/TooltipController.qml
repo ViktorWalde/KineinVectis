@@ -11,10 +11,22 @@ QtObject {
     property real anchorWidth: 0
     property real anchorHeight: 0
     property string placement: "bottom"
-    property var owner: null
+    property Item owner: null
+    onOwnerChanged: {
+        if (!owner) {
+            shown = false;
+            text = "";
+        }
+    }
+    property Connections ownerVisibility: Connections {
+        target: root.owner
+        function onVisibleChanged() {
+            if (root.owner && !root.owner.visible) root.hideFor(root.owner);
+        }
+    }
 
     function showFor(item, message, preferredPlacement) {
-        if (!item || message === "") {
+        if (!item || !item.visible || message === "") {
             hideFor(item);
             return;
         }
@@ -38,7 +50,7 @@ QtObject {
     }
 
     function hideFor(item) {
-        if (item && owner && owner !== item) {
+        if (!item || owner !== item) {
             return;
         }
         shown = false;

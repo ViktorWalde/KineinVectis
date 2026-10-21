@@ -43,6 +43,8 @@ impl Core {
     /// e a medição estão em
     /// `tests::workspace::test_core_never_writes_to_the_real_global_storage`.
     pub fn enable_persistence(&mut self, global_storage: PathBuf) {
+        self.serial_usage
+            .use_directory(global_storage.join("serial-usage"));
         self.global_storage = Some(global_storage);
     }
 

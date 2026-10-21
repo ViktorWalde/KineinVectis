@@ -7,7 +7,7 @@ use std::{
     io,
     os::unix::{
         ffi::OsStrExt,
-        fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt},
+        fs::{DirBuilderExt, FileTypeExt, MetadataExt, OpenOptionsExt, PermissionsExt},
         process::CommandExt,
     },
     path::{Component, Path, PathBuf},
@@ -38,6 +38,72 @@ pub(super) const INHERITED_ENV: &[&str] = &[
 #[allow(clippy::disallowed_methods)]
 pub(super) fn canonicalize(path: &Path) -> io::Result<PathBuf> {
     fs::canonicalize(path)
+}
+
+pub(super) fn serial_device_key(path: &Path) -> io::Result<String> {
+    let metadata = fs::metadata(path)?;
+    if metadata.file_type().is_char_device() {
+        Ok(format!("character:{}", metadata.rdev()))
+    } else if metadata.is_file() {
+        Ok(format!("file:{}:{}", metadata.dev(), metadata.ino()))
+    } else {
+        Err(io::Error::other("o caminho não é um dispositivo serial"))
+    }
+}
+
+pub(super) fn serial_lock_file(path: &Path) -> io::Result<File> {
+    let file = openat(
+        CWD,
+        path,
+        OFlags::RDWR | OFlags::CREATE | OFlags::CLOEXEC | OFlags::NOFOLLOW,
+        Mode::RUSR | Mode::WUSR,
+    )?;
+    let file = File::from(file);
+    if !file.metadata()?.is_file() {
+        return Err(io::Error::other("o arquivo de coordenação não é regular"));
+    }
+    Ok(file)
+}
+
+pub(super) fn try_lock_file(file: &File, shared: bool) -> io::Result<bool> {
+    use rustix::fs::{FlockOperation, flock};
+    let operation = if shared {
+        FlockOperation::NonBlockingLockShared
+    } else {
+        FlockOperation::NonBlockingLockExclusive
+    };
+    match flock(file, operation) {
+        Ok(()) => Ok(true),
+        Err(Errno::WOULDBLOCK) => Ok(false),
+        Err(error) => Err(error.into()),
+    }
+}
+
+pub(super) fn exec_keep_files(
+    files: Vec<File>,
+    program: &OsStr,
+    args: &[OsString],
+) -> io::Result<()> {
+    for file in &files {
+        rustix::io::fcntl_setfd(file, rustix::io::FdFlags::empty())?;
+    }
+    let error = Command::new(program).args(args).exec();
+    drop(files);
+    Err(error)
+}
+
+pub(super) fn is_parent_process(pid: u32) -> bool {
+    rustix::process::getppid()
+        .is_some_and(|parent| u32::try_from(parent.as_raw_pid()).ok() == Some(pid))
+}
+
+pub(super) fn self_executable() -> io::Result<PathBuf> {
+    let image = Path::new("/proc/self/exe");
+    if image.is_file() {
+        Ok(image.to_path_buf())
+    } else {
+        std::env::current_exe()
+    }
 }
 
 pub(super) fn home_dir() -> Option<PathBuf> {

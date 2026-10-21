@@ -135,6 +135,17 @@ impl TerminalManager {
         program: &str,
         args: &[String],
     ) -> Result<String, TerminalError> {
+        self.open_command_holding(root, program, args, ())
+    }
+
+    /// Keeps an operation's resource alive until this PTY's exit is observed.
+    pub(crate) fn open_command_holding(
+        &mut self,
+        root: &Path,
+        program: &str,
+        args: &[String],
+        resource: impl Send + 'static,
+    ) -> Result<String, TerminalError> {
         // Sessões mortas (shell saiu) não contam pro teto nem seguram memória.
         self.sessions
             .retain(|_id, session| session.running.load(Ordering::SeqCst));
@@ -187,7 +198,7 @@ impl TerminalManager {
 
         self.spawn_reader(&id, reader, &state, &dirty, &writer);
         self.spawn_emitter(&id, &state, &dirty, &running);
-        self.spawn_waiter(&id, &child, &running, &state);
+        self.spawn_waiter(&id, &child, &running, &state, resource);
 
         self.sessions.insert(
             id.clone(),

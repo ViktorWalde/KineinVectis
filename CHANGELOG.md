@@ -21,6 +21,16 @@ como novidade. Regra de entrega no roadmap 57 §1.1, sequência no 52 §11.
 O binário no checkout ainda diz `0.3.9`; a versão final e os metadados do
 pacote serão alinhados ao fechar a série. Nada aqui anuncia release publicada.
 
+- **Reserva serial (0.4.1h3, 2026-10-21):** identificar,
+  transferir arquivos e monitorar recusam sobreposição na mesma porta,
+  inclusive por aliases e entre instâncias atualizadas. A reserva acompanha
+  a ferramenta após queda do core. A mensagem informa o dono conhecido e
+  orienta encerrar a operação existente. Execução/gravação e ações visuais
+  de ocupação seguem na próxima parte; proteção completa ainda pendente.
+  Falhas de identificação, arquivos e prévia usam a faixa comum, com título,
+  texto legível e literal. Dicas deixam de permanecer após ocultar/destruir
+  seu controle.
+
 - **Falhas visíveis e recuperação (0.4.1h2, 2026-10-21):**
   operações de Embarcados deixam de ficar presas em ocupado após queda do
   core. Prévia e confirmação de escrita são invalidadas, preservando escolhas.

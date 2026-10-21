@@ -60,7 +60,7 @@ while IFS= read -r source_file; do
     else
         printf '%s 1.0 %s\n' "$type_name" "$file_name" >> "$mirror/KineinVectis/qmldir"
     fi
-done < <(rg --files ui/qml scripts/qml-harness/stubs -g '*.qml')
+done < <(find ui/qml scripts/qml-harness/stubs -type f -name '*.qml')
 # Os .js do modulo (KvIconGlyphs.js) viajam junto: um componente que os
 # importa por caminho relativo (KvIcon) so' carrega se eles estiverem ao lado.
 while IFS= read -r source_file; do

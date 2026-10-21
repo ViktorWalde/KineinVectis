@@ -158,3 +158,9 @@ compiledb
 
 # rustix Errno::SRCH: POSIX ESRCH, grupo de processo que já não existe.
 srch
+
+# API rustix/Unix usada na reserva serial: pai, identidade do dispositivo, flags FD e flock.
+getppid
+rdev
+setfd
+wouldblock

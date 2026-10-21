@@ -134,6 +134,8 @@ pub enum JsonRpcErrorCode {
     InvalidParams,
     /// The core failed while processing the command.
     InternalError,
+    /// Another managed operation already owns this serial channel.
+    SerialPortBusy,
     /// A required external tool was not found.
     ToolNotFound,
     /// The file changed after the client last read it.

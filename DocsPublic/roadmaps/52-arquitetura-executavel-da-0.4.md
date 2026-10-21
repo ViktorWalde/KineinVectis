@@ -2434,17 +2434,234 @@ compartilhou display por corrida no helper e foi descartada; não é prova do
 produto. O runner de cenas por macro também reaplica a macro ao recuperar
 workspace; por isso o aceite final usa abertura pelo atalho.
 
-**Observação para corrigir antes de fechar a série:** a dica de Identificar
-permanece visível após o card ser destruído, inclusive três segundos depois
-no aceite final. Reproduzido visualmente no componente TooltipController
-existente; precisa de regressão de destruição/ocultação do dono e correção
-no componente comum, antes do fechamento 0.4.9, sem copiar tooltip por painel.
+**Observação da 0.4.1h2 resolvida na parte seguinte:** a dica de Identificar
+permanecia após destruir o card, por mais de três segundos. A regressão e a
+correção do TooltipController existente foram incorporadas à 0.4.1h3 (§14.25),
+com foto nativa antes/depois. A reserva isolada sobre 54c061f foi rebaseada
+sobre 75330ef, corrigida após a prova inicial de crash reprovada e incorporada
+no principal com fio 0.183.0; fechamento e limites no §14.24–14.25.
 
-**Próxima parte isolada, ainda não integrar:** reserva por porta no checkout
-`/home/hugh/KineinVectis-worktrees/serial-lifecycle`, base 54c061f e target
-próprio. Contrato/desenho 0.183.0 no 52 §14.24 desse checkout. O teste de
-crash encontrou ferramenta viva após matar o core e segundo início aceito
-(`/tmp/kinein-serial-owner-crash-v9erukuf/report.json`). Desenho revisto para
-reserva de lançamento no core e reserva de execução na ferramenta, com token
-e exec no mesmo binário, sem executor paralelo. Implementação/reteste ainda
-pendentes; não declarar exclusividade pronta. Main permanece no fio 0.182.0.
+### 14.24 0.4.1h3 — reserva serial de jobs e monitores (desenho, 2026-10-21)
+
+Implementação sobre 75330ef, inicialmente isolada; incorporada e concluída
+no principal após os aceites e o gate registrados abaixo. Prioridade e matriz no §14.20.
+Esta parte cobre identificar, arquivos e monitor; run/flash e ocupação visual
+continuam obrigatórios nas partes seguintes, sem declarar Embarcados pronto.
+
+Um registro compartilhado do core concede uma reserva RAII por identidade de
+arquivo, resolvida por metadata sem abrir tty: rdev para dispositivo de
+caractere Unix e dev/inode para fixtures/aliases/hardlinks. Cada job captura
+a reserva até seu trabalho terminar, incluindo fallback e cancelamento. O
+waiter do PTY segura um guard Send até observar a saída; falha de spawn solta,
+falha de observação/close preserva. O terminal não conhece política serial.
+
+No core com persistência, complementar o mesmo registro com flock em arquivos
+privados de coordenação por usuário, permitindo janelas/workspaces distintos.
+Core de teste permanece em memória por padrão. Arquivos não são removidos:
+o kernel libera ao fechar/crash; registro em disco sem lock não prova uso.
+Aquisição usa lock compartilhado global e exclusivo por identidade; a escolha
+automática terá de obter global exclusivo na próxima parte. Falha de storage
+ou de coordenação recusa antes da ferramenta, sem fallback desprotegido.
+Metadata de dono é publicada antes do processo e só lida após confirmar lock
+ocupado. O escopo não inclui programas externos/versões antigas da IDE.
+
+Contrato 0.183.0, escrito antes do produtor: SERIAL_PORT_BUSY com details.device
+e details.owner {operation,title,workspace?,corePid}. Mensagem específica diz
+que operação ocupa o canal, em que projeto/janela, e orienta encerrar no
+Terminal ou cancelar no Jobs, sem encerrar trabalho existente automaticamente.
+A referência específica de job/terminal e as ações diretas da ocupação visual
+precisam ser adicionadas com seus consumidores; não inventar por parsing shell.
+
+API oficial rustix::fs::flock e FlockOperation conferida em 2026-10-21:
+https://docs.rs/rustix/latest/rustix/fs/fn.flock.html e
+https://docs.rs/rustix/latest/rustix/fs/enum.FlockOperation.html.
+Reutilizar rustix existente, sem nova dependência nem elevar MSRV 1.88;
+std::File::try_lock é estável desde 1.89, conferido na documentação oficial.
+Fronteiras Unix ficam na platform existente, sem cfg novo/adiamento de teste.
+
+Aceites: duas operações da mesma porta e aliases recusadas antes de iniciar
+ferramenta; duas portas independentes; liberar sucesso/falha/cancelamento,
+saída/fechamento do terminal e troca de workspace. Dois processos, crash e
+storage indisponível. Fixture regular e ferramentas falsas; nenhum dispositivo.
+A matriz inteira só fecha com execução/gravação e recuperação visual integradas.
+
+A metadata de dono pode estar indisponível na publicação inicial; owner null
+nessa recusa não inventa identidade, mas preserva o lock ocupado. O módulo
+usará a mesma exceção local de visibilidade de platform para tipos crate-only
+(redundant_pub_crate versus unreachable_pub), sem ampliar alcance ou limites.
+
+**Revisão obrigatória antes de integrar (2026-10-21):** teste real do protótipo
+matou apenas o core e encontrou ferramenta externa ainda viva; outro core
+aceitou a mesma porta. Relatório `/tmp/kinein-serial-owner-crash-v9erukuf/report.json`.
+Logo, lock mantido só pelo core não protege a vida real do recurso após crash.
+NÃO integrar nem declarar pronto esse protótipo sem corrigir e repetir a prova.
+
+Desenho revisto: dois arquivos por porta, reserva de lançamento do core e
+reserva de execução do processo. Ao adquirir, core toma lançamento exclusivo,
+sonda execução exclusiva e publica token único/dono antes de soltar a sonda.
+O executável core tem um modo interno de exec, sem outro executor: abre a
+reserva de execução, valida o token de lançamento e a vida do core originador,
+publica processId e substitui-se pela ferramenta via exec. Somente nesse
+processo filho dedicado remove CLOEXEC dos descritores de execução/global;
+nunca altera herança de FD no core multithread. O kernel mantém a reserva
+na ferramenta após crash do core. Um lançamento antigo que perder a corrida
+para novo dono vê token diferente e recusa antes de executar. Identidade do
+processo continua a do PTY/job, pois exec não muda PID. Sem dependência nova,
+sem shell adicional ou reimplementação de ferramenta. Reutiliza o runner e
+o terminal existentes; a saída permanece a da ferramenta.
+
+Metadados de disco separam Owner de token privado. details.owner ganha
+processId? quando o helper publicou a identidade. Mensagem descreve outra
+instância, sem supor uma janela ainda viva. Ações de recuperação visual e
+encerramento de órfão precisam usar identidade verificada; pertencem à parte
+seguinte com consumidor próprio. A proteção não pode aceitar nova operação
+quando o processo antigo ainda mantém a reserva. A mesma prova de crash
+deve recusar o segundo início enquanto a ferramenta falsa estiver viva.
+
+A suíte paralela também mostrou um fork herdando brevemente descritor CLOEXEC
+antes do exec, com metadata já limpa. Aquisição pode aguardar até 50 ms,
+dormindo 1 ms por tentativa, somente quando o lock está ocupado sem metadata
+legível, antes de devolver ocupação desconhecida. Teste determinístico deve
+cobrir essa janela; não desabilitar paralelismo nem enfraquecer asserções.
+
+O modo de exec confirma o PPID nativo igual a corePid antes de trocar de
+programa; não trata apenas existência de um número PID como prova de pai.
+Assim, reutilização do PID não autoriza um lançamento abandonado.
+
+O helper executa a imagem atual via /proc/self/exe quando disponível; não
+segue cegamente o caminho do binário que pode ter sido substituído por
+rebuild/atualização. Assim usa o mesmo contrato interno mesmo com o arquivo
+antigo removido. Fora desse caso, plataforma resolve o executável atual.
+Clippy sugeriu remover collect no teste de concorrência, o que esperaria
+no primeiro join antes de criar as outras threads da barreira; usar laço
+explícito de criação e só depois joins, sem exceção de lint.
+
+A reserva deve ser solta após observar o processo terminar e antes de publicar
+o desfecho serial: serial.files bem-sucedido dispara refresh no consumidor.
+Manter o guard até o retorno externo do job deixaria uma janela em que a UI
+recebe conclusão e o próximo pedido ainda é recusado. Runner passa a possuir
+o guard e o libera explicitamente antes do evento final, após todos os
+fallbacks/parsers, preservando o executor existente. Cobrir pedidos imediatos
+a partir do evento, sem aguardar job.finished.
+
+A conclusão do guard não apaga o último dono em disco: marca o Record privado
+como completed. Uma ferramenta/descendente pode ainda manter o descritor de
+execução; perder essa identidade prejudicaria a recuperação. O kernel continua
+a decidir ocupação. Lock com Record completed recebe a mesma espera curta
+para descritor herdado por fork; dados obsoletos sem lock são ignorados. O
+helper recusa também Record completed, mesmo que o token não tenha sido
+substituído. A mensagem de outra instância não manda cancelar no Jobs do core
+novo; parada/ocupação visual e execução/gravação continuam na próxima parte.
+
+Leitura da catraca antes da integração: lib.rs chegou a 503/500. A conversão
+do marcador Deferred pertence a outcome.rs, que já possui RequestOutcome;
+mover a conversão para From<JsonRpcResponse> nesse dono, mantendo o despacho no core,
+sem novo módulo nem alteração de comportamento. Nomes tocados do runner
+serial migram para inglês e a linha de base só encolhe.
+
+### 14.25 0.4.1h3 — feedback visual acompanha a operação (desenho, 2026-10-21)
+
+Bug já fotografado no §14.23: a dica de Identificar continua por cima do
+painel após a destruição do card, mesmo depois de três segundos. Corrigir
+TooltipController existente, mantendo os mesmos consumidores/host/estilo.
+A referência visual deve ser tipada e perder a exibição quando o dono deixa
+de existir ou de estar visível, inclusive por ancestral oculto. Um evento
+atrasado do dono anterior não pode apagar a dica do controle novo. Atualização
+de texto e dica em botão desabilitado continuam válidas. Sem polling, singleton
+novo ou limpeza duplicada em cada componente.
+
+Estender tst_tooltip_update com controles reais dinâmicos, destruição/ocultação
+e troca de dono; provar vermelho antes e verde após. Foto nativa antes/depois
+na mesma jornada de identificação interrompida. Sem alteração de IPC/ui/src.
+A proteção serial está em validação no principal. Integrar este feedback
+à mesma fatia antes dos gates QML, para fechar recusa, apresentação e vida
+do card juntas; sem repetir análise C++ sobre fontes inalteradas.
+
+A foto final da reserva (§14.24) também confirma recusa correta mas texto
+pequeno e inteiro vermelho na identidade. Reusar KvVerdict nas falhas de
+Identidade/Arquivos/Prévia de gravação, com título contextual, corpo legível,
+transição curta e o texto integral do backend. Não inferir causa no QML.
+O componente comum deve tratar mensagem/título como texto simples: retorno
+contendo tags literais precisa continuar legível, sem interpretação de HTML.
+Provar com superfícies reais, mensagens longas, larguras estreitas e recuperação
+que remove a faixa. A mudança é feedback da operação, sem redesenhar a navegação
+ou substituir os controllers. Preservar identidade parcial e saída técnica.
+
+O ensaio extra no Qt 6.4 falhou antes de carregar o teste: o espelho QML
+passou a usar rg, ausente na imagem do runner. A montagem do módulo deve
+usar find (já disponível), sem instalar ferramentas no host/container nem
+pular esse aceite. Registrar essa falha de infraestrutura e repetir a prova.
+
+**Aceites da 0.4.1h3 no principal (2026-10-21):** 18 testes novos de reserva,
+incluindo aliases/hardlinks, threads, dois registries/processos, storage,
+crash, token obsoleto, descritor mantido pela ferramenta, PTY/jobs reais e
+pedido imediato após evento de resultado. Teste de observação do terminal
+agora mantém uma reserva real durante falha/recuperação. Duas mutações de
+liberação precoce/exec com CLOEXEC foram recusadas por asserções de runtime
+(`/tmp/kinein-h3-mutations.json`). 1.227 testes Rust da fonte final passaram
+(`/tmp/kinein-h3-final-source-tests.log`), após a conversão de outcome.
+
+Core release real, estado isolado, ferramenta falsa e arquivo regular:
+- crash: `/tmp/kinein-serial-owner-crash-1n4b4rqs/report.json` confirma
+  ferramenta viva e segunda operação recusada com SERIAL_PORT_BUSY/processId;
+- imagem removida: `/tmp/kinein-self-exec-90tlphq5/report.json` confirma
+  identificação após remover apenas a cópia privada do binário em execução;
+- monitor persistido/PTY real: `/tmp/kinein-serial-monitor-persisted-ss4awi30/report.json`
+  confirma exec do tio falso que ignora HUP, recusa concorrente, saída real
+  no fechamento e nova abertura depois da liberação.
+
+Foto da recusa antes do polimento: `/tmp/kinein-shell-native-proof/serial-busy-main-final/shots/02-busy-visible.png`.
+Real core release + UI nativa; segunda instância recebe recusa, ferramenta
+chamada uma única vez, ui.log vazio. Não confundir esta fixture com placa
+física. Smokes prévios ao polimento: debug/release 391/377 ms nesta amostra,
+33 superfícies por preset sem aviso. Repetir após recompilar as mudanças QML.
+Nenhum dispositivo aberto e nenhuma gravação/instalação no host.
+
+O §14.25 usa os mesmos controllers e KvVerdict. A suíte de feedback compara
+larguras 320/736, causa literal contendo tags, identidade parcial e limpeza.
+Retirar PlainText produz links e reprova asserções; retirar a limpeza da dica
+reproduz o texto preso. Provas no Qt local e 6.4, sem desabilitar falhas.
+A primeira prova Qt 6.4 falhou por rg ausente no espelho; find corrigiu o
+preparo sem instalar dependência. Traversal de teste usa índice/guarda para
+listas de filhos do Qt 6.4. A rodada com mutações simultâneas não é aceite;
+provas finais estáveis: `/tmp/kinein-h3-feedback-main.log`,
+`/tmp/kinein-h3-tooltip-main.log`, `/tmp/kinein-h3-feedback-qt64-main.log` e
+`/tmp/kinein-tooltip-qt64-after.log`. Gate geral ainda em andamento.
+
+A mensagem pode conter um identificador USB longo sem espaços; a faixa comum
+deve quebrar esse trecho quando necessário, mantendo a causa integral dentro
+da largura. Aceite usa um identificador de 160 caracteres e mede contentWidth.
+
+**Fechamento da 0.4.1h3 (2026-10-21):** TUDO VERDE no gate rápido estrito
+(`/tmp/kinein-h3-gate-final.log`): 1.227 Rust, Clippy, análise C++ limpa,
+8 CTest, qmllint e 161 harnesses QML; nenhum NÃO PROVADO. Conversão final
+retestada na suíte Rust completa. O protótipo reprovado acima foi substituído
+pela reserva de execução, com a prova real de crash aprovada antes de integrar.
+Os fontes C++ não mudaram; compilações QML nativas ocorreram após terminar
+verificar-cpp.sh. Todas as fontes finais passaram nas checagens correspondentes.
+
+UI/core debug e release reconstruídos. Smokes finais 540/462 ms nesta amostra,
+33 superfícies por preset sem aviso (`/tmp/kinein-h3-smoke-debug-final.log` e
+`/tmp/kinein-h3-smoke-release-final.log`). Aceites nativos sequenciais com core
+release, Xvfb próprio/software e ui.log vazio: recusa legível com uma única
+chamada da ferramenta em `/tmp/kinein-shell-native-proof/serial-busy-polished-final/`;
+queda durante identificação sem dica presa em
+`/tmp/kinein-shell-native-proof/identify-loss-tooltip-cleared-final/`.
+Fotos antes/depois vistas. A primeira tentativa desse passeio coincidiu com
+o link do binário e não iniciou a UI; descartada, servidor X próprio encerrado
+e prova repetida somente após o build concluir. Nenhum processo da IDE do
+usuário foi encerrado, nenhuma entrada global ou dispositivo foi usado.
+
+**Próxima parte obrigatória, 0.4.1h4:** o caminho nativo de run.start/run.script
+(MicroPython com porta explícita e automática) e gravação precisam usar a mesma
+reserva. A seleção automática exige coordenação global; host CPython/comandos
+manuais não devem reservar uma porta só por estar selecionada na UI. Gravação
+nativa precisa transportar intenção estruturada no run/configuração salva,
+revalidando contexto/artefato/porta no backend; não inferir por parsing shell.
+Depois, snapshot e ações de ocupação ligadas a job/terminal ou processo com
+identidade verificada, incluindo ferramenta órfã após queda do core. Não matar
+PID apenas porque consta em metadata antiga. Reusar executores existentes.
+Aceites incluem portas distintas, concorrência, cancelamento, troca de projeto,
+reconexão, configurações antigas e nova instalação. Esta fatia não fecha a
+matriz inteira nem comprova flash físico. Setup no dock/schema 3/C/Python e
+o plano até 0.4.9 permanecem na fila; nada foi transferido à etapa especial.

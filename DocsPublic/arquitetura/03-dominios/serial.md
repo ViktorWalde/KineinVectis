@@ -179,3 +179,17 @@ nada achado → os três passos do probe.rs *Probe Setup* (baixar
 citados). Cada `fix` traz `sourceUrl` e `checkedOn`; a UI escreve o
 `command` no terminal da IDE pelo mesmo caminho do painel de instalação,
 com Enter após clique explícito; o botão deve dizer que executa no terminal.
+
+## Reserva por operação (0.183.0)
+
+`serial.identify`, `serial.files` e `serial.monitor` recusam conflito antes de
+iniciar ferramenta com código `SERIAL_PORT_BUSY`, mensagem adequada à UI e
+`details: {device, owner: {operation, title, workspace?, corePid, processId?} | null}`.
+`owner: null` informa ocupação confirmada sem metadata legível; não inventa dono. A operação
+pode ser do mesmo core ou de outra janela que compartilhe o storage global.
+Aliases da mesma identidade conflitam; portas diferentes são independentes.
+A reserva acompanha o job ou o término observado do monitor. Falha de fechar
+ou consultar estado não libera o canal. Descobrir acesso/porta não a abre.
+Falha de coordenação é INTERNAL_ERROR; não inicia ferramenta sem proteção.
+Programas externos não participam desta reserva. Run/flash ainda precisam
+integrar a mesma reserva; não inferir metadados analisando comando shell.

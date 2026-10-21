@@ -704,6 +704,17 @@ confirmações de escrita. As escolhas de porta, motor, firmware e aba são
 preservadas. Após reconectar, use **Atualizar** e inicie novamente a operação
 desejada; a recuperação não repete automaticamente seus comandos.
 
+Identificação, arquivos na placa e monitor serial reservam a porta enquanto
+sua ferramenta estiver viva. Outra operação nessas ações recebe a causa de
+ocupação, incluindo o projeto/instância quando conhecido. Feche o monitor
+no Terminal ou cancele a operação no Jobs da instância que a iniciou.
+Uma queda do core não libera uma porta ainda mantida pela ferramenta;
+aguarde seu encerramento. Esta proteção cobre instâncias atualizadas da
+IDE; execução/gravação e recuperação visual integrada seguem em desenvolvimento.
+As falhas de identificação, arquivos e prévia de gravação usam uma faixa com
+título e causa legível. Textos longos quebram dentro da largura; tags recebidas
+são mostradas literalmente. Dicas somem ao ocultar ou remover seu controle.
+
 Clique direito (ou `Shift+F10`/tecla Menu com foco no terminal) abre Copiar,
 Colar, **Selecionar Tudo**, Selecionar área visível, Limpar tela, Limpar
 histórico, Novo e Fechar. Navegue com setas e confirme com Enter. Selecionar

@@ -51,6 +51,7 @@ pub mod toolchain;
 pub mod tools;
 pub mod workspace;
 pub use runtime::{run_json_lines, run_stdio};
+pub use serial::ownership::run_serial_tool;
 
 mod outcome;
 mod platform;
@@ -99,6 +100,7 @@ pub struct Core {
     continuations: Option<std::sync::mpsc::Sender<Continuation>>,
     debug: Option<dap::DebugManager>,
     terminal: Option<terminal::TerminalManager>,
+    serial_usage: serial::ownership::Registry,
     jobs: Option<jobs::JobManager>,
     /// A checagem do compilador ao salvar (0.4.0c): o job em andamento e os
     /// arquivos citados, por unidade.
@@ -158,6 +160,7 @@ impl Core {
             continuations: None,
             debug: None,
             terminal: None,
+            serial_usage: serial::ownership::Registry::default(),
             jobs: None,
             syntax_checks: handlers::syntax_check::SyntaxChecks::default(),
             compiledb_job: Mutex::new(None),
@@ -235,9 +238,9 @@ impl Core {
                 request_id,
                 json!({ "commands": commands::command_descriptors() }),
             )),
-            "tools.detect" => outcome_for(self.tools_detect_response(request_id)),
+            "tools.detect" => RequestOutcome::from(self.tools_detect_response(request_id)),
             "datasource.discover" => {
-                outcome_for(self.datasource_discover_response(request_id, params))
+                RequestOutcome::from(self.datasource_discover_response(request_id, params))
             }
             "tools.status" => RequestOutcome::Continue(self.tools_status_response(request_id)),
             "environment.scan" => {
@@ -276,7 +279,9 @@ impl Core {
             "test.discover" => {
                 RequestOutcome::Continue(self.test_discover_response(request_id, params))
             }
-            method => outcome_for(self.service_request_response(method, request_id, params)),
+            method => {
+                RequestOutcome::from(self.service_request_response(method, request_id, params))
+            }
         }
     }
 
@@ -487,16 +492,6 @@ pub use outcome::{CoreError, RequestOutcome};
 /// O que fecha um pedido adiado que precisa do `Core`: roda NO LACO, com
 /// `&mut Core`, depois de a espera ter acontecido fora dele.
 pub type Continuation = Box<dyn FnOnce(&mut Core) -> JsonRpcResponse + Send>;
-
-/// `Continue`, ou `Deferred` quando o handler devolveu o marcador de
-/// resposta adiada (Etapa 2 F6).
-fn outcome_for(response: JsonRpcResponse) -> RequestOutcome {
-    if rpc::is_deferred(&response) {
-        RequestOutcome::Deferred(response)
-    } else {
-        RequestOutcome::Continue(response)
-    }
-}
 
 #[cfg(test)]
 mod tests;

@@ -18,6 +18,45 @@ use std::{
 
 use super::NoFollow;
 
+pub(super) fn self_executable() -> io::Result<PathBuf> {
+    std::env::current_exe()
+}
+
+// Serial execution is unavailable here; never accept an unverified parent.
+#[allow(clippy::missing_const_for_fn)]
+pub(super) fn is_parent_process(_pid: u32) -> bool {
+    false
+}
+
+pub(super) fn exec_keep_files(
+    _files: Vec<File>,
+    _program: &OsStr,
+    _args: &[OsString],
+) -> io::Result<()> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "o lançamento serial ainda não está disponível no Windows",
+    ))
+}
+
+pub(super) fn serial_device_key(path: &Path) -> io::Result<String> {
+    Ok(canonicalize(path)?.display().to_string().to_lowercase())
+}
+
+pub(super) fn serial_lock_file(_path: &Path) -> io::Result<File> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "a integração serial ainda não está disponível no Windows",
+    ))
+}
+
+pub(super) fn try_lock_file(_file: &File, _shared: bool) -> io::Result<bool> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "a coordenação serial ainda não está disponível no Windows",
+    ))
+}
+
 /// Abre o proprio ponto de reparse, sem segui-lo.
 const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
 /// Necessario para o `CreateFileW` abrir uma pasta.

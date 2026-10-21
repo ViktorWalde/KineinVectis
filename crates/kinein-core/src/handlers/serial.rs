@@ -104,10 +104,34 @@ impl Core {
             elf.as_deref(),
             escolha.activation.as_deref(),
         );
+        let reservation =
+            match self.claim_serial_port(&request.device, "serial.monitor", "Monitor serial") {
+                Ok(reservation) => reservation,
+                Err(error) => return JsonRpcResponse::failure(request_id, error),
+            };
+        let (executable, reserved_args) = match reservation.invocation(Path::new(&programa), &args)
+        {
+            Ok(invocation) => invocation,
+            Err(error) => {
+                return JsonRpcResponse::failure(
+                    request_id,
+                    JsonRpcError::new(
+                        JsonRpcErrorCode::InternalError,
+                        format!("Não foi possível preparar o monitor: {error}"),
+                        None,
+                    ),
+                );
+            }
+        };
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "serial.monitor");
         };
-        match session.open_command(&root, &programa, &args) {
+        match session.open_command_holding(
+            &root,
+            &executable.display().to_string(),
+            &reserved_args,
+            reservation,
+        ) {
             Ok(id) => JsonRpcResponse::success(
                 request_id,
                 json!(SerialMonitorResult {
@@ -118,6 +142,16 @@ impl Core {
             ),
             Err(error) => terminal_error_response(request_id, &error),
         }
+    }
+
+    pub(crate) fn claim_serial_port(
+        &self,
+        device: &str,
+        operation: &str,
+        title: &str,
+    ) -> Result<crate::serial::ownership::Lease, JsonRpcError> {
+        self.serial_usage
+            .acquire(device, operation, title, self.workspace_root().as_deref())
     }
 
     /// `serial.access` — permissao POR CANAL (E2 do `integracoes/38` §6):
@@ -206,6 +240,11 @@ impl Core {
             return jobs_unavailable_response(request_id, "serial.identify");
         };
         let device = request.device;
+        let reservation =
+            match self.claim_serial_port(&device, "serial.identify", "Identificação da placa") {
+                Ok(reservation) => reservation,
+                Err(error) => return JsonRpcResponse::failure(request_id, error),
+            };
         let (programa, args) = identify::command_line(&esptool, &device, identify::FLASH_ID_V5);
         let comando = identify::display(&programa, &args);
         let job_id = jobs.spawn(
@@ -214,7 +253,10 @@ impl Core {
             // Medio: reseta a placa (DTR/RTS), nao escreve nada nela.
             JobRisk::Medium,
             true,
-            move |ctx| identificar(ctx, &esptool, &device),
+            move |ctx| {
+                let runner = job::Runner::new(ctx, reservation);
+                identificar(runner, &esptool, &device)
+            },
         );
         JsonRpcResponse::success(
             request_id,
@@ -228,16 +270,17 @@ impl Core {
 
 /// O corpo do job: roda o `flash-id` (v5; cai para o `flash_id` da v4 se a
 /// ferramenta nao conhece o comando), le a saida e emite o desfecho.
-fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::JobOutcome {
+fn identificar(runner: job::Runner<'_>, esptool: &Path, device: &str) -> jobs::JobOutcome {
+    let ctx = runner.context();
     let deadline = Instant::now() + IDENTIFY_TIMEOUT;
     let mut subcommand = identify::FLASH_ID_V5;
-    let mut attempt = run_identification(ctx, esptool, device, subcommand, false, deadline);
-    if !attempt.sucesso && identify::unknown_subcommand(&attempt.raw) && !ctx.is_cancelled() {
+    let mut attempt = run_identification(&runner, esptool, device, subcommand, false, deadline);
+    if !attempt.success && identify::unknown_subcommand(&attempt.raw) && !ctx.is_cancelled() {
         ctx.emit_output("a ferramenta não conhece `flash-id`: tentando `flash_id` (esptool v4)");
         subcommand = identify::FLASH_ID_V4;
-        attempt = run_identification(ctx, esptool, device, subcommand, false, deadline);
+        attempt = run_identification(&runner, esptool, device, subcommand, false, deadline);
     }
-    if !attempt.sucesso
+    if !attempt.success
         && Instant::now() < deadline
         && attempt.raw.contains("Failed to start stub")
         && !ctx.is_cancelled()
@@ -245,17 +288,17 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
         ctx.emit_output(
             "o stub não respondeu: repetindo a leitura pela ROM, sem stub, a 115200 baud",
         );
-        attempt = run_identification(ctx, esptool, device, subcommand, true, deadline);
+        attempt = run_identification(&runner, esptool, device, subcommand, true, deadline);
     }
     let identity = identify::parse_flash_id(&attempt.raw);
     let leu_chip = identity.chip.is_some();
-    let tool_success = attempt.sucesso;
+    let tool_success = attempt.success;
     let success = tool_success && leu_chip;
     let error = if success {
         None
     } else if ctx.is_cancelled() {
         Some("identificação cancelada".to_owned())
-    } else if attempt.expirou {
+    } else if attempt.timed_out {
         Some(format!(
             "o esptool não respondeu em {} s: a placa está plugada nesta porta e sem outro \
              programa (monitor serial, ModemManager) segurando-a?",
@@ -270,12 +313,13 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
         .chip
         .as_deref()
         .map(|chip| crate::project::alvo_do_chip(chip, "esptool flash-id pela porta serial"));
+    drop(runner);
     ctx.emit_event(
         "event.serial.identified",
         json!(SerialIdentifiedEvent {
             job_id: ctx.id().to_owned(),
             device: device.to_owned(),
-            command: attempt.comando,
+            command: attempt.command_line,
             success,
             error,
             identity: leu_chip.then_some(identity),
@@ -293,19 +337,18 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
 /// Uma execucao do esptool com o prazo de identificacao (`serial/job.rs`
 /// faz o trabalho; aqui so' a linha de comando do `flash-id`).
 fn run_identification(
-    ctx: &jobs::JobContext,
+    runner: &job::Runner<'_>,
     esptool: &Path,
     device: &str,
     subcommand: &str,
     rom: bool,
     deadline: Instant,
-) -> job::Tentativa {
+) -> job::Attempt {
     let (_, mut args) = identify::command_line(esptool, device, subcommand);
     if rom {
         args.splice(0..0, ["--no-stub", "--baud", "115200"].map(str::to_owned));
     }
-    job::rodar(
-        ctx,
+    runner.run(
         esptool,
         &args,
         deadline.saturating_duration_since(Instant::now()),

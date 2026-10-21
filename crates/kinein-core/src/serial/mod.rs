@@ -33,6 +33,7 @@ pub mod files;
 pub mod identify;
 pub mod job;
 pub mod monitor;
+pub(crate) mod ownership;
 mod permissions;
 
 use std::collections::BTreeMap;

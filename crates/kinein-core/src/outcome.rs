@@ -74,3 +74,14 @@ impl Error for CoreError {
         }
     }
 }
+
+/// Converts a handler response, preserving the existing deferred marker.
+impl From<JsonRpcResponse> for RequestOutcome {
+    fn from(response: JsonRpcResponse) -> Self {
+        if crate::rpc::is_deferred(&response) {
+            Self::Deferred(response)
+        } else {
+            Self::Continue(response)
+        }
+    }
+}

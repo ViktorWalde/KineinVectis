@@ -188,13 +188,13 @@ Item {
         }
 
         // A recusa ou a falha, com a linha do mpremote.
-        Text {
+        KvVerdict {
+            objectName: "filesFailure"
             width: parent.width
-            wrapMode: Text.WordWrap
-            visible: root.files && root.files.errorText !== ""
-            text: root.files ? root.files.errorText : ""
-            color: Theme.errorSoft
-            font.pixelSize: Theme.fontSizeCaption
+            heading: qsTr("Operação de arquivos não concluída")
+            message: root.files ? root.files.errorText : ""
+            codeFont: false
+            animateChanges: true
         }
     }
 }

@@ -29,29 +29,29 @@ const FILES_TIMEOUT: Duration = Duration::from_secs(120);
 impl Core {
     /// `serial.files` — nao exige workspace para `list`/`rm`/`mkdir`; para
     /// `get`/`put` um `local` relativo e' sob o workspace (sem workspace,
-    /// so' absoluto). Recusa ANTES de tocar a porta: pedido invalido,
+    /// so' absoluto). Recusa ANTES de tocar a porta: request invalido,
     /// porta inexistente ou sem acesso, `mpremote` ausente.
     pub(crate) fn serial_files_response(
         &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let pedido = match parse_params::<SerialFilesParams>(
+        let request = match parse_params::<SerialFilesParams>(
             request_id.as_ref(),
             params,
             "serial.files requer device e action (list|get|put|rm|mkdir); aceita path, local e tool",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
-        let local = match self.local_resolvido(pedido.local.as_deref()) {
+        let local = match self.local_resolvido(request.local.as_deref()) {
             Ok(local) => local,
-            Err(mensagem) => return recusa(request_id, &mensagem, &pedido),
+            Err(mensagem) => return recusa(request_id, &mensagem, &request),
         };
         // `get` cria a pasta de destino (a tela baixa para `placa/<caminho>`
         // sob o workspace — o espelho da placa, que nunca colide com o codigo
         // do projeto e pode ser baixado de novo).
-        if pedido.action == SerialFilesAction::Get
+        if request.action == SerialFilesAction::Get
             && let Some(pasta) = local.as_deref().and_then(Path::parent)
             && !pasta.as_os_str().is_empty()
             && let Err(erro) = std::fs::create_dir_all(pasta)
@@ -59,18 +59,18 @@ impl Core {
             return recusa(
                 request_id,
                 &format!("não consegui criar {}: {erro}", pasta.display()),
-                &pedido,
+                &request,
             );
         }
         if let Err(mensagem) =
-            files::validate(pedido.action, pedido.path.as_deref(), local.as_deref())
+            files::validate(request.action, request.path.as_deref(), local.as_deref())
         {
-            return recusa(request_id, &mensagem, &pedido);
+            return recusa(request_id, &mensagem, &request);
         }
-        if let Err(recusa) = ready_port(request_id.as_ref(), "serial.files", &pedido.device) {
+        if let Err(recusa) = ready_port(request_id.as_ref(), "serial.files", &request.device) {
             return *recusa;
         }
-        let Some(mpremote) = pedido
+        let Some(mpremote) = request
             .tool
             .as_deref()
             .map(PathBuf::from)
@@ -90,9 +90,14 @@ impl Core {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "serial.files");
         };
-        let device = pedido.device.clone();
-        let action = pedido.action;
-        let path = pedido.path.unwrap_or_default().trim().to_owned();
+        let reservation =
+            match self.claim_serial_port(&request.device, "serial.files", "Arquivos na placa") {
+                Ok(reservation) => reservation,
+                Err(error) => return JsonRpcResponse::failure(request_id, error),
+            };
+        let device = request.device.clone();
+        let action = request.action;
+        let path = request.path.unwrap_or_default().trim().to_owned();
         let (programa, args) =
             files::command_line(&mpremote, &device, action, &path, local.as_deref());
         let comando = job::display(&programa, &args);
@@ -111,8 +116,9 @@ impl Core {
             JobRisk::Medium
         };
         let job_id = jobs.spawn("serial.files", titulo, risco, true, move |ctx| {
+            let runner = job::Runner::new(ctx, reservation);
             executar(
-                ctx,
+                runner,
                 &mpremote,
                 &args,
                 &device,
@@ -154,14 +160,14 @@ impl Core {
 fn recusa(
     request_id: Option<Value>,
     mensagem: &str,
-    pedido: &SerialFilesParams,
+    request: &SerialFilesParams,
 ) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(
             JsonRpcErrorCode::InvalidParams,
             format!("serial.files: {mensagem}"),
-            Some(json!({ "device": pedido.device, "action": pedido.action })),
+            Some(json!({ "device": request.device, "action": request.action })),
         ),
     )
 }
@@ -170,7 +176,7 @@ fn recusa(
 /// no raw REPL (medido: o programa dela inundando a UART), le a saida e
 /// emite o desfecho.
 fn executar(
-    ctx: &jobs::JobContext,
+    runner: job::Runner<'_>,
     mpremote: &Path,
     args: &[String],
     device: &str,
@@ -178,22 +184,23 @@ fn executar(
     path: &str,
     local: Option<&Path>,
 ) -> jobs::JobOutcome {
-    let mut tentativa = job::rodar(ctx, mpremote, args, FILES_TIMEOUT, "mpremote");
-    if !tentativa.sucesso && files::raw_repl_failed(&tentativa.raw) && !ctx.is_cancelled() {
+    let ctx = runner.context();
+    let mut tentativa = runner.run(mpremote, args, FILES_TIMEOUT, "mpremote");
+    if !tentativa.success && files::raw_repl_failed(&tentativa.raw) && !ctx.is_cancelled() {
         ctx.emit_output(
             "a placa não deixou entrar no raw REPL (o programa dela ocupa a UART): tentando de novo",
         );
         let primeira = tentativa.raw;
-        tentativa = job::rodar(ctx, mpremote, args, FILES_TIMEOUT, "mpremote");
+        tentativa = runner.run(mpremote, args, FILES_TIMEOUT, "mpremote");
         // As duas saidas viajam: a tela mostra por que a primeira morreu.
         tentativa.raw = format!("{primeira}--- segunda tentativa ---\n{}", tentativa.raw);
     }
-    let success = tentativa.sucesso;
+    let success = tentativa.success;
     let error = if success {
         None
     } else if ctx.is_cancelled() {
         Some("operação cancelada".to_owned())
-    } else if tentativa.expirou {
+    } else if tentativa.timed_out {
         Some(format!(
             "o mpremote não respondeu em {} s: a placa está plugada nesta porta e sem outro \
              programa (monitor serial, REPL) segurando-a?",
@@ -207,6 +214,7 @@ fn executar(
     };
     let entries =
         (success && action == SerialFilesAction::List).then(|| files::parse_ls(&tentativa.raw));
+    drop(runner);
     ctx.emit_event(
         "event.serial.files",
         json!(SerialFilesEvent {
@@ -214,7 +222,7 @@ fn executar(
             device: device.to_owned(),
             action,
             path: path.to_owned(),
-            command: tentativa.comando,
+            command: tentativa.command_line,
             success,
             error,
             entries,

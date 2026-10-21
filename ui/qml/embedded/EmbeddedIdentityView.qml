@@ -92,13 +92,13 @@ Item {
         }
 
         // A recusa ou a falha, com a mensagem do core/esptool.
-        Text {
+        KvVerdict {
+            objectName: "identityFailure"
             width: parent.width
-            wrapMode: Text.WordWrap
-            visible: root.identity && root.identity.errorText !== ""
-            text: root.identity ? root.identity.errorText : ""
-            color: Theme.errorSoft
-            font.pixelSize: Theme.fontSizeCaption
+            heading: root.identity && root.identity.found ? qsTr("Identificação incompleta") : qsTr("Não foi possível identificar a placa")
+            message: root.identity ? root.identity.errorText : ""
+            codeFont: false
+            animateChanges: true
         }
 
         // A saida crua so' quando o parser nao entendeu (sem chip): e' o que

@@ -104,6 +104,7 @@ impl TerminalManager {
         child: &SharedChild,
         running: &Arc<AtomicBool>,
         state: &Arc<Mutex<TerminalState>>,
+        resource: impl Send + 'static,
     ) {
         let running = Arc::clone(running);
         let child = Arc::clone(child);
@@ -147,6 +148,7 @@ impl TerminalManager {
                 thread::sleep(CHILD_POLL);
             };
             let code = i32::try_from(status.exit_code()).ok();
+            drop(resource);
             running.store(false, Ordering::SeqCst);
             drop(events.send(JsonRpcRequest::notification(
                 "event.terminal.closed",

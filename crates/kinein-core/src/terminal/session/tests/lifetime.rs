@@ -239,7 +239,14 @@ fn observation_failure_has_a_notice_preserves_vt_and_recovers_without_false_exit
     })));
     let running = Arc::new(AtomicBool::new(true));
     let manager = TerminalManager::new(sender);
-    manager.spawn_waiter("notice-test", &child, &running, &state);
+    let port = temp_root("notice-resource").join("port");
+    std::fs::write(&port, "regular fixture").unwrap();
+    let registry = crate::serial::ownership::Registry::default();
+    let device = port.to_str().unwrap();
+    let resource = registry
+        .acquire(device, "serial.monitor", "Monitor", None)
+        .unwrap();
+    manager.spawn_waiter("notice-test", &child, &running, &state, resource);
     let failed = wait_frame(&receiver, true);
     assert_eq!(failed["notice"]["code"], "INTERNAL_ERROR");
     assert!(
@@ -247,6 +254,13 @@ fn observation_failure_has_a_notice_preserves_vt_and_recovers_without_false_exit
             .as_str()
             .unwrap()
             .contains("status indisponível")
+    );
+    assert_eq!(
+        registry
+            .acquire(device, "serial.identify", "Identify", None)
+            .unwrap_err()
+            .code,
+        kinein_protocol::JsonRpcErrorCode::SerialPortBusy
     );
     assert_eq!(failed["lines"], before["lines"]);
     assert_eq!(failed["cursor"], before["cursor"]);
@@ -258,9 +272,19 @@ fn observation_failure_has_a_notice_preserves_vt_and_recovers_without_false_exit
     let recovered = wait_frame(&receiver, false);
     assert_eq!(recovered["lines"], before["lines"]);
     assert!(running.load(Ordering::SeqCst));
+    assert!(
+        registry
+            .acquire(device, "serial.identify", "Identify", None)
+            .is_err()
+    );
     exited.store(true, Ordering::SeqCst);
     wait_closed(&receiver, &["notice-test".to_owned()]);
     assert!(!running.load(Ordering::SeqCst));
+    assert!(
+        registry
+            .acquire(device, "serial.identify", "Identify", None)
+            .is_ok()
+    );
 }
 
 #[test]

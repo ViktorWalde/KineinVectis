@@ -41,6 +41,7 @@ Item {
 
         width: parent.width
         visible: root.busy
+        textFormat: Text.PlainText
         text: root.busyText
         color: Theme.textMuted
         font.pixelSize: Theme.fontSizeCaption
@@ -65,6 +66,7 @@ Item {
         Text {
             width: parent.width
             visible: root.heading !== ""
+            textFormat: Text.PlainText
             text: root.heading
             wrapMode: Text.WordWrap
             color: root.ok ? Theme.successSoft : root.neutral ? Theme.textPrimary : Theme.errorSoft
@@ -73,7 +75,8 @@ Item {
         }
         Text {
             width: parent.width
-            wrapMode: Text.WordWrap
+            wrapMode: Text.Wrap
+            textFormat: Text.PlainText
             text: root.message
             color: root.ok ? Theme.textPrimary : Theme.textSecondary
             font.family: root.codeFont ? Theme.monoFont : Theme.uiFont

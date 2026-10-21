@@ -557,6 +557,7 @@ convert
 converts
 cooperative
 coordinates
+coordination
 copied
 copies
 copy
@@ -788,6 +789,7 @@ dots
 dotted
 double
 down
+downgrade
 download
 downloaded
 downloading
@@ -1043,6 +1045,7 @@ flipper
 float
 floated
 floating
+flock
 floor
 floored
 flow
@@ -1058,6 +1061,7 @@ folders
 folding
 follow
 follows
+followup
 font
 fontes
 footer
@@ -1715,6 +1719,7 @@ objects
 observation
 observe
 observed
+obsolete
 occupied
 occurred
 occurrence
@@ -1788,6 +1793,7 @@ overwriting
 owned
 owner
 owners
+ownership
 paced
 pacing
 package
@@ -2104,6 +2110,7 @@ registered
 registers
 registrar
 registration
+registries
 registry
 regular
 reinterpret
@@ -2119,8 +2126,10 @@ released
 reload
 reloaded
 reloads
+remain
 remaining
 remains
+remedy
 remember
 remembered
 remote
@@ -2179,6 +2188,7 @@ requirement
 requirements
 requires
 reread
+reservation
 reserve
 reserved
 reset
@@ -2319,6 +2329,7 @@ section
 sections
 security
 seed
+seek
 seen
 sees
 segment
@@ -2755,6 +2766,7 @@ unix
 unknown
 unless
 unlimited
+unlocked
 unmoved
 unnamed
 unnecessary
@@ -2778,6 +2790,7 @@ unwrap
 update
 updated
 updates
+upgrade
 upload
 uploaded
 uploading
@@ -2870,6 +2883,7 @@ watcher
 watches
 wave
 ways
+weak
 website
 weight
 welcome
@@ -2910,6 +2924,7 @@ worst
 worth
 would
 wrap
+wrapped
 wrapper
 wraps
 writable
