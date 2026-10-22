@@ -18,10 +18,11 @@
 
 use std::path::PathBuf;
 
-use kinein_protocol::{FlashProposalResult, ProjectModel};
+use kinein_protocol::ProjectModel;
 
 use super::{
-    ESPTOOL_BAUD, FindTool, FlashError, ProposalTools, chosen_port, quote, readable_size, tool,
+    ESPTOOL_BAUD, FindTool, FlashCommand, FlashError, FlashPlan, ProposalTools, chosen_port, quote,
+    readable_size, tool,
 };
 
 /// Um firmware INSTALADO (o arquivo existe na pasta da IDE), como o
@@ -51,7 +52,7 @@ pub(super) fn propose(
     device: Option<&str>,
     flash_size_bytes: Option<u64>,
     tools: &ProposalTools<'_>,
-) -> Result<FlashProposalResult, FlashError> {
+) -> Result<FlashPlan, FlashError> {
     let find_tool = tools.find;
     let (_, engine_source) = select_engine(image, engine)?;
     let mut source = vec![engine_source];
@@ -73,13 +74,13 @@ pub(super) fn propose(
             });
         }
     };
-    Ok(FlashProposalResult {
-        name: format!("Gravar firmware ({})", image.label),
-        command,
-        engine: image.engine.clone(),
+    Ok(FlashPlan::new(
+        format!("Gravar firmware ({})", image.label),
+        image.engine.clone(),
         source,
         warnings,
-    })
+        command,
+    ))
 }
 
 pub(super) fn select_engine(
@@ -113,9 +114,8 @@ fn esptool(
     tools: &ProposalTools<'_>,
     source: &mut Vec<String>,
     warnings: &mut Vec<String>,
-) -> Result<String, FlashError> {
+) -> Result<FlashCommand, FlashError> {
     let selected = super::esptool::selected(tools)?;
-    let esptool = quote(&selected.path.display().to_string());
     source.push(selected.evidence());
     let device = chosen_port(device)?;
     let offset = image
@@ -125,7 +125,7 @@ fn esptool(
             message: format!("o catalogo não diz o offset de {}", image.label),
         })?;
     let arquivo = image.file.display().to_string();
-    let mut partes = vec![esptool];
+    let mut partes = Vec::new();
     // O chip da pagina; se o kit diz outro, o usuario ve os dois nos avisos
     // e a linha leva o da pagina (e' o firmware que decide o chip).
     if let Some(chip) = image.chip.as_deref() {
@@ -139,7 +139,7 @@ fn esptool(
     }
     partes.extend([
         "--port".to_owned(),
-        quote(device),
+        device.to_owned(),
         "--baud".to_owned(),
         ESPTOOL_BAUD.to_owned(),
         "--before".to_owned(),
@@ -148,7 +148,7 @@ fn esptool(
         selected.syntax("hard-reset"),
         selected.syntax("write-flash"),
         offset.to_owned(),
-        quote(&arquivo),
+        arquivo.clone(),
     ]);
     source.push(format!(
         "firmware: {arquivo} ({})",
@@ -163,7 +163,7 @@ fn esptool(
     warnings.push(format!(
         "primeira instalação do MicroPython nesta placa? a página manda apagar a flash antes: \
          {} --port {} {}",
-        partes[0],
+        quote(&selected.path.display().to_string()),
         quote(device),
         selected.syntax("erase-flash")
     ));
@@ -176,14 +176,14 @@ fn esptool(
             readable_size(placa)
         ));
     }
-    Ok(partes.join(" "))
+    Ok(FlashCommand::new(selected.path.clone(), partes))
 }
 
 fn picotool(
     image: &FirmwareImage,
     find_tool: &FindTool<'_>,
     source: &mut Vec<String>,
-) -> Result<String, FlashError> {
+) -> Result<FlashCommand, FlashError> {
     let picotool = tool(
         find_tool,
         "picotool",
@@ -199,7 +199,10 @@ fn picotool(
          para o drive RPI-RP2, como a página manda"
             .to_owned(),
     );
-    Ok(format!("{picotool} load -f -x {}", quote(&arquivo)))
+    Ok(FlashCommand::new(
+        picotool,
+        vec!["load".to_owned(), "-f".to_owned(), "-x".to_owned(), arquivo],
+    ))
 }
 
 #[cfg(test)]

@@ -2,9 +2,11 @@
 //! do autor em 2026-09-11: "como o Upload do `PlatformIO` e o `OpenOCD` Download &
 //! Run do `CLion`" — nao um dominio novo).
 //!
-//! Esta unidade e' PURA: compoe a linha de shell do motor a partir do que o
+//! Esta unidade e' PURA: planeja programa/argv do motor a partir do que o
 //! `project.model` ja' LEU (a receita `flasher_args.json`, o ELF/UF2/BIN mais
-//! novo, o alvo) e da porta escolhida. Nada roda aqui. A UI mostra a linha
+//! novo, o alvo) e da porta escolhida. A previa deriva desse mesmo plano;
+//! nenhuma linha salva e' analisada para reconstruir argumentos. Nada roda
+//! aqui. A UI mostra a linha
 //! como previa; salvar e' `runConfig.save`, rodar e' `run.start` — a saida
 //! vai para a aba de execucao existente, e a linha salva e' editavel como
 //! qualquer configuracao manual. A sintaxe da nova previa acompanha a versao
@@ -33,6 +35,7 @@
 //! `run.start`). Toda peca tem uma linha de EVIDENCIA (`source`) e o que o
 //! usuario deve saber antes de apertar vai em `warnings`.
 
+mod command;
 pub mod esptool;
 pub mod firmware;
 pub mod frameworks;
@@ -41,6 +44,7 @@ use std::path::PathBuf;
 
 use kinein_protocol::{FlashProposalResult, ProjectModel};
 
+pub use command::{FlashCommand, FlashPlan};
 pub use firmware::FirmwareImage;
 
 /// Baud de gravacao: o que o `idf.py flash` usa por padrao (`ESPBAUD`).
@@ -139,6 +143,31 @@ pub fn propose(
     framework: Option<&crate::build::Engine>,
     tools: &ProposalTools<'_>,
 ) -> Result<FlashProposalResult, FlashError> {
+    plan(
+        model,
+        engine,
+        device,
+        flash_size_bytes,
+        firmware,
+        framework,
+        tools,
+    )
+    .map(|plan| plan.proposal)
+}
+
+/// Prepare the existing proposal while retaining its original program and argv.
+///
+/// # Errors
+/// The same engine/tool/artifact/device refusals as [`propose`].
+pub fn plan(
+    model: &ProjectModel,
+    engine: Option<&str>,
+    device: Option<&str>,
+    flash_size_bytes: Option<u64>,
+    firmware: Option<&FirmwareImage>,
+    framework: Option<&crate::build::Engine>,
+    tools: &ProposalTools<'_>,
+) -> Result<FlashPlan, FlashError> {
     let find_tool = tools.find;
     // Um firmware baixado (C5) substitui os artefatos do build: a linha e'
     // a da pagina da placa, com o motor que ela fixa.
@@ -176,13 +205,13 @@ pub fn propose(
             });
         }
     };
-    Ok(FlashProposalResult {
-        name: format!("Gravar ({engine})"),
-        command,
+    Ok(FlashPlan::new(
+        format!("Gravar ({engine})"),
         engine,
         source,
         warnings,
-    })
+        command,
+    ))
 }
 
 /// Resolve the engine using the same project/explicit precedence as planning.
@@ -235,13 +264,11 @@ pub(super) fn tool(
     find_tool: &FindTool<'_>,
     binary: &str,
     hint: &str,
-) -> Result<String, FlashError> {
-    find_tool(binary)
-        .map(|p| quote(&p.display().to_string()))
-        .ok_or_else(|| FlashError::MissingTool {
-            tool: binary.to_owned(),
-            hint: hint.to_owned(),
-        })
+) -> Result<PathBuf, FlashError> {
+    find_tool(binary).ok_or_else(|| FlashError::MissingTool {
+        tool: binary.to_owned(),
+        hint: hint.to_owned(),
+    })
 }
 
 /// A porta escolhida pelo usuario. Sem porta nao ha' gravacao: adivinhar a
@@ -261,7 +288,7 @@ fn probe_rs(
     model: &ProjectModel,
     find_tool: &FindTool<'_>,
     source: &mut Vec<String>,
-) -> Result<String, FlashError> {
+) -> Result<FlashCommand, FlashError> {
     let probe_rs = tool(
         find_tool,
         "probe-rs",
@@ -281,14 +308,22 @@ fn probe_rs(
     })?;
     source.push(format!("chip: {chip} (kit/modelo)"));
     source.push(format!("imagem: {elf} (o ELF mais novo do build)"));
-    Ok(format!("{probe_rs} download --chip {chip} {}", quote(elf)))
+    Ok(FlashCommand::new(
+        probe_rs,
+        vec![
+            "download".to_owned(),
+            "--chip".to_owned(),
+            chip.to_owned(),
+            elf.to_owned(),
+        ],
+    ))
 }
 
 fn picotool(
     model: &ProjectModel,
     find_tool: &FindTool<'_>,
     source: &mut Vec<String>,
-) -> Result<String, FlashError> {
+) -> Result<FlashCommand, FlashError> {
     let picotool = tool(
         find_tool,
         "picotool",
@@ -301,14 +336,22 @@ fn picotool(
     })?;
     source.push(format!("imagem: {uf2} (o UF2 mais novo do build)"));
     source.push("modo: -f forca o BOOTSEL pelo USB; -x executa depois de gravar".to_owned());
-    Ok(format!("{picotool} load -f -x {}", quote(uf2)))
+    Ok(FlashCommand::new(
+        picotool,
+        vec![
+            "load".to_owned(),
+            "-f".to_owned(),
+            "-x".to_owned(),
+            uf2.to_owned(),
+        ],
+    ))
 }
 
 fn dfu_util(
     model: &ProjectModel,
     find_tool: &FindTool<'_>,
     source: &mut Vec<String>,
-) -> Result<String, FlashError> {
+) -> Result<FlashCommand, FlashError> {
     if model.target.family.as_deref() != Some("stm32") {
         return Err(FlashError::NoArtifact {
             message: format!(
@@ -327,9 +370,16 @@ fn dfu_util(
     source.push(format!(
         "destino: alt 0, {STM32_FLASH_BASE} (início da flash interna STM32), :leave sai do DFU"
     ));
-    Ok(format!(
-        "{dfu} -a 0 -s {STM32_FLASH_BASE}:leave -D {}",
-        quote(bin)
+    Ok(FlashCommand::new(
+        dfu,
+        vec![
+            "-a".to_owned(),
+            "0".to_owned(),
+            "-s".to_owned(),
+            format!("{STM32_FLASH_BASE}:leave"),
+            "-D".to_owned(),
+            bin.to_owned(),
+        ],
     ))
 }
 
@@ -387,7 +437,7 @@ mod tests {
     use super::propose_v5 as propose;
     use super::*;
 
-    fn acha(binarios: &'static [&'static str]) -> impl Fn(&str) -> Option<PathBuf> {
+    fn find_tools(binarios: &'static [&'static str]) -> impl Fn(&str) -> Option<PathBuf> {
         move |nome| {
             binarios
                 .contains(&nome)
@@ -395,7 +445,7 @@ mod tests {
         }
     }
 
-    fn receita() -> FlashRecipe {
+    fn recipe() -> FlashRecipe {
         FlashRecipe {
             chip: Some("esp32c3".to_owned()),
             flash_mode: Some("dio".to_owned()),
@@ -428,7 +478,7 @@ mod tests {
         }
     }
 
-    fn modelo(family: &str, engine: Option<&str>, chip: Option<&str>) -> ProjectModel {
+    fn model(family: &str, engine: Option<&str>, chip: Option<&str>) -> ProjectModel {
         ProjectModel {
             target: TargetModel {
                 chip: chip.map(str::to_owned),
@@ -445,6 +495,118 @@ mod tests {
         }
     }
 
+    #[test]
+    fn recipe_values_remain_literal_in_the_shell_preview() {
+        let injected = "dio; printf 'UNEXPECTED-SHELL-CONTENT' #";
+        let mut model = model("espressif", Some("esptool"), Some("esp32c3"));
+        let mut recipe = recipe();
+        recipe.flash_mode = Some(injected.to_owned());
+        model.artifacts.flash_recipe = Some(recipe);
+        let directory =
+            std::env::temp_dir().join(format!("{}-flash-recipe-literal", std::process::id()));
+        std::fs::create_dir_all(&directory).unwrap();
+        let program = crate::write_executable(
+            directory.join("fake-esptool"),
+            "#!/bin/sh\nprintf '<%s>' \"$@\"\n",
+        );
+        let proposal = propose(
+            &model,
+            None,
+            Some("/dev/unused-fixture"),
+            None,
+            None,
+            None,
+            &|_| Some(program.clone()),
+        )
+        .unwrap();
+        let output = crate::sh_command(&proposal.command)
+            .env("MSYS2_ARG_CONV_EXCL", "*")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert!(
+            String::from_utf8(output.stdout).unwrap().contains(injected),
+            "a recipe value became shell syntax instead of one literal argument"
+        );
+    }
+
+    #[test]
+    fn structured_plans_keep_engine_inputs_as_literal_arguments() {
+        let chip = "chip; $(printf literal)";
+        let path = "/build/a'b c-one_two.bin";
+        let device = "/device/board' one_two";
+        let mut model = model("stm32", None, Some(chip));
+        let mut recipe = recipe();
+        recipe.chip = Some(chip.to_owned());
+        model.artifacts = ProjectArtifacts {
+            elf: vec![path.to_owned()],
+            uf2: vec![path.to_owned()],
+            bin: vec![path.to_owned()],
+            flash_recipe: Some(recipe),
+            ..ProjectArtifacts::default()
+        };
+        let find = find_tools(&["esptool", "probe-rs", "picotool", "dfu-util"]);
+        let tools = ProposalTools {
+            find: &find,
+            esptool: Some(esptool::Selected::from_output("/x/esptool".into(), "5.4.0").unwrap()),
+        };
+        for (engine, expected) in [
+            ("probe-rs", vec!["download", "--chip", chip, path]),
+            ("picotool", vec!["load", "-f", "-x", path]),
+            (
+                "dfu-util",
+                vec!["-a", "0", "-s", "0x08000000:leave", "-D", path],
+            ),
+        ] {
+            let prepared =
+                plan(&model, Some(engine), Some(device), None, None, None, &tools).unwrap();
+            assert_eq!(prepared.command.program, PathBuf::from("/x").join(engine));
+            assert_eq!(prepared.command.args, expected);
+        }
+        let prepared = plan(
+            &model,
+            Some("esptool"),
+            Some(device),
+            None,
+            None,
+            None,
+            &tools,
+        )
+        .unwrap();
+        assert_eq!(
+            &prepared.command.args[..6],
+            ["--chip", chip, "--port", device, "--baud", "460800"]
+        );
+        assert_eq!(
+            prepared.command.args.last().map(String::as_str),
+            Some("/p/build/o meu app.bin")
+        );
+
+        let image = FirmwareImage {
+            label: "Test firmware".to_owned(),
+            engine: "esptool".to_owned(),
+            offset: Some("0x0".to_owned()),
+            chip: Some(chip.to_owned()),
+            file: path.into(),
+            size_bytes: 100,
+        };
+        let prepared = plan(&model, None, Some(device), None, Some(&image), None, &tools).unwrap();
+        assert_eq!(
+            &prepared.command.args[..4],
+            ["--chip", chip, "--port", device]
+        );
+        assert_eq!(
+            &prepared.command.args[prepared.command.args.len() - 3..],
+            ["write-flash", "0x0", path]
+        );
+        let image = FirmwareImage {
+            engine: "picotool".to_owned(),
+            ..image
+        };
+        let prepared = plan(&model, None, None, None, Some(&image), None, &tools).unwrap();
+        assert_eq!(prepared.command.args, ["load", "-f", "-x", path]);
+    }
+
     /// esptool: tudo da receita, porta entre aspas, arquivo com espaco entre
     /// aspas, cifrada avisada, e a linha e' a da v5.
     #[test]
@@ -453,9 +615,9 @@ mod tests {
         ignore = "W10: a linha de gravacao fala /dev/tty e caminho de Linux; a do Windows (COMx) e' da W10 (60 §3.3)"
     )]
     fn esptool_line_comes_from_the_recipe_and_the_chosen_port() {
-        let mut m = modelo("espressif", Some("esptool"), Some("esp32c3"));
+        let mut m = model("espressif", Some("esptool"), Some("esp32c3"));
         m.artifacts = ProjectArtifacts {
-            flash_recipe: Some(receita()),
+            flash_recipe: Some(recipe()),
             flasher_args: Some("/p/build/flasher_args.json".to_owned()),
             ..ProjectArtifacts::default()
         };
@@ -466,7 +628,7 @@ mod tests {
             Some(4 * 1024 * 1024),
             None,
             None,
-            &acha(&["esptool"]),
+            &find_tools(&["esptool"]),
         )
         .unwrap();
         assert_eq!(p.name, "Gravar (esptool)");
@@ -506,14 +668,14 @@ mod tests {
         ignore = "W10: a linha de gravacao fala /dev/tty e caminho de Linux; a do Windows (COMx) e' da W10 (60 §3.3)"
     )]
     fn esptool_refusals_and_variants() {
-        let mut m = modelo("espressif", Some("esptool"), None);
-        let acha_tool = acha(&["esptool.py"]);
+        let mut m = model("espressif", Some("esptool"), None);
+        let acha_tool = find_tools(&["esptool.py"]);
         let erro =
             propose(&m, None, Some("/dev/ttyUSB0"), None, None, None, &acha_tool).unwrap_err();
         assert!(matches!(erro, FlashError::NoArtifact { .. }), "{erro}");
         assert!(erro.to_string().contains("flasher_args.json"));
 
-        let mut r = receita();
+        let mut r = recipe();
         r.stub = false;
         r.chip = None;
         m.artifacts.flash_recipe = Some(r);
@@ -545,8 +707,16 @@ mod tests {
             p.warnings
         );
 
-        let erro =
-            propose(&m, None, Some("/dev/ttyACM0"), None, None, None, &acha(&[])).unwrap_err();
+        let erro = propose(
+            &m,
+            None,
+            Some("/dev/ttyACM0"),
+            None,
+            None,
+            None,
+            &find_tools(&[]),
+        )
+        .unwrap_err();
         assert!(matches!(erro, FlashError::MissingTool { .. }));
         assert!(erro.to_string().contains("pipx install esptool"));
     }
@@ -557,7 +727,7 @@ mod tests {
         ignore = "W10: a linha de gravacao fala /dev/tty e caminho de Linux; a do Windows (COMx) e' da W10 (60 §3.3)"
     )]
     fn probe_rs_picotool_and_dfu_util_lines() {
-        let mut m = modelo("stm32", Some("probe-rs"), Some("STM32F401CC"));
+        let mut m = model("stm32", Some("probe-rs"), Some("STM32F401CC"));
         m.artifacts.elf = vec![
             "/p/target/thumbv7em/debug/fw".to_owned(),
             "/p/old.elf".to_owned(),
@@ -570,7 +740,7 @@ mod tests {
             None,
             None,
             None,
-            &acha(&["probe-rs", "dfu-util", "picotool"]),
+            &find_tools(&["probe-rs", "dfu-util", "picotool"]),
         )
         .unwrap();
         assert_eq!(
@@ -587,7 +757,7 @@ mod tests {
             None,
             None,
             None,
-            &acha(&["dfu-util"]),
+            &find_tools(&["dfu-util"]),
         )
         .unwrap();
         assert_eq!(
@@ -597,7 +767,7 @@ mod tests {
         assert_eq!(p.source[0], "motor: escolhido na tela");
 
         // dfu-util fora de STM32: sem tabela, sem comando.
-        let mut pico = modelo("rp2040", Some("picotool"), Some("rp2040"));
+        let mut pico = model("rp2040", Some("picotool"), Some("rp2040"));
         pico.artifacts.bin = vec!["/p/x.bin".to_owned()];
         let erro = propose(
             &pico,
@@ -606,17 +776,26 @@ mod tests {
             None,
             None,
             None,
-            &acha(&["dfu-util"]),
+            &find_tools(&["dfu-util"]),
         )
         .unwrap_err();
         assert!(erro.to_string().contains("rp2040"), "{erro}");
 
         pico.artifacts.uf2 = vec!["/p/build/blink.uf2".to_owned()];
-        let p = propose(&pico, None, None, None, None, None, &acha(&["picotool"])).unwrap();
+        let p = propose(
+            &pico,
+            None,
+            None,
+            None,
+            None,
+            None,
+            &find_tools(&["picotool"]),
+        )
+        .unwrap();
         assert_eq!(p.command, "'/x/picotool' load -f -x '/p/build/blink.uf2'");
 
         // probe-rs sem chip: pede o kit; sem ELF: pede o build.
-        let mut sem_chip = modelo("cortex-m", Some("probe-rs"), None);
+        let mut sem_chip = model("cortex-m", Some("probe-rs"), None);
         sem_chip.artifacts.elf = vec!["/p/fw".to_owned()];
         assert!(
             propose(
@@ -626,27 +805,44 @@ mod tests {
                 None,
                 None,
                 None,
-                &acha(&["probe-rs"])
+                &find_tools(&["probe-rs"])
             )
             .unwrap_err()
             .to_string()
             .contains("--chip")
         );
-        let sem_elf = modelo("cortex-m", Some("probe-rs"), Some("nRF52840_xxAA"));
+        let sem_elf = model("cortex-m", Some("probe-rs"), Some("nRF52840_xxAA"));
         assert!(
-            propose(&sem_elf, None, None, None, None, None, &acha(&["probe-rs"]))
-                .unwrap_err()
-                .to_string()
-                .contains("sem ELF")
+            propose(
+                &sem_elf,
+                None,
+                None,
+                None,
+                None,
+                None,
+                &find_tools(&["probe-rs"])
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("sem ELF")
         );
     }
 
     #[test]
     fn no_engine_and_unknown_engine_are_named() {
-        let m = modelo("linux", None, None);
-        let erro = propose(&m, None, None, None, None, None, &acha(&[])).unwrap_err();
+        let m = model("linux", None, None);
+        let erro = propose(&m, None, None, None, None, None, &find_tools(&[])).unwrap_err();
         assert!(matches!(erro, FlashError::NoEngine { .. }));
-        let erro = propose(&m, Some("avrdude"), None, None, None, None, &acha(&[])).unwrap_err();
+        let erro = propose(
+            &m,
+            Some("avrdude"),
+            None,
+            None,
+            None,
+            None,
+            &find_tools(&[]),
+        )
+        .unwrap_err();
         assert_eq!(
             erro.to_string(),
             "motor de gravação `avrdude` desconhecido: use esptool, probe-rs, picotool ou dfu-util"

@@ -206,10 +206,10 @@ fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
         .result
         .expect("proposta");
     let comando = p["command"].as_str().unwrap();
-    assert!(comando.starts_with("bash '-c' '"), "{comando}");
+    assert!(comando.starts_with("'bash' -c '"), "{comando}");
     assert!(
         comando.ends_with(&format!(
-            "' 'bash' '{}' '-p' '/dev/ttyUSB0' 'flash'",
+            "' bash '{}' -p '/dev/ttyUSB0' flash",
             export.display()
         )),
         "{comando}"

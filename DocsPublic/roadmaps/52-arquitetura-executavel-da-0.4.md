@@ -3275,3 +3275,83 @@ ocupação/recuperação e a matriz integrada. A prévia atual ainda pode virar
 comando manual/schema 1; esta parte não torna shell salvo uma intenção nativa,
 não migra dados na abertura e não fecha a h4b2 ou a 0.4.1. Sem flash físico,
 instalação, pacote, push/tag/release/publicação.
+
+### 14.29 0.4.1h4b2b1 — preservar argv antes da intenção nativa (concluída, 2026-10-21)
+
+Primeira parte revisável da h4b2b: os planejadores atuais descartam os
+argumentos estruturados ao gerar a linha de shell. A intenção nativa não
+pode recuperá-los por parsing nem ter uma segunda implementação das regras.
+Refatorar o planejador existente para devolver programa/argv e proposta
+juntos; `propose` continua adaptando o resultado ao contrato atual. Receita
+esptool, firmware de catálogo, probe-rs, picotool, dfu-util e wrappers usam
+a mesma representação, sem executar ferramenta ou descobrir artefatos novos.
+
+A prévia deriva dos argumentos originais, escapando também valores de
+chip/receita, não somente caminhos. Provar vermelho antes com valor contendo
+metacaracteres: uma ferramenta falsa deve receber esse valor literal, sem
+executar conteúdo do projeto como shell. Provar a equivalência entre argv e
+prévia por execução local da fixture, além dos testes de despacho existentes.
+Nada acessa hardware. Interface, métodos, protocolo 0.186.0 e schema 1 não
+mudam nesta parte; não há nova ação de gravação nem conversão de comandos salvos.
+
+Na parte seguinte, o programa/argv deste mesmo plano será o consumidor da
+intenção tipada/schema 2: contexto e imagens com evidência, revalidação e
+reserva do destino resolvido. `defer_then` existente devolve o resultado ao
+dono do PTY com `&mut Core`, sem bloquear o laço ou criar outro executor.
+A escolha de artefatos por extensão/recência continua insuficiente para
+habilitar gravação nativa: essa associação precisa ser validada antes do
+produtor nativo. Não considerar h4b2b fechada apenas com esta preparação.
+
+**Contexto medido para a retomada:** `runtime/services.rs::defer_then` já
+espera fora do laço e conclui com `&mut Core`; `TerminalManager` continua
+com um único dono. Comparar apenas a raiz ao concluir não cobre sair e
+reabrir o mesmo workspace durante a espera: a transição precisa invalidar
+a tentativa, no dono único `activate_workspace`/`deactivate_workspace`.
+Há ainda o intervalo anterior à abertura do PTY: `run.stop` e a troca de
+workspace precisam cancelar a tentativa em validação. Uma continuação
+atrasada não pode iniciar a gravação depois de Parar, nem um segundo pedido
+substituir silenciosamente o primeiro. Apresentar preparação/cancelamento
+pelo fluxo existente, com prova de concorrência e cancelamento antes do exec.
+Auditar também edição/renomeação em RunConfigDialog, RunConfigController,
+RuntimeRequestRouter e ShellOverlays: hoje transportam só nome/comando;
+não deixar um cliente antigo descartar intenção tipada silenciosamente.
+ConfigAction chama o armazenamento manual existente; `active_command` não
+tem consumidor de produção no checkout, mas não deve virar atalho que
+transforma uma futura intenção nativa em shell.
+`project::artifacts` é lista de candidatos por recência, não prova de alvo.
+O file-api existente do CMake fornece os artefatos por target; não interpretar
+`CMakeLists.txt` nem criar outro scanner para suprir essa associação.
+
+Referências primárias conferidas em 2026-10-21, sem importar implementação:
+o [template do ESP-IDF v5.4.2](https://github.com/espressif/esp-idf/blob/v5.4.2/tools/cmake/project_description.json.in)
+(formato 1.2) registra projeto, build, configuração, alvo e artefatos. É
+evidência possível para a próxima parte, a conferir no SDK efetivo antes de
+consumir; esta fatia não acrescenta esse leitor. O
+[parser do esptool v4.8.1](https://github.com/espressif/esptool/blob/v4.8.1/esptool/__init__.py)
+confirma `--no-stub` com hífen também na v4: não normalizar indiscriminadamente
+todas as opções. A adaptação estrutural já existente continua preservada.
+
+**Fechamento (2026-10-21):** `flash::plan` retorna FlashPlan com FlashCommand
+e a proposta derivada. Os sete motores existentes preservam programa/argv;
+`flash::propose` mantém o payload atual. Valores de receita/chip agora são
+escapados também na prévia, sem parsing de shell ou segundo planejador.
+Reprodução vermelha: `/tmp/kinein-h4b2b1-preview-before.log`; o valor da receita
+virava sintaxe do shell. Três testes novos cobrem a regressão, planos dos
+motores/catálogos e igualdade de bytes entre argv direto e prévia, incluindo
+aspas, espaços, vazio, Unicode, expansão, metacaracteres e newline. Usam
+`write_executable`/`sh_command` existentes, sem acrescentar cfg(unix)/adiamento.
+
+Primeiro gate recusou a expectativa antiga de aspas do wrapper IDF; corrigida
+a expectativa e mantida a execução real com ferramenta falsa no teste de
+despacho. Gate rápido estrito final **TUDO VERDE** em
+`/tmp/kinein-h4b2b1-gate-fast-final.log`: 1.259 Rust, Clippy/C++ limpos,
+8 CTest, qmllint e 164 harnesses QML, sem NÃO PROVADO. Cópia QA em
+`/home/hugh/.cache/kinein-h4b2a-qa`, base 025c915 e fontes atualizadas com
+copyfile, comparadas com o principal. O menu local do autor continua
+preservado; a cópia usa seu fonte canônico. Nenhuma mudança visual/ui/src;
+não repetir builds finais/smokes desta UI inalterada. Legado de identificadores
+só diminuiu (14.457 ocorrências, 3.396 pares). Sem prova Windows nativa nova.
+
+Próxima h4b2b2: intenção/schema 2 e execução revalidada, usando este plano;
+ocupação/recuperação e a matriz continuam obrigatórias. Não houve flash físico,
+instalação, migração de dados, novo executor, pacote ou publicação.

@@ -15,9 +15,9 @@
 //! O esptool do E4 continua sendo o padrao num projeto ESP-IDF (a receita
 //! `flasher_args.json` e' mais transparente); o `idf.py` e' escolha explicita.
 
-use kinein_protocol::{FlashProposalResult, ProjectModel};
+use kinein_protocol::ProjectModel;
 
-use super::{FlashError, quote};
+use super::{FlashCommand, FlashError, FlashPlan};
 use crate::build::engine::{Engine, idf_command_args};
 
 /// Os nomes de motor que esta unidade atende (a tela os lista ao lado dos
@@ -38,7 +38,7 @@ pub(super) fn propose(
     engine: &str,
     device: Option<&str>,
     framework: Option<&Engine>,
-) -> Result<FlashProposalResult, FlashError> {
+) -> Result<FlashPlan, FlashError> {
     let device = device.map(str::trim).filter(|d| !d.is_empty());
     let mut source = Vec::new();
     let mut warnings = Vec::new();
@@ -59,12 +59,8 @@ pub(super) fn propose(
             source.push(
                 "o que grava: o build/ do idf.py (bootloader, tabela de partições, app)".to_owned(),
             );
-            let args = idf_command_args(activation, &["-p", porta, "flash"])
-                .iter()
-                .map(|arg| quote(arg))
-                .collect::<Vec<_>>()
-                .join(" ");
-            ("idf.py", format!("bash {args}"))
+            let args = idf_command_args(activation, &["-p", porta, "flash"]);
+            ("idf.py", FlashCommand::new("bash", args))
         }
         ("idf.py" | "idf", _) => return Err(sem_framework("ESP-IDF", model, "esp-idf")),
         ("west", Some(Engine::Zephyr { west })) => {
@@ -79,22 +75,24 @@ pub(super) fn propose(
             }
             (
                 "west",
-                format!("{} flash -d build", quote(&west.display().to_string())),
+                FlashCommand::new(
+                    west.clone(),
+                    vec!["flash".to_owned(), "-d".to_owned(), "build".to_owned()],
+                ),
             )
         }
         ("west", _) => return Err(sem_framework("Zephyr", model, "west")),
         ("platformio" | "pio", Some(Engine::PlatformIo { pio })) => {
-            let mut linha = format!("{} run -t upload", quote(&pio.display().to_string()));
+            let mut args = vec!["run".to_owned(), "-t".to_owned(), "upload".to_owned()];
             if let Some(porta) = device {
-                use std::fmt::Write as _;
-                let _ = write!(linha, " --upload-port {}", quote(porta));
+                args.extend(["--upload-port".to_owned(), porta.to_owned()]);
                 source.push(format!("porta: {porta} (--upload-port)"));
             } else {
                 source.push("porta: a que o pio detectar (sem --upload-port)".to_owned());
             }
             source
                 .push("o que grava: o env padrão do platformio.ini (pio run -t upload)".to_owned());
-            ("platformio", linha)
+            ("platformio", FlashCommand::new(pio.clone(), args))
         }
         ("platformio" | "pio", _) => return Err(sem_framework("PlatformIO", model, "pio")),
         (outro, _) => {
@@ -104,13 +102,13 @@ pub(super) fn propose(
         }
     };
     source.insert(0, format!("motor: {nome} (o wrapper do framework)"));
-    Ok(FlashProposalResult {
-        name: format!("Gravar ({nome})"),
-        command,
-        engine: nome.to_owned(),
+    Ok(FlashPlan::new(
+        format!("Gravar ({nome})"),
+        nome.to_owned(),
         source,
         warnings,
-    })
+        command,
+    ))
 }
 
 fn sem_framework(framework: &str, model: &ProjectModel, sdk: &str) -> FlashError {
@@ -132,7 +130,7 @@ fn sem_framework(framework: &str, model: &ProjectModel, sdk: &str) -> FlashError
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     use kinein_protocol::{ProjectArtifacts, ProjectModel, SdkRequirement, TargetModel};
 
@@ -164,11 +162,20 @@ mod tests {
         let idf = Engine::EspIdf {
             activation: PathBuf::from("/e/export.sh"),
         };
-        let p = propose(&modelo(), "idf.py", Some("/dev/ttyUSB0"), Some(&idf)).unwrap();
-        assert!(p.command.starts_with("bash '-c' '"), "{}", p.command);
+        let plan = propose(&modelo(), "idf.py", Some("/dev/ttyUSB0"), Some(&idf)).unwrap();
+        assert_eq!(plan.command.program, PathBuf::from("bash"));
+        assert_eq!(
+            plan.command.args,
+            crate::build::engine::idf_command_args(
+                Path::new("/e/export.sh"),
+                &["-p", "/dev/ttyUSB0", "flash"]
+            )
+        );
+        let p = plan.proposal;
+        assert!(p.command.starts_with("'bash' -c '"), "{}", p.command);
         assert!(
             p.command
-                .ends_with("' 'bash' '/e/export.sh' '-p' '/dev/ttyUSB0' 'flash'"),
+                .ends_with("' bash '/e/export.sh' -p '/dev/ttyUSB0' flash"),
             "{}",
             p.command
         );
@@ -189,12 +196,15 @@ mod tests {
         let west = Engine::Zephyr {
             west: PathBuf::from("/x/west"),
         };
-        let p = propose(&modelo(), "west", Some("/dev/ttyACM0"), Some(&west)).unwrap();
+        let plan = propose(&modelo(), "west", Some("/dev/ttyACM0"), Some(&west)).unwrap();
+        assert_eq!(plan.command.args, ["flash", "-d", "build"]);
+        let p = plan.proposal;
         assert_eq!(p.command, "'/x/west' flash -d build");
         assert_eq!(p.warnings.len(), 1);
         assert!(
             propose(&modelo(), "west", None, Some(&west))
                 .unwrap()
+                .proposal
                 .warnings
                 .is_empty()
         );
@@ -202,13 +212,20 @@ mod tests {
         let pio = Engine::PlatformIo {
             pio: PathBuf::from("/x/pio"),
         };
-        let p = propose(&modelo(), "platformio", Some("/dev/ttyUSB0"), Some(&pio)).unwrap();
+        let plan = propose(&modelo(), "platformio", Some("/dev/ttyUSB0"), Some(&pio)).unwrap();
+        assert_eq!(
+            plan.command.args,
+            ["run", "-t", "upload", "--upload-port", "/dev/ttyUSB0"]
+        );
+        let p = plan.proposal;
         assert_eq!(
             p.command,
             "'/x/pio' run -t upload --upload-port '/dev/ttyUSB0'"
         );
         assert_eq!(p.engine, "platformio");
-        let p = propose(&modelo(), "pio", None, Some(&pio)).unwrap();
+        let p = propose(&modelo(), "pio", None, Some(&pio))
+            .unwrap()
+            .proposal;
         assert_eq!(p.command, "'/x/pio' run -t upload");
         assert!(matches!(
             propose(&modelo(), "avrdude", None, None),

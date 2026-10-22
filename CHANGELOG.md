@@ -32,6 +32,12 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Argumentos da gravação (0.4.1h4b2b1, 2026-10-21):** os motores atuais
+  preservam programa e argumentos no mesmo plano que gera a prévia. Valores
+  de chip/receita com espaços ou metacaracteres passam como dados literais.
+  Preparação para a intenção nativa, sem interpretar comandos salvos,
+  mudar o schema ou executar gravações automaticamente.
+
 - **Prévia Espressif (0.4.1h4b2a, 2026-10-21):** consulta a versão do
   esptool selecionado e adapta comandos, flags e resets para v4/v5,
   incluindo firmware do catálogo. Versão desconhecida, falha e timeout

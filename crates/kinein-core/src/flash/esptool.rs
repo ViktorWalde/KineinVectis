@@ -1,7 +1,7 @@
 //! Esptool syntax selected from the binary's observed major version.
 //! The planner is pure; `probe` only asks `version`, never a serial operation.
 
-use super::{ESPTOOL_BAUD, FlashError, ProposalTools, chosen_port, quote, readable_size};
+use super::{ESPTOOL_BAUD, FlashCommand, FlashError, ProposalTools, chosen_port, readable_size};
 use kinein_protocol::{FlashRecipe, ProjectModel};
 use std::{
     collections::BTreeSet,
@@ -165,9 +165,8 @@ pub(super) fn propose(
     tools: &ProposalTools<'_>,
     source: &mut Vec<String>,
     warnings: &mut Vec<String>,
-) -> Result<String, FlashError> {
+) -> Result<FlashCommand, FlashError> {
     let selected = selected(tools)?;
-    let esptool = quote(&selected.path.display().to_string());
     let recipe: &FlashRecipe = model
         .artifacts
         .flash_recipe
@@ -185,11 +184,10 @@ pub(super) fn propose(
         .or(model.target.chip.as_deref())
         .unwrap_or("auto");
     let mut parts = vec![
-        esptool,
         "--chip".to_owned(),
         chip.to_owned(),
         "--port".to_owned(),
-        quote(device),
+        device.to_owned(),
         "--baud".to_owned(),
         ESPTOOL_BAUD.to_owned(),
         "--before".to_owned(),
@@ -214,7 +212,7 @@ pub(super) fn propose(
     let mut encrypted_files = Vec::new();
     for image in &recipe.files {
         parts.push(format!("0x{:x}", image.offset));
-        parts.push(quote(&image.file));
+        parts.push(image.file.clone());
         if image.encrypted {
             encrypted_files.push(image.name.clone().unwrap_or_else(|| image.file.clone()));
         }
@@ -222,7 +220,7 @@ pub(super) fn propose(
     append_evidence(model, recipe, chip, device, source);
     source.push(selected.evidence());
     append_warnings(recipe, &encrypted_files, flash_size_bytes, warnings);
-    Ok(parts.join(" "))
+    Ok(FlashCommand::new(selected.path.clone(), parts))
 }
 
 /// As linhas de evidencia do esptool: receita, chip e porta.
@@ -389,10 +387,19 @@ mod tests {
                 &mut warnings,
             )
             .unwrap();
-            assert!(command.contains(&quote(path)), "{command}");
-            assert!(command.contains("'/device/board-one_two'"));
-            assert!(command.contains(&format!("--before {before}")));
-            assert!(command.contains(&format!("--no-stub {write} {mode} dio 0x1000")));
+            assert_eq!(command.program, PathBuf::from("/tools/esptool.py"));
+            assert_eq!(command.args.last().map(String::as_str), Some(path));
+            assert!(
+                command
+                    .args
+                    .iter()
+                    .any(|arg| arg == "/device/board-one_two")
+            );
+            let preview = command.preview();
+            assert!(preview.contains(&super::super::quote(path)), "{preview}");
+            assert!(preview.contains("'/device/board-one_two'"));
+            assert!(preview.contains(&format!("--before {before}")));
+            assert!(preview.contains(&format!("--no-stub {write} {mode} dio 0x1000")));
             assert!(source.iter().any(|line| line.contains(version)));
             assert!(warnings.is_empty());
         }
