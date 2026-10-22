@@ -36,8 +36,21 @@ Item {
     property var frameworks: []
     readonly property var frameworkEngines: engineOfFrameworks(frameworks)
     readonly property var allEngines: engines.concat(frameworkEngines)
+    // probe-rs nativo (0.188.0, 52 §14.35): o alvo executavel do codemodel e a
+    // sonda listada. O motor sugerido e a raiz vem do pai; o core valida tudo.
+    property string suggestedEngine: ""
+    property string workspaceRoot: ""
+    property string target: ""
+    property string probe: ""
+    property var targets: []
+    property string targetsOrigin: ""
+    property string targetsError: ""
+    property bool targetsBusy: false
+    readonly property bool probeDestination: nativeMode && firmware === ""
+        && (engine === "probe-rs" || (engine === "" && suggestedEngine === "probe-rs"))
 
-    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory)
+    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory, string target, string probe)
+    signal targetsRequested()
     signal runRequested(string command, var flash)
     signal saveRequested(string name, string command, var flash)
 
@@ -49,6 +62,12 @@ Item {
         firmware = "";
         nativeMode = true;
         buildDirectory = "";
+        target = "";
+        probe = "";
+        targets = [];
+        targetsOrigin = "";
+        targetsError = "";
+        targetsBusy = false;
         proposal = ({});
         errorText = "";
         contextRevision += 1;
@@ -66,6 +85,7 @@ Item {
 
     function disconnected() {
         busy = false;
+        targetsBusy = false;
         invalidate();
         requestedRevision = -1;
         proposalRequestId = -1;
@@ -110,9 +130,59 @@ Item {
         invalidate();
     }
 
+    function selectTarget(name) {
+        if (target === name) return;
+        target = name;
+        invalidate();
+    }
+
+    function selectProbe(selector) {
+        if (probe === selector) return;
+        probe = selector;
+        invalidate();
+    }
+
+    // O seletor que o probe-rs 0.32 aceita, como a listagem escreve a entrada.
+    function selectorOf(entry) {
+        const iface = entry.interface === undefined || entry.interface === null ? "" : "-" + entry.interface;
+        return entry.vid + ":" + entry.pid + iface + ":" + (entry.serial || "");
+    }
+
+    // Sem serial a entrada nao identifica o destino; inacessivel precisa de permissao.
+    function probeSelectable(entry) {
+        return entry !== undefined && entry !== null && !!entry.serial && entry.inaccessible !== true;
+    }
+
+    function requestTargets() {
+        if (targetsBusy) return;
+        targetsBusy = true;
+        targetsError = "";
+        targetsRequested();
+    }
+
+    // So' a resposta que este controller pediu, so' executaveis do file-api e
+    // da raiz atual: a lista nao tem id e a Biblioteca tambem a pede.
+    function handleTargets(list, origin) {
+        if (!targetsBusy) return;
+        targetsBusy = false;
+        targetsOrigin = origin === undefined ? "" : origin;
+        const prefix = workspaceRoot.endsWith("/") ? workspaceRoot : workspaceRoot + "/";
+        targets = origin !== "fileApi" || list === undefined || list === null ? []
+            : list.filter(item => item.kind === "executable" && (item.sourceDir === workspaceRoot
+                || (item.sourceDir || "").startsWith(prefix)));
+        if (target !== "" && !targets.some(item => item.name === target)) selectTarget("");
+    }
+
+    function handleTargetsFailed(message) {
+        if (!targetsBusy) return;
+        targetsBusy = false;
+        targetsError = message;
+    }
+
     // Pede a previa. `device` e' a porta escolhida (vazia = o core decide se
     // o motor a exige); `flashSizeBytes` e' o que a identidade leu (0 = nao
-    // comparar). Um pedido por vez.
+    // comparar). Com destino na sonda, nem porta nem tamanho nem diretorio:
+    // vao alvo e sonda. Um pedido por vez.
     function propose(device, flashSizeBytes) {
         if (busy) {
             return;
@@ -122,9 +192,11 @@ Item {
         proposalRequestId = -1;
         proposal = ({});
         errorText = "";
-        proposalRequested(device === undefined ? "" : device, engine,
-                          flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware,
-                          nativeMode, nativeMode ? buildDirectory : "");
+        const toProbe = probeDestination;
+        proposalRequested(toProbe || device === undefined ? "" : device, engine,
+                          toProbe || flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware,
+                          nativeMode, nativeMode && !toProbe ? buildDirectory : "",
+                          toProbe ? target : "", toProbe ? probe : "");
     }
 
     function bindProposal(requestId) {

@@ -4025,3 +4025,86 @@ guardados. A vertical probe-rs continua aberta: próxima **b4b2**, a UI de alvo
 executável e sonda no fluxo de gravação atual, oferecendo Configurar quando
 falta o reply, com harness e fotos; depois b4b3.
 
+
+### 14.35 0.4.1h4b2b4b2 — alvo e sonda do probe-rs nativo na UI atual (desenho, 2026-10-22)
+
+**Base:** 9f9c155; contrato 0.188.0 já publicado no core, sem mudança de
+protocolo nesta parte. Hoje a aba Gravar pede o nativo sem `target`/`probe`
+e recebe a recusa orientada da b4b1. As fontes de dados existem: sondas no
+`EmbeddedController` (`probe.list`, campos `interface`/`inaccessible`) e
+alvos em `cmake.targets.list` (`origin`: `fileApi` autoritativo, `source`
+lido do CMakeLists antes de configurar, `none`). O comando `cmake.configure`
+já existe no despachante. `EmbeddedFlashView` tem 271/300 linhas.
+
+**Desenho (um dono por responsabilidade, sem lista ou executor novos):**
+
+- `EmbeddedFlashController`: `target`, `probe`, `suggestedEngine` (o
+  `target.flashEngine` do modelo, dado pelo pai), `targets`/`targetsOrigin`/
+  `targetsBusy`. `probeDestination` vale com nativo, sem firmware de catálogo
+  e motor probe-rs (escolhido, ou automático com sugestão probe-rs). Nesse
+  destino, `propose` não envia porta, `flashSizeBytes` nem `buildDirectory`, e
+  envia `target`/`probe`; fora dele, nunca os envia. Trocar alvo ou sonda
+  invalida a prévia; `clear()` (troca de workspace) zera tudo. Seletor da
+  sonda: `vid:pid[-IF]:serial` da entrada listada. Sem serial ou inacessível
+  não é selecionável, com o motivo visível.
+- Alvos: sinal `targetsRequested` → `EmbeddedRequestRouter` →
+  `coreClient.cmakeTargetsList()`; `EmbeddedEventRouter` entrega
+  `cmakeTargetsResolved` ao controller. Só executáveis de `fileApi` dentro da
+  raiz atual (`sourceDir`) entram, porque a resposta não tem id e a Biblioteca
+  também pede. A falha genérica do método encerra o busy. O pedido sai ao
+  abrir/atualizar o painel e a cada modelo novo (fim de Configurar/build),
+  quando o destino é a sonda. Com `source`/`none`, a seção mostra o motivo e o
+  botão existente "Configurar CMake"; o core continua sendo a validação final.
+- Ponte C++: `runConfigFlashProposal` ganha `target` e `probe`, incluídos só
+  quando não vazios. Sem sinal novo.
+- Vista: componente próprio `EmbeddedFlashDestination` (Kv* e tokens
+  existentes), incluído na aba Gravar com poucas linhas. A linha de porta
+  diz que a sonda é o destino; o campo de diretório do build some nesse
+  destino. Nenhuma reorganização do painel; fotos antes/depois para o autor.
+
+**Provas planejadas:** harness novo com os controllers e roteadores reais e
+cliente falso. Cobre: parâmetros por destino; alvos (`fileApi` executável,
+`source`, outra raiz, falha); sondas sem serial ou inacessível; invalidação;
+troca de workspace e modelo novo pedindo alvos. O CMake real e o probe-rs
+falso passam pela UI real com o core real: escolher alvo e sonda, gerar a
+prévia e gravar até o wrapper, sem hardware. Fotos em tela real ou Xvfb e
+gate completo estrito, porque `ui/src` muda.
+
+**Achado na tela real antes do código (2026-10-22, fotos em
+`/home/hugh/.cache/kinein-h4b2b4b2-proofs/real-before/`).** Mostrei ao autor
+a IDE real no notebook dele, com o projeto CMake arm-none-eabi da fixture,
+chip STM32F411RETx no kit e probe-rs. A aba Gravar só exibe a recusa da b4b1.
+A Visão geral não reconhece o projeto: `project.embedded` só vale com
+framework ou alvo Linux. Ela pede "abra um projeto ESP-IDF…", desabilita
+"Revisar gravação" e o passo 2 fala de porta serial. A mesma jornada fecha aqui:
+
+- Contrato 0.189.0 (semântica de campo existente, sem shape novo):
+  `embedded` também vale quando o kit ativo fixa um chip, a palavra explícita
+  do usuário, como já valia para o triple Linux do kit. Sem dedução nova e
+  sem reconhecer framework. O 03 (`project.md`) e o 03.1 mudam antes do core.
+- `EmbeddedController.projectFrameworkLabel` passa a nomear "Bare metal ·
+  <chip>" nesse caso. Na Visão geral, com destino sonda, o passo 2 fala da
+  sonda: estado "Sonda escolhida"/"Escolher sonda", ação levando a Gravar.
+  O passo Firmware leva à escolha de alvo. Fluxos ESP/PlatformIO/Linux/
+  MicroPython continuam com o texto e a ordem atuais.
+- Validação visual e de fluxo na IDE real do notebook do autor, com mouse e
+  teclado reais e ele acompanhando (pedido de 2026-10-22). Xvfb fica só para
+  as provas automatizadas.
+
+**Fecho de h4b2b4b2 (2026-10-22):** gate completo estrito TUDO VERDE no QA,
+com 1.297 Rust, 168 harnesses, 8 CTest e C++/Clippy/qmllint limpos;
+debug/release em 327/335 ms (`/home/hugh/.cache/kinein-h4b2b4b2-proofs/gate-full.log`). Fluxo validado na IDE real
+do autor: alvo → sonda → prévia → gravar até o wrapper → salvar/executar; sem
+reply, Configurar devolve a lista. Corrigidos no caminho: o pulo de layout
+das dicas e as frases quebradas no meio. Registro no 40.7 §7.344.
+
+**Levantamento para h4b2b4b3 (fonte oficial 0.32.0,
+`cmd/dap_server/server/configuration.rs`):** o launch do `dap-server` aceita
+`probe` (seletor), `chip`, `connectUnderReset`, `allowEraseAll` e
+`flashingConfig` (gravação desligada por padrão); o Kinein não passa
+seletor, então o `dap-server` escolhe a sonda sozinho, e a sessão não reserva
+a sonda. Próximo recorte: passar o seletor explícito (o mesmo de Gravar ou
+escolhido no gesto de depurar), reservar a mesma sonda durante a sessão no
+registro existente, recusar sessão ambígua e provar o conflito
+gravação × depuração. Desenho fino antes do código.
+

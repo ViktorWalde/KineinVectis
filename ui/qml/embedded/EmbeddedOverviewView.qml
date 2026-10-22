@@ -14,6 +14,9 @@ Column {
         ? controller.projectFrameworkLabel : ""
     readonly property string artifactLabel: controller ? controller.artifactsSummary(controller.projectArtifacts) : ""
     readonly property bool portSelected: controller !== null && controller.selectedPort !== ""
+    // probe-rs nativo (52 §14.35): o destino e' a sonda escolhida em Gravar.
+    readonly property bool probeDestination: controller !== null && controller.flash.probeDestination
+    readonly property bool boardReady: probeDestination ? controller.flash.probe !== "" : portSelected
     readonly property bool microPython: controller !== null && controller.projectMicroPython
     readonly property bool platformIo: controller !== null && controller.projectPlatformIo
     readonly property bool linuxTarget: controller !== null && controller.projectLinux
@@ -21,7 +24,7 @@ Column {
         && (controller.projectArtifacts.flashRecipe !== undefined
             || ["elf", "bin", "hex", "uf2"].some(kind => (controller.projectArtifacts[kind] || []).length > 0))
     readonly property string nextStep: !recognized || missingSdks.length > 0 ? "environment"
-        : !portSelected ? "board" : microPython ? "script" : "firmware"
+        : !boardReady ? "board" : microPython ? "script" : "firmware"
 
     function activate(step) {
         if (!root.controller) return;
@@ -71,7 +74,13 @@ Column {
                 : qsTr("%1 reconhecido. Os compiladores e o chip podem ser revisados em Ambiente.").arg(root.frameworkLabel),
               action: !root.recognized || root.missingSdks.length > 0 ? qsTr("Preparar ambiente") : qsTr("Revisar ferramentas"),
               command: !root.recognized || root.missingSdks.length > 0 ? "setup.list" : "", tab: "kit", enabled: true },
-            { key: "board", title: qsTr("2  Placa"),
+            root.probeDestination
+            ? { key: "board", title: qsTr("2  Sonda"),
+                status: root.boardReady ? qsTr("Escolhida") : qsTr("Escolher"),
+                detail: root.boardReady ? root.controller.flash.probe
+                  : qsTr("Conecte a sonda de depuração por USB e escolha-a em Gravar. A porta serial não é usada nesta gravação."),
+                action: qsTr("Escolher sonda"), command: "", tab: "flash", enabled: true }
+            : { key: "board", title: qsTr("2  Placa"),
               status: root.portSelected ? qsTr("Porta selecionada") : qsTr("Selecionar"),
               detail: root.portSelected ? root.controller.selectedPort
                 : qsTr("Conecte a placa por USB. Escolha a porta e use Identificar para ler chip e memória."),
@@ -116,7 +125,7 @@ Column {
                     text: stepCard.modelData.detail
                     color: Theme.textSecondary
                     font.pixelSize: Theme.fontSizeSmall
-                    wrapMode: Text.WrapAnywhere
+                    wrapMode: Text.Wrap
                 }
                 KvButton {
                     objectName: "embeddedStage_" + stepCard.modelData.key

@@ -81,9 +81,14 @@ pub fn model_in(
                 .to_owned(),
         );
     }
+    // O chip fixado no kit e' a palavra explicita do usuario (0.189.0): um
+    // CMake bare metal sem framework tambem e' embarcado, como o triple Linux.
+    let chip_from_kit = kit_chip.is_some_and(|chip| !chip.trim().is_empty());
     ProjectModel {
         root: root.display().to_string(),
-        embedded: !frameworks.is_empty() || target.family.as_deref() == Some("linux"),
+        embedded: !frameworks.is_empty()
+            || target.family.as_deref() == Some("linux")
+            || chip_from_kit,
         frameworks,
         sdks,
         artifacts,

@@ -42,12 +42,20 @@ qint64 CoreClient::runConfigSetActive(const QString& id)
 
 qint64 CoreClient::runConfigFlashProposal(const QString& device, const QString& engine,
                                           double flashSizeBytes, const QString& firmware,
-                                          bool native, const QString& buildDirectory)
+                                          bool native, const QString& buildDirectory,
+                                          const QString& target, const QString& probe)
 {
     QJsonObject params;
     params.insert(QStringLiteral("native"), native);
     if (!buildDirectory.isEmpty()) {
         params.insert(QStringLiteral("buildDirectory"), buildDirectory);
+    }
+    // probe-rs nativo (0.188.0): o alvo do codemodel e o seletor da sonda.
+    if (!target.isEmpty()) {
+        params.insert(QStringLiteral("target"), target);
+    }
+    if (!probe.isEmpty()) {
+        params.insert(QStringLiteral("probe"), probe);
     }
     // Campo ausente != vazio: sem porta o core diz "escolha a porta"; sem
     // motor ele usa o que o modelo sugere; sem tamanho, nao compara.

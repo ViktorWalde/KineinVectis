@@ -37,10 +37,12 @@ Item {
 
         Text {
             width: parent.width
-            text: root.controller && root.controller.selectedPort !== ""
+            text: root.flash && root.flash.probeDestination
+                  ? qsTr("Destino: a sonda escolhida abaixo. A porta serial não é usada nesta gravação.")
+                  : root.controller && root.controller.selectedPort !== ""
                   ? qsTr("Porta: %1").arg(root.controller.selectedPort)
                   : qsTr("Nenhuma porta selecionada. Escolha uma na aba Placa se o motor usar conexão serial.")
-            wrapMode: Text.WrapAnywhere
+            wrapMode: Text.Wrap
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeSmall
         }
@@ -118,7 +120,7 @@ Item {
         KvTextField {
             objectName: "embeddedFlashBuildDirectory"
             width: parent.width
-            visible: root.enginesVisible && root.flash && root.flash.nativeMode
+            visible: root.enginesVisible && root.flash && root.flash.nativeMode && !root.flash.probeDestination
             label: qsTr("Diretório do build (opcional)")
             placeholder: qsTr("Padrão do projeto")
             text: root.flash ? root.flash.buildDirectory : ""
@@ -128,11 +130,18 @@ Item {
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
-            text: root.flash && root.flash.nativeMode
+            text: root.flash && root.flash.probeDestination
+                  ? qsTr("Modo nativo: vincula alvo, sonda, ferramenta e arquivos à prévia e confere novamente antes de executar.")
+                  : root.flash && root.flash.nativeMode
                   ? qsTr("Modo nativo: vincula porta, ferramenta e arquivos à prévia e confere novamente antes de executar.")
                   : qsTr("Comando manual: executa shell, sem reserva serial nem revalidação nativa de destino e arquivos.")
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeSmall
+        }
+
+        EmbeddedFlashDestination {
+            width: parent.width
+            controller: root.controller
         }
 
         KvButton {

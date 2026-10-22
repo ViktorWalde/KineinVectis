@@ -32,6 +32,16 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Alvo e sonda na aba Gravar (0.4.1h4b2b4b2, 2026-10-22, protocolo 0.189.0):**
+  num projeto probe-rs, a aba Gravar lista os executáveis confirmados pelo
+  CMake e as sondas conectadas. Sondas sem serial ou sem permissão aparecem
+  com o motivo, sem poderem ser escolhidas. Sem modelo do file-api, a aba
+  oferece "Configurar CMake" e a lista volta sozinha ao fim do configure.
+  Prévia, "Gravar na placa" e "Salvar e ativar" levam a intenção nativa até o
+  terminal. Um CMake bare metal com o chip fixado no kit passa a ser
+  reconhecido como embarcado ("Bare metal · <chip>"), e a Visão geral guia
+  pela sonda. Frases do painel deixam de quebrar no meio da palavra.
+
 - **probe-rs nativo no core (0.4.1h4b2b4b1, 2026-10-22, protocolo 0.188.0):**
   a intenção nativa vincula o ELF único de um alvo executável do CMake (lido
   do file-api), o chip fixado no kit e uma sonda escolhida pelo seletor

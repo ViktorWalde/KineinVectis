@@ -56,13 +56,18 @@ Item {
     Connections {
         target: root.embeddedController ? root.embeddedController.flash : null
 
-        function onProposalRequested(device, engine, flashSizeBytes, firmware, nativeMode, buildDirectory) {
+        function onProposalRequested(device, engine, flashSizeBytes, firmware, nativeMode, buildDirectory, target, probe) {
             const flash = root.embeddedController.flash;
             if (!root.available("runConfig.flashProposal")) {
                 flash.bindProposal(-1);
                 return;
             }
-            flash.bindProposal(root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware, nativeMode, buildDirectory));
+            flash.bindProposal(root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware, nativeMode, buildDirectory, target, probe));
+        }
+
+        // Alvos do CMake para o probe-rs nativo (52 §14.35): a mesma lista da Biblioteca.
+        function onTargetsRequested() {
+            if (root.available("cmake.targets.list")) root.coreClient.cmakeTargetsList();
         }
     }
 

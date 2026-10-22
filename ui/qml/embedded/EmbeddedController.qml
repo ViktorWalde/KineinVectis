@@ -53,7 +53,8 @@ Item {
     readonly property bool projectManagedLinux: projectLinux && projectFrameworks.length > 0
         && ["yocto", "buildroot"].indexOf(projectFrameworks[0].framework) >= 0
     readonly property string projectFrameworkLabel: projectFrameworks.length > 0
-        ? frameworkSummary(projectFrameworks[0]).split(" · ")[0] : projectLinux ? qsTr("Linux embarcado") : ""
+        ? frameworkSummary(projectFrameworks[0]).split(" · ")[0] : projectLinux ? qsTr("Linux embarcado")
+        : projectEmbedded && projectTarget.chip ? qsTr("Bare metal · %1").arg(projectTarget.chip) : ""
     readonly property var projectSdks: project.sdks !== undefined ? project.sdks : []
     readonly property var projectHints: project.hints !== undefined ? project.hints : []
     readonly property var projectTarget: project.target !== undefined ? project.target : ({})
@@ -95,6 +96,8 @@ Item {
         id: flashController
 
         frameworks: root.projectFrameworks
+        suggestedEngine: root.projectTarget.flashEngine || ""
+        workspaceRoot: root.workspaceRoot
     }
 
     EmbeddedAccessController {
@@ -173,6 +176,12 @@ Item {
         flashController.invalidate();
         project = model === undefined || model === null ? ({}) : model;
         projectBusy = false;
+        if (flashController.probeDestination) flashController.requestTargets();
+    }
+
+    function refreshProbes() {
+        busy = true;
+        listRequested();
     }
 
     // Uma linha por framework: nome, o arquivo que o provou e o detalhe.
@@ -288,6 +297,7 @@ Item {
         identityController.handleFailed(method, message);
         accessController.handleFailed(method, message);
         filesController.handleFailed(method, message);
+        if (method === "cmake.targets.list") flashController.handleTargetsFailed(message);
         const flags = { "build.size": "sizeBusy", "serial.list": "portsBusy",
                         "project.model": "projectBusy", "probe.list": "busy" };
         const flag = flags[method];

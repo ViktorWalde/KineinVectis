@@ -38,6 +38,10 @@ Item {
             root.embeddedController.handleProject(model);
         }
 
+        function onCmakeTargetsResolved(targets, origin) {
+            root.embeddedController.flash.handleTargets(targets, origin);
+        }
+
         function onProjectChanged(model) {
             root.embeddedController.handleProject(model);
         }

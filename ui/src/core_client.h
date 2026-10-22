@@ -119,13 +119,14 @@ public:
     Q_INVOKABLE qint64 runConfigSetActive(const QString& id);
     // "Gravar" como configuracao de execucao (runConfig.flashProposal, 0.113.0): a linha do
     // motor, sem gravar; pode consultar versao (0.186.0). flashSizeBytes <= 0 = sem checagem;
-    // firmware (0.116.0) = id do
-    // catalogo baixado, no lugar dos artefatos do build.
+    // firmware (0.116.0) = id do catalogo baixado; target/probe (0.188.0) = probe-rs nativo.
     Q_INVOKABLE qint64 runConfigFlashProposal(const QString& device, const QString& engine,
                                               double flashSizeBytes = 0,
                                               const QString& firmware = QString(),
                                               bool native = false,
-                                              const QString& buildDirectory = QString());
+                                              const QString& buildDirectory = QString(),
+                                              const QString& target = QString(),
+                                              const QString& probe = QString());
     Q_INVOKABLE void debugStart(const QString& program = QString(),
                                 const QVariantMap& connect = QVariantMap());
     // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.

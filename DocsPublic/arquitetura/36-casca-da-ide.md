@@ -748,3 +748,14 @@ runStopFinished confirma a resposta do pedido, não a saída do processo: o
 estado de parada permanece até a recusa da preparação ou terminal.closed.
 Se a recusa chegar antes da resposta de Parar, espera também essa resposta
 antes de permitir uma nova execução; repetir o gesto não emite outro pedido.
+
+**Destino na sonda (0.4.1h4b2b4b2, 2026-10-22).** `runConfigFlashProposal`
+ganha `target` e `probe`, enviados só quando não vazios. O
+`EmbeddedFlashController` só os preenche quando o destino é a sonda (nativo,
+sem firmware de catálogo, probe-rs escolhido ou sugerido pelo modelo); aí
+porta, tamanho e diretório do build não vão. A lista de alvos reutiliza
+`cmake.targets.list` e `cmakeTargetsResolved` pelos roteadores de Embarcados.
+Sem id na resposta, o controller só aceita a lista que pediu e só os
+executáveis do `fileApi` dentro da raiz atual. A vista
+`EmbeddedFlashDestination` é burra; as dicas ficam estáveis depois da escolha,
+para os controles não fugirem do ponteiro. Desenho no 52 §14.35.

@@ -27,6 +27,7 @@ Item {
         signal probesResolved(var probes, bool toolAvailable, string rawOutput, string hint)
         signal buildSizeResolved(var sections, var regions, bool toolAvailable, string tool, string rawOutput)
         signal projectModelResolved(var model)
+        signal cmakeTargetsResolved(var targets, string origin)
         signal projectChanged(var model)
         signal serialPortsResolved(var ports, string hint)
         signal serialMonitorOpened(string id, string command, string tool)

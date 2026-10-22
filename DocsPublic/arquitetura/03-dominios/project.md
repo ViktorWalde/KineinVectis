@@ -58,7 +58,13 @@ o modelo também recebe o `targetTriple` do kit efetivo (o do último configure
 com kit nomeado, senão o padrão, pelo mesmo mecanismo de `index.context`).
 O triple explícito preenche `target.triple` com evidência do kit; um alvo
 Linux define `family: linux` e `embedded: true` mesmo sem framework de imagem.
-Um CMake comum sem esse alvo continua não embarcado. Salvar kit recompõe
+Um CMake comum sem esse alvo continua não embarcado.
+**Bare metal pelo chip do kit (0.189.0, 2026-10-22):** o chip fixado no kit
+ativo (`toolchain.setKit { chip }`) também define `embedded: true`, mesmo sem
+framework detectado. É a mesma palavra explícita do usuário que já preenche
+`target.chip` com a evidência "kit do projeto". Um chip só deduzido de
+framework não muda a regra, porque o framework já marca o projeto. Sem chip no
+kit e sem alvo Linux, um CMake comum continua não embarcado. 52 §14.35. Salvar kit recompõe
 `event.project.changed`; descoberta de toolchains e painel usam o mesmo
 modelo. Isso não inventa Yocto/Buildroot nem motor de flash de MCU.
 

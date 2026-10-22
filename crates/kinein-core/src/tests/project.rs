@@ -243,6 +243,18 @@ fn the_target_carries_its_evidence_and_the_kit_chip_wins_over_the_framework() {
     // Sem framework: nao e' embarcado e nao ha' alvo inventado.
     let m = model_in(&temp_dir("nao-embarcado"), None, None, &amb);
     assert!(!m.embedded && m.target.family.is_none() && m.hints.is_empty());
+    // Bare metal pelo kit (0.189.0): o chip fixado pelo usuario marca o
+    // projeto sem framework; um chip vazio no kit nao marca.
+    let m = model_in(
+        &temp_dir("bare-metal-kit"),
+        Some("STM32F411RETx"),
+        None,
+        &amb,
+    );
+    assert!(m.embedded, "{m:?}");
+    assert_eq!(m.target.flash_engine.as_deref(), Some("probe-rs"));
+    let m = model_in(&temp_dir("kit-sem-chip"), Some("  "), None, &amb);
+    assert!(!m.embedded, "{m:?}");
 }
 
 #[test]

@@ -236,7 +236,8 @@ pub struct TargetModel {
 pub struct ProjectModel {
     /// Workspace root.
     pub root: String,
-    /// Any embedded framework recognised.
+    /// An embedded framework recognised, a Linux target or, since `0.189.0`,
+    /// a chip fixed in the active kit (the user's explicit word).
     pub embedded: bool,
     /// Frameworks found, most specific first.
     pub frameworks: Vec<FrameworkInfo>,

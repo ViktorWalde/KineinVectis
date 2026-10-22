@@ -927,28 +927,33 @@ flowchart LR
     n_ui_src_core_client_log_cpp["core_client_log.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_probe_cpp["core_client_probe.cpp"]
+    n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
     n_ui_src_core_client_requests_run_cpp["core_client_requests_run.cpp"]
   end
   subgraph IPC["JSON-RPC"]
     n_ipc_build(["build.* · 1"])
+    n_ipc_cmake(["cmake.* · 1"])
     n_ipc_probe(["probe.* · 1"])
     n_ipc_project(["project.* · 1"])
     n_ipc_runConfig(["runConfig.* · 1"])
     n_ipc_serial(["serial.* · 5"])
   end
   subgraph CORE["crates/kinein-core"]
+    n_crates_kinein_core_src_handlers_cmake_rs["handlers/cmake.rs"]
     n_crates_kinein_core_src_handlers_probe_rs["handlers/probe.rs"]
     n_crates_kinein_core_src_handlers_project_rs["handlers/project.rs"]
     n_crates_kinein_core_src_handlers_runconfig_rs["handlers/runconfig.rs"]
     n_crates_kinein_core_src_handlers_serial_rs["handlers/serial.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
     n_core_build[build]
+    n_core_cdb[cdb]
     n_core_cmake[cmake]
     n_core_dap[dap]
     n_core_probe[probe]
     n_core_project[project]
     n_core_rpc[rpc]
     n_core_serial[serial]
+    n_core_settings[settings]
     n_core_toolchain[toolchain]
     n_core_tools[tools]
   end
@@ -957,6 +962,7 @@ flowchart LR
   n_ui_qml_ipc_EmbeddedEventRouter_qml -.-> n_ui_qml_embedded_EmbeddedController_qml
   n_ui_qml_ipc_EmbeddedEventRouter_qml -.-> n_ui_qml_runtime_RuntimeController_qml
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_probe_cpp
+  n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_requests_cpp
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_requests_run_cpp
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
@@ -967,7 +973,13 @@ flowchart LR
   n_ui_src_core_client_probe_cpp --> n_ipc_project
   n_ui_src_core_client_probe_cpp --> n_ipc_serial
   n_ui_src_core_client_probe_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
+  n_ui_src_core_client_requests_cpp --> n_ipc_cmake
   n_ui_src_core_client_requests_run_cpp --> n_ipc_runConfig
+  n_ipc_cmake --> n_crates_kinein_core_src_handlers_cmake_rs
+  n_crates_kinein_core_src_handlers_cmake_rs --> n_core_cdb
+  n_crates_kinein_core_src_handlers_cmake_rs --> n_core_rpc
+  n_crates_kinein_core_src_handlers_cmake_rs --> n_core_settings
+  n_crates_kinein_core_src_handlers_cmake_rs --> n_core_toolchain
   n_ipc_probe --> n_crates_kinein_core_src_handlers_probe_rs
   n_crates_kinein_core_src_handlers_probe_rs --> n_core_probe
   n_crates_kinein_core_src_handlers_probe_rs --> n_core_rpc
@@ -1003,14 +1015,16 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_log.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_probe.cpp` | Dominio de embarcados no lado da UI: |
+| ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | ponte C++ | `ui/src/core_client_requests_run.cpp` | Dominio RUN no lado da UI: |
+| handler Rust | `crates/kinein-core/src/handlers/cmake.rs` | Handlers for cmake.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/probe.rs` | Handler for probe.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/handlers/project.rs` | Handler for project.* requests (impl Core) — o MODELO do projeto embarcado (pilar 0 do roadmaps/42). |
 | handler Rust | `crates/kinein-core/src/handlers/runconfig.rs` | Handlers for runConfig.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/serial.rs` | Handler for serial.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (9): `build.size`, `probe.list`, `project.model`, `runConfig.flashProposal`, `serial.access`, `serial.files`, `serial.identify`, `serial.list`, `serial.monitor`.
+Métodos IPC (10): `build.size`, `cmake.targets.list`, `probe.list`, `project.model`, `runConfig.flashProposal`, `serial.access`, `serial.files`, `serial.identify`, `serial.list`, `serial.monitor`.
 
 ### Toolchains e kits
 
