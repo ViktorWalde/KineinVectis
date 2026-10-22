@@ -6,7 +6,7 @@ use kinein_protocol::{
 };
 use serde_json::{Value, json};
 use std::{
-    path::Path,
+    path::{Path, PathBuf},
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -43,50 +43,38 @@ impl Core {
         selection: kinein_protocol::FlashProposalParams,
         firmware: Option<flash::FirmwareImage>,
     ) -> JsonRpcResponse {
-        if let Err(error) = flash::native::engine(&model, &selection, firmware.as_ref()) {
-            return super::runconfig::flash_error_response(request_id, &error);
-        }
-        if let Some(device) = selection.device.as_deref()
+        let engine = match flash::native::engine(&model, &selection, firmware.as_ref()) {
+            Ok(engine) => engine,
+            Err(error) => return super::runconfig::flash_error_response(request_id, &error),
+        };
+        if engine == "esptool"
+            && let Some(device) = selection.device.as_deref()
             && let Err(response) =
                 super::serial::ready_port(request_id.as_ref(), "runConfig.flashProposal", device)
         {
             return *response;
         }
-        let context = self.native_flash_context(&root, &model);
-        let detector = self.detector.clone();
+        let tool = match self.native_tool(&root, &engine) {
+            Ok(tool) => tool,
+            Err(error) => return super::runconfig::flash_error_response(request_id, &error),
+        };
+        let input = self.native_request(&root, model, selection, firmware, tool);
         self.defer_work(request_id, move |request_id| {
-            let Some(tool) = detector
-                .find_in_path("esptool")
-                .or_else(|| detector.find_in_path("esptool.py"))
-            else {
-                return super::runconfig::flash_error_response(
-                    request_id,
-                    &flash::FlashError::MissingTool {
-                        tool: "esptool".to_owned(),
-                        hint: "instale pelo catálogo de ferramentas".to_owned(),
-                    },
-                );
-            };
-            match flash::native::prepare(
-                &root,
-                flash::native::NativeRequest {
-                    model,
-                    context,
-                    selection,
-                    firmware,
-                    tool,
-                },
-                &Arc::new(AtomicBool::new(false)),
-            ) {
+            match flash::native::prepare(&root, input, &Arc::new(AtomicBool::new(false))) {
                 Ok(prepared) => JsonRpcResponse::success(request_id, json!(prepared.plan.proposal)),
                 Err(error) => super::runconfig::flash_error_response(request_id, &error),
             }
         })
     }
 
-    pub(super) fn native_flash_context(&self, root: &Path, model: &ProjectModel) -> Value {
+    fn native_kit(&self, root: &Path) -> (String, crate::toolchain::Toolchain) {
         let preset = crate::cmake::active_kit(root);
         let kit = crate::toolchain::Toolchain::resolve_kit(root, &self.detected_tools(), &preset);
+        (preset, kit)
+    }
+
+    pub(super) fn native_flash_context(&self, root: &Path, model: &ProjectModel) -> Value {
+        let (preset, kit) = self.native_kit(root);
         json!([
             preset,
             kit.to_result(),
@@ -94,6 +82,56 @@ impl Core {
             model.frameworks,
             model.sdks
         ])
+    }
+
+    /// esptool from the detector; probe-rs from the kit's debugAdapter role,
+    /// the same executable `probe.list` asks.
+    fn native_tool(&self, root: &Path, engine: &str) -> Result<PathBuf, flash::FlashError> {
+        let missing = |tool: &str, hint: &str| flash::FlashError::MissingTool {
+            tool: tool.to_owned(),
+            hint: hint.to_owned(),
+        };
+        if engine == "probe-rs" {
+            let tool = self.probe_program(root).ok_or_else(|| {
+                missing(
+                    "probe-rs",
+                    "instale pelo catálogo ou fixe o adaptador de depuração no kit",
+                )
+            })?;
+            if tool.file_stem().and_then(|stem| stem.to_str()) != Some("probe-rs") {
+                return Err(missing(
+                    "probe-rs",
+                    &format!(
+                        "o adaptador de depuração do kit é {}; fixe o probe-rs para gravar por sonda",
+                        tool.display()
+                    ),
+                ));
+            }
+            return Ok(tool);
+        }
+        self.detector
+            .find_in_path("esptool")
+            .or_else(|| self.detector.find_in_path("esptool.py"))
+            .ok_or_else(|| missing("esptool", "instale pelo catálogo de ferramentas"))
+    }
+
+    fn native_request(
+        &self,
+        root: &Path,
+        model: ProjectModel,
+        selection: kinein_protocol::FlashProposalParams,
+        firmware: Option<flash::FirmwareImage>,
+        tool: PathBuf,
+    ) -> flash::native::NativeRequest {
+        let context = self.native_flash_context(root, &model);
+        flash::native::NativeRequest {
+            kit_chip: self.native_kit(root).1.chip().map(str::to_owned),
+            model,
+            context,
+            selection,
+            firmware,
+            tool,
+        }
     }
 
     pub(crate) fn cancel_run_preflight(&mut self) -> bool {
@@ -128,23 +166,22 @@ impl Core {
                 "Uma execução já está em andamento; pare-a antes de gravar.",
             );
         }
-        let device = intent.selection.device.as_deref().unwrap_or_default();
-        if let Err(response) = super::serial::ready_port(request_id.as_ref(), "run.start", device) {
-            return *response;
-        }
-        if crate::platform::serial_device_revision(Path::new(device))
-            .ok()
-            .as_ref()
-            != Some(&intent.device_key)
-        {
-            return refusal(
-                request_id,
-                "A porta mudou desde a prévia; selecione o dispositivo e gere outra.",
-            );
-        }
-        let reservation = match self.claim_serial_port(device, "run.start", "Gravação nativa") {
-            Ok(reservation) => reservation,
-            Err(error) => return JsonRpcResponse::failure(request_id, error),
+        let probe = intent.selection.probe.clone();
+        let reservation = if let Some(probe) = probe.as_deref() {
+            match self.serial_usage.acquire_probe(
+                probe,
+                "run.start",
+                "Gravação nativa por sonda",
+                Some(&root),
+            ) {
+                Ok(reservation) => reservation,
+                Err(error) => return JsonRpcResponse::failure(request_id, error),
+            }
+        } else {
+            match self.claim_serial_destination(request_id.as_ref(), &intent) {
+                Ok(reservation) => reservation,
+                Err(response) => return *response,
+            }
         };
         let firmware = match intent
             .selection
@@ -158,23 +195,14 @@ impl Core {
         };
         let model = self.compute_project_model(&root);
         let context = self.native_flash_context(&root, &model);
-        let Some(tool) = self
-            .detector
-            .find_in_path("esptool")
-            .or_else(|| self.detector.find_in_path("esptool.py"))
-        else {
+        let engine = intent.selection.engine.clone().unwrap_or_default();
+        let Ok(tool) = self.native_tool(&root, &engine) else {
             return refusal(
                 request_id,
-                "O esptool selecionado não está disponível; revise as ferramentas e gere outra prévia.",
+                "A ferramenta de gravação selecionada não está disponível; revise as ferramentas e gere outra prévia.",
             );
         };
-        let input = flash::native::NativeRequest {
-            model,
-            context: context.clone(),
-            selection: intent.selection.clone(),
-            firmware,
-            tool,
-        };
+        let input = self.native_request(&root, model, intent.selection.clone(), firmware, tool);
         let cancel = Arc::new(AtomicBool::new(false));
         self.run_preflight = Some(cancel.clone());
         let wait_cancel = cancel.clone();
@@ -196,17 +224,44 @@ impl Core {
                 if let Err(message) = check_active(&root, active.as_ref()) {
                     return refusal(request_id, &message);
                 }
-                let device = intent.selection.device.as_deref().unwrap_or_default();
-                if let Err(response) = super::serial::ready_port(request_id.as_ref(), "run.start", device) { return *response; }
-                if crate::platform::serial_device_revision(Path::new(device)).ok().as_ref() != Some(&intent.device_key) {
-                    return refusal(request_id, "A identidade da porta mudou; gere outra prévia.");
+                if probe.is_none() {
+                    let device = intent.selection.device.as_deref().unwrap_or_default();
+                    if let Err(response) = super::serial::ready_port(request_id.as_ref(), "run.start", device) { return *response; }
+                    if crate::platform::serial_device_revision(Path::new(device)).ok().as_ref() != Some(&intent.device_key) {
+                        return refusal(request_id, "A identidade da porta mudou; gere outra prévia.");
+                    }
                 }
                 let identity = active.as_ref().map_or_else(|| json!(["flash", root, intent.fingerprint]), |config| json!(["config", root, config.id]));
+                let removed = if probe.is_some() { flash::probe_rs::inherited_variables() } else { Vec::new() };
                 core.start_in_terminal(request_id, &root, Invocation {
                     program: prepared.plan.command.program.display().to_string(), args: prepared.plan.command.args,
-                    command: prepared.plan.proposal.command, identity, reservation: Some(reservation),
+                    command: prepared.plan.proposal.command, identity, reservation: Some(reservation), removed,
                 })
             })
+    }
+}
+
+impl Core {
+    /// esptool: the bound port must be ready and keep its identity, then reserved.
+    fn claim_serial_destination(
+        &self,
+        request_id: Option<&Value>,
+        intent: &FlashIntent,
+    ) -> Result<crate::serial::ownership::Lease, Box<JsonRpcResponse>> {
+        let device = intent.selection.device.as_deref().unwrap_or_default();
+        super::serial::ready_port(request_id, "run.start", device)?;
+        if crate::platform::serial_device_revision(Path::new(device))
+            .ok()
+            .as_ref()
+            != Some(&intent.device_key)
+        {
+            return Err(Box::new(refusal(
+                request_id.cloned(),
+                "A porta mudou desde a prévia; selecione o dispositivo e gere outra.",
+            )));
+        }
+        self.claim_serial_port(device, "run.start", "Gravação nativa")
+            .map_err(|error| Box::new(JsonRpcResponse::failure(request_id.cloned(), error)))
     }
 }
 

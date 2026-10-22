@@ -4,6 +4,7 @@ use serde_json::{Value, json};
 use std::{fs, time::Duration};
 mod catalog;
 mod pending;
+mod probe_rs;
 
 fn fixture(name: &str) -> Fixture {
     let fixture = Fixture::new(name);

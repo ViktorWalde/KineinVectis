@@ -135,15 +135,18 @@ impl TerminalManager {
         program: &str,
         args: &[String],
     ) -> Result<String, TerminalError> {
-        self.open_command_holding(root, program, args, ())
+        self.open_command_holding(root, program, args, &[], ())
     }
 
     /// Keeps an operation's resource alive until this PTY's exit is observed.
+    /// `removed` names inherited variables the program must not receive
+    /// (probe-rs options that would act without appearing in the preview).
     pub(crate) fn open_command_holding(
         &mut self,
         root: &Path,
         program: &str,
         args: &[String],
+        removed: &[std::ffi::OsString],
         resource: impl Send + 'static,
     ) -> Result<String, TerminalError> {
         // Sessões mortas (shell saiu) não contam pro teto nem seguram memória.
@@ -180,6 +183,9 @@ impl TerminalManager {
         command.env("TERM", "xterm-256color");
         command.env("COLORTERM", "truecolor");
         command.env("TERM_PROGRAM", "KineinVectis");
+        for name in removed {
+            command.env_remove(name);
+        }
         let child = pair
             .slave
             .spawn_command(command)
@@ -505,6 +511,32 @@ mod tests {
         assert!(
             render_contains(&receiver, "ai-bridge-ok"),
             "o comando explicito nao apareceu no renderer compartilhado"
+        );
+    }
+
+    /// Native probe-rs: an inherited variable named in `removed` never
+    /// reaches the program, even though the core itself has it.
+    #[test]
+    fn removed_variables_do_not_reach_the_command() {
+        let (sender, receiver) = mpsc::channel();
+        let mut manager = TerminalManager::new(sender);
+        let root = temp_root("removed-environment");
+        let inherited = if cfg!(windows) { "USERPROFILE" } else { "HOME" };
+        assert!(
+            std::env::var_os(inherited).is_some(),
+            "fixture needs {inherited}"
+        );
+        let args = vec![
+            "-c".to_owned(),
+            format!("printf 'value=%s.' \"${{{inherited}-removed}}\"; sleep 0.2"),
+        ];
+        let Ok(_id) = manager.open_command_holding(&root, "sh", &args, &[inherited.into()], ())
+        else {
+            return;
+        };
+        assert!(
+            render_contains(&receiver, "value=removed."),
+            "the removed variable reached the command"
         );
     }
 

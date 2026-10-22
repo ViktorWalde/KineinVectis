@@ -97,6 +97,11 @@ pub struct CmakeModel {
     pub targets: Vec<Target>,
     /// Compiladores por linguagem, quando a `toolchains-v1` foi respondida.
     pub toolchains: Vec<Toolchain>,
+    /// Quantas configuracoes o codemodel tem (`targets` e' so' da primeira).
+    pub configurations: usize,
+    /// Arquivos do reply lidos, com a revisao observada ANTES da leitura: quem
+    /// usa o modelo como evidencia (gravacao nativa) confere se nao mudaram.
+    pub observed: Vec<(PathBuf, String)>,
     /// Arquivo -> indices em `targets` que o compilam.
     por_arquivo: HashMap<PathBuf, Vec<usize>>,
 }
@@ -111,7 +116,11 @@ impl CmakeModel {
             .join("api")
             .join("v1")
             .join("reply");
-        let codemodel = read_json(&reply_com_prefixo(&reply_dir, "codemodel-v2")?)?;
+        let mut observed = Vec::new();
+        let codemodel = read_observed(
+            &reply_com_prefixo(&reply_dir, "codemodel-v2")?,
+            &mut observed,
+        )?;
         // `paths.source` e' obrigatorio no file-api real; um reply sem ele
         // (fixture minima) resolve os relativos contra o proprio build dir.
         let source_dir = codemodel
@@ -132,7 +141,7 @@ impl CmakeModel {
             let Some(json_file) = entrada.get("jsonFile").and_then(Value::as_str) else {
                 continue;
             };
-            let Some(mut detalhe) = read_json(&reply_dir.join(json_file)) else {
+            let Some(mut detalhe) = read_observed(&reply_dir.join(json_file), &mut observed) else {
                 continue;
             };
             // O nome vem no detalhe E na entrada do codemodel; a entrada
@@ -173,6 +182,11 @@ impl CmakeModel {
             source_dir,
             targets,
             toolchains,
+            configurations: codemodel
+                .get("configurations")
+                .and_then(Value::as_array)
+                .map_or(0, Vec::len),
+            observed,
             por_arquivo,
         })
     }
@@ -224,6 +238,14 @@ fn reply_com_prefixo(reply_dir: &Path, prefixo: &str) -> Option<PathBuf> {
 
 fn read_json(path: &Path) -> Option<Value> {
     serde_json::from_str(&fs::read_to_string(path).ok()?).ok()
+}
+
+/// `read_json`, anotando a revisao do arquivo vista antes da leitura.
+fn read_observed(path: &Path, observed: &mut Vec<(PathBuf, String)>) -> Option<Value> {
+    let revision = crate::platform::file_revision(path).ok()?;
+    let value = read_json(path)?;
+    observed.push((path.to_path_buf(), revision));
+    Some(value)
 }
 
 /// `base/caminho` sem os `.` que o file-api escreve (`paths.source: "."`).

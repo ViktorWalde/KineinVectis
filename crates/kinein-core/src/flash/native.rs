@@ -1,5 +1,7 @@
-//! Native esptool intent: establish provenance, regenerate the existing plan, snapshot it.
-//! Execution remains with run.start and the existing terminal/serial owners.
+//! Native flash intent: provenance, the regenerated plan and its snapshot.
+//!
+//! esptool lives here; probe-rs in `flash::probe_rs`. Execution remains with
+//! run.start and the existing terminal/reservation owners.
 use super::{FirmwareImage, FlashCommand, FlashError, FlashPlan, ProposalTools, snapshot};
 use kinein_protocol::{FlashIntent, FlashProposalParams, Framework, ProjectModel};
 use serde_json::{Value, json};
@@ -20,8 +22,11 @@ pub struct NativeRequest {
     pub selection: FlashProposalParams,
     /// Installed catalogue firmware, when requested.
     pub firmware: Option<FirmwareImage>,
-    /// The executable selected by the existing detector.
+    /// The executable selected by the existing detector (probe-rs: the kit's adapter).
     pub tool: PathBuf,
+    /// Chip fixed in the active kit (`toolchain.setKit`), the user's word;
+    /// probe-rs refuses a chip only deduced from a framework.
+    pub kit_chip: Option<String>,
 }
 
 /// Native snapshot with the original provider plan and file observations.
@@ -35,6 +40,18 @@ pub struct Prepared {
 }
 
 impl Prepared {
+    pub(super) const fn from_parts(
+        plan: FlashPlan,
+        intent: FlashIntent,
+        files: Vec<snapshot::Observation>,
+    ) -> Self {
+        Self {
+            plan,
+            intent,
+            files,
+        }
+    }
+
     /// Verify that files did not change between deferred validation and PTY handoff.
     #[must_use]
     pub fn unchanged(&self) -> bool {
@@ -45,19 +62,26 @@ impl Prepared {
 /// Resolve native support before querying an unrelated executable.
 ///
 /// # Errors
-/// Refuses engines whose native destination validation is still pending.
+/// Refuses engines whose native destination validation is still pending, and
+/// selection fields of another destination kind (`InvalidSelection`).
 pub fn engine(
     model: &ProjectModel,
     selection: &FlashProposalParams,
     firmware: Option<&FirmwareImage>,
 ) -> Result<String, FlashError> {
     let (engine, _) = super::select_engine(model, selection.engine.as_deref(), firmware)?;
-    if engine != "esptool" {
-        return Err(invalid(
+    match engine.as_str() {
+        "esptool" if selection.target.is_some() || selection.probe.is_some() => {
+            Err(FlashError::InvalidSelection {
+                message: "target e probe valem só para probe-rs nativo".to_owned(),
+            })
+        }
+        "esptool" => Ok(engine),
+        "probe-rs" => super::probe_rs::check_selection(selection).map(|()| engine),
+        _ => Err(invalid(
             "este motor ainda não tem validação de destino nativa; a integração permanece pendente, sem converter a operação em shell",
-        ));
+        )),
     }
-    Ok(engine)
 }
 
 /// Check static intent invariants and its display command without executing anything.
@@ -69,15 +93,23 @@ pub fn validate_intent(
     intent: &FlashIntent,
     command: Option<&str>,
 ) -> Result<(), String> {
+    let selection = &intent.selection;
+    let destination = match selection.engine.as_deref() {
+        Some("esptool") => {
+            selection.target.is_none()
+                && selection.probe.is_none()
+                && selection
+                    .device
+                    .as_deref()
+                    .is_some_and(|device| !device.trim().is_empty())
+        }
+        Some("probe-rs") => super::probe_rs::check_selection(selection).is_ok(),
+        _ => false,
+    };
     if intent.version != 1
         || Path::new(&intent.workspace) != root
-        || !intent.selection.native
-        || intent.selection.engine.as_deref() != Some("esptool")
-        || intent
-            .selection
-            .device
-            .as_deref()
-            .is_none_or(|device| device.trim().is_empty())
+        || !selection.native
+        || !destination
         || intent.device_key.is_empty()
         || !Path::new(&intent.program).is_absolute()
         || intent.args.is_empty()
@@ -119,6 +151,9 @@ pub fn prepare(
         &request.selection,
         request.firmware.as_ref(),
     )?;
+    if engine == "probe-rs" {
+        return super::probe_rs::prepare(root, request, cancel);
+    }
     let device = super::chosen_port(request.selection.device.as_deref())?.to_owned();
     let device_key = crate::platform::serial_device_revision(Path::new(&device))
         .map_err(|error| invalid(&error.to_string()))?;

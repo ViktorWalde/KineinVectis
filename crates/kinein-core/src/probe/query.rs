@@ -1,4 +1,5 @@
-//! Deadline and retained-output limits for the existing probe listing query.
+//! Deadline, cancellation and retained-output limits for probe-rs queries:
+//! the listing shown on screen and the native flash validation share them.
 use kinein_protocol::ProbeListResult;
 use std::{
     path::{Path, PathBuf},
@@ -7,10 +8,84 @@ use std::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
+    thread,
     time::Duration,
 };
 
 const MAX_OUTPUT_BYTES: usize = 65_536;
+
+/// Retained output of one bounded query and why it is not evidence, if so.
+#[derive(Debug)]
+pub struct Answer {
+    /// Retained output without ANSI escapes.
+    pub output: String,
+    /// `None` only when the program finished successfully within the limits.
+    pub failure: Option<Failure>,
+}
+
+/// Why a bounded query's output does not count.
+#[derive(Debug)]
+pub enum Failure {
+    /// The program could not start.
+    Spawn(String),
+    /// Status, deadline, size or cancellation left the output partial.
+    Incomplete(String),
+}
+
+/// Run `command` within the deadline and 64 KiB of retained output.
+///
+/// `cancel` belongs to the caller and is only read: an overflow stops this
+/// query without marking the caller's whole operation as cancelled.
+#[must_use]
+pub fn run(command: Command, timeout: Duration, cancel: &Arc<AtomicBool>) -> Answer {
+    let stop = Arc::new(AtomicBool::new(false));
+    let done = Arc::new(AtomicBool::new(false));
+    {
+        let (cancel, stop, done) = (Arc::clone(cancel), Arc::clone(&stop), Arc::clone(&done));
+        thread::spawn(move || {
+            while !done.load(Ordering::SeqCst) {
+                if cancel.load(Ordering::SeqCst) {
+                    stop.store(true, Ordering::SeqCst);
+                    break;
+                }
+                thread::sleep(Duration::from_millis(25));
+            }
+        });
+    }
+    let mut output = String::new();
+    let mut overflow = false;
+    let result = crate::process::stream_command_lines_with_timeout_cancelable(
+        command,
+        timeout,
+        Arc::clone(&stop),
+        &mut |_, line| {
+            if output.len().saturating_add(line.len()).saturating_add(1) <= MAX_OUTPUT_BYTES {
+                output.push_str(&line);
+                output.push('\n');
+            } else {
+                overflow = true;
+                stop.store(true, Ordering::SeqCst);
+            }
+        },
+    );
+    done.store(true, Ordering::SeqCst);
+    let incomplete = |reason: &str| Some(Failure::Incomplete(reason.to_owned()));
+    let failure = match result {
+        Err(crate::process::ProcessError::Spawn(error)) => Some(Failure::Spawn(error.to_string())),
+        Err(error) => incomplete(&format!("falha ao aguardar a consulta: {error:?}")),
+        Ok(_) if cancel.load(Ordering::SeqCst) => incomplete("a consulta foi cancelada"),
+        Ok((_, true)) => incomplete("o prazo da consulta expirou"),
+        Ok(_) if overflow => incomplete("a saída excedeu 64 KiB e a consulta foi interrompida"),
+        Ok((status, false)) if !status.success() => {
+            incomplete(&format!("a consulta terminou com {status}"))
+        }
+        Ok(_) => None,
+    };
+    Answer {
+        output: super::strip_ansi(&output),
+        failure,
+    }
+}
 
 pub(super) fn list(program: Option<&Path>, timeout: Duration) -> ProbeListResult {
     let program = program.map_or_else(
@@ -19,63 +94,34 @@ pub(super) fn list(program: Option<&Path>, timeout: Duration) -> ProbeListResult
     );
     let mut command = Command::new(&program);
     command.arg("list").env("NO_COLOR", "1");
-    let cancel = Arc::new(AtomicBool::new(false));
-    let mut output = String::new();
-    let mut overflow = false;
-    let result = crate::process::stream_command_lines_with_timeout_cancelable(
-        command,
-        timeout,
-        cancel.clone(),
-        &mut |_, line| {
-            if output.len().saturating_add(line.len()).saturating_add(1) <= MAX_OUTPUT_BYTES {
-                output.push_str(&line);
-                output.push('\n');
-            } else {
-                overflow = true;
-                cancel.store(true, Ordering::SeqCst);
-            }
-        },
-    );
-    let output = super::strip_ansi(&output);
-    let failure = match result {
-        Err(crate::process::ProcessError::Spawn(error)) => {
-            return failed(
-                false,
-                output,
-                format!(
-                    "{} não pôde iniciar: {error}. Confira a instalação e o adaptador fixado no kit; a lista não foi verificada.",
-                    program.display()
-                ),
-            );
-        }
-        Err(error) => Some(format!("falha ao aguardar a consulta: {error:?}")),
-        Ok((_, true)) => Some("o prazo da consulta expirou; a lista não foi verificada".to_owned()),
-        Ok(_) if overflow => Some(
-            "a saída excedeu 64 KiB; a consulta foi interrompida e a lista não foi verificada"
-                .to_owned(),
-        ),
-        Ok((status, false)) if !status.success() => Some(format!(
-            "a consulta terminou com {status}; a lista não foi verificada"
-        )),
-        Ok(_) => None,
-    };
-    if let Some(reason) = failure {
-        return failed(
-            true,
-            output,
+    let answer = run(command, timeout, &Arc::new(AtomicBool::new(false)));
+    match answer.failure {
+        Some(Failure::Spawn(error)) => failed(
+            false,
+            answer.output,
             format!(
-                "{}: {reason}. Confira a saída e solicite uma nova lista.",
+                "{} não pôde iniciar: {error}. Confira a instalação e o adaptador fixado no kit; a lista não foi verificada.",
                 program.display()
             ),
-        );
-    }
-    let probes = super::parse_list(&output);
-    let hint = super::hint_for(&probes, &output);
-    ProbeListResult {
-        probes,
-        tool_available: true,
-        raw_output: output,
-        hint,
+        ),
+        Some(Failure::Incomplete(reason)) => failed(
+            true,
+            answer.output,
+            format!(
+                "{}: {reason}; a lista não foi verificada. Confira a saída e solicite uma nova lista.",
+                program.display()
+            ),
+        ),
+        None => {
+            let probes = super::parse_list(&answer.output);
+            let hint = super::hint_for(&probes, &answer.output);
+            ProbeListResult {
+                probes,
+                tool_available: true,
+                raw_output: answer.output,
+                hint,
+            }
+        }
     }
 }
 

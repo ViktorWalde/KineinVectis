@@ -15,8 +15,13 @@
 //! nada casa, a saida CRUA volta junto para a UI mostrar. "Nao entendi o que o
 //! probe-rs respondeu, e aqui esta o que ele disse" e' acionavel. "Nenhuma
 //! sonda" quando ha uma plugada e' o item 4 da §5.1 sendo violado.
+//!
+//! Em 2026-10-22 o formato foi medido no codigo e no binario oficiais da
+//! 0.32.0 (`roadmaps/52` §14.34): o marcador `(inaccessible)` e a interface
+//! FTDI (`pid-IF`) deixaram de corromper serial/tipo. A tela continua
+//! tolerante; so' a validacao de gravacao ([`parse_listing`]) exige o formato.
 
-mod query;
+pub mod query;
 
 use kinein_protocol::{ProbeInfo, ProbeListResult};
 
@@ -57,56 +62,116 @@ fn strip_ansi(texto: &str) -> String {
 /// Interpreta a saida do `probe-rs list`. Funcao pura: e' o que se testa sem
 /// sonda, sem processo e sem a ferramenta instalada.
 ///
-/// Formato observado (probe-rs, fontes da comunidade — NAO verificado contra
-/// binario instalado):
+/// Formato da 0.32.0, medido no codigo oficial (`Display` de `DebugProbeInfo`
+/// e `cmd/list.rs`) e no binario instalado em 2026-10-22:
 ///
 /// ```text
 /// [0]: BBC micro:bit CMSIS-DAP -- 0d28:0204:9900000031 (CMSIS-DAP)
-/// [0]: STLink V3 -- 0483:374e:002700123456 (ST-LINK)
+/// [1]: Dual RS232-HS -- 0403:6010-1:FT1234 (FTDI) (inaccessible)
 /// ```
+///
+/// Tolerante para a tela: linha que nao casa e' ignorada e a saida crua vai
+/// junto. A validacao de gravacao usa [`parse_listing`], que recusa o resto.
 #[must_use]
-pub fn parse_list(saida: &str) -> Vec<ProbeInfo> {
-    let mut sondas = Vec::new();
-    for linha in saida.lines() {
-        let linha = linha.trim();
-        // `[N]:` abre a linha de uma sonda. Sem isso, e' cabecalho ou aviso.
-        let Some(resto) = linha.strip_prefix('[') else {
-            continue;
-        };
-        let Some((_indice, resto)) = resto.split_once("]:") else {
-            continue;
-        };
-        // `nome -- vid:pid:serial (tipo)`
-        let Some((nome, identificador)) = resto.split_once("--") else {
-            continue;
-        };
-        let nome = nome.trim();
-        let identificador = identificador.trim();
-        if nome.is_empty() || identificador.is_empty() {
-            continue;
+pub fn parse_list(output: &str) -> Vec<ProbeInfo> {
+    output
+        .lines()
+        .filter_map(probe_line)
+        .filter_map(Result::ok)
+        .collect()
+}
+
+/// A listagem inteira no formato da 0.32.0, ou a primeira linha de sonda que
+/// nao casa. Lista vazia e' resposta valida ("No debug probes were found.").
+///
+/// # Errors
+/// Uma linha `[N]:` fora do formato: listagem nao serve de prova de destino.
+pub(crate) fn parse_listing(output: &str) -> Result<Vec<ProbeInfo>, String> {
+    let mut probes = Vec::new();
+    for line in output.lines() {
+        match probe_line(line) {
+            None => {}
+            Some(Ok(probe)) if listed_exactly(&probe, line) => probes.push(probe),
+            Some(_) => {
+                return Err(format!(
+                    "linha da listagem fora do formato da 0.32.0: {}",
+                    line.trim()
+                ));
+            }
         }
-        // O tipo vem entre parenteses no fim, quando vem.
-        let (identificador, kind) = match identificador.rsplit_once('(') {
-            Some((antes, depois)) => (antes.trim(), depois.trim_end_matches(')').trim().to_owned()),
-            None => (identificador, String::new()),
-        };
-        let mut partes = identificador.split(':');
-        let vid = partes.next().unwrap_or_default().trim().to_owned();
-        let pid = partes.next().unwrap_or_default().trim().to_owned();
-        // O serial pode conter `:`; o resto todo e' serial.
-        let serial: String = partes.collect::<Vec<_>>().join(":").trim().to_owned();
-        if vid.is_empty() || pid.is_empty() {
-            continue;
-        }
-        sondas.push(ProbeInfo {
-            name: nome.to_owned(),
-            vid,
-            pid,
-            serial: (!serial.is_empty()).then_some(serial),
-            kind: (!kind.is_empty()).then_some(kind),
-        });
     }
-    sondas
+    Ok(probes)
+}
+
+/// `None`: nao e' linha de sonda (cabecalho, aviso). `Some(Err)`: abre com
+/// `[N]:` mas nao casa.
+fn probe_line(line: &str) -> Option<Result<ProbeInfo, ()>> {
+    let (index, rest) = line.trim().strip_prefix('[')?.split_once("]:")?;
+    if index.is_empty() || !index.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    Some(probe_fields(rest.trim()))
+}
+
+/// `<nome> -- vvvv:pppp[-IF]:<serial> (<fabrica>)[ (inaccessible)]`.
+fn probe_fields(line: &str) -> Result<ProbeInfo, ()> {
+    let (line, inaccessible) = line
+        .strip_suffix("(inaccessible)")
+        .map_or((line, false), |before| (before.trim_end(), true));
+    let (name, identifier) = line.split_once(" -- ").ok_or(())?;
+    let identifier = identifier.trim();
+    // A fabrica vem entre parenteses no fim; nenhuma da 0.32.0 tem " (".
+    let (identifier, kind) = identifier
+        .strip_suffix(')')
+        .and_then(|inner| inner.rsplit_once(" ("))
+        .map_or((identifier, None), |(before, kind)| {
+            (before.trim(), Some(kind.trim().to_owned()))
+        });
+    // O serial pode conter `:`; o resto todo e' serial.
+    let mut parts = identifier.splitn(3, ':');
+    let vid = parts.next().unwrap_or_default().trim();
+    let pid = parts.next().unwrap_or_default().trim();
+    let serial = parts.next().unwrap_or_default().trim();
+    let (pid, interface) = match pid.split_once('-') {
+        Some((pid, interface)) => (pid, Some(interface.parse::<u8>().map_err(|_| ())?)),
+        None => (pid, None),
+    };
+    if name.trim().is_empty() || vid.is_empty() || pid.is_empty() {
+        return Err(());
+    }
+    Ok(ProbeInfo {
+        name: name.trim().to_owned(),
+        vid: vid.to_owned(),
+        pid: pid.to_owned(),
+        serial: (!serial.is_empty()).then(|| serial.to_owned()),
+        kind: kind.filter(|kind| !kind.is_empty()),
+        interface,
+        inaccessible,
+    })
+}
+
+/// O que a validacao de destino exige alem do casamento tolerante: VID/PID
+/// como a 0.32.0 escreve (`{:04x}`), o campo de serial presente (mesmo vazio),
+/// a fabrica, e um unico separador ` -- ` (nome/serial vem do dispositivo).
+fn listed_exactly(probe: &ProbeInfo, line: &str) -> bool {
+    let hex4 = |field: &str| {
+        field.len() == 4
+            && field
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    };
+    let identifier = line.split_once(" -- ").map_or("", |(_, rest)| rest);
+    hex4(&probe.vid)
+        && hex4(&probe.pid)
+        && probe.kind.is_some()
+        && line.matches(" -- ").count() == 1
+        && identifier
+            .split(' ')
+            .next()
+            .unwrap_or_default()
+            .matches(':')
+            .count()
+            >= 2
 }
 
 /// A dica que transforma "nao achei" em algo acionavel.
@@ -160,7 +225,7 @@ fn hint_for(probes: &[ProbeInfo], cru: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{hint_for, parse_list, strip_ansi};
+    use super::{hint_for, parse_list, parse_listing, strip_ansi};
 
     #[test]
     fn failed_query_cannot_publish_recognised_partial_probes() {
@@ -236,6 +301,50 @@ mod tests {
         assert_eq!(sondas.len(), 1);
         assert_eq!(sondas[0].kind, None);
         assert_eq!(sondas[0].serial.as_deref(), Some("S1"));
+    }
+
+    /// Formato da 0.32.0: `(inaccessible)` e' marca, nao tipo nem serial; a
+    /// interface FTDI sai do pid.
+    #[test]
+    fn the_0_32_markers_do_not_corrupt_serial_kind_or_pid() {
+        let probes = parse_list(
+            "The following debug probes were found:\n\
+             [0]: CMSIS-DAP v2 -- 0d28:0204:9900000031 (CMSIS-DAP) (inaccessible)\n\
+             [1]: Dual RS232-HS -- 0403:6010-1:FT1234 (FTDI)\n\
+             [2]: Sem serial -- 1366:0101: (J-Link)\n",
+        );
+        assert_eq!(probes.len(), 3, "{probes:?}");
+        assert!(probes[0].inaccessible);
+        assert_eq!(probes[0].serial.as_deref(), Some("9900000031"));
+        assert_eq!(probes[0].kind.as_deref(), Some("CMSIS-DAP"));
+        assert_eq!(
+            (probes[1].pid.as_str(), probes[1].interface),
+            ("6010", Some(1))
+        );
+        assert!(!probes[1].inaccessible);
+        assert_eq!(probes[2].serial, None);
+    }
+
+    /// A listagem estrita (prova de destino) recusa o que a tela aceita.
+    #[test]
+    fn the_strict_listing_refuses_rows_the_screen_accepts() {
+        let listed = "[0]: STLink V3 -- 0483:374e:0027 (ST-LINK)\nNo more\n";
+        assert_eq!(parse_listing(listed).unwrap().len(), 1);
+        assert!(
+            parse_listing("No debug probes were found.\n")
+                .unwrap()
+                .is_empty()
+        );
+        for line in [
+            "[0]: Generica -- 1111:2222:S1",
+            "[0]: Curta -- 483:374e:S1 (ST-LINK)",
+            "[0]: Sem serial -- 0483:374e (ST-LINK)",
+            "[0]: A -- B -- 0483:374e:S1 (ST-LINK)",
+            "[0]: Interface -- 0403:6010-x:S1 (FTDI)",
+            "[0]: sem identificador",
+        ] {
+            assert!(parse_listing(line).is_err(), "aceitou {line}");
+        }
     }
 
     /// A dica de UDEV e a mais importante: sem regra, a ferramenta roda, nao

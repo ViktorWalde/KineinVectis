@@ -1,5 +1,5 @@
-//! One lease per managed serial channel, held by its actual process owner.
-//! Discovery and coordination never open the device itself.
+//! One lease per managed serial channel or debug probe, held by its actual
+//! process owner. Discovery and coordination never open the device itself.
 // Like platform, these types are crate-only in a restricted module: `pub`
 // conflicts with unreachable_pub, while Clippy asks for it here.
 #![allow(clippy::redundant_pub_crate)]
@@ -33,7 +33,34 @@ struct Owner {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 enum Channel {
     Device(String),
+    /// probe-rs selector, canonical; keyed apart from serial nodes.
+    Probe(String),
     Automatic,
+}
+
+/// What a refusal names: a port, a probe or the automatic selection.
+#[derive(Debug, Clone, Copy)]
+pub(super) struct Resource<'a> {
+    probe: bool,
+    name: Option<&'a str>,
+}
+
+impl Resource<'_> {
+    fn label(self) -> String {
+        match (self.probe, self.name) {
+            (true, Some(name)) => format!("a sonda {name}"),
+            (_, Some(name)) => format!("a porta {name}"),
+            (_, None) => "uma porta automaticamente".to_owned(),
+        }
+    }
+
+    const fn scope(self) -> &'static str {
+        match (self.probe, self.name) {
+            (true, _) => "probe",
+            (false, Some(_)) => "device",
+            (false, None) => "automatic",
+        }
+    }
 }
 
 /// In-memory by default; only the real persisted core enables file locks.
@@ -67,11 +94,31 @@ impl Registry {
         title: &str,
         workspace: Option<&Path>,
     ) -> Result<Lease, JsonRpcError> {
+        let resource = Resource {
+            probe: false,
+            name: Some(device),
+        };
         let key = crate::platform::serial_device_key(Path::new(device))
-            .map_err(|error| unavailable(Some(device), &error))?;
+            .map_err(|error| unavailable(resource, &error))?;
+        self.claim(Channel::Device(key), resource, operation, title, workspace)
+    }
+
+    /// A debug probe by its canonical selector: excludes the same probe and
+    /// automatic port selection, never an explicit serial port.
+    pub(crate) fn acquire_probe(
+        &self,
+        selector: &str,
+        operation: &str,
+        title: &str,
+        workspace: Option<&Path>,
+    ) -> Result<Lease, JsonRpcError> {
+        let resource = Resource {
+            probe: true,
+            name: Some(selector),
+        };
         self.claim(
-            Channel::Device(key),
-            Some(device),
+            Channel::Probe(format!("probe-rs:{selector}")),
+            resource,
             operation,
             title,
             workspace,
@@ -85,20 +132,24 @@ impl Registry {
         title: &str,
         workspace: Option<&Path>,
     ) -> Result<Lease, JsonRpcError> {
-        self.claim(Channel::Automatic, None, operation, title, workspace)
+        let resource = Resource {
+            probe: false,
+            name: None,
+        };
+        self.claim(Channel::Automatic, resource, operation, title, workspace)
     }
 
     fn claim(
         &self,
         channel: Channel,
-        device: Option<&str>,
+        resource: Resource<'_>,
         operation: &str,
         title: &str,
         workspace: Option<&Path>,
     ) -> Result<Lease, JsonRpcError> {
         let mut active = self.active.lock().map_err(|_| {
             unavailable(
-                device,
+                resource,
                 &io::Error::other("o registro de uso está indisponível"),
             )
         })?;
@@ -109,7 +160,7 @@ impl Registry {
                 .flatten()
         });
         if let Some(reservation) = conflict {
-            return Err(occupied(device, Some(&reservation.owner)));
+            return Err(occupied(resource, Some(&reservation.owner)));
         }
         let owner = Owner {
             operation: operation.to_owned(),
@@ -120,13 +171,13 @@ impl Registry {
             automatic: channel == Channel::Automatic,
         };
         let key = match &channel {
-            Channel::Device(key) => Some(key.as_str()),
+            Channel::Device(key) | Channel::Probe(key) => Some(key.as_str()),
             Channel::Automatic => None,
         };
         let files = self
             .directory
             .as_deref()
-            .map(|directory| Coordination::acquire(directory, key, device, &owner))
+            .map(|directory| Coordination::acquire(directory, key, resource, &owner))
             .transpose()?;
         let reservation = Arc::new(Reservation { owner, files });
         active.insert(channel, Arc::downgrade(&reservation));
@@ -135,11 +186,8 @@ impl Registry {
     }
 }
 
-fn occupied(device: Option<&str>, owner: Option<&Owner>) -> JsonRpcError {
-    let channel = device.map_or_else(
-        || "uma porta automaticamente".to_owned(),
-        |device| format!("a porta {device}"),
-    );
+fn occupied(resource: Resource<'_>, owner: Option<&Owner>) -> JsonRpcError {
+    let channel = resource.label();
     let message = owner.map_or_else(
         || format!("Não foi possível reservar {channel}: há outra operação serial da IDE em andamento. Aguarde sua conclusão ou escolha uma porta livre no painel Embarcados."),
         |owner| {
@@ -162,20 +210,21 @@ fn occupied(device: Option<&str>, owner: Option<&Owner>) -> JsonRpcError {
     JsonRpcError::new(
         JsonRpcErrorCode::SerialPortBusy,
         message,
-        Some(
-            json!({ "scope": if device.is_some() { "device" } else { "automatic" }, "device": device, "owner": owner }),
-        ),
+        Some(json!({ "scope": resource.scope(), "device": resource.name, "owner": owner })),
     )
 }
 
-fn unavailable(device: Option<&str>, error: &io::Error) -> JsonRpcError {
-    let channel = device.unwrap_or("a seleção automática de porta serial");
+fn unavailable(resource: Resource<'_>, error: &io::Error) -> JsonRpcError {
+    let channel = resource.name.map_or_else(
+        || "a seleção automática de porta serial".to_owned(),
+        |_| resource.label(),
+    );
     JsonRpcError::new(
         JsonRpcErrorCode::InternalError,
         format!(
             "Não foi possível reservar {channel} com segurança: {error}. A ferramenta não foi iniciada; confira o acesso ao estado da IDE e tente novamente."
         ),
-        Some(json!({ "device": device })),
+        Some(json!({ "device": resource.name })),
     )
 }
 

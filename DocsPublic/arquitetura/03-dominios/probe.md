@@ -53,3 +53,13 @@ de sucesso/falha; respostas anteriores são descartadas antes dos efeitos.
 Fechamento aceito, abertura aceita com outra raiz e desconexão invalidam o
 pedido. Abertura recusada e reabertura da mesma raiz conservam a consulta
 atual. API pública, sinais e formato IPC permanecem os mesmos.
+
+**Formato 0.32.0 e campos novos (0.188.0, 0.4.1h4b2b4b1):** `probes[]` ganha
+`interface?: number` e `inaccessible?: true`. O parser segue a linha medida no
+código e no binário oficiais da 0.32.0 (2026-10-22):
+`[N]: <nome> -- vvvv:pppp[-IF]:<serial> (<fábrica>)[ (inaccessible)]`. O
+marcador `(inaccessible)` não vira mais tipo nem parte do serial, e a interface
+FTDI sai do pid. Linhas desconhecidas continuam ignoradas aqui, com a saída crua
+junto. Só a validação nativa de gravação exige o formato inteiro e recusa o
+resto. A lista continua descoberta: não prova identidade, acesso ou exclusividade.
+

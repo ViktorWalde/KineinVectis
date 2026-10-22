@@ -130,6 +130,7 @@ impl Core {
             &root,
             &executable.display().to_string(),
             &reserved_args,
+            &[],
             reservation,
         ) {
             Ok(id) => JsonRpcResponse::success(

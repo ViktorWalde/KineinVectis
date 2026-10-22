@@ -169,3 +169,6 @@ wouldblock
 
 # shlex: modulo da biblioteca padrao Python para tokenizar a linha de link do Ninja.
 shlex
+# hashlib/hexdigest: modulo e metodo da biblioteca padrao Python (SHA-256 dos binarios na prova probe-rs).
+hashlib
+hexdigest

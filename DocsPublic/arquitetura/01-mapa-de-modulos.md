@@ -180,6 +180,7 @@ flowchart LR
   n_core_flash --> n_core_build
   n_core_flash --> n_core_fsops
   n_core_flash --> n_core_platform
+  n_core_flash --> n_core_probe
   n_core_flash --> n_core_process
   n_core_flash --> n_core_project
   n_core_format --> n_core_platform
@@ -236,6 +237,8 @@ flowchart LR
   n_core_owned_child --> n_core_stderr_tail
   n_core_probe --> n_core_process
   n_core_process --> n_core_platform
+  n_core_project --> n_core_cmake
+  n_core_project --> n_core_dap
   n_core_project --> n_core_fsops
   n_core_project --> n_core_platform
   n_core_python --> n_core_run
@@ -271,7 +274,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 128 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 131 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -294,7 +297,7 @@ flowchart LR
 | `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
-| `flash` | build, fsops, platform, process, project | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
+| `flash` | build, fsops, platform, probe, process, project | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
 | `fswatch` | lsp, platform | Debounced, workspace-confined observation of external file-system changes. |
@@ -310,9 +313,9 @@ flowchart LR
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
-| `probe` | process | Deadline and retained-output limits for the existing probe listing query. |
+| `probe` | process | Deadline, cancellation and retained-output limits for probe-rs queries: |
 | `process` | platform | Synchronous line streaming for child processes. |
-| `project` | fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
+| `project` | cmake, dap, fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
 | `python` | run | O dominio python: |
 | `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |

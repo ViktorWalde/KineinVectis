@@ -32,6 +32,16 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **probe-rs nativo no core (0.4.1h4b2b4b1, 2026-10-22, protocolo 0.188.0):**
+  a intenção nativa vincula o ELF único de um alvo executável do CMake (lido
+  do file-api), o chip fixado no kit e uma sonda escolhida pelo seletor
+  explícito; a prévia não toca hardware. A ferramenta precisa ser a 0.32.x, reconhecer o chip e listar
+  exatamente uma sonda acessível com aquele serial. As variáveis PROBE_RS_* do
+  ambiente não chegam ao probe-rs, e um `.probe-rs.*` que aplicaria presets
+  recusa. Reserva por sonda e revalidação antes do PTY. A lista de sondas
+  passa a ler `(inaccessible)` e a interface FTDI sem corromper serial/tipo.
+  A tela ainda não oferece a escolha de alvo/sonda (próxima parte).
+
 - **Respostas de sondas na UI (0.4.1h4b2b4a2, 2026-10-22):** a ponte Qt
   aplica somente o desfecho da última consulta. Respostas antigas, inclusive
   falhas após trocar/fechar workspace, deixam de alterar o painel; reabrir a

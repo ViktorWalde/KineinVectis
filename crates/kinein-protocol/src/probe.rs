@@ -18,6 +18,12 @@ pub struct ProbeInfo {
     /// Probe family (CMSIS-DAP, ST-LINK, ...), when reported.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<String>,
+    /// USB interface of a multi-channel probe (`vid:pid-IF`), when listed (`0.188.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interface: Option<u8>,
+    /// The tool marked the entry `(inaccessible)` (`0.188.0`); discovery, not access proof.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub inaccessible: bool,
 }
 
 /// Result payload for `probe.list`.

@@ -40,6 +40,7 @@ pub mod esptool;
 pub mod firmware;
 pub mod frameworks;
 pub mod native;
+pub mod probe_rs;
 mod snapshot;
 
 use std::path::PathBuf;
@@ -79,6 +80,11 @@ pub enum FlashError {
         /// O que faltou e como obter.
         message: String,
     },
+    /// Native selection fields of another destination kind (`INVALID_PARAMS`).
+    InvalidSelection {
+        /// Which field and why.
+        message: String,
+    },
     /// The selected binary could not establish a supported syntax.
     UnsupportedTool {
         /// Actionable version/probe failure.
@@ -103,6 +109,7 @@ impl std::fmt::Display for FlashError {
             | Self::NoArtifact { message }
             | Self::NoDevice { message }
             | Self::UnsupportedTool { message }
+            | Self::InvalidSelection { message }
             | Self::InvalidContext { message } => f.write_str(message),
             Self::UnknownEngine { engine } => write!(
                 f,

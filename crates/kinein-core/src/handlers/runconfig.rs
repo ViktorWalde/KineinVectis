@@ -42,7 +42,7 @@ impl Core {
         let request = match parse_params::<FlashProposalParams>(
             request_id.as_ref(),
             params,
-            "runConfig.flashProposal aceita device, engine, flashSizeBytes, firmware, native e buildDirectory opcionais",
+            "runConfig.flashProposal aceita device, engine, flashSizeBytes, firmware, native, buildDirectory, target e probe opcionais",
         ) {
             Ok(request) => request,
             Err(response) => return *response,
@@ -74,12 +74,13 @@ impl Core {
         if request.native {
             return self.native_flash_proposal_response(request_id, root, model, request, firmware);
         }
-        if request.build_directory.is_some() {
+        if request.build_directory.is_some() || request.target.is_some() || request.probe.is_some()
+        {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "buildDirectory requer native=true",
+                    "buildDirectory, target e probe requerem native=true",
                     None,
                 ),
             );
@@ -247,7 +248,9 @@ pub(super) fn flash_error_response_for(
 ) -> JsonRpcResponse {
     let code = match error {
         flash::FlashError::MissingTool { .. } => JsonRpcErrorCode::ToolNotFound,
-        flash::FlashError::UnknownEngine { .. } => JsonRpcErrorCode::InvalidParams,
+        flash::FlashError::UnknownEngine { .. } | flash::FlashError::InvalidSelection { .. } => {
+            JsonRpcErrorCode::InvalidParams
+        }
         _ => JsonRpcErrorCode::InvalidRequest,
     };
     JsonRpcResponse::failure(

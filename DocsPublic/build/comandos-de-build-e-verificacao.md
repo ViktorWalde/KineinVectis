@@ -73,6 +73,22 @@ partição. Nenhuma sonda/hardware é acessada. Não executá-lo durante
 `verificar-cpp.sh` nem enquanto a UI ainda compila. Detalhes no
 [52 §14.33](../roadmaps/52-arquitetura-executavel-da-0.4.md#1433-041h4b2b4a2--desfechos-de-sondas-correlacionados-no-qt-desenho-2026-10-22).
 
+Prova adicional local da gravação nativa por sonda (Linux; exige `cmake`,
+`ninja`, `arm-none-eabi-gcc` e probe-rs 0.32 no PATH; fora do gate padrão):
+
+```bash
+cargo build -p kinein-core
+python3 scripts/verificar_probe_rs_nativo.py --core target/debug/kinein-core
+```
+
+O runner sobe o core real por stdio com variáveis `PROBE_RS_*` no ambiente,
+faz Configurar e build de um projeto CMake arm-none-eabi e consulta o probe-rs
+real (`mi meta`, `chip info`, `list`). Só uma listagem de fixture e o
+`download` passam por um wrapper que grava argv e ambiente: nenhuma sonda é
+aberta e nada é gravado em chip. O parser real recebe o argv planejado com um
+seletor que não casa com sonda nenhuma. Relatório em `build/qa-artifacts/`.
+Detalhes no [52 §14.34](../roadmaps/52-arquitetura-executavel-da-0.4.md#1434-041h4b2b4b1--probe-rs-nativo-alvo-cmake-sonda-explícita-e-efeitos-herdados-desenho-2026-10-22).
+
 ## Requisitos que não são do Rust
 
 `cargo test --workspace` exige **`python3` no PATH** desde 2026-09-02: os testes

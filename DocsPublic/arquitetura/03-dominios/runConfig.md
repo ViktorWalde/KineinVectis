@@ -18,6 +18,29 @@ explicitamente (INVALID_REQUEST), sem fallback. O modo manual mantém seu contra
 Native requer porta existente/acessível, sem abri-la na prévia; metadados do build
 devem comprovar projeto/configuração/chip/app. Sem prova → recusa orientada.
 
+**0.188.0 — probe-rs nativo com alvo CMake e sonda explícita (contrato
+anterior ao produtor, 2026-10-22):** flashProposal ganha `target?: string`,
+o nome de um alvo do codemodel CMake, e `probe?: string`, o seletor probe-rs
+`vvvv:pppp[-IF]:SERIAL` em hexadecimal. Os dois só valem com native=true e
+motor resolvido probe-rs; fora disso, INVALID_PARAMS. Nesse motor os dois são
+obrigatórios, e device, firmware, buildDirectory e flashSizeBytes são
+INVALID_PARAMS. O core consulta a ferramenta do papel debugAdapter (a mesma do
+probe.list), fora do laço, com prazo e limite de saída: `mi meta` deve dizer
+0.32.x; `chip info` deve reconhecer o chip do kit, com um núcleo da arquitetura
+do ELF; `list` precisa ter todas as linhas no formato 0.32.0 e exatamente uma
+entrada igual ao seletor, com serial e acessível. O alvo vem do reply do
+`.kinein/build`: fonte = raiz, uma configuração, tipo EXECUTABLE e um único
+artefato ELF dentro do build dir. Chip só deduzido de framework, versão
+diferente, sonda ausente/duplicada/inacessível ou `.probe-rs.{toml,json,yaml,yml}`
+na raiz, na pasta do executável ou no home → INVALID_REQUEST com a causa.
+Ferramenta ausente → TOOL_NOT_FOUND. Programa/argv:
+`download --chip <chip> --probe <seletor> --binary-format elf --verify <ELF>`,
+sem reset, apagar tudo, ciclo de energia ou host remoto. `source` diz
+ferramenta/versão, alvo, artefato, núcleos, sonda e as variáveis PROBE_RS_*
+que não chegam ao processo. A intenção mantém versão 1; deviceKey é o digest
+opaco da entrada listada. A listagem não prova acesso exclusivo. Desenho e
+aceites no 52 §14.34.
+
 `runConfig.save {id?, name, command, flash?}` e configs ganham flash opcional.
 Com flash, command deve ser exatamente a prévia derivada de programa/argv;
 workspace/versão/seleção/fingerprint devem ser válidos. Schema 1 continua legível

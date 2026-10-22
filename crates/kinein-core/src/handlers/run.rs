@@ -26,6 +26,8 @@ pub(super) struct Invocation {
     pub(super) command: String,
     pub(super) identity: Value,
     pub(super) reservation: Option<Lease>,
+    /// Inherited variables the program must not receive (native probe-rs).
+    pub(super) removed: Vec<std::ffi::OsString>,
 }
 
 impl Invocation {
@@ -37,6 +39,7 @@ impl Invocation {
             command,
             identity,
             reservation: None,
+            removed: Vec::new(),
         }
     }
 }
@@ -142,6 +145,7 @@ impl Core {
                 command,
                 identity: json!(["script", root, script]),
                 reservation: None,
+                removed: Vec::new(),
             },
         )
     }
@@ -223,6 +227,7 @@ impl Core {
                 command,
                 identity: json!(["script", root, script]),
                 reservation,
+                removed: Vec::new(),
             },
         )
     }
@@ -281,12 +286,17 @@ impl Core {
         if let Some(config) = active.as_ref()
             && let Some(flash) = &config.flash
         {
-            if parsed.device.as_deref().is_some_and(|device| {
-                crate::platform::serial_device_revision(Path::new(device))
-                    .ok()
-                    .as_ref()
-                    != Some(&flash.device_key)
-            }) {
+            // A probe-rs intent's destination is its probe, never the port
+            // selected in the panel; the serial selection cannot redirect it.
+            let serial_destination = flash.selection.probe.is_none();
+            if serial_destination
+                && parsed.device.as_deref().is_some_and(|device| {
+                    crate::platform::serial_device_revision(Path::new(device))
+                        .ok()
+                        .as_ref()
+                        != Some(&flash.device_key)
+                })
+            {
                 return super::run_native::refusal(
                     request_id,
                     "A porta selecionada difere da configuração nativa; gere uma nova prévia para esse dispositivo.",
@@ -383,7 +393,13 @@ impl Core {
         } else {
             (invocation.program, invocation.args)
         };
-        match session.open_command_holding(root, &program, &args, invocation.reservation) {
+        match session.open_command_holding(
+            root,
+            &program,
+            &args,
+            &invocation.removed,
+            invocation.reservation,
+        ) {
             Ok(terminal_id) => {
                 self.run_terminal = Some(terminal_id.clone());
                 JsonRpcResponse::success(

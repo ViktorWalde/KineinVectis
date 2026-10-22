@@ -1,4 +1,5 @@
-//! ESP-IDF build provenance, read from its generated description and existing recipe parser.
+//! Build provenance for native flashing: the ESP-IDF generated description with
+//! its recipe parser, and a `CMake` executable target from the file-api reply.
 use kinein_protocol::{FlashRecipe, ProjectModel};
 use serde::Deserialize;
 use std::{
@@ -101,6 +102,87 @@ pub fn validate(
             (config, config_revision),
             (recipe_path, recipe_revision),
         ],
+    })
+}
+
+/// A `CMake` executable target proven by the canonical build's file-api reply.
+#[derive(Debug)]
+pub struct CmakeOrigin {
+    /// Canonical build directory (`.kinein/build`).
+    pub build: PathBuf,
+    /// Codemodel identity (`name::@hash`).
+    pub id: String,
+    /// The target's single artifact, canonical, inside the build directory.
+    pub artifact: PathBuf,
+    /// The artifact's ELF `e_machine`.
+    pub machine: crate::dap::gdb_pick::ElfMachine,
+    /// Reply files read by `CmakeModel`, with the revision seen before reading.
+    pub sources: Vec<(PathBuf, String)>,
+}
+
+/// Bind `name` to its single ELF artifact through the codemodel of this root.
+///
+/// # Errors
+/// Missing reply, another project/build, several configurations, an absent,
+/// duplicated or non-executable target, several artifacts, or a non-ELF file.
+/// Never falls back to the newest ELF of the build.
+pub fn cmake_target(root: &Path, name: &str) -> Result<CmakeOrigin, String> {
+    let build = canonical(&crate::cmake::build_dir(root))?;
+    let model = crate::cmake::model::CmakeModel::load(&build).ok_or(
+        "o build CMake não tem o modelo do file-api; use Configurar (CMake) no Kinein e compile antes de gravar",
+    )?;
+    if canonical(&model.source_dir)? != root || canonical(&model.build_dir)? != build {
+        return Err(
+            "o codemodel do build pertence a outro projeto ou diretório; reconfigure o projeto"
+                .to_owned(),
+        );
+    }
+    if model.configurations != 1 {
+        return Err(format!(
+            "o codemodel tem {} configurações; a gravação nativa exige gerador de configuração única",
+            model.configurations
+        ));
+    }
+    let mut named = model.targets.iter().filter(|target| target.name == name);
+    let target = named.next().ok_or_else(|| {
+        format!(
+            "o alvo CMake `{name}` não existe no build configurado; reconfigure ou escolha outro"
+        )
+    })?;
+    if named.next().is_some() {
+        return Err(format!("mais de um alvo CMake se chama `{name}`"));
+    }
+    if target.kind != "EXECUTABLE" {
+        return Err(format!(
+            "o alvo `{name}` é {}, não um executável gravável",
+            target.kind
+        ));
+    }
+    let [artifact] = target.artifacts.as_slice() else {
+        return Err(format!(
+            "o alvo `{name}` declara {} artefatos; a gravação precisa de exatamente um",
+            target.artifacts.len()
+        ));
+    };
+    let artifact = within(&build, artifact)?;
+    let mut header = Vec::with_capacity(64);
+    fs::File::open(&artifact)
+        .and_then(|file| {
+            std::io::Read::read_to_end(&mut std::io::Read::take(file, 64), &mut header)
+        })
+        .map_err(|error| format!("{}: {error}", artifact.display()))?;
+    let machine = crate::dap::gdb_pick::parse_elf_machine(&header).ok_or_else(|| {
+        format!(
+            "{} não é ELF; a gravação nativa por sonda grava o ELF do alvo",
+            artifact.display()
+        )
+    })?;
+    Ok(CmakeOrigin {
+        build,
+        id: target.id.clone(),
+        artifact,
+        machine,
+        sources: model.observed,
     })
 }
 

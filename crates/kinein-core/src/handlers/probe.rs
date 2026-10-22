@@ -59,7 +59,7 @@ impl Core {
             })
     }
 
-    fn probe_program(&self, root: &std::path::Path) -> Option<std::path::PathBuf> {
+    pub(super) fn probe_program(&self, root: &std::path::Path) -> Option<std::path::PathBuf> {
         crate::toolchain::Toolchain::resolve(root, &self.detected_tools())
             .program_for(kinein_protocol::ToolchainRole::DebugAdapter)
     }

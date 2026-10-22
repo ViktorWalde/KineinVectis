@@ -11,10 +11,10 @@
 > **HANDOFF (2026-10-22). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4a2 concluída:** desfechos de sondas correlacionados no Qt;
-> respostas antigas descartadas (52 §14.33; 40.7 §7.342), sobre `5d98107`.
+> **0.4.1h4b2b4b1 concluída:** probe-rs nativo no core: alvo CMake, sonda
+> explícita, efeitos herdados e reserva por sonda (52 §14.34; 40.7 §7.343).
 > `AppMenuBar.qml`, `.directory`, `eim_config.toml` e `log/` locais preservados.
-> Protocolo **0.187.0**, binário **0.3.9**.
+> Protocolo **0.188.0**, binário **0.3.9**; probe-rs 0.32.0 instalado no usuário (§7.343).
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
 > só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
@@ -29,9 +29,9 @@
 > UI/core debug/release, 33 superfícies por preset; CoreClient Qt real com IPC falso (§7.342).
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
-> **A1/A2 concluídas:** consulta fora do laço e correlação Qt (40.7 §7.341–7.342).
-> **Próxima h4b2b4b:** probe-rs nativo com alvo CMake e destino explícito (52 §14.32).
-> Depois: demais motores e ocupação/recuperação; h4b2b e a 0.4.1 seguem abertas.
+> **b4b1:** gate rápido estrito verde, 1297 Rust/8 CTest/167 QML; core stdio + probe-rs real (§7.343).
+> **Próxima h4b2b4b2:** UI de alvo executável e sonda no fluxo atual (52 §14.34), com fotos.
+> Depois: b4b3 ocupação/depuração na mesma sonda, demais motores; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
 > Quality Center: Q1 na 0.4.2; gate local/Q2–Q3 concluídos até a 0.4.6.
@@ -61,7 +61,7 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.187.0 (crates/kinein-protocol, medido em 2026-10-22; o
+protocolo   0.188.0 (crates/kinein-protocol, medido em 2026-10-22; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
@@ -80,6 +80,7 @@ testes      1284 Rust no gate completo estrito de 2026-10-22 (40.7 §7.342);
             1259 Rust na 0.4.1h4b2b1 em 2026-10-21 (§7.338), gate rápido estrito verde em cópia isolada.
             1278 Rust na 0.4.1h4b2b2 em 2026-10-22 (§7.339), gate rápido estrito verde em cópia isolada.
             1278 Rust na 0.4.1h4b2b3 em 2026-10-22 (§7.340), gate completo estrito verde com target independente.
+            1297 Rust na 0.4.1h4b2b4b1 em 2026-10-22 (§7.343), gate rápido estrito verde em cópia isolada.
 ```
 
 Os comandos que medem estão no
@@ -119,7 +120,7 @@ física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-2
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3 e consulta de sondas A1/A2 fechadas. Próxima h4b2b4b: probe-rs nativo com alvo CMake/destino explícito, antes dos demais motores e da recuperação de ocupação. A medida física ainda requer renovar a sessão (2026-10-22) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.33 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.342 |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e core probe-rs nativo b4b1 fechados. Próxima h4b2b4b2: UI de alvo executável e sonda no fluxo de gravação atual; depois b4b3 (depuração reservando a mesma sonda), demais motores e recuperação. A medida física ainda requer renovar a sessão (2026-10-22) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.34 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.343 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |

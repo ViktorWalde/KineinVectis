@@ -164,6 +164,14 @@ pub struct FlashProposalParams {
     /// its source page fixes, instead of the project's build artifacts.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub firmware: Option<String>,
+    /// `CMake` codemodel target whose single ELF artifact a native probe-rs
+    /// intent writes (`0.188.0`); never the newest ELF of the build.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+    /// Explicit probe-rs selector `vvvv:pppp[-IF]:SERIAL` for native probe-rs
+    /// (`0.188.0`); a listed row index or VID/PID alone is not a destination.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub probe: Option<String>,
 }
 
 /// Result of `runConfig.flashProposal`: a run configuration to save.

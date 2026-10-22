@@ -294,7 +294,7 @@ fn failed_terminal_spawn_releases_its_reservation() {
     let mut terminal = crate::terminal::TerminalManager::new(sender);
     assert!(
         terminal
-            .open_command_holding(&root, "/nonexistent-kinein-fixture", &[], lease)
+            .open_command_holding(&root, "/nonexistent-kinein-fixture", &[], &[], lease)
             .is_err()
     );
     assert!(

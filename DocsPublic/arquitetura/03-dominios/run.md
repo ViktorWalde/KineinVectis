@@ -24,6 +24,14 @@ o aceite da parada não conclui a espera antes da recusa ou saída do PTY.
 Detalhe da ponte local C++/QML no arquitetura/36 §12, aceites no 52 §14.31.
 Outros motores e ações de ocupação seguem pendentes; a jornada maior não fecha aqui.
 
+**0.188.0 — intenção probe-rs:** a mesma regeneração antes do PTY vale para
+probe-rs. A reserva usa o registro existente com o canal da sonda (seletor
+canônico): conflita com a mesma sonda e com a seleção automática de porta, e
+SERIAL_PORT_BUSY descreve a sonda. Um device recebido junto da configuração
+ativa não é destino de probe-rs e não altera a intenção. As variáveis PROBE_RS_*
+do ambiente do core não chegam ao processo lançado. O diretório corrente
+continua a raiz, por isso um `.probe-rs.*` ali recusa já na prévia. 52 §14.34.
+
 Implementado no protocolo `0.12.0`; **desde `0.125.0` (2026-09-18) a
 execução é uma SESSÃO DE TERMINAL** — decisão do autor no primeiro teste
 da IDE polida: "já temos o terminal integrado, não precisamos de mais nada

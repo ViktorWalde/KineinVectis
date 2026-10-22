@@ -14,7 +14,7 @@ use kinein_protocol::JsonRpcError;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use super::{Owner, occupied, unavailable};
+use super::{Owner, Resource, occupied, unavailable};
 
 static NEXT_TOKEN: AtomicU64 = AtomicU64::new(1);
 
@@ -42,7 +42,7 @@ impl Coordination {
     pub(super) fn acquire(
         directory: &Path,
         key: Option<&str>,
-        device: Option<&str>,
+        device: Resource<'_>,
         owner: &Owner,
     ) -> Result<Self, JsonRpcError> {
         prepare(directory).map_err(|error| unavailable(device, &error))?;
