@@ -262,6 +262,7 @@ Item {
         z: 95
         anchors.centerIn: parent
         editing: root.runConfigController.editingConfigId !== ""
+        nativeConfiguration: root.runConfigController.editingNative
         busy: root.runConfigController.mutationPending
         errorText: root.runConfigController.errorText
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium

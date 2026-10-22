@@ -44,10 +44,10 @@ Item {
     Component.onCompleted: {
         client.statusChanged();
         const flash = controller.flash;
-        flash.propose("/first-port", 0);
+        flash.selectMode(false); flash.propose("/first-port", 0);
         const first = client.sequence;
         controller.workspaceRoot = "/second";
-        flash.propose("/second-port", 0);
+        flash.selectMode(false); flash.propose("/second-port", 0);
         const second = client.sequence;
         client.flashProposalResolved({command: "old-workspace"}, first);
         check(flash.busy && !flash.found, "resposta antiga não conclui pedido de outro workspace");
@@ -62,20 +62,20 @@ Item {
         client.flashProposalFailed(second, "duplicate failure");
         check(flash.proposal.command === "current-workspace" && flash.errorText === "", "duplicatas não substituem o resultado concluído");
 
-        flash.propose("/second-port", 0);
+        flash.selectMode(false); flash.propose("/second-port", 0);
         const changed = client.sequence;
         controller.selectedPort = "/third-port";
         client.flashProposalResolved({command: "old-port"}, changed);
         check(!flash.busy && !flash.found, "id correto não valida contexto alterado");
-        flash.propose(controller.selectedPort, 0);
+        flash.selectMode(false); flash.propose(controller.selectedPort, 0);
         client.flashProposalFailed(client.sequence, "versão desconhecida: confira o binário");
         check(!flash.busy && !flash.found && flash.errorText.indexOf("versão") >= 0, "recusa atual chega com causa integral");
 
         client.rejectSend = true;
-        flash.propose(controller.selectedPort, 0);
+        flash.selectMode(false); flash.propose(controller.selectedPort, 0);
         check(!flash.busy && !flash.found && flash.errorText !== "", "envio recusado não deixa espera presa");
         client.rejectSend = false;
-        flash.propose(controller.selectedPort, 0);
+        flash.selectMode(false); flash.propose(controller.selectedPort, 0);
         const disconnected = client.sequence;
         client.connected = false;
         client.statusChanged();
@@ -84,7 +84,7 @@ Item {
         client.connected = true;
         client.statusChanged();
         check(client.sequence === count, "reconexão não repete consulta");
-        flash.propose(controller.selectedPort, 0);
+        flash.selectMode(false); flash.propose(controller.selectedPort, 0);
         client.flashProposalResolved({command: "old-connection"}, disconnected);
         check(flash.busy && !flash.found, "resposta de conexão antiga não conclui pedido novo");
         client.flashProposalResolved({command: "new-connection"}, client.sequence);

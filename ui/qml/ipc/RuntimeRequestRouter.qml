@@ -19,7 +19,8 @@ Item {
 
     function available(method) {
         if (coreClient && coreClient.connected !== false) return true;
-        runtimeController.handleRequestFailed(method, qsTr("O serviço da IDE está desconectado. Aguarde a reconexão e tente novamente."));
+        if (method === "terminal.close") runtimeController.handleRequestFailed(method,
+            qsTr("O serviço da IDE está desconectado. Aguarde a reconexão e tente novamente."));
         return false;
     }
 
@@ -64,16 +65,18 @@ Item {
         }
 
         // `device` (0.110.0) vai como veio: vazio e' campo ausente na ponte.
-        function onRunStartRequested(command, device) {
-            if (root.available("run.start")) root.coreClient.runStart(command, device);
+        function onRunStartRequested(command, device, flash) {
+            root.runtimeController.bindRunRequest(root.available("run.start")
+                ? root.coreClient.runStart(command, device, flash) : -1);
         }
 
         function onRunScriptRequested(path, device) {
-            if (root.available("run.script")) root.coreClient.runScript(path, device);
+            root.runtimeController.bindRunRequest(root.available("run.script")
+                ? root.coreClient.runScript(path, device) : -1);
         }
 
         function onRunStopRequested() {
-            if (root.available("run.stop")) root.coreClient.runStop();
+            root.runtimeController.bindStopRequest(root.available("run.stop") ? root.coreClient.runStop() : -1);
         }
 
     }
@@ -89,12 +92,12 @@ Item {
             else root.runConfigController.handleReadFailed(qsTr("O serviço da IDE está desconectado."));
         }
 
-        function onSaveRunConfigRequested(id, name, command) {
+        function onSaveRunConfigRequested(id, name, command, flash) {
             if (!root.coreClient || root.coreClient.connected === false) {
                 root.runConfigController.bindMutation(-1);
                 return;
             }
-            root.runConfigController.bindMutation(root.coreClient.runConfigSave(id, name, command));
+            root.runConfigController.bindMutation(root.coreClient.runConfigSave(id, name, command, flash));
         }
 
         function onDeleteRunConfigRequested(id) {

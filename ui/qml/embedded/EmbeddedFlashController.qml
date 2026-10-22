@@ -6,13 +6,8 @@ import QtQuick
 // motor (runConfig.flashProposal, sem salvar/gravar; consulta versao) e este
 // controller guarda a PREVIA: nome, comando, motor, evidencias e avisos.
 //
-// Dois gestos saem daqui, e nenhum grava por conta propria:
-//   runRequested(command)          -> RuntimeController.startRun(command):
-//                                     a linha roda AGORA na aba de execucao,
-//                                     como qualquer comando digitado
-//   saveRequested(name, command)   -> RunConfigController: vira a
-//                                     configuracao ativa, e o botao Executar
-//                                     passa a gravar ate' o usuario trocar
+// Run/save transportam a intenção nativa intacta, ou um comando manual
+// explicitamente escolhido. A prévia não executa nem salva por conta própria.
 // A fiacao dos dois mora no AppDomains (donos diferentes). Filho do
 // EmbeddedController (`embeddedController.flash`), pela mesma razao do
 // `identity`: nenhuma propriedade de repasse nova.
@@ -20,6 +15,8 @@ Item {
     id: root
 
     property bool busy: false
+    property bool nativeMode: true
+    property string buildDirectory: ""
     // O motor que o usuario ESCOLHEU; vazio = o que o modelo do projeto
     // sugere (esptool/probe-rs/picotool/dfu-util decidido pelo core).
     property string engine: ""
@@ -40,9 +37,9 @@ Item {
     readonly property var frameworkEngines: engineOfFrameworks(frameworks)
     readonly property var allEngines: engines.concat(frameworkEngines)
 
-    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware)
-    signal runRequested(string command)
-    signal saveRequested(string name, string command)
+    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory)
+    signal runRequested(string command, var flash)
+    signal saveRequested(string name, string command, var flash)
 
     visible: false
 
@@ -50,6 +47,8 @@ Item {
         busy = false;
         engine = "";
         firmware = "";
+        nativeMode = true;
+        buildDirectory = "";
         proposal = ({});
         errorText = "";
         contextRevision += 1;
@@ -99,6 +98,18 @@ Item {
         invalidate();
     }
 
+    function selectMode(value) {
+        if (nativeMode === value) return;
+        nativeMode = value;
+        invalidate();
+    }
+
+    function selectBuildDirectory(value) {
+        if (buildDirectory === value) return;
+        buildDirectory = value;
+        invalidate();
+    }
+
     // Pede a previa. `device` e' a porta escolhida (vazia = o core decide se
     // o motor a exige); `flashSizeBytes` e' o que a identidade leu (0 = nao
     // comparar). Um pedido por vez.
@@ -112,7 +123,8 @@ Item {
         proposal = ({});
         errorText = "";
         proposalRequested(device === undefined ? "" : device, engine,
-                          flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware);
+                          flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware,
+                          nativeMode, nativeMode ? buildDirectory : "");
     }
 
     function bindProposal(requestId) {
@@ -128,6 +140,14 @@ Item {
         proposalRequestId = -1;
         if (requestedRevision !== contextRevision) return;
         proposal = nova === undefined || nova === null ? ({}) : nova;
+        const intent = proposal.flash;
+        const hasIntent = intent !== undefined && intent !== null && typeof intent === "object"
+                          && !Array.isArray(intent) && Object.keys(intent).length > 0;
+        if (hasIntent !== nativeMode) {
+            proposal = ({});
+            errorText = qsTr("A resposta não corresponde ao modo solicitado. Gere outra prévia; nenhuma gravação foi iniciada.");
+            return;
+        }
         errorText = "";
     }
 
@@ -144,13 +164,14 @@ Item {
 
     function run() {
         if (found) {
-            runRequested(proposal.command);
+            runRequested(nativeMode ? "" : proposal.command, nativeMode ? proposal.flash : ({}));
         }
     }
 
     function save() {
         if (found) {
-            saveRequested(proposal.name !== undefined ? proposal.name : "Gravar", proposal.command);
+            saveRequested(proposal.name !== undefined ? proposal.name : "Gravar", proposal.command,
+                          nativeMode ? proposal.flash : ({}));
         }
     }
 

@@ -147,6 +147,10 @@ pub fn prepare(
         None,
         &tools,
     )?;
+    // The normalized selection is explicit on replay, even if the UI chose automatic.
+    if let Some(source) = plan.proposal.source.first_mut() {
+        "motor: esptool (resolvido para a intenção nativa)".clone_into(source);
+    }
     let captured = capture_files(&request, &sources, &tool_revision, cancel)?;
     let fingerprint = snapshot::digest(
         &serde_json::to_vec(&json!([

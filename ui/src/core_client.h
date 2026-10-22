@@ -113,8 +113,8 @@ public:
     Q_INVOKABLE void detectTools();
     Q_INVOKABLE void scanEnvironment();
     Q_INVOKABLE void runConfigList();
-    Q_INVOKABLE qint64 runConfigSave(const QString& id, const QString& name,
-                                     const QString& command);
+    Q_INVOKABLE qint64 runConfigSave(const QString& id, const QString& name, const QString& command,
+                                     const QVariantMap& flash = QVariantMap());
     Q_INVOKABLE qint64 runConfigDelete(const QString& id);
     Q_INVOKABLE qint64 runConfigSetActive(const QString& id);
     // "Gravar" como configuracao de execucao (runConfig.flashProposal, 0.113.0): a linha do
@@ -123,7 +123,9 @@ public:
     // catalogo baixado, no lugar dos artefatos do build.
     Q_INVOKABLE qint64 runConfigFlashProposal(const QString& device, const QString& engine,
                                               double flashSizeBytes = 0,
-                                              const QString& firmware = QString());
+                                              const QString& firmware = QString(),
+                                              bool native = false,
+                                              const QString& buildDirectory = QString());
     Q_INVOKABLE void debugStart(const QString& program = QString(),
                                 const QVariantMap& connect = QVariantMap());
     // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.
@@ -367,9 +369,10 @@ public:
     Q_INVOKABLE void searchInFiles(const QString& query, bool caseSensitive);
     Q_INVOKABLE void replaceInFiles(const QString& query, const QString& replacement,
                                     bool caseSensitive);
-    Q_INVOKABLE void runStart(const QString& command, const QString& device = QString());
-    Q_INVOKABLE void runScript(const QString& path, const QString& device = QString());
-    Q_INVOKABLE void runStop();
+    Q_INVOKABLE qint64 runStart(const QString& command, const QString& device = QString(),
+                                const QVariantMap& flash = QVariantMap());
+    Q_INVOKABLE qint64 runScript(const QString& path, const QString& device = QString());
+    Q_INVOKABLE qint64 runStop();
     // D2.3 (DocsPublic/roadmaps/24): multi-terminal — todo comando leva o id da sessão.
     Q_INVOKABLE qint64 terminalOpen(const QString& cwd = QString());
     Q_INVOKABLE void terminalInput(const QString& id, const QString& data);
@@ -654,7 +657,9 @@ signals:
     /// A execucao abriu numa ABA DE TERMINAL (0.125.0): `terminalId` e' a
     /// sessao — a saida chega por `terminalRendered`, como as outras.
     void runStarted(const QString& command, const QString& terminalId, const QString& executionKey,
-                    const QString& workspace);
+                    const QString& workspace, qint64 requestId);
+    void runRequestFailed(qint64 requestId, const QString& method, const QString& message);
+    void runStopFinished(qint64 requestId);
     /// A sessao da execucao fechou (`event.terminal.closed` com o id dela).
     void runFinished(bool success, int exitCode);
     void debuggingChanged();
@@ -737,7 +742,7 @@ private:
                                  const QVariantMap& requestQuery);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
-    bool dispatchRunResult(const QString& method, const QJsonObject& result);
+    bool dispatchRunResult(const QString& method, const QJsonObject& result, qint64 requestId);
     bool dispatchBuildSizeResult(const QString& method, const QJsonObject& result);
     bool dispatchSerialResult(const QString& method, const QJsonObject& result);
     bool dispatchContainerResult(const QString& method, const QJsonObject& result);
@@ -807,6 +812,7 @@ private:
     QSet<QString> m_terminalIds;
     /// A sessao de terminal da execucao em curso (`run.start`/`run.script`).
     QString m_runTerminalId;
+    qint64 m_runRequestId = -1;
     bool m_scanningEnvironment = false;
     QString m_buildJobId;
     QString m_testJobId;

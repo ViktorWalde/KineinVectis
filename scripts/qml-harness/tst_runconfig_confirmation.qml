@@ -25,7 +25,10 @@ Item {
         signal runConfigsResolved(var configs, string activeId)
         signal runConfigMutationFinished(double requestId)
         signal runConfigMutationFailed(double requestId, string message)
-        signal runStarted(string command, string terminalId, string executionKey, string workspace)
+        signal runStarted(string command, string terminalId, string executionKey, string workspace, double requestId)
+        signal runRequestFailed(double requestId, string method, string message)
+        signal runStopFinished(double requestId)
+        signal workspaceChanged()
         signal runFinished(bool success, int exitCode)
         signal requestFailed(string method, string message, string code)
         function runConfigSave(id, name, command) { writes++; return ++sequence; }

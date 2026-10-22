@@ -8,6 +8,9 @@ Item {
     property string errorText: ""
     property bool active: false
     property bool pending: false
+    property double requestId: -1
+    property bool stopping: false
+    property double stopRequestId: -1
     property string pendingName: ""
     property string terminalId: ""
     property var tabs: ({})
@@ -21,6 +24,9 @@ Item {
         errorText = "";
         active = false;
         pending = false;
+        requestId = -1;
+        stopping = false;
+        stopRequestId = -1;
         pendingName = "";
         terminalId = "";
         tabs = ({});
@@ -34,6 +40,84 @@ Item {
         errorText = "";
         pending = true;
         pendingName = name;
+        requestId = -1;
+    }
+
+    function workspaceActivated() {
+        pending = false;
+        requestId = -1;
+        pendingName = "";
+        stopping = false;
+        stopRequestId = -1;
+    }
+
+    function startRun(command, flash) {
+        if (!canStart()) return;
+        const intent = flash || ({});
+        const nativeRun = Object.keys(intent).length > 0;
+        prepare(command === "" && !nativeRun ? runtime.activeRunName : "");
+        runtime.runStartRequested(command, command === "" && !nativeRun && !runtime.savedRunSelected
+                                  ? runtime.serialDevice : "", intent);
+    }
+
+    function startScript(path) {
+        if (!canStart() || path === "") return;
+        prepare("");
+        runtime.runScriptRequested(path, runtime.serialDevice);
+    }
+
+    function canStart() {
+        return runtime.workspaceRoot !== "" && !runtime.running && !active && !pending && !stopping;
+    }
+
+    function prepare(name) {
+        runtime.lastRunMessage = "";
+        if (runtime.pendingShellInput === "") runtime.shellErrorText = "";
+        begin(name);
+    }
+
+    function bindRequest(value) {
+        if (!pending) return;
+        requestId = typeof value === "number" ? value : -1;
+        if (requestId < 0) requestFailed(requestId, "run.start", qsTr("O serviço da IDE está indisponível. Tente novamente após reconectar."));
+    }
+
+    function stop() {
+        if (stopping || (!pending && !active && !runtime.running)) return;
+        errorText = "";
+        stopping = true;
+        stopRequestId = -1;
+        runtime.runStopRequested();
+    }
+
+    function bindStop(value) {
+        if (!stopping) return;
+        stopRequestId = typeof value === "number" ? value : -1;
+        if (stopRequestId < 0) requestFailed(stopRequestId, "run.stop", qsTr("Não foi possível solicitar a parada. Confira a conexão e tente novamente."));
+    }
+
+    function stopped(value) {
+        if (!stopping || value !== stopRequestId) return;
+        stopRequestId = -1;
+        stopping = pending || active;
+        // A preparação ainda espera sua própria recusa, e o PTY sua saída.
+    }
+
+    function requestFailed(value, method, message) {
+        if (method === "run.stop") {
+            if (!stopping || value !== stopRequestId) return;
+            stopping = false;
+            stopRequestId = -1;
+        } else {
+            if (!pending || value !== requestId) return;
+            requestId = -1;
+            pending = false;
+            pendingName = "";
+            if (stopping && stopRequestId < 0) stopping = false;
+        }
+        errorText = message;
+        runtime.lastRunMessage = message;
+        runtime.showTabRequested("terminal");
     }
 
     function disconnected() {
@@ -42,6 +126,9 @@ Item {
             runtime.showTabRequested("terminal");
         }
         pending = false;
+        requestId = -1;
+        stopping = false;
+        stopRequestId = -1;
         active = false;
         pendingName = "";
         generation++;
@@ -58,14 +145,15 @@ Item {
         return "▶ " + (label.length > 28 ? label.substring(0, 27) + "…" : label);
     }
 
-    function started(command, id, key, workspace) {
-        if (!id || !key || workspace !== runtime.workspaceRoot) return;
+    function started(command, id, key, workspace, value) {
+        if (!pending || value !== requestId || !id || !key || workspace !== runtime.workspaceRoot) return;
         if (runtime.indexOfTerminal(id) >= 0) {
             if (accepted[id] === generation) return;
             if (!isFinished(id)) return;
             runtime.removeTerminalTab(id);
         }
         pending = false;
+        requestId = -1;
         active = true;
         const label = pendingName !== "" ? "▶ " + pendingName : title(command);
         pendingName = "";
@@ -89,7 +177,11 @@ Item {
     function closing(id) { errorText = ""; closingTabs[id] = true; }
 
     function finished(id, code) {
-        if (id === terminalId) active = false;
+        if (id === terminalId) {
+            active = false;
+            stopping = false;
+            stopRequestId = -1;
+        }
         if (closingTabs[id]) return false;
         if (isFinished(id)) return true;
         if (id !== terminalId) return false;
@@ -116,9 +208,5 @@ Item {
 
     function failed(method, message) {
         errorText = message;
-        if (method === "run.start" || method === "run.script") {
-            pending = false;
-            pendingName = "";
-        }
     }
 }

@@ -6,6 +6,7 @@ Rectangle {
 
     property bool editing: false
     property bool busy: false
+    property bool nativeConfiguration: false
     property string errorText: ""
     property real maxAvailableWidth: 420
 
@@ -22,6 +23,7 @@ Rectangle {
     function openWith(name, command) {
         nameInput.text = name;
         commandInput.text = command;
+        if (nativeConfiguration) commandInput.cursorPosition = 0;
         nameInput.forceActiveFocus();
         nameInput.selectAll();
     }
@@ -85,7 +87,8 @@ Rectangle {
         }
 
         Text {
-            text: qsTr("Comando (roda na raiz do projeto)")
+            text: root.nativeConfiguration ? qsTr("Gravação estruturada · prévia somente leitura")
+                                           : qsTr("Comando (roda na raiz do projeto)")
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeSmall
         }
@@ -94,6 +97,7 @@ Rectangle {
             id: commandInput
             objectName: "runConfigCommand"
             enabled: !root.busy
+            readOnly: root.nativeConfiguration
 
             width: parent.width
             height: 30
@@ -109,6 +113,15 @@ Rectangle {
             heading: qsTr("Não foi possível salvar a configuração")
             codeFont: false
             animateChanges: true
+        }
+
+        Text {
+            width: parent.width
+            visible: root.nativeConfiguration
+            text: qsTr("O nome pode ser alterado. Para mudar porta, arquivos ou ferramenta, gere outra prévia em Embarcados. A execução confere novamente o contexto salvo.")
+            wrapMode: Text.WordWrap
+            color: Theme.textSecondary
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         Row {

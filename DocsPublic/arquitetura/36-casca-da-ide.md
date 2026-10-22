@@ -727,3 +727,24 @@ snapshot da lista; recebê-lo não confirma que o salvamento pendente ocorreu.
 O editor existente fecha apenas após confirmação correspondente; erro preserva
 nome/comando e aparece no KvVerdict. Desconexão libera espera com resultado
 não confirmado e não repete o pedido. API local C++/QML, sem novo método/evento IPC.
+
+## 12. Intenção nativa e preparação de execução (contrato de 2026-10-22)
+
+O transporte Qt preserva flash do protocolo 0.187.0 como objeto em proposta,
+save e run.start; não interpreta command para derivá-lo. RunConfigController
+guarda a intenção por id separada do ListModel e mantém o editor nativo com
+comando somente leitura. O modo manual é escolha explícita na prévia;
+ausência de intenção em resposta nativa é falha, nunca fallback para shell.
+
+CoreClient.runStart/runScript/runStop devolvem o requestId existente.
+runStarted carrega esse id; runRequestFailed(requestId, method, message) e
+runStopFinished(requestId) completam o dono RunTerminalController. A ponte
+recusa resultado obsoleto antes de atualizar running/terminalActive; transição
+de workspace e queda da conexão invalidam o vínculo. Run/script e stop têm
+esperas distintas e correlacionadas: solicitar Parar não libera a preparação
+nem afirma saída antes do resultado correspondente. Header atual reflete a
+espera e permite cancelar, sem novo painel. Desenho/aceites no 52 §14.31.
+runStopFinished confirma a resposta do pedido, não a saída do processo: o
+estado de parada permanece até a recusa da preparação ou terminal.closed.
+Se a recusa chegar antes da resposta de Parar, espera também essa resposta
+antes de permitir uma nova execução; repetir o gesto não emite outro pedido.

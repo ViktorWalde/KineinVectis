@@ -201,24 +201,23 @@ Item {
         // configuracao ativa (a aba da execucao): composicao, nao IPC.
         serialDevice: environment.embeddedController.selectedPort
         activeRunName: runConfigController.activeConfigName
+        savedRunSelected: runConfigController.activeConfigId !== ""
         runConfigErrorText: runConfigController.errorText
         onShowTabRequested: tab => shellController.showTab(tab)
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()
     }
 
-    // Gravar (E4) e' configuracao de execucao: rodar agora e' o run.start de
-    // um comando explicito; salvar vira a configuracao ativa. Fiacao entre o
-    // painel de Embarcados e os donos de execucao — composicao, nao IPC.
+    // Composição de gravação: intenção nativa ou comando manual entre seus donos.
     Connections {
         target: environment.embeddedController.flash
 
-        function onRunRequested(command) {
-            runtimeController.startRun(command);
+        function onRunRequested(command, flash) {
+            runtimeController.startRun(command, flash);
         }
 
-        function onSaveRequested(name, command) {
-            runConfigController.saveConfiguration(name, command);
+        function onSaveRequested(name, command, flash) {
+            runConfigController.saveConfiguration(name, command, flash);
         }
     }
 

@@ -11,8 +11,8 @@
 > **HANDOFF (2026-10-22). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b2 concluída:** backend esptool com intenção/schema 2,
-> revalidação, reserva e cancelamento (52 §14.30; 40.7 §7.339), sobre `b2bc102`.
+> **0.4.1h4b2b3 concluída:** UI preserva intenção nativa e edição,
+> preparação/Parar correlacionados (52 §14.31; 40.7 §7.340), sobre `b1fc055`.
 > `AppMenuBar.qml`, `eim_config.toml` e `log/` locais preservados.
 > Protocolo **0.187.0**, binário **0.3.9**.
 >
@@ -24,14 +24,14 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate rápido estrito, 0.4.1h4b2b2:** 1278 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **164 harnesses QML**, sem NÃO PROVADO; cópia isolada (§7.339).
-> Completo anterior: UI/core debug/release, concorrência/crash e feedback nativo (§7.337).
+> **Último gate completo estrito, 0.4.1h4b2b3:** 1278 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **167 harnesses QML**, sem NÃO PROVADO; target isolado (§7.340).
+> UI/core debug/release, 33 superfícies por preset; Qt/Core/PTY reais com CLI falsa (§7.340).
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
-> **Próxima h4b2b3:** ligar intenção nativa e preparação cancelável na UI atual,
-> preservando edição tipada/correlação; depois outros motores e recuperação.
-> Não considerar a jornada entregue com o backend. Organização: 40.7 §7.334.
+> **Próxima h4b2b4:** demais motores nativos, vínculo dos artefatos/destinos;
+> depois ocupação/recuperação e matriz integrada. UI/base esptool fechadas,
+> não a jornada inteira. Organização: 40.7 §7.334; detalhe no 52 §14.29–14.31.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
 > Quality Center: Q1 na 0.4.2; gate local/Q2–Q3 concluídos até a 0.4.6.
@@ -50,7 +50,7 @@
 > C17 passou build/run/CTest/clang-format/clangd numa fixture (52 §14.14).
 > Última medida: CP2102 com sessão sem acesso; flash físico não provado. CircuitPython,
 > preferências de integração e assistente C ainda não implementados.
-> **Operação:** aceites em Xvfb próprio/software; não dirigir entrada global
+> **Operação:** aceites em Xvfb próprio/software; QA com target próprio, sem compartilhar com o principal; não dirigir entrada global
 > nem fechar a janela original. Sem sudo/instalação silenciosa ou gravação
 > na placa sem pedido específico. Não compilar UI durante `verificar-cpp.sh`.
 > Objetivo contínuo ativo (autor, 2026-10-21); cota/retomada dependem da plataforma.
@@ -65,8 +65,8 @@ protocolo   0.187.0 (crates/kinein-protocol, medido em 2026-10-22; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   164 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
-testes      1278 Rust no gate rápido estrito de 2026-10-22 (40.7 §7.339);
+harnesses   167 tst_*.qml em scripts/qml-harness (medido em 2026-10-22)
+testes      1278 Rust no gate completo estrito de 2026-10-22 (40.7 §7.340);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
@@ -79,6 +79,7 @@ testes      1278 Rust no gate rápido estrito de 2026-10-22 (40.7 §7.339);
             1256 Rust na 0.4.1h4b2a em 2026-10-21 (§7.337), gate completo estrito verde em cópia isolada.
             1259 Rust na 0.4.1h4b2b1 em 2026-10-21 (§7.338), gate rápido estrito verde em cópia isolada.
             1278 Rust na 0.4.1h4b2b2 em 2026-10-22 (§7.339), gate rápido estrito verde em cópia isolada.
+            1278 Rust na 0.4.1h4b2b3 em 2026-10-22 (§7.340), gate completo estrito verde com target independente.
 ```
 
 Os comandos que medem estão no

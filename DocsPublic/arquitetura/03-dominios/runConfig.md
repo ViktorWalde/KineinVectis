@@ -25,8 +25,10 @@ e não é reescrito na abertura. Salvar a primeira nativa promove para schema 2;
 schema 2 aceita nativas e manuais. Schema 1 contendo flash ou intenção malformada
 é armazenamento inválido, preservado. Editar uma nativa sem flash é INVALID_PARAMS,
 sem descarte silencioso por cliente antigo. active_command não converte nativa
-em shell. A UI tipada é ligada na próxima parte; não presumir suporte pelo simples
-fato de uma linha antiga mencionar uma ferramenta de gravação.
+em shell. Desde a 0.4.1h4b2b3 a UI preserva a intenção em prévia/save/run e
+renomeação; a prévia nativa fica somente leitura. Resposta nativa sem objeto
+de intenção não vazio é recusada, sem cair no lançador padrão. O modo manual
+é explícito; uma linha antiga mencionando gravação não ganha suporte nativo.
 
 run.start regenera contexto/plano e confere fingerprint/porta/arquivos antes do
 PTY, com reserva até a saída real. Arquivos de imagem/binário limitados a 1 GiB;

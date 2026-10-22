@@ -13,11 +13,15 @@ void CoreClient::runConfigList()
     sendRequest(QStringLiteral("runConfig.list"), QJsonObject{});
 }
 
-qint64 CoreClient::runConfigSave(const QString& id, const QString& name, const QString& command)
+qint64 CoreClient::runConfigSave(const QString& id, const QString& name, const QString& command,
+                                 const QVariantMap& flash)
 {
     QJsonObject params{{QStringLiteral("name"), name}, {QStringLiteral("command"), command}};
     if (!id.isEmpty()) {
         params.insert(QStringLiteral("id"), id);
+    }
+    if (!flash.isEmpty()) {
+        params.insert(QStringLiteral("flash"), QJsonObject::fromVariantMap(flash));
     }
     return sendRequest(QStringLiteral("runConfig.save"), params);
 }
@@ -37,9 +41,14 @@ qint64 CoreClient::runConfigSetActive(const QString& id)
 }
 
 qint64 CoreClient::runConfigFlashProposal(const QString& device, const QString& engine,
-                                          double flashSizeBytes, const QString& firmware)
+                                          double flashSizeBytes, const QString& firmware,
+                                          bool native, const QString& buildDirectory)
 {
     QJsonObject params;
+    params.insert(QStringLiteral("native"), native);
+    if (!buildDirectory.isEmpty()) {
+        params.insert(QStringLiteral("buildDirectory"), buildDirectory);
+    }
     // Campo ausente != vazio: sem porta o core diz "escolha a porta"; sem
     // motor ele usa o que o modelo sugere; sem tamanho, nao compara.
     if (!device.isEmpty()) {
@@ -112,9 +121,12 @@ void CoreClient::runQuality(const QString& buildSystem)
     sendRequest(QStringLiteral("quality.run"), params);
 }
 
-void CoreClient::runStart(const QString& command, const QString& device)
+qint64 CoreClient::runStart(const QString& command, const QString& device, const QVariantMap& flash)
 {
     QJsonObject params;
+    if (!flash.isEmpty()) {
+        params.insert(QStringLiteral("flash"), QJsonObject::fromVariantMap(flash));
+    }
     // A porta e' do LANCADOR PADRAO (`mpremote connect <porta> run main.py`):
     // so' vai sem comando explicito, porque o core recusa os dois juntos —
     // um comando digitado roda como foi escrito. Campo ausente nao e' vazio.
@@ -124,10 +136,11 @@ void CoreClient::runStart(const QString& command, const QString& device)
     else if (!device.isEmpty()) {
         params.insert(QStringLiteral("device"), device);
     }
-    sendRequest(QStringLiteral("run.start"), params);
+    m_runRequestId = sendRequest(QStringLiteral("run.start"), params);
+    return m_runRequestId;
 }
 
-void CoreClient::runScript(const QString& path, const QString& device)
+qint64 CoreClient::runScript(const QString& path, const QString& device)
 {
     QJsonObject params{{QStringLiteral("path"), path}};
     // A porta so' vai quando a tela a escolheu: num projeto MicroPython o
@@ -136,16 +149,22 @@ void CoreClient::runScript(const QString& path, const QString& device)
     if (!device.isEmpty()) {
         params.insert(QStringLiteral("device"), device);
     }
-    sendRequest(QStringLiteral("run.script"), params);
+    m_runRequestId = sendRequest(QStringLiteral("run.script"), params);
+    return m_runRequestId;
 }
 
-void CoreClient::runStop()
+qint64 CoreClient::runStop()
 {
-    sendRequest(QStringLiteral("run.stop"), QJsonObject{});
+    return sendRequest(QStringLiteral("run.stop"), QJsonObject{});
 }
 
-bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& result)
+bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& result,
+                                   qint64 requestId)
 {
+    if (method == QStringLiteral("run.stop")) {
+        emit runStopFinished(requestId);
+        return true;
+    }
     if (method != QStringLiteral("run.start") && method != QStringLiteral("run.script")) {
         return false;
     }
@@ -156,9 +175,10 @@ bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& res
     const QString terminalId = result.value(QStringLiteral("terminalId")).toString();
     const QString workspace = result.value(QStringLiteral("workspace")).toString();
     const QString executionKey = result.value(QStringLiteral("executionKey")).toString();
-    if (workspace != m_workspaceRoot || executionKey.isEmpty()) {
+    if (requestId != m_runRequestId || workspace != m_workspaceRoot || executionKey.isEmpty()) {
         return true;
     }
+    m_runRequestId = -1;
     if (!terminalId.isEmpty()) {
         m_terminalIds.insert(terminalId);
         setTerminalActive(true);
@@ -166,7 +186,7 @@ bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& res
         setRunning(true);
     }
     appendLog(QStringLiteral("execução iniciada (%1): %2").arg(terminalId, command));
-    emit runStarted(command, terminalId, executionKey, workspace);
+    emit runStarted(command, terminalId, executionKey, workspace, requestId);
     return true;
 }
 

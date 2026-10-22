@@ -18,8 +18,11 @@ Preparação é adiada e cancelável: run/script concorrente recusa, run.stop ca
 inclusive antes de existir terminal, e qualquer transição de workspace invalida
 a continuação. Alterar a ativa durante preparação automática também recusa.
 Falha/cancelamento não iniciam processo de gravação nem caem no modo manual.
-Seleções/shape em runConfig; desenho no 52 §14.30. A ligação visual da preparação
-vem na parte seguinte, antes de considerar a jornada nativa entregue.
+Seleções/shape em runConfig; desenho no 52 §14.30. Desde a 0.4.1h4b2b3,
+header atual permite Parar durante preparação, com resposta correlacionada;
+o aceite da parada não conclui a espera antes da recusa ou saída do PTY.
+Detalhe da ponte local C++/QML no arquitetura/36 §12, aceites no 52 §14.31.
+Outros motores e ações de ocupação seguem pendentes; a jornada maior não fecha aqui.
 
 Implementado no protocolo `0.12.0`; **desde `0.125.0` (2026-09-18) a
 execução é uma SESSÃO DE TERMINAL** — decisão do autor no primeiro teste

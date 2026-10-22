@@ -40,6 +40,7 @@ Item {
     Component.onCompleted: {
         let failures = 0;
         const f = controller.flash;
+        f.selectMode(false); // Explicit manual previews retain their existing semantics.
 
         // Nasce vazio; sem previa nao roda nem salva.
         if (f.busy || f.found || f.engine !== "") failures += 1;

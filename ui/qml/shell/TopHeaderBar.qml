@@ -16,6 +16,8 @@ Rectangle {
     property bool testing: false
     property bool analyzing: false
     property bool running: false
+    property bool runPending: false
+    property bool runStopping: false
     property bool debugging: false
     property string workspaceName: ""
     property string workspaceKind: ""
@@ -270,6 +272,8 @@ Rectangle {
         testing: root.testing
         analyzing: root.analyzing
         running: root.running
+        runPending: root.runPending
+        runStopping: root.runStopping
         debugging: root.debugging
         workspaceKind: root.workspaceKind
         activeConfigId: root.activeConfigId

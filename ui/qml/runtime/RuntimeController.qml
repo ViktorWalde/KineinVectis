@@ -26,6 +26,8 @@ Item {
     // execucao, e o desfecho da ultima.
     property alias runTerminalId: runTabs.terminalId
     readonly property bool runPending: runTabs.pending
+    readonly property bool runStopping: runTabs.stopping
+    property bool savedRunSelected: false
     property alias runErrorText: runTabs.errorText
     property string lastRunMessage: ""
     property string runConfigErrorText: ""
@@ -50,7 +52,7 @@ Item {
     signal terminalWheelRequested(string id, int col, int row, int lines,
                                   int modifiers)
     signal terminalCloseRequested(string id)
-    signal runStartRequested(string command, string device)
+    signal runStartRequested(string command, string device, var flash)
     signal runScriptRequested(string path, string device)
     signal runStopRequested()
     signal focusTerminalInputRequested()
@@ -230,34 +232,9 @@ Item {
     function bindShellRequest(requestId) { pendingShell.bindRequest(requestId); }
     function handleTerminalOpenFailed(requestId, message) { pendingShell.fail(requestId, message); }
 
-    // A porta so' acompanha o LANCADOR PADRAO (command vazio): um comando
-    // digitado roda como foi escrito, e o core recusa os dois juntos.
-    function startRun(command) {
-        if (workspaceRoot === "" || running || runPending) {
-            return;
-        }
-        lastRunMessage = "";
-        if (pendingShell.command === "") pendingShell.errorText = "";
-        runTabs.begin(command === "" ? activeRunName : "");
-        runStartRequested(command, command === "" ? serialDevice : "");
-    }
-
-    function startScript(path) {
-        if (workspaceRoot === "" || running || runPending || path === "") {
-            return;
-        }
-        lastRunMessage = "";
-        if (pendingShell.command === "") pendingShell.errorText = "";
-        runTabs.begin("");
-        runScriptRequested(path, serialDevice);
-    }
-
-    function stopRun() {
-        if (running) {
-            runTabs.errorText = "";
-            runStopRequested();
-        }
-    }
+    function startRun(command, flash) { runTabs.startRun(command, flash); }
+    function startScript(path) { runTabs.startScript(path); }
+    function stopRun() { runTabs.stop(); }
 
     // O nome da aba da execucao: "▶ " + o comando ate' caber (o caminho
     // longo de um script vira o nome do arquivo).
@@ -357,9 +334,15 @@ Item {
         root.terminalRender = root.terminalRenders[next] || ({});
     }
 
-    function handleRunStarted(command, terminalId, executionKey, workspace) {
-        runTabs.started(command, terminalId, executionKey, workspace);
+    function handleRunStarted(command, terminalId, executionKey, workspace, requestId) {
+        runTabs.started(command, terminalId, executionKey, workspace, requestId);
     }
+
+    function bindRunRequest(requestId) { runTabs.bindRequest(requestId); }
+    function handleWorkspaceActivated() { runTabs.workspaceActivated(); }
+    function bindStopRequest(requestId) { runTabs.bindStop(requestId); }
+    function handleRunStopFinished(requestId) { runTabs.stopped(requestId); }
+    function handleRunRequestFailed(requestId, method, message) { runTabs.requestFailed(requestId, method, message); }
 
     /// A sessao da execucao fechou: a aba fica (o autor le a saida) e o
     /// desfecho e' dito numa linha.
@@ -371,10 +354,8 @@ Item {
     }
 
     function handleRequestFailed(method, message) {
+        if (method !== "terminal.close") return;
         runTabs.failed(method, message);
-        if (method === "run.start" || method === "run.script" || method === "run.stop") {
-            lastRunMessage = message;
-        }
         showTabRequested("terminal");
     }
 }

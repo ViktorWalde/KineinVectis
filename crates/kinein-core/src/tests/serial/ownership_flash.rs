@@ -93,6 +93,14 @@ fn native_proposal(fixture: &mut Fixture) -> Value {
 fn native_flash_is_saved_checked_and_executed_with_literal_arguments() {
     let mut fixture = fixture("native-save-run");
     let proposal = native_proposal(&mut fixture);
+    assert!(
+        proposal["source"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|line| { !line.as_str().unwrap().contains("escolhido na tela") }),
+        "automatic engine resolution must not claim an explicit UI choice: {proposal}"
+    );
     let saved = fixture.rpc(
         "runConfig.save",
         json!({

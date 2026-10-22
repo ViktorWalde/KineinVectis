@@ -17,15 +17,18 @@ Item {
     height: 100
 
     property var pedidos: []
+    property int sequence: 0
 
     RuntimeController {
         id: runtime
 
         workspaceRoot: "/tmp/workspace"
         onRunStartRequested: function(command, device) {
+            runtime.bindRunRequest(++root.sequence);
             root.pedidos.push("start:" + command + ":" + device);
         }
         onRunScriptRequested: function(path, device) {
+            runtime.bindRunRequest(++root.sequence);
             root.pedidos.push("script:" + path + ":" + device);
         }
     }
@@ -35,52 +38,52 @@ Item {
 
         // Sem escolha: o campo vai vazio (= ausente na ponte C++).
         runtime.startRun("");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         runtime.startScript("/tmp/workspace/main.py");
         if (root.pedidos.join(",") !== "start::,script:/tmp/workspace/main.py:") failures += 1;
 
         // Com escolha: o botao Executar e o "Executar" num .py levam a porta.
-        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.script", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.serialDevice = "/dev/ttyUSB0";
         runtime.startRun("");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         runtime.startScript("/tmp/workspace/main.py");
         if (root.pedidos.join(",")
                 !== "start::/dev/ttyUSB0,script:/tmp/workspace/main.py:/dev/ttyUSB0") failures += 2;
 
         // Um comando DIGITADO roda como foi escrito: a porta NAO vai junto
         // (o core recusa command + device).
-        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.script", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.startRun("python tools/gera.py");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         runtime.startRun("echo oi");
         if (root.pedidos.join(",") !== "start:python tools/gera.py:,start:echo oi:") failures += 4;
 
         // A escolha e' de quem a fez: trocar/desfazer no painel chega aqui
         // pelo binding e vale no proximo gesto.
-        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.script", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.serialDevice = "/dev/ttyACM1";
         runtime.startScript("/tmp/workspace/util.py");
-        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.script", "sem ferramenta na prova");
         runtime.serialDevice = "";
         runtime.startScript("/tmp/workspace/util.py");
         if (root.pedidos.join(",")
                 !== "script:/tmp/workspace/util.py:/dev/ttyACM1,script:/tmp/workspace/util.py:") failures += 8;
 
         // Processo em curso ou sem workspace: nada vai, com ou sem porta.
-        runtime.handleRequestFailed("run.script", "sem ferramenta na prova");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.script", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         root.pedidos = [];
         runtime.serialDevice = "/dev/ttyUSB0";
         runtime.running = true;
         runtime.startRun("");
-        runtime.handleRequestFailed("run.start", "sem ferramenta na prova");
+        runtime.handleRunRequestFailed(root.sequence, "run.start", "sem ferramenta na prova");
         runtime.startScript("/tmp/workspace/main.py");
         runtime.running = false;
         runtime.workspaceRoot = "";
@@ -90,14 +93,16 @@ Item {
         // A recusa do core ao run.script vira a mensagem da ultima execucao
         // (a aba Terminal abre para mostra-la); outro dominio nao mexe nela.
         runtime.workspaceRoot = "/tmp/workspace";
-        runtime.handleRequestFailed("run.script", "projeto MicroPython: o mpremote nao esta' nesta maquina");
+        runtime.startScript("/tmp/workspace/main.py");
+        runtime.handleRunRequestFailed(root.sequence, "run.script", "projeto MicroPython: o mpremote nao esta' nesta maquina");
         if (runtime.lastRunMessage.indexOf("mpremote") < 0) failures += 32;
         runtime.handleRequestFailed("git.status", "outro dominio");
         if (runtime.lastRunMessage.indexOf("mpremote") < 0) failures += 64;
 
         // A execucao e' uma ABA DE TERMINAL (2026-09-18): o core devolve o id
         // e a aba nasce com o nome do comando; ao fechar, o desfecho fica dito.
-        runtime.handleRunStarted("cargo run --release", "t7", "config-cargo", "/tmp/workspace");
+        runtime.startRun("cargo run --release");
+        runtime.handleRunStarted("cargo run --release", "t7", "config-cargo", "/tmp/workspace", root.sequence);
         if (runtime.runTerminalId !== "t7" || runtime.activeTerminalId !== "t7"
                 || runtime.terminalsModel.count !== 1
                 || runtime.terminalsModel.get(0).title !== "▶ cargo run --release") failures += 128;
@@ -111,12 +116,14 @@ Item {
                 || !runtime.isFinishedRun("t7")) failures += 1024;
         runtime.closeTerminal("t7");
         if (runtime.terminalsModel.count !== 0 || runtime.isFinishedRun("t7")) failures += 2048;
-        runtime.handleRunStarted("/home/x/.venv/bin/python 'tools/gera.py'", "t8", "script-python", "/tmp/workspace");
+        runtime.startScript("/tmp/workspace/tools/gera.py");
+        runtime.handleRunStarted("/home/x/.venv/bin/python 'tools/gera.py'", "t8", "script-python", "/tmp/workspace", root.sequence);
         if (runtime.terminalsModel.count !== 1
                 || runtime.terminalsModel.get(0).title !== "▶ python 'tools/gera.py'") failures += 256;
         runtime.handleTerminalClosed("t8", 0);
         runtime.closeTerminal("t8");
-        runtime.handleRunStarted("cargo run", "", "config-cargo", "/tmp/workspace");
+        runtime.startRun("cargo run");
+        runtime.handleRunStarted("cargo run", "", "config-cargo", "/tmp/workspace", root.sequence);
         if (runtime.terminalsModel.count !== 0) failures += 4096;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);

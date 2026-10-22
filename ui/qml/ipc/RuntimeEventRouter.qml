@@ -44,8 +44,20 @@ Item {
             root.runConfigController.handleMutationFailed(requestId, message);
         }
 
-        function onRunStarted(command, terminalId, executionKey, workspace) {
-            root.runtimeController.handleRunStarted(command, terminalId, executionKey, workspace);
+        function onRunStarted(command, terminalId, executionKey, workspace, requestId) {
+            root.runtimeController.handleRunStarted(command, terminalId, executionKey, workspace, requestId);
+        }
+
+        function onRunRequestFailed(requestId, method, message) {
+            root.runtimeController.handleRunRequestFailed(requestId, method, message);
+        }
+
+        function onRunStopFinished(requestId) {
+            root.runtimeController.handleRunStopFinished(requestId);
+        }
+
+        function onWorkspaceChanged() {
+            root.runtimeController.handleWorkspaceActivated();
         }
 
         function onStatusChanged() {
@@ -67,8 +79,7 @@ Item {
             if (method === "terminal.selectAll" || method === "terminal.copySelection") {
                 root.runtimeController.terminalSelectionFailed();
             }
-            if (method === "run.start" || method === "run.script" || method === "run.stop"
-                    || method === "terminal.close") {
+            if (method === "terminal.close") {
                 root.runtimeController.handleRequestFailed(method, message);
             }
         }

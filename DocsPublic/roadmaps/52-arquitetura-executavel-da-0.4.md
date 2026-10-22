@@ -3439,3 +3439,155 @@ regressão material neste cenário limitado. A primeira referência foi descarta
 por cache Cargo compartilhado; referência refeita em target isolado, protocolos
 e hashes conferidos. Dados `/tmp/kinein-h4b2b2-perf-summary.json`.
 Sem mudança de tela nesta fatia; integração visual cancelável é a próxima.
+
+### 14.31 0.4.1h4b2b3 — intenção e preparação na UI atual (concluída, 2026-10-22)
+
+Consumir o contrato 0.187.0 pelos donos existentes: EmbeddedFlashController/
+View → composição AppDomains → RunConfigController ou RuntimeController →
+roteadores → CoreClient. Não reconstruir intenção a partir do texto. Proposta
+nativa precisa conter flash como objeto não vazio, sem aceitar {} como modo
+manual nem disparar o lançador padrão; salvar/editar preserva esse objeto por id, fora
+do ListModel que converte objetos aninhados. Editor nativo permite renomear,
+comando somente leitura e orientação para gerar outra prévia em Embarcados.
+Configurações manuais e suas ações continuam explicitamente manuais.
+
+Gerar prévia solicita modo nativo por padrão; opções progressivas existentes
+oferecem modo manual explícito, identificado sem reserva/revalidação nativa,
+e diretório de build opcional no nativo. Provider não suportado recusa; nunca
+há fallback automático ao shell. Troca de modo/build/porta/modelo/firmware
+invalida o resultado acionável. Mostrar origem e porta da intenção aprovada;
+isso não prova acesso físico, formato de imagem ou compatibilidade do chip.
+
+RunTerminalController continua dono da espera: o id JSON-RPC atravessa
+run.start/script/stop e suas respostas, sem novo método/evento no protocolo.
+Respostas antigas, duplicadas ou de outra conexão/workspace não concluem
+o pedido atual. Falha genérica não substitui a resposta correlacionada. Parar
+durante preparação pede run.stop; mantém espera até o aceite/recusa real,
+sem anunciar cancelamento concluído antes da resposta. Clique repetido não
+duplica run/stop. Header atual oferece Parar também durante preparação,
+com texto acessível; erro continua na faixa existente do Terminal. Desconexão
+libera espera sem repetir; evento terminal.closed preserva a aba concluída.
+O bridge filtra respostas obsoletas antes de atualizar running/terminalActive.
+
+Aceites antes de fechar: reprodução vermelha do descarte da intenção e do
+Parar pendente; harnesses de transporte/edição, correlação, cancelamento,
+troca de workspace, desconexão e duplicatas. Prova nativa com Qt/Core reais,
+CLI falsa/porta regular, prévia → save → executar e alteração recusada, sem
+hardware; fotos antes/depois dos componentes atuais, dimensões estreitas e
+teclado. Mutação dos guards, gate rápido e completo estritos, debug/release
+com smokes e medidas antes/depois. Referências visuais seguem rascunhos;
+preparar comparação para aprovação do autor sem considerar desenho aprovado.
+Outros motores e ações de ocupação continuam nas partes seguintes.
+
+**Feito e validado (2026-10-22; 40.7 §7.340):** intenção nativa atravessa
+ponte/roteadores/composição sem virar comando manual. Intenções por id ficam
+fora do ListModel; renomear conserva o snapshot aberto mesmo se chegar outra
+lista. Prévia nativa sem intenção é recusada. Modo manual é escolha explícita
+nas opções existentes; build opcional só vai no pedido nativo. Header oferece
+Parar durante a espera; ids distintos vinculam run/script e stop. Aceitar Parar
+não conclui a preparação antes da recusa correspondente. Reabrir a mesma raiz
+invalida espera, preservando abas existentes; outra raiz continua limpando-as.
+
+Reproduções vermelhas: `/tmp/kinein-h4b2b3-native-before.log` e
+`/tmp/kinein-h4b2b3-pending-before.log` (descarte de intenção/Parar inoperante).
+Três harnesses novos e os existentes passaram, 167 ao todo. Três mutantes
+caíram por asserção de execução: remover identidade da resposta, descartar
+intenção ao salvar e liberar Parar antes do fim (`/tmp/kinein-h4b2b3-mutations-final.json`). Sem exceção/baseline
+nova de idioma, tamanho ou avisos; o legado continua em 14.457 ocorrências.
+
+Qt/core/PTY reais com CLI falsa e portas regulares, debug e release:
+prévia → salvar → renomear → executar; imagem alterada recusada; versão
+bloqueada cancelada antes do PTY; execução explícita posterior concluída.
+Somente duas execuções da ferramenta falsa em cada cenário, argv/porta e
+intenção persistida conferidos. Tab/Shift+Tab reais enviados somente à janela
+de teste, sem entrada global. Relatórios em
+`/tmp/kinein-flash-native-ui-p194e6m3/report.json` e
+`/tmp/kinein-flash-native-ui-5qey97cc/report.json` (fontes finais, após os
+ajustes de parada, preservação de edição e intenção vazia).
+
+Capturas adicionais na **Main real**, com editor aberto, dock existente,
+prévia, opções e editor nativo, 1280×800:
+`/tmp/kinein-flash-native-ui-nkwnr4es/report.json`. Só consultou versão/salvou
+configuração da fixture; não executou gravação. Fotos de componentes antes
+em `/tmp/kinein-h4b2b3-before/`. A prova inicial tentou linkar durante um
+build em curso e foi descartada; repetida após link completo. O helper de
+teclado passou a receber a janela explicitamente, pois não havia janela
+global com foco no Xvfb. A Main foi carregada como raiz real para fotografar,
+sem wrapper visual. Esses ajustes foram nos helpers de QA, não no produto.
+Capturas não constituem aprovação visual do autor nem ensaio de todas as escalas.
+
+Mesma versão do core 0.187, UI debug antes/depois, Qt 6.10.2, software/offscreen,
+fixture de 10 mil linhas; três pares alternados, 9 aberturas e 120 teclas por UI.
+Mediana primeiro quadro 316/317 ms; tecla mediana 8,91/9,205 ms, p95 9,65/9,95 ms.
+Variações pequenas neste cenário, sem ganho de desempenho demonstrado; não é
+medição de hardware nem de todas as cargas. Dados
+`/tmp/kinein-h4b2b3-perf-summary.json` (integração antes dos ajustes finais
+de rótulo/chaves/cancelamento, sem alterar o caminho de digitação).
+**Gate completo estrito TUDO VERDE**, `/tmp/kinein-h4b2b3-gate-full-complete.log`:
+1.278 Rust, 8 CTest, Clippy/C++/qmllint limpos, 167 harnesses, sem NÃO PROVADO.
+Debug/release abriram em 322/320 ms nesta amostra, com passeio de 33 superfícies
+por preset, sem aviso. Core/adaptador/UI compilados nos dois perfis. Target
+independente; fontes comparadas ao principal, salvo o menu local do autor.
+
+**Correção identificada na revisão, incluída nesta fatia antes de repetir o gate:**
+na normalização da intenção, o plano
+recebe esptool explícito e herda o rótulo legado "escolhido na tela", inclusive
+quando a seleção original era automática. O motor efetivo está correto,
+mas a atribuição da escolha precisa ser corrigida no dono da proposta. Usar
+evidência de motor resolvido na intenção, estável entre prévia e run; não
+interpretar texto no QML. Provar a atribuição incorreta pelo despacho real
+antes de corrigir. O primeiro gate completo recusou um if sem chaves na ponte;
+corrigir e repetir sem exceção de lint. Não houve falha funcional nesse gate.
+Reprodução em `/tmp/kinein-h4b2b3-engine-source-before.log`; corrigido no dono
+nativo antes da impressão digital, com rótulo de motor resolvido. Os 15 testes
+da matriz passaram novamente, incluindo salvar/executar sem divergência do
+snapshot (`/tmp/kinein-h4b2b3-engine-source-after.log`). O C++ corrigido passou
+no lint isolado; provas Qt/Core/PTY e Main repetidas, relatórios acima.
+
+**Integridade do QA:** uma rodada compartilhando target com o principal foi
+interrompida: após Clippy no principal, o Cargo reutilizou o artefato no QA e
+não reanalisou a versão anterior do arquivo, que ainda tinha assigning_clones.
+Os dois fontes e o log comprovaram o reuso. Corrigido com clone_into no
+principal, validado pelo Clippy. O target do QA deixou de ser symlink: agora
+é diretório independente, recompilado do zero antes do gate final. Não recriar
+o compartilhamento em outra fatia. Rodadas anteriores desta fatia permanecem
+como evidência do incidente, sem valer como gate final dos fontes corrigidos.
+
+**Duplicação QML, exceção justificada:** o C++ da rodada isolada passou, mas o
+próximo gate reconheceu `value===number` como duplicação nova. A regex captura
+o trecho de `typeof value === "number"`: em RunTerminal é validação do retorno
+numérico de RPC; em ShellLayoutCodec compõe a restauração de geometria com
+isFinite/limites. Não é estado derivado comum aos dois domínios. Congelar
+somente essa ocorrência em 2 arquivos, pelo procedimento do próprio gate,
+sem novo helper genérico nem mudar o verificador. Rodar CI rápida e harnesses
+antes da nova rodada completa para pegar recusas baratas antes do C++.
+
+**Janela entre aceite e término:** completar o estado visual da parada também
+após receber run.stop: enquanto a preparação ainda aguarda sua recusa, o header
+deve continuar em parada pendente e não enviar outra solicitação. Da mesma
+forma, execução aceita espera terminal.closed. Provar a repetição depois do
+aceite, além do clique duplo antes da resposta, antes de ajustar o controller.
+
+Preservar o dono de limpar configurações: WorkspaceUiResetter já chama clear
+ao trocar/fechar a raiz; WorkspaceController mantém a UI na mesma raiz e na
+recuperação. RuntimeEventRouter deve invalidar só a execução pendente nessa
+notificação, sem limpar o editor/lista de configurações novamente. Provar que
+reabrir a mesma raiz mantém a edição antes de remover o clear duplicado.
+
+Pré-verificação final verde: CI rápida estrita e 167 harnesses, logs
+`/tmp/kinein-h4b2b3-preflight-ci.log` e `/tmp/kinein-h4b2b3-preflight-qml.log`.
+Reproduções adicionais antes da correção: Parar após aceite
+(`/tmp/kinein-h4b2b3-stop-ack-before.log`), perda do editor na mesma raiz
+(`/tmp/kinein-h4b2b3-same-root-before.log`) e intenção vazia disparando fallback
+(`/tmp/kinein-h4b2b3-empty-intent-before.log`). Corrigidos e cobertos pelos
+harnesses reais. A baseline de duplicação ganhou somente o falso positivo
+explicado acima e também encolheu dívidas antigas: createMode===project saiu,
+status===detected caiu de 4 para 3 arquivos. Verificador permaneceu intacto.
+
+**Próxima h4b2b4:** ampliar os motores nativos com evidência do artefato e
+destino, sem heurística por extensão/recência nem fallback automático; depois
+ações de ocupação verificadas e matriz integrada. Reusar os mesmos donos e
+preservar o modo manual explícito. h4b2b/0.4.1 continuam abertas. O 40.7 está
+próximo da catraca de 1.500 linhas; organizar sua próxima parte antes de
+acrescentar outra entrega. Sem gravação física/instalação/pacote/publicação;
+capturas continuam aguardando o refinamento e a aprovação visual do autor.

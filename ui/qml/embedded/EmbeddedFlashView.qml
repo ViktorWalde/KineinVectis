@@ -62,7 +62,7 @@ Item {
                 font.pixelSize: Theme.fontSizeSmall
             }
             KvButton {
-                text: root.enginesVisible ? qsTr("Ocultar opções") : qsTr("Alterar ferramenta")
+                text: root.enginesVisible ? qsTr("Ocultar opções") : qsTr("Ferramenta e modo")
                 compact: true
                 onClicked: root.enginesVisible = !root.enginesVisible
             }
@@ -97,6 +97,42 @@ Item {
                 }
             }
 
+        }
+
+        Flow {
+            width: parent.width
+            spacing: Theme.spacingSmall
+            visible: root.enginesVisible
+            KvToggleChip {
+                labelText: qsTr("Nativo")
+                active: root.flash && root.flash.nativeMode
+                onToggled: root.flash.selectMode(true)
+            }
+            KvToggleChip {
+                labelText: qsTr("Comando manual")
+                active: root.flash && !root.flash.nativeMode
+                onToggled: root.flash.selectMode(false)
+            }
+        }
+
+        KvTextField {
+            objectName: "embeddedFlashBuildDirectory"
+            width: parent.width
+            visible: root.enginesVisible && root.flash && root.flash.nativeMode
+            label: qsTr("Diretório do build (opcional)")
+            placeholder: qsTr("Padrão do projeto")
+            text: root.flash ? root.flash.buildDirectory : ""
+            onEdited: (value) => root.flash.selectBuildDirectory(value)
+        }
+
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            text: root.flash && root.flash.nativeMode
+                  ? qsTr("Modo nativo: vincula porta, ferramenta e arquivos à prévia e confere novamente antes de executar.")
+                  : qsTr("Comando manual: executa shell, sem reserva serial nem revalidação nativa de destino e arquivos.")
+            color: Theme.textSecondary
+            font.pixelSize: Theme.fontSizeSmall
         }
 
         KvButton {

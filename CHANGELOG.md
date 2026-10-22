@@ -32,6 +32,15 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Gravação nativa na UI (0.4.1h4b2b3, 2026-10-22):** prévia, salvar,
+  renomear e executar preservam a intenção estruturada. O editor permite
+  copiar a prévia nativa e alterar o nome; mudar a operação exige outra
+  prévia. Modo manual é escolha explícita. Parar funciona durante preparação
+  e mantém a espera até a confirmação real; respostas antigas não concluem
+  outro pedido. Reabrir a mesma raiz preserva o editor. Intenção vazia não
+  dispara o lançador padrão. Corrigida também a atribuição de escolha do motor.
+  Outros motores nativos e recuperação de ocupação continuam pendentes.
+
 - **Gravação nativa, backend (0.4.1h4b2b2, 2026-10-22):** esptool pode
   executar uma intenção estruturada, vinculada à porta, ferramenta, contexto
   e conteúdo dos arquivos. Build ESP-IDF exige metadados de origem; firmware

@@ -19,6 +19,9 @@ Item {
     property string activeConfigName: ""
     property bool runConfigDialogVisible: false
     property string editingConfigId: ""
+    property var flashById: ({})
+    property var editingFlash: ({})
+    readonly property bool editingNative: Object.keys(editingFlash).length > 0
     property bool configMenuVisible: false
     property real configMenuX: 0
     property real configMenuY: 0
@@ -29,7 +32,7 @@ Item {
 
     signal mutationFailed(string message)
     signal refreshRequested()
-    signal saveRunConfigRequested(string id, string name, string command)
+    signal saveRunConfigRequested(string id, string name, string command, var flash)
     signal deleteRunConfigRequested(string id)
     signal setActiveRunConfigRequested(string id)
     signal runConfigDialogOpenRequested(string name, string command)
@@ -47,6 +50,8 @@ Item {
         activeConfigId = "";
         activeConfigName = "";
         editingConfigId = "";
+        flashById = ({});
+        editingFlash = ({});
         configMenuVisible = false;
         runConfigDialogVisible = false;
         mutationPending = false;
@@ -59,7 +64,9 @@ Item {
         runConfigsListModel.clear();
         activeConfigId = activeId !== undefined ? activeId : "";
         activeConfigName = "";
+        const intents = ({});
         for (let i = 0; i < configs.length; i++) {
+            if (configs[i].flash) intents[configs[i].id] = JSON.parse(JSON.stringify(configs[i].flash));
             runConfigsListModel.append({
                 id: configs[i].id,
                 name: configs[i].name,
@@ -69,6 +76,7 @@ Item {
                 activeConfigName = configs[i].name;
             }
         }
+        flashById = intents;
         if (activeConfigName === "") {
             activeConfigId = "";
         }
@@ -104,6 +112,7 @@ Item {
         errorText = "";
         configMenuVisible = false;
         editingConfigId = "";
+        editingFlash = ({});
         runConfigDialogVisible = true;
         runConfigDialogOpenRequested("", "");
     }
@@ -115,13 +124,14 @@ Item {
         errorText = "";
         configMenuVisible = false;
         editingConfigId = activeConfigId;
+        editingFlash = flashById[activeConfigId] || ({});
         runConfigDialogVisible = true;
         runConfigDialogOpenRequested(activeConfigName, activeConfigCommand());
     }
 
     function confirmConfigDialog(name, command) {
         if (name === "" || command === "" || !beginMutation(true)) return;
-        saveRunConfigRequested(editingConfigId, name, command);
+        saveRunConfigRequested(editingConfigId, name, command, editingFlash);
     }
 
     function cancelConfigDialog() {
@@ -134,9 +144,9 @@ Item {
             deleteRunConfigRequested(activeConfigId);
         }
     }
-    function saveConfiguration(name, command) {
+    function saveConfiguration(name, command, flash) {
         if (name === "" || command === "" || !beginMutation(false)) return;
-        saveRunConfigRequested("", name, command);
+        saveRunConfigRequested("", name, command, flash || ({}));
     }
 
     function beginMutation(closeEditor) {

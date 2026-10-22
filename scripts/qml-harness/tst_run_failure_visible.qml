@@ -21,10 +21,10 @@ Item {
     QtObject {
         id: client
         property bool connected: false
-        function runStart(command, device) { root.calls++; }
-        function runScript(path, device) { root.calls++; }
-        function runStop() { root.calls++; }
-        function terminalClose(id) { root.calls++; }
+        function runStart(command, device) { return ++root.calls; }
+        function runScript(path, device) { return ++root.calls; }
+        function runStop() { return ++root.calls; }
+        function terminalClose(id) { return ++root.calls; }
     }
     RuntimeController { id: runtime; workspaceRoot: "/fixture" }
     RunConfigController { id: configs }
@@ -40,7 +40,7 @@ Item {
         runtime.startRun("fake-command");
         check(calls === 1 && runtime.runPending && runtime.runErrorText === "",
               "Nova tentativa conectada limpa erro e faz um pedido");
-        runtime.handleRequestFailed("run.start", "A porta está em uso por outro monitor.");
+        runtime.handleRunRequestFailed(root.calls, "run.start", "A porta está em uso por outro monitor.");
         check(!runtime.runPending, "Recusa real do core termina a espera");
         Qt.callLater(checkSurface);
     }
@@ -55,21 +55,21 @@ Item {
         check(runtime.runErrorText === "A porta está em uso por outro monitor.",
               "Desconexão após recusa preserva a causa específica");
         runtime.startRun("fake-command");
-        runtime.handleRunStarted("fake-command", "run-1", "key-1", "/fixture");
+        runtime.handleRunStarted("fake-command", "run-1", "key-1", "/fixture", root.calls);
         runtime.terminalActive = true;
         runtime.terminalActive = false;
         runtime.handleCoreDisconnected();
         check(runtime.runErrorText.indexOf("não pôde ser confirmado") >= 0,
               "Queda após aceite informa estado desconhecido mesmo após zerar terminalActive");
         runtime.startRun("fake-command");
-        runtime.handleRunStarted("fake-command", "run-2", "key-2", "/fixture");
+        runtime.handleRunStarted("fake-command", "run-2", "key-2", "/fixture", root.calls);
         runtime.handleTerminalClosed("run-2", 0);
         runtime.handleRunFinished(true, 0);
         check(runtime.runErrorText === "", "Conclusão positiva não vira erro vermelho");
         runtime.handleCoreDisconnected();
         check(runtime.runErrorText === "", "Queda após conclusão não inventa execução interrompida");
         runtime.startRun("fake-command");
-        runtime.handleRunStarted("fake-command", "run-3", "key-3", "/fixture");
+        runtime.handleRunStarted("fake-command", "run-3", "key-3", "/fixture", root.calls);
         runtime.handleTerminalOpened("shell-1", "sh", "Shell");
         runtime.closeTerminal("run-3");
         runtime.closeTerminal("shell-1");

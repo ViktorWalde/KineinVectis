@@ -16,6 +16,8 @@ Row {
     property bool testing: false
     property bool analyzing: false
     property bool running: false
+    property bool runPending: false
+    property bool runStopping: false
     property bool debugging: false
     property string workspaceKind: ""
     property string activeConfigId: ""
@@ -53,13 +55,16 @@ Row {
     }
 
     KvIconButton {
+        objectName: "headerRunAction"
         anchors.verticalCenter: parent.verticalCenter
-        enabled: root.coreConnected
-        primary: !root.running
-        danger: root.running
-        iconName: root.running ? "stop" : "run"
-        tooltip: root.running ? qsTr("Parar execução") : qsTr("Rodar a configuração ativa")
-        onClicked: root.running ? root.stopRunRequested() : root.runRequested()
+        enabled: root.coreConnected && !root.runStopping
+        primary: !root.running && !root.runPending
+        danger: root.running || root.runPending
+        iconName: root.running || root.runPending ? "stop" : "run"
+        tooltip: root.runStopping ? qsTr("Aguardando a parada…")
+                 : root.runPending ? qsTr("Cancelar preparação da execução")
+                 : root.running ? qsTr("Parar execução") : qsTr("Rodar a configuração ativa")
+        onClicked: root.running || root.runPending ? root.stopRunRequested() : root.runRequested()
     }
 
     KvIconButton {

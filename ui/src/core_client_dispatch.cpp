@@ -117,6 +117,14 @@ void CoreClient::dispatchFailure(const QString& method, const QJsonObject& error
                                  message);
     }
     handleDataSourceFailure(method, error, requestQuery);
+    if (method == QStringLiteral("run.start") || method == QStringLiteral("run.script") ||
+        method == QStringLiteral("run.stop"))
+    {
+        if (id == m_runRequestId) {
+            m_runRequestId = -1;
+        }
+        emit runRequestFailed(id, method, message);
+    }
     if (method == QStringLiteral("terminal.open")) {
         emit terminalOpenFailed(id, message);
     }
@@ -236,6 +244,7 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
         m_workspaceBuildSystems.clear();
         m_terminalIds.clear();
         m_runTerminalId.clear();
+        m_runRequestId = -1;
         setRunning(false);
         setTerminalActive(false);
         emit workspaceChanged();
@@ -246,6 +255,7 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
 
 void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
 {
+    m_runRequestId = -1;
     m_workspaceRoot = result.value(QStringLiteral("root")).toString();
     m_workspaceName = result.value(QStringLiteral("name")).toString();
     m_workspaceKind = result.value(QStringLiteral("kind")).toString();
@@ -367,7 +377,7 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         return;
     }
     if (dispatchFileResult(method, result) || dispatchSyntaxResult(method, result) ||
-        dispatchLspResult(method, result) || dispatchRunResult(method, result))
+        dispatchLspResult(method, result) || dispatchRunResult(method, result, requestId))
     {
         return;
     }

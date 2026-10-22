@@ -238,6 +238,8 @@ Rectangle {
         testing: root.coreClient.testing
         analyzing: root.coreClient.analyzing
         running: root.coreClient.running
+        runPending: root.runtimeController.runPending
+        runStopping: root.runtimeController.runStopping
         debugging: root.coreClient.debugging
         gitBranchLabel: root.gitController ? root.gitController.branchLabel : ""
         gitAheadCount: root.gitController ? root.gitController.aheadCount : 0

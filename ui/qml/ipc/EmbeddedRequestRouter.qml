@@ -56,13 +56,13 @@ Item {
     Connections {
         target: root.embeddedController ? root.embeddedController.flash : null
 
-        function onProposalRequested(device, engine, flashSizeBytes, firmware) {
+        function onProposalRequested(device, engine, flashSizeBytes, firmware, nativeMode, buildDirectory) {
             const flash = root.embeddedController.flash;
             if (!root.available("runConfig.flashProposal")) {
                 flash.bindProposal(-1);
                 return;
             }
-            flash.bindProposal(root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware));
+            flash.bindProposal(root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware, nativeMode, buildDirectory));
         }
     }
 
