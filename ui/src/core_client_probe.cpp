@@ -14,7 +14,7 @@ namespace kinein {
 
 void CoreClient::probeList()
 {
-    sendRequest(QStringLiteral("probe.list"), QJsonObject{});
+    m_probeRequestId = sendRequest(QStringLiteral("probe.list"), QJsonObject{});
 }
 
 void CoreClient::serialList()

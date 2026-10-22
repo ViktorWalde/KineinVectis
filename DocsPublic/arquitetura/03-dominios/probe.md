@@ -47,3 +47,9 @@ sondas reconhecidas a partir de resposta parcial; hint informa a causa e a
 saída retida continua disponível. toolAvailable indica somente se o processo
 pôde iniciar. Ao finalizar, raiz/adaptador fixado diferentes recusam a resposta
 antiga. Esta consulta não valida acesso, exclusividade nem destino de gravação.
+
+**Ponte Qt (h4b2b4a2):** somente o id da última consulta pode produzir sinais
+de sucesso/falha; respostas anteriores são descartadas antes dos efeitos.
+Fechamento aceito, abertura aceita com outra raiz e desconexão invalidam o
+pedido. Abertura recusada e reabertura da mesma raiz conservam a consulta
+atual. API pública, sinais e formato IPC permanecem os mesmos.

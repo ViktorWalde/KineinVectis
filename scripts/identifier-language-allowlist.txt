@@ -166,3 +166,6 @@ getppid
 rdev
 setfd
 wouldblock
+
+# shlex: modulo da biblioteca padrao Python para tokenizar a linha de link do Ninja.
+shlex

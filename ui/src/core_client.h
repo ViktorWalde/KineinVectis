@@ -813,6 +813,7 @@ private:
     /// A sessao de terminal da execucao em curso (`run.start`/`run.script`).
     QString m_runTerminalId;
     qint64 m_runRequestId = -1;
+    qint64 m_probeRequestId = -1;
     bool m_scanningEnvironment = false;
     QString m_buildJobId;
     QString m_testJobId;

@@ -32,6 +32,11 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Respostas de sondas na UI (0.4.1h4b2b4a2, 2026-10-22):** a ponte Qt
+  aplica somente o desfecho da última consulta. Respostas antigas, inclusive
+  falhas após trocar/fechar workspace, deixam de alterar o painel; reabrir a
+  mesma raiz e uma abertura recusada preservam a consulta atual.
+
 - **Consulta de sondas (0.4.1h4b2b4a, 2026-10-22):** a espera pela ferramenta
   sai do laço do core, com prazo e limite de saída retida. Falha não publica
   sondas parciais; troca de workspace/adaptador recusa a resposta antiga.

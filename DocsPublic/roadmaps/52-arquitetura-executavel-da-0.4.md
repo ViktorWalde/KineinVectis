@@ -3745,3 +3745,120 @@ ser preservada junto da correção A2; não fechar a jornada antes dela.
 1.819 arquivos deixa apenas o AppMenuBar local do autor diferente da cópia
 canônica de QA. Documentação/links conferidos após o registro. A2 é a próxima
 fatia e mantém a jornada aberta; depois dela, retomar os motores nativos.
+
+### 14.33 0.4.1h4b2b4a2 — desfechos de sondas correlacionados no Qt (desenho, 2026-10-22)
+
+**Base:** 5d98107 fecha somente o backend A1. A espera adiada permite ordem de
+respostas diferente da ordem de pedidos; a ponte existente entrega ambas ao
+mesmo consumidor sem id. Reprodução Qt real em
+`/tmp/kinein-probe-response-qt-co24_xpk/report.json`: a asserção detecta que o
+sucesso antigo sobrescreve o recente. Não usar esse resultado como sonda atual.
+
+**Arquivos e contrato, antes do código:**
+
+- core_client.h guarda o id mais recente de probe.list; core_client_probe.cpp
+  o atualiza ao enviar. core_client_dispatch.cpp descarta id antigo antes
+  de sucesso, falha genérica ou qualquer efeito de UI; o desfecho válido
+  consome o id. Nenhuma API/sinal/shape/protocolo novo (0.187.0 permanece).
+- Abertura aceita com raiz diferente e fechamento aceito invalidam o id;
+  core_client_process.cpp invalida na desconexão. Abertura recusada e
+  reabertura da mesma raiz conservam a consulta atual, evitando busy órfão.
+- Preservar em scripts/fixtures/probe-response-identity o core de fixture,
+  QML e main mínimo; runner verificar_probe_response_identity.py liga os
+  objetos Qt reais do build, substituindo somente o main no executável de
+  prova. Usa diretórios privados e plataforma offscreen, sem entrada global,
+  hardware ou alteração de arquivos do projeto testado. Prova local Linux;
+  não anuncia execução dessa fixture no Windows ou inclusão no gate padrão.
+- Casos: sucesso/falha antigos após resultado novo, respostas após close/open,
+  erro atual, duplicata, retry, abertura que falha e mesma raiz reaberta.
+  Mutar o guard para comprovar que a fixture detecta o defeito. Conferir
+  CI rápida e C++ focado antes do gate completo exigido por ui/src.
+
+O painel e seus sinais continuam os atuais; nenhum redesenho/aceite visual
+novo. A jornada A1+A2 só fecha com a ponte validada; depois retomar h4b2b4b
+(probe-rs/artefato/alvo/destino) e a recuperação/matriz integrada.
+
+**Pré-validação A2:** CI rápida estrita verde em
+`/tmp/kinein-h4b2b4a2-preflight-ci-final.log`; C++ focado nos três produtores
+verdes em `/tmp/kinein-h4b2b4a2-cpp-focused.log`. Qt real em debug:
+`/home/hugh/.cache/kinein-h4b2a-qa/build/qa-artifacts/probe-response-qt-13dhce_l/report.json`.
+Cinco sucessos válidos e uma falha atual, descartando antigos/duplicata;
+abertura recusada e mesma raiz preservadas. Duas mutações detectadas por
+asserção de runtime e fontes recompilados após restauração:
+`/tmp/kinein-h4b2b4a2-mutations.json` (ts2kwbk9 e 84hkxrho nos artefatos QA).
+
+**Notas de método:** primeira ligação da fixture falhou por falta de espaço
+na partição tmpfs de /tmp, sem executar o produto. O runner passou a gerar
+artefatos em build/qa-artifacts e usar TMPDIR privado nessa mesma partição;
+nenhum artefato antigo foi apagado. A pré-validação de idioma detectou termos
+fora do vocabulário: renomeados respond/compiled com o script do repositório;
+shlex entrou na allowlist com motivo explícito por ser a biblioteca padrão
+Python, sem alterar o verificador. Uma sincronização apontou origem e destino
+para a mesma cópia; interrompida por SameFileError, corrigida com caminhos
+absolutos e conferência das cópias. Nenhuma prova de compilação/carregamento
+falho foi contada como teste funcional. Gate completo estrito em execução:
+`/tmp/kinein-h4b2b4a2-gate-full.log`.
+
+**Retomada do gate A2, ambiente:** a rodada em
+`/tmp/kinein-h4b2b4a2-gate-full.log` passou Rust/C++/CTest/QML/integrações e
+abertura debug (346 ms, 33 superfícies), mas falhou ao ligar release:
+lto1 informou Disk quota exceeded nos temporários da partição tmpfs /tmp.
+Esse log não é gate completo verde. Preservado integralmente; não houve
+falha de código nem alteração de verificadores/otimizações para contornar.
+O QA próprio limita Ninja a quatro jobs, sem mudar flags/configuração.
+Usar TMPDIR curto em /var/tmp, na partição de disco, e repetir o gate completo
+estrito, depois de conferir o build release isolado. Esse build e a prova
+Qt release passaram. A rodada em `/tmp/kinein-h4b2b4a2-gate-full-disk-tmp.log`
+também não fecha o gate: o subdiretório /var/tmp/k.Gm9mhF alongou o caminho
+do teste de scrollback, que falhou esperando linha-final. Reprodução focada
+com o mesmo fonte: TMPDIR longo falha, TMPDIR=/var/tmp passa, nos logs
+`/tmp/kinein-h4b2b4a2-terminal-long-tmp.log` e
+`/tmp/kinein-h4b2b4a2-terminal-short-tmp.log`. Sem alterar o teste, repetir
+com TMPDIR=/var/tmp em `/tmp/kinein-h4b2b4a2-gate-full-var-tmp.log`.
+A conclusão desta fatia depende dessa rodada final.
+
+**Investigação adicional do gate, antes de alterar a prova:** com /var/tmp o
+teste de terminal passou, mas two_ports_remain_independent_in_dispatch
+falhou também isolado; as duas rodadas anteriores o aprovavam. O teste soma
+quaisquer dois event.job.finished, sem primeiro conferir os ids das duas
+operações esperadas. Conferir os eventos efetivos em cópia própria antes de
+decidir se é defeito da operação ou da coleta da fixture. Não afrouxar a
+asserção de independência nem contar a rodada falha como gate verde.
+
+O rastreio confirmou first=job_2, second=job_3, observed=[job_1, job_2]
+(`/tmp/kinein-h4b2b4a2-two-ports-diagnostic.log`): um job alheio encerrava a
+coleta antes do segundo id. Corrigir somente a fixture para acumular ids
+esperados distintos, mantendo prazo e asserção de ambas as portas. Uma
+mutação que perde o segundo id precisa continuar reprovando em runtime.
+
+Fixture corrigida aprovada isoladamente; mutação descartando o segundo id
+reprovou na mesma asserção após o prazo de 4 s, com compilação válida.
+Fontes restaurados e nova rodada completa estrita em
+`/tmp/kinein-h4b2b4a2-gate-full-var-tmp-final.log`. Relatório da mutação:
+`/tmp/kinein-h4b2b4a2-two-ports-mutation.json`. Essa alteração é só de coleta
+de evidência no teste, sem mudar execução ou coordenação de portas.
+
+**Fecho A2 (2026-10-22):** gate completo estrito TUDO VERDE em
+`/tmp/kinein-h4b2b4a2-gate-full-qa-final.log`, com TMPDIR=/var/tmp:
+1.284 Rust, Clippy/C++ limpos, 8 CTest, qmllint estrito, 167 harnesses QML
+e nenhum NÃO PROVADO no escopo automatizado. UI/core debug/release;
+primeiro frame em 315/307 ms e 33 superfícies por preset sem avisos. Entrada
+de terminal silenciosa, retorno em 32 ms. Medidas locais, sem extrapolar
+para desempenho geral ou hardware.
+
+CoreClient real passou em debug e release: cinco sucessos atuais aceitos,
+uma falha atual entregue, antigas/duplicatas descartadas; abertura recusada
+e mesma raiz preservadas. Duas mutações Qt e uma da coleta serial foram
+detectadas em runtime; fontes restaurados. A prova release está em
+`/home/hugh/.cache/kinein-h4b2a-qa/build/qa-artifacts/probe-response-qt-g6jygcq1/report.json`.
+Uma rodada iniciada por engano no checkout principal parou na edição local
+preexistente de AppMenuBar; nenhum byte dela foi corrigido ou incluído.
+O gate final usa o menu canônico em QA próprio e target independente;
+não comprova literalmente o checkout sujo do autor. Tentativas falhas
+preservadas, sem contar falha de compilação como mutação detectada.
+
+A fatia fecha sobre 5d98107; h4b2b/0.4.1 continuam abertas. Próxima sessão:
+h4b2b4b, primeiro probe-rs + alvo CMake + destino explícito (§14.32).
+Não implementou esse motor, não gravou hardware nem alterou desenho visual,
+instalou, empacotou ou publicou. O autor pediu encerrar esta sessão após
+gates/commit e receber prompt completo para a próxima; não iniciar b4b agora.

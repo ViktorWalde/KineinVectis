@@ -45,6 +45,12 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     const QString requestPath = m_pendingPaths.take(id);
     const QString requestRemoteName = m_pendingRemoteDirectoryNames.take(id);
     const QVariantMap requestQuery = m_pendingDataSourceQueries.take(id);
+    if (method == QStringLiteral("probe.list")) {
+        if (id != m_probeRequestId) {
+            return;
+        }
+        m_probeRequestId = -1;
+    }
     // A exportacao do Banco usa `fs.create*`, cuja resposta comum e' da arvore
     // do projeto (abre o arquivo, ou o dialogo de criar com o erro).
     const bool exportRequest = m_pendingExports.remove(id);
@@ -245,6 +251,7 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
         m_terminalIds.clear();
         m_runTerminalId.clear();
         m_runRequestId = -1;
+        m_probeRequestId = -1;
         setRunning(false);
         setTerminalActive(false);
         emit workspaceChanged();
@@ -256,7 +263,11 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
 void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
 {
     m_runRequestId = -1;
-    m_workspaceRoot = result.value(QStringLiteral("root")).toString();
+    const QString workspaceRoot = result.value(QStringLiteral("root")).toString();
+    if (workspaceRoot != m_workspaceRoot) {
+        m_probeRequestId = -1;
+    }
+    m_workspaceRoot = workspaceRoot;
     m_workspaceName = result.value(QStringLiteral("name")).toString();
     m_workspaceKind = result.value(QStringLiteral("kind")).toString();
     m_workspaceBuildSystems.clear();

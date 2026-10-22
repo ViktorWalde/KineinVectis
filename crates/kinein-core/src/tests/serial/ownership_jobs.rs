@@ -122,7 +122,10 @@ fn two_ports_remain_independent_in_dispatch() {
         if let Ok(event) = fixture.events.recv_timeout(Duration::from_millis(30))
             && event.method == "event.job.finished"
         {
-            finished.push(event.params.unwrap()["jobId"].as_str().unwrap().to_owned());
+            let id = event.params.unwrap()["jobId"].as_str().unwrap().to_owned();
+            if (id == first_id || id == second_id) && !finished.contains(&id) {
+                finished.push(id);
+            }
         }
     }
     assert!(finished.contains(&first_id) && finished.contains(&second_id));

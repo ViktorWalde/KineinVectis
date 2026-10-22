@@ -48,6 +48,31 @@ O modo **completo** e o que bloqueia release: os binarios do icone
 builds passarem. Presets CMake podem ser sobrescritos por ambiente:
 `KINEIN_PRESET_DEBUG` / `KINEIN_PRESET_RELEASE` (padrao `dev-local*`).
 
+Quando /tmp for tmpfs com quota insuficiente para ligar release com LTO,
+use temporários em disco, sem desativar otimizações. No QA local de
+2026-10-22 isso resolveu Disk quota exceeded; preserve o log da rodada falha.
+Use uma raiz curta: o teste de scrollback do terminal ficou sensível ao
+comprimento do prompt quando TMPDIR ganhou mais um subdiretório; a mesma
+prova passou com /var/tmp, sem alteração de código ou flags.
+
+```bash
+TMPDIR=/var/tmp bash scripts/verificar.sh --completo --estrito
+```
+
+Prova adicional local de correlação de sondas na ponte Qt (Linux, build da
+UI já concluído; não roda dentro do gate padrão):
+
+```bash
+python3 scripts/verificar_probe_response_identity.py --build-dir build/dev-local
+```
+
+O runner liga os mesmos objetos de produção com um main de fixture, usa
+CoreClient real e um core IPC falso que responde fora de ordem. Grava os
+relatórios e artefatos em `build/qa-artifacts/`, com temporários próprios nessa
+partição. Nenhuma sonda/hardware é acessada. Não executá-lo durante
+`verificar-cpp.sh` nem enquanto a UI ainda compila. Detalhes no
+[52 §14.33](../roadmaps/52-arquitetura-executavel-da-0.4.md#1433-041h4b2b4a2--desfechos-de-sondas-correlacionados-no-qt-desenho-2026-10-22).
+
 ## Requisitos que não são do Rust
 
 `cargo test --workspace` exige **`python3` no PATH** desde 2026-09-02: os testes
