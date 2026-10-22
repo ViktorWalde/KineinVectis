@@ -23,6 +23,26 @@ pub(super) fn self_executable() -> io::Result<PathBuf> {
     std::env::current_exe()
 }
 
+pub(super) fn file_revision(path: &Path) -> io::Result<String> {
+    use std::os::windows::fs::MetadataExt;
+    let metadata = fs::metadata(path)?;
+    if !metadata.is_file() {
+        return Err(io::Error::other("o caminho não é um arquivo regular"));
+    }
+    Ok(format!(
+        "{}:{}:{}:{}",
+        metadata.creation_time(),
+        metadata.last_write_time(),
+        metadata.file_size(),
+        metadata.file_attributes()
+    ))
+}
+
+pub(super) fn serial_device_revision(path: &Path) -> io::Result<String> {
+    // Native serial access remains unavailable until its Windows milestone.
+    serial_device_key(path)
+}
+
 // Serial execution is unavailable here; never accept an unverified parent.
 #[allow(clippy::missing_const_for_fn)]
 pub(super) fn is_parent_process(_pid: u32) -> bool {

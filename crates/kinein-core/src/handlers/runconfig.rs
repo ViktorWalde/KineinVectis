@@ -42,7 +42,7 @@ impl Core {
         let request = match parse_params::<FlashProposalParams>(
             request_id.as_ref(),
             params,
-            "runConfig.flashProposal aceita os campos opcionais device, engine, flashSizeBytes e firmware",
+            "runConfig.flashProposal aceita device, engine, flashSizeBytes, firmware, native e buildDirectory opcionais",
         ) {
             Ok(request) => request,
             Err(response) => return *response,
@@ -71,6 +71,19 @@ impl Core {
             }
         };
         let model = self.compute_project_model(&root);
+        if request.native {
+            return self.native_flash_proposal_response(request_id, root, model, request, firmware);
+        }
+        if request.build_directory.is_some() {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    "buildDirectory requer native=true",
+                    None,
+                ),
+            );
+        }
         // O wrapper do framework (bloco E), quando esta' nesta maquina.
         let framework = crate::build::engine::resolve(&model, self.sdk_home().as_deref())
             .ok()
@@ -144,7 +157,13 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        match runconfig::save(&root, parsed.id.as_deref(), &parsed.name, &parsed.command) {
+        match runconfig::save_with_flash(
+            &root,
+            parsed.id.as_deref(),
+            &parsed.name,
+            &parsed.command,
+            parsed.flash.as_ref(),
+        ) {
             Ok(state) => JsonRpcResponse::success(
                 request_id,
                 json!(RunConfigsResult {
@@ -214,7 +233,18 @@ impl Core {
 }
 
 /// Version/precondition refusals retain the proposal's existing error mapping.
-fn flash_error_response(request_id: Option<Value>, error: &flash::FlashError) -> JsonRpcResponse {
+pub(super) fn flash_error_response(
+    request_id: Option<Value>,
+    error: &flash::FlashError,
+) -> JsonRpcResponse {
+    flash_error_response_for("runConfig.flashProposal", request_id, error)
+}
+
+pub(super) fn flash_error_response_for(
+    method: &str,
+    request_id: Option<Value>,
+    error: &flash::FlashError,
+) -> JsonRpcResponse {
     let code = match error {
         flash::FlashError::MissingTool { .. } => JsonRpcErrorCode::ToolNotFound,
         flash::FlashError::UnknownEngine { .. } => JsonRpcErrorCode::InvalidParams,
@@ -222,11 +252,7 @@ fn flash_error_response(request_id: Option<Value>, error: &flash::FlashError) ->
     };
     JsonRpcResponse::failure(
         request_id,
-        JsonRpcError::new(
-            code,
-            error.to_string(),
-            Some(json!({ "method": "runConfig.flashProposal" })),
-        ),
+        JsonRpcError::new(code, error.to_string(), Some(json!({ "method": method }))),
     )
 }
 

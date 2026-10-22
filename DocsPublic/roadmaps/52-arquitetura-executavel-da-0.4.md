@@ -3355,3 +3355,87 @@ só diminuiu (14.457 ocorrências, 3.396 pares). Sem prova Windows nativa nova.
 Próxima h4b2b2: intenção/schema 2 e execução revalidada, usando este plano;
 ocupação/recuperação e a matriz continuam obrigatórias. Não houve flash físico,
 instalação, migração de dados, novo executor, pacote ou publicação.
+
+### 14.30 0.4.1h4b2b2 — intenção nativa e execução revalidada (desenho, 2026-10-21)
+
+Entregar primeiro o caminho completo no backend para esptool: receita ESP-IDF
+e firmware instalado do catálogo, por `runConfig.flashProposal` → salvar/ativar
+→ `run.start`, ou execução direta da intenção. A próxima parte liga a intenção
+na UI existente e amplia os demais motores; não fechar h4b2b com um provider.
+Wrappers que recompilam durante flash e motores USB sem destino inequívoco
+precisam de seus próprios aceites. Não convertê-los silenciosamente em shell.
+
+Contrato 0.187.0, antes do produtor: `flashProposal` recebe `native?: bool`
+(padrão falso, compatibilidade do comando manual) e `buildDirectory?: string`.
+Com native=true retorna `flash?` com versão 1, workspace, seleção tipada,
+programa/argv originais, identidade opaca da porta e fingerprint. Esta parte
+recusa outro motor no modo nativo com orientação; o modo manual anterior
+continua explícito. `runConfig.save`/configs e `run.start` recebem `flash?`;
+na execução direta é exclusivo com command/device. Sem método/evento novo.
+Programa/argv recebidos nunca são executados sem regenerar o plano pelo dono.
+
+Schema 1 continua legível, sem migração ao abrir. Só salvar intenção promove
+o arquivo para 2; versão 2 pode conter ambos os tipos. Ler schema 1 com flash,
+versão desconhecida ou intenção malformada recusa preservando os bytes.
+Salvar valida identidade/shape e correspondência da prévia com programa/argv;
+editar nativa sem transportar sua intenção é recusado, sem virar manual.
+ConfigAction manual não ganha exceção. Não executar native por active_command.
+
+Receita: diretório do build IDF (`build/`, ou seleção explícita, inclusive externa),
+sempre vinculado à raiz pelo metadado do próprio build; imagens ficam no build.
+sem escolher pelo arquivo mais recente. Reusar o leitor de receitas do modelo.
+Ler `project_description.json` dos formatos 1.2/1.3 (5.4.2 consultado; 1.3
+conferido no SDK local v6.1), comprovando raiz/build/configuração/chip/app.
+Não inferir firmware pela extensão. Receitas, metadados, configuração, kit,
+SDK, ferramenta/versão, imagens e identidade da porta entram no snapshot.
+Conteúdo é hashado fora do laço (limite de 1 GiB por arquivo de imagem/binário;
+JSON/configuração usam o limite de leitura existente). Revalidar alterações
+durante a leitura e antes do PTY pelo revisionamento de arquivo do platform.
+Leitura binária reusa a abertura regular por descritor do fsops, sem bloquear
+em FIFO substituído; aliases são resolvidos para o hash e conferidos novamente.
+No catálogo, conferir checksum da entrada original, não só existir um arquivo.
+
+O run pendente tem token cancelável único no Core. Segundo run/script é
+recusado; Parar e qualquer ativação/desativação de workspace cancelam,
+inclusive reabrir a mesma raiz. Consulta de versão usa streamer/timeout
+existentes e recebe cancelamento. A continuação verifica token, contexto,
+config ativa quando aplicável, artefatos e porta; só então abre o PTY existente,
+com argv direto e a mesma reserva/guardião serial que sobrevive ao crash.
+Falha/cancelamento nunca caem no shell ou no lançador padrão. Reserva acompanha
+o dono até a saída observada. Não criar executor, scanner ou protocolo serial.
+
+Aceites: despacho real com ferramenta falsa e arquivo regular, schema 1/2,
+preservação e edição, receita de outro projeto/alvo/configuração, arquivos
+alterados/deletados, troca de ferramenta/kit/porta, cancelamento antes do PTY,
+duas tentativas, reabrir mesma raiz, ativa trocada, busy e liberação/exec argv.
+Provar a recusa anterior e a regressão por mutação, gates estritos e commit.
+Sem acesso à placa/instalação. UI ainda transporta comandos manuais nesta parte;
+ligação tipada, estados de preparação e correlação Qt vêm imediatamente depois,
+antes de considerar a jornada de gravação nativa entregue ao usuário.
+
+**Feito em 2026-10-22 (40.7 §7.339):** backend esptool implementado pelo
+fluxo existente de run/PTY. Quinze testes de despacho/reserva exercitam origem,
+schema 2/run/argv, alterações, cancelamento e concorrência; três testes de
+armazenamento cobrem promoção/preservação/edição e provider sem suporte. O
+protocolo ganhou roundtrip estrito. Dois mutantes caíram por asserção de runtime
+(revisionamento antes do PTY e token/cancelamento da continuação). Core real
+por stdio + CLI falsa: após matar somente o core da fixture, a ferramenta
+continuou reservando a porta; segunda instância recusou e só executou após
+saída observada. Porta era arquivo regular; nenhum hardware foi aberto.
+
+Gate rápido estrito em cópia QA: 1.278 Rust, 8 CTest, 164 harnesses QML,
+Clippy/C++/qmllint limpos, sem NÃO PROVADO. Fontes comparadas ao checkout;
+AppMenuBar local preservado, QA com versão canônica. Novos testes seriais
+estão no domínio Unix já existente; armazenamento/protocolo são portáveis,
+sem nova omissão Windows. Windows serial continua pendente no marco próprio.
+Logs: `/tmp/kinein-h4b2b2-gate-fast.log` e
+`/tmp/kinein-native-flash-core-rjh_fih5/report.json`.
+
+Desempenho: mesma UI debug Qt 6.10.2, offscreen/software, fixture 10 mil linhas,
+core 0.186/0.187. Três pares alternados, 9 aberturas e 120 teclas por versão:
+mediana primeiro quadro 315/313 ms; tecla→quadro mediana 9,205/9,265 ms,
+p95 9,76/10,20 ms. A cauda variou entre rodadas; não demonstra ganho nem
+regressão material neste cenário limitado. A primeira referência foi descartada
+por cache Cargo compartilhado; referência refeita em target isolado, protocolos
+e hashes conferidos. Dados `/tmp/kinein-h4b2b2-perf-summary.json`.
+Sem mudança de tela nesta fatia; integração visual cancelável é a próxima.

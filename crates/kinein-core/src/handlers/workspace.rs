@@ -264,6 +264,7 @@ impl Core {
         &mut self,
         opened: &WorkspaceInfo,
     ) -> Result<(), crate::terminal::TerminalError> {
+        self.cancel_run_preflight();
         if self
             .workspace
             .as_ref()
@@ -332,6 +333,7 @@ impl Core {
     fn deactivate_workspace(
         &mut self,
     ) -> Result<Option<WorkspaceInfo>, crate::terminal::TerminalError> {
+        self.cancel_run_preflight();
         self.close_workspace_terminals()?;
         if let Some(debug) = self.debug.as_mut() {
             debug.clear();

@@ -7,6 +7,7 @@ use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
     process::Command,
+    sync::{Arc, atomic::AtomicBool},
     time::Duration,
 };
 
@@ -107,6 +108,19 @@ fn unsupported(path: &Path, reason: &str) -> FlashError {
 /// # Errors
 /// Returns a proposal refusal on failure, deadline or unsupported/inconsistent output.
 pub fn probe(path: PathBuf, root: &Path, timeout: Duration) -> Result<Selected, FlashError> {
+    probe_cancelable(path, root, timeout, Arc::new(AtomicBool::new(false)))
+}
+
+/// Version-only query that also observes cancellation of a pending native launch.
+///
+/// # Errors
+/// Same version/deadline refusals as [`probe`], without any serial operation.
+pub fn probe_cancelable(
+    path: PathBuf,
+    root: &Path,
+    timeout: Duration,
+    cancel: Arc<AtomicBool>,
+) -> Result<Selected, FlashError> {
     let mut command = Command::new(&path);
     command
         .arg("version")
@@ -114,15 +128,19 @@ pub fn probe(path: PathBuf, root: &Path, timeout: Duration) -> Result<Selected, 
         .env("NO_COLOR", "1");
     let mut output = String::new();
     let mut overflow = false;
-    let result =
-        crate::process::stream_command_lines_with_timeout(command, timeout, &mut |_, line| {
+    let result = crate::process::stream_command_lines_with_timeout_cancelable(
+        command,
+        timeout,
+        cancel,
+        &mut |_, line| {
             if output.len() + line.len() < 16_384 {
                 output.push_str(&line);
                 output.push('\n');
             } else {
                 overflow = true;
             }
-        });
+        },
+    );
     match result {
         Ok((_, true)) => Err(unsupported(&path, "o prazo da consulta de versão expirou")),
         Ok(_) if overflow => Err(unsupported(

@@ -8,13 +8,13 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-21). Leia isto primeiro.**
+> **HANDOFF (2026-10-22). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b1 concluída:** plano com programa/argv e prévia literal
-> (52 §14.29; 40.7 §7.338), sobre `025c915`; h4b2a preservada.
+> **0.4.1h4b2b2 concluída:** backend esptool com intenção/schema 2,
+> revalidação, reserva e cancelamento (52 §14.30; 40.7 §7.339), sobre `b2bc102`.
 > `AppMenuBar.qml`, `eim_config.toml` e `log/` locais preservados.
-> Protocolo **0.186.0**, binário **0.3.9**.
+> Protocolo **0.187.0**, binário **0.3.9**.
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
 > só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
@@ -24,14 +24,14 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate rápido estrito, 0.4.1h4b2b1:** 1259 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **164 harnesses QML**, sem NÃO PROVADO; cópia isolada (§7.338).
+> **Último gate rápido estrito, 0.4.1h4b2b2:** 1278 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **164 harnesses QML**, sem NÃO PROVADO; cópia isolada (§7.339).
 > Completo anterior: UI/core debug/release, concorrência/crash e feedback nativo (§7.337).
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
-> **Próxima:** h4b2b2, intenção nativa/schema 2, contexto/artefato/porta revalidados
-> e recuperação de ocupação. Contexto da retomada no 52 §14.29, incluindo cancelamento
-> antes do PTY e preservação da intenção ao editar. Handoff reorganizado: 40.7 §7.334.
+> **Próxima h4b2b3:** ligar intenção nativa e preparação cancelável na UI atual,
+> preservando edição tipada/correlação; depois outros motores e recuperação.
+> Não considerar a jornada entregue com o backend. Organização: 40.7 §7.334.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
 > Quality Center: Q1 na 0.4.2; gate local/Q2–Q3 concluídos até a 0.4.6.
@@ -61,12 +61,12 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.186.0 (crates/kinein-protocol, medido em 2026-10-21; o
+protocolo   0.187.0 (crates/kinein-protocol, medido em 2026-10-22; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   164 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
-testes      1259 Rust no gate rápido estrito de 2026-10-21 (40.7 §7.338);
+testes      1278 Rust no gate rápido estrito de 2026-10-22 (40.7 §7.339);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
@@ -78,6 +78,7 @@ testes      1259 Rust no gate rápido estrito de 2026-10-21 (40.7 §7.338);
             1251 Rust na 0.4.1h4b1 em 2026-10-21 (§7.333), gate completo estrito verde.
             1256 Rust na 0.4.1h4b2a em 2026-10-21 (§7.337), gate completo estrito verde em cópia isolada.
             1259 Rust na 0.4.1h4b2b1 em 2026-10-21 (§7.338), gate rápido estrito verde em cópia isolada.
+            1278 Rust na 0.4.1h4b2b2 em 2026-10-22 (§7.339), gate rápido estrito verde em cópia isolada.
 ```
 
 Os comandos que medem estão no

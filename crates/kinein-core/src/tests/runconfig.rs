@@ -4,6 +4,7 @@ use serde_json::json;
 
 use super::core_with_empty_search_path;
 use kinein_protocol::JsonRpcRequest;
+mod native;
 
 #[test]
 fn runconfig_crud_flows_through_dispatch() {

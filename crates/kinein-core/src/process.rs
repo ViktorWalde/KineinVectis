@@ -197,6 +197,24 @@ pub fn stream_command_lines_with_timeout(
     timeout: Duration,
     on_line: &mut dyn FnMut(&'static str, String),
 ) -> Result<(ExitStatus, bool), ProcessError> {
+    stream_command_lines_with_timeout_cancelable(
+        command,
+        timeout,
+        Arc::new(AtomicBool::new(false)),
+        on_line,
+    )
+}
+
+/// Deadline and caller cancellation, using the same managed process streamer.
+///
+/// # Errors
+/// Returns the existing spawn/wait error; the bool denotes deadline expiration.
+pub fn stream_command_lines_with_timeout_cancelable(
+    command: Command,
+    timeout: Duration,
+    cancel: Arc<AtomicBool>,
+    on_line: &mut dyn FnMut(&'static str, String),
+) -> Result<(ExitStatus, bool), ProcessError> {
     let stop = Arc::new(AtomicBool::new(false));
     let finished = Arc::new(AtomicBool::new(false));
     let expired = Arc::new(AtomicBool::new(false));
@@ -207,6 +225,10 @@ pub fn stream_command_lines_with_timeout(
         thread::spawn(move || {
             let deadline = Instant::now() + timeout;
             while !finished.load(Ordering::SeqCst) {
+                if cancel.load(Ordering::SeqCst) {
+                    stop.store(true, Ordering::SeqCst);
+                    break;
+                }
                 if Instant::now() >= deadline {
                     expired.store(true, Ordering::SeqCst);
                     stop.store(true, Ordering::SeqCst);

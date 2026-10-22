@@ -47,6 +47,7 @@ pub mod remote_discover;
 pub mod remote_mirror;
 pub mod remote_trust;
 pub mod run;
+mod run_native;
 pub mod runconfig;
 pub mod serial;
 pub mod serial_files;

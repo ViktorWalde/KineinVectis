@@ -20,12 +20,12 @@ use crate::serial::ownership::Lease;
 use crate::{Core, run};
 
 /// The resolved launch and its lifetime resource; the terminal remains the executor.
-struct Invocation {
-    program: String,
-    args: Vec<String>,
-    command: String,
-    identity: Value,
-    reservation: Option<Lease>,
+pub(super) struct Invocation {
+    pub(super) program: String,
+    pub(super) args: Vec<String>,
+    pub(super) command: String,
+    pub(super) identity: Value,
+    pub(super) reservation: Option<Lease>,
 }
 
 impl Invocation {
@@ -49,6 +49,12 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> Option<JsonRpcResponse> {
+        if matches!(method, "run.start" | "run.script") && self.run_preflight.is_some() {
+            return Some(super::run_native::refusal(
+                request_id,
+                "Uma gravação está em preparação; pare-a antes de iniciar outra execução.",
+            ));
+        }
         match method {
             "run.capabilities" => Some(Self::run_capabilities_response(request_id)),
             "run.start" => Some(self.run_start_response(request_id, params)),
@@ -232,7 +238,7 @@ impl Core {
         let parsed = match parse_params::<RunStartParams>(
             request_id.as_ref(),
             params,
-            "run.start aceita apenas os campos opcionais command e device",
+            "run.start aceita command e device, ou a intenção flash exclusiva",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -241,6 +247,9 @@ impl Core {
             return response;
         }
         let root = Path::new(&workspace.root);
+        if parsed.flash.is_some() {
+            return self.explicit_flash_response(request_id, parsed);
+        }
         let explicit_command = parsed.command.filter(|command| !command.trim().is_empty());
         // A porta e' parametro do LANCADOR PADRAO (mpremote); um comando
         // explicit_command roda como foi digitado e nao tem onde recebe-la. Mandar os
@@ -259,23 +268,32 @@ impl Core {
         // Uma configuracao de execucao ATIVA e' um comando que o autor salvou:
         // vence o lancador padrao e, como o comando explicit_command, nao recebe a
         // porta. O `command` ecoado diz o que rodou.
-        let state = if explicit_command.is_some() {
-            crate::runconfig::RunConfigsState {
-                configs: Vec::new(),
-                active_id: None,
-            }
+        let active = if explicit_command.is_some() {
+            None
         } else {
-            match crate::runconfig::load(root) {
-                Ok(state) => state,
+            match crate::runconfig::active(root) {
+                Ok(active) => active,
                 Err(error) => {
                     return super::runconfig::runconfig_error_response(request_id, &error);
                 }
             }
         };
-        let active = state
-            .configs
-            .iter()
-            .find(|config| Some(&config.id) == state.active_id.as_ref());
+        if let Some(config) = active.as_ref()
+            && let Some(flash) = &config.flash
+        {
+            if parsed.device.as_deref().is_some_and(|device| {
+                crate::platform::serial_device_revision(Path::new(device))
+                    .ok()
+                    .as_ref()
+                    != Some(&flash.device_key)
+            }) {
+                return super::run_native::refusal(
+                    request_id,
+                    "A porta selecionada difere da configuração nativa; gere uma nova prévia para esse dispositivo.",
+                );
+            }
+            return self.run_flash_response(request_id, flash.clone(), Some(config.clone()));
+        }
         let mut reservation = None;
         let (command, identity) = if let Some(command) = explicit_command {
             let identity = json!(["command", root, command]);
@@ -325,7 +343,7 @@ impl Core {
     /// Abre `program args` numa sessao de terminal (PTY) na raiz do workspace
     /// e a guarda como A execucao — `run.stop` fecha esta. A saida chega por
     /// `event.terminal.render`; o fim por `event.terminal.closed { exitCode }`.
-    fn start_in_terminal(
+    pub(super) fn start_in_terminal(
         &mut self,
         request_id: Option<Value>,
         root: &Path,
@@ -408,6 +426,9 @@ impl Core {
 
     /// Fecha a sessao da ultima execucao. Sem uma aberta, `InvalidRequest`.
     fn run_stop_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
+        if self.cancel_run_preflight() {
+            return JsonRpcResponse::success(request_id, json!({"status":"ok"}));
+        }
         let Some(terminal_id) = self.run_terminal.clone() else {
             return run_error_response(request_id, &run::RunError::NotRunning);
         };

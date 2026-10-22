@@ -6,6 +6,34 @@
 
 ### Run configurations (`runConfig.list` / `runConfig.save` / `runConfig.delete` / `runConfig.setActive` / `runConfig.flashProposal`)
 
+**0.187.0 — intenção nativa (contrato anterior ao produtor, 2026-10-21):**
+`flashProposal` aceita `native?: bool` (padrão falso) e `buildDirectory?: string`.
+No modo nativo, retorna também `flash: {version: 1, workspace, selection,
+program, args, deviceKey, fingerprint}`. selection tem o mesmo tipo dos parâmetros,
+com native=true e escolhas resolvidas; fingerprint é opaco, 64 dígitos hex.
+Programa/argv são a prévia estruturada, nunca autorização para executar valores
+do cliente sem regeneração. Nesta primeira parte, esptool com receita ESP-IDF
+ou firmware instalado é o provider nativo; outros motores recusam esse modo
+explicitamente (INVALID_REQUEST), sem fallback. O modo manual mantém seu contrato.
+Native requer porta existente/acessível, sem abri-la na prévia; metadados do build
+devem comprovar projeto/configuração/chip/app. Sem prova → recusa orientada.
+
+`runConfig.save {id?, name, command, flash?}` e configs ganham flash opcional.
+Com flash, command deve ser exatamente a prévia derivada de programa/argv;
+workspace/versão/seleção/fingerprint devem ser válidos. Schema 1 continua legível
+e não é reescrito na abertura. Salvar a primeira nativa promove para schema 2;
+schema 2 aceita nativas e manuais. Schema 1 contendo flash ou intenção malformada
+é armazenamento inválido, preservado. Editar uma nativa sem flash é INVALID_PARAMS,
+sem descarte silencioso por cliente antigo. active_command não converte nativa
+em shell. A UI tipada é ligada na próxima parte; não presumir suporte pelo simples
+fato de uma linha antiga mencionar uma ferramenta de gravação.
+
+run.start regenera contexto/plano e confere fingerprint/porta/arquivos antes do
+PTY, com reserva até a saída real. Arquivos de imagem/binário limitados a 1 GiB;
+metadados/configuração usam o limite de leitura existente. Mudança, falta de prova,
+cancelamento ou incompatibilidade não executam command nem heurística.
+Desenho, limites e aceites no 52 §14.30. Métodos/eventos permanecem os mesmos.
+
 Implementado no protocolo `0.27.0` (fatia M2.4). Todos exigem
 workspace aberto (qualquer kind). Persistência em `.kinein/runconfigs.json`
 com `schemaVersion` (ausência real = vazio; arquivo inválido ou ilegível é

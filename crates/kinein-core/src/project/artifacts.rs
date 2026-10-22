@@ -94,7 +94,8 @@ pub fn artifacts(root: &Path) -> ProjectArtifacts {
 // A ordem já é a dos mais recentes. A receita incompleta continua localizada
 // em flasher_args, mas não alimenta uma proposta de gravação.
 fn complete_flash_recipe(path: &Path) -> Option<FlashRecipe> {
-    let json = std::fs::read_to_string(path).ok()?;
+    let resolved = crate::platform::canonicalize(path).ok()?;
+    let (_, json) = crate::fsops::read_external_file(&resolved).ok()?;
     let recipe = super::esp::flash_recipe(&json, path.parent()?)?;
     (!recipe.files.is_empty()
         && recipe.files.iter().all(|image| {

@@ -14,9 +14,9 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use kinein_protocol::RunConfigInfo;
+use kinein_protocol::{FlashIntent, RunConfigInfo};
 
-/// Versao do schema de `.kinein/runconfigs.json` escrita por este core.
+/// Schema inicial; salvar uma intenção nativa promove o arquivo para 2.
 const RUNCONFIG_SCHEMA_VERSION: u32 = 1;
 
 /// Representacao em disco de `.kinein/runconfigs.json`.
@@ -97,9 +97,18 @@ fn read_file(root: &Path) -> Result<RunConfigsFile, RunConfigError> {
         ));
     }
     let body = String::from_utf8(bytes).map_err(|error| storage_error(root, error))?;
-    let file: RunConfigsFile =
+    let value: serde_json::Value =
         serde_json::from_str(&body).map_err(|error| storage_error(root, error))?;
-    if file.schema_version != RUNCONFIG_SCHEMA_VERSION {
+    if value["schemaVersion"] == 1
+        && value["configs"]
+            .as_array()
+            .is_some_and(|configs| configs.iter().any(|config| config.get("flash").is_some()))
+    {
+        return Err(storage_error(root, "schema 1 não admite o campo flash"));
+    }
+    let file: RunConfigsFile =
+        serde_json::from_value(value).map_err(|error| storage_error(root, error))?;
+    if !matches!(file.schema_version, 1 | 2) {
         return Err(storage_error(
             root,
             format!("schema {} não suportado", file.schema_version),
@@ -107,6 +116,13 @@ fn read_file(root: &Path) -> Result<RunConfigsFile, RunConfigError> {
     }
     let mut ids = BTreeSet::new();
     for config in &file.configs {
+        if let Some(intent) = &config.flash {
+            if file.schema_version == 1 {
+                return Err(storage_error(root, "schema 1 não admite intenção nativa"));
+            }
+            crate::flash::native::validate_intent(root, intent, Some(&config.command))
+                .map_err(|error| storage_error(root, error))?;
+        }
         if config.id.trim().is_empty()
             || config.name.trim().is_empty()
             || config.command.trim().is_empty()
@@ -167,15 +183,28 @@ pub fn load(root: &Path) -> Result<RunConfigsState, RunConfigError> {
 
 /// Comando da config ativa, quando ha uma.
 pub fn active_command(root: &Path) -> Result<Option<String>, RunConfigError> {
-    let file = read_file(root)?;
-    let Some(active) = file.active_id.as_deref() else {
+    let Some(config) = active(root)? else {
         return Ok(None);
     };
-    Ok(file
+    if config.flash.is_some() {
+        return Err(RunConfigError::Invalid(
+            "uma intenção nativa não pode ser convertida em comando shell; use run.start"
+                .to_owned(),
+        ));
+    }
+    Ok(Some(config.command))
+}
+
+/// Resolve the active configuration without losing its native intent.
+///
+/// # Errors
+/// Invalid or unreadable storage is never replaced with an automatic selection.
+pub fn active(root: &Path) -> Result<Option<RunConfigInfo>, RunConfigError> {
+    let state = load(root)?;
+    Ok(state
         .configs
-        .iter()
-        .find(|config| config.id == active)
-        .map(|config| config.command.clone()))
+        .into_iter()
+        .find(|config| Some(&config.id) == state.active_id.as_ref()))
 }
 
 /// Cria (`id` ausente) ou edita uma config; a config salva vira a ativa.
@@ -185,12 +214,30 @@ pub fn save(
     name: &str,
     command: &str,
 ) -> Result<RunConfigsState, RunConfigError> {
+    save_with_flash(root, id, name, command, None)
+}
+
+/// Save a manual command or preserve a complete native intent, under the same mutation guard.
+///
+/// # Errors
+/// Refuses malformed input, silent conversion of native configurations, or invalid storage.
+pub fn save_with_flash(
+    root: &Path,
+    id: Option<&str>,
+    name: &str,
+    command: &str,
+    flash: Option<&FlashIntent>,
+) -> Result<RunConfigsState, RunConfigError> {
     let name = name.trim();
     let command = command.trim();
     if name.is_empty() || command.is_empty() {
         return Err(RunConfigError::Invalid(
             "nome e comando não podem ser vazios".to_owned(),
         ));
+    }
+    if let Some(intent) = flash {
+        crate::flash::native::validate_intent(root, intent, Some(command))
+            .map_err(RunConfigError::Invalid)?;
     }
 
     let _guard = mutation_guard(root)?;
@@ -201,8 +248,12 @@ pub fn save(
                 "run config inexistente: {id}"
             )));
         };
+        if config.flash.is_some() && flash.is_none() {
+            return Err(RunConfigError::Invalid("esta configuração é nativa; preserve a intenção ao editar ou crie outra configuração manual".to_owned()));
+        }
         name.clone_into(&mut config.name);
         command.clone_into(&mut config.command);
+        config.flash = flash.cloned();
         id.to_owned()
     } else {
         let next = file
@@ -225,10 +276,14 @@ pub fn save(
             id: new_id.clone(),
             name: name.to_owned(),
             command: command.to_owned(),
+            flash: flash.cloned(),
         });
         new_id
     };
     file.active_id = Some(saved_id);
+    if flash.is_some() {
+        file.schema_version = 2;
+    }
     write_file(root, &file)?;
     Ok(state_of(file))
 }

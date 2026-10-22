@@ -95,6 +95,8 @@ pub struct Core {
     /// A sessao de terminal da ultima execucao (`run.start`/`run.script`),
     /// para o `run.stop` fechar.
     run_terminal: Option<String>,
+    /// One cancelable native launch validation; no second process executor.
+    run_preflight: Option<Arc<std::sync::atomic::AtomicBool>>,
     /// O canal das continuacoes (F6 fechamento): um pedido adiado que
     /// precisa do `Core` para terminar volta ao laco por aqui.
     continuations: Option<std::sync::mpsc::Sender<Continuation>>,
@@ -157,6 +159,7 @@ impl Core {
             lsp: None,
             workspace_edits: lsp::WorkspaceEditTransactions::default(),
             run_terminal: None,
+            run_preflight: None,
             continuations: None,
             debug: None,
             terminal: None,

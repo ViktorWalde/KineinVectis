@@ -51,6 +51,35 @@ pub(super) fn serial_device_key(path: &Path) -> io::Result<String> {
     }
 }
 
+pub(super) fn file_revision(path: &Path) -> io::Result<String> {
+    let metadata = fs::metadata(path)?;
+    if !metadata.is_file() {
+        return Err(io::Error::other("o caminho não é um arquivo regular"));
+    }
+    Ok(format!(
+        "{}:{}:{}:{}:{}:{}:{}",
+        metadata.dev(),
+        metadata.ino(),
+        metadata.len(),
+        metadata.mtime(),
+        metadata.mtime_nsec(),
+        metadata.ctime(),
+        metadata.ctime_nsec()
+    ))
+}
+
+pub(super) fn serial_device_revision(path: &Path) -> io::Result<String> {
+    let metadata = fs::metadata(path)?;
+    Ok(format!(
+        "{}:{}:{}:{}:{}",
+        serial_device_key(path)?,
+        metadata.dev(),
+        metadata.ino(),
+        metadata.ctime(),
+        metadata.ctime_nsec()
+    ))
+}
+
 pub(super) fn serial_lock_file(path: &Path) -> io::Result<File> {
     let file = openat(
         CWD,

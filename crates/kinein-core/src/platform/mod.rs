@@ -60,6 +60,16 @@ pub(crate) fn serial_device_key(path: &Path) -> io::Result<String> {
     imp::serial_device_key(path)
 }
 
+/// Cheap change token for a regular file, including replacement and metadata changes.
+pub(crate) fn file_revision(path: &Path) -> io::Result<String> {
+    imp::file_revision(path)
+}
+
+/// Serial node incarnation, distinct from the registry's shared channel key.
+pub(crate) fn serial_device_revision(path: &Path) -> io::Result<String> {
+    imp::serial_device_revision(path)
+}
+
 /// Opens a private coordination file, never a serial device.
 pub(crate) fn serial_lock_file(path: &Path) -> io::Result<File> {
     imp::serial_lock_file(path)

@@ -39,6 +39,8 @@ mod command;
 pub mod esptool;
 pub mod firmware;
 pub mod frameworks;
+pub mod native;
+mod snapshot;
 
 use std::path::PathBuf;
 
@@ -82,6 +84,11 @@ pub enum FlashError {
         /// Actionable version/probe failure.
         message: String,
     },
+    /// Native provenance or snapshot could not be established.
+    InvalidContext {
+        /// Cause and next action, without treating missing proof as compatibility.
+        message: String,
+    },
     /// O motor exige a porta e ela nao veio.
     NoDevice {
         /// O que fazer.
@@ -95,7 +102,8 @@ impl std::fmt::Display for FlashError {
             Self::NoEngine { message }
             | Self::NoArtifact { message }
             | Self::NoDevice { message }
-            | Self::UnsupportedTool { message } => f.write_str(message),
+            | Self::UnsupportedTool { message }
+            | Self::InvalidContext { message } => f.write_str(message),
             Self::UnknownEngine { engine } => write!(
                 f,
                 "motor de gravação `{engine}` desconhecido: use esptool, probe-rs, picotool ou dfu-util"
@@ -589,6 +597,7 @@ mod tests {
             chip: Some(chip.to_owned()),
             file: path.into(),
             size_bytes: 100,
+            expected_sha256: None,
         };
         let prepared = plan(&model, None, Some(device), None, Some(&image), None, &tools).unwrap();
         assert_eq!(

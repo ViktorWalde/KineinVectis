@@ -178,7 +178,10 @@ flowchart LR
   n_core_datasource --> n_core_stderr_tail
   n_core_datasource --> n_core_tools
   n_core_flash --> n_core_build
+  n_core_flash --> n_core_fsops
+  n_core_flash --> n_core_platform
   n_core_flash --> n_core_process
+  n_core_flash --> n_core_project
   n_core_format --> n_core_platform
   n_core_fsops --> n_core_platform
   n_core_fswatch --> n_core_lsp
@@ -232,12 +235,14 @@ flowchart LR
   n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
   n_core_process --> n_core_platform
+  n_core_project --> n_core_fsops
   n_core_project --> n_core_platform
   n_core_python --> n_core_run
   n_core_remote --> n_core_platform
   n_core_rpc --> n_core_dap
   n_core_run --> n_core_platform
   n_core_run --> n_core_python
+  n_core_runconfig --> n_core_flash
   n_core_runconfig --> n_core_fsops
   n_core_runconfig --> n_core_platform
   n_core_runtime --> n_core_datasource
@@ -265,7 +270,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 122 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 127 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -288,7 +293,7 @@ flowchart LR
 | `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
-| `flash` | build, process | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
+| `flash` | build, fsops, platform, process, project | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
 | `fswatch` | lsp, platform | Debounced, workspace-confined observation of external file-system changes. |
@@ -306,12 +311,12 @@ flowchart LR
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
 | `probe` | — | Sondas de debug conectadas: |
 | `process` | platform | Synchronous line streaming for child processes. |
-| `project` | platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
+| `project` | fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
 | `python` | run | O dominio python: |
 | `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
 | `run` | platform, python | O que "Executar" roda, e como se mostra. |
-| `runconfig` | fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
+| `runconfig` | flash, fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
 | `runtime` | datasource, rpc, settings | Habilitacao dos servicos externos e configuracao dos servidores LSP do Core. |
 | `serial` | build, platform, toolchain | Portas seriais USB: |
 | `settings` | platform | Settings persistidos em dois níveis (settings.*). |

@@ -41,6 +41,8 @@ pub struct FirmwareImage {
     pub file: PathBuf,
     /// Tamanho do arquivo, para o aviso contra a flash identificada.
     pub size_bytes: u64,
+    /// Original catalogue checksum, required by native validation.
+    pub expected_sha256: Option<String>,
 }
 
 /// A proposta para um firmware: o motor e' o da pagina; um motor pedido
@@ -242,6 +244,7 @@ mod tests {
             chip: chip.map(str::to_owned),
             file: PathBuf::from(arquivo),
             size_bytes: 1_790_544,
+            expected_sha256: None,
         }
     }
 

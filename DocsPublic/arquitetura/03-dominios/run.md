@@ -6,6 +6,21 @@
 
 ### Execução (`run.start` / `run.script` / `run.stop`)
 
+**0.187.0 — execução nativa de gravação (contrato anterior ao produtor):**
+`run.start {flash?}` aceita a intenção de runConfig.flashProposal, exclusiva com
+command/device; sem parâmetros, a configuração ativa pode conter essa intenção.
+Nesse caso, device recebido só é aceito se sua identidade coincide com a porta
+vinculada; a seleção visual não redireciona uma configuração salva silenciosamente.
+O core regenera o plano, compara programa/argv e snapshot e revalida contexto,
+artefatos e identidade da porta. Não interpreta shell nem executa argv arbitrário.
+Usa o mesmo PTY/guardião serial; conflito continua SERIAL_PORT_BUSY.
+Preparação é adiada e cancelável: run/script concorrente recusa, run.stop cancela
+inclusive antes de existir terminal, e qualquer transição de workspace invalida
+a continuação. Alterar a ativa durante preparação automática também recusa.
+Falha/cancelamento não iniciam processo de gravação nem caem no modo manual.
+Seleções/shape em runConfig; desenho no 52 §14.30. A ligação visual da preparação
+vem na parte seguinte, antes de considerar a jornada nativa entregue.
+
 Implementado no protocolo `0.12.0`; **desde `0.125.0` (2026-09-18) a
 execução é uma SESSÃO DE TERMINAL** — decisão do autor no primeiro teste
 da IDE polida: "já temos o terminal integrado, não precisamos de mais nada

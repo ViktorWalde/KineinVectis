@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RunStartParams {
+    /// Native flash snapshot, exclusive with command/device (`0.187.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash: Option<crate::FlashIntent>,
     /// Shell command to execute in the workspace root. When absent, the core
     /// derives a default from the project kind (e.g. `cargo run`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -99,6 +102,7 @@ mod tests {
         assert_eq!(
             serde_json::from_value::<RunStartParams>(json!({})).unwrap(),
             RunStartParams {
+                flash: None,
                 command: None,
                 device: None
             }

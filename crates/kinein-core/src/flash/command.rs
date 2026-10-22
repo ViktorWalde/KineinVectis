@@ -69,6 +69,7 @@ impl FlashPlan {
             engine,
             source,
             warnings,
+            flash: None,
         };
         Self { command, proposal }
     }

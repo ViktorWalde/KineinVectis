@@ -80,9 +80,12 @@ pub fn read_external_file(path: &Path) -> Result<(PathBuf, String), FsError> {
     Ok((path.to_path_buf(), content))
 }
 
-fn read_utf8_regular(path: &Path) -> Result<String, FsError> {
-    // Shared with import: descriptor-relative traversal rejects symlinked
-    // components, and NONBLOCK prevents a replaced FIFO from hanging the UI.
+/// Open a regular read-only file through the shared descriptor-relative traversal.
+/// Nonblocking opens and no-follow components also serve binary content snapshots.
+///
+/// # Errors
+/// Rejects links, non-regular entries and inaccessible paths without reading contents.
+pub fn open_regular_file(path: &Path) -> Result<fs::File, FsError> {
     let handle = open_source(path)?;
     let metadata = handle.metadata().map_err(|source| FsError::Io {
         path: path.display().to_string(),
@@ -93,6 +96,15 @@ fn read_utf8_regular(path: &Path) -> Result<String, FsError> {
             path: path.display().to_string(),
         });
     }
+    Ok(handle)
+}
+
+fn read_utf8_regular(path: &Path) -> Result<String, FsError> {
+    let handle = open_regular_file(path)?;
+    let metadata = handle.metadata().map_err(|source| FsError::Io {
+        path: path.display().to_string(),
+        source,
+    })?;
     if metadata.len() > MAX_READ_BYTES {
         return Err(FsError::TooLarge {
             path: path.display().to_string(),

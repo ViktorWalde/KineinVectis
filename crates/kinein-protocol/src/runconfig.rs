@@ -12,6 +12,9 @@ pub struct RunConfigInfo {
     pub name: String,
     /// Shell command executed from the workspace root by `run.start`.
     pub command: String,
+    /// Native flash intent; command is only its derived preview when present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash: Option<FlashIntent>,
 }
 
 /// Result payload for every `runConfig.*` method.
@@ -36,6 +39,9 @@ pub struct RunConfigSaveParams {
     pub name: String,
     /// Non-empty shell command.
     pub command: String,
+    /// Preserve the complete native intent while saving or renaming it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash: Option<FlashIntent>,
 }
 
 /// Parameters for `runConfig.delete`.
@@ -59,7 +65,7 @@ pub struct RunConfigSetActiveParams {
 mod tests {
     use serde_json::json;
 
-    use super::{RunConfigInfo, RunConfigSaveParams, RunConfigsResult};
+    use super::{FlashIntent, RunConfigInfo, RunConfigSaveParams, RunConfigsResult};
 
     #[test]
     fn configs_result_serializes_camel_case_and_omits_missing_active() {
@@ -68,6 +74,7 @@ mod tests {
                 id: "cfg-1".to_owned(),
                 name: "Servidor".to_owned(),
                 command: "cargo run --bin server".to_owned(),
+                flash: None,
             }],
             active_id: None,
         })
@@ -100,6 +107,22 @@ mod tests {
         }));
         assert!(rejected.is_err());
     }
+
+    #[test]
+    fn native_intent_has_a_strict_round_trip_without_reinterpreting_argv() {
+        let value = json!({"version":1,"workspace":"/workspace","selection":{
+            "native":true,"engine":"esptool","device":"/dev/fixture","buildDirectory":"/workspace/build"
+        },"program":"/tools/esptool","args":["--port","/dev/fixture","a'b c.bin"],"deviceKey":"opaque","fingerprint":"a".repeat(64)});
+        let intent: FlashIntent = serde_json::from_value(value.clone()).unwrap();
+        let round_trip = serde_json::to_value(&intent).unwrap();
+        assert_eq!(round_trip, value);
+        let parsed: crate::RunStartParams =
+            serde_json::from_value(json!({"flash":intent})).unwrap();
+        assert_eq!(parsed.flash.unwrap().args[2], "a'b c.bin");
+        let mut unknown = value;
+        unknown["selection"]["shell"] = json!("ignored?");
+        assert!(serde_json::from_value::<FlashIntent>(unknown).is_err());
+    }
 }
 
 /// Parameters for `runConfig.flashProposal` (`0.113.0`, E4 of
@@ -115,6 +138,12 @@ mod tests {
 #[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FlashProposalParams {
+    /// Request verified native intent instead of just a manual shell preview.
+    #[serde(default)]
+    pub native: bool,
+    /// Explicit ESP-IDF build directory; native default is the framework's build/.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_directory: Option<String>,
     /// Serial port for engines that need one (`esptool`): the port chosen in
     /// the Embedded panel. Absent = the engine's own detection, when it has
     /// one; `esptool` refuses without it (flashing the wrong board is worse
@@ -155,4 +184,27 @@ pub struct FlashProposalResult {
     /// larger than the reported flash, tool version caveats).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
+    /// Present only after native provenance and snapshot validation succeeded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash: Option<FlashIntent>,
+}
+
+/// Reviewed native flash snapshot. The core regenerates it before execution.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FlashIntent {
+    /// Intent format; only 1 is currently supported.
+    pub version: u32,
+    /// Canonical workspace that produced the snapshot.
+    pub workspace: String,
+    /// Resolved engine, device, firmware/build selection; native is true.
+    pub selection: FlashProposalParams,
+    /// Selected executable, never interpreted as shell text.
+    pub program: String,
+    /// Literal arguments from the provider plan.
+    pub args: Vec<String>,
+    /// Opaque serial-node identity observed without opening the device.
+    pub device_key: String,
+    /// Opaque content/context checksum, regenerated before starting the tool.
+    pub fingerprint: String,
 }

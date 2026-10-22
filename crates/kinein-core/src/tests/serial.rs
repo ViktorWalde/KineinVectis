@@ -9,6 +9,7 @@
 use std::os::unix::fs::MetadataExt;
 mod ownership;
 mod ownership_fixture;
+mod ownership_flash;
 mod ownership_jobs;
 mod ownership_run;
 use std::path::{Path, PathBuf};

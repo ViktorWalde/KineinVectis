@@ -32,6 +32,15 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Gravação nativa, backend (0.4.1h4b2b2, 2026-10-22):** esptool pode
+  executar uma intenção estruturada, vinculada à porta, ferramenta, contexto
+  e conteúdo dos arquivos. Build ESP-IDF exige metadados de origem; firmware
+  instalado exige o checksum do catálogo. Alterações ou cancelamento antes
+  do terminal recusam a execução. A reserva serial acompanha a ferramenta
+  até sua saída, inclusive após queda do core. Configurações manuais continuam
+  legíveis; salvar a primeira nativa promove o schema para 2. Integração
+  visual e outros motores seguem pendentes; sem prova física de gravação.
+
 - **Argumentos da gravação (0.4.1h4b2b1, 2026-10-21):** os motores atuais
   preservam programa e argumentos no mesmo plano que gera a prévia. Valores
   de chip/receita com espaços ou metacaracteres passam como dados literais.

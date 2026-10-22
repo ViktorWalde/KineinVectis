@@ -16,6 +16,7 @@
 pub mod artifacts;
 pub mod detect;
 pub mod esp;
+pub mod flash_origin;
 pub mod sdk;
 
 use std::path::Path;

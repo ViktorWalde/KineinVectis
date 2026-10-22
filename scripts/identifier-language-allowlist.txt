@@ -13,6 +13,8 @@ sram musl glibc libc sysv sysfs udev udevadm uaccess wayland loopback cryptograp
 extjson rgba cyan bezier radix hexdigit endiannesses
 
 # --- Rust, C++, Qt, QML, JS e Python (palavras de API e da linguagem)
+# nsec: sufixo de nanosegundos em std::os::unix::fs::MetadataExt (mtime_nsec/ctime_nsec).
+nsec
 const bool struct impl enum usize isize deref nodiscard constexpr nullptr nullopt typename
 sizeof typeof instanceof readonly pragma namespace mutex mpsc deque tuple dict
 serde deserialize lossy recv eprintln writeln rsplit rsplitn splitn rfind rstrip

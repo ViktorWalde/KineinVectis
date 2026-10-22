@@ -38,8 +38,8 @@ pub use copy_ops::{copy, copy_with_progress};
 pub use error::FsError;
 pub use find::find_files;
 pub use ops::{
-    create_directory, create_file, list_dir, read_external_file, read_file, rename, write_file,
-    write_file_if_unchanged,
+    create_directory, create_file, list_dir, open_regular_file, read_external_file, read_file,
+    rename, write_file, write_file_if_unchanged,
 };
 pub use remove_ops::{delete, move_to_trash};
 pub use replace::replace;

@@ -248,8 +248,14 @@ fn alvo_do_idf(dir: &Path) -> Option<String> {
     ["sdkconfig", "sdkconfig.defaults"]
         .iter()
         .filter_map(|nome| ler(&dir.join(nome)))
-        .find_map(|texto| valor_de_atribuicao(&texto, "CONFIG_IDF_TARGET"))
+        .find_map(|texto| idf_target_from_config(&texto))
         .map(|alvo| format!("IDF_TARGET {alvo}"))
+}
+
+/// Read the declared IDF target using the same assignment parser as detection.
+#[must_use]
+pub fn idf_target_from_config(content: &str) -> Option<String> {
+    valor_de_atribuicao(content, "CONFIG_IDF_TARGET")
 }
 
 /// `set(NOME valor)` num `CMakeLists`, sem parser de `CMake`: basta para `BOARD`,

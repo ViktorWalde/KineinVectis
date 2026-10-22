@@ -189,6 +189,7 @@ impl Core {
             offset: fw.offset.map(str::to_owned),
             chip: fw.chip.map(str::to_owned),
             size_bytes: std::fs::metadata(&file).map_or(e.size_bytes, |m| m.len()),
+            expected_sha256: Some(e.sha256.to_owned()),
             file,
         })
     }
