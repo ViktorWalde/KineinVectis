@@ -120,6 +120,9 @@ void CoreClient::dispatchFailure(const QString& method, const QJsonObject& error
     if (method == QStringLiteral("terminal.open")) {
         emit terminalOpenFailed(id, message);
     }
+    if (method == QStringLiteral("runConfig.flashProposal")) {
+        emit flashProposalFailed(id, message);
+    }
     if (method == QStringLiteral("runConfig.save") ||
         method == QStringLiteral("runConfig.delete") ||
         method == QStringLiteral("runConfig.setActive"))

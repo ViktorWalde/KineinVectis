@@ -148,9 +148,14 @@ pub fn stream_command_lines_cancelable(
         match receiver.recv_timeout(Duration::from_millis(50)) {
             Ok((stream, line)) => {
                 on_line(stream, line);
-                continue;
             }
-            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                if exited.is_some() {
+                    break;
+                }
+                // Closed pipes do not mean the child exited; retain cancellation.
+                thread::sleep(Duration::from_millis(50));
+            }
             Err(mpsc::RecvTimeoutError::Timeout) => {}
         }
 
@@ -182,6 +187,40 @@ pub fn stream_command_lines_cancelable(
     status
 }
 
+/// Runs through the existing managed streamer with a bounded execution deadline.
+/// The bool distinguishes a deadline from an ordinary nonzero exit.
+///
+/// # Errors
+/// Returns the existing spawn/wait error from the managed streamer.
+pub fn stream_command_lines_with_timeout(
+    command: Command,
+    timeout: Duration,
+    on_line: &mut dyn FnMut(&'static str, String),
+) -> Result<(ExitStatus, bool), ProcessError> {
+    let stop = Arc::new(AtomicBool::new(false));
+    let finished = Arc::new(AtomicBool::new(false));
+    let expired = Arc::new(AtomicBool::new(false));
+    {
+        let stop = Arc::clone(&stop);
+        let finished = Arc::clone(&finished);
+        let expired = Arc::clone(&expired);
+        thread::spawn(move || {
+            let deadline = Instant::now() + timeout;
+            while !finished.load(Ordering::SeqCst) {
+                if Instant::now() >= deadline {
+                    expired.store(true, Ordering::SeqCst);
+                    stop.store(true, Ordering::SeqCst);
+                    break;
+                }
+                thread::sleep(Duration::from_millis(25));
+            }
+        });
+    }
+    let outcome = stream_command_lines_cancelable(command, &stop, on_line);
+    finished.store(true, Ordering::SeqCst);
+    outcome.map(|status| (status, expired.load(Ordering::SeqCst)))
+}
+
 #[cfg(test)]
 mod tests {
     use std::process::Command;
@@ -211,6 +250,42 @@ mod tests {
         let error = stream_command_lines(command, &mut |_stream, _line| {}).unwrap_err();
 
         assert!(matches!(error, ProcessError::Spawn(_)));
+    }
+
+    #[test]
+    fn deadline_stops_a_child_after_output_closes() {
+        let command = crate::sh_command("exec 1>&- 2>&-; sleep 2");
+        let (status, expired) = super::stream_command_lines_with_timeout(
+            command,
+            std::time::Duration::from_millis(100),
+            &mut |_, _| {},
+        )
+        .unwrap();
+        assert!(expired);
+        assert!(
+            !status.success(),
+            "closed output must not disable the deadline"
+        );
+    }
+
+    #[test]
+    fn deadline_stops_a_child_with_output() {
+        let command = crate::sh_command(
+            "i=0; while [ \"$i\" -lt 200 ]; do echo version; sleep 0.005; i=$((i + 1)); done",
+        );
+        let mut lines = 0;
+        let (status, expired) = super::stream_command_lines_with_timeout(
+            command,
+            std::time::Duration::from_millis(100),
+            &mut |_, _| lines += 1,
+        )
+        .unwrap();
+        assert!(expired);
+        assert!(
+            !status.success(),
+            "the deadline must stop a tool even while it produces output"
+        );
+        assert!(lines > 0);
     }
 
     #[test]

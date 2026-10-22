@@ -51,13 +51,18 @@ Item {
         }
     }
 
-    // Gravar (E4): a previa e' um pedido puro ao core; rodar e salvar vao
+    // Gravar (E4): a previa nao grava nem salva; rodar e salvar vao
     // pelos donos de execucao (AppDomains), nao por aqui.
     Connections {
         target: root.embeddedController ? root.embeddedController.flash : null
 
         function onProposalRequested(device, engine, flashSizeBytes, firmware) {
-            if (root.available("runConfig.flashProposal")) root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware);
+            const flash = root.embeddedController.flash;
+            if (!root.available("runConfig.flashProposal")) {
+                flash.bindProposal(-1);
+                return;
+            }
+            flash.bindProposal(root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware));
         }
     }
 

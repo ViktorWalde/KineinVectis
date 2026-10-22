@@ -29,7 +29,8 @@ na raiz pelo `run.start`.
   `{ name, command, engine, source, warnings }` (`0.113.0`, E4 do
   `integracoes/38` §6; `firmware` em `0.116.0`).** "Gravar" como configuração de execução, na forma
   decidida pelo autor em 2026-09-11 (o Upload do PlatformIO, o Download &
-  Run do CLion): **puro** — nada roda, nada é salvo; a resposta é uma
+  Run do CLion): **sem gravar hardware ou salvar**; desde 0.186.0 pode
+  consultar a versão do esptool, fora do laço e com prazo. A resposta é uma
   proposta que a UI mostra como prévia e que vira `runConfig.save` (nome
   `Gravar (<motor>)`) ou `run.start { command }`. `engine` ausente = o
   `target.flashEngine` do modelo; sem ele, uma receita `flasher_args.json`
@@ -49,8 +50,9 @@ na raiz pelo `run.start`.
   leu) menor que a da receita. Erros: ferramenta ausente → `TOOL_NOT_FOUND`
   com o passo; motor desconhecido → `INVALID_PARAMS`; o resto (sem build,
   sem porta, sem chip, família sem tabela) → `INVALID_REQUEST`. A linha
-  salva é editável como qualquer configuração — é assim que um `esptool` v4
-  troca `write-flash` por `write_flash`.
+  salva é editável como qualquer configuração manual. Desde 0.186.0, a
+  nova prévia seleciona automaticamente a sintaxe conhecida v4/v5; comandos
+  shell já salvos não são interpretados ou reescritos.
 - **Os wrappers dos frameworks (`0.117.0`, bloco E):** `engine: "idf.py"`
   → `bash -c '<wrapper>' idf '<ativação>' -p '<porta>' flash` (a linha do
   "Start a Project": `idf.py -p PORT flash`; a porta é exigida, como no
@@ -75,6 +77,23 @@ na raiz pelo `run.start`.
   o da página: `engine` diferente → `INVALID_PARAMS`; firmware não
   baixado, id de toolchain ou desconhecido → `INVALID_REQUEST` com o passo.
   `name` é `Gravar firmware (<rótulo>)`.
+
+**Sintaxe por versão do esptool (0.186.0, contrato anterior ao produtor):**
+o próprio binário selecionado responde `version`, sem parâmetro de porta ou
+operação serial. Consulta adiada com prazo de 5 s; falha, timeout, saída
+inválida/discordante ou principal diferente de 4/5 → INVALID_REQUEST com
+causa e orientação. Ferramenta ausente continua TOOL_NOT_FOUND. Não adivinhar
+versão pelo nome esptool/esptool.py nem tentar gravar para descobrir sintaxe.
+Na v4 usar `write_flash`, `--flash_mode/size/freq`, resets com underscore e
+`erase_flash` no aviso; na v5, nomes correspondentes com hífen. Normalizar
+somente argumentos estruturados da sintaxe, preservando caminhos/valores de
+imagem. `source` registra binário e versão consultados. Vale para receita
+de projeto e firmware do catálogo; outros motores não consultam esptool.
+Schema 1, métodos, eventos e shape da resposta permanecem.
+Na ponte Qt, o id já existente do JSON-RPC acompanha sucesso/falha da
+prévia. Workspace/porta alterados invalidam o resultado; resposta antiga
+ou duplicada não conclui outro pedido nem habilita salvar/executar. Uma
+falha genérica sem id não substitui a resposta correlacionada.
 
 **Armazenamento rigoroso (0.185.0, contrato anterior ao produtor):** erro de
 leitura, JSON inválido, schema desconhecido, arquivo não regular, identidades

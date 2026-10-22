@@ -91,9 +91,46 @@ fn cenario(nome: &str, com_receita: bool) -> Cenario {
 }
 
 impl Cenario {
-    fn esptool_falso(&self) {
+    fn write_esptool(&self) {
+        self.esptool_version("5.4.0");
+    }
+
+    fn esptool_version(&self, version: &str) {
         let caminho = self.dir.join("bin/esptool");
-        crate::write_executable(&caminho, "#!/bin/sh\necho \"esptool-falso $*\"\n");
+        crate::write_executable(
+            &caminho,
+            format!(
+                "#!/bin/sh\nif [ \"$1\" = version ]; then echo '{version}'; exit 0; fi\necho \"esptool-falso $*\"\n"
+            ),
+        );
+    }
+
+    fn check_legacy_firmware(&mut self) {
+        self.esptool_version("6.0.0");
+        let refused = self
+            .proposal(json!({ "engine": "picotool", "firmware": "micropython-esp32-generic" }))
+            .error
+            .unwrap();
+        assert_eq!(refused.code, JsonRpcErrorCode::InvalidParams);
+        self.esptool_version("4.8.1");
+        let legacy = self
+            .proposal(json!({ "device": "/dev/ttyUSB0", "firmware": "micropython-esp32-generic" }))
+            .result
+            .unwrap();
+        assert!(
+            legacy["command"]
+                .as_str()
+                .unwrap()
+                .contains("--before default_reset --after hard_reset write_flash 0x1000")
+        );
+        assert!(
+            legacy["warnings"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|warning| warning.as_str().unwrap().contains("erase_flash"))
+        );
+        self.write_esptool();
     }
 
     fn rpc(&mut self, id: i64, method: &str, params: Value) -> kinein_protocol::JsonRpcResponse {
@@ -103,7 +140,7 @@ impl Cenario {
             .clone()
     }
 
-    fn proposta(&mut self, params: Value) -> kinein_protocol::JsonRpcResponse {
+    fn proposal(&mut self, params: Value) -> kinein_protocol::JsonRpcResponse {
         self.rpc(2, "runConfig.flashProposal", params)
     }
 
@@ -131,14 +168,35 @@ impl Cenario {
 )]
 fn the_proposal_becomes_a_run_configuration_that_run_start_executes() {
     let mut c = cenario("ciclo", true);
-    c.esptool_falso();
-    let resposta = c.proposta(json!({ "device": "/dev/ttyUSB0" }));
-    let proposta = resposta
+    c.esptool_version("4.8.1");
+    let legacy = c
+        .proposal(json!({ "device": "/dev/ttyUSB0" }))
+        .result
+        .unwrap();
+    let legacy_command = legacy["command"].as_str().unwrap();
+    assert!(
+        legacy_command.contains(" write_flash --flash_mode dio --flash_size 4MB --flash_freq 40m "),
+        "{legacy_command}"
+    );
+    assert!(
+        legacy_command.contains("--before default_reset --after hard_reset"),
+        "{legacy_command}"
+    );
+    assert!(
+        legacy["source"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|line| line.as_str().unwrap().contains("4.8.1"))
+    );
+    c.write_esptool();
+    let resposta = c.proposal(json!({ "device": "/dev/ttyUSB0" }));
+    let proposal = resposta
         .result
         .unwrap_or_else(|| panic!("{:?}", resposta.error));
-    assert_eq!(proposta["engine"], "esptool");
-    assert_eq!(proposta["name"], "Gravar (esptool)");
-    let comando = proposta["command"].as_str().unwrap().to_owned();
+    assert_eq!(proposal["engine"], "esptool");
+    assert_eq!(proposal["name"], "Gravar (esptool)");
+    let comando = proposal["command"].as_str().unwrap().to_owned();
     let build = c.dir.join("build");
     assert_eq!(
         comando,
@@ -152,19 +210,19 @@ fn the_proposal_becomes_a_run_configuration_that_run_start_executes() {
         )
     );
     assert!(
-        proposta["source"].as_array().unwrap().len() >= 4,
-        "{proposta}"
+        proposal["source"].as_array().unwrap().len() >= 4,
+        "{proposal}"
     );
     assert!(
-        proposta["warnings"].as_array().is_none_or(Vec::is_empty),
-        "{proposta}"
+        proposal["warnings"].as_array().is_none_or(Vec::is_empty),
+        "{proposal}"
     );
 
     let salvo = c
         .rpc(
             3,
             "runConfig.save",
-            json!({ "name": proposta["name"], "command": comando }),
+            json!({ "name": proposal["name"], "command": comando }),
         )
         .result
         .unwrap();
@@ -188,6 +246,24 @@ fn the_proposal_becomes_a_run_configuration_that_run_start_executes() {
     // A configuracao ativa continua sendo a de gravar (o usuario a ve no menu).
     let lista = c.rpc(5, "runConfig.list", json!({})).result.unwrap();
     assert_eq!(lista["activeId"], id);
+
+    // The query waits off the core loop: another request can still complete.
+    crate::write_executable(
+        c.dir.join("bin/esptool"),
+        "#!/bin/sh\nsleep 0.25\necho 5.4.0\n",
+    );
+    let (sender, responses) = mpsc::channel();
+    c.core.enable_deferred_responses(sender);
+    let pending = c.core.handle_request(&JsonRpcRequest::new(
+        6_i64,
+        "runConfig.flashProposal",
+        Some(json!({ "device": "/dev/ttyUSB0" })),
+    ));
+    assert!(pending.is_deferred());
+    assert!(c.rpc(7, "runConfig.list", json!({})).error.is_none());
+    let response = responses.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert_eq!(response.id, Some(json!(6)));
+    assert!(response.error.is_none(), "{:?}", response.error);
 }
 
 /// As recusas, cada uma com o codigo certo e sem nada salvo: sem porta
@@ -201,14 +277,14 @@ fn the_proposal_becomes_a_run_configuration_that_run_start_executes() {
 fn refusals_name_the_missing_piece_and_save_nothing() {
     let mut c = cenario("recusas", true);
     let sem_esptool = c
-        .proposta(json!({ "device": "/dev/ttyUSB0" }))
+        .proposal(json!({ "device": "/dev/ttyUSB0" }))
         .error
         .unwrap();
     assert_eq!(sem_esptool.code, JsonRpcErrorCode::ToolNotFound);
     assert!(sem_esptool.message.contains("pipx install esptool"));
 
-    c.esptool_falso();
-    let sem_porta = c.proposta(json!({})).error.unwrap();
+    c.write_esptool();
+    let sem_porta = c.proposal(json!({})).error.unwrap();
     assert_eq!(sem_porta.code, JsonRpcErrorCode::InvalidRequest);
     assert!(
         sem_porta.message.contains("escolha a porta"),
@@ -216,22 +292,60 @@ fn refusals_name_the_missing_piece_and_save_nothing() {
     );
 
     let desconhecido = c
-        .proposta(json!({ "engine": "avrdude", "device": "/dev/ttyUSB0" }))
+        .proposal(json!({ "engine": "avrdude", "device": "/dev/ttyUSB0" }))
         .error
         .unwrap();
     assert_eq!(desconhecido.code, JsonRpcErrorCode::InvalidParams);
 
-    let campo = c.proposta(json!({ "port": "/dev/ttyUSB0" })).error.unwrap();
+    let campo = c.proposal(json!({ "port": "/dev/ttyUSB0" })).error.unwrap();
     assert_eq!(campo.code, JsonRpcErrorCode::InvalidParams);
 
     let lista = c.rpc(6, "runConfig.list", json!({})).result.unwrap();
     assert!(lista["configs"].as_array().unwrap().is_empty());
 
+    for version in ["", "unknown", "6.0.0", "4.8.1\n5.4.0"] {
+        c.esptool_version(version);
+        let refused = c
+            .proposal(json!({ "device": "/dev/ttyUSB0" }))
+            .error
+            .unwrap();
+        assert_eq!(refused.code, JsonRpcErrorCode::InvalidRequest);
+        assert!(refused.message.contains("versão"), "{refused:?}");
+    }
+    c.esptool_version(&format!("5.4.0\n{}", "x".repeat(16_384)));
+    assert!(
+        c.proposal(json!({ "device": "/dev/ttyUSB0" }))
+            .error
+            .unwrap()
+            .message
+            .contains("excedeu o limite")
+    );
+    crate::write_executable(c.dir.join("bin/esptool"), "#!/bin/sh\necho 5.4.0\nexit 7\n");
+    assert!(
+        c.proposal(json!({ "device": "/dev/ttyUSB0" }))
+            .error
+            .unwrap()
+            .message
+            .contains("consulta de versão terminou")
+    );
+    // A hung version query is killed by the same managed process runner.
+    crate::write_executable(c.dir.join("bin/esptool"), "#!/bin/sh\nsleep 30\n");
+    let started = std::time::Instant::now();
+    let refused = c
+        .proposal(json!({ "device": "/dev/ttyUSB0" }))
+        .error
+        .unwrap();
+    assert!(refused.message.contains("prazo"), "{refused:?}");
+    assert!(started.elapsed() < Duration::from_secs(10));
+    crate::write_executable(c.dir.join("bin/picotool"), "#!/bin/sh\nexit 0\n");
+    let other = c.proposal(json!({ "engine": "picotool" })).error.unwrap();
+    assert!(other.message.contains("sem .uf2"), "{other:?}");
+
     // Sem receita (nao compilou): a mensagem diz o que fazer.
     let mut sem_build = cenario("sem-build", false);
-    sem_build.esptool_falso();
+    sem_build.write_esptool();
     let erro = sem_build
-        .proposta(json!({ "device": "/dev/ttyUSB0" }))
+        .proposal(json!({ "device": "/dev/ttyUSB0" }))
         .error
         .unwrap();
     assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
@@ -247,25 +361,25 @@ fn refusals_name_the_missing_piece_and_save_nothing() {
 )]
 fn a_smaller_reported_flash_is_a_warning() {
     let mut c = cenario("aviso", true);
-    c.esptool_falso();
-    let proposta = c
-        .proposta(json!({ "device": "/dev/ttyUSB0", "flashSizeBytes": 2_097_152 }))
+    c.write_esptool();
+    let proposal = c
+        .proposal(json!({ "device": "/dev/ttyUSB0", "flashSizeBytes": 2_097_152 }))
         .result
         .unwrap();
-    let avisos = proposta["warnings"].as_array().unwrap();
-    assert_eq!(avisos.len(), 1, "{proposta}");
+    let avisos = proposal["warnings"].as_array().unwrap();
+    assert_eq!(avisos.len(), 1, "{proposal}");
     assert!(avisos[0].as_str().unwrap().contains("2MB"));
     // Sem sdkconfig o modelo nao tem chip; a receita sozinha sugeriu o motor
     // e deu o chip.
     assert!(
-        proposta["source"][0]
+        proposal["source"][0]
             .as_str()
             .unwrap()
             .contains("receita flasher_args.json"),
-        "{proposta}"
+        "{proposal}"
     );
     assert!(
-        proposta["command"]
+        proposal["command"]
             .as_str()
             .unwrap()
             .contains("--chip esp32c3")
@@ -284,7 +398,7 @@ fn a_smaller_reported_flash_is_a_warning() {
 )]
 fn a_downloaded_firmware_is_flashed_by_the_page_line_and_runs() {
     let mut c = cenario("firmware", false);
-    c.esptool_falso();
+    c.write_esptool();
     let raiz = c.dir.join("toolchains");
     c.core = {
         let (sender, receiver) = mpsc::channel();
@@ -314,7 +428,7 @@ fn a_downloaded_firmware_is_flashed_by_the_page_line_and_runs() {
         ("nao-existe", "não está no catalogo"),
     ] {
         let erro = c
-            .proposta(json!({ "device": "/dev/ttyUSB0", "firmware": id }))
+            .proposal(json!({ "device": "/dev/ttyUSB0", "firmware": id }))
             .error
             .unwrap();
         assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{id}");
@@ -326,8 +440,9 @@ fn a_downloaded_firmware_is_flashed_by_the_page_line_and_runs() {
     std::fs::create_dir_all(&pasta).unwrap();
     let bin = pasta.join("ESP32_GENERIC-20260824-v1.29.0.bin");
     std::fs::write(&bin, vec![0xE9; 4096]).unwrap();
+    c.check_legacy_firmware();
     let r = c
-        .proposta(json!({ "device": "/dev/ttyUSB0", "firmware": "micropython-esp32-generic" }))
+        .proposal(json!({ "device": "/dev/ttyUSB0", "firmware": "micropython-esp32-generic" }))
         .result
         .expect("proposta");
     assert_eq!(

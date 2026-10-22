@@ -66,8 +66,12 @@ Item {
             root.embeddedController.identity.handleIdentified(outcome);
         }
 
-        function onFlashProposalResolved(proposal) {
-            root.embeddedController.flash.handleProposal(proposal);
+        function onFlashProposalResolved(proposal, requestId) {
+            root.embeddedController.flash.handleProposal(proposal, requestId);
+        }
+
+        function onFlashProposalFailed(requestId, message) {
+            root.embeddedController.flash.handleProposalFailed(requestId, message);
         }
 
         function onSerialAccessResolved(channels) {

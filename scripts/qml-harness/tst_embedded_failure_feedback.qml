@@ -75,7 +75,8 @@ Item {
         controller.files.list("/fixture-port");
         controller.files.handleFailed("serial.files", reason);
         controller.flash.propose("/fixture-port", 0);
-        controller.flash.handleFailed("runConfig.flashProposal", reason);
+        controller.flash.bindProposal(1);
+        controller.flash.handleProposalFailed(1, reason);
         settle.start();
     }
     function verifyNarrow() {

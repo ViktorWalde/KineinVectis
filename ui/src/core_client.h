@@ -118,11 +118,12 @@ public:
     Q_INVOKABLE qint64 runConfigDelete(const QString& id);
     Q_INVOKABLE qint64 runConfigSetActive(const QString& id);
     // "Gravar" como configuracao de execucao (runConfig.flashProposal, 0.113.0): a linha do
-    // motor, sem rodar; flashSizeBytes <= 0 = sem a checagem; firmware (0.116.0) = id do
+    // motor, sem gravar; pode consultar versao (0.186.0). flashSizeBytes <= 0 = sem checagem;
+    // firmware (0.116.0) = id do
     // catalogo baixado, no lugar dos artefatos do build.
-    Q_INVOKABLE void runConfigFlashProposal(const QString& device, const QString& engine,
-                                            double flashSizeBytes = 0,
-                                            const QString& firmware = QString());
+    Q_INVOKABLE qint64 runConfigFlashProposal(const QString& device, const QString& engine,
+                                              double flashSizeBytes = 0,
+                                              const QString& firmware = QString());
     Q_INVOKABLE void debugStart(const QString& program = QString(),
                                 const QVariantMap& connect = QVariantMap());
     // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.
@@ -580,7 +581,8 @@ signals:
     void runConfigMutationFinished(qint64 requestId);
     void runConfigMutationFailed(qint64 requestId, const QString& message);
     void runConfigsResolved(const QVariantList& configs, const QString& activeId);
-    void flashProposalResolved(const QVariantMap& proposal);
+    void flashProposalResolved(const QVariantMap& proposal, qint64 requestId);
+    void flashProposalFailed(qint64 requestId, const QString& message);
     void scanningEnvironmentChanged();
     void recoveringChanged();
     // Emitido quando a recuperacao de crash reconecta: a UI re-sincroniza

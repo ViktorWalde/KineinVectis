@@ -372,7 +372,7 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     // Com mpremote: `run <arquivo>` (auto-porta) e `connect <porta> run`.
     executable(
         &dir.join("bin/mpremote"),
-        "#!/bin/sh\necho \"mpremote-falso $*\"\n",
+        "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$(dirname \"$0\")/../mpremote.args\"\necho \"mpremote-falso $*\"\n",
     );
     let (mut core, receiver) = open_core(&dir);
     let started = run_script(&mut core, &dir.join("util.py"));
@@ -401,14 +401,8 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
         format!("mpremote connect {} run 'util.py'", script_port.display())
     );
     let linhas = run_output(&receiver, &com_porta);
-    assert_eq!(
-        linhas[0],
-        format!(
-            "mpremote-falso connect {} run {}",
-            script_port.display(),
-            dir.join("util.py").display()
-        )
-    );
+    assert!(linhas[0].starts_with("mpremote-falso connect "));
+    assert_mpremote_arguments(&dir, &script_port, &dir.join("util.py"));
 
     // O botao Executar: main.py na placa, sem pyproject (tipo Unknown).
     let padrao = core.handle_request(&JsonRpcRequest::new(72_i64, "run.start", None));
@@ -437,12 +431,19 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
         )
     );
     let linhas = run_output(&receiver, padrao_com_porta.response());
+    assert!(linhas[0].starts_with("mpremote-falso connect "));
+    assert_mpremote_arguments(&dir, &default_port, std::path::Path::new("main.py"));
+}
+
+// Check argv directly: a terminal row can wrap exactly on a trailing space.
+fn assert_mpremote_arguments(
+    root: &std::path::Path,
+    device: &std::path::Path,
+    script: &std::path::Path,
+) {
     assert_eq!(
-        linhas[0],
-        format!(
-            "mpremote-falso connect {} run main.py",
-            default_port.display()
-        )
+        std::fs::read_to_string(root.join("mpremote.args")).unwrap(),
+        format!("connect\n{}\nrun\n{}\n", device.display(), script.display())
     );
 }
 

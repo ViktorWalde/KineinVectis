@@ -7,8 +7,8 @@
 //! novo, o alvo) e da porta escolhida. Nada roda aqui. A UI mostra a linha
 //! como previa; salvar e' `runConfig.save`, rodar e' `run.start` — a saida
 //! vai para a aba de execucao existente, e a linha salva e' editavel como
-//! qualquer configuracao (e' assim que um `esptool` v4 troca `write-flash`
-//! por `write_flash`).
+//! qualquer configuracao manual. A sintaxe da nova previa acompanha a versao
+//! do binario consultado antes deste planejamento puro.
 //!
 //! # Os motores, e de onde cada linha veio (2026-09-17)
 //!
@@ -33,12 +33,13 @@
 //! `run.start`). Toda peca tem uma linha de EVIDENCIA (`source`) e o que o
 //! usuario deve saber antes de apertar vai em `warnings`.
 
+pub mod esptool;
 pub mod firmware;
 pub mod frameworks;
 
 use std::path::PathBuf;
 
-use kinein_protocol::{FlashProposalResult, FlashRecipe, ProjectModel};
+use kinein_protocol::{FlashProposalResult, ProjectModel};
 
 pub use firmware::FirmwareImage;
 
@@ -72,6 +73,11 @@ pub enum FlashError {
         /// O que faltou e como obter.
         message: String,
     },
+    /// The selected binary could not establish a supported syntax.
+    UnsupportedTool {
+        /// Actionable version/probe failure.
+        message: String,
+    },
     /// O motor exige a porta e ela nao veio.
     NoDevice {
         /// O que fazer.
@@ -84,7 +90,8 @@ impl std::fmt::Display for FlashError {
         match self {
             Self::NoEngine { message }
             | Self::NoArtifact { message }
-            | Self::NoDevice { message } => f.write_str(message),
+            | Self::NoDevice { message }
+            | Self::UnsupportedTool { message } => f.write_str(message),
             Self::UnknownEngine { engine } => write!(
                 f,
                 "motor de gravação `{engine}` desconhecido: use esptool, probe-rs, picotool ou dfu-util"
@@ -100,6 +107,23 @@ impl std::fmt::Display for FlashError {
 /// teste nao depender do PATH).
 pub type FindTool<'a> = dyn Fn(&str) -> Option<PathBuf> + 'a;
 
+/// Resolved paths and the esptool syntax confirmed before pure planning.
+pub struct ProposalTools<'a> {
+    /// Existing detector, without subprocess queries during planning.
+    pub find: &'a FindTool<'a>,
+    /// The selected esptool and its observed version; absent for other engines.
+    pub esptool: Option<esptool::Selected>,
+}
+
+impl std::fmt::Debug for ProposalTools<'_> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("ProposalTools")
+            .field("esptool", &self.esptool)
+            .finish_non_exhaustive()
+    }
+}
+
 /// A proposta: a linha do motor para este modelo, esta porta e esta flash.
 ///
 /// # Errors
@@ -113,12 +137,13 @@ pub fn propose(
     flash_size_bytes: Option<u64>,
     firmware: Option<&FirmwareImage>,
     framework: Option<&crate::build::Engine>,
-    find_tool: &FindTool<'_>,
+    tools: &ProposalTools<'_>,
 ) -> Result<FlashProposalResult, FlashError> {
+    let find_tool = tools.find;
     // Um firmware baixado (C5) substitui os artefatos do build: a linha e'
     // a da pagina da placa, com o motor que ela fixa.
     if let Some(imagem) = firmware {
-        return firmware::propose(model, imagem, engine, device, flash_size_bytes, find_tool);
+        return firmware::propose(model, imagem, engine, device, flash_size_bytes, tools);
     }
     // O wrapper do framework (bloco E): pedido pelo nome, ou o que o modelo
     // sugere para Zephyr (`west`) e PlatformIO (`platformio`).
@@ -130,9 +155,49 @@ pub fn propose(
     {
         return frameworks::propose(model, nome, device, framework);
     }
-    let (engine, engine_source) = if let Some(pedido) =
-        engine.map(str::trim).filter(|e| !e.is_empty())
-    {
+    let (engine, engine_source) = select_engine(model, engine, None)?;
+    let mut source = vec![engine_source];
+    let mut warnings = Vec::new();
+    let command = match engine.as_str() {
+        "esptool" => esptool::propose(
+            model,
+            device,
+            flash_size_bytes,
+            tools,
+            &mut source,
+            &mut warnings,
+        )?,
+        "probe-rs" => probe_rs(model, find_tool, &mut source)?,
+        "picotool" => picotool(model, find_tool, &mut source)?,
+        "dfu-util" => dfu_util(model, find_tool, &mut source)?,
+        outro => {
+            return Err(FlashError::UnknownEngine {
+                engine: outro.to_owned(),
+            });
+        }
+    };
+    Ok(FlashProposalResult {
+        name: format!("Gravar ({engine})"),
+        command,
+        engine,
+        source,
+        warnings,
+    })
+}
+
+/// Resolve the engine using the same project/explicit precedence as planning.
+///
+/// # Errors
+/// Refuses a project without a selected or evidenced engine.
+pub fn select_engine(
+    model: &ProjectModel,
+    engine: Option<&str>,
+    firmware: Option<&FirmwareImage>,
+) -> Result<(String, String), FlashError> {
+    if let Some(image) = firmware {
+        return firmware::select_engine(image, engine);
+    }
+    let selected = if let Some(pedido) = engine.map(str::trim).filter(|e| !e.is_empty()) {
         (pedido.to_owned(), "motor: escolhido na tela".to_owned())
     } else if model.artifacts.flash_recipe.is_some() && model.target.flash_engine.is_none() {
         // Uma receita do ESP-IDF no build e' evidencia de sobra: so' o
@@ -163,33 +228,7 @@ pub fn propose(
             format!("motor: {sugerido} (sugerido pelo modelo do projeto{familia})"),
         )
     };
-    let mut source = vec![engine_source];
-    let mut warnings = Vec::new();
-    let command = match engine.as_str() {
-        "esptool" => esptool(
-            model,
-            device,
-            flash_size_bytes,
-            find_tool,
-            &mut source,
-            &mut warnings,
-        )?,
-        "probe-rs" => probe_rs(model, find_tool, &mut source)?,
-        "picotool" => picotool(model, find_tool, &mut source)?,
-        "dfu-util" => dfu_util(model, find_tool, &mut source)?,
-        outro => {
-            return Err(FlashError::UnknownEngine {
-                engine: outro.to_owned(),
-            });
-        }
-    };
-    Ok(FlashProposalResult {
-        name: format!("Gravar ({engine})"),
-        command,
-        engine,
-        source,
-        warnings,
-    })
+    Ok(selected)
 }
 
 pub(super) fn tool(
@@ -205,18 +244,6 @@ pub(super) fn tool(
         })
 }
 
-/// O esptool (ou o `esptool.py` antigo), ja' entre aspas para a linha de
-/// comando. Um dono para as duas gravacoes que o usam (projeto e firmware).
-fn esptool_binary(find_tool: &FindTool<'_>) -> Result<String, FlashError> {
-    find_tool("esptool")
-        .or_else(|| find_tool("esptool.py"))
-        .map(|p| quote(&p.display().to_string()))
-        .ok_or_else(|| FlashError::MissingTool {
-            tool: "esptool".to_owned(),
-            hint: "pipx install esptool (o painel de instalação mostra o passo)".to_owned(),
-        })
-}
-
 /// A porta escolhida pelo usuario. Sem porta nao ha' gravacao: adivinhar a
 /// placa errada e' pior que um clique.
 fn chosen_port(device: Option<&str>) -> Result<&str, FlashError> {
@@ -228,142 +255,6 @@ fn chosen_port(device: Option<&str>) -> Result<&str, FlashError> {
                       gerar a prévia de gravação"
                 .to_owned(),
         })
-}
-
-fn esptool(
-    model: &ProjectModel,
-    device: Option<&str>,
-    flash_size_bytes: Option<u64>,
-    find_tool: &FindTool<'_>,
-    source: &mut Vec<String>,
-    warnings: &mut Vec<String>,
-) -> Result<String, FlashError> {
-    let esptool = esptool_binary(find_tool)?;
-    let receita: &FlashRecipe = model
-        .artifacts
-        .flash_recipe
-        .as_ref()
-        .filter(|r| !r.files.is_empty())
-        .ok_or_else(|| FlashError::NoArtifact {
-            message: "sem receita de gravação: o ESP-IDF escreve build/flasher_args.json no \
-                      build — compile o projeto primeiro"
-                .to_owned(),
-        })?;
-    let device = chosen_port(device)?;
-    let chip = receita
-        .chip
-        .as_deref()
-        .or(model.target.chip.as_deref())
-        .unwrap_or("auto");
-    let mut partes = vec![
-        esptool,
-        "--chip".to_owned(),
-        chip.to_owned(),
-        "--port".to_owned(),
-        quote(device),
-        "--baud".to_owned(),
-        ESPTOOL_BAUD.to_owned(),
-        "--before".to_owned(),
-        receita
-            .before
-            .clone()
-            .unwrap_or_else(|| "default-reset".to_owned()),
-        "--after".to_owned(),
-        receita
-            .after
-            .clone()
-            .unwrap_or_else(|| "hard-reset".to_owned()),
-    ];
-    if !receita.stub {
-        partes.push("--no-stub".to_owned());
-    }
-    partes.push("write-flash".to_owned());
-    for (flag, valor) in [
-        ("--flash-mode", &receita.flash_mode),
-        ("--flash-size", &receita.flash_size),
-        ("--flash-freq", &receita.flash_freq),
-    ] {
-        if let Some(v) = valor {
-            partes.push(flag.to_owned());
-            partes.push(v.clone());
-        }
-    }
-    let mut cifradas = Vec::new();
-    for imagem in &receita.files {
-        partes.push(format!("0x{:x}", imagem.offset));
-        partes.push(quote(&imagem.file));
-        if imagem.encrypted {
-            cifradas.push(imagem.name.clone().unwrap_or_else(|| imagem.file.clone()));
-        }
-    }
-    esptool_evidencia(model, receita, chip, device, source);
-    esptool_avisos(receita, &cifradas, flash_size_bytes, warnings);
-    Ok(partes.join(" "))
-}
-
-/// As linhas de evidencia do esptool: receita, chip e porta.
-fn esptool_evidencia(
-    model: &ProjectModel,
-    receita: &FlashRecipe,
-    chip: &str,
-    device: &str,
-    source: &mut Vec<String>,
-) {
-    let tamanho = receita
-        .flash_size
-        .as_deref()
-        .map(|s| format!(", flash {s}"))
-        .unwrap_or_default();
-    let modo = receita
-        .flash_mode
-        .as_deref()
-        .map(|m| format!(" {m}"))
-        .unwrap_or_default();
-    source.push(format!(
-        "receita: {} ({} imagens{tamanho}{modo})",
-        model
-            .artifacts
-            .flasher_args
-            .as_deref()
-            .unwrap_or("flasher_args.json"),
-        receita.files.len(),
-    ));
-    let origem = if receita.chip.is_some() {
-        "receita"
-    } else {
-        "kit/modelo"
-    };
-    source.push(format!("chip: {chip} ({origem})"));
-    source.push(format!(
-        "porta: {device} (escolhida no painel de Embarcados)"
-    ));
-}
-
-/// O que o usuario deve saber antes de gravar: imagens cifradas e flash
-/// menor que a receita.
-fn esptool_avisos(
-    receita: &FlashRecipe,
-    cifradas: &[String],
-    flash_size_bytes: Option<u64>,
-    warnings: &mut Vec<String>,
-) {
-    if !cifradas.is_empty() {
-        warnings.push(format!(
-            "imagens marcadas como cifradas ({}): write-flash grava em claro; com flash \
-             encryption ativa na placa, acrescente `--encrypt` a linha antes de rodar",
-            cifradas.join(", ")
-        ));
-    }
-    if let (Some(placa), Some(receita_bytes)) = (flash_size_bytes, receita.flash_size_bytes)
-        && u64::from(receita_bytes) > placa
-    {
-        warnings.push(format!(
-            "a receita foi gerada para {} de flash e a placa identificada tem {}: ajuste \
-                 CONFIG_ESPTOOLPY_FLASHSIZE e recompile",
-            receita.flash_size.as_deref().unwrap_or("?"),
-            tamanho_legivel(placa)
-        ));
-    }
 }
 
 fn probe_rs(
@@ -452,7 +343,7 @@ pub(super) fn quote(texto: &str) -> String {
     format!("'{}'", texto.replace('\'', "'\\''"))
 }
 
-pub(super) fn tamanho_legivel(bytes: u64) -> String {
+pub(super) fn readable_size(bytes: u64) -> String {
     if bytes >= 1024 * 1024 && bytes.is_multiple_of(1024 * 1024) {
         format!("{}MB", bytes / (1024 * 1024))
     } else if bytes >= 1024 && bytes.is_multiple_of(1024) {
@@ -463,9 +354,37 @@ pub(super) fn tamanho_legivel(bytes: u64) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use kinein_protocol::{FlashFile, ProjectArtifacts, TargetModel};
+fn propose_v5(
+    model: &ProjectModel,
+    engine: Option<&str>,
+    device: Option<&str>,
+    flash_size_bytes: Option<u64>,
+    firmware: Option<&FirmwareImage>,
+    framework: Option<&crate::build::Engine>,
+    find: &FindTool<'_>,
+) -> Result<FlashProposalResult, FlashError> {
+    let selected = find("esptool")
+        .or_else(|| find("esptool.py"))
+        .map(|path| esptool::Selected::from_output(path, "5.4.0").unwrap());
+    propose(
+        model,
+        engine,
+        device,
+        flash_size_bytes,
+        firmware,
+        framework,
+        &ProposalTools {
+            find,
+            esptool: selected,
+        },
+    )
+}
 
+#[cfg(test)]
+mod tests {
+    use kinein_protocol::{FlashFile, FlashRecipe, ProjectArtifacts, TargetModel};
+
+    use super::propose_v5 as propose;
     use super::*;
 
     fn acha(binarios: &'static [&'static str]) -> impl Fn(&str) -> Option<PathBuf> {
@@ -733,7 +652,7 @@ mod tests {
             "motor de gravação `avrdude` desconhecido: use esptool, probe-rs, picotool ou dfu-util"
         );
         assert_eq!(quote("it's"), "'it'\\''s'");
-        assert_eq!(tamanho_legivel(2 * 1024 * 1024), "2MB");
-        assert_eq!(tamanho_legivel(512 * 1024), "512KB");
+        assert_eq!(readable_size(2 * 1024 * 1024), "2MB");
+        assert_eq!(readable_size(512 * 1024), "512KB");
     }
 }

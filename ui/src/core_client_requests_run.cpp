@@ -36,8 +36,8 @@ qint64 CoreClient::runConfigSetActive(const QString& id)
     return sendRequest(QStringLiteral("runConfig.setActive"), params);
 }
 
-void CoreClient::runConfigFlashProposal(const QString& device, const QString& engine,
-                                        double flashSizeBytes, const QString& firmware)
+qint64 CoreClient::runConfigFlashProposal(const QString& device, const QString& engine,
+                                          double flashSizeBytes, const QString& firmware)
 {
     QJsonObject params;
     // Campo ausente != vazio: sem porta o core diz "escolha a porta"; sem
@@ -54,7 +54,7 @@ void CoreClient::runConfigFlashProposal(const QString& device, const QString& en
     if (!firmware.isEmpty()) {
         params.insert(QStringLiteral("firmware"), firmware);
     }
-    sendRequest(QStringLiteral("runConfig.flashProposal"), params);
+    return sendRequest(QStringLiteral("runConfig.flashProposal"), params);
 }
 
 void CoreClient::runBuild(const QString& buildSystem)

@@ -11,10 +11,10 @@
 > **HANDOFF (2026-10-21). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b1 concluída:** configurações preservadas e confirmação pelo core
-> (52 §14.27), sobre `7cab76f`; registro em **40.7 §7.333**.
-> Base `a5a4f0e`; `AppMenuBar.qml`, `eim_config.toml` e `log/` locais preservados.
-> Protocolo **0.185.0**, binário **0.3.9**.
+> **0.4.1h4b2a concluída:** prévia esptool v4/v5, prazo e respostas correlacionadas
+> (52 §14.28; 40.7 §7.337), sobre `6451953`; h4b1 preservada.
+> `AppMenuBar.qml`, `eim_config.toml` e `log/` locais preservados.
+> Protocolo **0.186.0**, binário **0.3.9**.
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
 > só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
@@ -24,13 +24,13 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate completo estrito, 0.4.1h4b1:** 1251 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **163 harnesses QML**, sem NÃO PROVADO.
+> **Último gate completo estrito, 0.4.1h4b2a:** 1256 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **164 harnesses QML**, sem NÃO PROVADO; cópia isolada (§7.337).
 > UI/core debug e release validados; concorrência/crash e feedback nativo conferidos.
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
-> **Handoff reorganizado (autor, 2026-10-21; 40.7 §7.334). Próxima:** 0.4.1h4b2, gravação nativa
-> com intenção tipada/schema 2, adaptação por versão/capacidade e recuperação
+> **Handoff reorganizado (autor, 2026-10-21; 40.7 §7.334). Próxima:** h4b2b, gravação nativa
+> com intenção tipada/schema 2, contexto/artefato/porta revalidados e recuperação
 > de ocupação. Usar o principal; o rascunho serial-lifecycle já foi incorporado.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
@@ -53,7 +53,7 @@
 > **Operação:** aceites em Xvfb próprio/software; não dirigir entrada global
 > nem fechar a janela original. Sem sudo/instalação silenciosa ou gravação
 > na placa sem pedido específico. Não compilar UI durante `verificar-cpp.sh`.
-> Atualizar documentação ao fim de cada tarefa; não há reinício agendado.
+> Objetivo contínuo ativo (autor, 2026-10-21); cota/retomada dependem da plataforma.
 > MCP/ROS 2/colaboração ficam após 0.4.9; inglês acompanha o fechamento (57).
 > Inglês no produto/divulgação: 0.5 (57 §3 item 11); Windows pausado na W6b4 (60).
 > EditorController congelado (§2). Pesquisa de Embarcados recebida como rascunho (52 §11.1).
@@ -61,12 +61,12 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.185.0 (crates/kinein-protocol, medido em 2026-10-21; o
+protocolo   0.186.0 (crates/kinein-protocol, medido em 2026-10-21; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   163 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
-testes      1251 Rust no gate completo estrito de 2026-10-21 (40.7 §7.333);
+harnesses   164 tst_*.qml em scripts/qml-harness (medido em 2026-10-21)
+testes      1256 Rust no gate completo estrito de 2026-10-21 (40.7 §7.337);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
@@ -76,6 +76,7 @@ testes      1251 Rust no gate completo estrito de 2026-10-21 (40.7 §7.333);
             1227 Rust na 0.4.1h3 em 2026-10-21 (§7.330), gate rápido estrito verde.
             1241 Rust na 0.4.1h4a em 2026-10-21 (§7.332), gate rápido estrito verde.
             1251 Rust na 0.4.1h4b1 em 2026-10-21 (§7.333), gate completo estrito verde.
+            1256 Rust na 0.4.1h4b2a em 2026-10-21 (§7.337), gate completo estrito verde em cópia isolada.
 ```
 
 Os comandos que medem estão no
@@ -414,8 +415,12 @@ continuidade ate 0.4.9       AUTORIZADA pelo autor em 2026-10-20, por fatias,
                              a bancada ESP32 e Embarcados integrado a HUD;
                              botao por arquivo continua exclusivo de scripts.
                              Reuso de componentes e animacoes existentes.
-                             Retomada solicitada a cada cinco horas, ainda
-                             NAO agendada por falta de ferramenta na sessao
+                             Retomada solicitada a cada cinco horas: objetivo
+                             continuo ATIVO em 2026-10-21, sem cronograma
+                             nem gatilho confirmado para renovacao da cota.
+                             Continuar assim que a plataforma permitir;
+                             registrar progresso e limites sem prometer
+                             retomada exata ou contornar limite de uso.
 modo automatico renovado     DECISAO DO AUTOR em 2026-10-20/21: desenvolver ate
                              a 0.4.9, executar a edicao especial em seguida
                              e so' depois gerar/testar o AppImage (57 §1.1).

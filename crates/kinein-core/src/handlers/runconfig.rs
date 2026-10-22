@@ -32,20 +32,19 @@ impl Core {
     }
 
     /// `runConfig.flashProposal` — "Gravar" como configuracao de execucao (E4
-    /// do `integracoes/38` §6, `0.113.0`). PURO: compoe a linha do motor a
-    /// partir do modelo do projeto e da porta escolhida; nada roda, nada e'
-    /// salvo — salvar e' `runConfig.save`, rodar e' `run.start`.
+    /// do `integracoes/38` §6, `0.113.0`). Sem acesso ao dispositivo ou escrita:
+    /// consulta apenas a versao do binario antes do planejamento puro.
     fn runconfig_flash_proposal_response(
         &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let pedido = match parse_params::<FlashProposalParams>(
+        let request = match parse_params::<FlashProposalParams>(
             request_id.as_ref(),
             params,
             "runConfig.flashProposal aceita os campos opcionais device, engine, flashSizeBytes e firmware",
         ) {
-            Ok(pedido) => pedido,
+            Ok(request) => request,
             Err(response) => return *response,
         };
         let Some(root) = self.workspace_root() else {
@@ -53,7 +52,11 @@ impl Core {
         };
         // Um firmware do catalogo (C5) substitui os artefatos do build; o
         // que nao foi baixado e' recusado antes de compor a linha.
-        let firmware = match pedido.firmware.as_deref().map(|id| self.firmware_image(id)) {
+        let firmware = match request
+            .firmware
+            .as_deref()
+            .map(|id| self.firmware_image(id))
+        {
             None => None,
             Some(Ok(imagem)) => Some(imagem),
             Some(Err(mensagem)) => {
@@ -67,41 +70,45 @@ impl Core {
                 );
             }
         };
-        let modelo = self.compute_project_model(&root);
+        let model = self.compute_project_model(&root);
         // O wrapper do framework (bloco E), quando esta' nesta maquina.
-        let framework = crate::build::engine::resolve(&modelo, self.sdk_home().as_deref())
+        let framework = crate::build::engine::resolve(&model, self.sdk_home().as_deref())
             .ok()
             .flatten();
-        let acha = |binario: &str| self.detector.find_in_path(binario);
-        match flash::propose(
-            &modelo,
-            pedido.engine.as_deref(),
-            pedido.device.as_deref(),
-            pedido.flash_size_bytes,
-            firmware.as_ref(),
-            framework.as_ref(),
-            &acha,
-        ) {
-            Ok(proposta) => JsonRpcResponse::success(request_id, json!(proposta)),
-            Err(error) => {
-                // Ferramenta ausente e' TOOL_NOT_FOUND (a UI mostra o passo);
-                // motor desconhecido e' parametro invalido; o resto e' o
-                // estado do projeto (sem build, sem porta, sem motor).
-                let code = match error {
-                    flash::FlashError::MissingTool { .. } => JsonRpcErrorCode::ToolNotFound,
-                    flash::FlashError::UnknownEngine { .. } => JsonRpcErrorCode::InvalidParams,
-                    _ => JsonRpcErrorCode::InvalidRequest,
+        let detector = self.detector.clone();
+        self.defer_work(request_id, move |request_id| {
+            let find = |binary: &str| detector.find_in_path(binary);
+            let engine =
+                match flash::select_engine(&model, request.engine.as_deref(), firmware.as_ref()) {
+                    Ok((engine, _)) => engine,
+                    Err(error) => return flash_error_response(request_id, &error),
                 };
-                JsonRpcResponse::failure(
-                    request_id,
-                    JsonRpcError::new(
-                        code,
-                        error.to_string(),
-                        Some(json!({ "method": "runConfig.flashProposal" })),
-                    ),
-                )
+            let mut selected = None;
+            if engine == "esptool"
+                && let Some(path) = find("esptool").or_else(|| find("esptool.py"))
+            {
+                match flash::esptool::probe(path, &root, std::time::Duration::from_secs(5)) {
+                    Ok(tool) => selected = Some(tool),
+                    Err(error) => return flash_error_response(request_id, &error),
+                }
             }
-        }
+            let tools = flash::ProposalTools {
+                find: &find,
+                esptool: selected,
+            };
+            match flash::propose(
+                &model,
+                request.engine.as_deref(),
+                request.device.as_deref(),
+                request.flash_size_bytes,
+                firmware.as_ref(),
+                framework.as_ref(),
+                &tools,
+            ) {
+                Ok(proposta) => JsonRpcResponse::success(request_id, json!(proposta)),
+                Err(error) => flash_error_response(request_id, &error),
+            }
+        })
     }
 
     fn runconfig_list_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
@@ -204,6 +211,23 @@ impl Core {
             Err(message) => runconfig_error_response(request_id, &message),
         }
     }
+}
+
+/// Version/precondition refusals retain the proposal's existing error mapping.
+fn flash_error_response(request_id: Option<Value>, error: &flash::FlashError) -> JsonRpcResponse {
+    let code = match error {
+        flash::FlashError::MissingTool { .. } => JsonRpcErrorCode::ToolNotFound,
+        flash::FlashError::UnknownEngine { .. } => JsonRpcErrorCode::InvalidParams,
+        _ => JsonRpcErrorCode::InvalidRequest,
+    };
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(
+            code,
+            error.to_string(),
+            Some(json!({ "method": "runConfig.flashProposal" })),
+        ),
+    )
 }
 
 /// Invalid input and unreadable persisted intent keep distinct error codes.

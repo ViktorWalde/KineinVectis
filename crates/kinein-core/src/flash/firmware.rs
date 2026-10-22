@@ -6,7 +6,8 @@
 //!            --after hard-reset write-flash <offset> <arquivo>` — a pagina diz
 //!            `esptool.py --port PORTNAME --baud 460800 write_flash 0x1000 <bin>` (ESP32
 //!            classico) e `write_flash 0` (C3/S3), lida em 2026-09-17; `write-flash`
-//!            e' a grafia da v5 desta maquina (a v4 aceita a linha editada)
+//!            e' a grafia v5; a previa adapta flags e resets a versao 4/5
+//!            confirmada no binario selecionado (0.186.0)
 //! picotool   `picotool load -f -x <uf2>` — a pagina manda copiar o .uf2 para o drive
 //!            RPI-RP2 (BOOTSEL); o picotool faz o mesmo pelo USB (E4)
 //! ```
@@ -20,7 +21,7 @@ use std::path::PathBuf;
 use kinein_protocol::{FlashProposalResult, ProjectModel};
 
 use super::{
-    ESPTOOL_BAUD, FindTool, FlashError, chosen_port, esptool_binary, quote, tamanho_legivel, tool,
+    ESPTOOL_BAUD, FindTool, FlashError, ProposalTools, chosen_port, quote, readable_size, tool,
 };
 
 /// Um firmware INSTALADO (o arquivo existe na pasta da IDE), como o
@@ -45,38 +46,27 @@ pub struct FirmwareImage {
 /// diferente e' recusado (a pagina nao da' outra forma).
 pub(super) fn propose(
     model: &ProjectModel,
-    imagem: &FirmwareImage,
+    image: &FirmwareImage,
     engine: Option<&str>,
     device: Option<&str>,
     flash_size_bytes: Option<u64>,
-    find_tool: &FindTool<'_>,
+    tools: &ProposalTools<'_>,
 ) -> Result<FlashProposalResult, FlashError> {
-    if let Some(pedido) = engine.map(str::trim).filter(|e| !e.is_empty())
-        && pedido != imagem.engine
-    {
-        return Err(FlashError::UnknownEngine {
-            engine: format!(
-                "{pedido} (o firmware {} grava-se por {}, como a página da placa manda)",
-                imagem.label, imagem.engine
-            ),
-        });
-    }
-    let mut source = vec![format!(
-        "motor: {} (a página do firmware no micropython.org)",
-        imagem.engine
-    )];
+    let find_tool = tools.find;
+    let (_, engine_source) = select_engine(image, engine)?;
+    let mut source = vec![engine_source];
     let mut warnings = Vec::new();
-    let command = match imagem.engine.as_str() {
+    let command = match image.engine.as_str() {
         "esptool" => esptool(
-            imagem,
+            image,
             model,
             device,
             flash_size_bytes,
-            find_tool,
+            tools,
             &mut source,
             &mut warnings,
         )?,
-        "picotool" => picotool(imagem, find_tool, &mut source)?,
+        "picotool" => picotool(image, find_tool, &mut source)?,
         outro => {
             return Err(FlashError::UnknownEngine {
                 engine: outro.to_owned(),
@@ -84,36 +74,61 @@ pub(super) fn propose(
         }
     };
     Ok(FlashProposalResult {
-        name: format!("Gravar firmware ({})", imagem.label),
+        name: format!("Gravar firmware ({})", image.label),
         command,
-        engine: imagem.engine.clone(),
+        engine: image.engine.clone(),
         source,
         warnings,
     })
 }
 
+pub(super) fn select_engine(
+    image: &FirmwareImage,
+    engine: Option<&str>,
+) -> Result<(String, String), FlashError> {
+    if let Some(pedido) = engine.map(str::trim).filter(|e| !e.is_empty())
+        && pedido != image.engine
+    {
+        return Err(FlashError::UnknownEngine {
+            engine: format!(
+                "{pedido} (o firmware {} grava-se por {}, como a página da placa manda)",
+                image.label, image.engine
+            ),
+        });
+    }
+    Ok((
+        image.engine.clone(),
+        format!(
+            "motor: {} (a página do firmware no micropython.org)",
+            image.engine
+        ),
+    ))
+}
+
 fn esptool(
-    imagem: &FirmwareImage,
+    image: &FirmwareImage,
     model: &ProjectModel,
     device: Option<&str>,
     flash_size_bytes: Option<u64>,
-    find_tool: &FindTool<'_>,
+    tools: &ProposalTools<'_>,
     source: &mut Vec<String>,
     warnings: &mut Vec<String>,
 ) -> Result<String, FlashError> {
-    let esptool = esptool_binary(find_tool)?;
+    let selected = super::esptool::selected(tools)?;
+    let esptool = quote(&selected.path.display().to_string());
+    source.push(selected.evidence());
     let device = chosen_port(device)?;
-    let offset = imagem
+    let offset = image
         .offset
         .as_deref()
         .ok_or_else(|| FlashError::NoArtifact {
-            message: format!("o catalogo não diz o offset de {}", imagem.label),
+            message: format!("o catalogo não diz o offset de {}", image.label),
         })?;
-    let arquivo = imagem.file.display().to_string();
+    let arquivo = image.file.display().to_string();
     let mut partes = vec![esptool];
     // O chip da pagina; se o kit diz outro, o usuario ve os dois nos avisos
     // e a linha leva o da pagina (e' o firmware que decide o chip).
-    if let Some(chip) = imagem.chip.as_deref() {
+    if let Some(chip) = image.chip.as_deref() {
         partes.push("--chip".to_owned());
         partes.push(chip.to_owned());
         if let Some(kit) = model.target.chip.as_deref().filter(|k| *k != chip) {
@@ -128,16 +143,16 @@ fn esptool(
         "--baud".to_owned(),
         ESPTOOL_BAUD.to_owned(),
         "--before".to_owned(),
-        "default-reset".to_owned(),
+        selected.syntax("default-reset"),
         "--after".to_owned(),
-        "hard-reset".to_owned(),
-        "write-flash".to_owned(),
+        selected.syntax("hard-reset"),
+        selected.syntax("write-flash"),
         offset.to_owned(),
         quote(&arquivo),
     ]);
     source.push(format!(
         "firmware: {arquivo} ({})",
-        tamanho_legivel(imagem.size_bytes)
+        readable_size(image.size_bytes)
     ));
     source.push(format!(
         "offset: {offset} (a página da placa no micropython.org)"
@@ -147,24 +162,25 @@ fn esptool(
     ));
     warnings.push(format!(
         "primeira instalação do MicroPython nesta placa? a página manda apagar a flash antes: \
-         {} --port {} erase-flash",
+         {} --port {} {}",
         partes[0],
-        quote(device)
+        quote(device),
+        selected.syntax("erase-flash")
     ));
     if let Some(placa) = flash_size_bytes
-        && imagem.size_bytes > placa
+        && image.size_bytes > placa
     {
         warnings.push(format!(
             "o firmware tem {} e a placa identificada tem {} de flash",
-            tamanho_legivel(imagem.size_bytes),
-            tamanho_legivel(placa)
+            readable_size(image.size_bytes),
+            readable_size(placa)
         ));
     }
     Ok(partes.join(" "))
 }
 
 fn picotool(
-    imagem: &FirmwareImage,
+    image: &FirmwareImage,
     find_tool: &FindTool<'_>,
     source: &mut Vec<String>,
 ) -> Result<String, FlashError> {
@@ -173,10 +189,10 @@ fn picotool(
         "picotool",
         "pacote `picotool` da distro ou o build oficial (github.com/raspberrypi/picotool)",
     )?;
-    let arquivo = imagem.file.display().to_string();
+    let arquivo = image.file.display().to_string();
     source.push(format!(
         "firmware: {arquivo} ({})",
-        tamanho_legivel(imagem.size_bytes)
+        readable_size(image.size_bytes)
     ));
     source.push(
         "modo: -f forca o BOOTSEL pelo USB; -x executa depois — o mesmo que copiar o .uf2 \
@@ -193,7 +209,7 @@ mod tests {
     use kinein_protocol::{ProjectArtifacts, ProjectModel, TargetModel};
 
     use super::FirmwareImage;
-    use crate::flash::{FlashError, propose};
+    use crate::flash::{FlashError, propose_v5 as propose};
 
     fn modelo(chip: Option<&str>) -> ProjectModel {
         ProjectModel {
@@ -210,7 +226,7 @@ mod tests {
         }
     }
 
-    fn imagem(
+    fn image(
         engine: &str,
         offset: Option<&str>,
         chip: Option<&str>,
@@ -240,7 +256,7 @@ mod tests {
     #[test]
     fn an_esptool_firmware_writes_the_file_at_the_page_offset() {
         let modelo = modelo(Some("esp32c3"));
-        let fw = imagem(
+        let fw = image(
             "esptool",
             Some("0x1000"),
             Some("esp32"),
@@ -315,7 +331,7 @@ mod tests {
     /// Pico: `picotool load -f -x <uf2>`, sem porta, sem offset.
     #[test]
     fn a_picotool_firmware_loads_the_uf2() {
-        let fw = imagem("picotool", None, None, "/ide/fw/RPI_PICO.uf2");
+        let fw = image("picotool", None, None, "/ide/fw/RPI_PICO.uf2");
         let p = propose(&modelo(None), None, None, None, Some(&fw), None, &acha).unwrap();
         assert_eq!(p.command, "'/x/picotool' load -f -x '/ide/fw/RPI_PICO.uf2'");
         assert!(p.source.iter().any(|s| s.contains("RPI-RP2")));

@@ -286,7 +286,6 @@ Item {
 
     function handleFailed(method, message) {
         identityController.handleFailed(method, message);
-        flashController.handleFailed(method, message);
         accessController.handleFailed(method, message);
         filesController.handleFailed(method, message);
         const flags = { "build.size": "sizeBusy", "serial.list": "portsBusy",

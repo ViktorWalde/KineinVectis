@@ -3149,3 +3149,129 @@ Depois: Setup no dock/schema 3, C e os demais escopos do §11 até a 0.4.9.
 O checkout serial-lifecycle é rascunho anterior, já incorporado; não reaplicar
 seu diff sobre o principal. Nenhuma nova etapa foi iniciada neste fechamento.
 Decisões de CLI estão no dono de desktop §3/§3.1 e no 57 §3 item 9.
+
+### 14.28 0.4.1h4b2a — sintaxe da prévia acompanha o esptool selecionado (concluída, 2026-10-21)
+
+Primeira parte verificável da h4b2, sobre 6451953. Conferência estática:
+flash/mod.rs e flash/firmware.rs fixam write-flash, flags e resets v5; o
+handler recebe apenas presença/caminho, sem consultar capacidades. Antes
+do produtor, estender a fixture de dispatch existente para v4/v5 e provar
+que a prévia v4 vem errada. Não usar o sufixo .py como prova de versão.
+
+Contrato 0.186.0: mesmo shape de runConfig.flashProposal, mas a prévia
+Espressif consulta o próprio binário com `version`, sem porta/comando de
+hardware, fora do laço do core e com prazo. Versões principais 4 e 5
+conhecidas selecionam os respectivos builders de subcomando, flags e resets;
+version desconhecida/inconsistente, erro ou timeout recusam INVALID_REQUEST.
+Ausência continua TOOL_NOT_FOUND. Evidência em source inclui caminho/versão
+consultados. Comandos shell salvos não são interpretados nem reescritos.
+
+Referências oficiais, consulta 2026-10-21: [migração v5](https://docs.espressif.com/projects/esptool/en/latest/esp32/migration-guide.html),
+[CLI v4.8.1](https://github.com/espressif/esptool/blob/v4.8.1/esptool/__init__.py)
+e [CLI v5.0.0](https://github.com/espressif/esptool/blob/v5.0.0/esptool/__init__.py).
+Somente estudo da interface de processo, sem transplantar código GPL.
+
+Arquivos: extrair o builder esptool de flash/mod.rs para flash/esptool.rs,
+com parser puro e sintaxe por versão; usar o mesmo adaptador em firmware.
+O resolvedor de ferramentas da prévia recebe a versão confirmada; demais
+motores preservam os caminhos existentes. O handler reusa defer_work;
+consulta com prazo usa o streamer de process.rs, sem outro executor.
+Não consultar esptool ao pedir outro motor. Fixture de dispatch continua
+no mesmo teste/matriz Windows, sem nova exceção de compatibilidade.
+
+A regressão do prazo reproduziu uma falha do streamer: cada linha recebida
+saltava a verificação de cancelamento. Retirar esse salto para verificar
+cancelamento/saída também sob fluxo contínuo. A consulta deve recusar saída
+excessiva em vez de aceitar uma versão a partir de evidência truncada.
+Também provar o prazo quando o filho fecha stdout/stderr e continua vivo:
+canal desconectado não equivale a processo encerrado.
+A escolha/recusa do motor deve ser compartilhada entre o handler e o
+planejador, inclusive no firmware do catálogo: um pedido incompatível deve
+ser recusado antes da consulta de versão, preservando INVALID_PARAMS.
+
+Aceites: v4/v5, nome esptool/esptool.py independente da versão, reset antigo/
+novo, nome de imagem contendo espaços/aspas/hifens/underscores preservado,
+firmware de catálogo e aviso de erase com sintaxe correspondente, versão
+ausente/desconhecida/discordante, saída não zero e prazo. Provar resposta
+adiada sem bloquear pedido independente, regressões de comandos manuais e
+mutação do seletor de sintaxe. Sem ferramenta real disponível, registrar a
+limitação e não promover fixture a teste físico. A UI de erro existente
+continua o consumidor, sem reformulação visual neste passo.
+
+Esta parte não fecha a h4b2: intenção tipada/schema 2, associação forte do
+artefato ao alvo, revalidação da execução, reserva na gravação e ações de
+ocupação/recuperação continuam nas partes seguintes. Não gravar hardware.
+
+Na regressão completa, o teste de run MicroPython falhou igualmente com o
+streamer anterior: a linha de 80 colunas terminava em espaço e o helper de
+teste não a desenrolava. Conferir os argv reais num arquivo escrito pela
+ferramenta falsa, mantendo também a prova de saída/encerramento do terminal;
+não alterar o produto ou a heurística de renderização para contornar o teste.
+
+**Ponto intermediário, superado pelo fechamento abaixo:** gate rápido estrito em
+`/home/hugh/.cache/kinein-h4b2a-qa`, log
+`/tmp/kinein-h4b2a-gate-fast.log`. Cópia isolada de 6451953 mais a fatia,
+sem a alteração local preexistente de AppMenuBar.qml (pragma inválido),
+e com target compartilhado. Não compilar a UI enquanto o gate C++ rodar.
+O arquivo de menu, eim_config.toml e log/ do principal seguem preservados.
+Naquele ponto o código ainda não estava commitado: não promover a execução
+em curso a gate verde. Essa rodada terminou reprovada conforme a nota abaixo.
+
+Provas já obtidas: regressão v4 reproduzida antes; 23 testes de flash
+passaram, incluindo consulta adiada, desconhecida/discordante, saída
+excessiva, erro e timeout; regressões de prazo sob saída contínua e pipes
+fechados falharam antes da correção. Mutação do seletor v4/v5 foi detectada
+(`/tmp/kinein-h4b2a-mutation-syntax.log`) e restaurada. O teste MicroPython
+passou após aferição dos argv; falha anterior reproduzida também com o
+streamer original (`/tmp/kinein-h4b2a-baseline-micropython-v2.log`).
+Esptool real 5.6.0 disponível em ~/.espressif/tools/shims/v6.1: `version` e
+`write-flash --help` passaram, sem porta ou operação na placa. A consulta
+pelo despacho real foi provada no fechamento. Esptool v4 real não medido.
+Não confundir estes resultados parciais com o aceite integral da fatia.
+
+**Revisão do consumidor antes do fechamento:** a consulta adiada permite
+trocar workspace e iniciar uma nova prévia antes da resposta antiga. O
+contador de revisão sozinho não identifica qual pedido respondeu: clear
+libera busy e a nova solicitação substitui requestedRevision. Provar no
+controller real antes de corrigir. A ponte deve retornar o id existente do
+JSON-RPC e repassá-lo no sucesso/falha específicos da prévia; o controller
+só conclui o id em voo, além de conferir a revisão do contexto. Recusa
+genérica não pode encerrar outro pedido. Desconexão limpa a espera, não
+repete consulta e não permite resposta antiga na reconexão. Sem campo novo
+no fio, segundo executor ou novo desenho visual. Harness inclui sucesso,
+erro, workspace/porta alterados, pedidos cruzados, duplicata e envio falho.
+
+A primeira rodada do gate terminou vermelha na suíte Rust: 5 falhas da
+mutação de sintaxe ainda presentes no artefato em cache. Os fontes estavam
+restaurados, mas copiar preservando mtime anterior fez o Cargo reutilizar o
+binário da mutação. Não é aceite. A próxima cópia deve renovar mtime e
+comprovar recompilação/testes com fontes finais; não limpar ou desabilitar
+testes para produzir verde.
+
+**Fechamento (2026-10-21):** gate completo estrito TUDO VERDE em
+`/tmp/kinein-h4b2a-gate-full.log`: 1.256 Rust, Clippy, C++ limpo, 8 CTest,
+qmllint e 164 harnesses QML, sem NÃO PROVADO. Debug/release recompilados e
+abertos (340/335 ms nesta amostra), 33 superfícies em cada preset sem aviso.
+Fontes de produto iguais aos do principal, exceto a alteração local de menu
+preservada: o gate usa a cópia isolada, não prova o checkout com pragma inválido.
+
+Despacho com esptool **real 5.6.0**: consulta de versão e sintaxe corretas,
+pedido independente respondeu primeiro (ids 3, 2), nenhum artefato alterado
+ou configuração salva. Relatório `/tmp/kinein-h4b2a-real-h3kr_9cb/report.json`;
+reprodução auxiliar `/tmp/kinein-h4b2a-real-proposal.py`. Sem operação serial.
+
+Prova nativa com core e ponte C++ reais, em Xvfb próprio/software, usando
+esptool de fixture: resposta v5 id 17 antes da v4 id 9; a antiga não substituiu
+a prévia atual. Recusa v6 id 25 exibida com causa integral e sem espera presa.
+Relatório, três fotos conferidas e ui.log sem avisos (só REPORT_JSON) em
+`/tmp/kinein-h4b2a-native/`; execução final
+`/tmp/kinein-h4b2a-native-final.log`. Auxiliares .py/.cpp/.qml em /tmp com o
+mesmo prefixo. Primeiras capturas tinham fundo transparente; repetidas com
+fundo do Theme antes da conferência. Não são mockups ou aprovação visual.
+
+Próxima h4b2b: intenção nativa/schema 2, vínculo do artefato ao contexto,
+revalidação da execução e reserva serial pelo destino resolvido; depois
+ocupação/recuperação e a matriz integrada. A prévia atual ainda pode virar
+comando manual/schema 1; esta parte não torna shell salvo uma intenção nativa,
+não migra dados na abertura e não fecha a h4b2 ou a 0.4.1. Sem flash físico,
+instalação, pacote, push/tag/release/publicação.

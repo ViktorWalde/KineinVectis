@@ -105,7 +105,10 @@ mod tests {
 /// Parameters for `runConfig.flashProposal` (`0.113.0`, E4 of
 /// `integracoes/38` §6): the "Gravar" line as a run configuration PROPOSAL.
 ///
-/// Pure: nothing runs. The core composes the engine's command line from
+/// No device operation or persistence: the core may query the selected
+/// esptool's version off the request loop, with a deadline (`0.186.0`).
+/// Unknown or unsupported versions refuse the proposal instead of guessing.
+/// The core composes the engine's command line from
 /// what the project model already read (flash recipe, ELF/UF2/BIN, target)
 /// and the UI shows it as a preview; saving it is `runConfig.save`, running
 /// it is `run.start` — flashing is a run configuration, not a new domain.

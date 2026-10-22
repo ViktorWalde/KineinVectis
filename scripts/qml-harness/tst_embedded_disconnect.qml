@@ -32,7 +32,8 @@ Item {
         signal serialMonitorOpened(string id, string command, string tool)
         signal serialIdentifyStarted(string jobId, string command)
         signal serialIdentified(var outcome)
-        signal flashProposalResolved(var proposal)
+        signal flashProposalResolved(var proposal, double requestId)
+        signal flashProposalFailed(double requestId, string message)
         signal serialAccessResolved(var channels)
         signal serialFilesStarted(string jobId, string command)
         signal serialFilesResolved(var outcome)
@@ -43,7 +44,7 @@ Item {
         function projectModel() { root.calls++; }
         function serialMonitor(device, baud) { root.calls++; }
         function serialIdentify(device) { root.calls++; }
-        function runConfigFlashProposal(device, engine, size, firmware) { root.calls++; }
+        function runConfigFlashProposal(device, engine, size, firmware) { return ++root.calls; }
         function serialAccess(device) { root.calls++; }
         function serialFiles(device, action, path, local) { root.calls++; }
     }
@@ -94,7 +95,7 @@ Item {
         check(controller.selectedPort === "/fixture-port" && controller.tab === "board"
               && controller.flash.engine === "esptool" && controller.flash.firmware === "chosen-firmware",
               "Escolhas e navegação são preservadas");
-        client.flashProposalResolved({ command: "stale command" });
+        client.flashProposalResolved({ command: "stale command" }, -1);
         client.serialIdentified({ device: "/fixture-port", success: true, identity: { chip: "old" } });
         client.serialFilesResolved({ device: "/fixture-port", success: true, action: "list", entries: [] });
         check(!controller.flash.found && !controller.identity.found && !controller.files.listed,

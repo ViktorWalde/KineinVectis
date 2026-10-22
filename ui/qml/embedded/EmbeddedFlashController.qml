@@ -3,7 +3,7 @@ import QtQuick
 
 // "Gravar" como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao
 // do autor em 2026-09-11: nao e' dominio novo). O core compoe a linha do
-// motor (runConfig.flashProposal, PURO — nada roda, nada e' salvo) e este
+// motor (runConfig.flashProposal, sem salvar/gravar; consulta versao) e este
 // controller guarda a PREVIA: nome, comando, motor, evidencias e avisos.
 //
 // Dois gestos saem daqui, e nenhum grava por conta propria:
@@ -31,6 +31,7 @@ Item {
     property string firmware: ""
     property int contextRevision: 0
     property int requestedRevision: 0
+    property double proposalRequestId: -1
     readonly property bool found: proposal.command !== undefined && proposal.command !== ""
     readonly property var engines: ["esptool", "probe-rs", "picotool", "dfu-util"]
     // Os frameworks do projeto (project.model.frameworks, do pai): o wrapper
@@ -53,6 +54,7 @@ Item {
         errorText = "";
         contextRevision += 1;
         requestedRevision = -1;
+        proposalRequestId = -1;
     }
 
     // Uma prévia só vale para a porta, firmware e modelo que a produziram.
@@ -67,6 +69,7 @@ Item {
         busy = false;
         invalidate();
         requestedRevision = -1;
+        proposalRequestId = -1;
     }
 
     // Escolher o firmware e' toggle; trocar descarta a previa. O motor
@@ -105,14 +108,24 @@ Item {
         }
         busy = true;
         requestedRevision = contextRevision;
+        proposalRequestId = -1;
         proposal = ({});
         errorText = "";
         proposalRequested(device === undefined ? "" : device, engine,
                           flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware);
     }
 
-    function handleProposal(nova) {
+    function bindProposal(requestId) {
+        if (!busy) return;
+        proposalRequestId = requestId;
+        if (requestId < 0) handleProposalFailed(requestId,
+            qsTr("O serviço da IDE está indisponível. Tente novamente após reconectar."));
+    }
+
+    function handleProposal(nova, requestId) {
+        if (!busy || requestId !== proposalRequestId) return;
         busy = false;
+        proposalRequestId = -1;
         if (requestedRevision !== contextRevision) return;
         proposal = nova === undefined || nova === null ? ({}) : nova;
         errorText = "";
@@ -120,11 +133,10 @@ Item {
 
     // A recusa do core (sem build, sem porta, sem motor, sem ferramenta) e'
     // a resposta, no lugar da previa.
-    function handleFailed(method, message) {
-        if (method !== "runConfig.flashProposal") {
-            return;
-        }
+    function handleProposalFailed(requestId, message) {
+        if (!busy || requestId !== proposalRequestId) return;
         busy = false;
+        proposalRequestId = -1;
         if (requestedRevision !== contextRevision) return;
         proposal = ({});
         errorText = message;

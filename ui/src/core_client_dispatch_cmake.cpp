@@ -29,8 +29,8 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
     }
     if (method == QStringLiteral("runConfig.flashProposal")) {
         // Mapa inteiro: nome, comando, motor, evidencias e avisos viajam
-        // juntos e a tela os mostra como PREVIA — nada foi salvo nem rodou.
-        emit flashProposalResolved(result.toVariantMap());
+        // juntos e a tela os mostra como PREVIA — sem salvar ou gravar.
+        emit flashProposalResolved(result.toVariantMap(), requestId);
         return true;
     }
     if (method == QStringLiteral("cargo.metadata")) {
