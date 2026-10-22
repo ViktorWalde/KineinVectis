@@ -746,6 +746,17 @@ dependência concreta; conservar fatias pequenas, revisáveis e com gate
 próprio. Esta organização substitui a ideia de deixar a reformulação do
 instalador ou o primeiro Quality Center para o polimento pós-0.4.9.
 
+**Leitura dos marcos, esclarecida em 2026-10-22:** a 0.4.1 entrega a
+fundação de ambiente/cross e orquestração. Construção/qualidade (0.4.2),
+gravação/depuração (0.4.3) e consolidação bare metal/Linux embarcado (até
+0.4.6) completam as jornadas; 0.4.7–0.4.9 auditam e estabilizam o conjunto.
+A implementação funcional pertence à série, independentemente de colaboradores
+com placas. Esses colaboradores ampliam as provas físicas por combinação de
+placa/sonda/SDK; registrar separadamente implementado, validado por ferramentas
+ou emulador e validado em hardware. A matriz de §10.1 limita o que o emulador
+comprova. Nenhum item funcional ausente vira “só falta hardware” para fechar
+um marco. Este esclarecimento conserva a ordem e o escopo já definidos.
+
 **Estado de partida:** h4b1 concluída em `a5a4f0e`, protocolo 0.185.0,
 binário 0.3.9. h4b2 ainda não implementada nesta reorganização. A tabela
 abaixo é plano, não lista de funcionalidades concluídas.
@@ -3591,3 +3602,146 @@ preservar o modo manual explícito. h4b2b/0.4.1 continuam abertas. O 40.7 está
 próximo da catraca de 1.500 linhas; organizar sua próxima parte antes de
 acrescentar outra entrega. Sem gravação física/instalação/pacote/publicação;
 capturas continuam aguardando o refinamento e a aprovação visual do autor.
+
+### 14.32 0.4.1h4b2b4 — próximos motores e continuidade do registro (desenho, 2026-10-22)
+
+**Ponto de partida:** bf54f17 fecha o transporte da intenção na UI; só esptool
+possui execução nativa validada. Os outros seis motores continuam com recusa
+explícita nessa modalidade. Os planners manuais não comprovam a origem de um
+artefato escolhido por extensão/recência, nem tornam um destino USB equivalente
+a uma porta serial. Não promover esses planners sem provas específicas.
+
+**Registro antes da próxima entrega:** o 40.7 tem 1.498 linhas; a entrada
+seguinte excederia a catraca. Aplicar 61 §3.2: mover §7.307–§7.340, palavra por
+palavra, para a parte 40.7.7, ajustando somente links relativos; atualizar a
+tabela e o índice da pasta. Comparar as transcrições com os links normalizados,
+conferir todas as 34 entradas e rodar os gates de documentação/links. Fechar
+essa parte do LOG não significa fechar a 0.4; §7.341 inicia a continuação.
+
+**Sequência técnica:** escolher um motor por recorte, identificar seu contrato
+real de artefato, alvo e destino, e só então ampliar a intenção/protocolo.
+Consultar documentação/código oficiais antes de afirmar a sintaxe. Reutilizar
+CMake file-api para alvos, probe.list para sondas e a coordenação existente
+para recursos, sem outro scanner/executor. Wrappers requerem prova própria
+sobre recompilação, seleção de ambiente e efeitos; não substituir uma escolha
+explícita do usuário por esptool. Registrar limitações e recortes seguintes
+nesta seção antes dos produtores. QA conserva target independente e fontes
+comparados; CI rápida estrita e provas focadas precedem o gate caro.
+
+**h4b2b4a — consulta de sondas antes de validar destinos:** na inspeção do dono
+existente, probe.list usa Command::output no handler e aceita linhas mesmo se
+o processo falhar. Corrigir antes de utilizá-lo nos próximos motores: consulta
+adiada pelo defer_then existente, prazo de 5 s, retenção de até 64 KiB da saída,
+recusa de resultados parciais em falha/prazo/excesso, código de saída e causa
+visíveis na hint. toolAvailable continua indicando se o processo pôde iniciar;
+probes vazio com falha não significa ausência física. Conferir raiz e adaptador
+fixado novamente ao concluir. Manter parser tolerante, saída para diagnóstico e
+o mesmo contrato/versão 0.187.0: correção de execução/erros, sem campo novo,
+sem declarar validação de destino ou habilitar gravação por sonda. Não mexer
+na UI, nem tratar listagem como prova de acesso exclusivo/compatibilidade.
+
+**Fonte primária consultada (2026-10-22):** o
+[código de probe-rs 0.32.0](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/cmd/list.rs)
+mostra a listagem e o marcador inaccessible. A listagem é apresentação, não um
+contrato de identidade de recurso. No
+[código de ESP-IDF 5.4.2](https://github.com/espressif/esp-idf/blob/v5.4.2/tools/idf_py_actions/serial_ext.py),
+flash pode preparar o build e delega ao alvo do gerador; não presumir que a
+receita atual permanecerá imutável ao executar esse wrapper. A próxima fatia
+nativa terá de comprovar seus efeitos específicos.
+
+**Levantamento para h4b2b4b (ainda não implementada):** priorizar a vertical
+probe-rs + alvo CMake selecionado, antes de generalizar USB ou wrappers. O
+[código das opções de probe-rs 0.32.0](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/util/common_options.rs)
+expõe seleção de sonda/interface, chip, protocolo e opções herdáveis do ambiente,
+inclusive permissão de apagar tudo e ciclo de alimentação. O
+[formato da entrada listada](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/rpc/functions/probe.rs)
+contém serial, interface opcional e acessibilidade; o índice da linha não é
+identidade estável. Não usar o parser tolerante atual como prova automática
+para executar. Antes dos produtores dessa vertical:
+
+- Contratar seleção explícita e persistente do alvo lógico e da sonda; conferir
+  versão/capacidade da ferramenta e recusar destino ausente, ambíguo ou sem
+  evidência. Não selecionar a primeira sonda ou o ELF mais recente.
+- Reutilizar CmakeModel para fonte/build/target/artefato, acrescentando ao dono
+  a observação dos metadados lidos. Validar vínculo com a raiz, tipo do alvo,
+  artefato e arquitetura; não criar outro parser de CMake ou scanner de ELFs.
+- Incorporar o contexto efetivo de ambiente/opções ao plano e à revalidação.
+  Uma variável não pode habilitar efeito omitido da prévia. Sem apagar tudo,
+  reiniciar ou ciclar alimentação implicitamente. Não inferir esses efeitos
+  apenas da ausência de flags na linha exibida.
+- Ampliar a coordenação existente para a identidade efetiva do recurso,
+  com consumidor real no mesmo recorte; não tratar VID/PID isolados ou porta
+  serial como identidade de uma sonda USB. Integrar cancelamento e recuperação
+  com os donos atuais de run/PTY, sem executor ou registro paralelo.
+- Completar o fluxo na UI atual, com controles progressivos já existentes,
+  provas de erro/cancelamento e fotos para revisão do autor. A execução nativa
+  continua recusada enquanto essa vertical não estiver comprovada.
+
+Os demais motores e a matriz integrada continuam abertos; este levantamento
+não transforma descoberta em validação nem fecha h4b2b/0.4.1. O limite da
+h4b2b4a é a saída **retida** pela consulta: não promete um limite novo para os
+buffers internos do streamer compartilhado. Não alterar esse componente
+transversal sem sua própria reprodução e provas dos consumidores existentes.
+
+**Dependência de frontend encontrada na revisão:** fechar o backend da consulta
+como **h4b2b4a1**; depois **h4b2b4a2**, ainda antes de probe-rs nativo. A ponte
+Qt atual despacha probe.list sem conferir o id. Com a espera adiada, duas
+consultas podem responder fora de ordem; até a recusa antiga do backend pode
+limpar o busy de uma nova consulta via requestFailed genérico. A2 manterá no
+CoreClient o id da última consulta, descartando resposta anterior antes de
+qualquer sinal de sucesso/falha; invalidação na abertura/fechamento aceitos e
+na desconexão, sem invalidar por tentativa de abrir workspace que falhou.
+Preservar a API pública e o controller atual: nenhuma organização visual nova.
+
+Provar A2 com CoreClient/Qt reais e core de fixture que envia sucessos/falhas
+fora de ordem, respostas após close/open, falha atual e retry. Reproduzir antes
+do guard e mutá-lo depois; guardar o harness/runner para reprodução. A ponte
+muda em ui/src e exige gate completo, depois dos testes focados e CI rápida.
+A1 fecha somente backend/registro; a jornada de consulta e o avanço ao motor
+seguinte dependem de A2. Não compilar UI enquanto o C++ do gate A1 estiver ativo.
+
+**Provas de h4b2b4a1, 2026-10-22:** seis testes novos, 17 focados no dono e
+no despacho real: processo com saída parcial/exit 7; prazo; excesso; ferramenta
+ausente; consulta adiada permitindo outro pedido; resposta antiga após close,
+outra raiz ou troca de adaptador. Reproduções antes da correção:
+`/tmp/kinein-h4b2b4a-partial-before.log` e
+`/tmp/kinein-h4b2b4a-deferred-before.log`; focados verdes em
+`/tmp/kinein-h4b2b4a-focused-final.log`. Duas mutações detectadas por asserções
+de runtime (aceitar exit não zero e remover a conferência de contexto), com
+fontes restaurados: `/tmp/kinein-h4b2b4a-mutations.json`. Uma tentativa inicial
+de mutação retirou referências e falhou na compilação; não foi contada como
+prova. Clippy pediu const no construtor do resultado de falha; corrigido,
+`/tmp/kinein-h4b2b4a-clippy-final.log` verde. Legado de idioma caiu de 14.457
+para 14.444 ocorrências, sem exceção nova.
+
+**Medição de espera no core real:** três pares de processos por stdio, antes
+com o binário bf54f17 do QA e depois com o novo core; probe-rs falso espera
+500 ms. A mediana de fs.list solicitado durante probe.list passou de
+504,821 ms para 0,546 ms. A consulta em si levou cerca de 505/555 ms,
+respectivamente; a mudança libera o laço, não acelera a ferramenta. Os três
+processos novos também recusaram a resposta após workspace.close. Relatório
+`/tmp/kinein-probe-query-rpc-m8zizaus/report.json`, com SHA dos binários e
+amostras. Não é medida geral da IDE nem prova de sonda física.
+
+**Transcrição do registro:** 34 entradas, §7.307–§7.340, iguais ao bf54f17
+após normalizar somente os links; SHA normalizado
+`e54b51be3ace8355f40c78c1a6eaed3ede0ed8c923b6158b385b3ef5c0d91417`,
+`/tmp/kinein-h4b2b4-archive-proof.json`. Índice e citações passam no gate.
+
+**A2, detalhe de invalidação:** abertura aceita que muda a raiz descarta a
+consulta antiga. Reabrir a mesma raiz mantém a consulta válida; uma tentativa
+de abrir outra raiz que falha também conserva a consulta atual. Sem isso o
+controller poderia ficar busy sem desfecho. Incluir ambos no harness Qt real.
+A reprodução Qt anterior ao guard já detectou sucesso antigo sobrescrevendo o
+mais novo: `/tmp/kinein-probe-response-qt-co24_xpk/report.json` (falha de
+asserção, não de compilação ou carregamento QML). Fixture em preparação para
+ser preservada junto da correção A2; não fechar a jornada antes dela.
+
+
+**Fecho A1:** gate rápido estrito completo TUDO VERDE, 1.284 Rust, 8 CTest,
+167 harnesses, Clippy/C++/qmllint limpos, sem NÃO PROVADO:
+`/tmp/kinein-h4b2b4a-gate-fast.log`. Prévia CI rápida estrita também verde
+(`/tmp/kinein-h4b2b4a-preflight-ci.log`). QA tem target próprio; comparação de
+1.819 arquivos deixa apenas o AppMenuBar local do autor diferente da cópia
+canônica de QA. Documentação/links conferidos após o registro. A2 é a próxima
+fatia e mantém a jornada aberta; depois dela, retomar os motores nativos.

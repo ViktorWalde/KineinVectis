@@ -29,9 +29,9 @@
 > UI/core debug/release, 33 superfícies por preset; Qt/Core/PTY reais com CLI falsa (§7.340).
 > Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
 >
-> **Próxima h4b2b4:** demais motores nativos, vínculo dos artefatos/destinos;
-> depois ocupação/recuperação e matriz integrada. UI/base esptool fechadas,
-> não a jornada inteira. Organização: 40.7 §7.334; detalhe no 52 §14.29–14.31.
+> **h4b2b4a1 concluída:** consulta de sondas fora do laço; gate rápido estrito, 1284 Rust (40.7 §7.341).
+> **Próxima h4b2b4a2:** correlacionar as respostas de sondas na ponte Qt (52 §14.32).
+> Depois: demais motores nativos, vínculo artefato/destino e ocupação/recuperação; jornada aberta.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
 > Quality Center: Q1 na 0.4.2; gate local/Q2–Q3 concluídos até a 0.4.6.
@@ -53,7 +53,7 @@
 > **Operação:** aceites em Xvfb próprio/software; QA com target próprio, sem compartilhar com o principal; não dirigir entrada global
 > nem fechar a janela original. Sem sudo/instalação silenciosa ou gravação
 > na placa sem pedido específico. Não compilar UI durante `verificar-cpp.sh`.
-> Objetivo contínuo ativo (autor, 2026-10-21); cota/retomada dependem da plataforma.
+> Objetivo contínuo autorizado (autor, 2026-10-21); cota/retomada dependem da plataforma.
 > MCP/ROS 2/colaboração ficam após 0.4.9; inglês acompanha o fechamento (57).
 > Inglês no produto/divulgação: 0.5 (57 §3 item 11); Windows pausado na W6b4 (60).
 > EditorController congelado (§2). Pesquisa de Embarcados recebida como rascunho (52 §11.1).
@@ -66,7 +66,7 @@ protocolo   0.187.0 (crates/kinein-protocol, medido em 2026-10-22; o
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   167 tst_*.qml em scripts/qml-harness (medido em 2026-10-22)
-testes      1278 Rust no gate completo estrito de 2026-10-22 (40.7 §7.340);
+testes      1284 Rust no gate rápido estrito de 2026-10-22 (40.7 §7.341);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
@@ -110,9 +110,16 @@ antes de aceitar um item de lá como pendente, meça.
 
 Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
+**Embarcados na série 0.4:** a 0.4.1 é a fundação; 0.4.2 e 0.4.3 completam
+construção/qualidade e gravação/depuração; até a 0.4.6 consolidam-se as jornadas
+bare metal e Linux embarcado. 0.4.7–0.4.9 auditam e estabilizam. Provas de software,
+emulação e hardware são estados distintos; colaboradores ampliam a matriz
+física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-22).
+
+
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso 0.4.1f e correlação de terminal 0.4.1g fechados; gate completo estrito verde. Ciclo de vida 0.4.1h1, recuperação visual 0.4.1h2 e reserva de jobs/monitor 0.4.1h3 fechados. 0.4.1h4a fechada: run MicroPython reserva o canal e saúde foi corrigida. h4b1 fechada: armazenamento preservado, confirmação correlacionada, teclado e reset do perfil corrigidos. Próxima sessão: gravação estruturada e ações de ocupação com identidade verificada. A medida física ainda requer renovar a sessão (2026-10-21) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.27 e [40.7](40.7-registro-das-entregas.md) §7.326–7.333 |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3 fechadas; consulta de sondas no backend h4b2b4a1 fechada. Próxima: h4b2b4a2, correlação na ponte Qt antes dos demais motores e da recuperação de ocupação. A medida física ainda requer renovar a sessão (2026-10-22) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.32 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.341 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |

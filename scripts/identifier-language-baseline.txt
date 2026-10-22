@@ -746,7 +746,6 @@ crates/kinein-core/src/handlers/lsp/mod.rs	consulta	1
 crates/kinein-core/src/handlers/lsp/mod.rs	documento	1
 crates/kinein-core/src/handlers/lsp/mod.rs	edicao	1
 crates/kinein-core/src/handlers/lsp/mod.rs	sessao	1
-crates/kinein-core/src/handlers/probe.rs	programa	2
 crates/kinein-core/src/handlers/project.rs	ambiente	2
 crates/kinein-core/src/handlers/project.rs	binario	2
 crates/kinein-core/src/handlers/project.rs	hermetico	2
@@ -1032,14 +1031,12 @@ crates/kinein-core/src/lsp/sync.rs	fechou	4
 crates/kinein-core/src/probe.rs	baixo	5
 crates/kinein-core/src/probe.rs	depois	2
 crates/kinein-core/src/probe.rs	dica	13
-crates/kinein-core/src/probe.rs	erro	3
-crates/kinein-core/src/probe.rs	executavel	3
 crates/kinein-core/src/probe.rs	identificador	8
 crates/kinein-core/src/probe.rs	indice	1
 crates/kinein-core/src/probe.rs	limpo	7
 crates/kinein-core/src/probe.rs	linha	4
 crates/kinein-core/src/probe.rs	resto	4
-crates/kinein-core/src/probe.rs	saida	13
+crates/kinein-core/src/probe.rs	saida	8
 crates/kinein-core/src/probe.rs	seguinte	2
 crates/kinein-core/src/probe.rs	sonda	3
 crates/kinein-core/src/probe.rs	sondas	25

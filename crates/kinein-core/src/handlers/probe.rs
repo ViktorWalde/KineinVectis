@@ -2,7 +2,7 @@
 //!
 //! Fino: roteia, valida params, delega ao `crate::probe` e formata a resposta.
 
-use kinein_protocol::{JsonRpcResponse, ProbeListParams};
+use kinein_protocol::{JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ProbeListParams};
 use serde_json::{Value, json};
 
 use crate::Core;
@@ -11,7 +11,7 @@ use crate::rpc::{no_workspace_response, parse_params};
 impl Core {
     /// Roteia os metodos `probe.*`.
     pub(crate) fn probe_request_response(
-        &self,
+        &mut self,
         method: &str,
         request_id: Option<Value>,
         params: Option<&Value>,
@@ -28,7 +28,7 @@ impl Core {
     /// ha kit, e cair no `PATH` em silencio esconderia do usuario qual
     /// ferramenta respondeu.
     fn probe_list_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -42,8 +42,25 @@ impl Core {
         ) {
             return *response;
         }
-        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
-        let programa = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
-        JsonRpcResponse::success(request_id, json!(crate::probe::list(programa.as_deref())))
+        let program = self.probe_program(&root);
+        let queried_program = program.clone();
+        self.defer_then(request_id,
+            move || crate::probe::list(queried_program.as_deref()),
+            move |core, request_id, result| {
+                if core.workspace_root().as_ref() != Some(&root)
+                    || core.probe_program(&root) != program {
+                    return JsonRpcResponse::failure(request_id, JsonRpcError::new(
+                        JsonRpcErrorCode::InvalidRequest,
+                        "o workspace ou adaptador mudou durante a consulta de sondas; solicite uma nova lista",
+                        None,
+                    ));
+                }
+                JsonRpcResponse::success(request_id, json!(result))
+            })
+    }
+
+    fn probe_program(&self, root: &std::path::Path) -> Option<std::path::PathBuf> {
+        crate::toolchain::Toolchain::resolve(root, &self.detected_tools())
+            .program_for(kinein_protocol::ToolchainRole::DebugAdapter)
     }
 }

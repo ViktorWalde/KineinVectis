@@ -39,3 +39,11 @@ nao reconhecida   -> "o formato mudou e o parser precisa acompanhar"
 Sem regra de udev a ferramenta roda, não acha nada, e o usuário conclui que a
 placa está com defeito. **Plug and play morre exatamente aí**, e é a lacuna que
 `integracoes/36` §5 já tinha nomeado como a mais subestimada.
+
+**Correção de consulta (0.4.1h4b2b4a, 2026-10-22):** o mesmo método/shape da
+0.187.0 passa a aguardar a ferramenta fora do laço do core, com prazo de 5 s e
+retenção de saída de até 64 KiB. Falha de saída, prazo ou excesso não produz
+sondas reconhecidas a partir de resposta parcial; hint informa a causa e a
+saída retida continua disponível. toolAvailable indica somente se o processo
+pôde iniciar. Ao finalizar, raiz/adaptador fixado diferentes recusam a resposta
+antiga. Esta consulta não valida acesso, exclusividade nem destino de gravação.

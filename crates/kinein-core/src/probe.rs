@@ -16,7 +16,7 @@
 //! probe-rs respondeu, e aqui esta o que ele disse" e' acionavel. "Nenhuma
 //! sonda" quando ha uma plugada e' o item 4 da §5.1 sendo violado.
 
-use std::process::Command;
+mod query;
 
 use kinein_protocol::{ProbeInfo, ProbeListResult};
 
@@ -28,45 +28,7 @@ const DEFAULT_PROBE_TOOL: &str = "probe-rs";
 /// `program` vem do kit quando o usuario fixou um; senao, o `PATH` decide.
 #[must_use]
 pub fn list(program: Option<&std::path::Path>) -> ProbeListResult {
-    let executavel = program.map_or_else(
-        || std::path::PathBuf::from(DEFAULT_PROBE_TOOL),
-        std::path::Path::to_path_buf,
-    );
-    let saida = Command::new(&executavel).arg("list").output();
-
-    let Ok(saida) = saida else {
-        return ProbeListResult {
-            probes: Vec::new(),
-            tool_available: false,
-            raw_output: String::new(),
-            hint: Some(format!(
-                "{} não foi encontrado. Instale-o ou fixe o adaptador no kit.",
-                executavel.display()
-            )),
-        };
-    };
-
-    // O `probe-rs list` escreve em stdout; alguns builds usam stderr para o
-    // aviso de permissao. Os dois entram na saida crua, porque e' justamente
-    // o aviso que explica "nenhuma sonda" quando ha uma plugada.
-    let mut cru = String::from_utf8_lossy(&saida.stdout).into_owned();
-    let erro = String::from_utf8_lossy(&saida.stderr);
-    if !erro.trim().is_empty() {
-        if !cru.is_empty() {
-            cru.push('\n');
-        }
-        cru.push_str(&erro);
-    }
-
-    let cru = strip_ansi(&cru);
-    let probes = parse_list(&cru);
-    let hint = hint_for(&probes, &cru);
-    ProbeListResult {
-        probes,
-        tool_available: true,
-        raw_output: cru,
-        hint,
-    }
+    query::list(program, std::time::Duration::from_secs(5))
 }
 
 /// Remove sequencias de escape ANSI.
@@ -199,6 +161,31 @@ fn hint_for(probes: &[ProbeInfo], cru: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{hint_for, parse_list, strip_ansi};
+
+    #[test]
+    fn failed_query_cannot_publish_recognised_partial_probes() {
+        let root =
+            std::env::temp_dir().join(format!("kinein-probe-failure-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let tool = crate::write_executable(
+            root.join("probe-failure.sh"),
+            "#!/bin/sh\necho '[0]: Partial -- 1234:5678:S1 (CMSIS-DAP)'\necho 'query failed' >&2\nexit 7\n",
+        );
+        let result = super::list(Some(&tool));
+        assert!(result.tool_available);
+        assert!(
+            result.probes.is_empty(),
+            "partial output became a device: {result:?}"
+        );
+        assert!(result.raw_output.contains("Partial"));
+        assert!(result.raw_output.contains("query failed"));
+        assert!(
+            result
+                .hint
+                .as_deref()
+                .is_some_and(|hint| hint.contains('7'))
+        );
+    }
 
     /// As duas formas observadas de saida do `probe-rs list`.
     #[test]

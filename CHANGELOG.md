@@ -32,6 +32,11 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Consulta de sondas (0.4.1h4b2b4a, 2026-10-22):** a espera pela ferramenta
+  sai do laço do core, com prazo e limite de saída retida. Falha não publica
+  sondas parciais; troca de workspace/adaptador recusa a resposta antiga.
+  Ainda não habilita gravação nativa pelos motores de sonda/USB.
+
 - **Gravação nativa na UI (0.4.1h4b2b3, 2026-10-22):** prévia, salvar,
   renomear e executar preservam a intenção estruturada. O editor permite
   copiar a prévia nativa e alterar o nome; mudar a operação exige outra

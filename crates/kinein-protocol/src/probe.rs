@@ -28,14 +28,14 @@ pub struct ProbeListResult {
     pub probes: Vec<ProbeInfo>,
     /// Whether the tool could be executed at all.
     pub tool_available: bool,
-    /// The tool's raw output.
+    /// The tool's combined output, retained up to 64 KiB; hint explains truncation.
     ///
     /// Always sent, never only on success: when nothing was recognised, this is
     /// what lets the user see whether a probe is actually there and the format
     /// simply changed. "I did not understand the answer, and here it is" is
     /// actionable; "no probes" when one is plugged in is a lie.
     pub raw_output: String,
-    /// What to do about it, when there is nothing to show.
+    /// Query failure, timeout, output limit or guidance when nothing was recognised.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hint: Option<String>,
 }

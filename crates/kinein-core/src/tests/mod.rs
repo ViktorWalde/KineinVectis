@@ -48,6 +48,7 @@ mod lsp_qml;
 mod lsp_server;
 mod lsp_stderr;
 mod platformio;
+mod probe;
 mod project;
 mod project_contexts;
 mod python;

@@ -234,6 +234,7 @@ flowchart LR
   n_core_outcome --> n_core_rpc
   n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
+  n_core_probe --> n_core_process
   n_core_process --> n_core_platform
   n_core_project --> n_core_fsops
   n_core_project --> n_core_platform
@@ -270,7 +271,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 127 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 128 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -309,7 +310,7 @@ flowchart LR
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
-| `probe` | — | Sondas de debug conectadas: |
+| `probe` | process | Deadline and retained-output limits for the existing probe listing query. |
 | `process` | platform | Synchronous line streaming for child processes. |
 | `project` | fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
 | `python` | run | O dominio python: |
