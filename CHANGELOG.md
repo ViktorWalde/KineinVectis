@@ -32,6 +32,14 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Gravação esptool nativa provada em hardware (0.4.1h4b2b4c, 2026-10-23):**
+  num ESP32 com ponte CP2102 (ESP-IDF v6.1, esptool 5.6.0), a gravação nativa
+  pela aba Gravar, direta ou por configuração salva + ▶, grava o firmware que
+  a placa passa a rodar. O SHA-256 do ELF impresso no boot é igual ao do
+  arquivo, em três builds distintos. Uma configuração salva antes de um novo
+  build é recusada sem tocar na placa. Na aba Placa, o botão do chip sugerido
+  mostra "Chip no kit" quando o kit já usa esse chip. Abrir o Monitor serial
+  já não deixa sobre ele a recusa de uma execução anterior.
 - **Depuração probe-rs na sonda escolhida (0.4.1h4b2b4b3, 2026-10-22, protocolo 0.190.0):**
   ao depurar um projeto probe-rs, a IDE usa a sonda e o alvo escolhidos em
   Gravar e reserva a sonda enquanto o `dap-server` vive. Gravar a mesma sonda

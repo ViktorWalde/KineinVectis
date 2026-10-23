@@ -16,6 +16,10 @@ Item {
     // O EmbeddedController; o que se le e' `controller.identity`.
     property var controller: null
     readonly property var identity: controller ? controller.identity : null
+    // O chip fixado no kit ativo: diz se a sugestao ja' foi aplicada.
+    property string kitChip: ""
+    readonly property bool chipInKit: identity !== null && identity.target.chip !== undefined
+                                      && identity.target.chip === kitChip
 
     implicitHeight: coluna.implicitHeight
     visible: identity !== null && identity.device !== ""
@@ -84,9 +88,11 @@ Item {
             KvButton {
                 id: aplicar
 
+                objectName: "identityApplyChip"
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Usar chip no kit")
+                text: root.chipInKit ? qsTr("Chip no kit") : qsTr("Usar chip no kit")
                 compact: true
+                enabled: !root.chipInKit
                 onClicked: root.identity.applyToKit()
             }
         }

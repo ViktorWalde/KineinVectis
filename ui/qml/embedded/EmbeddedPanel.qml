@@ -118,6 +118,7 @@ Item {
                 EmbeddedIdentityView {
                     width: parent.width
                     controller: root.controller
+                    kitChip: root.toolchainController ? root.toolchainController.chip : ""
                     visible: !root.linuxTarget && controller !== null && controller.identity.device !== ""
                 }
                 EmbeddedAccessView { id: accessView; width: parent.width; controller: root.controller }

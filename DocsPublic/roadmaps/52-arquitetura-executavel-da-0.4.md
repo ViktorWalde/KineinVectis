@@ -4204,3 +4204,150 @@ escolha do adaptador e `DebugManager`) e o caminho da sonda, de modo que
 **Limites.** Sem sonda probe-rs física, a sessão DAP real com hardware não foi
 exercitada. A depuração sem `probe` continua deixando o `dap-server` escolher
 e não reserva nada.
+
+### 14.37 0.4.1h4b2b4c — gravação esptool nativa em hardware: ESP32 com CP2102 (desenho, 2026-10-22)
+
+**Problema.** A gravação nativa esptool (§14.30, UI na §14.31) foi provada
+com uma CLI falsa e com um arquivo regular no lugar da porta. Nenhuma prova
+abriu uma porta real, escreveu numa flash ou observou o firmware novo rodando.
+Sem isso, o caminho fica no estado "validado por ferramentas", e não "validado
+em hardware" (§11.1). A placa da bancada está liberada para gravação (40 §5).
+
+**Combinação medida (e só ela).**
+
+- **Placa:** ESP32-D0WD-V3 rev. 3.1, cristal de 40 MHz, flash de 4 MB
+  (fabricante `0x5e`, dispositivo `0x4016`), MAC 70:4b:ca:04:54:54.
+- **Ponte e sistema:** CP2102 em `/dev/ttyUSB0`, Linux com KDE Plasma.
+- **Ferramentas:** ESP-IDF v6.1 e esptool 5.6.0 do ambiente do EIM.
+- **Projeto de bancada,** fora do repositório (`~/Projetos/esp32-idf-teste`):
+  uma aplicação ESP-IDF que escreve um contador na serial a 115200 baud, sem
+  periféricos.
+- **Receita do build:** `stub: false` (`CONFIG_ESPTOOLPY_NO_STUB=y`),
+  DIO/40 MHz/4 MB, bootloader em `0x1000`, tabela em `0x8000`, aplicação em
+  `0x10000`, `before: default-reset`, `after: hard-reset` e 460800 baud.
+
+**Caminho exercitado, sem caminho paralelo.** Todo gesto acontece na IDE,
+com o core do checkout, sem terminal externo, `idf.py flash` ou comando
+digitado:
+
+1. Embarcados → Placa: selecionar a porta e Identificar (`serial.identify`).
+2. Compilar pelo build do ESP-IDF, que escreve `build/`.
+3. Gravar, no modo nativo: prévia (`flashProposal` com `native`), depois
+   "Gravar na placa" ou "Salvar e ativar" + ▶ Executar. Em ambos, `run.start`
+   regenera o plano, reserva a porta e abre o PTY com o argv da intenção.
+4. Depois da saída do esptool, abrir o Monitor serial na mesma porta.
+
+**Prova de que a placa roda o firmware gravado.** O ESP-IDF grava na imagem o
+SHA-256 do ELF (`esp_app_desc_t.app_elf_sha256`) e o imprime no boot
+(`app_init: ELF file SHA256`, `esp_app_desc.c`). A prova compara esse prefixo,
+lido no monitor da IDE, com o `sha256sum` do ELF gravado. Para separar
+"gravou" de "a placa já tinha esse firmware", são três builds distintos, cada
+um com o próprio texto no contador. O esptool imprime "Hash of data verified"
+por região escrita.
+
+**Efeitos permitidos.** O `write-flash` apaga só os setores escritos. Não há
+`erase-flash`, nem eFuse, nem criptografia de flash ou secure boot. O reset vem
+da receita (`before`/`after`). Antes da primeira gravação, uma leitura
+integral da flash (fora da IDE, que não lê flash) preserva o firmware anterior
+para restauração.
+
+**Medição (2026-10-22).**
+
+| Etapa | Resultado |
+| --- | --- |
+| Antes | o descritor da aplicação em `0x10000` (leitura de 512 bytes) mostra `esp32_mqtt_validacao`, IDF v6.1, ELF `c650fb9a…`. O backup de 4 MiB, SHA-256 `bc05a29f…`, confere com a flash inteira (`verify-flash`, digest igual). |
+| Identificar | ESP32-D0WD-V3 rev. 3.1, flash de 4 MB, MAC acima; sugere chip esp32 e esptool. |
+| A (prévia → "Gravar na placa") | três regiões com "Hash of data verified"; o monitor mostra `kinein_esp32_test`, ELF `70202d4a0…` (igual ao arquivo) e "ESP32: ciclo N". |
+| Ocupação | o Monitor serial pedido durante a gravação recusa ("Gravação nativa … está em andamento"); depois da saída do esptool, abre. |
+| B ("Salvar e ativar" → ▶) | a configuração salva fica no schema 2 com a intenção; o monitor mostra ELF `22db65875…` (igual) e "ESP32 B: ciclo N". |
+| Revalidação | recompilar C com a intenção de B salva faz o ▶ recusar ("Contexto, ferramenta, porta ou arquivos mudaram desde a prévia"), sem PTY novo; o monitor seguinte ainda mostra "ESP32 B". |
+| C (prévia nova → "Gravar na placa") | o monitor mostra ELF `a5bed4ca1…` (igual) e "ESP32 C: ciclo N". |
+
+Uma prévia aberta na tela não fica velha depois de um build: o modelo novo do
+projeto descarta a prévia e a aba volta a "Gerar prévia de gravação". A
+revalidação do core só aparece pela intenção salva, como na linha
+"Revalidação".
+
+**Leitura da flash pela ponte.** Fora do produto: o stub do esptool a 230400 e
+a 460800 baud parou sempre ao ler `0x139000`, com "Packet content transfer
+stopped". Em blocos de 256 KiB, só o setor `0x139000` falhou pelo stub, e ele
+leu pela ROM (`--no-stub`), com o mesmo conteúdo da leitura isolada. A IDE não
+lê flash; a gravação usa a ROM (`stub: false`) e não foi afetada. Fica como
+dado da bancada, sem causa determinada.
+
+**Inconsistências de frontend corrigidas nesta fatia.**
+
+- **"Usar chip no kit" não mostra o efeito.** O pedido grava o chip no kit
+  (`toolchain.setKit`, `.kinein/toolchain.json`), mas a vista da identidade
+  não compara a sugestão com o kit, então o botão parece não ter feito nada.
+  Correção: o `EmbeddedPanel` passa o chip do kit (`toolchainController.chip`)
+  à `EmbeddedIdentityView`. Quando o chip sugerido já é o do kit, o botão diz
+  "Chip no kit" e fica desabilitado.
+- **A recusa da execução fica sobre o monitor.** A faixa de erro do Terminal
+  mostra `runErrorText` até a próxima execução. Abrir o Monitor serial com
+  sucesso deixava "Não foi possível concluir a operação" sobre a saída do
+  monitor, como se o monitor tivesse falhado. Correção: a abertura do monitor
+  limpa a recusa anterior, como já faz `runInNewTerminal` para um terminal
+  interativo novo. Uma falha do próprio monitor continua no painel de
+  Embarcados.
+
+**Observados e não tratados aqui.**
+
+- Um atalho global (Ctrl+F9) com o popup de completar aberto vai para o
+  popup.
+- O aviso de Project Health compara o compilador genérico do kit com o
+  wrapper da CDB (§14.11).
+- A sugestão de monitor da identidade (espflash) difere da ferramenta usada no
+  ESP-IDF (`idf.py monitor`): a sugestão é pelo chip, e a ferramenta é a do
+  projeto.
+- **A correção de includes do clangd quebra o build ESP-IDF.** O clangd marca
+  `#include "freertos/FreeRTOS.h"` como `unused-includes`, porque os símbolos
+  usados vêm dos headers que ele inclui, e o painel Problemas oferece as
+  correções do servidor (Ações → `lsp.codeActions`). A correção aplicada no
+  `main.c` da bancada trocou o include por `FreeRTOSConfig.h`,
+  `freertos/projdefs.h` e `portmacro.h`. Compilado com o comando da CDB
+  (saída em `/dev/null`), o arquivo falha com 577 erros, a partir de
+  `task.h:38: #error "include FreeRTOS.h must appear in source files before
+  include task.h"`. Só remover o include cai no mesmo `#error`. O diagnóstico
+  e a correção são do clangd: o FreeRTOS do ESP-IDF exige o header-guarda-chuva
+  e não marca as reexportações para o include-cleaner. Uma direção possível é
+  a IDE suprimir esse diagnóstico em projetos ESP-IDF
+  (`Diagnostics.Includes.IgnoreHeader` na configuração do clangd), numa fatia
+  de LSP para embarcados.
+
+**Feito em 2026-10-23 (40.7 §7.346).** As duas correções têm harness
+próprio, com controllers, roteador e superfície reais
+(`tst_embedded_board_feedback`). Ele cobre o botão sem chip no kit, o clique
+que pede o chip ao kit, "Chip no kit" desabilitado, a volta a "Usar chip no
+kit" com outro chip, a recusa limpa ao abrir o monitor e a falha do monitor
+mantida no painel de Embarcados. Três mutações reprovam por asserção: o
+painel sem `kitChip`, o monitor sem limpar a recusa e o botão sempre
+habilitado. Os 170 harnesses passam; o novo, também no Qt 6.4.2 do AppImage
+(percorre `children` por índice, §14.27). Na IDE real, com a placa em C e a
+intenção de B salva:
+
+1. Identificar com o kit em esp32 mostra "Chip no kit" desabilitado.
+2. ▶ recusa com "Contexto, ferramenta, porta ou arquivos mudaram desde a
+   prévia", sem PTY.
+3. O Monitor serial abre sem a faixa de recusa e mostra "ESP32 C: ciclo N".
+   A recusa não gravou nada.
+
+Gate rápido estrito no QA: 1.300 Rust, 8 CTest, 170 harnesses, C++, Clippy
+e qmllint limpos (`/home/hugh/.cache/kinein-h4b2b4c-proofs/gate-fast.log`).
+
+**Limites.** É uma combinação de placa, ponte, SDK e versão do esptool. Não
+cobre outros chips ESP (S2/S3/C3/C6/H2, USB-Serial-JTAG nativo), outras pontes
+(CH340/CH9102/FTDI), outro sistema operacional, outra versão do esptool, o
+stub na gravação, nem a gravação de firmware do catálogo. A matriz física
+ampla é dos colaboradores (40 §5).
+
+**Evidência:** `~/.cache/kinein-h4b2b4c-proofs/`:
+
+- `baseline-*` e `backup-*`: o firmware anterior e o backup;
+- `firmware-{A,B,C}.sha256`;
+- `runconfigs-B.json`;
+- `real/00–33`: as telas recortadas na janela da IDE, antes das correções;
+- `real-fixed/03–06`: as mesmas telas depois das correções;
+- `harness-all.log` e `mutations-qml.json`;
+- `main.c-alterado-22h12.c` e `quickfix-compile.log`: a correção do clangd e
+  a compilação dela.

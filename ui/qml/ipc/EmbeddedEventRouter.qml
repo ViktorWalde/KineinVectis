@@ -51,7 +51,10 @@ Item {
         }
 
         // O monitor é uma aba de terminal; o dock continua disponível ao lado.
+        // Ele abriu: a recusa de uma execução anterior não fica sobre a saída
+        // dele, como em runInNewTerminal.
         function onSerialMonitorOpened(id, command, tool) {
+            root.runtimeController.runErrorText = "";
             root.runtimeController.handleTerminalOpened(id, command, qsTr("Monitor serial · %1").arg(tool));
         }
 
