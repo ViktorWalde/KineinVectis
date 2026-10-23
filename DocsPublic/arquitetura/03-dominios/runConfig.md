@@ -58,6 +58,19 @@ mudança de forma):**
 
 Desenho no 52 §14.38.
 
+**Build ESP-IDF que queima eFuses (0.4.1h4b2b4d2, 2026-10-23, sem mudança de
+forma):** a origem nativa ESP-IDF lê também `<build>/config/sdkconfig.json`,
+a configuração efetiva que o build gerou. A gravação responde INVALID_REQUEST
+quando:
+- `SECURE_BOOT` ou `SECURE_FLASH_ENC_ENABLED` é `true`, porque o bootloader
+  queima eFuses no primeiro boot;
+- a receita marca uma imagem como cifrada;
+- o arquivo falta, não é um objeto JSON ou traz uma dessas chaves sem valor
+  booleano.
+
+Uma chave ausente vale como desabilitada. O arquivo entra no snapshot, e o
+`run.start` recusa quando ele muda. Desenho no 52 §14.39.
+
 `runConfig.save {id?, name, command, flash?}` e configs ganham flash opcional.
 Com flash, command deve ser exatamente a prévia derivada de programa/argv;
 workspace/versão/seleção/fingerprint devem ser válidos. Schema 1 continua legível

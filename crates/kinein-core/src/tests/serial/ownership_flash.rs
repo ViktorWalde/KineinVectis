@@ -40,6 +40,12 @@ fn fixture(name: &str) -> Fixture {
         .unwrap(),
     )
     .unwrap();
+    fs::create_dir(build.join("config")).unwrap();
+    fs::write(
+        build.join("config/sdkconfig.json"),
+        r#"{"IDF_TARGET": "esp32c3", "SECURE_BOOT": false, "SECURE_FLASH_ENC_ENABLED": false}"#,
+    )
+    .unwrap();
     fs::write(fixture.root.join("flash.release"), "").unwrap();
     let args =
         crate::platform::program_invocation(&fixture.root.join("flash.args").display().to_string());
@@ -159,7 +165,13 @@ fn native_flash_refuses_wrong_project_target_configuration_and_app() {
 fn native_flash_accepts_an_explicit_external_build_bound_to_this_workspace() {
     let mut fixture = fixture("native-external-selection");
     let external = super::temp_dir("native-external-build");
-    for file in ["flasher_args.json", "app.bin", "project_description.json"] {
+    fs::create_dir(external.join("config")).unwrap();
+    for file in [
+        "flasher_args.json",
+        "app.bin",
+        "project_description.json",
+        "config/sdkconfig.json",
+    ] {
         fs::copy(fixture.root.join("build").join(file), external.join(file)).unwrap();
     }
     let path = external.join("project_description.json");
@@ -304,6 +316,77 @@ fn native_flash_refuses_an_esptool_configuration_before_any_process() {
     assert!(message.contains("tox.ini"), "{message}");
     assert!(!fixture.root.join("flash.args").exists());
     assert!(fixture.core.run_preflight.is_none());
+}
+
+/// 52 §14.39: secure boot or flash encryption burn eFuses on the first boot.
+#[test]
+fn native_flash_refuses_builds_that_burn_efuses_on_first_boot() {
+    fn effective(bench: &Fixture, body: &str) {
+        fs::write(bench.root.join("build/config/sdkconfig.json"), body).unwrap();
+    }
+    for (case, body, reason) in [
+        (
+            "secure-boot",
+            r#"{"SECURE_BOOT": true}"#,
+            "CONFIG_SECURE_BOOT",
+        ),
+        (
+            "encryption",
+            r#"{"SECURE_FLASH_ENC_ENABLED": true}"#,
+            "CONFIG_SECURE_FLASH_ENC_ENABLED",
+        ),
+        (
+            "not-boolean",
+            r#"{"SECURE_BOOT": "y"}"#,
+            "sem valor booleano",
+        ),
+        ("not-object", "[]", "não é um objeto JSON"),
+    ] {
+        let mut bench = fixture(&format!("native-efuse-{case}"));
+        effective(&bench, body);
+        let message = proposal(&mut bench)
+            .error
+            .map(|error| error.message)
+            .unwrap_or_default();
+        assert!(message.contains(reason), "{case}: {message}");
+    }
+    let mut bench = fixture("native-efuse-encrypted-image");
+    fs::write(
+        bench.root.join("build/flasher_args.json"),
+        serde_json::to_vec(&json!({
+            "flash_files":{"0x0":"app.bin"},
+            "app":{"offset":"0x0", "file":"app.bin", "encrypted":"true"},
+            "extra_esptool_args":{"chip":"esp32c3", "stub":true}
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let message = proposal(&mut bench)
+        .error
+        .map(|error| error.message)
+        .unwrap_or_default();
+    assert!(message.contains("imagens cifradas"), "{message}");
+    let mut bench = fixture("native-efuse-missing");
+    fs::remove_file(bench.root.join("build/config/sdkconfig.json")).unwrap();
+    assert!(proposal(&mut bench).error.is_some());
+    let mut bench = fixture("native-efuse-after-save");
+    let previewed = native_proposal(&mut bench);
+    let saved = bench.rpc(
+        "runConfig.save",
+        json!({"name":"Native flash", "command":previewed["command"], "flash":previewed["flash"]}),
+    );
+    assert!(saved.error.is_none(), "{saved:?}");
+    effective(
+        &bench,
+        r#"{"SECURE_BOOT": false, "SECURE_FLASH_ENC_ENABLED": true}"#,
+    );
+    let message = bench
+        .rpc("run.start", json!({}))
+        .error
+        .map(|error| error.message)
+        .unwrap_or_default();
+    assert!(message.contains("eFuses"), "{message}");
+    assert!(!bench.root.join("flash.args").exists());
 }
 
 #[test]

@@ -172,3 +172,5 @@ shlex
 # hashlib/hexdigest: modulo e metodo da biblioteca padrao Python (SHA-256 dos binarios na prova probe-rs).
 hashlib
 hexdigest
+# efuse/efuses: eFuse, a memoria programavel uma vez dos chips Espressif (secure boot e criptografia de flash queimam eFuses; 52 §14.39).
+efuse efuses

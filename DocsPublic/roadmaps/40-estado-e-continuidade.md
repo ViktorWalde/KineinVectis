@@ -11,8 +11,8 @@
 > **HANDOFF (2026-10-23). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4d1 concluída:** esptool nativo sem `ESPTOOL_*` nem `[esptool]` fora da prévia, e
-> saída de terminal encerrado legível (52 §14.38; 40.7 §7.347–§7.348); b4c §7.346 (ESP32 físico).
+> **0.4.1h4b2b4d2 concluída:** gravação nativa ESP-IDF recusa build que queima eFuses (52 §14.39;
+> 40.7 §7.349); d1 §7.347–§7.348; b4c §7.346 (ESP32 físico); probe-rs b4b1–b4b3 §7.343–§7.345.
 > `AppMenuBar.qml`, `.directory`, `eim_config.toml` e `log/` locais preservados.
 > Protocolo **0.190.0**, binário **0.3.9**; probe-rs 0.32.0 instalado no usuário (§7.343).
 >
@@ -29,8 +29,8 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **b4b1–b4b3:** gravação e depuração probe-rs provadas por stdio com probe-rs real e na IDE (§5).
-> **Próxima:** h4b2b4d2, `idf.py flash` nativo (recompila, fast reflash, ambiente; 52 §14.38); clangd/ESP-IDF no §14.37.
+> **Próxima:** h4b2b4e clangd/FreeRTOS (configAction), f compilador do chip no kit ESP-IDF, g monitor
+> sugerido pelo projeto; depois d3 `idf.py flash` nativo (52 §14.40). Assistente semântico: §5 (2026-10-23).
 > Depois: demais motores com prova própria e matriz integrada; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
@@ -82,7 +82,7 @@ testes      1284 Rust no gate completo estrito de 2026-10-22 (40.7 §7.342);
             1278 Rust na 0.4.1h4b2b3 em 2026-10-22 (§7.340), gate completo estrito verde com target independente.
             1297 Rust na 0.4.1h4b2b4b1 em 2026-10-22 (§7.343), gate rápido estrito verde em cópia isolada.
             1297 Rust na 0.4.1h4b2b4b2 em 2026-10-22 (§7.344), gate completo estrito verde em cópia isolada.
-            1307 Rust na 0.4.1h4b2b4d1 em 2026-10-23 (§7.348, gate rápido estrito); 1300 no último gate completo (§7.345).
+            1308 Rust na 0.4.1h4b2b4d2 em 2026-10-23 (§7.349); 1300 no último gate completo (§7.345).
 ```
 
 Os comandos que medem estão no
@@ -122,7 +122,7 @@ física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-2
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1). Próxima: `idf.py flash` nativo (d2), um motor por recorte (52 §14.32); depois a matriz integrada e a recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.38 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.348 |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2). Próxima: `idf.py flash` nativo (d3), um motor por recorte (52 §14.32); depois a matriz integrada e a recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.39 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.349 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
@@ -522,6 +522,15 @@ core antes do acabamento     DECISAO DO AUTOR em 2026-10-23: nas fatias
                              durante a implementacao"). Frontend so' o
                              funcional para validar e mostrar a logica do core;
                              polimento de HUD/UX/UI fica na etapa propria.
+assistente semantico          DECISAO DO AUTOR em 2026-10-23: desenvolver um
+(2026-10-23)                 algoritmo avancado que entenda e analise a
+                             semantica e o contexto do projeto para atuar junto
+                             das ferramentas que a IDE orquestra (LSP,
+                             compiladores, gravadores), complementando-as. Caso
+                             de origem: o include-cleaner do clangd sugeriu
+                             trocar freertos/FreeRTOS.h e quebrou o build
+                             (52 §14.37). Desenho antes do codigo; ordem a
+                             definir no 52 §11.1.
 ```
 
 ## 7. O registro das entregas

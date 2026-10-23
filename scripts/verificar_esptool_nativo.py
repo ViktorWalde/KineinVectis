@@ -48,6 +48,9 @@ port.write_text('regular fixture; esptool never opens it\n')
     'flash_settings': {'flash_mode': 'dio', 'flash_size': '4MB', 'flash_freq': '40m'},
     'extra_esptool_args': {'chip': 'esp32', 'stub': False, 'before': 'default-reset',
                            'after': 'hard-reset'}}))
+(workspace/'build/config').mkdir()
+(workspace/'build/config/sdkconfig.json').write_text(json.dumps({
+    'IDF_TARGET': 'esp32', 'SECURE_BOOT': False, 'SECURE_FLASH_ENC_ENABLED': False}))
 (workspace/'build/project_description.json').write_text(json.dumps({
     'version': '1.3', 'project_path': str(workspace), 'build_dir': str(workspace/'build'),
     'config_file': str(workspace/'sdkconfig'), 'target': 'esp32', 'app_bin': 'app.bin'}))

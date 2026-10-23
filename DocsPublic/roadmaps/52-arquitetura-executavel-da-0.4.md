@@ -4380,7 +4380,7 @@ ESP-IDF v6.1, e o `esptool/config.py` da v4.8.1.
   `before`/`after` da receita pode não ser o que acontece.
 
 O probe-rs nativo já segue o princípio de que nada fora da prévia muda um
-efeito (§14.32, §14.34). O `idf.py flash`, próximo motor (§14.39), passa por
+efeito (§14.32, §14.34). O `idf.py flash`, próximo motor (§14.40), passa por
 este mesmo esptool.
 
 **Contrato (0.190.0, sem mudança de forma).** O probe-rs é o precedente: os
@@ -4529,3 +4529,176 @@ crystal freq 15.55 MHz is quite different to normalized freq 26 MHz" e
 mostra 26 MHz. Mesmo assim, a gravação confere os hashes e a placa inicia.
 O Identificar da §14.37 tinha lido 40 MHz. É uma medição do esptool nesta
 placa, sem efeito na prévia nem na revalidação.
+
+### 14.39 0.4.1h4b2b4d2 — a gravação nativa ESP-IDF recusa build com secure boot ou criptografia de flash (desenho, 2026-10-23)
+
+**Problema.** A gravação nativa grava o bootloader, a tabela de partições e a
+aplicação que o build gerou. Se a configuração do build habilita secure boot
+ou criptografia de flash, o efeito decisivo acontece depois da gravação: no
+primeiro boot, o bootloader queima eFuses. Isso pode ser:
+
+- a chave e o digest do secure boot;
+- `FLASH_CRYPT_CNT`;
+- a proteção contra escrita;
+- e, se configurado, o modo de download da ROM desligado de vez
+  (`SECURE_DISABLE_ROM_DL_MODE`) ou passado ao modo seguro.
+
+Esses efeitos são irreversíveis, e a prévia nativa não os mostra. Hoje o core
+só avisa quando a receita marca imagens como cifradas, e o modo nativo nem
+permite editar a linha. No ESP-IDF v6.1
+(`components/bootloader/Kconfig.projbuild`), todas as opções que queimam
+eFuse no boot dependem de `SECURE_BOOT` ou de `SECURE_FLASH_ENC_ENABLED`; a
+escolha do modo de download da ROM depende de
+`SECURE_BOOT_V2_ENABLED || SECURE_FLASH_ENC_ENABLED`.
+`SECURE_SIGNED_APPS_NO_SECURE_BOOT` só verifica assinatura e não queima nada.
+
+**Contrato (0.190.0, sem mudança de forma).**
+
+- `flash_origin::validate`, que valida a origem do build para a prévia e para
+  o `run.start`, também lê `<build>/config/sdkconfig.json`. É a configuração
+  efetiva que o próprio build gerou.
+- A gravação recusa com INVALID_REQUEST quando:
+  - `SECURE_BOOT` ou `SECURE_FLASH_ENC_ENABLED` é `true`;
+  - a receita marca alguma imagem como cifrada;
+  - o arquivo falta, não é um objeto JSON, ou uma dessas chaves tem valor que
+    não é booleano.
+- A chave ausente vale como desabilitada, que é o caso de um alvo sem o
+  recurso.
+- O arquivo entra no snapshot, como o `sdkconfig`. Mudá-lo depois da prévia
+  faz o `run.start` recusar.
+- A mensagem explica o efeito (eFuses queimados no primeiro boot) e indica o
+  modo manual, com a documentação de segurança do ESP-IDF.
+- O firmware de catálogo não tem `sdkconfig` e não muda.
+
+**Validação planejada.**
+
+- Despacho, com o fixture ganhando `build/config/sdkconfig.json`:
+  - `SECURE_BOOT` verdadeiro recusa;
+  - `SECURE_FLASH_ENC_ENABLED` verdadeiro recusa;
+  - uma imagem cifrada recusa;
+  - o arquivo ausente recusa;
+  - mudá-lo depois de salvar faz o `run.start` recusar;
+  - nada é executado em nenhum desses casos.
+- Um build real com `CONFIG_SECURE_FLASH_ENC_ENABLED=y`, numa cópia do projeto
+  de bancada, confirma as chaves no `sdkconfig.json` do ESP-IDF v6.1. Esse
+  build não grava nada.
+- Mutações.
+- Na IDE: a bancada normal ainda gera a prévia, e a cópia com criptografia
+  recusa com a explicação.
+
+**Limites.** Código da aplicação que queime eFuses pela API (`esp_efuse_*`) é
+efeito do firmware do usuário, como qualquer outro, e fica fora do alcance
+desta checagem.
+
+**Feito em 2026-10-23 (40.7 §7.349).** Implementado como desenhado em
+`project/flash_origin.rs` (`refuse_efuse_burning`, `EFUSE_BURNING`).
+
+- **Build real.** Numa cópia da bancada com
+  `CONFIG_SECURE_FLASH_ENC_ENABLED=y`, compilada pelo ESP-IDF v6.1 e sem
+  gravar nada, o `config/sdkconfig.json` traz:
+  - `SECURE_FLASH_ENC_ENABLED: true` e `SECURE_BOOT: false`;
+  - `SECURE_DISABLE_ROM_DL_MODE` ausente, porque fica oculta no ESP32 rev < 3.
+
+  A receita marca as três imagens como cifradas e passa a usar
+  `--after no-reset`.
+- **Na IDE.** Esse build recusa a prévia com a explicação.
+- **Pelo core real por stdio.** A bancada normal continua gerando a prévia.
+
+### 14.40 0.4.1h4b2b4d3 — `idf.py flash` nativo: compila e grava pela intenção revalidada (desenho, 2026-10-23)
+
+**Problema.** No ESP-IDF, o gesto comum é "compilar e gravar" num passo,
+`idf.py -p PORTA flash`. A IDE oferece esse comando hoje só no modo manual:
+uma linha de shell, sem revalidação nem efeitos declarados. O modo nativo
+recusa o motor. O esptool nativo (§14.30) grava imagens já compiladas e
+vinculadas à prévia; o `idf.py` compila na execução, então as imagens não
+podem ser vinculadas.
+
+**O que `idf.py -p PORTA flash` faz no ESP-IDF v6.1.** Fontes:
+`tools/idf_py_actions/serial_ext.py`,
+`components/esptool_py/run_serial_tool.cmake` e o `cmds.py` do esptool 5.6.0.
+
+1. **Compila.** A ação depende de `all`. O `ensure_build_directory` pode
+   reconfigurar o CMake, e o gerador recompila o que mudou no `build/`.
+2. **Porta e baud.** A porta vem de `-p` ou `ESPPORT`; sem nenhum dos dois,
+   o `idf.py` autodetecta. O baud vem de `-b`, `ESPBAUD` ou do padrão
+   460800.
+3. **Fast reflash, padrão da v6.** Com `build/*_flashed.bin` presentes, o
+   esptool recebe `--diff-with` e escreve só os setores que diferem. Sem
+   eles, recebe `--skip-flashed` e pula a região cujo MD5 na placa já é
+   igual. Nos dois casos, a imagem inteira é conferida por MD5 depois de
+   escrita, e uma divergência faz regravar tudo. Depois de gravar, as imagens
+   são copiadas para `build/*_flashed.bin`.
+   - `IDF_FLASH_FULL=1` (`-a`) desliga o fast reflash.
+   - `IDF_TRUST_FLASH_CONTENT=1` (`-t`) pula a conferência das regiões
+     inalteradas. Com um `*_flashed.bin` desatualizado, por exemplo depois de
+     uma gravação esptool nativa, que não atualiza esses arquivos, uma região
+     seria dada como gravada sem estar.
+4. **Execução do esptool.** Ele roda pelo `run_serial_tool.cmake`, com
+   diretório corrente no `build/`. O reset e o stub vêm da receita gerada
+   pelo `sdkconfig`. `SERIAL_TOOL_EXTRA_PRE_CMD_ARGS` e
+   `SERIAL_TOOL_EXTRA_ARGS` acrescentam argumentos; o `idf.py` os redefine.
+
+**Contrato (0.190.0, sem mudança de forma).**
+
+- **Seleção e argv.**
+  - A seleção com `engine: "idf.py"` passa a valer com `native: true` em
+    projeto ESP-IDF com build configurado. `device` é obrigatório;
+    `target`, `probe` e `firmware` são INVALID_PARAMS.
+  - Programa e argv: o `bash` com o ativador do ESP-IDF do modelo
+    (`IDF_WRAPPER` existente), seguido de
+    `-B <build> -p <porta> -b 460800 flash`. A linha não leva `-a`, `-t` nem
+    argumento extra.
+- **Ambiente.** O processo e a consulta de versão não recebem `ESPTOOL_*`,
+  `ESPPORT`, `ESPBAUD`, `IDF_FLASH_FULL`, `IDF_TRUST_FLASH_CONTENT`,
+  `SERIAL_TOOL_EXTRA_PRE_CMD_ARGS` nem `SERIAL_TOOL_EXTRA_ARGS`. O `source`
+  diz quais foram removidas.
+- **Arquivo de configuração do esptool.** Os candidatos da §14.38 são
+  procurados no `build/` (o diretório corrente do esptool aqui), na raiz, na
+  pasta do usuário e no home, e recusam.
+- **Origem e segurança.**
+  - A origem é a da §14.30: `project_description.json`, receita, `sdkconfig`
+    e `config/sdkconfig.json` do build atual.
+  - A recusa por secure boot ou criptografia de flash da §14.39 vale para a
+    configuração que o build vai usar.
+  - Sem build configurado, a prévia recusa e pede para compilar uma vez.
+- **O que a intenção vincula.** O conteúdo (SHA-256) destes arquivos, por
+  conteúdo e não por revisão, para que um build que reescreva o mesmo
+  conteúdo não invalide a configuração salva:
+  - o `project_description.json`;
+  - a receita;
+  - o `sdkconfig` da raiz e os `sdkconfig.defaults*`;
+  - o `config/sdkconfig.json`.
+
+  Vincula também o ativador (revisão), a versão relatada por
+  `idf.py --version`, a identidade da porta e o ambiente removido. Não
+  vincula imagens nem fontes: mudar o código e apertar ▶ compila e grava o
+  código novo, que é o gesto pretendido. Mudar a configuração muda a
+  intenção, e o `run.start` recusa.
+- **Avisos da prévia.**
+  - O comando compila antes de gravar, e as imagens são as do build no
+    momento da execução.
+  - Ele grava só o que mudou, com conferência por MD5, e copia as imagens
+    para `build/*_flashed.bin`.
+  - O reset vem da receita.
+- **Execução.** A reserva da porta, o guardião e a revalidação antes do PTY
+  são os mesmos do esptool nativo.
+
+**Validação planejada.**
+
+- Despacho com ativador e `idf.py` falsos, que registram argv, ambiente e
+  diretório corrente:
+  - a linha exata;
+  - o ambiente removido;
+  - recusas: sem porta, com firmware, com sonda, sem build, configuração
+    `[esptool]` no `build/`, `sdkconfig` alterado depois de salvar e build
+    com criptografia;
+  - uma fonte alterada não invalida;
+  - a mesma reescrita do `project_description.json` não invalida.
+- Core real por stdio com o `idf.py` real só na consulta de versão.
+- Mutações.
+- Na IDE, com o ESP32 liberado:
+  - escolher idf.py no modo nativo;
+  - prévia com os avisos;
+  - mudar o texto do contador (build D);
+  - "Gravar na placa": a saída mostra a compilação e o fast reflash;
+  - o monitor mostra o ELF SHA256 de D.

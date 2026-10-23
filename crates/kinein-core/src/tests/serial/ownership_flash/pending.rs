@@ -124,20 +124,26 @@ fn an_old_cancelled_reply_does_not_discard_the_new_native_attempt() {
 
 #[test]
 fn a_changed_artifact_after_worker_validation_is_refused_before_pty_start() {
-    let mut fixture = fixture("native-changed-before-finish");
-    let intent = native_proposal(&mut fixture)["flash"].clone();
-    let (sender, continuation) = mpsc::channel();
-    fixture.core.enable_continuations(sender);
-    fixture.rpc("run.start", json!({"flash":intent}));
-    let finish = continuation.recv_timeout(Duration::from_secs(3)).unwrap();
-    fs::write(
-        fixture.root.join("build/app.bin"),
-        "replaced after verification",
-    )
-    .unwrap();
-    let response = finish(&mut fixture.core);
-    assert!(response.error.is_some());
-    assert!(!fixture.root.join("flash.args").exists());
+    // The image, and the effective configuration that decides eFuse effects (52 §14.39).
+    for (case, file, replacement) in [
+        ("image", "build/app.bin", "replaced after verification"),
+        (
+            "effective-config",
+            "build/config/sdkconfig.json",
+            r#"{"SECURE_BOOT": false, "SECURE_FLASH_ENC_ENABLED": false, "CHANGED": true}"#,
+        ),
+    ] {
+        let mut fixture = fixture(&format!("native-changed-before-finish-{case}"));
+        let intent = native_proposal(&mut fixture)["flash"].clone();
+        let (sender, continuation) = mpsc::channel();
+        fixture.core.enable_continuations(sender);
+        fixture.rpc("run.start", json!({"flash":intent}));
+        let finish = continuation.recv_timeout(Duration::from_secs(3)).unwrap();
+        fs::write(fixture.root.join(file), replacement).unwrap();
+        let response = finish(&mut fixture.core);
+        assert!(response.error.is_some(), "{case}");
+        assert!(!fixture.root.join("flash.args").exists(), "{case}");
+    }
 }
 
 #[test]

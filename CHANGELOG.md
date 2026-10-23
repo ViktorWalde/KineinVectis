@@ -32,6 +32,11 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Gravação nativa recusa build com secure boot ou criptografia de flash (0.4.1h4b2b4d2, 2026-10-23):**
+  quando o build ESP-IDF habilita secure boot ou criptografia de flash, a
+  gravação nativa é recusada com a explicação. O bootloader desses builds
+  queima eFuses de forma irreversível no primeiro boot, e a prévia não mostra
+  esse efeito. Para esses projetos, o modo manual continua disponível.
 - **esptool nativo sem efeitos fora da prévia (0.4.1h4b2b4d1, 2026-10-23):**
   a gravação nativa com esptool não herda mais as variáveis `ESPTOOL_*`, e a
   prévia lista as que foram removidas. Um `esptool.cfg`, `setup.cfg` ou

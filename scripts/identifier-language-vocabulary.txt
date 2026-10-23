@@ -224,6 +224,7 @@ being
 belong
 belongs
 below
+bench
 beside
 best
 between
@@ -253,6 +254,7 @@ board
 body
 bold
 boolean
+boot
 bootstrap
 border
 born
@@ -295,6 +297,8 @@ builds
 built
 builtin
 bumps
+burn
+burning
 burst
 busy
 button
