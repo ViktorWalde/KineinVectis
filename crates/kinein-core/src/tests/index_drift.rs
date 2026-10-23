@@ -261,3 +261,39 @@ fn rpc_uses_the_last_configured_kit_and_updates_without_changing_the_build() {
         2
     );
 }
+
+/// 52 §14.42: with an Xtensa chip in the kit, the generic Espressif driver
+/// resolves to the chip's, the one the ESP-IDF CDB names: no compiler drift.
+#[test]
+fn an_xtensa_chip_kit_resolves_the_compiler_the_esp_idf_build_uses() {
+    let bin = std::env::temp_dir().join(format!("kinein-drift-{}-xtensa-bin", std::process::id()));
+    let _ = std::fs::remove_dir_all(&bin);
+    std::fs::create_dir_all(&bin).unwrap();
+    let drivers: Vec<PathBuf> = ["xtensa-esp-elf-g++", "xtensa-esp32-elf-g++"]
+        .iter()
+        .map(|name| {
+            crate::write_executable(bin.join(name), format!("#!/bin/sh\necho {name} 15.2.0\n"))
+        })
+        .collect();
+    let root = fixture(
+        "xtensa-chip",
+        &[drivers[1].to_str().unwrap(), "-c", "main.cpp"],
+    );
+    std::fs::create_dir_all(root.join(".kinein")).unwrap();
+    let kit = |entry: Value| {
+        std::fs::write(
+            root.join(".kinein/toolchain.json"),
+            json!({"schemaVersion":2,"kits":{"":entry}}).to_string(),
+        )
+        .unwrap();
+    };
+    kit(json!({"selections":{"cxxCompiler":"xtensa-esp-elf-gxx"}}));
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(&bin));
+    call(&mut core, "workspace.open", json!({"path":root}));
+    call(&mut core, "toolchain.get", json!({}));
+    let answer = call(&mut core, "index.context", json!({"path":"main.cpp"}));
+    assert_eq!(answer["drift"][0]["kind"], "compiler", "{answer}");
+    kit(json!({"selections":{"cxxCompiler":"xtensa-esp-elf-gxx"},"chip":"esp32"}));
+    let answer = call(&mut core, "index.context", json!({"path":"main.cpp"}));
+    assert!(answer.get("drift").is_none(), "{answer}");
+}

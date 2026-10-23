@@ -11,8 +11,8 @@
 > **HANDOFF (2026-10-23). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4e concluída:** clangd do ESP-IDF sem trocar os headers do FreeRTOS (52 §14.41; 40.7
-> §7.350); d2 §7.349 eFuses; d1 §7.347–§7.348; b4c §7.346 (ESP32 físico); probe-rs §7.343–§7.345.
+> **0.4.1h4b2b4f concluída:** kit de chip Xtensa usa o compilador do chip (52 §14.42; 40.7 §7.351);
+> e clangd/FreeRTOS §7.350; d2 eFuses §7.349; d1 §7.347–§7.348; b4c §7.346; probe-rs §7.343–§7.345.
 > `AppMenuBar.qml`, `.directory`, `eim_config.toml` e `log/` locais preservados.
 > Protocolo **0.190.0**, binário **0.3.9**; probe-rs 0.32.0 instalado no usuário (§7.343).
 >
@@ -29,8 +29,8 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** h4b2b4f compilador do chip no kit ESP-IDF, g monitor pelo projeto, d3 `idf.py` nativo
-> (52 §14.40); fechada a h4b2, etapa 1b assistente semântico (52 §11.2, 40 §5).
+> **Próxima:** h4b2b4g monitor sugerido pelo projeto, d3 `idf.py` nativo (52 §14.40); fechada a h4b2,
+> etapa 1b assistente semântico (52 §11.2, 40 §5).
 > Depois: demais motores com prova própria e matriz integrada; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
@@ -82,7 +82,7 @@ testes      1284 Rust no gate completo estrito de 2026-10-22 (40.7 §7.342);
             1278 Rust na 0.4.1h4b2b3 em 2026-10-22 (§7.340), gate completo estrito verde com target independente.
             1297 Rust na 0.4.1h4b2b4b1 em 2026-10-22 (§7.343), gate rápido estrito verde em cópia isolada.
             1297 Rust na 0.4.1h4b2b4b2 em 2026-10-22 (§7.344), gate completo estrito verde em cópia isolada.
-            1311 Rust na 0.4.1h4b2b4e em 2026-10-23 (§7.350); 1300 no último gate completo (§7.345).
+            1315 Rust na 0.4.1h4b2b4f/g em 2026-10-23 (§7.351); 1300 no último gate completo (§7.345).
 ```
 
 Os comandos que medem estão no
@@ -122,7 +122,7 @@ física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-2
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e). Próxima: `idf.py flash` nativo (d3), um motor por recorte (52 §14.32); depois a matriz integrada e a recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.41 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.350 |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f). Próxima: `idf.py flash` nativo (d3), um motor por recorte (52 §14.32); depois a matriz integrada e a recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.42 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.351 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
@@ -539,6 +539,14 @@ qualidade de Embarcados       DECISAO DO AUTOR em 2026-10-23: bare metal e Linux
                              Gravacao em hardware real fica com colaboradores;
                              software provado aqui. Estimativa do autor: ~2
                              meses ate Embarcados polido com os algoritmos.
+varredura de idioma           DECISAO DO AUTOR em 2026-10-23: a traducao do
+(2026-10-23)                 legado de identificadores em portugues (V-3 QML,
+                             V-4 Rust, Python e shell; 14.409 ocorrencias na
+                             linha de base) fica para a edicao especial depois
+                             da 0.4.9 ("nao faz sentido atrasarmos o
+                             desenvolvimento da versao agora"). Substitui o
+                             "entre fatias de produto" do 53 §13.0 item 3.
+                             O gate continua barrando identificador novo.
 ```
 
 ## 7. O registro das entregas

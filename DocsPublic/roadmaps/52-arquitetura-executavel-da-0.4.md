@@ -4865,3 +4865,85 @@ descrito. Validação na IDE, na bancada, com o core desta fatia:
 de novo e mostra em vermelho "o .clangd já ignora os headers do FreeRTOS",
 como se fosse um erro. O core responde corretamente (INVALID_PARAMS, ação
 já aplicada); falta a UI tratar esse estado como sucesso.
+
+### 14.42 0.4.1h4b2b4f — o kit de um chip Xtensa da Espressif usa o compilador do chip (desenho, 2026-10-23)
+
+**Problema (medido em 2026-10-23).** O kit da bancada fixa
+`xtensa-esp-elf-gcc` e `xtensa-esp-elf-gxx`, os drivers genéricos da
+instalação Xtensa da Espressif (esp-15.2.0). A CDB do ESP-IDF usa
+`xtensa-esp32-elf-gcc`, o wrapper do chip na mesma pasta, e o Project Health
+avisa "A configuração do kit difere do build" (deriva de compilador, §14.11).
+O aviso é verdadeiro, e mais sério do que parecia. Sem `-mdynconfig`, o
+driver genérico compila para um núcleo Xtensa big-endian
+(`__BYTE_ORDER__ __ORDER_BIG_ENDIAN__`, 345 macros predefinidas). O wrapper
+do ESP32 compila para o little-endian do chip (341 macros, `__FP_FAST_FMAF` e
+afins). Quem usa o compilador do kit (configure de um projeto CMake genérico,
+`--query-driver` do clangd, inspetor) recebe macros de outro núcleo. Evidência:
+`/home/hugh/.cache/kinein-h4b2b4f-proofs/{generic,esp32}.macros`.
+
+**Desenho.** Mudança no dono da resolução do kit (`Toolchain::resolve_kit`).
+
+- **A troca.** Quando:
+  - o chip do kit é um Xtensa da Espressif (`esp32`, `esp32s2` ou
+    `esp32s3`);
+  - o papel de compilador C ou C++ resolve para o driver genérico
+    (`xtensa-esp-elf-gcc` ou `xtensa-esp-elf-g++`);
+  - existe o executável irmão `xtensa-<chip>-elf-gcc` ou `-g++` na mesma
+    pasta;
+
+  então `resolved_path` passa a ser o do irmão. O id e o rótulo do candidato
+  não mudam.
+- **O que não muda.**
+  - Sem chip no kit, ou com o irmão ausente, nada muda, e a deriva continua
+    visível.
+  - Os chips RISC-V (`esp32c*`, `esp32h*`, `esp32p4`) usam
+    `riscv32-esp-elf-gcc` com `-march` e não têm wrapper por chip.
+- **Consumidores.** Configure, `program_for`, `effective_program` e deriva
+  passam a ver o mesmo compilador da CDB do ESP-IDF.
+
+**Validação planejada.**
+
+- Unitários com uma instalação falsa:
+  - com o chip, a troca acontece;
+  - sem o chip, não acontece;
+  - com o irmão ausente, não acontece;
+  - em chip RISC-V, não acontece;
+  - em compilador de outra família, não acontece.
+- Despacho de `toolchain.get` e do contexto do arquivo (`index.context`) num
+  projeto ESP-IDF falso: a deriva some quando a CDB usa o wrapper.
+- Mutações.
+- Na IDE, na bancada, o aviso do Project Health some.
+
+**Segurança da troca (decidido na implementação).** O nome do irmão é
+montado a partir do `chip` do kit, que vem do `.kinein/toolchain.json` do
+projeto. Um repositório clonado poderia trazer um chip como `x/../escape` e
+fazer o kit executar um arquivo qualquer como compilador. Hoje o kit só
+escolhe ferramentas por id do catálogo. Por isso, a troca só acontece para os
+três chips da lista, e o teste cobre um chip fora da lista que alcançaria um
+executável existente. Uma mutação que aceitava `esp32c3` na lista sobreviveu
+enquanto o teste não tinha esse caso; o caso foi acrescentado.
+
+**Regressão achada na validação, corrigida na mesma fatia.** Com o kit no
+driver do chip, a IDE mostrou `pp_file_not_found In included file:
+'stddef.h' file not found`. A causa:
+- o `.clangd` da bancada, escrito à mão em 2026-10-19, fixa `Compiler:` no
+  driver genérico, para casar com o kit antigo;
+- o core passava ao clangd `--query-driver` só com o compilador efetivo,
+  agora o do chip;
+- sem permissão de consultar o genérico, o clangd perdia os headers internos.
+
+Correção: `chip::generic_sibling`. Quando o compilador efetivo é o driver
+Xtensa de um chip, o `--query-driver` lista também o genérico irmão da mesma
+instalação. As binutils (`size`, `objcopy`) existem com o prefixo de cada
+chip (medido), então o prefixo derivado do compilador efetivo continua
+válido.
+
+**Feito em 2026-10-23 (40.7 §7.351).** Na IDE, na bancada, com o core desta
+fatia:
+- o aviso de deriva do Project Health não aparece mais;
+- a aba Problemas mostra "Nenhum problema", depois da correção do
+  `--query-driver`.
+
+Gate rápido estrito no QA, rodado com a fatia h4b2b4g: 1.315 Rust, 8 CTest, 170
+harnesses, C++, Clippy e qmllint limpos.
+

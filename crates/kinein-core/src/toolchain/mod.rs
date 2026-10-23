@@ -31,6 +31,7 @@
 
 mod arguments;
 mod catalog;
+mod chip;
 mod export;
 pub mod import;
 pub mod install;
@@ -130,6 +131,12 @@ impl Toolchain {
                 } else {
                     (resolved_path, effective_id)
                 };
+            let resolved_path = chip::chip_driver(
+                *role,
+                effective_id.as_deref(),
+                resolved_path,
+                kit.chip.as_deref(),
+            );
 
             selections.push(ToolchainSelection {
                 role: *role,

@@ -60,9 +60,15 @@ impl Toolchain {
         for role in [ToolchainRole::CCompiler, ToolchainRole::CxxCompiler] {
             if let Some((id, path)) = self.effective_program(role)
                 && !NATIVOS.contains(&id)
-                && !drivers.iter().any(|d| d == path)
             {
-                drivers.push(path.to_owned());
+                // The chip's Xtensa driver also allows its generic sibling (52 §14.42).
+                for driver in
+                    std::iter::once(path.to_owned()).chain(super::chip::generic_sibling(path))
+                {
+                    if !drivers.contains(&driver) {
+                        drivers.push(driver);
+                    }
+                }
             }
         }
         if !drivers.is_empty() {

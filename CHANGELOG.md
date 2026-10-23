@@ -32,6 +32,12 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **O kit de um ESP32 usa o compilador do chip (0.4.1h4b2b4f, 2026-10-23):**
+  com o chip `esp32`, `esp32s2` ou `esp32s3` no kit, o compilador Espressif
+  Xtensa genérico passa a ser o do chip, o mesmo que o build do ESP-IDF usa.
+  O genérico, sem configuração do núcleo, compilava para um Xtensa
+  big-endian. O aviso "a configuração do kit difere do build" some quando os
+  dois coincidem.
 - **clangd do ESP-IDF sem trocar os headers do FreeRTOS (0.4.1h4b2b4e, 2026-10-23):**
   numa ação de configuração recomendada para projetos ESP-IDF, a IDE
   acrescenta ao `.clangd` uma regra que impede o clangd de sugerir remover

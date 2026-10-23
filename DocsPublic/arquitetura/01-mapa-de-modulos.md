@@ -268,6 +268,7 @@ flowchart LR
   n_core_test --> n_core_process
   n_core_test --> n_core_python
   n_core_toolchain --> n_core_platform
+  n_core_toolchain --> n_core_run
   n_core_toolchain --> n_core_tools
   n_core_tools --> n_core_msvc
   n_core_tools --> n_core_platform
@@ -277,7 +278,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 134 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 135 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -332,7 +333,7 @@ flowchart LR
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
-| `toolchain` | platform, tools | Toolchain: |
+| `toolchain` | platform, run, tools | Toolchain: |
 | `tools` | msvc, platform | External tool detection. |
 | `workspace` | fsops, platform, python | Workspace opening, project kind detection, and metadata persistence. |
 
