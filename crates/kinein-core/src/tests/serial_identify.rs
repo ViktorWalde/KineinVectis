@@ -181,6 +181,27 @@ fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
             .contains("esptool flash-id"),
         "{alvo}"
     );
+    // 52 §14.43: with an ESP-IDF project open, the suggested monitor is the one
+    // `serial.monitor` opens there (the IDF Monitor), not the chip family's.
+    let project = c.dir.join("project");
+    std::fs::create_dir_all(&project).unwrap();
+    std::fs::write(
+        project.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.16)\n\
+         include($ENV{IDF_PATH}/tools/cmake/project.cmake)\nproject(app)\n",
+    )
+    .unwrap();
+    let opened = c.core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({ "path": project })),
+    ));
+    assert!(opened.response().error.is_none());
+    let device = c.port.display().to_string();
+    assert!(c.identify(json!({ "device": device })).error.is_none());
+    let target = c.identified()["target"].clone();
+    assert_eq!(target["flashEngine"], "esptool", "{target}");
+    assert_eq!(target["monitor"], "idf.py", "{target}");
     check_rom_retry();
 }
 

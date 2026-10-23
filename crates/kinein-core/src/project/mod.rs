@@ -180,11 +180,12 @@ fn deduzir_alvo(
 /// O alvo que um CHIP LIDO PELO CANAL sugere (E5, `serial.identify`).
 ///
 /// As mesmas tabelas de familia e motores do `project.model`, com a evidencia
-/// dizendo de onde o chip veio. E' SUGESTAO — vira kit so' no clique do
-/// usuario (`toolchain.setKit`), porque o modelo do projeto continua mandando
-/// no que o projeto E'.
+/// dizendo de onde o chip veio, e o framework do projeto aberto: o monitor
+/// sugerido e' o que `serial.monitor` abre nele (52 §14.43). E' SUGESTAO —
+/// vira kit so' no clique do usuario (`toolchain.setKit`), porque o modelo do
+/// projeto continua mandando no que o projeto E'.
 #[must_use]
-pub fn alvo_do_chip(chip: &str, evidencia: &str) -> TargetModel {
+pub fn target_from_chip(chip: &str, evidencia: &str, framework: Option<Framework>) -> TargetModel {
     let mut alvo = TargetModel {
         chip: Some(chip.to_owned()),
         evidence: vec![format!("chip: {evidencia}")],
@@ -194,7 +195,7 @@ pub fn alvo_do_chip(chip: &str, evidencia: &str) -> TargetModel {
     if let Some(f) = &alvo.family {
         alvo.evidence.push(format!("familia: {f}"));
     }
-    let (gravar, monitor, debug, porque) = motores(alvo.family.as_deref(), Some(chip), None);
+    let (gravar, monitor, debug, porque) = motores(alvo.family.as_deref(), Some(chip), framework);
     alvo.flash_engine = gravar.map(str::to_owned);
     alvo.monitor = monitor.map(str::to_owned);
     alvo.debug_adapter = debug.map(str::to_owned);
@@ -317,18 +318,18 @@ fn motores(
         Some(Framework::PlatformIo) => {
             return (
                 Some("platformio"),
-                Some("serial"),
+                Some("platformio"),
                 Some("gdb"),
                 Some("motores: pio run -t upload / pio device monitor / pio debug".to_owned()),
             );
         }
         Some(Framework::MicroPython) => {
-            return (Some("esptool"), Some("serial"), None, Some("motores: firmware pelo esptool/UF2; REPL pelo mpremote; sem depurador (MicroPython não tem DAP)".to_owned()));
+            return (Some("esptool"), Some("mpremote"), None, Some("motores: firmware pelo esptool/UF2; REPL pelo mpremote; sem depurador (MicroPython não tem DAP)".to_owned()));
         }
         _ => {}
     }
     let chip_baixo = chip.map(str::to_ascii_lowercase).unwrap_or_default();
-    match familia {
+    let engines = match familia {
         Some("espressif") => {
             let usb_jtag = [
                 "esp32c3", "esp32c6", "esp32h2", "esp32s3", "esp32c5", "esp32p4", "esp32c61",
@@ -379,5 +380,17 @@ fn motores(
             ),
         ),
         _ => (None, None, None, None),
+    };
+    // O ESP-IDF grava e depura pela familia, mas o monitor e' o IDF Monitor:
+    // o que `serial.monitor` abre num projeto ESP-IDF (52 §14.43).
+    if framework == Some(Framework::EspIdf) {
+        let (flash, _, debug, reason) = engines;
+        return (
+            flash,
+            Some("idf.py"),
+            debug,
+            reason.map(|reason| format!("{reason}; monitor: idf.py monitor (IDF Monitor)")),
+        );
     }
+    engines
 }

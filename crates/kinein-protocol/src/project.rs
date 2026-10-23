@@ -219,7 +219,9 @@ pub struct TargetModel {
     /// `west`, `platformio`, `openocd`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub flash_engine: Option<String>,
-    /// Suggested monitor: `espflash`, `serial`, `rtt`.
+    /// Suggested monitor: what `serial.monitor` opens for the project —
+    /// `idf.py` (ESP-IDF), `platformio`, `mpremote` (`MicroPython`) — or, without
+    /// a framework, the family's: `espflash`, `serial`, `rtt` (52 §14.43).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub monitor: Option<String>,
     /// Suggested DAP adapter: `probe-rs`, `gdb`.

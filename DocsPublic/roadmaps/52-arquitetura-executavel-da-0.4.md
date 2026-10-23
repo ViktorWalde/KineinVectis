@@ -4947,3 +4947,46 @@ fatia:
 Gate rápido estrito no QA, rodado com a fatia h4b2b4g: 1.315 Rust, 8 CTest, 170
 harnesses, C++, Clippy e qmllint limpos.
 
+### 14.43 0.4.1h4b2b4g — o monitor sugerido segue o que o projeto abre (desenho, 2026-10-23)
+
+**Problema.** Na aba Placa, a identificação da ESP32 da bancada sugere
+"monitor: espflash", mas o Monitor serial abre `idf.py monitor`. O
+`serial::monitor::escolher` põe o wrapper do framework primeiro desde a
+0.117.0: IDF Monitor no ESP-IDF, `pio device monitor` no PlatformIO, e o REPL
+pelo `mpremote` num MicroPython detectado. Já o campo de sugestão
+`TargetModel.monitor` nunca acompanhou essa mudança:
+
+- o `project.model` de um ESP-IDF cai na tabela da família `espressif` e
+  sugere espflash;
+- PlatformIO e MicroPython sugerem "serial";
+- a identificação pelo canal (`alvo_do_chip`, agora `target_from_chip`) nem recebe o framework.
+
+A sugestão e o gesto discordam.
+
+**Desenho (sem mudança de forma).**
+
+- **`motores`.**
+  - Num ESP-IDF, o motor de gravação e o depurador continuam vindo da
+    família, mas o monitor passa a ser `idf.py`, e a evidência diz "monitor:
+    idf.py monitor (IDF Monitor)".
+  - O PlatformIO sugere `platformio` e o MicroPython sugere `mpremote`: os
+    mesmos nomes que o `serial.monitor` abre.
+- **Identificação.** `target_from_chip` (antes `alvo_do_chip`) recebe o framework principal do projeto
+  aberto, e `serial.identify` o calcula antes de iniciar o job.
+- **Contrato.** `TargetModel.monitor` continua sendo texto de sugestão. Os
+  valores documentados passam a incluir `idf.py`, `platformio` e `mpremote`.
+
+**Validação planejada.**
+
+- Unitário de `target_from_chip` com cada framework e sem framework.
+- Despacho de `serial.identify` antes e depois de abrir um projeto ESP-IDF:
+  espflash e depois `idf.py`.
+- O teste do modelo ESP-IDF passa a esperar `idf.py`.
+- Mutações.
+- Na IDE: Identificar na bancada mostra "monitor: idf.py".
+
+**Feito em 2026-10-23 (40.7 §7.352).** Implementado como desenhado. Na IDE,
+Identificar na bancada mostra "sugere: chip esp32 · espressif · gravar:
+esptool, monitor: idf.py", o mesmo monitor que o botão abre. Gate rápido
+estrito no QA, junto da §14.42: 1.315 Rust, 8 CTest, 170 harnesses, C++,
+Clippy e qmllint limpos.

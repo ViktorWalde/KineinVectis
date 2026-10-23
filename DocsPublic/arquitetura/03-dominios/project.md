@@ -43,6 +43,16 @@ marcador que **decide** (`.cargo/config.toml` com o triple, não um `memory.x`
 solto) e, empatando, o mais raso. Um `CMakeLists.txt` comum **não** é
 embarcado; um `main.py` que não importa hardware **não** é MicroPython.
 
+**O monitor sugerido (`TargetModel.monitor`) é o que o `serial.monitor` abre
+(correção de 2026-10-23, 52 §14.43, sem mudança de forma).** Os valores são:
+- `idf.py` num ESP-IDF, que continua com o motor de gravação e o depurador da
+  família;
+- `platformio` num PlatformIO;
+- `mpremote` num MicroPython;
+- sem framework, os da família: `espflash`, `serial` ou `rtt`.
+
+O alvo que o `serial.identify` sugere usa o framework do projeto aberto.
+
 A execução e o monitor MicroPython seguem o **primeiro framework** do
 mesmo modelo (correção de 2026-10-20, sem mudança de formato). Quando ESP-IDF
 ou PlatformIO é o principal, um exemplo MicroPython aninhado continua como

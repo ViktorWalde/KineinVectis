@@ -813,7 +813,7 @@ crates/kinein-core/src/handlers/runconfig.rs	imagem	2
 crates/kinein-core/src/handlers/runconfig.rs	mensagem	1
 crates/kinein-core/src/handlers/runconfig.rs	proposta	2
 crates/kinein-core/src/handlers/serial.rs	acesso	1
-crates/kinein-core/src/handlers/serial.rs	alvo	3
+crates/kinein-core/src/handlers/serial.rs	alvo	2
 crates/kinein-core/src/handlers/serial.rs	comando	2
 crates/kinein-core/src/handlers/serial.rs	escolha	6
 crates/kinein-core/src/handlers/serial.rs	escolher	1
@@ -1096,7 +1096,7 @@ crates/kinein-core/src/project/esp.rs	sufixos	2
 crates/kinein-core/src/project/esp.rs	sufs	2
 crates/kinein-core/src/project/esp.rs	tamanho	3
 crates/kinein-core/src/project/esp.rs	texto	18
-crates/kinein-core/src/project/mod.rs	alvo	13
+crates/kinein-core/src/project/mod.rs	alvo	12
 crates/kinein-core/src/project/mod.rs	ambiente	2
 crates/kinein-core/src/project/mod.rs	baixo	9
 crates/kinein-core/src/project/mod.rs	deduzir	2

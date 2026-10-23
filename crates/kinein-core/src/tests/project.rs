@@ -184,7 +184,8 @@ fn the_target_carries_its_evidence_and_the_kit_chip_wins_over_the_framework() {
     assert_eq!(m.target.chip.as_deref(), Some("esp32c3"));
     assert_eq!(m.target.family.as_deref(), Some("espressif"));
     assert_eq!(m.target.flash_engine.as_deref(), Some("esptool"));
-    assert_eq!(m.target.monitor.as_deref(), Some("espflash"));
+    // O monitor sugerido e' o que `serial.monitor` abre num ESP-IDF (52 §14.43).
+    assert_eq!(m.target.monitor.as_deref(), Some("idf.py"));
     assert_eq!(m.target.debug_adapter.as_deref(), Some("probe-rs"));
     assert!(
         m.target
@@ -640,4 +641,34 @@ fn build_size_reports_the_esp_idf_app_partition_as_the_flash_region() {
         .unwrap_or_else(|| panic!("sem regiao da partição: {regioes:?}"));
     assert_eq!(app["used"], 123_456);
     assert_eq!(app["size"], 1024 * 1024);
+}
+
+/// 52 §14.43: the suggested monitor is what `serial.monitor` opens for the
+/// project's framework; without one, the chip family decides.
+#[test]
+fn the_suggested_monitor_follows_the_framework() {
+    use kinein_protocol::Framework;
+    let monitor = |framework| {
+        crate::project::target_from_chip("esp32", "fixture", framework)
+            .monitor
+            .unwrap_or_default()
+    };
+    assert_eq!(monitor(None), "espflash");
+    assert_eq!(monitor(Some(Framework::EspIdf)), "idf.py");
+    assert_eq!(monitor(Some(Framework::PlatformIo)), "platformio");
+    assert_eq!(monitor(Some(Framework::MicroPython)), "mpremote");
+    let esp_idf = crate::project::target_from_chip("esp32c3", "fixture", Some(Framework::EspIdf));
+    assert_eq!(esp_idf.flash_engine.as_deref(), Some("esptool"));
+    assert_eq!(
+        esp_idf.debug_adapter.as_deref(),
+        Some("probe-rs"),
+        "the family still decides"
+    );
+    assert!(
+        esp_idf
+            .evidence
+            .iter()
+            .any(|line| line.contains("idf.py monitor")),
+        "{esp_idf:?}"
+    );
 }

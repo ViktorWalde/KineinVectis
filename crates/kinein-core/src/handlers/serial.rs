@@ -246,6 +246,11 @@ impl Core {
                 Ok(reservation) => reservation,
                 Err(error) => return JsonRpcResponse::failure(request_id, error),
             };
+        // O monitor sugerido segue o framework do projeto aberto (52 §14.43).
+        let framework = self
+            .workspace_root()
+            .map(|root| self.compute_project_model(&root))
+            .and_then(|model| model.frameworks.first().map(|info| info.framework));
         let (programa, args) = identify::command_line(&esptool, &device, identify::FLASH_ID_V5);
         let comando = identify::display(&programa, &args);
         let job_id = jobs.spawn(
@@ -256,7 +261,7 @@ impl Core {
             true,
             move |ctx| {
                 let runner = job::Runner::new(ctx, reservation);
-                identificar(runner, &esptool, &device)
+                identificar(runner, &esptool, &device, framework)
             },
         );
         JsonRpcResponse::success(
@@ -271,7 +276,12 @@ impl Core {
 
 /// O corpo do job: roda o `flash-id` (v5; cai para o `flash_id` da v4 se a
 /// ferramenta nao conhece o comando), le a saida e emite o desfecho.
-fn identificar(runner: job::Runner<'_>, esptool: &Path, device: &str) -> jobs::JobOutcome {
+fn identificar(
+    runner: job::Runner<'_>,
+    esptool: &Path,
+    device: &str,
+    framework: Option<kinein_protocol::Framework>,
+) -> jobs::JobOutcome {
     let ctx = runner.context();
     let deadline = Instant::now() + IDENTIFY_TIMEOUT;
     let mut subcommand = identify::FLASH_ID_V5;
@@ -310,10 +320,9 @@ fn identificar(runner: job::Runner<'_>, esptool: &Path, device: &str) -> jobs::J
     } else {
         Some(job::ultimas_linhas(&attempt.raw, "esptool"))
     };
-    let target = identity
-        .chip
-        .as_deref()
-        .map(|chip| crate::project::alvo_do_chip(chip, "esptool flash-id pela porta serial"));
+    let target = identity.chip.as_deref().map(|chip| {
+        crate::project::target_from_chip(chip, "esptool flash-id pela porta serial", framework)
+    });
     drop(runner);
     ctx.emit_event(
         "event.serial.identified",
