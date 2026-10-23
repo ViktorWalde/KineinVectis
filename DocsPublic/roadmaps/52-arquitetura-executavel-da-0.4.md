@@ -764,6 +764,7 @@ abaixo é plano, não lista de funcionalidades concluídas.
 | Ordem | Marco/fatia | Dependência e entrega | Condição para seguir |
 | --- | --- | --- | --- |
 | 1 — próxima | 0.4.1h4b2: gravação/ocupação | Usar runconfig preservado e reserva serial existentes; intenção tipada/schema 2, adaptação por versão/capacidade e recuperação com identidade verificada (§14.27) | UI/core revalidam contexto, artefato e porta; sem parsing de shell salvo nem migração na abertura; matriz serial e limitações registradas |
+| 1b | 0.4.1s: assistente semântico (decisão do autor, 2026-10-23) | Depois de h4b2, antes do Setup. S0 desenho/corpus e S1 verificador de correções antes de qualquer regra; S2 regras de framework; S3 contexto; S4 servir Setup, kits, construir/C, Quality Center e gravação (§11.2) | Nenhuma sugestão da IDE que quebre o build passa sem aviso no corpus; métricas, mutação e prova em projetos reais; sem regra sem teste |
 | 2 | 0.4.1: Setup S1/S2 | Migrar ao dock **e reformular Instalar Ferramentas na mesma frente**, com busca, filtros, categorias, estados, fonte e revisão dos comandos | Guia e acessos anteriores preservados, retorno ao editor, teclado, erro/recuperação e envio explícito ao Terminal; sem depender de ROS 2 |
 | 3 | 0.4.1: kits/schema 3 | Depois dos bloqueadores de orquestração e Setup; completar contexto e configuração dos kits no dono atual | Origem e valor efetivo coerentes, formatos legados preservados, migração somente explícita |
 | 4 | 0.4.2: construir/C + Q1 | Build/test/check PlatformIO, cache/Bear/tamanho e assistente C no escopo do marco; expor build/lint/testes já existentes no Quality Center | Cada jornada nova fecha com UI; Q1 reusa rigor, Jobs e resultados, com ferramentas ausentes explicadas |
@@ -821,6 +822,78 @@ Pontos funcionais de contexto/artefatos/operação acompanham h4b2 e integraçõ
 acabamento na 0.4.8 e edição especial. Preservar o feedback do §14.16.
 Não bloqueia trabalho autorizado independente do desenho, nem permite usar
 aceite de protótipo/agente como aprovação visual do autor.
+
+### 11.2 Etapa 1b — assistente semântico (decisão do autor, 2026-10-23)
+
+**Decisão (40 §5).** A IDE ganha um algoritmo próprio que entende a semântica
+e o contexto do projeto e atua junto das ferramentas que ela orquestra: LSP,
+compiladores, build e gravadores. Ele complementa essas ferramentas e não as
+substitui. Uma sugestão da IDE não pode quebrar o build do desenvolvedor, e o
+algoritmo só entra depois de uma fase de testes rigorosa. O caso de origem é o
+include-cleaner do clangd trocando `freertos/FreeRTOS.h` (§14.41).
+
+**Por que nesta posição.** Ele entra depois de fechar a h4b2 e antes do Setup
+(linha 2). Assim, Setup, kits, construir/C e assistente C, Quality Center e a
+consolidação de Embarcados (0.4.3–0.4.6) já nascem consultando o
+verificador, sem que cada um traga uma heurística própria. A h4b2 continua
+primeiro porque fecha um caminho com efeitos físicos já começado.
+
+**Fases.** Cada fase é uma ou mais fatias, com desenho antes do código, gate
+e commit próprios.
+
+- **S0 — Desenho e corpus.** Uma especificação própria, com:
+  - o modelo de "sugestão": correção do LSP, ação de configuração, linha de
+    build ou gravação, comando do Setup;
+  - o veredito de cada sugestão: segura, arriscada ou quebra, com a
+    evidência;
+  - o orçamento de tempo e o comportamento quando não há como verificar.
+
+  O corpus de teste reúne projetos reais e realistas de bare metal e Linux
+  embarcado: ESP-IDF, Zephyr, pico-sdk, STM32/CMake, PlatformIO, MicroPython,
+  Buildroot/Yocto e C/C++ de host. Cada caso tem a sugestão e o desfecho
+  esperado, medidos por build real.
+- **S1 — Verificador de correções.** Antes de oferecer ou aplicar uma
+  correção do LSP, o core:
+  1. aplica a edição só na memória;
+  2. obtém os diagnósticos da versão editada pelo próprio servidor, num
+     documento-sombra, ou pela compilação `-fsyntax-only` com as flags da
+     CDB;
+  3. compara os diagnósticos com os de antes.
+
+  Uma correção que introduz erro aparece como "quebra", com o diagnóstico,
+  e não é aplicada sem confirmação explícita. Sem como verificar, o veredito
+  é "não verificado", nunca "segura".
+- **S2 — Regras de framework.** As regras são declarativas e versionadas
+  por SDK, como a ordem de includes do FreeRTOS, os headers-guarda-chuva, os
+  componentes do ESP-IDF, o devicetree do Zephyr e o pico-sdk. Cada regra é
+  provada contra o código-fonte do SDK e por build real, e regra sem teste
+  não entra.
+- **S3 — Contexto.** O modelo do projeto, a CDB, o kit, a versão do SDK, o
+  alvo e o build decidem quais regras valem. O mesmo mecanismo explica o
+  veredito.
+- **S4 — Consumidores.** O verificador passa a servir as ações de
+  configuração, as prévias de build e gravação (as recusas da §14.38–§14.41
+  viram casos do verificador), o Setup e o Quality Center.
+
+**Critérios de saída.**
+
+- Corpus completo verde: nenhuma sugestão que quebra o build é apresentada
+  como segura.
+- Taxa de falso "quebra" medida e registrada.
+- Mutações nas regras e no verificador reprovam.
+- O tempo de verificação fica dentro do orçamento da S0, medido.
+- Prova na IDE real.
+
+**Qualidade de Embarcados (mesma decisão).** Bare metal e Linux embarcado não
+saem da 0.4 com bugs críticos, nem com "bugs bobos" que um teste de uso real,
+ou uma simulação realista, evitaria. Cada jornada fecha com teste de uso: um
+projeto real ou uma fixture realista, a ferramenta real quando houver, e
+mutação. A matriz de gravação em hardware fica com os colaboradores, mas o
+caminho de software é provado aqui com ferramentas reais e o ESP32 liberado.
+
+**Horizonte.** Pela estimativa do autor, cerca de dois meses até Embarcados,
+com os algoritmos auxiliares, ficar polido no software. É uma estimativa, não
+um prazo de corte de qualidade.
 
 ## 12. Pontos de rollback
 
@@ -4702,3 +4775,93 @@ podem ser vinculadas.
   - mudar o texto do contador (build D);
   - "Gravar na placa": a saída mostra a compilação e o fast reflash;
   - o monitor mostra o ELF SHA256 de D.
+
+### 14.41 0.4.1h4b2b4e — clangd do ESP-IDF sem trocar os headers do FreeRTOS (desenho, 2026-10-23)
+
+**Problema (medido em 2026-10-23, 52 §14.37).** Num projeto ESP-IDF, o
+include-cleaner do clangd marca `#include "freertos/FreeRTOS.h"` como não
+usado, porque os símbolos usados vêm dos headers que ele inclui, e o painel
+Problemas oferece as correções do servidor.
+
+A reprodução usou o core real (`lsp.didChange` → `lsp.codeActions` →
+`lsp.applyCodeAction`, só a prévia, nada escrito) e o esp-clangd 21.1.3 que a
+IDE usa no ambiente ativado:
+
+- Com a configuração de usuário do autor (`UnusedIncludes: Strict`), a ação
+  oferecida é "remove #include directive". Ela só remove a linha.
+- Com `MissingIncludes: Strict`, também aparece "fix all includes", que troca
+  o `FreeRTOS.h` por `<stdint.h>` e `freertos/projdefs.h`.
+
+As duas quebram o build: `task.h:38` faz
+`#error "include FreeRTOS.h must appear in source files before include
+task.h"`. A IDE repassa fielmente o que o servidor oferece; falta ao clangd o
+contrato do FreeRTOS, que os headers do ESP-IDF não declaram com pragmas IWYU.
+
+**Desenho.** A correção é de configuração, no dono das mudanças de
+configuração do projeto (`configAction`), com prévia e consentimento.
+
+- **A ação.** Nova ação `espidf.clangdFreeRtos` ("Clangd: manter os headers
+  do FreeRTOS"), no escopo CMake (um projeto ESP-IDF é CMake), categoria
+  ESP-IDF, risco baixo e efeito `edit`. Ela afeta só `.clangd` e acrescenta
+  ao arquivo do projeto, ou cria, este fragmento:
+
+  ```yaml
+  Diagnostics:
+    Includes:
+      IgnoreHeader:
+        - 'freertos/.*'
+  ```
+
+  Num `.clangd` existente, o fragmento entra depois de um separador `---`.
+  O clangd lê vários fragmentos num mesmo arquivo, então o texto do usuário
+  fica intacto. A prévia mostra o antes e o depois, e o `apply` usa a barreira
+  `FILE_CHANGED` existente.
+- **Por que o padrão.** No ESP-IDF v6.1, todos os headers do FreeRTOS ficam
+  sob `include/freertos/`, inclusive `FreeRTOSConfig.h` e `portmacro.h`. Com o
+  fragmento:
+  - o clangd deixa de marcar e de oferecer trocar esses headers;
+  - continua sugerindo `<stdint.h>` para `uint32_t`, uma sugestão correta.
+
+  Medido com o fragmento numa configuração temporária.
+- **Estado.**
+  - "recomendada" quando o projeto é ESP-IDF, pela regra de `project::detect`,
+    e o `.clangd` não tem `IgnoreHeader` com `freertos/`;
+  - "já aplicada" quando tem;
+  - indisponível, com o motivo, fora do ESP-IDF.
+- **Depois do `apply`.** A mensagem lembra de reiniciar o servidor de
+  linguagem (`lsp.restart`) para reler o arquivo. A ação não reinicia o
+  servidor sozinha.
+
+**Fora desta fatia.** O algoritmo semântico que confere uma correção antes de
+aplicá-la, por diagnósticos da edição simulada e por regras de framework, é
+decisão do autor de 2026-10-23 (40 §5). Ele tem desenho próprio e generaliza
+este caso; esta fatia resolve o caso medido na origem, pela configuração.
+
+**Validação planejada.**
+
+- Unitários: o plano cria o arquivo, acrescenta depois do separador, não
+  muda o texto existente, recusa quando já aplicado, e cobre os estados.
+- Despacho por `configAction.list`, `preview` e `apply`, com a barreira.
+- Mutações.
+- Na IDE, na bancada:
+  - a ação aparece como recomendada;
+  - prévia e aplicação;
+  - depois de reiniciar o servidor, o aviso sobre `FreeRTOS.h` some do painel
+    Problemas.
+
+**Feito em 2026-10-23 (40.7 §7.350).** O desenho foi implementado como
+descrito. Validação na IDE, na bancada, com o core desta fatia:
+
+1. Antes, a aba Problemas mostra `main/main.c:2 unused-includes Included
+   header FreeRTOS.h is not used directly`.
+2. Em Ctrl+Alt+P, a ação aparece como recomendada.
+3. A prévia mostra o `.clangd` existente intacto, o `---` e o fragmento.
+4. "Ativar" acrescenta exatamente esse fragmento (conferido por `diff`), e o
+   estado passa a "ativa neste projeto".
+5. Depois de "LSP: Reiniciar servidor", a aba Problemas mostra "Nenhum
+   problema".
+
+**Observado, para a etapa de UI:** depois de aplicar, o diálogo pede a prévia
+de novo e mostra em vermelho "o .clangd já ignora os headers do FreeRTOS",
+como se fosse um erro. O core responde corretamente (INVALID_PARAMS, ação
+já aplicada); falta a UI tratar esse estado como sucesso.

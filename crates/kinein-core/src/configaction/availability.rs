@@ -17,7 +17,7 @@ use kinein_protocol::{
 };
 
 use super::catalog::ActionDefinition;
-use super::{builddir, cargotoml, cmakelists, presets};
+use super::{builddir, cargotoml, clangd, cmakelists, presets};
 
 /// O que o workspace diz sobre si, lido UMA vez por `configAction.list`.
 pub(super) struct WorkspaceFacts {
@@ -42,6 +42,10 @@ pub(super) struct WorkspaceFacts {
     /// O kit exportavel: `Ok(true)` quando o arquivo ja' diz o mesmo; o
     /// motivo quando nao ha o que exportar (0.4.1a).
     pub(super) kit_export: Option<Result<bool, String>>,
+    /// Frameworks do projeto, pela mesma regra do modelo do projeto.
+    pub(super) frameworks: Vec<kinein_protocol::Framework>,
+    /// Conteudo do `.clangd` da raiz, quando ele existe.
+    pub(super) clangd: Option<String>,
 }
 
 impl WorkspaceFacts {
@@ -73,6 +77,11 @@ impl WorkspaceFacts {
             }),
             targets,
             cmakelists,
+            frameworks: crate::project::detect::frameworks(root)
+                .into_iter()
+                .map(|info| info.framework)
+                .collect(),
+            clangd: std::fs::read_to_string(root.join(clangd::CLANGD)).ok(),
         }
     }
 }
@@ -203,6 +212,24 @@ fn evaluate(
             "CMAKE_OBJCOPY",
             "este projeto já gera .hex/.bin depois do build",
         ),
+        "espidf.clangdFreeRtos" => match facts.clangd.as_deref() {
+            _ if !facts
+                .frameworks
+                .contains(&kinein_protocol::Framework::EspIdf) =>
+            {
+                unavailable(
+                    "o projeto não é ESP-IDF (CMakeLists.txt sem o project.cmake do IDF_PATH)"
+                        .to_owned(),
+                )
+            }
+            Some(text) if clangd::ignores_freertos(text) => already_applied(format!(
+                "o {} já ignora os headers do FreeRTOS",
+                clangd::CLANGD
+            )),
+            _ => recommended(
+                "o include-cleaner do clangd sugere trocar freertos/FreeRTOS.h, o que quebra o build",
+            ),
+        },
         "cargo.embeddedTarget" if facts.cargo_config => {
             already_applied(".cargo/config.toml já existe neste projeto".to_owned())
         }

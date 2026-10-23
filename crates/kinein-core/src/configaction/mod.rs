@@ -37,6 +37,7 @@ mod availability;
 mod builddir;
 mod cargotoml;
 mod catalog;
+mod clangd;
 mod cmakelists;
 mod error;
 mod kit;
@@ -230,6 +231,7 @@ fn build_plan(
 ) -> Result<ActionPlan, ConfigActionError> {
     match id {
         "cmake.enableCompileCommands" => cmakelists::enable_compile_commands(root),
+        "espidf.clangdFreeRtos" => clangd::freertos_includes(root),
         "cmake.exportToolchainFile" => kit::export_plan(root, inputs),
         "cmake.createDebugPreset" => {
             presets::create_configure_preset(root, "debug", "Debug", "Debug")

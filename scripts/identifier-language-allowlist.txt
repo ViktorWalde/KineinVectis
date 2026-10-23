@@ -174,3 +174,7 @@ hashlib
 hexdigest
 # efuse/efuses: eFuse, a memoria programavel uma vez dos chips Espressif (secure boot e criptografia de flash queimam eFuses; 52 §14.39).
 efuse efuses
+# freertos: FreeRTOS, o kernel de tempo real do ESP-IDF (acao do .clangd que mantem os headers dele; 52 §14.41).
+freertos
+# espidf: ESP-IDF, o framework da Espressif (escopo das acoes de configuracao do framework).
+espidf

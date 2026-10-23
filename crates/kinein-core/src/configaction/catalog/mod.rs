@@ -11,6 +11,7 @@ use kinein_protocol::{ConfigActionEffect, ConfigActionRisk, ConfigActionScope};
 
 mod cargo;
 mod cmake;
+mod espidf;
 mod platformio;
 
 /// Definicao estatica de uma acao, antes de olhar o workspace.
@@ -37,12 +38,13 @@ pub(super) struct ActionDefinition {
     pub(super) docs: &'static [(&'static str, &'static str, &'static str)],
 }
 
-/// As acoes, na ordem em que a UI as mostra: as do `CMake`, as do Cargo e as
-/// do `PlatformIO`. O tamanho de cada tabela e' trava de compilacao sobre a
+/// As acoes, na ordem em que a UI as mostra: as do `CMake`, as do ESP-IDF, as
+/// do Cargo e as do `PlatformIO`. O tamanho de cada tabela e' trava de compilacao sobre a
 /// contagem: acrescentar sem atualizar reprova no build.
 pub(super) fn definitions() -> impl Iterator<Item = &'static ActionDefinition> {
     cmake::ACTIONS
         .iter()
+        .chain(espidf::ACTIONS.iter())
         .chain(cargo::ACTIONS.iter())
         .chain(platformio::ACTIONS.iter())
 }

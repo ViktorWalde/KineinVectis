@@ -32,6 +32,12 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **clangd do ESP-IDF sem trocar os headers do FreeRTOS (0.4.1h4b2b4e, 2026-10-23):**
+  numa ação de configuração recomendada para projetos ESP-IDF, a IDE
+  acrescenta ao `.clangd` uma regra que impede o clangd de sugerir remover
+  `freertos/FreeRTOS.h` ou trocá-lo pelos headers internos. As duas sugestões
+  quebravam o build. A ação mostra a prévia antes de aplicar e mantém o texto
+  que o `.clangd` já tinha.
 - **Gravação nativa recusa build com secure boot ou criptografia de flash (0.4.1h4b2b4d2, 2026-10-23):**
   quando o build ESP-IDF habilita secure boot ou criptografia de flash, a
   gravação nativa é recusada com a explicação. O bootloader desses builds

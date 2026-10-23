@@ -156,6 +156,7 @@ flowchart LR
   n_core_configaction --> n_core_fsops
   n_core_configaction --> n_core_library
   n_core_configaction --> n_core_platform
+  n_core_configaction --> n_core_project
   n_core_configaction --> n_core_runconfig
   n_core_configaction --> n_core_toolchain
   n_core_container --> n_core_process
@@ -276,7 +277,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 133 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 134 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -292,7 +293,7 @@ flowchart LR
 | `cdb` | platform | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | msvc, platform, toolchain | Servico CMake: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
-| `configaction` | cdb, cmake, fsops, library, platform, runconfig, toolchain | Configuration Actions: |
+| `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |
 | `coverage` | platform, process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |

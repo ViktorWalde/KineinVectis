@@ -56,7 +56,14 @@ As 16 ações do MVP são as da §12 da spec de fechamento: 10 de `CMake`
 `fetchContent`, `removeTargetLinkLibraries`, as cinco de regime —
 `setCxxStandard`, `strictWarnings`, `enableSanitizers`, `enableOpenMP`,
 `generateHexBin` — e `exportToolchainFile`), 7 de Cargo (as 6 e
-`embeddedTarget`) e 1 de `PlatformIO` (`compiledb`).
+`embeddedTarget`) e 1 de `PlatformIO` (`compiledb`). **Em 2026-10-23, 28:** entra
+`espidf.clangdFreeRtos` (escopo `CMake`, categoria ESP-IDF, efeito `edit`).
+Ela é recomendada só num projeto ESP-IDF, pela regra do modelo do projeto, e
+acrescenta ao `.clangd` (ou cria) um fragmento separado por `---` com
+`Diagnostics.Includes.IgnoreHeader: ['freertos/.*']`. Com isso, o
+include-cleaner do clangd deixa de sugerir trocar `freertos/FreeRTOS.h`, o que
+quebra o build. Fica "já aplicada" quando o arquivo já tem esse
+`IgnoreHeader`, e repeti-la é INVALID_PARAMS (52 §14.41).
 
 **PlatformIO (`0.177.0`, a 0.4.0e do `roadmaps/52` §14.5).** O escopo
 `platformio` (o build system `platformIo`) e a ação `platformio.compiledb`,

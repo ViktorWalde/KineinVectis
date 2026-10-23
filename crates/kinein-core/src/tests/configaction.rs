@@ -145,10 +145,12 @@ fn the_list_is_filtered_by_the_active_build_system() {
     // As cinco de REGIME de compilacao — padrao C++, avisos rigorosos,
     // sanitizers, OpenMP e .hex/.bin — entraram em 2026-09-04, de relato de
     // uso: nao havia como deixar o compilador mais rigido pela IDE. O kit
-    // exportavel como toolchain file entrou em 2026-10-17 (0.4.1a).
-    assert_eq!(ids.len(), 19, "as 19 acoes CMake");
+    // exportavel como toolchain file entrou em 2026-10-17 (0.4.1a). A do
+    // clangd do ESP-IDF, de escopo CMake, em 2026-10-23 (52 §14.41).
+    assert_eq!(ids.len(), 20, "as 19 acoes CMake e a do ESP-IDF");
     assert!(
-        ids.iter().all(|id| id.starts_with("cmake.")),
+        ids.iter()
+            .all(|id| id.starts_with("cmake.") || id.starts_with("espidf.")),
         "projeto CMake nao pode ver acao Cargo: {ids:?}"
     );
     assert_eq!(list["activeBuildSystems"], json!(["cmake"]));
@@ -159,7 +161,7 @@ fn the_list_is_filtered_by_the_active_build_system() {
         "configAction.list",
         &json!({ "includeHiddenByScope": true }),
     );
-    assert_eq!(all_actions["actions"].as_array().unwrap().len(), 27);
+    assert_eq!(all_actions["actions"].as_array().unwrap().len(), 28);
     assert_eq!(
         action(&all_actions, "cargo.addDependency")["state"],
         "hiddenByScope"
@@ -188,9 +190,81 @@ fn a_mixed_workspace_sees_both_toolboxes() {
     open(&mut core, &dir);
 
     let list = ok(&mut core, "configAction.list", &json!({}));
-    assert_eq!(list["actions"].as_array().unwrap().len(), 26);
+    assert_eq!(list["actions"].as_array().unwrap().len(), 27);
     assert_eq!(action(&list, "cargo.addDependency")["state"], "available");
     assert_eq!(action(&list, "cmake.addExecutable")["state"], "available");
+}
+
+/// 52 §14.41: a acao do clangd do ESP-IDF e' medida, previa, aplicada e
+/// recusada de novo pelo dispatch, contra o `.clangd` real do diretorio.
+#[test]
+fn the_esp_idf_clangd_action_appends_once_and_only_in_esp_idf_projects() {
+    let plain = cmake_workspace("clangd-plain");
+    let mut core = core_with_empty_search_path("configaction-clangd-plain");
+    open(&mut core, &plain);
+    let list = ok(&mut core, "configAction.list", &json!({}));
+    assert_eq!(
+        action(&list, "espidf.clangdFreeRtos")["state"],
+        "unavailable"
+    );
+
+    let dir = temp_dir("clangd-esp-idf");
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.16)
+         include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(app)
+",
+    )
+    .unwrap();
+    let user = "CompileFlags:\n  CompilationDatabase: build\n";
+    std::fs::write(dir.join(".clangd"), user).unwrap();
+    let mut core = core_with_empty_search_path("configaction-clangd-esp-idf");
+    open(&mut core, &dir);
+    let list = ok(&mut core, "configAction.list", &json!({}));
+    assert_eq!(
+        action(&list, "espidf.clangdFreeRtos")["state"],
+        "recommended"
+    );
+
+    let preview = ok(
+        &mut core,
+        "configAction.preview",
+        &json!({ "id": "espidf.clangdFreeRtos" }),
+    );
+    let file = &preview["files"][0];
+    assert_eq!(file["path"], ".clangd");
+    let after = file["after"].as_str().unwrap();
+    let before = file["before"].as_str().unwrap();
+    assert!(
+        after.starts_with(before) && after.contains("---\n") && after.contains("'freertos/.*'")
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.join(".clangd")).unwrap(),
+        before,
+        "preview writes nothing"
+    );
+
+    let applied = ok(
+        &mut core,
+        "configAction.apply",
+        &json!({ "id": "espidf.clangdFreeRtos", "expected": [{ "path": ".clangd", "content": before }] }),
+    );
+    assert_eq!(applied["files"], json!([".clangd"]));
+    assert_eq!(std::fs::read_to_string(dir.join(".clangd")).unwrap(), after);
+    let list = ok(&mut core, "configAction.list", &json!({}));
+    assert_eq!(
+        action(&list, "espidf.clangdFreeRtos")["state"],
+        "alreadyApplied"
+    );
+    assert_eq!(
+        error_code(
+            &mut core,
+            "configAction.preview",
+            json!({ "id": "espidf.clangdFreeRtos" })
+        ),
+        JsonRpcErrorCode::InvalidParams
+    );
 }
 
 /// O estado nao e decorativo: ele muda com o que esta no disco.
