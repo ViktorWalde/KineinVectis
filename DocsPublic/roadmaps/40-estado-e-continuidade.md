@@ -11,10 +11,10 @@
 > **HANDOFF (2026-10-22). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4b2 concluída:** alvo e sonda do probe-rs nativo na aba Gravar,
-> validados na IDE real do autor (52 §14.35; 40.7 §7.344); core em §7.343.
+> **0.4.1h4b2b4b3 concluída:** depuração probe-rs na sonda escolhida em Gravar,
+> com a mesma reserva (52 §14.36; 40.7 §7.345); core b4b1 §7.343, UI b4b2 §7.344.
 > `AppMenuBar.qml`, `.directory`, `eim_config.toml` e `log/` locais preservados.
-> Protocolo **0.189.0**, binário **0.3.9**; probe-rs 0.32.0 instalado no usuário (§7.343).
+> Protocolo **0.190.0**, binário **0.3.9**; probe-rs 0.32.0 instalado no usuário (§7.343).
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
 > só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
@@ -24,13 +24,13 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate completo estrito, 0.4.1h4b2b4b2:** 1297 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **168 harnesses QML**, sem NÃO PROVADO; target isolado (§7.344).
-> UI/core debug/release, 33 superfícies por preset, primeiro frame 327/335 ms (§7.344).
-> Acesso físico continua dependente de renovar a sessão (40.7 §7.326).
+> **Último gate completo estrito, 0.4.1h4b2b4b3:** 1300 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **169 harnesses QML**, sem NÃO PROVADO; target isolado (§7.345).
+> UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
+> Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **b4b1/b4b2:** core probe-rs (stdio + probe-rs real) e UI provados; validação na tela do autor (§5).
-> **Próxima h4b2b4b3:** depuração probe-rs com o seletor escolhido e reserva da mesma sonda (52 §14.35).
+> **b4b1–b4b3:** gravação e depuração probe-rs provadas por stdio com probe-rs real e na IDE (§5).
+> **Próxima:** gravação física esptool nativa no ESP32 CP2102 liberado (§5), depois demais motores.
 > Depois: demais motores com prova própria e matriz integrada; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
@@ -48,7 +48,7 @@
 >
 > **Provas:** build ESP-IDF via core e ciclo CPython/debugpy passaram;
 > C17 passou build/run/CTest/clang-format/clangd numa fixture (52 §14.14).
-> Última medida: CP2102 com sessão sem acesso; flash físico não provado. CircuitPython,
+> CP2102 acessível desde 2026-10-22; flash físico ainda não provado. CircuitPython,
 > preferências de integração e assistente C ainda não implementados.
 > **Operação:** validação visual na IDE real do autor (§5, 2026-10-22); QA com target próprio, sem compartilhar com o principal; Xvfb só em provas automáticas
 > nem fechar a janela original. Sem sudo/instalação silenciosa ou gravação
@@ -61,11 +61,11 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.189.0 (crates/kinein-protocol, medido em 2026-10-22; o
+protocolo   0.190.0 (crates/kinein-protocol, medido em 2026-10-22; o
             historico das versoes e' o arquitetura/03)
 metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   168 tst_*.qml em scripts/qml-harness (medido em 2026-10-22)
+harnesses   169 tst_*.qml em scripts/qml-harness (medido em 2026-10-22)
 testes      1284 Rust no gate completo estrito de 2026-10-22 (40.7 §7.342);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
@@ -82,6 +82,7 @@ testes      1284 Rust no gate completo estrito de 2026-10-22 (40.7 §7.342);
             1278 Rust na 0.4.1h4b2b3 em 2026-10-22 (§7.340), gate completo estrito verde com target independente.
             1297 Rust na 0.4.1h4b2b4b1 em 2026-10-22 (§7.343), gate rápido estrito verde em cópia isolada.
             1297 Rust na 0.4.1h4b2b4b2 em 2026-10-22 (§7.344), gate completo estrito verde em cópia isolada.
+            1300 Rust na 0.4.1h4b2b4b3 em 2026-10-22 (§7.345), gate completo estrito verde em cópia isolada.
 ```
 
 Os comandos que medem estão no
@@ -121,7 +122,7 @@ física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-2
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core) e b4b2 (UI, validada na tela do autor) fechados. Próxima h4b2b4b3: depuração probe-rs com o seletor escolhido e reserva da mesma sonda; depois demais motores e recuperação. A medida física ainda requer renovar a sessão (2026-10-22) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.35 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.344 |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados. Próxima: gravação física esptool nativa no ESP32 CP2102 liberado (§5; sessão com `dialout`, 2026-10-22); depois demais motores e recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.36 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.345 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
@@ -501,6 +502,13 @@ validacao na IDE real        DECISAO DO AUTOR em 2026-10-22: validacao visual e
                              Plasma e' dele. Tambem liberou instalar o necessario
                              no usuario; sudo vira comando para ele rodar.
                              Gravar placa continua exigindo pedido especifico.
+ESP32 do autor liberado       DECISAO DO AUTOR em 2026-10-22: o ESP32 conectado
+(2026-10-22)                 (ponte CP2102) pode ser configurado do zero, gravado
+                             e alterado ("esse esp32 voce pode configurar ele do
+                             zero, gravar um codigo novo, alterar e etc."). A
+                             compatibilidade fisica/funcional ampla fica com os
+                             colaboradores. Outras placas/sondas continuam
+                             exigindo pedido especifico.
 janelas de trabalho em dock  PEDIDO DO AUTOR em 2026-10-20: Instalar ferramentas
                              e demais janelas funcionais viram paineis;
                              menus, dicas e confirmacoes seguem compactos

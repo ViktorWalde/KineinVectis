@@ -5,7 +5,7 @@
 //! presets. Execution stays with `run.start`, the PTY and the reservation.
 mod tool;
 
-pub use tool::inherited_variables;
+pub use crate::probe::inherited_variables;
 
 use super::{
     FlashCommand, FlashError, FlashPlan,
@@ -245,7 +245,8 @@ fn collect_evidence(
             cores.join(", ")
         )));
     }
-    let probe = select(&selector, tool::listed(&request.tool, root, cancel)?)?;
+    let probe = select(&selector, tool::listed(&request.tool, root, cancel)?)
+        .map_err(|message| invalid(&message))?;
     Ok(Evidence {
         name,
         selector,
@@ -358,23 +359,40 @@ fn capture(
     Ok((contents, files))
 }
 
+/// Validate an explicit probe for another probe-rs operation (debugging,
+/// 0.190.0): 0.32.x, strict listing and one accessible matching entry.
+///
+/// # Errors
+/// The cause, without operation wording: the caller names what did not start.
+pub fn listed_probe(
+    tool: &Path,
+    root: &Path,
+    selector: &str,
+    cancel: &Arc<AtomicBool>,
+) -> Result<ProbeInfo, String> {
+    let selector = Selector::parse(selector)?;
+    tool::version(tool, root, cancel).map_err(|error| error.to_string())?;
+    let probes = tool::listed(tool, root, cancel).map_err(|error| error.to_string())?;
+    select(&selector, probes)
+}
+
 /// Exactly one accessible listed entry that probe-rs would select.
-fn select(selector: &Selector, probes: Vec<ProbeInfo>) -> Result<ProbeInfo, FlashError> {
+fn select(selector: &Selector, probes: Vec<ProbeInfo>) -> Result<ProbeInfo, String> {
     let mut matching: Vec<ProbeInfo> = probes
         .into_iter()
         .filter(|probe| selector.matches(probe))
         .collect();
     match matching.len() {
-        0 => Err(invalid(&format!(
+        0 => Err(format!(
             "a sonda {selector} não está na listagem; conecte-a e atualize a lista de sondas"
-        ))),
-        1 if matching[0].inaccessible => Err(invalid(&format!(
+        )),
+        1 if matching[0].inaccessible => Err(format!(
             "a sonda {selector} está listada como inacessível: falta permissão no dispositivo (regra de udev), não rode a IDE como root"
-        ))),
+        )),
         1 => Ok(matching.remove(0)),
-        count => Err(invalid(&format!(
+        count => Err(format!(
             "{count} sondas casam com {selector}; desconecte as duplicadas ou escolha a interface"
-        ))),
+        )),
     }
 }
 
@@ -443,9 +461,7 @@ mod tests {
         assert!(select(&hex, vec![probe("0483", "374b", None, Some("AB"))]).is_ok());
         let mut blocked = probe("0483", "374b", None, Some("S1"));
         blocked.inaccessible = true;
-        let message = select(&Selector::parse("0483:374b:S1").unwrap(), vec![blocked])
-            .unwrap_err()
-            .to_string();
+        let message = select(&Selector::parse("0483:374b:S1").unwrap(), vec![blocked]).unwrap_err();
         assert!(message.contains("udev"), "{message}");
         assert!(select(&Selector::parse("0483:374b:S2").unwrap(), Vec::new()).is_err());
     }

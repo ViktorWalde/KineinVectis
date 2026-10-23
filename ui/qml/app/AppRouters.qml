@@ -117,6 +117,7 @@ Item {
     DebugRequestRouter {
         coreClient: root.domains.coreClient
         debugController: root.domains.debugController
+        embeddedController: root.domains.embeddedController
     }
 
     ToolchainEventRouter {

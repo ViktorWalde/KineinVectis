@@ -707,8 +707,6 @@ crates/kinein-core/src/handlers/datasource_discover.rs	ultimas	7
 crates/kinein-core/src/handlers/datasource_query.rs	consulta	2
 crates/kinein-core/src/handlers/datasource_query.rs	evento	2
 crates/kinein-core/src/handlers/datasource_query.rs	resultado	4
-crates/kinein-core/src/handlers/debug.rs	alvo	7
-crates/kinein-core/src/handlers/debug.rs	efetivo	2
 crates/kinein-core/src/handlers/debug.rs	medir	1
 crates/kinein-core/src/handlers/debug.rs	outro	2
 crates/kinein-core/src/handlers/debug.rs	programa	4

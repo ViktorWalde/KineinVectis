@@ -71,6 +71,7 @@ impl Transport {
         adapter: &Adapter,
         target: &DebugTarget,
         events: &EventSender,
+        reservation: Option<&crate::serial::ownership::Lease>,
     ) -> Result<Opened, DebugError> {
         if let DebugTarget::PythonAttach(endpoint) = target {
             let socket = connect(endpoint).map_err(|error| DebugError::Adapter {
@@ -83,24 +84,41 @@ impl Transport {
             let reader = socket.try_clone().map_err(|error| io_error(&error))?;
             return Ok((Self::Tcp(socket), Writer::Tcp(writer), Box::new(reader)));
         }
-        let mut child = Command::new(&adapter.program)
-            .args(adapter.arguments)
+        let arguments: Vec<String> = adapter.arguments.iter().map(|a| (*a).to_owned()).collect();
+        // Com a sonda reservada (0.190.0), o adaptador sobe pelo guardiao da
+        // reserva, que segura a trava enquanto o processo vive.
+        let (program, arguments) = match reservation {
+            Some(lease) => lease
+                .invocation(&adapter.program, &arguments)
+                .map_err(|error| DebugError::Adapter {
+                    message: format!("não foi possível preparar a reserva da sonda: {error}"),
+                })?,
+            None => (adapter.program.clone(), arguments),
+        };
+        let mut command = Command::new(&program);
+        command
+            .args(&arguments)
             .current_dir(root)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|error| {
-                if error.kind() == io::ErrorKind::NotFound {
-                    DebugError::MissingAdapter {
-                        program: adapter.program.display().to_string(),
-                    }
-                } else {
-                    DebugError::Adapter {
-                        message: format!("falha ao iniciar {}: {error}", adapter.program.display()),
-                    }
+            .stderr(Stdio::piped());
+        // O launch da IDE e' a configuracao: opcoes PROBE_RS_* nao entram.
+        if adapter.is_probe_rs() {
+            for name in crate::probe::inherited_variables() {
+                command.env_remove(name);
+            }
+        }
+        let mut child = command.spawn().map_err(|error| {
+            if error.kind() == io::ErrorKind::NotFound {
+                DebugError::MissingAdapter {
+                    program: adapter.program.display().to_string(),
                 }
-            })?;
+            } else {
+                DebugError::Adapter {
+                    message: format!("falha ao iniciar {}: {error}", adapter.program.display()),
+                }
+            }
+        })?;
         let pipes = (child.stdin.take(), child.stdout.take(), child.stderr.take());
         let (Some(stdin), Some(stdout), Some(stderr)) = pipes else {
             // O `Child` cai aqui e mata o processo.

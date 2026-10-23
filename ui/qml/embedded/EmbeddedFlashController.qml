@@ -48,6 +48,11 @@ Item {
     property bool targetsBusy: false
     readonly property bool probeDestination: nativeMode && firmware === ""
         && (engine === "probe-rs" || (engine === "" && suggestedEngine === "probe-rs"))
+    // O ELF unico do alvo escolhido: a depuracao probe-rs usa o mesmo alvo.
+    readonly property string targetArtifact: {
+        const item = targets.find(entry => entry.name === target);
+        return item && (item.artifacts || []).length === 1 ? item.artifacts[0] : "";
+    }
 
     signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory, string target, string probe)
     signal targetsRequested()

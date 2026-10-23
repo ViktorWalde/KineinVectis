@@ -21,6 +21,17 @@ por workspace.
   (build e acao explicita, Ctrl+F9). Erros: `TOOL_NOT_FOUND` (lldb-dap
   ausente), `INVALID_REQUEST` (sem alvo/sessao ja viva), `INVALID_PARAMS`
   (program inexistente), `INTERNAL_ERROR` (falha do adapter).
+- **Sonda explícita do probe-rs (`0.190.0`, 2026-10-22):** `debug.start {
+  program?, probe? }`, com `probe` = seletor `vvvv:pppp[-IF]:SERIAL` igual ao
+  da gravação nativa. Só vale com o adaptador `probe-rs` do kit e alvo de
+  programa; com `connect`, Python ou outro adaptador → `INVALID_PARAMS`.
+  Fora do laço do core, o adaptador responde `mi meta` 0.32.x e a listagem
+  estrita tem exatamente uma entrada acessível igual ao seletor; senão
+  `INVALID_REQUEST` com a causa. O launch leva `"probe"`, o `dap-server` não
+  herda `PROBE_RS_*`, e a sonda fica reservada no registro existente (mesma
+  coordenação da gravação) até o EOF do adaptador. Gravar a mesma sonda
+  durante a sessão, ou depurar durante a gravação, recusa com
+  `SERIAL_PORT_BUSY` (`scope: "probe"`). Sem `probe`, nada muda. 52 §14.36.
 
   **Alvo `.py` — ou um MÓDULO (`0.101.0`/`0.107.0`, cadeia Python,
   2026-09-13).** Seja qual for o tipo do workspace (um CMake com

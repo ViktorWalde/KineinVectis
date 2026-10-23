@@ -36,6 +36,21 @@ pub fn list(program: Option<&std::path::Path>) -> ProbeListResult {
     query::list(program, std::time::Duration::from_secs(5))
 }
 
+/// Every option probe-rs 0.32 inherits from the environment uses this prefix
+/// (`util/common_options.rs` and `main.rs` of the release source).
+const INHERITED_PREFIX: &[u8] = b"PROBE_RS_";
+/// Names of the inherited `PROBE_RS_*` variables, sorted: they are removed
+/// from every probe-rs process the native flow starts, queries included.
+#[must_use]
+pub fn inherited_variables() -> Vec<std::ffi::OsString> {
+    let mut names: Vec<std::ffi::OsString> = std::env::vars_os()
+        .map(|(name, _)| name)
+        .filter(|name| name.as_encoded_bytes().starts_with(INHERITED_PREFIX))
+        .collect();
+    names.sort();
+    names
+}
+
 /// Remove sequencias de escape ANSI.
 ///
 /// O `probe-rs 0.32.0` COLORE os avisos (medido em 2026-09-03). Hoje isso cai em

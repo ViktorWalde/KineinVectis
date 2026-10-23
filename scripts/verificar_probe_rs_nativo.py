@@ -69,10 +69,51 @@ pwd > "$L/cwd-$1"
 case "$1" in
   list) if [ -f "$L/listing" ]; then cat "$L/listing"; exit 0; fi;;
   download) printf '%s\\n' "$@" > "$L/download.args"; echo wrapper-download-recorded; exit 0;;
+  dap-server) exec python3 "$L/fake_dap.py" "$L";;
 esac
 exec '{real_probe}' "$@"
 ''')
 wrapper.chmod(0o755)
+# Minimal stdio DAP stand-in: records the launch; ends when dap.exit appears.
+(log/'fake_dap.py').write_text('''import json, os, sys, threading, time
+log = sys.argv[1]
+seq = 0
+def send(message):
+    global seq
+    seq += 1
+    message["seq"] = seq
+    data = json.dumps(message).encode()
+    sys.stdout.buffer.write(b"Content-Length: %d\\r\\n\\r\\n" % len(data) + data)
+    sys.stdout.buffer.flush()
+def watch():
+    while not os.path.exists(os.path.join(log, "dap.exit")):
+        time.sleep(0.02)
+    send({"type": "event", "event": "terminated"})
+    os._exit(0)
+threading.Thread(target=watch, daemon=True).start()
+def read():
+    headers = {}
+    while True:
+        line = sys.stdin.buffer.readline()
+        if not line:
+            return None
+        line = line.decode().strip()
+        if not line:
+            break
+        key, value = line.split(":", 1)
+        headers[key.strip().lower()] = value.strip()
+    return json.loads(sys.stdin.buffer.read(int(headers["content-length"])))
+while True:
+    request = read()
+    if request is None:
+        break
+    if request.get("command") == "launch":
+        with open(os.path.join(log, "dap.launch"), "w") as out:
+            json.dump(request.get("arguments"), out)
+    send({"type": "response", "request_seq": request["seq"], "command": request.get("command"), "success": True, "body": {}})
+    if request.get("command") == "initialize":
+        send({"type": "event", "event": "initialized"})
+''')
 
 
 class Core:
@@ -179,6 +220,21 @@ try:
     report['artifact'] = {'path': str(artifact), 'sha256': digest(artifact),
                           'machine': subprocess.run(['arm-none-eabi-readelf', '-h', str(artifact)],
                                                     capture_output=True, text=True).stdout.count('ARM')}
+    debug = core.call('debug.start', {'program': intent['args'][-1], 'probe': PROBE})
+    assert 'error' not in debug, debug
+    launch = json.loads((log/'dap.launch').read_text())
+    busy = core.call('run.start', {'flash': intent})
+    (log/'dap.exit').write_text('')
+    released = None
+    for _ in range(80):
+        released = core.call('run.start', {'flash': intent})
+        if released.get('error', {}).get('code') != 'SERIAL_PORT_BUSY':
+            break
+        time.sleep(0.05)
+    report['debug'] = {'launchProbe': launch.get('probe'), 'launchChip': launch.get('chip'),
+                       'dapServerEnvironment': (log/'env-dap-server').read_text(),
+                       'busyWhileDebugging': busy.get('error', {}).get('message'),
+                       'releasedAfterAdapterExit': 'result' in released}
     unknown = list(intent['args'])
     unknown[unknown.index('--probe') + 1] = 'ffff:ffff:KINEIN-NO-SUCH-PROBE'
     clean = {key: value for key, value in environment.items() if not key.startswith('PROBE_RS_')}
@@ -190,6 +246,10 @@ try:
                             'usageError': 'Usage:' in output or 'unexpected argument' in output,
                             'tail': output.strip().splitlines()[-1:]}
     report['passed'] = (report['launchedEqualsIntent'] and report['noInheritedOption']
+                        and report['debug']['launchProbe'] == PROBE
+                        and report['debug']['dapServerEnvironment'] == ''
+                        and 'Depuração' in (report['debug']['busyWhileDebugging'] or '')
+                        and report['debug']['releasedAfterAdapterExit']
                         and report['downloadWorkingDirectory'] == str(workspace)
                         and report['realParser']['exitCode'] == 1
                         and report['realParser']['noProbeSelected']

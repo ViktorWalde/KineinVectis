@@ -13,6 +13,10 @@ pub struct DebugStartParams {
     /// Attach to an existing debugpy adapter; mutually exclusive with program.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connect: Option<DebugConnectParams>,
+    /// probe-rs selector `vvvv:pppp[-IF]:SERIAL` (`0.190.0`): the probe the
+    /// session uses and reserves; only with the probe-rs adapter and a program.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub probe: Option<String>,
 }
 
 /// TCP endpoint already listening for a debugpy DAP client.

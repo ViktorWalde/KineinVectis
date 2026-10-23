@@ -84,8 +84,8 @@ Column {
         font.bold: true
     }
 
-    // A dica fica depois da escolha: sumir empurraria os controles abaixo
-    // sob o ponteiro (achado na tela real do autor, 2026-10-22).
+    // A dica fica depois da escolha: se sumisse, os controles abaixo subiriam
+    // e um segundo clique no mesmo ponto cairia em outro controle.
     Text {
         width: parent.width
         wrapMode: Text.WordWrap

@@ -183,11 +183,15 @@ impl DebugManager {
     /// `adapter_id`/`adapter_path` vem do KIT (papel `debugAdapter`). Sem
     /// escolha, cai no `lldb-dap` e o comportamento e o de sempre — foi assim
     /// que o desktop continuou funcionando quando o embarcado entrou.
-    pub fn start(
+    ///
+    /// `reservation` (0.190.0) is the probe lease: the adapter starts through
+    /// its guardian and the reader thread drops it at the adapter's EOF.
+    pub(crate) fn start(
         &mut self,
         root: &Path,
         target: &DebugTarget,
         choice: &AdapterChoice<'_>,
+        reservation: Option<crate::serial::ownership::Lease>,
     ) -> Result<(), DebugError> {
         if self.is_running() {
             return Err(DebugError::AlreadyRunning);
@@ -201,6 +205,7 @@ impl DebugManager {
             &self.breakpoints,
             self.events.clone(),
             &adapter,
+            reservation,
         )?;
         self.session = Some(session);
         Ok(())

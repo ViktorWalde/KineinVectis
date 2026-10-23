@@ -159,12 +159,14 @@ Item {
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        // Parado, a saida divide o espaco com o inspetor; rodando, ocupa tudo.
+        // Parado, a saida divide o espaco com o inspetor; rodando, para antes
+        // dos escopos (visiveis com a sessao); sem sessao, ocupa tudo.
         // Antes esta conta somava as larguras de framesBox e variablesBox, que
         // hoje moram no DebugInspector — o vizinho passou a ser ele.
         width: panel.paused
                ? Math.max(220, parent.width - inspector.width
                           - watches.width - 2 * Theme.spacingSmall)
+               : panel.sessionActive ? Math.max(220, inspectView.x - Theme.spacingSmall)
                : parent.width
         clip: true
         model: panel.outputModel
@@ -197,6 +199,9 @@ Item {
     DebugInspector {
         id: inspector
 
+        // So' com a thread parada, como os watches: com o alvo rodando nao
+        // ha frames, e ancorado a direita da saida ele passaria da borda.
+        visible: panel.paused
         anchors.top: debugControlsRow.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom

@@ -5,6 +5,7 @@ use std::{fs, time::Duration};
 mod catalog;
 mod pending;
 mod probe_rs;
+mod probe_rs_debug;
 
 fn fixture(name: &str) -> Fixture {
     let fixture = Fixture::new(name);

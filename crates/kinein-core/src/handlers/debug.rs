@@ -10,8 +10,8 @@ use std::path::{Path, PathBuf};
 use kinein_protocol::{
     DebugBreakpointsResult, DebugDisassembleParams, DebugDisassembleResult, DebugEvaluateParams,
     DebugReadMemoryParams, DebugScopesParams, DebugScopesResult, DebugSetBreakpointsParams,
-    DebugStackTraceResult, DebugStartParams, DebugStartResult, DebugVariablesParams,
-    DebugVariablesResult, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    DebugStackTraceResult, DebugStartParams, DebugVariablesParams, DebugVariablesResult,
+    JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -104,95 +104,14 @@ impl Core {
                 },
             }
         };
-
-        let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
-        let python = e_um_alvo_python(&target);
-        let interpreter = if python && !target.is_attached() {
-            match self.python_debug_interpreter(root) {
-                Ok(path) => Some(path),
-                Err(error) => return debug_error_response(request_id, &error),
-            }
-        } else {
-            None
-        };
-        // Python never inherits a native kit's remoteTarget/debugServer/chip.
-        // TCP attach uses the adapter that debugpy.listen already started.
-        let native_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
-        // O GDB certo para o ELF (pente-fino 2026-09-18): o `gdb` nativo nao
-        // fala ARM/Xtensa/RISC-V e o attach ficaria mudo; um GDB de alvo
-        // detectado entra no lugar, ou a recusa diz o pacote.
-        let (gdb_id, gdb_path) = match self.gdb_for_target(&toolchain, &target) {
-            Ok(picked) => picked,
-            Err(error) => return debug_error_response(request_id, &error),
-        };
-        let choice = if python {
-            dap::AdapterChoice {
-                id: Some(dap::DEBUGPY),
-                path: interpreter.as_deref(),
-                ..dap::AdapterChoice::default()
-            }
-        } else {
-            native_choice(
-                &toolchain,
-                gdb_id.as_deref(),
-                gdb_path.as_deref(),
-                native_path.as_deref(),
-            )
-        };
-        let Some(manager) = self.debug.as_mut() else {
-            return debug_unavailable_response(request_id, "debug.start");
-        };
-        match manager.start(root, &target, &choice) {
-            Ok(()) => JsonRpcResponse::success(
-                request_id,
-                json!(DebugStartResult {
-                    program: target.display(),
-                    attached: target.is_attached(),
-                }),
-            ),
-            Err(error) => debug_error_response(request_id, &error),
+        if let Some(probe) = parsed.probe {
+            return self.debug_probe_start_response(request_id, root.to_path_buf(), target, probe);
         }
-    }
-
-    /// `Some((id, path))` quando o `gdb` nu deve dar lugar a um GDB de alvo
-    /// (o ELF e' de outra maquina); `None` = a escolha do kit fica. A troca e'
-    /// dita no console de debug; a falta e' erro com o pacote.
-    fn gdb_for_target(
-        &self,
-        toolchain: &crate::toolchain::Toolchain,
-        target: &dap::DebugTarget,
-    ) -> Result<(Option<String>, Option<String>), dap::DebugError> {
-        let Some(program) = target.program_path() else {
-            return Ok((None, None));
-        };
-        let efetivo = toolchain
-            .effective_program(kinein_protocol::ToolchainRole::DebugAdapter)
-            .map(|(id, _)| id.to_owned())
-            .or_else(|| {
-                toolchain
-                    .chosen(kinein_protocol::ToolchainRole::DebugAdapter)
-                    .map(str::to_owned)
-            })
-            .unwrap_or_else(|| dap::default_adapter().to_owned());
-        match dap::gdb_pick::pick_gdb(&efetivo, program, &self.detected_tools()) {
-            dap::gdb_pick::GdbPick::Keep => Ok((None, None)),
-            dap::gdb_pick::GdbPick::Replace { id, path, reason } => {
-                if let Some(events) = self.events.as_ref() {
-                    drop(events.send(kinein_protocol::JsonRpcRequest::notification(
-                        "event.debug.output",
-                        Some(json!({ "category": "console", "line": reason })),
-                    )));
-                }
-                Ok((Some(id), Some(path)))
-            }
-            dap::gdb_pick::GdbPick::Unavailable { message } => {
-                Err(dap::DebugError::NoTarget { message })
-            }
-        }
+        self.debug_launch(request_id, root, &target, None)
     }
 
     /// Launch needs debugpy in the project's interpreter; TCP attach does not.
-    fn python_debug_interpreter(&self, root: &Path) -> Result<PathBuf, dap::DebugError> {
+    pub(super) fn python_debug_interpreter(&self, root: &Path) -> Result<PathBuf, dap::DebugError> {
         let mut tools = self.python_tools();
         tools.medir_versao = false;
         let env = crate::python::env::python_env(root, &tools).ok_or_else(|| dap::DebugError::NoTarget {
@@ -461,7 +380,7 @@ impl Core {
 }
 
 /// Falha `INVALID_PARAMS` com a mensagem de dominio do debug.
-fn invalid_debug_params(request_id: Option<Value>, message: &str) -> JsonRpcResponse {
+pub(super) fn invalid_debug_params(request_id: Option<Value>, message: &str) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
@@ -471,7 +390,7 @@ fn invalid_debug_params(request_id: Option<Value>, message: &str) -> JsonRpcResp
 /// Um `.py` — ou um modulo Python — e' alvo do debugpy, seja qual for o tipo
 /// do workspace (um projeto `CMake` com um `tools/gera.py` depura o script
 /// com Python).
-fn e_um_alvo_python(target: &dap::DebugTarget) -> bool {
+pub(super) fn is_python_target(target: &dap::DebugTarget) -> bool {
     match target {
         dap::DebugTarget::Module(_) | dap::DebugTarget::PythonAttach(_) => true,
         dap::DebugTarget::Program(program) => program
@@ -481,28 +400,11 @@ fn e_um_alvo_python(target: &dap::DebugTarget) -> bool {
     }
 }
 
-/// A escolha nativa: o GDB de alvo (quando o ELF pediu) vence o do kit.
-fn native_choice<'a>(
-    toolchain: &'a crate::toolchain::Toolchain,
-    gdb_id: Option<&'a str>,
-    gdb_path: Option<&'a str>,
-    native_path: Option<&'a Path>,
-) -> dap::AdapterChoice<'a> {
-    dap::AdapterChoice {
-        id: gdb_id.or_else(|| toolchain.chosen(kinein_protocol::ToolchainRole::DebugAdapter)),
-        path: gdb_path.map(Path::new).or(native_path),
-        chip: toolchain.chip(),
-        remote_target: toolchain.remote_target(),
-        debug_server: toolchain.debug_server(),
-        svd_file: toolchain.svd_file(),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::path::Path;
 
-    use super::e_um_alvo_python;
+    use super::is_python_target;
     use crate::dap::DebugTarget;
 
     /// So' o `.py` (em qualquer caixa) e o modulo vao para o debugpy; o
@@ -510,16 +412,16 @@ mod tests {
     #[test]
     fn only_python_files_and_modules_are_python_targets() {
         let programa = |p: &str| DebugTarget::Program(Path::new(p).to_path_buf());
-        assert!(e_um_alvo_python(&programa("/w/tools/gera.py")));
-        assert!(e_um_alvo_python(&programa("/w/APP.PY")));
-        assert!(e_um_alvo_python(&DebugTarget::Module("pacote".to_owned())));
+        assert!(is_python_target(&programa("/w/tools/gera.py")));
+        assert!(is_python_target(&programa("/w/APP.PY")));
+        assert!(is_python_target(&DebugTarget::Module("pacote".to_owned())));
         for outro in [
             "/w/target/debug/app",
             "/w/src/main.rs",
             "/w/stubs/x.pyi",
             "/w/a.pyc",
         ] {
-            assert!(!e_um_alvo_python(&programa(outro)), "{outro}");
+            assert!(!is_python_target(&programa(outro)), "{outro}");
         }
     }
 }

@@ -759,3 +759,11 @@ Sem id na resposta, o controller só aceita a lista que pediu e só os
 executáveis do `fileApi` dentro da raiz atual. A vista
 `EmbeddedFlashDestination` é burra; as dicas ficam estáveis depois da escolha,
 para os controles não fugirem do ponteiro. Desenho no 52 §14.35.
+
+**Depuração na sonda escolhida (0.4.1h4b2b4b3, 2026-10-22).** `debugStart`
+ganha `probe`, enviado só quando não vazio. O `DebugRequestRouter` recebe o
+`EmbeddedController`: com destino na sonda e sem `connect`, envia a sonda
+escolhida em Gravar e, sem programa explícito, o ELF do alvo escolhido
+(`targetArtifact`). O `DebugController` não mudou. No `DebugPanel`, o
+`DebugInspector` só aparece com a thread parada, como os watches, e a saída
+termina antes dos escopos durante a sessão. Desenho no 52 §14.36.

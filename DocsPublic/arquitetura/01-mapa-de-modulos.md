@@ -165,8 +165,10 @@ flowchart LR
   n_core_coverage --> n_core_python
   n_core_dap --> n_core_lsp
   n_core_dap --> n_core_platform
+  n_core_dap --> n_core_probe
   n_core_dap --> n_core_python
   n_core_dap --> n_core_run
+  n_core_dap --> n_core_serial
   n_core_dap --> n_core_stderr_tail
   n_core_datasource --> n_core_container
   n_core_datasource --> n_core_db
@@ -274,7 +276,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 131 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+47 módulos, 133 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -293,7 +295,7 @@ flowchart LR
 | `configaction` | cdb, cmake, fsops, library, platform, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |
 | `coverage` | platform, process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
-| `dap` | lsp, platform, python, run, stderr_tail | Subsistema de debug: |
+| `dap` | lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |
 | `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
@@ -859,6 +861,7 @@ O core e' o cliente DAP: sobe o adaptador, guarda a sessao e manda para a UI fra
 flowchart LR
   subgraph QML["ui/qml"]
     n_ui_qml_debug_DebugController_qml["DebugController"]
+    n_ui_qml_embedded_EmbeddedController_qml["EmbeddedController"]
     n_ui_qml_ipc_DebugRequestRouter_qml["ipc/DebugRequestRouter"]
     n_ui_qml_ipc_DebugEventRouter_qml["ipc/DebugEventRouter"]
   end
@@ -877,10 +880,10 @@ flowchart LR
     n_core_platform[platform]
     n_core_python[python]
     n_core_rpc[rpc]
-    n_core_toolchain[toolchain]
   end
   n_tools_debug[/"gdb -i dap · lldb-dap · debugpy"/]
   n_ui_qml_debug_DebugController_qml --> n_ui_qml_ipc_DebugRequestRouter_qml
+  n_ui_qml_embedded_EmbeddedController_qml --> n_ui_qml_ipc_DebugRequestRouter_qml
   n_ui_qml_ipc_DebugEventRouter_qml -.-> n_ui_qml_debug_DebugController_qml
   n_ui_qml_ipc_DebugRequestRouter_qml --> n_ui_src_core_client_requests_debug_cpp
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_DebugEventRouter_qml
@@ -892,13 +895,13 @@ flowchart LR
   n_crates_kinein_core_src_handlers_debug_rs --> n_core_platform
   n_crates_kinein_core_src_handlers_debug_rs --> n_core_python
   n_crates_kinein_core_src_handlers_debug_rs --> n_core_rpc
-  n_crates_kinein_core_src_handlers_debug_rs --> n_core_toolchain
   CORE -.->|processos| n_tools_debug
 ```
 
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
 | controller | `ui/qml/debug/DebugController.qml` | Estado da sessao de debug e dos breakpoints na UI (fatia M2.5b). |
+| controller | `ui/qml/embedded/EmbeddedController.qml` | Estado apresentado de probe/serial/project: |
 | roteador | `ui/qml/ipc/DebugRequestRouter.qml` | Espelho do DebugEventRouter: |
 | roteador | `ui/qml/ipc/DebugEventRouter.qml` | Roteia eventos de debug do CoreClient para o DebugController. |
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |

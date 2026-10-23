@@ -128,7 +128,8 @@ public:
                                               const QString& target = QString(),
                                               const QString& probe = QString());
     Q_INVOKABLE void debugStart(const QString& program = QString(),
-                                const QVariantMap& connect = QVariantMap());
+                                const QVariantMap& connect = QVariantMap(),
+                                const QString& probe = QString());
     // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.
     // Trocou a lista crua de linhas no protocolo 0.66.0: a condicao viaja POR
     // breakpoint, e array paralelo de condicoes seria a forma de eles saírem

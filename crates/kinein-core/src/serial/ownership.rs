@@ -201,6 +201,8 @@ fn occupied(resource: Resource<'_>, owner: Option<&Owner>) -> JsonRpcError {
                 "Feche a aba do monitor no Terminal"
             } else if matches!(owner.operation.as_str(), "run.start" | "run.script") {
                 "Pare a execução ou feche sua aba no Terminal"
+            } else if owner.operation == "debug.start" {
+                "Pare a depuração"
             } else {
                 "Cancele essa operação no painel Jobs ou aguarde sua conclusão"
             };

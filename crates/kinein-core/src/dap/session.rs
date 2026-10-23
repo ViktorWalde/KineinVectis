@@ -96,6 +96,7 @@ impl DapSession {
         breakpoints: &BTreeMap<String, Vec<SourceBreakpointParams>>,
         events: EventSender,
         adapter: &Adapter,
+        reservation: Option<crate::serial::ownership::Lease>,
     ) -> Result<Self, DebugError> {
         // O servidor vem ANTES do adaptador, e so' faz sentido com um alvo
         // remoto para esperar: um `debugServer` sem `remoteTarget` e' um
@@ -122,7 +123,8 @@ impl DapSession {
             }
             (None, _) => None,
         };
-        let (transport, stdin, stdout) = Transport::open(root, adapter, target, &events)?;
+        let (transport, stdin, stdout) =
+            Transport::open(root, adapter, target, &events, reservation.as_ref())?;
 
         let wire = Wire::new(stdin);
         let alive = Arc::new(AtomicBool::new(true));
@@ -136,6 +138,7 @@ impl DapSession {
             &alive,
             &stopped_thread,
             initialized_sender,
+            reservation,
         );
 
         let session = Self {

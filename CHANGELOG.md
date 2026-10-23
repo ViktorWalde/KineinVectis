@@ -32,6 +32,13 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **Depuração probe-rs na sonda escolhida (0.4.1h4b2b4b3, 2026-10-22, protocolo 0.190.0):**
+  ao depurar um projeto probe-rs, a IDE usa a sonda e o alvo escolhidos em
+  Gravar e reserva a sonda enquanto o `dap-server` vive. Gravar a mesma sonda
+  durante a sessão recusa com "Pare a depuração", e a sonda fica livre assim
+  que o adaptador termina. O `dap-server` não herda `PROBE_RS_*`. O painel
+  Debug deixou de vazar a coluna de frames pela borda enquanto o alvo roda.
+
 - **Alvo e sonda na aba Gravar (0.4.1h4b2b4b2, 2026-10-22, protocolo 0.189.0):**
   num projeto probe-rs, a aba Gravar lista os executáveis confirmados pelo
   CMake e as sondas conectadas. Sondas sem serial ou sem permissão aparecem

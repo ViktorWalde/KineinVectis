@@ -7,6 +7,8 @@ Item {
 
     property var coreClient: null
     property var debugController: null
+    // A sonda escolhida em Gravar acompanha a depuracao probe-rs (52 §14.36).
+    property var embeddedController: null
 
     visible: false
 
@@ -14,7 +16,13 @@ Item {
         target: root.debugController
 
         function onStartRequested(program, connect) {
-            root.coreClient.debugStart(program, connect);
+            const flash = root.embeddedController ? root.embeddedController.flash : null;
+            const attach = connect !== undefined && connect !== null && Object.keys(connect).length > 0;
+            const probe = flash && flash.probeDestination && !attach ? flash.probe : "";
+            // Sem programa explicito, o alvo escolhido em Gravar (o core recusa
+            // "mais de um executavel" quando o build tem varios).
+            const chosen = probe !== "" && program === "" ? flash.targetArtifact : "";
+            root.coreClient.debugStart(chosen !== "" ? chosen : program, connect, probe);
         }
 
         function onStopRequested() {

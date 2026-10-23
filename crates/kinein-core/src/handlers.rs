@@ -23,6 +23,7 @@ pub mod datasource_preview;
 pub mod datasource_query;
 pub mod datasource_session;
 pub mod debug;
+mod debug_launch;
 pub mod draft;
 pub mod format;
 pub mod fs;

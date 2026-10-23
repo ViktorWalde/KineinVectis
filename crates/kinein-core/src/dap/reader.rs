@@ -32,6 +32,7 @@ pub(super) fn spawn_reader(
     alive: &Arc<AtomicBool>,
     stopped_thread: &Arc<Mutex<Option<i64>>>,
     initialized: mpsc::Sender<()>,
+    reservation: Option<crate::serial::ownership::Lease>,
 ) {
     let wire = wire.clone();
     let events = events.clone();
@@ -73,6 +74,9 @@ pub(super) fn spawn_reader(
             guard.clear();
         }
         finish_once(&alive, &events, &exit_code);
+        // A sonda (0.190.0) fica livre quando o adaptador fecha, nao quando
+        // a sessao morta deixa o slot do DebugManager.
+        drop(reservation);
     });
 }
 

@@ -39,6 +39,8 @@ pub struct AdapterChoice<'a> {
     pub debug_server: Option<&'a str>,
     /// O CMSIS-SVD do chip (P3): `svdFile` no `launch` do probe-rs.
     pub svd_file: Option<&'a str>,
+    /// Seletor explicito da sonda (0.190.0): `probe` no `launch` do probe-rs.
+    pub probe: Option<&'a str>,
 }
 
 /// Como cada adaptador conhecido e' invocado.
@@ -109,6 +111,8 @@ pub(super) struct Adapter {
     pub(super) debug_server: Option<String>,
     /// O CMSIS-SVD do chip, para o `coreConfigs` do probe-rs.
     pub(super) svd_file: Option<String>,
+    /// Seletor da sonda escolhida; sem ele o `dap-server` escolhe sozinho.
+    pub(super) probe: Option<String>,
 }
 
 impl Adapter {
@@ -125,11 +129,12 @@ impl Adapter {
             remote_target: choice.remote_target.map(str::to_owned),
             debug_server: choice.debug_server.map(str::to_owned),
             svd_file: choice.svd_file.map(str::to_owned),
+            probe: choice.probe.map(str::to_owned),
         }
     }
 
     /// `true` para o probe-rs, cujo `launch` tem forma propria.
-    fn is_probe_rs(&self) -> bool {
+    pub(super) fn is_probe_rs(&self) -> bool {
         self.id == "probe-rs"
     }
 
@@ -176,6 +181,9 @@ impl Adapter {
             });
             if let Some(chip) = &self.chip {
                 arguments["chip"] = json!(chip);
+            }
+            if let Some(probe) = &self.probe {
+                arguments["probe"] = json!(probe);
             }
             return ("launch", arguments);
         }
@@ -427,6 +435,27 @@ mod tests {
         );
         assert_eq!(pedido, "launch");
         assert_eq!(argumentos["chip"], "STM32H745ZITx");
+    }
+
+    /// A sonda escolhida (0.190.0) vai no `launch` do probe-rs; sem escolha o
+    /// campo nao existe e o `dap-server` decide, como antes.
+    #[test]
+    fn the_chosen_probe_goes_in_the_probe_rs_launch_only() {
+        let target = DebugTarget::Program(PathBuf::from("/w/fw.elf"));
+        let with_probe = adapter(AdapterChoice {
+            id: Some("probe-rs"),
+            probe: Some("0483:374b:066DFF485153"),
+            ..AdapterChoice::default()
+        });
+        let (_, arguments) = with_probe.start_request(Path::new("/w"), &target);
+        assert_eq!(arguments["probe"], "0483:374b:066DFF485153");
+        assert_eq!(with_probe.arguments, &["dap-server"]);
+        let without = adapter(AdapterChoice {
+            id: Some("probe-rs"),
+            ..AdapterChoice::default()
+        });
+        let (_, arguments) = without.start_request(Path::new("/w"), &target);
+        assert!(arguments.get("probe").is_none());
     }
 
     /// Alvo remoto = `attach`, com o `target` cru para o `target remote` e o

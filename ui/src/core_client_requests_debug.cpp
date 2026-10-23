@@ -12,7 +12,8 @@
 
 namespace kinein {
 
-void CoreClient::debugStart(const QString& program, const QVariantMap& connect)
+void CoreClient::debugStart(const QString& program, const QVariantMap& connect,
+                            const QString& probe)
 {
     QJsonObject params;
     if (!program.isEmpty()) {
@@ -20,6 +21,10 @@ void CoreClient::debugStart(const QString& program, const QVariantMap& connect)
     }
     if (!connect.isEmpty()) {
         params.insert(QStringLiteral("connect"), QJsonObject::fromVariantMap(connect));
+    }
+    // probe-rs (0.190.0): a sonda escolhida em Gravar, reservada pela sessao.
+    if (!probe.isEmpty()) {
+        params.insert(QStringLiteral("probe"), probe);
     }
     sendRequest(QStringLiteral("debug.start"), params);
 }

@@ -9,7 +9,6 @@ use crate::{
 use kinein_protocol::ProbeInfo;
 use serde_json::Value;
 use std::{
-    ffi::OsString,
     path::{Path, PathBuf},
     process::Command,
     sync::{Arc, atomic::AtomicBool},
@@ -17,24 +16,8 @@ use std::{
 };
 
 const DEADLINE: Duration = Duration::from_secs(5);
-/// Every option probe-rs 0.32 inherits from the environment uses this prefix
-/// (`util/common_options.rs` and `main.rs` of the release source).
-const INHERITED_PREFIX: &[u8] = b"PROBE_RS_";
 /// `main.rs::load_config` of 0.32.0 merges `.probe-rs.<extension>`.
 const CONFIGURATION_EXTENSIONS: [&str; 4] = ["toml", "json", "yaml", "yml"];
-
-/// Names of the inherited `PROBE_RS_*` variables, sorted: they are removed
-/// from every probe-rs process the native flow starts, queries included.
-#[must_use]
-pub fn inherited_variables() -> Vec<OsString> {
-    let mut names: Vec<OsString> = std::env::vars_os()
-        .map(|(name, _)| name)
-        .filter(|name| name.as_encoded_bytes().starts_with(INHERITED_PREFIX))
-        .collect();
-    names.sort();
-    names
-}
-
 /// The `.probe-rs.*` files 0.32 would load: the working directory (the root,
 /// as in the PTY), the executable's folder (given and resolved) and home.
 pub(super) fn configuration_files(root: &Path, tool: &Path) -> Vec<PathBuf> {
@@ -67,7 +50,7 @@ fn run(
 ) -> Result<String, FlashError> {
     let mut command = Command::new(tool);
     command.args(args).current_dir(root).env("NO_COLOR", "1");
-    for name in inherited_variables() {
+    for name in crate::probe::inherited_variables() {
         command.env_remove(name);
     }
     let answer = query::run(command, DEADLINE, cancel);
@@ -194,10 +177,7 @@ fn last_lines(output: &str) -> String {
 
 fn unsupported(message: &str) -> FlashError {
     FlashError::UnsupportedTool {
-        message: format!(
-            "{}. Nenhuma gravação foi iniciada.",
-            message.trim_end_matches('.')
-        ),
+        message: format!("{}. Nada foi iniciado.", message.trim_end_matches('.')),
     }
 }
 

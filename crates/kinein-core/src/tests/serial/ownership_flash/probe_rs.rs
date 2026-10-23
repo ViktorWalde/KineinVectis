@@ -5,8 +5,8 @@ use kinein_protocol::{JsonRpcErrorCode, JsonRpcResponse};
 use serde_json::{Value, json};
 use std::{fs, path::Path, sync::mpsc, thread, time::Duration};
 
-const PROBE: &str = "0483:374b:066DFF485153";
-const LISTED: &str = "The following debug probes were found:\n[0]: STLink V2-1 -- 0483:374b:066DFF485153 (ST-LINK)\n";
+pub(super) const PROBE: &str = "0483:374b:066DFF485153";
+pub(super) const LISTED: &str = "The following debug probes were found:\n[0]: STLink V2-1 -- 0483:374b:066DFF485153 (ST-LINK)\n";
 
 fn elf(machine: u16) -> Vec<u8> {
     let mut bytes = vec![0_u8; 64];
@@ -45,7 +45,7 @@ fn reply(root: &Path, firmware_artifacts: &[&str]) {
     fs::write(build.join("libsupport.a"), "!<arch>\n").unwrap();
 }
 
-fn fixture(name: &str) -> Fixture {
+pub(super) fn fixture(name: &str) -> Fixture {
     let mut fixture = Fixture::new(name);
     let root = fixture.root.clone();
     reply(&root, &["firmware.elf"]);
@@ -66,6 +66,7 @@ fn fixture(name: &str) -> Fixture {
              echo \"Error: The requested chip '$3' was not found in the list of known targets.\" >&2; exit 1;;\n\
              list) cat \"$R/probe.list\"; exit 0;;\n\
              download) printf '%s\\n' \"$@\" > \"$R/probe.args\"; env | grep '^PROBE_RS_' > \"$R/probe.env\"; echo download-fixture-complete; exit 0;;\n\
+             dap-server) exec python3 \"$R/fake_dap.py\" \"$R\";;\n\
              esac\nexit 2\n"
         ),
     );
@@ -83,11 +84,11 @@ fn fixture(name: &str) -> Fixture {
     fixture
 }
 
-fn request() -> Value {
+pub(super) fn request() -> Value {
     json!({"native":true, "engine":"probe-rs", "target":"firmware", "probe":PROBE})
 }
 
-fn propose(fixture: &mut Fixture, params: Value) -> JsonRpcResponse {
+pub(super) fn propose(fixture: &mut Fixture, params: Value) -> JsonRpcResponse {
     fixture.rpc("runConfig.flashProposal", params)
 }
 

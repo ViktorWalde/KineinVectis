@@ -3865,246 +3865,342 @@ gates/commit e receber prompt completo para a próxima; não iniciar b4b agora.
 
 ### 14.34 0.4.1h4b2b4b1 — probe-rs nativo: alvo CMake, sonda explícita e efeitos herdados (desenho, 2026-10-22)
 
-**Base:** d322de9, protocolo 0.187.0. Só esptool tem intenção nativa; probe-rs
-recusa em `flash::native::engine`. A linha manual `download --chip <chip>
-'<ELF mais novo>'` continua como está: é prévia editável, escolha explícita do
-usuário, e não vira execução nativa.
+**Problema.** A intenção nativa de gravação (§14.30) cobria só o esptool. Para
+probe-rs havia apenas a linha manual `download --chip <chip> '<ELF mais
+novo>'`, em que o firmware era o ELF mais recente das pastas de build e a sonda
+ficava a critério da ferramenta. Nenhuma das duas escolhas tinha evidência de
+origem ou de destino. A linha manual continua existindo como prévia editável,
+escolha explícita do usuário; ela não vira execução nativa.
 
-**Medido antes do desenho (2026-10-22).** Com autorização do autor nesta data,
-o binário oficial x86_64 da release v0.32.0
-(`probe-rs-tools-x86_64-unknown-linux-gnu.tar.xz`, SHA-256
-`c2ccc46049e52a5d403ef212078cd637ecda55b662708327960558f83e851ff5`, conferido
-com o `.sha256` e o digest da release) foi instalado em `~/.cargo/bin`.
-`probe-rs --version` responde `probe-rs 0.32.0 (git commit: 48f5e4d)`;
-`probe-rs mi meta`, `{"version":"0.32.0",...}`; `probe-rs list`, sem sonda,
-"No debug probes were found.". O `source.tar.gz` da mesma release (SHA
-conferido) foi lido nos pontos que decidem o desenho:
+**Sequência da vertical:** b4b1, o core (esta seção); b4b2, a UI (§14.35);
+b4b3, a depuração na mesma sonda (§14.36).
 
-- [`util/common_options.rs`](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/util/common_options.rs):
-  as opções de sonda herdam do ambiente `PROBE_RS_CHIP`, `_CHIP_DESCRIPTION_PATH`,
-  `_PROTOCOL`, `_CYCLE_POWER`, `_NON_INTERACTIVE`, `_PROBE`, `_SPEED`,
-  `_CONNECT_UNDER_RESET`, `_DRY_RUN` e `_ALLOW_ERASE_ALL`; as de gravação,
-  `PROBE_RS_PREFER_FLASH_ALGO`. Em
-  [`main.rs`](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/main.rs),
-  `PROBE_RS_REMOTE_HOST`/`_TOKEN` levam a operação a um servidor remoto e
-  `PROBE_RS_CONFIG_PRESET` escolhe um preset.
-- `main.rs::load_config` lê `.probe-rs.{toml,json,yaml,yml}` no diretório
-  corrente, na pasta do executável e no home. Um preset `default` é aplicado
-  sem flag e acrescenta ao argv opções ausentes (argv > preset > ambiente).
-  O PTY da IDE roda com o diretório corrente na raiz do projeto.
-- [`util/cli.rs`](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/util/cli.rs):
-  `download` só reinicia o chip com `--reset`, só apaga o chip inteiro com
-  `--chip-erase` e relê o gravado com `--verify`. `cycle_power` faz ciclo de
-  energia USB antes de conectar. `--binary-format` padrão `target` resolve pelo
-  chip (Espressif → formato IDF), então o formato precisa ser explícito.
-- Formato da listagem (Display de `DebugProbeInfo` em `probe-rs/src/probe.rs`
-  e `cmd/list.rs`): `[N]: <nome> -- vvvv:pppp[-IF]:<serial> (<fábrica>)[ (inaccessible)]`;
-  serial ausente sai vazio. Seletor (`probe/selector.rs`):
-  `VID:PID[-IF][:SERIAL]` hexadecimal; o serial pode conter `:`.
-  `rpc/functions/probe.rs::select_probe` com seletor considera só as entradas
-  que casam: nenhuma → erro sem abrir dispositivo; várias → pergunta interativa.
-- `probe-rs chip info <chip>` funciona sem hardware: nome, `Cores (N):`,
-  linhas `    - <núcleo> (<CoreType>)` (Armv6m/7a/7r/7m/7em/8a/8m, Riscv,
-  Riscv64, Xtensa) e regiões; chip desconhecido sai 1.
-- Experimento descartável: um ELF ARM mínimo e o argv planejado com seletor
-  inexistente (`ffff:ffff:…`) passam pelo parser real e falham em "No
-  connected probes were found", sem abrir dispositivo; `--dry-run` não evita a
-  seleção de sonda real, logo não serve de prova segura.
+**O que o probe-rs 0.32.0 faz e o desenho precisa controlar.** Fonte: o código
+da release oficial v0.32.0 (`probe-rs-tools`).
 
-No Kinein: o parser tolerante de `probe.list` erra no formato real (com
-`(inaccessible)` o tipo vira "inaccessible" e o serial absorve "(CMSIS-DAP)";
-com interface o pid vira `6010-1`). CmakeModel lê o reply do `.kinein/build`,
-build dir único, mas não registra o que leu. `dap::gdb_pick::elf_machine` lê o
-e_machine. A reserva serial (Registry/Lease, coordenação por arquivos e
-guardião) já é chaveada por canal. O PTY herda o ambiente do core.
+- **Opções herdadas do ambiente.**
+  [`util/common_options.rs`](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/util/common_options.rs)
+  declara `PROBE_RS_CHIP`, `_CHIP_DESCRIPTION_PATH`, `_PROTOCOL`,
+  `_CYCLE_POWER`, `_NON_INTERACTIVE`, `_PROBE`, `_SPEED`,
+  `_CONNECT_UNDER_RESET`, `_DRY_RUN`, `_ALLOW_ERASE_ALL` e
+  `_PREFER_FLASH_ALGO`.
+  [`main.rs`](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/main.rs)
+  declara `PROBE_RS_REMOTE_HOST`/`_TOKEN`, que levam a operação a um servidor
+  remoto, e `PROBE_RS_CONFIG_PRESET`. Qualquer uma delas muda a operação sem
+  aparecer no argv.
+- **Presets.** `main.rs::load_config` lê `.probe-rs.{toml,json,yaml,yml}` no
+  diretório corrente, na pasta do executável e no home. Um preset `default` é
+  aplicado sem flag e acrescenta ao argv as opções ausentes (precedência argv >
+  preset > ambiente). O PTY da IDE roda na raiz do projeto, então um arquivo
+  ali entra na operação.
+- **Efeitos do `download`.**
+  [`util/cli.rs`](https://github.com/probe-rs/probe-rs/blob/v0.32.0/probe-rs-tools/src/bin/probe-rs/util/cli.rs)
+  só reinicia o chip com `--reset` e só apaga o chip inteiro com
+  `--chip-erase`; `--verify` relê o que foi gravado. `cycle_power` faz ciclo
+  de energia USB antes de conectar. `--binary-format` padrão (`target`)
+  resolve o formato pelo chip (Espressif → IDF), por isso o formato é sempre
+  explícito.
+- **Listagem e seleção.** A linha de `list` é
+  `[N]: <nome> -- vvvv:pppp[-IF]:<serial> (<fábrica>)[ (inaccessible)]`, e um
+  serial ausente sai vazio (Display de `DebugProbeInfo`). O seletor é
+  `VID:PID[-IF][:SERIAL]` em hexadecimal, e o serial pode conter `:`. O
+  casamento trata a interface como opcional e aceita o serial igual ou em hex
+  maiúsculo. Com seletor, a seleção considera só as entradas que casam:
+  nenhuma é erro sem abrir dispositivo, e várias abrem uma pergunta interativa.
+- **Consultas sem hardware.** `mi meta` devolve a versão em JSON
+  (`{"version":"0.32.0",...}`). `chip info <chip>` devolve `Cores (N):`, uma
+  linha `    - <núcleo> (<CoreType>)` por núcleo (Armv6m/7a/7r/7m/7em/8a/8m,
+  Riscv, Riscv64, Xtensa) e as regiões; um chip desconhecido sai com código 1.
+  `--dry-run` não evita a seleção de uma sonda real e não serve como prova
+  segura.
 
-**Recorte, um commit cada:**
+**Contrato (protocolo 0.188.0).**
 
-1. **b4b1 (esta):** contrato 0.188.0 e core da intenção nativa probe-rs com alvo
-   CMake, sonda explícita, versão/capacidade, ambiente/presets e reserva por
-   sonda; despacho real com CLI falsa; probe-rs 0.32.0 real sem gravar. A UI
-   não muda: a prévia nativa que ela já pede para probe-rs passa a recusar por
-   falta de alvo/sonda, em vez de "motor sem validação".
-2. **b4b2:** UI. Escolher alvo executável (`cmake.targets.list`) e sonda
-   (`probe.list`, com acessibilidade) no fluxo de gravação atual, mais prévia,
-   erros e cancelamento, com harness e fotos. Até lá o nativo probe-rs não é
-   alcançável pela tela.
-3. **b4b3:** ocupação/recuperação. A depuração probe-rs reserva a mesma sonda;
-   matriz integrada. Os demais motores vêm depois, cada um com prova própria.
-
-**Contrato 0.188.0 (antes do core):**
-
-- `FlashProposalParams` ganha `target?: string` (nome do alvo no codemodel) e
-  `probe?: string` (seletor `vvvv:pppp[-IF]:SERIAL`). Só valem com `native`
-  e motor resolvido `probe-rs`; fora disso, INVALID_PARAMS. O probe-rs nativo
-  exige os dois e recusa `device`, `firmware`, `buildDirectory` e
-  `flashSizeBytes`.
-- `FlashIntent` continua versão 1 com o mesmo shape. Para probe-rs, `selection`
-  traz motor/alvo/sonda resolvidos e `deviceKey` é o digest opaco da entrada
+- `FlashProposalParams` ganha `target?: string` (alvo do codemodel) e
+  `probe?: string` (seletor canônico `vvvv:pppp[-IF]:SERIAL`). Os dois só valem
+  com `native` e motor resolvido `probe-rs`; fora disso, INVALID_PARAMS. Nesse
+  motor os dois são obrigatórios, e `device`, `firmware`, `buildDirectory` e
+  `flashSizeBytes` são INVALID_PARAMS.
+- `FlashIntent` mantém a versão 1 e o shape. Para probe-rs, `selection` leva
+  motor, alvo e sonda resolvidos, e `deviceKey` é o digest opaco da entrada
   listada. Um core 0.187 recusa a seleção nova (`deny_unknown_fields`).
-- `ProbeInfo` ganha `interface?: number` e `inaccessible?: true`, com o parser
-  corrigido para o formato 0.32.0. A listagem continua sendo descoberta: nenhum
-  campo prova identidade, acesso ou exclusividade.
+- `ProbeInfo` ganha `interface?: number` e `inaccessible?: true`. A listagem
+  continua sendo descoberta: nenhum campo prova identidade, acesso ou
+  exclusividade.
 
-**Validação nativa, na prévia e de novo antes do PTY (adiada, com prazo e o
-cancelamento de `run_preflight`):**
+**Validação de uma intenção probe-rs.** Roda fora do laço do core, na prévia e
+de novo antes do PTY, com prazo de 5 s e até 64 KiB de saída por consulta, e
+pode ser cancelada pelo `run_preflight`.
 
-1. Ferramenta: a mesma do `probe.list` (papel debugAdapter do kit, senão o
-   detector). `mi meta`, com o prazo e o limite de saída da consulta existente,
-   deve responder 0.32.x; outra versão, falha ou JSON inválido → INVALID_REQUEST
-   com a causa. Ausente → TOOL_NOT_FOUND.
-2. Efeitos herdados: as `PROBE_RS_*` do ambiente do core saem das consultas e
-   do processo lançado, e a prévia lista quais saíram. Um
+1. **Ferramenta:** a do papel debugAdapter (a mesma do `probe.list`), cujo
+   executável tem de ser `probe-rs`. `mi meta` tem de responder 0.32.x; outra
+   versão, falha ou JSON inválido dão INVALID_REQUEST com a causa, e a
+   ferramenta ausente dá TOOL_NOT_FOUND.
+2. **Efeitos herdados:** as `PROBE_RS_*` do ambiente do core saem das consultas
+   e do processo lançado, e a prévia lista quais saíram. Um
    `.probe-rs.{toml,json,yaml,yml}` na raiz, na pasta do executável ou no home
-   recusa citando o caminho: presets não são interpretados nem ignorados em
-   silêncio. O argv nunca leva apagar tudo, reset, ciclo de energia, conexão
-   sob reset, dry-run ou host remoto.
-3. Chip: o do kit (`toolchain.setKit`), igual ao do modelo; chip só deduzido de
-   framework recusa ("probe-rs sugere, o usuário confirma", 40 §5).
-   `chip info` precisa reconhecê-lo, e a arquitetura de ao menos um núcleo deve
-   corresponder ao e_machine do ELF (ARM; Armv8a também AArch64; RISC-V; Xtensa).
-4. Alvo e artefato: o CmakeModel do `.kinein/build` registra os arquivos do
-   reply lidos (caminho e revisão). O codemodel tem fonte = raiz e build =
-   build dir canônico, uma única configuração e um alvo com o nome pedido, tipo
-   EXECUTABLE, com exatamente um artefato dentro do build dir: arquivo regular,
-   não vazio, ELF. Nunca o ELF mais novo.
-5. Sonda: `list` pelo executável validado, com o prazo e o limite da consulta
-   existente. Toda linha `[N]:` precisa casar com o formato 0.32.0, senão recusa.
-   Exatamente uma entrada igual ao seletor (VID, PID, interface e serial), com
-   serial não vazio e sem `(inaccessible)`. Zero ou várias → recusa.
-6. Plano literal: `<probe-rs> download --chip <chip> --probe <seletor>
+   recusa citando o caminho, porque presets não são interpretados nem
+   ignorados em silêncio. O argv nunca leva apagar tudo, reset, ciclo de
+   energia, conexão sob reset, dry-run ou host remoto.
+3. **Chip:** o chip fixado no kit (`toolchain.setKit`), igual ao do modelo. Um
+   chip só deduzido de framework recusa ("probe-rs sugere, o usuário confirma",
+   40 §5). `chip info` tem de reconhecê-lo, e a arquitetura de ao menos um núcleo
+   tem de corresponder ao e_machine do ELF (ARM; Armv8a também AArch64; RISC-V;
+   Xtensa).
+4. **Alvo e artefato:** o codemodel do `.kinein/build` precisa ter fonte = raiz,
+   build = build dir canônico e uma única configuração, além de um alvo com o
+   nome pedido, do tipo EXECUTABLE, com exatamente um artefato. Esse artefato
+   fica dentro do build dir e é um arquivo regular, não vazio, ELF. O ELF mais
+   novo nunca entra na escolha.
+5. **Sonda:** toda linha `[N]:` de `list` tem de casar com o formato 0.32.0.
+   Pela mesma regra de casamento da ferramenta, exatamente uma entrada casa com
+   o seletor, com serial não vazio e sem `(inaccessible)`. Zero ou várias
+   recusam.
+6. **Plano literal:** `<probe-rs> download --chip <chip> --probe <seletor>
    --binary-format elf --verify <ELF>`. A prévia avisa que o chip não é
-   reiniciado depois e que só os setores escritos são apagados.
-7. Snapshot: SHA do ELF e do executável, revisões do reply, contexto
-   kit/preset, versão, núcleos e entrada listada entram no fingerprint;
-   `run.start` regenera e compara antes do PTY.
+   reiniciado e que só os setores escritos são apagados.
+7. **Snapshot:** o fingerprint cobre o SHA do ELF e do executável, as revisões
+   dos arquivos do reply, o contexto kit/preset, a versão, os núcleos e a
+   entrada listada. `run.start` regenera tudo e compara antes do PTY.
 
-**Reserva e lançamento:** o registro existente ganha o canal de sonda
+**Reserva e lançamento.** O registro de reservas ganha o canal de sonda
 (`probe-rs:<seletor canônico>`), com a mesma coordenação entre instâncias e o
-mesmo guardião. Ele conflita com a mesma sonda e com a seleção automática de
-porta, nunca com uma porta serial explícita: o monitor do VCP da sonda
-continua possível. O PTY recebe a lista de variáveis a remover; o diretório
-corrente segue a raiz. Sem shell e sem fallback.
+mesmo guardião do canal serial. Ele conflita com a mesma sonda e com a seleção
+automática de porta, nunca com uma porta serial explícita: o monitor do VCP da
+sonda continua possível. SERIAL_PORT_BUSY leva `scope: "probe"`. O PTY recebe
+a lista de variáveis a remover, e o diretório corrente continua sendo a raiz.
+Não há shell nem fallback.
 
-**Provas planejadas:** unitárias (formato 0.32.0, seletor, versão, núcleos e
-arquitetura, configurações, alvo CMake com reply de fixture e ELF mínimo).
-Despacho real com probe-rs falso: prévia → intenção → `run.start` → PTY, com o
-argv gravado igual ao da intenção; recusas para alvo/sonda ausentes, alvo
-biblioteca, dois artefatos, ELF ausente, chip só deduzido, versão 0.31, sonda
-inacessível/ausente/duplicada, configuração presente e contexto alterado.
-Sessão PTY removendo uma variável real. Core real por stdio com `PROBE_RS_*`
-no ambiente e CLI falsa registrando o ambiente recebido. probe-rs 0.32.0 real:
-`mi meta`, `chip info`, `list` sem sonda → recusa, e o argv planejado aceito
-pelo parser real com seletor inexistente. Mutações dos guardas principais.
-Gate rápido estrito (a fatia não toca `ui/src`).
+**Onde está no código.**
 
-**Não prova:** gravação física, acesso udev, sondas duplicadas reais, FTDI
-multicanal, outras versões da ferramenta. Uma segunda sonda idêntica plugada
-entre a validação e o lançamento faria o probe-rs perguntar no terminal; o
-risco residual fica dito.
+- `probe.rs`: parser no formato 0.32.0. `parse_list` é tolerante (tela) e
+  `parse_listing` é estrito (validação). `probe/query.rs::run` é a consulta
+  limitada reutilizável; ela só lê o cancelamento do chamador, então um
+  estouro de saída interrompe a consulta sem cancelar a operação inteira.
+  `inherited_variables()` lista as `PROBE_RS_*`.
+- `cmake/model.rs`: `observed` (arquivos do reply, com a revisão vista antes da
+  leitura) e `configurations`.
+- `project/flash_origin.rs::cmake_target`: vínculo alvo → ELF único. Lê só os
+  primeiros 64 bytes do artefato para o e_machine.
+- `flash/probe_rs.rs` (seletor, preparação, plano) e `flash/probe_rs/tool.rs`
+  (consultas 0.32).
+- `serial/ownership.rs`: canal `Probe` e mensagens que nomeiam a sonda.
+- `terminal/session.rs`: `open_command_holding` remove as variáveis indicadas.
+- `handlers/run_native.rs`: ferramenta, destino e reserva por motor.
 
-**Provas de h4b2b4b1 (2026-10-22):** 13 testes novos e 1297 Rust no workspace.
-Despacho real com CLI falsa cobre a intenção até o PTY e cada recusa do
-desenho, inclusive o chip deduzido do CubeMX, a revalidação de ELF/sonda, o
-busy da sonda e o cancelamento. A sessão PTY prova a remoção de uma variável
-real. Dez mutações dos guardas foram detectadas em runtime
-(`/home/hugh/.cache/kinein-h4b2b4b1-proofs/`). O runner
-`scripts/verificar_probe_rs_nativo.py` (core real por stdio, Configurar/build
-da IDE com arm-none-eabi, probe-rs 0.32.0 real) passou: argv lançado = intenção,
-nenhuma das cinco `PROBE_RS_*` do core chegou às chamadas e o parser real
-aceitou o argv com seletor inexistente, sem abrir sonda. Achado de UX para a
-b4b2: o reply do file-api só existe depois de Configurar (o `build.run`
-sozinho não escreve a query); a recusa orienta, e a tela deve oferecer o passo.
+**Validação.**
 
-**Fecho de h4b2b4b1 (2026-10-22):** gate rápido estrito TUDO VERDE no QA,
-com 1.297 Rust, Clippy e C++ limpos, 8 CTest, qmllint estrito e 167 harnesses
-QML, sem NÃO PROVADO (`/home/hugh/.cache/kinein-h4b2b4b1-proofs/gate-fast.log`). Antes dele, a CI rápida estrita
-reprovou duas vezes (identificador `unconfigured`; catraca de `cfg(unix)`).
-As duas causas foram corrigidas sem tocar em linha de base, e os logs ficaram
-guardados. A vertical probe-rs continua aberta: próxima **b4b2**, a UI de alvo
-executável e sonda no fluxo de gravação atual, oferecendo Configurar quando
-falta o reply, com harness e fotos; depois b4b3.
+- Unitários: formato 0.32.0 (tolerante × estrito), seletor canônico e regra de
+  casamento, versão 0.32.x, `chip info` e compatibilidade núcleo × ELF.
+- Despacho real (`tests/serial/ownership_flash/probe_rs.rs`, probe-rs falso):
+  prévia → intenção → `run.start` → PTY com o argv da intenção. Recusas para
+  alvo biblioteca ou ausente, dois artefatos, ELF ausente, não ELF ou de outra
+  arquitetura, versão 0.31, sonda ausente, inacessível ou duplicada, linha fora
+  do formato, preset, chip desconhecido e chip só deduzido do CubeMX.
+  Revalidação de ELF e sonda; busy da sonda; porta serial explícita sem
+  conflito; cancelamento durante a preparação.
+- PTY: `removed_variables_do_not_reach_the_command` usa uma variável real do
+  ambiente do teste.
+- Core real por stdio, `scripts/verificar_probe_rs_nativo.py`: projeto CMake
+  arm-none-eabi configurado e compilado pelo core e probe-rs 0.32.0 real em
+  `mi meta`, `chip info` e `list`. Um wrapper intercepta só uma listagem de
+  fixture e o `download`. A prova mostra que as cinco `PROBE_RS_*` do ambiente
+  do core não chegam a nenhuma chamada e que o argv lançado é o da intenção. O
+  parser real aceita esse argv: com seletor inexistente, ele para em "No
+  connected probes were found", sem abrir dispositivo.
+- Mutações dos guardas (remoção de ambiente, interface do seletor, sonda
+  inacessível, presets, chip do kit, versão, tipo do alvo, listagem estrita,
+  chave da reserva e comparação da intenção no lançamento) reprovam em runtime:
+  `/home/hugh/.cache/kinein-h4b2b4b1-proofs/mutations*.json`.
+- Gate rápido estrito, com 1.297 Rust, 8 CTest e 167 harnesses:
+  `/home/hugh/.cache/kinein-h4b2b4b1-proofs/gate-fast.log`.
+
+**Limites.** Não há gravação física. udev, sondas duplicadas reais, FTDI
+multicanal e outras versões do probe-rs não foram medidos. Se uma segunda sonda
+idêntica for plugada entre a validação e o lançamento, o probe-rs pergunta no
+terminal. O reply do file-api só existe depois de um Configurar explícito
+(`build.run` não escreve a query), e por isso a recusa orienta Configurar.
+
+**Ambiente de referência:** probe-rs 0.32.0 oficial x86_64
+(`probe-rs-tools-x86_64-unknown-linux-gnu.tar.xz`, SHA-256
+`c2ccc46049e52a5d403ef212078cd637ecda55b662708327960558f83e851ff5`) em
+`~/.cargo/bin`.
 
 
 ### 14.35 0.4.1h4b2b4b2 — alvo e sonda do probe-rs nativo na UI atual (desenho, 2026-10-22)
 
-**Base:** 9f9c155; contrato 0.188.0 já publicado no core, sem mudança de
-protocolo nesta parte. Hoje a aba Gravar pede o nativo sem `target`/`probe`
-e recebe a recusa orientada da b4b1. As fontes de dados existem: sondas no
-`EmbeddedController` (`probe.list`, campos `interface`/`inaccessible`) e
-alvos em `cmake.targets.list` (`origin`: `fileApi` autoritativo, `source`
-lido do CMakeLists antes de configurar, `none`). O comando `cmake.configure`
-já existe no despachante. `EmbeddedFlashView` tem 271/300 linhas.
+**Problema.** Com o contrato 0.188.0, a aba Gravar pedia o modo nativo sem
+`target`/`probe` e só podia mostrar a recusa do core. Além disso, um projeto
+CMake bare metal com chip fixado no kit não era tratado como embarcado:
+`project.embedded` só valia com framework detectado ou alvo Linux. Por isso a
+Visão geral pedia "abra um projeto ESP-IDF…", desabilitava "Revisar gravação"
+e falava de porta serial no passo de placa.
 
-**Desenho (um dono por responsabilidade, sem lista ou executor novos):**
+**Contrato (protocolo 0.189.0).** `project.model.embedded` também vale quando o
+kit ativo fixa um chip, a palavra explícita do usuário, como já valia para o
+triple Linux do kit. Não há campo novo, nem dedução, nem reconhecimento de
+framework.
 
-- `EmbeddedFlashController`: `target`, `probe`, `suggestedEngine` (o
-  `target.flashEngine` do modelo, dado pelo pai), `targets`/`targetsOrigin`/
-  `targetsBusy`. `probeDestination` vale com nativo, sem firmware de catálogo
-  e motor probe-rs (escolhido, ou automático com sugestão probe-rs). Nesse
-  destino, `propose` não envia porta, `flashSizeBytes` nem `buildDirectory`, e
-  envia `target`/`probe`; fora dele, nunca os envia. Trocar alvo ou sonda
-  invalida a prévia; `clear()` (troca de workspace) zera tudo. Seletor da
-  sonda: `vid:pid[-IF]:serial` da entrada listada. Sem serial ou inacessível
-  não é selecionável, com o motivo visível.
-- Alvos: sinal `targetsRequested` → `EmbeddedRequestRouter` →
-  `coreClient.cmakeTargetsList()`; `EmbeddedEventRouter` entrega
-  `cmakeTargetsResolved` ao controller. Só executáveis de `fileApi` dentro da
-  raiz atual (`sourceDir`) entram, porque a resposta não tem id e a Biblioteca
-  também pede. A falha genérica do método encerra o busy. O pedido sai ao
-  abrir/atualizar o painel e a cada modelo novo (fim de Configurar/build),
-  quando o destino é a sonda. Com `source`/`none`, a seção mostra o motivo e o
-  botão existente "Configurar CMake"; o core continua sendo a validação final.
-- Ponte C++: `runConfigFlashProposal` ganha `target` e `probe`, incluídos só
-  quando não vazios. Sem sinal novo.
-- Vista: componente próprio `EmbeddedFlashDestination` (Kv* e tokens
-  existentes), incluído na aba Gravar com poucas linhas. A linha de porta
-  diz que a sonda é o destino; o campo de diretório do build some nesse
-  destino. Nenhuma reorganização do painel; fotos antes/depois para o autor.
+**`EmbeddedFlashController` (estado e regras).**
 
-**Provas planejadas:** harness novo com os controllers e roteadores reais e
-cliente falso. Cobre: parâmetros por destino; alvos (`fileApi` executável,
-`source`, outra raiz, falha); sondas sem serial ou inacessível; invalidação;
-troca de workspace e modelo novo pedindo alvos. O CMake real e o probe-rs
-falso passam pela UI real com o core real: escolher alvo e sonda, gerar a
-prévia e gravar até o wrapper, sem hardware. Fotos em tela real ou Xvfb e
-gate completo estrito, porque `ui/src` muda.
+- `target`, `probe`, `targets`, `targetsOrigin`, `targetsBusy` e
+  `targetsError`. `suggestedEngine` e `workspaceRoot` vêm do
+  `EmbeddedController`.
+- `probeDestination` vale com nativo, sem firmware de catálogo e com motor
+  probe-rs, escolhido ou automático com sugestão probe-rs do modelo.
+- Com destino na sonda, `propose` envia `target` e `probe` e omite porta,
+  `flashSizeBytes` e `buildDirectory`, que o contrato recusa. Fora desse
+  destino, `target`/`probe` nunca são enviados.
+- Trocar alvo ou sonda invalida a prévia, e `clear()` (troca de workspace)
+  zera tudo.
+- `selectorOf()` monta `vid:pid[-IF]:serial` da entrada listada.
+  `probeSelectable()` exclui as sondas sem serial ou inacessíveis.
+  `targetArtifact` é o ELF único do alvo escolhido (usado pela depuração,
+  §14.36).
 
-**Achado na tela real antes do código (2026-10-22, fotos em
-`/home/hugh/.cache/kinein-h4b2b4b2-proofs/real-before/`).** Mostrei ao autor
-a IDE real no notebook dele, com o projeto CMake arm-none-eabi da fixture,
-chip STM32F411RETx no kit e probe-rs. A aba Gravar só exibe a recusa da b4b1.
-A Visão geral não reconhece o projeto: `project.embedded` só vale com
-framework ou alvo Linux. Ela pede "abra um projeto ESP-IDF…", desabilita
-"Revisar gravação" e o passo 2 fala de porta serial. A mesma jornada fecha aqui:
+**Lista de alvos.** `targetsRequested` → `EmbeddedRequestRouter` →
+`cmake.targets.list`; `EmbeddedEventRouter` → `handleTargets`. A resposta não
+tem id e a Biblioteca também a pede. Por isso o controller só aceita a lista
+que pediu (`targetsBusy`) e só os executáveis de `origin: "fileApi"` cujo
+`sourceDir` está na raiz atual. `origin` `source` (nomes lidos do CMakeLists
+antes de configurar) ou `none` não oferecem alvo escolhível. A falha genérica
+do método encerra a espera. O pedido sai a cada modelo novo do projeto, o que
+inclui o fim de um Configurar ou build, quando o destino é a sonda.
 
-- Contrato 0.189.0 (semântica de campo existente, sem shape novo):
-  `embedded` também vale quando o kit ativo fixa um chip, a palavra explícita
-  do usuário, como já valia para o triple Linux do kit. Sem dedução nova e
-  sem reconhecer framework. O 03 (`project.md`) e o 03.1 mudam antes do core.
-- `EmbeddedController.projectFrameworkLabel` passa a nomear "Bare metal ·
-  <chip>" nesse caso. Na Visão geral, com destino sonda, o passo 2 fala da
-  sonda: estado "Sonda escolhida"/"Escolher sonda", ação levando a Gravar.
-  O passo Firmware leva à escolha de alvo. Fluxos ESP/PlatformIO/Linux/
-  MicroPython continuam com o texto e a ordem atuais.
-- Validação visual e de fluxo na IDE real do notebook do autor, com mouse e
-  teclado reais e ele acompanhando (pedido de 2026-10-22). Xvfb fica só para
-  as provas automatizadas.
+**Vista `EmbeddedFlashDestination`.** É burra: lê `controller.flash` e
+`controller.probes`, e entra na aba Gravar no lugar do campo de diretório do
+build quando o destino é a sonda.
 
-**Fecho de h4b2b4b2 (2026-10-22):** gate completo estrito TUDO VERDE no QA,
-com 1.297 Rust, 168 harnesses, 8 CTest e C++/Clippy/qmllint limpos;
-debug/release em 327/335 ms (`/home/hugh/.cache/kinein-h4b2b4b2-proofs/gate-full.log`). Fluxo validado na IDE real
-do autor: alvo → sonda → prévia → gravar até o wrapper → salvar/executar; sem
-reply, Configurar devolve a lista. Corrigidos no caminho: o pulo de layout
-das dicas e as frases quebradas no meio. Registro no 40.7 §7.344.
+- Os alvos aparecem como chips.
+- Sem modelo do file-api, a vista mostra o motivo e o botão "Configurar CMake"
+  (o comando existente `cmake.configure`).
+- As sondas selecionáveis aparecem como chips. As outras aparecem como texto
+  com o motivo (sem serial; sem permissão, com a orientação de udev).
+- As dicas continuam visíveis depois da escolha, para que os controles abaixo
+  não mudem de posição.
+- A linha da porta diz que a sonda é o destino.
+- As frases desse painel usam `Text.Wrap`, que só quebra no meio de uma
+  palavra se ela não couber.
 
-**Levantamento para h4b2b4b3 (fonte oficial 0.32.0,
-`cmd/dap_server/server/configuration.rs`):** o launch do `dap-server` aceita
-`probe` (seletor), `chip`, `connectUnderReset`, `allowEraseAll` e
-`flashingConfig` (gravação desligada por padrão); o Kinein não passa
-seletor, então o `dap-server` escolhe a sonda sozinho, e a sessão não reserva
-a sonda. Próximo recorte: passar o seletor explícito (o mesmo de Gravar ou
-escolhido no gesto de depurar), reservar a mesma sonda durante a sessão no
-registro existente, recusar sessão ambígua e provar o conflito
-gravação × depuração. Desenho fino antes do código.
+**Visão geral.** `projectFrameworkLabel` nomeia "Bare metal · <chip>" quando o
+projeto é embarcado pelo chip do kit. Com destino na sonda, o passo 2 vira
+"Sonda" (Escolher/Escolhida, ação que leva a Gravar) e o próximo passo só
+avança quando há sonda escolhida. Os fluxos ESP, PlatformIO, Linux e
+MicroPython mantêm texto e ordem.
 
+**Ponte.** `CoreClient::runConfigFlashProposal` ganha `target` e `probe`,
+enviados só quando não vazios.
+
+**Validação.**
+
+- Harness `tst_embedded_flash_destination`, com controllers e roteadores reais.
+  Cobre os parâmetros por destino; os alvos (`fileApi` executável, biblioteca,
+  outra raiz, `source`, falha e resposta não pedida); as sondas sem serial,
+  inacessíveis e com interface; a invalidação; a troca de workspace; o modelo
+  novo pedindo alvos; e o passo 2 da Visão geral. Seis mutações dos guardas
+  reprovam por asserção:
+  `/home/hugh/.cache/kinein-h4b2b4b2-proofs/mutations-qml.json`.
+- Modelo: chip de kit marca o projeto como embarcado; chip vazio não marca
+  (`tests/project.rs`).
+- Aceite na IDE real com core real, projeto CMake arm-none-eabi configurado e
+  compilado, chip STM32F411RETx no kit e probe-rs via wrapper (sem hardware).
+  Percorridos: escolher alvo e sonda → prévia → "Gravar na placa" → terminal
+  (o wrapper registra o argv da prévia, sem `PROBE_RS_*`); "Salvar e ativar" →
+  ▶ Executar pela configuração salva (schema 2); sem reply, "Configurar CMake"
+  → a lista volta pelo evento de modelo. Telas em
+  `/home/hugh/.cache/kinein-h4b2b4b2-proofs/real-before`, `real-after` e
+  `real-fixed`.
+- Gate completo estrito: 1.297 Rust, 8 CTest, 168 harnesses, C++, Clippy e
+  qmllint limpos; primeiro frame em 327 ms (debug) e 335 ms (release).
+  `/home/hugh/.cache/kinein-h4b2b4b2-proofs/gate-full.log`.
+
+**Limites.** As telas registram o fluxo funcional, não aprovação de desenho
+visual (frontend §1.1). Não há gravação física nem sonda real.
+
+
+### 14.36 0.4.1h4b2b4b3 — depuração probe-rs na sonda escolhida, com a mesma reserva (desenho, 2026-10-22)
+
+**Problema.** A gravação nativa reserva a sonda pelo seletor explícito, mas a
+depuração probe-rs não passava seletor nenhum. O `dap-server` escolhia a sonda
+sozinho e a sessão não reservava nada, então gravar e depurar a mesma sonda só
+falhava dentro da ferramenta. O botão de depurar mandava `program` vazio, e o
+core procurava "o único executável" do build, recusando quando havia vários. O
+`dap-server` herdava o ambiente do core.
+
+**Comportamento do `dap-server` 0.32.0**
+(`cmd/dap_server/server/configuration.rs`): o JSON de launch aceita `probe`
+(seletor), `chip`, `connectUnderReset`, `allowEraseAll` e `flashingConfig`,
+com gravação desligada por padrão. As opções de sonda do ambiente não se
+aplicam a esse subcomando; `PROBE_RS_REMOTE_HOST` faz a sessão falhar ("not
+supported in remote mode").
+
+**Contrato (protocolo 0.190.0).** `debug.start` ganha `probe?: string`, o mesmo
+seletor da gravação. Ele só vale com o adaptador probe-rs do kit e um programa
+nativo; com `connect`, alvo Python ou outro adaptador, INVALID_PARAMS. Sem
+`probe`, nada muda.
+
+**Validação e reserva.** `handlers/debug_launch.rs` reserva a sonda
+(`acquire_probe`, operação `debug.start`) antes de qualquer consulta. Fora do
+laço, `flash::probe_rs::listed_probe` confere a versão 0.32.x e a listagem
+estrita, com uma entrada acessível igual ao seletor. A continuação confere o
+workspace e entrega ao `DebugManager` existente o seletor e a reserva.
+
+**Ciclo de vida da reserva.** Com coordenação por arquivos, o adaptador sobe
+pelo guardião do `Lease`, que segura a trava enquanto o processo vive. O
+`Lease` em memória vai para a thread leitora da sessão e é solto no EOF do
+adaptador, e não quando o objeto de sessão deixa o slot do `DebugManager`: uma
+sessão encerrada continua no slot até o próximo start/stop, e a sonda tem de
+ficar livre antes disso. Gravar a mesma sonda durante a sessão, e o inverso,
+recusa com SERIAL_PORT_BUSY (`scope: "probe"`), com a orientação "Pare a
+depuração". Portas seriais continuam livres.
+
+**Ambiente e launch.** O JSON de launch leva `"probe": <seletor>`. O processo
+probe-rs não recebe `PROBE_RS_*`. A função `inherited_variables()` fica em
+`crate::probe`, para que `dap` não dependa de `flash` (o que fecharia o ciclo
+dap → flash → project → dap).
+
+**UI.** `CoreClient::debugStart` ganha `probe`, enviado só quando não vazio. O
+`DebugRequestRouter` recebe o `EmbeddedController`. Com destino na sonda e sem
+`connect`, ele envia a sonda escolhida em Gravar e, sem programa explícito, o
+ELF do alvo escolhido (`targetArtifact`). O `DebugController` não muda.
+
+**Painel Debug.** O `DebugInspector` (frames e variáveis) só aparece com a
+thread parada, como os watches. Antes, com o alvo rodando, ele ficava ancorado
+à direita de uma saída de largura total e saía pela borda do dock. Durante a
+sessão, a saída termina antes dos escopos.
+
+**Estrutura.** `handlers/debug_launch.rs` contém o lançamento comum (kit,
+escolha do adaptador e `DebugManager`) e o caminho da sonda, de modo que
+`handlers/debug.rs` fica dentro do limite de 500 linhas.
+`python_debug_interpreter` continua no `debug.rs`.
+
+**Validação.**
+
+- Unitário: `the_chosen_probe_goes_in_the_probe_rs_launch_only`.
+- Despacho real, `tests/serial/ownership_flash/probe_rs_debug.rs`, com um
+  `dap-server` falso em Python por stdio:
+  - a sonda e o chip chegam ao launch, sem `PROBE_RS_*`;
+  - gravar a mesma sonda durante a sessão recusa com "Pare a depuração";
+  - quando o adaptador sai por conta própria, a sonda fica livre mesmo sem
+    `debug.stop`;
+  - recusas para `connect`, seletor inválido, sonda ausente, sonda reservada e
+    adaptador gdb.
+- Harness `tst_debug_probe_route`. Cobre sonda e alvo escolhidos, programa
+  explícito prevalecendo, `connect` sem sonda e destino que não é sonda.
+- Core real por stdio (`scripts/verificar_probe_rs_nativo.py`, etapa de
+  depuração): as cinco `PROBE_RS_*` do core não chegam ao `dap-server`, há
+  conflito durante a sessão e a sonda fica livre ao fim.
+- Mutações reprovam em runtime. Do core: sonda no launch, soltura antecipada
+  da reserva, checagem do adaptador e `connect` com sonda
+  (`/home/hugh/.cache/kinein-h4b2b4b3-proofs/mutations*.json`). Pela prova do
+  core real: a remoção de ambiente (`stdio-mutation/`). Do roteador QML: duas.
+- Aceite na IDE real com o wrapper: depurar → tentar gravar (recusa) → parar →
+  gravar. A correção do painel Debug é visível com o alvo rodando. Telas em
+  `/home/hugh/.cache/kinein-h4b2b4b3-proofs/real` e `real-debug-layout`.
+- Gate completo estrito: 1.300 Rust, 8 CTest, 169 harnesses, C++, Clippy e
+  qmllint limpos; primeiro frame em 314 ms (debug) e 333 ms (release).
+  `/home/hugh/.cache/kinein-h4b2b4b3-proofs/gate-full.log`.
+
+**Limites.** Sem sonda probe-rs física, a sessão DAP real com hardware não foi
+exercitada. A depuração sem `probe` continua deixando o `dap-server` escolher
+e não reserva nada.
