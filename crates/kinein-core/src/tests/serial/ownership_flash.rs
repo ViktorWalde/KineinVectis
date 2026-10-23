@@ -262,6 +262,51 @@ fn native_flash_rejects_changed_files_tool_kit_device_and_forged_argv() {
 }
 
 #[test]
+fn native_flash_refuses_an_esptool_configuration_before_any_process() {
+    let mut fixture = fixture("native-esptool-configuration");
+    fs::write(
+        fixture.root.join("esptool.cfg"),
+        "[esptool]\ncustom_reset_sequence = D0|R1|W0.1\n",
+    )
+    .unwrap();
+    let refused = proposal(&mut fixture);
+    let message = refused.error.map(|error| error.message).unwrap_or_default();
+    assert!(
+        message.contains("esptool.cfg") && message.contains("[esptool]"),
+        "{message}"
+    );
+    assert!(
+        !fixture.root.join("query.ready").exists(),
+        "the version query ran before the refusal"
+    );
+    fs::remove_file(fixture.root.join("esptool.cfg")).unwrap();
+    let proposal = native_proposal(&mut fixture);
+    let source = proposal["source"].to_string();
+    assert!(
+        source.contains("ambiente: ") && source.contains("configuração: nenhum esptool.cfg"),
+        "{source}"
+    );
+    let saved = fixture.rpc(
+        "runConfig.save",
+        json!({"name":"Native flash", "command":proposal["command"], "flash":proposal["flash"]}),
+    );
+    assert!(saved.error.is_none(), "{saved:?}");
+    fs::write(
+        fixture.root.join("tox.ini"),
+        "[tox]\nenvlist = py\n\n[esptool]\nconnect_attempts = 1\n",
+    )
+    .unwrap();
+    let response = fixture.rpc("run.start", json!({}));
+    let message = response
+        .error
+        .map(|error| error.message)
+        .unwrap_or_default();
+    assert!(message.contains("tox.ini"), "{message}");
+    assert!(!fixture.root.join("flash.args").exists());
+    assert!(fixture.core.run_preflight.is_none());
+}
+
+#[test]
 fn native_flash_holds_its_serial_reservation_until_the_terminal_exits() {
     let mut fixture = fixture("native-busy-until-exit");
     let proposal = native_proposal(&mut fixture);

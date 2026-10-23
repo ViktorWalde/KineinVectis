@@ -49,6 +49,8 @@ struct Session {
     child: lifecycle::SharedChild,
     running: Arc<AtomicBool>,
     closing: bool,
+    /// Opening order; the oldest finished sessions are discarded first.
+    serial: u64,
 }
 
 /// Owns the shell sessions a workspace keeps open (multi-terminal, D2.3).
@@ -98,12 +100,14 @@ impl TerminalManager {
     }
 
     /// Sessão viva pelo id, ou `NotOpen`.
-    fn live(&self, id: &str) -> Result<&Session, TerminalError> {
+    /// A retained session that was not closed on request, its process alive
+    /// or not: its grid and history stay readable after the exit (52 §14.38).
+    fn view(&self, id: &str) -> Result<&Session, TerminalError> {
         let session = self.sessions.get(id).ok_or(TerminalError::NotOpen)?;
-        if session.running.load(Ordering::SeqCst) && !session.closing {
-            Ok(session)
-        } else {
+        if session.closing {
             Err(TerminalError::NotOpen)
+        } else {
+            Ok(session)
         }
     }
 
@@ -149,10 +153,13 @@ impl TerminalManager {
         removed: &[std::ffi::OsString],
         resource: impl Send + 'static,
     ) -> Result<String, TerminalError> {
-        // Sessões mortas (shell saiu) não contam pro teto nem seguram memória.
-        self.sessions
-            .retain(|_id, session| session.running.load(Ordering::SeqCst));
-        if self.sessions.len() >= MAX_SESSIONS {
+        self.retain_finished();
+        let running = self
+            .sessions
+            .values()
+            .filter(|session| session.running.load(Ordering::SeqCst))
+            .count();
+        if running >= MAX_SESSIONS {
             return Err(TerminalError::TooMany);
         }
         self.next_id += 1;
@@ -215,9 +222,28 @@ impl TerminalManager {
                 child,
                 running,
                 closing: false,
+                serial: self.next_id,
             },
         );
         Ok(id)
+    }
+
+    /// Finished sessions stay readable but do not count toward the cap: those
+    /// closed on request leave, and only the `MAX_SESSIONS` most recent remain.
+    fn retain_finished(&mut self) {
+        self.sessions
+            .retain(|_id, session| session.running.load(Ordering::SeqCst) || !session.closing);
+        let mut finished: Vec<(u64, String)> = self
+            .sessions
+            .iter()
+            .filter(|(_, session)| !session.running.load(Ordering::SeqCst))
+            .map(|(id, session)| (session.serial, id.clone()))
+            .collect();
+        finished.sort_unstable();
+        let excess = finished.len().saturating_sub(MAX_SESSIONS);
+        for (_, id) in finished.into_iter().take(excess) {
+            self.sessions.remove(&id);
+        }
     }
 
     /// Forwards raw `data` (bytes/teclas) to the shell PTY da sessão `id`.
@@ -312,12 +338,18 @@ impl TerminalManager {
         if lines == 0 {
             return Ok(());
         }
-        let session = self.live(id)?;
+        let session = self.view(id)?;
         let Ok(mode) = session.state.lock().map(|state| *state.term.mode()) else {
             return Err(TerminalError::NotOpen);
         };
+        // Without a process nothing reads a report: the history is all there is.
+        let action = if session.running.load(Ordering::SeqCst) {
+            wheel_action(mode, modifiers.shift)
+        } else {
+            WheelAction::ScrollHistory
+        };
 
-        match wheel_action(mode, modifiers.shift) {
+        match action {
             WheelAction::Report => {
                 let button = if lines > 0 {
                     MOUSE_WHEEL_UP
@@ -350,7 +382,7 @@ impl TerminalManager {
 
     /// Reflui o grid e o PTY da sessão `id` para um novo tamanho (cols × rows).
     pub fn resize(&mut self, id: &str, cols: u16, rows: u16) -> Result<(), TerminalError> {
-        let session = self.live(id)?;
+        let session = self.view(id)?;
         if cols == 0 || rows == 0 {
             return Err(TerminalError::NotOpen);
         }
@@ -378,7 +410,7 @@ impl TerminalManager {
     /// convertemos e deixamos ele clampar ao histórico real, mantendo o eco da
     /// verdade no render (D2.2, DocsPublic/roadmaps/24).
     pub fn scroll(&mut self, id: &str, offset: u16) -> Result<(), TerminalError> {
-        let session = self.live(id)?;
+        let session = self.view(id)?;
         if let Ok(mut state) = session.state.lock() {
             let current = i32::try_from(state.term.grid().display_offset()).unwrap_or(i32::MAX);
             let delta = i32::from(offset) - current;
@@ -392,7 +424,7 @@ impl TerminalManager {
 
     /// Descarta o histórico real da sessão sem escrever nada no PTY.
     pub fn clear_scrollback(&mut self, id: &str) -> Result<(), TerminalError> {
-        let session = self.live(id)?;
+        let session = self.view(id)?;
         {
             let mut state = session.state.lock().map_err(|_| TerminalError::Process {
                 message: "estado do terminal indisponível para limpar histórico".to_owned(),
@@ -437,6 +469,7 @@ impl Drop for TerminalManager {
 
 #[cfg(test)]
 mod tests {
+    mod finished;
     mod lifetime;
 
     use std::path::PathBuf;

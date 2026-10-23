@@ -41,6 +41,23 @@ que não chegam ao processo. A intenção mantém versão 1; deviceKey é o dige
 opaco da entrada listada. A listagem não prova acesso exclusivo. Desenho e
 aceites no 52 §14.34.
 
+**Ambiente e configuração do esptool nativo (0.4.1h4b2b4d1, 2026-10-23, sem
+mudança de forma):**
+- **Ambiente.** Na gravação esptool nativa, inclusive a de firmware de
+  catálogo, o core remove toda variável `ESPTOOL_*` herdada, tanto da
+  consulta de versão quanto da gravação. `source` diz quais foram removidas,
+  ou que não havia nenhuma.
+- **Configuração.** O core procura `esptool.cfg`, `setup.cfg` ou `tox.ini`
+  com cabeçalho `[esptool]` em três lugares: na raiz, que é o diretório da
+  gravação, em `~/.config/esptool` (no Windows, `~/AppData/Local/esptool`)
+  e no home. Se encontra um, responde INVALID_REQUEST com o caminho, antes
+  de qualquer processo. Um candidato que não pode ser conferido também é
+  recusado. `source` diz que nenhum arquivo foi encontrado.
+- **Revalidação.** O `run.start` repete as duas checagens. Uma intenção
+  salva antes desta versão difere no fingerprint e pede outra prévia.
+
+Desenho no 52 §14.38.
+
 `runConfig.save {id?, name, command, flash?}` e configs ganham flash opcional.
 Com flash, command deve ser exatamente a prévia derivada de programa/argv;
 workspace/versão/seleção/fingerprint devem ser válidos. Schema 1 continua legível

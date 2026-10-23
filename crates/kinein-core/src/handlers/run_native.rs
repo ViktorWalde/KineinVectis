@@ -232,7 +232,7 @@ impl Core {
                     }
                 }
                 let identity = active.as_ref().map_or_else(|| json!(["flash", root, intent.fingerprint]), |config| json!(["config", root, config.id]));
-                let removed = if probe.is_some() { flash::probe_rs::inherited_variables() } else { Vec::new() };
+                let removed = if probe.is_some() { flash::probe_rs::inherited_variables() } else { flash::esptool::inherited_variables() };
                 core.start_in_terminal(request_id, &root, Invocation {
                     program: prepared.plan.command.program.display().to_string(), args: prepared.plan.command.args,
                     command: prepared.plan.proposal.command, identity, reservation: Some(reservation), removed,

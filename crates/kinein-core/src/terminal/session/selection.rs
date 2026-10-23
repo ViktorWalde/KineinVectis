@@ -10,7 +10,7 @@ impl TerminalManager {
         if selection_id.is_empty() || selection_id.len() > 128 {
             return Err(TerminalError::InvalidSelection);
         }
-        let session = self.live(id)?;
+        let session = self.view(id)?;
         let mut state = session.state.lock().map_err(|_| TerminalError::Process {
             message: "estado do terminal indisponível para selecionar".to_owned(),
         })?;
@@ -26,7 +26,7 @@ impl TerminalManager {
         id: &str,
         selection_id: &str,
     ) -> Result<Option<String>, TerminalError> {
-        let session = self.live(id)?;
+        let session = self.view(id)?;
         let state = session.state.lock().map_err(|_| TerminalError::Process {
             message: "estado do terminal indisponível para copiar".to_owned(),
         })?;

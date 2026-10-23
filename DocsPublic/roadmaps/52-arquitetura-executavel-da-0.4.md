@@ -4351,3 +4351,181 @@ ampla é dos colaboradores (40 §5).
 - `harness-all.log` e `mutations-qml.json`;
 - `main.c-alterado-22h12.c` e `quickfix-compile.log`: a correção do clangd e
   a compilação dela.
+
+### 14.38 0.4.1h4b2b4d1 — esptool nativo: ambiente e configuração fora da prévia (desenho, 2026-10-23)
+
+**Problema.** A prévia nativa do esptool mostra programa e argv completos, e
+o `run.start` os regenera e confere. Mesmo assim, o esptool lê duas entradas
+fora dessa linha. Fontes: esptool 5.6.0 e esp-pylib 1.2.0, do ambiente do
+ESP-IDF v6.1, e o `esptool/config.py` da v4.8.1.
+
+- **Variáveis `ESPTOOL_*`.**
+  - `ESPTOOL_CHIP`, `_PORT`, `_BAUD`, `_BEFORE`, `_AFTER`, `_FF`, `_FM` e
+    `_FS` são defaults que a linha nativa já fixa.
+  - `ESPTOOL_STUB_VERSION`, `ESPTOOL_CONNECT_ATTEMPTS`,
+    `ESPTOOL_OPEN_PORT_ATTEMPTS`, `ESPTOOL_ENV_FPGA` e `ESPTOOL_CFGFILE` a
+    linha não fixa.
+- **Arquivo de configuração.** Nas versões 4.8 e 5, o esptool procura, nesta
+  ordem:
+  1. o arquivo de `ESPTOOL_CFGFILE`;
+  2. o diretório corrente;
+  3. `~/.config/esptool` (no Windows, `~/AppData/Local/esptool`);
+  4. a home.
+
+  Em cada lugar, tenta `esptool.cfg`, `setup.cfg` e `tox.ini`. Vence o
+  primeiro arquivo que interpreta como INI e tem a seção `[esptool]`. A
+  versão 5 anuncia "Loaded custom configuration from <caminho>". O arquivo
+  muda tempos, tentativas e as sequências de reset (`custom_reset_sequence`,
+  `custom_hard_reset_sequence`). Assim, o reset que a prévia declara pelo
+  `before`/`after` da receita pode não ser o que acontece.
+
+O probe-rs nativo já segue o princípio de que nada fora da prévia muda um
+efeito (§14.32, §14.34). O `idf.py flash`, próximo motor (§14.39), passa por
+este mesmo esptool.
+
+**Contrato (0.190.0, sem mudança de forma).** O probe-rs é o precedente: os
+`.probe-rs.*` recusam com a causa, e `PROBE_RS_*` não chega ao processo.
+
+- **Ambiente.** Toda variável `ESPTOOL_*` herdada é removida do processo de
+  gravação, pelo `removed` do `run.start`, e da consulta de versão. O
+  `source` diz quais foram removidas, ou "nenhuma".
+- **Configuração.** O diretório corrente da gravação é a raiz do workspace.
+  Os candidatos são `esptool.cfg`, `setup.cfg` e `tox.ini` na raiz, em
+  `~/.config/esptool` (Windows: `~/AppData/Local/esptool`) e na home.
+  - Um candidato recusa a prévia nativa (INVALID_REQUEST, com o caminho)
+    quando tem uma linha de cabeçalho `[esptool]`. A regra é um superconjunto
+    da do esp-pylib, que também exige que o arquivo interprete. Também recusa
+    quando não pode ser conferido (erro de leitura ou acima do limite de
+    leitura do editor).
+  - Um arquivo que não é texto UTF-8 não recusa: o esptool também o ignora.
+  - O `source` diz que nenhum arquivo foi encontrado.
+  - O modo manual continua para quem precisa da configuração.
+- **Revalidação.** Prévia e `run.start` (`native::prepare`) fazem as duas
+  checagens. O `source` entra no fingerprint, então uma intenção salva antes
+  desta versão é recusada uma vez ("mudaram desde a prévia") e pede outra
+  prévia. O firmware de catálogo grava pelo mesmo esptool e segue as mesmas
+  regras.
+
+**Desenho.**
+
+- `process::inherited_with_prefix` lista as variáveis herdadas por prefixo.
+  `probe::inherited_variables` passa a usá-lo, e
+  `flash::esptool::inherited_variables` usa o prefixo `ESPTOOL_`.
+- `flash/esptool/config.rs` enumera os candidatos para uma raiz e uma home
+  dadas. A produção usa `platform::home_dir`, como o probe-rs.
+- `native::prepare` confere a configuração antes da consulta de versão, e
+  nenhum processo é iniciado quando há recusa.
+
+**Validação planejada.**
+
+- Unitários da busca:
+  - ordem e nomes;
+  - cabeçalho com espaços;
+  - `setup.cfg` e `tox.ini` sem a seção não contam;
+  - `esptool.cfg` sem a seção não conta;
+  - comentário `# [esptool]` não conta;
+  - não UTF-8 ignorado;
+  - pasta de usuário por sistema.
+- Despacho com o esptool falso, que registra o ambiente que recebe:
+  - `esptool.cfg` na raiz recusa a prévia sem iniciar processo;
+  - criar o arquivo depois de salvar faz o `run.start` recusar;
+  - `ESPTOOL_*` no processo do core não chega à consulta nem à gravação, e o
+    `source` cita os nomes.
+
+  O ambiente do processo de teste não é alterado. O teste mede no filho a
+  ausência de uma variável que o próprio processo do teste já tenha, ou
+  injeta uma pelo `removed` simulado.
+- Mutações: sem a remoção, sem a checagem e a checagem só por existência.
+- Hardware (ESP32 liberado), pela IDE:
+  - IDE aberta com `ESPTOOL_CFGFILE` apontando para um arquivo `[esptool]`:
+    a gravação nativa ocorre sem "Loaded custom configuration";
+  - `esptool.cfg` na raiz do projeto de bancada: a prévia recusa com o
+    caminho;
+  - sem o arquivo, grava, e o ELF SHA256 do boot confere.
+
+**Limites.** Um arquivo criado entre o último `prepare` e a abertura do PTY,
+uma janela de milissegundos na continuação do `run.start`, não é visto. O
+ambiente além de `ESPTOOL_*` (por exemplo `PYTHONPATH`) continua sendo o do
+usuário, como para qualquer ferramenta.
+
+**Pré-requisito encontrado na validação: a saída de uma execução encerrada
+(2026-10-23).**
+
+- **Problema.** Quando o processo de uma aba de terminal sai, o core recusa
+  com NotOpen estes pedidos sobre ela:
+  - `terminal.scroll`;
+  - a roda no histórico (`terminal.mouse` com `Wheel`);
+  - `terminal.selectAll` e `terminal.copySelection`;
+  - `terminal.clearScrollback`;
+  - `terminal.resize`.
+
+  A causa é `TerminalManager::live`, que exige o processo vivo. Mesmo assim,
+  a grade do emulador e o histórico continuam guardados, e a aba segue
+  mostrando o último render. Além disso, a próxima abertura de terminal
+  descarta as sessões encerradas (`retain` por `running`).
+- **Efeito numa gravação.** O começo da saída do esptool (versão, conexão e
+  aviso de configuração) fica ilegível quando passa da altura do painel. Ao
+  abrir o monitor, a saída da gravação perde o estado de vez. Medido na IDE em
+  2026-10-23: na aba de uma gravação encerrada, nem a roda, nem Shift+PageUp,
+  nem a barra de rolagem mudam o conteúdo.
+
+**Desenho.**
+
+- **Leitura.** `view(id)` aceita uma sessão que existe e não foi fechada a
+  pedido (`closing`). Usam-no `scroll`, `select_all`, `copy_selection` e
+  `clear_scrollback`.
+- **Roda.** Com o processo encerrado, a roda só rola o histórico. Ela nunca
+  escreve um relatório de mouse num PTY sem processo.
+- **Redimensionar.** `resize` refaz o PTY e a grade, como antes. O mestre do
+  PTY de um processo encerrado continua aceitando o tamanho; uma guarda para
+  pular esse passo sobreviveu à mutação e saiu.
+- **Escrita.** `write` e os relatórios de mouse continuam exigindo processo
+  vivo.
+- **Retenção.** Uma nova abertura:
+  - descarta as sessões encerradas que foram fechadas a pedido;
+  - das demais encerradas, mantém as `MAX_SESSIONS` mais recentes, na ordem
+    de abertura, e descarta as mais antigas.
+
+  O teto de terminais abertos conta só os processos vivos. A memória fica
+  limitada a 12 grades, cada uma com até 5.000 linhas de histórico.
+- **UI e protocolo.** A UI fecha localmente a aba de uma execução encerrada,
+  sem pedido ao core, e a sessão retida sai pelo limite. Não há mudança de
+  protocolo: os métodos já existem e passam a responder em vez de recusar.
+
+**Validação planejada.**
+
+- Testes de sessão, depois da saída do processo:
+  - rolar, a roda, selecionar, copiar, limpar e redimensionar respondem com
+    render;
+  - a escrita recusa;
+  - uma sessão nova não descarta a encerrada;
+  - o limite descarta a mais antiga;
+  - a sessão fechada a pedido sai;
+  - o teto conta só as vivas.
+- Mutações.
+- Na IDE: depois da gravação, a roda chega ao começo da saída do esptool, e
+  a aba da gravação continua rolando depois que o monitor abre.
+
+**Feito em 2026-10-23 (40.7 §7.347 e §7.348).** O desenho foi implementado
+como descrito, e a validação planejada foi cumprida. Na IDE, com o ESP32
+liberado e `ESPTOOL_CFGFILE` e `ESPTOOL_CONNECT_ATTEMPTS` no ambiente dela:
+
+1. Um `esptool.cfg` com `[esptool]` na raiz da bancada faz a prévia recusar
+   com o caminho.
+2. Sem o arquivo, a prévia lista as duas variáveis como removidas.
+3. "Gravar na placa" grava as três regiões com "Hash of data verified".
+4. A aba encerrada rola até o começo da saída: "esptool v5.6.0" e
+   "Connected to ESP32", sem "Loaded custom configuration".
+5. "Salvar e ativar", com um `tox.ini` `[esptool]` criado depois, faz o ▶
+   recusar com o caminho, sem gravar.
+6. O monitor mostra o ELF SHA256 `a5bed4ca1…` do firmware gravado.
+7. Com o monitor aberto, a aba da gravação continua rolando.
+
+Gate rápido estrito no QA: 1.307 Rust, 8 CTest, 170 harnesses, C++, Clippy e
+qmllint limpos.
+
+**Observado:** nessas conexões pela ROM, o esptool 5.6.0 avisa "Detected
+crystal freq 15.55 MHz is quite different to normalized freq 26 MHz" e
+mostra 26 MHz. Mesmo assim, a gravação confere os hashes e a placa inicia.
+O Identificar da §14.37 tinha lido 40 MHz. É uma medição do esptool nesta
+placa, sem efeito na prévia nem na revalidação.

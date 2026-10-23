@@ -159,6 +159,7 @@ pub fn prepare(
         .map_err(|error| invalid(&error.to_string()))?;
     let tool_revision = crate::platform::file_revision(&request.tool)
         .map_err(|error| invalid(&error.to_string()))?;
+    refuse_esptool_configuration(root)?;
     let selected = super::esptool::probe_cancelable(
         request.tool.clone(),
         root,
@@ -186,6 +187,23 @@ pub fn prepare(
     if let Some(source) = plan.proposal.source.first_mut() {
         "motor: esptool (resolvido para a intenção nativa)".clone_into(source);
     }
+    let inherited = super::esptool::inherited_variables();
+    plan.proposal.source.push(if inherited.is_empty() {
+        "ambiente: nenhuma variável ESPTOOL_* herdada".to_owned()
+    } else {
+        format!(
+            "ambiente: {} não chegam ao esptool",
+            inherited
+                .iter()
+                .map(|name| name.to_string_lossy().into_owned())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    });
+    plan.proposal.source.push(
+        "configuração: nenhum esptool.cfg, setup.cfg ou tox.ini com [esptool] na raiz, na pasta de configuração do usuário ou no home"
+            .to_owned(),
+    );
     let captured = capture_files(&request, &sources, &tool_revision, cancel)?;
     let fingerprint = snapshot::digest(
         &serde_json::to_vec(&json!([
@@ -228,6 +246,22 @@ pub fn prepare(
         return Err(invalid("arquivos mudaram ao preparar a prévia; gere outra"));
     }
     Ok(prepared)
+}
+
+/// esptool would load an `[esptool]` file from the root (its working
+/// directory here), the user configuration folder or home (52 §14.38).
+fn refuse_esptool_configuration(root: &Path) -> Result<(), FlashError> {
+    let home = crate::platform::home_dir();
+    match super::esptool::config::first_declared(root, home.as_deref()) {
+        Ok(None) => Ok(()),
+        Ok(Some(path)) => Err(invalid(&format!(
+            "o esptool leria a configuração {} (seção [esptool]), que pode mudar reset, tentativas e tempos fora desta prévia; mova ou renomeie o arquivo, ou use o modo manual",
+            path.display()
+        ))),
+        Err(reason) => Err(invalid(&format!(
+            "não foi possível conferir um arquivo que o esptool pode ler como configuração ({reason})"
+        ))),
+    }
 }
 
 struct SourceFiles {

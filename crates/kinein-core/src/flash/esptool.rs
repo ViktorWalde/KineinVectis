@@ -1,15 +1,29 @@
 //! Esptool syntax selected from the binary's observed major version.
 //! The planner is pure; `probe` only asks `version`, never a serial operation.
 
+pub(super) mod config;
+
 use super::{ESPTOOL_BAUD, FlashCommand, FlashError, ProposalTools, chosen_port, readable_size};
 use kinein_protocol::{FlashRecipe, ProjectModel};
 use std::{
     collections::BTreeSet,
+    ffi::OsString,
     path::{Path, PathBuf},
     process::Command,
     sync::{Arc, atomic::AtomicBool},
     time::Duration,
 };
+
+/// esptool 4.8 and 5.x read every option they take from the environment
+/// under this prefix (`ESPTOOL_CHIP`, `_STUB_VERSION`, `_CFGFILE`, ...).
+const INHERITED_PREFIX: &str = "ESPTOOL_";
+
+/// Names of the inherited `ESPTOOL_*` variables, sorted: they are removed
+/// from the native flash and from its version query (52 §14.38).
+#[must_use]
+pub fn inherited_variables() -> Vec<OsString> {
+    crate::process::inherited_with_prefix(INHERITED_PREFIX)
+}
 
 /// The exact executable and version used to prepare a proposal.
 #[derive(Debug, Clone)]
@@ -126,6 +140,9 @@ pub fn probe_cancelable(
         .arg("version")
         .current_dir(root)
         .env("NO_COLOR", "1");
+    for name in inherited_variables() {
+        command.env_remove(name);
+    }
     let mut output = String::new();
     let mut overflow = false;
     let result = crate::process::stream_command_lines_with_timeout_cancelable(

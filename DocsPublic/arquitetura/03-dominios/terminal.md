@@ -17,6 +17,19 @@ o protocolo `0.44.0` (D2.3), o manager mantém até 12 sessões simultâneas. Ca
 `open` cria um id monotônico (`t1`, `t2`, …); todos os comandos e eventos
 seguintes carregam esse id.
 
+**Sessão encerrada (2026-10-23, 52 §14.38, sem mudança de forma).** Depois
+que o processo sai, a sessão continua legível até ser fechada a pedido ou
+descartada pelo limite. Respondem nela:
+- `scroll`;
+- a roda, que nesse estado só rola o histórico;
+- `selectAll`, `copySelection` e `clearScrollback`;
+- `resize`.
+
+Já `input` e os relatórios de mouse recusam com INVALID_REQUEST. O limite de
+12 vale para os processos vivos. Das sessões encerradas, o core guarda as 12
+mais recentes, e a abertura seguinte descarta as mais antigas e as fechadas a
+pedido.
+
 **Invariante de camada.** O terminal é dono da semântica do input. A UI reporta
 gestos crus (tecla, roda, clique) e desenha o grid que recebe; ela **não** decide
 o que um gesto significa, porque isso depende do modo VT que só o emulador

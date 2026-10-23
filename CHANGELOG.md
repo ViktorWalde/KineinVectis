@@ -32,6 +32,18 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **esptool nativo sem efeitos fora da prévia (0.4.1h4b2b4d1, 2026-10-23):**
+  a gravação nativa com esptool não herda mais as variáveis `ESPTOOL_*`, e a
+  prévia lista as que foram removidas. Um `esptool.cfg`, `setup.cfg` ou
+  `tox.ini` com a seção `[esptool]` no projeto, em `~/.config/esptool` ou na
+  home é recusado com o caminho, porque mudaria o reset e os tempos sem
+  aparecer na prévia. O modo manual continua disponível para quem precisa
+  dele.
+- **A saída de um comando encerrado continua legível (2026-10-23):** depois
+  que uma gravação ou outro comando termina, a aba de terminal continua
+  rolando, selecionando e copiando. Antes, o começo da saída ficava
+  inacessível, e a abertura do terminal seguinte a descartava. O core guarda
+  as 12 saídas encerradas mais recentes.
 - **Gravação esptool nativa provada em hardware (0.4.1h4b2b4c, 2026-10-23):**
   num ESP32 com ponte CP2102 (ESP-IDF v6.1, esptool 5.6.0), a gravação nativa
   pela aba Gravar, direta ou por configuração salva + ▶, grava o firmware que

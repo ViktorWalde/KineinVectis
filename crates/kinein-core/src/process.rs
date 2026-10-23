@@ -6,6 +6,7 @@
 //! only provide a per-line callback and their own parsing.
 
 use std::{
+    ffi::OsString,
     io::{self, BufRead},
     process::{Command, ExitStatus, Stdio},
     sync::{
@@ -243,12 +244,48 @@ pub fn stream_command_lines_with_timeout_cancelable(
     outcome.map(|status| (status, expired.load(Ordering::SeqCst)))
 }
 
+/// Inherited environment variable names that start with `prefix`, sorted.
+///
+/// The native flash flow removes a tool's own options (`PROBE_RS_*`,
+/// `ESPTOOL_*`) from every process it starts, so no inherited value changes
+/// an effect the preview did not show.
+#[must_use]
+pub fn inherited_with_prefix(prefix: &str) -> Vec<OsString> {
+    names_with_prefix(std::env::vars_os().map(|(name, _)| name), prefix)
+}
+
+fn names_with_prefix(names: impl IntoIterator<Item = OsString>, prefix: &str) -> Vec<OsString> {
+    let mut names: Vec<OsString> = names
+        .into_iter()
+        .filter(|name| name.as_encoded_bytes().starts_with(prefix.as_bytes()))
+        .collect();
+    names.sort();
+    names
+}
+
 #[cfg(test)]
 mod tests {
     use std::process::Command;
 
     use super::stream_command_lines_cancelable;
     use super::{ProcessError, stream_command_lines};
+
+    #[test]
+    fn only_names_with_the_prefix_are_listed_in_order() {
+        let names = [
+            "PATH",
+            "ESPTOOL_CHIP",
+            "MY_ESPTOOL_X",
+            "ESPTOOL_",
+            "ESPTOOLX",
+            "ESPTOOL_BAUD",
+        ]
+        .map(std::ffi::OsString::from);
+        assert_eq!(
+            super::names_with_prefix(names, "ESPTOOL_"),
+            ["ESPTOOL_", "ESPTOOL_BAUD", "ESPTOOL_CHIP"].map(std::ffi::OsString::from)
+        );
+    }
 
     #[test]
     fn streams_stdout_and_stderr_lines_then_returns_status() {
