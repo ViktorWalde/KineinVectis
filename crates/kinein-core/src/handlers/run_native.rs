@@ -47,7 +47,7 @@ impl Core {
             Ok(engine) => engine,
             Err(error) => return super::runconfig::flash_error_response(request_id, &error),
         };
-        if engine == "esptool"
+        if matches!(engine.as_str(), "esptool" | "idf.py")
             && let Some(device) = selection.device.as_deref()
             && let Err(response) =
                 super::serial::ready_port(request_id.as_ref(), "runConfig.flashProposal", device)
@@ -85,12 +85,19 @@ impl Core {
     }
 
     /// esptool from the detector; probe-rs from the kit's debugAdapter role,
-    /// the same executable `probe.list` asks.
+    /// the same executable `probe.list` asks; for `idf.py`, the shell that
+    /// sources the ESP-IDF activation (52 §14.40).
     fn native_tool(&self, root: &Path, engine: &str) -> Result<PathBuf, flash::FlashError> {
         let missing = |tool: &str, hint: &str| flash::FlashError::MissingTool {
             tool: tool.to_owned(),
             hint: hint.to_owned(),
         };
+        if engine == "idf.py" {
+            return self
+                .detector
+                .find_in_path("bash")
+                .ok_or_else(|| missing("bash", "o idf.py roda num bash que ativa o ESP-IDF"));
+        }
         if engine == "probe-rs" {
             let tool = self.probe_program(root).ok_or_else(|| {
                 missing(
@@ -124,6 +131,11 @@ impl Core {
         tool: PathBuf,
     ) -> flash::native::NativeRequest {
         let context = self.native_flash_context(root, &model);
+        let activation = matches!(selection.engine.as_deref(), Some("idf.py" | "idf"))
+            .then(|| {
+                crate::build::engine::esp_idf_activation(&model.sdks, self.sdk_home().as_deref())
+            })
+            .flatten();
         flash::native::NativeRequest {
             kit_chip: self.native_kit(root).1.chip().map(str::to_owned),
             model,
@@ -131,6 +143,7 @@ impl Core {
             selection,
             firmware,
             tool,
+            activation,
         }
     }
 
@@ -196,6 +209,7 @@ impl Core {
         let model = self.compute_project_model(&root);
         let context = self.native_flash_context(&root, &model);
         let engine = intent.selection.engine.clone().unwrap_or_default();
+        let idf = engine == "idf.py";
         let Ok(tool) = self.native_tool(&root, &engine) else {
             return refusal(
                 request_id,
@@ -232,7 +246,7 @@ impl Core {
                     }
                 }
                 let identity = active.as_ref().map_or_else(|| json!(["flash", root, intent.fingerprint]), |config| json!(["config", root, config.id]));
-                let removed = if probe.is_some() { flash::probe_rs::inherited_variables() } else { flash::esptool::inherited_variables() };
+                let removed = if probe.is_some() { flash::probe_rs::inherited_variables() } else if idf { flash::idf_py::inherited_variables() } else { flash::esptool::inherited_variables() };
                 core.start_in_terminal(request_id, &root, Invocation {
                     program: prepared.plan.command.program.display().to_string(), args: prepared.plan.command.args,
                     command: prepared.plan.proposal.command, identity, reservation: Some(reservation), removed,

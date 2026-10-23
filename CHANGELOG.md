@@ -32,6 +32,13 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **`idf.py flash` no modo nativo (0.4.1h4b2b4d3, 2026-10-23):** o
+  "compilar e gravar" do ESP-IDF deixou de ser só uma linha manual. Na aba
+  Gravar, idf.py no modo nativo mostra a prévia com a linha exata, a versão
+  do ESP-IDF, a porta e as variáveis de ambiente que não chegam à ferramenta.
+  O ▶ revalida antes de abrir a porta: mudar o código compila e grava o
+  código novo, e mudar a configuração do build recusa. A gravação usa o fast
+  reflash do ESP-IDF 6, que só escreve o que mudou e confere por MD5.
 - **O monitor sugerido segue o projeto (0.4.1h4b2b4g, 2026-10-23):** a
   sugestão da aba Placa e do modelo do projeto passou a ser o monitor que o
   botão abre de fato: `idf.py monitor` num ESP-IDF, o do PlatformIO num

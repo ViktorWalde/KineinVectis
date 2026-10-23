@@ -4776,6 +4776,49 @@ podem ser vinculadas.
   - "Gravar na placa": a saída mostra a compilação e o fast reflash;
   - o monitor mostra o ELF SHA256 de D.
 
+**Feito em 2026-10-23 (40.7 §7.353).** Implementado em `flash/idf_py.rs`.
+O `native::prepare` despacha o motor e o handler resolve o `bash` e o
+ativador do modelo. Três pontos diferem do desenho:
+
+- o ativador e o `bash` entram na intenção por conteúdo, como a
+  configuração, e não por revisão;
+- o reset da receita aparece no `source`, e não entre os avisos;
+- a prova por stdio usa um `idf.py` falso também na consulta de versão; o
+  `idf.py` real foi exercido na gravação em hardware.
+
+A recusa por sonda, alvo, firmware de catálogo, falta de porta, falta de
+build, ESP-IDF 5, `[esptool]` no `build/` e build cifrado é coberta pelos
+testes de despacho, assim como a vinculação por conteúdo. As oito mutações
+foram todas detectadas.
+
+**Em hardware, pelo core real por stdio (2026-10-23 18:07).** Bancada:
+ESP32-D0WD-V3 rev 3.1 no CP2102, `main.c` mudado de C para D, sem
+`build/*_flashed.bin`. O core rodava com `ESPPORT=/dev/ttyS31`,
+`ESPBAUD=9600`, `IDF_FLASH_FULL=1` e `SERIAL_TOOL_EXTRA_ARGS=--no-stub`.
+
+- A prévia levou 1,1 s, com a consulta de versão incluída. O `source` nomeia
+  as quatro variáveis como removidas.
+- O `run.start` terminou com código 0 em 10,3 s:
+  1. o `ninja all` recompilou, e o ELF passou de `a5bed4ca…` para
+     `be502647…`;
+  2. o esptool 5.6.0 recebeu `-p /dev/ttyUSB0 -b 460800 … --skip-flashed`;
+  3. o bootloader e a tabela de partições deram "already in flash, skipping
+     write";
+  4. a app gravou 142.192 bytes em 4,3 s, com "Hash of data verified" e
+     reset por RTS;
+  5. o `build/kinein_esp32_test_flashed.bin` foi criado.
+- O fast reflash se manteve, sinal de que o `IDF_FLASH_FULL` não chegou. O
+  único `--no-stub` da linha vem da receita: a bancada tem
+  `CONFIG_ESPTOOLPY_NO_STUB=y`, e o `source` diz "sem stub (receita do
+  build)".
+- Depois de um reset pela porta, o boot mostra
+  `ELF file SHA256: be502647e...` e "ESP32 D: ciclo 0, 1, 2".
+
+Na IDE, na aba Gravar, idf.py no modo nativo gera a prévia com a linha
+exata, a versão do ESP-IDF e as fontes. A gravação pelo botão "Gravar na
+placa" ficou pendente: a sessão do autor estava bloqueada. Gate rápido estrito
+no QA: 1.318 Rust, 8 CTest, 170 harnesses, C++, Clippy e qmllint limpos.
+
 ### 14.41 0.4.1h4b2b4e — clangd do ESP-IDF sem trocar os headers do FreeRTOS (desenho, 2026-10-23)
 
 **Problema (medido em 2026-10-23, 52 §14.37).** Num projeto ESP-IDF, o

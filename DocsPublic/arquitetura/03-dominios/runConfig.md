@@ -71,6 +71,29 @@ quando:
 Uma chave ausente vale como desabilitada. O arquivo entra no snapshot, e o
 `run.start` recusa quando ele muda. Desenho no 52 §14.39.
 
+**`idf.py flash` nativo (0.4.1h4b2b4d3, 2026-10-23, sem mudança de forma).**
+`flashProposal` com `native: true` e `engine: "idf.py"` (ou `idf`) passa a
+valer num projeto ESP-IDF com build configurado:
+- **Seleção.** `device` é obrigatório; `target`, `probe` e `firmware` são
+  recusados.
+- **Linha.** Programa: o `bash` do detector. Argv: o `IDF_WRAPPER` com o
+  ativador do ESP-IDF do modelo, seguido de
+  `-B <build> -p <porta> -b 460800 flash`.
+- **Consulta de versão.** `idf.py --version` deve informar ESP-IDF 6.x.
+- **Recusas herdadas.** A origem e o eFuse da §14.39 valem para o build atual.
+  Um arquivo `[esptool]` no `build/`, na raiz, na pasta do usuário ou no home
+  recusa.
+- **Ambiente.** O processo e a consulta não recebem `ESPTOOL_*`, `ESPPORT`,
+  `ESPBAUD`, `IDF_FLASH_FULL`, `IDF_TRUST_FLASH_CONTENT` e
+  `SERIAL_TOOL_EXTRA_*`.
+- **O que a intenção vincula.** Por conteúdo: descrição, receita,
+  `sdkconfig`, `sdkconfig.defaults*`, `config/sdkconfig.json`, o `bash` e o
+  ativador. Também a versão e a porta.
+- **O que ela não vincula.** As imagens: mudar o código e reconstruir não
+  invalida a configuração salva, e mudar a configuração invalida.
+- **Avisos.** O comando compila antes de gravar e faz o fast reflash
+  conferido por MD5. Desenho no 52 §14.40.
+
 `runConfig.save {id?, name, command, flash?}` e configs ganham flash opcional.
 Com flash, command deve ser exatamente a prévia derivada de programa/argv;
 workspace/versão/seleção/fingerprint devem ser válidos. Schema 1 continua legível

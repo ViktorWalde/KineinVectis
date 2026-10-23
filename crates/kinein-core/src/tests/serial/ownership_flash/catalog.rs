@@ -38,6 +38,7 @@ fn native_catalogue_images_require_the_original_checksum() {
         }),
         tool: fixture.root.join("bin/esptool"),
         kit_chip: None,
+        activation: None,
     };
     let cancel = Arc::new(AtomicBool::new(false));
     let prepared = native::prepare(&fixture.root, request(), &cancel).unwrap();
@@ -81,6 +82,7 @@ fn native_images_larger_than_the_snapshot_limit_are_refused_without_reading_them
         }),
         tool: fixture.root.join("bin/esptool"),
         kit_chip: None,
+        activation: None,
     };
     let error =
         native::prepare(&fixture.root, request, &Arc::new(AtomicBool::new(false))).unwrap_err();

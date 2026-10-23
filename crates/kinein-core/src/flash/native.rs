@@ -27,6 +27,9 @@ pub struct NativeRequest {
     /// Chip fixed in the active kit (`toolchain.setKit`), the user's word;
     /// probe-rs refuses a chip only deduced from a framework.
     pub kit_chip: Option<String>,
+    /// The ESP-IDF activation script, for the native `idf.py` (52 §14.40);
+    /// `tool` is then the shell that sources it.
+    pub activation: Option<PathBuf>,
 }
 
 /// Native snapshot with the original provider plan and file observations.
@@ -78,6 +81,15 @@ pub fn engine(
         }
         "esptool" => Ok(engine),
         "probe-rs" => super::probe_rs::check_selection(selection).map(|()| engine),
+        "idf.py" | "idf" => {
+            super::idf_py::check_selection(selection)?;
+            if firmware.is_some() {
+                return Err(invalid(
+                    "o idf.py nativo grava o build do projeto, não firmware de catálogo",
+                ));
+            }
+            Ok("idf.py".to_owned())
+        }
         _ => Err(invalid(
             "este motor ainda não tem validação de destino nativa; a integração permanece pendente, sem converter a operação em shell",
         )),
@@ -104,6 +116,13 @@ pub fn validate_intent(
                     .is_some_and(|device| !device.trim().is_empty())
         }
         Some("probe-rs") => super::probe_rs::check_selection(selection).is_ok(),
+        Some("idf.py") => {
+            super::idf_py::check_selection(selection).is_ok()
+                && selection
+                    .device
+                    .as_deref()
+                    .is_some_and(|device| !device.trim().is_empty())
+        }
         _ => false,
     };
     if intent.version != 1
@@ -143,7 +162,7 @@ pub fn validate_intent(
 /// Refuses incomplete provenance, changed files/port, tool/cancellation failures or unsupported engines.
 pub fn prepare(
     root: &Path,
-    mut request: NativeRequest,
+    request: NativeRequest,
     cancel: &Arc<AtomicBool>,
 ) -> Result<Prepared, FlashError> {
     let engine = engine(
@@ -151,9 +170,20 @@ pub fn prepare(
         &request.selection,
         request.firmware.as_ref(),
     )?;
-    if engine == "probe-rs" {
-        return super::probe_rs::prepare(root, request, cancel);
+    match engine.as_str() {
+        "probe-rs" => super::probe_rs::prepare(root, request, cancel),
+        "idf.py" => super::idf_py::prepare(root, request, cancel),
+        _ => prepare_esptool(root, request, engine, cancel),
     }
+}
+
+/// The esptool engine: recipe or catalogue images bound by content.
+fn prepare_esptool(
+    root: &Path,
+    mut request: NativeRequest,
+    engine: String,
+    cancel: &Arc<AtomicBool>,
+) -> Result<Prepared, FlashError> {
     let device = super::chosen_port(request.selection.device.as_deref())?.to_owned();
     let device_key = crate::platform::serial_device_revision(Path::new(&device))
         .map_err(|error| invalid(&error.to_string()))?;

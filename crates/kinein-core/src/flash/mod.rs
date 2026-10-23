@@ -39,6 +39,7 @@ mod command;
 pub mod esptool;
 pub mod firmware;
 pub mod frameworks;
+pub mod idf_py;
 pub mod native;
 pub mod probe_rs;
 mod snapshot;
