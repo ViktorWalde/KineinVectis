@@ -127,8 +127,31 @@ for source in "$REPO_ROOT"/ui/src/*.cpp; do
     [ "$known_applies" -eq 1 ] && [ "$source" = "$KNOWN_FALSE_POSITIVE_FILE" ] && continue
     regular_files="$regular_files $source"
 done
+# UM PROCESSO POR ARQUIVO, EM PARALELO (2026-10-24, roadmaps/52 §14.48). Em
+# serie, os 48 arquivos levavam 1.111 s, 85% do gate rapido (~23 s por
+# arquivo, num nucleo so'). O maior clang-tidy medido usou 626 MiB: o
+# orquestrador diz quantos cabem na memoria (KINEIN_TIDY_JOBS); fora dele, um
+# por nucleo.
+# A saida de cada arquivo vai para um log proprio e sai inteira, na ordem dos
+# arquivos; qualquer achado reprova, como antes.
+tidy_jobs="${KINEIN_TIDY_JOBS:-$(nproc)}"
+tidy_logs="$(mktemp -d)"
+trap 'rm -rf "$tidy_logs"' EXIT
 # shellcheck disable=SC2086 # lista de arquivos, separada por espaco de proposito
-clang-tidy -p "$BUILD_DIR" $regular_files
+set -- $regular_files
+echo "clang-tidy: $# arquivos, $tidy_jobs em paralelo"
+# shellcheck disable=SC2016 # o $ e' do sh -c
+printf '%s\n' "$@" | xargs -P "$tidy_jobs" -I '{}' sh -c \
+    'clang-tidy -p "$1" "$2" > "$3/$(basename "$2").log" 2>&1 || echo "$2" >> "$3/failed"' \
+    sh "$BUILD_DIR" '{}' "$tidy_logs"
+for source in "$@"; do
+    cat "$tidy_logs/$(basename "$source").log"
+done
+if [ -s "$tidy_logs/failed" ]; then
+    echo "erro: o clang-tidy reprovou em:" >&2
+    sed "s|^$REPO_ROOT/|  |" "$tidy_logs/failed" >&2
+    exit 1
+fi
 
 if [ "$known_applies" -eq 0 ]; then
     echo "clang-tidy ${tidy_major:-?}: sem excecao (o falso positivo do QPointer so' foi provado no clang-tidy $KNOWN_FALSE_POSITIVE_TIDY_MAJORS; roadmaps/40.7 §7.152)"

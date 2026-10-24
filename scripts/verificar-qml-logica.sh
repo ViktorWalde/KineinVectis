@@ -47,8 +47,8 @@ fi
 # unicos no projeto (o qrc ja' exige isso, via QT_RESOURCE_ALIAS), entao o
 # qmldir sai direto do `find`. Nao ha copia de codigo — sao os mesmos arquivos.
 mirror="$(mktemp -d)"
-run_log="$(mktemp)"
-trap 'rm -rf "$mirror" "$run_log"' EXIT
+results="$(mktemp -d)"
+trap 'rm -rf "$mirror" "$results"' EXIT
 mkdir -p "$mirror/KineinVectis"
 printf 'module KineinVectis\n' > "$mirror/KineinVectis/qmldir"
 while IFS= read -r source_file; do
@@ -67,22 +67,66 @@ while IFS= read -r source_file; do
     cp "$source_file" "$mirror/KineinVectis/$(basename "$source_file")"
 done < <(find ui/qml -name '*.js')
 
-failed=0
+# QT_ASSUME_STDERR_HAS_CONSOLE: sem isso o qml6 ENGOLE console.log/warn.
+# A saida passa por um arquivo para o grep dos avisos proibidos: um harness
+# verde que imprime "Unable to assign" ou "Component is not ready" esconde
+# exatamente o defeito que o usuario veria no terminal (roadmap 53 §0.1).
+# QML_DISK_CACHE_PATH (2026-10-24, roadmaps/52 §14.48): o qml6 grava o QML
+# compilado com o caminho do arquivo na chave, e o espelho e' uma pasta nova a
+# cada rodada. No ~/.cache nada se reaproveitava entre rodadas: ~260 arquivos
+# por rodada, 356 MB em nove dias. Na pasta da rodada, um harness ainda usa o
+# que outro compilou, e ela sai no fim.
+run_harness() {
+    local test_name
+    test_name="$(basename "$1" .qml)"
+    timeout 60 env QT_QPA_PLATFORM=offscreen QT_ASSUME_STDERR_HAS_CONSOLE=1 \
+        QML_DISK_CACHE_PATH="$results/qmlcache" \
+        "$qml_runner" -I "$mirror" "$1" > "$results/$test_name.log" 2>&1
+    echo "$?" > "$results/$test_name.exit"
+}
 
+selected=()
 for test_file in scripts/qml-harness/tst_*.qml; do
     test_name="$(basename "$test_file" .qml)"
     if [ -n "${KINEIN_QML_TEST:-}" ] && [ "$test_name" != "$KINEIN_QML_TEST" ]; then
         continue
     fi
+    selected+=("$test_file")
+done
+
+# EM PARALELO (2026-10-24, roadmaps/52 §14.48). Os harnesses sao logica pura
+# sobre o espelho, que so' e' lido: nenhum grava arquivo nem usa Settings,
+# LocalStorage ou rede, e o unico WebEngine (tst_grafana_web) e' de perfil sem
+# disco (conferido nesta data). Em serie, os 171 levavam 30 s. O maior usou
+# 196 MiB: o orquestrador diz quantos cabem (KINEIN_QML_JOBS); fora dele, um
+# por nucleo.
+# Cada um grava a saida e o codigo de saida em arquivos proprios, e a leitura
+# abaixo e' a de antes, na mesma ordem: o log e os vereditos nao mudam.
+qml_jobs="${KINEIN_QML_JOBS:-$(nproc)}"
+running=0
+for test_file in "${selected[@]}"; do
+    if [ "$running" -ge "$qml_jobs" ]; then
+        wait -n
+        running=$((running - 1))
+    fi
+    run_harness "$test_file" &
+    running=$((running + 1))
+done
+wait
+
+failed=0
+
+for test_file in "${selected[@]}"; do
+    test_name="$(basename "$test_file" .qml)"
     printf '== %s ==\n' "$test_name"
-    # QT_ASSUME_STDERR_HAS_CONSOLE: sem isso o qml6 ENGOLE console.log/warn.
-    # A saida passa por um arquivo para o grep dos avisos proibidos: um harness
-    # verde que imprime "Unable to assign" ou "Component is not ready" esconde
-    # exatamente o defeito que o usuario veria no terminal (roadmap 53 §0.1).
-    timeout 60 env QT_QPA_PLATFORM=offscreen QT_ASSUME_STDERR_HAS_CONSOLE=1 \
-        "$qml_runner" -I "$mirror" "$test_file" > "$run_log" 2>&1
-    exit_code=$?
-    cat "$run_log"
+    run_log="$results/$test_name.log"
+    exit_code="$(cat "$results/$test_name.exit" 2>/dev/null)"
+    cat "$run_log" 2>/dev/null
+    if [ -z "$exit_code" ]; then
+        echo "  ✗ SEM CODIGO DE SAIDA — o processo do harness morreu antes de terminar" >&2
+        failed=1
+        continue
+    fi
     if [ "$exit_code" -eq 0 ] && grep -F -q -f scripts/avisos-qml.txt "$run_log"; then
         echo "  ✗ AVISO QML PROIBIDO (lista em scripts/avisos-qml.txt):" >&2
         grep -F -f scripts/avisos-qml.txt "$run_log" | sed 's/^/    /' >&2

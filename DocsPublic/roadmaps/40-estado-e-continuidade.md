@@ -11,8 +11,8 @@
 > **HANDOFF (2026-10-24). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4j concluída:** o gate sem lixo nos temporários e só na RAM (52 §14.47; 40.7 §7.357);
-> i agente do PIO Home §7.356 (protocolo 0.192.0); h §7.355; d4 §7.354; d3 §7.353; g–d1 §7.347–§7.352.
+> **0.4.1h4b2b4k concluída:** clang-tidy e harnesses QML em paralelo, gate em 377 s (52 §14.48; 40.7 §7.358);
+> j gate só na RAM §7.357; i agente do PIO Home §7.356 (protocolo 0.192.0); h §7.355; g–d4 §7.347–§7.354.
 > `.directory`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
 > Protocolo **0.192.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
 >
@@ -29,7 +29,7 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** tidy/QML em paralelo (52 §14.48), AppImage dev (40 §5); depois dfu-util, picotool, west (52 §14.32).
+> **Próxima:** o ambiente no Qt 6.12 (52 §14.49), AppImage dev (40 §5); depois dfu-util, picotool, west (52 §14.32).
 > Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
@@ -165,7 +165,7 @@ AppImage apos especial       DECISAO DO AUTOR em 2026-10-21: fechar a 0.4.9,
                              Dono: 57 §1.1; execucao: 52 §11/§11.1.
                              ESCLARECIDO PELO AUTOR em 2026-10-24: o AppImage
                              e' empacotado com o Qt do codigo em desenvolvimento
-                             (hoje o 6.10 do sistema), nao com o Qt 6.4.2 da
+                             (o 6.12, linha "qt do projeto"), nao com o 6.4.2 da
                              base antiga (packaging/appimage/Containerfile.qml64,
                              Debian 12); a base de empacotamento acompanha.
 Quality Center e instalador  INCLUIDOS na 0.4.x pelo autor em 2026-10-21:
@@ -621,10 +621,23 @@ appimage de desenvolvimento   DECISAO DO AUTOR em 2026-10-24: um AppImage
                              AppImage beta depois da 0.4.1" da linha
                              "divulgacao com a 0.4"; o AppImage apos a edicao
                              especial segue. Base portavel: container com
-                             glibc antiga e o Qt 6.10 oficial (o Qt do codigo
-                             em desenvolvimento), nao o Qt 6.4.2 do Debian 12.
-                             Ordem: as fatias do gate (52 §14.47 e §14.48)
-                             antes. Push e publicacao com o autor.
+                             glibc antiga e o Qt 6.12.0 oficial (linha "qt do
+                             projeto"), nao o Qt 6.4.2 do Debian 12. Ordem: as
+                             fatias do gate (52 §14.47 e §14.48) e a do Qt
+                             (§14.49) antes. Push e publicacao com o autor.
+qt do projeto                 DECISAO DO AUTOR em 2026-10-24: o Qt do projeto
+(2026-10-24)                 e' o 6.12 ("foi o que decidi"), e teste e
+                             ambiente de teste usam a MESMA versao do
+                             frontend: build, gates (clang-tidy, qmllint,
+                             harnesses, CTest) e AppImage. O Qt 6.4 fica
+                             esquecido: nada novo para ele. Medido na data: o
+                             codigo pede Qt >= 6.4 e passa no 6.10.2; desde a
+                             volta ao Ubuntu (2026-10-15) o "Qt local do
+                             sistema" do perfil de 2026-10-07 (entao o 6.12.0
+                             do Arch) virou o 6.10.2, sem decisao. Neste
+                             Ubuntu o 6.12.0 oficial mora em
+                             ~/Qt/6.12.0/gcc_64, sem o WebEngine. Dono: 52
+                             §14.49.
 ```
 
 ## 7. O registro das entregas

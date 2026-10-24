@@ -5888,3 +5888,123 @@ próprio gate: os gates de teste do primeiro passo herdavam o teto da rodada
 de fora (`KINEIN_GATE_CEILING_MIB`); ele passou a valer só dentro do escopo.
 Gate rápido estrito verde em 1.364 s, no escopo com teto de 12.385 MiB, sem
 nenhuma entrada no `/tmp` no fim; 11 mutações detectadas.
+
+### 14.48 0.4.1h4b2b4k — o gate usa a CPU inteira: clang-tidy e harnesses QML em paralelo (desenho, 2026-10-24)
+
+**Problema.** Na linha de base da §14.47, o gate rápido estrito levou 1.311 s,
+e 1.111 deles (85%) foram do `verificar-cpp.sh`: o clang-tidy analisa os 48
+arquivos de `ui/src` em série, ~23 s cada, num núcleo, enquanto os outros 15
+ficam parados. Os 171 harnesses QML, também em série, levam 30 s (medido às
+20:25). O autor pediu o melhor do hardware sem perder rigor (40 §5, "lixo e
+memoria do gate"): nenhuma etapa sai, nenhuma regra afrouxa.
+
+A mesma medição achou mais um lixo. O `qml6` grava o QML compilado (`.qmlc`)
+em `~/.cache/QtProject/Qml Runtime/qmlcache`, e a chave leva o caminho do
+arquivo. O espelho do módulo é uma pasta nova a cada rodada, então nada se
+reaproveita entre rodadas. Cada rodada acrescenta ~260 arquivos, e a pasta
+chegou a 29.170 arquivos e 356 MB desde 2026-10-15. Ela fica em disco, não
+na RAM, mas só cresce.
+
+**Desenho.**
+
+1. **clang-tidy, um processo por arquivo, em paralelo.** Cada arquivo é uma
+   unidade de tradução independente, e o clang-tidy de vários arquivos numa
+   chamada só os analisa um depois do outro. O `verificar-cpp.sh` passa a
+   rodar `KINEIN_TIDY_JOBS` processos ao mesmo tempo (fora do gate, um por
+   núcleo).
+   - A saída de cada arquivo vai para um log próprio e sai inteira, na
+     ordem dos arquivos.
+   - Qualquer achado reprova, como antes, e o fim lista os arquivos que
+     reprovaram.
+   - A exceção do falso positivo do clang-tidy 18 não muda: o caminho dela
+     continua em série, num arquivo só.
+2. **Harnesses QML em paralelo.** Os harnesses são lógica pura sobre o
+   espelho do módulo, que só é lido. Nenhum grava arquivo, usa `Settings`,
+   LocalStorage ou rede, e o único WebEngine (`tst_grafana_web`) é de perfil
+   sem disco (conferido em 2026-10-24). O `verificar-qml-logica.sh` roda
+   `KINEIN_QML_JOBS` ao mesmo tempo, com a saída e o código de saída de cada
+   um em arquivos próprios.
+   - A leitura dos vereditos é a de antes, na mesma ordem: o log, os avisos
+     proibidos, o TIMEOUT e o bitmask não mudam.
+   - Um harness sem código de saída (o processo morreu antes de gravá-lo)
+     reprova.
+3. **O cache do QML compilado mora na pasta da rodada.** O
+   `QML_DISK_CACHE_PATH` aponta para ela; o Qt 6.10.2 e o 6.12.0 leem essa
+   variável (conferido nos binários). Um harness ainda aproveita o que outro
+   da mesma rodada compilou, e a pasta sai no fim. O que as rodadas antigas
+   deixaram em `Qml Runtime/qmlcache` é apagado uma vez.
+4. **Os jobs saem da memória**, pelo mesmo cálculo da §14.47, os dois com o
+   teto da CPU, e o valor do ambiente vale:
+   - `KINEIN_TIDY_JOBS` a 700 MiB por processo (o maior clang-tidy medido
+     usou 626);
+   - `KINEIN_QML_JOBS` a 200 (o maior harness, `tst_grafana_web` com o
+     WebEngine, usou 196; a mediana é 48).
+5. **A regra "não compilar a UI enquanto o `verificar-cpp.sh` roda" continua
+   valendo.** As etapas seguem uma depois da outra; o paralelismo é dentro
+   de cada uma.
+
+**Validação planejada.**
+
+- Mutações:
+  - um achado plantado num `.cpp` tem de reprovar o `verificar-cpp.sh`
+    paralelo e aparecer no log;
+  - um harness que falha, um que imprime aviso proibido e um que estoura o
+    tempo têm de reprovar o `verificar-qml-logica.sh` com a mensagem de
+    sempre.
+- Estabilidade: os 171 harnesses em paralelo, cinco rodadas seguidas, sem
+  diferença de veredito. Os harnesses de timer (autosave, debounce) são os
+  que a carga poderia mudar.
+- Lixo: o `Qml Runtime/qmlcache` não ganha arquivo numa rodada, e a pasta
+  da rodada some.
+- Orquestrador: `test_verification_profiles.py` com os quatro jobs.
+- Gate rápido estrito com a mesma carga da linha de base: tempo, pico de
+  memória, swap e `/tmp` antes e depois.
+
+**Feito em 2026-10-24 (40.7 §7.358).** Como desenhado. Gate rápido estrito
+verde em 377 s com a carga da linha de base (a §14.47 levou 1.364 s): o
+`verificar-cpp.sh` caiu de 1.165 para 204 s e os harnesses de 30 para 10 s.
+O pico foi de 8.872 MiB, num teto de 14.281. O caminho crítico passou a ser
+a CPU.
+
+### 14.49 0.4.1h4b2b4l — o ambiente no Qt do projeto, o 6.12 (desenho, 2026-10-24)
+
+**Problema.** Decisão do autor de 2026-10-24 (40 §5, "qt do projeto"): o Qt
+do projeto é o 6.12, e teste e ambiente de teste usam a mesma versão do
+frontend. Medido na data:
+
+- os três builds (`dev-local`, `dev-local-release`,
+  `linux-clang-debug-strict`) usam `/usr/lib/x86_64-linux-gnu/cmake/Qt6`, o
+  Qt 6.10.2 do Ubuntu. O qmllint segue o Qt do build, e o runner dos
+  harnesses sai do PATH (`/usr/bin/qml6`, também 6.10.2);
+- o código pede `Qt6 6.4` no `find_package` e passa no 6.10.2. Nada exige o
+  6.12, e por isso a volta ao Ubuntu, em 2026-10-15, trocou a versão sem que
+  nenhum gate notasse;
+- o Qt 6.12.0 oficial está em `~/Qt/6.12.0/gcc_64` (instalado em 2026-10-16
+  com o Qt Design Studio). Tem tudo o que o build e os gates usam, menos o
+  QtWebEngine. O WebEngine do sistema é 6.10.2 e não carrega sobre um QtCore
+  6.12;
+- o 07, o 04, o 14 e o cabeçalho do `verificar.sh` ainda descrevem o Arch.
+
+**Desenho.** A fatia mede e fecha os detalhes.
+
+1. O código declara o Qt dele, `find_package(Qt6 6.12 ...)`. Um build com
+   outro Qt reprova na configuração, e é isso que faltou para a troca de
+   2026-10-15 não passar calada.
+2. Um lugar só diz onde está o Qt do projeto, e os presets e os gates o
+   leem. O lugar exato (preset de usuário ou variável) sai da medição.
+3. Cada ferramenta Qt dos gates sai do Qt do build, nunca do PATH. O
+   qmllint já faz isso; o runner dos harnesses, o qmlformat e o qmlls da
+   exercitação passam a fazer também.
+4. O QtWebEngine 6.12.0, com os módulos que ele exige, vem do repositório
+   oficial do Qt e é instalado no espaço do usuário, dentro de
+   `~/Qt/6.12.0/gcc_64`.
+5. Os três builds são reconfigurados do zero no 6.12, e os documentos do
+   ambiente passam a descrever o Ubuntu com o Qt 6.12.0.
+6. Nada novo para o Qt 6.4 (40 §5).
+
+**Validação planejada.**
+
+- O `Qt6_DIR` dos três builds e o `ldd` dos binários apontam para o 6.12.0.
+- Um build configurado com o Qt 6.10 reprova na configuração.
+- Gate rápido estrito verde, com cada ferramenta Qt no 6.12.0.
+- A IDE abre no 6.12 na tela do autor, com o PIO Home no WebEngine 6.12.

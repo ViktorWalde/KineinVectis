@@ -122,9 +122,11 @@ run_tmp="$tmp_base/kinein-gate.$$"
 mkdir -p "$run_tmp"
 export TMPDIR="$run_tmp"
 
-# Picos medidos em 2026-10-24 (52 §14.47). C++: a UI inteira com 18
+# Picos medidos em 2026-10-24 (52 §14.47 e §14.48). C++: a UI inteira com 18
 # compiladores chegou a 6.453 MiB (358 por job; o maior cc1plus, 704), e 500
 # deixa margem. Rust: o maior rustc, 994 MiB, e o maior clippy-driver, 985.
+# clang-tidy: o maior, 626 MiB. Harness QML: o maior, 196 MiB
+# (tst_grafana_web, com o WebEngine; a mediana, 48).
 cores="$(nproc)"
 jobs_within() {
     local count=$((ceiling_mib / $1))
@@ -135,22 +137,25 @@ jobs_within() {
     fi
     echo "$count"
 }
-cxx_origin="do ambiente"
-if [ -z "${CMAKE_BUILD_PARALLEL_LEVEL:-}" ]; then
-    CMAKE_BUILD_PARALLEL_LEVEL="$(jobs_within 500 $((cores + 2)))"
-    export CMAKE_BUILD_PARALLEL_LEVEL
-    cxx_origin="pela memoria"
-fi
-rust_origin="do ambiente"
-if [ -z "${CARGO_BUILD_JOBS:-}" ]; then
-    CARGO_BUILD_JOBS="$(jobs_within 1000 "$cores")"
-    export CARGO_BUILD_JOBS
-    rust_origin="pela memoria"
-fi
+# Variavel, rotulo, MiB de pico de um job e teto da CPU; o valor do ambiente vale.
+jobs_line=""
+choose_jobs() {
+    local origin="do ambiente"
+    if [ -z "${!1:-}" ]; then
+        printf -v "$1" '%s' "$(jobs_within "$3" "$4")"
+        origin="pela memoria"
+    fi
+    export "${1?}"
+    jobs_line="$jobs_line$2 ${!1} ($origin), "
+}
+choose_jobs CMAKE_BUILD_PARALLEL_LEVEL C++ 500 $((cores + 2))
+choose_jobs CARGO_BUILD_JOBS cargo 1000 "$cores"
+choose_jobs KINEIN_TIDY_JOBS clang-tidy 700 "$cores"
+choose_jobs KINEIN_QML_JOBS "harnesses QML" 200 "$cores"
 
 echo "== recursos da rodada =="
 echo "memoria: $available_mib MiB disponiveis, $swap_used_mib MiB de swap em uso; $scope_line"
-echo "paralelismo: C++ $CMAKE_BUILD_PARALLEL_LEVEL ($cxx_origin), cargo $CARGO_BUILD_JOBS ($rust_origin), $cores nucleos"
+echo "paralelismo: $jobs_line$cores nucleos"
 tmp_line="temporarios: $run_tmp, apagados no fim"
 if [ "$(stat -f -c %T "$tmp_base" 2>/dev/null)" = tmpfs ]; then
     tmp_used_mib="$(df -m --output=used "$tmp_base" | tail -n 1 | tr -d ' ')"

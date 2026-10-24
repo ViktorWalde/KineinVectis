@@ -34,8 +34,9 @@ FAKE_TOOL = """#!/bin/sh
 name="${0##*/}"
 call="$name${*:+ }$*"
 printf '%s\\n' "$call" >> "$KINEIN_PROFILE_LOG"
-printf '%s %s %s %s\\n' "$name" "$TMPDIR" "${CMAKE_BUILD_PARALLEL_LEVEL:-}" \\
-    "${CARGO_BUILD_JOBS:-}" >> "$KINEIN_PROFILE_ENVIRONMENT"
+printf '%s %s %s %s %s %s\\n' "$name" "$TMPDIR" "${CMAKE_BUILD_PARALLEL_LEVEL:-}" \\
+    "${CARGO_BUILD_JOBS:-}" "${KINEIN_TIDY_JOBS:-}" "${KINEIN_QML_JOBS:-}" \\
+    >> "$KINEIN_PROFILE_ENVIRONMENT"
 : > "$TMPDIR/$name.left-behind"
 if [ "$call" = "${KINEIN_PROFILE_FAIL:-}" ]; then exit 37; fi
 if [ "$name" = "verificar-deny.sh" ] && [ "${KINEIN_PROFILE_UNPROVEN:-0}" = 1 ]; then
@@ -210,21 +211,27 @@ class GateProfiles(unittest.TestCase):
     def test_jobs_follow_available_memory_and_respect_the_environment(self):
         cores = int(subprocess.run(["nproc"], capture_output=True, text=True,
                                    check=True).stdout)
-        for available, expected in ((64 * GIB, cores + 2), (6 * GIB, 8), (2 * GIB, 2)):
+        # C++, cargo, clang-tidy e harnesses QML: teto / (500, 1000, 700, 200),
+        # limitados por nucleos + 2, nucleos, nucleos e nucleos.
+        caps = (cores + 2, cores, cores, cores)
+        for available, by_memory in ((64 * GIB, caps), (6 * GIB, (8, 4, 5, 20)),
+                                     (2 * GIB, (2, 1, 1, 5))):
             with self.subTest(available=available):
                 self.memory.write_text(memory_report(available))
                 result, _ = self.run_gate("--ci-rapida")
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-                self.assertEqual({row[1] for row in self.seen_by_steps()},
-                                 {str(min(expected, cores + 2))})
+                expected = tuple(str(min(jobs, cap)) for jobs, cap in zip(by_memory, caps))
+                self.assertEqual({row[1:] for row in self.seen_by_steps()}, {expected})
                 self.assertIn("(pela memoria)", result.stdout)
         result, _ = self.run_gate("--ci-rapida", KINEIN_GATE_CEILING_MIB="999999")
         self.assertEqual({row[1] for row in self.seen_by_steps()}, {"2"},
                          "um teto herdado fora do escopo nao vale")
         result, _ = self.run_gate("--ci-rapida", CMAKE_BUILD_PARALLEL_LEVEL="3",
-                                  CARGO_BUILD_JOBS="5")
-        self.assertEqual({row[1:] for row in self.seen_by_steps()}, {("3", "5")})
-        self.assertIn("C++ 3 (do ambiente), cargo 5 (do ambiente)", result.stdout)
+                                  CARGO_BUILD_JOBS="5", KINEIN_TIDY_JOBS="7",
+                                  KINEIN_QML_JOBS="9")
+        self.assertEqual({row[1:] for row in self.seen_by_steps()}, {("3", "5", "7", "9")})
+        self.assertIn("C++ 3 (do ambiente), cargo 5 (do ambiente), clang-tidy 7 (do ambiente), "
+                      f"harnesses QML 9 (do ambiente), {cores} nucleos", result.stdout)
 
     def test_the_run_asks_for_a_scope_without_swap_under_the_ceiling(self):
         scope = self.root / "bin" / "systemd-run"
