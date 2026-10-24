@@ -64,7 +64,7 @@ bool CoreClient::dispatchGrafanaResult(const QString& method, const QJsonObject&
     // "procurando..." para sempre — por seis dias, com todos os gates verdes
     // (achado em 2026-09-18 pela foto da F8). O gate de fiacao IPC agora
     // reprova um `dispatch*Result` que ninguem chama.
-    return dispatchProbeResult(method, result);
+    return dispatchPlatformioResult(method, result);
 }
 
 } // namespace kinein

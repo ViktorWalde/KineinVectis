@@ -156,9 +156,14 @@ const shapes = {
                         + "M7 7h.01M7 17h.01M11 7h6M11 17h6", fill: "" },
     "cpu": { stroke: roundRect(5, 5, 14, 14, 2.5) + roundRect(9, 9, 6, 6, 1)
                      + "M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3", fill: "" },
-    // Embarcados: a placa, com o chip e a fileira de pinos.
+    // Gravar e depurar: a placa, com o chip e a fileira de pinos.
     "embedded": { stroke: roundRect(3, 5, 18, 14, 2.5) + roundRect(7, 9, 6, 6, 1),
-                  fill: circle(17, 9, 1.1) + circle(17, 12, 1.1) + circle(17, 15, 1.1) }
+                  fill: circle(17, 9, 1.1) + circle(17, 12, 1.1) + circle(17, 15, 1.1) },
+    // PlatformIO (52 §14.45): a plataforma que junta placas, frameworks e
+    // bibliotecas, como um hexagono com o nucleo no centro. Signo generico:
+    // nao e' o logo da marca.
+    "platformio": { stroke: "M12 2.5L20.2 7.25V16.75L12 21.5L3.8 16.75V7.25Z" + circle(12, 12, 3.2),
+                    fill: circle(12, 12, 1.2) }
 };
 
 function shape(name) {

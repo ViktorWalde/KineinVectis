@@ -94,6 +94,7 @@ Provas locais dos wrappers nativos (Linux; fora do gate padrão):
 ```bash
 python3 scripts/verificar_idf_py_nativo.py --core target/debug/kinein-core
 python3 scripts/verificar_platformio_nativo.py --core target/debug/kinein-core
+python3 scripts/verificar_platformio_home.py --core target/debug/kinein-core
 ```
 
 - **`idf.py`.** Usa um ativador e um `idf.py` falsos, que gravam argv e
@@ -106,6 +107,13 @@ python3 scripts/verificar_platformio_nativo.py --core target/debug/kinein-core
     na porta, que é um arquivo comum. Nenhuma placa é tocada.
   - O core roda com `PLATFORMIO_*` e `ESPTOOL_*` no ambiente, e nenhuma pode
     chegar ao `pio` (52 §14.44).
+
+- **PIO Home.** Exige o `pio` (Core 6). O core real sobe o PIO Home
+  (`platformio.homeStart`) com um proxy HTTP morto no ambiente. Confere:
+  - 200 na página da sessão e 403 na raiz;
+  - o reuso da sessão;
+  - a porta fechada depois de `platformio.homeStop` e depois de o core sair
+    (52 §14.45).
 
 Os relatórios ficam em `build/qa-artifacts/`.
 

@@ -45,7 +45,7 @@ pub(super) fn propose(
     let (nome, command) = match (engine, framework) {
         ("idf.py" | "idf", Some(Engine::EspIdf { activation })) => {
             let porta = device.ok_or_else(|| FlashError::NoDevice {
-                message: "escolha a porta no painel de Embarcados: o idf.py autodetecta, mas \
+                message: "escolha a porta em Gravar e depurar: o idf.py autodetecta, mas \
                           gravar na placa errada é pior que um clique"
                     .to_owned(),
             })?;
@@ -53,9 +53,7 @@ pub(super) fn propose(
                 "ambiente: . {} (a ativação do ESP-IDF, como o Get Started manda)",
                 activation.display()
             ));
-            source.push(format!(
-                "porta: {porta} (escolhida no painel de Embarcados)"
-            ));
+            source.push(format!("porta: {porta} (escolhida em Gravar e depurar)"));
             source.push(
                 "o que grava: o build/ do idf.py (bootloader, tabela de partições, app)".to_owned(),
             );

@@ -240,7 +240,27 @@ pub(super) fn grafana_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
-/// Embarcados (roadmaps/35 §5.7, 2026-09-11): a sonda, o alvo e o depurador.
+/// O PIO Home (52 §14.45): a interface do proprio `PlatformIO` (projeto novo,
+/// placas, plataformas, bibliotecas) na janela do `PlatformIO`.
+///
+/// O id `platformio.home` e' da UI: a janela pede `platformio.homeStart` ao
+/// aparecer. `requires_workspace` e' false porque o PIO Home nao e' do projeto:
+/// e' nele que se cria um projeto novo.
+pub(super) fn platformio_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "platformio.home".to_owned(),
+        title: "PlatformIO (PIO Home)...".to_owned(),
+        category: "Projeto".to_owned(),
+        description: "A interface do PlatformIO: projeto novo, placas, plataformas e bibliotecas"
+            .to_owned(),
+        default_shortcut: None,
+        requires_workspace: false,
+        internal: false,
+    }]
+}
+
+/// Gravar e depurar (roadmaps/35 §5.7, 2026-09-11; o nome desde 52 §14.45): a
+/// sonda, o alvo e o depurador.
 ///
 /// UM descriptor, e o id e' `probe.list` porque e' o metodo que a acao chama:
 /// o painel abre perguntando a ferramenta o que esta' no USB. Ate' esta data o
@@ -253,7 +273,7 @@ pub(super) fn grafana_command_descriptors() -> Vec<CommandDescriptor> {
 pub(super) fn probe_command_descriptors() -> Vec<CommandDescriptor> {
     vec![CommandDescriptor {
         id: "probe.list".to_owned(),
-        title: "Embarcados...".to_owned(),
+        title: "Gravar e depurar...".to_owned(),
         category: "Projeto".to_owned(),
         description: "A sonda conectada, o chip do alvo e o depurador do kit".to_owned(),
         // Ctrl+Alt+M de eMbarcados. O Ctrl+Alt+E ja' e' usado pela UI.

@@ -25,6 +25,8 @@ SettingsValues { formatOnSave?: bool, editorFontSize?: u32,
                  bottomPanelHeight?: u32, outlineWidth?: u32,
                  outlineCollapsed?: bool, railExpanded?: bool (0.128.0),
                  compilerCheckOnSave?: bool (0.175.0),
+                 grafanaWebView?: bool (0.154.0, só global),
+                 platformioWebView?: bool (0.191.0, só global),
                  layout?: Layout (0.146.0) }
                                           (campos ausentes = não setados)
 EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs, autoSave,
@@ -32,6 +34,7 @@ EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs, autoSave,
                     assistantTerminalWidth,
                     bottomPanelHeight, outlineWidth, outlineCollapsed,
                     railExpanded, compilerCheckOnSave (0.175.0),
+                    grafanaWebView (0.154.0), platformioWebView (0.191.0),
                     layout? (0.146.0) }
 Layout (schemaVersion 1) { schemaVersion: 1,
                  leftWindow?: "explorer"|"git", leftVisible?: bool,
@@ -51,7 +54,11 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
   `autoSave=true` (0.123.0, decisão do autor na Etapa 2),
   `compilerCheckOnSave=true` (0.175.0: a checagem do compilador ao salvar
   C/C++ com CDB, decisão do autor de 2026-10-15, `roadmaps/52` §13.1),
-  `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
+  `grafanaWebView=false` e `platformioWebView=false` (as páginas web
+  dentro da IDE: o Grafana local, 59 §6.1, e o PIO Home, 52 §14.45). Só o
+  global decide essas duas, e o projeto não opina. Qualquer uma ligada
+  faz a IDE compartilhar o contexto OpenGL na abertura (~13 ms e ~9 MiB,
+  59 §7.1.6), o que o QtWebEngine exige. `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
   terminal KV ativo e Estrutura), painel inferior `260` e Estrutura expandida.
 - Erros: `NO_WORKSPACE` (set `scope=workspace` sem workspace);
   `INVALID_PARAMS` (`editorFontSize` fora de 8..=40, ou `rigorProfile`

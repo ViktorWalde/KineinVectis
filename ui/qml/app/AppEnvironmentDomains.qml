@@ -13,11 +13,17 @@ Item {
     // O FolderPicker da Start Screen (Main.qml): o seletor de pasta NATIVO
     // que o kit reutiliza para o SDK/sysroot, em vez de um dialogo proprio.
     property var folderPicker: null
+    // Para onde Gravar e depurar compoe (fiacao, nao IPC): executar e salvar
+    // a gravacao, e o editor dos arquivos da placa. Os donos moram no AppDomains.
+    property var runtimeController: null
+    property var runConfigController: null
+    property var editorController: null
 
     readonly property alias toolchainController: toolchainController
     readonly property alias libraryController: libraryController
     readonly property alias dataSourceController: dataSourceController
     readonly property alias grafanaController: grafanaController
+    readonly property alias platformioController: platformioController
     readonly property alias embeddedController: embeddedController
     readonly property alias setupController: setupController
     readonly property alias containerController: containerController
@@ -66,6 +72,12 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
     }
 
+    // O PIO Home (0.191.0, roadmaps/52 §14.45): o servidor do PlatformIO que
+    // o core sobe so' em 127.0.0.1. Nao e' do projeto: vive entre workspaces.
+    PlatformioController {
+        id: platformioController
+    }
+
     // Embarcados (roadmaps/35 §5.7): a sonda no USB. O kit (chip, alvo,
     // depurador) continua no toolchainController — e' kit, nao sonda.
     EmbeddedController {
@@ -108,5 +120,32 @@ Item {
         id: remoteController
 
         workspaceRoot: root.coreClient.workspaceRoot
+    }
+
+    // Composição de gravação: intenção nativa ou comando manual entre seus donos.
+    Connections {
+        target: embeddedController.flash
+
+        function onRunRequested(command, flash) {
+            root.runtimeController.startRun(command, flash);
+        }
+
+        function onSaveRequested(name, command, flash) {
+            root.runConfigController.saveConfiguration(name, command, flash);
+        }
+    }
+
+    // Arquivos na placa (C2): "enviar o arquivo aberto" pergunta ao editor
+    // qual e' NO CLIQUE; o baixado abre no editor. Fiacao entre dois donos.
+    Connections {
+        target: embeddedController.files
+
+        function onUploadCurrentRequested() {
+            embeddedController.files.upload(root.editorController.currentFilePath(), "");
+        }
+
+        function onOpenLocalRequested(local) {
+            root.editorController.openDiagnostic(local, 1, 1);
+        }
     }
 }

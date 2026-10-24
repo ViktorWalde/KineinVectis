@@ -37,6 +37,7 @@ futures-util.workspace = true
 # so' CONVERSA com ele, pela HTTP API. Este e' o cliente dessa conversa.
 ureq.workspace = true
 sha2.workspace = true
+getrandom.workspace = true
 # Bancos nao-relacionais (roadmaps/35 §9.7): colecao -> documento.
 mongodb.workspace = true
 odbc-api.workspace = true

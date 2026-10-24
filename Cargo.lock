@@ -1160,6 +1160,7 @@ version = "0.3.9"
 dependencies = [
  "alacritty_terminal",
  "futures-util",
+ "getrandom 0.3.4",
  "kinein-config",
  "kinein-protocol",
  "kinein-sys",

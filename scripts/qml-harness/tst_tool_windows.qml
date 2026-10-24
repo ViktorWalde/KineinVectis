@@ -33,6 +33,7 @@ Item {
         property bool containersWindowVisible: false
         property bool remoteWindowVisible: false
         property bool embeddedWindowVisible: false
+        property bool platformioWindowVisible: false
         function toggleExplorer() { root.calls.push("explorer"); }
         function toggleDockWindow(name) { root.calls.push("dock:" + name); }
         function toggleBottomTab(tab) { root.calls.push("tab:" + tab); }
@@ -49,8 +50,8 @@ Item {
     Component.onCompleted: {
         // O CONTRATO de uma entrada: todo campo que o trilho desenha.
         // Nove desde 0.3.9: os Simbolos (nascem no trilho da direita) e o
-        // Terminal entraram.
-        check(toolWindows.entries.length === 9, "nove entradas, deu " + toolWindows.entries.length);
+        // Terminal entraram. Dez desde 2026-10-24: o PlatformIO (52 §14.45).
+        check(toolWindows.entries.length === 10, "dez entradas, deu " + toolWindows.entries.length);
         for (const e of toolWindows.entries) {
             check(e.id !== undefined && e.id !== "", "entrada sem id");
             check(e.icon !== undefined && e.icon !== "", e.id + " sem icone");
@@ -68,7 +69,7 @@ Item {
 
         // A ordem e' a decidida pelo autor, e nao pode mudar por acidente.
         const ids = toolWindows.entries.map(function(e) { return e.id; });
-        check(ids.join(",") === "explorer,terminal,outline,embedded,database,containers,remote,observability,tools",
+        check(ids.join(",") === "explorer,terminal,outline,embedded,database,containers,remote,observability,platformio,tools",
               "ordem do trilho mudou: " + ids.join(","));
         let anterior = -1;
         for (const e of toolWindows.entries) {
@@ -91,7 +92,8 @@ Item {
         // 2026-10-03): sem projeto, NENHUMA area fica a mao — nem as da
         // maquina (Containers, Ferramentas, Remoto, Grafana).
         check(!porId("containers").available && !porId("observability").available
-              && !porId("tools").available && !porId("remote").available,
+              && !porId("tools").available && !porId("remote").available
+              && !porId("platformio").available,
               "sem projeto, nenhuma area");
         // Os trilhos so' levam o que se usa agora (pente fino 0.3.9): sem
         // projeto, Projeto, Terminal e Simbolos ficam de fora dos dois.
@@ -167,9 +169,27 @@ Item {
         fakeShell.containersWindowVisible = true;
         check(porId("containers").active, "janela visivel acende o icone");
 
+        // O nome diz o que o painel faz (52 §14.45): gravar e depurar; o
+        // "Embarcados" ficou para a secao da Biblioteca.
+        check(porId("embedded").label === "Gravar e depurar" && porId("embedded").title === "Gravar e depurar",
+              "o painel se chama Gravar e depurar: " + porId("embedded").label);
+
+        // O PLATFORMIO (52 §14.45): contextual pelo PlatformIO instalado,
+        // janela acoplada, e acende com a janela aberta.
+        check(porId("platformio").defaultPolicy === "contextual"
+              && porId("platformio").factKey === "platformio.installed",
+              "PlatformIO aparece com o PlatformIO instalado");
+        check(porId("platformio").kind === "dock-left" && porId("platformio").panel === undefined,
+              "PlatformIO e' janela, nao overlay");
+        check(!porId("platformio").active, "janela fechada nao acende o PlatformIO");
+        check(toolWindows.activate("platformio") === true && calls[calls.length - 1] === "dock:platformio",
+              "activate('platformio') alterna a janela");
+        fakeShell.platformioWindowVisible = true;
+        check(porId("platformio").active, "janela aberta acende o PlatformIO");
+
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
         check(toolWindows.activate("nao.existe") === false, "id sem dono devolve false");
-        check(calls.length === 6, // explorer, tools e quatro janelas integradas
+        check(calls.length === 7, // explorer, tools e cinco janelas integradas
               "id sem dono nao pode tocar em nada");
 
         Qt.exit(failures === 0 ? 0 : 1);

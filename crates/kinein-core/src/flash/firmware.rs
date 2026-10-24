@@ -159,9 +159,7 @@ fn esptool(
     source.push(format!(
         "offset: {offset} (a página da placa no micropython.org)"
     ));
-    source.push(format!(
-        "porta: {device} (escolhida no painel de Embarcados)"
-    ));
+    source.push(format!("porta: {device} (escolhida em Gravar e depurar)"));
     warnings.push(format!(
         "primeira instalação do MicroPython nesta placa? a página manda apagar a flash antes: \
          {} --port {} {}",

@@ -17,6 +17,7 @@ Item {
     property var containerController: null
     property var remoteController: null
     property var grafanaController: null
+    property var platformioController: null
     property var settingsController: null
     property var embeddedController: null
     property var toolchainController: null
@@ -38,6 +39,7 @@ Item {
         if (name === "remote") return remoteWindow.minimumWidth;
         if (name === "observability") return grafanaWindow.minimumWidth;
         if (name === "embedded") return embeddedWindow.minimumWidth;
+        if (name === "platformio") return platformioWindow.minimumWidth;
         return name === "containers" ? containersWindow.minimumWidth : 220;
     }
 
@@ -111,6 +113,7 @@ Item {
         else if (name === "remote") remoteWindow.forceActiveFocus();
         else if (name === "observability") grafanaWindow.forceActiveFocus();
         else if (name === "embedded") embeddedWindow.forceActiveFocus();
+        else if (name === "platformio") platformioWindow.forceActiveFocus();
         else explorerPanel.focusTree();
     }
 
@@ -239,6 +242,34 @@ Item {
 
         function onWindowRequested() {
             root.shellController.showDockWindow("embedded");
+        }
+    }
+
+    // O PIO Home (52 §14.45), acoplado como o Grafana: aparecer sobe (ou
+    // reusa) o servidor; sumir destroi a view, e o servidor fica.
+    PlatformioWindow {
+        id: platformioWindow
+
+        parent: root.slotOf("platformio")
+        anchors.fill: parent
+        visible: root.shellController.platformioWindowVisible
+        controller: root.platformioController
+        settings: root.settingsController
+        onVisibleChanged: {
+            if (!root.platformioController) return;
+            if (visible) root.platformioController.prepare();
+            else root.platformioController.close();
+        }
+        onCloseRequested: root.shellController.toggleDockWindow("platformio")
+        onWidenRequested: width => root.shellController.docks.widen("platformio", width)
+        onRestoreWidthRequested: width => root.shellController.docks.restore("platformio", width)
+    }
+
+    Connections {
+        target: root.platformioController
+
+        function onWindowRequested() {
+            root.shellController.showDockWindow("platformio");
         }
     }
 

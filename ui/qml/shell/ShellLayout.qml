@@ -7,7 +7,9 @@ import KineinVectis
 // uma ilha so', e ao redor um unico rodape"): o trilho fica na moldura; a
 // area da esquerda, o editor e o painel de baixo ficam sobre UM fundo
 // arredondado, sem borda propria, separados por divisorias finas no meio dos
-// vaos. Quem monta (ShellWorkspaceHost) so' diz quem e' quem.
+// vaos. Quem monta (ShellWorkspaceHost) so' diz quem e' quem. As alcas de
+// arrastar ficam nos mesmos vaos das divisorias; o arrasto vira sinal, e quem
+// monta decide o limite (ShellController).
 Item {
     id: root
 
@@ -20,6 +22,9 @@ Item {
     property Item rightItem: null
     // O slot da direita (a janela cujo icone esta' no trilho da direita).
     property Item rightDockItem: null
+
+    signal leftGapDragged(real delta)
+    signal bottomGapDragged(real delta)
 
     Rectangle {
         id: island
@@ -69,5 +74,25 @@ Item {
         width: root.centerItem !== null ? root.centerItem.width - 2 * Theme.spacingSmall : 0
         height: 1
         color: Theme.borderSoft
+    }
+
+    // Alcas de redimensionamento sobre os vaos.
+    PanelSplitter {
+        visible: root.leftItem !== null && root.leftItem.visible
+        x: root.leftItem !== null ? root.leftItem.x + root.leftItem.width : 0
+        width: Theme.panelGap
+        height: root.height
+        onDragged: delta => root.leftGapDragged(delta)
+    }
+
+    PanelSplitter {
+        visible: root.bottomItem !== null && root.bottomItem.visible
+        horizontal: true
+        x: root.centerItem !== null ? root.centerItem.x : 0
+        y: root.centerItem !== null && root.bottomItem !== null
+           ? root.centerItem.y + root.bottomItem.y - Theme.panelGap : 0
+        width: root.centerItem !== null ? root.centerItem.width : 0
+        height: Theme.panelGap
+        onDragged: delta => root.bottomGapDragged(delta)
     }
 }

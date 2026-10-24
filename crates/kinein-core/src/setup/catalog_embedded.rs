@@ -31,8 +31,8 @@ pub(super) static TOOLS: &[Tool] = &[
     Tool {
         id: "esptool",
         name: "esptool",
-        summary: "Fala com o bootloader de ROM dos ESP32: le o chip e a flash (a lupa do \
-                  painel de Embarcados) e grava o firmware (o motor do Gravar).",
+        summary: "Fala com o bootloader de ROM dos ESP32: le o chip e a flash (a lupa de \
+                  Gravar e depurar) e grava o firmware (o motor do Gravar).",
         website: "https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html",
         probe_binary: "esptool",
     },

@@ -26,6 +26,7 @@
 | [`job.md`](job.md) | `job.*` |
 | [`library.md`](library.md) | `library.*` |
 | [`lsp.md`](lsp.md) | `lsp.*`, `event.lsp.documentsClosed` e `event.lsp.progress` |
+| [`platformio.md`](platformio.md) | `platformio.*` (o PIO Home) |
 | [`probe.md`](probe.md) | `probe.*` |
 | [`project.md`](project.md) | `project.*` |
 | [`python.md`](python.md) | `python.*` |

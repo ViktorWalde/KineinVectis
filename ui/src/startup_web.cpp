@@ -11,8 +11,8 @@ namespace kinein {
 
 namespace {
 
-// `true`/`false` quando o arquivo declara a opcao; nada quando nao declara.
-std::optional<bool> readOption(const QString& file)
+// `true`/`false` quando o arquivo declara `option`; nada quando nao declara.
+std::optional<bool> readOption(const QString& file, const QString& option)
 {
     if (file.isEmpty()) {
         return std::nullopt;
@@ -22,11 +22,18 @@ std::optional<bool> readOption(const QString& file)
         return std::nullopt;
     }
     const QJsonDocument document = QJsonDocument::fromJson(settings.readAll());
-    const QJsonValue value = document.object().value(QStringLiteral("grafanaWebView"));
+    const QJsonValue value = document.object().value(option);
     if (!value.isBool()) {
         return std::nullopt;
     }
     return value.toBool();
+}
+
+// A do projeto vence a global; nenhuma das duas declarando conta desligada.
+bool wantsOption(const QString& globalFile, const QString& workspaceFile, const QString& option)
+{
+    const std::optional<bool> workspace = readOption(workspaceFile, option);
+    return workspace.value_or(readOption(globalFile, option).value_or(false));
 }
 
 } // namespace
@@ -49,10 +56,10 @@ QString globalSettingsFile()
 
 bool wantsWebView(const QString& globalFile, const QString& workspaceFile)
 {
-    if (const std::optional<bool> workspace = readOption(workspaceFile)) {
-        return *workspace;
-    }
-    return readOption(globalFile).value_or(false);
+    // As opcoes que pedem a visualizacao web: o Grafana (59 §6.1) e o PIO
+    // Home (52 §14.45). Qualquer uma ligada liga o contexto compartilhado.
+    return wantsOption(globalFile, workspaceFile, QStringLiteral("grafanaWebView")) ||
+           wantsOption(globalFile, workspaceFile, QStringLiteral("platformioWebView"));
 }
 
 } // namespace kinein

@@ -24,6 +24,24 @@ Item {
         workspaceOpen: true
     }
 
+    // O PlatformIO instalado (52 §14.45): pergunta a' faixa de saude, dona
+    // de "esta ferramenta foi detectada".
+    QtObject {
+        id: healthFake
+
+        property var detected: []
+        function hasAnyTool(ids) {
+            return ids.some(function(id) { return detected.indexOf(id) >= 0; });
+        }
+    }
+
+    RailFacts {
+        id: toolFacts
+
+        projectHealthController: healthFake
+        workspaceOpen: true
+    }
+
     readonly property var entries: [
         { id: "explorer", title: "Projeto", order: 10, defaultPolicy: "pinned", factKey: "",
           commandId: "view.project", shortcut: "", available: true },
@@ -107,6 +125,14 @@ Item {
         failures += check(facts.knownFacts["remote.any"] === true, "desconhecido apagou o ultimo");
         remoteFake.targets = [];
         failures += check(facts.knownFacts["remote.any"] === false, "fato falso vale");
+
+        // PlatformIO: desconhecido ate' a deteccao chegar; depois, o que ela diz.
+        failures += check(toolFacts.facts["platformio.installed"] === undefined, "sem deteccao, desconhecido");
+        toolFacts.toolsList = [{ id: "cmake" }];
+        failures += check(toolFacts.facts["platformio.installed"] === false, "sem pio, falso");
+        healthFake.detected = ["pio"];
+        toolFacts.toolsList = [{ id: "cmake" }, { id: "pio" }];
+        failures += check(toolFacts.facts["platformio.installed"] === true, "com pio, verdadeiro");
 
         // ShellController: fixar tira de oculta; ocultar tira de fixada.
         shell.hideArea("database");

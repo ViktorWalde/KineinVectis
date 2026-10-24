@@ -18,6 +18,7 @@ Item {
     property var dataSourceController: null
     property var remoteController: null
     property var grafanaController: null
+    property var platformioController: null
     property var embeddedController: null
     property var setupController: null
     property var containerController: null
@@ -206,6 +207,9 @@ Item {
             return true;
         case "grafana.get":
             grafanaController.open();
+            return true;
+        case "platformio.home":
+            platformioController.open();
             return true;
         case "probe.list":
             embeddedController.open();

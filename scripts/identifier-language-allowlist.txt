@@ -184,3 +184,7 @@ autoinstall
 getcwd
 isdir
 realpath
+# getrandom: o crate do gerador do sistema (a sessao do PIO Home, 52 §14.45).
+getrandom
+# settimeout: API de socket do Python (socket.settimeout) na prova do PIO Home (52 §14.45).
+settimeout

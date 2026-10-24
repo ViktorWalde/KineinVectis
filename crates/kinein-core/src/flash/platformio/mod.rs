@@ -358,7 +358,7 @@ fn source(query: &Query, accepted: &Accepted, core: &str, device: &str) -> Vec<S
             accepted.board.manifest.display()
         ),
         format!(
-            "porta: {device} (escolhida no painel de Embarcados; --upload-port vence o upload_port do platformio.ini)"
+            "porta: {device} (escolhida em Gravar e depurar; --upload-port vence o upload_port do platformio.ini)"
         ),
         format!(
             "baud: {speed}; reset: {} antes e {} depois (placa)",

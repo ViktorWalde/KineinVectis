@@ -87,6 +87,7 @@ set_source_files_properties(qml/components/TextMenuController.qml PROPERTIES QT_
 set_source_files_properties(qml/components/KvTextMenuHost.qml PROPERTIES QT_RESOURCE_ALIAS KvTextMenuHost.qml)
 set_source_files_properties(qml/components/KvFloatingLayer.qml PROPERTIES QT_RESOURCE_ALIAS KvFloatingLayer.qml)
 set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOURCE_ALIAS KvIconButton.qml)
+set_source_files_properties(qml/components/KvLocalWebPage.qml PROPERTIES QT_RESOURCE_ALIAS KvLocalWebPage.qml)
 set_source_files_properties(qml/components/ReorderController.qml PROPERTIES QT_RESOURCE_ALIAS ReorderController.qml)
 set_source_files_properties(qml/components/ReorderMouseArea.qml PROPERTIES QT_RESOURCE_ALIAS ReorderMouseArea.qml)
 set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_ALIAS KvButton.qml)
@@ -162,6 +163,10 @@ set_source_files_properties(qml/grafana/GrafanaVerdict.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/grafana/GrafanaTokenPrompt.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaTokenPrompt.qml)
 set_source_files_properties(qml/ipc/GrafanaEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaEventRouter.qml)
 set_source_files_properties(qml/ipc/GrafanaRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaRequestRouter.qml)
+set_source_files_properties(qml/ipc/PlatformioEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioEventRouter.qml)
+set_source_files_properties(qml/ipc/PlatformioRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioRequestRouter.qml)
+set_source_files_properties(qml/platformio/PlatformioController.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioController.qml)
+set_source_files_properties(qml/platformio/PlatformioWindow.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioWindow.qml)
 set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
 set_source_files_properties(qml/embedded/EmbeddedOverviewView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedOverviewView.qml)
@@ -519,6 +524,7 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvTextMenuHost.qml
         qml/components/KvFloatingLayer.qml
         qml/components/KvIconButton.qml
+        qml/components/KvLocalWebPage.qml
         qml/components/ReorderController.qml
         qml/components/ReorderMouseArea.qml
         qml/components/KvButton.qml
@@ -595,6 +601,10 @@ qt_add_qml_module(kinein-vectis
         qml/grafana/GrafanaTokenPrompt.qml
         qml/ipc/GrafanaEventRouter.qml
         qml/ipc/GrafanaRequestRouter.qml
+        qml/ipc/PlatformioEventRouter.qml
+        qml/ipc/PlatformioRequestRouter.qml
+        qml/platformio/PlatformioController.qml
+        qml/platformio/PlatformioWindow.qml
         qml/embedded/EmbeddedController.qml
         qml/embedded/EmbeddedPanel.qml
         qml/embedded/EmbeddedOverviewView.qml
@@ -938,6 +948,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_library.cpp
         src/core_client_datasource.cpp
     src/core_client_grafana.cpp
+    src/core_client_platformio.cpp
     src/core_client_probe.cpp
     src/core_client_container.cpp
     src/core_client_index.cpp

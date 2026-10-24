@@ -95,6 +95,12 @@ pub struct SettingsValues {
     /// default: the web module is only loaded once this is on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub grafana_web_view: Option<bool>,
+    /// Whether the `PlatformIO` window may show PIO Home inside the IDE
+    /// (`0.191.0`, roadmap 52 §14.45). Global and OFF by default, like
+    /// [`Self::grafana_web_view`]: either one makes the UI share the OpenGL
+    /// context at startup, which the web module needs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub platformio_web_view: Option<bool>,
     /// The shell layout (`0.146.0`, roadmap 53 §4.4): which left window,
     /// preferred panel sizes, bottom panel and Structure state, versioned by
     /// its own `schemaVersion`. Kept as raw JSON on purpose: a layout written
@@ -143,6 +149,8 @@ pub struct EffectiveSettings {
     pub welcome_animation: bool,
     /// Effective Grafana web view (`false` unless turned on).
     pub grafana_web_view: bool,
+    /// Effective PIO Home web view (`false` unless turned on).
+    pub platformio_web_view: bool,
     /// The layout to restore: the workspace one, else the global one, and
     /// only when its `schemaVersion` is one this core understands. Absent =
     /// the UI uses the legacy width fields above, or its automatic layout.

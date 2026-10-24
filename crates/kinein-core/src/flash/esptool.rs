@@ -291,9 +291,7 @@ fn append_evidence(
         "kit/modelo"
     };
     source.push(format!("chip: {chip} ({origin})"));
-    source.push(format!(
-        "porta: {device} (escolhida no painel de Embarcados)"
-    ));
+    source.push(format!("porta: {device} (escolhida em Gravar e depurar)"));
 }
 
 /// O que o usuario deve saber antes de gravar: imagens cifradas e flash

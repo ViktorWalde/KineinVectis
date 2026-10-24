@@ -86,6 +86,11 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit grafanaProbed(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.platformio.homeExited")) {
+        const QJsonValue code = params.value(QStringLiteral("code"));
+        emit platformioHomeExited(code.isDouble() ? QVariant(code.toInt()) : QVariant());
+        return;
+    }
     if (method == QStringLiteral("event.index.progress")) {
         emit indexProgressed(params.value(QStringLiteral("files")).toInt(),
                              params.value(QStringLiteral("symbols")).toInt());

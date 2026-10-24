@@ -11,10 +11,10 @@
 > **HANDOFF (2026-10-23). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4d4 concluída:** PlatformIO nativo para ESP32 e prévia sem código do projeto (52 §14.44;
-> 40.7 §7.354); d3 `idf.py` §7.353; g §7.352; f §7.351; e §7.350; d2 §7.349; d1 §7.347–§7.348.
-> `AppMenuBar.qml`, `.directory`, `eim_config.toml` e `log/` locais preservados.
-> Protocolo **0.190.0**, binário **0.3.9**; probe-rs 0.32.0 instalado no usuário (§7.343).
+> **0.4.1h4b2b4h concluída:** "Gravar e depurar" e o atalho do PlatformIO com o PIO Home (52 §14.45;
+> 40.7 §7.355; protocolo 0.191.0); d4 PlatformIO nativo §7.354; d3 §7.353; g–d1 §7.347–§7.352.
+> `.directory`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
+> Protocolo **0.191.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
 > só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
@@ -29,8 +29,8 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** os demais motores nativos (picotool, dfu-util, west), um por fatia; fechada a h4b2,
-> etapa 1b assistente semântico (52 §11.2, 40 §5).
+> **Próxima:** agente do PIO Home (52 §14.45 item 5: abrir o projeto criado); picotool, dfu-util e west nativos.
+> Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
 > construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
@@ -163,6 +163,11 @@ AppImage apos especial       DECISAO DO AUTOR em 2026-10-21: fechar a 0.4.9,
                              Substitui o pacote logo apos a 0.4.9; versao/
                              identificacao do artefato ainda nao fixadas.
                              Dono: 57 §1.1; execucao: 52 §11/§11.1.
+                             ESCLARECIDO PELO AUTOR em 2026-10-24: o AppImage
+                             e' empacotado com o Qt do codigo em desenvolvimento
+                             (hoje o 6.10 do sistema), nao com o Qt 6.4.2 da
+                             base antiga (packaging/appimage/Containerfile.qml64,
+                             Debian 12); a base de empacotamento acompanha.
 Quality Center e instalador  INCLUIDOS na 0.4.x pelo autor em 2026-10-21:
                              reformular Setup junto da migracao ao dock e
                              expor verificacoes existentes com gate local
@@ -529,10 +534,17 @@ assistente semantico          DECISAO DO AUTOR em 2026-10-23: desenvolver um
                              compiladores, gravadores), complementando-as. Caso
                              de origem: o include-cleaner do clangd sugeriu
                              trocar freertos/FreeRTOS.h e quebrou o build
-                             (52 §14.37). Etapa 1b da 0.4 (52 §11.2), depois
-                             da h4b2 e antes do Setup; nada "meia boca": testes
-                             rigorosos, corpus real, mutacao, sem regra sem
-                             teste. Uma sugestao da IDE nao pode quebrar o build.
+                             (52 §14.37). Nada "meia boca": testes rigorosos,
+                             corpus real, mutacao, sem regra sem teste. Uma
+                             sugestao da IDE nao pode quebrar o build.
+                             POSICAO TROCADA PELO AUTOR em 2026-10-24: nao e'
+                             mais a etapa 1b; e' um ESCOPO INTEIRO e dedicado
+                             da 0.4, no final, depois que todas as ferramentas
+                             de Embarcados estiverem validadas, testadas e
+                             funcionais ("nao aceitaria menos do que algo
+                             minimamente confiavel e funcional"; "nao temos um
+                             prazo a cumprir"). Entre a 0.4.6 e a 0.4.7
+                             (52 §11.1 linha 9b e §11.2).
 qualidade de Embarcados       DECISAO DO AUTOR em 2026-10-23: bare metal e Linux
 (2026-10-23)                 embarcado sem bugs criticos nem "bugs bobos" que
                              teste de uso real ou simulacao realista evitaria.
@@ -561,6 +573,13 @@ dos paineis (2026-10-23)     chamado "Embarcados" (Visao geral, Placa, Gravar,
                              literalmente copiar a forma", adaptar ao contexto
                              da IDE. Fatia logo apos a h4b2b4d4, antes de
                              picotool, dfu-util e west (52 §14.45).
+gates no fim da 0.4.9         DECISAO DO AUTOR em 2026-10-23: no final da 0.4.9
+(2026-10-23)                 os gates sao otimizados e polidos ("vamos ter um
+                             grande salto nessa 0.4"). Ponto de partida medido:
+                             o gate rapido estrito leva ~35-40 min (1.321 Rust,
+                             8 CTest, 170 harnesses, C++/Clippy/qmllint em
+                             2026-10-23). Ate' la' a regra do gate por fatia
+                             nao muda.
 ```
 
 ## 7. O registro das entregas

@@ -35,6 +35,7 @@ Item {
     readonly property alias toolchainController: environment.toolchainController
     readonly property alias dataSourceController: environment.dataSourceController
     readonly property alias grafanaController: environment.grafanaController
+    readonly property alias platformioController: environment.platformioController
     readonly property alias embeddedController: environment.embeddedController
     readonly property alias setupController: environment.setupController
     readonly property alias containerController: environment.containerController
@@ -146,6 +147,9 @@ Item {
 
         coreClient: root.coreClient
         folderPicker: root.folderPicker
+        runtimeController: runtimeController
+        runConfigController: runConfigController
+        editorController: editorController
     }
 
     // O indice do projeto INTEIRO (pilar 0 do roadmaps/42, 2026-09-12): os
@@ -206,33 +210,6 @@ Item {
         onShowTabRequested: tab => shellController.showTab(tab)
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()
-    }
-
-    // Composição de gravação: intenção nativa ou comando manual entre seus donos.
-    Connections {
-        target: environment.embeddedController.flash
-
-        function onRunRequested(command, flash) {
-            runtimeController.startRun(command, flash);
-        }
-
-        function onSaveRequested(name, command, flash) {
-            runConfigController.saveConfiguration(name, command, flash);
-        }
-    }
-
-    // Arquivos na placa (C2): "enviar o arquivo aberto" pergunta ao editor
-    // qual e' NO CLIQUE; o baixado abre no editor. Fiacao entre dois donos.
-    Connections {
-        target: environment.embeddedController.files
-
-        function onUploadCurrentRequested() {
-            environment.embeddedController.files.upload(editorController.currentFilePath(), "");
-        }
-
-        function onOpenLocalRequested(local) {
-            editorController.openDiagnostic(local, 1, 1);
-        }
     }
 
     // A cobertura dos testes (D8, 2026-09-17): o resumo e as linhas do
@@ -331,6 +308,7 @@ Item {
         libraryController: environment.libraryController
         dataSourceController: environment.dataSourceController
         grafanaController: environment.grafanaController
+        platformioController: environment.platformioController
         embeddedController: environment.embeddedController
         setupController: environment.setupController
         containerController: environment.containerController

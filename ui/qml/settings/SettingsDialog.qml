@@ -30,6 +30,7 @@ Item {
     property string rigorProfile: "strict"
     property bool welcomeAnimation: true
     property bool grafanaWebView: false
+    property bool platformioWebView: false
     // As chaves que o projeto aberto define no proprio settings (o pai passa
     // todas; aqui ficam so' as que esta tela mostra — o layout tambem e' do
     // projeto e nao tem selo).

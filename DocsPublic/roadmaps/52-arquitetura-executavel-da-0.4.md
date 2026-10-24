@@ -633,7 +633,9 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
        cores semânticas; medir resposta e desempenho, fechar regressões
 0.4.9  estabilização integrada: corrigir os bloqueadores das auditorias,
        repetir jornadas de aceitação, gates completos, documentação e
-       versões coerentes; fecha a base funcional e libera a edição especial
+       versões coerentes; otimizar e polir os próprios gates (decisão do
+       autor de 2026-10-23, 40 §5); fecha a base funcional e libera a
+       edição especial
 especial  em seguida à 0.4.9: otimização/acabamento do §14.17.1, base da
           0.5 em diante; validar o conjunto polido antes do pacote
 AppImage  somente após concluir a edição especial: alinhar identificação/
@@ -764,7 +766,6 @@ abaixo é plano, não lista de funcionalidades concluídas.
 | Ordem | Marco/fatia | Dependência e entrega | Condição para seguir |
 | --- | --- | --- | --- |
 | 1 — próxima | 0.4.1h4b2: gravação/ocupação | Usar runconfig preservado e reserva serial existentes; intenção tipada/schema 2, adaptação por versão/capacidade e recuperação com identidade verificada (§14.27) | UI/core revalidam contexto, artefato e porta; sem parsing de shell salvo nem migração na abertura; matriz serial e limitações registradas |
-| 1b | 0.4.1s: assistente semântico (decisão do autor, 2026-10-23) | Depois de h4b2, antes do Setup. S0 desenho/corpus e S1 verificador de correções antes de qualquer regra; S2 regras de framework; S3 contexto; S4 servir Setup, kits, construir/C, Quality Center e gravação (§11.2) | Nenhuma sugestão da IDE que quebre o build passa sem aviso no corpus; métricas, mutação e prova em projetos reais; sem regra sem teste |
 | 2 | 0.4.1: Setup S1/S2 | Migrar ao dock **e reformular Instalar Ferramentas na mesma frente**, com busca, filtros, categorias, estados, fonte e revisão dos comandos | Guia e acessos anteriores preservados, retorno ao editor, teclado, erro/recuperação e envio explícito ao Terminal; sem depender de ROS 2 |
 | 3 | 0.4.1: kits/schema 3 | Depois dos bloqueadores de orquestração e Setup; completar contexto e configuração dos kits no dono atual | Origem e valor efetivo coerentes, formatos legados preservados, migração somente explícita |
 | 4 | 0.4.2: construir/C + Q1 | Build/test/check PlatformIO, cache/Bear/tamanho e assistente C no escopo do marco; expor build/lint/testes já existentes no Quality Center | Cada jornada nova fecha com UI; Q1 reusa rigor, Jobs e resultados, com ferramentas ausentes explicadas |
@@ -773,8 +774,9 @@ abaixo é plano, não lista de funcionalidades concluídas.
 | 7 | 0.4.4 | L2/L3/L5 do editor conforme §5.11 | Navegação/diagnósticos e desempenho sem regressão |
 | 8 | 0.4.5 | Banco para embarcados, com os limites já decididos | Aceite dos donos de Banco; sem reabrir adiamentos |
 | 9 | 0.4.6 | Consolidar C/CPython/MicroPython/CircuitPython, bare metal/Linux, integrações opcionais, janelas funcionais no dock, comando de terminal e Q3 | Inventário reconciliado com uso real e nenhum básico transferido à edição especial |
+| 9b | Escopo dedicado: assistente semântico (decisão do autor, 2026-10-24) | Depois da 0.4.6, com todas as ferramentas de Embarcados validadas, testadas e funcionais; um escopo inteiro: S0 desenho/corpus e S1 verificador de correções antes de qualquer regra; S2 regras de framework; S3 contexto; S4 servir ações de configuração, prévias de build e gravação, Setup e Quality Center (§11.2) | Nada menos que confiável e funcional: nenhuma sugestão da IDE que quebre o build passa sem aviso no corpus; métricas, mutação e prova em projetos reais; sem regra sem teste |
 | 10 | 0.4.7–0.4.8 | Auditoria integrada de frontend, acessibilidade e desempenho (§14.17) | Corrigir achados, fotos comparáveis e regressões; não redesenhar a disposição principal |
-| 11 | 0.4.9 | Estabilização, jornadas, gates completos e documentação/versões; fechamento funcional | Base funcional validada para a edição especial, sem gerar o pacote intermediário |
+| 11 | 0.4.9 | Estabilização, jornadas, gates completos (otimizados e polidos, 40 §5) e documentação/versões; fechamento funcional | Base funcional validada para a edição especial, sem gerar o pacote intermediário |
 | 12 | Imediatamente após a 0.4.9 / edição especial | Otimização e acabamento do conjunto; estabelecer a base polida da 0.5 em diante | Jornadas e gates sobre o conjunto final; nenhum básico funcional da 0.4 adiado para esta etapa |
 | 13 | Após concluir a edição especial | Alinhar identificação/metadados, gerar e testar o AppImage local com a base polida para teste de usuários | Critério de artefato do §10/57; smokes/ambiente mínimo; sem push/tag/publicação |
 
@@ -823,7 +825,7 @@ acabamento na 0.4.8 e edição especial. Preservar o feedback do §14.16.
 Não bloqueia trabalho autorizado independente do desenho, nem permite usar
 aceite de protótipo/agente como aprovação visual do autor.
 
-### 11.2 Etapa 1b — assistente semântico (decisão do autor, 2026-10-23)
+### 11.2 Escopo dedicado — assistente semântico (decisão do autor, 2026-10-23; posição de 2026-10-24)
 
 **Decisão (40 §5).** A IDE ganha um algoritmo próprio que entende a semântica
 e o contexto do projeto e atua junto das ferramentas que ela orquestra: LSP,
@@ -832,11 +834,23 @@ substitui. Uma sugestão da IDE não pode quebrar o build do desenvolvedor, e o
 algoritmo só entra depois de uma fase de testes rigorosa. O caso de origem é o
 include-cleaner do clangd trocando `freertos/FreeRTOS.h` (§14.41).
 
-**Por que nesta posição.** Ele entra depois de fechar a h4b2 e antes do Setup
-(linha 2). Assim, Setup, kits, construir/C e assistente C, Quality Center e a
-consolidação de Embarcados (0.4.3–0.4.6) já nascem consultando o
-verificador, sem que cada um traga uma heurística própria. A h4b2 continua
-primeiro porque fecha um caminho com efeitos físicos já começado.
+**Posição (decisão do autor de 2026-10-24, que substitui a etapa 1b).** Um
+escopo inteiro e dedicado da 0.4, no final: depois da 0.4.6, quando todas as
+ferramentas de Embarcados estiverem validadas, testadas e funcionais, e antes
+da auditoria integrada da 0.4.7–0.4.8 (§11.1, linha 9b). Nas palavras do
+autor, "não é muito difícil, mas não é fácil", e ele "não aceitaria menos do
+que algo minimamente confiável e funcional"; sem prazo a cumprir, a 0.4 é
+feita bem feita. Consequências para quem vem antes:
+
+- Setup, kits, construir/C, Quality Center e a consolidação de Embarcados
+  não esperam o verificador. As recusas e ações que eles trazem (§14.38 a
+  §14.44, a ação do FreeRTOS no clangd) ficam nos donos atuais, com seus
+  testes, e viram casos do corpus na S0.
+- Nenhuma heurística nova de "sugestão segura" entra antes deste escopo: o
+  que for sugestão continua mostrado como sugestão da ferramenta, com a
+  origem, sem promessa de que não quebra.
+- A S4 adapta os consumidores que já existirem nessa hora, em vez de cada
+  um nascer consultando o verificador.
 
 **Fases.** Cada fase é uma ou mais fatias, com desenho antes do código, gate
 e commit próprios.
@@ -5298,6 +5312,212 @@ aparece.
 - 22 mutações detectadas, todas.
 - Gate rápido estrito no QA: 1.321 Rust, 8 CTest, 170 harnesses, C++,
   Clippy e qmllint limpos.
-- **Pendente:** a gravação na placa pelo botão da IDE. A janela da Kinein
-  estava coberta enquanto o autor usava o computador; ela entra na fatia
-  seguinte.
+- **Na IDE, na bancada, em 2026-10-24 (registrado na 40.7 §7.355).**
+  1. Gravar e depurar → Gravar → platformio → Nativo gera a prévia com a
+     linha, o Core, a plataforma, o `tool-esptool`, o env, a placa, a
+     porta, o baud, o reset e os quatro avisos.
+  2. "Gravar na placa" grava 291.584 bytes em 0x10000, com "Hash of data
+     verified" e `[SUCCESS] Took 7.65 seconds`.
+  3. O Monitor serial (`pio device monitor`) mostra "ESP32 PIO A: ciclo";
+     antes, a placa rodava o firmware ESP-IDF "ESP32 E".
+
+### 14.45 0.4.1h4b2b4h — "Gravar e depurar" e o atalho do PlatformIO com o PIO Home (desenho, 2026-10-23)
+
+**Problema (decisão do autor, 40 §5).**
+
+- O painel chamado "Embarcados" (Visão geral, Placa, Gravar, Ambiente) só
+  grava e depura, mas o nome promete "tudo de embarcados". Ele passa a se
+  chamar **Gravar e depurar**.
+- "Embarcados" fica para uma seção da Biblioteca, que é o "Instalar
+  Ferramentas" reformulado (§11.1). Esta fatia não cria a seção: ela vem com
+  a reformulação.
+- O PlatformIO tem interface própria, o PIO Home: assistente de projeto
+  novo, placas, plataformas e bibliotecas. A IDE passa a exibi-la a partir
+  de um atalho do PlatformIO, fixável no trilho lateral, depois que o
+  PlatformIO estiver instalado.
+- O VS Code é referência, não molde: a forma segue o modelo da Kinein.
+
+**Medido em 2026-10-23 (PlatformIO Core 6.2.0).**
+
+- **Linha.** `pio home --host 127.0.0.1 --port P --no-open --session-id S
+  --shutdown-timeout T`.
+- **Primeira subida.** Ela instala o `contrib-piohome` 3.4.4 pela rede e
+  leva 4,07 s até "PIO Home has been started".
+- **Endereços.**
+  - `http://127.0.0.1:P/session/S/` responde 200; a raiz responde 403
+    ("Protected PlatformIO Home session").
+  - `POST /session/S/__shutdown__` desliga o servidor.
+- **Comandos para a IDE.** A página manda três comandos por um agente
+  WebSocket JSON-RPC (`/session/S/wsrpc`, `ide.listen_commands` e
+  `ide.on_command_result`; `home/rpc/handlers/ide.py` e o bundle
+  `main.*.js`): `open_project` (pasta), `open_text_document` (caminho,
+  linha, coluna) e `get_pio_project_dirs`.
+- **Sem agente.** Em 1,5 s o servidor responde erro 4005, e a página cai em
+  alternativas:
+  - abre o arquivo pelo sistema (`os.open_file`);
+  - diz onde o projeto foi criado.
+- **QtWebEngine.** O módulo QML existe no Qt do sistema. A página do Grafana
+  (59 §6.1) já o usa como opção, criada por `Qt.createQmlObject`, só para
+  endereço local, com links externos indo ao navegador. O contexto OpenGL
+  compartilhado tem de ser ligado antes do `QGuiApplication` e custa ~13 ms
+  e ~9 MiB (59 §7.1.6). Por isso ele só liga quando a opção está ligada.
+
+**Desenho.**
+
+1. **Nome.** Os textos da área `embedded` passam a dizer "Gravar e depurar":
+   - rótulo, título e dica;
+   - menu e paleta.
+
+   O id, o comando e o atalho (Ctrl+Alt+M) não mudam: o layout salvo, as
+   preferências e os testes seguem valendo.
+2. **Área PlatformIO no trilho.**
+   - É uma entrada nova no `ToolWindows`, contextual, com o fato
+     `platformio.installed` (o `pio` detectado pelo `tools.detect`, como os
+     containers usam o podman ou o docker).
+   - A pessoa fixa, desafixa ou oculta pelo mecanismo existente (53 §4).
+     Fixada, a área fica no trilho mesmo fora de um projeto PlatformIO.
+3. **Janela PlatformIO,** no slot do lado do ícone, como a do Grafana:
+   - o estado do servidor (subindo, pronto, parou, erro com o motivo);
+   - "Abrir no navegador" e "Parar";
+   - o PIO Home dentro da IDE quando a opção `platformioWebView` está
+     ligada e o contexto foi compartilhado na abertura;
+   - sem a opção, o texto diz como ligar e oferece o navegador.
+
+   Ligar a opção pede reabrir a IDE, como no Grafana. A view só navega no
+   endereço da sessão, e o resto vai ao navegador do sistema.
+4. **Servidor no core (protocolo 0.191.0).**
+   - **Métodos.** `platformio.homeStart {}` responde `{url, port}` e reusa o
+     servidor vivo. `platformio.homeStop {}` responde `{stopped}`.
+   - **Evento.** `event.platformio.homeExited {code}` sai quando o processo
+     termina sem ter sido parado.
+   - **Linha.** O `pio` do detector, com `--host 127.0.0.1`, uma porta livre
+     (escolhida ligando `127.0.0.1:0`), `--no-open`, uma sessão aleatória de
+     128 bits (`getrandom`) e `--shutdown-timeout 300`. Esse timeout é a
+     rede de segurança se o core morrer.
+   - **Onde roda.** Na pasta do `pio`, fora de projetos: o PIO Home não é
+     código do projeto e não depende de confiança.
+   - **Pronto** é o `GET` da URL da sessão responder 200, com prazo de 120 s
+     (a primeira subida instala pela rede).
+   - **Parar** é o POST de shutdown e, se for preciso, matar o processo. O
+     core para o servidor ao sair.
+5. **O agente da IDE (fatia seguinte, h4b2b4i).** O core responde aos três
+   comandos:
+   - `open_project` abre a pasta como workspace, pelo fluxo de abrir
+     projeto da IDE;
+   - `open_text_document` abre o arquivo na linha;
+   - `get_pio_project_dirs` dá a raiz aberta, quando ela é PlatformIO.
+
+   Até lá, valem as alternativas da própria página.
+
+**Contrato antes do código.**
+
+- `PROTOCOL_VERSION` 0.191.0.
+- Domínio novo `03-dominios/platformio.md`, que também passa a descrever o
+  `platformio.compiledb` existente.
+- A opção `platformioWebView` no `settings.md`.
+- A nota no 03.1.
+
+**Validação planejada.**
+
+- Core:
+  - com um `pio` falso, que imprime a linha de início e serve a URL da
+    sessão, conferir o argv exato, o reuso, o parar, o evento de saída e o
+    prazo;
+  - o core real por stdio com o PIO Home real: 200 na sessão, 403 na raiz,
+    porta fechada depois de parar;
+  - mutações.
+- UI:
+  - harness da projeção com o fato novo;
+  - os estados da janela;
+  - o nome novo.
+- Na IDE, na tela do autor:
+  - a área aparece com o `pio` instalado;
+  - fixar;
+  - abrir e ver o PIO Home dentro da IDE (opção ligada) e pelo navegador;
+  - o painel com o nome novo.
+
+**Feito em 2026-10-24 (40.7 §7.355).** Implementado como desenhado. Os
+pontos de implementação:
+
+- **Core.**
+  - `platformio/home.rs` cuida do servidor: um por core, reusado; uma
+    subida simultânea espera a outra; parar tira o processo do slot antes de
+    encerrá-lo; o `Drop` desliga.
+  - `handlers/platformio_home.rs` responde os dois métodos e manda o
+    evento.
+  - A sessão vem do `getrandom`, já no lockfile.
+  - "Pronto" é um `GET` local, sem o proxy do ambiente.
+- **UI.**
+  - `PlatformioController`, `PlatformioWindow` e os roteadores; a área do
+    trilho é contextual com `platformio.installed`.
+  - A página web local virou componente (`KvLocalWebPage`): o Grafana a usa
+    com os textos dele, e o PIO Home com `scopeUrl` na sessão.
+  - O comando `platformio.home` está na paleta e no menu Ambiente.
+  - A opção `platformioWebView` liga o contexto compartilhado na abertura,
+    junto com a do Grafana.
+- **O nome.** "Gravar e depurar" no trilho, no painel, no menu, na paleta e
+  nas mensagens do core que diziam "painel de Embarcados". O texto entra na
+  prévia nativa, então configurações nativas salvas antes da troca pedem
+  outra prévia no ▶, e nada é gravado.
+- **Sem projeto, a área sai do trilho,** como toda área (decisão de
+  2026-10-03). O menu Ambiente e a paleta abrem o PIO Home sem projeto, que é
+  onde se cria um.
+- **Catracas, por responsabilidade.**
+  - O vigia de arquivos saiu do `lib.rs` para `handlers/workspace_watch.rs`,
+    junto dos handlers que o usam.
+  - A fiação de Gravar e depurar com execução e editor foi para o
+    `AppEnvironmentDomains`, onde o domínio nasce.
+  - As alças de arrastar dos vãos foram para o `ShellLayout`, que já
+    desenha as divisórias nesses vãos.
+- **Corrigido de passagem.** A edição local no `AppMenuBar.qml`
+  (`pragmaComponentBehavior`, faltava um espaço) quebrava a compilação da UI
+  no checkout. Ela foi corrigida pela edição, a pedido do autor ("se tiver
+  incompleto algo da UI pega e complete").
+
+**Validação.**
+
+- Core:
+  - seis testes do servidor, com um `pio` falso em Python que serve a sessão
+    (200), a raiz (403) e o shutdown. Eles cobrem argv exato, sessão de 128
+    bits que muda a cada servidor, diretório fora do projeto, reuso, parar,
+    `Drop`, saída sozinha avisada uma vez, falha com a saída, prazo (servidor
+    mudo e servidor que responde 403), subida simultânea e o caminho pelo
+    protocolo;
+  - o teste das configurações;
+  - 1.328 testes Rust no total.
+- Core real por stdio com o PIO Home real e um proxy HTTP morto no
+  ambiente:
+  - sobe em 0,23–0,43 s com a interface já instalada;
+  - 200 na sessão e 403 na raiz;
+  - reuso;
+  - porta fechada depois de parar e depois de o core sair.
+- UI:
+  - `tst_platformio` (estados, filtro de erro, escopo da página, largura);
+  - `tst_tool_windows` (a área, o nome, sem projeto);
+  - `tst_rail_projection` (o fato);
+  - `tst_shell_docks` (o slot e o codec);
+  - `tst_startup_web` (a opção na abertura);
+  - os 171 harnesses verdes.
+- Mutações: 17, com 16 detectadas. A sobrevivente (a flag `stopping`) era
+  código sem efeito, porque o `stop` já tira o processo antes de encerrá-lo.
+  A flag foi removida.
+- **Na IDE, na tela do autor (2026-10-24).**
+  1. Com o `pio` instalado, o trilho mostra o ícone do PlatformIO, com a
+     dica "PlatformIO — PIO Home: projeto novo, placas, bibliotecas".
+  2. Abrir a área sobe o servidor ("pronto em 127.0.0.1:33903") e alarga o
+     slot.
+  3. Com a opção ligada na IDE aberta, a janela avisa que a página vale na
+     próxima abertura.
+  4. Reaberta a IDE, o PIO Home aparece dentro dela: Home com Core 6.2.0 e
+     Home 3.4.4, e o Board Explorer com 1.655 placas.
+  5. O painel aparece como "Gravar e depurar".
+- Gate rápido estrito no QA: 1.328 Rust, 8 CTest, 171 harnesses, C++,
+  Clippy e qmllint limpos. As duas rodadas anteriores pararam na duplicação
+  de QML e no clang-tidy do `startup_web.cpp`, ambos corrigidos (40.7
+  §7.355).
+- **Para o polimento de UI:** a largura que o PIO Home pede fica no slot
+  quando outra janela da esquerda abre depois de reabrir a IDE. É o mesmo
+  molde do Grafana.
+- **Entrada da tela:** o KWin pedia, a cada sessão, permissão de "Remote
+  Control" para a entrada emulada do `xdotool`. O autor ligou
+  `XwaylandEisNoPrompt` no próprio `kwinrc` (2026-10-24).

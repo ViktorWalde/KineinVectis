@@ -20,6 +20,7 @@ Item {
     property var recentWorkspacesController
     property var containerController
     property var grafanaController
+    property var platformioController: null
     property var dataSourceController
     property var settingsController: null
     property var embeddedController: null
@@ -104,6 +105,9 @@ Item {
         bottomItem: bottomPanel
         rightItem: rightSide
         rightDockItem: rightDock
+        // As alcas nos vaos sao do layout; os limites, do ShellController.
+        onLeftGapDragged: delta => root.shellController.resizeExplorer(delta)
+        onBottomGapDragged: delta => root.shellController.resizeBottomPanel(-delta)
 
         // As entradas do trilho sao DADO (V3): uma entrada no `ToolWindows`.
         ToolWindows {
@@ -162,6 +166,7 @@ Item {
             containerController: root.containerController
             remoteController: root.remoteController
             grafanaController: root.grafanaController
+            platformioController: root.platformioController
             settingsController: root.settingsController
             embeddedController: root.embeddedController
             toolchainController: root.toolchainController
@@ -379,22 +384,4 @@ Item {
         }
     }
 
-    // Alcas de redimensionamento sobre os vaos (limites no ShellController).
-    PanelSplitter {
-        visible: explorerPanel.visible
-        x: explorerPanel.x + explorerPanel.width
-        width: Theme.panelGap
-        height: parent.height
-        onDragged: delta => root.shellController.resizeExplorer(delta)
-    }
-
-    PanelSplitter {
-        visible: bottomPanel.visible
-        horizontal: true
-        x: centerColumn.x
-        y: centerColumn.y + bottomPanel.y - Theme.panelGap
-        width: centerColumn.width
-        height: Theme.panelGap
-        onDragged: delta => root.shellController.resizeBottomPanel(-delta)
-    }
 }

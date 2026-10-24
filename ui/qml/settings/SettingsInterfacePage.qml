@@ -40,6 +40,14 @@ Column {
                 checked: root.settings !== null && root.settings.grafanaWebView
                 onToggled: root.settings.settingChanged("grafanaWebView", !root.settings.grafanaWebView)
             }
+
+            SettingsToggleRow {
+                width: parent.width
+                label: qsTr("PIO Home dentro da IDE")
+                hint: qsTr("Mostra o PIO Home (projeto novo, placas, plataformas, bibliotecas do PlatformIO) na janela do PlatformIO. Desligado, o navegador embutido nem é carregado e o PIO Home abre no navegador do sistema. Vale na próxima abertura da IDE.")
+                checked: root.settings !== null && root.settings.platformioWebView
+                onToggled: root.settings.settingChanged("platformioWebView", !root.settings.platformioWebView)
+            }
         }
     }
 }

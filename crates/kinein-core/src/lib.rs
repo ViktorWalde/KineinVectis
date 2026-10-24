@@ -31,6 +31,7 @@ pub mod library;
 pub mod lsp;
 pub mod msvc;
 pub mod owned_child;
+pub mod platformio;
 pub mod probe;
 pub mod process;
 pub mod project;
@@ -57,7 +58,7 @@ mod outcome;
 mod platform;
 
 use std::{
-    path::{Path, PathBuf},
+    path::PathBuf,
     sync::{Arc, Mutex},
 };
 
@@ -90,6 +91,8 @@ pub struct Core {
     index: Arc<Mutex<index::ProjectIndex>>,
     extractor: lang::extract::SymbolExtractor,
     events: Option<lsp::EventSender>,
+    /// O PIO Home que a IDE exibe (0.191.0, 52 §14.45); o `Drop` o desliga.
+    platformio_home: Arc<platformio::home::Home>,
     lsp: Option<lsp::LspManager>,
     workspace_edits: lsp::WorkspaceEditTransactions,
     /// A sessao de terminal da ultima execucao (`run.start`/`run.script`),
@@ -156,6 +159,7 @@ impl Core {
             index: Arc::new(Mutex::new(index::ProjectIndex::default())),
             extractor: lang::extract::SymbolExtractor::default(),
             events: None,
+            platformio_home: Arc::default(),
             lsp: None,
             workspace_edits: lsp::WorkspaceEditTransactions::default(),
             run_terminal: None,
@@ -318,6 +322,7 @@ impl Core {
             .or_else(|| self.setup_request_response(method, request_id.clone(), params))
             .or_else(|| self.datasource_request_response(method, request_id.clone(), params))
             .or_else(|| self.grafana_request_response(method, request_id.clone(), params))
+            .or_else(|| self.platformio_home_request_response(method, request_id.clone()))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
             .or_else(|| self.container_request_response(method, request_id.clone(), params))
             .or_else(|| self.project_request_response(method, request_id.clone(), params))
@@ -351,43 +356,6 @@ impl Core {
         self.workspace
             .as_ref()
             .map(|workspace| PathBuf::from(&workspace.root))
-    }
-
-    /// Replaces the watcher when a workspace opens. Failure is reported as an
-    /// async warning, while compare-before-save remains active as the final
-    /// protection against silent overwrites.
-    fn reset_workspace_watcher(&mut self, root: &Path) {
-        self.fswatch = None;
-        let Some(events) = self.events.as_ref() else {
-            return;
-        };
-        match fswatch::WorkspaceWatcher::new(root, events.clone()) {
-            Ok(watcher) => self.fswatch = Some(watcher),
-            Err(error) => drop(events.send(JsonRpcRequest::notification(
-                "event.fs.watchError",
-                Some(json!({ "message": error.to_string() })),
-            ))),
-        }
-    }
-
-    /// Lazily observes a directory reached by the explorer, the editor — or
-    /// the index, that registers every folder it walked. Returns `false` when
-    /// the watcher refused (the error is reported once, here).
-    fn watch_workspace_directory(&mut self, directory: &Path) -> bool {
-        let error = self
-            .fswatch
-            .as_mut()
-            .and_then(|watcher| watcher.watch_directory(directory).err());
-        let Some(error) = error else {
-            return true;
-        };
-        if let Some(events) = self.events.as_ref() {
-            drop(events.send(JsonRpcRequest::notification(
-                "event.fs.watchError",
-                Some(json!({ "message": error.to_string() })),
-            )));
-        }
-        false
     }
 
     /// Deixa o core reagir a um evento assincrono ANTES de ele ir para a UI.

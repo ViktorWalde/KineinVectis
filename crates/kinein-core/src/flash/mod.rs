@@ -295,9 +295,10 @@ fn chosen_port(device: Option<&str>) -> Result<&str, FlashError> {
         .map(str::trim)
         .filter(|d| !d.is_empty())
         .ok_or_else(|| FlashError::NoDevice {
-            message: "escolha a porta em Embarcados › Placa usando Selecionar porta antes de \
+            message:
+                "escolha a porta em Gravar e depurar › Placa usando Selecionar porta antes de \
                       gerar a prévia de gravação"
-                .to_owned(),
+                    .to_owned(),
         })
 }
 
@@ -671,7 +672,7 @@ mod tests {
         assert!(
             p.source
                 .iter()
-                .any(|s| s == "porta: /dev/ttyUSB0 (escolhida no painel de Embarcados)")
+                .any(|s| s == "porta: /dev/ttyUSB0 (escolhida em Gravar e depurar)")
         );
         assert_eq!(p.warnings.len(), 1);
         assert!(p.warnings[0].contains("app") && p.warnings[0].contains("--encrypt"));

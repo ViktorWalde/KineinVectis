@@ -189,7 +189,7 @@ impl Registry {
 fn occupied(resource: Resource<'_>, owner: Option<&Owner>) -> JsonRpcError {
     let channel = resource.label();
     let message = owner.map_or_else(
-        || format!("Não foi possível reservar {channel}: há outra operação serial da IDE em andamento. Aguarde sua conclusão ou escolha uma porta livre no painel Embarcados."),
+        || format!("Não foi possível reservar {channel}: há outra operação serial da IDE em andamento. Aguarde sua conclusão ou escolha uma porta livre em Gravar e depurar."),
         |owner| {
             let location = owner.workspace.as_deref().map_or_else(String::new, |root| format!(" no projeto {root}"));
             let window = if owner.core_pid == std::process::id() { String::new() }

@@ -209,6 +209,7 @@ Window {
         dataSourceController: domains.dataSourceController
         remoteController: domains.remoteController
         grafanaController: domains.grafanaController
+        platformioController: domains.platformioController
         embeddedController: domains.embeddedController
         setupController: domains.setupController
         containerController: domains.containerController
@@ -276,6 +277,7 @@ Window {
         recentWorkspacesController: domains.recentWorkspacesController
         containerController: domains.containerController
         grafanaController: domains.grafanaController
+        platformioController: domains.platformioController
         dataSourceController: domains.dataSourceController
         embeddedController: domains.embeddedController
         remoteController: domains.remoteController

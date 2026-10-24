@@ -19,6 +19,7 @@ Rectangle {
     property var dataSourceController: null
     property var remoteController: null
     property var grafanaController: null
+    property var platformioController: null
     property var embeddedController: null
     property var setupController: null
     property var containerController: null
@@ -133,6 +134,7 @@ Rectangle {
         case "datasource.list": root.dataSourceController.windowRequested(); break;
         case "remote.list": root.remoteController.open(); break;
         case "grafana.get": root.grafanaController.open(); break;
+        case "platformio.home": root.platformioController.open(); break;
         case "probe.list": root.embeddedController.open(); break;
         case "setup.list": root.setupController.open(); break;
         case "container.list": root.containerController.open(); break;

@@ -97,10 +97,10 @@ Item {
         },
         // Embarcados e' por projeto (o kit mora no .kinein), como o Git.
         {
-            "id": "embedded", "label": qsTr("Embarcados"), "icon": "embedded",
-            "tooltip": qsTr("Embarcados — placa, projeto, gravar, kit (Ctrl+Alt+M)"),
+            "id": "embedded", "label": qsTr("Gravar e depurar"), "icon": "embedded",
+            "tooltip": qsTr("Gravar e depurar — placa, porta, gravar, kit (Ctrl+Alt+M)"),
             "area": "left", "order": 30, "available": root.workspaceOpen,
-            "title": qsTr("Embarcados"), "kind": "dock-left", "defaultPolicy": "contextual",
+            "title": qsTr("Gravar e depurar"), "kind": "dock-left", "defaultPolicy": "contextual",
             "factKey": "project.embedded", "commandId": "probe.list", "shortcut": "Ctrl+Alt+M",
             "active": root.shellController !== null && root.shellController.embeddedWindowVisible === true
                       && root.workspaceOpen
@@ -151,6 +151,18 @@ Item {
             "title": qsTr("Observabilidade"), "kind": "dock-left", "defaultPolicy": "contextual",
             "factKey": "grafana.instance", "commandId": "grafana.get", "shortcut": "Ctrl+Alt+O",
             "active": root.shellController !== null && root.shellController.observabilityWindowVisible === true
+        },
+        {
+            // O PIO Home (52 §14.45): aparece com o PlatformIO instalado e
+            // pode ser fixado, mesmo fora de um projeto PlatformIO. Sem
+            // projeto, como toda area, fica fora do trilho (boas-vindas so'
+            // de boas-vindas); o menu Ambiente e a paleta o abrem.
+            "id": "platformio", "label": qsTr("PlatformIO"), "icon": "platformio",
+            "tooltip": qsTr("PlatformIO — PIO Home: projeto novo, placas, bibliotecas"), "area": "left",
+            "order": 65, "available": root.workspaceOpen,
+            "title": qsTr("PlatformIO"), "kind": "dock-left", "defaultPolicy": "contextual",
+            "factKey": "platformio.installed", "commandId": "platformio.home", "shortcut": "",
+            "active": root.shellController !== null && root.shellController.platformioWindowVisible === true
         },
         {
             "id": "tools", "label": "", "icon": "tools",
@@ -250,6 +262,10 @@ Item {
         case "observability":
             if (shellController === null || shellController === undefined) return false;
             shellController.toggleDockWindow("observability");
+            return true;
+        case "platformio":
+            if (shellController === null || shellController === undefined) return false;
+            shellController.toggleDockWindow("platformio");
             return true;
         case "remote":
             if (shellController === null || shellController === undefined) return false;

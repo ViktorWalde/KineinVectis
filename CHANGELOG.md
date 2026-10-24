@@ -32,6 +32,18 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **"Gravar e depurar" e o PlatformIO no trilho (0.4.1h4b2b4h, 2026-10-24):**
+  - O painel antes chamado "Embarcados" passa a se chamar "Gravar e depurar",
+    o que ele faz. "Embarcados" fica para uma seção da Biblioteca (Instalar
+    Ferramentas).
+  - Com o PlatformIO instalado, o trilho ganha a área PlatformIO, que dá para
+    fixar. Ela abre o PIO Home, a interface do próprio PlatformIO (projeto
+    novo, placas, plataformas, bibliotecas): no navegador do sistema, ou
+    dentro da IDE com a opção "PIO Home dentro da IDE".
+  - O servidor roda só no próprio computador, com uma sessão aleatória, e se
+    desliga quando a IDE fecha.
+  - Configurações de gravação nativa salvas antes pedem uma prévia nova,
+    porque o texto da prévia mudou com o nome.
 - **PlatformIO no modo nativo para ESP32 (0.4.1h4b2b4d4, 2026-10-23):**
   - Num projeto PlatformIO com ESP32, a aba Gravar passa a gerar a prévia de
     `pio run -t upload`, com o env fixado, a placa, o baud e o reset lidos

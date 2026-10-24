@@ -118,7 +118,7 @@ Rectangle {
         Text {
             width: parent.width
             visible: root.nativeConfiguration
-            text: qsTr("O nome pode ser alterado. Para mudar porta, arquivos ou ferramenta, gere outra prévia em Embarcados. A execução confere novamente o contexto salvo.")
+            text: qsTr("O nome pode ser alterado. Para mudar porta, arquivos ou ferramenta, gere outra prévia em Gravar e depurar. A execução confere novamente o contexto salvo.")
             wrapMode: Text.WordWrap
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeSmall

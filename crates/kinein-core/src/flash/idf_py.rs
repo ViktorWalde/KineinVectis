@@ -131,7 +131,7 @@ pub(super) fn prepare(
         "motor: idf.py (o wrapper do ESP-IDF, resolvido para a intenção nativa)".to_owned(),
         format!("ambiente: . {} ({version})", activation.display()),
         format!("build: {build} (descrição, receita e configuração vinculadas por conteúdo)"),
-        format!("porta: {device} (escolhida no painel de Embarcados), {ESPTOOL_BAUD} baud"),
+        format!("porta: {device} (escolhida em Gravar e depurar), {ESPTOOL_BAUD} baud"),
         format!(
             "reset: {} antes e {} depois; {} (receita do build)",
             recipe.before.as_deref().unwrap_or("default-reset"),

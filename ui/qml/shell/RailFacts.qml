@@ -27,11 +27,15 @@ QtObject {
         return list === undefined || list === null ? -1 : lists.listOf(list).length;
     }
 
-    function engineDetected(list) {
+    function anyDetected(list, ids) {
         if (listLength(list) <= 0 || !root.projectHealthController) {
             return undefined;
         }
-        return root.projectHealthController.hasAnyTool(["podman", "docker"]);
+        return root.projectHealthController.hasAnyTool(ids);
+    }
+
+    function engineDetected(list) {
+        return root.anyDetected(list, ["podman", "docker"]);
     }
 
     readonly property var facts: ({
@@ -45,7 +49,9 @@ QtObject {
                       ? root.remoteController.targets.length > 0 : undefined,
         "grafana.instance": root.grafanaController && root.workspaceOpen
                             ? root.grafanaController.hasInstance === true : undefined,
-        "container.engine": root.engineDetected(root.toolsList)
+        "container.engine": root.engineDetected(root.toolsList),
+        // O PIO Home (52 §14.45): o PlatformIO Core detectado na maquina.
+        "platformio.installed": root.anyDetected(root.toolsList, ["pio"])
     })
 
     // Fato ainda desconhecido mantem o ULTIMO conhecido (53 §5.4): uma area

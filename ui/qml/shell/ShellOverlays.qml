@@ -142,6 +142,7 @@ Item {
         rigorProfile: root.settingsController.rigorProfile
         welcomeAnimation: root.settingsController.welcomeAnimation
         grafanaWebView: root.settingsController.grafanaWebView
+        platformioWebView: root.settingsController.platformioWebView
         projectKeys: Object.keys(root.settingsController.workspaceValues)
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium

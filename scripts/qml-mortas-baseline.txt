@@ -2,7 +2,6 @@ ui/qml/coverage/CoverageController.qml::activeSummary
 ui/qml/debug/DebugController.qml::breakpointAt
 ui/qml/debug/DebugController.qml::setBreakpointCondition
 ui/qml/diagnostics/DiagnosticsController.qml::diagnosticCount
-ui/qml/editor/EditorDocumentController.qml::jumpToPending
 ui/qml/editor/EditorPersistenceController.qml::cancelPendingSaves
 ui/qml/embedded/EmbeddedFilesController.qml::makeDir
 ui/qml/git/GitController.qml::closeBranchMenu

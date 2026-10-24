@@ -76,6 +76,11 @@ ureq = { version = "3.4", default-features = false, features = ["rustls"] }
 # de desempacotar. Medido em 2026-09-13: ja' estava no Cargo.lock (0.11.0) como
 # transitiva do `mongodb` e do `postgres-protocol`; +0 crates. MIT OR Apache-2.0.
 sha2 = "0.11"
+# A sessao aleatoria do PIO Home (roadmaps/52 §14.45): 128 bits do gerador do
+# sistema, para so' quem tem a URL entrar no servidor local. Medido em
+# 2026-10-23: ja' estava no Cargo.lock (0.3.4) como transitiva; +0 crates.
+# MIT OR Apache-2.0.
+getrandom = "0.3"
 # `access(2)` seguro para o dominio `serial` (DocsPublic/integracoes/38 §6, E1): a
 # IDE precisa saber se o usuario le/escreve `/dev/ttyUSB0` SEM ABRIR a porta —
 # abrir aciona DTR/RTS na maioria das pontes e isso RESETA a placa. `access`

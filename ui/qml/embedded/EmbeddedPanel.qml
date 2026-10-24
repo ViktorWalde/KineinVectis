@@ -50,7 +50,7 @@ Item {
         id: header
         anchors.top: parent.top
         width: parent.width
-        title: qsTr("Embarcados")
+        title: qsTr("Gravar e depurar")
         subtitle: root.linuxTarget ? qsTr("SDK e alvo Linux por SSH") : root.controller ? root.controller.boardVerdict : ""
         primaryLabel: qsTr("Atualizar")
         primaryIcon: "refresh"

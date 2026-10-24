@@ -170,6 +170,16 @@ Item {
         grafanaController: root.domains.grafanaController
     }
 
+    PlatformioEventRouter {
+        coreClient: root.domains.coreClient
+        platformioController: root.domains.platformioController
+    }
+
+    PlatformioRequestRouter {
+        coreClient: root.domains.coreClient
+        platformioController: root.domains.platformioController
+    }
+
     EmbeddedEventRouter {
         coreClient: root.domains.coreClient
         embeddedController: root.domains.embeddedController

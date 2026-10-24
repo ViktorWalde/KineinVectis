@@ -1,4 +1,4 @@
-// A leitura da opcao `grafanaWebView` antes do QGuiApplication (16.6,
+// A leitura das opcoes `grafanaWebView` e `platformioWebView` antes do QGuiApplication (16.6,
 // DocsPublic/roadmaps/59 §7.1.6): ausente, global, o projeto vencendo e o
 // arquivo invalido.
 
@@ -49,6 +49,20 @@ private slots:
         const QString on =
             write("projeto-on.json", "{\"schemaVersion\":1,\"grafanaWebView\":true}");
         QVERIFY(kinein::wantsWebView(m_dir.filePath("nada.json"), on));
+    }
+
+    void thePlatformioOptionTurnsItOnToo()
+    {
+        const QString global =
+            write("global-pio.json", "{\"schemaVersion\":1,\"platformioWebView\":true}");
+        QVERIFY(kinein::wantsWebView(global, QString()));
+        const QString off =
+            write("projeto-pio-off.json", "{\"schemaVersion\":1,\"platformioWebView\":false}");
+        QVERIFY(!kinein::wantsWebView(global, off));
+        const QString both =
+            write("global-ambas.json",
+                  "{\"schemaVersion\":1,\"grafanaWebView\":false,\"platformioWebView\":true}");
+        QVERIFY(kinein::wantsWebView(both, QString()));
     }
 
     void invalidFilesMeanOff()

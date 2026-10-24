@@ -265,7 +265,7 @@ fn instalar(
         Ok(destino) => {
             ctx.emit_output(&if e.kind == Kind::Firmware {
                 format!(
-                    "baixado em {} — grave pelo painel de Embarcados (Gravar, firmware)",
+                    "baixado em {} — grave em Gravar e depurar (aba Gravar, firmware)",
                     destino.display()
                 )
             } else {

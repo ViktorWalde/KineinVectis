@@ -232,6 +232,11 @@ public:
     Q_INVOKABLE void grafanaForget();
     Q_INVOKABLE void grafanaProbe(const QString& token);
 
+    // O PIO Home que a IDE exibe (0.191.0, roadmaps/52 §14.45): o core sobe o
+    // servidor do PlatformIO so' em 127.0.0.1, com sessao aleatoria.
+    Q_INVOKABLE void platformioHomeStart();
+    Q_INVOKABLE void platformioHomeStop();
+
     Q_INVOKABLE void libraryList();
     Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
     Q_INVOKABLE void toolchainGet(const QString& preset);
@@ -502,6 +507,11 @@ signals:
     /// alcance, autenticacao, fontes de dados, dashboards e o CRUZAMENTO com
     /// os perfis de banco deste workspace.
     void grafanaProbed(const QVariantMap& result);
+    /// O PIO Home respondeu: `url` e' a pagina da sessao.
+    void platformioHomeStarted(const QString& url, int port);
+    void platformioHomeStopped(bool stopped);
+    /// O servidor terminou sozinho (inatividade ou falha); `code` nulo = sinal.
+    void platformioHomeExited(const QVariant& code);
 
     void libraryListResolved(const QVariantList& libraries);
     void libraryPlanResolved(const QVariantMap& plan);
@@ -743,6 +753,7 @@ private:
     void handleDataSourceFailure(const QString& method, const QJsonObject& error,
                                  const QVariantMap& requestQuery);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
+    bool dispatchPlatformioResult(const QString& method, const QJsonObject& result);
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
     bool dispatchRunResult(const QString& method, const QJsonObject& result, qint64 requestId);
     bool dispatchBuildSizeResult(const QString& method, const QJsonObject& result);

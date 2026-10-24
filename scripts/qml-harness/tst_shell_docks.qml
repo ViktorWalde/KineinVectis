@@ -132,6 +132,16 @@ Item {
         shell.toggleDockWindow("embedded");
         failures += check(!shell.embeddedWindowVisible, "Mesmo ícone fecha Embarcados");
 
+        // O PlatformIO (52 §14.45): o mesmo ciclo, no slot do icone, e o
+        // codec aceita a janela ao reabrir.
+        shell.toggleDockWindow("platformio");
+        failures += check(shell.platformioWindowVisible && shell.leftWindow === "platformio",
+                          "PlatformIO abre no slot");
+        failures += check(shell.codec.decode(shell.layoutSnapshot(), shell).leftWindow === "platformio",
+                          "Codec preserva o PlatformIO ao reabrir");
+        shell.toggleDockWindow("platformio");
+        failures += check(!shell.platformioWindowVisible, "Mesmo ícone fecha o PlatformIO");
+
         Qt.exit(failures === 0 ? 0 : 1);
     }
 }

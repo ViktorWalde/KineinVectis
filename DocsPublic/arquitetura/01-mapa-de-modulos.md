@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 187 métodos IPC roteados pelo core.
+Medido: 189 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -121,6 +121,7 @@ flowchart LR
   n_core_outcome[outcome]
   n_core_owned_child[owned_child]
   n_core_platform[platform]
+  n_core_platformio[platformio]
   n_core_probe[probe]
   n_core_process[process]
   n_core_project[project]
@@ -208,6 +209,7 @@ flowchart LR
   n_core_handlers --> n_core_library
   n_core_handlers --> n_core_lsp
   n_core_handlers --> n_core_platform
+  n_core_handlers --> n_core_platformio
   n_core_handlers --> n_core_probe
   n_core_handlers --> n_core_process
   n_core_handlers --> n_core_project
@@ -238,6 +240,9 @@ flowchart LR
   n_core_outcome --> n_core_rpc
   n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
+  n_core_platformio --> n_core_owned_child
+  n_core_platformio --> n_core_platform
+  n_core_platformio --> n_core_tools
   n_core_probe --> n_core_process
   n_core_process --> n_core_platform
   n_core_project --> n_core_cmake
@@ -278,7 +283,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-47 módulos, 135 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+48 módulos, 139 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -307,7 +312,7 @@ flowchart LR
 | `fswatch` | lsp, platform | Debounced, workspace-confined observation of external file-system changes. |
 | `git` | — | Git orquestrado sobre o binario git. |
 | `grafana` | datasource | Observabilidade: |
-| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
+| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
 | `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
@@ -317,6 +322,7 @@ flowchart LR
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
+| `platformio` | owned_child, platform, tools | PlatformIO beyond flashing: |
 | `probe` | process | Deadline, cancellation and retained-output limits for probe-rs queries: |
 | `process` | platform | Synchronous line streaming for child processes. |
 | `project` | cmake, dap, fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
@@ -339,8 +345,8 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 187 métodos roteados pelo core, 158 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 29 estão aqui,
+Dos 189 métodos roteados pelo core, 158 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 31 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -370,7 +376,7 @@ nomeados, para nada ficar invisível:
 | `workspace.recent.remove` | `ui/qml/app/AppDomains.qml` |
 | `workspace.trust` | `ui/qml/workspace/ProjectHealthActions.qml` |
 
-**Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `remote.status`, `tools.status`.
+**Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `platformio.homeStart`, `platformio.homeStop`, `remote.status`, `tools.status`.
 
 **Sem cliente na UI** (a CLI, os gates ou nenhum): `core.shutdown`, `job.list`, `workspace.status`.
 

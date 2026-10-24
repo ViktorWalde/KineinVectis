@@ -29,6 +29,8 @@ Item {
     // O Grafana dentro da IDE (0.154.0, 59 §6.1): desligado por padrao, so'
     // global. Desligado, o modulo web nem carrega.
     property bool grafanaWebView: false
+    // O PIO Home dentro da IDE (0.191.0, 52 §14.45): o mesmo molde.
+    property bool platformioWebView: false
     // O layout do shell (0.146.0): o do workspace, senao o global, ja'
     // filtrado pelo core (so' schema conhecido). null = nenhum.
     property var layout: null
@@ -77,6 +79,7 @@ Item {
         railExpanded = effective.railExpanded === true;
         welcomeAnimation = effective.welcomeAnimation !== false;
         grafanaWebView = effective.grafanaWebView === true;
+        platformioWebView = effective.platformioWebView === true;
         layout = effective.layout !== undefined ? effective.layout : null;
         globalValues = global;
         workspaceValues = workspace;
@@ -113,6 +116,12 @@ Item {
     function setGrafanaWebView(on) {
         grafanaWebView = on;
         setRequested("global", { grafanaWebView: on });
+    }
+
+    // O "Ligar" da janela do PlatformIO: a mesma chave das Configuracoes.
+    function setPlatformioWebView(on) {
+        platformioWebView = on;
+        setRequested("global", { platformioWebView: on });
     }
 
     function hasPersistedLayout() {
