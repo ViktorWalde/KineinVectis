@@ -19,5 +19,15 @@ Item {
         function onHomeStopRequested() {
             root.coreClient.platformioHomeStop();
         }
+
+        function onHomeReleaseRequested(afterSeconds) {
+            root.coreClient.platformioHomeRelease(afterSeconds);
+        }
+
+        // O projeto que o PIO Home criou abre como o "Abrir pasta": sem
+        // confianca, como qualquer pasta (§14.46).
+        function onOpenProjectRequested(path) {
+            root.coreClient.openWorkspace(path);
+        }
     }
 }

@@ -88,7 +88,14 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
     }
     if (method == QStringLiteral("event.platformio.homeExited")) {
         const QJsonValue code = params.value(QStringLiteral("code"));
-        emit platformioHomeExited(code.isDouble() ? QVariant(code.toInt()) : QVariant());
+        emit platformioHomeExited(code.isDouble() ? QVariant(code.toInt()) : QVariant(),
+                                  params.value(QStringLiteral("reason")).toString());
+        return;
+    }
+    if (method == QStringLiteral("event.platformio.homeCommand")) {
+        emit platformioHomeCommand(
+            params.value(QStringLiteral("method")).toString(),
+            params.value(QStringLiteral("params")).toObject().toVariantMap());
         return;
     }
     if (method == QStringLiteral("event.index.progress")) {

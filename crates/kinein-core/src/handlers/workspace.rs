@@ -287,6 +287,7 @@ impl Core {
         self.syntax.clear();
         self.workspace_edits.clear();
         self.reset_workspace_watcher(&root);
+        self.platformio_home.set_workspace(Some(&root));
         // E o indice do projeto INTEIRO comeca a ser construido agora, em job:
         // a IDE le todas as pastas, arquivos e declaracoes sem esperar LSP.
         // As pastas que ele caminha entram no watcher quando o
@@ -343,6 +344,7 @@ impl Core {
         self.adapters.close_all();
         let closed = self.workspace.take();
         self.fswatch = None;
+        self.platformio_home.set_workspace(None);
         self.syntax.clear();
         self.workspace_edits.clear();
         self.drafts = None;

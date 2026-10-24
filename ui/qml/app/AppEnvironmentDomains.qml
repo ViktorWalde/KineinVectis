@@ -78,6 +78,16 @@ Item {
         id: platformioController
     }
 
+    // O arquivo que o PIO Home pede (um defeito do `pio check`, um simbolo do
+    // inspetor) abre no editor, na linha. Fiacao entre dois donos: aqui.
+    Connections {
+        target: platformioController
+
+        function onOpenFileRequested(path, line, column) {
+            root.editorController.openDiagnostic(path, line, column);
+        }
+    }
+
     // Embarcados (roadmaps/35 §5.7): a sonda no USB. O kit (chip, alvo,
     // depurador) continua no toolchainController — e' kit, nao sonda.
     EmbeddedController {

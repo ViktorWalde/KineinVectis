@@ -32,6 +32,13 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **O PIO Home abre na IDE o que cria (0.4.1h4b2b4i, 2026-10-24):**
+  - Um projeto criado ou importado no PIO Home abre na IDE como pasta, pelo
+    mesmo caminho do "Abrir pasta".
+  - Um arquivo que o PIO Home manda abrir (um defeito do `pio check`, um
+    símbolo do inspetor) abre no editor, na linha.
+  - Com a janela do PlatformIO fechada, o servidor do PIO Home é desligado
+    depois de 5 minutos e volta a subir quando a janela abre.
 - **"Gravar e depurar" e o PlatformIO no trilho (0.4.1h4b2b4h, 2026-10-24):**
   - O painel antes chamado "Embarcados" passa a se chamar "Gravar e depurar",
     o que ele faz. "Embarcados" fica para uma seção da Biblioteca (Instalar

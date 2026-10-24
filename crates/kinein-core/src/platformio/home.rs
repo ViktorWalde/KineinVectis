@@ -3,9 +3,14 @@
 //! One server per core, started on demand and reused: `pio home` on
 //! `127.0.0.1`, a free port, a random 128-bit session and an idle shutdown,
 //! beside the `pio` executable. PIO Home is `PlatformIO`'s own interface, not
-//! project code. Ready means the session page answers 200. The owner stops it
-//! on `platformio.homeStop` and when it is dropped (the core exiting). An exit
-//! on its own, the idle timeout or a failure, is reported once.
+//! project code. The owner stops it on `platformio.homeStop` and when it is
+//! dropped (the core exiting).
+//!
+//! The server and its IDE agent (`ide_agent`, 52 §14.46) are one unit: ready
+//! once the session page answers 200 and the agent connected, stopped
+//! together, the agent first, and when either ends on its own the other is
+//! ended too and the exit is reported once. The agent is a client of the
+//! server, so the idle shutdown only ends a server whose core died.
 
 use std::{
     fmt::Write as _,
@@ -18,10 +23,13 @@ use std::{
     time::{Duration, Instant},
 };
 
+use super::ide_agent;
 use crate::owned_child::{Env, OwnedChild};
 
-/// `--shutdown-timeout`: with no page connected for this long, the server
-/// stops on its own, also when the core died without stopping it.
+/// `--shutdown-timeout`: the server stops after this long with no client.
+///
+/// The agent is a client while the core lives, so this ends only a server
+/// whose core died (the UI stops an unused one, 52 §14.46).
 pub const IDLE_SHUTDOWN_SECONDS: u32 = 300;
 /// The first start installs `contrib-piohome` from the network.
 pub const START_DEADLINE: Duration = Duration::from_secs(120);
@@ -50,20 +58,58 @@ enum State {
 
 struct Running {
     session: Session,
-    // `stop` takes the process out of here before ending it, so the watcher
-    // only ever finds a process that ended on its own.
-    child: Arc<Mutex<Option<OwnedChild>>>,
+    // `stop` takes the processes out of here before ending them, so the
+    // watcher only ever finds processes that ended on their own.
+    child: Arc<Mutex<Option<Processes>>>,
+}
+
+/// The server and its agent.
+struct Processes {
+    server: OwnedChild,
+    agent: ide_agent::Agent,
+}
+
+impl Processes {
+    /// The exit of whichever ended first, `None` while both run.
+    fn exited(&mut self) -> Option<std::process::ExitStatus> {
+        self.server.exited().or_else(|| self.agent.exited())
+    }
+
+    /// The agent first (its stdin closes and it leaves), then the server.
+    fn close(self, shutdown: Option<&str>) {
+        self.agent.close(STOP_GRACE);
+        if let Some(url) = shutdown {
+            drop(http().post(url).send_empty());
+        }
+        let _ = self.server.close(if shutdown.is_some() {
+            STOP_GRACE
+        } else {
+            Duration::ZERO
+        });
+    }
 }
 
 #[derive(Default)]
 struct Shared {
     state: Mutex<State>,
     changed: Condvar,
+    /// Bumped by every release and start: a pending release only acts while
+    /// the number is still its own, so the latest of the two wins.
+    release: Mutex<u64>,
+    released: Condvar,
 }
 
 impl Shared {
     fn lock(&self) -> MutexGuard<'_, State> {
         self.state.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Cancel a pending release; the new number.
+    fn bump_release(&self) -> u64 {
+        let mut generation = self.release.lock().unwrap_or_else(PoisonError::into_inner);
+        *generation += 1;
+        self.released.notify_all();
+        *generation
     }
 }
 
@@ -71,25 +117,31 @@ impl Shared {
 #[derive(Default)]
 pub struct Home {
     shared: Arc<Shared>,
+    /// The open workspace, for the agent's `get_pio_project_dirs`.
+    workspace: Arc<Mutex<Option<std::path::PathBuf>>>,
 }
 
 impl Home {
     /// The live server, or a new one from `pio`. A call that arrives while
     /// another one starts the server waits for that start.
     ///
-    /// `on_exit` runs once if the server later ends without [`Home::stop`],
-    /// with its exit code (`None` for a signal).
+    /// `on_exit` runs once if the server or its agent later ends without
+    /// [`Home::stop`], with the server's exit code when it was the server,
+    /// else the agent's (`None` for a signal).
     ///
     /// # Errors
     /// No free port, no randomness, a process that cannot start or ends
-    /// before answering, or `deadline` passing first; the message carries the
-    /// tail of its output.
+    /// before answering, an agent that cannot connect, or `deadline` passing
+    /// first; the message carries the tail of the output.
     pub fn start(
         &self,
         pio: &Path,
         deadline: Duration,
+        events: Option<crate::lsp::EventSender>,
         on_exit: impl Fn(Option<i32>) + Send + 'static,
     ) -> Result<Session, String> {
+        // The page is back: a pending release no longer applies.
+        self.shared.bump_release();
         let mut state = self.shared.lock();
         loop {
             match &*state {
@@ -108,8 +160,12 @@ impl Home {
         }
         *state = State::Starting;
         drop(state);
-        let result = launch(pio, deadline).map(|(session, owned)| {
-            let child = Arc::new(Mutex::new(Some(owned)));
+        let context = ide_agent::Context {
+            events,
+            workspace: Arc::clone(&self.workspace),
+        };
+        let result = launch(pio, deadline, context).map(|(session, processes)| {
+            let child = Arc::new(Mutex::new(Some(processes)));
             // Running before the watcher exists: an exit it sees always finds
             // its own server in the slot.
             *self.shared.lock() = State::Running(Running {
@@ -128,30 +184,67 @@ impl Home {
 
     /// Stop the server: the shutdown request, then the process group after a
     /// grace. `false` when none was running.
+    #[must_use]
     pub fn stop(&self) -> bool {
-        let running = {
-            let mut state = self.shared.lock();
-            if !matches!(&*state, State::Running(_)) {
-                return false;
-            }
-            match std::mem::take(&mut *state) {
-                State::Running(running) => running,
-                _ => return false,
-            }
-        };
-        let owned = running
-            .child
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take();
-        let Some(owned) = owned else {
+        let Some((shutdown, processes)) = take_running(&self.shared) else {
             return false;
         };
-        let shutdown = running.session.url + "__shutdown__";
-        drop(agent().post(&shutdown).send_empty());
-        let _ = owned.close(STOP_GRACE);
+        processes.close(Some(&shutdown));
         self.shared.changed.notify_all();
         true
+    }
+
+    /// The page left the screen: stop the server `after` from now, on the
+    /// monotonic clock, unless a start comes first; another release restarts
+    /// the countdown. The deadline stops whichever server runs then (after a
+    /// stop, none). `on_idle` runs once if the deadline stops one. `false`
+    /// when no server runs (or one is still starting).
+    pub fn release(&self, after: Duration, on_idle: impl FnOnce() + Send + 'static) -> bool {
+        if !matches!(&*self.shared.lock(), State::Running(_)) {
+            return false;
+        }
+        let generation = self.shared.bump_release();
+        let shared = Arc::clone(&self.shared);
+        thread::spawn(move || {
+            let deadline = Instant::now() + after;
+            let mut current = shared
+                .release
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            loop {
+                if *current != generation {
+                    return;
+                }
+                let left = deadline.saturating_duration_since(Instant::now());
+                if left.is_zero() {
+                    break;
+                }
+                current = shared
+                    .released
+                    .wait_timeout(current, left)
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .0;
+            }
+            // Out of the slot before the number is released: a start that
+            // comes now finds no server to reuse and launches a new one.
+            let taken = take_running(&shared);
+            drop(current);
+            if let Some((shutdown, processes)) = taken {
+                processes.close(Some(&shutdown));
+                shared.changed.notify_all();
+                on_idle();
+            }
+        });
+        true
+    }
+
+    /// The workspace now open (`None` when closed): the agent answers
+    /// `get_pio_project_dirs` with it when it is a `PlatformIO` project.
+    pub fn set_workspace(&self, root: Option<&Path>) {
+        *self
+            .workspace
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) = root.map(Path::to_path_buf);
     }
 }
 
@@ -165,26 +258,69 @@ impl std::fmt::Debug for Home {
         formatter
             .debug_struct("Home")
             .field("state", &state)
+            .field("workspace", &self.workspace)
             .finish()
     }
 }
 
 impl Drop for Home {
     fn drop(&mut self) {
-        self.stop();
+        let _ = self.stop();
     }
 }
 
-fn alive(child: &Mutex<Option<OwnedChild>>) -> bool {
+/// Take the running server out of the slot: its shutdown URL and its
+/// processes, for the caller to close.
+fn take_running(shared: &Shared) -> Option<(String, Processes)> {
+    let running = {
+        let mut state = shared.lock();
+        if !matches!(&*state, State::Running(_)) {
+            return None;
+        }
+        match std::mem::take(&mut *state) {
+            State::Running(running) => running,
+            _ => return None,
+        }
+    };
+    let processes = running
+        .child
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .take()?;
+    Some((running.session.url + "__shutdown__", processes))
+}
+
+fn alive(child: &Mutex<Option<Processes>>) -> bool {
     child
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .as_mut()
-        .is_some_and(|owned| owned.exited().is_none())
+        .is_some_and(|processes| processes.exited().is_none())
+}
+
+/// Spawn `pio home`, wait until the session page answers 200, then start
+/// the IDE agent on the session's WebSocket.
+fn launch(
+    pio: &Path,
+    deadline: Duration,
+    context: ide_agent::Context,
+) -> Result<(Session, Processes), String> {
+    let started = Instant::now();
+    let (session, server) = serve(pio, deadline)?;
+    let socket = session.url.replacen("http://", "ws://", 1) + "wsrpc";
+    let agent = ide_agent::interpreter(pio)
+        .and_then(|python| ide_agent::spawn(&python, &socket, context, started + deadline));
+    match agent {
+        Ok(agent) => Ok((session, Processes { server, agent })),
+        Err(message) => {
+            let _ = server.close(Duration::ZERO);
+            Err(message)
+        }
+    }
 }
 
 /// Spawn `pio home` and wait until the session page answers 200.
-fn launch(pio: &Path, deadline: Duration) -> Result<(Session, OwnedChild), String> {
+fn serve(pio: &Path, deadline: Duration) -> Result<(Session, OwnedChild), String> {
     let port = TcpListener::bind(("127.0.0.1", 0))
         .and_then(|listener| listener.local_addr())
         .map_err(|error| format!("nenhuma porta livre em 127.0.0.1: {error}"))?
@@ -220,7 +356,7 @@ fn launch(pio: &Path, deadline: Duration) -> Result<(Session, OwnedChild), Strin
     })
     .map_err(|error| format!("não foi possível iniciar {}: {error}", pio.display()))?;
     let url = format!("http://127.0.0.1:{port}/session/{session}/");
-    let agent = agent();
+    let client = http();
     let started = Instant::now();
     let said = |owned: &OwnedChild| {
         let text = output
@@ -236,7 +372,7 @@ fn launch(pio: &Path, deadline: Duration) -> Result<(Session, OwnedChild), Strin
                 said(&owned)
             ));
         }
-        if agent
+        if client
             .get(&url)
             .call()
             .is_ok_and(|response| response.status().as_u16() == 200)
@@ -259,7 +395,7 @@ fn launch(pio: &Path, deadline: Duration) -> Result<(Session, OwnedChild), Strin
 /// Report an exit on its own once, and free the slot for a new server.
 fn watch(
     shared: Arc<Shared>,
-    child: Arc<Mutex<Option<OwnedChild>>>,
+    child: Arc<Mutex<Option<Processes>>>,
     on_exit: impl Fn(Option<i32>) + Send + 'static,
 ) {
     thread::spawn(move || {
@@ -272,10 +408,13 @@ fn watch(
             let Some(status) = owned.exited() else {
                 continue;
             };
-            if let Some(owned) = slot.take() {
-                let _ = owned.close(Duration::ZERO);
-            }
+            // Out of the slot before the grace: a start meanwhile sees it
+            // gone and launches a new one.
+            let processes = slot.take();
             drop(slot);
+            if let Some(processes) = processes {
+                processes.close(None);
+            }
             let mut state = shared.lock();
             if matches!(&*state, State::Running(running) if Arc::ptr_eq(&running.child, &child)) {
                 *state = State::Idle;
@@ -290,304 +429,11 @@ fn watch(
 
 /// Local requests only: no proxy from the environment, short timeouts and the
 /// status as data.
-fn agent() -> ureq::Agent {
+pub(super) fn http() -> ureq::Agent {
     ureq::Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(2)))
         .proxy(None)
         .http_status_as_error(false)
         .build()
         .into()
-}
-
-#[cfg(test)]
-mod tests {
-    use std::{
-        path::{Path, PathBuf},
-        sync::mpsc,
-        time::Duration,
-    };
-
-    use super::{Home, agent};
-
-    /// A fake `pio` that serves the session page (200), the root (403) and
-    /// the shutdown, like PIO Home; files beside it change how it behaves.
-    const FAKE: &str = r#"#!/usr/bin/env python3
-import http.server, json, os, sys, threading, time
-from pathlib import Path
-here = Path(__file__).resolve().parent
-args = sys.argv[1:]
-with open(here / "home.launches", "a") as launches:
-    launches.write(json.dumps(args) + "\n")
-(here / "home.cwd").write_text(os.getcwd())
-if (here / "mode-exit").exists():
-    print("Error: fixture refuses to start", flush=True)
-    sys.exit(3)
-port = int(args[args.index("--port") + 1])
-prefix = "/session/%s/" % args[args.index("--session-id") + 1]
-class Handler(http.server.BaseHTTPRequestHandler):
-    def log_message(self, *ignored):
-        pass
-    def do_GET(self):
-        ok = self.path == prefix and not (here / "mode-wrong").exists()
-        self.send_response(200 if ok else 403)
-        self.end_headers()
-        self.wfile.write(b"home" if ok else b"Protected PlatformIO Home session")
-    def do_POST(self):
-        if self.path != prefix + "__shutdown__":
-            self.send_response(403)
-            self.end_headers()
-            return
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Server has been shutdown!")
-        self.wfile.flush()
-        (here / "home.shutdown").write_text("yes")
-        os._exit(0)
-server = http.server.HTTPServer(("127.0.0.1", port), Handler)
-if (here / "mode-silent").exists():
-    time.sleep(60)
-    sys.exit(0)
-if (here / "mode-short").exists():
-    threading.Timer(1.0, lambda: os._exit(7)).start()
-print("PIO Home has been started. Press Ctrl+C to shutdown.", flush=True)
-server.serve_forever()
-"#;
-
-    fn bench(name: &str) -> (PathBuf, PathBuf) {
-        let bin = std::env::temp_dir()
-            .join("kinein-platformio-home")
-            .join(format!("{}-{name}", std::process::id()));
-        drop(std::fs::remove_dir_all(&bin));
-        std::fs::create_dir_all(&bin).unwrap();
-        let pio = crate::write_executable(bin.join("pio"), FAKE);
-        (bin, pio)
-    }
-
-    fn launches(bin: &Path) -> Vec<Vec<String>> {
-        std::fs::read_to_string(bin.join("home.launches"))
-            .unwrap_or_default()
-            .lines()
-            .map(|line| serde_json::from_str(line).unwrap())
-            .collect()
-    }
-
-    fn status(url: &str) -> Option<u16> {
-        agent()
-            .get(url)
-            .call()
-            .ok()
-            .map(|response| response.status().as_u16())
-    }
-
-    #[test]
-    fn the_session_page_is_served_reused_and_the_root_refused() {
-        let (bin, pio) = bench("session");
-        let home = Home::default();
-        let session = home.start(&pio, Duration::from_secs(20), |_| {}).unwrap();
-        let launched = launches(&bin);
-        assert_eq!(launched.len(), 1);
-        let id = &launched[0][launched[0]
-            .iter()
-            .position(|arg| arg == "--session-id")
-            .unwrap()
-            + 1];
-        assert_eq!(id.len(), 32, "128 bits in hex");
-        assert!(id.bytes().all(|byte| byte.is_ascii_hexdigit()));
-        let port = session.port.to_string();
-        assert_eq!(
-            launched[0],
-            [
-                "home",
-                "--host",
-                "127.0.0.1",
-                "--port",
-                &port,
-                "--no-open",
-                "--session-id",
-                id,
-                "--shutdown-timeout",
-                "300"
-            ]
-        );
-        assert_eq!(
-            session.url,
-            format!("http://127.0.0.1:{port}/session/{id}/")
-        );
-        assert_eq!(
-            std::fs::read_to_string(bin.join("home.cwd")).unwrap(),
-            crate::platform::canonicalize(&bin)
-                .unwrap()
-                .display()
-                .to_string(),
-            "beside the executable, outside any project"
-        );
-        assert_eq!(status(&session.url), Some(200));
-        assert_eq!(status(&format!("http://127.0.0.1:{port}/")), Some(403));
-        let again = home.start(&pio, Duration::from_secs(20), |_| {}).unwrap();
-        assert_eq!(again, session);
-        assert_eq!(launches(&bin).len(), 1, "the live server is reused");
-    }
-
-    #[test]
-    fn stopping_shuts_the_server_down_and_frees_its_port() {
-        let (bin, pio) = bench("stop");
-        let home = Home::default();
-        let (sender, exits) = mpsc::channel();
-        let session = home
-            .start(&pio, Duration::from_secs(20), move |code| {
-                let _ = sender.send(code);
-            })
-            .unwrap();
-        assert!(home.stop());
-        assert!(
-            bin.join("home.shutdown").exists(),
-            "the shutdown request came first"
-        );
-        assert_eq!(status(&session.url), None, "nothing listens any more");
-        assert!(!home.stop(), "nothing left to stop");
-        assert!(
-            exits.recv_timeout(Duration::from_secs(1)).is_err(),
-            "a requested stop is not an exit on its own"
-        );
-        let next = home.start(&pio, Duration::from_secs(20), |_| {}).unwrap();
-        let id = |url: &str| {
-            url.trim_end_matches('/')
-                .rsplit('/')
-                .next()
-                .unwrap()
-                .to_owned()
-        };
-        assert_ne!(
-            id(&next.url),
-            id(&session.url),
-            "a new server, a new random session"
-        );
-        drop(home);
-        assert_eq!(status(&next.url), None, "dropping the owner stops it");
-    }
-
-    #[test]
-    fn an_exit_on_its_own_is_reported_once_and_frees_the_slot() {
-        let (bin, pio) = bench("short");
-        std::fs::write(bin.join("mode-short"), "").unwrap();
-        let home = Home::default();
-        let (sender, exits) = mpsc::channel();
-        home.start(&pio, Duration::from_secs(20), move |code| {
-            let _ = sender.send(code);
-        })
-        .unwrap();
-        assert_eq!(exits.recv_timeout(Duration::from_secs(10)), Ok(Some(7)));
-        assert!(
-            exits.recv_timeout(Duration::from_millis(600)).is_err(),
-            "once"
-        );
-        std::fs::remove_file(bin.join("mode-short")).unwrap();
-        home.start(&pio, Duration::from_secs(20), |_| {}).unwrap();
-        assert_eq!(launches(&bin).len(), 2, "the next start launches again");
-    }
-
-    #[test]
-    fn a_server_that_ends_or_never_answers_is_an_error_with_its_output() {
-        let (bin, pio) = bench("failures");
-        std::fs::write(bin.join("mode-exit"), "").unwrap();
-        let home = Home::default();
-        let error = home
-            .start(&pio, Duration::from_secs(20), |_| {})
-            .unwrap_err();
-        assert!(error.contains("fixture refuses to start"), "{error}");
-        std::fs::remove_file(bin.join("mode-exit")).unwrap();
-        std::fs::write(bin.join("mode-silent"), "").unwrap();
-        let error = home
-            .start(&pio, Duration::from_secs(2), |_| {})
-            .unwrap_err();
-        assert!(error.contains("não respondeu em 2 s"), "{error}");
-        assert!(!home.stop(), "a failed start leaves nothing running");
-        // A server that answers, but not 200 on this session, is not ready.
-        std::fs::remove_file(bin.join("mode-silent")).unwrap();
-        std::fs::write(bin.join("mode-wrong"), "").unwrap();
-        let error = home
-            .start(&pio, Duration::from_secs(2), |_| {})
-            .unwrap_err();
-        assert!(error.contains("não respondeu em 2 s"), "{error}");
-    }
-
-    #[test]
-    fn concurrent_starts_share_one_launch() {
-        let (bin, pio) = bench("concurrent");
-        let home = std::sync::Arc::new(Home::default());
-        // All three start before any is joined: that is the race under test.
-        let mut threads = Vec::new();
-        for _ in 0..3 {
-            let home = std::sync::Arc::clone(&home);
-            let pio = pio.clone();
-            threads.push(std::thread::spawn(move || {
-                home.start(&pio, Duration::from_secs(20), |_| {})
-            }));
-        }
-        let sessions: Vec<_> = threads
-            .into_iter()
-            .map(|thread| thread.join().unwrap().unwrap())
-            .collect();
-        assert!(sessions.windows(2).all(|pair| pair[0] == pair[1]));
-        assert_eq!(launches(&bin).len(), 1);
-    }
-
-    fn rpc(core: &mut crate::Core, method: &str) -> kinein_protocol::JsonRpcResponse {
-        core.handle_request(&kinein_protocol::JsonRpcRequest::new(
-            7_i64,
-            method,
-            Some(serde_json::json!({})),
-        ))
-        .response()
-        .clone()
-    }
-
-    /// Through the protocol: a missing `pio`, start and stop, and the event
-    /// of a server that ends on its own.
-    #[test]
-    fn the_methods_answer_and_an_exit_on_its_own_becomes_the_event() {
-        let empty = std::env::temp_dir()
-            .join("kinein-platformio-home")
-            .join(format!("{}-empty", std::process::id()));
-        std::fs::create_dir_all(&empty).unwrap();
-        let mut core =
-            crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(empty));
-        let missing = rpc(&mut core, "platformio.homeStart");
-        assert_eq!(
-            missing.error.map(|error| error.code),
-            Some(kinein_protocol::JsonRpcErrorCode::ToolNotFound)
-        );
-
-        let (bin, _) = bench("rpc");
-        let mut core =
-            crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(bin.clone()));
-        let (sender, events) = mpsc::channel();
-        core.enable_lsp(sender);
-        let started = rpc(&mut core, "platformio.homeStart");
-        let url = started.result.as_ref().unwrap()["url"]
-            .as_str()
-            .unwrap()
-            .to_owned();
-        assert_eq!(status(&url), Some(200));
-        let stopped = rpc(&mut core, "platformio.homeStop");
-        assert_eq!(stopped.result.unwrap()["stopped"], true);
-
-        std::fs::write(bin.join("mode-short"), "").unwrap();
-        assert!(rpc(&mut core, "platformio.homeStart").error.is_none());
-        let deadline = std::time::Instant::now() + Duration::from_secs(10);
-        let exited = loop {
-            let event = events.recv_timeout(Duration::from_millis(200));
-            if let Ok(event) = event
-                && event.method == "event.platformio.homeExited"
-            {
-                break event;
-            }
-            assert!(std::time::Instant::now() < deadline, "no exit event");
-        };
-        assert_eq!(exited.params.unwrap()["code"], 7);
-        assert_eq!(
-            rpc(&mut core, "platformio.homeStop").result.unwrap()["stopped"],
-            false
-        );
-    }
 }

@@ -8,13 +8,13 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-23). Leia isto primeiro.**
+> **HANDOFF (2026-10-24). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4h concluída:** "Gravar e depurar" e o atalho do PlatformIO com o PIO Home (52 §14.45;
-> 40.7 §7.355; protocolo 0.191.0); d4 PlatformIO nativo §7.354; d3 §7.353; g–d1 §7.347–§7.352.
+> **0.4.1h4b2b4i concluída:** o agente do PIO Home abre na IDE o projeto criado (52 §14.46; 40.7 §7.356;
+> protocolo 0.192.0); h "Gravar e depurar" e PIO Home §7.355; d4 §7.354; d3 §7.353; g–d1 §7.347–§7.352.
 > `.directory`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
-> Protocolo **0.191.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
+> Protocolo **0.192.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
 > só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
@@ -29,7 +29,7 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** agente do PIO Home (52 §14.45 item 5: abrir o projeto criado); picotool, dfu-util e west nativos.
+> **Próxima:** dfu-util, picotool e west nativos (52 §14.32), um motor por fatia.
 > Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
@@ -591,6 +591,13 @@ divulgacao com a 0.4          DECISAO DO AUTOR em 2026-10-24: sem testers no
                              o projeto inteiro foca no ingles. Enviar
                              mensagens/publicar segue so' com o autor. Dono:
                              57 §1.1 e §3 itens 5 e 11.
+dividas tecnicas na 0.4       DECISAO DO AUTOR em 2026-10-24: "essa 0.4 vai ser
+(2026-10-24)                 longa, vamos arrumar todos os problemas da IDE e
+                             resolver dividas tecnicas que forem encontradas";
+                             deixar tudo polido para nao ter dores de cabeca
+                             da 0.5 em diante, dentro do possivel. Problema ou
+                             divida achado numa fatia vira registro e fatia
+                             dentro da 0.4, nao pendencia para depois.
 gates no fim da 0.4.9         DECISAO DO AUTOR em 2026-10-23: no final da 0.4.9
 (2026-10-23)                 os gates sao otimizados e polidos ("vamos ter um
                              grande salto nessa 0.4"). Ponto de partida medido:

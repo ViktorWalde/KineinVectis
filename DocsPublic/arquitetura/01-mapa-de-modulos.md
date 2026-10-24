@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 189 métodos IPC roteados pelo core.
+Medido: 190 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -240,8 +240,10 @@ flowchart LR
   n_core_outcome --> n_core_rpc
   n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
+  n_core_platformio --> n_core_lsp
   n_core_platformio --> n_core_owned_child
   n_core_platformio --> n_core_platform
+  n_core_platformio --> n_core_process
   n_core_platformio --> n_core_tools
   n_core_probe --> n_core_process
   n_core_process --> n_core_platform
@@ -283,7 +285,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-48 módulos, 139 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+48 módulos, 141 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -322,7 +324,7 @@ flowchart LR
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
-| `platformio` | owned_child, platform, tools | PlatformIO beyond flashing: |
+| `platformio` | lsp, owned_child, platform, process, tools | PlatformIO beyond flashing: |
 | `probe` | process | Deadline, cancellation and retained-output limits for probe-rs queries: |
 | `process` | platform | Synchronous line streaming for child processes. |
 | `project` | cmake, dap, fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
@@ -345,8 +347,8 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 189 métodos roteados pelo core, 158 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 31 estão aqui,
+Dos 190 métodos roteados pelo core, 158 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 32 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -376,7 +378,7 @@ nomeados, para nada ficar invisível:
 | `workspace.recent.remove` | `ui/qml/app/AppDomains.qml` |
 | `workspace.trust` | `ui/qml/workspace/ProjectHealthActions.qml` |
 
-**Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `platformio.homeStart`, `platformio.homeStop`, `remote.status`, `tools.status`.
+**Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `platformio.homeRelease`, `platformio.homeStart`, `platformio.homeStop`, `remote.status`, `tools.status`.
 
 **Sem cliente na UI** (a CLI, os gates ou nenhum): `core.shutdown`, `job.list`, `workspace.status`.
 

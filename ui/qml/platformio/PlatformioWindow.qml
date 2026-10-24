@@ -13,8 +13,9 @@ import KineinVectis
 //   └──────────────────────────────────────────────────┘
 //
 // Abrir a janela sobe (ou reusa) o servidor; fechar destroi a view e devolve
-// a largura, mas o servidor fica para a proxima abertura (ele se desliga
-// sozinho sem pagina conectada). A view so' navega na pagina da sessao.
+// a largura, mas o servidor fica 5 minutos para a proxima abertura (depois o
+// core o desliga, por `platformio.homeRelease`). A view so' navega na pagina
+// da sessao.
 Rectangle {
     id: root
 

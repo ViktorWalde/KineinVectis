@@ -296,6 +296,7 @@ building
 builds
 built
 builtin
+bump
 bumps
 burn
 burning
@@ -1079,6 +1080,7 @@ force
 forced
 foreground
 foreign
+forever
 forged
 forget
 forgetting
@@ -1794,6 +1796,7 @@ overlays
 override
 overrides
 oversized
+overtakes
 overview
 overwrite
 overwriting
@@ -1803,6 +1806,7 @@ owners
 ownership
 paced
 pacing
+pack
 package
 packages
 padded
@@ -2135,6 +2139,7 @@ relative
 relaxed
 release
 released
+releasing
 reload
 reloaded
 reloads
@@ -2786,6 +2791,7 @@ unmoved
 unnamed
 unnecessary
 unopened
+unpack
 unpin
 unpinned
 unproven

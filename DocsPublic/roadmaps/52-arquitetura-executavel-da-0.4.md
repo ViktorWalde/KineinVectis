@@ -5521,3 +5521,254 @@ pontos de implementação:
 - **Entrada da tela:** o KWin pedia, a cada sessão, permissão de "Remote
   Control" para a entrada emulada do `xdotool`. O autor ligou
   `XwaylandEisNoPrompt` no próprio `kwinrc` (2026-10-24).
+
+### 14.46 0.4.1h4b2b4i — o agente do PIO Home: a IDE abre o que a página pede (desenho, 2026-10-24)
+
+**Problema.** O PIO Home cria projetos ("New Project", "Import Arduino
+Project", "Project Examples") e abre arquivos, e para isso pede à IDE. Sem
+agente, a página só diz onde o projeto ficou, e o arquivo abre pelo programa
+do sistema (§14.45 item 5).
+
+**Medido em 2026-10-24 (PlatformIO Core 6.2.0, contrib-piohome 3.4.4).**
+
+- **Servidor** (`home/rpc/server.py`). É JSON-RPC 2.0 (ajsonrpc) em
+  frames de texto, no WebSocket `/session/<sessão>/wsrpc`.
+  - Cada cliente conectado conta; o desligamento por inatividade
+    (`--shutdown-timeout`) só corre sem nenhum cliente.
+  - Cada pedido é tratado numa tarefa própria, então dois pedidos do mesmo
+    cliente andam em paralelo.
+- **Agente da IDE** (`home/rpc/handlers/ide.py`).
+  - `ide.listen_commands` fica pendurado até a página mandar um comando e
+    devolve `{id, method, params}`.
+  - `ide.on_command_result [id, valor]` responde o comando.
+  - Sem um `listen_commands` esperando por 1,5 s, o comando falha com o
+    código 4005, e a página usa a alternativa dela.
+- **Comandos da página** (bundle `main.*.js`).
+  - `open_project` (pasta) depois de criar ou importar.
+  - `open_text_document {path, line, column}`.
+  - `get_pio_project_dirs` (lista de pastas, normalizada pelo servidor).
+- **Bibliotecas.** O Rust do projeto não tem cliente WebSocket. O
+  interpretador do PlatformIO tem `wsproto` 1.3.2, a mesma biblioteca que o
+  servidor usa por baixo.
+
+**Desenho.**
+
+1. **O agente é um script Python** (`platformio/agent.py`, embutido com
+   `include_str!`, como o `query.py`), rodado pelo core no interpretador do
+   PlatformIO, com `-I`, logo depois de o servidor ficar pronto. Ele é dono
+   do processo, como o servidor (`OwnedChild`, grupo próprio).
+   - Conecta ao `/session/<sessão>/wsrpc` com `wsproto` e mantém sempre um
+     `ide.listen_commands` pendente. Ao receber um comando, já pede o
+     próximo, para nenhum comando cair no prazo de 1,5 s.
+   - Fala com o core por linhas JSON:
+     - pelo stdout, `{"ready": true}` e `{"command": {id, method, params}}`;
+     - pelo stdin, `{"result": {id, value}}`.
+   - **Sai quando o stdin fecha.** Se o core morrer, o servidor volta a
+     ter zero clientes e se desliga sozinho em 300 s.
+   - Para bibliotecas de terceiros, só `wsproto`; o resto é da biblioteca
+     padrão.
+2. **O core responde** cada comando, pelo laço principal
+   (`observe_notification`, onde o estado mora), num evento novo,
+   `event.platformio.homeCommand {method, params}`.
+   - `get_pio_project_dirs` responde a raiz aberta, quando ela é um projeto
+     PlatformIO, ou lista vazia.
+   - `open_project` e `open_text_document` respondem `true` e deixam o
+     evento seguir para a UI, que abre o projeto ou o arquivo pelo caminho
+     de sempre.
+   - Outro método responde `null` e não chega à UI como ação.
+   - O comando só é aceito com o campo `path` absoluto.
+3. **A UI**:
+   - abre a pasta com o mesmo `openWorkspace` do "Abrir pasta": o projeto
+     nasce sem confiança, como qualquer pasta;
+   - abre o arquivo com o `openDiagnostic` do editor, na linha e coluna.
+
+   O PIO Home continua na janela dele: trocar de workspace não derruba o
+   servidor.
+4. **Ciclo de vida: servidor e agente são uma unidade.**
+   - O agente sobe logo depois de o servidor responder, e o conjunto só
+     conta como pronto depois do `{"ready": true}`.
+   - Parar encerra os dois, o agente primeiro.
+   - Se um dos dois sai sozinho, o core encerra o outro e emite
+     `event.platformio.homeExited` uma vez, com o código de quem saiu; a
+     próxima abertura sobe os dois.
+
+**Contrato (0.192.0).** Um evento novo,
+`event.platformio.homeCommand {method, params}`, no
+`03-dominios/platformio.md`, no 03.1 e nas listas do 03. Não há método novo.
+(Na implementação, o contrato ganhou o método `platformio.homeRelease` e o
+`reason` do `event.platformio.homeExited`; ver o "Feito" abaixo.)
+
+**Validação planejada.**
+
+- O agente contra um servidor WebSocket falso em Python (o `pio` falso
+  ganha o `wsrpc`):
+  - o `listen_commands` sempre pendente, inclusive com dois comandos
+    seguidos;
+  - a resposta que chega ao servidor;
+  - a saída no fim do stdin.
+- Core:
+  - os três comandos;
+  - `path` relativo recusado;
+  - o evento só para os dois que viram ação.
+- Prova por stdio com o PIO Home real: um cliente que faz o papel da página
+  chama `ide.send_command` (`get_pio_project_dirs`, `open_project`) e
+  recebe as respostas do core.
+- Harness da UI e mutações.
+- Na IDE, na tela do autor: criar um projeto pelo PIO Home e ver a IDE
+  abri-lo.
+
+**Feito em 2026-10-24 (40.7 §7.356).** Implementado com três mudanças no
+desenho, todas achadas pela leitura do servidor real e pela prova contra ele,
+e uma quarta, achada na IDE real: o desligamento da página fora da tela
+(`platformio.homeRelease`, nos pontos de implementação abaixo).
+
+- **O agente só usa a biblioteca padrão.** O `wsproto` é dependência
+  interna do PlatformIO (via `uvicorn`) e pode mudar entre versões dele. O
+  agente traz um cliente RFC 6455 mínimo (handshake, quadros mascarados com
+  tamanhos de 7, 16 e 64 bits, ping, close e fragmentos), que basta para o
+  JSON-RPC do PIO Home.
+- **O comando é respondido na thread que lê o agente, não no laço
+  principal.** A resposta só precisa da raiz aberta, que o core mantém num
+  `Arc<Mutex<Option<PathBuf>>>` (`Home::set_workspace`, chamado ao abrir e
+  fechar o workspace), e do canal de eventos. Um pedido demorado no laço
+  principal não atrasa a página.
+- **Escutar de novo só depois da resposta, e cada id passa uma vez.** O
+  desenho dizia para pedir o próximo `listen_commands` antes de responder,
+  para nenhum comando cair no prazo de 1,5 s. O `ide.py` real mostra outra
+  semântica:
+  - um comando fica em `_cmd_queue` até o `on_command_result` chegar;
+  - cada `listen_commands` roda `_process_commands`, que entrega cada
+    comando pendente a todos os ouvintes;
+  - o prazo de 1,5 s só corre sem nenhum ouvinte, e o agente fica sem
+    ouvinte só pelos milissegundos da resposta;
+  - cada pedido roda numa tarefa própria, então o `listen_commands` pode
+    ser tratado antes do `on_command_result` que veio antes dele.
+
+  Escutar antes de responder fazia o servidor real entregar o mesmo comando
+  de novo, e cada ação virava dois eventos (medido pela prova por stdio).
+  Agora o agente escuta de novo depois de mandar o resultado e descarta um
+  id já entregue (os últimos 256). Uma resposta de erro ao `listen_commands`
+  espera 0,5 s antes de escutar de novo, para não girar.
+
+Os pontos de implementação:
+
+- **Core.**
+  - `platformio/agent.py`: o agente, embutido com `include_str!` e rodado
+    com `python -I -c`.
+  - `platformio/ide_agent.rs`: o interpretador (`pio system info
+    --json-output`, campo `python_exe`), a subida (espera o `{"ready":
+    true}` até o prazo da subida), a resposta a cada comando e o tipo
+    `Agent`. O `Agent` guarda o stdin do agente, porque é a thread de
+    leitura que escreve as respostas nele. Fechar a unidade fecha esse
+    stdin primeiro, e o agente manda o close do WebSocket e sai.
+  - `platformio/home.rs`: servidor e agente são uma unidade (`Processes`).
+    O `homeStart` só responde com os dois prontos, e a falha do agente
+    encerra o servidor. Parar fecha o agente e depois manda o shutdown. O
+    vigia encerra os dois quando um sai, e o código avisado é o do
+    servidor, quando foi ele (o agente só perde a conexão depois que o
+    servidor morre).
+- **UI.**
+  - O `CoreClient` emite `platformioHomeCommand(method, params)`.
+  - O `PlatformioController.handleCommand` traduz em `openProjectRequested`
+    e `openFileRequested`.
+  - O projeto abre pelo `coreClient.openWorkspace`, o mesmo do "Abrir
+    pasta" (`PlatformioRequestRouter`).
+  - O arquivo abre pelo `editorController.openDiagnostic`, na linha e na
+    coluna (contadas de 1; sem coluna, 1). Isso fica no
+    `AppEnvironmentDomains`, onde os dois donos se encontram.
+- **A página fora da tela desliga o servidor em 5 minutos, pelo core.**
+  Com o agente conectado, o desligamento por inatividade do próprio PIO
+  Home não corre mais enquanto o core vive. Sem outra regra, uma abertura
+  deixaria o servidor ligado até a IDE fechar.
+  - **Primeira forma, descartada:** um `Timer` do QML no controller pedia
+    `platformio.homeStop` 5 minutos depois de a janela fechar. Na IDE real
+    (QtWebEngine, XWayland), com a janela coberta por outra, o servidor
+    caiu 8 min 7 s depois do fechamento (2026-10-24, 11:18:47 → 11:26:54).
+    O rastro do tráfego do core numa segunda rodada mostrou o pedido saindo
+    fora dos 5 minutos de novo. O Qt documenta que o `Timer` do QML é
+    sincronizado com o relógio de animação, não com um relógio de parede.
+    Uma janela minimizada com um `Timer` de 10 s bateu certo (60,40 s em 6
+    ciclos), então o mecanismo exato da deriva não ficou medido; o desenho
+    não depende dele.
+  - **O desenho:** `platformio.homeRelease { after }` diz ao core que a
+    página saiu da tela. O core arma o prazo no relógio monotônico dele e,
+    vencido, desliga como um `homeStop` e emite
+    `event.platformio.homeExited { code: null, reason: "idle" }`. Um
+    `homeStart` (a janela voltou) cancela, e outro `homeRelease` recomeça o
+    prazo: um número de geração, que os dois incrementam, faz valer o último.
+    O prazo desliga o servidor que estiver rodando quando vence, sem
+    conferir a sessão: um `homeStart` em voo seguido de um `homeRelease`
+    deixaria, com a conferência, o servidor novo ligado com a janela
+    fechada. Tirar o servidor do slot acontece sob a trava da geração, então
+    um `homeStart` que chega no vencimento espera e sobe outro. A UI só relata o fato: manda o
+    `homeRelease` (300 s, `releaseSeconds` do controller) ao fechar a
+    janela com o servidor pronto, ou quando o servidor fica pronto com a
+    janela já fechada. Ao reabrir com o servidor pronto, manda `homeStart`,
+    que reusa a sessão e cancela o prazo.
+  - Se o core morrer, o agente vê o fim do stdin e sai, e o timeout do
+    próprio servidor volta a valer.
+- **O `pio` falso dos testes** foi para `platformio/fixtures/fake_pio.py`
+  (os testes passariam de 500 linhas) e imita o `_process_commands` real:
+  - comando pendente até o resultado;
+  - entrega a todos os ouvintes;
+  - um modo em que o `listen_commands` passa à frente do resultado;
+  - o registro de como o WebSocket fechou (quadro de close ou conexão
+    caída).
+
+**Validação.**
+
+- Core: doze testes em `platformio/tests.rs`.
+  - Os seis do servidor, ajustados para a unidade.
+  - Os cinco comandos do agente, com as respostas na ordem e uma escuta por
+    resposta (7 para 6 comandos).
+  - Os dois eventos certos e nenhum para a consulta, o caminho relativo e
+    o método desconhecido.
+  - A escuta que passa à frente do resultado sem repetir o evento.
+  - A falha de conexão encerrando o servidor e liberando a porta.
+  - O agente que sai levando o servidor junto.
+  - Parar com o close do WebSocket antes do shutdown.
+  - O `homeRelease`: o prazo vencido desliga uma vez, sem ser "saída
+    sozinha"; um `homeStart` cancela; um segundo `homeRelease` recomeça;
+    depois de um `homeStop` não há o que desligar.
+  - Pelo protocolo: `after` fora de 0–3600 ou de outro tipo é
+    INVALID_PARAMS; sem servidor, `releasing: false`; sem `after`, o
+    servidor segue vivo depois de 1 s; `after: 0` emite
+    `homeExited { code: null, reason: "idle" }`.
+- Core real por stdio com o PIO Home real
+  (`scripts/verificar_platformio_home.py`):
+  - um cliente no papel da página manda `ide.send_command`, e as respostas
+    são `[raiz]`, `true`, `true` e `false`, com dois eventos exatos;
+  - parar leva 0,53 s (2,52 s com o stdin preso, a mutação
+    `stdin-preso-medida`);
+  - o agente some depois de parar, depois de o core sair e depois de um
+    `SIGKILL` no core (o servidor fica para o timeout dele, e a prova o
+    desliga);
+  - um `homeStart` 2 s antes do prazo de um `homeRelease` mantém o servidor;
+    `homeRelease { after: 1 }` emite o `"idle"` em 1,52 s, fecha a porta e
+    leva o agente.
+- UI: `tst_platformio` ganhou os comandos (coluna padrão, filtro) e o
+  `homeRelease`: fechar com o servidor pronto pede 300 s; reabrir pede o
+  `homeStart` que reusa a sessão; fechar subindo espera ficar pronto; o
+  `"idle"` desliga sem ser falha; `releasing: false` esquece a sessão.
+- Mutações: 29, das quais 28 detectadas e uma de medida
+  (`/home/hugh/.cache/kinein-h4b2b4i-proofs/mutations-final.json`). Elas
+  cobrem:
+  - escutar antes de responder (15 escutas em vez de 7) e o descarte de id
+    repetido;
+  - o agente que fica no fim do stdin, o stdin preso e a ordem de fechar;
+  - caminho relativo, o nome do evento e a raiz sem `platformio.ini`;
+  - a unidade sem o agente e o servidor deixado vivo na falha;
+  - o workspace e o evento que não chegam ao agente (pela prova por stdio);
+  - o `homeRelease` sem prazo, sem cancelar no `homeStart`, sem recomeçar,
+    sem aviso, sem limite, com o `reason` errado e sem o padrão de 300 s;
+  - os seis pontos do `homeRelease` e os dois dos comandos na UI;
+  - o evento sem dono no C++ (`verificar_fiacao_ipc.py`).
+- IDE: a primeira forma (o `Timer` do QML) rodou na tela do autor e deixou
+  o servidor cair 8 min 7 s depois do fechamento, o que levou o prazo para o
+  core. A forma final não foi validada na tela: a instância aberta às 17:20
+  fechou antes dos cliques (o rastro do core termina num `saveSession`
+  normal, sem pedido ao PlatformIO). O autor aprovou a fatia no estado atual
+  em 2026-10-24.
+- Gate rápido estrito no QA, TUDO VERDE: 1.334 Rust, Clippy e C++ limpos,
+  8 CTest, qmllint estrito e 171 harnesses, sem NÃO PROVADO, em 27 min 28 s
+  (`/home/hugh/.cache/kinein-h4b2b4i-proofs/gate-fast.log`).

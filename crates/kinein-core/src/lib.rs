@@ -322,7 +322,7 @@ impl Core {
             .or_else(|| self.setup_request_response(method, request_id.clone(), params))
             .or_else(|| self.datasource_request_response(method, request_id.clone(), params))
             .or_else(|| self.grafana_request_response(method, request_id.clone(), params))
-            .or_else(|| self.platformio_home_request_response(method, request_id.clone()))
+            .or_else(|| self.platformio_home_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
             .or_else(|| self.container_request_response(method, request_id.clone(), params))
             .or_else(|| self.project_request_response(method, request_id.clone(), params))

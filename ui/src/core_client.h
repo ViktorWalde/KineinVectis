@@ -236,6 +236,7 @@ public:
     // servidor do PlatformIO so' em 127.0.0.1, com sessao aleatoria.
     Q_INVOKABLE void platformioHomeStart();
     Q_INVOKABLE void platformioHomeStop();
+    Q_INVOKABLE void platformioHomeRelease(int afterSeconds);
 
     Q_INVOKABLE void libraryList();
     Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
@@ -510,8 +511,11 @@ signals:
     /// O PIO Home respondeu: `url` e' a pagina da sessao.
     void platformioHomeStarted(const QString& url, int port);
     void platformioHomeStopped(bool stopped);
-    /// O servidor terminou sozinho (inatividade ou falha); `code` nulo = sinal.
-    void platformioHomeExited(const QVariant& code);
+    void platformioHomeReleased(bool releasing);
+    /// O servidor saiu sem homeStop: `reason` "exited" (falha; `code` nulo = sinal) ou "idle".
+    void platformioHomeExited(const QVariant& code, const QString& reason);
+    /// A pagina pediu: `open_project {path}` ou `open_text_document {path, line, column}`.
+    void platformioHomeCommand(const QString& method, const QVariantMap& params);
 
     void libraryListResolved(const QVariantList& libraries);
     void libraryPlanResolved(const QVariantMap& plan);
