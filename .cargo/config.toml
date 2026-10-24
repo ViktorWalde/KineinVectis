@@ -6,3 +6,8 @@ kw-fmt = "fmt --all --check"
 kw-check = "check --workspace --all-targets --all-features"
 kw-clippy = "clippy --workspace --all-targets --all-features -- -D warnings"
 kw-test = "test --workspace --all-features"
+
+# Cada binario de teste roda com um TMPDIR proprio, apagado quando ele termina
+# (scripts/isolar-temporarios.sh; roadmaps/52 §14.47).
+[target.'cfg(unix)']
+runner = "scripts/isolar-temporarios.sh"

@@ -5772,3 +5772,119 @@ Os pontos de implementação:
 - Gate rápido estrito no QA, TUDO VERDE: 1.334 Rust, Clippy e C++ limpos,
   8 CTest, qmllint estrito e 171 harnesses, sem NÃO PROVADO, em 27 min 28 s
   (`/home/hugh/.cache/kinein-h4b2b4i-proofs/gate-fast.log`).
+
+### 14.47 0.4.1h4b2b4j — o gate sem lixo nos temporários e com o paralelismo pela memória (desenho, 2026-10-24)
+
+**Problema.** Em 2026-10-24 a máquina do autor travou duas vezes: às 17:03
+o OOM killer encerrou o CLion durante um build da UI, e às 18:5x tudo
+parou com o swap cheio. A máquina tem 20 GB de RAM, 8 GB de swap e 16
+núcleos. Decisão do autor no 40 §5 ("lixo e memoria do gate").
+
+**Medido em 2026-10-24, 18:59–19:20.**
+
+- **O `/tmp` é tmpfs, e estava cheio de lixo.** 8,2 GB ocupados, 7,8 GB
+  deles em `kinein*`. Dos 7,9 GB de swap em uso, os processos somavam
+  0,88 GB; o resto eram esses arquivos, que só saem da RAM para o swap.
+  - Uns 5 GB eram cópias de 279 MB do core de debug, deixadas por provas
+    de agentes em 21 e 22/10 (`kinein-flash-native-ui-*`, `kinein-h4b2*`).
+  - Uns 2,3 GB eram de testes Rust: `kinein-core-tests` tinha 27 mil
+    pastas, 610 MB só de 24/10.
+  - Apagado com a autorização do autor: o `/tmp` caiu para 768 MB, o swap
+    para 1,2 GB, e a memória disponível subiu para 15 GB.
+- **Os testes não apagam o que criam.** São 238 chamadas a
+  `std::env::temp_dir()` em 150 arquivos, com dezenas de raízes diferentes
+  e o pid no nome. Nenhuma apaga a própria pasta, e o pid no nome impede a
+  rodada seguinte de reaproveitá-la.
+- **O gate não isola nem limpa os temporários, e não limita o
+  paralelismo.** O Ninja usa núcleos + 2 (18) e o cargo usa os 16 núcleos.
+  O limite da rodada do 40.7 §7.356 foi exportado à mão.
+- **Fora do código:** o CLion do autor roda com `-Xmx14000m` e chegou a
+  7,6 GB no OOM. Ajuste do autor, registrado no 40.7 §7.357.
+
+**Desenho.**
+
+1. **Cada binário de teste apaga o que criou.** O `.cargo/config.toml` ganha
+   `[target.'cfg(unix)'] runner = "scripts/isolar-temporarios.sh"`.
+   - Para o que mora em `target/<perfil>/deps/` (testes unitários e de
+     integração), o runner cria `${TMPDIR:-/tmp}/kinein-teste.XXXXXX`,
+     roda o binário com esse `TMPDIR` e apaga a pasta no fim. Isso vale
+     também na falha e no Ctrl+C, e o código de saída do teste é mantido.
+   - O `cargo run` de um binário passa direto.
+   - `KINEIN_KEEP_TEST_TMP=1` desliga o isolamento, para inspecionar o que
+     um teste deixou.
+   - Vale para o `cargo test` direto tanto quanto para o gate, sem tocar nos
+     238 pontos. No Windows nada muda: o runner é só para alvos unix, e o
+     Windows está pausado (60).
+2. **O gate apaga os temporários da rodada.** O `verificar.sh` cria
+   `${TMPDIR:-/tmp}/kinein-gate.<pid>`, exporta como `TMPDIR` para todas as
+   etapas (harnesses Python e QML, CTest, temporários dos compiladores) e o
+   apaga no `trap` de saída.
+   - Um gate morto por `SIGKILL` (o próprio OOM) não roda o `trap`. Por isso
+     a rodada seguinte apaga, no início, as `kinein-gate.<pid>` cujo processo
+     não existe mais.
+   - Nenhum outro nome do `/tmp` é tocado: pode ser da IDE aberta ou de
+     outro programa.
+   - O gate diz quanto o tmpfs já ocupa e avisa acima de 1 GiB, para que
+     lixo de fora (uma prova esquecida) apareça antes da rodada.
+3. **Paralelismo pela memória disponível.** Sem `CMAKE_BUILD_PARALLEL_LEVEL`
+   ou `CARGO_BUILD_JOBS` no ambiente, o gate calcula cada um pela
+   `MemAvailable` do início, menos uma reserva para o desktop, dividida
+   pelo pico medido de um job. O teto é núcleos + 2 para o Ninja e núcleos
+   para o cargo. Valor definido por quem chama é respeitado. O gate diz o
+   que escolheu e de onde veio. Os números por job saem da medição desta
+   fatia (abaixo).
+4. **O teste de scrollback não depende do prompt.** O
+   `clear_scrollback_reaches_only_the_requested_live_session` escreve pelo
+   shell do usuário num terminal de 40×3. O prompt traz a pasta, e com um
+   `TMPDIR` mais longo ele ocupa três linhas e empurra a `linha-final` para
+   fora da tela. Achado em 2026-10-22 (§14.27, retomada do gate A2), quando
+   foi contornado com `TMPDIR=/var/tmp`. Com o runner, todo `cargo test`
+   tem caminho mais longo. O teste passa a usar o `terminal_com_saida`, que
+   já existe no arquivo para isso: uma saída conhecida sem o startup nem o
+   prompt do shell do usuário.
+5. **Provas de agente não moram no `/tmp`.** Uma linha no
+   `contribuindo/05`: cópias de binário, árvores de QA e provas vão para
+   `~/.cache/`, em disco, e saem quando a fatia fecha.
+
+**Validação planejada.**
+
+- O orquestrador (`test_verification_profiles.py`): o `TMPDIR` das etapas é
+  a raiz da rodada e some no sucesso e na falha; um órfão de pid morto é
+  apagado e o de pid vivo fica; jobs calculados de uma `MemAvailable`
+  falsa, e o valor do ambiente respeitado.
+- Runner: um crate de rascunho (pasta privada no teste, apagada no sucesso
+  e na falha, saída 101 mantida, `cargo run` direto); e `cargo test -p
+  kinein-core` sem deixar nada no `/tmp`.
+- Scrollback: reprova com um `TMPDIR` longo antes da mudança e passa depois.
+- Mutações: sem o `rm` do runner, sem o `trap` do gate, sem a varredura de
+  órfãos, e jobs ignorando a memória.
+- Gate rápido estrito medido pelo amostrador de memória: pico, mínimo de
+  memória disponível, swap sem crescer e o `/tmp` igual antes e depois.
+
+**Linha de base medida (2026-10-24, 19:22–19:44, gate rápido estrito no
+checkout, com um `.rs` do core e um `.h` da UI tocados, a carga típica de
+uma fatia; `/home/hugh/.cache/kinein-h4b2b4j-proofs/`).**
+
+- Tempo: 1.311 s (21 min 51 s), dos quais **1.111 s no `verificar-cpp.sh`**
+  (85%): o clang-tidy analisa 48 arquivos em série, ~23 s cada, num núcleo.
+  Depois vêm `cargo test` (37 s), a exercitação (31 s), os harnesses QML
+  (35 s) e o build da UI (17,5 s); o resto soma menos de 90 s.
+- Memória: pico de 6,6 GB na árvore do gate (o build da UI com 18
+  compiladores) e mínimo de 9,2 GB disponíveis; o swap não cresceu.
+  Picos por processo: `rust-lld` 1.267 MiB (até 4 ao mesmo tempo), `rustc`
+  994 (até 8), `clippy-driver` 985, `ld` 841, clang-tidy 626, `cc1plus` 590.
+- A UI inteira do zero (`--clean-first`, 18 compiladores): 193 s, pico de
+  6.453 MiB, o maior `cc1plus` com 704 MiB.
+- Lixo: a rodada deixou 92 entradas e 46 MiB no `/tmp` (pastas
+  `kinein-*-tests`, `kinein-drift-<pid>-*`, `<pid>-*`), apagadas depois da
+  medição. Umas 50 rodadas explicam os 2,3 GB de restos de testes.
+
+Os números do item 3: 500 MiB por job de C++ (358 de média no pico, 704 no
+maior) e 1.000 por job de Rust (o maior `rustc` e o maior `clippy-driver`).
+O ganho de tempo está no clang-tidy em série, que é a fatia seguinte (§14.48).
+
+**Feito em 2026-10-24 (40.7 §7.357).** Como desenhado, com um achado do
+próprio gate: os gates de teste do primeiro passo herdavam o teto da rodada
+de fora (`KINEIN_GATE_CEILING_MIB`); ele passou a valer só dentro do escopo.
+Gate rápido estrito verde em 1.364 s, no escopo com teto de 12.385 MiB, sem
+nenhuma entrada no `/tmp` no fim; 11 mutações detectadas.

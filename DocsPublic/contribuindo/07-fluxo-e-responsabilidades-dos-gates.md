@@ -99,7 +99,22 @@ não um detalhe da máquina.
 - a lista NÃO PROVADO, a mensagem final (“tudo verde” só com a lista vazia)
   e a identificação da etapa que falhou;
 - o build de debug **antes** dos gates que leem o build, e a variável
-  `KINEIN_QML_BUILD_DIR` que diz a eles qual build é esse.
+  `KINEIN_QML_BUILD_DIR` que diz a eles qual build é esse;
+- os **recursos da rodada** (desde 2026-10-24,
+  [52 §14.47](../roadmaps/52-arquitetura-executavel-da-0.4.md)):
+  - só RAM: a rodada se executa num escopo do systemd do usuário com swap
+    zero e um teto (memória disponível no início menos 2 GiB). Passar do
+    teto encerra um processo do gate, não o editor de quem roda, e o fim da
+    rodada diz isso. Sem systemd do usuário, ou com `KINEIN_GATE_SCOPE=0`,
+    roda sem escopo e diz isso;
+  - os temporários: `TMPDIR` aponta para `kinein-gate.<pid>`, apagada no
+    fim. A de uma rodada morta por `SIGKILL` é apagada pela seguinte, e
+    nenhum outro nome do `/tmp` é tocado;
+  - o paralelismo: `CMAKE_BUILD_PARALLEL_LEVEL` e `CARGO_BUILD_JOBS` saem do
+    teto dividido pelo pico medido de um job, sem passar da CPU, e o valor
+    do ambiente é respeitado;
+  - o tempo de cada etapa, e as cinco mais longas no fim de uma rodada
+    verde.
 
 Cada chamada a `passo` exige **nome e função**. A expansão `${2:?...}` rejeita
 descrição ausente ou vazia, em vez de deixar a etapa muda no log:

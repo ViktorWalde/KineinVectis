@@ -101,7 +101,7 @@ fn terminal_open_accepts_only_workspace_directory_as_cwd() {
 #[test]
 fn select_all_and_copy_are_typed_session_scoped_and_invalidated_by_clear() {
     let (mut core, receptor, raiz) = core_com_terminal("selection-rpc");
-    let id = terminal_com_saida(&mut core, &raiz, "inicio\nmeio\nfim");
+    let id = terminal_with_output(&mut core, &raiz, "inicio\nmeio\nfim");
     render_com(&receptor, "fim").expect("saida inicial");
     let resize = core.handle_request(&JsonRpcRequest::new(
         950_i64,
@@ -149,7 +149,7 @@ fn select_all_and_copy_are_typed_session_scoped_and_invalidated_by_clear() {
         Some(json!({ "id": id })),
     ));
     assert!(closed.response().error.is_none());
-    let next = terminal_com_saida(&mut core, &raiz, "novo");
+    let next = terminal_with_output(&mut core, &raiz, "novo");
     assert_ne!(id, next);
     // O closed anterior pode estar na fila; este helper filtra ate a sessao nova.
     loop {
@@ -191,7 +191,7 @@ fn selection_isolated_between_live_sessions_and_invalidated_by_resize() {
     let (mut core, receiver, root) = core_com_terminal("selection-isolation");
     let mut ids = Vec::new();
     for text in ["primeira", "segunda"] {
-        let id = terminal_com_saida(&mut core, &root, text);
+        let id = terminal_with_output(&mut core, &root, text);
         render_com(&receiver, text).expect("output inicial da sessao");
         let selected = core.handle_request(&JsonRpcRequest::new(
             961_i64,
@@ -221,7 +221,7 @@ fn selection_isolated_between_live_sessions_and_invalidated_by_resize() {
 ///
 /// Em Python, que e' requisito do gate nos dois sistemas: o `/bin/sh` nao
 /// existe no Windows, e o `sh` do Git e' do MSYS (60 §3.3, W2b).
-fn terminal_com_saida(core: &mut crate::Core, raiz: &std::path::Path, texto: &str) -> String {
+fn terminal_with_output(core: &mut crate::Core, raiz: &std::path::Path, texto: &str) -> String {
     core.terminal
         .as_mut()
         .unwrap()
@@ -604,17 +604,12 @@ fn resize_reaches_the_live_session_and_shows_up_in_the_next_render() {
     assert!(rolado.response().error.is_none());
 }
 
-/// Cinco linhas, `<prefix>-01` a `<prefix>-final`, pelo shell padrao. No
-/// Windows ele e' o PowerShell, onde o `echo` de varios argumentos ja' poe um
-/// por linha.
+/// Cinco linhas, `<prefix>-01` a `<prefix>-final`, para um processo sem o
+/// startup nem o prompt do shell do usuario. Pelo shell, o prompt trazia a
+/// pasta do teste e, num terminal de 40x3, um TMPDIR mais longo o quebrava
+/// em tres linhas que empurravam a `-final` para fora da tela (52 §14.47).
 fn five_lines(prefix: &str) -> String {
-    if cfg!(windows) {
-        format!("echo {prefix}-01 {prefix}-02 {prefix}-03 {prefix}-04 {prefix}-final\n")
-    } else {
-        format!(
-            "printf '{prefix}-01\\n{prefix}-02\\n{prefix}-03\\n{prefix}-04\\n{prefix}-%s\\n' final\n"
-        )
-    }
+    format!("{prefix}-01\n{prefix}-02\n{prefix}-03\n{prefix}-04\n{prefix}-final")
 }
 
 /// Limpar histórico é estado do emulador, não um comando escrito no shell.
@@ -622,25 +617,14 @@ fn five_lines(prefix: &str) -> String {
 /// verdade, preservando o conteúdo que ainda está no grid visível.
 #[test]
 fn clear_scrollback_reaches_only_the_requested_live_session() {
-    let (mut core, receptor, _raiz) = core_com_terminal("clear-scrollback");
-    let aberto = core.handle_request(&JsonRpcRequest::new(919_i64, "terminal.open", None));
-    let id = aberto.response().result.as_ref().unwrap()["id"]
-        .as_str()
-        .unwrap()
-        .to_owned();
-
+    let (mut core, receptor, root) = core_com_terminal("clear-scrollback");
+    let id = terminal_with_output(&mut core, &root, &five_lines("linha"));
     let resize = core.handle_request(&JsonRpcRequest::new(
         920_i64,
         "terminal.resize",
         Some(json!({ "id": id, "cols": 40, "rows": 3 })),
     ));
     assert!(resize.response().error.is_none());
-    let escrito = core.handle_request(&JsonRpcRequest::new(
-        921_i64,
-        "terminal.input",
-        Some(json!({ "id": id, "data": five_lines("linha") })),
-    ));
-    assert!(escrito.response().error.is_none());
 
     let historico = render_com(&receptor, "linha-final").expect("render com historico");
     if historico.params.as_ref().unwrap()["scrollbackMax"]
@@ -653,23 +637,13 @@ fn clear_scrollback_reaches_only_the_requested_live_session() {
         );
     }
 
-    let segundo = core.handle_request(&JsonRpcRequest::new(922_i64, "terminal.open", None));
-    let segundo_id = segundo.response().result.as_ref().unwrap()["id"]
-        .as_str()
-        .unwrap()
-        .to_owned();
+    let segundo_id = terminal_with_output(&mut core, &root, &five_lines("outra"));
     let resize_segundo = core.handle_request(&JsonRpcRequest::new(
         923_i64,
         "terminal.resize",
         Some(json!({ "id": segundo_id, "cols": 40, "rows": 3 })),
     ));
     assert!(resize_segundo.response().error.is_none());
-    let escrito_segundo = core.handle_request(&JsonRpcRequest::new(
-        924_i64,
-        "terminal.input",
-        Some(json!({ "id": segundo_id, "data": five_lines("outra") })),
-    ));
-    assert!(escrito_segundo.response().error.is_none());
     let outro_historico =
         render_com(&receptor, "outra-final").expect("segunda sessao com historico");
     if outro_historico.params.as_ref().unwrap()["scrollbackMax"]

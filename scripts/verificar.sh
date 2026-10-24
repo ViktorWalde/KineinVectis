@@ -53,6 +53,118 @@ done
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$raiz"
 
+# RECURSOS DA RODADA (2026-10-24, roadmaps/52 §14.47). No mesmo dia o gate e o
+# que ficava para tras dele travaram a maquina do autor duas vezes: 7,8 GB de
+# restos de testes e provas no /tmp (tmpfs: RAM, e dali para o swap) e o
+# paralelismo padrao do Ninja (nucleos + 2) e do cargo (nucleos), que nao olha
+# a memoria livre. A rodada garante tres coisas.
+#
+# 1. SO' RAM. Ela se executa num escopo do systemd do usuario com swap zero e
+#    um teto: a memoria disponivel no inicio menos uma reserva para o desktop.
+#    Passar do teto encerra um processo DO GATE, e o fim da rodada diz isso;
+#    sem o escopo, o OOM killer escolhia o maior processo da maquina (o CLion,
+#    7,6 GB, em 2026-10-24 17:03). Sem systemd do usuario (CI, container) ou
+#    com KINEIN_GATE_SCOPE=0, a rodada segue sem escopo e diz isso.
+# 2. TEMPORARIOS DA RODADA. TMPDIR aponta para ${TMPDIR:-/tmp}/kinein-gate.<pid>,
+#    apagada no fim; a de uma rodada morta por SIGKILL (o trap nao roda) e'
+#    apagada pela seguinte. Nenhum outro nome do /tmp e' tocado: pode ser da
+#    IDE aberta. O runner do cargo (scripts/isolar-temporarios.sh) faz o mesmo
+#    por binario de teste, tambem fora do gate.
+# 3. PARALELISMO PELA MEMORIA. Sem CMAKE_BUILD_PARALLEL_LEVEL/CARGO_BUILD_JOBS
+#    no ambiente, cada um sai do teto dividido pelo pico MEDIDO de um job, sem
+#    passar da CPU. Valor do ambiente e' respeitado e dito.
+memory_info="${KINEIN_MEMINFO:-/proc/meminfo}"
+available_mib="$(awk '/^MemAvailable:/ { print int($2 / 1024) }' "$memory_info")"
+swap_used_mib="$(awk '/^SwapTotal:/ { total = $2 } /^SwapFree:/ { free = $2 }
+    END { print int((total - free) / 1024) }' "$memory_info")"
+reserve_mib=2048
+ceiling_mib=$((available_mib - reserve_mib))
+if [ "$ceiling_mib" -lt 1024 ]; then
+    ceiling_mib=1024
+fi
+# O teto vem da rodada de fora so' para a de dentro do escopo; um gate que
+# roda dentro de outro (o primeiro passo faz isso) calcula o seu.
+if [ "${KINEIN_GATE_SCOPE:-}" = inside ] && [ -n "${KINEIN_GATE_CEILING_MIB:-}" ]; then
+    ceiling_mib="$KINEIN_GATE_CEILING_MIB"
+fi
+
+if [ "${KINEIN_GATE_SCOPE:-1}" = 1 ] && command -v systemd-run >/dev/null 2>&1 \
+    && systemd-run --user --scope --quiet --collect true >/dev/null 2>&1; then
+    export KINEIN_GATE_SCOPE=inside KINEIN_GATE_CEILING_MIB="$ceiling_mib"
+    exec systemd-run --user --scope --quiet --collect \
+        -p MemorySwapMax=0 -p "MemoryMax=${ceiling_mib}M" \
+        bash "$raiz/scripts/verificar.sh" "$@"
+fi
+own_cgroup="/sys/fs/cgroup$(sed -n 's/^0:://p' /proc/self/cgroup 2>/dev/null)"
+case "${KINEIN_GATE_SCOPE:-1}" in
+    inside)
+        if [ "$(cat "$own_cgroup/memory.max" 2>/dev/null)" = "$((ceiling_mib * 1024 * 1024))" ]; then
+            scope_line="so' RAM: escopo com swap zero e teto de $ceiling_mib MiB"
+        else
+            scope_line="aviso: o escopo nao aplicou o teto (controlador de memoria nao delegado ao usuario)"
+        fi
+        ;;
+    0) scope_line="sem escopo de memoria (KINEIN_GATE_SCOPE=0)" ;;
+    *) scope_line="sem escopo de memoria (systemd do usuario indisponivel)" ;;
+esac
+
+tmp_base="${TMPDIR:-/tmp}"
+for stale in "$tmp_base"/kinein-gate.*; do
+    owner="${stale##*.}"
+    case "$owner" in
+        '' | *[!0-9]*) continue ;;
+    esac
+    if [ -d "$stale" ] && ! kill -0 "$owner" 2>/dev/null; then
+        rm -rf "$stale"
+    fi
+done
+run_tmp="$tmp_base/kinein-gate.$$"
+mkdir -p "$run_tmp"
+export TMPDIR="$run_tmp"
+
+# Picos medidos em 2026-10-24 (52 §14.47). C++: a UI inteira com 18
+# compiladores chegou a 6.453 MiB (358 por job; o maior cc1plus, 704), e 500
+# deixa margem. Rust: o maior rustc, 994 MiB, e o maior clippy-driver, 985.
+cores="$(nproc)"
+jobs_within() {
+    local count=$((ceiling_mib / $1))
+    if [ "$count" -lt 1 ]; then
+        count=1
+    elif [ "$count" -gt "$2" ]; then
+        count="$2"
+    fi
+    echo "$count"
+}
+cxx_origin="do ambiente"
+if [ -z "${CMAKE_BUILD_PARALLEL_LEVEL:-}" ]; then
+    CMAKE_BUILD_PARALLEL_LEVEL="$(jobs_within 500 $((cores + 2)))"
+    export CMAKE_BUILD_PARALLEL_LEVEL
+    cxx_origin="pela memoria"
+fi
+rust_origin="do ambiente"
+if [ -z "${CARGO_BUILD_JOBS:-}" ]; then
+    CARGO_BUILD_JOBS="$(jobs_within 1000 "$cores")"
+    export CARGO_BUILD_JOBS
+    rust_origin="pela memoria"
+fi
+
+echo "== recursos da rodada =="
+echo "memoria: $available_mib MiB disponiveis, $swap_used_mib MiB de swap em uso; $scope_line"
+echo "paralelismo: C++ $CMAKE_BUILD_PARALLEL_LEVEL ($cxx_origin), cargo $CARGO_BUILD_JOBS ($rust_origin), $cores nucleos"
+tmp_line="temporarios: $run_tmp, apagados no fim"
+if [ "$(stat -f -c %T "$tmp_base" 2>/dev/null)" = tmpfs ]; then
+    tmp_used_mib="$(df -m --output=used "$tmp_base" | tail -n 1 | tr -d ' ')"
+    tmp_line="$tmp_line; $tmp_base e' tmpfs (RAM) com $tmp_used_mib MiB ocupados"
+fi
+echo "$tmp_line"
+if [ "$available_mib" -lt $((reserve_mib + 4096)) ]; then
+    echo "aviso: so' $available_mib MiB disponiveis; feche programas antes do gate." >&2
+fi
+if [ "${tmp_used_mib:-0}" -gt 1024 ]; then
+    echo "aviso: $tmp_base ocupa $tmp_used_mib MiB de RAM; veja o que e' lixo com" \
+        "'du -xsh $tmp_base/* | sort -rh | head'." >&2
+fi
+
 preset_debug="${KINEIN_PRESET_DEBUG:-dev-local}"
 preset_release="${KINEIN_PRESET_RELEASE:-dev-local-release}"
 
@@ -62,20 +174,45 @@ export KINEIN_UNPROVEN_FILE="$unproven_file"
 
 current_step=""
 # shellcheck disable=SC2154  # `estado` e' atribuido na 1a instrucao do trap.
-trap 'estado=$?; rm -f "$unproven_file"; if [ "$estado" -ne 0 ]; then
+trap 'estado=$?; rm -rf "$run_tmp"; if [ "$estado" -ne 0 ]; then
     echo ""
     echo "✗ FALHOU em: ${current_step:-inicializacao} (exit $estado)"
+    report_memory_kills
 fi' EXIT
 
+# O kernel so' encerra processo da rodada por memoria dentro do escopo; o
+# memory.events dele conta quantos. Sem isso a falha parecia de compilador.
+report_memory_kills() {
+    local kills
+    kills="$(awk '/^oom_kill / { print $2 }' "$own_cgroup/memory.events" 2>/dev/null)"
+    if [ "${KINEIN_GATE_SCOPE:-}" = inside ] && [ "${kills:-0}" -gt 0 ]; then
+        echo "✗ a rodada passou do teto de $ceiling_mib MiB: o kernel encerrou $kills processo(s) dela."
+        echo "  Feche programas (o teto sai da memoria disponivel no inicio) ou fixe menos"
+        echo "  jobs em CMAKE_BUILD_PARALLEL_LEVEL/CARGO_BUILD_JOBS."
+    fi
+}
+
+# Quanto cada etapa levou, para que a otimizacao do gate parta de numero.
+step_clock=$SECONDS
+step_durations=()
+close_step() {
+    if [ -n "$current_step" ]; then
+        step_durations+=("$((SECONDS - step_clock))"$'\t'"$current_step")
+        echo "($((SECONDS - step_clock)) s)"
+    fi
+}
+
 passo() {
+    close_step
     current_step="$1"
+    step_clock=$SECONDS
     echo ""
     echo "== $1 =="
     echo "funcao: ${2:?cada etapa precisa de uma descricao nao vazia}"
 }
 
 passo "scripts/test_verification_profiles.py" \
-    "Prova selecao dos perfis, fail-fast e NAO PROVADO estrito sem ferramentas externas."
+    "Prova perfis, fail-fast, NAO PROVADO estrito, recursos da rodada e runner do cargo, sem ferramentas externas."
 python3 scripts/test_verification_profiles.py
 
 if [ "$mode" != "ci-rapida" ]; then
@@ -297,7 +434,12 @@ if [ -s "$unproven_file" ]; then
     fi
 fi
 
+close_step
 current_step=""
+echo ""
+echo "== tempo: $SECONDS s; as etapas mais longas =="
+printf '%s\n' "${step_durations[@]}" | sort -rn | head -n 5 \
+    | while IFS=$'\t' read -r seconds name; do printf '  %5d s  %s\n' "$seconds" "$name"; done
 echo ""
 if [ "$mode" = "completo" ]; then
     scope="completo — builds e abertura dos presets selecionados validados"

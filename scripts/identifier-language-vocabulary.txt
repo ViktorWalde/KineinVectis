@@ -1824,6 +1824,7 @@ panels
 panic
 paragraph
 paragraphs
+parallel
 parameter
 parent
 parents

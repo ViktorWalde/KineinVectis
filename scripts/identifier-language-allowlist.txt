@@ -193,3 +193,5 @@ realpath
 getrandom
 # settimeout: API de socket do Python (socket.settimeout) na prova do PIO Home (52 §14.45).
 settimeout
+# cgroup: o "control group" do Linux, onde o gate le' o teto e as mortes por memoria do proprio escopo (52 §14.47).
+cgroup

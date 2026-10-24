@@ -77,6 +77,7 @@ divergir daqui, este documento vence, e os dois se corrigem no mesmo gesto.
 | Uma função QML chamada `destroy` era engolida pelo `destroy()` de todo objeto | nomes: `destroyProfile`; o harness pegou |
 | O `indexController` não descia até a tela: o campo aceitava texto e nada acontecia | binding para `null` é falha silenciosa que gate nenhum vê — foto com o gesto |
 | Clippy da lib verde, `--all-targets` vermelho | o gate roda `--all-targets`; rode o gate, não o atalho |
+| Provas de agentes deixaram cópias de 279 MB do core no `/tmp` (tmpfs, ou seja RAM): somadas aos restos dos testes, 7,8 GB que foram para o swap e travaram a máquina (2026-10-24) | prova, cópia de binário e árvore de QA vão para `~/.cache/`, em disco, e saem quando a fatia fecha; o gate e o runner do cargo apagam os temporários deles (52 §14.47) |
 
 ## Como revisar o que um agente entregou
 

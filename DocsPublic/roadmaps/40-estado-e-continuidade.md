@@ -11,8 +11,8 @@
 > **HANDOFF (2026-10-24). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4i concluída:** o agente do PIO Home abre na IDE o projeto criado (52 §14.46; 40.7 §7.356;
-> protocolo 0.192.0); h "Gravar e depurar" e PIO Home §7.355; d4 §7.354; d3 §7.353; g–d1 §7.347–§7.352.
+> **0.4.1h4b2b4j concluída:** o gate sem lixo nos temporários e só na RAM (52 §14.47; 40.7 §7.357);
+> i agente do PIO Home §7.356 (protocolo 0.192.0); h §7.355; d4 §7.354; d3 §7.353; g–d1 §7.347–§7.352.
 > `.directory`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
 > Protocolo **0.192.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
 >
@@ -29,7 +29,7 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** dfu-util, picotool e west nativos (52 §14.32), um motor por fatia.
+> **Próxima:** tidy/QML em paralelo (52 §14.48), AppImage dev (40 §5); depois dfu-util, picotool, west (52 §14.32).
 > Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
@@ -605,6 +605,26 @@ gates no fim da 0.4.9         DECISAO DO AUTOR em 2026-10-23: no final da 0.4.9
                              8 CTest, 170 harnesses, C++/Clippy/qmllint em
                              2026-10-23). Ate' la' a regra do gate por fatia
                              nao muda.
+lixo e memoria do gate        DECISAO DO AUTOR em 2026-10-24, depois de dois
+(2026-10-24)                 travamentos no mesmo dia (OOM do CLion, swap
+                             cheio): resolver ja' o lixo que testes e provas
+                             acumulam nos temporarios ("o nome ja' fala lixo
+                             e nao recurso necessario") e o paralelismo que
+                             ignora a memoria, sem perder qualidade de teste
+                             nem de compilacao. Antecipa essa parte da linha
+                             acima; o resto da otimizacao dos gates segue no
+                             fim da 0.4.9. Dono: 52 §14.47.
+appimage de desenvolvimento   DECISAO DO AUTOR em 2026-10-24: um AppImage
+(2026-10-24)                 "Kinein Vectis (desenvolvimento)" do estado
+                             estavel da 0.4.1 ainda aberta, "para ja' terem
+                             algo". Muda, so' para este artefato, o "sem
+                             AppImage beta depois da 0.4.1" da linha
+                             "divulgacao com a 0.4"; o AppImage apos a edicao
+                             especial segue. Base portavel: container com
+                             glibc antiga e o Qt 6.10 oficial (o Qt do codigo
+                             em desenvolvimento), nao o Qt 6.4.2 do Debian 12.
+                             Ordem: as fatias do gate (52 §14.47 e §14.48)
+                             antes. Push e publicacao com o autor.
 ```
 
 ## 7. O registro das entregas

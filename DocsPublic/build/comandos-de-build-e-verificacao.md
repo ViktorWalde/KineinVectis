@@ -48,12 +48,31 @@ O modo **completo** e o que bloqueia release: os binarios do icone
 builds passarem. Presets CMake podem ser sobrescritos por ambiente:
 `KINEIN_PRESET_DEBUG` / `KINEIN_PRESET_RELEASE` (padrao `dev-local*`).
 
+### Recursos da rodada: só RAM, temporários e paralelismo (2026-10-24)
+
+O gate se protege sozinho ([`contribuindo/07` §2](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#2-o-que-o-orquestrador-possui)):
+
+- **Só RAM.** Roda num escopo do systemd do usuário com swap zero e teto de
+  memória disponível menos 2 GiB. O começo da rodada imprime a memória, o
+  teto, o paralelismo e a pasta dos temporários. `KINEIN_GATE_SCOPE=0`
+  desliga o escopo.
+- **Paralelismo.** Sem `CMAKE_BUILD_PARALLEL_LEVEL`/`CARGO_BUILD_JOBS` no
+  ambiente, cada um sai da memória; com eles, vale o que você pôs.
+- **Temporários.** Cada rodada usa `${TMPDIR:-/tmp}/kinein-gate.<pid>` e o
+  apaga no fim. Fora do gate, o runner do cargo
+  (`scripts/isolar-temporarios.sh`, no `.cargo/config.toml`) dá a cada
+  binário de teste uma pasta própria e a apaga quando ele termina. Para
+  inspecionar o que um teste deixou:
+
+```bash
+KINEIN_KEEP_TEST_TMP=1 cargo test -p kinein-core nome_do_teste
+```
+
 Quando /tmp for tmpfs com quota insuficiente para ligar release com LTO,
-use temporários em disco, sem desativar otimizações. No QA local de
-2026-10-22 isso resolveu Disk quota exceeded; preserve o log da rodada falha.
-Use uma raiz curta: o teste de scrollback do terminal ficou sensível ao
-comprimento do prompt quando TMPDIR ganhou mais um subdiretório; a mesma
-prova passou com /var/tmp, sem alteração de código ou flags.
+use temporários em disco, sem desativar otimizações (o `kinein-gate.<pid>`
+vai junto para lá). No QA local de 2026-10-22 isso resolveu Disk quota
+exceeded, com o /tmp cheio de restos de testes. O teste de scrollback que
+dependia do comprimento desse caminho não depende mais (52 §14.47).
 
 ```bash
 TMPDIR=/var/tmp bash scripts/verificar.sh --completo --estrito
