@@ -2271,7 +2271,7 @@ escura/âmbar, sem criar outro desktop, dashboard ou biblioteca visual.
 | Diagnósticos e Qualidade | Problema, origem, evidência, explicação e ação; navegação, revisão de correção e resultados verificáveis; polir a base do Quality Center entregue na 0.4 |
 | Ambiente e instalação | Clareza de detectado/selecionado/efetivo, disponibilidade e revisão dos comandos; polir Instalar Ferramentas já reformulado na 0.4 |
 | Interação e desempenho | Feedback de carga/falha/cancelamento/conclusão; tempos curtos pelos tokens, movimento reduzido, nenhum trabalho pesado em delegate/binding de animação |
-| Internacionalização | Português/inglês, pluralização, mensagens, nomes acessíveis e layout com expansão do texto; marco público no 57 |
+| Internacionalização | **A UI fica inteiramente em inglês nesta fase** (decisão do autor de 2026-10-24, 40 §5): textos, mensagens do core mostradas na tela, pluralização, nomes acessíveis e layout com expansão do texto. Manter ou não o português como opção fica para decidir; marco no 57 |
 
 Faixas do estudo são **hipóteses para teste**, não alteração de tokens já
 aprovada: hover 80–120 ms, seleção 100–150 ms e expansão 140–200 ms; abas

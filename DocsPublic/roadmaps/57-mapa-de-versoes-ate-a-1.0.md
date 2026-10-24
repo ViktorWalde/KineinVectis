@@ -119,7 +119,14 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   da 0.4**, agora 0.4.9. A transição da documentação para inglês acompanha
   esse fechamento. A extensão não antecipa essas frentes para 0.4.6–0.4.9.
 - O autor estabelece a **0.5 como marco de suporte público ao inglês e de
-  divulgação internacional** (2026-10-21). Distinguir a preparação/transição
+  divulgação internacional** (2026-10-21). **Atualizado em 2026-10-24:** a
+  divulgação internacional sai da 0.5 para a **0.4 finalizada** (depois da
+  edição especial), com **toda** a documentação em inglês, revisada no
+  porte (convenções profissionais, explicações melhores, informação
+  desatualizada corrigida). A UI fica **inteiramente em inglês** já na fase
+  de polimento (a edição especial); depois do polimento do código e das
+  otimizações, o projeto inteiro foca no inglês (40 §5, "divulgacao com a
+  0.4"). Distinguir a preparação/transição
   da documentação no fechamento da 0.4.9 da revisão de interface, mensagens,
   tutoriais e entrada de novos usuários em inglês na 0.5, mantendo português.
   Componentes tocados antes já usam strings traduzíveis. Divulgação em
@@ -140,7 +147,7 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 | 0.4.0–0.4.9 | EM CURSO; fechamento funcional na 0.4.9, depois edição especial e só então AppImage (autor, 2026-10-21); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Instalar Ferramentas reformulado e Quality Center inicial (autor, 2026-10-21); Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11/§11.1, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux, Setup e Quality Center verificadas, auditoria/gates completos, documentação; artefato somente após a edição especial (§1.1; 52 §10) |
 | edição especial | PLANEJADA (autor, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
 | edição especial de HUD/UX/UI, base da 0.5 em diante | PLANEJADA (autor, 2026-10-20/21), imediatamente após fechar a 0.4.9 e antes do AppImage; patch/identificação do artefato a definir | otimização e acabamento | auditoria rigorosa de consistência, densidade, tipografia, foco, acessibilidade e desempenho; pequenos achados sobre a base funcional já entregue | 52 §14.17/§14.17.1 | jornadas e gates do conjunto polido; depois gerar/testar AppImage, incluindo smokes e ambiente mínimo; não confundir com a edição Windows + WSL2 do 60 |
-| 0.5.x | PLANEJADA; evolui sobre a base 0.4.9 aprimorada pela edição especial, com notas do próprio delta (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; inglês como idioma plenamente suportado e preparação da divulgação internacional | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
+| 0.5.x | PLANEJADA; evolui sobre a base 0.4.9 aprimorada pela edição especial, com notas do próprio delta (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; o que restar do inglês (a UI já fica em inglês no polimento da 0.4 e a documentação e a divulgação vêm com a 0.4 finalizada, decisão de 2026-10-24) | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
 | 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
@@ -194,7 +201,12 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
    com o desenho antes do código. Revisa, só nisto, o "IA na IDE fora de
    escopo" de 2026-07-17: o agente segue no terminal, sem painel de IA.
 5. **A documentação em inglês, junto do fechamento da 0.4.9** (a prioridade; o alemão
-   talvez na 0.5, sem decisão). O site, em outra sessão, fica em inglês, com
+   talvez na 0.5, sem decisão). Desde 2026-10-24, **toda** a documentação vai
+   para o inglês com a 0.4 finalizada, revisada no porte (convenções
+   profissionais de documentação, explicações melhores, informação
+   desatualizada ou fora de contexto corrigida, explicação técnica
+   reforçada), e o autor divulga o projeto em grupos internacionais nesse
+   momento (40 §5). O site, em outra sessão, fica em inglês, com
    uma aba de colaboradores, dizendo só de passagem que o projeto vem do
    Brasil.
 6. **Parte da 0.9 antecipada:** a CI pública entra agora, numa fatia curta
@@ -234,7 +246,12 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
     sobre build/lint/testes/rigor já existentes, com gate local simples.
     Ordem no 52 §11.1; a edição especial posterior aprimora/otimiza a base.
     Não antecipa ROS 2 ou Library/providers completos.
-11. **Inglês e divulgação na 0.5** (autor, 2026-10-21): interface e
+11. **Inglês e divulgação na 0.5** (autor, 2026-10-21). **Antecipado em
+    2026-10-24:** a UI fica inteiramente em inglês na fase de polimento (a
+    edição especial da 0.4), e a documentação em inglês e a divulgação vêm
+    com a 0.4 finalizada; o que este item ainda pede depois disso (seleção
+    de idioma, português preservado) fica para decidir na 0.5. Texto
+    original: interface e
     mensagens essenciais traduzidas, diagnósticos/ajuda de entrada e tutoriais
     utilizáveis em inglês, com português preservado e seleção de idioma
     verificável. Auditar strings dos fluxos novos, pluralização, atalhos,

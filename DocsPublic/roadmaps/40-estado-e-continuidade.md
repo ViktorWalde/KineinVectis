@@ -55,7 +55,7 @@
 > na placa sem pedido específico. Não compilar UI durante `verificar-cpp.sh`.
 > Objetivo contínuo autorizado (autor, 2026-10-21); cota/retomada dependem da plataforma.
 > MCP/ROS 2/colaboração ficam após 0.4.9; inglês acompanha o fechamento (57).
-> Inglês no produto/divulgação: 0.5 (57 §3 item 11); Windows pausado na W6b4 (60).
+> UI toda em inglês no polimento; docs revisadas em inglês e divulgação com a 0.4 finalizada (57 §3); Windows pausado (60).
 > EditorController congelado (§2). Pesquisa de Embarcados recebida como rascunho (52 §11.1).
 
 ## 1. O estado, em números
@@ -573,6 +573,24 @@ dos paineis (2026-10-23)     chamado "Embarcados" (Visao geral, Placa, Gravar,
                              literalmente copiar a forma", adaptar ao contexto
                              da IDE. Fatia logo apos a h4b2b4d4, antes de
                              picotool, dfu-util e west (52 §14.45).
+divulgacao com a 0.4          DECISAO DO AUTOR em 2026-10-24: sem testers no
+(2026-10-24)                 momento (nenhum membro novo no Discord nem retorno
+                             no privado), nao ha AppImage "beta" depois da
+                             0.4.1: segue "AppImage apos especial". A 0.4 vai
+                             ate' o fim da edicao especial, com o assistente
+                             semantico dentro dela. A UI fica INTEIRAMENTE em
+                             ingles na fase de polimento (edicao especial).
+                             Com a 0.4 finalizada, TODA a documentacao vai
+                             para o ingles e o autor divulga o projeto em
+                             grupos internacionais (sai da 0.5). Portar a
+                             documentacao e' tambem revisa-la: convencoes
+                             profissionais de documentacao, explicacoes
+                             melhores, informacao desatualizada ou fora de
+                             contexto corrigida, explicacao tecnica reforcada.
+                             Depois do polimento do codigo e das otimizacoes,
+                             o projeto inteiro foca no ingles. Enviar
+                             mensagens/publicar segue so' com o autor. Dono:
+                             57 §1.1 e §3 itens 5 e 11.
 gates no fim da 0.4.9         DECISAO DO AUTOR em 2026-10-23: no final da 0.4.9
 (2026-10-23)                 os gates sao otimizados e polidos ("vamos ter um
                              grande salto nessa 0.4"). Ponto de partida medido:
