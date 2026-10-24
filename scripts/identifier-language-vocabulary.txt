@@ -2491,6 +2491,7 @@ speaks
 spec
 special
 specs
+speed
 spell
 spelling
 splice

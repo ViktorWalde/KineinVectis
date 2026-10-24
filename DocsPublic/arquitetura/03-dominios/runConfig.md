@@ -80,12 +80,18 @@ valer num projeto ESP-IDF com build configurado:
   ativador do ESP-IDF do modelo, seguido de
   `-B <build> -p <porta> -b 460800 flash`.
 - **Consulta de versão.** `idf.py --version` deve informar ESP-IDF 6.x.
+  Desde a 0.4.1h4b2b4d4, ela roda na pasta do ativador, fora do projeto,
+  porque o `idf.py` importa o `idf_ext.py` do diretório corrente.
 - **Recusas herdadas.** A origem e o eFuse da §14.39 valem para o build atual.
   Um arquivo `[esptool]` no `build/`, na raiz, na pasta do usuário ou no home
   recusa.
+- **Extensões do `idf.py` (desde a 0.4.1h4b2b4d4).** Um `idf_ext.py` na raiz,
+  ou na pasta de um componente do build, recusa: ele pode redefinir a ação
+  `flash`.
 - **Ambiente.** O processo e a consulta não recebem `ESPTOOL_*`, `ESPPORT`,
-  `ESPBAUD`, `IDF_FLASH_FULL`, `IDF_TRUST_FLASH_CONTENT` e
-  `SERIAL_TOOL_EXTRA_*`.
+  `ESPBAUD`, `IDF_FLASH_FULL`, `IDF_TRUST_FLASH_CONTENT`,
+  `SERIAL_TOOL_EXTRA_*`, nem (desde a 0.4.1h4b2b4d4) `IDF_EXTRA_ACTIONS_PATH`
+  e `IDF_EXTENSION_ALLOW_UNTRUSTED`.
 - **O que a intenção vincula.** Por conteúdo: descrição, receita,
   `sdkconfig`, `sdkconfig.defaults*`, `config/sdkconfig.json`, o `bash` e o
   ativador. Também a versão e a porta.
@@ -93,6 +99,44 @@ valer num projeto ESP-IDF com build configurado:
   invalida a configuração salva, e mudar a configuração invalida.
 - **Avisos.** O comando compila antes de gravar e faz o fast reflash
   conferido por MD5. Desenho no 52 §14.40.
+
+**`pio run -t upload` nativo para ESP32 (0.4.1h4b2b4d4, 2026-10-23, sem
+mudança de forma).** `flashProposal` com `native: true` e
+`engine: "platformio"` (ou `pio`) passa a valer num projeto PlatformIO cujo
+env é espressif32 com upload por esptool:
+- **Seleção.** `device` é obrigatório. `target`, `probe`, `firmware` e
+  `buildDirectory` são recusados.
+- **Env.** É o único que o `pio run` processaria sem `-e`: o único
+  `default_envs` ou o único `[env:*]`. Mais de um candidato recusa.
+- **Linha.** Programa: o `pio` do modelo. Argv:
+  `run -d <raiz> -e <env> -t upload --upload-port <porta>`.
+- **Consultas.**
+  - `pio system info --json-output` deve informar o Core 6.x.
+  - O interpretador do PlatformIO, com `-I`, lê a configuração e a placa pela
+    API do PlatformIO, sem instalar nada, sem SCons e sem script do projeto.
+    Uma plataforma cuja pasta fica dentro do projeto recusa antes de ser
+    carregada.
+- **Recusas.**
+  - Plataforma diferente de espressif32 ou não instalada.
+  - Protocolo diferente de `esptool`, ou `tool-esptool` ausente.
+  - `extra_scripts`, `upload_command`, `platform_packages`, `extra_configs`
+    ou framework `espidf`.
+  - Placa com toque de 1200 bps ou espera de porta nova.
+  - Arquivo `[esptool]` na raiz, na pasta do usuário ou no home.
+- **Ambiente.** O processo e as consultas não recebem `ESPTOOL_*` nem as
+  `PLATFORMIO_*` das opções do projeto, exceto as que localizam a instalação
+  e os caches (`CORE_DIR`, `PLATFORMS_DIR`, `PACKAGES_DIR`, `CACHE_DIR`,
+  `BUILD_CACHE_DIR`).
+- **O que a intenção vincula.**
+  - Por conteúdo: o `platformio.ini`, os arquivos da plataforma
+    (`platform.json`, `platform.py`, `builder/main.py`), o manifesto da placa
+    e o lançador do `pio`.
+  - Também as opções calculadas do env e de `[platformio]`, as versões e a
+    porta.
+- **O que ela não vincula.** Fontes e imagens.
+- **Avisos.** O comando compila antes, grava as imagens inteiras, pode
+  instalar pacotes e `lib_deps` ausentes e limpa o `.pio/build` quando a estrutura
+  muda. Desenho no 52 §14.44.
 
 `runConfig.save {id?, name, command, flash?}` e configs ganham flash opcional.
 Com flash, command deve ser exatamente a prévia derivada de programa/argv;

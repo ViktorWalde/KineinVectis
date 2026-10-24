@@ -11,8 +11,8 @@
 > **HANDOFF (2026-10-23). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4d3 concluída:** `idf.py flash` nativo, gravado no ESP32 (52 §14.40; 40.7 §7.353); g monitor
-> §7.352; f compilador do chip §7.351; e clangd §7.350; d2 eFuses §7.349; d1 §7.347–§7.348; b4c §7.346.
+> **0.4.1h4b2b4d4 concluída:** PlatformIO nativo para ESP32 e prévia sem código do projeto (52 §14.44;
+> 40.7 §7.354); d3 `idf.py` §7.353; g §7.352; f §7.351; e §7.350; d2 §7.349; d1 §7.347–§7.348.
 > `AppMenuBar.qml`, `.directory`, `eim_config.toml` e `log/` locais preservados.
 > Protocolo **0.190.0**, binário **0.3.9**; probe-rs 0.32.0 instalado no usuário (§7.343).
 >
@@ -29,7 +29,7 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** os demais motores nativos (picotool, dfu-util, west, pio), um por fatia; fechada a h4b2,
+> **Próxima:** os demais motores nativos (picotool, dfu-util, west), um por fatia; fechada a h4b2,
 > etapa 1b assistente semântico (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
@@ -122,7 +122,7 @@ física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-2
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3). Próxima: picotool, dfu-util, west e pio nativos, um motor por recorte (52 §14.32); depois a matriz integrada e a recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.43 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.353 |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Próxima: picotool, dfu-util e west nativos, um motor por recorte (52 §14.32); depois a matriz integrada e a recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.44 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.354 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
@@ -547,6 +547,20 @@ varredura de idioma           DECISAO DO AUTOR em 2026-10-23: a traducao do
                              desenvolvimento da versao agora"). Substitui o
                              "entre fatias de produto" do 53 §13.0 item 3.
                              O gate continua barrando identificador novo.
+PlatformIO visivel e nomes    DECISAO DO AUTOR em 2026-10-23: o painel hoje
+dos paineis (2026-10-23)     chamado "Embarcados" (Visao geral, Placa, Gravar,
+                             Ambiente) e' so' gravar/depurar e passa a se
+                             chamar "Gravar e depurar". "Instalar Ferramentas"
+                             e' a "Biblioteca" que o autor imaginou; "Embarcados"
+                             vira uma secao DENTRO dela (frameworks, SDKs,
+                             toolchains, placas, exemplos; PlatformIO entre
+                             eles), nao um painel a parte. O PlatformIO ganha
+                             atalho proprio, fixavel nos paineis laterais,
+                             depois de instalado, e exibe a interface dele (PIO
+                             Home). O VS Code e' referencia, nao molde: "nao
+                             literalmente copiar a forma", adaptar ao contexto
+                             da IDE. Fatia logo apos a h4b2b4d4, antes de
+                             picotool, dfu-util e west (52 §14.45).
 ```
 
 ## 7. O registro das entregas

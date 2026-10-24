@@ -5,6 +5,7 @@ use std::{fs, time::Duration};
 mod catalog;
 mod idf_py;
 mod pending;
+mod platformio;
 mod probe_rs;
 mod probe_rs_debug;
 

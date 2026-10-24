@@ -89,6 +89,26 @@ aberta e nada é gravado em chip. O parser real recebe o argv planejado com um
 seletor que não casa com sonda nenhuma. Relatório em `build/qa-artifacts/`.
 Detalhes no [52 §14.34](../roadmaps/52-arquitetura-executavel-da-0.4.md#1434-041h4b2b4b1--probe-rs-nativo-alvo-cmake-sonda-explícita-e-efeitos-herdados-desenho-2026-10-22).
 
+Provas locais dos wrappers nativos (Linux; fora do gate padrão):
+
+```bash
+python3 scripts/verificar_idf_py_nativo.py --core target/debug/kinein-core
+python3 scripts/verificar_platformio_nativo.py --core target/debug/kinein-core
+```
+
+- **`idf.py`.** Usa um ativador e um `idf.py` falsos, que gravam argv e
+  ambiente, e não exige ESP-IDF instalado (52 §14.40).
+- **PlatformIO.** Exige o `pio` (Core 6) no PATH, com a plataforma
+  espressif32 e o framework Arduino instalados.
+  - Passa 17 projetos-fixture pela prévia real, entre aceitos e recusados,
+    incluindo uma plataforma dentro do projeto, que não pode ser carregada.
+  - Roda um `run.start` real, em que o `pio run` compila e o esptool falha
+    na porta, que é um arquivo comum. Nenhuma placa é tocada.
+  - O core roda com `PLATFORMIO_*` e `ESPTOOL_*` no ambiente, e nenhuma pode
+    chegar ao `pio` (52 §14.44).
+
+Os relatórios ficam em `build/qa-artifacts/`.
+
 ## Requisitos que não são do Rust
 
 `cargo test --workspace` exige **`python3` no PATH** desde 2026-09-02: os testes

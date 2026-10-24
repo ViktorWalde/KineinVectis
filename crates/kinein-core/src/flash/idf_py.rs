@@ -27,14 +27,17 @@ use super::{ESPTOOL_BAUD, FlashCommand, FlashError, FlashPlan, chosen_port, snap
 use crate::build::engine::idf_command_args;
 
 /// What `idf.py flash` and its esptool read from the environment beyond
-/// `ESPTOOL_*`: port, baud, full/trusted fast reflash and extra arguments.
-const IDF_VARIABLES: [&str; 6] = [
+/// `ESPTOOL_*`: port, baud, full/trusted fast reflash, extra arguments and
+/// the folders of `idf.py` extensions, which can redefine `flash` (52 §14.44).
+const IDF_VARIABLES: [&str; 8] = [
     "ESPPORT",
     "ESPBAUD",
     "IDF_FLASH_FULL",
     "IDF_TRUST_FLASH_CONTENT",
     "SERIAL_TOOL_EXTRA_PRE_CMD_ARGS",
     "SERIAL_TOOL_EXTRA_ARGS",
+    "IDF_EXTRA_ACTIONS_PATH",
+    "IDF_EXTENSION_ALLOW_UNTRUSTED",
 ];
 /// Activating ESP-IDF and asking `idf.py --version` takes seconds.
 const VERSION_DEADLINE: Duration = Duration::from_secs(30);
@@ -110,7 +113,8 @@ pub(super) fn prepare(
             )));
         }
     }
-    let version = version(&request.tool, &activation, root, cancel)?;
+    refuse_extensions(root, &origin.build)?;
+    let version = version(&request.tool, &activation, cancel)?;
     let (contents, files) = bind(root, &origin, &request.tool, &activation, cancel)?;
 
     let build = origin.build.display().to_string();
@@ -199,18 +203,47 @@ pub(super) fn prepare(
     Ok(prepared)
 }
 
+/// `idf.py` imports `idf_ext.py` from the project directory and from the
+/// build components it trusts, on every invocation; an extension can
+/// redefine `flash` (52 §14.44).
+fn refuse_extensions(root: &Path, build: &Path) -> Result<(), FlashError> {
+    let description: Value = std::fs::read(build.join("project_description.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .ok_or_else(|| invalid("project_description.json ilegível"))?;
+    let components = description["build_component_info"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter_map(|(_, info)| info["dir"].as_str().map(PathBuf::from));
+    for folder in std::iter::once(root.to_path_buf()).chain(components) {
+        let extension = folder.join("idf_ext.py");
+        if extension.exists() {
+            return Err(invalid(&format!(
+                "{} estende o idf.py e pode redefinir a gravação fora desta prévia; use o modo manual",
+                extension.display()
+            )));
+        }
+    }
+    Ok(())
+}
+
 /// `idf.py --version` in the activated environment, without the removed
-/// variables; only ESP-IDF 6 has the measured flash semantics.
+/// variables; only ESP-IDF 6 has the measured flash semantics. It runs in
+/// the activation's folder: in the project, `idf.py` would import the
+/// project's `idf_ext.py` (52 §14.44).
 fn version(
     shell: &Path,
     activation: &Path,
-    root: &Path,
     cancel: &Arc<AtomicBool>,
 ) -> Result<String, FlashError> {
+    let outside = activation
+        .parent()
+        .map_or_else(std::env::temp_dir, Path::to_path_buf);
     let mut command = Command::new(shell);
     command
         .args(idf_command_args(activation, &["--version"]))
-        .current_dir(root)
+        .current_dir(outside)
         .env("NO_COLOR", "1");
     for name in inherited_variables() {
         command.env_remove(name);

@@ -47,14 +47,14 @@ impl Core {
             Ok(engine) => engine,
             Err(error) => return super::runconfig::flash_error_response(request_id, &error),
         };
-        if matches!(engine.as_str(), "esptool" | "idf.py")
+        if matches!(engine.as_str(), "esptool" | "idf.py" | "platformio")
             && let Some(device) = selection.device.as_deref()
             && let Err(response) =
                 super::serial::ready_port(request_id.as_ref(), "runConfig.flashProposal", device)
         {
             return *response;
         }
-        let tool = match self.native_tool(&root, &engine) {
+        let tool = match self.native_tool(&root, &engine, &model) {
             Ok(tool) => tool,
             Err(error) => return super::runconfig::flash_error_response(request_id, &error),
         };
@@ -87,11 +87,26 @@ impl Core {
     /// esptool from the detector; probe-rs from the kit's debugAdapter role,
     /// the same executable `probe.list` asks; for `idf.py`, the shell that
     /// sources the ESP-IDF activation (52 §14.40).
-    fn native_tool(&self, root: &Path, engine: &str) -> Result<PathBuf, flash::FlashError> {
+    fn native_tool(
+        &self,
+        root: &Path,
+        engine: &str,
+        model: &ProjectModel,
+    ) -> Result<PathBuf, flash::FlashError> {
         let missing = |tool: &str, hint: &str| flash::FlashError::MissingTool {
             tool: tool.to_owned(),
             hint: hint.to_owned(),
         };
+        if engine == "platformio" {
+            return match crate::build::engine::resolve(model, self.sdk_home().as_deref()) {
+                Ok(Some(crate::build::engine::Engine::PlatformIo { pio })) => Ok(pio),
+                Ok(_) => Err(missing(
+                    "PlatformIO",
+                    "este projeto não é PlatformIO (sem platformio.ini)",
+                )),
+                Err(error) => Err(missing("PlatformIO", &error.message)),
+            };
+        }
         if engine == "idf.py" {
             return self
                 .detector
@@ -209,8 +224,7 @@ impl Core {
         let model = self.compute_project_model(&root);
         let context = self.native_flash_context(&root, &model);
         let engine = intent.selection.engine.clone().unwrap_or_default();
-        let idf = engine == "idf.py";
-        let Ok(tool) = self.native_tool(&root, &engine) else {
+        let Ok(tool) = self.native_tool(&root, &engine, &model) else {
             return refusal(
                 request_id,
                 "A ferramenta de gravação selecionada não está disponível; revise as ferramentas e gere outra prévia.",
@@ -246,7 +260,7 @@ impl Core {
                     }
                 }
                 let identity = active.as_ref().map_or_else(|| json!(["flash", root, intent.fingerprint]), |config| json!(["config", root, config.id]));
-                let removed = if probe.is_some() { flash::probe_rs::inherited_variables() } else if idf { flash::idf_py::inherited_variables() } else { flash::esptool::inherited_variables() };
+                let removed = flash::native::removed_variables(&engine, probe.is_some());
                 core.start_in_terminal(request_id, &root, Invocation {
                     program: prepared.plan.command.program.display().to_string(), args: prepared.plan.command.args,
                     command: prepared.plan.proposal.command, identity, reservation: Some(reservation), removed,

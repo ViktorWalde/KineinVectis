@@ -32,6 +32,16 @@ simples. Ordem no roadmap 52 §11.1 e specs próprias. A edição especial
 associada à 0.5 otimiza/pole essa base; inglês e divulgação internacional
 têm marco na 0.5 (57 §3 item 11). ROS 2 permanece posterior à 0.4.9.
 
+- **PlatformIO no modo nativo para ESP32 (0.4.1h4b2b4d4, 2026-10-23):**
+  - Num projeto PlatformIO com ESP32, a aba Gravar passa a gerar a prévia de
+    `pio run -t upload`, com o env fixado, a placa, o baud e o reset lidos
+    do próprio PlatformIO.
+  - O ▶ revalida antes de abrir a porta.
+  - Configurações cujo efeito a prévia não mostra seguem pelo modo manual:
+    scripts do projeto, comando de upload próprio, OTA, JTAG e placas que
+    trocam de porta.
+  - Gerar a prévia não executa código do projeto. Isso vale também para o
+    `idf.py`, que antes importava o `idf_ext.py` do projeto já na prévia.
 - **`idf.py flash` no modo nativo (0.4.1h4b2b4d3, 2026-10-23):** o
   "compilar e gravar" do ESP-IDF deixou de ser só uma linha manual. Na aba
   Gravar, idf.py no modo nativo mostra a prévia com a linha exata, a versão

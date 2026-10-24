@@ -4814,10 +4814,26 @@ ESP32-D0WD-V3 rev 3.1 no CP2102, `main.c` mudado de C para D, sem
 - Depois de um reset pela porta, o boot mostra
   `ELF file SHA256: be502647e...` e "ESP32 D: ciclo 0, 1, 2".
 
-Na IDE, na aba Gravar, idf.py no modo nativo gera a prévia com a linha
-exata, a versão do ESP-IDF e as fontes. A gravação pelo botão "Gravar na
-placa" ficou pendente: a sessão do autor estava bloqueada. Gate rápido estrito
-no QA: 1.318 Rust, 8 CTest, 170 harnesses, C++, Clippy e qmllint limpos.
+Gate rápido estrito no QA: 1.318 Rust, 8 CTest, 170 harnesses, C++, Clippy
+e qmllint limpos.
+
+**Na IDE, na bancada (2026-10-23 20:03, depois do commit c80ea07).** Com o
+contador mudado para E e os `*_flashed.bin` da gravação anterior presentes:
+
+1. Na aba Gravar, idf.py no modo nativo gera a prévia com a linha, a versão,
+   as fontes e os dois avisos.
+2. "Gravar na placa" recompila, e o ELF passa de `be502647…` para
+   `cd5da6ca…`.
+3. O esptool recebe `--diff-with` com os três `*_flashed.bin`. O bootloader e
+   a tabela de partições saem "verified", sem escrita, e a app regrava só os
+   setores que mudaram ("Reflashing 1 changed sector", 4.096 bytes cada),
+   com "Hash of data verified".
+4. O `*_flashed.bin` da app é atualizado.
+5. O Monitor serial (idf.py) mostra `ELF file SHA256: cd5da6cac...` e
+   "ESP32 E: ciclo 0…9".
+
+Assim, os dois caminhos do fast reflash foram exercidos em hardware:
+`--skip-flashed` pelo stdio e `--diff-with` pela IDE.
 
 ### 14.41 0.4.1h4b2b4e — clangd do ESP-IDF sem trocar os headers do FreeRTOS (desenho, 2026-10-23)
 
@@ -5033,3 +5049,255 @@ Identificar na bancada mostra "sugere: chip esp32 · espressif · gravar:
 esptool, monitor: idf.py", o mesmo monitor que o botão abre. Gate rápido
 estrito no QA, junto da §14.42: 1.315 Rust, 8 CTest, 170 harnesses, C++,
 Clippy e qmllint limpos.
+
+### 14.44 0.4.1h4b2b4d4 — `pio run -t upload` nativo para ESP32: grava pela intenção revalidada (desenho, 2026-10-23)
+
+**Problema.** Num projeto PlatformIO, a IDE oferece `pio run -t upload
+[--upload-port P]` só no modo manual, sem revalidação nem efeitos declarados.
+O modo nativo recusa o motor. A linha manual também não fixa o env. Sem `-e`,
+o `pio run` processa todos os envs, ou os `default_envs`, e grava cada um, em
+sequência, na mesma placa.
+
+**O que `pio run -e ENV -t upload --upload-port P` faz.** Medido em
+2026-10-23 com o PlatformIO Core 6.2.0, a plataforma espressif32 8.0.0 e o
+`tool-esptool` 2.50400.0 (esptool 5.4.0), na bancada `esp32-pio-teste`
+(`esp32dev`, Arduino). Fontes: `run/cli.py`, `run/processor.py`,
+`run/helpers.py`, `project/config.py`, `builder/main.py` e
+`builder/tools/piomisc.py` do Core; `builder/main.py` e `platform.py` da
+plataforma.
+
+1. **Limpeza automática.** Se a soma de `project.checksum` mudou, o
+   `.pio/build` inteiro é apagado. A soma cobre a versão do Core, a
+   configuração calculada e a lista de fontes de `include/`, `src/` e `lib/`.
+2. **Dependências.** `install_project_env_dependencies` instala a plataforma,
+   os pacotes e as `lib_deps` que faltarem, pela rede. A primeira compilação
+   da bancada baixou o framework Arduino.
+3. **Compilação.** O SCons roda na raiz do projeto, com `ENV=os.environ`, e
+   compila o env.
+   - `extra_scripts` (`pre:`/`post:`) são Python do projeto executado dentro
+     do build. Eles podem trocar o comando de upload.
+   - `upload_command` substitui o uploader.
+4. **Upload.** O protocolo vem de `upload_protocol` ou do manifesto da placa;
+   na espressif32, o padrão é `esptool`.
+   - `espota` grava pela rede.
+   - As sondas JTAG gravam pelo OpenOCD.
+   - Um `upload_port` com cara de IP ou `.local` troca o protocolo para
+     `espota`.
+   - A porta da linha de comando vence a do `platformio.ini`
+     ("Using manually specified").
+   - Com `upload.use_1200bps_touch` ou `upload.wait_for_upload_port` na
+     placa (51 e 54 dos 314 manifestos da espressif32), o upload toca a porta
+     e espera surgir uma porta nova, que passa a ser o destino.
+5. **Linha do esptool.** Medida contra uma porta inexistente, sem tocar a
+   placa: `esptool --chip esp32 --port P --baud 460800 --before default-reset
+   --after hard-reset write-flash -z …` com bootloader, partições,
+   `boot_app0` e firmware. Grava as quatro imagens inteiras, sem fast reflash.
+   - O baud e o reset vêm da placa e das opções `board_upload.*`.
+   - `upload_flags` são postos antes de tudo.
+   - O esptool roda na raiz do projeto e lê `esptool.cfg` dali (medido com o
+     binário 5.4.0 do pacote) e as variáveis `ESPTOOL_*`.
+6. **Ambiente.** As 26 opções do projeto com `sysenvvar` são lidas de
+   `PLATFORMIO_*`. Medido: `PLATFORMIO_UPLOAD_FLAGS` e
+   `PLATFORMIO_BUILD_FLAGS` aparecem em `pio project config` como
+   `upload_flags` e `build_flags`. `${sysenv.X}` lê qualquer variável.
+
+**Contrato (0.190.0, sem mudança de forma).**
+
+- **Seleção.**
+  - A seleção com `engine: "platformio"` (ou `pio`) e `native: true` passa
+    a valer num projeto PlatformIO. `device` é obrigatório.
+  - `target`, `probe`, `firmware` e `buildDirectory` são INVALID_PARAMS.
+  - O env é o único que o `pio run` processaria sem `-e`: o único
+    `default_envs`, ou o único `[env:*]`. Com mais de um candidato, a prévia
+    recusa e pede um `default_envs` com um env, ou o modo manual. Escolher o
+    env na tela pede um campo novo no protocolo, fora desta fatia.
+- **Programa e argv.** O `pio` do modelo, com
+  `run -d <raiz> -e <env> -t upload --upload-port <porta>`.
+- **Consulta.** Duas chamadas, no diretório do projeto e sem as variáveis
+  removidas; elas não rodam SCons nem script do projeto.
+  1. `pio system info --json-output` dá a versão do Core (aceita 6.x) e o
+     interpretador do PlatformIO.
+  2. Esse interpretador, com `-I`, roda uma consulta pela API do próprio
+     PlatformIO: `ProjectConfig`, e `PlatformFactory.from_env` com
+     `autoinstall=False`. Ela devolve em JSON:
+     - os envs, os `default_envs` e as opções calculadas do env;
+     - os arquivos de configuração lidos;
+     - nome, versão e pasta da plataforma;
+     - a placa, com o manifesto e as opções `board_*` aplicadas como o
+       builder aplica, e o caminho do manifesto;
+     - o protocolo efetivo e a pasta e versão do `tool-esptool`.
+- **Recusas.**
+  - Core fora da 6.x, plataforma ou `tool-esptool` não instalados ("compile
+    uma vez").
+  - Plataforma diferente de espressif32: as outras têm uploaders e destinos
+    próprios e terão prova própria.
+  - Protocolo diferente de `esptool`; `extra_scripts`; `upload_command`;
+    `platform_packages`; `extra_configs`.
+  - Placa com toque de 1200 bps ou espera de porta nova.
+  - Framework `espidf`: o `sdkconfig` do env pode ligar secure boot ou
+    criptografia, como na §14.39.
+  - `esptool.cfg`, `setup.cfg` ou `tox.ini` com `[esptool]` na raiz, na
+    pasta do usuário ou no home (§14.38).
+- **Ambiente.** O processo e as consultas não recebem `ESPTOOL_*` nem as
+  `PLATFORMIO_*` das opções do projeto, exceto as cinco que localizam a
+  instalação e os caches (`CORE_DIR`, `PLATFORMS_DIR`, `PACKAGES_DIR`,
+  `CACHE_DIR`, `BUILD_CACHE_DIR`). O `source` nomeia as removidas.
+  `${sysenv.X}` resolve com o ambiente do core, constante enquanto ele roda,
+  e o valor entra na configuração vinculada.
+- **O que a intenção vincula.**
+  - Por conteúdo:
+    - os arquivos de configuração lidos;
+    - as opções calculadas do env e da seção `[platformio]`;
+    - o `platform.json`, o `platform.py` e o `builder/main.py` da
+      plataforma;
+    - o manifesto da placa;
+    - o lançador do `pio`.
+  - As versões do Core, da plataforma e do esptool, e a identidade da porta.
+  - Não vincula fontes nem imagens: mudar o código e apertar ▶ compila e
+    grava o código novo.
+- **Avisos da prévia.**
+  - O comando compila antes de gravar.
+  - Ele grava as imagens inteiras (bootloader, partições, `boot_app0` e
+    app).
+  - Pode instalar pacotes da plataforma e `lib_deps` que faltarem, pela
+    rede. Exemplo: com `upload_protocol` escrito no `platformio.ini`, mesmo
+    `esptool`, a plataforma passa a exigir o `tool-openocd-esp32`.
+  - O `pio run` limpa o `.pio/build` quando a estrutura do projeto muda.
+- **Execução.** A reserva da porta, o guardião e a revalidação antes do PTY
+  são os do esptool nativo. A revalidação refaz as duas consultas.
+
+**Regra comum aos wrappers: a prévia não executa código do projeto.** Achado
+ao abrir a bancada PlatformIO na IDE (2026-10-23). A faixa de saúde lembra
+que o `pio` roda scripts do projeto. O contrato de workspace deixa os gestos
+(Configurar, Compilar, Executar) valerem sem confiança, e gravar é um gesto:
+o `run.start` compila com o código do projeto, como o Compilar. Gerar a
+prévia, porém, só deve ler. Medido nas fontes:
+
+- **ESP-IDF v6.1.** O `idf.py`, em **toda** invocação, inclusive
+  `--version`, importa o `idf_ext.py` do diretório do projeto (o diretório
+  corrente) e os `idf_ext.py` dos componentes do build vindos de fontes que
+  ele considera confiáveis.
+  - `IDF_EXTRA_ACTIONS_PATH` acrescenta pastas de extensão;
+    `IDF_EXTENSION_ALLOW_UNTRUSTED` carrega todas.
+  - Uma extensão pode redefinir a ação `flash`.
+  - A prévia da §14.40 rodava `idf.py --version` na raiz e não via nada
+    disso.
+- **PlatformIO 6.2.** O `PlatformFactory.new` carrega o `platform.py` da
+  pasta da plataforma. A pasta pode estar dentro do projeto:
+  - um `platform` que é uma pasta;
+  - um `symlink://` ou `file://`;
+  - um `platforms_dir` ou `core_dir` no `platformio.ini`.
+
+Correções, nesta fatia:
+
+- **`idf.py`.**
+  - A consulta de versão roda na pasta do ativador, fora do projeto.
+  - Um `idf_ext.py` na raiz, ou na pasta de um componente do build
+    (`build_component_info` da descrição), recusa. Nenhum componente do
+    ESP-IDF v6.1 traz um, nem os 144 da bancada.
+  - `IDF_EXTRA_ACTIONS_PATH` e `IDF_EXTENSION_ALLOW_UNTRUSTED` entram nas
+    variáveis removidas.
+- **PlatformIO.**
+  - A consulta acha a pasta da plataforma como o `PlatformFactory.new` acha
+    e recusa, antes de carregá-la, uma pasta dentro do projeto.
+  - O `pio system info` roda fora do projeto.
+
+**Limite.** O `run.start` compila, e compilar roda código do projeto: o
+CMake e os componentes no ESP-IDF; as bibliotecas da `lib/`, com seus
+`extraScript`, no PlatformIO. Esse código pode mudar o que o build entrega,
+como no Compilar. A prévia promete porta, env, protocolo, reset e a
+configuração vinculada; ela não isola o build.
+
+**Validação planejada.**
+
+- Despacho com `pio` e interpretador falsos, que devolvem a consulta
+  gravada. Os casos:
+  - a linha exata;
+  - as recusas;
+  - o env escolhido;
+  - o ambiente removido;
+  - a vinculação por conteúdo;
+  - fonte alterada que não invalida.
+- A consulta real contra projetos-fixture com o PlatformIO instalado, sem
+  gravar:
+  - a bancada;
+  - dois envs;
+  - `extra_scripts`;
+  - `upload_command`;
+  - `espota`;
+  - placa S3 com toque de 1200 bps;
+  - `espidf`;
+  - `PLATFORMIO_UPLOAD_FLAGS` no ambiente.
+- Core real por stdio com variáveis herdadas.
+- Mutações.
+- Na IDE, com o ESP32 liberado:
+  - a prévia;
+  - "Gravar na placa" com o contador mudado;
+  - o monitor do projeto mostra o texto novo.
+
+**Como a pessoa chega ao PlatformIO hoje (registro de 2026-10-23, pergunta
+do autor).**
+
+- **O Core.** Vem do PATH. O detector procura `pio` ou `platformio` (o
+  `tools/known.rs` só sugere `pipx install platformio`, sem instalar).
+  - Na máquina do autor, o Core 6.2.0 já estava instalado por pipx.
+  - Nesta fatia, a plataforma espressif32 foi instalada pela linha de
+    comando (`pio pkg install -g -p platformio/espressif32`). O primeiro
+    build baixou o framework Arduino sozinho, que é o comportamento do
+    `pio run`.
+- **Na IDE.**
+  - Abrir uma pasta com `platformio.ini` marca o projeto como PlatformIO.
+  - O Compilar roda `pio run`.
+  - A aba Gravar oferece "platformio", em nativo ou manual.
+  - O monitor é o `pio device monitor`.
+  - A faixa de saúde aponta ferramenta ausente e confiança.
+- **O que falta, e onde mora.**
+  - Instalar o Core e as plataformas pela IDE pertence à reformulação de
+    Instalar Ferramentas junto do Setup no dock (§11.1), uma fatia funcional
+    da 0.4.x e não do polimento.
+  - Criar um projeto PlatformIO por modelo também não existe ainda.
+  - Escolher o env na tela pede um campo novo no protocolo, numa fatia
+    própria.
+  - A edição especial de HUD/UX/UI pole a apresentação, mas não cria essas
+    funções.
+
+**Feito em 2026-10-23 (40.7 §7.354).** Implementado em `flash/platformio/`:
+- `mod.rs` tem as checagens, o `source`, os avisos e o vínculo;
+- `query.rs` tem as duas consultas;
+- `query.py` é a consulta pela API do PlatformIO, embutida com
+  `include_str!`.
+
+O `native::removed_variables` concentra as variáveis removidas por motor.
+
+**Bug achado pela prova real e corrigido antes do commit.** A checagem
+aceitava `board_upload.wait_for_upload_port = yes` sobre a `esp32dev`.
+- Como a chave não existe no manifesto, o builder grava a string sem
+  converter.
+- O `BeforeUpload` da plataforma testa a verdade como o Python, e qualquer
+  string não vazia é verdadeira, até "no".
+- A checagem só olhava booleano `true`. Agora usa a mesma regra
+  (`python_true`).
+
+**Prova da regra da prévia.** Num projeto com `platform = ./myplat`, o
+`PlatformFactory.from_env` do PlatformIO executou o `platform.py` do projeto
+(marcador criado). A consulta recusa antes de carregar, e o marcador não
+aparece.
+
+**Validação.**
+
+- Despacho:
+  - três testes do PlatformIO, com 12 recusas pela consulta, 3 pela seleção,
+    o Core 5 e o `esptool.cfg`;
+  - os testes do `idf.py` ganharam os casos de `idf_ext.py` (raiz e
+    componente) e da consulta de versão fora do projeto.
+- Core real por stdio com o PlatformIO real: 17 projetos, 4 aceitos e 13
+  recusados pelo motivo certo, cada prévia em cerca de 1 s.
+  - As variáveis herdadas não vazam.
+  - O `run.start` real compila e chega ao esptool, que falha na porta (um
+    arquivo comum) sem escrevê-la.
+- 22 mutações detectadas, todas.
+- Gate rápido estrito no QA: 1.321 Rust, 8 CTest, 170 harnesses, C++,
+  Clippy e qmllint limpos.
+- **Pendente:** a gravação na placa pelo botão da IDE. A janela da Kinein
+  estava coberta enquanto o autor usava o computador; ela entra na fatia
+  seguinte.

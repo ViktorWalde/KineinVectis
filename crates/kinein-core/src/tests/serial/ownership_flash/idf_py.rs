@@ -20,13 +20,14 @@ fn idf_fixture(name: &str, version: &str) -> Fixture {
         format!("export PATH={}:\"$PATH\"\n", quote(root.join("idf-bin"))),
     )
     .unwrap();
-    let watched = "'^(ESPTOOL_|ESPPORT=|ESPBAUD=|IDF_FLASH_FULL=|IDF_TRUST_FLASH_CONTENT=|SERIAL_TOOL_EXTRA)'";
+    let watched = "'^(ESPTOOL_|ESPPORT=|ESPBAUD=|IDF_FLASH_FULL=|IDF_TRUST_FLASH_CONTENT=|SERIAL_TOOL_EXTRA|IDF_EXTRA_ACTIONS_PATH=|IDF_EXTENSION_ALLOW)'";
     crate::write_executable(
         root.join("idf-bin/idf.py"),
         format!(
-            "#!/bin/sh\nif [ \"$1\" = --version ]; then env | grep -E {watched} > {version_env}; echo 'ESP-IDF {version}'; exit 0; fi\n\
+            "#!/bin/sh\nif [ \"$1\" = --version ]; then env | grep -E {watched} > {version_env}; pwd > {version_cwd}; echo 'ESP-IDF {version}'; exit 0; fi\n\
              printf '%s\\n' \"$@\" > {args}\npwd > {cwd}\nenv | grep -E {watched} > {env}\necho idf-fixture-complete\n",
             version_env = quote(root.join("idf-version.env")),
+            version_cwd = quote(root.join("idf-version.cwd")),
             args = quote(root.join("idf.args")),
             cwd = quote(root.join("idf.cwd")),
             env = quote(root.join("idf.env")),
@@ -120,6 +121,18 @@ fn native_idf_py_builds_and_flashes_through_the_activated_wrapper() {
             .trim(),
         bench.root.display().to_string()
     );
+    // In the project, idf.py would import the project's idf_ext.py: the
+    // version query runs in the activation's folder.
+    assert_eq!(
+        fs::read_to_string(bench.root.join("idf-version.cwd"))
+            .unwrap()
+            .trim(),
+        bench
+            .root
+            .join("home/.espressif/tools")
+            .display()
+            .to_string()
+    );
 }
 
 #[test]
@@ -154,6 +167,32 @@ fn native_idf_py_refuses_what_its_preview_cannot_promise() {
     )
     .unwrap();
     assert!(message(&idf_proposal(&mut bench, &json!({}))).contains("esptool.cfg"));
+
+    // An idf.py extension in the project, or in a build component, can
+    // redefine flash.
+    let mut bench = idf_fixture("native-idf-project-extension", "v6.1");
+    fs::write(
+        bench.root.join("idf_ext.py"),
+        "def action_extensions(base, path):\n    return {}\n",
+    )
+    .unwrap();
+    assert!(message(&idf_proposal(&mut bench, &json!({}))).contains("idf_ext.py"));
+    let mut bench = idf_fixture("native-idf-component-extension", "v6.1");
+    let component = bench.root.join("components/extended");
+    fs::create_dir_all(&component).unwrap();
+    fs::write(
+        component.join("idf_ext.py"),
+        "def action_extensions(base, path):\n    return {}\n",
+    )
+    .unwrap();
+    let description = bench.root.join("build/project_description.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(&description).unwrap()).unwrap();
+    value["build_component_info"] = json!({"extended": {"dir": component}});
+    fs::write(&description, value.to_string()).unwrap();
+    assert!(
+        message(&idf_proposal(&mut bench, &json!({})))
+            .contains(&component.join("idf_ext.py").display().to_string())
+    );
 
     let mut bench = idf_fixture("native-idf-encrypted", "v6.1");
     fs::write(

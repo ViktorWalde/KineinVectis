@@ -41,6 +41,7 @@ pub mod firmware;
 pub mod frameworks;
 pub mod idf_py;
 pub mod native;
+pub mod platformio;
 pub mod probe_rs;
 mod snapshot;
 

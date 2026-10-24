@@ -3,8 +3,9 @@
 The workspace is an ESP-IDF build fixture; HOME holds a fake EIM activation
 that puts a recording idf.py first in PATH, behind the real bash. The core
 runs with ESPPORT, ESPBAUD, IDF_FLASH_FULL, IDF_TRUST_FLASH_CONTENT,
-SERIAL_TOOL_EXTRA_ARGS and ESPTOOL_CFGFILE in its environment; none may reach
-idf.py, neither in the version query nor in the flash. The port is a regular
+SERIAL_TOOL_EXTRA_ARGS, ESPTOOL_CFGFILE, IDF_EXTRA_ACTIONS_PATH and
+IDF_EXTENSION_ALLOW_UNTRUSTED in its environment; none may reach idf.py,
+neither in the version query nor in the flash. The port is a regular
 file and nothing is flashed (52 §14.40).
 """
 import argparse
@@ -29,7 +30,8 @@ for folder in (workspace, idf_bin, log, home/'.espressif/tools', workspace/'buil
     folder.mkdir(parents=True)
 INHERITED = {'ESPPORT': '/dev/inherited', 'ESPBAUD': '9600', 'IDF_FLASH_FULL': '1',
              'IDF_TRUST_FLASH_CONTENT': '1', 'SERIAL_TOOL_EXTRA_ARGS': '--force',
-             'ESPTOOL_CFGFILE': str(root/'injected.cfg')}
+             'ESPTOOL_CFGFILE': str(root/'injected.cfg'), 'IDF_EXTRA_ACTIONS_PATH': str(root/'actions'),
+             'IDF_EXTENSION_ALLOW_UNTRUSTED': '1'}
 (root/'injected.cfg').write_text('[esptool]\nconnect_attempts = 1\n')
 port = root/'port'
 port.write_text('regular fixture; idf.py never opens it\n')
@@ -47,7 +49,7 @@ port.write_text('regular fixture; idf.py never opens it\n')
     'version': '1.3', 'project_path': str(workspace), 'build_dir': str(workspace/'build'),
     'config_file': str(workspace/'sdkconfig'), 'target': 'esp32', 'app_bin': 'app.bin'}))
 (home/'.espressif/tools/activate_idf_v6.1.sh').write_text(f"export PATH='{idf_bin}':\"$PATH\"\n")
-watched = "'^(ESPTOOL_|ESPPORT=|ESPBAUD=|IDF_FLASH_FULL=|IDF_TRUST_FLASH_CONTENT=|SERIAL_TOOL_EXTRA)'"
+watched = "'^(ESPTOOL_|ESPPORT=|ESPBAUD=|IDF_FLASH_FULL=|IDF_TRUST_FLASH_CONTENT=|SERIAL_TOOL_EXTRA|IDF_EXTRA_ACTIONS_PATH=|IDF_EXTENSION_ALLOW)'"
 fake = idf_bin/'idf.py'
 fake.write_text(f"""#!/bin/sh
 L='{log}'

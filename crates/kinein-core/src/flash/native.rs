@@ -90,6 +90,10 @@ pub fn engine(
             }
             Ok("idf.py".to_owned())
         }
+        "platformio" | "pio" => {
+            super::platformio::check_selection(selection)?;
+            Ok("platformio".to_owned())
+        }
         _ => Err(invalid(
             "este motor ainda não tem validação de destino nativa; a integração permanece pendente, sem converter a operação em shell",
         )),
@@ -118,6 +122,13 @@ pub fn validate_intent(
         Some("probe-rs") => super::probe_rs::check_selection(selection).is_ok(),
         Some("idf.py") => {
             super::idf_py::check_selection(selection).is_ok()
+                && selection
+                    .device
+                    .as_deref()
+                    .is_some_and(|device| !device.trim().is_empty())
+        }
+        Some("platformio") => {
+            super::platformio::check_selection(selection).is_ok()
                 && selection
                     .device
                     .as_deref()
@@ -173,7 +184,19 @@ pub fn prepare(
     match engine.as_str() {
         "probe-rs" => super::probe_rs::prepare(root, request, cancel),
         "idf.py" => super::idf_py::prepare(root, request, cancel),
+        "platformio" => super::platformio::prepare(root, request, cancel),
         _ => prepare_esptool(root, request, engine, cancel),
+    }
+}
+
+/// Inherited names a native engine removes from its process and queries.
+#[must_use]
+pub fn removed_variables(engine: &str, probe: bool) -> Vec<std::ffi::OsString> {
+    match engine {
+        _ if probe => super::probe_rs::inherited_variables(),
+        "idf.py" => super::idf_py::inherited_variables(),
+        "platformio" => super::platformio::inherited_variables(),
+        _ => super::esptool::inherited_variables(),
     }
 }
 

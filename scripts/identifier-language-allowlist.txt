@@ -178,3 +178,9 @@ efuse efuses
 freertos
 # espidf: ESP-IDF, o framework da Espressif (escopo das acoes de configuracao do framework).
 espidf
+# autoinstall: parametro da API do PlatformIO (PlatformFactory.from_env), passado como False na consulta da gravacao nativa (52 §14.44).
+autoinstall
+# getcwd, isdir, realpath: funcoes da biblioteca padrao do Python (os.getcwd, os.path.isdir, os.path.realpath) na consulta do PlatformIO (52 §14.44).
+getcwd
+isdir
+realpath
