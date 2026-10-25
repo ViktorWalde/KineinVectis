@@ -2,11 +2,16 @@
 
 O ambiente local deve refletir o modo de segurança máximo do projeto.
 
+**Ambiente vigente em 2026-10-24:** Ubuntu 26.04.1 e Qt 6.12.0 oficial em
+`~/Qt/6.12.0/gcc_64`. O Qt do sistema (6.10.2) não atende ao projeto.
+Decisão e desenho no [52 §14.49](../roadmaps/52-arquitetura-executavel-da-0.4.md#1449-041h4b2b4l--o-ambiente-no-qt-do-projeto-o-612-desenho-2026-10-24).
+As observações datadas de outras distribuições abaixo são históricas.
+
 ## Bootstrap ao trocar de distro/máquina
 
 `scripts/instalar-ambiente.sh` instala todas as dependências abaixo com
-detecção de distro (pacman no Arch/CachyOS — alvo principal —, apt no
-Debian/Ubuntu, dnf no Fedora), aceita `--dry-run` (só mostra os comandos) e
+detecção de distro (apt no Debian/Ubuntu, pacman no Arch/CachyOS,
+dnf no Fedora), aceita `--dry-run` (só mostra os comandos) e
 `--extras` (o Podman, o motor de containers rootless; o `cargo-deny` saiu de
 `--extras` em 2026-08-30 e o `shellcheck` em 2026-10-15, porque o gate depende
 dos dois), e termina verificando ferramenta por ferramenta o mesmo conjunto que
@@ -56,11 +61,28 @@ configurar o driver do banco é responsabilidade da pessoa. Não existe
 download automático de driver. A decisão e a licença estão no
 [ADR-0007](../decisoes-adr/ADR-0007-odbc-com-consentimento.md).
 
-Dependências base no Arch/CachyOS:
+Dependências de compilação no Ubuntu (instalação pelo autor):
 
 ```bash
-sudo pacman -S cmake ninja clang lldb gdb qt6-base qt6-declarative qt6-tools
+sudo apt install cmake ninja-build clang lldb gdb libgl1-mesa-dev libegl1-mesa-dev libxcb-cursor0 unixodbc-dev
 ```
+
+O Qt vem do instalador oficial ou do `aqtinstall` no usuário. Confira a
+lista de módulos antes do download; não combine bibliotecas do sistema com
+o prefixo oficial. Para completar uma instalação existente:
+
+```bash
+pipx install aqtinstall
+aqt list-qt linux desktop --modules 6.12.0 linux_gcc_64
+aqt install-qt linux desktop 6.12.0 linux_gcc_64 -m qtwebengine qtwebchannel qtpositioning -O "$HOME/Qt"
+```
+
+`cmake/KineinQt.cmake` é o dono da versão 6.12 e da escolha do prefixo:
+`-DKINEIN_QT_PREFIX=/caminho` ou o mais recente `~/Qt/6.12.*/gcc_64`.
+Cada build grava `kinein-qt-bins.txt`; os gates usam as ferramentas dali.
+Reconfigure os três builds com `cmake --fresh --preset dev-local`,
+`dev-local-release` e `linux-clang-debug-strict`. Não basta conservar um
+cache CMake que ainda aponta para o Qt do sistema.
 
 Presets previstos:
 

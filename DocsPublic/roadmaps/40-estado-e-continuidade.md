@@ -11,8 +11,8 @@
 > **HANDOFF (2026-10-24). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4k concluída:** clang-tidy e harnesses QML em paralelo, gate em 377 s (52 §14.48; 40.7 §7.358);
-> j gate só na RAM §7.357; i agente do PIO Home §7.356 (protocolo 0.192.0); h §7.355; g–d4 §7.347–§7.354.
+> **0.4.1h4b2b4l concluída:** ambiente e gates no Qt 6.12.0, rápido estrito verde em 434 s (52 §14.49; 40.7 §7.359);
+> k gate em paralelo §7.358; j só na RAM §7.357; i PIO Home §7.356 (protocolo 0.192.0); h–d4 §7.347–§7.355.
 > `.directory`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
 > Protocolo **0.192.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
 >
@@ -29,7 +29,7 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** o ambiente no Qt 6.12 (52 §14.49), AppImage dev (40 §5); depois dfu-util, picotool, west (52 §14.32).
+> **Próxima:** AppImage dev local (52 §14.50; 40 §5); visual Qt 6.12/PIO Home pendente com o autor; depois dfu-util, picotool, west (52 §14.32).
 > Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;

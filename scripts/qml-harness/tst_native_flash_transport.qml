@@ -10,6 +10,19 @@ Item {
     function check(condition, message) {
         if (!condition) { failures++; console.error("FALHAS: " + message); }
     }
+    // O transporte pode reordenar chaves; o contrato e' o conteudo inteiro.
+    function sameValue(actual, expected) {
+        // Sequencia Qt tambem serializa como array, sem ser um Array JS.
+        return sameJson(JSON.parse(JSON.stringify(actual)), JSON.parse(JSON.stringify(expected)));
+    }
+    function sameJson(actual, expected) {
+        if (actual === expected) return true;
+        if (!actual || !expected || typeof actual !== "object" || typeof expected !== "object") return false;
+        if (Array.isArray(actual) !== Array.isArray(expected)) return false;
+        const keys = Object.keys(expected);
+        return Object.keys(actual).length === keys.length
+                && keys.every(key => Object.prototype.hasOwnProperty.call(actual, key) && sameJson(actual[key], expected[key]));
+    }
     QtObject {
         id: client
         property bool connected: true
@@ -44,10 +57,10 @@ Item {
         check(client.proposalRequest.native === true, "prévia solicita intenção nativa por padrão");
         flash.handleProposal({name: "Flash", command: "reviewed command", flash: intent}, client.sequence);
         flash.run();
-        check(JSON.stringify(client.launched.flash) === JSON.stringify(intent), "run transporta intenção inteira");
+        check(sameValue(client.launched.flash, intent), "run transporta intenção inteira");
         check(client.launched.command === "" && client.launched.device === "", "execução nativa não leva shell nem outra porta");
         flash.save();
-        check(JSON.stringify(client.saved.flash) === JSON.stringify(intent), "save transporta intenção inteira");
+        check(sameValue(client.saved.flash, intent), "save transporta intenção inteira");
         configs.handleMutationFinished(client.sequence);
         configs.handleRunConfigs([{id:"cfg-1",name:"Flash",command:"reviewed command",flash:intent}],"cfg-1");
         configs.openEditConfigDialog();
@@ -58,7 +71,7 @@ Item {
         configs.handleRunConfigs([{id:"cfg-1",name:"Concurrent",command:"other",flash:{version:2}}],"cfg-1");
         configs.confirmConfigDialog("Renamed", "reviewed command");
         check(client.saved.id === "cfg-1" && client.saved.name === "Renamed"
-              && JSON.stringify(client.saved.flash) === JSON.stringify(intent), "renomear preserva objeto aninhado sem ListModel");
+              && sameValue(client.saved.flash, intent), "renomear preserva objeto aninhado sem ListModel");
         configs.handleMutationFinished(client.sequence);
         configs.clear();
         check(!configs.editingNative && Object.keys(configs.flashById).length === 0, "novo projeto descarta intenções anteriores");

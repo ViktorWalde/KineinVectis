@@ -1,11 +1,11 @@
 # 07 — Fluxo e responsabilidades dos gates
 
-> **Perfil vigente (autor, 2026-10-07):** desenvolvimento/validação usam o
-> Qt local do sistema — Arch Linux desde a mesma data, Qt 6.12.0 (antes 6.10).
-> O orquestrador executa qmllint, harnesses, CTest e abertura locais;
-> `verificar-qml-qt64.sh` e `verificar-qml-logica-qt64.sh` saem da sequência
-> obrigatória. Seus scripts/provas ficam históricos para o pacote anterior.
-> Check barato de invariantes AppImage continua sem gerar pacote/rodar Qt 6.4.
+> **Perfil vigente (autor, 2026-10-24):** desenvolvimento, validação e AppImage
+> usam Qt 6.12. No Ubuntu 26.04.1, o oficial está em `~/Qt/6.12.0/gcc_64`.
+> `cmake/KineinQt.cmake` escolhe o prefixo e recusa outra versão; cada build
+> grava `kinein-qt-bins.txt`, consumido pelo lint, harnesses e exercitação.
+> CTest e abertura também usam o Qt do build. Os scripts Qt 6.4 são históricos,
+> fora da sequência obrigatória. Invariantes AppImage seguem sem gerar pacote.
 
 Este documento descreve **como** os gates se relacionam e qual código é dono
 de cada responsabilidade. Para saber o que cada reprovação significa e como

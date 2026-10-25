@@ -1,10 +1,10 @@
 # 04 — Os gates que dizem "não"
 
-> **Perfil vigente (2026-10-07):** o Qt local do sistema, por orientação do
-> autor — desde a migração para Arch Linux na mesma data, Qt 6.12.0 (antes
-> 6.10). G0.2/G0.3 do Qt 6.4 permanecem scripts legados; não são executados
-> pelo orquestrador nem exigidos nas próximas fatias. Lint, harnesses e CTest
-> locais continuam obrigatórios; provas antigas abaixo conservam suas datas.
+> **Perfil vigente (autor, 2026-10-24):** Qt 6.12 no build, gates e AppImage.
+> O CMake recusa outra versão e grava em cada build o caminho das ferramentas;
+> lint, harnesses e exercitação usam esse Qt. No Ubuntu 26.04.1, o prefixo
+> oficial é `~/Qt/6.12.0/gcc_64` (52 §14.49). G0.2/G0.3 do Qt 6.4 são
+> históricos, fora do orquestrador. Lint, harnesses e CTest seguem obrigatórios.
 
 `bash scripts/verificar.sh` roda tudo em sequência e **para no primeiro
 erro**. `--rapido` pula o build release e os smokes ("o binário abre"), não a

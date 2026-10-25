@@ -10,6 +10,7 @@ include(GNUInstallDirs)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(KineinStrictOptions)
+include(KineinQt)
 
 # CTest, para os testes C++ da UI (2026-09-24). O projeto media Rust e QML e nao
 # media C++; ver ui/tests/CMakeLists.txt.

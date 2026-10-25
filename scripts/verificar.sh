@@ -11,11 +11,11 @@
 #   scripts/verificar.sh --ci-rapida # Rust + gates estaticos, sem Qt/integracoes
 #   scripts/verificar.sh --estrito  # combina com os tres perfis: NAO PROVADO reprova
 #
-# PERFIL ATUAL (autor, 2026-10-07): o Qt local do sistema. Na mesma data o
-# desenvolvimento migrou para Arch Linux, pelas versoes estaveis mais recentes
-# (Qt 6.12.0 medido; antes 6.10 no Ubuntu). Os gates Qt 6.4 do AppImage
-# anterior ficam legados e fora desta sequencia; qmllint, CTest, harnesses e
-# abertura locais continuam obrigatorios. Nao muda SDK/CMake.
+# PERFIL ATUAL (autor, 2026-10-24): Qt 6.12 no build, gates e AppImage.
+# No Ubuntu 26.04.1, o Qt 6.12.0 oficial mora em ~/Qt/6.12.0/gcc_64.
+# cmake/KineinQt.cmake escolhe o prefixo e recusa outra versao; cada build
+# grava as ferramentas para qmllint, harnesses e exercitacao. Os gates Qt 6.4
+# anteriores ficam historicos e fora desta sequencia.
 #
 # NAO PROVADO (2026-10-01, scripts/unproven.py). Gate que verifica a integracao
 # com o AMBIENTE (QEMU, debugpy, kit cross, Qt 6.4 em container) e nao tem a

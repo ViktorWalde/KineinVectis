@@ -147,9 +147,9 @@ Item {
 
         coreClient: root.coreClient
         folderPicker: root.folderPicker
-        runtimeController: runtimeController
-        runConfigController: runConfigController
-        editorController: editorController
+        runtimeController: root.runtimeController
+        runConfigController: root.runConfigController
+        editorController: root.editorController
     }
 
     // O indice do projeto INTEIRO (pilar 0 do roadmaps/42, 2026-09-12): os

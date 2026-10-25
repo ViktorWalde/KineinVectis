@@ -19,7 +19,7 @@ KvPanelFrame {
     }
 
     Column {
-        id: header
+        id: inspectorHeader
         width: parent.width
         spacing: Theme.spacingSmall
 
@@ -104,7 +104,7 @@ KvPanelFrame {
 
     ListView {
         id: factsList
-        anchors.top: header.bottom
+        anchors.top: inspectorHeader.bottom
         anchors.topMargin: Theme.spacingMedium
         anchors.bottom: parent.bottom
         width: parent.width - 14

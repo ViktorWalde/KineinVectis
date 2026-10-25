@@ -199,7 +199,7 @@ Item {
     // veio. O compilador da unidade ja' esta' no resumo; sem unidade, ele vem
     // do kit ou do cache do CMake e entra aqui.
     function originLabel(origin) {
-        return contextFacts.originLabel(origin);
+        return root.contextFacts.originLabel(origin);
     }
 
     function effectiveParts(effective, hasUnit) {

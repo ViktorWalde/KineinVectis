@@ -127,24 +127,27 @@ if [ -z "$RSP" ] || [ ! -f "$RSP" ]; then
     exit 1
 fi
 
-# O binario do Qt 6 PRIMEIRO, e cada candidato tem de RESPONDER `--version`:
-# no Ubuntu 26.04 o `qmllint` do PATH e' o wrapper do qtchooser apontando para
-# um Qt 5 que nao existe ("could not exec /usr/lib/qt5/bin/qmllint") — a mesma
-# licao do `qml` no verificar-qml-logica.sh: estar no PATH nao e' prova de
-# ferramenta funcional (medido em 2026-09-17).
+# O QMLLINT E' O DO QT DO BUILD (2026-10-24, roadmaps/52 §14.49). O .rsp
+# carrega os caminhos de import do Qt com que o build configurou, e o lint tem
+# de ser do mesmo Qt: o do projeto, o 6.12, gravado pelo CMake em
+# kinein-qt-bins.txt. Ate' esta data ele saia do /usr/lib/qt6 (o 6.10.2 do
+# Ubuntu), e o PATH nunca foi prova de ferramenta funcional (em 2026-09-17 o
+# `qmllint` do PATH era o wrapper do qtchooser para um Qt 5 inexistente).
 QMLLINT="${KINEIN_QMLLINT:-}"
 if [ -z "$QMLLINT" ]; then
-    for candidate in /usr/lib/qt6/bin/qmllint qmllint-qt6 qmllint; do
-        if "$candidate" --version >/dev/null 2>&1; then
-            QMLLINT="$candidate"
-            break
-        fi
-    done
-    if [ -z "$QMLLINT" ]; then
-        echo "erro: qmllint do Qt 6 nao encontrado (instale qt6-declarative-dev-tools)" >&2
+    rsp_build="${RSP%/ui/.rcc/qmllint/kinein-vectis.rsp}"
+    if [ ! -f "$rsp_build/kinein-qt-bins.txt" ]; then
+        echo "erro: $rsp_build nao diz qual e' o Qt do build (kinein-qt-bins.txt);" >&2
+        echo "      configure-o (cmake --fresh --preset dev-local) ou passe KINEIN_QMLLINT." >&2
         exit 1
     fi
+    QMLLINT="$(cat "$rsp_build/kinein-qt-bins.txt")/qmllint"
 fi
+if ! qmllint_version="$("$QMLLINT" --version 2>/dev/null)"; then
+    echo "erro: $QMLLINT nao responde --version" >&2
+    exit 1
+fi
+echo "qmllint: $QMLLINT ($qmllint_version)"
 
 # A copia que o lint vai ler tem de ser a arvore de agora. Arquivo com
 # QT_RESOURCE_ALIAS e' achatado em KineinVectis/<nome>; sem alias, mantem o

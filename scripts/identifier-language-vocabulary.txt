@@ -235,6 +235,7 @@ binary
 bind
 binding
 bindings
+bins
 bits
 black
 blame

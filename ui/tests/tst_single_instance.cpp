@@ -11,8 +11,10 @@
 // vivem no `main`, onde ha' sistema operacional e compositor.
 #include "single_instance.h"
 
+#include <QDir>
 #include <QEventLoop>
 #include <QFileInfo>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QtTest>
@@ -32,6 +34,18 @@ using kinein::sameWorkspace;
 using kinein::socketPathFor;
 
 namespace {
+
+// O TMPDIR do gate pode ser longo; sun_path tem 108 bytes. O runtime da
+// fixture fica curto no cache em disco e sai no destrutor do QTemporaryDir
+// (52 §14.49, 2026-10-24), sem depender do nome da pasta de provas.
+QString socketRuntimeTemplate()
+{
+    const QString cache = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation);
+    if (cache.isEmpty() || !QDir{}.mkpath(cache)) {
+        return {};
+    }
+    return QDir{cache}.filePath(QStringLiteral("kv-sock-XXXXXX"));
+}
 
 // O DONO ESPERA PELO MESMO CAMINHO DA PRODUCAO: a escuta do `watchIncoming`
 // (o QSocketNotifier no Unix, o sinal do QLocalServer no Windows) e so' entao
@@ -176,7 +190,7 @@ void TestSingleInstance::only_the_exact_yes_counts_as_yes()
 // aberto NAO abre a segunda janela.
 void TestSingleInstance::a_live_owner_answers_and_the_newcomer_steps_aside()
 {
-    QTemporaryDir runtime;
+    QTemporaryDir runtime{socketRuntimeTemplate()};
     QVERIFY(runtime.isValid());
     const QString project = QStringLiteral("/home/alguem/projeto");
     const QString socket = socketPathFor(runtime.path(), project);
@@ -201,7 +215,7 @@ void TestSingleInstance::a_live_owner_answers_and_the_newcomer_steps_aside()
 // nao — e diz RAPIDO, em vez de deixar o outro lado esperar o prazo.
 void TestSingleInstance::an_owner_of_another_folder_says_no_right_away()
 {
-    QTemporaryDir runtime;
+    QTemporaryDir runtime{socketRuntimeTemplate()};
     QVERIFY(runtime.isValid());
     const QString socket = socketPathFor(runtime.path(), QStringLiteral("/qualquer"));
     const int ownerFd = kinein::listenFor(socket);
@@ -242,7 +256,7 @@ void TestSingleInstance::an_owner_of_another_folder_says_no_right_away()
 // e o seguinte assume sem esperar nada.
 void TestSingleInstance::an_orphan_socket_is_taken_over()
 {
-    QTemporaryDir runtime;
+    QTemporaryDir runtime{socketRuntimeTemplate()};
     QVERIFY(runtime.isValid());
     const QString project = QStringLiteral("/home/alguem/projeto");
     const QString socket = socketPathFor(runtime.path(), project);
@@ -269,7 +283,7 @@ void TestSingleInstance::an_orphan_socket_is_taken_over()
 // nenhum, porque o terminal esta' na frente de alguem.
 void TestSingleInstance::with_nobody_listening_the_newcomer_just_opens()
 {
-    QTemporaryDir runtime;
+    QTemporaryDir runtime{socketRuntimeTemplate()};
     QVERIFY(runtime.isValid());
     const QString socket = socketPathFor(runtime.path(), QStringLiteral("/home/a/p"));
     // Mesmo raciocinio: o ponto e' nao esperar o prazo, e nao um numero.

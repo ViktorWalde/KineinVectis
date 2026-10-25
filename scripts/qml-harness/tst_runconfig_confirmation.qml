@@ -10,6 +10,19 @@ Item {
     function check(condition, message) {
         if (!condition) { failures++; console.error("FALHAS: " + message); }
     }
+    // QObject preserva identidade no sinal var; objeto JS e' copiado no 6.12.
+    QtObject {
+        id: tabEvent
+        property int key: Qt.Key_Tab
+        property int modifiers: Qt.NoModifier
+        property bool accepted: false
+    }
+    QtObject {
+        id: backEvent
+        property int key: Qt.Key_Backtab
+        property int modifiers: Qt.ShiftModifier
+        property bool accepted: false
+    }
     QtObject {
         id: client
         property bool connected: true
@@ -58,12 +71,12 @@ Item {
         const commandField = find(editor, "runConfigCommand");
         const cancel = find(editor, "runConfigCancel");
         const save = find(editor, "runConfigSave");
-        // Offscreen checks focus intent; Xvfb covers the actual key events/window.
+        // Offscreen confere a logica; teclas reais sao validadas pelo autor.
         nameField.forceActiveFocus();
-        let tab = {key: Qt.Key_Tab, modifiers: Qt.NoModifier, accepted: false};
+        const tab = tabEvent;
         nameField.keyPressed(tab);
         check(tab.accepted && commandField.focus, "Tab segue do nome ao comando");
-        let back = {key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, accepted: false};
+        const back = backEvent;
         commandField.keyPressed(back);
         check(back.accepted && nameField.focus, "Shift+Tab volta ao nome");
         nameField.keyPressed({key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier, accepted: false});

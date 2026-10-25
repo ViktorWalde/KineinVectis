@@ -241,8 +241,14 @@ reconfigure o preset debug. O build precisa ter gerado o `.qmltypes`.
 `KINEIN_QML_RSP` e `KINEIN_QMLLINT` continuam disponíveis para o caminho
 explícito de response file. Sem `.rsp`, o alvo CMake usa o binário da mesma
 instalação Qt do build; um `KINEIN_QMLLINT` isolado é rejeitado.
-No Ubuntu, os testes de lógica precisam do pacote `qml-qt6`: o executável
-é `/usr/lib/qt6/bin/qml`, não o wrapper de Qt 5 que pode existir no PATH.
+Desde 2026-10-24, o Qt do projeto é o 6.12 (40 §5). O módulo
+`cmake/KineinQt.cmake` procura a instalação oficial mais recente em
+`~/Qt/6.12.*/gcc_64`, ou o prefixo explícito `-DKINEIN_QT_PREFIX=/caminho`.
+Recusa outra versão e grava `kinein-qt-bins.txt` em cada build. O qmllint,
+runner QML, qmlformat e qmlls da exercitação saem dessa instalação.
+Após instalar ou trocar o Qt, reconfigure com `cmake --fresh --preset
+dev-local` e repita para `dev-local-release` e `linux-clang-debug-strict`.
+Instalação e dependências no [14](14-ambiente-de-desenvolvimento.md).
 
 Execucao manual da IDE:
 

@@ -6008,3 +6008,123 @@ frontend. Medido na data:
 - Um build configurado com o Qt 6.10 reprova na configuração.
 - Gate rápido estrito verde, com cada ferramenta Qt no 6.12.0.
 - A IDE abre no 6.12 na tela do autor, com o PIO Home no WebEngine 6.12.
+
+**Implementação em 2026-10-24.** A fatia anterior está no commit
+`60b56d0`. O WebEngine 6.12.0 já está instalado no prefixo do usuário. Os
+três presets foram reconfigurados com o Qt 6.12.0, e a configuração negativa
+com o 6.10.2 reprovou. Provas em `~/.cache/kinein-h4b2b4l-proofs/`.
+Na primeira execução do runner 6.12.0, 169 dos 171 harnesses passaram,
+incluindo `tst_grafana_web`. Reprovaram três comparações da intenção nativa
+em `tst_native_flash_transport` e duas verificações de Tab/Shift+Tab em
+`tst_runconfig_confirmation`. Antes de corrigir, comparar os valores
+transportados e a entrega do evento: distinguir perda de conteúdo de ordem
+de propriedades na serialização, e foco real de mutação do objeto de evento
+do teste. A exercitação deve usar `qmlformat` e `qmlls` do prefixo gravado
+pelo build, pelo PATH privado dessa etapa, conferindo as versões e os
+caminhos antes de iniciar o core. Não altera a descoberta de ferramentas
+para os projetos do usuário.
+
+**Diagnóstico medido em 2026-10-24.** O transporte nativo mantém todos os
+valores, inclusive o objeto `selection` e o array `args`; o Qt 6.12 devolve
+as chaves em outra ordem. O teste passa a comparar conteúdo recursivamente,
+sem depender da representação textual do JSON. Nos dois gestos de foco,
+o destino está correto, mas `accepted` no objeto JavaScript do teste fica
+`false`: o sinal recebe uma cópia. A fixture deve usar um `QtObject` como
+evento, preservando identidade e verificando a aceitação e o foco. Nenhuma
+regra de transporte ou navegação do produto precisa mudar por estes achados.
+O array transportado também é uma sequência Qt (`Array.isArray` é `false`),
+mas serializa como array JSON. A comparação normaliza ambos por JSON antes
+de percorrer as chaves, preservando ordem e tipo dos valores do contrato.
+
+**Prova após a correção dos testes (2026-10-24):** os 171 harnesses passam
+com o runner 6.12.0. O gate rápido estrito recompilou o frontend
+inteiro com o novo Qt, com temporários e amostragem em disco na pasta de
+provas. A validação na tela do autor continua separada dessa execução.
+
+**Achado do gate (2026-10-24).** A primeira rodada passou na compilação e
+no clang-tidy, mas três casos de socket real do `tst_single_instance`
+reprovaram ao escutar. Com `TMPDIR` dentro da pasta de provas, o
+`QTemporaryDir` acrescenta o nome do teste ao caminho, que já leva a pasta
+do gate: o socket excede os 108 bytes do Unix. A fixture precisa de um
+diretório curto próprio no cache genérico do usuário, removido pelo
+`QTemporaryDir`, em vez de usar o comprimento arbitrário do `TMPDIR` como
+se fosse o `XDG_RUNTIME_DIR`. O contrato de instância única não muda.
+O autor autorizou prosseguir em 2026-10-24; ainda não relatou a validação
+visual do Qt 6.12/PIO Home.
+
+**Achado do qmllint 6.12 (2026-10-24).** Cinco referências a ids colidem
+com propriedades homônimas: os três controllers passados ao
+`AppEnvironmentDomains`, o cabeçalho do inspetor de contexto e
+`contextFacts.originLabel`. O lint emite dez achados contando as notas de
+localização. Qualificar as referências públicas pelo `root` e dar ao id
+visual do cabeçalho um nome próprio; preservar aliases e a API dos
+controllers. Não desativar a diagnóstica nem alterar o EditorController.
+
+**Achado do smoke (2026-10-24).** A catraca de objetos obsoletos também
+lia alvos do Ninja que não são objetos: o fonte gerado
+`kinein-ui-puro_autogen/mocs_compilation.cpp`, mantido por `restat` porque
+seu conteúdo não mudou, foi comparado ao ctime da configuração do
+WebEngine recém-instalado. Isso não mede mistura de objetos/ODR. Restringir
+a catraca aos objetos `.o`/`.obj`, como promete o contrato do gate, e provar
+que um objeto compilado realmente antigo continua reprovando. Não precisa
+apagar nem recompilar artefatos só para alterar sua data.
+
+**Feito em 2026-10-24 (40.7 §7.359).** Gate rápido estrito TUDO VERDE em
+434 s: 1.334 Rust, 8 CTest, qmllint limpo e 171 harnesses no Qt 6.12.0.
+Os três presets apontam para o prefixo oficial; debug e release foram
+compilados e o `ldd` de ambos usa as bibliotecas 6.12.0. Cada binário passou
+pelo primeiro frame e pelas 33 superfícies sem avisos. Quatro mutações dos
+testes QML detectadas; objeto antigo ainda detectado pela catraca do smoke.
+Nenhuma entrada nova no `/tmp`. A validação visual Qt/PIO Home foi pedida;
+o autor autorizou prosseguir, sem relatar o resultado na tela.
+
+### 14.50 0.4.1h4b2b4m — AppImage local de desenvolvimento no Qt 6.12 (desenho, 2026-10-24)
+
+**Problema.** O autor autorizou um artefato local da 0.4.1 ainda aberta,
+identificado como desenvolvimento (40 §5). O builder portátil existente usa
+Qt 6.4.2 do Debian 12; isso diverge do Qt 6.12 do projeto. A receita e o
+smoke também exigem os antigos plugins `libqwayland-egl.so` e
+`libqwayland-generic.so`. Medido no Qt 6.12.0 oficial em 2026-10-24: há
+`libqwayland.so`, `libQt6WaylandClient.so.6` e os grupos de integração, sem
+`libQt6WaylandEglClientHwIntegration.so.6`. O instalador usa nomes fixos
+para o atalho, ícone e comando `kinein`, sobrescrevendo o estável.
+
+**Desenho e contrato.**
+
+1. Preservar a base Debian 12/glibc 2.36 e o Rust fixados por digest.
+   Instalar o Qt 6.12.0 oficial pelo `aqtinstall` no container, com WebEngine,
+   WebChannel e Positioning; garantir SVG, Wayland e Network no prefixo.
+   Avisar antes do download. O CMake recebe esse prefixo explicitamente;
+   nenhuma biblioteca Qt 6.4 do sistema participa do pacote.
+2. `KINEIN_VERSION` com sufixo de desenvolvimento identifica o artefato e a
+   UI, sem alterar o protocolo ou a versão Cargo do core. O worker recebe o
+   valor do wrapper e passa-o ao CMake. A versão padrão dos builds locais
+   continua saindo do `project()`.
+3. O canal de desenvolvimento tem id
+   `io.github.viktorwalde.KineinVectis.Development`, nome público
+   **Kinein Vectis (desenvolvimento)** e metadados coerentes no AppDir,
+   inclusive desktop id usado pelo Qt em execução. Derivar os metadados dos
+   modelos existentes; não manter duas descrições do mesmo produto.
+4. O instalador lê a identidade embutida. Desenvolvimento instala atalho,
+   ícone e comando separados (`kinein-dev`), preservando o estável e o
+   atalho do checkout. O smoke executa o instalador somente em HOME/XDG de
+   teste. Não instalar o artefato na sessão do autor.
+5. Exigir os plugins e dependências do Qt 6.12, mantendo as verificações de
+   RPATH, SVG, Wayland, WebEngine e Network. Não criar compatibilidade nova
+   com o Qt 6.4. QtQuick segue usando software por padrão.
+6. Build, cache e temporários ficam em disco; provas e árvores de teste em
+   `~/.cache/`. Respeitar os limites de memória/jobs e não compilar durante
+   `verificar-cpp.sh`. A entrega pronta fica em `dist/`, com checksum,
+   instalador e tutorial, sem push, tag, release ou publicação externa.
+
+**Validação planejada.** Gate rápido estrito e `cargo fmt`; metadados e
+instalação isolada preservam arquivos do estável; UI anuncia versão de
+desenvolvimento; `scripts/testar-appimage.sh` e smoke no Debian mínimo sem
+Qt do sistema, com primeiro frame e passeio por superfícies. Conferir a
+versão das bibliotecas Qt e o maior símbolo glibc exigido. A validação
+visual e de fluxo é do autor, na IDE real; smoke offscreen não a substitui.
+
+**Limites.** Só x86_64 e glibc compatível com o baseline medido. Não publica
+nem fecha a 0.4.1, e não substitui o AppImage após a edição especial. A
+regra existente de uma janela por pasta continua: as versões não devem ser
+donas simultâneas do mesmo `.kinein/`.

@@ -88,12 +88,16 @@ def objetos_obsoletos(build_dir: Path) -> list[tuple[Path, Path, int, int]]:
             objeto, pior = None, None
             if ": #deps" not in linha:
                 continue
-            candidato = build_dir / linha.split(": #deps", 1)[0]
+            candidate = build_dir / linha.split(": #deps", 1)[0]
+            # O Ninja tambem registra fontes do autogen, preservados por
+            # restat. So' objetos compilados podem misturar ABI (52 §14.49).
+            if candidate.suffix not in {".o", ".obj"}:
+                continue
             try:
-                mtime = os.stat(candidato).st_mtime_ns
+                mtime = os.stat(candidate).st_mtime_ns
             except FileNotFoundError:
                 continue
-            objeto = candidato
+            objeto = candidate
             continue
         if objeto is None:
             continue

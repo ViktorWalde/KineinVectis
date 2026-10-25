@@ -2784,7 +2784,6 @@ scripts/verificar_binario_abre.py	ambiente	3
 scripts/verificar_binario_abre.py	armadilha	7
 scripts/verificar_binario_abre.py	avisos	4
 scripts/verificar_binario_abre.py	caminho	6
-scripts/verificar_binario_abre.py	candidato	3
 scripts/verificar_binario_abre.py	cauda	3
 scripts/verificar_binario_abre.py	codigo	7
 scripts/verificar_binario_abre.py	completo	3

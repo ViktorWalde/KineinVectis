@@ -10,7 +10,7 @@
 # inclusive o `CoreClient`) e tira-los do `qt_add_qml_module` quebraria o
 # registro. A fronteira cresce quando uma unidade puder sair sem quebrar isso —
 # nao por decreto de uma vez.
-find_package(Qt6 6.4 REQUIRED COMPONENTS Test)
+find_package(Qt6 REQUIRED COMPONENTS Test)
 
 # O ALVO AGREGADO existe porque o `verificar-cpp-testes.sh` compilava um alvo
 # pelo NOME (`tst_cli_args`). O segundo teste do projeto, em 2026-09-25, nao foi

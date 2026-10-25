@@ -14,25 +14,31 @@
 #
 # Uso: bash scripts/verificar-qml-logica.sh
 # Um único fixture: KINEIN_QML_TEST=tst_project_tree_drop bash scripts/verificar-qml-logica.sh
-# Outro Qt: KINEIN_QML_RUNNER=/caminho/qml (o G0.3 usa o Qt 6.4 do AppImage).
+# Outro runner: KINEIN_QML_RUNNER=/caminho/qml.
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# O RUNNER E' O DO QT DO BUILD (2026-10-24, roadmaps/52 §14.49). Os harnesses
+# testam o QML da UI, entao rodam no Qt com que ela compila (o 6.12 do projeto,
+# gravado pelo CMake em kinein-qt-bins.txt), nunca no do PATH: ate' esta data
+# o `qml6` do PATH era o 6.10.2 do Ubuntu. O build e' o que o orquestrador
+# acabou de compilar (KINEIN_QML_BUILD_DIR); a mao, o build/dev-local.
 qml_runner="${KINEIN_QML_RUNNER:-}"
 if [ -z "$qml_runner" ]; then
-    for candidate in qml6 qml-qt6 /usr/lib/qt6/bin/qml qml; do
-        if command -v "$candidate" >/dev/null 2>&1; then
-            qml_runner="$candidate"
-            break
-        fi
-    done
+    qt_build="${KINEIN_QML_BUILD_DIR:-build/dev-local}"
+    if [ ! -f "$qt_build/kinein-qt-bins.txt" ]; then
+        echo "erro: $qt_build nao diz qual e' o Qt do build (kinein-qt-bins.txt);" >&2
+        echo "      configure-o: cmake --fresh --preset dev-local" >&2
+        exit 1
+    fi
+    qml_runner="$(cat "$qt_build/kinein-qt-bins.txt")/qml"
 fi
-
-if [ -z "$qml_runner" ]; then
-    echo "runner QML nao encontrado (pacote qt6-declarative)." >&2
+if ! runner_version="$("$qml_runner" --version 2>/dev/null)"; then
+    echo "erro: runner QML $qml_runner nao responde --version" >&2
     exit 1
 fi
+echo "runner QML: $qml_runner ($runner_version)"
 
 # ESPELHO PLANO DO MODULO KineinVectis (2026-09-04).
 #

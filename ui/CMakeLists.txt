@@ -1,7 +1,9 @@
 # Qt/QML frontend of Kinein Vectis.
 # Presentation only: every action is sent to kinein-core over JSON-RPC.
 
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Qml Quick)
+# A versao e' conferida pelo kinein_require_project_qt (cmake/KineinQt.cmake).
+find_package(Qt6 ${KINEIN_QT_VERSION} REQUIRED COMPONENTS Core Gui Qml Quick)
+kinein_require_project_qt()
 
 qt_standard_project_setup()
 

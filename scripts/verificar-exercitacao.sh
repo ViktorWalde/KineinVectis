@@ -33,6 +33,23 @@ cd "$(dirname "$0")/.." || exit 1
 
 echo "== exercitacao (o core contra as ferramentas reais) =="
 
+# As ferramentas QML sao as do Qt da UI (52 §14.49, 2026-10-24).
+# PATH privado desta etapa: o detector do core escolhe estes executaveis.
+qt_build="${KINEIN_QML_BUILD_DIR:-build/dev-local}"
+if [ ! -f "$qt_build/kinein-qt-bins.txt" ]; then
+    echo "erro: configure $qt_build para registrar o Qt do build (kinein-qt-bins.txt)." >&2
+    exit 1
+fi
+qt_bins="$(cat "$qt_build/kinein-qt-bins.txt")"
+for qt_tool in qmlformat qmlls; do
+    if ! qt_version="$("$qt_bins/$qt_tool" --version 2>&1)"; then
+        echo "erro: $qt_bins/$qt_tool nao responde --version" >&2
+        exit 1
+    fi
+    echo "$qt_tool: $qt_bins/$qt_tool ($qt_version)"
+done
+export PATH="$qt_bins:$PATH"
+
 # Sempre, e nao so' quando o binario falta (2026-10-08): um core ANTIGO
 # provaria o codigo de ontem. Incremental, custa menos de 1 s sem mudanca.
 cargo build -q -p kinein-core || exit 1
@@ -64,7 +81,7 @@ printf 'def test_soma():\n    assert 1 + 1 == 2\n' > "$raiz/tests/test_gera.py"
 # python.status resolve o interpretador desta maquina e diz se ha' ambiente.
 printf '[project]\nname = "exercitacao"\nversion = "0.1.0"\n' > "$raiz/pyproject.toml"
 # Um .qml com uma propriedade que nao existe (59 §2.4, 2026-10-08): o qmlls
-# REAL, achado fora do PATH (/usr/lib/qt6/bin), tem de apontar `widht`.
+# REAL, do Qt do build, tem de apontar `widht`.
 mkdir -p "$raiz/ui"
 printf 'import QtQuick\n\nItem {\n    widht: 10\n}\n' > "$raiz/ui/Erro.qml"
 # Uma compile_commands.json escrita a mao, na forma `command` do padrao do
@@ -316,17 +333,8 @@ verifica 24 "toolchain.installable (a Arm GNU 15.2.rel1 com o sha256 publicado)"
 verifica 25 "toolchain.inspectSysroot (uma pasta sem usr/include e' dita vazia)" '"verdict":"vazia para o compilador'
 verifica 29 "format.text de QML (o qmlformat real, pela copia privada)" '"formatter":"qmlformat"'
 verifica 29 "format.text de QML (o buffer volta formatado)" 'width: 10'
-qmlls_real=""
-for candidate in "$(command -v qmlls || true)" /usr/lib/qt6/bin/qmlls \
-    /usr/lib/x86_64-linux-gnu/qt6/bin/qmlls /usr/lib64/qt6/bin/qmlls; do
-    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
-        qmlls_real="$candidate"
-        break
-    fi
-done
-if [ -z "$qmlls_real" ]; then
-    record_unproven "exercitacao" "lsp de QML (qmlls)" "qmlls ausente nesta maquina"
-elif printf '%s\n' "$resposta" | grep '"event.lsp.diagnostics"' | grep 'Erro.qml' | grep -q 'widht'; then
+qmlls_real="$qt_bins/qmlls"
+if printf '%s\n' "$resposta" | grep '"event.lsp.diagnostics"' | grep 'Erro.qml' | grep -q 'widht'; then
     echo "  ok lsp de QML (o qmlls real apontou a propriedade inexistente no Erro.qml)"
 else
     echo "  ✗ lsp de QML: o qmlls real ($qmlls_real) nao diagnosticou o Erro.qml" >&2
