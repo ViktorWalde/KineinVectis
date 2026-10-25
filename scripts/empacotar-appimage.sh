@@ -36,6 +36,20 @@ APPDIR="$BUILD_ROOT/AppDir"
 DIST_DIR="${KINEIN_APPIMAGE_DIST_DIR:-$REPO_ROOT/dist}"
 TOOLS_DIR="${KINEIN_APPIMAGE_TOOLS_DIR:-$BUILD_ROOT/cache/tools}"
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$BUILD_ROOT/cargo-target}"
+VERSION="${KINEIN_VERSION:-$(sed -n 's/^project(kinein-vectis VERSION \([^ ]*\).*/\1/p' "$REPO_ROOT/CMakeLists.txt")}"
+PACKAGE_ID=io.github.viktorwalde.KineinVectis
+if [[ "${KINEIN_APPIMAGE_DEVELOPMENT:-0}" == 1 ]]; then
+    VERSION="${KINEIN_VERSION:-0.4.1-dev.h4b2b4m}"
+    PACKAGE_ID+=.Development
+    if [[ "$VERSION" != *-dev* ]]; then
+        echo "erro: AppImage de desenvolvimento precisa de versao com sufixo -dev." >&2
+        exit 1
+    fi
+fi
+if [[ ! "$VERSION" =~ ^[0-9A-Za-z.+-]+$ ]]; then
+    echo "erro: versao invalida para o AppImage: $VERSION" >&2
+    exit 1
+fi
 
 LINUXDEPLOY_VERSION="1-alpha-20251107-1"
 LINUXDEPLOY_COMMIT="cc7b86472c3caa3fd729b9dc502fd2aa78394257"
@@ -47,8 +61,8 @@ QT_PLUGIN_COMMIT="ce5291e25979d7d6417551d787f308b88c1b8d76"
 QT_PLUGIN_SHA256="15106be885c1c48a021198e7e1e9a48ce9d02a86dd0a1848f00bdbf3c1c92724"
 QT_PLUGIN_URL="https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/$QT_PLUGIN_VERSION/linuxdeploy-plugin-qt-x86_64.AppImage"
 
-TYPE2_RUNTIME_COMMIT="75849dce7cc37e4319b633df1f116ca895c71a12"
-TYPE2_RUNTIME_SHA256="1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf"
+TYPE2_RUNTIME_COMMIT="fedfad51acc2860b2916a1eef32ba4a500ff31ef"
+TYPE2_RUNTIME_SHA256="617aa77314d57c8b8e4fae9c3f0b35af7b30d5529cb69e98f64f92510ed98a46"
 TYPE2_RUNTIME_URL="https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64"
 
 LINUXDEPLOY="$TOOLS_DIR/linuxdeploy-x86_64.AppImage"
@@ -125,7 +139,7 @@ copy_wayland_plugin_group() {
     if [[ ! -d "$source_dir" ]]; then
         echo "erro: grupo de plugins Wayland ausente no builder:" >&2
         echo "  $source_dir" >&2
-        echo "confirme que qt6-wayland está instalado no Containerfile." >&2
+        echo "confirme os arquivos qtwayland do SDK Qt 6.12 no Containerfile." >&2
         exit 1
     fi
 
@@ -189,7 +203,8 @@ for command_name in \
     ldd \
     mktemp \
     ninja \
-    qmake6 \
+    qmake \
+    python3 \
     sha256sum
 do
     require_command "$command_name"
@@ -262,13 +277,15 @@ cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_COMPILER=clang++ \
     -DCMAKE_INSTALL_PREFIX=/usr \
+    -DKINEIN_QT_PREFIX="$KINEIN_QT_PREFIX" \
+    -DKINEIN_VERSION="$VERSION" \
     -DKINEIN_ENABLE_HARDENING=ON \
     -DKINEIN_ENABLE_SANITIZERS=OFF \
     -DKINEIN_WARNINGS_AS_ERRORS=ON
 
 cmake --build \
     "$NATIVE_BUILD_DIR" \
-    --parallel "$(nproc)"
+    --parallel "${CMAKE_BUILD_PARALLEL_LEVEL:-6}"
 
 echo "==> montando AppDir"
 
@@ -286,21 +303,10 @@ install \
     "$CARGO_TARGET_DIR/release/kinein-core" \
     "$APPDIR/usr/bin/kinein-core"
 
-desktop-file-validate \
-    "$APPDIR/usr/share/applications/io.github.viktorwalde.KineinVectis.desktop"
-
-VERSION="$(
-    sed -n \
-        's/^project(kinein-vectis VERSION \([^ ]*\).*/\1/p' \
-        "$REPO_ROOT/CMakeLists.txt"
-)"
-
-VERSION="${KINEIN_VERSION:-$VERSION}"
-
-if [[ -z "$VERSION" ]]; then
-    echo "erro: não foi possível determinar a versão do produto." >&2
-    exit 1
+if [[ "${KINEIN_APPIMAGE_DEVELOPMENT:-0}" == 1 ]]; then
+    python3 "$REPO_ROOT/scripts/prepare_appimage_metadata.py" "$APPDIR" "$VERSION" "$(date +%F)"
 fi
+desktop-file-validate "$APPDIR/usr/share/applications/$PACKAGE_ID.desktop"
 
 OUTPUT_BASENAME="Kinein-Vectis-$VERSION-x86_64.AppImage"
 OUTPUT_FILE="$DELIVERY_STAGING_DIR/$OUTPUT_BASENAME"
@@ -308,11 +314,15 @@ FINAL_OUTPUT_FILE="$DIST_DIR/$OUTPUT_BASENAME"
 
 export APPIMAGE_EXTRACT_AND_RUN=1
 
-QMAKE="$(
-    command -v qmake6 ||
-        command -v qmake
-)"
+QMAKE="$(cat "$NATIVE_BUILD_DIR/kinein-qt-bins.txt")/qmake"
 export QMAKE
+
+# O SDK oficial nao esta' no ldconfig do Debian. So' o deployer recebe o
+# prefixo; as provas de RPATH abaixo continuam sem LD_LIBRARY_PATH.
+deploy_qt() {
+    LD_LIBRARY_PATH="$KINEIN_QT_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+        "$LINUXDEPLOY" "$@"
+}
 
 # O segundo caminho so' tem o `import QtWebEngine` da aba Web do Grafana, que
 # a IDE cria sob demanda e sem import estatico (59 §6.1).
@@ -336,8 +346,7 @@ PLATFORM_PLUGINS=(
     libqxcb.so
     libqoffscreen.so
     libqminimal.so
-    libqwayland-egl.so
-    libqwayland-generic.so
+    libqwayland.so
 )
 
 echo "==> validando plugins de plataforma no builder"
@@ -348,7 +357,7 @@ for plugin_name in "${PLATFORM_PLUGINS[@]}"; do
     if [[ ! -f "$plugin_path" ]]; then
         echo "erro: plugin Qt obrigatório ausente no builder:" >&2
         echo "  $plugin_path" >&2
-        echo "confirme que qt6-wayland está instalado no Containerfile." >&2
+        echo "confirme os arquivos qtwayland do SDK Qt 6.12 no Containerfile." >&2
         exit 1
     fi
 
@@ -367,7 +376,7 @@ export EXTRA_PLATFORM_PLUGINS
 # so' avisa "Unsupported image format" no stderr (AppImage de 2026-10-01).
 # `webenginecore`: a aba Web do Grafana (0.154.0, 59 §6.1). O deployer do
 # plugin leva o QtWebEngineProcess, os .pak e os locales.
-export EXTRA_QT_MODULES="svg;webenginecore"
+export EXTRA_QT_MODULES="svg;webenginecore;network"
 
 # A libxkbcommon e' do SISTEMA, nao do pacote: ela le os dados de teclado do
 # sistema (/usr/share/X11/locale/*/Compose), e a do Debian 12 empacotada nao
@@ -383,7 +392,7 @@ LINUXDEPLOY_EXCLUDES=(--exclude-library 'libxkbcommon.so*' --exclude-library 'li
 
 echo "==> primeira etapa: empacotando Qt, QML e plugins de plataforma"
 
-"$LINUXDEPLOY" \
+deploy_qt \
     --appdir "$APPDIR" \
     "${LINUXDEPLOY_EXCLUDES[@]}" \
     --plugin qt
@@ -398,7 +407,7 @@ REQUIRED_QT_PLUGINS=(
 for required_plugin in "${REQUIRED_QT_PLUGINS[@]}"; do
     if [[ ! -f "$APPDIR/usr/plugins/$required_plugin" ]]; then
         echo "erro: plugin Qt obrigatório ausente do AppDir: $required_plugin" >&2
-        echo "confirme libqt6svg6 no Containerfile e EXTRA_QT_MODULES=svg." >&2
+        echo "confirme qtsvg no SDK do Containerfile e EXTRA_QT_MODULES=svg." >&2
         exit 1
     fi
     echo "  incluído: $required_plugin"
@@ -418,13 +427,12 @@ done
 
 echo "==> segunda etapa: empacotando dependências dos plugins Wayland"
 
-"$LINUXDEPLOY" \
+deploy_qt \
     --appdir "$APPDIR" \
     "${LINUXDEPLOY_EXCLUDES[@]}"
 
 REQUIRED_WAYLAND_FILES=(
-    "$APPDIR/usr/plugins/platforms/libqwayland-egl.so"
-    "$APPDIR/usr/plugins/platforms/libqwayland-generic.so"
+    "$APPDIR/usr/plugins/platforms/libqwayland.so"
     "$APPDIR/usr/plugins/wayland-graphics-integration-client/libqt-plugin-wayland-egl.so"
     "$APPDIR/usr/plugins/wayland-shell-integration/libxdg-shell.so"
 )
@@ -464,20 +472,6 @@ fi
 
 echo "  ok: libQt6WaylandClient"
 
-if ! find \
-    "$APPDIR/usr/lib" \
-    -maxdepth 1 \
-    -type f \
-    -name 'libQt6WaylandEglClientHwIntegration.so*' \
-    -print -quit |
-    grep -q .
-then
-    echo "erro: libQt6WaylandEglClientHwIntegration não foi empacotada." >&2
-    exit 1
-fi
-
-echo "  ok: libQt6WaylandEglClientHwIntegration"
-
 echo "==> validando dependências dinâmicas dos plugins Wayland"
 
 for plugin_file in "${REQUIRED_WAYLAND_FILES[@]}"; do
@@ -491,10 +485,11 @@ install \
     -m 0755 \
     "$REPO_ROOT/packaging/appimage/kinein-portable-graphics-hook.sh" \
     "$APPDIR/apprun-hooks/kinein-portable-graphics-hook.sh"
+printf '\nexport KINEIN_DESKTOP_FILE=%s\n' "$PACKAGE_ID" >> "$APPDIR/apprun-hooks/kinein-portable-graphics-hook.sh"
 
 echo "==> gerando AppImage"
 
-"$LINUXDEPLOY" \
+deploy_qt \
     --appdir "$APPDIR" \
     "${LINUXDEPLOY_EXCLUDES[@]}" \
     --output appimage
@@ -521,6 +516,11 @@ install \
     -m 0755 \
     "$REPO_ROOT/scripts/instalar-appimage.sh" \
     "$DELIVERY_STAGING_DIR/instalar-kinein-vectis.sh"
+
+if [[ "${KINEIN_APPIMAGE_DEVELOPMENT:-0}" == 1 ]]; then
+    sed -i 's/KINEIN_APPIMAGE_CHANNEL:-stable/KINEIN_APPIMAGE_CHANNEL:-development/' \
+        "$DELIVERY_STAGING_DIR/instalar-kinein-vectis.sh"
+fi
 
 # O MODELO DO COMANDO CURTO VIAJA DENTRO DO INSTALADOR. Quem baixa recebe dois
 # arquivos — o AppImage e o instalador —, e o instalador precisa bastar. O

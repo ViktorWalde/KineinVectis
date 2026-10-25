@@ -15,7 +15,7 @@ echo "==> construindo runtime mínimo de validação"
 podman build \
     --file "$REPO_ROOT/packaging/appimage/Containerfile.smoke" \
     --tag "$IMAGE" \
-    "$REPO_ROOT"
+    "$REPO_ROOT/packaging/appimage"
 
 echo "==> testando sem rede, Qt/Rust SDKs ou compiladores no host convidado"
 # Fedora/SELinux exige rótulo também no mount somente-leitura do smoke.

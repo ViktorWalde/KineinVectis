@@ -195,3 +195,6 @@ getrandom
 settimeout
 # cgroup: o "control group" do Linux, onde o gate le' o teto e as mortes por memoria do proprio escopo (52 §14.47).
 cgroup
+# etree/getroot: modulo e API oficiais de xml.etree.ElementTree, biblioteca
+# padrao do Python, usados para os metadados AppStream (52 §14.50).
+etree getroot

@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.25)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(kinein-vectis VERSION 0.3.9 LANGUAGES CXX)
+set(KINEIN_VERSION "${PROJECT_VERSION}" CACHE STRING "Versao exibida pela UI e pelo pacote")
 
 include(GNUInstallDirs)
 

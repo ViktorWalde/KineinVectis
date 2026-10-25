@@ -27,12 +27,13 @@ if [[ ! -f "$BUILDER_FILE" ]]; then
     exit 1
 fi
 
-echo "==> construindo builder AppImage fixado (Debian 12 / Rust 1.96.1)"
+echo "==> construindo builder AppImage fixado (Debian 12 / Rust 1.96.1 / Qt 6.12.0 oficial)"
+echo "==> a primeira rodada baixa o SDK Qt, inclusive WebEngine, para o container"
 
 "$CONTAINER_ENGINE" build \
     --file "$BUILDER_FILE" \
     --tag "$BUILDER_IMAGE" \
-    "$REPO_ROOT"
+    "$REPO_ROOT/packaging/appimage"
 
 VOLUME_SPEC="$REPO_ROOT:/workspace:rw"
 
@@ -48,9 +49,21 @@ RUN_ARGS=(
     --env CARGO_HOME=/workspace/build/appimage/cache/cargo
     --env KINEIN_APPIMAGE_TOOLS_DIR=/workspace/build/appimage/cache/tools
     --env KINEIN_APPIMAGE_NATIVE_BUILD_DIR=/workspace/build/appimage/native-portable
+    --env "CMAKE_BUILD_PARALLEL_LEVEL=${CMAKE_BUILD_PARALLEL_LEVEL:-6}"
+    --env "CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-8}"
+    --env "KINEIN_APPIMAGE_DEVELOPMENT=${KINEIN_APPIMAGE_DEVELOPMENT:-0}"
+    --env "KINEIN_VERSION=${KINEIN_VERSION:-}"
+    --env TMPDIR=/workspace/build/appimage/cache/tmp
     --volume "$VOLUME_SPEC"
     --workdir /workspace
 )
+mkdir -p "$REPO_ROOT/build/appimage/cache/tmp"
+
+# A compilacao fica sem swap, como o gate; jobs conservadores fora dele.
+available_mib="$(awk '/^MemAvailable:/ {print int($2 / 1024)}' /proc/meminfo)"
+ceiling_mib=$((available_mib - 2048))
+if (( ceiling_mib < 1024 )); then ceiling_mib=1024; fi
+RUN_ARGS+=(--memory "${ceiling_mib}m" --memory-swap "${ceiling_mib}m")
 
 # Saida fora do dist/ (build de desenvolvimento que nao deve sobrescrever o
 # artefato publicado): a pasta precisa estar dentro do repositorio montado.

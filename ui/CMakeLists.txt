@@ -1019,9 +1019,9 @@ target_link_libraries(kinein-vectis PRIVATE kinein-ui-puro Qt6::Core Qt6::Gui Qt
 # No Windows, subsistema grafico: abrir pelo Iniciar nao abre um console junto,
 # e o terminal devolve o prompt sem o `fork` do Unix (60 §3.2, W3).
 set_target_properties(kinein-vectis PROPERTIES WIN32_EXECUTABLE TRUE)
-# A versao vem do `project(... VERSION ...)`: escrita a mao no main.cpp, ela
-# ficou em 0.1.0 enquanto o projeto estava em 0.2.0, e nada reprovava.
-target_compile_definitions(kinein-vectis PRIVATE KINEIN_VERSION="${PROJECT_VERSION}")
+# O padrao vem do project(); o pacote pode passar KINEIN_VERSION com sufixo
+# de desenvolvimento. Nunca escrever outra versao a mao no main.cpp.
+target_compile_definitions(kinein-vectis PRIVATE KINEIN_VERSION="${KINEIN_VERSION}")
 
 # Keep the install tree AppDir/FHS-compatible. The Rust core is built and
 # installed by the AppImage recipe because it is not a CMake target.

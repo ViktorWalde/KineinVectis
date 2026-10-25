@@ -6128,3 +6128,97 @@ visual e de fluxo é do autor, na IDE real; smoke offscreen não a substitui.
 nem fecha a 0.4.1, e não substitui o AppImage após a edição especial. A
 regra existente de uma janela por pasta continua: as versões não devem ser
 donas simultâneas do mesmo `.kinein/`.
+
+**Implementação (2026-10-24–25).** A fatia do Qt está no commit
+`7d54149`. O builder Debian 12/Rust fixado foi construído com o Qt 6.12.0
+oficial por aqtinstall 3.3.0; a lista oficial confirma SVG e Wayland nos
+arquivos base. A primeira conferência por `ldd` achou `libxkbfile.so.1` no
+WebEngine e `libwayland-cursor.so.0` no Wayland ausentes: acrescentar os
+pacotes correspondentes ao builder antes do empacotamento. A identidade e
+o instalador passaram em HOME isolada com uma versão estável de número
+maior ao lado: canal correto, nome/id de desenvolvimento, comando
+`kinein-dev` e sentinelas do estável/checkout preservados. Nenhuma instalação
+na sessão do autor. A compilação da UI no container respeita a regra de
+não executar durante o clang-tidy.
+
+**Runtime do AppImage (auditoria, 2026-10-24).** A primeira tentativa foi
+recusada pelo SHA256: o canal `continuous` já não serve o runtime auditado
+em julho. A [release oficial](https://github.com/AppImage/type2-runtime/releases/tag/continuous)
+de 2026-10-19 aponta para `fedfad51acc2860b2916a1eef32ba4a500ff31ef`,
+asset x86_64 `657374641`, SHA256
+`617aa77314d57c8b8e4fae9c3f0b35af7b30d5529cb69e98f64f92510ed98a46`.
+O [diff desde o pino anterior](https://github.com/AppImage/type2-runtime/compare/75849dce7cc37e4319b633df1f116ca895c71a12...fedfad51acc2860b2916a1eef32ba4a500ff31ef)
+tem só dois commits: diretórios de extração passam a `0700`, e o build de
+dependências remove caminhos temporários da informação de debug. Nenhuma
+mudança de licença, dependências, rede ou execução de AppRun. Hash do
+download coincide com o digest da API oficial; assinatura GPG válida com a
+chave obtida do commit anterior, fingerprint
+`570C77ACEA40C0F1B758902CBF96CCA56490F695`, em chaveiro isolado. Atualizar
+pino e registro de componentes; manter a recusa de qualquer hash diferente.
+
+**Build no baseline (2026-10-24).** O core release compilou em 3 min 47 s;
+a configuração da UI passou com Clang 14.0.6 e Qt 6.12.0. A compilação
+parou no moc incluído por `tst_startup_web.cpp`: o Clang 14 acusa CTAD nas
+estruturas geradas `QtMocHelpers::StringRefStorage`/`UintData`. Os outros
+testes já limitam essa diagnóstica ao include do moc. Aplicar o mesmo
+escopo neste teste; manter os avisos estritos no código escrito à mão.
+
+**Descoberta do SDK no deploy (2026-10-24).** Com a compilação concluída,
+o linuxdeploy não encontra `libQt6Quick.so.6` no executável instalado:
+o SDK oficial fica fora do cache de bibliotecas do sistema, ao contrário do
+Qt da distribuição anterior. Passar `LD_LIBRARY_PATH=<prefixo>/lib` somente
+às chamadas do deployer. Não gravar esse caminho no launcher nem usá-lo na
+prova final das dependências: `check_dynamic_dependencies` continua sem
+LD_LIBRARY_PATH, conferindo o RPATH do próprio AppDir.
+
+A conferência de todos os plugins exigidos, em 2026-10-24, também encontrou
+as bibliotecas XCB `libxkbcommon-x11`, `libxcb-icccm`, `libxcb-keysyms`,
+`libxcb-shape` e `libxcb-xkb`, além de `libwayland-egl`. O Qt do sistema
+anterior trazia essas dependências pelos pacotes; o SDK oficial exige que
+o builder as declare. Acrescentá-las e repetir o `ldd` antes da montagem.
+
+**Smoke do artefato (2026-10-24).** O AppImage foi gerado e a estrutura
+passou. O instalador real revelou uma diferença que a fixture de extração
+não media: `--appimage-extract` aceita apenas um prefixo, e não os dois
+filtros para ícone e desktop. Usar o prefixo comum `usr/share` e repetir o
+smoke com o runtime real. O instalador fica ao lado do AppImage; sua
+correção não altera o binário nem seu checksum.
+
+**Runtime mínimo (2026-10-24).** O smoke local passou, mas o Debian mínimo
+não tinha `libGL.so.1`, agora exigida pelo Qt Gui oficial. Ela pertence à
+pilha gráfica do host, excluída do AppImage pela política existente.
+Acrescentar `libgl1` ao runtime mínimo de teste, junto de EGL/GLX/OpenGL e
+fontes já declarados; manter o backend software e o teste sem rede/SDK.
+
+**Core escolhido pela UI (2026-10-24).** No Debian mínimo, o primeiro frame
+passou, mas o passeio não abriu o workspace. O log privado da UI revelou
+que ela tentou executar `/workspace/target/debug/kinein-core`, do checkout,
+em vez do core embarcado. O launcher AppRun usa um link na raiz do AppDir,
+e a descoberta relativa não encontrou o core irmão em `usr/bin`. O smoke
+local passava porque o host conseguia executar a cópia do checkout.
+O hook deve oferecer `KINEIN_CORE_BIN=$APPDIR/usr/bin/kinein-core` como
+padrão, mantendo override explícito. O passeio do AppImage passa a rodar
+fora do checkout. Regerar o artefato e repetir as provas local e mínima;
+ping direto e primeiro frame, sozinhos, não provam a integração UI/core.
+
+**Provas finais do artefato (2026-10-25).** AppImage regenerado em 2026-10-24
+com o hook do core embarcado, versão `0.4.1-dev.h4b2b4m`,
+170.625.528 bytes, SHA256
+`733857f63a39ef45227e25e9d887c92a053acbf9eb461e1567d00639a246b74e`.
+O smoke local fora do checkout e o Debian mínimo sem rede/SDK passaram:
+estrutura, identidade, versão, instalador isolado preservando o estável e o
+checkout, ping do core, primeiro frame e 33 superfícies em cada ambiente.
+A consulta à Qt Core embarcada devolveu 6.12.0; os 179 ELF do AppDir têm
+requisito glibc máximo 2.34. A base validada continua Debian 12/glibc 2.36;
+não se promete suporte a distribuições anteriores só pelo número de símbolo.
+Os oito CTest também passaram no builder Debian 12/Clang 14 em 2026-10-24.
+O gate rápido estrito final, já com o artefato corrigido em `dist/`, passou
+em 413 s. Validação visual e PIO Home na tela seguem com o autor;
+nenhuma instalação na sessão dele nem publicação externa.
+
+**Feito em 2026-10-25 (40.7 §7.360).** AppImage de desenvolvimento em
+`dist/`, com checksum, instalador e tutorial; smokes local e Debian mínimo
+sem rede/Qt/compiladores verdes. Gate rápido estrito TUDO VERDE: 1.334 Rust,
+8 CTest, qmllint e 171 harnesses QML, incluindo smoke do artefato entregue.
+Pico de 10.473 MiB no escopo com teto de 14.685 MiB e swap zero; nenhuma
+entrada nova no `/tmp`. A fatia não fecha a 0.4.1 e não publica o pacote.

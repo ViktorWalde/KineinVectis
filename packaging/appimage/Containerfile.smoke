@@ -10,6 +10,7 @@ RUN apt-get update \
         libfontconfig1 \
         libfreetype6 \
         libglx0 \
+        libgl1 \
         libharfbuzz0b \
         libopengl0 \
         libx11-6 \

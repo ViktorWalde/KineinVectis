@@ -116,7 +116,7 @@ obrigatorios=(
     'usr/bin/kinein-core'
     'apprun-hooks/kinein-portable-graphics-hook.sh'
     'usr/plugins/platforms/libqxcb.so'
-    'usr/plugins/platforms/libqwayland-egl.so'
+    'usr/plugins/platforms/libqwayland.so'
 )
 for obrigatorio in "${obrigatorios[@]}"; do
     if ! grep -Fq "$obrigatorio" scripts/testar-appimage.sh; then

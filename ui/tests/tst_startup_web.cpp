@@ -83,4 +83,12 @@ private slots:
 };
 
 QTEST_GUILESS_MAIN(StartupWebTest)
+#ifdef __clang__
+// O moc do Qt 6.12 usa CTAD; mesma fronteira dos demais testes (52 §14.50).
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wctad-maybe-unsupported"
+#endif
 #include "tst_startup_web.moc"
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

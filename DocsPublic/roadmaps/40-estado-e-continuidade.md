@@ -8,16 +8,16 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-24). Leia isto primeiro.**
+> **HANDOFF (2026-10-25). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4l concluída:** ambiente e gates no Qt 6.12.0, rápido estrito verde em 434 s (52 §14.49; 40.7 §7.359);
-> k gate em paralelo §7.358; j só na RAM §7.357; i PIO Home §7.356 (protocolo 0.192.0); h–d4 §7.347–§7.355.
+> **0.4.1h4b2b4m concluída:** AppImage dev local no Qt 6.12.0, rápido estrito verde em 413 s (52 §14.50; 40.7 §7.360);
+> l Qt 6.12 §7.359; k gate paralelo §7.358; j só na RAM §7.357; i PIO Home §7.356; h–d4 §7.347–§7.355.
 > `.directory`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
 > Protocolo **0.192.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
-> só após validá-la gerar/testar o **AppImage local** (40.7 §7.335), sem publicação.
+> só após validá-la gerar/testar o **AppImage final local** (40.7 §7.335), sem publicação.
 > Decisão de 2026-10-20 substitui o fechamento anterior na 0.4.5. A entrega
 > 0.4 inclui o trabalho não publicado 0.3.6–0.3.9; a 0.5 herda essa base e
 > anuncia apenas seu próprio delta ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
@@ -29,7 +29,7 @@
 > UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** AppImage dev local (52 §14.50; 40 §5); visual Qt 6.12/PIO Home pendente com o autor; depois dfu-util, picotool, west (52 §14.32).
+> **Próxima:** dfu-util, picotool, west (52 §14.32), um motor por recorte; visual Qt 6.12/PIO Home/AppImage pendente com o autor.
 > Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
@@ -636,8 +636,8 @@ qt do projeto                 DECISAO DO AUTOR em 2026-10-24: o Qt do projeto
                              sistema" do perfil de 2026-10-07 (entao o 6.12.0
                              do Arch) virou o 6.10.2, sem decisao. Neste
                              Ubuntu o 6.12.0 oficial mora em
-                             ~/Qt/6.12.0/gcc_64, sem o WebEngine. Dono: 52
-                             §14.49.
+                             ~/Qt/6.12.0/gcc_64; WebEngine complementado na
+                             fatia do ambiente. Dono: 52 §14.49.
 ```
 
 ## 7. O registro das entregas

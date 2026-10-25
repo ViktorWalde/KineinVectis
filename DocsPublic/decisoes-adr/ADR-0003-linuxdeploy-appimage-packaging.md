@@ -30,10 +30,14 @@ Os AppImages oficiais das ferramentas são obtidos por URL de release imutável
 e verificados pelos SHA256 registrados em `registro-de-componentes-abertos.json`. O
 canal mutável `continuous` não é aceito sem checksum. O runtime type-2
 embutido atualmente só é publicado nesse canal; a receita fixa o commit
-`75849dce7cc37e4319b633df1f116ca895c71a12` e recusa qualquer asset cujo
+`fedfad51acc2860b2916a1eef32ba4a500ff31ef` e recusa qualquer asset cujo
 SHA256 não seja o auditado. As ferramentas rodam no builder oficial Rust
 1.96.1/Debian 12 fixado pelo digest amd64
 `sha256:d99f7b31f49909348dc59b51f3c95d1efded1701ffb222f095aaab7de3c4abd8`.
+Desde a decisão do autor de 2026-10-24, o Qt desse builder é o **6.12.0
+oficial**, instalado no container por aqtinstall 3.3.0, com WebEngine,
+WebChannel e Positioning. SVG, Wayland e Network vêm nos arquivos base.
+Não usa o Qt 6.4.2 da distribuição. Desenho no 52 §14.50.
 
 A receita é dividida em:
 
@@ -64,10 +68,9 @@ reutilizado pelo checkout em `/home/...` (ou o inverso). O wrapper portátil
 invoca os scripts montados com `bash`, sem depender do bit executável, e os
 mounts Podman usam rótulo SELinux `:Z` com modo de acesso explícito.
 
-O worker não é uma interface de build nativo. Distribuições e versões do Qt
-podem representar o backend Wayland por nomes diferentes — por exemplo, o
-builder Qt 6.4 fornece `libqwayland-egl.so` e `libqwayland-generic.so`, enquanto
-ambientes mais recentes podem fornecer apenas `libqwayland.so`. Obrigar toda
+O worker não é uma interface de build nativo. O Qt 6.12 oficial fornece
+`libqwayland.so` e seus grupos de integração; a receita e o smoke exigem
+esse layout. Obrigar toda
 entrada pública a passar pelo builder fixado evita validar um layout no host e
 publicar outro no baseline suportado.
 
@@ -87,10 +90,30 @@ O AppImage é dono do desktop id `kinein-vectis.desktop` e do nome público
 **Kinein Vectis (Desenvolvimento)**; assim o mantenedor pode comparar o
 artefato distribuído com a build local sem um atalho sobrescrever o outro.
 
+**Canal local de desenvolvimento (autor, 2026-10-24):**
+`KINEIN_APPIMAGE_DEVELOPMENT=1 bash scripts/empacotar-appimage.sh` gera o
+artefato com versão padrão `0.4.1-dev.h4b2b4m`, sobrescrita por
+`KINEIN_VERSION` com sufixo `-dev`. A versão chega à UI pelo cache CMake;
+o protocolo e a versão Cargo do core não mudam. O id desse pacote é
+`io.github.viktorwalde.KineinVectis.Development`, e o nome no menu,
+**Kinein Vectis (desenvolvimento)**. O hook passa esse desktop id ao Qt.
+O instalador lê os metadados do artefato, preserva o nome e instala atalho,
+ícone e comando `kinein-dev` separados do estável e do checkout. Seleciona
+apenas versões do canal ao procurar na pasta; um caminho de arquivo
+explícito seleciona exatamente aquele artefato. A limpeza opcional de
+versões antigas fica no mesmo canal. A regra de uma janela por pasta
+continua protegendo `.kinein/` entre versões.
+
+O build usa, por padrão, seis jobs C++ e oito Cargo. O container de
+compilação recebe teto de memória disponível menos 2 GiB e swap adicional
+zero. O smoke cria HOME/XDG e extrações no cache em disco, remove a árvore
+de teste ao sair e verifica que o canal de desenvolvimento não sobrescreve
+sentinelas do estável/checkout. A geração local não publica o artefato.
+
 O baseline atual é Debian 12/glibc 2.36. Portanto, o primeiro artefato cobre
 distribuições Linux x86_64 atuais com glibc igual ou posterior; não se promete
 compatibilidade binária com distribuições mais antigas que o baseline. Para
-ampliar essa faixa será necessário construir Qt 6.4+ sobre uma base anterior e
+ampliar essa faixa será necessário construir Qt 6.12 sobre uma base anterior e
 repetir toda a validação.
 
 Compatibilidade de distribuição e compatibilidade gráfica são limites

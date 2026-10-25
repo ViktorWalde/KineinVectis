@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-06",
+  "updatedAt": "2026-10-24",
   "components": [
     {
       "id": "alacritty-terminal",
@@ -296,10 +296,10 @@
         "release": "https://github.com/AppImage/type2-runtime/releases/tag/continuous"
       },
       "version": {
-        "selected": "continuous build from commit 75849dce7cc37e4319b633df1f116ca895c71a12",
-        "commit": "75849dce7cc37e4319b633df1f116ca895c71a12",
+        "selected": "compilação continuous do commit fedfad51acc2860b2916a1eef32ba4a500ff31ef",
+        "commit": "fedfad51acc2860b2916a1eef32ba4a500ff31ef",
         "asset": "runtime-x86_64",
-        "sha256": "1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf",
+        "sha256": "617aa77314d57c8b8e4fae9c3f0b35af7b30d5529cb69e98f64f92510ed98a46",
         "pin": "Upstream exposes a mutable continuous URL; the Kinein recipe treats the recorded SHA256 as authoritative and fails closed when the asset changes",
         "reason": "Official statically linked type-2 runtime no longer requires libfuse2 on the target system and supports extract-and-run fallback"
       },
@@ -309,8 +309,8 @@
         "source": "LICENSE from the audited commit; file also identifies statically linked musl, libfuse, squashfuse, zstd and zlib notices"
       },
       "maintenance": {
-        "statusAtReview": "Official AppImage organization; continuous build published 2026-06-23",
-        "reviewedAt": "2026-07-14"
+        "statusAtReview": "Release oficial de 2026-10-19; dois commits desde o pino anterior, sem mudar licença ou dependências",
+        "reviewedAt": "2026-10-24"
       },
       "runtimeSecurity": {
         "shippedWithProduct": true,
@@ -332,7 +332,9 @@
         "MIT and bundled dependency notices verified",
         "Source scan found no telemetry, analytics, sockets or network client",
         "Mount/extract and AppRun exec behavior documented",
-        "Official runtime SHA256 verified before packaging"
+        "Official runtime SHA256 verified before packaging",
+        "2026-10-24: diff integral desde 75849dce revisado; extração 0700 e remoção do caminho temporário no debug",
+        "2026-10-24: SHA256 coincide com o digest da API oficial; assinatura válida pela chave do commit anterior, fingerprint 570C77ACEA40C0F1B758902CBF96CCA56490F695"
       ],
       "decision": "DocsPublic/decisoes-adr/ADR-0003-linuxdeploy-appimage-packaging.md"
     },
