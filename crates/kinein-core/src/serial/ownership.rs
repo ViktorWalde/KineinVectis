@@ -35,30 +35,40 @@ enum Channel {
     Device(String),
     /// probe-rs selector, canonical; keyed apart from serial nodes.
     Probe(String),
+    Usb(String),
     Automatic,
 }
 
 /// What a refusal names: a port, a probe or the automatic selection.
 #[derive(Debug, Clone, Copy)]
 pub(super) struct Resource<'a> {
-    probe: bool,
+    kind: Kind,
     name: Option<&'a str>,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Kind {
+    Serial,
+    Probe,
+    Usb,
 }
 
 impl Resource<'_> {
     fn label(self) -> String {
-        match (self.probe, self.name) {
-            (true, Some(name)) => format!("a sonda {name}"),
+        match (self.kind, self.name) {
+            (Kind::Probe, Some(name)) => format!("a sonda {name}"),
+            (Kind::Usb, Some(name)) => format!("o dispositivo USB {name}"),
             (_, Some(name)) => format!("a porta {name}"),
             (_, None) => "uma porta automaticamente".to_owned(),
         }
     }
 
     const fn scope(self) -> &'static str {
-        match (self.probe, self.name) {
-            (true, _) => "probe",
-            (false, Some(_)) => "device",
-            (false, None) => "automatic",
+        match (self.kind, self.name) {
+            (Kind::Probe, _) => "probe",
+            (Kind::Usb, _) => "usb",
+            (Kind::Serial, Some(_)) => "device",
+            (Kind::Serial, None) => "automatic",
         }
     }
 }
@@ -95,7 +105,7 @@ impl Registry {
         workspace: Option<&Path>,
     ) -> Result<Lease, JsonRpcError> {
         let resource = Resource {
-            probe: false,
+            kind: Kind::Serial,
             name: Some(device),
         };
         let key = crate::platform::serial_device_key(Path::new(device))
@@ -113,12 +123,32 @@ impl Registry {
         workspace: Option<&Path>,
     ) -> Result<Lease, JsonRpcError> {
         let resource = Resource {
-            probe: true,
+            kind: Kind::Probe,
             name: Some(selector),
         };
         self.claim(
             Channel::Probe(format!("probe-rs:{selector}")),
             resource,
+            operation,
+            title,
+            workspace,
+        )
+    }
+
+    /// USB identity shared by every alternative of the same physical selection.
+    pub(crate) fn acquire_usb(
+        &self,
+        identity: &str,
+        operation: &str,
+        title: &str,
+        workspace: Option<&Path>,
+    ) -> Result<Lease, JsonRpcError> {
+        self.claim(
+            Channel::Usb(format!("usb:{identity}")),
+            Resource {
+                kind: Kind::Usb,
+                name: Some(identity),
+            },
             operation,
             title,
             workspace,
@@ -133,7 +163,7 @@ impl Registry {
         workspace: Option<&Path>,
     ) -> Result<Lease, JsonRpcError> {
         let resource = Resource {
-            probe: false,
+            kind: Kind::Serial,
             name: None,
         };
         self.claim(Channel::Automatic, resource, operation, title, workspace)
@@ -171,7 +201,7 @@ impl Registry {
             automatic: channel == Channel::Automatic,
         };
         let key = match &channel {
-            Channel::Device(key) | Channel::Probe(key) => Some(key.as_str()),
+            Channel::Device(key) | Channel::Probe(key) | Channel::Usb(key) => Some(key.as_str()),
             Channel::Automatic => None,
         };
         let files = self

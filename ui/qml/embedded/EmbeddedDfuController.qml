@@ -72,8 +72,10 @@ Item {
         errorText = qsTr("A conexão com o serviço da IDE foi interrompida. Consulte USB DFU novamente após reconectar.");
     }
 
+    function isDfu(entry) { return !!entry && entry.mode === "dfu"; }
+
     function summary(entry) {
-        const mode = entry.mode === "dfu" ? qsTr("DFU") : qsTr("Runtime");
+        const mode = isDfu(entry) ? qsTr("DFU") : qsTr("Runtime");
         return qsTr("%1 · %2:%3 · configuração %4 · interface %5 · alternativa %6")
             .arg(mode).arg(entry.vid).arg(entry.pid).arg(entry.configuration).arg(entry.interface).arg(entry.alternate);
     }

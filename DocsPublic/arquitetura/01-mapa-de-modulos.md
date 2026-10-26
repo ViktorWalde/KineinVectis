@@ -184,6 +184,7 @@ flowchart LR
   n_core_datasource --> n_core_tools
   n_core_dfu --> n_core_probe
   n_core_flash --> n_core_build
+  n_core_flash --> n_core_dfu
   n_core_flash --> n_core_fsops
   n_core_flash --> n_core_platform
   n_core_flash --> n_core_probe
@@ -287,7 +288,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-49 módulos, 142 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+49 módulos, 143 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -311,7 +312,7 @@ flowchart LR
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `dfu` | probe | Bounded dfu-util discovery. |
 | `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
-| `flash` | build, fsops, platform, probe, process, project | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
+| `flash` | build, dfu, fsops, platform, probe, process, project | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
 | `fswatch` | lsp, platform | Debounced, workspace-confined observation of external file-system changes. |

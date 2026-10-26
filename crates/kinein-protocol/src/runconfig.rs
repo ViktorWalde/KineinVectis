@@ -172,6 +172,9 @@ pub struct FlashProposalParams {
     /// (`0.188.0`); a listed row index or VID/PID alone is not a destination.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub probe: Option<String>,
+    /// Explicit `DfuSe` file and USB alternative for native dfu-util (`0.194.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dfu: Option<crate::DfuFlashSelection>,
 }
 
 /// Result of `runConfig.flashProposal`: a run configuration to save.

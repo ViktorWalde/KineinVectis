@@ -258,3 +258,32 @@ independente do arquivo. ConfigAction delega ao mesmo armazenamento.
 O armazenamento usa o mesmo limite de leitura do editor (1 MiB em 2026-10-21).
 Leitura acima do limite é INVALID_REQUEST; atualização que o excederia é
 INVALID_PARAMS antes de publicar, preservando a configuração anterior.
+
+
+### dfu-util nativo — arquivo DfuSe explícito (0.194.0, 2026-10-26)
+
+`runConfig.flashProposal` aceita `dfu?: {image, destination:{vid,pid,serial,
+path,configuration,interface,alternate}}`, exclusivamente com `native=true`
+e motor resolvido `dfu-util`. Os demais campos de destino (device, probe,
+target, firmware, buildDirectory, flashSizeBytes) são incompatíveis. Outros
+motores e o modo manual recusam dfu. O arquivo explícito dentro do workspace
+é a origem contratada; não se deduz relação com o build ativo. Prévia mostra
+conteúdo, elementos/endereço/tamanho e apagamento por página.
+
+Recorte inicial: DfuSe v1/1.1a, um Target e até 128 elementos ordenados,
+sufixo e CRC válidos, até 32 MiB; VID/PID exatos 0483:df11, configuração 1,
+interface 0, dispositivo já em DFU. Serial obrigatório sem vírgula/controle,
+caminho USB canônico e alternativa do arquivo igual à selecionada. Exige
+lista completa e uma única instância VID/PID/serial. O mapa Internal Flash
+precisa cobrir os elementos em regiões apagáveis e graváveis, dentro de
+0x08000000–0x09000000. BIN cru, múltiplos targets, Runtime, memória externa e
+Option Bytes ficam recusados. Não pede reset, leave, unprotect, mass-erase,
+force ou espera por reconexão. Contrato e fontes no [52 §14.52](../../roadmaps/52-arquitetura-executavel-da-0.4.md#1452-041h4b2b4n2--dfuse-escolhido-e-destino-usb-revalidado-desenho-2026-10-26).
+
+A intenção versão 1/schema 2 transporta a seleção normalizada e o fingerprint
+com contexto, arquivo, ferramenta e interface observada. `run.start` regenera
+tudo, compara, verifica revisões e usa o PTY existente com argv literal.
+Reserva USB por VID/PID/serial, comum a todas as alternativas da mesma
+instância, acompanha o processo e o guardião após crash. Conflito responde
+SERIAL_PORT_BUSY com scope=usb. Nenhum campo de descoberta é prova de
+identidade imutável ou exclusividade de ferramentas externas à IDE.

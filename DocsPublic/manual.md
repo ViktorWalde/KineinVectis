@@ -1695,7 +1695,15 @@ USB DFU          na aba Placa, "Verificar USB DFU" consulta o dfu-util 0.11
                  le descritores USB, sem reset, detach ou gravacao. Falha,
                  permissao, prazo e formato desconhecido aparecem com causa e
                  saida da ferramenta; lista nao verificada nao significa nenhuma
-                 placa. A gravacao nativa por dfu-util continua pendente.
+                 placa. Para gravar DfuSe (0.194.0), escolha dfu-util no modo
+                 Nativo da aba Gravar, indique o arquivo dentro do projeto,
+                 consulte USB e escolha uma alternativa. O recorte cobre
+                 0483:df11, configuracao 1/interface 0, ja' em modo DFU e
+                 memoria Internal Flash apagavel/gravavel. A previa mostra hash,
+                 elementos/endereco/tamanho e avisa sobre apagar paginas. Revise
+                 antes de Gravar ou Salvar. A escolha do firmware e' explicita;
+                 nao se deduz que veio do build ativo. BIN cru, Runtime, multiplos
+                 targets e memoria externa continuam recusados (52 §14.52).
 sonda e kit      a sonda pelo `probe-rs list`; o chip, o alvo (triple), o
                  sysroot e o depurador ficam no KIT do projeto
 tamanho          "Medir" le o ELF e mostra uma barra por regiao do linker

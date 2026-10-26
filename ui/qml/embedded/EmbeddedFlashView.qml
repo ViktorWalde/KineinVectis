@@ -37,7 +37,9 @@ Item {
 
         Text {
             width: parent.width
-            text: root.flash && root.flash.probeDestination
+            text: root.flash && root.flash.dfuDestination
+                  ? qsTr("Modo nativo: confere arquivo DfuSe e alternativa USB novamente antes de gravar.")
+                  : root.flash && root.flash.probeDestination
                   ? qsTr("Destino: a sonda escolhida abaixo. A porta serial não é usada nesta gravação.")
                   : root.controller && root.controller.selectedPort !== ""
                   ? qsTr("Porta: %1").arg(root.controller.selectedPort)
@@ -120,7 +122,7 @@ Item {
         KvTextField {
             objectName: "embeddedFlashBuildDirectory"
             width: parent.width
-            visible: root.enginesVisible && root.flash && root.flash.nativeMode && !root.flash.probeDestination
+            visible: root.enginesVisible && root.flash && root.flash.nativeMode && !root.flash.probeDestination && !root.flash.dfuDestination
             label: qsTr("Diretório do build (opcional)")
             placeholder: qsTr("Padrão do projeto")
             text: root.flash ? root.flash.buildDirectory : ""
@@ -143,6 +145,8 @@ Item {
             width: parent.width
             controller: root.controller
         }
+
+        EmbeddedDfuFlashView { width: parent.width; flash: root.flash }
 
         KvButton {
             objectName: "embeddedReviewCommand"

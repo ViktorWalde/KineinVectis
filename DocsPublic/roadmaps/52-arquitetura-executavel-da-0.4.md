@@ -6305,3 +6305,127 @@ cópia QA comparadas por hash (1.882 arquivos); target próprio, temporários em
 disco, escopo com swap zero e nenhuma entrada nova no `/tmp`. UI/core locais
 atualizados em debug/release; sem usar hardware DFU ou ESP32 nestas provas. Não fechou a 0.4.1 nem alterou o AppImage anterior. Próxima n2 conforme
 o recorte acima, depois picotool/west e a matriz integrada.
+
+
+### 14.52 0.4.1h4b2b4n2 — DfuSe escolhido e destino USB revalidado (desenho, 2026-10-26)
+
+**Estado e recorte.** A n1 está em `1cdedbb`: descoberta, sem execução nativa.
+O handoff continua na 0.4.1. Esta vertical acrescenta gravação pelo `run.start`
+atual para **um arquivo DfuSe explicitamente escolhido dentro do workspace**,
+um alvo/alternativa no arquivo, no destino USB `0483:df11` já em modo DFU,
+configuração 1/interface 0. Não deduz BIN por recência, chip por ponte USB ou
+endereço pelo nome da família. A origem contratada é a escolha explícita desse
+arquivo e seu conteúdo; não afirma que veio do build ativo. BIN cru e vínculo
+a um alvo CMake precisam de outro recorte, antes de ampliar esse suporte.
+
+**Fontes primárias conferidas.** O [manual do dfu-util 0.11](https://dfu-util.sourceforge.net/dfu-util.1.html)
+mostra que `-d ,VID:PID` e `-S ,SERIAL` ignoram Runtime; `-p`, `-c`, `-i`
+e `-a` restringem a instância e a alternativa. O [guia DfuSe oficial](https://dfu-util.sourceforge.net/dfuse.html)
+explica endereços/alternativas no arquivo e atributos de memória no descritor.
+O fonte oficial 0.11, auditado na n1, é a referência de formato:
+`dfuse-pack.py` (prefixo/tamanho/CRC, destino padrão 0483:df11),
+`src/dfu_file.c` (sufixo e CRC), `dfuse.c` (seleção de alternativas/elementos),
+`dfuse_mem.c` (mapa), `main.c` e `dfu_util.c` (seletores e efeitos).
+Listagem não prova exclusividade ou identidade imutável; a execução revalida
+a mesma evidência e o dfu-util volta a selecionar pelas restrições literais.
+
+**Contrato antes do produtor: IPC 0.194.0.** `FlashProposalParams` ganha
+`dfu?: {image, destination:{vid,pid,serial,path,configuration,interface,alternate}}`.
+Só vale com native=true e engine=dfu-util; recusar campos dos demais destinos
+(device, probe, target, firmware, buildDirectory, flashSizeBytes), inclusive no
+modo manual. Outros motores recusam dfu. `image` resolve dentro da raiz,
+regular/não vazio/até 32 MiB, sem stdin, FIFO ou alias fora do workspace.
+`FlashIntent` versão 1 e armazenamento schema 2 preservados; a seleção resolvida
+é explícita, regenerada na execução e nunca reinterpretada como shell.
+Nenhum método/evento novo. A compatibilidade anterior continua pela ausência
+do campo opcional; seleção desconhecida/malformada recusa.
+
+**Artefato e alvo.** Leitor puro em `flash/dfu/image.rs`: DfuSe versão 1,
+tamanho total coerente, um Target, 1–128 elementos não vazios em ordem,
+sem sobreposição/trailing bytes, sufixo UFD de 16 bytes, bcdDFU 0x011a,
+CRC conferido e VID/PID exatos 0483:df11. bcdDevice 0/ffff é genérico;
+outro valor tem de casar com o release observado. Alternativa do arquivo
+igual à selecionada. O mapa `@Internal Flash` vem da interface listada;
+endereços/grupos/seções são lidos com aritmética verificada, sem sobreposição,
+e todos os bytes escritos precisam de memória apagável e gravável dentro da
+faixa interna STM32 0x08000000–0x09000000. Sem Option Bytes, memória externa,
+unprotect, mass-erase, force, leave ou reset pedidos implicitamente. A prévia
+mostra arquivo, hash, elementos/endereço/tamanho, memória e apagamento por
+página; a compatibilidade da aplicação escolhida continua decisão do usuário.
+
+**Destino e plano.** `flash/dfu/mod.rs` usa a consulta limitada da n1 com o
+cancelamento da preparação. Somente uma instância por VID/PID/serial na lista,
+serial real não vazio/UNKNOWN e sem vírgula/controle, caminho USB canônico,
+configuração 1/interface 0 e exatamente uma alternativa escolhida. Runtime,
+ausente, duplicado, mudança de release/mapa/caminho ou listagem parcial recusam.
+Plano literal: `dfu-util --device ,0483:df11 --serial ,SERIAL --path PATH
+--cfg 1 --intf 0 --alt ALT --download IMAGEM`. A ferramenta faz a seleção
+novamente; não converter serial em USB nem usar índice de linha como destino.
+O fingerprint cobre contexto, seleção, metadados observados, mapa, conteúdo e
+executável. A lista e arquivos são revalidados antes do PTY pelos donos atuais.
+
+**Reserva e UI.** Estender `serial/ownership` com recurso USB identificado por
+VID/PID/serial (sem configuração/interface/alternativa); conflitos entre
+instâncias e guardião após crash seguem o mesmo registro/Lease. A seleção
+automática conflita; serial explícita e outras sondas continuam independentes.
+Erro SERIAL_PORT_BUSY com scope=usb. `handlers/run_native.rs` escolhe ferramenta,
+reserva e validação final por destino, sem executor novo. A remoção de ambiente
+é vazia para dfu-util: o código 0.11 não herda opções de flash do ambiente.
+UI: filho `flash.dfu` guarda arquivo/destino; a view seleciona uma alternativa
+listada e o caminho do arquivo. Ponte e roteador transportam dfu com a prévia
+existente. Alterar arquivo/destino/lista/motor/modo/workspace invalida a prévia;
+desconexão limpa a descoberta e o destino, preservando o caminho como rascunho.
+O controller pai estava em 399 linhas antes da fatia; a composição final ficou
+em 400/400. Próximos acréscimos devem permanecer nos filhos. Não transformar
+descoberta em autorização de gravar.
+
+**Provas previstas.** Fixture produzida pelo empacotador oficial, parser com
+CRC/tamanhos/overflow/endereços/alternativas/IDs e mapa protegido; despacho
+real + CLI falsa, argv literal, arquivo alterado/deletado, tool/listagem
+trocada, cancelamento, busy/liberação, armazenamento e recusa de destino
+ambíguo/Runtime. Harness com controllers/roteadores atuais, invalidação e
+seleção explícita; mutações de CRC/revalidação/reserva; gate estrito e fonte
+QA comparada. Sem DFU físico, ESP32, instalação, pacote ou publicação. Registrar
+limites reais e próximo recorte no handoff ao concluir.
+
+**Achados durante a validação.** O primeiro completo encontrou um teste antigo
+que ainda recusava todo DFU nativo; atualizado para exigir arquivo/destino
+explícitos. O segundo passou Rust/Clippy/C++ e detectou a derivação do modo DFU
+duplicada entre descoberta e seleção. A correção centralizou `isDfu(entry)`
+no dono da descoberta, usado também pelo resumo e pela seleção. Provas
+repetidas sem alterar a baseline de duplicação.
+
+
+**Feito em 2026-10-26, sobre 1cdedbb (40.7 §7.362).** Contrato, leitor puro,
+preparação e seleção/UI implementados no recorte acima. Fixture de 333 bytes
+do empacotador oficial 0.11, SHA256
+`1e864881e3ed0dd6cfde8815c0d95f99d11b3072f3425d0ab7fe2aa3bb39d96f`.
+Sete testes puros, sete de despacho/reserva e um do protocolo acrescentados;
+novo harness atravessa controllers/roteador/view reais. A prova Qt com
+CoreClient real passou em dez fases, incluindo payload nativo e execução.
+Core real por stdio + CLI falsa provou argv literal, execução e guardião
+sobrevivendo ao crash do core: outra instância recusou USB busy enquanto a
+ferramenta ficou viva, executando só após sua saída. Mutações de CRC,
+revalidação final e reserva foram detectadas por asserções.
+
+A primeira rodada completa revelou um teste antigo que ainda esperava
+recusa global de dfu-util; atualizado para exigir arquivo/destino explícitos,
+sem fallback. A segunda detectou a derivação do modo DFU duplicada; descoberta
+e seleção agora usam o mesmo dono, sem alterar a baseline. Harnesses e prova
+Qt repetidos. Rodada final completa estrita **TUDO VERDE em 913 s**:
+**1.363 Rust, 8 CTest, análise C++ limpa, qmllint e 173 harnesses**, sem
+NÃO PROVADO. Primeiro frame e 33 superfícies por preset debug/release sem
+avisos. QA com target independente e **1.892 fontes comparadas por hash**;
+escopo com swap zero, temporários em disco e nenhuma entrada nova no `/tmp`.
+UI/core locais atualizados nos dois presets. Capturas offscreen antes/depois
+conferidas com IPC falso; aceite visual do autor permanece pendente. Provas em
+`~/.cache/kinein-h4b2b4n2-proofs/`. Sem DFU físico, ESP32, instalação, pacote,
+push, tag, release ou publicação; AppImage anterior preservado.
+
+**Próximo recorte.** Este aceite cobre arquivo DfuSe escolhido, sem atribuí-lo
+ao build ativo. Antes de ampliar DFU, desenhar a origem ligada ao build/BIN,
+endereços e evidência do alvo; não habilitar BIN por nome/recência ou dedução
+de família. Em seguida picotool/west (52 §14.32), matriz integrada e recuperação.
+A h4b2b e a 0.4.1 seguem abertas. EmbeddedController está em 400/400; evoluir
+os filhos sem aumentar o limite. Nenhuma prova acima substitui flash físico
+DFU ou aceite visual do autor.

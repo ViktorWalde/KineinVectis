@@ -172,6 +172,8 @@ set_source_files_properties(qml/platformio/PlatformioWindow.qml PROPERTIES QT_RE
 set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuController.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuView.qml)
+set_source_files_properties(qml/embedded/EmbeddedDfuSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuSelectionController.qml)
+set_source_files_properties(qml/embedded/EmbeddedDfuFlashView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuFlashView.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
 set_source_files_properties(qml/embedded/EmbeddedOverviewView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedOverviewView.qml)
 set_source_files_properties(qml/embedded/EmbeddedLinuxView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedLinuxView.qml)
@@ -612,6 +614,8 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedController.qml
         qml/embedded/EmbeddedDfuController.qml
         qml/embedded/EmbeddedDfuView.qml
+        qml/embedded/EmbeddedDfuSelectionController.qml
+        qml/embedded/EmbeddedDfuFlashView.qml
         qml/embedded/EmbeddedPanel.qml
         qml/embedded/EmbeddedOverviewView.qml
     qml/embedded/EmbeddedLinuxView.qml

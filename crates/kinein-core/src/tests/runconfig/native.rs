@@ -106,19 +106,17 @@ fn an_unavailable_native_provider_does_not_fall_back_to_manual_or_an_unrelated_t
         .error
         .is_none()
     );
-    for engine in ["picotool", "dfu-util"] {
-        let response = core.handle_request(&kinein_protocol::JsonRpcRequest::new(
-            2_i64,
-            "runConfig.flashProposal",
-            Some(json!({"native":true,"engine":engine})),
-        ));
-        let error = response.response().error.as_ref().unwrap();
-        assert_eq!(
-            error.code,
-            kinein_protocol::JsonRpcErrorCode::InvalidRequest
-        );
-        assert!(error.message.contains("motor ainda"), "{error:?}");
-    }
+    let response = core.handle_request(&kinein_protocol::JsonRpcRequest::new(
+        2_i64,
+        "runConfig.flashProposal",
+        Some(json!({"native":true,"engine":"picotool"})),
+    ));
+    let error = response.response().error.as_ref().unwrap();
+    assert_eq!(
+        error.code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+    assert!(error.message.contains("motor ainda"), "{error:?}");
     // probe-rs has native validation since 0.188.0, but never without an
     // explicit target and probe: no manual line, no guessed destination.
     let response = core.handle_request(&kinein_protocol::JsonRpcRequest::new(
@@ -129,5 +127,15 @@ fn an_unavailable_native_provider_does_not_fall_back_to_manual_or_an_unrelated_t
     let error = response.response().error.as_ref().unwrap();
     assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
     assert!(error.message.contains("alvo"), "{error:?}");
+    // dfu-util has native validation since 0.194.0. An explicit image and
+    // USB alternative are mandatory; missing fields never become a manual plan.
+    let response = core.handle_request(&kinein_protocol::JsonRpcRequest::new(
+        4_i64,
+        "runConfig.flashProposal",
+        Some(json!({"native":true,"engine":"dfu-util"})),
+    ));
+    let error = response.response().error.as_ref().unwrap();
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+    assert!(error.message.contains("arquivo DfuSe"), "{error:?}");
     assert!(!runconfig::configs_path(&root).exists());
 }

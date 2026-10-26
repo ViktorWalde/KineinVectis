@@ -33,4 +33,5 @@ Nova consulta e qualquer ativação/desativação do workspace cancelam a anteri
 inclusive reabrir a mesma raiz. A continuação recusa o token antigo ou mudança
 de ferramenta/workspace com INVALID_REQUEST. O consumidor Qt/QML correlaciona
 sucesso e erro por id e invalida a tela na desconexão/mudança de workspace.
-Sem evento novo. Gravação nativa dfu-util continua recusada nesta versão.
+Sem evento novo. A gravação nativa permaneceu recusada na 0.193.0; o recorte
+DfuSe da 0.194.0 está no [runConfig](runConfig.md#dfu-util-nativo--arquivo-dfuse-explícito-01940-2026-10-26).

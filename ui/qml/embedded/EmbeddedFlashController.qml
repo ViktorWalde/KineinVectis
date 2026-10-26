@@ -46,6 +46,10 @@ Item {
     property string targetsOrigin: ""
     property string targetsError: ""
     property bool targetsBusy: false
+    readonly property alias dfu: dfuSelection
+    readonly property bool dfuDestination: nativeMode && firmware === ""
+        && (engine === "dfu-util" || (engine === "" && suggestedEngine === "dfu-util"))
+    EmbeddedDfuSelectionController { id: dfuSelection; onChanged: { if (root.dfuDestination) root.invalidate(); } }
     readonly property bool probeDestination: nativeMode && firmware === ""
         && (engine === "probe-rs" || (engine === "" && suggestedEngine === "probe-rs"))
     // O ELF unico do alvo escolhido: a depuracao probe-rs usa o mesmo alvo.
@@ -54,7 +58,7 @@ Item {
         return item && (item.artifacts || []).length === 1 ? item.artifacts[0] : "";
     }
 
-    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory, string target, string probe)
+    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory, string target, string probe, var dfu)
     signal targetsRequested()
     signal runRequested(string command, var flash)
     signal saveRequested(string name, string command, var flash)
@@ -62,6 +66,7 @@ Item {
     visible: false
 
     function clear() {
+        dfuSelection.clear();
         busy = false;
         engine = "";
         firmware = "";
@@ -89,6 +94,7 @@ Item {
     }
 
     function disconnected() {
+        dfuSelection.forgetDestination();
         busy = false;
         targetsBusy = false;
         invalidate();
@@ -198,10 +204,11 @@ Item {
         proposal = ({});
         errorText = "";
         const toProbe = probeDestination;
-        proposalRequested(toProbe || device === undefined ? "" : device, engine,
-                          toProbe || flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware,
-                          nativeMode, nativeMode && !toProbe ? buildDirectory : "",
-                          toProbe ? target : "", toProbe ? probe : "");
+        const toUsb = dfuDestination;
+        proposalRequested(toProbe || toUsb || device === undefined ? "" : device, engine,
+                          toProbe || toUsb || flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware,
+                          nativeMode, nativeMode && !toProbe && !toUsb ? buildDirectory : "",
+                          toProbe ? target : "", toProbe ? probe : "", toUsb ? dfu.payload() : ({}));
     }
 
     function bindProposal(requestId) {

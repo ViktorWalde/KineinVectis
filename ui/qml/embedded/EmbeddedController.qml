@@ -102,6 +102,7 @@ Item {
         frameworks: root.projectFrameworks
         suggestedEngine: root.projectTarget.flashEngine || ""
         workspaceRoot: root.workspaceRoot
+        dfu.discovery: dfuController
     }
 
     EmbeddedAccessController {

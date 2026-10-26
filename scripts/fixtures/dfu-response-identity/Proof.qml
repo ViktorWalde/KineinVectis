@@ -5,6 +5,7 @@ import KineinVectis
 Item {
     id: root
     property int phase: 0
+    property bool nativeRequested: false
     function require(ok, message) {
         if (ok) return true;
         console.error("DFU_RESPONSE_FAIL " + message);
@@ -15,6 +16,12 @@ Item {
     EmbeddedController { id: controller; workspaceRoot: client.workspaceRoot }
     EmbeddedRequestRouter { coreClient: client; embeddedController: controller }
     EmbeddedEventRouter { coreClient: client; embeddedController: controller }
+    Connections {
+        target: controller.flash
+        function onRunRequested(command, flash) {
+            root.nativeRequested = command === "" && flash.selection.dfu.image === "firmware a'b.dfu";
+        }
+    }
     Connections {
         target: client
         function onStatusChanged() {
@@ -68,7 +75,21 @@ Item {
         } else if (phase === 8) {
             if (!require(!dfu.measured && !dfu.busy && name === "" && dfu.errorText === "",
                          "reply after same-root activation escaped")) return;
-            console.log("DFU_RESPONSE_REPORT " + JSON.stringify({phases: 8, protocol: client.protocolVersion}));
+            phase = 9;
+            dfu.refresh();
+        } else if (phase === 9) {
+            if (!require(dfu.interfaces.length === 1, "native destination listing missing")) return;
+            phase = 10;
+            controller.flash.selectEngine("dfu-util");
+            controller.flash.dfu.setImage("firmware a'b.dfu");
+            controller.flash.dfu.select(dfu.interfaces[0]);
+            controller.flash.propose("/dev/ignored", 999);
+        } else if (phase === 10) {
+            if (!require(controller.flash.found && controller.flash.proposal.flash.selection.dfu.destination.serial === "FIXTURE-1",
+                         "native DFU selection was lost in real Qt serialization or dispatch")) return;
+            controller.flash.run();
+            if (!require(nativeRequested, "native DFU intent was converted into a manual command")) return;
+            console.log("DFU_RESPONSE_REPORT " + JSON.stringify({phases: 10, protocol: client.protocolVersion}));
             Qt.exit(0);
             return;
         }

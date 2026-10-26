@@ -3,6 +3,7 @@ use super::ownership_fixture::Fixture;
 use serde_json::{Value, json};
 use std::{fs, time::Duration};
 mod catalog;
+mod dfu;
 mod idf_py;
 mod pending;
 mod platformio;

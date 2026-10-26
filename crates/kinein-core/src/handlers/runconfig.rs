@@ -74,13 +74,16 @@ impl Core {
         if request.native {
             return self.native_flash_proposal_response(request_id, root, model, request, firmware);
         }
-        if request.build_directory.is_some() || request.target.is_some() || request.probe.is_some()
+        if request.build_directory.is_some()
+            || request.target.is_some()
+            || request.probe.is_some()
+            || request.dfu.is_some()
         {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "buildDirectory, target e probe requerem native=true",
+                    "buildDirectory, target, probe e dfu requerem native=true",
                     None,
                 ),
             );

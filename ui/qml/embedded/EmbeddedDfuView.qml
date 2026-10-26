@@ -5,6 +5,7 @@ import KineinVectis
 Column {
     id: root
     property var controller: null
+    property var selection: null
     property bool outputVisible: false
     spacing: Theme.spacingSmall
 
@@ -47,6 +48,13 @@ Column {
             required property var modelData
             width: root.width
             spacing: Theme.spacingSmall
+            KvToggleChip {
+                objectName: "dfuAlternative_" + row.modelData.path + "_" + row.modelData.alternate
+                visible: root.selection !== null && root.selection.selectable(row.modelData)
+                active: root.selection !== null && root.selection.key(root.selection.destination) === root.selection.key(row.modelData)
+                labelText: active ? qsTr("Escolhida") : qsTr("Escolher alternativa")
+                onToggled: root.selection.select(row.modelData)
+            }
             Text {
                 width: parent.width
                 text: root.controller.summary(row.modelData)

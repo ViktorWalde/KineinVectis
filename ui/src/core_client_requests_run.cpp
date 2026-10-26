@@ -43,10 +43,14 @@ qint64 CoreClient::runConfigSetActive(const QString& id)
 qint64 CoreClient::runConfigFlashProposal(const QString& device, const QString& engine,
                                           double flashSizeBytes, const QString& firmware,
                                           bool native, const QString& buildDirectory,
-                                          const QString& target, const QString& probe)
+                                          const QString& target, const QString& probe,
+                                          const QVariantMap& dfu)
 {
     QJsonObject params;
     params.insert(QStringLiteral("native"), native);
+    if (!dfu.isEmpty()) {
+        params.insert(QStringLiteral("dfu"), QJsonObject::fromVariantMap(dfu));
+    }
     if (!buildDirectory.isEmpty()) {
         params.insert(QStringLiteral("buildDirectory"), buildDirectory);
     }

@@ -15,7 +15,9 @@ def send(request_id, result=None, error=None):
 
 def listed(request_id, name):
     send(request_id, {"complete": True, "toolAvailable": True,
-                      "interfaces": [{"mode": "dfu", "name": name}], "rawOutput": name})
+                      "interfaces": [{"mode": "dfu", "name": name, "vid": "0483", "pid": "df11",
+                                      "serial": "FIXTURE-1", "path": "1-2", "configuration": 1,
+                                      "interface": 0, "alternate": 0, "release": "2200", "deviceNumber": 2}], "rawOutput": name})
 
 
 def failed(request_id, message):
@@ -27,7 +29,7 @@ for line in sys.stdin:
     request_id = request["id"]
     method = request["method"]
     if method == "core.ping":
-        send(request_id, {"protocolVersion": "0.193.0"})
+        send(request_id, {"protocolVersion": "0.194.0"})
     elif method == "workspace.open":
         send(request_id, {"root": request["params"]["path"], "name": "DFU fixture", "kind": "cmake",
                           "capabilities": {"buildSystems": []}})
@@ -57,7 +59,16 @@ for line in sys.stdin:
         elif sequence == 7:
             listed(request_id, "retry-success")
             listed(request_id, "duplicate-retry-success")
+        elif sequence == 9:
+            listed(request_id, "native-choice")
         else:
             failed(request_id, "unexpected-query")
+    elif method == "runConfig.flashProposal":
+        params = request["params"]
+        assert params == {"native": True, "engine": "dfu-util", "dfu": {
+            "image": "firmware a'b.dfu", "destination": {"vid": "0483", "pid": "df11",
+                "serial": "FIXTURE-1", "path": "1-2", "configuration": 1, "interface": 0, "alternate": 0}}}, params
+        send(request_id, {"command": "literal dfu fixture", "engine": "dfu-util",
+                          "flash": {"version": 1, "selection": params}})
     else:
         send(request_id, {})

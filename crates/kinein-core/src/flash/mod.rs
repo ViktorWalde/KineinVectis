@@ -36,6 +36,7 @@
 //! usuario deve saber antes de apertar vai em `warnings`.
 
 mod command;
+pub mod dfu;
 pub mod esptool;
 pub mod firmware;
 pub mod frameworks;

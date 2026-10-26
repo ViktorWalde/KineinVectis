@@ -113,6 +113,14 @@ impl Core {
                 .find_in_path("bash")
                 .ok_or_else(|| missing("bash", "o idf.py roda num bash que ativa o ESP-IDF"));
         }
+        if engine == "dfu-util" {
+            return self.detector.find_in_path("dfu-util").ok_or_else(|| {
+                missing(
+                    "dfu-util",
+                    "instale o dfu-util 0.11 para consultar e gravar DfuSe",
+                )
+            });
+        }
         if engine == "probe-rs" {
             let tool = self.probe_program(root).ok_or_else(|| {
                 missing(
@@ -195,21 +203,9 @@ impl Core {
             );
         }
         let probe = intent.selection.probe.clone();
-        let reservation = if let Some(probe) = probe.as_deref() {
-            match self.serial_usage.acquire_probe(
-                probe,
-                "run.start",
-                "Gravação nativa por sonda",
-                Some(&root),
-            ) {
-                Ok(reservation) => reservation,
-                Err(error) => return JsonRpcResponse::failure(request_id, error),
-            }
-        } else {
-            match self.claim_serial_destination(request_id.as_ref(), &intent) {
-                Ok(reservation) => reservation,
-                Err(response) => return *response,
-            }
+        let reservation = match self.claim_flash_destination(request_id.as_ref(), &intent) {
+            Ok(reservation) => reservation,
+            Err(response) => return *response,
         };
         let firmware = match intent
             .selection
@@ -252,7 +248,7 @@ impl Core {
                 if let Err(message) = check_active(&root, active.as_ref()) {
                     return refusal(request_id, &message);
                 }
-                if probe.is_none() {
+                if probe.is_none() && engine != "dfu-util" {
                     let device = intent.selection.device.as_deref().unwrap_or_default();
                     if let Err(response) = super::serial::ready_port(request_id.as_ref(), "run.start", device) { return *response; }
                     if crate::platform::serial_device_revision(Path::new(device)).ok().as_ref() != Some(&intent.device_key) {
@@ -270,6 +266,32 @@ impl Core {
 }
 
 impl Core {
+    fn claim_flash_destination(
+        &self,
+        request_id: Option<&Value>,
+        intent: &FlashIntent,
+    ) -> Result<crate::serial::ownership::Lease, Box<JsonRpcResponse>> {
+        let root = self.workspace_root();
+        let reservation = if let Some(dfu) = intent.selection.dfu.as_ref() {
+            self.serial_usage.acquire_usb(
+                &flash::dfu::resource_key(&dfu.destination),
+                "run.start",
+                "Gravação nativa DfuSe",
+                root.as_deref(),
+            )
+        } else if let Some(probe) = intent.selection.probe.as_deref() {
+            self.serial_usage.acquire_probe(
+                probe,
+                "run.start",
+                "Gravação nativa por sonda",
+                root.as_deref(),
+            )
+        } else {
+            return self.claim_serial_destination(request_id, intent);
+        };
+        reservation.map_err(|error| Box::new(JsonRpcResponse::failure(request_id.cloned(), error)))
+    }
+
     /// esptool: the bound port must be ready and keep its identity, then reserved.
     fn claim_serial_destination(
         &self,
