@@ -170,6 +170,8 @@ set_source_files_properties(qml/ipc/PlatformioRequestRouter.qml PROPERTIES QT_RE
 set_source_files_properties(qml/platformio/PlatformioController.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioController.qml)
 set_source_files_properties(qml/platformio/PlatformioWindow.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioWindow.qml)
 set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
+set_source_files_properties(qml/embedded/EmbeddedDfuController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuController.qml)
+set_source_files_properties(qml/embedded/EmbeddedDfuView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuView.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
 set_source_files_properties(qml/embedded/EmbeddedOverviewView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedOverviewView.qml)
 set_source_files_properties(qml/embedded/EmbeddedLinuxView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedLinuxView.qml)
@@ -608,6 +610,8 @@ qt_add_qml_module(kinein-vectis
         qml/platformio/PlatformioController.qml
         qml/platformio/PlatformioWindow.qml
         qml/embedded/EmbeddedController.qml
+        qml/embedded/EmbeddedDfuController.qml
+        qml/embedded/EmbeddedDfuView.qml
         qml/embedded/EmbeddedPanel.qml
         qml/embedded/EmbeddedOverviewView.qml
     qml/embedded/EmbeddedLinuxView.qml
@@ -952,6 +956,7 @@ qt_add_qml_module(kinein-vectis
     src/core_client_grafana.cpp
     src/core_client_platformio.cpp
     src/core_client_probe.cpp
+    src/core_client_dfu.cpp
     src/core_client_container.cpp
     src/core_client_index.cpp
     src/core_client_python.cpp

@@ -40,6 +40,7 @@ canônicas e as regras ficam aqui.
 | `coverage.*` | [`03-dominios/coverage.md`](03-dominios/coverage.md) |
 | `datasource.*` | [`03-dominios/datasource.md`](03-dominios/datasource.md) |
 | `debug.*` | [`03-dominios/debug.md`](03-dominios/debug.md) |
+| `dfu.*` | [`03-dominios/dfu.md`](03-dominios/dfu.md) |
 | `draft.*` | [`03-dominios/draft.md`](03-dominios/draft.md) |
 | `format.*` | [`03-dominios/format.md`](03-dominios/format.md) |
 | `fs.*` (arquivos: ler, gravar, mover, lixeira) | [`03-dominios/fs.md`](03-dominios/fs.md) |
@@ -216,7 +217,7 @@ indistinguível de rodá-lo fora dela — que era o requisito original. Uma
 superfície visual de atalho (Assistente) pode voltar depois **como UI pura**,
 abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
 
-## Os 190 métodos roteados — a lista inteira
+## Os 191 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -373,6 +374,7 @@ platformio.homeRelease
 platformio.homeStart
 platformio.homeStop
 
+dfu.list
 probe.list
 
 project.model

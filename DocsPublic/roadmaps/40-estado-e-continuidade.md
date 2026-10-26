@@ -8,13 +8,13 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-25). Leia isto primeiro.**
+> **HANDOFF (2026-10-26). Leia isto primeiro.**
 >
 > **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4m concluída:** AppImage dev local no Qt 6.12.0, rápido estrito verde em 413 s (52 §14.50; 40.7 §7.360);
-> l Qt 6.12 §7.359; k gate paralelo §7.358; j só na RAM §7.357; i PIO Home §7.356; h–d4 §7.347–§7.355.
-> `.directory`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
-> Protocolo **0.192.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
+> **0.4.1h4b2b4n1 concluída:** descoberta USB DFU na aba Placa, completo estrito verde em 556 s (52 §14.51; 40.7 §7.361).
+> AppImage dev anterior no Qt 6.12.0: §7.360; Qt 6.12 §7.359; PIO Home §7.356.
+> `.directory`, `dist.zip`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
+> Protocolo **0.193.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
 >
 > **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
 > só após validá-la gerar/testar o **AppImage final local** (40.7 §7.335), sem publicação.
@@ -24,12 +24,12 @@
 >
 > **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
 > cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate completo estrito, 0.4.1h4b2b4b3:** 1300 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **169 harnesses QML**, sem NÃO PROVADO; target isolado (§7.345).
-> UI/core debug/release, 33 superfícies por preset, primeiro frame 314/333 ms (§7.345).
+> **Último gate completo estrito, 0.4.1h4b2b4n1:** 1348 Rust, análise C++ limpa,
+> 8 CTest, qmllint estrito e **172 harnesses QML**, sem NÃO PROVADO; target isolado (§7.361).
+> UI/core debug/release, primeiro frame e 33 superfícies por preset, sem avisos (§7.361).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próxima:** dfu-util, picotool, west (52 §14.32), um motor por recorte; visual Qt 6.12/PIO Home/AppImage pendente com o autor.
+> **Próxima:** dfu-util nativo com origem/destino USB validados (52 §14.51), depois picotool/west (52 §14.32); visual Qt 6.12/PIO Home/AppImage pendente com o autor.
 > Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
@@ -61,12 +61,12 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.190.0 (crates/kinein-protocol, medido em 2026-10-22; o
+protocolo   0.193.0 (crates/kinein-protocol, medido em 2026-10-26; o
             historico das versoes e' o arquitetura/03)
-metodos     187 roteados e 61 eventos (os titulos do arquitetura/03, que o
+metodos     191 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   170 tst_*.qml em scripts/qml-harness (medido em 2026-10-23)
-testes      1284 Rust no gate completo estrito de 2026-10-22 (40.7 §7.342);
+harnesses   172 tst_*.qml em scripts/qml-harness (medido em 2026-10-26)
+testes      1348 Rust no gate completo estrito de 2026-10-26 (40.7 §7.361);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
@@ -82,7 +82,7 @@ testes      1284 Rust no gate completo estrito de 2026-10-22 (40.7 §7.342);
             1278 Rust na 0.4.1h4b2b3 em 2026-10-22 (§7.340), gate completo estrito verde com target independente.
             1297 Rust na 0.4.1h4b2b4b1 em 2026-10-22 (§7.343), gate rápido estrito verde em cópia isolada.
             1297 Rust na 0.4.1h4b2b4b2 em 2026-10-22 (§7.344), gate completo estrito verde em cópia isolada.
-            1315 Rust na 0.4.1h4b2b4f/g em 2026-10-23 (§7.351–§7.352); 1300 no último gate completo (§7.345).
+            1315 Rust na 0.4.1h4b2b4f/g em 2026-10-23 (§7.351–§7.352); completo anterior no §7.345.
 ```
 
 Os comandos que medem estão no
@@ -122,7 +122,7 @@ física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-2
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Próxima: picotool, dfu-util e west nativos, um motor por recorte (52 §14.32); depois a matriz integrada e a recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.44 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.354 |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Descoberta USB DFU fechada (n1); próxima: dfu-util nativo com origem do firmware e destino USB validados (52 §14.51), depois picotool e west, matriz integrada e recuperação | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.51 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.361 |
 | C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |

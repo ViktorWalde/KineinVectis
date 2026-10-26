@@ -30,6 +30,18 @@ Item {
             root.embeddedController.handleProbes(probes, toolAvailable, rawOutput, hint);
         }
 
+        function onWorkspaceChanged() {
+            root.embeddedController.dfu.clear();
+        }
+
+        function onDfuListResolved(result, requestId) {
+            root.embeddedController.dfu.handleResult(result, requestId);
+        }
+
+        function onDfuListFailed(requestId, message) {
+            root.embeddedController.dfu.handleFailed(requestId, message);
+        }
+
         function onBuildSizeResolved(sections, regions, toolAvailable, tool, rawOutput) {
             root.embeddedController.handleBuildSize(sections, regions, toolAvailable, tool, rawOutput);
         }

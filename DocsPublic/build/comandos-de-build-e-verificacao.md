@@ -83,10 +83,13 @@ UI já concluído; não roda dentro do gate padrão):
 
 ```bash
 python3 scripts/verificar_probe_response_identity.py --build-dir build/dev-local
+python3 scripts/verificar_probe_response_identity.py --build-dir build/dev-local --domain dfu
 ```
 
-O runner liga os mesmos objetos de produção com um main de fixture, usa
-CoreClient real e um core IPC falso que responde fora de ordem. Grava os
+O runner usa as flags/SDK do compile_commands do build e liga os mesmos
+objetos de produção com um main compartilhado de fixture. Usa
+CoreClient real e um core IPC falso que responde fora de ordem. O domínio
+dfu também passa pelos roteadores e controller de produção (52 §14.51). Grava os
 relatórios e artefatos em `build/qa-artifacts/`, com temporários próprios nessa
 partição. Nenhuma sonda/hardware é acessada. Não executá-lo durante
 `verificar-cpp.sh` nem enquanto a UI ainda compila. Detalhes no

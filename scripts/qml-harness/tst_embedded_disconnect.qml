@@ -24,6 +24,9 @@ Item {
         id: client
         property bool connected: false
         signal statusChanged()
+        signal workspaceChanged()
+        signal dfuListResolved(var result, double requestId)
+        signal dfuListFailed(double requestId, string message)
         signal probesResolved(var probes, bool toolAvailable, string rawOutput, string hint)
         signal buildSizeResolved(var sections, var regions, bool toolAvailable, string tool, string rawOutput)
         signal projectModelResolved(var model)

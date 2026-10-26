@@ -123,6 +123,11 @@ Item {
                 }
                 EmbeddedAccessView { id: accessView; width: parent.width; controller: root.controller }
                 EmbeddedFilesView { width: parent.width; controller: root.controller }
+                EmbeddedDfuView {
+                    width: parent.width
+                    visible: !root.linuxTarget
+                    controller: root.controller ? root.controller.dfu : null
+                }
             }
 
             EmbeddedFlashView {

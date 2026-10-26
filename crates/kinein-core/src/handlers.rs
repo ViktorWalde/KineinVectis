@@ -24,6 +24,7 @@ pub mod datasource_query;
 pub mod datasource_session;
 pub mod debug;
 mod debug_launch;
+pub mod dfu;
 pub mod draft;
 pub mod format;
 pub mod fs;

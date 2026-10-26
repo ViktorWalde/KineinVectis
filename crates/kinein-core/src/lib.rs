@@ -17,6 +17,7 @@ pub mod coverage;
 pub mod dap;
 pub mod datasource;
 pub mod db;
+pub mod dfu;
 pub mod flash;
 pub mod format;
 pub mod fsops;
@@ -100,6 +101,8 @@ pub struct Core {
     run_terminal: Option<String>,
     /// One cancelable native launch validation; no second process executor.
     run_preflight: Option<Arc<std::sync::atomic::AtomicBool>>,
+    /// Current USB DFU discovery; workspace changes and newer queries cancel it.
+    dfu_query: Option<Arc<std::sync::atomic::AtomicBool>>,
     /// O canal das continuacoes (F6 fechamento): um pedido adiado que
     /// precisa do `Core` para terminar volta ao laco por aqui.
     continuations: Option<std::sync::mpsc::Sender<Continuation>>,
@@ -164,6 +167,7 @@ impl Core {
             workspace_edits: lsp::WorkspaceEditTransactions::default(),
             run_terminal: None,
             run_preflight: None,
+            dfu_query: None,
             continuations: None,
             debug: None,
             terminal: None,
@@ -226,6 +230,7 @@ impl Core {
                 json!(CorePingResult::default()),
             )),
             "core.shutdown" => {
+                self.cancel_dfu_query();
                 self.previews.clear();
                 // M4.3b: cancela jobs vivos já no shutdown (sinal pronto +
                 // entrega os event.job.* enquanto o canal existe); o drain
@@ -324,6 +329,7 @@ impl Core {
             .or_else(|| self.grafana_request_response(method, request_id.clone(), params))
             .or_else(|| self.platformio_home_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
+            .or_else(|| self.dfu_request_response(method, request_id.clone(), params))
             .or_else(|| self.container_request_response(method, request_id.clone(), params))
             .or_else(|| self.project_request_response(method, request_id.clone(), params))
             .or_else(|| self.index_request_response(method, request_id.clone(), params))

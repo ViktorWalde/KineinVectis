@@ -29,6 +29,7 @@ mod datasource_provider;
 mod datasource_query;
 mod datasource_session;
 mod debug;
+mod dfu;
 mod diagnostic;
 mod draft;
 pub mod driver;
@@ -78,6 +79,7 @@ pub use datasource_provider::*;
 pub use datasource_query::*;
 pub use datasource_session::*;
 pub use debug::*;
+pub use dfu::*;
 pub use diagnostic::*;
 pub use draft::*;
 pub use format::*;
@@ -110,4 +112,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.192.0";
+pub const PROTOCOL_VERSION: &str = "0.193.0";

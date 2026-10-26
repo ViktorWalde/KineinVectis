@@ -6222,3 +6222,86 @@ sem rede/Qt/compiladores verdes. Gate rápido estrito TUDO VERDE: 1.334 Rust,
 8 CTest, qmllint e 171 harnesses QML, incluindo smoke do artefato entregue.
 Pico de 10.473 MiB no escopo com teto de 14.685 MiB e swap zero; nenhuma
 entrada nova no `/tmp`. A fatia não fecha a 0.4.1 e não publica o pacote.
+
+
+### 14.51 0.4.1h4b2b4n1 — descoberta USB do dfu-util antes da gravação nativa (desenho, 2026-10-26)
+
+**Problema medido.** O `flash/mod.rs` só oferece a prévia manual do dfu-util:
+BIN mais recente, interface alternativa 0 e endereço STM32 fixo. O motor
+continua recusado por `flash/native.rs`. Isso não comprova artefato nem destino;
+esta primeira fatia prepara a descoberta, sem promover aquele planner.
+
+**Referências primárias conferidas em 2026-10-26.** O
+[manual oficial](https://dfu-util.sourceforge.net/dfu-util.1.html) distingue
+modo Runtime de DFU e seleção por configuração, interface e alternativa USB.
+O [fonte oficial 0.11](https://dfu-util.sourceforge.net/releases/dfu-util-0.11.tar.gz),
+`src/dfu_util.c::print_dfu_if`, imprime uma linha por alternativa, não por
+placa. `probe_devices` pode avisar `Cannot open DFU device` e a listagem ainda
+terminar com código zero (`main.c`, MODE_LIST). Não interpretar isso como
+lista completa ou ausência de hardware. `--list` abre USB para ler descritores;
+não faz detach, reset, claim de interface ou transferência de firmware.
+
+**Contrato anterior ao produtor: IPC 0.193.0.** Novo `dfu.list {}` exige
+workspace e responde `{interfaces, toolAvailable, complete, tool?, rawOutput,
+hint?}`. Cada interface leva `mode` (`dfu`/`runtime`), `vid`, `pid`, `release`,
+`deviceNumber`, `configuration`, `interface`, `path`, `alternate`, `name` e
+`serial?` (UNKNOWN/vazio ausente). Caminho/número USB e serial são descritores
+observados, não identidade estável nem permissão/exclusividade comprovadas.
+`complete` exige processo bem-sucedido, cabeçalho 0.11 e todas as linhas
+reconhecidas; aviso/erro, formato ou versão desconhecidos recusam a lista
+inteira e conservam a saída/dica. Falha de spawn deixa toolAvailable=false;
+as outras falhas não fingem ferramenta ausente. Retenção de até 64 KiB e
+prazo de cinco segundos, pelo runner limitado existente; o limite é da saída
+retida, não dos buffers internos desse runner.
+
+**Arquivos e fluxo.** Tipos em `kinein-protocol/src/dfu.rs`, contrato em
+`arquitetura/03-dominios/dfu.md`; `kinein-core/src/dfu.rs` interpreta a listagem
+e consulta somente `--list` pelo `probe::query::run` existente. Handler fino
+em `handlers/dfu.rs` usa `defer_then`, confere workspace/ferramenta e token
+cancelável: nova consulta, ativação ou desativação do workspace invalidam a
+anterior, inclusive reabrir a mesma raiz. Sem scanner, executor ou reserva
+paralelos. Ponte `core_client_dfu.cpp` entrega id de sucesso/erro ao filho
+`EmbeddedDfuController`, ligado pelos roteadores Embedded. Consulta só por
+gesto explícito em `EmbeddedDfuView`, dentro da aba Placa atual; reset no
+workspace/desconexão e respostas fora de ordem não repõem dados antigos.
+O cabeçalho do painel reusa o veredito desse filho, sem anunciar ausência de
+dispositivos quando há alternativas DFU; Atualizar invalida a consulta anterior.
+
+**Aceites.** Parser com Runtime, alternativas múltiplas, serial ausente,
+descritores com aspas, linhas inválidas e aviso de acesso com exit zero;
+ferramenta falsa prova argv literal, falha, prazo e excesso. Despacho real
+prova laço disponível, troca/reabertura de workspace, concorrência e parâmetros
+estritos. Harness com controller e roteadores reais prova sucesso/erro antigos,
+desconexão e invalidação. Mutações devem cair nas asserções. Gate rápido
+estrito, cargo fmt e smoke da UI; UI release antes de pedir aceite visual.
+Provas e temporários em disco no cache, target Rust de QA independente.
+
+**Fora desta fatia.** Gravar, destacar uma alternativa como destino executável,
+converter uma porta serial em USB, escolher BIN/ELF por recência, gerar pacote
+ou instalar ferramenta. Próxima n2: contratar origem BIN/DfuSe e alvo/endereço,
+seleção USB inequívoca e reserva/revalidação pelos donos atuais, com provas
+próprias antes de habilitar execução nativa. Depois picotool, west e matriz
+integrada; a 0.4.1 e a jornada h4b2b continuam abertas.
+
+
+**Feito em 2026-10-26 (40.7 §7.361).** `dfu.list` e aba Placa ligados pelo
+CoreClient e roteadores atuais. O cabeçalho reusa o veredito do filho; consulta
+não verificada não vira ausência de hardware, e desconexão conserva o estado
+geral desconhecido. Atualizar invalida a lista sem consultar USB automaticamente.
+Treze testes novos do core e um do protocolo cobrem formato, argv, falha,
+prazo, cancelamento, limite, revisão da ferramenta e ciclo do workspace.
+Harness novo com controllers/roteadores/view reais; prova Qt de oito fases
+com CoreClient real e respostas IPC reordenadas. O runner existente de sondas
+passou também, agora compilando seu main pelas flags/SDK do build.
+
+Três mutações detectadas por asserções de runtime: ignorar aviso USB com exit
+zero, omitir cancelamento no workspace e omitir id na resposta QML. Core real
+por stdio + dfu-util falso passou do METHOD_NOT_FOUND anterior à lista tipada;
+modo nativo ainda recusou antes de executar. Capturas antes/depois offscreen
+com IPC falso, sem substituir o aceite visual do autor. Gate completo estrito
+final TUDO VERDE em **556 s**: **1.348 Rust, 8 CTest, qmllint, 172 harnesses**,
+primeiro frame e 33 superfícies por preset debug/release sem avisos. Fontes da
+cópia QA comparadas por hash (1.882 arquivos); target próprio, temporários em
+disco, escopo com swap zero e nenhuma entrada nova no `/tmp`. UI/core locais
+atualizados em debug/release; sem usar hardware DFU ou ESP32 nestas provas. Não fechou a 0.4.1 nem alterou o AppImage anterior. Próxima n2 conforme
+o recorte acima, depois picotool/west e a matriz integrada.

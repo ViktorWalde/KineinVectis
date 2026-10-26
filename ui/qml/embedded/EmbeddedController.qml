@@ -72,6 +72,7 @@ Item {
             .arg(identityController.device)
         : portFound ? qsTr("%1 porta(s) serial(is); nenhuma placa identificada ainda").arg(ports.length)
         : probeFound ? qsTr("sonda %1").arg(probes[0].name)
+        : dfuController.verdict !== "" ? dfuController.verdict
         : portsMeasured ? qsTr("Nenhum dispositivo listado") : qsTr("Dispositivos a verificar")
 
     // A identidade pelo canal (E5) e' dono proprio, filho deste: quem tem o
@@ -83,6 +84,9 @@ Item {
     readonly property alias access: accessController
     // Arquivos na placa MicroPython (C2): idem, filho.
     readonly property alias files: filesController
+    readonly property alias dfu: dfuController
+
+    EmbeddedDfuController { id: dfuController }
 
     EmbeddedIdentityController {
         id: identityController
@@ -141,6 +145,7 @@ Item {
         flashController.clear();
         accessController.clear();
         filesController.clear();
+        dfuController.clear();
         project = ({});
         projectBusy = false;
         panelVisible = false;
@@ -160,6 +165,7 @@ Item {
     // Toda abertura PERGUNTA de novo: sonda e porta sao coisa que se pluga e
     // despluga, e a lista da ultima vez e' exatamente o que nao se pode mostrar.
     function refresh() {
+        dfuController.clear();
         busy = true;
         portsBusy = true;
         projectBusy = true;
@@ -325,6 +331,7 @@ Item {
         identityController.clear();
         filesController.clear();
         flashController.disconnected();
+        dfuController.disconnected();
         accessController.clear(true);
         errorText = message;
     }

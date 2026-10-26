@@ -1688,6 +1688,14 @@ Executar         Executar de um projeto MicroPython (`mpremote connect
                  execucao salva — esses rodam como foram escritos. Uma porta
                  que some da lista (placa desplugada, painel reaberto) deixa
                  de ser a escolhida; trocar de projeto tambem limpa
+USB DFU          na aba Placa, "Verificar USB DFU" consulta o dfu-util 0.11
+                 somente por gesto explicito. Mostra Runtime/DFU, configuracao,
+                 interface, alternativa, caminho USB e serial quando informado;
+                 alternativas nao sao contadas como placas distintas. A consulta
+                 le descritores USB, sem reset, detach ou gravacao. Falha,
+                 permissao, prazo e formato desconhecido aparecem com causa e
+                 saida da ferramenta; lista nao verificada nao significa nenhuma
+                 placa. A gravacao nativa por dfu-util continua pendente.
 sonda e kit      a sonda pelo `probe-rs list`; o chip, o alvo (triple), o
                  sysroot e o depurador ficam no KIT do projeto
 tamanho          "Medir" le o ELF e mostra uma barra por regiao do linker

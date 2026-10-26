@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 190 métodos IPC roteados pelo core.
+Medido: 191 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -104,6 +104,7 @@ flowchart LR
   n_core_dap[dap]
   n_core_datasource[datasource]
   n_core_db[db]
+  n_core_dfu[dfu]
   n_core_fake_exe[fake_exe]
   n_core_flash[flash]
   n_core_format[format]
@@ -181,6 +182,7 @@ flowchart LR
   n_core_datasource --> n_core_settings
   n_core_datasource --> n_core_stderr_tail
   n_core_datasource --> n_core_tools
+  n_core_dfu --> n_core_probe
   n_core_flash --> n_core_build
   n_core_flash --> n_core_fsops
   n_core_flash --> n_core_platform
@@ -285,7 +287,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-48 módulos, 141 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+49 módulos, 142 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -307,6 +309,7 @@ flowchart LR
 | `dap` | lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |
 | `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
+| `dfu` | probe | Bounded dfu-util discovery. |
 | `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
 | `flash` | build, fsops, platform, probe, process, project | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
@@ -347,7 +350,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 190 métodos roteados pelo core, 158 seguem o caminho padrão
+Dos 191 métodos roteados pelo core, 159 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 32 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -935,6 +938,7 @@ flowchart LR
     n_ui_qml_ipc_EmbeddedEventRouter_qml["ipc/EmbeddedEventRouter"]
   end
   subgraph CPP["ui/src"]
+    n_ui_src_core_client_dfu_cpp["core_client_dfu.cpp"]
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_dispatch_cmake_cpp["core_client_dispatch_cmake.cpp"]
     n_ui_src_core_client_log_cpp["core_client_log.cpp"]
@@ -946,6 +950,7 @@ flowchart LR
   subgraph IPC["JSON-RPC"]
     n_ipc_build(["build.* · 1"])
     n_ipc_cmake(["cmake.* · 1"])
+    n_ipc_dfu(["dfu.* · 1"])
     n_ipc_probe(["probe.* · 1"])
     n_ipc_project(["project.* · 1"])
     n_ipc_runConfig(["runConfig.* · 1"])
@@ -953,6 +958,7 @@ flowchart LR
   end
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_cmake_rs["handlers/cmake.rs"]
+    n_crates_kinein_core_src_handlers_dfu_rs["handlers/dfu.rs"]
     n_crates_kinein_core_src_handlers_probe_rs["handlers/probe.rs"]
     n_crates_kinein_core_src_handlers_project_rs["handlers/project.rs"]
     n_crates_kinein_core_src_handlers_runconfig_rs["handlers/runconfig.rs"]
@@ -962,6 +968,7 @@ flowchart LR
     n_core_cdb[cdb]
     n_core_cmake[cmake]
     n_core_dap[dap]
+    n_core_platform[platform]
     n_core_probe[probe]
     n_core_project[project]
     n_core_rpc[rpc]
@@ -970,13 +977,16 @@ flowchart LR
     n_core_toolchain[toolchain]
     n_core_tools[tools]
   end
-  n_tools_embedded[/"esptool · OpenOCD · probe-rs · mpremote · tio/picocom · QEMU"/]
+  n_tools_embedded[/"esptool · OpenOCD · probe-rs · dfu-util · mpremote · tio/picocom · QEMU"/]
   n_ui_qml_embedded_EmbeddedController_qml --> n_ui_qml_ipc_EmbeddedRequestRouter_qml
   n_ui_qml_ipc_EmbeddedEventRouter_qml -.-> n_ui_qml_embedded_EmbeddedController_qml
   n_ui_qml_ipc_EmbeddedEventRouter_qml -.-> n_ui_qml_runtime_RuntimeController_qml
+  n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_dfu_cpp
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_probe_cpp
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_requests_cpp
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_requests_run_cpp
+  n_ui_src_core_client_dfu_cpp --> n_ipc_dfu
+  n_ui_src_core_client_dfu_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_log_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
@@ -993,6 +1003,8 @@ flowchart LR
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_rpc
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_settings
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_toolchain
+  n_ipc_dfu --> n_crates_kinein_core_src_handlers_dfu_rs
+  n_crates_kinein_core_src_handlers_dfu_rs --> n_core_platform
   n_ipc_probe --> n_crates_kinein_core_src_handlers_probe_rs
   n_crates_kinein_core_src_handlers_probe_rs --> n_core_probe
   n_crates_kinein_core_src_handlers_probe_rs --> n_core_rpc
@@ -1023,6 +1035,7 @@ flowchart LR
 | controller | `ui/qml/runtime/RuntimeController.qml` |  |
 | roteador | `ui/qml/ipc/EmbeddedRequestRouter.qml` | Espelho do EmbeddedEventRouter: |
 | roteador | `ui/qml/ipc/EmbeddedEventRouter.qml` | O que o core responde de probe.*, build.size e serial.* -> EmbeddedController. |
+| ponte C++ | `ui/src/core_client_dfu.cpp` | USB DFU discovery: |
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch_cmake.cpp` | Dispatch do dominio CMake/build (ARCHITECTURE.md §5). |
 | ponte C++ | `ui/src/core_client_log.cpp` |  |
@@ -1031,13 +1044,14 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | ponte C++ | `ui/src/core_client_requests_run.cpp` | Dominio RUN no lado da UI: |
 | handler Rust | `crates/kinein-core/src/handlers/cmake.rs` | Handlers for cmake.* requests (impl Core): |
+| handler Rust | `crates/kinein-core/src/handlers/dfu.rs` | Thin dfu.list handler. |
 | handler Rust | `crates/kinein-core/src/handlers/probe.rs` | Handler for probe.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/handlers/project.rs` | Handler for project.* requests (impl Core) — o MODELO do projeto embarcado (pilar 0 do roadmaps/42). |
 | handler Rust | `crates/kinein-core/src/handlers/runconfig.rs` | Handlers for runConfig.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/serial.rs` | Handler for serial.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (10): `build.size`, `cmake.targets.list`, `probe.list`, `project.model`, `runConfig.flashProposal`, `serial.access`, `serial.files`, `serial.identify`, `serial.list`, `serial.monitor`.
+Métodos IPC (11): `build.size`, `cmake.targets.list`, `dfu.list`, `probe.list`, `project.model`, `runConfig.flashProposal`, `serial.access`, `serial.files`, `serial.identify`, `serial.list`, `serial.monitor`.
 
 ### Toolchains e kits
 

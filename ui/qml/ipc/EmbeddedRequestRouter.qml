@@ -39,6 +39,16 @@ Item {
         }
     }
 
+    Connections {
+        target: root.embeddedController ? root.embeddedController.dfu : null
+
+        function onListRequested() {
+            const dfu = root.embeddedController.dfu;
+            dfu.bindRequest(root.coreClient && root.coreClient.connected !== false
+                ? root.coreClient.dfuList() : -1);
+        }
+    }
+
     // Identidade pelo canal (E5): o sinal e' do controller FILHO `identity`,
     // nao do EmbeddedController — ligado ao pai, o Qt avisava "no signal of
     // the target matches" e o serial.identify nunca saia (achado em

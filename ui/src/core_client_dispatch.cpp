@@ -85,6 +85,9 @@ void CoreClient::dispatchFailure(const QString& method, const QJsonObject& error
 {
     const QString message = error.value(QStringLiteral("message")).toString();
     appendLog(QStringLiteral("erro do core em %1: %2").arg(method, message));
+    if (method == QStringLiteral("dfu.list")) {
+        emit dfuListFailed(id, message);
+    }
     if (method == QStringLiteral("build.run")) {
         setBuilding(false);
         m_buildJobId.clear();
@@ -350,6 +353,9 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
 
 void CoreClient::dispatchResult(const QString& method, const QJsonObject& result, qint64 requestId)
 {
+    if (dispatchDfuResult(method, result, requestId)) {
+        return;
+    }
     if (method == QStringLiteral("core.ping")) {
         m_protocolVersion = result.value(QStringLiteral("protocolVersion")).toString();
         setStatus(QStringLiteral("conectado"), true);

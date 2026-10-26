@@ -16,6 +16,7 @@
 | [`coverage.md`](coverage.md) | `coverage.*` |
 | [`datasource.md`](datasource.md) | `datasource.*` |
 | [`debug.md`](debug.md) | `debug.*` |
+| [`dfu.md`](dfu.md) | `dfu.*` |
 | [`draft.md`](draft.md) | `draft.*` |
 | [`format.md`](format.md) | `format.*` |
 | [`fs.md`](fs.md) | `fs.*` (arquivos: ler, gravar, mover, lixeira) |

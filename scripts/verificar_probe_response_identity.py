@@ -1,4 +1,4 @@
-"""Exercise the real Qt CoreClient against deliberately reordered probe replies."""
+"""Exercise the real Qt CoreClient against deliberately reordered discovery replies."""
 import argparse
 import json
 import os
@@ -12,18 +12,26 @@ import tempfile
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--build-dir', type=Path, required=True)
-parser.add_argument('--fixtures', type=Path, default=Path(__file__).resolve().parent/'fixtures/probe-response-identity')
+parser.add_argument('--domain', choices=['probe', 'dfu'], default='probe')
+parser.add_argument('--fixtures', type=Path)
 parser.add_argument('--expect-failure', action='store_true')
 args = parser.parse_args()
 build = args.build_dir.resolve()
-fixtures = args.fixtures.resolve()
+fixtures = (args.fixtures or Path(__file__).resolve().parent/f'fixtures/{args.domain}-response-identity').resolve()
+marker = args.domain.upper() + '_RESPONSE_'
 artifact_base = build.parent/'qa-artifacts'
 artifact_base.mkdir(parents=True, exist_ok=True)
-root = Path(tempfile.mkdtemp(prefix='probe-response-qt-', dir=artifact_base))
+root = Path(tempfile.mkdtemp(prefix=f'{args.domain}-response-qt-', dir=artifact_base))
 (root/'tmp').mkdir()
 task_env = dict(os.environ, TMPDIR=str(root/'tmp'))
-flags = shlex.split(subprocess.check_output(['pkg-config', '--cflags', 'Qt6Gui', 'Qt6Qml', 'Qt6Quick'], text=True))
-compile_result = subprocess.run(['c++', '-std=c++20', '-fPIC', *flags, '-c', str(fixtures/'main.cpp'), '-o', str(root/'main.o')], capture_output=True, text=True, env=task_env)
+# Use the same SDK and flags as the production objects, including Qt 6.12.
+main_source = Path(__file__).resolve().parent/'fixtures/probe-response-identity/main.cpp'
+database = json.loads((build/'compile_commands.json').read_text())
+entry = next(item for item in database if item['file'].endswith('/ui/src/main.cpp'))
+compile_command = shlex.split(entry['command'])
+compile_command[compile_command.index('-o')+1] = str(root/'main.o')
+compile_command[compile_command.index('-c')+1] = str(main_source)
+compile_result = subprocess.run(compile_command, cwd=entry['directory'], capture_output=True, text=True, env=task_env)
 (root/'compile.log').write_text(compile_result.stdout + compile_result.stderr)
 assert compile_result.returncode == 0, f'helper compilation failed: {root}/compile.log'
 commands = subprocess.check_output(['ninja', '-C', str(build), '-t', 'commands', 'ui/kinein-vectis'], text=True)
@@ -54,12 +62,12 @@ env.pop('KINEIN_STARTUP_COMMANDS', None)
 result = subprocess.run([str(root/'proof')], env=env, cwd=root, capture_output=True, text=True, timeout=15)
 output = result.stdout + result.stderr
 (root/'run.log').write_text(output)
-match = re.search(r'PROBE_RESPONSE_REPORT (\{[^\n]+\})', output)
-failed_assertion = result.returncode == 1 and 'PROBE_RESPONSE_FAIL ' in output
+match = re.search(re.escape(marker) + r'REPORT (\{[^\n]+\})', output)
+failed_assertion = result.returncode == 1 and marker + 'FAIL ' in output
 report = {'exitCode': result.returncode, 'runtimeAssertionFailed': failed_assertion,
           'passed': result.returncode == 0 and match is not None,
           'result': json.loads(match[1]) if match else None, 'log': str(root/'run.log'),
-          'buildDirectory': str(build), 'expectFailure': args.expect_failure}
+          'buildDirectory': str(build), 'domain': args.domain, 'expectFailure': args.expect_failure}
 (root/'report.json').write_text(json.dumps(report, indent=2)+'\n')
 print(json.dumps({'report': str(root/'report.json'), **report}))
 assert failed_assertion if args.expect_failure else report['passed'], str(root/'run.log')
