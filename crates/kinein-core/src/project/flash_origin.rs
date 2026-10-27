@@ -208,10 +208,9 @@ pub fn cmake_target(root: &Path, name: &str) -> Result<CmakeOrigin, String> {
     };
     let artifact = within(&build, artifact)?;
     let mut header = Vec::with_capacity(64);
-    fs::File::open(&artifact)
-        .and_then(|file| {
-            std::io::Read::read_to_end(&mut std::io::Read::take(file, 64), &mut header)
-        })
+    let file = crate::fsops::open_regular_file(&artifact)
+        .map_err(|error| format!("{}: {error}", artifact.display()))?;
+    std::io::Read::read_to_end(&mut std::io::Read::take(file, 64), &mut header)
         .map_err(|error| format!("{}: {error}", artifact.display()))?;
     let machine = crate::dap::gdb_pick::parse_elf_machine(&header).ok_or_else(|| {
         format!(

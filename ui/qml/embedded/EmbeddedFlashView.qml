@@ -38,7 +38,7 @@ Item {
         Text {
             width: parent.width
             text: root.flash && root.flash.dfuDestination
-                  ? qsTr("Modo nativo: confere arquivo DfuSe e alternativa USB novamente antes de gravar.")
+                  ? qsTr("Modo nativo: confere arquivo e alternativa USB novamente antes de gravar.")
                   : root.flash && root.flash.probeDestination
                   ? qsTr("Destino: a sonda escolhida abaixo. A porta serial não é usada nesta gravação.")
                   : root.controller && root.controller.selectedPort !== ""
@@ -132,6 +132,7 @@ Item {
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
+            visible: !root.flash || !root.flash.dfuDestination
             text: root.flash && root.flash.probeDestination
                   ? qsTr("Modo nativo: vincula alvo, sonda, ferramenta e arquivos à prévia e confere novamente antes de executar.")
                   : root.flash && root.flash.nativeMode
@@ -146,7 +147,7 @@ Item {
             controller: root.controller
         }
 
-        EmbeddedDfuFlashView { width: parent.width; flash: root.flash }
+        EmbeddedDfuFlashView { width: parent.width; controller: root.controller; flash: root.flash }
 
         KvButton {
             objectName: "embeddedReviewCommand"

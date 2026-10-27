@@ -19,7 +19,9 @@ Item {
     Connections {
         target: controller.flash
         function onRunRequested(command, flash) {
-            root.nativeRequested = command === "" && flash.selection.dfu.image === "firmware a'b.dfu";
+            root.nativeRequested = command === "" && (root.phase === 10
+                ? flash.selection.dfu.image === "firmware a'b.dfu"
+                : flash.selection.dfu.image === ".kinein/build/firmware a'b.bin" && flash.selection.dfu.binaryTarget === "firmware");
         }
     }
     Connections {
@@ -89,7 +91,18 @@ Item {
                          "native DFU selection was lost in real Qt serialization or dispatch")) return;
             controller.flash.run();
             if (!require(nativeRequested, "native DFU intent was converted into a manual command")) return;
-            console.log("DFU_RESPONSE_REPORT " + JSON.stringify({phases: 10, protocol: client.protocolVersion}));
+            phase = 11;
+            nativeRequested = false;
+            controller.flash.dfu.selectBinary(true);
+            controller.flash.dfu.setImage(".kinein/build/firmware a'b.bin");
+            controller.flash.selectTarget("firmware");
+            controller.flash.propose("/dev/ignored", 999);
+        } else if (phase === 11) {
+            if (!require(controller.flash.found && controller.flash.proposal.flash.selection.dfu.binaryTarget === "firmware",
+                         "BIN target was lost in real Qt serialization or dispatch")) return;
+            controller.flash.run();
+            if (!require(nativeRequested, "BIN intent was converted into a manual command")) return;
+            console.log("DFU_RESPONSE_REPORT " + JSON.stringify({phases: 11, protocol: client.protocolVersion}));
             Qt.exit(0);
             return;
         }

@@ -5,6 +5,7 @@ import sys
 
 pending = None
 sequence = 0
+proposals = 0
 
 
 def send(request_id, result=None, error=None):
@@ -29,7 +30,7 @@ for line in sys.stdin:
     request_id = request["id"]
     method = request["method"]
     if method == "core.ping":
-        send(request_id, {"protocolVersion": "0.194.0"})
+        send(request_id, {"protocolVersion": "0.195.0"})
     elif method == "workspace.open":
         send(request_id, {"root": request["params"]["path"], "name": "DFU fixture", "kind": "cmake",
                           "capabilities": {"buildSystems": []}})
@@ -65,9 +66,13 @@ for line in sys.stdin:
             failed(request_id, "unexpected-query")
     elif method == "runConfig.flashProposal":
         params = request["params"]
-        assert params == {"native": True, "engine": "dfu-util", "dfu": {
+        proposals += 1
+        expected = {"native": True, "engine": "dfu-util", "dfu": {
             "image": "firmware a'b.dfu", "destination": {"vid": "0483", "pid": "df11",
-                "serial": "FIXTURE-1", "path": "1-2", "configuration": 1, "interface": 0, "alternate": 0}}}, params
+                "serial": "FIXTURE-1", "path": "1-2", "configuration": 1, "interface": 0, "alternate": 0}}}
+        if proposals == 2:
+            expected["dfu"].update(image=".kinein/build/firmware a'b.bin", binaryTarget="firmware")
+        assert params == expected, params
         send(request_id, {"command": "literal dfu fixture", "engine": "dfu-util",
                           "flash": {"version": 1, "selection": params}})
     else:

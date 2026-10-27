@@ -6429,3 +6429,110 @@ de família. Em seguida picotool/west (52 §14.32), matriz integrada e recupera�
 A h4b2b e a 0.4.1 seguem abertas. EmbeddedController está em 400/400; evoluir
 os filhos sem aumentar o limite. Nenhuma prova acima substitui flash físico
 DFU ou aceite visual do autor.
+
+
+### 14.53 0.4.1h4b2b4n3 — BIN conferido com o ELF do alvo CMake (desenho, 2026-10-26)
+
+**Antes do código.** Continuação autorizada pelo autor após 8310a17. O fechamento
+0.4.1 ainda exige: motores restantes e matriz integrada de ocupação/recuperação;
+Setup S1/S2 no dock com Instalar Ferramentas reformulado; kits/schema 3; aceite
+integrado, correções, gates e documentação (§11.1). O aceite físico registra
+separadamente cada combinação medida. Não antecipar CircuitPython, Quality
+Center ou o assistente semântico para esta fatia.
+
+**Recorte n3.** Acrescentar `dfu.binaryTarget?: string` ao contrato 0.195.0,
+sem método/evento novo. Ausente mantém o arquivo DfuSe da n2; presente escolhe
+explicitamente BIN e o nome do executável no codemodel do `.kinein/build`.
+Reusar `project::flash_origin::cmake_target`, uma configuração/um artefato ELF,
+raiz/build canônicos. BIN regular, não vazio, até 32 MiB e dentro desse build;
+ELF regular até 64 MiB. Nenhuma geração de imagem, build, objcopy ou código do
+projeto é executado pela prévia. Não afirmar que o build está atualizado com
+as fontes ou que o chip físico foi autenticado.
+
+**Conteúdo/endereço.** Validador puro em `flash/dfu/binary.rs`: ELF32 little
+endian ARM ET_EXEC, versão 1, cabeçalhos coerentes e 1–128 program headers.
+Recusar carregamento dinâmico/interpreter, contagens estendidas, truncamento,
+overflow, segmentos sobrepostos ou bytes carregáveis fora de flash interna.
+Usar bytes de PT_LOAD com filesz > 0 e p_paddr; filesz <= memsz, alinhamento
+coerente, endereço final dentro de 0x08000000–0x09000000. BSS sem bytes não
+vira dados de flash. Exigir ponto de entrada em segmento executável. Ordenar
+por endereço físico; BIN deve cobrir exatamente do primeiro ao último byte,
+com os bytes dos segmentos iguais e somente zeros nos intervalos entre eles.
+Sem padding inicial/final, relocação ou gap-fill diferente de zero neste
+recorte. Não é um conversor ELF nem equivalência universal com objcopy.
+
+**Fontes primárias conferidas.** [Program Header do ABI ELF](https://refspecs.linuxfoundation.org/elf/TIS1.1.pdf)
+define offsets, tamanhos, PT_LOAD e alinhamento. O [manual GNU objcopy](https://sourceware.org/binutils/docs/binutils/objcopy.html)
+explica que BIN começa no menor endereço de carga de seção e descarta símbolos;
+essa é a razão para nunca tirar o endereço do BIN isolado. Fixture real será
+produzida pelo arm-none-eabi-gcc/objcopy já instalados, sem nova dependência.
+O [manual dfu-util 0.11](https://dfu-util.sourceforge.net/dfu-util.1.html) e seu
+fonte oficial já auditado (`dfu_file.c`, `dfuse.c`) mostram -s ADDRESS e a
+remoção automática de prefixos/sufixos. BIN que pareça conter UFD, DfuSe ou
+prefixo TI/LPC será recusado, para a ferramenta transferir os mesmos bytes
+conferidos. Não adicionar `force`, `leave`, reset ou apagamento global.
+
+**Preparação/execução.** Extrair leitura/identidade do artefato para
+`flash/dfu/artifact.rs`, preservando parser DfuSe e donos de USB/reserva/PTYS.
+Plano BIN acrescenta `--dfuse-address 0xENDERECO` antes de `--download BIN`;
+nenhum endereço vem do cliente. Validar o intervalo inteiro no mapa, inclusive
+gaps. Prévia mostra alvo/id/ELF, endereço, tamanho e hashes. Snapshot inclui
+reply CMake, ELF, BIN e ferramenta, com revisões antes da leitura e nova
+comparação na execução e antes do PTY. Lista/destino e guardião da n2 mantidos.
+Leituras do file-api e do cabeçalho ELF no dono existente passarão por
+`fsops::open_regular_file` com limite, evitando FIFO e conteúdo ilimitado.
+
+**UI.** Reusar a lista de alvos e seu pedido em EmbeddedFlashController.
+Extrair a view do seletor CMake de EmbeddedFlashDestination para
+EmbeddedFlashTargetView, usada também por DFU. A seleção DFU mantém modo
+DfuSe/BIN explícito e inclui binaryTarget somente em BIN, exigindo alvo.
+Trocar modo/alvo/lista invalida a prévia; desconexão/workspace mantêm os
+contratos existentes. Pai EmbeddedController continua em 400/400. Ponte
+QVariantMap existente transporta o novo campo sem mudar assinatura C++.
+
+**Provas/limites.** Fixture ARM real com dois segmentos, data em RAM com LMA
+em flash e BSS; comparação com BIN do objcopy. Negativos: tamanho/conteúdo,
+gaps, cabeçalhos, overflow, arquitetura, segmentos externos, prefixos/sufixo,
+origem CMake trocada, ELF/reply/BIN alterados, FIFO e limites. Despacho real,
+argv literal, armazenamento/replay e bloqueio antes do PTY; harness de ambos
+os destinos, invalidação e Qt CoreClient real. Mutações de bytes/origem e
+gate estrito em QA isolado. Sem DFU físico, ESP32, instalação, AppImage ou
+publicação. Depois: picotool/west, matriz integrada e recuperação (§14.32).
+
+
+**Feito em 2026-10-26, sobre 8310a17 (40.7 §7.363).** Leitura de artefato,
+validador puro, preparação/fingerprint e seleção BIN na UI implementados no
+recorte acima. Nove testes Rust novos (quatro puros, quatro de despacho e um
+no protocolo); harness DFU existente estendido e 173 verdes juntos. Prova Qt
+real em onze fases, incluindo DfuSe/BIN e execução. CMake/GCC 14.2.1/objcopy
+reais produziram o BIN de uma fixture; core real por stdio e CLI USB falsa
+confirmaram endereço 0x08004000, argv com apóstrofo, reserva/guardião após crash
+e liberação após sair a ferramenta. Carregador oficial dfu-util 0.11 compilado
+offline confirmou 32 bytes sem prefixo/sufixo removido. Mutações de bytes,
+sufixo e vínculo do reply/ELF foram detectadas por asserções.
+
+CI rápida estrita verde em 107 s; **gate rápido estrito TUDO VERDE em 604 s**:
+**1.372 Rust, 8 CTest, Clippy/análise C++ limpos, qmllint e 173 harnesses**,
+sem NÃO PROVADO. QA com target independente e **1.901 fontes comparadas por
+hash**; escopo com swap zero, temporários em disco, nenhuma entrada nova no
+`/tmp`. UI/core locais compilados em debug/release; ambos abriram e passaram
+pelas 33 superfícies sem avisos. Fotos da IDE antes/depois e do componente BIN
+com IPC falso conferidas; não são aceite visual do autor. Sem mudança de C++
+em ui/src nesta fatia; o completo anterior é o da n2. Provas em
+`~/.cache/kinein-h4b2b4n3-proofs/`.
+
+Primeiro frame foi medido novamente após a compilação concorrente: três
+pares release n2/n3 com mesmo Qt/IPC falso, medianas **651/655 ms**. Os smokes
+sob carga de build tinham marcado 2.234/2.191 ms em debug/release. Registro e
+limites no 40.7 §7.363; não é benchmark geral nem aceite físico.
+
+O vocabulário recebeu physical/power/replay/unbounded (inglês verificado) e
+FIFO entrou na lista técnica com motivo, sem crescer o legado 14.395. O texto
+herdado sobre porta serial foi retirado do fluxo USB. EmbeddedController
+continua em 400/400. Limites de formato permanecem os acima, incluindo os
+16 MiB por JSON do file-api; não converter recusa em escolha heurística.
+
+**Próxima:** picotool com consulta/artefato/destino comprovados; depois west,
+matriz integrada e recuperação (§14.32), Setup/Instalar Ferramentas e kits/schema 3
+(§11.1). Sem DFU físico, ESP32 ou Windows executado, instalação, pacote ou
+publicação. A h4b2b e a 0.4.1 seguem abertas.

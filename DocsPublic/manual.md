@@ -1702,8 +1702,9 @@ USB DFU          na aba Placa, "Verificar USB DFU" consulta o dfu-util 0.11
                  memoria Internal Flash apagavel/gravavel. A previa mostra hash,
                  elementos/endereco/tamanho e avisa sobre apagar paginas. Revise
                  antes de Gravar ou Salvar. A escolha do firmware e' explicita;
-                 nao se deduz que veio do build ativo. BIN cru, Runtime, multiplos
-                 targets e memoria externa continuam recusados (52 §14.52).
+                 nao se deduz que veio do build ativo. BIN exige o vinculo com ELF
+                 descrito abaixo. Runtime, multiplos targets e memoria
+                 externa continuam recusados (52 §14.52–14.53).
 sonda e kit      a sonda pelo `probe-rs list`; o chip, o alvo (triple), o
                  sysroot e o depurador ficam no KIT do projeto
 tamanho          "Medir" le o ELF e mostra uma barra por regiao do linker
@@ -1717,6 +1718,14 @@ sysroot e SDK    "Ler sysroot" diz o que uma pasta contem (headers,
                  "Importar kit" le um SDK Yocto, uma arvore Buildroot ou uma
                  pasta de toolchain e PROPOE o kit — voce aplica
 ```
+
+Para usar BIN, ative **BIN conferido com alvo CMake**, atualize os alvos e
+escolha o executável do build configurado. Informe o BIN dentro de
+`.kinein/build`. A prévia confere seus bytes com o ELF do alvo e mostra o
+endereço de carga; não compila nem converte arquivos. Configure/compile antes
+se precisar atualizar o build. O recorte aceita ELF32 ARM little endian,
+bytes carregáveis em flash interna e gaps somente zero, sem prefixos/sufixos
+DFU ou padding extra; formatos que não puder conferir são recusados.
 
 **Execução MicroPython e porta ocupada (0.4.1h4a).** Executar `main.py` ou
 um arquivo `.py` usa a mesma proteção de identificação, arquivos e monitor.

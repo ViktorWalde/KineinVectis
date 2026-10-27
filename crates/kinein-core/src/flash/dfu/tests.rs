@@ -265,6 +265,7 @@ fn selection_refuses_foreign_fields_and_selector_separators() {
         engine: Some("dfu-util".into()),
         dfu: Some(DfuFlashSelection {
             image: "firmware.dfu".into(),
+            binary_target: None,
             destination: destination(),
         }),
         ..FlashProposalParams::default()

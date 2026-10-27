@@ -237,7 +237,20 @@ fn reply_com_prefixo(reply_dir: &Path, prefixo: &str) -> Option<PathBuf> {
 }
 
 fn read_json(path: &Path) -> Option<Value> {
-    serde_json::from_str(&fs::read_to_string(path).ok()?).ok()
+    let mut bytes = Vec::new();
+    let file = crate::fsops::open_regular_file(path).ok()?;
+    if file.metadata().ok()?.len() > 16 * 1024 * 1024 {
+        return None;
+    }
+    std::io::Read::read_to_end(
+        &mut std::io::Read::take(file, 16 * 1024 * 1024 + 1),
+        &mut bytes,
+    )
+    .ok()?;
+    if bytes.len() > 16 * 1024 * 1024 {
+        return None;
+    }
+    serde_json::from_slice(&bytes).ok()
 }
 
 /// `read_json`, anotando a revisao do arquivo vista antes da leitura.

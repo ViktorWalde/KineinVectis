@@ -276,7 +276,7 @@ interface 0, dispositivo já em DFU. Serial obrigatório sem vírgula/controle,
 caminho USB canônico e alternativa do arquivo igual à selecionada. Exige
 lista completa e uma única instância VID/PID/serial. O mapa Internal Flash
 precisa cobrir os elementos em regiões apagáveis e graváveis, dentro de
-0x08000000–0x09000000. BIN cru, múltiplos targets, Runtime, memória externa e
+0x08000000–0x09000000. BIN sem o vínculo da 0.195.0 abaixo, múltiplos targets, Runtime, memória externa e
 Option Bytes ficam recusados. Não pede reset, leave, unprotect, mass-erase,
 force ou espera por reconexão. Contrato e fontes no [52 §14.52](../../roadmaps/52-arquitetura-executavel-da-0.4.md#1452-041h4b2b4n2--dfuse-escolhido-e-destino-usb-revalidado-desenho-2026-10-26).
 
@@ -287,3 +287,27 @@ Reserva USB por VID/PID/serial, comum a todas as alternativas da mesma
 instância, acompanha o processo e o guardião após crash. Conflito responde
 SERIAL_PORT_BUSY com scope=usb. Nenhum campo de descoberta é prova de
 identidade imutável ou exclusividade de ferramentas externas à IDE.
+
+
+### BIN DFU conferido com ELF CMake (0.195.0, 2026-10-26)
+
+`dfu.binaryTarget?: string` escolhe explicitamente BIN quando presente;
+nome não vazio/sem espaços externos, executável único de uma configuração do
+file-api da raiz/build canônicos em `.kinein/build`. `dfu.image` deve estar
+nesse build. Ausente mantém DfuSe; não deduzir formato por extensão.
+
+BIN regular não vazio até 32 MiB; ELF até 64 MiB, ELF32 LE ARM ET_EXEC v1,
+1–128 program headers. Bytes file-backed de PT_LOAD em flash interna, sem
+sobreposição/overflow, filesz <= memsz e alinhamento coerente; entrada em
+segmento executável. BSS sem bytes não é gravado. BIN cobre exatamente os
+segmentos por p_paddr, com gaps somente zero, sem padding extra. Prefixos
+TI/LPC/DfuSe ou assinatura de sufixo UFD recusados: dfu-util deve transferir
+os mesmos bytes conferidos. Unsupported/ambíguo recusa antes da execução.
+
+Endereço deriva do primeiro segmento; argv inclui `--dfuse-address
+0xENDERECO`, sem modificadores. Intervalo inteiro validado no mapa da n2.
+Prévia mostra alvo/id/ELF/endereço/tamanho e hashes. Reply CMake, ELF e BIN
+integram o snapshot/fingerprint, revalidado na execução e antes do PTY.
+Seletores USB, reservas e recusas de campos externos da n2 preservados.
+Não executa build/objcopy nem afirma atualização com as fontes; preserva a
+escolha explícita e os limites de compatibilidade física da n2.

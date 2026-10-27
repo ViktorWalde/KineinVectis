@@ -7,7 +7,7 @@ use std::{fs, sync::mpsc, time::Duration};
 const IMAGE: &[u8] = include_bytes!("../../../flash/dfu/fixtures/valid.dfu");
 const LIST: &str = "dfu-util 0.11\nFound DFU: [0483:df11] ver=2200, devnum=2, cfg=1, intf=0, path=\"1-2\", alt=0, name=\"@Internal Flash /0x08000000/04*016Kg,01*064Kg,07*128Kg\", serial=\"FIXTURE-1\"\n";
 
-fn fixture(name: &str) -> Fixture {
+pub(super) fn fixture(name: &str) -> Fixture {
     let fixture = Fixture::new(name);
     let root = &fixture.root;
     fs::write(root.join("firmware a'b.dfu"), IMAGE).unwrap();
@@ -24,7 +24,7 @@ fn fixture(name: &str) -> Fixture {
     fixture
 }
 
-fn selection() -> Value {
+pub(super) fn selection() -> Value {
     json!({"native":true,"engine":"dfu-util","dfu":{"image":"firmware a'b.dfu","destination":{
         "vid":"0483","pid":"df11","serial":"FIXTURE-1","path":"1-2","configuration":1,"interface":0,"alternate":0}}})
 }

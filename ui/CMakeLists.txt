@@ -189,6 +189,7 @@ set_source_files_properties(qml/embedded/EmbeddedIdentityController.qml PROPERTI
 set_source_files_properties(qml/embedded/EmbeddedIdentityView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedIdentityView.qml)
 set_source_files_properties(qml/embedded/EmbeddedFlashController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedFlashController.qml)
 set_source_files_properties(qml/embedded/EmbeddedFlashDestination.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedFlashDestination.qml)
+set_source_files_properties(qml/embedded/EmbeddedFlashTargetView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedFlashTargetView.qml)
 set_source_files_properties(qml/embedded/EmbeddedFlashView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedFlashView.qml)
 set_source_files_properties(qml/embedded/EmbeddedAccessController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedAccessController.qml)
 set_source_files_properties(qml/embedded/EmbeddedAccessView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedAccessView.qml)
@@ -630,6 +631,7 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedIdentityController.qml
         qml/embedded/EmbeddedIdentityView.qml
         qml/embedded/EmbeddedFlashController.qml
+        qml/embedded/EmbeddedFlashTargetView.qml
         qml/embedded/EmbeddedFlashDestination.qml
         qml/embedded/EmbeddedFlashView.qml
         qml/embedded/EmbeddedAccessController.qml

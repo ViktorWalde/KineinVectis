@@ -1,4 +1,6 @@
 //! Native `DfuSe` file selection and USB evidence (52 §14.52).
+mod artifact;
+mod binary;
 mod image;
 mod memory;
 
@@ -7,19 +9,18 @@ use super::{
     native::{NativeRequest, Prepared},
     snapshot,
 };
-use kinein_protocol::{
-    DfuDestination, DfuFlashSelection, DfuInterface, DfuMode, FlashIntent, FlashProposalParams,
-};
+use kinein_protocol::{DfuDestination, DfuInterface, DfuMode, FlashIntent, FlashProposalParams};
 use serde_json::json;
 use std::{
-    io::Read,
-    path::{Path, PathBuf},
+    path::Path,
     sync::{Arc, atomic::AtomicBool},
 };
 
 fn invalid(message: &str) -> FlashError {
     FlashError::InvalidContext {
-        message: format!("Gravação DfuSe não validada: {message}. Nenhuma gravação foi iniciada."),
+        message: format!(
+            "Gravação USB DFU não validada: {message}. Nenhuma gravação foi iniciada."
+        ),
     }
 }
 
@@ -46,6 +47,15 @@ pub fn check_selection(selection: &FlashProposalParams) -> Result<(), FlashError
         .dfu
         .as_ref()
         .ok_or_else(|| selection_error("escolha o arquivo DfuSe e uma alternativa USB DFU"))?;
+    if selected
+        .binary_target
+        .as_deref()
+        .is_some_and(|name| name.trim().is_empty() || name.trim() != name || name.contains('\0'))
+    {
+        return Err(selection_error(
+            "escolha o alvo CMake do BIN, sem espaços externos",
+        ));
+    }
     let destination = &selected.destination;
     if selected.image.trim().is_empty() || selected.image.contains('\0') {
         return Err(selection_error(
@@ -134,36 +144,6 @@ fn selected_interface(
     Ok(selected.clone())
 }
 
-fn read_image(
-    root: &Path,
-    selected: &DfuFlashSelection,
-    cancel: &AtomicBool,
-) -> Result<(PathBuf, String, image::Image), FlashError> {
-    let candidate = Path::new(&selected.image);
-    let candidate = if candidate.is_absolute() {
-        candidate.to_path_buf()
-    } else {
-        root.join(candidate)
-    };
-    let path =
-        crate::platform::canonicalize(&candidate).map_err(|error| invalid(&error.to_string()))?;
-    if !path.starts_with(root) {
-        return Err(invalid(
-            "o arquivo escolhido precisa estar dentro do workspace; aliases externos são recusados",
-        ));
-    }
-    let revision =
-        crate::platform::file_revision(&path).map_err(|error| invalid(&error.to_string()))?;
-    let mut bytes = Vec::new();
-    crate::fsops::open_regular_file(&path)
-        .map_err(|error| invalid(&error.to_string()))?
-        .take(image::MAX_BYTES as u64 + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|error| invalid(&error.to_string()))?;
-    let image = image::parse(&bytes, cancel).map_err(|message| invalid(&message))?;
-    Ok((path, revision, image))
-}
-
 pub(super) fn prepare(
     root: &Path,
     mut request: NativeRequest,
@@ -177,7 +157,9 @@ pub(super) fn prepare(
         .ok_or_else(|| invalid("seleção DfuSe ausente"))?;
     let tool_revision = crate::platform::file_revision(&request.tool)
         .map_err(|error| invalid(&error.to_string()))?;
-    let (path, image_revision, image) = read_image(root, selected, cancel)?;
+    let artifact = artifact::read(root, selected, cancel).map_err(|message| invalid(&message))?;
+    let image = &artifact.image;
+    let path = &artifact.path;
     let listing = crate::dfu::list(Some(&request.tool), cancel);
     if !listing.complete {
         return Err(invalid(
@@ -201,39 +183,45 @@ pub(super) fn prepare(
         ));
     }
     memory::validate(&entry.name, &image.elements).map_err(|message| invalid(&message))?;
-    let (image_hash, image_observation) = snapshot::file(&path, Some(&image_revision), cancel)
+    let (image_hash, image_observation) = snapshot::file(path, Some(&artifact.revision), cancel)
         .map_err(|message| invalid(&message))?;
     let (tool_hash, tool_observation) = snapshot::file(&request.tool, Some(&tool_revision), cancel)
         .map_err(|message| invalid(&message))?;
+    let mut contents = Vec::new();
+    let mut files = vec![image_observation, tool_observation];
+    for (source, revision) in &artifact.sources {
+        let (hash, observed) =
+            snapshot::file(source, Some(revision), cancel).map_err(|message| invalid(&message))?;
+        contents.push(json!([source, hash]));
+        files.push(observed);
+    }
     let destination = &selected.destination;
-    let mut plan = plan(
-        &request.tool,
-        &path,
-        &image,
-        &entry,
-        &image_hash,
-        destination,
-    );
+    let mut plan = plan(&request.tool, &artifact, &entry, &image_hash, destination);
     request.selection.engine = Some("dfu-util".into());
     if let Some(selected) = request.selection.dfu.as_mut() {
         selected.image = path.display().to_string();
     }
     let device_key =
         snapshot::digest(&serde_json::to_vec(&entry).map_err(|error| invalid(&error.to_string()))?);
+    let mut fingerprint_parts = json!([
+        root,
+        request.context,
+        request.selection,
+        plan.command.program,
+        plan.command.args,
+        plan.proposal.source,
+        plan.proposal.warnings,
+        device_key,
+        image_hash,
+        tool_hash
+    ]);
+    if !contents.is_empty()
+        && let Some(parts) = fingerprint_parts.as_array_mut()
+    {
+        parts.push(json!(contents));
+    }
     let fingerprint = snapshot::digest(
-        &serde_json::to_vec(&json!([
-            root,
-            request.context,
-            request.selection,
-            plan.command.program,
-            plan.command.args,
-            plan.proposal.source,
-            plan.proposal.warnings,
-            device_key,
-            image_hash,
-            tool_hash
-        ]))
-        .map_err(|error| invalid(&error.to_string()))?,
+        &serde_json::to_vec(&fingerprint_parts).map_err(|error| invalid(&error.to_string()))?,
     );
     let intent = FlashIntent {
         version: 1,
@@ -247,7 +235,7 @@ pub(super) fn prepare(
     super::native::validate_intent(root, &intent, Some(&plan.proposal.command))
         .map_err(|message| invalid(&message))?;
     plan.proposal.flash = Some(intent.clone());
-    let prepared = Prepared::from_parts(plan, intent, vec![image_observation, tool_observation]);
+    let prepared = Prepared::from_parts(plan, intent, files);
     if !prepared.unchanged() {
         return Err(invalid("arquivos mudaram ao preparar a prévia; gere outra"));
     }
@@ -256,35 +244,41 @@ pub(super) fn prepare(
 
 fn plan(
     tool: &Path,
-    path: &Path,
-    image: &image::Image,
+    artifact: &artifact::Artifact,
     entry: &DfuInterface,
     image_hash: &str,
     destination: &DfuDestination,
 ) -> FlashPlan {
-    let command = FlashCommand::new(
-        tool,
-        vec![
-            "--device".into(),
-            format!(",{}:{}", destination.vid, destination.pid),
-            "--serial".into(),
-            format!(",{}", destination.serial),
-            "--path".into(),
-            destination.path.clone(),
-            "--cfg".into(),
-            destination.configuration.to_string(),
-            "--intf".into(),
-            destination.interface.to_string(),
-            "--alt".into(),
-            destination.alternate.to_string(),
-            "--download".into(),
-            path.display().to_string(),
-        ],
-    );
+    let path = &artifact.path;
+    let image = &artifact.image;
+    let mut args = vec![
+        "--device".into(),
+        format!(",{}:{}", destination.vid, destination.pid),
+        "--serial".into(),
+        format!(",{}", destination.serial),
+        "--path".into(),
+        destination.path.clone(),
+        "--cfg".into(),
+        destination.configuration.to_string(),
+        "--intf".into(),
+        destination.interface.to_string(),
+        "--alt".into(),
+        destination.alternate.to_string(),
+    ];
+    if let Some(address) = artifact.address {
+        args.extend(["--dfuse-address".into(), format!("0x{address:08x}")]);
+    }
+    args.extend(["--download".into(), path.display().to_string()]);
+    let command = FlashCommand::new(tool, args);
     let mut source = vec![
         "motor: dfu-util 0.11 (confirmado na listagem completa)".to_owned(),
         format!(
-            "origem: arquivo DfuSe explicitamente escolhido: {}; SHA256 {image_hash}",
+            "origem: arquivo {} explicitamente escolhido: {}; SHA256 {image_hash}",
+            if artifact.address.is_some() {
+                "BIN"
+            } else {
+                "DfuSe"
+            },
             path.display()
         ),
         format!(
@@ -299,17 +293,26 @@ fn plan(
         ),
         format!("memória anunciada: {}", entry.name),
     ];
+    source.extend(artifact.evidence.iter().cloned());
     source.extend(image.elements.iter().map(|element| {
         format!(
             "elemento: endereço 0x{:08x}, {} bytes",
             element.address, element.size
         )
     }));
-    let warnings = vec!["O dfu-util apaga as páginas cobertas pela gravação; bytes fora dos elementos na mesma página também podem ser apagados.".to_owned(),
+    let mut warnings = vec!["O dfu-util apaga as páginas cobertas pela gravação; bytes fora dos elementos na mesma página também podem ser apagados.".to_owned(),
         "Arquivo escolhido pelo usuário; a IDE não deduz que veio do build ativo nem comprova a compatibilidade da aplicação com o chip.".to_owned(),
         "Não são pedidos reset, leave, unprotect, mass-erase ou force; a aplicação não é iniciada por esta prévia.".to_owned()];
+    if artifact.address.is_some() {
+        warnings[1] = "BIN conferido com o ELF do último build configurado; a prévia não recompila fontes nem comprova a compatibilidade física da aplicação com o chip.".into();
+    }
     FlashPlan::new(
-        "Gravar (DfuSe)".into(),
+        if artifact.address.is_some() {
+            "Gravar (BIN/ELF)"
+        } else {
+            "Gravar (DfuSe)"
+        }
+        .into(),
         "dfu-util".into(),
         source,
         warnings,
@@ -317,5 +320,7 @@ fn plan(
     )
 }
 
+#[cfg(test)]
+mod binary_tests;
 #[cfg(test)]
 mod tests;

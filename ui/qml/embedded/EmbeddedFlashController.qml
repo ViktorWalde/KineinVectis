@@ -166,6 +166,7 @@ Item {
 
     function requestTargets() {
         if (targetsBusy) return;
+        if (dfuDestination && dfu.binaryMode) invalidate();
         targetsBusy = true;
         targetsError = "";
         targetsRequested();
@@ -208,7 +209,7 @@ Item {
         proposalRequested(toProbe || toUsb || device === undefined ? "" : device, engine,
                           toProbe || toUsb || flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware,
                           nativeMode, nativeMode && !toProbe && !toUsb ? buildDirectory : "",
-                          toProbe ? target : "", toProbe ? probe : "", toUsb ? dfu.payload() : ({}));
+                          toProbe ? target : "", toProbe ? probe : "", toUsb ? dfu.payload(target) : ({}));
     }
 
     function bindProposal(requestId) {

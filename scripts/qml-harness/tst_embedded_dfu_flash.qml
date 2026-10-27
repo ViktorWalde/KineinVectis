@@ -35,6 +35,7 @@ Item {
         signal serialFilesResolved(var outcome)
         signal requestFailed(string method, string message, string code)
         function dfuList() { return ++sequence; }
+        function cmakeTargetsList() { return ++sequence; }
         function runConfigFlashProposal(device, engine, size, firmware, nativeMode, buildDirectory, target, probe, dfu) {
             root.payload = {device: device, engine: engine, size: size, firmware: firmware, nativeMode: nativeMode,
                 buildDirectory: buildDirectory, target: target, probe: probe, dfu: dfu};
@@ -44,7 +45,7 @@ Item {
     EmbeddedController { id: controller; workspaceRoot: "/first" }
     EmbeddedRequestRouter { coreClient: client; embeddedController: controller }
     EmbeddedEventRouter { coreClient: client; embeddedController: controller }
-    EmbeddedDfuFlashView { width: parent.width; flash: controller.flash }
+    EmbeddedDfuFlashView { width: parent.width; controller: controller; flash: controller.flash }
     Connections {
         target: controller.flash
         function onRunRequested(command, flash) { root.runs++; }
@@ -90,8 +91,32 @@ Item {
         client.flashProposalResolved({command: "explicit manual command"}, client.sequence);
         listed();
         check(flash.found, "USB discovery does not invalidate an unrelated manual preview");
+        flash.selectMode(true);
+        selected.selectBinary(true);
+        selected.setImage(".kinein/build/firmware.bin");
+        listed(); selected.select(entry);
+        flash.requestTargets();
+        client.cmakeTargetsResolved([{name: "firmware", kind: "executable", sourceDir: "/first"}], "source");
+        check(flash.targets.length === 0, "source parsing cannot offer a BIN target");
+        flash.requestTargets();
+        client.cmakeTargetsResolved([{name: "firmware", kind: "executable", sourceDir: "/first", artifacts: ["/first/.kinein/build/firmware.elf"]}], "fileApi");
+        flash.selectTarget("firmware");
+        flash.propose("/dev/ignored", 1);
+        check(payload.dfu.binaryTarget === "firmware" && payload.target === "" && payload.device === "",
+              "BIN uses nested target and never inherits another destination");
+        client.flashProposalResolved({command: "BIN literal", flash: {version: 1}}, client.sequence);
+        check(flash.found, "BIN native preview accepted");
+        flash.requestTargets();
+        check(!flash.found, "refreshing build targets invalidates BIN preview");
+        client.cmakeTargetsResolved([], "fileApi");
+        check(flash.target === "", "vanished CMake target cannot remain selected");
+        selected.selectBinary(false); flash.propose("", 0);
+        check(payload.dfu.binaryTarget === undefined, "DfuSe never inherits BIN target");
+        client.flashProposalResolved({command: "DfuSe literal", flash: {version: 1}}, client.sequence);
+        selected.selectBinary(true);
+        check(!flash.found, "changing the file format invalidates preview");
         controller.workspaceRoot = "/second";
-        check(selected.image === "" && !selected.destination.serial && !flash.found, "workspace clears image, selection and preview");
+        check(selected.image === "" && !selected.binaryMode && !selected.destination.serial && !flash.found, "workspace clears image, selection and preview");
         flash.selectEngine("dfu-util"); selected.setImage("second.dfu"); listed(); selected.select(entry);
         flash.propose("", 0);
         client.connected = false; client.statusChanged();

@@ -92,3 +92,9 @@ explícito tem precedência).
   ([vscode-clangd #42](https://github.com/clangd/vscode-clangd/issues/42)).
   Logo a ação certa após um configure é **reabrir os documentos abertos**, e não
   reiniciar o servidor — reiniciar joga o índice fora.
+
+
+**Limite de leitura do file-api (0.195.0, 2026-10-26).** O modelo lê somente
+arquivos regulares, sem seguir links na abertura, com até 16 MiB por JSON.
+FIFO, arquivo ilegível/excessivo ou conteúdo inválido não confirmam alvos.
+A origem nativa exige o modelo válido; não cai no parser de CMakeLists.

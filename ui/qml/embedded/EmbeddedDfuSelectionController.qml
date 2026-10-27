@@ -6,14 +6,17 @@ Item {
     visible: false
     property var discovery: null
     property string image: ""
+    property bool binaryMode: false
     property var destination: ({})
     signal changed()
     onImageChanged: changed()
+    onBinaryModeChanged: changed()
     onDestinationChanged: changed()
 
-    function clear() { image = ""; forgetDestination(); }
+    function clear() { image = ""; binaryMode = false; forgetDestination(); }
     function forgetDestination() { if (Object.keys(destination).length > 0) destination = ({}); }
     function setImage(value) { image = value; }
+    function selectBinary(value) { binaryMode = value; }
 
     function key(entry) {
         return JSON.stringify([entry.vid, entry.pid, entry.serial || "", entry.path,
@@ -34,8 +37,11 @@ Item {
         };
     }
 
-    function payload() {
-        return image === "" || !destination.serial ? ({}) : {image: image, destination: destination};
+    function payload(target) {
+        if (image === "" || !destination.serial) return ({});
+        const result = {image: image, destination: destination};
+        if (binaryMode) result.binaryTarget = target || "";
+        return result;
     }
 
     Connections {

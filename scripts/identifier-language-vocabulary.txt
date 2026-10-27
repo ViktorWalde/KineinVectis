@@ -1884,6 +1884,7 @@ peso
 phantom
 phase
 phrase
+physical
 pick
 picked
 picker
@@ -1938,6 +1939,7 @@ positional
 positions
 positive
 post
+power
 precede
 precedence
 precedes
@@ -2186,6 +2188,7 @@ replacement
 replacements
 replaces
 replacing
+replay
 replays
 replies
 reply
@@ -2766,6 +2769,7 @@ typings
 ubuntu
 unambiguous
 unavailable
+unbounded
 uncertainty
 unchanged
 unconfirmed

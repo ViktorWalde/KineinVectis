@@ -4,6 +4,7 @@ use serde_json::{Value, json};
 use std::{fs, time::Duration};
 mod catalog;
 mod dfu;
+mod dfu_binary;
 mod idf_py;
 mod pending;
 mod platformio;

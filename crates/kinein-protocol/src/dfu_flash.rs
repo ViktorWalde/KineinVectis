@@ -1,12 +1,15 @@
-//! Explicit `DfuSe` image and USB destination for a native flash intent.
+//! Explicit DFU image and USB destination for a native flash intent.
 use serde::{Deserialize, Serialize};
 
-/// An explicitly chosen `DfuSe` file; never inferred from build recency.
+/// An explicitly chosen image; never inferred from build recency.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DfuFlashSelection {
     /// Regular file inside the workspace, canonicalized in the returned intent.
     pub image: String,
+    /// Select raw BIN verified against this `CMake` target's ELF; absent means `DfuSe`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub binary_target: Option<String>,
     /// Explicit alternative of a device already in DFU mode.
     pub destination: DfuDestination,
 }
@@ -52,6 +55,17 @@ mod tests {
         assert!(serde_json::from_value::<super::DfuFlashSelection>(unknown).is_err());
         let mut invalid = selection;
         invalid["destination"]["alternate"] = json!(256);
+        assert!(serde_json::from_value::<super::DfuFlashSelection>(invalid).is_err());
+    }
+    #[test]
+    fn binary_target_is_explicit_strict_and_optional() {
+        let value = json!({"image":".kinein/build/app.bin","binaryTarget":"app","destination":{
+            "vid":"0483","pid":"df11","serial":"S1","path":"1-2","configuration":1,"interface":0,"alternate":0}});
+        let parsed: super::DfuFlashSelection = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(parsed.binary_target.as_deref(), Some("app"));
+        assert_eq!(serde_json::to_value(parsed).unwrap(), value);
+        let mut invalid = value;
+        invalid["binaryTarget"] = json!(true);
         assert!(serde_json::from_value::<super::DfuFlashSelection>(invalid).is_err());
     }
 }
