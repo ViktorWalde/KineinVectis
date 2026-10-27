@@ -174,6 +174,8 @@ set_source_files_properties(qml/embedded/EmbeddedUsbQueryController.qml PROPERTI
 set_source_files_properties(qml/embedded/EmbeddedUsbController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedUsbController.qml)
 set_source_files_properties(qml/embedded/EmbeddedPicoController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPicoController.qml)
 set_source_files_properties(qml/embedded/EmbeddedPicoView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPicoView.qml)
+set_source_files_properties(qml/embedded/EmbeddedPicoSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPicoSelectionController.qml)
+set_source_files_properties(qml/embedded/EmbeddedPicoFlashView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPicoFlashView.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuController.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuView.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuSelectionController.qml)
@@ -621,6 +623,8 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedUsbController.qml
         qml/embedded/EmbeddedPicoController.qml
         qml/embedded/EmbeddedPicoView.qml
+        qml/embedded/EmbeddedPicoSelectionController.qml
+        qml/embedded/EmbeddedPicoFlashView.qml
         qml/embedded/EmbeddedDfuController.qml
         qml/embedded/EmbeddedDfuView.qml
         qml/embedded/EmbeddedDfuSelectionController.qml

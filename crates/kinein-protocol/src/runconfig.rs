@@ -175,6 +175,9 @@ pub struct FlashProposalParams {
     /// Explicit `DfuSe` file and USB alternative for native dfu-util (`0.194.0`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dfu: Option<crate::DfuFlashSelection>,
+    /// UF2 verified against target's ELF and a confirmed RP2040 (`0.197.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pico: Option<crate::PicoFlashSelection>,
 }
 
 /// Result of `runConfig.flashProposal`: a run configuration to save.
@@ -214,7 +217,7 @@ pub struct FlashIntent {
     pub program: String,
     /// Literal arguments from the provider plan.
     pub args: Vec<String>,
-    /// Opaque serial-node identity observed without opening the device.
+    /// Opaque observed destination identity; the engine defines its evidence.
     pub device_key: String,
     /// Opaque content/context checksum, regenerated before starting the tool.
     pub fingerprint: String,

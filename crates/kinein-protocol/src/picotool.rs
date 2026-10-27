@@ -18,6 +18,16 @@ pub struct PicoDevice {
 #[serde(deny_unknown_fields)]
 pub struct PicoListParams {}
 
+/// UF2 selected within the configured build, with an observed BOOTSEL destination.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PicoFlashSelection {
+    /// Regular UF2 file inside the selected `CMake` target's build.
+    pub image: String,
+    /// Chip, selector and capacity to confirm again before native execution.
+    pub destination: PicoDevice,
+}
+
 /// Verified observations, or an explained incomplete query with no devices.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -59,5 +69,19 @@ mod tests {
             )
             .is_err()
         );
+    }
+    #[test]
+    fn pico_native_selection_is_strict_and_round_trips_in_the_existing_intent() {
+        let value = json!({"image":".kinein/build/app.uf2","destination":{"chip":"rp2040","serialSelector":"E660583883355B21","flashSizeBytes":2_097_152}});
+        let parsed: super::PicoFlashSelection = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(serde_json::to_value(parsed).unwrap(), value);
+        for field in ["force", "offset", "execute"] {
+            let mut changed = value.clone();
+            changed[field] = json!(true);
+            assert!(serde_json::from_value::<super::PicoFlashSelection>(changed).is_err());
+        }
+        let intent = json!({"version":1,"workspace":"/project","selection":{"native":true,"engine":"picotool","target":"app","pico":value},"program":"/tools/picotool","args":["load"],"deviceKey":"usb","fingerprint":"a".repeat(64)});
+        let parsed: crate::FlashIntent = serde_json::from_value(intent.clone()).unwrap();
+        assert_eq!(serde_json::to_value(parsed).unwrap(), intent);
     }
 }

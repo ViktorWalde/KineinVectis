@@ -7,6 +7,8 @@ mod dfu;
 mod dfu_binary;
 mod idf_py;
 mod pending;
+mod pico_native;
+mod pico_native_bounds;
 mod picotool;
 mod platformio;
 mod probe_rs;

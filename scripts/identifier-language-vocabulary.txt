@@ -899,6 +899,7 @@ environment
 epoch
 equal
 erase
+erased
 error
 errors
 escape
@@ -1741,6 +1742,7 @@ offenders
 offending
 offered
 offers
+official
 offset
 offsets
 oldest
@@ -2352,6 +2354,8 @@ secrets
 secs
 section
 sections
+sector
+sectors
 security
 seed
 seek
@@ -2498,6 +2502,7 @@ spaces
 spacing
 span
 spans
+sparse
 spawn
 spawning
 speak

@@ -35,13 +35,16 @@
 //! `run.start`). Toda peca tem uma linha de EVIDENCIA (`source`) e o que o
 //! usuario deve saber antes de apertar vai em `warnings`.
 
+mod artifact;
 mod command;
 pub mod dfu;
+mod elf;
 pub mod esptool;
 pub mod firmware;
 pub mod frameworks;
 pub mod idf_py;
 pub mod native;
+pub mod pico;
 pub mod platformio;
 pub mod probe_rs;
 mod snapshot;

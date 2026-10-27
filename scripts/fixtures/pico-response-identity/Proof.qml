@@ -5,6 +5,8 @@ import KineinVectis
 Item {
     id: root
     property int phase: 0
+    property bool savedNative: false
+    property bool startedNative: false
     function require(ok, message) {
         if (ok) return true;
         console.error("PICO_RESPONSE_FAIL " + message);
@@ -16,12 +18,21 @@ Item {
     EmbeddedRequestRouter { coreClient: client; embeddedController: controller }
     EmbeddedEventRouter { coreClient: client; embeddedController: controller }
     Connections {
+        target: controller.flash
+        function onRunRequested(command, flash) { client.runStart(command, "", flash); }
+        function onSaveRequested(name, command, flash) { client.runConfigSave("", name, command, flash); }
+    }
+    Connections {
         target: client
         function onStatusChanged() {
             if (client.connected && root.phase === 0) {
                 root.phase = 1;
                 client.openWorkspace(proofWorkspace);
             }
+        }
+        function onRunConfigMutationFinished(requestId) { root.savedNative = true; }
+        function onRunStarted(command, terminalId, executionKey, workspace, requestId) {
+            root.startedNative = command === "literal UF2 argv" && terminalId === "pico-native-terminal";
         }
         function onWorkspaceChanged() {
             if (root.phase === 1 && client.workspaceRoot !== "") {
@@ -68,7 +79,24 @@ Item {
         } else if (phase === 8) {
             if (!require(!pico.measured && !pico.busy && name === "" && pico.errorText === "",
                          "reply after same-root activation escaped")) return;
-            console.log("PICO_RESPONSE_REPORT " + JSON.stringify({phases: 8, protocol: client.protocolVersion}));
+            phase = 9;
+            pico.refresh();
+        } else if (phase === 9) {
+            if (!require(name === "E660583883355B21", "native destination missing")) return;
+            phase = 10;
+            controller.flash.selectEngine("picotool");
+            controller.flash.selectTarget("firmware");
+            controller.flash.pico.setImage(".kinein/build/firmware a'b.uf2");
+            controller.flash.pico.select(pico.devices[0]);
+            controller.flash.propose("/dev/ignored", 999);
+        } else if (phase === 10) {
+            if (!require(controller.flash.found && controller.flash.proposal.flash.selection.pico.destination.serialSelector === "E660583883355B21",
+                         "UF2 selection lost in Qt serialization or dispatch")) return;
+            phase = 11;
+            controller.flash.save(); controller.flash.run();
+        } else if (phase === 11) {
+            if (!require(savedNative && startedNative, "native save/run lost intent or became a shell command")) return;
+            console.log("PICO_RESPONSE_REPORT " + JSON.stringify({phases: 11, protocol: client.protocolVersion}));
             Qt.exit(0); return;
         }
         step.start();

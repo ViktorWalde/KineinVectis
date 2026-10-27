@@ -124,7 +124,8 @@ public:
         const QString& device, const QString& engine, double flashSizeBytes = 0,
         const QString& firmware = QString(), bool native = false,
         const QString& buildDirectory = QString(), const QString& target = QString(),
-        const QString& probe = QString(), const QVariantMap& dfu = QVariantMap());
+        const QString& probe = QString(), const QVariantMap& dfu = QVariantMap(),
+        const QVariantMap& pico = QVariantMap());
     Q_INVOKABLE void debugStart(const QString& program = QString(),
                                 const QVariantMap& connect = QVariantMap(),
                                 const QString& probe = QString());

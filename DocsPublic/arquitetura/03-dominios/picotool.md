@@ -30,5 +30,5 @@ cancelam a anterior. Continuação antiga ou ferramenta/raiz alterada responde
 INVALID_REQUEST. Substitutas compartilham a reserva e uma seção exclusiva USB;
 espera com prazo/cancelamento fora do laço impede sobreposição, inclusive com
 três ou mais pedidos rápidos. Qt/QML correlacionam sucesso e erro por id e limpam estado
-na desconexão/workspace. Nenhum evento novo; nenhuma gravação nativa picotool
-habilitada. Desenho/fontes: [52 §14.54](../../roadmaps/52-arquitetura-executavel-da-0.4.md#1454-041h4b2b4o1--consulta-picotool-rp2040-antes-da-gravação-desenho-2026-10-27).
+na desconexão/workspace. Nenhum evento novo. A gravação nativa da 0.197.0 usa runConfig/run,
+com o [contrato UF2](runConfig.md#picotool-nativo--uf2-conferido-com-elf-cmake-01970-2026-10-27). Desenho/fontes: [52 §14.54](../../roadmaps/52-arquitetura-executavel-da-0.4.md#1454-041h4b2b4o1--consulta-picotool-rp2040-antes-da-gravação-desenho-2026-10-27).

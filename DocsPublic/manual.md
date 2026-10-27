@@ -1715,8 +1715,16 @@ RP2040 BOOTSEL   na aba Placa, "Consultar RP2040 BOOTSEL" verifica explicitament
                  confirmacao divergente deixam a lista nao verificada, com
                  causa e saida; nao significam nenhuma placa. A consulta
                  reserva os canais gerenciados enquanto acessa USB. Workspace
-                 ou desconexao limpam os dados. Gravacao picotool nativa
-                 continua pendente; RP2350 nao entra neste recorte (52 §14.54).
+                 ou desconexao limpam os dados. Para gravar no modo Nativo da
+                 aba Gravar, escolha picotool, o executavel CMake e o UF2 dentro
+                 de .kinein/build; consulte e escolha o RP2040. A previa confere
+                 o UF2 com o ELF do alvo e mostra hashes, paginas e destino.
+                 Configure e compile antes; a previa nao compila nem converte.
+                 Gravar apaga setores de 4 KiB, verifica os dados e nao inicia
+                 a aplicacao; bytes fora das paginas no mesmo setor podem ser
+                 apagados e zerados. Uma operacao picotool RP2040 por vez,
+                 mantendo outros canais explicitos livres. RP2350, firmware
+                 de catalogo e force/reboot nao entram neste recorte (52 §14.55).
 sonda e kit      a sonda pelo `probe-rs list`; o chip, o alvo (triple), o
                  sysroot e o depurador ficam no KIT do projeto
 tamanho          "Medir" le o ELF e mostra uma barra por regiao do linker

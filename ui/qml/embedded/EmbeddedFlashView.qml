@@ -37,8 +37,8 @@ Item {
 
         Text {
             width: parent.width
-            text: root.flash && root.flash.dfuDestination
-                  ? qsTr("Modo nativo: confere arquivo e alternativa USB novamente antes de gravar.")
+            text: root.flash && root.flash.usbDestination
+                  ? qsTr("Modo nativo: confere arquivo e destino USB novamente antes de gravar.")
                   : root.flash && root.flash.probeDestination
                   ? qsTr("Destino: a sonda escolhida abaixo. A porta serial não é usada nesta gravação.")
                   : root.controller && root.controller.selectedPort !== ""
@@ -122,7 +122,7 @@ Item {
         KvTextField {
             objectName: "embeddedFlashBuildDirectory"
             width: parent.width
-            visible: root.enginesVisible && root.flash && root.flash.nativeMode && !root.flash.probeDestination && !root.flash.dfuDestination
+            visible: root.enginesVisible && root.flash && root.flash.nativeMode && !root.flash.probeDestination && !root.flash.usbDestination
             label: qsTr("Diretório do build (opcional)")
             placeholder: qsTr("Padrão do projeto")
             text: root.flash ? root.flash.buildDirectory : ""
@@ -132,7 +132,7 @@ Item {
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
-            visible: !root.flash || !root.flash.dfuDestination
+            visible: !root.flash || !root.flash.usbDestination
             text: root.flash && root.flash.probeDestination
                   ? qsTr("Modo nativo: vincula alvo, sonda, ferramenta e arquivos à prévia e confere novamente antes de executar.")
                   : root.flash && root.flash.nativeMode
@@ -145,6 +145,12 @@ Item {
         EmbeddedFlashDestination {
             width: parent.width
             controller: root.controller
+        }
+
+        EmbeddedPicoFlashView {
+            width: parent.width
+            controller: root.controller
+            flash: root.flash
         }
 
         EmbeddedDfuFlashView { width: parent.width; controller: root.controller; flash: root.flash }

@@ -102,7 +102,7 @@ Item {
         frameworks: root.projectFrameworks
         suggestedEngine: root.projectTarget.flashEngine || ""
         workspaceRoot: root.workspaceRoot
-        dfu.discovery: usbController.dfu
+        usb: usbController
     }
 
     EmbeddedAccessController {

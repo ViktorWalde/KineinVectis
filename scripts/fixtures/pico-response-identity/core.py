@@ -5,6 +5,8 @@ import sys
 
 pending = None
 sequence = 0
+workspace = ""
+intent = None
 
 
 def send(request_id, result=None, error=None):
@@ -27,8 +29,9 @@ for line in sys.stdin:
     request_id = request["id"]
     method = request["method"]
     if method == "core.ping":
-        send(request_id, {"protocolVersion": "0.196.0"})
+        send(request_id, {"protocolVersion": "0.197.0"})
     elif method == "workspace.open":
+        workspace = request["params"]["path"]
         send(request_id, {"root": request["params"]["path"], "name": "Pico fixture", "kind": "cmake",
                           "capabilities": {"buildSystems": []}})
         if pending is not None:
@@ -57,7 +60,23 @@ for line in sys.stdin:
         elif sequence == 7:
             listed(request_id, "retry-success")
             listed(request_id, "duplicate-retry-success")
+        elif sequence == 9:
+            listed(request_id, "E660583883355B21")
         else:
             failed(request_id, "unexpected-query")
+    elif method == "runConfig.flashProposal":
+        expected = {"native": True, "engine": "picotool", "target": "firmware", "pico": {
+            "image": ".kinein/build/firmware a'b.uf2", "destination": {
+                "chip": "rp2040", "serialSelector": "E660583883355B21", "flashSizeBytes": 2097152}}}
+        assert request["params"] == expected, request["params"]
+        intent = {"version": 1, "workspace": workspace, "selection": expected,
+                  "program": "/fixture/picotool", "args": ["load", "--verify"], "deviceKey": "pico", "fingerprint": "a"*64}
+        send(request_id, {"name": "Gravar UF2", "command": "literal UF2 argv", "engine": "picotool", "source": [], "warnings": [], "flash": intent})
+    elif method == "runConfig.save":
+        assert request["params"] == {"name": "Gravar UF2", "command": "literal UF2 argv", "flash": intent}, request["params"]
+        send(request_id, {})
+    elif method == "run.start":
+        assert request["params"] == {"flash": intent}, request["params"]
+        send(request_id, {"command": "literal UF2 argv", "terminalId": "pico-native-terminal", "executionKey": "pico-proof", "workspace": workspace})
     else:
         send(request_id, {})

@@ -109,7 +109,7 @@ fn an_unavailable_native_provider_does_not_fall_back_to_manual_or_an_unrelated_t
     let response = core.handle_request(&kinein_protocol::JsonRpcRequest::new(
         2_i64,
         "runConfig.flashProposal",
-        Some(json!({"native":true,"engine":"picotool"})),
+        Some(json!({"native":true,"engine":"west"})),
     ));
     let error = response.response().error.as_ref().unwrap();
     assert_eq!(
@@ -137,5 +137,14 @@ fn an_unavailable_native_provider_does_not_fall_back_to_manual_or_an_unrelated_t
     let error = response.response().error.as_ref().unwrap();
     assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
     assert!(error.message.contains("arquivo DfuSe"), "{error:?}");
+    // picotool now requires a CMake target and a typed UF2/BOOTSEL selection.
+    let response = core.handle_request(&kinein_protocol::JsonRpcRequest::new(
+        5_i64,
+        "runConfig.flashProposal",
+        Some(json!({"native":true,"engine":"picotool"})),
+    ));
+    let error = response.response().error.as_ref().unwrap();
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+    assert!(error.message.contains("executável CMake"), "{error:?}");
     assert!(!runconfig::configs_path(&root).exists());
 }

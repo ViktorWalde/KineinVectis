@@ -73,6 +73,11 @@ pub fn engine(
     firmware: Option<&FirmwareImage>,
 ) -> Result<String, FlashError> {
     let (engine, _) = super::select_engine(model, selection.engine.as_deref(), firmware)?;
+    if selection.pico.is_some() && engine != "picotool" {
+        return Err(FlashError::InvalidSelection {
+            message: "pico vale só para picotool nativo".into(),
+        });
+    }
     if selection.dfu.is_some() && engine != "dfu-util" {
         return Err(FlashError::InvalidSelection {
             message: "dfu vale só para dfu-util nativo".to_owned(),
@@ -87,6 +92,7 @@ pub fn engine(
         "esptool" => Ok(engine),
         "probe-rs" => super::probe_rs::check_selection(selection).map(|()| engine),
         "dfu-util" => super::dfu::check_selection(selection).map(|()| engine),
+        "picotool" => super::pico::check_selection(selection).map(|()| engine),
         "idf.py" | "idf" => {
             super::idf_py::check_selection(selection)?;
             if firmware.is_some() {
@@ -116,6 +122,9 @@ pub fn validate_intent(
     command: Option<&str>,
 ) -> Result<(), String> {
     let selection = &intent.selection;
+    if selection.pico.is_some() && selection.engine.as_deref() != Some("picotool") {
+        return Err("seleção RP2040 não se aplica a este motor".into());
+    }
     if selection.dfu.is_some() && selection.engine.as_deref() != Some("dfu-util") {
         return Err("seleção USB DFU não se aplica a este motor".to_owned());
     }
@@ -130,6 +139,7 @@ pub fn validate_intent(
         }
         Some("probe-rs") => super::probe_rs::check_selection(selection).is_ok(),
         Some("dfu-util") => super::dfu::check_selection(selection).is_ok(),
+        Some("picotool") => super::pico::check_selection(selection).is_ok(),
         Some("idf.py") => {
             super::idf_py::check_selection(selection).is_ok()
                 && selection
@@ -181,10 +191,11 @@ pub fn validate_intent(
 ///
 /// # Errors
 /// Refuses incomplete provenance, changed files/port, tool/cancellation failures or unsupported engines.
-pub fn prepare(
+pub(crate) fn prepare(
     root: &Path,
     request: NativeRequest,
     cancel: &Arc<AtomicBool>,
+    lease: Option<&crate::serial::ownership::Lease>,
 ) -> Result<Prepared, FlashError> {
     let engine = engine(
         &request.model,
@@ -194,6 +205,12 @@ pub fn prepare(
     match engine.as_str() {
         "probe-rs" => super::probe_rs::prepare(root, request, cancel),
         "dfu-util" => super::dfu::prepare(root, request, cancel),
+        "picotool" => super::pico::prepare(
+            root,
+            request,
+            cancel,
+            lease.ok_or_else(|| invalid("a consulta picotool exige reserva USB gerenciada"))?,
+        ),
         "idf.py" => super::idf_py::prepare(root, request, cancel),
         "platformio" => super::platformio::prepare(root, request, cancel),
         _ => prepare_esptool(root, request, engine, cancel),
@@ -204,7 +221,7 @@ pub fn prepare(
 #[must_use]
 pub fn removed_variables(engine: &str, probe: bool) -> Vec<std::ffi::OsString> {
     match engine {
-        "dfu-util" => Vec::new(),
+        "dfu-util" | "picotool" => Vec::new(),
         _ if probe => super::probe_rs::inherited_variables(),
         "idf.py" => super::idf_py::inherited_variables(),
         "platformio" => super::platformio::inherited_variables(),

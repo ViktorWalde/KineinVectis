@@ -311,3 +311,34 @@ integram o snapshot/fingerprint, revalidado na execução e antes do PTY.
 Seletores USB, reservas e recusas de campos externos da n2 preservados.
 Não executa build/objcopy nem afirma atualização com as fontes; preserva a
 escolha explícita e os limites de compatibilidade física da n2.
+
+### picotool nativo — UF2 conferido com ELF CMake (0.197.0, 2026-10-27)
+
+`pico?: {image, destination:{chip,serialSelector,flashSizeBytes}}` exige
+native=true, motor picotool e target CMake explícito. Recusa device, probe,
+dfu, firmware, buildDirectory e flashSizeBytes do nível superior; outros
+motores/modo manual recusam pico. UF2 regular até 32 MiB dentro de `.kinein/build`,
+ELF até 64 MiB do executável único confirmado no file-api desse workspace.
+Aliases de UF2 para fora do workspace são recusados.
+
+ELF32 LE ARM ET_EXEC, até 128 headers, entrada executável, sem dinâmica,
+overflow/sobreposição; bytes carregáveis em 0x10000000–0x11000000. UF2 de 512
+bytes/bloco, payload 256, flags 0x2000, família 0xe48bff56, índices/contagem
+exatos e endereços ordenados/alinhados. Magics e cauda zero conferidos; páginas
+iguais ao ELF com padding zero segundo elf2uf2 2.2.0/2.3.1, sem páginas extras.
+Outras famílias, flags, RAM, arquivo parcial e origem ambígua recusados.
+
+Destino RP2040 2e8a:0003 já em BOOTSEL; --ser confirmado com um único mesmo
+chip/ID/capacidade e versão 2.2.0/2.3.1. Reserva USB por família
+`picotool:2e8a:0003`, pois o upstream faz claim antes de comparar flash ID;
+serial/sondas de outros recursos permanecem livres. Consultas protegidas pelo
+guardião, 5 s/64 KiB conjuntos. Conflito usa SERIAL_PORT_BUSY, scope=usb.
+
+Argv: load --verify --family 0xe48bff56 IMAGE --type uf2 --vid 0x2e8a --pid
+0x0003 --ser ID. Apaga setores de 4 KiB, pode zerar bytes fora das páginas UF2
+no mesmo setor, verifica os dados e não inicia a aplicação. Fim do setor deve
+caber na capacidade confirmada. Sem force, reboot, offset, update ou OTP.
+Intenção versão 1/schema 2 e PTY existentes; snapshot inclui CMake/ELF/UF2,
+ferramenta, destino/versão e contexto, revalidados em run.start e antes do PTY.
+Não compila/converte na prévia, não comprova atualização das fontes ou
+compatibilidade física. Desenho/fontes: [52 §14.55](../../roadmaps/52-arquitetura-executavel-da-0.4.md#1455-041h4b2b4o2--uf2build-e-picotool-nativo-desenho-2026-10-27).

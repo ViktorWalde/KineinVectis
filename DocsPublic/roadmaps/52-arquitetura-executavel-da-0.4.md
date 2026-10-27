@@ -6679,3 +6679,119 @@ revalidado; só depois west, matriz integrada/recuperação, Setup/Instalar
 Ferramentas e kits/schema 3 (§11.1). Sem RP2040/DFU físico, ESP32, Windows,
 instalação, AppImage novo, push, tag ou release nesta fatia. A h4b2b e a 0.4.1
 seguem abertas.
+
+### 14.55 0.4.1h4b2b4o2 — UF2/build e picotool nativo (2026-10-27)
+
+**Continuidade e contrato primeiro.** Sobre 45b697b, concluir o recorte RP2040
+iniciado no §14.54. IPC 0.197.0 acrescenta `pico?: {image, destination}` a
+FlashProposalParams; destination é PicoDevice `{chip,serialSelector,
+flashSizeBytes}`. Exige native=true, motor picotool e target CMake explícito.
+Recusa device, probe, dfu, firmware, buildDirectory e flashSizeBytes do nível
+superior. Outros motores e modo manual recusam pico. Intenção versão 1 e
+armazenamento schema 2 preservados; nenhum método/evento novo.
+
+**Origem e conteúdo.** UF2 regular, não vazio, até 32 MiB, sem alias externo ao workspace, dentro do build
+canônico `.kinein/build`; ELF até 64 MiB do executável único de uma configuração
+do file-api desse workspace. Sem escolher por recência e sem executar CMake,
+conversor ou código do projeto na prévia. Reusar cmake_target e extrair os
+leitores ELF/arquivo limitado de DFU para donos comuns, com dois consumidores
+reais; DFU mantém limites/recusas. ELF32 LE ARM ET_EXEC v1, até 128 program
+headers, entrada executável, sem dinâmica/sobreposição/overflow; todos os bytes
+PT_LOAD file-backed em 0x10000000–0x11000000. BSS sem bytes não vira conteúdo.
+
+UF2: blocos de 512 bytes, três magics, flags exatamente 0x2000, família
+RP2040 0xe48bff56, payload 256, índices 0..N-1 e contagem exata, endereços
+alinhados/ordenados e sem duplicata. Cauda não usada zerada. Recusar flags de
+comentário, contêiner, MD5, extensão, outras famílias, RAM e arquivo parcial.
+Conferir cada página com os segmentos ELF; bytes fora deles somente zero.
+O conjunto esperado segue elf2uf2 oficial: páginas dos segmentos e páginas
+zero dos setores de 4 KiB tocados antes da última página; não preencher setores
+inteiros ausentes. Nenhuma página extra aceita. Fim do setor apagável precisa
+caber na capacidade confirmada do destino. Não é conversor ou suporte universal
+UF2/ELF; não prova atualização das fontes nem compatibilidade da aplicação.
+
+**Fontes primárias.** [UF2 Microsoft](https://github.com/microsoft/uf2),
+[picotool 2.3.1 main.cpp](https://github.com/raspberrypi/picotool/blob/2.3.1/main.cpp),
+[elf2uf2 2.3.1](https://github.com/raspberrypi/picotool/blob/2.3.1/elf2uf2/elf2uf2.cpp)
+e os equivalentes 2.2.0 auditados. load_guts apaga setores e preenche com zero
+as regiões fora dos dados da imagem na mesma gravação; --verify compara os
+dados carregados. Sem prometer preservação do restante do setor.
+
+**Destino e coordenação.** Somente RP2040 2e8a:0003 já em BOOTSEL, com seletor
+16 hex maiúsculos não zero/ffff e capacidade positiva até 16 MiB. O upstream
+faz claim antes de conferir flash ID, inclusive com --ser; por isso uma reserva
+USB compartilhada `picotool:2e8a:0003` serializa as operações nativas dessa
+família. Portas/sondas explícitas de outros recursos continuam disponíveis;
+a consulta geral picotool.list mantém a reserva automática da o1. Sem inferir
+identidade física entre canais diferentes ou exclusividade de ferramentas
+externas à IDE.
+
+Prévia também reserva essa família antes de consultar. Reusar o serviço da o1
+para version + info --device --vid 0x2e8a --pid 0x0003 --ser ID, exigindo
+exatamente um dispositivo com chip/ID/capacidade iguais; 5 s e 64 KiB conjuntos,
+versões 2.2.0/2.3.1 apenas. Consultas usam Lease::invocation: guardião inclusive
+se o core cair durante a preparação. Passar a reserva opcional ao prepare
+interno existente; esptool/probe-rs/DFU/IDF/PIO preservados. Execução mantém a
+mesma reserva até encerrar o processo/guardião no PTY existente.
+
+**Plano e replay.** Argv literal: load --verify --family 0xe48bff56 IMAGE
+--type uf2 --vid 0x2e8a --pid 0x0003 --ser ID. Sem -f/-F, execute/reboot,
+update, offset, partição, erase-all ou OTP. Avisos explícitos: apaga setores,
+não inicia a aplicação e reserva operações picotool RP2040. Prévia mostra
+alvo/id/ELF, hashes ELF/UF2, páginas/intervalo e destino/capacidade/versão.
+Normalizar caminho da imagem; fingerprint inclui contexto, seleção, ferramenta,
+metadados CMake, ELF/UF2, destino e versão. run.start refaz a consulta e a
+comparação, confere revisões antes do PTY e recusa qualquer troca. Sem serial
+fallback. Mesmo save/run existentes, sem interpretar o texto da prévia.
+
+**UI.** Estender seleção nativa e ponte QVariantMap existentes com pico;
+EmbeddedPicoSelectionController guarda arquivo/destino e invalida ao atualizar
+consulta, trocar workspace/desconectar. EmbeddedPicoFlashView reutiliza a
+escolha CMake e EmbeddedPicoView com seleção explícita. Pai fornece usb ao
+FlashController em uma ligação, preservando EmbeddedController em 400/400 e
+aliases DFU. Alvo/arquivo/destino/consulta nova invalidam a prévia; id antigo
+não reaplica resultado. A UI não valida bytes nem executa ferramenta. Texto
+externo simples, componentes Kv*, foto antes/depois e harness real.
+
+**Provas e fechamento.** Parser e ELF compartilhado, negativos de formato,
+padding, origem, capacidade e arquivo excessivo/FIFO; dispatcher/PTY com CLI
+falsa, save/replay e troca antes/depois da preparação, cancelamento, reserva
+por família com serial livre e guardião após crash. CMake/GCC reais numa fixture
+e conversor oficial offline ou fixture UF2 de formato auditado, sem instalar.
+Mutações de bytes/família/origem; Qt real para pico no runner existente e
+regressões DFU. CI rápida e gate completo estritos, target de QA independente;
+nunca compilar UI durante verificar-cpp. Sem Pico/ESP32 físico, AppImage,
+instalação, push/tag/release. Registrar o frontend real conforme a permissão
+Remote Control, sem repetir o pedido já pendente. O registro passa à parte
+8 antes da entrada 7.365, mantendo entradas anteriores e citações intactas.
+
+**Conferência offline (2026-10-27).** CMake/GCC Cortex-M0+ reais geraram a
+fixture, convertida por [elf2uf2 do SDK 1.5.1](https://github.com/raspberrypi/pico-sdk/blob/1.5.1/tools/elf2uf2/main.cpp)
+compilado em pasta de prova, sem dependência USB/instalação. O formato e o
+padding RP2040 correspondem aos geradores 2.2.0/2.3.1 auditados. Core real
+por stdio aceitou as 17 páginas e conferiu guarda após queda tanto durante
+a consulta da prévia quanto no load simulado. Não houve acesso a Pico físico.
+
+**Feito em software (2026-10-27).** Contrato e implementação acima entregues;
+IPC 0.197.0 aceito, intenção versão 1/schema 2 preservados. Três testes puros
+UF2, sete de despacho nativo e um de protocolo acrescentados. Mutações de
+bytes/família/origem detectadas e fontes restauradas. Core real com CMake/GCC
+e conversor oficial offline passou consulta, save/replay literal, PTY e guardião
+de reserva após queda; CLI picotool simulada, sem USB físico. Qt real passou
+11 fases Pico com QVariantMap/save/run e 11 fases de regressão DFU; o novo
+harness cobre controllers, router e tela. Fotos antes/depois e abertura na
+tela real registradas. O portal liberou entrada, mas a sessão Plasma ficou
+bloqueada e o helper encerrou; não se comprovou o fluxo por gestos reais nem
+se tentou desbloquear a sessão.
+
+Gate completo estrito **TUDO VERDE em 1119 s**: 1.395 Rust, Clippy, análise
+C++, 8 CTest, qmllint, 175 harnesses QML, UI/core debug/release e primeiro
+frame/33 superfícies por preset, sem NÃO PROVADO. Cópia de QA com target
+independente, 1929 arquivos comparados antes do gate; depois, fechamento
+em três documentos e remoção de linha vazia no índice do registro, revalidados.
+Nenhum resíduo novo em /tmp;
+binários auxiliares das provas Qt removidos, relatórios preservados em disco.
+Resultados e notas de método no 40.7 §7.365. Próximo: west, depois matriz
+integrada/recuperação. Hardware RP2040, gestos reais e o restante da h4b2b/
+0.4.1 seguem abertos; ESP32 não foi usado. Sem instalação, AppImage,
+push, tag ou release.

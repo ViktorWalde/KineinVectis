@@ -46,10 +46,24 @@ Item {
     property string targetsOrigin: ""
     property string targetsError: ""
     property bool targetsBusy: false
+    property var usb: null
     readonly property alias dfu: dfuSelection
+    readonly property alias pico: picoSelection
     readonly property bool dfuDestination: nativeMode && firmware === ""
         && (engine === "dfu-util" || (engine === "" && suggestedEngine === "dfu-util"))
-    EmbeddedDfuSelectionController { id: dfuSelection; onChanged: { if (root.dfuDestination) root.invalidate(); } }
+    EmbeddedDfuSelectionController {
+        id: dfuSelection
+        discovery: root.usb ? root.usb.dfu : null
+        onChanged: { if (root.dfuDestination) root.invalidate(); }
+    }
+    readonly property bool picoDestination: nativeMode && firmware === ""
+        && (engine === "picotool" || (engine === "" && suggestedEngine === "picotool"))
+    readonly property bool usbDestination: dfuDestination || picoDestination
+    EmbeddedPicoSelectionController {
+        id: picoSelection
+        discovery: root.usb ? root.usb.pico : null
+        onChanged: { if (root.picoDestination) root.invalidate(); }
+    }
     readonly property bool probeDestination: nativeMode && firmware === ""
         && (engine === "probe-rs" || (engine === "" && suggestedEngine === "probe-rs"))
     // O ELF unico do alvo escolhido: a depuracao probe-rs usa o mesmo alvo.
@@ -58,7 +72,7 @@ Item {
         return item && (item.artifacts || []).length === 1 ? item.artifacts[0] : "";
     }
 
-    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory, string target, string probe, var dfu)
+    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware, bool nativeMode, string buildDirectory, string target, string probe, var dfu, var pico)
     signal targetsRequested()
     signal runRequested(string command, var flash)
     signal saveRequested(string name, string command, var flash)
@@ -67,6 +81,7 @@ Item {
 
     function clear() {
         dfuSelection.clear();
+        picoSelection.clear();
         busy = false;
         engine = "";
         firmware = "";
@@ -95,6 +110,7 @@ Item {
 
     function disconnected() {
         dfuSelection.forgetDestination();
+        picoSelection.forgetDestination();
         busy = false;
         targetsBusy = false;
         invalidate();
@@ -166,7 +182,7 @@ Item {
 
     function requestTargets() {
         if (targetsBusy) return;
-        if (dfuDestination && dfu.binaryMode) invalidate();
+        if (picoDestination || (dfuDestination && dfu.binaryMode)) invalidate();
         targetsBusy = true;
         targetsError = "";
         targetsRequested();
@@ -205,11 +221,13 @@ Item {
         proposal = ({});
         errorText = "";
         const toProbe = probeDestination;
-        const toUsb = dfuDestination;
+        const toUsb = usbDestination;
+        const toPico = picoDestination;
         proposalRequested(toProbe || toUsb || device === undefined ? "" : device, engine,
                           toProbe || toUsb || flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware,
                           nativeMode, nativeMode && !toProbe && !toUsb ? buildDirectory : "",
-                          toProbe ? target : "", toProbe ? probe : "", toUsb ? dfu.payload(target) : ({}));
+                          toProbe || toPico ? target : "", toProbe ? probe : "", dfuDestination ? dfu.payload(target) : ({}),
+                          toPico ? pico.payload() : ({}));
     }
 
     function bindProposal(requestId) {

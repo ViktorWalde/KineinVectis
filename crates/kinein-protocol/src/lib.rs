@@ -116,4 +116,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.196.0";
+pub const PROTOCOL_VERSION: &str = "0.197.0";

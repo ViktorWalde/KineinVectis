@@ -6,6 +6,7 @@ Column {
     id: root
     property var controller: null
     property bool outputVisible: false
+    property var selection: null
     spacing: Theme.spacingSmall
     Text {
         text: qsTr("RP2040 · picotool")
@@ -39,14 +40,26 @@ Column {
     }
     Repeater {
         model: root.controller ? root.controller.devices : []
-        Text {
+        Column {
+            id: row
             required property var modelData
             width: root.width
-            text: root.controller.summary(modelData)
-            textFormat: Text.PlainText
-            wrapMode: Text.WrapAnywhere
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeSmall
+            spacing: Theme.spacingSmall
+            Text {
+                width: parent.width
+                text: root.controller.summary(row.modelData)
+                textFormat: Text.PlainText
+                wrapMode: Text.WrapAnywhere
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontSizeSmall
+            }
+            KvToggleChip {
+                objectName: "picoDestination_" + row.modelData.serialSelector
+                visible: root.selection !== null && root.selection.selectable(row.modelData)
+                labelText: active ? qsTr("Escolhido") : qsTr("Escolher RP2040")
+                active: root.selection !== null && root.selection.key(root.selection.destination) === root.selection.key(row.modelData)
+                onToggled: root.selection.select(row.modelData)
+            }
         }
     }
     Text {

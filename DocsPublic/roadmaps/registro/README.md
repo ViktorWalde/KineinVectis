@@ -15,10 +15,11 @@
 40.7.5-o-porte-para-o-windows.md                 §7.261–§7.277 2026-10-09 a 10-14
 40.7.6-o-fechamento-da-0.3.9.md                  §7.278–§7.306 2026-10-15 a 10-16
 40.7.7-a-fundacao-e-a-interface-da-0.4.md        §7.307–§7.340 2026-10-16 a 10-22
+40.7.8-orquestracao-embarcada-da-0.4.md          §7.341–§7.364 2026-10-22 a 10-27
 40-o-estado-ate-2026-10-15.md                    o 40 inteiro, antes de voltar a ter só o estado
 ```
 
 A tabela que manda é a do [40.7](../40.7-registro-das-entregas.md), e o gate
-a confere contra estes arquivos. A fase aberta (§7.341 em diante, continuação da 0.4) continua
+a confere contra estes arquivos. A fase aberta (§7.365 em diante, continuação da 0.4) continua
 no próprio 40.7. Uma citação "40 §4.1" ou "40 §8" anterior a 2026-10-15 se lê
 no `40-o-estado-ate-2026-10-15.md`.

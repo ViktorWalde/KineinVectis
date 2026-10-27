@@ -58,9 +58,27 @@ impl Core {
             Ok(tool) => tool,
             Err(error) => return super::runconfig::flash_error_response(request_id, &error),
         };
+        let lease = if engine == "picotool" {
+            match self.serial_usage.acquire_usb(
+                flash::pico::RESOURCE_KEY,
+                "runConfig.flashProposal",
+                "Consultar destino RP2040",
+                Some(&root),
+            ) {
+                Ok(lease) => Some(lease),
+                Err(error) => return JsonRpcResponse::failure(request_id, error),
+            }
+        } else {
+            None
+        };
         let input = self.native_request(&root, model, selection, firmware, tool);
         self.defer_work(request_id, move |request_id| {
-            match flash::native::prepare(&root, input, &Arc::new(AtomicBool::new(false))) {
+            match flash::native::prepare(
+                &root,
+                input,
+                &Arc::new(AtomicBool::new(false)),
+                lease.as_ref(),
+            ) {
                 Ok(prepared) => JsonRpcResponse::success(request_id, json!(prepared.plan.proposal)),
                 Err(error) => super::runconfig::flash_error_response(request_id, &error),
             }
@@ -118,6 +136,14 @@ impl Core {
                 missing(
                     "dfu-util",
                     "instale o dfu-util 0.11 para consultar e gravar DfuSe",
+                )
+            });
+        }
+        if engine == "picotool" {
+            return self.detector.find_in_path("picotool").ok_or_else(|| {
+                missing(
+                    "picotool",
+                    "instale picotool 2.2.0/2.3.1 para consultar e gravar RP2040 BOOTSEL",
                 )
             });
         }
@@ -231,7 +257,10 @@ impl Core {
         self.run_preflight = Some(cancel.clone());
         let wait_cancel = cancel.clone();
         let wait_root = root.clone();
-        self.defer_then(request_id, move || (flash::native::prepare(&wait_root, input, &wait_cancel), reservation),
+        self.defer_then(request_id, move || {
+            let prepared = flash::native::prepare(&wait_root, input, &wait_cancel, Some(&reservation));
+            (prepared, reservation)
+        },
             move |core, request_id, (prepared, reservation)| {
                 if cancel.load(Ordering::SeqCst)
                     || !core.run_preflight.as_ref().is_some_and(|pending| Arc::ptr_eq(pending, &cancel)) {
@@ -248,7 +277,7 @@ impl Core {
                 if let Err(message) = check_active(&root, active.as_ref()) {
                     return refusal(request_id, &message);
                 }
-                if probe.is_none() && engine != "dfu-util" {
+                if probe.is_none() && !matches!(engine.as_str(), "dfu-util" | "picotool") {
                     let device = intent.selection.device.as_deref().unwrap_or_default();
                     if let Err(response) = super::serial::ready_port(request_id.as_ref(), "run.start", device) { return *response; }
                     if crate::platform::serial_device_revision(Path::new(device)).ok().as_ref() != Some(&intent.device_key) {
@@ -272,7 +301,14 @@ impl Core {
         intent: &FlashIntent,
     ) -> Result<crate::serial::ownership::Lease, Box<JsonRpcResponse>> {
         let root = self.workspace_root();
-        let reservation = if let Some(dfu) = intent.selection.dfu.as_ref() {
+        let reservation = if intent.selection.pico.is_some() {
+            self.serial_usage.acquire_usb(
+                flash::pico::RESOURCE_KEY,
+                "run.start",
+                "Gravação nativa RP2040 BOOTSEL",
+                root.as_deref(),
+            )
+        } else if let Some(dfu) = intent.selection.dfu.as_ref() {
             self.serial_usage.acquire_usb(
                 &flash::dfu::resource_key(&dfu.destination),
                 "run.start",

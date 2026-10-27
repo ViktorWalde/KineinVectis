@@ -1,6 +1,6 @@
 //! Bounded RP2040 BOOTSEL queries; no firmware transfer, force or reboot.
 mod parser;
-use kinein_protocol::PicoListResult;
+use kinein_protocol::{PicoDevice, PicoListResult};
 use std::{
     path::Path,
     process::Command,
@@ -62,11 +62,15 @@ impl Query<'_> {
         Ok(answer.output)
     }
 
-    fn discover(&mut self) -> Result<(), String> {
+    fn discover(&mut self, selected: Option<&PicoDevice>) -> Result<(), String> {
         let version = parser::version(&self.command(&["version"])?)?;
         self.result.version = Some(version);
         let args = ["info", "--device", "--vid", "0x2e8a", "--pid", "0x0003"];
-        let devices = parser::devices(&self.command(&args)?)?;
+        let devices = if let Some(selected) = selected {
+            vec![selected.clone()]
+        } else {
+            parser::devices(&self.command(&args)?)?
+        };
         for device in &devices {
             let mut selected = args.to_vec();
             selected.extend(["--ser", &device.serial_selector]);
@@ -91,6 +95,27 @@ pub(crate) fn list(
     cancel: &Arc<AtomicBool>,
     lease: Option<&crate::serial::ownership::Lease>,
 ) -> PicoListResult {
+    query(program, deadline, cancel, lease, None)
+}
+
+/// Recheck one explicit native destination under the caller's family lease.
+pub(crate) fn confirm(
+    program: &Path,
+    selected: &PicoDevice,
+    deadline: Instant,
+    cancel: &Arc<AtomicBool>,
+    lease: &crate::serial::ownership::Lease,
+) -> PicoListResult {
+    query(Some(program), deadline, cancel, Some(lease), Some(selected))
+}
+
+fn query(
+    program: Option<&Path>,
+    deadline: Instant,
+    cancel: &Arc<AtomicBool>,
+    lease: Option<&crate::serial::ownership::Lease>,
+    selected: Option<&PicoDevice>,
+) -> PicoListResult {
     let Some(program) = program else {
         return failed(
             None,
@@ -112,7 +137,7 @@ pub(crate) fn list(
             hint: None,
         },
     };
-    if let Err(reason) = query.discover() {
+    if let Err(reason) = query.discover(selected) {
         query.result.devices.clear();
         query.result.complete = false;
         query.result.hint = Some(format!(

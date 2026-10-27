@@ -41,7 +41,7 @@ fn native_catalogue_images_require_the_original_checksum() {
         activation: None,
     };
     let cancel = Arc::new(AtomicBool::new(false));
-    let prepared = native::prepare(&fixture.root, request(), &cancel).unwrap();
+    let prepared = native::prepare(&fixture.root, request(), &cancel, None).unwrap();
     assert!(prepared.unchanged());
     assert_eq!(
         &prepared.intent.args[prepared.intent.args.len() - 3..],
@@ -49,7 +49,7 @@ fn native_catalogue_images_require_the_original_checksum() {
     );
     fs::write(&image, "abX").unwrap();
     assert!(!prepared.unchanged());
-    let error = native::prepare(&fixture.root, request(), &cancel).unwrap_err();
+    let error = native::prepare(&fixture.root, request(), &cancel, None).unwrap_err();
     assert!(error.to_string().contains("checksum"), "{error}");
     assert!(!fixture.root.join("flash.args").exists());
 }
@@ -84,8 +84,13 @@ fn native_images_larger_than_the_snapshot_limit_are_refused_without_reading_them
         kit_chip: None,
         activation: None,
     };
-    let error =
-        native::prepare(&fixture.root, request, &Arc::new(AtomicBool::new(false))).unwrap_err();
+    let error = native::prepare(
+        &fixture.root,
+        request,
+        &Arc::new(AtomicBool::new(false)),
+        None,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("1 GiB"), "{error}");
     assert!(!fixture.root.join("flash.args").exists());
 }

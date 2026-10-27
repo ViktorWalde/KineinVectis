@@ -78,12 +78,13 @@ impl Core {
             || request.target.is_some()
             || request.probe.is_some()
             || request.dfu.is_some()
+            || request.pico.is_some()
         {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "buildDirectory, target, probe e dfu requerem native=true",
+                    "buildDirectory, target, probe, dfu e pico requerem native=true",
                     None,
                 ),
             );
