@@ -7,6 +7,7 @@ mod dfu;
 mod dfu_binary;
 mod idf_py;
 mod pending;
+mod picotool;
 mod platformio;
 mod probe_rs;
 mod probe_rs_debug;

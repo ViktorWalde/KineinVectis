@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 191 métodos IPC roteados pelo core.
+Medido: 192 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -121,6 +121,7 @@ flowchart LR
   n_core_msvc[msvc]
   n_core_outcome[outcome]
   n_core_owned_child[owned_child]
+  n_core_picotool[picotool]
   n_core_platform[platform]
   n_core_platformio[platformio]
   n_core_probe[probe]
@@ -244,6 +245,8 @@ flowchart LR
   n_core_outcome --> n_core_rpc
   n_core_owned_child --> n_core_platform
   n_core_owned_child --> n_core_stderr_tail
+  n_core_picotool --> n_core_probe
+  n_core_picotool --> n_core_serial
   n_core_platformio --> n_core_lsp
   n_core_platformio --> n_core_owned_child
   n_core_platformio --> n_core_platform
@@ -289,7 +292,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-49 módulos, 144 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+50 módulos, 146 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -328,6 +331,7 @@ flowchart LR
 | `msvc` | — | O Visual Studio do Windows, para o build de C/C++. |
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
+| `picotool` | probe, serial | Audited info --device output for RP2040 in picotool 2.2.0/2.3.1. |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
 | `platformio` | lsp, owned_child, platform, process, tools | PlatformIO beyond flashing: |
 | `probe` | process | Deadline, cancellation and retained-output limits for probe-rs queries: |
@@ -352,7 +356,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 191 métodos roteados pelo core, 159 seguem o caminho padrão
+Dos 192 métodos roteados pelo core, 160 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 32 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -945,6 +949,7 @@ flowchart LR
     n_ui_src_core_client_dispatch_cmake_cpp["core_client_dispatch_cmake.cpp"]
     n_ui_src_core_client_log_cpp["core_client_log.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
+    n_ui_src_core_client_picotool_cpp["core_client_picotool.cpp"]
     n_ui_src_core_client_probe_cpp["core_client_probe.cpp"]
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
     n_ui_src_core_client_requests_run_cpp["core_client_requests_run.cpp"]
@@ -953,6 +958,7 @@ flowchart LR
     n_ipc_build(["build.* · 1"])
     n_ipc_cmake(["cmake.* · 1"])
     n_ipc_dfu(["dfu.* · 1"])
+    n_ipc_picotool(["picotool.* · 1"])
     n_ipc_probe(["probe.* · 1"])
     n_ipc_project(["project.* · 1"])
     n_ipc_runConfig(["runConfig.* · 1"])
@@ -961,6 +967,7 @@ flowchart LR
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_cmake_rs["handlers/cmake.rs"]
     n_crates_kinein_core_src_handlers_dfu_rs["handlers/dfu.rs"]
+    n_crates_kinein_core_src_handlers_picotool_rs["handlers/picotool.rs"]
     n_crates_kinein_core_src_handlers_probe_rs["handlers/probe.rs"]
     n_crates_kinein_core_src_handlers_project_rs["handlers/project.rs"]
     n_crates_kinein_core_src_handlers_runconfig_rs["handlers/runconfig.rs"]
@@ -979,11 +986,12 @@ flowchart LR
     n_core_toolchain[toolchain]
     n_core_tools[tools]
   end
-  n_tools_embedded[/"esptool · OpenOCD · probe-rs · dfu-util · mpremote · tio/picocom · QEMU"/]
+  n_tools_embedded[/"esptool · OpenOCD · probe-rs · picotool · dfu-util · mpremote · tio/picocom · QEMU"/]
   n_ui_qml_embedded_EmbeddedController_qml --> n_ui_qml_ipc_EmbeddedRequestRouter_qml
   n_ui_qml_ipc_EmbeddedEventRouter_qml -.-> n_ui_qml_embedded_EmbeddedController_qml
   n_ui_qml_ipc_EmbeddedEventRouter_qml -.-> n_ui_qml_runtime_RuntimeController_qml
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_dfu_cpp
+  n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_picotool_cpp
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_probe_cpp
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_requests_cpp
   n_ui_qml_ipc_EmbeddedRequestRouter_qml --> n_ui_src_core_client_requests_run_cpp
@@ -993,6 +1001,8 @@ flowchart LR
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_log_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
+  n_ui_src_core_client_picotool_cpp --> n_ipc_picotool
+  n_ui_src_core_client_picotool_cpp -.-> n_ui_qml_ipc_EmbeddedEventRouter_qml
   n_ui_src_core_client_probe_cpp --> n_ipc_build
   n_ui_src_core_client_probe_cpp --> n_ipc_probe
   n_ui_src_core_client_probe_cpp --> n_ipc_project
@@ -1007,6 +1017,8 @@ flowchart LR
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_toolchain
   n_ipc_dfu --> n_crates_kinein_core_src_handlers_dfu_rs
   n_crates_kinein_core_src_handlers_dfu_rs --> n_core_platform
+  n_ipc_picotool --> n_crates_kinein_core_src_handlers_picotool_rs
+  n_crates_kinein_core_src_handlers_picotool_rs --> n_core_platform
   n_ipc_probe --> n_crates_kinein_core_src_handlers_probe_rs
   n_crates_kinein_core_src_handlers_probe_rs --> n_core_probe
   n_crates_kinein_core_src_handlers_probe_rs --> n_core_rpc
@@ -1042,18 +1054,20 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch_cmake.cpp` | Dispatch do dominio CMake/build (ARCHITECTURE.md §5). |
 | ponte C++ | `ui/src/core_client_log.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
+| ponte C++ | `ui/src/core_client_picotool.cpp` | RP2040 BOOTSEL queries: |
 | ponte C++ | `ui/src/core_client_probe.cpp` | Dominio de embarcados no lado da UI: |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | ponte C++ | `ui/src/core_client_requests_run.cpp` | Dominio RUN no lado da UI: |
 | handler Rust | `crates/kinein-core/src/handlers/cmake.rs` | Handlers for cmake.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/dfu.rs` | Thin dfu.list handler. |
+| handler Rust | `crates/kinein-core/src/handlers/picotool.rs` | Bounded picotool query with the existing automatic reservation and defer_then. |
 | handler Rust | `crates/kinein-core/src/handlers/probe.rs` | Handler for probe.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/handlers/project.rs` | Handler for project.* requests (impl Core) — o MODELO do projeto embarcado (pilar 0 do roadmaps/42). |
 | handler Rust | `crates/kinein-core/src/handlers/runconfig.rs` | Handlers for runConfig.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/serial.rs` | Handler for serial.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (11): `build.size`, `cmake.targets.list`, `dfu.list`, `probe.list`, `project.model`, `runConfig.flashProposal`, `serial.access`, `serial.files`, `serial.identify`, `serial.list`, `serial.monitor`.
+Métodos IPC (12): `build.size`, `cmake.targets.list`, `dfu.list`, `picotool.list`, `probe.list`, `project.model`, `runConfig.flashProposal`, `serial.access`, `serial.files`, `serial.identify`, `serial.list`, `serial.monitor`.
 
 ### Toolchains e kits
 

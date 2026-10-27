@@ -12,7 +12,7 @@ import tempfile
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--build-dir', type=Path, required=True)
-parser.add_argument('--domain', choices=['probe', 'dfu'], default='probe')
+parser.add_argument('--domain', choices=['probe', 'dfu', 'pico'], default='probe')
 parser.add_argument('--fixtures', type=Path)
 parser.add_argument('--expect-failure', action='store_true')
 args = parser.parse_args()

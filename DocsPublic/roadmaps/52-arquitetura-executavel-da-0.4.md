@@ -6536,3 +6536,146 @@ continua em 400/400. Limites de formato permanecem os acima, incluindo os
 matriz integrada e recuperação (§14.32), Setup/Instalar Ferramentas e kits/schema 3
 (§11.1). Sem DFU físico, ESP32 ou Windows executado, instalação, pacote ou
 publicação. A h4b2b e a 0.4.1 seguem abertas.
+
+
+### 14.54 0.4.1h4b2b4o1 — consulta picotool RP2040 antes da gravação (desenho, 2026-10-27)
+
+**Continuidade.** Sobre bc94e37, próximo motor do §14.32. Primeiro consultar e
+validar o seletor do destino; UF2/build e execução nativa ficam para o recorte
+seguinte. Sem instalação ou uso de placa do autor. Pico/picotool não é porta
+serial. Escopo inicial explícito: RP2040 em BOOTSEL, VID 2e8a/PID 0003,
+picotool 2.2.0 e 2.3.1. RP2350, outros VID/PID e versões não auditadas não são
+suporte prometido por esta fatia.
+
+**Fontes primárias conferidas.** [picotool 2.2.0](https://github.com/raspberrypi/picotool/tree/2.2.0),
+[2.3.1](https://github.com/raspberrypi/picotool/tree/2.3.1) e release oficial
+2.3.1 (2026-09-05). Em `main.cpp`, version/info e seleção --vid/--pid/--ser;
+`picoboot_connection.c` confirma interface e serial, incluindo fallback de
+flash ID em casos de USB serial não único. `info --device` lê informações do
+dispositivo, faz claim da interface BOOTSEL e usa comandos picoboot; não é
+mera leitura de descritores. Sem -f/-F, reboot, load, erase ou OTP. Um único
+dispositivo não recebe cabeçalho com barramento/endereço na saída; nunca
+inventar esses campos nem usar índice da linha como destino.
+
+**Contrato primeiro, IPC 0.196.0.** Novo `picotool.list {}` (workspace exigido,
+parâmetros estritos) retorna `{devices, complete, toolAvailable, tool?, version?,
+rawOutput, hint?}`. Cada entrada: `{chip:"rp2040", serialSelector, flashSizeBytes}`.
+serialSelector são 16 hexadecimais maiúsculos, não zero/ffff; é o seletor --ser
+confirmado pela ferramenta, não afirma identidade criptográfica/imutável nem
+que todo serial USB seja igual ao flash ID. Capacidade é a informada pelo
+picotool, até 16 MiB. Um método novo, nenhum evento. Native picotool continua
+recusado; consulta não é autorização de gravar.
+
+**Serviço e limite.** `picotool.rs` usa `probe::query::run`, prazo total de 5 s,
+64 KiB retidos no conjunto e até 16 dispositivos. Executar `version`, depois
+`info --device --vid 0x2e8a --pid 0x0003`, depois uma confirmação por candidato
+com os mesmos argumentos mais `--ser ID`. Cada confirmação precisa dar um
+único RP2040 com o mesmo ID e tamanho. O VID explícito evita a parada antecipada
+da busca --ser sem filtro de VID no upstream. Parser puro exige grupos
+Device Information e apenas type/flash size/flash id; cabeçalhos múltiplos
+RP2040 com bus/address e separadores conhecidos. Duplicatas, dados inválidos,
+campos/avisos desconhecidos, saída parcial, falha, limite ou cancelamento
+invalidam o conjunto inteiro. Sem zero falso: ausência de BOOTSEL acessível
+termina com erro no picotool; registrar complete=false e saída/causa, sem
+converter erro em lista vazia verificada.
+
+**Coordenação/lifecycle.** Consulta faz claim USB; reservar seleção automática
+no registro serial/USB existente durante toda a operação, antes de chamar a
+ferramenta. Busy usa a recusa existente, sem executor/registro paralelo.
+Handler fino em `handlers/picotool.rs`, defer_then fora do laço; token cancela
+consulta anterior, abertura/fechamento de workspace (inclusive mesma raiz) e
+shutdown. Conferir raiz, token e revisão/caminho do executável ao concluir;
+liberar Lease também nas falhas e respostas antigas. Ferramenta ausente deve
+ser distinguida de falha da consulta. Não consultar automaticamente ao abrir
+a IDE e não instalar ferramentas em silêncio.
+
+**UI e ponte.** `picotoolList`/resolved/failed no CoreClient correlacionados por
+id. Reusar o runner Qt de prova de identidade existente, acrescentando domínio
+pico. Para manter EmbeddedController em 400/400, compor DFU/Pico em
+EmbeddedUsbController e preservar o alias público dfu; novo acesso usb.pico.
+Extrair o lifecycle comum de EmbeddedDfuController para EmbeddedUsbQueryController,
+com dois consumidores reais e rótulos/coleção por domínio. DFU mantém seu
+contrato/summary/isDfu e a seleção de gravação existente. EmbeddedPicoView na
+aba Placa: ação explícita, RP2040/seletor/capacidade, estado e saída; sem botão
+de gravar. Mesmos routers e componentes Kv*. Desconexão/workspace limpa dados;
+sucesso/erro antigo ou duplicado não recoloca seleção nem snapshot acionável.
+
+**Provas.** Parser/versões/duplicatas/limites e confirmação --ser; CLI falsa
+com argv literal, prazo/cancelamento/excesso/falha/acesso. Despacho real para
+responsividade, reservas/liberação, nova consulta/workspace/shutdown/tool
+alterado. Harness real de ambos os controllers/routers/views, regressões DFU
+e novos ids; CoreClient Qt real com respostas reordenadas, core real stdio e
+capturas antes/depois. Mutações de confirmação e lifecycle, CI rápida e gate
+completo estritos em QA com target próprio; não compilar UI durante análise
+C++. Próxima o2: UF2 ligado ao alvo/build e picotool nativo, revalidando o
+seletor confirmado, antes de west/matriz/recuperação. Registrar os limites de
+hardware separadamente.
+
+
+**Refinamento antes do produtor.** Consulta substituta reutiliza o mesmo Lease
+por Arc e espera, fora do laço, a seção USB anterior terminar; só então toca USB.
+O worker anterior mantém a reserva até sair, inclusive após cancelamento do
+workspace. O prazo de 5 s inclui essa espera. Assim um segundo clique não
+concorre com a interface ainda sendo fechada nem se recusa como ocupação
+externa pelo próprio pedido anterior. Não há novo registro/executor.
+
+**Revisão antes da integração (2026-10-27).** Um marcador done encadeado não
+basta: a segunda consulta pode ser cancelada enquanto espera a primeira e
+liberar a terceira cedo demais. Usar um Mutex compartilhado com o Lease entre
+as substitutas, adquirido por try_lock com prazo/cancelamento e mantido por
+RAII até terminar o runner. Assim qualquer quantidade de substituições fica
+serializada sem bloquear o laço. Provar três pedidos e cancelamento de um
+aguardando; não criar fila/executor nem segurar o Mutex no laço principal.
+
+A consulta protegida usa também `Lease::invocation`, o guardião já existente,
+antes do runner limitado. Na instância real, a reserva não some se o core
+morrer enquanto picotool ainda mantém a interface; testes em memória usam o
+mesmo caminho sem o wrapper persistente. Provar esse crash com CLI falsa e
+segundo core, sem introduzir outro supervisor.
+
+**Validação visual autorizada (autor, 2026-10-27).** Teclado/mouse e tela reais
+liberados para o frontend. Abrir instância de teste na sessão gráfica do
+notebook, sem fechar janela do autor, com workspace/configuração isolados.
+Conferir aba Placa, foco, consultas e saída com cliques reais na janela; separar
+esse gesto das provas automáticas offscreen e do hardware, que não foi usado.
+
+**Revisão de apresentação (2026-10-27).** Saída e mensagens da ferramenta são
+texto simples, como no DFU; não deixar o Text inferir rich text de diagnósticos.
+O veredito usa a tipografia normal do componente KvVerdict. Revalidar o QML e
+os binários após o ajuste, sem declarar a captura anterior como a final.
+
+
+**Feito em 2026-10-27, sobre bc94e37 (40.7 §7.364).** Serviço, handler, protocolo,
+ponte correlacionada e UI implementados no recorte acima. Cinco testes puros,
+seis de despacho e um no protocolo novos; 13 focados incluindo dois legados.
+174 harnesses verdes; Qt real em oito fases Pico e onze DFU. Core stdio real
+com CLI falsa provou argv literal, laço responsivo, guardião após queda,
+segunda instância ocupada e liberação depois da ferramenta. Mutações de
+confirmação, workspace e id antigo foram detectadas por asserções, com bytes
+restaurados. A seção exclusiva compartilhada cobre três substituições sem
+liberar USB quando um aguardando é cancelado.
+
+**Gate completo estrito TUDO VERDE, 543 s.** 1.384 Rust, Clippy/análise
+C++ limpos, 8 CTest, qmllint e 174 harnesses, sem NÃO PROVADO. Primeiro frame e
+33 superfícies por preset debug/release, sem avisos; CI rápida estrita verde
+em 187 s. QA com target independente e 1.916 fontes comparadas por hash;
+escopo com swap zero, temporários em disco, nenhuma entrada nova no `/tmp`.
+UI/core locais atualizados em debug/release. Legado de idioma 14.395, sem
+crescimento; enabling/invented/unverified acrescentados ao vocabulário inglês,
+sem exceção nova. Provas em `~/.cache/kinein-h4b2b4o1-proofs/`; auxiliares de
+compilação Qt removidos, relatórios e caches preservados.
+
+Capturas antes/depois da UI na sessão real Wayland/Plasma, via XWayland,
+conferidas. O portal Remote Control aguarda confirmação do autor; gestos de mouse
+não são declarados provados. Componente com resposta confirmada também capturado
+offscreen com IPC falso. Aceite visual do autor e hardware continuam distintos das
+provas automáticas. A sessão real isolada registrou aviso do portal por app ID não
+cadastrado; os smokes e harnesses não emitiram avisos QML. O registro
+`desktop-report.json` identifica as janelas/processos; `desktop-input.py`
+aguarda a resposta do portal na pasta de provas, sem enviar eventos sozinho.
+
+**Próxima o2:** UF2 ligado ao alvo/build e execução picotool nativa, com seletor
+revalidado; só depois west, matriz integrada/recuperação, Setup/Instalar
+Ferramentas e kits/schema 3 (§11.1). Sem RP2040/DFU físico, ESP32, Windows,
+instalação, AppImage novo, push, tag ou release nesta fatia. A h4b2b e a 0.4.1
+seguem abertas.

@@ -251,6 +251,7 @@ public:
     // Embarcados (roadmaps/35 §5.7): a sonda que esta' no USB agora.
     Q_INVOKABLE void probeList();
     Q_INVOKABLE qint64 dfuList();
+    Q_INVOKABLE qint64 picotoolList();
     // Tamanho do ELF do kit (build.size): flash/RAM usados.
     Q_INVOKABLE void buildSize(const QString& program);
     // Portas seriais USB (serial.list): o canal que toda placa compartilha.
@@ -543,6 +544,8 @@ signals:
     void toolchainInstalled(const QVariantMap& outcome);
     void probesResolved(const QVariantList& probes, bool toolAvailable, const QString& rawOutput,
                         const QString& hint);
+    void picotoolListResolved(const QVariantMap& result, qint64 requestId);
+    void picotoolListFailed(qint64 requestId, const QString& message);
     void dfuListResolved(const QVariantMap& result, qint64 requestId);
     void dfuListFailed(qint64 requestId, const QString& message);
     void buildSizeResolved(const QVariantList& sections, const QVariantList& regions,
@@ -747,6 +750,7 @@ private:
     bool handleCmakeNotification(const QString& method, const QJsonObject& params);
     bool handleDebugNotification(const QString& method, const QJsonObject& params);
     void dispatchResult(const QString& method, const QJsonObject& result, qint64 requestId);
+    bool dispatchPicotoolResult(const QString& method, const QJsonObject& result, qint64 requestId);
     bool dispatchDfuResult(const QString& method, const QJsonObject& result, qint64 requestId);
     bool dispatchFileResult(const QString& method, const QJsonObject& result);
     bool dispatchLspResult(const QString& method, const QJsonObject& result);

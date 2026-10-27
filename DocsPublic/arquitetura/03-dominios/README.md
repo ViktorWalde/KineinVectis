@@ -28,6 +28,7 @@
 | [`library.md`](library.md) | `library.*` |
 | [`lsp.md`](lsp.md) | `lsp.*`, `event.lsp.documentsClosed` e `event.lsp.progress` |
 | [`platformio.md`](platformio.md) | `platformio.*` (o PIO Home) |
+| [`picotool.md`](picotool.md) | `picotool.*` |
 | [`probe.md`](probe.md) | `probe.*` |
 | [`project.md`](project.md) | `project.*` |
 | [`python.md`](python.md) | `python.*` |

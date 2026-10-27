@@ -40,6 +40,15 @@ Item {
     }
 
     Connections {
+        target: root.embeddedController ? root.embeddedController.usb.pico : null
+        function onListRequested() {
+            const pico = root.embeddedController.usb.pico;
+            pico.bindRequest(root.coreClient && root.coreClient.connected !== false
+                ? root.coreClient.picotoolList() : -1);
+        }
+    }
+
+    Connections {
         target: root.embeddedController ? root.embeddedController.dfu : null
 
         function onListRequested() {

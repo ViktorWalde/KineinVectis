@@ -266,6 +266,7 @@ impl Core {
     ) -> Result<(), crate::terminal::TerminalError> {
         self.cancel_run_preflight();
         self.cancel_dfu_query();
+        self.cancel_picotool_query();
         if self
             .workspace
             .as_ref()
@@ -337,6 +338,7 @@ impl Core {
     ) -> Result<Option<WorkspaceInfo>, crate::terminal::TerminalError> {
         self.cancel_run_preflight();
         self.cancel_dfu_query();
+        self.cancel_picotool_query();
         self.close_workspace_terminals()?;
         if let Some(debug) = self.debug.as_mut() {
             debug.clear();

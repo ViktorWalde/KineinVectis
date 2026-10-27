@@ -1705,6 +1705,18 @@ USB DFU          na aba Placa, "Verificar USB DFU" consulta o dfu-util 0.11
                  nao se deduz que veio do build ativo. BIN exige o vinculo com ELF
                  descrito abaixo. Runtime, multiplos targets e memoria
                  externa continuam recusados (52 §14.52–14.53).
+RP2040 BOOTSEL   na aba Placa, "Consultar RP2040 BOOTSEL" verifica explicitamente
+                 dispositivos 2e8a:0003 com picotool 2.2.0/2.3.1. Entre em
+                 BOOTSEL antes: a consulta acessa a interface USB e le dados
+                 via picoboot, sem forcar reinicio ou gravar. Mostra RP2040,
+                 seletor --ser confirmado e capacidade da flash. O seletor
+                 nao e' uma porta serial nem prova de identidade imutavel.
+                 Falha, permissao, prazo, formato/versao desconhecido ou
+                 confirmacao divergente deixam a lista nao verificada, com
+                 causa e saida; nao significam nenhuma placa. A consulta
+                 reserva os canais gerenciados enquanto acessa USB. Workspace
+                 ou desconexao limpam os dados. Gravacao picotool nativa
+                 continua pendente; RP2350 nao entra neste recorte (52 §14.54).
 sonda e kit      a sonda pelo `probe-rs list`; o chip, o alvo (triple), o
                  sysroot e o depurador ficam no KIT do projeto
 tamanho          "Medir" le o ELF e mostra uma barra por regiao do linker

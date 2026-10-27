@@ -170,6 +170,10 @@ set_source_files_properties(qml/ipc/PlatformioRequestRouter.qml PROPERTIES QT_RE
 set_source_files_properties(qml/platformio/PlatformioController.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioController.qml)
 set_source_files_properties(qml/platformio/PlatformioWindow.qml PROPERTIES QT_RESOURCE_ALIAS PlatformioWindow.qml)
 set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
+set_source_files_properties(qml/embedded/EmbeddedUsbQueryController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedUsbQueryController.qml)
+set_source_files_properties(qml/embedded/EmbeddedUsbController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedUsbController.qml)
+set_source_files_properties(qml/embedded/EmbeddedPicoController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPicoController.qml)
+set_source_files_properties(qml/embedded/EmbeddedPicoView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPicoView.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuController.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuView.qml)
 set_source_files_properties(qml/embedded/EmbeddedDfuSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedDfuSelectionController.qml)
@@ -613,6 +617,10 @@ qt_add_qml_module(kinein-vectis
         qml/platformio/PlatformioController.qml
         qml/platformio/PlatformioWindow.qml
         qml/embedded/EmbeddedController.qml
+        qml/embedded/EmbeddedUsbQueryController.qml
+        qml/embedded/EmbeddedUsbController.qml
+        qml/embedded/EmbeddedPicoController.qml
+        qml/embedded/EmbeddedPicoView.qml
         qml/embedded/EmbeddedDfuController.qml
         qml/embedded/EmbeddedDfuView.qml
         qml/embedded/EmbeddedDfuSelectionController.qml
@@ -962,6 +970,7 @@ qt_add_qml_module(kinein-vectis
     src/core_client_grafana.cpp
     src/core_client_platformio.cpp
     src/core_client_probe.cpp
+    src/core_client_picotool.cpp
     src/core_client_dfu.cpp
     src/core_client_container.cpp
     src/core_client_index.cpp

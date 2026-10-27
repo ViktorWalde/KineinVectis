@@ -173,7 +173,7 @@ CONTEXTS = [
             "variaveis e paradas ja' no formato da IDE."),
     Context("embedded", "Embarcados: sonda, serial, gravacao",
             ["EmbeddedRequestRouter", "EmbeddedEventRouter"],
-            ["esptool", "OpenOCD", "probe-rs", "dfu-util", "mpremote", "tio/picocom", "QEMU"],
+            ["esptool", "OpenOCD", "probe-rs", "picotool", "dfu-util", "mpremote", "tio/picocom", "QEMU"],
             "Gravar e monitorar passam pelo mesmo caminho de Executar (configuracao de execucao): "
             "a IDE compoe a linha da ferramenta oficial e nunca grava sem pedido."),
     Context("toolchain", "Toolchains e kits",

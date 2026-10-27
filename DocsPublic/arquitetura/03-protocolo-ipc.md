@@ -52,6 +52,7 @@ canônicas e as regras ficam aqui.
 | `library.*` | [`03-dominios/library.md`](03-dominios/library.md) |
 | `lsp.*`, `event.lsp.documentsClosed` e `event.lsp.progress` | [`03-dominios/lsp.md`](03-dominios/lsp.md) |
 | `platformio.*` | [`03-dominios/platformio.md`](03-dominios/platformio.md) |
+| `picotool.*` | [`03-dominios/picotool.md`](03-dominios/picotool.md) |
 | `probe.*` | [`03-dominios/probe.md`](03-dominios/probe.md) |
 | `project.*` | [`03-dominios/project.md`](03-dominios/project.md) |
 | `python.*` | [`03-dominios/python.md`](03-dominios/python.md) |
@@ -217,7 +218,7 @@ indistinguível de rodá-lo fora dela — que era o requisito original. Uma
 superfície visual de atalho (Assistente) pode voltar depois **como UI pura**,
 abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
 
-## Os 191 métodos roteados — a lista inteira
+## Os 192 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -375,6 +376,7 @@ platformio.homeStart
 platformio.homeStop
 
 dfu.list
+picotool.list
 probe.list
 
 project.model

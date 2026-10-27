@@ -19,6 +19,8 @@ Item {
         property var lastProposal: []
         signal statusChanged()
         signal workspaceChanged()
+        signal picotoolListResolved(var result, double requestId)
+        signal picotoolListFailed(double requestId, string message)
         signal dfuListResolved(var result, double requestId)
         signal dfuListFailed(double requestId, string message)
         signal probesResolved(var probes, bool toolAvailable, string rawOutput, string hint)

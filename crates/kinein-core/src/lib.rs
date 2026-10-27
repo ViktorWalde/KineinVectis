@@ -32,6 +32,7 @@ pub mod library;
 pub mod lsp;
 pub mod msvc;
 pub mod owned_child;
+pub mod picotool;
 pub mod platformio;
 pub mod probe;
 pub mod process;
@@ -103,6 +104,7 @@ pub struct Core {
     run_preflight: Option<Arc<std::sync::atomic::AtomicBool>>,
     /// Current USB DFU discovery; workspace changes and newer queries cancel it.
     dfu_query: Option<Arc<std::sync::atomic::AtomicBool>>,
+    picotool_query: Option<picotool::Pending>,
     /// O canal das continuacoes (F6 fechamento): um pedido adiado que
     /// precisa do `Core` para terminar volta ao laco por aqui.
     continuations: Option<std::sync::mpsc::Sender<Continuation>>,
@@ -168,6 +170,7 @@ impl Core {
             run_terminal: None,
             run_preflight: None,
             dfu_query: None,
+            picotool_query: None,
             continuations: None,
             debug: None,
             terminal: None,
@@ -231,6 +234,7 @@ impl Core {
             )),
             "core.shutdown" => {
                 self.cancel_dfu_query();
+                self.cancel_picotool_query();
                 self.previews.clear();
                 // M4.3b: cancela jobs vivos já no shutdown (sinal pronto +
                 // entrega os event.job.* enquanto o canal existe); o drain
@@ -330,6 +334,7 @@ impl Core {
             .or_else(|| self.platformio_home_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
             .or_else(|| self.dfu_request_response(method, request_id.clone(), params))
+            .or_else(|| self.picotool_request_response(method, request_id.clone(), params))
             .or_else(|| self.container_request_response(method, request_id.clone(), params))
             .or_else(|| self.project_request_response(method, request_id.clone(), params))
             .or_else(|| self.index_request_response(method, request_id.clone(), params))

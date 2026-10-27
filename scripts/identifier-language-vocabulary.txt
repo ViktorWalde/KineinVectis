@@ -868,6 +868,7 @@ emulated
 enable
 enabled
 enables
+enabling
 enclosing
 encode
 encoded
@@ -1367,6 +1368,7 @@ invalidate
 invalidated
 invalidates
 invalidation
+invented
 inventing
 invents
 inverse
@@ -2814,6 +2816,7 @@ unsupported
 until
 unusable
 unused
+unverified
 unwrap
 update
 updated

@@ -31,7 +31,14 @@ Item {
         }
 
         function onWorkspaceChanged() {
-            root.embeddedController.dfu.clear();
+            root.embeddedController.usb.clear();
+        }
+
+        function onPicotoolListResolved(result, requestId) {
+            root.embeddedController.usb.pico.handleResult(result, requestId);
+        }
+        function onPicotoolListFailed(requestId, message) {
+            root.embeddedController.usb.pico.handleFailed(requestId, message);
         }
 
         function onDfuListResolved(result, requestId) {

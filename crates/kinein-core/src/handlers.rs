@@ -36,6 +36,7 @@ pub mod index;
 pub mod jobs;
 pub mod library;
 pub mod lsp;
+pub mod picotool;
 pub mod platformio;
 pub mod platformio_home;
 pub mod probe;
