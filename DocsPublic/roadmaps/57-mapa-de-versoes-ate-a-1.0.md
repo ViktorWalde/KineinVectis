@@ -200,19 +200,21 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
    `claude mcp add`), **depois da 0.4.9**, o primeiro corte só de leitura,
    com o desenho antes do código. Revisa, só nisto, o "IA na IDE fora de
    escopo" de 2026-07-17: o agente segue no terminal, sem painel de IA.
-5. **A documentação em inglês, junto do fechamento da 0.4.9** (a prioridade; o alemão
-   talvez na 0.5, sem decisão). Desde 2026-10-24, **toda** a documentação vai
-   para o inglês com a 0.4 finalizada, revisada no porte (convenções
+5. **A documentação em inglês após fechar a 0.4.1** (autor, 2026-10-27;
+   antecipa a decisão de 2026-10-24). O autor fará a internacionalização para
+   buscar colaboradores; o site será tratado em sessão separada. **Toda** a documentação
+   será revisada no porte (convenções
    profissionais de documentação, explicações melhores, informação
    desatualizada ou fora de contexto corrigida, explicação técnica
-   reforçada), e o autor divulga o projeto em grupos internacionais nesse
-   momento (40 §5). O site, em outra sessão, fica em inglês, com
+   reforçada); divulgação e mensagens seguem com o autor (40 §5).
+   O site, em outra sessão, fica em inglês, com
    uma aba de colaboradores, dizendo só de passagem que o projeto vem do
    Brasil.
 6. **Parte da 0.9 antecipada:** a CI pública entra agora, numa fatia curta
    antes da 0.4.1b; a porta para novos colaboradores (modelos, labels,
-   issues de entrada em inglês) entra depois da 0.4.9: o autor segue sozinho
-   até ela (esclarecimento de 2026-10-19).
+   issues de entrada em inglês) havia ficado para depois da 0.4.9. Em
+   2026-10-27 o autor antecipou a busca de colaboradores: documentação após
+   a 0.4.1 e site em sessão separada; não esperar esse marco para acolhê-los.
    A recomendação de CI no repositório público e a ideia de cards no site
    derivados das issues foram documentadas em 2026-10-19 no
    [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md);
@@ -248,8 +250,9 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
     Não antecipa ROS 2 ou Library/providers completos.
 11. **Inglês e divulgação na 0.5** (autor, 2026-10-21). **Antecipado em
     2026-10-24:** a UI fica inteiramente em inglês na fase de polimento (a
-    edição especial da 0.4), e a documentação em inglês e a divulgação vêm
-    com a 0.4 finalizada; o que este item ainda pede depois disso (seleção
+    edição especial da 0.4). **Atualização de 2026-10-27:** documentação após
+    a 0.4.1 e site em outra sessão para buscar colaboradores (§3 item 5);
+    o que este item ainda pede depois disso (seleção
     de idioma, português preservado) fica para decidir na 0.5. Texto
     original: interface e
     mensagens essenciais traduzidas, diagnósticos/ajuda de entrada e tutoriais

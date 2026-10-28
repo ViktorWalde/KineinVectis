@@ -6795,3 +6795,93 @@ Resultados e notas de método no 40.7 §7.365. Próximo: west, depois matriz
 integrada/recuperação. Hardware RP2040, gestos reais e o restante da h4b2b/
 0.4.1 seguem abertos; ESP32 não foi usado. Sem instalação, AppImage,
 push, tag ou release.
+
+### 14.56 0.4.1h4b2b4p — west nativo, runner ESP32 (desenho, 2026-10-27)
+
+**Objetivo e fronteira.** Sobre a719b24, continuar a fundação da 0.4.1.
+Autor prioriza seu fechamento, depois fará a documentação em inglês e tratará
+o site em outra sessão para buscar colaboradores (57 §3, atualização de hoje).
+ESP32 CP2102 reconectado; autorização específica de 2026-10-22 preservada.
+Esta vertical aceita west 1.5.0 e Zephyr 4.2.1, runner esp32, imagem única de
+aplicação com bootloader/partições opcionais, porta explícita e build existente.
+Outros runners, sysbuild/múltiplos domínios, módulos com runners externos,
+manifestos importados e extensões adicionais são recusados nesta integração;
+não prometer suporte universal Zephyr. Workspace west com manifesto plano é
+o recorte inicial; ferramentas/build já instalados, sem instalar ao executar.
+
+**Fontes primárias e efeitos.** [west 1.5.0](https://github.com/zephyrproject-rtos/west/releases/tag/v1.5.0),
+[Zephyr 4.2.1 run_common.py](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/scripts/west_commands/run_common.py)
+e [runner esp32](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/scripts/west_commands/runners/esp32.py),
+auditados hoje. O west normalmente recompila e importa runners dos módulos;
+--skip-rebuild impede o rebuild, mas não impede essas importações. O runner
+esp32 usa --esp-device (não --dev-id), esptool via Python, chip auto, reset
+antes/depois, write_flash -u e offsets do runners.yaml. Pode apagar tudo ou
+cifrar se receber flags; recusar esses efeitos e qualquer opção desconhecida.
+
+**Contrato planejado; produtor ainda não implementado.** Antes da implementação
+elevar o IPC aceito 0.197.0 para 0.198.0 e registrar a nota. Sem campo/método/evento novo: engine west,
+native true, device obrigatório, buildDirectory opcional (build por padrão).
+Recusar target/probe/firmware/dfu/pico/flashSizeBytes. Intenção v1/schema 2,
+runConfig.save/run.start, reserva de porta/PTY/guardião existentes. Nenhum
+fallback para shell ou outro motor. Prévia não roda west flash, CMake,
+conversor ou Python do projeto/SDK; só a versão do west e consulta própria
+em Python isolado, usando bibliotecas de dados do ambiente do west.
+
+**Origem.** Reusar leitura limitada/regular e snapshots. Build canônico dentro
+do workspace; cache comprova APPLICATION_SOURCE_DIR e ZEPHYR_BASE. Ler
+runners.yaml com PyYAML seguro, sem tags/aliases/duplicatas, limites de bytes,
+configuração e caminhos; runner esp32 disponível/default, imagens dentro do
+build, não vazias, offsets/intervalos sem sobreposição. .config comprova ESP32,
+sem flash encryption/secure boot. Validar VERSION do SDK, configuração west,
+manifesto plano e dono da extensão flash; impedir substituição por outra
+extensão ou runner externo. Capturar configuração, scripts de runner/loader,
+metadados de módulos, ferramentas e imagens por conteúdo, mais contexto/porta.
+Não prometer atualização das fontes nem origem criptográfica do SDK instalado.
+
+**Comando/ambiente.** west -z SDK flash -d BUILD --skip-rebuild --runner esp32
+--esp-device PORT --esp-baud-rate 460800. Mostrar runner, imagens/offsets/hashes,
+SDK/west/esptool e resets. Recusar configuração esptool externa; remover
+ESPTOOL_*, WEST_CONFIG_*, ZEPHYR_BASE/ZEPHYR_EXTRA_MODULES e opções Python
+herdadas que trocam módulos/efeitos. Reconsultar e comparar antes do PTY;
+run.stop e queda do core preservam os donos atuais. Scripts do SDK executam
+somente na ação explícita, vinculados à prévia; isso não é uma sandbox.
+
+**Provas/continuidade.** Despacho real com CLI falsa para save/replay, contexto,
+arquivos/opções/módulos trocados, falha/prazo/cancelamento e disputa da porta.
+Consulta real em ambiente Python privado, west e runner oficiais contra
+ferramenta simulada, sem apresentar isso como build ou gravação Zephyr físico.
+UI existente de porta/motor/build, harness e fotos antes/depois; gate rápido
+estrito, completo se houver C++ alterado, QA com target independente. Fontes e
+logs em cache de disco; sem resíduos /tmp ou compilar UI durante clang-tidy.
+Depois: matriz integrada/recuperação, Setup/Instalar Ferramentas e kits/schema 3.
+
+**Ponto de retomada p0 (2026-10-27, pedido do autor).** Auditoria e desenho
+encerrados nesta sessão; p1 será a implementação/validação do contrato acima.
+Nenhum produtor west entregue e IPC aceito continua 0.197.0. Um esboço de
+consulta Python foi retirado da árvore de produto e guardado, sem validação,
+em `~/.cache/kinein-h4b2b4p-proofs/draft/query.py`: é referência de trabalho,
+não implementação aprovada. Deve ser revisado antes de reaproveitar.
+West 1.5.0 e dependências instalados no venv privado dessa pasta, conforme
+autorização anterior de instalação no usuário e aviso nesta sessão; clone
+esparso oficial Zephyr v4.2.1 no subdiretório zephyr, commit
+64e98eb5278d790f3b3e5279ca8b39b45097bbc0. Nenhuma instalação global.
+
+**Achado a preservar.** O west.yml oficial 4.2.1 usa `self.import:
+submanifests`. O recorte plano proposto exige outro manifesto de workspace,
+sem imports, que aponte para esse SDK e seus módulos já presentes. Não testar
+somente JSON simulado e declarar o workspace padrão suportado. A próxima
+sessão deve provar west/runner oficiais com manifesto plano e considerar
+explicitamente esse limite; suporte a imports requer desenho/prova próprios.
+Conferir ainda localização real dos arquivos emitidos, parser de argumentos,
+opções herdadas, ausências que possam surgir após a prévia e todos os módulos
+carregados. O helper em rascunho não prova essas propriedades.
+
+ESP32 CP2102 novamente presente em /dev/serial/by-id, ligado a ttyUSB0,
+sem abrir a porta ou gravar nesta retomada; disponibilidade não substitui prova
+física. O pedido final foi encerrar a etapa, commitar e fornecer prompt;
+0.4.1 continua aberta nos itens enumerados acima. Registro no 40.7 §7.366.
+
+**Verificação p0.** Gate rápido estrito verde em 389 s: 1395 Rust, análise
+C++, 8 CTest, qmllint e 175 harnesses QML, sem NÃO PROVADO. Nenhum código de
+produto alterado; 1929 fontes QA comparadas, target independente. Fechamento
+posterior restrito ao resultado neste documento e no 40.7, revalidados.

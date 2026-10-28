@@ -29,7 +29,7 @@
 > UI/core debug/release, primeiro frame e 33 superfícies por preset, sem avisos; completo 1119 s (§7.365).
 > Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
 >
-> **Próximo:** west; UF2/picotool nativo fechado em software (52 §14.55). Gestos reais pendentes: sessão Plasma bloqueada; Qt 6.12/PIO Home/AppImage seguem com o autor.
+> **Próximo:** implementar west/ESP32 nativo (52 §14.56); auditoria/desenho p0 fechados (§7.366), sem produtor. UF2/picotool fechado em software (§14.55); aceite visual integrado pendente.
 > Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
 > Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
 > Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
@@ -55,7 +55,7 @@
 > na placa sem pedido específico. Não compilar UI durante `verificar-cpp.sh`.
 > Objetivo contínuo autorizado (autor, 2026-10-21); cota/retomada dependem da plataforma.
 > MCP/ROS 2/colaboração ficam após 0.4.9; inglês acompanha o fechamento (57).
-> UI toda em inglês no polimento; docs revisadas em inglês e divulgação com a 0.4 finalizada (57 §3); Windows pausado (60).
+> Autor fará a documentação em inglês após fechar a 0.4.1; site em outra sessão para buscar colaboradores (2026-10-27, 57 §3). UI em inglês no polimento; Windows pausado (60).
 > EditorController congelado (§2). Pesquisa de Embarcados recebida como rascunho (52 §11.1).
 
 ## 1. O estado, em números
@@ -147,6 +147,14 @@ que ainda vale, medindo antes.
 ## 5. As decisões registradas que NÃO se reabrem
 
 ```text
+documentacao apos a 0.4.1    DECISAO DO AUTOR em 2026-10-27: finalizar a 0.4.1;
+                             depois ele internacionaliza a documentacao do
+                             projeto e, em sessao separada, o site, para buscar
+                             colaboradores. Antecipa esse trabalho em relacao
+                             ao fechamento da 0.4, sem mudar os marcos tecnicos
+                             ou autorizar publicacao pelo agente. Dono: 57 §3.
+                             ESP32 reconectado e disponivel nesta retomada;
+                             continua a autorizacao especifica de 2026-10-22.
 rascunhos e aprovacao visual DECISAO DO AUTOR em 2026-10-21: estudos/imagens
                              de frontend sao rascunhos e nao retratam a UI
                              real nem aprovam desenho. Melhorar/incrementar/
@@ -177,7 +185,9 @@ Quality Center e instalador  INCLUIDOS na 0.4.x pelo autor em 2026-10-21:
                              otimiza/pole detalhes da base entregue.
 ingles e divulgacao 0.5      DECISAO DO AUTOR em 2026-10-21: ingles plenamente
                              suportado no produto, mantendo portugues;
-                             marco internacional na 0.5. Preparacao dos
+                             marco internacional na 0.5. Documentacao/site
+                             antecipados novamente em 2026-10-27 (57 §3).
+                             Preparacao dos
                              componentes/documentacao antes, sem alterar
                              permissao de publicar/enviar mensagens.
                              Dono: 57 §1.1 e §3 item 11.
@@ -593,6 +603,9 @@ divulgacao com a 0.4          DECISAO DO AUTOR em 2026-10-24: sem testers no
                              o projeto inteiro foca no ingles. Enviar
                              mensagens/publicar segue so' com o autor. Dono:
                              57 §1.1 e §3 itens 5 e 11.
+                             ATUALIZACAO em 2026-10-27: documentacao apos a
+                             0.4.1 e site em outra sessao para colaboradores;
+                             a UI continua na fase de polimento. Dono: 57 §3.
 dividas tecnicas na 0.4       DECISAO DO AUTOR em 2026-10-24: "essa 0.4 vai ser
 (2026-10-24)                 longa, vamos arrumar todos os problemas da IDE e
                              resolver dividas tecnicas que forem encontradas";

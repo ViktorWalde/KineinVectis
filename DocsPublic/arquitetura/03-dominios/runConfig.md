@@ -213,6 +213,29 @@ na raiz pelo `run.start`.
   (ou `pio`) → `'<pio>' run -t upload [--upload-port '<porta>']` (o padrão
   de um PlatformIO). Num ESP-IDF o padrão continua sendo o esptool com a
   receita do build; o `idf.py` é escolha explícita.
+
+**west nativo — contrato planejado, ainda não implementado (52 §14.56).**
+A próxima implementação deverá elevar o IPC de 0.197.0 para 0.198.0 antes
+do produtor. `native:true`,
+`engine:"west"`, `device` obrigatório e `buildDirectory?` (padrão build).
+Recusa target/probe/firmware/dfu/pico/flashSizeBytes. Exige projeto Zephyr,
+west 1.5.0 com Python no mesmo bin e PyYAML, SDK Zephyr 4.2.1, build
+canônico dentro do workspace e ligado por APPLICATION_SOURCE_DIR no cache.
+Somente runner esp32 de domínio único; .config comprova ESP32 sem segurança
+irreversível, runners.yaml/manifesto/configuração são lidos como dados.
+Recusa sysbuild, imports de manifesto, extensões extras/runners de módulos,
+opções de erase/encrypt e opções desconhecidas. Imagens não vazias do build
+e offsets sem sobreposição vinculados à intenção por conteúdo, junto de
+scripts/configuração/ferramentas/contexto/porta. Comando literal:
+`west -z SDK flash -d BUILD --skip-rebuild --runner esp32 --esp-device PORT
+--esp-baud-rate 460800`. Prévia não executa SDK/projeto nem recompila;
+avisa que grava o build existente, com resets antes/depois, sem provar
+atualidade das fontes. Execução refaz consulta/comparação e usa reserva
+serial/PTY/guardião existentes; intenção v1 e schema 2 mantidos. Variáveis
+ESPTOOL_*, WEST_CONFIG_* e opções de carregamento de Python/Zephyr removidas;
+configuração esptool externa recusada. Sem sandbox ou suporte universal a
+Zephyr; formatos/runners fora do recorte → INVALID_REQUEST com orientação,
+ferramenta ausente → TOOL_NOT_FOUND, campos conflitantes → INVALID_PARAMS.
 - **`firmware` (`0.116.0`, C5 do `roadmaps/41` bloco C):** o id de um
   firmware do catálogo (`toolchain.installable`, `kind: firmware`) já
   BAIXADO substitui os artefatos do build. A linha é a da página da placa
