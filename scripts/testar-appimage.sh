@@ -105,6 +105,21 @@ required_paths=(
     "$APPDIR/usr/lib/libQt6WebEngineCore.so.6"
 )
 
+# Artefatos anteriores conservam suas licencas. Os avisos da migracao sao
+# exigidos quando o proprio pacote declara AGPL, sem reclassificar releases.
+metadata_file="$APPDIR/usr/share/metainfo/$package_id.appdata.xml"
+if [[ -f "$metadata_file" ]] && grep -Fq '<project_license>AGPL-3.0-only</project_license>' "$metadata_file"; then
+    required_paths+=(
+        "$APPDIR/usr/share/doc/kinein-vectis/LICENSE"
+        "$APPDIR/usr/share/doc/kinein-vectis/LICENSE-CC-BY-SA-4.0.txt"
+        "$APPDIR/usr/share/doc/kinein-vectis/NOTICE"
+        "$APPDIR/usr/share/doc/kinein-vectis/AUTHORS.md"
+        "$APPDIR/usr/share/doc/kinein-vectis/TRADEMARKS.md"
+        "$APPDIR/usr/share/doc/kinein-vectis/icons/file-icons/LICENSE-NOTICE.md"
+        "$APPDIR/usr/share/doc/kinein-vectis/icons/visual-system/LICENSE_ICONS.txt"
+    )
+fi
+
 for required_path in "${required_paths[@]}"; do
     if [[ ! -e "$required_path" ]]; then
         echo "erro: item obrigatório ausente do AppImage: $required_path" >&2

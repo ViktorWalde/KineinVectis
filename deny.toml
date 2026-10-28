@@ -6,10 +6,11 @@
 # forma da regra de split antes da catraca e do shellcheck antes desta semana.
 
 [licenses]
-# Só licenças permissivas. O objetivo declarado do projeto é ser 100% open
-# source E redistribuível sem obrigação viral; por isso nada de copyleft aqui,
-# nem mesmo LGPL. Ferramenta externa com licença copyleft (o GDB é GPL-3) é
-# EXECUTADA como processo, nunca linkada — e por isso não aparece nesta lista.
+# Dependencias Rust: mantem-se a lista permissiva auditada. O codigo proprio
+# passou a AGPL-3.0-only (ADR-0011); excecoes por crate abaixo autorizam apenas
+# os membros do workspace, sem liberar novas dependencias copyleft.
+# Ferramentas externas continuam integradas por seus protocolos/processos;
+# redistribui-las exige cumprir suas proprias licencas.
 allow = [
     "MIT",
     "Apache-2.0",
@@ -37,6 +38,30 @@ allow = [
     # seria teatro.
     "CDLA-Permissive-2.0",
 ]
+
+[[licenses.exceptions]]
+name = "kinein-core"
+allow = ["AGPL-3.0-only"]
+
+[[licenses.exceptions]]
+name = "kinein-protocol"
+allow = ["AGPL-3.0-only"]
+
+[[licenses.exceptions]]
+name = "kinein-config"
+allow = ["AGPL-3.0-only"]
+
+[[licenses.exceptions]]
+name = "kinein-cli"
+allow = ["AGPL-3.0-only"]
+
+[[licenses.exceptions]]
+name = "kinein-adapter-sqlite"
+allow = ["AGPL-3.0-only"]
+
+[[licenses.exceptions]]
+name = "kinein-sys"
+allow = ["AGPL-3.0-only"]
 
 [bans]
 multiple-versions = "warn"

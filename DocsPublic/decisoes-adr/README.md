@@ -16,6 +16,7 @@ ADR-0009-banco-e-linguagem-por-provedores.md acesso ao banco e LSP independentes
                                            ferramentas externas e expansão modular
 ADR-0010-drivers-em-processos-versionados.md atualização de drivers sem recompilar a IDE,
                                             processo adaptador e contrato negociado
+ADR-0011-copyleft-e-procedencia.md        AGPL-3.0-only, documentação CC BY-SA e procedência
 ```
 
 O ADR-0006 (`exmex`) saiu do repositório com a simulação em 2026-09-12

@@ -198,6 +198,9 @@ cgroup
 # etree/getroot: modulo e API oficiais de xml.etree.ElementTree, biblioteca
 # padrao do Python, usados para os metadados AppStream (52 §14.50).
 etree getroot
+# tomllib e ElementTree.findtext: APIs da biblioteca padrao do Python para
+# conferir os identificadores SPDX dos manifestos Cargo e AppStream (ADR-0011).
+tomllib findtext
 
 # FIFO: POSIX named pipe; native DFU tests reject non-regular image/metadata files (52 §14.53).
 fifo

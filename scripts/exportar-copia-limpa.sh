@@ -2,10 +2,9 @@
 # Exportador da copia limpa do codigo (M7.3 de DocsPublic/roadmaps/21; A6 da fila).
 #
 # Gera, numa arvore SEPARADA, uma copia do projeto contendo o codigo e apenas
-# tres arquivos Markdown: README.md, DocsPublic/manual.md e DocsPublic/tutorial.md.
-# Tudo o mais que e
-# Markdown, e todo o material interno/pessoal, fica de fora — inclusive como
-# NOME de caminho.
+# os guias de uso e os documentos legais explicitamente listados abaixo.
+# Outros arquivos Markdown e o material interno/pessoal ficam de fora.
+# Esta selecao nao certifica, por si so, o Codigo-Fonte Correspondente.
 #
 # O que este script NAO faz, de proposito:
 #   - nao cria repositorio, nao roda `git init`, nao adiciona remote, nao faz push;
@@ -39,11 +38,23 @@ done
 
 # ---------------------------------------------------------------- allowlist
 # Somente o que esta aqui entra. Acrescentar item exige decisao consciente.
-ALLOW_DIRS="crates ui cmake packaging schemas scripts"
+ALLOW_DIRS="crates ui cmake packaging schemas scripts .cargo"
 ALLOW_FILES="
 README.md
 DocsPublic/manual.md
 DocsPublic/tutorial.md
+LICENSE
+LICENSE-CC-BY-SA-4.0.txt
+NOTICE
+AUTHORS.md
+TRADEMARKS.md
+DCO.txt
+DocsPublic/contribuindo/12-licenciamento-e-procedencia.md
+DocsPublic/contribuindo/13-colaboracao-institucional.md
+DocsPublic/contribuindo/14-minuta-de-colaboracao-institucional.md
+DocsPublic/decisoes-adr/ADR-0011-copyleft-e-procedencia.md
+DocsPublic/iconografia/icones-de-arquivo/LICENSE-NOTICE.md
+DocsPublic/iconografia/sistema-visual/02_QML_SVG_IMPLEMENTATION/LICENSE_ICONS.txt
 LICENSE-MIT.txt
 LICENSE-APACHE-2.0.txt
 Cargo.toml
@@ -64,7 +75,13 @@ imagens/icon-amber.png
 "
 
 # Markdown permitido na copia. Qualquer outro .md e um erro, nao um aviso.
-ALLOWED_MD="README.md DocsPublic/manual.md DocsPublic/tutorial.md"
+ALLOWED_MD="README.md DocsPublic/manual.md DocsPublic/tutorial.md
+AUTHORS.md TRADEMARKS.md
+DocsPublic/contribuindo/12-licenciamento-e-procedencia.md
+DocsPublic/contribuindo/13-colaboracao-institucional.md
+DocsPublic/contribuindo/14-minuta-de-colaboracao-institucional.md
+DocsPublic/decisoes-adr/ADR-0011-copyleft-e-procedencia.md
+DocsPublic/iconografia/icones-de-arquivo/LICENSE-NOTICE.md"
 
 # ------------------------------------------------------------------ denylist
 # Caminhos que nao podem aparecer NEM COMO NOME na copia. Sao a camada pessoal
@@ -98,20 +115,20 @@ bad()  { printf '  ✗ %s\n' "$*" >&2; fail=1; }
 
 echo "== copia limpa: montando a lista =="
 
-# Lista final = arquivos rastreados pelo git dentro da allowlist.
+# Lista final = arquivos explicitamente permitidos e fontes rastreados.
 # `git ls-files` ja exclui build/target/dist (ignorados) e .git.
 LIST_FILE="$(mktemp)"
 trap 'rm -f "$LIST_FILE"' EXIT
 
 for f in $ALLOW_FILES; do
     [ -n "$f" ] || continue
-    if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+    if [ -f "$f" ]; then
         echo "$f" >> "$LIST_FILE"
     fi
 done
 for d in $ALLOW_DIRS; do
     # Markdown de subdiretorio (ex.: ui/README.md) e interno: a copia leva
-    # apenas os tres da raiz. A verificacao abaixo continua como rede de
+    # apenas os documentos explicitos acima. A verificacao continua como rede de
     # seguranca caso alguem acrescente um .md aqui sem pensar.
     git ls-files "$d" 2>/dev/null | grep -v '\.md$' >> "$LIST_FILE" || true
 done
@@ -123,14 +140,17 @@ note "arquivos selecionados: $total"
 echo "== verificando a denylist (nem como caminho) =="
 for path in $DENY; do
     [ -n "$path" ] || continue
-    if grep -qE "(^|/)${path//./\\.}(/|$)" "$LIST_FILE"; then
+    pattern="(^|/)${path//./\\.}(/|$)"
+    # Build outputs live at the root; src/build is source, not an artifact.
+    case "$path" in build|target|dist) pattern="^$path(/|$)" ;; esac
+    if grep -qE "$pattern" "$LIST_FILE"; then
         bad "caminho proibido presente na lista: $path"
     fi
 done
 [ "$fail" = "0" ] && note "nenhum caminho da camada pessoal na lista"
 
 # --------------------------------------------- verificacao 2: markdown extra
-echo "== verificando Markdown (so 3 permitidos) =="
+echo "== verificando Markdown (allowlist de guias e documentos legais) =="
 md_found="$(grep -E '\.md$' "$LIST_FILE" || true)"
 for m in $md_found; do
     ok=0
@@ -138,8 +158,9 @@ for m in $md_found; do
     [ "$ok" = "1" ] || bad "Markdown fora da allowlist: $m"
 done
 md_count=$(printf '%s\n' "$md_found" | grep -c . || true)
-note "markdown na copia: $md_count (esperado: 3)"
-[ "$md_count" = "3" ] || bad "contagem de Markdown diferente de 3"
+expected_md_count=$(printf '%s\n' "$ALLOWED_MD" | wc -w)
+note "markdown na copia: $md_count (esperado: $expected_md_count)"
+[ "$md_count" = "$expected_md_count" ] || bad "contagem de Markdown diferente da allowlist"
 
 # ------------------------------------------- verificacao 3: auditoria de segredos
 echo "== auditoria de segredos =="

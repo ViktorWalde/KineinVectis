@@ -173,8 +173,10 @@ DocsPublic/
 
 Este repositório é público, e `DocsPublic/` é a documentação de quem colabora.
 Outra coisa é a **cópia de distribuição** (o pacote para quem só usa a IDE): ela
-leva o código e **somente três Markdown** — `README.md`, `DocsPublic/manual.md` e
-`DocsPublic/tutorial.md`.
+leva o código, os guias `README.md`, `DocsPublic/manual.md` e
+`DocsPublic/tutorial.md`, além dos documentos legais, de autoria e de
+licenciamento explicitamente listados pelo exportador. A seleção não
+certifica, por si só, Código-Fonte Correspondente completo.
 
 Isso não depende de disciplina: `scripts/exportar-copia-limpa.sh` gera a cópia
 por allowlist numa árvore separada, recusa Markdown extra, verifica que nenhum
@@ -305,6 +307,10 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | Arquivo | Assunto |
 | --- | --- |
 | [../README.md](../README.md) | Apresentação e estado atual do projeto |
+| [contribuindo/12-licenciamento-e-procedencia.md](contribuindo/12-licenciamento-e-procedencia.md) | Escopo das licenças, distribuição, SPDX e DCO |
+| [contribuindo/13-colaboracao-institucional.md](contribuindo/13-colaboracao-institucional.md) | Autorização e continuidade das contribuições institucionais |
+| [contribuindo/14-minuta-de-colaboracao-institucional.md](contribuindo/14-minuta-de-colaboracao-institucional.md) | Modelo de acordo para contribuições e infraestrutura |
+| [../AUTHORS.md](../AUTHORS.md), [../NOTICE](../NOTICE), [../TRADEMARKS.md](../TRADEMARKS.md) | Atribuição e identificação de distribuições |
 | [manual.md](manual.md) | **Manual do usuário** — operação, funções e atalhos dentro da IDE |
 | [tutorial.md](tutorial.md) | Distribuição, checksum, instalação, atualização e geração do AppImage |
 | [build/como-executar.md](build/como-executar.md) | Como executar a IDE pelo checkout (ícone/launcher) |

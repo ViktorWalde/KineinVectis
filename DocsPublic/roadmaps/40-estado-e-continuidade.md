@@ -146,6 +146,12 @@ que ainda vale, medindo antes.
 
 ## 5. As decisões registradas que NÃO se reabrem
 
+Licenciamento desde 2026-10-28: código próprio sob **AGPL-3.0-only**,
+documentação própria sob **CC BY-SA 4.0**, com exceções e permissões
+anteriores preservadas. Decisão no
+[ADR-0011](../decisoes-adr/ADR-0011-copyleft-e-procedencia.md); escopo e
+contribuições no [capítulo 12](../contribuindo/12-licenciamento-e-procedencia.md).
+
 ```text
 documentacao apos a 0.4.1    DECISAO DO AUTOR em 2026-10-27: finalizar a 0.4.1;
                              depois ele internacionaliza a documentacao do

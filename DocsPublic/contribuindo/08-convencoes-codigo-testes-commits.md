@@ -3,6 +3,9 @@
 O que o gate cobra está no [04](04-os-gates-que-dizem-nao.md). Este
 capítulo é o que o gate **não** cobra e o revisor cobra.
 
+Licenças, cabeçalhos SPDX e certificação DCO de novas contribuições seguem
+o [capítulo 12](12-licenciamento-e-procedencia.md).
+
 ## Idioma
 
 - **Documentação e comentários**: português do Brasil. Nos `.md`, com

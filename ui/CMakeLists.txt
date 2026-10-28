@@ -1073,10 +1073,23 @@ install(
 )
 install(
     FILES
+        "${CMAKE_SOURCE_DIR}/LICENSE"
+        "${CMAKE_SOURCE_DIR}/LICENSE-CC-BY-SA-4.0.txt"
+        "${CMAKE_SOURCE_DIR}/NOTICE"
+        "${CMAKE_SOURCE_DIR}/AUTHORS.md"
+        "${CMAKE_SOURCE_DIR}/TRADEMARKS.md"
         "${CMAKE_SOURCE_DIR}/LICENSE-MIT.txt"
         "${CMAKE_SOURCE_DIR}/LICENSE-APACHE-2.0.txt"
         "${CMAKE_SOURCE_DIR}/packaging/appimage/KINEIN_LICENSE_NOTICE.txt"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/kinein-vectis"
+)
+install(
+    FILES "${CMAKE_SOURCE_DIR}/DocsPublic/iconografia/icones-de-arquivo/LICENSE-NOTICE.md"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/kinein-vectis/icons/file-icons"
+)
+install(
+    FILES "${CMAKE_SOURCE_DIR}/DocsPublic/iconografia/sistema-visual/02_QML_SVG_IMPLEMENTATION/LICENSE_ICONS.txt"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/kinein-vectis/icons/visual-system"
 )
 
 if(BUILD_TESTING)

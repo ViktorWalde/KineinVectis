@@ -1,0 +1,24 @@
+Kinein Vectis
+
+Initial author: Vitor Hugo da Silva (ViktorWalde).
+Copyright (c) 2026 Vitor Hugo da Silva (ViktorWalde) and contributors,
+each with respect to their own contributions.
+
+The project's own software is licensed under the GNU Affero General Public
+License, version 3 only (SPDX: AGPL-3.0-only). See LICENSE.
+
+Original documentation is licensed under Creative Commons
+Attribution-ShareAlike 4.0 International (SPDX: CC-BY-SA-4.0), except for
+code, separately licensed material and third-party content.
+See LICENSE-CC-BY-SA-4.0.txt.
+
+Third-party components and material with specific license notices retain
+their own licenses, copyrights and attribution requirements. In particular,
+the existing icon license notices and AppStream metadata license remain in
+effect. Previously granted MIT/Apache-2.0 permissions are not revoked.
+LICENSE-MIT.txt and LICENSE-APACHE-2.0.txt remain for applicable material;
+their presence does not offer a permissive alternative for new AGPL code.
+
+This notice records attribution and license scope. It does not modify the
+license texts, assign copyright, claim registered trademarks, or require
+permission for lawful forks. See AUTHORS.md and TRADEMARKS.md.

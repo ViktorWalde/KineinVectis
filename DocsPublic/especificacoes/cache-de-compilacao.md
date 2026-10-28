@@ -197,7 +197,8 @@ pela próxima sessão — foi exatamente o motivo do ADR-0005.
 ## 5. Decisões que são do autor
 
 1. **Licença do projeto.** O relatório de origem recomenda MPL-2.0; o
-   repositório é `MIT OR Apache-2.0`. Trocar a licença de um projeto é decisão
+   código próprio passou a `AGPL-3.0-only` em 2026-10-28
+   ([ADR-0011](../decisoes-adr/ADR-0011-copyleft-e-procedencia.md)). Trocar a licença de um projeto é decisão
    de dono, não consequência de escolher uma ferramenta de build — e nada
    nesta especificação depende dela, porque a IDE **invoca** o cache em vez de
    linkar.

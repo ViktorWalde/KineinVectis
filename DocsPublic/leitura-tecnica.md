@@ -316,8 +316,10 @@ pelo processo real. O padrão seguro deixou de depender de disciplina — antes
 disso, a suíte de testes apagou a lista de projetos recentes do autor.
 
 **5. A cadeia de dependências é verificada, não afirmada.** Desde 2026-08-30 o
-`cargo-deny` está no gate: licenças restritas a permissivas (MIT, Apache-2.0,
-ISC, CC0-1.0, Unicode-3.0), advisories negados, origens conhecidas. A primeira
+`cargo-deny` está no gate: dependências com licenças permissivas aprovadas em
+`deny.toml`, exceções AGPL-3.0-only para os crates próprios desde o
+[ADR-0011](decisoes-adr/ADR-0011-copyleft-e-procedencia.md), advisories negados
+e origens conhecidas. A primeira
 execução achou uma dependência **abandonada desde 2017** no caminho do terminal.
 Ferramenta externa com licença copyleft (o GDB é GPL-3) é **executada como
 processo**, nunca linkada.

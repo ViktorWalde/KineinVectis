@@ -12,7 +12,7 @@ members = [
 [workspace.package]
 version = "0.3.9"
 edition = "2024"
-license = "MIT OR Apache-2.0"
+license = "AGPL-3.0-only"
 repository = "https://github.com/kinein/kinein-vectis"
 homepage = "https://github.com/kinein/kinein-vectis"
 readme = "README.md"

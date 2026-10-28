@@ -873,14 +873,17 @@ Executar
 
 # Licença
 
-Kinein Vectis é software open source disponibilizado sob licença dupla:
+Kinein Vectis é software livre sob a **GNU Affero General Public License,
+versão 3 somente** (`AGPL-3.0-only`). O texto integral está em
+[`LICENSE`](LICENSE). A documentação própria utiliza **CC BY-SA 4.0**,
+ressalvadas as licenças específicas e os materiais de terceiros.
 
-* MIT;
-* Apache-2.0.
+Distribuições e versões modificadas devem cumprir as obrigações de fontes,
+avisos e reciprocidade nas hipóteses previstas na licença. Uso comercial e
+forks são permitidos. As permissões MIT/Apache-2.0 concedidas anteriormente
+permanecem válidas para o material que abrangem.
 
-Consulte:
-
-[`LICENSE-MIT.txt`](LICENSE-MIT.txt)
-
-[`LICENSE-APACHE-2.0.txt`](LICENSE-APACHE-2.0.txt)
+Consulte o [escopo e as regras de licenciamento](DocsPublic/contribuindo/12-licenciamento-e-procedencia.md),
+os [créditos de autoria](AUTHORS.md), o [NOTICE](NOTICE) e a
+[política de identidade](TRADEMARKS.md).
 

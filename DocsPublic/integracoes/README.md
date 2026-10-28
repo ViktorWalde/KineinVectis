@@ -60,8 +60,10 @@ MODE-C  port seletivo, só com licença compatível + auditoria + ADR
 MODE-D  somente estudo (copyleft forte, dependência do host, imaturo)
 ```
 
-Licenças: MIT > Apache-2.0 > BSD > MPL-2.0 após revisão. GPL/AGPL **não** entram
-no core MIT/Apache — só referência.
+Dependências e código incorporado continuam sujeitos à revisão de licença
+e à política de adoção; a migração do código próprio para AGPL-3.0-only não
+aprova automaticamente novas dependências copyleft. O escopo atual está no
+[guia de licenciamento](../contribuindo/12-licenciamento-e-procedencia.md).
 
 ## Regra que ordena a fila: capacidade antes de ferramenta
 

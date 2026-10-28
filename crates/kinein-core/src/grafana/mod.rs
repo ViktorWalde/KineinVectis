@@ -371,9 +371,9 @@ mod tests {
 
     #[test]
     fn sqlite_combina_pelo_caminho_do_arquivo() {
-        let mut perfil = perfil_banco("local", "", 0, "/home/hugh/dados.db");
+        let mut perfil = perfil_banco("local", "", 0, "/home/example/dados.db");
         perfil.engine = DataSourceEngine::Sqlite;
-        let achados = cross_reference(&[perfil], &[fonte("arquivo", "/home/hugh/dados.db", "")]);
+        let achados = cross_reference(&[perfil], &[fonte("arquivo", "/home/example/dados.db", "")]);
         assert_eq!(achados.len(), 1);
         assert!(achados[0].reason.contains("dados.db"));
     }

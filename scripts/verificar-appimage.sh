@@ -78,14 +78,51 @@ entradas=(
     packaging/appimage/Containerfile.smoke
     packaging/appimage/Containerfile.qml64
     ui/assets/icon-amber.png
+    LICENSE
+    LICENSE-CC-BY-SA-4.0.txt
+    NOTICE
+    AUTHORS.md
+    TRADEMARKS.md
+    DCO.txt
     LICENSE-MIT.txt
     LICENSE-APACHE-2.0.txt
     DocsPublic/manual.md
     DocsPublic/tutorial.md
+    DocsPublic/iconografia/icones-de-arquivo/LICENSE-NOTICE.md
+    DocsPublic/iconografia/sistema-visual/02_QML_SVG_IMPLEMENTATION/LICENSE_ICONS.txt
 )
 for entrada in "${entradas[@]}"; do
     [[ -f "$entrada" ]] || reprovar "entrada de empacotamento ausente: $entrada"
 done
+
+# Metadados de licenca precisam concordar antes de gerar qualquer binario.
+# A verificacao le os manifestos; um nome de arquivo LICENSE nao prova a regra.
+if ! python3 - <<'PY'
+from pathlib import Path
+import tomllib
+import xml.etree.ElementTree as ET
+
+root = Path('.')
+workspace = tomllib.loads((root / 'Cargo.toml').read_text())
+expected = 'AGPL-3.0-only'
+
+def check(condition, message):
+    if not condition:
+        raise SystemExit(message)
+
+check(workspace['workspace']['package']['license'] == expected, 'licenca do workspace divergente')
+for member in workspace['workspace']['members']:
+    package = tomllib.loads((root / member / 'Cargo.toml').read_text())['package']
+    check(package['license'] == {'workspace': True}, f'{member}: licenca deve herdar do workspace')
+metadata = ET.parse(root / 'packaging/appimage/io.github.viktorwalde.KineinVectis.appdata.xml')
+check(metadata.findtext('project_license') == expected, 'project_license divergente')
+check(metadata.findtext('metadata_license') == 'CC0-1.0', 'licenca de metadados alterada')
+check(expected in (root / 'packaging/appimage/KINEIN_LICENSE_NOTICE.txt').read_text(), 'aviso divergente')
+print('licencas: workspace, crates, AppStream e aviso de distribuicao coerentes')
+PY
+then
+    reprovar "metadados de licenca incoerentes"
+fi
 
 # 3. O hook grafico continua escolhendo software POR PADRAO. Trocar o default
 #    para `auto` seria uma linha, e devolveria a IDE a dependencia de driver
@@ -112,6 +149,10 @@ done
 #    esvaziar a lista de caminhos obrigatorios do testar-appimage.sh, ele passa
 #    a aprovar qualquer coisa — e ninguem percebe, porque ele fica VERDE.
 obrigatorios=(
+    'usr/share/doc/kinein-vectis/LICENSE'
+    'usr/share/doc/kinein-vectis/LICENSE-CC-BY-SA-4.0.txt'
+    'usr/share/doc/kinein-vectis/NOTICE'
+    'usr/share/doc/kinein-vectis/AUTHORS.md'
     'usr/bin/kinein-vectis'
     'usr/bin/kinein-core'
     'apprun-hooks/kinein-portable-graphics-hook.sh'

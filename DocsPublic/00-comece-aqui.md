@@ -110,6 +110,7 @@ documentação pública** (§6).
 | Como montar o ambiente e compilar? | [`contribuindo/02-preparar-o-ambiente.md`](contribuindo/02-preparar-o-ambiente.md), [`build/comandos-de-build-e-verificacao.md`](build/comandos-de-build-e-verificacao.md) |
 | O que cada gate mede e como ler o "não"? | [`contribuindo/04-os-gates-que-dizem-nao.md`](contribuindo/04-os-gates-que-dizem-nao.md) |
 | Convenções de código, testes e commits? Nomes de identificador? | [`contribuindo/08`](contribuindo/08-convencoes-codigo-testes-commits.md), [`contribuindo/09`](contribuindo/09-glossario-de-identificadores.md) |
+| Licenciamento, distribuição e procedência das contribuições? | [`contribuindo/12`](contribuindo/12-licenciamento-e-procedencia.md); colaboração institucional no [`13`](contribuindo/13-colaboracao-institucional.md) |
 | Como usar a IDE (usuário final)? | [`manual.md`](manual.md), [`tutorial.md`](tutorial.md) |
 
 ## 5. Por onde começar, conforme o que você veio fazer

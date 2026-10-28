@@ -158,5 +158,6 @@ Ferramentas de outras linguagens ficam adiadas — um ambiente C/C++/Rust bem
 feito já é trabalhoso, e diluir isso é o erro que o projeto evita
 deliberadamente.
 
-Licença: MIT **ou** Apache-2.0. Uma contribuição entra sob essa licença dupla;
-código copyleft não é aceito no core.
+Licenciamento e procedência: o [capítulo 12](contribuindo/12-licenciamento-e-procedencia.md)
+define AGPL-3.0-only para o código próprio, CC BY-SA 4.0 para a documentação,
+as exceções e o DCO. A política das dependências continua em `deny.toml`.

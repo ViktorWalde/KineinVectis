@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>io.github.viktorwalde.KineinVectis</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>MIT OR Apache-2.0</project_license>
+  <project_license>AGPL-3.0-only</project_license>
   <name>Kinein Vectis</name>
   <summary>IDE para C, C++, Rust, Python e sistemas embarcados</summary>
   <developer_name>Kinein Vectis contributors</developer_name>

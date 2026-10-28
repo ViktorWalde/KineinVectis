@@ -23,10 +23,22 @@ DocsPublic/contribuindo/08-convencoes-codigo-testes-commits.md idioma, comentár
 DocsPublic/contribuindo/09-glossario-de-identificadores.md a tradução de cada palavra para os nomes em inglês
 DocsPublic/contribuindo/10-sua-primeira-contribuicao-passo-a-passo.md uma contribuição inteira, do clone ao commit
 DocsPublic/contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md CI pública, requisitos das tarefas e proposta de cards derivados das issues
+DocsPublic/contribuindo/12-licenciamento-e-procedencia.md licenças, fontes correspondentes, SPDX e DCO
+DocsPublic/contribuindo/13-colaboracao-institucional.md autorização, publicação e continuidade de contribuições
+DocsPublic/contribuindo/14-minuta-de-colaboracao-institucional.md modelo de acordo sobre contribuições e infraestrutura
 ```
 
 A versão curta ("onde olhar para mudar o quê") é
 [`DocsPublic/contribuindo.md`](DocsPublic/contribuindo.md); o estado real
 do projeto, medido e datado, é
 [`DocsPublic/roadmaps/40-estado-e-continuidade.md`](DocsPublic/roadmaps/40-estado-e-continuidade.md).
-Licença dupla MIT/Apache-2.0: contribuições entram sob as duas.
+Contribuições novas seguem a licença do material de destino: código próprio
+sob **AGPL-3.0-only** e documentação própria sob **CC-BY-SA-4.0**, respeitadas
+as licenças específicas. Leia o [DCO 1.1](DCO.txt) e use `git commit -s`
+para certificar a procedência de sua contribuição. Não há cessão
+obrigatória de copyright.
+
+O [guia de licenciamento](DocsPublic/contribuindo/12-licenciamento-e-procedencia.md)
+define o escopo e as exceções. Se direitos sobre a contribuição pertencerem
+a uma instituição, obtenha a autorização competente conforme a
+[política institucional](DocsPublic/contribuindo/13-colaboracao-institucional.md).
