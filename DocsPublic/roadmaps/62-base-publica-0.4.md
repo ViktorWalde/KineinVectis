@@ -61,9 +61,9 @@ protocolo IPC 0.197.0 tem ciclo independente da versão pública.
    maior interrupção do trabalho. Hierarquia, largura, listas, estados,
    atalhos, foco e recuperação; fotos antes/depois e interação na UI nativa.
    Aceite visual permanece separado dos testes de lógica.
-4. **B4 — Primeiro verificador semântico.** Implementar um recorte com
-   consumidor real e critérios abaixo; o assistente completo continua
-   aberto no 52 §11.2.
+4. **B4 — Primeiro verificador semântico.** Recorte host integrado e provado
+   conforme §4 e [40.7 §7.372](40.7-registro-das-entregas.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
+   O assistente completo continua aberto no 52 §11.2.
 5. **B5 — Fechamento.** Idiomas e traduções conforme [57 §3](57-mapa-de-versoes-ate-a-1.0.md#3-pedidos-do-autor-e-para-onde-foram),
    metadados 0.4.0, changelog/manual/tutorial coerentes, gate completo estrito,
    pacote local com checksum e validação em ambiente mínimo. Esta fronteira
@@ -84,6 +84,13 @@ compilador e o contexto já disponíveis, sem substituir parser, LSP ou build.
 Primeiro consumidor: a prévia/aplicação de correções C/C++ no dono atual de
 ações de linguagem. O algoritmo completo continua o [52 §11.2](52-arquitetura-executavel-da-0.4.md#112-escopo-dedicado--assistente-semântico-decisão-do-projeto-2026-10-23-posição-de-2026-10-24).
 
+**Estado em 2026-11-02:** S0 e primeira fatia S1 host implementadas na
+[especificação própria](../especificacoes/verificador-de-correcoes-lsp.md).
+Clang/Clang++ e GCC/G++ reais comparam diagnósticos antes/depois, com headers
+imutáveis, ranges UTF-16 estritos e guardas de conteúdo/contexto. A prévia
+apresenta evidência, confiança do workspace e confirmação explícita. Corpus,
+mutações e prova nativa estão no [registro](40.7-registro-das-entregas.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
+
 **Entradas:** conteúdo e versão do documento, edição LSP, CDB e compilador
 efetivos, diretório de trabalho e diagnósticos anteriores. Congelar a
 identidade desses dados; resposta obsoleta não libera aplicação.
@@ -93,19 +100,23 @@ semântica nem sucesso de link/testes; não usar o rótulo genérico “segura�
 
 **Recorte determinístico inicial:** uma unidade C/C++, edição em memória,
 checagem antes/depois com flags da CDB e arquivo-sombra que preserve a
-resolução de includes. Sem escrita no documento original. Limites iniciais
-propostos: uma unidade de até 1 MiB, 5 s por verificação, cancelamento por
+resolução de includes. Sem escrita no documento original. Limites implementados:
+uma unidade de até 1 MiB, 5 s por verificação, cancelamento por
 troca de versão/contexto. Comando não interpretável, compilador ausente,
 timeout, mudança em múltiplos arquivos ou contexto incompleto resultam em
-“não verificado”. Definir e revisar o contrato IPC antes da implementação.
+“não verificado”. O contrato IPC 0.198.0 precede o produtor e está nos
+documentos de protocolo e LSP.
 
-**Corpus mínimo anterior ao aceite:** correção válida de host C e C++, erro
-de sintaxe inserido, include removido necessário, ordem de includes FreeRTOS,
-macro de SDK ausente, flags/CDB divergentes, Unicode, edição obsoleta,
-timeout e ferramenta ausente. Casos de SDK usam versões identificadas e
-build real; fixtures sintéticas não os substituem. Medir falso bloqueio e
-tempo; mutações que removem a comparação ou aceitam contexto obsoleto devem
-reprovar. Ampliar depois para os SDKs e consumidores de S2–S4.
+**Corpus host executável:** correção válida C/C++, erro inserido, include
+necessário removido, macros e flags/CDB divergentes, Unicode, edição/contexto
+obsoletos, cancelamento, timeout e ferramenta ausente. Também cobre mensagens
+idênticas em posições novas, erros além do limite padrão do compilador e
+mudanças de headers com metadados restaurados. Duração e falso `newError`
+são medidos; seis mutações da comparação e das guardas reprovam.
+
+**Expansão do corpus:** ordem de includes FreeRTOS e macros de SDK exigem
+dependências e versões identificadas, com build real; fixtures sintéticas não
+os substituem. SDKs e consumidores de S2–S4 conservam seus aceites próprios.
 
 ## 5. Integração opcional de contexto com Codex
 

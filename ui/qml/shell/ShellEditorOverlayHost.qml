@@ -223,11 +223,14 @@ Item {
         files: root.editorController.workspaceEditFiles
         editCount: root.editorController.workspaceEditCount
         errorText: root.editorController.workspaceEditError
+        verification: root.editorController.language.editVerification.evidence
+        obsolete: root.editorController.language.editVerification.obsolete
         maxAvailableWidth: root.maxOverlayWidth
         maxAvailableHeight: root.height - 4 * Theme.spacingSmall
 
         onApplyRequested: root.editorController.applyWorkspaceEdit()
         onCancelRequested: root.editorController.cancelWorkspaceEdit()
+        onTrustRequested: root.editorController.language.trustVerificationWorkspace()
     }
 
     EditorGoToLineDialog {

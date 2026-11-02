@@ -73,6 +73,7 @@ Item {
     property var workspaceEditFiles: []
     property int workspaceEditCount: 0
     property string workspaceEditError: ""
+    readonly property alias editVerification: verification
 
     signal switchSourceHeaderRequested(string path, string content)
     signal definitionRequested(string path, string content, int line, int column)
@@ -85,11 +86,18 @@ Item {
     signal codeActionApplyRequested(string path, string content, int actionIndex)
     signal workspaceEditApplyRequested(string transactionId)
     signal workspaceEditCancelRequested(string transactionId)
+    signal workspaceTrustRequested()
     // O editor precisa voltar a receber o foco depois de um diálogo fechar; o
     // dono do foco é o composition root, não este controller.
     signal focusEditorRequested()
 
     visible: false
+
+    EditorEditVerificationController {
+        id: verification
+        documentController: root.documentController
+        surfaceBridge: root.surfaceBridge
+    }
 
     ListModel {
         id: usagesItems
@@ -286,17 +294,18 @@ Item {
         documentController.handleRenameApplied(files);
     }
 
-    function handleWorkspaceEditPreview(transactionId, title, files, edits) {
+    function handleWorkspaceEditPreview(transactionId, title, files, edits, evidence) {
         workspaceEditTransactionId = transactionId;
         workspaceEditTitle = title;
         workspaceEditFiles = files;
         workspaceEditCount = edits;
         workspaceEditError = "";
+        verification.receive(files, evidence);
         workspaceEditPreviewVisible = true;
     }
 
     function applyWorkspaceEdit() {
-        if (workspaceEditTransactionId === "") {
+        if (workspaceEditTransactionId === "" || !verification.canApply()) {
             return;
         }
         workspaceEditError = "";
@@ -312,6 +321,11 @@ Item {
         workspaceEditCancelRequested(workspaceEditTransactionId);
     }
 
+    function trustVerificationWorkspace() {
+        cancelWorkspaceEdit();
+        workspaceTrustRequested();
+    }
+
     function handleWorkspaceEditApplied(files) {
         resetWorkspaceEditPreview();
         handleRenameApplied(files);
@@ -324,6 +338,7 @@ Item {
     }
 
     function resetWorkspaceEditPreview() {
+        verification.reset();
         workspaceEditPreviewVisible = false;
         workspaceEditTransactionId = "";
         workspaceEditTitle = "";
@@ -359,6 +374,7 @@ Item {
             dismissActions();
         }
         if (method === "lsp.workspaceEdit.apply") {
+            verification.invalidate(message);
             workspaceEditError = message;
             workspaceEditPreviewVisible = workspaceEditTransactionId !== "";
         }

@@ -154,7 +154,8 @@ bool CoreClient::dispatchLspResult(const QString& method, const QJsonObject& res
             result.value(QStringLiteral("transactionId")).toString(),
             result.value(QStringLiteral("title")).toString(),
             result.value(QStringLiteral("files")).toArray().toVariantList(),
-            result.value(QStringLiteral("edits")).toInt(0));
+            result.value(QStringLiteral("edits")).toInt(0),
+            result.value(QStringLiteral("verification")).toObject().toVariantMap());
         return true;
     }
     if (method == QStringLiteral("lsp.workspaceEdit.apply")) {

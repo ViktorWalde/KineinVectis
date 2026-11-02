@@ -646,7 +646,8 @@ signals:
     void lspReferencesResolved(const QVariantList& references);
     void lspCodeActionsResolved(const QVariantList& actions);
     void lspWorkspaceEditPreviewResolved(const QString& transactionId, const QString& title,
-                                         const QVariantList& files, int edits);
+                                         const QVariantList& files, int edits,
+                                         const QVariantMap& verification);
     void lspWorkspaceEditApplied(const QStringList& files, const QString& title, int edits);
     void lspWorkspaceEditCancelled(const QString& transactionId);
     // Um sinal por ORIGEM: o `path` e a `query` nao sao enfeite, sao a

@@ -504,6 +504,18 @@ sem `clang-tidy`, diz o pacote.
 de você apertar `Alt+Enter`: é onde os quick fixes do clangd, rust-analyzer,
 basedpyright e ruff moram. Clicar nela é o mesmo que `Alt+Enter`.
 
+**Verificar uma correção C/C++.** Escolher a ação abre a prévia; nada é
+gravado nessa etapa. Em projeto confiável, uma unidade com GCC/G++ ou Clang/Clang++ e
+flags suportadas na CDB recebe comparação de diagnósticos antes/depois:
+**Erro novo observado**, **Sem erro novo observado** ou **Não verificado**.
+A prévia mostra motivo, compilador, contexto, duração e erros adicionais.
+Ausência de erro novo não prova equivalência, link ou testes. GCC usa isolamento
+com bubblewrap; ferramenta incompatível, timeout e escopo não suportado ficam
+não verificados. Se faltar confiança, **Confiar neste projeto** está disponível
+na prévia; depois, consulte a ação novamente.
+Reveja e confirme explicitamente; mudar documento ou contexto exige nova
+consulta. Salve outras abas modificadas antes de verificar.
+
 **Cobertura dos testes** (menu Build → **Cobertura dos testes**, ou a
 paleta): Rust pelo `cargo llvm-cov` (`cargo install cargo-llvm-cov` e
 `rustup component add llvm-tools-preview`), Python pelo `coverage.py` do

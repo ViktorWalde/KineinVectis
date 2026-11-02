@@ -55,6 +55,7 @@ Item {
         }
 
         function onFileChangedNotificationRequested(path, content) {
+            root.editorController.language.editVerification.documentChanged(path, content);
             root.coreClient.notifyFileChanged(path, content);
         }
 
@@ -95,6 +96,10 @@ Item {
 
         function onWorkspaceEditCancelRequested(transactionId) {
             root.coreClient.cancelWorkspaceEdit(transactionId);
+        }
+
+        function onWorkspaceTrustRequested() {
+            root.coreClient.trustWorkspace();
         }
 
         function onSwitchSourceHeaderRequested(path, content) {

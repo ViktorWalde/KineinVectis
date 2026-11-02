@@ -71,6 +71,8 @@ Item {
         }
 
         function onFilesChanged(changes) {
+            root.editorController.language.editVerification.invalidate(
+                qsTr("Contexto em disco alterado; consulte as ações novamente."));
             root.editorController.handleExternalChanges(changes);
         }
 
@@ -141,9 +143,9 @@ Item {
             root.editorController.handleCodeActionsResolved(actions);
         }
 
-        function onLspWorkspaceEditPreviewResolved(transactionId, title, files, edits) {
-            root.editorController.handleWorkspaceEditPreview(transactionId, title,
-                                                             files, edits);
+        function onLspWorkspaceEditPreviewResolved(transactionId, title, files, edits, verification) {
+            root.editorController.language.handleWorkspaceEditPreview(transactionId, title,
+                                                                      files, edits, verification);
         }
 
         function onLspWorkspaceEditApplied(files, title, edits) {

@@ -462,6 +462,8 @@ set_source_files_properties(qml/editor/EditorOutlineSide.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/editor/EditorSaveController.qml PROPERTIES QT_RESOURCE_ALIAS EditorSaveController.qml)
 set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextController.qml)
 set_source_files_properties(qml/editor/EditorLanguageController.qml PROPERTIES QT_RESOURCE_ALIAS EditorLanguageController.qml)
+set_source_files_properties(qml/editor/EditorEditVerificationController.qml PROPERTIES QT_RESOURCE_ALIAS EditorEditVerificationController.qml)
+set_source_files_properties(qml/editor/EditorEditVerificationSummary.qml PROPERTIES QT_RESOURCE_ALIAS EditorEditVerificationSummary.qml)
 set_source_files_properties(qml/editor/EditorHighlightController.qml PROPERTIES QT_RESOURCE_ALIAS EditorHighlightController.qml)
 set_source_files_properties(qml/editor/EditorFormatController.qml PROPERTIES QT_RESOURCE_ALIAS EditorFormatController.qml)
 set_source_files_properties(qml/editor/EditorPersistenceController.qml PROPERTIES QT_RESOURCE_ALIAS EditorPersistenceController.qml)
@@ -911,6 +913,8 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorSaveController.qml
         qml/editor/EditorTextController.qml
         qml/editor/EditorLanguageController.qml
+        qml/editor/EditorEditVerificationController.qml
+        qml/editor/EditorEditVerificationSummary.qml
         qml/editor/EditorHighlightController.qml
         qml/editor/EditorFormatController.qml
         qml/editor/EditorPersistenceController.qml

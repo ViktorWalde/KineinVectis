@@ -8,11 +8,14 @@ Rectangle {
     property var files: []
     property int editCount: 0
     property string errorText: ""
+    property var verification: null
+    property bool obsolete: false
     property real maxAvailableWidth: 760
     property real maxAvailableHeight: 540
 
     signal applyRequested()
     signal cancelRequested()
+    signal trustRequested()
 
     width: Math.min(760, maxAvailableWidth)
     height: Math.min(540, maxAvailableHeight)
@@ -21,6 +24,9 @@ Rectangle {
     border.color: root.errorText === "" ? Theme.accent : Theme.errorSoft
     border.width: 1
     focus: visible
+    onObsoleteChanged: {
+        if (visible && obsolete) root.forceActiveFocus();
+    }
     Keys.onEscapePressed: root.cancelRequested()
 
     // A roda do mouse dentro da caixa nao atravessa para o codigo (o clique
@@ -58,10 +64,20 @@ Rectangle {
         font.pixelSize: Theme.fontSizeSmall
     }
 
+    EditorEditVerificationSummary {
+        id: verificationSummary
+        anchors.top: summaryLabel.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: Theme.spacingMedium
+        height: visible ? implicitHeight : 0
+        evidence: root.verification
+    }
+
     ListView {
         id: fileList
 
-        anchors.top: summaryLabel.bottom
+        anchors.top: verificationSummary.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: errorLabel.visible ? errorLabel.top : actionRow.top
@@ -152,6 +168,13 @@ Rectangle {
 
         KvButton {
             compact: true
+            visible: verificationSummary.trustRequired
+            text: qsTr("Confiar neste projeto")
+            onClicked: root.trustRequested()
+        }
+
+        KvButton {
+            compact: true
             text: qsTr("Cancelar")
             onClicked: root.cancelRequested()
         }
@@ -159,7 +182,11 @@ Rectangle {
         KvButton {
             compact: true
             primary: true
-            text: qsTr("Aplicar alterações")
+            enabled: !root.obsolete
+            text: verificationSummary.newError
+                ? qsTr("Aplicar mesmo com erro novo")
+                : verificationSummary.unverified
+                ? qsTr("Aplicar sem verificação") : qsTr("Aplicar alterações")
             onClicked: root.applyRequested()
         }
     }

@@ -10,15 +10,15 @@
 
 > **RESUMO TÉCNICO (2026-11-02).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.197.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.198.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > Fronteira, auditoria inicial e bloqueadores em **62 §§1–3**.
 >
 > **Prioridade:** integridade/contexto e uso no próprio desenvolvimento;
-> polimento UI/HUD/UX, painéis integrados e primeiro verificador semântico
-> complementar. Setup/Instalar Ferramentas acoplado, com busca/filtro e
-> recuperação; foco da navegação corrigido. Provas da fatia no §7.371.
+> polimento UI/HUD/UX e painéis integrados. Primeiro verificador de correções
+> LSP integrado à prévia, com compilador/CDB e aplicação explícita (§7.372).
+> Setup acoplado, com busca/filtro e recuperação; foco corrigido (§7.371).
 >
 > **Trilha aberta:** os marcos antigos **0.4.1–0.4.9** permanecem no 52 para
 > colaboradores; não são requisito de conclusão integral antes desta base.
@@ -31,9 +31,9 @@
 > metadados, documentação e pacote mínimo coerentes; release ainda não pronta.
 > Integração opcional de contexto Codex `/ide`: objetivo a investigar (62 §5).
 >
-> **Provas da fatia (2026-11-02, §7.371):** 1395 Rust, 8 CTest, 177 QML;
+> **Provas da fatia (2026-11-02, §7.372):** 1426 Rust, 8 CTest, 178 QML;
 > rápido passa com dois NÃO PROVADOS de compiladores ARM; estrito reprova.
-> Release abre e percorre 33 superfícies sem avisos QML. Não é fechamento.
+> Corpus host, seis mutações e consumidor nativo exercitados. Não é fechamento.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -43,12 +43,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.197.0 (crates/kinein-protocol, medido em 2026-10-27; o
+protocolo   0.198.0 (crates/kinein-protocol, medido em 2026-11-02; o
             historico das versoes e' o arquitetura/03)
 metodos     192 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   175 tst_*.qml em scripts/qml-harness (medido em 2026-10-27)
-testes      1395 Rust no gate completo estrito de 2026-10-27 (40.7 §7.365);
+harnesses   178 tst_*.qml em scripts/qml-harness (medido em 2026-11-02)
+testes      1426 Rust no gate rápido de 2026-11-02 (40.7 §7.372);
+            1395 no gate completo estrito de 2026-10-27 (40.7 §7.365);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
             1194 Rust no gate rápido estrito integral da 0.4.1e em
@@ -112,7 +113,7 @@ Provas de software, emulação e hardware permanecem distintas.
 | Prévia de navegação compacta continua sem escolha visual aprovada. Pesquisa de Embarcados recebida em 2026-10-21: cinco imagens conceituais, ainda sujeitas a refinamento e aprovação. Estudos de frontend são rascunhos; evoluir a UI real, sem copiar mockups. Trabalho funcional independente pode seguir | [52](52-arquitetura-executavel-da-0.4.md) §11.1/§14.16–14.17; [rascunho de Embarcados](../especificacoes/embarcados-hud-ux-0.4.md) e [regra de aprovação visual](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21) |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pela manutenção, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site em frente própria | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
 | ROS 2: frente posterior à base pública 0.4; escolher versão exata pela pesquisa medida e provar jornadas próprias | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
-| Algoritmos complementares: primeiro verificador conservador incluído na base; assistente completo e análise profunda seguem abertos, sem substituir LSP/compiladores | [62 §4](62-base-publica-0.4.md#4-primeiro-algoritmo-fronteira-anterior-ao-código); [52 §11.2](52-arquitetura-executavel-da-0.4.md#112-escopo-dedicado--assistente-semântico-decisão-do-projeto-2026-10-23-posição-de-2026-10-24) |
+| Algoritmos complementares: primeiro verificador de host integrado à prévia LSP, com corpus e mutações; assistente completo, SDKs e S2–S4 seguem abertos | [Verificador](../especificacoes/verificador-de-correcoes-lsp.md); [62 §4](62-base-publica-0.4.md#4-primeiro-algoritmo-fronteira-anterior-ao-código); [52 §11.2](52-arquitetura-executavel-da-0.4.md#112-escopo-dedicado--assistente-semântico-decisão-do-projeto-2026-10-23-posição-de-2026-10-24) |
 | Alocações históricas de Banco 0.4.5, consolidação 0.4.6 e estabilização 0.4.7–0.4.9 permanecem na trilha pública aberta. Não são requisito de conclusão integral antes do pacote da base | [52](52-arquitetura-executavel-da-0.4.md) §11; [62](62-base-publica-0.4.md) |
 | Entrega acumulada: etapas não publicadas 0.3.6–0.3.9 e trabalho interno 0.4 integram a base pública 0.4 / SemVer 0.4.0; pacote após os aceites próprios, sem declarar concluído o backlog | [62](62-base-publica-0.4.md); [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |

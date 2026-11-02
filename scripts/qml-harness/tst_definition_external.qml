@@ -61,6 +61,7 @@ Item {
         signal codeActionApplyRequested(var path, var content, var actionIndex)
         signal workspaceEditApplyRequested(var transactionId)
         signal workspaceEditCancelRequested(var transactionId)
+        signal workspaceTrustRequested()
         signal switchSourceHeaderRequested(var path, var content)
         signal definitionRequested(var path, var content, var line, var column)
         signal hoverRequested(var path, var content, var line, var column)
