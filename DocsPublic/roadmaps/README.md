@@ -41,21 +41,21 @@ O [`53-arquitetura-executavel-da-0.3.6.md`](53-arquitetura-executavel-da-0.3.6.m
 aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
 é a arquitetura da 0.4 (embarcados com compiladores e ecossistemas por baixo):
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
-**Decisão de 2026-10-20:** a série atual fecha na **0.4.9**, com auditoria
-geral de frontend. **Atualização de 2026-10-21:** a edição especial vem
-imediatamente após a 0.4.9, estabelece a base polida da 0.5 em diante e
-precede a geração/teste do AppImage. A entrega incorpora o trabalho não
-publicado 0.3.6–0.3.9; a 0.5 lista somente seu próprio delta. O 52 §11
-organiza 0.4.0–0.4.9; o 57 §1.1 é o dono dessa fronteira e o 40 é o resumo técnico.
-
-**Reorganização de 2026-10-21:** o **52 §11.1** ordena a próxima h4b2,
-Setup reformulado no dock e Quality Center inicial na própria 0.4.x.
-Specs: [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e
-[Quality Center](../especificacoes/quality-center-e-gates.md). Polimento
-especial associado à 0.5 no 52 §14.17.1; inglês/divulgação no 57 §3 item 11.
+**Fronteira de 2026-11-02:** a base pública **Kinein Vectis 0.4** usa SemVer
+**0.4.0** e consolida o trabalho acumulado, com foco em estabilidade, uso no
+próprio desenvolvimento, polimento UI/HUD/UX e primeiro verificador
+complementar. Critérios e auditoria no [62](62-base-publica-0.4.md).
+A trilha completa 0.4.1–0.4.9 continua aberta para colaboradores, sem exigir
+releases intermediárias nem sua conclusão integral antes da base. As
+[quatro tarefas iniciais](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md)
+separam duas jornadas bare metal e duas Linux embarcado. O 57 §1.1 conserva
+as decisões anteriores e aponta a fronteira atual; idiomas no 57 §3.
+Setup/Instalar Ferramentas é a primeira fatia de polimento; Quality Center
+conserva seu plano na trilha aberta.
 
 ```text
-57-mapa-de-versoes-ate-a-1.0.md     as versoes ate a 1.0; §1.1: entrega acumulada ate 0.4.9 e delta da 0.5
+62-base-publica-0.4.md             fronteira vigente, auditoria e bloqueadores da base pública 0.4
+57-mapa-de-versoes-ate-a-1.0.md     as versões até a 1.0; §1.1: base pública 0.4 e trilha aberta
 58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia
 59-fechamento-da-0.3.9.md            o fechamento da 0.3.9, encerrada em 2026-10-16 (registro)
 60-windows-e-edicao-especial.md       o Windows 11 Pro: adaptar a IDE, fechar 0.3.9 e 0.4.0, edição especial Windows + WSL2

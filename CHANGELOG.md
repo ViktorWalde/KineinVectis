@@ -5,7 +5,27 @@ mudança, com data, medida e prova, está em
 `DocsPublic/roadmaps/40.7-registro-das-entregas.md`; a situação de cada versão,
 em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 
-## 0.4.0–0.4.9 — em desenvolvimento (não lançada)
+## 0.4 — base pública em desenvolvimento (metadados previstos: 0.4.0)
+
+Fronteira atualizada em 2026-11-02: consolidar o trabalho acumulado da
+0.3.6–0.3.9 e da trilha interna 0.4, incluindo a etapa 0.4.1, em uma base
+estável para desenvolver a própria IDE. Prioridade em integridade/contexto,
+polimento UI/HUD/UX, painéis integrados e primeiro verificador semântico
+complementar às ferramentas existentes. Critérios no
+[roadmap 62](DocsPublic/roadmaps/62-base-publica-0.4.md).
+
+A trilha completa 0.4.1–0.4.9 continua aberta a contribuições, com
+[quatro tarefas iniciais](DocsPublic/contribuindo/15-tarefas-iniciais-embarcados-0.4.md).
+Pendências não viram funcionalidades concluídas; números históricos e provas
+anteriores são preservados abaixo. O acabamento antes associado à edição
+especial entra no polimento da base. Idiomas/traduções continuam no 57 §3.
+O binário ainda se identifica como 0.3.9; pacote final e release não estão prontos.
+
+## 0.4.0–0.4.9 — planejamento e entregas internas históricas (não lançadas)
+
+**Fronteira histórica substituída em 2026-11-02 pela base pública acima.**
+A introdução abaixo conserva o planejamento anterior; os itens de comportamento
+registram as entregas efetivas, sem afirmar que toda a trilha foi concluída.
 
 Embarcados com os compiladores e ecossistemas por baixo (roadmaps 52 e 57),
 em curso desde 2026-10-16. **Decisão de 2026-10-20:** a série fecha na

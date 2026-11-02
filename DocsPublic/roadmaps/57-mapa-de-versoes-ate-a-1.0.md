@@ -28,9 +28,9 @@ documento: **ninguém (pessoa ou IA) pode tratar uma proposta como decisão.**
 flowchart LR
   v02["0.1–0.2<br/>MVP e teste fechado"]:::done --> v03["0.3.0–0.3.5<br/>série 0.3"]:::done
   v03 --> v036["0.3.6–0.3.9<br/>casca e base visual"]:::checkout
-  v036 --> v04["0.4.0–0.4.9<br/>embarcados e entrega acumulada"]:::now
-  v04 --> special["Edição especial<br/>base polida"]:::planned
-  special --> package["AppImage local<br/>geração e testes"]:::planned
+  v036 --> v04["0.4 pública / SemVer 0.4.0<br/>base estável e polimento"]:::now
+  v04 --> embedded["Trilha 0.4.1–0.4.9<br/>Embarcados / colaboração"]:::planned
+  v04 --> package["AppImage local<br/>após aceites da base"]:::planned
   package --> v05["0.5.x em diante<br/>evolução sobre essa base"]:::planned
   v05 --> v06["0.6<br/>motor do editor"]:::planned
   v06 --> v07["0.7<br/>paridade diária"]:::planned
@@ -52,6 +52,9 @@ especial**, para oferecer essa base polida aos usuários que a testarão. O §1.
 resolve o agrupamento que ainda estava aberto no
 [`53`](53-arquitetura-executavel-da-0.3.6.md) §11.
 
+**Histórico anterior à fronteira de 2026-11-02 (§1.1).** As datas abaixo
+registram as decisões anteriores de pacote; a entrega vigente é a base 0.4.
+
 **Revisão de continuidade em 2026-10-07:** foco Qt 6.10; na mesma noite o
 autor migrou para Arch Linux e o Qt local passou a 6.12.0 (59, topo). Em
 2026-10-08 adiou MySQL/MariaDB nativo e a edição na grade (59 §2.3). A 0.3.9 encerra com
@@ -69,7 +72,37 @@ foram substituídas pela decisão vigente do §1.1; não são marcos de pacote.
 Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
 (nenhuma versão desde 2026-10-01; o que resta proposto é o critério da 1.0, §4).
 
-### 1.1 Fronteira da entrega 0.4.9 — decisão de 2026-10-20
+### 1.1 Fronteira vigente: entrega pública 0.4 — 2026-11-02
+
+A entrega consolidada chama-se **Kinein Vectis 0.4**, com **0.4.0** nos
+metadados SemVer. A fronteira e os critérios atuais estão no
+[62](62-base-publica-0.4.md): estabilidade para desenvolver a própria IDE,
+polimento integrado de UI/HUD/UX e primeiro verificador semântico
+complementar. O trabalho acumulado, incluindo 0.4.1, integra essa base;
+itens planejados continuam pendentes até implementação e prova.
+
+A antiga trilha **0.4.1–0.4.9 permanece aberta** para colaboradores de
+Sistemas Embarcados Modernos. Não é requisito de publicação integral da
+base, nem exige versões intermediárias. As
+[quatro tarefas iniciais](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md)
+recortam duas jornadas bare metal e duas de Linux embarcado. Cargas extensas
+e validações físicas conservam aceites próprios. Os compromissos anteriores
+não foram declarados concluídos ou removidos. O acabamento da edição especial
+é incorporado ao polimento da base 0.4; idiomas/traduções seguem o §3.
+
+Os marcos da tabela §2 e as alocações históricas do §3 descrevem a trilha,
+subordinados a esta fronteira. Pacote local só depois dos aceites do 62;
+protocolo IPC independente. A integração opcional de contexto `/ide` é um
+objetivo técnico de fim de ciclo, ainda sujeito a investigação e prova.
+
+<a id="11-fronteira-da-entrega-049--decisão-de-2026-10-20"></a>
+
+#### Fronteira anterior da entrega 0.4.9 — decisão de 2026-10-20
+
+**HISTÓRICO SUPERADO na fronteira de lançamento em 2026-11-02.** Os itens
+abaixo preservam a decisão anterior; a fronteira vigente está acima e no 62.
+Compromissos funcionais não concluídos seguem na trilha pública aberta.
+
 
 - A versão pública de referência continua sendo a **0.3.5**. As etapas
   históricas **0.3.6–0.3.9**, encerradas no checkout sem pacote próprio,
@@ -144,10 +177,11 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
 | 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pela manutenção, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização FEITA (2026-10-15, 61 §4; continua junto de cada fatia) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
-| 0.4.0–0.4.9 | EM CURSO; fechamento funcional na 0.4.9, depois edição especial e só então AppImage (decisão registrada, 2026-10-21); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Instalar Ferramentas reformulado e Quality Center inicial (decisão registrada, 2026-10-21); Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11/§11.1, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux, Setup e Quality Center verificadas, auditoria/gates completos, documentação; artefato somente após a edição especial (§1.1; 52 §10) |
+| 0.4 pública / 0.4.0 SemVer | EM DESENVOLVIMENTO; fronteira de 2026-11-02 | base estável e polida | trabalho acumulado, uso no próprio desenvolvimento, UI/HUD/UX integrada e primeiro verificador semântico | [62](62-base-publica-0.4.md) | B1–B5 do 62; gate completo e pacote mínimo antes da publicação |
+| trilha interna 0.4.1–0.4.9 | ABERTA A CONTRIBUIÇÕES; sem exigência de releases intermediárias | Sistemas Embarcados Modernos | compromissos restantes de contexto/cross, build/qualidade, gravação/depuração, editor, Banco e consolidação; sem declaração de conclusão por renumeração | [52](52-arquitetura-executavel-da-0.4.md) §11 e [tarefas iniciais](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md) | aceites de cada jornada; implementação, integração, software/emulação e hardware discriminados |
 | edição especial | PLANEJADA (decisão registrada, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
-| edição especial de HUD/UX/UI, base da 0.5 em diante | PLANEJADA (decisão registrada, 2026-10-20/21), imediatamente após fechar a 0.4.9 e antes do AppImage; patch/identificação do artefato a definir | otimização e acabamento | auditoria rigorosa de consistência, densidade, tipografia, foco, acessibilidade e desempenho; pequenos achados sobre a base funcional já entregue | 52 §14.17/§14.17.1 | jornadas e gates do conjunto polido; depois gerar/testar AppImage, incluindo smokes e ambiente mínimo; não confundir com a edição Windows + WSL2 do 60 |
-| 0.5.x | PLANEJADA; evolui sobre a base 0.4.9 aprimorada pela edição especial, com notas do próprio delta (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; o que restar do inglês (a UI já fica em inglês no polimento da 0.4 e a documentação e a divulgação vêm com a 0.4 finalizada, decisão de 2026-10-24) | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
+| acabamento de HUD/UX/UI | INCORPORADO AO POLIMENTO DA BASE 0.4 (2026-11-02) | otimização e consistência | hierarquia, densidade, tipografia, foco, acessibilidade e desempenho, sobre os componentes existentes | [62](62-base-publica-0.4.md) e 52 §14.17/§14.17.1 (histórico) | jornadas nativas e gates do conjunto final; não implica versão pública intermediária |
+| 0.5.x | PLANEJADA; evolui sobre a base pública 0.4, com notas do próprio delta (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; o que restar do inglês (a UI já fica em inglês no polimento da 0.4 e a documentação e a divulgação vêm com a 0.4 finalizada, decisão de 2026-10-24) | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
 | 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |

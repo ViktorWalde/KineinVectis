@@ -6,6 +6,11 @@
 > critérios de release. Este documento define o plano técnico, não configura
 > automaticamente serviços externos.
 
+As [quatro tarefas iniciais de Embarcados](15-tarefas-iniciais-embarcados-0.4.md)
+estão delimitadas no checkout: duas bare metal e duas Linux embarcado.
+A trilha 0.4.1–0.4.9 permanece aberta, independente do fechamento da base
+pública 0.4; fronteira vigente no [62](../roadmaps/62-base-publica-0.4.md).
+
 ## 1. O lugar da colaboração
 
 **Recomendação:** código, documentação de desenvolvimento, issues, PRs e CI

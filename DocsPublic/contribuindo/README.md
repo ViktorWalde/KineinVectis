@@ -24,6 +24,7 @@
 12-licenciamento-e-procedencia.md  AGPL, documentação, distribuição, SPDX e DCO
 13-colaboracao-institucional.md  autorização, material publicável e continuidade
 14-minuta-de-colaboracao-institucional.md  modelo de acordo sobre contribuições e infraestrutura
+15-tarefas-iniciais-embarcados-0.4.md  duas jornadas bare metal e duas Linux embarcado na trilha aberta
 ```
 
 ## Em uma tela
@@ -51,6 +52,7 @@ A regra que resume o método de trabalho, e que os gates cobram:
 | Implementar uma funcionalidade | [03](03-o-ritual-de-uma-fatia.md) inteiro | o roadmap da etapa (`../roadmaps/README.md`) |
 | Só documentação | [03](03-o-ritual-de-uma-fatia.md) §"documentação" | [`../README.md`](../README.md) (o índice) |
 | Entender ou alterar os gates | [04](04-os-gates-que-dizem-nao.md) | [07](07-fluxo-e-responsabilidades-dos-gates.md) |
+| Escolher uma tarefa de Embarcados | [15](15-tarefas-iniciais-embarcados-0.4.md) | [trilha 52](../roadmaps/52-arquitetura-executavel-da-0.4.md) |
 | Preparar tarefas para novos colaboradores | [11](11-ci-publica-e-tarefas-para-colaboradores.md) | [03](03-o-ritual-de-uma-fatia.md) |
 | Contribuir ou distribuir respeitando as licenças | [12](12-licenciamento-e-procedencia.md) | [DCO](../../DCO.txt) |
 | Organizar colaboração institucional | [13](13-colaboracao-institucional.md) | [14 — minuta](14-minuta-de-colaboracao-institucional.md) |

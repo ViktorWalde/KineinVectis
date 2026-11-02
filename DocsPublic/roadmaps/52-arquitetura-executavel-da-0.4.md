@@ -29,6 +29,17 @@
 > cidadão de tier 1** — as cinco jornadas abaixo valem para ele, não só o
 > compiledb (§5.10) — e os **emuladores entram como alvo** (§10.1).
 
+> **Fronteira vigente — 2026-11-02:** este documento preserva a trilha
+> completa de Sistemas Embarcados Modernos, aberta para colaboração. Os
+> marcos 0.4.1–0.4.9 organizam escopos, sem exigir releases intermediárias
+> nem conclusão integral antes da base pública **Kinein Vectis 0.4**
+> (SemVer **0.4.0**). Critérios de lançamento e prioridade atual no
+> [62](62-base-publica-0.4.md); quatro tarefas iniciais em
+> [contribuindo/15](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md).
+> Polimento e primeiro verificador complementar avançam na base; o
+> assistente completo de §11.2 e os compromissos pendentes não são dados
+> como concluídos. Esta fronteira prevalece sobre ordens antigas abaixo.
+
 ## 0. Como ler e como usar
 
 - A §1 diz o que o usuário consegue fazer ao fim da 0.4. A §2 diz o que não
@@ -584,6 +595,14 @@ no usuário e medidos com o mesmo ciclo.
 
 ## 11. Ordem e marcos
 
+**Atualização de fronteira — 2026-11-02:** a ordem abaixo é a referência
+histórica da trilha completa, agora aberta a contribuições. A sequência de
+fechamento da base pública é a do [62 §3](62-base-publica-0.4.md#3-ordem-e-critérios-de-fechamento).
+Setup e polimento deixam de esperar west; o recorte inicial do verificador
+segue §11.2 com corpus e consumidor antes do código. O produtor west nativo
+continua ausente e é a tarefa BM1, não o próximo bloqueador do lançamento.
+
+
 Dependências primeiro; os números abaixo organizam o trabalho. A série
 acumulada fecha funcionalmente na 0.4.9; a edição especial vem em seguida,
 forma a base da 0.5 em diante e precede a geração/teste do AppImage, conforme o
@@ -742,6 +761,11 @@ que impeçam ou contradigam as jornadas assumidas para a série.
 
 ### 11.1 Fluxo de execução reorganizado — 2026-10-21
 
+**Leitura histórica:** ordem da trilha completa. A fronteira de 2026-11-02
+no 62 distingue bloqueadores da base e evolução; os aceites abaixo continuam
+válidos para os respectivos escopos, sem bloquear todos a entrega pública.
+
+
 **Objetivo:** fechar jornadas completas com menos retrabalho entre core e
 frontend. Agrupar alterações no mesmo host/componente quando houver uma
 dependência concreta; conservar fatias pequenas, revisáveis e com gate
@@ -826,6 +850,12 @@ Não bloqueia trabalho autorizado independente do desenho, nem permite usar
 aceite de protótipo/agente como aprovação visual do autor.
 
 ### 11.2 Escopo dedicado — assistente semântico (decisão do projeto, 2026-10-23; posição de 2026-10-24)
+
+**Recorte de 2026-11-02:** o primeiro verificador conservador acompanha a
+base pública 0.4, conforme [62 §4](62-base-publica-0.4.md#4-primeiro-algoritmo-fronteira-anterior-ao-código),
+sem aguardar a conclusão da trilha de Embarcados. S0–S4 abaixo preservam o
+escopo completo; o recorte inicial não satisfaz seus critérios por extensão.
+
 
 **Decisão (40 §5).** A IDE ganha um algoritmo próprio que entende a semântica
 e o contexto do projeto e atua junto das ferramentas que ela orquestra: LSP,
