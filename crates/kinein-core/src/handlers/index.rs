@@ -1,5 +1,5 @@
 //! Handler for `index.*` requests (`impl Core`) — o indice do projeto inteiro
-//! (pilar 0 do `roadmaps/42`, decisao do autor em 2026-09-12).
+//! (pilar 0 do `roadmaps/42`, decisao do projeto em 2026-09-12).
 //!
 //! O indice mora num `Arc<Mutex<ProjectIndex>>` porque quem o CONSTROI e' um
 //! job em thread propria e quem o CONSULTA e' o loop principal. E' a mesma

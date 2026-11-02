@@ -35,7 +35,7 @@ dedicada a embarcados. O
 estrutura a Library por capacidades e providers em fatias verificáveis da 0.5.
 O [`51-plano-fechamento-0.3.5.md`](51-plano-fechamento-0.3.5.md) registra,
 antes da execução, a ordem de implementação, provas, empacotamento em `KV0.3`,
-commit/push, release e atualização do site autorizados pelo autor.
+commit/push, release e atualização do site autorizados pela manutenção.
 O [`53-arquitetura-executavel-da-0.3.6.md`](53-arquitetura-executavel-da-0.3.6.md)
 é a arquitetura da 0.3.6 (a casca em torno do editor, terminal sem ruído e zero
 aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
@@ -46,7 +46,7 @@ geral de frontend. **Atualização de 2026-10-21:** a edição especial vem
 imediatamente após a 0.4.9, estabelece a base polida da 0.5 em diante e
 precede a geração/teste do AppImage. A entrega incorpora o trabalho não
 publicado 0.3.6–0.3.9; a 0.5 lista somente seu próprio delta. O 52 §11
-organiza 0.4.0–0.4.9; o 57 §1.1 é o dono dessa fronteira e o 40 é o handoff.
+organiza 0.4.0–0.4.9; o 57 §1.1 é o dono dessa fronteira e o 40 é o resumo técnico.
 
 **Reorganização de 2026-10-21:** o **52 §11.1** ordena a próxima h4b2,
 Setup reformulado no dock e Quality Center inicial na própria 0.4.x.

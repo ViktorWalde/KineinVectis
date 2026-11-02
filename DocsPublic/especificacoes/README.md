@@ -8,11 +8,11 @@
 [`arquitetura-de-frontend-0.3-em-diante.md`](arquitetura-de-frontend-0.3-em-diante.md)
 consolida e corrige as specs antigas de UI. Em conflito, ela vence. A Vectis
 não terá Assistente/Chat de IA embutido nem telemetria de produto/usuário.
-Após fechar a série 0.3, a reorganização da casca aprovada pelo autor entra na
+Após fechar a série 0.3, a reorganização da casca aprovada pela manutenção entra na
 0.3.6 segundo o [roadmap 49](../roadmaps/49-frontend-0.3.6-e-sequencia-0.5.md);
 a expansão da Biblioteca por capacidades/providers fica na 0.5 segundo o
 [roadmap 50](../roadmaps/50-biblioteca-e-providers-0.5.md).
-Atualização do autor em 2026-10-21: [Instalar Ferramentas](instalar-ferramentas.md)
+Atualização do projeto em 2026-10-21: [Instalar Ferramentas](instalar-ferramentas.md)
 reformulado e [Quality Center inicial](quality-center-e-gates.md) entram na
 0.4.x; o [52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21)
 ordena as dependências. A Library completa continua na 0.5.

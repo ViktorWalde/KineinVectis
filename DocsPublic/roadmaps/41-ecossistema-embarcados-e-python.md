@@ -7,7 +7,7 @@
 > da documentação oficial em `code.visualstudio.com/docs` ou do README da
 > extensão, lidos na mesma data. Número sem data é sobre AGORA.
 >
-> **A decisão do autor que abre este documento (2026-09-11, noite):**
+> **A decisão do projeto que abre este documento (2026-09-11, noite):**
 >
 > 1. **Python e MicroPython entram como vertical NATIVA.** Isto **reverte** o
 >    "Python fica para depois" de 2026-08-30 ([`29`](29-verticais-de-linguagem.md)
@@ -24,7 +24,7 @@
 >    nunca reescrita. Padrão de mercado, solução pronta, nada do zero.
 
 > **SUCEDIDO na parte de embarcados pelo [`42`](42-trilha-profunda-embarcados.md)
-> (2026-09-12).** O autor pediu profundidade em vez de cortes verticais rasos:
+> (2026-09-12).** O requisito prevê profundidade em vez de cortes verticais rasos:
 > o 42 reorganiza os blocos A–F em oito pilares com critério de pronto por
 > família e amplia o alvo para Linux embarcado. O inventário (§3) e o que não
 > entra (§4) desta página continuam valendo como fonte; a ORDEM passa a ser a
@@ -221,7 +221,7 @@ attach com desligamento preservando o processo. MicroPython passou a prova
 de despacho por porta com ferramenta falsa; isso não comprova execução física
 no firmware atual do ESP32. A correção dos argumentos de `run.start` cobre
 portas com espaços e apóstrofos; a rodada geral e seus resultados ficam no
-52 §14.12 e no handoff.
+52 §14.12 e no resumo técnico.
 
 **Lacuna medida de CircuitPython:** `project/detect.rs` reconhece imports de
 `board`/`microcontroller` em `main.py`/`boot.py` como `microPython` e não
@@ -361,7 +361,7 @@ Dependi (VS Code)             sem arquivo de licenca publicado — nao se adota 
 MicroPico, pico-vscode        MPL-2.0: referencia de UX (MODE-B), nunca codigo — a
                               decisao de 2026-09-11 e' "MPL nao entra" e vale para
                               crate; extensao nao se linka de todo modo
-AVR / Arduino                 decisao do autor em 2026-09-11 (35 §5.7): "outro
+AVR / Arduino                 decisao do projeto em 2026-09-11 (35 §5.7): "outro
                               ecossistema, nao entra". Reabrir e' decisao dele; se
                               reabrir, e' arduino-cli (GPL-3) e avrdude (GPL-2)
                               como processo, e o probe-rs tem ZERO AVR
@@ -459,7 +459,7 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             uv, ruff e basedpyright no catalogo do setup
                                             com o guia oficial (a fonte e' agnostica de
                                             distro; PEP 668 respeitada)
- B8  ANUNCIAR Python                        FEITO 2026-09-13 (40 §7.31), a pedido do autor:
+ B8  ANUNCIAR Python                        FEITO 2026-09-13 (40 §7.31), conforme os requisitos técnicos:
                                             template "Python" no Novo projeto, o resumo
                                             Python na barra de status, o icone do .py na
                                             arvore, "Testar com pytest"/"Analise (ruff)" no
@@ -503,7 +503,7 @@ BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
                                             (kind firmware; SHA-256 medido — a fonte nao
                                             publica), gravados por runConfig.flashProposal
                                             { firmware } com a linha da pagina da placa.
-                                            Nao gravado na placa do autor (apagaria o
+                                            Nao gravado na placa de teste (apagaria o
                                             main.py dele)
  C6  CircuitPython                          drive CIRCUITPY (copia) + circup
 

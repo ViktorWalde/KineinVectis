@@ -6,7 +6,7 @@
 
 **Horizonte:** frente ROS 2 depois do fechamento da 0.4, agora **0.4.9** (limite atualizado em 2026-10-20, roadmaps/57 §1.1); a pesquisa medida precede a escolha da versão exata.
 
-**Experiência de produto (autor, 2026-10-21):** configuração visual e
+**Experiência de produto (decisão registrada, 2026-10-21):** configuração visual e
 Analisar Projeto no layout atual têm dono no
 [41 — HUD/UX e análise](41-ros2-hud-ux-analise-projeto.md).
 As referências de Instalar Ferramentas e o Quality Center inicial entram
@@ -63,12 +63,12 @@ A implementação local foi examinada no HEAD `34cec5bffd25727c04dab964aacc00e78
 
 ### 1.2 Decisão recuperada: escopos por ferramentas e melhorias próprias (2026-10-19)
 
-Depois do commit `8b52104` (2026-10-17), o autor pediu documentar o ROS 2
+Depois do commit `8b52104` (2026-10-17), O requisito prevê documentar o ROS 2
 por escopos, como embarcados, orquestrando ferramentas existentes e buscando
 as melhorias de experiência discutidas. A sessão terminou antes da escrita;
-o trecho foi fornecido novamente pelo autor em 2026-10-19. A entrada do
+o trecho foi fornecido novamente pela manutenção em 2026-10-19. A entrada do
 ROS 2 já estava decidida no [40 §5](../roadmaps/40-estado-e-continuidade.md).
-**Esclarecimento do autor em 2026-10-19:** o ROS 2 entra **depois da
+**Esclarecimento do projeto em 2026-10-19:** o ROS 2 entra **depois da
 0.4.5**. **Fronteira atualizada em 2026-10-20:** o fechamento passou à
 **0.4.9** ([57 §1.1](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
 A frente e seu ensaio ficam para depois desse fechamento; a versão exata
@@ -589,7 +589,7 @@ Cada execução do gate deve registrar: versão da Vectis, distribuição/OS/arq
 | **R5 — Rust e micro-ROS qualificados** | Gates por cliente Rust e por firmware/placa/Agent; reaproveitamento da frente Embarcados já comprovada |
 | **Estudos posteriores** | Multi-DAP, streaming volumoso e trace integrado somente quando os contratos e medições justificarem |
 
-Essa ordem expressa dependências, não datas nem alocação automática de versões. A entrada do ROS 2 foi decidida pelo autor em 2026-10-17 (§1.2); o recorte inicial C++/Python continua recomendado, usando **RDE e Qt Creator como referências de comportamento**, **ros2cli/colcon/rosdep como ferramentas da cadeia**, e **RViz/rqt/PlotJuggler/Lichtblick/Gazebo como aplicações externas qualificadas**. A promoção de cada capacidade depende dos ensaios da §12.
+Essa ordem expressa dependências, não datas nem alocação automática de versões. A entrada do ROS 2 foi decidida pela manutenção em 2026-10-17 (§1.2); o recorte inicial C++/Python continua recomendado, usando **RDE e Qt Creator como referências de comportamento**, **ros2cli/colcon/rosdep como ferramentas da cadeia**, e **RViz/rqt/PlotJuggler/Lichtblick/Gazebo como aplicações externas qualificadas**. A promoção de cada capacidade depende dos ensaios da §12.
 
 ## 15. Registro das fontes e interpretação
 

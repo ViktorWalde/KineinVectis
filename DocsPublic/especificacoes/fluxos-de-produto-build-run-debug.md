@@ -2287,21 +2287,12 @@ A ordem errada seria começar pelo debug visual antes de ter build e run sólido
 
 ---
 
-## 27. Prompt de trabalho para IA CLI
+## 27. Critérios de implementação
 
-Use este prompt quando for pedir à IA CLI para implementar esta parte:
-
-```text
-Implemente a Parte 4 da Kinein Vectis com foco em fluxos de produto para Toolchain, CMake, Build, Run e Debug. Siga o documento fluxos-de-produto-build-run-debug.md como fonte de verdade.
-
-Priorize a implementação em camadas: modelos, job system, tool detection, toolchain validation, CMake configure, build, problems parser, run local e debug MVP. A UI Qt/QML deve apenas solicitar ações e renderizar estado; o Rust core deve executar processos, validar ferramentas, gerenciar jobs, parsear saída e emitir eventos.
-
-Não implemente QEMU completo, flash real, plugin marketplace ou IA que altera código automaticamente nesta etapa. Mantenha a experiência JetBrains-like na previsibilidade: editor no centro, toolbar compacta, tool windows claras, status bar informativa e feedback discreto.
-
-Ao implementar, sempre exponha: comando real executado, estado do job, logs, problemas estruturados, ações de correção e mensagens compreensíveis para o usuário.
-```
-
----
+Implementar os fluxos de toolchain, CMake, build, execução e depuração pelas
+camadas e contratos definidos neste documento. O core valida ferramentas,
+executa processos e emite eventos; Qt/QML apresenta estado, comandos reais,
+logs, problemas estruturados e ações de correção.
 
 ## 28. Resumo executivo
 

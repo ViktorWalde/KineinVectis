@@ -488,7 +488,7 @@ plano-de-implementacao-ui-ux-arquitetura-performance.md
 ```
 
 O `tarefas-de-implementacao-diagrama.md` **saiu de `DocsPublic/especificacoes/`** em
-2026-08-29, por decisão do autor: fala em "Kernwerk Studio" (nome anterior do
+2026-08-29, por decisão do projeto: fala em "Kernwerk Studio" (nome anterior do
 projeto), e as tarefas M1.1–M1.3 que ele propunha — modularizar `lsp.rs`,
 dividir o `CoreClient`, quebrar o `Main.qml` — **já foram executadas**. A
 sequência dele foi substituída pelos roadmaps 21, 24 e 28, e ele saiu do

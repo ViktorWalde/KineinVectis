@@ -55,14 +55,12 @@ O Kinein deve usar:
 
 ### 1.1 Direção de longo prazo recuperada em 2026-10-19
 
-**Pedido do autor, após o commit `8b52104` de 2026-10-17, recuperado em
-2026-10-19:** melhorar refatoração e compreensão do compilador e, ao longo
-dos anos, desenvolver um sistema profundo com a régua da JetBrains. Este
+**Direção registrada em 2026-10-19:** estudar melhorias de refatoração e
+compreensão do compilador complementares aos motores existentes. Este
 documento é o dono dessa direção. ROS 2 é um caso de aplicação, com seu
 recorte no [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19),
-e não um segundo motor semântico. Em 2026-10-19 o autor esclareceu que quer
-estudar análises e refatorações próprias **complementares**, como melhoria
-da IDE, mantendo os motores existentes. Não se aprovam por isso um engine
+e não um segundo motor semântico. A pesquisa de análises e refatorações
+próprias é **complementar**, mantendo os motores existentes. Não prevê engine
 substituto, cronograma plurianual ou equivalência de funcionalidades.
 
 **Base conferida em 2026-10-19:** já existem rename e prévia de edições
@@ -93,7 +91,7 @@ conferidas em 2026-10-19: [clangd](https://clangd.llvm.org/features#refactoring)
 e [assists do rust-analyzer](https://rust-analyzer.github.io/book/assists.html).
 São capacidades upstream, não uma lista de recursos entregues pela Kinein.
 
-**Fronteira refinada pelo autor em 2026-10-19:** fica autorizado o estudo de
+**Fronteira refinada pela manutenção em 2026-10-19:** fica autorizado o estudo de
 algoritmos próprios de análise e refatoração que **complementem** os motores,
 sem substituí-los. Isso refina a proibição absoluta antiga do 21 §M5.1 no
 ponto da pesquisa complementar; a entrega atual continua baseada em LSP.
@@ -2039,7 +2037,7 @@ Políticas:
 - permitir override do usuário;
 - mostrar exatamente quem consome memória.
 
-### 46.1 Para o notebook de 24 GB
+### 46.1 Orçamento de referência para 24 GB de RAM
 
 Uma política inicial possível:
 

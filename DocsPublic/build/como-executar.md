@@ -24,9 +24,8 @@ As duas formas de execução podem coexistir no menu sem se sobrescrever:
 > `dev-local*` — justamente os que o `scripts/verificar.sh` compila por padrão —
 > e caía no build **sanitized** (ASan/UBSan), que é vários vezes mais lento, sem
 > avisar. Agora ele **imprime** qual binário subiu e de quando ele é, e alerta
-> se for o sanitized. Era a metade silenciosa de uma armadilha que o autor
-> registrou ("horas com uma IDE quebrada porque esse binário estava 4
-> commits atrás").
+> se for o sanitized. Isso permite conferir se a execução usa o artefato
+> recém-compilado.
 
 Instale ou atualize somente o atalho de desenvolvimento com:
 
@@ -93,13 +92,10 @@ cmake --build --preset dev-local
 ```
 
 > Os presets `dev-local*` estão em `CMakeUserPresets.json` (arquivo local,
-> fora do git). Eles herdam os presets estritos oficiais, mas nesta máquina
-> usam GCC nativo com warnings-as-errors e sanitizers desligados, porque o
-> toolchain recente dispara warnings em código gerado pelo Qt. Em outra máquina, prefira os
-> presets oficiais `linux-clang-debug-strict` / `linux-clang-release-hardened`
-> (debug oficial liga ASan/UBSan). Se o build reclamar de caminhos de outra
-> distro (ex.: `/usr/lib/x86_64-linux-gnu/...`), apague o diretório em
-> `build/` e reconfigure do zero — reconfigurar por cima não limpa o cache.
+> fora do git). O exemplo do [guia de ambiente](14-ambiente-de-desenvolvimento.md)
+> herda Clang dos presets oficiais e desliga sanitizers no debug local.
+> O preset oficial `linux-clang-debug-strict` liga ASan/UBSan. Ao trocar
+> distro, compilador ou Qt, use uma reconstrução limpa conforme o guia.
 
 ## Verificação rigorosa (antes de considerar algo pronto)
 
@@ -171,7 +167,7 @@ chmod u+x ./*.AppImage
 ./Kinein-Vectis-0.1.0-x86_64.AppImage
 ```
 
-Para o estado das ferramentas no notebook e os gates ainda pendentes, ler
+Para requisitos e configuração das ferramentas, consulte
 [ambiente de desenvolvimento](14-ambiente-de-desenvolvimento.md).
 
 ## Logs de erro da IDE

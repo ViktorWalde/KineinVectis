@@ -26,7 +26,7 @@ nome é um SVG path no grid 24×24. O `KvIcon.qml` escala o desenho para o
 tamanho pedido (16, 20, 24 ou 28 px) e pinta na cor de estado do `Theme`
 (padrão, ativo em âmbar, aviso, erro, desabilitado).
 
-A reformulação foi pedida pelo autor ("os ícones estão muito fracos"; "fazer
+A reformulação foi pedida pela manutenção ("os ícones estão muito fracos"; "fazer
 ícones melhores visualmente"). Antes, os desenhos eram traçados à mão com
 `moveTo`/`lineTo`, sem curvas nem cantos redondos. Vários não diziam o que
 eram:
@@ -113,7 +113,7 @@ Detalhamento em `DocsPublic/01_FILE_SEMANTICS.md` (semântica),
 
 ## icones-da-arvore/
 
-Ícones individuais da árvore. Os cinco SVGs fornecidos pelo autor foram
+Ícones individuais da árvore. Os cinco SVGs fornecidos pela manutenção foram
 integrados sem alterar seus bytes — conferir antes de reprocessar.
 
 ## Onde os ícones em uso realmente vivem

@@ -61,7 +61,7 @@ USB Serial/JTAG — o próprio chip"*. A identidade do chip vem **pelo canal**
 `integracoes/38` §5.
 
 **`serial.monitor` é o monitor como PROCESSO numa aba de terminal** (E3 do
-`integracoes/38` §6, decisão do autor em 2026-09-11: nunca código serial
+`integracoes/38` §6, decisão do projeto em 2026-09-11: nunca código serial
 nosso). A ferramenta vem do papel novo do kit, `serialMonitor` — candidatos
 `tio`, `picocom`, `minicom`, `espflash`, `mpremote` nessa ordem —, com duas
 regras a mais que o catálogo não conhece: **projeto MicroPython e `mpremote`
@@ -70,7 +70,7 @@ MicroPython o monitor É o REPL — um tio a 115200 mostraria o mesmo texto sem
 o raw-paste nem o Ctrl-] de sair; o mpremote é o último do catálogo e nunca
 vence sozinho fora de MicroPython); chip Espressif no kit **e** `espflash`
 detectado → `espflash monitor --elf <ELF>`, que decodifica o backtrace;
-escolha **fixada** pelo autor vence tudo. **Bloco E (`0.117.0`):** antes de tudo que não foi fixado, o wrapper do
+escolha **fixada** pelo usuário vence tudo. **Bloco E (`0.117.0`):** antes de tudo que não foi fixado, o wrapper do
 framework — num projeto ESP-IDF com ativação nesta máquina, o **IDF
 Monitor** (`bash -c '<wrapper>' idf <ativação> -p <dev> monitor`; decodifica
 o backtrace com o ELF do build); num PlatformIO com `pio`, `pio device

@@ -50,7 +50,7 @@ offscreen). As três fotos estão em `imagens/prints/2026-09-18-etapa2/`.
 Python e sistemas embarcados"; um cartão "Começar" com quatro botões (o
 primeiro amarelo); "Workspaces recentes" com **três entradas `/tmp/…` —
 caminho ausente** (lixo dos gates que abriam pastas temporárias no config
-do autor; corrigido nesta sessão: os gates isolam `XDG_CONFIG_HOME`);
+do autor; corrigido nesta verificação: os gates isolam `XDG_CONFIG_HOME`);
 "Estado do ambiente: 37 de 62 ferramentas detectadas" com a lista inteira.
 Barra de status só com "IDE" e "core conectado · IPC 0.122.0". Juízo: a tela
 inicial já é informativa; a lista de 62 ferramentas na primeira dobra é
@@ -65,7 +65,7 @@ com **10 ícones sem rótulo**. Explorer com `.cargo .git .idea .kinein
 "Project Health: configurando o projeto CMake automaticamente…" com
 botão Jobs. Editor vazio com "Clique em um arquivo no explorer para abrir".
 **Barra de status colidindo**: "3 alterações" por cima de "IDE" (defeito de
-layout; corrigido nesta sessão — a faixa esquerda para antes da direita e
+layout; corrigido nesta verificação — a faixa esquerda para antes da direita e
 o git vem antes dos números do índice, que são os que cedem). Juízo: os
 dois sistemas de build lado a lado com ícones iguais e sem rótulo são a
 maior fonte de dúvida ("qual ✓ testa o quê?"); o Run widget da referência
@@ -160,7 +160,7 @@ F8  paineis de ambiente (banco, remoto, embarcados, containers): mesma forma
 
 ## 5. O que se pede ao autor aprovar — e o que ele decidiu
 
-**Decidido em 2026-09-18 ("prossiga"):** a ordem F1 → F8 como está;
+**Decidido em 2026-09-18:** a ordem F1 → F8 como está;
 **autosave sim** (a decisão entra na F3/F6, com o rascunho de
 `seguranca/23` como rede); **um widget Executar com menu** (não dois grupos
 rotulados). **F1 FEITA no mesmo dia** (`40` §7.56): a barra passou de doze
@@ -220,7 +220,7 @@ menu, ou dois grupos com rótulo).
 
 ## 7. Estado ao fim de 2026-09-18 — F0 a F7 feitas, F8 aberta
 
-Escrito antes da F8, a pedido do autor. Uma linha por fatia: o que entrou,
+Escrito antes da F8, conforme os requisitos técnicos. Uma linha por fatia: o que entrou,
 como foi medido, a foto, e onde está o registro (o `40.7` §7.N tem o
 detalhe e as provas).
 
@@ -450,12 +450,10 @@ couber na sessão; senão fica dito.
 
 ## 9. A fila do TESTE DO AUTOR (noite de 2026-09-18) — o que entrou, e o desenho do que falta, linear
 
-Escrito a pedido do autor antes de qualquer código novo ("pode ser que o
-limite acabe no meio do desenvolvimento; todo o contexto deve ficar salvo
-na documentação"). Quem retoma lê ESTA seção de cima a baixo e sabe onde
-cada coisa está e o que fazer a seguir, sem depender da conversa.
+Diagnóstico e sequência técnica definidos em 2026-09-18, antes da
+implementação dos recortes descritos abaixo.
 
-### 9.1 O que o autor disse depois de testar a IDE (2026-09-18, ~19h30)
+### 9.1 O que O registro técnico indica depois de testar a IDE (2026-09-18, ~19h30)
 
 1. Banco: clicar em MongoDB acendia também PostgreSQL; não dava para criar
    nem descobrir um banco; "a maior parte aparentou ser apenas visual".
@@ -468,7 +466,7 @@ cada coisa está e o que fazer a seguir, sem depender da conversa.
    IDEs JetBrains".
 5. "Ainda há muito a ser polido/otimizado."
 
-Decisões dadas como padrão e aceitas ("prossiga"): ▶ roda numa aba de
+Decisões dadas como padrão e aceitas: ▶ roda numa aba de
 terminal PTY (não numa saída própria reformada); criar servidor de banco em
 container ENTRA (com o comando visível e confirmação por clique).
 
@@ -611,7 +609,7 @@ filho `GitStagingController` ou dentro do `GitInspectorController`; view
 
 **Estado em 2026-09-19:** o fechamento da Etapa 2 (§9.5 item 1) foi
 FEITO item a item — `40` §7.74–7.79. **A Etapa 2 está fechada.** O que
-vem é a sessão do autor na IDE (`40` §4.2.6) e a Etapa 3 (`40` §4.2.5).
+vem é a validação visual humana na IDE (`40` §4.2.6) e a Etapa 3 (`40` §4.2.5).
 
 **Estado em 2026-09-18, fim da noite:** a fatia 2 foi FEITA como
 desenhada — (a) `0dfe956`, (b)+(c) `b5c68d6` (mais quatro âncoras
@@ -629,7 +627,7 @@ o clique real.
    (`KvPanelHeader`) nos painéis de baixo se o autor achar que cabe; fotos
    das três telas lado a lado com as de manhã; release-hardened remedido;
    43 §5/§7 e leitura-técnica sincronizados.
-2. **Uma sessão do autor na IDE aberta** com o roteiro do `40` §4.2.6 (o
+2. **Uma validação visual humana na IDE aberta** com o roteiro do `40` §4.2.6 (o
    banco real por container é um clique dele; o "Identificar" do ESP32).
 3. **Etapa 3, candidatas** (`40` §4.2.5): restos de banco e remoto; bloco
    F; validação com hardware conforme chegar; release/AppImage só quando
@@ -645,5 +643,5 @@ fotos headless (`KINEIN_STARTUP_COMMANDS=git.log`, `git.commit`,
 `datasource.list`, `terminal.open,run.start`) para ver o estado com os
 próprios olhos antes de mexer. As regras do projeto continuam: contrato
 primeiro, catracas, medir antes de afirmar, registro datado + evidências,
-nunca `git checkout <arquivo>`, nunca gravar a placa do autor, nada de
+nunca `git checkout <arquivo>`, nunca gravar a placa de teste, nada de
 push/release sem ele pedir.

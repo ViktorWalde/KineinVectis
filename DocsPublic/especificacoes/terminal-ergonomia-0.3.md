@@ -43,7 +43,7 @@ Naquele baseline ainda não havia:
 - menu contextual;
 - ações visíveis de Copiar/Colar/Selecionar tudo;
 - `Ctrl+V` com semântica de desktop. `Ctrl+C` com semântica de desktop foi
-  considerado e **recusado** pelo autor em 2026-09-24: interromper é o gesto
+  considerado e **recusado** pela manutenção em 2026-09-24: interromper é o gesto
   que não pode competir com copiar (§4.1);
 - seleção que represente todo o scrollback;
 - ação explícita para limpar tela;
@@ -54,7 +54,7 @@ Naquele baseline ainda não havia:
 
 Ponto particularmente enganoso naquele baseline: `Ctrl+V` caía na regra genérica de teclas
 de controle e envia `0x16` (`^V`) ao PTY. Isso é coerente com um terminal
-tradicional, mas diverge do gesto de colar esperado pelo autor.
+tradicional, mas diverge do gesto de colar esperado pela manutenção.
 
 ### 2.1 Estado implementado em 2026-09-23
 
@@ -85,7 +85,7 @@ Ainda faltam a prova manual em shell/TUI/SSH real, auditoria de acessibilidade,
 busca e seleção de todo o scrollback. Portanto “Selecionar tudo” não é exibido:
 a UI usa o nome honesto **Selecionar área visível**.
 
-**Esclarecimento vinculante do autor em 2026-09-23:** a ação real
+**Esclarecimento vinculante do projeto em 2026-09-23:** a ação real
 **Selecionar Tudo** é básica e obrigatória para fechar a 0.3.0. O nome honesto
 da ação parcial evita uma promessa falsa, mas não satisfaz esse aceite. A
 nomenclatura reutilizável das sessões da §5.2 também permanece pendente.

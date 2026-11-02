@@ -4,7 +4,7 @@
 > [40.7 §7.221](../roadmaps/40.7-registro-das-entregas.md).
 > **Data:** 2026-10-06. Protocolo `0.157.0`.
 
-## Contexto e decisão do autor
+## Contexto e decisão do projeto
 
 O [59 §5.7](../roadmaps/59-fechamento-da-0.3.9.md) autoriza **Outro banco
 (ODBC)**: listar os DSN do unixODBC, orquestrar console, catálogo padrão e

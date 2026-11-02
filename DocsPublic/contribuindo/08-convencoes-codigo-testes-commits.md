@@ -18,7 +18,7 @@ o [capítulo 12](12-licenciamento-e-procedencia.md).
   `handleDestroyed`, `indexByDocId`, `takePendingSave`). Até 2026-09-25 esta
   regra aceitava português em nome local "quando o domínio é em português", e o
   resultado foi um repositório em duas línguas dentro do mesmo arquivo:
-  `openFilesModel.get(indice)`. A decisão do autor é que a língua do código é o
+  `openFilesModel.get(indice)`. A decisão do projeto é que a língua do código é o
   inglês, e a do comentário é o português.
   - **Desde 2026-10-01 a regra tem gate**: `scripts/check_identifier_language.py`
     (no `verificar.sh`) quebra cada identificador de Rust, C++, QML/JS, Python e
@@ -135,7 +135,7 @@ inválidos (`InvalidParams`), ferramenta ausente (`ToolNotFound`).
   `SymbolsController`, `SymbolResultsList`). Registro nas **duas** listas
   do `ui/CMakeLists.txt`.
 - **Formatação:** o QML daqui **não** é formatado em massa pelo `qmlformat`
-  (decisão do autor, 2026-10-08): o estilo é o que está nos arquivos.
+  (decisão do projeto, 2026-10-08): o estilo é o que está nos arquivos.
   Formatar tudo mudaria 479 de 543 arquivos e deixaria 18 acima do limite da
   catraca de arquitetura só por formatação. O `.qmlformat.ini` da raiz deixa
   explícito o que a IDE usa se alguém formatar um arquivo; não formate um
@@ -225,7 +225,7 @@ rápido vermelho. Sem push/tag/release sem o mantenedor.
 | As evidências (fotos, logs) | anexadas ao PR ou ao issue — nunca um caminho que o leitor não tem |
 
 **A documentação pública só se refere a documentação pública** (decisão do
-autor, 2026-10-01). Nenhum arquivo versionado — documento, comentário ou script
+decisão registrada, 2026-10-01). Nenhum arquivo versionado — documento, comentário ou script
 — cita caminho, nome ou arquivo das notas internas do autor; o que for preciso
 saber está escrito aqui, no documento dono. O `verificar-links-docs.sh` reprova.
 

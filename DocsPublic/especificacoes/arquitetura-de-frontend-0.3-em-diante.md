@@ -55,7 +55,7 @@ autorizado e independente do desenho pode prosseguir.
 
 O rascunho consolidado de Embarcados, com as cinco referências e seus
 limites, está em [embarcados-hud-ux-0.4.md](embarcados-hud-ux-0.4.md).
-A imagem 5 é a aproximação preferida pelo autor, ainda não aprovada.
+A imagem 5 é a aproximação preferida pela manutenção, ainda não aprovada.
 
 ## 2. O que deve ser preservado da implementação atual
 

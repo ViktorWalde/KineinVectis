@@ -43,7 +43,7 @@ ao usuário um seletor sem efeito.
   arquivo (no gerador, o `CMAKE_GENERATOR` quando é candidato); antes do
   primeiro configure, os dois ficam ausentes. O primeiro detectado não é o
   que o CMake usa: sem nada fixado, nada vai para a linha do `cmake`
-  (decisão do autor, 2026-10-16; `roadmaps/59` §7.1.7.1).
+  (decisão do projeto, 2026-10-16; `roadmaps/59` §7.1.7.1).
 - `toolchain.set` com `id` ausente volta para automático. Com um `id` que não
   existe no catálogo, ou que existe mas **não foi detectado nesta máquina**,
   responde `INVALID_PARAMS`: oferecer um compilador ausente é oferecer um

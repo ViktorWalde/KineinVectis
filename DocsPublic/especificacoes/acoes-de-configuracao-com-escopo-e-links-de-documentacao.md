@@ -8,7 +8,7 @@
 
 ## 1. Correção importante de conceito
 
-Na conversa informal pode parecer que “o compilador selecionado” define se aparecem ações CMake ou Cargo. Tecnicamente, o que define a lista principal de ações é o **tipo de projeto / sistema de build ativo**.
+Em uma descrição informal pode parecer que “o compilador selecionado” define se aparecem ações CMake ou Cargo. Tecnicamente, o que define a lista principal de ações é o **tipo de projeto / sistema de build ativo**.
 
 ```text
 CMake project  → ações CMake

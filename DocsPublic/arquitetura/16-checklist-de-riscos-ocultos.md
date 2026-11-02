@@ -99,7 +99,7 @@ services.
 
 Não esquecer: desktop entry, ícone, script launcher, config dir, cache dir,
 data dir, logs dir, AppImage/PKGBUILD futuro, seleção release/debug, não
-depender de caminho absoluto da máquina do autor.
+depender de caminho absoluto da ambiente de teste.
 
 ## 10. Cópia cega, referência obsoleta e transplante arquitetural
 

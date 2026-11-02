@@ -144,9 +144,8 @@ parse de dialeto, IPC novo, migração ou persistência nesta fatia.
 
 ## 5. Aceite da integração — 2026-10-07
 
-40.7 §7.237: um agente adicional autorizado desenvolveu esta fatia em
-worktree separado; o principal revisou e integrou após `b29c549`. Sete
-testes operacionais do protocolo e 15 do core passaram na árvore principal.
+40.7 §7.237: integração após `b29c549`. Sete testes operacionais do protocolo
+e 15 do core passaram na árvore principal.
 Regressão real de Context como array posicional falhou antes da correção;
 desserialização comum exige objeto para os tipos operacionais novos. Os nós
 de catálogo reaproveitados do IPC (colunas, tabelas, esquemas, coleções e

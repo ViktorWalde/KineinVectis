@@ -8,7 +8,7 @@
 
 ## 1. Resultado de produto
 
-**Atualização de escopo (autor, 2026-10-21):** o
+**Atualização de escopo (decisão registrada, 2026-10-21):** o
 [Quality Center inicial](../especificacoes/quality-center-e-gates.md) e a
 [reformulação de Instalar Ferramentas](../especificacoes/instalar-ferramentas.md)
 entram na **0.4.x**. Sua ordem está no [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).

@@ -16,7 +16,6 @@ DocsPublic/contribuindo/01-o-que-o-projeto-e.md   a ideia, as regras e a data do
 DocsPublic/contribuindo/02-preparar-o-ambiente.md instalar, compilar, abrir pelo checkout, presets, variáveis de medição
 DocsPublic/contribuindo/03-o-ritual-de-uma-fatia.md desenhar → contrato → core → ponte → UI → provar → documentar → commit
 DocsPublic/contribuindo/04-os-gates-que-dizem-nao.md o verificar.sh e cada gate: o que mede e como ler o "não"
-DocsPublic/contribuindo/05-com-um-agente-de-ia.md  colaborar com Claude Code/Codex/outros sem quebrar as regras
 DocsPublic/contribuindo/06-onde-mexer.md          o mapa por área (código, contrato, docs, testes)
 DocsPublic/contribuindo/07-fluxo-e-responsabilidades-dos-gates.md fluxo, comunicação e dono de cada gate
 DocsPublic/contribuindo/08-convencoes-codigo-testes-commits.md idioma, comentários, testes, commits e onde documentar

@@ -1,6 +1,6 @@
 # 07 — Fluxo e responsabilidades dos gates
 
-> **Perfil vigente (autor, 2026-10-24):** desenvolvimento, validação e AppImage
+> **Perfil vigente (decisão registrada, 2026-10-24):** desenvolvimento, validação e AppImage
 > usam Qt 6.12. No Ubuntu 26.04.1, o oficial está em `~/Qt/6.12.0/gcc_64`.
 > `cmake/KineinQt.cmake` escolhe o prefixo e recusa outra versão; cada build
 > grava `kinein-qt-bins.txt`, consumido pelo lint, harnesses e exercitação.
@@ -156,7 +156,7 @@ Git e ShellCheck. O cache Cargo usa toolchain, manifests e lockfile; as
 actions têm SHA fixado. Dispara em push, pull request e manualmente, com
 token de leitura, timeout e cancelamento de execução obsoleta.
 
-**Ainda não provado:** execução no GitHub; a publicação é do autor
+**Ainda não provado:** execução no GitHub; a publicação depende do fluxo da manutenção
 ([40](../roadmaps/40-estado-e-continuidade.md) §5). As camadas de UI,
 integrações pesadas agendadas e a matriz Arch continuam pendentes. Desenho da
 fatia no [52 §14.8](../roadmaps/52-arquitetura-executavel-da-0.4.md).
@@ -168,7 +168,7 @@ pelos gates; não é a fonte recomendada para receber contribuições. A dúvida
 anterior vinha de um trecho superado do 21 M7.3; o estado correto já estava
 em [DocsPublic/README](../README.md#repositório-público--cópia-de-distribuição).
 Não é necessário ampliar a exportação nem alterar visibilidade para rodar
-esta CI no repositório público. Publicação e execução continuam com o autor.
+esta CI no repositório público. Publicação e execução no GitHub seguem o fluxo da manutenção.
 
 A recomendação para atrair colaboradores e a ideia de cards derivados de
 issues no site estão no
@@ -273,7 +273,7 @@ declarada, não comunicação entre gates:
   um `.qml` na árvore fora do `ui/CMakeLists.txt`, que ninguém compila nem linta.
   A lista de débito declarado está **vazia** desde 2026-09-25: o único morador
   (`EditorUnsavedChangesDialog.qml`, na árvore desde a fundação e sem uma única
-  referência) foi descartado pelo autor. Entrar no módulo ou sair da árvore é
+  referência) foi descartado pela manutenção. Entrar no módulo ou sair da árvore é
   decisão dele, não do gate — arquivo novo nessa situação reprova.
 - o **primeiro** passo confere que `build/<preset-debug>` e
   `build/<preset-release>` existem. Custa milissegundos e existe porque em

@@ -1,11 +1,11 @@
 # 41 — ROS 2: HUD, configuração visual e análise de projeto
 
 > **Classe: PLANO / ALVO de experiência.** Consolidado em 2026-10-21 a partir
-> do estudo e das referências fornecidos pelo autor. Não implementa ROS 2,
+> do estudo e das referências fornecidos pela manutenção. Não implementa ROS 2,
 > define novo IPC ou fixa sua versão. Frente e ensaio **após a 0.4.9**;
 > pesquisa técnica e matriz de suporte no [40](40-ros2-ecossistema-e-integracao.md).
 
-**UX em rascunho, esclarecimento do autor em 2026-10-21:** imagens e
+**UX em rascunho, esclarecimento do projeto em 2026-10-21:** imagens e
 reformulações do estudo não são fiéis à UI atual nem representam design
 aprovado. Incrementar/polir a interface real, mantendo a aprovação visual
 do autor como referência de direção. Aplicar a

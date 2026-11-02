@@ -284,7 +284,7 @@ Usar escala de 4px.
 
 ### 6.5 Bordas e cabeçalho mais naturais — compromisso da 0.3.x
 
-**Pedido do autor em 2026-09-23; proposta visual implementada em 2026-09-30,
+**Pedido do projeto em 2026-09-23; proposta visual implementada em 2026-09-30,
 aceite ainda pendente.**
 Refinar o arredondamento da IDE, especialmente a região superior, tomando o
 IntelliJ Community como referência de conforto. A expressão “rodapé superior”
@@ -333,7 +333,7 @@ A paleta deve ser confortável, escura e com contraste equilibrado.
 
 ### 7.1 Tokens principais
 
-**Paleta "ilhas" (desde 2026-10-02, decisão do autor; inspiração: o tema
+**Paleta "ilhas" (desde 2026-10-02, decisão do projeto; inspiração: o tema
 Islands da JetBrains, com o âmbar no lugar do verde).** A MOLDURA da janela —
 topo, trilho, barra de status — é cinza; a área de trabalho é mais escura,
 sem borda marcada; o código tem a cor da área. O canto esquerdo do topo
@@ -1593,29 +1593,21 @@ MVP UI Layout 0.6: conectar ao core real
 Implementar o shell visual principal da IDE Kinein Vectis em Qt/QML seguindo sistema-de-layout.md e arquitetura-de-frontend-0.3-em-diante.md. Reutilizar os componentes atuais para App Bar, Main Toolbar, Tool Rail, Left/Right/Bottom Tool Windows, Editor Area e Status Bar. Usar tokens de tema centralizados. O layout deve ser real de IDE, não marketing: sem callouts, slogans ou textos promocionais na área de trabalho. Priorizar visual limpo, escuro, denso e confortável, com referência de comportamento profissional e identidade própria.
 ```
 
-### 30.2 Prompt para IA CLI criar tokens
+### 30.2 Tokens compartilhados
 
-```text
-Crie os tokens visuais da Kinein Vectis em QML usando as cores, espaçamentos, fontes, raios e métricas descritos em sistema-de-layout.md. Todos os componentes devem importar esses tokens, sem cores hardcoded espalhadas.
-```
+Centralizar cores, espaçamentos, fontes, raios e métricas em tokens QML.
+Componentes reutilizam esses tokens, sem repetir constantes visuais.
 
-### 30.3 Prompt para IA CLI criar estados de layout
+### 30.3 Estados de layout
 
-```text
-Implemente estados de layout para Default Coding, Focus Editor, Build & CMake, Debug Active e Embedded Target. Cada estado deve apenas reorganizar/mostrar/ocultar painéis, mantendo a mesma arquitetura visual principal.
-```
+Default Coding, Focus Editor, Build & CMake, Debug Active e Embedded Target
+reorganizam a visibilidade dos painéis, preservando a arquitetura principal.
 
----
+## 31. Referências visuais
 
-## 31. Instruções para geração de imagem de layout
-
-Para gerar imagem de referência, usar prompt:
-
-```text
-Criar mockup de alta resolução de uma IDE profissional chamada Kinein Vectis, nome curto Kinein, sigla KV. Mostrar apenas a interface real da IDE, sem callouts de marketing ou elementos fora da janela. Tema escuro grafite confortável e identidade própria. Layout: header enxuto com Projeto, Git e Execução; tool rail esquerdo; Project/Git à esquerda; editor central com tabs, breadcrumbs, código, gutter e diagnostics; Tool Window direita opcional com Símbolos/Structure; painel inferior com Terminal, Problems, Jobs, Build, Debug e Search; status bar com workspace, job, toolchain, contexto remoto quando houver, line/column e LSP. Usar acento âmbar com moderação. Interface limpa, densa e confortável, sem chat, Assistente de IA ou Telemetry.
-```
-
----
+Referências de layout devem representar as áreas e estados definidos neste
+documento. Estudos visuais são propostas; o aceite depende da interface
+implementada e da validação de suas jornadas.
 
 ## 32. Checklist de qualidade
 

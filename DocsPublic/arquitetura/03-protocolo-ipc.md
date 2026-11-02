@@ -140,7 +140,7 @@ gRPC/local socket
   "jsonrpc": "2.0",
   "method": "event.diagnostics.updated",
   "params": {
-    "uri": "file:///home/vitor/dev/projeto/src/main.cpp",
+    "uri": "file:///home/user/dev/projeto/src/main.cpp",
     "errors": 1,
     "warnings": 0
   }

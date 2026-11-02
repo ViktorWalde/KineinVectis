@@ -318,7 +318,7 @@ flowchart LR
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `dfu` | probe | Bounded dfu-util discovery. |
 | `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
-| `flash` | build, dfu, fsops, picotool, platform, probe, process, project, serial | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do autor em 2026-09-11: |
+| `flash` | build, dfu, fsops, picotool, platform, probe, process, project, serial | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do projeto em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
 | `fswatch` | lsp, platform | Debounced, workspace-confined observation of external file-system changes. |
@@ -667,7 +667,7 @@ flowchart LR
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
 | controller | `ui/qml/editor/EditorController.qml` |  |
-| controller | `ui/qml/index/IndexController.qml` | Estado do indice do projeto INTEIRO (pilar 0 do roadmaps/42, decisao do autor em 2026-09-12: |
+| controller | `ui/qml/index/IndexController.qml` | Estado do indice do projeto INTEIRO (pilar 0 do roadmaps/42, decisao do projeto em 2026-09-12: |
 | controller | `ui/qml/search/SearchController.qml` | BUSCA E SUBSTITUIÇÃO NO PROJETO — o painel de baixo. |
 | controller | `ui/qml/search/SearchEverywhereController.qml` | SEARCH EVERYWHERE: |
 | roteador | `ui/qml/ipc/SearchRequestRouter.qml` | Espelho do SearchEventRouter: |
@@ -676,11 +676,11 @@ flowchart LR
 | roteador | `ui/qml/ipc/IndexEventRouter.qml` | O que o core responde/emite de index.* -> IndexController (os totais) e SearchEverywhereController (os simbolos do #nome, antes do LSP responder). |
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch_lsp.cpp` | Dispatch do dominio LSP (ARCHITECTURE.md §5): |
-| ponte C++ | `ui/src/core_client_index.cpp` | O indice do projeto INTEIRO no lado da UI (pilar 0 do roadmaps/42, decisao do autor em 2026-09-12): |
+| ponte C++ | `ui/src/core_client_index.cpp` | O indice do projeto INTEIRO no lado da UI (pilar 0 do roadmaps/42, decisao do projeto em 2026-09-12): |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
-| handler Rust | `crates/kinein-core/src/handlers/index.rs` | Handler for index.* requests (impl Core) — o indice do projeto inteiro (pilar 0 do roadmaps/42, decisao do autor em 2026-09-12). |
+| handler Rust | `crates/kinein-core/src/handlers/index.rs` | Handler for index.* requests (impl Core) — o indice do projeto inteiro (pilar 0 do roadmaps/42, decisao do projeto em 2026-09-12). |
 | handler Rust | `crates/kinein-core/src/handlers/lsp/mod.rs` | Handlers for lsp.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
@@ -1130,7 +1130,7 @@ flowchart LR
 
 | Etapa | Arquivo | O que ele diz de si |
 | --- | --- | --- |
-| controller | `ui/qml/index/IndexController.qml` | Estado do indice do projeto INTEIRO (pilar 0 do roadmaps/42, decisao do autor em 2026-09-12: |
+| controller | `ui/qml/index/IndexController.qml` | Estado do indice do projeto INTEIRO (pilar 0 do roadmaps/42, decisao do projeto em 2026-09-12: |
 | controller | `ui/qml/toolchain/ToolchainController.qml` | Estado da toolchain do workspace (roadmap 30, etapa 5). |
 | roteador | `ui/qml/ipc/ToolchainRequestRouter.qml` | Espelho do ToolchainEventRouter: |
 | roteador | `ui/qml/ipc/ToolchainEventRouter.qml` | O que o core responde de toolchain.* -> ToolchainController. |

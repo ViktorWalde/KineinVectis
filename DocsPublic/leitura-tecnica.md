@@ -201,7 +201,7 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       uaccess; o ModemManager candidato e' dito. E o monitor
                       serial como PROCESSO numa aba de terminal (papel
                       `serialMonitor` do kit: tio/picocom/minicom/espflash) —
-                      decisao do autor: nunca codigo serial nosso
+                      decisão do projeto: nunca codigo serial nosso
             container Docker E Podman como dominio NATIVO (0.92.0, 2026-09-12;
                       a decisao era de 2026-07-17). Nesta maquina `docker` e' o
                       shim podman-docker: a deteccao pergunta ao binario. status
@@ -404,7 +404,7 @@ isso é demorado. O que isso significa em concreto:
 
 A ordem das etapas até o MVP está em
 [roadmaps/30-caminho-para-o-mvp.md](roadmaps/30-caminho-para-o-mvp.md),
-decidida pelo autor em 2026-08-30 e medida item por item contra a spec de MVP.
+decidida pela manutenção em 2026-08-30 e medida item por item contra a spec de MVP.
 Medido em **2026-09-02**, os **21 itens do MVP essencial estão fechados**: 20
 existem e 1 é item morto (a linha de IA, cancelada). As Configuration Actions —
 o único que faltava — entraram na etapa 2. O resto da lista é dívida de

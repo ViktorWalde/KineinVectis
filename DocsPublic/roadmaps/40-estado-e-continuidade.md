@@ -6,57 +6,31 @@
 > [`registro/40-o-estado-ate-2026-10-15.md`](registro/40-o-estado-ate-2026-10-15.md),
 > e uma citação "40 §1–§4, §6 ou §8" anterior a ela se lê lá
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
-> handoff: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
+> resumo técnico: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **HANDOFF (2026-10-27). Leia isto primeiro.**
+> **RESUMO TÉCNICO (2026-11-01).**
 >
-> **Checkout:** `/home/hugh/KineinVectis`, branch `main`, sem push.
-> **0.4.1h4b2b4o2 concluída em software:** UF2 conferido com ELF CMake e picotool nativo (52 §14.55; 40.7 §7.365).
-> AppImage dev anterior no Qt 6.12.0: §7.360; Qt 6.12 §7.359; PIO Home §7.356.
-> `.directory`, `dist.zip`, `eim_config.toml` e `log/` locais preservados; o `AppMenuBar.qml` foi corrigido (§7.355).
-> Protocolo aceito **0.197.0**, binário **0.3.9**; probe-rs 0.32.0 e a espressif32 do PlatformIO no usuário.
+> **Estado funcional:** binário **0.3.9**, protocolo **0.197.0**; série **0.4.1 aberta**.
+> Código próprio sob AGPL-3.0-only; documentação própria sob CC-BY-SA-4.0 (§7.367).
+> UF2/ELF CMake + picotool nativo concluídos em software (52 §14.55; §7.365).
 >
-> **Objetivo autorizado:** concluir a **0.4.9**, executar a **edição especial** em seguida;
-> só após validá-la gerar/testar o **AppImage final local** (40.7 §7.335), sem publicação.
-> Decisão de 2026-10-20 substitui o fechamento anterior na 0.4.5. A entrega
-> 0.4 inclui o trabalho não publicado 0.3.6–0.3.9; a 0.5 herda essa base e
-> anuncia apenas seu próprio delta ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
+> **Próxima implementação:** west/ESP32 nativo, **52 §14.56**; auditoria e desenho
+> concluídos, produtor ainda ausente (§7.366). Depois: matriz integrada/recuperação,
+> Setup S1/S2 com Biblioteca e Instalar Ferramentas; kits/schema 3 após os bloqueadores.
+> Ordem e aceites em **52 §11.1–§11.2**; pendências por área no **§4 abaixo**.
+> A 0.4.1 exige aceite visual integrado. Gravação física dos demais motores,
+> serial completa e CircuitPython seguem pendentes; assistente semântico ao final.
 >
-> **Fechado:** 0.3.9 no checkout, sem lançamento (59); fundação 0.4.0;
-> cross 0.4.1a, inspector/deriva 0.4.1b/c, dock 0.4.1d, contextos 0.4.1e e acesso 0.4.1f.
-> **Último gate completo estrito, 0.4.1h4b2b4o2:** 1395 Rust, análise C++ limpa,
-> 8 CTest, qmllint estrito e **175 harnesses QML**, sem NÃO PROVADO; target isolado (§7.365).
-> UI/core debug/release, primeiro frame e 33 superfícies por preset, sem avisos; completo 1119 s (§7.365).
-> Acesso físico: sessão com `dialout` e `/dev/ttyUSB0` legível/gravável (medido 2026-10-22 21:30).
+> **Plano da série:** estabilização funcional na **0.4.9**, seguida pela edição
+> especial e validação do AppImage. A entrega agrega o trabalho não publicado
+> da 0.3.6–0.3.9; fronteira de versão em **57 §1.1** e decisões no **§5 abaixo**.
+> Windows pausado (60); MCP/ROS 2/colaboração após 0.4.9; inglês conforme 57 §3.
 >
-> **Próximo:** implementar west/ESP32 nativo (52 §14.56); auditoria/desenho p0 fechados (§7.366), sem produtor. UF2/picotool fechado em software (§14.55); aceite visual integrado pendente.
-> Fechada a h4b2, Setup S1/S2 com a Biblioteca; o assistente semântico vai para o fim (52 §11.2, 40 §5).
-> Depois: matriz integrada e recuperação; h4b2b e a 0.4.1 seguem abertas.
-> Depois: reformular Instalar Ferramentas junto do Setup no dock; schema 3;
-> construir/C + Quality Center inicial; demais escopos. Ordem no **52 §11.1**.
-> Quality Center: Q1 na 0.4.2; gate local/Q2–Q3 concluídos até a 0.4.6.
-> Navegação compacta aguarda feedback (52 §14.16); serial completa e flash físico dos demais motores pendentes.
->
-> **Escopo:** bare metal e Linux embarcado; PlatformIO em destaque dentro
-> de Embarcados; C puro com assistente/padrão C e jornada visual completa;
-> CPython, MicroPython e CircuitPython distintos; integrações nativas
-> ativáveis/desativáveis. Terminal como escolha; UI moderna, discreta e contextual.
-> Cada escopo fecha com UI/UX prática (52 §11, §14.14–14.17).
-> Banco **0.4.5**, consolidação **0.4.6**, qualidade **0.4.7–0.4.8**;
-> estabilização funcional **0.4.9**; edição especial imediatamente depois,
-> base polida da 0.5 em diante; AppImage somente após essa edição.
->
-> **Provas:** build ESP-IDF via core e ciclo CPython/debugpy passaram;
-> C17 passou build/run/CTest/clang-format/clangd numa fixture (52 §14.14).
-> Flash esptool nativo provado no ESP32 CP2102 (§7.346); outros motores sem hardware. CircuitPython,
-> preferências de integração e assistente C ainda não implementados.
-> **Operação:** validação visual na IDE real do autor (§5, 2026-10-22); QA com target próprio, sem compartilhar com o principal; Xvfb só em provas automáticas
-> nem fechar a janela original. Sem sudo/instalação silenciosa ou gravação
-> na placa sem pedido específico. Não compilar UI durante `verificar-cpp.sh`.
-> Objetivo contínuo autorizado (autor, 2026-10-21); cota/retomada dependem da plataforma.
-> MCP/ROS 2/colaboração ficam após 0.4.9; inglês acompanha o fechamento (57).
-> Autor fará a documentação em inglês após fechar a 0.4.1; site em outra sessão para buscar colaboradores (2026-10-27, 57 §3). UI em inglês no polimento; Windows pausado (60).
-> EditorController congelado (§2). Pesquisa de Embarcados recebida como rascunho (52 §11.1).
+> **Verificação:** completo estrito de 2026-10-27 (§7.365): 1395 testes Rust,
+> 8 CTest, 175 harnesses QML e análise C++ limpa; debug/release e 33 superfícies por preset.
+> Matriz de desenvolvimento Linux validada em 2026-11-01 (§7.368), com cobertura parcial.
+> Requisitos e comandos reproduzíveis em [build/14](../build/14-ambiente-de-desenvolvimento.md).
+> EditorController congelado (§2); estudos visuais não aprovados são propostas (§5).
 
 ## 1. O estado, em números
 
@@ -89,7 +63,7 @@ Os comandos que medem estão no
 [`build/comandos-de-build-e-verificacao.md`](../build/comandos-de-build-e-verificacao.md);
 número sem data aqui é afirmação sobre hoje e o `verificar-docs.sh` o cobra.
 
-## 2. A dívida da catraca: 1 arquivo, e ele tem decisão do autor
+## 2. A dívida da catraca: 1 arquivo, e ele tem decisão do projeto
 
 ```text
 ui/qml/editor/EditorController.qml   791/400
@@ -99,13 +73,13 @@ ui/qml/editor/EditorController.qml   791/400
 [`../arquitetura/32`](../arquitetura/32-editor-por-responsabilidade.md) §8.4, e
 as duas saídas estão medidas em [`39`](39-divida-tecnica-paga.md) §6: dissolver
 a fachada (~190 pontos de chamada em 15 arquivos) ou corrigir a categoria.
-Mexer em limite é decisão explícita dele, nunca do assistente.
+Alterar a exceção exige decisão arquitetural registrada.
 
 ## 3. O que este arquivo já guardou
 
-As seções §3 (a sessão de 2026-09-03/04), §4.1 e §4.2 (as ordens e panoramas
+As seções §3 (as entregas de 2026-09-03/04), §4.1 e §4.2 (as ordens e panoramas
 de setembro), §6 (a lacuna do dogfooding) e §8 (a varredura de 2026-09-10),
-e os cabeçalhos de cada retomada, estão no
+e os resumos históricos, estão no
 [registro](registro/40-o-estado-ate-2026-10-15.md). São registro do dia:
 antes de aceitar um item de lá como pendente, meça.
 
@@ -123,16 +97,16 @@ física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-2
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
 | Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Descoberta USB DFU (n1), DfuSe explícito (n2) e BIN conferido com ELF do alvo CMake (n3) fechados; consulta picotool RP2040 (o1) e UF2/ELF CMake com gravação nativa (o2) fechados em software; próximos west, matriz integrada e recuperação (52 §14.55) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.55 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.365 |
-| C puro: pendências básicas incluídas pelo autor no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
-| Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (autor, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
+| C puro: pendências básicas incluídas pela manutenção no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
+| Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (decisão registrada, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
-| Prévia de navegação compacta continua sem escolha visual aprovada. Pesquisa de Embarcados recebida em 2026-10-21: cinco imagens conceituais, com a 5 mais próxima da UI atual segundo o autor, ainda sujeita a refinamento/aprovação. Estudos de frontend são rascunhos; evoluir a UI real, sem copiar mockups. Trabalho funcional independente pode seguir | [52](52-arquitetura-executavel-da-0.4.md) §11.1/§14.16–14.17; [rascunho de Embarcados](../especificacoes/embarcados-hud-ux-0.4.md) e [regra de aprovação visual](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21) |
-| CI pública: camada rápida preparada e validada localmente; execução no GitHub pelo autor, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site para outra sessão | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
-| ROS 2: frente e ensaio por jornadas depois da 0.4.9 (limite atualizado em 2026-10-20); escolher versão exata a partir da pesquisa medida (autor, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
-| Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (autor, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
-| Pendências do handoff confirmadas dentro da 0.4.x em 2026-10-21 (alocação no 52 §11). Banco na 0.4.5, consolidação nativa na 0.4.6, auditoria/polimento geral na 0.4.7–0.4.8 e estabilização funcional na 0.4.9. Edição especial imediatamente em seguida; AppImage só depois dela | [52](52-arquitetura-executavel-da-0.4.md) §11/§11.1; fronteira no [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
-| Entrega acumulada: trabalho não publicado 0.3.6–0.3.9 pertence à série 0.4; edição especial sobre a 0.4.9 estabelece a base polida da 0.5 em diante. Alinhar identificação/versões/notas e gerar/testar o AppImage somente após essa edição; publicação com o autor (atualizado em 2026-10-21) | o autor; [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
+| Prévia de navegação compacta continua sem escolha visual aprovada. Pesquisa de Embarcados recebida em 2026-10-21: cinco imagens conceituais, ainda sujeitas a refinamento e aprovação. Estudos de frontend são rascunhos; evoluir a UI real, sem copiar mockups. Trabalho funcional independente pode seguir | [52](52-arquitetura-executavel-da-0.4.md) §11.1/§14.16–14.17; [rascunho de Embarcados](../especificacoes/embarcados-hud-ux-0.4.md) e [regra de aprovação visual](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21) |
+| CI pública: camada rápida preparada e validada localmente; execução no GitHub pela manutenção, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site em frente própria | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
+| ROS 2: frente e ensaio por jornadas depois da 0.4.9 (limite atualizado em 2026-10-20); escolher versão exata a partir da pesquisa medida (decisão registrada, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
+| Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (decisão registrada, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
+| Pendências do resumo técnico confirmadas dentro da 0.4.x em 2026-10-21 (alocação no 52 §11). Banco na 0.4.5, consolidação nativa na 0.4.6, auditoria/polimento geral na 0.4.7–0.4.8 e estabilização funcional na 0.4.9. Edição especial imediatamente em seguida; AppImage só depois dela | [52](52-arquitetura-executavel-da-0.4.md) §11/§11.1; fronteira no [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
+| Entrega acumulada: trabalho não publicado 0.3.6–0.3.9 pertence à série 0.4; edição especial sobre a 0.4.9 estabelece a base polida da 0.5 em diante. Alinhar identificação/versões/notas e gerar/testar o AppImage somente após essa edição; publicação pela manutenção (atualizado em 2026-10-21) | [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
 | A edição especial Windows + WSL2, depois da 0.4.0 | [60](60-windows-e-edicao-especial.md) §4 |
@@ -144,522 +118,40 @@ probe-rs, as fatias de embarcados da trilha), estão na lista datada do §4 do
 [52](52-arquitetura-executavel-da-0.4.md)). Quem abrir a 0.4 confere ali o
 que ainda vale, medindo antes.
 
-## 5. As decisões registradas que NÃO se reabrem
+## 5. Decisões técnicas vigentes
 
-Licenciamento desde 2026-10-28: código próprio sob **AGPL-3.0-only**,
-documentação própria sob **CC BY-SA 4.0**, com exceções e permissões
-anteriores preservadas. Decisão no
-[ADR-0011](../decisoes-adr/ADR-0011-copyleft-e-procedencia.md); escopo e
-contribuições no [capítulo 12](../contribuindo/12-licenciamento-e-procedencia.md).
+Esta tabela resume as decisões de produto e aponta seus documentos canônicos.
+Mudanças de escopo devem ser registradas no documento responsável.
 
-```text
-documentacao apos a 0.4.1    DECISAO DO AUTOR em 2026-10-27: finalizar a 0.4.1;
-                             depois ele internacionaliza a documentacao do
-                             projeto e, em sessao separada, o site, para buscar
-                             colaboradores. Antecipa esse trabalho em relacao
-                             ao fechamento da 0.4, sem mudar os marcos tecnicos
-                             ou autorizar publicacao pelo agente. Dono: 57 §3.
-                             ESP32 reconectado e disponivel nesta retomada;
-                             continua a autorizacao especifica de 2026-10-22.
-rascunhos e aprovacao visual DECISAO DO AUTOR em 2026-10-21: estudos/imagens
-                             de frontend sao rascunhos e nao retratam a UI
-                             real nem aprovam desenho. Melhorar/incrementar/
-                             polir sobre a IDE atual; a direcao visual vem
-                             da aprovacao dele. Imagem 5 de Embarcados e' a
-                             aproximacao preferida, ainda por refinar/aprovar.
-                             Dono: frontend §1.1; pesquisa: spec
-                             embarcados-hud-ux-0.4; ordem: 52 §11.1.
-AppImage apos especial       DECISAO DO AUTOR em 2026-10-21: fechar a 0.4.9,
-                             executar a edicao especial imediatamente depois
-                             e so' entao gerar/testar o AppImage. A edicao
-                             especial estabelece a base polida da 0.5 em
-                             diante, para oferecer aos usuarios de teste.
-                             Substitui o pacote logo apos a 0.4.9; versao/
-                             identificacao do artefato ainda nao fixadas.
-                             Dono: 57 §1.1; execucao: 52 §11/§11.1.
-                             ESCLARECIDO PELO AUTOR em 2026-10-24: o AppImage
-                             e' empacotado com o Qt do codigo em desenvolvimento
-                             (o 6.12, linha "qt do projeto"), nao com o 6.4.2 da
-                             base antiga (packaging/appimage/Containerfile.qml64,
-                             Debian 12); a base de empacotamento acompanha.
-Quality Center e instalador  INCLUIDOS na 0.4.x pelo autor em 2026-10-21:
-                             reformular Setup junto da migracao ao dock e
-                             expor verificacoes existentes com gate local
-                             simples. Ordem 52 §11.1; detalhes nas specs
-                             instalar-ferramentas e quality-center-e-gates.
-                             A edicao especial associada a 0.5 melhora/
-                             otimiza/pole detalhes da base entregue.
-ingles e divulgacao 0.5      DECISAO DO AUTOR em 2026-10-21: ingles plenamente
-                             suportado no produto, mantendo portugues;
-                             marco internacional na 0.5. Documentacao/site
-                             antecipados novamente em 2026-10-27 (57 §3).
-                             Preparacao dos
-                             componentes/documentacao antes, sem alterar
-                             permissao de publicar/enviar mensagens.
-                             Dono: 57 §1.1 e §3 item 11.
-analise futura de CLI        após 0.4.9 e após revisão especial HUD/UX/UI;
-                             medir utilidade nos fluxos embarcados/ROS 2,
-                             sem novos comandos aprovados. Autor 2026-10-21;
-                             dono: especificacao de projetos/desktop §3.1,
-                             índice 57 §3 item 9.
-comando curto de terminal    `kine` passa a ser a entrada principal; `kinein`
-                             mantém compatibilidade. Decisão 2026-10-21;
-                             contrato/estado em especificacoes/projetos-arquivos-
-                             e-integracao-desktop-0.3.md §3; entrega 0.4.6,
-                             verificação no AppImage apos a edicao especial (52 §11).
-IA na IDE                    fora de escopo (2026-07-17): sem painel de IA,
-                             o agente roda no terminal. So' o servidor MCP
-                             para agentes externos entra, depois da 0.4.9
-                             (limite atualizado em 2026-10-20; 57 §1.1)
-symbolica (CAS Rust)         PROIBIDO — fonte visivel, uso proprietario, licenca
-                             a adquirir. Categoria Pylance (2026-09-05)
-Python                       ENTRA como vertical nativa — DECISAO DO AUTOR em
-                             2026-09-11 (roadmaps/41), REVERTENDO o "adiado" de
-                             2026-08-30. Sem anuncio parcial: a tela so' diz
-                             "Python" quando a cadeia inteira funcionar (41 §5, B8)
-Pylance                      PROIBIDO (licenca) — continua; o motor e' basedpyright
-Docker e banco               NATIVOS, nao plugins. Docker/Podman IMPLEMENTADO
-                             em 2026-09-12 (§7.14): dominio `container`
-UX/UI/HUD: ETAPA PROPRIA,    DECISAO DO AUTOR em 2026-09-13: "a IDE focou muito
-DEPOIS do backend            a UI para C/C++ e Rust; agora com o Python vai
-                             precisar de uma formulacao melhor da UX/UI/HUD,
-                             mas vamos deixar isso para uma etapa propria;
-                             vamos fazer tudo referente a backend e integracao
-                             de toolchains de forma impecavel antes de
-                             arquitetar a reformulacao". Dois pedidos ja'
-                             registrados para essa etapa: (1) o banco de dados
-                             com o EFEITO PSICOLOGICO e a UI/UX/HUD do
-                             JetBrains (DataGrip) ADAPTADOS ao Kinein Vectis —
-                             nao copiados; (2) o Python como cidadao da tela,
-                             nao um acrescimo; (3) a APRESENTACAO da IDE
-                             (autor, 2026-09-13, fim de tarde): listar
-                             "Python, C/C++, Rust e sistemas embarcados" na
-                             StartScreen/About/.desktop/appdata "fica muita
-                             coisa" — precisa de algo melhor para exibir o que
-                             a IDE e' (uma frase, ou a forma visual, nao a
-                             enumeracao). Ate' la': polimento de tela so'
-                             quando e' DEFEITO (a promessa errada do botao,
-                             §7.34), nunca reformulacao
-simulacao: FORA DO PRODUTO   DECISAO DO AUTOR em 2026-09-12, em dois tempos.
-                             Tarde: "esquece a parte de simulacao fisica/
-                             matematica; vamos refinar ao maximo para sistemas
-                             embarcados e desenvolvimento de software". Noite:
-                             "vamos remover tambem tudo sobre a parte de
-                             simulacao" — quem quiser simular escreve o proprio
-                             codigo e a IDE o roda e mostra. O dominio `sim`,
-                             o `kinein-sim`, os paineis, 7 harnesses, o oraculo
-                             SymPy e o `exmex` SAIRAM do codigo; os documentos
-                             (31, arquitetura/34, ADR-0006) e as decisoes de
-                             simulacao que estavam aqui sairam do
-                             repositorio. O foco
-                             sao DOIS contextos: software (Python, C/C++, Rust,
-                             banco) e sistemas embarcados. "Futuramente vejo
-                             algo sobre simulacao" — reabrir e' do autor
-emulador de alvo: NA 0.4     DECISAO DO AUTOR em 2026-10-01, e NAO reabre a
-                             linha acima: QEMU, Renode e QEMU da Espressif
-                             entram como ALVO onde o firmware roda (o
-                             debugServer do kit, como o QEMU ja' entra no
-                             gate). A IDE nao modela nada; sobe o emulador
-                             que o usuario escolheu e o depura (52 §10.1)
-PlatformIO: TIER 1 NA 0.4    DECISAO DO AUTOR em 2026-10-01: as cinco
-                             jornadas da 0.4, nao so' o compiledb (52 §5.10;
-                             o que falta por arquivo: 58 §4.4)
-versoes 0.6-1.0: PLANEJADAS  DECISAO DO AUTOR em 2026-10-01: o agrupamento
-                             proposto foi aceito (57 §2); o criterio da 1.0
-                             continua PROPOSTA (57 §4)
-inicio da 0.3.6              DECISAO DO AUTOR em 2026-10-01: F0 -> layout
-                             -> V-1; wayland-egl investigado na 0.3.6;
-                             varredura grande entre fatias (53 §13.0)
-gdb >= 16; qmllint >= 6.5    DECISAO DO AUTOR em 2026-10-01: abaixo do gdb 16
-                             a falta de globais no DAP e' degradacao
-                             EXPLICADA (protocolo 0.145.0); abaixo do qmllint
-                             6.5 o lint e' NAO PROVADO (contribuindo/04)
-documentacao: DUAS ARVORES   DECISAO DO AUTOR em 2026-09-12: `DocsPublic/` (toda a
-                             documentacao do projeto, versionada; pastas com
-                             nome explicito; documento = numero + nome
-                             explicito) e a arvore interna do autor (no .gitignore: log,
-                             diario, prompts das sessoes com IA, historico do
-                             que saiu, legado/). Sucede as tres arvores de
-                             2026-08-29 (ADR-0005 anotado). Os numeros dos
-                             documentos ficam: sao o sistema de citacao
-instalar toolchain           REFINAMENTO de "comando de instalacao" (autor,
-                             2026-09-12, integracoes/39 §5): instalar NO SISTEMA
-                             continua sendo comando visivel com fonte, nunca
-                             sudo; instalar NA PASTA DA IDE
-                             (~/.local/share/kinein-vectis/toolchains) pode ser
-                             download — DEPOIS de um clique, com URL, tamanho e
-                             sha256 mostrados antes e verificados depois, de
-                             fonte com checksum publicado e versao pinada.
-                             Nunca calado, nunca "latest", nunca fora da pasta
-foco do produto              DOIS contextos, por decisao do autor em 2026-09-12:
-                             desenvolvimento de software (Python, C/C++, Rust,
-                             banco de dados) e sistemas embarcados (MCU bare
-                             metal e Linux embarcado), com TODO o ecossistema
-                             aberto e credivel de toolchains dessas linguagens
-                             a escolha do usuario. "Focar em fazer algo bem
-                             feito do que tudo"
-o efeito JetBrains           CRITERIO DE PRONTO, nao pilar novo (autor, 2026-09-12;
-                             42 §8): zero-config = DETECTAR + UM CLIQUE com o
-                             comando visivel, nunca download calado (a regra de
-                             instalacao acima continua); indexacao visivel;
-                             intention actions proativas; project model ANTES
-                             do LSP; toolchain manager com sysroot; remote
-                             deploy & debug; SVD com ESCRITA; sondas visuais
-a trilha Python completa     bare metal -> edge -> backend -> banco, com C/C++/
-                             Rust onde o Python nao cabe (autor, 2026-09-12; 42
-                             §9). Ferramentas do PROJETO do usuario, que a IDE
-                             reconhece, sobe, observa e depura — nao dependencias
-                             da IDE. Python desta maquina: 3.14.7; 3.15.0 final
-                             em 2026-10-01 (PEP 790); "3.16" e' outubro de 2027
-A IDE LE O PROJETO INTEIRO   DECISAO DO AUTOR em 2026-09-12: todas as pastas,
-                             arquivos, funcoes e tipos de C/C++/Rust/Python,
-                             com integracao PROFUNDA do contexto de codigo e
-                             compilador. Primeira forma: o dominio `index`
-                             (§7.17). E' o "entender o projeto inteiro" da
-                             especificacao do KSWE — reaberto pelo autor nesta
-                             forma, sem adotar a especificacao inteira
-EditorConfig                 auditado com resultado NEGATIVO (2026-07-16)
-Grafana embutido             PROIBIDO (AGPL) — integracao por HTTP API
-TLS na IDE                   ENTRA (autor, 2026-09-04): `subtle` (BSD-3-Clause) e
-                             `webpki-roots` (CDLA-Permissive-2.0) estao na
-                             allowlist, com justificativa datada no deny.toml
-esquema de documento         DECLARADO quando ha' validador, INFERIDO de amostra
-                             quando nao — e a tela nunca deixa os dois parecidos
-custo de leitura             sempre VISIVEL: quantos documentos foram lidos e se
-                             a leitura obrigou o servidor a varrer tudo
-EditorController             congelado ate' decisao do autor (../arquitetura/32 §8.4)
-senha em disco               PROIBIDA: a IDE guarda o PERFIL (../seguranca/40)
-comando de instalacao        so' com FONTE OFICIAL citada e datada; sem fonte,
-                             a IDE mostra o site e diz que nao tem passo a passo
-dimensionamento da UI        AUTOMATICO pelo conteudo, com PISO e com o teto da
-                             janela (autor, 2026-09-04). Altura fixa corta
-                             conteudo; automatica sem piso faz a tela piscar
-UI/UX moderna e minimalista  ETAPA A PARTE, depois do pente-fino (autor,
-                             2026-09-04). Nao se antecipa em fatia de
-                             funcionalidade, e nao reabre decisao registrada
-embarcados: escopo           ARM Cortex-M via probe-rs nesta etapa; RISC-V e
-                             ESP32 depois; AVR/Arduino NAO entra (2026-09-11)
-embarcados: ponte GDB        ENTRA como `gdb -i dap`, 2o candidato do papel
-                             debugAdapter — o GDB fala DAP desde a v14, e isso
-                             derruba o "protocolo novo inteiro" do 36 §3
-                             (2026-09-11)
-embarcados: prova            QEMU no gate com fixture propria; sonda real so'
-                             quando plugada, e ate' la' NAO PROVADO e dito
-                             (2026-09-11)
-embarcados: deducao          `probe-rs info` SUGERE, o usuario CONFIRMA; a IDE
-                             nunca escolhe o chip calada (2026-09-11)
-embarcados: templates        catalogo CURADO com fonte e licenca, nunca
-                             linker script adivinhado (2026-09-11)
-modo autonomo (2026-10-15)   o autor PAUSA o desenvolvimento da IDE (projetos de
-                             portfolio; CLion e Rider no dia a dia) e AUTORIZA o
-                             agente a fechar a 0.3.9 e a 0.4 sozinho, com mouse e
-                             teclado no Xvfb (o aceite fica dito como do agente);
-                             SDKs fora do apt no usuario, sem sudo (ESP-IDF,
-                             Zephyr, pico-sdk, QEMU Espressif, Renode,
-                             PlatformIO); SEM placa (o que nao tem emulador fica
-                             NAO PROVADO); AppImage autorizado so' apos a
-                             edicao especial pos-0.4.9 (2026-10-21); sem push/tag/release;
-                             organizar a documentacao junto, sem pular
-0.4: C1 ao salvar            LIGADO por padrao em C/C++ com CDB; Rust so' com
-                             `cargo check` quando o rust-analyzer nao esta'
-                             ativo (52 §13.1, 2026-10-15)
-0.4: perifericos (SVD)       aba da area Embarcados (52 §13.2, 2026-10-15)
-0.4: delta de tamanho        so' do ultimo build (52 §13.3, 2026-10-15)
-toolchain automatica         NOME NEUTRO, e o automatico LE o que o projeto
-                             aberto de fato usa (o cache do CMake), sem
-                             suposicao (autor, 2026-10-16; 59 §7.1.7, F7). O
-                             "primeiro candidato detectado" deixa de ser o
-                             que a tela diz que vai ser usado
-Banco para embarcados        DE VOLTA, dentro da 0.4, na 0.4.5, antes do
-(2026-10-16)                 fechamento (52 §11, 0.4.5): o LSP por conexao
-                             (passo 10 do 59) e o InfluxDB 3 nativo (passo
-                             11). MySQL/MariaDB, edicao de celula e drivers
-                             em processo externo seguem adiados (59 §2.3)
-versao e AppImage            o binario diz 0.3.9 desde 2026-10-16 ("pode
-(2026-10-16)                 gerar e atualizar"); AppImage SO' com a 0.4
-                             finalizada. Tag e release continuam com o autor
-documentacao para agentes    APROVADOS (2026-10-16): um arquivo curto de
-(2026-10-16)                 entrada na raiz e o 03 dividido por dominio (61
-                             §4, O6 e O7). A entrada e' o `CLAUDE.md`: o nome
-                             que a proposta usava e' o de uma nota interna do
-                             autor pela regra de 2026-10-01 (gate de links e
-                             copia limpa)
-Rust e Qt                    MANTIDOS (autor, 2026-10-08, 40.7 §7.241;
-                             reconfirmado em 2026-10-16, §7.311): a pilha do
-                             projeto nao muda
-fechamento da 0.4            (autor, 2026-10-17; limite atualizado para
-(2026-10-20/21)              0.4.9 em 2026-10-20) A 0.4.9 fecha funcionalmente;
-                             AppImage apos a edicao especial; marco de
-                             divulgacao na 0.5 e TRANSICAO DA DOCUMENTACAO PARA O
-                             INGLES (prioridade; o alemao talvez na 0.5, sem
-                             decisao). Ate' la a documentacao segue em
-                             portugues. DEPOIS da 0.4.9: a Kinein como
-                             servidor MCP para agentes externos (o Claude Code
-                             por `claude mcp add`), o que revisa, so' nisto, o
-                             "IA na IDE fora de escopo" de 2026-07-17 — o
-                             agente continua no terminal, sem painel de IA; o
-                             desenho, com o primeiro corte so' de leitura, vem
-                             antes do codigo. O site (outra sessao) fica em
-                             ingles, com aba de colaboradores, dizendo so' de
-                             passagem que o projeto vem do Brasil. O `/ide` da
-                             Kinein (protocolo interno do Claude Code, sem
-                             especificacao publica) NAO foi decidido
-0.9 antecipada em parte      (autor, 2026-10-17) A CI publica ENTRA AGORA,
-(2026-10-17)                 numa fatia curta antes da 0.4.1b, em camadas (a
-                             rapida em todo push; a UI; a pesada agendada); o
-                             gate estrito local continua a regra de cada
-                             commit. A porta para novos colaboradores (modelos
-                             de issue e PR, labels, issues de entrada em
-                             INGLES): ver "porta de colaboracao" abaixo,
-                             com a atualizacao do autor de 2026-10-19.
-                             Push, workflow e issue no GitHub sao do autor
-ROS 2                        ENTRA na IDE (autor, 2026-10-17): o ambiente ROS 2
-(2026-10-17)                 tao bom quanto o do VS Code ou melhor, orquestrando
-                             as ferramentas abertas que ja existem. Versao a
-                             decidir; antes, a pesquisa medida (o que o VS
-                             Code faz, o que a Kinein ja tem, o que falta)
-                             Pedido posterior recuperado em 2026-10-19:
-                             escopos por ferramentas, jornadas e melhorias;
-                             dono: integracoes/40 §1.2. Versao nao escolhida
-                             Esclarecido pelo autor em 2026-10-19: a frente
-                             ROS 2 e seu ensaio ficam DEPOIS da 0.4.9
-                             (limite atualizado em 2026-10-20, 57 §1.1)
-profundidade semantica       DIRECAO de longo prazo do autor (pedido apos o
-(recuperada 2026-10-19)       commit de 2026-10-17): refatoracao e compreensao
-                             de compilador com a regua JetBrains, ao longo
-                             dos anos. Esclarecido em 2026-10-19: AUTORIZADO
-                             o estudo de algoritmos proprios COMPLEMENTARES
-                             de analise/refatoracao, sem substituir motores;
-                             refina a restricao absoluta anterior no ponto
-                             da pesquisa. Donos: 56 §1.1 e pesquisa/02
-porta de colaboracao         IDEIA documentada a pedido do autor (2026-10-19):
-(2026-10-19)                 tarefas no GitHub, cards informativos no site
-                             com botao para a issue e "Tasks realizadas".
-                             Recomendacao no contribuindo/11; nenhuma issue,
-                             configuracao GitHub ou mudanca no site nesta
-                             fatia. Atualizacao do autor em 2026-10-19:
-                             trabalha SOZINHO ate o fechamento, agora 0.4.9
-                             (2026-10-20); porta e tarefas
-                             para colaboradores DEPOIS dela. O prompt do
-                             site foi entregue na conversa, sem ampliar
-                             esta documentacao com implementacao do site
-continuidade ate 0.4.9       AUTORIZADA pelo autor em 2026-10-20, por fatias,
-                             com documentacao atualizada a cada etapa; o
-                             limite anterior 0.4.5 foi ampliado. Primeiro
-                             a bancada ESP32 e Embarcados integrado a HUD;
-                             botao por arquivo continua exclusivo de scripts.
-                             Reuso de componentes e animacoes existentes.
-                             Retomada solicitada a cada cinco horas: objetivo
-                             continuo ATIVO em 2026-10-21, sem cronograma
-                             nem gatilho confirmado para renovacao da cota.
-                             Continuar assim que a plataforma permitir;
-                             registrar progresso e limites sem prometer
-                             retomada exata ou contornar limite de uso.
-modo automatico renovado     DECISAO DO AUTOR em 2026-10-20/21: desenvolver ate
-                             a 0.4.9, executar a edicao especial em seguida
-                             e so' depois gerar/testar o AppImage (57 §1.1).
-                             Em cada 0.4.x: procurar falhas de logica e bugs
-                             visuais, otimizar o frontend e melhorar os paineis
-                             para uma UX moderna, clara e intuitiva. Embarcados
-                             tem prioridade; Python inclui CPython,
-                             MicroPython e CircuitPython. Sem push/publicacao;
-                             firmware fisico ainda exige pedido especifico.
-HUD por contexto (2026-10-20) Embarcados tambem cobre Linux embarcado; a UX
-                             deve distinguir as jornadas. PlatformIO fica
-                             em DESTAQUE DENTRO DE EMBARCADOS, sem novo icone
-                             separado. Animacoes acompanham os fluxos com
-                             os componentes e tokens existentes. Atualizar
-                             a documentacao ao final de CADA tarefa.
-C e integracoes nativas      DECISAO DO AUTOR em 2026-10-20: as pendencias
-                             basicas de C entram na 0.4; embarcados integra
-                             as ferramentas existentes, com jornadas visuais
-                             praticas para bare metal e Linux, mantendo o
-                             terminal como escolha. Integracoes ativaveis/
-                             desativaveis pelo usuario, profundamente ligadas
-                             aos fluxos da IDE; refinamento dessa gestao e
-                             ampliacao do escopo na 0.5 (52 §14.14–14.15).
-evolucao e projetos legados  REFORCO DO AUTOR em 2026-10-21: modularidade e
-                             compatibilidade de projetos antigos/novos fazem
-                             parte dos aceites da 0.4.x. Matriz medida e pontos
-                             de extensao no 52 §11; abrir nao migra o projeto
-                             nem comprova suporte a toda versao de ferramenta.
-fronteira da entrega 0.4.9   DECISAO DO AUTOR em 2026-10-20: fechar a serie
-                             na 0.4.9 antes do AppImage. O trabalho nao
-                             publicado 0.3.6–0.3.9 entra na entrega 0.4;
-                             preservar commits/registros. A 0.5 herda a base,
-                             mas anuncia so' o delta proprio. Dono: 57 §1.1.
-                             Banco continua marco funcional 0.4.5. Ordem
-                             operacional 0.4.6–0.4.9 no 52 §11.
-auditoria geral de frontend  PEDIDO DO AUTOR em 2026-10-20: componentes,
-                             comportamento, HUD/UI/UX, espaco dos paineis,
-                             animacao/interacao, resposta, informacoes,
-                             cores semanticas legiveis e confortaveis,
-                             atalhos/nomes/localizacao/acesso lateral.
-                             Entra antes do fechamento funcional 0.4.9;
-                             AppImage apos a edicao especial (52 §14.17).
-                             Previa de navegacao compacta para feedback
-                             ainda pendente (52 §14.16); nao tratar como
-                             layout aprovado nem como arquivo ja' entregue.
-eficiencia e escopo fechado  ESCLARECIMENTO DO AUTOR apos o handoff, em
-(2026-10-20)                 2026-10-20: concluir cada escopo sem acumular
-                             pendencias. A 0.4.9 deve entregar tudo redondo,
-                             incluindo UI/UX necessaria ao uso. As revisoes
-                             finais conferem a integracao e as regressoes;
-                             nao recebem lacunas deixadas pelos marcos.
-                             Confirmacao posterior: "edicao especial"
-                             revisa HUD/UX/UI APOS concluir a 0.4.9, buscando
-                             componentes/estilos/estados esquecidos ou fora
-                             do padrao moderno. Atualizacao 2026-10-21:
-                             associada a 0.5; patch/artefato e cronograma
-                             ainda nao fixados; sem transferir pendencias.
-                             Criterios no 52 §11 e §14.17; fronteira no 57 §1.1.
-validacao na IDE real        DECISAO DO AUTOR em 2026-10-22: validacao visual e
-(2026-10-22)                 de fluxo usa a IDE real na tela do notebook dele,
-                             com mouse/teclado reais e ele acompanhando ("eu quero
-                             que use a IDE real no meu notebook para que possa
-                             validar de fato e eu visualizar tambem"). Xvfb fica
-                             para provas automatizadas. Instancia separada, sem
-                             fechar a janela dele; permissao "Remote Control" do
-                             Plasma e' dele. Tambem liberou instalar o necessario
-                             no usuario; sudo vira comando para ele rodar.
-                             Gravar placa continua exigindo pedido especifico.
-                             Reafirmado em 2026-10-27: o agente pode usar
-                             teclado/mouse e tela reais na parte do frontend.
-ESP32 do autor liberado       DECISAO DO AUTOR em 2026-10-22: o ESP32 conectado
-(2026-10-22)                 (ponte CP2102) pode ser configurado do zero, gravado
-                             e alterado ("esse esp32 voce pode configurar ele do
-                             zero, gravar um codigo novo, alterar e etc."). A
-                             compatibilidade fisica/funcional ampla fica com os
-                             colaboradores. Outras placas/sondas continuam
-                             exigindo pedido especifico.
-janelas de trabalho em dock  PEDIDO DO AUTOR em 2026-10-20: Instalar ferramentas
-                             e demais janelas funcionais viram paineis;
-                             menus, dicas e confirmacoes seguem compactos
-                             (clarificacao explicita). Reusar componentes e
-                             estender os donos existentes por open/closed.
-                             Erros com mensagem clara, destaque e animacao
-                             leve. Primeiro Setup e acesso ESP32 (52 §14.18).
-core antes do acabamento     DECISAO DO AUTOR em 2026-10-23: nas fatias
-(2026-10-23)                 funcionais o importante e' o core/backend sem bugs
-                             ("o importante e' nao haver problemas no backend
-                             durante a implementacao"). Frontend so' o
-                             funcional para validar e mostrar a logica do core;
-                             polimento de HUD/UX/UI fica na etapa propria.
-assistente semantico          DECISAO DO AUTOR em 2026-10-23: desenvolver um
-(2026-10-23)                 algoritmo avancado que entenda e analise a
-                             semantica e o contexto do projeto para atuar junto
-                             das ferramentas que a IDE orquestra (LSP,
-                             compiladores, gravadores), complementando-as. Caso
-                             de origem: o include-cleaner do clangd sugeriu
-                             trocar freertos/FreeRTOS.h e quebrou o build
-                             (52 §14.37). Nada "meia boca": testes rigorosos,
-                             corpus real, mutacao, sem regra sem teste. Uma
-                             sugestao da IDE nao pode quebrar o build.
-                             POSICAO TROCADA PELO AUTOR em 2026-10-24: nao e'
-                             mais a etapa 1b; e' um ESCOPO INTEIRO e dedicado
-                             da 0.4, no final, depois que todas as ferramentas
-                             de Embarcados estiverem validadas, testadas e
-                             funcionais ("nao aceitaria menos do que algo
-                             minimamente confiavel e funcional"; "nao temos um
-                             prazo a cumprir"). Entre a 0.4.6 e a 0.4.7
-                             (52 §11.1 linha 9b e §11.2).
-qualidade de Embarcados       DECISAO DO AUTOR em 2026-10-23: bare metal e Linux
-(2026-10-23)                 embarcado sem bugs criticos nem "bugs bobos" que
-                             teste de uso real ou simulacao realista evitaria.
-                             Gravacao em hardware real fica com colaboradores;
-                             software provado aqui. Estimativa do autor: ~2
-                             meses ate Embarcados polido com os algoritmos.
-varredura de idioma           DECISAO DO AUTOR em 2026-10-23: a traducao do
-(2026-10-23)                 legado de identificadores em portugues (V-3 QML,
-                             V-4 Rust, Python e shell; 14.409 ocorrencias na
-                             linha de base) fica para a edicao especial depois
-                             da 0.4.9 ("nao faz sentido atrasarmos o
-                             desenvolvimento da versao agora"). Substitui o
-                             "entre fatias de produto" do 53 §13.0 item 3.
-                             O gate continua barrando identificador novo.
-PlatformIO visivel e nomes    DECISAO DO AUTOR em 2026-10-23: o painel hoje
-dos paineis (2026-10-23)     chamado "Embarcados" (Visao geral, Placa, Gravar,
-                             Ambiente) e' so' gravar/depurar e passa a se
-                             chamar "Gravar e depurar". "Instalar Ferramentas"
-                             e' a "Biblioteca" que o autor imaginou; "Embarcados"
-                             vira uma secao DENTRO dela (frameworks, SDKs,
-                             toolchains, placas, exemplos; PlatformIO entre
-                             eles), nao um painel a parte. O PlatformIO ganha
-                             atalho proprio, fixavel nos paineis laterais,
-                             depois de instalado, e exibe a interface dele (PIO
-                             Home). O VS Code e' referencia, nao molde: "nao
-                             literalmente copiar a forma", adaptar ao contexto
-                             da IDE. Fatia logo apos a h4b2b4d4, antes de
-                             picotool, dfu-util e west (52 §14.45).
-divulgacao com a 0.4          DECISAO DO AUTOR em 2026-10-24: sem testers no
-(2026-10-24)                 momento (nenhum membro novo no Discord nem retorno
-                             no privado), nao ha AppImage "beta" depois da
-                             0.4.1: segue "AppImage apos especial". A 0.4 vai
-                             ate' o fim da edicao especial, com o assistente
-                             semantico dentro dela. A UI fica INTEIRAMENTE em
-                             ingles na fase de polimento (edicao especial).
-                             Com a 0.4 finalizada, TODA a documentacao vai
-                             para o ingles e o autor divulga o projeto em
-                             grupos internacionais (sai da 0.5). Portar a
-                             documentacao e' tambem revisa-la: convencoes
-                             profissionais de documentacao, explicacoes
-                             melhores, informacao desatualizada ou fora de
-                             contexto corrigida, explicacao tecnica reforcada.
-                             Depois do polimento do codigo e das otimizacoes,
-                             o projeto inteiro foca no ingles. Enviar
-                             mensagens/publicar segue so' com o autor. Dono:
-                             57 §1.1 e §3 itens 5 e 11.
-                             ATUALIZACAO em 2026-10-27: documentacao apos a
-                             0.4.1 e site em outra sessao para colaboradores;
-                             a UI continua na fase de polimento. Dono: 57 §3.
-dividas tecnicas na 0.4       DECISAO DO AUTOR em 2026-10-24: "essa 0.4 vai ser
-(2026-10-24)                 longa, vamos arrumar todos os problemas da IDE e
-                             resolver dividas tecnicas que forem encontradas";
-                             deixar tudo polido para nao ter dores de cabeca
-                             da 0.5 em diante, dentro do possivel. Problema ou
-                             divida achado numa fatia vira registro e fatia
-                             dentro da 0.4, nao pendencia para depois.
-gates no fim da 0.4.9         DECISAO DO AUTOR em 2026-10-23: no final da 0.4.9
-(2026-10-23)                 os gates sao otimizados e polidos ("vamos ter um
-                             grande salto nessa 0.4"). Ponto de partida medido:
-                             o gate rapido estrito leva ~35-40 min (1.321 Rust,
-                             8 CTest, 170 harnesses, C++/Clippy/qmllint em
-                             2026-10-23). Ate' la' a regra do gate por fatia
-                             nao muda.
-lixo e memoria do gate        DECISAO DO AUTOR em 2026-10-24, depois de dois
-(2026-10-24)                 travamentos no mesmo dia (OOM do CLion, swap
-                             cheio): resolver ja' o lixo que testes e provas
-                             acumulam nos temporarios ("o nome ja' fala lixo
-                             e nao recurso necessario") e o paralelismo que
-                             ignora a memoria, sem perder qualidade de teste
-                             nem de compilacao. Antecipa essa parte da linha
-                             acima; o resto da otimizacao dos gates segue no
-                             fim da 0.4.9. Dono: 52 §14.47.
-appimage de desenvolvimento   DECISAO DO AUTOR em 2026-10-24: um AppImage
-(2026-10-24)                 "Kinein Vectis (desenvolvimento)" do estado
-                             estavel da 0.4.1 ainda aberta, "para ja' terem
-                             algo". Muda, so' para este artefato, o "sem
-                             AppImage beta depois da 0.4.1" da linha
-                             "divulgacao com a 0.4"; o AppImage apos a edicao
-                             especial segue. Base portavel: container com
-                             glibc antiga e o Qt 6.12.0 oficial (linha "qt do
-                             projeto"), nao o Qt 6.4.2 do Debian 12. Ordem: as
-                             fatias do gate (52 §14.47 e §14.48) e a do Qt
-                             (§14.49) antes. Push e publicacao com o autor.
-qt do projeto                 DECISAO DO AUTOR em 2026-10-24: o Qt do projeto
-(2026-10-24)                 e' o 6.12 ("foi o que decidi"), e teste e
-                             ambiente de teste usam a MESMA versao do
-                             frontend: build, gates (clang-tidy, qmllint,
-                             harnesses, CTest) e AppImage. O Qt 6.4 fica
-                             esquecido: nada novo para ele. Medido na data: o
-                             codigo pede Qt >= 6.4 e passa no 6.10.2; desde a
-                             volta ao Ubuntu (2026-10-15) o "Qt local do
-                             sistema" do perfil de 2026-10-07 (entao o 6.12.0
-                             do Arch) virou o 6.10.2, sem decisao. Neste
-                             Ubuntu o 6.12.0 oficial mora em
-                             ~/Qt/6.12.0/gcc_64; WebEngine complementado na
-                             fatia do ambiente. Dono: 52 §14.49.
-```
+| Tema | Decisão | Referência |
+| --- | --- | --- |
+| Licenciamento | Código próprio AGPL-3.0-only; documentação própria CC-BY-SA-4.0. Preservar exceções, avisos e permissões anteriores; contribuições com DCO. | [ADR-0011](../decisoes-adr/ADR-0011-copyleft-e-procedencia.md), [guia 12](../contribuindo/12-licenciamento-e-procedencia.md) |
+| Pilha | Core Rust e frontend Qt/QML com ponte C++; Qt do projeto na série 6.12, inclusive testes e empacotamento. | [arquitetura](../arquitetura/ARCHITECTURE.md), [ambiente](../build/14-ambiente-de-desenvolvimento.md) |
+| Escopo | IDE para software e sistemas embarcados, com C, C++, Rust e Python; sem simulação física/matemática própria. | [mapa de versões](57-mapa-de-versoes-ate-a-1.0.md), [escopo da 0.4](52-arquitetura-executavel-da-0.4.md) §10.1 |
+| IA | Sem painel de IA, telemetria ou dependência de provedor de IA no produto. Ferramentas externas podem rodar no terminal. | [leitura técnica](../leitura-tecnica.md), [ADR-0005](../decisoes-adr/ADR-0005-tres-arvores-de-documentacao.md) |
+| Componentes | Reusar ferramentas maduras com origem e licença verificadas; Pylance e Symbolica permanecem fora do conjunto adotado. | [integrações](../integracoes/README.md), [trilha Python](41-ecossistema-embarcados-e-python.md) |
+| Integrações nativas | Docker/Podman, banco e demais integrações são domínios nativos, não um runtime de plugins. Respeitar ativação e contexto do projeto. | [arquitetura](../arquitetura/ARCHITECTURE.md), [escopo da 0.4](52-arquitetura-executavel-da-0.4.md) §11 |
+| Projeto e toolchain | Ler o projeto completo, preservar configurações herdadas e distinguir detectado, selecionado e efetivo. Seleção automática segue evidências do projeto. | [toolchains](../integracoes/39-toolchains-por-alvo.md), [compilação](../build/22-compilacao-c-cpp-rust.md) |
+| Instalação | Sem sudo ou instalação silenciosa pela IDE; origem oficial e verificação de integridade para toolchains gerenciadas. | [toolchains](../integracoes/39-toolchains-por-alvo.md), [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) |
+| UI | Componentes reutilizáveis; layout pelo conteúdo e limites da tela; feedback claro, contexto explícito e editor dominante. Estudos visuais não são design aprovado. | [frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md), [componentes](../especificacoes/sistema-de-componentes-de-ui.md) |
+| Validação visual | Testar jornadas integradas com mouse/teclado; automação em instância isolada complementa o aceite visual. | [casca da IDE](../arquitetura/36-casca-da-ide.md), [escopo da 0.4](52-arquitetura-executavel-da-0.4.md) §11 |
+| EditorController | Fachada congelada até revisão arquitetural; não ampliar a exceção de tamanho. | [editor](../arquitetura/32-editor-por-responsabilidade.md) §8.4, [dívida](39-divida-tecnica-paga.md) §6 |
+| Ferramentas de linguagem | Usar provedores existentes; não duplicar parser, LSP ou motor semântico. GDB DAP exige versão compatível; degradações devem ser explícitas. | [semântica](56-motor-semantico-profundo-cpp-rust.md), [contrato debug](../arquitetura/03-dominios/debug.md) |
+| Banco | Provedores externos versionados, perfil separado de credencial, contexto explícito de produção e custo de leitura visível. | [banco](../arquitetura/37-banco-de-dados.md), [drivers](../arquitetura/40-contrato-operacional-de-drivers.md), [cofre](../seguranca/40-cofre-de-credencial.md) |
+| Grafana | Integração por HTTP API e serviço externo; navegador embutido opcional. | [integrações](../integracoes/README.md), [especificação Grafana](../especificacoes/grafana-ui-ux-0.3.5.md) |
+| TLS | Dependências e licenças de TLS seguem o registro de componentes e o gate cargo-deny. | [integrações](../integracoes/README.md) |
+| Embarcados | Bare metal e Linux embarcado; PlatformIO em destaque. QEMU/Renode são alvos de execução, não simuladores próprios da IDE. | [0.4](52-arquitetura-executavel-da-0.4.md) §10.1–§11, [trilha embarcados](42-trilha-profunda-embarcados.md) |
+| Placas e sondas | Identificação sugere; a pessoa confirma o alvo e cada operação de gravação. Validar capacidades reais; USB/serial não comprova interface JTAG. | [conectividade](../integracoes/38-conectividade-bare-metal.md), [protocolo probe](../arquitetura/03-dominios/probe.md) |
+| Templates | Catálogo curado com origem, licença e parâmetros explícitos; sem geração arbitrária de configuração. | [0.4](52-arquitetura-executavel-da-0.4.md), [biblioteca](../arquitetura/03-dominios/library.md) |
+| C e Python | Jornada completa de C; CPython, MicroPython e CircuitPython tratados como contextos distintos. | [0.4](52-arquitetura-executavel-da-0.4.md) §14.14, [Python](41-ecossistema-embarcados-e-python.md) |
+| Build e SVD | C1 ao salvar para C/C++ com CDB; Rust mediante opção. SVD na área Embarcados; delta de tamanho relativo ao último build. | [0.4](52-arquitetura-executavel-da-0.4.md) §13 |
+| Setup e qualidade | Setup/Instalar Ferramentas no dock; Quality Center inicial na 0.4.2, gate local e consolidação até a 0.4.6. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1, [Quality Center](../especificacoes/quality-center-e-gates.md) |
+| Ordem de implementação | Corrigir bloqueadores e consolidar o core antes do acabamento. Assistente semântico após integração dos recursos existentes. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1–§11.2 |
+| Fronteira de versão | 0.4.9 fecha funcionalmente; edição especial em seguida. AppImage final somente após essa validação; base não publicada 0.3.6–0.3.9 integra a entrega. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
+| Internacionalização | Documentação em inglês após a 0.4.1; UI em inglês no polimento; divulgação internacional na 0.5. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
+| Frentes posteriores | ROS 2, colaboração, análise semântica complementar e estudo de CLI seguem seus planos; propostas não alteram o escopo vigente. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
+| CI e recursos | CI pública compartilha os gates; limites de RAM, swap zero por escopo e limpeza de temporários devem ser verificáveis. | [gates](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md), [comandos](../build/comandos-de-build-e-verificacao.md) |
+| Documentação | Material público é técnico; contexto pessoal e instruções de agentes são locais e não publicáveis. | [política documental](../README.md#repositório-público--cópia-de-distribuição) |
 
 ## 7. O registro das entregas
 

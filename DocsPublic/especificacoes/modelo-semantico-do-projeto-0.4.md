@@ -1,21 +1,17 @@
 # Modelo semântico profundo do projeto — 0.4 em diante
 
-> **Classe: ALVO / PLANO.** Escrito em 2026-09-25, a partir de pedido do autor e
+> **Classe: ALVO / PLANO.** Escrito em 2026-09-25, a partir de requisito de desenvolvimento e
 > de medição do que já existe no core. Nada aqui está implementado. As decisões
 > do autor registradas na §6 são **fechadas** e não se reabrem por conveniência
 > de implementação.
 
-## 1. O pedido, nas palavras do autor
+## 1. Objetivo
 
-> "toda a leitura automática do projeto, [...] a construção de um modelo
-> semântico profundo do projeto, usando LSP + build system + package manager +
-> toolchain + metadata da linguagem [...] ler o projeto inteiramente, entender
-> onde cada parte se conecta, o porquê, as dependências [...] evitar que tenha
-> quebra de ambiente por conta de atualizar apenas uma dependência e não outra,
-> ter uma recomendação visual e implementação automatizada."
-
-Este documento aceita o objetivo e **discorda de parte do meio**, com motivo
-medido. O que muda está na §4.
+Construir o modelo do projeto a partir de LSP, sistema de build, gerenciador
+de pacotes, toolchain e metadados da linguagem. Representar dependências,
+contexto de compilação e incompatibilidades de ambiente, com recomendações
+visuais e ações explícitas. A §4 delimita os mecanismos propostos com base
+na medição do código existente.
 
 ## 2. O que já existe, medido em 2026-09-25
 
@@ -99,7 +95,7 @@ manifesto do gerenciador Python quando houver, o manifesto do SDK embarcado.
 Isso **estende o C2** em vez de criar superfície nova: hoje ele explica um
 arquivo; passa a explicar um alvo e a cadeia acima dele.
 
-## 6. Decisões do autor, registradas em 2026-09-25
+## 6. Decisões do projeto, registradas em 2026-09-25
 
 ### 6.1 NÃO haverá customização por Lua
 

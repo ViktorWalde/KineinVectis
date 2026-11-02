@@ -699,7 +699,7 @@ Quando um painel pede **Executar no terminal** ou **Shell no terminal**, o
 comando aguarda o shell solicitado. Abrir um monitor ao mesmo tempo não
 muda seu destino. Se a abertura falhar, a conexão cair ou a espera expirar,
 a faixa **Comando não enviado** mostra a causa no Terminal. Após resolver,
-faça uma nova tentativa; a linha descartada não reaparece em outra sessão.
+faça uma nova tentativa; a linha descartada não reaparece em uma frente independente.
 
 A confirmação de fechamento acompanha a saída real do processo. Trocar para
 outro projeto encerra as sessões do anterior; reabrir a mesma raiz as

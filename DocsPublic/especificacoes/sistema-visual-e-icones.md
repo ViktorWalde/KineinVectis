@@ -1883,35 +1883,18 @@ Antes de aprovar um ícone, verificar:
 
 ---
 
-## 27. Prompt para gerar pacote inicial de ícones
+## 27. Composição do conjunto de ícones
 
-Use este prompt quando for gerar referências visuais, não como especificação final de SVG.
+Manter grid 24×24, traço consistente, formas simples e linguagem técnica
+original. O conjunto cobre navegação, build, depuração, targets, toolchains,
+execução, testes, terminal e estados. Validar legibilidade e contraste antes
+da adoção na interface.
 
-```text
-Criar uma folha de ícones vetoriais para uma IDE chamada Kinein Vectis, nome curto Kinein, sigla KV. A IDE é Linux-first e focada em C, C++ e Rust, CMake, toolchains, compiladores, debug e sistemas embarcados. Os ícones devem ser lineares, técnicos, minimalistas, angulares, com cantos levemente arredondados, desenhados em grid 24x24, stroke consistente, sem preenchimento excessivo.
+## 28. Ícone da aplicação
 
-Estilo visual: profissional, confortável, JetBrains-like na sensação de maturidade e clareza, mas completamente original. Usar fundo grafite escuro, ícones em cinza claro e versões ativas em âmbar industrial. A linguagem visual deve usar chevrons de código, vetores, nós de circuito, pequenos chips, deltas abertos e malhas técnicas discretas.
-
-Gerar ícones para: Project, Search, Git, Build, Debug, Targets, Tools, Extensions, Run, Configure, Rebuild, Stop, Test, CMake, Toolchain, Compiler, Linker, Presets, Environment, Terminal, Problems, Error, Warning, Success, Context, Explain, Fix, Docs.
-
-Não usar engrenagens grandes, chaves inglesas, foguetes, robôs, cartoons, neon exagerado ou símbolos copiados de IDEs existentes.
-```
-
----
-
-## 28. Prompt para gerar app icon KV final
-
-```text
-Criar um app icon profissional para uma IDE chamada Kinein Vectis, nome curto Kinein, sigla KV. O ícone deve ter formato quadrado com bordas arredondadas, fundo externo transparente real e nenhum elemento fora do quadrado. Dentro do ícone, criar um fundo escuro grafite com estética de engenharia, C/C++/Rust, CMake, toolchains, sistemas embarcados, Linux embarcado.
-
-O fundo interno deve conter detalhes sutis de circuitos, trilhas de PCB, malha 3D wireframe, vetores de força, trajetória orbital e integrais discretas, sem poluir e sem competir com o monograma.
-
-No centro, criar um monograma grande KV, geométrico, angular e vetorial. O K deve ser metálico/prata, robusto e técnico. O V deve ser âmbar/dourado industrial, como uma alavanca/vetor em aceleração. O V pode se estender como seta vetorial ou braço de força, mas ainda deve ser claramente a letra V.
-
-Estilo premium, moderno, com presença visual de ícone profissional de IDE, mas completamente original. Alto contraste, legível em tamanhos pequenos, sem texto, sem logotipo pequeno embaixo, sem mockup, sem fundo branco, sem checkerboard renderizado.
-```
-
----
+O monograma KV deve preservar identidade original, contraste e legibilidade
+em tamanhos pequenos. Arquivos de produção seguem as regras de exportação,
+transparência e geometria definidas neste documento.
 
 ## 29. Próximos documentos recomendados
 

@@ -188,7 +188,7 @@ Os dois casos (40.7 §7.190 e §7.172):
 
 ### 2.0 Janelas acopladas: os dois slots (2026-10-03)
 
-**Pedido do autor:** "coloca para o painel aparecer no canto de acordo com o
+**Requisito de desenvolvimento:** "coloca para o painel aparecer no canto de acordo com o
 ícone na trilha", primeiro para o Banco e depois também para o Projeto. Ele
 avisou que essa parte "pode ser complicada de se fazer para evitar bugs".
 Por isso as regras abaixo são **um dono só** (`ShellDocks`) e estão provadas
@@ -210,14 +210,14 @@ esquerda até alguém mudar isso.
 
 | Situação | O que acontece |
 | --- | --- |
-| Sem projeto (tela de boas-vindas) | **Nenhum** slot aparece (`slotVisible`), mesmo que o layout lembre uma janela aberta; os trilhos, o painel de baixo, os atalhos de área (`EnvironmentShortcuts`) e o widget "Abrir projeto" do topo também somem. Decisão do autor (2026-10-03): a tela de boas-vindas é só de boas-vindas. |
+| Sem projeto (tela de boas-vindas) | **Nenhum** slot aparece (`slotVisible`), mesmo que o layout lembre uma janela aberta; os trilhos, o painel de baixo, os atalhos de área (`EnvironmentShortcuts`) e o widget "Abrir projeto" do topo também somem. Decisão do projeto (2026-10-03): a tela de boas-vindas é só de boas-vindas. |
 | `show(nome)` com o ícone à direita | `rightWindow = nome`; se a mesma janela estava na esquerda, a esquerda fecha. |
 | `show(nome)` com o ícone à esquerda | `leftWindow = nome`, `showExplorer = true`; se estava na direita, a direita esvazia. |
 | `toggle(nome)` | Visível em algum lado: fecha. Senão: `show`. É o clique no ícone. |
 | Ícone arrastado com a janela **aberta** do outro lado (`followSide`) | A janela vai junto (`show` no lado novo). |
 | Ícone arrastado com a janela **fechada** | Nada abre. |
 | Layout gravado com a janela no lado errado (`normalize`, depois de `applyLayout`) | A janela vai para o lado do ícone. Pega layouts gravados antes de existir o slot da direita. |
-| Símbolos abertos (`effectiveOutlineCollapsed` falso) | O slot da direita **some** (`showing` devolve `""`, o `ShellRightDock` fica invisível), sem perder `rightWindow`; ao fechar os Símbolos ele volta igual. Decisão do autor: "quando ele aparecer, o que estiver ali desaparece momentaneamente". |
+| Símbolos abertos (`effectiveOutlineCollapsed` falso) | O slot da direita **some** (`showing` devolve `""`, o `ShellRightDock` fica invisível), sem perder `rightWindow`; ao fechar os Símbolos ele volta igual. Decisão do projeto: "quando ele aparecer, o que estiver ali desaparece momentaneamente". |
 | `show` de uma janela escondida pelos Símbolos | Fecha os Símbolos (`toggleOutline`); senão o clique no ícone não faria nada visível. |
 | A janela pede mais largura (`widen`) | O slot dela **só alarga** até o pedido; o teto do `ShellController` continua valendo, e nunca encolhe por aqui. O Banco pede a largura natural da grade de dados (§2.0, "Tamanhos"). |
 

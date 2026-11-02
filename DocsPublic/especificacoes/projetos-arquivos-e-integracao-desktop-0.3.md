@@ -1,7 +1,7 @@
 # Projetos, arquivos e integração com o desktop — série 0.3
 
 > **Classe: ALVO, ainda não implementado como fluxo completo.** Decisões do
-> autor em 2026-09-23: abrir a Kinein pelo terminal e trabalhar com pastas deve
+> projeto em 2026-09-23: abrir a Kinein pelo terminal e trabalhar com pastas deve
 > entrar na 0.3.0 ou em 0.3.1–0.3.4, sem esperar o Grafana da 0.3.5. A interação
 > com o projeto precisa cobrir o ciclo diário completo, não só aceitar um drop.
 > A distribuição exata segue como proposta no
@@ -56,7 +56,7 @@ existente já move dentro do workspace; não criar um segundo motor de rename.
 > entregue, para que um download de dois arquivos baste; o gate de distribuição
 > cobra essa etapa.
 >
-> **Decidido pelo autor em 2026-09-26:** *mesma pasta foca a janela aberta;
+> **Decidido pela manutenção em 2026-09-26:** *mesma pasta foca a janela aberta;
 > outra pasta abre janela nova.* Implementado no mesmo dia. Cada janela que tem
 > um workspace aberto escuta num socket de domínio Unix dentro do
 > `XDG_RUNTIME_DIR`, nomeado por um digest do caminho canônico; quem chega
@@ -80,7 +80,7 @@ existente já move dentro do workspace; não criar um segundo motor de rename.
 > diretório qualquer. O default de CWD é do comando curto, e a §7 o registra como
 > sugestão a confirmar.
 
-**Comando curto — decisão do autor em 2026-10-21, para a série 0.4.x:**
+**Comando curto — decisão do projeto em 2026-10-21, para a série 0.4.x:**
 `kine` substitui `kinein` como entrada principal de terminal. A mesma entrada
 atende `kine`, `kine .`, `kine caminho`, `kine --help` e `kine --version`,
 preservando o contrato de argumentos/defaults do launcher existente. A mudança
@@ -130,7 +130,7 @@ testes. A decisão final de defaults está na §7.
 
 ### 3.1 Análise futura dos comandos da IDE no terminal
 
-**Pedido do autor em 2026-10-21:** avaliar a utilidade de ampliar os comandos
+**Pedido do projeto em 2026-10-21:** avaliar a utilidade de ampliar os comandos
 de terminal da IDE para os fluxos de embarcados e ROS 2. Executar essa análise
 **depois de concluir a 0.4.9 e a etapa especial de revisão de HUD/UX/UI**
 ([52 §14.17](../roadmaps/52-arquitetura-executavel-da-0.4.md#1417-auditoria-geral-de-frontend-antes-do-appimage--decisão-de-2026-10-20)).
@@ -271,7 +271,7 @@ segue para `workspace.open`, cuja validação no core permanece. Soltar um arqui
 da árvore sobre o editor força ação de cópia
 do drag e usa `EditorController.openDiagnostic` para abrir ou ativar a aba,
 sem alterar o disco. O payload interno tem parser único para árvore/editor.
-**Decisão do autor em 2026-09-30:** soltar uma URL local única fora da raiz no
+**Decisão do projeto em 2026-09-30:** soltar uma URL local única fora da raiz no
 editor abre uma aba somente leitura, sem importar. O fluxo usa
 `fs.readExternal` (`0.142.0`) e o mesmo modelo de documentos, mas o marcador
 de somente leitura bloqueia edição, salvamento, formatação, rascunhos, LSP e
@@ -288,7 +288,7 @@ local em `text/uri-list`, interpretou-a como `QUrl` e aceitou cópia. O Nautilus
 isolado aceitou a ação, mas não criou a cópia. Em 2026-10-01, em Wayland
 nativo, um receptor GTK4 recebeu `GdkFileList` com a URL correta, inclusive
 lido 500 ms depois do drop. Com o mouse sintético, o Nautilus 50.2.2 realçava
-o destino e não copiava. Com o gesto feito pelo autor, a cópia funcionou em
+o destino e não copiava. Com o gesto feito pela manutenção, a cópia funcionou em
 Wayland (roadmap 40 §7.147), e a falha era do método de teste. A origem
 permaneceu intacta.
 

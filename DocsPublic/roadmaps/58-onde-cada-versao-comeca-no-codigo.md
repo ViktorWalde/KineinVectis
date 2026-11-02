@@ -3,10 +3,8 @@
 <!-- caminhos-conferidos -->
 
 > **Classe: PLANO, ancorado no código** (`DocsPublic/README.md`). Escrito em
-> 2026-10-01, a pedido do autor: "detalhe o fluxo inicial das versões que
-> estão para ser desenvolvidas, para que quem colabora — pessoa ou IA — foque
-> na geração de código; leia o código e desenvolva a arquitetura das versões
-> em cima disso".
+> 2026-10-01 para identificar os pontos de extensão e os critérios de prova
+> de cada versão a partir da implementação existente.
 >
 > **O que este documento é dono:** *onde, no código de hoje,* cada versão
 > começa — os arquivos reais, o mecanismo que já existe e deve ser estendido,
@@ -273,7 +271,7 @@ emulador             QEMU: o debugServer do kit; provado por
 5  doc        03-protocolo-ipc (contrato), 40 (estado), 40.7 (registro)
 ```
 
-**PlatformIO como cidadão de tier 1 (decisão do autor, 2026-10-01).** Medido
+**PlatformIO como cidadão de tier 1 (decisão do projeto, 2026-10-01).** Medido
 hoje, por jornada:
 
 | Jornada | PlatformIO hoje | Onde está ou falta |
@@ -293,7 +291,7 @@ na 0.4.3. A prova de cada uma é um `pio` falso no padrão das ferramentas
 falsas do 52 §10 e, quando houver `pio` na máquina, a exercitação real (senão,
 NÃO PROVADO).
 
-**Emuladores como alvo (decisão do autor, 2026-10-01; o quê e o limite com
+**Emuladores como alvo (decisão do projeto, 2026-10-01; o quê e o limite com
 a simulação que saiu do produto: 52 §10.1).** No código, um emulador entra
 pelo `debugServer` do kit (`crates/kinein-protocol/src/toolchain.rs`), que o
 `crates/kinein-core/src/dap/server.rs` sobe, espera a porta e mata com a
@@ -323,7 +321,7 @@ e testa o AppImage; suas notas contêm somente o delta da 0.5 (57 §1.1).
 O controle básico de integrações pertence à 0.4, com refinamento e expansão
 na 0.5 (52 §14.15); não reclassificar a entrega anterior como novidade.
 O mesmo vale para Instalar Ferramentas e Quality Center inicial (52 §11.1,
-autor em 2026-10-21). A Library/providers da 0.5 reutiliza seus donos.
+projeto em 2026-10-21). A Library/providers da 0.5 reutiliza seus donos.
 
 **Estado de partida (medido).** A Library existe: domínio
 `crates/kinein-core/src/library/` (`catalog.rs` 337/500, `availability.rs`,

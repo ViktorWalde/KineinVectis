@@ -6,7 +6,7 @@
 > [52 §11.1](../roadmaps/52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
 > As imagens são referências conceituais, não telas já implementadas.
 
-**Esclarecimento posterior do autor em 2026-10-21:** o desenho de frontend
+**Esclarecimento posterior do projeto em 2026-10-21:** o desenho de frontend
 deste estudo é **rascunho**, sem aprovação visual final. Evoluir a UI real
 da IDE e seus componentes; não copiar as imagens. A imagem não demonstra
 estado do produto nem substitui a aprovação do autor. A inclusão de Setup
@@ -22,7 +22,7 @@ O host atual usa `KvPanelFrame`. O contrato real é
 [setup.*](../arquitetura/03-dominios/setup.md): hoje **não** fornece toda a
 taxonomia, versões, seleção em lote ou um instalador automático das imagens.
 
-Referências fornecidas pelo autor:
+Referências fornecidas pela manutenção:
 
 ![Referência 1: categorias, estados e revisão de instalação](instalar-ferramentas-ros2-referencia-1.png)
 

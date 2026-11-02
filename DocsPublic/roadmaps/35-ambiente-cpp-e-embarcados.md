@@ -6,7 +6,7 @@
 > Sucessor parcial de [34-depois-do-mvp.md](34-depois-do-mvp.md), cuja ordem
 > linear (§7) **fechou em 2026-09-03** — 11, 11.1, 12, 13, 14, 15, 16 e 17
 > feitas. A frente G (simulação) que nasceu aqui **saiu do produto em
-> 2026-09-12** por decisão do autor; ficou a §6 como marca.
+> 2026-09-12** por decisão do projeto; ficou a §6 como marca.
 
 ## 0. Como ler isto
 
@@ -22,23 +22,21 @@ já escrevendo `CMakeLists.txt`. Ver §3.
 ## 1. As três frentes novas
 
 ```text
-E  AMBIENTE C/C++ FACILITADO   a PRINCIPAL, decidida pelo autor em 2026-09-03.
+E  AMBIENTE C/C++ FACILITADO   a PRINCIPAL, decidida pela manutenção em 2026-09-03.
    (TR1)                       Importar/usar bibliotecas solidas, explicar o
                                que cada uma faz, e tornar o CMakeLists
                                configuravel sem decorar sintaxe.
 
 F  EMBARCADOS                  ferramentas open source, estaveis, nao
-   (reordenada, ver §5)        proprietarias. Sobe de L6 por decisao do autor.
+   (reordenada, ver §5)        proprietarias. Sobe de L6 por decisão do projeto.
 
 H  BANCO E OBSERVABILIDADE     relacional + temporal (TimescaleDB) e Grafana,
-   (ver §7)                    NATIVOS. Decisao do autor em 2026-09-03.
+   (ver §7)                    NATIVOS. Decisao do projeto em 2026-09-03.
 ```
 
-A frente **E vem primeiro**, e não por gosto: é a única das três que não
-reordena nenhuma decisão registrada, é a que tem fundação medida, e é TR1 — o
-autor disse em 2026-09-03 que passará a dar feedback de uso diário, o que
-finalmente alimenta o registro de saídas do dogfooding, vazio desde
-que nasceu.
+A frente **E vem primeiro** porque tem fundação medida e não reordena
+as decisões vigentes. A validação por uso diário deve alimentar o registro
+de problemas e os critérios de aceite.
 
 ## 2. As decisões registradas em 2026-09-03
 
@@ -211,9 +209,9 @@ MIT, BSD-3-Clause, Zlib e BSL-1.0.
   pode. O campo `license` diz isso na cara, em vez de esconder atrás de um
   identificador SPDX que o usuário teria de ir pesquisar.
 
-**Um erro de memória que a verificação pegou:** eu ia registrar Eigen em 3.4.0
-(2021). O atual é **5.0.1 (2025-11-08)** — quatro anos de diferença. Foi a
-consulta ao GitLab que corrigiu, não a revisão do texto.
+**Versão conferida na origem.** A auditoria registrada substituiu a referência
+Eigen 3.4.0 pela 5.0.1, publicada em 2025-11-08. O catálogo deve registrar
+a versão e a origem verificadas, sem presumir atualidade por memória.
 
 **O Boost entrou como bloco**, com `Boost::boost` (as partes header-only) como
 alvo. A IDE **não chuta a lista de `COMPONENTS`**: quem precisa de uma parte
@@ -461,7 +459,7 @@ DO PROJETO   --specs=nosys.specs, linker script, startup, vector table — sao
              sobre hardware que nao conhece.
 ```
 
-### 5.7 As decisões do autor para a frente F — 2026-09-11
+### 5.7 As decisões do projeto para a frente F — 2026-09-11
 
 **Medido antes de perguntar**, e a medição mudou duas premissas (uma no
 [`36`](../integracoes/36-ferramentas-de-embarcados.md) §3, corrigida lá). O
@@ -545,7 +543,7 @@ todas as outras.
 
 ## 6. FRENTE G — simulação (REMOVIDA do produto em 2026-09-12)
 
-> A frente G saiu do produto por decisão do autor em 2026-09-12; o texto desta
+> A frente G saiu do produto por decisão do projeto em 2026-09-12; o texto desta
 > seção saiu do repositório junto (40 §5). A numeração das
 > seções seguintes foi mantida porque o resto da documentação as cita.
 
@@ -554,7 +552,7 @@ todas as outras.
 ### 7.1 A decisão, registrada em 2026-09-03
 
 **A IDE terá integração nativa com bancos relacionais e temporais
-(TimescaleDB) e com Grafana**, tudo plug and play. Decisão do autor, e ela
+(TimescaleDB) e com Grafana**, tudo plug and play. Decisão do projeto, e ela
 estende o que já estava registrado: `LEITURA_TECNICA` §6 diz que **Docker e
 banco são domínios NATIVOS, não plugins**, e a ordem L0–L10 põe banco em L5.5.
 
@@ -617,14 +615,13 @@ SQLite — e `truncated` diz quando parou. Escrita: `simple_query`/
 além da do próprio motor — o que o autor escreveu é o que roda.
 
 **Células como texto.** O protocolo simples do PostgreSQL (`simple_query`)
-devolve toda coluna em texto — sem mapa de tipos, sem "esse tipo eu não
-sei mostrar"; `NULL` é `null`. No SQLite o `ValueRef` vira texto (`BLOB` vira
+devolve toda coluna em texto — sem mapa de tipos, sem "tipo não suportado mostrar"; `NULL` é `null`. No SQLite o `ValueRef` vira texto (`BLOB` vira
 `<N bytes>`). Mongo nesta fatia: só leitura — `<coleção> <filtro JSON>` →
 `find` com `limit`, colunas = união das chaves de primeiro nível, células =
 o JSON do valor; escrever documento fica para depois, dito.
 
 **TLS pelo `rustls` que já está na árvore** (o `mongodb` trouxe; `subtle` e
-`webpki-roots` entraram no `deny.toml` por decisão do autor em 2026-09-04).
+`webpki-roots` entraram no `deny.toml` por decisão do projeto em 2026-09-04).
 Crate `tokio-postgres-rustls` 0.14 (MIT): medido em 2026-09-18, +11 crates
 (`x509-cert`, `der`, `spki`, `tls_codec`, … — todos MIT/Apache), `cargo
 deny` verde. `require` aqui é o `verify-full` do libpq — verifica a cadeia
@@ -654,7 +651,7 @@ job não é cancelável: o driver é síncrono).
 
 ## 8. A fase de POLIMENTO, e por que ela é etapa e não sentimento
 
-Decisão do autor em 2026-09-03: **quando as funcionalidades estiverem completas
+Decisão do projeto em 2026-09-03: **quando as funcionalidades estiverem completas
 e documentadas, começa a fase de polimento/pente-fino.**
 
 Registrar isso agora tem uma razão prática: "polir" sem critério vira refatoração
@@ -767,14 +764,14 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            estiverem documentadas e medidas.
 ```
 
-**O feedback de TR1 fura esta fila.** O autor disse em 2026-09-03 que passará a
+**O feedback de TR1 fura esta fila.** O registro técnico indica em 2026-09-03 que passará a
 usar a IDE e reportar; perda de dados, crash e bloqueio diário vêm antes de
 qualquer item planejado (a regra de prioridade, `00-comece-aqui.md` §2), e o
-registro é o de saídas do dogfooding, mantido pelo autor.
+registro é o de saídas do dogfooding, mantido pela manutenção.
 
 ### 9.1 A etapa 26 exercitada contra um PostgreSQL REAL (2026-09-04)
 
-O autor instalou o servidor no mesmo dia, e a exercitação foi feita **duas
+O ambiente de teste passou a incluir o servidor no mesmo dia, e a exercitação foi feita **duas
 vezes**: contra o `postgresql` do sistema e contra uma instância própria,
 subida pelo usuário comum com `initdb`/`pg_ctl` num socket em `/tmp` — que é o
 que permite provar o caso **sem senha nenhuma**, já que aí o dono do processo
@@ -870,10 +867,9 @@ controllers, não dos doze que o `ShellOverlays` carrega.
 
 ### 9.3.1 O alvo do CMake deixou de ser digitado (2026-09-04)
 
-Relato de uso: *"o SQLite eu não consegui ativar"*. **A causa não era o
-catálogo nem o plano — era o campo do alvo.** Ele era uma caixa de texto vazia,
-e enquanto ficasse vazia o painel não mostrava plano nenhum: a IDE cobrava do
-autor o nome de um alvo que está escrito no `CMakeLists.txt` do projeto dele.
+**Ativação de SQLite.** O plano dependia do campo de alvo preenchido, mas a
+interface apresentava uma caixa vazia. O alvo já constava no `CMakeLists.txt`;
+a integração deve descobri-lo e oferecer uma seleção explícita.
 
 O `cmake.targets.list` só respondia **depois** de um configure, porque lia o
 file-api — e é justamente num projeto recém-aberto que se escolhem bibliotecas.
@@ -1088,7 +1084,7 @@ exatamente como as duas cópias de `isWordChar` divergiram
 
 ### 9.3.7 O campo explica e sugere (2026-09-04)
 
-Pedido do autor: *"mostrar o que aquilo faz ou não no projeto, e ter uma
+Requisito de desenvolvimento: *"mostrar o que aquilo faz ou não no projeto, e ter uma
 descrição explicando... e o usuário clicar no campo e, em vez de digitar
 manualmente, ter a opção de selecionar visualmente a leitura que a IDE faz"*.
 
@@ -1130,7 +1126,7 @@ existia para corrigir. O teste agora cobre as duas grafias.
 
 ### 9.3.8 Toolchain: a IDE escolhe **e** mostra que escolheu (2026-09-04)
 
-Decisão do autor, mesclando as duas saídas que estavam em aberto: *"acho que
+Decisão do projeto, mesclando as duas saídas que estavam em aberto: *"acho que
 uma mescla dos dois seria mais interessante, e mostrar o risco de forma
 explícita"*.
 
@@ -1148,7 +1144,7 @@ antes de fazer qualquer coisa.
 **Por que `effectiveId` é separado de `id`:** `id` continua sendo *"o que o
 autor fixou"*, e ausência ali continua significando *"não fixei nada"*.
 Misturar os dois apagaria a diferença entre **uma escolha e um palpite** — e a
-UI precisa dela para não mostrar como decisão do autor algo que ele nunca
+UI precisa dela para não mostrar como decisão do projeto algo que ele nunca
 tomou.
 
 Na tela, `automático` deixou de ser a palavra que **esconde** a informação:
@@ -1170,7 +1166,7 @@ mutação.
 
 ### 9.3.9 "Instalar ferramentas": o passo a passo oficial, na sua distro
 
-Ideia do autor em 2026-09-04: *"mostrar os comandos de acordo com as distros
+Ideia do projeto em 2026-09-04: *"mostrar os comandos de acordo com as distros
 mais famosas, auxiliando dentro da própria IDE o usuário iniciante, mostrar o
 comando oficial e dar o link oficial para ele conferir caso haja
 desconfiança"*.
@@ -1212,7 +1208,7 @@ detectado como já instalado, três passos oficiais, fonte e data ao lado.
 data de conferência e explicação em cada passo. Quem acrescentar um comando sem
 fonte reprova antes de a IDE mostrar instrução que ninguém conferiu.
 
-**Sobre o botão que executa.** O autor pediu *"ou o próprio usuário clicar em
+**Sobre o botão que executa.** O requisito prevê *"ou o próprio usuário clicar em
 instalar e já rodar todo o script oficial"*. Ele **escreve o comando no terminal
 da própria IDE**, visível, onde o autor lê a linha e responde o prompt de senha.
 Instalador silencioso com `sudo` dentro de um editor de texto é poder que
@@ -1256,12 +1252,12 @@ seria esconder uma ação que o autor ainda precisa.
 é "já está no seu projeto", cinza é "disponível para ativar". Duas telas com a
 mesma bolinha significando coisas diferentes seria pior que não ter bolinha.
 
-Isso é a metade do caminho para a lista unificada que o autor pediu (Bibliotecas
+Isso é a metade do caminho para a lista unificada que O requisito prevê (Bibliotecas
 + Ações numa lista só): **as duas telas agora falam a mesma língua de estado.**
 
 ### 9.3.11 A lista unificada: "Ambiente do projeto" (2026-09-04)
 
-Pedido do autor: *"em vez de 'Biblioteca C/C++', que só aparece funcionalidade
+Requisito de desenvolvimento: *"em vez de 'Biblioteca C/C++', que só aparece funcionalidade
 para C/C++, deveria aparecer o Configure Actions e o nome mudar... vai precisar
 de certa reformulação desse fluxo"*.
 
@@ -1294,7 +1290,7 @@ resposta (`library.list`), e sem isso o painel abriria com as ações e sem as
 bibliotecas até o próximo `configAction.list` — falha que não daria erro
 nenhum, só uma lista incompleta.
 
-**E o harness estava atrasado pela terceira vez nesta sessão:** a fixture das
+**E o harness estava atrasado pela terceira vez nesta verificação:** a fixture das
 ações não tinha `riskLabel` nem `riskExplanation`, que entraram horas antes. Foi
 corrigida. É a mesma lição do `fd`, do toolchain e agora daqui — **fixture que
 descreve um protocolo que não existe mais não testa nada**, e ela envelhece
@@ -1302,7 +1298,7 @@ justamente quando o protocolo está mudando rápido.
 
 ### 9.3.12 Catálogo auditado: duas entram, duas NÃO entram (2026-09-04)
 
-Pedido do autor: *"deixar tudo completo em quesito de funcionalidades, ter
+Requisito de desenvolvimento: *"deixar tudo completo em quesito de funcionalidades, ter
 todas certificadas/sólidas dentro da IDE, verifique e implemente apenas o que
 for sólido no mercado"*.
 
@@ -1349,11 +1345,9 @@ que não cumpre isso vale menos que a ausência dela.
 
 ### 9.3.13 Polimento: o chip que se mede e o campo que já sabe (2026-09-04)
 
-Relato do autor: *"em algumas coisas já tem botões para eu interagir e clicar
-para selecionar em vez de escrever, mas isso também precisa ser polido, no caso
-o dimensionamento precisa de polimento"*. E: *"a IDE deve detectar
-automaticamente pastas/arquivos para tudo que houver, adaptado ao contexto de
-cada função"*.
+**Requisitos de seleção.** Preferir seletores para valores descobertos,
+com dimensionamento pelo conteúdo. Pastas e arquivos devem ser detectados
+conforme o contexto da função, mantendo a escolha explícita.
 
 **O dimensionamento tinha causa medida: três cópias da mesma conta.** O
 `KvToggleChip` nasceu quadrado (22×22) para rótulo de **um caractere** (`Aa`,
@@ -1544,21 +1538,20 @@ conexão **bem-sucedido** em erro.
 ### 9.5.4 O que falta da etapa 27
 
 ```text
-MongoDB    escolhido pelo autor como o primeiro nao-relacional. Ele NAO cabe
+MongoDB    escolhido pela manutenção como o primeiro nao-relacional. Ele NAO cabe
            na arvore esquema->tabela->coluna: e' colecao -> documento sem
            esquema fixo. Forcar o formato faria a tela mentir, entao ele pede
            uma segunda forma de exibicao — e essa e' a decisao a tomar antes
            de escrever qualquer linha
-MySQL      o autor o citou como EXEMPLO de banco bem arquitetado, e disse para
-           entrar so' "se for de fato necessario ao longo do projeto". Fica
-           registrado como nao-pedido, nao como esquecido
+MySQL      candidato sem implementacao prevista nesta etapa; a inclusao
+           depende de necessidade tecnica e desenho especifico
 Grafana    por HTTP API, nunca embutido (AGPL). O painel de instalacao ja'
            entrega o passo a passo oficial dele (§9.3.9)
 ```
 
 ## 9.6 A etapa 27 fecha: o Grafana entra pela API (2026-09-04)
 
-Pedido do autor: *"prossiga pela Grafana"*. A frente H do §7 previa
+Integração Grafana incluída no escopo técnico. A frente H do §7 previa
 *"relacional + temporal (TimescaleDB) e Grafana, tudo plug and play"*, e esta é
 a metade que faltava.
 
@@ -1646,10 +1639,8 @@ https            reachable=0 auth=0  recusa explicita (removida horas depois,
 politica prompt  recusa SECRET_REQUIRED antes de tocar a rede
 ```
 
-**Sem token não é erro, é um estado com resposta própria.** Pedir credencial de
-cara seria o mesmo obstáculo inventado que o autor recusou no banco em
-2026-09-04 (*"para que eu deveria digitar uma senha num projeto 100% open
-source?"*).
+**Credencial opcional.** Ausência de token deve produzir estado próprio,
+sem solicitação prematura de segredo ou diagnóstico falso de falha de rede.
 
 ### 9.6.5 O token segue a regra da senha
 
@@ -1699,9 +1690,9 @@ O `verificar-atalhos.sh` não pega isto: ele prova que o atalho anunciado
 esteja ligado. É o mesmo formato dos quatro defeitos de atalho de 2026-09-04, e
 apareceu do mesmo jeito — mexendo no código de perto, não por gate.
 
-### 9.6.8 Dimensionamento: automático com piso (decisão do autor)
+### 9.6.8 Dimensionamento: automático com piso (decisão do projeto)
 
-Decisão do autor em 2026-09-04: *"creio que um dimensionamento automático com um
+Decisão do projeto em 2026-09-04: *"creio que um dimensionamento automático com um
 dimensionamento mínimo está ótimo para a IDE"*. Ela agora tem nome e regra:
 
 ```text
@@ -1731,7 +1722,7 @@ dashboard   e' fatia propria, e ela pede desenho antes de codigo
 
 ## 9.7 A etapa 27 fecha de verdade: o MongoDB (2026-09-04)
 
-O autor pediu as perguntas antes do código — *"me faz agora as sete perguntas
+O requisito prevê as perguntas antes do código — *"me faz agora as sete perguntas
 para podermos prosseguir"* — e respondeu as oito de uma vez. Elas ficam aqui
 porque cada uma virou uma linha de código que sem elas seria palpite.
 
@@ -1851,7 +1842,7 @@ na tela.
 
 ### 9.7.7 O TLS entrou, e com ele duas licenças
 
-Decisão do autor em 2026-09-04, e ela vale para **todos** os clientes de rede da
+Decisão do projeto em 2026-09-04, e ela vale para **todos** os clientes de rede da
 IDE, não só para este:
 
 ```text

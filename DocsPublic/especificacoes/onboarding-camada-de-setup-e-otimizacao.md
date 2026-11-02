@@ -196,7 +196,7 @@ Antes de criar ou abrir projeto, a IDE deve montar uma “impressão digital” 
   "desktop": "kde",
   "shell": "fish",
   "arch": "x86_64",
-  "home": "/home/vitor",
+  "home": "/home/user",
   "path_entries": [],
   "package_managers": ["pacman", "flatpak"],
   "tools": {
@@ -729,7 +729,7 @@ Exemplo:
 ```text
 Este build directory foi criado para outro caminho:
 Old: /home/user/old-project
-Now: /home/vitor/motor-control
+Now: /home/user/motor-control
 ```
 
 ### 16.3 Ação segura
@@ -768,7 +768,7 @@ CMakeUserPresets.json
 
 ### 17.2 Regra
 
-Se a configuração contém `/home/vitor`, `/opt/sdk-local`, paths pessoais ou credenciais, sugerir arquivo local.
+Se a configuração contém `/home/user`, `/opt/sdk-local`, paths pessoais ou credenciais, sugerir arquivo local.
 
 ---
 
@@ -928,7 +928,7 @@ Rollback: remover build/debug.
 {
   "method": "project.fingerprint",
   "params": {
-    "path": "/home/vitor/Projects/motor-control"
+    "path": "/home/user/Projects/motor-control"
   }
 }
 ```
@@ -942,7 +942,7 @@ Rollback: remover build/debug.
     "intent": "new_project",
     "template": "cpp-cmake-executable",
     "profile": "quick_start",
-    "path": "/home/vitor/Projects/motor-control"
+    "path": "/home/user/Projects/motor-control"
   }
 }
 ```

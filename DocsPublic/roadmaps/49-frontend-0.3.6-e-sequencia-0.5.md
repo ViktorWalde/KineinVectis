@@ -1,6 +1,6 @@
 # 49 — A casca da IDE na 0.3.6 e a sequência até a 0.5
 
-> **Classe: PLANO / ALVO.** Decisão do autor em 2026-09-29: depois de fechar a
+> **Classe: PLANO / ALVO.** Decisão do projeto em 2026-09-29: depois de fechar a
 > série 0.3 até a 0.3.5, a prioridade seguinte é a **0.3.6, dedicada ao
 > frontend da IDE**. O autor aprovou a direção de reorganização da casca
 > descrita em dois estudos do autor (não publicados). Este plano
@@ -191,7 +191,7 @@ fase dos embarcados. A 0.3.6 não anuncia esses trabalhos como prontos.
 
 ## 6. 0.5 — experiência completa sobre a casca estabilizada
 
-**Fronteira atualizada pelo autor em 2026-10-21:** Instalar Ferramentas
+**Fronteira atualizada pela manutenção em 2026-10-21:** Instalar Ferramentas
 reformulado e Quality Center inicial passam a integrar a **0.4.x**,
 conforme [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21).
 A 0.5 evolui essa base, oferece inglês plenamente suportado e associa a
@@ -200,7 +200,7 @@ O AppImage é gerado/testado somente após essa edição especial, imediatamente
 seguinte à 0.4.9 e base polida das versões 0.5 em diante (57 §1.1).
 O Environment Center e a Library completos mantêm seus escopos abaixo.
 
-**Desenho dos novos estudos ainda em rascunho (autor, 2026-10-21):** os
+**Desenho dos novos estudos ainda em rascunho (decisão registrada, 2026-10-21):** os
 marcos não aprovam mockups ou uma nova disposição de janela. Melhorar a UI
 atual e submeter a solução visual concreta a refinamento/aprovação do autor,
 conforme [frontend §1.1](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
@@ -223,7 +223,7 @@ a revisão especial está no [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#
 
 ## 7. Decisões fechadas e pontos a medir
 
-**Fechado pelo autor:** 0.3.6 depois da 0.3 inteira; frontend como prioridade;
+**Fechado pela manutenção:** 0.3.6 depois da 0.3 inteira; frontend como prioridade;
 direção da casca dos novos estudos aprovada; 0.4 reservada ao embarcado;
 preservação do core, Jobs e fluxo sem instalação silenciosa.
 

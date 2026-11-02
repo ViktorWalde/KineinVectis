@@ -33,7 +33,7 @@ do ambiente do core não chegam ao processo lançado. O diretório corrente
 continua a raiz, por isso um `.probe-rs.*` ali recusa já na prévia. 52 §14.34.
 
 Implementado no protocolo `0.12.0`; **desde `0.125.0` (2026-09-18) a
-execução é uma SESSÃO DE TERMINAL** — decisão do autor no primeiro teste
+execução é uma SESSÃO DE TERMINAL** — decisão do projeto no primeiro teste
 da IDE polida: "já temos o terminal integrado, não precisamos de mais nada
 para executar". `run.start`/`run.script` continuam a resolver O QUE rodar
 (a lógica abaixo é a mesma) e abrem o comando num PTY na raiz do
@@ -74,7 +74,7 @@ Requer workspace aberto.
   PADRÃO e por isso é exclusivo com `command` (`INVALID_PARAMS` quando vêm
   os dois — um comando explícito roda como foi escrito e não tem onde
   receber a porta). Uma configuração de execução ATIVA é um comando salvo
-  pelo autor: vence o lançador padrão e tampouco recebe a porta; o `command`
+  pelo usuário: vence o lançador padrão e tampouco recebe a porta; o `command`
   ecoado diz o que rodou. Fora de MicroPython o campo não tem efeito. Vazio
   ou só espaço é `INVALID_PARAMS` (ver `run.script`).
 - `run.script { path, device? }` → `{ command, terminalId }` (protocolo `0.55.0`).

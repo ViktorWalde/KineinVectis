@@ -1,5 +1,5 @@
 // O indice do projeto INTEIRO no lado da UI (pilar 0 do roadmaps/42, decisao
-// do autor em 2026-09-12): totais e busca por nome. Arquivo proprio pela regra
+// do projeto em 2026-09-12): totais e busca por nome. Arquivo proprio pela regra
 // "dominio novo, arquivo novo". A UI so' mostra e pergunta; quem le o projeto
 // e' o core.
 #include "core_client.h"

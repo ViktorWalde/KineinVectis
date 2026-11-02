@@ -94,6 +94,8 @@ DENY="
 DocsPrivate/historico/PONTO_ATUAL.md
 GUIAIA.md
 AGENTS.md
+AGENTS.override.md
+CLAUDE.md
 docs
 DocsPrivate
 DocsPrivate/legado

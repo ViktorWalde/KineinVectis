@@ -210,7 +210,7 @@ embaixo — sem isso, a completação no fim do arquivo nasce fora da tela.
 
 ## 4. As regras que ganharam dono
 
-O autor pediu, em 2026-09-03: *"regra de negócio ou lógica não deve ficar na
+O requisito prevê, em 2026-09-03: *"regra de negócio ou lógica não deve ficar na
 UI"*. Três donos novos nasceram disso, e todos são **sem estado e sem pixel**:
 
 | Dono | O que decide |
@@ -443,8 +443,8 @@ seleção".
 
 ## 8.1 O 17º gate, e ele nasceu de um relato de uso (2026-09-04)
 
-O autor disse: *"eu ainda não consigo acessar as bibliotecas na versão de
-desenvolvimento"*. **A causa não era o painel — era o atalho.**
+**Biblioteca no checkout.** A falha de acesso à biblioteca na versão de
+desenvolvimento foi rastreada ao atalho, não ao painel.
 
 O core declara um `default_shortcut` por comando, a paleta mostra esse texto ao
 lado do comando, e **nada verificava que a UI honrava a promessa**. Medido no

@@ -22,7 +22,7 @@
 > ainda não está fechada. Pesquisa VS Code/JetBrains e divergências explícitas
 > estão na especificação do terminal (§3/§7).
 >
-> **Complemento do autor, 2026-09-23:** Selecionar Tudo completo e nomes
+> **Complemento da decisão registrada, 2026-09-23:** Selecionar Tudo completo e nomes
 > reutilizáveis de terminal são básicos ainda pendentes. Launcher/abertura e
 > interação completa com pastas entram em 0.3.0–0.3.4, sem depender de Grafana;
 > bordas superiores mais naturais entram na 0.3.x. A §4 e o roadmap 48
@@ -222,7 +222,7 @@ Fonte: [`terminal-ergonomia-0.3.md`](../especificacoes/terminal-ergonomia-0.3.md
 
 - menu contextual e ações visíveis;
 - política de teclado aprovada: `Ctrl+C` só interrompe, `Ctrl+Shift+C` copia,
-  `Ctrl+V` cola (decisão do autor em 2026-09-24);
+  `Ctrl+V` cola (decisão do projeto em 2026-09-24);
 - limpar tela separado de limpar histórico;
 - Selecionar Tudo sobre o buffer completo retido da sessão ativa;
 - nomes `terminal`, `terminal1` etc. usam a primeira posição livre, sem
@@ -247,7 +247,7 @@ alternativa (o dado já chega do core; nada o mostra). Dos três alvos que a §8
 nomeia para a 0.3 — busca, troca de sessão por teclado e confirmação de paste —
 só o terceiro está feito.
 
-Decisão do autor em 2026-09-25: **essas extensões entram depois da V5.** Ações
+Decisão do projeto em 2026-09-25: **essas extensões entram depois da V5.** Ações
 entram na paleta somente junto da convergência V3, sem dispatcher paralelo.
 
 ### V2 — Remote sem formulário monolítico
@@ -307,7 +307,7 @@ Aceite: adicionar Remote ao slot não exige novo branching nominal em
 
 - Remote entra pelo modelo mínimo de tool window;
 - workspace espelhado mostra `SSH · alvo · estado de sync` na status bar;
-- estado inicial é “não verificado nesta sessão”;
+- estado inicial é “não verificado nesta verificação”;
 - sonda sempre mostra idade/origem;
 - save local bem-sucedido não é confundido com push remoto falho;
 - sync/deploy aparece em Jobs e HUD;
@@ -482,7 +482,7 @@ O trem proposto no roadmap 48 distribui o obrigatório entre 0.3.0 e 0.3.5.
 Itens desta lista só entram no meio se a prova do marco anterior estiver verde;
 do contrário seguem para 0.4 sem serem anunciados como prontos.
 
-### 10.1 Decisão do autor para a 0.4 (registrada em 2026-09-24)
+### 10.1 Decisão do projeto para a 0.4 (registrada em 2026-09-24)
 
 > **Decisão posterior, 2026-09-29:** o autor aprovou a reorganização da casca
 > do frontend como prioridade da **0.3.6**, depois de fechar a 0.3.5. A
@@ -501,7 +501,7 @@ Duas frentes ficam **fora da 0.3** por decisão dele, e não por corte de escopo
   layout, atalhos e fluxo. Hoje ele é uma entrada do trilho como as outras, e a
   decisão é que isso não corresponde ao peso que ele tem no produto.
 
-### 10.2 Decisões do autor em 2026-09-25 (0.4 em diante)
+### 10.2 Decisões do projeto em 2026-09-25 (0.4 em diante)
 
 Fechadas, e detalhadas em
 [`modelo-semantico-do-projeto-0.4.md`](../especificacoes/modelo-semantico-do-projeto-0.4.md):
@@ -515,12 +515,11 @@ Fechadas, e detalhadas em
   atalhos e layout em dados, sem execução;
 - **o alvo é Linux nativo.** Não é pendência de portabilidade, é o escopo —
   handles do Windows e ferramentas equivalentes ficam fora por plataforma, e o
-  equivalente nativo (`/proc/<pid>/fd`) já existe. **Revisto pelo autor em
+  equivalente nativo (`/proc/<pid>/fd`) já existe. **Revisto pela manutenção em
   2026-10-08:** a IDE passa a ser adaptada para rodar no Windows, e há uma
   edição especial para Windows + WSL2 depois da 0.4.0
-  ([60](60-windows-e-edicao-especial.md)). Em 2026-10-09 o autor suspendeu
-  e, no mesmo dia, retomou essa revisão: o desenvolvimento vai para o
-  Windows 11 Pro, por um projeto de integração TA/TI (40.7 §7.258, §7.260);
+  ([60](60-windows-e-edicao-especial.md)). As revisões de prioridade estão no registro técnico
+  (40.7 §7.258, §7.260); o estado vigente do porte está no 40;
 - **o modelo semântico profundo detecta DERIVA, e não resolve versão.** Quem
   resolve é o `cargo`, o `uv`, o `conan`, o `west`; a IDE roda a ferramenta do
   ecossistema e mostra o que ela decidiu. Em C++ o que quebra é ABI, e isso é
@@ -591,7 +590,7 @@ GRAFANA conectar → autenticar se necessário → cruzar banco → abrir dashbo
 O teste Remote precisa provar também o caso de falha: a alteração local
 permanece segura e a HUD não diz “sincronizado”.
 
-## 13. Decisões do autor para congelar a versão
+## 13. Decisões do projeto para congelar a versão
 
 1. Confirmar a tese **uso diário confiável** como identidade da 0.3, em vez de
    uma release centrada somente em LSP/compiladores.
@@ -611,7 +610,7 @@ permanece segura e a HUD não diz “sincronizado”.
 
 As definições posteriores de Selecionar Tudo, nomes de terminal, launcher e
 interação completa de pastas antes do Grafana e bordas na 0.3.x já foram dadas
-pelo autor. Não são perguntas reabertas. Defaults e limites adicionais de
+pela manutenção. Não são perguntas reabertas. Defaults e limites adicionais de
 projeto estão na §7 da especificação de projetos, para decisão na fatia certa.
 
 As decisões ainda abertas não são preenchidas por inferência. Até a resposta,

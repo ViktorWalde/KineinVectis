@@ -21,6 +21,9 @@ cd "$(dirname "$0")/.."
 
 echo "== links de documentacao (alvo inexistente) =="
 
+python3 scripts/test_public_docs_privacy.py
+python3 scripts/check_public_docs_privacy.py
+
 python3 - <<'PY'
 import pathlib, re, subprocess, sys
 from urllib.parse import unquote
@@ -129,8 +132,9 @@ for readme, document in missing_from_index:
 # 0.3.5 ja' lancado (KV0.3/, com checksums).
 PRIVATE = re.compile(r"DocsPrivate|AGENTS\.md|GUIAIA|ContextoIA|PONTO_ATUAL")
 PRIVATE_BY_FUNCTION = {
-    ".gitignore", "scripts/exportar-copia-limpa.sh", "scripts/verificar-docs.sh",
+    ".gitignore", ".gitattributes", "scripts/exportar-copia-limpa.sh", "scripts/verificar-docs.sh",
     "scripts/check_identifier_language.py", "scripts/verificar-links-docs.sh",
+    "scripts/check_public_docs_privacy.py", "scripts/test_public_docs_privacy.py",
 }
 private_mentions = []
 for name in tracked:

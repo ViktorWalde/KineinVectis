@@ -1,13 +1,13 @@
 # 52 — Arquitetura executável da 0.4: embarcados com compiladores e ecossistemas por baixo
 
-> **Classe: PLANO / ARQUITETURA.** Escrito em 2026-10-01, a pedido do autor,
+> **Classe: PLANO / ARQUITETURA.** Escrito em 2026-10-01, conforme os requisitos técnicos,
 > depois do adendo do [roadmap 45 §7](45-etapa4-backend-lsp-edicao-compiladores.md).
 > Nada aqui está implementado por estar escrito. O código e o
 > [roadmap 40](40-estado-e-continuidade.md) prevalecem para o estado real; este
 > documento prevalece para o **desenho** de cada fatia da 0.4, e cada sessão que
 > implementar uma fatia relê a seção dela antes do código.
 >
-> **Por que este documento existe:** o autor pediu o desenho e o fluxo nos
+> **Por que este documento existe:** O requisito prevê o desenho e o fluxo nos
 > mínimos detalhes, porque arquitetura de qualidade facilita o código, evita
 > bugs e **evita código duplicado**. O núcleo é a §3: para cada pergunta que a
 > 0.4 precisa responder, **um dono que já existe** no código, o que se
@@ -25,7 +25,7 @@
 > estender, arquivos no limite que precisam ser divididos antes):
 > [`58`](58-onde-cada-versao-comeca-no-codigo.md) §4.4.
 >
-> **Decisões do autor de 2026-10-01 que ampliam a 0.4:** o **PlatformIO é
+> **Decisões do projeto de 2026-10-01 que ampliam a 0.4:** o **PlatformIO é
 > cidadão de tier 1** — as cinco jornadas abaixo valem para ele, não só o
 > compiledb (§5.10) — e os **emuladores entram como alvo** (§10.1).
 
@@ -36,7 +36,7 @@
 - As §§4–6 são o modelo (contexto efetivo), os fluxos passo a passo e os
   contratos IPC. Cada fluxo diz, em cada passo, **quem é o dono**.
 - As §§7–10 são UI, concorrência, estados de erro e provas. A §11 é a ordem;
-  a §12, os pontos de rollback; a §13, o que ainda é decisão do autor.
+  a §12, os pontos de rollback; a §13, o que ainda é decisão do projeto.
 - **Nomes marcados *(proposto)*** não existem no código hoje. Todo nome sem
   essa marca foi conferido no checkout em 2026-10-01.
 
@@ -92,7 +92,7 @@ Herdadas do [48 §2](48-arquitetura-executavel-da-serie-0.3.md) e do
    (kit por projeto, `.kinein/toolchain.json`, schema 2).
 7. **A IDE detecta deriva, não resolve versão.** Quem resolve é `cargo`,
    `west`, `idf.py`, `conan`; a IDE roda por Job e explica.
-8. **Nada roda `sudo`, nada instala em silêncio**, a placa do autor nunca é
+8. **Nada roda `sudo`, nada instala em silêncio**, a placa de teste nunca é
    gravada sem pedido explícito.
 9. **Evidência ou dica, nunca silêncio:** toda dedução carrega a fonte
    (arquivo, comando, versão); o que não se decide vira `hint`.
@@ -368,7 +368,7 @@ depurar  dono: dap
 7  UI    painel de periféricos dentro da área Embarcados; campo editável
 falha    escrita não confirmada pela releitura → mostra o valor lido e o erro;
          sem SVD → diz de onde obter (CMSIS-Pack do fabricante, licença lida)
-regra    gravar na placa do autor só com pedido explícito na sessão
+regra    gravar firmware somente após confirmação explícita do dispositivo
 ```
 
 ### 5.9 Deriva — detectar, explicar, nunca resolver
@@ -394,7 +394,7 @@ Zephyr           west como ferramenta detectada; build pelo build/frameworks.rs
                  (dono existente); SDK por importKit (42 §8.5 "falta")
 ESP-IDF          idf.py e a receita flasher_args.json (já lidos em project/esp.rs)
 pico-sdk         CMake por baixo; nada próprio além da detecção que já existe
-PlatformIO       TIER 1 (decisão do autor, 2026-10-01): as cinco jornadas.
+PlatformIO       TIER 1 (decisão do projeto, 2026-10-01): as cinco jornadas.
                  J2: `pio run -t compiledb` como Configuration Action (C4);
                  J3: `pio run` (existe), `pio test` como runner e `pio check`
                  como provider de qualidade; J4: `pio run -t upload` (existe);
@@ -512,10 +512,10 @@ real           exercitação com arm-none-eabi e aarch64-linux-gnu reais;
 QML            harness por controller (intenção, estado, resposta velha)
 mutação        cada guarda nova provada removendo-a
 artefato       AppImage com avisos-qml.txt + Debian mínimo
-hardware       placa do autor: só leitura/monitor sem pedido; gravar com pedido
+hardware       dispositivo físico: só leitura/monitor sem pedido; gravar com pedido
 ```
 
-**Momento do artefato, atualizado pelo autor em 2026-10-21:** as provas
+**Momento do artefato, atualizado pela manutenção em 2026-10-21:** as provas
 funcionais/gates continuam no fechamento da 0.4.9; o AppImage só é gerado e
 testado após a edição especial imediatamente seguinte. Revalidar as fontes
 finais dessa edição e exercitar o artefato polido com os smokes e o ambiente
@@ -524,7 +524,7 @@ depois dela. Identificação/versão do pacote ainda a definir no 57 §1.1.
 
 ### 10.1 Emuladores: o que cada um prova e o que fica NÃO PROVADO
 
-Decisão do autor (2026-10-01): os emuladores entram na 0.4 como **alvo** onde
+Decisão do projeto (2026-10-01): os emuladores entram na 0.4 como **alvo** onde
 o firmware roda, pelo `debugServer` do kit — o mesmo caminho que o QEMU já usa
 no `scripts/verificar_embarcado.py`. **Não é simulação física/matemática**, que
 continua fora do produto (40 §5): a IDE não modela o mundo, ela sobe o emulador
@@ -589,7 +589,7 @@ acumulada fecha funcionalmente na 0.4.9; a edição especial vem em seguida,
 forma a base da 0.5 em diante e precede a geração/teste do AppImage, conforme o
 [57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20).
 
-**Execução automática renovada pelo autor (2026-10-20; pacote atualizado em
+**Execução automática renovada pela manutenção (2026-10-20; pacote atualizado em
 2026-10-21):** concluir até a 0.4.9, executar a edição especial em seguida
 e somente depois gerar/testar o AppImage local. Isso substitui o marco de
 pacote imediatamente ao fechar a 0.4.9. Cada marco inclui revisão da lógica,
@@ -618,7 +618,7 @@ pelas jornadas e gates; o número da versão sozinho não encerra trabalho.
        debug.writeMemory (§5.8); PlatformIO depurar; Renode como
        debugServer (§10.1); integração própria de CircuitPython (§14.14, 41 §3.4)
 0.4.4  editor: L2, L3, L5 (§5.11)
-0.4.5  Banco para embarcados (decisão do autor, 2026-10-16): o LSP por
+0.4.5  Banco para embarcados (decisão do projeto, 2026-10-16): o LSP por
        conexão (o passo 10 do 59 §2.3: instâncias isoladas, Postgres
        Language Server, syntaqlite, o servidor do MongoDB; arquitetura/38) e
        o InfluxDB 3 nativo com a linguagem dele (o passo 11).
@@ -643,7 +643,7 @@ AppImage  somente após concluir a edição especial: alinhar identificação/
 ```
 
 A divisão 0.4.6–0.4.9 é a organização operacional deste plano para executar
-o escopo pedido pelo autor. Não exige esperar a 0.4.6 para corrigir uma falha
+o escopo pedido pela manutenção. Não exige esperar a 0.4.6 para corrigir uma falha
 já encontrada nem interrompe o polimento por fatia. C e Python podem ser
 concluídos antes dela; 0.4.6 cobra a integração ponta a ponta. A revisão de
 qualidade do frontend ocorre antes do fechamento funcional da 0.4.9.
@@ -651,8 +651,8 @@ A edição especial vem imediatamente depois e antes do AppImage; está
 definida no §14.17 e não deve
 receber pendências funcionais ou de usabilidade desta série.
 
-**Pendências reafirmadas pelo autor em 2026-10-21:** todos os itens citados
-no handoff pertencem à entrega 0.4.x. Atribuição operacional: concluir proteção
+**Pendências reafirmadas pela manutenção em 2026-10-21:** todos os itens citados
+no resumo técnico pertencem à entrega 0.4.x. Atribuição operacional: concluir proteção
 de run/MicroPython/gravação e recuperação de ocupação, Setup no dock e schema 3
 na 0.4.1; assistente de projeto C puro e padrão C visual na 0.4.2; separar e
 integrar CircuitPython na 0.4.3; consolidar CPython/MicroPython/CircuitPython,
@@ -660,11 +660,11 @@ as jornadas bare metal/Linux, preferências de ativação nativa e as demais
 janelas de trabalho em painéis até a 0.4.6. Auditorias 0.4.7–0.4.8 corrigem
 o conjunto antes do aceite funcional da 0.4.9. O AppImage espera a edição
 especial posterior. Menus, dicas e confirmações
-compactos permanecem conforme a decisão do autor. O aceite físico continua
+compactos permanecem conforme a decisão do projeto. O aceite físico continua
 explicitamente pendente até poder ser medido; não substituí-lo por fixture.
 Nada desta lista fica para a 0.5 ou para a edição especial.
 
-**Atualização do autor em 2026-10-21:** reformular Instalar Ferramentas na
+**Atualização do projeto em 2026-10-21:** reformular Instalar Ferramentas na
 própria migração do Setup e incluir **Quality Center inicial na 0.4.x**,
 aproveitando o trabalho de frontend. Evoluir/polir a base nas versões
 seguintes. A edição especial associada à 0.5 concentra otimização,
@@ -673,7 +673,7 @@ Os donos de escopo são [Instalar Ferramentas](../especificacoes/instalar-ferram
 e [Quality Center e gates](../especificacoes/quality-center-e-gates.md).
 O §11.1 organiza a execução, sem antecipar Library/providers completos ou ROS 2.
 
-**Compatibilidade e evolução, reforço do autor em 2026-10-21:** Embarcados
+**Compatibilidade e evolução, reforço do projeto em 2026-10-21:** Embarcados
 precisa atender projetos legados e novos dentro da matriz suportada, mantendo
 os adaptadores de ferramenta/linguagem extensíveis. Critérios da 0.4.x:
 
@@ -700,7 +700,7 @@ Esses requisitos pertencem às integrações e à consolidação 0.4.1–0.4.6, 
 regressão integrada antes da 0.4.9; não são promessa de compatibilidade universal
 com qualquer ferramenta ou versão futura ainda não medida.
 
-**Entrada de terminal (autor, 2026-10-21):** consolidar o comando curto na
+**Entrada de terminal (decisão registrada, 2026-10-21):** consolidar o comando curto na
 0.4.6 e verificá-lo no AppImage após a edição especial. Contrato, compatibilidade e estado em
 [Projetos e desktop §3](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#3-p0--abrir-pelo-terminal-e-pelo-desktop).
 
@@ -712,7 +712,7 @@ pendente; não promover suporte só porque a CLI externa já existe. Os
 inventários 41/42 e integracoes/39 delimitam a cobertura por ferramenta,
 versão e alvo; manter explícitos os casos ainda não provados.
 
-**Esclarecimento do autor após o handoff (2026-10-20):** priorizar eficiência
+**Esclarecimento do autor após o resumo técnico (2026-10-20):** priorizar eficiência
 e fechar cada escopo sem deixar suas pendências para trás. A 0.4.9 deve
 entregar o conjunto “redondo”, apto a receber um eventual polimento visual
 mais amplo depois. Isso exige concluir a UI/UX necessária ao uso de cada
@@ -774,7 +774,7 @@ abaixo é plano, não lista de funcionalidades concluídas.
 | 7 | 0.4.4 | L2/L3/L5 do editor conforme §5.11 | Navegação/diagnósticos e desempenho sem regressão |
 | 8 | 0.4.5 | Banco para embarcados, com os limites já decididos | Aceite dos donos de Banco; sem reabrir adiamentos |
 | 9 | 0.4.6 | Consolidar C/CPython/MicroPython/CircuitPython, bare metal/Linux, integrações opcionais, janelas funcionais no dock, comando de terminal e Q3 | Inventário reconciliado com uso real e nenhum básico transferido à edição especial |
-| 9b | Escopo dedicado: assistente semântico (decisão do autor, 2026-10-24) | Depois da 0.4.6, com todas as ferramentas de Embarcados validadas, testadas e funcionais; um escopo inteiro: S0 desenho/corpus e S1 verificador de correções antes de qualquer regra; S2 regras de framework; S3 contexto; S4 servir ações de configuração, prévias de build e gravação, Setup e Quality Center (§11.2) | Nada menos que confiável e funcional: nenhuma sugestão da IDE que quebre o build passa sem aviso no corpus; métricas, mutação e prova em projetos reais; sem regra sem teste |
+| 9b | Escopo dedicado: assistente semântico (decisão do projeto, 2026-10-24) | Depois da 0.4.6, com todas as ferramentas de Embarcados validadas, testadas e funcionais; um escopo inteiro: S0 desenho/corpus e S1 verificador de correções antes de qualquer regra; S2 regras de framework; S3 contexto; S4 servir ações de configuração, prévias de build e gravação, Setup e Quality Center (§11.2) | Nada menos que confiável e funcional: nenhuma sugestão da IDE que quebre o build passa sem aviso no corpus; métricas, mutação e prova em projetos reais; sem regra sem teste |
 | 10 | 0.4.7–0.4.8 | Auditoria integrada de frontend, acessibilidade e desempenho (§14.17) | Corrigir achados, fotos comparáveis e regressões; não redesenhar a disposição principal |
 | 11 | 0.4.9 | Estabilização, jornadas, gates completos (otimizados e polidos, 40 §5) e documentação/versões; fechamento funcional | Base funcional validada para a edição especial, sem gerar o pacote intermediário |
 | 12 | Imediatamente após a 0.4.9 / edição especial | Otimização e acabamento do conjunto; estabelecer a base polida da 0.5 em diante | Jornadas e gates sobre o conjunto final; nenhum básico funcional da 0.4 adiado para esta etapa |
@@ -825,7 +825,7 @@ acabamento na 0.4.8 e edição especial. Preservar o feedback do §14.16.
 Não bloqueia trabalho autorizado independente do desenho, nem permite usar
 aceite de protótipo/agente como aprovação visual do autor.
 
-### 11.2 Escopo dedicado — assistente semântico (decisão do autor, 2026-10-23; posição de 2026-10-24)
+### 11.2 Escopo dedicado — assistente semântico (decisão do projeto, 2026-10-23; posição de 2026-10-24)
 
 **Decisão (40 §5).** A IDE ganha um algoritmo próprio que entende a semântica
 e o contexto do projeto e atua junto das ferramentas que ela orquestra: LSP,
@@ -834,7 +834,7 @@ substitui. Uma sugestão da IDE não pode quebrar o build do desenvolvedor, e o
 algoritmo só entra depois de uma fase de testes rigorosa. O caso de origem é o
 include-cleaner do clangd trocando `freertos/FreeRTOS.h` (§14.41).
 
-**Posição (decisão do autor de 2026-10-24, que substitui a etapa 1b).** Um
+**Posição (decisão do projeto de 2026-10-24, que substitui a etapa 1b).** Um
 escopo inteiro e dedicado da 0.4, no final: depois da 0.4.6, quando todas as
 ferramentas de Embarcados estiverem validadas, testadas e funcionais, e antes
 da auditoria integrada da 0.4.7–0.4.8 (§11.1, linha 9b). Nas palavras do
@@ -919,7 +919,7 @@ um prazo de corte de qualidade.
 - Toolchain file gerado mora em `.kinein/`; remover o arquivo volta ao
   comportamento anterior.
 
-## 13. Decisões do autor ainda abertas
+## 13. Decisões do projeto ainda abertas
 
 1. C1 ligado por padrão para C/C++? **Decidida (2026-10-15): sim, com CDB**;
    Rust por padrão só `cargo check` quando o rust-analyzer não está ativo,
@@ -930,12 +930,10 @@ um prazo de corte de qualidade.
 4. Quais placas definem "pronto" para a 0.4 (o 42 §0 lista famílias; confirmar
    com o que o autor tem na mesa)? **Em parte respondida (2026-10-01):** o que
    um emulador cobre prova-se nele (§10.1); a placa real confirma o que o
-   emulador não cobre (sonda, gravação física). **Em 2026-10-15, sem placa:**
-   o autor pausou o desenvolvimento e autorizou o fechamento autônomo da 0.4
-   ([40](40-estado-e-continuidade.md) §5, "modo autonomo"); o que só a placa
-   prova fica NÃO PROVADO, dito. Naquela autorização não havia AppImage.
-   **Atualização de 2026-10-20/21:** geração e teste locais autorizados
-   somente após a edição especial que segue a 0.4.9 (§11); a prova de
+   emulador não cobre (sonda, gravação física). Sem ensaio físico, esses
+   efeitos ficam NÃO PROVADOS, mesmo com validação integrada em software.
+   **Atualização de 2026-10-20/21:** geração e teste do pacote vêm
+   após a edição especial que segue a 0.4.9 (§11); a prova de
    artefato do §10 continua obrigatória nesse fechamento do pacote.
 5. **Decidida (2026-10-16):** o Banco para embarcados (o LSP por conexão e o
    InfluxDB 3 nativo, adiados na 0.3.9) volta dentro da 0.4, na 0.4.5.
@@ -1076,7 +1074,7 @@ o `CMakeLists.txt` com `params {}` saindo com `preset: "release"` e
 
 ### 14.3 0.4.0c — o diagnóstico do compilador ao salvar, C/C++ (C1, §5.2; 2026-10-16)
 
-**Decisão do autor que vale (§13.1, 2026-10-15):** ligado por padrão em C/C++
+**Decisão do projeto que vale (§13.1, 2026-10-15):** ligado por padrão em C/C++
 com CDB; Rust só com `cargo check` quando o rust-analyzer não está ativo.
 
 **Medido no checkout e na máquina (2026-10-16).** O GCC 15.2 e o clang 21.1.8
@@ -1215,13 +1213,13 @@ Xvfb, um projeto Rust confiado: a barra disse "LSP … rust · Fetching",
 
 ### 14.5 0.4.0e — o `compiledb` do PlatformIO como Configuration Action (§5.10, J2; 2026-10-16)
 
-**Decisão do autor que vale (2026-10-01):** o PlatformIO é cidadão de tier 1;
+**Decisão do projeto que vale (2026-10-01):** o PlatformIO é cidadão de tier 1;
 na J2, `pio run -t compiledb` como Configuration Action (58 §4.4: "sem CDB,
 o clangd não vê o projeto").
 
 **Medido (2026-10-16).** O PlatformIO não estava na máquina; entrou no
 usuário com `pipx install platformio` (Core 6.2.0, `~/.local/bin/pio`), como
-o modo autônomo autoriza (40 §5). Num projeto mínimo `platform = native`, o
+o plano de testes prevê. Num projeto mínimo `platform = native`, o
 `pio run -t compiledb` grava a `compile_commands.json` na RAIZ do projeto
 (onde o `cdb::status` já procura e o clangd acha sozinho): 5,6 s na primeira
 vez (prepara a plataforma), menos de 1 s depois. No código: o projeto
@@ -1413,7 +1411,7 @@ arquivo novo, aplicada, e a lista dizendo "ativa neste projeto".
 
 ### 14.8 CI pública — a camada rápida antes da 0.4.1b (2026-10-19)
 
-**Origem:** decisão do autor de 2026-10-17, [40](40-estado-e-continuidade.md)
+**Origem:** decisão do projeto de 2026-10-17, [40](40-estado-e-continuidade.md)
 §5, "0.9 antecipada em parte". **Antes, medido em 2026-10-19:** não há
 `.github/`; o orquestrador rejeita `--ci-rapida` (exit 2). O `--rapido`
 local exige os presets CMake, compila a UI e roda C++, QML e integrações;
@@ -1521,7 +1519,7 @@ antes do schema 3.
 
 ### 14.10 0.4.1c — deriva de compilação, sem correção automática (2026-10-19)
 
-**Desenho anterior ao código:** a continuação linear autorizada pelo autor.
+**Desenho anterior ao código:** a continuação linear autorizada pela manutenção.
 O inspector já explica os valores efetivos; agora compara fatos explícitos
 da unidade com os valores do kit que o último configure usou.
 
@@ -1584,18 +1582,17 @@ mutações reprovaram. Gate rápido estrito TUDO VERDE, sem NÃO PROVADO;
 [40.7 §7.320](40.7-registro-das-entregas.md). Próxima fatia: schema 3 dos
 kits, mantendo as fronteiras acima.
 
-### 14.11 Bancada física do autor — ESP32 por USB/serial (2026-10-19)
+### 14.11 Validação física — ESP32 por USB/serial (2026-10-19)
 
-**Pedido anterior à preparação:** o autor conectou um ESP32 simples e
-confirmou que será o único hardware disponível. Pediu configurar ESP-IDF e
-afins e acompanhar os gestos na Kinein do notebook, usando a sessão real de
-teclado/mouse. Este aceite usa o desktop real; não usa Xvfb nem máquina
-virtual. A sequência de produto continua no schema 3 dos kits (§11).
+**Matriz de validação:** ESP32 por ponte USB/serial CP2102, com ESP-IDF.
+O aceite de produto inclui build, permissões, receita de gravação e monitor
+serial. Outros chips e sondas exigem provas próprias; uma ponte serial não
+comprova capacidade de depuração por JTAG.
 
 **Estado inicial medido:** conversor CP2102 em `/dev/ttyUSB0`, sem acesso
-para o usuário `hugh` (grupo `dialout`, usuário fora dele); isso identifica
+para a conta de teste (grupo `dialout`); isso identifica
 a interface, ainda não o chip. PlatformIO Core 6.2.0 presente, sem plataforma
-ESP32; ESP-IDF ainda ausente. Nenhuma janela Kinein estava aberta.
+ESP32; ESP-IDF ainda ausente nesse cenário de teste.
 
 **Preparação:** projeto de diagnóstico separado em
 `~/Projetos/esp32-idf-teste`, sem GPIO presumido; saída de contador pela
@@ -1612,19 +1609,7 @@ conversor serial.
 e [EIM por linha de comando](https://docs.espressif.com/projects/idf-im-ui/en/latest/headless_usage.html),
 consultadas em 2026-10-19. Resultado somente após execução.
 
-**Retomada após perda do contexto (2026-10-19):** checkout ainda em
-`4a1f826`; a instalação EIM de `v6.1`, seu ativador e o projeto de
-diagnóstico já estão no disco. O README da bancada registra uma identificação
-anterior como ESP32-D0WD-V3 rev. 3.1, flash 4 MB; esta retomada ainda não
-repetiu essa leitura. A porta continua em `/dev/ttyUSB0`, sem acesso para
-`hugh`. A ferramenta de controle de desktop desta sessão devolveu inventário
-vazio de aplicativos e navegadores, com controle nativo desabilitado; portanto
-os gestos na sessão real continuam sem aceite. Próximo passo desta retomada:
-ativar o ambiente isolado, compilar o diagnóstico e conferir CDB/receita de
-gravação; depois resolver o acesso serial com o autor. Nenhuma gravação foi
-autorizada por este pedido de retomada.
-
-**Medição da retomada (2026-10-19):** o autor executou o comando de ACL e
+**Validação de acesso (2026-10-19):** após configurar a ACL,
 `os.access` confirmou leitura/escrita em `/dev/ttyUSB0`. O diagnóstico compilou
 com ESP-IDF v6.1 e GCC Xtensa 15.2.0: CDB com 901 unidades, aplicação de
 142192 bytes, partição de aplicação de 1 MiB; receita DIO/40 MHz/4 MB com
@@ -1640,10 +1625,8 @@ legado `export.sh` também reportou ambiente/ferramentas ausentes. O build
 direto pelo ativador EIM com shell bash passou; o fluxo de build da IDE
 precisa ser verificado na janela real antes de ser declarado pronto.
 
-**Aceite na sessão real iniciado (2026-10-19):** depois de o autor
-autorizar explicitamente `xdotool`, a Kinein do checkout foi aberta no
-XWayland do desktop real (`DISPLAY=:1`, sem Xvfb, HOME/XDG reais). A captura
-da própria janela usa seu pixmap XComposite. Foram acionados pela UI:
+**Validação integrada em XWayland (2026-10-19):** a captura da janela usa
+o pixmap XComposite; os gestos foram executados por automação com xdotool. Foram acionados pela UI:
 confiar no diagnóstico revisado, abrir Embarcados, identificar, selecionar
 os compiladores GCC/G++ Espressif
 Xtensa, reiniciar LSP, compilar pelo menu e montar prévias sem gravar.
@@ -1696,7 +1679,7 @@ ou push nesta preparação. A reformulação solicitada é detalhada no §14.12.
 
 ### 14.12 Correções da bancada na interface — desenho em 2026-10-20
 
-**Pedido e limite confirmado:** o autor pediu melhorar o comportamento e a
+**Pedido e limite confirmado:** O requisito prevê melhorar o comportamento e a
 UX/UI de Embarcados e corrigir o ícone da IDE no alternador de janelas. Após
 esclarecer o comportamento atual, decidiu manter o botão por arquivo
 exclusivo para scripts; esta fatia não amplia execução de C/C++ por arquivo.
@@ -1754,7 +1737,7 @@ gates do projeto e antes/depois na Kinein do notebook. Verificar propriedades
 nativas do ícone na janela real. Não presumir aceite de flash/JTAG nem
 resultado de inspeção somente por leitura do QML.
 
-**Reuso auditado a pedido do autor (2026-10-20):** `KvSegmentedControl`
+**Reuso auditado conforme os requisitos técnicos (2026-10-20):** `KvSegmentedControl`
 já implementa escolha exclusiva com ícone, foco e setas, e substitui a
 fileira antiga de chips das abas. O dock usa `ShellDocks` e o host lateral;
 `KvPanelFrame`/`KvBackdrop` continuam próprios dos diálogos, sem participar
@@ -1770,7 +1753,7 @@ dois consumidores concretos compartilharem a mesma responsabilidade.
 `FlickableScrollBar`, já usado pelas listas e painéis, também atende ao
 corpo do dock; reutilizá-lo conserva a rolagem visual da casca.
 
-**Continuidade autorizada (2026-10-20):** o autor pediu prosseguir até a
+**Continuidade autorizada (2026-10-20):** O requisito prevê prosseguir até a
 0.4.5 (limite ampliado depois para 0.4.9, §11) e atualizar a documentação
 ao concluir cada etapa. A correção desta
 bancada vem primeiro; depois, retomar as fatias de produto do §11, mantendo
@@ -1778,7 +1761,7 @@ provas e commits separados. Meta persistente registrada nesta conversa.
 Retomada a cada cinco horas foi solicitada, mas não está agendada: a sessão
 não expõe ferramenta de agendamento. Não confundir a meta ativa com garantia
 de reinício após limite do serviço; deixar o próximo passo concreto neste
-documento e no handoff a cada fatia.
+documento e no resumo técnico a cada fatia.
 
 **Medição da implementação em andamento (2026-10-20):** a janela real da
 Kinein, reiniciada no XWayland do notebook, mostrou a visão geral no dock de
@@ -1800,19 +1783,19 @@ ainda é pendência separada desta fatia.
 
 **Limite da evidência visual (2026-10-20):** as capturas XComposite comprovam
 a renderização e os cliques enviados à janela por XSendEvent; o aceite
-interativo no desktop visível solicitado pelo autor continua pendente.
+interativo no desktop visível solicitado pela manutenção continua pendente.
 
 **Revisão visual apresentada ao autor (2026-10-20):** as quatro abas foram
 renderizadas a partir dos componentes QML atuais, em 400 px, com dados
 demonstrativos da bancada e sem avisos QML. A janela completa foi capturada
 a 1440×900 com uma cópia temporária do diagnóstico, mostrando o dock ao
-lado do editor. A pedido do autor, a IDE atualizada também foi aberta no
+lado do editor. Conforme os requisitos técnicos, a IDE atualizada também foi aberta no
 projeto de diagnóstico com Embarcados na Visão geral e o ESP-IDF ativado.
 Essas prévias não substituem a confirmação visual do autor nem o aceite
 físico de Identificar. Os cinco harnesses direcionados (layout, prévia,
 docks, trilho e terminais) passaram; a rodada geral está em curso.
 
-**Polimento solicitado pelo autor (2026-10-20), antes do código:** reduzir
+**Polimento solicitado pela manutenção (2026-10-20), antes do código:** reduzir
 a interpretação exigida no primeiro contato e exercitar ações e falhas.
 No refinamento seguinte, o autor retirou o ensaio de sensor/relé: a prova
 prioriza a integração ESP-IDF/ESP32 e o frontend. Depois, conferir a cadeia
@@ -1855,13 +1838,13 @@ próprios, sem ser tratado como um alias de MicroPython.
   shell é bash e a porta com espaço/apóstrofo chega inteira. Não executar
   esse teste com o gravador real ou com a placa.
 
-**Ampliação da HUD pelo autor (2026-10-20), antes da próxima fatia:**
+**Ampliação da HUD pela manutenção (2026-10-20), antes da próxima fatia:**
 Embarcados abrange também Linux embarcado. A visão geral deve distinguir
 microcontroladores, Python na placa, PlatformIO e Linux/SSH, usando fatos do
 modelo e os donos atuais de build, execução, serial e remoto. Yocto/Buildroot
 não devem receber uma jornada obrigatória de porta USB e flash de MCU.
 PlatformIO precisa de acesso visual claro aos ambientes e às tarefas;
-**destaque dentro de Embarcados**, confirmado pelo autor, abrindo a mesma
+**destaque dentro de Embarcados**, confirmado pela manutenção, abrindo a mesma
 superfície integrada. A animação acompanha abertura,
 mudança de contexto e progresso com os tokens existentes; não executa
 descoberta contínua nem deve deslocar o conteúdo durante a leitura.
@@ -1947,7 +1930,7 @@ MicroPython, Yocto, Buildroot e projeto misto), gestos que chegam ao comando
 correto e ausência de gravação implícita; geometria a 400 px e janela menor;
 estados sem ferramenta/sem alvo/em andamento; antes/depois no Xvfb e medidas
 de primeiro frame e tecla→quadro. Registrar o resultado e o próximo passo no
-handoff ao concluir a tarefa, conforme o pedido do autor de 2026-10-20.
+resumo técnico ao concluir a tarefa, conforme o requisito de desenvolvimento de 2026-10-20.
 
 **Prévia inicial, antes da implementação (2026-10-20):**
 `/tmp/kinein-hud-next` contém a proposta QML, o teste de contextos e fotos
@@ -1988,7 +1971,7 @@ o redirecionamento de script auxiliar para mpremote e os requisitos indevidos
 do exemplo MicroPython; após a correção os testes direcionados passaram.
 A ordem do modelo agora acompanha o dono do build e os requisitos geridos
 pelo PlatformIO. Compilação UI release passou; o fechamento integral abaixo
-supera o ponto de handoff parcial. Os gestos nativos são aceites do agente,
+supera o ponto de resumo técnico parcial. Os gestos nativos são aceites do agente,
 separados do feedback do autor.
 
 **Revisão visual real (2026-10-20):** UI release e core atual, em Xvfb
@@ -1998,7 +1981,7 @@ abas/campos Linux em Yocto, sem gravação nem implantação. Fotos locais em
 425 ms (Yocto), uma amostra por projeto, sem afirmar ganho. Os processos
 continuaram vivos e sem avisos QML proibidos.
 
-**Primeiro ponto de handoff, superado pelo fechamento abaixo (2026-10-20):** a rodada do gate
+**Primeiro ponto de resumo técnico, superado pelo fechamento abaixo (2026-10-20):** a rodada do gate
 rápido passou 1193 testes Rust, Clippy, análise limpa dos 47 arquivos C++ e
 8 CTest, e parou no qmllint: `Loader.item` era tipado como `QObject` ao
 chamar `applyKit`. O cast para `EmbeddedEnvironmentView` foi aplicado;
@@ -2083,8 +2066,8 @@ básicos? A leitura do código confirma a fundação compartilhada C/C++:
 compiladores e kits cross, CMake/Make, clangd, diagnósticos ao salvar,
 clang-format, depuração e CTest. Isso não prova uma jornada de C puro.
 
-**Decisão do autor, 2026-10-20:** incluir as pendências de C na série 0.4,
-antes do fechamento da 0.4.9 (§11, limite ampliado pelo autor). A jornada
+**Decisão do projeto, 2026-10-20:** incluir as pendências de C na série 0.4,
+antes do fechamento da 0.4.9 (§11, limite ampliado pela manutenção). A jornada
 visual deve ser prática e intuitiva,
 com configuração simples e explicação do que acontece; terminal permanece
 como escolha normal. O mesmo critério vale para bare metal e Linux embarcado.
@@ -2183,7 +2166,7 @@ Git). **Atualização de 2026-10-20:** arquivo criado, com quatro variantes
 e navegação local; JavaScript e 25 verificações de interação/layout por
 largura passaram em WebKitGTK a **1024, 736 e 320 px**, com Xvfb próprio/
 software. Fotos locais `/tmp/kinein-navigation-*.png`, logs
-`/tmp/kinein-navigation-test-*.log`. Preparada para apresentação na conversa;
+`/tmp/kinein-navigation-test-*.log`. Preparada para apresentação na revisão visual;
 o autor recebeu também o comando para abrir a UI nativa. A escolha de
 layout depende do feedback, sem substituir as abas nativas nesta fatia. Não substitui a validação nativa nem anuncia um
 layout aprovado. A UI Qt continua com as abas da fatia em validação até
@@ -2192,7 +2175,7 @@ em curso; os aceites funcionais e o fechamento da 0.4 continuam obrigatórios.
 
 ### 14.17 Auditoria geral de frontend antes do AppImage — decisão de 2026-10-20
 
-**Decisão consolidada do autor após o handoff, em 2026-10-20:** cada
+**Decisão consolidada do autor após o resumo técnico, em 2026-10-20:** cada
 escopo fecha eficiente, funcional e com UI/UX adequada; a 0.4.9 entrega a
 base pronta. A revisão integrada desta seção permanece antes do AppImage.
 **Após concluir a 0.4.9, haverá uma etapa especial de revisão de HUD/UX/UI**
@@ -2211,7 +2194,7 @@ após seu fechamento, para oferecer o conjunto polido aos usuários de teste.
 A etapa especial não transfere para depois os bugs, as lacunas
 funcionais ou a usabilidade necessários ao aceite da 0.4.9.
 
-O autor pediu examinar toda a IDE: componentes com aparência antiga,
+O requisito prevê examinar toda a IDE: componentes com aparência antiga,
 comportamentos que prejudicam o uso, HUD, aproveitamento do espaço,
 estilização, animações, interações, resposta, informações, cores do editor e
 atalhos. Com a extensão até a 0.4.9, este plano coloca a auditoria nas
@@ -2256,7 +2239,7 @@ recebidas nesta data não são design final. Refinar sobre a UI real e
 registrar aprovação visual do autor, conforme
 [frontend §1.1](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
 
-Junção pedida pelo autor: apresentação contemporânea de ferramenta de
+Junção pedida pela manutenção: apresentação contemporânea de ferramenta de
 engenharia, orientação compreensível para iniciantes e foco no código.
 Preservar disposição de barra superior, explorador à esquerda, abas/editor,
 ferramentas inferiores e status; continuar com Qt/QML, core Rust, Theme e
@@ -2271,7 +2254,7 @@ escura/âmbar, sem criar outro desktop, dashboard ou biblioteca visual.
 | Diagnósticos e Qualidade | Problema, origem, evidência, explicação e ação; navegação, revisão de correção e resultados verificáveis; polir a base do Quality Center entregue na 0.4 |
 | Ambiente e instalação | Clareza de detectado/selecionado/efetivo, disponibilidade e revisão dos comandos; polir Instalar Ferramentas já reformulado na 0.4 |
 | Interação e desempenho | Feedback de carga/falha/cancelamento/conclusão; tempos curtos pelos tokens, movimento reduzido, nenhum trabalho pesado em delegate/binding de animação |
-| Internacionalização | **A UI fica inteiramente em inglês nesta fase** (decisão do autor de 2026-10-24, 40 §5): textos, mensagens do core mostradas na tela, pluralização, nomes acessíveis e layout com expansão do texto. Manter ou não o português como opção fica para decidir; marco no 57 |
+| Internacionalização | **A UI fica inteiramente em inglês nesta fase** (decisão do projeto de 2026-10-24, 40 §5): textos, mensagens do core mostradas na tela, pluralização, nomes acessíveis e layout com expansão do texto. Manter ou não o português como opção fica para decidir; marco no 57 |
 
 Faixas do estudo são **hipóteses para teste**, não alteração de tokens já
 aprovada: hover 80–120 ms, seleção 100–150 ms e expansão 140–200 ms; abas
@@ -2299,7 +2282,7 @@ motivo para reabrir decisões ou reescrever o shell.
 
 ### 14.18 Painéis de trabalho e acesso ao ESP32 — pedido de 2026-10-20
 
-**Decisão do autor:** Instalar ferramentas deve ser painel acoplado; as
+**Decisão do projeto:** Instalar ferramentas deve ser painel acoplado; as
 janelas funcionais abertas como pop-up serão migradas para painéis. Na
 clarificação explícita, menus de seleção, dicas e confirmações continuam
 compactos. Modernizar textos, hierarquia, destaque das informações importantes
@@ -2551,7 +2534,7 @@ anterior já foi preparado em `/tmp/kinein-shell-native-proof/lifetime-before/`:
 clique de fechar, aba ainda visível e processo falso vivo; nenhuma entrada no
 monitor. O core anterior foi guardado com SHA-256 em
 `/tmp/kinein-terminal-lifetime-proof/before/`. **Concluída no principal:** desenvolvida no checkout
-`/home/hugh/KineinVectis-worktrees/serial-lifecycle`, target próprio, e
+`/home/user/KineinVectis-worktrees/serial-lifecycle`, target próprio, e
 incorporada após `bf65481`. Nove testes focados, 50 da família terminal e
 o gate rápido estrito passaram (40.7 §7.328). O ensaio do §14.21 mostrou monitor vivo após trocar de
 workspace e após fechar uma sessão cujo processo ignora `SIGHUP`. A matriz de
@@ -3011,7 +2994,7 @@ falsa, sem hardware, e erro visível no Terminal nativo. Mutação da reserva e
 da exclusividade global deve reprovar asserções. Depois gate rápido estrito,
 documentação e commit próprio antes de continuar a gravação.
 
-O handoff de origem está no 40.7 §7.331; a implementação/prova final abaixo
+O resumo técnico de origem está no 40.7 §7.331; a implementação/prova final abaixo
 substitui aquele ponto de retomada.
 
 No desenvolvimento da h4a, a resolução mostrou outro ramo a conferir:
@@ -3021,7 +3004,7 @@ esse padrão no MicroPython, como já ocorre com pacote -m. Nenhum fallback
 para executar Python do host numa intenção de placa. A fixture comum fixa
 tio no papel de monitor para manter o conflito estável; sem fixar, projeto
 MicroPython prefere o próprio mpremote como monitor. O primeiro teste do
-handoff usava esse caminho curto; a regressão definitiva deve manter monitor
+resumo técnico usava esse caminho curto; a regressão definitiva deve manter monitor
 realmente vivo, arquivo de liberação ausente e ferramenta de run não chamada.
 
 Na conferência nativa da h4a apareceu contradição adicional: o cabeçalho usa
@@ -3183,8 +3166,8 @@ o campo compartilhado nem criar outro editor. Provar o gesto nativo e a
 ordem nos dois Qt, mantendo a confirmação correlacionada do salvamento.
 
 
-**Fechamento de sessão solicitado pelo autor em 2026-10-21:** concluir a h4b1,
-validar, registrar e fazer o último commit, sem iniciar a h4b2 nesta sessão.
+**Fechamento de sessão solicitado pela manutenção em 2026-10-21:** concluir a h4b1,
+validar, registrar e fazer o último commit, sem iniciar a h4b2 nesta verificação.
 A correção de foco ficou no editor existente; o harness reprova ao retirar
 os handlers de Tab e passou após restaurá-los. Offscreen mede a intenção de
 foco; a janela Xvfb comprova as teclas reais. Fotos nativas finais debug em
@@ -3238,14 +3221,11 @@ ou gravação de firmware. O guard Windows foi preservado pela fachada e
 separação de arquivos, mas compilação/aceite Windows nativo não foram feitos
 nesta máquina; o porte continua pausado conforme 60.
 
-**Sessão encerrada após este commit, a pedido do autor.** Retomar pelo
-principal: h4b2 ainda não iniciada — intenção tipada/gravação nativa/schema 2,
+**Próximo recorte na data deste registro:** h4b2 — intenção tipada/gravação nativa/schema 2,
 com capacidades/versões do binário selecionado (incluindo esptool v4/v5),
 reserva serial pelo caminho resolvido e ações de ocupação/recuperação.
 Não interpretar comandos shell salvos; não migrar configurações na abertura.
 Depois: Setup no dock/schema 3, C e os demais escopos do §11 até a 0.4.9.
-O checkout serial-lifecycle é rascunho anterior, já incorporado; não reaplicar
-seu diff sobre o principal. Nenhuma nova etapa foi iniciada neste fechamento.
 Decisões de CLI estão no dono de desktop §3/§3.1 e no 57 §3 item 9.
 
 ### 14.28 0.4.1h4b2a — sintaxe da prévia acompanha o esptool selecionado (concluída, 2026-10-21)
@@ -3307,7 +3287,7 @@ ferramenta falsa, mantendo também a prova de saída/encerramento do terminal;
 não alterar o produto ou a heurística de renderização para contornar o teste.
 
 **Ponto intermediário, superado pelo fechamento abaixo:** gate rápido estrito em
-`/home/hugh/.cache/kinein-h4b2a-qa`, log
+`/home/user/.cache/kinein-h4b2a-qa`, log
 `/tmp/kinein-h4b2a-gate-fast.log`. Cópia isolada de 6451953 mais a fatia,
 sem a alteração local preexistente de AppMenuBar.qml (pragma inválido),
 e com target compartilhado. Não compilar a UI enquanto o gate C++ rodar.
@@ -3444,7 +3424,7 @@ a expectativa e mantida a execução real com ferramenta falsa no teste de
 despacho. Gate rápido estrito final **TUDO VERDE** em
 `/tmp/kinein-h4b2b1-gate-fast-final.log`: 1.259 Rust, Clippy/C++ limpos,
 8 CTest, qmllint e 164 harnesses QML, sem NÃO PROVADO. Cópia QA em
-`/home/hugh/.cache/kinein-h4b2a-qa`, base 025c915 e fontes atualizadas com
+`/home/user/.cache/kinein-h4b2a-qa`, base 025c915 e fontes atualizadas com
 copyfile, comparadas com o principal. O menu local do autor continua
 preservado; a cópia usa seu fonte canônico. Nenhuma mudança visual/ui/src;
 não repetir builds finais/smokes desta UI inalterada. Legado de identificadores
@@ -3868,7 +3848,7 @@ novo. A jornada A1+A2 só fecha com a ponte validada; depois retomar h4b2b4b
 **Pré-validação A2:** CI rápida estrita verde em
 `/tmp/kinein-h4b2b4a2-preflight-ci-final.log`; C++ focado nos três produtores
 verdes em `/tmp/kinein-h4b2b4a2-cpp-focused.log`. Qt real em debug:
-`/home/hugh/.cache/kinein-h4b2a-qa/build/qa-artifacts/probe-response-qt-13dhce_l/report.json`.
+`/home/user/.cache/kinein-h4b2a-qa/build/qa-artifacts/probe-response-qt-13dhce_l/report.json`.
 Cinco sucessos válidos e uma falha atual, descartando antigos/duplicata;
 abertura recusada e mesma raiz preservadas. Duas mutações detectadas por
 asserção de runtime e fontes recompilados após restauração:
@@ -3937,7 +3917,7 @@ CoreClient real passou em debug e release: cinco sucessos atuais aceitos,
 uma falha atual entregue, antigas/duplicatas descartadas; abertura recusada
 e mesma raiz preservadas. Duas mutações Qt e uma da coleta serial foram
 detectadas em runtime; fontes restaurados. A prova release está em
-`/home/hugh/.cache/kinein-h4b2a-qa/build/qa-artifacts/probe-response-qt-g6jygcq1/report.json`.
+`/home/user/.cache/kinein-h4b2a-qa/build/qa-artifacts/probe-response-qt-g6jygcq1/report.json`.
 Uma rodada iniciada por engano no checkout principal parou na edição local
 preexistente de AppMenuBar; nenhum byte dela foi corrigido ou incluído.
 O gate final usa o menu canônico em QA próprio e target independente;
@@ -3947,7 +3927,7 @@ preservadas, sem contar falha de compilação como mutação detectada.
 A fatia fecha sobre 5d98107; h4b2b/0.4.1 continuam abertas. Próxima sessão:
 h4b2b4b, primeiro probe-rs + alvo CMake + destino explícito (§14.32).
 Não implementou esse motor, não gravou hardware nem alterou desenho visual,
-instalou, empacotou ou publicou. O autor pediu encerrar esta sessão após
+instalou, empacotou ou publicou. O requisito prevê encerrar esta sessão após
 gates/commit e receber prompt completo para a próxima; não iniciar b4b agora.
 
 ### 14.34 0.4.1h4b2b4b1 — probe-rs nativo: alvo CMake, sonda explícita e efeitos herdados (desenho, 2026-10-22)
@@ -4098,9 +4078,9 @@ Não há shell nem fallback.
 - Mutações dos guardas (remoção de ambiente, interface do seletor, sonda
   inacessível, presets, chip do kit, versão, tipo do alvo, listagem estrita,
   chave da reserva e comparação da intenção no lançamento) reprovam em runtime:
-  `/home/hugh/.cache/kinein-h4b2b4b1-proofs/mutations*.json`.
+  `/home/user/.cache/kinein-h4b2b4b1-proofs/mutations*.json`.
 - Gate rápido estrito, com 1.297 Rust, 8 CTest e 167 harnesses:
-  `/home/hugh/.cache/kinein-h4b2b4b1-proofs/gate-fast.log`.
+  `/home/user/.cache/kinein-h4b2b4b1-proofs/gate-fast.log`.
 
 **Limites.** Não há gravação física. udev, sondas duplicadas reais, FTDI
 multicanal e outras versões do probe-rs não foram medidos. Se uma segunda sonda
@@ -4186,7 +4166,7 @@ enviados só quando não vazios.
   inacessíveis e com interface; a invalidação; a troca de workspace; o modelo
   novo pedindo alvos; e o passo 2 da Visão geral. Seis mutações dos guardas
   reprovam por asserção:
-  `/home/hugh/.cache/kinein-h4b2b4b2-proofs/mutations-qml.json`.
+  `/home/user/.cache/kinein-h4b2b4b2-proofs/mutations-qml.json`.
 - Modelo: chip de kit marca o projeto como embarcado; chip vazio não marca
   (`tests/project.rs`).
 - Aceite na IDE real com core real, projeto CMake arm-none-eabi configurado e
@@ -4195,11 +4175,11 @@ enviados só quando não vazios.
   (o wrapper registra o argv da prévia, sem `PROBE_RS_*`); "Salvar e ativar" →
   ▶ Executar pela configuração salva (schema 2); sem reply, "Configurar CMake"
   → a lista volta pelo evento de modelo. Telas em
-  `/home/hugh/.cache/kinein-h4b2b4b2-proofs/real-before`, `real-after` e
+  `/home/user/.cache/kinein-h4b2b4b2-proofs/real-before`, `real-after` e
   `real-fixed`.
 - Gate completo estrito: 1.297 Rust, 8 CTest, 168 harnesses, C++, Clippy e
   qmllint limpos; primeiro frame em 327 ms (debug) e 335 ms (release).
-  `/home/hugh/.cache/kinein-h4b2b4b2-proofs/gate-full.log`.
+  `/home/user/.cache/kinein-h4b2b4b2-proofs/gate-full.log`.
 
 **Limites.** As telas registram o fluxo funcional, não aprovação de desenho
 visual (frontend §1.1). Não há gravação física nem sonda real.
@@ -4279,14 +4259,14 @@ escolha do adaptador e `DebugManager`) e o caminho da sonda, de modo que
   conflito durante a sessão e a sonda fica livre ao fim.
 - Mutações reprovam em runtime. Do core: sonda no launch, soltura antecipada
   da reserva, checagem do adaptador e `connect` com sonda
-  (`/home/hugh/.cache/kinein-h4b2b4b3-proofs/mutations*.json`). Pela prova do
+  (`/home/user/.cache/kinein-h4b2b4b3-proofs/mutations*.json`). Pela prova do
   core real: a remoção de ambiente (`stdio-mutation/`). Do roteador QML: duas.
 - Aceite na IDE real com o wrapper: depurar → tentar gravar (recusa) → parar →
   gravar. A correção do painel Debug é visível com o alvo rodando. Telas em
-  `/home/hugh/.cache/kinein-h4b2b4b3-proofs/real` e `real-debug-layout`.
+  `/home/user/.cache/kinein-h4b2b4b3-proofs/real` e `real-debug-layout`.
 - Gate completo estrito: 1.300 Rust, 8 CTest, 169 harnesses, C++, Clippy e
   qmllint limpos; primeiro frame em 314 ms (debug) e 333 ms (release).
-  `/home/hugh/.cache/kinein-h4b2b4b3-proofs/gate-full.log`.
+  `/home/user/.cache/kinein-h4b2b4b3-proofs/gate-full.log`.
 
 **Limites.** Sem sonda probe-rs física, a sessão DAP real com hardware não foi
 exercitada. A depuração sem `probe` continua deixando o `dap-server` escolher
@@ -4303,7 +4283,7 @@ em hardware" (§11.1). A placa da bancada está liberada para gravação (40 §5
 **Combinação medida (e só ela).**
 
 - **Placa:** ESP32-D0WD-V3 rev. 3.1, cristal de 40 MHz, flash de 4 MB
-  (fabricante `0x5e`, dispositivo `0x4016`), MAC 70:4b:ca:04:54:54.
+  (fabricante `0x5e`, dispositivo `0x4016`), MAC omitido.
 - **Ponte e sistema:** CP2102 em `/dev/ttyUSB0`, Linux com KDE Plasma.
 - **Ferramentas:** ESP-IDF v6.1 e esptool 5.6.0 do ambiente do EIM.
 - **Projeto de bancada,** fora do repositório (`~/Projetos/esp32-idf-teste`):
@@ -4420,7 +4400,7 @@ intenção de B salva:
    A recusa não gravou nada.
 
 Gate rápido estrito no QA: 1.300 Rust, 8 CTest, 170 harnesses, C++, Clippy
-e qmllint limpos (`/home/hugh/.cache/kinein-h4b2b4c-proofs/gate-fast.log`).
+e qmllint limpos (`/home/user/.cache/kinein-h4b2b4c-proofs/gate-fast.log`).
 
 **Limites.** É uma combinação de placa, ponte, SDK e versão do esptool. Não
 cobre outros chips ESP (S2/S3/C3/C6/H2, USB-Serial-JTAG nativo), outras pontes
@@ -4907,7 +4887,7 @@ configuração do projeto (`configAction`), com prévia e consentimento.
 
 **Fora desta fatia.** O algoritmo semântico que confere uma correção antes de
 aplicá-la, por diagnósticos da edição simulada e por regras de framework, é
-decisão do autor de 2026-10-23 (40 §5). Ele tem desenho próprio e generaliza
+decisão do projeto de 2026-10-23 (40 §5). Ele tem desenho próprio e generaliza
 este caso; esta fatia resolve o caso medido na origem, pela configuração.
 
 **Validação planejada.**
@@ -4952,7 +4932,7 @@ driver genérico compila para um núcleo Xtensa big-endian
 do ESP32 compila para o little-endian do chip (341 macros, `__FP_FAST_FMAF` e
 afins). Quem usa o compilador do kit (configure de um projeto CMake genérico,
 `--query-driver` do clangd, inspetor) recebe macros de outro núcleo. Evidência:
-`/home/hugh/.cache/kinein-h4b2b4f-proofs/{generic,esp32}.macros`.
+`/home/user/.cache/kinein-h4b2b4f-proofs/{generic,esp32}.macros`.
 
 **Desenho.** Mudança no dono da resolução do kit (`Toolchain::resolve_kit`).
 
@@ -5254,7 +5234,7 @@ do autor).**
 
 - **O Core.** Vem do PATH. O detector procura `pio` ou `platformio` (o
   `tools/known.rs` só sugere `pipx install platformio`, sem instalar).
-  - Na máquina do autor, o Core 6.2.0 já estava instalado por pipx.
+  - Na ambiente de teste, o Core 6.2.0 já estava instalado por pipx.
   - Nesta fatia, a plataforma espressif32 foi instalada pela linha de
     comando (`pio pkg install -g -p platformio/espressif32`). O primeiro
     build baixou o framework Arduino sozinho, que é o comportamento do
@@ -5323,7 +5303,7 @@ aparece.
 
 ### 14.45 0.4.1h4b2b4h — "Gravar e depurar" e o atalho do PlatformIO com o PIO Home (desenho, 2026-10-23)
 
-**Problema (decisão do autor, 40 §5).**
+**Problema (decisão do projeto, 40 §5).**
 
 - O painel chamado "Embarcados" (Visão geral, Placa, Gravar, Ambiente) só
   grava e depura, mas o nome promete "tudo de embarcados". Ele passa a se
@@ -5471,8 +5451,7 @@ pontos de implementação:
     desenha as divisórias nesses vãos.
 - **Corrigido de passagem.** A edição local no `AppMenuBar.qml`
   (`pragmaComponentBehavior`, faltava um espaço) quebrava a compilação da UI
-  no checkout. Ela foi corrigida pela edição, a pedido do autor ("se tiver
-  incompleto algo da UI pega e complete").
+  no checkout. A sintaxe foi corrigida antes da validação.
 
 **Validação.**
 
@@ -5582,7 +5561,7 @@ do sistema (§14.45 item 5).
      nasce sem confiança, como qualquer pasta;
    - abre o arquivo com o `openDiagnostic` do editor, na linha e coluna.
 
-   O PIO Home continua na janela dele: trocar de workspace não derruba o
+   O PIO Home continua na mesma janela: trocar de workspace não derruba o
    servidor.
 4. **Ciclo de vida: servidor e agente são uma unidade.**
    - O agente sobe logo depois de o servidor responder, e o conjunto só
@@ -5751,7 +5730,7 @@ Os pontos de implementação:
   `homeStart` que reusa a sessão; fechar subindo espera ficar pronto; o
   `"idle"` desliga sem ser falha; `releasing: false` esquece a sessão.
 - Mutações: 29, das quais 28 detectadas e uma de medida
-  (`/home/hugh/.cache/kinein-h4b2b4i-proofs/mutations-final.json`). Elas
+  (`/home/user/.cache/kinein-h4b2b4i-proofs/mutations-final.json`). Elas
   cobrem:
   - escutar antes de responder (15 escutas em vez de 7) e o descarte de id
     repetido;
@@ -5771,123 +5750,47 @@ Os pontos de implementação:
   em 2026-10-24.
 - Gate rápido estrito no QA, TUDO VERDE: 1.334 Rust, Clippy e C++ limpos,
   8 CTest, qmllint estrito e 171 harnesses, sem NÃO PROVADO, em 27 min 28 s
-  (`/home/hugh/.cache/kinein-h4b2b4i-proofs/gate-fast.log`).
+  (`/home/user/.cache/kinein-h4b2b4i-proofs/gate-fast.log`).
 
-### 14.47 0.4.1h4b2b4j — o gate sem lixo nos temporários e com o paralelismo pela memória (desenho, 2026-10-24)
+### 14.47 0.4.1h4b2b4j — isolamento de temporários e orçamento de memória (2026-10-24)
 
-**Problema.** Em 2026-10-24 a máquina do autor travou duas vezes: às 17:03
-o OOM killer encerrou o CLion durante um build da UI, e às 18:5x tudo
-parou com o swap cheio. A máquina tem 20 GB de RAM, 8 GB de swap e 16
-núcleos. Decisão do autor no 40 §5 ("lixo e memoria do gate").
+**Objetivo técnico:** evitar acúmulo de temporários e concorrência de compilação
+incompatível com a RAM disponível. A implementação está em
+`scripts/verificar.sh`, `scripts/isolar-temporarios.sh` e `.cargo/config.toml`.
 
-**Medido em 2026-10-24, 18:59–19:20.**
+**Isolamento de memória.** O gate tenta criar um escopo systemd do usuário com
+`MemorySwapMax=0` e `MemoryMax` pela RAM disponível menos 2 GiB, com piso de
+1 GiB. O cabeçalho informa se os controles foram efetivamente aplicados.
+Swap ocupada por outros processos não demonstra uso de swap pelo escopo.
+Sem systemd ou controlador delegado, o diagnóstico informa a ausência do
+isolamento; essa execução não comprova a proteção por cgroup.
 
-- **O `/tmp` é tmpfs, e estava cheio de lixo.** 8,2 GB ocupados, 7,8 GB
-  deles em `kinein*`. Dos 7,9 GB de swap em uso, os processos somavam
-  0,88 GB; o resto eram esses arquivos, que só saem da RAM para o swap.
-  - Uns 5 GB eram cópias de 279 MB do core de debug, deixadas por provas
-    de agentes em 21 e 22/10 (`kinein-flash-native-ui-*`, `kinein-h4b2*`).
-  - Uns 2,3 GB eram de testes Rust: `kinein-core-tests` tinha 27 mil
-    pastas, 610 MB só de 24/10.
-  - Apagado com a autorização do autor: o `/tmp` caiu para 768 MB, o swap
-    para 1,2 GB, e a memória disponível subiu para 15 GB.
-- **Os testes não apagam o que criam.** São 238 chamadas a
-  `std::env::temp_dir()` em 150 arquivos, com dezenas de raízes diferentes
-  e o pid no nome. Nenhuma apaga a própria pasta, e o pid no nome impede a
-  rodada seguinte de reaproveitá-la.
-- **O gate não isola nem limpa os temporários, e não limita o
-  paralelismo.** O Ninja usa núcleos + 2 (18) e o cargo usa os 16 núcleos.
-  O limite da rodada do 40.7 §7.356 foi exportado à mão.
-- **Fora do código:** o CLion do autor roda com `-Xmx14000m` e chegou a
-  7,6 GB no OOM. Ajuste do autor, registrado no 40.7 §7.357.
+**Paralelismo.** Valores de ambiente explícitos são respeitados. Na seleção
+automática, o orçamento é dividido pelos valores de referência por job:
+C++ 500 MiB, Cargo 1000 MiB, clang-tidy 700 MiB e harness QML 200 MiB.
+O limite por CPU é `nproc + 2` para CMake e `nproc` para as demais ferramentas.
+O mínimo é um job; cada escolha informa sua origem no cabeçalho.
 
-**Desenho.**
+**Temporários.** Cada rodada recebe `${TMPDIR:-/tmp}/kinein-gate.<pid>` e limpa
+a pasta ao terminar. A rodada seguinte remove somente diretórios desse padrão
+cujo PID não esteja ativo. O runner Unix dá a cada binário de teste uma pasta
+própria, preserva seu código de saída e a remove inclusive na falha; `cargo run`
+é encaminhado diretamente. `KINEIN_KEEP_TEST_TMP=1` permite inspeção explícita.
+Para artefatos grandes e QA, use uma partição em disco e target próprio;
+não acumule cópias de binários em `/tmp` quando ele for tmpfs.
 
-1. **Cada binário de teste apaga o que criou.** O `.cargo/config.toml` ganha
-   `[target.'cfg(unix)'] runner = "scripts/isolar-temporarios.sh"`.
-   - Para o que mora em `target/<perfil>/deps/` (testes unitários e de
-     integração), o runner cria `${TMPDIR:-/tmp}/kinein-teste.XXXXXX`,
-     roda o binário com esse `TMPDIR` e apaga a pasta no fim. Isso vale
-     também na falha e no Ctrl+C, e o código de saída do teste é mantido.
-   - O `cargo run` de um binário passa direto.
-   - `KINEIN_KEEP_TEST_TMP=1` desliga o isolamento, para inspecionar o que
-     um teste deixou.
-   - Vale para o `cargo test` direto tanto quanto para o gate, sem tocar nos
-     238 pontos. No Windows nada muda: o runner é só para alvos unix, e o
-     Windows está pausado (60).
-2. **O gate apaga os temporários da rodada.** O `verificar.sh` cria
-   `${TMPDIR:-/tmp}/kinein-gate.<pid>`, exporta como `TMPDIR` para todas as
-   etapas (harnesses Python e QML, CTest, temporários dos compiladores) e o
-   apaga no `trap` de saída.
-   - Um gate morto por `SIGKILL` (o próprio OOM) não roda o `trap`. Por isso
-     a rodada seguinte apaga, no início, as `kinein-gate.<pid>` cujo processo
-     não existe mais.
-   - Nenhum outro nome do `/tmp` é tocado: pode ser da IDE aberta ou de
-     outro programa.
-   - O gate diz quanto o tmpfs já ocupa e avisa acima de 1 GiB, para que
-     lixo de fora (uma prova esquecida) apareça antes da rodada.
-3. **Paralelismo pela memória disponível.** Sem `CMAKE_BUILD_PARALLEL_LEVEL`
-   ou `CARGO_BUILD_JOBS` no ambiente, o gate calcula cada um pela
-   `MemAvailable` do início, menos uma reserva para o desktop, dividida
-   pelo pico medido de um job. O teto é núcleos + 2 para o Ninja e núcleos
-   para o cargo. Valor definido por quem chama é respeitado. O gate diz o
-   que escolheu e de onde veio. Os números por job saem da medição desta
-   fatia (abaixo).
-4. **O teste de scrollback não depende do prompt.** O
-   `clear_scrollback_reaches_only_the_requested_live_session` escreve pelo
-   shell do usuário num terminal de 40×3. O prompt traz a pasta, e com um
-   `TMPDIR` mais longo ele ocupa três linhas e empurra a `linha-final` para
-   fora da tela. Achado em 2026-10-22 (§14.27, retomada do gate A2), quando
-   foi contornado com `TMPDIR=/var/tmp`. Com o runner, todo `cargo test`
-   tem caminho mais longo. O teste passa a usar o `terminal_com_saida`, que
-   já existe no arquivo para isso: uma saída conhecida sem o startup nem o
-   prompt do shell do usuário.
-5. **Provas de agente não moram no `/tmp`.** Uma linha no
-   `contribuindo/05`: cópias de binário, árvores de QA e provas vão para
-   `~/.cache/`, em disco, e saem quando a fatia fecha.
+**Regressão de terminal.** A prova de scrollback usa saída controlada, sem
+depender do prompt do shell ou do comprimento de `TMPDIR`.
 
-**Validação planejada.**
+**Verificação:** `scripts/test_verification_profiles.py` cobre cálculo de jobs,
+respeito a overrides, sucesso/falha, limpeza e tratamento de órfãos. Mutações
+removendo a limpeza ou ignorando o orçamento devem reprovar. O contrato
+operacional e os comandos estão em
+[recursos da rodada](../build/comandos-de-build-e-verificacao.md#recursos-da-rodada-só-ram-temporários-e-paralelismo-2026-10-24).
 
-- O orquestrador (`test_verification_profiles.py`): o `TMPDIR` das etapas é
-  a raiz da rodada e some no sucesso e na falha; um órfão de pid morto é
-  apagado e o de pid vivo fica; jobs calculados de uma `MemAvailable`
-  falsa, e o valor do ambiente respeitado.
-- Runner: um crate de rascunho (pasta privada no teste, apagada no sucesso
-  e na falha, saída 101 mantida, `cargo run` direto); e `cargo test -p
-  kinein-core` sem deixar nada no `/tmp`.
-- Scrollback: reprova com um `TMPDIR` longo antes da mudança e passa depois.
-- Mutações: sem o `rm` do runner, sem o `trap` do gate, sem a varredura de
-  órfãos, e jobs ignorando a memória.
-- Gate rápido estrito medido pelo amostrador de memória: pico, mínimo de
-  memória disponível, swap sem crescer e o `/tmp` igual antes e depois.
-
-**Linha de base medida (2026-10-24, 19:22–19:44, gate rápido estrito no
-checkout, com um `.rs` do core e um `.h` da UI tocados, a carga típica de
-uma fatia; `/home/hugh/.cache/kinein-h4b2b4j-proofs/`).**
-
-- Tempo: 1.311 s (21 min 51 s), dos quais **1.111 s no `verificar-cpp.sh`**
-  (85%): o clang-tidy analisa 48 arquivos em série, ~23 s cada, num núcleo.
-  Depois vêm `cargo test` (37 s), a exercitação (31 s), os harnesses QML
-  (35 s) e o build da UI (17,5 s); o resto soma menos de 90 s.
-- Memória: pico de 6,6 GB na árvore do gate (o build da UI com 18
-  compiladores) e mínimo de 9,2 GB disponíveis; o swap não cresceu.
-  Picos por processo: `rust-lld` 1.267 MiB (até 4 ao mesmo tempo), `rustc`
-  994 (até 8), `clippy-driver` 985, `ld` 841, clang-tidy 626, `cc1plus` 590.
-- A UI inteira do zero (`--clean-first`, 18 compiladores): 193 s, pico de
-  6.453 MiB, o maior `cc1plus` com 704 MiB.
-- Lixo: a rodada deixou 92 entradas e 46 MiB no `/tmp` (pastas
-  `kinein-*-tests`, `kinein-drift-<pid>-*`, `<pid>-*`), apagadas depois da
-  medição. Umas 50 rodadas explicam os 2,3 GB de restos de testes.
-
-Os números do item 3: 500 MiB por job de C++ (358 de média no pico, 704 no
-maior) e 1.000 por job de Rust (o maior `rustc` e o maior `clippy-driver`).
-O ganho de tempo está no clang-tidy em série, que é a fatia seguinte (§14.48).
-
-**Feito em 2026-10-24 (40.7 §7.357).** Como desenhado, com um achado do
-próprio gate: os gates de teste do primeiro passo herdavam o teto da rodada
-de fora (`KINEIN_GATE_CEILING_MIB`); ele passou a valer só dentro do escopo.
-Gate rápido estrito verde em 1.364 s, no escopo com teto de 12.385 MiB, sem
-nenhuma entrada no `/tmp` no fim; 11 mutações detectadas.
+**Cobertura histórica:** a implementação e as provas desta fatia estão no
+registro técnico 40.7 §7.357. Esta seção define os mecanismos e não um perfil
+particular de máquina.
 
 ### 14.48 0.4.1h4b2b4k — o gate usa a CPU inteira: clang-tidy e harnesses QML em paralelo (desenho, 2026-10-24)
 
@@ -5895,7 +5798,7 @@ nenhuma entrada no `/tmp` no fim; 11 mutações detectadas.
 e 1.111 deles (85%) foram do `verificar-cpp.sh`: o clang-tidy analisa os 48
 arquivos de `ui/src` em série, ~23 s cada, num núcleo, enquanto os outros 15
 ficam parados. Os 171 harnesses QML, também em série, levam 30 s (medido às
-20:25). O autor pediu o melhor do hardware sem perder rigor (40 §5, "lixo e
+20:25). O requisito prevê o melhor do hardware sem perder rigor (40 §5, "lixo e
 memoria do gate"): nenhuma etapa sai, nenhuma regra afrouxa.
 
 A mesma medição achou mais um lixo. O `qml6` grava o QML compilado (`.qmlc`)
@@ -5968,7 +5871,7 @@ a CPU.
 
 ### 14.49 0.4.1h4b2b4l — o ambiente no Qt do projeto, o 6.12 (desenho, 2026-10-24)
 
-**Problema.** Decisão do autor de 2026-10-24 (40 §5, "qt do projeto"): o Qt
+**Problema.** Decisão do projeto de 2026-10-24 (40 §5, "qt do projeto"): o Qt
 do projeto é o 6.12, e teste e ambiente de teste usam a mesma versão do
 frontend. Medido na data:
 
@@ -6049,9 +5952,6 @@ do gate: o socket excede os 108 bytes do Unix. A fixture precisa de um
 diretório curto próprio no cache genérico do usuário, removido pelo
 `QTemporaryDir`, em vez de usar o comprimento arbitrário do `TMPDIR` como
 se fosse o `XDG_RUNTIME_DIR`. O contrato de instância única não muda.
-O autor autorizou prosseguir em 2026-10-24; ainda não relatou a validação
-visual do Qt 6.12/PIO Home.
-
 **Achado do qmllint 6.12 (2026-10-24).** Cinco referências a ids colidem
 com propriedades homônimas: os três controllers passados ao
 `AppEnvironmentDomains`, o cabeçalho do inspetor de contexto e
@@ -6076,11 +5976,7 @@ compilados e o `ldd` de ambos usa as bibliotecas 6.12.0. Cada binário passou
 pelo primeiro frame e pelas 33 superfícies sem avisos. Quatro mutações dos
 testes QML detectadas; objeto antigo ainda detectado pela catraca do smoke.
 Nenhuma entrada nova no `/tmp`. A validação visual Qt/PIO Home foi pedida;
-o autor autorizou prosseguir, sem relatar o resultado na tela.
-
-### 14.50 0.4.1h4b2b4m — AppImage local de desenvolvimento no Qt 6.12 (desenho, 2026-10-24)
-
-**Problema.** O autor autorizou um artefato local da 0.4.1 ainda aberta,
+**Problema.** A validação de um artefato da 0.4.1 ainda aberta exige
 identificado como desenvolvimento (40 §5). O builder portátil existente usa
 Qt 6.4.2 do Debian 12; isso diverge do Qt 6.12 do projeto. A receita e o
 smoke também exigem os antigos plugins `libqwayland-egl.so` e
@@ -6108,7 +6004,7 @@ para o atalho, ícone e comando `kinein`, sobrescrevendo o estável.
 4. O instalador lê a identidade embutida. Desenvolvimento instala atalho,
    ícone e comando separados (`kinein-dev`), preservando o estável e o
    atalho do checkout. O smoke executa o instalador somente em HOME/XDG de
-   teste. Não instalar o artefato na sessão do autor.
+   teste. Não instalar o artefato na avaliação visual humana.
 5. Exigir os plugins e dependências do Qt 6.12, mantendo as verificações de
    RPATH, SVG, Wayland, WebEngine e Network. Não criar compatibilidade nova
    com o Qt 6.4. QtQuick segue usando software por padrão.
@@ -6138,7 +6034,7 @@ pacotes correspondentes ao builder antes do empacotamento. A identidade e
 o instalador passaram em HOME isolada com uma versão estável de número
 maior ao lado: canal correto, nome/id de desenvolvimento, comando
 `kinein-dev` e sentinelas do estável/checkout preservados. Nenhuma instalação
-na sessão do autor. A compilação da UI no container respeita a regra de
+na avaliação visual humana. A compilação da UI no container respeita a regra de
 não executar durante o clang-tidy.
 
 **Runtime do AppImage (auditoria, 2026-10-24).** A primeira tentativa foi
@@ -6310,7 +6206,7 @@ o recorte acima, depois picotool/west e a matriz integrada.
 ### 14.52 0.4.1h4b2b4n2 — DfuSe escolhido e destino USB revalidado (desenho, 2026-10-26)
 
 **Estado e recorte.** A n1 está em `1cdedbb`: descoberta, sem execução nativa.
-O handoff continua na 0.4.1. Esta vertical acrescenta gravação pelo `run.start`
+O resumo técnico continua na 0.4.1. Esta vertical acrescenta gravação pelo `run.start`
 atual para **um arquivo DfuSe explicitamente escolhido dentro do workspace**,
 um alvo/alternativa no arquivo, no destino USB `0483:df11` já em modo DFU,
 configuração 1/interface 0. Não deduz BIN por recência, chip por ponte USB ou
@@ -6386,7 +6282,7 @@ trocada, cancelamento, busy/liberação, armazenamento e recusa de destino
 ambíguo/Runtime. Harness com controllers/roteadores atuais, invalidação e
 seleção explícita; mutações de CRC/revalidação/reserva; gate estrito e fonte
 QA comparada. Sem DFU físico, ESP32, instalação, pacote ou publicação. Registrar
-limites reais e próximo recorte no handoff ao concluir.
+limites reais e próximo recorte no resumo técnico ao concluir.
 
 **Achados durante a validação.** O primeiro completo encontrou um teste antigo
 que ainda recusava todo DFU nativo; atualizado para exigir arquivo/destino
@@ -6433,7 +6329,7 @@ DFU ou aceite visual do autor.
 
 ### 14.53 0.4.1h4b2b4n3 — BIN conferido com o ELF do alvo CMake (desenho, 2026-10-26)
 
-**Antes do código.** Continuação autorizada pelo autor após 8310a17. O fechamento
+**Antes do código.** Continuação autorizada pela manutenção após 8310a17. O fechamento
 0.4.1 ainda exige: motores restantes e matriz integrada de ocupação/recuperação;
 Setup S1/S2 no dock com Instalar Ferramentas reformulado; kits/schema 3; aceite
 integrado, correções, gates e documentação (§11.1). O aceite físico registra
@@ -6542,7 +6438,7 @@ publicação. A h4b2b e a 0.4.1 seguem abertas.
 
 **Continuidade.** Sobre bc94e37, próximo motor do §14.32. Primeiro consultar e
 validar o seletor do destino; UF2/build e execução nativa ficam para o recorte
-seguinte. Sem instalação ou uso de placa do autor. Pico/picotool não é porta
+seguinte. Sem instalação ou uso de dispositivo físico. Pico/picotool não é porta
 serial. Escopo inicial explícito: RP2040 em BOOTSEL, VID 2e8a/PID 0003,
 picotool 2.2.0 e 2.3.1. RP2350, outros VID/PID e versões não auditadas não são
 suporte prometido por esta fatia.
@@ -6633,7 +6529,7 @@ morrer enquanto picotool ainda mantém a interface; testes em memória usam o
 mesmo caminho sem o wrapper persistente. Provar esse crash com CLI falsa e
 segundo core, sem introduzir outro supervisor.
 
-**Validação visual autorizada (autor, 2026-10-27).** Teclado/mouse e tela reais
+**Validação visual autorizada (decisão registrada, 2026-10-27).** Teclado/mouse e tela reais
 liberados para o frontend. Abrir instância de teste na sessão gráfica do
 notebook, sem fechar janela do autor, com workspace/configuração isolados.
 Conferir aba Placa, foco, consultas e saída com cliques reais na janela; separar
@@ -6800,7 +6696,7 @@ push, tag ou release.
 
 **Objetivo e fronteira.** Sobre a719b24, continuar a fundação da 0.4.1.
 Autor prioriza seu fechamento, depois fará a documentação em inglês e tratará
-o site em outra sessão para buscar colaboradores (57 §3, atualização de hoje).
+o site em uma frente independente para buscar colaboradores (57 §3, atualização de hoje).
 ESP32 CP2102 reconectado; autorização específica de 2026-10-22 preservada.
 Esta vertical aceita west 1.5.0 e Zephyr 4.2.1, runner esp32, imagem única de
 aplicação com bootloader/partições opcionais, porta explícita e build existente.
@@ -6855,14 +6751,14 @@ estrito, completo se houver C++ alterado, QA com target independente. Fontes e
 logs em cache de disco; sem resíduos /tmp ou compilar UI durante clang-tidy.
 Depois: matriz integrada/recuperação, Setup/Instalar Ferramentas e kits/schema 3.
 
-**Ponto de retomada p0 (2026-10-27, pedido do autor).** Auditoria e desenho
-encerrados nesta sessão; p1 será a implementação/validação do contrato acima.
+**Ponto de retomada p0 (2026-10-27, requisito de desenvolvimento).** Auditoria e desenho
+encerrados nesta verificação; p1 será a implementação/validação do contrato acima.
 Nenhum produtor west entregue e IPC aceito continua 0.197.0. Um esboço de
 consulta Python foi retirado da árvore de produto e guardado, sem validação,
 em `~/.cache/kinein-h4b2b4p-proofs/draft/query.py`: é referência de trabalho,
 não implementação aprovada. Deve ser revisado antes de reaproveitar.
 West 1.5.0 e dependências instalados no venv privado dessa pasta, conforme
-autorização anterior de instalação no usuário e aviso nesta sessão; clone
+autorização anterior de instalação no usuário e aviso nesta verificação; clone
 esparso oficial Zephyr v4.2.1 no subdiretório zephyr, commit
 64e98eb5278d790f3b3e5279ca8b39b45097bbc0. Nenhuma instalação global.
 

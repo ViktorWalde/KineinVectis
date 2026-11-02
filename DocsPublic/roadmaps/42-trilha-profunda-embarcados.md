@@ -3,15 +3,14 @@
 > **Classe: PLANO**, com o ESTADO medido em **2026-09-12** na §1. Sucede o
 > [`41`](41-ecossistema-embarcados-e-python.md) na parte de embarcados: o 41
 > inventariou e ordenou em blocos; este documento **reorganiza por
-> profundidade**, a pedido do autor em 2026-09-12 — *"quero profundidade e não
-> um monte de corte vertical raso"* — e amplia o alvo para **Linux/software
+> profundidade**, com critérios de ponta a ponta por família, e amplia o alvo para **Linux/software
 > embarcado**. A fila continua sendo o [`40`](40-estado-e-continuidade.md) §4;
 > este é o mapa que a ordena daqui em diante. **Em 2026-09-12 à tarde ganhou
 > a §8** (o "efeito JetBrains": zero-config, indexação visível, intention
 > actions, project model antes do LSP, toolchain manager com sysroot, remote
 > deploy & debug, SVD com escrita, sondas visuais — o que já existe medido, o
 > que falta e em que pilar) **e a §9** (a trilha completa em Python com
-> C/C++/Rust: bare metal → edge → backend → banco), a pedido do autor.
+> C/C++/Rust: bare metal → edge → backend → banco).
 >
 > **O que "profundo" significa aqui, dito de forma verificável** — sem isto a
 > palavra é sentimento:
@@ -50,7 +49,7 @@ Linguagens       C/C++ (ESP-IDF, Zephyr, pico-sdk, CMSIS/Cube, CMake puro)
                  MCU, CPython no Linux embarcado)
 ```
 
-**Decidido pelo autor em 2026-09-12 (as três perguntas da §7):**
+**Decidido pela manutenção em 2026-09-12 (as três perguntas da §7):**
 
 ```text
 a mesa           SO' o ESP32 classico, por ora. C3/C6, STM32 e Pico: pronto = gate
@@ -177,13 +176,13 @@ ser profundo**, **como se prova**, e **o que NÃO entra**.
 
 ### P0 — O modelo do projeto embarcado, e o projeto INTEIRO lido
 
-**O que é.** Duas coisas, por decisão do autor em 2026-09-12: (a) o
+**O que é.** Duas coisas, por decisão do projeto em 2026-09-12: (a) o
 **modelo** do projeto embarcado — o domínio `project`; (b) a **leitura do
 projeto inteiro** — o domínio `index` (todas as pastas, arquivos, funções e
 tipos, C/C++/Rust/Python) **mais o contexto de código/compilador por arquivo**.
 A parte (b) é o "entender o projeto inteiro" da especificação do KSWE
 ([`KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE…`](56-motor-semantico-profundo-cpp-rust.md)
-§2), reaberta pelo autor **nesta forma** — índice estrutural próprio +
+§2), reaberta pela manutenção **nesta forma** — índice estrutural próprio +
 contexto de compilador, com o LSP por cima — sem adotar a especificação
 inteira (scheduler, brokers, RAM budget) até que a dor a peça.
 
@@ -618,9 +617,9 @@ nunca gerado), **J-Link Software** (a sonda funciona via probe-rs/OpenOCD),
 3  P0 primeiro: confirmado
 ```
 
-## 8. O "efeito JetBrains" — a experiência como critério de pronto (autor, 2026-09-12)
+## 8. O "efeito JetBrains" — a experiência como critério de pronto (decisão registrada, 2026-09-12)
 
-**O pedido do autor, na tarde de 2026-09-12**, depois da quinta fatia do P0:
+**O requisito de desenvolvimento, na tarde de 2026-09-12**, depois da quinta fatia do P0:
 o que faz alguém amar o CLion/PyCharm/RustRover é a sensação de *baterias
 inclusas* — **zero-config ao abrir**, **indexação agressiva** visível,
 **intention actions** (Alt+Enter) proativas, um **Project Model** construído
@@ -811,9 +810,9 @@ experiência de "não editei JSON nenhum", sem quebrar a regra de instalação;
 (2) o SVD com escrita é a peça de maior valor que **não existe em nenhuma
 forma** hoje, e o caminho pelo `gdb -i dap` já está medido do nosso lado.
 
-## 9. A trilha completa em Python (com C/C++ e Rust): bare metal → edge → backend → banco (autor, 2026-09-12)
+## 9. A trilha completa em Python (com C/C++ e Rust): bare metal → edge → backend → banco (decisão registrada, 2026-09-12)
 
-**O pedido do autor:** *"esquece a parte de simulação física/matemática;
+**O requisito de desenvolvimento:** *"esquece a parte de simulação física/matemática;
 vamos refinar ao máximo para sistemas embarcados e também para
 desenvolvimento de software — no Python dá para fazer, com C/C++ ou Rust, um
 projeto desde bare metal → edge computing → backend e banco de dados de

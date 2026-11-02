@@ -1,8 +1,7 @@
 # 38 — A dívida restante, medida, e por onde continuar
 
-> **Classe: ESTADO.** Medido em **2026-09-03**, no fim de uma sessão longa.
-> Existe por um motivo específico: **o contexto daquela sessão acabou no meio
-> do trabalho**, e este documento é o que impede a próxima de redescobrir tudo.
+> **Classe: LOG.** Diagnóstico de dívida medido em **2026-09-03**.
+> A fila de dívida foi superada em 2026-09-04, conforme a §0.
 >
 > **Regra zero vale aqui como em tudo:** antes de aceitar qualquer item como
 > pendente, MEÇA. Cada linha carrega o comando.
@@ -38,7 +37,7 @@ protocolo   0.78.0  (era 0.71.0 quando este documento nasceu)
 testes      529 Rust verdes  (eram 467 quando este documento nasceu)
 dominios    17 no core        (contagem por pasta; a de 21 misturava modulo
                               de arquivo unico com dominio de pasta)
-catraca     1 arquivo em debito   (eram 8 aqui, e 18 no inicio daquela sessao)
+catraca     1 arquivo em debito   (eram 8 no diagnóstico de 2026-09-03)
 gate        18 verificacoes       (eram 14; medido em 2026-09-04)
 ```
 
@@ -77,7 +76,7 @@ débito. Os dois visuais são candidatos ao padrão que funcionou em `GitPanel`
 (764 → 288): **extrair componente por área visual**, com o posicionamento
 ficando no pai.
 
-**O padrão provado nesta sessão, três vezes:** `GitPanel`, `DebugPanel` e
+**O padrão provado nesta verificação, três vezes:** `GitPanel`, `DebugPanel` e
 `editor_highlighter.cpp`. Ver `roadmaps/34` §7 etapas 16 e 17.
 
 ### 2.3 Perto do limite — cortar aqui seria corte por TAMANHO (3 arquivos)
@@ -96,7 +95,7 @@ O caminho certo: eles encolhem quando uma fatia funcional tocar a área — foi
 assim que cinco das dez etapas do roadmap 30 aconteceram. `SearchPanel` já tem
 uma fatia esperando (`arquitetura/33` §8a: o `TextArea` do replace).
 
-## 3. O que foi feito nesta sessão, para não ser refeito
+## 3. Entregas técnicas e critérios de regressão
 
 ```text
 roadmap 34  etapas 11, 11.1, 12, 13, 14, 15, 16, 17   TODAS
@@ -153,12 +152,12 @@ segurança.
 ### 4.4 A lacuna que não é técnica
 
 **O registro de saídas do dogfooding está VAZIO**. Enquanto ele estiver assim, a
-ordem da frente C é palpite. O autor instalou o AppImage atual em 2026-09-03 —
+ordem da frente C é palpite. O ambiente de teste passou a incluir o AppImage atual em 2026-09-03 —
 a primeira entrada real vale mais que qualquer refatoração desta lista.
 
 ## 5. Sobre "pesquisar as melhores arquiteturas"
 
-Pedido do autor em 2026-09-03, e a resposta honesta é que **este projeto não
+Pedido do projeto em 2026-09-03, e a resposta honesta é que **este projeto não
 tem problema de arquitetura desconhecida** — tem 8 arquivos acima de uma linha,
 com diagnóstico individual na §2.
 

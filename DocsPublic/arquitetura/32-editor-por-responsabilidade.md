@@ -212,7 +212,7 @@ evidência"*. Corrigido o prazo para 1.900 ms, a mutação cai.
 
 ## 8. A decisão que estava em aberto — RESPONDIDA em 2026-09-03
 
-> **DECIDIDA pelo autor em 2026-09-03: saída (a), a terceira fatia.** Corta-se
+> **DECIDIDA pela manutenção em 2026-09-03: saída (a), a terceira fatia.** Corta-se
 > o `ShellWorkspaceHost.qml` PRIMEIRO; só depois se reavalia a fachada. Nenhum
 > limite foi levantado — a §4 regra 8 não foi acionada. O registro da decisão,
 > com a medição que a sustenta, está na §8.4.
@@ -269,7 +269,7 @@ qualidade do código — o mesmo diagnóstico que corrigiu a categoria do
 325 contra 300 (um quase-acerto); este está em **791 contra 400**, quase o
 dobro. Nenhum limite defensável cobre isso.
 
-### 8.3 A recomendação desta sessão, e ela não decide nada
+### 8.3 Alternativas arquiteturais em avaliação
 
 Nem (a) nem (b) puros. O que a medição sugere é uma **terceira fatia própria**,
 que não é a etapa 6:
@@ -473,5 +473,5 @@ não mudaram de arquivo — **deixaram de existir**. O host de overlay lê
 **O que isto NÃO mudou:** o `EditorController` continua em 791/400, congelado
 pela decisão da §8.4. Ele segue sendo o único item da catraca, e as duas saídas
 — dissolver a fachada (~190 pontos de chamada em 15 arquivos, medido em
-2026-09-03) ou corrigir a categoria — continuam sendo decisão do autor, não
+2026-09-03) ou corrigir a categoria — continuam sendo decisão do projeto, não
 desta sessão. Ver [`../roadmaps/39-divida-tecnica-paga.md`](../roadmaps/39-divida-tecnica-paga.md) §6.

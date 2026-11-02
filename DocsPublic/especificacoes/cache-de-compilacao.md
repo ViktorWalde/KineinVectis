@@ -6,18 +6,18 @@
 > **Origem:** dois relatórios de pesquisa do autor, ambos de 2026-09-26 (não
 > publicados). Este documento é a versão pública e **medida** — o que foi
 > conferido nesta máquina — e é a fonte para quem colabora; uma divergência
-> com a pesquisa original se resolve por decisão do autor registrada aqui.
+> com a pesquisa original se resolve por decisão do projeto registrada aqui.
 >
 > **Esta especificação não é fatia nova: ela dá corpo à `C5` do
 > [`../roadmaps/45`](../roadmaps/45-etapa4-backend-lsp-edicao-compiladores.md)**,
 > que desde a abertura da Etapa 4 já dizia *"ccache/sccache detectados e
 > oferecidos como ação de configuração"*.
 >
-> **Fase: 0.4, junto dos embarcados — decisão do autor em 2026-09-26.**
+> **Fase: 0.4, junto dos embarcados — decisão do projeto em 2026-09-26.**
 > Nada disto entra na 0.3, pela mesma regra que mantém o trilho e os
 > embarcados fora dela.
 
-## 1. O que foi medido nesta máquina, em 2026-09-26
+## 1. Matriz de ferramentas de cache (2026-09-26)
 
 Medir antes de escrever é a regra do projeto, e aqui ela já mudou duas
 afirmações do relatório de origem.

@@ -59,7 +59,7 @@ existentes ficaram mais simples que seus equivalentes montados no terminal.
 ## 3. Trem de versões proposto
 
 O trem abaixo reduz o raio de falha e permite dogfooding entre marcos. Grafana
-na 0.3.5 e launcher/pastas antes dele estão decididos pelo autor. A alocação
+na 0.3.5 e launcher/pastas antes dele estão decididos pela manutenção. A alocação
 exata em 0.3.0–0.3.4 permanece proposta; bordas têm compromisso com a 0.3.x.
 
 | versão | corte proposto | prova que libera o corte seguinte |
@@ -199,7 +199,7 @@ terminal.* IPC            somente o que pertence ao PTY/grid
 alacritty_terminal/PTy
 ```
 
-Copy/Paste e menu não justificam outro emulador. Por decisão do autor em
+Copy/Paste e menu não justificam outro emulador. Por decisão do projeto em
 2026-09-24, `Ctrl+C` sempre envia `0x03`, com ou sem seleção; `Ctrl+Shift+C`
 copia sem consumir a seleção. `Ctrl+V` cola e `Ctrl+Shift+V` permanece.
 
@@ -582,7 +582,7 @@ parte do aceite da fatia seguinte.
 ## 16. Decisões ainda necessárias
 
 1. confirmar ou redistribuir o trem 0.3.0–0.3.4 da §3;
-2. **revisado pelo autor em 2026-09-24:** `Ctrl+C` só interrompe,
+2. **revisado pela manutenção em 2026-09-24:** `Ctrl+C` só interrompe,
    `Ctrl+Shift+C` copia; `Ctrl+Alt+V` envia `^V`;
 3. confirmar o momento de iniciar o primeiro shell (projeto ou painel);
    alcance de Selecionar Tudo já está decidido: buffer inteiro da sessão;

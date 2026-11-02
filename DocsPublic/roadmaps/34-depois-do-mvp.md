@@ -47,7 +47,7 @@ B  ATRITO DIARIO MEDIDO          o que forca sair da Kinein para outra
 C  PROFUNDIDADE                  targets, contextos, brokers, debugger de
    (TR2)                         verdade, split/multicursor.
 
-D  (era a simulacao — SAIU do produto em 2026-09-12, decisao do autor)
+D  (era a simulacao — SAIU do produto em 2026-09-12, decisão do projeto)
 ```
 
 ### A frente A não se paga de uma vez, e a evidência é o roadmap 30 inteiro
@@ -189,7 +189,7 @@ saída para outra ferramenta com **motivo exato, projeto/arquivo, ação que
 faltou, impacto e reprodução mínima**. O gatilho já foi recebido. O protocolo existia; **o artefato não** — o que havia era prosa de sessão,
 que não se consulta.
 
-**Artefato:** o registro de saídas do dogfooding, mantido pelo autor fora do
+**Artefato:** o registro de saídas do dogfooding, mantido pela manutenção fora do
 repositório (etapa 12). Append-only, com o formato de entrada, a ordem de prioridade e
 a regra de que **entrada sem reprodução mínima não conta**.
 
@@ -262,7 +262,7 @@ catraca vai barrar. Cortar e acrescentar na mesma fatia é o padrão que o roadm
 
 ## 6. FRENTE D — simulação (REMOVIDA do produto em 2026-09-12)
 
-> A frente D saiu do produto por decisão do autor em 2026-09-12; o texto desta
+> A frente D saiu do produto por decisão do projeto em 2026-09-12; o texto desta
 > seção saiu do repositório junto (40 §5). A numeração das
 > seções seguintes foi mantida.
 

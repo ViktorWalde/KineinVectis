@@ -1,10 +1,8 @@
 # 44 — Etapa 3: a arquitetura do frontend (tool windows à JetBrains, adaptadas)
 
-> Escrito em 2026-09-19 a pedido do autor, depois do teste dele na IDE com a
-> Etapa 2 fechada: *"faz a arquitetura dessa otimização do frontend"*. É
-> desenho ANTES do código, como o `43`. Cada fatia tem a medida; a ordem
-> está no §7. Depois desta etapa vem a **integração profunda com os
-> compiladores** (§8), anotada aqui como a etapa seguinte.
+> **Classe: PLANO.** Desenho do frontend definido em 2026-09-19, após a
+> Etapa 2. Cada fatia registra diagnóstico e critérios de prova; a ordem
+> está no §7. A integração com compiladores é descrita no §8.
 
 ## 1. O que o autor viu (2026-09-19, a lista, na ordem dele)
 
@@ -156,7 +154,7 @@ E3-5  Embarcados: a HUD                                                  sem con
       - PlatformIO como cidadao: quando `platformio.ini` existe, a aba
         Projeto mostra os ambientes do `pio` e o Gravar usa o `pio run -t
         upload` (ja' existe no bloco E; falta a tela dizer).
-      Medida: fotos das quatro abas com a placa do autor plugada (so' ele)
+      Medida: fotos das quatro abas com a placa de teste plugada
       e sem placa (headless); harness do controller de abas.
 
 E3-6  Containers: polimento                                               sem contrato
@@ -293,7 +291,7 @@ esta página ganha o "feito" de cada uma no §7.1.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 
-Decisão do autor (2026-09-19): depois do frontend, **a integração profunda
+Decisão do projeto (2026-09-19): depois do frontend, **a integração profunda
 com os compiladores e a exibição disso ao usuário**, por polimento e
 confiabilidade. O que isso significa aqui, para desenhar quando chegar:
 o modelo de compilação por arquivo (a CDB do file-api, os flags reais)

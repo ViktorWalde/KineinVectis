@@ -2,7 +2,7 @@
 
 > **Status revisto em 2026-08-29 — o cabeçalho anterior mentia.** Ele dizia
 > "PROPOSTA, nada aqui foi implementado" enquanto a §4.3 do MESMO arquivo
-> registrava *"APROVADA pelo autor em 2026-07-16: (b)"* e a catraca do core já
+> registrava *"APROVADA pela manutenção em 2026-07-16: (b)"* e a catraca do core já
 > estava no gate. Documento que se contradiz no topo não é proposta pendente: é
 > mapa desatualizado, e mapa desatualizado engana mais que a ausência de mapa —
 > por isso o mapa vivo, [`01-mapa-de-modulos.md`](01-mapa-de-modulos.md), é gerado do código.
@@ -10,7 +10,7 @@
 > ```text
 > ENTREGUE   Item 1 — a catraca cobre o core. `verificar-arquitetura.sh` varre
 >            `crates/` desde 2026-07-16; sao 7 arquivos do core na baseline.
-> APROVADO   §4.3, opcao (b), pelo autor em 2026-07-16: dividir a composicao
+> APROVADO   §4.3, opcao (b), pela manutenção em 2026-07-16: dividir a composicao
 >            por AREA, fazendo crescer a CONTAGEM de arquivos e nunca o limite.
 >            Virou a regra 8 da ARCHITECTURE §4.
 > ABERTO     Frente 1 (§4) — modulo por dominio na UI: um `<X>Domain` que
@@ -20,7 +20,7 @@
 >            sair do debito, e e' fatia PROPRIA.
 > ```
 >
-> Escrito em 2026-07-16 a pedido do autor, antes de mover arquivo.
+> Escrito em 2026-07-16 conforme os requisitos técnicos, antes de mover arquivo.
 >
 > Referências de arquitetura: VS Code, Zed e IntelliJ IDEA Community, em
 > **MODE-D** (referência apenas) — o padrão é aprendido, o código não entra.
@@ -41,7 +41,7 @@ falta não é desenho — são três buracos concretos:
 2. A UI nao tem padrao de composition root. O Main.qml nao chega a 400
    por router; o resto e composicao legitima e precisa de outro corte.
 3. Nao existe fronteira para SUBSISTEMA OPCIONAL. O simulador OpenGL
-   exigido pelo autor nao tem onde morar sem contaminar o nucleo.
+   exigido pela manutenção nao tem onde morar sem contaminar o nucleo.
 ```
 
 Este documento ataca os três. Não propõe reescrita.
@@ -212,7 +212,7 @@ não continha a IDE inteira.
     o ganho nao paga a complexidade nesta escala.
 ```
 
-**APROVADA pelo autor em 2026-07-16: (b).** Mantém a catraca intacta (nunca se
+**APROVADA pela manutenção em 2026-07-16: (b).** Mantém a catraca intacta (nunca se
 gira o limite para o lado confortável), e o corte por área é honesto — hosts e
 domínios são coisas diferentes.
 
@@ -349,7 +349,7 @@ apareceu; ele não conhece a forma do contrato.
 
 > Esta seção descrevia o simulador OpenGL como subsistema opcional e a colisão
 > dele com o renderer por software do AppImage (§6.2). A simulação **saiu do
-> produto em 2026-09-12** por decisão do autor (40 §5); o texto saiu do
+> produto em 2026-09-12** por decisão do projeto (40 §5); o texto saiu do
 > repositório junto. O que dela continua valendo para
 > qualquer subsistema futuro que peça GPU: o AppImage força renderer por
 > software, e é isso que faz a IDE abrir em qualquer máquina — um subsistema

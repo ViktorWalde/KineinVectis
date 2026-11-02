@@ -1,9 +1,8 @@
 # 00 — Comece aqui
 
-> **Para quem:** qualquer pessoa ou IA que vá ler, alterar ou revisar este
-> repositório sem ter estado nas conversas anteriores. Escrito em 2026-10-01 a
-> pedido do autor: "deixe tudo explícito para qualquer pessoa ou IA que queira
-> colaborar". **Este arquivo não contém fatos do projeto; ele diz onde cada fato
+> **Para quem:** contribuidores que vão ler, alterar ou revisar este
+> repositório. Este índice, criado em 2026-10-01, organiza os documentos por
+> responsabilidade técnica. **Este arquivo diz onde cada fato
 > mora.** Se ele e o documento apontado divergirem, o apontado vence.
 
 ## 1. O projeto em quatro frases
@@ -32,7 +31,7 @@ plugin de terceiros — cada "não" é uma decisão registrada
    entrada em `CONTEXTS` (`scripts/module_map.py`); um gate de ambiente novo usa
    o protocolo NÃO PROVADO sem tocar no orquestrador
    ([`contribuindo/07`](contribuindo/07-fluxo-e-responsabilidades-dos-gates.md) §1.1).
-4. **Decisão do autor não se reabre por conta própria.** Ela está registrada,
+4. **Decisão do projeto não se reabre por conta própria.** Ela está registrada,
    com data, no dono (a lista está no [`40`](roadmaps/40-estado-e-continuidade.md) §5).
    Proposta não é decisão: o [mapa de versões](roadmaps/57-mapa-de-versoes-ate-a-1.0.md)
    separa as duas. Para os rascunhos de HUD/UX de 2026-10-21, imagens não
@@ -120,7 +119,7 @@ caminho de um pedido em `arquitetura/01-mapa-de-modulos.md` → o mapa de versõ
 
 **Fazer uma mudança (uma fatia).**
 
-1. Leia o estado: o handoff no topo do `roadmaps/40` e o §4 (o que está
+1. Leia o estado: o resumo técnico no topo do `roadmaps/40` e o §4 (o que está
    aberto, com o dono de cada ordem).
 2. Ache o contexto da mudança na tabela abaixo e leia **só a linha dele**; o
    resto da documentação fica para quando a linha mandar. Depois, o "onde
@@ -132,8 +131,8 @@ caminho de um pedido em `arquitetura/01-mapa-de-modulos.md` → o mapa de versõ
 
 ### 5.1 O que cada contexto lê (desde 2026-10-15)
 
-Pedido do autor: "separar a documentação por contexto", para que ninguém leia
-o que não vai mexer ([`roadmaps/61`](roadmaps/61-organizacao-da-documentacao.md)).
+A documentação é organizada por contexto para limitar a leitura à área da
+mudança ([`roadmaps/61`](roadmaps/61-organizacao-da-documentacao.md)).
 Os contextos de código são os do mapa de módulos (`CONTEXTS` em
 `scripts/module_map.py`); cada um tem uma seção "Contextos" no
 [`arquitetura/01`](arquitetura/01-mapa-de-modulos.md), que é sempre a primeira
@@ -153,7 +152,7 @@ linha, em [`arquitetura/03-dominios/`](arquitetura/03-dominios/README.md)
 | Embarcados | [`roadmaps/52`](roadmaps/52-arquitetura-executavel-da-0.4.md) (a 0.4), [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md), [`especificacoes/embarcados-targets-flash-serial-qemu.md`](especificacoes/embarcados-targets-flash-serial-qemu.md), [`integracoes/36`](integracoes/36-ferramentas-de-embarcados.md) | [`probe.*`](arquitetura/03-dominios/probe.md), [`dfu.*`](arquitetura/03-dominios/dfu.md), [`picotool.*`](arquitetura/03-dominios/picotool.md), [`serial.*`](arquitetura/03-dominios/serial.md), [`project.*`](arquitetura/03-dominios/project.md) |
 | Toolchains e kits | [`integracoes/39`](integracoes/39-toolchains-por-alvo.md), [`build/22`](build/22-compilacao-c-cpp-rust.md) | [`toolchain.*`](arquitetura/03-dominios/toolchain.md), [`cmake.*`](arquitetura/03-dominios/cmake.md), [`cargo.*`](arquitetura/03-dominios/cargo.md), [`runConfig.*`](arquitetura/03-dominios/runConfig.md) |
 | Remote SSH | [`especificacoes/remote-ssh-ui-hud.md`](especificacoes/remote-ssh-ui-hud.md) | [`remote.*`](arquitetura/03-dominios/remote.md) |
-| Banco e observabilidade | [`arquitetura/37`](arquitetura/37-banco-de-dados.md), [`38`](arquitetura/38-provedores-de-banco-e-linguagem.md), [`39`](arquitetura/39-drivers-externos-e-compatibilidade.md), [`40`](arquitetura/40-contrato-operacional-de-drivers.md); os adiados pelo autor no [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.3 (registro) | [`datasource.*`](arquitetura/03-dominios/datasource.md), [`grafana.*`](arquitetura/03-dominios/grafana.md) |
+| Banco e observabilidade | [`arquitetura/37`](arquitetura/37-banco-de-dados.md), [`38`](arquitetura/38-provedores-de-banco-e-linguagem.md), [`39`](arquitetura/39-drivers-externos-e-compatibilidade.md), [`40`](arquitetura/40-contrato-operacional-de-drivers.md); os adiados pela manutenção no [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.3 (registro) | [`datasource.*`](arquitetura/03-dominios/datasource.md), [`grafana.*`](arquitetura/03-dominios/grafana.md) |
 | Containers | [`roadmaps/59`](roadmaps/59-fechamento-da-0.3.9.md) §2.5 (o 16b) e §3 | [`container.*`](arquitetura/03-dominios/container.md) |
 | Python | [`roadmaps/42`](roadmaps/42-trilha-profunda-embarcados.md) §9 | [`python.*`](arquitetura/03-dominios/python.md) |
 | Configuração, biblioteca, setup | [`especificacoes/fluxo-duplo-e-acoes-de-configuracao.md`](especificacoes/fluxo-duplo-e-acoes-de-configuracao.md); para Setup, [`Instalar Ferramentas`](especificacoes/instalar-ferramentas.md) | [`configAction.*`](arquitetura/03-dominios/configAction.md), [`library.*`](arquitetura/03-dominios/library.md), [`setup.*`](arquitetura/03-dominios/setup.md), [`settings.*`](arquitetura/03-dominios/settings.md), [`command.*`](arquitetura/03-dominios/command.md) |
@@ -179,8 +178,10 @@ domínio bastar; os roadmaps de etapas fechadas (o índice de
 [`roadmaps/`](roadmaps/README.md) marca quais são registro); e as
 especificações de outras áreas.
 
-**Se você é uma IA.** Tudo acima, e mais: leia
-[`contribuindo/05-com-um-agente-de-ia.md`](contribuindo/05-com-um-agente-de-ia.md).
+**Para contribuir:** consulte o
+[ritual de uma mudança](contribuindo/03-o-ritual-de-uma-fatia.md) e limite a
+leitura à área afetada. Contratos e decisões técnicas são fontes públicas;
+orientações de execução local não integram a documentação distribuída.
 Três erros já custaram fatias inteiras a este projeto, e estão documentados para
 não se repetirem: implementar a partir de uma especificação **cancelada**
 (ADR-0005), confiar num número de documento sem medir (`leitura-tecnica.md`,
@@ -189,9 +190,8 @@ deixa de funcionar em silêncio (ARCHITECTURE §8).
 
 ## 6. Só o que é público
 
-Tudo o que é preciso para colaborar está neste repositório. O autor guarda
-esboços fora dele, e **nenhum documento versionado aponta para eles**: a
-documentação pública só se refere a documentação pública (decisão do autor,
+Os requisitos para colaborar estão neste repositório. A
+documentação pública só se refere a documentação pública (decisão do projeto,
 2026-10-01; o `scripts/verificar-links-docs.sh` reprova citação de caminho
 interno). Se um texto parecer depender de algo que você não encontra aqui, é
 defeito de documentação — abra um issue.

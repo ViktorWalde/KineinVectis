@@ -54,7 +54,7 @@ ambiente que ignora a escolha explícita do usuário
 "basic" é pior que o erro: ele **parece** cifrado e não é.
 
 **A estratégia de teste que isso implica:** o caminho SEM Secret Service tem de
-ser exercitado no gate, não descoberto pelo autor. E ele nunca pode fingir
+ser exercitado no gate, não descoberto pela manutenção. E ele nunca pode fingir
 cifra.
 
 ### 2.2 DBeaver
@@ -180,7 +180,7 @@ ela.
 ## 6. O registro da decisão
 
 ```text
-DECISAO   (a) DELEGAR agora, Secret Service depois — autor, 2026-09-04
+DECISAO   (a) DELEGAR agora, Secret Service depois — decisão registrada, 2026-09-04
 ```
 
 **A escolha do autor foi a (a), com a (b) explicitamente adiada, não

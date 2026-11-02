@@ -3,12 +3,12 @@
 > **Classe: PLANO / RASCUNHO DE UX.** Pesquisa recebida em 2026-10-21.
 > **Nenhuma das imagens é fonte da verdade ou design aprovado.** A direção
 > visual depende da aprovação do autor, seguindo a interface atual da IDE.
-> A imagem 5 é a aproximação preferida pelo autor, ainda sujeita a
+> A imagem 5 é a aproximação preferida pela manutenção, ainda sujeita a
 > refinamento e aprovação visual. Não reproduzir os mockups literalmente.
 
 ## 1. O que está decidido e o que é proposta
 
-**Decidido pelo autor:** melhorar/incrementar as HUDs e polir a experiência
+**Decidido pela manutenção:** melhorar/incrementar as HUDs e polir a experiência
 sobre a UI atual, preservando organização da janela, editor prioritário,
 identidade grafite/âmbar, componentes e donos existentes. Não redesenhar a
 IDE nem transformar Embarcados em um dashboard de configurações.

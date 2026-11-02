@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O autor tornou LSP SQL obrigatório no passo 7 e pediu ferramentas existentes
+O passo 7 exige LSP SQL e integração com ferramentas existentes
 para MongoDB moderno, SQLite e InfluxDB 3 nativo, com expansão futura.
 Instalação e atualização de banco/LSP ficam a cargo do usuário. Uma versão
 moderna usada em projetos existentes e outra recente para projetos novos
@@ -55,7 +55,7 @@ integração no produto. Detalhes, fontes, licenças, donos e fatias estão no
 
 Um LSP por marca duplicaria seleção sem provar dialeto. Um único LSP SQL
 universal não cobre automaticamente MongoDB e InfluxQL. Completion própria
-e um novo parser aumentariam manutenção que o autor pediu evitar. Um host
+e um novo parser aumentariam manutenção que a especificação requer evitar. Um host
 genérico de extensões importaria dependências desnecessárias ao domínio.
 
 A opção adotada requer adaptadores pequenos para configuração e diferenças

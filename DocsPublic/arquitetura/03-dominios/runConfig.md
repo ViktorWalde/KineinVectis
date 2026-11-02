@@ -178,7 +178,7 @@ na raiz pelo `run.start`.
 - **`runConfig.flashProposal { device?, engine?, flashSizeBytes?, firmware? }` →
   `{ name, command, engine, source, warnings }` (`0.113.0`, E4 do
   `integracoes/38` §6; `firmware` em `0.116.0`).** "Gravar" como configuração de execução, na forma
-  decidida pelo autor em 2026-09-11 (o Upload do PlatformIO, o Download &
+  decidida pela manutenção em 2026-09-11 (o Upload do PlatformIO, o Download &
   Run do CLion): **sem gravar hardware ou salvar**; desde 0.186.0 pode
   consultar a versão do esptool, fora do laço e com prazo. A resposta é uma
   proposta que a UI mostra como prévia e que vira `runConfig.save` (nome

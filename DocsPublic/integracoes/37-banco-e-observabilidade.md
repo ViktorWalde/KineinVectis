@@ -115,7 +115,7 @@ A referência funcional de cliente de banco continua sendo o **DBeaver**, não o
 IntelliJ Community — que não tem Database Tools (é Ultimate), verificado em
 2026-07-17.
 
-### 4.1 Incluir DataGrip ou DBeaver na IDE? (pergunta do autor, 2026-10-08)
+### 4.1 Incluir DataGrip ou DBeaver na IDE? (pergunta da decisão registrada, 2026-10-08)
 
 **DataGrip: não.** É proprietário. Desde 2025-10-01 é gratuito só para uso
 não comercial, e o contrato desse uso (Toolbox Subscription Agreement for
@@ -182,7 +182,7 @@ documentação e o servidor, registradas porque importam:
 
 ## O TLS entrou em 2026-09-04, e a decisão vale para todos os clientes
 
-Decisão do autor, ao escolher que a IDE fale com um MongoDB remoto. Duas
+Decisão do projeto, ao escolher que a IDE fale com um MongoDB remoto. Duas
 licenças entraram no `deny.toml` com justificativa datada:
 
 | licença | crate | o que é |
@@ -213,7 +213,7 @@ mongodb 3.9        +104 crates   (o maior que o projeto aceitou)
 O item de **segredo** era o mais perigoso e o mais fácil de esquecer, e foi o
 primeiro a ser resolvido: **a IDE guarda o perfil e nunca a senha**
 ([`../seguranca/40-cofre-de-credencial.md`](../seguranca/40-cofre-de-credencial.md),
-decisão do autor em 2026-09-04). O domínio `datasource` do core nasceu com essa
+decisão do projeto em 2026-09-04). O domínio `datasource` do core nasceu com essa
 garantia testada — um campo `password` enviado pela UI é **recusado**, não
 ignorado em silêncio.
 
@@ -252,9 +252,9 @@ Donos, limites e ciclo da conexão em [arquitetura/37 §9](../arquitetura/37-ban
 
 ## 6. Descobrir e criar (2026-09-18, `0.124.0`)
 
-O primeiro teste do autor na IDE polida disse que o painel de banco "parecia
-só visual": perfil, testar, consultar — e nada para achar um banco nem para
-criar um. O que entrou (`roadmaps/40` §7.66; contrato em `arquitetura/03`):
+O painel permitia editar perfis, testar e consultar, mas não descobrir nem
+criar bancos. Recursos adicionados (`roadmaps/40` §7.66; contrato em
+`arquitetura/03`):
 
 - **Descobrir** (`datasource.discover`, ao abrir o painel e no ↻): o socket
   do PostgreSQL de distro, as portas 5432/27017 no loopback, os containers

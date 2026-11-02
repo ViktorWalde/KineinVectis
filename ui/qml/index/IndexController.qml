@@ -3,7 +3,7 @@ import QtQuick
 import KineinVectis
 
 // Estado do indice do projeto INTEIRO (pilar 0 do roadmaps/42, decisao do
-// autor em 2026-09-12: a IDE le todas as pastas, arquivos e declaracoes).
+// projeto em 2026-09-12: a IDE le todas as pastas, arquivos e declaracoes).
 //
 // Guarda os totais que o core manda (event.index.finished / index.status) e o
 // progresso enquanto constroi. NAO le arquivo nenhum: quem caminha a arvore e

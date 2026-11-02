@@ -7,9 +7,9 @@
 
 ## Contexto
 
-O terminal integrado é requisito central do produto: o autor pediu, desde o
-início, "meu terminal inteiro dentro da IDE", com os agentes de CLI (Claude,
-Codex) funcionando como funcionam fora dela.
+O terminal integrado deve preservar as capacidades de um terminal completo
+e executar CLIs interativas com o mesmo comportamento observado em um terminal
+externo, incluindo aplicações de tela inteira.
 
 O sintoma reportado — cursor "flutuando", scroll que não navega o histórico e a
 sensação de que a UI da IDE interfere ao rodar `claude`/`codex` — foi

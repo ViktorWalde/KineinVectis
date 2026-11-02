@@ -7,7 +7,7 @@
 ## `index.*` — o índice do projeto inteiro
 
 Domínio novo no protocolo `0.94.0` (pilar 0 do `roadmaps/42`, 2026-09-12).
-**Decisão do autor:** *"a IDE deve ler o projeto inteiro que for aberto… todas
+**Decisão do projeto:** *"a IDE deve ler o projeto inteiro que for aberto… todas
 as funções/arquivos/pastas"* — para Python, C, C++ e Rust.
 
 ```text

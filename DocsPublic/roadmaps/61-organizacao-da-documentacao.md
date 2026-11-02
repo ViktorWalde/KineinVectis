@@ -8,15 +8,12 @@
 > **Situação em 2026-10-15:** O1–O5 feitas (40.7 §7.278–§7.281). O que
 > fica de fora está no §5, sem decisão.
 
-## 1. O pedido
+## 1. Objetivo
 
-Do autor, em 2026-10-09 (60 §1): "separar a documentação por contexto,
-deixar tudo explícito e bem separado", para que uma pessoa ou um agente de
-IA "não fique lendo partes desnecessárias onde não vai mexer". Em
-2026-10-14 o autor voltou ao Linux e pôs o fechamento da 0.3.9 na frente,
-com a organização planejada sem bloqueá-la (40.7 §7.277). Em 2026-10-15
-pediu a organização agora, "para otimizar o desenvolvimento das versões
-futuras e a finalização da 0.3.9".
+Organizar a documentação por contexto, com leitura restrita à área alterada,
+fontes canônicas para contratos e estado, índices completos e histórico
+separado da fila atual. A organização deve reduzir duplicação e facilitar
+contribuições sem exigir a leitura integral do acervo.
 
 ## 2. O ponto de partida, medido em 2026-10-15 no `6daacd4`
 
@@ -35,7 +32,7 @@ O que isso custa, visto nas sessões de 2026-10-09 a 2026-10-15:
   "retomadas" empilhadas (2026-09-15 a 2026-10-14), cada uma com um pedaço
   de estado que outra mais nova já desmentiu. A seção §1 ("o estado, em
   números") é de 2026-10-03.
-- **O 40.7** não cabe numa leitura de agente; só se lê por trechos. Quem quer
+- **O 40.7** não cabe numa leitura inicial; só se lê por trechos. Quem quer
   as últimas entregas lê as 12 mil linhas para achar o fim.
 - **A ordem das versões** aparece, com diferenças, no cabeçalho do 40, no 57,
   no 59, no 47 e no 60.
@@ -58,7 +55,7 @@ e **a fila** (versões e o que vem a seguir).
 O mapa "contexto → leia → dispensa" mora no
 [`00-comece-aqui.md`](../00-comece-aqui.md) §5, que já é "por onde começar,
 conforme o que você veio fazer". Ele não contém fato; aponta para o dono. A
-leitura comum a todos encolhe para: 00 → o cabeçalho do 40 (o handoff) → a
+leitura comum a todos encolhe para: 00 → o cabeçalho do 40 (o resumo técnico) → a
 linha do contexto. O registro (40.7) e as partes fechadas dele saem da
 leitura obrigatória: só se leem para responder "por que isto é assim?".
 
@@ -90,7 +87,7 @@ correção é entrada nova na fase aberta, que cita a antiga.
 
 ### 3.3 O 40 só com o estado de hoje
 
-O 40 volta a ter o tamanho de um estado: o handoff curto, o estado em
+O 40 volta a ter o tamanho de um estado: o resumo técnico curto, o estado em
 números com data, a dívida da catraca, a fila aberta (apontando para o
 dono de cada item) e as decisões que não se reabrem (§5, intacta). O texto
 que sai (os cabeçalhos empilhados e as §1, §3, §4, §6 e §8 antigas) vai,
@@ -134,7 +131,7 @@ Estende o `scripts/verificar-links-docs.sh`, sem gate novo:
 - **citação resolvida:** toda citação "40.7 §7.N" num `.md` aponta uma
   entrada que existe;
 - **sem depósito:** o cabeçalho do 40 (antes do "## 1.") cabe em 60 linhas e
-  a fase aberta do 40.7 em 1500. Passou, fecha a parte ou enxuga o handoff.
+  a fase aberta do 40.7 em 1500. Passou, fecha a parte ou enxuga o resumo técnico.
 
 O `verificar-docs.sh` passa a tratar `roadmaps/registro/` como registro,
 como já trata as ADRs: número lá dentro é do dia em que foi escrito.
@@ -143,7 +140,7 @@ Cada verificação nova é provada por mutação antes do commit.
 
 ### 3.7 O 03 por domínio (O6, desenho em 2026-10-16, antes de mover)
 
-**Medido em 2026-10-16:** o 03 tem 4.096 linhas (~57 mil tokens). Os
+**Medido em 2026-10-16:** o 03 tem 4.096 linhas. Os
 domínios estão em títulos de dois níveis: de `workspace.*` a `job.*` em
 `###`, de `library.*` a `grafana.*` em `##`, e a seção "Jobs" se estende
 por 1.189 linhas porque as listas canônicas, as regras e nove domínios vêm
@@ -174,7 +171,7 @@ Nada lê as seções de domínio.
    §5.1 passa a ligar a coluna "Domínios no 03" aos arquivos.
 4. **As citações antigas** ("03 §Toolchain", links com âncora para o 03)
    continuam achando o caminho pela tabela do item 1; as do 00, do
-   `contribuindo/05` e do `CLAUDE.md` são atualizadas.
+   `contribuindo/03` e dos índices públicos são atualizadas.
 
 **Prova:** um script compara, linha a linha, o 03 de antes com a
 concatenação do 03 de depois e dos arquivos de domínio, descontados os
@@ -190,14 +187,13 @@ um contexto lê, medido antes e depois.
 | O2 | O 40.7 em partes (§3.2) e o gate do registro (§3.6) | as 273 entradas idênticas antes e depois (comparação byte a byte, só links relativos reescritos); mutações: entrada duplicada, faixa errada na tabela, citação a entrada inexistente, fase aberta acima do teto |
 | O3 | O 40 só com o estado (§3.3), o 59 §2.5 e o dono de cada ordem (§3.4) | o texto que saiu do 40 está inteiro no registro; mutação do teto do cabeçalho |
 | O4 | O 03 sem o histórico no caminho (§3.5) | as 949 linhas idênticas no 03.1; o `verificar-fiacao-ipc.sh` lê a lista canônica (onde o Rust estiver instalado) |
-| O5 | O mapa de contextos no 00 §5 e a ordem de leitura do `contribuindo/05` (§3.1) | os links do mapa existem (gate) |
-| O6 | O 03 dividido por domínio (decisão do autor, 2026-10-16): o 03 fica com as regras, as listas canônicas que o gate lê e o índice; cada domínio no seu arquivo. Desenho em §3.7 antes de mover. **Feita em 2026-10-16 (40.7 §7.306)** | os gates de fiação e de links verdes; o texto movido idêntico ao de antes (comparação por linha) |
-| O7 | Um arquivo curto de entrada para agentes na raiz, o `CLAUDE.md` (decisão do autor, 2026-10-16): aponta o 00, o 40 e o `contribuindo/05` e repete as regras que não se otimizam. **Feita em 2026-10-16 (40.7 §7.305)** | o gate de links; o Claude Code o carrega sozinho |
+| O5 | O mapa de contextos no 00 §5 e a ordem de leitura do `contribuindo/03` (§3.1) | os links do mapa existem (gate) |
+| O6 | O 03 dividido por domínio (decisão do projeto, 2026-10-16): o 03 fica com as regras, as listas canônicas que o gate lê e o índice; cada domínio no seu arquivo. Desenho em §3.7 antes de mover. **Feita em 2026-10-16 (40.7 §7.306)** | os gates de fiação e de links verdes; o texto movido idêntico ao de antes (comparação por linha) |
 
 ## 5. O que fica de fora, por enquanto
 
 - **Dividir o 03 por domínio:** saiu daqui em 2026-10-16, decidido pelo
-  autor; é a O6 (§4). Medido nessa data: 4.096 linhas (~57 mil tokens), com
+  autor; é a O6 (§4). Medido nessa data: 4.096 linhas, com
   domínios em títulos de dois níveis (uma seção "Jobs" de 1.189 linhas leva
   nove domínios dentro).
 - **Enxugar o 59.** As seções dos passos feitos (§3–§6, §5.8–§5.15) são o

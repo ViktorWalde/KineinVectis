@@ -2,7 +2,7 @@
 
 > Aberto em 2026-09-19, ao fim da Etapa 3 (roadmap 44; a E3-7 ficou
 > pendente e em 2026-09-22 foi agendada para a 0.3.5). Este documento é o
-> **brief** da etapa: o que o autor pediu, o
+> **brief** da etapa: o que a especificação requer, o
 > que a IDE já faz (medido no código, não de memória), o que falta em
 > relação ao VS Code e às IDEs JetBrains, e a ordem proposta. **A
 > arquitetura fina de cada fatia é escrita na sessão que a implementa,
@@ -24,7 +24,7 @@ quebrado em duas metades, por classe:
 **Fase:** 0.4, junto dos embarcados, antes da 1.0. Nada disto entra na 0.3 —
 mesma regra que mantém o trilho e os embarcados fora dela.
 
-## 1. O pedido do autor (2026-09-19, literal e interpretado)
+## 1. O requisito de desenvolvimento (2026-09-19, literal e interpretado)
 
 > "A próxima sessão vai focar no aprofundamento do backend, adicionar
 > funcionalidades convenientes que o VS Code/JetBrains possuem. Integração
@@ -147,7 +147,7 @@ L3  documentHighlight: `lsp.documentHighlight` no cursor parado (debounce
 L4  inlayHint: `lsp.inlayHints { range }` para a janela visível; desenho
     inline no editor (é o mais difícil de desenhar — medir a latência).
     Setting por linguagem: ligado no Rust, desligado no C++ por padrão?
-    (decisão do autor).
+    (decisão do projeto).
 L5  formatting pelo servidor: `lsp.formatting`/`rangeFormatting` e
     `onTypeFormatting` (clangd formata ao digitar `;` `}` `\n`); "formatar
     ao salvar" como setting por linguagem; `format.text` continua para
@@ -224,7 +224,7 @@ ser dividido antes de E6 (é a catraca cobrando a dívida antiga).
 
 Contrato primeiro; catracas; medir antes de afirmar; registro datado com
 evidências; um commit por fatia; nunca `git checkout <arquivo>`; a IDE
-nunca roda `sudo` nem instala em silêncio; a placa do autor nunca é
+nunca roda `sudo` nem instala em silêncio; a placa de teste nunca é
 gravada sem pedido; nada de push/release/AppImage sem o autor. E a
 **régua desta etapa**: a latência da tecla e o primeiro frame não pioram
 — toda fatia mede os dois antes e depois.
@@ -243,7 +243,7 @@ gravada sem pedido; nada de push/release/AppImage sem o autor. E a
 
 ## 7. Adendo de 2026-10-01 — a Etapa 4 como motor da 0.4 dos embarcados
 
-> **Decisão do autor em 2026-10-01.** A 0.4 continua sendo a versão dedicada
+> **Decisão do projeto em 2026-10-01.** A 0.4 continua sendo a versão dedicada
 > aos embarcados ([roadmap 49 §5](49-frontend-0.3.6-e-sequencia-0.5.md)) e
 > leva junto a integração mais profunda com compiladores e ecossistemas
 > desta etapa. O embarcado é o **tema**; as famílias L/E/C deste documento
@@ -268,7 +268,7 @@ Regras que continuam valendo, sem reabrir:
 
 - **A IDE detecta deriva, não resolve versão.** Quem resolve dependência é a
   ferramenta do ecossistema; a IDE a executa por Job e explica o resultado.
-- Nada roda `sudo` nem instala em silêncio; a placa do autor nunca é gravada
+- Nada roda `sudo` nem instala em silêncio; a placa de teste nunca é gravada
   sem pedido.
 - A régua da §5 vale: latência da tecla e primeiro frame não pioram.
 

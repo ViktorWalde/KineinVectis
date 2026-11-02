@@ -11,12 +11,12 @@ ordem de precedência quando houver conflito entre documentos.
 inclui o trabalho não publicado da 0.3.6–0.3.9. **Atualização de 2026-10-21:**
 fechamento funcional 0.4.9 → edição especial imediatamente em seguida, base
 polida da 0.5 em diante → geração/teste do AppImage local para usuários de
-teste. Estado e handoff no [40](roadmaps/40-estado-e-continuidade.md),
+teste. Estado e resumo técnico no [40](roadmaps/40-estado-e-continuidade.md),
 execução no [52 §11](roadmaps/52-arquitetura-executavel-da-0.4.md#11-ordem-e-marcos),
 contabilização de versões no [57 §1.1](roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)
 e pontos de entrada no código no [58 §4.4](roadmaps/58-onde-cada-versao-comeca-no-codigo.md#44-04--embarcados-o-quê-52-ordem-52-11).
 
-**Organização atualizada (autor, 2026-10-21):** reformular
+**Organização atualizada (decisão registrada, 2026-10-21):** reformular
 [Instalar Ferramentas](especificacoes/instalar-ferramentas.md) junto da
 migração de Setup ao dock e incluir o
 [Quality Center inicial](especificacoes/quality-center-e-gates.md) na 0.4.x.
@@ -26,43 +26,34 @@ produto e a divulgação internacional têm marco na 0.5 (57 §3 item 11).
 O [estudo de HUD/UX ROS 2](integracoes/41-ros2-hud-ux-analise-projeto.md)
 orienta a frente posterior à 0.4.9, sem antecipar sua implementação.
 
-**Estudos de HUD/UX são rascunhos (autor, 2026-10-21):** imagens não
+**Estudos de HUD/UX são rascunhos (decisão registrada, 2026-10-21):** imagens não
 representam a UI real nem aprovam design. Evoluir a interface atual,
 com refinamento/aprovação visual do autor, conforme
 [frontend §1.1](especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
 Pesquisa de Embarcados consolidada em
 [embarcados-hud-ux-0.4.md](especificacoes/embarcados-hud-ux-0.4.md).
 
-## Como a documentação está organizada (2026-09-12)
+## Organização da documentação
 
-Duas árvores, por decisão do autor em 2026-09-12 (sucede a decisão das três
-árvores de 2026-08-29 — a legada virou uma pasta dentro da privada):
+A documentação pública é autossuficiente para usar, compilar e desenvolver a
+IDE. Cada informação técnica tem um documento responsável; os demais apontam
+para ele. A documentação não inclui diários pessoais ou contexto operacional
+de ferramentas de assistência.
 
 ```text
-DocsPublic/      TODA a documentacao do projeto, versionada. Uma sessao de
-                 trabalho le esta pasta e mais nada: ela e' auto-suficiente.
-  README.md                 este indice: o mapa, a precedencia, as classes
-  leitura-tecnica.md        primeira leitura de quem e' novo: o que existe, medido
-  contribuindo.md           como contribuir (versão curta)
-  contribuindo/             o guia completo de quem chega, com ou sem IA (2026-09-19)
-  arquitetura/              contrato de engenharia (ARCHITECTURE.md), estrutura do
-                            repositorio, protocolo IPC, boot, rigor, modulos
-  roadmaps/                 planos e o ESTADO vivo (40 = a fila; 42 = a trilha)
-  especificacoes/           a visao-alvo do produto (layout, editor, fluxos,
-                            embarcados, onboarding) — alvo, nao estado
-  pesquisa/                 HIPOTESE: linhas que o autor quer perseguir e que
-                            ninguem decidiu fazer (2026-09-26). Nao e' alvo.
-  integracoes/              as ferramentas abertas que a IDE orquestra: licenca,
-                            versao, forma (crate ou processo); o registro JSON
-  build/                    ambiente de desenvolvimento, compilacao, comandos
-  seguranca/                rede de seguranca de dados, cofre de credencial
-  decisoes-adr/             decisoes de arquitetura datadas (ADR-0001..0005)
-  iconografia/              o sistema visual e os icones (assets com checksum)
-
-(fora do repo)   as notas internas do autor ficam no .gitignore. Sao esbocos:
-                 tudo o que e' preciso para colaborar esta' nesta pasta, e
-                 nenhum documento daqui aponta para elas (gate de links,
-                 desde 2026-10-01).
+DocsPublic/
+  README.md          índice, precedência, classes e política de publicação
+  leitura-tecnica.md estado implementado e primeira leitura técnica
+  contribuindo/      requisitos, fluxo de contribuição e gates
+  arquitetura/       contratos, módulos e protocolo IPC
+  roadmaps/          estado, planos e registro técnico das entregas
+  especificacoes/    requisitos de produto e propostas identificadas
+  pesquisa/          hipóteses ainda não adotadas
+  integracoes/       ferramentas, versões, licenças e formas de integração
+  build/             dependências, compilação, execução e verificação
+  seguranca/         proteção de dados e credenciais
+  decisoes-adr/      decisões arquiteturais e suas justificativas
+  iconografia/       sistema visual e recursos gráficos
 ```
 
 **Regras de nome:** pasta com nome explícito em português; documento com
@@ -88,13 +79,13 @@ voltar a valer, o conteúdo é reescrito no documento vivo relevante.
 2. ESTADO                 → tem que ser verdade HOJE. Se divergir do código,
                             o código vence e o documento se corrige no mesmo gesto.
 3. PLANO / ALVO           → aspiracional. Diverge por natureza; reconciliar.
-4. LOG                    → registro datado. Nunca reescrever. NÃO é estado.
+4. LOG                    → registro datado. Preservar fatos técnicos; remover dados pessoais. NÃO é estado.
 5. PESQUISA               → hipótese. NÃO autoriza implementar nada (2026-09-26).
 ```
 
 **Em conflito, o código vence sempre. Nenhum documento derruba uma medição.**
 
-### As quatro classes de volatilidade
+### Classes de documentação
 
 Este eixo é **ortogonal** às faixas P/T/X de audiência (mais abaixo). Ele responde outra pergunta: *"se este arquivo
 envelhecer, o que acontece?"*
@@ -102,9 +93,9 @@ envelhecer, o que acontece?"*
 | Classe | Regra | O que acontece se envelhecer | Onde |
 | --- | --- | --- | --- |
 | **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `00-comece-aqui.md` (as regras), `arquitetura/ARCHITECTURE.md` §2/§4/§5, `decisoes-adr/` |
-| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `roadmaps/40` (a fila), `leitura-tecnica.md`, `arquitetura/01` (o mapa, gerado do código), `arquitetura/02`, `arquitetura/03` |
+| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Pode induzir contribuições a reimplementar o que existe. | `roadmaps/40` (a fila), `leitura-tecnica.md`, `arquitetura/01` (o mapa, gerado do código), `arquitetura/02`, `arquitetura/03` |
 | **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `DocsPublic/especificacoes/`, `DocsPublic/roadmaps/` |
-| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `roadmaps/40.7` (o registro das entregas, separado do `40` em 2026-10-01), `decisoes-adr/` |
+| **LOG** | Registro datado das decisões e provas **daquele dia**. Não atualizar fatos históricos; remover dados pessoais quando necessário. | Nada: envelhecer é a função dele. | `roadmaps/40.7` (o registro das entregas, separado do `40` em 2026-10-01), `decisoes-adr/` |
 | **PESQUISA** | Hipótese que **ninguém decidiu fazer**. Começa dizendo o que a falsearia. Sair de lá exige decisão datada. | Nada — desde que ninguém a leia como alvo, que é o risco inteiro. | `DocsPublic/pesquisa/` |
 
 ### Duas lições de documento que mentiu
@@ -117,13 +108,10 @@ passou inteiro para o [`roadmaps/40`](roadmaps/40-estado-e-continuidade.md): um
 documento que para de ser atualizado continua com o crachá de estado no pescoço,
 e mente.
 
-**Log em primeiro na precedência engana** (2026-07-17). Um log datado de 44
-entradas estava em primeiro lugar, descrito como "estado real". Foi assim que uma
-IA reimplementou um seletor que o autor mandou remover no mesmo dia e listou como
-pendente um harness entregue havia 24 horas. **Log é ótimo para responder "por
-que isto é assim?". É péssimo para responder "o que existe hoje?" — essa pergunta
-se responde no código.** Por isso o registro deste projeto (`roadmaps/40.7`) é
-LOG e mora separado do estado (`roadmaps/40`).
+**Registros históricos não definem o estado atual.** Um log descreve decisões
+e provas de uma data; o código e os gates determinam a implementação atual.
+Por isso o registro deste projeto (`roadmaps/40.7`) é LOG e mora separado do
+estado (`roadmaps/40`).
 
 ### A regra que separa registro de mentira
 
@@ -146,7 +134,7 @@ mudar X → olhe aqui", ritual de uma mudança e o gate.
 
 Para localizar os arquivos de cada domínio, use [contribuindo.md](contribuindo.md)
 §3. **O que vem a seguir** está no [roadmap 40](roadmaps/40-estado-e-continuidade.md):
-o handoff no topo e, no §4, a próxima fatia de cada frente com o documento
+o resumo técnico no topo e, no §4, a próxima fatia de cada frente com o documento
 dono da ordem. **O que cada contexto lê** está no
 [`00-comece-aqui.md`](00-comece-aqui.md) §5. As ordens de setembro (Etapas 1
 e 2, o panorama do 40 §4.2) são registro desde 2026-10-15, em
@@ -159,7 +147,7 @@ DocsPublic/
 ├── 00-comece-aqui.md  a porta de entrada: regras, onde mora cada fato
 ├── arquitetura/       mapa de módulos (gerado), contrato de engenharia, protocolo IPC, boot, rigor
 ├── build/             ambiente, comandos de compilação e gate de verificação
-├── contribuindo/      o guia completo de quem chega, com ou sem IA
+├── contribuindo/      guia técnico de contribuição
 ├── decisoes-adr/      decisões arquiteturais registradas
 ├── especificacoes/    a visão-alvo do produto + diagramas
 ├── integracoes/       como adotar uma ferramenta; o registro auditável de componentes
@@ -170,6 +158,14 @@ DocsPublic/
 ```
 
 ## Repositório público × cópia de distribuição
+
+O conteúdo público contém somente informações técnicas necessárias ao uso,
+desenvolvimento e distribuição da IDE. Relatos pessoais de sessão,
+orientações locais de agentes, permissões de execução, caminhos de contas e
+identificadores de dispositivos não pertencem a esta documentação. Exemplos
+usam contas e endereços fictícios. Registros preservam decisões, procedimentos
+e resultados técnicos; dados locais devem ser removidos antes da publicação.
+O gate de documentação verifica essa separação também nos arquivos novos.
 
 Este repositório é público, e `DocsPublic/` é a documentação de quem colabora.
 Outra coisa é a **cópia de distribuição** (o pacote para quem só usa a IDE): ela
@@ -189,7 +185,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | --- | --- |
 | [leitura-tecnica.md](leitura-tecnica.md) | **Comece por aqui se você é novo no projeto** (remedida em 2026-09-10): o que a IDE é e não é, o peso medido de cada camada, o que existe de verdade por domínio, onde a arquitetura está sob tensão e o que a direção escolhida custa |
 | [contribuindo.md](contribuindo.md) | **Onde olhar para alterar/implementar**: arquitetura, mapa por área, ambiente, ritual da mudança, gate e convenções |
-| [contribuindo/](contribuindo/README.md) | **O guia completo de quem chega** (2026-09-19): a ideia e o que o projeto recusa ser, o ambiente e os presets, o ritual de uma fatia, cada gate e o porquê, trabalhar com um agente de IA (e sem), o mapa por área |
+| [contribuindo/](contribuindo/README.md) | **O guia completo de quem chega** (2026-09-19): escopo, ambiente, presets, fluxo de uma mudança, gates e mapa por área |
 | [integracoes/README.md](integracoes/README.md) | **Entrada obrigatória para adotar qualquer ferramenta**: modos A–D, gate de auditoria, níveis L0–L10, checklist de 10 passos e o índice do que já está adotado |
 | [integracoes/36-ferramentas-de-embarcados.md](integracoes/36-ferramentas-de-embarcados.md) | **Levantamento de embarcados** (2026-09-03): probe-rs, OpenOCD, pyOCD e QEMU com licença verificada na fonte e — o que decide o desenho — qual protocolo cada uma fala. Candidatas, **não** adotadas |
 | [integracoes/37-banco-e-observabilidade.md](integracoes/37-banco-e-observabilidade.md) | **Levantamento de banco e observabilidade** (2026-09-03): Grafana (AGPL-3.0) e TimescaleDB (Apache-2.0 + Timescale License). A licença do Grafana decide a **forma** da integração; a do TimescaleDB tem parte não-OSI, e isso está dito |
@@ -247,9 +243,9 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [roadmaps/29-verticais-de-linguagem.md](roadmaps/29-verticais-de-linguagem.md) | **Verticais C/C++, Rust e Python medidas**: o que existe hoje por linguagem, por que Python é reconhecido e ignorado, o que falta para C/C++ sem atrito, e onde está o risco proprietário real (Pylance) |
 | [roadmaps/30-caminho-para-o-mvp.md](roadmaps/30-caminho-para-o-mvp.md) | **As etapas para o MVP, em ordem linear** (decidida em 2026-08-30): o que falta medido item por item contra a spec de MVP, e a ordem por dependência |
 | [roadmaps/34-depois-do-mvp.md](roadmaps/34-depois-do-mvp.md) | **Sucessor do 30, o pós-MVP** (2026-09-02): as quatro frentes — dívida que cobra pedágio, atrito diário medido, profundidade (TR2) e a simulação —, o estado medido item a item, a ordem linear recomendada e o comando que decide se cada item ainda existe |
-| [roadmaps/35-ambiente-cpp-e-embarcados.md](roadmaps/35-ambiente-cpp-e-embarcados.md) | **Sucessor parcial do 34** (2026-09-03): ambiente C/C++ facilitado (catálogo de bibliotecas curado e auditado, `find_package`/`FetchContent` pinado), embarcados reordenado de L6 por decisão registrada, e a simulação — com as decisões de escopo tomadas pelo autor e o que já existe medido |
+| [roadmaps/35-ambiente-cpp-e-embarcados.md](roadmaps/35-ambiente-cpp-e-embarcados.md) | **Sucessor parcial do 34** (2026-09-03): ambiente C/C++ facilitado (catálogo de bibliotecas curado e auditado, `find_package`/`FetchContent` pinado), embarcados reordenado de L6 por decisão registrada, e a simulação — com as decisões de escopo tomadas pela manutenção e o que já existe medido |
 | [roadmaps/42-trilha-profunda-embarcados.md](roadmaps/42-trilha-profunda-embarcados.md) | **A trilha PROFUNDA de embarcados** (2026-09-12), sucessora do 41 nessa parte: o que a IDE lê de um projeto hoje (medido — e por que isso é a primeira lacuna), a análise do que se repete em todos os levantamentos (identidade/modelo, processo, canal, permissão), oito pilares com critério de pronto POR FAMÍLIA — modelo do projeto, ambiente, ciclo MCU, depuração, Python no embarcado, teste, Linux embarcado (SSH/Yocto/Buildroot/container por dentro), Rust —, a ordem e as três decisões que pede ao autor (respondidas); e, desde a tarde de 2026-09-12, o **"efeito JetBrains" como critério de pronto** (§8: o que já existe medido, o que falta por pilar, com ferramenta e licença) e a **trilha Python completa** bare metal → edge → backend → banco (§9) |
-| [roadmaps/41-ecossistema-embarcados-e-python.md](roadmaps/41-ecossistema-embarcados-e-python.md) | **O ecossistema aberto de embarcados e Python em ORDEM LINEAR** (2026-09-11): o que o VS Code oferece para Python, C/C++, Rust e embarcados, a ferramenta aberta por trás de cada funcionalidade com licença lida no arquivo, o que a IDE já tem medido, o que NÃO entra (Pylance, Serial Monitor fechado, cpptools proprietário…) e os seis blocos A–F. Registra a decisão do autor que reverte o "Python adiado" |
+| [roadmaps/41-ecossistema-embarcados-e-python.md](roadmaps/41-ecossistema-embarcados-e-python.md) | **O ecossistema aberto de embarcados e Python em ORDEM LINEAR** (2026-09-11): o que o VS Code oferece para Python, C/C++, Rust e embarcados, a ferramenta aberta por trás de cada funcionalidade com licença lida no arquivo, o que a IDE já tem medido, o que NÃO entra (Pylance, Serial Monitor fechado, cpptools proprietário…) e os seis blocos A–F. Registra a decisão do projeto que reverte o "Python adiado" |
 | [roadmaps/40-estado-e-continuidade.md](roadmaps/40-estado-e-continuidade.md) | **COMECE POR AQUI ao retomar — é a FILA VIVA** (remedido em 2026-09-10, com o gate verde): o estado medido, o único arquivo que resta na catraca e por que ele não se corta, o que está aberto e as decisões que não se reabrem. O que cada fatia entregou está no [`40.7`](roadmaps/40.7-registro-das-entregas.md) |
 | [roadmaps/39-divida-tecnica-paga.md](roadmaps/39-divida-tecnica-paga.md) | **O registro da dívida paga** (2026-09-04): a dívida da catraca paga de 8 arquivos para 1 — cada corte com a pergunta que o justifica, as regras que saíram da UI, as duplicações que já tinham divergido, e o único arquivo restante com as duas saídas medidas para o autor decidir |
 | [roadmaps/38-divida-restante-e-continuidade.md](roadmaps/38-divida-restante-e-continuidade.md) | **Superado pelo 39** na parte de dívida (2026-09-03): registro de como a fila estava quando o contexto acabou. A §4 (o que está aberto e NÃO é dívida) continua valendo |
@@ -320,13 +316,13 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 O eixo de **audiência** citado na tabela de volatilidade:
 
 ```text
-P  PUBLICO   entregue a terceiros. Hoje: README.md, DocsPublic/manual.md, DocsPublic/tutorial.md.
-T  TECNICO   quem compila/altera o projeto. Hoje: DocsPublic/ inteira.
-X  INTERNO   as notas e esbocos do autor, fora do repositorio. Nada em P ou T
-             depende deles.
+P  USO       documentação pública para uso e distribuição. Hoje: README.md, DocsPublic/manual.md, DocsPublic/tutorial.md.
+T  TECNICO   documentação pública para quem compila/altera o projeto. Hoje: DocsPublic/ inteira.
+X  LOCAL     notas de execução e orientações privadas, ignoradas pelo Git.
+             Não são documentação publicável; P e T não dependem delas.
 ```
 
-O eixo P/T/X responde *"quem pode ler?"*; as quatro classes de volatilidade
+O eixo P/T/X responde *"quem pode ler?"*; as classes de documentação
 respondem *"o que acontece se envelhecer?"*. São ortogonais: um documento
 TÉCNICO pode ser CONTRATO (`ARCHITECTURE.md`) ou PLANO (`DocsPublic/especificacoes/`).
 

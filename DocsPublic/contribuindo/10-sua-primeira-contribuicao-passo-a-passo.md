@@ -186,7 +186,7 @@ do clang-tidy e a foto.
 ```text
 feat(banco): os chips cabem; datasource.destroy — remover o que foi criado (E3-1, 0.129.0)
 
-- o quê e por quê (o pedido do autor);
+- o quê e por quê (o requisito de desenvolvimento);
 - o contrato e o plano por motor;
 - o achado (destroy → destroyProfile);
 - Provado: … (testes, harness, gates, números);

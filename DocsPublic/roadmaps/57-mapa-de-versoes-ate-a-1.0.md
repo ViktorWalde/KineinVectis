@@ -18,9 +18,9 @@ documento: **ninguém (pessoa ou IA) pode tratar uma proposta como decisão.**
 | Situação | Significa | Quem pode mudar |
 | --- | --- | --- |
 | **ENCERRADA** | lançada; o registro está no `CHANGELOG.md` e no [`40.7`](40.7-registro-das-entregas.md) | ninguém: é histórico |
-| **EM CURSO** | decidida pelo autor e em implementação | o autor, com registro no dono |
-| **PLANEJADA** | escopo e ordem decididos pelo autor, com documento dono | o autor, com registro no dono |
-| **PROPOSTA** | agrupamento sugerido, **sem decisão do autor** | o autor decide; até lá não se implementa nada a partir dela |
+| **EM CURSO** | decidida pela manutenção e em implementação | o autor, com registro no dono |
+| **PLANEJADA** | escopo e ordem decididos pela manutenção, com documento dono | o autor, com registro no dono |
+| **PROPOSTA** | agrupamento sugerido, **sem decisão do projeto** | o autor decide; até lá não se implementa nada a partir dela |
 
 ## 1. A linha do tempo
 
@@ -81,19 +81,19 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   até a **0.4.9**; a ordem operacional pertence ao 52 §11.
 - A conclusão da 0.4.9 exige jornadas verificadas, correções das falhas
   encontradas, auditoria visual e funcional, gates completos e documentação
-  coerente. **Atualização do autor em 2026-10-21:** isso fecha o marco
+  coerente. **Atualização do projeto em 2026-10-21:** isso fecha o marco
   funcional; executar a edição especial imediatamente em seguida e validar
   o conjunto polido antes de alinhar versão do artefato, manifests/notas e
   **gerar/testar o AppImage localmente**. Não gerar o pacote de teste entre
   a 0.4.9 e a edição especial. O binário do checkout ainda diz
   `0.3.9`; protocolo e versão de produto têm numerações independentes.
-- **Prioridade esclarecida após o handoff (2026-10-20):** eficiência e
+- **Prioridade esclarecida após o resumo técnico (2026-10-20):** eficiência e
   fechamento completo de cada escopo, incluindo a UI/UX necessária ao uso;
   não acumular pendências para o final. A 0.4.9 entrega a base pronta e
   coerente. Em seguida, o autor confirmou uma **etapa especial de revisão
   de HUD/UX/UI após concluir a 0.4.9**, para procurar componentes, estados
   ou estilos esquecidos e incompatíveis com o padrão moderno da IDE.
-  **Atualização do autor em 2026-10-21:** edição especial associada à **0.5**,
+  **Atualização do projeto em 2026-10-21:** edição especial associada à **0.5**,
   com foco em otimização, acabamento e pequenos detalhes. Ela vem em seguida
   da 0.4.9, constitui a base da 0.5 em diante e **precede o AppImage**.
   Patch/identificação do artefato e cronograma não fixados. A reformulação
@@ -101,7 +101,7 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   **0.4.x**, aproveitando as
   mudanças de frontend. Ela não recebe pendências desta entrega.
   Sequência no 52 §11.1; cobertura da revisão no 52 §14.17/§14.17.1.
-- **Esclarecimento visual do autor em 2026-10-21:** incluir uma frente no
+- **Esclarecimento visual do projeto em 2026-10-21:** incluir uma frente no
   roadmap não aprova o desenho sugerido. Estudos/imagens de frontend são
   rascunhos, e a direção visual depende da aprovação dele sobre a UI atual.
   Regra em [frontend §1.1](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21);
@@ -131,7 +131,7 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
   tutoriais e entrada de novos usuários em inglês na 0.5, mantendo português.
   Componentes tocados antes já usam strings traduzíveis. Divulgação em
   Discord/GitHub é intenção de lançamento, não autorização para enviar
-  mensagens ou publicar nesta sessão; aceite em §3 item 11.
+  mensagens ou publicar nesta verificação; aceite em §3 item 11.
 
 ## 2. Versão a versão
 
@@ -142,16 +142,16 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 | 0.3.6 | FEITA NO CHECKOUT (2026-10-03) | limpeza e base | G0 (gates antes do código — feito), terminal mudo, passeio por superfícies, inventário F0, layout versionado | [`53`](53-arquitetura-executavel-da-0.3.6.md) §11, [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §4 | gate completo, passeio sem aviso no AppImage, telas nas três larguras (53 §11) |
 | 0.3.7 | FEITA NO CHECKOUT (2026-10-03) | navegação | trilho por áreas, painel de baixo contextual | 53 §5.4–§5.5 | idem |
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
-| 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pelo autor, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
+| 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pela manutenção, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização FEITA (2026-10-15, 61 §4; continua junto de cada fatia) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
-| 0.4.0–0.4.9 | EM CURSO; fechamento funcional na 0.4.9, depois edição especial e só então AppImage (autor, 2026-10-21); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Instalar Ferramentas reformulado e Quality Center inicial (autor, 2026-10-21); Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11/§11.1, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux, Setup e Quality Center verificadas, auditoria/gates completos, documentação; artefato somente após a edição especial (§1.1; 52 §10) |
-| edição especial | PLANEJADA (autor, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
-| edição especial de HUD/UX/UI, base da 0.5 em diante | PLANEJADA (autor, 2026-10-20/21), imediatamente após fechar a 0.4.9 e antes do AppImage; patch/identificação do artefato a definir | otimização e acabamento | auditoria rigorosa de consistência, densidade, tipografia, foco, acessibilidade e desempenho; pequenos achados sobre a base funcional já entregue | 52 §14.17/§14.17.1 | jornadas e gates do conjunto polido; depois gerar/testar AppImage, incluindo smokes e ambiente mínimo; não confundir com a edição Windows + WSL2 do 60 |
+| 0.4.0–0.4.9 | EM CURSO; fechamento funcional na 0.4.9, depois edição especial e só então AppImage (decisão registrada, 2026-10-21); incorpora a entrega não publicada 0.3.6–0.3.9 (§1.1) | embarcados e consolidação da IDE | contexto, cross, tamanho/cache, gravação/depuração/SVD, **PlatformIO tier 1**, emuladores, C puro, CPython/MicroPython/CircuitPython, Linux embarcado, integrações nativas opcionais; Instalar Ferramentas reformulado e Quality Center inicial (decisão registrada, 2026-10-21); Banco na 0.4.5; auditoria e polimento geral de frontend antes do pacote | [`52`](52-arquitetura-executavel-da-0.4.md) §11/§11.1, §14.14–14.17 | jornadas J1–J5 e de C/Python/Linux, Setup e Quality Center verificadas, auditoria/gates completos, documentação; artefato somente após a edição especial (§1.1; 52 §10) |
+| edição especial | PLANEJADA (decisão registrada, 2026-10-08; retomada em 2026-10-09, Windows 11 Pro) | Windows + WSL2 | a IDE no Windows sem atrito com o WSL2, para embarcados e comunicação USB | [`60`](60-windows-e-edicao-especial.md) | a desenhar no Windows (60 §4) |
+| edição especial de HUD/UX/UI, base da 0.5 em diante | PLANEJADA (decisão registrada, 2026-10-20/21), imediatamente após fechar a 0.4.9 e antes do AppImage; patch/identificação do artefato a definir | otimização e acabamento | auditoria rigorosa de consistência, densidade, tipografia, foco, acessibilidade e desempenho; pequenos achados sobre a base funcional já entregue | 52 §14.17/§14.17.1 | jornadas e gates do conjunto polido; depois gerar/testar AppImage, incluindo smokes e ambiente mínimo; não confundir com a edição Windows + WSL2 do 60 |
 | 0.5.x | PLANEJADA; evolui sobre a base 0.4.9 aprimorada pela edição especial, com notas do próprio delta (§1.1) | ambiente, capacidades e internacionalização | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo; evolução de Quality Center/integrações; o que restar do inglês (a UI já fica em inglês no polimento da 0.4 e a documentação e a divulgação vêm com a 0.4 finalizada, decisão de 2026-10-24) | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | por fatia; corte pela evidência (49 §6) e jornadas em português/inglês |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
 | 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
 | 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
-| 0.9 | PLANEJADA; a CI pública e a porta para colaboradores antecipadas (autor, 2026-10-17, §3 item 6) | distribuição e comunidade | CI pública, documentação pública, diagnóstico de falha sem telemetria, processo de release | 21 §M7 | "outra pessoa instala e contribui sem mim" (21 §M7) |
+| 0.9 | PLANEJADA; a CI pública e a porta para colaboradores antecipadas (decisão registrada, 2026-10-17, §3 item 6) | distribuição e comunidade | CI pública, documentação pública, diagnóstico de falha sem telemetria, processo de release | 21 §M7 | "outra pessoa instala e contribui sem mim" (21 §M7) |
 | 1.0 | PLANEJADA | contratos congelados | protocolo IPC e formatos persistidos versionados com migração; nada quebra sem versão major | este documento §4 | §4 — **ainda PROPOSTA** |
 
 ### 2.1 O que o código já entrega dos marcos M5–M7 (medido em 2026-10-01)
@@ -182,11 +182,11 @@ continuam pendentes. Cobertura e fronteiras no
 
 Os três pedidos de 2026-10-01 já têm dono:
 
-1. **PlatformIO como cidadão de tier 1** → **0.4** (decisão do autor,
+1. **PlatformIO como cidadão de tier 1** → **0.4** (decisão do projeto,
    2026-10-01). O que existe e o que falta por jornada, medido no código, está
    no [`58`](58-onde-cada-versao-comeca-no-codigo.md) §4.4; o requisito está no
    [`52`](52-arquitetura-executavel-da-0.4.md) §5.10.
-2. **Emuladores na IDE** → **0.4** (decisão do autor, 2026-10-01): QEMU (já no
+2. **Emuladores na IDE** → **0.4** (decisão do projeto, 2026-10-01): QEMU (já no
    gate), Renode, QEMU da Espressif — como **alvo** onde o firmware roda,
    pelo `debugServer` do kit. **Não é a simulação física/matemática que saiu do
    produto** (40 §5); a matriz "jornada × emulador × NÃO PROVADO" é o 52 §10.1.
@@ -200,16 +200,11 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
    `claude mcp add`), **depois da 0.4.9**, o primeiro corte só de leitura,
    com o desenho antes do código. Revisa, só nisto, o "IA na IDE fora de
    escopo" de 2026-07-17: o agente segue no terminal, sem painel de IA.
-5. **A documentação em inglês após fechar a 0.4.1** (autor, 2026-10-27;
-   antecipa a decisão de 2026-10-24). O autor fará a internacionalização para
-   buscar colaboradores; o site será tratado em sessão separada. **Toda** a documentação
-   será revisada no porte (convenções
-   profissionais de documentação, explicações melhores, informação
-   desatualizada ou fora de contexto corrigida, explicação técnica
-   reforçada); divulgação e mensagens seguem com o autor (40 §5).
-   O site, em outra sessão, fica em inglês, com
-   uma aba de colaboradores, dizendo só de passagem que o projeto vem do
-   Brasil.
+5. **A documentação em inglês após fechar a 0.4.1** (decisão registrada, 2026-10-27;
+   antecipa a decisão de 2026-10-24). A revisão inclui convenções profissionais,
+   clareza técnica e correção de informações desatualizadas. O site e a
+   documentação para colaboradores são frentes próprias, com divulgação
+   internacional prevista no mapa de versões.
 6. **Parte da 0.9 antecipada:** a CI pública entra agora, numa fatia curta
    antes da 0.4.1b; a porta para novos colaboradores (modelos, labels,
    issues de entrada em inglês) havia ficado para depois da 0.4.9. Em
@@ -223,7 +218,7 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
    orquestrando as ferramentas abertas; a versão sai de uma pesquisa medida.
    O pedido posterior de escopos e melhorias, recuperado em 2026-10-19,
    está no [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19);
-   **Esclarecido pelo autor em 2026-10-19:** a frente ROS 2 e seu ensaio
+   **Esclarecido pela manutenção em 2026-10-19:** a frente ROS 2 e seu ensaio
    ficam para **depois do fechamento da 0.4, agora 0.4.9**; a versão exata
    continua sem número.
 8. **Profundidade de refatoração e compreensão do compilador ao longo dos
@@ -235,23 +230,23 @@ Os de 2026-10-17 (40 §5), com o limite de fechamento atualizado para a
    no [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md).
    Não reserva versão nem aprova uma implementação na 0.4.
 
-9. **Análise dos comandos de terminal da IDE** (autor, 2026-10-21), para
+9. **Análise dos comandos de terminal da IDE** (decisão registrada, 2026-10-21), para
    medir o ganho de integração com ferramentas de embarcados e ROS 2,
    **após a 0.4.9 e após a edição especial de revisão de HUD/UX/UI**.
    Sem versão/novos comandos aprovados; dono e critérios em
    [Projetos e desktop §3.1](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#31-análise-futura-dos-comandos-da-ide-no-terminal).
 
-10. **Eficiência no frontend da 0.4.x** (autor, 2026-10-21): reformular
+10. **Eficiência no frontend da 0.4.x** (decisão registrada, 2026-10-21): reformular
     [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) junto
     da migração para dock e incluir o
     [Quality Center inicial](../especificacoes/quality-center-e-gates.md),
     sobre build/lint/testes/rigor já existentes, com gate local simples.
     Ordem no 52 §11.1; a edição especial posterior aprimora/otimiza a base.
     Não antecipa ROS 2 ou Library/providers completos.
-11. **Inglês e divulgação na 0.5** (autor, 2026-10-21). **Antecipado em
+11. **Inglês e divulgação na 0.5** (decisão registrada, 2026-10-21). **Antecipado em
     2026-10-24:** a UI fica inteiramente em inglês na fase de polimento (a
     edição especial da 0.4). **Atualização de 2026-10-27:** documentação após
-    a 0.4.1 e site em outra sessão para buscar colaboradores (§3 item 5);
+    a 0.4.1 e site em uma frente independente para buscar colaboradores (§3 item 5);
     o que este item ainda pede depois disso (seleção
     de idioma, português preservado) fica para decidir na 0.5. Texto
     original: interface e
@@ -274,7 +269,7 @@ especificação aberta. O diff no editor é o que só o `/ide` daria.
 
 ## 4. Proposta de critério para a 1.0
 
-**PROPOSTA, sem decisão do autor.** A 1.0 é a promessa de que um contrato não
+**PROPOSTA, sem decisão do projeto.** A 1.0 é a promessa de que um contrato não
 quebra sem aviso:
 
 - o protocolo IPC tem versão (já tem, `0.147.0` em 2026-10-02) e a 1.0 congela a
@@ -293,16 +288,11 @@ Não está copiado aqui — está no dono, e é lá que se lê:
   (IA fora da IDE, simulação fora do produto, Python nativo, licenças proibidas…);
 - 0.4 em diante: sem Lua antes nem depois da 1.0, alvo Linux nativo, o modelo
   semântico detecta deriva e não resolve versão: [`47`](47-estrutura-da-v0.3.md) §10.2.
-  O alvo Linux nativo foi revisto pelo autor em 2026-10-08: Windows entra,
+  O alvo Linux nativo foi revisto pela manutenção em 2026-10-08: Windows entra,
   com uma edição especial Windows + WSL2 depois da 0.4.0
-  ([`60`](60-windows-e-edicao-especial.md)). Em 2026-10-09 o autor a
-  suspendeu e a retomou no mesmo dia: o desenvolvimento vai para o Windows 11
-  Pro, por um projeto de integração TA/TI. Na mesma noite, a ordem passou a
-  ser: o porte, a organização da documentação e só então o fim da 0.3.9 (60
-  §1). Em 2026-10-14 o autor voltou ao Linux (Ubuntu 26.04 LTS) e pôs o
-  fechamento da 0.3.9 na frente; o porte pausou na W6b4 (40.7 §7.277). Em
-  2026-10-15 pediu a organização da documentação junto com o fechamento
-  ([`61`](61-organizacao-da-documentacao.md)).
+  ([`60`](60-windows-e-edicao-especial.md)). As revisões de prioridade estão nas entradas 40.7 §7.258–§7.277.
+  O porte está pausado; a organização documental segue o
+  [`61`](61-organizacao-da-documentacao.md), e a fila vigente permanece no 40.
 
 ## 6. Decisões deste mapa
 

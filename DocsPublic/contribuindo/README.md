@@ -5,7 +5,7 @@
 >
 > Escrito em 2026-09-19. Este é o ponto de entrada para quem vai **mexer
 > no código ou na documentação**, seja uma linha ou uma etapa inteira, seja
-> com as próprias mãos ou com um agente de IA ao lado. A versão curta
+> por qualquer contribuidor. A versão curta
 > ("onde olhar para mudar o quê") continua em
 > [`../contribuindo.md`](../contribuindo.md); este guia é o caminho
 > completo.
@@ -15,7 +15,6 @@
 02-preparar-o-ambiente.md      instalar, compilar, abrir pelo checkout, os presets
 03-o-ritual-de-uma-fatia.md    desenhar → contrato → core → ponte → UI → provar → documentar → commit
 04-os-gates-que-dizem-nao.md   o verificar.sh e cada gate: o que mede, por que existe, como ler o "não"
-05-com-um-agente-de-ia.md      como colaborar com Claude Code/Codex/outros sem que quebrem as regras
 06-onde-mexer.md               o mapa por área (código, contrato, docs, testes)
 07-fluxo-e-responsabilidades-dos-gates.md  orquestração, comunicação e dono do código de cada gate
 08-convencoes-codigo-testes-commits.md   idioma (nomes em inglês, com gate), comentários, testes, commits
@@ -40,7 +39,7 @@ nada em silêncio, nunca roda `sudo`, não tem telemetria nem IA embutida.
 A regra que resume o método de trabalho, e que os gates cobram:
 
 > **Contrato primeiro, medir antes de afirmar, um commit por fatia, e o
-> contexto salvo na documentação antes do código.**
+> desenho técnico documentado antes do código, sem contexto pessoal de sessão.**
 
 ## Por onde começar, por perfil
 
@@ -50,7 +49,6 @@ A regra que resume o método de trabalho, e que os gates cobram:
 | Compilar e abrir a IDE | [02](02-preparar-o-ambiente.md) | [`../build/como-executar.md`](../build/como-executar.md) |
 | Corrigir um bug pequeno | [06](06-onde-mexer.md) → [03](03-o-ritual-de-uma-fatia.md) §"a fatia mínima" | [04](04-os-gates-que-dizem-nao.md) |
 | Implementar uma funcionalidade | [03](03-o-ritual-de-uma-fatia.md) inteiro | o roadmap da etapa (`../roadmaps/README.md`) |
-| Trabalhar com um agente de IA | [05](05-com-um-agente-de-ia.md) | [03](03-o-ritual-de-uma-fatia.md) |
 | Só documentação | [03](03-o-ritual-de-uma-fatia.md) §"documentação" | [`../README.md`](../README.md) (o índice) |
 | Entender ou alterar os gates | [04](04-os-gates-que-dizem-nao.md) | [07](07-fluxo-e-responsabilidades-dos-gates.md) |
 | Preparar tarefas para novos colaboradores | [11](11-ci-publica-e-tarefas-para-colaboradores.md) | [03](03-o-ritual-de-uma-fatia.md) |

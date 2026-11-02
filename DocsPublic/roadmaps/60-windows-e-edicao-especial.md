@@ -1,69 +1,23 @@
-# 60 — Windows: adaptar a IDE, fechar a 0.3.9 e a 0.4.0, e a edição especial
+# 60 — Compatibilidade Windows e WSL2
 
-> **Classe: PLANO** (`DocsPublic/README.md`). Decisão do autor em 2026-10-08,
-> à noite. Cada fatia ainda tem desenho próprio antes do código, no documento
-> dono, como sempre.
+> **Classe: PLANO.** Requisitos e desenho do porte Windows/WSL2.
+> O levantamento inicial é de 2026-10-08; as validações posteriores estão
+> datadas nas respectivas seções. A frente está pausada conforme o
+> [estado atual](40-estado-e-continuidade.md); este plano não define a fila vigente.
 
-> **Histórico de 2026-10-09** (40.7 §7.260). No mesmo dia o autor
-> o suspendeu ("não vou mais para ambiente Windows no momento", §7.258) e o
-> retomou: "por eu tocar um projeto de integração TA/TI vou precisar estar
-> usando Windows 11 Pro". O ambiente de desenvolvimento passa a ser o
-> **Windows 11 Pro**. Entre as duas decisões, o 9a.3 foi feito no Arch
-> (§7.259); o §1 e o §2 abaixo já contam com ele.
+## 1. Objetivo e prioridade
 
-> **Ordem revista em 2026-10-09, à noite** (40.7 §7.261): primeiro o porte,
-> depois a organização da documentação (e da arquitetura, se a medição
-> pedir), e só então o fechamento da 0.3.9. O §1 já está na ordem nova. O §2.1
-> traz a medição feita no Windows; o §3, as decisões D1–D4 e as fatias
-> W1–W5; o §6, o ponto de partida da organização.
+Preservar a arquitetura Linux-first e estabelecer compatibilidade verificável
+com Windows: core Rust nativo, frontend Qt/MSVC, ferramentas de linguagem,
+processos canceláveis, caminhos de arquivos e integrações externas.
+WSL2 é um ambiente de execução adicional; sua presença não comprova suporte
+nativo do host nem acesso a dispositivos USB.
 
-> **Decisão posterior, 2026-10-14:** o autor voltará ao Linux, com Ubuntu
-> 26.04 LTS, após fechar a W6b4 neste checkout. A compatibilidade Windows
-> restante será retomada em VM. A prioridade passa a ser o fechamento da
-> 0.3.9, na ordem do [59](59-fechamento-da-0.3.9.md) §2. O §1 abaixo guarda
-> a decisão anterior como histórico; a ordem vigente está no
-> [40](40-estado-e-continuidade.md).
-
-## 1. A decisão
-
-Em 2026-10-08, o autor estava migrando o sistema operacional de desenvolvimento
-para Windows, por necessidade de um projeto que pode se tornar fonte de renda.
-Nas palavras dele: "nesse meio tempo podemos adaptar a IDE para multiplataforma e usá-la no
-Windows, finalizando a 0.3.9, vamos para a 0.4.0 e, finalizando ela, vamos ter
-uma 'special edition' onde vamos buscar resolver o problema/atrito do Windows
-e WSL2 com a IDE, para parte de embarcados e comunicação USB".
-
-A ordem decidida então:
-
-1. **Adaptar a IDE para rodar no Windows** (o porte, §3), o suficiente para o
-   autor continuar desenvolvendo a própria IDE nela, sem perder o Linux: o
-   mesmo código compila e roda nos dois, e o gate do Linux continua verde.
-2. **Organizar a documentação por contexto e, se a medição pedir, a
-   arquitetura** (§6), para que uma pessoa ou um agente de IA leia só o que
-   vai mexer.
-3. **Fechar a 0.3.9**: a fatia dos containers (16b), as provas finais (15) e
-   o pente fino (16) ([59](59-fechamento-da-0.3.9.md) §2). O 9a.3 foi feito
-   no Arch em 2026-10-09 (40.7 §7.259). O corte de escopo de 2026-10-08 já
-   tirou da 0.3.9 o 9b/9c, o 10 e o 11 (59 §2.3).
-4. **A 0.4.0**: embarcados ([52](52-arquitetura-executavel-da-0.4.md)).
-5. **A edição especial**, depois da 0.4.0: resolver o atrito do Windows com o
-   WSL2 na IDE, para embarcados e comunicação USB.
-
-O item 2 é decisão do autor em 2026-10-09, à noite: "depois de fazer a IDE
-rodar no windows, vamos também já melhorar a arquitetura do projeto
-atualmente, ainda mais no quesito documentação, para os agentes de IA,
-inclusive você, não ficar lendo partes desnecessárias onde não vai mexer", e
-"separar a documentação por contexto, deixar tudo explícito e bem separado".
-Ele vinha depois da 0.3.9; na mesma noite o autor aceitou trazê-lo para antes,
-porque as fatias que faltam na 0.3.9 também pagam o custo de leitura ("pode
-seguir assim com essa rota eficiente que me apontou e recomendou também").
-Sem prazo: "mesmo que atrase não precisamos ter pressa. Não fiz nenhuma
-promessa de entrega para 0.4".
-
-Naquele momento, isso revia a decisão antiga de "alvo Linux nativo"
-([47](47-estrutura-da-v0.3.md) §10.2, [57](57-mapa-de-versoes-ate-a-1.0.md)).
-Rust, Qt, o ritual e os gates continuam (decisão do autor de 2026-10-08,
-40.7 §7.241).
+O plano distingue compilação, execução, paridade por domínio e aceites de
+interface. Cada fatia exige contrato, matriz de testes e limites explícitos.
+A ordem vigente e a fronteira das versões pertencem ao
+[mapa de versões](57-mapa-de-versoes-ate-a-1.0.md) e ao
+[estado do projeto](40-estado-e-continuidade.md).
 
 ## 2. O que hoje é Linux, medido no código em 2026-10-08
 
@@ -155,7 +109,7 @@ Unix; o resto ganha equivalente Windows. Os stubs da W1 (serial, consoles do
 Banco) passam a ser dívida do porte. O plano por domínio, com as decisões
 que ele pede, é o §3.3.
 
-### 3.1 As decisões do autor (2026-10-09, respondidas como perguntas)
+### 3.1 As decisões do projeto (2026-10-09, respondidas como perguntas)
 
 - **D1, o CMake.** Saem as linhas 20–38 do `CMakeLists.txt` da raiz: o
   `FetchContent` do `sqlite3` e do `asio` e o `find_package(fmt)`, que aparece
@@ -278,9 +232,8 @@ crate de FFI próprio.
 - Um lançador, `scripts/kinein-vectis.ps1`, par do `scripts/kinein-vectis`: põe
   o `bin` do Qt no `PATH` do processo e acha o core. Não há `windeployqt` no
   checkout.
-- Prova: o smoke sem janela (`QT_QPA_PLATFORM=offscreen`, 20 s, sem aviso de
-  QML) e a foto da janela real. Na foto, o agente opera a tela com o mouse e o
-  teclado do autor, que autorizou isso em 2026-10-09.
+- Prova: smoke sem janela (`QT_QPA_PLATFORM=offscreen`, 20 s, sem aviso de
+  QML) e interação com mouse e teclado na janela real.
 
 W3a feita em 2026-10-09 (40.7 §7.264): a UI compila com MSVC e abre no
 Windows. W3b feita no mesmo dia (§7.266, §7.267): o MSVC estrito, o ASan e os
@@ -302,9 +255,7 @@ compila e usa o Git na IDE no Windows. A partir daí, os aceites pendentes (7,
 7b, 14a, 14b, 13a, 13b, 9a.3) podem ser feitos lá. Nessa hora o ambiente do
 Windows sai do §2.1 e vai para o `contribuindo/02`, para ter um dono só.
 
-Cada fatia é um commit no branch `porte-windows`, com o gate do Linux verde no
-WSL e o build do Windows medido. Os commits não sobem para o GitHub sem
-pedido do autor.
+Cada fatia exige o gate do Linux verde no WSL e o build do Windows medido.
 
 ### 3.3 Paridade por domínio (o critério "impecável", 2026-10-09)
 
@@ -331,7 +282,7 @@ o Linux.
 | Gate | `scripts/verificar-windows.ps1` (W4); a catraca dos adiados (W2b) | ficar todo verde no Windows |
 | Distribuição | — | o pacote do Windows (D9) |
 
-**As decisões do autor (2026-10-09, à noite, respondidas como perguntas):**
+**As decisões do projeto (2026-10-09, à noite, respondidas como perguntas):**
 
 - **D7, FFI do Windows:** um crate próprio, pequeno, que confina o `unsafe`
   atrás de uma API segura e testada. Ele usa o `windows-sys`, que já está no
@@ -344,12 +295,12 @@ o Linux.
   disparado pelo mesmo comando. Isso estende a D2.
 - **D9, a distribuição:** um zip portátil agora, feito com o `windeployqt`
   mais o core e o adaptador, com um smoke que o abre e fotografa. Instalador
-  ou MSIX ficam para o lançamento, que só sai a pedido do autor.
+  ou MSIX ficam para o lançamento, com validação própria do pacote.
 - **D10, embarcados e depuração:** entram no porte, nativos. A placa como
   `COMx`, os gravadores e um adaptador de depuração no Windows. A ponte
   Windows + WSL2 com `usbipd` continua sendo a edição especial (§4).
 
-**As decisões do autor de 2026-10-10**, respondidas com "sim" às perguntas
+**As decisões do projeto de 2026-10-10**, respondidas com "sim" às perguntas
 do fim da W2b (40.7 §7.270):
 
 - **D11, o Run no Windows:** pelo PowerShell com `-EncodedCommand`
@@ -436,7 +387,7 @@ do fim da W2b (40.7 §7.270):
      todos corrigidos: a URI do LSP, o Run, o `run.script`, o terminal que não
      começava, os caminhos misturados e o comando mostrado do Banco. Acharam
      também um defeito do portable-pty, contornado. A lista está no 40.7.
-   - **Decidido pelo autor em 2026-10-10:** D11 e D12 confirmam o Run e o
+   - **Decidido pela manutenção em 2026-10-10:** D11 e D12 confirmam o Run e o
      `run.script` como ficaram. A D13 abre a W2c. A D14 diz como os 82
      adiados voltam.
 5. **W2c (D13):** cancelar um job mata a árvore de processos, nos dois
@@ -469,7 +420,7 @@ do fim da W2b (40.7 §7.270):
      - o `clang-format` e o `clang-tidy` em `VC\Tools\Llvm\x64\bin`, sem
        `clangd` e sem `clang-cl`.
 
-     Na medição de 2026-10-10 não havia LLVM avulso; o autor instalou o 23.1.3
+     Na medição de 2026-10-10 não havia LLVM avulso; O ambiente de teste passou a incluir o 23.1.3
      em 2026-10-14 (W6b4). Sem o ambiente do `vcvars64.bat`, o `cl` não acha o
      `INCLUDE` nem o `LIB`. O gerador padrão do CMake no Windows é o do
      Visual Studio, que é multiconfiguração e NÃO gera o
@@ -544,16 +495,13 @@ do fim da W2b (40.7 §7.270):
     do PlatformIO (0.4.0e, `tests/platformio.rs`), que roda um `pio` falso
     em `sh` como os demais testes de frameworks.
 11. **W11:** o zip portátil (D9).
-12. **W12:** o aceite do autor com mouse e teclado. O controle da tela pelo
-    agente pede o "Computer use" ligado no app.
+12. **W12:** aceite integrado com mouse e teclado nas plataformas suportadas.
 
 ### 3.4 Como trabalhar no porte
 
-**Onde (para retomar o porte na VM).** O trabalho desta rodada foi no Windows,
-em `C:\dev\KineinVectis`, branch
-`porte-windows`. O Linux de referência é o Fedora 44 do WSL2 (usuário `hugh`,
-`sudo` sem senha). O CMake acha o Qt pelo `CMAKE_PREFIX_PATH` do usuário, que
-aponta para `C:\Qt\6.12.0\msvc2022_64`.
+**Ambiente de referência.** Windows com MSVC e Qt 6.12, mais uma instalação
+Linux no WSL2 para verificar compatibilidade. O CMake localiza o Qt pelo
+`CMAKE_PREFIX_PATH`; um prefixo de exemplo é `C:\Qt\6.12.0\msvc2022_64`.
 
 **Verificar (desde a W4).** Um comando, no PowerShell, da raiz do checkout:
 
@@ -609,7 +557,7 @@ pasta do `cl`, que tem o runtime dele. O log de avisos da UI fica em
 - Teste de LSP com servidor falso espera o servidor como a UI espera
   (`RESYNC`, `warm_up`): a graça do handshake no core é de 300 ms.
 
-**Armadilhas medidas nesta sessão:**
+**Armadilhas medidas nesta verificação:**
 
 - O PowerShell 5.1 lê UTF-8 sem BOM como ANSI. Arquivo do repositório não se
   edita por `Get-Content`/`Set-Content`.
@@ -659,12 +607,10 @@ os dois testes que apresentaram timeouts e seus limites foram preservados.
 
 ### 3.6 W6b4 — LLVM instalado e clangd real sobre a CDB do MSVC (2026-10-14)
 
-**Autorização:** o autor instalou o LLVM pelo comando indicado e pediu para
-seguir em 2026-10-14. Medido: `C:\Program Files\LLVM\bin\clangd.exe` é o
-23.1.3, alvo `x86_64-pc-windows-msvc`. Esta sessão ainda tem o `PATH` anterior
-à instalação. O detector só acrescenta o LLVM do VS, que não traz clangd;
-`configure_clangd_from_toolchain` passa o nome `clangd`, mesmo quando o
-detector encontrou a ferramenta fora do `PATH`.
+**Ambiente de validação:** clangd 23.1.3, alvo `x86_64-pc-windows-msvc`,
+instalado fora do PATH. O detector considerava apenas o LLVM do Visual Studio,
+que não incluía clangd; `configure_clangd_from_toolchain` usava o nome simples
+mesmo após detectar a ferramenta em outro diretório.
 
 **Desenho antes do código:**
 
@@ -756,18 +702,10 @@ Markdown                  96008 linhas em 153 arquivos
   40, o estado             1581 linhas, 415 delas no cabecalho, antes do §1
 ```
 
-O autor estimava "quase 190 mil linhas de código"; a medida, sem Markdown, dá
-206752.
-
-**O que se viu nesta sessão** (o agente que fez o porte, 2026-10-09):
-
-- Para saber onde o projeto está, a ordem de leitura do `contribuindo/05`
-  passa por 00, o cabeçalho do 40, o 40.7 recente, o roadmap da versão e o
-  `ARCHITECTURE.md` antes do primeiro arquivo de código.
-- O 40.7 é grande demais para um agente ler de uma vez, e só se consegue lê-lo
-  por trechos.
-- A ordem das versões aparecia, com pequenas diferenças, no cabeçalho do 40, no
-  57, no 59, no 47 e no 60.
+**Diagnóstico documental de 2026-10-09:** a ordem de versões aparecia com
+pequenas diferenças em vários roadmaps; o registro 40.7 e o cabeçalho do 40
+eram extensos. A organização por contexto e a divisão de registros reduzem
+a leitura necessária para uma mudança.
 
 **O que o desenho precisa responder** (nada decidido):
 
@@ -775,6 +713,6 @@ O autor estimava "quase 190 mil linhas de código"; a medida, sem Markdown, dá
   gates.
 - O que cada contexto obriga a ler, e o que dispensa.
 - Como o 40.7 se divide sem reescrever o LOG (por exemplo, por versão), e o
-  cabeçalho do 40 se reduz ao handoff.
+  cabeçalho do 40 se reduz ao resumo técnico.
 - Que gate prova a separação: o `verificar-docs.sh` e o
   `verificar-links-docs.sh` já existem e seriam estendidos, não duplicados.

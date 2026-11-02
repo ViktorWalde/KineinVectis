@@ -4,11 +4,11 @@
 > implementação por natureza. O que existe hoje se **mede no código**. Reconciliar
 > a cada retomada — não citar este documento como estado.
 >
-> **Escrito em 2026-07-17** a pedido do autor. Não inventa processo: encaixa o que
+> **Escrito em 2026-07-17** conforme os requisitos técnicos. Não inventa processo: encaixa o que
 > ele pediu no framework que já existe (`DocsPublic/integracoes/README.md` — modos A–D,
 > níveis L0–L10, checklist de 10 passos, gate de auditoria).
 
-## 0. Decisão do autor (2026-07-17): Docker e banco são NATIVOS
+## 0. Decisão do projeto (2026-07-17): Docker e banco são NATIVOS
 
 > "vamos integrar de forma nativa o docker e banco de dados, vão ser cidadãos
 > 'nativos' ou 'de primeira classe'… vai ser demorado mas não tem problema"
@@ -99,7 +99,7 @@ kinein-core/src/integration/              o dominio, ja em pasta (§4 regra 4)
 vertical real, testes de falha/cancelamento, orçamento medido, configuração
 reversível e nenhum processo/handle órfão.
 
-**Primeira vertical, recomendada pelo autor:** o **inventário das
+**Primeira vertical, recomendada pela manutenção:** o **inventário das
 ferramentas já detectadas** (clangd, rust-analyzer, CMake, Cargo, Git, rg, fd,
 lldb-dap, Clippy). Zero dependência nova, valida o contrato inteiro e a aba
 informativa. **Não** começar pelo EditorConfig: a auditoria de 2026-07-16 derrubou
@@ -234,11 +234,11 @@ automática, nunca vinda de IA.
 
 ## 7. UI/UX — dívida explícita, contínua e ortogonal aos níveis
 
-> **Registro do autor, 2026-07-17: a UI/UX da IDE tem MUITO a ser
+> **Registro da decisão registrada, 2026-07-17: a UI/UX da IDE tem MUITO a ser
 > otimizado/polido.** Isso não é um nível da fila: é trabalho contínuo que
 > atravessa todos eles.
 
-**Referência: IntelliJ IDEA Community — visual e de fluxo.** Decisão do autor:
+**Referência: IntelliJ IDEA Community — visual e de fluxo.** Decisão do projeto:
 *"essa UI/UX da JetBrains é muito agradável/confortável para o desenvolvimento"*.
 
 **Mas a referência não cobre tudo, e é importante saber onde ela acaba:**

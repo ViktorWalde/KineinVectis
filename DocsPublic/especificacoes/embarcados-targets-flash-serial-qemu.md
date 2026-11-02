@@ -599,7 +599,7 @@ Remote Target: RPi Lab
 Status: Connected
 Host: 192.168.1.40
 Arch: aarch64
-Deploy path: /home/vitor/kinein/app
+Deploy path: /home/user/kinein/app
 Run command: ./motor_control
 
 [ Test Connection ] [ Deploy ] [ Run ] [ Debug ] [ Open Logs ]

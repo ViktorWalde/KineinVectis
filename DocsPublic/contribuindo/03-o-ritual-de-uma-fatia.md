@@ -30,11 +30,14 @@ tentado e por que foi feito assim.
 
 ## 1. Desenhar antes do código
 
+Registre somente o contexto técnico da mudança. Conversas, contas, permissões
+de execução e notas operacionais de agentes não integram o material público.
+
 No roadmap da etapa (ou numa seção `§N.1 desenho fino` dele), escreva:
 **o que muda, arquivo a arquivo**; o contrato (método, params, resultado,
 evento — com os nomes finais); **o que fica fora e por quê**; as medidas
 que vão provar (foto, harness, número). Isso existe para que o contexto
-sobreviva a um corte — de sessão, de agente, de pessoa. Um bom teste: se
+permita revisão independente e continuidade do desenvolvimento. Um bom teste: se
 você desaparecesse agora, outra pessoa conseguiria implementar só com o
 que está escrito?
 
@@ -42,7 +45,7 @@ que está escrito?
 
 Foto (`KINEIN_SCREENSHOT`), o número (tempo de primeiro frame, latência da
 tecla, contagem), ou um teste que falha. "Estava ruim" não é medida.
-Guarde fora do repositório e anexe ao PR (ou ao issue) da fatia: é a
+Use uma fixture com dados fictícios e anexe a evidência técnica ao PR ou issue: é a
 prova de "antes" que o revisor compara com o "depois".
 
 ## 3. O contrato

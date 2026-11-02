@@ -51,9 +51,9 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
 - `settings.set` faz MERGE parcial de `values` no escopo (campo ausente
   mantém o valor gravado; reverter/limpar override é pós-v1). Defaults:
   `formatOnSave=false`, `editorFontSize=14`, `autoClosePairs=true`,
-  `autoSave=true` (0.123.0, decisão do autor na Etapa 2),
+  `autoSave=true` (0.123.0, decisão do projeto na Etapa 2),
   `compilerCheckOnSave=true` (0.175.0: a checagem do compilador ao salvar
-  C/C++ com CDB, decisão do autor de 2026-10-15, `roadmaps/52` §13.1),
+  C/C++ com CDB, decisão do projeto de 2026-10-15, `roadmaps/52` §13.1),
   `grafanaWebView=false` e `platformioWebView=false` (as páginas web
   dentro da IDE: o Grafana local, 59 §6.1, e o PIO Home, 52 §14.45). Só o
   global decide essas duas, e o projeto não opina. Qualquer uma ligada

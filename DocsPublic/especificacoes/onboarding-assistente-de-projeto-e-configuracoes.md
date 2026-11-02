@@ -909,8 +909,8 @@ Custom Target
   "name": "Raspberry Pi Dev",
   "kind": "remote-ssh",
   "host": "192.168.1.20",
-  "user": "vitor",
-  "deploy_path": "/home/vitor/app"
+  "user": "user",
+  "deploy_path": "/home/user/app"
 }
 ```
 
@@ -1569,7 +1569,7 @@ avisos
   "params": {
     "template": "cpp-cmake-executable",
     "name": "motor-control",
-    "location": "/home/vitor/Projects",
+    "location": "/home/user/Projects",
     "language_standard": "cxx23",
     "toolchain_id": "clang-local",
     "generator": "Ninja",
@@ -1584,7 +1584,7 @@ avisos
 {
   "method": "project.detect",
   "params": {
-    "path": "/home/vitor/Projects/motor-control"
+    "path": "/home/user/Projects/motor-control"
   }
 }
 ```

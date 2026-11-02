@@ -6,7 +6,7 @@
 
 ## Contexto
 
-O autor pediu transação com prévia no [59 §5.3](../roadmaps/59-fechamento-da-0.3.9.md).
+O requisito prevê transação com prévia no [59 §5.3](../roadmaps/59-fechamento-da-0.3.9.md).
 Uma contagem antes da escrita não mostra o resultado real nem conserva uma
 transação para COMMIT/ROLLBACK. A interface síncrona `postgres::simple_query`
 coleta um Vec; não existe `simple_query_iter` no cliente instalado, apesar

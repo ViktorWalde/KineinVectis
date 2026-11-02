@@ -1,11 +1,10 @@
 # CI pública e tarefas para colaboradores
 
-> **Classe: PLANO.** Recomendação e ideia registradas em 2026-10-19 a pedido
-> do autor. O autor segue sozinho até o fechamento da 0.4, agora
-> **0.4.9** (limite atualizado em 2026-10-20, 57 §1.1); a porta e as tarefas
-> entram depois dele (40 §5). Cards no site são
-> uma proposta para outra sessão, não requisito novo de release. Este registro
-> não cria issues, labels, configurações no GitHub ou alterações no site.
+> **Classe: PLANO.** Fluxo público de contribuição, CI e requisitos de tarefas.
+> A abertura de novas frentes de colaboração segue o mapa de versões
+> (57 §1.1). Cards no site são uma proposta independente, sem alterar os
+> critérios de release. Este documento define o plano técnico, não configura
+> automaticamente serviços externos.
 
 ## 1. O lugar da colaboração
 
@@ -48,7 +47,7 @@ gestão próprio para começar.
 Publicar poucas tarefas revisadas e prontas para receber contribuição, em
 inglês na abertura da colaboração, após a 0.4.9. Não transformar automaticamente
 cada pendência do roadmap em issue: várias ainda dependem de desenho ou
-decisão do autor.
+decisão do projeto.
 
 Cada issue apta a receber colaboração deve conter:
 
@@ -80,7 +79,7 @@ na [documentação oficial](https://docs.github.com/en/communities/using-templat
 O site segue a direção em inglês (40 §5); os nomes em português abaixo
 explicam o fluxo. Textos finais e visual pertencem à sessão do site.
 
-**Proposta, sem implementação nesta sessão:** em "Colaborar", cards com
+**Proposta, sem implementação nesta verificação:** em "Colaborar", cards com
 resumo, área, dificuldade, requisitos essenciais e estado; filtros por área,
 dificuldade e disponibilidade; expansão para objetivo, escopo, critérios de
 aceite e forma de entrega. Um botão explícito **"Ver tarefa no GitHub"**
@@ -136,7 +135,7 @@ cadastro de colaboradores à IDE.
 2. Preparar modelos, labels e poucas issues de entrada, com os campos da §3
    preenchidos e a primeira pessoa conseguindo reproduzir a validação.
 3. Publicar a porta de contribuição em inglês depois da 0.4.9, conforme a fronteira vigente do 57 §1.1.
-4. Em outra sessão, avaliar e implementar a apresentação no site. Provar
+4. Em frente própria, avaliar e implementar a apresentação no site. Provar
    navegação issue/PR, filtros, atualização, falha de sincronização e os
    estados concluído/cancelado/reaberto antes de anunciar automação.
 

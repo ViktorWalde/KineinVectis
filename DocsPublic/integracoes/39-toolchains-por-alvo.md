@@ -1,12 +1,9 @@
 # 39 — Toolchains por alvo: o catálogo credível, e como a IDE as encontra
 
-> **Classe: INTEGRAÇÃO, com o ESTADO medido em 2026-09-12.** Nasce de um
-> levantamento que o autor recebeu de outra IA e pediu para conferir:
-> *"veja se algo dessas informações pode ser usado e qual a credibilidade real
-> delas; pesquise e, se tiver credibilidade real, implemente; procure o que
-> falta."* Cada linha abaixo tem **fonte lida no dia** (release, README,
-> LICENSE do repositório, `rpm -q` desta máquina) — nunca a afirmação de
-> partida. Onde a afirmação de partida estava errada, está dito.
+> **Classe: INTEGRAÇÃO, com o ESTADO medido em 2026-09-12.** Catálogo
+> verificado por fontes oficiais e pacotes instalados. Cada linha identifica
+> sua fonte: release, README, LICENSE ou consulta de pacote. Divergências
+> entre candidatos e ferramentas disponíveis são explícitas.
 >
 > O que este documento decide entra no código no mesmo gesto: o catálogo de
 > candidatos por papel (`toolchain/catalog.rs`), a tabela de ferramentas
@@ -210,7 +207,7 @@ parâmetro — a função é pura e o teste a prova com uma `$HOME` falsa.
 
 *"Se o usuário abrir um projeto de STM32 e a máquina estiver limpa, a IDE
 oferece um botão: Instalar toolchain Arm Cortex-M recomendada."* Entra, com a
-forma que a decisão registrada e o pedido do autor juntos permitem:
+forma que a decisão registrada e o requisito de desenvolvimento juntos permitem:
 
 ```text
 gatilho     o project.model diz a familia (ESP-IDF, Zephyr, pico-sdk, Cube,

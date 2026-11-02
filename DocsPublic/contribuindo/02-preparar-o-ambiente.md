@@ -15,7 +15,9 @@ gate está verde".
 - **unixODBC de desenvolvimento**, para ligar o adaptador ODBC do core:
   `unixodbc-dev` no Debian/Ubuntu, `unixODBC-devel` no Fedora e `unixodbc`
   no Arch. Nenhum driver de banco é necessário para compilar ou abrir.
-- **Qt 6.10+** (Quick, Qml, QuickControls2) e **CMake ≥ 3.28** com Ninja.
+- **Qt 6.12** (Core, Gui, Qml, Quick, QuickControls2 e Test) e
+  **CMake ≥ 3.25** com Ninja, conforme `cmake/KineinQt.cmake` e o
+  `CMakeLists.txt` da raiz. Outra série Qt é recusada.
 - **Clang/LLVM** (clang, clang++, clang-tidy, clang-format, lldb) — os
   presets oficiais são clang; o gate C++ é clang-tidy.
 - Python 3 (para os scripts dos gates), `shellcheck`, `qmllint` (vem com o
@@ -25,9 +27,11 @@ gate está verde".
   obrigatória para compilar** — os gates que dependem delas dizem o que
   falta e pulam com motivo.
 
-`bash scripts/instalar-ambiente.sh` conhece as distros suportadas e
-**imprime** os comandos por distro; leia e execute você. (É a mesma regra
-da IDE: nada de `sudo` escondido.)
+`bash scripts/instalar-ambiente.sh --dry-run` conhece as distros suportadas e
+**imprime** os comandos por distro; leia antes de executar. Sem `--dry-run`,
+o script **instala** pacotes e pode chamar sudo. O agente apresenta os
+comandos de sistema ao autor. Para os presets locais ausentes num clone,
+veja [ambiente de desenvolvimento](../build/14-ambiente-de-desenvolvimento.md).
 
 ## Compilar e abrir
 

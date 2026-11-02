@@ -3,3 +3,12 @@
 # whitespace pelo Git.
 KINEIN_VECTIS_TREE_ICONS_INDIVIDUAL/**/svg/*.svg binary
 ui/assets/icons/tree/*.svg binary
+
+# Instruções e notas locais não integram arquivos públicos de distribuição.
+AGENTS.md export-ignore
+AGENTS.override.md export-ignore
+CLAUDE.md export-ignore
+DocsPrivate/** export-ignore
+.claude/** export-ignore
+.codex/** export-ignore
+.agents/** export-ignore

@@ -36,8 +36,7 @@ Três consequências que explicam a maior parte do código:
   discute o que se aproveita das ferramentas abertas: o *conhecimento*,
   não o *runtime*.)
 - **Não é uma IDE com IA dentro.** Agentes rodam no terminal integrado,
-  como qualquer programa. O projeto é desenvolvido *com* agentes (ver
-  [05](05-com-um-agente-de-ia.md)), mas o produto não os embute.
+  como qualquer programa. O produto não os embute.
 - **Não é rígida com o usuário.** O rigor (`-Werror`, clippy pedante,
   sanitizers, clang-tidy) é como o **próprio projeto** se compila, nos
   presets `*-strict`/`*-hardened`. Os projetos do usuário compilam com os
@@ -59,7 +58,7 @@ Três consequências que explicam a maior parte do código:
 | Atalhos: a paleta anuncia o que a IDE obedece | `Ctrl+Alt+L` formatava em vez de abrir a biblioteca (`40` 2026-09-04) | `scripts/verificar-atalhos.sh` |
 | Medir antes de afirmar; número datado | contagens de métodos erradas por grep de literal (`40` §4.2) | `scripts/verificar-docs.sh` |
 | Nunca `git checkout <arquivo>` para desfazer | perdeu-se trabalho não commitado duas vezes (`40` §7.74) | regra de sessão |
-| A placa do autor nunca é gravada sem pedido | é a placa de trabalho dele, com o `main.py` dele | regra de sessão ([05](05-com-um-agente-de-ia.md)) |
+| Gravação em dispositivo físico exige confirmação | a operação substitui o firmware existente | segurança da operação |
 
 Se uma regra atrapalha, o caminho é **medir, propor e registrar** — não
 contornar. O padrão histórico do repositório é que o problema era regra
@@ -81,7 +80,7 @@ abertura).
   por quê, como provou e o que não fez. A evidência (logs, fotos) vai
   anexada ao PR ou ao issue, nunca para um caminho que o leitor não tem.
 - **Foto**: um screenshot headless (`QT_QPA_PLATFORM=offscreen
-  KINEIN_SCREENSHOT=<png>`) — a prova visual que o agente consegue tirar;
-  o clique real é do autor.
+  KINEIN_SCREENSHOT=<png>`) — evidência automatizada da UI;
+  a validação humana de usabilidade é um aceite complementar.
 - **Moldura comum / HUD**: `KvPanelFrame`, `KvPanelHeader`, `KvVerdict`,
   `KvDataGrid` — as peças de UI que todos os painéis de ambiente usam.

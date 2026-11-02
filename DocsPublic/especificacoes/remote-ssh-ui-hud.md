@@ -109,8 +109,8 @@ Os problemas de uso diário são estruturais:
 ## 3.1 Referência verificada: o Remote-SSH do VS Code
 
 Consultado em 2026-09-24 em
-[code.visualstudio.com/docs/remote/ssh](https://code.visualstudio.com/docs/remote/ssh),
-a pedido do autor. O que se aproveita é **comportamento**, não arquitetura: a
+[code.visualstudio.com/docs/remote/ssh](https://code.visualstudio.com/docs/remote/ssh).
+A referência orienta o comportamento dos fluxos: a
 Vectis não instala servidor no alvo, e é justamente aí que os dois desenhos
 divergem de propósito.
 
@@ -303,7 +303,7 @@ workspace abre
 ```
 
 Abrir não deve bloquear o editor esperando rede. Estado inicial honesto:
-**“estado remoto ainda não verificado nesta sessão”**.
+**“estado remoto ainda não verificado nesta verificação”**.
 
 ### 6.3 Editar e salvar
 
@@ -410,7 +410,7 @@ discovery       idle | loading | ready | failed
 authentication  unknown | ready | interactive_required | failed
 ```
 
-`reachable` significa “a última sonda nesta sessão terminou com sucesso”, não
+`reachable` significa “a última sonda nesta verificação terminou com sucesso”, não
 conexão permanente. O horário faz parte da apresentação.
 
 Uma futura resposta do core pode fornecer snapshot próprio. Até lá, o
@@ -559,7 +559,7 @@ ser fingidos por UI antes do contrato.
   verdes;
 - teste real em Linux remoto registra o que falsos não provam.
 
-## 13. Decisões do autor ainda necessárias
+## 13. Decisões do projeto ainda necessárias
 
 Estas opções foram preservadas; nenhuma foi descartada:
 

@@ -2,7 +2,7 @@
 
 Este é o ponto de entrada para **adicionar uma ferramenta, protocolo, formato ou
 biblioteca** à Kinein. Existe porque a fila de candidatos é longa (53 itens
-triados pelo autor) e cada adoção precisa seguir o mesmo
+triados pela manutenção) e cada adoção precisa seguir o mesmo
 caminho, sem virar improviso.
 
 ## O que é (e o que não é)
@@ -18,7 +18,7 @@ Uma integração é o core ORQUESTRANDO uma ferramenta madura por um contrato
 tipado, com a UI apenas listando, configurando e pedindo ações.
 ```
 
-**Exceção explícita: ODBC (59 §5.7, decisão do autor).** O driver de banco
+**Exceção explícita: ODBC (59 §5.7, decisão do projeto).** O driver de banco
 é código nativo carregado no processo do core somente após o gesto
 **Carregar driver**. A autorização é efêmera e vinculada ao perfil/projeto;
 a IDE não instala nem baixa drivers. O adaptador Rust é MIT, enquanto o
@@ -85,14 +85,14 @@ falha/cancelamento, orçamento medido, configuração reversível e nenhum proce
 ou handle órfão. A aba visual não desbloqueia nível; o contrato e o serviço
 comprovados desbloqueiam.
 
-### Embarcados sobe de L6 — decisão do autor em 2026-09-03
+### Embarcados sobe de L6 — decisão do projeto em 2026-09-03
 
 A ordem acima punha embarcados em **L6**, depois de L5 (RemoteContext/SSH) e
 L5.5 (banco). **O autor decidiu que embarcados sobe na fila**, e este parágrafo
 é o registro: contrariar decisão registrada exige registro novo, que é como este
 repositório muda de regra.
 
-**E a frente é PLUG AND PLAY** (decisão do autor, 2026-09-03): a IDE detecta a
+**E a frente é PLUG AND PLAY** (decisão do projeto, 2026-09-03): a IDE detecta a
 sonda, deduz o alvo e roda build → flash → debug sem o usuário editar arquivo na
 mão — e, quando **não** consegue deduzir, diz o que faltou e onde procurou, em
 vez de falhar calada. O critério verificável está em

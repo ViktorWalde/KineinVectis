@@ -9,7 +9,7 @@
 > encerrar a 0.3.9 e em que ordem; o feito, com data e prova, está no
 > [`40.7`](40.7-registro-das-entregas.md).
 
-> **Revisão do autor em 2026-10-07:** o antigo passo 7 foi dividido nos
+> **Revisão do projeto em 2026-10-07:** o antigo passo 7 foi dividido nos
 > passos 7–15 (§2); o pente fino é o passo 16, último da 0.3.9.
 > Desenvolvimento e próximas provas focam **Qt 6.10** (checkout 6.10.2).
 > Qt 6.4 do AppImage anterior sai do alvo de validação desta continuidade;
@@ -29,7 +29,7 @@
 > Versões e disponibilidade de Qt e ferramentas no Ubuntu serão medidas após
 > a instalação; as medições anteriores do Arch e do Fedora/WSL são históricas.
 
-## 1. A decisão (o autor, 2026-10-03, noite)
+## 1. A decisão (o decisão registrada, 2026-10-03, noite)
 
 A série 0.3.6–0.3.9 reorganizou a casca da IDE. Ela **não se encerra** no estado
 de 2026-10-03 (protocolo `0.150.0`). Antes, o autor quer:
@@ -57,14 +57,14 @@ pop-up.
 
 | Painel | Por quê |
 | --- | --- |
-| Aviso de escrita SQL (impacto, 40.7 §7.209) | Decisão do autor ("faz sentido e eu quero que isso se mantenha"): uma decisão pontual e perigosa pede o foco inteiro. |
+| Aviso de escrita SQL (impacto, 40.7 §7.209) | Decisão do projeto ("faz sentido e eu quero que isso se mantenha"): uma decisão pontual e perigosa pede o foco inteiro. |
 | Diálogo da conexão do Banco | Configuração pontual. A JetBrains também usa diálogo ("Data Sources and Drivers"). |
 | Bibliotecas, Instalar ferramentas | Tarefa pontual: escolher, ver a prévia e aceitar. |
 | Configurações, seletor de pastas, renomear, excluir, descartar no Git, colar no terminal | Decisões pontuais. |
 | Toolchain e Python (abrem abaixo do widget do topo) | São contextuais ao widget. |
 | Embarcados | Fica como está até a 0.4, que o redesenha. |
 
-## 2. A ordem (reorganizada por pedido do autor em 2026-10-07)
+## 2. A ordem (reorganizada por requisito de desenvolvimento em 2026-10-07)
 
 Os passos 1–6 conservam as entregas aceitas. O antigo Banco completo
 deixa de ser um único passo aberto: seu restante ocupa 7–15, mantendo
@@ -74,7 +74,7 @@ Um passo pode exigir vários commits, cada um com contrato e prova próprios.
 
 Cada passo termina com:
 
-- a **prova na tela real, com o mouse e o teclado do autor**, quando houver
+- a **prova na tela real, com mouse e teclado físicos**, quando houver
   comportamento de interface; contrato puro exige provas no seu consumidor;
 - os gates verdes;
 - o registro no 40.7.
@@ -86,23 +86,23 @@ Cada passo termina com:
 | 3 | **Modernizar os controles antigos** no padrão interativo (§3.4) | feito (40.7 §7.214) |
 | 4 | **Configurações redesenhada** (§3.5) e **seletor "Abrir projeto"** (§3.6) | feito (40.7 §7.215), com os campos de texto refeitos e o menu que não deixa o mouse atravessar |
 | 5 | **Remoto acoplado** (§4) | feito (40.7 §7.216), provado contra sshd reais, com as conveniências de SSH (confiar no servidor, último contato, programa lembrado) |
-| 5b | **Painel de baixo em relevo** (pedido do autor, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
+| 5b | **Painel de baixo em relevo** (requisito de desenvolvimento, 2026-10-04: "um fundo e melhorar a separação visual") | feito (40.7 §7.217): bandeja e poço para todas as abas; o texto do terminal na grade |
 | 6 | **Grafana: visualização web opcional** (§6) | feito (40.7 §7.218–§7.219, protocolo `0.154.0`), provado contra Grafana 11.2.0 real. Prova histórica do AppImage: 121 MB; novo pacote adiado (§8) |
-| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1, 40.7 §7.292); handoff do 8 no §2.1 |
-| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse e teclado feito pelo agente na 16.1, neste repositório (§7.1.1, 40.7 §7.292). Estilo QML decidido pelo autor em 2026-10-08: sem formatação em massa, `.qmlformat.ini` explícito (7b.4, 40.7 §7.253) |
+| 7 | **Contratos e perfis extensíveis** (§5.13–§5.15; 38 D1/D1a) | feito (40.7 §7.234–§7.237, §7.243–§7.244; IPC `0.165.0`); aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1, 40.7 §7.292); resumo técnico do 8 no §2.1 |
+| 7b | **QML para desenvolver a IDE nela mesma** (§2.4) | feito (40.7 §7.245–§7.247): `qmlls` com o build do projeto, realce próprio e `qmlformat`; aceite com mouse e teclado feito pelo agente na 16.1, neste repositório (§7.1.1, 40.7 §7.292). Estilo QML decidido pela manutenção em 2026-10-08: sem formatação em massa, `.qmlformat.ini` explícito (7b.4, 40.7 §7.253) |
 | 8 | **Supervisão de processos e ponte externa** (39 D1b) | feito (40.7 §7.248): base de processo de longa vida e ponte do adaptador, provadas contra um adaptador falso; o LSP migrou para a mesma base (§7.249) |
-| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | na 0.3.9 só o 9a (39 §6.2): 9a.1 feita (40.7 §7.256), o adaptador SQLite e a API 1.1; 9a.2 feita (§7.257), a escolha no perfil e o core usando o adaptador; 9a.3 feita (§7.259), o campo "Adaptador" no formulário, com o aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1); **o 9a está fechado**. 9b/9c (PostgreSQL e MongoDB) **adiados** (autor, 2026-10-08; §2.3, segundo corte) |
-| 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | **adiado** (autor, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
-| 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | **adiado** (autor, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
-| 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (autor, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
+| 9 | **Extrair os drivers atuais** (39 D1c/D1d) | na 0.3.9 só o 9a (39 §6.2): 9a.1 feita (40.7 §7.256), o adaptador SQLite e a API 1.1; 9a.2 feita (§7.257), a escolha no perfil e o core usando o adaptador; 9a.3 feita (§7.259), o campo "Adaptador" no formulário, com o aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1); **o 9a está fechado**. 9b/9c (PostgreSQL e MongoDB) **adiados** (decisão registrada, 2026-10-08; §2.3, segundo corte) |
+| 10 | **Instâncias e LSP de PostgreSQL/SQLite/MongoDB** (38 D2–D5) | **adiado** (decisão registrada, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
+| 11 | **InfluxDB 3 nativo e linguagem** (38 D6–D7) | **adiado** (decisão registrada, 2026-10-08; §2.3, segundo corte) para versão futura do Banco, sem número |
+| 12 | **MySQL/MariaDB nativo** (§5.7) | **adiado** (decisão registrada, 2026-10-08; §2.3) para versão futura ainda sem número; o ODBC aceito continua cobrindo MySQL/MariaDB |
 | 13 | **Console, localizar objeto e histórico** (§5.1–§5.2) | feito (40.7 §7.254–§7.255, IPC `0.166.0`): localizar a conexão do console ativo e histórico por conexão gravado fora do projeto; aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1) |
-| 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1). Edição por chave primária **adiada** (autor, 2026-10-08; §2.3) |
+| 14 | **Grade de dados** (§5.4) | feito (40.7 §7.250–§7.251): ordenar, carregar mais, copiar e exportar CSV; aceite com mouse e teclado feito pelo agente na 16.1 (§7.1.1). Edição por chave primária **adiada** (decisão registrada, 2026-10-08; §2.3) |
 | 15 | **Provas finais do Banco** (§5.6; desenho em §5.6.1) | **feito** (2026-10-15): 15a já estava feita (§7.252); 15b, a resolução de nomes com prazo (§7.289); 15c, o aviso com `UPDATE … FROM` (§7.290); 15d, a bateria real com TLS verify-full, nome por resolvedor, concorrência, SQLite e os critérios cruzados dos passos 7–14 (§7.291, 266 verificações) |
 | 16b | **Containers: os seis defeitos da investigação de 2026-10-08** (§2.5) | 16b.1 feita (40.7 §7.284, IPC `0.168.0`): Podman como reserva, falha do motor visível, list/images sem travar o core, rótulo do motor real, "Apagar os dados" com os volumes, e o Banco no motor que responde. 16b.2 feita (§7.285, IPC `0.169.0`): porta livre no "Criar banco", desligado com o motivo. 16b.3 feita (§7.286, IPC `0.170.0`): o "Remover" pergunta "com os volumes (N, X MB)" ou "só o container". **A 16b está fechada** |
-| 16c | **Reprodutibilidade entre distros** (§2.6; pedido do autor em 2026-10-15: "evitar o 'na minha máquina funciona'", antes do 15) | feito: R1 (40.7 §7.287), o `rust-analyzer` pelo `rust-toolchain.toml` e as lacunas do `instalar-ambiente.sh`; R2 (§7.288), o gate de idioma pelo vocabulário do repositório |
+| 16c | **Reprodutibilidade entre distros** (§2.6; requisito de desenvolvimento em 2026-10-15: "evitar o 'diferenças locais de ambiente'", antes do 15) | feito: R1 (40.7 §7.287), o `rust-analyzer` pelo `rust-toolchain.toml` e as lacunas do `instalar-ambiente.sh`; R2 (§7.288), o gate de idioma pelo vocabulário do repositório |
 | 16 | **Pente fino e fechamento da 0.3.9** (§7; auditoria e fatias 16.1–16.8 no §7.1) | último passo: frontend, bugs, segurança, desempenho, uso cronometrado (40.7 §7.201) e documentação; depois dos critérios dos passos 7–15; não exige gerar AppImage. 16.1 feita (40.7 §7.292, 2026-10-16): os aceites de 7, 7b, 9a.3, 13a, 13b, 14a e 14b, e os defeitos F1, F3 e F4 corrigidos. Anotado: os botões da barra do Banco não entram no ciclo de Tab (40.7 §7.254) |
 
-### 2.1 Handoff do passo 7 — 2026-10-07
+### 2.1 resumo técnico do passo 7 — 2026-10-07
 
 Base integrada: `main`, D1a.2 em `b29c549` e D1a.3 em `53fa4ac`, IPC UI/core
 `0.164.0`, API externa 1.0. D1 registra os quatro motores; D1a.1 protege o
@@ -134,10 +134,10 @@ Incidente de perda de dados, crash ou bloqueio diário continua furando a fila.
 **Fechamento do passo 7 (2026-10-08, 40.7 §7.243–§7.244):** D1a.4a (formato 2,
 migração e preservação no core, IPC `0.165.0`) e D1a.4b (a árvore do Banco
 mostra os indisponíveis; remover pede confirmação no menu) feitas. Provas no
-display virtual e em harness; **o aceite com o mouse e o teclado do autor fica
+display virtual e em harness; **o aceite com mouse e teclado físicos fica
 pendente** (roteiro no 40.7 §7.244).
 
-**Handoff do passo 8 (D1b), sobre a base `0.165.0`:** supervisionar o processo
+**resumo técnico do passo 8 (D1b), sobre a base `0.165.0`:** supervisionar o processo
 do adaptador com o contrato já fixado. O que a revisão D1b (§7.239) e as fatias
 D1a deixaram como requisito, nesta ordem:
 
@@ -156,45 +156,20 @@ D1a deixaram como requisito, nesta ordem:
    qualquer driver real (passo 9): pipes saturados, resposta tardia, célula
    grande, encerramento e `core.ping` durante as esperas.
 
-O passo 7b (QML) vem antes do passo 8, por decisão do autor (§2.4).
+O passo 7b (QML) vem antes do passo 8, por decisão do projeto (§2.4).
 
-### 2.2 Frentes paralelas autorizadas — 2026-10-07
+### 2.2 Frentes de implementação — 2026-10-07
 
-O autor pediu mais agentes com a mesma capacidade desta sessão, no máximo
-dois adicionais. Duas frentes de implementação foram abertas sobre
-`78f3ea2`, em worktrees separados; o agente anterior foi reutilizado para
-revisão preparatória. Mesmo modelo/esforço herdados, sem novas delegações.
+O passo 7 define negociação, perfis e contexto. O passo 8/D1b define
+processo, pipes e coleta. Os passos 13/14 abrangem histórico por conexão,
+cópia de células e exportação CSV, preservando os consumidores existentes.
+Fiação, contrato IPC e hosts comuns exigem revisão integrada.
 
-| Dono | Recorte atual | Entrega esperada |
-| --- | --- | --- |
-| Principal | Passo 7 e validação Qt 6.10 | Perfil de verificação alinhado, revisão de contratos/D1a.4 e integração/commits das frentes |
-| Agente passo 13 | Histórico limitado por conexão, reabrível no console | Desenho anterior ao código, persistência/contexto/rascunho provados, patch próprio |
-| Agente passo 14 | Copiar célula/linha e exportar resultado carregado em CSV | Formatação/snapshot/limites e escrita sem sobrescrita provados, patch próprio |
-| Agente anterior | Revisão preparatória do passo 8/D1b | Donos de processo/pipes/coleta, dependências e critérios; sem ativar runtime |
+**Validação de 2026-10-08 (40.7 §7.240):** dois testes negativos de
+negociação/erros e o perfil do orquestrador foram corrigidos e validados no
+Arch/Qt 6.12. Contratos e testes de cada passo definem seus critérios de aceite.
 
-Passos 13/14 avançam sobre os consumidores atuais, enquanto 8–12 conservam
-suas dependências. Cada frente entrega uma fatia, não o passo inteiro:
-localizar objeto, paginação/ordenação/edição da grade ficam em recortes
-seguintes. Qt 6.10, sem ações GNOME; provas GUI finais coordenadas pelo
-principal. Só o principal integra e commita depois dos gates. Fiação/
-registros de módulos, contrato IPC e hosts comuns são reconciliados em
-sequência; ninguém trabalha diretamente na árvore de outro agente.
-
-**Interrupção solicitada pelo autor nesta sessão:** as implementações foram
-suspensas antes da integração. Histórico e grade têm contratos/código parcial,
-patches WIP e notas nos seus worktrees; nenhuma entrega nova é declarada aceita.
-Principal preserva dois testes negativos de negociação/erros que reproduzem
-os achados da revisão D1b, com correção ainda pendente, e a edição não validada
-do orquestrador para retirar Qt 6.4. Retomar pelos handoffs, não iniciar gate
-completo esperando uma árvore já verde. D1a.4 continua pendente.
-
-**Retomada em 2026-10-08 (40.7 §7.240):** a correção dos dois testes e o
-perfil do orquestrador foram concluídos e validados no Arch/Qt 6.12. Os
-worktrees das frentes dos passos 13 e 14 ficaram na máquina anterior; quando
-esses passos chegarem, recomeçam pelos contratos aqui descritos, salvo se o
-autor trouxer os patches.
-
-### 2.3 Banco com foco em embarcados — decisão do autor, 2026-10-08
+### 2.3 Banco com foco em embarcados — decisão do projeto, 2026-10-08
 
 Pergunta do autor: quão utilizável fica a 0.3.9, profissionalmente, se o foco
 da IDE é embarcados e eles só chegam na 0.4? A análise apontou que o Banco
@@ -237,18 +212,12 @@ renumerar entregas nem citações; o 12 fica marcado como adiado. Os itens
 adiados não ganham versão por esta decisão. Inclusão de DataGrip ou DBeaver
 na IDE: análise de licença e de forma na [integracoes/37](../integracoes/37-banco-e-observabilidade.md) §4.1.
 
-### 2.4 QML na 0.3.9, para usar a IDE no próprio projeto — decisão do autor, 2026-10-08
+### 2.4 QML na 0.3.9, para usar a IDE no próprio projeto — decisão do projeto, 2026-10-08
 
-Pedido do autor ao passar a usar o atalho de desenvolvimento: "vamos colocar
-o LSP do QML também agora na 0.3.9, se não como eu uso a IDE para desenvolver
-ela mesma? Como as fatias do banco de dados reduziram, dá para integrar todo
-o necessário do QML". O QML é cerca de um terço do código deste repositório
-(406 arquivos). **Medição corrigida no mesmo dia:** a primeira leitura olhou só
-o registro tree-sitter do core (C, C++, Rust e Python) e concluiu que `.qml`
-abria como texto puro. Errado: o realce em C++ (`editor_highlighter_rules.cpp`)
-já trata `.qml` como JavaScript, com `property`, `readonly`, `required`,
-`signal` e `import`. Falta o LSP, as construções próprias do QML e a
-estrutura.
+QML entra no escopo da 0.3.9 para permitir o desenvolvimento da própria IDE.
+A revisão distingue suporte de linguagem via LSP do realce já existente em
+C++; a ausência de gramática QML no registro tree-sitter não comprova ausência
+de realce na interface.
 
 **Escopo do passo 7b**, com desenho escrito antes do código:
 
@@ -266,7 +235,7 @@ estrutura.
 ligação com o código da IDE; a adoção passa pelo checklist de
 `integracoes/README.md`. **Aceite:** abrir este repositório na IDE e editar
 um `.qml` com realce, diagnóstico do `qmlls` e ir para definição entre
-arquivos do módulo, provado com o mouse e o teclado do autor; gates verdes.
+arquivos do módulo, provado com mouse e teclado físicos; gates verdes.
 
 **Ordem:** depois da D1a.4, que fecha o passo 7, e antes do passo 8, para
 que os passos seguintes já sejam feitos com a IDE em uso diário.
@@ -289,7 +258,7 @@ mecanismo que já existe:
   o buffer num arquivo temporário privado e o `.qmlformat.ini` do projeto
   passado por `-s`, para valer o estilo do projeto. **Feita em 2026-10-08
   (40.7 §7.247).**
-- **7b.4, estilo deste repositório (decisão do autor, 2026-10-08, revista
+- **7b.4, estilo deste repositório (decisão do projeto, 2026-10-08, revista
   na mesma noite).** Primeiro o autor escolheu um `.qmlformat.ini` perto do
   estilo atual e um commit só de formatação. A medição antes do código
   mostrou que nenhuma opção evita as duas mudanças que o `qmlformat` sempre
@@ -317,10 +286,10 @@ Transcrito do cabeçalho do 40 em 2026-10-15, que era onde morava
 ([61](61-organizacao-da-documentacao.md) §3.3); este é o dono. O desenho fino
 da fatia é escrito aqui, antes do código.
 
-**Investigação de 2026-10-08, a pedido do autor:** funciona na máquina de
+**Investigação de 2026-10-08, conforme os requisitos técnicos:** funciona na máquina de
 então (Docker CLI 29.8.2 no contexto `podman-rootless`, Podman 6.1.3), mas
 há seis defeitos, a corrigir numa fatia própria **logo depois do 9a.2**
-(decisão do autor):
+(decisão do projeto):
 
 1. "Apagar os dados" deixa o volume do banco (`rm` sem `-v`).
 2. Docker que não responde não cai no Podman, e a dica manda `sudo
@@ -333,7 +302,7 @@ há seis defeitos, a corrigir numa fatia própria **logo depois do 9a.2**
 6. "Criar banco" sugere a porta 5432 já ocupada.
 
 Há também um teste de compose que chama o Docker real (`detect()` em vez do
-detector injetado). **Decisão do autor:** o "Remover" da janela Containers
+detector injetado). **Decisão do projeto:** o "Remover" da janela Containers
 pergunta na confirmação, com o tamanho dos volumes anônimos: "Remover com os
 volumes" ou "Só o container". "Apagar os dados" no Banco apaga os volumes
 sempre.
@@ -383,7 +352,7 @@ aditivo: nenhum campo some, nenhum método muda de nome.
 | 5 | `status()` pergunta `{{.Client.Version}}`, a versão do CLI | perguntar o **servidor**: `version --format {{json .Server}}`; o nome do componente (`Podman Engine` ou `Engine`) vira o campo novo `serverName`, e `version` passa a ser a do servidor (a do cliente fica em `clientVersion`). O rótulo diz "Podman 6.1.3 (pelo docker CLI)" quando o CLI é Docker e o servidor é Podman | docker falso que devolve o JSON de servidor do Podman → `serverName` "Podman Engine"; o rótulo QML no harness |
 | 6 | `DataSourceCreateBox.qml` sugere a porta interna (5432/27017) | o `discover` devolve `suggestedPorts: { postgres, mongo }`, a primeira porta livre no loopback a partir da padrão (teste de `bind` em `127.0.0.1`, até 20 tentativas); o formulário usa como valor inicial. O `datasource.create` recusa porta ocupada antes do `run`, com a porta e a sugestão | teste com um `TcpListener` segurando a porta: a sugestão pula para a seguinte, e o `create` recusa com `INVALID_PARAMS` |
 
-**O "Remover" que pergunta** (decisão do autor, §2.5 acima). Método novo
+**O "Remover" que pergunta** (decisão do projeto, §2.5 acima). Método novo
 `container.volumes { id }` → `{ id, volumes: [{ name, anonymous, sizeBytes? }] }`,
 fora do laço: os volumes vêm do `inspect` (`Mounts` do tipo `volume`;
 anônimo é o nome de 64 hexadecimais) e o tamanho do `system df -v`, quando
@@ -399,7 +368,7 @@ clique duplo de hoje. "Apagar os dados" no Banco usa sempre o `-v` (#1).
 passa pelo motor da máquina. Ele passa a usar o detector do `Core` (o mesmo
 que o `discover` já recebe), e o teste injeta o `PATH` falso.
 
-**O Banco também usa o motor que responde (decisão do autor, 2026-10-15, na
+**O Banco também usa o motor que responde (decisão do projeto, 2026-10-15, na
 16b.1).** Achado na leitura do diff da 16b.1, antes de compilar, e medido em
 2026-10-15 com o Podman 5.7.0 instalado: `docker ps` nega o socket e `podman
 ps` responde. Nessa combinação, `datasource.create` e `datasource.destroy`
@@ -436,7 +405,7 @@ e o "Criar banco" desligado com motivo, no
 core e na UI; 16b.3, o "Remover" com volumes. Cada uma com o gate rápido
 verde e foto antes/depois no Xvfb das telas que muda. **Precisa:** o Rust
 instalado nesta máquina; para a prova real, o usuário no grupo `docker` (ou
-o Podman instalado), decisão do autor. Em 2026-10-15 o autor instalou o
+o Podman instalado), decisão do projeto. Em 2026-10-15 O ambiente de teste passou a incluir o
 Rust 1.96.1 e o Podman 5.7.0; o usuário continua fora do grupo `docker`.
 
 **O desenho fino da 16b.2 (2026-10-15, antes do código).** Os defeitos 3 (a
@@ -482,7 +451,7 @@ metade do `discover`) e 6, e o "Criar banco" desligado com motivo. Protocolo
   a tela mostra um comando que não é o que roda, numa porta sem conferir.
 
 **O desenho fino da 16b.3 (2026-10-15, antes do código).** O "Remover" da
-janela Containers pergunta, com os volumes (decisão do autor, §2.5).
+janela Containers pergunta, com os volumes (decisão do projeto, §2.5).
 Protocolo `0.170.0`, aditivo.
 
 **Medido no Podman 5.7.0 desta máquina, 2026-10-15** (um `postgres:16` ligado
@@ -544,9 +513,8 @@ tamanho e a pergunta mostra só a contagem.
 
 ### 2.6 Passo 16c — reprodutibilidade entre distros (2026-10-15)
 
-**O pedido (o autor, 2026-10-15):** "vamos evitar conflitos também entre
-distros, para evitar o 'na minha máquina funciona'", e fazer isso antes do
-passo 15. A primeira sessão no Ubuntu 26.04 (40.7 §7.283–§7.286) encontrou
+**Requisito de 2026-10-15:** tornar os gates reproduzíveis entre distros
+antes do passo 15. A validação no Ubuntu 26.04 (40.7 §7.283–§7.286) encontrou
 quatro lugares onde o resultado dependia da máquina, todos medidos:
 
 1. **O LSP de Rust.** A IDE abre o próprio repositório, mas o Project
@@ -633,7 +601,7 @@ mesma base da janela do Banco.
 - **Provas:** `tst_container_rows` e `tst_containers_window` (a promessa do
   compose); falta a tela.
 
-### 3.1 A tela de boas-vindas (decisões do autor, 2026-10-03)
+### 3.1 A tela de boas-vindas (decisões do projeto, 2026-10-03)
 
 - **Só boas-vindas.** Não há trilhos, janelas, painel de baixo, atalhos de
   área (Ctrl+Alt+W/J/O/M/K/P) nem o "Abrir projeto" da barra de cima. O
@@ -667,7 +635,7 @@ responde ao pressionar. Ele vale para toda preferência de liga/desliga.
 
 ### 3.3 O topo com o ☰ aberto
 
-Pedido do autor: ao clicar no ☰, os menus aparecem na barra e os widgets do
+Requisito de desenvolvimento: ao clicar no ☰, os menus aparecem na barra e os widgets do
 topo (projeto, git, toolchain, python) **somem por um momento**, em vez de
 serem empurrados para o lado. Ao fechar o ☰, eles voltam iguais.
 
@@ -687,7 +655,7 @@ campos de texto, ~20 botões e três menus desenhados à mão. Agora:
 - **O atalho do menu sai do catálogo de comandos**, e o gate de atalhos
   confere os mapas de exceção.
 
-### 3.6 O seletor "Abrir projeto" (pedido do autor, 2026-10-03, noite)
+### 3.6 O seletor "Abrir projeto" (requisito de desenvolvimento, 2026-10-03, noite)
 
 Feito em 2026-10-04 (40.7 §7.215, protocolo `0.152.0`). O autor acrescentou,
 vendo a tela: o seletor **abre sempre no Início** (`/home/<usuário>`), com o
@@ -747,7 +715,7 @@ gate completo e estrito. Fatia concluída no 40.7 §7.220. Esse é o registro
 da retomada de 2026-10-05; ODBC foi concluído depois (§7.221), seguido por
 produção/somente leitura (§7.222) e prévia PostgreSQL (§7.223).
 
-**Decisão do autor na sessão de 2026-10-04:** escrita comum roda direto;
+**Decisão do projeto na sessão de 2026-10-04:** escrita comum roda direto;
 remoção, esvaziamento, alteração em massa sem filtro e instrução que o core
 não sabe classificar pedem confirmação. Essa decisão substitui a regra de
 avisar em toda escrita de desenvolvimento. Perfis de produção, modo somente
@@ -1030,14 +998,14 @@ nada interpreta SQL na UI.
 
 ### 5.2 Console que ajuda
 
-- **LSP obrigatório por decisão do autor em 2026-10-07.** Completar tabelas,
+- **LSP obrigatório por decisão do projeto em 2026-10-07.** Completar tabelas,
   colunas e palavras-chave usando ferramentas existentes e o cliente LSP
   já integrado. MongoDB precisa de coleções/campos/operadores; SQLite e
   InfluxDB 3 precisam de provedor compatível com seus dialetos. Um LSP pode
   atender vários bancos quando isso for comprovado. O plano anterior de
   completion própria e LSP SQL opcional foi substituído por essa decisão.
 - **Histórico de consultas** por conexão (as últimas N), reabrível no
-  console. **Decisão do autor (2026-10-08):** gravado fora do projeto, no
+  console. **Decisão do projeto (2026-10-08):** gravado fora do projeto, no
   estado do usuário (`$XDG_STATE_HOME`), separado por projeto, nunca em
   `.kinein/` nem no Git, com "Limpar histórico". O SQL pode conter senha; por
   isso ele não viaja com o repositório.
@@ -1060,7 +1028,7 @@ nada interpreta SQL na UI.
 
 #### 5.2.1 Desenho do histórico de consultas (passo 13b, 2026-10-08), antes do código
 
-Decisão do autor (no topo do 40 em 2026-10-08; hoje no [registro](registro/40-o-estado-ate-2026-10-15.md)): gravado fora do projeto, no estado do usuário,
+Decisão do projeto (no topo do 40 em 2026-10-08; hoje no [registro](registro/40-o-estado-ate-2026-10-15.md)): gravado fora do projeto, no estado do usuário,
 separado por projeto, nunca em `.kinein/` nem no Git, com "Limpar histórico".
 
 - **Dono: o core**, que executa. Cada `datasource.query` que **rodou** (o job
@@ -1112,7 +1080,7 @@ separado por projeto, nunca em `.kinein/` nem no Git, com "Limpar histórico".
 - **Exportar** o resultado para CSV.
 - **Editar célula** numa tabela com chave primária: gera o `UPDATE … WHERE pk`,
   que respeita a política de confirmação e de alcance do §5.3. **Adiado pelo
-  autor em 2026-10-08 (§2.3)**, para versão futura sem número.
+  projeto em 2026-10-08 (§2.3)**, para versão futura sem número.
 
 #### 5.4.1 Desenho do passo 14 (2026-10-08), antes do código
 
@@ -1268,7 +1236,7 @@ tinha), pelo `scripts/testar-banco-real.py` e pelas provas acima:
   disco, evento nem `ps`).
 - Os critérios cruzados dos passos 7–14: o que cada um prometeu e pode ser
   provado sem mouse; o aceite com mouse e teclado continua do autor (o
-  handoff do [40](40-estado-e-continuidade.md), "Pendente do autor").
+  resumo técnico do [40](40-estado-e-continuidade.md), "Pendente do autor").
 
 ### 5.7 "Todos os bancos": a pergunta do autor (2026-10-04), para decidir
 
@@ -1282,7 +1250,7 @@ escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
 | **`usql`** (cliente universal, um binário Go) | Mais de 40 bancos pela linha de comando | Orquestrar um processo externo e ler a saída como texto. Serve para console, não para árvore nem edição. |
 | JDBC (o caminho do DBeaver e do DataGrip) | Praticamente todos | Exige uma JVM. Fora, pelo peso. |
 
-**Proposta histórica, aceita pelo autor abaixo:** dois níveis.
+**Proposta histórica, aceita pela manutenção abaixo:** dois níveis.
 
 1. **Nativos completos.** PostgreSQL, MySQL/MariaDB, SQLite e MongoDB, com
    árvore, edição, aviso de impacto e transação.
@@ -1293,7 +1261,7 @@ escolher qualquer banco em vez dos quatro de hoje. As opções levantadas:
 É a forma que cobre "a escolha do usuário" sem a IDE manter um driver por
 banco.
 
-**Decidido pelo autor em 2026-10-04: vale, e entrou no antigo passo 7
+**Decidido pela manutenção em 2026-10-04: vale, e entrou no antigo passo 7
 (agora dividido nos passos 7–15; MySQL/MariaDB no 12, adiado em 2026-10-08,
 §2.3).** Nas palavras
 dele: "os nativos e os por plugins que o usuário quiser usar, e a IDE apenas
@@ -1305,7 +1273,7 @@ orquestra". Ficam assim:
 - a IDE não baixa driver sozinha. Um driver é código nativo de terceiros, e
   carregá-lo é gesto explícito, com aviso (§7, segurança).
 
-**Ampliação esclarecida pelo autor em 2026-10-07:** incluir **InfluxDB 3
+**Ampliação esclarecida pela manutenção em 2026-10-07:** incluir **InfluxDB 3
 nativo**, sem ODBC, e suporte LSP de **MongoDB moderno**, SQLite e dialetos
 SQL. MongoDB 3.x não é requisito de legado. A instalação/atualização do
 banco e do LSP fica com o usuário. Não fixar versão de servidor ao teste;
@@ -1324,198 +1292,19 @@ InfluxDB 3 usa SQL/InfluxQL para consulta e API de escrita própria; não
 atribuir a ele as operações PostgreSQL. O LSP correto ainda é pendência,
 independente da integração de acesso nativo.
 
-### 5.8 A fatia retomada e o próximo prompt (atualizado em 2026-10-07)
+### 5.8 Contratos e perfis dos provedores de banco (2026-10-07)
 
-A arquitetura do Banco, com diagramas, donos e limites, está no
-[37](../arquitetura/37-banco-de-dados.md). A escrita MongoDB, a confirmação
-seletiva e o formulário estão concluídos, com gate completo e estrito
-verde, PostgreSQL/MongoDB reais e prova na tela registrados no 40.7 §7.220.
-O passo 7 continua aberto.
+O passo 7 organiza os provedores de banco em contratos externos, perfis,
+negociação de recursos, execução isolada e contexto de linguagem. A arquitetura
+está em [37](../arquitetura/37-banco-de-dados.md),
+[39](../arquitetura/39-drivers-externos-e-compatibilidade.md) §8 e
+[40](../arquitetura/40-contrato-operacional-de-drivers.md).
 
-**Última fatia concluída:** D1a.3 (40.7 §7.237): contrato operacional e
-guardião puro de contexto/sequência/terminal, alvos de decisão/cancelamento
-e limites cumulativos. Agente adicional em worktree isolado; revisão,
-integração e commits pelo principal. Gate completo/estrito em continuação,
-1056 testes Rust, sete CTest e 132 harnesses por Qt; debug/release em
-351/352 ms, 33 superfícies limpas cada. Sem runtime externo nem LSP novo.
-
-**D1a.2 anterior aceita (40.7 §7.236):** negociação externa pura,
-API própria 1.0, identidade/recursos/limites e erros públicos sem texto livre.
-IPC UI/core permanece `0.164.0`. Gates completos/estritos em continuação,
-1034 testes Rust, sete CTest e 132 harnesses por Qt. Não inicia processo ou
-banco; fluxo operacional aceito em D1a.3, perfil extensível/migração pendente.
-
-**D1a.1 anterior aceita (40.7 §7.235), mantendo `0.164.0`:**
-Catálogo inválido/futuro e campos duplicados são recusados sem sobrescrita;
-escrita atômica compartilhada, teto de 1 MiB e aviso na janela do Banco.
-Gates completos/estritos em continuação, 1019 testes Rust, sete CTest e 132
-harnesses por Qt; recusa real de criação SQLite, arquivo idêntico e texto do
-console preservado na IDE. D1a segue aberta para formato/migração e contrato.
-
-**D1 anterior aceita:** registro dos provedores (40.7 §7.234), `0.164.0`.
-O core fornece os descritores dos quatro motores atuais ao formulário/menu
-pelo fluxo de perfis existente. Gates completos/estritos em continuação,
-1014 testes Rust, 132 harnesses em cada Qt 6.10/6.4 e prova com mouse/teclado
-na sessão gráfica real. Perfis preservados; catálogo e linha SQLite lidos
-na IDE. Drivers externos e LSP continuam pendentes; próxima fatia D1a.
-
-**Desconexão anterior aceita:** Desconectar (§5.1.5, 40.7 §7.231), protocolo
-`0.163.0`. Drena trabalhos e drivers, revoga prévia sem decisão/consentimento
-ODBC, preserva perfil/rascunho e descarta resposta antiga do console.
-PostgreSQL/MongoDB reais e gestos SQLite na janela da IDE provados. Gates
-completos/estritos em continuação, com hashes conferidos: 1012 testes Rust,
-Clippy, clang-format/clang-tidy 21 sem exceção, 131 harnesses em cada Qt
-6.10/6.4, sete CTest nos três builds e abertura/33 superfícies em cada um.
-Debug/release reconstruídos após o gate detectar objetos anteriores aos
-headers do sistema. Launcher confirmado com UI hardened e core release
-atuais. Novo banco no menu permanece aceito no §7.230; releitura após execução permanece aceita
-no §7.229: CREATE/ALTER/DROP e lote parcialmente aplicado na IDE real sem F5;
-contexto, resultado duplicado, coalescência e credencial cobertos.
-Modelos/ações com impacto permanecem aceitos no §7.228: geração no core,
-buffer sujo/desfazer e aviso existente. A primeira fatia da árvore, barra,
-seleção e menus permanece aceita no §7.226; integração na main no §7.227. Consoles
-seguros e reutilização das abas continuam aceitos no §7.225 (d116b43).
-Prévia PostgreSQL permanece aceita no §7.223 (fbf3294). Produção/somente leitura
-permanecem aceitas no §7.222 (c4d8779), e ODBC no §7.221 (fa32f51).
-Não repita provas aceitas sem risco concreto.
-
-**Relevo do editor concluído:** pedido do autor em 2026-10-06, desenho
-anterior ao código no §7 e aceite no 40.7 §7.224. Código e Markdown usam
-KvInsetSurface como o terminal, conservando as 24 linhas de código na janela
-de 1400×875. Provas de edição, roda, busca, foco e Markdown passaram; gates
-completos e estritos verdes. Confira git log para o commit local.
-
-**Desenho registrado:** modularidade de Banco/LSP, atualização pelo usuário,
-MongoDB moderno e InfluxDB 3 nativo, no 40.7 §7.232 e no
-[38](../arquitetura/38-provedores-de-banco-e-linguagem.md). Sem mudança de
-produto/protocolo; provas de ferramentas externas não são integração na IDE.
-
-**Revisão anterior ao código:** após pesquisa do IntelliJ/Database Navigator,
-o 39 e ADR-0010 definem atualização independente também do driver, com API
-de processo, perfis preservados e migração gradual. Revisão de donos/falhas
-registrada no 39 §9 e 40.7 §7.233. Sem implementação nessa entrega.
-
-**D1 entregue (40.7 §7.234, `0.164.0`):** registro sobre os quatro motores
-atuais, descritores no fluxo de perfis, formulário/menu consumidores. Nenhum
-driver ou LSP novo carregado; perfis/contextos anteriores preservados.
-
-**Próxima fatia executável:** perfil extensível e migração (D1a.4),
-com preservação/migração antes de runtime ou seleção persistida de ferramenta.
-A proteção do schema 1 já foi aceita em D1a.1 (§5.13, 40.7 §7.235);
-não refaça essa correção. A inicialização/erros/limites puros já estão aceitos
-em D1a.2 (§5.14, 40.7 §7.236); mensagens e guardião operacional em D1a.3
-(§5.15, 40.7 §7.237). Falta o formato extensível com migração D1a.4,
-antes de aplicar o contrato no transporte.
-Ponte/extração de drivers em D1b–D1d; instâncias/contexto e integração LSP
-(D2–D5) seguem as dependências do 39 §8.
-LSP SQL passou a ser obrigatório: não implementar completion de catálogo
-própria antes dessas ferramentas. InfluxDB 3 exige adaptador nativo e
-provedor de linguagem comprovado (D6–D7), com perfil/ID extensível.
-
-**Restante do Banco, distribuído nos passos 8–15 (§2):** localizar objeto do console (§5.1), histórico
-(§5.2), carregar mais/ordenar/copiar/exportar (§5.4; a edição por chave
-primária e o MySQL/MariaDB nativo do §5.7 foram adiados em 2026-10-08,
-§2.3), aviso com `UPDATE FROM` e TLS
-`verify-full` (§5.6), além das integrações LSP/InfluxDB acima.
-Vínculos, identidades, seleção, menus, modelos, impacto, releitura e
-desconexão já estão validados (§5.12/§5.1.1–§5.1.5); continuar sobre essa
-base. As onze pendências contadas antes da ampliação não são onze commits
-nem garantia de encerramento na fatia 11. Cada passo fecha com seus próprios
-critérios; o 7 fecha com D1a.4, o 15 com a bateria cruzada do Banco.
-O pente fino é o passo 16, incluindo revisão das demais áreas; DNS/NSS
-entra na bateria do 15. AppImage está adiado e fora do fechamento (§8).
-
-Prompt de continuidade (conferir estado e log antes de usar):
-
-```text
-Kinein Vectis — continuar a 0.3.9, passo 7 (contratos/perfis), fatia D1a.4.
-Use a main em /home/hugh/Projects/KineinVectis (Arch Linux desde 2026-10-07;
-o checkout anterior era /home/hugh/KineinVectis). Em 2026-10-06 o autor pediu reunir
-frontend e core nesse checkout: os sete commits até b31aa89 foram incorporados
-por fast-forward. Não abra outra divisão para o frontend.
-O autor autorizou concluir o plano da 0.3.9. A revisão de 2026-10-07 divide
-o antigo Banco nos passos 7–15; pente fino é o passo 16, último da versão.
-Qt local do sistema (Arch, 6.12.0, clang 23, GCC 16); ignorar Qt 6.4 do AppImage
-anterior nesta continuidade. Novo AppImage está fora deste fechamento;
-o autor pensa em lançá-lo após a 0.4.0, ainda sem decisão de publicação.
-A integração antecipada em main e a retirada da divisão substituem a ordem
-anterior, por pedido explícito nessa sessão. Sem push/empacotamento.
-
-Comece com git status --short --branch e git log -5; preserve todo trabalho
-local. Leia 00-comece-aqui, o cabeçalho e a fila do 40, a última entrada
-do 40.7, o 59 §2.1/§5.8/§7, arquitetura/37/38/39/40, ADR-0009/0010
-e o contrato arquitetura/03.
-Confira PROTOCOL_VERSION no código. Preserve as proteções do 40.7 §7.220.
-Leia o aceite do §7.221: protocolo 0.157.0, ODBC concluído e validado.
-ODBC está no commit local fa32f51. Produção/somente leitura/contexto
-(protocolo 0.158.0) estão validados no §7.222. Confira git log/status para
-localizar o commit e preservar qualquer trabalho posterior. Não repita
-provas aceitas sem risco concreto. Prévia PostgreSQL (§5.11), protocolo
-0.159.0, está concluída e validada (§7.223). Confira git log e preserve
-qualquer trabalho posterior. O relevo do editor está validado (§7.224),
-com prova visual, gates completos e estritos e commit próprio. Consoles
-seguros e abas de execução estão aceitos no §7.225, protocolo 0.160.0.
-Barra, menus, seleção/atalhos locais e releitura estão aceitos no §7.226.
-Modelos do catálogo e ações com impacto estão aceitos no §7.228, protocolo
-0.161.0. Releitura após execução está aceita no §7.229, protocolo
-0.162.0, incluindo falha parcial e coalescência. Não refaça geração,
-confirmação, inserção no buffer nem refresh automático. Novo banco no menu
-está aceito no §7.230, mantendo 0.162.0; usa o formulário existente, com prova
-de cancelamento/criação e rascunho intacto. Não refaça essa entrada.
-Desconexão está aceita no §7.231, protocolo 0.163.0, com PostgreSQL/MongoDB
-reais e rascunho preservado na IDE. Não refaça leases/barreira, shutdown
-MongoDB nem descarte de pedidos antigos do console. Desenho modular registrado
-no §7.232, arquitetura/38 e ADR-0009; ainda sem integração de
-produto. A revisão posterior, antes do código, está no §7.233,
-arquitetura/39 e ADR-0010. D1 entregue no §7.234, protocolo 0.164.0:
-providers em datasource.list/save/remove, campos e motores do formulário/menu
-vindos do core; não refaça esse registro. Atual: D1a.4, formato/migração de
-perfis; proteção, negociação e guardião puros já aceitos em D1a.1–D1a.3;
-runtime/extração de drivers em D1b–D1d, contexto LSP em D2 conforme o 39 §8.
-Não refaça menus/seleção, popup LSP ou transporte do cliente. Leia os donos,
-limites, revisão e dependências antes do código.
-
-A decisão de 2026-10-04 permanece: inserir, criar e alterar com filtro
-rodam sem pop-up comum; remover, alterar tudo e impacto desconhecido
-pedem confirmação. A medição silenciosa protege filtro que pega todos.
-O console Mongo usa um comando por linha, com JSON estrito; preserve
-a forma antiga de leitura e o tratamento de Extended JSON.
-
-A decisão esclarecida em 2026-10-07 torna LSP SQL obrigatório, com ferramentas
-existentes para PostgreSQL, SQLite, MongoDB moderno e InfluxDB 3 SQL/InfluxQL.
-Não há requisito MongoDB 3.x. O usuário instala/atualiza banco, adaptador e
-LSP; a IDE negocia capacidades e contém incompatibilidade na instância/adaptador.
-Um LSP pode atender vários bancos, se comprovado. InfluxDB 3 é nativo, sem
-ODBC; seu LSP ainda precisa de seleção/prova. Não usar Flux LSP arquivado.
-Não implementar parser ou completion semântica próprios. O alvo de driver
-externo no 39 é independente do LSP e reutiliza bibliotecas/APIs mantidas.
-Sem retry de escrita ou fallback automático após falha; prévia mantém a
-mesma conexão/transação e desconexão aguarda recursos reais.
-Siga D1–D7 e D1a–D1d no 38/39,
-preservando localizar objeto (§5.1), histórico (§5.2), grade (§5.4) e
-provas finais (§5.6). MySQL/MariaDB nativo e edição por chave primária foram
-adiados pelo autor em 2026-10-08 (§2.3): não implementar nesta versão.
-A correção pendente do WIP 1ebd7ad (desfecho/slot de controle) está no 40.7
-§7.240; os worktrees dos passos 13/14 ficaram na máquina anterior. Não interpretar a contagem antiga
-de onze pendências como onze commits até o fechamento. Uma fatia por commit,
-contrato antes do código.
-ODBC nunca baixa driver; preserve o gesto de carregar e a revogação da sessão.
-
-PT-BR na documentação/UI; identificadores em inglês; regras no core.
-Segurança: argumentos sem shell, validação estrita, segredos só em memória,
-recusa por padrão e testes que tentam quebrar. Não suprima avisos de terminal.
-Prove os gestos com mouse/teclado na janela da IDE, capturando só essa janela.
-HOME real, XDG isolado; bancos de teste em contêineres no loopback, com limpeza.
-Todos os gates verdes antes do commit local. Nunca push.
-Registre em 40.7, 59, 40, CHANGELOG, manual e arquitetura.
-
-Após os passos 7–15, passo 16 inteiro: revisão minuciosa das outras áreas que
-o autor relatou em 2026-10-05, além de segurança, bugs e desempenho.
-O critério é consumo de recurso no uso diário, com Qt 6.10. AppImage não é
-critério de encerramento da 0.3.9; seu planejamento futuro está no §8.
-Ao concluir de fato a 0.3.9, desative o timer local de retomada autorizado
-pelo autor e registre o fechamento. Limite de uso não encerra a tarefa.
-```
+D1a.1–D1a.3 estabeleceram negociação e guardião puro de contexto, sequência,
+terminal e limites cumulativos. D1a.4 trata formato extensível e migração de
+perfis; D1b–D1d tratam runtime e extração dos drivers. D2 trata o contexto LSP.
+Os desenhos seguintes detalham as fronteiras e os critérios de aceite.
+O estado atual de implementação está no [40](40-estado-e-continuidade.md).
 
 ### 5.9 Desenho da fatia ODBC — 2026-10-05
 
@@ -1886,8 +1675,8 @@ Debug/release abriram em 345/336 ms, 33 superfícies sem avisos cada.
 
 ### 5.15 D1a.3 — fluxo operacional externo (desenho, 2026-10-07)
 
-Sobre a negociação aceita em `b29c549`: integrar a fatia do agente adicional,
-isolada de D1a.2. Desenho anterior ao código no
+Sobre a negociação aceita em `b29c549`: integrar o fluxo operacional,
+isolado de D1a.2. Desenho anterior ao código no
 [40](../arquitetura/40-contrato-operacional-de-drivers.md): mensagens tipadas
 de abrir/testar/introspectar/consultar/impacto/prévia/decidir/cancelar/fechar/
 encerrar, chunks e resposta terminal, com API externa 1.0 e IPC UI preservado.
@@ -1927,7 +1716,7 @@ instalação ou migração de perfis. Próximo recorte D1a.4; passo 7 aberto.
   é para o desenvolvimento do próprio Grafana do projeto.
 - **Janela acoplada**, com o endereço, o estado e o painel web.
 - **O AppImage** passa a levar o QtWebEngine. O aumento do download foi
-  aceito pelo autor e é medido e registrado no passo.
+  aceito pela manutenção e é medido e registrado no passo.
 
 ### 6.1 O desenho decidido (2026-10-04, antes de codificar)
 
@@ -2023,7 +1812,7 @@ com tamanho e compatibilidade registrados no §7.219. Desde a revisão de
 
 ## 7. Pente fino e fechamento
 
-**Passo 16, último da 0.3.9 (revisão do autor, 2026-10-07).** Começa após
+**Passo 16, último da 0.3.9 (revisão da decisão registrada, 2026-10-07).** Começa após
 os critérios dos passos 7–15. Foco Qt 6.10, sem migração de SDK ou prova do
 AppImage antigo. A geração de novo pacote está fora deste fechamento (§8).
 
@@ -2052,7 +1841,7 @@ o prazo não é teto absoluto do job com hostname. Reproduzir com resolvedor
 controlado da prova e resolver duração/cancelamento sem acumular threads ou
 processos órfãos; conferir também o caminho PostgreSQL ordinário.
 
-**Inspeção adicional pedida pelo autor em 2026-10-06:** abrir o estado atual
+**Inspeção adicional pedida pela manutenção em 2026-10-06:** abrir o estado atual
 da IDE e procurar defeitos fora do foco recente de Banco, sem declarar a
 0.3.9 encerrada. A revisão inicial conferiu o handler de mensagens Qt com
 uma prova isolada usando o código real e o handler padrão, fora do QtTest:
@@ -2068,7 +1857,7 @@ visível; corrigir no pente fino após Banco. Roda e barra são verificadas
 separadamente; um evento discreto do auxiliar de input não foi entregue,
 e a roda respondeu ao evento apropriado, sem alterar código da IDE.
 
-**Pedido do autor em 2026-10-06:** depois de concluir a correção em curso da
+**Pedido do projeto em 2026-10-06:** depois de concluir a correção em curso da
 prévia PostgreSQL, analisar e aplicar na área de edição de código o relevo
 que já separa o conteúdo do terminal (40.7 §7.217). Conferir os fundos,
 bordas, gutter, abas e sobreposições com o editor em uso; preservar espaço
@@ -2093,7 +1882,7 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
 - **Terminal com reflow:** ao alargar, as linhas antigas continuam quebradas
   na largura estreita (visto com a janela do Grafana voltando ao tamanho).
   Terminais modernos refazem a quebra.
-- **Segurança da casca** (pedido do autor, 2026-10-04: a IDE orquestra
+- **Segurança da casca** (requisito de desenvolvimento, 2026-10-04: a IDE orquestra
   ferramentas prontas — ssh, Grafana, drivers de banco — e a falha não pode
   vir do lado dela). Revisar e testar, com teste que tenta quebrar:
   - **Injeção em linha de comando:** host, usuário, porta, caminho e nome de
@@ -2119,7 +1908,7 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
   - **ODBC:** driver é código nativo de terceiros. A IDE carrega o que a
     pessoa instalou, com aviso, e nunca baixa driver.
 - **Shift+F10** abre o menu de contexto no terminal e na árvore; Executar fica
-  no Ctrl+Alt+R. **Confirmado pelo autor em 2026-10-04.**
+  no Ctrl+Alt+R. **Confirmado pela manutenção em 2026-10-04.**
 - **A/B do `AA_ShareOpenGLContexts`** (40.7 §7.218): RSS e primeiro quadro
   com e sem a linha, N≥5 na mesma cena. Se custar, ligar só quando a opção
   `grafanaWebView` estiver ligada (lida antes do `QGuiApplication`).
@@ -2133,7 +1922,7 @@ lado a lado, símbolos, overlays e terminais na mesma janela.
   Problemas, configurar, recompilar, banco, containers e remoto.
 - **Desempenho:** primeiro quadro (orçamento de 400 ms; 247 ms em
   2026-10-03), RSS, e A/B intercalado para qualquer mudança medida.
-- **Dívidas conhecidas:** resolvidas DENTRO da 0.3.9 (decisão do autor,
+- **Dívidas conhecidas:** resolvidas DENTRO da 0.3.9 (decisão do projeto,
   2026-10-03: "tudo tem que estar preparado para iniciarmos a 0.4, evitando
   retrabalho; a 0.3.9 vai servir de base"). A lista:
   - o slot da esquerda tem uma largura só para as três janelas: alargar o
@@ -2168,14 +1957,14 @@ autônomo, 40 §5): o que está feito sai da lista, com a entrada que o prova.
 | DNS/NSS da prévia | feito (§7.289, passo 15b) | — |
 | Relevo do editor | feito (§7.224) | — |
 | Shift+F10 | feito: `GlobalShortcuts.qml` (Executar), menu local no terminal e na árvore do Banco | — |
-| Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | feitos pelo agente (40 §5, "modo autonomo"), com os defeitos F1, F3 e F4 corrigidos (§7.1.1; 40.7 §7.292) | 16.1 |
+| Aceites com mouse e teclado de 7, 7b, 9a.3, 13a, 13b, 14a, 14b | validados por automação em ambiente isolado, com os defeitos F1, F3 e F4 corrigidos (§7.1.1; 40.7 §7.292) | 16.1 |
 | PageUp/PageDown no editor | feito (§7.1.2; 40.7 §7.293) | 16.2 |
 | Terminal com reflow ao alargar | feito (§7.1.3; 40.7 §7.294) | 16.3 |
 | Segurança da casca (injeção em `ssh`/`rsync`, projeto não confiável, credenciais, aba Web, `known_hosts`, caminhos, cadeia de suprimento, ODBC) | feito em 2026-10-16 (§7.1.4; 40.7 §7.295–§7.297): injeção no Remoto, `known_hosts` regravável, espelho por marcador clonado, CMake e `build.rs` rodando ao abrir, `file://` ao `xdg-open`, origem do deploy fora do projeto, credencial na URL do Grafana | 16.4a, 16.4b, 16.4c |
 | Dívidas: `Flickable` rolado além do fim (2 de 25 arquivos com o `returnToBounds`), mensagens do core sem acento (~60), a largura única do slot da esquerda, a barra do Banco fora do ciclo de Tab (§7.254), o tooltip antigo do `KvButton`; o catálogo editado fora da IDE (F2 da 16.1) | feito em 2026-10-16 (§7.1.5): o `Flickable` não reproduz no Qt 6.10 (fica, medido); as mensagens (16.5a, 40.7 §7.298); largura por janela, ↻ que relê o catálogo, Tab da barra do Banco e o tooltip (16.5b, §7.299) | 16.5a, 16.5b |
 | Desempenho: primeiro quadro (orçamento de 400 ms), RSS, A/B do `AA_ShareOpenGLContexts` | feito em 2026-10-16 (§7.1.6; 40.7 §7.300): tudo no orçamento; o atributo só com a aba Web ligada; a medida da digitação de volta | 16.6 |
 | Caça a bugs por fluxos inteiros (abrir, editar, compilar com erro, Problemas, configurar, recompilar, banco, containers, remoto) e polimento, com o Ctrl+B mudo (F5) e o completar depois de número (F6) da 16.1 | feito em 2026-10-16 (§7.1.7; 40.7 §7.301): o fluxo C++/CMake e os Containers passaram; F5, F6 e F10 (o Ctrl+B num cabeçalho do sistema) corrigidos; F8 era o `xdotool` (as teclas F vão pelo XTEST agora) | 16.7 |
-| F7: o automático da toolchain diz o que o projeto usa (decisão do autor, 2026-10-16) | feito em 2026-10-16 (§7.1.7.1; 40.7 §7.302): o cache do CMake do projeto, chip neutro, protocolo 0.172.0 | 16.7b |
+| F7: o automático da toolchain diz o que o projeto usa (decisão do projeto, 2026-10-16) | feito em 2026-10-16 (§7.1.7.1; 40.7 §7.302): o cache do CMake do projeto, chip neutro, protocolo 0.172.0 | 16.7b |
 | F9: os textos da UI sem acento (15 `qsTr`, ~25 em `ui/src`) | feito em 2026-10-16 (§7.1.7.2; 40.7 §7.303) | 16.7c |
 | Fechamento: 40, 57 e CHANGELOG dizem "0.3.9 encerrada" | feito em 2026-10-16 (§7.1.8; 40.7 §7.304) | 16.8 |
 
@@ -2244,7 +2033,7 @@ descartáveis no Podman 5.7.0.
   encontrado no PATH": o `fd` é dependência declarada (o instalador o traz;
   `fs/find.rs` tenta `fd` e `fdfind`), e o `fd-find` ainda não foi instalado
   nesta máquina (o comando do `apt` está com o autor). O autosave gravou a
-  edição em disco no meio do aceite: é a decisão do autor de 2026-09-18 (o
+  edição em disco no meio do aceite: é a decisão do projeto de 2026-09-18 (o
   Ctrl+Z também é gravado, e o disco voltou ao HEAD).
 
 **Desenho da correção do F4.** O `ToolDetector` ganha o diretório do probe
@@ -2276,7 +2065,7 @@ condição; sem a limpeza no `editDraft`) reprovam. Foto antes (a de hoje,
 `10-testar-depois`) e depois no Xvfb.
 
 **O roteiro do aceite 7b.** O diretório real deste repositório, com o
-autosave ligado (decisão do autor): toda edição é desfeita pela própria IDE
+autosave ligado (decisão do projeto): toda edição é desfeita pela própria IDE
 (Ctrl+Z, Ctrl+/ de novo), e o `git status` do fim é comparado ao do começo.
 A formatação (`qmlformat`, Ctrl+Alt+L) ficou fora: reformataria o arquivo
 inteiro (7b.4, sem formatação em massa) e já tem a prova da 7b.3.
@@ -2675,7 +2464,7 @@ que está com o autor.
   resposta de `lsp.definition` sem caminho. Passa a emitir o sinal também
   vazio; o `EditorEventRouter` mostra, no popup de hover que já aparece no
   cursor, "nenhuma declaração para ir daqui" (o hover some sozinho). O
-  `EditorController` (congelado por decisão do autor, 40 §2) não muda.
+  `EditorController` (congelado por decisão do projeto, 40 §2) não muda.
 - **F6, o completar abre depois de um número.** O disparo automático (depois
   de caractere de palavra, `.` ou `:`) passa a ignorar a palavra que começa
   com dígito e o `.` logo depois de um dígito (`1`, `3.14`, `0x1F`). Com
@@ -2712,14 +2501,13 @@ máquina). Achados:
   suposto o chip, o menu, a dica de sysroot e o prefixo das binutils; o
   `--query-driver` do clangd só entra para compilador cross, e o nativo não
   é afetado (corrigido em 2026-10-16, ao desenhar a 16.7b).
-  **Decisão do autor (2026-10-16):** "manter um nome neutro e o
+  **Decisão do projeto (2026-10-16):** "manter um nome neutro e o
   funcionamento automático de ler o que de fato está no projeto que for
   aberto, e não suposições". O automático passa a dizer o que o build do
   projeto usa (o cache do CMake do preset), e nada antes de ele existir; o
   rótulo é neutro. Fatia própria, 16.7b (§7.1.7.1), desenho antes do código.
 - **F8: Ctrl+F9, Ctrl+Shift+F9 e Shift+F10 não disparavam no Xvfb. Causa
-  achada, e não é da IDE.** O autor autorizou o teclado e o mouse dele
-  (2026-10-16); antes disso, o `xev` no mesmo Xvfb mostrou a causa: o
+  achada no driver de teste.** Em 2026-10-16, o `xev` no mesmo Xvfb mostrou a causa: o
   `xdotool` 3.20160805 manda `Alt_L` junto de TODA tecla F (`xdotool key
   ctrl+F9` chega como Control_L, Alt_L, F9; `shift+F10`, como Shift_L,
   Alt_L, F10; `F9`, como Alt_L, F9). Ctrl+Alt+F9 é a troca de terminal
@@ -2763,7 +2551,7 @@ e a 16.7c (F9).
 
 ##### 7.1.7.1 16.7b — o automático da toolchain lê o projeto (desenho, 2026-10-16, antes do código)
 
-**A decisão (autor, 2026-10-16, 40 §5):** "manter um nome neutro e o
+**A decisão (decisão registrada, 2026-10-16, 40 §5):** "manter um nome neutro e o
 funcionamento automático de ler o que de fato está no projeto que for
 aberto, e não suposições".
 
@@ -2889,7 +2677,7 @@ quadro), sem aviso, com o passeio de 33 passos limpo (40.7 §7.304). **A
 
 ## 8. AppImage futuro — fora do fechamento da 0.3.9
 
-**Orientação do autor em 2026-10-07:** focar Qt 6.10 agora e ignorar o Qt do
+**Orientação do projeto em 2026-10-07:** focar Qt 6.10 agora e ignorar o Qt do
 AppImage anterior. A versão em desenvolvimento é a 0.3.9; isso não exige
 publicar um pacote ao encerrá-la. O autor está considerando lançar novo
 AppImage após finalizar a 0.4.0. É intenção registrada, não decisão de data,
@@ -2904,7 +2692,7 @@ automático desta revisão de planejamento.
 
 Requisitos guardados para a futura fatia de pacote:
 
-- Preservar os alvos definidos pelo autor em 2026-10-04: Ubuntu 24.04 LTS
+- Preservar os alvos definidos pela manutenção em 2026-10-04: Ubuntu 24.04 LTS
   e posteriores/derivadas, Debian 13, Fedora atual e anterior, Arch.
   Reconfirmar as versões e provar o pacote nesses ambientes ao abrir a fatia.
 - Builder baseado em Ubuntu 24.04, o alvo mais antigo; fixar SDK,

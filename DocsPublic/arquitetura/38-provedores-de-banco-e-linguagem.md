@@ -2,7 +2,7 @@
 
 <!-- caminhos-conferidos -->
 
-> **Classe: PLANO.** Decisão do autor esclarecida em 2026-10-07; base lida:
+> **Classe: PLANO.** Decisão do projeto esclarecida em 2026-10-07; base lida:
 > `main`, commit `33463a1`, protocolo `0.163.0`. A integração descrita aqui
 > ainda não está integrada por inteiro. D1 entrega o registro de motores
 > atuais em `0.164.0`; runtime externo e LSP continuam pendentes. A decisão está no
@@ -23,7 +23,7 @@ entra no fechamento da 0.3.9 como requisito (passos 10–11 do 59 §2), usando
 o cliente LSP existente: completar
 tabelas, colunas, palavras-chave e, no MongoDB, coleções, campos e operadores.
 O alvo inclui PostgreSQL, SQLite, MongoDB moderno, MySQL/MariaDB e InfluxDB 3
-nativo, sem ODBC para este último. MySQL/MariaDB nativo foi adiado pelo autor
+nativo, sem ODBC para este último. MySQL/MariaDB nativo foi adiado pela manutenção
 em 2026-10-08 para versão futura (59 §2.3); até lá, segue pelo ODBC. MongoDB 3.x não é requisito de legado.
 ODBC conserva seu caminho genérico e seu consentimento de sessão.
 
@@ -362,7 +362,7 @@ O [39 §9](39-drivers-externos-e-compatibilidade.md#9-revisão-do-desenho--2026-
 registra a revisão anterior ao código, achados e correções no plano.
 
 Cada linha pode exigir mais de um commit. D0 não habilita recurso no produto.
-Reorganização do autor em 2026-10-07: D1/D1a ficam no passo 7, D1b no 8,
+Reorganização do projeto em 2026-10-07: D1/D1a ficam no passo 7, D1b no 8,
 D1c/D1d no 9, D2–D5 no 10 e D6–D7 no 11 do
 [59 §2](../roadmaps/59-fechamento-da-0.3.9.md#2-a-ordem-reorganizada-por-pedido-do-autor-em-2026-10-07).
 MySQL/MariaDB, console/localizar/histórico, grade e provas finais ficam nos

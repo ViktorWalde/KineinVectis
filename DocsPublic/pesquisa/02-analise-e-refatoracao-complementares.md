@@ -1,6 +1,6 @@
 # Análise e refatoração complementares — o estudo
 
-> **Classe: PESQUISA.** Estudo autorizado pelo autor em 2026-10-19 para o
+> **Classe: PESQUISA.** Estudo autorizado pela manutenção em 2026-10-19 para o
 > longo prazo. Autoriza investigar algoritmos próprios que complementem os
 > motores existentes; não promete recurso, versão ou equivalência à
 > JetBrains. A direção do produto e o estado atual têm dono no
@@ -17,7 +17,7 @@ antes de rodar qual é a medida e qual resultado o reprova.
 
 ## 2. O objetivo e a fronteira
 
-Pedido do autor: análises e refatorações próprias como algoritmo
+Requisito de desenvolvimento: análises e refatorações próprias como algoritmo
 **complementar**, uma melhoria sobre a composição da IDE, sem substituir
 clangd, rust-analyzer ou o compilador. A restrição absoluta antiga de
 "nenhum refactor próprio" foi refinada para permitir este estudo; não

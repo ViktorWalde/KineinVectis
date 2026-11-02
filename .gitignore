@@ -15,3 +15,8 @@ CMakeUserPresets.json
 __pycache__/
 *.pyc
 .codex
+.agents/
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+05-com-um-agente-de-ia.md

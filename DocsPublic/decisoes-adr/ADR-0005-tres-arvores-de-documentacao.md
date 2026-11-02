@@ -1,101 +1,56 @@
 # ADR-0005 — Três árvores de documentação: a pública, a interna e o legado
 
-> **Nota datada (2026-10-01), decisão do autor:** a documentação pública só
-> se refere a documentação pública. As notas internas do autor são esboços;
-> tudo o que é preciso para colaborar está em `DocsPublic/`, e nenhum documento
-> versionado cita caminho, nome ou arquivo interno (o `verificar-links-docs.sh`
-> reprova). Por isso, a partir desta data, este ADR descreve a árvore interna
-> sem os nomes dos arquivos dela; as decisões e as datas abaixo não mudaram.
-
-> **Nota datada (2026-09-12):** as três árvores viraram **duas**, por decisão
-> do autor: `docs/` → `DocsPublic/` (toda a documentação do projeto,
-> versionada) e as duas internas viraram uma só (não versionada, no
-> `.gitignore`). A regra deste
-> ADR — a árvore de trabalho é auto-suficiente e o log/legado ficam fora dela —
-> continua de pé; mudou o nome e o versionamento da árvore privada.
-
-> **Status:** **implementado** em 2026-08-29, com gate.
+> **Status:** implementado em 2026-08-29; organização atualizada em
+> 2026-09-12 e política de referências públicas consolidada em 2026-10-01.
 > **Data:** 2026-08-29.
-> **Contraria:** a decisão de 2026-07-05 que removeu `DocsPublic/archive/` com a regra
-> *"não recriar uma pasta de arquivo só para guardar"*. É por isso que este ADR
-> existe: neste repositório, regra só muda por decisão explícita e registrada.
 
 ## Contexto
 
-A documentação tem **61.671 linhas em 82 arquivos** — mais do que o core Rust e
-a UI QML somados. Isso é uma escolha consciente (o projeto é conduzido por
-sessões que trocam de contexto e precisam se reorientar do zero), mas cobra um
-preço que ficou concreto.
+Especificações canceladas no índice de desenvolvimento podem ser confundidas
+com requisitos vigentes. Em 2026-07-17, o painel de IA e a ponte dedicada de
+CLI foram retirados do escopo e o `aiBridge` foi removido no protocolo 0.59.0.
+Essas especificações precisavam deixar de orientar a implementação.
 
-Dentro de `DocsPublic/especificacoes/` moravam **2.380 linhas em duas specs completas** —
-`KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md` e
-`KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md` — descrevendo painel de IA,
-chat, seletor de agente, aba dedicada e atalho no rail. Tudo **cancelado pelo
-autor em 2026-07-17**, com o `aiBridge` removido do código no protocolo 0.59.0.
-
-As duas tinham um aviso `⛔ FORA DE ESCOPO` no topo. **O aviso não segura.** Quem
-chega pelo `SPEC_INDEX` vê o título; quem chega por `grep` cai no meio do
-arquivo. Uma spec cancelada é grande, completa, bem escrita e persuasiva — é
-exatamente o que uma sessão nova procura ao perguntar "para onde este projeto
-vai?". O repositório já pagou por confiar em documento velho: em 2026-07-17 uma
-IA reimplementou um seletor que o autor mandou remover **no mesmo dia**.
-
-Havia uma segunda pressão, medida na mesma data: o log de sessões (2.414 linhas
-de log datado) esteve em **primeiro** na ordem de precedência, descrito como
-"estado real". Foi rebaixado em 2026-07-17, mas continuava no caminho de leitura
-de quem só queria trabalhar.
+Registros históricos também não definem o estado atual: números e provas
+valem para a data declarada. O código e os gates determinam o que existe.
 
 ## Decisão
 
-Três árvores, e uma regra: **uma sessão de trabalho lê `DocsPublic/` e mais nada.**
+A árvore `DocsPublic/` reúne documentação pública autossuficiente: contratos,
+estado, planos, especificações vigentes, requisitos de build e registros
+estritamente técnicos. Documentos públicos só apontam para fontes públicas.
 
-```text
-DocsPublic/            LIDA EM TODA SESSAO. Contrato, estado, plano, specs, build.
-                 Auto-suficiente para trabalhar.
-(interna)        Continuidade interna: log datado, diario de sessoes,
-                 prompts de bootstrap. Fora do repositorio; nada publico
-                 depende dela.
-(legado interno) Superado ou CANCELADO. Nunca e' alvo.
-```
+A organização inicial de três árvores, de 2026-08-29, separava documentação
+vigente, notas locais e material superado. Em 2026-09-12, as duas últimas
+passaram a uma área local ignorada pelo Git. Instruções de ferramentas,
+conversas e dados pessoais não integram a distribuição.
 
-**Critério de entrada no legado, deliberadamente estreito: só entra o
-que uma sessão poderia confundir com alvo.** O que for descontinuado e
-inofensivo continua seguindo a regra de 2026-07-05 — extrair o que tem valor e
-**remover**. Legar é para o que engana.
-
-**Mão única: entra e não volta.** Se algo lá dentro voltar a valer, o *conteúdo*
-é extraído para o documento vivo; o arquivo legado permanece, como registro.
+Especificações canceladas deixam o índice vigente. Uma decisão recuperada
+exige novo registro técnico datado no documento responsável; o conteúdo
+histórico não volta automaticamente a ser requisito.
 
 ## Por que não as alternativas
 
-```text
-DELETAR    perde o registro da decisao de produto. O "por que NAO" e' a parte
-           cara de descobrir; o "o que" se reescreve numa tarde.
-DEIXAR     convida a reimplementacao, e foi o estado que ja mordeu o projeto.
-           O aviso no topo do arquivo nao alcanca quem chega pelo indice ou
-           pelo grep.
-SEPARAR    custa uma pasta e uma regra. E' o que foi feito.
-```
+- Manter uma especificação cancelada junto das vigentes, apenas com aviso,
+  permite que índices ou buscas apresentem seu conteúdo como alvo.
+- Apagar a justificativa técnica de uma decisão elimina contexto útil para
+  revisão. A justificativa pública deve ser curta, datada e independente de
+  relatos pessoais.
+- Misturar registro histórico e estado atual torna contagens e pendências
+  ambíguas. Cada classe deve ter precedência e finalidade explícitas.
 
 ## Consequências
 
-- As regras de agente ganharam o passo 0: ler `DocsPublic/` e só `DocsPublic/`. O log deixou de ser
-  o item 1 da ordem de leitura (hoje a porta é o `00-comece-aqui.md`).
-- `DocsPublic/leitura-tecnica.md` passa a ser a primeira leitura de quem é novo.
-- `scripts/exportar-copia-limpa.sh` nega as três árvores (todas internas).
-- `scripts/verificar-docs.sh` trata o legado como registro: número lá
-  dentro descreve o que era verdade quando o documento valia.
-- **Gate novo, `scripts/verificar-links-docs.sh`.** `git mv` não atualiza link
-  nenhum, e este repositório já moveu documentação assim uma vez (2026-07-16:
-  410 referências reescritas à mão). Link morto em Markdown não tem compilador:
-  o gate fica verde e o próximo a ler conclui que o documento não existe. Foi
-  escrito e testado por mutação **antes** de a reorganização começar, e foi ele
-  que apontou os 5 links que a mudança quebrou.
+- `DocsPublic/00-comece-aqui.md` organiza a leitura por contexto técnico.
+- `DocsPublic/leitura-tecnica.md` apresenta o estado implementado.
+- `scripts/exportar-copia-limpa.sh` exclui notas e orientações locais.
+- `scripts/verificar-docs.sh` confere números sem data contra o código;
+  medições históricas permanecem identificadas pela data.
+- `scripts/verificar-links-docs.sh` verifica referências, índices e a
+  separação entre material público e local.
 
 ## O risco que este ADR aceita
 
-O legado pode virar depósito — que é exatamente o que a decisão de
-2026-07-05 matou. A defesa é o critério estreito escrito acima e o índice do
-legado, que exige **motivo e data** por documento. Se um dia a
-pasta crescer com material que ninguém confundiria com alvo, a regra foi
-violada, não revista.
+A separação exige revisão editorial contínua. Gates detectam padrões e links
+inválidos, mas não substituem a leitura para identificar relatos pessoais ou
+requisitos superados. Publicar somente o fato técnico verificável.

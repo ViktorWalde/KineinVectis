@@ -208,7 +208,7 @@ sem escolher substituto. Campos adicionais da resposta são ignorados;
 parâmetros, versões e orçamento têm formato fechado. Operação desconhecida,
 repetida ou obrigatória ausente recusa essa instalação.
 
-**API 1.1 — a mensagem do banco (decisão do autor, 2026-10-08).** O 1.0 não
+**API 1.1 — a mensagem do banco (decisão do projeto, 2026-10-08).** O 1.0 não
 deixa texto do adaptador chegar à tela, e quem usa um cliente de banco perde
 a causa do erro (`no such table: nada`). O 1.1 é aditivo: `Failure` ganha
 `engineMessage` opcional, a mensagem do **banco** (não do adaptador), só
@@ -351,11 +351,11 @@ Editar opções exige o validador compatível do provedor. Senhas/tokens nunca
 viram campos novos de perfil ou descritor. Valores e vínculos atuais
 `postgres/sqlite/mongo/odbc` sobrevivem; migração não conecta nem atualiza banco.
 
-### 5.2 Origem e escolha do adaptador (decisão do autor, 2026-10-08)
+### 5.2 Origem e escolha do adaptador (decisão do projeto, 2026-10-08)
 
 O §5 diz que a pessoa escolhe a instalação por conexão e o ADR-0010 proíbe
 downloader; faltava dizer de onde o adaptador vem e onde se escolhe.
-Decidido pelo autor:
+Decidido pela manutenção:
 
 - **De onde vem:** cada adaptador externo é construído neste repositório e
   instalado ao lado do `kinein-core` (a mesma pasta do binário; no pacote,
@@ -437,7 +437,7 @@ com opções futuras, schema 3 e inválido; v1 lido igual a hoje; migração
 grava v2 + cópia v1 idêntica e relê igual; falha simulada na verificação
 restaura o original; indisponível preservado ao salvar outro perfil; nome
 colidindo recusado; segredo ausente do arquivo; nenhum processo iniciado.
-Harness da árvore com o indisponível; prova na tela pelo autor.
+Harness da árvore com o indisponível; prova na tela pela manutenção.
 
 ## 6. Execução, falhas e atualização
 
@@ -515,7 +515,7 @@ na resolução/reinício e não provoca substituição automática do processo v
 > migrou para a mesma base em seguida (40.7 §7.249): os dois consumidores
 > reais que o §7 exige.
 
-Desenho anterior ao código, sobre o contrato da D1a (§4.4, `40`) e o handoff do
+Desenho anterior ao código, sobre o contrato da D1a (§4.4, `40`) e o resumo técnico do
 passo 8 (59 §2.1). Duas fatias, cada uma com seu consumidor real:
 
 **D1b.1 — base de processo de longa vida (`crate::owned_child`).** Dona única
@@ -741,7 +741,7 @@ prévia mantida na mesma conexão; fim real de processos/auxiliares; TLS,
 somente leitura e consentimento ODBC; arquivo futuro/perfil desconhecido
 preservados. Provar concorrência vizinha e `core.ping` durante as esperas.
 Esses critérios estão distribuídos nos passos 7–15 do 59 §2, por revisão
-do autor em 2026-10-07. Passo 7 fecha contratos/perfis; runtime/extrações
+do projeto em 2026-10-07. Passo 7 fecha contratos/perfis; runtime/extrações
 e linguagem têm aceites próprios nos passos seguintes. Pente fino é o
 passo 16, último da 0.3.9; AppImage fica adiado no 59 §8.
 

@@ -18,69 +18,12 @@
 
 ---
 
-## Como continuar este projeto (playbook — leia antes de qualquer código)
+## Fluxo de contribuição
 
-O ritual por fatia é FIXO e não-negociável (pedido explícito do autor):
-
-```text
-1. LER: roadmaps/40 (estado atual + fila) → o roadmap da versão (ordem e
-   designs) → este doc (se a fatia for de M4+).
-2. ESTRUTURAR: escrever o design da fatia no roadmap da versão ANTES do código:
-   decisões COM porquês, contrato IPC (se houver), lista de arquivos,
-   testes planejados, o que fica FORA (com gatilho para entrar).
-3. IMPLEMENTAR: protocolo (kinein-protocol, bump de versão) → domínio no
-   core (crates/kinein-core/src/<dominio>.rs, funções puras testáveis) →
-   handler fino (handlers/<dominio>.rs) → registro (lib.rs/commands.rs)
-   → testes de domínio e dispatch → UI (controller QML não-visual +
-   roteador ipc/ + componente visual burro + fios em Main.qml +
-   ui/CMakeLists.txt).
-4. VALIDAR: cargo fmt --all → scripts/verificar.sh (gate completo, para
-   no primeiro erro) → smoke offscreen (QT_QPA_PLATFORM=offscreen
-   timeout 8 ./scripts/kinein-vectis; exit 124 = vivo = ok) → SONDA e2e
-   com a ferramenta real via stdio (padrão: scripts python que sobem
-   target/debug/kinein-core e falam JSON-RPC linha a linha; ver sondas
-   de LSP/DAP/git em scripts/).
-5. SINCRONIZAR: DocsPublic/arquitetura/03 (contrato), o roadmap da versão (checklist [feito] +
-   descobertas incorporadas), MANUAL.md (linguagem de usuário final),
-   roadmaps/40 (próxima fatia) e roadmaps/40.7 (fatia feita).
-6. NUNCA COMMITAR: o autor faz um único commit ele mesmo. A árvore
-   acumula tudo.
-```
-
-Convenções que pegam quem chega agora (aprendidas em M0–M3):
-
-```text
-- Rigor é gate, não sugestão: clippy pedantic/nursery -D warnings,
-  clang-tidy Werror, qmllint estrito zero warnings. Conflitos comuns:
-  unreachable_pub × redundant_pub_crate → módulo `pub` com itens
-  `pub(crate)` (padrão rpc.rs); const fn com tipo Drop movido é ok,
-  dropado não.
-- Nunca parsear saída LOCALIZADA de ferramenta externa: exit codes e
-  formatos estáveis (--porcelain=v2 -z, JSON-RPC, DAP, file-api).
-- Respostas ECOAM a chave pedida (path/frameId/ref) para a UI
-  correlacionar e descartar resposta velha (padrão format.text).
-- Mutações respondem o estado COMPLETO novo (padrão runConfig/git): a
-  UI nunca calcula estado derivado.
-- Popups/dropdowns NUNCA são filhos do header/painéis: sempre overlay
-  em ShellOverlays (z 90–102), com dismiss por clique-fora.
-- Estado em controller QML não-visual; componente visual é burro
-  (property in, signal out); rebind de função em delegate usa o padrão
-  "revision counter" (breakpointsRevision/gitRevision).
-- Todo atalho com F-key tem alternativa sem F-key e acionamento manual
-  por botão/comando (regra do usuário; notebooks com Fn).
-- cargo test NÃO recompila o binário target/debug/kinein-core — rodar
-  `cargo build -p kinein-core` antes de sondas e2e.
-- Pequenas coisas acumuladas = fluidez (princípio do usuário): cada
-  fatia olha a ergonomia do caminho que toca e registra na fila do
-  `40` §4 o que não couber nela.
-```
-
-Estado ao escrever este doc: M0–M2 prontos e validados pelo usuário;
-M3.1–M3.3 prontos (status/diff/gutter/stage/commit), M3.4 (blame) e
-trilha E2/E3 pendentes; radar tem "auto-setup ao abrir projeto pronto".
-Protocolo IPC 0.32.0. Testes: 187 core + 47 protocol.
-
----
+O procedimento vigente está no
+[ritual de uma mudança](../contribuindo/03-o-ritual-de-uma-fatia.md).
+Consulte contratos, desenho, critérios de teste e estado da versão antes de
+implementar os marcos técnicos abaixo.
 
 ## Norte de produto — “simbiose com os compiladores”
 
@@ -576,7 +519,7 @@ os motores; as hipóteses ficam em [pesquisa/02](../pesquisa/02-analise-e-refato
 - Produto atual: refatorações pelos motores LSP; registrar lacunas no
   manual. Custo imediato: codeAction com range e applyEdit multi-arquivo
   mais robusto (já existe base da M1.3).
-- Refinamento do autor, 2026-10-19: estudo de análises/refatorações próprias
+- Refinamento da decisão registrada, 2026-10-19: estudo de análises/refatorações próprias
   COMPLEMENTARES autorizado (56 §1.1 e pesquisa/02); sem substituir LSP
   ou compilador. Pesquisa não é autorização automática de entrega.
 ```
@@ -682,7 +625,7 @@ aí como M7+).
   arbitrários (shellcheck, eslint...) sem código novo por linter.
 ```
 
-### M6.4 — Ponte de IA — ⛔ FORA DE ESCOPO (decisão do autor, 2026-07-17)
+### M6.4 — Ponte de IA — ⛔ FORA DE ESCOPO (decisão do projeto, 2026-07-17)
 
 **A linha inteira de IA na IDE foi cancelada. Esta fase não será executada.**
 
@@ -762,7 +705,7 @@ transição da documentação para inglês acompanha esse fechamento. A recomend
 briefings de issues e a ideia de cards no site, incluindo "Tasks
 realizadas", têm dono no
 [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md).
-O site pertence a outra sessão; sua apresentação não acrescenta requisito
+O site é uma frente independente; sua apresentação não acrescenta requisito
 à IDE nem bloqueia o release. A CI técnica permanece no contribuindo/07.
 
 ### M7.4 — Diagnóstico de falhas sem telemetria

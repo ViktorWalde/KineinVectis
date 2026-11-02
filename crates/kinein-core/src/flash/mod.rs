@@ -1,5 +1,5 @@
 //! Gravar como CONFIGURACAO DE EXECUCAO (E4 do `integracoes/38` §6; decisao
-//! do autor em 2026-09-11: "como o Upload do `PlatformIO` e o `OpenOCD` Download &
+//! do projeto em 2026-09-11: "como o Upload do `PlatformIO` e o `OpenOCD` Download &
 //! Run do `CLion`" — nao um dominio novo).
 //!
 //! Esta unidade e' PURA: planeja programa/argv do motor a partir do que o

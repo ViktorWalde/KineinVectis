@@ -635,7 +635,7 @@ frame; screenshot da fixture e gesto humano em Claude/Codex.
 > **A decisão que este R3 pedia foi tomada, e por evidência.** O critério estava
 > escrito aqui: *"QML com baseline/métricas explícitas: manter se R2 corrigir o
 > visual e cumprir orçamento de frame/memória"*. O visual foi corrigido (§4.7,
-> `ab3becc`) e **aprovado pelo autor em 2026-07-17**; os orçamentos de frame estão
+> `ab3becc`) e **aprovado pela manutenção em 2026-07-17**; os orçamentos de frame estão
 > medidos em `DocsPublic/roadmaps/21` §A3.
 >
 > **Fica a composição QML atual. Não trocar de renderer.** As opções 2
@@ -749,7 +749,7 @@ continuam sem autorização separada.
 | Forma/piscagem DECSCUSR | implementado; coberto pelo aceite de 2026-07-17 | preservar | R4 |
 | Baseline e caixa da célula | fonte única (`metrics.yForRow`), R1 feito | preservar | R2 só se DPR≠1 divergir |
 | DPR físico | não demonstrado | determinístico | R1 |
-| Cursor visual Claude/Codex | **APROVADO pelo autor em 2026-07-17** | preservar | regressão contínua |
+| Cursor visual Claude/Codex | **APROVADO pela manutenção em 2026-07-17** | preservar | regressão contínua |
 | Seleção/clipboard | implementado básico | paridade profissional | R5 |
 | Busca/links/a11y | incompleto | fatias próprias | R5 |
 | Rajadas/performance | infraestrutura parcial | orçamento medido | R6/A3 |
@@ -954,7 +954,7 @@ setting `aiCliFlatTranscript` (bool, default false)
   flat)` escolhe o par. Claude: `[]` / `["--ax-screen-reader"]`. Codex:
   `["--no-alt-screen"]` nos dois modos — o inline oficial já entrega TUI **e**
   scrollback, então não há apresentação a sacrificar.
-- A setting é lida no `aiBridge.terminal.open` e vale na próxima sessão.
+- A setting é lida no `aiBridge.terminal.open` e vale na próxima etapa técnica.
   Exposta em Configurações (`Ctrl+Alt+S`) como "Assistente: histórico
   navegável", documentada no `DocsPublic/manual.md` e no contrato `DocsPublic/arquitetura/03`.
 - Cobertura: `claude_keeps_its_decorative_tui_by_default`,

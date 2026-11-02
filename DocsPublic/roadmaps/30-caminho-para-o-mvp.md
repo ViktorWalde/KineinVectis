@@ -3,7 +3,7 @@
 > **Classe: PLANO** (`DocsPublic/README.md`). Descreve o alvo e pode divergir da
 > implementação — reconciliar ao retomar. O que é **medição** aqui está datado.
 >
-> **Decidido pelo autor em 2026-08-30.** Esta lista substitui "o que fazer
+> **Decidido pela manutenção em 2026-08-30.** Esta lista substitui "o que fazer
 > depois?" espalhado por seis roadmaps. Ela é linear de propósito: cada etapa
 > só entra depois que a anterior fecha, e a ordem é por **dependência**, não
 > por preferência.
@@ -53,7 +53,7 @@ Dois itens marcados `[x] validado e2e` citavam sondas que **nunca foram
 commitadas**: `sonda_drafts.py` (`seguranca/23` §P2.6) e `sonda_terminal.py`
 (`roadmaps/24`, D2.1/D2.2).
 
-**Decisão do autor: reescrever, não rebaixar.** Ambas existem agora, rodam e
+**Decisão do projeto: reescrever, não rebaixar.** Ambas existem agora, rodam e
 foram provadas por mutação. O que a etapa ensinou, e que vale mais que ela:
 a **primeira** versão da `sonda_drafts.py` ficou **verde com o produto
 quebrado** — ela olhava a resposta do `workspace.open`, e o `recover_drafts`
@@ -443,7 +443,7 @@ decisão em aberto). O sucessor é
 [34-depois-do-mvp.md](34-depois-do-mvp.md): as quatro frentes do pós-MVP —
 dívida que cobra pedágio, atrito diário medido e profundidade (TR2) — cada
 uma com o comando que mede se ainda está pendente. (A quarta frente, a
-simulação, saiu do produto em 2026-09-12 por decisão do autor.)
+simulação, saiu do produto em 2026-09-12 por decisão do projeto.)
 
 ## 4. O que esta lista deliberadamente NÃO inclui
 

@@ -1742,7 +1742,7 @@ documentação existe.
 # 8. Ordem prática de execução
 
 > A lista estendida de 53 candidatos solicitada em 2026-07-15, com decisões
-> item a item e dependências L0–L10, foi feita pelo autor (o resumo L0–L10 está no
+> item a item e dependências L0–L10, foi feita pela manutenção (o resumo L0–L10 está no
 > [`integracoes/README.md`](../integracoes/README.md)). Essa
 > sequência complementa as fases históricas abaixo e prevalece para novas
 > adoções: primeiro a capacidade arquitetural, depois a ferramenta. O primeiro

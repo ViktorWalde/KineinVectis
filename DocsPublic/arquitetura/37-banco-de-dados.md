@@ -103,7 +103,7 @@ confirmação interrompe o lote inteiro antes de abrir a conexão.
 
 ## 3. O caminho de uma consulta
 
-A política foi alterada pelo autor em 2026-10-04 para evitar interromper
+A política foi alterada pela manutenção em 2026-10-04 para evitar interromper
 toda escrita de desenvolvimento. `confirm` decide sobre a classificação:
 
 | Operação | Caminho |
@@ -674,7 +674,7 @@ Shift+F10/F5 têm ShortcutOverride local enquanto a árvore está com foco.
 O harness de composição também prova que restaurar foco não cancela a ação
 nem rouba o foco do diálogo que ela abre.
 
-A fila e o prompt de retomada ficam no
+A fila e o guia de contribuição ficam no
 [59 §5.8](../roadmaps/59-fechamento-da-0.3.9.md).
 Prévia PostgreSQL (§9) e profundidade do editor aceitas no 40.7 §7.223/224.
 Base de console/árvore aceita no 40.7 §7.225; primeira fatia de ações no
@@ -690,7 +690,7 @@ No protocolo 0.161.0, tabelas e coleções recebem `statements` do core.
 `object_statements` delimita nomes de esquema/tabela/coluna e produz
 SELECT, modelos incompletos INSERT/UPDATE e esvaziar/remover. SQLite esvazia
 com DELETE; PostgreSQL com TRUNCATE. Visões só recebem leitura/remoção.
-Caminho de arquivo SQLite (decisão do autor, 2026-10-08): o caminho
+Caminho de arquivo SQLite (decisão do projeto, 2026-10-08): o caminho
 relativo no perfil é resolvido a partir da raiz do projeto aberto, para um
 perfil versionado no repositório funcionar em qualquer máquina; o absoluto
 segue como está. O perfil guarda o que a pessoa escreveu: a resolução é feita

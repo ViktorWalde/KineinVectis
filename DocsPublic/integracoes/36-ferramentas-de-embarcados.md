@@ -10,7 +10,7 @@
 
 ## 0. Por que este levantamento existe antes de qualquer linha
 
-A frente de embarcados é **plug and play** por decisão do autor
+A frente de embarcados é **plug and play** por decisão do projeto
 (`roadmaps/35` §5.1), e plug and play é a experiência do **usuário** — não
 atalho no gate de adoção. Cada ferramenta aqui é candidata, **nenhuma está
 adotada**: a adoção passa pelo checklist de
@@ -95,7 +95,7 @@ constante por um campo do kit.
 > `gdb` com `-i dap` — sem cliente GDB remote no core. O custo real, que a
 > versão anterior deste parágrafo não via: gerenciar o **processo servidor**
 > (openocd/qemu) ao lado do adaptador, e um caminho de `attach` na sessão, que
-> hoje só faz `launch`. Decisão do autor em 2026-09-11: entra
+> hoje só faz `launch`. Decisão do projeto em 2026-09-11: entra
 > (`roadmaps/35` §5.7).
 
 ## 4. A recomendação, e o que ela não decide

@@ -1,6 +1,6 @@
 # 53 — Arquitetura executável da 0.3.6: a casca da IDE em torno do editor
 
-> **Continuidade revisada pelo autor em 2026-10-07:** o fechamento atual
+> **Continuidade revisada pela manutenção em 2026-10-07:** o fechamento atual
 > segue o [59 §2](59-fechamento-da-0.3.9.md), com Banco dividido nos passos
 > 7–15 e pente fino no 16, último da 0.3.9. Foco Qt 6.10; requisitos/provas
 > Qt 6.4 deste desenho permanecem históricos e não regem as próximas fatias.
@@ -8,7 +8,7 @@
 > 0.4 inclui o trabalho não publicado 0.3.6–0.3.9 e fecha com AppImage após a
 > **0.4.9** ([57 §1.1](57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20)).
 
-> **Classe: PLANO / ARQUITETURA.** Escrito em 2026-10-01, a pedido do autor:
+> **Classe: PLANO / ARQUITETURA.** Escrito em 2026-10-01, conforme os requisitos técnicos:
 > *"estruturar toda a documentação de arquitetura antes de qualquer código"*.
 > O [roadmap 49](49-frontend-0.3.6-e-sequencia-0.5.md) diz **o quê** e **por
 > quê** (cortes F0–F5); este documento diz **como**, com dono, fluxo, contrato,
@@ -48,7 +48,7 @@ Consequências, que valem para toda a série 0.3.6–0.3.9:
 4. **O gate garante:** qualquer linha da lista `scripts/avisos-qml.txt` em
    qualquer superfície, no checkout ou no AppImage, reprova.
 
-## 0.2 G0 — gates antes de qualquer código de produto (decisão do autor, 2026-10-01)
+## 0.2 G0 — gates antes de qualquer código de produto (decisão do projeto, 2026-10-01)
 
 > *"Vamos precisar, pelo visto, criar gates rigorosos antes de qualquer linha de
 > código."* — depois de achar identificadores em português num código novo,
@@ -92,7 +92,7 @@ Ao fim, a linha de base fica vazia e a catraca vira proibição pura.
 - §1 resultado; §2 invariantes; §3 mapa de donos e regra anti-duplicação.
 - §4 o modelo: área, estado de área e layout persistido.
 - §5 os fluxos, inclusive **abrir pelo terminal sem ruído** (§5.1) e **zero
-  aviso em execução** (§5.2), que o autor pediu junto com esta versão.
+  aviso em execução** (§5.2), que O requisito prevê junto com esta versão.
 - §6 contratos; §7 composição da UI; §8 desempenho; §9 estados e erros;
   §10 provas; §11 ordem; §12 rollback; §13 decisões abertas.
 - Nomes marcados *(proposto)* não existem hoje. Os demais foram conferidos no
@@ -277,7 +277,7 @@ volta vazia); o eco do `settings.set` não é reaplicado (puxaria o painel no
 meio de um arrasto); trocar de workspace cancela a gravação pendente.
 
 **Limites de tamanho: mínimo do conteúdo, máximo automático (pedido e
-decisão do autor, 2026-10-01; feito na fatia do layout, 40.7 §7.156, para o
+decisão do projeto, 2026-10-01; feito na fatia do layout, 40.7 §7.156, para o
 painel da esquerda e o de baixo; a Estrutura segue a regra que o `EditorPane`
 já tinha; a barra de status por prioridade veio logo depois, 40.7 §7.159).** Hoje os limites são constantes no
 `ShellController` (explorer e Git dividem 220–420 px; padrão 22% da janela
@@ -353,7 +353,7 @@ prova    teste C++ do cli_args (flags novas); teste de integração em Xvfb:
 
 ### 5.2 Zero aviso em execução (R2)
 
-**Medido em 2026-10-01** no AppImage instalado, numa sessão do autor:
+**Medido em 2026-10-01** no AppImage instalado, numa validação visual humana:
 centenas de `QQmlComponent: Component is not ready` e `GitWindow.qml:50:13:
 Binding loop detected for property "width"`. Nenhum dos dois apareceu ao abrir
 o pacote no projeto da IDE e no projeto do site, nem com o Git e o menu de
@@ -463,7 +463,7 @@ fatos, a ativa sempre visível, fixar/desafixar pelo botão direito e
 dono     BottomPanelHost/BottomTabBar (abas) · ShellController (estado) ·
          settings (ordem/pin)
 regra    sempre visíveis: Terminal e Problemas
-         contextuais: Build (há build em curso ou terminado nesta sessão),
+         contextuais: Build (há build em curso ou terminado nesta verificação),
          Testes (há descoberta ou execução), Debug (sessão de debug),
          Jobs (há job vivo ou falho não visto), Busca (há resultado), IDE/logs
          (há aviso não lido)
@@ -499,7 +499,7 @@ toolchain efetiva no cabeçalho, rodapé sem o sistema e sem o chip repetidos,
 título da faixa removido, seletor de toolchain por papéis; segunda parte
 (§7.174) — chip e popover do Python, prioridade por largura entre os chips;
 o "⋯" com o que não coube (§7.175). Falta: perfil/kit, alvo, dispositivo e
-remoto como chips pertinentes. O Python saiu do rodapé (decisão do autor,
+remoto como chips pertinentes. O Python saiu do rodapé (decisão do projeto,
 §7.176): um lugar só, o chip que também configura.
 
 ```text
@@ -554,7 +554,7 @@ gestos e desempenho comparados com a 0.3.5 e a F0. A primeira linha subiu
 68 px, e cabem de 4 a 5 linhas a mais em toda largura. A medida achou e
 corrigiu uma regressão de digitação (§7.198). O primeiro quadro caiu de 404
 para 247 ms com a criação sob demanda medida por componente (§7.203). A
-sessão na tela real, com o mouse e o teclado do autor, mediu gestos e
+sessão na tela real, com mouse e teclado físicos, mediu gestos e
 resposta e corrigiu os Problemas ilegíveis (§7.204). **A F5 está completa.**
 
 Comparação antes/depois na mesma máquina; tarefa real cronometrada e com
@@ -635,7 +635,7 @@ medida     medir-performance.sh antes/depois, mesma máquina
 mutação    cada guarda nova provada removendo-a
 ```
 
-## 11. Ordem e trem de versões (decisão do autor, 2026-10-01)
+## 11. Ordem e trem de versões (decisão do projeto, 2026-10-01)
 
 **Decisão vigente, atualizada em 2026-10-21:** as etapas históricas abaixo continuam
 preservadas como ordem e registro. O agrupamento antes em aberto foi
@@ -649,19 +649,19 @@ A série 0.3.0–0.3.5 está encerrada e divulgada. A reorganização da casca v
 da **0.3.6 à 0.3.9**, e cada etapa só fecha com o gate completo, o passeio sem
 aviso no AppImage e as telas nas três larguras.
 
-**Lançamento (decisão do autor, 2026-10-02): a 0.3.6 até a 0.3.9 saem JUNTAS,
+**Lançamento (decisão do projeto, 2026-10-02): a 0.3.6 até a 0.3.9 saem JUNTAS,
 num lançamento só**, anunciado como uma versão única. As etapas continuam
 existindo como ordem de trabalho e de registro (40.7), não como pacotes
 publicados. **Em aberto:** publicar esse lançamento junto com as notas da 0.4,
 separando a 0.4.5 a partir daí — o autor ainda decide. Em 2026-10-02 (noite)
-o autor disse que está **pensando em lançar tudo isso junto com a 0.4** —
+O registro técnico indica que está **pensando em lançar tudo isso junto com a 0.4** —
 intenção registrada, não decisão; a ordem de trabalho segue: os retornos
 visuais dele, o resto da 0.3.9 (53 §5.8) e então a 0.4 (roadmap 52).
 
 **Esclarecimento em 2026-10-07:** o autor considera publicar novo AppImage
 após finalizar a 0.4.0. A ordem de desenvolvimento permanece 0.3.9, pente
 fino como último passo, depois 0.4; publicação não condiciona esse fechamento.
-Qt 6.10 é o foco atual. Plano e handoff vigentes no 59 §2.1/§8.
+Qt 6.10 é o foco atual. Plano e resumo técnico vigentes no 59 §2.1/§8.
 
 ```text
 0.3.6  LIMPEZA E BASE
@@ -689,7 +689,7 @@ Qt 6.10 é o foco atual. Plano e handoff vigentes no 59 §2.1/§8.
 - `layout` novo ignorável: apagar o campo volta aos campos antigos.
 - Projeção do trilho com política "todas fixadas" reproduz o trilho de hoje.
 
-## 13. Decisões do autor
+## 13. Decisões do projeto
 
 1. Busca no trilho: decidir pela medida da §5.4 (proposta: fora, se o atalho e
    o header cobrirem com menos gestos).
@@ -702,7 +702,7 @@ Qt 6.10 é o foco atual. Plano e handoff vigentes no 59 §2.1/§8.
 5. Atalho para percorrer o foco entre regiões (proposta: Ctrl+F6, como em
    IDEs JetBrains) — confirmar no gate de atalhos.
 
-### 13.0 Decisões do autor sobre o começo da 0.3.6 (2026-10-01)
+### 13.0 Decisões do projeto sobre o começo da 0.3.6 (2026-10-01)
 
 1. **Ordem das primeiras fatias: F0 → layout → V-1.** Primeiro medir (§5.3:
    telas nas três larguras, linha de base de desempenho, inventário e os
@@ -734,7 +734,7 @@ Qt 6.10 é o foco atual. Plano e handoff vigentes no 59 §2.1/§8.
    escolha de linguagem e, dentro dela, o ecossistema. **Feito em 2026-10-01**
    (40.7 §7.155): catálogo `ui/qml/workspace/ProjectTemplateCatalog.qml`.
 
-### 13.1 Direção visual do trem 0.3.6–0.3.9 (decisão do autor, 2026-10-01)
+### 13.1 Direção visual do trem 0.3.6–0.3.9 (decisão do projeto, 2026-10-01)
 
 Registrada **antes** da task dedicada de UX/HUD, que a detalha e mede; aqui
 é a intenção, não o desenho:
@@ -751,7 +751,7 @@ Registrada **antes** da task dedicada de UX/HUD, que a detalha e mede; aqui
   do projeto (embarcados, Remote, ambiente) e com identidade própria — não
   uma cópia.
 
-**Fluidez a 60 Hz, 120 Hz onde der (decisão do autor, 2026-10-01, à noite):**
+**Fluidez a 60 Hz, 120 Hz onde der (decisão do projeto, 2026-10-01, à noite):**
 *"quero que melhore a fluidez das animações que existem na IDE, pelo menos
 60 Hz ou 120 Hz se possível, e deixar mais responsivo e fluido a interação do
 usuário com o mouse, o mais suave possível."* Entra quando a casca com projeto

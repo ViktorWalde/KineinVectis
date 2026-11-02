@@ -34,7 +34,7 @@ embutido atualmente só é publicado nesse canal; a receita fixa o commit
 SHA256 não seja o auditado. As ferramentas rodam no builder oficial Rust
 1.96.1/Debian 12 fixado pelo digest amd64
 `sha256:d99f7b31f49909348dc59b51f3c95d1efded1701ffb222f095aaab7de3c4abd8`.
-Desde a decisão do autor de 2026-10-24, o Qt desse builder é o **6.12.0
+Desde a decisão do projeto de 2026-10-24, o Qt desse builder é o **6.12.0
 oficial**, instalado no container por aqtinstall 3.3.0, com WebEngine,
 WebChannel e Positioning. SVG, Wayland e Network vêm nos arquivos base.
 Não usa o Qt 6.4.2 da distribuição. Desenho no 52 §14.50.
@@ -90,7 +90,7 @@ O AppImage é dono do desktop id `kinein-vectis.desktop` e do nome público
 **Kinein Vectis (Desenvolvimento)**; assim o mantenedor pode comparar o
 artefato distribuído com a build local sem um atalho sobrescrever o outro.
 
-**Canal local de desenvolvimento (autor, 2026-10-24):**
+**Canal local de desenvolvimento (decisão registrada, 2026-10-24):**
 `KINEIN_APPIMAGE_DEVELOPMENT=1 bash scripts/empacotar-appimage.sh` gera o
 artefato com versão padrão `0.4.1-dev.h4b2b4m`, sobrescrita por
 `KINEIN_VERSION` com sufixo `-dev`. A versão chega à UI pelo cache CMake;

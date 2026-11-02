@@ -197,7 +197,7 @@ da Kinein.
 | `kinein-config` | modelo de configuração strict-by-default. |
 | `kinein-cli` | lib (`kinein_cli`) que gera requests JSON-RPC + binário fino. |
 | `kinein-adapter-sqlite` | o adaptador **externo** do SQLite (API de drivers 1.1 por stdio), construído aqui e instalado ao lado do `kinein-core`; reusa o motor SQLite do core ([39 §6.2](39-drivers-externos-e-compatibilidade.md)). |
-| `kinein-sys` | o **único** código com `unsafe` do projeto (decisão D7 do autor, 2026-10-09, [roadmap 60](../roadmaps/60-windows-e-edicao-especial.md) §3.1): a API do Windows atrás de uma interface segura, com `SAFETY` em cada bloco. Vazio no Unix. Os outros crates continuam `forbid(unsafe_code)`. |
+| `kinein-sys` | o **único** código com `unsafe` do projeto (decisão D7 da decisão registrada, 2026-10-09, [roadmap 60](../roadmaps/60-windows-e-edicao-especial.md) §3.1): a API do Windows atrás de uma interface segura, com `SAFETY` em cada bloco. Vazio no Unix. Os outros crates continuam `forbid(unsafe_code)`. |
 | `ui/` (C++/Qt) | frontend Qt/QML; sobe o `kinein-core` como processo filho via `CoreClient`. |
 
 Esta é a base mínima. A visão-alvo (specs) prevê ~18 crates; a Seção 6 descreve
@@ -344,7 +344,7 @@ Regras que mantêm isso saudável:
    `tests/mod.rs`.
 7. **Lints estritos são inegociáveis** (`unsafe` forbid, warnings/pedantic/nursery
    deny, sem `unwrap/expect/panic` fora de teste). Eles são parte do design.
-8. **Como os limites acompanham o crescimento do projeto** (decisão do autor,
+8. **Como os limites acompanham o crescimento do projeto** (decisão do projeto,
    2026-07-16: a catraca não pode impedir o projeto de crescer).
 
    > O limite é **por responsabilidade** e **não cresce**. O projeto cresce
@@ -369,7 +369,7 @@ Regras que mantêm isso saudável:
    domínio; contorná-lo em silêncio é o vício que a §1.1 documenta.
 
    **A segunda correção de CATEGORIA, registrada — o header que só DECLARA**
-   (decisão do autor, 2026-09-10). A primeira foi o `ui/qml/app/`, que nunca foi
+   (decisão do projeto, 2026-09-10). A primeira foi o `ui/qml/app/`, que nunca foi
    QML visual. Esta é o `ui/src/core_client.h`, que bateu em **exatamente
    500/500** e travaria a próxima assinatura IPC que a UI consumisse.
 
@@ -402,7 +402,7 @@ Regras que mantêm isso saudável:
    trinta declarações novas passam.
 
 9. **O critério é RESPONSABILIDADE. Tamanho é sintoma, não regra**
-   (decisão do autor, 2026-07-16).
+   (decisão do projeto, 2026-07-16).
 
    > A catraca mede linhas porque é o que um script consegue medir. Ela é
    > **detector de fumaça, não o incêndio.** Quando dispara, a pergunta certa é
@@ -519,7 +519,7 @@ Regras que mantêm isso saudável:
                                             verificava. `${BASH_SOURCE[0]}` num
                                             script `#!/bin/sh` PASSA no Fedora
                                             (/bin/sh = bash) e quebra no Debian
-                                            (dash). Verde na maquina do autor,
+                                            (dash). Verde na ambiente de teste,
                                             quebrado na de qualquer outro.
     verificar-links-docs.sh    2026-08-29  `git mv` nao atualiza link nenhum. A
       (link morto)                          documentacao ja foi reorganizada por

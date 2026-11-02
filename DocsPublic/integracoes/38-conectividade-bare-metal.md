@@ -7,15 +7,11 @@
 > de novo (o `openocd-esp32`, o `debugprobe` e o `openocd` vêm como
 > `NOASSERTION`; o `espflash` vem como só `Apache-2.0` e é dual).
 >
-> **Por que existe.** A decisão do autor de 2026-09-11
-> ([`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md) §5.7)
-> dizia *"ESP32-C3/C6/S3 existe mas NÃO pode ser plugado agora"* e o escopo era
-> *"ARM Cortex-M via probe-rs; RISC-V/ESP32 depois"*. **Na tarde do mesmo dia o
-> autor plugou um ESP32** — e pediu o mapa de como um microcontrolador bare
-> metal se conecta, o que existe de open source para cada elo, e se o que vale
-> para o ESP32 vale para STM32 e Raspberry Pi. Este documento responde as três
-> perguntas. Ele **não** é código nem decisão: é o levantamento que vem antes,
-> como o [`36`](36-ferramentas-de-embarcados.md) veio antes da etapa 22.
+> **Escopo:** levantamento dos elos de conexão de microcontroladores bare
+> metal e das ferramentas abertas aplicáveis a ESP32, STM32 e Raspberry Pi.
+> A medição de 2026-09-11 usa um ESP32 clássico via CP2102; não comprova
+> suporte aos demais modelos. O plano anterior de Cortex-M/probe-rs está no
+> [`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md) §5.7.
 
 ## 0. A resposta curta, para quem não vai ler o resto
 
@@ -45,16 +41,16 @@ VALE PARA STM32/PI?   Em parte, e a parte que vale e' a maior: o CANAL SERIAL
                       o item "SSH remoto" da fila.
 ```
 
-## 1. O que foi MEDIDO nesta máquina (2026-09-11, ~19:43 → 20:30)
+## 1. Validação USB/serial (2026-09-11)
 
 ```text
 lsusb                Bus 008 Device 002: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
 kernel               cp210x converter now attached to ttyUSB0  (19:43:48)
 /dev/ttyUSB0         crw-rw---- root:dialout          (0660)
 /dev/serial/by-id/   usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
-id                   hugh: hugh, wheel, dialout        (NAO esta' em plugdev; plugdev nao existe)
+id                   user: user, wheel, dialout        (NAO esta' em plugdev; plugdev nao existe)
 esptool chip-id      ESP32-D0WD-V3 (revision v3.1), Wi-Fi/BT, dual core, 240 MHz,
-                     cristal 40 MHz, MAC 70:4b:ca:04:54:54
+                     cristal 40 MHz, MAC omitido
 esptool flash-id     flash 4 MB (fabricante 5e, device 4016), 3.3 V por strapping
 auto-reset           "Connecting....." e "Hard resetting via RTS pin..." — o
                      circuito DTR/RTS da placa FUNCIONA; ninguem apertou BOOT
@@ -495,7 +491,7 @@ E6  debug do ESP32 classico   BLOQUEADO por hardware (ESP-Prog) e por toolchain
                               sem fatia nova — e' `chip` no kit.
 ```
 
-**As decisões do autor — 2026-09-11, à noite, depois de ler este documento.**
+**As decisões do projeto — 2026-09-11, à noite, depois de ler este documento.**
 A regra que ele deu antes de responder, e que passa a ordenar a frente:
 *"seguir o padrão estabelecido no mercado e as soluções open source já
 adotadas; apenas incluir algo pronto na IDE"* — não escrever o que já existe.

@@ -5,7 +5,7 @@
 > implementado sem decisão explícita do autor — a §5 tem trade-offs reais e uma
 > recomendação que **contraria** duas das ferramentas pesquisadas.
 >
-> **Medido em 2026-09-10**, a pedido do autor, com o gate completo verde.
+> **Medido em 2026-09-10**, conforme os requisitos técnicos, com o gate completo verde.
 >
 > **A regra zero desta página é a §1.1 da [`ARCHITECTURE.md`](ARCHITECTURE.md):**
 > antes de propor arquitetura, MEDIR — porque duas vezes seguidas, neste
