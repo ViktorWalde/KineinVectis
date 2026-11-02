@@ -114,6 +114,10 @@ pub(super) fn home_dir() -> Option<PathBuf> {
     var_dir("USERPROFILE").or_else(|| var_dir("HOME"))
 }
 
+pub(super) fn create_private_directory(path: &Path) -> io::Result<()> {
+    std::fs::create_dir_all(path)
+}
+
 pub(super) fn config_home() -> PathBuf {
     var_dir("APPDATA")
         .or_else(|| home_dir().map(|home| home.join("AppData").join("Roaming")))

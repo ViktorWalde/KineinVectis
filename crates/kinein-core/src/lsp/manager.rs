@@ -42,6 +42,7 @@ use super::{EventSender, LspReply, PendingResponses};
 #[derive(Debug)]
 pub(super) struct ActiveCodeActions {
     path: PathBuf,
+    content: String,
     /// Cada acao crua com a CHAVE do servidor que a ofereceu: o principal e
     /// os companheiros entram na mesma lista, e o indice que a UI devolve
     /// aponta para uma so'.
@@ -58,6 +59,7 @@ pub struct LspManager {
     pub(super) root: Option<PathBuf>,
     pub(super) next_request_id: i64,
     pub(super) active_code_actions: Option<ActiveCodeActions>,
+    pub(super) code_action_generation: u64,
     /// Timeouts consecutivos por servidor; zera em qualquer resposta. A
     /// politica que o consome vive em [`super::session`].
     pub(super) timeout_streak: Arc<Mutex<HashMap<&'static str, u32>>>,
@@ -85,6 +87,7 @@ impl LspManager {
             root: None,
             next_request_id: 2,
             active_code_actions: None,
+            code_action_generation: 0,
             timeout_streak: Arc::new(Mutex::new(HashMap::new())),
             registry: ServerRegistry::default(),
             merged_diagnostics: Arc::new(Mutex::new(HashMap::new())),
@@ -224,6 +227,7 @@ impl LspManager {
         column: u64,
     ) -> Result<Vec<(&'static str, LspReply)>, LspError> {
         let language = self.sync_document(path, content)?;
+        self.invalidate_code_actions();
         let mut pending = vec![(
             language,
             self.code_actions_from(language, path, line, column)?,
@@ -243,6 +247,7 @@ impl LspManager {
     pub fn finish_code_actions(
         &mut self,
         path: &Path,
+        content: &str,
         replies: Vec<(&'static str, Result<Value, LspError>)>,
     ) -> Result<Vec<LspCodeActionInfo>, LspError> {
         let mut infos = Vec::new();
@@ -259,6 +264,7 @@ impl LspManager {
         }
         self.active_code_actions = Some(ActiveCodeActions {
             path: path.to_path_buf(),
+            content: content.to_owned(),
             actions: raw,
         });
         Ok(infos)
@@ -309,9 +315,10 @@ impl LspManager {
         &mut self,
         path: &Path,
         index: usize,
+        content: &str,
     ) -> Option<Result<(String, WorkspaceEditPlan), LspError>> {
         let active = self.active_code_actions.take()?;
-        if active.path != path {
+        if active.path != path || active.content != content {
             return None;
         }
         let (server, action) = active.actions.get(index)?;

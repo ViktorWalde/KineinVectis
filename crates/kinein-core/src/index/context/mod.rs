@@ -28,6 +28,8 @@ mod cargo;
 mod cdb;
 mod drift;
 mod effective;
+mod verification;
+pub(crate) use verification::verification_context;
 
 pub use drift::compile_drift;
 pub use effective::{KitFacts, complete_with_kit};
@@ -59,7 +61,7 @@ pub struct CompileContext {
     cdb_directory: Option<String>,
     cdb_path: Option<String>,
     cdb_stale_because: Option<String>,
-    unidades: HashMap<PathBuf, CdbUnit>,
+    units: HashMap<PathBuf, CdbUnit>,
     pacotes: u64,
     alvos: Vec<AlvoCargo>,
     python: Option<PythonEnv>,
@@ -72,7 +74,15 @@ pub struct CompileContext {
 impl CompileContext {
     /// Carrega o contexto de `root`.
     #[must_use]
-    pub fn load(root: &Path, ferramentas: &ContextTools) -> Self {
+    pub fn load(root: &Path, tools: &ContextTools) -> Self {
+        let mut ctx = Self::load_cdb(root);
+        ctx.load_other_context(root, tools);
+        ctx
+    }
+
+    /// Fresh CDB-only context, without querying Cargo or other build tools.
+    #[must_use]
+    pub fn load_cdb(root: &Path) -> Self {
         let mut ctx = Self::default();
         let cdb = crate::cdb::status(root);
         if let Some(dir) = cdb.directory.as_deref() {
@@ -80,25 +90,45 @@ impl CompileContext {
                 .join(if dir == "." { "" } else { dir })
                 .join("compile_commands.json");
             if let Ok(texto) = std::fs::read_to_string(&path) {
-                ctx.unidades = cdb::parse_cdb(&texto);
-                ctx.cdb_path = Some(path.display().to_string());
-                ctx.cdb_directory = Some(dir.to_owned());
-                ctx.cdb_stale_because = cdb
-                    .stale_because
-                    .or_else(|| cdb::cmakelists_mais_novo(root, &path, &ctx.unidades));
+                ctx = Self::from_cdb_text(root, &path, &texto);
             }
         }
+        ctx
+    }
+
+    /// Parse an identified CDB snapshot through the same context owner.
+    #[must_use]
+    pub(crate) fn from_cdb_text(root: &Path, path: &Path, text: &str) -> Self {
+        let mut ctx = Self::default();
+        ctx.units = cdb::parse_cdb(text);
+        ctx.cdb_path = Some(path.display().to_string());
+        ctx.cdb_directory = path
+            .parent()
+            .and_then(|p| p.strip_prefix(root).ok())
+            .map(|p| p.display().to_string());
+        ctx.cdb_stale_because = crate::cdb::status(root)
+            .stale_because
+            .or_else(|| cdb::cmakelists_mais_novo(root, path, &ctx.units));
+        ctx
+    }
+
+    /// Multiple commands for one source cannot establish a single effective context.
+    pub(crate) fn unambiguous_cdb_unit(&self, path: &Path) -> bool {
+        let canonical = crate::platform::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+        self.units.get(&canonical).is_some_and(|u| !u.ambiguous)
+    }
+
+    fn load_other_context(&mut self, root: &Path, tools: &ContextTools) {
         if root.join("Cargo.toml").is_file()
-            && let Some(cargo) = ferramentas.cargo.as_deref()
+            && let Some(cargo) = tools.cargo.as_deref()
             && let Some((pacotes, alvos)) = cargo::cargo_metadata(cargo, root)
         {
-            ctx.pacotes = pacotes;
-            ctx.alvos = alvos;
+            self.pacotes = pacotes;
+            self.alvos = alvos;
         }
-        ctx.python = crate::python::env::python_env(root, &ferramentas.python);
-        ctx.cmake = CmakeModel::load(&crate::cmake::build_dir(root));
-        ctx.platformio = root.join("platformio.ini").is_file();
-        ctx
+        self.python = crate::python::env::python_env(root, &tools.python);
+        self.cmake = CmakeModel::load(&crate::cmake::build_dir(root));
+        self.platformio = root.join("platformio.ini").is_file();
     }
 
     /// Os numeros para o `index.status`.
@@ -106,7 +136,7 @@ impl CompileContext {
     pub fn summary(&self) -> ContextSummary {
         ContextSummary {
             cdb_directory: self.cdb_directory.clone(),
-            cdb_entries: self.unidades.len() as u64,
+            cdb_entries: self.units.len() as u64,
             cdb_stale: self.cdb_stale_because.is_some(),
             cdb_stale_because: self.cdb_stale_because.clone(),
             cargo_packages: self.pacotes,
@@ -169,11 +199,7 @@ impl CompileContext {
                 .map(|t| t.name.clone())
                 .collect();
         }
-        if let Some(u) = self
-            .unidades
-            .get(&chave)
-            .or_else(|| self.unidades.get(absoluto))
-        {
+        if let Some(u) = self.units.get(&chave).or_else(|| self.units.get(absoluto)) {
             ctx.cdb_location = self.cdb_path.as_ref().map(|path| CdbLocation {
                 path: path.clone(),
                 line: u.line,

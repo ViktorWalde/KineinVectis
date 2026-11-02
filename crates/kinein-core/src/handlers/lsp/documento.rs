@@ -34,6 +34,13 @@ impl Core {
                     Ok(canonical) => canonical,
                     Err(error) => return fs_error_response(request_id, &error),
                 };
+                if self
+                    .lsp
+                    .as_ref()
+                    .is_some_and(|lsp| !lsp.document_matches(&canonical, &parsed.content))
+                {
+                    self.workspace_edits.invalidate_verifications();
+                }
                 if let Some(lsp) = self.lsp.as_mut() {
                     lsp.did_change(&canonical, &parsed.content);
                 }

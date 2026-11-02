@@ -46,7 +46,7 @@ use kinein_protocol::JsonRpcRequest;
 use serde_json::Value;
 
 pub use diagnostics_merge::{MergedDiagnostics, record as record_diagnostics};
-pub use edit::apply_text_edits;
+pub use edit::{apply_text_edits, text_edit_byte_spans};
 pub use manager::LspManager;
 pub use query::{LspBegun, LspPending, LspQuery};
 pub use session::LspReply;

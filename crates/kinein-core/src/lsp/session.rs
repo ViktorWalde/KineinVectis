@@ -117,7 +117,7 @@ impl LspManager {
 
     /// Encerra todos os servidores gerenciados.
     pub fn shutdown_all(&mut self) {
-        self.active_code_actions = None;
+        self.invalidate_code_actions();
         super::diagnostics_merge::clear(&self.merged_diagnostics);
         let drained: Vec<(&'static str, ServerHandle)> = self.servers.drain().collect();
         for (key, handle) in drained {

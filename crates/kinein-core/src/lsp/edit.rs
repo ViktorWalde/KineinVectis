@@ -12,72 +12,128 @@ use super::types::{LspError, TextSpanEdit};
 /// Os edits sao aplicados de tras para frente para preservar offsets; ranges
 /// invertidos ou sobrepostos geram erro sem resultado parcial.
 pub fn apply_text_edits(content: &str, edits: &[TextSpanEdit]) -> Result<String, LspError> {
-    let starts = line_start_offsets(content);
+    let spans = validated_spans(content, edits, false)?;
+    let mut result = String::with_capacity(content.len());
+    let mut cursor = 0;
+    for (start, end, new_text) in spans.into_iter().rev() {
+        result.push_str(&content[cursor..start]);
+        result.push_str(new_text);
+        cursor = end;
+    }
+    result.push_str(&content[cursor..]);
+    Ok(result)
+}
+
+/// Strict byte ranges for compiler mapping; malformed UTF-16 positions are rejected.
+pub fn text_edit_byte_spans(
+    content: &str,
+    edits: &[TextSpanEdit],
+) -> Result<Vec<(usize, usize, usize)>, LspError> {
+    Ok(validated_spans(content, edits, true)?
+        .into_iter()
+        .map(|(s, e, t)| (s, e, t.len()))
+        .collect())
+}
+
+struct Positions {
+    length: usize,
+    starts: Vec<usize>,
+    columns: std::collections::BTreeMap<usize, Vec<usize>>,
+    limits: std::collections::BTreeMap<usize, usize>,
+}
+
+impl Positions {
+    fn new(content: &str, edits: &[TextSpanEdit]) -> Self {
+        let starts = std::iter::once(0)
+            .chain(content.match_indices('\n').map(|(i, _)| i + 1))
+            .collect::<Vec<_>>();
+        let requested = edits
+            .iter()
+            .flat_map(|e| [e.start_line, e.end_line])
+            .filter_map(|n| usize::try_from(n).ok())
+            .collect::<std::collections::BTreeSet<_>>();
+        let mut columns = std::collections::BTreeMap::new();
+        let mut limits = std::collections::BTreeMap::new();
+        for line in requested {
+            let Some(&start) = starts.get(line) else {
+                continue;
+            };
+            let end = starts.get(line + 1).map_or(content.len(), |n| n - 1);
+            let text = &content[start..end];
+            let mut offsets = vec![0];
+            for (byte, c) in text.char_indices() {
+                for _ in 0..c.len_utf16() {
+                    offsets.push(byte + c.len_utf8());
+                }
+            }
+            limits.insert(line, offsets.len() - 1 - usize::from(text.ends_with('\r')));
+            columns.insert(line, offsets);
+        }
+        Self {
+            length: content.len(),
+            starts,
+            columns,
+            limits,
+        }
+    }
+    fn offset(&self, line: u64, character: u64, strict: bool) -> Result<usize, LspError> {
+        let line = usize::try_from(line).unwrap_or(usize::MAX);
+        let target = usize::try_from(character).unwrap_or(usize::MAX);
+        let Some(columns) = self.columns.get(&line) else {
+            return if strict {
+                Err(invalid_position())
+            } else {
+                Ok(self.length)
+            };
+        };
+        let middle = columns
+            .get(target)
+            .is_some_and(|value| columns.get(target.saturating_add(1)) == Some(value));
+        if strict && (target > *self.limits.get(&line).unwrap_or(&0) || middle) {
+            return Err(invalid_position());
+        }
+        Ok(self.starts[line]
+            + columns
+                .get(target)
+                .copied()
+                .unwrap_or_else(|| *columns.last().unwrap_or(&0)))
+    }
+}
+
+fn invalid_position() -> LspError {
+    LspError::Transport {
+        message: "Range LSP fora do documento ou entre unidades UTF-16 de um caractere.".into(),
+    }
+}
+
+fn validated_spans<'a>(
+    content: &str,
+    edits: &'a [TextSpanEdit],
+    strict: bool,
+) -> Result<Vec<(usize, usize, &'a str)>, LspError> {
+    let positions = Positions::new(content, edits);
     let mut spans = Vec::with_capacity(edits.len());
     for edit in edits {
-        let start = position_to_offset(content, &starts, edit.start_line, edit.start_character);
-        let end = position_to_offset(content, &starts, edit.end_line, edit.end_character);
+        let start = positions.offset(edit.start_line, edit.start_character, strict)?;
+        let end = positions.offset(edit.end_line, edit.end_character, strict)?;
         if end < start {
             return Err(LspError::Transport {
-                message: "edit LSP com range invertido".to_owned(),
+                message: "edit LSP com range invertido".into(),
             });
         }
         spans.push((start, end, edit.new_text.as_str()));
     }
-    spans.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| right.1.cmp(&left.1)));
-
-    let mut previous_start = usize::MAX;
-    let mut result = content.to_owned();
-    for (start, end, new_text) in spans {
-        if end > previous_start {
+    spans.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| b.1.cmp(&a.1)));
+    let mut previous = usize::MAX;
+    for &(start, end, _) in &spans {
+        if end > previous {
             return Err(LspError::Transport {
-                message: "edits LSP sobrepostos".to_owned(),
+                message: "edits LSP sobrepostos".into(),
             });
         }
-        previous_start = start;
-        result.replace_range(start..end, new_text);
+        previous = start;
     }
-    Ok(result)
-}
-
-/// Offset em bytes do inicio de cada linha do conteudo.
-fn line_start_offsets(content: &str) -> Vec<usize> {
-    let mut starts = vec![0];
-    for (index, byte) in content.bytes().enumerate() {
-        if byte == b'\n' {
-            starts.push(index + 1);
-        }
-    }
-    starts
-}
-
-/// Converte posicao LSP (linha 0-based, coluna UTF-16) em offset de byte.
-///
-/// Posicoes fora do conteudo sao grampeadas ao fim do texto/linha.
-fn position_to_offset(content: &str, starts: &[usize], line: u64, character: u64) -> usize {
-    let Ok(line_index) = usize::try_from(line) else {
-        return content.len();
-    };
-    let Some(&line_start) = starts.get(line_index) else {
-        return content.len();
-    };
-    let line_end = starts
-        .get(line_index + 1)
-        .map_or(content.len(), |next| next.saturating_sub(1));
-    line_start + utf16_col_to_byte(&content[line_start..line_end], character)
-}
-
-/// Converte uma coluna em unidades UTF-16 para offset de byte dentro da linha.
-fn utf16_col_to_byte(line: &str, character: u64) -> usize {
-    let target = usize::try_from(character).unwrap_or(usize::MAX);
-    let mut units = 0_usize;
-    for (byte_index, symbol) in line.char_indices() {
-        if units >= target {
-            return byte_index;
-        }
-        units += symbol.len_utf16();
-    }
-    line.len()
+    Ok(spans)
 }
 
 #[cfg(test)]
@@ -142,5 +198,30 @@ mod tests {
         let edits = vec![span(9, 9, 9, 9, "!")];
 
         assert_eq!(apply_text_edits(content, &edits).unwrap(), "fim!");
+    }
+
+    #[test]
+    fn edit_verification_mapping_rejects_invalid_utf16_and_outside_ranges() {
+        let half = vec![span(0, 1, 0, 2, "x")];
+        assert!(super::text_edit_byte_spans("😀a", &half).is_err());
+        assert!(super::text_edit_byte_spans("😀a", &[span(2, 0, 2, 0, "x")]).is_err());
+        assert_eq!(
+            super::text_edit_byte_spans("😀a", &[span(0, 2, 0, 3, "x")]).unwrap(),
+            [(4, 5, 1)]
+        );
+        assert!(super::text_edit_byte_spans("abc\r\n", &[span(0, 4, 0, 4, "x")]).is_err());
+    }
+
+    #[test]
+    fn edit_verification_many_edits_on_one_line_are_bounded() {
+        let content = "a".repeat(200_000);
+        let edits = (0..2000)
+            .map(|i| span(0, i * 100, 0, i * 100 + 1, "b"))
+            .collect::<Vec<_>>();
+        let started = std::time::Instant::now();
+        let edited = apply_text_edits(&content, &edits).unwrap();
+        assert_eq!(edited.len(), content.len());
+        assert_eq!(edited.bytes().filter(|b| *b == b'b').count(), 2000);
+        assert!(started.elapsed() < std::time::Duration::from_secs(2));
     }
 }

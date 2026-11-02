@@ -31,6 +31,16 @@ use std::{
     time::SystemTime,
 };
 
+mod directory;
+pub(crate) mod verification;
+
+/// An exact, unambiguous unit and the CDB bytes from which it was derived.
+pub(crate) struct VerificationContext {
+    pub unit: kinein_protocol::CompileUnit,
+    pub cdb: PathBuf,
+    pub bytes: Vec<u8>,
+}
+
 /// Nome do arquivo, fixado pela especificação da JSON Compilation Database.
 const ARQUIVO: &str = "compile_commands.json";
 

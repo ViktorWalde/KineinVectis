@@ -9,6 +9,10 @@ use std::{
     error::Error,
     fmt,
     path::{Path, PathBuf},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use kinein_protocol::{LspWorkspaceEditFilePreview, LspWorkspaceEditPreviewResult};
@@ -55,6 +59,7 @@ impl PendingTransaction {
                 })
                 .collect(),
             edits: self.edits,
+            verification: None,
         }
     }
 }
@@ -143,13 +148,80 @@ pub struct WorkspaceEditTransactions {
     pending: HashMap<String, PendingTransaction>,
     order: VecDeque<String>,
     next_id: u64,
+    verification_cancel: Option<(String, Arc<AtomicBool>)>,
+    verification_ids: HashSet<String>,
+    verification_guards: HashMap<String, crate::cdb::verification::ContextGuard>,
 }
 
 impl WorkspaceEditTransactions {
     /// Descarta todas as previas, por exemplo ao trocar de workspace.
     pub fn clear(&mut self) {
+        if let Some((_, cancel)) = self.verification_cancel.take() {
+            cancel.store(true, Ordering::SeqCst);
+        }
+        self.verification_guards.clear();
+        self.verification_ids.clear();
         self.pending.clear();
         self.order.clear();
+    }
+
+    /// Only one compiler comparison runs for this consumer at a time.
+    pub(crate) fn begin_verification(&mut self, id: &str) -> Arc<AtomicBool> {
+        if let Some((_, cancel)) = self.verification_cancel.take() {
+            cancel.store(true, Ordering::SeqCst);
+        }
+        let cancel = Arc::new(AtomicBool::new(false));
+        self.verification_cancel = Some((id.to_owned(), Arc::clone(&cancel)));
+        cancel
+    }
+
+    /// Code-action invalidation leaves unrelated rename previews intact.
+    pub(crate) fn track_verification(&mut self, id: &str) {
+        self.verification_ids.insert(id.to_owned());
+    }
+
+    pub(crate) fn finish_verification(&mut self, id: &str) {
+        if self
+            .verification_cancel
+            .as_ref()
+            .is_some_and(|(running, _)| running == id)
+        {
+            self.verification_cancel.take();
+        }
+    }
+
+    pub(crate) fn invalidate_verifications(&mut self) {
+        let ids = self.verification_ids.iter().cloned().collect::<Vec<_>>();
+        for id in ids {
+            self.remove(&id);
+        }
+    }
+
+    /// Retain context observations with the existing transaction owner.
+    pub(crate) fn set_verification_guard(
+        &mut self,
+        id: &str,
+        guard: crate::cdb::verification::ContextGuard,
+    ) {
+        self.verification_guards.insert(id.to_owned(), guard);
+    }
+
+    /// A completed or pending preview must still belong to this workspace.
+    pub(crate) fn contains(&self, id: &str) -> bool {
+        self.pending.contains_key(id)
+    }
+
+    /// An open buffer must still match the preview, even before didChange arrives.
+    pub(crate) fn validate_buffers(
+        &self,
+        id: &str,
+        mut matches: impl FnMut(&Path, &str) -> bool,
+    ) -> bool {
+        self.pending.get(id).is_some_and(|tx| {
+            tx.files
+                .iter()
+                .all(|file| matches(&file.path, &file.before_content))
+        })
     }
 
     /// Valida versoes opcionais do `documentChanges` contra o manager LSP.
@@ -251,7 +323,7 @@ impl WorkspaceEditTransactions {
         self.order.push_back(id);
         while self.order.len() > MAX_PENDING_TRANSACTIONS {
             if let Some(expired) = self.order.pop_front() {
-                self.pending.remove(&expired);
+                self.remove(&expired);
             }
         }
         Ok(preview)
@@ -277,6 +349,27 @@ impl WorkspaceEditTransactions {
                 id: transaction_id.to_owned(),
             }
         })?;
+
+        if self
+            .verification_cancel
+            .as_ref()
+            .is_some_and(|(id, _)| id == transaction_id)
+        {
+            return Err(WorkspaceEditTransactionError::InvalidPlan {
+                message: "A verificação ainda está em andamento.".into(),
+            });
+        }
+
+        if self
+            .verification_guards
+            .get(transaction_id)
+            .is_some_and(|guard| !guard.is_current())
+        {
+            self.remove(transaction_id);
+            return Err(WorkspaceEditTransactionError::InvalidPlan {
+                message: "Contexto da verificação alterado; consulte as ações novamente.".into(),
+            });
+        }
 
         let updates = transaction
             .files
@@ -314,6 +407,16 @@ impl WorkspaceEditTransactions {
     }
 
     fn remove(&mut self, transaction_id: &str) -> Option<PendingTransaction> {
+        if self
+            .verification_cancel
+            .as_ref()
+            .is_some_and(|(id, _)| id == transaction_id)
+            && let Some((_, cancel)) = self.verification_cancel.take()
+        {
+            cancel.store(true, Ordering::SeqCst);
+        }
+        self.verification_ids.remove(transaction_id);
+        self.verification_guards.remove(transaction_id);
         self.order.retain(|id| id != transaction_id);
         self.pending.remove(transaction_id)
     }

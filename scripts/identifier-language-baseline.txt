@@ -884,7 +884,6 @@ crates/kinein-core/src/index/context/mod.rs	chave	6
 crates/kinein-core/src/index/context/mod.rs	compilador	2
 crates/kinein-core/src/index/context/mod.rs	contexto	4
 crates/kinein-core/src/index/context/mod.rs	exato	2
-crates/kinein-core/src/index/context/mod.rs	ferramentas	3
 crates/kinein-core/src/index/context/mod.rs	modelo	6
 crates/kinein-core/src/index/context/mod.rs	novo	1
 crates/kinein-core/src/index/context/mod.rs	pacotes	5
@@ -892,7 +891,6 @@ crates/kinein-core/src/index/context/mod.rs	porque	2
 crates/kinein-core/src/index/context/mod.rs	profundidade	2
 crates/kinein-core/src/index/context/mod.rs	texto	2
 crates/kinein-core/src/index/context/mod.rs	unidade	2
-crates/kinein-core/src/index/context/mod.rs	unidades	6
 crates/kinein-core/src/index/mod.rs	achados	5
 crates/kinein-core/src/index/mod.rs	achatar	3
 crates/kinein-core/src/index/mod.rs	agulha	5
@@ -3352,13 +3350,6 @@ ui/qml/search/SearchController.qml	seguinte	3
 ui/qml/search/SearchEverywhereController.qml	absolutos	4
 ui/qml/search/SearchEverywhereController.qml	caminho	6
 ui/qml/search/SearchEverywhereController.qml	plano	7
-ui/qml/setup/SetupPanel.qml	comando	2
-ui/qml/setup/SetupPanel.qml	linha	4
-ui/qml/setup/SetupPanel.qml	lista	3
-ui/qml/setup/SetupPanel.qml	rodape	2
-ui/qml/setup/SetupPanel.qml	rolagem	2
-ui/qml/setup/SetupPanel.qml	subtitulo	2
-ui/qml/setup/SetupPanel.qml	titulo	2
 ui/qml/setup/SetupPanelHost.qml	comando	2
 ui/qml/setup/SetupToolRow.qml	coluna	3
 ui/qml/setup/SetupToolRow.qml	comando	2
@@ -3372,7 +3363,7 @@ ui/qml/shell/HeaderGitWidget.qml	alteracoes	2
 ui/qml/shell/HeaderGitWidget.qml	conteudo	2
 ui/qml/shell/HeaderProjectWidget.qml	conteudo	2
 ui/qml/shell/HeaderRunWidget.qml	acoes	3
-ui/qml/shell/ShellEnvironmentOverlays.qml	comando	4
+ui/qml/shell/ShellEnvironmentOverlays.qml	comando	2
 ui/qml/shell/StatusBarJobWidget.qml	preenchido	1
 ui/qml/shell/StatusBarJobWidget.qml	trilho	4
 ui/qml/toolchain/ToolchainController.qml	alvo	3

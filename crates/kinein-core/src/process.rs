@@ -7,11 +7,11 @@
 
 use std::{
     ffi::OsString,
-    io::{self, BufRead},
+    io::{self, BufRead, Read},
     process::{Command, ExitStatus, Stdio},
     sync::{
         Arc,
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
         mpsc,
     },
     thread,
@@ -103,10 +103,95 @@ const CANCEL_DRAIN_DEADLINE: Duration = Duration::from_secs(2);
 /// never blocks waiting on lingering grandchildren, so cancel returns promptly.
 /// A cancelled process yields a non-success status.
 pub fn stream_command_lines_cancelable(
-    mut command: Command,
+    command: Command,
     cancel: &Arc<AtomicBool>,
     on_line: &mut dyn FnMut(&'static str, String),
 ) -> Result<ExitStatus, ProcessError> {
+    stream_cancelable(command, cancel, on_line, None).map(|(status, _)| status)
+}
+
+/// Same process owner with a byte cap enforced inside the pipe readers.
+/// The flag reports truncation, invalid UTF-8 or an unreadable output pipe.
+pub fn stream_command_lines_bounded(
+    command: Command,
+    cancel: &Arc<AtomicBool>,
+    maximum: usize,
+    on_line: &mut dyn FnMut(&'static str, String),
+) -> Result<(ExitStatus, bool), ProcessError> {
+    let budget = Arc::new(OutputBudget {
+        bytes: AtomicUsize::new(0),
+        maximum,
+        failed: AtomicBool::new(false),
+    });
+    stream_cancelable(command, cancel, on_line, Some(&budget))
+}
+
+struct OutputBudget {
+    bytes: AtomicUsize,
+    maximum: usize,
+    failed: AtomicBool,
+}
+
+fn forward_output(
+    reader: impl Read,
+    sender: &mpsc::SyncSender<(&'static str, String)>,
+    stream: &'static str,
+    budget: Option<&OutputBudget>,
+    cancel: &AtomicBool,
+) {
+    let mut reader = io::BufReader::new(reader);
+    loop {
+        if budget.is_some_and(|b| b.failed.load(Ordering::SeqCst)) {
+            break;
+        }
+        let mut bytes = Vec::new();
+        let maximum = budget.map_or(u64::MAX, |b| (b.maximum as u64).saturating_add(1));
+        let count = match reader.by_ref().take(maximum).read_until(b'\n', &mut bytes) {
+            Ok(0) => break,
+            Ok(count) => count,
+            Err(_) => {
+                if let Some(b) = budget {
+                    b.failed.store(true, Ordering::SeqCst);
+                    cancel.store(true, Ordering::SeqCst);
+                }
+                break;
+            }
+        };
+        if let Some(b) = budget
+            && b.bytes
+                .fetch_add(count, Ordering::SeqCst)
+                .saturating_add(count)
+                > b.maximum
+        {
+            b.failed.store(true, Ordering::SeqCst);
+            cancel.store(true, Ordering::SeqCst);
+            break;
+        }
+        if bytes.last() == Some(&b'\n') {
+            bytes.pop();
+            if bytes.last() == Some(&b'\r') {
+                bytes.pop();
+            }
+        }
+        let Ok(line) = String::from_utf8(bytes) else {
+            if let Some(b) = budget {
+                b.failed.store(true, Ordering::SeqCst);
+                cancel.store(true, Ordering::SeqCst);
+            }
+            break;
+        };
+        if sender.send((stream, line)).is_err() {
+            break;
+        }
+    }
+}
+
+fn stream_cancelable(
+    mut command: Command,
+    cancel: &Arc<AtomicBool>,
+    on_line: &mut dyn FnMut(&'static str, String),
+    budget: Option<&Arc<OutputBudget>>,
+) -> Result<(ExitStatus, bool), ProcessError> {
     command.stdin(Stdio::null());
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());
@@ -118,25 +203,17 @@ pub fn stream_command_lines_cancelable(
     let mut child = command.spawn().map_err(ProcessError::Spawn)?;
     let group = crate::platform::group_of(&child);
 
-    let (sender, receiver) = mpsc::channel::<(&'static str, String)>();
+    let (sender, receiver) = mpsc::sync_channel::<(&'static str, String)>(128);
     if let Some(stdout) = child.stdout.take() {
-        let sender = sender.clone();
+        let (sender, budget, cancel) = (sender.clone(), budget.map(Arc::clone), cancel.clone());
         thread::spawn(move || {
-            for line in io::BufReader::new(stdout).lines().map_while(Result::ok) {
-                if sender.send(("stdout", line)).is_err() {
-                    break;
-                }
-            }
+            forward_output(stdout, &sender, "stdout", budget.as_deref(), &cancel);
         });
     }
     if let Some(stderr) = child.stderr.take() {
-        let sender = sender.clone();
+        let (sender, budget, cancel) = (sender.clone(), budget.map(Arc::clone), cancel.clone());
         thread::spawn(move || {
-            for line in io::BufReader::new(stderr).lines().map_while(Result::ok) {
-                if sender.send(("stderr", line)).is_err() {
-                    break;
-                }
-            }
+            forward_output(stderr, &sender, "stderr", budget.as_deref(), &cancel);
         });
     }
     drop(sender);
@@ -185,7 +262,14 @@ pub fn stream_command_lines_cancelable(
     if !killed && let Some(group) = &group {
         crate::platform::release_group(group);
     }
-    status
+    status.map(|status| {
+        (
+            status,
+            budget
+                .as_ref()
+                .is_some_and(|b| b.failed.load(Ordering::SeqCst)),
+        )
+    })
 }
 
 /// Runs through the existing managed streamer with a bounded execution deadline.

@@ -126,6 +126,11 @@ pub(crate) fn state_home() -> PathBuf {
     imp::state_home()
 }
 
+/// A private temporary directory, using the platform's permission model.
+pub(crate) fn create_private_directory(path: &Path) -> std::io::Result<()> {
+    imp::create_private_directory(path)
+}
+
 /// Os nomes de arquivo que `binary` pode ter numa pasta do `PATH`. No Unix,
 /// so' ele. No Windows, com cada extensao do `%PATHEXT%` (`.com`, `.exe`,
 /// `.bat`, `.cmd` quando ele nao esta' definido), nessa ordem; um nome que ja'

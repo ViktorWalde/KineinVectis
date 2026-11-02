@@ -11,6 +11,7 @@ use serde_json::{Value, value::RawValue};
 /// A unidade de compilacao de um arquivo, ja' interpretada.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct CdbUnit {
+    pub(super) ambiguous: bool,
     pub(super) line: usize,
     pub(super) column: usize,
     pub(super) compiler: String,
@@ -51,6 +52,9 @@ pub(super) fn parse_cdb(text: &str) -> HashMap<PathBuf, CdbUnit> {
             continue;
         };
         if let Some((key, unit)) = parse_entry(&entry, line, column) {
+            let ambiguous = units.contains_key(&key);
+            let mut unit = unit;
+            unit.ambiguous = ambiguous;
             units.insert(key, unit);
         }
     }
@@ -75,15 +79,16 @@ fn parse_entry(entry: &Value, line: usize, column: usize) -> Option<(PathBuf, Cd
             },
             |list| {
                 list.iter()
-                    .filter_map(Value::as_str)
-                    .map(str::to_owned)
-                    .collect()
+                    .map(|v| v.as_str().map(str::to_owned))
+                    .collect::<Option<Vec<_>>>()
+                    .unwrap_or_default()
             },
         );
     if arguments.is_empty() {
         return None;
     }
     let mut unit = CdbUnit {
+        ambiguous: false,
         line,
         column,
         compiler: arguments[0].clone(),

@@ -21,7 +21,7 @@ impl Core {
     /// confirmar. Estava escrita DUAS vezes; um plano que nasce de origens
     /// diferentes tem que virar preview pelo MESMO caminho, senao uma das duas
     /// pode divergir na validacao — que e' a barreira de versao.
-    fn workspace_edit_preview_response(
+    pub(super) fn workspace_edit_preview_response(
         &mut self,
         request_id: Option<Value>,
         root: &Path,
@@ -142,6 +142,8 @@ impl Core {
                 Ok(pending) => pending,
                 Err(error) => return lsp_error_response(request_id, &error),
             };
+        let generation = lsp.code_action_generation();
+        let content = parsed.content;
         self.defer_then(
             request_id,
             move || {
@@ -154,7 +156,17 @@ impl Core {
                 let Some(lsp) = core.lsp.as_mut() else {
                     return lsp_unavailable_response(request_id, "lsp.codeActions");
                 };
-                match lsp.finish_code_actions(&path, replies) {
+                if lsp.code_action_generation() != generation {
+                    return JsonRpcResponse::failure(
+                        request_id,
+                        JsonRpcError::new(
+                            JsonRpcErrorCode::InvalidParams,
+                            "Documento alterado durante a consulta; peça as ações novamente.",
+                            None,
+                        ),
+                    );
+                }
+                match lsp.finish_code_actions(&path, &content, replies) {
                     Ok(actions) => JsonRpcResponse::success(
                         request_id,
                         json!(LspCodeActionsResult { actions }),
@@ -191,7 +203,7 @@ impl Core {
             return lsp_unavailable_response(request_id, "lsp.applyCodeAction");
         };
         let index = usize::try_from(parsed.action_index).unwrap_or(usize::MAX);
-        let Some(taken) = lsp.take_code_action(&active_path, index) else {
+        let Some(taken) = lsp.take_code_action(&active_path, index, &parsed.content) else {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
@@ -207,14 +219,15 @@ impl Core {
             Err(error) => return lsp_error_response(request_id, &error),
         };
 
-        self.workspace_edit_preview_response(
-            request_id,
+        let response = self.workspace_edit_preview_response(
+            request_id.clone(),
             &root,
             &active_path,
             &parsed.content,
             &plan,
             title,
-        )
+        );
+        self.verify_code_action_preview(request_id, &root, response, &plan)
     }
 
     /// Confirma e consome uma transacao previamente apresentada pela UI.
@@ -234,6 +247,24 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
+        if !self
+            .workspace_edits
+            .validate_buffers(&parsed.transaction_id, |path, content| {
+                self.lsp.as_ref().is_none_or(|lsp| {
+                    lsp.document_version(path, None).is_none()
+                        || lsp.document_matches(path, content)
+                })
+            })
+        {
+            let _ = self.workspace_edits.cancel(&parsed.transaction_id);
+            return workspace_edit_error_response(
+                request_id,
+                &lsp::WorkspaceEditTransactionError::InvalidPlan {
+                    message: "Documento ou transação obsoletos; consulte as ações novamente."
+                        .into(),
+                },
+            );
+        }
         let applied = match self.workspace_edits.apply(&root, &parsed.transaction_id) {
             Ok(applied) => applied,
             Err(error) => return workspace_edit_error_response(request_id, &error),

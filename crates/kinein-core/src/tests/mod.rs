@@ -31,6 +31,7 @@ mod debug_attach;
 mod debug_inspect;
 mod dfu;
 mod dispatch;
+mod edit_verification;
 mod flash_proposal;
 mod format;
 mod frameworks;

@@ -149,6 +149,7 @@ flowchart LR
   n_core_build --> n_core_platform
   n_core_build --> n_core_process
   n_core_build --> n_core_toolchain
+  n_core_build --> n_core_tools
   n_core_cargo --> n_core_toolchain
   n_core_cdb --> n_core_platform
   n_core_cmake --> n_core_fsops
@@ -240,6 +241,7 @@ flowchart LR
   n_core_jobs --> n_core_lsp
   n_core_library --> n_core_cmake
   n_core_library --> n_core_configaction
+  n_core_lsp --> n_core_cdb
   n_core_lsp --> n_core_cmake
   n_core_lsp --> n_core_fsops
   n_core_lsp --> n_core_owned_child
@@ -294,7 +296,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-50 módulos, 148 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+50 módulos, 150 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -305,9 +307,9 @@ flowchart LR
 
 | Domínio | Depende de | Cabeçalho |
 | --- | --- | --- |
-| `build` | cdb, cmake, msvc, platform, process, toolchain | Build execution with streamed output and structured diagnostics. |
+| `build` | cdb, cmake, msvc, platform, process, toolchain, tools | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
-| `cdb` | platform | Descoberta e diagnóstico da compilation database do C/C++. |
+| `cdb` | platform | Identity of include-search namespaces, including previously absent headers. |
 | `cmake` | fsops, msvc, platform, toolchain | Servico CMake: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |
@@ -329,7 +331,7 @@ flowchart LR
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
-| `lsp` | cmake, fsops, owned_child, stderr_tail | Subsistema LSP: |
+| `lsp` | cdb, cmake, fsops, owned_child, stderr_tail | Subsistema LSP: |
 | `msvc` | — | O Visual Studio do Windows, para o build de C/C++. |
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |
@@ -358,8 +360,8 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 192 métodos roteados pelo core, 160 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 32 estão aqui,
+Dos 192 métodos roteados pelo core, 161 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 31 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -387,7 +389,6 @@ nomeados, para nada ficar invisível:
 | `workspace.recent.list` | `ui/qml/app/AppDomains.qml` |
 | `workspace.recent.pin` | `ui/qml/app/AppDomains.qml` |
 | `workspace.recent.remove` | `ui/qml/app/AppDomains.qml` |
-| `workspace.trust` | `ui/qml/workspace/ProjectHealthActions.qml` |
 
 **Enviados só pela ponte C++** (ciclo de vida do processo, respostas encadeadas): `cmake.presets.list`, `cmake.status`, `core.ping`, `platformio.homeRelease`, `platformio.homeStart`, `platformio.homeStop`, `remote.status`, `tools.status`.
 
@@ -504,6 +505,7 @@ flowchart LR
     n_ui_qml_ipc_EditorEventRouter_qml["ipc/EditorEventRouter"]
   end
   subgraph CPP["ui/src"]
+    n_ui_src_core_client_cpp["core_client.cpp"]
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_dispatch_lsp_cpp["core_client_dispatch_lsp.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
@@ -515,7 +517,7 @@ flowchart LR
     n_ipc_fs(["fs.* · 3"])
     n_ipc_lsp(["lsp.* · 12"])
     n_ipc_syntaxTree(["syntaxTree.* · 2"])
-    n_ipc_workspace(["workspace.* · 1"])
+    n_ipc_workspace(["workspace.* · 2"])
   end
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_draft_rs["handlers/draft.rs"]
@@ -523,11 +525,13 @@ flowchart LR
     n_crates_kinein_core_src_handlers_fs_rs["handlers/fs.rs"]
     n_crates_kinein_core_src_handlers_lsp_mod_rs["handlers/lsp/mod.rs"]
     n_crates_kinein_core_src_handlers_syntax_rs["handlers/syntax.rs"]
+    n_crates_kinein_core_src_handlers_workspace_trust_rs["handlers/workspace_trust.rs"]
     n_crates_kinein_core_src_lib_rs["lib.rs"]
     n_core_format[format]
     n_core_jobs[jobs]
     n_core_lsp[lsp]
     n_core_rpc[rpc]
+    n_core_toolchain[toolchain]
     n_core_tools[tools]
   end
   n_tools_editor[/"clangd · rust-analyzer · pyright/basedpyright"/]
@@ -535,7 +539,9 @@ flowchart LR
   n_ui_qml_ipc_EditorEventRouter_qml -.-> n_ui_qml_editor_EditorAppendController_qml
   n_ui_qml_ipc_EditorEventRouter_qml -.-> n_ui_qml_editor_EditorController_qml
   n_ui_qml_ipc_EditorEventRouter_qml -.-> n_ui_qml_workspace_LspStatusController_qml
+  n_ui_qml_ipc_EditorRequestRouter_qml --> n_ui_src_core_client_cpp
   n_ui_qml_ipc_EditorRequestRouter_qml --> n_ui_src_core_client_requests_cpp
+  n_ui_src_core_client_cpp --> n_ipc_workspace
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_EditorEventRouter_qml
   n_ui_src_core_client_dispatch_lsp_cpp -.-> n_ui_qml_ipc_EditorEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_EditorEventRouter_qml
@@ -556,6 +562,9 @@ flowchart LR
   n_ipc_lsp --> n_crates_kinein_core_src_handlers_lsp_mod_rs
   n_crates_kinein_core_src_handlers_lsp_mod_rs --> n_core_lsp
   n_ipc_syntaxTree --> n_crates_kinein_core_src_handlers_syntax_rs
+  n_ipc_workspace --> n_crates_kinein_core_src_handlers_workspace_trust_rs
+  n_crates_kinein_core_src_handlers_workspace_trust_rs --> n_core_rpc
+  n_crates_kinein_core_src_handlers_workspace_trust_rs --> n_core_toolchain
   n_ipc_workspace --> n_crates_kinein_core_src_lib_rs
   n_crates_kinein_core_src_lib_rs --> n_core_tools
   CORE -.->|processos| n_tools_editor
@@ -568,6 +577,7 @@ flowchart LR
 | controller | `ui/qml/workspace/LspStatusController.qml` | O ESTADO DOS SERVIDORES DE LINGUAGEM para a barra de status (Etapa 2, F2). |
 | roteador | `ui/qml/ipc/EditorRequestRouter.qml` | Espelho do EditorEventRouter. |
 | roteador | `ui/qml/ipc/EditorEventRouter.qml` |  |
+| ponte C++ | `ui/src/core_client.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch_lsp.cpp` | Dispatch do dominio LSP (ARCHITECTURE.md §5): |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
@@ -577,9 +587,10 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
 | handler Rust | `crates/kinein-core/src/handlers/lsp/mod.rs` | Handlers for lsp.* requests (impl Core). |
 | handler Rust | `crates/kinein-core/src/handlers/syntax.rs` | Handlers for local incremental syntax intelligence (syntaxTree.*). |
+| handler Rust | `crates/kinein-core/src/handlers/workspace_trust.rs` | workspace.trust e o que a confianca liga (16.4b, roadmaps/59 §7.1.4). |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
 
-Métodos IPC (21): `draft.clear`, `draft.save`, `format.text`, `fs.read`, `fs.readExternal`, `fs.write`, `lsp.applyCodeAction`, `lsp.codeActions`, `lsp.completion`, `lsp.definition`, `lsp.didChange`, `lsp.hover`, `lsp.references`, `lsp.rename`, `lsp.semanticTokens`, `lsp.switchSourceHeader`, `lsp.workspaceEdit.apply`, `lsp.workspaceEdit.cancel`, `syntaxTree.indent`, `syntaxTree.update`, `workspace.saveSession`.
+Métodos IPC (22): `draft.clear`, `draft.save`, `format.text`, `fs.read`, `fs.readExternal`, `fs.write`, `lsp.applyCodeAction`, `lsp.codeActions`, `lsp.completion`, `lsp.definition`, `lsp.didChange`, `lsp.hover`, `lsp.references`, `lsp.rename`, `lsp.semanticTokens`, `lsp.switchSourceHeader`, `lsp.workspaceEdit.apply`, `lsp.workspaceEdit.cancel`, `syntaxTree.indent`, `syntaxTree.update`, `workspace.saveSession`, `workspace.trust`.
 
 ### Busca, indice e simbolos
 

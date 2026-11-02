@@ -204,3 +204,13 @@ tomllib findtext
 
 # FIFO: POSIX named pipe; native DFU tests reject non-regular image/metadata files (52 §14.53).
 fifo
+
+# English terms used by the compiler correction verifier and its host corpus.
+additional comparison corpus filename lexical optimization random shadow standalone stopper verification
+
+# shutil.copytree: Python standard library API used to isolate mutation builds.
+copytree
+
+# English validation and verifier lifecycle terminology.
+validated verifications
+freeze signature

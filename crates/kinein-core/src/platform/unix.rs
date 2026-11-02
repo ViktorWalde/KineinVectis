@@ -24,6 +24,10 @@ use super::NoFollow;
 
 pub(super) type GroupId = Pid;
 
+pub(super) fn create_private_directory(path: &Path) -> io::Result<()> {
+    DirBuilder::new().recursive(true).mode(0o700).create(path)
+}
+
 pub(super) const INHERITED_ENV: &[&str] = &[
     "PATH",
     "HOME",

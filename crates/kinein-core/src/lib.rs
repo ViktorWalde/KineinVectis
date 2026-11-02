@@ -408,6 +408,7 @@ impl Core {
         // O indice segue o disco: o que o watcher viu mudar e' reindexado
         // aqui, no loop principal, antes de o evento chegar a UI.
         if notification.method == "event.fs.changed" {
+            self.workspace_edits.invalidate_verifications();
             let paths: Vec<PathBuf> = notification
                 .params
                 .as_ref()

@@ -80,6 +80,7 @@ STDERR = int(ARGS[ARGS.index("--stderr") + 1]) if "--stderr" in ARGS else 0
 MORRE = "--morre" in ARGS
 CRASH_AFTER_START = "--cai" in ARGS
 PROGRESS = "--progresso" in ARGS
+CODE_ACTIONS_FILE = ARGS[ARGS.index("--code-actions") + 1] if "--code-actions" in ARGS else None
 
 # Legend anunciada no initialize. O core a le em
 # `capabilities.semanticTokensProvider.legend.tokenTypes` e a usa para decodificar
@@ -171,6 +172,9 @@ def resultado(method, params):
             "range": {"start": {"line": 0, "character": 3}, "end": {"line": 0, "character": 7}},
             "newText": novo,
         }]}}
+    if method == "textDocument/codeAction" and CODE_ACTIONS_FILE:
+        with open(CODE_ACTIONS_FILE, encoding="utf-8") as fixture:
+            return json.load(fixture)
     if method == "textDocument/codeAction" and PUBLICA:
         uri = params.get("textDocument", {}).get("uri", "")
         linha = {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}}

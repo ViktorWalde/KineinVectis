@@ -6,6 +6,7 @@
 //! `file:line:column: level: message` format.
 
 mod cmake;
+pub(crate) mod edit_verification;
 pub mod engine;
 mod frameworks;
 mod make;

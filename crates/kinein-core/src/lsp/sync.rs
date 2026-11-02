@@ -28,6 +28,16 @@ use super::types::LspError;
 use super::uri::uri_for_path;
 
 impl LspManager {
+    /// Pending and completed action lists share one content/context generation.
+    pub(super) fn invalidate_code_actions(&mut self) {
+        self.active_code_actions = None;
+        self.code_action_generation = self.code_action_generation.saturating_add(1);
+    }
+
+    /// Identity of the latest query, independent from redundant LSP didChange versions.
+    pub(crate) const fn code_action_generation(&self) -> u64 {
+        self.code_action_generation
+    }
     /// Abre (ou re-sincroniza) um documento nos servidores da linguagem dele.
     ///
     /// Conteudo identico ao ultimo sincronizado nao gera notificacao nova:
@@ -51,7 +61,7 @@ impl LspManager {
             }
         }
         if enviou {
-            self.active_code_actions = None;
+            self.invalidate_code_actions();
         }
     }
 
@@ -82,7 +92,7 @@ impl LspManager {
             }
         }
         if enviou {
-            self.active_code_actions = None;
+            self.invalidate_code_actions();
         }
     }
 
@@ -133,7 +143,7 @@ impl LspManager {
             // As posicoes das code actions valem para o conteudo que o
             // servidor viu; fechar o documento invalida a consulta como
             // qualquer sync.
-            self.active_code_actions = None;
+            self.invalidate_code_actions();
         }
         fechou
     }
@@ -167,7 +177,7 @@ impl LspManager {
             }
         }
         if fechados > 0 {
-            self.active_code_actions = None;
+            self.invalidate_code_actions();
         }
         fechados
     }
@@ -223,14 +233,20 @@ impl LspManager {
             .copied()
     }
 
+    /// Current buffer identity, independent from protocol version counters.
+    pub(crate) fn document_matches(&self, path: &Path, content: &str) -> bool {
+        language_for_path(path)
+            .and_then(|key| self.servers.get(key))
+            .and_then(|handle| handle.content_hashes.get(&uri_for_path(path)))
+            .is_some_and(|hash| *hash == content_hash(content))
+    }
+
     /// Garante o servidor principal da linguagem e sincroniza o texto nele e
     /// nos companheiros vivos; devolve a LINGUAGEM (= a chave do principal),
     /// que e o que todo chamador precisa daqui.
     ///
-    /// No principal o `didChange` vai SEMPRE (e' o que o roadmap 30 §3 mediu
-    /// e os testes do fio esperam); nos companheiros so' quando o texto
-    /// mudou — um linter re-analisa a cada didChange, e a pergunta
-    /// interativa nao e' para ele.
+    /// Consultas sem mudanca real nao avancam a versao: hover nao pode
+    /// invalidar o `WorkspaceEdit` de uma code action pendente.
     pub(super) fn sync_document(
         &mut self,
         path: &Path,
@@ -255,7 +271,11 @@ impl LspManager {
         if !handle.is_ready() {
             return Err(LspError::Starting { key: spec.key });
         }
-        open_or_change(handle, &uri, spec.language_id, content, hash, false);
+        let changed = handle.content_hashes.get(&uri) != Some(&hash);
+        open_or_change(handle, &uri, spec.language_id, content, hash, true);
+        if changed {
+            self.invalidate_code_actions();
+        }
         for companion in self.ensure_companions(path) {
             if let Some(handle) = self.servers.get_mut(companion.key) {
                 open_or_change(handle, &uri, spec.language_id, content, hash, true);
@@ -287,9 +307,7 @@ fn open_or_change(
         }
         *version += 1;
         let params = full_change_params(uri, *version, content);
-        if skip_if_same {
-            handle.content_hashes.insert(uri.to_owned(), hash);
-        }
+        handle.content_hashes.insert(uri.to_owned(), hash);
         send_notification(&handle.stdin, "textDocument/didChange", &params);
         return true;
     }
