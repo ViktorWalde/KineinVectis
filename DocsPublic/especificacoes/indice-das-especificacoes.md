@@ -31,6 +31,16 @@
 
 ## 1. Identidade do projeto
 
+**Fronteira vigente de 2026-11-02:** a base 0.4 consolida C/C++, depois Rust
+e integração Rust/C/C++, depois Python; especializações preservam seus roadmaps.
+Arquitetura, sequência e aceites na
+[orquestração de linguagens](orquestracao-e-verificacao-de-linguagens.md),
+com a primeira implementação no
+[verificador de correções LSP](verificador-de-correcoes-lsp.md).
+Instalar Ferramentas mantém polimento cromático e de interação pendente na
+[especificação própria](instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
+Fronteira de lançamento no [62](../roadmaps/62-base-publica-0.4.md).
+
 **Complemento de 2026-10-21:** [Instalar Ferramentas](instalar-ferramentas.md)
 e [Quality Center e gates](quality-center-e-gates.md) especificam as novas
 entregas de frontend da 0.4.x. A Library/providers completos permanecem na

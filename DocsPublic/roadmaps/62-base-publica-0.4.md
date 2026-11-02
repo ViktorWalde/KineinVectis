@@ -12,11 +12,15 @@ implementado da trilha interna 0.4, incluindo a etapa 0.4.1 ainda incompleta.
 Números históricos permanecem em commits, changelog e registros. Renumerar
 o produto não conclui nenhuma funcionalidade pendente.
 
-A base prioriza desenvolver a própria IDE: integridade dos documentos,
-contexto consistente, editor/LSP, terminal, Git, configurar, compilar,
-executar, testar e depurar C/C++, Rust e o frontend QML. Polimento de
-UI/HUD/UX e otimização acompanham essas jornadas. Superfícies funcionais
-migram dos pop-ups para os docks existentes; menus, tooltips e confirmações
+A base prioriza uso confiável em projetos pequenos e médios e no desenvolvimento
+da própria IDE: integridade dos documentos, contexto consistente, editor/LSP,
+terminal, Git, configurar, compilar, executar, testar e depurar. A consolidação
+segue **C e C++ → Rust e integração Rust/C/C++ → Python → especializações**.
+C tem corpus e aprofundamento próprios. QML participa da jornada da própria IDE.
+O desenho técnico está na
+[orquestração e verificação de linguagens](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
+Polimento de UI/HUD/UX e otimização de algoritmos acompanham essas jornadas.
+Superfícies funcionais migram dos pop-ups para os docks existentes; menus, tooltips e confirmações
 mantêm seu papel. O editor continua a área principal.
 
 A trilha completa de **Sistemas Embarcados Modernos** do [52](52-arquitetura-executavel-da-0.4.md)
@@ -27,6 +31,12 @@ compromissos dessa trilha; deixam de bloquear a base pública. As
 [quatro tarefas iniciais](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md)
 separam implementação, integração, prova em software e prova em hardware.
 Nenhuma limitação de emulação demonstra validação física.
+
+O foco vigente é consolidar a orquestração das linguagens já existentes, os
+algoritmos complementares e a experiência de uso. Novos SDKs e jornadas de
+bare metal/Linux embarcado seguem a base essencial; as regressões dos recursos
+especializados já oferecidos continuam obrigatórias. Esta ordem preserva o
+roadmap de Embarcados e substitui sua execução integral como prioridade da 0.4.
 
 ## 2. Auditoria inicial do checkout — 2026-11-02
 
@@ -57,13 +67,19 @@ protocolo IPC 0.197.0 tem ciclo independente da versão pública.
    abrir → editar → salvar → configurar → compilar → executar/testar →
    depurar, com LSP, Git e terminal. Declarar explicitamente qualquer etapa
    NÃO PROVADA e o motivo; compilação sozinha não aprova esta jornada.
+   Consolidar C/C++, depois Rust e suas fronteiras C/C++, depois Python,
+   conforme §3.1. O fluxo com contexto externo `/ide` tem aceite próprio (§5).
 3. **B3 — Polimento integrado.** Setup primeiro, depois as superfícies com
    maior interrupção do trabalho. Hierarquia, largura, listas, estados,
    atalhos, foco e recuperação; fotos antes/depois e interação na UI nativa.
-   Aceite visual permanece separado dos testes de lógica.
+   Aceite visual permanece separado dos testes de lógica. Instalar Ferramentas
+   requer hierarquia cromática e estados mais distinguíveis, conforme sua
+   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
 4. **B4 — Primeiro verificador semântico.** Recorte host integrado e provado
    conforme §4 e [40.7 §7.372](40.7-registro-das-entregas.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
-   O assistente completo continua aberto no 52 §11.2.
+   Ampliar pela base das linguagens e pelo núcleo comum da especificação,
+   priorizando Rust antes de Python. O assistente completo continua aberto
+   no 52 §11.2; o recorte host não encerra esse trabalho.
 5. **B5 — Fechamento.** Idiomas e traduções conforme [57 §3](57-mapa-de-versoes-ate-a-1.0.md#3-pedidos-do-autor-e-para-onde-foram),
    metadados 0.4.0, changelog/manual/tutorial coerentes, gate completo estrito,
    pacote local com checksum e validação em ambiente mínimo. Esta fronteira
@@ -76,6 +92,28 @@ impedir B1–B5. ROS 2, Windows, colaboração remota e o motor semântico profu
 conservam seus planos posteriores. A revisão de acabamento antes associada
 à edição especial é incorporada ao polimento desta base, sem exigir outra
 versão pública. Os compromissos de idioma não são cancelados pelo recorte.
+
+### 3.1 Matriz de consolidação e prontidão
+
+| Frente, na ordem de aprofundamento | Aceite mínimo a demonstrar |
+| --- | --- |
+| C | Projeto C puro com biblioteca e executável em várias unidades, contexto/headers corretos, correções verificadas, build/ligação, testes e depuração |
+| C++ | Projeto com dependências, configuração efetiva, navegação/rename/correções, build/ligação, testes e depuração |
+| Rust | Workspace Cargo com features/target, contexto coerente no rust-analyzer, verificação, build, testes e depuração |
+| Rust/C/C++ | Projetos mistos, interfaces e bindings, invalidação nos consumidores, ligação e testes nas fronteiras |
+| Python | Ambiente e interpretador corretos, análise/imports, correções, testes e depuração; extensões nativas com prova própria |
+| Própria IDE | Jornada Rust/C++/QML e IPC, reconstrução, testes, Git/terminal, recuperação e contexto externo conforme §5 |
+
+Cada frente deve incluir projeto novo e existente, reabertura, troca de workspace,
+dependência/ferramenta ausente, falha e cancelamento, sem perda de conteúdo.
+Registrar fixtures, versões, passos e resultado observado por capacidade.
+Projetos pequenos/médios precisam representar dependências, múltiplas unidades
+ou pacotes e configurações reais, não somente exemplos de um arquivo.
+
+Otimização exige comparação reproduzível de latência, consultas, CPU e memória.
+Polimento fecha foco, teclado, estados, recuperação e hierarquia visual junto
+da jornada. Enquanto esses aceites estiverem abertos, a presença do LSP ou um
+build bem-sucedido não constituem prontidão do ecossistema inteiro.
 
 ## 4. Primeiro algoritmo: fronteira anterior ao código
 
@@ -117,12 +155,16 @@ são medidos; seis mutações da comparação e das guardas reprovam.
 **Expansão do corpus:** ordem de includes FreeRTOS e macros de SDK exigem
 dependências e versões identificadas, com build real; fixtures sintéticas não
 os substituem. SDKs e consumidores de S2–S4 conservam seus aceites próprios.
+Antes dessa expansão especializada, aprofundar C/C++ de host, introduzir Rust,
+provar Rust/C/C++ e então Python, pela especificação comum. A infraestrutura
+compartilhada deve nascer de consumidores reais; LSP, compiladores e donos de
+build existentes continuam responsáveis por suas verificações.
 
 ## 5. Integração opcional de contexto com Codex
 
-Objetivo de fim de ciclo: investigar e provar uma ponte externa para o
-contexto de editor consumido por `/ide`. Segundo a
-[documentação oficial](https://learn.chatgpt.com/docs/developer-commands?surface=cli),
+Objetivo da jornada de autodesenvolvimento da 0.4: investigar e provar uma ponte
+externa para o contexto de editor consumido por `/ide`. Segundo a
+[documentação oficial](https://learn.chatgpt.com/docs/developer-commands),
 o comando inclui arquivos abertos e seleção no prompt. Essa descrição não
 estabelece um protocolo público de adaptador para qualquer IDE.
 
@@ -131,3 +173,16 @@ e teste real de descoberta/contexto. Ainda não implementada nem comprovada.
 Delimitar transporte e acesso antes de código; não criar um endpoint que se
 anuncie compatível sem prova. Preservar execução externa e uso opcional,
 sem painel de IA ou dependência de provedor no funcionamento da IDE.
+
+O aceite do fluxo com `/ide` exige identificar o mecanismo e a versão realmente
+suportados, conectar a instância correta e observar no cliente externo o arquivo
+ativo, arquivos abertos e seleção atuais. Testar edição ainda não salva conforme
+as capacidades do mecanismo, seleção vazia, Unicode, troca de arquivo/workspace,
+desconexão e reconexão, impedindo contexto antigo ou cruzado. Declarar os dados
+que o mecanismo não transporta. Paths/ranges e identidade do contexto precisam
+ser coerentes com os documentos vivos.
+
+Uso do CLI no terminal ou leitura explícita de arquivos não aceita essa integração.
+Ela continua não implementada e não comprovada; sua existência não é deduzida da
+documentação de uso do comando. A prontidão da jornada com contexto externo só
+pode ser declarada após a prova, preservando a operação independente da IDE.

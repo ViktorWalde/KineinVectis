@@ -77,8 +77,12 @@ Cinza: encerrada. Cinza com traço fino: feita no checkout, não lançada. Amare
 A entrega consolidada chama-se **Kinein Vectis 0.4**, com **0.4.0** nos
 metadados SemVer. A fronteira e os critérios atuais estão no
 [62](62-base-publica-0.4.md): estabilidade para desenvolver a própria IDE,
-polimento integrado de UI/HUD/UX e primeiro verificador semântico
-complementar. O trabalho acumulado, incluindo 0.4.1, integra essa base;
+consolidação da orquestração C/C++, depois Rust e integração Rust/C/C++, depois
+Python. Otimização de algoritmos e polimento UI/HUD/UX acompanham as jornadas,
+incluindo hierarquia cromática/de interação de Instalar Ferramentas. O primeiro
+verificador host já está integrado; o motor comum permanece em evolução pela
+[especificação](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
+O trabalho acumulado, incluindo 0.4.1, integra essa base;
 itens planejados continuam pendentes até implementação e prova.
 
 A antiga trilha **0.4.1–0.4.9 permanece aberta** para colaboradores de
@@ -92,8 +96,10 @@ não foram declarados concluídos ou removidos. O acabamento da edição especia
 
 Os marcos da tabela §2 e as alocações históricas do §3 descrevem a trilha,
 subordinados a esta fronteira. Pacote local só depois dos aceites do 62;
-protocolo IPC independente. A integração opcional de contexto `/ide` é um
-objetivo técnico de fim de ciclo, ainda sujeito a investigação e prova.
+protocolo IPC independente. A prontidão para projetos pequenos/médios e para
+desenvolver a própria IDE exige a matriz do 62 §3.1. A integração externa de
+contexto `/ide` integra o aceite dessa jornada, ainda sujeita a investigação e
+prova; o funcionamento independente da IDE permanece requisito.
 
 <a id="11-fronteira-da-entrega-049--decisão-de-2026-10-20"></a>
 

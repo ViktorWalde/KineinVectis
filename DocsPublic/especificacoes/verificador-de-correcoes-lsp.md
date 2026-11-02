@@ -1,5 +1,12 @@
 # Verificador complementar de correções LSP
 
+**Escopo implementado e evolução:** este documento descreve a primeira fatia
+host C/C++. O alvo comum, o aprofundamento próprio de C e a ordem C/C++ → Rust
+e integração Rust/C/C++ → Python estão na
+[orquestração e verificação das linguagens](orquestracao-e-verificacao-de-linguagens.md).
+Suporte LSP existente de uma linguagem não implica provedor de verificação
+implementado; a ampliação especializada de SDKs conserva provas próprias.
+
 ## Contrato S0/S1
 
 O consumidor é a prévia transacional de `lsp.applyCodeAction`.

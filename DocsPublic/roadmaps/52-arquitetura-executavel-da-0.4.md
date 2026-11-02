@@ -36,7 +36,10 @@
 > (SemVer **0.4.0**). Critérios de lançamento e prioridade atual no
 > [62](62-base-publica-0.4.md); quatro tarefas iniciais em
 > [contribuindo/15](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md).
-> Polimento e primeiro verificador complementar avançam na base; o
+> A prioridade é consolidar C/C++, depois Rust e integração Rust/C/C++, depois
+> Python, com otimização de algoritmos e polimento UI/HUD/UX. Arquitetura e
+> aceites na [orquestração de linguagens](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
+> A expansão especializada segue essa base. Polimento e verificador avançam; o
 > assistente completo de §11.2 e os compromissos pendentes não são dados
 > como concluídos. Esta fronteira prevalece sobre ordens antigas abaixo.
 
@@ -851,6 +854,22 @@ aceite de protótipo/agente como aprovação visual do autor.
 
 ### 11.2 Escopo dedicado — assistente semântico (decisão do projeto, 2026-10-23; posição de 2026-10-24)
 
+**Ordem vigente, 2026-11-02:** consolidar C e C++ de host, introduzir Rust
+como terceira linguagem do verificador e aprofundar Rust/C/C++, depois Python. O motor comum
+coordena identidade, evidências e execução; provedores e perfis especializados
+mantêm verificações próprias. O desenho técnico e as fatias estão na
+[especificação de orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
+Esta ordem substitui a exigência histórica de executar o assistente apenas
+depois da consolidação integral de Embarcados/0.4.6.
+
+As fases S0–S4 abaixo preservam o escopo do assistente e dos SDKs, com esta
+precedência: corpus de linguagens e projetos mistos antes de especializações.
+S2 inclui regras de ecossistema aplicáveis aos provedores; S3 inclui contextos
+Cargo, ambiente Python e fronteiras nativas além da CDB. S4 conserva os
+consumidores existentes. Os rótulos atuais são observacionais, conforme o
+contrato do verificador; os termos históricos de segurança abaixo não ampliam
+o alcance das evidências. As capacidades adicionais continuam planejadas.
+
 **Recorte de 2026-11-02:** o primeiro verificador conservador acompanha a
 base pública 0.4, conforme [62 §4](62-base-publica-0.4.md#4-primeiro-algoritmo-fronteira-anterior-ao-código),
 sem aguardar a conclusão da trilha de Embarcados. S0–S4 abaixo preservam o
@@ -873,13 +892,12 @@ substitui. Uma sugestão da IDE não pode quebrar o build do desenvolvedor, e o
 algoritmo só entra depois de uma fase de testes rigorosa. O caso de origem é o
 include-cleaner do clangd trocando `freertos/FreeRTOS.h` (§14.41).
 
-**Posição (decisão do projeto de 2026-10-24, que substitui a etapa 1b).** Um
+**Posição histórica de 2026-10-24, superada na ordem pela atualização acima.** Um
 escopo inteiro e dedicado da 0.4, no final: depois da 0.4.6, quando todas as
 ferramentas de Embarcados estiverem validadas, testadas e funcionais, e antes
-da auditoria integrada da 0.4.7–0.4.8 (§11.1, linha 9b). Nas palavras do
-autor, "não é muito difícil, mas não é fácil", e ele "não aceitaria menos do
-que algo minimamente confiável e funcional"; sem prazo a cumprir, a 0.4 é
-feita bem feita. Consequências para quem vem antes:
+da auditoria integrada da 0.4.7–0.4.8 (§11.1, linha 9b). Os critérios técnicos
+de confiabilidade, corpus e integração permanecem; a sequência vigente está
+na especificação comum e no 62. Dependências preservadas:
 
 - Setup, kits, construir/C, Quality Center e a consolidação de Embarcados
   não esperam o verificador. As recusas e ações que eles trazem (§14.38 a
@@ -944,9 +962,9 @@ projeto real ou uma fixture realista, a ferramenta real quando houver, e
 mutação. A matriz de gravação em hardware fica com os colaboradores, mas o
 caminho de software é provado aqui com ferramentas reais e o ESP32 liberado.
 
-**Horizonte.** Pela estimativa do autor, cerca de dois meses até Embarcados,
-com os algoritmos auxiliares, ficar polido no software. É uma estimativa, não
-um prazo de corte de qualidade.
+**Planejamento.** As fatias fecham por evidência, regressões resolvidas e
+aceites dos consumidores. Os marcos históricos não antecipam a conclusão
+do assistente nem substituem a matriz da base pública.
 
 ## 12. Pontos de rollback
 

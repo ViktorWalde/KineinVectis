@@ -42,12 +42,45 @@ não aguarda outro Enter. A consulta não executa comandos de instalação.
 Sem workspace, envio desativado com motivo visível; consulta, fontes e cópia
 continuam disponíveis. Preservar o requisito de workspace de `terminal.open`.
 
+### 0.1 Polimento visual e de interação da base 0.4
+
+**Requisito vigente, 2026-11-02:** aprimorar a hierarquia cromática e a leitura
+dos estados no painel existente. O dock funcional não conclui seu acabamento
+UI/HUD/UX. A inspeção de `SetupToolRow.qml` e `SetupPanel.qml` identifica acento
+na seleção, sucesso na disponibilidade instalada e erro na falha; o polimento
+deve tornar essas distinções mais presentes e coerentes, com uso dos tokens
+de `Theme.qml` e dos controles Kv*.
+
+| Elemento | Direção técnica e comportamento esperado |
+| --- | --- |
+| Cabeçalho, filtro ativo e seleção | Acento do tema em pontos de orientação e ação, com hierarquia entre título, resumo, disponibilidade e detalhes |
+| Ferramenta instalada | `successSoft` com texto/ícone; disponibilidade não significa compatibilidade com o projeto |
+| Ferramenta ausente | Texto explícito e indicação informativa; usar alerta somente quando houver requisito contextual observado, sem tratar toda ausência como erro |
+| Falha e recuperação | `errorSoft` para falha real, mensagem legível e ação de tentar novamente distinguível |
+| Fonte, guia e próxima ação | Destaque consistente para links e ação principal; comandos completos e escopo legíveis antes do envio |
+| Foco, hover e desativado | Estados distintos de seleção, navegação por teclado visível e motivo de ação indisponível preservado |
+
+Não inventar categorias, versões ou estados de compatibilidade ausentes de
+`setup.list`. Distinguir dado observado de recomendação contextual; ampliar
+contrato antes de apresentar informação nova. Estado deve continuar identificável
+por texto/ícone sem depender somente de cor. Evitar acento em todos os elementos,
+excesso de badges ou cores fixas fora dos tokens existentes.
+
+Validar contraste, truncamento, textos longos, foco e fluxo de busca → detalhes
+→ guia → copiar/enviar → retorno ao editor, no dock estreito e nas escalas da
+§5. Capturas comparáveis e interação nativa devem comprovar o polimento, com
+regressão dos estados de carga, vazio, erro, retry e ausência de workspace.
+O trabalho é uma fatia de apresentação e interação; não altera a política de
+instalação nem cria um executor paralelo. **Estado: especificado, ainda não
+implementado nem aceito visualmente.**
+
 ## 1. Base e referências
 
 Conferência de código em 2026-10-21: `SetupController`, `SetupPanelHost`,
 `SetupPanel` e `SetupToolRow`, em `ui/qml/setup/`, apresentam o guia oficial
 por distribuição; `setup.list` fornece as ferramentas e a disponibilidade.
-O host atual usa `KvPanelFrame`. O contrato real é
+Naquela conferência o host usava `KvPanelFrame`; a migração de 2026-11-02
+está na §0. O contrato real é
 [setup.*](../arquitetura/03-dominios/setup.md): hoje **não** fornece toda a
 taxonomia, versões, seleção em lote ou um instalador automático das imagens.
 
@@ -75,8 +108,8 @@ permanentemente espaço ao redor do editor.
 
 Na 0.4.x, aplicar a organização às ferramentas **já suportadas**, incluindo
 embarcados e os pré-requisitos do Quality Center. A categoria ROS 2 das
-imagens só entra quando a integração pós-0.4.9 possuir dados e comandos
-verificados; reformular Setup não antecipa a frente ROS 2.
+imagens só entra quando a integração especializada posterior à base possuir
+dados e comandos verificados; reformular Setup não antecipa a frente ROS 2.
 
 | Área | Proposta de organização a refinar na UI atual |
 | --- | --- |

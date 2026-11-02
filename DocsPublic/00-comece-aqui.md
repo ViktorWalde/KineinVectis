@@ -141,6 +141,12 @@ leitura dele. Do protocolo, leia o [`arquitetura/03`](arquitetura/03-protocolo-i
 linha, em [`arquitetura/03-dominios/`](arquitetura/03-dominios/README.md)
 (um por domínio desde 2026-10-16).
 
+Para consolidação de linguagens e algoritmos complementares, consultar a
+[base 0.4](roadmaps/62-base-publica-0.4.md), a
+[orquestração e verificação](especificacoes/orquestracao-e-verificacao-de-linguagens.md)
+e o [verificador LSP](especificacoes/verificador-de-correcoes-lsp.md), depois
+apenas os contextos e domínios alterados pela fatia.
+
 | Contexto | Leia, além do 01 | Domínios no 03 |
 | --- | --- | --- |
 | Workspace e árvore | [`especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md`](especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md) | [`workspace.*`](arquitetura/03-dominios/workspace.md), [`fs.*`](arquitetura/03-dominios/fs.md), [`draft.*`](arquitetura/03-dominios/draft.md) |

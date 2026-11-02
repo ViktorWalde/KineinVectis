@@ -15,10 +15,10 @@
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > Fronteira, auditoria inicial e bloqueadores em **62 §§1–3**.
 >
-> **Prioridade:** integridade/contexto e uso no próprio desenvolvimento;
-> polimento UI/HUD/UX e painéis integrados. Primeiro verificador de correções
-> LSP integrado à prévia, com compilador/CDB e aplicação explícita (§7.372).
-> Setup acoplado, com busca/filtro e recuperação; foco corrigido (§7.371).
+> **Prioridade:** consolidar a orquestração C/C++, depois Rust e integração
+> Rust/C/C++, depois Python; uso confiável em projetos pequenos/médios e na
+> própria IDE. Otimização de algoritmos e polimento UI/HUD/UX acompanham as
+> jornadas. Setup exige polimento cromático/de interação; plano no 62 (§7.373).
 >
 > **Trilha aberta:** os marcos antigos **0.4.1–0.4.9** permanecem no 52 para
 > colaboradores; não são requisito de conclusão integral antes desta base.
@@ -29,7 +29,7 @@
 >
 > **Fechamento:** idiomas/traduções preservados (57 §3), gate completo,
 > metadados, documentação e pacote mínimo coerentes; release ainda não pronta.
-> Integração opcional de contexto Codex `/ide`: objetivo a investigar (62 §5).
+> Contexto externo Codex `/ide`: aceite da jornada ainda a provar (62 §5).
 >
 > **Provas da fatia (2026-11-02, §7.372):** 1426 Rust, 8 CTest, 178 QML;
 > rápido passa com dois NÃO PROVADOS de compiladores ARM; estrito reprova.
@@ -103,17 +103,23 @@ escopo, sem impor toda a ordem antiga ao lançamento. Novas tarefas no
 [contribuindo/15](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md).
 Provas de software, emulação e hardware permanecem distintas.
 
+A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)
+e pela [especificação comum](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
+A expansão do corpus de SDK segue C/C++, Rust/C/C++ e Python. O polimento
+cromático/de interação de Instalar Ferramentas permanece pendente (§0.1 de sua
+especificação), mesmo com a primeira migração funcional concluída.
+
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
-| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Descoberta USB DFU (n1), DfuSe explícito (n2) e BIN conferido com ELF do alvo CMake (n3) fechados; consulta picotool RP2040 (o1) e UF2/ELF CMake com gravação nativa (o2) fechados em software; próximos west, matriz integrada e recuperação (52 §14.55) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.55 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.365 |
-| C puro: jornada visual de criar/configurar/compilar/executar/testar/depurar permanece na trilha. A jornada de host necessária ao próprio desenvolvimento bloqueia a base; expansões embarcadas seguem os aceites do 52 | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
-| Instalar Ferramentas: primeira fatia da base pública no dock, com busca/filtro e recuperação. S2/revisão em lote continua aberta; Quality Center Q1–Q3 permanece na trilha de evolução | [Setup](../especificacoes/instalar-ferramentas.md); [62](62-base-publica-0.4.md); [Quality Center](../especificacoes/quality-center-e-gates.md) |
+| Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Descoberta USB DFU (n1), DfuSe explícito (n2) e BIN conferido com ELF do alvo CMake (n3) fechados; consulta picotool RP2040 (o1) e UF2/ELF CMake com gravação nativa (o2) fechados em software; evoluções dessa trilha: west, matriz integrada e recuperação (52 §14.55) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.55 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.365 |
+| C puro: consolidar linguagem e ecossistema com corpus próprio, biblioteca/executável, várias unidades, headers, ligação, testes e depuração. C++ acompanha a primeira frente; Rust/C/C++ vem antes de Python | [Orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md); [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
+| Instalar Ferramentas: dock, busca/filtro e recuperação implementados; polimento cromático, hierarquia e estados de interação pendentes. S2/revisão em lote continua aberta; Quality Center Q1–Q3 permanece na evolução | [Setup §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04); [62](62-base-publica-0.4.md); [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Acabamento de HUD/UX/UI incorporado ao polimento da base pública 0.4. Inglês/traduções e divulgação conservam os compromissos do 57 §3; ROS 2 segue posterior | [62](62-base-publica-0.4.md); [57](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia de navegação compacta continua sem escolha visual aprovada. Pesquisa de Embarcados recebida em 2026-10-21: cinco imagens conceituais, ainda sujeitas a refinamento e aprovação. Estudos de frontend são rascunhos; evoluir a UI real, sem copiar mockups. Trabalho funcional independente pode seguir | [52](52-arquitetura-executavel-da-0.4.md) §11.1/§14.16–14.17; [rascunho de Embarcados](../especificacoes/embarcados-hud-ux-0.4.md) e [regra de aprovação visual](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21) |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pela manutenção, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site em frente própria | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
 | ROS 2: frente posterior à base pública 0.4; escolher versão exata pela pesquisa medida e provar jornadas próprias | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
-| Algoritmos complementares: primeiro verificador de host integrado à prévia LSP, com corpus e mutações; assistente completo, SDKs e S2–S4 seguem abertos | [Verificador](../especificacoes/verificador-de-correcoes-lsp.md); [62 §4](62-base-publica-0.4.md#4-primeiro-algoritmo-fronteira-anterior-ao-código); [52 §11.2](52-arquitetura-executavel-da-0.4.md#112-escopo-dedicado--assistente-semântico-decisão-do-projeto-2026-10-23-posição-de-2026-10-24) |
+| Algoritmos complementares: primeiro verificador host integrado; consolidar C/C++, introduzir Rust e integração nativa, depois Python, extraindo núcleo comum com consumidores reais. SDKs e S2–S4 seguem abertos | [Orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md); [Verificador](../especificacoes/verificador-de-correcoes-lsp.md); [52 §11.2](52-arquitetura-executavel-da-0.4.md#112-escopo-dedicado--assistente-semântico-decisão-do-projeto-2026-10-23-posição-de-2026-10-24) |
 | Alocações históricas de Banco 0.4.5, consolidação 0.4.6 e estabilização 0.4.7–0.4.9 permanecem na trilha pública aberta. Não são requisito de conclusão integral antes do pacote da base | [52](52-arquitetura-executavel-da-0.4.md) §11; [62](62-base-publica-0.4.md) |
 | Entrega acumulada: etapas não publicadas 0.3.6–0.3.9 e trabalho interno 0.4 integram a base pública 0.4 / SemVer 0.4.0; pacote após os aceites próprios, sem declarar concluído o backlog | [62](62-base-publica-0.4.md); [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
@@ -152,10 +158,10 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Embarcados | Bare metal e Linux embarcado; PlatformIO em destaque. QEMU/Renode são alvos de execução, não simuladores próprios da IDE. | [0.4](52-arquitetura-executavel-da-0.4.md) §10.1–§11, [trilha embarcados](42-trilha-profunda-embarcados.md) |
 | Placas e sondas | Identificação sugere; a pessoa confirma o alvo e cada operação de gravação. Validar capacidades reais; USB/serial não comprova interface JTAG. | [conectividade](../integracoes/38-conectividade-bare-metal.md), [protocolo probe](../arquitetura/03-dominios/probe.md) |
 | Templates | Catálogo curado com origem, licença e parâmetros explícitos; sem geração arbitrária de configuração. | [0.4](52-arquitetura-executavel-da-0.4.md), [biblioteca](../arquitetura/03-dominios/library.md) |
-| C e Python | Jornada completa de C; CPython, MicroPython e CircuitPython tratados como contextos distintos. | [0.4](52-arquitetura-executavel-da-0.4.md) §14.14, [Python](41-ecossistema-embarcados-e-python.md) |
+| Linguagens e integração | C e C++ primeiro; Rust como terceira linguagem do verificador, com integração Rust/C/C++; Python depois. CPython, MicroPython e CircuitPython têm contextos distintos. | [orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md), [Python](41-ecossistema-embarcados-e-python.md) |
 | Build e SVD | C1 ao salvar para C/C++ com CDB; Rust mediante opção. SVD na área Embarcados; delta de tamanho relativo ao último build. | [0.4](52-arquitetura-executavel-da-0.4.md) §13 |
-| Setup e qualidade | Setup/Instalar Ferramentas no dock no polimento da base; Quality Center mantém Q1–Q3 na trilha aberta. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1, [Quality Center](../especificacoes/quality-center-e-gates.md) |
-| Ordem de implementação | Integridade/contexto, uso no próprio desenvolvimento, polimento integrado e primeiro verificador complementar. Escopo completo do assistente continua aberto; fronteira no 62. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1–§11.2 |
+| Setup e qualidade | Setup no dock; polimento cromático/de interação pendente na base. Quality Center mantém Q1–Q3 na trilha aberta. | [Setup §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04), [Quality Center](../especificacoes/quality-center-e-gates.md) |
+| Ordem de implementação | Consolidar C/C++, Rust/C/C++, depois Python e especializações, com integridade, otimização e polimento por jornada. Prontidão de projetos pequenos/médios e autodesenvolvimento exige prova; `/ide` tem aceite próprio. | [base 0.4](62-base-publica-0.4.md), [orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md) |
 | Fronteira de versão | Entrega pública 0.4 / SemVer 0.4.0 consolida o trabalho acumulado. Trilha 0.4.1–0.4.9 aberta a colaboradores; critérios da base no 62, com polimento incorporado. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
 | Internacionalização | UI em inglês no polimento; documentação integral em inglês e divulgação com a base finalizada, preservando português e strings traduzíveis. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | Frentes posteriores | ROS 2, colaboração remota, motor semântico profundo e estudo de CLI conservam seus planos. A trilha pública de contribuições já tem quatro tarefas; primeiro verificador na base 0.4. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
