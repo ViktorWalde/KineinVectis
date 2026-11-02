@@ -1,21 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// O passo a passo OFICIAL para instalar o que falta, na distro detectada.
-//
-// POR QUE ESTE ARQUIVO EXISTE (2026-09-04). Ideia do autor: a IDE mostrar,
-// para quem esta comecando, o comando OFICIAL de instalacao da ferramenta —
-// com o link da fonte ao lado, para conferir em vez de confiar.
-//
-// Ele resolve tambem o buraco que o proprio autor apontou antes: quando uma
-// biblioteca nao esta' instalada, a IDE escreve `FetchContent` com uma URL do
-// GitHub no CMakeLists dele. O caminho que DISPENSA a URL e' instalar o pacote
-// no sistema, e ate' aqui a IDE dizia "instale" sem dizer COMO.
-//
-// A IDE NAO RODA NADA SOZINHA. "Enviar ao terminal" ESCREVE o comando no
-// terminal da propria IDE, visivel, onde o autor le' a linha e responde o
-// prompt de senha. Instalador silencioso com root dentro de um editor de texto
-// e' poder que ninguem pediu.
+// Local tool catalogue and query state; commands require an explicit user action.
 Item {
     id: root
 
@@ -24,6 +10,14 @@ Item {
     property string family: ""
     property var tools: []
     property string errorText: ""
+    property bool busy: false
+    property string query: ""
+    property string availability: "all"
+    readonly property var filteredTools: root.tools.filter(tool => {
+        const needle = root.query.trim().toLocaleLowerCase();
+        return (root.availability === "all" || tool.installed === (root.availability === "installed"))
+            && (needle === "" || (tool.id + " " + tool.name + " " + tool.summary).toLocaleLowerCase().indexOf(needle) >= 0);
+    })
 
     // Ferramenta cujo passo a passo esta aberto. Uma so' por vez: a lista
     // inteira aberta viraria uma parede de comando.
@@ -31,11 +25,24 @@ Item {
 
     signal listRequested()
     signal commandRequested(string command)
+    signal windowRequested()
 
     visible: false
 
     function open() {
+        windowRequested();
+    }
+
+    function prepare() {
         panelVisible = true;
+        refresh();
+    }
+
+    function refresh() {
+        if (busy) return;
+        busy = true;
+        errorText = "";
+        tools = [];
         listRequested();
     }
 
@@ -48,6 +55,8 @@ Item {
     }
 
     function handleList(distro, newFamily, newTools) {
+        if (!busy) return;
+        busy = false;
         distroName = distro;
         family = newFamily;
         tools = newTools;
@@ -56,6 +65,8 @@ Item {
 
     function handleFailed(method, message) {
         if (method === "setup.list") {
+            busy = false;
+            tools = [];
             errorText = message;
         }
     }

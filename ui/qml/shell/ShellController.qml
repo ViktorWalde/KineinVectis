@@ -60,7 +60,7 @@ Item {
     property string leftWindow: "explorer"
     // As janelas que o slot da esquerda conhece (o codec valida contra esta).
     readonly property var leftWindows: ["explorer", "git", "database", "containers", "remote", "observability", "embedded",
-                                      "platformio"]
+                                      "platformio", "setup"]
     // O trilho por areas (0.3.7 F1, 53 §4.2): o que o USUARIO decidiu. O que
     // o core sabe (fatos) nao mora aqui. Vai no `layout`, por workspace.
     property var railState: ({ pinned: [], unpinned: [], hidden: [] })

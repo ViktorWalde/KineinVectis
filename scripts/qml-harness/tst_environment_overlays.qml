@@ -74,7 +74,6 @@ Item {
         hostWidth: 800
         hostHeight: 600
         libraryController: fakeOwner
-        setupController: fakeOwner
         toolWindows: fakeToolWindows
         indexController: index
         toolchainController: toolchain

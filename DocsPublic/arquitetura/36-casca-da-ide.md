@@ -72,7 +72,7 @@ rebaixado (§1.2.1), dentro das bandejas das abas.
 | Linha do topo, ao meio | `ui/qml/shell/TopHeaderBar.qml` | Os widgets de contexto: projeto, Git, toolchain, Python e o "⋯". A barra é transparente e fica por cima da `AppMenuBar` (`z: 101`). |
 | Montagem do topo | `ui/qml/shell/ShellHeaderHost.qml` | Põe a `TopHeaderBar` logo depois do fim dos menus (`menuEndX`) e antes dos controles da janela (`controlsX`). |
 | Ilha e divisórias | `ui/qml/shell/ShellLayout.qml` | Um `Rectangle` arredondado atrás de uma `Row` (slot da esquerda, centro e slot da direita), mais as divisórias de 1 px (esquerda/centro, centro/direita, editor/painel de baixo). |
-| Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco, Containers, Remoto, Grafana, Embarcados). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
+| Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco, Containers, Remoto, Grafana, Embarcados, PlatformIO e Setup). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
 | Slot da direita | `ui/qml/shell/ShellRightDock.qml` | Um `Item` vazio na `Row`, com a alça de largura no vão à esquerda dele. Recebe a janela por troca de pai. |
 | De que lado cada janela abre | `ui/qml/shell/ShellDocks.qml` | Funções sobre o estado do `ShellController`: `sideOf`, `placed`, `showing`, `show`, `close`, `toggle`, `followSide`, `normalize`, `widen` (§2.3). |
 | Trilho da esquerda | `ui/qml/shell/SideRail.qml` | Ícones das áreas (34 px de largura, botões de 28 px, ícones de 20 px). |
@@ -210,7 +210,7 @@ esquerda até alguém mudar isso.
 
 | Situação | O que acontece |
 | --- | --- |
-| Sem projeto (tela de boas-vindas) | **Nenhum** slot aparece (`slotVisible`), mesmo que o layout lembre uma janela aberta; os trilhos, o painel de baixo, os atalhos de área (`EnvironmentShortcuts`) e o widget "Abrir projeto" do topo também somem. Decisão do projeto (2026-10-03): a tela de boas-vindas é só de boas-vindas. |
+| Sem projeto (tela de boas-vindas) | Trilhos e painel inferior ficam ocultos; os docks de projeto não aparecem. Setup pode abrir pelo menu/paleta/atalho, com consulta e cópia; enviar comando fica desativado porque `terminal.open` exige workspace. Configurações continuam acessíveis. |
 | `show(nome)` com o ícone à direita | `rightWindow = nome`; se a mesma janela estava na esquerda, a esquerda fecha. |
 | `show(nome)` com o ícone à esquerda | `leftWindow = nome`, `showExplorer = true`; se estava na direita, a direita esvazia. |
 | `toggle(nome)` | Visível em algum lado: fecha. Senão: `show`. É o clique no ícone. |

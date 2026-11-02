@@ -26,6 +26,7 @@ Item {
     property var embeddedController: null
     property var remoteController: null
     property var toolchainController: null
+    property var setupController: null
     property alias editorSurface: editorPaneHost.editorSurface
     property bool workspaceOpen: false
     property string workspaceRoot: ""
@@ -170,6 +171,8 @@ Item {
             settingsController: root.settingsController
             embeddedController: root.embeddedController
             toolchainController: root.toolchainController
+            setupController: root.setupController
+            onSetupCommandRequested: command => root.runtimeController.runInNewTerminal(command)
             onMinimumWidthChanged: root.updatePanelLimits()
             onRightMinimumWidthChanged: root.updatePanelLimits()
             workspaceName: root.workspaceName

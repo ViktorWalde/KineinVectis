@@ -15,6 +15,12 @@ Item {
     Connections {
         target: root.coreClient
 
+        function onConnectedChanged() {
+            if (!root.coreClient.connected) {
+                root.setupController.handleFailed("setup.list", qsTr("Core desconectado. Reconecte e atualize o catálogo."));
+            } else if (root.setupController.panelVisible) root.setupController.refresh();
+        }
+
         function onSetupListResolved(distroName, family, tools) {
             root.setupController.handleList(distroName, family, tools);
         }

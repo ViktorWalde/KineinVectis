@@ -248,6 +248,7 @@ Window {
     ShellWorkspaceHost {
         id: shellWorkspaceHost
 
+        setupController: domains.setupController
         settingsController: domains.settingsController
         onShellMenuRequested: function(menuX, menuY, items) {
             const pos = shellWorkspaceHost.mapToItem(overlays, menuX, menuY);
@@ -367,7 +368,6 @@ Window {
         remoteController: domains.remoteController
         grafanaController: domains.grafanaController
         embeddedController: domains.embeddedController
-        setupController: domains.setupController
         containerController: domains.containerController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController

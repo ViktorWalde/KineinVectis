@@ -44,7 +44,7 @@ QtObject {
     // (decisao do autor, 2026-10-03).
     function slotVisible(side, workspaceOpen) {
         const name = root.windowOn(side);
-        if (name === "" || !workspaceOpen) return false;
+        if (name === "" || (!workspaceOpen && name !== "setup")) return false;
         if (side === "right") return root.shell.effectiveOutlineCollapsed;
         return root.shell.showExplorer && name !== root.shell.rightWindow;
     }

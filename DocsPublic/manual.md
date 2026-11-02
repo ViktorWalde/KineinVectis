@@ -1466,14 +1466,24 @@ ao par *projeto + endereço confirmado*: mudar de projeto, confirmar outra URL,
 
 ### Instalar ferramentas
 
+Abra **Ambiente → Instalar ferramentas** ou use `Ctrl+Alt+H`. O painel fica
+acoplado ao lado escolhido no trilho e também abre sem projeto. Busque por
+nome, identificador ou descrição; filtre **Todas**, **Ausentes** ou
+**Instaladas**. **Atualizar detecção** consulta novamente a disponibilidade.
+Fechar ou pressionar `Esc` dentro do painel devolve o foco ao editor.
+
 Falta o `cmake`, o `clangd` ou o `gdb`? Este painel mostra o passo a passo
 **oficial** para a sua distro — copiado da documentação do próprio projeto, com a
 URL e a data em que foi conferida. Onde a fonte oficial não cobre a sua família
 de distro, **a entrada não existe**: a IDE mostra o link e diz que não tem passo
 a passo, em vez de traduzir um comando de outra distro.
 
-**A IDE não instala nada sozinha.** O botão escreve os comandos no terminal
-dela, visível, e quem aperta Enter é você.
+**A IDE não instala nada ao abrir ou filtrar o catálogo.** Revise o comando
+e a fonte antes de usar **Enviar ao terminal**: esse botão abre uma sessão
+nova e executa o comando exibido no terminal da IDE. **Copiar** apenas leva
+o texto à área de transferência. Atualizar a detecção não executa o guia.
+Sem projeto, consulta e cópia continuam disponíveis; o envio fica desativado
+porque o terminal da IDE exige um workspace aberto.
 
 O painel cobre o banco, o Grafana, as ferramentas Python e — desde
 2026-09-17 — as de embarcados: `esptool`, `mpremote`, `espflash`,

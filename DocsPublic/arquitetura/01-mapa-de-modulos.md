@@ -1574,7 +1574,7 @@ flowchart LR
 | controller | `ui/qml/configaction/ConfigActionController.qml` | Estado das Configuration Actions (roadmap 30, etapa 2). |
 | controller | `ui/qml/library/LibraryController.qml` | Estado do catalogo de bibliotecas (etapa 20 do roadmaps/35). |
 | controller | `ui/qml/settings/SettingsController.qml` | Estado de configuracoes (fatia M4.1). |
-| controller | `ui/qml/setup/SetupController.qml` | O passo a passo OFICIAL para instalar o que falta, na distro detectada. |
+| controller | `ui/qml/setup/SetupController.qml` | Local tool catalogue and query state; commands require an explicit user action. |
 | roteador | `ui/qml/ipc/ConfigActionRequestRouter.qml` | Espelho do ConfigActionEventRouter: |
 | roteador | `ui/qml/ipc/ConfigActionEventRouter.qml` | O que o core devolve das Configuration Actions -> ConfigActionController. |
 | roteador | `ui/qml/ipc/LibraryRequestRouter.qml` | Espelho do LibraryEventRouter: |

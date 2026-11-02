@@ -21,6 +21,7 @@ Item {
     property var settingsController: null
     property var embeddedController: null
     property var toolchainController: null
+    property var setupController: null
     property string workspaceName: ""
     property string workspaceRoot: ""
     // O slot da direita (ShellRightDock): a janela cujo icone esta' no trilho
@@ -40,6 +41,7 @@ Item {
         if (name === "observability") return grafanaWindow.minimumWidth;
         if (name === "embedded") return embeddedWindow.minimumWidth;
         if (name === "platformio") return platformioWindow.minimumWidth;
+        if (name === "setup") return setupWindow.minimumWidth;
         return name === "containers" ? containersWindow.minimumWidth : 220;
     }
 
@@ -51,6 +53,7 @@ Item {
     signal listDirRequested(string path)
     signal readFileRequested(string path)
     signal closeWorkspaceRequested()
+    signal setupCommandRequested(string command)
 
     ProjectExplorer {
         id: explorerPanel
@@ -114,6 +117,7 @@ Item {
         else if (name === "observability") grafanaWindow.forceActiveFocus();
         else if (name === "embedded") embeddedWindow.forceActiveFocus();
         else if (name === "platformio") platformioWindow.forceActiveFocus();
+        else if (name === "setup") setupWindow.focusArea();
         else explorerPanel.focusTree();
     }
 
@@ -270,6 +274,30 @@ Item {
 
         function onWindowRequested() {
             root.shellController.showDockWindow("platformio");
+        }
+    }
+
+    SetupPanelHost {
+        id: setupWindow
+
+        parent: root.slotOf("setup")
+        anchors.fill: parent
+        visible: root.shellController.docks.showing("setup") !== ""
+        controller: root.setupController
+        terminalAvailable: root.workspaceRoot !== ""
+        onCommandRequested: command => root.setupCommandRequested(command)
+        onCloseRequested: {
+            root.shellController.docks.close("setup");
+            if (root.editorController) root.editorController.focusEditor();
+        }
+    }
+
+    Connections {
+        target: root.setupController
+
+        function onWindowRequested() {
+            root.shellController.showDockWindow("setup");
+            Qt.callLater(setupWindow.focusArea);
         }
     }
 

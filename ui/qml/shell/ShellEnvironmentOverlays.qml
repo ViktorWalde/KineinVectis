@@ -27,7 +27,6 @@ Item {
     // Sources" da JetBrains.
     property var dataSourceController: null
     property var embeddedController: null
-    property var setupController: null
     // Nao e' painel de ambiente: e' quem recebe o plano que a biblioteca produz.
     property var configActionController: null
     // Nao e' painel de ambiente: e' o terminal onde o comando de instalacao
@@ -184,15 +183,4 @@ Item {
         }
     }
 
-    SetupPanelHost {
-        anchors.fill: parent
-        visible: root.setupController.panelVisible
-        z: 99
-        controller: root.setupController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.setupController.close()
-        // O comando vai para o TERMINAL DA IDE, visivel. Nada roda escondido.
-        onCommandRequested: comando => root.runtimeController.runInNewTerminal(comando)
-    }
 }

@@ -8,29 +8,37 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > resumo técnico: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **RESUMO TÉCNICO (2026-11-01).**
+> **RESUMO TÉCNICO (2026-11-02).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.197.0**; série **0.4.1 aberta**.
-> Código próprio sob AGPL-3.0-only; documentação própria sob CC-BY-SA-4.0 (§7.367).
-> UF2/ELF CMake + picotool nativo concluídos em software (52 §14.55; §7.365).
+> **Estado funcional:** binário **0.3.9**, protocolo **0.197.0**; etapa interna
+> **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
+> Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
+> Fronteira, auditoria inicial e bloqueadores em **62 §§1–3**.
 >
-> **Próxima implementação:** west/ESP32 nativo, **52 §14.56**; auditoria e desenho
-> concluídos, produtor ainda ausente (§7.366). Depois: matriz integrada/recuperação,
-> Setup S1/S2 com Biblioteca e Instalar Ferramentas; kits/schema 3 após os bloqueadores.
-> Ordem e aceites em **52 §11.1–§11.2**; pendências por área no **§4 abaixo**.
-> A 0.4.1 exige aceite visual integrado. Gravação física dos demais motores,
-> serial completa e CircuitPython seguem pendentes; assistente semântico ao final.
+> **Prioridade:** integridade/contexto e uso no próprio desenvolvimento;
+> polimento UI/HUD/UX, painéis integrados e primeiro verificador semântico
+> complementar. Setup/Instalar Ferramentas acoplado, com busca/filtro e
+> recuperação; foco da navegação corrigido. Provas da fatia no §7.371.
 >
-> **Plano da série:** estabilização funcional na **0.4.9**, seguida pela edição
-> especial e validação do AppImage. A entrega agrega o trabalho não publicado
-> da 0.3.6–0.3.9; fronteira de versão em **57 §1.1** e decisões no **§5 abaixo**.
-> Windows pausado (60); MCP/ROS 2/colaboração após 0.4.9; inglês conforme 57 §3.
+> **Trilha aberta:** os marcos antigos **0.4.1–0.4.9** permanecem no 52 para
+> colaboradores; não são requisito de conclusão integral antes desta base.
+> Quatro tarefas iniciais (duas bare metal, duas Linux) em contribuindo/15.
+> West nativo tem desenho e produtor ausente (52 §14.56), agora tarefa BM1.
+> Capacidades oferecidas precisam de regressão; hardware e emulação são provas
+> distintas. Assistente completo continua aberto; recorte inicial em 62 §4.
 >
-> **Verificação:** completo estrito de 2026-10-27 (§7.365): 1395 testes Rust,
-> 8 CTest, 175 harnesses QML e análise C++ limpa; debug/release e 33 superfícies por preset.
-> Matriz de desenvolvimento Linux validada em 2026-11-01 (§7.368), com cobertura parcial.
-> Requisitos e comandos reproduzíveis em [build/14](../build/14-ambiente-de-desenvolvimento.md).
-> EditorController congelado (§2); estudos visuais não aprovados são propostas (§5).
+> **Fechamento:** idiomas/traduções preservados (57 §3), gate completo,
+> metadados, documentação e pacote mínimo coerentes; release ainda não pronta.
+> Integração opcional de contexto Codex `/ide`: objetivo a investigar (62 §5).
+>
+> **Provas da fatia (2026-11-02, §7.371):** 1395 Rust, 8 CTest, 177 QML;
+> rápido passa com dois NÃO PROVADOS de compiladores ARM; estrito reprova.
+> Release abre e percorre 33 superfícies sem avisos QML. Não é fechamento.
+> **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
+> Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
+> 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
+> Requisitos em [build/14](../build/14-ambiente-de-desenvolvimento.md).
+> EditorController congelado (§2); estudos visuais continuam propostas (§5).
 
 ## 1. O estado, em números
 
@@ -87,26 +95,26 @@ antes de aceitar um item de lá como pendente, meça.
 
 Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 
-**Embarcados na série 0.4:** a 0.4.1 é a fundação; 0.4.2 e 0.4.3 completam
-construção/qualidade e gravação/depuração; até a 0.4.6 consolidam-se as jornadas
-bare metal e Linux embarcado. 0.4.7–0.4.9 auditam e estabilizam. Provas de software,
-emulação e hardware são estados distintos; colaboradores ampliam a matriz
-física. Ordem/aceite no 52 §11.1 e limites no §10.1 (esclarecido em 2026-10-22).
-
+**Fronteira vigente:** a base pública 0.4 tem critérios próprios no
+[62](62-base-publica-0.4.md). A trilha completa de Embarcados 0.4.1–0.4.9
+continua aberta; a tabela abaixo conserva os compromissos e referências de
+escopo, sem impor toda a ordem antiga ao lançamento. Novas tarefas no
+[contribuindo/15](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md).
+Provas de software, emulação e hardware permanecem distintas.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
 | Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Descoberta USB DFU (n1), DfuSe explícito (n2) e BIN conferido com ELF do alvo CMake (n3) fechados; consulta picotool RP2040 (o1) e UF2/ELF CMake com gravação nativa (o2) fechados em software; próximos west, matriz integrada e recuperação (52 §14.55) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.55 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.365 |
-| C puro: pendências básicas incluídas pela manutenção no fechamento da 0.4, com jornada visual de criar/configurar/compilar/executar/testar/depurar; terminal como escolha (2026-10-20) | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
-| Instalar Ferramentas: reformular junto da migração Setup ao dock na 0.4.1; aplicar referências ao catálogo existente. Quality Center inicial: Q1 na 0.4.2, gate local e consolidação Q2/Q3 até a 0.4.6. Ambos planejados, ainda sem implementação (decisão registrada, 2026-10-21) | [52 §11.1](52-arquitetura-executavel-da-0.4.md#111-fluxo-de-execução-reorganizado--2026-10-21); [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) e [Quality Center](../especificacoes/quality-center-e-gates.md) |
-| Edição especial associada à 0.5: otimização/acabamento depois da 0.4.9; inglês como idioma plenamente suportado e divulgação internacional na 0.5. ROS 2 continua em frente posterior, sem versão fixada | [52 §14.17.1](52-arquitetura-executavel-da-0.4.md#14171-direção-da-edição-especial-associada-à-05--2026-10-21), [57](57-mapa-de-versoes-ate-a-1.0.md) §3 item 11 e [integracoes/41](../integracoes/41-ros2-hud-ux-analise-projeto.md) |
+| C puro: jornada visual de criar/configurar/compilar/executar/testar/depurar permanece na trilha. A jornada de host necessária ao próprio desenvolvimento bloqueia a base; expansões embarcadas seguem os aceites do 52 | [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
+| Instalar Ferramentas: primeira fatia da base pública no dock, com busca/filtro e recuperação. S2/revisão em lote continua aberta; Quality Center Q1–Q3 permanece na trilha de evolução | [Setup](../especificacoes/instalar-ferramentas.md); [62](62-base-publica-0.4.md); [Quality Center](../especificacoes/quality-center-e-gates.md) |
+| Acabamento de HUD/UX/UI incorporado ao polimento da base pública 0.4. Inglês/traduções e divulgação conservam os compromissos do 57 §3; ROS 2 segue posterior | [62](62-base-publica-0.4.md); [57](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
 | Prévia de navegação compacta continua sem escolha visual aprovada. Pesquisa de Embarcados recebida em 2026-10-21: cinco imagens conceituais, ainda sujeitas a refinamento e aprovação. Estudos de frontend são rascunhos; evoluir a UI real, sem copiar mockups. Trabalho funcional independente pode seguir | [52](52-arquitetura-executavel-da-0.4.md) §11.1/§14.16–14.17; [rascunho de Embarcados](../especificacoes/embarcados-hud-ux-0.4.md) e [regra de aprovação visual](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21) |
 | CI pública: camada rápida preparada e validada localmente; execução no GitHub pela manutenção, camadas UI/pesada e matriz Arch pendentes; porta para colaboradores em preparação, com ideia de cards no site em frente própria | [contribuindo/07 §2.1](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md#21-a-camada-rápida-da-ci-2026-10-19) e [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); decisão no §5 |
-| ROS 2: frente e ensaio por jornadas depois da 0.4.9 (limite atualizado em 2026-10-20); escolher versão exata a partir da pesquisa medida (decisão registrada, 2026-10-19) | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
-| Algoritmos complementares de análise e refatoração: estudo de longo prazo autorizado, sem substituir motores ou reservar versão (decisão registrada, 2026-10-19) | [56 §1.1](56-motor-semantico-profundo-cpp-rust.md#11-direção-de-longo-prazo-recuperada-em-2026-10-19) e [pesquisa/02](../pesquisa/02-analise-e-refatoracao-complementares.md) |
-| Pendências do resumo técnico confirmadas dentro da 0.4.x em 2026-10-21 (alocação no 52 §11). Banco na 0.4.5, consolidação nativa na 0.4.6, auditoria/polimento geral na 0.4.7–0.4.8 e estabilização funcional na 0.4.9. Edição especial imediatamente em seguida; AppImage só depois dela | [52](52-arquitetura-executavel-da-0.4.md) §11/§11.1; fronteira no [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
-| Entrega acumulada: trabalho não publicado 0.3.6–0.3.9 pertence à série 0.4; edição especial sobre a 0.4.9 estabelece a base polida da 0.5 em diante. Alinhar identificação/versões/notas e gerar/testar o AppImage somente após essa edição; publicação pela manutenção (atualizado em 2026-10-21) | [57](57-mapa-de-versoes-ate-a-1.0.md) e [53](53-arquitetura-executavel-da-0.3.6.md) §11; os requisitos do pacote no [59](59-fechamento-da-0.3.9.md) §8 (registro) |
+| ROS 2: frente posterior à base pública 0.4; escolher versão exata pela pesquisa medida e provar jornadas próprias | [integracoes/40 §1.2](../integracoes/40-ros2-ecossistema-e-integracao.md#12-decisão-recuperada-escopos-por-ferramentas-e-melhorias-próprias-2026-10-19) |
+| Algoritmos complementares: primeiro verificador conservador incluído na base; assistente completo e análise profunda seguem abertos, sem substituir LSP/compiladores | [62 §4](62-base-publica-0.4.md#4-primeiro-algoritmo-fronteira-anterior-ao-código); [52 §11.2](52-arquitetura-executavel-da-0.4.md#112-escopo-dedicado--assistente-semântico-decisão-do-projeto-2026-10-23-posição-de-2026-10-24) |
+| Alocações históricas de Banco 0.4.5, consolidação 0.4.6 e estabilização 0.4.7–0.4.9 permanecem na trilha pública aberta. Não são requisito de conclusão integral antes do pacote da base | [52](52-arquitetura-executavel-da-0.4.md) §11; [62](62-base-publica-0.4.md) |
+| Entrega acumulada: etapas não publicadas 0.3.6–0.3.9 e trabalho interno 0.4 integram a base pública 0.4 / SemVer 0.4.0; pacote após os aceites próprios, sem declarar concluído o backlog | [62](62-base-publica-0.4.md); [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
 | A edição especial Windows + WSL2, depois da 0.4.0 | [60](60-windows-e-edicao-especial.md) §4 |
@@ -145,11 +153,11 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Templates | Catálogo curado com origem, licença e parâmetros explícitos; sem geração arbitrária de configuração. | [0.4](52-arquitetura-executavel-da-0.4.md), [biblioteca](../arquitetura/03-dominios/library.md) |
 | C e Python | Jornada completa de C; CPython, MicroPython e CircuitPython tratados como contextos distintos. | [0.4](52-arquitetura-executavel-da-0.4.md) §14.14, [Python](41-ecossistema-embarcados-e-python.md) |
 | Build e SVD | C1 ao salvar para C/C++ com CDB; Rust mediante opção. SVD na área Embarcados; delta de tamanho relativo ao último build. | [0.4](52-arquitetura-executavel-da-0.4.md) §13 |
-| Setup e qualidade | Setup/Instalar Ferramentas no dock; Quality Center inicial na 0.4.2, gate local e consolidação até a 0.4.6. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1, [Quality Center](../especificacoes/quality-center-e-gates.md) |
-| Ordem de implementação | Corrigir bloqueadores e consolidar o core antes do acabamento. Assistente semântico após integração dos recursos existentes. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1–§11.2 |
-| Fronteira de versão | 0.4.9 fecha funcionalmente; edição especial em seguida. AppImage final somente após essa validação; base não publicada 0.3.6–0.3.9 integra a entrega. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
-| Internacionalização | Documentação em inglês após a 0.4.1; UI em inglês no polimento; divulgação internacional na 0.5. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
-| Frentes posteriores | ROS 2, colaboração, análise semântica complementar e estudo de CLI seguem seus planos; propostas não alteram o escopo vigente. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
+| Setup e qualidade | Setup/Instalar Ferramentas no dock no polimento da base; Quality Center mantém Q1–Q3 na trilha aberta. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1, [Quality Center](../especificacoes/quality-center-e-gates.md) |
+| Ordem de implementação | Integridade/contexto, uso no próprio desenvolvimento, polimento integrado e primeiro verificador complementar. Escopo completo do assistente continua aberto; fronteira no 62. | [0.4](52-arquitetura-executavel-da-0.4.md) §11.1–§11.2 |
+| Fronteira de versão | Entrega pública 0.4 / SemVer 0.4.0 consolida o trabalho acumulado. Trilha 0.4.1–0.4.9 aberta a colaboradores; critérios da base no 62, com polimento incorporado. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
+| Internacionalização | UI em inglês no polimento; documentação integral em inglês e divulgação com a base finalizada, preservando português e strings traduzíveis. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
+| Frentes posteriores | ROS 2, colaboração remota, motor semântico profundo e estudo de CLI conservam seus planos. A trilha pública de contribuições já tem quatro tarefas; primeiro verificador na base 0.4. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
 | CI e recursos | CI pública compartilha os gates; limites de RAM, swap zero por escopo e limpeza de temporários devem ser verificáveis. | [gates](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md), [comandos](../build/comandos-de-build-e-verificacao.md) |
 | Documentação | Material público é técnico; contexto pessoal e instruções de agentes são locais e não publicáveis. | [política documental](../README.md#repositório-público--cópia-de-distribuição) |
 

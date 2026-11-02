@@ -4,11 +4,18 @@ import KineinVectis
 
 // Uma ferramenta na lista: se ja' esta instalada, o que ela faz, e o passo a
 // passo quando aberto.
-Item {
+Rectangle {
     id: root
 
     property var tool: null
     property bool expanded: false
+    property bool selected: false
+    property bool terminalAvailable: false
+
+    color: root.selected ? Theme.surface2 : "transparent"
+    radius: Theme.radius
+    border.width: root.selected ? 1 : 0
+    border.color: Theme.accent
 
     signal toggleRequested()
     signal commandRequested(string command)
@@ -24,57 +31,39 @@ Item {
         anchors.right: parent.right
         spacing: 2
 
-        Row {
+        Text {
+            width: parent.width
+            text: root.tool ? root.tool.name : ""
+            textFormat: Text.PlainText
+            wrapMode: Text.WordWrap
+            color: Theme.textPrimary
+            font.pixelSize: Theme.fontSizeSmall
+            font.weight: Font.DemiBold
+        }
+
+        Flow {
             width: parent.width
             spacing: Theme.spacingSmall
 
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 8
-                height: 8
-                radius: height / 2
-                color: root.tool && root.tool.installed
-                       ? Theme.successSoft : Theme.textDisabled
-            }
-
             Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.tool ? root.tool.name : ""
-                color: Theme.textPrimary
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Font.DemiBold
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
                 text: root.tool && root.tool.installed
-                      ? qsTr("já instalado") : qsTr("não encontrado")
-                color: root.tool && root.tool.installed
-                       ? Theme.successSoft : Theme.textMuted
+                      ? qsTr("Instalada") : qsTr("Não encontrada")
+                color: root.tool && root.tool.installed ? Theme.successSoft : Theme.textMuted
                 font.pixelSize: Theme.fontSizeCaption
             }
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("site oficial ↗")
-                color: siteArea.containsMouse ? Theme.accent : Theme.textSecondary
-                font.pixelSize: Theme.fontSizeCaption
-                font.underline: siteArea.containsMouse
-
-                MouseArea {
-                    id: siteArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Qt.openUrlExternally(root.tool.website)
-                }
+            KvButton {
+                compact: true
+                activeFocusOnTab: true
+                text: qsTr("Site oficial ↗")
+                onClicked: if (root.tool) Qt.openUrlExternally(root.tool.website)
             }
         }
 
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
+            textFormat: Text.PlainText
             text: root.tool ? root.tool.summary : ""
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeCaption
@@ -82,6 +71,7 @@ Item {
 
         KvButton {
             compact: true
+            activeFocusOnTab: true
             visible: root.guide !== null
             text: root.expanded ? qsTr("Ocultar passo a passo")
                                 : qsTr("Ver passo a passo")
@@ -133,6 +123,7 @@ Item {
                         y: Theme.spacingXSmall
                         width: parent.width - 2 * Theme.spacingXSmall
                         wrapMode: Text.WrapAnywhere
+                        textFormat: Text.PlainText
                         text: passo.modelData.command
                         color: Theme.textPrimary
                         font.family: Theme.monoFont
@@ -140,18 +131,24 @@ Item {
                     }
                 }
 
-                Row {
+                Flow {
+                    width: parent.width
                     spacing: Theme.spacingXSmall
 
                     KvButton {
                         compact: true
+                        activeFocusOnTab: true
                         text: qsTr("Copiar")
                         onClicked: Clipboard.setText(passo.modelData.command)
                     }
 
                     KvButton {
                         compact: true
+                        activeFocusOnTab: true
                         text: qsTr("Enviar ao terminal")
+                        enabled: root.terminalAvailable
+                        tooltip: root.terminalAvailable ? qsTr("Executa o comando exibido em uma nova sessão de terminal.")
+                                                        : qsTr("Abra um projeto para usar o terminal da IDE.")
                         onClicked: root.commandRequested(passo.modelData.command)
                     }
                 }

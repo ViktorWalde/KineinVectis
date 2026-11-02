@@ -20,9 +20,7 @@ import QtQuick
 // abrir/fechar, mesma folga de janela". Agora a entrada carrega o painel, com a
 // fiacao especifica dele junto, e o host cuida so' do que e' igual.
 //
-// Biblioteca e Instalacao NAO ganharam `componente`: sao overlays de ambiente,
-// mas nao sao entradas do trilho. Forcar a abstracao sobre quem nao e' tool
-// window seria cerimonia.
+// Biblioteca continua no overlay; Setup usa o dock e o host existentes.
 //
 // O slot ESQUERDO (explorer e Git) continua montado pelo `ShellLeftWindowHost`:
 // sao duas janelas com fiacao inteiramente propria, e um `Loader` generico nao
@@ -165,6 +163,15 @@ Item {
             "active": root.shellController !== null && root.shellController.platformioWindowVisible === true
         },
         {
+            "id": "setup", "label": qsTr("Instalar ferramentas"), "icon": "tools",
+            "tooltip": qsTr("Instalar ferramentas (Ctrl+Alt+H)"), "area": "left", "order": 68,
+            "available": root.workspaceOpen,
+            "title": qsTr("Instalar ferramentas"), "kind": "dock-left", "defaultPolicy": "unpinned",
+            "factKey": "", "commandId": "setup.list", "shortcut": "Ctrl+Alt+H",
+            "active": root.shellController !== null && root.shellController.docks !== undefined
+                      && root.shellController.docks.showing("setup") !== ""
+        },
+        {
             "id": "tools", "label": "", "icon": "tools",
             "tooltip": qsTr("Ferramentas"), "area": "left", "order": 70,
             "available": root.workspaceOpen,
@@ -270,6 +277,10 @@ Item {
         case "remote":
             if (shellController === null || shellController === undefined) return false;
             shellController.toggleDockWindow("remote");
+            return true;
+        case "setup":
+            if (!root.shellController) return false;
+            root.shellController.toggleDockWindow("setup");
             return true;
         case "tools":
             if (shellController === null || shellController === undefined) {

@@ -36,6 +36,14 @@ ui/qml/search/          COMANDO.
 **Regra prática:** se a pergunta tem a palavra "substituir", é a do meio. Se tem
 "abrir rápido", é a de baixo. Se não sai da tela do editor, é a de cima.
 
+### Foco ao aceitar navegação
+
+Aceitar arquivo, recente ou símbolo fecha Search Everywhere e solicita foco
+ao editor pelo sinal existente, depois do gesto de aceite. Aceitar comando
+preserva o foco definido pela ação, inclusive quando ela abre outro painel.
+O debounce pendente é encerrado no aceite. Uma falha tardia de `fs.findFiles`
+não reabre a caixa já fechada nem captura a digitação destinada ao editor.
+
 ### Por que as duas de baixo moravam no mesmo arquivo, e por que não moram mais
 
 Até 2026-09-02 `SearchController.qml` tinha 420 linhas e era as duas. Elas

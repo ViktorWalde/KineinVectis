@@ -281,7 +281,9 @@ Item {
             return;
         }
         const item = everywhereItemsModel.get(everywhereIndex);
+        searchEverywhereDebounce.stop();
         everywhereVisible = false;
+        if (item.kind !== "command") Qt.callLater(root.focusEditorRequested);
         if (item.kind === "command") {
             commandAccepted(item.commandId);
             return;
@@ -377,7 +379,7 @@ Item {
     // A recusa do core vira texto NA CAIXA, e não linha de log: "abra um
     // arquivo com LSP" é a resposta à pergunta que o usuário acabou de fazer.
     function handleRequestFailed(method, message) {
-        if (method === "fs.findFiles") {
+        if (method === "fs.findFiles" && everywhereVisible) {
             everywhereLoading = false;
             everywhereError = message;
             everywhereVisible = true;

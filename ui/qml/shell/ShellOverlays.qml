@@ -22,7 +22,6 @@ Item {
     property var remoteController: null
     property var grafanaController: null
     property var embeddedController: null
-    property var setupController: null
     property var containerController: null
     property var toolchainController: null
     property var indexController: null
@@ -201,7 +200,6 @@ Item {
         libraryController: root.libraryController
         dataSourceController: root.dataSourceController
         embeddedController: root.embeddedController
-        setupController: root.setupController
         configActionController: root.configActionController
         runtimeController: root.runtimeController
         indexController: root.indexController

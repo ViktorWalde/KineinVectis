@@ -13,6 +13,35 @@ estado do produto nem substitui a aprovação do autor. A inclusão de Setup
 na 0.4.x permanece decidida; organização, controles e acabamento propostos
 abaixo seguem a [regra comum de aprovação visual](arquitetura-de-frontend-0.3-em-diante.md#11-aprovação-visual-e-referências--decisão-de-2026-10-21).
 
+## 0. Primeira fatia da base pública 0.4 — desenho e implementação de 2026-11-02
+
+Reusar `ShellLeftWindowHost`, `ShellDocks` e `SetupPanelHost`: uma instância
+no lado escolhido pelo trilho, largura redimensionável e estado conservado.
+Menu, paleta e Ctrl+Alt+H abrem o mesmo dock. Setup continua disponível sem
+workspace; os outros docks mantêm sua política. Fechar devolve foco ao
+editor, preservando documento e seleção.
+
+A lista usa os campos existentes de `setup.list`: busca por nome/resumo/id,
+filtro todas/ausentes/instaladas, contagem de resultados, disponibilidade
+textual, guia/fonte e ação explícita por comando. Não inventar categoria ou
+versão ausente do contrato. Lista virtualizada com detalhes sob demanda;
+sem sondagem por delegate. `SetupController` controla carga, erro e retry;
+requisições duplicadas são coalescidas. Falha conserva a consulta e permite
+atualizar, sem apresentar o catálogo anterior como detecção atual.
+
+Esta fatia não conclui S2 (revisão em lote), categorias do catálogo ou os
+aceites visuais completos da §5. O contrato IPC não muda. Próximas fatias
+são avaliadas pelo uso na base, conforme [62](../roadmaps/62-base-publica-0.4.md).
+
+**Implementado:** host acoplado, lista virtualizada, busca/filtro,
+disponibilidade, carga/erro/retry, fonte/guia e retorno ao editor. A entrada
+do trilho é contextual à abertura ou fixação; menu, paleta e atalho continuam
+disponíveis. Detalhes também abrem por Enter na lista, com indicação do item
+atual. O envio usa a sessão nova de terminal já existente e executa a linha;
+não aguarda outro Enter. A consulta não executa comandos de instalação.
+Sem workspace, envio desativado com motivo visível; consulta, fontes e cópia
+continuam disponíveis. Preservar o requisito de workspace de `terminal.open`.
+
 ## 1. Base e referências
 
 Conferência de código em 2026-10-21: `SetupController`, `SetupPanelHost`,

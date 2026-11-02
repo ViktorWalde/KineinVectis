@@ -51,7 +51,7 @@ Item {
         // O CONTRATO de uma entrada: todo campo que o trilho desenha.
         // Nove desde 0.3.9: os Simbolos (nascem no trilho da direita) e o
         // Terminal entraram. Dez desde 2026-10-24: o PlatformIO (52 §14.45).
-        check(toolWindows.entries.length === 10, "dez entradas, deu " + toolWindows.entries.length);
+        check(toolWindows.entries.length === 11, "onze entradas, deu " + toolWindows.entries.length);
         for (const e of toolWindows.entries) {
             check(e.id !== undefined && e.id !== "", "entrada sem id");
             check(e.icon !== undefined && e.icon !== "", e.id + " sem icone");
@@ -69,7 +69,7 @@ Item {
 
         // A ordem e' a decidida pelo autor, e nao pode mudar por acidente.
         const ids = toolWindows.entries.map(function(e) { return e.id; });
-        check(ids.join(",") === "explorer,terminal,outline,embedded,database,containers,remote,observability,platformio,tools",
+        check(ids.join(",") === "explorer,terminal,outline,embedded,database,containers,remote,observability,platformio,setup,tools",
               "ordem do trilho mudou: " + ids.join(","));
         let anterior = -1;
         for (const e of toolWindows.entries) {
