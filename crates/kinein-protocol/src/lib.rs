@@ -34,6 +34,7 @@ mod dfu_flash;
 mod diagnostic;
 mod draft;
 pub mod driver;
+mod edit_verification;
 mod format;
 mod fs;
 mod git;
@@ -85,6 +86,7 @@ pub use dfu::*;
 pub use dfu_flash::*;
 pub use diagnostic::*;
 pub use draft::*;
+pub use edit_verification::*;
 pub use format::*;
 pub use fs::*;
 pub use git::*;
@@ -116,4 +118,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.197.0";
+pub const PROTOCOL_VERSION: &str = "0.198.0";

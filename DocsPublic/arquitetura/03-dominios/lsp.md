@@ -144,7 +144,7 @@ respondem primeiro com um preview:
 
 ```text
 { transactionId, title, edits,
-  files: [{ path, before, after }] }
+  files: [{ path, beforeContent, afterContent }] }
 lsp.workspaceEdit.apply  { transactionId }
   → { transactionId, files, edits }
 lsp.workspaceEdit.cancel { transactionId }
@@ -157,6 +157,19 @@ vez no `apply`. A escrita multi-arquivo compartilha a primitiva transacional
 do `fs.replace`: arquivos atômicos e rollback de todos os já gravados em caso
 de falha. Só após sucesso editor, watcher e LSP são ressincronizados. A UI
 mostra `before`/`after` lado a lado e nunca aplica edits por conta própria.
+
+**Verificação complementar (protocolo `0.198.0`):** a prévia de
+`lsp.applyCodeAction` inclui `verification` com `status` (`newError`,
+`noNewError`, `notVerified`), `reason`, `reasonCode?`, `obsolete`, `durationMs`, `documentVersion`,
+`contextId`, `compiler`, `arguments`, `directory`, `beforeErrors`, `afterErrors`
+e `newErrors` (diagnósticos do compilador). Campos sem evidência são opcionais;
+rename pode omitir `verification`. A UI mostra o resultado e os limites antes
+da confirmação. `obsolete: true` desativa a confirmação. Conteúdo ou contexto
+alterados invalidam a transação e exigem nova consulta. Não há aplicação automática nem promessa de segurança.
+`reasonCode: "untrustedWorkspace"` oferece a ação existente `workspace.trust`
+na própria prévia; confiar não aplica a correção e exige nova consulta.
+Limites, comparação e corpus no
+[contrato do verificador](../../especificacoes/verificador-de-correcoes-lsp.md).
 
 ### Documentos fechados após um configure (`event.lsp.documentsClosed`)
 

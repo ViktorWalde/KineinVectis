@@ -13,6 +13,9 @@
 
 ## Objetivo
 
+A versão `0.198.0` acrescenta evidência de verificação à prévia de correções
+LSP, conforme o [domínio LSP](03-dominios/lsp.md).
+
 O protocolo IPC permite comunicação entre:
 
 ```text

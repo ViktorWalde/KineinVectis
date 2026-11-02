@@ -53,6 +53,7 @@ sistema-de-layout.md                       a tela: regiões, janelas de ferramen
 sistema-de-componentes-de-ui.md            os componentes visuais e a paleta
 sistema-visual-e-icones.md                 identidade visual e a família de ícones
 editor-e-inteligencia-de-linguagem.md      editor, LSP, Tree-sitter, diagnósticos
+verificador-de-correcoes-lsp.md            contrato, limites e corpus do verificador complementar de correções
 camada-de-editor-tree-sitter.md            a camada estrutural local do editor
 fluxos-de-produto-build-run-debug.md       configure → build → run → debug
 embarcados-targets-flash-serial-qemu.md    targets, flash, serial, QEMU

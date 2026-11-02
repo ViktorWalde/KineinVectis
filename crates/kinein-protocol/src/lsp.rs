@@ -111,6 +111,9 @@ pub struct LspWorkspaceEditPreviewResult {
     pub files: Vec<LspWorkspaceEditFilePreview>,
     /// Total number of edits in every file.
     pub edits: u64,
+    /// Bounded compiler evidence for code actions; absent for rename.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verification: Option<crate::EditVerification>,
 }
 
 /// Parameters for `lsp.workspaceEdit.apply` and
@@ -442,6 +445,7 @@ mod tests {
                 edits: 1,
             }],
             edits: 3,
+            verification: None,
         };
         let value = serde_json::to_value(result).unwrap();
 
