@@ -2,7 +2,7 @@
 
 use super::*;
 
-fn messages(path: &Path) -> Vec<Value> {
+pub(super) fn messages(path: &Path) -> Vec<Value> {
     std::fs::read_to_string(path)
         .unwrap_or_default()
         .lines()
@@ -35,7 +35,7 @@ fn wait_document(p: &mut Project, file: &str, language: &str, count: usize) -> V
     }
 }
 
-fn fake_server(p: &mut Project) {
+pub(super) fn fake_server(p: &mut Project) {
     assert!(p.core.use_language_server_command(
         "cpp",
         super::super::lsp_server::python3(),

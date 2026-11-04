@@ -1,6 +1,7 @@
 //! Identidade C/C++ compartilhada por contexto, estrutura local e clangd.
 
 mod context;
+mod headers;
 mod wire;
 
 use kinein_protocol::JsonRpcRequest;

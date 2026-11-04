@@ -127,6 +127,17 @@ SUITES = {
             "tests::c_identity::wire::c_identity_wire_uses_one_clangd_and_reopens_when_only_context_changes",
         ),
     ]),
+    "c-headers": ("c_identity", [
+        ("header_owner", "crates/kinein-core/src/index/context/header.rs",
+         "owners.len() != 1", "owners.is_empty()",
+         "tests::c_identity::headers::c_identity_header_references_refuse_ambiguity_and_manual_databases"),
+        ("header_overlay", "crates/kinein-core/src/lsp/document.rs",
+         '(spec.key == "cpp")', '(spec.key == "cpp" && path.as_os_str().is_empty())',
+         "tests::c_identity::headers::c_identity_header_wire_preserves_argv_and_invalidates_unsaved_buffers"),
+        ("header_generation", "crates/kinein-core/src/lsp/sync.rs",
+         "&& self.header_matches(path)", "&& (self.header_matches(path) || !content.is_empty())",
+         "tests::c_identity::headers::c_identity_header_wire_preserves_argv_and_invalidates_unsaved_buffers"),
+    ]),
     "c-project": ("c_project", [
         (
             "future_identifier",

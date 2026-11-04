@@ -49,14 +49,14 @@
 > Rápido verde: 1440 Rust, 8 CTest, 178 QML; etapa C permanece aberta.
 > **Identidade documental C/C++ (2026-11-04, §7.380):** gramática e estrutura
 > por contexto, `languageId` por documento e reabertura com texto igual;
-> quatro regressões e três mutantes. Permanecem lacunas medidas em `typeof`
-> no Tree-sitter e na inferência de comando de header misto pelo clangd.
-> Rápido verde: 1444 Rust, 8 CTest, 178 QML; dois NÃO PROVADOS ARM persistem.
+> quatro regressões e três mutantes; gramática `typeof` permanece aberta.
+> **Referência de headers (§7.381):** alvo/fonte únicos orientam clangd;
+> ambiguidade/base manual explícitas, invalidação e buffers não salvos.
+> Sete regressões de identidade/headers e três mutantes; C1–C8 abertos.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
-> Requisitos em [build/14](../build/14-ambiente-de-desenvolvimento.md).
-> EditorController congelado (§2); estudos visuais continuam propostas (§5).
+> Requisitos em [build/14](../build/14-ambiente-de-desenvolvimento.md); EditorController congelado (§2).
 
 ## 1. O estado, em números
 

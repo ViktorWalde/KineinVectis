@@ -1,5 +1,13 @@
 # `lsp.*`, `event.lsp.documentsClosed` e `event.lsp.progress` — o domínio no protocolo IPC
 
+**Headers C/C++ (2026-11-04, sem novo schema):** o manager pode fornecer ao
+clangd uma referência comprovada pelo contexto CDB/codemodel, conforme a
+[consolidação C §11](../../especificacoes/consolidacao-nativa-de-c.md#11-referência-semântica-de-headers--desenho-de-2026-11-04).
+O argv/diretório original é transferido pela própria ferramenta. Mudanças
+invalidam ações mesmo sem edição. Perder a referência reinicia pelo evento
+existente; a UI reenvia o buffer vivo. Comandos explícitos e configurações
+manuais da base conservam precedência.
+
 > Parte do [03](../03-protocolo-ipc.md), que tem o formato base, as listas
 > canônicas de métodos e eventos e as regras. Movido sem mudar o texto em
 > 2026-10-16 ([61](../../roadmaps/61-organizacao-da-documentacao.md) §3.7, O6).

@@ -415,3 +415,61 @@ Gate rápido final aprovado em 283 s: 1444 Rust, Clippy sem avisos, análise de
 `arm-none-eabi-gcc`/`arm-none-eabi-g++` ausentes. Revisão editorial e gates de
 documentação, nomenclatura, mapa e arquitetura aprovados. Não equivale ao
 gate completo estrito de release nem aceita os limites funcionais acima.
+
+## 11. Referência semântica de headers — desenho de 2026-11-04
+
+O dono `index::context` pode associar um header sem entrada própria na CDB
+a uma unidade quando o codemodel declara exatamente um alvo proprietário e
+esse alvo compila exatamente uma fonte com comando CDB não duplicado. Mais de
+uma fonte/alvo, CDB obsoleta, ausência de comando ou configuração manual da
+base em `.clangd` conservam a inferência do servidor, com motivo em `hint`.
+A associação prova propriedade no build; não afirma que a fonte inclui o header.
+Headers compartilhados continuam ambíguos. Não escolher pela ordem de abertura,
+nome próximo ou primeira entrada da CDB. A unidade do header permanece ausente.
+
+O LSP envia o argv e diretório originais, sem alterar qualquer flag, pela
+[extensão `compilationDatabaseChanges`](https://clangd.llvm.org/extensions#compilation-commands).
+O [CommandMangler do clangd](https://github.com/llvm/llvm-project/blob/main/clang-tools-extra/clangd/CompileCommands.cpp)
+transfere o comando da fonte para o header e aplica depois os ajustes `.clangd`.
+Essa responsabilidade permanece na ferramenta; não há parser de opções ou
+pré-processador novo na IDE. Comando explícito do header na CDB prevalece.
+
+O manager compara a referência atual antes de sincronizar ou consultar. Mudança
+de comando reabre com o buffer recebido e invalida code actions, mesmo com
+conteúdo/família iguais. A extensão não oferece remoção de uma entrada; perder
+uma associação exige reiniciar o clangd pelo ciclo de vida existente. O evento
+de reinício solicita o buffer vivo à UI, sem reler disco ou salvar edições.
+Trocar raiz descarta o processo e suas associações. Sem novo schema IPC: a
+explicação usa `index.context.hint` e os eventos LSP existentes.
+
+Provar abertura do header C++ antes de fontes, flags por alvo, ambiguidade,
+comando explícito, configuração manual, troca de contexto sem edição e buffer
+não salvo. Essa associação conservadora não encerra C2/C3 nem resolve headers
+de múltiplas unidades com configurações diferentes.
+
+### 11.1 Integração conservadora e provas — 2026-11-04
+
+A referência está integrada ao contexto e à sincronização documental existentes.
+O header mantém `unit` ausente; a dica identifica alvo/fonte ou explica ausência
+ou ambiguidade. O LSP envia o comando original antes de abrir o header, compara
+argv/diretório e invalida ações mesmo sem mudança de texto/família. A atualização
+do índice revalida também referências de headers inativos. Retirar um override
+reinicia pelo ciclo de vida existente, pois a extensão não oferece remoção.
+
+Três regressões novas complementam as quatro de identidade: comando explícito
+do header, donos compartilhados/ausentes, CDB duplicada, configuração manual,
+argv integral no wire, troca de flags com buffer não salvo e retirada de override.
+Clangd 23.1.4 real interpretou o header C++ antes das fontes, manteve uma definição
+adicionada por `.clangd`, diagnosticou erro introduzido somente no buffer e
+recuperou após a edição. Três mutantes compiláveis eliminados: seleção de primeiro
+alvo em ambiguidade, envio do comando desativado e comparação de contexto ignorada.
+
+A associação atual exige alvo e fonte únicos; múltiplas fontes, mesmo com flags
+aparentemente semelhantes, conservam inferência do clangd. Não se afirma conhecer
+includes transitivos ou aceitar todas as configurações de um header compartilhado.
+A gramática `typeof(expr)` e os demais aceites C1–C8 continuam abertos.
+
+Na UI nativa, o header C++ aberto antes das fontes deixou de apresentar erro
+em `namespace`. A prova em fixture isolada preservou a configuração manual
+herdada por diretórios no caso separado. Não houve aceite de release nem
+fechamento da etapa C.

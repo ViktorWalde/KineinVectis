@@ -29,6 +29,7 @@ mod cdb;
 mod document;
 mod drift;
 mod effective;
+mod header;
 mod verification;
 pub(crate) use verification::verification_context;
 
@@ -45,6 +46,14 @@ use kinein_protocol::{
 use self::cargo::AlvoCargo;
 use self::cdb::CdbUnit;
 use crate::cmake::model::CmakeModel;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct HeaderCommand {
+    pub(crate) source: PathBuf,
+    pub(crate) target: String,
+    pub(crate) directory: String,
+    pub(crate) arguments: Vec<String>,
+}
 
 /// O que o contexto pode EXECUTAR, e so' se estiver aqui.
 #[derive(Debug, Clone, Default)]
@@ -217,6 +226,12 @@ impl CompileContext {
             ctx.hint = Some(
                 ctx.hint
                     .map_or_else(|| note.to_owned(), |hint| format!("{hint}; {note}")),
+            );
+        }
+        if let Some(note) = self.header_hint(root, &absolute_path) {
+            ctx.hint = Some(
+                ctx.hint
+                    .map_or_else(|| note.clone(), |hint| format!("{hint}; {note}")),
             );
         }
         ctx

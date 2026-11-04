@@ -407,6 +407,9 @@ impl Core {
         // watcher, para o incremento alcancar o projeto INTEIRO.
         if notification.method == "event.index.finished" {
             self.watch_index_folders();
+            if let Some(lsp) = self.lsp.as_mut() {
+                lsp.refresh_header_context();
+            }
         }
         // O indice segue o disco: o que o watcher viu mudar e' reindexado
         // aqui, no loop principal, antes de o evento chegar a UI.

@@ -53,6 +53,7 @@ pub(super) struct ServerHandle {
     pub(super) stdin: Arc<Mutex<ChildStdin>>,
     pub(super) versions: HashMap<String, i64>,
     pub(super) language_ids: HashMap<String, &'static str>,
+    pub(super) header_commands: HashMap<std::path::PathBuf, crate::index::context::HeaderCommand>,
     /// Hash do ultimo conteudo sincronizado por URI. Evita `didChange`
     /// redundante quando o buffer nao mudou (cada request posicional
     /// re-sincroniza) — sem isso o clangd invalida seus fix-its a cada
@@ -186,6 +187,7 @@ pub(super) fn spawn_server(
         stdin,
         versions: HashMap::new(),
         language_ids: HashMap::new(),
+        header_commands: HashMap::new(),
         content_hashes: HashMap::new(),
         semantic_token_types,
         diagnostics_by_uri,

@@ -1,5 +1,10 @@
 # `index.*` — o domínio no protocolo IPC
 
+**Referência de headers (2026-11-04, sem novo schema):** `hint` também explica
+a referência semântica conservadora da [consolidação C §11](../../especificacoes/consolidacao-nativa-de-c.md#11-referência-semântica-de-headers--desenho-de-2026-11-04),
+ou o motivo de continuar com inferência do clangd. `unit` conserva somente
+comando próprio; a associação não cria unidade de compilação para o header.
+
 > Parte do [03](../03-protocolo-ipc.md), que tem o formato base, as listas
 > canônicas de métodos e eventos e as regras. Movido sem mudar o texto em
 > 2026-10-16 ([61](../../roadmaps/61-organizacao-da-documentacao.md) §3.7, O6).

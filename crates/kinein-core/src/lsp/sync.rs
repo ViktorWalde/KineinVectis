@@ -46,7 +46,7 @@ impl LspManager {
         let Some(spec) = self.spec_for_document(path) else {
             return;
         };
-        if self.ensure_server(&spec).is_err() {
+        if self.prepare_document_server(path, &spec).is_err() {
             return;
         }
         let uri = uri_for_path(path);
@@ -68,6 +68,11 @@ impl LspManager {
     ///
     /// Sem mudanca real de conteudo, nada e enviado (ver `did_open`).
     pub fn did_change(&mut self, path: &Path, content: &str) {
+        if let Some(spec) = self.spec_for_document(path)
+            && self.prepare_document_server(path, &spec).is_err()
+        {
+            return;
+        }
         let Some(language) = self.spec_for_document(path).map(|spec| spec.key) else {
             return;
         };
@@ -209,6 +214,14 @@ impl LspManager {
             return;
         };
         let uri = uri_for_path(path);
+        let was_open = self
+            .servers
+            .get(language)
+            .is_some_and(|handle| handle.versions.contains_key(&uri));
+        if was_open {
+            self.did_change(path, content);
+            return;
+        }
         let hash = content_hash(content);
         let language_id = self.document_language(path);
         let mut changed = false;
@@ -248,6 +261,7 @@ impl LspManager {
                 let uri = uri_for_path(path);
                 handle.content_hashes.get(&uri) == Some(&content_hash(content))
                     && handle.language_ids.get(&uri) == Some(&self.document_language(path))
+                    && self.header_matches(path)
             })
     }
 
@@ -267,7 +281,7 @@ impl LspManager {
                 path: path.display().to_string(),
             });
         };
-        self.ensure_server(&spec)?;
+        self.prepare_document_server(path, &spec)?;
         let uri = uri_for_path(path);
         let hash = content_hash(content);
         let Some(handle) = self.servers.get_mut(spec.key) else {
@@ -343,7 +357,7 @@ fn open_or_change(
 }
 
 /// `didClose` num servidor, se ele tinha o documento; devolve se tinha.
-fn close_in(handle: &mut ServerHandle, uri: &str) -> bool {
+pub(super) fn close_in(handle: &mut ServerHandle, uri: &str) -> bool {
     if handle.versions.remove(uri).is_none() {
         return false;
     }
