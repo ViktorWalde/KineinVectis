@@ -379,6 +379,9 @@ impl Core {
     ///
     /// Silencioso de proposito: um evento sem reacao registrada nao e erro.
     pub fn observe_notification(&mut self, notification: &JsonRpcRequest) {
+        if notification.method == "event.build.finished" {
+            self.on_build_context_finished();
+        }
         // O modelo do projeto (pilar 0 do roadmaps/42) muda quando o build
         // muda: configure escreve a CDB e a file-api, build escreve os
         // artefatos. Recomputar aqui e' o que faz a tela SEGUIR o modelo.

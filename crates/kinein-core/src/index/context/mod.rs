@@ -60,6 +60,7 @@ pub struct ContextTools {
 pub struct CompileContext {
     cdb_directory: Option<String>,
     cdb_path: Option<String>,
+    cdb_digest: Option<String>,
     cdb_stale_because: Option<String>,
     units: HashMap<PathBuf, CdbUnit>,
     pacotes: u64,
@@ -102,6 +103,7 @@ impl CompileContext {
         let mut ctx = Self::default();
         ctx.units = cdb::parse_cdb(text);
         ctx.cdb_path = Some(path.display().to_string());
+        ctx.cdb_digest = Some(crate::cdb::verification::digest(text.as_bytes()));
         ctx.cdb_directory = path
             .parent()
             .and_then(|p| p.strip_prefix(root).ok())
@@ -110,6 +112,19 @@ impl CompileContext {
             .stale_because
             .or_else(|| cdb::cmakelists_mais_novo(root, path, &ctx.units));
         ctx
+    }
+
+    /// Compara origem/conteudo limitado, incluindo criacao/remocao apos um build.
+    pub(crate) fn has_current_cdb(&self, root: &Path) -> bool {
+        let Some(directory) = crate::cdb::status(root).directory else {
+            return self.cdb_path.is_none();
+        };
+        let directory = if directory == "." { "" } else { &directory };
+        let path = root.join(directory).join("compile_commands.json");
+        self.cdb_path.as_deref() == path.to_str()
+            && crate::cdb::verification::cdb_bytes(&path).is_ok_and(|bytes| {
+                self.cdb_digest.as_deref() == Some(&crate::cdb::verification::digest(&bytes))
+            })
     }
 
     /// Multiple commands for one source cannot establish a single effective context.

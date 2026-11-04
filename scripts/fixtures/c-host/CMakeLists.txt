@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.24)
+project(c_host LANGUAGES C)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+set(SAMPLE_BIAS 1)
+math(EXPR SAMPLE_EXPECTED "7 + ${SAMPLE_BIAS}")
+configure_file(include/sample_config.h.in generated/sample_config.h @ONLY)
+
+add_library(sample STATIC src/sum.c src/scale.c)
+target_include_directories(sample PUBLIC include "${CMAKE_CURRENT_BINARY_DIR}/generated")
+target_compile_definitions(sample PUBLIC SAMPLE_BIAS=${SAMPLE_BIAS})
+add_executable(c_host app/main.c)
+target_link_libraries(c_host PRIVATE sample)
+
+enable_testing()
+add_executable(sample_test tests/sample_test.c)
+target_link_libraries(sample_test PRIVATE sample)
+add_test(NAME sample_values COMMAND sample_test)

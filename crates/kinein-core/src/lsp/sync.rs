@@ -188,14 +188,17 @@ impl LspManager {
     /// `None` = reiniciou (o `event.lsp.restarted` ja' saiu); `Some(n)` = `n`
     /// documentos fechados.
     pub fn refresh_compile_commands(&mut self, language: &str) -> Option<usize> {
-        let blind = self
-            .servers
-            .get(language)
-            .is_some_and(|handle| !handle.cdb_at_start);
-        if blind && self.restart_language(language) {
+        if self.needs_compile_commands(language) && self.restart_language(language) {
             return None;
         }
         Some(self.close_documents(language))
+    }
+
+    /// O servidor iniciou sem uma CDB alcancavel, mesmo que o indice ja a tenha.
+    pub(crate) fn needs_compile_commands(&self, language: &str) -> bool {
+        self.servers
+            .get(language)
+            .is_some_and(|handle| !handle.cdb_at_start)
     }
 
     /// Re-sincroniza um documento que ja esta aberto nos servidores.

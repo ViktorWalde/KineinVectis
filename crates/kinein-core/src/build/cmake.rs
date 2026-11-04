@@ -24,6 +24,7 @@ pub(super) fn run_cmake_build(
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     let build_dir = crate::cmake::build_dir(root);
+    crate::cmake::write_file_api_query(root).map_err(BuildError::Io)?;
 
     // Configura sem cache E quando o perfil de rigor mudou: o perfil vive no
     // cache do CMake, e so' um configure novo o troca.
@@ -37,7 +38,12 @@ pub(super) fn run_cmake_build(
                 ),
             });
         }
-        let preset = crate::cmake::status(root).preset;
+        let (preset, _) = crate::cmake::choose_preset(root, None).map_err(|reason| {
+            BuildError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                reason,
+            ))
+        })?;
         let configure =
             crate::cmake::configure_with_rigor(root, preset.as_deref(), toolchain, extra, profile);
 
@@ -52,6 +58,7 @@ pub(super) fn run_cmake_build(
             return Ok(outcome);
         }
         crate::cmake::record_rigor(root, profile);
+        crate::cmake::record_preset(root, preset.as_deref());
     }
 
     let mut build = Command::new(program_for_role(toolchain, ToolchainRole::Cmake, "cmake"));

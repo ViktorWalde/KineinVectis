@@ -6,8 +6,10 @@
 //! file-api oficial do `CMake`, nunca de parser proprio de `CMakeLists.txt`.
 
 pub mod model;
+mod preset_selection;
 mod rigor;
 
+pub(crate) use preset_selection::{choose_default, choose_preset};
 pub use rigor::{applied_rigor, configure_with_rigor, needs_configure, record_rigor, rigor_key};
 
 use std::{

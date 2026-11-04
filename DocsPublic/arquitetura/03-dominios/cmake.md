@@ -82,6 +82,7 @@ explícito tem precedência).
   `Makefile`). O clangd então usa flags de um projeto que mudou. Os três campos
   são **omitidos quando não há o que reportar** — projeto sadio não carrega
   ruído, e a UI não precisa distinguir `false` de ausente.
+
 - clangd: quando `compile_commands.json` existe no build dir da IDE, novos
   servidores cpp sobem com `--compile-commands-dir` apontando para ele — o
   `.kinein/build/` **não** é `$SRC/build/`, então o clangd não o acharia sozinho.
@@ -93,6 +94,14 @@ explícito tem precedência).
   Logo a ação certa após um configure é **reabrir os documentos abertos**, e não
   reiniciar o servidor — reiniciar joga o índice fora.
 
+**Configure pelo build (correção de integração, 2026-11-03).** O configure
+automático de `build.run` usa a mesma seleção de preset da configuração
+explícita, prepara a query file-api e registra preset/rigor no sucesso.
+Presets ambíguos interrompem o job com o motivo, antes de executar o CMake.
+Criação, troca de origem ou alteração de conteúdo da CDB ao fim de um build
+recarregam contexto e documentos LSP pelos donos existentes, inclusive quando
+a compilação/ligação posterior falha. Um build que preserva a CDB conserva os
+documentos e suas versões. Formatos e versão IPC permanecem os existentes.
 
 **Limite de leitura do file-api (0.195.0, 2026-10-26).** O modelo lê somente
 arquivos regulares, sem seguir links na abertura, com até 16 MiB por JSON.

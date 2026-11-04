@@ -14,6 +14,29 @@ use crate::{Core, cmake, jobs, process};
 const CPP_LANGUAGE: &str = "cpp";
 
 impl Core {
+    /// O build pode configurar/regenerar sem um pedido explicito de configure.
+    pub(crate) fn on_build_context_finished(&mut self) {
+        let Some(root) = self.workspace_root() else {
+            return;
+        };
+        let changed = self.index.lock().is_ok_and(|index| {
+            index.context.as_ref().map_or_else(
+                || crate::cdb::status(&root).directory.is_some(),
+                |context| !context.has_current_cdb(&root),
+            )
+        });
+        let server_needs_context = self.lsp.as_ref().is_some_and(|lsp| {
+            lsp.needs_compile_commands(CPP_LANGUAGE)
+                && crate::cdb::status(&root).directory.is_some()
+        });
+        if changed || server_needs_context {
+            self.workspace_edits.invalidate_verifications();
+            self.reload_index_context();
+            self.on_cmake_configure_finished(true);
+            self.on_cmake_finished_for_qml();
+        }
+    }
+
     /// Reage ao fim de um `cmake.configure` bem-sucedido fechando os documentos
     /// C/C++ que o language server conhece.
     ///
@@ -118,7 +141,7 @@ impl Core {
         };
 
         // O preset: o pedido, o anotado, o unico, ou a recusa (52 §14.2).
-        let (preset, preset_origem) = match choose_preset(&root, parsed.preset) {
+        let (preset, preset_origem) = match cmake::choose_preset(&root, parsed.preset) {
             Ok(choice) => choice,
             Err(refusal) => return invalid_params(request_id, refusal),
         };
@@ -273,7 +296,7 @@ impl Core {
         let status = cmake::status(&root);
         // Os presets entre os quais a pessoa escolhe, quando o configure sem
         // preset seria recusado (52 §14.2).
-        let (preset_choices, preset_choices_file) = match choose_default(&root) {
+        let (preset_choices, preset_choices_file) = match cmake::choose_default(&root) {
             Err((file, names)) => (names, Some(file.to_owned())),
             Ok(_) => (Vec::new(), None),
         };
@@ -305,39 +328,4 @@ fn invalid_params(request_id: Option<Value>, message: String) -> JsonRpcResponse
         request_id,
         JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
     )
-}
-
-/// O preset escolhido e de onde veio (`presetSource`).
-type PresetChoice = (Option<String>, Option<&'static str>);
-
-/// O preset do configure (52 §14.2): o pedido (o kit ativo, `"kit"`) vence;
-/// senao o padrao ([`choose_default`]); com varios, a recusa diz quais.
-fn choose_preset(root: &std::path::Path, request: Option<String>) -> Result<PresetChoice, String> {
-    if let Some(preset) = request.filter(|p| !p.trim().is_empty()) {
-        return Ok((Some(preset), Some("kit")));
-    }
-    choose_default(root).map_err(|(file, names)| {
-        format!(
-            "o projeto tem {} presets de configure em {file} ({}): escolha um",
-            names.len(),
-            names.join(", ")
-        )
-    })
-}
-
-/// Sem pedido: o preset do ultimo configure que deu certo, anotado no build
-/// dir, se ainda existe entre os presets do projeto (`"buildDir"`) — senao o
-/// unico do projeto, com o arquivo; sem presets, nenhum; com varios, o
-/// arquivo e os nomes, para a pessoa escolher.
-fn choose_default(root: &std::path::Path) -> Result<PresetChoice, (&'static str, Vec<String>)> {
-    if let Some(recorded) = cmake::status(root).preset
-        && cmake::list_presets(root).is_ok_and(|presets| presets.iter().any(|p| p.name == recorded))
-    {
-        return Ok((Some(recorded), Some("buildDir")));
-    }
-    match cmake::default_preset(root) {
-        cmake::PresetDefault::Absent => Ok((None, None)),
-        cmake::PresetDefault::One(preset, file) => Ok((Some(preset), Some(file))),
-        cmake::PresetDefault::Several(file, names) => Err((file, names)),
-    }
 }

@@ -120,7 +120,8 @@ job, logo depois dos arquivos:
   foi respondida (CMake < 3.20 ou query antiga), dito em vez de inventado;
   `source` diz `file-api codemodel-v2 (target X), sem compile_commands.json`.
   Com a CDB presente, a CDB vence a unidade e os `targets` ficam.
-- **Quando recarrega:** `event.cmake.finished` (o configure reescreve a CDB) e
+- **Quando recarrega:** `event.build.finished` quando conteúdo/origem da CDB
+  mudam, `event.cmake.finished` (o configure reescreve a CDB) e
   um `Cargo.toml` em `event.fs.changed` (um alvo novo muda a que pacote cada
   arquivo pertence) recarregam **só o contexto**, num job curto; os arquivos
   ficam. O `event.index.finished` sai de novo com o `context` novo, e a UI

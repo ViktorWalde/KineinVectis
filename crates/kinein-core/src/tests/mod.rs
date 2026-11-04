@@ -4,6 +4,7 @@
 //! core surface and every submodule shares [`core_with_empty_search_path`].
 
 mod build;
+mod c_host;
 mod cargo;
 #[cfg(windows)]
 mod clangd_windows;

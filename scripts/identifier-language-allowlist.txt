@@ -16,6 +16,8 @@ extjson rgba cyan bezier radix hexdigit endiannesses websocket
 # nsec: sufixo de nanosegundos em std::os::unix::fs::MetadataExt (mtime_nsec/ctime_nsec).
 nsec
 const bool struct impl enum usize isize deref nodiscard constexpr nullptr nullopt typename
+# Diretiva do pre-processador e macro de linguagem C/C++ na fixture C11.
+ifndef cplusplus
 sizeof typeof instanceof readonly pragma namespace mutex mpsc deque tuple dict
 serde deserialize lossy recv eprintln writeln rsplit rsplitn splitn rfind rstrip
 lstrip substr subspan concat findall finditer splitlines startswith endswith keepends

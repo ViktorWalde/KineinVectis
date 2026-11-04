@@ -179,6 +179,12 @@ Nasceu em 2026-09-02 (etapa 4 do `DocsPublic/roadmaps/30-caminho-para-o-mvp.md`)
 **O que aconteceu:** um `cmake.configure` terminou com sucesso, e o core fechou
 (`textDocument/didClose`) os documentos C/C++ que o language server conhecia.
 
+**Integração do build, 2026-11-03:** a mesma atualização ocorre após
+`event.build.finished` quando conteúdo ou origem da CDB mudaram, incluindo
+configure/regeneração automáticos. Uma falha posterior de compilação/ligação
+não descarta o contexto que foi produzido. Build com CDB inalterada conserva
+documentos e versões; o mecanismo de recarga/reinício existente é compartilhado.
+
 **Por que o core faz isso.** O clangd recarrega a `compile_commands.json`
 sozinho desde a v12 — reconfere a cada ~5 s
 (<https://reviews.llvm.org/D92663>) —, mas **o documento já aberto fica com a

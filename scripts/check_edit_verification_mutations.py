@@ -59,11 +59,36 @@ CASES = [
     ),
 ]
 
+C_HOST_CASES = [
+    (
+        "cdb_content",
+        "crates/kinein-core/src/index/context/mod.rs",
+        "self.cdb_digest.as_deref() == Some(&crate::cdb::verification::digest(&bytes))",
+        "self.cdb_digest.is_some() && !bytes.is_empty()",
+        "tests::c_host::c_host_tracks_cdb_content_and_origin_with_restored_metadata",
+    ),
+    (
+        "initial_server",
+        "crates/kinein-core/src/handlers/cmake.rs",
+        "if changed || server_needs_context {",
+        "if changed || (server_needs_context && changed) {",
+        "tests::c_host::c_host_refreshes_an_initial_server_even_when_the_index_already_has_the_new_cdb",
+    ),
+    (
+        "stable_documents",
+        "crates/kinein-core/src/handlers/cmake.rs",
+        "if changed || server_needs_context {",
+        "if changed || server_needs_context || root.is_dir() {",
+        "tests::c_host::c_host_keeps_build_lsp_context_and_verification_on_the_same_configuration",
+    ),
+]
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target-dir", type=Path, required=True)
     parser.add_argument("--logs", type=Path, required=True)
+    parser.add_argument("--suite", choices=("edit-verification", "c-host"), default="edit-verification")
     args = parser.parse_args()
     args.logs.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "CARGO_TARGET_DIR": str(args.target_dir.resolve())}
@@ -86,10 +111,12 @@ def main():
             (args.logs / f"{label}.log").write_text(result.stdout)
             return result
 
-        baseline = run("baseline", "edit_verification", False)
+        cases = C_HOST_CASES if args.suite == "c-host" else CASES
+        baseline_test = "c_host" if args.suite == "c-host" else "edit_verification"
+        baseline = run("baseline", baseline_test, False)
         if baseline.returncode:
             raise SystemExit("Baseline failed; no mutation verdict is valid. See baseline.log")
-        for label, filename, original, replacement, test in CASES:
+        for label, filename, original, replacement, test in cases:
             source = checkout / filename
             text = source.read_text()
             if text.count(original) != 1:
@@ -103,7 +130,7 @@ def main():
                 print(f"killed: {label} ({test})", flush=True)
             finally:
                 source.write_text(text)
-    print(f"{len(CASES)}/{len(CASES)} mutations killed")
+    print(f"{len(cases)}/{len(cases)} mutations killed")
 
 
 if __name__ == "__main__":
