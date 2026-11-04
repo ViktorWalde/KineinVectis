@@ -13,8 +13,8 @@
 
 ## Objetivo
 
-A versão `0.198.0` acrescenta evidência de verificação à prévia de correções
-LSP, conforme o [domínio LSP](03-dominios/lsp.md).
+A versão `0.199.0` acrescenta a ação de padrão C por alvo, com prévia e
+aplicação explícita, conforme o [domínio configAction](03-dominios/configAction.md).
 
 O protocolo IPC permite comunicação entre:
 

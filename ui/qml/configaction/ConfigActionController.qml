@@ -302,6 +302,7 @@ Item {
         }
         values[name] = value;
         paramValues = values;
+        clearPreview();
     }
 
     // Falta algum parametro obrigatorio? Enquanto faltar, nem se pede preview:
@@ -331,22 +332,21 @@ Item {
             clearPreview();
             return;
         }
+        clearPreview();
         previewLoading = true;
-        errorText = "";
         previewRequested(selectedId, paramValues);
     }
 
     function handlePreviewed(preview) {
-        previewLoading = false;
-        if (preview.id !== selectedId) {
+        if (preview.id !== selectedId || !previewLoading || !canPreview()) {
             return;
         }
+        previewLoading = false;
         previewId = preview.id;
         previewSummary = preview.summary;
         previewFiles = preview.files !== undefined ? preview.files : [];
         previewReport = preview.report !== undefined ? preview.report : [];
         previewNotes = preview.notes !== undefined ? preview.notes : [];
-        errorText = "";
     }
 
     // O Apply devolve ao core o `before` que o preview mostrou: e o mesmo
@@ -372,7 +372,6 @@ Item {
     function handleApplied(id, message, files, jobId) {
         statusText = jobId !== "" ? qsTr("%1 (job %2)").arg(message).arg(jobId) : message;
         runningJob = jobId;
-        errorText = "";
         paramValues = {};
         clearPreview();
         // O efeito mudou o disco: o estado das acoes mudou junto.
@@ -395,6 +394,7 @@ Item {
             return;
         }
         previewLoading = false;
+        previewId = "";
         errorText = message;
     }
 }

@@ -35,6 +35,8 @@
 
 mod availability;
 mod builddir;
+mod c_standard;
+mod c_standard_source;
 mod cargotoml;
 mod catalog;
 mod clangd;
@@ -249,6 +251,7 @@ fn build_plan(
         "cmake.removeTargetLinkLibraries" => remover::remove_target_link_libraries(root, params),
         "cmake.strictWarnings" => rigor::strict_warnings(root, params),
         "cmake.setCxxStandard" => rigor::cxx_standard(root, params),
+        "cmake.setCStandard" => c_standard::plan(root, params),
         "cmake.enableSanitizers" => rigor::sanitizers(root, params),
         "cmake.enableOpenMP" => rigor::openmp(root, params),
         "cmake.generateHexBin" => rigor::hex_and_bin(root, params),

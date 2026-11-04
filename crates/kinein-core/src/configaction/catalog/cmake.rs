@@ -4,7 +4,7 @@ use kinein_protocol::{ConfigActionEffect, ConfigActionRisk, ConfigActionScope};
 
 use super::{ActionDefinition, CMAKELISTS_ONLY, NO_FILE, PRESETS_ONLY, VISIBILITY_PARAM};
 
-pub(super) static ACTIONS: [ActionDefinition; 19] = [
+pub(super) static ACTIONS: [ActionDefinition; 20] = [
     ActionDefinition {
         id: "cmake.enableCompileCommands",
         title: "Habilitar compile_commands.json",
@@ -199,6 +199,22 @@ pub(super) static ACTIONS: [ActionDefinition; 19] = [
     // ele COMPILA", que era o buraco que o autor relatou: nao havia como
     // deixar o compilador mais rigido, ligar sanitizer, paralelizar calculo
     // ou gerar firmware pela IDE.
+    ActionDefinition {
+        id: "cmake.setCStandard",
+        title: "Fixar o padrão C do alvo",
+        description: "Exige C90/C99/C11/C17/C23 no alvo escolhido, com extensões OFF/ON e prévia.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Rigor",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("target", "Alvo C", true, ""),
+            ("standard", "Padrão C (90/99/11/17/23)", false, "23"),
+            ("extensions", "Extensões (OFF/ON)", false, "OFF"),
+        ],
+        docs: &[("officialDoc", "CMake: C_STANDARD", "cmake.C_STANDARD")],
+    },
     ActionDefinition {
         id: "cmake.setCxxStandard",
         title: "Fixar o padrão C++",

@@ -45,6 +45,9 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     const QString requestPath = m_pendingPaths.take(id);
     const QString requestRemoteName = m_pendingRemoteDirectoryNames.take(id);
     const QVariantMap requestQuery = m_pendingDataSourceQueries.take(id);
+    if (method == QStringLiteral("configAction.preview") && id != m_configActionPreviewRequestId) {
+        return;
+    }
     if (method == QStringLiteral("probe.list")) {
         if (id != m_probeRequestId) {
             return;

@@ -2,7 +2,8 @@
 
 > **Classe: DECISÃO / ALVO, 2026-11-03.** Etapa profunda e obrigatória antes
 > da consolidação C++. Define os aceites de C na base pública 0.4.0; a primeira
-> jornada C11 é uma prova parcial. Estado observado em §7; fronteira da release
+> jornada C11 é uma prova parcial. Inventário inicial em §7 e evolução em §8;
+> fronteira da release
 > no [62](../roadmaps/62-base-publica-0.4.md).
 
 ## 1. Finalidade e significado de integração nativa
@@ -194,3 +195,78 @@ inteiros com overflow conferido por `<stdckdint.h>` e contagem de bits com
 capacidade desses recursos nas ferramentas/biblioteca presentes. A integração
 desses mesmos casos no editor, contexto, verificador e UI continua pendente;
 a auditoria direta não aceita C23 na IDE nem a matriz C1–C8.
+
+## 8. Configuração do padrão C por alvo — desenho de 2026-11-03
+
+A ação `cmake.setCStandard` amplia o fluxo existente de configuração:
+listagem contextual → parâmetros → prévia sem escrita → aplicação explícita.
+O alvo é obrigatório; o padrão oferece C90/C99/C11/C17/C23, com C23 como
+referência inicial, e as extensões oferecem OFF/ON. A receita escreve
+`C_STANDARD`, `C_STANDARD_REQUIRED ON` e `C_EXTENSIONS` no alvo escolhido.
+As variáveis `CMAKE_C_*`, os presets e os outros alvos conservam seu conteúdo.
+A prévia explica que a escolha substitui os defaults herdados nesse alvo e
+que configurar/build e consultar o contexto efetivo são passos posteriores.
+O CMake continua responsável por validar a capacidade da toolchain.
+
+O recorte de edição é o `CMakeLists.txt` da raiz, com alvo literal que lista
+fonte `.c`. A ação não avalia a linguagem CMake: recusa fluxo condicional,
+scripts externos, nomes dinâmicos e sintaxe que não consegue delimitar.
+Propriedades manuais de padrão/extensões e flags explícitas de dialeto no
+alvo escolhido exigem edição manual, com motivo na prévia. Propriedades de
+outros alvos são preservadas. Somente o bloco exato gerado por esta ação pode
+ser atualizado por ela; bloco alterado manualmente também é recusado.
+
+Os parâmetros e snapshots usam o contrato existente de `configAction.*`;
+o catálogo passa a distinguir sugestões de padrão C das de C++. O schema
+dos envelopes não ganha campos. A adição da receita e de seus parâmetros
+é versionada no [domínio IPC](../arquitetura/03-dominios/configAction.md).
+Template C e identidade documental de headers/LSP permanecem fatias próprias.
+
+### 8.1 Integração e provas — 2026-11-04
+
+A receita está integrada ao catálogo e aos três métodos existentes, no
+protocolo 0.199.0. A UI revoga a prévia quando os parâmetros mudam ou uma
+consulta falha; a ponte descarta respostas de prévias anteriores pelo id da
+requisição. O botão só aplica uma prévia vigente, com o snapshot exibido.
+
+Sete regressões Rust novas reusam a fixture C11, CMake/Ninja, CDB/file-api,
+contexto, CTest e verificador. A matriz C11/C17/C23 passou com GCC 16.2.1 e
+Clang 23.1.4 em Linux x86_64. Só o alvo escolhido muda; biblioteca e teste
+conservam C11. Troca GNU/ISO, snapshot obsoleto, configuração manual, alvo
+incorreto e recuperação foram exercitados. Dois mutantes compiláveis foram
+eliminados: ignorar propriedades manuais e editar outro alvo.
+
+O caso C23 acrescenta `static_assert` e confere `__STDC_VERSION__ >= 202311L`;
+verifica uma correção textual com compilador real, recusa sua aplicação após
+mudar o padrão, provoca falha em C17 e recupera build/CTest em C23. As
+sugestões LSP desse teste são controladas. O CMake 4.4.5 produziu `c2x` para
+GCC e `c23` para Clang; o contexto conserva o dialeto efetivamente observado.
+Isso não transfere o aceite para todo compilador que reconhece `c2x`.
+
+Interação automatizada de mouse/teclado na UI Qt 6.12: ação C encontrada,
+alvo selecionado, prévia C23 sem escrita, padrão inválido recusado, recuperação
+e aplicação explícita. Build/CTest pela UI passaram, e o painel de contexto
+mostrou Clang, `c23` e alvo `c_host`, coerentes com a CDB gerada. A comparação
+visual usa a interface existente; não representa aprovação de um novo desenho.
+
+A regressão Qt `configaction-response-identity` usa a ponte, os roteadores e
+o controller de produção contra um core controlado: sucesso/falha antigos
+fora de ordem são descartados, falha vigente bloqueia aplicação e uma nova
+consulta recupera o fluxo. Cinco fases passaram; a aplicação levou os
+parâmetros e o snapshot da última prévia. Reprodução sobre a UI compilada:
+
+```bash
+python3 scripts/verificar_probe_response_identity.py --build-dir build/dev-local \
+    --domain configaction \
+    --artifacts-dir "${XDG_CACHE_HOME:-$HOME/.cache}/kinein-vectis/qa-response-identity"
+```
+
+Gate rápido de 2026-11-04 aprovado: 1437 testes Rust, Clippy, análise de 50
+arquivos C++, 8 CTest e 178 harnesses QML. Permanecem dois NÃO PROVADOS ARM
+por ausência de `arm-none-eabi-gcc` e `arm-none-eabi-g++`. Não equivale ao
+gate completo estrito de release.
+
+Alcance parcial de C1/C2. C90/C99 são opções da receita, sem novo corpus
+nativo nesta fatia. Template C, identidade documental C/headers, corpus C23
+completo no editor, análise/memória, Make, cross e Windows continuam abertos,
+assim como os demais aceites C1–C8. Não houve nova prova DAP nesta fatia.

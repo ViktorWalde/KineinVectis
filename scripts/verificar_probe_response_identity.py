@@ -1,4 +1,4 @@
-"""Exercise the real Qt CoreClient against deliberately reordered discovery replies."""
+"""Exercise the real Qt CoreClient against deliberately reordered query replies."""
 import argparse
 import json
 import os
@@ -12,14 +12,15 @@ import tempfile
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--build-dir', type=Path, required=True)
-parser.add_argument('--domain', choices=['probe', 'dfu', 'pico'], default='probe')
+parser.add_argument('--domain', choices=['probe', 'dfu', 'pico', 'configaction'], default='probe')
 parser.add_argument('--fixtures', type=Path)
+parser.add_argument('--artifacts-dir', type=Path)
 parser.add_argument('--expect-failure', action='store_true')
 args = parser.parse_args()
 build = args.build_dir.resolve()
 fixtures = (args.fixtures or Path(__file__).resolve().parent/f'fixtures/{args.domain}-response-identity').resolve()
 marker = args.domain.upper() + '_RESPONSE_'
-artifact_base = build.parent/'qa-artifacts'
+artifact_base = (args.artifacts_dir or build.parent/'qa-artifacts').resolve()
 artifact_base.mkdir(parents=True, exist_ok=True)
 root = Path(tempfile.mkdtemp(prefix=f'{args.domain}-response-qt-', dir=artifact_base))
 (root/'tmp').mkdir()

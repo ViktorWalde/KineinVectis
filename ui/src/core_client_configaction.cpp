@@ -75,7 +75,7 @@ void CoreClient::configActionList(bool includeHiddenByScope)
 
 void CoreClient::configActionPreview(const QString& id, const QVariantMap& params)
 {
-    sendRequest(
+    m_configActionPreviewRequestId = sendRequest(
         QStringLiteral("configAction.preview"),
         QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("params"), stringParams(params)}});
 }

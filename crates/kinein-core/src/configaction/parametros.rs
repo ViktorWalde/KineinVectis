@@ -33,6 +33,33 @@ const MAX_SUGESTOES: usize = 20;
 /// Extensoes que contam como fonte compilavel.
 const FONTES: [&str; 8] = ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx"];
 
+/// Parametros compartilhados podem ter vocabularios diferentes por linguagem.
+pub(super) fn action_description(action: &str, name: &str) -> &'static str {
+    if action == "cmake.setCStandard" && name == "standard" {
+        return "Padrão C exigido neste alvo: 90, 99, 11, 17 ou 23. Vazio escolhe C23; a prévia mostra a mudança.";
+    }
+    if action == "cmake.setCStandard" && name == "extensions" {
+        return "OFF pede dialeto ISO; ON permite extensões do compilador (como gnu23). Vazio escolhe OFF.";
+    }
+    describe(name)
+}
+
+pub(super) fn action_suggestions(root: &Path, action: &str, name: &str) -> Vec<String> {
+    if action == "cmake.setCStandard" {
+        match name {
+            "standard" => {
+                return super::c_standard::STANDARDS
+                    .iter()
+                    .map(|s| (*s).to_owned())
+                    .collect();
+            }
+            "extensions" => return vec!["OFF".to_owned(), "ON".to_owned()],
+            _ => {}
+        }
+    }
+    suggestions(root, name)
+}
+
 /// O que o parametro faz, em uma frase.
 ///
 /// Nome desconhecido devolve vazio: melhor nao dizer nada que inventar uma

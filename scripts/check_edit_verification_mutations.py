@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run correction-verifier guard mutations in a disposable Rust checkout.
+"""Run configuration/context/correction guard mutations in a disposable checkout.
 
 Requires a warmed QA target, fixed Rust and the host corpus dependencies.
 The working checkout is only read. Run inside the documented memory scope.
@@ -83,12 +83,35 @@ C_HOST_CASES = [
     ),
 ]
 
+C_STANDARD_CASES = [
+    (
+        "manual_properties",
+        "crates/kinein-core/src/configaction/c_standard_source.rs",
+        "if conflicts(command, target) {",
+        "if conflicts(command, target) && target.is_empty() {",
+        "configaction::c_standard::tests::c_standard_refuses_manual_dialect_properties_and_dynamic_sources",
+    ),
+    (
+        "selected_target",
+        "crates/kinein-core/src/configaction/c_standard.rs",
+        "set_target_properties({target} PROPERTIES\\n",
+        "set_target_properties(sample PROPERTIES\\n",
+        "tests::c_host::standard::c_standard_drives_gcc_clang_cdb_context_and_tests_without_changing_other_targets",
+    ),
+]
+
+SUITES = {
+    "edit-verification": ("edit_verification", CASES),
+    "c-host": ("c_host", C_HOST_CASES),
+    "c-standard": ("c_standard", C_STANDARD_CASES),
+}
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target-dir", type=Path, required=True)
     parser.add_argument("--logs", type=Path, required=True)
-    parser.add_argument("--suite", choices=("edit-verification", "c-host"), default="edit-verification")
+    parser.add_argument("--suite", choices=tuple(SUITES), default="edit-verification")
     args = parser.parse_args()
     args.logs.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "CARGO_TARGET_DIR": str(args.target_dir.resolve())}
@@ -111,8 +134,7 @@ def main():
             (args.logs / f"{label}.log").write_text(result.stdout)
             return result
 
-        cases = C_HOST_CASES if args.suite == "c-host" else CASES
-        baseline_test = "c_host" if args.suite == "c-host" else "edit_verification"
+        baseline_test, cases = SUITES[args.suite]
         baseline = run("baseline", baseline_test, False)
         if baseline.returncode:
             raise SystemExit("Baseline failed; no mutation verdict is valid. See baseline.log")

@@ -839,6 +839,7 @@ private:
     QString m_runTerminalId;
     qint64 m_runRequestId = -1;
     qint64 m_probeRequestId = -1;
+    qint64 m_configActionPreviewRequestId = -1;
     bool m_scanningEnvironment = false;
     QString m_buildJobId;
     QString m_testJobId;

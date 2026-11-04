@@ -1,5 +1,7 @@
 //! Contexto C gerado pelo `CMake`, build/teste e verificador existente pelo despacho.
 
+mod standard;
+
 use kinein_protocol::{JsonRpcRequest, JsonRpcResponse};
 use serde_json::{Value, json};
 use std::{

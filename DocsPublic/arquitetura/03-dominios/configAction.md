@@ -6,6 +6,31 @@
 
 ### Configuration Actions (`configAction.list` / `configAction.preview` / `configAction.apply`)
 
+**Padrão C por alvo (`0.199.0`, 2026-11-03).** A ação
+`cmake.setCStandard`, título "Fixar o padrão C do alvo", escopo `cmake`,
+categoria "CMake Rigor", risco `medium` e efeito `edit`, afeta somente
+`CMakeLists.txt`. Parâmetros string: `target` obrigatório, `standard`
+opcional (`90`, `99`, `11`, `17`, `23`; ausência/vazio escolhe `23`) e
+`extensions` opcional (`OFF`, `ON`; ausência/vazio escolhe `OFF`). A listagem
+oferece sugestões e descrições próprias de C; `standard` em `setCxxStandard`
+conserva seus valores C++.
+
+A prévia escreve propriedades do alvo: `C_STANDARD`,
+`C_STANDARD_REQUIRED ON`, `C_EXTENSIONS`. Não muda variáveis globais/presets
+nem outros alvos. O alvo deve ser literal, declarado na raiz, com fonte `.c`;
+fluxo dinâmico, scripts externos ou configuração manual conflitante são
+`INVALID_PARAMS`, com motivo. O bloco exato gerado pela ação pode ser trocado
+por outra seleção; alterações manuais impedem a substituição automática.
+`apply` usa a barreira `expected` existente (`FILE_CHANGED` quando o snapshot
+mudou). O resultado confirma a edição, sem afirmar que a toolchain aceitou
+o padrão: configurar/build e consultar a CDB/contexto continuam necessários.
+Sem método, evento ou campo novo nos envelopes. Desenho e limites na
+[consolidação C §8](../../especificacoes/consolidacao-nativa-de-c.md#8-configuração-do-padrão-c-por-alvo--desenho-de-2026-11-03).
+
+A UI invalida a prévia ao alterar parâmetros ou receber uma falha. Respostas
+de consultas anteriores são descartadas pela identidade da requisição na
+ponte; a aplicação usa somente a prévia vigente e seu snapshot.
+
 Implementado no protocolo `0.63.0` (etapa 2 de `DocsPublic/roadmaps/30-caminho-para-o-mvp.md`).
 Os três exigem workspace aberto. O escopo de cada ação é o **build system
 ativo** do workspace (spec 9.2 §1): projeto Cargo não vê ação `CMake`, e pedir

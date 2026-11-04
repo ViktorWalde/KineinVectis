@@ -167,6 +167,7 @@ Item {
 
         // Arquivo que sera CRIADO nao tem `before`: o `expected` precisa
         // OMITIR o content, porque "nao existia" e' diferente de "vazio".
+        controller.requestPreview();
         controller.handlePreviewed({
             id: "cmake.addExecutable",
             title: "Adicionar executavel",
@@ -263,6 +264,29 @@ Item {
         if (controller.chipsFor(["cmake", "python"]).length !== 0) failures += 536870912;
         controller.activeBuildSystems = ["cmake", "cargo"];
         if (controller.scopeChips.length !== 3) failures += 1073741824;
+
+        // Mudar parametros revoga a previa; Apply nao pode usar um diff antigo.
+        controller.select("cmake.addExecutable");
+        controller.setParam("name", "app");
+        controller.setParam("sources", "main.c");
+        controller.requestPreview();
+        const currentPreview = {
+            id: "cmake.addExecutable", summary: "primeira selecao",
+            files: [{ path: "CMakeLists.txt", before: "antes", after: "depois" }]
+        };
+        controller.handlePreviewed(currentPreview);
+        controller.setParam("sources", "other.c");
+        root.lastApply = null;
+        controller.apply();
+        if (root.lastApply !== null || controller.previewId !== "") failures += 1;
+        // Uma resposta que chega sem pedido vigente tambem nao restaura consentimento.
+        controller.handlePreviewed(currentPreview);
+        if (controller.previewId !== "") failures += 1;
+        controller.requestPreview();
+        controller.handlePreviewed(currentPreview);
+        controller.handleFailed("configAction.preview", "padrao indisponivel");
+        controller.apply();
+        if (root.lastApply !== null || controller.previewId !== "") failures += 1;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

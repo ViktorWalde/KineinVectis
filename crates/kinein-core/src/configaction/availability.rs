@@ -135,11 +135,10 @@ pub(super) fn describe(
                     label: (*label).to_owned(),
                     required: *required,
                     placeholder: (*placeholder).to_owned(),
-                    // O significado e os valores vem do NOME do parametro, e
-                    // nao da acao: `target` quer dizer a mesma coisa em todas
-                    // elas. Ver `parametros.rs`.
-                    description: super::parametros::describe(name).to_owned(),
-                    suggestions: super::parametros::suggestions(root, name),
+                    // Campos comuns compartilham vocabulario; padrao e
+                    // extensoes respeitam a linguagem da acao.
+                    description: super::parametros::action_description(action.id, name).to_owned(),
+                    suggestions: super::parametros::action_suggestions(root, action.id, name),
                 },
             )
             .collect(),
@@ -174,6 +173,9 @@ fn evaluate(
     }
 
     match action.id {
+        "cmake.setCStandard" if facts.targets.is_empty() => {
+            partial("nenhum alvo literal na raiz; padrão C exige um alvo que compile fonte .c")
+        }
         "cmake.enableCompileCommands" => {
             let text = facts.cmakelists.as_deref().unwrap_or_default();
             if cmakelists::exports_compile_commands(text) {
@@ -212,24 +214,7 @@ fn evaluate(
             "CMAKE_OBJCOPY",
             "este projeto já gera .hex/.bin depois do build",
         ),
-        "espidf.clangdFreeRtos" => match facts.clangd.as_deref() {
-            _ if !facts
-                .frameworks
-                .contains(&kinein_protocol::Framework::EspIdf) =>
-            {
-                unavailable(
-                    "o projeto não é ESP-IDF (CMakeLists.txt sem o project.cmake do IDF_PATH)"
-                        .to_owned(),
-                )
-            }
-            Some(text) if clangd::ignores_freertos(text) => already_applied(format!(
-                "o {} já ignora os headers do FreeRTOS",
-                clangd::CLANGD
-            )),
-            _ => recommended(
-                "o include-cleaner do clangd sugere trocar freertos/FreeRTOS.h, o que quebra o build",
-            ),
-        },
+        "espidf.clangdFreeRtos" => freertos_state(facts),
         "cargo.embeddedTarget" if facts.cargo_config => {
             already_applied(".cargo/config.toml já existe neste projeto".to_owned())
         }
@@ -264,6 +249,27 @@ fn evaluate(
             }
         }
         _ => available(),
+    }
+}
+
+fn freertos_state(facts: &WorkspaceFacts) -> (ConfigActionState, Option<String>) {
+    match facts.clangd.as_deref() {
+        _ if !facts
+            .frameworks
+            .contains(&kinein_protocol::Framework::EspIdf) =>
+        {
+            unavailable(
+                "o projeto não é ESP-IDF (CMakeLists.txt sem o project.cmake do IDF_PATH)"
+                    .to_owned(),
+            )
+        }
+        Some(text) if clangd::ignores_freertos(text) => already_applied(format!(
+            "o {} já ignora os headers do FreeRTOS",
+            clangd::CLANGD
+        )),
+        _ => recommended(
+            "o include-cleaner do clangd sugere trocar freertos/FreeRTOS.h, o que quebra o build",
+        ),
     }
 }
 

@@ -8,9 +8,9 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > resumo técnico: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **RESUMO TÉCNICO (2026-11-03; provas funcionais datadas abaixo).**
+> **RESUMO TÉCNICO (2026-11-04; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.198.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.199.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > Fronteira, auditoria inicial e bloqueadores em **62 §§1–3**.
@@ -40,6 +40,10 @@
 > rápido passa com dois NÃO PROVADOS de compiladores ARM; estrito reprova.
 > Jornada C11, quatro regressões novas, três mutações e clangd/GDB reais.
 > Verificador preservado; a prova host não encerra a vertical 0.4.
+> **Padrão C por alvo (2026-11-04, §7.378):** prévia/aplicação C23 na UI,
+> CMake/CDB/contexto/CTest; matriz C11/C17/C23 GCC/Clang e duas mutações.
+> Alcance parcial C1/C2; template C e identidade de headers/LSP pendentes.
+> Rápido verde: 1437 Rust, 8 CTest, 178 QML; dois NÃO PROVADOS ARM persistem.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -49,12 +53,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.198.0 (crates/kinein-protocol, medido em 2026-11-02; o
+protocolo   0.199.0 (crates/kinein-protocol, medido em 2026-11-04; o
             historico das versoes e' o arquitetura/03)
 metodos     192 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   178 tst_*.qml em scripts/qml-harness (medido em 2026-11-02)
-testes      1430 Rust no gate rápido de 2026-11-03 (40.7 §7.376);
+testes      1437 Rust no gate rápido de 2026-11-04 (40.7 §7.378);
+            1430 Rust no gate rápido de 2026-11-03 (40.7 §7.376);
             1426 Rust no gate rápido de 2026-11-02 (40.7 §7.372);
             1395 no gate completo estrito de 2026-10-27 (40.7 §7.365);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
