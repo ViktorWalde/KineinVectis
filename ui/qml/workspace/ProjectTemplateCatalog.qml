@@ -20,8 +20,8 @@ QtObject {
             "ecosystems": [
                 {
                     "template": "cCmake", "label": "CMake",
-                    "detail": qsTr("C23 inicial, alterável por alvo; Ninja e CTest"),
-                    "files": ["CMakeLists.txt  · C23 exigido no alvo, extensões OFF",
+                    "detail": qsTr("Compilador e padrão à sua escolha; Ninja e CTest"),
+                    "files": ["CMakeLists.txt  · padrão escolhido na criação",
                               "CMakePresets.json  · Debug + Release / Ninja",
                               "src/main.c  · fonte compatível com C90",
                               "include/  tests/", ".gitignore  README.md"],
@@ -34,8 +34,8 @@ QtObject {
             "ecosystems": [
                 {
                     "template": "cppCmake", "label": "CMake",
-                    "detail": qsTr("C++23, presets Debug e Release com Ninja"),
-                    "files": ["CMakeLists.txt  · C++23 target-based",
+                    "detail": qsTr("Compilador e padrão à sua escolha; presets Ninja"),
+                    "files": ["CMakeLists.txt  · padrão escolhido na criação",
                               "CMakePresets.json  · Debug + Release / Ninja",
                               "src/main.cpp", "include/  tests/", ".gitignore  README.md"],
                     "command": ""

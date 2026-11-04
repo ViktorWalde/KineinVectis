@@ -12,6 +12,10 @@
 //! distribution, would be a guess dressed up as an instruction.
 
 mod known;
+mod project_environments;
+pub(crate) fn environment_version(path: &Path) -> Result<String, String> {
+    project_environments::environment_version(path)
+}
 pub mod search_dirs;
 
 pub use search_dirs::install_root;

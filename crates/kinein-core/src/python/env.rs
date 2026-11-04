@@ -29,22 +29,37 @@ pub struct PythonTools {
 /// interpretador EXISTE; `poetry` e `sistema` so' se a ferramenta foi dada.
 #[must_use]
 pub fn python_env(root: &Path, f: &PythonTools) -> Option<PythonEnv> {
-    let com_versao = |interpreter: PathBuf, origin: &str, warning: Option<&str>| PythonEnv {
+    let with_version = |interpreter: PathBuf, origin: &str, warning: Option<&str>| PythonEnv {
         version: f.medir_versao.then(|| versao_de(&interpreter)).flatten(),
         interpreter: interpreter.display().to_string(),
         origin: origin.to_owned(),
         warning: warning.map(str::to_owned),
     };
+    if root.join(".kinein/python.json").exists() {
+        for directory in [".venv", "venv", "env"] {
+            let python = root.join(directory).join("bin/python");
+            if python.is_file() {
+                return Some(with_version(python, directory, None));
+            }
+        }
+        return selected_interpreter(root).map(|path| {
+            with_version(
+                path,
+                "projeto",
+                Some("Interpretador selecionado: crie um .venv antes de instalar dependências"),
+            )
+        });
+    }
     if let Some(venv) = f.virtual_env.as_deref().filter(|v| !v.is_empty()) {
         let py = Path::new(venv).join("bin").join("python");
         if py.is_file() {
-            return Some(com_versao(py, "VIRTUAL_ENV", None));
+            return Some(with_version(py, "VIRTUAL_ENV", None));
         }
     }
     for pasta in [".venv", "venv", "env"] {
         let py = root.join(pasta).join("bin").join("python");
         if py.is_file() {
-            return Some(com_versao(py, pasta, None));
+            return Some(with_version(py, pasta, None));
         }
     }
     if root.join("poetry.lock").is_file()
@@ -58,11 +73,11 @@ pub fn python_env(root: &Path, f: &PythonTools) -> Option<PythonEnv> {
         let caminho = String::from_utf8_lossy(&saida.stdout).trim().to_owned();
         let py = Path::new(&caminho).join("bin").join("python");
         if py.is_file() {
-            return Some(com_versao(py, "poetry", None));
+            return Some(with_version(py, "poetry", None));
         }
     }
     f.python_sistema.clone().map(|py| {
-        com_versao(
+        with_version(
             py,
             "sistema",
             Some("Python do sistema: instalar pacote nele quebra a distro; crie um .venv"),
@@ -80,4 +95,16 @@ fn versao_de(interpreter: &Path) -> Option<String> {
     };
     let linha = texto.trim();
     (!linha.is_empty()).then(|| linha.to_owned())
+}
+
+/// A seleção explícita tem um único leitor, compartilhado com a criação de venv.
+pub(crate) fn selected_interpreter(root: &Path) -> Option<PathBuf> {
+    let value: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(root.join(".kinein/python.json")).ok()?)
+            .ok()?;
+    if value["schemaVersion"] != 1 {
+        return None;
+    }
+    let path = PathBuf::from(value["interpreter"].as_str()?);
+    (path.is_absolute() && path.is_file()).then_some(path)
 }

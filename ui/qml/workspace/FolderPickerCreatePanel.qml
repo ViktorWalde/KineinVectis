@@ -15,6 +15,7 @@ Item {
     id: root
 
     property var controller
+    property real maxPanelHeight: 440
 
     readonly property var catalog: root.controller.templateCatalog
     readonly property bool projectMode: root.controller.creatingProject
@@ -22,17 +23,22 @@ Item {
     readonly property string projectName: root.controller.createName.trim()
 
     width: parent.width
-    height: visible ? content.implicitHeight : 0
+    height: visible ? Math.min(content.implicitHeight, maxPanelHeight) : 0
     visible: root.projectMode
 
     function focusName() {
         nameField.forceActiveFocus();
     }
 
+    Flickable {
+        anchors.fill: parent
+        contentHeight: content.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
     Column {
         id: content
 
-        anchors.fill: parent
+        width: parent.width
         spacing: Theme.spacingMedium
 
         // ---- 1. a linguagem, em cartoes ------------------------------------
@@ -98,6 +104,8 @@ Item {
             font.pixelSize: Theme.fontSizeSmall
             elide: Text.ElideRight
         }
+
+        ProjectEnvironmentFields { controller: root.controller }
 
         // ---- 2. o nome: o rotulo mora no campo e sobe no foco (2026-10-04) ---
         KvTextField {
@@ -165,11 +173,13 @@ Item {
                 anchors.top: parent.top
                 anchors.margins: Theme.spacingSmall
                 text: root.catalog.preview(root.controller.createTemplate, root.controller.createName)
+                      + "\n" + root.controller.projectOptions.preview(root.controller.createLanguage)
                 color: Theme.textSecondary
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WrapAnywhere
             }
         }
+    }
     }
 }

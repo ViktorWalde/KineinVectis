@@ -224,6 +224,11 @@ bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& re
 
 bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("workspace.projectEnvironments")) {
+        emit projectEnvironmentsResolved(
+            result.value(QStringLiteral("environments")).toArray().toVariantList());
+        return true;
+    }
     if (method == QStringLiteral("workspace.open") ||
         method == QStringLiteral("workspace.createProject"))
     {

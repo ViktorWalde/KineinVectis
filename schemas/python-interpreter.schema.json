@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kinein Vectis project Python interpreter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "interpreter"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "interpreter": {"type": "string", "minLength": 1}
+  }
+}

@@ -91,6 +91,8 @@ Item {
             root.projectTree.handleExternalChanges(changes);
         }
 
+        function onProjectEnvironmentsResolved(environments) { root.folderPicker.setProjectEnvironments(environments); }
+
         function onWorkspaceBrowseListed(path, parent, entries, places) {
             root.folderPicker.setListing(path, parent, entries, places);
         }
@@ -126,6 +128,7 @@ Item {
 
         function onRequestFailed(method, message) {
             root.recentWorkspacesController.handleRequestFailed(method, message);
+            if (method === "workspace.projectEnvironments") root.folderPicker.projectEnvironmentsFailed(message);
             if (method === "workspace.open" || method === "workspace.browse"
                     || method === "workspace.createFolder"
                     || method === "workspace.createProject") {

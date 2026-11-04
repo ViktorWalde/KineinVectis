@@ -13,9 +13,8 @@
 
 ## Objetivo
 
-A versão `0.200.0` acrescenta o template de projeto C no
-[domínio workspace](03-dominios/workspace.md) e abre os valores numéricos da
-configuração C no [domínio configAction](03-dominios/configAction.md).
+A versão `0.201.0` acrescenta consulta de ambientes instalados e seleção
+de ferramenta/padrão na criação, no [domínio workspace](03-dominios/workspace.md).
 
 O protocolo IPC permite comunicação entre:
 
@@ -222,7 +221,7 @@ indistinguível de rodá-lo fora dela — que era o requisito original. Uma
 superfície visual de atalho (Assistente) pode voltar depois **como UI pura**,
 abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
 
-## Os 192 métodos roteados — a lista inteira
+## Os 193 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -460,6 +459,7 @@ workspace.browse
 workspace.close
 workspace.createFolder
 workspace.createProject
+workspace.projectEnvironments
 workspace.open
 workspace.recent.clear
 workspace.recent.list

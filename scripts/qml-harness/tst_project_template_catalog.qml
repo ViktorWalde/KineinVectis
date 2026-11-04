@@ -11,11 +11,13 @@ Item {
     id: root
 
     property var created: []
+    property var lastOptions: ({})
 
     FolderPickerController {
         id: picker
 
-        onCreateProjectRequested: function(parent, name, templateId) {
+        onCreateProjectRequested: function(parent, name, templateId, options) {
+            root.lastOptions = options;
             root.created.push(parent + "|" + name + "|" + templateId);
         }
     }
@@ -75,12 +77,26 @@ Item {
                           "previa rust mostra o comando");
         failures += check(catalog.preview("", "x").indexOf("Escolha") === 0, "previa sem escolha");
         const cPreview = catalog.preview("cCmake", "sensor");
-        failures += check(cPreview.indexOf("C23") >= 0 && cPreview.indexOf("src/main.c") >= 0
+        failures += check(cPreview.indexOf("padrão escolhido") >= 0 && cPreview.indexOf("src/main.c") >= 0
                           && cPreview.indexOf("src/main.cpp") < 0, "previa C explicita: " + cPreview);
         picker.chooseLanguage("c");
         picker.submitCreate();
         failures += check(root.created[root.created.length - 1] === "/home/x|demo|cCmake",
                           "escolha C usa template proprio");
+
+        picker.projectOptions.resolved([
+            {language: "c", executable: "/opt/old/gcc", version: "GCC 10"},
+            {language: "c", executable: "/opt/new/gcc", version: "GCC 16"},
+            {language: "python", executable: "/opt/python3.9", version: "Python 3.9"}
+        ]);
+        failures += check(picker.projectOptions.forLanguage("c").length === 2, "duas toolchains C");
+        picker.projectOptions.executable = "/opt/old/gcc";
+        picker.projectOptions.standard = "99";
+        picker.submitCreate();
+        failures += check(root.lastOptions.executable === "/opt/old/gcc" && root.lastOptions.standard === "99", "opções chegam à criação");
+        picker.chooseLanguage("python");
+        failures += check(picker.projectOptions.executable === "" && picker.projectOptions.standard === "", "troca limpa seleção de outra linguagem");
+        failures += check(picker.projectOptions.preview("python").indexOf("Padrão/edição") < 0, "Python segue interpretador");
 
         if (failures !== 0) console.error("FALHAS=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

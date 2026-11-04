@@ -19,11 +19,12 @@ mod detect;
 mod error;
 mod open;
 mod places;
+mod project_options;
 mod recent;
 mod session;
 mod trust;
 
-pub use create::{create_directory, create_project};
+pub use create::{create_directory, create_project, create_project_with_options};
 pub use detect::detect_project;
 pub use error::WorkspaceError;
 pub use open::{browse_directories, metadata_path, open_workspace};

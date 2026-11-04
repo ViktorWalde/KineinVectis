@@ -6,6 +6,17 @@
 
 ## `python.*` — o ambiente do projeto Python
 
+**Seleção na criação (0.201.0):** `.kinein/python.json`, schema 1
+([schema público](../../../schemas/python-interpreter.schema.json)), registra
+`{ schemaVersion: 1, interpreter: "/caminho/absoluto/python" }`. O resolvedor
+único prioriza o venv do projeto e depois essa seleção, antes de ambientes
+herdados de outro projeto. `origin: projeto` indica interpretador selecionado,
+com `hasEnvironment: false`; ambientes próprios conservam seus estados.
+Seleção inválida/ausente no disco não cai silenciosamente no Python do sistema.
+A criação de venv usa o interpretador escolhido; com uv desativa download de
+Python para não substituir uma instalação ausente. Sem seleção, conserva a
+precedência anterior. O template não impõe Python mínimo.
+
 Domínio novo no protocolo `0.98.0` (fatia 1 da cadeia Python, 2026-09-12).
 O interpretador é o `compile_commands.json` do Python: quem o resolve é
 `python::env` (a precedência do `roadmaps/29` §4.1), e é o MESMO que o
@@ -25,7 +36,7 @@ event.python.stubs    { jobId, success, package, command, target }
 PythonStatus   interpreter? (PythonEnv: interpreter, version?, origin, warning?),
                nativeModule? (PythonNativeModule: kind, tool, evidence[], buildHint;
                0.102.0),
-               hasEnvironment (origin != sistema), environmentTool? (uv|venv:
+               hasEnvironment (origin diferente de sistema e projeto), environmentTool? (uv|venv:
                o que a IDE usaria), uv? (caminho), projectFiles[] (pyproject.toml,
                requirements.txt, setup.py, uv.lock, poetry.lock, Pipfile),
                hint? (o que falta, com o remedio),

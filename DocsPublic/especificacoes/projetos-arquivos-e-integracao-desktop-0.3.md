@@ -323,6 +323,73 @@ Antes da implementação de abertura por clique, confrontar o uso atual com o
 modo preview de abas das referências. A decisão de preview/pin não pode ser
 substituída por “duplo clique faz o mesmo” sem discussão (§7).
 
+### 4.0 Ambiente e versão na criação — desenho de 2026-11-04
+
+Criar projeto deve permitir escolher uma ferramenta instalada antes da geração.
+C/C++ distinguem versão do compilador e padrão da linguagem; o padrão é editável,
+sem lista fechada, e vazio conserva o padrão da ferramenta. Rust distingue
+toolchain instalada e edição; Python seleciona o interpretador. A IDE não exige
+uma revisão fixa, não baixa runtimes ao criar e não troca uma escolha inválida
+por outra silenciosamente. Instalações adicionais ficam no fluxo de ferramentas.
+
+Referências consultadas em 2026-11-04, sem incorporar código: a seleção de
+[interpretadores do PyCharm](https://www.jetbrains.com/help/pycharm/configuring-python-interpreter.html)
+separa instalações e ambientes; o [rustup](https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file)
+aceita toolchain local por caminho. A tradução na Vectis usa os donos existentes
+de detecção, geração e resolução, preservando Qt/QML e IPC.
+
+O detector existente enumera executáveis nas pastas que já pesquisa, inclusive
+nomes com versão e instalações paralelas; caminhos alternativos são aceitos e
+validados no core. A UI mostra caminho e versão medidos, permite atualizar a
+lista e mantém a prévia coerente com a seleção. Uma pasta vazia não tem ambiente.
+Selecionar linguagem limpa escolhas incompatíveis. Cancelar não grava nada.
+
+O dono workspace gera a escolha em formatos consumidos pelos donos existentes:
+CMake Presets para compilador e propriedades por alvo para padrão C/C++;
+`rust-toolchain.toml` por caminho de toolchain local e edição no `Cargo.toml`;
+seleção local de interpretador Python lida pelo resolvedor único do ambiente.
+O resolvedor Python mantém ambientes virtuais do projeto prioritários; criar
+um ambiente usa o interpretador selecionado. Arquivo local inválido não deve
+silenciosamente executar outro Python. Versão ausente na criação não introduz
+`requires-python` arbitrário. Compatibilidade efetiva é validada pelas ferramentas.
+
+Contrato primeiro no protocolo 0.201.0: `workspace.projectEnvironments` e
+opções adicionais em `workspace.createProject`. A geração deve validar opções
+antes de criar o diretório. Provar escolhas simultâneas, caminho com espaços,
+troca de linguagem, opção inválida, build/execução e interação na UI existente.
+
+### 4.1 Integração e provas da seleção — 2026-11-04
+
+O assistente consulta instalações sem workspace aberto, exibe versões/caminhos
+e envia a seleção com a criação. A lista usa os diretórios do detector e
+instalações locais rustup, pyenv e uv; o campo de caminho cobre instalações
+fora deles. O padrão/edição é livre e opcional. O tipo `EnvironmentCreators`
+substitui o nome interno antigo do mesmo dono Python, sem novo serviço paralelo.
+
+Três regressões exercitam instalações Python paralelas controladas, recusa de
+seleção inválida, compilação real GCC/C90 e Clang/C23, C++17, padrão automático
+e Cargo local com edição 2021 e build offline. O arquivo rustup por caminho foi
+conferido pela ferramenta real. Consultas e criação desativam a instalação
+automática pelo [controle oficial do rustup](https://rust-lang.github.io/rustup/environment-variables.html).
+Um Cargo controlado falha se esse bloqueio não for enviado. O diretório de
+proxies é recusado antes de criar arquivos, pois não representa uma toolchain
+local. A regressão anterior de projeto C escolhe C23 explicitamente e continua
+cobrindo dialetos/reconfiguração. Três mutantes
+compiláveis eliminados: opções descartadas no handler, seleção Python ignorada
+e instalação automática do rustup habilitada.
+Os harnesses de catálogo e roteador validam payload, troca de linguagem,
+resposta e erro da descoberta.
+
+Na UI nativa, seleção de Clang e C99 apareceu na prévia e nos arquivos gerados.
+Após escolher Debug no fluxo existente, build e CTest 1/1 passaram; a CDB
+registrou o compilador escolhido e `-std=c99`. As versões são as instalações
+medidas, sem download na criação. A enumeração local não certifica SDKs remotos,
+Windows, todas as versões das linguagens ou compatibilidade de dependências.
+
+A verificação integrada da criação e dos headers aprovou 1450 Rust, Clippy,
+51 arquivos C++, 8 CTest e 178 QML; dois NÃO PROVADOS ARM por compiladores cross
+ausentes. Esse resultado não equivale ao gate completo estrito de release.
+
 ## 5. Fronteiras e proteções
 
 O caminho continua: gesto → controller existente → router/CoreClient → core

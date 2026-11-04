@@ -10,7 +10,7 @@
 
 > **RESUMO TÉCNICO (2026-11-04; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.200.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.201.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > Fronteira, auditoria inicial e bloqueadores em **62 §§1–3**.
@@ -36,23 +36,18 @@
 > metadados, documentação e pacotes Linux/Windows; release ainda não pronta.
 > Contexto externo Codex `/ide`: aceite da jornada ainda a provar (62 §5).
 >
-> **Provas da fatia (2026-11-03, §7.376):** 1430 Rust, 8 CTest, 178 QML;
-> rápido passa com dois NÃO PROVADOS de compiladores ARM; estrito reprova.
-> Jornada C11, quatro regressões novas, três mutações e clangd/GDB reais.
-> Verificador preservado; a prova host não encerra a vertical 0.4.
-> **Padrão C por alvo (2026-11-04, §7.378):** prévia/aplicação C23 na UI,
-> CMake/CDB/contexto/CTest; matriz C11/C17/C23 GCC/Clang e duas mutações.
-> Alcance parcial C1/C2; identidade de headers/LSP pendente.
-> Rápido verde: 1437 Rust, 8 CTest, 178 QML; dois NÃO PROVADOS ARM persistem.
-> **Projeto C (2026-11-04, §7.379):** template próprio e reconhecimento aberto
-> de dialetos; C90–C23 GCC/Clang, 48 casos de seletor, três mutantes.
-> Rápido verde: 1440 Rust, 8 CTest, 178 QML; etapa C permanece aberta.
+> **Jornadas C anteriores:** C11 de host (§7.376), padrão C por alvo
+> (§7.378) e projeto C próprio/dialetos abertos (§7.379), com regressões.
 > **Identidade documental C/C++ (2026-11-04, §7.380):** gramática e estrutura
 > por contexto, `languageId` por documento e reabertura com texto igual;
 > quatro regressões e três mutantes; gramática `typeof` permanece aberta.
 > **Referência de headers (§7.381):** alvo/fonte únicos orientam clangd;
 > ambiguidade/base manual explícitas, invalidação e buffers não salvos.
 > Sete regressões de identidade/headers e três mutantes; C1–C8 abertos.
+> **Ambiente na criação (§7.382):** ferramenta instalada e padrão/edição
+> escolhidos antes de gerar C/C++, Rust ou Python; prévia e persistência.
+> Rápido integrado verde: 1450 Rust, 8 CTest, 178 QML e 51 arquivos C++;
+> dois NÃO PROVADOS ARM por compiladores ausentes. Seis mutantes eliminados.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -61,12 +56,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.200.0 (crates/kinein-protocol, medido em 2026-11-04; o
+protocolo   0.201.0 (crates/kinein-protocol, medido em 2026-11-04; o
             historico das versoes e' o arquitetura/03)
-metodos     192 roteados e 63 eventos (os titulos do arquitetura/03, que o
+metodos     193 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   178 tst_*.qml em scripts/qml-harness (medido em 2026-11-02)
-testes      1444 Rust no gate rápido de 2026-11-04 (40.7 §7.380);
+testes      1450 Rust no gate rápido de 2026-11-04 (40.7 §7.382);
+            1444 Rust no gate rápido de 2026-11-04 (40.7 §7.380);
             1440 Rust no gate rápido de 2026-11-04 (40.7 §7.379);
             1437 Rust no gate rápido de 2026-11-04 (40.7 §7.378);
             1430 Rust no gate rápido de 2026-11-03 (40.7 §7.376);

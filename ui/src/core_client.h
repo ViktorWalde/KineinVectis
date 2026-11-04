@@ -84,7 +84,9 @@ public:
     Q_INVOKABLE void browseWorkspaceFolders(const QString& path);
     Q_INVOKABLE void createWorkspaceFolder(const QString& parent, const QString& name);
     Q_INVOKABLE void createWorkspaceProject(const QString& parent, const QString& name,
-                                            const QString& templateId);
+                                            const QString& templateId,
+                                            const QVariantMap& options = QVariantMap());
+    Q_INVOKABLE void projectEnvironments();
     Q_INVOKABLE void closeWorkspace();
     Q_INVOKABLE void trustWorkspace();
     Q_INVOKABLE void saveSession(const QStringList& openFiles, const QString& activeFile);
@@ -405,6 +407,7 @@ signals:
     void workspaceChanged();
     void workspaceTrustedChanged();
     void recentWorkspacesResolved(const QVariantList& workspaces);
+    void projectEnvironmentsResolved(const QVariantList& environments);
     void workspaceBrowseListed(const QString& path, const QString& parent,
                                const QVariantList& entries, const QVariantList& places);
     void workspaceFolderCreated(const QString& path);

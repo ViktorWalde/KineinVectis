@@ -111,8 +111,9 @@ Window {
         onCreateFolderRequested: function(parent, name) {
             core.createWorkspaceFolder(parent, name);
         }
-        onCreateProjectRequested: function(parent, name, templateId) {
-            core.createWorkspaceProject(parent, name, templateId);
+        onProjectEnvironmentsRequested: core.projectEnvironments()
+        onCreateProjectRequested: function(parent, name, templateId, options) {
+            core.createWorkspaceProject(parent, name, templateId, options);
         }
     }
 

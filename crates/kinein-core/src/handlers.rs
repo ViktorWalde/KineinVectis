@@ -66,5 +66,6 @@ pub mod toolchain_import;
 pub mod toolchain_install;
 pub mod tools;
 pub mod workspace;
+mod workspace_creation;
 pub mod workspace_trust;
 pub mod workspace_watch;

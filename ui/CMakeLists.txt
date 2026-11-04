@@ -379,6 +379,8 @@ set_source_files_properties(qml/workspace/FolderPickerController.qml PROPERTIES 
 set_source_files_properties(qml/workspace/FolderPickerHeader.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerHeader.qml)
 set_source_files_properties(qml/workspace/FolderPickerPathBar.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerPathBar.qml)
 set_source_files_properties(qml/workspace/FolderPickerCreatePanel.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCreatePanel.qml)
+set_source_files_properties(qml/workspace/ProjectEnvironmentFields.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEnvironmentFields.qml)
+set_source_files_properties(qml/workspace/ProjectOptionsController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectOptionsController.qml)
 set_source_files_properties(qml/workspace/ProjectTemplateCatalog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTemplateCatalog.qml)
 set_source_files_properties(qml/workspace/FolderPickerLanguageTile.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerLanguageTile.qml)
 set_source_files_properties(qml/workspace/StartActionTile.qml PROPERTIES QT_RESOURCE_ALIAS StartActionTile.qml)
@@ -833,6 +835,8 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/FolderPickerPathBar.qml
         qml/workspace/FolderPickerCreatePanel.qml
         qml/workspace/ProjectTemplateCatalog.qml
+        qml/workspace/ProjectEnvironmentFields.qml
+        qml/workspace/ProjectOptionsController.qml
         qml/workspace/FolderPickerLanguageTile.qml
         qml/workspace/StartActionTile.qml
         qml/workspace/FolderPickerDirectoryList.qml
@@ -988,6 +992,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp
+        src/core_client_workspace.cpp
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h

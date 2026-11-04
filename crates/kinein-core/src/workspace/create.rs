@@ -6,7 +6,7 @@ use std::{
     process::Command,
 };
 
-use kinein_protocol::{WorkspaceInfo, WorkspaceProjectTemplate};
+use kinein_protocol::{WorkspaceInfo, WorkspaceProjectOptions, WorkspaceProjectTemplate};
 
 use super::WorkspaceError;
 use super::open_workspace;
@@ -43,24 +43,35 @@ pub fn create_project(
     name: &str,
     template: WorkspaceProjectTemplate,
 ) -> Result<WorkspaceInfo, WorkspaceError> {
+    create_project_with_options(parent, name, template, &WorkspaceProjectOptions::default())
+}
+
+/// Creates a project with validated installed-tool and standard choices.
+pub fn create_project_with_options(
+    parent: &Path,
+    name: &str,
+    template: WorkspaceProjectTemplate,
+    options: &WorkspaceProjectOptions,
+) -> Result<WorkspaceInfo, WorkspaceError> {
+    super::project_options::validate(template, options)?;
     match template {
         WorkspaceProjectTemplate::Empty => {
             let root = create_directory(parent, name)?;
             open_workspace(&root)
         }
         WorkspaceProjectTemplate::CCmake => {
-            create_cmake_project(parent, name, super::cmake_template::Language::C)
+            create_cmake_project(parent, name, super::cmake_template::Language::C, options)
         }
         WorkspaceProjectTemplate::CppCmake => {
-            create_cmake_project(parent, name, super::cmake_template::Language::Cpp)
+            create_cmake_project(parent, name, super::cmake_template::Language::Cpp, options)
         }
-        WorkspaceProjectTemplate::RustCargo => create_rust_cargo_project(parent, name),
-        WorkspaceProjectTemplate::Python => create_python_project(parent, name),
+        WorkspaceProjectTemplate::RustCargo => create_rust_cargo_project(parent, name, options),
+        WorkspaceProjectTemplate::Python => create_python_project(parent, name, options),
     }
 }
 
 /// Um projeto Python como a PEP 621 escreve, sem rodar ferramenta nenhuma:
-/// `pyproject.toml` (nome, versao, `requires-python`, `[project.optional-
+/// `pyproject.toml` (nome, versao, `[project.optional-
 /// dependencies] dev = ["pytest"]`, `[tool.ruff]`, `[tool.pytest.ini_options]`
 /// com `pythonpath = ["."]`), `main.py` como ponto de entrada (o que o botao
 /// Executar procura primeiro), o pacote `<pacote>/__init__.py` NA RAIZ (layout
@@ -69,7 +80,11 @@ pub fn create_project(
 /// `tests/test_main.py`, `.gitignore` com o `.venv`. Criar o ambiente e' o
 /// clique da faixa de saude; instalar o pytest e' `uv add --dev pytest` ou
 /// `pip install -e .[dev]` — a IDE nao roda nada aqui.
-fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, WorkspaceError> {
+fn create_python_project(
+    parent: &Path,
+    name: &str,
+    options: &WorkspaceProjectOptions,
+) -> Result<WorkspaceInfo, WorkspaceError> {
     let parent = canonical_directory(parent)?;
     let name = validate_child_name(name, NameKind::Project)?;
     let root = parent.join(name);
@@ -93,7 +108,6 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
         format!("name = \"{name}\""),
         "version = \"0.1.0\"".to_owned(),
         "description = \"\"".to_owned(),
-        "requires-python = \">=3.12\"".to_owned(),
         "dependencies = []".to_owned(),
         String::new(),
         "[project.optional-dependencies]".to_owned(),
@@ -130,7 +144,7 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
         String::new(),
         String::new(),
         "def greet(person: str) -> str:".to_owned(),
-        "    return f\"Olá, {person}!\"".to_owned(),
+        "    return \"Olá, {}!\".format(person)".to_owned(),
     ]
     .join("\n")
         + "\n";
@@ -163,6 +177,13 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
     .join("\n")
         + "\n";
     write_template(&root.join("README.md"), &readme)?;
+    if let Some(executable) = options
+        .executable
+        .as_deref()
+        .filter(|value| !value.is_empty())
+    {
+        super::project_options::pin_python(&root, executable)?;
+    }
     open_workspace(&root)
 }
 
@@ -218,6 +239,7 @@ fn create_cmake_project(
     parent: &Path,
     name: &str,
     language: super::cmake_template::Language,
+    options: &WorkspaceProjectOptions,
 ) -> Result<WorkspaceInfo, WorkspaceError> {
     let parent = canonical_directory(parent)?;
     let name = validate_child_name(name, NameKind::Project)?;
@@ -241,11 +263,15 @@ fn create_cmake_project(
         })?;
     }
 
-    super::cmake_template::write(&root, name, language)?;
+    super::cmake_template::write(&root, name, language, options)?;
     open_workspace(&root)
 }
 
-fn create_rust_cargo_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, WorkspaceError> {
+fn create_rust_cargo_project(
+    parent: &Path,
+    name: &str,
+    options: &WorkspaceProjectOptions,
+) -> Result<WorkspaceInfo, WorkspaceError> {
     let parent = canonical_directory(parent)?;
     let name = validate_child_name(name, NameKind::Project)?;
     let root = parent.join(name);
@@ -255,20 +281,37 @@ fn create_rust_cargo_project(parent: &Path, name: &str) -> Result<WorkspaceInfo,
         });
     }
 
-    let output = Command::new("cargo")
+    let selected = options
+        .executable
+        .as_deref()
+        .filter(|value| !value.is_empty());
+    let mut command = Command::new(selected.unwrap_or("cargo"));
+    command.env("RUSTUP_AUTO_INSTALL", "0");
+    command
         .args(["new", "--bin", "--vcs", "none", name])
-        .current_dir(&parent)
-        .output()
-        .map_err(|source| {
-            if source.kind() == io::ErrorKind::NotFound {
-                WorkspaceError::MissingTool { tool: "cargo" }
-            } else {
-                WorkspaceError::CreateDirectory {
-                    path: root.display().to_string(),
-                    source,
-                }
+        .current_dir(&parent);
+    if let Some(standard) = options
+        .standard
+        .as_deref()
+        .filter(|value| !value.is_empty())
+    {
+        command.args(["--edition", standard]);
+    }
+    if let Some(executable) = selected {
+        let rustc =
+            Path::new(executable).with_file_name(if cfg!(windows) { "rustc.exe" } else { "rustc" });
+        command.env("RUSTC", rustc);
+    }
+    let output = command.output().map_err(|source| {
+        if source.kind() == io::ErrorKind::NotFound {
+            WorkspaceError::MissingTool { tool: "cargo" }
+        } else {
+            WorkspaceError::CreateDirectory {
+                path: root.display().to_string(),
+                source,
             }
-        })?;
+        }
+    })?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -280,6 +323,9 @@ fn create_rust_cargo_project(parent: &Path, name: &str) -> Result<WorkspaceInfo,
         });
     }
 
+    if let Some(executable) = selected {
+        super::project_options::pin_rust(&root, executable)?;
+    }
     open_workspace(&root)
 }
 
@@ -348,9 +394,9 @@ mod tests {
         assert!(root.join("tests").is_dir());
         assert!(root.join(".gitignore").is_file());
         let cmake = fs::read_to_string(root.join("CMakeLists.txt")).unwrap();
-        assert!(cmake.contains("-Werror"));
-        assert!(cmake.contains("target_compile_features"));
-        assert!(cmake.contains("cxx_std_23"));
+        assert!(cmake.contains("COMPILE_WARNING_AS_ERROR ON"));
+        assert!(!cmake.contains("target_compile_features"));
+        assert!(!cmake.contains("cxx_std_23"));
         assert!(!cmake.contains("CMAKE_CXX_STANDARD"));
         let presets = fs::read_to_string(root.join("CMakePresets.json")).unwrap();
         assert!(presets.contains("\"name\": \"debug\""));

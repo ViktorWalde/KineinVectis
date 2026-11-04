@@ -138,6 +138,18 @@ SUITES = {
          "&& self.header_matches(path)", "&& (self.header_matches(path) || !content.is_empty())",
          "tests::c_identity::headers::c_identity_header_wire_preserves_argv_and_invalidates_unsaved_buffers"),
     ]),
+    "project-creation": ("project_creation", [
+        ("creation_options", "crates/kinein-core/src/handlers/workspace_creation.rs",
+         "&params.options", "&Default::default()",
+         "tests::project_creation::project_creation_enumerates_parallel_versions_and_preserves_python_selection"),
+        ("python_selection", "crates/kinein-core/src/python/env.rs",
+         'if root.join(".kinein/python.json").exists() {',
+         'if root.join(".kinein/python.json").exists() && false {',
+         "tests::project_creation::project_creation_enumerates_parallel_versions_and_preserves_python_selection"),
+        ("rustup_download", "crates/kinein-core/src/workspace/create.rs",
+         '.env("RUSTUP_AUTO_INSTALL", "0")', '.env("RUSTUP_AUTO_INSTALL", "1")',
+         "tests::project_creation::project_creation_local_rust_toolchain_and_edition_are_used_without_downloads"),
+    ]),
     "c-project": ("c_project", [
         (
             "future_identifier",
@@ -156,8 +168,8 @@ SUITES = {
         (
             "c_template_language",
             "crates/kinein-core/src/workspace/create.rs",
-            "create_cmake_project(parent, name, super::cmake_template::Language::C)",
-            "create_cmake_project(parent, name, super::cmake_template::Language::Cpp)",
+            "create_cmake_project(parent, name, super::cmake_template::Language::C, options)",
+            "create_cmake_project(parent, name, super::cmake_template::Language::Cpp, options)",
             "tests::c_project::c_project_creation_build_context_standards_and_recovery_use_real_tools",
         ),
     ]),

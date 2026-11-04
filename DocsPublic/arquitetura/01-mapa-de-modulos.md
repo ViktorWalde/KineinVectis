@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 192 métodos IPC roteados pelo core.
+Medido: 193 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -290,14 +290,16 @@ flowchart LR
   n_core_toolchain --> n_core_tools
   n_core_tools --> n_core_msvc
   n_core_tools --> n_core_platform
+  n_core_tools --> n_core_process
   n_core_workspace --> n_core_configaction
   n_core_workspace --> n_core_fsops
   n_core_workspace --> n_core_platform
   n_core_workspace --> n_core_python
+  n_core_workspace --> n_core_tools
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-50 módulos, 151 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+50 módulos, 153 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -356,13 +358,13 @@ flowchart LR
 | `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
 | `toolchain` | platform, run, tools | Toolchain: |
-| `tools` | msvc, platform | External tool detection. |
-| `workspace` | configaction, fsops, platform, python | Workspace opening, project kind detection, and metadata persistence. |
+| `tools` | msvc, platform, process | External tool detection. |
+| `workspace` | configaction, fsops, platform, python, tools | Workspace opening, project kind detection, and metadata persistence. |
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 192 métodos roteados pelo core, 161 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 31 estão aqui,
+Dos 193 métodos roteados pelo core, 161 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 32 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -386,6 +388,7 @@ nomeados, para nada ficar invisível:
 | `workspace.close` | `ui/qml/Main.qml`, `ui/qml/command/CommandDispatcher.qml`, `ui/qml/shell/ShellHeaderHost.qml` |
 | `workspace.createFolder` | `ui/qml/Main.qml` |
 | `workspace.createProject` | `ui/qml/Main.qml` |
+| `workspace.projectEnvironments` | `ui/qml/Main.qml` |
 | `workspace.recent.clear` | `ui/qml/app/AppDomains.qml` |
 | `workspace.recent.list` | `ui/qml/app/AppDomains.qml` |
 | `workspace.recent.pin` | `ui/qml/app/AppDomains.qml` |
@@ -421,6 +424,7 @@ flowchart LR
     n_ui_src_core_client_log_cpp["core_client_log.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
+    n_ui_src_core_client_workspace_cpp["core_client_workspace.cpp"]
   end
   subgraph IPC["JSON-RPC"]
     n_ipc_cmake(["cmake.* · 1"])
@@ -447,6 +451,7 @@ flowchart LR
   n_ui_qml_ipc_WorkspaceEventRouter_qml -.-> n_ui_qml_workspace_RecentWorkspacesController_qml
   n_ui_qml_ipc_WorkspaceEventRouter_qml -.-> n_ui_qml_workspace_WorkspaceController_qml
   n_ui_qml_ipc_WorkspaceEventRouter_qml --> n_ui_src_core_client_requests_cpp
+  n_ui_qml_ipc_WorkspaceEventRouter_qml --> n_ui_src_core_client_workspace_cpp
   n_ui_src_core_client_cpp -.-> n_ui_qml_ipc_WorkspaceEventRouter_qml
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_WorkspaceEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_WorkspaceEventRouter_qml
@@ -456,7 +461,7 @@ flowchart LR
   n_ui_src_core_client_requests_cpp --> n_ipc_command
   n_ui_src_core_client_requests_cpp --> n_ipc_fs
   n_ui_src_core_client_requests_cpp --> n_ipc_tools
-  n_ui_src_core_client_requests_cpp --> n_ipc_workspace
+  n_ui_src_core_client_workspace_cpp --> n_ipc_workspace
   n_ipc_cmake --> n_crates_kinein_core_src_handlers_cmake_rs
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_cdb
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_rpc
@@ -486,6 +491,7 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_log.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
+| ponte C++ | `ui/src/core_client_workspace.cpp` |  |
 | handler Rust | `crates/kinein-core/src/handlers/cmake.rs` | Handlers for cmake.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
 | handler Rust | `crates/kinein-core/src/lib.rs` | Rust core for Kinein Vectis. |
@@ -511,6 +517,7 @@ flowchart LR
     n_ui_src_core_client_dispatch_lsp_cpp["core_client_dispatch_lsp.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
+    n_ui_src_core_client_workspace_cpp["core_client_workspace.cpp"]
   end
   subgraph IPC["JSON-RPC"]
     n_ipc_draft(["draft.* · 2"])
@@ -542,6 +549,7 @@ flowchart LR
   n_ui_qml_ipc_EditorEventRouter_qml -.-> n_ui_qml_workspace_LspStatusController_qml
   n_ui_qml_ipc_EditorRequestRouter_qml --> n_ui_src_core_client_cpp
   n_ui_qml_ipc_EditorRequestRouter_qml --> n_ui_src_core_client_requests_cpp
+  n_ui_qml_ipc_EditorRequestRouter_qml --> n_ui_src_core_client_workspace_cpp
   n_ui_src_core_client_cpp --> n_ipc_workspace
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_EditorEventRouter_qml
   n_ui_src_core_client_dispatch_lsp_cpp -.-> n_ui_qml_ipc_EditorEventRouter_qml
@@ -551,7 +559,7 @@ flowchart LR
   n_ui_src_core_client_requests_cpp --> n_ipc_fs
   n_ui_src_core_client_requests_cpp --> n_ipc_lsp
   n_ui_src_core_client_requests_cpp --> n_ipc_syntaxTree
-  n_ui_src_core_client_requests_cpp --> n_ipc_workspace
+  n_ui_src_core_client_workspace_cpp --> n_ipc_workspace
   n_ipc_draft --> n_crates_kinein_core_src_handlers_draft_rs
   n_crates_kinein_core_src_handlers_draft_rs --> n_core_rpc
   n_ipc_format --> n_crates_kinein_core_src_handlers_format_rs
@@ -583,6 +591,7 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch_lsp.cpp` | Dispatch do dominio LSP (ARCHITECTURE.md §5): |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_requests.cpp` |  |
+| ponte C++ | `ui/src/core_client_workspace.cpp` |  |
 | handler Rust | `crates/kinein-core/src/handlers/draft.rs` | Handlers de draft.* (autosave/rascunhos) — rede de segurança (DocsPublic/seguranca/23). |
 | handler Rust | `crates/kinein-core/src/handlers/format.rs` | Handlers for format.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/fs.rs` | Filesystem request router and mutation handlers. |
@@ -1172,8 +1181,8 @@ flowchart LR
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_remote_cpp["core_client_remote.cpp"]
-    n_ui_src_core_client_requests_cpp["core_client_requests.cpp"]
     n_ui_src_core_client_requests_run_cpp["core_client_requests_run.cpp"]
+    n_ui_src_core_client_workspace_cpp["core_client_workspace.cpp"]
   end
   subgraph IPC["JSON-RPC"]
     n_ipc_remote(["remote.* · 14"])
@@ -1203,8 +1212,8 @@ flowchart LR
   n_tools_remote[/"ssh · rsync"/]
   n_ui_qml_ipc_RemoteEventRouter_qml -.-> n_ui_qml_remote_RemoteController_qml
   n_ui_qml_ipc_RemoteRequestRouter_qml --> n_ui_src_core_client_remote_cpp
-  n_ui_qml_ipc_RemoteRequestRouter_qml --> n_ui_src_core_client_requests_cpp
   n_ui_qml_ipc_RemoteRequestRouter_qml --> n_ui_src_core_client_requests_run_cpp
+  n_ui_qml_ipc_RemoteRequestRouter_qml --> n_ui_src_core_client_workspace_cpp
   n_ui_qml_remote_RemoteController_qml --> n_ui_qml_ipc_RemoteRequestRouter_qml
   n_ui_qml_runtime_RuntimeController_qml --> n_ui_qml_ipc_RemoteRequestRouter_qml
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_RemoteEventRouter_qml
@@ -1212,8 +1221,8 @@ flowchart LR
   n_ui_src_core_client_remote_cpp --> n_ipc_remote
   n_ui_src_core_client_remote_cpp --> n_ipc_toolchain
   n_ui_src_core_client_remote_cpp -.-> n_ui_qml_ipc_RemoteEventRouter_qml
-  n_ui_src_core_client_requests_cpp --> n_ipc_workspace
   n_ui_src_core_client_requests_run_cpp --> n_ipc_runConfig
+  n_ui_src_core_client_workspace_cpp --> n_ipc_workspace
   n_ipc_remote --> n_crates_kinein_core_src_handlers_remote_rs
   n_crates_kinein_core_src_handlers_remote_rs --> n_core_jobs
   n_crates_kinein_core_src_handlers_remote_rs --> n_core_platform
@@ -1260,8 +1269,8 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_remote.cpp` | O ALVO LINUX POR SSH no lado da UI (P6 fatia 1 do roadmaps/42, 2026-09-17): |
-| ponte C++ | `ui/src/core_client_requests.cpp` |  |
 | ponte C++ | `ui/src/core_client_requests_run.cpp` | Dominio RUN no lado da UI: |
+| ponte C++ | `ui/src/core_client_workspace.cpp` |  |
 | handler Rust | `crates/kinein-core/src/handlers/remote.rs` | Handlers de remote.* (impl Core) — P6 fatia 1 do roadmaps/42, 2026-09-17. |
 | handler Rust | `crates/kinein-core/src/handlers/remote_command.rs` | remote.command (impl Core) — compor a linha, sem rodar nada. |
 | handler Rust | `crates/kinein-core/src/handlers/remote_directories.rs` | One-level remote directory browsing for the existing SSH mirror flow. |

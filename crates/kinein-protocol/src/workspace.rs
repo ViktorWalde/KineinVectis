@@ -311,7 +311,46 @@ pub struct WorkspaceCreateProjectParams {
     pub name: String,
     /// Template/scaffold to create.
     pub template: WorkspaceProjectTemplate,
+    /// Optional installed tool and language standard/edition selected at creation.
+    #[serde(default)]
+    pub options: WorkspaceProjectOptions,
 }
+
+/// Choices made before generating a project; empty means automatic.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WorkspaceProjectOptions {
+    /// Absolute compiler, local toolchain cargo, or Python interpreter path.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub executable: Option<String>,
+    /// Numeric C/C++ standard or Rust edition; no whitelist in the IDE.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub standard: Option<String>,
+}
+
+/// One installed executable available while creating a project.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectEnvironment {
+    /// Project language key.
+    pub language: String,
+    /// Absolute executable path, preserving a proxy's invocation name.
+    pub executable: String,
+    /// Version measured on this installation.
+    pub version: String,
+}
+
+/// Installed environments, without requiring an open workspace.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ProjectEnvironmentsResult {
+    /// Selectable installations, deduplicated by language and real path.
+    pub environments: Vec<ProjectEnvironment>,
+}
+
+/// Empty request for project environment discovery.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProjectEnvironmentsParams {}
 
 #[cfg(test)]
 mod tests {
@@ -416,6 +455,7 @@ mod tests {
             parent: "/tmp".to_owned(),
             name: "demo".to_owned(),
             template: WorkspaceProjectTemplate::CppCmake,
+            options: super::WorkspaceProjectOptions::default(),
         };
         let value = serde_json::to_value(params).unwrap();
 

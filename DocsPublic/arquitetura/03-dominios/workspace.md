@@ -6,6 +6,21 @@
 
 ### Workspace (`workspace.browse` / `workspace.createFolder` / `workspace.createProject` / `workspace.open` / `workspace.recent.*`)
 
+**0.201.0 — ambiente na criação:** `workspace.projectEnvironments {}` responde
+`{ environments: [{ language: "c|cpp|rust|python", executable, version }] }`,
+sem exigir workspace. Enumera ferramentas instaladas nos diretórios do detector
+e toolchains locais rustup, sem download. Consultas e criação Cargo usam
+`RUSTUP_AUTO_INSTALL=0`; runtime ausente exige instalação separada. A consulta não executa código de projeto.
+`workspace.createProject` aceita `options?: { executable?: string, standard?: string }`.
+`executable` é caminho absoluto do compilador, cargo de uma toolchain local
+(com rustc adjacente), ou interpretador Python. `standard` é identificador
+decimal positivo para C/C++, edição decimal para Rust; ausente/vazio não fixa
+padrão. Python não aceita padrão separado do interpretador. Opções incompatíveis
+ou ferramenta inválida são recusadas antes de criar arquivos.
+Os campos ausentes preservam seleção automática das ferramentas, sem exigir
+C23/C++23 ou Python mínimo fixo. A seleção chega aos consumidores conforme o
+[desenho de criação](../../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#40-ambiente-e-versão-na-criação--desenho-de-2026-11-04).
+
 `workspace.open` foi implementado no protocolo `0.3.0`. `workspace.browse`
 foi adicionado no protocolo `0.5.0` para o seletor proprio de workspace da UI.
 `workspace.createFolder` e `workspace.createProject` foram adicionados no
@@ -95,25 +110,21 @@ O core canonicaliza `parent`, valida que `name` é apenas um segmento de caminho
 e cria o diretório filho. A resposta é `{ "path": "/dir/modulo" }`.
 
 `workspace.createProject` recebe
-`{ "parent": "/dir", "name": "demo", "template": "empty|cCmake|cppCmake|rustCargo|python" }`.
+`{ "parent": "/dir", "name": "demo", "template": "empty|cCmake|cppCmake|rustCargo|python", "options": {} }`.
 O core cria o diretório do projeto, aplica o template e abre o projeto como
 workspace, retornando o mesmo payload de `workspace.open`.
 
 - `empty`: cria diretório vazio e persiste `.kinein/workspace.json`.
-- `cCmake` (`0.200.0`, 2026-11-04): projeto C/CMake com `src/main.c`
-  compatível com C90, `include/`, `tests/`, presets Ninja Debug/Release,
-  `.gitignore`, README e um teste CTest de execução. O alvo inicial exige C23
-  e extensões OFF pelo mesmo bloco gerado de `cmake.setCStandard`. Criar não
-  executa ferramenta; configurar/build validam o padrão na toolchain. A prévia
-  do seletor informa esse padrão inicial e a ação existente permite alterá-lo.
-  A escolha inicial não restringe padrões reconhecidos em projetos existentes.
-- `cppCmake`: cria projeto C++23/CMake strict e target-based com
-  `CMakeLists.txt`, presets Ninja Debug/Release, `src/main.cpp`, diretórios
-  `include/` e `tests/`, `.gitignore` e `README.md`.
+- `cCmake` e `cppCmake`: geram projeto C ou C++/CMake por alvo,
+  com `CMakeLists.txt`, presets Ninja Debug/Release, `src/main.c` ou
+  `src/main.cpp`, diretórios `include/` e `tests/`, `.gitignore` e `README.md`.
+  Padrão explícito é exigido no alvo, com extensões OFF; ausente conserva o
+  padrão do compilador. O executável escolhido é gravado nos presets.
+  C conserva fonte compatível com C90 e teste CTest de execução.
 - `rustCargo`: usa `cargo new --bin --vcs none`; se `cargo` não existir,
   retorna `TOOL_NOT_FOUND`.
 - `python` (`0.105.0`, 2026-09-13): geração interna, sem ferramenta —
-  `pyproject.toml` como a PEP 621 escreve (`requires-python = ">=3.12"`,
+  `pyproject.toml` como a PEP 621 escreve (sem mínimo de Python imposto;
   `[project.optional-dependencies] dev = ["pytest"]`, `[tool.ruff]`,
   `[tool.pytest.ini_options]` com `testpaths` e `pythonpath = ["."]`),
   `main.py` (o ponto de entrada que o botão Executar procura primeiro), o

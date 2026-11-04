@@ -15,7 +15,7 @@ use serde_json::{Value, json};
 
 use crate::Core;
 use crate::jobs::JobOutcome;
-use crate::python::{self, CriadoresDeAmbiente, PASTA_DO_AMBIENTE};
+use crate::python::{self, EnvironmentCreators, PASTA_DO_AMBIENTE};
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
 /// A chave do `ruff server` como companheiro do servidor `python`.
@@ -119,8 +119,8 @@ impl Core {
         }
     }
 
-    fn criadores_de_ambiente(&self) -> CriadoresDeAmbiente {
-        CriadoresDeAmbiente {
+    fn criadores_de_ambiente(&self) -> EnvironmentCreators {
+        EnvironmentCreators {
             uv: self.detector.find_in_path("uv"),
         }
     }

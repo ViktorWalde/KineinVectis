@@ -30,7 +30,7 @@ use std::process::Command;
 
 use kinein_protocol::{PythonEnvironmentTool, PythonStatus};
 
-use self::env::PythonTools;
+use self::env::{PythonTools, selected_interpreter};
 
 /// Nome da pasta que a IDE cria; e' a convencao que o uv cria por padrao e a
 /// que todo editor procura primeiro (29 §4.1).
@@ -48,16 +48,18 @@ const ARQUIVOS_DE_PROJETO: &[&str] = &[
 
 /// O que a IDE tem para criar ambiente nesta maquina.
 #[derive(Debug, Clone, Default)]
-pub struct CriadoresDeAmbiente {
+pub struct EnvironmentCreators {
     /// O `uv`, quando detectado.
     pub uv: Option<PathBuf>,
 }
 
 /// O estado do Python do workspace.
 #[must_use]
-pub fn status(root: &Path, tools: &PythonTools, criadores: &CriadoresDeAmbiente) -> PythonStatus {
+pub fn status(root: &Path, tools: &PythonTools, criadores: &EnvironmentCreators) -> PythonStatus {
     let interpreter = env::python_env(root, tools);
-    let has_environment = interpreter.as_ref().is_some_and(|e| e.origin != "sistema");
+    let has_environment = interpreter
+        .as_ref()
+        .is_some_and(|e| !matches!(e.origin.as_str(), "sistema" | "projeto"));
     let project_files: Vec<String> = ARQUIVOS_DE_PROJETO
         .iter()
         .filter(|f| root.join(f).is_file())
@@ -65,7 +67,7 @@ pub fn status(root: &Path, tools: &PythonTools, criadores: &CriadoresDeAmbiente)
         .collect();
     let environment_tool = if criadores.uv.is_some() {
         Some(PythonEnvironmentTool::Uv)
-    } else if tools.python_sistema.is_some() {
+    } else if tools.python_sistema.is_some() || selected_interpreter(root).is_some() {
         Some(PythonEnvironmentTool::Venv)
     } else {
         None
@@ -117,17 +119,31 @@ pub fn status(root: &Path, tools: &PythonTools, criadores: &CriadoresDeAmbiente)
 pub fn create_environment_command(
     root: &Path,
     tool: PythonEnvironmentTool,
-    criadores: &CriadoresDeAmbiente,
+    criadores: &EnvironmentCreators,
     python_sistema: Option<&Path>,
 ) -> Option<(Command, String)> {
+    if root.join(".kinein/python.json").exists() && selected_interpreter(root).is_none() {
+        return None;
+    }
     let (mut comando, rotulo) = match tool {
         PythonEnvironmentTool::Uv => {
             let mut c = Command::new(criadores.uv.as_deref()?);
             c.args(["venv", PASTA_DO_AMBIENTE]);
-            (c, format!("uv venv {PASTA_DO_AMBIENTE}"))
+            let label = selected_interpreter(root).map_or_else(
+                || format!("uv venv {PASTA_DO_AMBIENTE}"),
+                |path| {
+                    c.arg("--python").arg(&path).arg("--no-python-downloads");
+                    format!(
+                        "uv venv {PASTA_DO_AMBIENTE} --python {} --no-python-downloads",
+                        path.display()
+                    )
+                },
+            );
+            (c, label)
         }
         PythonEnvironmentTool::Venv => {
-            let py = python_sistema?;
+            let selected = selected_interpreter(root);
+            let py = selected.as_deref().or(python_sistema)?;
             let mut c = Command::new(py);
             c.args(["-m", "venv", PASTA_DO_AMBIENTE]);
             (c, format!("{} -m venv {PASTA_DO_AMBIENTE}", py.display()))

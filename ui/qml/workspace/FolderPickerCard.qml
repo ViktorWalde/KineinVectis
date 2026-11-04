@@ -78,6 +78,7 @@ Rectangle {
 
             visible: root.creatingProject && !root.choosingLocation
             controller: root.controller
+            maxPanelHeight: Math.max(180, root.maxAvailableHeight - footer.implicitHeight - 130)
         }
     }
 

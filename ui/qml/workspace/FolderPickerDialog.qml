@@ -20,7 +20,11 @@ Item {
     signal openRequested(string path)
     signal folderPicked(string purpose, string path)
     signal createFolderRequested(string parent, string name)
-    signal createProjectRequested(string parent, string name, string templateId)
+    signal createProjectRequested(string parent, string name, string templateId, var options)
+    signal projectEnvironmentsRequested()
+
+    function setProjectEnvironments(entries) { folderPickerController.projectOptions.resolved(entries); }
+    function projectEnvironmentsFailed(message) { folderPickerController.projectOptions.failed(message); }
 
     function open(startPath) {
         picker.visible = true;
@@ -104,8 +108,9 @@ Item {
         onCreateFolderRequested: function(parent, name) {
             picker.createFolderRequested(parent, name);
         }
-        onCreateProjectRequested: function(parent, name, templateId) {
-            picker.createProjectRequested(parent, name, templateId);
+        onProjectEnvironmentsRequested: picker.projectEnvironmentsRequested()
+        onCreateProjectRequested: function(parent, name, templateId, options) {
+            picker.createProjectRequested(parent, name, templateId, options);
         }
         onPathFocusRequested: card.focusPath()
         onCreateFocusRequested: card.focusCreateName()

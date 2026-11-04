@@ -30,6 +30,7 @@ Item {
         signal pathDeleted(string path)
         signal filesChanged(var changes)
         signal workspaceBrowseListed(string path, string parent, var entries, var places)
+        signal projectEnvironmentsResolved(var environments)
         signal workspaceFolderCreated(string path)
         signal recentWorkspacesResolved(var workspaces)
         signal toolsListed(var tools)
@@ -45,7 +46,11 @@ Item {
     QtObject {
         id: picker
         property int closed: 0
+        property var environments: []
+        property string environmentError: ""
         function close() { picker.closed++; }
+        function setProjectEnvironments(entries) { environments = entries; }
+        function projectEnvironmentsFailed(message) { environmentError = message; }
     }
     QtObject {
         id: workspace
@@ -62,6 +67,9 @@ Item {
         folderPicker: picker
         workspaceController: workspace
         projectHealthController: health
+        recentWorkspacesController: QtObject {
+            function handleRequestFailed(method, message) {}
+        }
     }
     Component.onCompleted: {
         bridge.workspaceChanged();
@@ -74,6 +82,11 @@ Item {
         bridge.fileSaved("/p/CMakeLists.txt");
         const trusted = bridge.configures === 1 && JSON.stringify(health.trust) === "[true]";
         if (!trusted) console.error("FALHOU: com confiança: " + bridge.configures + " " + JSON.stringify(health.trust));
-        Qt.exit(ok && withoutTrust && trusted ? 0 : 1);
+        bridge.projectEnvironmentsResolved([{language: "c", executable: "/old/gcc", version: "GCC 10"},
+                                            {language: "c", executable: "/new/gcc", version: "GCC 16"}]);
+        bridge.requestFailed("workspace.projectEnvironments", "scan failed");
+        const environments = picker.environments.length === 2 && picker.environmentError === "scan failed";
+        if (!environments) console.error("FALHOU: resultado/erro de ambientes não chegou ao seletor");
+        Qt.exit(ok && withoutTrust && trusted && environments ? 0 : 1);
     }
 }

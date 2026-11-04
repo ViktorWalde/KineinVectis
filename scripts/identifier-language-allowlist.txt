@@ -225,3 +225,6 @@ contextual homogeneous modern producers duplicated
 extern
 # Structural index: remove duplicates and rank the more specific declaration.
 deduplicate specificity
+
+creators # English: tools that create a project environment.
+pyenv # Official Python version manager; installed versions are enumerated locally.

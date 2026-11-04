@@ -36,7 +36,7 @@ impl Project {
         };
         let created = project.call(
             "workspace.createProject",
-            json!({"parent":project.parent,"name":"starter","template":"cCmake"}),
+            json!({"parent":project.parent,"name":"starter","template":"cCmake","options":{"standard":"23"}}),
         );
         assert_eq!(created["kind"], "cmake");
         assert_eq!(created["trusted"], true);
@@ -171,7 +171,7 @@ fn c_project_creation_build_context_standards_and_recovery_use_real_tools() {
         let collision = project.core.handle_request(&JsonRpcRequest::new(
             2_i64,
             "workspace.createProject",
-            Some(json!({"parent":project.parent,"name":"starter","template":"cCmake"})),
+            Some(json!({"parent":project.parent,"name":"starter","template":"cCmake","options":{"standard":"23"}})),
         ));
         assert!(collision.response().error.is_some());
         assert_eq!(std::fs::read_to_string(source).unwrap(), original);

@@ -6,9 +6,8 @@ use std::path::{Path, PathBuf};
 use kinein_protocol::{
     DraftInfo, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, RecentWorkspacePinParams,
     RecentWorkspaceRemoveParams, RecentWorkspacesParams, RecentWorkspacesResult,
-    WorkspaceBrowseParams, WorkspaceCreateFolderParams, WorkspaceCreateFolderResult,
-    WorkspaceCreateProjectParams, WorkspaceInfo, WorkspaceOpenParams, WorkspaceSaveSessionParams,
-    WorkspaceSaveSessionResult,
+    WorkspaceBrowseParams, WorkspaceCreateFolderParams, WorkspaceCreateFolderResult, WorkspaceInfo,
+    WorkspaceOpenParams, WorkspaceSaveSessionParams, WorkspaceSaveSessionResult,
 };
 use serde_json::{Value, json};
 
@@ -260,7 +259,7 @@ impl Core {
     /// Regra: quem acrescentar estado por-workspace ao `Core` acrescenta a
     /// troca dele AQUI, e em lugar nenhum mais. Verificado por
     /// `scripts/verificar-transicao-workspace.sh`.
-    fn activate_workspace(
+    pub(super) fn activate_workspace(
         &mut self,
         opened: &WorkspaceInfo,
     ) -> Result<(), crate::terminal::TerminalError> {
@@ -413,41 +412,6 @@ impl Core {
                     path: path.display().to_string(),
                 }),
             ),
-            Err(error) => workspace_error_response(request_id, &error),
-        }
-    }
-
-    pub(crate) fn create_workspace_project_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let params = match parse_params::<WorkspaceCreateProjectParams>(
-            request_id.as_ref(),
-            params,
-            "workspace.createProject requer parent, name e template",
-        ) {
-            Ok(parsed) => parsed,
-            Err(response) => return *response,
-        };
-        match workspace::create_project(Path::new(&params.parent), &params.name, params.template) {
-            Ok(mut opened) => {
-                // O projeto que a IDE criou nasce confiavel (16.4b).
-                opened.trusted = true;
-                self.remember_trust(&opened.root);
-                if let Err(error) = self.activate_workspace(&opened) {
-                    return terminal_error_response(
-                        request_id,
-                        &crate::terminal::TerminalError::Process {
-                            message: format!(
-                                "O projeto foi criado em {}, mas não foi possível trocar de projeto: {error}",
-                                opened.root
-                            ),
-                        },
-                    );
-                }
-                JsonRpcResponse::success(request_id, json!(opened))
-            }
             Err(error) => workspace_error_response(request_id, &error),
         }
     }

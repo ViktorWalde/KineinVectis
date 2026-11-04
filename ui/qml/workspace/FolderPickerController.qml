@@ -16,6 +16,9 @@ Item {
     property string createLanguage: ""
     property string createTemplate: ""
     readonly property ProjectTemplateCatalog templateCatalog: ProjectTemplateCatalog {}
+    readonly property ProjectOptionsController projectOptions: ProjectOptionsController {
+        onEnvironmentsRequested: root.projectEnvironmentsRequested()
+    }
     // No "Criar projeto" o navegador de pastas fica recolhido; "Alterar
     // local..." o abre (0.3.8).
     property bool createBrowsing: false
@@ -62,7 +65,8 @@ Item {
     signal openRequested(string path)
     signal folderPicked(string purpose, string path)
     signal createFolderRequested(string parent, string name)
-    signal createProjectRequested(string parent, string name, string templateId)
+    signal createProjectRequested(string parent, string name, string templateId, var options)
+    signal projectEnvironmentsRequested()
     signal pathFocusRequested()
     signal createFocusRequested()
 
@@ -263,6 +267,7 @@ Item {
 
     // Escolher a linguagem seleciona o primeiro ecossistema dela.
     function chooseLanguage(key) {
+        if (createLanguage !== key) projectOptions.reset();
         createLanguage = key;
         createTemplate = templateCatalog.defaultTemplate(key);
         errorText = "";
@@ -271,12 +276,15 @@ Item {
     // O template ja' traz a linguagem (o comando da paleta, ou quem abrir com
     // um template); vazio deixa os dois por escolher.
     function chooseTemplate(templateId) {
+        projectOptions.reset();
         createLanguage = templateCatalog.languageOf(templateId);
         createTemplate = createLanguage !== "" ? templateId : "";
         errorText = "";
     }
 
     function beginCreateProject() {
+        projectOptions.reset();
+        projectOptions.refresh();
         createMode = "project";
         createBrowsing = false;
         errorText = "";
@@ -294,7 +302,7 @@ Item {
             errorText = qsTr("Escolha a linguagem do projeto.");
             return;
         }
-        createProjectRequested(currentPath, name, createTemplate);
+        createProjectRequested(currentPath, name, createTemplate, projectOptions.payload());
     }
 
     // A pasta nova foi criada: a linha fecha e ela vem selecionada.
