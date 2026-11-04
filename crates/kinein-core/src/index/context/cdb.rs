@@ -147,6 +147,8 @@ fn parse_entry(entry: &Value, line: usize, column: usize) -> Option<(PathBuf, Cd
             unit.defines.push(v);
         } else if let Some(v) = arg.strip_prefix("-std=") {
             unit.standard = Some(v.to_owned());
+        } else if matches!(arg.as_str(), "-ansi" | "--ansi") {
+            unit.standard = Some(arg.clone());
         } else if let Some(v) = take_value("-o") {
             unit.output.get_or_insert(v);
         }

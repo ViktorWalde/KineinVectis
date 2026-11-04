@@ -290,13 +290,14 @@ flowchart LR
   n_core_toolchain --> n_core_tools
   n_core_tools --> n_core_msvc
   n_core_tools --> n_core_platform
+  n_core_workspace --> n_core_configaction
   n_core_workspace --> n_core_fsops
   n_core_workspace --> n_core_platform
   n_core_workspace --> n_core_python
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-50 módulos, 150 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+50 módulos, 151 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -356,7 +357,7 @@ flowchart LR
 | `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
 | `toolchain` | platform, run, tools | Toolchain: |
 | `tools` | msvc, platform | External tool detection. |
-| `workspace` | fsops, platform, python | Workspace opening, project kind detection, and metadata persistence. |
+| `workspace` | configaction, fsops, platform, python | Workspace opening, project kind detection, and metadata persistence. |
 
 ## Cobertura: todo método IPC tem um lugar
 

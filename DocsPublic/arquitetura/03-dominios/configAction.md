@@ -10,10 +10,18 @@
 `cmake.setCStandard`, título "Fixar o padrão C do alvo", escopo `cmake`,
 categoria "CMake Rigor", risco `medium` e efeito `edit`, afeta somente
 `CMakeLists.txt`. Parâmetros string: `target` obrigatório, `standard`
-opcional (`90`, `99`, `11`, `17`, `23`; ausência/vazio escolhe `23`) e
+opcional (identificador decimal positivo para `C_STANDARD`; ausência/vazio escolhe `23`) e
 `extensions` opcional (`OFF`, `ON`; ausência/vazio escolhe `OFF`). A listagem
 oferece sugestões e descrições próprias de C; `standard` em `setCxxStandard`
 conserva seus valores C++.
+
+**Desde `0.200.0` (2026-11-04)**, os exemplos `90`, `99`, `11`, `17`, `23`
+não limitam os valores numéricos de `standard`. A prévia/aplicação aceitam
+valores futuros sem uma nova lista na IDE; configurar/build validam sua
+disponibilidade no CMake/toolchain. Blocos exatos da receita com esses valores
+também podem ser atualizados. Sintaxe inválida/injeção continua `INVALID_PARAMS`.
+Aliases de driver permanecem no projeto/CDB; não se convertem em propriedades
+CMake por aproximação. Ler um projeto C não depende desta receita ou sugestões.
 
 A prévia escreve propriedades do alvo: `C_STANDARD`,
 `C_STANDARD_REQUIRED ON`, `C_EXTENSIONS`. Não muda variáveis globais/presets

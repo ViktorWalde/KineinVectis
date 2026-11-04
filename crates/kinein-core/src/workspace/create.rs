@@ -48,7 +48,12 @@ pub fn create_project(
             let root = create_directory(parent, name)?;
             open_workspace(&root)
         }
-        WorkspaceProjectTemplate::CppCmake => create_cpp_cmake_project(parent, name),
+        WorkspaceProjectTemplate::CCmake => {
+            create_cmake_project(parent, name, super::cmake_template::Language::C)
+        }
+        WorkspaceProjectTemplate::CppCmake => {
+            create_cmake_project(parent, name, super::cmake_template::Language::Cpp)
+        }
         WorkspaceProjectTemplate::RustCargo => create_rust_cargo_project(parent, name),
         WorkspaceProjectTemplate::Python => create_python_project(parent, name),
     }
@@ -209,7 +214,11 @@ fn validate_child_name(name: &str, kind: NameKind) -> Result<&str, WorkspaceErro
     Ok(trimmed)
 }
 
-fn create_cpp_cmake_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, WorkspaceError> {
+fn create_cmake_project(
+    parent: &Path,
+    name: &str,
+    language: super::cmake_template::Language,
+) -> Result<WorkspaceInfo, WorkspaceError> {
     let parent = canonical_directory(parent)?;
     let name = validate_child_name(name, NameKind::Project)?;
     let root = parent.join(name);
@@ -232,48 +241,7 @@ fn create_cpp_cmake_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, 
         })?;
     }
 
-    write_template(
-        &root.join("CMakeLists.txt"),
-        &format!(
-            "cmake_minimum_required(VERSION 3.24)\n\n\
-             project({name}\n\
-                 VERSION 0.1.0\n\
-                 LANGUAGES CXX\n\
-             )\n\n\
-             add_executable({name}\n\
-                 src/main.cpp\n\
-             )\n\n\
-             target_compile_features({name}\n\
-                 PRIVATE\n\
-                     cxx_std_23\n\
-             )\n\n\
-             target_include_directories({name}\n\
-                 PRIVATE\n\
-                     ${{CMAKE_CURRENT_SOURCE_DIR}}/include\n\
-             )\n\n\
-             target_compile_options({name} PRIVATE\n\
-                 -Wall -Wextra -Wpedantic -Werror\n\
-                 -Wconversion -Wsign-conversion -Wshadow\n\
-             )\n"
-        ),
-    )?;
-    write_template(
-        &root.join("CMakePresets.json"),
-        "{\n  \"version\": 6,\n  \"configurePresets\": [\n    {\n      \"name\": \"debug\",\n      \"displayName\": \"Debug\",\n      \"generator\": \"Ninja\",\n      \"binaryDir\": \"${sourceDir}/build/debug\",\n      \"cacheVariables\": {\n        \"CMAKE_BUILD_TYPE\": \"Debug\",\n        \"CMAKE_EXPORT_COMPILE_COMMANDS\": \"ON\"\n      }\n    },\n    {\n      \"name\": \"release\",\n      \"displayName\": \"Release\",\n      \"generator\": \"Ninja\",\n      \"binaryDir\": \"${sourceDir}/build/release\",\n      \"cacheVariables\": {\n        \"CMAKE_BUILD_TYPE\": \"Release\",\n        \"CMAKE_EXPORT_COMPILE_COMMANDS\": \"ON\"\n      }\n    }\n  ],\n  \"buildPresets\": [\n    {\n      \"name\": \"debug\",\n      \"configurePreset\": \"debug\"\n    },\n    {\n      \"name\": \"release\",\n      \"configurePreset\": \"release\"\n    }\n  ]\n}\n",
-    )?;
-    write_template(
-        &src.join("main.cpp"),
-        "#include <iostream>\n\nint main()\n{\n    std::cout << \"Kinein Vectis\" << '\\n';\n    return 0;\n}\n",
-    )?;
-    write_template(
-        &root.join("README.md"),
-        &format!("# {name}\n\nProjeto C++/CMake strict criado pelo Kinein Vectis.\n"),
-    )?;
-    write_template(
-        &root.join(".gitignore"),
-        "/build/\n/.cache/\n/compile_commands.json\n",
-    )?;
-
+    super::cmake_template::write(&root, name, language)?;
     open_workspace(&root)
 }
 
@@ -315,7 +283,7 @@ fn create_rust_cargo_project(parent: &Path, name: &str) -> Result<WorkspaceInfo,
     open_workspace(&root)
 }
 
-fn write_template(path: &Path, content: &str) -> Result<(), WorkspaceError> {
+pub(super) fn write_template(path: &Path, content: &str) -> Result<(), WorkspaceError> {
     fs::write(path, content).map_err(|source| WorkspaceError::WriteTemplate {
         path: path.display().to_string(),
         source,

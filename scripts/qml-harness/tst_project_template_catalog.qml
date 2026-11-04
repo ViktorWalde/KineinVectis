@@ -32,14 +32,16 @@ Item {
         const catalog = picker.templateCatalog;
         let failures = 0;
 
-        // Os quatro templates do contrato (`WorkspaceProjectTemplate`), cada
+        // Os cinco templates do contrato (`WorkspaceProjectTemplate`), cada
         // um com a sua linguagem.
-        const expected = { cppCmake: "cpp", rustCargo: "rust", python: "python", empty: "empty" };
+        const expected = { cCmake: "c", cppCmake: "cpp", rustCargo: "rust", python: "python", empty: "empty" };
         for (const templateId in expected) {
             failures += check(catalog.languageOf(templateId) === expected[templateId],
                               "linguagem de " + templateId);
         }
-        failures += check(catalog.languages.length === 4, "quatro linguagens");
+        failures += check(catalog.languages.length === 5, "cinco linguagens");
+        failures += check(catalog.language("c").label === "C" && catalog.language("cpp").label === "C++",
+                          "C e C++ separados");
         failures += check(catalog.language("python").label === "Python", "Python na lista");
         failures += check(catalog.languageOf("platformIo") === "", "template desconhecido sem dono");
 
@@ -72,6 +74,13 @@ Item {
         failures += check(catalog.preview("rustCargo", "x").indexOf("cargo new --bin --vcs none x") >= 0,
                           "previa rust mostra o comando");
         failures += check(catalog.preview("", "x").indexOf("Escolha") === 0, "previa sem escolha");
+        const cPreview = catalog.preview("cCmake", "sensor");
+        failures += check(cPreview.indexOf("C23") >= 0 && cPreview.indexOf("src/main.c") >= 0
+                          && cPreview.indexOf("src/main.cpp") < 0, "previa C explicita: " + cPreview);
+        picker.chooseLanguage("c");
+        picker.submitCreate();
+        failures += check(root.created[root.created.length - 1] === "/home/x|demo|cCmake",
+                          "escolha C usa template proprio");
 
         if (failures !== 0) console.error("FALHAS=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

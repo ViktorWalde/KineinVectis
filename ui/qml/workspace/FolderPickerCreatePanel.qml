@@ -56,7 +56,8 @@ Item {
                 delegate: FolderPickerLanguageTile {
                     required property var modelData
 
-                    width: (tiles.width - 3 * tiles.spacing) / 4
+                    width: (tiles.width - (root.catalog.languages.length - 1) * tiles.spacing)
+                           / root.catalog.languages.length
                     language: modelData
                     selected: root.controller.createLanguage === modelData.key
                     onChosen: {

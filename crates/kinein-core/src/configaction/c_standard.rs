@@ -11,7 +11,12 @@ use super::{
     required_param,
 };
 
-pub(super) const STANDARDS: &[&str] = &["90", "99", "11", "17", "23"];
+pub(super) const SUGGESTED_STANDARDS: &[&str] = &["90", "99", "11", "17", "23"];
+
+fn numeric_standard(value: &str) -> bool {
+    value.starts_with(|c: char| c.is_ascii_digit() && c != '0')
+        && value.bytes().all(|c| c.is_ascii_digit())
+}
 
 pub(super) fn plan(
     root: &Path,
@@ -25,10 +30,10 @@ pub(super) fn plan(
         return Err(manual("nome de alvo fora do recorte literal"));
     }
     let standard = optional_param(params, "standard").unwrap_or("23").trim();
-    if !STANDARDS.contains(&standard) {
+    if !numeric_standard(standard) {
         return Err(ConfigActionError::InvalidParam {
             name: "standard",
-            reason: "use C90, C99, C11, C17 ou C23: 90, 99, 11, 17, 23".to_owned(),
+            reason: "informe um identificador decimal positivo de C_STANDARD; o CMake valida o suporte (ex.: 90, 99, 11, 17, 23)".to_owned(),
         });
     }
     let extensions = optional_param(params, "extensions").unwrap_or("OFF").trim();
@@ -42,26 +47,29 @@ pub(super) fn plan(
     let original_commands = commands(&before)?;
     let marker = format!("# Kinein: padrão C do alvo {target}\n");
     let mut existing = None;
-    for old_standard in STANDARDS {
-        for old_extensions in ["OFF", "ON"] {
+    for command in &original_commands {
+        if let [
+            name,
+            properties,
+            standard_key,
+            old_standard,
+            required_key,
+            required,
+            extensions_key,
+            old_extensions,
+        ] = command.args.as_slice()
+            && command.name == "set_target_properties"
+            && name == &target
+            && properties == "PROPERTIES"
+            && standard_key == "C_STANDARD"
+            && numeric_standard(old_standard)
+            && required_key == "C_STANDARD_REQUIRED"
+            && required == "ON"
+            && extensions_key == "C_EXTENSIONS"
+            && matches!(old_extensions.as_str(), "OFF" | "ON")
+        {
             let block = block(&target, old_standard, old_extensions);
             if before.contains(&block) {
-                let expected = [
-                    target.as_str(),
-                    "PROPERTIES",
-                    "C_STANDARD",
-                    old_standard,
-                    "C_STANDARD_REQUIRED",
-                    "ON",
-                    "C_EXTENSIONS",
-                    old_extensions,
-                ];
-                if !original_commands.iter().any(|command| {
-                    command.name == "set_target_properties"
-                        && command.args.iter().map(String::as_str).eq(expected)
-                }) {
-                    return Err(manual("bloco de padrão C não é um comando literal"));
-                }
                 if existing.is_some() || before.matches(&block).count() != 1 {
                     return Err(manual("bloco de padrão C duplicado"));
                 }
@@ -72,7 +80,7 @@ pub(super) fn plan(
     let remaining = existing
         .as_ref()
         .map_or_else(|| before.clone(), |old| before.replacen(old, "", 1));
-    if remaining.lines().any(|line| line == marker.trim()) {
+    if remaining.contains(&marker) {
         return Err(manual("bloco de padrão C alterado manualmente"));
     }
     validate(&commands(&remaining)?, &target)?;
@@ -88,7 +96,8 @@ pub(super) fn plan(
      .with_note("A edição ainda precisa de Configurar/build. Confira o padrão efetivo no contexto; a toolchain pode recusar o padrão exigido."))
 }
 
-fn block(target: &str, standard: &str, extensions: &str) -> String {
+/// Bloco canonico compartilhado pela receita e pelo template de projeto C.
+pub(super) fn block(target: &str, standard: &str, extensions: &str) -> String {
     format!(
         "# Kinein: padrão C do alvo {target}\nset_target_properties({target} PROPERTIES\n    C_STANDARD {standard}\n    C_STANDARD_REQUIRED ON\n    C_EXTENSIONS {extensions}\n)\n"
     )
@@ -180,6 +189,21 @@ mod tests {
     }
 
     #[test]
+    fn c_standard_future_values_can_be_previewed_and_replaced_without_a_new_enum() {
+        let p = Project::new("future", SOURCE);
+        let future = p.plan("app", "2099").unwrap();
+        assert!(future.files[0].after.contains("C_STANDARD 2099"));
+        std::fs::write(p.0.join(CMAKELISTS), &future.files[0].after).unwrap();
+        let updated = p.plan("app", "26").unwrap();
+        assert_eq!(
+            updated.files[0].after.matches("# Kinein: padrão C").count(),
+            1
+        );
+        assert!(!updated.files[0].after.contains("C_STANDARD 2099"));
+        assert!(updated.files[0].after.contains("C_STANDARD 26"));
+    }
+
+    #[test]
     fn c_standard_refuses_manual_dialect_properties_and_dynamic_sources() {
         for (index, extra) in [
             "set_target_properties(app legacy PROPERTIES C_STANDARD 11)",
@@ -230,15 +254,22 @@ mod tests {
     }
 
     #[test]
-    fn c_standard_validates_closed_choices_and_literal_target() {
+    fn c_standard_validates_numeric_values_and_literal_target() {
         let p = Project::new("params", SOURCE);
-        for standard in ["20", "2y", "gnu23", "23)\nmessage(FATAL_ERROR bad)"] {
+        for standard in [
+            "0",
+            "-1",
+            "02",
+            "2y",
+            "gnu23",
+            "23)\nmessage(FATAL_ERROR bad)",
+        ] {
             assert!(p.plan("app", standard).is_err());
         }
         for target in ["missing", "${app}", "app;legacy", "app/legacy"] {
             assert!(p.plan(target, "23").is_err());
         }
-        for standard in STANDARDS {
+        for standard in SUGGESTED_STANDARDS.iter().copied().chain(["26", "2099"]) {
             assert!(p.plan("app", standard).is_ok());
         }
         let params = BTreeMap::from([

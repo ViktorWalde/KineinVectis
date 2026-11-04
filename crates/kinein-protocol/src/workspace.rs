@@ -271,6 +271,8 @@ pub struct WorkspaceBrowseResult {
 pub enum WorkspaceProjectTemplate {
     /// Empty directory opened as an unknown project.
     Empty,
+    /// C console project using `CMake`, initially requiring C23 per target.
+    CCmake,
     /// Strict C++ console project using `CMake`.
     CppCmake,
     /// Rust binary project created through `cargo new`.
@@ -418,5 +420,14 @@ mod tests {
         let value = serde_json::to_value(params).unwrap();
 
         assert_eq!(value["template"], "cppCmake");
+        let c_template: WorkspaceCreateProjectParams = serde_json::from_value(json!({
+            "parent":"/tmp", "name":"demo", "template":"cCmake"
+        }))
+        .unwrap();
+        assert_eq!(c_template.template, WorkspaceProjectTemplate::CCmake);
+        assert_eq!(
+            serde_json::to_value(c_template).unwrap()["template"],
+            "cCmake"
+        );
     }
 }

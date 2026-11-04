@@ -13,8 +13,9 @@
 
 ## Objetivo
 
-A versão `0.199.0` acrescenta a ação de padrão C por alvo, com prévia e
-aplicação explícita, conforme o [domínio configAction](03-dominios/configAction.md).
+A versão `0.200.0` acrescenta o template de projeto C no
+[domínio workspace](03-dominios/workspace.md) e abre os valores numéricos da
+configuração C no [domínio configAction](03-dominios/configAction.md).
 
 O protocolo IPC permite comunicação entre:
 

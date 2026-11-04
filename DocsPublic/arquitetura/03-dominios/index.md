@@ -85,7 +85,10 @@ job, logo depois dos arquivos:
   `directory` e a chave é o caminho **real** (`canonicalize`), porque a CDB do
   Ninja/Meson escreve `../src/a.cpp` e o editor pergunta pelo absoluto.
   `-I`/`-isystem`/`-iquote` colados ou separados viram `includes` absolutos;
-  `-D` viram `defines`; `-std=` vira `standard`; `output` vence `-o`. O resto
+  `-D` viram `defines`; `-std=` vira `standard` sem lista fechada de valores;
+  `-ansi`/`--ansi` conservam a grafia do seletor em `standard`, sem inferir
+  uma revisão a partir dele. Ausência de seletor conserva o campo ausente.
+  `output` vence `-o`. O resto
   segue inteiro em `arguments`. Cabeçalho não tem unidade própria e a `hint`
   diz isso (o clangd deduz pela unidade que o inclui); fonte fora da CDB diz
   "nenhum alvo o compila" — ou, se a CDB envelheceu, qual arquivo a envelheceu.

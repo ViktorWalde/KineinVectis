@@ -5,6 +5,7 @@
 
 mod build;
 mod c_host;
+mod c_project;
 mod cargo;
 #[cfg(windows)]
 mod clangd_windows;

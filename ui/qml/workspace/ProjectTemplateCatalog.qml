@@ -16,7 +16,21 @@ QtObject {
 
     readonly property var languages: [
         {
-            "key": "cpp", "label": "C/C++", "iconFile": "main.cpp",
+            "key": "c", "label": "C", "iconFile": "main.c",
+            "ecosystems": [
+                {
+                    "template": "cCmake", "label": "CMake",
+                    "detail": qsTr("C23 inicial, alterável por alvo; Ninja e CTest"),
+                    "files": ["CMakeLists.txt  · C23 exigido no alvo, extensões OFF",
+                              "CMakePresets.json  · Debug + Release / Ninja",
+                              "src/main.c  · fonte compatível com C90",
+                              "include/  tests/", ".gitignore  README.md"],
+                    "command": ""
+                }
+            ]
+        },
+        {
+            "key": "cpp", "label": "C++", "iconFile": "main.cpp",
             "ecosystems": [
                 {
                     "template": "cppCmake", "label": "CMake",

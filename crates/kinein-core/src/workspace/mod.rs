@@ -13,6 +13,7 @@
 //! - [`recent`]: histórico global versionado para Start Screen/menu Arquivo.
 //! - [`trust`]: a confiança no projeto, guardada fora dele (16.4b).
 
+mod cmake_template;
 mod create;
 mod detect;
 mod error;

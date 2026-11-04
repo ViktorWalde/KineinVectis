@@ -95,11 +95,18 @@ O core canonicaliza `parent`, valida que `name` é apenas um segmento de caminho
 e cria o diretório filho. A resposta é `{ "path": "/dir/modulo" }`.
 
 `workspace.createProject` recebe
-`{ "parent": "/dir", "name": "demo", "template": "empty|cppCmake|rustCargo|python" }`.
+`{ "parent": "/dir", "name": "demo", "template": "empty|cCmake|cppCmake|rustCargo|python" }`.
 O core cria o diretório do projeto, aplica o template e abre o projeto como
 workspace, retornando o mesmo payload de `workspace.open`.
 
 - `empty`: cria diretório vazio e persiste `.kinein/workspace.json`.
+- `cCmake` (`0.200.0`, 2026-11-04): projeto C/CMake com `src/main.c`
+  compatível com C90, `include/`, `tests/`, presets Ninja Debug/Release,
+  `.gitignore`, README e um teste CTest de execução. O alvo inicial exige C23
+  e extensões OFF pelo mesmo bloco gerado de `cmake.setCStandard`. Criar não
+  executa ferramenta; configurar/build validam o padrão na toolchain. A prévia
+  do seletor informa esse padrão inicial e a ação existente permite alterá-lo.
+  A escolha inicial não restringe padrões reconhecidos em projetos existentes.
 - `cppCmake`: cria projeto C++23/CMake strict e target-based com
   `CMakeLists.txt`, presets Ninja Debug/Release, `src/main.cpp`, diretórios
   `include/` e `tests/`, `.gitignore` e `README.md`.

@@ -202,7 +202,7 @@ pub(super) static ACTIONS: [ActionDefinition; 20] = [
     ActionDefinition {
         id: "cmake.setCStandard",
         title: "Fixar o padrão C do alvo",
-        description: "Exige C90/C99/C11/C17/C23 no alvo escolhido, com extensões OFF/ON e prévia.",
+        description: "Solicita o padrão C ao CMake no alvo escolhido, com extensões OFF/ON e prévia.",
         scope: ConfigActionScope::Cmake,
         category: "CMake Rigor",
         risk: ConfigActionRisk::Medium,
@@ -210,7 +210,7 @@ pub(super) static ACTIONS: [ActionDefinition; 20] = [
         effect: ConfigActionEffect::Edit,
         params: &[
             ("target", "Alvo C", true, ""),
-            ("standard", "Padrão C (90/99/11/17/23)", false, "23"),
+            ("standard", "Padrão C (CMake)", false, "23"),
             ("extensions", "Extensões (OFF/ON)", false, "OFF"),
         ],
         docs: &[("officialDoc", "CMake: C_STANDARD", "cmake.C_STANDARD")],

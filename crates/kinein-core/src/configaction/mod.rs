@@ -58,6 +58,11 @@ use kinein_protocol::{
 
 pub use error::ConfigActionError;
 
+/// Compartilha o bloco canonico de padrao C com a criacao de projetos.
+pub(crate) fn c_standard_block(target: &str, standard: &str, extensions: &str) -> String {
+    c_standard::block(target, standard, extensions)
+}
+
 use availability::WorkspaceFacts;
 use plan::ActionPlan;
 

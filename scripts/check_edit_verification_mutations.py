@@ -104,6 +104,29 @@ SUITES = {
     "edit-verification": ("edit_verification", CASES),
     "c-host": ("c_host", C_HOST_CASES),
     "c-standard": ("c_standard", C_STANDARD_CASES),
+    "c-project": ("c_project", [
+        (
+            "future_identifier",
+            "crates/kinein-core/src/configaction/c_standard.rs",
+            "if !numeric_standard(standard) {",
+            "if !SUGGESTED_STANDARDS.contains(&standard) {",
+            "tests::c_project::c_project_creation_build_context_standards_and_recovery_use_real_tools",
+        ),
+        (
+            "dialect_allowlist",
+            "crates/kinein-core/src/index/context/cdb.rs",
+            "unit.standard = Some(v.to_owned());",
+            "if [\"c11\", \"c17\", \"c23\"].contains(&v) { unit.standard = Some(v.to_owned()); }",
+            "tests::c_project::dialects::c_project_dialects_from_real_compilers_are_preserved_without_a_version_allowlist",
+        ),
+        (
+            "c_template_language",
+            "crates/kinein-core/src/workspace/create.rs",
+            "create_cmake_project(parent, name, super::cmake_template::Language::C)",
+            "create_cmake_project(parent, name, super::cmake_template::Language::Cpp)",
+            "tests::c_project::c_project_creation_build_context_standards_and_recovery_use_real_tools",
+        ),
+    ]),
 }
 
 

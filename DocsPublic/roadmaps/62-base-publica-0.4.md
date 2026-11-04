@@ -121,7 +121,7 @@ versão pública. Os compromissos de idioma não são cancelados pelo recorte.
 
 | Frente, na ordem de aprofundamento | Aceite mínimo a demonstrar |
 | --- | --- |
-| C | Matriz C1–C8 da [consolidação nativa de C](../especificacoes/consolidacao-nativa-de-c.md): C23/C17/C11, criação e configuração, GCC/Clang, CMake/Make, editor/headers, análise/memória, build/ligação/testes/DAP, embarcados e plataformas |
+| C | Matriz C1–C8 da [consolidação nativa de C](../especificacoes/consolidacao-nativa-de-c.md): reconhecimento de dialetos sem lista fechada, C23 como referência e regressões antigas, criação/configuração, GCC/Clang, CMake/Make, editor/headers, análise/memória, build/ligação/testes/DAP, embarcados e plataformas |
 | C++ | Projeto com dependências, configuração efetiva, navegação/rename/correções, build/ligação, testes e depuração |
 | Rust | Workspace Cargo com features/target, contexto coerente no rust-analyzer, verificação, build, testes e depuração |
 | Rust/C/C++ | Projetos mistos, interfaces e bindings, invalidação nos consumidores, ligação e testes nas fronteiras |

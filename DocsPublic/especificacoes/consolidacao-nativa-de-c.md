@@ -2,7 +2,7 @@
 
 > **Classe: DECISÃO / ALVO, 2026-11-03.** Etapa profunda e obrigatória antes
 > da consolidação C++. Define os aceites de C na base pública 0.4.0; a primeira
-> jornada C11 é uma prova parcial. Inventário inicial em §7 e evolução em §8;
+> jornada C11 é uma prova parcial. Inventário inicial em §7 e evolução em §§8–9;
 > fronteira da release
 > no [62](../roadmaps/62-base-publica-0.4.md).
 
@@ -34,6 +34,14 @@ C17 e C11 têm regressões obrigatórias; preservar C99/C90 e dialetos GNU quand
 exigidos por projetos e SDKs. A escolha pertence ao projeto/alvo e requer
 prévia para qualquer alteração. Projetos existentes conservam suas opções.
 C2y permanece experimental, com capacidade e alcance identificados.
+
+**Reconhecimento aberto de dialetos:** a identidade C não depende de uma lista
+de revisões na IDE. Projetos antigos, aliases ISO/GNU, prévias e valores futuros
+conservam o padrão e os argumentos observados. A ausência de `-std` mantém o
+padrão como não informado; não se inventa o default da toolchain. Reconhecer
+o contexto não certifica conformidade, suporte de sintaxe ou biblioteca: essas
+capacidades pertencem ao compilador, clangd e demais ferramentas efetivos.
+As opções sugeridas pela IDE são exemplos, sem restringir a leitura do projeto.
 
 | Dimensão | Requisito de integração |
 | --- | --- |
@@ -270,3 +278,61 @@ Alcance parcial de C1/C2. C90/C99 são opções da receita, sem novo corpus
 nativo nesta fatia. Template C, identidade documental C/headers, corpus C23
 completo no editor, análise/memória, Make, cross e Windows continuam abertos,
 assim como os demais aceites C1–C8. Não houve nova prova DAP nesta fatia.
+
+## 9. Projeto C próprio e configuração aberta — desenho de 2026-11-04
+
+`workspace.createProject` ganha o template `cCmake` no fluxo existente.
+O seletor distingue C e C++; a prévia anuncia C23 inicial, arquivos e presets.
+A criação interna não executa compilador nem modifica diretório existente.
+Gera `src/main.c` compatível com C90, diretórios `include/` e `tests/`, presets
+Ninja Debug/Release, `.gitignore`, README e teste de execução CTest. O padrão
+inicial C23 é exigido por alvo, sem extensões, usando o mesmo serializador da
+ação `cmake.setCStandard`; a escolha posterior usa sua prévia/aplicação.
+Configurar sem suporte conserva a falha da ferramenta, sem reduzir o padrão.
+
+A ação passa a aceitar um identificador decimal positivo de `C_STANDARD`,
+sem enumeração fechada na IDE. Os valores sugeridos continuam exemplos; o
+CMake efetivo valida o pedido, incluindo valores que só uma versão futura
+dele venha a aceitar. A ação pode atualizar seu bloco exato também nesses
+valores. Flags e aliases específicos do compilador, como `iso9899:199409` e
+`c2y`, permanecem no projeto/CDB e não são traduzidos em número CMake por
+adivinhação. `-ansi`/`--ansi` são exibidos como seletores de dialeto observados.
+O reconhecimento conserva também grafias futuras desconhecidas da IDE.
+
+O contrato vem antes dos produtores no protocolo 0.200.0, nos domínios
+`workspace` e `configAction`. Template C++ e demais linguagens conservam seus
+arquivos e fluxos. Identidade contextual de headers e languageId C no clangd
+seguem como fatia própria; esta entrega não fecha C1–C8.
+
+### 9.1 Integração e provas — 2026-11-04
+
+Template `cCmake` integrado ao gerador de projetos, protocolo 0.200.0 e
+catálogo visual. C e C++ têm cartões distintos; a prévia anuncia C23 inicial,
+fonte C90, presets e geração interna. A gravação C/C++ compartilha o dono de
+templates; arquivos e opções do template C++ são conservados. A criação C
+reusa o bloco da ação de padrão, com alteração posterior explícita por alvo.
+
+Interação na UI nativa comprovou seleção C separada de C++, prévia antes da
+escrita, escolha do diretório pai e recusa de nome inválido com recuperação.
+O projeto criado foi aberto; configuração, build e CTest de execução (1/1)
+passaram pela interface. O contexto do arquivo conservou o seletor efetivo da
+CDB. A prova usa os componentes visuais existentes, sem novo aceite de desenho.
+
+Regressões pelo despacho do core criam o projeto em caminho com espaços e
+Unicode, configuram e exercitam build/contexto/CTest de C90, C99, C11, C17 e
+C23 com GCC 16.2.1 e Clang 23.1.4. O pedido `2099` passa pela prévia/aplicação,
+é recusado pelo CMake 4.4.5 e recupera ao voltar para C23; a IDE não reduz o
+padrão nem sobrescreve projeto existente em colisão.
+
+Outras 48 compilações básicas, com `-pedantic-errors -fsyntax-only`, passaram
+nos dois drivers: 24 modos/aliases por ferramenta, incluindo C89, a emenda
+C90 de 1994, aliases ISO/GNU, C23 e C2y. A CDB conserva o argumento e a grafia
+do modo. Casos controlados conservam valores futuros/vendor, default ausente,
+último seletor e `/std:clatest`; não são prova nativa MSVC. Esta matriz mede
+aceitação do seletor e uma fonte mínima, sem certificar toda a linguagem,
+biblioteca, gramática do editor ou recursos da revisão futura.
+
+Três mutantes compiláveis eliminados: voltar à lista fechada na ação,
+filtrar dialetos na CDB e criar C++ ao selecionar C. Gate rápido aprovado
+em 314 s: 1440 Rust, Clippy, 50 arquivos C++, 8 CTest e 178 harnesses QML.
+Os dois NÃO PROVADOS ARM persistem por compiladores cross ausentes.
