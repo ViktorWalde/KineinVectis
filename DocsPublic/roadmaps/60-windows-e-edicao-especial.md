@@ -2,8 +2,9 @@
 
 > **Classe: PLANO.** Requisitos e desenho do porte Windows/WSL2.
 > O levantamento inicial é de 2026-10-08; as validações posteriores estão
-> datadas nas respectivas seções. A frente está pausada conforme o
-> [estado atual](40-estado-e-continuidade.md); este plano não define a fila vigente.
+> datadas nas respectivas seções. O porte tem aceites pendentes; Windows nativo
+> e instalador integram obrigatoriamente a 0.4 desde 2026-11-03 (§1.1).
+> O [estado atual](40-estado-e-continuidade.md) distingue plano e prova.
 
 ## 1. Objetivo e prioridade
 
@@ -18,6 +19,26 @@ interface. Cada fatia exige contrato, matriz de testes e limites explícitos.
 A ordem vigente e a fronteira das versões pertencem ao
 [mapa de versões](57-mapa-de-versoes-ate-a-1.0.md) e ao
 [estado do projeto](40-estado-e-continuidade.md).
+
+### 1.1 Aceite obrigatório na base 0.4 — 2026-11-03
+
+Windows nativo deixa de depender de uma edição posterior à 0.4.0. O bloqueador
+B7 do [62](62-base-publica-0.4.md) exige core/UI nativos e instalador para
+Windows 11 x86_64, com as jornadas F4 da
+[infraestrutura fundamental](../especificacoes/infraestrutura-fundamental-0.4.md).
+As matrizes de §3.3 e as fatias §3.4 continuam sendo os pontos de execução;
+o avanço anterior não certifica mudanças posteriores.
+
+Fechar descoberta de ferramentas, arquivos/caminhos, editor/LSP, terminal/Git,
+build/testes/run/debug e cancelamento no Windows. Acrescentar o aceite do
+instalador em ambiente limpo: instalar, iniciar, atualizar e desinstalar,
+preservando projetos e configurações, com integridade do pacote conferida.
+Formato do pacote e dependências redistribuíveis devem ser definidos no
+desenho de empacotamento antes da implementação.
+
+Prova no WSL2, compilação cruzada ou testes adiados não aceitam a matriz nativa.
+A integração WSL2 de §4 mantém contexto, mapeamento e dispositivos próprios.
+Sem ambiente Windows e execução da matriz, o requisito permanece NÃO PROVADO.
 
 ## 2. O que hoje é Linux, medido no código em 2026-10-08
 
@@ -656,7 +677,13 @@ ambiente continuam NÃO PROVADAS no Fedora por ferramentas ausentes (40.7
 §7.277). O porte restante fica para a VM, conforme a decisão de 2026-10-14
 registrada no início deste plano.
 
-## 4. A edição especial (depois da 0.4.0)
+<a id="4-a-edição-especial-depois-da-040"></a>
+
+## 4. Integração Windows + WSL2
+
+**Fronteira revista em 2026-11-03:** a alocação histórica desta frente depois
+da 0.4.0 não adia o Windows nativo nem seu instalador, obrigatórios pelo §1.1.
+Os itens abaixo tratam da integração adicional com WSL2 e dispositivos.
 
 O tema é o atrito real de quem desenvolve embarcados no Windows. A lista abaixo
 é ponto de partida, sem desenho; o desenho é feito lá, com as ferramentas

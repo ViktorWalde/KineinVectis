@@ -122,3 +122,14 @@ comparação e das guardas numa cópia descartável, com baseline previamente ve
 SDKs requerem corpus e builds próprios com versões identificadas. A fatia host
 não conclui S2–S4 nem o assistente completo do
 [52 §11.2](../roadmaps/52-arquitetura-executavel-da-0.4.md#112-escopo-dedicado--assistente-semântico-decisão-do-projeto-2026-10-23-posição-de-2026-10-24).
+
+**Integração C de host (2026-11-03):**
+`crates/kinein-core/src/tests/c_host.rs` usa a
+[fixture C11](../../scripts/fixtures/c-host/README.md), CMake/Clang/CTest reais
+e sugestões LSP controladas. A CDB é produzida pelo build, com biblioteca,
+executável, várias unidades e headers públicos/gerados. O corpus confere
+correção válida, erro novo, invalidação após alterar configuração/header,
+aplicação explícita, regeneração, falha de ligação e recuperação. Esse aceite
+exercita o verificador existente sem ampliar seu escopo para edições de headers
+ou múltiplos arquivos. A prova separada com clangd e GDB reais consta no
+[registro §7.376](../roadmaps/40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).

@@ -36,6 +36,7 @@ CONSOLIDADO (vence em conflito)
 arquitetura-de-frontend-0.3-em-diante.md   alvo consolidado do frontend; precedência
 
 POR VERSÃO (escritos antes do código, a partir de medição)
+infraestrutura-fundamental-0.4.md          mínimos obrigatórios: toolchains, DAP/QEMU, Windows, SVD, VFS e ciência
 projetos-arquivos-e-integracao-desktop-0.3.md  CLI, árvore, clipboard e drag-and-drop
 terminal-ergonomia-0.3.md                  ações, atalhos e segurança do terminal
 markdown-preview-0.3.md                    edição, preview e split de Markdown
@@ -55,6 +56,7 @@ sistema-visual-e-icones.md                 identidade visual e a família de íc
 editor-e-inteligencia-de-linguagem.md      editor, LSP, Tree-sitter, diagnósticos
 verificador-de-correcoes-lsp.md            contrato, limites e corpus do verificador complementar de correções
 orquestracao-e-verificacao-de-linguagens.md base comum: C/C++, Rust e integração nativa, depois Python e especializações
+consolidacao-nativa-de-c.md                etapa C profunda: C23, ferramentas, projetos e aceites antes de C++
 camada-de-editor-tree-sitter.md            a camada estrutural local do editor
 fluxos-de-produto-build-run-debug.md       configure → build → run → debug
 embarcados-targets-flash-serial-qemu.md    targets, flash, serial, QEMU

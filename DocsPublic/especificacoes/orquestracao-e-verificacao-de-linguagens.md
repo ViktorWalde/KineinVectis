@@ -17,7 +17,8 @@ Quantidade de arquivos ou linhas, isoladamente, não comprova essa capacidade.
 
 A ordem de consolidação é vinculante:
 
-1. C como linguagem com corpus e aceites próprios; C++ e seu ecossistema de host.
+1. C como etapa profunda dedicada, incluindo C23 e aceites próprios; depois C++
+   e seu ecossistema de host, condicionado ao fechamento da etapa C.
 2. Rust como terceira linguagem do verificador, integração profunda com C e C++,
    e jornada de desenvolvimento da própria IDE.
 3. Python, reutilizando o núcleo comum demonstrado pelos provedores anteriores.
@@ -29,6 +30,13 @@ provedores de verificação; não exige remover capacidades atuais.
 Bare metal, Linux embarcado, ROS 2, computação científica e IoT compõem a
 evolução especializada. A trilha do [52](../roadmaps/52-arquitetura-executavel-da-0.4.md)
 permanece aberta, com seus compromissos e provas independentes.
+
+**Fronteira complementar de 2026-11-03:** a
+[infraestrutura fundamental](infraestrutura-fundamental-0.4.md) define mínimos
+obrigatórios de ambiente, DAP, QEMU, Windows, SVD, VFS, plotagem, notebooks e
+engenharia na 0.4. A ordem acima organiza dependências de linguagem; não adia
+esses mínimos para a 0.5. Os provedores e a identidade comum desta especificação
+devem atender os consumidores científicos e embarcados correspondentes.
 
 ## 2. Arquitetura comum e donos
 
@@ -115,6 +123,13 @@ Resultados devem explicar o que foi executado, inclusive quando apenas parte
 do projeto foi verificada. Ausência de ferramenta ou evidência fica explícita.
 
 ## 5. C como frente própria
+
+Os requisitos, a sequência e a matriz C1–C8 pertencem à
+[consolidação nativa de C](consolidacao-nativa-de-c.md). A etapa é obrigatória
+na 0.4 e permanece aberta após a primeira jornada C11. C23 é a referência
+moderna, preservando os padrões e dialetos exigidos pelos projetos existentes.
+Criação/configuração, editor, qualidade, testes, depuração, contexto embarcado,
+portabilidade e recuperação exigem aceites próprios antes de aprofundar C++.
 
 O corpus C deve conter programas C puros e bibliotecas consumidas por outras
 linguagens. O driver e o padrão efetivos devem ser preservados; sucesso ao
@@ -262,8 +277,8 @@ precisam de orçamento justificado por medição, sem bloqueio síncrono do edit
 
 | Ordem | Entrega técnica | Evidência de saída |
 | --- | --- | --- |
-| 1a | Contexto e jornada C de host | Projeto C puro: biblioteca + executável, edição, includes, build, testes e depuração |
-| 1b | C++ e comparação ampliada conforme o corpus | Projeto C++ com dependências e várias unidades; correção válida e falhas introduzidas |
+| 1a | Consolidação nativa e profunda de C | Matriz C1–C8 da especificação C: C23, projetos/contexto, editor, análise, ciclo diário, embarcados e plataformas; jornada C11 inicial é parcial |
+| 1b | C++ e comparação ampliada conforme o corpus, após o aceite C | Projeto C++ com dependências e várias unidades; correção válida e falhas introduzidas |
 | 2a | Rust e núcleo compartilhado com consumidor real | Workspace Cargo, features/target, diagnósticos, verificação, build/testes e depuração |
 | 2b | Integração Rust/C e Rust/C++ | Fixtures de interface positivas/negativas, invalidação bilateral, ligação e execução |
 | 2c | Desenvolvimento da própria IDE | Jornada Rust/C++/QML, IPC, reconstrução, testes, recuperação e contexto externo conforme 62 §5 |
@@ -278,3 +293,98 @@ Registrar por capacidade se está implementada, integrada e comprovada, com
 fixture, versões e alcance. Cada fatia fecha regressões, mutações das guardas,
 falsos resultados e tempo. Compilar a IDE ou passar um gate isolado não aceita
 todo o ciclo de uso. Este plano não altera o estado de implementação por si só.
+
+### 12.1 Dependências entre ferramentas e verificador
+
+A sequência vigente prioriza consolidar a orquestração/integração das ferramentas
+e o contexto de cada jornada. O verificador existente acompanha as fatias para
+exercitar essas entradas e corrigir falhas de suas garantias. A fase dedicada
+de evolução e fechamento do algoritmo ocorre depois, ainda na 0.4, sobre as
+ferramentas e os consumidores consolidados. A vertical só fecha com evidência
+funcional e robustez no escopo aceito.
+
+O verificador host existente permanece integrado, com regressões das guardas
+de conteúdo/contexto, cancelamento e aplicação transacional. Falhas confirmadas
+nessas garantias têm correção imediata. A expansão para outra linguagem, SDK
+ou ambiente exige primeiro um produtor de contexto confiável nesse recorte;
+extrair infraestrutura comum ao integrar consumidores reais.
+
+| Dependência da jornada | Pré-condição para ampliar a verificação |
+| --- | --- |
+| Ambiente e build | Ferramenta efetiva identificada, configuração/alvo e dependências conhecidos; configurar e compilar a fixture pelos donos existentes |
+| LSP e contexto | Servidor e verificador observam o mesmo projeto/configuração; CDB atual, contexto Cargo ou ambiente Python conforme a linguagem |
+| Documentos e arquivos | Conteúdo, versões, headers/gerados e caminhos coerentes; alterações invalidam a evidência e a aplicação dependente |
+| Execução controlada | Confiança, isolamento aplicável, prazo, cancelamento e orçamento de recursos comprovados no ambiente exercitado |
+| Evidência | Diagnósticos interpretáveis e comparação reproduzível, com casos válidos e falhas introduzidas que exercitem as guardas |
+
+Uma dependência ausente ou divergente mantém o resultado não verificado e
+direciona a correção ao dono correspondente. Não compensar contexto incorreto
+com heurísticas de comparação, troca de compilador ou remoção de flags.
+Resolver o contexto e repetir o caso antes de ampliar a cobertura declarada.
+
+**Primeira fatia de implementação:** C de host, com biblioteca e executável,
+múltiplas unidades e header compartilhado. Provar configurar/build/ligação e
+contexto LSP, então exercitar correção válida, erro novo e troca de configuração
+no verificador. Conferir a CDB efetivamente produzida, conteúdo preservado e
+invalidação antes da aplicação. Falhas de ferramenta/contexto são resolvidas
+na mesma fatia. Essa fixture inicia a
+[etapa profunda de C](consolidacao-nativa-de-c.md); a consolidação C++ começa
+após seus aceites obrigatórios. Rust e suas fronteiras C/C++ precedem Python
+conforme a tabela de §12.
+
+DAP, testes e QEMU acrescentam evidências de execução/depuração às jornadas;
+não substituem os diagnósticos do compilador. SVD, notebooks e plotagem mantêm
+seus aceites na [infraestrutura fundamental](infraestrutura-fundamental-0.4.md)
+e não são pré-condições da comparação host de correções textuais. Quando um
+consumidor científico ou embarcado precisar de verificação própria, seu ambiente
+e suas ferramentas passam a integrar as entradas e o corpus correspondente.
+
+Windows, SSH e containers exigem contexto, identidade e execução controlada
+próprios ao ampliar o verificador a esses ambientes; a prova Linux local não
+se transfere automaticamente. O endurecimento host pode avançar enquanto os
+provedores desses ambientes são construídos. Seu suporte declarado depende
+dos aceites da plataforma e do consumidor efetivamente exercitados.
+
+O fechamento do algoritmo no escopo da 0.4 exige repetir o corpus sobre os
+contextos consolidados: positivos/negativos, contexto obsoleto, troca de
+workspace/configuração, Unicode, falhas, cancelamento, limites e recuperação.
+Reexecutar mutações das guardas, medir falsos resultados, latência e recursos,
+e provar a prévia/aplicação na UI. Vincular resultado, ferramenta e configuração;
+análise, build, ligação, testes e depuração preservam evidências distintas.
+O recorte host continua limitado ao contrato S0/S1 até a implementação e prova
+de cada ampliação; consolidar ferramentas não o transforma no assistente S0–S4.
+
+### 12.2 Jornada C inicial: build, contexto e correções
+
+Fixture C de host: biblioteca estática com duas unidades, header público,
+header gerado pelo CMake, executável e teste CTest. O projeto declara C11 e
+recusa compilação como C++; includes e definições vêm do próprio CMake.
+Executar em caminho com espaços/Unicode, usando o core e os produtores reais.
+
+O corpus deve começar abrindo o projeto antes de existir CDB, ler uma unidade
+no LSP e acionar `build.run` sem configure separado. O configure automático
+precisa preparar o file-api, e a CDB gerada deve atualizar contexto e LSP.
+Depois, alterar uma definição no CMake e repetir o build, incluindo a
+regeneração automática do gerador. Conferir a configuração nova em
+`index.context` e nas evidências do verificador.
+
+Reusar o dono de contexto para identificar mudanças da CDB por conteúdo e
+origem. Ao observar o fim de um build que as produziu, invalidar evidências,
+recarregar o contexto e reabrir/reconfigurar os documentos pelo dono LSP
+existente. Um build sem mudança na CDB deve preservar documentos e versões.
+A atualização também vale quando o configure gera contexto válido e a
+compilação/ligação seguinte falha. Não adicionar outro evento ou cliente IPC.
+
+Aceitar correção válida e erro novo com compilador real; sugestões controladas
+podem exercitar o consumidor, com origem declarada. Conferir arquivo intacto
+na prévia, aplicação explícita, recusa após mudar header/configuração e novo
+build/teste após aplicação. Exercitar erro de ligação, recuperação e reabertura.
+Navegação/diagnósticos com clangd real e depuração DAP têm provas próprias.
+
+**Estado da primeira fatia, 2026-11-03:** fixture, sincronização pelo build e
+corpus implementados; regressões e mutações, clangd e GDB reais exercitados no
+[registro §7.376](../roadmaps/40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).
+Isso aceita a jornada descrita em Linux, sem declarar todos os projetos C,
+Windows, cross ou o assistente completo consolidados.
+O fechamento da etapa C segue C1–C8; o corpus C11 continua como regressão,
+enquanto C23 e os demais fluxos da linguagem recebem integração e provas próprias.

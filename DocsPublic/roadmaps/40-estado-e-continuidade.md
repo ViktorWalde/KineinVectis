@@ -8,32 +8,38 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > resumo técnico: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **RESUMO TÉCNICO (2026-11-02).**
+> **RESUMO TÉCNICO (2026-11-03; provas funcionais datadas abaixo).**
 >
 > **Estado funcional:** binário **0.3.9**, protocolo **0.198.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > Fronteira, auditoria inicial e bloqueadores em **62 §§1–3**.
 >
-> **Prioridade:** consolidar a orquestração C/C++, depois Rust e integração
-> Rust/C/C++, depois Python; uso confiável em projetos pequenos/médios e na
+> **Prioridade:** etapa profunda C, incluindo C23, depois C++, Rust e integração
+> Rust/C/C++, depois Python; aceites C1–C8 no documento de consolidação C.
+> A etapa C permanece aberta; uso confiável em projetos pequenos/médios e na
 > própria IDE. Otimização de algoritmos e polimento UI/HUD/UX acompanham as
 > jornadas. Setup exige polimento cromático/de interação; plano no 62 (§7.373).
+> **Fundamentos obrigatórios:** ambiente, DAP, QEMU, Windows, SVD, VFS,
+> plotagem, notebooks e engenharia; contribuição/demonstração no fechamento.
+> Aceites B6–B10 no 62; a 0.5 aprofunda e amplia essa fundação.
 >
 > **Trilha aberta:** os marcos antigos **0.4.1–0.4.9** permanecem no 52 para
-> colaboradores; não são requisito de conclusão integral antes desta base.
+> colaboradores; os mínimos da infraestrutura bloqueiam esta base, sem exigir
+> a conclusão indistinta de toda a trilha.
 > Quatro tarefas iniciais (duas bare metal, duas Linux) em contribuindo/15.
 > West nativo tem desenho e produtor ausente (52 §14.56), agora tarefa BM1.
 > Capacidades oferecidas precisam de regressão; hardware e emulação são provas
 > distintas. Assistente completo continua aberto; recorte inicial em 62 §4.
 >
 > **Fechamento:** idiomas/traduções preservados (57 §3), gate completo,
-> metadados, documentação e pacote mínimo coerentes; release ainda não pronta.
+> metadados, documentação e pacotes Linux/Windows; release ainda não pronta.
 > Contexto externo Codex `/ide`: aceite da jornada ainda a provar (62 §5).
 >
-> **Provas da fatia (2026-11-02, §7.372):** 1426 Rust, 8 CTest, 178 QML;
+> **Provas da fatia (2026-11-03, §7.376):** 1430 Rust, 8 CTest, 178 QML;
 > rápido passa com dois NÃO PROVADOS de compiladores ARM; estrito reprova.
-> Corpus host, seis mutações e consumidor nativo exercitados. Não é fechamento.
+> Jornada C11, quatro regressões novas, três mutações e clangd/GDB reais.
+> Verificador preservado; a prova host não encerra a vertical 0.4.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -48,7 +54,8 @@ protocolo   0.198.0 (crates/kinein-protocol, medido em 2026-11-02; o
 metodos     192 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   178 tst_*.qml em scripts/qml-harness (medido em 2026-11-02)
-testes      1426 Rust no gate rápido de 2026-11-02 (40.7 §7.372);
+testes      1430 Rust no gate rápido de 2026-11-03 (40.7 §7.376);
+            1426 Rust no gate rápido de 2026-11-02 (40.7 §7.372);
             1395 no gate completo estrito de 2026-10-27 (40.7 §7.365);
             920 no Windows com 73 adiados e 1006 no Fedora do WSL (2026-10-14,
             §7.277); 1191 no gate rápido estrito local de 2026-10-20 (§7.321).
@@ -99,20 +106,30 @@ Este arquivo diz qual é a próxima fatia; a ordem mora no dono.
 **Fronteira vigente:** a base pública 0.4 tem critérios próprios no
 [62](62-base-publica-0.4.md). A trilha completa de Embarcados 0.4.1–0.4.9
 continua aberta; a tabela abaixo conserva os compromissos e referências de
-escopo, sem impor toda a ordem antiga ao lançamento. Novas tarefas no
+escopo. Os mínimos da [infraestrutura fundamental](../especificacoes/infraestrutura-fundamental-0.4.md)
+integram o fechamento; a ordem antiga não impõe o backlog inteiro. Novas tarefas no
 [contribuindo/15](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md).
 Provas de software, emulação e hardware permanecem distintas.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)
 e pela [especificação comum](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
+O trabalho atual é a [etapa profunda C](../especificacoes/consolidacao-nativa-de-c.md):
+C23, criação/configuração, editor/headers/LSP, ferramentas de qualidade,
+ciclo diário, embarcados e plataformas. C1–C8 condicionam a consolidação C++.
+A primeira jornada C11 de host tem prova em software no
+[registro §7.376](40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).
+A consolidação C/C++ continua pela matriz; ferramentas e verificador avançam
+por jornada, conforme a
+[orquestração §12.1](../especificacoes/orquestracao-e-verificacao-de-linguagens.md#121-dependências-entre-ferramentas-e-verificador).
 A expansão do corpus de SDK segue C/C++, Rust/C/C++ e Python. O polimento
 cromático/de interação de Instalar Ferramentas permanece pendente (§0.1 de sua
 especificação), mesmo com a primeira migração funcional concluída.
 
 | O quê | Dono da ordem e do detalhe |
 | --- | --- |
+| Fundamentos obrigatórios da 0.4: perfis de toolchain, DAP, QEMU, Windows nativo, SVD, VFS, plotagem, notebooks e engenharia; contribuição e demonstração. Planejamento atualizado, sem novas provas de execução | [Infraestrutura F1–F9](../especificacoes/infraestrutura-fundamental-0.4.md); [62 §3.2](62-base-publica-0.4.md#32-fundamentos-obrigatórios-e-porta-de-contribuição) |
 | Embarcados: acesso, ciclo de vida, reservas e armazenamento fechados nas fatias anteriores; intenção/UI esptool h4b2b3, consulta de sondas A1/A2 e probe-rs nativo b4b1 (core), b4b2 (UI) e b4b3 (depuração na mesma sonda) fechados; gravação esptool nativa provada no ESP32 CP2102 (b4c) e sem ambiente/configuração fora da prévia (d1); build que queima eFuses recusado (d2); clangd/FreeRTOS (e); compilador do chip no kit (f); monitor sugerido pelo projeto (g); `idf.py flash` nativo gravado no ESP32 (d3); PlatformIO nativo para ESP32 e prévia sem código do projeto (d4). Descoberta USB DFU (n1), DfuSe explícito (n2) e BIN conferido com ELF do alvo CMake (n3) fechados; consulta picotool RP2040 (o1) e UF2/ELF CMake com gravação nativa (o2) fechados em software; evoluções dessa trilha: west, matriz integrada e recuperação (52 §14.55) | [52](52-arquitetura-executavel-da-0.4.md) §14.19–14.55 e [40.7](40.7-registro-das-entregas.md) §7.326–§7.365 |
-| C puro: consolidar linguagem e ecossistema com corpus próprio, biblioteca/executável, várias unidades, headers, ligação, testes e depuração. C++ acompanha a primeira frente; Rust/C/C++ vem antes de Python | [Orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md); [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
+| C: etapa profunda dedicada C1–C8, incluindo C23 e preservação de C17/C11, projetos, headers/LSP, análise/memória, build/test/debug, contexto embarcado e plataformas. Jornada C11 tem prova parcial; etapa C aberta antes da consolidação C++ | [Consolidação nativa de C](../especificacoes/consolidacao-nativa-de-c.md); [orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md); [52 §14.14](52-arquitetura-executavel-da-0.4.md#1414-auditoria-de-c-puro-antes-do-fechamento--2026-10-20) |
 | Instalar Ferramentas: dock, busca/filtro e recuperação implementados; polimento cromático, hierarquia e estados de interação pendentes. S2/revisão em lote continua aberta; Quality Center Q1–Q3 permanece na evolução | [Setup §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04); [62](62-base-publica-0.4.md); [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Acabamento de HUD/UX/UI incorporado ao polimento da base pública 0.4. Inglês/traduções e divulgação conservam os compromissos do 57 §3; ROS 2 segue posterior | [62](62-base-publica-0.4.md); [57](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | HUD por contexto 0.4.1e fechada: PlatformIO/Linux e aplicação CMake com kit Linux, gate integral estrito verde. Schema 3 dos kits segue após os bloqueadores de orquestração e Setup. CPython revalidado, MicroPython corrigido, CircuitPython ainda por separar/implementar (2026-10-20) | [52 §14.13](52-arquitetura-executavel-da-0.4.md#1413-hud-por-contexto-e-destaque-platformio--desenho-em-2026-10-20) e [41 §3.4.1](41-ecossistema-embarcados-e-python.md#341-ampliação-confirmada-e-revisão-medida-em-2026-10-20) |
@@ -124,7 +141,7 @@ especificação), mesmo com a primeira migração funcional concluída.
 | Entrega acumulada: etapas não publicadas 0.3.6–0.3.9 e trabalho interno 0.4 integram a base pública 0.4 / SemVer 0.4.0; pacote após os aceites próprios, sem declarar concluído o backlog | [62](62-base-publica-0.4.md); [57](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
 | Os adiados do Banco que seguem sem versão: MySQL/MariaDB nativo, a edição de célula, os drivers em processo externo (9b/9c); o LSP por conexão (10) e o InfluxDB 3 (11) voltaram na 0.4.5 | [59](59-fechamento-da-0.3.9.md) §2.3 (registro); a arquitetura no [arquitetura/38](../arquitetura/38-provedores-de-banco-e-linguagem.md) e [39](../arquitetura/39-drivers-externos-e-compatibilidade.md) |
 | O porte para o Windows (pausado na W6b4): W6c, depois W7–W12 | [60](60-windows-e-edicao-especial.md) §3.3 e §3.4; os testes adiados na catraca `scripts/verificar-adiados-windows.sh` |
-| A edição especial Windows + WSL2, depois da 0.4.0 | [60](60-windows-e-edicao-especial.md) §4 |
+| Windows nativo e instalador agora bloqueiam a própria 0.4; WSL2 conserva contexto e prova adicionais. O porte ainda tem os aceites acima pendentes | [60](60-windows-e-edicao-especial.md) §1.1 e §4; [62](62-base-publica-0.4.md) B7 |
 
 As dívidas antigas, de antes da 0.3.9 (o TLS do `postgres`, o DAP com
 probe-rs, as fatias de embarcados da trilha), estão na lista datada do §4 do
@@ -162,7 +179,7 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Build e SVD | C1 ao salvar para C/C++ com CDB; Rust mediante opção. SVD na área Embarcados; delta de tamanho relativo ao último build. | [0.4](52-arquitetura-executavel-da-0.4.md) §13 |
 | Setup e qualidade | Setup no dock; polimento cromático/de interação pendente na base. Quality Center mantém Q1–Q3 na trilha aberta. | [Setup §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04), [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Ordem de implementação | Consolidar C/C++, Rust/C/C++, depois Python e especializações, com integridade, otimização e polimento por jornada. Prontidão de projetos pequenos/médios e autodesenvolvimento exige prova; `/ide` tem aceite próprio. | [base 0.4](62-base-publica-0.4.md), [orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md) |
-| Fronteira de versão | Entrega pública 0.4 / SemVer 0.4.0 consolida o trabalho acumulado. Trilha 0.4.1–0.4.9 aberta a colaboradores; critérios da base no 62, com polimento incorporado. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
+| Fronteira de versão | Entrega pública 0.4 / SemVer 0.4.0 consolida o trabalho acumulado e os fundamentos F1–F9 obrigatórios, com polimento e contribuição. Windows nativo integra o fechamento. A 0.5 aprofunda, melhora e amplia a base. | [62](62-base-publica-0.4.md), [infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md), [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
 | Internacionalização | UI em inglês no polimento; documentação integral em inglês e divulgação com a base finalizada, preservando português e strings traduzíveis. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | Frentes posteriores | ROS 2, colaboração remota, motor semântico profundo e estudo de CLI conservam seus planos. A trilha pública de contribuições já tem quatro tarefas; primeiro verificador na base 0.4. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
 | CI e recursos | CI pública compartilha os gates; limites de RAM, swap zero por escopo e limpeza de temporários devem ser verificáveis. | [gates](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md), [comandos](../build/comandos-de-build-e-verificacao.md) |

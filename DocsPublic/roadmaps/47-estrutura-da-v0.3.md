@@ -517,8 +517,10 @@ Fechadas, e detalhadas em
   handles do Windows e ferramentas equivalentes ficam fora por plataforma, e o
   equivalente nativo (`/proc/<pid>/fd`) já existe. **Revisto pela manutenção em
   2026-10-08:** a IDE passa a ser adaptada para rodar no Windows, e há uma
-  edição especial para Windows + WSL2 depois da 0.4.0
-  ([60](60-windows-e-edicao-especial.md)). As revisões de prioridade estão no registro técnico
+  frente Windows + WSL2 ([60](60-windows-e-edicao-especial.md)). **Fronteira
+  revista em 2026-11-03:** Windows nativo e instalador são obrigatórios na
+  própria base 0.4, conforme o [62](62-base-publica-0.4.md); WSL2 tem prova
+  adicional. As revisões de prioridade estão no registro técnico
   (40.7 §7.258, §7.260); o estado vigente do porte está no 40;
 - **o modelo semântico profundo detecta DERIVA, e não resolve versão.** Quem
   resolve é o `cargo`, o `uv`, o `conan`, o `west`; a IDE roda a ferramenta do

@@ -37,6 +37,13 @@ as licenças específicas. Leia o [DCO 1.1](DCO.txt) e use `git commit -s`
 para certificar a procedência de sua contribuição. Não há cessão
 obrigatória de copyright.
 
+Os [briefings iniciais da base 0.4](DocsPublic/contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md#31-briefings-iniciais-para-revisão-e-publicação)
+e as [quatro jornadas de Embarcados](DocsPublic/contribuindo/15-tarefas-iniciais-embarcados-0.4.md)
+oferecem pontos de entrada. No GitHub, `good first issue` identifica tarefas
+pequenas já revisadas e `help wanted` sinaliza oportunidades mais amplas;
+os briefings locais ainda precisam de triagem antes de publicação. Os modelos
+de issue e PR em `.github/` orientam escopo, reprodução e evidências.
+
 O [guia de licenciamento](DocsPublic/contribuindo/12-licenciamento-e-procedencia.md)
 define o escopo e as exceções. Se direitos sobre a contribuição pertencerem
 a uma instituição, obtenha a autorização competente conforme a

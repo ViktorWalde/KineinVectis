@@ -1,8 +1,9 @@
 # 62 — Base pública Kinein Vectis 0.4
 
 > **Classe: PLANO / ESTADO**, conforme indicado em cada seção. Fronteira
-> vigente desde 2026-11-02; substitui a exigência de concluir todos os marcos
-> 0.4.1–0.4.9 antes da entrega pública. Não altera registros de entregas.
+> vigente revista em 2026-11-03: fundamentos obrigatórios na 0.4, com evolução
+> na 0.5. Substitui a exigência de concluir indistintamente todos os marcos
+> 0.4.1–0.4.9; os mínimos desta base bloqueiam a entrega. Não altera registros.
 
 ## 1. Fronteira e contabilização
 
@@ -12,14 +13,30 @@ implementado da trilha interna 0.4, incluindo a etapa 0.4.1 ainda incompleta.
 Números históricos permanecem em commits, changelog e registros. Renumerar
 o produto não conclui nenhuma funcionalidade pendente.
 
+**Fechamento por vertical comprovada:** a 0.4 só se conclui com as ferramentas
+orquestradas, os consumidores integrados e as jornadas robustas demonstradas,
+incluindo a etapa final do algoritmo efetivo no escopo declarado. Depois da
+0.4.0, versões públicas **0.4.1 em diante até a 0.5** aprofundam as etapas,
+integrações complementares, polimento e estabilização, preservando essa base.
+Essas versões públicas são distintas dos identificadores internos históricos
+0.4.1–0.4.9 usados para organizar trabalhos ainda não lançados.
+
 A base prioriza uso confiável em projetos pequenos e médios e no desenvolvimento
 da própria IDE: integridade dos documentos, contexto consistente, editor/LSP,
 terminal, Git, configurar, compilar, executar, testar e depurar. A consolidação
-segue **C e C++ → Rust e integração Rust/C/C++ → Python → especializações**.
-C tem corpus e aprofundamento próprios. QML participa da jornada da própria IDE.
+segue **C → C++ → Rust e integração Rust/C/C++ → Python → especializações**.
+C tem uma [etapa profunda dedicada](../especificacoes/consolidacao-nativa-de-c.md),
+com C23, integração nativa e matriz de aceites C1–C8 antes da consolidação C++.
+A primeira jornada C11 é uma prova parcial dessa etapa, que permanece aberta.
+QML participa da jornada da própria IDE.
 O desenho técnico está na
 [orquestração e verificação de linguagens](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
 Polimento de UI/HUD/UX e otimização de algoritmos acompanham essas jornadas.
+Detecção/perfis de toolchain, DAP, QEMU, Windows nativo, SVD, VFS, plotagem,
+notebooks e ferramentas de engenharia são fundamentos obrigatórios da 0.4,
+com mínimos na [especificação de infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md).
+A 0.5 aprofunda, melhora e amplia essa base; não recebe esses mínimos por
+adiamento implícito. A preparação para colaboradores acompanha o fechamento.
 Superfícies funcionais migram dos pop-ups para os docks existentes; menus, tooltips e confirmações
 mantêm seu papel. O editor continua a área principal.
 
@@ -27,7 +44,8 @@ A trilha completa de **Sistemas Embarcados Modernos** do [52](52-arquitetura-exe
 continua aberta para contribuições públicas, com marcos 0.4.1–0.4.9 como
 referências de escopo, sem exigir releases intermediárias. Funcionalidades
 pendentes, cargas extensas de SDK/build e matrizes físicas continuam
-compromissos dessa trilha; deixam de bloquear a base pública. As
+compromissos dessa trilha. O que excede os mínimos F1–F9 não bloqueia esta
+base por pertencer ao roadmap inteiro; os mínimos continuam exigidos. As
 [quatro tarefas iniciais](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md)
 separam implementação, integração, prova em software e prova em hardware.
 Nenhuma limitação de emulação demonstra validação física.
@@ -36,7 +54,8 @@ O foco vigente é consolidar a orquestração das linguagens já existentes, os
 algoritmos complementares e a experiência de uso. Novos SDKs e jornadas de
 bare metal/Linux embarcado seguem a base essencial; as regressões dos recursos
 especializados já oferecidos continuam obrigatórias. Esta ordem preserva o
-roadmap de Embarcados e substitui sua execução integral como prioridade da 0.4.
+roadmap de Embarcados, com ciclo mínimo integrado obrigatório, e substitui sua
+execução integral como pré-condição indistinta da 0.4.
 
 ## 2. Auditoria inicial do checkout — 2026-11-02
 
@@ -67,7 +86,7 @@ protocolo IPC 0.197.0 tem ciclo independente da versão pública.
    abrir → editar → salvar → configurar → compilar → executar/testar →
    depurar, com LSP, Git e terminal. Declarar explicitamente qualquer etapa
    NÃO PROVADA e o motivo; compilação sozinha não aprova esta jornada.
-   Consolidar C/C++, depois Rust e suas fronteiras C/C++, depois Python,
+   Consolidar a etapa C, depois C++, Rust e suas fronteiras C/C++, depois Python,
    conforme §3.1. O fluxo com contexto externo `/ide` tem aceite próprio (§5).
 3. **B3 — Polimento integrado.** Setup primeiro, depois as superfícies com
    maior interrupção do trabalho. Hierarquia, largura, listas, estados,
@@ -75,21 +94,26 @@ protocolo IPC 0.197.0 tem ciclo independente da versão pública.
    Aceite visual permanece separado dos testes de lógica. Instalar Ferramentas
    requer hierarquia cromática e estados mais distinguíveis, conforme sua
    [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
-4. **B4 — Primeiro verificador semântico.** Recorte host integrado e provado
+4. **B4 — Verificador consolidado.** Recorte host inicial integrado e provado
    conforme §4 e [40.7 §7.372](40.7-registro-das-entregas.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
    Ampliar pela base das linguagens e pelo núcleo comum da especificação,
    priorizando Rust antes de Python. O assistente completo continua aberto
    no 52 §11.2; o recorte host não encerra esse trabalho.
+   A fase dedicada de consolidação do algoritmo ocorre após a orquestração
+   das ferramentas, com consumidores, corpus e aceites das linguagens da base.
+   A versão não fecha somente pela existência do primeiro recorte host.
 5. **B5 — Fechamento.** Idiomas e traduções conforme [57 §3](57-mapa-de-versoes-ate-a-1.0.md#3-pedidos-do-autor-e-para-onde-foram),
    metadados 0.4.0, changelog/manual/tutorial coerentes, gate completo estrito,
-   pacote local com checksum e validação em ambiente mínimo. Esta fronteira
-   não declara a release pronta e não inclui publicação automática.
+   pacotes Linux/Windows com checksum e validação em ambiente mínimo, depois
+   dos aceites B1–B4 e B6–B10. Esta fronteira não declara a release pronta e
+   não inclui publicação automática.
 
 Quality Center, schema 3, CircuitPython, Banco para embarcados, expansão de
-emuladores e as demais jornadas não concluídas do 52 permanecem abertos nos
-seus donos. Só bloqueiam esta base quando uma dependência ou regressão
-impedir B1–B5. ROS 2, Windows, colaboração remota e o motor semântico profundo
-conservam seus planos posteriores. A revisão de acabamento antes associada
+emuladores além de F3 e as demais jornadas não concluídas do 52 permanecem
+abertos nos seus donos. Bloqueiam quando integram os mínimos de §3.2 ou uma
+dependência/regressão impede os aceites da base. Windows nativo passa a
+bloqueador B7; ROS 2, colaboração remota entre pessoas e o motor semântico
+profundo conservam seus planos posteriores. A revisão de acabamento antes associada
 à edição especial é incorporada ao polimento desta base, sem exigir outra
 versão pública. Os compromissos de idioma não são cancelados pelo recorte.
 
@@ -97,7 +121,7 @@ versão pública. Os compromissos de idioma não são cancelados pelo recorte.
 
 | Frente, na ordem de aprofundamento | Aceite mínimo a demonstrar |
 | --- | --- |
-| C | Projeto C puro com biblioteca e executável em várias unidades, contexto/headers corretos, correções verificadas, build/ligação, testes e depuração |
+| C | Matriz C1–C8 da [consolidação nativa de C](../especificacoes/consolidacao-nativa-de-c.md): C23/C17/C11, criação e configuração, GCC/Clang, CMake/Make, editor/headers, análise/memória, build/ligação/testes/DAP, embarcados e plataformas |
 | C++ | Projeto com dependências, configuração efetiva, navegação/rename/correções, build/ligação, testes e depuração |
 | Rust | Workspace Cargo com features/target, contexto coerente no rust-analyzer, verificação, build, testes e depuração |
 | Rust/C/C++ | Projetos mistos, interfaces e bindings, invalidação nos consumidores, ligação e testes nas fronteiras |
@@ -114,6 +138,49 @@ Otimização exige comparação reproduzível de latência, consultas, CPU e mem
 Polimento fecha foco, teclado, estados, recuperação e hierarquia visual junto
 da jornada. Enquanto esses aceites estiverem abertos, a presença do LSP ou um
 build bem-sucedido não constituem prontidão do ecossistema inteiro.
+
+### 3.2 Fundamentos obrigatórios e porta de contribuição
+
+**Escopo de 2026-11-03.** Os requisitos F1–F9 e sua sequência pertencem à
+[infraestrutura fundamental](../especificacoes/infraestrutura-fundamental-0.4.md).
+Esta tabela vincula os aceites à release; nenhum destes bloqueadores é opcional.
+
+| Bloqueador | Entrega exigida | Evidência mínima e dono |
+| --- | --- | --- |
+| B6 — Ambiente e ciclo embarcado | F1, F2, F3 e F5: perfis sem edição manual de JSON, DAP consolidado, compilar/emular e visualizador SVD | Toolchains reais; jornadas ARM/RISC-V com console e breakpoint; árvore SVD offline e valores no debug; especificação F1–F5 e trilha 52 |
+| B7 — Windows | F4: core/UI nativos, jornadas e instalador Windows 11 x86_64 | Matriz nativa, instalação/atualização/desinstalação em ambiente limpo; [60](60-windows-e-edicao-especial.md). WSL2 tem prova separada |
+| B8 — Arquivos e contexto | F6: VFS integrada a editor, análise e build em Linux/Windows, SSH e container | Identidade, mapeamento, snapshots, conflitos e reconexão com ferramentas no ambiente correto |
+| B9 — Ciência e engenharia | F7–F9: plotagem reutilizável, notebook Python/Jupyter, bibliotecas e utilitários, relatório Flash/RAM | Fluxo numérico até C/C++, buffers e desempenho medidos, kernel recuperável, resultados de engenharia conferidos e artefatos identificados |
+| B10 — Contribuição e demonstração | README coerente, guias, CI, templates e tarefas revisadas com labels; demonstração curta do ciclo integrado | [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); distinguir artefatos locais de configuração/publicação efetiva no GitHub |
+
+O estado inicial da infraestrutura está na especificação §2. Ele não declara
+novas provas funcionais. Ferramenta, plataforma ou hardware indisponível fica
+NÃO PROVADO com seu alcance; ausência de evidência não encerra um bloqueador.
+A demonstração de lançamento usa somente capacidades aceitas, com versão e
+ambiente identificados. A 0.5 evolui esses contratos e consumidores em uso.
+
+### 3.3 Sequência de consolidação das ferramentas e do algoritmo
+
+O foco inicial é consolidar a orquestração/integração das ferramentas e o
+contexto de cada jornada. O verificador existente acompanha as fatias para
+exercitar as entradas e preservar suas garantias; a fase dedicada de evolução
+e fechamento do algoritmo vem depois dessa consolidação, ainda na 0.4.
+As pré-condições, a primeira fixture C e os aceites finais estão na
+[orquestração §12.1](../especificacoes/orquestracao-e-verificacao-de-linguagens.md#121-dependências-entre-ferramentas-e-verificador).
+
+A sequência começa por contexto/build/LSP de C de host e verificador no mesmo
+projeto, aprofunda C até o aceite C1–C8, segue por C++, Rust e fronteiras C/C++,
+depois Python. A jornada C11 isolada não encerra a etapa C. DAP, testes e
+QEMU comprovam as etapas de execução/depuração aplicáveis. SVD, notebooks e
+plotagem preservam seus bloqueadores próprios, sem impedir o endurecimento
+do verificador host. Windows/VFS acompanham seus consumidores desde o desenho.
+
+O fechamento B4 exige evidências nos contextos suportados e consolidados,
+com regressões, mutações das guardas, medições e prévia/aplicação na UI.
+O recorte S0/S1 existente conserva seu alcance até cada ampliação ser provada;
+o assistente S0–S4 permanece com seus aceites no 52 §11.2. Um resultado positivo
+não compensa ferramenta, configuração ou dependência divergente. B5 continua
+dependendo de todos os bloqueadores, inclusive os que não alimentam o verificador.
 
 ## 4. Primeiro algoritmo: fronteira anterior ao código
 

@@ -29,7 +29,7 @@
 > cidadão de tier 1** — as cinco jornadas abaixo valem para ele, não só o
 > compiledb (§5.10) — e os **emuladores entram como alvo** (§10.1).
 
-> **Fronteira vigente — 2026-11-02:** este documento preserva a trilha
+> **Fronteira vigente — 2026-11-03:** este documento preserva a trilha
 > completa de Sistemas Embarcados Modernos, aberta para colaboração. Os
 > marcos 0.4.1–0.4.9 organizam escopos, sem exigir releases intermediárias
 > nem conclusão integral antes da base pública **Kinein Vectis 0.4**
@@ -39,6 +39,13 @@
 > A prioridade é consolidar C/C++, depois Rust e integração Rust/C/C++, depois
 > Python, com otimização de algoritmos e polimento UI/HUD/UX. Arquitetura e
 > aceites na [orquestração de linguagens](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
+> C tem [etapa profunda dedicada](../especificacoes/consolidacao-nativa-de-c.md),
+> com C23 e matriz C1–C8 antes da consolidação C++. A primeira jornada C11
+> constitui prova parcial; a etapa C permanece aberta.
+> Os mínimos de toolchain, DAP, QEMU, Windows, SVD, VFS, plotagem, notebooks
+> e engenharia são obrigatórios na 0.4 pela
+> [infraestrutura fundamental](../especificacoes/infraestrutura-fundamental-0.4.md).
+> A expansão da trilha permanece aberta; os mínimos bloqueiam o lançamento.
 > A expansão especializada segue essa base. Polimento e verificador avançam; o
 > assistente completo de §11.2 e os compromissos pendentes não são dados
 > como concluídos. Esta fronteira prevalece sobre ordens antigas abaixo.

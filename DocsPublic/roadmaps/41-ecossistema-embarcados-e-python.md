@@ -45,6 +45,13 @@
 > onde a IDE procura além do `PATH`, e a regra do provedor de instalação. Este
 > inventário continua sendo a lista das ferramentas de FUNCIONALIDADE.
 
+> **Fronteira vigente de 2026-11-03:** a sequência da base pertence à
+> [orquestração de linguagens](../especificacoes/orquestracao-e-verificacao-de-linguagens.md)
+> e ao [62](62-base-publica-0.4.md). Notebooks científicos, plotagem e
+> ferramentas de engenharia têm mínimos obrigatórios na 0.4 pela
+> [infraestrutura fundamental](../especificacoes/infraestrutura-fundamental-0.4.md).
+> O inventário e as ordens históricas abaixo não os adiam para outra versão.
+
 ## 0. Como ler isto
 
 ```text

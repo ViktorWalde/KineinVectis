@@ -122,14 +122,15 @@ problemas.
 
 ### 6.2 O alvo é Linux nativo
 
-**Fechado.** O produto é Linux; o artefato é AppImage. Isso não é uma pendência
-de portabilidade, é o escopo.
+**Escopo original de 2026-09-25, revisto.** Linux nativo e AppImage continuam
+na base; Windows entrou no escopo em 2026-10-08 e suporte nativo/instalador
+passam a obrigatórios na própria 0.4 desde 2026-11-03. Fronteira no
+[62](../roadmaps/62-base-publica-0.4.md), porte no
+[60](../roadmaps/60-windows-e-edicao-especial.md).
 
-Consequência concreta e registrada para não voltar como ideia: a sugestão de
-espelhar o *Object Explorer* do Windows ("list handle by process") **não se
-aplica** — o equivalente Linux é `/proc/<pid>/fd`, que já é a forma nativa e não
-precisa de ferramenta de terceiros. Handles do Windows ficam fora por
-plataforma, e não por dificuldade.
+O monitoramento de descritores Linux usa `/proc/<pid>/fd`. Uma superfície
+equivalente de handles do Windows exigiria backend e aceite próprios;
+essa evolução não é deduzida da portabilidade básica da IDE.
 
 ### 6.3 Monitoramento entra, e separado por alvo
 

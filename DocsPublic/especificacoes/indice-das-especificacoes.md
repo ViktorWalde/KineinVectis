@@ -31,15 +31,21 @@
 
 ## 1. Identidade do projeto
 
-**Fronteira vigente de 2026-11-02:** a base 0.4 consolida C/C++, depois Rust
+**Fronteira vigente de 2026-11-03:** a base 0.4 consolida C/C++, depois Rust
 e integração Rust/C/C++, depois Python; especializações preservam seus roadmaps.
 Arquitetura, sequência e aceites na
 [orquestração de linguagens](orquestracao-e-verificacao-de-linguagens.md),
 com a primeira implementação no
 [verificador de correções LSP](verificador-de-correcoes-lsp.md).
+A [consolidação nativa de C](consolidacao-nativa-de-c.md) define a etapa
+profunda C1–C8, incluindo C23, antes da consolidação C++; a jornada C11
+existente tem alcance parcial.
 Instalar Ferramentas mantém polimento cromático e de interação pendente na
 [especificação própria](instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
 Fronteira de lançamento no [62](../roadmaps/62-base-publica-0.4.md).
+Os mínimos obrigatórios de toolchain, DAP/QEMU, Windows, SVD, VFS, plotagem,
+notebooks e engenharia estão na [infraestrutura fundamental](infraestrutura-fundamental-0.4.md).
+A 0.5 aprofunda e amplia essa base.
 
 **Complemento de 2026-10-21:** [Instalar Ferramentas](instalar-ferramentas.md)
 e [Quality Center e gates](quality-center-e-gates.md) especificam as novas

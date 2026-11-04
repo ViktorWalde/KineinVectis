@@ -41,12 +41,15 @@ O [`53-arquitetura-executavel-da-0.3.6.md`](53-arquitetura-executavel-da-0.3.6.m
 aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
 é a arquitetura da 0.4 (embarcados com compiladores e ecossistemas por baixo):
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
-**Fronteira de 2026-11-02:** a base pública **Kinein Vectis 0.4** usa SemVer
+**Fronteira de 2026-11-03:** a base pública **Kinein Vectis 0.4** usa SemVer
 **0.4.0** e consolida o trabalho acumulado, com foco em estabilidade, uso no
 próprio desenvolvimento, polimento UI/HUD/UX e primeiro verificador
-complementar. Critérios e auditoria no [62](62-base-publica-0.4.md).
+complementar. Os fundamentos de ambiente, DAP/QEMU, Windows, SVD, VFS e ciência
+são obrigatórios pela [infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md).
+Critérios e auditoria no [62](62-base-publica-0.4.md); a 0.5 aprofunda a base.
 A trilha completa 0.4.1–0.4.9 continua aberta para colaboradores, sem exigir
-releases intermediárias nem sua conclusão integral antes da base. As
+releases intermediárias nem sua conclusão integral antes da base; seus mínimos
+obrigatórios continuam bloqueadores. As
 [quatro tarefas iniciais](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md)
 separam duas jornadas bare metal e duas Linux embarcado. O 57 §1.1 conserva
 as decisões anteriores e aponta a fronteira atual; idiomas no 57 §3.

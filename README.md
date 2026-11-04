@@ -20,10 +20,32 @@ A Vectis não tenta substituir CMake, Cargo, clangd, GDB ou os SDKs dos fabrican
 
 **[Download 0.3.5](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5) · [Discord / Comunidade](https://discord.gg/cWRkUGUmQU)**
 
-**Em desenvolvimento: série 0.4 até a 0.4.9, ainda não publicada.** A próxima
-entrega reúne também o trabalho não publicado da 0.3.6–0.3.9. O AppImage será
-gerado e testado após a estabilização da 0.4.9; veja a
-[regra de versões e entrega](DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md#11-fronteira-da-entrega-049--decisão-de-2026-10-20).
+**Em desenvolvimento: base Kinein Vectis 0.4, ainda não publicada.** A próxima
+entrega usa SemVer **0.4.0** e reúne também o trabalho não publicado da
+0.3.6–0.3.9. Após a base comprovada, versões públicas 0.4.1 em diante, até a
+0.5, aprofundam, complementam, integram, aprimoram e estabilizam essa fundação. Pacotes dependem
+dos [critérios de entrega](DocsPublic/roadmaps/62-base-publica-0.4.md), com
+polimento, jornadas e plataformas comprovados.
+
+## Base 0.4 em desenvolvimento
+
+Os seguintes mínimos são **requisitos de fechamento**, com implementação e
+validação ainda pendentes conforme a capacidade:
+
+- Consolidar [C em etapa própria, incluindo C23](DocsPublic/especificacoes/consolidacao-nativa-de-c.md),
+  depois C++, Rust e integração Rust/C/C++, depois Python, para projetos
+  pequenos/médios e o desenvolvimento da própria IDE.
+- Integrar detecção de toolchains e perfis de projeto ao ciclo compilar,
+  emular com QEMU e depurar por DAP, sem exigir edição manual de JSON.
+- Validar Windows nativo e instalador, visualizador SVD e contexto de arquivos
+  local, SSH e container, preservando o Linux.
+- Entregar notebooks Python/Jupyter, plotagem reutilizável, bibliotecas e
+  utilitários de engenharia, com consumo Flash/RAM identificado por artefato.
+- Polir UI/HUD/UX, Instalar Ferramentas e a entrada de colaboradores.
+
+O [escopo e os aceites da infraestrutura](DocsPublic/especificacoes/infraestrutura-fundamental-0.4.md)
+distinguem os mecanismos existentes das lacunas. Estes requisitos não descrevem
+os recursos disponíveis na release 0.3.5 nem certificam a 0.4 como concluída.
 
 ---
 
@@ -806,6 +828,10 @@ Atualmente:
 Windows        não suportado
 Linux ARM64    ainda não distribuído
 ```
+
+Windows nativo e instalador são requisitos da base 0.4 em desenvolvimento;
+o [plano de portabilidade](DocsPublic/roadmaps/60-windows-e-edicao-especial.md)
+mantém os aceites pendentes e distingue Windows de WSL2.
 
 ---
 

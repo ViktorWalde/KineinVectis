@@ -9,7 +9,9 @@
 As [quatro tarefas iniciais de Embarcados](15-tarefas-iniciais-embarcados-0.4.md)
 estão delimitadas no checkout: duas bare metal e duas Linux embarcado.
 A trilha 0.4.1–0.4.9 permanece aberta, independente do fechamento da base
-pública 0.4; fronteira vigente no [62](../roadmaps/62-base-publica-0.4.md).
+pública 0.4; os mínimos obrigatórios e a porta de contribuição seguem a
+fronteira vigente do [62](../roadmaps/62-base-publica-0.4.md). Preparar essa
+porta integra o fechamento da 0.4, antes da divulgação.
 
 ## 1. O lugar da colaboração
 
@@ -49,8 +51,8 @@ gestão próprio para começar.
 
 ## 3. A tarefa nasce no GitHub
 
-Publicar poucas tarefas revisadas e prontas para receber contribuição, em
-inglês na abertura da colaboração, após a 0.4.9. Não transformar automaticamente
+Preparar poucas tarefas revisadas e prontas para receber contribuição, em
+inglês para a divulgação da base 0.4. Não transformar automaticamente
 cada pendência do roadmap em issue: várias ainda dependem de desenho ou
 decisão do projeto.
 
@@ -73,11 +75,32 @@ podem ser labels adicionais. O GitHub usa `good first issue` para ajudar a
 expor oportunidades ([documentação](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/encouraging-helpful-contributions-to-your-project-with-labels),
 consulta 2026-10-19); isso não garante recrutamento.
 
-Formulários de issue podem tornar o briefing consistente, e um modelo de PR
-pode pedir o vínculo e as evidências. As configurações futuras pertencem a
-`.github/`, mas nenhuma é criada nesta fatia. A sintaxe de formulários está
-na [documentação oficial](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms)
-(consulta 2026-10-19).
+Os modelos locais de [bug](../../.github/ISSUE_TEMPLATE/bug_report.md),
+[tarefa](../../.github/ISSUE_TEMPLATE/contribution_task.md) e
+[PR](../../.github/pull_request_template.md) pedem reprodução, escopo e evidências.
+Eles não criam issues, labels nem checks obrigatórios no serviço. Sua presença
+no checkout não comprova ativação no GitHub. O formato segue a
+[documentação oficial](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms)
+(consulta 2026-11-03).
+
+### 3.1 Briefings iniciais para revisão e publicação
+
+Os recortes abaixo partem dos mecanismos existentes e dispensam hardware.
+São briefings locais; antes de publicar, conferir duplicatas, completar a
+reprodução/comandos, indicar revisor e confirmar o rótulo. As jornadas do
+[15](15-tarefas-iniciais-embarcados-0.4.md) são contribuições mais amplas.
+
+| Tarefa | Entrada e escopo | Aceite e validação | Rótulo candidato |
+| --- | --- | --- | --- |
+| Documentar um projeto mínimo Eigen/CMake pela Biblioteca | `crates/kinein-core/src/library/catalog.rs`, `library/` e seção Bibliotecas do manual; usar a entrada Eigen já existente | Projeto host que configura/compila, mostra o diff de ativação/desativação e explica dependência ausente; comandos e resultado numérico reproduzíveis; gate documental | `good first issue`, documentação |
+| Documentar seleção e troca de presets sem edição manual | `crates/kinein-core/src/tests/cmake.rs`, dono CMake e manual; usar os casos existentes de vários presets e escolha persistida | Tutorial exercitado na IDE, incluindo preset removido e recuperação; distinguir projeto/local/kit; gate documental | `good first issue`, documentação |
+| Preparar fixture SVD pequena e redistribuível | F5 da infraestrutura; descrição genérica com periférico, registrador e campos, origem/licença explícitas | XML conferido contra schema CMSIS-SVD, endereços e bits esperados descritos; não implementar parser nem alegar suporte a um chip real | `good first issue`, fixtures |
+| Ampliar a matriz real CMake/presets | `crates/kinein-core/src/tests/cmake.rs` e donos CMake/configaction; selecionar lacuna após conferir a cobertura atual | Caso com CMake real, caminho com espaços/Unicode e configuração herdada preservada; reproduzir falha, corrigir a lacuna e executar regressões pertinentes | `help wanted`, build |
+
+Implementar DAP/probe-rs completo, VFS ou um parser SVD inteiro exige desenho
+e conhecimento de domínio. Essas frentes devem ser divididas antes de receber
+`good first issue`; o suporte DAP/probe-rs já presente precisa ser estendido,
+sem criar outro adaptador da IDE.
 
 ## 4. Ideia para o site: uma apresentação das mesmas issues
 
@@ -139,10 +162,30 @@ cadastro de colaboradores à IDE.
    falha real, correção e logs legíveis; manter permissões adequadas a PRs.
 2. Preparar modelos, labels e poucas issues de entrada, com os campos da §3
    preenchidos e a primeira pessoa conseguindo reproduzir a validação.
-3. Publicar a porta de contribuição em inglês depois da 0.4.9, conforme a fronteira vigente do 57 §1.1.
+3. Validar a porta de contribuição em inglês no fechamento da base 0.4,
+   conforme o 62 B10; divulgar somente com o estado técnico conferido.
 4. Em frente própria, avaliar e implementar a apresentação no site. Provar
    navegação issue/PR, filtros, atualização, falha de sincronização e os
    estados concluído/cancelado/reaberto antes de anunciar automação.
+
+## 7. Demonstração e divulgação da base 0.4
+
+O material de divulgação depende dos aceites B1–B10 do 62. Destacar integração
+de ferramentas, configuração assistida e o ciclo sem placa, distinguindo as
+plataformas e perfis comprovados. Evitar afirmação de ser a primeira IDE a
+combinar essas áreas e comparações de mercado sem evidência.
+
+Preparar uma demonstração curta, com alvo de até um minuto: abrir a fixture,
+mostrar toolchain/perfil, compilar, iniciar QEMU, atingir breakpoint via DAP e
+inspecionar um valor. Identificar versão, máquina e ferramentas; declarar cache
+e cortes quando usados. A duração do vídeo não é um benchmark do ciclo inteiro.
+O roteiro só fica aceito com gravação do produto funcional, sem simular estados.
+
+README, changelog e texto para fóruns devem apontar release, demonstração,
+limitações e tarefas revisadas. A mensagem central é: **Kinein Vectis 0.4
+integra firmware, ferramentas científicas e emulação em uma IDE open source,
+com ambiente e escolhas visíveis.** Usar essa mensagem como anúncio de entrega
+somente após a validação. Até lá, comunicar os itens como desenvolvimento.
 
 CI e portal não tornam a revisão dispensável. O mantenedor continua sendo
 quem aceita escopo e entrega. Push, configuração e publicação no GitHub
