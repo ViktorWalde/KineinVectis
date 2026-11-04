@@ -116,6 +116,10 @@ impl ServerRegistry {
     /// self` ao mesmo tempo (subir o servidor), e o spec tem duas strings.
     pub(super) fn spec_for_path(&self, path: &Path) -> Option<ServerSpec> {
         let language = language_for_path(path)?;
+        self.spec_for_language(language)
+    }
+
+    pub(super) fn spec_for_language(&self, language: &str) -> Option<ServerSpec> {
         self.specs.iter().find(|spec| spec.key == language).cloned()
     }
 
@@ -135,14 +139,6 @@ impl ServerRegistry {
             .filter(|spec| spec.language == language && spec.key != spec.language)
             .cloned()
             .collect()
-    }
-
-    /// O `languageId` do protocolo de uma linguagem (o do principal).
-    pub(super) fn language_id_of(&self, language: &str) -> &'static str {
-        self.specs
-            .iter()
-            .find(|spec| spec.key == language)
-            .map_or("plaintext", |spec| spec.language_id)
     }
 
     /// A linguagem de uma chave de servidor, se ela existe na tabela.

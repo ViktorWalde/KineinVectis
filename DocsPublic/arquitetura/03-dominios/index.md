@@ -76,7 +76,7 @@ suposto. Rust: só `target` (do kit) e o `kit`; a edição já está no `crate`.
 
 **O contexto de compilador (0.95.0).** O índice diz *o que há* em cada
 arquivo; o contexto diz *com que* ele é compilado — e é carregado no mesmo
-job, logo depois dos arquivos:
+job, antes da extração estrutural desde 2026-11-04, para orientar a gramática:
 
 - **C/C++:** a `compile_commands.json` que o `cdb::status` encontra
   (`.kinein/build`, raiz, `build`, `builddir`, `out/build`), nas **duas
@@ -89,9 +89,15 @@ job, logo depois dos arquivos:
   `-ansi`/`--ansi` conservam a grafia do seletor em `standard`, sem inferir
   uma revisão a partir dele. Ausência de seletor conserva o campo ausente.
   `output` vence `-o`. O resto
-  segue inteiro em `arguments`. Cabeçalho não tem unidade própria e a `hint`
-  diz isso (o clangd deduz pela unidade que o inclui); fonte fora da CDB diz
+  segue inteiro em `arguments`. Cabeçalho sem comando próprio não ganha uma
+  unidade inferida; a `hint` delega as flags ao clangd. Fonte fora da CDB diz
   "nenhum alvo o compila" — ou, se a CDB envelheceu, qual arquivo a envelheceu.
+
+  Desde 2026-11-04, sem campo novo, `language` C/C++ usa a identidade documental
+  da [consolidação C §10](../../especificacoes/consolidacao-nativa-de-c.md#10-identidade-documental-cc--desenho-de-2026-11-04),
+  compartilhada com gramática/extração e LSP. A `hint` de `.h` distingue escolha
+  local pelo contexto de fallback C++ por ambiguidade/ausência. Isso não cria
+  unidade nem afirma conhecer o includer ou as flags semânticas do clangd.
 - **A CDB envelhecida por SUBPASTA.** Medido em 2026-09-12 neste repositório:
   a CDB de 04/09 sem cinco fontes que o `ui/CMakeLists.txt` de 12/09
   acrescentou, e o `cdb::status` dizendo "não envelheceu" porque só compara

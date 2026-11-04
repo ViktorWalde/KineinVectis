@@ -197,7 +197,6 @@ flowchart LR
   n_core_flash --> n_core_serial
   n_core_format --> n_core_platform
   n_core_fsops --> n_core_platform
-  n_core_fswatch --> n_core_lsp
   n_core_fswatch --> n_core_platform
   n_core_grafana --> n_core_datasource
   n_core_handlers --> n_core_build
@@ -244,6 +243,7 @@ flowchart LR
   n_core_lsp --> n_core_cdb
   n_core_lsp --> n_core_cmake
   n_core_lsp --> n_core_fsops
+  n_core_lsp --> n_core_index
   n_core_lsp --> n_core_owned_child
   n_core_lsp --> n_core_stderr_tail
   n_core_outcome --> n_core_rpc
@@ -324,7 +324,7 @@ flowchart LR
 | `flash` | build, dfu, fsops, picotool, platform, probe, process, project, serial | Gravar como CONFIGURACAO DE EXECUCAO (E4 do integracoes/38 §6; decisao do projeto em 2026-09-11: |
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
-| `fswatch` | lsp, platform | Debounced, workspace-confined observation of external file-system changes. |
+| `fswatch` | platform | Debounced, workspace-confined observation of external file-system changes. |
 | `git` | — | Git orquestrado sobre o binario git. |
 | `grafana` | datasource | Observabilidade: |
 | `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
@@ -332,7 +332,7 @@ flowchart LR
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
-| `lsp` | cdb, cmake, fsops, owned_child, stderr_tail | Subsistema LSP: |
+| `lsp` | cdb, cmake, fsops, index, owned_child, stderr_tail | Subsistema LSP: |
 | `msvc` | — | O Visual Studio do Windows, para o build de C/C++. |
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
 | `owned_child` | platform, stderr_tail | A base prova o que diz: |

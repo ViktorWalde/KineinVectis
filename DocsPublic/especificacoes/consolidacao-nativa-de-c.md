@@ -2,7 +2,7 @@
 
 > **Classe: DECISÃO / ALVO, 2026-11-03.** Etapa profunda e obrigatória antes
 > da consolidação C++. Define os aceites de C na base pública 0.4.0; a primeira
-> jornada C11 é uma prova parcial. Inventário inicial em §7 e evolução em §§8–9;
+> jornada C11 é uma prova parcial. Inventário inicial em §7 e evolução em §§8–10;
 > fronteira da release
 > no [62](../roadmaps/62-base-publica-0.4.md).
 
@@ -336,3 +336,82 @@ Três mutantes compiláveis eliminados: voltar à lista fechada na ação,
 filtrar dialetos na CDB e criar C++ ao selecionar C. Gate rápido aprovado
 em 314 s: 1440 Rust, Clippy, 50 arquivos C++, 8 CTest e 178 harnesses QML.
 Os dois NÃO PROVADOS ARM persistem por compiladores cross ausentes.
+
+## 10. Identidade documental C/C++ — desenho de 2026-11-04
+
+A família da linguagem do documento deve ser independente da chave do servidor:
+C e C++ continuam no mesmo clangd, sob a chave histórica `cpp`. Fontes C usam
+`languageId: c`; fontes C++ usam `cpp`. O padrão/dialeto permanece nos argumentos
+originais, sem lista de revisões nem inserção de flags pela seleção de gramática.
+`.C` e `.H` conservam a convenção C++; `.c` conserva C. A seleção local usa o mesmo
+contexto do índice: comando explícito CDB (`-x`, `/TC`, `/TP`) e driver C++
+conhecido precedem a extensão, sem executar compiladores na consulta.
+O recorte respeita a posição da entrada: `-x` posterior ao próprio arquivo
+não muda sua família, conforme a [semântica do driver GCC](https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html).
+
+Para `.h` sem comando próprio, os alvos que o declaram no codemodel podem
+determinar uma única família C/C++. Sem dono explícito, uma CDB homogênea pode
+orientar a gramática local. Contexto ausente, conflitante ou misto conserva o
+fallback C++ de compatibilidade, com alcance explicado em `index.context`.
+Não se deduz um includer por proximidade de nome nem se reimplementa o
+pré-processador. A inferência semântica de includes/flags continua no clangd,
+conforme sua [documentação de comandos](https://clangd.llvm.org/design/compile-commands).
+Um header compartilhado não ganha uma unidade fictícia na CDB.
+
+Editor, extração estrutural e `index.context` devem consumir a mesma escolha.
+Recarregar contexto refaz a estrutura dos documentos cuja família mudou;
+Tree-sitter descarta a árvore anterior de outra gramática. No LSP, uma mudança
+de família exige `didClose`/`didOpen`, mesmo com texto idêntico, e invalida ações
+baseadas na identidade anterior. Troca de workspace não reutiliza contexto antigo.
+Os envelopes IPC existentes já comportam `c` e `cpp`; esta correção não adiciona
+campo/método nem altera a versão 0.200.0. A prova deve separar wire controlado,
+gramática local, clangd real e interação na UI. C3 permanece parcial até seus
+demais aceites; headers ambíguos não equivalem a resolução completa de inclusões.
+
+### 10.1 Integração parcial e limites observados — 2026-11-04
+
+Identidade documental integrada nos donos de contexto, Tree-sitter, índice
+estrutural e sincronização LSP. O índice carrega contexto antes da extração e
+refaz somente os arquivos cuja gramática mudou ao recarregá-lo. O editor pede
+novos snapshots após `event.index.finished`, inclusive sem edição do buffer.
+O watcher conserva o mesmo canal de eventos usando o tipo `mpsc::Sender`
+diretamente; a dependência de alias no LSP foi retirada para manter o grafo
+sem novo ciclo ao compartilhar o contexto do índice com o manager.
+
+Quatro regressões novas: seletores CDB sem enumeração de revisões; `.C`, `-x`
+e `/TC`/`/TP`; headers em contexto homogêneo/ambíguo; wire de C/C++ com um
+único servidor, reabertura e invalidação com texto igual, troca de workspace
+e rejeição de contexto da raiz anterior; projeto misto pelos produtores reais.
+A fixture `scripts/fixtures/c-identity/` usa biblioteca C23, executável C++17,
+headers C/C++ próprios e uma API compartilhada. Configuração/build/CTest,
+identidade contextual e gramáticas dos headers passaram com GCC 16.2.1 e
+Clang 23.1.4; hover do header
+C passou com clangd 23.1.4. Seletores MSVC são casos controlados, sem prova Windows.
+Três mutantes compiláveis eliminados: `languageId` C convertido em C++, dono
+C do header convertido em C++ e reabertura por mudança de família desativada.
+
+Na UI nativa foram comprovados realce e inspeção dos headers C e C++, a dica
+de ambiguidade do header compartilhado, build misto e CTest 1/1. Para o header
+C, o compilador de fallback do inspetor mudou de C++ para C, mantendo unidade
+ausente. A prova funcional usa os componentes existentes.
+
+**Limites que mantêm C3 aberto:** a gramática `tree-sitter-c` 0.24.2 sinaliza
+erro em `typeof(1)` usado como tipo, embora GCC/Clang aceitem a fonte C23.
+Prova isolada por IPC conservou `language: c`; `static_assert`, `_Static_assert`
+e `_Generic` passaram sem erro sintático local. As quatro fontes passaram
+também em oito compilações básicas GCC/Clang; isso não certifica o corpus C23.
+
+O clangd real, ao abrir primeiro o header C++ da fixture mista, escolheu um
+comando C por inferência e publicou erro em `namespace`, apesar da identidade
+local C++ correta. O caso foi observado tanto por IPC quanto na UI. A seleção
+local entregue não corrige essa inferência semântica: associar uma unidade de
+referência confiável e invalidá-la continua pendente em C2/C3. O mecanismo de
+[comandos via LSP do clangd](https://clangd.llvm.org/extensions#compilation-commands)
+é uma possibilidade técnica a avaliar, sem escrever CDB ou flags inventadas.
+Não há aceite completo de headers mistos, gramática C23 ou fechamento C1–C8.
+
+Gate rápido final aprovado em 283 s: 1444 Rust, Clippy sem avisos, análise de
+50 arquivos C++, 8 CTest e 178 harnesses QML. Dois NÃO PROVADOS ARM por
+`arm-none-eabi-gcc`/`arm-none-eabi-g++` ausentes. Revisão editorial e gates de
+documentação, nomenclatura, mapa e arquitetura aprovados. Não equivale ao
+gate completo estrito de release nem aceita os limites funcionais acima.

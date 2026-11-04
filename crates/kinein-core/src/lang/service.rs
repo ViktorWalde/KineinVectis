@@ -111,12 +111,13 @@ pub(crate) struct SyntaxTreeService {
 }
 
 impl SyntaxTreeService {
-    /// Produces highlights, folds, outline and locals for one document version.
-    pub(crate) fn update(
+    /// Uses the document identity selected by the compilation context owner.
+    pub(crate) fn update_with_language(
         &mut self,
         path: &Path,
         content: &str,
         version: u64,
+        language: Option<&str>,
     ) -> Result<SyntaxTreeSnapshotResult, SyntaxTreeError> {
         if content.len() > MAX_CONTENT_BYTES {
             return Err(SyntaxTreeError::TooLarge {
@@ -124,7 +125,10 @@ impl SyntaxTreeService {
                 maximum: MAX_CONTENT_BYTES,
             });
         }
-        let Some(language_id) = LanguageId::for_path(path) else {
+        let Some(language_id) = language
+            .and_then(LanguageId::from_name)
+            .or_else(|| LanguageId::for_path(path))
+        else {
             return Ok(empty_snapshot(path, "plain", version));
         };
 
@@ -405,9 +409,11 @@ mod tests {
     fn service_reuses_one_document_and_returns_all_structural_layers() {
         let mut service = SyntaxTreeService::default();
         let path = Path::new("/tmp/main.rs");
-        let first = service.update(path, "fn main() {\n    let café = 1;\n}\n", 1);
+        let first =
+            service.update_with_language(path, "fn main() {\n    let café = 1;\n}\n", 1, None);
         assert!(first.is_ok());
-        let second = service.update(path, "fn main() {\n    let café = 2;\n}\n", 2);
+        let second =
+            service.update_with_language(path, "fn main() {\n    let café = 2;\n}\n", 2, None);
         assert!(second.is_ok());
         let Ok(second) = second else {
             return;
@@ -427,7 +433,12 @@ mod tests {
 
     #[test]
     fn unsupported_files_have_a_typed_empty_snapshot() {
-        let result = SyntaxTreeService::default().update(Path::new("/tmp/readme.txt"), "text", 3);
+        let result = SyntaxTreeService::default().update_with_language(
+            Path::new("/tmp/readme.txt"),
+            "text",
+            3,
+            None,
+        );
         assert!(result.is_ok());
         let Ok(result) = result else {
             return;

@@ -50,7 +50,19 @@ impl Core {
             Err(error) => return fs_error_response(request_id, &error),
         };
 
-        match self.syntax.update(&path, &parsed.content, parsed.version) {
+        let language = self.index.lock().ok().and_then(|index| {
+            if index.root != root {
+                return None;
+            }
+            index
+                .context
+                .as_ref()
+                .map(|context| context.document_language(&path))
+        });
+        match self
+            .syntax
+            .update_with_language(&path, &parsed.content, parsed.version, language)
+        {
             Ok(snapshot) => JsonRpcResponse::success(request_id, json!(snapshot)),
             Err(error) => syntax_error_response(request_id, &path, &error),
         }

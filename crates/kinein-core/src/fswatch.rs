@@ -22,7 +22,7 @@ use notify::{
 };
 use serde_json::json;
 
-use crate::lsp::EventSender;
+type EventSender = mpsc::Sender<JsonRpcRequest>;
 
 const DEBOUNCE: Duration = Duration::from_millis(180);
 const POLL_INTERVAL: Duration = Duration::from_secs(2);

@@ -21,6 +21,7 @@
 //! - [`uri`]: conversao entre caminhos e URIs `file://`.
 
 mod diagnostics_merge;
+mod document;
 mod edit;
 pub mod framing;
 mod handshake;

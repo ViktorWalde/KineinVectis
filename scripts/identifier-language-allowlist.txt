@@ -216,3 +216,12 @@ copytree
 # English validation and verifier lifecycle terminology.
 validated verifications
 freeze signature
+
+# English vocabulary used for document identity and native-tool regressions.
+# contextual/homogeneous: context selection and a single compiler-language family.
+# modern/producers/duplicated: coverage and repeated compilation-database entries.
+contextual homogeneous modern producers duplicated
+# C/C++ linkage keyword used by a shared C API header.
+extern
+# Structural index: remove duplicates and rank the more specific declaration.
+deduplicate specificity

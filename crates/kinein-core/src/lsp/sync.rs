@@ -22,7 +22,6 @@ use serde_json::json;
 
 use super::framing::{full_change_params, send_notification};
 use super::manager::LspManager;
-use super::registry::language_for_path;
 use super::server::ServerHandle;
 use super::types::LspError;
 use super::uri::uri_for_path;
@@ -44,7 +43,7 @@ impl LspManager {
     /// alem de evitar reparse no servidor, preserva a consulta ativa de code
     /// actions e os fix-its que o clangd amarra a versao do documento.
     pub fn did_open(&mut self, path: &Path, content: &str) {
-        let Some(spec) = self.registry.spec_for_path(path) else {
+        let Some(spec) = self.spec_for_document(path) else {
             return;
         };
         if self.ensure_server(&spec).is_err() {
@@ -69,7 +68,7 @@ impl LspManager {
     ///
     /// Sem mudanca real de conteudo, nada e enviado (ver `did_open`).
     pub fn did_change(&mut self, path: &Path, content: &str) {
-        let Some(language) = language_for_path(path) else {
+        let Some(language) = self.spec_for_document(path).map(|spec| spec.key) else {
             return;
         };
         let uri = uri_for_path(path);
@@ -82,7 +81,7 @@ impl LspManager {
             return;
         }
         let hash = content_hash(content);
-        let language_id = self.registry.language_id_of(language);
+        let language_id = self.document_language(path);
         let mut enviou = false;
         for key in self.registry.keys_of(language) {
             if let Some(handle) = self.servers.get_mut(key)
@@ -99,7 +98,7 @@ impl LspManager {
     /// Notifica salvamento de um documento.
     pub fn did_save(&mut self, path: &Path, content: &str) {
         self.did_change(path, content);
-        let Some(language) = language_for_path(path) else {
+        let Some(language) = self.spec_for_document(path).map(|spec| spec.key) else {
             return;
         };
         let uri = uri_for_path(path);
@@ -129,7 +128,7 @@ impl LspManager {
     /// o clangd recompilar com as flags novas — a etapa 4 do roadmap 30, que
     /// estava barrada por nao existir nem a operacao nem prova dela.
     pub fn did_close(&mut self, path: &Path) -> bool {
-        let Some(language) = language_for_path(path) else {
+        let Some(language) = self.spec_for_document(path).map(|spec| spec.key) else {
             return false;
         };
         let uri = uri_for_path(path);
@@ -206,18 +205,22 @@ impl LspManager {
     /// Usado depois de um rename reescrever arquivos no disco; documentos que
     /// o servidor nao conhece ficam intactos (nenhum `didOpen` novo).
     pub fn sync_if_open(&mut self, path: &Path, content: &str) {
-        let Some(language) = language_for_path(path) else {
+        let Some(language) = self.spec_for_document(path).map(|spec| spec.key) else {
             return;
         };
         let uri = uri_for_path(path);
         let hash = content_hash(content);
-        let language_id = self.registry.language_id_of(language);
+        let language_id = self.document_language(path);
+        let mut changed = false;
         for key in self.registry.keys_of(language) {
             if let Some(handle) = self.servers.get_mut(key)
                 && handle.versions.contains_key(&uri)
             {
-                open_or_change(handle, &uri, language_id, content, hash, true);
+                changed |= open_or_change(handle, &uri, language_id, content, hash, true);
             }
+        }
+        if changed {
+            self.invalidate_code_actions();
         }
     }
 
@@ -228,7 +231,7 @@ impl LspManager {
     /// criar uma transacao de escrita.
     #[must_use]
     pub fn document_version(&self, path: &Path, server: Option<&str>) -> Option<i64> {
-        let language = server.or_else(|| language_for_path(path))?;
+        let language = server.or_else(|| self.spec_for_document(path).map(|spec| spec.key))?;
         let uri = uri_for_path(path);
         self.servers
             .get(language)
@@ -238,10 +241,14 @@ impl LspManager {
 
     /// Current buffer identity, independent from protocol version counters.
     pub(crate) fn document_matches(&self, path: &Path, content: &str) -> bool {
-        language_for_path(path)
+        self.spec_for_document(path)
+            .map(|spec| spec.key)
             .and_then(|key| self.servers.get(key))
-            .and_then(|handle| handle.content_hashes.get(&uri_for_path(path)))
-            .is_some_and(|hash| *hash == content_hash(content))
+            .is_some_and(|handle| {
+                let uri = uri_for_path(path);
+                handle.content_hashes.get(&uri) == Some(&content_hash(content))
+                    && handle.language_ids.get(&uri) == Some(&self.document_language(path))
+            })
     }
 
     /// Garante o servidor principal da linguagem e sincroniza o texto nele e
@@ -255,7 +262,7 @@ impl LspManager {
         path: &Path,
         content: &str,
     ) -> Result<&'static str, LspError> {
-        let Some(spec) = self.registry.spec_for_path(path) else {
+        let Some(spec) = self.spec_for_document(path) else {
             return Err(LspError::UnsupportedFile {
                 path: path.display().to_string(),
             });
@@ -274,8 +281,7 @@ impl LspManager {
         if !handle.is_ready() {
             return Err(LspError::Starting { key: spec.key });
         }
-        let changed = handle.content_hashes.get(&uri) != Some(&hash);
-        open_or_change(handle, &uri, spec.language_id, content, hash, true);
+        let changed = open_or_change(handle, &uri, spec.language_id, content, hash, true);
         if changed {
             self.invalidate_code_actions();
         }
@@ -294,7 +300,7 @@ impl LspManager {
 fn open_or_change(
     handle: &mut ServerHandle,
     uri: &str,
-    language_id: &str,
+    language_id: &'static str,
     content: &str,
     hash: u64,
     skip_if_same: bool,
@@ -303,6 +309,13 @@ fn open_or_change(
     // foi barrado antes, no sync_document).
     if !handle.is_ready() {
         return false;
+    }
+    if handle
+        .language_ids
+        .get(uri)
+        .is_some_and(|previous| *previous != language_id)
+    {
+        close_in(handle, uri);
     }
     if let Some(version) = handle.versions.get_mut(uri) {
         if skip_if_same && handle.content_hashes.get(uri) == Some(&hash) {
@@ -315,6 +328,7 @@ fn open_or_change(
         return true;
     }
     handle.versions.insert(uri.to_owned(), 1);
+    handle.language_ids.insert(uri.to_owned(), language_id);
     handle.content_hashes.insert(uri.to_owned(), hash);
     let params = json!({
         "textDocument": {
@@ -334,6 +348,7 @@ fn close_in(handle: &mut ServerHandle, uri: &str) -> bool {
         return false;
     }
     handle.content_hashes.remove(uri);
+    handle.language_ids.remove(uri);
     let params = json!({ "textDocument": { "uri": uri } });
     send_notification(&handle.stdin, "textDocument/didClose", &params);
     true

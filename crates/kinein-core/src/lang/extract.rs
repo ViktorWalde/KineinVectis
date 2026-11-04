@@ -34,7 +34,16 @@ impl SymbolExtractor {
     /// gramatica falhou. Um arquivo com erro de sintaxe AINDA devolve o que a
     /// arvore parcial permitiu — e' assim que o Tree-sitter foi desenhado.
     pub fn symbols(&mut self, path: &Path, content: &str) -> Option<Vec<SyntaxOutlineItem>> {
-        let id = LanguageId::for_path(path)?;
+        self.symbols_with_language(Self::language_for(path)?, content)
+    }
+
+    /// Extracts with the same contextual grammar as the active editor.
+    pub(crate) fn symbols_with_language(
+        &mut self,
+        language: &str,
+        content: &str,
+    ) -> Option<Vec<SyntaxOutlineItem>> {
+        let id = LanguageId::from_name(language)?;
         let runtime = self.registry.runtime(id).ok()?;
         let mut parser = Parser::new();
         parser.set_language(runtime.language()).ok()?;

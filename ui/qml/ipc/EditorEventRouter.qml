@@ -66,6 +66,12 @@ Item {
             root.editorController.refreshSemanticTokens();
         }
 
+        // O contexto pode chegar depois do primeiro parse ou mudar sem edicao.
+        function onIndexFinished(stats) {
+            root.editorController.refreshSyntaxTree();
+            root.editorController.refreshSemanticTokens();
+        }
+
         function onFileSaved(path) {
             root.editorController.handleFileSaved(path);
         }

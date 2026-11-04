@@ -65,6 +65,7 @@ pub struct LspManager {
     pub(super) timeout_streak: Arc<Mutex<HashMap<&'static str, u32>>>,
     /// Qual executavel roda cada linguagem. Ver [`ServerRegistry`].
     pub(super) registry: ServerRegistry,
+    pub(super) document_context: Option<Arc<Mutex<crate::index::ProjectIndex>>>,
     /// Os diagnosticos de cada servidor por arquivo, fundidos num evento so'
     /// (ver [`super::diagnostics_merge`]).
     pub(super) merged_diagnostics: MergedDiagnostics,
@@ -90,6 +91,7 @@ impl LspManager {
             code_action_generation: 0,
             timeout_streak: Arc::new(Mutex::new(HashMap::new())),
             registry: ServerRegistry::default(),
+            document_context: None,
             merged_diagnostics: Arc::new(Mutex::new(HashMap::new())),
         }
     }

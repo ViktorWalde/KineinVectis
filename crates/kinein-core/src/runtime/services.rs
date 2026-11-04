@@ -11,7 +11,9 @@ impl Core {
     /// no-ops, no language server is spawned and `run.*`/`terminal.*` are
     /// unavailable.
     pub fn enable_lsp(&mut self, events: lsp::EventSender) {
-        self.lsp = Some(lsp::LspManager::new(events.clone()));
+        let mut manager = lsp::LspManager::new(events.clone());
+        manager.use_document_context(std::sync::Arc::clone(&self.index));
+        self.lsp = Some(manager);
         self.debug = Some(dap::DebugManager::new(events.clone()));
         self.jobs = Some(jobs::JobManager::new(events.clone()));
         self.terminal = Some(terminal::TerminalManager::new(events.clone()));

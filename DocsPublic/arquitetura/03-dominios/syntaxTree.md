@@ -50,6 +50,11 @@ obsoleta é descartada na UI. A composição visual é regex fallback <
 Tree-sitter < semantic tokens LSP < diagnósticos/busca. `locals` é índice
 sintático local, nunca promovido a referência semântica.
 
+**Identidade C/C++ (2026-11-04, sem novo schema):** `language` também reflete
+o contexto documental da [consolidação C §10](../../especificacoes/consolidacao-nativa-de-c.md#10-identidade-documental-cc--desenho-de-2026-11-04).
+A gramática local não determina flags ou conformidade com um padrão. Mudar a
+família descarta a árvore incremental anterior, mesmo com texto/versão iguais.
+
 `lsp.documentSymbols` e `lsp.workspaceSymbols` foram adicionados no
 protocolo `0.23.0` (fatia M1.4):
 

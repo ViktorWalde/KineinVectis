@@ -52,12 +52,25 @@ pub(super) enum LanguageId {
 impl LanguageId {
     /// Detects the language from a workspace file name.
     pub(super) fn for_path(path: &Path) -> Option<Self> {
+        if path.extension()?.to_str()? == "C" {
+            return Some(Self::Cpp);
+        }
         let extension = path.extension()?.to_str()?.to_ascii_lowercase();
         match extension.as_str() {
             "c" => Some(Self::C),
             "h" | "hh" | "hpp" | "hxx" | "ipp" | "cc" | "cpp" | "cxx" => Some(Self::Cpp),
             "rs" => Some(Self::Rust),
             "py" | "pyi" | "pyw" => Some(Self::Python),
+            _ => None,
+        }
+    }
+
+    pub(super) fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "c" => Some(Self::C),
+            "cpp" => Some(Self::Cpp),
+            "rust" => Some(Self::Rust),
+            "python" => Some(Self::Python),
             _ => None,
         }
     }

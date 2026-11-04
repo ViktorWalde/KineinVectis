@@ -127,8 +127,11 @@ impl Core {
         };
         let caminho = Path::new(&pedido.path);
         let language = index::language_of(caminho);
-        let contexto = self.index.lock().ok().and_then(|indice| {
-            indice
+        let contexto = self.index.lock().ok().and_then(|index| {
+            if index.root != root {
+                return None;
+            }
+            index
                 .context
                 .as_ref()
                 .map(|c| c.for_file(&root, caminho, language))
@@ -147,8 +150,8 @@ impl Core {
             drift: Vec::new(),
         });
         // O que a unidade nao disse vem do kit que vale (52 §14.1).
-        if matches!(language, "c" | "cpp" | "rust") {
-            let kit = self.kit_facts(&root, language);
+        if matches!(response.language.as_str(), "c" | "cpp" | "rust") {
+            let kit = self.kit_facts(&root, &response.language);
             response.drift = compile_drift(&response, &kit);
             complete_with_kit(
                 response
@@ -225,8 +228,12 @@ impl Core {
         let ferramentas = self.index_tools(root);
         let Some(jobs) = self.jobs.as_ref() else {
             let parado = std::sync::atomic::AtomicBool::new(false);
-            let mut construido = index::build(&raiz, &parado, &|_, _| {});
-            construido.context = Some(CompileContext::load(&raiz, &ferramentas));
+            let construido = index::build_with_context(
+                &raiz,
+                &parado,
+                &|_, _| {},
+                Some(CompileContext::load(&raiz, &ferramentas)),
+            );
             if let Ok(mut indice) = compartilhado.lock() {
                 *indice = construido;
             }
@@ -243,10 +250,12 @@ impl Core {
                     json!(IndexProgressEvent { files, symbols }),
                 );
             };
-            let mut construido = index::build(&raiz, &cancel, &progresso);
-            if !cancel.load(Ordering::SeqCst) {
-                construido.context = Some(CompileContext::load(&raiz, &ferramentas));
-            }
+            let context = if cancel.load(Ordering::SeqCst) {
+                None
+            } else {
+                Some(CompileContext::load(&raiz, &ferramentas))
+            };
+            let construido = index::build_with_context(&raiz, &cancel, &progresso, context);
             let stats = construido.stats();
             let ok = matches!(construido.state, IndexState::Ready);
             if let Ok(mut indice) = compartilhado.lock() {
@@ -283,7 +292,7 @@ impl Core {
             let Ok(mut indice) = compartilhado.lock() else {
                 return None;
             };
-            indice.context = Some(contexto);
+            indice.set_context(contexto);
             Some(indice.stats())
         };
         let Some(jobs) = self.jobs.as_ref() else {

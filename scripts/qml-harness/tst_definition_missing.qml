@@ -23,6 +23,7 @@ Item {
         signal lspProgress(var language, var title, var message, var percentage, var done)
         signal lspRestarted(var language)
         signal lspDocumentsClosed(var language, var count)
+        signal indexFinished(var stats)
         signal fileSaved(var path)
         signal filesChanged(var changes)
         signal fileSaveFailed(var path, var message)
@@ -48,6 +49,10 @@ Item {
         id: editor
         property var hovers: []
         property var opened: []
+        property int syntaxRefreshes: 0
+        property int semanticRefreshes: 0
+        function refreshSyntaxTree() { syntaxRefreshes++; }
+        function refreshSemanticTokens() { semanticRefreshes++; }
         function handleHoverResolved(content) { editor.hovers = editor.hovers.concat([content]); }
         function openDiagnostic(path, line, column) { editor.opened = editor.opened.concat([path + ":" + line]); }
     }
@@ -63,6 +68,12 @@ Item {
             "sem destino, o aviso: " + JSON.stringify(editor.hovers));
         bridge.lspDefinitionResolved("/p/DataSourcePanel.qml", 18, 1);
         root.check(JSON.stringify(editor.opened) === '["/p/DataSourcePanel.qml:18"]', "com destino, abre");
+        bridge.indexFinished({ state: "ready" });
+        root.check(editor.syntaxRefreshes === 1 && editor.semanticRefreshes === 1,
+                   "contexto pronto atualiza sintaxe e semantica sem editar");
+        bridge.indexFinished({ state: "ready" });
+        root.check(editor.syntaxRefreshes === 2 && editor.semanticRefreshes === 2,
+                   "recarga de contexto tambem atualiza o documento");
         Qt.exit(root.failures === 0 ? 0 : 1);
     }
 }

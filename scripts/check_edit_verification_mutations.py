@@ -104,6 +104,29 @@ SUITES = {
     "edit-verification": ("edit_verification", CASES),
     "c-host": ("c_host", C_HOST_CASES),
     "c-standard": ("c_standard", C_STANDARD_CASES),
+    "c-identity": ("c_identity", [
+        (
+            "c_document_language_id",
+            "crates/kinein-core/src/lsp/document.rs",
+            "spec.language_id = language;",
+            'spec.language_id = if language == "c" { "cpp" } else { language };',
+            "tests::c_identity::wire::c_identity_wire_uses_one_clangd_and_reopens_when_only_context_changes",
+        ),
+        (
+            "c_header_owner",
+            "crates/kinein-core/src/index/context/document.rs",
+            '\"C\" => Some(\"c\"),',
+            '\"C\" => Some(\"cpp\"),',
+            "tests::c_identity::c_identity_mixed_targets_grammars_and_clangd_use_real_producers",
+        ),
+        (
+            "same_text_new_language",
+            "crates/kinein-core/src/lsp/sync.rs",
+            "*previous != language_id",
+            "*previous != language_id && false",
+            "tests::c_identity::wire::c_identity_wire_uses_one_clangd_and_reopens_when_only_context_changes",
+        ),
+    ]),
     "c-project": ("c_project", [
         (
             "future_identifier",

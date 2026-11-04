@@ -47,6 +47,11 @@
 > **Projeto C (2026-11-04, §7.379):** template próprio e reconhecimento aberto
 > de dialetos; C90–C23 GCC/Clang, 48 casos de seletor, três mutantes.
 > Rápido verde: 1440 Rust, 8 CTest, 178 QML; etapa C permanece aberta.
+> **Identidade documental C/C++ (2026-11-04, §7.380):** gramática e estrutura
+> por contexto, `languageId` por documento e reabertura com texto igual;
+> quatro regressões e três mutantes. Permanecem lacunas medidas em `typeof`
+> no Tree-sitter e na inferência de comando de header misto pelo clangd.
+> Rápido verde: 1444 Rust, 8 CTest, 178 QML; dois NÃO PROVADOS ARM persistem.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -61,7 +66,8 @@ protocolo   0.200.0 (crates/kinein-protocol, medido em 2026-11-04; o
 metodos     192 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   178 tst_*.qml em scripts/qml-harness (medido em 2026-11-02)
-testes      1440 Rust no gate rápido de 2026-11-04 (40.7 §7.379);
+testes      1444 Rust no gate rápido de 2026-11-04 (40.7 §7.380);
+            1440 Rust no gate rápido de 2026-11-04 (40.7 §7.379);
             1437 Rust no gate rápido de 2026-11-04 (40.7 §7.378);
             1430 Rust no gate rápido de 2026-11-03 (40.7 §7.376);
             1426 Rust no gate rápido de 2026-11-02 (40.7 §7.372);

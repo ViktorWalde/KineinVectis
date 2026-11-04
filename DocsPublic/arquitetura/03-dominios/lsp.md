@@ -21,6 +21,13 @@ aberto, alterado ou salvo:
   **detectado** (`~/.local/bin` do pipx/npm entra pelo detector; o `PATH` do
   processo da IDE pode não o ter), `languageId: "python"` para `.py/.pyi/.pyw`.
 
+**Identidade C/C++ (2026-11-04, sem novo schema):** a chave de servidor e dos
+eventos continua `cpp`, compartilhada por C e C++. O `languageId` de cada
+`didOpen` é `c` ou `cpp` conforme o contexto documental descrito na
+[consolidação C §10](../../especificacoes/consolidacao-nativa-de-c.md#10-identidade-documental-cc--desenho-de-2026-11-04).
+Alteração de família reabre o documento, mesmo com conteúdo igual, sem trocar
+o processo. Dialetos e inferência de flags de headers continuam no clangd/CDB.
+
 Se o servidor não estiver instalado ou falhar no `initialize`, o core emite
 `event.lsp.status` com `status: "failed"` e mensagem humana. O MVP usa
 sincronização de documento inteiro.

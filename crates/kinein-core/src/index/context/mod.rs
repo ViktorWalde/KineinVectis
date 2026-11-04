@@ -26,6 +26,7 @@
 
 mod cargo;
 mod cdb;
+mod document;
 mod drift;
 mod effective;
 mod verification;
@@ -63,6 +64,8 @@ pub struct CompileContext {
     cdb_digest: Option<String>,
     cdb_stale_because: Option<String>,
     units: HashMap<PathBuf, CdbUnit>,
+    document_languages: HashMap<PathBuf, &'static str>,
+    document_family: Option<&'static str>,
     pacotes: u64,
     alvos: Vec<AlvoCargo>,
     python: Option<PythonEnv>,
@@ -100,8 +103,11 @@ impl CompileContext {
     /// Parse an identified CDB snapshot through the same context owner.
     #[must_use]
     pub(crate) fn from_cdb_text(root: &Path, path: &Path, text: &str) -> Self {
-        let mut ctx = Self::default();
-        ctx.units = cdb::parse_cdb(text);
+        let mut ctx = Self {
+            units: cdb::parse_cdb(text),
+            ..Self::default()
+        };
+        ctx.load_document_languages();
         ctx.cdb_path = Some(path.display().to_string());
         ctx.cdb_digest = Some(crate::cdb::verification::digest(text.as_bytes()));
         ctx.cdb_directory = path
@@ -165,13 +171,19 @@ impl CompileContext {
     /// Como `path` e' compilado/executado.
     #[must_use]
     pub fn for_file(&self, root: &Path, path: &Path, language: &str) -> FileContext {
-        let absoluto = if path.is_absolute() {
+        let absolute_path = if path.is_absolute() {
             path.to_path_buf()
         } else {
             root.join(path)
         };
+        let contextual_language = self.document_language(&absolute_path);
+        let language = if contextual_language == "other" {
+            language
+        } else {
+            contextual_language
+        };
         let mut ctx = FileContext {
-            path: absoluto.display().to_string(),
+            path: absolute_path.display().to_string(),
             language: language.to_owned(),
             unit: None,
             cdb_location: None,
@@ -184,8 +196,8 @@ impl CompileContext {
             drift: Vec::new(),
         };
         match language {
-            "c" | "cpp" => self.contexto_c(&absoluto, &mut ctx),
-            "rust" => self.contexto_rust(&absoluto, &mut ctx),
+            "c" | "cpp" => self.contexto_c(&absolute_path, &mut ctx),
+            "rust" => self.contexto_rust(&absolute_path, &mut ctx),
             "python" => {
                 ctx.python.clone_from(&self.python);
                 if let Some(p) = &self.python {
@@ -199,6 +211,13 @@ impl CompileContext {
                 }
             }
             _ => {}
+        }
+        if document::ambiguous_header(&absolute_path) {
+            let note = self.document_hint(&absolute_path);
+            ctx.hint = Some(
+                ctx.hint
+                    .map_or_else(|| note.to_owned(), |hint| format!("{hint}; {note}")),
+            );
         }
         ctx
     }

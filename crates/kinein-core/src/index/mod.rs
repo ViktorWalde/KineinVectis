@@ -26,20 +26,22 @@
 //! ```
 //!
 //! O que NAO entra: conteudo de arquivo em memoria (so' as declaracoes e os
-//! numeros), pastas de saida, arquivos acima de [`ARQUIVO_MAXIMO`].
+//! numeros), pastas de saida, arquivos acima de [`MAX_FILE_BYTES`].
 //!
 //! O CONTEXTO DE COMPILADOR (com que cada arquivo e' compilado) mora em
 //! [`context`] e e' carregado junto do indice — o mapa diz o que ha'; o
 //! contexto diz como se compila.
 
 pub mod context;
+mod file;
+use file::index_file;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
-use kinein_protocol::{IndexState, IndexStats, IndexSymbol, LanguageStats, SyntaxOutlineItem};
+use kinein_protocol::{IndexState, IndexStats, IndexSymbol, LanguageStats};
 
 use crate::lang::extract::SymbolExtractor;
 
@@ -47,7 +49,9 @@ use self::context::CompileContext;
 
 /// Arquivo maior que isto e' contado, mas nao parseado (o mesmo teto do
 /// editor: 4 MiB).
-pub const ARQUIVO_MAXIMO: u64 = 4 * 1024 * 1024;
+pub const MAX_FILE_BYTES: u64 = 4 * 1024 * 1024;
+/// Compatibility name for the existing structural-index byte limit.
+pub const ARQUIVO_MAXIMO: u64 = MAX_FILE_BYTES;
 
 /// Um arquivo indexado.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -207,6 +211,20 @@ impl ProjectIndex {
         )
     }
 
+    /// Replaces context and reparses files whose local grammar changed.
+    pub(crate) fn set_context(&mut self, context: CompileContext) {
+        let paths: Vec<PathBuf> = self
+            .files
+            .values()
+            .filter_map(|file| {
+                let path = self.root.join(&file.path);
+                (context.document_language(&path) != file.language).then_some(path)
+            })
+            .collect();
+        self.context = Some(context);
+        self.reindex_paths(&paths, &mut SymbolExtractor::default());
+    }
+
     /// Reindexa os caminhos que mudaram: arquivo relido se existe e e' fonte;
     /// pasta nova caminhada inteira (ela entra em `folder_paths`, e o Core
     /// registra no watcher tudo que esta' la' a cada `event.index.finished`);
@@ -224,9 +242,13 @@ impl ProjectIndex {
             };
             let chave = crate::platform::portable_relative(relativo);
             if caminho.is_file() {
-                if let Some(arquivo) =
-                    indexar_arquivo(&self.root, caminho, extractor, &mut self.skipped)
-                {
+                if let Some(arquivo) = index_file(
+                    &self.root,
+                    caminho,
+                    extractor,
+                    &mut self.skipped,
+                    self.context.as_ref(),
+                ) {
                     self.files.insert(chave, arquivo);
                     mudou += 1;
                 }
@@ -282,21 +304,31 @@ fn pasta_ignorada(root: &Path, caminho: &Path) -> bool {
 /// `Failed` com o motivo.
 #[must_use]
 pub fn build(root: &Path, cancel: &AtomicBool, progress: &dyn Fn(u64, u64)) -> ProjectIndex {
+    build_with_context(root, cancel, progress, None)
+}
+
+pub(crate) fn build_with_context(
+    root: &Path,
+    cancel: &AtomicBool,
+    progress: &dyn Fn(u64, u64),
+    context: Option<CompileContext>,
+) -> ProjectIndex {
     let inicio = Instant::now();
-    let mut indice = ProjectIndex::empty(root);
-    indice.state = IndexState::Building;
+    let mut index = ProjectIndex::empty(root);
+    index.context = context;
+    index.state = IndexState::Building;
     let mut extractor = SymbolExtractor::default();
-    caminhar(root, root, cancel, &mut extractor, &mut indice, progress);
+    caminhar(root, root, cancel, &mut extractor, &mut index, progress);
     if cancel.load(Ordering::SeqCst) {
-        indice.state = IndexState::Failed;
-        indice.error = Some("indexação cancelada".to_owned());
+        index.state = IndexState::Failed;
+        index.error = Some("indexação cancelada".to_owned());
     } else {
-        indice.state = IndexState::Ready;
+        index.state = IndexState::Ready;
     }
-    indice.elapsed_ms = u64::try_from(inicio.elapsed().as_millis()).unwrap_or(u64::MAX);
-    let simbolos: u64 = indice.files.values().map(|a| a.symbols.len() as u64).sum();
-    progress(indice.files.len() as u64, simbolos);
-    indice
+    index.elapsed_ms = u64::try_from(inicio.elapsed().as_millis()).unwrap_or(u64::MAX);
+    let simbolos: u64 = index.files.values().map(|a| a.symbols.len() as u64).sum();
+    progress(index.files.len() as u64, simbolos);
+    index
 }
 
 /// Caminha a subarvore de `inicio` (dentro de `root`) para dentro de
@@ -321,7 +353,7 @@ fn caminhar(
         let Ok(entradas) = std::fs::read_dir(&dir) else {
             indice
                 .skipped
-                .push(relativo(root, &dir) + " (pasta ilegível)");
+                .push(relative_path(root, &dir) + " (pasta ilegível)");
             continue;
         };
         indice.folder_paths.push(dir.clone());
@@ -344,7 +376,13 @@ fn caminhar(
         }
         arquivos.sort();
         for caminho in arquivos {
-            if let Some(arquivo) = indexar_arquivo(root, &caminho, extractor, &mut indice.skipped) {
+            if let Some(arquivo) = index_file(
+                root,
+                &caminho,
+                extractor,
+                &mut indice.skipped,
+                indice.context.as_ref(),
+            ) {
                 simbolos += arquivo.symbols.len() as u64;
                 indice.files.insert(arquivo.path.clone(), arquivo);
                 lidos += 1;
@@ -357,66 +395,11 @@ fn caminhar(
     lidos
 }
 
-fn relativo(root: &Path, caminho: &Path) -> String {
+fn relative_path(root: &Path, caminho: &Path) -> String {
     caminho.strip_prefix(root).map_or_else(
         |_| caminho.to_string_lossy().into_owned(),
         crate::platform::portable_relative,
     )
-}
-
-/// Classifica, le e parseia UM arquivo. Todo arquivo entra (contado); so' os
-/// de fonte sao lidos; so' os com gramatica ganham simbolos.
-fn indexar_arquivo(
-    root: &Path,
-    caminho: &Path,
-    extractor: &mut SymbolExtractor,
-    skipped: &mut Vec<String>,
-) -> Option<IndexedFile> {
-    let path = relativo(root, caminho);
-    let meta = std::fs::metadata(caminho).ok()?;
-    let language = language_of(caminho);
-    if language == "other" {
-        return Some(IndexedFile {
-            path,
-            language: language.to_owned(),
-            lines: 0,
-            bytes: meta.len(),
-            symbols: Vec::new(),
-        });
-    }
-    if meta.len() > ARQUIVO_MAXIMO {
-        skipped.push(format!("{path} ({} bytes: acima do teto)", meta.len()));
-        return Some(IndexedFile {
-            path,
-            language: language.to_owned(),
-            lines: 0,
-            bytes: meta.len(),
-            symbols: Vec::new(),
-        });
-    }
-    let Ok(conteudo) = std::fs::read_to_string(caminho) else {
-        skipped.push(format!("{path} (não é UTF-8 legível)"));
-        return Some(IndexedFile {
-            path,
-            language: language.to_owned(),
-            lines: 0,
-            bytes: meta.len(),
-            symbols: Vec::new(),
-        });
-    };
-    let lines = conteudo.lines().count() as u64;
-    let mut symbols = Vec::new();
-    if let Some(outline) = extractor.symbols(caminho, &conteudo) {
-        achatar(&outline, None, &path, language, &mut symbols);
-        deduplicar(&mut symbols);
-    }
-    Some(IndexedFile {
-        path,
-        language: language.to_owned(),
-        lines,
-        bytes: meta.len(),
-        symbols,
-    })
 }
 
 /// `c`/`cpp`/`rust`/`python` pela gramatica do editor (o Python entrou em
@@ -424,67 +407,6 @@ fn indexar_arquivo(
 /// lido.
 pub(crate) fn language_of(caminho: &Path) -> &'static str {
     SymbolExtractor::language_for(caminho).unwrap_or("other")
-}
-
-/// O outline aninhado do editor vira lista plana com `container`.
-fn achatar(
-    itens: &[SyntaxOutlineItem],
-    container: Option<&str>,
-    path: &str,
-    language: &str,
-    saida: &mut Vec<IndexSymbol>,
-) {
-    for item in itens {
-        saida.push(IndexSymbol {
-            name: item.name.clone(),
-            kind: item.kind.clone(),
-            path: path.to_owned(),
-            language: language.to_owned(),
-            line: item.line,
-            end_line: item.end_line,
-            container: container.map(str::to_owned),
-        });
-        achatar(&item.children, Some(&item.name), path, language, saida);
-    }
-}
-
-/// A query `tags` do Rust captura um `fn` dentro de `impl` DUAS vezes —
-/// `definition.function` e `definition.method` (medido em 2026-09-12 no
-/// proprio repositorio: `handle_request` aparecia em dobro). Uma declaracao
-/// e' uma: fica a mais especifica (method) por (linha, nome).
-fn deduplicar(symbols: &mut Vec<IndexSymbol>) {
-    let mut vistos: BTreeMap<(u64, String), usize> = BTreeMap::new();
-    let mut manter: Vec<bool> = vec![true; symbols.len()];
-    for (i, s) in symbols.iter().enumerate() {
-        let chave = (s.line, s.name.clone());
-        match vistos.get(&chave) {
-            None => {
-                vistos.insert(chave, i);
-            }
-            Some(&anterior) => {
-                if especificidade(&s.kind) > especificidade(&symbols[anterior].kind) {
-                    manter[anterior] = false;
-                    vistos.insert(chave, i);
-                } else {
-                    manter[i] = false;
-                }
-            }
-        }
-    }
-    let mut i = 0;
-    symbols.retain(|_| {
-        let fica = manter[i];
-        i += 1;
-        fica
-    });
-}
-
-fn especificidade(kind: &str) -> u8 {
-    match kind {
-        "method" | "constructor" => 2,
-        "function" => 1,
-        _ => 0,
-    }
 }
 
 fn e_funcao(kind: &str) -> bool {
