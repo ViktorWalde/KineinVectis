@@ -137,7 +137,9 @@ QtObject {
         for (let i = 0; i < chosen.files.length; i++) {
             lines.push("  " + chosen.files[i].replace("%2", moduleName));
         }
-        lines.push(chosen.command !== ""
+        lines.push(templateId === "cCmake"
+                   ? qsTr("Geração interna; seleção explícita de compilador será testada")
+                   : chosen.command !== ""
                    ? qsTr("Comando: %1").arg(chosen.command.replace("%1", name))
                    : qsTr("Geração interna: nenhum comando externo"));
         return lines.join("\n");

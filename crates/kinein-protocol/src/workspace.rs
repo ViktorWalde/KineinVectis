@@ -323,7 +323,7 @@ pub struct WorkspaceProjectOptions {
     /// Absolute compiler, local toolchain cargo, or Python interpreter path.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub executable: Option<String>,
-    /// Numeric C/C++ standard or Rust edition; no whitelist in the IDE.
+    /// Numeric C/C++ standard, literal C dialect, or Rust edition; no revision enum.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub standard: Option<String>,
 }

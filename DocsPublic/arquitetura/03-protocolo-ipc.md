@@ -13,8 +13,8 @@
 
 ## Objetivo
 
-A versão `0.201.0` acrescenta consulta de ambientes instalados e seleção
-de ferramenta/padrão na criação, no [domínio workspace](03-dominios/workspace.md).
+A versão `0.202.0` amplia a escolha de padrão C na criação para tokens literais
+de dialeto, no [domínio workspace](03-dominios/workspace.md).
 
 O protocolo IPC permite comunicação entre:
 

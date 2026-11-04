@@ -39,17 +39,22 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        match workspace::create_project_with_options(
-            Path::new(&params.parent),
-            &params.name,
-            params.template,
-            &params.options,
-        ) {
+        let previous_root = self.workspace_root();
+        self.defer_then(request_id, move || workspace::prepare_project(
+            Path::new(&params.parent), &params.name, params.template, params.options,
+        ), move |core, request_id, prepared| {
+        if core.workspace_root() != previous_root {
+            return workspace_error_response(request_id, &workspace::WorkspaceError::InvalidName {
+                name: "workspace".to_owned(),
+                reason: "o workspace mudou durante a validação; repita a criação no contexto atual".to_owned(),
+            });
+        }
+        match prepared.and_then(workspace::ProjectCreation::create) {
             Ok(mut opened) => {
                 // O projeto que a IDE criou nasce confiavel (16.4b).
                 opened.trusted = true;
-                self.remember_trust(&opened.root);
-                if let Err(error) = self.activate_workspace(&opened) {
+                core.remember_trust(&opened.root);
+                if let Err(error) = core.activate_workspace(&opened) {
                     return terminal_error_response(
                         request_id,
                         &crate::terminal::TerminalError::Process {
@@ -64,5 +69,6 @@ impl Core {
             }
             Err(error) => workspace_error_response(request_id, &error),
         }
+        })
     }
 }

@@ -93,6 +93,30 @@ fn change_reference_flags(project: &Project) {
     std::fs::write(cdb_path, json!(entries).to_string()).unwrap();
 }
 
+fn wait_reference_flag(project: &mut Project, path: &Path, flag: &str) {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        project.pump();
+        let updated = project
+            .core
+            .index
+            .lock()
+            .unwrap()
+            .context
+            .as_ref()
+            .and_then(|context| context.header_command(&project.root, path))
+            .is_some_and(|command| command.arguments.iter().any(|arg| arg == flag));
+        if updated {
+            return;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "header reference context deadline"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 #[test]
 fn c_identity_header_wire_preserves_argv_and_invalidates_unsaved_buffers() {
     let mut project = configured("header-wire");
@@ -134,7 +158,8 @@ fn c_identity_header_wire_preserves_argv_and_invalidates_unsaved_buffers() {
     // Same family/text with changed per-target flags is a new context too.
     change_reference_flags(&project);
     project.core.reload_index_context();
-    project.pump();
+    // A recarga e' um job: familia igual/Ready nao comprova flags novas.
+    wait_reference_flag(&mut project, &path, "-DHEADER_REVISION=2");
     assert!(
         !project
             .core

@@ -101,6 +101,21 @@ C_STANDARD_CASES = [
 ]
 
 SUITES = {
+    "c1-environment": ("c1_", [
+        ("c1_driver_mode", "crates/kinein-core/src/workspace/c_options.rs",
+         "if !status.success() {", "if !status.success() && standard == Some(\"never\") {",
+         "tests::c_project::environment::c1_invalid_driver_dialect_and_collision_preserve_workspace_and_allow_retry"),
+        ("c1_literal_persistence", "crates/kinein-core/src/workspace/c_options.rs",
+         "PRIVATE -std={standard})", "PRIVATE -std=c17)",
+         "tests::c_project::environment::c1_literal_dialects_build_and_survive_reopen_configuration_and_workspace_changes"),
+        ("c1_token_syntax", "crates/kinein-core/src/workspace/c_options.rs",
+         "numeric || literal", "numeric || literal || !value.is_empty()",
+         "tests::c_project::environment::c1_future_literal_without_driver_is_preserved_but_invalid_syntax_is_refused"),
+        ("c1_workspace_guard", "crates/kinein-core/src/handlers/workspace_creation.rs",
+         "if core.workspace_root() != previous_root {",
+         "if core.workspace_root() != previous_root && previous_root.is_none() {",
+         "tests::c_project::environment::c1_validation_uses_continuations_and_refuses_a_changed_workspace_before_creation"),
+    ]),
     "edit-verification": ("edit_verification", CASES),
     "c-host": ("c_host", C_HOST_CASES),
     "c-standard": ("c_standard", C_STANDARD_CASES),

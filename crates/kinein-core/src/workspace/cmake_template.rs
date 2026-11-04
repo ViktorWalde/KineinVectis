@@ -84,7 +84,7 @@ fn cmakelists(name: &str, language: Language, options: &WorkspaceProjectOptions)
         ("CXX", "cpp")
     };
     let standard = options.standard.as_deref().filter(|value| !value.is_empty()).map_or_else(String::new, |standard| {
-        if language == Language::C { return crate::configaction::c_standard_block(name, standard, "OFF"); }
+        if language == Language::C { return super::c_options::block(name, standard); }
         format!("set_target_properties({name} PROPERTIES {family}_STANDARD {standard} {family}_STANDARD_REQUIRED ON {family}_EXTENSIONS OFF)\n")
     });
     let minimum = if language == Language::C {

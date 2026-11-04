@@ -13,6 +13,7 @@
 //! - [`recent`]: histórico global versionado para Start Screen/menu Arquivo.
 //! - [`trust`]: a confiança no projeto, guardada fora dele (16.4b).
 
+mod c_options;
 mod cmake_template;
 mod create;
 mod detect;
@@ -36,6 +37,35 @@ pub use recent::{
 };
 pub use session::{load_session, save_session, session_path};
 pub use trust::{is_trusted_in, trust_in, trust_path_in};
+
+/// Valida ferramentas fora do laço; a geração só começa na continuação.
+pub(crate) fn prepare_project(
+    parent: &std::path::Path,
+    name: &str,
+    template: kinein_protocol::WorkspaceProjectTemplate,
+    options: kinein_protocol::WorkspaceProjectOptions,
+) -> Result<ProjectCreation, WorkspaceError> {
+    project_options::validate(template, &options)?;
+    Ok(ProjectCreation {
+        parent: parent.to_owned(),
+        name: name.to_owned(),
+        template,
+        options,
+    })
+}
+
+pub(crate) struct ProjectCreation {
+    parent: std::path::PathBuf,
+    name: String,
+    template: kinein_protocol::WorkspaceProjectTemplate,
+    options: kinein_protocol::WorkspaceProjectOptions,
+}
+
+impl ProjectCreation {
+    pub(crate) fn create(self) -> Result<kinein_protocol::WorkspaceInfo, WorkspaceError> {
+        create::create_prepared_project(&self.parent, &self.name, self.template, &self.options)
+    }
+}
 
 /// Directory created inside the workspace root for Kinein Vectis metadata.
 pub const WORKSPACE_DIR: &str = ".kinein";

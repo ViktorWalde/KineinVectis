@@ -272,10 +272,10 @@ impl Core {
                 RequestOutcome::Continue(Self::create_workspace_folder_response(request_id, params))
             }
             "workspace.projectEnvironments" => {
-                RequestOutcome::Continue(self.project_environments_response(request_id, params))
+                RequestOutcome::from(self.project_environments_response(request_id, params))
             }
             "workspace.createProject" => {
-                RequestOutcome::Continue(self.create_workspace_project_response(request_id, params))
+                RequestOutcome::from(self.create_workspace_project_response(request_id, params))
             }
             "workspace.saveSession" => {
                 RequestOutcome::Continue(self.save_session_response(request_id, params))

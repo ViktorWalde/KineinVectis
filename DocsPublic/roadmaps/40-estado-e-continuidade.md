@@ -10,7 +10,7 @@
 
 > **RESUMO TÉCNICO (2026-11-04; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.201.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.202.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
@@ -46,10 +46,10 @@
 > **Referência de headers (§7.381):** alvo/fonte únicos orientam clangd;
 > ambiguidade/base manual explícitas, invalidação e buffers não salvos.
 > Sete regressões de identidade/headers e três mutantes; C1–C8 abertos.
-> **Ambiente na criação (§7.382):** ferramenta instalada e padrão/edição
-> escolhidos antes de gerar C/C++, Rust ou Python; prévia e persistência.
-> Rápido integrado verde: 1450 Rust, 8 CTest, 178 QML e 51 arquivos C++;
-> dois NÃO PROVADOS ARM por compiladores ausentes. Seis mutantes eliminados.
+> **C1 — criação (§7.383):** dialeto literal, driver C validado e consultas
+> fora do laço; reabertura, configurações e recuperação com cinco regressões.
+> Rápido integrado verde: 1455 Rust, 8 CTest, 178 QML e 51 arquivos C++;
+> dois NÃO PROVADOS ARM por compiladores ausentes. C1 conserva aceites abertos.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -58,12 +58,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.201.0 (crates/kinein-protocol, medido em 2026-11-04; o
+protocolo   0.202.0 (crates/kinein-protocol, medido em 2026-11-04; o
             historico das versoes e' o arquitetura/03)
 metodos     193 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   178 tst_*.qml em scripts/qml-harness (medido em 2026-11-02)
-testes      1450 Rust no gate rápido de 2026-11-04 (40.7 §7.382);
+testes      1455 Rust no gate rápido de 2026-11-04 (40.7 §7.383);
+            1450 Rust no gate rápido de 2026-11-04 (40.7 §7.382);
             1444 Rust no gate rápido de 2026-11-04 (40.7 §7.380);
             1440 Rust no gate rápido de 2026-11-04 (40.7 §7.379);
             1437 Rust no gate rápido de 2026-11-04 (40.7 §7.378);

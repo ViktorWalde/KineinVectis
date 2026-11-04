@@ -1,6 +1,7 @@
 //! Criacao C pelo dispatch e dialetos pelo contexto/compiladores reais.
 
 mod dialects;
+mod environment;
 
 use kinein_protocol::JsonRpcRequest;
 use serde_json::{Value, json};

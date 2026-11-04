@@ -513,3 +513,96 @@ Na UI nativa, o header C++ aberto antes das fontes deixou de apresentar erro
 em `namespace`. A prova em fixture isolada preservou a configuração manual
 herdada por diretórios no caso separado. Não houve aceite de release nem
 fechamento da etapa C.
+
+## 12. C1: dialeto na criação e validação do driver — desenho de 2026-11-04
+
+Inventário localizado de C-01, antes da implementação:
+
+| ID / dono | Evidência e causa confirmada | Severidade / impacto | Testes e decisão |
+| --- | --- | --- | --- |
+| C1-01 / `workspace/project_options.rs`, `cmake_template.rs` | `workspace.createProject`, template C e `standard: gnu17`, retorna `INVALID_PARAMS` antes de gerar. O validador só aceita dígitos e o template só emite `C_STANDARD` ISO | Alta: a criação não expressa dialetos e aliases que o contexto já reconhece | Corrigir nesses donos: aceitar token de dialeto sem enum de revisões; GCC/Clang reais, alias ISO, GNU e prévia, CDB/contexto, reabertura e mutação da persistência |
+| C1-02 / `workspace/project_options.rs` | Selecionar `g++` com padrão 17 cria projeto apenas C. A validação só confere o texto de `--version`, compartilhado entre drivers | Alta: seleção aceita pode configurar o projeto como C++ | Corrigir: testar uma unidade `.c` que recusa `__cplusplus` com o executável selecionado, sem forçar `-x c`; incompatibilidade/ausência não cria destino. Provar erro, repetição e mutação da guarda |
+| C1-03 / `handlers/workspace_creation.rs` | A validação roda no handler síncrono; uma ferramenta controlada que não termina ocupa o laço durante o prazo da sonda | Média: eventos e consultas independentes aguardam a ferramenta | Corrigir pelo `defer_then` existente: validar fora do laço e gerar/ativar na continuação. Se a raiz ativa mudar durante a espera, recusar antes de gerar; regressão de resposta adiada e guarda de workspace |
+| C1-04 / regressão `c_identity/headers.rs` | O gate observou comando anterior após `reload_index_context`; caso isolado passou. O teste drena eventos uma vez, embora a recarga rode em job e a identidade da família permaneça igual | Média: falso negativo na prova de preservação de headers durante configuração | Corrigir a sincronização do teste: aguardar a flag nova no contexto antes de conferir invalidação/wire, conservando as asserções e mutações das guardas |
+
+Estado inicial dos registros: defeitos de escolhas reproduzidos pelo despacho IPC;
+correção e provas ainda pendentes. C1 completo permanece aberto em §4.1.
+
+Desenho: números positivos continuam como propriedades CMake por alvo,
+`C_STANDARD_REQUIRED ON` e extensões OFF. Um token literal de dialeto, como
+`gnu17`, `c2y` ou `iso9899:1990`, gera `target_compile_options` com o argumento
+`-std=` exato. Aceitar sintaxe de token não certifica suporte da ferramenta;
+não traduzir aliases/prévias em uma revisão diferente. Recusar metacaracteres
+de CMake e espaços; não manter uma lista de dialetos válidos. A receita numérica
+existente continua conservadora diante de flags manuais ou desse bloco literal.
+
+Uma seleção explícita de driver C passa por consulta de versão e compilação
+sintática limitada de uma fonte própria, em temporário privado, antes da geração.
+O teste usa o dialeto pedido quando literal. Para números, confere somente o
+modo C do driver; traduzir a propriedade e exigir o padrão cabe ao CMake no
+configure. Não deduzir `-std=c<número>` na sonda: o CMake pode usar um alias
+do compilador para aquela propriedade.
+Consultas externas rodam fora do laço por `defer_then`; a continuação confere
+a raiz ativa antes de gerar/ativar o projeto. Mudança de workspace recusa a
+operação antes da criação, sem assumir que uma resposta adiada ainda é atual.
+Não liga nem executa o programa e não testa libc, SDK ou conformidade completa.
+Sem executável explícito, a criação conserva a seleção automática: configure/build
+continuam responsáveis pela disponibilidade e compatibilidade efetivas. O padrão
+vazio não emite flag ou propriedade. Padrão, caminho e motivo da recusa aparecem
+no fluxo atual, permitindo corrigir/repetir sem trocar de workspace no erro.
+
+O contrato de `options.standard` em C deve ser ampliado antes do código; C++,
+Rust e Python conservam seus formatos. A UI distingue versão da instalação,
+propriedade numérica e token literal na prévia. As escolhas persistem nos arquivos
+do projeto, lidos pelos donos existentes na abertura/configuração; nenhuma nova
+base de configurações, download ou serviço de toolchain é introduzido.
+
+### 12.1 Integração e alcance das provas — 2026-11-04
+
+Protocolo 0.202.0: números e tokens literais compartilham a criação existente,
+com validação antes de gerar arquivos do projeto. A consulta de instalações e
+a criação reconhecem o marcador de resposta adiada no despacho. A continuação
+retoma somente se a raiz ativa for a mesma. A sonda usa o dono de processos,
+prazo de três segundos e limpeza do temporário privado em sucesso/erro.
+
+Cinco regressões de C1 exercitam GCC 16.2.1, Clang 23.1.4 e CMake 4.4.5 reais
+em Linux x86_64. GNU17, `iso9899:1990`, C2y e padrão automático configuram,
+compilam e passam em CTest; CDB e `index.context` conservam compilador, dialeto
+exato e origem. Reabertura com core novo, troca de workspace e Debug/Release
+preservam fonte, presets e `.clangd` manual. Alias futuro é conservado sem
+driver explícito, sem afirmar suporte da ferramenta. Drivers C++, ferramenta
+ausente/removida, dialeto literal recusado, token inválido e destino conflitante não
+substituem conteúdo; corrigir/repetir funciona. A prova de caminho alternativo
+com espaços/Unicode usa encaminhador para GCC real; somente a sonda de prazo
+é uma ferramenta controlada, sem atribuir a ela capacidade de compilador.
+Padrão numérico 2099 com driver real cria a propriedade exigida e é recusado
+pelo CMake efetivo, sem redução silenciosa. O encaminhador registra argv para
+conferir que a sonda não inventou uma grafia de `-std` para a propriedade 17;
+o build e a CDB comprovam a tradução feita pelo CMake para C17.
+
+A regressão de headers aguarda as flags recarregadas pelo job antes de conferir
+invalidação e wire. A família C++ e o estado Ready, isoladamente, não identificam
+essa atualização. As asserções de buffer, argv e geração permanecem exigidas.
+
+Na UI nativa isolada, driver C++, caminho inexistente e dialeto recusado mantêm
+as escolhas para correção. A recuperação com GCC/GNU17 cria apenas C em destino
+com espaços/Unicode; a prévia mostra `-std=gnu17` literal. Debug, build e CTest
+1/1 foram acionados pela UI; a CDB contém o driver selecionado e a opção exata.
+Reabrir a fixture recupera abas e contexto GCC/GNU17. Com salvamento automático
+desativado somente na fixture, erro de criação e cancelamento mantêm texto
+adicionado apenas ao buffer, indicador de alteração e arquivo em disco intacto.
+
+Gate rápido final aprovado em 311 s: 1455 Rust, Clippy, 51 arquivos C++, 8 CTest
+e 178 harnesses QML. Dois NÃO PROVADOS ARM por compiladores cross ausentes.
+Quatro mutantes compiláveis de C1 eliminados: erro do driver ignorado, dialeto
+persistido substituído, sintaxe de token liberada e guarda de workspace removida.
+Três mutantes de headers também eliminados após a correção da sincronização:
+ambiguidade, envio de comando e identidade de contexto. C1-01–C1-04 corrigidos
+e validados no recorte descrito; o aceite global C1 permanece aberto.
+
+Esta fatia não encerra C1. Abertura/configuração visual de projetos manuais
+arbitrários, divergências de ambiente, remoção após configure, cancelamento de
+sonda em andamento e a matriz nativa Windows continuam sem aceite completo.
+O diálogo pode ser cancelado antes de submeter; a sonda submetida termina pelo
+resultado ou prazo. Libc, SDK, conformidade completa de C2y/C23 e C2–C8 conservam
+suas provas próprias. `typeof(expr)` e QEMU permanecem em C3 e C6/F3.

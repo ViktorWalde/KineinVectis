@@ -53,7 +53,15 @@ pub fn create_project_with_options(
     template: WorkspaceProjectTemplate,
     options: &WorkspaceProjectOptions,
 ) -> Result<WorkspaceInfo, WorkspaceError> {
-    super::project_options::validate(template, options)?;
+    super::prepare_project(parent, name, template, options.clone())?.create()
+}
+
+pub(super) fn create_prepared_project(
+    parent: &Path,
+    name: &str,
+    template: WorkspaceProjectTemplate,
+    options: &WorkspaceProjectOptions,
+) -> Result<WorkspaceInfo, WorkspaceError> {
     match template {
         WorkspaceProjectTemplate::Empty => {
             let root = create_directory(parent, name)?;

@@ -390,6 +390,18 @@ A verificação integrada da criação e dos headers aprovou 1450 Rust, Clippy,
 51 arquivos C++, 8 CTest e 178 QML; dois NÃO PROVADOS ARM por compiladores cross
 ausentes. Esse resultado não equivale ao gate completo estrito de release.
 
+### 4.2 Consolidação C1 da criação — 2026-11-04
+
+C distingue identificador CMake numérico de token literal do driver, sem enum
+de dialetos. A prévia mostra ISO obrigatório para números, `-std=` exato para
+tokens e ausência de revisão imposta no automático. A seleção explícita passa
+por sonda C limitada antes de gerar arquivos; não força modo C em driver C++.
+Validação externa ocorre fora do laço, e mudar de workspace antes da continuação
+recusa a geração. Erro conserva as escolhas para correção/repetição.
+Contrato 0.202.0 e provas/limites na [consolidação C §12](consolidacao-nativa-de-c.md#12-c1-dialeto-na-criação-e-validação-do-driver--desenho-de-2026-11-04).
+C++, Rust e Python preservam seus formatos e regressões anteriores; não há
+instalação implícita nem mudança automática de projetos existentes.
+
 ## 5. Fronteiras e proteções
 
 O caminho continua: gesto → controller existente → router/CoreClient → core

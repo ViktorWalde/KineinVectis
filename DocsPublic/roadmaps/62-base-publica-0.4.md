@@ -280,10 +280,13 @@ já documentados; sem nova auditoria funcional:**
 - **C-01 — Projeto e ambiente, C1.** Dono e evidência:
   [consolidação C §4.1](../especificacoes/consolidacao-nativa-de-c.md#41-c1--projeto-e-ambiente-recorte-prioritário).
   Severidade alta, por jornada obrigatória parcialmente provada; impacto na
-  confiança de criação/abertura e seleção persistida. Causa de eventuais falhas
-  ainda não investigada. Testes: projeto novo/existente, escolhas reais,
-  persistência e recuperação na UI. Decisão: consolidar e corrigir lacunas
-  confirmadas no dono. Estado aberto; próximo recorte, sem aceite completo.
+  confiança de criação/abertura e seleção persistida. A auditoria localizada
+  de criação e seus defeitos, causas e testes estão na
+  [consolidação C §12](../especificacoes/consolidacao-nativa-de-c.md#12-c1-dialeto-na-criação-e-validação-do-driver--desenho-de-2026-11-04):
+  token de dialeto, modo C do driver, validação fora do laço e sincronização da
+  regressão de contexto. Decisão: corrigir nesses donos e conservar abertura,
+  divergências e recuperação ainda não comprovadas na matriz de §4.1.
+  Estado C1 aberto; provas parciais e limites no mesmo documento.
 - **C-02 — `typeof(expr)` na gramática C.** Dono e evidência:
   [consolidação C §10.1](../especificacoes/consolidacao-nativa-de-c.md#101-integração-parcial-e-limites-observados--2026-11-04).
   Severidade alta no escopo C23; impacto na estrutura/sintaxe compreendida pelo

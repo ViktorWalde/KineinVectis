@@ -58,9 +58,10 @@ Column {
         width: parent.width
         height: 40
         visible: root.controller.createLanguage !== "python"
-        label: root.controller.createLanguage === "rust" ? qsTr("Edição Rust") : qsTr("Padrão da linguagem")
+        label: root.controller.createLanguage === "rust" ? qsTr("Edição Rust")
+               : root.controller.createLanguage === "c" ? qsTr("Padrão C / dialeto (opcional)") : qsTr("Padrão da linguagem")
         placeholder: root.controller.createLanguage === "rust" ? qsTr("Padrão do Cargo; ou informe 2021, 2024…")
-                     : root.controller.createLanguage === "c" ? qsTr("Padrão do compilador; ou informe 90, 99, 11, 17, 23…")
+                     : root.controller.createLanguage === "c" ? qsTr("Da ferramenta; ou 17, 23, gnu17, c2y, iso9899:1990…")
                      : qsTr("Padrão do compilador; ou informe 98, 11, 17, 20, 23…")
         text: root.options.standard
         onEdited: (value) => { root.options.standard = value; }

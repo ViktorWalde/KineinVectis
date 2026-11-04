@@ -14,9 +14,26 @@ e toolchains locais rustup, sem download. Consultas e criação Cargo usam
 `workspace.createProject` aceita `options?: { executable?: string, standard?: string }`.
 `executable` é caminho absoluto do compilador, cargo de uma toolchain local
 (com rustc adjacente), ou interpretador Python. `standard` é identificador
-decimal positivo para C/C++, edição decimal para Rust; ausente/vazio não fixa
+decimal positivo para C/C++, edição decimal para Rust; **desde 0.202.0**, C
+também aceita token literal de dialeto do driver (até 128 caracteres ASCII,
+iniciado por letra e seguido por letras, dígitos, `_`, `:`, `.` ou `-`, por
+exemplo `gnu17`, `c2y`, `iso9899:1990`). Não há enum de revisões.
+Número gera propriedade CMake exigida, extensões OFF; token gera `-std=` exato
+por alvo. Ausente/vazio não fixa
 padrão. Python não aceita padrão separado do interpretador. Opções incompatíveis
-ou ferramenta inválida são recusadas antes de criar arquivos.
+ou ferramenta inválida são recusadas antes de criar arquivos do projeto.
+Driver C explícito também precisa aceitar uma unidade `.c` própria, sem
+`__cplusplus`, com o dialeto solicitado quando literal. Para números, a sonda
+confere o modo C e o configure valida `C_STANDARD_REQUIRED`; a tradução para
+flag/alias pertence ao CMake, sem deduzi-la na sonda. Consulta de versão e teste sintático
+têm prazos de 2 e 3 segundos, respectivamente, pelo dono de processos existente;
+não há ligação/execução nem código de projeto. Erro/deadline mantém o workspace
+atual e não cria o destino. Sem driver explícito, configure/build conferem a
+seleção automática. Essa sonda não certifica SDK, libc ou conformidade completa.
+Validação externa usa resposta adiada e continuação existentes: consultas e
+eventos independentes continuam. Se a raiz ativa mudar antes da continuação,
+a criação é recusada antes de gerar arquivos, com pedido para repetir no
+contexto atual. Não há cancelamento de sonda em andamento pelo diálogo.
 Os campos ausentes preservam seleção automática das ferramentas, sem exigir
 C23/C++23 ou Python mínimo fixo. A seleção chega aos consumidores conforme o
 [desenho de criação](../../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md#40-ambiente-e-versão-na-criação--desenho-de-2026-11-04).

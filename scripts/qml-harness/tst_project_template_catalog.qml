@@ -94,6 +94,14 @@ Item {
         picker.projectOptions.standard = "99";
         picker.submitCreate();
         failures += check(root.lastOptions.executable === "/opt/old/gcc" && root.lastOptions.standard === "99", "opções chegam à criação");
+        failures += check(picker.projectOptions.preview("c").indexOf("99 (ISO") >= 0, "prévia numérica ISO");
+        picker.projectOptions.standard = "gnu17";
+        picker.submitCreate();
+        failures += check(root.lastOptions.standard === "gnu17" && picker.projectOptions.preview("c").indexOf("-std=gnu17 (literal)") >= 0, "dialeto literal na prévia/payload");
+        picker.showError("driver indisponível");
+        failures += check(picker.projectOptions.standard === "gnu17" && picker.createName === "demo", "erro preserva opções para repetir");
+        picker.projectOptions.standard = "";
+        failures += check(picker.projectOptions.preview("c").indexOf("sem revisão imposta") >= 0, "automático explícito");
         picker.chooseLanguage("python");
         failures += check(picker.projectOptions.executable === "" && picker.projectOptions.standard === "", "troca limpa seleção de outra linguagem");
         failures += check(picker.projectOptions.preview("python").indexOf("Padrão/edição") < 0, "Python segue interpretador");

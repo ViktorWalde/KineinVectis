@@ -22,7 +22,14 @@ QtObject {
     }
     function preview(language) {
         if (language === "" || language === "empty") return "";
-        return qsTr("Ferramenta: %1").arg(executable.trim() || qsTr("automática"))
-               + (language === "python" ? "" : "\n" + qsTr("Padrão/edição: %1").arg(standard.trim() || qsTr("da ferramenta")));
+        const tool = qsTr("Ferramenta: %1").arg(executable.trim() || qsTr("automática"));
+        if (language === "python") return tool;
+        const value = standard.trim();
+        if (language === "c") {
+            return tool + "\n" + (value === "" ? qsTr("Padrão C: da ferramenta (sem revisão imposta)")
+                : /^\d+$/.test(value) ? qsTr("Padrão CMake: %1 (ISO obrigatório)").arg(value)
+                : qsTr("Dialeto C: -std=%1 (literal)").arg(value));
+        }
+        return tool + "\n" + qsTr("Padrão/edição: %1").arg(value || qsTr("da ferramenta"));
     }
 }

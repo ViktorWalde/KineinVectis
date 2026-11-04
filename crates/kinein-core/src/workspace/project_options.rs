@@ -23,15 +23,22 @@ pub(super) fn validate(
     if template == WorkspaceProjectTemplate::Empty && (executable.is_some() || standard.is_some()) {
         return Err(invalid("pasta vazia não tem ambiente ou padrão"));
     }
-    if let Some(standard) = standard
-        && (template == WorkspaceProjectTemplate::Python
+    if let Some(standard) = standard {
+        if template == WorkspaceProjectTemplate::CCmake {
+            if !super::c_options::valid_standard(standard) {
+                return Err(invalid(
+                    "informe um número CMake positivo ou um token literal de dialeto C (ex.: 17, gnu17, iso9899:1990), sem espaços ou metacaracteres",
+                ));
+            }
+        } else if template == WorkspaceProjectTemplate::Python
             || standard.len() > 6
             || !standard.bytes().all(|byte| byte.is_ascii_digit())
-            || !standard.bytes().any(|byte| byte != b'0'))
-    {
-        return Err(invalid(
-            "padrão/edição deve ser um identificador decimal positivo de C, C++ ou Rust",
-        ));
+            || !standard.bytes().any(|byte| byte != b'0')
+        {
+            return Err(invalid(
+                "padrão/edição deve ser um identificador decimal positivo de C++ ou Rust",
+            ));
+        }
     }
     if let Some(executable) = executable {
         let path = Path::new(executable);
@@ -78,6 +85,9 @@ pub(super) fn validate(
         };
         if !compatible {
             return Err(invalid("ferramenta incompatível com a linguagem escolhida"));
+        }
+        if template == WorkspaceProjectTemplate::CCmake {
+            super::c_options::probe(path, standard).map_err(|message| invalid(&message))?;
         }
     }
     Ok(())
