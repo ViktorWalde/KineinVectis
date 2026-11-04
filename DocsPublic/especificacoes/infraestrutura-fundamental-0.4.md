@@ -122,6 +122,14 @@ console, breakpoint, inspeção, parada e repetição. Build falho impede execut
 artefato antigo; perfil incompatível e emulador ausente têm recuperação visível.
 Firmware e sensores simulados não comprovam periféricos ou hardware físico.
 
+Sem placa física, a validação de software embarcado usa QEMU com as fixtures
+ARM/RISC-V e máquinas compatíveis acima. Registrar emulação, ferramenta,
+perfil e operações comprovadas. Flash em placa, sonda, sinais elétricos e
+periféricos físicos conservam evidências separadas e ficam não provados
+enquanto não exercitados. A ausência de hardware permite avançar nas provas
+independentes de software; não transforma emulação em aceite físico nem
+dispensa requisitos obrigatórios de C6/F1–F5.
+
 ### F4 — Windows nativo e distribuição
 
 Windows integra o fechamento da 0.4; deixa de ser uma entrega exigida somente

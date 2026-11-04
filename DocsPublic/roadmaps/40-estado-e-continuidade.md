@@ -13,10 +13,12 @@
 > **Estado funcional:** binário **0.3.9**, protocolo **0.201.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
-> Fronteira, auditoria inicial e bloqueadores em **62 §§1–3**.
+> **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
+> fronteira/bloqueadores em **62 §§1–3** e inventário de dívida em **62 §3.4**.
 >
 > **Prioridade:** etapa profunda C, incluindo C23, depois C++, Rust e integração
-> Rust/C/C++, depois Python; aceites C1–C8 no documento de consolidação C.
+> Rust/C/C++, depois Python. Recorte atual: **C1 — Projeto e ambiente**;
+> aceites C1–C8 no documento de consolidação C, com C1 detalhado no §4.1.
 > A etapa C permanece aberta; uso confiável em projetos pequenos/médios e na
 > própria IDE. Otimização de algoritmos e polimento UI/HUD/UX acompanham as
 > jornadas. Setup exige polimento cromático/de interação; plano no 62 (§7.373).
@@ -127,6 +129,12 @@ e pela [especificação comum](../especificacoes/orquestracao-e-verificacao-de-l
 O trabalho atual é a [etapa profunda C](../especificacoes/consolidacao-nativa-de-c.md):
 C23, criação/configuração, editor/headers/LSP, ferramentas de qualidade,
 ciclo diário, embarcados e plataformas. C1–C8 condicionam a consolidação C++.
+O próximo recorte é **C1 — Projeto e ambiente**, com critérios no
+[§4.1 da consolidação C](../especificacoes/consolidacao-nativa-de-c.md#41-c1--projeto-e-ambiente-recorte-prioritário):
+consolidar criação/abertura, escolha livre de instalação e padrão, configuração,
+prévia, persistência e recuperação nos donos existentes. A criação já oferece
+seleção de ambiente (§7.382); essa entrega não encerrou C1. `typeof(expr)`
+permanece pendente em C3, e a prova QEMU pertence a C6/F3.
 A primeira jornada C11 de host tem prova em software no
 [registro §7.376](40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).
 A consolidação C/C++ continua pela matriz; ferramentas e verificador avançam
@@ -190,7 +198,7 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Build e SVD | C1 ao salvar para C/C++ com CDB; Rust mediante opção. SVD na área Embarcados; delta de tamanho relativo ao último build. | [0.4](52-arquitetura-executavel-da-0.4.md) §13 |
 | Setup e qualidade | Setup no dock; polimento cromático/de interação pendente na base. Quality Center mantém Q1–Q3 na trilha aberta. | [Setup §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04), [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Ordem de implementação | Consolidar C/C++, Rust/C/C++, depois Python e especializações, com integridade, otimização e polimento por jornada. Prontidão de projetos pequenos/médios e autodesenvolvimento exige prova; `/ide` tem aceite próprio. | [base 0.4](62-base-publica-0.4.md), [orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md) |
-| Fronteira de versão | Entrega pública 0.4 / SemVer 0.4.0 consolida o trabalho acumulado e os fundamentos F1–F9 obrigatórios, com polimento e contribuição. Windows nativo integra o fechamento. A 0.5 aprofunda, melhora e amplia a base. | [62](62-base-publica-0.4.md), [infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md), [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
+| Fronteira de versão | 0.4 / SemVer 0.4.0: Foundation — Engineering Consolidation Release. Capacidades declaradas integradas, documentadas e validadas, com limites explícitos; eliminar a dívida que compromete seus aceites. F1–F9 e Windows nativo obrigatórios; melhorias futuras não exigem esgotamento na 0.4. | [62 §1.1](62-base-publica-0.4.md#11-visão-da-04--foundation) e [§3.4](62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica), [infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md), [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |
 | Internacionalização | UI em inglês no polimento; documentação integral em inglês e divulgação com a base finalizada, preservando português e strings traduzíveis. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | Frentes posteriores | ROS 2, colaboração remota, motor semântico profundo e estudo de CLI conservam seus planos. A trilha pública de contribuições já tem quatro tarefas; primeiro verificador na base 0.4. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
 | CI e recursos | CI pública compartilha os gates; limites de RAM, swap zero por escopo e limpeza de temporários devem ser verificáveis. | [gates](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md), [comandos](../build/comandos-de-build-e-verificacao.md) |

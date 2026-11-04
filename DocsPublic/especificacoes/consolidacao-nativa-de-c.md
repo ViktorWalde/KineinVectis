@@ -130,6 +130,40 @@ constrói outro ambiente, o endurecimento do host pode avançar; o ambiente
 pendente conserva seu aceite aberto. Regressões das outras linguagens e dos
 recursos embarcados oferecidos continuam necessárias durante a sequência.
 
+### 4.1 C1 — Projeto e ambiente: recorte prioritário
+
+**Prioridade de 2026-11-04: consolidar C1 antes de ampliar C2–C8.** O template
+C próprio e a escolha de instalação/padrão já integram a criação, conforme a
+[especificação de projetos §§4.0–4.1](projetos-arquivos-e-integracao-desktop-0.3.md).
+São a base a fortalecer. C1 permanece aberto até a jornada abaixo estar
+integrada e comprovada, com cobertura e limitações explícitas.
+
+Versão do compilador e padrão da linguagem são escolhas distintas. A criação
+permite selecionar uma instalação local de GCC/Clang, inclusive por caminho
+alternativo, e solicitar um padrão/dialeto compatível com o projeto e as
+ferramentas. Sugestões não formam uma lista fechada de revisões. C23 continua
+referência de prova, sem imposição ao projeto. Escolha automática não inventa
+uma revisão; escolha explícita persiste e não admite substituição silenciosa
+de ferramenta ou redução de padrão. Obter outra instalação é uma operação
+explícita, separada da criação.
+
+| Jornada C1 | Evidência de aceite |
+| --- | --- |
+| Criar projeto apenas C | Selecionar instalação, padrão opcional, destino e configuração pela UI; conferir prévia e arquivos gerados, sem impor revisão da linguagem |
+| Abrir projeto C existente | Reconhecer configuração/toolchain do projeto, respeitando presets, CDB, flags e arquivos manuais; propor mudanças com prévia e aplicação explícita |
+| Persistir e retomar | Reabrir o projeto e alternar configuração/workspace mantendo a escolha efetiva; tornar origem, seleção automática e divergências compreensíveis |
+| Conferir a seleção real | GCC e Clang reais, com instalações/versões identificadas; configurar e compilar um caso mínimo, conferindo compilador, padrão e configuração na CDB/contexto consumidos pela IDE |
+| Falhar e recuperar | Caminho inválido, ferramenta ausente ou removida após a seleção, padrão incompatível, destino conflitante e cancelamento; preservar arquivos e buffers não salvos e permitir corrigir/repetir |
+| Provar o fluxo visual | Projeto novo e existente, espaços/Unicode, prévia/aplicação, reabertura e recuperação na UI; regressões e mutações pertinentes, sem atribuir a ferramentas simuladas uma prova real |
+
+Reusar os donos de criação, configuração, ambiente/toolchain, CMake e contexto.
+A prova mínima de configure/build confirma a escolha de C1; a matriz completa
+de Make, dependências, bibliotecas e múltiplas unidades pertence a C2.
+`typeof(expr)`, gramática/corpus C23 e ampliação do editor permanecem em C3;
+análise, depuração e embarcados conservam C4–C6. QEMU integra C6/F3, sem ser
+pré-condição para concluir o recorte de projeto/ambiente de host. Cada aceite
+pendente mantém seu alcance aberto, inclusive plataformas não exercitadas.
+
 ## 5. Corpus e registro de prontidão
 
 O conjunto deve conter a fixture C11 atual, corpus C17/C23, projeto Make,
@@ -154,6 +188,12 @@ prova na UI para os fluxos visuais. Uma pendência obrigatória permanece aberta
 mesmo quando a ferramenta/plataforma necessária está indisponível. O algoritmo
 transversal mantém depois sua fase dedicada e seus próprios aceites; encerrar
 C não equivale ao fechamento da vertical inteira da 0.4.
+
+Após C1–C8 implementados, integrados e comprovados, a base C entra em maturação
+por uso real: corrigir falhas reproduzíveis, ampliar cobertura, melhorar UX e
+otimizar com medições. O polimento já acompanha cada jornada e continua nessa
+maturação; não substitui requisitos obrigatórios ainda abertos. As frentes C++,
+Rust/interoperabilidade, Python e F1–F9 mantêm seus próprios aceites da 0.4.
 
 ## 6. Donos existentes a fortalecer
 

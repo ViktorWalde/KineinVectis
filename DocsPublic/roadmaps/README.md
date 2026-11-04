@@ -41,10 +41,13 @@ O [`53-arquitetura-executavel-da-0.3.6.md`](53-arquitetura-executavel-da-0.3.6.m
 aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
 é a arquitetura da 0.4 (embarcados com compiladores e ecossistemas por baixo):
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
-**Fronteira de 2026-11-03:** a base pública **Kinein Vectis 0.4** usa SemVer
-**0.4.0** e consolida o trabalho acumulado, com foco em estabilidade, uso no
-próprio desenvolvimento, polimento UI/HUD/UX e primeiro verificador
-complementar. Os fundamentos de ambiente, DAP/QEMU, Windows, SVD, VFS e ciência
+**Visão de 2026-11-04:** **Kinein Vectis 0.4 — Foundation**,
+**Engineering Consolidation Release**, usa SemVer **0.4.0**. Consolida o trabalho
+acumulado pela [visão e critério de conclusão do 62 §1.1](62-base-publica-0.4.md#11-visão-da-04--foundation)
+e pelo [inventário sistemático de dívida do §3.4](62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica),
+com foco em estabilidade, uso no próprio desenvolvimento, polimento UI/HUD/UX
+e primeiro verificador complementar. Os fundamentos de ambiente, DAP/QEMU,
+Windows, SVD, VFS e ciência
 são obrigatórios pela [infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md).
 Critérios e auditoria no [62](62-base-publica-0.4.md); a 0.5 aprofunda a base.
 A trilha completa 0.4.1–0.4.9 continua aberta para colaboradores, sem exigir
@@ -57,7 +60,7 @@ Setup/Instalar Ferramentas é a primeira fatia de polimento; Quality Center
 conserva seu plano na trilha aberta.
 
 ```text
-62-base-publica-0.4.md             fronteira vigente, auditoria e bloqueadores da base pública 0.4
+62-base-publica-0.4.md             Foundation: visão, inventário de dívida, fronteira e aceites da 0.4
 57-mapa-de-versoes-ate-a-1.0.md     as versões até a 1.0; §1.1: base pública 0.4 e trilha aberta
 58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia
 59-fechamento-da-0.3.9.md            o fechamento da 0.3.9, encerrada em 2026-10-16 (registro)

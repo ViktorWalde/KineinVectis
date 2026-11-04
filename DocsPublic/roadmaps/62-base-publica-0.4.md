@@ -4,6 +4,8 @@
 > vigente revista em 2026-11-03: fundamentos obrigatórios na 0.4, com evolução
 > na 0.5. Substitui a exigência de concluir indistintamente todos os marcos
 > 0.4.1–0.4.9; os mínimos desta base bloqueiam a entrega. Não altera registros.
+> Visão de engenharia consolidada em 2026-11-04: **Foundation — Engineering
+> Consolidation Release**, conforme §1.1; inventário sistemático em §3.4.
 
 ## 1. Fronteira e contabilização
 
@@ -56,6 +58,43 @@ bare metal/Linux embarcado seguem a base essencial; as regressões dos recursos
 especializados já oferecidos continuam obrigatórias. Esta ordem preserva o
 roadmap de Embarcados, com ciclo mínimo integrado obrigatório, e substitui sua
 execução integral como pré-condição indistinta da 0.4.
+
+### 1.1 Visão da 0.4 — Foundation
+
+**Kinein Vectis 0.4 — Foundation**
+
+**Engineering Consolidation Release**
+
+Uma versão destinada a auditar, corrigir, aprofundar e estabilizar a
+infraestrutura existente, transformando o conjunto de funcionalidades
+implementadas em uma base coerente, verificável e extensível.
+
+A 0.4 trata uma deficiência acumulada no processo de engenharia desde as
+primeiras versões: funcionalidades implementadas precisam de integração,
+profundidade de suporte delimitada e evidência de comportamento para formar
+uma base confiável. Auditar e consolidar por capacidade, corrigindo causas nos
+donos existentes e integrando ferramentas maduras onde necessário.
+
+**Critério central de conclusão:** a versão somente será publicada quando os
+recursos que declara suportar estiverem integrados, documentados e validados,
+com limitações conhecidas explicitamente registradas. Uma limitação precisa
+delimitar o suporte e a reação da IDE; sua documentação não aprova uma jornada
+obrigatória que continua incorreta ou não provada.
+
+**A 0.4 deve eliminar a dívida técnica que compromete a correção, a
+confiabilidade, a manutenção e a evolução das capacidades declaradas. Não
+precisa eliminar toda possibilidade de melhoria futura.** A conclusão exige
+os aceites desta base e o tratamento da dívida que os compromete; melhorias
+posteriores conservam escopo, justificativa e dependências identificados.
+
+Declarar análise semântica de C, por exemplo, exige registrar quais construções
+e operações são compreendidas, quais casos não têm suporte e como a IDE reage
+a uma situação desconhecida. Distinguir parser/estrutura, clangd, compilador
+e verificador: êxito de um produtor não comprova a cobertura dos demais.
+Identificar versão, dialeto, alvo e contexto, com casos aceitos, recusados e
+indisponíveis. Uma situação desconhecida deve preservar conteúdo, explicar o
+limite e manter operações independentes; não pode produzir aparência de
+análise válida nem reutilizar evidência obsoleta como atual.
 
 ## 2. Auditoria inicial do checkout — 2026-11-02
 
@@ -128,6 +167,11 @@ versão pública. Os compromissos de idioma não são cancelados pelo recorte.
 | Python | Ambiente e interpretador corretos, análise/imports, correções, testes e depuração; extensões nativas com prova própria |
 | Própria IDE | Jornada Rust/C++/QML e IPC, reconstrução, testes, Git/terminal, recuperação e contexto externo conforme §5 |
 
+Na etapa C, o recorte prioritário é **C1 — Projeto e ambiente**, detalhado na
+[consolidação C §4.1](../especificacoes/consolidacao-nativa-de-c.md#41-c1--projeto-e-ambiente-recorte-prioritário).
+A criação com escolha de instalação/padrão é uma base parcial; completar e
+provar a jornada antes de ampliar os demais aceites.
+
 Cada frente deve incluir projeto novo e existente, reabertura, troca de workspace,
 dependência/ferramenta ausente, falha e cancelamento, sem perda de conteúdo.
 Registrar fixtures, versões, passos e resultado observado por capacidade.
@@ -138,6 +182,10 @@ Otimização exige comparação reproduzível de latência, consultas, CPU e mem
 Polimento fecha foco, teclado, estados, recuperação e hierarquia visual junto
 da jornada. Enquanto esses aceites estiverem abertos, a presença do LSP ou um
 build bem-sucedido não constituem prontidão do ecossistema inteiro.
+
+Após a aceitação de C1–C8, C continua em maturação e polimento por uso real,
+conforme a [consolidação C §5](../especificacoes/consolidacao-nativa-de-c.md#5-corpus-e-registro-de-prontidão).
+Isso não encerra as outras linguagens nem os fundamentos obrigatórios da 0.4.
 
 ### 3.2 Fundamentos obrigatórios e porta de contribuição
 
@@ -181,6 +229,81 @@ O recorte S0/S1 existente conserva seu alcance até cada ampliação ser provada
 o assistente S0–S4 permanece com seus aceites no 52 §11.2. Um resultado positivo
 não compensa ferramenta, configuração ou dependência divergente. B5 continua
 dependendo de todos os bloqueadores, inclusive os que não alimentam o verificador.
+
+### 3.4 Inventário sistemático de dívida técnica
+
+Antes de refatorar uma capacidade, registrar sua dívida e as lacunas de prova,
+conferindo o código e os resultados atuais. O inventário cresce por fatia na
+ordem de §3.1; não exige uma reauditoria indistinta do histórico nem autoriza
+refatorações gerais. Quantidade de linhas alteradas e redução de tamanho não
+demonstram correção de comportamento. Reusar inventários, donos e fixtures
+existentes e vincular cada intervenção a um problema reproduzível ou a uma
+limitação de engenharia demonstrada.
+
+| Área | O que investigar |
+| --- | --- |
+| Linguagem C | Tratamento próprio de C e fronteira com C++, parsing, semântica, diagnósticos, toolchains e matriz C1–C8 |
+| Linguagem C++ | Análise semântica, padrões, indexação e integração com compiladores |
+| Outras linguagens existentes | Profundidade real do suporte, funcionalidades incompletas e fronteiras entre linguagens |
+| Algoritmos | Correção, complexidade, cobertura, casos extremos e limites de recursos |
+| DAP | Protocolo, estados, falhas, comunicação e consistência da depuração |
+| Sistemas embarcados | Toolchains, QEMU, SDKs, configuração e integração de projetos |
+| Infraestrutura da IDE | Concorrência, gerenciamento de recursos, persistência e tratamento de erros |
+| Interface | Responsividade, consistência, carregamento, foco, recuperação e diagnósticos |
+
+Cada problema tem **ID, área/capacidade e dono; evidência/contexto de reprodução;
+severidade e impacto; causa provável; testes necessários; decisão e justificativa;
+estado e evidência de fechamento**. Causa não investigada fica assim marcada,
+separada de hipótese e causa confirmada. Falta de prova não é, por si só,
+evidência de defeito no código. O detalhe pertence ao documento da capacidade;
+este inventário conserva sua referência e classificação, sem duplicar o relato.
+
+Severidade: **crítica** para perda/corrupção de conteúdo ou resultado incorreto
+tratado como seguro; **alta** para capacidade declarada inviável, inconsistente
+ou sem evidência obrigatória; **média** para degradação com recuperação viável;
+**baixa** para melhoria localizada sem comprometimento desses aceites. Registrar
+o impacto concreto e a prioridade no contexto; não classificar só pelo tamanho
+do arquivo ou pela dificuldade da mudança.
+
+As decisões possíveis são **corrigir, substituir, limitar o suporte ou adiar
+com justificativa**. Corrigir/substituir exige evidência antes/depois, regressões
+e prova real do consumidor; mutações exercitam guardas relevantes, e mudanças
+de desempenho precisam de medições. Limitar exige fronteira pública explícita
+e comportamento seguro fora dela. Adiar exige motivo, alcance, dependências e
+critério de retomada. Limitação ou adiamento não dispensam C1–C8, F1–F9 nem os
+demais aceites obrigatórios: um bloqueador permanece aberto até ser resolvido.
+Melhoria futura sem impacto nesses compromissos não impede o lançamento.
+
+**Registros iniciais — 2026-11-04, classificação de planejamento sobre limites
+já documentados; sem nova auditoria funcional:**
+
+- **C-01 — Projeto e ambiente, C1.** Dono e evidência:
+  [consolidação C §4.1](../especificacoes/consolidacao-nativa-de-c.md#41-c1--projeto-e-ambiente-recorte-prioritário).
+  Severidade alta, por jornada obrigatória parcialmente provada; impacto na
+  confiança de criação/abertura e seleção persistida. Causa de eventuais falhas
+  ainda não investigada. Testes: projeto novo/existente, escolhas reais,
+  persistência e recuperação na UI. Decisão: consolidar e corrigir lacunas
+  confirmadas no dono. Estado aberto; próximo recorte, sem aceite completo.
+- **C-02 — `typeof(expr)` na gramática C.** Dono e evidência:
+  [consolidação C §10.1](../especificacoes/consolidacao-nativa-de-c.md#101-integração-parcial-e-limites-observados--2026-11-04).
+  Severidade alta no escopo C23; impacto na estrutura/sintaxe compreendida pelo
+  editor. Rejeição observada no Tree-sitter C 0.24.2; causa interna ainda não
+  determinada. Testes: corpus C23 válido/inválido e regressões de C11/C17,
+  separando prova de gramática, compilador e clangd. Decisão: corrigir ou integrar
+  solução no dono da gramática, com limite explícito até a prova. Estado aberto
+  em C3, posterior a C1; não equivale a ausência de semântica no clangd.
+- **UI-01 — Instalar Ferramentas.** Dono e evidência:
+  [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
+  Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:
+  acabamento parcial da apresentação existente, sem concluir falha de protocolo.
+  Testes: foco/teclado, carga/vazio/erro/retry, escalas e capturas comparáveis com
+  interação nativa. Decisão: corrigir o acabamento nos componentes atuais.
+  Estado aberto e obrigatório em B3; não integra a implementação de C1.
+
+As demais áreas da tabela ainda exigem inventário por capacidade; esta lista
+inicial não certifica ausência de dívida nelas. Atualizar classificação,
+causa e estado conforme a evidência, encerrando problemas pelo comportamento
+comprovado e pela manutenção/evolução viável, não pela conclusão de um rewrite.
 
 ## 4. Primeiro algoritmo: fronteira anterior ao código
 
