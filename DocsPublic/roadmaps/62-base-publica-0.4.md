@@ -292,6 +292,11 @@ auditorias e provas posteriores datadas nos donos:**
   recarga tardia de outro workspace. C1-05/C1-06/C1-08 têm correção localizada;
   C1-07 conserva o cancelamento da sonda de criação aberto. Estado C1 aberto;
   provas parciais e limites no mesmo documento.
+  C1-09/C1-10 e suas provas estão na
+  [consolidação C §14](../especificacoes/consolidacao-nativa-de-c.md#14-c1-seleção-visual-de-opções-conhecidas--desenho-de-2026-11-05):
+  seleção visual com escape personalizado e preservação do buffer ao retornar
+  pela árvore. Não fecham configuração livre de instalações/presets manuais,
+  divergências, cancelamento da sonda submetida ou matriz Windows.
 - **C-02 — `typeof(expr)` na gramática C.** Dono e evidência:
   [consolidação C §10.1](../especificacoes/consolidacao-nativa-de-c.md#101-integração-parcial-e-limites-observados--2026-11-04).
   Severidade alta no escopo C23; impacto na estrutura/sintaxe compreendida pelo

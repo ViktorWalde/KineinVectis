@@ -366,6 +366,11 @@ instalações locais rustup, pyenv e uv; o campo de caminho cobre instalações
 fora deles. O padrão/edição é livre e opcional. O tipo `EnvironmentCreators`
 substitui o nome interno antigo do mesmo dono Python, sem novo serviço paralelo.
 
+Instalações e exemplos de padrão/edição são apresentados em seletores, com
+opção automática/vazia e “Personalizado…” para informar outros valores.
+Atualizar a detecção conserva a escolha, inclusive quando ela deixa de ser
+encontrada; a validação do core decide sua disponibilidade na submissão.
+
 Três regressões exercitam instalações Python paralelas controladas, recusa de
 seleção inválida, compilação real GCC/C90 e Clang/C23, C++17, padrão automático
 e Cargo local com edição 2021 e build offline. O arquivo rustup por caminho foi

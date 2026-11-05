@@ -568,6 +568,14 @@ CommandPalette: 44px
 
 Select/dropdown para opções compactas.
 
+`KvSelect` atende à criação de projetos e aos parâmetros conhecidos de
+Configuration Actions. O menu reutiliza `AppMenuPopup`, fora da área rolável
+do formulário, com teclado, Escape, clique externo e retorno de foco.
+Sugestões não limitam os valores: “Personalizado…” revela a entrada livre.
+Abrir/cancelar o menu e atualizar opções não escolhem um valor automaticamente;
+a opção vazia conserva o significado definido pelo consumidor. A instalação
+é identificada pela versão medida e pelo caminho, separados do padrão/edição.
+
 Usos:
 
 - target;

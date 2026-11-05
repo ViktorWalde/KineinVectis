@@ -331,13 +331,10 @@ Item {
             external.applyExternalRead(path, content);
             return;
         }
-        const alreadyOpen = openDocuments.applyDiskContent(path, content, false);
-        if (alreadyOpen !== 0) {
+        // Abrir novamente ativa o buffer; recarregar tem fluxo explícito acima.
+        const alreadyOpen = openDocuments.docIdForPath(path);
+        if (alreadyOpen !== 0 && !isReadOnlyDocument(alreadyOpen)) {
             selectDocument(alreadyOpen);
-            if (surfaceBridge !== null) {
-                surfaceBridge.setText(content);
-                surfaceBridge.setPath(path);
-            }
             if (jump.hasPendingFor(path)) {
                 jump.applyPending();
             }

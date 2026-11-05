@@ -43,6 +43,13 @@ O usuário deve confiar que a Kinein entende o projeto antes de sugerir algo.
 
 ## 2. Escopo da Parte 5
 
+**Preservação na reabertura (2026-11-05).** Abrir pela árvore ou navegação um
+arquivo que já tem documento ativa esse documento, conservando buffer,
+identidade e baseline salvo. Uma resposta ordinária de leitura não autoriza
+recarregar o disco sobre o texto editado. Recarga explícita e mudanças externas
+seguem seus fluxos de descarte/confirmação e conflito. Dono:
+`EditorDocumentController`; regressão `tst_editor_reopen_buffer.qml`.
+
 Esta especificação cobre:
 
 1. Modelo de editor.

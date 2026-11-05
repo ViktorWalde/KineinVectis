@@ -14,6 +14,14 @@ QtObject {
     function resolved(entries) { environments = entries; loading = false; errorText = ""; }
     function failed(message) { loading = false; errorText = message; }
     function forLanguage(language) { return environments.filter(entry => entry.language === language); }
+    function standardsFor(language) {
+        const examples = {
+            rust: ["2015", "2018", "2021", "2024"],
+            c: ["90", "99", "11", "17", "23", "gnu17", "gnu23"],
+            cpp: ["98", "11", "14", "17", "20", "23", "26"]
+        };
+        return examples[language] || [];
+    }
     function payload() {
         const result = {};
         if (executable.trim() !== "") result.executable = executable.trim();

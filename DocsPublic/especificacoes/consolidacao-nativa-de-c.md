@@ -688,3 +688,66 @@ aceites próprios. O diagnóstico não verifica conteúdo/versão do binário no
 mesmo caminho, disponibilidade de SDK/libc ou toda alteração externa do file-api.
 O cancelamento provado é do processo de configure em andamento; não abrange
 uma consulta de versão auxiliar bloqueada antes dele. Não encerra C2–C8.
+
+## 14. C1: seleção visual de opções conhecidas — desenho de 2026-11-05
+
+| ID / capacidade | Evidência e reprodução | Severidade, impacto e causa | Decisão e provas necessárias |
+| --- | --- | --- | --- |
+| C1-09 / escolha na criação e configuração | `ProjectEnvironmentFields` oferece instalações em uma lista de duas linhas e exige texto para padrão; `ConfigActionField` mantém entrada de texto mesmo quando `suggestions` já contém alvos e valores. Abrir a configuração do padrão C reproduz o fluxo | Média: transcrição desnecessária de opções conhecidas e baixa descoberta das instalações. Causa confirmada na apresentação dos dados já fornecidos pelos donos | Corrigir nos consumidores existentes com um seletor compartilhado, opção vazia explícita e entrada personalizada acessível. Provar seleção por teclado/clique, cancelamento do menu, atualização sem substituição da escolha, opções futuras, prévia/aplicação e preservação na UI |
+| C1-10 / buffer ao retornar ao arquivo | Com `autoSave=false`, editar `main.c`, configurar/compilar, abrir `other.c` pela árvore e retornar a `main.c` elimina o texto não salvo e seu indicador; marcador continua ausente do disco. Reprodução confirmada na UI e nas respostas `fs.read` | Alta: perda de alterações durante a conferência do ambiente. Causa confirmada: a carga ordinária de arquivo já aberto chama `applyDiskContent` e substitui também a superfície | Corrigir em `EditorDocumentController`: carga ordinária ativa o documento existente por identidade; recarga explícita e conflito externo continuam nos seus fluxos. Provar buffer ativo/inativo, resposta repetida, identidade, baseline salvo e recarga explícita; mutação da proteção e repetição nativa da troca de arquivo |
+
+O seletor apresenta as instalações medidas por `workspace.projectEnvironments`
+com versão e caminho. Sugestões de padrão são exemplos, sem enum fechado:
+o valor personalizado conserva o contrato numérico/literal existente. Vazio
+continua sem impor padrão na criação. Em Configuration Actions, as sugestões
+continuam sendo valores do core; ausência de sugestões conserva a entrada livre.
+Escolher uma opção solicita a mesma prévia; somente a aplicação explícita grava.
+O menu precisa escapar da área rolável dos parâmetros, caber na janela e
+devolver o foco ao fechar. Ocultar/destruir o formulário fecha o menu.
+
+Não há mudança de schema ou semântica IPC; produto 0.3.9 e protocolo 0.203.0.
+Esta fatia não altera as receitas nem transforma seus exemplos em limites.
+A seleção livre de instalações em projetos existentes, alterações de presets
+manuais arbitrários, origem/divergência completa, cancelamento da sonda
+submetida e matriz Windows continuam com seus aceites abertos.
+
+### 14.1 Integração e alcance das provas — 2026-11-05
+
+`KvSelect` apresenta instalações, padrões/edições e sugestões das ações, com
+automático/vazio e “Personalizado…”. A lista de instalações mostra versão
+medida e caminho; atualizar não troca a escolha. Ocultar o formulário fecha
+o menu e limpa apenas seu modo transitório de edição. Não há instalação ou
+tradução de padrão no frontend. Ações sem sugestões conservam entrada livre.
+
+A abertura ordinária de arquivo já aberto passa a ativar seu documento por
+identidade, conservando texto, baseline salvo e indicador. Recarga explícita,
+prévia externa somente leitura e tratamento de conflito conservam seus donos.
+Dois harnesses adicionais exercitam os seletores e a preservação de buffer
+ativo/inativo, resposta de disco repetida e recarga explícita. Oito mutações
+QML válidas eliminadas com ambos os baselines verdes: caminho selecionado,
+personalizado, vazio, ocultação, busca em andamento, atualização da escolha,
+modelo do documento e texto da superfície.
+
+Na UI nativa, um projeto C existente recusa a receita sobre alvo com flags
+manuais. Outro alvo recebe a prévia e aplicação explícita; padrão numérico
+indisponível falha no CMake, e escolher C17 recupera configure/build. A CDB e
+`index.context` confirmam C17 nesse alvo e GNU17 no alvo manual. A remoção do
+driver após configure produz falha na tentativa seguinte; restaurar o mesmo
+caminho recupera, sem substituir a instalação. Fontes, presets, toolchain file,
+`.clangd` e `compile_flags.txt` conservam seus bytes; somente o bloco aplicado
+no `CMakeLists.txt` muda. Com `autoSave=false` confirmado pelo IPC, o texto e
+indicador não salvos permanecem após troca pela árvore e configure/build;
+marcador ausente do disco. C1-09/C1-10 têm correção localizada; C1 segue aberto.
+
+A criação nativa por seletores usa GCC 16.2.1 e Clang 23.1.4, com CMake 4.4.5:
+GNU17 literal e C17 numérico, respectivamente. Prévia, criação, seleção de
+preset Debug, configure/build e reabertura conferem os caminhos escolhidos e
+`-std=gnu17`/`-std=c17` na CDB e em `index.context`. O destino contém
+espaços/Unicode. Esta prova não amplia a configuração de instalações em
+projetos existentes arbitrários.
+
+Gate rápido aprovado em 286 s: 1462 Rust, Clippy, 51 arquivos C++, 8 CTest e
+180 harnesses QML. Dois NÃO PROVADOS ARM por compiladores cross ausentes.
+Formatação, veracidade, links/privacidade e revisão editorial acompanham o
+fechamento. Baselines, allowances e exclusões Windows não foram ampliados.
+Sem prova nativa Windows, cancelamento de sonda submetida ou fechamento de C1.

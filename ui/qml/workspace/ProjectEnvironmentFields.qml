@@ -29,47 +29,50 @@ Column {
             onClicked: root.options.refresh()
         }
     }
-    ListView {
+    KvSelect {
         width: parent.width
-        height: Math.min(2, count) * 30
-        clip: true
-        model: root.options.forLanguage(root.controller.createLanguage)
-        spacing: 2
-        delegate: KvButton {
-            required property var modelData
-            width: ListView.view.width
-            height: 28
-            compact: true
-            text: modelData.version.length > 84 ? modelData.version.slice(0, 81) + "…" : modelData.version
-            tooltip: modelData.executable
-            selected: root.options.executable === modelData.executable
-            onClicked: root.options.executable = modelData.executable
-        }
+        choices: root.options.forLanguage(root.controller.createLanguage).map(entry => ({
+            value: entry.executable, label: entry.version + " — " + entry.executable
+        }))
+        value: root.options.executable
+        busy: root.options.loading
+        emptyLabel: qsTr("Automático — ferramenta do ambiente")
+        accessibleLabel: qsTr("Instalação local")
+        customPlaceholder: qsTr("Caminho do executável instalado")
+        onEdited: value => { root.options.executable = value; }
     }
-    KvTextField {
+    Text {
         width: parent.width
-        height: 40
-        label: qsTr("Executável (caminho alternativo permitido)")
-        placeholder: qsTr("Automático — ferramenta do ambiente")
+        visible: root.options.executable !== ""
         text: root.options.executable
-        onEdited: (value) => { root.options.executable = value; }
+        textFormat: Text.PlainText
+        color: Theme.textSecondary
+        font.pixelSize: Theme.fontSizeCaption
+        wrapMode: Text.WrapAnywhere
     }
-    KvTextField {
-        width: parent.width
-        height: 40
+    Text {
+        text: root.controller.createLanguage === "rust" ? qsTr("EDIÇÃO RUST") : qsTr("PADRÃO / DIALETO (OPCIONAL)")
         visible: root.controller.createLanguage !== "python"
-        label: root.controller.createLanguage === "rust" ? qsTr("Edição Rust")
-               : root.controller.createLanguage === "c" ? qsTr("Padrão C / dialeto (opcional)") : qsTr("Padrão da linguagem")
-        placeholder: root.controller.createLanguage === "rust" ? qsTr("Padrão do Cargo; ou informe 2021, 2024…")
-                     : root.controller.createLanguage === "c" ? qsTr("Da ferramenta; ou 17, 23, gnu17, c2y, iso9899:1990…")
-                     : qsTr("Padrão do compilador; ou informe 98, 11, 17, 20, 23…")
-        text: root.options.standard
-        onEdited: (value) => { root.options.standard = value; }
+        color: Theme.textSecondary
+        font.pixelSize: Theme.fontSizeMicro
+    }
+    KvSelect {
+        width: parent.width
+        visible: root.controller.createLanguage !== "python"
+        choices: root.options.standardsFor(root.controller.createLanguage)
+        emptyLabel: root.controller.createLanguage === "rust" ? qsTr("Padrão do Cargo") : qsTr("Da ferramenta — sem padrão imposto")
+        accessibleLabel: root.controller.createLanguage === "rust" ? qsTr("Edição Rust") : qsTr("Padrão da linguagem")
+        customPlaceholder: root.controller.createLanguage === "c" ? qsTr("Ex.: 17, gnu17, c2y, iso9899:1990…") : qsTr("Informe outro valor")
+        value: root.options.standard
+        onEdited: value => { root.options.standard = value; }
     }
     Text {
         width: parent.width
         text: root.options.errorText !== "" ? root.options.errorText
-              : qsTr("Escolha uma instalação ou informe seu caminho. Novas versões são instaladas em Ferramentas.")
+              : root.options.loading ? qsTr("Consultando instalações locais…")
+              : root.options.forLanguage(root.controller.createLanguage).length === 0
+                ? qsTr("Nenhuma instalação detectada. Use Personalizado… para indicar um caminho; novas versões ficam em Ferramentas.")
+                : qsTr("Selecione uma instalação detectada ou use Personalizado… para outro caminho. Novas versões ficam em Ferramentas.")
         color: root.options.errorText !== "" ? Theme.errorSoft : Theme.textMuted
         wrapMode: Text.WordWrap
         font.pixelSize: Theme.fontSizeCaption

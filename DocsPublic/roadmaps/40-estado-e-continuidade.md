@@ -49,7 +49,9 @@
 > **C1 — criação (§7.383):** dialeto livre e driver C validados.
 > **C1 — existentes (§7.384):** histórico separado do efetivo, recuperação
 > do preset e guardas de raiz; sete regressões e oito mutantes.
-> Rápido de 2026-11-05: 1462 Rust, 8 CTest, 178 QML e 51 arquivos C++;
+> **C1 — seletores/buffers (§7.385):** escolhas visuais, retorno sem perda
+> do buffer; dois harnesses adicionais e oito mutantes QML.
+> Rápido de 2026-11-05: 1462 Rust, 8 CTest, 180 QML e 51 arquivos C++;
 > dois NÃO PROVADOS ARM por compiladores ausentes. C1 conserva aceites abertos.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
@@ -138,7 +140,8 @@ consolidar criação/abertura, escolha livre de instalação e padrão, configur
 prévia, persistência e recuperação nos donos existentes. A criação já oferece
 seleção de ambiente (§7.382); essa entrega não encerrou C1. A validade do
 contexto e a retomada após configure incompleto avançam na consolidação C §13;
-projetos manuais arbitrários, divergências e plataformas conservam seus aceites.
+seletores e preservação de buffer ao retornar pela árvore estão no §14.
+Projetos manuais arbitrários, divergências e plataformas conservam seus aceites.
 `typeof(expr)`
 permanece pendente em C3, e a prova QEMU pertence a C6/F3.
 A primeira jornada C11 de host tem prova em software no
