@@ -8,9 +8,9 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > resumo técnico: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **RESUMO TÉCNICO (2026-11-04; provas funcionais datadas abaixo).**
+> **RESUMO TÉCNICO (2026-11-05; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.202.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.203.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
@@ -46,9 +46,10 @@
 > **Referência de headers (§7.381):** alvo/fonte únicos orientam clangd;
 > ambiguidade/base manual explícitas, invalidação e buffers não salvos.
 > Sete regressões de identidade/headers e três mutantes; C1–C8 abertos.
-> **C1 — criação (§7.383):** dialeto literal, driver C validado e consultas
-> fora do laço; reabertura, configurações e recuperação com cinco regressões.
-> Rápido integrado verde: 1455 Rust, 8 CTest, 178 QML e 51 arquivos C++;
+> **C1 — criação (§7.383):** dialeto livre e driver C validados.
+> **C1 — existentes (§7.384):** histórico separado do efetivo, recuperação
+> do preset e guardas de raiz; sete regressões e oito mutantes.
+> Rápido de 2026-11-05: 1462 Rust, 8 CTest, 178 QML e 51 arquivos C++;
 > dois NÃO PROVADOS ARM por compiladores ausentes. C1 conserva aceites abertos.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
@@ -58,12 +59,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.202.0 (crates/kinein-protocol, medido em 2026-11-04; o
+protocolo   0.203.0 (crates/kinein-protocol, medido em 2026-11-05; o
             historico das versoes e' o arquitetura/03)
 metodos     193 roteados e 63 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   178 tst_*.qml em scripts/qml-harness (medido em 2026-11-02)
-testes      1455 Rust no gate rápido de 2026-11-04 (40.7 §7.383);
+testes      1462 Rust no gate rápido de 2026-11-05 (40.7 §7.384);
+            1455 Rust no gate rápido de 2026-11-04 (40.7 §7.383);
             1450 Rust no gate rápido de 2026-11-04 (40.7 §7.382);
             1444 Rust no gate rápido de 2026-11-04 (40.7 §7.380);
             1440 Rust no gate rápido de 2026-11-04 (40.7 §7.379);
@@ -134,7 +136,10 @@ O próximo recorte é **C1 — Projeto e ambiente**, com critérios no
 [§4.1 da consolidação C](../especificacoes/consolidacao-nativa-de-c.md#41-c1--projeto-e-ambiente-recorte-prioritário):
 consolidar criação/abertura, escolha livre de instalação e padrão, configuração,
 prévia, persistência e recuperação nos donos existentes. A criação já oferece
-seleção de ambiente (§7.382); essa entrega não encerrou C1. `typeof(expr)`
+seleção de ambiente (§7.382); essa entrega não encerrou C1. A validade do
+contexto e a retomada após configure incompleto avançam na consolidação C §13;
+projetos manuais arbitrários, divergências e plataformas conservam seus aceites.
+`typeof(expr)`
 permanece pendente em C3, e a prova QEMU pertence a C6/F3.
 A primeira jornada C11 de host tem prova em software no
 [registro §7.376](40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).

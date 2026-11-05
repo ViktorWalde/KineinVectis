@@ -53,7 +53,7 @@ Item {
 
     function openContextCdb() {
         const location = fileContext.cdbLocation;
-        if (!location || contextLoading) return;
+        if (!location || contextLoading || fileContext.staleBecause) return;
         closeInspector();
         openSymbolRequested(location.path, location.line, location.column);
     }
@@ -156,6 +156,7 @@ Item {
     function contextSummary() {
         const c = fileContext;
         if (contextPath === "" || c.path === undefined) return "";
+        if (c.staleBecause) return qsTr("contexto desatualizado ⚠");
         if (c.unit !== undefined) {
             const partes = [baseName(c.unit.compiler)];
             if (c.unit.standard !== undefined) partes.push(c.unit.standard);
@@ -190,6 +191,7 @@ Item {
         const effectiveLines = effectiveParts(c.effective, c.unit !== undefined);
         for (let i = 0; i < effectiveLines.length; i++) partes.push(effectiveLines[i]);
         if (c.source !== undefined) partes.push(c.source);
+        if (c.staleBecause) partes.push(c.staleBecause);
         if (c.hint !== undefined) partes.push(c.hint);
         if (c.python !== undefined && c.python.warning !== undefined) partes.push(c.python.warning);
         return partes.join(" — ");

@@ -2,6 +2,8 @@
 
 mod dialects;
 mod environment;
+mod existing;
+mod existing_recovery;
 
 use kinein_protocol::JsonRpcRequest;
 use serde_json::{Value, json};

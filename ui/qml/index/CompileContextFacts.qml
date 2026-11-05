@@ -38,17 +38,24 @@ QtObject {
         const sourced = (label, field) => add(label, field ? field.value : "",
                                              field ? root.originLabel(field.origin) : "");
         add(qsTr("Fonte do contexto"), context.source, "");
-        if (context.language === "c" || context.language === "cpp" || context.language === "rust") {
+        if (context.staleBecause) add(qsTr("Contexto desatualizado"), context.staleBecause, "");
+        if (!context.staleBecause && (context.language === "c" || context.language === "cpp" || context.language === "rust")) {
             sourced(qsTr("Compilador"), effective.compiler);
             sourced(qsTr("Padrão"), effective.standard);
             sourced(qsTr("Target"), effective.target);
             sourced(qsTr("Sysroot"), effective.sysroot);
             if (effective.kit) add(qsTr("Kit"), effective.kit.preset || qsTr("padrão do projeto"), qsTr("do kit"));
         }
-        if (context.targets && context.targets.length) add(qsTr("Targets CMake"), context.targets.join("\n"), qsTr("do file-api do CMake"));
+        if (context.targets && context.targets.length) add(qsTr("Targets CMake"), context.targets.join("\n"),
+            context.staleBecause ? qsTr("do file-api anterior") : qsTr("do file-api do CMake"));
         if (context.unit) {
             const unit = context.unit;
-            const origin = root.originLabel(effective.flagsOrigin);
+            const origin = context.staleBecause ? qsTr("comando anterior; não comprova o ambiente atual")
+                                               : root.originLabel(effective.flagsOrigin);
+            if (context.staleBecause) {
+                add(qsTr("Compilador anterior"), unit.compiler, origin);
+                add(qsTr("Padrão anterior"), unit.standard, origin);
+            }
             add(qsTr("Diretório de trabalho"), unit.directory, origin);
             add(qsTr("Saída"), unit.output, origin);
             add(qsTr("Includes (%1)").arg(unit.includes.length), unit.includes.join("\n") || qsTr("nenhum declarado"), origin);

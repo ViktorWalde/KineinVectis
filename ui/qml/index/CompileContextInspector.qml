@@ -90,7 +90,7 @@ KvPanelFrame {
 
             KvButton {
                 text: qsTr("Abrir CDB na unidade")
-                enabled: !!root.context.cdbLocation && !root.controller.contextLoading
+                enabled: !!root.context.cdbLocation && !root.controller.contextLoading && !root.context.staleBecause
                 onClicked: root.controller.openContextCdb()
             }
 

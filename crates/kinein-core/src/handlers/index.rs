@@ -146,11 +146,14 @@ impl Core {
             targets: Vec::new(),
             source: None,
             hint: Some("o contexto do projeto ainda está sendo carregado".to_owned()),
+            stale_because: None,
             effective: None,
             drift: Vec::new(),
         });
         // O que a unidade nao disse vem do kit que vale (52 §14.1).
-        if matches!(response.language.as_str(), "c" | "cpp" | "rust") {
+        if response.stale_because.is_none()
+            && matches!(response.language.as_str(), "c" | "cpp" | "rust")
+        {
             let kit = self.kit_facts(&root, &response.language);
             response.drift = compile_drift(&response, &kit);
             complete_with_kit(
@@ -224,15 +227,15 @@ impl Core {
             indice.state = IndexState::Building;
         }
         let compartilhado = std::sync::Arc::clone(&self.index);
-        let raiz = root.to_path_buf();
+        let workspace_root = root.to_path_buf();
         let ferramentas = self.index_tools(root);
         let Some(jobs) = self.jobs.as_ref() else {
             let parado = std::sync::atomic::AtomicBool::new(false);
             let construido = index::build_with_context(
-                &raiz,
+                &workspace_root,
                 &parado,
                 &|_, _| {},
-                Some(CompileContext::load(&raiz, &ferramentas)),
+                Some(CompileContext::load(&workspace_root, &ferramentas)),
             );
             if let Ok(mut indice) = compartilhado.lock() {
                 *indice = construido;
@@ -241,7 +244,7 @@ impl Core {
             // nascem no enable_lsp): nada a registrar aqui.
             return;
         };
-        let titulo = format!("Indexar {}", raiz.display());
+        let titulo = format!("Indexar {}", workspace_root.display());
         jobs.spawn("index", titulo, JobRisk::Low, true, move |ctx| {
             let cancel = ctx.cancellation();
             let progresso = |files: u64, symbols: u64| {
@@ -253,12 +256,16 @@ impl Core {
             let context = if cancel.load(Ordering::SeqCst) {
                 None
             } else {
-                Some(CompileContext::load(&raiz, &ferramentas))
+                Some(CompileContext::load(&workspace_root, &ferramentas))
             };
-            let construido = index::build_with_context(&raiz, &cancel, &progresso, context);
+            let construido =
+                index::build_with_context(&workspace_root, &cancel, &progresso, context);
             let stats = construido.stats();
             let ok = matches!(construido.state, IndexState::Ready);
             if let Ok(mut indice) = compartilhado.lock() {
+                if indice.root != workspace_root {
+                    return JobOutcome::Failed;
+                }
                 *indice = construido;
             }
             ctx.emit_event("event.index.finished", json!(stats));
@@ -288,10 +295,14 @@ impl Core {
         }
         let compartilhado = std::sync::Arc::clone(&self.index);
         let ferramentas = self.index_tools(&root);
+        let expected_root = root.clone();
         let trocar = move |contexto: CompileContext| {
             let Ok(mut indice) = compartilhado.lock() else {
                 return None;
             };
+            if indice.root != expected_root {
+                return None;
+            }
             indice.set_context(contexto);
             Some(indice.stats())
         };

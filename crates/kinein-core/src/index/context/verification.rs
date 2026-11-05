@@ -34,8 +34,11 @@ pub(crate) fn verification_context(
     if !loaded.unambiguous_cdb_unit(path) {
         return Err("Contexto ausente ou ambíguo na CDB.".into());
     }
-    let unit = loaded
-        .for_file(root, path, language)
+    let context = loaded.for_file(root, path, language);
+    if let Some(reason) = context.stale_because {
+        return Err(format!("Contexto obsoleto: {reason}"));
+    }
+    let unit = context
         .unit
         .ok_or("Contexto ausente: sem unidade exata na CDB.")?;
     Ok(VerificationContext { unit, cdb, bytes })

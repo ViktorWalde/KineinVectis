@@ -312,7 +312,7 @@ Item {
         if (cdbStale) {
             apply("warning",
                   cdbStaleBecause !== ""
-                      ? qsTr("análise desatualizada: %1 mudou depois do último configure")
+                      ? qsTr("análise desatualizada: %1; reconfigure para atualizar as flags")
                             .arg(cdbStaleBecause)
                       : qsTr("análise desatualizada: reconfigure para atualizar as flags"),
                   qsTr("Reconfigurar"), "cmakeConfigure");

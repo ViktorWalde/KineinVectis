@@ -151,6 +151,7 @@ flowchart LR
   n_core_build --> n_core_toolchain
   n_core_build --> n_core_tools
   n_core_cargo --> n_core_toolchain
+  n_core_cdb --> n_core_cmake
   n_core_cdb --> n_core_platform
   n_core_cmake --> n_core_fsops
   n_core_cmake --> n_core_msvc
@@ -300,7 +301,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-50 módulos, 154 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+50 módulos, 155 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -313,7 +314,7 @@ flowchart LR
 | --- | --- | --- |
 | `build` | cdb, cmake, msvc, platform, process, toolchain, tools | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
-| `cdb` | platform | Identity of include-search namespaces, including previously absent headers. |
+| `cdb` | cmake, platform | Identity of include-search namespaces, including previously absent headers. |
 | `cmake` | fsops, msvc, platform, toolchain | Servico CMake: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |

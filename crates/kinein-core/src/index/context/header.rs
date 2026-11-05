@@ -69,6 +69,9 @@ impl CompileContext {
             .get(&source)
             .filter(|unit| !unit.ambiguous)
             .ok_or("comando da fonte ausente ou duplicado na CDB")?;
+        if super::freshness::missing_compiler(&unit.compiler, &unit.directory).is_some() {
+            return Err("compilador da referência indisponível");
+        }
         // A transferência do clangd exige a entrada original no argv. Não
         // completar comandos incompletos nem interpretar wrappers aqui.
         if !unit.arguments.iter().skip(1).any(|argument| {

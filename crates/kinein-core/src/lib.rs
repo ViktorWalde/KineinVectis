@@ -382,6 +382,14 @@ impl Core {
     ///
     /// Silencioso de proposito: um evento sem reacao registrada nao e erro.
     pub fn observe_notification(&mut self, notification: &JsonRpcRequest) {
+        if notification.method == "event.build.started"
+            && self
+                .workspace_root()
+                .is_some_and(|root| cmake::incomplete_configure(&root).is_some())
+        {
+            self.workspace_edits.invalidate_verifications();
+            self.reload_index_context();
+        }
         if notification.method == "event.build.finished" {
             self.on_build_context_finished();
         }
@@ -398,8 +406,9 @@ impl Core {
         // interpretador Python segue o ambiente: criar o .venv muda a resposta.
         if matches!(
             notification.method.as_str(),
-            "event.cmake.finished" | "event.python.finished"
+            "event.cmake.started" | "event.cmake.finished" | "event.python.finished"
         ) {
+            self.workspace_edits.invalidate_verifications();
             self.reload_index_context();
         }
         // O qmlls segue o build: um configure novo pode ter criado o diretorio.

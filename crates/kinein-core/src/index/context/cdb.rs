@@ -167,7 +167,7 @@ fn parse_entry(entry: &Value, line: usize, column: usize) -> Option<(PathBuf, Cd
 /// dias depois da CDB e o diagnostico dizia "nao envelheceu" — cinco arquivos
 /// sem unidade, em silencio. Aqui, com as unidades em maos, cada diretorio de
 /// fonte sobe ate' a raiz procurando um `CMakeLists.txt` mais novo que a CDB.
-pub(super) fn cmakelists_mais_novo(
+pub(super) fn newer_cmake_input(
     root: &Path,
     cdb: &Path,
     unidades: &HashMap<PathBuf, CdbUnit>,

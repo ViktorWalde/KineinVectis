@@ -44,6 +44,9 @@ pub(super) fn run_cmake_build(
                 reason,
             ))
         })?;
+        let attempt =
+            crate::cmake::begin_configure(root, preset.as_deref(), &toolchain.to_result().preset)
+                .map_err(BuildError::Io)?;
         let configure =
             crate::cmake::configure_with_rigor(root, preset.as_deref(), toolchain, extra, profile);
 
@@ -59,6 +62,7 @@ pub(super) fn run_cmake_build(
         }
         crate::cmake::record_rigor(root, profile);
         crate::cmake::record_preset(root, preset.as_deref());
+        crate::cmake::complete_configure(attempt).map_err(BuildError::Io)?;
     }
 
     let mut build = Command::new(program_for_role(toolchain, ToolchainRole::Cmake, "cmake"));

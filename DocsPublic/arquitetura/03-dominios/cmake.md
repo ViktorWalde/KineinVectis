@@ -1,5 +1,21 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**Configure incompleto (`0.203.0`).** Antes de executar configure explícito ou
+automático, o dono registra `.kinein-configure-pending` no build dir, com
+`preset` string ou nulo e `kit` usado (vazio para o padrão). Só sucesso remove
+o registro. Falha, cancelamento ou
+interrupção conservam a escolha para repetir sem preset pedido; preset removido
+ou registro ilegível recusam essa repetição, exigindo correção explícita.
+`cmake.status.preset` continua sendo o último sucesso. A CDB desse build dir
+fica `cdbStale`, com diagnóstico da tentativa incompleta em `cdbStaleBecause`;
+esse campo passa a conter também motivos além de nomes de arquivos. Cache/CDB
+existentes não comprovam sucesso atual. CDB manual em outro diretório conserva
+seu dono. `presetSource: incompleteConfigure` identifica essa repetição;
+ela conserva também o kit usado, sem promover seleção automática a kit nomeado.
+Arquivos de configuração e fontes não são reescritos para recuperar.
+Configure simultâneo da IDE no mesmo build dir é recusado por lock nativo,
+liberado ao terminar o produtor; o arquivo de lock pode permanecer sem estar ocupado.
+
 > Parte do [03](../03-protocolo-ipc.md), que tem o formato base, as listas
 > canônicas de métodos e eventos e as regras. Movido sem mudar o texto em
 > 2026-10-16 ([61](../../roadmaps/61-organizacao-da-documentacao.md) §3.7, O6).

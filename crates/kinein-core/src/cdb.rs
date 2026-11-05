@@ -69,7 +69,7 @@ pub struct CdbStatus {
     pub directory: Option<String>,
     /// A CDB é mais velha que algum arquivo de build que a define.
     pub stale: bool,
-    /// Arquivo que tornou a CDB obsoleta, quando `stale`.
+    /// Motivo: arquivo de build mais novo ou configure da IDE incompleto.
     pub stale_because: Option<String>,
 }
 
@@ -91,12 +91,18 @@ impl CdbStatus {
 /// C/C++ ainda não configurado), não um erro.
 #[must_use]
 pub fn status(root: &Path) -> CdbStatus {
-    let Some((diretorio, arquivo)) = encontrar(root) else {
+    let Some((directory, arquivo)) = encontrar(root) else {
         return CdbStatus::ausente();
     };
-    let (stale, stale_because) = envelheceu(root, &arquivo);
+    let (mut stale, mut stale_because) = envelheceu(root, &arquivo);
+    if directory == ".kinein/build"
+        && let Some(reason) = crate::cmake::incomplete_configure(root)
+    {
+        stale = true;
+        stale_because = Some(reason);
+    }
     CdbStatus {
-        directory: Some(diretorio),
+        directory: Some(directory),
         stale,
         stale_because,
     }

@@ -14,6 +14,17 @@ pub(crate) fn choose_preset(root: &Path, request: Option<String>) -> Result<Pres
     if let Some(preset) = request.filter(|p| !p.trim().is_empty()) {
         return Ok((Some(preset), Some("kit")));
     }
+    if let Some(attempt) = super::attempt::pending_preset(root)? {
+        let preset = attempt.preset;
+        if let Some(name) = preset.as_ref()
+            && !list_presets(root)?.iter().any(|entry| entry.name == *name)
+        {
+            return Err(format!(
+                "preset do configure incompleto removido: {name}; escolha outro"
+            ));
+        }
+        return Ok((preset, Some("incompleteConfigure")));
+    }
     choose_default(root).map_err(|(file, names)| {
         format!(
             "o projeto tem {} presets de configure em {file} ({}): escolha um",

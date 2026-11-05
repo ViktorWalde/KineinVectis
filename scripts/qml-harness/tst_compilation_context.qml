@@ -51,6 +51,14 @@ Item {
         check(row("Includes (2)").value === "/sdk/include\n/project/include", "include order survives");
         check(row("Defines (1)").value === "NAME=a b", "defines retain spaces");
         check(row("Argumentos (4)").value === "clang++\n-DNAME=a b\n-c\nmain.cpp", "argument boundaries survive");
+        const stale = Object.assign({}, answer, {staleBecause: "configure incompleto", effective: undefined});
+        index.handleContext(stale);
+        check(index.contextSummary() === "contexto desatualizado ⚠", "old standard is not a current summary");
+        check(!row("Compilador") && row("Compilador anterior"), "historical compiler is labelled explicitly");
+        check(row("Argumentos (4)").origin.indexOf("comando anterior") >= 0, "old argv remains inspectable");
+        index.openContextCdb();
+        check(opened === null, "old coordinates cannot navigate into a replaced database");
+        index.handleContext(answer);
         index.openContextKit();
         check(kit === "cross" && !index.inspectorVisible, "opens the effective kit, not a guessed current selection");
         index.openInspector();

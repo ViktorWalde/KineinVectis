@@ -298,14 +298,16 @@ fn a_newer_cmakelists_in_a_subfolder_marks_the_cdb_stale() {
         resumo.cdb_stale_because.as_deref(),
         Some("ui/CMakeLists.txt")
     );
-    let novo = ctx.for_file(&raiz, Path::new("ui/src/novo.cpp"), "cpp");
+    let new_file = ctx.for_file(&raiz, Path::new("ui/src/novo.cpp"), "cpp");
     assert!(
-        novo.hint
+        new_file
+            .hint
             .as_deref()
             .unwrap()
-            .contains("mais velha que ui/CMakeLists.txt"),
-        "{novo:?}"
+            .contains("ui/CMakeLists.txt"),
+        "{new_file:?}"
     );
+    assert_eq!(new_file.stale_because.as_deref(), Some("ui/CMakeLists.txt"));
     let main = ctx.for_file(&raiz, Path::new("ui/src/main.cpp"), "cpp");
     assert!(main.unit.is_some(), "a unidade velha ainda e' mostrada");
     assert!(

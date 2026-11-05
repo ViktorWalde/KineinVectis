@@ -109,7 +109,8 @@ pub fn record_rigor(root: &Path, profile: RigorProfile) {
 /// aberto nao mudava nada no C/C++.
 #[must_use]
 pub fn needs_configure(root: &Path, profile: RigorProfile) -> bool {
-    !build_dir(root).join("CMakeCache.txt").is_file()
+    super::incomplete_configure(root).is_some()
+        || !build_dir(root).join("CMakeCache.txt").is_file()
         || applied_rigor(root).as_deref() != Some(rigor_key(profile))
 }
 

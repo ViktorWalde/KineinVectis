@@ -125,7 +125,7 @@ pub struct CmakeStatusResult {
     /// defines it, so clangd is using flags for a project that changed.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub cdb_stale: bool,
-    /// Which build file made the database stale, when `cdbStale`.
+    /// Stale reason: a newer build input or an incomplete IDE configure.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cdb_stale_because: Option<String>,
     /// The configure presets the person chooses among (`0.174.0`): present

@@ -13,8 +13,9 @@
 
 ## Objetivo
 
-A versão `0.202.0` amplia a escolha de padrão C na criação para tokens literais
-de dialeto, no [domínio workspace](03-dominios/workspace.md).
+A versão `0.203.0` distingue contexto C/C++ histórico de efetivo e conserva
+a escolha de configure incompleto nos domínios [index](03-dominios/index.md)
+e [cmake](03-dominios/cmake.md).
 
 O protocolo IPC permite comunicação entre:
 

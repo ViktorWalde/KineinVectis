@@ -5,7 +5,7 @@ use kinein_protocol::JsonRpcRequest;
 use serde_json::{Value, json};
 use std::{fs, path::Path, sync::mpsc, time::Duration};
 
-fn project(name: &str) -> Project {
+pub(super) fn project(name: &str) -> Project {
     let parent = std::env::temp_dir().join(format!("kinein C1 ação {} {name}", std::process::id()));
     fs::create_dir_all(&parent).unwrap();
     let (sender, events) = mpsc::channel();

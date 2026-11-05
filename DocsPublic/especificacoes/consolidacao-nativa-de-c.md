@@ -606,3 +606,85 @@ sonda em andamento e a matriz nativa Windows continuam sem aceite completo.
 O diálogo pode ser cancelado antes de submeter; a sonda submetida termina pelo
 resultado ou prazo. Libc, SDK, conformidade completa de C2y/C23 e C2–C8 conservam
 suas provas próprias. `typeof(expr)` e QEMU permanecem em C3 e C6/F3.
+
+## 13. C1: validade do ambiente de projetos existentes — desenho de 2026-11-05
+
+Inventário localizado antes da correção, nos donos de CMake e contexto:
+
+| ID / capacidade | Evidência e causa | Severidade / impacto | Decisão e prova necessária |
+| --- | --- | --- | --- |
+| C1-05 / configurar e repetir | `cmake::status` só verifica artefatos; um configure que falha conserva cache/CDB anteriores. `choose_default` retoma o preset do último sucesso, mesmo depois de outra escolha falhar. Causa confirmada no fluxo | Alta: evidência anterior parece atual e a repetição pode abandonar a configuração escolhida | Corrigir nos donos existentes: registrar tentativa incompleta antes de executar, invalidar sua evidência e repetir a mesma escolha. Provar falha real, reabertura, recuperação e cancelamento do configure |
+| C1-06 / ambiente efetivo | `CompileContext` conserva unidades e `effective` após remoção do executável; a atualidade compara somente origem/bytes da CDB | Alta: instalação indisponível aparece efetiva; mudanças externas podem deixar a resposta anterior na UI | Corrigir a consulta: distinguir comando histórico de contexto atual, sem substituir compilador. Provar GCC/Clang reais, remoção após configure, mudança de CDB, prévia/aplicação e buffer não salvo |
+| C1-07 / cancelamento da sonda de criação | `defer_then` não fornece um job cancelável ao diálogo; Cancelar antes de submeter não interrompe a sonda submetida | Lacuna de aceite, alta no fechamento C1; não é prova de cancelamento em andamento | Manter aberto: esta fatia trata configure cancelável pelo dono de jobs; integrar cancelamento da sonda exige recorte próprio no fluxo de criação |
+| C1-08 / troca de workspace durante indexação/recarga | As continuações da indexação inicial e de `reload_index_context` aplicam resultado sem conferir a raiz do índice; uma consulta lenta pode terminar depois da abertura de outro projeto. Causa confirmada por inspeção | Alta: contexto da raiz anterior contamina os totais/contexto da nova | Corrigir as guardas no dono existente e exercitar os dois trabalhos bloqueados por produtor controlado, troca de raiz e liberação do resultado anterior |
+
+Estado inicial: C1-05/C1-06/C1-08 confirmados por inspeção; regressões de reprodução
+e provas dos consumidores pendentes. C1-07 conserva a lacuna documentada.
+
+O CMake registra no build dir somente a tentativa ainda não concluída, com
+o preset solicitado e o kit usado, antes de executar o configure explícito ou
+automático.
+Sucesso remove o registro; falha, cancelamento ou interrupção o conservam.
+A tentativa mantém lock nativo do arquivo no build dir durante o produtor;
+outro configure da IDE é recusado enquanto esse lock estiver ocupado. Isso
+impede que o sucesso de uma tentativa limpe o registro de outra ainda ativa.
+A repetição sem escolha nova usa esse preset, inclusive a escolha sem preset;
+preset removido ou registro ilegível exigem correção explícita. O preset do
+último sucesso permanece distinguível do solicitado no diagnóstico. Não
+reescrever presets, toolchain files, flags ou fontes para recuperar.
+
+`index.context` deve identificar dados históricos com `staleBecause`, conservar
+o comando para inspeção e omitir `effective`/deriva enquanto obsoleto. Conferir
+origem/bytes atuais da CDB, fontes de invalidação já conhecidas e existência do
+compilador com caminho explícito; nome simples continua dependente do ambiente
+do produtor, sem resolução inventada. Configure incompleto invalida somente
+os artefatos do build dir da IDE; uma CDB manual externa conserva seu dono.
+A UI apresenta o contexto como desatualizado e permite inspecionar o comando
+anterior. Isso não certifica disponibilidade de SDK/libc nem interpreta `.clangd`.
+
+### 13.1 Integração e alcance das provas — 2026-11-05
+
+Protocolo 0.203.0, produto 0.3.9. Sete regressões de projetos existentes usam
+GCC 16.2.1, Clang 23.1.4 e CMake 4.4.5: configure/build, GNU17 na CDB/contexto,
+Debug/Release, caminho com espaços/Unicode, toolchain file e arquivos manuais.
+Falha conserva o último sucesso separado da tentativa pendente; repetição,
+reabertura, preset removido e registro inválido não retornam ao preset anterior.
+A escolha automática conserva o kit padrão e a ausência de preset quando aplicável.
+
+Remoção do compilador após configure/build torna a consulta histórica antes de
+nova execução; forçar recompilação comprova falha, e restaurar o mesmo caminho
+permite recuperar. Trocar os bytes da CDB invalida o snapshot carregado.
+CDB gerada externamente continua sendo lida em `build/`, mesmo com tentativa
+incompleta no build dir da IDE. `.clangd`, `compile_flags.txt`, toolchain file,
+fontes e outros alvos permanecem intactos. Essa preservação não prova que as
+opções adicionais do clangd estejam representadas em `index.context`.
+
+Cancelamento é exercitado depois de uma mensagem do CMake real confirmar o
+início do produtor; ele é interrompido, o registro permanece obsoleto e a repetição
+recupera. Outro configure no mesmo build dir é recusado durante a tentativa.
+Uma consulta Cargo controlada bloqueia indexação inicial e recarga para provar
+a troca de workspace: seu resultado tardio não substitui o contexto da nova raiz. Essa
+ferramenta controlada prova sincronização, sem certificar capacidades do Cargo.
+
+Na UI nativa isolada, prévia não grava; aplicação explícita preserva as demais
+configurações. Com `autoSave=false` efetivamente recebido pela UI, o marcador
+no buffer e o indicador de alteração permanecem durante aplicação, falha de
+configure e recuperação. O marcador continua ausente do disco. A instalação
+GCC escolhida e GNU17 reaparecem na CDB/contexto após recuperar.
+
+Oito mutantes compiláveis eliminados com baseline de sete casos aprovado:
+CDB incompleta, seleção da repetição, compilador ausente, efetivo obsoleto,
+guardas de raiz da indexação/recarga, kit automático e lock do configure.
+
+Gate rápido integrado aprovado em 318 s: 1462 Rust, Clippy, 51 arquivos C++,
+8 CTest e 178 harnesses QML. Dois NÃO PROVADOS ARM por compiladores cross ausentes.
+Formatação e gates documentais aprovados; sem alteração de baselines/allowances.
+
+C1-05/C1-06/C1-08 têm correção e provas localizadas; C1 permanece aberto.
+A matriz nativa Windows não foi executada. Cancelamento da sonda de criação
+submetida (C1-07), seleção visual unificada de instalações/dialetos e troca de
+configuração em projetos manuais arbitrários, divergências e arquivos de build transitivos conservam
+aceites próprios. O diagnóstico não verifica conteúdo/versão do binário no
+mesmo caminho, disponibilidade de SDK/libc ou toda alteração externa do file-api.
+O cancelamento provado é do processo de configure em andamento; não abrange
+uma consulta de versão auxiliar bloqueada antes dele. Não encerra C2–C8.

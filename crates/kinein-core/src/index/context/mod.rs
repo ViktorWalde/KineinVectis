@@ -29,6 +29,7 @@ mod cdb;
 mod document;
 mod drift;
 mod effective;
+mod freshness;
 mod header;
 mod verification;
 pub(crate) use verification::verification_context;
@@ -125,18 +126,24 @@ impl CompileContext {
             .map(|p| p.display().to_string());
         ctx.cdb_stale_because = crate::cdb::status(root)
             .stale_because
-            .or_else(|| cdb::cmakelists_mais_novo(root, path, &ctx.units));
+            .or_else(|| cdb::newer_cmake_input(root, path, &ctx.units));
         ctx
     }
 
     /// Compara origem/conteudo limitado, incluindo criacao/remocao apos um build.
     pub(crate) fn has_current_cdb(&self, root: &Path) -> bool {
-        let Some(directory) = crate::cdb::status(root).directory else {
+        let status = crate::cdb::status(root);
+        if status.stale {
+            return false;
+        }
+        let Some(directory) = status.directory else {
             return self.cdb_path.is_none();
         };
         let directory = if directory == "." { "" } else { &directory };
         let path = root.join(directory).join("compile_commands.json");
-        self.cdb_path.as_deref() == path.to_str()
+        self.cdb_path
+            .as_deref()
+            .is_some_and(|loaded| Path::new(loaded) == path)
             && crate::cdb::verification::cdb_bytes(&path).is_ok_and(|bytes| {
                 self.cdb_digest.as_deref() == Some(&crate::cdb::verification::digest(&bytes))
             })
@@ -201,6 +208,7 @@ impl CompileContext {
             targets: Vec::new(),
             source: None,
             hint: None,
+            stale_because: None,
             effective: None,
             drift: Vec::new(),
         };
@@ -234,6 +242,7 @@ impl CompileContext {
                     .map_or_else(|| note.clone(), |hint| format!("{hint}; {note}")),
             );
         }
+        self.apply_freshness(root, &mut ctx);
         ctx
     }
 
@@ -271,12 +280,6 @@ impl CompileContext {
                 .cdb_directory
                 .as_ref()
                 .map(|d| format!("compile_commands.json em {d}"));
-            if let Some(porque) = &self.cdb_stale_because {
-                ctx.hint = Some(format!(
-                    "a compile_commands.json é mais velha que {porque}: reconfigure para as flags \
-                     voltarem a valer"
-                ));
-            }
             return;
         }
         if self.unidade_do_file_api(&chave, ctx) {
@@ -308,8 +311,8 @@ impl CompileContext {
                         .to_owned()
                 }
                 (Some(dir), false, Some(porque)) => format!(
-                    "arquivo fora da compile_commands.json em {dir}, que é mais velha que {porque}: \
-                 reconfigure"
+                    "arquivo fora da compile_commands.json em {dir}; contexto desatualizado: {porque}; \
+                     reconfigure"
                 ),
                 (Some(dir), false, None) => {
                     format!("arquivo fora da compile_commands.json em {dir}: nenhum alvo o compila")

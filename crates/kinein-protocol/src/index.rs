@@ -107,7 +107,7 @@ pub struct ContextSummary {
     pub cdb_entries: u64,
     /// The CDB is older than a build file that defines it.
     pub cdb_stale: bool,
-    /// The build file that is newer, workspace-relative, when `cdb_stale`.
+    /// Stale reason: a newer build input or an incomplete IDE configure.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cdb_stale_because: Option<String>,
     /// Cargo packages seen by `cargo metadata --no-deps`.
@@ -228,6 +228,9 @@ pub struct FileContext {
     /// outside every cargo target; no interpreter).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hint: Option<String>,
+    /// Historical C/C++ command: reason it cannot establish current context.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stale_because: Option<String>,
     /// What applies to the file, value by value, with where each value came
     /// from (`0.173.0`, `roadmaps/52` §14.1). Absent for languages without a
     /// compiler context.

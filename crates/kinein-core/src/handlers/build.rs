@@ -74,7 +74,13 @@ impl Core {
         let profile = crate::settings::effective_rigor_profile(&root);
         // Resolvida na thread do loop: o job nao alcanca o `Core`
         // (arquitetura/04 §3) e a toolchain precisa do detector de ferramentas.
-        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
+        let kit = if crate::cmake::incomplete_configure(&root).is_some() {
+            crate::cmake::active_kit(&root)
+        } else {
+            String::new()
+        };
+        let toolchain =
+            crate::toolchain::Toolchain::resolve_kit(&root, &self.detected_tools(), &kit);
         // Makefile puro (P0): o make e o bear desta maquina, resolvidos aqui.
         let make_tools = build::MakeTools {
             make: self

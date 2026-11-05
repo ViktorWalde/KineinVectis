@@ -5,10 +5,12 @@
 //! explicito tem precedencia). Targets vem da resposta `codemodel-v2` do
 //! file-api oficial do `CMake`, nunca de parser proprio de `CMakeLists.txt`.
 
+mod attempt;
 pub mod model;
 mod preset_selection;
 mod rigor;
 
+pub use attempt::{ConfigureAttempt, begin_configure, complete_configure, incomplete_configure};
 pub(crate) use preset_selection::{choose_default, choose_preset};
 pub use rigor::{applied_rigor, configure_with_rigor, needs_configure, record_rigor, rigor_key};
 
@@ -55,6 +57,9 @@ const PRESET_MARKER: &str = ".kinein-preset";
 /// sabe o ultimo preset e' o `cmake` — e o `toolchain` nao depende dele.
 #[must_use]
 pub fn active_kit(root: &Path) -> String {
+    if let Ok(Some(attempt)) = attempt::pending_preset(root) {
+        return attempt.kit;
+    }
     status(root)
         .preset
         .filter(|preset| crate::toolchain::has_kit(root, preset))

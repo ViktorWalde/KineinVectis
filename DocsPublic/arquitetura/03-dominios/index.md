@@ -1,5 +1,16 @@
 # `index.*` — o domínio no protocolo IPC
 
+**Atualidade C/C++ (`0.203.0`).** `FileContext.staleBecause?` é o motivo pelo
+qual o comando conhecido não comprova o ambiente atual. A consulta confere
+origem/bytes da CDB carregada, invalidação por arquivos de build conhecidos,
+configure incompleto no build dir da IDE e remoção do compilador com caminho
+explícito. Nome simples não é resolvido por um PATH presumido. `unit`,
+`cdbLocation`, `targets` e `source` permanecem dados históricos inspecionáveis;
+`effective` e `drift` são omitidos enquanto `staleBecause` estiver presente.
+A UI marca o resumo e os argumentos como anteriores. Esse diagnóstico não
+valida SDK/ABI nem reproduz opções adicionais do clangd. Ausência do campo
+não equivale a prova de conformidade ou sucesso de build.
+
 **Referência de headers (2026-11-04, sem novo schema):** `hint` também explica
 a referência semântica conservadora da [consolidação C §11](../../especificacoes/consolidacao-nativa-de-c.md#11-referência-semântica-de-headers--desenho-de-2026-11-04),
 ou o motivo de continuar com inferência do clangd. `unit` conserva somente
@@ -35,7 +46,8 @@ IndexSymbol  name, kind, path (relativo a raiz), language, line, endLine,
 FileContext  path (absoluto), language (c|cpp|rust|python|other), unit?, crate?,
              python?, targets[] (0.96.0: os targets do CMake que compilam ou
              listam o arquivo), source?, hint?, effective? (0.173.0),
-             cdbLocation? (0.179.0), drift[] (0.180.0, omitido vazio)
+             cdbLocation? (0.179.0), drift[] (0.180.0, omitido vazio),
+             staleBecause? (0.203.0, contexto C/C++ histórico)
 EffectiveContext (0.173.0) compiler?, standard?, target?, sysroot? — cada um
              { value, origin } —, flagsOrigin?, kit? { preset }
 origin       cdb | cmakeFileApi | cmakeCache | kit

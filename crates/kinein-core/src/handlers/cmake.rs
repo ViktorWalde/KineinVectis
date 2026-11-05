@@ -153,6 +153,7 @@ impl Core {
         // proprio e usa as escolhas do kit padrao (""), como antes.
         let kit = match preset_origem {
             Some("kit") => preset.clone().unwrap_or_default(),
+            Some("incompleteConfigure") => cmake::active_kit(&root),
             _ => String::new(),
         };
         let toolchain =
@@ -167,7 +168,22 @@ impl Core {
             JobRisk::Medium,
             true,
             move |ctx| {
-                let cancel = ctx.cancellation();
+                let attempt = match cmake::begin_configure(&root, preset.as_deref(), &kit) {
+                    Ok(attempt) => attempt,
+                    Err(error) => {
+                        ctx.emit_output(&format!(
+                            "não foi possível registrar o configure: {error}"
+                        ));
+                        ctx.emit_event(
+                            "event.cmake.finished",
+                            json!({
+                                "jobId":ctx.id(), "success":false, "exitCode":-1,
+                                "hasCompileCommands":cmake::status(&root).has_compile_commands
+                            }),
+                        );
+                        return jobs::JobOutcome::Failed;
+                    }
+                };
                 if let Err(error) = cmake::write_file_api_query(&root) {
                     ctx.emit_output(&format!("aviso: query do file-api falhou: {error}"));
                 }
@@ -192,28 +208,14 @@ impl Core {
                     }),
                 );
 
-                let outcome = process::stream_command_lines_cancelable(
-                    command,
-                    &cancel,
-                    &mut |_stream, line| ctx.emit_output(&line),
-                );
-                let (success, exit_code) = match outcome {
-                    Ok(exit_status) => (exit_status.success(), exit_status.code().unwrap_or(-1)),
-                    Err(error) => {
-                        ctx.emit_output(&match &error {
-                            process::ProcessError::Spawn(source) => {
-                                format!("cmake não pode ser iniciado: {source}")
-                            }
-                            process::ProcessError::Wait(source) => {
-                                format!("falha aguardando o cmake: {source}")
-                            }
-                        });
-                        (false, -1)
-                    }
-                };
+                let (mut success, exit_code) = configure_outcome(command, ctx);
                 if success {
                     cmake::record_preset(&root, preset.as_deref());
                     cmake::record_rigor(&root, profile);
+                    if let Err(error) = cmake::complete_configure(attempt) {
+                        ctx.emit_output(&format!("não foi possível concluir o registro: {error}"));
+                        success = false;
+                    }
                 }
                 let status = cmake::status(&root);
                 ctx.emit_event(
@@ -319,6 +321,31 @@ impl Core {
                 preset_choices_file,
             }),
         )
+    }
+}
+
+fn configure_outcome(command: std::process::Command, ctx: &jobs::JobContext) -> (bool, i32) {
+    let outcome = process::stream_command_lines_cancelable(
+        command,
+        &ctx.cancellation(),
+        &mut |_stream, line| ctx.emit_output(&line),
+    );
+    match outcome {
+        Ok(status) => (
+            status.success() && !ctx.is_cancelled(),
+            status.code().unwrap_or(-1),
+        ),
+        Err(error) => {
+            ctx.emit_output(&match error {
+                process::ProcessError::Spawn(source) => {
+                    format!("cmake não pode ser iniciado: {source}")
+                }
+                process::ProcessError::Wait(source) => {
+                    format!("falha aguardando o cmake: {source}")
+                }
+            });
+            (false, -1)
+        }
     }
 }
 

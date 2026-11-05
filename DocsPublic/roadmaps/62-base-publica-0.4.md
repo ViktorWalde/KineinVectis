@@ -274,8 +274,8 @@ critério de retomada. Limitação ou adiamento não dispensam C1–C8, F1–F9 
 demais aceites obrigatórios: um bloqueador permanece aberto até ser resolvido.
 Melhoria futura sem impacto nesses compromissos não impede o lançamento.
 
-**Registros iniciais — 2026-11-04, classificação de planejamento sobre limites
-já documentados; sem nova auditoria funcional:**
+**Registros — classificação inicial em 2026-11-04 sobre limites documentados;
+auditorias e provas posteriores datadas nos donos:**
 
 - **C-01 — Projeto e ambiente, C1.** Dono e evidência:
   [consolidação C §4.1](../especificacoes/consolidacao-nativa-de-c.md#41-c1--projeto-e-ambiente-recorte-prioritário).
@@ -286,7 +286,12 @@ já documentados; sem nova auditoria funcional:**
   token de dialeto, modo C do driver, validação fora do laço e sincronização da
   regressão de contexto. Decisão: corrigir nesses donos e conservar abertura,
   divergências e recuperação ainda não comprovadas na matriz de §4.1.
-  Estado C1 aberto; provas parciais e limites no mesmo documento.
+  A auditoria de projetos existentes está na
+  [consolidação C §13](../especificacoes/consolidacao-nativa-de-c.md#13-c1-validade-do-ambiente-de-projetos-existentes--desenho-de-2026-11-05):
+  configure incompleto, comando histórico/efetivo, instalação removida e
+  recarga tardia de outro workspace. C1-05/C1-06/C1-08 têm correção localizada;
+  C1-07 conserva o cancelamento da sonda de criação aberto. Estado C1 aberto;
+  provas parciais e limites no mesmo documento.
 - **C-02 — `typeof(expr)` na gramática C.** Dono e evidência:
   [consolidação C §10.1](../especificacoes/consolidacao-nativa-de-c.md#101-integração-parcial-e-limites-observados--2026-11-04).
   Severidade alta no escopo C23; impacto na estrutura/sintaxe compreendida pelo
