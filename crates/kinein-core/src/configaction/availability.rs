@@ -46,6 +46,8 @@ pub(super) struct WorkspaceFacts {
     pub(super) frameworks: Vec<kinein_protocol::Framework>,
     /// Conteudo do `.clangd` da raiz, quando ele existe.
     pub(super) clangd: Option<String>,
+    /// Drivers C nas pastas do detector (consolidacao C §15).
+    pub(super) c_installations: Vec<String>,
 }
 
 impl WorkspaceFacts {
@@ -82,6 +84,7 @@ impl WorkspaceFacts {
                 .map(|info| info.framework)
                 .collect(),
             clangd: std::fs::read_to_string(root.join(clangd::CLANGD)).ok(),
+            c_installations: inputs.c_installations.clone(),
         }
     }
 }
@@ -138,7 +141,12 @@ pub(super) fn describe(
                     // Campos comuns compartilham vocabulario; padrao e
                     // extensoes respeitam a linguagem da acao.
                     description: super::parametros::action_description(action.id, name).to_owned(),
-                    suggestions: super::parametros::action_suggestions(root, action.id, name),
+                    suggestions: super::parametros::action_suggestions(
+                        root,
+                        action.id,
+                        name,
+                        &facts.c_installations,
+                    ),
                 },
             )
             .collect(),

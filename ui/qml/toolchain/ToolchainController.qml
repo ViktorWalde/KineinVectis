@@ -320,8 +320,8 @@ Item {
         if (selection === null) {
             return qsTr("nenhum detectado");
         }
-        if (selection.id !== undefined) {
-            return labelOf(role, selection.id);
+        if (selection.id !== undefined) {   // instalação por caminho: o próprio caminho
+            return selection.id === selection.resolvedPath ? selection.id : labelOf(role, selection.id);
         }
         // O automatico diz o que vai ser usado (2026-09-04). Nos papeis do
         // CMake e' o que o cache do projeto diz, e antes do configure quem

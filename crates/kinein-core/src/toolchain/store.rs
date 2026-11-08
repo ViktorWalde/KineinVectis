@@ -138,6 +138,12 @@ pub(super) fn save(root: &Path, kits: &BTreeMap<String, Kit>) -> Result<(), Stri
         fs::create_dir_all(parent)
             .map_err(|error| format!("falha criando {}: {error}", parent.display()))?;
     }
+    let body = render(kits)?;
+    fs::write(&target, body).map_err(|error| format!("falha escrevendo a toolchain: {error}"))
+}
+
+/// O texto que [`save`] grava: a previa de uma receita mostra os mesmos bytes.
+pub(super) fn render(kits: &BTreeMap<String, Kit>) -> Result<String, String> {
     let file = ToolchainFile {
         schema_version: SCHEMA_VERSION,
         kits: kits
@@ -146,9 +152,8 @@ pub(super) fn save(root: &Path, kits: &BTreeMap<String, Kit>) -> Result<(), Stri
             .map(|(nome, kit)| (nome.clone(), kit.clone()))
             .collect(),
     };
-    let body = serde_json::to_string_pretty(&file)
-        .map_err(|error| format!("falha serializando a toolchain: {error}"))?;
-    fs::write(&target, body).map_err(|error| format!("falha escrevendo a toolchain: {error}"))
+    serde_json::to_string_pretty(&file)
+        .map_err(|error| format!("falha serializando a toolchain: {error}"))
 }
 
 #[cfg(test)]

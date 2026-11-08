@@ -13,8 +13,9 @@
 
 ## Objetivo
 
-A versão `0.203.0` distingue contexto C/C++ histórico de efetivo e conserva
-a escolha de configure incompleto nos domínios [index](03-dominios/index.md)
+A versão `0.204.0` fixa por prévia uma instalação local do compilador C no kit
+e impede que configure troque ou perca essa escolha em silêncio, nos domínios
+[configAction](03-dominios/configAction.md), [toolchain](03-dominios/toolchain.md)
 e [cmake](03-dominios/cmake.md).
 
 O protocolo IPC permite comunicação entre:

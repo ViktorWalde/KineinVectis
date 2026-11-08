@@ -36,10 +36,12 @@ mod export;
 pub mod import;
 pub mod install;
 mod project;
+mod selection;
 mod store;
 pub mod sysroot;
 
 pub use export::ExportedToolchain;
+pub use selection::{CompilerChoice, Measured, plan_c_compiler};
 
 use std::path::{Path, PathBuf};
 
@@ -97,21 +99,8 @@ impl Toolchain {
             let available = detectados(*role, tools);
             let escolhido = escolhas
                 .get(role.as_str())
-                .filter(|id| catalog::is_known(*role, id))
+                .filter(|id| catalog::is_known(*role, id) || selection::is_installation(*role, id))
                 .cloned();
-
-            let resolved_path = escolhido.as_ref().map_or_else(
-                // Automatico: nada e fixado, e o `PATH` decide na hora de
-                // executar. O caminho do primeiro detectado entra so como
-                // INFORMACAO para a UI dizer o que vai acontecer.
-                || available.first().and_then(|entry| entry.path.clone()),
-                |id| {
-                    available
-                        .iter()
-                        .find(|entry| entry.id == *id)
-                        .and_then(|entry| entry.path.clone())
-                },
-            );
 
             // A MESCLA que o autor decidiu em 2026-09-04: sem escolha fixada,
             // o core PEGA o primeiro candidato detectado — a ordem do catalogo
@@ -119,18 +108,31 @@ impl Toolchain {
             // autor. A IDE nao para esperando o menu ser aberto, e tambem nao
             // finge que o autor decidiu.
             let automatic = escolhido.is_none();
-            let effective_id = escolhido
-                .clone()
-                .or_else(|| available.first().map(|entry| entry.id.clone()));
-            // Os papeis que o `CMake` decide: o automatico e' o que o cache do
-            // projeto diz, nunca um candidato suposto (autor, 2026-10-16;
-            // `roadmaps/59` §7.1.7.1). Antes do primeiro configure, nada.
-            let (resolved_path, effective_id) =
-                if automatic && project::ProjectCache::decides(*role) {
+            let (resolved_path, effective_id) = match escolhido.as_deref() {
+                // Os papeis que o `CMake` decide: o automatico e' o que o cache
+                // do projeto diz, nunca um candidato suposto (autor, 2026-10-16;
+                // `roadmaps/59` §7.1.7.1). Antes do primeiro configure, nada.
+                None if project::ProjectCache::decides(*role) => {
                     project_cache.automatic(*role, &available)
-                } else {
-                    (resolved_path, effective_id)
-                };
+                }
+                // Automatico: nada e fixado, e o `PATH` decide na hora de
+                // executar. O primeiro detectado entra so como INFORMACAO.
+                None => (
+                    available.first().and_then(|entry| entry.path.clone()),
+                    available.first().map(|entry| entry.id.clone()),
+                ),
+                // Fixada e indisponivel: sem efetivo, para ninguem anunciar
+                // nem executar outro compilador no lugar (consolidacao C §15).
+                Some(path) if selection::is_installation(*role, path) => selection::installed(path),
+                Some(id) => {
+                    let path = available
+                        .iter()
+                        .find(|entry| entry.id == id)
+                        .and_then(|entry| entry.path.clone());
+                    let effective = path.as_ref().map(|_| id.to_owned());
+                    (path, effective)
+                }
+            };
             let resolved_path = chip::chip_driver(
                 *role,
                 effective_id.as_deref(),
@@ -276,6 +278,35 @@ impl Toolchain {
     pub fn svd_file(&self) -> Option<&str> {
         self.svd_file.as_deref()
     }
+
+    /// Por que um configure com este kit nao pode rodar: um compilador
+    /// FIXADO que nao esta disponivel. Sem a recusa, o `CMake` escolheria
+    /// outro em silencio (C1-12, consolidacao C §15).
+    #[must_use]
+    pub fn unavailable_compiler(&self) -> Option<String> {
+        let selection = self.selections.iter().find(|selection| {
+            matches!(
+                selection.role,
+                ToolchainRole::CCompiler | ToolchainRole::CxxCompiler
+            ) && selection.id.is_some()
+                && selection.resolved_path.is_none()
+        })?;
+        Some(format!(
+            "o {} fixado no kit {} não está disponível: {}; restaure-o, escolha outra \
+             instalação ou volte para automático",
+            if selection.role == ToolchainRole::CCompiler {
+                "compilador C"
+            } else {
+                "compilador C++"
+            },
+            if self.preset.is_empty() {
+                "padrão"
+            } else {
+                &self.preset
+            },
+            selection.id.as_deref().unwrap_or_default()
+        ))
+    }
 }
 
 /// Fixa (ou libera) a escolha de um papel e devolve a toolchain resultante.
@@ -364,35 +395,14 @@ pub fn set_kit(
 
 /// O `toolchainFile` que o preset declara, se declarar.
 ///
-/// Le o `CMakePresets.json`/`CMakeUserPresets.json` cru: e' informacao para a
-/// tela, nao entrada de decisao. O campo existe no schema de presets desde a
+/// Le o `CMakePresets.json`/`CMakeUserPresets.json`, seguindo `inherits` desde
+/// 2026-11-08: e' informacao para a tela e para nao passar o toolchain file do
+/// kit por cima do do preset. O campo existe no schema de presets desde a
 /// versao 3 (`CMake` 3.21) e tem precedencia sobre `CMAKE_TOOLCHAIN_FILE`, entao
 /// quando ele esta la' o compilador efetivo pode NAO ser o que o usuario
 /// escolheu aqui — e a IDE precisa dizer isso em vez de deixar procurar.
 fn preset_toolchain_file(root: &Path, preset: &str) -> Option<String> {
-    if preset.is_empty() {
-        return None;
-    }
-    for arquivo in ["CMakePresets.json", "CMakeUserPresets.json"] {
-        let Ok(body) = std::fs::read_to_string(root.join(arquivo)) else {
-            continue;
-        };
-        let Ok(valor) = serde_json::from_str::<serde_json::Value>(&body) else {
-            continue;
-        };
-        let encontrado = valor
-            .get("configurePresets")
-            .and_then(serde_json::Value::as_array)
-            .into_iter()
-            .flatten()
-            .find(|entry| entry.get("name").and_then(serde_json::Value::as_str) == Some(preset))
-            .and_then(|entry| entry.get("toolchainFile"))
-            .and_then(serde_json::Value::as_str);
-        if let Some(caminho) = encontrado {
-            return Some(caminho.to_owned());
-        }
-    }
-    None
+    selection::preset_value(root, preset, &["toolchainFile"])
 }
 
 /// Candidatos de um papel que existem nesta machine, na ordem do catalogo.
@@ -665,6 +675,14 @@ mod tests {
             toolchain.cmake_arguments().is_empty(),
             "sem binario, nada de -DCMAKE_CXX_COMPILER apontando para o vazio"
         );
+        // Mas tambem nada de outro compilador no lugar (C1-12): sem efetivo, e
+        // o configure tem o motivo para recusar.
+        assert!(
+            toolchain
+                .effective_program(ToolchainRole::CxxCompiler)
+                .is_none()
+        );
+        assert!(toolchain.unavailable_compiler().unwrap().contains("gxx"));
     }
 
     /// Sysroot e triple viram argumento de `cmake` e `--target` do cargo.

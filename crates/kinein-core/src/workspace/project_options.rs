@@ -75,11 +75,7 @@ pub(super) fn validate(
                     })
             }
             WorkspaceProjectTemplate::CCmake | WorkspaceProjectTemplate::CppCmake => {
-                let version = version.to_ascii_lowercase();
-                version.contains("clang")
-                    || version.contains("gcc")
-                    || version.contains("g++")
-                    || version.contains("free software foundation")
+                gcc_or_clang(&version)
             }
             WorkspaceProjectTemplate::Empty => false,
         };
@@ -91,6 +87,30 @@ pub(super) fn validate(
         }
     }
     Ok(())
+}
+
+/// Confere o driver C escolhido para um projeto EXISTENTE com as mesmas
+/// regras da criacao: caminho absoluto, GCC/Clang pela versao e a sonda C
+/// limitada. Devolve a versao medida (consolidacao C §15).
+pub(super) fn validate_c_driver(executable: &str) -> Result<String, String> {
+    let path = Path::new(executable);
+    if !path.is_absolute() || !path.is_file() {
+        return Err("selecione o caminho absoluto de uma ferramenta instalada".to_owned());
+    }
+    let version = crate::tools::environment_version(path)?;
+    if !gcc_or_clang(&version) {
+        return Err("ferramenta incompatível com a linguagem escolhida".to_owned());
+    }
+    super::c_options::probe(path, None)?;
+    Ok(version)
+}
+
+fn gcc_or_clang(version: &str) -> bool {
+    let version = version.to_ascii_lowercase();
+    version.contains("clang")
+        || version.contains("gcc")
+        || version.contains("g++")
+        || version.contains("free software foundation")
 }
 
 pub(super) fn pin_python(root: &Path, executable: &str) -> Result<(), WorkspaceError> {

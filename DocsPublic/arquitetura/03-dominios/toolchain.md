@@ -6,6 +6,14 @@
 
 ### Toolchain (`toolchain.get` / `toolchain.set` / `toolchain.setKit` / `toolchain.installable` / `toolchain.install` / `toolchain.inspectSysroot` / `toolchain.importKit`)
 
+**Instalação por caminho e escolha indisponível (`0.204.0`).** Em `cCompiler`,
+`selections[].id` pode ser o caminho absoluto gravado pela receita
+`cmake.selectCCompiler`; `resolvedPath` repete o caminho enquanto o arquivo
+existir. `toolchain.set` continua aceitando somente ids do catálogo. Escolha
+fixada (id ou caminho) que não está disponível fica sem `resolvedPath` e sem
+`effectiveId`, e `cmake.configure`/`build.run` recusam configurar com ela
+em vez de deixar o CMake escolher outro compilador.
+
 Implementado no protocolo `0.64.0` (etapa 5 de
 `DocsPublic/roadmaps/30-caminho-para-o-mvp.md`; B2 do TR2 e §5d do `roadmaps/29`).
 Ambos exigem workspace aberto. Persistência em `.kinein/toolchain.json` com

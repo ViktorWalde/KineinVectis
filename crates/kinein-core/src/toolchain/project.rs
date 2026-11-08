@@ -59,6 +59,11 @@ impl ProjectCache {
         cache
     }
 
+    /// O compilador C que o ultimo configure gravou no cache.
+    pub(super) fn c_compiler(&self) -> Option<&str> {
+        self.c_compiler.as_deref()
+    }
+
     /// O papel e' decidido pelo `CMake` (e entao o automatico vem daqui)?
     pub(super) const fn decides(role: ToolchainRole) -> bool {
         matches!(

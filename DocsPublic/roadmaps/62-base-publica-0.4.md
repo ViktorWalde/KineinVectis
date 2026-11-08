@@ -297,6 +297,12 @@ auditorias e provas posteriores datadas nos donos:**
   seleção visual com escape personalizado e preservação do buffer ao retornar
   pela árvore. Não fecham configuração livre de instalações/presets manuais,
   divergências, cancelamento da sonda submetida ou matriz Windows.
+  C1-11–C1-14 estão na
+  [consolidação C §15](../especificacoes/consolidacao-nativa-de-c.md#15-c1-instalação-do-compilador-em-projetos-existentes--desenho-de-2026-11-08):
+  instalação por caminho no kit de projetos existentes, com prévia; escolha
+  indisponível recusada; kit do último configure conservado; e CDB do
+  compilador anterior, deixada pelo CMake ao recriar o cache, sem passar por
+  atual. Configurações manuais/transitivas amplas, C1-07 e Windows seguem abertos.
 - **C-02 — `typeof(expr)` na gramática C.** Dono e evidência:
   [consolidação C §10.1](../especificacoes/consolidacao-nativa-de-c.md#101-integração-parcial-e-limites-observados--2026-11-04).
   Severidade alta no escopo C23; impacto na estrutura/sintaxe compreendida pelo
@@ -305,6 +311,17 @@ auditorias e provas posteriores datadas nos donos:**
   separando prova de gramática, compilador e clangd. Decisão: corrigir ou integrar
   solução no dono da gramática, com limite explícito até a prova. Estado aberto
   em C3, posterior a C1; não equivale a ausência de semântica no clangd.
+- **INF-01 — Terminal integrado com zsh interativo.** Dono e evidência:
+  regressão `terminal_open_accepts_only_workspace_directory_as_cwd`
+  (`crates/kinein-core/src/tests/terminal.rs`). Observado em 2026-11-08, também
+  no commit anterior a C1-11: com `$SHELL` zsh interativo, com ou sem
+  configuração do usuário, a saída de `pwd` não chega ao render em 10 s; com bash
+  o caso passa. Causa provável não confirmada: inicialização interativa do zsh
+  (assistente de novo usuário ou prompt da distribuição) consome ou adia a
+  entrada. Severidade média para o terminal, sem perda de conteúdo; a prova
+  depende do shell. Testes: zsh com HOME isolado e configurado, prompt pronto
+  antes da entrada. Decisão: investigar no dono do terminal; o gate desta fatia
+  roda com bash. Estado aberto.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

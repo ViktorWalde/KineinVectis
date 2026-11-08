@@ -232,6 +232,7 @@ flowchart LR
   n_core_handlers --> n_core_terminal
   n_core_handlers --> n_core_toolchain
   n_core_handlers --> n_core_tools
+  n_core_handlers --> n_core_workspace
   n_core_index --> n_core_cdb
   n_core_index --> n_core_cmake
   n_core_index --> n_core_fswatch
@@ -301,7 +302,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-50 módulos, 155 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+50 módulos, 156 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -331,7 +332,7 @@ flowchart LR
 | `fswatch` | platform | Debounced, workspace-confined observation of external file-system changes. |
 | `git` | — | Git orquestrado sobre o binario git. |
 | `grafana` | datasource | Observabilidade: |
-| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools | Handlers for the build / quality / test runners, all async cancelable jobs. |
+| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Handlers for the build / quality / test runners, all async cancelable jobs. |
 | `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
@@ -1547,6 +1548,7 @@ flowchart LR
     n_core_settings[settings]
     n_core_setup[setup]
     n_core_toolchain[toolchain]
+    n_core_workspace[workspace]
   end
   n_tools_config[/"os gerenciadores oficiais de cada ecossistema"/]
   n_ui_qml_configaction_ConfigActionController_qml --> n_ui_qml_ipc_ConfigActionRequestRouter_qml
@@ -1583,6 +1585,7 @@ flowchart LR
   n_crates_kinein_core_src_handlers_configaction_rs --> n_core_configaction
   n_crates_kinein_core_src_handlers_configaction_rs --> n_core_rpc
   n_crates_kinein_core_src_handlers_configaction_rs --> n_core_toolchain
+  n_crates_kinein_core_src_handlers_configaction_rs --> n_core_workspace
   n_ipc_library --> n_crates_kinein_core_src_handlers_library_rs
   n_crates_kinein_core_src_handlers_library_rs --> n_core_library
   n_crates_kinein_core_src_handlers_library_rs --> n_core_rpc

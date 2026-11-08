@@ -6,6 +6,9 @@
 //! unica decisao que mora aqui e a que o dominio nao pode tomar — disparar o
 //! job do `cargo.check`, porque o `JobManager` e do `Core` (arquitetura/04 §3).
 
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
+
 use kinein_protocol::{
     ConfigActionApplyParams, ConfigActionApplyResult, ConfigActionListParams,
     ConfigActionPreviewParams, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
@@ -16,10 +19,13 @@ use crate::Core;
 use crate::configaction::{self, ConfigActionError, ConfigActionOutcome};
 use crate::rpc::{no_workspace_response, parse_params};
 
+/// A receita cuja previa/aplicacao confere uma instalacao fora do laco.
+const COMPILER_ACTION: &str = "cmake.selectCCompiler";
+
 impl Core {
     /// Roteia os metodos `configAction.*`; `None` quando o metodo nao e deles.
     pub(crate) fn configaction_request_response(
-        &self,
+        &mut self,
         method: &str,
         request_id: Option<Value>,
         params: Option<&Value>,
@@ -59,7 +65,7 @@ impl Core {
     }
 
     fn configaction_preview_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -74,21 +80,24 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        let root = std::path::PathBuf::from(&workspace.root);
-        let inputs = self.configaction_inputs(&root);
-        match configaction::preview(
-            &root,
-            &workspace.capabilities.build_systems,
-            &parsed,
-            &inputs,
-        ) {
-            Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
-            Err(error) => configaction_error_response(request_id, &error),
+        let root = PathBuf::from(&workspace.root);
+        let build_systems = workspace.capabilities.build_systems.clone();
+        let compiler = (parsed.id == COMPILER_ACTION).then(|| parsed.params.clone());
+        let preview = move |_: &mut Self, request_id, root: &Path, inputs: configaction::Inputs| {
+            match configaction::preview(root, &build_systems, &parsed, &inputs) {
+                Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
+                Err(error) => configaction_error_response(request_id, &error),
+            }
+        };
+        if let Some(params) = compiler {
+            return self.defer_compiler_choice(request_id, root, &params, preview);
         }
+        let inputs = self.configaction_inputs(&root);
+        preview(self, request_id, &root, inputs)
     }
 
     fn configaction_apply_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -103,42 +112,127 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        let root = std::path::PathBuf::from(&workspace.root);
-        let inputs = self.configaction_inputs(&root);
-        let outcome = match configaction::apply(
-            &root,
-            &workspace.capabilities.build_systems,
-            &parsed,
-            &inputs,
-        ) {
-            Ok(outcome) => outcome,
-            Err(error) => return configaction_error_response(request_id, &error),
-        };
-
-        match outcome {
-            ConfigActionOutcome::Done { message, files } => JsonRpcResponse::success(
-                request_id,
-                json!(ConfigActionApplyResult {
-                    id: parsed.id,
-                    message,
-                    files,
-                    job_id: None,
-                }),
-            ),
-            ConfigActionOutcome::Job { method } => {
-                self.configaction_job_response(request_id, &parsed.id, method)
-            }
+        let root = PathBuf::from(&workspace.root);
+        let build_systems = workspace.capabilities.build_systems.clone();
+        let compiler = (parsed.id == COMPILER_ACTION).then(|| parsed.params.clone());
+        let apply =
+            move |core: &mut Self, request_id, root: &Path, inputs: configaction::Inputs| {
+                let outcome = match configaction::apply(root, &build_systems, &parsed, &inputs) {
+                    Ok(outcome) => outcome,
+                    Err(error) => return configaction_error_response(request_id, &error),
+                };
+                match outcome {
+                    ConfigActionOutcome::Done { message, files } => {
+                        if parsed.id == COMPILER_ACTION {
+                            // O mesmo que `toolchain.set` faz depois de gravar o kit.
+                            core.configure_clangd_from_toolchain(root);
+                            core.emit_project_changed();
+                        }
+                        JsonRpcResponse::success(
+                            request_id,
+                            json!(ConfigActionApplyResult {
+                                id: parsed.id,
+                                message,
+                                files,
+                                job_id: None,
+                            }),
+                        )
+                    }
+                    ConfigActionOutcome::Job { method } => {
+                        core.configaction_job_response(request_id, &parsed.id, method)
+                    }
+                }
+            };
+        if let Some(params) = compiler {
+            return self.defer_compiler_choice(request_id, root, &params, apply);
         }
+        let inputs = self.configaction_inputs(&root);
+        apply(self, request_id, &root, inputs)
+    }
+
+    /// `cmake.selectCCompiler` confere o executavel com processos (versao e
+    /// sonda C): fora do laco, como a criacao (C1-03). A continuacao recusa
+    /// se o workspace mudou e segue o caminho comum de preview/apply com o
+    /// plano do `toolchain` (consolidacao C §15).
+    fn defer_compiler_choice<F>(
+        &mut self,
+        request_id: Option<Value>,
+        root: PathBuf,
+        params: &BTreeMap<String, String>,
+        finish: F,
+    ) -> JsonRpcResponse
+    where
+        F: FnOnce(&mut Self, Option<Value>, &Path, configaction::Inputs) -> JsonRpcResponse
+            + Send
+            + 'static,
+    {
+        let compiler =
+            configaction::optional_param(params, "compiler").map(|value| value.trim().to_owned());
+        let kit = configaction::optional_param(params, "kit").map_or_else(
+            || crate::cmake::active_kit(&root),
+            |value| value.trim().to_owned(),
+        );
+        let detector = self.detector.clone();
+        self.defer_then(
+            request_id,
+            move || {
+                let checked = compiler
+                    .as_deref()
+                    .map(crate::workspace::validate_c_driver)
+                    .transpose();
+                (compiler, checked, detector.c_environments())
+            },
+            move |core, request_id, (compiler, checked, detected)| {
+                if core.workspace_root().as_deref() != Some(root.as_path()) {
+                    return JsonRpcResponse::failure(
+                        request_id,
+                        JsonRpcError::new(
+                            JsonRpcErrorCode::InvalidParams,
+                            "o workspace mudou durante a conferência da instalação; repita a \
+                             ação no projeto atual",
+                            None,
+                        ),
+                    );
+                }
+                let mut inputs = core.configaction_inputs(&root);
+                // O kit padrao configura com o preset padrao do projeto.
+                let preset = if kit.is_empty() {
+                    crate::cmake::choose_default(&root)
+                        .ok()
+                        .and_then(|(preset, _)| preset)
+                } else {
+                    Some(kit.clone())
+                };
+                inputs.compiler_choice = Some(checked.and_then(|version| {
+                    let measured = crate::toolchain::Measured {
+                        version: version.as_deref(),
+                        detected: &detected,
+                        preset: preset.as_deref(),
+                    };
+                    crate::toolchain::plan_c_compiler(
+                        &root,
+                        &core.detected_tools(),
+                        &kit,
+                        compiler.as_deref(),
+                        measured,
+                    )
+                }));
+                finish(core, request_id, &root, inputs)
+            },
+        )
     }
 
     /// O que as acoes precisam de outros donos (0.4.1a): o kit do configure
-    /// exportado como toolchain file, pelo `toolchain`.
-    fn configaction_inputs(&self, root: &std::path::Path) -> configaction::Inputs {
+    /// exportado como toolchain file, pelo `toolchain`, e os drivers C que o
+    /// detector encontra (consolidacao C §15).
+    fn configaction_inputs(&self, root: &Path) -> configaction::Inputs {
         let kit = crate::cmake::active_kit(root);
         let toolchain =
             crate::toolchain::Toolchain::resolve_kit(root, &self.detected_tools(), &kit);
         configaction::Inputs {
             kit_export: Some(toolchain.export(&kit)),
+            c_installations: self.detector.c_installations(),
+            compiler_choice: None,
         }
     }
 

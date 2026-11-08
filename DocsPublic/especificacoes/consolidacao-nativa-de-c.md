@@ -751,3 +751,99 @@ Gate rápido aprovado em 286 s: 1462 Rust, Clippy, 51 arquivos C++, 8 CTest e
 Formatação, veracidade, links/privacidade e revisão editorial acompanham o
 fechamento. Baselines, allowances e exclusões Windows não foram ampliados.
 Sem prova nativa Windows, cancelamento de sonda submetida ou fechamento de C1.
+
+## 15. C1: instalação do compilador em projetos existentes — desenho de 2026-11-08
+
+Inventário localizado antes da mudança, nos donos `toolchain/`, `cmake/`,
+`build/` e `configaction/`. Reproduções pelo despacho IPC com GCC 16.2.1,
+Clang 23.1.4 e CMake 4.4.5 reais, encaminhados por caminhos alternativos:
+
+| ID / capacidade | Evidência e causa | Severidade / impacto | Decisão e prova necessária |
+| --- | --- | --- | --- |
+| C1-11 / escolher instalação em projeto existente | `toolchain.set` aceita só ids do catálogo detectados (`gcc`, `clang` primeiro no `PATH`). Instalações paralelas enumeradas por `workspace.projectEnvironments` e caminho alternativo, aceitos na criação, não podem ser fixados no kit; a escolha é aplicada no clique, sem prévia. Lacuna confirmada por inspeção | Alta: aceite C1 de abertura/configuração sem escolha livre de instalação nem prévia | Corrigir reutilizando kit, Configuration Actions e a sonda C da criação: receita com prévia/aplicação, validação fora do laço, detectado/selecionado/efetivo, origem e divergências. Provar GCC/Clang, caminho com espaços/Unicode, inválido/C++ recusados, persistência, reabertura e mutações |
+| C1-12 / compilador do kit removido | Com Clang fixado e removido, `toolchain.get` ainda informa `effectiveId: clang`; `cmake_definitions` deixa de emitir `CMAKE_C_COMPILER` e um configure novo usa `/usr/bin/cc` (GCC). Reproduzido | Alta: escolha explícita trocada em silêncio | Corrigir: escolha indisponível fica sem efetivo e configure explícito/automático recusa antes de produzir, nomeando a correção. Provar remoção, recusa, restauração/repetição e mutação |
+| C1-13 / kit do configure sem preset explícito | Configure sem preset pedido usa o preset anotado (`buildDir`) com o kit padrão; o kit desse preset é ignorado. Com kits distintos, o CMake troca de Clang para GCC, enquanto `index.context` informa o kit do preset. Reproduzido | Alta: troca silenciosa de compilador e kit divergente entre consumidores | Corrigir: configure e build automático usam o kit ativo (`cmake::active_kit`), já usado por contexto e execução. Preset vindo dos arquivos sem kit próprio continua no kit padrão |
+| C1-14 / CDB após troca de compilador | Ao mudar `CMAKE_C_COMPILER` num build dir configurado, o CMake 4.4.5 apaga o cache e repete o configure sem as definições da linha de comando: `CMAKE_EXPORT_COMPILE_COMMANDS` fica vazio, `build.ninja` usa o compilador novo e a CDB anterior permanece. Reproduzido por kit e por preset | Crítica: contexto do compilador anterior apresentado como atual | Corrigir no produtor de configure: conferir no cache as definições da IDE após sucesso; ausentes, repetir uma vez o mesmo configure e recusar se persistirem. Provar troca por kit/preset, CDB/contexto atuais e mutação |
+
+Estado inicial: C1-12/C1-13/C1-14 reproduzidos; C1-11 confirmado por inspeção.
+C1-07, matriz Windows e consulta de versão bloqueada continuam abertos.
+
+A receita grava a instalação no kit (`.kinein/toolchain.json`) usado pelo
+configure em uso ou no kit do preset informado, sem editar presets, toolchain files,
+`CMakeLists.txt`, flags ou `.clangd`. Vazio volta ao automático. A prévia lista
+instalações detectadas, escolha atual, compilador do último configure, origem
+sem fixação (preset, toolchain file ou regra do CMake) e divergências: toolchain
+file que pode prevalecer, compilador do preset sobreposto pela linha de comando
+e cache que será recriado. Nada é instalado e o padrão C não muda.
+
+### 15.1 Integração e alcance das provas — 2026-11-08
+
+Protocolo 0.204.0, produto 0.3.9. A receita `cmake.selectCCompiler` usa o
+kit existente: o `toolchain` planeja o texto de `.kinein/toolchain.json` com o
+mesmo serializador da gravação, e a Configuration Action mostra diff, notas e
+aplica com snapshot. Versão e sonda C da criação conferem o executável fora do
+laço; mudar de workspace antes da continuação recusa a resposta. Sugestões
+listam drivers C das pastas do detector sem consultar versão; a prévia lista
+as instalações C com versão. O kit padrão descreve a origem pelo preset que o
+configure sem preset usaria. `presetToolchainFile` passa a seguir `inherits`.
+
+O configure registra em `.kinein-kit` o kit efetivamente usado. Tentativa
+pendente, preset anotado e build automático usam esse kit, e a receita sem kit
+informado edita o mesmo. Voltar um kit nomeado ao automático não entrega o
+configure seguinte ao kit padrão. Compilador fixado indisponível, por id ou
+caminho, perde `resolvedPath`/`effectiveId` e recusa `cmake.configure` e o
+configure do `build.run` antes do CMake. Quando o CMake recria o cache ao trocar
+de compilador e perde `CMAKE_EXPORT_COMPILE_COMMANDS`, os dois produtores repetem
+uma vez o configure; a CDB e `index.context` passam a descrever o compilador
+novo. Cache sem essa entrada, como o de ferramentas controladas, não dispara a
+repetição.
+
+Quatro regressões de projeto existente usam GCC 16.2.1, Clang 23.1.4 e CMake
+4.4.5 reais, por caminho direto e encaminhadores em caminhos com espaços e
+Unicode. Cobrem sugestões, recusa de caminho relativo, ausente e driver C++
+sem gravar o kit; prévia sem escrita, notas de detectado/selecionado/efetivo,
+divergência com o compilador do preset; aplicação, configure/build, troca
+GCC→Clang com repetição e CDB/contexto atuais; reabertura; troca pelo build
+automático; retorno ao automático sem trocar o cache; remoção e restauração por
+id e por caminho; kit do preset anotado; e conferência adiada com troca de
+workspace. Fontes, presets, `.clangd` e `compile_flags.txt` conservam seus bytes.
+Antes do configure, `index.context` já informa a escolha com origem `kit`;
+depois, origem `cdb`.
+
+Doze mutantes compiláveis eliminados com baseline verde: recusa no configure
+explícito e no build, repetição nos dois produtores, kit anotado no configure e
+no build, leitura do kit registrado, kit padrão da receita, instalação ausente,
+efetivo de id ausente, sonda C e guarda de workspace. Um mutante que removia a
+gravação do registro não compilou e não conta como prova. No harness QML, o
+seletor mostra o caminho fixado e “(ausente)” quando o core não o resolve; a
+mutação desse rótulo foi eliminada.
+
+Na UI nativa isolada, com `autoSave=false` confirmado pelo IPC, um projeto C
+existente em caminho com espaços/Unicode recebeu Clang pelo seletor e depois
+GCC por “Personalizado…” em `instalações C/gcc 16/bin/gcc`. Caminho inexistente
+foi recusado na prévia, sem gravar o kit; a prévia não gravou e “Ativar” aplicou.
+Antes do configure, o Project Health apontou a divergência entre kit e build;
+configurar e compilar pelo menu Build repetiram o configure após recriar o
+cache, e a CDB, `index.context` e a barra de status passaram a Clang e depois ao
+GCC escolhido, com `-std=gnu17`. O menu da toolchain mostra o caminho fixado e
+“(ausente)” depois da remoção. A prova expôs que a recusa síncrona de
+`cmake.configure` só chegava ao log da UI; agora o Project Health mostra o motivo
+e “Tentar de novo”, e o aviso sai no configure seguinte bem-sucedido. Restaurar
+o mesmo caminho recuperou configure, CDB e contexto. Trocar de arquivo pela árvore
+e reabrir a IDE conservaram o texto não salvo e o indicador; o marcador seguiu
+ausente do disco, e fontes, `CMakeLists.txt`, `.clangd` e `compile_flags.txt`
+mantiveram seus bytes. Duas mutações QML dessa recusa foram eliminadas.
+
+Limites: o seletor de toolchain continua aceitando só ids do catálogo; o
+caminho entra pela receita com prévia. A lista sugere o primeiro caminho de cada
+binário real (`/usr/bin/cc` para o GCC do sistema). O kit padrão exibido no menu pode
+diferir do kit registrado até a tela escolher o preset. A receita trata o
+compilador C; C++ e geradores conservam o comportamento anterior, e o
+executável do papel `cmake` ausente continua resolvido pelo `PATH`. Não há
+verificação do conteúdo do binário no mesmo caminho, de SDK/libc ou de flags
+de toolchain files além da divergência anunciada. C1-07, consulta de versão
+auxiliar bloqueada antes do configure e a matriz nativa Windows seguem abertos.
+Gate rápido aprovado em 289 s: 1468 Rust, Clippy, 51 arquivos C++, 8 CTest e
+180 harnesses QML; um NÃO PROVADO (debugpy ausente). Formatação e gates
+documentais acompanham o fechamento, sem ampliar baselines, allowances ou
+exclusões Windows. C1-11–C1-14 têm correção e provas localizadas; C1 permanece aberto.

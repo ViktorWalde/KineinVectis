@@ -74,11 +74,9 @@ impl Core {
         let profile = crate::settings::effective_rigor_profile(&root);
         // Resolvida na thread do loop: o job nao alcanca o `Core`
         // (arquitetura/04 §3) e a toolchain precisa do detector de ferramentas.
-        let kit = if crate::cmake::incomplete_configure(&root).is_some() {
-            crate::cmake::active_kit(&root)
-        } else {
-            String::new()
-        };
+        // O kit ativo: o da tentativa pendente ou do preset anotado, como no
+        // `cmake.configure` sem preset pedido (C1-13, consolidacao C §15).
+        let kit = crate::cmake::active_kit(&root);
         let toolchain =
             crate::toolchain::Toolchain::resolve_kit(&root, &self.detected_tools(), &kit);
         // Makefile puro (P0): o make e o bear desta maquina, resolvidos aqui.

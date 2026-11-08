@@ -11,6 +11,31 @@ use std::{
 
 impl ToolDetector {
     pub(crate) fn project_environments(&self) -> ProjectEnvironmentsResult {
+        ProjectEnvironmentsResult {
+            environments: measured(self.installations()),
+        }
+    }
+
+    /// So' os drivers C, com versao: o "detectado" da previa que escolhe a
+    /// instalacao de um projeto existente, fora do laco.
+    pub(crate) fn c_environments(&self) -> Vec<ProjectEnvironment> {
+        let mut installations = self.installations();
+        installations.retain(|(language, _)| *language == "c");
+        measured(installations)
+    }
+
+    /// Drivers C nas mesmas pastas, sem consultar versao: sugestoes baratas
+    /// para escolher a instalacao de um projeto existente (consolidacao C §15).
+    pub(crate) fn c_installations(&self) -> Vec<String> {
+        self.installations()
+            .into_iter()
+            .filter(|(language, _)| *language == "c")
+            .map(|(_, path)| path.display().to_string())
+            .collect()
+    }
+
+    /// Executaveis por linguagem, deduplicados pelo caminho real.
+    fn installations(&self) -> Vec<(&'static str, PathBuf)> {
         let mut directories = self.search_dirs();
         if self.install_root.is_some()
             && let Some(home) = crate::platform::home_dir()
@@ -49,26 +74,34 @@ impl ToolDetector {
         }
         paths.sort();
         let mut seen = HashSet::new();
-        let environments = paths
+        paths
             .into_iter()
-            .filter_map(|(language, path)| {
-                let real = crate::platform::canonicalize(&path).ok()?;
-                if language == "rust" && real.file_stem().is_some_and(|name| name == "rustup") {
-                    return None;
+            .filter(|(language, path)| {
+                let Ok(real) = crate::platform::canonicalize(path) else {
+                    return false;
+                };
+                if *language == "rust" && real.file_stem().is_some_and(|name| name == "rustup") {
+                    return false;
                 }
-                if !seen.insert((language, real)) {
-                    return None;
-                }
-                let version = environment_version(&path).ok()?;
-                Some(ProjectEnvironment {
-                    language: language.to_owned(),
-                    executable: path.display().to_string(),
-                    version,
-                })
+                seen.insert((*language, real))
             })
-            .collect();
-        ProjectEnvironmentsResult { environments }
+            .collect()
     }
+}
+
+/// Instalacoes que respondem a consulta de versao.
+fn measured(installations: Vec<(&'static str, PathBuf)>) -> Vec<ProjectEnvironment> {
+    installations
+        .into_iter()
+        .filter_map(|(language, path)| {
+            let version = environment_version(&path).ok()?;
+            Some(ProjectEnvironment {
+                language: language.to_owned(),
+                executable: path.display().to_string(),
+                version,
+            })
+        })
+        .collect()
 }
 
 fn language_for_binary(name: &str) -> Option<&'static str> {

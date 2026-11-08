@@ -146,8 +146,9 @@ fn the_list_is_filtered_by_the_active_build_system() {
     // sanitizers, OpenMP e .hex/.bin — entraram em 2026-09-04, de relato de
     // uso: nao havia como deixar o compilador mais rigido pela IDE. O kit
     // exportavel como toolchain file entrou em 2026-10-17 (0.4.1a). A do
-    // clangd do ESP-IDF, de escopo CMake, em 2026-10-23 (52 §14.41).
-    assert_eq!(ids.len(), 21, "as 20 acoes CMake e a do ESP-IDF");
+    // clangd do ESP-IDF, de escopo CMake, em 2026-10-23 (52 §14.41). A da
+    // instalacao do compilador C no kit, em 2026-11-08 (consolidacao C §15).
+    assert_eq!(ids.len(), 22, "as 21 acoes CMake e a do ESP-IDF");
     assert!(
         ids.iter()
             .all(|id| id.starts_with("cmake.") || id.starts_with("espidf.")),
@@ -161,7 +162,7 @@ fn the_list_is_filtered_by_the_active_build_system() {
         "configAction.list",
         &json!({ "includeHiddenByScope": true }),
     );
-    assert_eq!(all_actions["actions"].as_array().unwrap().len(), 29);
+    assert_eq!(all_actions["actions"].as_array().unwrap().len(), 30);
     assert_eq!(
         action(&all_actions, "cargo.addDependency")["state"],
         "hiddenByScope"
@@ -190,7 +191,7 @@ fn a_mixed_workspace_sees_both_toolboxes() {
     open(&mut core, &dir);
 
     let list = ok(&mut core, "configAction.list", &json!({}));
-    assert_eq!(list["actions"].as_array().unwrap().len(), 28);
+    assert_eq!(list["actions"].as_array().unwrap().len(), 29);
     assert_eq!(action(&list, "cargo.addDependency")["state"], "available");
     assert_eq!(action(&list, "cmake.addExecutable")["state"], "available");
 }

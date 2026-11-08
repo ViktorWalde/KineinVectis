@@ -4,7 +4,7 @@ use kinein_protocol::{ConfigActionEffect, ConfigActionRisk, ConfigActionScope};
 
 use super::{ActionDefinition, CMAKELISTS_ONLY, NO_FILE, PRESETS_ONLY, VISIBILITY_PARAM};
 
-pub(super) static ACTIONS: [ActionDefinition; 20] = [
+pub(super) static ACTIONS: [ActionDefinition; 21] = [
     ActionDefinition {
         id: "cmake.enableCompileCommands",
         title: "Habilitar compile_commands.json",
@@ -19,6 +19,27 @@ pub(super) static ACTIONS: [ActionDefinition; 20] = [
             "officialDoc",
             "CMake: CMAKE_EXPORT_COMPILE_COMMANDS",
             "cmake.CMAKE_EXPORT_COMPILE_COMMANDS",
+        )],
+    },
+    // A instalacao do compilador C no kit (consolidacao C §15): o projeto
+    // existente escolhe GCC/Clang por caminho, com previa, sem tocar presets.
+    ActionDefinition {
+        id: "cmake.selectCCompiler",
+        title: "Escolher a instalação do compilador C",
+        description: "Fixa no kit uma instalação local de GCC/Clang por caminho, com prévia; vazio volta ao automático.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Basic",
+        risk: ConfigActionRisk::Low,
+        affects: &[".kinein/toolchain.json"],
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("compiler", "Instalação do compilador C", false, ""),
+            ("kit", "Kit (preset)", false, ""),
+        ],
+        docs: &[(
+            "officialDoc",
+            "CMake: CMAKE_<LANG>_COMPILER",
+            "cmake.CMAKE_LANG_COMPILER",
         )],
     },
     ActionDefinition {

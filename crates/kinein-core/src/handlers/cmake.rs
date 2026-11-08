@@ -145,19 +145,11 @@ impl Core {
             Ok(choice) => choice,
             Err(refusal) => return invalid_params(request_id, refusal),
         };
-        // A toolchain e resolvida AQUI, na thread do loop, e vai pronta para o
-        // job: um job nao alcanca o `Core` (arquitetura/04 §3), e resolver la
-        // dentro exigiria o `ToolDetector`, que e estado do core.
-        // As ESCOLHAS de ferramenta sao as do kit ativo (nome = preset) quando
-        // o preset veio do kit; um preset escolhido pelo projeto nao tem kit
-        // proprio e usa as escolhas do kit padrao (""), como antes.
-        let kit = match preset_origem {
-            Some("kit") => preset.clone().unwrap_or_default(),
-            Some("incompleteConfigure") => cmake::active_kit(&root),
-            _ => String::new(),
-        };
-        let toolchain =
-            crate::toolchain::Toolchain::resolve_kit(&root, &self.detected_tools(), &kit);
+        let (kit, toolchain) =
+            match self.configure_toolchain(&root, preset.as_deref(), preset_origem) {
+                Ok(resolved) => resolved,
+                Err(reason) => return invalid_params(request_id, reason),
+            };
         let extra = self.framework_cmake_args(&root);
         // O perfil de rigor do usuario (M4.5) entra no configure, como no
         // configure que o build faz sozinho.
@@ -187,13 +179,15 @@ impl Core {
                 if let Err(error) = cmake::write_file_api_query(&root) {
                     ctx.emit_output(&format!("aviso: query do file-api falhou: {error}"));
                 }
-                let command = cmake::configure_with_rigor(
-                    &root,
-                    preset.as_deref(),
-                    &toolchain,
-                    &extra,
-                    profile,
-                );
+                let command = || {
+                    cmake::configure_with_rigor(
+                        &root,
+                        preset.as_deref(),
+                        &toolchain,
+                        &extra,
+                        profile,
+                    )
+                };
                 let label = preset.as_deref().map_or_else(
                     || "cmake configure".to_owned(),
                     |name| format!("cmake configure --preset {name}"),
@@ -208,7 +202,7 @@ impl Core {
                     }),
                 );
 
-                let (mut success, exit_code) = configure_outcome(command, ctx);
+                let (mut success, exit_code) = configure_keeping_definitions(&root, command, ctx);
                 if success {
                     cmake::record_preset(&root, preset.as_deref());
                     cmake::record_rigor(&root, profile);
@@ -236,6 +230,31 @@ impl Core {
         );
 
         JsonRpcResponse::success(request_id, json!(JobAcceptedResult { job_id }))
+    }
+
+    /// O kit e a toolchain do configure, resolvidos AQUI, na thread do loop:
+    /// um job nao alcanca o `Core` (arquitetura/04 §3), e resolver la dentro
+    /// exigiria o `ToolDetector`, que e estado do core. As ESCOLHAS sao as do
+    /// kit com o nome do preset pedido; um preset escolhido pelo projeto nao
+    /// tem kit proprio e usa o padrao (""). O preset anotado no build dir e a
+    /// tentativa pendente conservam o kit que o configure usou (C1-13), e um
+    /// compilador fixado indisponivel recusa antes do `CMake` (C1-12).
+    fn configure_toolchain(
+        &self,
+        root: &std::path::Path,
+        preset: Option<&str>,
+        origin: Option<&str>,
+    ) -> Result<(String, crate::toolchain::Toolchain), String> {
+        let kit = match origin {
+            Some("kit") => preset.unwrap_or_default().to_owned(),
+            Some("incompleteConfigure" | "buildDir") => cmake::active_kit(root),
+            _ => String::new(),
+        };
+        let toolchain =
+            crate::toolchain::Toolchain::resolve_kit(root, &self.detected_tools(), &kit);
+        toolchain
+            .unavailable_compiler()
+            .map_or(Ok((kit, toolchain)), Err)
     }
 
     /// O que o framework acrescenta ao configure (bloco E do 41): o
@@ -347,6 +366,26 @@ fn configure_outcome(command: std::process::Command, ctx: &jobs::JobContext) -> 
             (false, -1)
         }
     }
+}
+
+/// O configure com a conferencia de C1-14: se o `CMake` recriou o cache sem
+/// as definicoes da IDE, a mesma linha roda uma vez sobre o cache novo.
+fn configure_keeping_definitions(
+    root: &std::path::Path,
+    command: impl Fn() -> std::process::Command,
+    ctx: &jobs::JobContext,
+) -> (bool, i32) {
+    let (success, exit_code) = configure_outcome(command(), ctx);
+    if !success || !cmake::attempt::lost_ide_definitions(root) {
+        return (success, exit_code);
+    }
+    ctx.emit_output(cmake::attempt::DEFINITIONS_LOST);
+    let (success, exit_code) = configure_outcome(command(), ctx);
+    if success && cmake::attempt::lost_ide_definitions(root) {
+        ctx.emit_output("o cache continua sem as definições da IDE; configure não concluído");
+        return (false, exit_code);
+    }
+    (success, exit_code)
 }
 
 /// A recusa do configure sem preset (vários, nada anotado), sem job.

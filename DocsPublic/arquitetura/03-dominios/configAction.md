@@ -6,6 +6,26 @@
 
 ### Configuration Actions (`configAction.list` / `configAction.preview` / `configAction.apply`)
 
+**Instalação do compilador C (`0.204.0`, 2026-11-08).** A ação
+`cmake.selectCCompiler`, título "Escolher a instalação do compilador C", escopo
+`cmake`, categoria "CMake Basic", risco `low` e efeito `edit`, afeta somente
+`.kinein/toolchain.json`. Parâmetros string opcionais: `compiler`, caminho
+absoluto de um driver C local (vazio volta ao automático), e `kit`, nome do
+preset cujo kit recebe a escolha (vazio usa o kit ativo do domínio `cmake`: o
+da tentativa pendente ou o usado pelo último configure; sem configure, o
+padrão). As sugestões de `compiler` são
+executáveis C encontrados nas pastas do detector, sem lista fechada; as de
+`kit`, os configure presets. Prévia e aplicação conferem o executável fora do
+laço com a mesma consulta de versão e sonda C da criação, recusando caminho
+relativo/inexistente, ferramenta que não é GCC/Clang e driver C++ com
+`INVALID_PARAMS`. Se o workspace mudar durante a conferência, a resposta é
+recusada. As notas da prévia mostram instalações detectadas com versão,
+escolha atual, compilador do último configure, origem sem fixação e
+divergências (toolchain file que pode prevalecer, compilador do preset
+sobreposto pela linha de comando e cache que será recriado). `apply` usa
+`expected`; presets, toolchain files, fontes, flags e `.clangd` não mudam.
+Desenho na [consolidação C §15](../../especificacoes/consolidacao-nativa-de-c.md#15-c1-instalação-do-compilador-em-projetos-existentes--desenho-de-2026-11-08).
+
 **Padrão C por alvo (`0.199.0`, 2026-11-03).** A ação
 `cmake.setCStandard`, título "Fixar o padrão C do alvo", escopo `cmake`,
 categoria "CMake Rigor", risco `medium` e efeito `edit`, afeta somente
@@ -96,7 +116,8 @@ acrescenta ao `.clangd` (ou cria) um fragmento separado por `---` com
 `Diagnostics.Includes.IgnoreHeader: ['freertos/.*']`. Com isso, o
 include-cleaner do clangd deixa de sugerir trocar `freertos/FreeRTOS.h`, o que
 quebra o build. Fica "já aplicada" quando o arquivo já tem esse
-`IgnoreHeader`, e repeti-la é INVALID_PARAMS (52 §14.41).
+`IgnoreHeader`, e repeti-la é INVALID_PARAMS (52 §14.41). Em 2026-11-03 são 29,
+com `cmake.setCStandard`; em 2026-11-08, 30, com `cmake.selectCCompiler`.
 
 **PlatformIO (`0.177.0`, a 0.4.0e do `roadmaps/52` §14.5).** O escopo
 `platformio` (o build system `platformIo`) e a ação `platformio.compiledb`,

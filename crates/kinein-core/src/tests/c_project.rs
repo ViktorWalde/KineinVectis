@@ -3,6 +3,7 @@
 mod dialects;
 mod environment;
 mod existing;
+mod existing_kit;
 mod existing_recovery;
 
 use kinein_protocol::JsonRpcRequest;

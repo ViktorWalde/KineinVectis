@@ -103,6 +103,18 @@ Item {
         controller.handleCmakeStatus(true, true, "CMakeLists.txt");
         if (controller.actionTarget !== "cmakeConfigure") failures += 4096;
 
+        // Configure recusado antes do CMake (consolidação C §15): a recusa
+        // aparece com o motivo do core e sai com o próximo configure verde.
+        controller.pythonNeedsEnvironment = false;
+        controller.handleCmakeStatus(true, false, "");
+        controller.handleCmakeConfigureFailed("o compilador C fixado no kit padrão não está disponível: /x/gcc");
+        if (controller.status !== "warning" || controller.message.indexOf("/x/gcc") < 0
+                || controller.actionTarget !== "cmakeConfigure") failures += 8192;
+        controller.handleCmakeFinished(false);
+        if (controller.message.indexOf("/x/gcc") < 0) failures += 16384;
+        controller.handleCmakeFinished(true);
+        if (controller.status !== "ok") failures += 32768;
+
         // Makefile puro (P0, 2026-09-17): sem bear, a faixa nomeia o bear
         // como ferramenta ausente (com make, clangd e g++ presentes); com
         // bear, nada. Um Makefile AO LADO do CMake nao exige bear.

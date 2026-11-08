@@ -54,6 +54,12 @@ pub(crate) fn prepare_project(
     })
 }
 
+/// Confere o driver C de um projeto EXISTENTE com as regras da criacao,
+/// devolvendo a versao medida (consolidacao C §15); roda fora do laco.
+pub(crate) fn validate_c_driver(executable: &str) -> Result<String, String> {
+    project_options::validate_c_driver(executable)
+}
+
 pub(crate) struct ProjectCreation {
     parent: std::path::PathBuf,
     name: String,

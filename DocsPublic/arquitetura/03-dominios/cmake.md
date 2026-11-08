@@ -1,5 +1,19 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**Kit e definições do configure (`0.204.0`).** Configure com preset da
+tentativa pendente ou do último configure (`incompleteConfigure`, `buildDir`)
+e o configure automático do `build.run` usam o kit ativo: o da tentativa
+pendente, senão o que o último configure bem-sucedido usou, registrado em
+`.kinein-kit` no build dir (build dir anterior ao registro conserva a regra do
+preset anotado com kit próprio). O mesmo kit orienta `index.context` e a receita
+`cmake.selectCCompiler`. Preset pedido continua usando o kit com seu nome; preset
+escolhido pelos arquivos do projeto, o kit padrão. Compilador fixado e indisponível
+recusa o configure com `INVALID_PARAMS` (ou falha do build) antes de executar o
+CMake; a UI mostra essa recusa no Project Health. Depois de um configure bem-sucedido, o produtor confere no cache que
+`CMAKE_EXPORT_COMPILE_COMMANDS` continua ligado; quando o CMake recriou o cache
+ao trocar de compilador e perdeu as definições da linha de comando, repete uma
+vez o mesmo configure e falha se a perda persistir, mantendo a tentativa pendente.
+
 **Configure incompleto (`0.203.0`).** Antes de executar configure explícito ou
 automático, o dono registra `.kinein-configure-pending` no build dir, com
 `preset` string ou nulo e `kit` usado (vazio para o padrão). Só sucesso remove

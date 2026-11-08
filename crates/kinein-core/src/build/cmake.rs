@@ -38,25 +38,48 @@ pub(super) fn run_cmake_build(
                 ),
             });
         }
-        let (preset, _) = crate::cmake::choose_preset(root, None).map_err(|reason| {
-            BuildError::Io(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                reason,
-            ))
-        })?;
+        let (preset, _) = crate::cmake::choose_preset(root, None)
+            .and_then(|choice| toolchain.unavailable_compiler().map_or(Ok(choice), Err))
+            .map_err(|reason| {
+                BuildError::Io(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    reason,
+                ))
+            })?;
         let attempt =
             crate::cmake::begin_configure(root, preset.as_deref(), &toolchain.to_result().preset)
                 .map_err(BuildError::Io)?;
         let configure =
             crate::cmake::configure_with_rigor(root, preset.as_deref(), toolchain, extra, profile);
 
-        let outcome = stream_command(
+        let mut outcome = stream_command(
             configure,
             "cmake (configure)",
             DiagnosticFormat::GccLike,
             cancel,
             sink,
         )?;
+        // C1-14: o cache recriado sem as definicoes da IDE nao gera a CDB.
+        if outcome.success && crate::cmake::attempt::lost_ide_definitions(root) {
+            sink(BuildEvent::Output {
+                stream: "stdout",
+                line: crate::cmake::attempt::DEFINITIONS_LOST.to_owned(),
+            });
+            outcome = stream_command(
+                crate::cmake::configure_with_rigor(
+                    root,
+                    preset.as_deref(),
+                    toolchain,
+                    extra,
+                    profile,
+                ),
+                "cmake (configure)",
+                DiagnosticFormat::GccLike,
+                cancel,
+                sink,
+            )?;
+            outcome.success = outcome.success && !crate::cmake::attempt::lost_ide_definitions(root);
+        }
         if !outcome.success {
             return Ok(outcome);
         }

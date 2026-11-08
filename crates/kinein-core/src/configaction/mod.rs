@@ -90,6 +90,11 @@ pub struct Inputs {
     /// O toolchain file do kit do configure, ou o motivo de nao haver um;
     /// `None` quando ninguem o calculou.
     pub kit_export: Option<Result<crate::toolchain::ExportedToolchain, String>>,
+    /// Drivers C nas pastas do detector, sugeridos em `cmake.selectCCompiler`.
+    pub c_installations: Vec<String>,
+    /// O kit planejado pelo `toolchain` para `cmake.selectCCompiler`, ja'
+    /// com a instalacao conferida fora do laco; ou o motivo da recusa.
+    pub compiler_choice: Option<Result<crate::toolchain::CompilerChoice, String>>,
 }
 
 /// Lista as acoes do workspace, filtradas pelo build system ativo.
@@ -240,6 +245,7 @@ fn build_plan(
         "cmake.enableCompileCommands" => cmakelists::enable_compile_commands(root),
         "espidf.clangdFreeRtos" => clangd::freertos_includes(root),
         "cmake.exportToolchainFile" => kit::export_plan(root, inputs),
+        "cmake.selectCCompiler" => kit::compiler_plan(inputs),
         "cmake.createDebugPreset" => {
             presets::create_configure_preset(root, "debug", "Debug", "Debug")
         }

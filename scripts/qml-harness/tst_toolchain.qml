@@ -133,6 +133,14 @@ Item {
             [{ role: "cxxCompiler", id: "gxx" }],
             [{ role: "cxxCompiler", id: "clangxx", label: "Clang++" }]);
         if (controller.labelFor("cxxCompiler") !== "gxx (ausente)") failures += 1024;
+        // Instalação fixada por caminho (consolidação C §15): o caminho, e
+        // "(ausente)" quando o core deixa de resolvê-lo.
+        controller.handleResolved(
+            [{ role: "cCompiler", id: "/opt/gcc 16/bin/gcc", resolvedPath: "/opt/gcc 16/bin/gcc" }],
+            [{ role: "cCompiler", id: "gcc", label: "GCC", path: "/usr/bin/gcc" }]);
+        if (controller.labelFor("cCompiler") !== "/opt/gcc 16/bin/gcc") failures += 1024;
+        controller.handleResolved([{ role: "cCompiler", id: "/opt/gcc 16/bin/gcc" }], []);
+        if (controller.labelFor("cCompiler") !== "/opt/gcc 16/bin/gcc (ausente)") failures += 1024;
         // O automatico do CMake sem candidato que case: o caminho do cache; e,
         // antes do primeiro configure, quem escolhe e' o CMake.
         controller.handleResolved(

@@ -406,6 +406,9 @@ recusa a geração. Erro conserva as escolhas para correção/repetição.
 Contrato 0.202.0 e provas/limites na [consolidação C §12](consolidacao-nativa-de-c.md#12-c1-dialeto-na-criação-e-validação-do-driver--desenho-de-2026-11-04).
 C++, Rust e Python preservam seus formatos e regressões anteriores; não há
 instalação implícita nem mudança automática de projetos existentes.
+Em projeto C existente, a instalação local entra no kit por caminho, com a
+mesma sonda, prévia e aplicação explícita; contrato 0.204.0 e provas na
+[consolidação C §15](consolidacao-nativa-de-c.md#15-c1-instalação-do-compilador-em-projetos-existentes--desenho-de-2026-11-08).
 
 ## 5. Fronteiras e proteções
 

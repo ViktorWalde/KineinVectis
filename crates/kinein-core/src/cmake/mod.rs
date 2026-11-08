@@ -5,7 +5,7 @@
 //! explicito tem precedencia). Targets vem da resposta `codemodel-v2` do
 //! file-api oficial do `CMake`, nunca de parser proprio de `CMakeLists.txt`.
 
-mod attempt;
+pub mod attempt;
 pub mod model;
 mod preset_selection;
 mod rigor;
@@ -52,18 +52,16 @@ const PRESET_MARKER: &str = ".kinein-preset";
 
 /// O kit que vale para o configure e para o contexto (0.4.1a).
 ///
-/// O do preset do ultimo configure, quando o projeto tem um kit com esse
-/// nome; senao o padrao (`""`). Mora aqui, e nao no `toolchain`, porque quem
-/// sabe o ultimo preset e' o `cmake` — e o `toolchain` nao depende dele.
+/// O da tentativa pendente, senao o que o ultimo configure USOU (registrado
+/// desde 2026-11-08, C1-13). Mora aqui porque quem sabe o configure e' o `cmake`.
 #[must_use]
 pub fn active_kit(root: &Path) -> String {
-    if let Ok(Some(attempt)) = attempt::pending_preset(root) {
-        return attempt.kit;
-    }
-    status(root)
-        .preset
-        .filter(|preset| crate::toolchain::has_kit(root, preset))
-        .unwrap_or_default()
+    attempt::active_kit(root).unwrap_or_else(|| {
+        status(root)
+            .preset
+            .filter(|preset| crate::toolchain::has_kit(root, preset))
+            .unwrap_or_default()
+    })
 }
 
 /// Le o estado atual por stat dos artefatos do configure.

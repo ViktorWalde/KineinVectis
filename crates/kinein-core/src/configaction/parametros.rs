@@ -41,10 +41,35 @@ pub(super) fn action_description(action: &str, name: &str) -> &'static str {
     if action == "cmake.setCStandard" && name == "extensions" {
         return "OFF pede dialeto ISO; ON permite extensões do compilador (como gnu23). Vazio escolhe OFF.";
     }
+    if action == "cmake.selectCCompiler" {
+        match name {
+            "compiler" => {
+                return "Caminho absoluto de um driver C (GCC/Clang) desta máquina; a lista traz os encontrados pelo detector e Personalizado aceita outro. Vazio volta ao automático.";
+            }
+            "kit" => {
+                return "Preset cujo kit recebe a escolha. Vazio usa o kit do configure em uso (tentativa pendente ou último configure); sem configure, o kit padrão.";
+            }
+            _ => {}
+        }
+    }
     describe(name)
 }
 
-pub(super) fn action_suggestions(root: &Path, action: &str, name: &str) -> Vec<String> {
+pub(super) fn action_suggestions(
+    root: &Path,
+    action: &str,
+    name: &str,
+    c_installations: &[String],
+) -> Vec<String> {
+    if action == "cmake.selectCCompiler" {
+        return match name {
+            "compiler" => c_installations.to_vec(),
+            "kit" => crate::cmake::list_presets(root)
+                .map(|presets| presets.into_iter().map(|preset| preset.name).collect())
+                .unwrap_or_default(),
+            _ => Vec::new(),
+        };
+    }
     if action == "cmake.setCStandard" {
         match name {
             "standard" => {

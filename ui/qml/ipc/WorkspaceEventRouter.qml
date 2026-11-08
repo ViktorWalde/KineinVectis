@@ -142,6 +142,9 @@ Item {
             if (method === "cargo.metadata") {
                 root.projectHealthController.handleCargoMetadataFailed(message);
             }
+            if (method === "cmake.configure") {
+                root.projectHealthController.handleCmakeConfigureFailed(message);
+            }
         }
     }
 }

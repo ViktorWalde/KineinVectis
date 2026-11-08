@@ -24,6 +24,9 @@ Item {
     property bool workspaceTrusted: false
     property bool cargoMetadataFailed: false
     property string cargoMetadataError: ""
+    // A recusa do `cmake.configure` antes do CMake (consolidação C §15: o
+    // compilador fixado sumiu). Sai com o próximo configure bem-sucedido.
+    property string cmakeConfigureRefusal: ""
     // O ambiente Python (bloco B do roadmaps/41): o PythonController diz se
     // falta ambiente e qual e' o botao; este controller so' escolhe a faixa.
     property bool pythonNeedsEnvironment: false
@@ -70,6 +73,7 @@ Item {
         autoConfigureFailed = false;
         cargoMetadataFailed = false;
         cargoMetadataError = "";
+        cmakeConfigureRefusal = "";
         cdbStale = false;
         cdbStaleBecause = "";
         presetChoices = [];
@@ -123,6 +127,12 @@ Item {
         if (!success && autoConfigureAttempted) {
             autoConfigureFailed = true;
         }
+        if (success) cmakeConfigureRefusal = "";
+        update();
+    }
+
+    function handleCmakeConfigureFailed(message) {
+        cmakeConfigureRefusal = message;
         update();
     }
 
@@ -295,6 +305,11 @@ Item {
                   qsTr("o projeto tem %1 presets de configure (%2): escolha um")
                       .arg(presetChoices.length).arg(presetChoicesFile),
                   qsTr("Escolher preset…"), "cmakePresetChoice");
+            return;
+        }
+        if (hasBuildSystem("cmake") && cmakeConfigureRefusal !== "") {
+            apply("warning", qsTr("configure recusado: %1").arg(cmakeConfigureRefusal),
+                  qsTr("Tentar de novo"), "cmakeConfigure");
             return;
         }
         if (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured) {
