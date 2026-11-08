@@ -61,6 +61,11 @@ pub struct TerminalManager {
     /// morta: um render atrasado de uma sessão fechada não pode ser confundido
     /// com uma nova.
     next_id: u64,
+    /// The shell `open` starts; `None` is the user's (`platform::default_shell`).
+    /// Only tests set it: the user's interactive startup (a prompt wizard, a
+    /// first-run menu) may consume input typed right after opening (62 §3.4,
+    /// INF-01), and the dispatch tests must not depend on it.
+    shell: Option<String>,
 }
 
 impl fmt::Debug for TerminalManager {
@@ -80,7 +85,14 @@ impl TerminalManager {
             events,
             sessions: HashMap::new(),
             next_id: 0,
+            shell: None,
         }
+    }
+
+    /// Starts `shell` instead of the user's in `open` (dispatch tests).
+    #[cfg(test)]
+    pub(crate) fn use_shell(&mut self, shell: &str) {
+        self.shell = Some(shell.to_owned());
     }
 
     /// `true` enquanto a sessão `id` está viva (o waiter zera ao shell sair).
@@ -116,7 +128,10 @@ impl TerminalManager {
     /// Returns `(id, shell)` — o `id` identifica a sessão nos comandos e
     /// eventos seguintes (D2.3).
     pub fn open(&mut self, root: &Path) -> Result<(String, String), TerminalError> {
-        let shell = crate::platform::default_shell();
+        let shell = self
+            .shell
+            .clone()
+            .unwrap_or_else(crate::platform::default_shell);
         let id = self.open_with_shell(root, &shell)?;
         Ok((id, shell))
     }

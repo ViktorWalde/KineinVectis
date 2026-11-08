@@ -52,6 +52,13 @@ fn core_com_terminal(
     let (emissor, receptor) = mpsc::channel();
     let mut core = core_with_empty_search_path(&format!("terminal-{nome}"));
     core.enable_lsp(emissor);
+    // O shell do usuario pode abrir um assistente (Powerlevel10k, zsh sem
+    // .zshrc) que consome o que se digita logo apos abrir (62 §3.4, INF-01).
+    // Em Unix o despacho roda num `sh` sem configuracao; no Windows segue o
+    // padrao. O `$SHELL` do usuario tem prova propria abaixo.
+    if cfg!(unix) {
+        core.terminal.as_mut().unwrap().use_shell("/bin/sh");
+    }
     let aberto = core.handle_request(&JsonRpcRequest::new(
         900_i64,
         "workspace.open",
@@ -332,6 +339,31 @@ fn terminal_open_requires_an_open_workspace() {
     assert_eq!(erro.message, "nenhum projeto aberto");
 }
 
+/// Sem injecao, `terminal.open` sobe o shell do usuario (`$SHELL` em Unix) e
+/// diz qual: a escolha dos testes de despacho nao esconde o caminho real.
+#[test]
+fn terminal_open_starts_the_user_shell_by_default() {
+    let root = temp_root("shell-do-usuario");
+    let (sender, _receiver) = mpsc::channel();
+    let mut core = core_with_empty_search_path("terminal-shell-do-usuario");
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        902_i64,
+        "workspace.open",
+        Some(json!({ "path": root.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let terminal = core.handle_request(&JsonRpcRequest::new(903_i64, "terminal.open", None));
+    let result = terminal.response().result.as_ref().unwrap();
+    assert_eq!(result["shell"], crate::platform::default_shell());
+    let closed = core.handle_request(&JsonRpcRequest::new(
+        904_i64,
+        "terminal.close",
+        Some(json!({ "id": result["id"] })),
+    ));
+    assert!(closed.response().error.is_none());
+}
+
 /// Sem `enable_lsp` não há `TerminalManager`: o core tem de dizer isso, e não
 /// fingir sucesso. É o caminho dos loops leves (`run_json_lines`).
 #[test]
@@ -418,7 +450,7 @@ fn open_input_and_close_round_trip_through_dispatch() {
     let escrito = core.handle_request(&JsonRpcRequest::new(
         906_i64,
         "terminal.input",
-        Some(json!({ "id": id, "data": "echo kinein-vectis-ok\n" })),
+        Some(json!({ "id": id, "data": "echo kinein''-vectis-ok\n" })),
     ));
     assert!(escrito.response().error.is_none());
     assert!(
@@ -462,7 +494,7 @@ fn render_event_keeps_every_field_the_ui_reads() {
     let escrito = core.handle_request(&JsonRpcRequest::new(
         910_i64,
         "terminal.input",
-        Some(json!({ "id": id, "data": "echo contrato-render\n" })),
+        Some(json!({ "id": id, "data": "echo contrato''-render\n" })),
     ));
     assert!(escrito.response().error.is_none());
 
@@ -586,7 +618,7 @@ fn resize_reaches_the_live_session_and_shows_up_in_the_next_render() {
     let escrito = core.handle_request(&JsonRpcRequest::new(
         917_i64,
         "terminal.input",
-        Some(json!({ "id": id, "data": "echo depois-do-resize\n" })),
+        Some(json!({ "id": id, "data": "echo depois''-do-resize\n" })),
     ));
     assert!(escrito.response().error.is_none());
     let evento = render_com(&receptor, "depois-do-resize").expect("render apos resize");

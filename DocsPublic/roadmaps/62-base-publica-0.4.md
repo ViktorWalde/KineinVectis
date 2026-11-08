@@ -147,6 +147,15 @@ protocolo IPC 0.197.0 tem ciclo independente da versão pública.
    dos aceites B1–B4 e B6–B10. Esta fronteira não declara a release pronta e
    não inclui publicação automática.
 
+**Ordem do autor (2026-11-08).** A 0.4 consolida primeiro o essencial da IDE,
+sem atalhos: C em profundidade, depois C++, Rust com suas fronteiras C/C++ e
+Python, nesta ordem; em seguida, DAP e QEMU sólidos (F2/F3 de B6). Cada
+etapa só avança com a anterior confiável no recorte declarado. A dívida técnica
+que compromete essas capacidades é paga dentro da 0.4 (§3.4). As provas mantêm
+rigidez alta: lógica e comunicação entre módulos exercitadas até o limite,
+cenários improváveis, falhas e casos de borda que façam defeitos aparecer, com
+mutações das guardas; quantidade de testes não substitui essa rigidez.
+
 Quality Center, schema 3, CircuitPython, Banco para embarcados, expansão de
 emuladores além de F3 e as demais jornadas não concluídas do 52 permanecem
 abertos nos seus donos. Bloqueiam quando integram os mínimos de §3.2 ou uma
@@ -311,17 +320,23 @@ auditorias e provas posteriores datadas nos donos:**
   separando prova de gramática, compilador e clangd. Decisão: corrigir ou integrar
   solução no dono da gramática, com limite explícito até a prova. Estado aberto
   em C3, posterior a C1; não equivale a ausência de semântica no clangd.
-- **INF-01 — Terminal integrado com zsh interativo.** Dono e evidência:
-  regressão `terminal_open_accepts_only_workspace_directory_as_cwd`
-  (`crates/kinein-core/src/tests/terminal.rs`). Observado em 2026-11-08, também
-  no commit anterior a C1-11: com `$SHELL` zsh interativo, com ou sem
-  configuração do usuário, a saída de `pwd` não chega ao render em 10 s; com bash
-  o caso passa. Causa provável não confirmada: inicialização interativa do zsh
-  (assistente de novo usuário ou prompt da distribuição) consome ou adia a
-  entrada. Severidade média para o terminal, sem perda de conteúdo; a prova
-  depende do shell. Testes: zsh com HOME isolado e configurado, prompt pronto
-  antes da entrada. Decisão: investigar no dono do terminal; o gate desta fatia
-  roda com bash. Estado aberto.
+- **INF-01 — Testes do terminal dependentes do shell do usuário.** Dono e
+  evidência: `crates/kinein-core/src/tests/terminal.rs` e
+  `terminal/session.rs`. Observado em 2026-11-08, também no commit anterior a
+  C1-11: com `$SHELL` zsh, `terminal_open_accepts_only_workspace_directory_as_cwd`
+  não via a saída de `pwd`. Causa confirmada em PTY: a inicialização interativa
+  do usuário (assistente do Powerlevel10k sem configuração; `zsh-newuser-install`
+  sem `.zshrc`) consome a entrada digitada logo após abrir. O terminal da IDE se
+  comporta como qualquer emulador; o defeito era de prova. Três testes que
+  digitavam `echo` também passavam pelo eco da entrada, sem o comando executar.
+  Severidade média: prova falsa e gate dependente do ambiente. Correção: em
+  Unix, os testes de despacho injetam `/bin/sh` no gerenciador; um teste próprio
+  confere que, sem injeção, `terminal.open` sobe e informa o `$SHELL` do usuário;
+  as agulhas só aparecem se o comando executar. Prova: 50 testes do terminal
+  verdes com zsh real; trocar o shell por `cat` reprova os quatro testes de
+  execução (com as agulhas antigas, só um), e ignorar a injeção reprova quatro
+  no zsh. Windows mantém o shell padrão nesses testes e não foi exercitado.
+  Estado corrigido no recorte Linux.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:
