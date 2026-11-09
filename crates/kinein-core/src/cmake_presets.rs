@@ -4,54 +4,36 @@
 //! O `CMake` nao informa o `binaryDir` de um preset sem configurar: medido com
 //! o 4.4.5, `cmake --preset X -N` so' lista o cache. Por isso a IDE le
 //! `CMakePresets.json` e `CMakeUserPresets.json` como o cmake-presets(7)
-//! descreve. O que ela nao sabe resolver fica sem pasta, nunca com uma pasta
-//! adivinhada (consolidacao C §16). `include` (schema 4+) nao e' seguido
-//! ainda: C1-18, retomado no C-04.
+//! descreve, com `include` (C1-18, `files.rs`). O que ela nao sabe resolver
+//! fica sem pasta, nunca com uma pasta adivinhada (consolidacao C §16), e o
+//! que o `CMake` recusa ela tambem recusa, com o motivo (§17).
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+mod files;
+mod macros;
+
+use std::path::{Path, PathBuf};
 
 use kinein_protocol::CmakePresetInfo;
 use serde_json::Value;
 
-/// Os arquivos de presets da raiz, na ordem do `cmake.presets.list`.
-const FILES: [&str; 2] = ["CMakePresets.json", "CMakeUserPresets.json"];
+use files::{PROJECT, Presets, USER};
 
 /// Lista os configure presets nao ocultos de `CMakePresets.json` e
-/// `CMakeUserPresets.json`, na ordem dos arquivos.
+/// `CMakeUserPresets.json`, com o que eles incluem, na ordem dos arquivos.
 pub fn list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
-    let mut presets = Vec::new();
-    for file in ["CMakePresets.json", "CMakeUserPresets.json"] {
-        let path = root.join(file);
-        if !path.is_file() {
-            continue;
-        }
-        let body =
-            fs::read_to_string(&path).map_err(|error| format!("falha lendo {file}: {error}"))?;
-        let value: Value =
-            serde_json::from_str(&body).map_err(|error| format!("{file} inválido: {error}"))?;
-        let Some(items) = value.get("configurePresets").and_then(Value::as_array) else {
-            continue;
-        };
-        for item in items {
-            if item.get("hidden").and_then(Value::as_bool) == Some(true) {
-                continue;
-            }
-            let Some(name) = item.get("name").and_then(Value::as_str) else {
-                continue;
-            };
-            presets.push(CmakePresetInfo {
-                name: name.to_owned(),
-                display_name: item
-                    .get("displayName")
-                    .and_then(Value::as_str)
-                    .map(str::to_owned),
-            });
-        }
-    }
-    Ok(presets)
+    Ok(files::load(root)?
+        .entries
+        .iter()
+        .filter(|entry| entry.value.get("hidden").and_then(Value::as_bool) != Some(true))
+        .map(|entry| CmakePresetInfo {
+            name: entry.name.clone(),
+            display_name: entry
+                .value
+                .get("displayName")
+                .and_then(Value::as_str)
+                .map(str::to_owned),
+        })
+        .collect())
 }
 
 /// O que os presets do projeto dizem ao configure sem preset pedido.
@@ -63,34 +45,33 @@ pub enum PresetDefault {
     One(String, &'static str),
     /// Varios no mesmo arquivo: ninguem escolhe pela pessoa (52 §14.2).
     Several(&'static str, Vec<String>),
+    /// O `CMake` recusaria todos os presets (C1-18): o motivo, nunca um
+    /// configure sem preset que ignore os arquivos.
+    Refused(String),
 }
 
 /// O preset PADRAO do projeto, quando nem o pedido nem o kit dizem um.
 ///
-/// Os `configurePresets` nao ocultos do primeiro arquivo que tem algum:
+/// Os `configurePresets` nao ocultos do primeiro lado que tem algum: o de
 /// `CMakeUserPresets.json` (a escolha do usuario para ESTA maquina vence),
-/// senao `CMakePresets.json`, pulando os que uma `condition` exclui no
-/// Linux. Ate' 2026-10-16 (P0, 40.7 §7.46) valia o PRIMEIRO da lista; desde a
-/// 0.4.0b, com varios, a UI pergunta (`roadmaps/52` §14.2).
+/// com o que so' ele inclui, senao o de `CMakePresets.json`, pulando os que
+/// uma `condition` exclui no Linux. Ate' 2026-10-16 (P0, 40.7 §7.46) valia o
+/// PRIMEIRO da lista; desde a 0.4.0b, com varios, a UI pergunta
+/// (`roadmaps/52` §14.2).
 #[must_use]
 pub fn default_preset(root: &Path) -> PresetDefault {
-    for file in ["CMakeUserPresets.json", "CMakePresets.json"] {
-        let Ok(body) = fs::read_to_string(root.join(file)) else {
-            continue;
-        };
-        let Ok(value) = serde_json::from_str::<Value>(&body) else {
-            continue;
-        };
-        let Some(items) = value.get("configurePresets").and_then(Value::as_array) else {
-            continue;
-        };
-        let mut names: Vec<String> = items
+    let presets = match files::load(root) {
+        Ok(presets) => presets,
+        Err(reason) => return PresetDefault::Refused(reason),
+    };
+    for (file, user_side) in [(USER, true), (PROJECT, false)] {
+        let mut names: Vec<String> = presets
+            .entries
             .iter()
-            .filter(|item| {
-                item.get("hidden").and_then(Value::as_bool) != Some(true)
-                    && condition_allows_linux(item.get("condition"))
+            .filter(|entry| {
+                presets.file_of(entry).user_side == user_side && visible_on_linux(&entry.value)
             })
-            .filter_map(|item| item.get("name").and_then(Value::as_str).map(str::to_owned))
+            .map(|entry| entry.name.clone())
             .collect();
         match names.len() {
             0 => {}
@@ -99,6 +80,12 @@ pub fn default_preset(root: &Path) -> PresetDefault {
         }
     }
     PresetDefault::Absent
+}
+
+/// Nao oculto, e a `condition` nao o exclui no Linux.
+fn visible_on_linux(item: &Value) -> bool {
+    item.get("hidden").and_then(Value::as_bool) != Some(true)
+        && condition_allows_linux(item.get("condition"))
 }
 
 /// A `condition` de um preset (cmake-presets(7)): so' as formas que dizem
@@ -129,8 +116,8 @@ fn condition_allows_linux(condition: Option<&Value>) -> bool {
     }
 }
 
-/// Profundidade de `inherits` e de macros dentro de `environment`: o `CMake`
-/// recusa ciclos, e um ciclo aqui so' pode deixar o preset sem pasta.
+/// Profundidade de `inherits`: o `CMake` recusa ciclos, e um ciclo aqui so'
+/// pode deixar o campo ausente.
 const MAX_DEPTH: usize = 16;
 
 /// O valor de um campo depois da heranca.
@@ -142,47 +129,31 @@ enum Field {
     Absent,
 }
 
-/// Todos os configure presets dos dois arquivos; arquivo ausente ou invalido
-/// nao contribui.
-fn entries(root: &Path) -> Vec<Value> {
-    FILES
-        .iter()
-        .filter_map(|file| std::fs::read_to_string(root.join(file)).ok())
-        .filter_map(|body| serde_json::from_str::<Value>(&body).ok())
-        .filter_map(|value| {
-            value
-                .get("configurePresets")
-                .and_then(Value::as_array)
-                .cloned()
-        })
-        .flatten()
-        .collect()
-}
-
 /// Um campo de configure preset, seguindo `inherits` como o `CMake`: o
 /// proprio preset primeiro, depois os pais na ordem declarada. Valor `null`
 /// desfaz a heranca. Valor objeto de `cacheVariables` usa seu `value`.
+/// Presets que o `CMake` recusaria nao tem campo.
 pub(crate) fn preset_value(root: &Path, preset: &str, field: &[&str]) -> Option<String> {
     if preset.is_empty() {
         return None;
     }
-    match lookup(&entries(root), preset, field, 0) {
+    match lookup(&files::load(root).ok()?, preset, field, 0) {
         Field::Text(text) => Some(text),
         Field::Unset | Field::Absent => None,
     }
 }
 
-fn lookup(entries: &[Value], name: &str, field: &[&str], depth: usize) -> Field {
+fn lookup(presets: &Presets, name: &str, field: &[&str], depth: usize) -> Field {
     if depth > MAX_DEPTH {
         return Field::Absent;
     }
-    let Some(entry) = entries
-        .iter()
-        .find(|entry| entry.get("name").and_then(Value::as_str) == Some(name))
-    else {
+    let Some(entry) = presets.find(name) else {
         return Field::Absent;
     };
-    match field.iter().try_fold(entry, |value, key| value.get(*key)) {
+    match field
+        .iter()
+        .try_fold(&entry.value, |value, key| value.get(*key))
+    {
         Some(Value::Null) => return Field::Unset,
         Some(Value::String(text)) => return Field::Text(text.clone()),
         Some(object) => {
@@ -192,12 +163,12 @@ fn lookup(entries: &[Value], name: &str, field: &[&str], depth: usize) -> Field 
         }
         None => {}
     }
-    match entry.get("inherits") {
-        Some(Value::String(parent)) => lookup(entries, parent, field, depth + 1),
+    match entry.value.get("inherits") {
+        Some(Value::String(parent)) => lookup(presets, parent, field, depth + 1),
         Some(Value::Array(parents)) => parents
             .iter()
             .filter_map(Value::as_str)
-            .map(|parent| lookup(entries, parent, field, depth + 1))
+            .map(|parent| lookup(presets, parent, field, depth + 1))
             .find(|found| *found != Field::Absent)
             .unwrap_or(Field::Absent),
         _ => Field::Absent,
@@ -213,21 +184,20 @@ pub(crate) struct PresetDirectory {
 
 /// O `binaryDir` resolvido dos configure presets nao ocultos que a
 /// `condition` nao exclui, na ordem dos arquivos. Um preset sem pasta
-/// resolvida nao aparece.
+/// resolvida nao aparece; presets recusados nao tem nenhuma.
 pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
-    let entries = entries(root);
-    entries
+    let Ok(presets) = files::load(root) else {
+        return Vec::new();
+    };
+    presets
+        .entries
         .iter()
-        .filter(|item| {
-            item.get("hidden").and_then(Value::as_bool) != Some(true)
-                && condition_allows_linux(item.get("condition"))
-        })
-        .filter_map(|item| item.get("name").and_then(Value::as_str))
-        .filter_map(|name| {
-            resolve_binary_dir(root, &entries, name)
+        .filter(|entry| visible_on_linux(&entry.value))
+        .filter_map(|entry| {
+            resolve_binary_dir(root, &presets, &entry.name)
                 .ok()
                 .map(|directory| PresetDirectory {
-                    name: name.to_owned(),
+                    name: entry.name.clone(),
                     directory,
                 })
         })
@@ -236,18 +206,22 @@ pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
 
 /// A pasta de build que o preset declara, ou por que ela nao e' conhecida.
 pub(crate) fn binary_dir(root: &Path, preset: &str) -> Result<PathBuf, String> {
-    resolve_binary_dir(root, &entries(root), preset)
+    resolve_binary_dir(root, &files::load(root)?, preset)
 }
 
-fn resolve_binary_dir(root: &Path, entries: &[Value], preset: &str) -> Result<PathBuf, String> {
-    let declared = match lookup(entries, preset, &["binaryDir"], 0) {
+fn resolve_binary_dir(root: &Path, presets: &Presets, preset: &str) -> Result<PathBuf, String> {
+    let declared = match lookup(presets, preset, &["binaryDir"], 0) {
         Field::Text(text) => text,
         Field::Unset | Field::Absent => return Err("o preset não declara binaryDir".to_owned()),
     };
-    let expanded = Macros {
+    let file_dir = presets
+        .find(preset)
+        .map_or(root, |entry| presets.file_of(entry).dir.as_path());
+    let expanded = macros::Macros {
         root,
-        entries,
+        presets,
         preset,
+        file_dir,
     }
     .expand(&declared, 0)?;
     let path = PathBuf::from(expanded);
@@ -258,103 +232,12 @@ fn resolve_binary_dir(root: &Path, entries: &[Value], preset: &str) -> Result<Pa
     })
 }
 
-/// A expansao das macros do cmake-presets(7) no contexto de um preset.
-struct Macros<'a> {
-    root: &'a Path,
-    entries: &'a [Value],
-    preset: &'a str,
-}
-
-impl Macros<'_> {
-    fn expand(&self, text: &str, depth: usize) -> Result<String, String> {
-        if depth > MAX_DEPTH {
-            return Err("ciclo de macros em environment".to_owned());
-        }
-        let mut result = String::new();
-        let mut rest = text;
-        while let Some(start) = rest.find('$') {
-            result.push_str(&rest[..start]);
-            rest = &rest[start..];
-            let Some((namespace, after)) = ["${", "$env{", "$penv{", "$vendor{"]
-                .iter()
-                .find_map(|prefix| rest.strip_prefix(prefix).map(|after| (*prefix, after)))
-            else {
-                result.push('$');
-                rest = &rest[1..];
-                continue;
-            };
-            let end = after
-                .find('}')
-                .ok_or_else(|| format!("macro sem fechamento: {rest}"))?;
-            let name = &after[..end];
-            rest = &after[end + 1..];
-            result.push_str(&match namespace {
-                "${" => self.macro_value(name)?,
-                "$env{" => self.environment(name, depth)?,
-                "$penv{" => parent_environment(name)?,
-                _ => return Err(format!("$vendor{{{name}}}: o CMake ignora este preset")),
-            });
-        }
-        result.push_str(rest);
-        Ok(result)
-    }
-
-    fn macro_value(&self, name: &str) -> Result<String, String> {
-        let text = |path: &Path| path.to_string_lossy().into_owned();
-        Ok(match name {
-            "sourceDir" | "fileDir" => text(self.root),
-            "sourceParentDir" => text(self.root.parent().unwrap_or(self.root)),
-            "sourceDirName" => self
-                .root
-                .file_name()
-                .map(|name| name.to_string_lossy().into_owned())
-                .unwrap_or_default(),
-            "presetName" => self.preset.to_owned(),
-            "generator" => match lookup(self.entries, self.preset, &["generator"], 0) {
-                Field::Text(generator) => generator,
-                Field::Unset | Field::Absent => {
-                    return Err("a macro generator exige generator no preset".to_owned());
-                }
-            },
-            "hostSystemName" => host_system_name().to_owned(),
-            "dollar" => "$".to_owned(),
-            "pathListSep" => if cfg!(windows) { ";" } else { ":" }.to_owned(),
-            other => return Err(format!("macro desconhecida: ${{{other}}}")),
-        })
-    }
-
-    /// `$env{X}`: o `environment` do preset (com heranca, e com as macros do
-    /// proprio valor), senao o ambiente do core; ausente expande vazio.
-    fn environment(&self, name: &str, depth: usize) -> Result<String, String> {
-        if name.is_empty() {
-            return Err("$env{} sem nome".to_owned());
-        }
-        match lookup(self.entries, self.preset, &["environment", name], 0) {
-            Field::Text(value) => self.expand(&value, depth + 1),
-            Field::Unset => Ok(String::new()),
-            Field::Absent => parent_environment(name),
-        }
-    }
-}
-
-fn parent_environment(name: &str) -> Result<String, String> {
-    if name.is_empty() {
-        return Err("$penv{} sem nome".to_owned());
-    }
-    Ok(std::env::var(name).unwrap_or_default())
-}
-
-/// O `${hostSystemName}`: o nome que o `CMake` da' ao sistema do host.
-const fn host_system_name() -> &'static str {
-    if cfg!(windows) {
-        "Windows"
-    } else if cfg!(target_os = "macos") {
-        "Darwin"
-    } else if cfg!(target_os = "freebsd") {
-        "FreeBSD"
-    } else {
-        "Linux"
-    }
+/// Um arquivo de presets nas mensagens: relativo a raiz quando dentro dela.
+fn label(root: &Path, path: &Path) -> String {
+    path.strip_prefix(root).map_or_else(
+        |_| path.display().to_string(),
+        crate::platform::portable_relative,
+    )
 }
 
 #[cfg(test)]
@@ -380,7 +263,8 @@ mod tests {
             r#"{"version":6,"configurePresets":[
               {"name":"base","toolchainFile":"base.cmake",
                "cacheVariables":{"CMAKE_C_COMPILER":{"type":"FILEPATH","value":"/opt/cc"}}},
-              {"name":"child","inherits":["missing","base"]},
+              {"name":"empty","hidden":true},
+              {"name":"child","inherits":["empty","base"]},
               {"name":"unset","inherits":"base","cacheVariables":{"CMAKE_C_COMPILER":null}}]}"#,
         );
         let compiler = ["cacheVariables", "CMAKE_C_COMPILER"];
@@ -408,7 +292,8 @@ mod tests {
               {"name":"a","hidden":true,"cacheVariables":{"KV":null}},
               {"name":"b","hidden":true,"cacheVariables":{"KV":"from-b"}},
               {"name":"child","inherits":["a","b"]},
-              {"name":"later","inherits":["missing","b"]}]}"#,
+              {"name":"empty","hidden":true},
+              {"name":"later","inherits":["empty","b"]}]}"#,
         );
         assert_eq!(
             preset_value(&root, "child", &["cacheVariables", "KV"]),
@@ -534,5 +419,302 @@ mod tests {
         let listed: Vec<String> = binary_dirs(&root).into_iter().map(|p| p.name).collect();
         assert_eq!(listed, ["abs", "mine"]);
         assert_eq!(binary_dir(&root, "mine").unwrap(), root.join("m"));
+    }
+
+    fn write(root: &Path, relative: &str, body: &str) {
+        let path = root.join(relative);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, body).unwrap();
+    }
+
+    fn names(root: &Path) -> Vec<String> {
+        super::list_presets(root)
+            .unwrap()
+            .into_iter()
+            .map(|preset| preset.name)
+            .collect()
+    }
+
+    /// C1-18, medido com o `CMake` 4.4.5 em 2026-11-09 (consolidacao C §17):
+    /// `cmake --preset top` configurou em `out/top` e `--preset sub` em
+    /// `sub/out/sub`, com o `binaryDir` herdado de `sub/more.json`.
+    #[test]
+    fn include_is_followed_nested_relative_to_the_including_file_and_read_once() {
+        let root = root(
+            "include",
+            r#"{"version":6,"include":["sub/more.json","shared/x.json"],"configurePresets":[
+              {"name":"top","inherits":"base","generator":"Ninja"}]}"#,
+        );
+        write(
+            &root,
+            "sub/more.json",
+            r#"{"version":6,"include":["../shared/./x.json"],"configurePresets":[
+              {"name":"base","hidden":true,"binaryDir":"${fileDir}/out/${presetName}"},
+              {"name":"sub","inherits":"base","generator":"Ninja"}]}"#,
+        );
+        write(
+            &root,
+            "shared/x.json",
+            r#"{"version":6,"configurePresets":[{"name":"shared","binaryDir":"${fileDir}/s"}]}"#,
+        );
+        assert_eq!(names(&root), ["top", "sub", "shared"]);
+        assert_eq!(binary_dir(&root, "top").unwrap(), root.join("out/top"));
+        assert_eq!(binary_dir(&root, "sub").unwrap(), root.join("sub/out/sub"));
+        assert_eq!(binary_dir(&root, "shared").unwrap(), root.join("shared/s"));
+        let found: Vec<PathBuf> = binary_dirs(&root)
+            .into_iter()
+            .map(|p| p.directory)
+            .collect();
+        assert_eq!(
+            found,
+            [
+                root.join("out/top"),
+                root.join("sub/out/sub"),
+                root.join("shared/s")
+            ]
+        );
+        assert_eq!(
+            super::default_preset(&root),
+            super::PresetDefault::Several(
+                "CMakePresets.json",
+                vec!["top".to_owned(), "sub".to_owned(), "shared".to_owned()]
+            )
+        );
+        assert_eq!(
+            preset_value(&root, "top", &["generator"]).as_deref(),
+            Some("Ninja")
+        );
+    }
+
+    /// Um caso que o `CMake` 4.4.5 recusa: o nome, o `CMakePresets.json`,
+    /// os outros arquivos e o comeco do motivo.
+    type Refusal = (
+        &'static str,
+        &'static str,
+        &'static [(&'static str, &'static str)],
+        &'static str,
+    );
+
+    const OK: &str = r#"{"version":6,"configurePresets":[{"name":"m","binaryDir":"o"}]}"#;
+
+    const REFUSALS: [Refusal; 12] = [
+        (
+            "cycle",
+            r#"{"version":6,"include":["sub/b.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            &[(
+                "sub/b.json",
+                r#"{"version":6,"include":["../CMakePresets.json"],"configurePresets":[]}"#,
+            )],
+            "ciclo de include entre arquivos de presets: CMakePresets.json",
+        ),
+        (
+            "missing",
+            r#"{"version":6,"include":["nada.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            &[],
+            "arquivo de presets não encontrado: nada.json",
+        ),
+        (
+            "old",
+            r#"{"version":3,"include":["sub/m.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            &[("sub/m.json", OK)],
+            "CMakePresets.json: include exige version 4 ou maior",
+        ),
+        (
+            "duplicate",
+            r#"{"version":6,"include":["sub/m.json"],"configurePresets":[{"name":"m","binaryDir":"p"}]}"#,
+            &[("sub/m.json", OK)],
+            "preset de configure repetido: \"m\"",
+        ),
+        (
+            "unreachable",
+            r#"{"version":6,"configurePresets":[{"name":"p","inherits":"u","binaryDir":"o"}]}"#,
+            &[(
+                "CMakeUserPresets.json",
+                r#"{"version":6,"configurePresets":[{"name":"u","hidden":true}]}"#,
+            )],
+            "o preset de configure \"p\" herda de um preset que o arquivo dele não inclui",
+        ),
+        (
+            "siblings",
+            r#"{"version":6,"include":["sub/a.json","sub/b.json"],"configurePresets":[]}"#,
+            &[
+                (
+                    "sub/a.json",
+                    r#"{"version":6,"configurePresets":[{"name":"a","inherits":"b0","binaryDir":"o"}]}"#,
+                ),
+                (
+                    "sub/b.json",
+                    r#"{"version":6,"configurePresets":[{"name":"b0","hidden":true}]}"#,
+                ),
+            ],
+            "o preset de configure \"a\" herda de um preset que o arquivo dele não inclui",
+        ),
+        (
+            "noversion",
+            r#"{"version":6,"include":["sub/x.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            &[("sub/x.json", r#"{"configurePresets":[]}"#)],
+            "sub/x.json sem o campo version",
+        ),
+        (
+            "invalid",
+            r#"{"version":6,"include":["sub/x.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            &[("sub/x.json", r#"{"version":6,"configurePresets":["#)],
+            "sub/x.json inválido: ",
+        ),
+        (
+            "loop",
+            r#"{"version":6,"include":["CMakeUserPresets.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            &[(
+                "CMakeUserPresets.json",
+                r#"{"version":6,"configurePresets":[{"name":"u","binaryDir":"o"}]}"#,
+            )],
+            "ciclo de include entre arquivos de presets: CMakeUserPresets.json",
+        ),
+        (
+            "noparent",
+            r#"{"version":6,"configurePresets":[{"name":"p","inherits":"missing","binaryDir":"o"}]}"#,
+            &[],
+            "o preset de configure \"p\" herda de \"missing\", que não existe",
+        ),
+        (
+            "inheritcycle",
+            r#"{"version":6,"configurePresets":[{"name":"p","inherits":"b","binaryDir":"o"},
+                  {"name":"b","inherits":"p","hidden":true}]}"#,
+            &[],
+            "herança cíclica no preset de configure \"p\"",
+        ),
+        (
+            "macro",
+            r#"{"version":9,"include":["${presetName}/m.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            &[],
+            "CMakePresets.json: include inválido: macro não aceita em include: ${presetName}",
+        ),
+    ];
+
+    /// O que o `CMake` 4.4.5 recusa ("Could not read presets") recusa todos
+    /// os presets, com o motivo: nunca parte da lista nem um padrao.
+    #[test]
+    fn what_cmake_refuses_refuses_every_preset_with_the_reason() {
+        for (name, presets, others, reason) in REFUSALS {
+            let root = root(name, presets);
+            for (relative, body) in others {
+                write(&root, relative, body);
+            }
+            let refused = super::list_presets(&root).unwrap_err();
+            assert!(refused.starts_with(reason), "{name}: {refused}");
+            assert_eq!(
+                super::default_preset(&root),
+                super::PresetDefault::Refused(refused.clone()),
+                "{name}"
+            );
+            assert_eq!(binary_dir(&root, "p").unwrap_err(), refused, "{name}");
+            assert!(binary_dirs(&root).is_empty(), "{name}");
+            assert_eq!(preset_value(&root, "p", &["binaryDir"]), None, "{name}");
+        }
+    }
+
+    #[test]
+    fn include_macros_follow_the_version_of_the_including_file() {
+        use super::macros::include_path;
+        let root = Path::new("/r/proj");
+        let dir = Path::new("/r/proj/cmake");
+        let path = std::env::var("PATH").unwrap_or_default();
+        for text in ["${sourceDir}/a.json", "$penv{PATH}", "$env{X}"] {
+            assert_eq!(
+                include_path(text, 6, root, dir).unwrap(),
+                text,
+                "literal na 6"
+            );
+        }
+        assert_eq!(
+            include_path("$penv{PATH}/a", 7, root, dir).unwrap(),
+            format!("{path}/a")
+        );
+        assert_eq!(
+            include_path("${sourceDir}/a", 8, root, dir).unwrap_err(),
+            "macro não aceita em include na versão 8"
+        );
+        assert_eq!(
+            include_path(
+                "${sourceDir}/${fileDir}/${sourceDirName}${dollar}",
+                9,
+                root,
+                dir
+            )
+            .unwrap(),
+            "/r/proj//r/proj/cmake/proj$"
+        );
+        assert_eq!(
+            include_path("$env{X}", 9, root, dir).unwrap_err(),
+            "macro não aceita em include na versão 9"
+        );
+        assert_eq!(
+            include_path("${generator}", 10, root, dir).unwrap_err(),
+            "macro não aceita em include: ${generator}"
+        );
+        assert_eq!(
+            include_path("${sourceDir", 9, root, dir).unwrap_err(),
+            "macro sem fechamento: ${sourceDir"
+        );
+
+        let root = super::tests::root(
+            "include-macros",
+            r#"{"version":9,"include":["${sourceDir}/cmake/a.json"],"configurePresets":[]}"#,
+        );
+        write(
+            &root,
+            "cmake/a.json",
+            r#"{"version":9,"include":["${fileDir}/b.json"],"configurePresets":[{"name":"a","binaryDir":"o"}]}"#,
+        );
+        write(
+            &root,
+            "cmake/b.json",
+            r#"{"version":9,"configurePresets":[{"name":"b","binaryDir":"o"}]}"#,
+        );
+        assert_eq!(names(&root), ["a", "b"]);
+    }
+
+    /// O padrao (52 §14.2) e' do lado do usuario quando so' o
+    /// `CMakeUserPresets.json` alcanca o preset; um arquivo que os dois
+    /// alcancam e' do projeto.
+    #[test]
+    fn presets_reached_only_from_the_user_file_are_the_user_side() {
+        let root = root(
+            "user-side",
+            r#"{"version":6,"include":["common.json"],"configurePresets":[
+              {"name":"p1","binaryDir":"o"},{"name":"p2","binaryDir":"o"}]}"#,
+        );
+        write(
+            &root,
+            "common.json",
+            r#"{"version":6,"configurePresets":[{"name":"c","binaryDir":"o"}]}"#,
+        );
+        write(
+            &root,
+            "CMakeUserPresets.json",
+            r#"{"version":6,"include":["local/mine.json","common.json"],"configurePresets":[]}"#,
+        );
+        write(
+            &root,
+            "local/mine.json",
+            r#"{"version":6,"configurePresets":[{"name":"mine","binaryDir":"${fileDir}/m"}]}"#,
+        );
+        assert_eq!(names(&root), ["p1", "p2", "c", "mine"]);
+        assert_eq!(
+            super::default_preset(&root),
+            super::PresetDefault::One("mine".to_owned(), "CMakeUserPresets.json")
+        );
+        assert_eq!(binary_dir(&root, "mine").unwrap(), root.join("local/m"));
+        // O `include` implicito e' do arquivo do usuario, nao do que ele
+        // inclui: o `CMake` 4.4.5 recusa ("unreachable from preset's file").
+        write(
+            &root,
+            "local/mine.json",
+            r#"{"version":6,"configurePresets":[{"name":"mine","inherits":"p1"}]}"#,
+        );
+        assert_eq!(
+            super::list_presets(&root).unwrap_err(),
+            "o preset de configure \"mine\" herda de um preset que o arquivo dele não inclui"
+        );
     }
 }

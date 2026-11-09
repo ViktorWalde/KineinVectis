@@ -6,6 +6,7 @@ mod existing;
 mod existing_cdb;
 mod existing_kit;
 mod existing_recovery;
+mod preset_include;
 
 use kinein_protocol::JsonRpcRequest;
 use serde_json::{Value, json};

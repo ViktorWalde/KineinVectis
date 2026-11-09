@@ -160,6 +160,7 @@ flowchart LR
   n_core_cmake --> n_core_msvc
   n_core_cmake --> n_core_platform
   n_core_cmake --> n_core_toolchain
+  n_core_cmake_presets --> n_core_platform
   n_core_configaction --> n_core_cdb
   n_core_configaction --> n_core_cmake
   n_core_configaction --> n_core_fsops
@@ -305,7 +306,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-51 módulos, 158 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+51 módulos, 159 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -320,7 +321,7 @@ flowchart LR
 | `cargo` | toolchain | Servico Cargo: |
 | `cdb` | cmake, cmake_presets, platform | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | cmake_presets, fsops, msvc, platform, toolchain | Servico CMake: |
-| `cmake_presets` | — | Os configure presets do projeto: |
+| `cmake_presets` | platform | Os configure presets do projeto: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |

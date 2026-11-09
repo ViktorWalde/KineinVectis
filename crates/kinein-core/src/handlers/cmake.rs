@@ -380,8 +380,8 @@ fn status_result(root: &std::path::Path) -> CmakeStatusResult {
     // Os presets entre os quais a pessoa escolhe, quando o configure sem
     // preset seria recusado (52 §14.2).
     let (preset_choices, preset_choices_file) = match cmake::choose_default(root) {
-        Err((file, names)) => (names, Some(file.to_owned())),
-        Ok(_) => (Vec::new(), None),
+        Err(cmake::DefaultRefusal::Several(file, names)) => (names, Some(file.to_owned())),
+        Ok(_) | Err(cmake::DefaultRefusal::Refused(_)) => (Vec::new(), None),
     };
     // O diagnostico da CDB e' mais amplo que o `has_compile_commands`: este
     // olha so o build dir da IDE, e a CDB em uso pode estar no `binaryDir` de

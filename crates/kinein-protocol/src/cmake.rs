@@ -28,7 +28,8 @@ pub struct CmakePresetInfo {
 #[serde(rename_all = "camelCase")]
 pub struct CmakePresetsResult {
     /// Non-hidden configure presets, in file order
-    /// (`CMakePresets.json` then `CMakeUserPresets.json`).
+    /// (`CMakePresets.json` then `CMakeUserPresets.json`), each file before
+    /// the files it includes (`0.207.0`).
     pub presets: Vec<CmakePresetInfo>,
 }
 

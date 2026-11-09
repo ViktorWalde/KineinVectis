@@ -35,16 +35,25 @@ pub(crate) fn choose_preset(root: &Path, request: Option<String>) -> Result<Pres
         }
         return Ok((Some(preset), Some("configuration")));
     }
-    choose_default(root).map_err(|(file, names)| {
-        format!(
+    choose_default(root).map_err(|refusal| match refusal {
+        DefaultRefusal::Several(file, names) => format!(
             "o projeto tem {} presets de configure em {file} ({}): escolha um",
             names.len(),
             names.join(", ")
-        )
+        ),
+        DefaultRefusal::Refused(reason) => reason,
     })
 }
 
-pub(crate) fn choose_default(root: &Path) -> Result<PresetChoice, (&'static str, Vec<String>)> {
+/// Why the configure without a requested preset has no default.
+pub(crate) enum DefaultRefusal {
+    /// Several presets in the same file: the person chooses (52 §14.2).
+    Several(&'static str, Vec<String>),
+    /// `CMake` would refuse every preset (C1-18).
+    Refused(String),
+}
+
+pub(crate) fn choose_default(root: &Path) -> Result<PresetChoice, DefaultRefusal> {
     if let Ok(Some(selected)) = super::selected_configuration(root)
         && list_presets(root).is_ok_and(|presets| presets.iter().any(|p| p.name == selected))
     {
@@ -58,6 +67,7 @@ pub(crate) fn choose_default(root: &Path) -> Result<PresetChoice, (&'static str,
     match default_preset(root) {
         PresetDefault::Absent => Ok((None, None)),
         PresetDefault::One(preset, file) => Ok((Some(preset), Some(file))),
-        PresetDefault::Several(file, names) => Err((file, names)),
+        PresetDefault::Several(file, names) => Err(DefaultRefusal::Several(file, names)),
+        PresetDefault::Refused(reason) => Err(DefaultRefusal::Refused(reason)),
     }
 }

@@ -362,8 +362,10 @@ fn choose(
 /// `binaryDir` dele. Sem CDB ali, nenhuma outra a substitui.
 fn chosen(root: &Path, preset: &str, ide: &Path, found: &[Found]) -> Choice {
     let with_cdb = |directory: &Path| find(found, directory);
-    let listed = crate::cmake::list_presets(root)
-        .is_ok_and(|presets| presets.iter().any(|entry| entry.name == preset));
+    let listed = match crate::cmake::list_presets(root) {
+        Ok(presets) => presets.iter().any(|entry| entry.name == preset),
+        Err(reason) => return absent(CdbAbsenceKind::ChosenConfiguration, reason),
+    };
     if !listed {
         return absent(
             CdbAbsenceKind::ChosenConfiguration,

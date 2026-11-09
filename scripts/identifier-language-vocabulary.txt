@@ -626,6 +626,7 @@ custom
 cutting
 cycle
 cycles
+cyclic
 dado
 dados
 daemon
@@ -1295,6 +1296,7 @@ inbox
 include
 included
 includes
+including
 inclusion
 incoming
 incompatible
@@ -2887,6 +2889,7 @@ variants
 vars
 vary
 vector
+vendor
 verb
 verbatim
 verbose

@@ -102,10 +102,24 @@ explícito tem precedência).
   preset que vale do primeiro arquivo que tem algum → **vários: o configure é
   recusado com `INVALID_PARAMS`**, dizendo o arquivo e os nomes, e nenhum job
   roda. O "primeiro da lista" do P0 deixou de ser escolhido pela pessoa.
+  Desde o `0.207.0` (C1-18), o lado do usuário inclui o que só o
+  `CMakeUserPresets.json` alcança por `include`, e presets que o CMake
+  recusaria (veja `cmake.presets.list`) recusam o configure sem preset pedido
+  com `INVALID_PARAMS` e o motivo, sem configurar sem preset; até então um
+  `CMakeUserPresets.json` inválido era ignorado, e o configure reprovava
+  depois no CMake.
 - `cmake.presets.list {}` → `{ presets: [{ name, displayName? }] }` —
   configure presets não ocultos de `CMakePresets.json` +
-  `CMakeUserPresets.json`, na ordem dos arquivos; JSON inválido → erro
-  humano.
+  `CMakeUserPresets.json` e dos arquivos que eles incluem (`include`, schema
+  4+; `0.207.0`, C1-18), na ordem dos arquivos: os de cada arquivo antes dos
+  que ele inclui. O caminho relativo vale a partir do arquivo que inclui, e as
+  macros dele seguem a versão desse arquivo (nenhuma até a 6, só `$penv{}` na
+  7 e na 8, todas menos `$env{}` e as do preset da 9 em diante). O que o
+  CMake 4.4.5 recusa recusa a lista inteira, com erro humano e o motivo, sem
+  lista parcial: JSON inválido, ciclo de `include`, arquivo ausente, `include`
+  antes da versão 4, arquivo sem `version`, macro não aceita no caminho, nome
+  repetido, pai inexistente, pai num arquivo que o do filho não inclui e
+  herança cíclica.
 - `cmake.targets.list {}` → `{ origin, targets: [{ name, kind, artifacts[],
   sources, generatedSources, languages[], standard?, includes, defines,
   sysroot?, dependencies[], sourceDir? }] }` — lidos da resposta codemodel-v2

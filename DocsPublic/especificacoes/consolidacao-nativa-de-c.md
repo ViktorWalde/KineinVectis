@@ -1023,3 +1023,129 @@ pasta longa fora da raiz é cortada no fim. Valem também os limites declarados
 em §16 e C1-18. C-05 tem correção e provas localizadas; C1 permanece aberto
 com C-04, C1-07, origem por toolchain file e `CC` do ambiente e consulta de
 versão bloqueada.
+
+## 17. C1: configure no `binaryDir`, configuração ativa e `include` de presets — desenho de 2026-11-09
+
+Inventário localizado de C-04 ([62 §3.4](../roadmaps/62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica))
+e de C1-18 (§16) antes da mudança, nos donos `cmake/`, `cmake_presets.rs`,
+`cdb.rs` e nos consumidores da pasta de build. As medições usam CMake 4.4.5 e
+GCC 16.2.1 reais, com o core do commit 3c224e9b:
+
+| ID / capacidade | Evidência e causa | Severidade / impacto | Decisão e prova necessária |
+| --- | --- | --- | --- |
+| C1-18 / `include` dos presets | Como em §16. Medido: o CMake segue `include` aninhado, relativo ao arquivo que inclui, aceita o mesmo arquivo duas vezes e recusa **todos** os presets com ciclo ("Cyclic include among presets files"), arquivo ausente ("File not found"), `include` em versão menor que 4 e nome repetido ("Duplicate preset"). Macros no caminho: nenhuma até a versão 6, só `$penv{}` nas 7–8, todas menos `$env{}` e as do preset (`presetName`, `generator`) da 9 em diante; outra macro recusa ("Invalid \"include\" field"). `${fileDir}` no `binaryDir` herdado de outro arquivo vale a pasta do arquivo que define o preset em uso, nas versões 6 e 12 | Média: um projeto que divide presets por `include` aparece sem eles, e o configure o reprovaria com outra mensagem | Corrigir em `cmake_presets.rs`, com as mesmas recusas e o motivo. Provar com aninhamento, inclusão repetida, ciclo, ausência, versão, duplicata, macros por versão e `${fileDir}`, e com `cmake --preset` real resolvendo a mesma pasta que a IDE |
+| C1-19 / configure fora do `binaryDir` | `configure_command` (`cmake/mod.rs`) passa `-B .kinein/build` também com `--preset`. Medido: `cmake --preset top -B ide` configura em `ide/`, e o `binaryDir` do preset fica vazio | Alta: a IDE e o terminal configuram pastas diferentes para o mesmo preset, e trocar de preset reconfigura a mesma pasta | Configurar na pasta da configuração (decisões abaixo). Provar com dois presets de `binaryDir` distinto, troca e retorno sem reconfigurar o outro, e o argv do CMake gravado |
+| C1-20 / registros da IDE numa pasta só | A tentativa pendente, a trava, o kit, o preset anotado e o perfil de rigor (`cmake/attempt.rs`, `cmake/rigor.rs`, `cmake/mod.rs`) moram em `.kinein/build`; o sucesso apaga `.kinein/configuration.json` (C-05) | Alta: o configure de uma configuração invalidaria os registros de outra | Os registros vão para a pasta de cada configuração, e o registro de `.kinein/configuration.json` passa a ser a configuração ativa. Provar a tentativa incompleta de uma configuração sem afetar a outra, com mutações |
+| C1-21 / consumidores fixos em `.kinein/build` | Build (`build/cmake.rs`), run (`run.rs`), debug (`dap/target.rs`), ctest (`test/mod.rs`), gravação (`project/flash_origin.rs`), qmlls (`handlers/qml.rs`), contexto (`index/context/mod.rs`), ações de configuração (`configaction/builddir.rs`) e `toolchain/project.rs` usam `cmake::build_dir` ou o caminho literal. Confirmada por leitura | Alta: com o C-19 corrigido, compilar e executar sairiam de outra pasta que a do contexto | Um dono, a configuração ativa, para todos. Provar build, run, debug e ctest reais na pasta do preset, e o contexto e o Project Health na mesma pasta |
+| C1-22 / multi-config | `CmakeModel` lê só `/configurations/0` (`cmake/model.rs`); `cmake --build` vai sem `--config`; `collect_executables` percorre a pasta inteira. Medido com Ninja Multi-Config: três configurações no codemodel, três entradas da CDB para o mesmo arquivo, o clangd usa a primeira (Debug), e `cmake --build` sem `--config` compila `CMAKE_DEFAULT_BUILD_TYPE`, senão a primeira; após dois builds há `Debug/app` e `Release/app` | Média: com `CMAKE_DEFAULT_BUILD_TYPE` diferente, o build compila uma configuração e o contexto mostra outra; o run recusa por achar dois executáveis | Usar a configuração que o clangd vê (decisão abaixo). Provar com Ninja Multi-Config real, `CMAKE_DEFAULT_BUILD_TYPE=Release` e mutações |
+| C1-23 / UI sem troca da configuração | O Project Health só oferece "Escolher configuração…" quando a escolha é obrigatória; o menu corta no fim a pasta longa fora da raiz (§16.1) | Média: trocar a configuração ativa ou voltar ao automático exige editar `.kinein/configuration.json` | Menu de configuração sempre que há presets, com a ativa marcada e "Automático". Provar na UI nativa isolada |
+
+**Decisões do autor em 2026-11-09.** O configure de um preset que declara
+`binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
+a ativa quando o configure começa. Com gerador multi-config, a IDE usa a
+configuração que o clangd lê. O cache da pasta do preset recebe as definições da
+IDE, e a IDE mostra isso. Um preset sem `binaryDir` configura em
+`.kinein/presets/<preset>`.
+
+**Presets (C1-18).** A leitura segue `include` como o CMake: o caminho
+relativo vale a partir do arquivo que inclui. Um arquivo incluído também inclui,
+e um arquivo já lido não é lido de novo. `CMakeUserPresets.json` inclui
+`CMakePresets.json` mesmo sem `include`. As macros do caminho seguem a versão do
+arquivo que inclui. Ciclo, arquivo ausente ou inválido, `include` antes da
+versão 4, macro não aceita, nome repetido, pai inexistente ou fora do alcance
+do arquivo do filho e herança cíclica recusam todos os presets com o motivo
+("Could not find inherited preset" e "Cyclic preset inheritance" no CMake): `cmake.presets.list` falha, e não há padrão nem candidata de preset.
+A ordem da lista não muda: `CMakePresets.json` e o que ele inclui, depois
+`CMakeUserPresets.json` e o que só ele inclui; os presets de cada arquivo vêm
+antes dos que ele inclui. O padrão (52 §14.2) considera do lado do usuário os
+presets alcançados só por `CMakeUserPresets.json`. `${fileDir}` vale a pasta do
+arquivo que define o preset em uso.
+
+**Pasta da configuração (C1-19).** `cmake::configuration_dir` responde:
+- sem preset, `.kinein/build`;
+- preset com `binaryDir`, a pasta resolvida, passada ao CMake com `-B`. A query
+  do file-api precisa estar na pasta antes do configure, e o `-B` com o mesmo
+  caminho garante que o CMake configure onde a IDE lê;
+- preset sem `binaryDir`, `.kinein/presets/<preset>`. Nome vazio, `.`, `..` ou
+  com separador de caminho é recusado com o motivo;
+- `binaryDir` não resolvido (§16) recusa antes do CMake, que também recusaria.
+
+Uma pasta fora da raiz vale, como no C-05. Antes do comando, a saída do
+configure diz em que pasta ele roda e, numa pasta de preset, que o cache recebe
+as definições da IDE e que o terminal as herda.
+
+**Configuração ativa (C1-20).** `.kinein/configuration.json` passa a registrar
+a configuração ativa. O configure grava o preset pedido antes do produtor, ou
+apaga o registro quando roda sem preset; o sucesso não o apaga mais. A
+tentativa pendente, a trava, o kit, o preset anotado e o perfil de rigor moram
+na pasta da configuração. Sem registro, vale o automático:
+1. `.kinein/build` já configurado pela IDE, com o preset anotado nele, inclusive
+   o de antes do C-04;
+2. senão, o preset padrão único;
+3. senão, nenhum preset, em `.kinein/build`.
+
+Com vários presets e nenhuma escolha, a IDE pergunta, como no configure.
+Escolher pela UI grava o registro sem configurar (C-05), e `null` volta ao
+automático. Na regra 2 do §16, a CDB em uso é a da pasta da configuração
+escolhida. A exceção do `.kinein/build` anotado com o mesmo preset deixa de
+existir: esse `.kinein/build`, de antes do C-04, continua valendo no automático.
+
+**Consumidores (C1-21).** Build, run, debug, ctest, gravação, qmlls, contexto,
+ações de configuração e `toolchain/project.rs` leem a configuração ativa. Sem
+configuração ativa, cada um recusa com o motivo do configure.
+
+**Multi-config (C1-22).** A configuração usada é a primeira de
+`CMAKE_CONFIGURATION_TYPES` no cache, a mesma que o clangd lê da CDB. Build e
+ctest passam `--config`, e o codemodel é lido por nome. O run e o debug procuram
+o executável nos artefatos dessa configuração. Quando `CMAKE_DEFAULT_BUILD_TYPE`
+é outra, o status traz as duas, e a faixa mostra a diferença. Trocar de
+configuração numa pasta multi-config fica para o C-03, que trata da CDB 1:N.
+
+**Interface (C1-23).** Com presets, o Project Health oferece o menu de
+configuração a qualquer momento: as configurações, a ativa marcada, e
+"Automático". A pasta longa é cortada no meio, e o caminho inteiro fica na dica.
+O contrato do IPC é escrito no
+[03 cmake](../arquitetura/03-dominios/cmake.md) antes da mudança, com nova
+versão do protocolo.
+
+Fatias, cada uma com commit próprio: C1-18; C1-19–C1-21 com o IPC; C1-22; C1-23.
+
+### 17.1 C1-18: integração e provas — 2026-11-09
+
+`cmake_presets.rs` foi dividido por responsabilidade. `files.rs` lê os arquivos
+com `include` e recusa o que o CMake recusa. `macros.rs` expande as macros com
+duas políticas, `binaryDir` e `include`. O módulo-raiz guarda a lista, o
+padrão, a herança e o `binaryDir`. A lista, o padrão, os campos herdados
+(`toolchainFile` e o compilador do preset) e as pastas candidatas da CDB vêm da
+mesma leitura. O padrão ganhou a recusa com o motivo: o `cmake.status` não
+oferece escolhas nesse caso, o configure sem preset pedido é recusado, e uma
+configuração escolhida mostra o motivo em `cdbAbsence`. Protocolo 0.207.0, sem
+campo novo.
+
+Além do `include`, muda o seguinte: um `CMakeUserPresets.json` inválido, um pai
+inexistente e a herança cíclica recusam todos os presets, como no CMake. Antes,
+o padrão ignorava o arquivo inválido, e o pai inexistente e o ciclo deixavam o
+campo ausente.
+
+Provas:
+- testes do dono: aninhamento com caminho relativo, `./` e `../`, arquivo
+  incluído duas vezes e lido uma, e `${fileDir}` do arquivo do preset em uso;
+  doze recusas com o motivo e sem lista, padrão, pasta nem campo; macros por
+  versão; lado do usuário, com o `include` implícito só no arquivo do usuário;
+- regressão com `cmake --preset` real, GCC 16.2.1 e Clang 23.1.4: dois presets
+  configurados fora da IDE, um do arquivo incluído e outro da raiz, herdando o
+  `binaryDir` com `${fileDir}`. A pasta vem da saída do próprio CMake. A IDE
+  lista os dois, acha as duas CDBs nessas pastas e aceita a escolha. Sem o
+  arquivo incluído, a lista falha com o motivo, o CMake também recusa, e a
+  configuração escolhida mostra o motivo;
+- vinte mutantes reprovam, entre eles o `include` ignorado, o caminho a partir
+  da raiz, o ciclo, a versão, a duplicata, o pai fora do alcance, o pai
+  inexistente, a herança cíclica, o lado do usuário, o `${fileDir}`, as macros
+  por versão e o motivo escondido no configure e na CDB.
+
+Limites: a ordem da lista não é a do `cmake --list-presets`, que põe o arquivo
+do usuário primeiro. Os build e test presets não são lidos, então um nome
+repetido entre eles não recusa. Campos de tipo errado e campos obrigatórios por
+versão seguem sem validação própria: o CMake recusa no configure, com a
+mensagem dele. O teste de serial que reprovou sem o `TMPDIR` do gate é de outra
+causa, registrada como INF-05 no 62 §3.4.

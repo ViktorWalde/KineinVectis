@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-17 e C-05 corrigidos com provas; abertos C-04 (com C1-18), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-18 e C-05 corrigidos com provas; abertos C-04 (C1-19–C1-23), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -397,7 +397,17 @@ auditorias e provas posteriores datadas nos donos:**
   diretório canônico. Testes: dois presets com `binaryDir` distintos, troca e
   retorno sem reconfigurar o outro, gerador multi-config, build dir de preset
   configurado fora da IDE, contexto e Project Health coerentes. Decisão:
-  corrigir na etapa C, com contrato antes de mudar o IPC. Estado aberto.
+  corrigir na etapa C, com contrato antes de mudar o IPC. Medido em 2026-11-09
+  com CMake 4.4.5: o `-B` da IDE vence o `binaryDir`, e com Ninja
+  Multi-Config a CDB traz uma entrada por configuração, das quais o clangd usa
+  a primeira. Inventário C1-18–C1-23 e decisões do autor de 2026-11-09:
+  configure no `binaryDir`; configuração ativa ao começar o configure; com
+  multi-config, a que o clangd vê; cache comum com as definições da IDE à
+  vista; preset sem `binaryDir` em `.kinein/presets/<preset>`. Desenho na
+  [consolidação C §17](../especificacoes/consolidacao-nativa-de-c.md#17-c1-configure-no-binarydir-configuração-ativa-e-include-de-presets--desenho-de-2026-11-09).
+  Estado aberto, em quatro fatias: C1-18, corrigido em 2026-11-09
+  ([40.7 §7.394](40.7-registro-das-entregas.md), protocolo 0.207.0); C1-19–C1-21
+  com o IPC; C1-22; C1-23.
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste
@@ -538,6 +548,23 @@ auditorias e provas posteriores datadas nos donos:**
   render da última linha vem antes dele; com um filho que segura o PTY, a
   sessão termina no teto. Três mutações reprovam. A carga de CPU sozinha não
   reproduziu a falha original, nem antes nem depois.
+- **INF-05 — Linha da tela do terminal juntada por heurística nos testes.**
+  Dono e evidência: `render_lines` em `crates/kinein-core/src/tests/mod.rs`.
+  Observado em 2026-11-09, no `cargo test` sem o `TMPDIR` do gate:
+  `serial::ownership_run::port_and_script_names_remain_literal_in_both_micropython_run_methods`
+  reprova sempre, com o caminho `…/file it's safe.py` partido em `…/file` e
+  `it's safe.py`; com o `TMPDIR` do gate, passa. Causa confirmada: o render não
+  diz se a linha continua na seguinte, e o ajudante só junta uma linha cheia
+  que não termina em espaço. Aqui o espaço cai exatamente na coluna 80 (79
+  caracteres antes dele, com `/tmp` e PID de 7 dígitos). O `run.script` passa o
+  argv sem shell; o defeito é da prova. Severidade média: o veredito depende do
+  comprimento do caminho temporário e do PID, e o gate não o vê. Decisão do
+  autor em 2026-11-09: cada linha do `event.terminal.render` passa a dizer se
+  continua na seguinte, pela marca `WRAPLINE` que o `alacritty_terminal` já põe
+  na última célula da linha quebrada, com contrato e versão nova do protocolo;
+  o ajudante junta só por essa marca. Commit próprio, depois do C1-18. Testes:
+  quebra exatamente num espaço, linha cheia sem quebra, quebra dupla e
+  redimensionamento, com mutações. Estado aberto.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

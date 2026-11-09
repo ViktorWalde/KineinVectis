@@ -14,7 +14,7 @@ mod rigor;
 pub use crate::cmake_presets::{PresetDefault, default_preset, list_presets};
 pub use attempt::{ConfigureAttempt, begin_configure, complete_configure, incomplete_configure};
 pub use configuration::{select_configuration, selected_configuration};
-pub(crate) use preset_selection::{choose_default, choose_preset};
+pub(crate) use preset_selection::{DefaultRefusal, choose_default, choose_preset};
 pub use rigor::{applied_rigor, configure_with_rigor, needs_configure, record_rigor, rigor_key};
 
 use std::{
@@ -658,9 +658,22 @@ mod tests {
             default_preset(&root),
             PresetDefault::One("dev-local".to_owned(), "CMakeUserPresets.json")
         );
-        // Um arquivo de usuario invalido nao esconde o do projeto.
+        // Um arquivo de usuario invalido: o `CMake` 4.4.5 recusa todos os
+        // presets ("Could not read presets"), e a IDE tambem (C1-18). Ate'
+        // 2026-11-09 o padrao saia dos presets do projeto, e o configure
+        // reprovava depois no `CMake`.
         std::fs::write(root.join("CMakeUserPresets.json"), "{ nao e json").unwrap();
-        assert!(matches!(default_preset(&root), PresetDefault::Several(..)));
+        assert!(matches!(
+            default_preset(&root),
+            PresetDefault::Refused(reason) if reason.starts_with("CMakeUserPresets.json inválido")
+        ));
+        // O configure sem preset pedido recusa com o mesmo motivo, sem
+        // configurar sem preset.
+        assert!(
+            super::choose_preset(&root, None)
+                .unwrap_err()
+                .starts_with("CMakeUserPresets.json inválido")
+        );
 
         // O preset usado: anotado so' com CMakeCache (configurado) — e apagado
         // quando o configure seguinte roda sem preset.
