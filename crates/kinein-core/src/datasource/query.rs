@@ -208,11 +208,7 @@ pub fn run_sqlite(
         let mut stmt = conexao
             .prepare(sql)
             .map_err(|e| sqlite::error_response(&e))?;
-        resultado.columns = stmt
-            .column_names()
-            .iter()
-            .map(|c| (*c).to_owned())
-            .collect();
+        resultado.columns = stmt.column_names().map(str::to_owned).collect();
         let largura = resultado.columns.len();
         let mut linhas = stmt.query([]).map_err(|e| sqlite::error_response(&e))?;
         while let Some(linha) = linhas.next().map_err(|e| sqlite::error_response(&e))? {

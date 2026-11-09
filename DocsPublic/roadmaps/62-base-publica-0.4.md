@@ -475,6 +475,29 @@ auditorias e provas posteriores datadas nos donos:**
   local: bash anterior a 5.1, fish anterior a 4 (sem marcador nativo, cobre-o a
   função injetada) e Windows, cujo shell não tem integração e recebe o comando
   na abertura.
+- **INF-03 — SQLite embutido com leitura de memória não inicializada.** Dono e
+  evidência: `Cargo.toml` (`rusqlite` 0.32 com `bundled`, que traz o SQLite
+  3.46 do `libsqlite3-sys` 0.30.1), `db/mod.rs` e `datasource/sqlite.rs`. O
+  `cargo-deny` do gate rápido de 2026-11-09 acusou RUSTSEC-2026-0459
+  (CVE-2026-119375), publicado depois do gate verde anterior: antes do SQLite
+  3.54.0, abrir um banco com um `-wal` irmão de page size diferente pode
+  devolver memória antiga do processo em consultas comuns. A IDE abre os dois
+  casos: `.kinein/kinein.db`, em WAL, dentro do projeto, que pode vir de um
+  repositório não confiável, e o arquivo SQLite que a pessoa escolhe como
+  fonte de dados. Severidade alta: gate bloqueado e exposição local ao abrir
+  arquivos de terceiros. Causa confirmada pelo advisory; a correção só existe
+  no `libsqlite3-sys` 0.39 (SQLite 3.54), com `rusqlite` 0.41. Decisão do autor
+  em 2026-11-09: atualizar a dependência num commit próprio, sem ignorar o
+  advisory no `deny.toml`. Testes: os existentes de `db` e `datasource`, mais um par banco
+  e `-wal` de page size diferente pelos dois donos e a versão mínima do SQLite
+  ligado. Estado corrigido em 2026-11-09
+  ([40.7 §7.392](40.7-registro-das-entregas.md)): `rusqlite` 0.41.1 liga o
+  SQLite 3.54.1, que zera o resto da página lida do WAL. O `foldhash`, Zlib,
+  entra por exceção própria no `deny.toml`, decisão do autor. Com
+  `MALLOC_PERTURB_`, o par forjado lê zeros na fonte de dados, e com o 3.46.0
+  os mesmos testes reprovam. Limite: o par forjado esconde o rascunho do
+  projeto nas duas versões, porque o `SQLite` não o detecta e a IDE não valida
+  páginas por conta própria.
 - **INF-04 — Fim da sessão de terminal antes da saída final.** Dono e
   evidência: `crates/kinein-core/src/terminal/session/threads.rs`. Observado
   em 2026-11-09: `finished::a_finished_session_stays_readable_but_takes_no_input`

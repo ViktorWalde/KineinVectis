@@ -74,6 +74,7 @@ mod serial;
 mod serial_files;
 mod serial_identify;
 mod settings;
+mod sqlite_wal_pair;
 mod syntax;
 mod syntax_check;
 mod terminal;

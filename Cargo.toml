@@ -32,7 +32,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["raw_value"] }
 # SQLite vendorizado (feature bundled): sem dep de sistema, reprodutível.
 # Rede de segurança de dados (DocsPublic/23). FFI C fica na dependência.
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 # Terminal profissional (DocsPublic/24 D2): PTY real (wezterm) para a sessão. O
 # emulador VT vive no `alacritty_terminal`, declarado pelo core (ADR-0004): a
 # Kinein anuncia `xterm-256color` ao processo, então precisa entregar um VT de

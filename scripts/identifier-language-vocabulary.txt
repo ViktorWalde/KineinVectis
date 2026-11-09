@@ -588,6 +588,7 @@ cover
 coverage
 covered
 covers
+crafted
 crash
 crashed
 crate
@@ -1984,6 +1985,7 @@ previewing
 previews
 previous
 primary
+primer
 principal
 print
 printable
@@ -2314,6 +2316,7 @@ rust
 safe
 safety
 said
+salt
 salvo
 salvos
 same
@@ -2975,6 +2978,7 @@ would
 wrap
 wrapped
 wrapper
+wrapping
 wraps
 writable
 write

@@ -248,7 +248,7 @@ fn sqlite_query_reads_refuses_unconfirmed_writes_and_writes_when_confirmed() {
         JsonRpcErrorCode::WriteConfirmationRequired
     );
     let independent = rusqlite::Connection::open(dir.join("dados.db")).unwrap();
-    let count: u64 = independent
+    let count: i64 = independent
         .query_row("SELECT count(*) FROM leituras", [], |row| row.get(0))
         .unwrap();
     assert_eq!(count, 2, "CTE bloqueado não pode escrever");
@@ -260,7 +260,7 @@ fn sqlite_query_reads_refuses_unconfirmed_writes_and_writes_when_confirmed() {
     let ev = c.queried();
     assert_eq!(ev["success"], true, "{ev}");
     assert_eq!(ev["access"], "write");
-    let count: u64 = independent
+    let count: i64 = independent
         .query_row("SELECT count(*) FROM leituras", [], |row| row.get(0))
         .unwrap();
     assert_eq!(count, 3, "CTE só escreve depois de confirmação explícita");
@@ -362,7 +362,7 @@ fn ordinary_writes_run_directly_but_whole_table_updates_never_do() {
     assert_eq!(
         connection
             .query_row("SELECT count(*) FROM leituras WHERE valor = 999", [], |r| r
-                .get::<_, u64>(0))
+                .get::<_, i64>(0))
             .unwrap(),
         0
     );
@@ -394,7 +394,7 @@ fn ordinary_writes_run_directly_but_whole_table_updates_never_do() {
     assert_eq!(
         connection
             .query_row("SELECT count(*) FROM leituras WHERE valor = 999", [], |r| r
-                .get::<_, u64>(0))
+                .get::<_, i64>(0))
             .unwrap(),
         4
     );

@@ -7,8 +7,9 @@
 
 [licenses]
 # Dependencias Rust: mantem-se a lista permissiva auditada. O codigo proprio
-# passou a AGPL-3.0-only (ADR-0011); excecoes por crate abaixo autorizam apenas
-# os membros do workspace, sem liberar novas dependencias copyleft.
+# passou a AGPL-3.0-only (ADR-0011); excecoes por crate abaixo autorizam os
+# membros do workspace e o Zlib do `foldhash`, sem liberar novas dependencias
+# copyleft.
 # Ferramentas externas continuam integradas por seus protocolos/processos;
 # redistribui-las exige cumprir suas proprias licencas.
 allow = [
@@ -62,6 +63,16 @@ allow = ["AGPL-3.0-only"]
 [[licenses.exceptions]]
 name = "kinein-sys"
 allow = ["AGPL-3.0-only"]
+
+# Zlib só para o `foldhash`: permissiva, OSI-approved e FSF Free. Exige não
+# deturpar a origem e marcar versões de fonte alteradas, sem obrigação para o
+# binário. Chega pelo `hashbrown` 0.17 com `default-hasher`, que o `hashlink`
+# 0.12 do `rusqlite` 0.41 liga. DECISÃO DO AUTOR em 2026-11-09 (INF-03, o
+# SQLite 3.54 do RUSTSEC-2026-0459): exceção por crate, sem Zlib na lista
+# geral; outro crate Zlib pede nova decisão.
+[[licenses.exceptions]]
+name = "foldhash"
+allow = ["Zlib"]
 
 [bans]
 multiple-versions = "warn"

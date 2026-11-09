@@ -19,7 +19,7 @@
 > **Ordem (autor, 2026-11-08; 62 §3, com estado por etapa):** C com C23 → C++
 > → Rust/C/C++ → Python → DAP/QEMU → F5–F9 → algoritmo semântico de ambiente →
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
-> em VM. Fundação transversal (INF-02 e INF-04 no Linux, §§7.390–7.391); dívida na 0.4.
+> em VM. Fundação transversal (INF-02 e INF-04 no Linux, §§7.390–7.391; INF-03 SQLite, §7.392); dívida na 0.4.
 > Recorte atual: **C1** (consolidação C §4.1), com C-04/C-05 do 62 §3.4; uso confiável
 > em projetos pequenos/médios e na própria IDE. Polimento UI/HUD/UX acompanha
 > as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
