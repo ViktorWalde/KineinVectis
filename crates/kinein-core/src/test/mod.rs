@@ -117,6 +117,12 @@ pub enum TestError {
     },
     /// IO failure while waiting for the runner.
     Io(std::io::Error),
+    /// The `CMake` project has no active configuration (C1-21): the reason
+    /// the configure gives.
+    NoConfiguration {
+        /// The sentence for the person.
+        reason: String,
+    },
 }
 
 impl fmt::Display for TestError {
@@ -133,6 +139,7 @@ impl fmt::Display for TestError {
             }
             Self::ToolMissing { tool, hint } => write!(formatter, "{tool} ausente: {hint}"),
             Self::Io(error) => write!(formatter, "falha de IO durante os testes: {error}"),
+            Self::NoConfiguration { reason } => formatter.write_str(reason),
         }
     }
 }
@@ -141,9 +148,16 @@ impl Error for TestError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Spawn { source, .. } | Self::Io(source) => Some(source),
-            Self::Unsupported { .. } | Self::ToolMissing { .. } => None,
+            Self::Unsupported { .. } | Self::ToolMissing { .. } | Self::NoConfiguration { .. } => {
+                None
+            }
         }
     }
+}
+
+/// The folder ctest reads: the one of the active configuration (C1-21).
+pub(crate) fn cmake_test_dir(root: &Path) -> Result<std::path::PathBuf, TestError> {
+    crate::cmake::active_dir(root).map_err(|reason| TestError::NoConfiguration { reason })
 }
 
 impl TestError {
@@ -173,18 +187,14 @@ pub fn run_tests(
         // Um caso de DENTRO de um binario gtest/Catch2 (`teste::caso`, D7)
         // roda pelo proprio binario; o resto e' o ctest de sempre.
         ProjectKind::Cmake => {
+            let build_dir = cmake_test_dir(root)?;
             if let Selection::Exact(id) = selection
-                && let Some(resultado) = frameworks::run_inner_case(
-                    Path::new("ctest"),
-                    &crate::cmake::build_dir(root),
-                    id,
-                    cancel,
-                    sink,
-                )
+                && let Some(resultado) =
+                    frameworks::run_inner_case(Path::new("ctest"), &build_dir, id, cancel, sink)
             {
                 return resultado;
             }
-            runners::run_ctest(root, selection, cancel, sink)
+            runners::run_ctest(root, &build_dir, selection, cancel, sink)
         }
         ProjectKind::Python => runners::run_pytest(root, selection, python, cancel, sink),
         other => Err(TestError::Unsupported {
@@ -344,8 +354,10 @@ mod tests {
         assert_eq!(args_de(&c), ["test", "tests::alpha", "--", "--exact"]);
         assert_eq!(d, "cargo test tests::alpha -- --exact");
 
-        let (c, d) = super::runners::ctest_command(root, Selection::Exact("Broken.Case"));
-        let build = crate::cmake::build_dir(root).display().to_string();
+        let build_dir = crate::cmake::ide_build_dir(root);
+        let (c, d) =
+            super::runners::ctest_command(root, &build_dir, Selection::Exact("Broken.Case"));
+        let build = build_dir.display().to_string();
         assert_eq!(
             args_de(&c),
             [
@@ -358,7 +370,8 @@ mod tests {
         );
         assert!(d.ends_with("-R ^Broken\\.Case$"), "{d}");
         assert_eq!(
-            args_de(&super::runners::ctest_command(root, Selection::Filter("Core")).0)[3..],
+            args_de(&super::runners::ctest_command(root, &build_dir, Selection::Filter("Core")).0)
+                [3..],
             ["-R", "Core"]
         );
     }

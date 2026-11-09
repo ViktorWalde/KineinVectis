@@ -14,7 +14,7 @@ use std::{
 
 use kinein_protocol::{RigorProfile, ToolchainRole};
 
-use super::{build_dir, configure_command};
+use super::configure_command;
 
 /// O arquivo em que a IDE anota o perfil de rigor do ultimo configure
 /// (M4.5): o build so' reconfigura quando o perfil escolhido mudou.
@@ -85,19 +85,19 @@ fn version_at_least(version_text: &str, major: u32, minor: u32) -> bool {
     found >= (major, minor)
 }
 
-/// O perfil com que o build dir foi configurado da ultima vez, se anotado.
+/// O perfil com que a pasta foi configurada da ultima vez, se anotado.
 #[must_use]
-pub fn applied_rigor(root: &Path) -> Option<String> {
-    fs::read_to_string(build_dir(root).join(RIGOR_MARKER))
+pub fn applied_rigor(directory: &Path) -> Option<String> {
+    fs::read_to_string(directory.join(RIGOR_MARKER))
         .ok()
         .map(|text| text.trim().to_owned())
         .filter(|text| !text.is_empty())
 }
 
-/// Anota o perfil de um configure que deu certo.
-pub fn record_rigor(root: &Path, profile: RigorProfile) {
+/// Anota o perfil de um configure que deu certo na pasta.
+pub fn record_rigor(directory: &Path, profile: RigorProfile) {
     drop(fs::write(
-        build_dir(root).join(RIGOR_MARKER),
+        directory.join(RIGOR_MARKER),
         format!("{}\n", rigor_key(profile)),
     ));
 }
@@ -108,10 +108,10 @@ pub fn record_rigor(root: &Path, profile: RigorProfile) {
 /// 2026-10-03 so' a falta de cache contava, e trocar o perfil com o projeto
 /// aberto nao mudava nada no C/C++.
 #[must_use]
-pub fn needs_configure(root: &Path, profile: RigorProfile) -> bool {
-    super::incomplete_configure(root).is_some()
-        || !build_dir(root).join("CMakeCache.txt").is_file()
-        || applied_rigor(root).as_deref() != Some(rigor_key(profile))
+pub fn needs_configure(directory: &Path, profile: RigorProfile) -> bool {
+    super::attempt::incomplete_in(directory).is_some()
+        || !directory.join("CMakeCache.txt").is_file()
+        || applied_rigor(directory).as_deref() != Some(rigor_key(profile))
 }
 
 /// O configure completo de um perfil de rigor: o [`configure_command`] mais
@@ -119,6 +119,7 @@ pub fn needs_configure(root: &Path, profile: RigorProfile) -> bool {
 #[must_use]
 pub fn configure_with_rigor(
     root: &Path,
+    directory: &Path,
     preset: Option<&str>,
     toolchain: &crate::toolchain::Toolchain,
     extra: &[String],
@@ -128,14 +129,15 @@ pub fn configure_with_rigor(
         .program_for(ToolchainRole::Cmake)
         .unwrap_or_else(|| PathBuf::from("cmake"));
     let rigor = rigor_arguments(profile, supports_warning_as_error(&program));
-    configure_command(root, preset, toolchain, extra, &rigor)
+    configure_command(root, directory, preset, toolchain, extra, &rigor)
 }
 
 #[cfg(test)]
 mod tests {
     use std::fs;
 
-    use super::{build_dir, needs_configure, record_rigor, rigor_arguments, version_at_least};
+    use super::{needs_configure, record_rigor, rigor_arguments, version_at_least};
+    use crate::cmake::ide_build_dir as build_dir;
 
     #[test]
     fn each_rigor_profile_says_what_it_changes_in_the_configure() {
@@ -176,18 +178,25 @@ mod tests {
         let root = std::env::temp_dir().join(format!("kinein-rigor-marker-{}", std::process::id()));
         drop(fs::remove_dir_all(&root));
         fs::create_dir_all(build_dir(&root)).unwrap();
-        assert!(needs_configure(&root, RigorProfile::Strict), "sem cache");
-        fs::write(build_dir(&root).join("CMakeCache.txt"), "").unwrap();
+        let build = build_dir(&root);
+        assert!(needs_configure(&build, RigorProfile::Strict), "sem cache");
+        fs::write(build.join("CMakeCache.txt"), "").unwrap();
         assert!(
-            needs_configure(&root, RigorProfile::Strict),
+            needs_configure(&build, RigorProfile::Strict),
             "cache sem perfil anotado"
         );
-        record_rigor(&root, RigorProfile::Strict);
-        assert!(!needs_configure(&root, RigorProfile::Strict));
+        record_rigor(&build, RigorProfile::Strict);
+        assert!(!needs_configure(&build, RigorProfile::Strict));
         assert!(
-            needs_configure(&root, RigorProfile::Balanced),
+            needs_configure(&build, RigorProfile::Balanced),
             "o perfil mudou"
         );
+        // Uma tentativa pendente nesta pasta pede configure; a de outra, nao.
+        let other = root.join("build/other");
+        drop(crate::cmake::begin_configure(&root, &other, Some("other"), "").unwrap());
+        assert!(!needs_configure(&build, RigorProfile::Strict));
+        drop(crate::cmake::begin_configure(&root, &build, None, "").unwrap());
+        assert!(needs_configure(&build, RigorProfile::Strict));
         drop(fs::remove_dir_all(&root));
     }
 }

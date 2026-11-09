@@ -103,13 +103,16 @@ pub struct CmakeStatusResult {
     pub configured: bool,
     /// Whether `<buildDir>/compile_commands.json` exists (clangd uses it).
     pub has_compile_commands: bool,
-    /// Canonical build directory used by configure/build/run.
-    pub build_dir: String,
-    /// The configure preset the IDE used on the last `cmake.configure`
-    /// (`0.115.0`): the one asked for, else the kit's, else the project's
-    /// default (first non-hidden `configurePresets` of `CMakeUserPresets.json`,
-    /// then `CMakePresets.json`, whose `condition` does not exclude Linux).
-    /// Absent when the last configure ran without a preset, or never ran.
+    /// The folder of the active configuration, which configure, build, run,
+    /// debug and ctest use (`0.209.0`, C1-19–C1-21): `.kinein/build` without a
+    /// preset, the `binaryDir` of a preset, else `.kinein/presets/<preset>`.
+    /// Absent when there is no active configuration (`configurationRefused`).
+    /// Until `0.208.0` always `.kinein/build`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_dir: Option<String>,
+    /// The configure preset the IDE used on the last successful configure of
+    /// `buildDir` (`0.115.0`, per folder since `0.209.0`). Absent when it ran
+    /// without a preset, or never ran there.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub preset: Option<String>,
     /// Directory holding the compilation database actually reachable by
@@ -150,9 +153,23 @@ pub struct CmakeStatusResult {
     /// Why no database is in use although there is evidence of one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cdb_absence: Option<CdbAbsence>,
-    /// The preset recorded by `cmake.selectConfiguration`.
+    /// The preset recorded by `cmake.selectConfiguration` or, since
+    /// `0.209.0`, by the configure: the active configuration.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub selected_configuration: Option<String>,
+    /// The preset of the active configuration (`0.209.0`); absent for one
+    /// without preset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub configuration_preset: Option<String>,
+    /// Why it is the active one (`0.209.0`): `"configuration"` (the record),
+    /// `"buildDir"` (`.kinein/build` with the IDE's evidence), the presets
+    /// file of the default, or `"noPresets"`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub configuration_source: Option<String>,
+    /// Why there is no active configuration (`0.209.0`); the consumers refuse
+    /// with this sentence.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub configuration_refused: Option<String>,
 }
 
 /// Where the compilation database in use came from (`0.206.0`).
@@ -274,7 +291,7 @@ mod tests {
         let value = serde_json::to_value(CmakeStatusResult {
             configured: true,
             has_compile_commands: false,
-            build_dir: "/w/.kinein/build".to_owned(),
+            build_dir: Some("/w/build/linux-clang".to_owned()),
             preset: Some("linux-clang".to_owned()),
             cdb_directory: Some("build".to_owned()),
             cdb_stale: true,
@@ -285,13 +302,18 @@ mod tests {
             cdb_preset: None,
             cdb_candidates: Vec::new(),
             cdb_absence: None,
-            selected_configuration: None,
+            selected_configuration: Some("linux-clang".to_owned()),
+            configuration_preset: Some("linux-clang".to_owned()),
+            configuration_source: Some("configuration".to_owned()),
+            configuration_refused: None,
         })
         .unwrap();
 
         assert_eq!(value["configured"], true);
         assert_eq!(value["hasCompileCommands"], false);
-        assert_eq!(value["buildDir"], "/w/.kinein/build");
+        assert_eq!(value["buildDir"], "/w/build/linux-clang");
+        assert_eq!(value["configurationPreset"], "linux-clang");
+        assert_eq!(value["configurationSource"], "configuration");
         assert_eq!(value["cdbDirectory"], "build");
         assert_eq!(value["cdbStale"], true);
         assert_eq!(value["cdbStaleBecause"], "CMakeLists.txt");
@@ -310,7 +332,7 @@ mod tests {
         let value = serde_json::to_value(CmakeStatusResult {
             configured: true,
             has_compile_commands: true,
-            build_dir: "/w/.kinein/build".to_owned(),
+            build_dir: None,
             preset: None,
             cdb_directory: None,
             cdb_stale: false,
@@ -322,6 +344,9 @@ mod tests {
             cdb_candidates: Vec::new(),
             cdb_absence: None,
             selected_configuration: None,
+            configuration_preset: None,
+            configuration_source: None,
+            configuration_refused: None,
         })
         .unwrap();
 
@@ -335,6 +360,10 @@ mod tests {
             "cdbCandidates",
             "cdbAbsence",
             "selectedConfiguration",
+            "buildDir",
+            "configurationPreset",
+            "configurationSource",
+            "configurationRefused",
         ] {
             assert!(value.get(absent).is_none(), "{absent}");
         }

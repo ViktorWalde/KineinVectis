@@ -1045,7 +1045,10 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 a ativa quando o configure começa. Com gerador multi-config, a IDE usa a
 configuração que o clangd lê. O cache da pasta do preset recebe as definições da
 IDE, e a IDE mostra isso. Um preset sem `binaryDir` configura em
-`.kinein/presets/<preset>`.
+`.kinein/presets/<preset>`. Reparar o build dir remove a pasta da configuração
+ativa: a da IDE como antes, e a de um preset só quando o `CMakeCache.txt` dela
+tem a raiz do projeto em `CMAKE_HOME_DIRECTORY` e ela não é a raiz nem a
+contém, com o caminho absoluto na prévia.
 
 **Presets (C1-18).** A leitura segue `include` como o CMake: o caminho
 relativo vale a partir do arquivo que inclui. Um arquivo incluído também inclui,
@@ -1149,3 +1152,110 @@ repetido entre eles não recusa. Campos de tipo errado e campos obrigatórios po
 versão seguem sem validação própria: o CMake recusa no configure, com a
 mensagem dele. O teste de serial que reprovou sem o `TMPDIR` do gate é de outra
 causa, registrada como INF-05 no 62 §3.4.
+
+### 17.2 C1-19–C1-21: integração e provas — 2026-11-09
+
+O dono novo é `cmake_configuration.rs`, uma folha ao lado de `cmake_presets`.
+Ele guarda a pasta de cada configuração, a configuração ativa e os registros
+que a IDE deixa em cada pasta. Fica fora de `cmake` porque `toolchain` lê a
+configuração ativa, e `cmake` depende de `toolchain`. O `cmake/configuration.rs`
+saiu, e o registro `.kinein/configuration.json` do C-05 passou a ser o da
+configuração ativa. O `handlers/cmake.rs` passou do limite de tamanho e foi
+dividido: o `cmake.status` e o `cmake.selectConfiguration` foram para
+`handlers/cmake_configuration.rs`. Protocolo 0.209.0, com o contrato no
+[03 cmake](../arquitetura/03-dominios/cmake.md).
+
+O configure da IDE passa `-B` com a pasta da configuração. Essa pasta é o
+`binaryDir` resolvido, que o `-B` antes sobrepunha, ou `.kinein/presets/<preset>`
+para um preset sem `binaryDir`. Um nome que não serve de pasta é recusado antes
+de qualquer processo. A trava, a tentativa pendente, o kit, o preset e o rigor
+ficam na pasta, e cada configuração conserva o seu estado. Duas configurações
+diferentes podem configurar ao mesmo tempo; a mesma, não. O configure grava a
+configuração ativa ao começar, depois da trava, e o sucesso não a apaga mais. A
+saída diz em que pasta o configure roda. Numa pasta de preset, diz também que o
+cache recebe as definições da IDE e que `cmake --preset` no terminal as herda.
+
+Build, run, debug, ctest, flash, `qmlls`, o contexto do índice, o compilador do
+projeto, as ações do Project Health e os artefatos leem a pasta da configuração
+ativa. Sem configuração ativa, recusam com o motivo, sem voltar a
+`.kinein/build`. O build sem cache configura na pasta do preset. Um
+`.kinein/build` de antes do C-04 vale no automático até o próximo configure. Na
+CDB, a configuração escolhida usa a pasta dela, sem a exceção do `.kinein/build`
+anotado, e uma tentativa pendente deixa obsoleta a CDB da pasta em que está.
+`cmake.selectConfiguration` recarrega o contexto, o clangd e o `qmlls` quando a
+CDB em uso ou a pasta ativa muda.
+
+Três achados da integração foram corrigidos no dono:
+- um registro órfão (o preset saiu dos presets, ou o registro está inválido)
+  recusava sem nada a escolher. Agora o `cmake.status` oferece as escolhas do
+  automático em `presetChoices`;
+- o contexto de uma pasta sem CDB dizia "Comando anterior apenas para inspeção",
+  sem comando anterior;
+- presets com o mesmo `binaryDir` dividem a pasta. A tentativa pendente e o kit
+  do último sucesso de um passavam a valer para o outro. Agora valem só para o
+  preset que os gravou.
+
+Provas:
+- testes do dono:
+  - a pasta por preset;
+  - os nomes recusados (vazio, `.`, `..`, `/`, `\`);
+  - um `binaryDir` fora da raiz e uma macro aberta;
+  - a ordem da configuração ativa, sem volta silenciosa;
+  - o registro de ida e volta;
+  - a tentativa ativa desde o começo, com registros e rigor por pasta;
+  - a pasta comum de dois presets: a trava recusa o segundo sem tocar o
+    registro, e a tentativa e o kit de um não valem para o outro;
+  - a tentativa pendente deixa obsoleta só a CDB da pasta dela;
+- três regressões com CMake 4.4.5, GCC 16.2.1, Clang 23.1.4, Ninja e `ctest`
+  reais:
+  - os presets: dois com `binaryDir`, um deles fora da raiz com espaço e acento
+    no caminho, e um sem `binaryDir`;
+  - as agulhas: o executável imprime o tipo de build e o compilador, e o caso
+    do `ctest` tem o tipo no nome;
+  - cada configuração configura, compila, roda e testa na pasta dela. O alvo
+    de debug sai da mesma pasta, e o contexto vem da CDB dela;
+  - voltar a uma configuração não reconfigura;
+  - a pasta que sumiu é refeita no mesmo lugar;
+  - o nome inválido é recusado sem processo;
+  - um configure que falha deixa a outra configuração atual;
+  - um `.kinein/build` de antes do C-04 segue ativo no automático, e o próximo
+    configure vai para a pasta do preset;
+  - reparar recusa o cache de outro projeto e o build in-source, e a prévia
+    mostra o caminho absoluto;
+- o `qmlls` recebe `-b` da configuração ativa e reinicia com a escolhida;
+- as regressões C anteriores passaram a provar a pasta do preset. Entre elas
+  estão a falha do configure com a configuração anterior intacta e duas
+  configurações configurando ao mesmo tempo, com a mesma recusada;
+- vinte e quatro mutantes reprovam, todos contra baseline verde:
+  - o nome inválido e a barra invertida aceitos;
+  - o registro órfão aceito e a pasta da IDE frouxa;
+  - a tentativa e o kit de outro preset;
+  - o registro gravado antes da trava ou não gravado;
+  - o configure sem `-B`, e o build que configura na pasta ativa;
+  - ctest, debug, run e `qmlls` em `.kinein/build`;
+  - as escolhas do registro escondidas, e o comando anterior sempre anunciado;
+  - a nota do `binaryDir` ausente, e as pastas da IDE fora das candidatas;
+  - a tentativa que não marca a CDB, e a exceção antiga do `.kinein/build`;
+  - o in-source e o cache de outro projeto removíveis;
+  - a escolha que não recarrega.
+
+  Na primeira rodada, quatro sobreviveram. O M9 e o M21 sobreviveram por
+  falta de prova, coberta pela pasta comum e pela CDB obsoleta. O M4 e o M5
+  eram mutantes equivalentes para a prova nova, e foram refeitos. O mutante
+  sem `-B` configurou em `crates/kinein-core`, o diretório do processo de
+  teste: o preset sem `binaryDir` caiu ali, como cai no terminal. Os arquivos
+  gerados foram removidos, e o `compile_commands.json` versionado foi
+  restaurado.
+
+Limites:
+- sem presets no projeto e com um registro órfão, a UI não oferece saída até o
+  C1-23 ("Automático"). O IPC já aceita `cmake.selectConfiguration { preset:
+  null }`;
+- o `qmlls` monta o `-b` ao abrir, ao configurar e ao escolher. Uma edição do
+  `CMakePresets.json` que muda a configuração ativa só chega a ele no próximo
+  desses momentos;
+- `configured` continua sendo o stat do `CMakeCache.txt`. O CMake grava o cache
+  mesmo quando o configure falha; quem diz que ele não vale é a tentativa
+  pendente;
+- o flash e os artefatos leem a pasta ativa sem regressão própria;
+- o multi-config (C1-22) e o menu (C1-23) seguem abertos.

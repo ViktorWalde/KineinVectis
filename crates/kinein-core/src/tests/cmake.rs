@@ -74,7 +74,14 @@ fn cmake_status_and_presets_work_without_jobs() {
     let result = status.response().result.as_ref().unwrap().clone();
     assert_eq!(result["configured"], false);
     assert_eq!(result["hasCompileCommands"], false);
-    assert!(std::path::Path::new(result["buildDir"].as_str().unwrap()).ends_with(".kinein/build"));
+    // Um preset sem binaryDir configura numa pasta da IDE (C1-19).
+    assert!(
+        std::path::Path::new(result["buildDir"].as_str().unwrap())
+            .ends_with(".kinein/presets/release"),
+        "{result}"
+    );
+    assert_eq!(result["configurationPreset"], "release");
+    assert_eq!(result["configurationSource"], "CMakePresets.json");
 
     let presets = core.handle_request(&JsonRpcRequest::new(85_i64, "cmake.presets.list", None));
     let listed = presets.response().result.as_ref().unwrap()["presets"]
@@ -222,6 +229,64 @@ fn status_de(core: &mut crate::Core, id: i64) -> serde_json::Value {
         .unwrap()
 }
 
+/// O fim de `configure_picks_the_project_default_preset_and_status_reports_it`:
+/// os presets saem do projeto com o registro do "projeto" ainda gravado.
+fn without_presets_the_orphan_record_waits_for_the_automatic(
+    core: &mut crate::Core,
+    receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
+    dir: &std::path::Path,
+) {
+    // Sem presets no projeto: a configuracao ativa ainda e' o "projeto"
+    // registrado, que saiu; o configure sem preset recusa em vez de voltar
+    // ao automatico em silencio (C1-20). Voltar ao automatico (`null`)
+    // configura como sempre, sem preset, e o status nao afirma nenhum.
+    std::fs::remove_file(dir.join("CMakePresets.json")).unwrap();
+    std::fs::remove_file(dir.join("CMakeUserPresets.json")).unwrap();
+    let refused = core.handle_request(&JsonRpcRequest::new(
+        96_i64,
+        "cmake.configure",
+        Some(json!({})),
+    ));
+    let error = refused.response().error.clone().expect("registro órfão");
+    assert_eq!(
+        error.message,
+        "configuração escolhida removida dos presets: projeto; escolha outra"
+    );
+    let status = status_de(core, 961);
+    assert_eq!(status["configurationRefused"], error.message, "{status}");
+    assert!(status.get("buildDir").is_none(), "{status}");
+    assert!(
+        status.get("presetChoices").is_none(),
+        "nada a escolher: {status}"
+    );
+    let automatic = core.handle_request(&JsonRpcRequest::new(
+        962_i64,
+        "cmake.selectConfiguration",
+        Some(json!({ "preset": null })),
+    ));
+    assert!(automatic.response().error.is_none());
+    let aceito = core.handle_request(&JsonRpcRequest::new(
+        963_i64,
+        "cmake.configure",
+        Some(json!({})),
+    ));
+    assert!(aceito.response().error.is_none());
+    let (inicio, saida) = wait_configure(receiver);
+    assert_eq!(inicio["preset"], serde_json::Value::Null);
+    assert_eq!(inicio["command"], "cmake configure");
+    assert!(
+        saida.iter().any(|l| l.starts_with("cmake-falso -S ")),
+        "{saida:?}"
+    );
+    let status = status_de(core, 97);
+    assert!(status.get("preset").is_none(), "{status}");
+    assert_eq!(status["configurationSource"], "noPresets");
+    assert!(
+        std::path::Path::new(status["buildDir"].as_str().unwrap()).ends_with(".kinein/build"),
+        "{status}"
+    );
+}
+
 #[test]
 fn configure_picks_the_project_default_preset_and_status_reports_it() {
     let dir = cmake_workspace("preset-automatico");
@@ -301,28 +366,21 @@ fn configure_picks_the_project_default_preset_and_status_reports_it() {
     let status = status_de(&mut core, 95);
     assert_eq!(status["preset"], "projeto");
 
-    // Sem presets no projeto: configure como sempre, sem preset, e o status
-    // nao afirma nenhum.
-    std::fs::remove_file(dir.join("CMakePresets.json")).unwrap();
-    std::fs::remove_file(dir.join("CMakeUserPresets.json")).unwrap();
-    let aceito = core.handle_request(&JsonRpcRequest::new(
-        96_i64,
-        "cmake.configure",
-        Some(json!({})),
-    ));
-    assert!(aceito.response().error.is_none());
-    let (inicio, saida) = wait_configure(&receiver);
-    assert_eq!(inicio["preset"], serde_json::Value::Null);
-    assert_eq!(inicio["command"], "cmake configure");
-    assert!(
-        saida.iter().any(|l| l.starts_with("cmake-falso -S ")),
-        "{saida:?}"
-    );
-    let status = status_de(&mut core, 97);
-    assert!(status.get("preset").is_none(), "{status}");
+    without_presets_the_orphan_record_waits_for_the_automatic(&mut core, &receiver, &dir);
 }
 
 /// Um `CMakePresets.json` com um oculto e os nomes dados.
+/// Cada preset tem o seu kit (C1-13): sem fixar o `cmake` falso nele, o
+/// configure do preset roda o `cmake` do `PATH`.
+fn pin_fake_cmake(core: &mut crate::Core, kit: &str) {
+    let fixed = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "toolchain.set",
+        Some(json!({ "role": "cmake", "id": "cmake", "preset": kit })),
+    ));
+    assert!(fixed.response().error.is_none(), "{kit}");
+}
+
 fn presets(names: &[&str]) -> String {
     let items: Vec<String> = names
         .iter()
@@ -332,6 +390,48 @@ fn presets(names: &[&str]) -> String {
         r#"{{"version": 6, "configurePresets": [{{"name": "base", "hidden": true}}, {}]}}"#,
         items.join(", ")
     )
+}
+
+/// O fim de `several_presets_ask_and_the_recorded_one_wins_until_it_vanishes`:
+/// o preset `release` registrado sai dos presets.
+fn a_vanished_record_offers_the_automatic_choices(
+    core: &mut crate::Core,
+    receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
+    dir: &std::path::Path,
+) {
+    // O preset registrado saiu: o status oferece as escolhas do automatico,
+    // e configurar uma delas grava o registro de novo.
+    std::fs::write(dir.join("CMakePresets.json"), presets(&["debug", "rel2"])).unwrap();
+    pin_fake_cmake(core, "rel2");
+    let status = status_de(core, 87);
+    assert_eq!(
+        status["presetChoices"],
+        json!(["debug", "rel2"]),
+        "{status}"
+    );
+    assert_eq!(
+        status["configurationRefused"],
+        "configuração escolhida removida dos presets: release; escolha outra"
+    );
+    let refused = core.handle_request(&JsonRpcRequest::new(
+        88_i64,
+        "cmake.configure",
+        Some(json!({})),
+    ));
+    assert!(
+        refused.response().error.is_some(),
+        "o registrado sumiu: a pergunta volta"
+    );
+    let accepted = core.handle_request(&JsonRpcRequest::new(
+        89_i64,
+        "cmake.configure",
+        Some(json!({ "preset": "rel2" })),
+    ));
+    assert!(accepted.response().error.is_none());
+    wait_configure(receiver);
+    let status = status_de(core, 90);
+    assert_eq!(status["configurationPreset"], "rel2");
+    assert!(status.get("presetChoices").is_none(), "{status}");
 }
 
 /// O preset do configure automatico (0.4.0b, `roadmaps/52` §14.2): com
@@ -373,6 +473,7 @@ fn several_presets_ask_and_the_recorded_one_wins_until_it_vanishes() {
         Some(json!({ "role": "cmake", "id": "cmake" })),
     ));
     assert!(fixed.response().error.is_none());
+    pin_fake_cmake(&mut core, "release");
 
     let status = status_de(&mut core, 82);
     assert_eq!(
@@ -421,26 +522,25 @@ fn several_presets_ask_and_the_recorded_one_wins_until_it_vanishes() {
         Some(json!({})),
     ));
     assert!(again.response().error.is_none());
-    let (start, _) = wait_configure(&receiver);
+    let (start, output) = wait_configure(&receiver);
     assert_eq!(start["preset"], "release");
-    assert_eq!(start["presetSource"], "buildDir");
-
-    std::fs::write(dir.join("CMakePresets.json"), presets(&["debug", "rel2"])).unwrap();
-    let status = status_de(&mut core, 87);
-    assert_eq!(
-        status["presetChoices"],
-        json!(["debug", "rel2"]),
-        "{status}"
-    );
-    let refused = core.handle_request(&JsonRpcRequest::new(
-        88_i64,
-        "cmake.configure",
-        Some(json!({})),
-    ));
+    // O configure gravou a configuracao ativa ao comecar (C1-20).
+    assert_eq!(start["presetSource"], "configuration");
+    assert_eq!(start["buildDir"], ".kinein/presets/release");
+    assert_eq!(output[0], "configurando em .kinein/presets/release");
+    let argv = output
+        .iter()
+        .find(|line| line.starts_with("cmake-falso"))
+        .unwrap();
     assert!(
-        refused.response().error.is_some(),
-        "o anotado sumiu: a pergunta volta"
+        argv.contains(&format!(
+            "-B {}",
+            dir.join(".kinein/presets/release").display()
+        )),
+        "{argv}"
     );
+
+    a_vanished_record_offers_the_automatic_choices(&mut core, &receiver, &dir);
 }
 
 /// O `clang-tidy` de verdade, o do Visual Studio, sobre a CDB de verdade do

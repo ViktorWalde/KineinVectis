@@ -377,6 +377,7 @@ fn c_host_refuses_ambiguous_presets_before_configuring() {
         "{result}"
     );
     assert!(!p.root.join(".kinein/build/CMakeCache.txt").exists());
+    assert!(!p.root.join(".kinein/presets").exists());
 }
 
 #[test]

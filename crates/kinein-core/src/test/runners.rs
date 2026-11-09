@@ -52,21 +52,26 @@ pub(super) fn cargo_command(root: &Path, selection: Selection<'_>) -> (Command, 
 
 pub(super) fn run_ctest(
     root: &Path,
+    build_dir: &Path,
     selection: Selection<'_>,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
-    let (command, display) = ctest_command(root, selection);
+    let (command, display) = ctest_command(root, build_dir, selection);
     stream_command(command, &display, parse_ctest_case, cancel, sink)
 }
 
-/// `ctest --test-dir .kinein/build --output-on-failure [-R filtro | -R ^id$]`.
-pub(super) fn ctest_command(root: &Path, selection: Selection<'_>) -> (Command, String) {
-    let build_dir = root.join(".kinein").join("build");
+/// `ctest --test-dir <pasta> --output-on-failure [-R filtro | -R ^id$]`, na
+/// pasta da configuracao ativa (C1-21).
+pub(super) fn ctest_command(
+    root: &Path,
+    build_dir: &Path,
+    selection: Selection<'_>,
+) -> (Command, String) {
     let mut command = Command::new("ctest");
     command
         .arg("--test-dir")
-        .arg(&build_dir)
+        .arg(build_dir)
         .arg("--output-on-failure")
         .current_dir(root);
     crate::msvc::apply_environment(&mut command);

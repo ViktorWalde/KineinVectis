@@ -31,6 +31,27 @@ fn c1_existing_cancelled_configure_retains_obsolete_state_until_successful_retry
         context(&mut p)["effective"].is_null(),
         "running configure is not current evidence"
     );
+    let debug_local = p.root.join(".kinein/presets/debug local");
+    let pending = ".kinein-configure-pending";
+    let attempt = fs::read(debug_local.join(pending)).unwrap();
+    // A mesma configuração não tem dois produtores: o segundo recusa antes
+    // de tocar a tentativa em andamento e o registro.
+    let same = p.call("cmake.configure", json!({"preset":"debug local"}))["jobId"].clone();
+    p.wait("event.job.output", |value| {
+        value["jobId"] == same
+            && value["line"] == "não foi possível registrar o configure: outra instância está alterando as configurações; aguarde e tente novamente"
+    });
+    assert_eq!(
+        p.wait("event.cmake.finished", |value| value["jobId"] == same)["success"],
+        false
+    );
+    assert_eq!(fs::read(debug_local.join(pending)).unwrap(), attempt);
+    assert_eq!(
+        crate::cmake::selected_configuration(&p.root),
+        Ok(Some("debug local".to_owned()))
+    );
+    // Outra configuração configura na pasta dela, em paralelo (C1-19), e é a
+    // ativa desde que começa (C1-20); falha pelo C1_FAIL do preset.
     let parallel = p.call("cmake.configure", json!({"preset":"release local"}))["jobId"].clone();
     assert_eq!(
         p.wait("event.cmake.finished", |value| value["jobId"] == parallel)["success"],
@@ -40,8 +61,19 @@ fn c1_existing_cancelled_configure_retains_obsolete_state_until_successful_retry
         context(&mut p)["staleBecause"]
             .as_str()
             .unwrap()
-            .contains("debug local"),
-        "second producer cannot replace the active attempt"
+            .contains("release local"),
+        "the configuration begun last is the active one"
+    );
+    assert_eq!(
+        fs::read(debug_local.join(pending)).unwrap(),
+        attempt,
+        "each folder keeps its own attempt"
+    );
+    assert!(
+        p.root
+            .join(".kinein/presets/release local")
+            .join(pending)
+            .is_file()
     );
     p.call("core.ping", json!({}));
     let start = Instant::now();
@@ -58,10 +90,12 @@ fn c1_existing_cancelled_configure_retains_obsolete_state_until_successful_retry
             .unwrap()
             .contains("configure")
     );
+    assert_eq!(fs::read(debug_local.join(pending)).unwrap(), attempt);
     fs::write(path, original).unwrap();
-    configure(&mut p, None, true);
+    configure(&mut p, Some("debug local"), true);
     p.build(true);
     current(&mut p);
+    assert!(!debug_local.join(pending).exists());
 }
 
 #[test]
@@ -81,16 +115,20 @@ fn c1_existing_removed_preset_and_corrupt_attempt_require_explicit_recovery() {
         "cmake.configure",
         Some(json!({})),
     ));
-    assert!(
-        response
-            .response()
-            .error
-            .as_ref()
-            .unwrap()
-            .message
-            .contains("removido")
-    );
-    let marker = p.root.join(".kinein/build/.kinein-configure-pending");
+    let removed = "configuração escolhida removida dos presets: release local; escolha outra";
+    assert_eq!(response.response().error.as_ref().unwrap().message, removed);
+    // O status diz por quê e oferece o que o automático escolheria.
+    let status = p.call("cmake.status", json!({}));
+    assert_eq!(status["configurationRefused"], removed, "{status}");
+    assert_eq!(status["presetChoices"], json!(["debug local"]), "{status}");
+    assert_eq!(status["presetChoicesFile"], "CMakePresets.json");
+    assert!(status.get("buildDir").is_none(), "{status}");
+    // Uma tentativa ilegível na pasta da configuração escolhida recusa o
+    // configure implícito, sem virar o automático.
+    p.call("cmake.selectConfiguration", json!({"preset":"debug local"}));
+    let marker = p
+        .root
+        .join(".kinein/presets/debug local/.kinein-configure-pending");
     fs::write(marker, "invalid json").unwrap();
     let response = p.core.handle_request(&JsonRpcRequest::new(
         3_i64,
@@ -136,7 +174,11 @@ fn c1_existing_manual_database_remains_owned_by_its_external_tool() {
         .output()
         .unwrap();
     assert!(result.status.success(), "{result:?}");
-    drop(crate::cmake::begin_configure(&p.root, Some("release local"), "").unwrap());
+    // Uma tentativa da IDE de antes do C-04, pendente em .kinein/build, que
+    // não é a configuração escolhida: a CDB do terminal continua sendo dela.
+    let ide = crate::cmake::ide_build_dir(&p.root);
+    drop(crate::cmake::begin_configure(&p.root, &ide, Some("release local"), "").unwrap());
+    crate::cmake::select_configuration(&p.root, None).unwrap();
     let context = CompileContext::load(&p.root, &ContextTools::default()).for_file(
         &p.root,
         &p.root.join("main.c"),
@@ -267,7 +309,8 @@ fn c1_existing_automatic_retry_keeps_the_default_kit_and_the_absence_of_a_preset
     configure(&mut p, None, false);
     p.build(false);
     assert_eq!(crate::cmake::active_kit(&p.root), "");
-    drop(crate::cmake::begin_configure(&p.root, None, "").unwrap());
+    let ide = crate::cmake::ide_build_dir(&p.root);
+    drop(crate::cmake::begin_configure(&p.root, &ide, None, "").unwrap());
     let (preset, source) = crate::cmake::choose_preset(&p.root, None).unwrap();
     assert!(
         preset.is_none(),

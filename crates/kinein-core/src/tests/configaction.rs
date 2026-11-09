@@ -441,14 +441,25 @@ fn every_cmake_action_has_a_verified_effect_on_disk() {
     assert!(texto.contains("target_include_directories(nucleo PUBLIC\n    include\n)\n"));
     assert!(texto.contains("target_link_libraries(ferramenta PRIVATE\n    nucleo\n)\n"));
 
-    // 9. Inspecionar o cache: le o CMakeCache.txt do build dir da IDE.
-    let build = dir.join(".kinein/build");
+    // 9. Inspecionar o cache: le o CMakeCache.txt da configuracao ativa. Com
+    //    dois presets e nenhuma escolha nao ha configuracao ativa (C1-20).
+    assert_eq!(
+        error_code(
+            &mut core,
+            "configAction.preview",
+            json!({ "id": "cmake.inspectCache" })
+        ),
+        JsonRpcErrorCode::InvalidParams
+    );
+    ok(
+        &mut core,
+        "cmake.selectConfiguration",
+        &json!({ "preset": "debug" }),
+    );
+    let build = dir.join("build/debug");
     std::fs::create_dir_all(&build).unwrap();
-    std::fs::write(
-        build.join("CMakeCache.txt"),
-        "CMAKE_BUILD_TYPE:STRING=Debug\nCMAKE_HOME_DIRECTORY:INTERNAL=/tmp\n",
-    )
-    .unwrap();
+    let foreign = "CMAKE_BUILD_TYPE:STRING=Debug\nCMAKE_HOME_DIRECTORY:INTERNAL=/tmp\n";
+    std::fs::write(build.join("CMakeCache.txt"), foreign).unwrap();
     let inspecao = ok(
         &mut core,
         "configAction.preview",
@@ -457,10 +468,29 @@ fn every_cmake_action_has_a_verified_effect_on_disk() {
     assert_eq!(inspecao["report"], json!(["CMAKE_BUILD_TYPE:STRING=Debug"]));
     assert!(inspecao["files"].as_array().unwrap().is_empty());
 
-    // 10. Reparar o build dir: some do disco de verdade.
-    assert!(build.is_dir());
+    // 10. Reparar o build dir: a pasta do preset e' do projeto, e a IDE so' a
+    //     remove com o cache dele (decisao do autor de 2026-11-09).
+    let refusal = call(
+        &mut core,
+        "configAction.preview",
+        json!({ "id": "cmake.repairBuildDir", "params": {} }),
+    );
+    let reason = &refusal.response().error.as_ref().unwrap().message;
+    assert_eq!(
+        reason,
+        &format!(
+            "{} é a pasta de build do preset e o cache dela é de outro projeto (/tmp): a IDE não a remove",
+            build.display()
+        )
+    );
+    std::fs::write(
+        build.join("CMakeCache.txt"),
+        format!("CMAKE_HOME_DIRECTORY:INTERNAL={}\n", dir.display()),
+    )
+    .unwrap();
     apply(&mut core, "cmake.repairBuildDir", &json!({}));
     assert!(!build.exists(), "o build dir continuou la");
+    assert!(dir.join("build").is_dir(), "so' a pasta do preset sai");
 }
 
 /// As 6 acoes Cargo da spec de MVP §12.2, cada uma contra o arquivo real.

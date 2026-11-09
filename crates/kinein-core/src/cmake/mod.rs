@@ -1,20 +1,27 @@
 //! Servico `CMake`: configure explicito, presets, targets via file-api e status.
 //!
-//! O diretorio de build e UNICO e imutavel (`<root>/.kinein/build`) — o mesmo
-//! usado por `build.run` e `run.start`; presets nao mudam o diretorio (o `-B`
-//! explicito tem precedencia). Targets vem da resposta `codemodel-v2` do
-//! file-api oficial do `CMake`, nunca de parser proprio de `CMakeLists.txt`.
+//! Desde o C-04 (C1-19–C1-21, consolidacao C §17) cada configuracao configura
+//! na propria pasta: `.kinein/build` sem preset, o `binaryDir` do preset ou
+//! `.kinein/presets/<preset>`; build, run, debug, ctest e o contexto usam a
+//! configuracao ativa (`crate::cmake_configuration`). Ate' 2026-11-09 a pasta
+//! era unica, e o `-B .kinein/build` vencia o `binaryDir`. Targets vem da
+//! resposta `codemodel-v2` do file-api oficial do `CMake`, nunca de parser
+//! proprio de `CMakeLists.txt`.
 
 pub mod attempt;
-mod configuration;
 pub mod model;
 mod preset_selection;
 mod rigor;
 
+pub use crate::cmake_configuration::{
+    Configuration, Refusal, active_configuration, active_dir, configuration_dir, ide_build_dir,
+    label, owned_by_ide, select_configuration, selected_configuration,
+};
 pub use crate::cmake_presets::{PresetDefault, default_preset, list_presets};
-pub use attempt::{ConfigureAttempt, begin_configure, complete_configure, incomplete_configure};
-pub use configuration::{select_configuration, selected_configuration};
-pub(crate) use preset_selection::{DefaultRefusal, choose_default, choose_preset};
+pub use attempt::{
+    ConfigureAttempt, begin_configure, complete_configure, incomplete_configure, incomplete_in,
+};
+pub(crate) use preset_selection::choose_preset;
 pub use rigor::{applied_rigor, configure_with_rigor, needs_configure, record_rigor, rigor_key};
 
 use std::{
@@ -25,86 +32,125 @@ use std::{
 
 use kinein_protocol::{CmakeTargetInfo, ToolchainRole};
 
+use crate::cmake_configuration::{PRESET_MARKER, annotated_preset, last_kit, pending};
+
 /// Maximo de targets repassados a UI por request.
 const MAX_TARGETS: usize = 200;
 
-/// Diretorio de build canonico do workspace.
-#[must_use]
-pub fn build_dir(root: &Path) -> PathBuf {
-    root.join(".kinein").join("build")
-}
-
-/// Estado do configure para `cmake.status`.
+/// Estado do configure para `cmake.status`: o da pasta da configuracao
+/// ativa (C1-20).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CmakeStatus {
-    /// `CMakeCache.txt` existe no build dir.
+    /// A configuracao ativa, ou por que nao ha'.
+    pub configuration: Result<Configuration, Refusal>,
+    /// `CMakeCache.txt` existe na pasta dela.
     pub configured: bool,
-    /// `compile_commands.json` existe no build dir.
+    /// `compile_commands.json` existe na pasta dela.
     pub has_compile_commands: bool,
-    /// Build dir canonico.
-    pub build_dir: PathBuf,
-    /// O preset com que a IDE configurou da ultima vez (`.kinein-preset` no
-    /// build dir; o `CMake` nao guarda o preset no cache).
+    /// A pasta da configuracao ativa.
+    pub build_dir: Option<PathBuf>,
+    /// O preset com que a IDE configurou essa pasta da ultima vez
+    /// (`.kinein-preset`; o `CMake` nao guarda o preset no cache).
     pub preset: Option<String>,
 }
 
-/// O arquivo em que a IDE anota o preset usado: o `CMakeCache.txt` nao o
-/// registra, e a tela precisa dizer COM QUE configurou.
-const PRESET_MARKER: &str = ".kinein-preset";
-
-/// O kit que vale para o configure e para o contexto (0.4.1a).
+/// O kit que vale para o configure e para o contexto (0.4.1a): o da
+/// configuracao ativa.
 ///
-/// O da tentativa pendente, senao o da configuracao escolhida (C-05: o
-/// configure seguinte usa o kit dela), senao o que o ultimo configure USOU
-/// (registrado desde 2026-11-08, C1-13). Mora aqui porque quem sabe o
-/// configure e' o `cmake`.
+/// Na pasta dela, o da tentativa pendente, senao o que o ultimo configure
+/// USOU (C1-13), senao, numa pasta de antes desse registro, o do preset
+/// anotado com kit proprio; os dois nao quando sao de outro preset, porque
+/// presets com o mesmo `binaryDir` dividem a pasta. Uma configuracao escolhida
+/// numa pasta sem registro dela usa o kit com o nome do preset (C-05). Desde
+/// o C1-20 todo configure grava a configuracao ativa, e a pasta conserva o
+/// kit com que foi configurada. Mora aqui porque quem sabe o configure e' o
+/// `cmake`.
 #[must_use]
 pub fn active_kit(root: &Path) -> String {
-    if let Ok(Some(attempt)) = attempt::pending_preset(root) {
+    let Ok(configuration) = active_configuration(root) else {
+        return String::new();
+    };
+    let directory = &configuration.directory;
+    if let Ok(Some(attempt)) = pending(directory)
+        && attempt.preset == configuration.preset
+    {
         return attempt.kit;
     }
-    if let Ok(Some(selected)) = selected_configuration(root) {
-        return selected;
+    // Os registros de outro preset que divide a pasta nao valem; os de uma
+    // pasta sem preset, como o `.kinein/build` de antes do C-04, sim.
+    let annotated = annotated_preset(directory);
+    let foreign = matches!(
+        (&annotated, &configuration.preset),
+        (Some(annotated), Some(preset)) if annotated != preset
+    );
+    if directory.join("CMakeCache.txt").is_file() && !foreign {
+        if let Some(kit) = last_kit(directory) {
+            return kit;
+        }
+        if let Some(preset) = annotated {
+            return if crate::toolchain::has_kit(root, &preset) {
+                preset
+            } else {
+                String::new()
+            };
+        }
     }
-    attempt::active_kit(root).unwrap_or_else(|| {
-        status(root)
-            .preset
-            .filter(|preset| crate::toolchain::has_kit(root, preset))
-            .unwrap_or_default()
-    })
+    if configuration.source == "configuration" {
+        return configuration.preset.unwrap_or_default();
+    }
+    String::new()
 }
 
 /// Le o estado atual por stat dos artefatos do configure.
 #[must_use]
 pub fn status(root: &Path) -> CmakeStatus {
-    let build_dir = build_dir(root);
-    let configured = build_dir.join("CMakeCache.txt").is_file();
-    let preset = configured
-        .then(|| fs::read_to_string(build_dir.join(PRESET_MARKER)).ok())
-        .flatten()
-        .map(|p| p.trim().to_owned())
-        .filter(|p| !p.is_empty());
+    let configuration = active_configuration(root);
+    let build_dir = configuration
+        .as_ref()
+        .ok()
+        .map(|configuration| configuration.directory.clone());
+    let folder = build_dir.as_deref();
     CmakeStatus {
-        configured,
-        has_compile_commands: build_dir.join("compile_commands.json").is_file(),
+        configured: folder.is_some_and(|folder| folder.join("CMakeCache.txt").is_file()),
+        has_compile_commands: folder
+            .is_some_and(|folder| folder.join("compile_commands.json").is_file()),
+        preset: folder.and_then(annotated_preset),
         build_dir,
-        preset,
+        configuration,
     }
 }
 
 /// Anota (ou apaga) o preset usado num configure que TERMINOU com sucesso.
-pub fn record_preset(root: &Path, preset: Option<&str>) {
-    let marker = build_dir(root).join(PRESET_MARKER);
+pub fn record_preset(directory: &Path, preset: Option<&str>) {
+    let marker = directory.join(PRESET_MARKER);
     match preset {
         Some(p) => drop(fs::write(marker, format!("{p}\n"))),
         None => drop(fs::remove_file(marker)),
     }
 }
 
+/// O que a saida do configure diz antes do `CMake` (C1-19, decisao do autor
+/// de 2026-11-09): a pasta e, num `binaryDir` de preset, que o cache recebe
+/// as definicoes da IDE e que o terminal as herda.
+#[must_use]
+pub fn configure_notes(root: &Path, directory: &Path, preset: Option<&str>) -> Vec<String> {
+    let label = label(root, directory);
+    let mut notes = vec![format!("configurando em {label}")];
+    if let Some(preset) = preset
+        && !owned_by_ide(root, directory)
+    {
+        notes.push(format!(
+            "{label} é o binaryDir do preset {preset}: o cache recebe as definições da IDE \
+             (-D da linha de comando), e `cmake --preset {preset}` no terminal as herda"
+        ));
+    }
+    notes
+}
+
 /// Escreve a query `codemodel-v2` do file-api antes do configure, para o
 /// `CMake` responder com os targets em `.cmake/api/v1/reply`.
-pub fn write_file_api_query(root: &Path) -> io::Result<()> {
-    let query = build_dir(root)
+pub fn write_file_api_query(directory: &Path) -> io::Result<()> {
+    let query = directory
         .join(".cmake")
         .join("api")
         .join("v1")
@@ -117,7 +163,11 @@ pub fn write_file_api_query(root: &Path) -> io::Result<()> {
     fs::write(query.join("codemodel-v2"), "")
 }
 
-/// Monta o comando de configure com a CDB exportada e o `-B` fixo.
+/// Monta o comando de configure com a CDB exportada e o `-B` da pasta da
+/// configuracao.
+///
+/// A pasta e' o `binaryDir` resolvido do preset, a mesma que o `CMake`
+/// usaria, para a query do file-api estar onde ele configura.
 ///
 /// `toolchain` e a escolha do usuario (roadmap 30, etapa 5). Ela entra por
 /// dois caminhos: o EXECUTAVEL do `cmake` (quando fixado) e os argumentos
@@ -126,6 +176,7 @@ pub fn write_file_api_query(root: &Path) -> io::Result<()> {
 #[must_use]
 pub fn configure_command(
     root: &Path,
+    directory: &Path,
     preset: Option<&str>,
     toolchain: &crate::toolchain::Toolchain,
     extra: &[String],
@@ -138,7 +189,7 @@ pub fn configure_command(
     if let Some(preset) = preset {
         command.arg("--preset").arg(preset);
     }
-    command.arg("-S").arg(root).arg("-B").arg(build_dir(root));
+    command.arg("-S").arg(root).arg("-B").arg(directory);
     command.arg("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON");
     // O perfil de rigor (M4.5) ANTES do kit e do framework: um `-D` explicito
     // deles continua valendo por ultimo, como a regra abaixo pede.
@@ -314,10 +365,14 @@ pub(crate) fn cmake_lists_files(root: &Path) -> Vec<PathBuf> {
 /// de cada um (`cmake/model.rs`): fontes, artefatos, linguagens, flags,
 /// sysroot, dependencias.
 ///
-/// Sem reply (nunca configurado com a query) retorna vazio; a UI explica.
+/// Sem reply (nunca configurado com a query) ou sem configuracao ativa
+/// retorna vazio; a UI explica.
 #[must_use]
 pub fn list_targets(root: &Path) -> Vec<CmakeTargetInfo> {
-    let Some(modelo) = model::CmakeModel::load(&build_dir(root)) else {
+    let Some(modelo) = active_dir(root)
+        .ok()
+        .and_then(|directory| model::CmakeModel::load(&directory))
+    else {
         return Vec::new();
     };
     modelo
@@ -420,19 +475,23 @@ mod tests {
         assert!(!before.configured);
         assert!(!before.has_compile_commands);
 
-        std::fs::create_dir_all(before.build_dir.clone()).unwrap();
-        std::fs::write(before.build_dir.join("CMakeCache.txt"), "#\n").unwrap();
-        std::fs::write(before.build_dir.join("compile_commands.json"), "[]\n").unwrap();
+        let build_dir = before.build_dir.unwrap();
+        assert_eq!(build_dir, root.join(".kinein/build"), "sem presets");
+        std::fs::create_dir_all(&build_dir).unwrap();
+        std::fs::write(build_dir.join("CMakeCache.txt"), "#\n").unwrap();
+        std::fs::write(build_dir.join("compile_commands.json"), "[]\n").unwrap();
         let after = status(&root);
         assert!(after.configured);
         assert!(after.has_compile_commands);
     }
 
     #[test]
-    fn configure_command_pins_build_dir_and_exports_cdb() {
+    fn configure_command_passes_the_configuration_dir_and_exports_cdb() {
         let root = temp_root("command");
+        let directory = root.join("build/dev");
         let command = configure_command(
             &root,
+            &directory,
             Some("dev"),
             &Toolchain::resolve(&root, &[]),
             &[],
@@ -448,13 +507,13 @@ mod tests {
         assert!(arguments.contains(&"-S".to_owned()));
         assert!(arguments.contains(&"-DCMAKE_EXPORT_COMPILE_COMMANDS=ON".to_owned()));
         let build_index = arguments.iter().position(|arg| arg == "-B").unwrap();
-        assert!(std::path::Path::new(&arguments[build_index + 1]).ends_with(".kinein/build"));
+        assert_eq!(std::path::Path::new(&arguments[build_index + 1]), directory);
     }
 
     #[test]
     fn file_api_query_is_written_inside_build_dir() {
         let root = temp_root("query");
-        write_file_api_query(&root).unwrap();
+        write_file_api_query(&root.join(".kinein/build")).unwrap();
         assert!(
             root.join(".kinein/build/.cmake/api/v1/query/codemodel-v2")
                 .is_file()
@@ -676,17 +735,36 @@ mod tests {
         );
 
         // O preset usado: anotado so' com CMakeCache (configurado) — e apagado
-        // quando o configure seguinte roda sem preset.
-        std::fs::create_dir_all(root.join(".kinein/build")).unwrap();
-        record_preset(&root, Some("linux-clang"));
+        // quando o configure seguinte roda sem preset. Com dois presets e
+        // nenhuma escolha, o `.kinein/build` anotado de antes do C-04 vale.
+        std::fs::remove_file(root.join("CMakeUserPresets.json")).unwrap();
+        let ide = root.join(".kinein/build");
+        std::fs::create_dir_all(&ide).unwrap();
+        record_preset(&ide, Some("linux-clang"));
         assert_eq!(
             status(&root).preset,
             None,
             "sem CMakeCache nao esta' configurado"
         );
-        std::fs::write(root.join(".kinein/build/CMakeCache.txt"), "").unwrap();
-        assert_eq!(status(&root).preset.as_deref(), Some("linux-clang"));
-        record_preset(&root, None);
-        assert_eq!(status(&root).preset, None);
+        assert_eq!(
+            status(&root).build_dir,
+            None,
+            "dois presets e nenhuma escolha"
+        );
+        std::fs::write(ide.join("CMakeCache.txt"), "").unwrap();
+        let configured = status(&root);
+        assert_eq!(configured.preset.as_deref(), Some("linux-clang"));
+        assert_eq!(configured.build_dir.as_deref(), Some(ide.as_path()));
+        assert!(configured.configured);
+        record_preset(&ide, None);
+        let after = status(&root);
+        assert_eq!(
+            (after.preset, after.build_dir, after.configured),
+            (None, None, false)
+        );
+        assert!(matches!(
+            after.configuration,
+            Err(super::Refusal::Several("CMakePresets.json", _))
+        ));
     }
 }

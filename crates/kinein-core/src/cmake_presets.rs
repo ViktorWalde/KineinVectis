@@ -183,8 +183,8 @@ pub(crate) struct PresetDirectory {
 }
 
 /// O `binaryDir` resolvido dos configure presets nao ocultos que a
-/// `condition` nao exclui, na ordem dos arquivos. Um preset sem pasta
-/// resolvida nao aparece; presets recusados nao tem nenhuma.
+/// `condition` nao exclui, na ordem dos arquivos. Um preset sem `binaryDir`
+/// ou com pasta nao resolvida nao aparece; presets recusados nao tem nenhuma.
 pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
     let Ok(presets) = files::load(root) else {
         return Vec::new();
@@ -196,6 +196,7 @@ pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
         .filter_map(|entry| {
             resolve_binary_dir(root, &presets, &entry.name)
                 .ok()
+                .flatten()
                 .map(|directory| PresetDirectory {
                     name: entry.name.clone(),
                     directory,
@@ -204,19 +205,27 @@ pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
         .collect()
 }
 
-/// A pasta de build que o preset declara, ou por que ela nao e' conhecida.
-pub(crate) fn binary_dir(root: &Path, preset: &str) -> Result<PathBuf, String> {
+/// A pasta de build que o preset declara; `None` quando ele nao declara
+/// `binaryDir` (C1-19: a IDE configura em `.kinein/presets/<preset>`). Erro
+/// quando os presets sao recusados, o preset nao existe ou a pasta nao se
+/// resolve.
+pub(crate) fn binary_dir(root: &Path, preset: &str) -> Result<Option<PathBuf>, String> {
     resolve_binary_dir(root, &files::load(root)?, preset)
 }
 
-fn resolve_binary_dir(root: &Path, presets: &Presets, preset: &str) -> Result<PathBuf, String> {
+fn resolve_binary_dir(
+    root: &Path,
+    presets: &Presets,
+    preset: &str,
+) -> Result<Option<PathBuf>, String> {
+    let Some(entry) = presets.find(preset) else {
+        return Err(format!("preset de configure inexistente: {preset}"));
+    };
     let declared = match lookup(presets, preset, &["binaryDir"], 0) {
         Field::Text(text) => text,
-        Field::Unset | Field::Absent => return Err("o preset não declara binaryDir".to_owned()),
+        Field::Unset | Field::Absent => return Ok(None),
     };
-    let file_dir = presets
-        .find(preset)
-        .map_or(root, |entry| presets.file_of(entry).dir.as_path());
+    let file_dir = presets.file_of(entry).dir.as_path();
     let expanded = macros::Macros {
         root,
         presets,
@@ -225,11 +234,11 @@ fn resolve_binary_dir(root: &Path, presets: &Presets, preset: &str) -> Result<Pa
     }
     .expand(&declared, 0)?;
     let path = PathBuf::from(expanded);
-    Ok(if path.is_absolute() {
+    Ok(Some(if path.is_absolute() {
         path
     } else {
         root.join(path)
-    })
+    }))
 }
 
 /// Um arquivo de presets nas mensagens: relativo a raiz quando dentro dela.
@@ -318,7 +327,7 @@ mod tests {
         );
         let name = root.file_name().unwrap().to_str().unwrap().to_owned();
         assert_eq!(
-            binary_dir(&root, "dbg").unwrap(),
+            binary_dir(&root, "dbg").unwrap().unwrap(),
             root.parent()
                 .unwrap()
                 .join(format!("{name}-dbg"))
@@ -327,11 +336,11 @@ mod tests {
         );
         let separator = if cfg!(windows) { ";" } else { ":" };
         assert_eq!(
-            binary_dir(&root, "dollar").unwrap(),
+            binary_dir(&root, "dollar").unwrap().unwrap(),
             root.join(format!("b/$x{separator}y"))
         );
         assert_eq!(
-            binary_dir(&root, "relative").unwrap(),
+            binary_dir(&root, "relative").unwrap().unwrap(),
             root.join("rel/relative")
         );
         // O oculto nao e' configuracao: so' o filho aparece.
@@ -356,16 +365,25 @@ mod tests {
         // `$penv` le o ambiente do core, sem o `environment` do preset.
         let home = std::env::var("HOME").unwrap_or_default();
         assert_eq!(
-            binary_dir(&root, "inherited").unwrap(),
+            binary_dir(&root, "inherited").unwrap().unwrap(),
             PathBuf::from(format!("{home}/from-base/x"))
         );
-        assert_eq!(binary_dir(&root, "override").unwrap(), root.join("mine"));
-        assert_eq!(binary_dir(&root, "removed").unwrap(), root.join("z"));
+        assert_eq!(
+            binary_dir(&root, "override").unwrap().unwrap(),
+            root.join("mine")
+        );
+        assert_eq!(
+            binary_dir(&root, "removed").unwrap().unwrap(),
+            root.join("z")
+        );
         assert_eq!(
             binary_dir(&root, "loop").unwrap_err(),
             "ciclo de macros em environment"
         );
-        assert_eq!(binary_dir(&root, "unknownvar").unwrap(), root.join("u"));
+        assert_eq!(
+            binary_dir(&root, "unknownvar").unwrap().unwrap(),
+            root.join("u")
+        );
     }
 
     /// O que o `CMake` recusa ou ignora nao vira pasta.
@@ -387,11 +405,11 @@ mod tests {
             ("vendor", "$vendor{acme}: o CMake ignora este preset"),
             ("open", "macro sem fechamento: ${presetName"),
             ("nogenerator", "a macro generator exige generator no preset"),
-            ("nodir", "o preset não declara binaryDir"),
-            ("absent", "o preset não declara binaryDir"),
+            ("absent", "preset de configure inexistente: absent"),
         ] {
             assert_eq!(binary_dir(&root, preset).unwrap_err(), reason, "{preset}");
         }
+        assert_eq!(binary_dir(&root, "nodir"), Ok(None));
         assert_eq!(
             binary_dirs(&root),
             [PresetDirectory {
@@ -413,12 +431,12 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            binary_dir(&root, "abs").unwrap(),
+            binary_dir(&root, "abs").unwrap().unwrap(),
             Path::new("/opt/kv build")
         );
         let listed: Vec<String> = binary_dirs(&root).into_iter().map(|p| p.name).collect();
         assert_eq!(listed, ["abs", "mine"]);
-        assert_eq!(binary_dir(&root, "mine").unwrap(), root.join("m"));
+        assert_eq!(binary_dir(&root, "mine").unwrap().unwrap(), root.join("m"));
     }
 
     fn write(root: &Path, relative: &str, body: &str) {
@@ -458,9 +476,18 @@ mod tests {
             r#"{"version":6,"configurePresets":[{"name":"shared","binaryDir":"${fileDir}/s"}]}"#,
         );
         assert_eq!(names(&root), ["top", "sub", "shared"]);
-        assert_eq!(binary_dir(&root, "top").unwrap(), root.join("out/top"));
-        assert_eq!(binary_dir(&root, "sub").unwrap(), root.join("sub/out/sub"));
-        assert_eq!(binary_dir(&root, "shared").unwrap(), root.join("shared/s"));
+        assert_eq!(
+            binary_dir(&root, "top").unwrap().unwrap(),
+            root.join("out/top")
+        );
+        assert_eq!(
+            binary_dir(&root, "sub").unwrap().unwrap(),
+            root.join("sub/out/sub")
+        );
+        assert_eq!(
+            binary_dir(&root, "shared").unwrap().unwrap(),
+            root.join("shared/s")
+        );
         let found: Vec<PathBuf> = binary_dirs(&root)
             .into_iter()
             .map(|p| p.directory)
@@ -704,7 +731,10 @@ mod tests {
             super::default_preset(&root),
             super::PresetDefault::One("mine".to_owned(), "CMakeUserPresets.json")
         );
-        assert_eq!(binary_dir(&root, "mine").unwrap(), root.join("local/m"));
+        assert_eq!(
+            binary_dir(&root, "mine").unwrap().unwrap(),
+            root.join("local/m")
+        );
         // O `include` implicito e' do arquivo do usuario, nao do que ele
         // inclui: o `CMake` 4.4.5 recusa ("unreachable from preset's file").
         write(

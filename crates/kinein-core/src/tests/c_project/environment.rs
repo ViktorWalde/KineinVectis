@@ -92,7 +92,7 @@ fn c1_literal_dialects_build_and_survive_reopen_configuration_and_workspace_chan
             context(&mut p, &executable, standard);
             p.test();
             let cdb: Value = serde_json::from_slice(
-                &fs::read(p.root.join(".kinein/build/compile_commands.json")).unwrap(),
+                &fs::read(p.root.join("build/debug/compile_commands.json")).unwrap(),
             )
             .unwrap();
             let command = cdb[0]["command"].as_str().unwrap();
@@ -119,11 +119,15 @@ fn c1_literal_dialects_build_and_survive_reopen_configuration_and_workspace_chan
             configure(&mut p, "release");
             context(&mut p, &executable, standard);
             assert_eq!(p.call("cmake.status", json!({}))["preset"], "release");
-            assert!(
-                fs::read_to_string(p.root.join(".kinein/build/CMakeCache.txt"))
+            // Cada preset configura no binaryDir dele (C1-19): o debug fica
+            // como estava.
+            let cache = |preset: &str| {
+                fs::read_to_string(p.root.join("build").join(preset).join("CMakeCache.txt"))
                     .unwrap()
-                    .contains("CMAKE_BUILD_TYPE:STRING=Release")
-            );
+            };
+            assert!(cache("release").contains("CMAKE_BUILD_TYPE:STRING=Release"));
+            assert!(cache("debug").contains("CMAKE_BUILD_TYPE:STRING=Debug"));
+            assert!(!p.root.join(".kinein/build").exists());
             for (name, bytes) in preserved {
                 assert_eq!(fs::read(p.root.join(name)).unwrap(), bytes, "{name}");
             }

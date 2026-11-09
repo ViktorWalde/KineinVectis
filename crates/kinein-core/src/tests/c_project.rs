@@ -1,5 +1,6 @@
 //! Criacao C pelo dispatch e dialetos pelo contexto/compiladores reais.
 
+mod configurations;
 mod dialects;
 mod environment;
 mod existing;

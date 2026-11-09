@@ -29,9 +29,10 @@
 //! `out/build`): a CDB de um preset configurado fora da IDE, em
 //! `build/<preset>/`, não era achada, e a de `builddir/` era mostrada sem que o
 //! clangd a recebesse. A ordem agora: o `.clangd` da raiz que fixa a base → a
-//! configuração escolhida → `.kinein/build` → raiz e `build/` → o `binaryDir`
-//! dos presets (um: ele; vários: a pessoa escolhe) → `builddir/` e
-//! `out/build/`.
+//! configuração escolhida → `.kinein/build` → raiz e `build/` → a pasta dos
+//! presets, o `binaryDir` ou `.kinein/presets/<preset>` (uma: ela; várias: a
+//! pessoa escolhe) → `builddir/` e `out/build/`. Desde o C1-20 a configuração
+//! escolhida é a ativa, e a CDB dela é a da pasta dela (consolidação C §17).
 
 use std::{
     path::{Path, PathBuf},
@@ -41,6 +42,9 @@ use std::{
 use kinein_protocol::{CdbAbsence, CdbAbsenceKind, CdbCandidate, CdbOrigin};
 
 use crate::cmake_presets::PresetDirectory;
+// O rotulo mora na folha `cmake_configuration`: `run` e `cmake` o usam sem
+// depender da CDB.
+pub use crate::cmake_configuration::label;
 
 mod clangd;
 mod directory;
@@ -141,29 +145,6 @@ impl CdbStatus {
     }
 }
 
-/// O texto que o fio usa para uma pasta: relativa ao root, `"."` para ele,
-/// absoluta fora dele.
-#[must_use]
-pub fn label(root: &Path, directory: &Path) -> String {
-    let relative = directory
-        .strip_prefix(root)
-        .map(Path::to_path_buf)
-        .ok()
-        .or_else(|| {
-            let root = crate::platform::canonicalize(root).ok()?;
-            crate::platform::canonicalize(directory)
-                .ok()?
-                .strip_prefix(&root)
-                .map(Path::to_path_buf)
-                .ok()
-        });
-    match relative {
-        Some(path) if path.as_os_str().is_empty() => ".".to_owned(),
-        Some(path) => crate::platform::portable_relative(&path),
-        None => directory.display().to_string(),
-    }
-}
-
 fn directory_path(root: &Path, label: &str) -> PathBuf {
     if label.is_empty() || label == "." {
         root.to_path_buf()
@@ -197,7 +178,7 @@ const fn absent(kind: CdbAbsenceKind, reason: String) -> Choice {
 /// C/C++ ainda não configurado), não um erro.
 #[must_use]
 pub fn status(root: &Path) -> CdbStatus {
-    let presets = crate::cmake_presets::binary_dirs(root);
+    let presets = crate::cmake_configuration::preset_dirs(root);
     let clangd = clangd::base(root);
     let selected = crate::cmake::selected_configuration(root);
     let found = discover(root, &presets, &clangd);
@@ -219,9 +200,8 @@ pub fn status(root: &Path) -> CdbStatus {
         Choice::Use(found) => {
             let file = found.directory.join(FILE);
             (status.stale, status.stale_because) = stale(root, &file);
-            if same_directory(&found.directory, &root.join(IDE_DIRECTORY))
-                && let Some(reason) = crate::cmake::incomplete_configure(root)
-            {
+            // A tentativa pendente vale na pasta em que está (C1-20).
+            if let Some(reason) = crate::cmake::incomplete_in(&found.directory) {
                 status.stale = true;
                 status.stale_because = Some(reason);
             }
@@ -318,7 +298,7 @@ fn choose(
     let ide = root.join(IDE_DIRECTORY);
     match selected {
         Err(reason) => return absent(CdbAbsenceKind::ChosenConfiguration, reason),
-        Ok(Some(preset)) => return chosen(root, &preset, &ide, found),
+        Ok(Some(preset)) => return chosen(root, &preset, found),
         Ok(None) => {}
     }
     if let Some(found) = with_cdb(&ide) {
@@ -358,9 +338,11 @@ fn choose(
         .map_or(Choice::Absent(None), |found| Choice::Use(found.clone()))
 }
 
-/// A configuração escolhida: o configure da IDE com esse preset, senão o
-/// `binaryDir` dele. Sem CDB ali, nenhuma outra a substitui.
-fn chosen(root: &Path, preset: &str, ide: &Path, found: &[Found]) -> Choice {
+/// A configuração escolhida: a CDB da pasta dela (C1-20). Até 2026-11-09 o
+/// `.kinein/build` configurado pela IDE com o mesmo preset vencia o
+/// `binaryDir`; esse `.kinein/build` agora só vale no automático. Sem CDB na
+/// pasta, nenhuma outra a substitui.
+fn chosen(root: &Path, preset: &str, found: &[Found]) -> Choice {
     let with_cdb = |directory: &Path| find(found, directory);
     let listed = match crate::cmake::list_presets(root) {
         Ok(presets) => presets.iter().any(|entry| entry.name == preset),
@@ -375,11 +357,7 @@ fn chosen(root: &Path, preset: &str, ide: &Path, found: &[Found]) -> Choice {
             ),
         );
     }
-    let configured_by_ide = crate::cmake::status(root).preset.as_deref() == Some(preset);
-    if configured_by_ide && let Some(found) = with_cdb(ide) {
-        return Choice::Use(found.clone());
-    }
-    match crate::cmake_presets::binary_dir(root, preset) {
+    match crate::cmake::configuration_dir(root, Some(preset)) {
         Ok(directory) => with_cdb(&directory).map_or_else(
             || {
                 absent(
@@ -401,10 +379,7 @@ fn chosen(root: &Path, preset: &str, ide: &Path, found: &[Found]) -> Choice {
         ),
         Err(reason) => absent(
             CdbAbsenceKind::ChosenConfiguration,
-            format!(
-                "a configuração escolhida (preset {preset}) não tem pasta de build conhecida: \
-                 {reason}"
-            ),
+            format!("a configuração escolhida (preset {preset}) não tem pasta de build: {reason}"),
         ),
     }
 }
@@ -670,21 +645,63 @@ mod tests {
         assert_eq!(status(&root).origin, Some(CdbOrigin::Ide));
     }
 
-    /// A configuracao escolhida que a IDE configurou usa `.kinein/build`.
+    /// A configuracao escolhida usa a pasta dela, mesmo com um `.kinein/build`
+    /// que a IDE configurou com o mesmo preset antes do C-04 (C1-19): ate' o
+    /// `0.208.0` esse `.kinein/build` vencia.
     #[test]
-    fn the_chosen_configuration_configured_by_the_ide_uses_its_directory() {
+    fn the_chosen_configuration_uses_its_own_directory_even_beside_an_old_ide_build() {
         let root = temp_root("escolhida-ide");
         presets(&root, TWO_PRESETS);
         write_cdb(&root.join("build/debug"));
-        write_cdb(&root.join(".kinein/build"));
-        fs::write(root.join(".kinein/build/CMakeCache.txt"), "").unwrap();
-        crate::cmake::record_preset(&root, Some("debug"));
+        let ide = root.join(".kinein/build");
+        write_cdb(&ide);
+        fs::write(ide.join("CMakeCache.txt"), "").unwrap();
+        crate::cmake::record_preset(&ide, Some("debug"));
         crate::cmake::select_configuration(&root, Some("debug")).unwrap();
 
         let found = status(&root);
 
+        assert_eq!(found.directory.as_deref(), Some("build/debug"));
+        assert_eq!(found.origin, Some(CdbOrigin::Configuration));
+        assert_eq!(found.preset.as_deref(), Some("debug"));
+
+        // No automatico, o `.kinein/build` anotado continua valendo.
+        crate::cmake::select_configuration(&root, None).unwrap();
+        let found = status(&root);
         assert_eq!(found.directory.as_deref(), Some(".kinein/build"));
         assert_eq!(found.origin, Some(CdbOrigin::Ide));
+    }
+
+    /// A tentativa pendente deixa obsoleta a CDB da pasta em que esta, e so'
+    /// ela (C1-20).
+    #[test]
+    fn a_pending_attempt_marks_only_the_database_of_its_folder() {
+        let root = temp_root("tentativa-pasta");
+        presets(&root, TWO_PRESETS);
+        write_cdb(&root.join("build/debug"));
+        write_cdb(&root.join("build/release"));
+        crate::cmake::select_configuration(&root, Some("debug")).unwrap();
+        let pending = |preset: &str| {
+            fs::write(
+                root.join("build")
+                    .join(preset)
+                    .join(".kinein-configure-pending"),
+                format!(r#"{{"preset":"{preset}","kit":""}}"#),
+            )
+            .unwrap();
+        };
+        pending("release");
+        let found = status(&root);
+        assert_eq!(found.directory.as_deref(), Some("build/debug"));
+        assert!(!found.stale, "{:?}", found.stale_because);
+
+        pending("debug");
+        let found = status(&root);
+        assert!(found.stale);
+        assert_eq!(
+            found.stale_because.as_deref(),
+            Some("configure não concluído (preset debug); repita ou escolha outra configuração")
+        );
     }
 
     /// A raiz e `build/` vem antes dos presets: o clangd as acharia sozinho.

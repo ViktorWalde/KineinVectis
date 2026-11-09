@@ -62,6 +62,70 @@ pub(super) fn current(p: &mut Project) -> Value {
     }
 }
 
+/// Depois do configure de `release local` que falhou: a configuracao ativa e'
+/// a dele, na pasta dela (C1-19, C1-20), e a de `debug local` fica intacta.
+fn failed_configuration_stays_in_its_folder(
+    p: &mut Project,
+    debug_local: &Path,
+    debug_cache: &[u8],
+) {
+    // O configure que falhou deixa ativa a configuracao dele, na pasta
+    // dela (C1-19, C1-20): nenhuma CDB de outra pasta a substitui.
+    let status = p.call("cmake.status", json!({}));
+    assert_eq!(status["configurationPreset"], "release local", "{status}");
+    assert_eq!(status["configurationSource"], "configuration");
+    assert!(
+        Path::new(status["buildDir"].as_str().unwrap()).ends_with(".kinein/presets/release local"),
+        "{status}"
+    );
+    assert!(
+        status.get("preset").is_none(),
+        "nenhum sucesso nesta pasta: {status}"
+    );
+    assert_eq!(status["hasCompileCommands"], false);
+    assert!(status.get("cdbDirectory").is_none(), "{status}");
+    assert_eq!(status["cdbAbsence"]["kind"], "chosenConfiguration");
+    assert_eq!(
+        status["cdbCandidates"],
+        json!([{"directory":".kinein/presets/debug local","origin":"preset","preset":"debug local"}])
+    );
+    let stale = context(p);
+    assert_eq!(
+        stale["staleBecause"],
+        "configure não concluído (preset release local); repita ou escolha outra configuração",
+        "{stale}"
+    );
+    assert!(
+        stale["effective"].is_null() && stale["unit"].is_null(),
+        "{stale}"
+    );
+    assert!(
+        !stale["hint"].as_str().unwrap().contains("Comando anterior"),
+        "nesta pasta não há comando anterior: {stale}"
+    );
+    assert!(crate::index::context::verification_context(&p.root, &p.root.join("main.c")).is_err());
+    // A configuracao que funcionava ficou intacta: voltar a ela nao
+    // reconfigura, e o contexto dela volta a valer.
+    assert_eq!(
+        fs::read(debug_local.join("CMakeCache.txt")).unwrap(),
+        debug_cache
+    );
+    p.call("cmake.selectConfiguration", json!({"preset":"debug local"}));
+    let back = current(p);
+    assert_eq!(back["effective"]["compiler"]["origin"], "cdb", "{back}");
+    let status = p.call("cmake.status", json!({}));
+    assert_eq!(status["preset"], "debug local", "{status}");
+    assert_eq!(status["cdbDirectory"], ".kinein/presets/debug local");
+    assert_eq!(
+        fs::read(debug_local.join("CMakeCache.txt")).unwrap(),
+        debug_cache
+    );
+    p.call(
+        "cmake.selectConfiguration",
+        json!({"preset":"release local"}),
+    );
+}
+
 #[test]
 fn c1_existing_failed_configure_preserves_selection_and_marks_previous_commands() {
     for compiler in ["gcc", "clang"] {
@@ -89,32 +153,10 @@ fn c1_existing_failed_configure_preserves_selection_and_marks_previous_commands(
             executable.to_str().unwrap()
         );
         assert_eq!(before["effective"]["compiler"]["origin"], "cdb");
+        let debug_local = p.root.join(".kinein/presets/debug local");
+        let debug_cache = fs::read(debug_local.join("CMakeCache.txt")).unwrap();
         configure(&mut p, Some("release local"), false);
-        let status = p.call("cmake.status", json!({}));
-        assert_eq!(
-            status["preset"], "debug local",
-            "last success remains distinct"
-        );
-        assert_eq!(
-            status["cdbStale"], true,
-            "old CDB is not current evidence: {status}"
-        );
-        let stale = context(&mut p);
-        assert!(
-            stale["staleBecause"]
-                .as_str()
-                .unwrap()
-                .contains("release local"),
-            "{stale}"
-        );
-        assert!(stale["effective"].is_null(), "{stale}");
-        assert_eq!(
-            stale["unit"]["standard"], "gnu17",
-            "history remains inspectable"
-        );
-        assert!(
-            crate::index::context::verification_context(&p.root, &p.root.join("main.c")).is_err()
-        );
+        failed_configuration_stays_in_its_folder(&mut p, &debug_local, &debug_cache);
         // Reabertura não transforma falha persistida em sucesso nem perde a escolha.
         p.call("workspace.close", json!({}));
         p.call("workspace.open", json!({"path":p.root}));
@@ -128,8 +170,17 @@ fn c1_existing_failed_configure_preserves_selection_and_marks_previous_commands(
         p.build(true);
         current(&mut p);
         assert_eq!(p.call("cmake.status", json!({}))["preset"], "release local");
-        let cdb = fs::read_to_string(p.root.join(".kinein/build/compile_commands.json")).unwrap();
+        let cdb = fs::read_to_string(
+            p.root
+                .join(".kinein/presets/release local/compile_commands.json"),
+        )
+        .unwrap();
         assert!(cdb.contains("-O3") && cdb.contains("-std=gnu17"), "{cdb}");
+        assert_eq!(
+            fs::read(debug_local.join("CMakeCache.txt")).unwrap(),
+            debug_cache
+        );
+        assert!(!p.root.join(".kinein/build").exists());
         for (name, bytes) in preserved {
             assert_eq!(fs::read(p.root.join(name)).unwrap(), bytes, "{name}");
         }
@@ -179,7 +230,9 @@ fn c1_existing_removed_compiler_and_replaced_database_never_claim_current_contex
     opened.build(true);
     current(&mut opened);
     let loaded = CompileContext::load(&opened.root, &ContextTools::default());
-    let cdb = opened.root.join(".kinein/build/compile_commands.json");
+    let cdb = opened
+        .root
+        .join(".kinein/presets/debug local/compile_commands.json");
     let mut entries: Value = serde_json::from_slice(&fs::read(&cdb).unwrap()).unwrap();
     entries[0]["command"] = json!(format!(
         "'{}' -std=gnu11 -c '{}'",

@@ -116,14 +116,16 @@ fn cargo_binary(root: &Path) -> Result<PathBuf, DebugError> {
     single_binary(binaries, "target/debug")
 }
 
-/// Finds the single executable produced by the `CMake` build.
+/// Finds the single executable the `CMake` build produced in the folder of
+/// the active configuration (C1-21).
 fn cmake_binary(root: &Path) -> Result<PathBuf, DebugError> {
-    let build_dir = root.join(".kinein").join("build");
+    let build_dir =
+        crate::cmake::active_dir(root).map_err(|message| DebugError::NoTarget { message })?;
     let mut found = Vec::new();
     crate::run::collect_executables(&build_dir, &mut found);
     single_binary(
         found.into_iter().map(PathBuf::from).collect(),
-        ".kinein/build",
+        &crate::cmake_configuration::label(root, &build_dir),
     )
 }
 

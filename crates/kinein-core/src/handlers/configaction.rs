@@ -195,11 +195,11 @@ impl Core {
                     );
                 }
                 let mut inputs = core.configaction_inputs(&root);
-                // O kit padrao configura com o preset padrao do projeto.
+                // O kit padrao configura com o preset da configuracao ativa.
                 let preset = if kit.is_empty() {
-                    crate::cmake::choose_default(&root)
+                    crate::cmake::active_configuration(&root)
                         .ok()
-                        .and_then(|(preset, _)| preset)
+                        .and_then(|configuration| configuration.preset)
                 } else {
                     Some(kit.clone())
                 };

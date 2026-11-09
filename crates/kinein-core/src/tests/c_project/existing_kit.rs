@@ -68,11 +68,20 @@ fn request(p: &mut Project, method: &str, params: Value) -> kinein_protocol::Jso
         .clone()
 }
 
+/// The folder the fixture configures in: without presets `.kinein/build`;
+/// the preset `dev` declares no `binaryDir` (C1-19).
+fn build_folder(p: &Project) -> PathBuf {
+    if p.root.join("CMakePresets.json").is_file() {
+        p.root.join(".kinein/presets/dev")
+    } else {
+        p.root.join(".kinein/build")
+    }
+}
+
 fn cdb_compiler(p: &Project) -> String {
-    let cdb: Value = serde_json::from_slice(
-        &fs::read(p.root.join(".kinein/build/compile_commands.json")).unwrap(),
-    )
-    .unwrap();
+    let cdb: Value =
+        serde_json::from_slice(&fs::read(build_folder(p).join("compile_commands.json")).unwrap())
+            .unwrap();
     let command = cdb[0]["command"].as_str().unwrap();
     assert!(command.contains("-std=gnu17"), "{command}");
     command
@@ -288,7 +297,7 @@ fn reopen_rebuild_and_release(p: &mut Project, gcc: &Path, clang: &Path) {
 
     // O configure automático do build também repete quando o cache é recriado.
     choose(p, &json!({"compiler":gcc}));
-    fs::remove_file(p.root.join(".kinein/build/.kinein-rigor")).unwrap();
+    fs::remove_file(build_folder(p).join(".kinein-rigor")).unwrap();
     p.build(true);
     assert_eq!(cdb_compiler(p), gcc.to_str().unwrap());
     context_with(p, gcc.to_str().unwrap());
@@ -379,7 +388,7 @@ fn c1_implicit_configure_keeps_the_kit_of_the_recorded_preset() {
     );
     assert_eq!(cdb_compiler(&p), clang.to_str().unwrap());
     // O configure automático do build (perfil de rigor a reaplicar) também.
-    fs::remove_file(p.root.join(".kinein/build/.kinein-rigor")).unwrap();
+    fs::remove_file(build_folder(&p).join(".kinein-rigor")).unwrap();
     p.build(true);
     assert_eq!(cdb_compiler(&p), clang.to_str().unwrap());
     let context = context_with(&mut p, clang.to_str().unwrap());

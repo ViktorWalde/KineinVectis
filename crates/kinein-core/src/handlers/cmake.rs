@@ -1,10 +1,11 @@
 //! Handlers for `cmake.*` requests (`impl Core`): configure como job,
-//! presets/targets/status sincronos, todos exigindo workspace `CMake`.
+//! presets/targets sincronos, todos exigindo workspace `CMake`.
+//!
+//! O status e a escolha da configuracao ativa moram em `cmake_configuration`.
 
 use kinein_protocol::{
-    BuildSystem, CmakeConfigureParams, CmakePresetsResult, CmakeSelectConfigurationParams,
-    CmakeStatusResult, CmakeTargetsResult, JobAcceptedResult, JobRisk, JsonRpcError,
-    JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse,
+    BuildSystem, CmakeConfigureParams, CmakePresetsResult, CmakeTargetsResult, JobAcceptedResult,
+    JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -99,7 +100,7 @@ impl Core {
     }
 
     /// Valida a capacidade `CMake` do workspace; devolve o root.
-    fn cmake_workspace_root(
+    pub(super) fn cmake_workspace_root(
         &self,
         request_id: Option<&Value>,
         method: &str,
@@ -144,9 +145,14 @@ impl Core {
             return jobs_unavailable_response(request_id, "cmake.configure");
         };
 
-        // O preset: o pedido, o anotado, o unico, ou a recusa (52 §14.2).
+        // O preset: o pedido, o da configuracao ativa, ou a recusa (52 §14.2,
+        // C1-20); a pasta dele, ou a recusa antes do job (C1-19).
         let (preset, preset_origem) = match cmake::choose_preset(&root, parsed.preset) {
             Ok(choice) => choice,
+            Err(refusal) => return invalid_params(request_id, refusal),
+        };
+        let directory = match cmake::configuration_dir(&root, preset.as_deref()) {
+            Ok(directory) => directory,
             Err(refusal) => return invalid_params(request_id, refusal),
         };
         let (kit, toolchain) =
@@ -164,28 +170,18 @@ impl Core {
             JobRisk::Medium,
             true,
             move |ctx| {
-                let attempt = match cmake::begin_configure(&root, preset.as_deref(), &kit) {
-                    Ok(attempt) => attempt,
-                    Err(error) => {
-                        ctx.emit_output(&format!(
-                            "não foi possível registrar o configure: {error}"
-                        ));
-                        ctx.emit_event(
-                            "event.cmake.finished",
-                            json!({
-                                "jobId":ctx.id(), "success":false, "exitCode":-1,
-                                "hasCompileCommands":cmake::status(&root).has_compile_commands
-                            }),
-                        );
-                        return jobs::JobOutcome::Failed;
-                    }
+                let Some(attempt) =
+                    begin_or_finish(ctx, &root, &directory, preset.as_deref(), &kit)
+                else {
+                    return jobs::JobOutcome::Failed;
                 };
-                if let Err(error) = cmake::write_file_api_query(&root) {
+                if let Err(error) = cmake::write_file_api_query(&directory) {
                     ctx.emit_output(&format!("aviso: query do file-api falhou: {error}"));
                 }
                 let command = || {
                     cmake::configure_with_rigor(
                         &root,
+                        &directory,
                         preset.as_deref(),
                         &toolchain,
                         &extra,
@@ -203,26 +199,30 @@ impl Core {
                         "command": label,
                         "preset": preset,
                         "presetSource": preset_origem,
+                        "buildDir": crate::cdb::label(&root, &directory),
                     }),
                 );
+                for note in cmake::configure_notes(&root, &directory, preset.as_deref()) {
+                    ctx.emit_output(&note);
+                }
 
-                let (mut success, exit_code) = configure_keeping_definitions(&root, command, ctx);
+                let (mut success, exit_code) =
+                    configure_keeping_definitions(&directory, command, ctx);
                 if success {
-                    cmake::record_preset(&root, preset.as_deref());
-                    cmake::record_rigor(&root, profile);
+                    cmake::record_preset(&directory, preset.as_deref());
+                    cmake::record_rigor(&directory, profile);
                     if let Err(error) = cmake::complete_configure(attempt) {
                         ctx.emit_output(&format!("não foi possível concluir o registro: {error}"));
                         success = false;
                     }
                 }
-                let status = cmake::status(&root);
                 ctx.emit_event(
                     "event.cmake.finished",
                     json!({
                         "jobId": ctx.id(),
                         "success": success,
                         "exitCode": exit_code,
-                        "hasCompileCommands": status.has_compile_commands,
+                        "hasCompileCommands": directory.join("compile_commands.json").is_file(),
                     }),
                 );
                 if success {
@@ -240,9 +240,9 @@ impl Core {
     /// um job nao alcanca o `Core` (arquitetura/04 §3), e resolver la dentro
     /// exigiria o `ToolDetector`, que e estado do core. As ESCOLHAS sao as do
     /// kit com o nome do preset pedido; um preset escolhido pelo projeto nao
-    /// tem kit proprio e usa o padrao (""). O preset anotado no build dir e a
-    /// tentativa pendente conservam o kit que o configure usou (C1-13), e um
-    /// compilador fixado indisponivel recusa antes do `CMake` (C1-12).
+    /// tem kit proprio e usa o padrao (""). A configuracao ativa conserva o
+    /// kit com que a pasta dela foi configurada (C1-13, `cmake::active_kit`),
+    /// e um compilador fixado indisponivel recusa antes do `CMake` (C1-12).
     fn configure_toolchain(
         &self,
         root: &std::path::Path,
@@ -250,8 +250,8 @@ impl Core {
         origin: Option<&str>,
     ) -> Result<(String, crate::toolchain::Toolchain), String> {
         let kit = match origin {
-            Some("kit" | "configuration") => preset.unwrap_or_default().to_owned(),
-            Some("incompleteConfigure" | "buildDir") => cmake::active_kit(root),
+            Some("kit") => preset.unwrap_or_default().to_owned(),
+            Some("configuration" | "incompleteConfigure" | "buildDir") => cmake::active_kit(root),
             _ => String::new(),
         };
         let toolchain =
@@ -312,97 +312,6 @@ impl Core {
             }),
         )
     }
-
-    fn cmake_status_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        match self.cmake_workspace_root(request_id.as_ref(), "cmake.status") {
-            Ok(root) => JsonRpcResponse::success(request_id, json!(status_result(&root))),
-            Err(response) => *response,
-        }
-    }
-
-    /// Grava ou apaga a configuracao escolhida (C-05, consolidacao C §16).
-    /// Quando a CDB em uso muda, o contexto recarrega e o clangd recebe a
-    /// pasta nova; a resposta e' o `cmake.status` ja' com a escolha.
-    fn cmake_select_configuration_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let root = match self.cmake_workspace_root(request_id.as_ref(), "cmake.selectConfiguration")
-        {
-            Ok(root) => root,
-            Err(response) => return *response,
-        };
-        let parsed = match parse_params::<CmakeSelectConfigurationParams>(
-            request_id.as_ref(),
-            params,
-            "cmake.selectConfiguration exige o campo preset: um nome ou null",
-        ) {
-            Ok(parsed) => parsed,
-            Err(response) => return *response,
-        };
-        if let Some(name) = parsed.preset.as_deref() {
-            match cmake::list_presets(&root) {
-                Ok(presets) if presets.iter().any(|preset| preset.name == name) => {}
-                Ok(_) => {
-                    return invalid_params(
-                        request_id,
-                        format!("preset de configure inexistente ou oculto: {name}"),
-                    );
-                }
-                Err(reason) => return invalid_params(request_id, reason),
-            }
-        }
-        let before = crate::cdb::status(&root).file(&root);
-        if let Err(error) = cmake::select_configuration(&root, parsed.preset.as_deref()) {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InternalError,
-                    format!("não foi possível gravar a configuração escolhida: {error}"),
-                    None,
-                ),
-            );
-        }
-        let result = status_result(&root);
-        if crate::cdb::status(&root).file(&root) != before {
-            self.workspace_edits.invalidate_verifications();
-            self.reload_index_context();
-            self.on_cmake_configure_finished(true);
-        }
-        JsonRpcResponse::success(request_id, json!(result))
-    }
-}
-
-/// O `cmake.status`: o configure da IDE e a CDB em uso, com origem.
-fn status_result(root: &std::path::Path) -> CmakeStatusResult {
-    let status = cmake::status(root);
-    // Os presets entre os quais a pessoa escolhe, quando o configure sem
-    // preset seria recusado (52 §14.2).
-    let (preset_choices, preset_choices_file) = match cmake::choose_default(root) {
-        Err(cmake::DefaultRefusal::Several(file, names)) => (names, Some(file.to_owned())),
-        Ok(_) | Err(cmake::DefaultRefusal::Refused(_)) => (Vec::new(), None),
-    };
-    // O diagnostico da CDB e' mais amplo que o `has_compile_commands`: este
-    // olha so o build dir da IDE, e a CDB em uso pode estar no `binaryDir` de
-    // um preset, em `build/` ou onde o `.clangd` aponta — quem sabe e' o `cdb`.
-    let cdb = crate::cdb::status(root);
-    CmakeStatusResult {
-        configured: status.configured,
-        has_compile_commands: status.has_compile_commands,
-        build_dir: status.build_dir.display().to_string(),
-        preset: status.preset,
-        cdb_directory: cdb.directory,
-        cdb_stale: cdb.stale,
-        cdb_stale_because: cdb.stale_because,
-        preset_choices,
-        preset_choices_file,
-        cdb_origin: cdb.origin,
-        cdb_preset: cdb.preset,
-        cdb_candidates: cdb.candidates,
-        cdb_absence: cdb.absence,
-        selected_configuration: cdb.selected,
-    }
 }
 
 fn configure_outcome(command: std::process::Command, ctx: &jobs::JobContext) -> (bool, i32) {
@@ -432,18 +341,43 @@ fn configure_outcome(command: std::process::Command, ctx: &jobs::JobContext) -> 
 
 /// O configure com a conferencia de C1-14: se o `CMake` recriou o cache sem
 /// as definicoes da IDE, a mesma linha roda uma vez sobre o cache novo.
-fn configure_keeping_definitions(
+/// Comeca o configure na pasta (trava, tentativa e configuracao ativa), ou
+/// fecha o job com o motivo: outra instancia configurando a mesma pasta.
+fn begin_or_finish(
+    ctx: &jobs::JobContext,
     root: &std::path::Path,
+    directory: &std::path::Path,
+    preset: Option<&str>,
+    kit: &str,
+) -> Option<cmake::ConfigureAttempt> {
+    match cmake::begin_configure(root, directory, preset, kit) {
+        Ok(attempt) => Some(attempt),
+        Err(error) => {
+            ctx.emit_output(&format!("não foi possível registrar o configure: {error}"));
+            ctx.emit_event(
+                "event.cmake.finished",
+                json!({
+                    "jobId": ctx.id(), "success": false, "exitCode": -1,
+                    "hasCompileCommands": directory.join("compile_commands.json").is_file()
+                }),
+            );
+            None
+        }
+    }
+}
+
+fn configure_keeping_definitions(
+    directory: &std::path::Path,
     command: impl Fn() -> std::process::Command,
     ctx: &jobs::JobContext,
 ) -> (bool, i32) {
     let (success, exit_code) = configure_outcome(command(), ctx);
-    if !success || !cmake::attempt::lost_ide_definitions(root) {
+    if !success || !cmake::attempt::lost_ide_definitions(directory) {
         return (success, exit_code);
     }
     ctx.emit_output(cmake::attempt::DEFINITIONS_LOST);
     let (success, exit_code) = configure_outcome(command(), ctx);
-    if success && cmake::attempt::lost_ide_definitions(root) {
+    if success && cmake::attempt::lost_ide_definitions(directory) {
         ctx.emit_output("o cache continua sem as definições da IDE; configure não concluído");
         return (false, exit_code);
     }
@@ -451,7 +385,7 @@ fn configure_keeping_definitions(
 }
 
 /// A recusa do configure sem preset (vários, nada anotado), sem job.
-fn invalid_params(request_id: Option<Value>, message: String) -> JsonRpcResponse {
+pub(super) fn invalid_params(request_id: Option<Value>, message: String) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),

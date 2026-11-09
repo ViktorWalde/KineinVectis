@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-18 e C-05 corrigidos com provas; abertos C-04 (C1-19–C1-23), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21 e C-05 corrigidos com provas; abertos C-04 (C1-22, C1-23), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -199,7 +199,7 @@ A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-09: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04 e INF-05 corrigidos; UI-01 aberto. A dívida
+INF-04 e INF-05 corrigidos; INF-06 e UI-01 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -404,11 +404,20 @@ auditorias e provas posteriores datadas nos donos:**
   a primeira. Inventário C1-18–C1-23 e decisões do autor de 2026-11-09:
   configure no `binaryDir`; configuração ativa ao começar o configure; com
   multi-config, a que o clangd vê; cache comum com as definições da IDE à
-  vista; preset sem `binaryDir` em `.kinein/presets/<preset>`. Desenho na
+  vista; preset sem `binaryDir` em `.kinein/presets/<preset>`; reparar o build
+  dir remove a pasta de um preset só se o cache dela for deste projeto e ela
+  não for a raiz nem a contiver. Desenho na
   [consolidação C §17](../especificacoes/consolidacao-nativa-de-c.md#17-c1-configure-no-binarydir-configuração-ativa-e-include-de-presets--desenho-de-2026-11-09).
   Estado aberto, em quatro fatias: C1-18, corrigido em 2026-11-09
-  ([40.7 §7.394](40.7-registro-das-entregas.md), protocolo 0.207.0); C1-19–C1-21
-  com o IPC; C1-22; C1-23.
+  ([40.7 §7.394](40.7-registro-das-entregas.md), protocolo 0.207.0); C1-19–C1-21,
+  corrigidos em 2026-11-09 ([40.7 §7.396](40.7-registro-das-entregas.md),
+  protocolo 0.209.0); C1-22; C1-23. Na segunda fatia, cada configuração
+  configura na pasta dela: o `binaryDir`, ou `.kinein/presets/<preset>` sem ele.
+  A configuração fica ativa ao começar o configure, e build, run, debug,
+  ctest, flash, `qmlls`, o contexto e o Project Health usam a pasta dela
+  ([§17.2](../especificacoes/consolidacao-nativa-de-c.md#172-c1-19c1-21-integração-e-provas--2026-11-09)).
+  Limite até o C1-23: sem presets e com o registro órfão, a UI não oferece a
+  volta ao automático.
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste
@@ -571,6 +580,21 @@ auditorias e provas posteriores datadas nos donos:**
   que o render descarta. Com o ajudante anterior, o teste reprova sem o
   `TMPDIR` do gate e passa com ele; agora passa nos dois. Oito mutações
   reprovam.
+- **INF-06 — Prazo de relógio nos testes da verificação de edição.** Dono e
+  evidência: `crates/kinein-core/src/build/edit_verification/tests/mod.rs`, que
+  dá 5 s a cada verificação. Observado em 2026-11-09, no gate rápido do
+  C1-19–C1-21: cinco testes reprovaram com `duration_ms` 5000 e "Contexto
+  alterado ou prazo excedido.". Foram
+  `edit_verification_real_host_corpus` e os casos de driver GCC/G++, erro de
+  macro, header restaurado e includes relativos e forçados. Na mesma árvore,
+  passaram em outras três rodadas do gate e, sozinhos, em duas seguidas.
+  Causa provável: cada verificação roda o compilador real ao menos três vezes
+  (sonda, antes e depois) dentro do prazo. O gate roda a suíte com paralelismo
+  pleno, junto de regressões com CMake e compiladores reais. O produto responde
+  certo ("prazo excedido"), mas o teste espera o veredito. Severidade média: o
+  gate reprova de forma intermitente, sem defeito no produto. Testes: a
+  reprodução sob carga controlada e uma prova que não dependa do relógio da
+  máquina. Decisão pendente do autor. Estado aberto.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

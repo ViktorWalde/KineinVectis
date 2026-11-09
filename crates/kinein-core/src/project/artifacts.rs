@@ -117,12 +117,15 @@ enum Tipo {
 
 /// As pastas onde cada framework escreve. So' as que existem.
 fn pastas_de_build(root: &Path) -> Vec<PathBuf> {
-    let mut pastas = vec![
+    // A pasta da configuracao ativa (C1-21) primeiro: o `binaryDir` de um
+    // preset fora de `build/`, ou `.kinein/presets/<preset>`.
+    let mut pastas: Vec<PathBuf> = crate::cmake::active_dir(root).into_iter().collect();
+    pastas.extend([
         root.join(".kinein").join("build"),
         root.join("build"),
         root.join("cmake-build-debug"),
         root.join("cmake-build-release"),
-    ];
+    ]);
     // PlatformIO: .pio/build/<env>
     if let Ok(envs) = std::fs::read_dir(root.join(".pio").join("build")) {
         pastas.extend(envs.filter_map(Result::ok).map(|e| e.path()));
@@ -138,7 +141,13 @@ fn pastas_de_build(root: &Path) -> Vec<PathBuf> {
             }
         }
     }
-    pastas.into_iter().filter(|p| p.is_dir()).collect()
+    let mut unique: Vec<PathBuf> = Vec::new();
+    for pasta in pastas {
+        if pasta.is_dir() && !unique.contains(&pasta) {
+            unique.push(pasta);
+        }
+    }
+    unique
 }
 
 fn varrer(dir: &Path, nivel: usize, vistos: &mut Vec<(SystemTime, PathBuf, Tipo)>) {

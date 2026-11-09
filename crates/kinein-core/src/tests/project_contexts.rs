@@ -109,7 +109,7 @@ fn linux_application_model_follows_the_effective_kit_and_refreshes_after_save() 
         });
         std::fs::remove_dir_all(root.join("examples")).unwrap();
         std::fs::write(root.join("CMakeLists.txt"), "project(linux_app C)\n").unwrap();
-        let build = crate::cmake::build_dir(&root);
+        let build = crate::cmake::ide_build_dir(&root);
         std::fs::create_dir_all(&build).unwrap();
         let (sender, receiver) = std::sync::mpsc::channel();
         let mut core = super::core_with_empty_search_path(&format!("linux-context-{preset}"));
@@ -123,7 +123,7 @@ fn linux_application_model_follows_the_effective_kit_and_refreshes_after_save() 
         if !preset.is_empty() {
             // Model a completed configure; the test exercises context, not CMake.
             std::fs::write(build.join("CMakeCache.txt"), "").unwrap();
-            crate::cmake::record_preset(&root, Some(preset));
+            crate::cmake::record_preset(&build, Some(preset));
         }
         let saved = core.handle_request(&JsonRpcRequest::new(
             2_i64,

@@ -169,7 +169,7 @@ pub struct CmakeOrigin {
 /// duplicated or non-executable target, several artifacts, or a non-ELF file.
 /// Never falls back to the newest ELF of the build.
 pub fn cmake_target(root: &Path, name: &str) -> Result<CmakeOrigin, String> {
-    let build = canonical(&crate::cmake::build_dir(root))?;
+    let build = canonical(&crate::cmake::active_dir(root)?)?;
     let model = crate::cmake::model::CmakeModel::load(&build).ok_or(
         "o build CMake não tem o modelo do file-api; use Configurar (CMake) no Kinein e compile antes de gravar",
     )?;

@@ -65,8 +65,9 @@ fn c_standard_drives_gcc_clang_cdb_context_and_tests_without_changing_other_targ
             assert_eq!(context["language"], "c");
             let library = p.call("index.context", json!({"path":p.root.join("src/sum.c")}));
             assert_eq!(library["unit"]["standard"], "c11", "{library}");
-            let model =
-                crate::cmake::model::CmakeModel::load(&p.root.join(".kinein/build")).unwrap();
+            // O preset `host` não declara binaryDir (C1-19).
+            let model = crate::cmake::model::CmakeModel::load(&p.root.join(".kinein/presets/host"))
+                .unwrap();
             let (_, group) = model.compile_group_for(&p.root.join("app/main.c")).unwrap();
             assert_eq!(group.language, "C");
             assert_eq!(group.standard.as_deref(), Some(standard));

@@ -25,13 +25,16 @@ pub(super) struct ProjectCache {
 }
 
 impl ProjectCache {
-    /// Le o cache do build dir unico da IDE; sem cache (projeto nunca
-    /// configurado, ou so' Cargo), tudo ausente.
+    /// Le o cache da pasta da configuracao ativa (C1-21); sem cache (projeto
+    /// nunca configurado, so' Cargo, ou sem configuracao ativa), tudo
+    /// ausente.
     ///
-    /// O caminho e' o de `cmake::build_dir`, escrito aqui como o `run.rs` o
-    /// escreve: o `cmake` ja' depende deste modulo, e a volta seria ciclo.
+    /// A pasta vem do `cmake_configuration`, a folha que o `cmake` tambem
+    /// le: o `cmake` ja' depende deste modulo, e a volta seria ciclo.
     pub(super) fn read(root: &Path) -> Self {
-        fs::read_to_string(root.join(".kinein").join("build").join("CMakeCache.txt"))
+        crate::cmake_configuration::active_dir(root)
+            .ok()
+            .and_then(|directory| fs::read_to_string(directory.join("CMakeCache.txt")).ok())
             .map(|body| Self::parse(&body))
             .unwrap_or_default()
     }

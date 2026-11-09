@@ -16,8 +16,14 @@ impl CompileContext {
             missing_compiler(&unit.compiler, &unit.directory)
         });
         if let Some(reason) = reason {
+            // A pasta de uma configuracao nova nao tem comando anterior (C1-19).
+            let previous = if context.unit.is_some() {
+                " Comando anterior apenas para inspeção."
+            } else {
+                ""
+            };
             let note = format!(
-                "Contexto desatualizado: {reason}; reconfigure/recarregue para atualizar. Comando anterior apenas para inspeção."
+                "Contexto desatualizado: {reason}; reconfigure/recarregue para atualizar.{previous}"
             );
             context.hint = Some(
                 context

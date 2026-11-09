@@ -135,7 +135,8 @@ Item {
     // O configure automatico executa o CMakeLists.txt do projeto: sem a
     // confianca, so' o "Configurar" da faixa (um gesto) o roda. Com uma CDB
     // em uso (de um preset, do CLI, de outra IDE) ou uma escolha pendente, ele
-    // nao roda: reconfiguraria em `.kinein/build` e trocaria a base calado.
+    // nao roda: configuraria a pasta da configuracao ativa, que pode nao ser a
+    // dessa CDB, e trocaria a base calado (C1-19).
     function configureIfTrusted() {
         if (workspaceTrusted && hasBuildSystem("cmake") && cmakeStatusKnown
                 && !cmakeConfigured && !autoConfigureAttempted && presetChoices.length === 0

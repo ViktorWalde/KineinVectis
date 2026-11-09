@@ -332,27 +332,26 @@ fn the_chosen_database_goes_stale_and_the_ide_configure_returns(
     assert_eq!(stale["cdbStale"], true);
     assert_eq!(stale["cdbStaleBecause"], "CMakeLists.txt");
 
-    // O configure da IDE usa a configuração escolhida e devolve a CDB a
-    // `.kinein/build` (retorno ao diretório da IDE; C-04 muda a pasta).
+    // O configure da IDE usa a configuração escolhida, no binaryDir dela
+    // (C1-19): a CDB continua em `build/gcc-debug`, e o clangd não muda de
+    // pasta. Até o 0.208.0 ela voltava a `.kinein/build`.
+    let before = spawns(log);
     let job = p.call("cmake.configure", json!({}))["jobId"].clone();
     let started = p.wait("event.cmake.started", |e| e["jobId"] == job);
     assert_eq!(started["presetSource"], "configuration", "{started}");
     assert_eq!(started["preset"], "gcc-debug");
+    assert_eq!(started["buildDir"], "build/gcc-debug");
     let finished = p.wait("event.cmake.finished", |e| e["jobId"] == job);
     assert_eq!(finished["success"], true, "{finished}");
-    let ide = status(p);
-    assert_eq!(ide["cdbOrigin"], "ide", "{ide}");
-    assert_eq!(ide["cdbDirectory"], ".kinein/build");
-    assert!(ide.get("selectedConfiguration").is_none(), "{ide}");
-    // O clangd vivo subiu com `build/gcc-debug`; a pasta em uso mudou.
-    p.wait("event.lsp.restarted", |value| value["language"] == "cpp");
-    let before = spawns(log);
+    let configured = status(p);
+    assert_eq!(configured["cdbOrigin"], "configuration", "{configured}");
+    assert_eq!(configured["cdbDirectory"], "build/gcc-debug");
+    assert_eq!(configured["selectedConfiguration"], "gcc-debug");
+    assert_eq!(configured["preset"], "gcc-debug", "a IDE anota a pasta");
+    assert!(!p.root.join(".kinein/build").exists());
     diagnostics(p, debug_signature);
-    assert_eq!(spawns(log), before + 1);
-    assert!(last_argv(log).contains(&format!(
-        "--compile-commands-dir={}",
-        p.root.join(".kinein/build").display()
-    )));
+    assert_eq!(spawns(log), before, "a mesma pasta: o clangd não reinicia");
+    assert!(last_argv(log).contains(&debug_argv));
     assert_eq!(fs::read_to_string(p.root.join("src/main.c")).unwrap(), MAIN);
 }
 

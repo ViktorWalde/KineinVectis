@@ -169,13 +169,15 @@ impl CompileContext {
         self.python = crate::python::env::python_env(root, &tools.python);
         // O codemodel da MESMA pasta da CDB em uso (C1-17): o de
         // `.kinein/build` junto da CDB de um preset juntaria alvos de uma
-        // configuracao e comandos de outra. Sem CDB, o da IDE, como antes.
+        // configuracao e comandos de outra. Sem CDB, o da configuracao ativa
+        // (C1-21); sem ela, nenhum.
         let model_dir = self
             .cdb_path
             .as_deref()
             .and_then(|path| Path::new(path).parent())
-            .map_or_else(|| crate::cmake::build_dir(root), Path::to_path_buf);
-        self.cmake = CmakeModel::load(&model_dir);
+            .map(Path::to_path_buf)
+            .or_else(|| crate::cmake::active_dir(root).ok());
+        self.cmake = model_dir.and_then(|directory| CmakeModel::load(&directory));
         self.platformio = root.join("platformio.ini").is_file();
     }
 

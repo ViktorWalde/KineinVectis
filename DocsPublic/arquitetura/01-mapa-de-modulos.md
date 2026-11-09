@@ -97,6 +97,7 @@ flowchart LR
   n_core_cargo[cargo]
   n_core_cdb[cdb]
   n_core_cmake[cmake]
+  n_core_cmake_configuration[cmake_configuration]
   n_core_cmake_presets[cmake_presets]
   n_core_commands[commands]
   n_core_configaction[configaction]:::cycle
@@ -153,13 +154,18 @@ flowchart LR
   n_core_build --> n_core_tools
   n_core_cargo --> n_core_toolchain
   n_core_cdb --> n_core_cmake
+  n_core_cdb --> n_core_cmake_configuration
   n_core_cdb --> n_core_cmake_presets
   n_core_cdb --> n_core_platform
+  n_core_cmake --> n_core_cmake_configuration
   n_core_cmake --> n_core_cmake_presets
   n_core_cmake --> n_core_fsops
   n_core_cmake --> n_core_msvc
   n_core_cmake --> n_core_platform
   n_core_cmake --> n_core_toolchain
+  n_core_cmake_configuration --> n_core_cmake_presets
+  n_core_cmake_configuration --> n_core_fsops
+  n_core_cmake_configuration --> n_core_platform
   n_core_cmake_presets --> n_core_platform
   n_core_configaction --> n_core_cdb
   n_core_configaction --> n_core_cmake
@@ -174,6 +180,8 @@ flowchart LR
   n_core_coverage --> n_core_platform
   n_core_coverage --> n_core_process
   n_core_coverage --> n_core_python
+  n_core_dap --> n_core_cmake
+  n_core_dap --> n_core_cmake_configuration
   n_core_dap --> n_core_lsp
   n_core_dap --> n_core_platform
   n_core_dap --> n_core_probe
@@ -270,6 +278,7 @@ flowchart LR
   n_core_python --> n_core_run
   n_core_remote --> n_core_platform
   n_core_rpc --> n_core_dap
+  n_core_run --> n_core_cmake_configuration
   n_core_run --> n_core_platform
   n_core_run --> n_core_python
   n_core_runconfig --> n_core_flash
@@ -290,6 +299,7 @@ flowchart LR
   n_core_test --> n_core_msvc
   n_core_test --> n_core_process
   n_core_test --> n_core_python
+  n_core_toolchain --> n_core_cmake_configuration
   n_core_toolchain --> n_core_cmake_presets
   n_core_toolchain --> n_core_platform
   n_core_toolchain --> n_core_run
@@ -306,7 +316,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-51 módulos, 159 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+52 módulos, 168 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -319,14 +329,15 @@ flowchart LR
 | --- | --- | --- |
 | `build` | cdb, cmake, msvc, platform, process, toolchain, tools | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
-| `cdb` | cmake, cmake_presets, platform | Descoberta e diagnóstico da compilation database do C/C++. |
-| `cmake` | cmake_presets, fsops, msvc, platform, toolchain | Servico CMake: |
+| `cdb` | cmake, cmake_configuration, cmake_presets, platform | Descoberta e diagnóstico da compilation database do C/C++. |
+| `cmake` | cmake_configuration, cmake_presets, fsops, msvc, platform, toolchain | Servico CMake: |
+| `cmake_configuration` | cmake_presets, fsops, platform | The configurations of a CMake project (C1-19 and C1-20 of C-04, consolidacao C §17): |
 | `cmake_presets` | platform | Os configure presets do projeto: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |
 | `coverage` | platform, process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
-| `dap` | lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |
+| `dap` | cmake, cmake_configuration, lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |
 | `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | — | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `dfu` | probe | Bounded dfu-util discovery. |
@@ -355,7 +366,7 @@ flowchart LR
 | `python` | run | O dominio python: |
 | `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
-| `run` | platform, python | O que "Executar" roda, e como se mostra. |
+| `run` | cmake_configuration, platform, python | O que "Executar" roda, e como se mostra. |
 | `runconfig` | flash, fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
 | `runtime` | datasource, rpc, settings | The stdio JSON-RPC loop that drives Core as a subprocess. |
 | `serial` | build, platform, toolchain | Portas seriais USB: |
@@ -365,7 +376,7 @@ flowchart LR
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
-| `toolchain` | cmake_presets, platform, run, tools | Toolchain: |
+| `toolchain` | cmake_configuration, cmake_presets, platform, run, tools | Toolchain: |
 | `tools` | msvc, platform, process | External tool detection. |
 | `workspace` | configaction, fsops, platform, process, python, tools | Workspace opening, project kind detection, and metadata persistence. |
 

@@ -6,68 +6,92 @@
 
 use std::path::Path;
 
-use super::{PresetDefault, default_preset, list_presets, status};
+use crate::cmake_configuration::{active_configuration, pending};
 
 pub(crate) type PresetChoice = (Option<String>, Option<&'static str>);
 
+/// O preset do configure e o `presetSource`: o pedido (`"kit"`), senao o da
+/// configuracao ativa (C1-20). A tentativa pendente da mesma configuracao,
+/// na pasta dela, repete-se como `"incompleteConfigure"`; a de outro preset
+/// que divide a pasta perde para a configuracao ativa.
 pub(crate) fn choose_preset(root: &Path, request: Option<String>) -> Result<PresetChoice, String> {
     if let Some(preset) = request.filter(|p| !p.trim().is_empty()) {
         return Ok((Some(preset), Some("kit")));
     }
-    if let Some(attempt) = super::attempt::pending_preset(root)? {
-        let preset = attempt.preset;
-        if let Some(name) = preset.as_ref()
-            && !list_presets(root)?.iter().any(|entry| entry.name == *name)
-        {
-            return Err(format!(
-                "preset do configure incompleto removido: {name}; escolha outro"
-            ));
-        }
-        return Ok((preset, Some("incompleteConfigure")));
+    let configuration = active_configuration(root).map_err(|refusal| refusal.reason())?;
+    if let Some(attempt) = pending(&configuration.directory)?
+        && attempt.preset == configuration.preset
+    {
+        return Ok((attempt.preset, Some("incompleteConfigure")));
     }
-    // A configuracao escolhida (C-05): removida dos presets ou registro
-    // invalido exigem escolha nova, sem voltar ao preset anotado.
-    if let Some(preset) = super::selected_configuration(root)? {
-        if !list_presets(root)?.iter().any(|entry| entry.name == preset) {
-            return Err(format!(
-                "configuração escolhida removida dos presets: {preset}; escolha outra"
-            ));
-        }
-        return Ok((Some(preset), Some("configuration")));
-    }
-    choose_default(root).map_err(|refusal| match refusal {
-        DefaultRefusal::Several(file, names) => format!(
-            "o projeto tem {} presets de configure em {file} ({}): escolha um",
-            names.len(),
-            names.join(", ")
-        ),
-        DefaultRefusal::Refused(reason) => reason,
-    })
+    let source = match configuration.source {
+        "noPresets" => None,
+        source => Some(source),
+    };
+    Ok((configuration.preset, source))
 }
 
-/// Why the configure without a requested preset has no default.
-pub(crate) enum DefaultRefusal {
-    /// Several presets in the same file: the person chooses (52 §14.2).
-    Several(&'static str, Vec<String>),
-    /// `CMake` would refuse every preset (C1-18).
-    Refused(String),
-}
+#[cfg(test)]
+mod tests {
+    use super::choose_preset;
+    use crate::cmake::{
+        active_kit, begin_configure, complete_configure, record_preset, select_configuration,
+        selected_configuration,
+    };
 
-pub(crate) fn choose_default(root: &Path) -> Result<PresetChoice, DefaultRefusal> {
-    if let Ok(Some(selected)) = super::selected_configuration(root)
-        && list_presets(root).is_ok_and(|presets| presets.iter().any(|p| p.name == selected))
-    {
-        return Ok((Some(selected), Some("configuration")));
-    }
-    if let Some(recorded) = status(root).preset
-        && list_presets(root).is_ok_and(|presets| presets.iter().any(|p| p.name == recorded))
-    {
-        return Ok((Some(recorded), Some("buildDir")));
-    }
-    match default_preset(root) {
-        PresetDefault::Absent => Ok((None, None)),
-        PresetDefault::One(preset, file) => Ok((Some(preset), Some(file))),
-        PresetDefault::Several(file, names) => Err(DefaultRefusal::Several(file, names)),
-        PresetDefault::Refused(reason) => Err(DefaultRefusal::Refused(reason)),
+    /// Dois presets com o mesmo `binaryDir`: a tentativa pendente de um nao
+    /// decide o preset nem o kit do outro.
+    #[test]
+    fn an_attempt_of_another_preset_in_a_shared_folder_is_not_repeated() {
+        let root = std::env::temp_dir()
+            .join("kinein-preset-selection")
+            .join(format!("{} pasta comum", std::process::id()));
+        drop(std::fs::remove_dir_all(&root));
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("CMakePresets.json"),
+            r#"{"version":3,"configurePresets":[
+                {"name":"a","binaryDir":"${sourceDir}/build"},
+                {"name":"b","binaryDir":"${sourceDir}/build"}]}"#,
+        )
+        .unwrap();
+        let shared = root.join("build");
+        // Enquanto `a` configura, `b` recusa na trava da pasta comum, sem
+        // tocar o registro nem a tentativa.
+        let running = begin_configure(&root, &shared, Some("a"), "kit-a").unwrap();
+        assert_eq!(
+            begin_configure(&root, &shared, Some("b"), "kit-b")
+                .err()
+                .map(|error| error.kind()),
+            Some(std::io::ErrorKind::WouldBlock)
+        );
+        assert_eq!(selected_configuration(&root), Ok(Some("a".to_owned())));
+        // O configure de `a` foi interrompido: a tentativa fica na pasta.
+        drop(running);
+        assert_eq!(
+            choose_preset(&root, None),
+            Ok((Some("a".to_owned()), Some("incompleteConfigure")))
+        );
+        assert_eq!(active_kit(&root), "kit-a");
+
+        select_configuration(&root, Some("b")).unwrap();
+        assert_eq!(
+            choose_preset(&root, None),
+            Ok((Some("b".to_owned()), Some("configuration")))
+        );
+        assert_eq!(active_kit(&root), "b");
+
+        // `a` configurou a pasta com sucesso; o kit dela nao vale para `b`.
+        let done = begin_configure(&root, &shared, Some("a"), "kit-a").unwrap();
+        std::fs::write(shared.join("CMakeCache.txt"), "").unwrap();
+        record_preset(&shared, Some("a"));
+        complete_configure(done).unwrap();
+        assert_eq!(active_kit(&root), "kit-a");
+        select_configuration(&root, Some("b")).unwrap();
+        assert_eq!(active_kit(&root), "b");
+        assert_eq!(
+            choose_preset(&root, None),
+            Ok((Some("b".to_owned()), Some("configuration")))
+        );
     }
 }

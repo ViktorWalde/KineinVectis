@@ -120,22 +120,23 @@ pub fn default_command(kind: ProjectKind, root: &Path) -> Result<String, RunErro
     }
 }
 
-/// Finds the single executable produced by the `CMake` build, if any.
+/// Finds the single executable the `CMake` build produced in the folder of
+/// the active configuration (C1-21), if any.
 fn cmake_binary_command(root: &Path) -> Result<String, RunError> {
-    let build_dir = root.join(".kinein").join("build");
+    let build_dir = crate::cmake_configuration::active_dir(root)
+        .map_err(|message| RunError::NoDefaultCommand { message })?;
+    let location = crate::cmake_configuration::label(root, &build_dir);
     let mut executables = Vec::new();
     collect_executables(&build_dir, &mut executables);
 
     match executables.as_slice() {
         [] => Err(RunError::NoDefaultCommand {
-            message: "nenhum executável encontrado em .kinein/build; \
-                      compile antes (Ctrl+F9)"
-                .to_owned(),
+            message: format!("nenhum executável encontrado em {location}; compile antes (Ctrl+F9)"),
         }),
         [single] => Ok(crate::platform::program_invocation(single)),
         _multiple => Err(RunError::NoDefaultCommand {
             message: format!(
-                "mais de um executável em .kinein/build ({}); \
+                "mais de um executável em {location} ({}); \
                  digite o comando no painel Terminal",
                 executables.join(", ")
             ),

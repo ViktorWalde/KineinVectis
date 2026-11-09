@@ -195,6 +195,59 @@ fn a_finished_configure_restarts_qmlls_with_the_new_build() {
     assert_eq!(setup.args_when(|args| !args.is_empty()), ["-b", &build]);
 }
 
+/// O `-b` e' a pasta da configuracao ativa (C1-21): com dois presets e
+/// nenhuma escolha, nenhuma; escolher uma reinicia o `qmlls` com a dela.
+#[test]
+fn the_active_configuration_gives_qmlls_its_folder() {
+    let mut setup = setup("configuracao", true);
+    std::fs::write(
+        setup.root.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.24)\nproject(qml NONE)\n",
+    )
+    .unwrap();
+    std::fs::write(
+        setup.root.join("CMakePresets.json"),
+        r#"{"version":6,"configurePresets":[
+            {"name":"a","binaryDir":"${sourceDir}/out/a"},
+            {"name":"b","binaryDir":"${sourceDir}/out/b"}]}"#,
+    )
+    .unwrap();
+    let folder = |name: &str| setup.root.join("out").join(name);
+    for name in ["a", "b"] {
+        std::fs::create_dir_all(folder(name)).unwrap();
+        std::fs::write(folder(name).join("CMakeCache.txt"), "# teste\n").unwrap();
+    }
+    let (a, b) = (folder("a"), folder("b"));
+    // Como quem abre um projeto que ja' tem os presets: o comando do `qmlls`
+    // e' montado na abertura.
+    let reopened = setup.core.handle_request(&JsonRpcRequest::new(
+        2_i64,
+        "workspace.open",
+        Some(json!({ "path": setup.root.to_str().unwrap() })),
+    ));
+    assert!(reopened.response().error.is_none());
+    setup.open_main_qml();
+    setup.did_open();
+    assert!(
+        setup.args_when(|_| true).is_empty(),
+        "o .kinein/build sem registro da IDE nao vale"
+    );
+    for (preset, build) in [("a", &a), ("b", &b)] {
+        let selected = setup.core.handle_request(&JsonRpcRequest::new(
+            3_i64,
+            "cmake.selectConfiguration",
+            Some(json!({ "preset": preset })),
+        ));
+        assert!(selected.response().error.is_none(), "{preset}");
+        setup.open_main_qml();
+        let build = build.display().to_string();
+        assert_eq!(
+            setup.args_when(|args| args.last() == Some(&build)),
+            ["-b", &build]
+        );
+    }
+}
+
 #[test]
 fn closing_the_workspace_takes_the_server_helpers_with_it() {
     // O servidor sobe um auxiliar no mesmo grupo (como o proc-macro do

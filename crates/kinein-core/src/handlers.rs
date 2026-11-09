@@ -8,6 +8,7 @@ pub mod build;
 pub mod build_size;
 pub mod cargo;
 pub mod cmake;
+pub mod cmake_configuration;
 pub mod configaction;
 pub mod container;
 pub mod coverage;

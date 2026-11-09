@@ -17,9 +17,15 @@ impl Core {
             .detector
             .find_in_path("qmlls")
             .map_or_else(|| "qmlls".to_owned(), |p| p.display().to_string());
-        let build = crate::cmake::build_dir(root);
-        let build_arg = build.display().to_string();
-        let args: &[&str] = if build.join("CMakeCache.txt").is_file() {
+        // A pasta da configuracao ativa (C1-21): a mesma do build.
+        let build = crate::cmake::active_dir(root)
+            .ok()
+            .filter(|build| build.join("CMakeCache.txt").is_file());
+        let build_arg = build
+            .as_ref()
+            .map(|build| build.display().to_string())
+            .unwrap_or_default();
+        let args: &[&str] = if build.is_some() {
             &["-b", &build_arg]
         } else {
             &[]

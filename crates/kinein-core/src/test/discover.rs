@@ -144,7 +144,7 @@ pub fn discover_tests(
             (c, "cargo test -- --list".to_owned())
         }
         ProjectKind::Cmake => {
-            let build_dir = root.join(".kinein").join("build");
+            let build_dir = super::cmake_test_dir(root)?;
             let mut c = Command::new("ctest");
             c.arg("--test-dir")
                 .arg(&build_dir)
@@ -219,7 +219,7 @@ pub fn discover_tests(
     if kind == ProjectKind::Cmake {
         let internos = super::frameworks::discover_inner_cases(
             Path::new("ctest"),
-            &root.join(".kinein").join("build"),
+            &super::cmake_test_dir(root)?,
             cancel,
         );
         if !internos.is_empty() {
