@@ -149,8 +149,8 @@ apenas os contextos e domínios alterados pela fatia.
 Para a etapa dedicada de C, consultar também a
 [consolidação nativa de C](especificacoes/consolidacao-nativa-de-c.md):
 C23, inventário existente e aceites C1–C8 antes de aprofundar C++.
-Para os fundamentos obrigatórios da 0.4 e seus aceites de Windows, ciclo
-embarcado e ciência, consultar a
+Para os fundamentos obrigatórios da 0.4 e seus aceites de ciclo embarcado,
+ciência e Windows básico, consultar a
 [infraestrutura fundamental](especificacoes/infraestrutura-fundamental-0.4.md).
 
 | Contexto | Leia, além do 01 | Domínios no 03 |

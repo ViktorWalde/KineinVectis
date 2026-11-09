@@ -3,7 +3,8 @@
 > **Classe: PLANO.** Requisitos e desenho do porte Windows/WSL2.
 > O levantamento inicial é de 2026-10-08; as validações posteriores estão
 > datadas nas respectivas seções. O porte tem aceites pendentes; Windows nativo
-> e instalador integram obrigatoriamente a 0.4 desde 2026-11-03 (§1.1).
+> e instalador entraram na 0.4 em 2026-11-03; desde 2026-11-08 a 0.4 exige só a
+> validação funcional básica numa VM, e o porte completo é colaboração (§1.1).
 > O [estado atual](40-estado-e-continuidade.md) distingue plano e prova.
 
 ## 1. Objetivo e prioridade
@@ -21,6 +22,14 @@ A ordem vigente e a fronteira das versões pertencem ao
 [estado do projeto](40-estado-e-continuidade.md).
 
 ### 1.1 Aceite obrigatório na base 0.4 — 2026-11-03
+
+**Revisto pelo autor em 2026-11-08:** a 0.4 exige só a validação funcional
+básica numa VM Windows 11, depois do algoritmo especializado e das camadas
+finais de teste (62 §3, etapa 10), com o mínimo proposto em B7 (62 §3.2). O
+aceite abaixo continua sendo o do porte completo, que segue como frente de
+colaboração por issues pequenas com reprodução e critério de aceite. O código
+Windows existente e a catraca de testes adiados são preservados; a retomada
+parte da W6b4 (§3.3). Texto de 2026-11-03:
 
 Windows nativo deixa de depender de uma edição posterior à 0.4.0. O bloqueador
 B7 do [62](62-base-publica-0.4.md) exige core/UI nativos e instalador para
@@ -683,6 +692,7 @@ registrada no início deste plano.
 
 **Fronteira revista em 2026-11-03:** a alocação histórica desta frente depois
 da 0.4.0 não adia o Windows nativo nem seu instalador, obrigatórios pelo §1.1.
+Desde 2026-11-08 a 0.4 exige deles só a validação básica em VM (§1.1).
 Os itens abaixo tratam da integração adicional com WSL2 e dispositivos.
 
 O tema é o atrito real de quem desenvolve embarcados no Windows. A lista abaixo

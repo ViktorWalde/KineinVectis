@@ -24,6 +24,13 @@ A ordem de consolidação é vinculante:
 3. Python, reutilizando o núcleo comum demonstrado pelos provedores anteriores.
 4. Perfis especializados de plataforma e domínio, conforme dependências e provas.
 
+**Ordem completa de 2026-11-08** ([62 §3](../roadmaps/62-base-publica-0.4.md#3-ordem-e-critérios-de-fechamento)):
+depois de Python vêm DAP e QEMU, os mínimos F5–F9, o algoritmo semântico de
+ambiente, que lê a configuração essencial de cada ecossistema, e, por último,
+a fase dedicada do algoritmo especializado (§12.1); seguem as camadas finais
+de teste e a validação básica do Windows em VM. O foco é orquestrar os motores
+maduros já integrados, sem parser, compilador ou servidor paralelos.
+
 Os LSPs e recursos de Rust e Python já existentes continuam sendo mantidos
 durante essa sequência. A ordem acima rege o aprofundamento e a introdução dos
 provedores de verificação; não exige remover capacidades atuais.
@@ -300,7 +307,8 @@ A sequência vigente prioriza consolidar a orquestração/integração das ferra
 e o contexto de cada jornada. O verificador existente acompanha as fatias para
 exercitar essas entradas e corrigir falhas de suas garantias. A fase dedicada
 de evolução e fechamento do algoritmo ocorre depois, ainda na 0.4, sobre as
-ferramentas e os consumidores consolidados. A vertical só fecha com evidência
+ferramentas e os consumidores consolidados; é a última etapa de implementação,
+precedida por DAP/QEMU, F5–F9 e pelo algoritmo semântico de ambiente (62 §3). A vertical só fecha com evidência
 funcional e robustez no escopo aceito.
 
 O verificador host existente permanece integrado, com regressões das guardas

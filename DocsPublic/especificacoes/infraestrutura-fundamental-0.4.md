@@ -14,9 +14,11 @@ ferramentas maduras e pelos pontos de extensão existentes, com provas próprias
 
 A 0.4 estabelece a base técnica para desenvolver software, firmware e cálculos
 científicos na mesma IDE. A 0.5 aprofunda, melhora e amplia essa base. Detecção
-de ambiente, DAP, QEMU, Windows, SVD, VFS, plotagem, notebooks e ferramentas
-de engenharia têm entregas mínimas obrigatórias nesta versão. Estruturas vazias,
+de ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks e ferramentas de
+engenharia têm entregas mínimas obrigatórias nesta versão. Estruturas vazias,
 abas demonstrativas e uma classificação como opcionais não aceitam esses itens.
+Windows (F4) exige na 0.4, desde 2026-11-08, só a validação funcional básica numa VM, na penúltima etapa da ordem (62 §3);
+o porte completo segue por colaboração.
 
 A ordem das linguagens é **C → C++ → Rust e integração Rust/C/C++ → Python**
 pela [especificação comum](orquestracao-e-verificacao-de-linguagens.md).
@@ -132,8 +134,11 @@ dispensa requisitos obrigatórios de C6/F1–F5.
 
 ### F4 — Windows nativo e distribuição
 
-Windows integra o fechamento da 0.4; deixa de ser uma entrega exigida somente
-depois dela. O [60](../roadmaps/60-windows-e-edicao-especial.md) continua dono
+**Revisto em 2026-11-08:** a 0.4 exige só a validação funcional básica numa VM
+Windows 11, na etapa 10 do 62 §3, com o mínimo de B7 (62 §3.2). Os mínimos
+abaixo continuam sendo o aceite do porte completo, que segue como frente de
+colaboração por issues com reprodução e aceite; a 0.4 não declara mais do que
+provar. O [60](../roadmaps/60-windows-e-edicao-especial.md) continua dono
 do porte e de sua matriz. O mínimo é Windows 11 x86_64 com core e UI nativos,
 toolchains efetivas e instalador validado em ambiente limpo.
 
@@ -146,7 +151,7 @@ O suporte USB/serial e cross deve declarar os backends e dispositivos medidos.
 Validar instalação, primeira execução, atualização e desinstalação preservando
 projetos/configurações. WSL2 é contexto adicional, com caminhos e ferramentas
 próprios; um teste em WSL2 não aceita Windows nativo. O Linux mantém regressões.
-Sem execução da matriz no Windows, este bloqueador permanece aberto.
+Sem execução da matriz no Windows, o suporte Windows permanece não provado.
 
 ### F5 — Visualizador CMSIS-SVD
 
@@ -244,16 +249,20 @@ build válido e identificar resultado antigo enquanto o código muda.
 
 ## 4. Sequência e dependências
 
+Sequência revista em 2026-11-08 conforme a ordem do autor no
+[62 §3](../roadmaps/62-base-publica-0.4.md#3-ordem-e-critérios-de-fechamento):
+
 | Etapa | Trabalho e dependências |
 | --- | --- |
-| 1 | Consolidar contexto/build/LSP de C de host e o verificador na mesma fixture, depois aprofundar C++; ambiente F1, identidade VFS e portabilidade acompanham os consumidores |
-| 2 | Consolidar DAP F2 e ciclo QEMU F3; extrair regressões reais de erro/cancelamento e preservar as capacidades embarcadas existentes |
-| 3 | Consolidar Rust e fronteiras Rust/C/C++; fechar provedores F6 e matriz/instalador Windows F4; integrar árvore SVD F5 ao debug existente |
-| 4 | Consolidar Python; implementar notebooks F8, plotagem F7 e ferramentas/bibliotecas F9 com jornadas científicas reais |
-| 5 | Repetir jornadas finais Linux/Windows, polimento, desempenho, idiomas, contribuição, documentação e pacote conforme o 62 |
+| 1 | C de host até C1–C8, depois C++, Rust e fronteiras Rust/C/C++ e Python; ambiente F1 e identidade VFS acompanham os consumidores de cada linguagem |
+| 2 | Consolidar DAP F2 e ciclo QEMU F3 sobre essas jornadas; extrair regressões reais de erro/cancelamento e preservar as capacidades embarcadas existentes |
+| 3 | Integrar a árvore SVD F5 ao debug existente; fechar os provedores F6; implementar plotagem F7, notebooks F8 e ferramentas/bibliotecas F9 com jornadas científicas reais |
+| 4 | Algoritmo semântico de ambiente por ecossistema e, por último, a fase dedicada do algoritmo especializado (62 §3.3) |
+| 5 | Camadas finais de teste (62 §3.5) sobre as jornadas Linux, depois a validação básica do Windows numa VM (F4, recorte de B7) |
+| 6 | Polimento restante, desempenho, idiomas, contribuição, documentação e pacote conforme o 62 |
 
-O desenho de Windows/VFS começa com a primeira etapa; sua prova integrada
-depende dos consumidores. Integridade, falhas e regressões podem alterar a
+O desenho de VFS começa com a primeira etapa; sua prova integrada depende dos
+consumidores. O porte Windows completo segue por colaboração. Integridade, falhas e regressões podem alterar a
 ordem das correções. O acabamento cromático de Instalar Ferramentas acompanha
 as jornadas pela [especificação §0.1](instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
 

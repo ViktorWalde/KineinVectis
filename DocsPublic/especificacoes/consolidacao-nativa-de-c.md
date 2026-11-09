@@ -21,7 +21,11 @@ e fortalece o que já foi construído; os donos compartilhados C/C++ são estend
 para respeitar as particularidades de C. Cada capacidade exige inventário,
 integração e prova de uso; presença de um executável no catálogo é só uma entrada.
 
-Esta etapa integra B2/B6/B7 do 62. As lacunas essenciais abaixo permanecem na
+Esta etapa integra B2/B6 do 62; desde 2026-11-08 o Windows (B7) entra só na
+validação básica em VM, perto do fim da 0.4, e o porte completo é colaboração. Conforme a ordem do autor (62 §3), a depuração de C5 e o
+ciclo QEMU de C6 fecham na etapa de DAP e QEMU, depois de Python, e os
+problemas C-03–C-05 do inventário (CDB 1:N, diretório de build por preset e
+localização da CDB) entram nesta etapa. As lacunas essenciais abaixo permanecem na
 0.4.0. Versões públicas 0.4.1 em diante aprofundam e estabilizam a base aceita.
 O verificador existente acompanha as fatias; sua fase transversal dedicada
 permanece posterior à orquestração das ferramentas, ainda dentro da 0.4.
@@ -79,7 +83,7 @@ diagnóstico; lacuna do consumidor da IDE exige correção no seu dono.
 | C5 — Executar, testar e depurar | Artefato/configuração corretos, CTest/testes do projeto, GDB/DAP com breakpoints, steps, pilha, variáveis, expressão e memória; falha, cancelamento e reinício exercitados pela UI |
 | C6 — Embarcados | Contexto freestanding ARM e RISC-V, toolchain, sysroot/libc, headers de SDK, startup/linker script e ELF identificados; build, relatório Flash/RAM e ciclo QEMU/DAP dos mínimos F1–F5, com regressões de SDKs já oferecidos |
 | C7 — Bibliotecas e fronteiras | API pública C, visibilidade de símbolos, linkage, tipos/layout/alinhamento, includes transitivos e consumo de dependência; biblioteca C preparada e testada para consumo posterior em C++/Rust |
-| C8 — Robustez e plataformas | Projetos pequenos/médios, novos/existentes, configurações distintas, caminhos com espaços/Unicode, reabertura, troca de workspace, ferramenta ausente, falha/cancelamento e recuperação; matriz Linux e Windows nativo, integridade e latência/recursos medidos |
+| C8 — Robustez e plataformas | Projetos pequenos/médios, novos/existentes, configurações distintas, caminhos com espaços/Unicode, reabertura, troca de workspace, ferramenta ausente, falha/cancelamento e recuperação; matriz Linux (Windows nativo só no recorte básico em VM desde 2026-11-08), integridade e latência/recursos medidos |
 
 As funções do editor dependem das capacidades negociadas do servidor; a UI
 explica uma função indisponível e conserva as operações independentes. A
@@ -119,8 +123,9 @@ essa mesma biblioteca; essa dependência mantém uma sequência executável.
    pré-processamento, ações LSP, formatação, diagnósticos e análise de memória.
 4. **Ciclo diário de host:** bibliotecas/dependências, build/ligação, executar,
    testes e depuração; provas visuais e recuperação na mesma jornada.
-5. **C embarcado e portabilidade:** ARM/RISC-V e mínimos F1–F5, Linux/Windows
-   e consumidores VFS; conservar a mesma identidade de projeto/configuração.
+5. **C embarcado e portabilidade:** ARM/RISC-V e mínimos F1–F5, Linux e
+   consumidores VFS (Windows no recorte básico em VM); conservar a mesma
+   identidade de projeto/configuração.
 6. **Fechamento C:** repetir matriz positiva/negativa, mutações das guardas,
    medições e gates; registrar cobertura e lacunas. Aceitar a etapa somente
    após os requisitos obrigatórios, então aprofundar C++ e seguir para Rust.
@@ -163,6 +168,11 @@ de Make, dependências, bibliotecas e múltiplas unidades pertence a C2.
 análise, depuração e embarcados conservam C4–C6. QEMU integra C6/F3, sem ser
 pré-condição para concluir o recorte de projeto/ambiente de host. Cada aceite
 pendente mantém seu alcance aberto, inclusive plataformas não exercitadas.
+
+Conferência de 2026-11-08 ([62 §3.4](../roadmaps/62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica)):
+abrir um projeto existente ainda não respeita o `binaryDir` dos presets (C-04)
+nem localiza uma CDB fora dos diretórios conhecidos (C-05); os dois pertencem
+a este recorte. A CDB com uma unidade por arquivo (C-03) pertence a C2.
 
 ## 5. Corpus e registro de prontidão
 

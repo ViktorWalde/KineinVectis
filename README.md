@@ -37,10 +37,13 @@ validação ainda pendentes conforme a capacidade:
   pequenos/médios e o desenvolvimento da própria IDE.
 - Integrar detecção de toolchains e perfis de projeto ao ciclo compilar,
   emular com QEMU e depurar por DAP, sem exigir edição manual de JSON.
-- Validar Windows nativo e instalador, visualizador SVD e contexto de arquivos
-  local, SSH e container, preservando o Linux.
+- Validar visualizador SVD e contexto de arquivos local, SSH e container.
 - Entregar notebooks Python/Jupyter, plotagem reutilizável, bibliotecas e
   utilitários de engenharia, com consumo Flash/RAM identificado por artefato.
+- Depois, um algoritmo que lê a configuração essencial de ambiente de cada
+  ecossistema e a fase dedicada do algoritmo especializado de verificação.
+- No fim, camadas de teste rigorosas contra regressões, falhas de lógica e
+  atrasos desnecessários, e uma validação funcional básica no Windows.
 - Polir UI/HUD/UX, Instalar Ferramentas e a entrada de colaboradores.
 
 O [escopo e os aceites da infraestrutura](DocsPublic/especificacoes/infraestrutura-fundamental-0.4.md)
@@ -829,8 +832,9 @@ Windows        não suportado
 Linux ARM64    ainda não distribuído
 ```
 
-Windows nativo e instalador são requisitos da base 0.4 em desenvolvimento;
-o [plano de portabilidade](DocsPublic/roadmaps/60-windows-e-edicao-especial.md)
+A 0.4 exige no Windows nativo só uma validação funcional básica numa VM; o
+porte completo e o instalador são uma frente aberta a colaboradores, e o
+[plano de portabilidade](DocsPublic/roadmaps/60-windows-e-edicao-especial.md)
 mantém os aceites pendentes e distingue Windows de WSL2.
 
 ---

@@ -520,7 +520,8 @@ Fechadas, e detalhadas em
   frente Windows + WSL2 ([60](60-windows-e-edicao-especial.md)). **Fronteira
   revista em 2026-11-03:** Windows nativo e instalador são obrigatórios na
   própria base 0.4, conforme o [62](62-base-publica-0.4.md); WSL2 tem prova
-  adicional. As revisões de prioridade estão no registro técnico
+  adicional. **Revista em 2026-11-08:** a 0.4 exige só a validação básica numa
+  VM; o porte completo segue como colaboração (62 §3.2). As revisões de prioridade estão no registro técnico
   (40.7 §7.258, §7.260); o estado vigente do porte está no 40;
 - **o modelo semântico profundo detecta DERIVA, e não resolve versão.** Quem
   resolve é o `cargo`, o `uv`, o `conan`, o `west`; a IDE roda a ferramenta do

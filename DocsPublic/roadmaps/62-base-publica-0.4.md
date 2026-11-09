@@ -6,6 +6,9 @@
 > 0.4.1–0.4.9; os mínimos desta base bloqueiam a entrega. Não altera registros.
 > Visão de engenharia consolidada em 2026-11-04: **Foundation — Engineering
 > Consolidation Release**, conforme §1.1; inventário sistemático em §3.4.
+> Revisto em 2026-11-08: ordem completa da 0.4 com estado por etapa (§3),
+> camadas finais de teste (§3.5), Windows básico validado em VM no fim e porte
+> completo por colaboração (§3.2), e conferência do planejamento (§2.1).
 
 ## 1. Fronteira e contabilização
 
@@ -34,9 +37,12 @@ QML participa da jornada da própria IDE.
 O desenho técnico está na
 [orquestração e verificação de linguagens](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
 Polimento de UI/HUD/UX e otimização de algoritmos acompanham essas jornadas.
-Detecção/perfis de toolchain, DAP, QEMU, Windows nativo, SVD, VFS, plotagem,
-notebooks e ferramentas de engenharia são fundamentos obrigatórios da 0.4,
-com mínimos na [especificação de infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md).
+Detecção/perfis de toolchain, DAP, QEMU, SVD, VFS, plotagem, notebooks e
+ferramentas de engenharia são fundamentos obrigatórios da 0.4, com mínimos na
+[especificação de infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md).
+Desde 2026-11-08, Windows nativo exige na 0.4 só a validação funcional básica
+numa VM, penúltima etapa da ordem (§3); a matriz completa e o instalador seguem
+como frente de colaboração (§3.2, B7), e a 0.4 não declara mais do que provar.
 A 0.5 aprofunda, melhora e amplia essa base; não recebe esses mínimos por
 adiamento implícito. A preparação para colaboradores acompanha o fechamento.
 Superfícies funcionais migram dos pop-ups para os docks existentes; menus, tooltips e confirmações
@@ -117,6 +123,26 @@ estão registrados no [40](40-estado-e-continuidade.md). Não validam mudanças
 posteriores. O produto ainda se identifica como 0.3.9 nesta auditoria;
 protocolo IPC 0.197.0 tem ciclo independente da versão pública.
 
+### 2.1 Conferência do planejamento de fundamentos — 2026-11-08
+
+Três documentos de planejamento do autor (recuperação do escopo da 0.4,
+catálogo de fundamentos maduros e orquestração em Rust, motor semântico
+intermediário por linguagem) foram conferidos com o checkout por leitura de
+código, sem executar jornadas. Não são donos: as decisões vigentes estão em §3
+e os problemas confirmados em §3.4.
+
+| Afirmação do planejamento | Estado no checkout |
+| --- | --- |
+| Motores maduros já orquestrados: Tree-sitter, clangd, rust-analyzer, basedpyright/Ruff, qmlls, CMake File API, Cargo, Git, `fd`, PTY com `alacritty_terminal`, SQLite, `notify`, formatadores, cargo test/CTest/pytest | Código identificado; o aceite por jornada continua aberto. Consolidar, não reimplementar |
+| A CDB guarda uma unidade por arquivo | Confirmado: C-03 |
+| Diretório de build único e só a primeira configuração do CMake | Confirmado: C-04 |
+| CodeAction sem `range` da seleção, `only` e `resolve` | Confirmado: CPP-01 |
+| Uma thread por job, busca literal própria e fuzzy ausente | Confirmado no código; mudar só com medição que demonstre a falta, sem registro de defeito |
+| Cobertura C/C++ | Recusa rotulada em `coverage/`; aceite pertence à etapa C |
+| Detectado, selecionado e efetivo | Compilador C provado (C1-11–C1-14); origem por toolchain file e `CC` do ambiente aberta |
+| Notebook, API de plotagem e VFS unificada | Ausentes, como na [infraestrutura §2](../especificacoes/infraestrutura-fundamental-0.4.md#2-ponto-de-partida--inspeção-de-2026-11-03) |
+| Achado desta conferência | CDB fora de `.kinein/build`, raiz, `build`, `builddir` e `out/build` não é localizada: C-05 |
+
 ## 3. Ordem e critérios de fechamento
 
 1. **B1 — Integridade e estabilidade.** Corrigir perdas de dados, crashes,
@@ -143,24 +169,49 @@ protocolo IPC 0.197.0 tem ciclo independente da versão pública.
    A versão não fecha somente pela existência do primeiro recorte host.
 5. **B5 — Fechamento.** Idiomas e traduções conforme [57 §3](57-mapa-de-versoes-ate-a-1.0.md#3-pedidos-do-autor-e-para-onde-foram),
    metadados 0.4.0, changelog/manual/tutorial coerentes, gate completo estrito,
-   pacotes Linux/Windows com checksum e validação em ambiente mínimo, depois
-   dos aceites B1–B4 e B6–B10. Esta fronteira não declara a release pronta e
+   pacote Linux com checksum e validação em ambiente mínimo, depois dos
+   aceites B1–B4 e B6–B10 (B7 no recorte básico de §3.2). Esta fronteira não declara a release pronta e
    não inclui publicação automática.
 
 **Ordem do autor (2026-11-08).** A 0.4 consolida primeiro o essencial da IDE,
-sem atalhos: C em profundidade, depois C++, Rust com suas fronteiras C/C++ e
-Python, nesta ordem; em seguida, DAP e QEMU sólidos (F2/F3 de B6). Cada
-etapa só avança com a anterior confiável no recorte declarado. A dívida técnica
-que compromete essas capacidades é paga dentro da 0.4 (§3.4). As provas mantêm
-rigidez alta: lógica e comunicação entre módulos exercitadas até o limite,
-cenários improváveis, falhas e casos de borda que façam defeitos aparecer, com
-mutações das guardas; quantidade de testes não substitui essa rigidez.
+sem atalhos, orquestrando os motores maduros já integrados (Tree-sitter,
+clangd, rust-analyzer, basedpyright/Ruff, CMake File API, CDB, Cargo, Git,
+PTY/VT, SQLite, `notify`, `fd`, DAP) em vez de criar parser, compilador,
+terminal, índice ou depurador próprios. Cada etapa só avança com a anterior
+confiável no recorte declarado. A coluna de estado é a visão concreta da 0.4;
+cada atualização datada a substitui, e o detalhe fica nos donos:
+
+| Etapa | Conteúdo | Estado em 2026-11-08 |
+| --- | --- | --- |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-14 corrigidos com provas; abertos C-04, C-05, C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
+| 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
+| 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
+| 5. DAP e QEMU | F2/F3 sólidos sobre as jornadas anteriores; as partes de depuração (C5) e QEMU (C6) de cada linguagem fecham aqui | Base existente (`dap/`, GDB, LLDB, probe-rs, debugpy; QEMU `lm3s6965evb` no gate embarcado); aceites F2/F3 abertos |
+| 6. F5–F9 | SVD, VFS, plotagem, notebooks e engenharia (B6, B8, B9) | SVD, VFS e engenharia parciais; plotagem e notebooks ausentes ([infraestrutura §2](../especificacoes/infraestrutura-fundamental-0.4.md#2-ponto-de-partida--inspeção-de-2026-11-03)) |
+| 7. Algoritmo semântico de ambiente | Leitura básica/intermediária da configuração essencial de ambiente de cada ecossistema: presets e toolchain file, Cargo e `rust-toolchain`, `pyproject` e venv | Não iniciada; base em `toolchain/`, `project/` e `index/context/` |
+| 8. Algoritmo especializado | Fase dedicada do verificador/assistente (B4, §3.3); última etapa de implementação | Recorte host S0/S1 integrado (40.7 §7.372); fase dedicada não iniciada |
+| 9. Camadas finais de teste | Varredura rigorosa de §3.5 sobre o produto inteiro | Gates atuais em uso por fatia; camadas novas de §3.5 a desenhar |
+| 10. Windows básico em VM | Compatibilidade ao menos funcional, conforme B7 em §3.2 | Porte pausado na W6b4 ([60](60-windows-e-edicao-especial.md) §3.3); VM a preparar |
+| 11. Fechamento | Polimento restante e B5 | Não iniciada |
+
+A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
+transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
+e zsh reais) é o primeiro item. Estado transversal em 2026-11-08: INF-02
+aberto e próximo; UI-01 aberto; INF-01 corrigido no recorte Linux. A dívida
+técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
+camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
+e comunicação entre módulos exercitadas até o limite, cenários improváveis,
+falhas e casos de borda que façam defeitos aparecer, com mutações das guardas;
+quantidade de testes não substitui essa rigidez.
 
 Quality Center, schema 3, CircuitPython, Banco para embarcados, expansão de
 emuladores além de F3 e as demais jornadas não concluídas do 52 permanecem
 abertos nos seus donos. Bloqueiam quando integram os mínimos de §3.2 ou uma
-dependência/regressão impede os aceites da base. Windows nativo passa a
-bloqueador B7; ROS 2, colaboração remota entre pessoas e o motor semântico
+dependência/regressão impede os aceites da base. Windows nativo, bloqueador
+B7 desde 2026-11-03, passou em 2026-11-08 a exigir só a validação básica em
+VM (etapa 10), com o porte completo por colaboração; ROS 2,
+colaboração remota entre pessoas e o motor semântico
 profundo conservam seus planos posteriores. A revisão de acabamento antes associada
 à edição especial é incorporada ao polimento desta base, sem exigir outra
 versão pública. Os compromissos de idioma não são cancelados pelo recorte.
@@ -201,12 +252,14 @@ Isso não encerra as outras linguagens nem os fundamentos obrigatórios da 0.4.
 **Escopo de 2026-11-03.** Os requisitos F1–F9 e sua sequência pertencem à
 [infraestrutura fundamental](../especificacoes/infraestrutura-fundamental-0.4.md).
 Esta tabela vincula os aceites à release; nenhum destes bloqueadores é opcional.
+B7 bloqueia desde 2026-11-08 só no recorte básico em VM; o restante do porte é
+frente de colaboração.
 
 | Bloqueador | Entrega exigida | Evidência mínima e dono |
 | --- | --- | --- |
 | B6 — Ambiente e ciclo embarcado | F1, F2, F3 e F5: perfis sem edição manual de JSON, DAP consolidado, compilar/emular e visualizador SVD | Toolchains reais; jornadas ARM/RISC-V com console e breakpoint; árvore SVD offline e valores no debug; especificação F1–F5 e trilha 52 |
-| B7 — Windows | F4: core/UI nativos, jornadas e instalador Windows 11 x86_64 | Matriz nativa, instalação/atualização/desinstalação em ambiente limpo; [60](60-windows-e-edicao-especial.md). WSL2 tem prova separada |
-| B8 — Arquivos e contexto | F6: VFS integrada a editor, análise e build em Linux/Windows, SSH e container | Identidade, mapeamento, snapshots, conflitos e reconexão com ferramentas no ambiente correto |
+| B7 — Windows básico (recorte de 2026-11-08) | Etapa 10: Windows 11 x86_64 numa VM, com core e UI nativos compilados, a IDE abrindo, abrir/editar/salvar/reabrir projeto, terminal, Git e configurar/compilar/executar um projeto C e um Rust de host, sem processos órfãos. Proposta de mínimo, a confirmar pelo autor antes da etapa. Matriz completa e instalador seguem por colaboração | Matriz e instalador no [60](60-windows-e-edicao-especial.md) §1.1; código Windows e catraca de adiados preservados; o que não for exercitado fica NÃO PROVADO. WSL2 não substitui a VM nativa |
+| B8 — Arquivos e contexto | F6: VFS integrada a editor, análise e build em Linux, SSH e container | Identidade, mapeamento, snapshots, conflitos e reconexão com ferramentas no ambiente correto |
 | B9 — Ciência e engenharia | F7–F9: plotagem reutilizável, notebook Python/Jupyter, bibliotecas e utilitários, relatório Flash/RAM | Fluxo numérico até C/C++, buffers e desempenho medidos, kernel recuperável, resultados de engenharia conferidos e artefatos identificados |
 | B10 — Contribuição e demonstração | README coerente, guias, CI, templates e tarefas revisadas com labels; demonstração curta do ciclo integrado | [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); distinguir artefatos locais de configuração/publicação efetiva no GitHub |
 
@@ -225,12 +278,14 @@ e fechamento do algoritmo vem depois dessa consolidação, ainda na 0.4.
 As pré-condições, a primeira fixture C e os aceites finais estão na
 [orquestração §12.1](../especificacoes/orquestracao-e-verificacao-de-linguagens.md#121-dependências-entre-ferramentas-e-verificador).
 
-A sequência começa por contexto/build/LSP de C de host e verificador no mesmo
-projeto, aprofunda C até o aceite C1–C8, segue por C++, Rust e fronteiras C/C++,
-depois Python. A jornada C11 isolada não encerra a etapa C. DAP, testes e
-QEMU comprovam as etapas de execução/depuração aplicáveis. SVD, notebooks e
-plotagem preservam seus bloqueadores próprios, sem impedir o endurecimento
-do verificador host. Windows/VFS acompanham seus consumidores desde o desenho.
+A sequência segue a ordem do autor em §3: C de host até o aceite C1–C8, C++,
+Rust e fronteiras C/C++, Python, DAP e QEMU, F5–F9, o algoritmo semântico de
+ambiente e, por último, a fase dedicada do algoritmo especializado. A jornada
+C11 isolada não encerra a etapa C. Testes comprovam a execução em cada
+linguagem; SVD, notebooks e plotagem preservam seus bloqueadores próprios,
+sem impedir o endurecimento do verificador host. VFS acompanha seus
+consumidores desde o desenho. Depois do algoritmo especializado vêm as camadas
+finais de teste (§3.5) e a validação básica do Windows em VM.
 
 O fechamento B4 exige evidências nos contextos suportados e consolidados,
 com regressões, mutações das guardas, medições e prévia/aplicação na UI.
@@ -320,6 +375,51 @@ auditorias e provas posteriores datadas nos donos:**
   separando prova de gramática, compilador e clangd. Decisão: corrigir ou integrar
   solução no dono da gramática, com limite explícito até a prova. Estado aberto
   em C3, posterior a C1; não equivale a ausência de semântica no clangd.
+- **C-03 — CDB com uma unidade por arquivo, C2.** Dono e evidência:
+  `crates/kinein-core/src/index/context/cdb.rs` (`parse_cdb` devolve um mapa
+  caminho → unidade). Conferido em 2026-11-08 por leitura: uma segunda entrada
+  do mesmo arquivo substitui a primeira e só marca `ambiguous`; headers e
+  verificador recusam a unidade ambígua, sem tratá-la como segura. Severidade
+  alta: o contexto de um fonte compilado em dois alvos ou configurações fica
+  inviável e as alternativas se perdem. Causa confirmada no modelo de dados.
+  Testes: CDB real com o mesmo `.c` em dois alvos com `-D`/`-I` distintos, GCC
+  e Clang, seleção explícita, invalidação ao reconfigurar, consumidores de
+  header e verificador; mutação que volte a descartar unidades. Decisão:
+  corrigir na etapa C, conservando todas as unidades com identidade de
+  alvo/configuração. Estado aberto.
+- **C-04 — Diretório de build único e primeira configuração, C1/C2.** Dono e
+  evidência: `cmake::build_dir` (`crates/kinein-core/src/cmake/mod.rs`) passa
+  `-B .kinein/build` também com `--preset`, e `CmakeModel` lê só
+  `/configurations/0/targets` (`cmake/model.rs`). Conferido em 2026-11-08 por
+  leitura. Severidade alta: o `binaryDir` dos presets do projeto é ignorado no
+  configure da IDE, trocar de preset reconfigura o mesmo diretório e um gerador
+  multi-config expõe só a primeira configuração. Causa confirmada no desenho do
+  diretório canônico. Testes: dois presets com `binaryDir` distintos, troca e
+  retorno sem reconfigurar o outro, gerador multi-config, build dir de preset
+  configurado fora da IDE, contexto e Project Health coerentes. Decisão:
+  corrigir na etapa C, com contrato antes de mudar o IPC. Estado aberto.
+- **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
+  `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
+  `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste
+  repositório ficam em `build/<preset>/`, fora da lista; por leitura, o contexto
+  da IDE neste checkout, sem configure pela própria IDE, não encontra CDB.
+  Reprodução na jornada pendente. Severidade alta: um projeto existente
+  configurado por presets ou por outra ferramenta perde o contexto C/C++ e é
+  orientado a configurar de novo. Causa confirmada por leitura: lista fixa, sem
+  o `binaryDir` dos presets. Testes: preset com `binaryDir` próprio já
+  configurado, várias CDBs candidatas, escolha visível com origem, CDB obsoleta
+  e retorno ao diretório da IDE. Decisão: corrigir junto de C-04. Estado aberto.
+- **CPP-01 — Contrato de CodeAction incompleto.** Dono e evidência:
+  `crates/kinein-core/src/lsp/manager.rs` (pedido no ponto do cursor) e
+  `lsp/parse.rs` (aceita só ação literal com `edit` inline). Conferido em
+  2026-11-08: sem `range` da seleção, sem filtro `only` e sem
+  `codeAction/resolve` anunciado; ações só de comando e as que dependem de
+  resolve são descartadas. Severidade média: o comportamento é seguro, mas
+  correções e refatorações oferecidas pelos servidores não chegam à UI. Causa
+  confirmada no handshake e no parser. Testes: clangd e rust-analyzer reais com
+  seleção, kinds, resolve e comando; ação obsoleta após edição; range UTF-16
+  inválido recusado antes da escrita; transação existente. Decisão: corrigir na
+  etapa C++; a jornada C usa o mesmo cliente quando exigir. Estado aberto.
 - **INF-01 — Testes do terminal dependentes do shell do usuário.** Dono e
   evidência: `crates/kinein-core/src/tests/terminal.rs` e
   `terminal/session.rs`. Observado em 2026-11-08, também no commit anterior a
@@ -337,6 +437,23 @@ auditorias e provas posteriores datadas nos donos:**
   execução (com as agulhas antigas, só um), e ignorar a injeção reprova quatro
   no zsh. Windows mantém o shell padrão nesses testes e não foi exercitado.
   Estado corrigido no recorte Linux.
+- **INF-02 — Terminal com bash e zsh reais.** Dono e evidência:
+  `crates/kinein-core/src/terminal/`, `tests/terminal.rs` e
+  `ui/qml/runtime/RuntimeController.qml`. Pedido do autor em 2026-11-08:
+  qualquer configuração de zsh deve funcionar na IDE tanto quanto a de bash,
+  não só a de uma máquina. A prova de execução usa `/bin/sh` (INF-01); bash e
+  zsh com inicialização real não têm prova. Severidade alta: jornada B2 sem
+  evidência. Causa não investigada; hipótese com evidência de código: o
+  emulador responde às consultas do terminal (`Event::PtyWrite`), mas o comando
+  pedido ao abrir um terminal é digitado assim que `terminal.opened` chega
+  (`handleTerminalOpened`), antes de a inicialização do shell terminar, onde um
+  assistente ou prompt de atualização pode consumi-lo, como no INF-01. Testes:
+  matriz isolada (HOME e ZDOTDIR próprios, sem tocar a configuração do usuário)
+  com bash sem rc e com `PROMPT_COMMAND`, zsh `-f`, zsh sem `.zshrc`, zsh com
+  tema instalado sem configuração e configurado com prompt instantâneo; resize,
+  TUI, cancelamento e comando enviado pela IDE; agulhas que provem execução.
+  Decisão: provar e corrigir no dono do terminal, sem depender da configuração
+  do usuário. Estado aberto; primeiro item após a organização de 2026-11-08.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:
@@ -349,6 +466,33 @@ As demais áreas da tabela ainda exigem inventário por capacidade; esta lista
 inicial não certifica ausência de dívida nelas. Atualizar classificação,
 causa e estado conforme a evidência, encerrando problemas pelo comportamento
 comprovado e pela manutenção/evolução viável, não pela conclusão de um rewrite.
+
+### 3.5 Camadas finais de teste
+
+Pedido do autor de 2026-11-08: depois do algoritmo especializado, uma varredura
+rigorosa do produto inteiro evita regressões, falhas de lógica, código que
+funciona mas está mal escrito e causa atraso ou bug desnecessário, e falhas por
+coisas básicas não feitas. A rigidez já vale em cada fatia (§3); esta etapa a
+repete sobre o produto consolidado e acrescenta o que o gate por fatia não
+cobre. Os gates existentes estão no
+[catálogo](../contribuindo/04-os-gates-que-dizem-nao.md) e o fluxo no
+[07](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md); uma camada
+nova entra lá quando for implementada.
+
+| Camada | Defeito que deve revelar | Técnica e evidência | Ponto de partida |
+| --- | --- | --- | --- |
+| Regressão de jornadas | Fluxo que funcionava e quebrou | Jornadas de C, C++, Rust, Python, DAP/QEMU e F5–F9 com fixtures reais, positivas, negativas e de recuperação, no gate completo estrito | Testes de despacho, harnesses QML, `verificar-exercitacao.sh` e `verificar-embarcado.sh` |
+| Mutação das guardas | Teste verde porque a guarda nunca foi exercida | Mutação de cada guarda crítica com baseline verde, que compile e reprove pela guarda; catálogo versionado em vez de scripts avulsos | Mutações manuais registradas por fatia no 40.7 |
+| Propriedades e fronteiras | Caso não imaginado em parsers, IPC, offsets Unicode, caminhos e CDB | Geração de entradas e fuzzing nas fronteiras, com regressão para cada falha encontrada | Casos fixos atuais; ferramenta nova só com registro de componente |
+| Ordem temporal e concorrência | Resposta antiga publicada, troca de workspace, cancelamento, processo morto | Sequências forçadas sem `sleep` como sincronização; repetição em lote para revelar intermitência; nenhum processo órfão ao final | Guardas de workspace e testes de cancelamento atuais |
+| Desempenho e atraso | Espera fixa, polling, trabalho repetido, custo quadrático, bloqueio do laço do core ou da UI | Baseline e p50/p95 de abrir, digitar, IPC, indexar, configurar e compilar; piora acima do limite medido reprova | Marcador de primeiro frame (G0.5) e medições por fatia |
+| Qualidade do código | Lógica duplicada, erro engolido, `unwrap` fora de teste, estado com dois donos, responsabilidade inchada | Revisão dirigida por domínio com o [checklist de riscos ocultos](../arquitetura/16-checklist-de-riscos-ocultos.md), Clippy pedante e catracas de arquitetura, fiação e duplicação | Gates atuais de Clippy, arquitetura, fiação IPC e QML |
+| Básico feito | Erro sem mensagem, operação sem cancelamento ou prazo, recurso sem limpeza, dado sem persistência, botão sem efeito | Matriz por superfície: vazio, carregando, erro, nova tentativa, cancelamento, teclado e reabertura, na UI nativa isolada | `verificar-qml-alcance.sh`, `verificar-fiacao-ipc.sh` e provas nativas por fatia |
+| Pacote e ambiente limpo | Funciona só na máquina de desenvolvimento | Gate completo estrito em checkout limpo e AppImage em ambiente mínimo | `verificar-appimage.sh` e `testar-appimage` |
+
+Uma camada só conta quando seu defeito-alvo foi reproduzido e reprovado por
+ela, por mutação ou falha injetada. NÃO PROVADO por ambiente ausente fica
+explícito e mantém a etapa aberta. Contagem de testes não mede esta etapa.
 
 ## 4. Primeiro algoritmo: fronteira anterior ao código
 

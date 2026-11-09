@@ -86,7 +86,7 @@ verificador host já está integrado; o motor comum permanece em evolução pela
 [especificação](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
 C tem [etapa profunda própria](../especificacoes/consolidacao-nativa-de-c.md),
 com C23 e aceites C1–C8 antes de consolidar C++; a primeira jornada C11 é parcial.
-Detecção/perfis, DAP, QEMU, Windows nativo, SVD, VFS, plotagem, notebooks e
+Detecção/perfis, DAP, QEMU, SVD, VFS, plotagem, notebooks e
 ferramentas de engenharia têm mínimos obrigatórios na
 [infraestrutura fundamental](../especificacoes/infraestrutura-fundamental-0.4.md).
 A preparação da contribuição e a demonstração também acompanham o fechamento.
@@ -102,8 +102,10 @@ recortam duas jornadas bare metal e duas de Linux embarcado. Cargas extensas
 e validações físicas conservam aceites próprios. Os compromissos anteriores
 não foram declarados concluídos ou removidos. O acabamento da edição especial
 é incorporado ao polimento da base 0.4; idiomas/traduções seguem o §3.
-Windows nativo e instalador passam a requisito da própria 0.4; a integração
-WSL2 conserva aceites separados no [60](60-windows-e-edicao-especial.md).
+Windows nativo e instalador, requisito da própria 0.4 desde 2026-11-03, passam
+em 2026-11-08 a exigir só a validação funcional básica numa VM, perto do fim da
+0.4; o porte completo é colaboração, e a integração WSL2 conserva aceites
+separados no [60](60-windows-e-edicao-especial.md).
 
 Os marcos da tabela §2 e as alocações históricas do §3 descrevem a trilha,
 subordinados a esta fronteira. Pacote local só depois dos aceites do 62;
@@ -201,10 +203,10 @@ Compromissos funcionais não concluídos seguem na trilha pública aberta.
 | 0.3.8 | FEITA NO CHECKOUT (2026-10-03) | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
 | 0.3.9 | FEITA NO CHECKOUT (2026-10-16): encerrada, não lançada (59 §7.1.8, 40.7 §7.304). Passos 1–8, 9a e 13–16 feitos (40.7 §7.220–§7.303); 9b/9c, 10, 11 e 12 adiados pela manutenção, sem versão (59 §2.3). AppImage adiado | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda e Banco voltado a embarcados (59 §2.3), QML para desenvolver a IDE nela (59 §2.4), confiança no projeto e a segurança da casca (59 §7.1.4) | [`59`](59-fechamento-da-0.3.9.md) (registro desde 2026-10-16); 53 §5.8–§5.9 | aceites dos passos 7–16 e medida antes/depois; sem novo pacote como requisito |
 | porte e organização | porte PAUSADO na W6b4 (2026-10-14), a retomar numa VM; organização FEITA (2026-10-15, 61 §4; continua junto de cada fatia) | Windows nativo e documentação por contexto | a IDE compila e roda no Windows sem perder o Linux; a documentação separada por contexto, e a arquitetura se a medição pedir | [`60`](60-windows-e-edicao-especial.md) §3 (porte); [`61`](61-organizacao-da-documentacao.md) (organização) | porte: W6c (60 §3.3); organização: 61 §4 |
-| 0.4 pública / 0.4.0 SemVer | EM DESENVOLVIMENTO; fronteira de 2026-11-03 | fundação Linux/Windows, embarcados e ciência | trabalho acumulado, linguagens, uso no próprio desenvolvimento, UI/HUD/UX e mínimos F1–F9 | [62](62-base-publica-0.4.md) | B1–B10 do 62; jornadas, gate completo e pacotes Linux/Windows antes da publicação |
+| 0.4 pública / 0.4.0 SemVer | EM DESENVOLVIMENTO; fronteira de 2026-11-03, ordem e Windows revistos em 2026-11-08 | fundação Linux, embarcados, ciência e Windows básico | trabalho acumulado, linguagens, uso no próprio desenvolvimento, UI/HUD/UX, mínimos F1–F3 e F5–F9 e Windows básico em VM | [62](62-base-publica-0.4.md) | B1–B10 do 62 (B7 no recorte básico); jornadas, camadas finais de teste, gate completo e pacote Linux antes da publicação |
 | 0.4.1 pública em diante, até a 0.5 | PLANEJADA; posterior ao fechamento comprovado da 0.4.0 | aprofundamento da vertical | aprofundar cada etapa, integrar ferramentas complementares, polir e estabilizar; preservar a base robusta | [62](62-base-publica-0.4.md) e §1.1 deste mapa | deltas verificáveis e regressões da base; não confundir com os números internos históricos |
 | trilha interna 0.4.1–0.4.9 | ABERTA A CONTRIBUIÇÕES; sem exigência de releases intermediárias | Sistemas Embarcados Modernos | compromissos restantes de contexto/cross, build/qualidade, gravação/depuração, editor, Banco e consolidação; sem declaração de conclusão por renumeração | [52](52-arquitetura-executavel-da-0.4.md) §11 e [tarefas iniciais](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md) | aceites de cada jornada; implementação, integração, software/emulação e hardware discriminados |
-| Windows + WSL2 | WINDOWS NATIVO OBRIGATÓRIO NA 0.4 (2026-11-03); integração WSL2 com aceite próprio | portabilidade | core/UI nativos, ferramentas e instalador; WSL2 como contexto adicional | [`60`](60-windows-e-edicao-especial.md) | B7 do 62 e matriz do 60; WSL2 não substitui prova nativa |
+| Windows + WSL2 | VALIDAÇÃO BÁSICA EM VM NA 0.4 E PORTE COMPLETO POR COLABORAÇÃO (2026-11-08; porte completo obrigatório de 2026-11-03 a 2026-11-08); integração WSL2 com aceite próprio | portabilidade | core/UI nativos, ferramentas e instalador; WSL2 como contexto adicional | [`60`](60-windows-e-edicao-especial.md) | B7 do 62 e matriz do 60; WSL2 não substitui prova nativa |
 | acabamento de HUD/UX/UI | INCORPORADO AO POLIMENTO DA BASE 0.4 (2026-11-02) | otimização e consistência | hierarquia, densidade, tipografia, foco, acessibilidade e desempenho, sobre os componentes existentes | [62](62-base-publica-0.4.md) e 52 §14.17/§14.17.1 (histórico) | jornadas nativas e gates do conjunto final; não implica versão pública intermediária |
 | 0.5.x | PLANEJADA; aprofunda, melhora e amplia a fundação obrigatória da 0.4 (§1.1) | ambiente e capacidades | evolução de linguagens, ciência, embarcados, portabilidade e integrações; Environment Center, Library por capacidades/providers e Quality Center, além dos mínimos já entregues | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md); §3 item 11 deste mapa | deltas próprios, regressão da base e jornadas em português/inglês; não adiar implicitamente F1–F9 |
 | 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
