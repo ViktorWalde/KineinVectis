@@ -316,6 +316,12 @@ bool CoreClient::handleTerminalNotification(const QString& method, const QJsonOb
         emit terminalRender(params.toVariantMap());
         return true;
     }
+    if (method == QStringLiteral("event.terminal.command")) {
+        emit terminalCommandSettled(params.value(QStringLiteral("id")).toString(),
+                                    params.value(QStringLiteral("state")).toString(),
+                                    params.value(QStringLiteral("reason")).toString());
+        return true;
+    }
     if (method == QStringLiteral("event.terminal.closed")) {
         // D2.3: eventos atrasados de workspaces anteriores não podem alterar o
         // estado das sessões atuais; por isso removemos o ID exato.

@@ -118,6 +118,11 @@ pub(super) fn create_private_directory(path: &Path) -> io::Result<()> {
     std::fs::create_dir_all(path)
 }
 
+#[cfg(test)]
+pub(super) fn is_private_directory(path: &Path) -> bool {
+    path.is_dir()
+}
+
 pub(super) fn config_home() -> PathBuf {
     var_dir("APPDATA")
         .or_else(|| home_dir().map(|home| home.join("AppData").join("Roaming")))

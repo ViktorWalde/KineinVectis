@@ -77,6 +77,7 @@ mod settings;
 mod syntax;
 mod syntax_check;
 mod terminal;
+mod terminal_shells;
 mod toolchain;
 mod tools;
 mod workspace;

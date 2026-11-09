@@ -1005,6 +1005,7 @@ fatal
 feature
 features
 fedora
+feed
 feedback
 fence
 fetch
@@ -1033,6 +1034,7 @@ fired
 firmware
 firmwares
 first
+fish
 fits
 fitting
 five
@@ -1349,6 +1351,7 @@ instruction
 instructions
 intact
 integer
+integration
 intent
 interactive
 interface
@@ -2277,6 +2280,7 @@ revoke
 revokes
 rewrite
 rewrites
+rewriting
 rewritten
 rich
 right
@@ -2678,6 +2682,7 @@ terminal
 terminals
 terminate
 terminated
+terminator
 test
 tested
 testing
@@ -2825,6 +2830,7 @@ unsigned
 unstable
 unsupported
 until
+untouched
 unusable
 unused
 unverified
@@ -2956,6 +2962,7 @@ wiring
 with
 within
 without
+wizard
 word
 words
 work

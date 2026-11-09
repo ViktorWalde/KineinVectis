@@ -209,7 +209,6 @@ Item {
         runConfigErrorText: runConfigController.errorText
         onShowTabRequested: tab => shellController.showTab(tab)
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
-        onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()
     }
 
     // A cobertura dos testes (D8, 2026-09-17): o resumo e as linhas do

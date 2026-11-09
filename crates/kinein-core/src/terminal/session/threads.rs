@@ -1,6 +1,9 @@
 //! As tres threads de uma sessao viva: a leitora (bytes do PTY para o
 //! emulador, e as respostas do emulador de volta ao PTY), a emissora (um frame
 //! por `FRAME`, so' quando ha' mudanca) e a que espera o processo sair.
+//!
+//! The reader also writes a command held for the first prompt when the shell
+//! marks it (INF-02); the waiter discards one still held at exit.
 
 // Os metodos sao do `session`, e nada daqui e' publico: `pub(super)` e' a
 // visibilidade certa, e `pub` seria reprovado pelo `unreachable_pub` do
@@ -18,13 +21,17 @@ use std::{
     time::Duration,
 };
 
-use kinein_protocol::{JsonRpcError, JsonRpcErrorCode, JsonRpcRequest};
+use kinein_protocol::{
+    JsonRpcError, JsonRpcErrorCode, JsonRpcRequest, TerminalCommandEvent, TerminalCommandReason,
+    TerminalCommandState,
+};
 use serde_json::json;
 
+use super::super::integration::PromptMarker;
 use super::super::render::{emit_locked_render, emit_render};
 use super::super::state::TerminalState;
-use super::TerminalManager;
 use super::lifecycle::{self, SharedChild};
+use super::{PendingCommand, TerminalManager, take};
 
 /// Tamanho de cada leitura do PTY, em bytes.
 const READ_CHUNK_BYTES: usize = 8192;
@@ -41,12 +48,18 @@ impl TerminalManager {
         state: &Arc<Mutex<TerminalState>>,
         dirty: &Arc<AtomicBool>,
         writer: &Arc<Mutex<Box<dyn Write + Send>>>,
+        pending: &PendingCommand,
     ) {
         let state = Arc::clone(state);
         let dirty = Arc::clone(dirty);
         let writer = Arc::clone(writer);
+        let pending = Arc::clone(pending);
         let events = self.events.clone();
         let id = id.to_owned();
+        // Only a session that starts with a command looks for the marker, and
+        // only until the first one.
+        let mut watching = pending.lock().is_ok_and(|pending| pending.is_some());
+        let mut marker = PromptMarker::default();
         thread::spawn(move || {
             let mut buffer = [0_u8; READ_CHUNK_BYTES];
             while let Ok(bytes_read) = reader.read(&mut buffer) {
@@ -66,6 +79,15 @@ impl TerminalManager {
                 {
                     // Se o processo ja' saiu, nao ha' quem leia a resposta.
                     drop(writer.write_all(&replies).and_then(|()| writer.flush()));
+                }
+                // After the replies: a shell that asked the terminal something
+                // reads the answer before the command.
+                if watching && marker.feed(bytes) {
+                    watching = false;
+                    if let Some(command) = take(&pending) {
+                        let written = write_line(&writer, &command).is_ok();
+                        settle(&events, &id, written, TerminalCommandReason::Prompt);
+                    }
                 }
                 dirty.store(true, Ordering::SeqCst);
             }
@@ -104,11 +126,13 @@ impl TerminalManager {
         child: &SharedChild,
         running: &Arc<AtomicBool>,
         state: &Arc<Mutex<TerminalState>>,
+        pending: &PendingCommand,
         resource: impl Send + 'static,
     ) {
         let running = Arc::clone(running);
         let child = Arc::clone(child);
         let state = Arc::clone(state);
+        let pending = Arc::clone(pending);
         let events = self.events.clone();
         let id = id.to_owned();
         thread::spawn(move || {
@@ -149,6 +173,9 @@ impl TerminalManager {
             };
             let code = i32::try_from(status.exit_code()).ok();
             drop(resource);
+            if take(&pending).is_some() {
+                settle(&events, &id, false, TerminalCommandReason::Exit);
+            }
             running.store(false, Ordering::SeqCst);
             drop(events.send(JsonRpcRequest::notification(
                 "event.terminal.closed",
@@ -168,4 +195,39 @@ fn update_notice(
         state.notice = notice;
         emit_locked_render(events, id, &state);
     }
+}
+
+/// Types `command` and the Enter.
+pub(super) fn write_line(
+    writer: &Mutex<Box<dyn Write + Send>>,
+    command: &str,
+) -> std::io::Result<()> {
+    let mut writer = writer
+        .lock()
+        .map_err(|_poisoned| std::io::Error::other("o terminal travou numa escrita anterior"))?;
+    writer.write_all(format!("{command}\n").as_bytes())?;
+    writer.flush()
+}
+
+/// `event.terminal.command`: the held command was sent or discarded.
+pub(super) fn settle(
+    events: &super::super::EventSender,
+    id: &str,
+    sent: bool,
+    reason: TerminalCommandReason,
+) {
+    let state = if sent {
+        TerminalCommandState::Sent
+    } else {
+        TerminalCommandState::Discarded
+    };
+    let event = TerminalCommandEvent {
+        id: id.to_owned(),
+        state,
+        reason,
+    };
+    drop(events.send(JsonRpcRequest::notification(
+        "event.terminal.command",
+        Some(json!(event)),
+    )));
 }

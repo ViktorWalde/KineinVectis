@@ -4,7 +4,7 @@
 > canônicas de métodos e eventos e as regras. Movido sem mudar o texto em
 > 2026-10-16 ([61](../../roadmaps/61-organizacao-da-documentacao.md) §3.7, O6).
 
-### Terminal (`terminal.open` / `terminal.input` / `terminal.resize` / `terminal.scroll` / `terminal.mouse` / `terminal.clearScrollback` / `terminal.selectAll` / `terminal.copySelection` / `terminal.close`)
+### Terminal (`terminal.open` / `terminal.input` / `terminal.pendingCommand` / `terminal.resize` / `terminal.scroll` / `terminal.mouse` / `terminal.clearScrollback` / `terminal.selectAll` / `terminal.copySelection` / `terminal.close`)
 
 Terminal profissional (reescrito no protocolo `0.41.0`, fatia D2 de
 `DocsPublic/roadmaps/24`). Requer workspace aberto. **PTY real** via `portable-pty` (do
@@ -36,10 +36,18 @@ o que um gesto significa, porque isso depende do modo VT que só o emulador
 conhece. Nenhuma política por programa existe no core: uma CLI de IA recebe o
 mesmo tratamento de um `ls`.
 
-- `terminal.open { cwd? }` → `{ id, shell }`. Cada chamada cria uma sessão
-  nova; sem `cwd` começa na raiz. Desde `0.140.0`, `cwd` precisa ser diretório
-  absoluto existente dentro do workspace. Erro `INVALID_REQUEST` ao atingir
-  o limite de 12 sessões.
+- `terminal.open { cwd?, command? }` → `{ id, shell, command? }`. Cada
+  chamada cria uma sessão nova; sem `cwd` começa na raiz. Desde `0.140.0`,
+  `cwd` precisa ser diretório absoluto existente dentro do workspace. Erro
+  `INVALID_REQUEST` ao atingir o limite de 12 sessões. Desde `0.205.0`,
+  `command` é uma linha que a IDE quer executar no shell novo (abaixo, "Comando
+  pedido na abertura"); com ele, o resultado traz `command: "sent"|"waiting"`.
+- `terminal.pendingCommand { id, action: "send"|"discard" }` →
+  `{ id, state: "sent"|"discarded"|"none" }` (`0.205.0`). Envia agora ou
+  descarta o comando que aguarda o primeiro prompt da sessão. `none`: nada
+  aguardava (já enviado, já descartado ou nunca pedido); a mudança real é
+  sempre anunciada por `event.terminal.command`. Sessão inexistente ou
+  encerrada devolve `INVALID_REQUEST`.
 - `terminal.input { id, data }` → `{ status: "ok" }`. Encaminha `data` **cru**
   ao PTY. A UI manda CADA tecla (char-a-char), incl. control chars
   (Enter=`\r`, Backspace=`\x7f`, setas=`\x1b[A..D`, Ctrl+letra, …) — não
@@ -139,6 +147,9 @@ event.terminal.render {           (throttle ~30fps; substitui event.terminal.dat
                  "inverse"?: bool } ... ] ... ]
 }
 event.terminal.closed  { "id": string, "exitCode": int|null }
+event.terminal.command { "id": string,                 (0.205.0)
+                         "state": "sent"|"discarded",
+                         "reason": "prompt"|"request"|"exit" }
 ```
 
 `fg`/`bg`: índice 0–255 (paleta) ou `#rrggbb` (truecolor); ausência = cor
@@ -179,3 +190,34 @@ saída. A UI mostra o aviso em sua faixa existente, sem alterar texto, cursor
 ou modos VT. Consulta recuperada remove o campo no próximo frame. Ausência
 de aviso não significa que o processo terminou; o término continua sendo
 `event.terminal.closed`, emitido somente quando observado.
+
+**Comando pedido na abertura (`0.205.0`, INF-02, 2026-11-08).** Até a
+`0.204.0` a UI digitava o comando assim que `terminal.open` respondia, antes de
+a inicialização do shell terminar; o `zsh-newuser-install` e assistentes de
+tema consumiam a linha (62 §3.4, INF-02). Agora o core guarda o comando e o
+escreve, seguido de `\n`, quando o shell sinaliza o primeiro prompt com
+OSC 133;A.
+
+- `command`: 1 a 8192 bytes UTF-8, não só espaços, sem caracteres de controle
+  além de tab; fora disso `INVALID_PARAMS`. O Enter é do core.
+- Integração por nome do executável do shell. `bash`: `--init-file` que lê o
+  `~/.bashrc` (o bashrc do sistema o bash já leu) e põe o marcador no `PS1`
+  pelo último `PROMPT_COMMAND`, preservando `$?` e temas que reescrevem o
+  `PS1`. `zsh`: `ZDOTDIR` da IDE com `.zshenv` e `.zshrc` que devolvem o
+  `ZDOTDIR` do usuário (passado em `KINEIN_ZDOTDIR` quando definido) antes de
+  ler os arquivos dele, refazem a oferta do `zsh-newuser-install` para a pasta
+  do usuário e emitem o marcador quando o editor de linha começa a ler o
+  prompt principal (`zle-line-init`), depois de todo `precmd`. `fish`:
+  `--init-command` com função do evento `fish_prompt`; o fish 4 também emite
+  o marcador nativo. Os arquivos ficam em pasta privada do estado da IDE,
+  endereçada pelo conteúdo.
+- `command: "waiting"`: integração conhecida; o comando sai no primeiro
+  marcador. `command: "sent"`: shell sem integração conhecida; o comando foi
+  escrito logo após abrir o processo, limite documentado.
+- `event.terminal.command` encerra a espera: `sent` por `prompt` ou
+  `request`; `discarded` por `request` ou `exit` (o processo saiu antes do
+  prompt, inclusive por `terminal.close`). Um rc que troca de shell (`exec zsh`
+  no `~/.bashrc`) não emite marcador: o comando fica aguardando até a pessoa
+  enviar ou descartar.
+- Só a sessão aberta com `command` recebe a integração; sem ele o shell abre
+  como antes. Outras sessões, `terminal.input` e o render não mudam.

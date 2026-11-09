@@ -363,6 +363,7 @@ set_source_files_properties(qml/panels/bottom/SearchPanel.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/panels/bottom/TerminalPanel.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS TerminalContextMenu.qml)
 set_source_files_properties(qml/panels/bottom/TerminalPasteDialog.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPasteDialog.qml)
+set_source_files_properties(qml/panels/bottom/TerminalPendingCommand.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPendingCommand.qml)
 set_source_files_properties(qml/panels/bottom/TerminalViewport.qml PROPERTIES QT_RESOURCE_ALIAS TerminalViewport.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSpanRules.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSpanRules.qml)
 set_source_files_properties(qml/panels/bottom/SearchReplaceBar.qml PROPERTIES QT_RESOURCE_ALIAS SearchReplaceBar.qml)
@@ -408,6 +409,7 @@ set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
 set_source_files_properties(qml/runtime/RunTerminalController.qml PROPERTIES QT_RESOURCE_ALIAS RunTerminalController.qml)
 set_source_files_properties(qml/runtime/PendingShellInput.qml PROPERTIES QT_RESOURCE_ALIAS PendingShellInput.qml)
+set_source_files_properties(qml/runtime/TerminalPendingCommands.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPendingCommands.qml)
 set_source_files_properties(qml/runtime/RunConfigController.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigController.qml)
 set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
 set_source_files_properties(qml/search/SearchEverywhereController.qml PROPERTIES QT_RESOURCE_ALIAS SearchEverywhereController.qml)
@@ -819,6 +821,7 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/TerminalPanel.qml
         qml/panels/bottom/TerminalContextMenu.qml
         qml/panels/bottom/TerminalPasteDialog.qml
+        qml/panels/bottom/TerminalPendingCommand.qml
         qml/panels/bottom/TerminalViewport.qml
         qml/panels/bottom/TerminalSpanRules.qml
         qml/panels/bottom/SearchReplaceBar.qml
@@ -863,6 +866,7 @@ qt_add_qml_module(kinein-vectis
         qml/runtime/RuntimeController.qml
         qml/runtime/RunTerminalController.qml
         qml/runtime/PendingShellInput.qml
+        qml/runtime/TerminalPendingCommands.qml
         qml/runtime/RunConfigController.qml
         qml/search/SearchController.qml
         qml/search/SearchEverywhereController.qml
@@ -974,6 +978,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_dispatch_cmake.cpp
         src/core_client_dispatch_lsp.cpp
         src/core_client_dispatch_debug.cpp
+        src/core_client_dispatch_terminal.cpp
         src/core_client_requests_debug.cpp
         src/core_client_requests_git.cpp
         src/core_client_requests_run.cpp

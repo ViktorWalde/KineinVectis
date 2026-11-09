@@ -228,3 +228,6 @@ deduplicate specificity
 
 creators # English: tools that create a project environment.
 pyenv # Official Python version manager; installed versions are enumerated locally.
+# INF-02 shell integration: zsh's startup variable and files, and the theme and
+# plugin names of the real zsh configurations in the terminal matrix.
+zdotdir zshenv zshrc powerlevel robbyrussell autosuggestions

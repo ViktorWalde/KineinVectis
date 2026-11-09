@@ -709,6 +709,24 @@ visível no `TerminalPanel` pelo `KvVerdict` existente; o viewport se redimensio
 sem sobrepor o grid. Desenho, prova do defeito anterior e aceite da fatia no
 [52 §14.21](../roadmaps/52-arquitetura-executavel-da-0.4.md#1421-041g--comando-associado-ao-terminal-solicitado-2026-10-20).
 
+**Comando guardado pelo core (`0.205.0`, INF-02, 2026-11-08).** A linha deixa
+de ser digitada pela UI. O `RuntimeRequestRouter` passa o texto do
+`PendingShellInput` a `CoreClient.terminalOpen(cwd, command)`; a correlação
+pelo `requestId` continua igual e só encerra a espera local.
+`terminalOpened(id, shell, requestId, commandState)` traz `waiting` ou `sent`.
+Com `waiting`, o `TerminalPendingCommands` do `RuntimeController` guarda a
+linha por sessão até `terminalCommandSettled(id, state, reason)`, sinal de
+`event.terminal.command`.
+Passado um segundo de espera, o `TerminalPanel` da sessão ativa mostra uma
+faixa (`TerminalPendingCommand`) com a linha, "Enviar agora" e "Descartar",
+que chamam `CoreClient.terminalPendingCommand(id, action)`. Descarte por saída
+do processo e falha desse pedido aparecem no `KvVerdict` como comando não
+enviado. Fechar a aba ou trocar de workspace descarta a espera com a sessão.
+Resposta `waiting` cuja espera local já acabou (timeout, troca de projeto,
+queda do core) é descartada, mantendo o que a pessoa leu; `sent` tardio troca
+o aviso por "o comando foi enviado". Contrato do fio no
+[03 terminal](03-dominios/terminal.md).
+
 Desde a 0.4.1h2 (2026-10-21), os roteadores de Embarcados e execução recusam
 localmente pedidos quando o transporte informa desconexão, liberando a espera
 no dono existente. Perder uma conexão antes estabelecida invalida os resultados

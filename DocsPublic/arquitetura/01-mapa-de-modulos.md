@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 193 métodos IPC roteados pelo core.
+Medido: 194 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -366,7 +366,7 @@ flowchart LR
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 193 métodos roteados pelo core, 161 seguem o caminho padrão
+Dos 194 métodos roteados pelo core, 162 seguem o caminho padrão
 e estão num contexto abaixo. Os outros 32 estão aqui,
 nomeados, para nada ficar invisível:
 
@@ -790,6 +790,7 @@ flowchart LR
     n_ui_src_core_client_dispatch_cpp["core_client_dispatch.cpp"]
     n_ui_src_core_client_dispatch_cmake_cpp["core_client_dispatch_cmake.cpp"]
     n_ui_src_core_client_dispatch_lsp_cpp["core_client_dispatch_lsp.cpp"]
+    n_ui_src_core_client_dispatch_terminal_cpp["core_client_dispatch_terminal.cpp"]
     n_ui_src_core_client_log_cpp["core_client_log.cpp"]
     n_ui_src_core_client_notifications_cpp["core_client_notifications.cpp"]
     n_ui_src_core_client_process_cpp["core_client_process.cpp"]
@@ -800,7 +801,7 @@ flowchart LR
     n_ipc_coverage(["coverage.* · 1"])
     n_ipc_run(["run.* · 3"])
     n_ipc_runConfig(["runConfig.* · 4"])
-    n_ipc_terminal(["terminal.* · 9"])
+    n_ipc_terminal(["terminal.* · 10"])
   end
   subgraph CORE["crates/kinein-core"]
     n_crates_kinein_core_src_handlers_coverage_rs["handlers/coverage.rs"]
@@ -838,6 +839,7 @@ flowchart LR
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_dispatch_lsp_cpp -.-> n_ui_qml_ipc_JobsEventRouter_qml
+  n_ui_src_core_client_dispatch_terminal_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_log_cpp -.-> n_ui_qml_ipc_RuntimeEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_CoverageEventRouter_qml
   n_ui_src_core_client_notifications_cpp -.-> n_ui_qml_ipc_JobsEventRouter_qml
@@ -886,6 +888,7 @@ flowchart LR
 | ponte C++ | `ui/src/core_client_dispatch.cpp` |  |
 | ponte C++ | `ui/src/core_client_dispatch_cmake.cpp` | Dispatch do dominio CMake/build (ARCHITECTURE.md §5). |
 | ponte C++ | `ui/src/core_client_dispatch_lsp.cpp` | Dispatch do dominio LSP (ARCHITECTURE.md §5): |
+| ponte C++ | `ui/src/core_client_dispatch_terminal.cpp` | Dispatch do dominio TERMINAL (ARCHITECTURE.md §5): |
 | ponte C++ | `ui/src/core_client_log.cpp` |  |
 | ponte C++ | `ui/src/core_client_notifications.cpp` | O que o core manda SEM SER PERGUNTADO: |
 | ponte C++ | `ui/src/core_client_process.cpp` |  |
@@ -896,7 +899,7 @@ flowchart LR
 | handler Rust | `crates/kinein-core/src/handlers/runconfig.rs` | Handlers for runConfig.* requests (impl Core): |
 | handler Rust | `crates/kinein-core/src/handlers/terminal.rs` | Handlers for terminal.* requests (impl Core). |
 
-Métodos IPC (17): `coverage.lines`, `run.script`, `run.start`, `run.stop`, `runConfig.delete`, `runConfig.list`, `runConfig.save`, `runConfig.setActive`, `terminal.clearScrollback`, `terminal.close`, `terminal.copySelection`, `terminal.input`, `terminal.mouse`, `terminal.open`, `terminal.resize`, `terminal.scroll`, `terminal.selectAll`.
+Métodos IPC (18): `coverage.lines`, `run.script`, `run.start`, `run.stop`, `runConfig.delete`, `runConfig.list`, `runConfig.save`, `runConfig.setActive`, `terminal.clearScrollback`, `terminal.close`, `terminal.copySelection`, `terminal.input`, `terminal.mouse`, `terminal.open`, `terminal.pendingCommand`, `terminal.resize`, `terminal.scroll`, `terminal.selectAll`.
 
 ### Depuracao (DAP)
 

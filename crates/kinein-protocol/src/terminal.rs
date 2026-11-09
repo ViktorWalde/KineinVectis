@@ -9,6 +9,10 @@ pub struct TerminalOpenParams {
     /// Absolute directory inside the open workspace.
     #[serde(default)]
     pub cwd: Option<String>,
+    /// A line the IDE wants executed in the new shell (`0.205.0`, INF-02). The
+    /// core writes it, with the Enter, once the shell shows its first prompt.
+    #[serde(default)]
+    pub command: Option<String>,
 }
 
 /// Result payload for `terminal.open`.
@@ -19,6 +23,88 @@ pub struct TerminalOpenResult {
     pub id: String,
     /// Shell the session is running (from `$SHELL`).
     pub shell: String,
+    /// What happened to `command`, present only when one was given.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub command: Option<TerminalCommandState>,
+}
+
+/// Where a command requested at `terminal.open` stands (`0.205.0`).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TerminalCommandState {
+    /// Held until the shell's first prompt marker (OSC 133;A).
+    Waiting,
+    /// Written to the shell: at its first prompt, on request, or right after
+    /// opening a shell without known integration.
+    Sent,
+    /// Dropped on request or because the process exited first.
+    Discarded,
+}
+
+/// What `terminal.pendingCommand` does with the waiting command.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TerminalPendingAction {
+    /// Write it now, without waiting for the prompt.
+    Send,
+    /// Drop it.
+    Discard,
+}
+
+/// Parameters for `terminal.pendingCommand` (`0.205.0`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TerminalPendingCommandParams {
+    /// Id da sessão.
+    pub id: String,
+    /// Send now or discard.
+    pub action: TerminalPendingAction,
+}
+
+/// What `terminal.pendingCommand` did.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TerminalPendingOutcome {
+    /// The waiting command was written.
+    Sent,
+    /// The waiting command was dropped.
+    Discarded,
+    /// Nothing was waiting: already sent, already discarded or never asked.
+    None,
+}
+
+/// Result payload for `terminal.pendingCommand`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerminalPendingCommandResult {
+    /// Id da sessão.
+    pub id: String,
+    /// What the request did.
+    pub state: TerminalPendingOutcome,
+}
+
+/// Why a waiting command stopped waiting (`event.terminal.command`).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TerminalCommandReason {
+    /// The shell marked its first prompt.
+    Prompt,
+    /// `terminal.pendingCommand` asked for it.
+    Request,
+    /// The process exited before the prompt.
+    Exit,
+}
+
+/// Payload of `event.terminal.command`: a waiting command left the wait.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerminalCommandEvent {
+    /// Id da sessão.
+    pub id: String,
+    /// `sent` or `discarded`; never `waiting`.
+    pub state: TerminalCommandState,
+    /// What ended the wait.
+    pub reason: TerminalCommandReason,
 }
 
 /// Parameters for `terminal.close` (D2.3): qual sessão fechar.

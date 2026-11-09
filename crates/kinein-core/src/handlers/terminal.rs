@@ -6,7 +6,8 @@
 use kinein_protocol::{
     JsonRpcResponse, TerminalClearScrollbackParams, TerminalCloseParams,
     TerminalCopySelectionResult, TerminalInputParams, TerminalMouseParams, TerminalOpenParams,
-    TerminalOpenResult, TerminalResizeParams, TerminalScrollParams, TerminalSelectionParams,
+    TerminalOpenResult, TerminalPendingCommandParams, TerminalPendingCommandResult,
+    TerminalResizeParams, TerminalScrollParams, TerminalSelectionParams,
 };
 use serde_json::{Value, json};
 use std::path::Path;
@@ -28,6 +29,9 @@ impl Core {
         match method {
             "terminal.open" => Some(self.terminal_open_response(request_id, params)),
             "terminal.input" => Some(self.terminal_input_response(request_id, params)),
+            "terminal.pendingCommand" => {
+                Some(self.terminal_pending_command_response(request_id, params))
+            }
             "terminal.resize" => Some(self.terminal_resize_response(request_id, params)),
             "terminal.scroll" => Some(self.terminal_scroll_response(request_id, params)),
             "terminal.mouse" => Some(self.terminal_mouse_response(request_id, params)),
@@ -163,7 +167,7 @@ impl Core {
         let parsed = match parse_params::<TerminalOpenParams>(
             request_id.as_ref(),
             params,
-            "terminal.open aceita cwd absoluto dentro do projeto",
+            "terminal.open aceita cwd absoluto dentro do projeto e command de uma linha",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -178,10 +182,43 @@ impl Core {
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "terminal.open");
         };
-        match session.open(&directory) {
-            Ok((id, shell)) => {
-                JsonRpcResponse::success(request_id, json!(TerminalOpenResult { id, shell }))
-            }
+        match session.open(&directory, parsed.command.as_deref()) {
+            Ok(opened) => JsonRpcResponse::success(
+                request_id,
+                json!(TerminalOpenResult {
+                    id: opened.id,
+                    shell: opened.shell,
+                    command: opened.command,
+                }),
+            ),
+            Err(error) => terminal_error_response(request_id, &error),
+        }
+    }
+
+    fn terminal_pending_command_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<TerminalPendingCommandParams>(
+            request_id.as_ref(),
+            params,
+            "terminal.pendingCommand requer id e action (send ou discard)",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let Some(session) = self.terminal.as_mut() else {
+            return terminal_unavailable_response(request_id, "terminal.pendingCommand");
+        };
+        match session.pending_command(&parsed.id, parsed.action) {
+            Ok(state) => JsonRpcResponse::success(
+                request_id,
+                json!(TerminalPendingCommandResult {
+                    id: parsed.id,
+                    state,
+                }),
+            ),
             Err(error) => terminal_error_response(request_id, &error),
         }
     }

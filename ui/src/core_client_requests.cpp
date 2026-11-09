@@ -355,13 +355,22 @@ void CoreClient::cancelJob(const QString& jobId)
     sendRequest(QStringLiteral("job.cancel"), QJsonObject{{QStringLiteral("jobId"), jobId}});
 }
 
-qint64 CoreClient::terminalOpen(const QString& cwd)
+qint64 CoreClient::terminalOpen(const QString& cwd, const QString& command)
 {
     QJsonObject params;
     if (!cwd.isEmpty()) {
         params.insert(QStringLiteral("cwd"), cwd);
     }
+    if (!command.isEmpty()) {
+        params.insert(QStringLiteral("command"), command);
+    }
     return sendRequest(QStringLiteral("terminal.open"), params);
+}
+
+void CoreClient::terminalPendingCommand(const QString& id, const QString& action)
+{
+    sendRequest(QStringLiteral("terminal.pendingCommand"),
+                QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("action"), action}});
 }
 
 void CoreClient::terminalInput(const QString& id, const QString& data)

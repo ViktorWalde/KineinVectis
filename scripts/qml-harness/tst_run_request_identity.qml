@@ -13,7 +13,8 @@ Item {
         property int sequence: 0
         signal statusChanged()
         signal workspaceChanged()
-        signal terminalOpened(string id, string shell, double requestId)
+        signal terminalOpened(string id, string shell, double requestId, string commandState)
+        signal terminalCommandSettled(string id, string state, string reason)
         signal terminalOpenFailed(double requestId, string message)
         signal terminalRender(var render)
         signal terminalSelectionCopied(string id, string selectionId, string text, bool valid)

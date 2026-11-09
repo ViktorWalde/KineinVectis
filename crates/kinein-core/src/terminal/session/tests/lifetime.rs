@@ -246,7 +246,8 @@ fn observation_failure_has_a_notice_preserves_vt_and_recovers_without_false_exit
     let resource = registry
         .acquire(device, "serial.monitor", "Monitor", None)
         .unwrap();
-    manager.spawn_waiter("notice-test", &child, &running, &state, resource);
+    let pending = Arc::new(Mutex::new(None));
+    manager.spawn_waiter("notice-test", &child, &running, &state, &pending, resource);
     let failed = wait_frame(&receiver, true);
     assert_eq!(failed["notice"]["code"], "INTERNAL_ERROR");
     assert!(

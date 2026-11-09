@@ -16,13 +16,17 @@ use std::{
 };
 
 use alacritty_terminal::grid::Scroll;
-use kinein_protocol::{TerminalMouseEvent, TerminalMouseModifiers};
+use kinein_protocol::{
+    TerminalCommandReason, TerminalCommandState, TerminalMouseEvent, TerminalMouseModifiers,
+    TerminalPendingAction, TerminalPendingOutcome,
+};
 use portable_pty::{CommandBuilder, MasterPty, PtySize, native_pty_system};
 
 use super::error::TerminalError;
 use super::input::{
     MOUSE_WHEEL_DOWN, MOUSE_WHEEL_UP, WheelAction, alt_scroll, mouse_report, wheel_action,
 };
+use super::integration;
 use super::render::emit_render;
 use super::state::{GridSize, TerminalState};
 use super::{EventSender, MAX_SESSIONS};
@@ -33,6 +37,8 @@ mod threads;
 
 /// Linhas de histórico (scrollback) mantidas pelo emulador.
 const SCROLLBACK: usize = 5000;
+/// Maior comando aceito em `terminal.open` (INF-02).
+const MAX_COMMAND_BYTES: usize = 8192;
 /// Tamanho inicial do grid até a UI mandar o primeiro `resize`.
 const DEFAULT_ROWS: u16 = 24;
 const DEFAULT_COLS: u16 = 80;
@@ -48,9 +54,35 @@ struct Session {
     // would deadlock close; a cloned Unix killer only sends SIGHUP.
     child: lifecycle::SharedChild,
     running: Arc<AtomicBool>,
+    /// The command waiting for the first prompt (INF-02); whoever takes it
+    /// (the reader at the marker, a request, the waiter at exit) settles it.
+    pending: PendingCommand,
     closing: bool,
     /// Opening order; the oldest finished sessions are discarded first.
     serial: u64,
+}
+
+/// A command held until the shell's first prompt.
+type PendingCommand = Arc<Mutex<Option<String>>>;
+
+/// A shell opened by `open`, and what became of its command.
+#[derive(Debug)]
+pub struct Opened {
+    /// Session id.
+    pub id: String,
+    /// The shell program.
+    pub shell: String,
+    /// `None` without a command.
+    pub command: Option<TerminalCommandState>,
+}
+
+/// What a new session runs and receives (`open_command_holding` and `open`).
+struct Start<'a> {
+    program: &'a str,
+    args: &'a [String],
+    env: &'a [(&'static str, Option<std::ffi::OsString>)],
+    removed: &'a [std::ffi::OsString],
+    pending: Option<String>,
 }
 
 /// Owns the shell sessions a workspace keeps open (multi-terminal, D2.3).
@@ -66,6 +98,8 @@ pub struct TerminalManager {
     /// first-run menu) may consume input typed right after opening (62 §3.4,
     /// INF-01), and the dispatch tests must not depend on it.
     shell: Option<String>,
+    /// Where the shell integration scripts are written (INF-02).
+    integration_root: std::path::PathBuf,
 }
 
 impl fmt::Debug for TerminalManager {
@@ -86,6 +120,9 @@ impl TerminalManager {
             sessions: HashMap::new(),
             next_id: 0,
             shell: None,
+            integration_root: crate::platform::state_home()
+                .join("kinein-vectis")
+                .join("shell-integration"),
         }
     }
 
@@ -93,6 +130,12 @@ impl TerminalManager {
     #[cfg(test)]
     pub(crate) fn use_shell(&mut self, shell: &str) {
         self.shell = Some(shell.to_owned());
+    }
+
+    /// Writes the shell integration under `root` instead of the user's state.
+    #[cfg(test)]
+    pub(crate) fn use_integration_root(&mut self, root: &Path) {
+        root.clone_into(&mut self.integration_root);
     }
 
     /// `true` enquanto a sessão `id` está viva (o waiter zera ao shell sair).
@@ -125,15 +168,90 @@ impl TerminalManager {
 
     /// Opens the user's shell (`platform::default_shell`: `$SHELL` on Unix,
     /// `pwsh`/`powershell`/`%ComSpec%` on Windows) inside a real PTY at `root`.
-    /// Returns `(id, shell)` — o `id` identifica a sessão nos comandos e
-    /// eventos seguintes (D2.3).
-    pub fn open(&mut self, root: &Path) -> Result<(String, String), TerminalError> {
+    /// O `id` identifica a sessão nos comandos e eventos seguintes (D2.3).
+    ///
+    /// With `command`, bash, zsh and fish start with the integration and the
+    /// command waits for their first prompt; any other shell receives it right
+    /// away (INF-02, 62 §3.4).
+    pub fn open(&mut self, root: &Path, command: Option<&str>) -> Result<Opened, TerminalError> {
         let shell = self
             .shell
             .clone()
             .unwrap_or_else(crate::platform::default_shell);
-        let id = self.open_with_shell(root, &shell)?;
-        Ok((id, shell))
+        let Some(command) = command else {
+            let id = self.open_with_shell(root, &shell)?;
+            return Ok(Opened {
+                id,
+                shell,
+                command: None,
+            });
+        };
+        validate_command(command)?;
+        let Some(known) = integration::Shell::of(&shell) else {
+            let id = self.open_with_shell(root, &shell)?;
+            self.write(&id, &format!("{command}\n"))?;
+            return Ok(Opened {
+                id,
+                shell,
+                command: Some(TerminalCommandState::Sent),
+            });
+        };
+        let directory = integration::prepare(&self.integration_root).map_err(|error| {
+            TerminalError::Process {
+                message: format!("integração do shell indisponível: {error}"),
+            }
+        })?;
+        let launch = known.launch(&directory, std::env::var_os("ZDOTDIR"));
+        let id = self.spawn(
+            root,
+            &Start {
+                program: &shell,
+                args: &launch.args,
+                env: &launch.env,
+                removed: &[],
+                pending: Some(command.to_owned()),
+            },
+            (),
+        )?;
+        Ok(Opened {
+            id,
+            shell,
+            command: Some(TerminalCommandState::Waiting),
+        })
+    }
+
+    /// Sends now or discards the command waiting in session `id`.
+    pub fn pending_command(
+        &mut self,
+        id: &str,
+        action: TerminalPendingAction,
+    ) -> Result<TerminalPendingOutcome, TerminalError> {
+        let session = self.view(id)?;
+        if !session.running.load(Ordering::SeqCst) {
+            return Err(TerminalError::NotOpen);
+        }
+        let Some(command) = take(&session.pending) else {
+            return Ok(TerminalPendingOutcome::None);
+        };
+        Ok(match action {
+            TerminalPendingAction::Send => {
+                let written = threads::write_line(&session.writer, &command);
+                threads::settle(
+                    &self.events,
+                    id,
+                    written.is_ok(),
+                    TerminalCommandReason::Request,
+                );
+                written.map_err(|source| TerminalError::Process {
+                    message: format!("falha ao escrever no terminal: {source}"),
+                })?;
+                TerminalPendingOutcome::Sent
+            }
+            TerminalPendingAction::Discard => {
+                threads::settle(&self.events, id, false, TerminalCommandReason::Request);
+                TerminalPendingOutcome::Discarded
+            }
+        })
     }
 
     /// Opens `shell` inside a real PTY at `root`. Split out for tests.
@@ -168,6 +286,32 @@ impl TerminalManager {
         removed: &[std::ffi::OsString],
         resource: impl Send + 'static,
     ) -> Result<String, TerminalError> {
+        self.spawn(
+            root,
+            &Start {
+                program,
+                args,
+                env: &[],
+                removed,
+                pending: None,
+            },
+            resource,
+        )
+    }
+
+    fn spawn(
+        &mut self,
+        root: &Path,
+        start: &Start<'_>,
+        resource: impl Send + 'static,
+    ) -> Result<String, TerminalError> {
+        let Start {
+            program,
+            args,
+            env,
+            removed,
+            ..
+        } = *start;
         self.retain_finished();
         let running = self
             .sessions
@@ -208,6 +352,12 @@ impl TerminalManager {
         for name in removed {
             command.env_remove(name);
         }
+        for (name, value) in env {
+            match value {
+                Some(value) => command.env(name, value),
+                None => command.env_remove(name),
+            }
+        }
         let child = pair
             .slave
             .spawn_command(command)
@@ -223,10 +373,11 @@ impl TerminalManager {
         let running = Arc::new(AtomicBool::new(true));
         let child = Arc::new(Mutex::new(child));
         let dirty = Arc::new(AtomicBool::new(false));
+        let pending = Arc::new(Mutex::new(start.pending.clone()));
 
-        self.spawn_reader(&id, reader, &state, &dirty, &writer);
+        self.spawn_reader(&id, reader, &state, &dirty, &writer, &pending);
         self.spawn_emitter(&id, &state, &dirty, &running);
-        self.spawn_waiter(&id, &child, &running, &state, resource);
+        self.spawn_waiter(&id, &child, &running, &state, &pending, resource);
 
         self.sessions.insert(
             id.clone(),
@@ -236,6 +387,7 @@ impl TerminalManager {
                 state,
                 child,
                 running,
+                pending,
                 closing: false,
                 serial: self.next_id,
             },
@@ -482,6 +634,23 @@ impl Drop for TerminalManager {
     }
 }
 
+/// Takes the waiting command, if any; only one taker ever gets it.
+fn take(pending: &PendingCommand) -> Option<String> {
+    pending.lock().ok().and_then(|mut pending| pending.take())
+}
+
+/// A line the core can type and then press Enter on: no control characters
+/// (the Enter is the core's), not blank, bounded.
+fn validate_command(command: &str) -> Result<(), TerminalError> {
+    if command.trim().is_empty()
+        || command.len() > MAX_COMMAND_BYTES
+        || command.chars().any(|c| c != '\t' && c.is_control())
+    {
+        return Err(TerminalError::InvalidCommand);
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     mod finished;
@@ -496,7 +665,7 @@ mod tests {
     // O decodificador do evento de render e' do modulo que o EMITE: um teste de
     // sessao afirma que a saida apareceu, sem conhecer a forma do contrato.
     use super::super::render::tests::render_contains;
-    use super::{TerminalError, TerminalManager};
+    use super::{MAX_COMMAND_BYTES, TerminalError, TerminalManager, validate_command};
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -655,6 +824,31 @@ mod tests {
         manager.close(&second).unwrap();
         lifetime::wait_closed(&receiver, std::slice::from_ref(&second));
         assert!(!manager.any_open());
+    }
+
+    /// INF-02: the Enter is the core's; a line is bounded and printable.
+    #[test]
+    fn requested_commands_are_one_bounded_printable_line() {
+        assert!(validate_command(&"x".repeat(MAX_COMMAND_BYTES)).is_ok());
+        assert!(validate_command("make\t-j4 && ./run 'ação'").is_ok());
+        let long = "é".repeat(MAX_COMMAND_BYTES / 2) + "x";
+        for refused in [
+            "",
+            " \t ",
+            "a\nb",
+            "a\r",
+            "\u{7f}",
+            "\u{9b}31m",
+            long.as_str(),
+        ] {
+            assert!(
+                matches!(
+                    validate_command(refused),
+                    Err(TerminalError::InvalidCommand)
+                ),
+                "{refused:?}"
+            );
+        }
     }
 
     #[test]

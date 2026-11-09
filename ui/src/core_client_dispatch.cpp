@@ -408,24 +408,9 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         return;
     }
     if (dispatchFileResult(method, result) || dispatchSyntaxResult(method, result) ||
-        dispatchLspResult(method, result) || dispatchRunResult(method, result, requestId))
+        dispatchLspResult(method, result) || dispatchRunResult(method, result, requestId) ||
+        dispatchTerminalResult(method, result, requestId))
     {
-        return;
-    }
-    if (method == QStringLiteral("terminal.copySelection")) {
-        const QJsonValue text = result.value(QStringLiteral("text"));
-        emit terminalSelectionCopied(result.value(QStringLiteral("id")).toString(),
-                                     result.value(QStringLiteral("selectionId")).toString(),
-                                     text.toString(), text.isString());
-        return;
-    }
-    if (method == QStringLiteral("terminal.open")) {
-        const QString id = result.value(QStringLiteral("id")).toString();
-        const QString shell = result.value(QStringLiteral("shell")).toString();
-        m_terminalIds.insert(id);
-        setTerminalActive(!m_terminalIds.isEmpty());
-        emit terminalOpened(id, shell, requestId);
-        appendLog(QStringLiteral("terminal aberto (%1): %2").arg(id, shell));
         return;
     }
     if (method == QStringLiteral("fs.findFiles")) {

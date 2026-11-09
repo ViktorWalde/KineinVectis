@@ -18,6 +18,9 @@ pub enum TerminalError {
     NotOpen,
     /// Missing or oversized opaque selection identity.
     InvalidSelection,
+    /// A command for `terminal.open` that is blank, too long or carries
+    /// control characters (INF-02).
+    InvalidCommand,
     /// Gesto de mouse cujo contrato existe mas ainda não tem comportamento
     /// (clique/arrasto/movimento, fatia R5 de `DocsPublic/roadmaps/26`).
     MouseUnimplemented,
@@ -37,6 +40,10 @@ impl fmt::Display for TerminalError {
             ),
             Self::NotOpen => write!(formatter, "sessão de terminal inexistente ou encerrada"),
             Self::InvalidSelection => write!(formatter, "identidade de seleção inválida"),
+            Self::InvalidCommand => write!(
+                formatter,
+                "comando inválido: uma linha não vazia, até 8192 bytes, sem caracteres de controle"
+            ),
             Self::MouseUnimplemented => write!(
                 formatter,
                 "gesto de mouse ainda não implementado: só a roda está ativa"

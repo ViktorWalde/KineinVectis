@@ -99,6 +99,7 @@ pub(crate) fn terminal_error_response(
 ) -> JsonRpcResponse {
     let code = match error {
         terminal::TerminalError::Process { .. } => JsonRpcErrorCode::InternalError,
+        terminal::TerminalError::InvalidCommand => JsonRpcErrorCode::InvalidParams,
         terminal::TerminalError::TooMany
         | terminal::TerminalError::NotOpen
         | terminal::TerminalError::InvalidSelection

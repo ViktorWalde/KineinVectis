@@ -46,6 +46,9 @@ Item {
     readonly property var lines: (render && render.lines) ? render.lines : []
     readonly property string processNotice: render && render.notice && render.notice.message
         ? String(render.notice.message) : ""
+    // INF-02: a linha que o core guarda ate' o primeiro prompt desta sessao.
+    readonly property string pendingCommand: runtimeController
+        ? runtimeController.pendingCommandFor(sessionId) : ""
     readonly property var cursor: (render && render.cursor)
             ? render.cursor : ({ row: 0, col: 0, visible: false })
     readonly property bool alternateScreen: render
@@ -197,10 +200,20 @@ Item {
         animateChanges: true
     }
 
+    TerminalPendingCommand {
+        id: pendingCommandBand
+        objectName: "terminalPendingCommand"
+        anchors.top: commandError.bottom
+        width: parent.width
+        command: panel.pendingCommand
+        onSendRequested: panel.runtimeController.sendPendingCommand(panel.sessionId)
+        onDiscardRequested: panel.runtimeController.discardPendingCommand(panel.sessionId)
+    }
+
     TerminalViewport {
         id: terminalViewport
         objectName: "terminalViewport"
-        anchors.top: commandError.bottom
+        anchors.top: pendingCommandBand.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right

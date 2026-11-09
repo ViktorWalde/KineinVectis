@@ -28,8 +28,15 @@ Item {
         target: root.runtimeController
 
         function onTerminalOpenRequested(cwd, forCommand) {
-            const requestId = root.coreClient.terminalOpen(cwd);
+            // INF-02: the core holds the line until the shell's first prompt.
+            const command = forCommand ? root.runtimeController.pendingShellInput : "";
+            const requestId = root.coreClient.terminalOpen(cwd, command);
             if (forCommand) root.runtimeController.bindShellRequest(requestId);
+        }
+
+        function onTerminalPendingCommandRequested(id, action) {
+            if (root.available("terminal.pendingCommand"))
+                root.coreClient.terminalPendingCommand(id, action);
         }
 
         function onTerminalInputRequested(id, data) {

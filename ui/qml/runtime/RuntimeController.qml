@@ -56,7 +56,7 @@ Item {
     signal runScriptRequested(string path, string device)
     signal runStopRequested()
     signal focusTerminalInputRequested()
-    signal clearTerminalInputRequested()
+    signal terminalPendingCommandRequested(string id, string action)
 
     visible: false
     onWorkspaceRootChanged: {
@@ -75,6 +75,7 @@ Item {
         root.activeTerminalId = "";
         root.terminalRender = ({});
         root.terminalRenders = ({});
+        pendingCommands.clear();
         runTabs.clear();
     }
 
@@ -127,7 +128,7 @@ Item {
         return number === 0 ? "terminal" : "terminal" + number;
     }
 
-    function handleTerminalOpened(id, shell, title, requestId) {
+    function handleTerminalOpened(id, shell, title, requestId, commandState) {
         if (indexOfTerminal(id) >= 0) {
             if (!isFinishedRun(id)) return;
             removeTerminalTab(id);
@@ -142,12 +143,39 @@ Item {
         root.terminalsRevision += 1;
         selectTerminal(id);
 
-        // Only the response to the requested shell can consume its command.
+        // Only the response to the requested shell ends the local wait. The
+        // core holds the line until the shell's first prompt (INF-02).
         const command = pendingShell.take(requestId);
-        if (command !== "") {
-            terminalInputRequested(id, command + "\n");
-            clearTerminalInputRequested();
+        if (commandState === "waiting") {
+            if (command !== "") pendingCommands.set(id, command);
+            // The wait already ended here (timeout, project change, lost core)
+            // and the user was told the line was not sent: keep it that way.
+            else terminalPendingCommandRequested(id, "discard");
+        } else if (commandState === "sent" && command === "") {
+            pendingShell.errorText = qsTr("O terminal abriu depois do prazo e o comando foi enviado.");
         }
+    }
+
+    TerminalPendingCommands {
+        id: pendingCommands
+
+        onActionRequested: function(id, action) {
+            root.terminalPendingCommandRequested(id, action);
+        }
+        onDroppedAtExit: function(command) {
+            pendingShell.errorText = qsTr("O shell encerrou antes do prompt. O comando não foi enviado.");
+            root.shellInputDropped(command);
+        }
+    }
+
+    function pendingCommandFor(id) { return pendingCommands.commandFor(id); }
+    function sendPendingCommand(id) { pendingCommands.request(id, "send"); }
+    function discardPendingCommand(id) { pendingCommands.request(id, "discard"); }
+    /// `event.terminal.command`: a espera acabou, por prompt, pedido ou saida.
+    function handleTerminalCommandSettled(id, state, reason) { pendingCommands.settled(id, state, reason); }
+
+    function handlePendingCommandFailed(message) {
+        pendingShell.errorText = message || qsTr("O comando não foi enviado ao terminal.");
     }
 
     /// Troca a aba ativa. O grid da sessão volta INTACTO (o core mantém o
@@ -248,6 +276,7 @@ Item {
 
     function handleCoreDisconnected() {
         pendingShell.cancel(qsTr("O serviço da IDE foi desconectado. O comando pendente não foi enviado."));
+        pendingCommands.clear();
         runTabs.disconnected();
     }
 
@@ -314,6 +343,7 @@ Item {
 
     function removeTerminalTab(id) {
         runTabs.release(id);
+        pendingCommands.forget(id);
         const index = indexOfTerminal(id);
         if (index >= 0) {
             terminalsListModel.remove(index);

@@ -131,6 +131,14 @@ pub(crate) fn create_private_directory(path: &Path) -> std::io::Result<()> {
     imp::create_private_directory(path)
 }
 
+/// Whether `path` is a directory as private as `create_private_directory`
+/// makes it: on Unix, mode 0700; on Windows the folder inherits the user
+/// profile's ACL (60 §3.1, D3), so only its existence is checked.
+#[cfg(test)]
+pub(crate) fn is_private_directory(path: &Path) -> bool {
+    imp::is_private_directory(path)
+}
+
 /// Os nomes de arquivo que `binary` pode ter numa pasta do `PATH`. No Unix,
 /// so' ele. No Windows, com cada extensao do `%PATHEXT%` (`.com`, `.exe`,
 /// `.bat`, `.cmd` quando ele nao esta' definido), nessa ordem; um nome que ja'

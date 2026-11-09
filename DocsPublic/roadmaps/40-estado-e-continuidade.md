@@ -10,7 +10,7 @@
 
 > **RESUMO TÉCNICO (2026-11-08; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.204.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.205.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
@@ -19,7 +19,7 @@
 > **Ordem (autor, 2026-11-08; 62 §3, com estado por etapa):** C com C23 → C++
 > → Rust/C/C++ → Python → DAP/QEMU → F5–F9 → algoritmo semântico de ambiente →
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
-> em VM. Fundação transversal (INF-02 primeiro); dívida paga na 0.4.
+> em VM. Fundação transversal (INF-02 corrigido no Linux, §7.390); dívida na 0.4.
 > Recorte atual: **C1** (consolidação C §4.1), com C-04/C-05 do 62 §3.4; uso confiável
 > em projetos pequenos/médios e na própria IDE. Polimento UI/HUD/UX acompanha
 > as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
@@ -51,8 +51,8 @@
 > do preset e guardas de raiz; sete regressões e oito mutantes.
 > **C1 — seletores/buffers (§7.385):** escolhas visuais e buffer preservado.
 > **C1 — instalação em existentes (§7.386):** caminho no kit com prévia, sem
-> troca silenciosa; kit registrado e CDB atual. Rápido de 2026-11-08 (§7.387):
-> 1469 Rust, 8 CTest, 180 QML e 51 arquivos C++. C1 conserva aceites abertos.
+> troca silenciosa; kit registrado e CDB atual. Rápido de 2026-11-08 (§7.390):
+> 1492 Rust, 8 CTest, 181 QML e 52 arquivos C++. C1 conserva aceites abertos.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -61,12 +61,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.204.0 (crates/kinein-protocol, medido em 2026-11-08; o
+protocolo   0.205.0 (crates/kinein-protocol, medido em 2026-11-08; o
             historico das versoes e' o arquitetura/03)
-metodos     193 roteados e 63 eventos (os titulos do arquitetura/03, que o
+metodos     194 roteados e 64 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   180 tst_*.qml em scripts/qml-harness (medido em 2026-11-08)
-testes      1469 Rust no gate rápido de 2026-11-08 (40.7 §7.387);
+harnesses   181 tst_*.qml em scripts/qml-harness (medido em 2026-11-08)
+testes      1492 Rust no gate rápido de 2026-11-08 (40.7 §7.390);
+            1469 Rust no gate rápido de 2026-11-08 (40.7 §7.387);
             1468 Rust no gate rápido de 2026-11-08 (40.7 §7.386);
             1462 Rust no gate rápido de 2026-11-05 (40.7 §7.384);
             1455 Rust no gate rápido de 2026-11-04 (40.7 §7.383);
@@ -208,6 +209,7 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Templates | Catálogo curado com origem, licença e parâmetros explícitos; sem geração arbitrária de configuração. | [0.4](52-arquitetura-executavel-da-0.4.md), [biblioteca](../arquitetura/03-dominios/library.md) |
 | Linguagens e integração | C e C++ primeiro; Rust como terceira linguagem do verificador, com integração Rust/C/C++; Python depois. CPython, MicroPython e CircuitPython têm contextos distintos. | [orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md), [Python](41-ecossistema-embarcados-e-python.md) |
 | Build e SVD | C1 ao salvar para C/C++ com CDB; Rust mediante opção. SVD na área Embarcados; delta de tamanho relativo ao último build. | [0.4](52-arquitetura-executavel-da-0.4.md) §13 |
+| Terminal | Comando pedido pela IDE espera o primeiro prompt (OSC 133;A); integração de bash, zsh e fish só na sessão com comando, preservando a configuração do usuário; outro shell recebe na abertura. | [03 terminal](../arquitetura/03-dominios/terminal.md), [62 §3.4](62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica) INF-02 |
 | Setup e qualidade | Setup no dock; polimento cromático/de interação pendente na base. Quality Center mantém Q1–Q3 na trilha aberta. | [Setup §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04), [Quality Center](../especificacoes/quality-center-e-gates.md) |
 | Ordem de implementação | Autor, 2026-11-08: C em profundidade, depois C++, Rust/C/C++ e Python; em seguida DAP e QEMU sólidos, F5–F9, o algoritmo semântico de ambiente por ecossistema e o algoritmo especializado; depois, as camadas finais de teste (62 §3.5) e a validação básica do Windows em VM. Orquestrar os motores maduros já integrados, sem reimplementá-los; fundação geral transversal, com INF-02 primeiro. Integridade, otimização e polimento por jornada; dívida que compromete esses aceites é paga na 0.4. Prontidão de projetos pequenos/médios e autodesenvolvimento exige prova; `/ide` tem aceite próprio. | [base 0.4](62-base-publica-0.4.md), [orquestração](../especificacoes/orquestracao-e-verificacao-de-linguagens.md) |
 | Fronteira de versão | 0.4 / SemVer 0.4.0: Foundation — Engineering Consolidation Release. Capacidades declaradas integradas, documentadas e validadas, com limites explícitos; eliminar a dívida que compromete seus aceites. F1–F9 obrigatórios, com Windows nativo só no recorte básico em VM desde 2026-11-08; melhorias futuras não exigem esgotamento na 0.4. | [62 §1.1](62-base-publica-0.4.md#11-visão-da-04--foundation) e [§3.4](62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica), [infraestrutura](../especificacoes/infraestrutura-fundamental-0.4.md), [versões](57-mapa-de-versoes-ate-a-1.0.md) §1.1 |

@@ -13,10 +13,9 @@
 
 ## Objetivo
 
-A versão `0.204.0` fixa por prévia uma instalação local do compilador C no kit
-e impede que configure troque ou perca essa escolha em silêncio, nos domínios
-[configAction](03-dominios/configAction.md), [toolchain](03-dominios/toolchain.md)
-e [cmake](03-dominios/cmake.md).
+A versão `0.205.0` faz o core guardar o comando pedido ao abrir um terminal
+até o primeiro prompt do shell, marcado por OSC 133;A pela integração de bash,
+zsh e fish, no domínio [terminal](03-dominios/terminal.md).
 
 O protocolo IPC permite comunicação entre:
 
@@ -223,7 +222,7 @@ indistinguível de rodá-lo fora dela — que era o requisito original. Uma
 superfície visual de atalho (Assistente) pode voltar depois **como UI pura**,
 abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
 
-## Os 193 métodos roteados — a lista inteira
+## Os 194 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -439,6 +438,7 @@ terminal.copySelection
 terminal.input
 terminal.mouse
 terminal.open
+terminal.pendingCommand
 terminal.resize
 terminal.scroll
 terminal.selectAll
@@ -472,7 +472,7 @@ workspace.status
 workspace.trust
 ```
 
-## Os 63 eventos emitidos — a lista inteira
+## Os 64 eventos emitidos — a lista inteira
 
 > **2026-10-03:** a lista estava atrás do código — sete eventos entraram sem
 > chegar aqui (`coverage.finished`, `python.stubs`, `remote.deployed`,
@@ -560,6 +560,7 @@ event.serial.files
 event.serial.identified
 
 event.terminal.closed
+event.terminal.command
 event.terminal.render
 
 event.test.case

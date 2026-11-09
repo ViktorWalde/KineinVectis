@@ -29,16 +29,18 @@
 //! render   o CONTRATO de saida: snapshot do grid -> `event.terminal.render`
 //! input    a DECISAO de entrada: o que a roda significa, e como se relata
 //! error    o VOCABULARIO de erro, que o `rpc.rs` mapeia para JSON-RPC
+//! integration  o PROMPT do shell: scripts que o marcam e o leitor do marcador
 //! ```
 
 mod error;
 mod input;
+mod integration;
 mod render;
 mod session;
 mod state;
 
 pub use error::TerminalError;
-pub use session::TerminalManager;
+pub use session::{Opened, TerminalManager};
 
 /// Canal de eventos do loop principal.
 type EventSender = crate::lsp::EventSender;

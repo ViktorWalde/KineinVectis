@@ -28,6 +28,12 @@ pub(super) fn create_private_directory(path: &Path) -> io::Result<()> {
     DirBuilder::new().recursive(true).mode(0o700).create(path)
 }
 
+#[cfg(test)]
+pub(super) fn is_private_directory(path: &Path) -> bool {
+    fs::metadata(path)
+        .is_ok_and(|metadata| metadata.is_dir() && metadata.permissions().mode() & 0o777 == 0o700)
+}
+
 pub(super) const INHERITED_ENV: &[&str] = &[
     "PATH",
     "HOME",

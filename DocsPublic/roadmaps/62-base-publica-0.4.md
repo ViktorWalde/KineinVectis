@@ -198,7 +198,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-08: INF-02
-aberto e próximo; UI-01 aberto; INF-01 corrigido no recorte Linux. A dívida
+corrigido no recorte Linux (bash, zsh e fish); UI-01 aberto; INF-01 corrigido no recorte Linux. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -438,23 +438,43 @@ auditorias e provas posteriores datadas nos donos:**
   no zsh. Windows mantém o shell padrão nesses testes e não foi exercitado.
   Estado corrigido no recorte Linux.
 - **INF-02 — Terminal com bash, zsh e fish reais.** Dono e evidência:
-  `crates/kinein-core/src/terminal/`, `tests/terminal.rs` e
-  `ui/qml/runtime/RuntimeController.qml`. Pedido do autor em 2026-11-08:
+  `crates/kinein-core/src/terminal/`, `tests/terminal_shells.rs` e
+  `ui/qml/runtime/TerminalPendingCommands.qml`. Pedido do autor em 2026-11-08:
   qualquer configuração de zsh deve funcionar na IDE tanto quanto a de bash,
-  não só a de uma máquina; fish entra na matriz por pedido do autor. A prova de execução usa `/bin/sh` (INF-01); bash e
-  zsh com inicialização real não têm prova. Severidade alta: jornada B2 sem
-  evidência. Causa não investigada; hipótese com evidência de código: o
-  emulador responde às consultas do terminal (`Event::PtyWrite`), mas o comando
-  pedido ao abrir um terminal é digitado assim que `terminal.opened` chega
-  (`handleTerminalOpened`), antes de a inicialização do shell terminar, onde um
-  assistente ou prompt de atualização pode consumi-lo, como no INF-01. Testes:
-  matriz isolada (HOME e ZDOTDIR próprios, sem tocar a configuração do usuário)
-  com bash sem rc e com `PROMPT_COMMAND`, zsh `-f`, zsh sem `.zshrc`, zsh com
-  tema instalado sem configuração e configurado com prompt instantâneo, fish
-  sem configuração e com `config.fish` próprio; resize,
-  TUI, cancelamento e comando enviado pela IDE; agulhas que provem execução.
-  Decisão: provar e corrigir no dono do terminal, sem depender da configuração
-  do usuário. Estado aberto; primeiro item após a organização de 2026-11-08.
+  não só a de uma máquina; fish entra na matriz por pedido do autor.
+  Severidade alta: jornada B2 sem evidência. Causa confirmada por reprodução
+  em 2026-11-08, com HOME, ZDOTDIR e XDG isolados: o comando pedido ao abrir
+  um terminal era digitado assim que `terminal.opened` chegava
+  (`handleTerminalOpened`), antes de a inicialização do shell terminar. Sem
+  arquivos de inicialização, o `zsh-newuser-install` consumiu o primeiro
+  caractere e o zsh executou o comando mutilado (`cho …`, comando não
+  encontrado); com o tema powerlevel10k instalado e sem configuração, o
+  assistente consumiu o comando como respostas. bash sem rc e com
+  `PROMPT_COMMAND`, zsh com rc lento, p10k configurado com prompt instantâneo,
+  oh-my-zsh com plugins e fish com e sem `config.fish` executaram. Decisão do
+  autor em 2026-11-08: o core guarda o comando até o primeiro prompt, marcado
+  por OSC 133;A pela integração de shell (bash por `--init-file`, zsh por
+  ZDOTDIR próprio que devolve o do usuário, fish por `--init-command`); a
+  integração preserva o `zsh-newuser-install` de quem não tem arquivos de zsh;
+  shell sem integração conhecida recebe o comando na abertura, limite
+  documentado; sem marcador, o terminal mostra o comando aguardando com
+  "Enviar agora" e "Descartar". Testes: matriz com o shell real de cada perfil
+  e agulhas de execução (bash sem rc, `PROMPT_COMMAND` e tema que reescreve
+  `PS1`; zsh sem arquivos, rc lento, p10k sem configuração e com prompt
+  instantâneo, oh-my-zsh, ZDOTDIR do usuário e `.zshenv` que o define; fish
+  sem e com `config.fish`; rc de bash que troca de shell), assistentes
+  respondidos pelo teste, comando sem marcador enviado e descartado a pedido,
+  sessão que sai com comando pendente, marcador partido entre leituras, e
+  mutações das guardas. Estado corrigido no recorte Linux em 2026-11-08
+  ([40.7 §7.390](40.7-registro-das-entregas.md)): matriz verde com bash 5.3,
+  zsh 5.9 e fish 4.9; na UI real sob Xvfb, com zsh sem arquivos, a faixa
+  aparece sobre o menu do `zsh-newuser-install`, o comando executa depois do
+  `q` e "Descartar" deixa o prompt sem ele; 12 mutações do core e 13 da UI
+  reprovadas, e uma sobrevivente com motivo (o `$?` preservado pelo marcador do bash só importa
+  na forma em texto do `PROMPT_COMMAND`, usada antes do bash 5.1). Sem prova
+  local: bash anterior a 5.1, fish anterior a 4 (sem marcador nativo, cobre-o a
+  função injetada) e Windows, cujo shell não tem integração e recebe o comando
+  na abertura.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

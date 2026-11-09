@@ -12,8 +12,12 @@ Item {
     Connections {
         target: root.coreClient
 
-        function onTerminalOpened(id, shell, requestId) {
-            root.runtimeController.handleTerminalOpened(id, shell, "", requestId);
+        function onTerminalOpened(id, shell, requestId, commandState) {
+            root.runtimeController.handleTerminalOpened(id, shell, "", requestId, commandState);
+        }
+
+        function onTerminalCommandSettled(id, state, reason) {
+            root.runtimeController.handleTerminalCommandSettled(id, state, reason);
         }
 
         function onTerminalOpenFailed(requestId, message) {
@@ -81,6 +85,9 @@ Item {
             }
             if (method === "terminal.close") {
                 root.runtimeController.handleRequestFailed(method, message);
+            }
+            if (method === "terminal.pendingCommand") {
+                root.runtimeController.handlePendingCommandFailed(message);
             }
         }
     }

@@ -385,8 +385,14 @@ public:
     Q_INVOKABLE qint64 runScript(const QString& path, const QString& device = QString());
     Q_INVOKABLE qint64 runStop();
     // D2.3 (DocsPublic/roadmaps/24): multi-terminal — todo comando leva o id da sessão.
-    Q_INVOKABLE qint64 terminalOpen(const QString& cwd = QString());
+    /// `command` (protocolo 0.205.0, INF-02): o core a guarda ate' o primeiro
+    /// prompt do shell; vazio abre o shell sem comando.
+    Q_INVOKABLE qint64 terminalOpen(const QString& cwd = QString(),
+                                    const QString& command = QString());
     Q_INVOKABLE void terminalInput(const QString& id, const QString& data);
+    /// Envia agora (`send`) ou descarta (`discard`) o comando que aguarda o
+    /// prompt da sessao `id` (`terminal.pendingCommand`, 0.205.0).
+    Q_INVOKABLE void terminalPendingCommand(const QString& id, const QString& action);
     Q_INVOKABLE void terminalResize(const QString& id, int cols, int rows);
     Q_INVOKABLE void terminalScroll(const QString& id, int offset);
     Q_INVOKABLE void terminalClearScrollback(const QString& id);
@@ -715,7 +721,12 @@ signals:
                           const QVariantMap& workspace);
     void terminalActiveChanged();
     // D2.3: a sessão nasceu; o id identifica a aba dela daqui pra frente.
-    void terminalOpened(const QString& id, const QString& shell, qint64 requestId);
+    // `commandState`: "waiting", "sent" ou vazio quando nao houve comando.
+    void terminalOpened(const QString& id, const QString& shell, qint64 requestId,
+                        const QString& commandState);
+    // `event.terminal.command`: o comando que aguardava saiu ("sent") ou foi
+    // descartado ("discarded"); `reason` e' "prompt", "request" ou "exit".
+    void terminalCommandSettled(const QString& id, const QString& state, const QString& reason);
     void terminalOpenFailed(qint64 requestId, const QString& message);
     // D2 (DocsPublic/roadmaps/24): grid renderizável do terminal (cols/rows/cursor/lines).
     // Desde a D2.3 o mapa carrega `id`: a UI roteia pro terminal certo.
@@ -780,6 +791,7 @@ private:
     bool dispatchRemoteResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
+    bool dispatchTerminalResult(const QString& method, const QJsonObject& result, qint64 requestId);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);
     void handleWorkspaceOpened(const QJsonObject& result);
     void storeJobId(const QString& method, const QString& jobId);

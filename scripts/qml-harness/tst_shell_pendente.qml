@@ -61,27 +61,28 @@ Item {
             if (runtime.pendingShellInput !== "") root.failures += 8;
             if (root.sent.length !== 0) root.failures += 16;
 
-            // SEGUNDO cenario: a sessao nasce, e a linha sai — uma vez, com o
-            // \n que o shell espera.
+            // SEGUNDO cenario: a sessao nasce com a linha, que o core guarda
+            // ate' o primeiro prompt do shell (INF-02). A UI nao a digita.
             runtime.runInNewTerminal("ssh pi@10.0.0.7");
             if (root.openRequests !== 2) root.failures += 32;
             if (root.sent.length !== 0) root.failures += 64;
-            runtime.handleTerminalOpened("t1", "/bin/sh", "", root.requestId);
-            if (root.sent.length !== 1) root.failures += 128;
-            if (root.sent[0] !== "t1|ssh pi@10.0.0.7\n") root.failures += 256;
+            runtime.handleTerminalOpened("t1", "/bin/sh", "", root.requestId, "waiting");
+            if (root.sent.length !== 0) root.failures += 128;
+            if (runtime.pendingCommandFor("t1") !== "ssh pi@10.0.0.7") root.failures += 256;
             if (runtime.pendingShellInput !== "") root.failures += 512;
 
             // A SEGUNDA sessao nao recebe nada: a linha ja' foi.
             runtime.handleTerminalOpened("t2", "/bin/sh");
-            if (root.sent.length !== 1) root.failures += 1024;
+            if (root.sent.length !== 0 || runtime.pendingCommandFor("t2") !== "") root.failures += 1024;
 
             // TERCEIRO: com sessao viva, abre OUTRA, e a linha vai para a nova
-            // (nunca para a ativa, que pode ser uma execucao terminada).
+            // (nunca para a ativa, que pode ser uma execucao terminada). Um
+            // shell sem integracao ja' recebeu a linha na abertura: nada fica.
             runtime.runInNewTerminal("ssh outro@host");
             if (root.openRequests !== 3) root.failures += 8192;
-            if (root.sent.length !== 1) root.failures += 2048;
-            runtime.handleTerminalOpened("t3", "/bin/sh", "", root.requestId);
-            if (root.sent[1] !== "t3|ssh outro@host\n") root.failures += 4096;
+            if (root.sent.length !== 0) root.failures += 2048;
+            runtime.handleTerminalOpened("t3", "/bin/sh", "", root.requestId, "sent");
+            if (runtime.pendingCommandFor("t3") !== "" || runtime.shellErrorText !== "") root.failures += 4096;
 
             // E o guarda nao dispara depois de a linha ter saido.
             noLateEcho.start();
