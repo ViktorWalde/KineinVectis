@@ -49,8 +49,17 @@ Item {
     // faixa pergunta em vez de configurar sozinha.
     property var presetChoices: []
     property string presetChoicesFile: ""
+    // A CDB em uso (0.206.0, consolidação C §16): a pasta, a origem e, com
+    // várias configurações de presets e nenhuma escolhida, as candidatas que a
+    // faixa oferece. Escolher não reconfigura.
+    property string cdbDirectory: ""
+    property bool cdbChoiceRequired: false
+    property string cdbAbsentBecause: ""
+    property var cdbCandidates: []
     property var compileContext: ({})
     onCompileContextChanged: update()
+    // O que o projeto exige e o que a máquina tem.
+    readonly property ProjectToolRequirements requirements: ProjectToolRequirements {}
 
     property bool active: false
     property string status: "idle"
@@ -78,6 +87,10 @@ Item {
         cdbStaleBecause = "";
         presetChoices = [];
         presetChoicesFile = "";
+        cdbDirectory = "";
+        cdbChoiceRequired = false;
+        cdbAbsentBecause = "";
+        cdbCandidates = [];
         update();
     }
     onWorkspaceKindChanged: update()
@@ -93,7 +106,8 @@ Item {
     onPythonStubsMessageChanged: update()
     Component.onCompleted: update()
 
-    function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile) {
+    function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile,
+                               database) {
         cmakeStatusKnown = true;
         cmakeConfigured = configured;
         cmakePreset = preset === undefined || preset === null ? "" : preset;
@@ -102,6 +116,11 @@ Item {
         cdbStale = stale === true;
         cdbStaleBecause = cdbStale && staleBecause !== undefined
                 && staleBecause !== null ? staleBecause : "";
+        const cdb = database === undefined || database === null ? ({}) : database;
+        cdbDirectory = cdb.directory || "";
+        cdbChoiceRequired = cdb.choiceRequired === true;
+        cdbAbsentBecause = cdb.absentBecause || "";
+        cdbCandidates = cdb.candidates || [];
         configureIfTrusted();
         update();
     }
@@ -114,10 +133,13 @@ Item {
     }
 
     // O configure automatico executa o CMakeLists.txt do projeto: sem a
-    // confianca, so' o "Configurar" da faixa (um gesto) o roda.
+    // confianca, so' o "Configurar" da faixa (um gesto) o roda. Com uma CDB
+    // em uso (de um preset, do CLI, de outra IDE) ou uma escolha pendente, ele
+    // nao roda: reconfiguraria em `.kinein/build` e trocaria a base calado.
     function configureIfTrusted() {
         if (workspaceTrusted && hasBuildSystem("cmake") && cmakeStatusKnown
-                && !cmakeConfigured && !autoConfigureAttempted && presetChoices.length === 0) {
+                && !cmakeConfigured && !autoConfigureAttempted && presetChoices.length === 0
+                && cdbDirectory === "" && !cdbChoiceRequired) {
             autoConfigureAttempted = true;
             autoConfigureRequested();
         }
@@ -157,24 +179,9 @@ Item {
         return status + "|" + message + "|" + detail;
     }
 
-    function hasTool(toolId) {
-        const tools = toolsList !== undefined && toolsList !== null
-                ? toolsList : [];
-        for (let i = 0; i < tools.length; i++) {
-            if (tools[i].id === toolId && tools[i].status === "detected") {
-                return true;
-            }
-        }
-        return false;
-    }
-
+    // O dono de "esta ferramenta foi detectada" para o RailFacts.
     function hasAnyTool(toolIds) {
-        for (let i = 0; i < toolIds.length; i++) {
-            if (hasTool(toolIds[i])) {
-                return true;
-            }
-        }
-        return false;
+        return requirements.hasAnyTool(toolsList, toolIds);
     }
 
     function hasBuildSystem(buildSystem) {
@@ -184,75 +191,27 @@ Item {
         return systems.indexOf(buildSystem) >= 0;
     }
 
-    function requiredToolGroups(kind) {
-        if (kind === "rustCargo") {
-            return [["cargo"], ["rustc"], ["rust-analyzer"]];
-        }
-        if (kind === "cmake") {
-            return [["cmake"], ["ninja"], ["clangd"], ["clangxx", "gxx"]];
-        }
-        // Makefile puro (P0, 2026-09-17): o bear entra como ferramenta do
-        // projeto porque sem ele nao ha' compile_commands.json — e a faixa
-        // diz isso antes do primeiro build mudo.
-        if (kind === "make") {
-            return [["make", "gmake"], ["clangd"], ["clangxx", "gxx"], ["bear"]];
-        }
-        // PlatformIO (0.4.0e): o `pio` constroi e gera a CDB; o clangd a le'.
-        if (kind === "platformIo") {
-            return [["pio"], ["clangd"]];
-        }
-        return [];
-    }
-
-    function requiredWorkspaceToolGroups() {
-        const groups = [];
-        const systems = workspaceBuildSystems !== undefined
-                && workspaceBuildSystems !== null
-                ? workspaceBuildSystems : [];
-        for (let index = 0; index < systems.length; index++) {
-            let systemGroups = [];
-            if (systems[index] === "cargo") {
-                systemGroups = requiredToolGroups("rustCargo");
-            } else if (systems[index] === "cmake" || systems[index] === "platformIo") {
-                systemGroups = requiredToolGroups(systems[index]);
-            } else if (systems[index] === "make" && systems.indexOf("cmake") < 0) {
-                // Um Makefile ao lado de um CMakeLists e' do CMake: o bear so'
-                // e' exigido quando o make e' o unico build system C/C++.
-                systemGroups = requiredToolGroups("make");
-            }
-            for (let groupIndex = 0; groupIndex < systemGroups.length;
-                 groupIndex++) {
-                const key = systemGroups[groupIndex].join("|");
-                let duplicate = false;
-                for (let existing = 0; existing < groups.length; existing++) {
-                    if (groups[existing].join("|") === key) {
-                        duplicate = true;
-                        break;
-                    }
-                }
-                if (!duplicate) {
-                    groups.push(systemGroups[groupIndex]);
-                }
-            }
-        }
-        return groups.length > 0 ? groups : requiredToolGroups(workspaceKind);
-    }
-
-    function missingGroups(groups) {
-        const missing = [];
-        for (let i = 0; i < groups.length; i++) {
-            if (!hasAnyTool(groups[i])) {
-                missing.push(groups[i].join("/"));
-            }
-        }
-        return missing;
-    }
-
     // O menu do "Escolher preset…": um item por preset; escolher configura
     // com ele (ShellHeaderHost.executeMenuAction, prefixo "cmake.preset:").
     function presetMenuItems() {
         return presetChoices.map(name => ({ label: name, action: "cmake.preset:" + name,
                                             icon: "", enabled: true, shortcut: "" }));
+    }
+
+    // O menu do "Escolher configuração…": um item por pasta e preset;
+    // escolher só troca a CDB em uso (prefixo "cmake.configuration:").
+    function configurationMenuItems() {
+        return cdbCandidates.map(entry => ({
+            label: qsTr("%1 — %2").arg(entry.preset || entry.directory).arg(entry.directory),
+            action: "cmake.configuration:" + (entry.preset || ""), icon: "",
+            enabled: (entry.preset || "") !== "", shortcut: "" }));
+    }
+
+    // O menu da faixa atual; vazio quando a ação não abre menu.
+    function menuItems() {
+        if (actionTarget === "cmakePresetChoice") return presetMenuItems();
+        if (actionTarget === "cmakeConfigurationChoice") return configurationMenuItems();
+        return [];
     }
 
     function apply(newStatus, newMessage, newActionLabel, newActionTarget, detail) {
@@ -274,7 +233,7 @@ Item {
             apply("busy", qsTr("verificando o ambiente do projeto..."), "", "");
             return;
         }
-        const groups = requiredWorkspaceToolGroups();
+        const groups = requirements.requiredWorkspaceToolGroups(workspaceKind, workspaceBuildSystems);
         const hasTools = toolsList !== undefined && toolsList !== null
                 && toolsList.length > 0;
         if (groups.length > 0 && !hasTools) {
@@ -282,7 +241,7 @@ Item {
                   qsTr("Verificar"), "scan");
             return;
         }
-        const missing = missingGroups(groups);
+        const missing = requirements.missingGroups(toolsList, groups);
         if (missing.length > 0) {
             apply("warning",
                   qsTr("ferramentas ausentes: %1").arg(missing.join(", ")),
@@ -299,6 +258,11 @@ Item {
                   qsTr("Confiar neste projeto"), "trust");
             return;
         }
+        if (hasBuildSystem("cmake") && cmakeStatusKnown && cdbChoiceRequired) {
+            apply("warning", cdbAbsentBecause, qsTr("Escolher configuração…"),
+                  "cmakeConfigurationChoice");
+            return;
+        }
         if (hasBuildSystem("cmake") && cmakeStatusKnown && presetChoices.length > 0
                 && (!cmakeConfigured || cdbStale)) {
             apply("warning",
@@ -312,7 +276,9 @@ Item {
                   qsTr("Tentar de novo"), "cmakeConfigure");
             return;
         }
-        if (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured) {
+        // Com a CDB de outra configuração em uso, a análise não está degradada.
+        if (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured
+                && cdbDirectory === "") {
             if (autoConfigureAttempted && !autoConfigureFailed) {
                 apply("info",
                       qsTr("configurando o projeto CMake automaticamente..."),

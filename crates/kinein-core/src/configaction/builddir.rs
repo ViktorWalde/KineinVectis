@@ -71,10 +71,13 @@ pub(super) fn inspect_cache(root: &Path) -> Result<ActionPlan, ConfigActionError
 }
 
 /// Diz por que o build dir merece reparo, quando merece.
+///
+/// So' quando a CDB em uso e' a dele: a de um preset, de `build/` ou do
+/// `.clangd` nao se repara removendo `.kinein/build` (C-05, 2026-11-09).
 #[must_use]
 pub(super) fn stale_reason(root: &Path) -> Option<String> {
     let status = cdb::status(root);
-    if !status.stale {
+    if !status.stale || status.origin != Some(kinein_protocol::CdbOrigin::Ide) {
         return None;
     }
     let culprit = status

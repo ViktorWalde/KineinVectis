@@ -6,11 +6,14 @@
 //! file-api oficial do `CMake`, nunca de parser proprio de `CMakeLists.txt`.
 
 pub mod attempt;
+mod configuration;
 pub mod model;
 mod preset_selection;
 mod rigor;
 
+pub use crate::cmake_presets::{PresetDefault, default_preset, list_presets};
 pub use attempt::{ConfigureAttempt, begin_configure, complete_configure, incomplete_configure};
+pub use configuration::{select_configuration, selected_configuration};
 pub(crate) use preset_selection::{choose_default, choose_preset};
 pub use rigor::{applied_rigor, configure_with_rigor, needs_configure, record_rigor, rigor_key};
 
@@ -20,8 +23,7 @@ use std::{
     process::Command,
 };
 
-use kinein_protocol::{CmakePresetInfo, CmakeTargetInfo, ToolchainRole};
-use serde_json::Value;
+use kinein_protocol::{CmakeTargetInfo, ToolchainRole};
 
 /// Maximo de targets repassados a UI por request.
 const MAX_TARGETS: usize = 200;
@@ -52,10 +54,18 @@ const PRESET_MARKER: &str = ".kinein-preset";
 
 /// O kit que vale para o configure e para o contexto (0.4.1a).
 ///
-/// O da tentativa pendente, senao o que o ultimo configure USOU (registrado
-/// desde 2026-11-08, C1-13). Mora aqui porque quem sabe o configure e' o `cmake`.
+/// O da tentativa pendente, senao o da configuracao escolhida (C-05: o
+/// configure seguinte usa o kit dela), senao o que o ultimo configure USOU
+/// (registrado desde 2026-11-08, C1-13). Mora aqui porque quem sabe o
+/// configure e' o `cmake`.
 #[must_use]
 pub fn active_kit(root: &Path) -> String {
+    if let Ok(Some(attempt)) = attempt::pending_preset(root) {
+        return attempt.kit;
+    }
+    if let Ok(Some(selected)) = selected_configuration(root) {
+        return selected;
+    }
     attempt::active_kit(root).unwrap_or_else(|| {
         status(root)
             .preset
@@ -88,81 +98,6 @@ pub fn record_preset(root: &Path, preset: Option<&str>) {
     match preset {
         Some(p) => drop(fs::write(marker, format!("{p}\n"))),
         None => drop(fs::remove_file(marker)),
-    }
-}
-
-/// O que os presets do projeto dizem ao configure sem preset pedido.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PresetDefault {
-    /// O projeto nao tem presets que valham: configure sem preset.
-    Absent,
-    /// Um so': ele, com o arquivo de onde veio (a evidencia).
-    One(String, &'static str),
-    /// Varios no mesmo arquivo: ninguem escolhe pela pessoa (52 §14.2).
-    Several(&'static str, Vec<String>),
-}
-
-/// O preset PADRAO do projeto, quando nem o pedido nem o kit dizem um.
-///
-/// Os `configurePresets` nao ocultos do primeiro arquivo que tem algum:
-/// `CMakeUserPresets.json` (a escolha do usuario para ESTA maquina vence),
-/// senao `CMakePresets.json`, pulando os que uma `condition` exclui no
-/// Linux. Ate' 2026-10-16 (P0, 40.7 §7.46) valia o PRIMEIRO da lista; desde a
-/// 0.4.0b, com varios, a UI pergunta (`roadmaps/52` §14.2).
-#[must_use]
-pub fn default_preset(root: &Path) -> PresetDefault {
-    for file in ["CMakeUserPresets.json", "CMakePresets.json"] {
-        let Ok(body) = fs::read_to_string(root.join(file)) else {
-            continue;
-        };
-        let Ok(value) = serde_json::from_str::<Value>(&body) else {
-            continue;
-        };
-        let Some(items) = value.get("configurePresets").and_then(Value::as_array) else {
-            continue;
-        };
-        let mut names: Vec<String> = items
-            .iter()
-            .filter(|item| {
-                item.get("hidden").and_then(Value::as_bool) != Some(true)
-                    && condition_allows_linux(item.get("condition"))
-            })
-            .filter_map(|item| item.get("name").and_then(Value::as_str).map(str::to_owned))
-            .collect();
-        match names.len() {
-            0 => {}
-            1 => return PresetDefault::One(names.remove(0), file),
-            _ => return PresetDefault::Several(file, names),
-        }
-    }
-    PresetDefault::Absent
-}
-
-/// A `condition` de um preset (cmake-presets(7)): so' as formas que dizem
-/// respeito ao sistema — `const`, e `equals`/`notEquals` sobre
-/// `${hostSystemName}` — sao avaliadas; qualquer outra e' considerada
-/// verdadeira (o `CMake` decide de fato na hora do configure).
-fn condition_allows_linux(condition: Option<&Value>) -> bool {
-    let Some(condition) = condition else {
-        return true;
-    };
-    match condition.get("type").and_then(Value::as_str) {
-        Some("const") => condition.get("value").and_then(Value::as_bool) != Some(false),
-        Some(kind @ ("equals" | "notEquals")) => {
-            let lhs = condition.get("lhs").and_then(Value::as_str).unwrap_or("");
-            let rhs = condition.get("rhs").and_then(Value::as_str).unwrap_or("");
-            let host = |s: &str| s == "${hostSystemName}";
-            let outro = if host(lhs) {
-                rhs
-            } else if host(rhs) {
-                lhs
-            } else {
-                return true;
-            };
-            let iguais = outro == "Linux";
-            if kind == "equals" { iguais } else { !iguais }
-        }
-        _ => true,
     }
 }
 
@@ -221,41 +156,6 @@ pub fn configure_command(
     crate::msvc::prefer_ninja(&mut command, generator_chosen);
     crate::msvc::apply_environment(&mut command);
     command
-}
-
-/// Lista os configure presets nao ocultos de `CMakePresets.json` e
-/// `CMakeUserPresets.json`, na ordem dos arquivos.
-pub fn list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
-    let mut presets = Vec::new();
-    for file in ["CMakePresets.json", "CMakeUserPresets.json"] {
-        let path = root.join(file);
-        if !path.is_file() {
-            continue;
-        }
-        let body =
-            fs::read_to_string(&path).map_err(|error| format!("falha lendo {file}: {error}"))?;
-        let value: Value =
-            serde_json::from_str(&body).map_err(|error| format!("{file} inválido: {error}"))?;
-        let Some(items) = value.get("configurePresets").and_then(Value::as_array) else {
-            continue;
-        };
-        for item in items {
-            if item.get("hidden").and_then(Value::as_bool) == Some(true) {
-                continue;
-            }
-            let Some(name) = item.get("name").and_then(Value::as_str) else {
-                continue;
-            };
-            presets.push(CmakePresetInfo {
-                name: name.to_owned(),
-                display_name: item
-                    .get("displayName")
-                    .and_then(Value::as_str)
-                    .map(str::to_owned),
-            });
-        }
-    }
-    Ok(presets)
 }
 
 /// Os `kind` de target em que se PODE linkar uma biblioteca.

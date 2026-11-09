@@ -204,8 +204,8 @@ Item {
                 message: root.projectHealthController.message
                 actionLabel: root.projectHealthController.actionLabel
                 menuSpace: root
-                onActionRequested: (x, y) => root.projectHealthController.actionTarget === "cmakePresetChoice" ? root.shellMenuRequested(x, y, root.projectHealthController.presetMenuItems())
-                                                                                                            : root.healthActionRequested(root.projectHealthController.actionTarget)
+                onActionRequested: (x, y) => root.projectHealthController.menuItems().length > 0 ? root.shellMenuRequested(x, y, root.projectHealthController.menuItems())
+                                                                                                  : root.healthActionRequested(root.projectHealthController.actionTarget)
                 onDismissRequested: root.projectHealthController.dismiss()
             }
 

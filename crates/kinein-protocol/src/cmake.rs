@@ -136,13 +136,104 @@ pub struct CmakeStatusResult {
     /// The presets file `presetChoices` came from.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub preset_choices_file: Option<String>,
+    /// Where the compilation database in use came from (`0.206.0`, C-05).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cdb_origin: Option<CdbOrigin>,
+    /// The configure preset whose `binaryDir` holds the database in use.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cdb_preset: Option<String>,
+    /// Every directory found with a compilation database, the one in use
+    /// included, in precedence order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cdb_candidates: Vec<CdbCandidate>,
+    /// Why no database is in use although there is evidence of one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cdb_absence: Option<CdbAbsence>,
+    /// The preset recorded by `cmake.selectConfiguration`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selected_configuration: Option<String>,
+}
+
+/// Where the compilation database in use came from (`0.206.0`).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CdbOrigin {
+    /// The root `.clangd` fixes `CompileFlags.CompilationDatabase`.
+    Clangd,
+    /// The configuration the person chose with `cmake.selectConfiguration`.
+    Configuration,
+    /// The IDE's own configure directory (`.kinein/build`).
+    Ide,
+    /// A conventional directory: the root, `build/`, `builddir/`, `out/build/`.
+    Directory,
+    /// The `binaryDir` of the only configure preset that has a database.
+    Preset,
+}
+
+/// No database in use although there is evidence of one (`0.206.0`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CdbAbsence {
+    /// What the person can do about it.
+    pub kind: CdbAbsenceKind,
+    /// The explanation shown as is.
+    pub reason: String,
+}
+
+/// The kinds of [`CdbAbsence`].
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CdbAbsenceKind {
+    /// Several presets have a database and nothing was chosen: none is used
+    /// until the person picks one (`cmake.selectConfiguration`).
+    ChoiceRequired,
+    /// The chosen configuration is unreadable, removed from the presets, or
+    /// has no database in its directory; no other one replaces it.
+    ChosenConfiguration,
+    /// The root `.clangd` fixes a base without a database, or decides it in a
+    /// form the IDE does not interpret.
+    Clangd,
+}
+
+/// One directory holding a `compile_commands.json`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CdbCandidate {
+    /// Relative to the workspace root (`"."` for the root); absolute outside it.
+    pub directory: String,
+    /// The rule that found it.
+    pub origin: CdbOrigin,
+    /// The configure preset whose `binaryDir` is this directory, when any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset: Option<String>,
+}
+
+/// Parameters for `cmake.selectConfiguration` (`0.206.0`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CmakeSelectConfigurationParams {
+    /// A non-hidden configure preset, or `null` to return to the automatic
+    /// choice. The field is required: an empty request is not a reset.
+    #[serde(deserialize_with = "required_nullable")]
+    pub preset: Option<String>,
+}
+
+/// `Option` fields may be missing in serde; this one may only be `null`.
+fn required_nullable<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Option::<String>::deserialize(deserializer)
 }
 
 #[cfg(test)]
 mod tests {
     use serde_json::json;
 
-    use super::{CmakeConfigureParams, CmakePresetInfo, CmakePresetsResult, CmakeStatusResult};
+    use super::{
+        CdbAbsence, CdbAbsenceKind, CdbCandidate, CdbOrigin, CmakeConfigureParams, CmakePresetInfo,
+        CmakePresetsResult, CmakeSelectConfigurationParams, CmakeStatusResult,
+    };
 
     #[test]
     fn configure_params_accept_missing_preset_and_reject_unknown_fields() {
@@ -189,6 +280,11 @@ mod tests {
             cdb_stale_because: Some("CMakeLists.txt".to_owned()),
             preset_choices: Vec::new(),
             preset_choices_file: None,
+            cdb_origin: None,
+            cdb_preset: None,
+            cdb_candidates: Vec::new(),
+            cdb_absence: None,
+            selected_configuration: None,
         })
         .unwrap();
 
@@ -220,6 +316,11 @@ mod tests {
             cdb_stale_because: None,
             preset_choices: Vec::new(),
             preset_choices_file: None,
+            cdb_origin: None,
+            cdb_preset: None,
+            cdb_candidates: Vec::new(),
+            cdb_absence: None,
+            selected_configuration: None,
         })
         .unwrap();
 
@@ -227,5 +328,66 @@ mod tests {
         assert!(value.get("cdbStale").is_none());
         assert!(value.get("cdbStaleBecause").is_none());
         assert!(value.get("preset").is_none());
+        for absent in [
+            "cdbOrigin",
+            "cdbPreset",
+            "cdbCandidates",
+            "cdbAbsence",
+            "selectedConfiguration",
+        ] {
+            assert!(value.get(absent).is_none(), "{absent}");
+        }
+    }
+
+    #[test]
+    fn compile_database_origin_and_candidates_serialize_camel_case() {
+        let candidate = CdbCandidate {
+            directory: "build/debug".to_owned(),
+            origin: CdbOrigin::Preset,
+            preset: Some("debug".to_owned()),
+        };
+        assert_eq!(
+            serde_json::to_value(&candidate).unwrap(),
+            json!({"directory":"build/debug","origin":"preset","preset":"debug"})
+        );
+        assert_eq!(
+            serde_json::to_value(CdbOrigin::Configuration).unwrap(),
+            json!("configuration")
+        );
+        let ide = CdbCandidate {
+            directory: ".kinein/build".to_owned(),
+            origin: CdbOrigin::Ide,
+            preset: None,
+        };
+        assert!(serde_json::to_value(ide).unwrap().get("preset").is_none());
+        let absence = CdbAbsence {
+            kind: CdbAbsenceKind::ChoiceRequired,
+            reason: "escolha uma".to_owned(),
+        };
+        assert_eq!(
+            serde_json::to_value(absence).unwrap(),
+            json!({"kind":"choiceRequired","reason":"escolha uma"})
+        );
+        assert_eq!(
+            serde_json::to_value(CdbAbsenceKind::ChosenConfiguration).unwrap(),
+            json!("chosenConfiguration")
+        );
+    }
+
+    #[test]
+    fn select_configuration_requires_the_field_and_accepts_null() {
+        let chosen: CmakeSelectConfigurationParams =
+            serde_json::from_value(json!({"preset":"debug"})).unwrap();
+        assert_eq!(chosen.preset.as_deref(), Some("debug"));
+        let automatic: CmakeSelectConfigurationParams =
+            serde_json::from_value(json!({"preset":null})).unwrap();
+        assert_eq!(automatic.preset, None);
+        assert!(serde_json::from_value::<CmakeSelectConfigurationParams>(json!({})).is_err());
+        assert!(
+            serde_json::from_value::<CmakeSelectConfigurationParams>(
+                json!({"preset":"x","extra":1})
+            )
+            .is_err()
+        );
     }
 }

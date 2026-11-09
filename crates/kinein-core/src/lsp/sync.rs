@@ -198,11 +198,16 @@ impl LspManager {
         Some(self.close_documents(language))
     }
 
-    /// O servidor iniciou sem uma CDB alcancavel, mesmo que o indice ja a tenha.
+    /// O servidor subiu com outra pasta de CDB que a em uso agora: sem CDB, e
+    /// ela apareceu; ou a escolha, um configure ou o `.clangd` a trocaram.
     pub(crate) fn needs_compile_commands(&self, language: &str) -> bool {
+        let Some(root) = self.root.as_deref() else {
+            return false;
+        };
+        let current = crate::cdb::status(root).clangd_directory(root);
         self.servers
             .get(language)
-            .is_some_and(|handle| !handle.cdb_at_start)
+            .is_some_and(|handle| handle.cdb_at_start != current)
     }
 
     /// Re-sincroniza um documento que ja esta aberto nos servidores.

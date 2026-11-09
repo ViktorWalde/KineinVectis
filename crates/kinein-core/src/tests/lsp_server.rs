@@ -545,6 +545,11 @@ fn a_clangd_that_started_without_a_cdb_is_restarted_when_one_appears() {
     let mut harness = harness("configure-sem-cdb");
     harness.ok("fs.read", json!({ "path": harness.main_cpp() }));
     harness.wait_for("textDocument/didOpen", 0);
+    // O que o configure real deixa: a CDB no build dir da IDE. Sem CDB nova,
+    // a pasta do clangd nao muda e nao ha' o que reiniciar.
+    let build = harness.root.join(".kinein/build");
+    std::fs::create_dir_all(&build).unwrap();
+    std::fs::write(build.join("compile_commands.json"), "[]\n").unwrap();
 
     harness.configure_finished(true);
 
@@ -579,6 +584,8 @@ fn a_successful_platformio_compiledb_refreshes_clangd_like_a_configure() {
         .core
         .observe_notification(&finished("job-9", "failed"));
     *harness.core.compiledb_job.lock().unwrap() = Some("job-9".to_owned());
+    // O `compiledb` grava a CDB na raiz.
+    std::fs::write(harness.root.join("compile_commands.json"), "[]\n").unwrap();
     harness
         .core
         .observe_notification(&finished("job-9", "success"));

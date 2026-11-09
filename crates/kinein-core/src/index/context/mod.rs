@@ -70,6 +70,10 @@ pub struct ContextTools {
 #[derive(Debug, Clone, Default)]
 pub struct CompileContext {
     cdb_directory: Option<String>,
+    /// De onde veio a CDB em uso, para a tela (`preset debug`, `.clangd`).
+    cdb_origin: Option<String>,
+    /// Por que nao ha CDB em uso apesar da evidencia (`cdb::status`).
+    cdb_absent_because: Option<String>,
     cdb_path: Option<String>,
     cdb_digest: Option<String>,
     cdb_stale_because: Option<String>,
@@ -99,14 +103,12 @@ impl CompileContext {
     pub fn load_cdb(root: &Path) -> Self {
         let mut ctx = Self::default();
         let cdb = crate::cdb::status(root);
-        if let Some(dir) = cdb.directory.as_deref() {
-            let path = root
-                .join(if dir == "." { "" } else { dir })
-                .join("compile_commands.json");
-            if let Ok(texto) = std::fs::read_to_string(&path) {
-                ctx = Self::from_cdb_text(root, &path, &texto);
-            }
+        if let Some(path) = cdb.file(root)
+            && let Ok(text) = std::fs::read_to_string(&path)
+        {
+            ctx = Self::from_cdb_text(root, &path, &text);
         }
+        ctx.cdb_absent_because = cdb.absence.map(|absence| absence.reason);
         ctx
     }
 
@@ -122,9 +124,12 @@ impl CompileContext {
         ctx.cdb_digest = Some(crate::cdb::verification::digest(text.as_bytes()));
         ctx.cdb_directory = path
             .parent()
-            .and_then(|p| p.strip_prefix(root).ok())
-            .map(|p| p.display().to_string());
-        ctx.cdb_stale_because = crate::cdb::status(root)
+            .map(|directory| crate::cdb::label(root, directory));
+        let status = crate::cdb::status(root);
+        if status.file(root).as_deref() == Some(path) {
+            ctx.cdb_origin = origin_text(&status);
+        }
+        ctx.cdb_stale_because = status
             .stale_because
             .or_else(|| cdb::newer_cmake_input(root, path, &ctx.units));
         ctx
@@ -136,11 +141,9 @@ impl CompileContext {
         if status.stale {
             return false;
         }
-        let Some(directory) = status.directory else {
+        let Some(path) = status.file(root) else {
             return self.cdb_path.is_none();
         };
-        let directory = if directory == "." { "" } else { &directory };
-        let path = root.join(directory).join("compile_commands.json");
         self.cdb_path
             .as_deref()
             .is_some_and(|loaded| Path::new(loaded) == path)
@@ -164,7 +167,15 @@ impl CompileContext {
             self.alvos = alvos;
         }
         self.python = crate::python::env::python_env(root, &tools.python);
-        self.cmake = CmakeModel::load(&crate::cmake::build_dir(root));
+        // O codemodel da MESMA pasta da CDB em uso (C1-17): o de
+        // `.kinein/build` junto da CDB de um preset juntaria alvos de uma
+        // configuracao e comandos de outra. Sem CDB, o da IDE, como antes.
+        let model_dir = self
+            .cdb_path
+            .as_deref()
+            .and_then(|path| Path::new(path).parent())
+            .map_or_else(|| crate::cmake::build_dir(root), Path::to_path_buf);
+        self.cmake = CmakeModel::load(&model_dir);
         self.platformio = root.join("platformio.ini").is_file();
     }
 
@@ -276,10 +287,12 @@ impl CompileContext {
                 .unit
                 .as_ref()
                 .map(|unit| effective::from_unit(unit, ContextOrigin::Cdb, None));
-            ctx.source = self
-                .cdb_directory
-                .as_ref()
-                .map(|d| format!("compile_commands.json em {d}"));
+            ctx.source = self.cdb_directory.as_ref().map(|d| {
+                self.cdb_origin.as_ref().map_or_else(
+                    || format!("compile_commands.json em {d}"),
+                    |origin| format!("compile_commands.json em {d} ({origin})"),
+                )
+            });
             return;
         }
         if self.unidade_do_file_api(&chave, ctx) {
@@ -300,6 +313,10 @@ impl CompileContext {
                                   flags pela unidade que o inclui"
                         .to_owned()
                 }
+                (None, false, _) if self.cdb_absent_because.is_some() => format!(
+                    "sem compile_commands.json em uso: {}",
+                    self.cdb_absent_because.as_deref().unwrap_or_default()
+                ),
                 (None, false, _) if self.platformio => {
                     "sem compile_commands.json: aplique a ação \"Gerar compile_commands.json\" \
                      (PlatformIO) para a IDE saber como cada arquivo é compilado"
@@ -405,4 +422,19 @@ impl CompileContext {
             .max_by_key(|(profundidade, e_lib, _)| (*profundidade, *e_lib))
             .map(|(_, _, a)| a)
     }
+}
+
+/// A origem da CDB em uso como a tela a mostra ao lado da pasta.
+fn origin_text(status: &crate::cdb::CdbStatus) -> Option<String> {
+    use kinein_protocol::CdbOrigin;
+    let preset = status.preset.as_deref();
+    Some(match (status.origin?, preset) {
+        (CdbOrigin::Clangd, _) => ".clangd da raiz".to_owned(),
+        (CdbOrigin::Configuration, Some(name)) => format!("configuração escolhida: preset {name}"),
+        (CdbOrigin::Ide, _) => "configure da IDE".to_owned(),
+        (CdbOrigin::Preset | CdbOrigin::Directory, Some(name)) => format!("preset {name}"),
+        (CdbOrigin::Configuration | CdbOrigin::Preset | CdbOrigin::Directory, None) => {
+            return None;
+        }
+    })
 }

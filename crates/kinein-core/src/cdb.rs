@@ -21,16 +21,28 @@
 //! há CDB, de onde ela veio e se envelheceu. Sem isso, um projeto sem CDB dá
 //! erro de include em tudo e a IDE fica muda.
 //!
-//! As duas exceções à busca do clangd, e é por elas que a lista abaixo começa
-//! como começa: `<root>/.kinein/build/` não é `$SRC/build/` (daí o
-//! `--compile-commands-dir` no `lsp/server.rs`), e `builddir/` — nome comum de
-//! Meson — não é procurado.
+//! # Qual CDB vale (C-05, consolidação C §16, 2026-11-09)
+//!
+//! Este módulo é o ÚNICO dono da resposta: contexto, verificador, tidy e o
+//! `--compile-commands-dir` do clangd (`lsp/server.rs`) leem a mesma CDB. Até
+//! 2026-11-09 a lista era fixa (`.kinein/build`, raiz, `build`, `builddir`,
+//! `out/build`): a CDB de um preset configurado fora da IDE, em
+//! `build/<preset>/`, não era achada, e a de `builddir/` era mostrada sem que o
+//! clangd a recebesse. A ordem agora: o `.clangd` da raiz que fixa a base → a
+//! configuração escolhida → `.kinein/build` → raiz e `build/` → o `binaryDir`
+//! dos presets (um: ele; vários: a pessoa escolhe) → `builddir/` e
+//! `out/build/`.
 
 use std::{
     path::{Path, PathBuf},
     time::SystemTime,
 };
 
+use kinein_protocol::{CdbAbsence, CdbAbsenceKind, CdbCandidate, CdbOrigin};
+
+use crate::cmake_presets::PresetDirectory;
+
+mod clangd;
 mod directory;
 pub(crate) mod verification;
 
@@ -42,19 +54,22 @@ pub(crate) struct VerificationContext {
 }
 
 /// Nome do arquivo, fixado pela especificação da JSON Compilation Database.
-const ARQUIVO: &str = "compile_commands.json";
+const FILE: &str = "compile_commands.json";
 
-/// Diretórios procurados, em ordem de precedência.
-///
-/// A ordem não é arbitrária: a CDB que a **IDE** gerou vem primeiro porque é a
-/// única que sabemos estar casada com o configure mais recente. As demais são
-/// convenções de build system, e `""` é a própria raiz (muita gente cria um
-/// symlink `compile_commands.json` ali justamente para o clangd achar).
-const DIRETORIOS: &[&str] = &[".kinein/build", "", "build", "builddir", "out/build"];
+/// O build dir da IDE: a única CDB que sabemos casada com o configure dela.
+const IDE_DIRECTORY: &str = ".kinein/build";
+
+/// Pastas que o clangd também acha sozinho a partir de um arquivo da raiz;
+/// `""` é a própria raiz (muita gente cria ali um symlink para o clangd achar).
+const SEARCHED_BY_CLANGD: [&str; 2] = ["", "build"];
+
+/// Convenções de build system que o clangd não procura (`builddir` é o nome
+/// comum do Meson).
+const CONVENTIONS: [&str; 2] = ["builddir", "out/build"];
 
 /// Fontes que podem invalidar uma CDB: se alguma for mais nova que ela, as
 /// flags no disco descrevem um projeto que não existe mais.
-const FONTES_DE_INVALIDACAO: &[&str] = &[
+const INVALIDATING_SOURCES: &[&str] = &[
     "CMakeLists.txt",
     "CMakePresets.json",
     "CMakeUserPresets.json",
@@ -65,12 +80,27 @@ const FONTES_DE_INVALIDACAO: &[&str] = &[
 /// Diagnóstico da compilation database de um workspace.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CdbStatus {
-    /// Diretório que contém a CDB, relativo ao root; `None` quando não há.
+    /// Diretório da CDB em uso, relativo ao root (`"."` é o root) ou absoluto
+    /// fora dele; `None` quando não há.
     pub directory: Option<String>,
     /// A CDB é mais velha que algum arquivo de build que a define.
     pub stale: bool,
     /// Motivo: arquivo de build mais novo ou configure da IDE incompleto.
     pub stale_because: Option<String>,
+    /// A regra que escolheu a CDB em uso.
+    pub origin: Option<CdbOrigin>,
+    /// O preset cujo `binaryDir` contém a CDB em uso.
+    pub preset: Option<String>,
+    /// Toda pasta com CDB achada, na ordem de precedência.
+    pub candidates: Vec<CdbCandidate>,
+    /// Por que não há CDB em uso apesar da evidência de uma; com vários
+    /// presets com CDB e nenhuma escolha, a IDE pergunta em vez de escolher.
+    pub absence: Option<CdbAbsence>,
+    /// O preset de `.kinein/configuration.json`.
+    pub selected: Option<String>,
+    /// O `.clangd` da raiz decide a base: a IDE não passa
+    /// `--compile-commands-dir`, que o sobreporia.
+    pub clangd_decides: bool,
 }
 
 impl CdbStatus {
@@ -81,8 +111,84 @@ impl CdbStatus {
             directory: None,
             stale: false,
             stale_because: None,
+            origin: None,
+            preset: None,
+            candidates: Vec::new(),
+            absence: None,
+            selected: None,
+            clangd_decides: false,
         }
     }
+
+    /// O `compile_commands.json` em uso.
+    #[must_use]
+    pub fn file(&self, root: &Path) -> Option<PathBuf> {
+        self.directory
+            .as_deref()
+            .map(|directory| directory_path(root, directory).join(FILE))
+    }
+
+    /// A pasta que a IDE passa ao clangd: a da CDB em uso, salvo quando o
+    /// `.clangd` decide.
+    #[must_use]
+    pub fn clangd_directory(&self, root: &Path) -> Option<PathBuf> {
+        if self.clangd_decides {
+            return None;
+        }
+        self.directory
+            .as_deref()
+            .map(|directory| directory_path(root, directory))
+    }
+}
+
+/// O texto que o fio usa para uma pasta: relativa ao root, `"."` para ele,
+/// absoluta fora dele.
+#[must_use]
+pub fn label(root: &Path, directory: &Path) -> String {
+    let relative = directory
+        .strip_prefix(root)
+        .map(Path::to_path_buf)
+        .ok()
+        .or_else(|| {
+            let root = crate::platform::canonicalize(root).ok()?;
+            crate::platform::canonicalize(directory)
+                .ok()?
+                .strip_prefix(&root)
+                .map(Path::to_path_buf)
+                .ok()
+        });
+    match relative {
+        Some(path) if path.as_os_str().is_empty() => ".".to_owned(),
+        Some(path) => crate::platform::portable_relative(&path),
+        None => directory.display().to_string(),
+    }
+}
+
+fn directory_path(root: &Path, label: &str) -> PathBuf {
+    if label.is_empty() || label == "." {
+        root.to_path_buf()
+    } else {
+        root.join(crate::platform::from_portable(label))
+    }
+}
+
+/// Uma pasta com CDB e a regra que a achou.
+#[derive(Debug, Clone)]
+struct Found {
+    directory: PathBuf,
+    origin: CdbOrigin,
+    preset: Option<String>,
+}
+
+/// O que a ordem decidiu.
+enum Choice {
+    Use(Found),
+    /// Sem CDB em uso, com o motivo quando há evidência de uma.
+    Absent(Option<CdbAbsence>),
+}
+
+const fn absent(kind: CdbAbsenceKind, reason: String) -> Choice {
+    Choice::Absent(Some(CdbAbsence { kind, reason }))
 }
 
 /// Procura a CDB e diz se ela envelheceu.
@@ -91,45 +197,225 @@ impl CdbStatus {
 /// C/C++ ainda não configurado), não um erro.
 #[must_use]
 pub fn status(root: &Path) -> CdbStatus {
-    let Some((directory, arquivo)) = encontrar(root) else {
-        return CdbStatus::ausente();
+    let presets = crate::cmake_presets::binary_dirs(root);
+    let clangd = clangd::base(root);
+    let selected = crate::cmake::selected_configuration(root);
+    let found = discover(root, &presets, &clangd);
+    let mut status = CdbStatus {
+        candidates: found
+            .iter()
+            .map(|found| CdbCandidate {
+                directory: label(root, &found.directory),
+                origin: found.origin,
+                preset: found.preset.clone(),
+            })
+            .collect(),
+        selected: selected.clone().ok().flatten(),
+        clangd_decides: !matches!(clangd, clangd::Base::Unset),
+        ..CdbStatus::ausente()
     };
-    let (mut stale, mut stale_because) = envelheceu(root, &arquivo);
-    if directory == ".kinein/build"
-        && let Some(reason) = crate::cmake::incomplete_configure(root)
-    {
-        stale = true;
-        stale_because = Some(reason);
+    match choose(root, &found, &clangd, selected) {
+        Choice::Absent(absence) => status.absence = absence,
+        Choice::Use(found) => {
+            let file = found.directory.join(FILE);
+            (status.stale, status.stale_because) = stale(root, &file);
+            if same_directory(&found.directory, &root.join(IDE_DIRECTORY))
+                && let Some(reason) = crate::cmake::incomplete_configure(root)
+            {
+                status.stale = true;
+                status.stale_because = Some(reason);
+            }
+            status.directory = Some(label(root, &found.directory));
+            status.origin = Some(found.origin);
+            status.preset = found.preset;
+        }
     }
-    CdbStatus {
-        directory: Some(directory),
-        stale,
-        stale_because,
+    status
+}
+
+/// Toda pasta com CDB, na ordem de precedência e sem repetir a mesma pasta.
+fn discover(root: &Path, presets: &[PresetDirectory], clangd: &clangd::Base) -> Vec<Found> {
+    let relative = |text: &str| directory_path(root, text);
+    let mut ordered: Vec<(PathBuf, CdbOrigin)> = Vec::new();
+    if let clangd::Base::Directory(directory) = clangd {
+        ordered.push((directory.clone(), CdbOrigin::Clangd));
+    }
+    ordered.push((relative(IDE_DIRECTORY), CdbOrigin::Ide));
+    ordered.extend(
+        SEARCHED_BY_CLANGD
+            .iter()
+            .map(|text| (relative(text), CdbOrigin::Directory)),
+    );
+    ordered.extend(
+        presets
+            .iter()
+            .map(|preset| (preset.directory.clone(), CdbOrigin::Preset)),
+    );
+    ordered.extend(
+        CONVENTIONS
+            .iter()
+            .map(|text| (relative(text), CdbOrigin::Directory)),
+    );
+    let mut found: Vec<Found> = Vec::new();
+    for (directory, origin) in ordered {
+        if !directory.join(FILE).is_file()
+            || found
+                .iter()
+                .any(|seen| same_directory(&seen.directory, &directory))
+        {
+            continue;
+        }
+        let preset = presets
+            .iter()
+            .find(|preset| same_directory(&preset.directory, &directory))
+            .map(|preset| preset.name.clone());
+        found.push(Found {
+            directory,
+            origin,
+            preset,
+        });
+    }
+    found
+}
+
+fn choose(
+    root: &Path,
+    found: &[Found],
+    clangd: &clangd::Base,
+    selected: Result<Option<String>, String>,
+) -> Choice {
+    let with_cdb = |directory: &Path| find(found, directory);
+    match clangd {
+        clangd::Base::Unset => {}
+        clangd::Base::Directory(directory) => {
+            return with_cdb(directory).cloned().map_or_else(
+                || {
+                    absent(
+                        CdbAbsenceKind::Clangd,
+                        format!(
+                            "o .clangd da raiz fixa a base em {}, sem compile_commands.json",
+                            label(root, directory)
+                        ),
+                    )
+                },
+                |found| {
+                    Choice::Use(Found {
+                        origin: CdbOrigin::Clangd,
+                        ..found
+                    })
+                },
+            );
+        }
+        clangd::Base::Manual(reason) => {
+            return absent(
+                CdbAbsenceKind::Clangd,
+                format!(
+                    "o .clangd da raiz decide a base ({reason}); a IDE não a interpreta nem a sobrepõe"
+                ),
+            );
+        }
+    }
+    let ide = root.join(IDE_DIRECTORY);
+    match selected {
+        Err(reason) => return absent(CdbAbsenceKind::ChosenConfiguration, reason),
+        Ok(Some(preset)) => return chosen(root, &preset, &ide, found),
+        Ok(None) => {}
+    }
+    if let Some(found) = with_cdb(&ide) {
+        return Choice::Use(found.clone());
+    }
+    if let Some(found) = SEARCHED_BY_CLANGD
+        .iter()
+        .find_map(|text| with_cdb(&directory_path(root, text)))
+    {
+        return Choice::Use(found.clone());
+    }
+    let from_presets: Vec<&Found> = found
+        .iter()
+        .filter(|found| found.origin == CdbOrigin::Preset)
+        .collect();
+    match from_presets.as_slice() {
+        [] => {}
+        [only] => return Choice::Use((*only).clone()),
+        several => {
+            let names: Vec<&str> = several
+                .iter()
+                .filter_map(|found| found.preset.as_deref())
+                .collect();
+            return absent(
+                CdbAbsenceKind::ChoiceRequired,
+                format!(
+                    "{} configurações de presets têm compile_commands.json ({}): escolha uma",
+                    names.len(),
+                    names.join(", ")
+                ),
+            );
+        }
+    }
+    CONVENTIONS
+        .iter()
+        .find_map(|text| with_cdb(&directory_path(root, text)))
+        .map_or(Choice::Absent(None), |found| Choice::Use(found.clone()))
+}
+
+/// A configuração escolhida: o configure da IDE com esse preset, senão o
+/// `binaryDir` dele. Sem CDB ali, nenhuma outra a substitui.
+fn chosen(root: &Path, preset: &str, ide: &Path, found: &[Found]) -> Choice {
+    let with_cdb = |directory: &Path| find(found, directory);
+    let listed = crate::cmake::list_presets(root)
+        .is_ok_and(|presets| presets.iter().any(|entry| entry.name == preset));
+    if !listed {
+        return absent(
+            CdbAbsenceKind::ChosenConfiguration,
+            format!(
+                "a configuração escolhida (preset {preset}) não existe mais entre os presets: \
+                 escolha outra"
+            ),
+        );
+    }
+    let configured_by_ide = crate::cmake::status(root).preset.as_deref() == Some(preset);
+    if configured_by_ide && let Some(found) = with_cdb(ide) {
+        return Choice::Use(found.clone());
+    }
+    match crate::cmake_presets::binary_dir(root, preset) {
+        Ok(directory) => with_cdb(&directory).map_or_else(
+            || {
+                absent(
+                    CdbAbsenceKind::ChosenConfiguration,
+                    format!(
+                        "a configuração escolhida (preset {preset}) não tem compile_commands.json \
+                         em {}: configure",
+                        label(root, &directory)
+                    ),
+                )
+            },
+            |found| {
+                Choice::Use(Found {
+                    origin: CdbOrigin::Configuration,
+                    preset: Some(preset.to_owned()),
+                    ..found.clone()
+                })
+            },
+        ),
+        Err(reason) => absent(
+            CdbAbsenceKind::ChosenConfiguration,
+            format!(
+                "a configuração escolhida (preset {preset}) não tem pasta de build conhecida: \
+                 {reason}"
+            ),
+        ),
     }
 }
 
-/// Primeiro diretório de [`DIRETORIOS`] que contém uma CDB legível.
-///
-/// Devolve o caminho RELATIVO ao root (o que a UI mostra) e o absoluto (o que
-/// o `stat` usa). Um `compile_commands.json` que existe mas não é um arquivo
-/// regular é ignorado como se não estivesse lá.
-fn encontrar(root: &Path) -> Option<(String, PathBuf)> {
-    DIRETORIOS.iter().find_map(|relativo| {
-        let diretorio = if relativo.is_empty() {
-            root.to_path_buf()
-        } else {
-            root.join(crate::platform::from_portable(relativo))
-        };
-        let arquivo = diretorio.join(ARQUIVO);
-        arquivo.is_file().then(|| {
-            let rotulo = if relativo.is_empty() {
-                ".".to_owned()
-            } else {
-                (*relativo).to_owned()
-            };
-            (rotulo, arquivo)
-        })
-    })
+fn find<'a>(found: &'a [Found], directory: &Path) -> Option<&'a Found> {
+    found
+        .iter()
+        .find(|found| same_directory(&found.directory, directory))
+}
+
+/// Mesma pasta pelo caminho real; sem resolver, pela grafia.
+fn same_directory(left: &Path, right: &Path) -> bool {
+    left == right || crate::platform::same_file(left, right) == Some(true)
 }
 
 /// A CDB é mais velha que alguma fonte que a define?
@@ -137,84 +423,93 @@ fn encontrar(root: &Path) -> Option<(String, PathBuf)> {
 /// Compara mtime. Se o mtime da CDB não puder ser lido, a resposta é "não
 /// envelheceu": **um diagnóstico que não sabe não deve gritar.** Aviso falso
 /// ensina a ignorar aviso (`ARCHITECTURE.md` §4 regra 11).
-fn envelheceu(root: &Path, cdb: &Path) -> (bool, Option<String>) {
-    let Some(cdb_em) = modificado_em(cdb) else {
+fn stale(root: &Path, cdb: &Path) -> (bool, Option<String>) {
+    let Some(written) = modified(cdb) else {
         return (false, None);
     };
-    for fonte in FONTES_DE_INVALIDACAO {
-        let caminho = root.join(fonte);
-        let Some(fonte_em) = modificado_em(&caminho) else {
+    for source in INVALIDATING_SOURCES {
+        let Some(changed) = modified(&root.join(source)) else {
             continue;
         };
-        if fonte_em > cdb_em {
-            return (true, Some((*fonte).to_owned()));
+        if changed > written {
+            return (true, Some((*source).to_owned()));
         }
     }
     (false, None)
 }
 
-fn modificado_em(caminho: &Path) -> Option<SystemTime> {
-    std::fs::metadata(caminho).ok()?.modified().ok()
+fn modified(path: &Path) -> Option<SystemTime> {
+    std::fs::metadata(path).ok()?.modified().ok()
 }
 
 #[cfg(test)]
 mod tests {
     use std::{fs, path::PathBuf, thread, time::Duration};
 
+    use kinein_protocol::{CdbAbsenceKind, CdbCandidate, CdbOrigin};
+
     use super::{CdbStatus, status};
 
-    fn raiz(nome: &str) -> PathBuf {
+    /// O tipo e o motivo da ausência, para comparar os dois de uma vez.
+    fn absence(found: &CdbStatus) -> Option<(CdbAbsenceKind, &str)> {
+        found
+            .absence
+            .as_ref()
+            .map(|absence| (absence.kind, absence.reason.as_str()))
+    }
+
+    fn temp_root(name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
             .join("kinein-cdb-tests")
-            .join(format!("{}-{nome}", std::process::id()));
+            .join(format!("{}-{name}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
     }
 
-    fn escrever_cdb(dir: &std::path::Path) {
+    fn write_cdb(dir: &std::path::Path) {
         fs::create_dir_all(dir).unwrap();
         fs::write(dir.join("compile_commands.json"), "[]\n").unwrap();
     }
 
     #[test]
     fn workspace_sem_cdb_nao_e_erro() {
-        let root = raiz("ausente");
+        let root = temp_root("ausente");
 
         assert_eq!(status(&root), CdbStatus::ausente());
     }
 
     #[test]
     fn encontra_a_cdb_na_raiz_e_no_build() {
-        let root = raiz("na-raiz");
-        escrever_cdb(&root);
+        let root = temp_root("na-raiz");
+        write_cdb(&root);
         assert_eq!(status(&root).directory.as_deref(), Some("."));
 
-        let root = raiz("no-build");
-        escrever_cdb(&root.join("build"));
+        let root = temp_root("no-build");
+        write_cdb(&root.join("build"));
         assert_eq!(status(&root).directory.as_deref(), Some("build"));
 
         // `builddir` e' nome comum de Meson e NAO e' procurado pelo clangd.
-        let root = raiz("no-builddir");
-        escrever_cdb(&root.join("builddir"));
+        let root = temp_root("no-builddir");
+        write_cdb(&root.join("builddir"));
         assert_eq!(status(&root).directory.as_deref(), Some("builddir"));
     }
 
     /// A CDB da IDE vence: e' a unica que sabemos casada com o ultimo configure.
     #[test]
     fn a_cdb_da_ide_tem_precedencia_sobre_as_convencoes() {
-        let root = raiz("precedencia");
-        escrever_cdb(&root.join("build"));
-        escrever_cdb(&root);
-        escrever_cdb(&root.join(".kinein").join("build"));
+        let root = temp_root("precedencia");
+        write_cdb(&root.join("build"));
+        write_cdb(&root);
+        write_cdb(&root.join(".kinein").join("build"));
 
         assert_eq!(status(&root).directory.as_deref(), Some(".kinein/build"));
     }
 
     #[test]
     fn cdb_mais_velha_que_o_cmakelists_e_reportada_com_o_culpado() {
-        let root = raiz("velha");
-        escrever_cdb(&root.join("build"));
+        let root = temp_root("velha");
+        write_cdb(&root.join("build"));
         // mtime tem granularidade; garante ordem observavel.
         thread::sleep(Duration::from_millis(20));
         fs::write(root.join("CMakeLists.txt"), "project(x)\n").unwrap();
@@ -227,10 +522,10 @@ mod tests {
 
     #[test]
     fn cdb_mais_nova_que_as_fontes_nao_e_velha() {
-        let root = raiz("nova");
+        let root = temp_root("nova");
         fs::write(root.join("CMakeLists.txt"), "project(x)\n").unwrap();
         thread::sleep(Duration::from_millis(20));
-        escrever_cdb(&root.join("build"));
+        write_cdb(&root.join("build"));
 
         let resultado = status(&root);
 
@@ -241,12 +536,253 @@ mod tests {
     /// Sem CDB nao existe "velha": stale so faz sentido sobre algo que existe.
     #[test]
     fn ausente_nunca_e_reportada_como_velha() {
-        let root = raiz("ausente-nao-e-velha");
+        let root = temp_root("ausente-nao-e-velha");
         fs::write(root.join("CMakeLists.txt"), "project(x)\n").unwrap();
 
         let resultado = status(&root);
 
         assert_eq!(resultado.directory, None);
         assert!(!resultado.stale);
+    }
+
+    fn presets(root: &std::path::Path, body: &str) {
+        fs::write(root.join("CMakePresets.json"), body).unwrap();
+    }
+
+    const TWO_PRESETS: &str = r#"{"version":6,"configurePresets":[
+        {"name":"debug","binaryDir":"${sourceDir}/build/debug"},
+        {"name":"release","binaryDir":"${sourceDir}/build/release"},
+        {"name":"hidden","hidden":true,"binaryDir":"${sourceDir}/build/hidden"}]}"#;
+
+    /// C-05: a CDB de um preset configurado fora da IDE e' achada, com origem.
+    #[test]
+    fn the_only_preset_with_a_database_is_used_with_its_origin() {
+        let root = temp_root("preset-unico");
+        presets(&root, TWO_PRESETS);
+        write_cdb(&root.join("build/debug"));
+        write_cdb(&root.join("build/hidden"));
+
+        let found = status(&root);
+
+        assert_eq!(found.directory.as_deref(), Some("build/debug"));
+        assert_eq!(found.origin, Some(CdbOrigin::Preset));
+        assert_eq!(found.preset.as_deref(), Some("debug"));
+        assert_eq!(absence(&found), None);
+        assert_eq!(
+            found.file(&root),
+            Some(root.join("build/debug/compile_commands.json"))
+        );
+        assert_eq!(
+            found.clangd_directory(&root),
+            Some(root.join("build/debug"))
+        );
+    }
+
+    /// Varios presets com CDB e nenhuma escolha: a IDE nao escolhe (autor,
+    /// 2026-11-09), e as candidatas vao para a tela.
+    #[test]
+    fn several_preset_databases_require_a_choice() {
+        let root = temp_root("varios-presets");
+        presets(&root, TWO_PRESETS);
+        write_cdb(&root.join("build/debug"));
+        write_cdb(&root.join("build/release"));
+
+        let found = status(&root);
+
+        assert_eq!(found.directory, None);
+        assert_eq!(
+            absence(&found),
+            Some((
+                CdbAbsenceKind::ChoiceRequired,
+                "2 configurações de presets têm compile_commands.json (debug, release): escolha uma"
+            ))
+        );
+        assert_eq!(
+            found.candidates,
+            [
+                CdbCandidate {
+                    directory: "build/debug".to_owned(),
+                    origin: CdbOrigin::Preset,
+                    preset: Some("debug".to_owned()),
+                },
+                CdbCandidate {
+                    directory: "build/release".to_owned(),
+                    origin: CdbOrigin::Preset,
+                    preset: Some("release".to_owned()),
+                },
+            ]
+        );
+        assert_eq!(found.clangd_directory(&root), None);
+    }
+
+    #[test]
+    fn the_chosen_configuration_wins_and_never_falls_back() {
+        let root = temp_root("escolhida");
+        presets(&root, TWO_PRESETS);
+        write_cdb(&root.join("build/debug"));
+        write_cdb(&root.join("build/release"));
+        write_cdb(&root.join(".kinein/build"));
+        crate::cmake::select_configuration(&root, Some("release")).unwrap();
+
+        let found = status(&root);
+        assert_eq!(found.directory.as_deref(), Some("build/release"));
+        assert_eq!(found.origin, Some(CdbOrigin::Configuration));
+        assert_eq!(found.selected.as_deref(), Some("release"));
+
+        fs::remove_file(root.join("build/release/compile_commands.json")).unwrap();
+        let found = status(&root);
+        assert_eq!(found.directory, None);
+        assert_eq!(
+            absence(&found),
+            Some((
+                CdbAbsenceKind::ChosenConfiguration,
+                "a configuração escolhida (preset release) não tem compile_commands.json em \
+                 build/release: configure"
+            ))
+        );
+
+        presets(
+            &root,
+            r#"{"version":6,"configurePresets":[{"name":"debug","binaryDir":"b"}]}"#,
+        );
+        let found = status(&root);
+        assert_eq!(found.directory, None);
+        let (kind, reason) = absence(&found).unwrap();
+        assert_eq!(kind, CdbAbsenceKind::ChosenConfiguration);
+        assert!(
+            reason.contains("não existe mais entre os presets"),
+            "{reason}"
+        );
+
+        fs::write(root.join(".kinein/configuration.json"), "{").unwrap();
+        let found = status(&root);
+        assert_eq!(found.directory, None);
+        let (kind, reason) = absence(&found).unwrap();
+        assert_eq!(kind, CdbAbsenceKind::ChosenConfiguration);
+        assert!(
+            reason.starts_with("registro da configuração escolhida"),
+            "{reason}"
+        );
+
+        crate::cmake::select_configuration(&root, None).unwrap();
+        assert_eq!(status(&root).origin, Some(CdbOrigin::Ide));
+    }
+
+    /// A configuracao escolhida que a IDE configurou usa `.kinein/build`.
+    #[test]
+    fn the_chosen_configuration_configured_by_the_ide_uses_its_directory() {
+        let root = temp_root("escolhida-ide");
+        presets(&root, TWO_PRESETS);
+        write_cdb(&root.join("build/debug"));
+        write_cdb(&root.join(".kinein/build"));
+        fs::write(root.join(".kinein/build/CMakeCache.txt"), "").unwrap();
+        crate::cmake::record_preset(&root, Some("debug"));
+        crate::cmake::select_configuration(&root, Some("debug")).unwrap();
+
+        let found = status(&root);
+
+        assert_eq!(found.directory.as_deref(), Some(".kinein/build"));
+        assert_eq!(found.origin, Some(CdbOrigin::Ide));
+    }
+
+    /// A raiz e `build/` vem antes dos presets: o clangd as acharia sozinho.
+    #[test]
+    fn databases_clangd_finds_alone_come_before_preset_directories() {
+        let root = temp_root("build-antes");
+        presets(&root, TWO_PRESETS);
+        write_cdb(&root.join("build/debug"));
+        write_cdb(&root.join("build/release"));
+        write_cdb(&root.join("build"));
+
+        let found = status(&root);
+
+        assert_eq!(found.directory.as_deref(), Some("build"));
+        assert_eq!(found.origin, Some(CdbOrigin::Directory));
+        assert_eq!(absence(&found), None);
+        assert_eq!(found.candidates.len(), 3);
+    }
+
+    #[test]
+    fn a_conventional_directory_that_is_a_preset_binary_dir_names_the_preset() {
+        let root = temp_root("builddir-preset");
+        presets(
+            &root,
+            r#"{"version":6,"configurePresets":[{"name":"meson-like","binaryDir":"builddir"}]}"#,
+        );
+        write_cdb(&root.join("builddir"));
+
+        let found = status(&root);
+
+        assert_eq!(found.directory.as_deref(), Some("builddir"));
+        assert_eq!(found.origin, Some(CdbOrigin::Preset));
+        assert_eq!(found.preset.as_deref(), Some("meson-like"));
+    }
+
+    #[test]
+    fn a_binary_dir_outside_the_root_is_absolute() {
+        let root = temp_root("fora");
+        let outside = root.with_extension("fora build");
+        drop(fs::remove_dir_all(&outside));
+        let body = format!(
+            r#"{{"version":6,"configurePresets":[{{"name":"out","binaryDir":"{}"}}]}}"#,
+            outside.display()
+        );
+        presets(&root, &body);
+        write_cdb(&outside);
+
+        let found = status(&root);
+
+        assert_eq!(found.directory, Some(outside.display().to_string()));
+        assert_eq!(
+            found.file(&root),
+            Some(outside.join("compile_commands.json"))
+        );
+        drop(fs::remove_dir_all(&outside));
+    }
+
+    /// O `.clangd` que fixa a base vence (autor, 2026-11-09), e a IDE nao
+    /// passa a opcao que o sobreporia.
+    #[test]
+    fn a_root_clangd_file_that_fixes_the_base_wins() {
+        let root = temp_root("clangd");
+        presets(&root, TWO_PRESETS);
+        write_cdb(&root.join("build/debug"));
+        write_cdb(&root.join(".kinein/build"));
+        crate::cmake::select_configuration(&root, Some("debug")).unwrap();
+        fs::write(
+            root.join(".clangd"),
+            "CompileFlags:\n  CompilationDatabase: build/release\n",
+        )
+        .unwrap();
+
+        let found = status(&root);
+        assert_eq!(found.directory, None);
+        assert!(found.clangd_decides);
+        assert_eq!(
+            absence(&found),
+            Some((
+                CdbAbsenceKind::Clangd,
+                "o .clangd da raiz fixa a base em build/release, sem compile_commands.json"
+            ))
+        );
+
+        write_cdb(&root.join("build/release"));
+        let found = status(&root);
+        assert_eq!(found.directory.as_deref(), Some("build/release"));
+        assert_eq!(found.origin, Some(CdbOrigin::Clangd));
+        assert_eq!(found.preset.as_deref(), Some("release"));
+        assert_eq!(found.clangd_directory(&root), None);
+
+        fs::write(
+            root.join(".clangd"),
+            "If:\n  PathMatch: src/.*\nCompileFlags:\n  CompilationDatabase: build/debug\n",
+        )
+        .unwrap();
+        let found = status(&root);
+        assert_eq!(found.directory, None);
+        assert!(found.clangd_decides);
+        let (kind, reason) = absence(&found).unwrap();
+        assert_eq!(kind, CdbAbsenceKind::Clangd);
+        assert!(reason.contains("fragmento condicional"), "{reason}");
     }
 }

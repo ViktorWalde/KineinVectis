@@ -10,6 +10,7 @@ pub mod build;
 pub mod cargo;
 pub mod cdb;
 pub mod cmake;
+pub mod cmake_presets;
 pub mod commands;
 pub mod configaction;
 pub mod container;

@@ -177,6 +177,9 @@ public:
     Q_INVOKABLE void cmakeConfigure();
     Q_INVOKABLE void cmakeTargetsList();
     Q_INVOKABLE void cmakeStatus();
+    // A configuracao cuja CDB a IDE usa (cmake.selectConfiguration, 0.206.0): um preset de
+    // configure; vazio = `null`, a escolha automatica. Nao reconfigura.
+    Q_INVOKABLE void cmakeSelectConfiguration(const QString& preset);
     // `preset` vazio = o kit padrao do workspace (etapa 14: a escolha passou a
     // ser por KIT, nao por workspace).
     Q_INVOKABLE void setupList();
@@ -443,9 +446,14 @@ signals:
     void cmakePresetsResolved(const QVariantList& presets);
     /// `presetChoices` (0.174.0): os presets entre os quais a pessoa escolhe,
     /// quando o configure sem preset seria recusado por haver varios.
+    /// `compileDatabase` (0.206.0): a CDB em uso e a escolha — `directory`,
+    /// `origin`, `preset`, `candidates`, `absenceKind`, `choiceRequired` (o
+    /// `kind` da ausência é `choiceRequired`), `absentBecause` e
+    /// `selectedConfiguration`; campo ausente no core = vazio aqui.
     void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
                              const QString& cdbStaleBecause, const QString& preset,
-                             const QStringList& presetChoices, const QString& presetChoicesFile);
+                             const QStringList& presetChoices, const QString& presetChoicesFile,
+                             const QVariantMap& compileDatabase);
     void cmakeConfigureFinished(bool success);
     /// `origin` diz de onde os nomes vieram: "fileApi" (confirmados por um
     /// configure), "source" (lidos do CMakeLists) ou "none".
@@ -772,6 +780,7 @@ private:
     bool dispatchLspResult(const QString& method, const QJsonObject& result);
     bool dispatchSyntaxResult(const QString& method, const QJsonObject& result);
     bool dispatchCmakeResult(const QString& method, const QJsonObject& result, qint64 requestId);
+    void emitCmakeStatus(const QJsonObject& result);
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);

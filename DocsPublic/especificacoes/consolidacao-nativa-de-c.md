@@ -173,6 +173,7 @@ Conferência de 2026-11-08 ([62 §3.4](../roadmaps/62-base-publica-0.4.md#34-inv
 abrir um projeto existente ainda não respeita o `binaryDir` dos presets (C-04)
 nem localiza uma CDB fora dos diretórios conhecidos (C-05); os dois pertencem
 a este recorte. A CDB com uma unidade por arquivo (C-03) pertence a C2.
+O inventário e o desenho de C-05 estão em §16.
 
 ## 5. Corpus e registro de prontidão
 
@@ -857,3 +858,168 @@ Gate rápido aprovado em 289 s: 1468 Rust, Clippy, 51 arquivos C++, 8 CTest e
 180 harnesses QML; um NÃO PROVADO (debugpy ausente). Formatação e gates
 documentais acompanham o fechamento, sem ampliar baselines, allowances ou
 exclusões Windows. C1-11–C1-14 têm correção e provas localizadas; C1 permanece aberto.
+
+## 16. C1: CDB de configurações existentes e coerência com o clangd — desenho de 2026-11-09
+
+Inventário localizado de C-05 ([62 §3.4](../roadmaps/62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica))
+antes da mudança, nos donos `cdb.rs`, `cmake/`, `lsp/server.rs` e
+`index/context/`. As reproduções usam CMake 4.4.5, GCC 16.2.1, Clang 23.1.4 e
+clangd 23.1.4 reais, com o core do commit b1d22bdb consultado por IPC:
+
+| ID / capacidade | Evidência e causa | Severidade / impacto | Decisão e prova necessária |
+| --- | --- | --- | --- |
+| C1-15 / CDB de preset configurado fora da IDE | Fixture com presets `debug` e `release` (`binaryDir` `${sourceDir}/build/<nome>`), configurada por `cmake --preset debug`: `cmake.status` sem `cdbDirectory`, `index.context` orienta "configure o projeto (cmake)" e `clangd --check` não acha base. Neste checkout as três CDBs ficam em `build/<preset>/`, e nenhuma está nas cinco pastas da lista. Causa confirmada: `cdb::DIRETORIOS` é fixa e não lê o `binaryDir` dos presets | Alta: um projeto configurado por presets, CLI ou outra IDE perde o contexto C/C++ e é levado a configurar de novo; o configure automático ao abrir reconfigura em `.kinein/build` | Corrigir em `cdb.rs`, com o `binaryDir` resolvido pelo dono dos presets. Uma candidata é usada e mostra a origem. Com várias e nenhuma escolha registrada, a IDE pergunta e não escolhe (autor, 2026-11-09). Provar com GCC e Clang reais: uma e várias candidatas, escolha, troca, retorno ao automático e à pasta da IDE, CDB obsoleta ou removida, preset removido, macros, caminho com espaços/Unicode e mutações |
+| C1-16 / CDB em uso divergente do clangd | Com CDB só em `builddir/`, `cmake.status` responde `cdbDirectory: builddir`, e `clangd --check` não a acha: `point_clangd_at_cdb` só passa `--compile-commands-dir` para `.kinein/build`. Por leitura, um servidor que subiu com a CDB da raiz ou de `build/` não reinicia quando `.kinein/build` passa à frente, porque `cdb_at_start` é booleano. Medido: `--compile-commands-dir` prevalece sobre o `CompileFlags.CompilationDatabase` do `.clangd`, que `cdb::status` ignora | Alta: o contexto da IDE e o clangd descrevem bases diferentes sem aviso | Corrigir: um dono decide a CDB em uso, e o clangd recebe exatamente essa pasta e reinicia quando ela muda. O `.clangd` que fixa a base vence (autor, 2026-11-09). Provar o argv do clangd e um diagnóstico real que dependa da CDB |
+| C1-17 / codemodel de outro build dir | `CompileContext` lê o codemodel de `.kinein/build` sem conferir a pasta da CDB: a referência de header e as unidades do file-api podem juntar alvos de uma configuração e comandos de outra. Confirmada por inspeção | Média: hoje só com CDB externa e configure anterior da IDE; C1-15 torna o caso comum | Corrigir: o codemodel vem da pasta da CDB em uso; sem CDB, de `.kinein/build` como antes. Provar com as duas pastas configuradas, com mutação |
+| C1-18 / `include` dos presets | `list_presets`, `default_preset` e a leitura de campos com herança não seguem `include` (schema 4+): um preset de arquivo incluído não é listado, escolhido nem resolvido. Confirmada por inspeção | Média: um projeto que divide presets por `include` aparece sem eles | Adiar para C-04, que reescreve a leitura de presets do configure; a dependência é a mesma leitura. Até lá, limite explícito: candidata de arquivo incluído não aparece. Retomar no C-04, com prova de `include` aninhado, ciclo e `${fileDir}` |
+
+Estado inicial: C1-15 e C1-16 reproduzidos; C1-17 e C1-18 confirmados por
+inspeção. C-04 (configure no `binaryDir`, multi-config) é a fatia seguinte, e
+o autor decidiu em 2026-11-09 que o configure da IDE com preset que declara
+`binaryDir` usa essa pasta. Esta fatia não muda o diretório do configure.
+
+**CDB em uso.** Um só dono, `cdb::status`, responde qual CDB vale, com origem,
+nesta ordem:
+
+1. `.clangd` da raiz que declara `CompileFlags.CompilationDatabase`. Na forma
+   simples (um só fragmento com a chave, sem `If`, valor escalar diferente de
+   `Ancestors` e `None`), a pasta declarada, relativa à raiz, é a CDB em uso,
+   com origem `clangd`, e a IDE não passa `--compile-commands-dir`. Nas outras
+   formas a base é manual: a IDE não passa a opção, não atribui CDB e explica o
+   motivo, como a referência de header já faz.
+2. A configuração escolhida pela pessoa (`.kinein/configuration.json`, com
+   `{ "preset": "<nome>" }`). Vale `.kinein/build` se o último configure da IDE
+   usou esse preset e deixou CDB; senão, o `binaryDir` resolvido dele. Sem CDB
+   ali, preset removido ou registro ilegível, não há CDB em uso e o motivo
+   aparece; outra candidata nunca a substitui.
+3. `.kinein/build`, do configure da IDE.
+4. A raiz e `build/`, que o clangd também acharia sozinho.
+5. O `binaryDir` dos configure presets não ocultos que a `condition` não exclui
+   no host. Uma pasta com CDB é usada, com origem `preset`. Com várias, nenhuma
+   é usada: `cdbAbsence` com `kind: "choiceRequired"` e a lista vão para a UI.
+6. `builddir/` e `out/build/`.
+
+Uma pasta das listas 3, 4 e 6 que coincide com o `binaryDir` de um preset leva o
+nome dele. Todas as pastas com CDB entram em `cdbCandidates`, sem duplicar pelo
+caminho canônico. Obsolescência e configure incompleto seguem as regras
+anteriores; o configure incompleto vale só para `.kinein/build`.
+
+**clangd.** O servidor cpp sobe com `--compile-commands-dir` da CDB em uso, também
+para a raiz e `build/`: com isso a busca do clangd não acha, num subdiretório,
+uma base que a IDE não mostra. Com `.clangd` decidindo, ou sem CDB em uso, a opção
+não é passada. O handle guarda a pasta com que subiu. Se a CDB em uso passa a
+outra pasta (escolha, configure, CDB que aparece), o servidor reinicia: a opção
+só vale na partida. Reiniciar descarta o índice do clangd, e os documentos
+reabrem com o buffer do editor pelo fluxo `restarted` existente.
+
+**Escolha.** `cmake.selectConfiguration { preset }` grava ou apaga o registro.
+Um nome precisa estar entre os configure presets não ocultos; `null` volta ao
+automático. Responde com o `cmake.status` atual, recarrega o contexto e reinicia
+o clangd quando a pasta muda. O configure sem preset pedido usa a configuração
+escolhida antes do preset anotado no build dir (`presetSource:
+"configuration"`), com o kit de mesmo nome, como um preset pedido. Um configure
+bem-sucedido da IDE, explícito ou do build, apaga o registro, e `.kinein/build`
+volta a valer. No C-04, esse registro passa a ser a configuração ativa
+do configure.
+
+**Presets.** A leitura de campos com `inherits` sai de `toolchain/selection.rs`
+para `cmake_presets.rs`, que serve o `toolchainFile` e o `binaryDir`. O
+`binaryDir` expande as macros de cmake-presets(7): `${sourceDir}`,
+`${sourceParentDir}`, `${sourceDirName}`, `${presetName}`, `${generator}`,
+`${hostSystemName}`, `${fileDir}`, `${dollar}`, `${pathListSep}`,
+`$env{…}` (campo `environment` do preset com herança, depois o ambiente do
+core; ausente expande vazio) e `$penv{…}`. `$vendor{…}`, macro desconhecida,
+ciclo e `generator` ausente deixam o preset sem pasta resolvida, sem
+candidata. Caminho relativo vale a partir da raiz.
+
+**Interface.** O Project Health pergunta quando há várias candidatas, com um item
+por pasta e preset, e escolher não reconfigura. O configure automático ao abrir
+não roda quando já há CDB em uso ou escolha pendente. A origem aparece no
+contexto do arquivo (`compile_commands.json em build/debug (preset debug)`), e
+o motivo da ausência substitui a dica de configurar.
+
+**Limites declarados.** O `binaryDir` é resolvido com o ambiente do core, que
+pode diferir do terminal ou da IDE que configurou. O `.clangd` lido é o da raiz;
+o de um subdiretório é sobreposto pela opção que a IDE passa. A configuração do
+usuário do clangd não é lida. `include` de presets fica em C1-18. A CDB com uma
+unidade por arquivo continua em C-03 (C2), e o diretório do configure em C-04.
+
+### 16.1 Integração e alcance das provas — 2026-11-09
+
+Protocolo 0.206.0, produto 0.3.9. `cdb::status` decide a CDB em uso na ordem
+acima, e `cdb/clangd.rs` lê a forma simples do `.clangd` da raiz. A leitura
+dos presets virou o módulo-folha `cmake_presets`: lista, preset padrão,
+`condition`, campos com `inherits` e `binaryDir`. Saiu de
+`toolchain/selection.rs` e de `cmake/mod.rs`, e assim `cmake`, `toolchain` e
+`cdb` a leem sem ciclo entre `cmake` e `toolchain`. Corrigido também: um pai
+de `inherits` que desfaz o campo (`null`) vence os pais seguintes, como o
+CMake 4.4.5 faz. Antes, o leitor pulava para o pai seguinte. `cmake/configuration.rs`
+grava `.kinein/configuration.json`. O configure guarda a escolha do início e,
+no sucesso, só apaga um registro que ninguém trocou durante o produtor. O
+servidor cpp guarda a pasta com que subiu e reinicia quando a pasta em uso
+muda. O contexto lê o codemodel da pasta da CDB e mostra a origem. A ausência
+vai no fio como `cdbAbsence { kind, reason }`, com `kind` `choiceRequired`,
+`chosenConfiguration` ou `clangd`; só o primeiro pede escolha. Na UI, o
+sinal `cmakeStatusResolved` leva o mapa `compileDatabase`. O Project Health
+pergunta pelas candidatas, e o item de menu (`cmake.configuration:<preset>`)
+chama `cmake.selectConfiguration` e põe o kit no mesmo preset, sem
+reconfigurar. O configure automático e o aviso de modo degradado não aparecem
+com CDB em uso. A tabela de ferramentas exigidas saiu para
+`ProjectToolRequirements.qml`, sem estado, porque um objeto filho com
+bindings lia a lista atrasada no `onToolsListChanged`.
+
+Quatro regressões de dispatch (`tests/c_project/existing_cdb.rs`) usam CMake
+4.4.5, GCC 16.2.1, Clang 23.1.4 e clangd 23.1.4 reais. Os presets são
+configurados por `cmake --preset` fora da IDE, com `binaryDir` por
+`${presetName}` e fora da raiz por `${sourceParentDir}`, `${sourceDirName}` e
+`$env{}` do preset, com espaços e Unicode. O clangd real roda atrás de um
+encaminhador que grava o argv. Cada CDB tem assinatura positiva: Debug dá um
+aviso e um erro, Release só o aviso dela. Publicação vazia não prova nada,
+porque o core limpa os diagnósticos do clangd que mata; a primeira versão do
+teste aceitava essa limpeza, e a contagem de partidas acusou. Cobrem:
+
+- uma candidata, com origem, compilador, defines, texto da fonte e argv;
+- duas candidatas: escolha pedida, dica com o motivo e lista ordenada;
+- escolha sem configure: reinício do servidor vivo, uma partida nova, contexto
+  e diagnósticos de Release, e codemodel da mesma pasta (C1-17);
+- recusa de preset inexistente sem gravar, `null` e nova pergunta;
+- CDB escolhida obsoleta, com o culpado;
+- configure da IDE: `presetSource: "configuration"`, registro apagado,
+  `.kinein/build` de volta e clangd reiniciado nela;
+- `.clangd` simples vence sem a opção, com escolha registrada; `If` passa a
+  base manual com motivo;
+- CDB de `builddir/` que chega ao clangd (C1-16);
+- preset escolhido removido dos presets: o motivo aparece e o configure é
+  recusado, em vez de trocar a escolha pelo único preset restante.
+
+Testes unitários cobrem `inherits` com `null` medido, macros, `$env`/`$penv`,
+caminhos absolutos e `CMakeUserPresets.json`, as formas do `.clangd`, a
+precedência, o registro e o instantâneo do configure (escolha feita durante o
+produtor sobrevive; registro ilegível fica). Dezesseis mutantes compiláveis
+do core e seis do QML foram eliminados com baseline verde; dois deles trocam o
+`kind` da ausência. O harness
+`tst_cdb_choice` cobre a faixa, o menu e o configure automático.
+
+Na UI nativa isolada (Xvfb, `autoSave=false` confirmado pelo IPC), o projeto
+`projeto presets ação/` foi configurado pelo CLI nos dois presets. A faixa
+pediu confiança e depois mostrou o motivo do core com "Escolher
+configuração…", sem configure automático. O menu listou as duas pastas, e
+escolher clang-release enviou `cmake.selectConfiguration` e `toolchain.get`
+com o preset, sem `cmake.configure`. O clangd vivo recebeu
+`--compile-commands-dir` com a pasta de fora da raiz. `main.c` mostrou só o
+aviso de Release e o bloco de Debug inativo, e a barra de status passou a
+`contexto: clang · 0 -I · 2 -D`. Reaberta, a IDE conservou a escolha, e a
+confiança não disparou configure. Fontes, `CMakeLists.txt` e
+`CMakePresets.json` mantiveram seus bytes, e `.kinein/build` não foi criado.
+Repetida com os binários finais e `main.c` já aberto: o clangd vivo, sem a
+opção, mostrava só o `#error`. A escolha o reiniciou com a pasta de Release, e
+o documento aberto passou ao aviso de Release sem configure. Na reabertura, o
+clangd já subiu nessa pasta.
+
+Limites desta fatia: o Project Health só oferece a escolha quando ela é
+obrigatória. Trocar uma configuração já escolhida ou voltar ao automático
+pela UI fica para o C-04, junto do seletor da configuração ativa. No menu, a
+pasta longa fora da raiz é cortada no fim. Valem também os limites declarados
+em §16 e C1-18. C-05 tem correção e provas localizadas; C1 permanece aberto
+com C-04, C1-07, origem por toolchain file e `CC` do ambiente e consulta de
+versão bloqueada.

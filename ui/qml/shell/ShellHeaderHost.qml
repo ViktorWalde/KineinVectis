@@ -74,6 +74,15 @@ Rectangle {
             root.coreClient.cmakeConfigure();
             return;
         }
+        // A configuração escolhida na faixa (0.206.0): a CDB dela passa a
+        // valer sem reconfigurar, e o kit acompanha o mesmo preset.
+        const configurationPrefix = "cmake.configuration:";
+        if (action.indexOf(configurationPrefix) === 0) {
+            const preset = action.substring(configurationPrefix.length);
+            root.toolchainController.selectPreset(preset);
+            root.coreClient.cmakeSelectConfiguration(preset);
+            return;
+        }
         const bottomAction = /^bottom\.(pin|unpin):(.+)$/.exec(action);
         if (bottomAction !== null) {
             root.shellController.setBottomPinned(bottomAction[2], bottomAction[1] === "pin");

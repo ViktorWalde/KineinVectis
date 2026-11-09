@@ -22,9 +22,7 @@ pub(crate) fn verification_context(
     if status.stale {
         return Err("CDB obsoleta: reconfigure o projeto.".into());
     }
-    let cdb = root
-        .join(status.directory.ok_or("Contexto ausente: sem CDB.")?)
-        .join("compile_commands.json");
+    let cdb = status.file(root).ok_or("Contexto ausente: sem CDB.")?;
     let bytes = cdb_bytes(&cdb)?;
     let text = std::str::from_utf8(&bytes).map_err(|_| "CDB não é UTF-8.")?;
     let loaded = super::CompileContext::from_cdb_text(root, &cdb, text);

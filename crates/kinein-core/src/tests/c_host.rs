@@ -332,7 +332,9 @@ fn recover_link_error(p: &mut Project) {
 #[test]
 fn c_host_refreshes_an_initial_server_even_when_the_index_already_has_the_new_cdb() {
     let mut p = Project::new("early-index");
-    assert!(p.core.lsp.as_ref().unwrap().needs_compile_commands("cpp"));
+    // Sem CDB em lugar nenhum, o servidor subiu sem pasta e nada mudou ainda:
+    // so' a CDB que o build cria o torna desatualizado (C1-16, 2026-11-09).
+    assert!(!p.core.lsp.as_ref().unwrap().needs_compile_commands("cpp"));
     let job = p.call("build.run", json!({}))["jobId"].clone();
     let deadline = Instant::now() + Duration::from_secs(30);
     loop {

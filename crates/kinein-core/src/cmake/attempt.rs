@@ -20,6 +20,9 @@ const LAST_KIT: &str = ".kinein-kit";
 pub struct ConfigureAttempt {
     root: PathBuf,
     kit: String,
+    /// A configuracao escolhida quando o configure comecou: o sucesso so'
+    /// apaga um registro que ninguem trocou durante o produtor (C-05).
+    selection: Result<Option<String>, String>,
     _lock: fs::File,
 }
 
@@ -63,14 +66,24 @@ pub fn begin_configure(
     Ok(ConfigureAttempt {
         root: root.to_owned(),
         kit: kit.to_owned(),
+        selection: super::selected_configuration(root),
         _lock: lock,
     })
 }
 
 /// Only a successful configure may restore current evidence.
+///
+/// It also returns the compilation database to `.kinein/build`: the chosen
+/// configuration recorded before this configure began is removed (C-05). A
+/// choice made while the producer ran is newer and stays.
 pub fn complete_configure(attempt: ConfigureAttempt) -> io::Result<()> {
     let directory = super::build_dir(&attempt.root);
     fs::write(directory.join(LAST_KIT), format!("{}\n", attempt.kit))?;
+    if let Ok(Some(_)) = &attempt.selection
+        && super::selected_configuration(&attempt.root) == attempt.selection
+    {
+        super::select_configuration(&attempt.root, None)?;
+    }
     let result = fs::remove_file(directory.join(MARKER));
     drop(attempt);
     result
@@ -131,4 +144,49 @@ pub fn lost_ide_definitions(root: &Path) -> bool {
             })
         })
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{begin_configure, complete_configure};
+    use crate::cmake::{select_configuration, selected_configuration};
+
+    #[test]
+    fn success_clears_only_the_choice_recorded_when_the_configure_began() {
+        let root = std::env::temp_dir()
+            .join("kinein-cmake-attempt")
+            .join(format!("{} escolha", std::process::id()));
+        drop(std::fs::remove_dir_all(&root));
+        std::fs::create_dir_all(&root).unwrap();
+        let chosen = |name: &str| Ok(Some(name.to_owned()));
+
+        // A escolha anterior volta a' pasta da IDE com o sucesso.
+        select_configuration(&root, Some("debug")).unwrap();
+        complete_configure(begin_configure(&root, Some("debug"), "").unwrap()).unwrap();
+        assert_eq!(selected_configuration(&root), Ok(None));
+
+        // Trocada, criada ou apagada durante o produtor: a nova vence.
+        for (before, during) in [(Some("debug"), Some("release")), (None, Some("release"))] {
+            select_configuration(&root, before).unwrap();
+            let attempt = begin_configure(&root, before, "").unwrap();
+            select_configuration(&root, during).unwrap();
+            complete_configure(attempt).unwrap();
+            assert_eq!(
+                selected_configuration(&root),
+                chosen("release"),
+                "{before:?}"
+            );
+        }
+        select_configuration(&root, Some("debug")).unwrap();
+        let attempt = begin_configure(&root, Some("debug"), "").unwrap();
+        select_configuration(&root, None).unwrap();
+        complete_configure(attempt).unwrap();
+        assert_eq!(selected_configuration(&root), Ok(None));
+
+        // Um registro ilegível no início não é apagado por um sucesso.
+        let record = root.join(".kinein/configuration.json");
+        std::fs::write(&record, "{").unwrap();
+        complete_configure(begin_configure(&root, None, "").unwrap()).unwrap();
+        assert_eq!(std::fs::read_to_string(&record).unwrap(), "{");
+    }
 }

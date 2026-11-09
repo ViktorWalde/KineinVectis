@@ -2,8 +2,9 @@
 //! presets/targets/status sincronos, todos exigindo workspace `CMake`.
 
 use kinein_protocol::{
-    BuildSystem, CmakeConfigureParams, CmakePresetsResult, CmakeStatusResult, CmakeTargetsResult,
-    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse,
+    BuildSystem, CmakeConfigureParams, CmakePresetsResult, CmakeSelectConfigurationParams,
+    CmakeStatusResult, CmakeTargetsResult, JobAcceptedResult, JobRisk, JsonRpcError,
+    JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -80,7 +81,7 @@ impl Core {
 
     /// Roteia os metodos `cmake.*`; `None` quando o metodo nao e `CMake`.
     pub(crate) fn cmake_request_response(
-        &self,
+        &mut self,
         method: &str,
         request_id: Option<Value>,
         params: Option<&Value>,
@@ -90,6 +91,9 @@ impl Core {
             "cmake.presets.list" => Some(self.cmake_presets_response(request_id)),
             "cmake.targets.list" => Some(self.cmake_targets_response(request_id)),
             "cmake.status" => Some(self.cmake_status_response(request_id)),
+            "cmake.selectConfiguration" => {
+                Some(self.cmake_select_configuration_response(request_id, params))
+            }
             _ => None,
         }
     }
@@ -246,7 +250,7 @@ impl Core {
         origin: Option<&str>,
     ) -> Result<(String, crate::toolchain::Toolchain), String> {
         let kit = match origin {
-            Some("kit") => preset.unwrap_or_default().to_owned(),
+            Some("kit" | "configuration") => preset.unwrap_or_default().to_owned(),
             Some("incompleteConfigure" | "buildDir") => cmake::active_kit(root),
             _ => String::new(),
         };
@@ -310,36 +314,94 @@ impl Core {
     }
 
     fn cmake_status_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let root = match self.cmake_workspace_root(request_id.as_ref(), "cmake.status") {
+        match self.cmake_workspace_root(request_id.as_ref(), "cmake.status") {
+            Ok(root) => JsonRpcResponse::success(request_id, json!(status_result(&root))),
+            Err(response) => *response,
+        }
+    }
+
+    /// Grava ou apaga a configuracao escolhida (C-05, consolidacao C §16).
+    /// Quando a CDB em uso muda, o contexto recarrega e o clangd recebe a
+    /// pasta nova; a resposta e' o `cmake.status` ja' com a escolha.
+    fn cmake_select_configuration_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let root = match self.cmake_workspace_root(request_id.as_ref(), "cmake.selectConfiguration")
+        {
             Ok(root) => root,
             Err(response) => return *response,
         };
-        let status = cmake::status(&root);
-        // Os presets entre os quais a pessoa escolhe, quando o configure sem
-        // preset seria recusado (52 §14.2).
-        let (preset_choices, preset_choices_file) = match cmake::choose_default(&root) {
-            Err((file, names)) => (names, Some(file.to_owned())),
-            Ok(_) => (Vec::new(), None),
+        let parsed = match parse_params::<CmakeSelectConfigurationParams>(
+            request_id.as_ref(),
+            params,
+            "cmake.selectConfiguration exige o campo preset: um nome ou null",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
         };
-        // O diagnostico da CDB e' mais amplo que o `has_compile_commands`: este
-        // olha so o build dir da IDE, e o clangd acha base em `build/` e nos
-        // diretorios pai sozinho. Um projeto Meson funciona com
-        // `hasCompileCommands: false` — quem sabe disso e' o `cdb`.
-        let cdb = crate::cdb::status(&root);
-        JsonRpcResponse::success(
-            request_id,
-            json!(CmakeStatusResult {
-                configured: status.configured,
-                has_compile_commands: status.has_compile_commands,
-                build_dir: status.build_dir.display().to_string(),
-                preset: status.preset,
-                cdb_directory: cdb.directory,
-                cdb_stale: cdb.stale,
-                cdb_stale_because: cdb.stale_because,
-                preset_choices,
-                preset_choices_file,
-            }),
-        )
+        if let Some(name) = parsed.preset.as_deref() {
+            match cmake::list_presets(&root) {
+                Ok(presets) if presets.iter().any(|preset| preset.name == name) => {}
+                Ok(_) => {
+                    return invalid_params(
+                        request_id,
+                        format!("preset de configure inexistente ou oculto: {name}"),
+                    );
+                }
+                Err(reason) => return invalid_params(request_id, reason),
+            }
+        }
+        let before = crate::cdb::status(&root).file(&root);
+        if let Err(error) = cmake::select_configuration(&root, parsed.preset.as_deref()) {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InternalError,
+                    format!("não foi possível gravar a configuração escolhida: {error}"),
+                    None,
+                ),
+            );
+        }
+        let result = status_result(&root);
+        if crate::cdb::status(&root).file(&root) != before {
+            self.workspace_edits.invalidate_verifications();
+            self.reload_index_context();
+            self.on_cmake_configure_finished(true);
+        }
+        JsonRpcResponse::success(request_id, json!(result))
+    }
+}
+
+/// O `cmake.status`: o configure da IDE e a CDB em uso, com origem.
+fn status_result(root: &std::path::Path) -> CmakeStatusResult {
+    let status = cmake::status(root);
+    // Os presets entre os quais a pessoa escolhe, quando o configure sem
+    // preset seria recusado (52 §14.2).
+    let (preset_choices, preset_choices_file) = match cmake::choose_default(root) {
+        Err((file, names)) => (names, Some(file.to_owned())),
+        Ok(_) => (Vec::new(), None),
+    };
+    // O diagnostico da CDB e' mais amplo que o `has_compile_commands`: este
+    // olha so o build dir da IDE, e a CDB em uso pode estar no `binaryDir` de
+    // um preset, em `build/` ou onde o `.clangd` aponta — quem sabe e' o `cdb`.
+    let cdb = crate::cdb::status(root);
+    CmakeStatusResult {
+        configured: status.configured,
+        has_compile_commands: status.has_compile_commands,
+        build_dir: status.build_dir.display().to_string(),
+        preset: status.preset,
+        cdb_directory: cdb.directory,
+        cdb_stale: cdb.stale,
+        cdb_stale_because: cdb.stale_because,
+        preset_choices,
+        preset_choices_file,
+        cdb_origin: cdb.origin,
+        cdb_preset: cdb.preset,
+        cdb_candidates: cdb.candidates,
+        cdb_absence: cdb.absence,
+        selected_configuration: cdb.selected,
     }
 }
 

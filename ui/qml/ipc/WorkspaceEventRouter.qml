@@ -23,10 +23,12 @@ Item {
         }
 
         function onCmakeStatusResolved(configured, hasCompileCommands, cdbStale,
-                                       cdbStaleBecause, preset, presetChoices, presetChoicesFile) {
+                                       cdbStaleBecause, preset, presetChoices, presetChoicesFile,
+                                       compileDatabase) {
             root.projectHealthController.handleCmakeStatus(configured, cdbStale,
                                                            cdbStaleBecause, preset,
-                                                           presetChoices, presetChoicesFile);
+                                                           presetChoices, presetChoicesFile,
+                                                           compileDatabase);
         }
 
         function onCmakeConfigureFinished(success) {

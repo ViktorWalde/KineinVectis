@@ -8,7 +8,7 @@
 use std::{
     collections::HashMap,
     io::{self, BufReader},
-    path::Path,
+    path::{Path, PathBuf},
     process::{ChildStdin, ChildStdout, Command},
     sync::{
         Arc, Mutex,
@@ -53,7 +53,7 @@ pub(super) struct ServerHandle {
     pub(super) stdin: Arc<Mutex<ChildStdin>>,
     pub(super) versions: HashMap<String, i64>,
     pub(super) language_ids: HashMap<String, &'static str>,
-    pub(super) header_commands: HashMap<std::path::PathBuf, crate::index::context::HeaderCommand>,
+    pub(super) header_commands: HashMap<PathBuf, crate::index::context::HeaderCommand>,
     /// Hash do ultimo conteudo sincronizado por URI. Evita `didChange`
     /// redundante quando o buffer nao mudou (cada request posicional
     /// re-sincroniza) — sem isso o clangd invalida seus fix-its a cada
@@ -65,9 +65,10 @@ pub(super) struct ServerHandle {
     /// Ultimo array cru de diagnostics publicado por URI, para compor o
     /// `context` de `textDocument/codeAction` sem depender da UI.
     pub(super) diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
-    /// clangd: havia uma CDB onde ele a acha ao subir ([`point_clangd_at_cdb`]).
-    /// Sem ela, uma CDB nova so' vale com o servidor reiniciado (0.4.0e).
-    pub(super) cdb_at_start: bool,
+    /// clangd: a pasta passada em `--compile-commands-dir` ao subir
+    /// ([`point_clangd_at_cdb`]); `None` sem CDB em uso ou com o `.clangd`
+    /// decidindo. A opcao so' vale na partida: outra pasta exige reiniciar.
+    pub(super) cdb_at_start: Option<PathBuf>,
 }
 
 impl std::fmt::Debug for ServerHandle {
@@ -105,7 +106,11 @@ pub(super) fn spawn_server(
     // atualiza e' o DOCUMENTO ja aberto, que fica com a compilacao em cache.
     // A acao certa apos um configure e' reabrir os documentos abertos; reiniciar
     // o servidor joga o indice fora.
-    let cdb_at_start = spec.language == "cpp" && point_clangd_at_cdb(&mut command, root);
+    let cdb_at_start = if spec.language == "cpp" {
+        point_clangd_at_cdb(&mut command, root)
+    } else {
+        None
+    };
     // O processo e' do `OwnedChild` (D1b, 39 §6.1): grupo proprio, para o
     // encerramento alcancar os filhos (o proc-macro do rust-analyzer, o node
     // do basedpyright), e coleta com o leitor junto. Ambiente herdado: um
@@ -195,21 +200,18 @@ pub(super) fn spawn_server(
     })
 }
 
-/// O `--compile-commands-dir` quando a CDB do configure existe; `true` quando
-/// o clangd vai ACHAR uma CDB ao subir: a do configure, ou uma na raiz ou no
-/// `build/` dela, onde ele procura sozinho. Medido em 2026-10-16 (clangd
-/// 21.1.8): sem nenhuma ao subir, a que nasce depois nao vale com o documento
-/// reaberto — na raiz, so' uns 30 s depois (o cache do "nao achei"); em
-/// `.kinein/build`, nunca.
-fn point_clangd_at_cdb(command: &mut Command, root: &Path) -> bool {
-    let build_dir = crate::cmake::build_dir(root);
-    if build_dir.join("compile_commands.json").is_file() {
-        command.arg(format!("--compile-commands-dir={}", build_dir.display()));
-        return true;
-    }
-    ["compile_commands.json", "build/compile_commands.json"]
-        .iter()
-        .any(|cdb| root.join(cdb).is_file())
+/// O `--compile-commands-dir` da CDB em uso (`cdb::status`, o mesmo dono do
+/// contexto), e a pasta passada. Ate' 2026-11-09 so' `.kinein/build` ia por
+/// aqui, e a raiz e `build/` ficavam com a busca do proprio clangd: uma CDB em
+/// `builddir/` ou no `binaryDir` de um preset aparecia na IDE e nao chegava ao
+/// clangd (C1-16). Medido em 2026-10-16 (clangd 21.1.8): sem nenhuma ao subir,
+/// a que nasce depois nao vale com o documento reaberto. Com o `.clangd` da
+/// raiz fixando a base, a opcao nao vai: medido com o clangd 23.1.4, ela
+/// prevaleceria sobre o arquivo.
+fn point_clangd_at_cdb(command: &mut Command, root: &Path) -> Option<PathBuf> {
+    let directory = crate::cdb::status(root).clangd_directory(root)?;
+    command.arg(format!("--compile-commands-dir={}", directory.display()));
+    Some(directory)
 }
 
 impl ServerHandle {

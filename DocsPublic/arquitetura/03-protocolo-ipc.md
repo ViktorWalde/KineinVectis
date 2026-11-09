@@ -222,7 +222,7 @@ indistinguível de rodá-lo fora dela — que era o requisito original. Uma
 superfície visual de atalho (Assistente) pode voltar depois **como UI pura**,
 abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
 
-## Os 194 métodos roteados — a lista inteira
+## Os 195 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -248,6 +248,7 @@ cargo.metadata
 
 cmake.configure
 cmake.presets.list
+cmake.selectConfiguration
 cmake.status
 cmake.targets.list
 

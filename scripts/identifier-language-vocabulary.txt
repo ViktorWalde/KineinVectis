@@ -214,6 +214,7 @@ because
 become
 becomes
 before
+began
 begin
 beginning
 begun
@@ -559,6 +560,8 @@ control
 controller
 controllers
 controls
+conventional
+conventions
 conversion
 convert
 converts
@@ -1040,6 +1043,7 @@ fits
 fitting
 five
 fixed
+fixes
 fixture
 fixtures
 flag
@@ -1373,6 +1377,7 @@ invalid
 invalidate
 invalidated
 invalidates
+invalidating
 invalidation
 invented
 inventing
@@ -2829,6 +2834,8 @@ unrecognised
 unregistered
 unrelated
 unsafe
+unset
+unsets
 unsigned
 unstable
 unsupported

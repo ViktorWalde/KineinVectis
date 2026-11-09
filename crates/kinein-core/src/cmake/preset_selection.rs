@@ -25,6 +25,16 @@ pub(crate) fn choose_preset(root: &Path, request: Option<String>) -> Result<Pres
         }
         return Ok((preset, Some("incompleteConfigure")));
     }
+    // A configuracao escolhida (C-05): removida dos presets ou registro
+    // invalido exigem escolha nova, sem voltar ao preset anotado.
+    if let Some(preset) = super::selected_configuration(root)? {
+        if !list_presets(root)?.iter().any(|entry| entry.name == preset) {
+            return Err(format!(
+                "configuração escolhida removida dos presets: {preset}; escolha outra"
+            ));
+        }
+        return Ok((Some(preset), Some("configuration")));
+    }
     choose_default(root).map_err(|(file, names)| {
         format!(
             "o projeto tem {} presets de configure em {file} ({}): escolha um",
@@ -35,6 +45,11 @@ pub(crate) fn choose_preset(root: &Path, request: Option<String>) -> Result<Pres
 }
 
 pub(crate) fn choose_default(root: &Path) -> Result<PresetChoice, (&'static str, Vec<String>)> {
+    if let Ok(Some(selected)) = super::selected_configuration(root)
+        && list_presets(root).is_ok_and(|presets| presets.iter().any(|p| p.name == selected))
+    {
+        return Ok((Some(selected), Some("configuration")));
+    }
     if let Some(recorded) = status(root).preset
         && list_presets(root).is_ok_and(|presets| presets.iter().any(|p| p.name == recorded))
     {

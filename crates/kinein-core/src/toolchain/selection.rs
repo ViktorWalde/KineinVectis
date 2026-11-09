@@ -11,7 +11,6 @@
 use std::path::Path;
 
 use kinein_protocol::{ProjectEnvironment, ToolInfo, ToolchainRole};
-use serde_json::Value;
 
 use super::{Toolchain, project::ProjectCache, store};
 
@@ -176,8 +175,9 @@ fn origin_notes(
     compiler: Option<&str>,
     cache_compiler: Option<&str>,
 ) -> Vec<String> {
-    let preset_compiler = preset_value(root, preset, &["cacheVariables", "CMAKE_C_COMPILER"]);
-    let toolchain_file = preset_value(root, preset, &["toolchainFile"])
+    let preset_compiler =
+        crate::cmake_presets::preset_value(root, preset, &["cacheVariables", "CMAKE_C_COMPILER"]);
+    let toolchain_file = crate::cmake_presets::preset_value(root, preset, &["toolchainFile"])
         .or_else(|| kit_toolchain_file.map(str::to_owned));
     let mut notes = vec![match (&preset_compiler, &toolchain_file) {
         (Some(value), _) => {
@@ -242,64 +242,13 @@ fn detected_note(detected: &[ProjectEnvironment]) -> String {
     )
 }
 
-/// Um campo de configure preset, seguindo `inherits` como o `CMake`: o
-/// proprio preset primeiro, depois os pais na ordem declarada. Valor `null`
-/// desfaz a heranca. Valor objeto de `cacheVariables` usa seu `value`.
-pub(super) fn preset_value(root: &Path, preset: &str, field: &[&str]) -> Option<String> {
-    if preset.is_empty() {
-        return None;
-    }
-    let entries: Vec<Value> = ["CMakePresets.json", "CMakeUserPresets.json"]
-        .iter()
-        .filter_map(|file| std::fs::read_to_string(root.join(file)).ok())
-        .filter_map(|body| serde_json::from_str::<Value>(&body).ok())
-        .filter_map(|value| {
-            value
-                .get("configurePresets")
-                .and_then(Value::as_array)
-                .cloned()
-        })
-        .flatten()
-        .collect();
-    lookup(&entries, preset, field, 0)
-}
-
-fn lookup(entries: &[Value], name: &str, field: &[&str], depth: usize) -> Option<String> {
-    // Um ciclo de `inherits` e' erro do projeto; o `CMake` o recusa.
-    if depth > 16 {
-        return None;
-    }
-    let entry = entries
-        .iter()
-        .find(|entry| entry.get("name").and_then(Value::as_str) == Some(name))?;
-    let value = field.iter().try_fold(entry, |value, key| value.get(*key));
-    match value {
-        Some(Value::Null) => return None,
-        Some(Value::String(text)) => return Some(text.clone()),
-        Some(object) => {
-            if let Some(text) = object.get("value").and_then(Value::as_str) {
-                return Some(text.to_owned());
-            }
-        }
-        None => {}
-    }
-    match entry.get("inherits") {
-        Some(Value::String(parent)) => lookup(entries, parent, field, depth + 1),
-        Some(Value::Array(parents)) => parents
-            .iter()
-            .filter_map(Value::as_str)
-            .find_map(|parent| lookup(entries, parent, field, depth + 1)),
-        _ => None,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
     use kinein_protocol::{ProjectEnvironment, ToolInfo, ToolStatus, ToolchainRole};
 
-    use super::{Measured, plan_c_compiler, preset_value};
+    use super::{Measured, plan_c_compiler};
     use crate::toolchain::Toolchain;
 
     fn temp_root(name: &str) -> PathBuf {
@@ -321,31 +270,6 @@ mod tests {
             suggested_install: None,
             message: None,
         }]
-    }
-
-    #[test]
-    fn presets_follow_inherits_and_object_values() {
-        let root = temp_root("presets");
-        std::fs::write(
-            root.join("CMakePresets.json"),
-            r#"{"version":6,"configurePresets":[
-              {"name":"base","toolchainFile":"base.cmake",
-               "cacheVariables":{"CMAKE_C_COMPILER":{"type":"FILEPATH","value":"/opt/cc"}}},
-              {"name":"child","inherits":["missing","base"]},
-              {"name":"unset","inherits":"base","cacheVariables":{"CMAKE_C_COMPILER":null}}]}"#,
-        )
-        .unwrap();
-        let compiler = ["cacheVariables", "CMAKE_C_COMPILER"];
-        assert_eq!(
-            preset_value(&root, "child", &["toolchainFile"]).as_deref(),
-            Some("base.cmake")
-        );
-        assert_eq!(
-            preset_value(&root, "child", &compiler).as_deref(),
-            Some("/opt/cc")
-        );
-        assert_eq!(preset_value(&root, "unset", &compiler), None);
-        assert_eq!(preset_value(&root, "", &compiler), None);
     }
 
     #[test]

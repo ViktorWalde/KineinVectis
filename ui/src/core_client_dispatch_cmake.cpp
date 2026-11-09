@@ -43,21 +43,11 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
                       .arg(result.value(QStringLiteral("jobId")).toString()));
         return true;
     }
-    if (method == QStringLiteral("cmake.status")) {
-        // `cdbStale`/`cdbStaleBecause` sao OMITIDOS pelo core quando falsos
-        // (skip_serializing_if no kinein-protocol), entao ausente vira false /
-        // string vazia — que e' exatamente o que a UI deve mostrar.
-        QStringList choices;
-        const QJsonArray choiceArray = result.value(QStringLiteral("presetChoices")).toArray();
-        for (const QJsonValue choice : choiceArray) {
-            choices.append(choice.toString());
-        }
-        emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
-                                 result.value(QStringLiteral("hasCompileCommands")).toBool(),
-                                 result.value(QStringLiteral("cdbStale")).toBool(),
-                                 result.value(QStringLiteral("cdbStaleBecause")).toString(),
-                                 result.value(QStringLiteral("preset")).toString(), choices,
-                                 result.value(QStringLiteral("presetChoicesFile")).toString());
+    // A escolha responde com o `cmake.status` atual (0.206.0): o mesmo sinal.
+    if (method == QStringLiteral("cmake.status") ||
+        method == QStringLiteral("cmake.selectConfiguration"))
+    {
+        emitCmakeStatus(result);
         return true;
     }
     if (method == QStringLiteral("cmake.presets.list")) {
@@ -90,6 +80,40 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
         return true;
     }
     return dispatchDataSourceResult(method, result);
+}
+
+void CoreClient::emitCmakeStatus(const QJsonObject& result)
+{
+    // `cdbStale`/`cdbStaleBecause` sao OMITIDOS pelo core quando falsos
+    // (skip_serializing_if no kinein-protocol), entao ausente vira false /
+    // string vazia — que e' exatamente o que a UI deve mostrar. O mesmo vale
+    // para os campos da CDB em uso.
+    QStringList choices;
+    const QJsonArray choiceArray = result.value(QStringLiteral("presetChoices")).toArray();
+    for (const QJsonValue choice : choiceArray) {
+        choices.append(choice.toString());
+    }
+    const QJsonObject absence = result.value(QStringLiteral("cdbAbsence")).toObject();
+    const QString absenceKind = absence.value(QStringLiteral("kind")).toString();
+    const QVariantMap compileDatabase{
+        {QStringLiteral("directory"), result.value(QStringLiteral("cdbDirectory")).toString()},
+        {QStringLiteral("origin"), result.value(QStringLiteral("cdbOrigin")).toString()},
+        {QStringLiteral("preset"), result.value(QStringLiteral("cdbPreset")).toString()},
+        {QStringLiteral("candidates"),
+         result.value(QStringLiteral("cdbCandidates")).toArray().toVariantList()},
+        {QStringLiteral("absenceKind"), absenceKind},
+        {QStringLiteral("choiceRequired"), absenceKind == QStringLiteral("choiceRequired")},
+        {QStringLiteral("absentBecause"), absence.value(QStringLiteral("reason")).toString()},
+        {QStringLiteral("selectedConfiguration"),
+         result.value(QStringLiteral("selectedConfiguration")).toString()},
+    };
+    emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
+                             result.value(QStringLiteral("hasCompileCommands")).toBool(),
+                             result.value(QStringLiteral("cdbStale")).toBool(),
+                             result.value(QStringLiteral("cdbStaleBecause")).toString(),
+                             result.value(QStringLiteral("preset")).toString(), choices,
+                             result.value(QStringLiteral("presetChoicesFile")).toString(),
+                             compileDatabase);
 }
 
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)

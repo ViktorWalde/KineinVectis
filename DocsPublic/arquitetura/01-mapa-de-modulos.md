@@ -87,7 +87,7 @@ o **RequestRouter** é o único que chama o `CoreClient` naquele domínio (uma g
 cross-domain, quando existe, mora nele e só nele); o **EventRouter** é o espelho da
 volta. Trocar o transporte muda o `CoreClient`, e nenhuma tela.
 
-Medido: 194 métodos IPC roteados pelo core.
+Medido: 195 métodos IPC roteados pelo core.
 
 ## Nível 2 — os domínios do `kinein-core`
 
@@ -97,6 +97,7 @@ flowchart LR
   n_core_cargo[cargo]
   n_core_cdb[cdb]
   n_core_cmake[cmake]
+  n_core_cmake_presets[cmake_presets]
   n_core_commands[commands]
   n_core_configaction[configaction]:::cycle
   n_core_container[container]
@@ -152,7 +153,9 @@ flowchart LR
   n_core_build --> n_core_tools
   n_core_cargo --> n_core_toolchain
   n_core_cdb --> n_core_cmake
+  n_core_cdb --> n_core_cmake_presets
   n_core_cdb --> n_core_platform
+  n_core_cmake --> n_core_cmake_presets
   n_core_cmake --> n_core_fsops
   n_core_cmake --> n_core_msvc
   n_core_cmake --> n_core_platform
@@ -243,7 +246,6 @@ flowchart LR
   n_core_library --> n_core_cmake
   n_core_library --> n_core_configaction
   n_core_lsp --> n_core_cdb
-  n_core_lsp --> n_core_cmake
   n_core_lsp --> n_core_fsops
   n_core_lsp --> n_core_index
   n_core_lsp --> n_core_owned_child
@@ -287,6 +289,7 @@ flowchart LR
   n_core_test --> n_core_msvc
   n_core_test --> n_core_process
   n_core_test --> n_core_python
+  n_core_toolchain --> n_core_cmake_presets
   n_core_toolchain --> n_core_platform
   n_core_toolchain --> n_core_run
   n_core_toolchain --> n_core_tools
@@ -302,7 +305,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-50 módulos, 156 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+51 módulos, 158 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -315,8 +318,9 @@ flowchart LR
 | --- | --- | --- |
 | `build` | cdb, cmake, msvc, platform, process, toolchain, tools | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
-| `cdb` | cmake, platform | Identity of include-search namespaces, including previously absent headers. |
-| `cmake` | fsops, msvc, platform, toolchain | Servico CMake: |
+| `cdb` | cmake, cmake_presets, platform | Descoberta e diagnóstico da compilation database do C/C++. |
+| `cmake` | cmake_presets, fsops, msvc, platform, toolchain | Servico CMake: |
+| `cmake_presets` | — | Os configure presets do projeto: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |
@@ -332,19 +336,19 @@ flowchart LR
 | `fswatch` | platform | Debounced, workspace-confined observation of external file-system changes. |
 | `git` | — | Git orquestrado sobre o binario git. |
 | `grafana` | datasource | Observabilidade: |
-| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Handlers for the build / quality / test runners, all async cancelable jobs. |
+| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Request handlers grouped by domain, each implemented as impl Core blocks. |
 | `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
-| `lsp` | cdb, cmake, fsops, index, owned_child, stderr_tail | Subsistema LSP: |
+| `lsp` | cdb, fsops, index, owned_child, stderr_tail | Subsistema LSP: |
 | `msvc` | — | O Visual Studio do Windows, para o build de C/C++. |
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
-| `owned_child` | platform, stderr_tail | A base prova o que diz: |
-| `picotool` | probe, serial | Audited info --device output for RP2040 in picotool 2.2.0/2.3.1. |
+| `owned_child` | platform, stderr_tail | Processo filho de LONGA VIDA com dono unico (D1b.1, DocsPublic/arquitetura/39 §6.1). |
+| `picotool` | probe, serial | Bounded RP2040 BOOTSEL queries; no firmware transfer, force or reboot. |
 | `platform` | — | O que difere por sistema operacional, num lugar so' (DocsPublic/roadmaps/60 §3.2, fatia W1 do porte para o Windows). |
 | `platformio` | lsp, owned_child, platform, process, tools | PlatformIO beyond flashing: |
-| `probe` | process | Deadline, cancellation and retained-output limits for probe-rs queries: |
+| `probe` | process | Sondas de debug conectadas: |
 | `process` | platform | Synchronous line streaming for child processes. |
 | `project` | cmake, dap, fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
 | `python` | run | O dominio python: |
@@ -352,7 +356,7 @@ flowchart LR
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
 | `run` | platform, python | O que "Executar" roda, e como se mostra. |
 | `runconfig` | flash, fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
-| `runtime` | datasource, rpc, settings | Habilitacao dos servicos externos e configuracao dos servidores LSP do Core. |
+| `runtime` | datasource, rpc, settings | The stdio JSON-RPC loop that drives Core as a subprocess. |
 | `serial` | build, platform, toolchain | Portas seriais USB: |
 | `settings` | platform | Settings persistidos em dois níveis (settings.*). |
 | `setup` | tools | Como instalar o que falta — passo a passo OFICIAL, para a distro detectada. |
@@ -360,14 +364,14 @@ flowchart LR
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
-| `toolchain` | platform, run, tools | Toolchain: |
+| `toolchain` | cmake_presets, platform, run, tools | Toolchain: |
 | `tools` | msvc, platform, process | External tool detection. |
 | `workspace` | configaction, fsops, platform, process, python, tools | Workspace opening, project kind detection, and metadata persistence. |
 
 ## Cobertura: todo método IPC tem um lugar
 
-Dos 194 métodos roteados pelo core, 162 seguem o caminho padrão
-e estão num contexto abaixo. Os outros 32 estão aqui,
+Dos 195 métodos roteados pelo core, 162 seguem o caminho padrão
+e estão num contexto abaixo. Os outros 33 estão aqui,
 nomeados, para nada ficar invisível:
 
 **Chamados direto da QML, sem RequestRouter** (fora do padrão — dívida medida em
@@ -378,6 +382,7 @@ nomeados, para nada ficar invisível:
 | `build.run` | `ui/qml/app/AppDomains.qml` |
 | `cargo.check` | `ui/qml/command/CommandDispatcher.qml` |
 | `cargo.metadata` | `ui/qml/command/CommandDispatcher.qml`, `ui/qml/workspace/ProjectHealthActions.qml` |
+| `cmake.selectConfiguration` | `ui/qml/shell/ShellHeaderHost.qml` |
 | `coverage.run` | `ui/qml/app/AppDomains.qml` |
 | `environment.scan` | `ui/qml/workspace/ProjectHealthActions.qml` |
 | `format.capabilities` | `ui/qml/Main.qml` |

@@ -3,6 +3,7 @@
 mod dialects;
 mod environment;
 mod existing;
+mod existing_cdb;
 mod existing_kit;
 mod existing_recovery;
 

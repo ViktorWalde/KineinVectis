@@ -1,5 +1,42 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**CDB em uso e configuração escolhida (`0.206.0`, C-05).** O `cdb::status`
+decide a CDB em uso nesta ordem: `.clangd` da raiz que fixa
+`CompileFlags.CompilationDatabase` → configuração escolhida → `.kinein/build` →
+raiz e `build/` → `binaryDir` dos configure presets → `builddir/` e
+`out/build/`. A ordem e as regras estão na
+[consolidação C §16](../../especificacoes/consolidacao-nativa-de-c.md#16-c1-cdb-de-configurações-existentes-e-coerência-com-o-clangd--desenho-de-2026-11-09).
+Campos novos de `cmake.status`, todos omitidos quando vazios:
+
+```text
+cdbOrigin?           "clangd" | "configuration" | "ide" | "directory" | "preset"
+cdbPreset?           preset cujo binaryDir contem a CDB em uso
+cdbCandidates?       [{ directory, origin, preset? }] toda pasta com CDB achada
+cdbAbsence?          { kind, reason }: por que nao ha CDB em uso apesar da evidencia
+selectedConfiguration?  o preset de .kinein/configuration.json
+```
+
+`cdbAbsence.kind` é `"choiceRequired"` (vários presets com CDB e nenhuma
+escolha registrada; a UI pergunta), `"chosenConfiguration"` (a configuração
+escolhida não tem CDB, saiu dos presets ou o registro está ilegível; nenhuma
+outra a substitui) ou `"clangd"` (o `.clangd` da raiz fixa uma base que a IDE
+não atribui: pasta sem CDB ou forma manual). `reason` é a frase para a pessoa.
+
+`cdbDirectory` continua relativo à raiz quando dentro dela; fora dela é
+absoluto. `cmake.selectConfiguration { preset: string | null }` →
+`CmakeStatusResult`: o nome precisa estar entre os configure presets não
+ocultos (senão `INVALID_PARAMS`, nada gravado); `null` apaga o registro. O
+configure sem preset pedido usa a configuração escolhida antes do preset
+anotado (`presetSource: "configuration"`, com o kit de mesmo nome), e o sucesso
+do configure apaga o registro. O clangd recebe `--compile-commands-dir` da CDB
+em uso, sem a opção quando o `.clangd` decide, e reinicia quando essa pasta muda.
+Na ponte, `cmake.status` e `cmake.selectConfiguration` emitem o mesmo
+`cmakeStatusResolved`, cujo último argumento, `compileDatabase`, leva
+`directory`, `origin`, `preset`, `candidates`, `absenceKind`, `absentBecause`
+(o `reason`), `choiceRequired` (`absenceKind == "choiceRequired"`) e
+`selectedConfiguration` (vazios quando omitidos);
+`CoreClient::cmakeSelectConfiguration("")` envia `null`.
+
 **Kit e definições do configure (`0.204.0`).** Configure com preset da
 tentativa pendente ou do último configure (`incompleteConfigure`, `buildDir`)
 e o configure automático do `build.run` usam o kit ativo: o da tentativa

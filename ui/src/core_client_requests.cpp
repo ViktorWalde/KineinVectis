@@ -322,6 +322,14 @@ void CoreClient::cmakeStatus()
     sendRequest(QStringLiteral("cmake.status"), QJsonObject{});
 }
 
+void CoreClient::cmakeSelectConfiguration(const QString& preset)
+{
+    sendRequest(
+        QStringLiteral("cmake.selectConfiguration"),
+        QJsonObject{{QStringLiteral("preset"),
+                     preset.isEmpty() ? QJsonValue(QJsonValue::Null) : QJsonValue(preset)}});
+}
+
 void CoreClient::cmakePresetsList()
 {
     sendRequest(QStringLiteral("cmake.presets.list"), QJsonObject{});

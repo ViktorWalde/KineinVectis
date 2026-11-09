@@ -181,9 +181,9 @@ terminal, índice ou depurador próprios. Cada etapa só avança com a anterior
 confiável no recorte declarado. A coluna de estado é a visão concreta da 0.4;
 cada atualização datada a substitui, e o detalhe fica nos donos:
 
-| Etapa | Conteúdo | Estado em 2026-11-08 |
+| Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-14 corrigidos com provas; abertos C-04, C-05, C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-17 e C-05 corrigidos com provas; abertos C-04 (com C1-18), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -408,7 +408,23 @@ auditorias e provas posteriores datadas nos donos:**
   orientado a configurar de novo. Causa confirmada por leitura: lista fixa, sem
   o `binaryDir` dos presets. Testes: preset com `binaryDir` próprio já
   configurado, várias CDBs candidatas, escolha visível com origem, CDB obsoleta
-  e retorno ao diretório da IDE. Decisão: corrigir junto de C-04. Estado aberto.
+  e retorno ao diretório da IDE. Decisão: corrigir junto de C-04. Reproduzido
+  em 2026-11-09 com `cmake --preset` real, e com dois achados vizinhos: CDB em
+  `builddir/` sem `--compile-commands-dir` para o clangd, e codemodel de outro
+  build dir. Inventário C1-15–C1-18, decisões do autor (várias candidatas:
+  perguntar; `.clangd` que fixa a base vence; configure no `binaryDir` no C-04)
+  e desenho na
+  [consolidação C §16](../especificacoes/consolidacao-nativa-de-c.md#16-c1-cdb-de-configurações-existentes-e-coerência-com-o-clangd--desenho-de-2026-11-09).
+  Estado corrigido em 2026-11-09 ([40.7 §7.393](40.7-registro-das-entregas.md)),
+  com protocolo 0.206.0. Um dono decide a CDB em uso, e o clangd recebe essa
+  pasta e reinicia quando ela muda. Com várias candidatas, a faixa pergunta, e
+  escolher não reconfigura. O codemodel vem da mesma pasta. Quatro regressões
+  com CMake, GCC, Clang e clangd reais cobrem o argv e diagnósticos que
+  dependem da CDB. Dezesseis mutantes do core e seis do QML reprovam, e a UI
+  nativa isolada mostra a escolha
+  ([§16.1](../especificacoes/consolidacao-nativa-de-c.md#161-integração-e-alcance-das-provas--2026-11-09)).
+  C1-18 (`include`) segue com C-04, que também traz a troca da configuração
+  já escolhida pela UI.
 - **CPP-01 — Contrato de CodeAction incompleto.** Dono e evidência:
   `crates/kinein-core/src/lsp/manager.rs` (pedido no ponto do cursor) e
   `lsp/parse.rs` (aceita só ação literal com `edit` inline). Conferido em

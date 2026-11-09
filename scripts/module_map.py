@@ -566,7 +566,10 @@ def render() -> tuple[str, list[str]]:
     for module in sorted(graph):
         files = module_files(module)
         head = ""
-        for candidate in ([CORE_SRC / module / "mod.rs"] if (CORE_SRC / module).is_dir() else []) + files:
+        # A raiz do modulo (`mod.rs` ou `<modulo>.rs`) fala por ele; o `sorted`
+        # dos arquivos poria `cdb/clangd.rs` antes de `cdb.rs`.
+        roots = [CORE_SRC / module / "mod.rs", CORE_SRC / f"{module}.rs"]
+        for candidate in roots + files:
             if candidate.exists():
                 head = header_comment(candidate)
                 if head:

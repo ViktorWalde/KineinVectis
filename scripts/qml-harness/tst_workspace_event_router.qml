@@ -16,7 +16,7 @@ Item {
         signal statusChanged()
         signal cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
                                    string cdbStaleBecause, string preset, var presetChoices,
-                                   string presetChoicesFile)
+                                   string presetChoicesFile, var compileDatabase)
         signal cmakeConfigureFinished(bool success)
         signal fileSaved(string path)
         signal cargoMetadataResolved(var packages)

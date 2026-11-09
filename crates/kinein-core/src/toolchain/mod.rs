@@ -402,7 +402,7 @@ pub fn set_kit(
 /// quando ele esta la' o compilador efetivo pode NAO ser o que o usuario
 /// escolheu aqui — e a IDE precisa dizer isso em vez de deixar procurar.
 fn preset_toolchain_file(root: &Path, preset: &str) -> Option<String> {
-    selection::preset_value(root, preset, &["toolchainFile"])
+    crate::cmake_presets::preset_value(root, preset, &["toolchainFile"])
 }
 
 /// Candidatos de um papel que existem nesta machine, na ordem do catalogo.

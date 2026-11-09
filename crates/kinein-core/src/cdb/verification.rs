@@ -190,9 +190,7 @@ impl ContextGuard {
     }
     pub(crate) fn is_current_before(&self, deadline: Instant) -> bool {
         let status = crate::cdb::status(&self.root);
-        let selected = status
-            .directory
-            .map(|d| self.root.join(d).join("compile_commands.json"));
+        let selected = status.file(&self.root);
         self.valid
             && !status.stale
             && selected.as_ref() == Some(&self.cdb)

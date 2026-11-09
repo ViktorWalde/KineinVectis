@@ -8,9 +8,9 @@
 > ([61](61-organizacao-da-documentacao.md) §3.3). Este cabeçalho é só o
 > resumo técnico: cabe em 60 linhas (gate), e o que é decisão ou plano mora no dono.
 
-> **RESUMO TÉCNICO (2026-11-08; provas funcionais datadas abaixo).**
+> **RESUMO TÉCNICO (2026-11-09; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.205.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.206.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
@@ -20,7 +20,7 @@
 > → Rust/C/C++ → Python → DAP/QEMU → F5–F9 → algoritmo semântico de ambiente →
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
 > em VM. Fundação transversal (INF-02 e INF-04 no Linux, §§7.390–7.391; INF-03 SQLite, §7.392); dívida na 0.4.
-> Recorte atual: **C1** (consolidação C §4.1), com C-04/C-05 do 62 §3.4; uso confiável
+> Recorte atual: **C1** (consolidação C §4.1), com C-04 do 62 §3.4; uso confiável
 > em projetos pequenos/médios e na própria IDE. Polimento UI/HUD/UX acompanha
 > as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
@@ -51,8 +51,8 @@
 > do preset e guardas de raiz; sete regressões e oito mutantes.
 > **C1 — seletores/buffers (§7.385):** escolhas visuais e buffer preservado.
 > **C1 — instalação em existentes (§7.386):** caminho no kit com prévia, sem
-> troca silenciosa; kit registrado e CDB atual. Rápido de 2026-11-08 (§7.390):
-> 1492 Rust, 8 CTest, 181 QML e 52 arquivos C++. C1 conserva aceites abertos.
+> troca silenciosa. **C-05 (§7.393):** CDB de presets e outras ferramentas,
+> escolha sem reconfigurar e clangd na mesma pasta. C1 conserva aceites abertos.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -61,12 +61,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.205.0 (crates/kinein-protocol, medido em 2026-11-08; o
+protocolo   0.206.0 (crates/kinein-protocol, medido em 2026-11-09; o
             historico das versoes e' o arquitetura/03)
-metodos     194 roteados e 64 eventos (os titulos do arquitetura/03, que o
+metodos     195 roteados e 64 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   181 tst_*.qml em scripts/qml-harness (medido em 2026-11-08)
-testes      1492 Rust no gate rápido de 2026-11-08 (40.7 §7.390);
+harnesses   182 tst_*.qml em scripts/qml-harness (medido em 2026-11-09)
+testes      1521 Rust no gate rápido de 2026-11-09 (40.7 §7.393);
+            1492 Rust no gate rápido de 2026-11-08 (40.7 §7.390);
             1469 Rust no gate rápido de 2026-11-08 (40.7 §7.387);
             1468 Rust no gate rápido de 2026-11-08 (40.7 §7.386);
             1462 Rust no gate rápido de 2026-11-05 (40.7 §7.384);
