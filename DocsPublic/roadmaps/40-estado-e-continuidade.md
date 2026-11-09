@@ -10,7 +10,7 @@
 
 > **RESUMO TÉCNICO (2026-11-09; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.207.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.208.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
@@ -19,7 +19,7 @@
 > **Ordem (autor, 2026-11-08; 62 §3, com estado por etapa):** C com C23 → C++
 > → Rust/C/C++ → Python → DAP/QEMU → F5–F9 → algoritmo semântico de ambiente →
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
-> em VM. Fundação transversal (INF-02 e INF-04 no Linux, §§7.390–7.391; INF-03 SQLite, §7.392); dívida na 0.4.
+> em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395); dívida na 0.4.
 > Recorte atual: **C1** (consolidação C §4.1), com C-04 do 62 §3.4; uso confiável
 > em projetos pequenos/médios e na própria IDE. Polimento UI/HUD/UX acompanha
 > as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
@@ -61,12 +61,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.207.0 (crates/kinein-protocol, medido em 2026-11-09; o
+protocolo   0.208.0 (crates/kinein-protocol, medido em 2026-11-09; o
             historico das versoes e' o arquitetura/03)
 metodos     195 roteados e 64 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   182 tst_*.qml em scripts/qml-harness (medido em 2026-11-09)
-testes      1526 Rust no gate rápido de 2026-11-09 (40.7 §7.394);
+testes      1530 Rust no gate rápido de 2026-11-09 (40.7 §7.395);
+            1526 Rust no gate rápido de 2026-11-09 (40.7 §7.394);
             1521 Rust no gate rápido de 2026-11-09 (40.7 §7.393);
             1492 Rust no gate rápido de 2026-11-08 (40.7 §7.390);
             1469 Rust no gate rápido de 2026-11-08 (40.7 §7.387);

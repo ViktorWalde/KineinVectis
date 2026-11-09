@@ -62,6 +62,17 @@ pub(super) fn emit_locked_render(events: &EventSender, id: &str, state: &Termina
     let lines: Vec<Value> = (0..rows)
         .map(|row| build_line(grid, row, cols, scrollback))
         .collect();
+    // INF-05: as linhas que continuam na seguinte por quebra suave. O
+    // emulador marca a última célula da linha quebrada; sem a marca, quem
+    // junta as linhas adivinhava pelo comprimento.
+    let wrapped: Vec<usize> = (0..rows)
+        .filter(|&row| {
+            cols > 0
+                && grid[visible_line(row, scrollback)][Column(cols - 1)]
+                    .flags
+                    .contains(Flags::WRAPLINE)
+        })
+        .collect();
 
     let mut frame = json!({
         "id": id,
@@ -87,6 +98,7 @@ pub(super) fn emit_locked_render(events: &EventSender, id: &str, state: &Termina
         "scrollback": scrollback,
         "scrollbackMax": scrollback_max,
         "lines": lines,
+        "wrapped": wrapped,
     });
     if let Some(notice) = &state.notice {
         frame["notice"] = json!(notice);
@@ -121,6 +133,12 @@ const DEFAULT_STYLE: CellStyle = (
     false,
 );
 
+/// A linha do emulador que a linha visível `row` mostra: `display_offset`
+/// desloca a janela para o histórico.
+fn visible_line(row: usize, display_offset: usize) -> Line {
+    Line(i32::try_from(row).unwrap_or(0) - i32::try_from(display_offset).unwrap_or(0))
+}
+
 /// Monta uma linha VISÍVEL do grid como array de spans (runs de mesmo estilo).
 ///
 /// `display_offset` desloca a janela para o histórico: a linha visível `row`
@@ -132,7 +150,7 @@ fn build_line(grid: &Grid<Cell>, row: usize, cols: usize, display_offset: usize)
     let mut run_style: Option<CellStyle> = None;
     let mut run_isolated = false;
 
-    let line = Line(i32::try_from(row).unwrap_or(0) - i32::try_from(display_offset).unwrap_or(0));
+    let line = visible_line(row, display_offset);
     for col in 0..cols {
         let cell = &grid[line][Column(col)];
         // A segunda célula de um glifo largo ocupa espaço na grade, mas não
@@ -262,7 +280,9 @@ pub(in crate::terminal) mod tests {
 
     use kinein_protocol::JsonRpcRequest;
 
-    use super::super::state::TerminalState;
+    use alacritty_terminal::grid::Scroll;
+
+    use super::super::state::{GridSize, TerminalState};
     use super::{build_line, emit_render};
 
     /// Junta o texto de todos os spans de todas as linhas de um render.
@@ -356,5 +376,67 @@ pub(in crate::terminal) mod tests {
         assert!(spans.iter().all(|span| span["fg"] == 2));
         assert!(spans.iter().all(|span| span["bold"] == true));
         assert_eq!(state.term.grid().cursor.point.column.0, 4);
+    }
+
+    fn wrapped(state: TerminalState) -> (TerminalState, Vec<u64>) {
+        let (sender, receiver) = mpsc::channel();
+        let shared = Arc::new(Mutex::new(state));
+        emit_render(&sender, "t1", &shared);
+        let params = receiver
+            .recv_timeout(Duration::from_secs(1))
+            .unwrap()
+            .params
+            .unwrap();
+        let rows = params["wrapped"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|row| row.as_u64().unwrap())
+            .collect();
+        let state = Arc::try_unwrap(shared).ok().unwrap().into_inner().unwrap();
+        (state, rows)
+    }
+
+    /// INF-05: a marca vem do emulador. Uma quebra num espaço é quebra; uma
+    /// linha cheia que o programa terminou com `\r\n` não é.
+    #[test]
+    fn wrapped_marks_soft_wraps_even_at_a_space_and_never_a_line_that_ended() {
+        let mut state = TerminalState::new(6, 10, 0);
+        state.process(b"aaaaaaaaa bbb\r\ncccccccccc\r\n0123456789abcdefghijXY");
+        let (_, rows) = wrapped(state);
+        assert_eq!(rows, [0, 3, 4]);
+    }
+
+    /// A marca segue o refluxo do redimensionamento e a janela rolada.
+    #[test]
+    fn wrapped_follows_reflow_and_the_scrolled_view() {
+        let mut state = TerminalState::new(3, 10, 100);
+        state.process(b"0123456789abcde");
+        let (mut state, rows) = wrapped(state);
+        assert_eq!(rows, [0]);
+        state.term.resize(GridSize::new(3, 20));
+        let (mut state, rows) = wrapped(state);
+        assert_eq!(rows, Vec::<u64>::new());
+        // Medido com o alacritty_terminal 0.26: ao estreitar, a linha do
+        // cursor fica no topo e o começo dela vai para o histórico, com a
+        // marca que a janela rolada mostra.
+        state.term.resize(GridSize::new(3, 5));
+        let (mut state, rows) = wrapped(state);
+        assert_eq!(rows, Vec::<u64>::new());
+        state.term.scroll_display(Scroll::Delta(2));
+        let (_, rows) = wrapped(state);
+        assert_eq!(rows, [0, 1]);
+
+        let mut state = TerminalState::new(2, 10, 100);
+        state.process(b"aaaaaaaaaaaa\r\nb\r\nc");
+        let (mut state, rows) = wrapped(state);
+        assert_eq!(rows, Vec::<u64>::new(), "a quebra rolou para o histórico");
+        state.term.scroll_display(Scroll::Delta(2));
+        let (_, rows) = wrapped(state);
+        assert_eq!(
+            rows,
+            [0],
+            "a janela rolada mostra a quebra na primeira linha"
+        );
     }
 }

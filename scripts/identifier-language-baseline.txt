@@ -1717,8 +1717,7 @@ crates/kinein-core/src/tests/lsp_server.rs	resposta	2
 crates/kinein-core/src/tests/lsp_server.rs	saida	3
 crates/kinein-core/src/tests/lsp_server.rs	secao	2
 crates/kinein-core/src/tests/lsp_server.rs	ultimo	2
-crates/kinein-core/src/tests/mod.rs	cheia	2
-crates/kinein-core/src/tests/mod.rs	linhas	10
+crates/kinein-core/src/tests/mod.rs	linhas	4
 crates/kinein-core/src/tests/mod.rs	sessao	3
 crates/kinein-core/src/tests/project.rs	achado	3
 crates/kinein-core/src/tests/project.rs	achados	7

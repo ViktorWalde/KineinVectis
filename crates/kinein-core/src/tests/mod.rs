@@ -78,6 +78,7 @@ mod sqlite_wal_pair;
 mod syntax;
 mod syntax_check;
 mod terminal;
+mod terminal_lines;
 mod terminal_shells;
 mod toolchain;
 mod tools;
@@ -99,41 +100,63 @@ fn render_lines(event: &kinein_protocol::JsonRpcRequest) -> Vec<String> {
         .and_then(|p| p["cols"].as_u64())
         .and_then(|c| usize::try_from(c).ok())
         .unwrap_or(80);
-    let raw: Vec<String> = params
+    // INF-05 (0.208.0): o core diz quais linhas continuam na seguinte. Ate'
+    // 2026-11-09 este ajudante adivinhava pelo comprimento, e uma quebra
+    // exatamente num espaco partia a linha.
+    let wrapped: Vec<usize> = params
+        .and_then(|p| p["wrapped"].as_array())
+        .map(|rows| {
+            rows.iter()
+                .filter_map(serde_json::Value::as_u64)
+                .filter_map(|row| usize::try_from(row).ok())
+                .collect()
+        })
+        .unwrap_or_default();
+    let raw: Vec<(String, usize)> = params
         .and_then(|p| p["lines"].as_array())
         .map(|lines| {
             lines
                 .iter()
                 .map(|line| {
-                    line.as_array()
-                        .map(|spans| {
-                            spans
-                                .iter()
-                                .filter_map(|s| s["text"].as_str())
-                                .collect::<String>()
-                        })
-                        .unwrap_or_default()
+                    let spans = line.as_array().map(Vec::as_slice).unwrap_or_default();
+                    let text = spans
+                        .iter()
+                        .filter_map(|s| s["text"].as_str())
+                        .collect::<String>();
+                    let cells = spans
+                        .iter()
+                        .filter_map(|s| s["cells"].as_u64())
+                        .filter_map(|c| usize::try_from(c).ok())
+                        .sum();
+                    (text, cells)
                 })
                 .collect()
         })
         .unwrap_or_default();
-    let mut linhas: Vec<String> = Vec::new();
-    let mut continua = false;
-    for row in raw {
-        let cheia = row.chars().count() >= cols && !row.ends_with(' ');
-        if continua {
-            if let Some(last) = linhas.last_mut() {
-                last.push_str(row.trim_end());
-            }
+    let mut joined: Vec<String> = Vec::new();
+    let mut continues = false;
+    for (index, (text, cells)) in raw.into_iter().enumerate() {
+        // A linha quebrada ocupa todas as colunas: o espaco final que o core
+        // descarta (estilo default) faz parte do texto.
+        let wraps = wrapped.contains(&index);
+        let part = if wraps {
+            format!("{text}{}", " ".repeat(cols.saturating_sub(cells)))
         } else {
-            linhas.push(row.trim_end().to_owned());
+            text
+        };
+        match joined.last_mut() {
+            Some(last) if continues => last.push_str(&part),
+            _ => joined.push(part),
         }
-        continua = cheia;
+        continues = wraps;
     }
-    while linhas.last().is_some_and(String::is_empty) {
-        linhas.pop();
+    for line in &mut joined {
+        line.truncate(line.trim_end().len());
     }
-    linhas
+    while joined.last().is_some_and(String::is_empty) {
+        joined.pop();
+    }
+    joined
 }
 
 /// O que uma EXECUCAO (`run.start`/`run.script`, uma sessao de terminal desde

@@ -197,8 +197,9 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
-e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-08: INF-02
-corrigido no recorte Linux (bash, zsh e fish); UI-01 aberto; INF-01 corrigido no recorte Linux. A dívida
+e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-09: INF-01
+e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
+INF-04 e INF-05 corrigidos; UI-01 aberto. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -564,7 +565,12 @@ auditorias e provas posteriores datadas nos donos:**
   na última célula da linha quebrada, com contrato e versão nova do protocolo;
   o ajudante junta só por essa marca. Commit próprio, depois do C1-18. Testes:
   quebra exatamente num espaço, linha cheia sem quebra, quebra dupla e
-  redimensionamento, com mutações. Estado aberto.
+  redimensionamento, com mutações. Estado corrigido em 2026-11-09
+  ([40.7 §7.395](40.7-registro-das-entregas.md)), protocolo 0.208.0: o render
+  emite `wrapped`, e o ajudante junta só pela marca, devolvendo o espaço final
+  que o render descarta. Com o ajudante anterior, o teste reprova sem o
+  `TMPDIR` do gate e passa com ele; agora passa nos dois. Oito mutações
+  reprovam.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

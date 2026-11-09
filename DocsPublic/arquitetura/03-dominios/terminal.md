@@ -144,7 +144,8 @@ event.terminal.render {           (throttle ~30fps; substitui event.terminal.dat
   "lines": [ [ { "text": str, "cells": u16,
                  "fg"?: idx|"#rrggbb", "bg"?: idx|"#rrggbb",
                  "bold"?: bool, "italic"?: bool, "underline"?: bool,
-                 "inverse"?: bool } ... ] ... ]
+                 "inverse"?: bool } ... ] ... ],
+  "wrapped": [u16, ...]          (0.208.0 — linhas visíveis que continuam na seguinte)
 }
 event.terminal.closed  { "id": string, "exitCode": int|null }
 event.terminal.command { "id": string,                 (0.205.0)
@@ -163,6 +164,17 @@ Desde `0.57.0`, `shape` e `blinking` preservam o estado VT solicitado por
 preferência do terminal Kinein (`bar`) e sempre emite uma forma concreta; forma
 explícita e piscagem pertencem ao programa no PTY. A UI não deve inferir a CLI
 ativa nem aplicar geometria específica para Claude/Codex.
+
+Desde `0.208.0` (INF-05 do 62 §3.4), `wrapped` lista, em ordem crescente, os
+índices de `lines` cujo texto continua na linha seguinte por quebra suave: o
+emulador marca a última célula da linha quebrada (`WRAPLINE` do
+`alacritty_terminal`). Uma linha cheia que terminou com quebra de linha do
+programa não entra, e a marca segue o refluxo do redimensionamento e a janela
+rolada (`scrollback`). Uma linha quebrada ocupa todas as `cols`: quando a soma
+de `cells` dos spans é menor, a diferença é o espaço final em estilo default
+que o core descartou, e ele faz parte do texto juntado. Sem a marca, quem
+junta as linhas tinha de adivinhar pelo comprimento, e uma quebra exatamente
+num espaço parecia um fim de linha. A UI pode ignorar o campo.
 
 `scrollback`/`scrollbackMax` (`0.43.0`, B1/B2 de DocsPublic/roadmaps/24) existem porque a UI
 **não tem como saber sozinha** se há histórico nem onde a view está: o core é

@@ -45,6 +45,8 @@ hostname sendall urandom urlparse replacen opcode
 maxlen wfile getpid
 waitpid waitstatus exitcode execvpe sigkill ppid pids gids nsecs nanos millis killpg sigterm
 openpty decscusr crbegin crend cstring memcpy unistd ssize ceil freq
+# Flags::WRAPLINE do alacritty_terminal e o refluxo da grade ao redimensionar (INF-05).
+wrapline reflow
 tokio rustls webpki ureq rusqlite rustix nodelay
 # rustix::io::Errno::PERM — constante POSIX EPERM (operation not permitted).
 perm
