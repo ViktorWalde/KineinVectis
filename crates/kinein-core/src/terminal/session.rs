@@ -12,7 +12,9 @@ use std::{
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
+        mpsc,
     },
+    time::Duration,
 };
 
 use alacritty_terminal::grid::Scroll;
@@ -100,6 +102,8 @@ pub struct TerminalManager {
     shell: Option<String>,
     /// Where the shell integration scripts are written (INF-02).
     integration_root: std::path::PathBuf,
+    /// How long the exit waits for the reader to drain the PTY (INF-04).
+    reader_drain: Duration,
 }
 
 impl fmt::Debug for TerminalManager {
@@ -123,7 +127,14 @@ impl TerminalManager {
             integration_root: crate::platform::state_home()
                 .join("kinein-vectis")
                 .join("shell-integration"),
+            reader_drain: threads::READER_DRAIN,
         }
+    }
+
+    /// Bounds the wait for the reader at exit (the test of a held PTY).
+    #[cfg(test)]
+    pub(crate) const fn use_reader_drain(&mut self, limit: Duration) {
+        self.reader_drain = limit;
     }
 
     /// Starts `shell` instead of the user's in `open` (dispatch tests).
@@ -375,9 +386,14 @@ impl TerminalManager {
         let dirty = Arc::new(AtomicBool::new(false));
         let pending = Arc::new(Mutex::new(start.pending.clone()));
 
-        self.spawn_reader(&id, reader, &state, &dirty, &writer, &pending);
+        let shared = threads::Shared {
+            state: &state,
+            pending: &pending,
+        };
+        let (drained, reader_done) = mpsc::channel();
+        self.spawn_reader(&id, reader, &shared, &dirty, &writer, drained);
         self.spawn_emitter(&id, &state, &dirty, &running);
-        self.spawn_waiter(&id, &child, &running, &state, &pending, resource);
+        self.spawn_waiter(&id, &child, &running, &shared, reader_done, resource);
 
         self.sessions.insert(
             id.clone(),
@@ -653,6 +669,7 @@ fn validate_command(command: &str) -> Result<(), TerminalError> {
 
 #[cfg(test)]
 mod tests {
+    mod exit_order;
     mod finished;
     mod lifetime;
 

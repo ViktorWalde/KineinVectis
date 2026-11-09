@@ -16,6 +16,7 @@ use std::{
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
+        mpsc,
     },
     thread,
     time::Duration,
@@ -37,7 +38,17 @@ use super::{PendingCommand, TerminalManager, take};
 const READ_CHUNK_BYTES: usize = 8192;
 /// Cadência máxima de render (~30fps): coalesce rajadas de saída.
 const FRAME: Duration = Duration::from_millis(33);
+/// The longest the exit waits for the reader to reach EOF. Only a background
+/// child that ignores SIGHUP and keeps the PTY open makes it count.
+pub(super) const READER_DRAIN: Duration = Duration::from_secs(2);
 const CHILD_POLL: Duration = Duration::from_millis(50);
+
+/// What the reader and the waiter of one session share: the emulator state
+/// and the command held for the first prompt.
+pub(super) struct Shared<'a> {
+    pub(super) state: &'a Arc<Mutex<TerminalState>>,
+    pub(super) pending: &'a PendingCommand,
+}
 
 impl TerminalManager {
     /// Thread leitora: bytes crus do PTY → `parser.process` → marca sujo.
@@ -45,15 +56,15 @@ impl TerminalManager {
         &self,
         id: &str,
         mut reader: Box<dyn Read + Send>,
-        state: &Arc<Mutex<TerminalState>>,
+        shared: &Shared<'_>,
         dirty: &Arc<AtomicBool>,
         writer: &Arc<Mutex<Box<dyn Write + Send>>>,
-        pending: &PendingCommand,
+        drained: mpsc::Sender<()>,
     ) {
-        let state = Arc::clone(state);
+        let state = Arc::clone(shared.state);
         let dirty = Arc::clone(dirty);
         let writer = Arc::clone(writer);
-        let pending = Arc::clone(pending);
+        let pending = Arc::clone(shared.pending);
         let events = self.events.clone();
         let id = id.to_owned();
         // Only a session that starts with a command looks for the marker, and
@@ -91,8 +102,10 @@ impl TerminalManager {
                 }
                 dirty.store(true, Ordering::SeqCst);
             }
-            // EOF: garante o render do estado final antes do `closed`.
+            // EOF: garante o render do estado final antes do `closed`, que a
+            // espera do processo só emite depois que este fim se desconecta.
             emit_render(&events, &id, &state);
+            drop(drained);
         });
     }
 
@@ -125,14 +138,15 @@ impl TerminalManager {
         id: &str,
         child: &SharedChild,
         running: &Arc<AtomicBool>,
-        state: &Arc<Mutex<TerminalState>>,
-        pending: &PendingCommand,
+        shared: &Shared<'_>,
+        reader_done: mpsc::Receiver<()>,
         resource: impl Send + 'static,
     ) {
+        let drain = self.reader_drain;
         let running = Arc::clone(running);
         let child = Arc::clone(child);
-        let state = Arc::clone(state);
-        let pending = Arc::clone(pending);
+        let state = Arc::clone(shared.state);
+        let pending = Arc::clone(shared.pending);
         let events = self.events.clone();
         let id = id.to_owned();
         thread::spawn(move || {
@@ -176,6 +190,9 @@ impl TerminalManager {
             if take(&pending).is_some() {
                 settle(&events, &id, false, TerminalCommandReason::Exit);
             }
+            // The last output before the end: the reader disconnects at EOF.
+            // A child that keeps the PTY open is waited for only `drain`.
+            let _drained = reader_done.recv_timeout(drain);
             running.store(false, Ordering::SeqCst);
             drop(events.send(JsonRpcRequest::notification(
                 "event.terminal.closed",

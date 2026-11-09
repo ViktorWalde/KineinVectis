@@ -475,6 +475,30 @@ auditorias e provas posteriores datadas nos donos:**
   local: bash anterior a 5.1, fish anterior a 4 (sem marcador nativo, cobre-o a
   função injetada) e Windows, cujo shell não tem integração e recebe o comando
   na abertura.
+- **INF-04 — Fim da sessão de terminal antes da saída final.** Dono e
+  evidência: `crates/kinein-core/src/terminal/session/threads.rs`. Observado
+  em 2026-11-09: `finished::a_finished_session_stays_readable_but_takes_no_input`
+  falhou uma vez sob carga (um `cargo check` de editor em paralelo), sem repetir
+  em 40 rodadas sozinho e 15 com a suíte do terminal; já tinha falhado uma vez
+  na sessão do INF-02. Causa confirmada: a thread que espera o processo zera
+  `running` e emite `event.terminal.closed` assim que ele sai, sem esperar a
+  leitora drenar o PTY, embora a leitora prometa o render do estado final antes
+  do `closed`. Uma sonda que segura o lock do estado, o que para a leitora, e
+  libera o processo por um FIFO recebeu `closed` antes do render com a última
+  linha. No teste, a rolagem acontece com o histórico ainda crescendo.
+  Severidade média: o fim da sessão é anunciado com saída por entrar, e quem a
+  lê no `closed` perde o final. Decisão do autor em 2026-11-09: corrigir agora,
+  em commit próprio. Correção: a leitora sinaliza o EOF, e a espera do processo
+  aguarda esse sinal antes de `running` e `closed`, com teto para o filho em
+  segundo plano que mantém o PTY aberto. Testes: a ordem com a leitora parada,
+  o teto com um filho que segura o PTY, a matriz `terminal_shells` e mutações
+  da espera e do teto. Estado corrigido em 2026-11-09
+  ([40.7 §7.391](40.7-registro-das-entregas.md)): a leitora sinaliza o EOF
+  depois do render final, e o `closed` espera esse sinal, com teto de 2 s. Com
+  a leitora parada pelo lock do estado, não há `closed` até ela terminar, e o
+  render da última linha vem antes dele; com um filho que segura o PTY, a
+  sessão termina no teto. Três mutações reprovam. A carga de CPU sozinha não
+  reproduziu a falha original, nem antes nem depois.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

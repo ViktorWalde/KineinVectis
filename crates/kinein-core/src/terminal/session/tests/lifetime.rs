@@ -99,9 +99,9 @@ fn dropping_the_manager_terminates_a_stubborn_process() {
     wait_closed(&receiver, &[id]);
 }
 
-struct ChildCleanup {
-    pid: String,
-    active: bool,
+pub(super) struct ChildCleanup {
+    pub(super) pid: String,
+    pub(super) active: bool,
 }
 impl Drop for ChildCleanup {
     fn drop(&mut self) {
@@ -111,7 +111,7 @@ impl Drop for ChildCleanup {
     }
 }
 
-fn process_running(pid: &str) -> bool {
+pub(super) fn process_running(pid: &str) -> bool {
     std::fs::read_to_string(format!("/proc/{pid}/status")).map_or_else(
         |_| crate::process_alive(pid),
         |status| {
@@ -247,7 +247,20 @@ fn observation_failure_has_a_notice_preserves_vt_and_recovers_without_false_exit
         .acquire(device, "serial.monitor", "Monitor", None)
         .unwrap();
     let pending = Arc::new(Mutex::new(None));
-    manager.spawn_waiter("notice-test", &child, &running, &state, &pending, resource);
+    let shared = super::super::threads::Shared {
+        state: &state,
+        pending: &pending,
+    };
+    // No reader here: the end that would signal its EOF is already dropped.
+    let reader_done = mpsc::channel().1;
+    manager.spawn_waiter(
+        "notice-test",
+        &child,
+        &running,
+        &shared,
+        reader_done,
+        resource,
+    );
     let failed = wait_frame(&receiver, true);
     assert_eq!(failed["notice"]["code"], "INTERNAL_ERROR");
     assert!(
