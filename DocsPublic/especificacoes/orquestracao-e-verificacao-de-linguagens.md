@@ -396,3 +396,84 @@ Isso aceita a jornada descrita em Linux, sem declarar todos os projetos C,
 Windows, cross ou o assistente completo consolidados.
 O fechamento da etapa C segue C1–C8; o corpus C11 continua como regressão,
 enquanto C23 e os demais fluxos da linguagem recebem integração e provas próprias.
+
+## 13. Etapas 7 e 8 da 0.4: ambiente semântico e núcleo profundo do algoritmo
+
+**Decisão do autor de 2026-11-08.** O algoritmo de complexidade intermediária
+(etapa 7 do [62 §3](../roadmaps/62-base-publica-0.4.md#3-ordem-e-critérios-de-fechamento))
+é uma camada preparatória, não o limite de profundidade do algoritmo final da
+0.4. A etapa 8 entrega um núcleo profundo e delimitado, com comportamento,
+complexidade esperada, falhas e aceite definidos aqui. Não exige todo o
+modelo profundo do [56](../roadmaps/56-motor-semantico-profundo-cpp-rust.md)
+nem um motor semântico universal. A 0.4.x amplia cobertura, desempenho, casos
+extremos e especializações sobre os mesmos contratos, sem refazer o motor.
+
+### 13.1 Etapa 7 — leitura e normalização de ambientes
+
+Lê a configuração essencial de cada ecossistema pelas interfaces oficiais e
+normaliza o resultado em contextos com procedência. Não executa código do
+projeto ao abrir e não reescreve manifests.
+
+| Ecossistema | Fontes lidas |
+| --- | --- |
+| C/C++ | Presets com herança, `binaryDir`, `toolchainFile` e variáveis de cache; todas as unidades de cada CDB; todas as configurações do CMake File API (`codemodel-v2`, `toolchains-v1`); cache do CMake; kit da IDE; `CC`/`CXX` do ambiente |
+| Rust | `cargo metadata` (workspace, pacotes, alvos e features), `rust-toolchain(.toml)`, `.cargo/config.toml` (alvo, flags e ambiente) e `Cargo.lock` |
+| Python | Interpretador e venv (`pyvenv.cfg`), `pyproject.toml` (`requires-python` e seções das ferramentas), `pyrightconfig.json`, configuração do Ruff e do pytest, `uv.lock` |
+
+O contrato representa, desde a etapa 7, **vários alvos, dependências,
+evidências e configurações simultâneas**:
+
+- **Contexto:** identidade estável derivada de workspace, ecossistema,
+  projeto/pacote, alvo, configuração, ferramenta efetiva e opções relevantes;
+  nunca só o caminho do arquivo.
+- **Arquivo → contextos (1:N):** um fonte ou header pertence a todos os
+  contextos que o compilam; nenhum é descartado (resolve o modelo de C-03).
+- **Fato:** valor com produtor, arquivo de origem, revisão (digest),
+  estado (`observed`, `derived`, `selected`, `ambiguous`, `stale`,
+  `unavailable`) e completude.
+- **Dependência:** referência às arestas dos grafos de origem (alvos CMake,
+  pacotes Cargo), sem copiá-los num grafo próprio.
+
+Complexidade esperada: leitura linear no tamanho das entradas; releitura
+incremental só da fonte cuja revisão mudou. Falhas: ferramenta ausente vira
+`unavailable` com motivo; arquivo malformado, resultado parcial explicado;
+fontes em conflito ficam `ambiguous` com as alternativas preservadas.
+Aceite: corpus com o mesmo `.c` em dois alvos, presets com `binaryDir`
+próprios, workspace Cargo com features e alvos, dois venvs com dependências
+diferentes e projeto misto Rust/C; resultado esperado por contexto, mutação de
+cada guarda de normalização e nenhuma execução de código do projeto.
+
+### 13.2 Etapa 8 — núcleo profundo obrigatório na 0.4
+
+O algoritmo especializado consome os contextos da etapa 7 e os produtores
+reais (compilador, clangd, Cargo/rustc/Clippy, rust-analyzer, basedpyright,
+Ruff, testes e DAP). Quatro capacidades são obrigatórias:
+
+| Capacidade | Comportamento exigido |
+| --- | --- |
+| Correlação de evidências | Liga cada evidência ao contexto e à revisão do documento que a produziram; detecta contradições entre produtores (contexto do LSP diferente do build, kit diferente da CDB, analisador no host enquanto o build usa outro alvo) e as apresenta com as duas origens, sem escolher uma em silêncio |
+| Propagação de invalidação | Grafo fato → resultado derivado; uma revisão nova de documento, header, preset, CDB, manifest, lockfile ou venv invalida todos os dependentes transitivos; resultado de geração antiga nunca é publicado. Invalidar a mais custa desempenho; invalidar a menos é defeito |
+| Análise de impacto contextual | Dada uma mudança (editar header, trocar feature, preset, kit ou venv), lista contextos, alvos, unidades e testes afetados, com a evidência de cada aresta; o que não é observável fica `unknown`, nunca omitido |
+| Verificação entre configurações | Uma correção ou refatoração é verificada em todos os contextos afetados (Debug/Release, host/ARM, features, venvs) pelos verificadores existentes de cada produtor; resultado por contexto (`newError`, `noNewError`, `notVerified`); a agregação nunca promove `notVerified` a sucesso |
+
+Complexidade esperada: propagação e impacto proporcionais ao subgrafo afetado
+(percurso linear em vértices e arestas alcançados), não ao projeto inteiro;
+verificação limitada por orçamento por contexto, com cancelamento; memória
+proporcional aos fatos retidos. Metas numéricas só depois do baseline do corpus.
+
+Falhas que o núcleo trata explicitamente: ciclo inesperado no grafo de fatos
+(detectado e recusado), produtor ausente ou morto, evidência parcial ou
+contraditória, revisão alterada durante a verificação (resultado descartado),
+troca de workspace, orçamento esgotado (`notVerified` com motivo), CDB enorme
+ou com unidades duplicadas e header gerado ausente.
+
+Aceite: corpus da etapa 7 ampliado com C++ Debug/Release, Rust com features e
+alvos, dois venvs e Rust/C; mutação de cada guarda (pular invalidação,
+subnotificar impacto, agregar `notVerified` como sucesso, publicar geração
+antiga); testes de ordem temporal sem `sleep`; prévia por contexto na UI
+nativa; latência e recursos medidos; camadas de §3.5 do 62 aplicadas.
+
+**Fora da 0.4:** inferência de tipos, CFG/dataflow e análise simbólica
+próprias; grafo universal que copie CMake ou Cargo; solver de ABI entre
+linguagens; demais capacidades do 56. Elas não são pré-condição do núcleo e
+podem crescer sobre os mesmos contratos depois da 0.4.

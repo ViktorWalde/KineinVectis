@@ -19,6 +19,12 @@
 > API/CDB, Cargo Metadata) — é o Project Graph desta página começando a
 > existir, fatia a fatia, pelo `roadmaps/42` P0. Scheduler, brokers e RAM
 > budget continuam só aqui.
+>
+> **Revisão de 2026-11-08.** Um núcleo delimitado deste alvo entra na 0.4 como
+> etapa 8 do 62 §3: correlação de evidências, propagação de invalidação,
+> análise de impacto contextual e verificação entre configurações, conforme a
+> [orquestração §13](../especificacoes/orquestracao-e-verificacao-de-linguagens.md#13-etapas-7-e-8-da-04-ambiente-semântico-e-núcleo-profundo-do-algoritmo).
+> O restante desta página continua sendo direção posterior.
 
 ## 1. Decisão executiva
 

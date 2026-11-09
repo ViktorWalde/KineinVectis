@@ -187,17 +187,17 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
-| 5. DAP e QEMU | F2/F3 sólidos sobre as jornadas anteriores; as partes de depuração (C5) e QEMU (C6) de cada linguagem fecham aqui | Base existente (`dap/`, GDB, LLDB, probe-rs, debugpy; QEMU `lm3s6965evb` no gate embarcado); aceites F2/F3 abertos |
+| 5. DAP e QEMU | F2/F3 sólidos sobre as jornadas anteriores; as partes de depuração (C5) e QEMU (C6) de cada linguagem fecham aqui (confirmado pelo autor em 2026-11-08) | Base existente (`dap/`, GDB, LLDB, probe-rs, debugpy; QEMU `lm3s6965evb` no gate embarcado); aceites F2/F3 abertos |
 | 6. F5–F9 | SVD, VFS, plotagem, notebooks e engenharia (B6, B8, B9) | SVD, VFS e engenharia parciais; plotagem e notebooks ausentes ([infraestrutura §2](../especificacoes/infraestrutura-fundamental-0.4.md#2-ponto-de-partida--inspeção-de-2026-11-03)) |
-| 7. Algoritmo semântico de ambiente | Leitura básica/intermediária da configuração essencial de ambiente de cada ecossistema: presets e toolchain file, Cargo e `rust-toolchain`, `pyproject` e venv | Não iniciada; base em `toolchain/`, `project/` e `index/context/` |
-| 8. Algoritmo especializado | Fase dedicada do verificador/assistente (B4, §3.3); última etapa de implementação | Recorte host S0/S1 integrado (40.7 §7.372); fase dedicada não iniciada |
+| 7. Algoritmo semântico de ambiente | Camada preparatória: leitura básica/intermediária da configuração essencial de cada ecossistema (presets e toolchain file, Cargo e `rust-toolchain`, `pyproject` e venv), com contratos para vários alvos, dependências, evidências e configurações simultâneas ([orquestração §13.1](../especificacoes/orquestracao-e-verificacao-de-linguagens.md#131-etapa-7--leitura-e-normalização-de-ambientes)) | Não iniciada; base em `toolchain/`, `project/` e `index/context/` |
+| 8. Algoritmo especializado | Núcleo profundo delimitado e obrigatório: correlação de evidências, propagação de invalidação, análise de impacto contextual e verificação entre configurações ([orquestração §13.2](../especificacoes/orquestracao-e-verificacao-de-linguagens.md#132-etapa-8--núcleo-profundo-obrigatório-na-04)); fase dedicada do verificador/assistente (B4, §3.3) e última etapa de implementação | Recorte host S0/S1 integrado (40.7 §7.372); fase dedicada não iniciada |
 | 9. Camadas finais de teste | Varredura rigorosa de §3.5 sobre o produto inteiro | Gates atuais em uso por fatia; camadas novas de §3.5 a desenhar |
 | 10. Windows básico em VM | Compatibilidade ao menos funcional, conforme B7 em §3.2 | Porte pausado na W6b4 ([60](60-windows-e-edicao-especial.md) §3.3); VM a preparar |
 | 11. Fechamento | Polimento restante e B5 | Não iniciada |
 
 A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
-e zsh reais) é o primeiro item. Estado transversal em 2026-11-08: INF-02
+e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-08: INF-02
 aberto e próximo; UI-01 aberto; INF-01 corrigido no recorte Linux. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
@@ -258,7 +258,7 @@ frente de colaboração.
 | Bloqueador | Entrega exigida | Evidência mínima e dono |
 | --- | --- | --- |
 | B6 — Ambiente e ciclo embarcado | F1, F2, F3 e F5: perfis sem edição manual de JSON, DAP consolidado, compilar/emular e visualizador SVD | Toolchains reais; jornadas ARM/RISC-V com console e breakpoint; árvore SVD offline e valores no debug; especificação F1–F5 e trilha 52 |
-| B7 — Windows básico (recorte de 2026-11-08) | Etapa 10: Windows 11 x86_64 numa VM, com core e UI nativos compilados, a IDE abrindo, abrir/editar/salvar/reabrir projeto, terminal, Git e configurar/compilar/executar um projeto C e um Rust de host, sem processos órfãos. Proposta de mínimo, a confirmar pelo autor antes da etapa. Matriz completa e instalador seguem por colaboração | Matriz e instalador no [60](60-windows-e-edicao-especial.md) §1.1; código Windows e catraca de adiados preservados; o que não for exercitado fica NÃO PROVADO. WSL2 não substitui a VM nativa |
+| B7 — Windows básico (recorte de 2026-11-08) | Etapa 10: Windows 11 x86_64 numa VM, com core e UI nativos compilados, a IDE abrindo, abrir/editar/salvar/reabrir projeto, terminal, Git e configurar/compilar/executar um projeto C e um Rust de host, sem processos órfãos. Mínimo confirmado pelo autor em 2026-11-08. Matriz completa e instalador seguem por colaboração | Matriz e instalador no [60](60-windows-e-edicao-especial.md) §1.1; código Windows e catraca de adiados preservados; o que não for exercitado fica NÃO PROVADO. WSL2 não substitui a VM nativa |
 | B8 — Arquivos e contexto | F6: VFS integrada a editor, análise e build em Linux, SSH e container | Identidade, mapeamento, snapshots, conflitos e reconexão com ferramentas no ambiente correto |
 | B9 — Ciência e engenharia | F7–F9: plotagem reutilizável, notebook Python/Jupyter, bibliotecas e utilitários, relatório Flash/RAM | Fluxo numérico até C/C++, buffers e desempenho medidos, kernel recuperável, resultados de engenharia conferidos e artefatos identificados |
 | B10 — Contribuição e demonstração | README coerente, guias, CI, templates e tarefas revisadas com labels; demonstração curta do ciclo integrado | [contribuindo/11](../contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md); distinguir artefatos locais de configuração/publicação efetiva no GitHub |
@@ -437,11 +437,11 @@ auditorias e provas posteriores datadas nos donos:**
   execução (com as agulhas antigas, só um), e ignorar a injeção reprova quatro
   no zsh. Windows mantém o shell padrão nesses testes e não foi exercitado.
   Estado corrigido no recorte Linux.
-- **INF-02 — Terminal com bash e zsh reais.** Dono e evidência:
+- **INF-02 — Terminal com bash, zsh e fish reais.** Dono e evidência:
   `crates/kinein-core/src/terminal/`, `tests/terminal.rs` e
   `ui/qml/runtime/RuntimeController.qml`. Pedido do autor em 2026-11-08:
   qualquer configuração de zsh deve funcionar na IDE tanto quanto a de bash,
-  não só a de uma máquina. A prova de execução usa `/bin/sh` (INF-01); bash e
+  não só a de uma máquina; fish entra na matriz por pedido do autor. A prova de execução usa `/bin/sh` (INF-01); bash e
   zsh com inicialização real não têm prova. Severidade alta: jornada B2 sem
   evidência. Causa não investigada; hipótese com evidência de código: o
   emulador responde às consultas do terminal (`Event::PtyWrite`), mas o comando
@@ -450,7 +450,8 @@ auditorias e provas posteriores datadas nos donos:**
   assistente ou prompt de atualização pode consumi-lo, como no INF-01. Testes:
   matriz isolada (HOME e ZDOTDIR próprios, sem tocar a configuração do usuário)
   com bash sem rc e com `PROMPT_COMMAND`, zsh `-f`, zsh sem `.zshrc`, zsh com
-  tema instalado sem configuração e configurado com prompt instantâneo; resize,
+  tema instalado sem configuração e configurado com prompt instantâneo, fish
+  sem configuração e com `config.fish` próprio; resize,
   TUI, cancelamento e comando enviado pela IDE; agulhas que provem execução.
   Decisão: provar e corrigir no dono do terminal, sem depender da configuração
   do usuário. Estado aberto; primeiro item após a organização de 2026-11-08.
