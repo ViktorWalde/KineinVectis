@@ -537,11 +537,13 @@ mod tests {
         )
         .unwrap();
 
+        // Na ordem do `cmake --list-presets` (C1-25, medido com o 4.4.5): o
+        // `CMakeUserPresets.json` inclui o `CMakePresets.json` por ultimo.
         let presets = list_presets(&root).unwrap();
         assert_eq!(presets.len(), 2);
-        assert_eq!(presets[0].name, "release");
-        assert_eq!(presets[0].display_name.as_deref(), Some("Release"));
-        assert_eq!(presets[1].name, "dev-local");
+        assert_eq!(presets[0].name, "dev-local");
+        assert_eq!(presets[1].name, "release");
+        assert_eq!(presets[1].display_name.as_deref(), Some("Release"));
 
         std::fs::write(root.join("CMakeUserPresets.json"), "nao é json").unwrap();
         assert!(list_presets(&root).is_err());
@@ -721,18 +723,26 @@ mod tests {
         // presets ("Could not read presets"), e a IDE tambem (C1-18). Ate'
         // 2026-11-09 o padrao saia dos presets do projeto, e o configure
         // reprovava depois no `CMake`.
+        // Desde o C1-25 o motivo e' o do `CMake` do projeto; sem ele, o da
+        // leitura nativa.
         std::fs::write(root.join("CMakeUserPresets.json"), "{ nao e json").unwrap();
-        assert!(matches!(
-            default_preset(&root),
-            PresetDefault::Refused(reason) if reason.starts_with("CMakeUserPresets.json inválido")
-        ));
-        // O configure sem preset pedido recusa com o mesmo motivo, sem
-        // configurar sem preset.
-        assert!(
-            super::choose_preset(&root, None)
-                .unwrap_err()
-                .starts_with("CMakeUserPresets.json inválido")
-        );
+        for (asks, reason) in [
+            (true, "o CMake recusa os presets: CMakeUserPresets.json:1: "),
+            (false, "CMakeUserPresets.json inválido"),
+        ] {
+            let _native = (!asks).then(crate::cmake_presets::native_reading);
+            assert!(matches!(
+                default_preset(&root),
+                PresetDefault::Refused(refused) if refused.starts_with(reason)
+            ));
+            // O configure sem preset pedido recusa com o mesmo motivo, sem
+            // configurar sem preset.
+            assert!(
+                super::choose_preset(&root, None)
+                    .unwrap_err()
+                    .starts_with(reason)
+            );
+        }
 
         // O preset usado: anotado so' com CMakeCache (configurado) — e apagado
         // quando o configure seguinte roda sem preset. Com dois presets e

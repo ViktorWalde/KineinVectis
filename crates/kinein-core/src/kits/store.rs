@@ -26,7 +26,7 @@ const SCHEMA_VERSION: u32 = 2;
 /// Um kit: os executaveis escolhidos mais para onde eles compilam.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub(super) struct Kit {
+pub(crate) struct Kit {
     /// Papel (chave estavel) -> id do candidato escolhido.
     #[serde(default)]
     pub selections: BTreeMap<String, String>,
@@ -57,7 +57,7 @@ pub(super) struct Kit {
 
 impl Kit {
     /// `true` quando o kit nao guarda nada — nao vale a pena persistir.
-    pub(super) fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.selections.is_empty()
             && self.sysroot.is_none()
             && self.target_triple.is_none()
@@ -90,7 +90,7 @@ struct ToolchainFileV1 {
 
 /// Caminho do arquivo para um root de workspace.
 #[must_use]
-pub(super) fn path_for(root: &Path) -> PathBuf {
+pub(crate) fn path_for(root: &Path) -> PathBuf {
     root.join(".kinein").join("toolchain.json")
 }
 
@@ -100,7 +100,7 @@ pub(super) fn path_for(root: &Path) -> PathBuf {
 /// padrao. Migrar na leitura, e nao na escrita, e' o que faz a IDE nao perder
 /// a escolha de quem abriu o projeto e nao mexeu na toolchain.
 #[must_use]
-pub(super) fn load(root: &Path) -> BTreeMap<String, Kit> {
+pub(crate) fn load(root: &Path) -> BTreeMap<String, Kit> {
     let Ok(body) = fs::read_to_string(path_for(root)) else {
         return BTreeMap::new();
     };
@@ -110,12 +110,12 @@ pub(super) fn load(root: &Path) -> BTreeMap<String, Kit> {
         return file.kits;
     }
     match serde_json::from_str::<ToolchainFileV1>(&body) {
-        Ok(antigo) if antigo.schema_version == 1 && !antigo.selections.is_empty() => {
+        Ok(legacy) if legacy.schema_version == 1 && !legacy.selections.is_empty() => {
             let mut kits = BTreeMap::new();
             kits.insert(
                 String::new(),
                 Kit {
-                    selections: antigo.selections,
+                    selections: legacy.selections,
                     sysroot: None,
                     target_triple: None,
                     chip: None,
@@ -132,7 +132,7 @@ pub(super) fn load(root: &Path) -> BTreeMap<String, Kit> {
 }
 
 /// Grava os kits, criando `.kinein/` se preciso. Kit vazio nao e' persistido.
-pub(super) fn save(root: &Path, kits: &BTreeMap<String, Kit>) -> Result<(), String> {
+pub(crate) fn save(root: &Path, kits: &BTreeMap<String, Kit>) -> Result<(), String> {
     let target = path_for(root);
     if let Some(parent) = target.parent() {
         fs::create_dir_all(parent)
@@ -143,7 +143,7 @@ pub(super) fn save(root: &Path, kits: &BTreeMap<String, Kit>) -> Result<(), Stri
 }
 
 /// O texto que [`save`] grava: a previa de uma receita mostra os mesmos bytes.
-pub(super) fn render(kits: &BTreeMap<String, Kit>) -> Result<String, String> {
+pub(crate) fn render(kits: &BTreeMap<String, Kit>) -> Result<String, String> {
     let file = ToolchainFile {
         schema_version: SCHEMA_VERSION,
         kits: kits
@@ -209,16 +209,16 @@ mod tests {
         kits.insert("vazio".to_owned(), Kit::default());
         save(&root, &kits).unwrap();
 
-        let lidos = load(&root);
+        let loaded = load(&root);
         assert_eq!(
-            lidos[""].selections.get("cxxCompiler").map(String::as_str),
+            loaded[""].selections.get("cxxCompiler").map(String::as_str),
             Some("gxx")
         );
         assert_eq!(
-            lidos["cross-arm"].sysroot.as_deref(),
+            loaded["cross-arm"].sysroot.as_deref(),
             Some("/opt/sysroots/arm")
         );
-        assert!(!lidos.contains_key("vazio"), "kit vazio foi persistido");
+        assert!(!loaded.contains_key("vazio"), "kit vazio foi persistido");
     }
 
     /// Quem ja tinha `.kinein/toolchain.json` do schema 1 nao pode perder a
@@ -233,9 +233,9 @@ mod tests {
         )
         .unwrap();
 
-        let lidos = load(&root);
+        let loaded = load(&root);
         assert_eq!(
-            lidos[""].selections.get("cCompiler").map(String::as_str),
+            loaded[""].selections.get("cCompiler").map(String::as_str),
             Some("gcc"),
             "a escolha do schema 1 tinha que virar o kit padrao"
         );

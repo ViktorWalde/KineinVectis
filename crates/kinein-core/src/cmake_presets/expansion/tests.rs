@@ -1,10 +1,14 @@
 //! C1-24: every preset as `CMake` 4.4.5 reads it (consolidacao C §17.4).
 //! Each case was measured with `cmake --list-presets` and `cmake --preset`;
 //! `tests/c_project/preset_macros.rs` repeats them against the real `CMake`.
+//! These test the native reading: since C1-25 the `CMake` of the project
+//! answers first (`verdict/tests.rs`), so each test turns it off.
 
 use std::path::{Path, PathBuf};
 
-use super::super::{PresetDefault, binary_dir, default_preset, list_presets, preset_value};
+use super::super::{
+    PresetDefault, binary_dir, default_preset, list_presets, native_reading, preset_value,
+};
 
 fn project(name: &str, presets: &str) -> PathBuf {
     let dir = std::env::temp_dir()
@@ -200,6 +204,7 @@ const LITERAL: &[(&str, &str)] = &[
 
 #[test]
 fn an_invalid_macro_in_any_field_of_any_preset_refuses_every_preset() {
+    let _native = native_reading();
     for (index, (kind, preset)) in EXPANDED.iter().enumerate() {
         let root = project(&format!("expanded-{index}"), &file(10, kind, preset));
         let refused = list_presets(&root).unwrap_err();
@@ -228,6 +233,7 @@ fn an_invalid_macro_in_any_field_of_any_preset_refuses_every_preset() {
 
 #[test]
 fn every_kind_of_invalid_macro_is_refused_with_its_reason() {
+    let _native = native_reading();
     for (text, reason) in [
         ("x${presetName", "macro sem fechamento: ${presetName"),
         ("$env{}", "$env{} sem nome"),
@@ -247,6 +253,7 @@ fn every_kind_of_invalid_macro_is_refused_with_its_reason() {
 /// of the preset being read, also for an inherited field.
 #[test]
 fn macros_follow_the_version_of_the_preset_file() {
+    let _native = native_reading();
     for (version, macro_, since) in [
         (2, "hostSystemName", 3),
         (3, "fileDir", 4),
@@ -302,6 +309,7 @@ fn root_build() -> PathBuf {
 
 #[test]
 fn environment_cycles_refuse_and_a_removed_variable_falls_back_to_the_core() {
+    let _native = native_reading();
     for (name, preset, refused_in, variable) in [
         (
             "cycle",
@@ -376,6 +384,7 @@ fn environment_cycles_refuse_and_a_removed_variable_falls_back_to_the_core() {
 /// after is never expanded, and a hidden preset is no loss.
 #[test]
 fn vendor_stops_the_preset_in_the_order_cmake_expands() {
+    let _native = native_reading();
     for (name, preset, accepted) in [
         (
             "vendor-then-invalid",
@@ -453,6 +462,7 @@ fn vendor_stops_the_preset_in_the_order_cmake_expands() {
 
 #[test]
 fn conditions_are_inherited_and_evaluated_like_cmake() {
+    let _native = native_reading();
     let root = project(
         "conditions",
         r#"{"version":10,"configurePresets":[
@@ -506,6 +516,7 @@ fn conditions_are_inherited_and_evaluated_like_cmake() {
 /// expanded and the file is accepted.
 #[test]
 fn build_and_test_presets_see_the_configure_generator_and_package_presets_none() {
+    let _native = native_reading();
     for (kind, configure, generator, accepted) in [
         ("buildPresets", "ok", "Ninja", true),
         ("buildPresets", "heir", "Ninja", true),
@@ -546,6 +557,7 @@ fn build_and_test_presets_see_the_configure_generator_and_package_presets_none()
 /// does not.
 #[test]
 fn file_dir_in_version_12_names_the_file_that_writes_it() {
+    let _native = native_reading();
     for (root_version, sub_version) in [(12, 12), (11, 12), (12, 11), (6, 6)] {
         let root = project(
             &format!("filedir-{root_version}-{sub_version}"),
@@ -603,6 +615,7 @@ fn file_dir_in_version_12_names_the_file_that_writes_it() {
 /// as macros.
 #[test]
 fn the_toolchain_reads_expanded_values() {
+    let _native = native_reading();
     let root = project(
         "toolchain",
         r#"{"version":10,"configurePresets":[{"name":"arm","binaryDir":"o",

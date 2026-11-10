@@ -8,41 +8,72 @@
 //! presets expandidas ao ler, como o `CMake` faz (C1-24, `expansion.rs`). O
 //! que ela nao sabe resolver fica sem pasta, nunca com uma pasta adivinhada
 //! (consolidacao C §16), e o que o `CMake` recusa ela tambem recusa, com o
-//! motivo (§17).
+//! motivo (§17). Desde o C1-25 (§18), quem decide a recusa e a lista e' o
+//! `CMake` do projeto (`verdict.rs`): o esquema muda com a versao dele.
 
 mod expansion;
 mod files;
 mod macros;
+mod reading;
+mod verdict;
 
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::CmakePresetInfo;
 use serde_json::Value;
 
-use expansion::{Preset, Reading};
+use expansion::Preset;
 use files::{Entry, Kind, PROJECT, Presets, USER};
+use reading::Reading;
+#[cfg(not(test))]
+use verdict::program;
 
-/// Os presets lidos como o `CMake` le: os arquivos, e o que a expansao das
-/// macros e as `condition` deixaram fora da lista.
+/// Os presets como o `CMake` do projeto os le: a recusa dele, ou a leitura
+/// nativa com o que ele nao lista; sem `CMake` que rode, a leitura nativa.
 fn load(root: &Path) -> Result<(Presets, Reading), String> {
-    let presets = files::load(root)?;
-    let reading = expansion::read(root, &presets)?;
-    Ok((presets, reading))
+    load_with(root, program(root).as_deref())
+}
+
+/// Idem, com `program` no lugar do `CMake` do projeto; `None` e' a leitura
+/// nativa so'.
+fn load_with(root: &Path, program: Option<&Path>) -> Result<(Presets, Reading), String> {
+    let files::Loaded { presets, opened } = files::load(root);
+    let native = presets.and_then(|presets| {
+        let reading = expansion::read(root, &presets)?;
+        Ok((presets, reading))
+    });
+    verdict::apply(root, native, &opened, program)
 }
 
 /// Os configure presets que o `CMake` lista: nao ocultos, sem `$vendor{}` e
-/// com a `condition` verdadeira (ou que a IDE nao decide, C1-26).
+/// com a `condition` verdadeira (ou que a IDE nao decide, C1-26), e na ordem
+/// dele: a que ele imprime, senao a dos arquivos como ele os percorre
+/// (`listing_order`, C1-25).
 fn listed<'a>(presets: &'a Presets, reading: &'a Reading) -> impl Iterator<Item = &'a Entry> {
-    presets.entries.iter().filter(|entry| {
-        entry.value.get("hidden").and_then(Value::as_bool) != Some(true)
-            && reading.listed(&entry.name)
-    })
+    let files = presets.listing_order();
+    let mut entries: Vec<&Entry> = presets
+        .entries
+        .iter()
+        .filter(|entry| reading.listed(&entry.name))
+        .collect();
+    entries.sort_by_key(|entry| {
+        (
+            reading.order.iter().position(|name| *name == entry.name),
+            files.iter().position(|file| *file == entry.file),
+        )
+    });
+    entries.into_iter()
 }
 
 /// Lista os configure presets de `CMakePresets.json` e
-/// `CMakeUserPresets.json`, com o que eles incluem, na ordem dos arquivos.
+/// `CMakeUserPresets.json`, com o que eles incluem, na ordem em que o `CMake`
+/// os lista.
 pub fn list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
-    let (presets, reading) = load(root)?;
+    list_from(load(root))
+}
+
+fn list_from(loaded: Result<(Presets, Reading), String>) -> Result<Vec<CmakePresetInfo>, String> {
+    let (presets, reading) = loaded?;
     Ok(listed(&presets, &reading)
         .map(|entry| CmakePresetInfo {
             name: entry.name.clone(),
@@ -121,7 +152,7 @@ pub(crate) struct PresetDirectory {
 }
 
 /// O `binaryDir` resolvido dos configure presets que o `CMake` lista, na
-/// ordem dos arquivos. Um preset sem `binaryDir` ou com pasta nao resolvida
+/// ordem em que ele os lista. Um preset sem `binaryDir` ou com pasta nao resolvida
 /// nao aparece; presets recusados nao tem nenhuma.
 pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
     let Ok((presets, reading)) = load(root) else {
@@ -143,7 +174,8 @@ pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
 /// A pasta de build que o preset declara; `None` quando ele nao declara
 /// `binaryDir` (C1-19: a IDE configura em `.kinein/presets/<preset>`). Erro
 /// quando os presets sao recusados, o preset nao existe, o `CMake` nao o usa
-/// (`$vendor{}` ou `condition` falsa) ou a pasta nao se resolve.
+/// (oculto, `$vendor{}`, `condition` falsa ou fora da lista dele) ou a pasta
+/// nao se resolve.
 pub(crate) fn binary_dir(root: &Path, preset: &str) -> Result<Option<PathBuf>, String> {
     let (presets, reading) = load(root)?;
     let Some(entry) = presets.find(preset) else {
@@ -179,6 +211,45 @@ fn label(root: &Path, path: &Path) -> String {
         |_| path.display().to_string(),
         crate::platform::portable_relative,
     )
+}
+
+#[cfg(test)]
+thread_local! {
+    static NATIVE_READING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Para os testes da leitura nativa (C1-18, C1-24): ate' cair, nenhum `CMake`
+/// responde nesta thread.
+#[cfg(test)]
+pub(crate) struct NativeReading(());
+
+#[cfg(test)]
+impl Drop for NativeReading {
+    fn drop(&mut self) {
+        NATIVE_READING.with(|native| native.set(false));
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn native_reading() -> NativeReading {
+    NATIVE_READING.with(|native| native.set(true));
+    NativeReading(())
+}
+
+/// O `CMake` de [`verdict::program`], menos sob [`native_reading`].
+#[cfg(test)]
+fn program(root: &Path) -> Option<PathBuf> {
+    if NATIVE_READING.with(std::cell::Cell::get) {
+        return None;
+    }
+    verdict::program(root)
+}
+
+/// A lista da leitura nativa, sem perguntar ao `CMake`: o diferencial do
+/// C1-24 a compara com o `cmake --list-presets` real.
+#[cfg(test)]
+pub(crate) fn native_list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
+    list_from(load_with(root, None))
 }
 
 #[cfg(test)]
@@ -328,9 +399,15 @@ mod tests {
               {"name":"nogenerator","binaryDir":"${sourceDir}/g[${generator}]"},
               {"name":"nodir"},
               {"name":"windows","binaryDir":"w","condition":{"type":"equals","lhs":"${hostSystemName}","rhs":"Windows"}},
-              {"name":"ok","binaryDir":"ok"}]}"#,
+              {"name":"ok","binaryDir":"ok"},
+              {"name":"base","hidden":true,"binaryDir":"${sourceDir}/${presetName}","cacheVariables":{"X":"from-base"}},
+              {"name":"child","inherits":"base"}]}"#,
         );
         for (preset, reason) in [
+            (
+                "base",
+                "o preset base é oculto: o CMake não o usa pelo nome",
+            ),
             (
                 "vendor",
                 "o CMake ignora o preset vendor: ele usa $vendor{}",
@@ -352,7 +429,7 @@ mod tests {
             root.join("g[]")
         );
         assert_eq!(binary_dir(&root, "nodir"), Ok(None));
-        assert_eq!(names(&root), ["nogenerator", "nodir", "ok"]);
+        assert_eq!(names(&root), ["nogenerator", "nodir", "ok", "child"]);
         assert_eq!(
             binary_dirs(&root),
             [
@@ -363,14 +440,33 @@ mod tests {
                 PresetDirectory {
                     name: "ok".to_owned(),
                     directory: root.join("ok"),
+                },
+                PresetDirectory {
+                    name: "child".to_owned(),
+                    directory: root.join("child"),
                 }
             ]
         );
         assert_eq!(preset_value(&root, "vendorcache", &["binaryDir"]), None);
+        // C1-27: o oculto pedido pelo nome e' recusado, com `CMake` e sem
+        // ele, e o filho continua herdando dele.
+        for native in [None, Some(super::native_reading())] {
+            assert_eq!(
+                binary_dir(&root, "base").unwrap_err(),
+                "o preset base é oculto: o CMake não o usa pelo nome",
+                "{}",
+                native.is_some()
+            );
+            assert_eq!(preset_value(&root, "base", &["cacheVariables", "X"]), None);
+            assert_eq!(
+                preset_value(&root, "child", &["cacheVariables", "X"]).as_deref(),
+                Some("from-base")
+            );
+        }
     }
 
     #[test]
-    fn an_absolute_binary_dir_is_kept_and_user_presets_follow_project_presets() {
+    fn an_absolute_binary_dir_is_kept_and_user_presets_come_first_as_cmake_lists_them() {
         let root = root(
             "absolute",
             r#"{"version":6,"configurePresets":[{"name":"abs","binaryDir":"/opt/kv build"}]}"#,
@@ -384,8 +480,11 @@ mod tests {
             binary_dir(&root, "abs").unwrap().unwrap(),
             Path::new("/opt/kv build")
         );
+        // Medido com o 4.4.5 (C1-25): o `CMakeUserPresets.json` inclui o
+        // `CMakePresets.json` por ultimo, e o `cmake --list-presets` lista os
+        // dele primeiro. Ate' o C1-25 a IDE listava os do projeto antes.
         let listed: Vec<String> = binary_dirs(&root).into_iter().map(|p| p.name).collect();
-        assert_eq!(listed, ["abs", "mine"]);
+        assert_eq!(listed, ["mine", "abs"]);
         assert_eq!(binary_dir(&root, "mine").unwrap().unwrap(), root.join("m"));
     }
 
@@ -569,14 +668,25 @@ mod tests {
     ];
 
     /// O que o `CMake` 4.4.5 recusa ("Could not read presets") recusa todos
-    /// os presets, com o motivo: nunca parte da lista nem um padrao.
+    /// os presets, com o motivo: nunca parte da lista nem um padrao. A
+    /// leitura nativa da' o motivo dela; desde o C1-25 o `CMake` do projeto
+    /// responde antes, com o dele.
     #[test]
     fn what_cmake_refuses_refuses_every_preset_with_the_reason() {
-        for (name, presets, others, reason) in REFUSALS {
-            let root = root(name, presets);
-            for (relative, body) in others {
+        for ((name, presets, others, native), asks) in REFUSALS
+            .iter()
+            .flat_map(|refusal| [(refusal, false), (refusal, true)])
+        {
+            let root = root(&format!("{name}-{asks}"), presets);
+            for (relative, body) in *others {
                 write(&root, relative, body);
             }
+            let _native = (!asks).then(super::native_reading);
+            let reason = if asks {
+                "o CMake recusa os presets: "
+            } else {
+                native
+            };
             let refused = super::list_presets(&root).unwrap_err();
             assert!(refused.starts_with(reason), "{name}: {refused}");
             assert_eq!(
@@ -676,7 +786,11 @@ mod tests {
             "local/mine.json",
             r#"{"version":6,"configurePresets":[{"name":"mine","binaryDir":"${fileDir}/m"}]}"#,
         );
-        assert_eq!(names(&root), ["p1", "p2", "c", "mine"]);
+        // A ordem do `cmake --list-presets` (C1-25): a partir do arquivo do
+        // usuario, `common.json` onde ele aparece primeiro.
+        assert_eq!(names(&root), ["mine", "c", "p1", "p2"]);
+        let _native = super::native_reading();
+        assert_eq!(names(&root), ["mine", "c", "p1", "p2"]);
         assert_eq!(
             super::default_preset(&root),
             super::PresetDefault::One("mine".to_owned(), "CMakeUserPresets.json")

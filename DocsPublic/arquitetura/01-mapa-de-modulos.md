@@ -117,6 +117,7 @@ flowchart LR
   n_core_handlers[handlers]
   n_core_index[index]
   n_core_jobs[jobs]
+  n_core_kits[kits]
   n_core_lang[lang]
   n_core_library[library]:::cycle
   n_core_lsp[lsp]
@@ -166,7 +167,9 @@ flowchart LR
   n_core_cmake_configuration --> n_core_cmake_presets
   n_core_cmake_configuration --> n_core_fsops
   n_core_cmake_configuration --> n_core_platform
+  n_core_cmake_presets --> n_core_kits
   n_core_cmake_presets --> n_core_platform
+  n_core_cmake_presets --> n_core_tools
   n_core_configaction --> n_core_cdb
   n_core_configaction --> n_core_cmake
   n_core_configaction --> n_core_fsops
@@ -252,6 +255,7 @@ flowchart LR
   n_core_index --> n_core_platform
   n_core_index --> n_core_python
   n_core_jobs --> n_core_lsp
+  n_core_kits --> n_core_tools
   n_core_library --> n_core_cmake
   n_core_library --> n_core_configaction
   n_core_lsp --> n_core_cdb
@@ -301,6 +305,7 @@ flowchart LR
   n_core_test --> n_core_python
   n_core_toolchain --> n_core_cmake_configuration
   n_core_toolchain --> n_core_cmake_presets
+  n_core_toolchain --> n_core_kits
   n_core_toolchain --> n_core_platform
   n_core_toolchain --> n_core_run
   n_core_toolchain --> n_core_tools
@@ -316,7 +321,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-52 módulos, 168 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+53 módulos, 172 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -332,7 +337,7 @@ flowchart LR
 | `cdb` | cmake, cmake_configuration, cmake_presets, platform | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | cmake_configuration, cmake_presets, fsops, msvc, platform, toolchain | Servico CMake: |
 | `cmake_configuration` | cmake_presets, fsops, platform | The configurations of a CMake project (C1-19 and C1-20 of C-04, consolidacao C §17): |
-| `cmake_presets` | platform | Os configure presets do projeto: |
+| `cmake_presets` | kits, platform, tools | Os configure presets do projeto: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |
@@ -351,6 +356,7 @@ flowchart LR
 | `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Request handlers grouped by domain, each implemented as impl Core blocks. |
 | `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
+| `kits` | tools | Os kits como o workspace os grava e quem pode cumprir cada papel. |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
 | `lsp` | cdb, fsops, index, owned_child, stderr_tail | Subsistema LSP: |
@@ -376,7 +382,7 @@ flowchart LR
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
-| `toolchain` | cmake_configuration, cmake_presets, platform, run, tools | Toolchain: |
+| `toolchain` | cmake_configuration, cmake_presets, kits, platform, run, tools | Toolchain: |
 | `tools` | msvc, platform, process | External tool detection. |
 | `workspace` | configaction, fsops, platform, process, python, tools | Workspace opening, project kind detection, and metadata persistence. |
 

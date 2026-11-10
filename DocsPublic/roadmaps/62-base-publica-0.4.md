@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21, C1-23, C1-24 e C-05 corrigidos com provas; abertos C-04 (C1-25, C1-26, C1-22), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21, C1-23–C1-25, C1-27 e C-05 corrigidos com provas; abertos C-04 (C1-26, C1-22), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -414,7 +414,9 @@ auditorias e provas posteriores datadas nos donos:**
   protocolo 0.209.0); C1-23, corrigido em 2026-11-09
   ([40.7 §7.397](40.7-registro-das-entregas.md), protocolo 0.210.0); C1-24,
   corrigido em 2026-11-09 ([40.7 §7.398](40.7-registro-das-entregas.md),
-  protocolo 0.211.0); C1-25; C1-26; C1-22. Na
+  protocolo 0.211.0); C1-25, corrigido em 2026-11-10
+  ([40.7 §7.399](40.7-registro-das-entregas.md), protocolo 0.212.0); C1-26;
+  C1-22. Na
   segunda fatia, cada configuração
   configura na pasta dela: o `binaryDir`, ou `.kinein/presets/<preset>` sem ele.
   A configuração fica ativa ao começar o configure, e build, run, debug,
@@ -439,7 +441,14 @@ auditorias e provas posteriores datadas nos donos:**
   C1-24 e antes do C1-22. Achou também o C1-26: `matches` e `notMatches` usam a
   expressão regular do CMake. Decisões do autor de 2026-11-10: a IDE pergunta
   ao `cmake --list-presets` do projeto quando a `condition` usa essas formas,
-  e o C1-26 vem depois do C1-25 e antes do C1-22.
+  e o C1-26 vem depois do C1-25 e antes do C1-22. Decisões do autor de
+  2026-11-10 para o C1-25: perguntar ao CMake do projeto, o que o kit padrão
+  fixa, senão o do `PATH`. Na quinta fatia, a lista, o menu e o configure
+  seguem o `cmake --list-presets` desse CMake, na ordem dele; a recusa dele
+  recusa os presets com o motivo, e sem CMake vale a leitura nativa. Os
+  mutantes acharam o C1-27, corrigido na mesma fatia por decisão do autor: o
+  preset oculto pedido pelo nome é recusado antes do job
+  ([§18.1](../especificacoes/consolidacao-nativa-de-c.md#181-c1-25-integração-e-provas--2026-11-10)).
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste

@@ -1,5 +1,35 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**Presets pelo CMake do projeto (`0.212.0`, C1-25 do C-04).** Sem campo novo.
+Desenho na
+[consolidação C §18](../../especificacoes/consolidacao-nativa-de-c.md#18-c1-25-os-presets-pelo-cmake-do-projeto--desenho-de-2026-11-10).
+Quando o projeto tem arquivo de presets, o core pergunta ao
+`cmake --list-presets` do CMake que o kit padrão do workspace fixa, senão do
+`cmake` do `PATH`, e guarda a resposta até mudar o executável ou um arquivo de
+presets lido. A resposta do CMake vale sobre a leitura nativa (`0.211.0`):
+- o CMake recusa: `cmake.presets.list` falha com
+  `o CMake recusa os presets: <motivo>`, o motivo da linha que segue
+  `Could not read presets from`; o configure sem preset pedido e o pedido
+  pelo nome são recusados com `INVALID_PARAMS` e o mesmo motivo, sem job, e
+  `configurations` é omitida;
+- o CMake lista: `cmake.presets.list`, `configurations` e o padrão têm só os
+  presets que ele lista, na ordem dele. O configure de um preset não oculto fora da lista é
+  recusado com `INVALID_PARAMS` e o motivo: o nativo, a `condition` falsa para
+  o CMake, o gerador que ele não tem ou o preset que ele não lista;
+- o CMake lista e a leitura nativa recusa: tudo é recusado com
+  `o CMake aceita os presets, mas a IDE não os lê: <motivo>`;
+- sem CMake que rode, vale a leitura nativa.
+
+Com ou sem CMake, o configure de um preset oculto pedido pelo nome, ou de uma
+configuração registrada que ficou oculta, é recusado com `INVALID_PARAMS` e
+`o preset X é oculto: o CMake não o usa pelo nome`, sem job (C1-27). Até o
+`0.211.0` a IDE começava o job, e o CMake recusava depois.
+
+A ordem da lista e do menu muda nos dois casos para a do CMake: primeiro os
+presets do `CMakeUserPresets.json`, depois os que ele inclui e por último os
+do `CMakePresets.json` e dos seus includes, cada arquivo uma vez, onde aparece
+primeiro. Até o `0.211.0` vinham antes os do `CMakePresets.json`.
+
 **Macros e `condition` de todos os presets (`0.211.0`, C1-24 do C-04).** Sem
 campo novo. Desenho na
 [consolidação C §17.4](../../especificacoes/consolidacao-nativa-de-c.md#174-c1-24-integração-e-provas--2026-11-09).

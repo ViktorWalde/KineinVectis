@@ -3,39 +3,21 @@
 //!
 //! O catalogo nomeia o primeiro `gcc`/`clang` do `PATH`; instalacoes
 //! paralelas e caminhos alternativos, que a criacao ja' aceita, so' cabem no
-//! kit como caminho absoluto. Este modulo diz quando um valor gravado e' uma
-//! instalacao, se ela ainda existe e qual texto o kit teria depois da escolha
-//! — com o que a tela precisa para decidir antes de gravar. Quem confere o
-//! executavel (versao e sonda C) e' o dono da criacao, fora do laco.
+//! kit como caminho absoluto. Este modulo diz qual texto o kit teria depois
+//! da escolha — com o que a tela precisa para decidir antes de gravar; quando
+//! um valor gravado e' uma instalacao, e se ela ainda existe, diz o
+//! [`crate::kits`]. Quem confere o executavel (versao e sonda C) e' o dono da
+//! criacao, fora do laco.
 
 use std::path::Path;
 
 use kinein_protocol::{ProjectEnvironment, ToolInfo, ToolchainRole};
 
-use super::{Toolchain, project::ProjectCache, store};
+use super::{Toolchain, project::ProjectCache};
+use crate::kits::store;
 
 /// Quantas instalacoes detectadas a previa lista pelo nome.
 const DETECTED_SHOWN: usize = 6;
-
-/// O valor gravado no papel e' uma instalacao por caminho absoluto?
-///
-/// So' o compilador C: e' o papel que tem receita para gravar caminho.
-pub(super) fn is_installation(role: ToolchainRole, value: &str) -> bool {
-    role == ToolchainRole::CCompiler && Path::new(value).is_absolute()
-}
-
-/// `(resolvedPath, effectiveId)` de uma instalacao: ambos ausentes quando o
-/// arquivo sumiu, para nenhum consumidor executar outro no lugar.
-pub(super) fn installed(path: &str) -> (Option<String>, Option<String>) {
-    let file = Path::new(path);
-    if !file.is_file() {
-        return (None, None);
-    }
-    let id = file
-        .file_name()
-        .map(|name| name.to_string_lossy().into_owned());
-    (Some(path.to_owned()), id)
-}
 
 /// O plano do kit para uma escolha de compilador C, sem gravar nada.
 #[derive(Debug, Clone, PartialEq, Eq)]

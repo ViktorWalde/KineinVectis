@@ -131,11 +131,12 @@ fn c1_18_presets_of_an_included_file_are_found_where_cmake_configures_them() {
     assert_eq!(chosen["cdbPreset"], "gcc-inc", "{chosen}");
 
     // Um `include` que some recusa tudo, como no `CMake`: nem candidata de
-    // preset nem lista parcial.
+    // preset nem lista parcial. Desde o C1-25 o motivo é o do `CMake`.
     fs::remove_file(p.root.join("cmake/presets/compilers.json")).unwrap();
     let refused = refusal(&mut p, "cmake.presets.list");
     assert!(
-        refused.contains("arquivo de presets não encontrado: cmake/presets/compilers.json"),
+        refused.starts_with("o CMake recusa os presets: File not found: ")
+            && refused.ends_with("cmake/presets/compilers.json"),
         "{refused}"
     );
     let cmake = Command::new("cmake")
@@ -153,7 +154,7 @@ fn c1_18_presets_of_an_included_file_are_found_where_cmake_configures_them() {
         status["cdbAbsence"]["reason"]
             .as_str()
             .unwrap()
-            .contains("arquivo de presets não encontrado"),
+            .contains("o CMake recusa os presets: File not found: "),
         "{status}"
     );
 }

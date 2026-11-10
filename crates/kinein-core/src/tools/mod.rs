@@ -309,36 +309,44 @@ const EXEC_BUSY_ATTEMPTS: u32 = 20;
 /// Espera entre duas tentativas de exec apos `ETXTBSY` (total <= 200 ms).
 const EXEC_BUSY_BACKOFF: Duration = Duration::from_millis(10);
 
-fn probe_version(path: &Path, dir: Option<&Path>) -> Result<String, String> {
-    for remaining in (0..EXEC_BUSY_ATTEMPTS).rev() {
-        let mut command = Command::new(path);
-        command.arg("--version");
-        if let Some(dir) = dir {
-            command.current_dir(dir);
-        }
+/// Runs `command` to the end, again while its executable is busy
+/// (`ETXTBSY`, above): `pub(crate)` for the other short queries of a tool,
+/// like the presets the `CMake` lists (C1-25).
+pub(crate) fn output_when_free(command: &mut Command) -> io::Result<std::process::Output> {
+    let mut remaining = EXEC_BUSY_ATTEMPTS;
+    loop {
+        remaining -= 1;
         match command.output() {
-            Ok(output) if output.status.success() => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                return stdout
-                    .lines()
-                    .map(str::trim)
-                    .find(|line| !line.is_empty())
-                    .map(ToOwned::to_owned)
-                    .ok_or_else(|| "a ferramenta não informou versão".to_owned());
-            }
-            Ok(output) => {
-                return Err(format!(
-                    "o comando de versão terminou com {}",
-                    output.status
-                ));
-            }
             Err(error) if error.kind() == io::ErrorKind::ExecutableFileBusy && remaining > 0 => {
                 thread::sleep(EXEC_BUSY_BACKOFF);
             }
-            Err(error) => return Err(format!("falha ao executar a ferramenta: {error}")),
+            outcome => return outcome,
         }
     }
-    Err("a ferramenta seguiu ocupada para execução (ETXTBSY)".to_owned())
+}
+
+fn probe_version(path: &Path, dir: Option<&Path>) -> Result<String, String> {
+    let mut command = Command::new(path);
+    command.arg("--version");
+    if let Some(dir) = dir {
+        command.current_dir(dir);
+    }
+    match output_when_free(&mut command) {
+        Ok(output) if output.status.success() => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            stdout
+                .lines()
+                .map(str::trim)
+                .find(|line| !line.is_empty())
+                .map(ToOwned::to_owned)
+                .ok_or_else(|| "a ferramenta não informou versão".to_owned())
+        }
+        Ok(output) => Err(format!(
+            "o comando de versão terminou com {}",
+            output.status
+        )),
+        Err(error) => Err(format!("falha ao executar a ferramenta: {error}")),
+    }
 }
 
 #[cfg(test)]

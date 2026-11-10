@@ -10,6 +10,7 @@
 use std::{
     collections::HashMap,
     fs,
+    hash::{DefaultHasher, Hash, Hasher},
     path::{Component, Path, PathBuf},
 };
 
@@ -100,43 +101,49 @@ impl Presets {
     pub(super) fn file_of(&self, entry: &Entry) -> &File {
         &self.files[entry.file]
     }
+
+    /// The files in the order `CMake` lists their presets (measured with
+    /// 4.4.5, C1-25): from `CMakeUserPresets.json` when there is one, which
+    /// includes `CMakePresets.json` last, and each file before the ones it
+    /// includes. A file reached twice comes again later: its first place is
+    /// the one that counts.
+    pub(super) fn listing_order(&self) -> Vec<usize> {
+        let start = self
+            .files
+            .iter()
+            .position(|file| file.user_side)
+            .unwrap_or(0);
+        self.files
+            .get(start)
+            .map(|file| file.reaches.clone())
+            .unwrap_or_default()
+    }
+}
+
+/// What reading the files gave, and what it opened.
+pub(super) struct Loaded {
+    pub presets: Result<Presets, String>,
+    /// Each file the reading opened, with a hash of its text, or `None` when
+    /// reading it failed, also before a refusal. The answer of the `CMake`
+    /// holds while none of them changes (C1-25); a file that appears or goes
+    /// changes the list itself.
+    pub opened: Vec<(PathBuf, Option<u64>)>,
 }
 
 /// Reads `CMakePresets.json`, then `CMakeUserPresets.json`, with includes.
-pub(super) fn load(root: &Path) -> Result<Presets, String> {
+pub(super) fn load(root: &Path) -> Loaded {
     let mut loader = Loader {
         root,
         presets: Presets::empty(),
         read: HashMap::new(),
         stack: Vec::new(),
+        opened: Vec::new(),
     };
-    let project = root.join(PROJECT);
-    let project_index = if project.is_file() {
-        Some(loader.read(&project, PROJECT)?)
-    } else {
-        None
-    };
-    let user = root.join(USER);
-    if user.is_file() {
-        // `CMakeUserPresets.json` includes `CMakePresets.json` implicitly:
-        // the project side reaching the user file is a cycle.
-        if loader.read.contains_key(&identity(&user)?) {
-            return Err(format!(
-                "ciclo de include entre arquivos de presets: {USER}"
-            ));
-        }
-        let first_user_file = loader.presets.files.len();
-        let user_index = loader.read(&user, USER)?;
-        if let Some(project_index) = project_index {
-            let reached = loader.presets.files[project_index].reaches.clone();
-            loader.presets.files[user_index].reaches.extend(reached);
-        }
-        for file in &mut loader.presets.files[first_user_file..] {
-            file.user_side = true;
-        }
+    let presets = loader.load();
+    Loaded {
+        presets,
+        opened: loader.opened,
     }
-    validate(&loader.presets)?;
-    Ok(loader.presets)
 }
 
 struct Loader<'a> {
@@ -146,9 +153,40 @@ struct Loader<'a> {
     read: HashMap<PathBuf, usize>,
     /// Files being read: one of them again is a cycle.
     stack: Vec<PathBuf>,
+    opened: Vec<(PathBuf, Option<u64>)>,
 }
 
 impl Loader<'_> {
+    fn load(&mut self) -> Result<Presets, String> {
+        let project = self.root.join(PROJECT);
+        let project_index = if project.is_file() {
+            Some(self.read(&project, PROJECT)?)
+        } else {
+            None
+        };
+        let user = self.root.join(USER);
+        if user.is_file() {
+            // `CMakeUserPresets.json` includes `CMakePresets.json` implicitly:
+            // the project side reaching the user file is a cycle.
+            if self.read.contains_key(&identity(&user)?) {
+                return Err(format!(
+                    "ciclo de include entre arquivos de presets: {USER}"
+                ));
+            }
+            let first_user_file = self.presets.files.len();
+            let user_index = self.read(&user, USER)?;
+            if let Some(project_index) = project_index {
+                let reached = self.presets.files[project_index].reaches.clone();
+                self.presets.files[user_index].reaches.extend(reached);
+            }
+            for file in &mut self.presets.files[first_user_file..] {
+                file.user_side = true;
+            }
+        }
+        validate(&self.presets)?;
+        Ok(std::mem::replace(&mut self.presets, Presets::empty()))
+    }
+
     fn read(&mut self, path: &Path, label: &str) -> Result<usize, String> {
         if !path.is_file() {
             return Err(format!("arquivo de presets não encontrado: {label}"));
@@ -162,8 +200,14 @@ impl Loader<'_> {
         if let Some(&index) = self.read.get(&identity) {
             return Ok(index);
         }
-        let body =
-            fs::read_to_string(path).map_err(|error| format!("falha lendo {label}: {error}"))?;
+        let body = fs::read_to_string(path);
+        let text = body.as_ref().ok().map(|body| {
+            let mut hasher = DefaultHasher::new();
+            body.hash(&mut hasher);
+            hasher.finish()
+        });
+        self.opened.push((path.to_path_buf(), text));
+        let body = body.map_err(|error| format!("falha lendo {label}: {error}"))?;
         let value: Value =
             serde_json::from_str(&body).map_err(|error| format!("{label} inválido: {error}"))?;
         let version = value

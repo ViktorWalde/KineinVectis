@@ -54,7 +54,7 @@ const TWO: &str = r#"{"version":3,"configurePresets":[
   {"name":"debug","binaryDir":"${sourceDir}/build/${presetName}"},
   {"name":"release local"},
   {"name":"elsewhere","binaryDir":"${sourceParentDir}/fora/${presetName}"},
-  {"name":"","binaryDir":"vazio"},
+  {"name":"a/c","binaryDir":"vazio"},
   {"name":"."},
   {"name":".."},
   {"name":"a/b"},
@@ -77,7 +77,9 @@ fn each_preset_configures_in_its_binary_dir_or_a_folder_of_the_ide() {
         "uma pasta fora da raiz vale, como no C-05"
     );
     // Um binaryDir declarado vale mesmo com um nome que não serve de pasta.
-    assert_eq!(dir(Some("")).unwrap(), root.join("vazio"));
+    // O nome vazio servia aqui até o C1-25: o CMake recusa o arquivo por ele
+    // ("Invalid Preset Name"), e o caso foi para `cmake_presets/verdict`.
+    assert_eq!(dir(Some("a/c")).unwrap(), root.join("vazio"));
     for name in [".", "..", "a/b", "a\\b"] {
         let reason = dir(Some(name)).unwrap_err();
         assert!(
@@ -100,7 +102,7 @@ fn each_preset_configures_in_its_binary_dir_or_a_folder_of_the_ide() {
         [
             ("debug", root.join("build/debug")),
             ("elsewhere", root.parent().unwrap().join("fora/elsewhere")),
-            ("", root.join("vazio")),
+            ("a/c", root.join("vazio")),
             ("release local", root.join(".kinein/presets/release local")),
         ]
         .map(|(name, directory)| PresetDirectory {
@@ -241,6 +243,12 @@ fn the_record_comes_first_and_is_never_replaced() {
     );
     select_configuration(&root, Some("debug")).unwrap();
     std::fs::write(root.join("CMakePresets.json"), "{").unwrap();
+    assert!(
+        refused(&root).starts_with("o CMake recusa os presets: CMakePresets.json:1: "),
+        "{}",
+        refused(&root)
+    );
+    let _native = crate::cmake_presets::native_reading();
     assert!(refused(&root).starts_with("CMakePresets.json inválido"));
 }
 
@@ -304,7 +312,10 @@ fn without_a_record_the_ide_build_dir_then_the_default_then_no_preset() {
         r#"{"version":3,"configurePresets":[{"name":"only"}],"include":["x.json"]}"#,
     )
     .unwrap();
+    assert!(refused(&root).contains("File version must be 4 or higher for include support"));
+    let native = crate::cmake_presets::native_reading();
     assert!(refused(&root).contains("include exige version 4"));
+    drop(native);
 
     std::fs::remove_file(root.join("CMakePresets.json")).unwrap();
     assert_eq!(active(&root), (None, ide_build_dir(&root), "noPresets"));

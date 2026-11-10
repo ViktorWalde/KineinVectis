@@ -2030,8 +2030,6 @@ crates/kinein-core/src/toolchain/mod.rs	relido	2
 crates/kinein-core/src/toolchain/mod.rs	repetir	1
 crates/kinein-core/src/toolchain/mod.rs	resolvido	1
 crates/kinein-core/src/toolchain/mod.rs	resultado	2
-crates/kinein-core/src/toolchain/store.rs	antigo	4
-crates/kinein-core/src/toolchain/store.rs	lidos	6
 crates/kinein-core/src/toolchain/sysroot.rs	conta	2
 crates/kinein-core/src/toolchain/sysroot.rs	entradas	2
 crates/kinein-core/src/toolchain/sysroot.rs	linha	2

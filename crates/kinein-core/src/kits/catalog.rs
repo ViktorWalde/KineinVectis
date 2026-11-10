@@ -9,17 +9,17 @@
 use kinein_protocol::ToolchainRole;
 
 /// Um candidato possivel para um papel.
-pub(super) struct RoleCandidate {
+pub(crate) struct RoleCandidate {
     /// Id estavel; para compilador/ferramenta e o mesmo do `tools.detect`.
-    pub(super) id: &'static str,
+    pub(crate) id: &'static str,
     /// Rotulo curto para a UI.
-    pub(super) label: &'static str,
+    pub(crate) label: &'static str,
     /// Id em [`crate::tools::KNOWN_TOOLS`] que prova que ele existe aqui.
     ///
     /// O gerador tambem tem um: `Ninja` so aparece se o `ninja` existir, e
     /// `Unix Makefiles` so se o `make` existir. Oferecer um gerador que a
     /// maquina nao tem e' oferecer um configure que vai falhar.
-    pub(super) tool_id: &'static str,
+    pub(crate) tool_id: &'static str,
 }
 
 /// Candidatos de um papel, na ordem de preferencia.
@@ -27,7 +27,7 @@ pub(super) struct RoleCandidate {
 /// A ordem importa: e' ela que a UI mostra, e o primeiro DETECTADO e o que a
 /// dica de "automatico" descreve.
 #[must_use]
-pub(super) fn candidates_for(role: ToolchainRole) -> &'static [RoleCandidate] {
+pub(crate) fn candidates_for(role: ToolchainRole) -> &'static [RoleCandidate] {
     match role {
         ToolchainRole::CCompiler => C_COMPILERS,
         ToolchainRole::CxxCompiler => CXX_COMPILERS,
@@ -41,7 +41,7 @@ pub(super) fn candidates_for(role: ToolchainRole) -> &'static [RoleCandidate] {
 
 /// O candidato existe no catalogo do papel?
 #[must_use]
-pub(super) fn is_known(role: ToolchainRole, id: &str) -> bool {
+pub(crate) fn is_known(role: ToolchainRole, id: &str) -> bool {
     candidates_for(role).iter().any(|entry| entry.id == id)
 }
 

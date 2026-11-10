@@ -7,7 +7,7 @@
 //! fields of the kind. An invalid macro anywhere refuses every preset;
 //! `$vendor{}` stops the preset, and `CMake` ignores it; a false `condition`
 //! leaves it out of the list. `matches` and `notMatches` depend on the
-//! regular expressions of `CMake` and stay undecided here (C1-26).
+//! regular expressions of `CMake` and stay unknown here (C1-26).
 
 use std::{collections::BTreeMap, path::Path};
 
@@ -16,6 +16,7 @@ use serde_json::Value;
 use super::{
     files::{Entry, Kind, Presets},
     macros::{Context, Expanded},
+    reading::Reading,
 };
 
 /// `inherits` deeper than this is a cycle `CMake` refuses elsewhere.
@@ -87,36 +88,6 @@ const fn label(kind: Kind) -> &'static str {
     }
 }
 
-/// What reading the configure presets left out of the list.
-#[derive(Debug, Default)]
-pub(super) struct Reading {
-    /// `CMake` ignores them: a `$vendor{}` macro.
-    pub ignored: Vec<String>,
-    /// Their `condition` is false.
-    pub disabled: Vec<String>,
-}
-
-impl Reading {
-    pub(super) fn listed(&self, name: &str) -> bool {
-        self.unusable(name).is_none()
-    }
-
-    /// Why `CMake` will not configure with a preset it read (measured:
-    /// "Could not evaluate configure preset" and "Cannot use disabled
-    /// configure preset").
-    pub(super) fn unusable(&self, name: &str) -> Option<String> {
-        if self.ignored.iter().any(|ignored| ignored == name) {
-            return Some(format!(
-                "o CMake ignora o preset {name}: ele usa $vendor{{}}"
-            ));
-        }
-        self.disabled
-            .iter()
-            .any(|disabled| disabled == name)
-            .then(|| format!("a condition do preset {name} é falsa: o CMake não o usa"))
-    }
-}
-
 /// Reads every preset of every kind, as `CMake` does.
 pub(super) fn read(root: &Path, presets: &Presets) -> Result<Reading, String> {
     let mut reading = Reading::default();
@@ -133,10 +104,14 @@ pub(super) fn read(root: &Path, presets: &Presets) -> Result<Reading, String> {
             if kind != Kind::Configure {
                 continue;
             }
+            if entry.value.get("hidden").and_then(Value::as_bool) == Some(true) {
+                reading.hidden.push(entry.name.clone());
+            }
             match outcome {
                 None => reading.ignored.push(entry.name.clone()),
                 Some(Truth::False) => reading.disabled.push(entry.name.clone()),
-                Some(Truth::True | Truth::Unknown) => {}
+                Some(Truth::Unknown) => reading.unknown.push(entry.name.clone()),
+                Some(Truth::True) => {}
             }
         }
     }
@@ -205,7 +180,7 @@ fn chain<'a>(presets: &'a Presets, kind: Kind, entry: &'a Entry) -> Vec<&'a Entr
     order
 }
 
-/// A three-valued `condition`: `matches` stays undecided (C1-26).
+/// A three-valued `condition`: `matches` stays unknown (C1-26).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Truth {
     True,

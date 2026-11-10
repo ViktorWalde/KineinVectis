@@ -1583,6 +1583,16 @@ presets do projeto: o configure diz o tipo e o nome do preset e o motivo, antes
 de rodar o CMake. Um preset com `$vendor{}`, ou com a `condition` falsa, não
 aparece no menu, como não aparece no `cmake --list-presets`.
 
+**A lista do CMake do projeto** (desde 2026-11-10). A lista de presets, o menu
+e o configure seguem o `cmake --list-presets` do CMake que o kit padrão fixa,
+ou do `cmake` do `PATH`, na ordem dele: primeiro os presets do
+`CMakeUserPresets.json`. Um preset cujo gerador esse CMake não tem, ou cuja
+`condition` ele acha falsa, sai do menu, e o configure pedido pelo nome dele
+diz por quê. Quando o CMake recusa o arquivo, por exemplo por um campo que a
+versão dele não conhece, a IDE recusa também, com o motivo que ele dá. Sem
+CMake que rode, vale a leitura da própria IDE. Um preset oculto só serve de
+base para outros: pedido pelo nome, o configure diz que ele é oculto.
+
 **Projeto só com Makefile.** É reconhecido como "Make": Build roda `bear --
 make` quando o `bear` está instalado — é ele que escreve o
 `compile_commands.json` que o clangd lê — e `make` a seco quando não, dizendo

@@ -42,8 +42,10 @@ fn cmake_listing(root: &Path) -> Result<Vec<String>, String> {
         .collect())
 }
 
+/// A leitura NATIVA: desde o C1-25 a lista pública pergunta ao `CMake`, e a
+/// comparação seria a do `CMake` consigo mesmo.
 fn ide_listing(root: &Path) -> Result<Vec<String>, String> {
-    crate::cmake_presets::list_presets(root)
+    crate::cmake_presets::native_list_presets(root)
         .map(|presets| presets.into_iter().map(|preset| preset.name).collect())
 }
 
@@ -481,9 +483,10 @@ fn c1_24_file_dir_of_version_12_configures_where_cmake_does() {
         ))
         .response()
         .clone();
+    // O motivo é o do `CMake` do projeto (C1-25).
     let message = refused.error.expect("presets recusados").message;
     assert!(
-        message.contains("macro inválida no preset de build \"all\": macro desconhecida: ${nope}"),
+        message.contains("o CMake recusa os presets: Invalid macro expansion in \"all\""),
         "{message}"
     );
     let deadline = Instant::now() + Duration::from_millis(300);

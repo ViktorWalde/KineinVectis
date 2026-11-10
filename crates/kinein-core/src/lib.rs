@@ -29,6 +29,7 @@ pub mod grafana;
 pub mod handlers;
 pub mod index;
 pub mod jobs;
+pub mod kits;
 pub mod lang;
 pub mod library;
 pub mod lsp;

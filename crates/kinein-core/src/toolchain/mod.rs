@@ -30,14 +30,12 @@
 //!   compiladores e do gerador (2026-10-16).
 
 mod arguments;
-mod catalog;
 mod chip;
 mod export;
 pub mod import;
 pub mod install;
 mod project;
 mod selection;
-mod store;
 pub mod sysroot;
 
 pub use export::ExportedToolchain;
@@ -45,6 +43,7 @@ pub use selection::{CompilerChoice, Measured, plan_c_compiler};
 
 use std::path::{Path, PathBuf};
 
+use crate::kits::{catalog, installed, is_installation, store};
 use kinein_protocol::{
     ToolInfo, ToolStatus, ToolchainCandidate, ToolchainResult, ToolchainRole, ToolchainSelection,
 };
@@ -99,7 +98,7 @@ impl Toolchain {
             let available = detectados(*role, tools);
             let escolhido = escolhas
                 .get(role.as_str())
-                .filter(|id| catalog::is_known(*role, id) || selection::is_installation(*role, id))
+                .filter(|id| catalog::is_known(*role, id) || is_installation(*role, id))
                 .cloned();
 
             // A MESCLA que o autor decidiu em 2026-09-04: sem escolha fixada,
@@ -123,7 +122,7 @@ impl Toolchain {
                 ),
                 // Fixada e indisponivel: sem efetivo, para ninguem anunciar
                 // nem executar outro compilador no lugar (consolidacao C §15).
-                Some(path) if selection::is_installation(*role, path) => selection::installed(path),
+                Some(path) if is_installation(*role, path) => installed(path),
                 Some(id) => {
                     let path = available
                         .iter()

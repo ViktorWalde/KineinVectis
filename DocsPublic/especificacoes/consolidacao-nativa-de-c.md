@@ -1040,8 +1040,9 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-22 / multi-config | `CmakeModel` lê só `/configurations/0` (`cmake/model.rs`); `cmake --build` vai sem `--config`; `collect_executables` percorre a pasta inteira. Medido com Ninja Multi-Config: três configurações no codemodel, três entradas da CDB para o mesmo arquivo, o clangd usa a primeira (Debug), e `cmake --build` sem `--config` compila `CMAKE_DEFAULT_BUILD_TYPE`, senão a primeira; após dois builds há `Debug/app` e `Release/app` | Média: com `CMAKE_DEFAULT_BUILD_TYPE` diferente, o build compila uma configuração e o contexto mostra outra; o run recusa por achar dois executáveis | Usar a configuração que o clangd vê (decisão abaixo). Provar com Ninja Multi-Config real, `CMAKE_DEFAULT_BUILD_TYPE=Release` e mutações |
 | C1-23 / UI sem troca da configuração | O Project Health só oferece "Escolher configuração…" quando a escolha é obrigatória; o menu corta no fim a pasta longa fora da raiz (§16.1) | Média: trocar a configuração ativa ou voltar ao automático exige editar `.kinein/configuration.json` | Menu de configuração sempre que há presets, com a ativa marcada e "Automático". Provar na UI nativa isolada |
 | C1-24 / macros dos presets só sob demanda | Achado na prova do C1-23 (2026-11-09). `cmake_presets` expande só o `binaryDir`, e só do preset usado. Medido com `cmake --list-presets` e `cmake --preset` do CMake 4.4.5 (§17.4): cada preset de cada tipo, mesmo oculto e sem uso, é expandido ao ler os arquivos, com a herança e na versão do arquivo que o define. Uma macro desconhecida, sem fechamento, `$env{}` ou `$penv{}` sem nome, uma macro de versão maior (`${hostSystemName}` 3, `${fileDir}` 4, `${pathListSep}` 5) ou um ciclo no `environment` recusa o arquivo inteiro ("Invalid macro expansion"). Nos configure presets valem `binaryDir`, `installDir`, `toolchainFile`, `graphviz`, os valores de `cacheVariables` e de `environment` e as cadeias da `condition`; nos build presets, `environment`, `targets`, `nativeToolOptions` e `condition`, com o `environment` do configure preset; nos test presets, `environment`, `overwriteConfigurationFile`, `output`, `filter`, `execution` e `condition`; nos package presets, `environment`. `$vendor{}` tira da lista só o preset que o usa. Divergências vizinhas: `${generator}` sem `generator` expande vazio, e a IDE recusava a pasta; no build e no test preset, `${generator}` é o do configure preset, e no package preset é sempre vazio (achado pelos mutantes); na versão 12, `${fileDir}` é a pasta do arquivo que escreveu o texto quando todas as macros dele são `${fileDir}`, e a IDE usava a do preset em uso, então o `-B` da IDE e o `cmake --preset` configuravam em pastas diferentes. A `condition` é herdada, e o CMake a avalia ao listar: o preset de condição falsa some do `--list-presets`. A IDE lia só a do próprio preset e dava por verdadeira toda forma que não fosse do host. `environment: null` tira a chave, e `$env{}` cai no ambiente do processo; a IDE expandia vazio. `$vendor{}` interrompe a expansão do preset: o que vem depois, na ordem do CMake, não é conferido. A ordem é `environment`, `condition` e os campos do tipo, com as chaves dos mapas em ordem. A toolchain mostrava `CMAKE_C_COMPILER` e `toolchainFile` crus, com as macros | Média: a IDE lista, escolhe e oferece no menu presets de um arquivo que o CMake recusa, e o configure falha no CMake com a mensagem dele, não em silêncio; com `${fileDir}` na versão 12, a IDE configura fora da pasta do preset | Corrigido em 2026-11-09 (§17.4). Decisões do autor de 2026-11-09: corrigir antes do C1-22, e em todos os tipos de preset. Corrigir em `cmake_presets`, com o motivo do CMake. A `condition` segue o CMake em todas as formas menos `matches` e `notMatches`, que dependem da expressão regular do CMake (C1-26) e continuam valendo como verdadeiras. Provar com o CMake real cada campo, o preset oculto, a versão por arquivo, o ciclo e as pastas do `${fileDir}` |
-| C1-25 / esquema dos presets | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). O CMake recusa o arquivo inteiro por um campo que o esquema não tem ("Invalid extra field") e por um campo de versão maior (`installDir` e `toolchainFile` 3, `graphviz` 10: "File version must be N or higher"); um `generator` desconhecido tira o preset da lista, e o configure dele falha. Também recusam o arquivo um `configurePreset` inexistente (`Invalid "configurePreset"`), uma `condition` sem campo obrigatório (`Missing required field "rhs"`) e uma de tipo desconhecido (`Invalid condition`). A IDE lê só os campos que usa e lista esses presets; na `condition`, o campo ausente vale vazio, e o tipo desconhecido, verdadeiro | Média: o mesmo efeito do C1-24 por outra causa | Aberto. Decisão do autor de 2026-11-09: corrigir depois do C1-24 e antes do C1-22 |
+| C1-25 / esquema dos presets | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). O CMake recusa o arquivo inteiro por um campo que o esquema não tem ("Invalid extra field") e por um campo de versão maior (`installDir` e `toolchainFile` 3, `graphviz` 10: "File version must be N or higher"); um `generator` desconhecido tira o preset da lista, e o configure dele falha. Também recusam o arquivo um `configurePreset` inexistente (`Invalid "configurePreset"`), uma `condition` sem campo obrigatório (`Missing required field "rhs"`) e uma de tipo desconhecido (`Invalid condition`). A IDE lê só os campos que usa e lista esses presets; na `condition`, o campo ausente vale vazio, e o tipo desconhecido, verdadeiro | Média: o mesmo efeito do C1-24 por outra causa | Corrigido em 2026-11-10 (§18.1). Decisão do autor de 2026-11-09: corrigir depois do C1-24 e antes do C1-22. Decisões do autor de 2026-11-10: perguntar ao CMake do projeto, o que o kit padrão do workspace fixa, senão o do `PATH` (desenho no §18). A IDE roda o `cmake --list-presets` desse CMake, com cache pela data dos arquivos de presets e do executável, e a recusa e a lista dele valem: o esquema muda com a versão do CMake. A leitura nativa do C1-24 fica para os valores e para quando não há CMake. Com isso a lista do CMake já reflete `matches` e `notMatches`, e ao C1-26 resta o caso sem CMake. Provar com o CMake real cada recusa medida, o cache e a ausência do CMake |
 | C1-26 / expressão regular da `condition` | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). `matches` e `notMatches` usam a expressão regular do próprio CMake: `\d` não é classe, e `^a\d$` não casa `a1`. Uma expressão que não compila recusa o arquivo inteiro ("RegularExpression::compile(): Error in compile"). A IDE dá essas formas por verdadeiras | Baixa: um preset de `matches` falsa aparece na lista, e uma expressão inválida não recusa o arquivo | Aberto. Decisão do autor de 2026-11-10: perguntar ao CMake. Só quando uma `condition` usa `matches` ou `notMatches`, a IDE roda o `cmake --list-presets` do projeto, com cache pela data dos arquivos, e usa a lista ou a recusa dele. Sem CMake, essas formas continuam verdadeiras, e a IDE diz isso. Vem depois do C1-25 e antes do C1-22 (autor, 2026-11-10). Provar com o CMake real a expressão que casa, a que não casa, a que não compila e a ausência do CMake |
+| C1-27 / preset oculto pedido pelo nome | Achado pelos mutantes do C1-25 (2026-11-10): o mutante que dava aos presets ocultos o motivo de fora da lista sobreviveu, porque nenhum teste decidia o caso. Medido com o CMake 4.4.5: `cmake --preset h`, com `h` oculto, sai com 1 e "Cannot use hidden configure preset", e o `cmake --list-presets` não o lista. A IDE resolve a pasta, o configure pelo nome começa o job e o CMake recusa depois. Causa: `Reading::unusable` não conhece o oculto, e só a lista o filtra | Baixa: só quem pede o preset pelo nome, pelo IPC ou por uma configuração registrada que ficou oculta; o configure falha com a mensagem do CMake | Corrigido em 2026-11-10 (§18.1). Decisão do autor de 2026-11-10: corrigir dentro do C1-25, no mesmo protocolo 0.212.0. A leitura nativa anota os configure presets ocultos, e o preset oculto pedido pelo nome é recusado antes do job, com ou sem CMake: "o preset h é oculto: o CMake não o usa pelo nome". Vale para a pasta, o configure e os valores da toolchain; um filho visível continua herdando dele. Provar pela leitura nativa e com o CMake real, de ponta a ponta sem job, e com o mutante da guarda |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
 `binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
@@ -1120,12 +1121,13 @@ do IPC é escrito no [03 cmake](../arquitetura/03-dominios/cmake.md) antes da
 mudança, com nova versão do protocolo.
 
 Fatias, cada uma com commit próprio: C1-18; C1-19–C1-21 com o IPC; C1-23;
-C1-24; C1-25; C1-26; C1-22. O autor pôs o C1-23 antes do C1-22 em 2026-11-09, porque sem
+C1-24; C1-25 com o C1-27; C1-26; C1-22. O autor pôs o C1-23 antes do C1-22 em 2026-11-09, porque sem
 presets e com o registro órfão a UI não tinha saída (§17.2). No mesmo dia pôs o
 C1-24, achado na prova do C1-23, também antes do C1-22: o menu novo listava
 presets de um arquivo que o CMake recusa. O C1-25, achado na medida do C1-24,
 vem logo depois dele. Em 2026-11-10 o autor pôs o C1-26 depois do C1-25 e antes
-do C1-22: o menu não deve oferecer um preset que o CMake tira da lista.
+do C1-22: o menu não deve oferecer um preset que o CMake tira da lista. No
+mesmo dia pôs o C1-27, achado pelos mutantes do C1-25, dentro do C1-25.
 
 ### 17.1 C1-18: integração e provas — 2026-11-09
 
@@ -1457,3 +1459,209 @@ Limites:
   `binaryDir`, `toolchainFile` e `cacheVariables`. Os campos de build, test e
   package presets ela só confere (recusa e `$vendor{}`), sem usar o valor;
 - seguem abertos o C1-25 e, depois dele, o C1-22.
+
+## 18. C1-25: os presets pelo CMake do projeto — desenho de 2026-11-10
+
+O esquema dos presets muda com a versão do CMake: os campos de cada versão de
+arquivo, os tipos, os campos obrigatórios e os geradores que ele tem. A leitura
+nativa do C1-24 segue o CMake 4.4.5 e não confere o esquema (C1-25, inventário
+do §17). Decisões do autor de 2026-11-10: a IDE pergunta ao CMake do projeto, e
+quem responde é o CMake que o kit padrão do workspace fixa, senão o `cmake` do
+`PATH`, a mesma regra do configure sem kit.
+
+Medido com o CMake 4.4.5:
+- `cmake --list-presets` lista só os configure presets, um por linha, como
+  `  "nome"` ou `  "nome"  - displayName`, sem escapar as aspas do nome, e
+  sai com 0. Sem preset visível, não imprime nada;
+- numa recusa, sai com 1, e a linha depois de
+  `CMake Error: Could not read presets from <pasta>:` é o motivo, às vezes com
+  o arquivo e a linha (`CMakePresets.json:1: Invalid extra field "nope" in
+  Preset`). Seguem o trecho do JSON e um `^`. Recusam assim o campo extra, o
+  campo de versão maior, o tipo errado, o JSON inválido, o `configurePreset`
+  inexistente e a `condition` incompleta ou de tipo desconhecido;
+- um preset cujo gerador este CMake não tem sai da lista, também herdado. Isso
+  inclui os geradores do Visual Studio no Linux e a macro no `generator`, que o
+  CMake não expande. Um filho que troca o gerador por um que existe volta à
+  lista. `cmake --list-presets=all` lista esses presets, e por isso a pergunta
+  usa a forma sem `=all`, que é a do `cmake.presets.list`;
+- `matches` com `\d` não casa `a1`, e o preset sai da lista (C1-26);
+- a pergunta leva cerca de 9 ms num projeto de 80 presets.
+
+Desenho:
+- `cmake_presets/verdict.rs` roda `<cmake> --list-presets` na raiz, com o
+  ambiente do core, só quando há arquivo de presets. A saída 0 dá os nomes
+  listados: cada linha é conferida contra os nomes da leitura nativa e, sem
+  ela, lida até o `"  - ` ou o fim. Outra saída dá o motivo da linha depois de
+  `Could not read presets from`, ou a primeira linha de erro. Um executável
+  ausente, ou que não roda, não dá veredito;
+- o programa vem do toolchain: o `cmake` que o kit padrão fixa, achado pelo
+  detector do core, senão `cmake` pelo `PATH`. O exec repete no `ETXTBSY`, com
+  a regra que hoje só a sonda de versão tem;
+- o veredito fica em cache por raiz. A chave tem o caminho, o tamanho e a data
+  do executável resolvido e de cada arquivo de presets que a leitura nativa
+  abriu, também os abertos antes de uma recusa dela. Mudou um, a IDE pergunta
+  de novo;
+- quando o CMake recusa, todos os presets são recusados com
+  `o CMake recusa os presets: <motivo>`: a lista, o padrão, o menu, a pasta e o
+  configure, como as recusas do C1-18;
+- quando o CMake lista e a leitura nativa lê, a lista é a do CMake. Um preset
+  não oculto fora dela não serve: com o motivo nativo (`$vendor{}`, condition
+  falsa), com `a condition do preset X é falsa para o CMake` quando a leitura
+  nativa não a decidia, senão com `o CMake não tem o gerador "G" do preset X`
+  ou `o CMake não lista o preset X`;
+- quando o CMake lista e a leitura nativa recusa, os presets são recusados com
+  `o CMake aceita os presets, mas a IDE não os lê: <motivo>`. A IDE precisa dos
+  valores (`binaryDir`, toolchain) para configurar, e a divergência fica à
+  vista em vez de virar uma pasta adivinhada;
+- sem veredito, vale a leitura nativa, como no C1-24;
+- o diferencial do C1-24 continua comparando a leitura nativa com o CMake
+  real, para não virar a comparação do CMake consigo mesmo.
+
+O contrato muda sem campo novo: protocolo 0.212.0, escrito no
+[03 cmake](../arquitetura/03-dominios/cmake.md) antes da mudança.
+
+Provas necessárias:
+- cada recusa medida, pelo CMake real, com o motivo dele na lista, no padrão,
+  no menu e no configure, sem job;
+- o gerador desconhecido, o do Visual Studio e o herdado fora da lista, o filho
+  que troca o gerador dentro, e o configure pedido pelo nome recusado antes do
+  job;
+- com um CMake falso que registra cada chamada: a segunda leitura não pergunta;
+  uma edição num arquivo incluído, ou um executável trocado, pergunta de novo;
+  o executável ausente cai na leitura nativa; a divergência das duas leituras
+  aparece com os dois motivos;
+- o programa do kit padrão e o do `PATH`;
+- mutantes que compilem e reprovem pela guarda.
+
+Limites previstos:
+- a pergunta não tem prazo, como a sonda de `--version`; um CMake que trava
+  trava a leitura;
+- o ambiente é o do core. Um preset cujo kit fixa outro CMake configura com
+  ele, e a recusa desse CMake aparece na saída do configure;
+- sem CMake, `matches` e `notMatches` continuam verdadeiros, e a IDE ainda não
+  diz isso (C1-26).
+
+### 18.1 C1-25: integração e provas — 2026-11-10
+
+A lista, o padrão, o menu, a pasta da configuração e o configure seguem o
+`cmake --list-presets` do CMake do projeto, como o §18 desenhou. O dono continua
+`cmake_presets`:
+- `files.rs` guarda cada arquivo que a leitura abriu, com um hash do texto,
+  também os abertos antes de uma recusa. Diz também a ordem em que o CMake
+  percorre os arquivos;
+- `reading.rs` é novo e guarda por que um preset não serve: ignorado,
+  desabilitado, com `condition` que a IDE não decide, ou fora da lista do
+  CMake, com o motivo;
+- `verdict.rs` é novo: pergunta, guarda a resposta em cache e combina as duas
+  leituras.
+
+O programa vem do módulo novo `kits`, e não do `toolchain`, como o §18 previa.
+O `toolchain` lê os presets, e os presets passaram a ler o kit: o ciclo
+reprovava o mapa de módulos. Decisão do autor de 2026-11-10: descer para `kits`
+o arquivo dos kits (`store.rs`, o `.kinein/toolchain.json`), o catálogo de
+candidatos por papel (`catalog.rs`) e a busca do executável que um kit fixa. O
+`toolchain` passou a usá-los de lá, sem mudança de comportamento. Os dois
+identificadores em português do `store.rs` foram traduzidos na mudança, e a
+linha de base deles saiu.
+
+A medida da implementação achou a ordem. O CMake lista primeiro os presets do
+`CMakeUserPresets.json`, depois os que ele inclui e por último os do
+`CMakePresets.json` e dos seus includes, cada arquivo uma vez, onde aparece
+primeiro. A IDE listava antes os do `CMakePresets.json`. Agora a lista e o menu
+seguem a ordem que o CMake imprime e, sem ele, a dos arquivos como ele os
+percorre. O contrato do 0.212.0 registra a mudança.
+
+O cache segue o desenho com uma diferença: a chave tem o caminho, o tamanho e
+a data do executável, mas dos arquivos de presets guarda o hash do texto, e não
+a data. Uma edição de mesmo tamanho no mesmo segundo também pergunta de novo.
+Um arquivo que aparece ou some muda a lista de arquivos abertos, e por isso o
+arquivo ausente não precisa de entrada própria.
+
+Os mutantes acharam o C1-27, registrado no inventário do §17. O que dava aos
+presets ocultos o motivo de fora da lista sobreviveu, porque nenhum teste
+decidia o caso. Medido com o 4.4.5: `cmake --preset h`, com `h` oculto, sai
+com "Cannot use hidden configure preset". A IDE começava o job. Decisão do
+autor de 2026-11-10: corrigir dentro do C1-25. A leitura nativa anota os
+configure presets ocultos, e o oculto pedido pelo nome é recusado antes do
+job, com ou sem CMake, com `o preset X é oculto: o CMake não o usa pelo nome`.
+O filho visível continua herdando dele. Com isso, os filtros de oculto da lista
+e do fora da lista ficaram redundantes e saíram.
+
+A linha da lista também foi medida: o CMake alinha o `- displayName` pelo nome
+mais longo, com espaços. A IDE reconhece o nome entre aspas seguido do fim da
+linha, ou de espaços e `- `. Um nome que é prefixo de outro não se confunde,
+nem `x` com um preset chamado `x - y`, que parece um `displayName`. As aspas
+dentro do nome, que o CMake não escapa, também não confundem.
+
+Provas:
+- testes do dono, em `verdict/tests.rs`, contra o CMake 4.4.5 real: as dez
+  recusas do esquema medidas (campo extra na raiz e no preset, `installDir`,
+  `toolchainFile` e `graphviz` em versão menor, tipo errado, `configurePreset`
+  inexistente, `condition` sem `rhs` e de tipo desconhecido, nome vazio), cada
+  uma na lista, no padrão e na pasta, depois de a leitura nativa aceitar o
+  arquivo; os geradores do Visual Studio, desconhecido e herdado fora da
+  lista, o filho que troca o gerador dentro, o `matches` falso para o CMake e o
+  padrão entre os que sobram;
+- com um CMake falso que registra cada chamada: a segunda leitura não pergunta,
+  e perguntam de novo uma edição de mesmo tamanho num include, um arquivo de
+  usuário que aparece, um executável trocado no mesmo caminho e um include que
+  some, cuja recusa também fica em cache; dois executáveis de mesmo texto,
+  tamanho e data em pastas diferentes têm cada um a sua resposta; a lista com
+  alinhamento, aspas, um nome prefixo de outro e `x` ao lado de `x - y`, na
+  ordem impressa, também em `cmake.presets.list`, com o preset que a leitura
+  nativa desabilitava e o CMake lista; o motivo da linha certa; o CMake que aceita o
+  que a IDE não lê; o executável ausente, uma pasta e um arquivo que não
+  executa no lugar dele; sem arquivo de presets, nenhuma pergunta;
+- o kit padrão fixa o CMake que responde, e outro kit não; com o `PATH` dado,
+  o fixado vence o do `PATH` e, sem fixação, o do `PATH` responde. No `kits`,
+  cada ramo da busca: o kit e o papel pela chave, a instalação pelo caminho, o
+  binário antes do alternativo, o fixado que sumiu e o id fora do catálogo;
+- regressão de ponta a ponta pelo core, com CMake 4.4.5, GCC 16.2.1 e Ninja
+  reais: a lista e o menu têm só o preset que o CMake lista; o configure do
+  preset do Visual Studio, do gerador herdado e do `matches` falso é recusado
+  com o motivo, sem `event.cmake.started` e sem pasta; o configure sem preset
+  pedido escreve a CDB; um campo fora do esquema recusa a lista e o configure
+  com a linha que o CMake dá, sem job e sem `configurations`; corrigido o
+  arquivo, a lista volta sem reabrir nada. O configure do preset oculto pelo
+  nome é recusado com o motivo do C1-27, sem job; pela leitura nativa e com o
+  CMake, a pasta e os valores do oculto são recusados, e o filho herda dele;
+- os testes da leitura nativa (C1-18, C1-24) rodam sem perguntar ao CMake, e o
+  diferencial do C1-24 compara a leitura nativa com o CMake real, nos mesmos
+  347 projetos;
+- 40 mutantes que compilam, todos reprovados na terceira rodada: o cache
+  sempre vencido, sem a data, o caminho ou o texto da chave, ou sem os
+  arquivos abertos; a pergunta sem arquivo de presets, ou só com todos; a
+  recusa caindo na leitura nativa; a divergência sem o prefixo; a lista com
+  `=all` ou fora da raiz; o motivo da linha errada, com o `CMake Error:` ou
+  sempre a primeira linha; o nome sem o alinhamento, com qualquer resto ou sem
+  a aspa final; o desabilitado nativo que o CMake lista; sem os de fora da
+  lista, sem a ordem do CMake ou a dos arquivos, e a ordem a partir do
+  projeto; sem o motivo da `condition` ou do gerador, e o gerador sem herança;
+  o `matches` não anotado; sem o kit, sem o `PATH`, e o `PATH` do ambiente no
+  lugar do dado; qualquer kit, qualquer papel; a instalação procurada no
+  catálogo ou valendo depois de sumir; sem o binário alternativo, ou com ele
+  antes; o id fora do catálogo; o oculto sem motivo, não anotado ou herdado.
+
+Na primeira rodada, dez mutantes não compilaram (variável ou import sem uso,
+que o teste nega) e foram refeitos, e sete sobreviveram. Três pediam teste: o
+caminho do executável na chave, o nome sem a aspa final e a ordem do CMake na
+lista. Quatro eram equivalentes, e o código saiu: a entrada do arquivo ausente
+na chave, em três lugares, e a deduplicação da ordem dos arquivos, porque quem
+ordena já pega o primeiro lugar; e o filtro dos já recusados no fora da lista,
+porque o motivo nativo vem antes. Na segunda rodada sobreviveram dois: o nome
+com qualquer resto, fechado com um preset `q` ao lado de `q"uote`, e o que dava
+motivo ao oculto, que achou o C1-27.
+
+Limites:
+- a pergunta não tem prazo, como a sonda de `--version`: um CMake que trava
+  trava a leitura;
+- o ambiente é o do core. Um preset cujo kit fixa outro CMake configura com
+  ele, e a recusa desse CMake aparece na saída do configure;
+- os motivos do CMake são mais secos que os da leitura nativa: "Invalid macro
+  expansion in "all"" não diz qual macro. O motivo nativo fica à vista só sem
+  CMake;
+- sem CMake, `matches` e `notMatches` continuam verdadeiros, e a IDE ainda não
+  diz isso (C1-26);
+- a ordem dos motivos de um preset oculto que também usa `$vendor{}` ou tem a
+  `condition` falsa não foi medida: a IDE dá o do oculto;
+- segue aberto o C1-26 e, depois dele, o C1-22.
