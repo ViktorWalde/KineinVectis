@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21, C1-23–C1-27 e C-05 corrigidos com provas; abertos C-04 (C1-22), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-31, C1-33, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-32, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -408,7 +408,7 @@ auditorias e provas posteriores datadas nos donos:**
   dir remove a pasta de um preset só se o cache dela for deste projeto e ela
   não for a raiz nem a contiver. Desenho na
   [consolidação C §17](../especificacoes/consolidacao-nativa-de-c.md#17-c1-configure-no-binarydir-configuração-ativa-e-include-de-presets--desenho-de-2026-11-09).
-  Estado aberto, em sete fatias: C1-18, corrigido em 2026-11-09
+  Estado corrigido no C1, em sete fatias: C1-18, corrigido em 2026-11-09
   ([40.7 §7.394](40.7-registro-das-entregas.md), protocolo 0.207.0); C1-19–C1-21,
   corrigidos em 2026-11-09 ([40.7 §7.396](40.7-registro-das-entregas.md),
   protocolo 0.209.0); C1-23, corrigido em 2026-11-09
@@ -417,7 +417,9 @@ auditorias e provas posteriores datadas nos donos:**
   protocolo 0.211.0); C1-25, corrigido em 2026-11-10
   ([40.7 §7.399](40.7-registro-das-entregas.md), protocolo 0.212.0); C1-26,
   corrigido em 2026-11-10 ([40.7 §7.400](40.7-registro-das-entregas.md),
-  protocolo 0.213.0); C1-22. Na
+  protocolo 0.213.0); C1-22, corrigido em 2026-11-10
+  ([40.7 §7.401](40.7-registro-das-entregas.md), protocolo 0.214.0). Trocar
+  de configuração numa pasta multi-config segue no C-03, no C2. Na
   segunda fatia, cada configuração
   configura na pasta dela: o `binaryDir`, ou `.kinein/presets/<preset>` sem ele.
   A configuração fica ativa ao começar o configure, e build, run, debug,
@@ -455,6 +457,17 @@ auditorias e provas posteriores datadas nos donos:**
   depois de uma forma indecisa, uma macro inválida ou um `$vendor{}` não
   recusam nem ignoram mais o preset, como no CMake, que não chega neles
   ([§19.1](../especificacoes/consolidacao-nativa-de-c.md#191-c1-26-integração-e-provas--2026-11-10)).
+  Na sétima fatia, com gerador multi-config, o build, o `ctest`, o run e o
+  debug usam a configuração que o clangd lê, e o contexto mostra a entrada
+  dela na CDB; a faixa informa quando o `cmake --build` do terminal compila
+  outra. Corrigidos na mesma fatia, por decisão do autor, os achados da
+  regressão: o Catch2 precisa se identificar (C1-28), o caso gtest conta uma
+  vez, com o nome da lista (C1-29), o run e o debug não contam mais as
+  bibliotecas compartilhadas (C1-30), o caso Catch2 roda só ele (C1-31), e a
+  faixa cortada mostra a mensagem inteira ao pairar (C1-33).
+  O C1-32, a árvore que repete os casos de um teste que já é um caso, fica
+  para o commit seguinte
+  ([§20.1](../especificacoes/consolidacao-nativa-de-c.md#201-c1-22-integração-e-provas--2026-11-10)).
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste

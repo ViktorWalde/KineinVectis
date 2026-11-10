@@ -116,6 +116,11 @@ void CoreClient::emitCmakeStatus(const QJsonObject& result)
         {QStringLiteral("directory"), result.value(QStringLiteral("buildDir")).toString()},
         {QStringLiteral("choices"),
          result.value(QStringLiteral("configurations")).toArray().toVariantList()},
+        // Multi-config (0.214.0, C1-22): o que a IDE compila e o que o terminal.
+        {QStringLiteral("buildConfiguration"),
+         result.value(QStringLiteral("buildConfiguration")).toString()},
+        {QStringLiteral("defaultBuildConfiguration"),
+         result.value(QStringLiteral("defaultBuildConfiguration")).toString()},
     };
     emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
                              result.value(QStringLiteral("hasCompileCommands")).toBool(),

@@ -1,5 +1,32 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**Multi-config (`0.214.0`, C1-22 do C-04).** Desenho na
+[consolidação C §20](../../especificacoes/consolidacao-nativa-de-c.md#20-c1-22-multi-config--desenho-de-2026-11-10).
+`cmake.status` ganha dois campos opcionais:
+
+```text
+buildConfiguration?         a configuração que o clangd lê: o primeiro item
+                            não vazio de CMAKE_CONFIGURATION_TYPES no cache
+                            da pasta da configuração ativa; só com gerador
+                            multi-config (Ninja Multi-Config, Xcode,
+                            Visual Studio)
+defaultBuildConfiguration?  o CMAKE_DEFAULT_BUILD_TYPE desse cache, só quando
+                            difere de buildConfiguration: o que o
+                            cmake --build sem --config do terminal compila
+```
+
+Com `buildConfiguration`, o build do `build.run` passa `--config` com ela, e o
+`test.discover` e o `test.run` passam `-C` ao `ctest`. O `run.start` sem
+comando e o debug procuram o executável nos artefatos dos alvos `EXECUTABLE`
+do codemodel. Sem o modelo do file-api, recusam com o motivo e pedem o
+configure pela IDE. Sem gerador multi-config, os dois campos não vêm. O
+`run.start` e o debug também leem os alvos `EXECUTABLE` do codemodel, e não
+mais toda a pasta, que conta as bibliotecas compartilhadas (C1-30). Sem o
+modelo, varrem a pasta como antes, mas deixam de fora `.so`, `.so.N` e
+`.dylib`. Na ponte, o mapa `configuration` do `cmakeStatusResolved` ganha
+`buildConfiguration` e `defaultBuildConfiguration` (vazios quando omitidos).
+Clientes antigos ignoram os campos.
+
 **`matches` e `notMatches` sem o CMake (`0.213.0`, C1-26 do C-04).** Desenho
 na
 [consolidação C §19](../../especificacoes/consolidacao-nativa-de-c.md#19-c1-26-matches-e-notmatches-sem-o-cmake--desenho-de-2026-11-10).
@@ -313,7 +340,8 @@ arquivo).
   configure.
 - `cmake.status {}` → `{ configured, hasCompileCommands, buildDir, preset? (0.115.0),
   cdbDirectory?, cdbStale?, cdbStaleBecause?, presetChoices[]?,
-  presetChoicesFile? (0.174.0) }` — `presetChoices` são os nomes quando um
+  presetChoicesFile? (0.174.0), buildConfiguration?,
+  defaultBuildConfiguration? (0.214.0, veja o topo) }` — `presetChoices` são os nomes quando um
   configure sem preset seria recusado por haver vários, e a UI pergunta
   pela faixa de saúde em vez de configurar sozinha; stat de
   `CMakeCache.txt`/`compile_commands.json`, mais o **diagnóstico da compilation

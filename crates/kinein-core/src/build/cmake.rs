@@ -111,13 +111,15 @@ pub(super) fn run_cmake_build(
 
     let mut build = Command::new(program_for_role(toolchain, ToolchainRole::Cmake, "cmake"));
     build.arg("--build").arg(&build_dir);
+    // C1-22: the configuration clangd reads, not the default of `CMake`.
+    let display = crate::cmake::build_configuration::of(&build_dir).map_or_else(
+        || "cmake --build".to_owned(),
+        |configuration| {
+            build.arg("--config").arg(&configuration.name);
+            format!("cmake --build --config {}", configuration.name)
+        },
+    );
     crate::msvc::apply_environment(&mut build);
 
-    stream_command(
-        build,
-        "cmake --build",
-        DiagnosticFormat::GccLike,
-        cancel,
-        sink,
-    )
+    stream_command(build, &display, DiagnosticFormat::GccLike, cancel, sink)
 }

@@ -150,8 +150,9 @@ pub fn discover_tests(
                 .arg(&build_dir)
                 .arg("-N")
                 .current_dir(root);
+            let configuration = super::ctest_configuration(&mut c, &build_dir);
             crate::msvc::apply_environment(&mut c);
-            (c, "ctest -N".to_owned())
+            (c, format!("ctest -N{configuration}"))
         }
         ProjectKind::Python => {
             let Some(launcher) = python else {

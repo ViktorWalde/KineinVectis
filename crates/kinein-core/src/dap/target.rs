@@ -108,7 +108,7 @@ fn cargo_binary(root: &Path) -> Result<PathBuf, DebugError> {
         for entry in entries.flatten() {
             let path = entry.path();
             let is_file = entry.file_type().is_ok_and(|kind| kind.is_file());
-            if is_file && path.extension().is_none() && crate::run::is_executable(&path) {
+            if is_file && path.extension().is_none() && crate::platform::is_executable(&path) {
                 binaries.push(path);
             }
         }
@@ -121,8 +121,8 @@ fn cargo_binary(root: &Path) -> Result<PathBuf, DebugError> {
 fn cmake_binary(root: &Path) -> Result<PathBuf, DebugError> {
     let build_dir =
         crate::cmake::active_dir(root).map_err(|message| DebugError::NoTarget { message })?;
-    let mut found = Vec::new();
-    crate::run::collect_executables(&build_dir, &mut found);
+    let found = crate::run::cmake_executables(root, &build_dir)
+        .map_err(|message| DebugError::NoTarget { message })?;
     single_binary(
         found.into_iter().map(PathBuf::from).collect(),
         &crate::cmake_configuration::label(root, &build_dir),

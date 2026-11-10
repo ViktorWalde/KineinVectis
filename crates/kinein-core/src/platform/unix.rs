@@ -61,6 +61,11 @@ pub(super) fn serial_device_key(path: &Path) -> io::Result<String> {
     }
 }
 
+pub(super) fn is_executable(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::metadata(path).is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
+}
+
 pub(super) fn file_revision(path: &Path) -> io::Result<String> {
     let metadata = fs::metadata(path)?;
     if !metadata.is_file() {

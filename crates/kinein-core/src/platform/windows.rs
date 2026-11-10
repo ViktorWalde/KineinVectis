@@ -23,6 +23,11 @@ pub(super) fn self_executable() -> io::Result<PathBuf> {
     std::env::current_exe()
 }
 
+pub(super) fn is_executable(path: &Path) -> bool {
+    path.extension()
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("exe"))
+}
+
 pub(super) fn file_revision(path: &Path) -> io::Result<String> {
     use std::os::windows::fs::MetadataExt;
     let metadata = fs::metadata(path)?;

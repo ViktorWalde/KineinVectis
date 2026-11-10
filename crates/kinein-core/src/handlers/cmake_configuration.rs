@@ -118,6 +118,12 @@ fn status_result(root: &std::path::Path) -> CmakeStatusResult {
     // outra pasta de preset, em `build/` ou onde o `.clangd` aponta — quem
     // sabe e' o `cdb`.
     let cdb = crate::cdb::status(root);
+    // C1-22: with a multi-config generator, what the IDE builds and what the
+    // terminal does.
+    let build = status
+        .build_dir
+        .as_deref()
+        .and_then(cmake::build_configuration::of);
     CmakeStatusResult {
         configured: status.configured,
         has_compile_commands: status.has_compile_commands,
@@ -140,5 +146,7 @@ fn status_result(root: &std::path::Path) -> CmakeStatusResult {
         configuration_source,
         configuration_refused,
         configurations: cmake::configurations(root),
+        build_configuration: build.as_ref().map(|build| build.name.clone()),
+        default_build_configuration: build.and_then(|build| build.default),
     }
 }

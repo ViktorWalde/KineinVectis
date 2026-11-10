@@ -339,6 +339,11 @@ Item {
             apply("info", pythonStubsMessage, qsTr("Instalar stubs"), "pythonStubs");
             return;
         }
+        // Só um `cmake.status` multi-config a preenche (C1-22).
+        if (configuration.buildMismatch() !== "") {
+            apply("info", configuration.buildMismatch(), "", "");
+            return;
+        }
         if (workspaceKind === "unknown" && workspaceBuildSystems.length === 0
                 && !projectRecognized) {
             apply("info", qsTr("sistema de build não detectado; scripts e comandos manuais continuam disponíveis"), "", "");

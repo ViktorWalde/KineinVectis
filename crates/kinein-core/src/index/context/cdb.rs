@@ -2,7 +2,7 @@
 //! formas do padrao do clang, e a CDB envelhecida por `CMakeLists.txt` de
 //! subpasta (o `cdb::status` da raiz nao ve).
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, hash_map::Entry};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
@@ -52,10 +52,16 @@ pub(super) fn parse_cdb(text: &str) -> HashMap<PathBuf, CdbUnit> {
             continue;
         };
         if let Some((key, unit)) = parse_entry(&entry, line, column) {
-            let ambiguous = units.contains_key(&key);
-            let mut unit = unit;
-            unit.ambiguous = ambiguous;
-            units.insert(key, unit);
+            // clangd reads the first entry of a file, and a multi-config
+            // build writes one per configuration, the one clangd reads first
+            // (measured with clangd 23 and `CMake` 4.4.5, C1-22): the IDE shows
+            // the same one. A repeated file stays ambiguous (C-03).
+            match units.entry(key) {
+                Entry::Occupied(mut first) => first.get_mut().ambiguous = true,
+                Entry::Vacant(slot) => {
+                    slot.insert(unit);
+                }
+            }
         }
     }
     units
@@ -244,5 +250,29 @@ fn absolute(dir: &Path, caminho: &str) -> String {
         caminho.to_owned()
     } else {
         dir.join(p).display().to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_cdb;
+    use std::path::Path;
+
+    /// A file in two entries keeps the first, the one clangd reads, and is
+    /// ambiguous; a file in one is not (C1-22).
+    #[test]
+    fn a_repeated_file_keeps_the_entry_clangd_reads() {
+        let units = parse_cdb(
+            r#"[
+{"directory":"/w/b","command":"gcc -DCONF_Release -c /w/main.c","file":"/w/main.c"},
+{"directory":"/w/b","command":"gcc -DCONF_Debug -c /w/main.c","file":"/w/main.c"},
+{"directory":"/w/b","command":"gcc -DONLY -c /w/other.c","file":"/w/other.c"}
+]"#,
+        );
+        let main = &units[Path::new("/w/main.c")];
+        assert_eq!(main.defines, ["CONF_Release"]);
+        assert_eq!((main.line, main.ambiguous), (2, true));
+        let other = &units[Path::new("/w/other.c")];
+        assert_eq!((other.line, other.ambiguous), (4, false));
     }
 }

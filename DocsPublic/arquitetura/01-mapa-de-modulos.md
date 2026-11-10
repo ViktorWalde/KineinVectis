@@ -282,6 +282,7 @@ flowchart LR
   n_core_python --> n_core_run
   n_core_remote --> n_core_platform
   n_core_rpc --> n_core_dap
+  n_core_run --> n_core_cmake
   n_core_run --> n_core_cmake_configuration
   n_core_run --> n_core_platform
   n_core_run --> n_core_python
@@ -307,7 +308,6 @@ flowchart LR
   n_core_toolchain --> n_core_cmake_presets
   n_core_toolchain --> n_core_kits
   n_core_toolchain --> n_core_platform
-  n_core_toolchain --> n_core_run
   n_core_toolchain --> n_core_tools
   n_core_tools --> n_core_msvc
   n_core_tools --> n_core_platform
@@ -372,7 +372,7 @@ flowchart LR
 | `python` | run | O dominio python: |
 | `remote` | platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
-| `run` | cmake_configuration, platform, python | O que "Executar" roda, e como se mostra. |
+| `run` | cmake, cmake_configuration, platform, python | O que "Executar" roda, e como se mostra. |
 | `runconfig` | flash, fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
 | `runtime` | datasource, rpc, settings | The stdio JSON-RPC loop that drives Core as a subprocess. |
 | `serial` | build, platform, toolchain | Portas seriais USB: |
@@ -382,7 +382,7 @@ flowchart LR
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
-| `toolchain` | cmake_configuration, cmake_presets, kits, platform, run, tools | Toolchain: |
+| `toolchain` | cmake_configuration, cmake_presets, kits, platform, tools | Toolchain: |
 | `tools` | msvc, platform, process | External tool detection. |
 | `workspace` | configaction, fsops, platform, process, python, tools | Workspace opening, project kind detection, and metadata persistence. |
 

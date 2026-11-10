@@ -180,6 +180,15 @@ pub struct CmakeStatusResult {
     /// presets, or with presets `CMake` would refuse.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub configurations: Vec<CmakeConfigurationInfo>,
+    /// With a multi-config generator, the configuration the IDE builds, tests
+    /// and runs: the first of `CMAKE_CONFIGURATION_TYPES`, the one clangd
+    /// reads (`0.214.0`, C1-22).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_configuration: Option<String>,
+    /// `CMAKE_DEFAULT_BUILD_TYPE`, only when it is not `buildConfiguration`:
+    /// what `cmake --build` without `--config` builds (`0.214.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_build_configuration: Option<String>,
 }
 
 /// One configuration of the menu (`0.210.0`).
@@ -367,9 +376,13 @@ mod tests {
                     condition_note: None,
                 },
             ],
+            build_configuration: Some("Release".to_owned()),
+            default_build_configuration: Some("Debug".to_owned()),
         })
         .unwrap();
 
+        assert_eq!(value["buildConfiguration"], "Release");
+        assert_eq!(value["defaultBuildConfiguration"], "Debug");
         assert_eq!(
             value["configurations"],
             json!([
@@ -418,6 +431,8 @@ mod tests {
             configuration_source: None,
             configuration_refused: None,
             configurations: Vec::new(),
+            build_configuration: None,
+            default_build_configuration: None,
         })
         .unwrap();
 
@@ -436,6 +451,8 @@ mod tests {
             "configurationSource",
             "configurationRefused",
             "configurations",
+            "buildConfiguration",
+            "defaultBuildConfiguration",
         ] {
             assert!(value.get(absent).is_none(), "{absent}");
         }

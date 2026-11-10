@@ -6,6 +6,22 @@
 
 ### Testes (`test.run` / `test.discover` — jobs assíncronos)
 
+**Casos de dentro (`0.214.0`, C1-28, C1-29 e C1-31 do C-04).** A lista do Catch2 só
+é pedida ao binário que responde `framework: Catch2` a `<exe> --libidentify`,
+na forma `chave: valor` alinhada que o Catch2 documenta para ferramentas. Um
+teste comum que imprime uma linha para qualquer argumento continua só a linha
+do ctest. O gtest continua perguntado antes. Um caso gtest roda com
+`--gtest_print_time=1`, e só a linha do caso, que termina no tempo, vira
+`event.test.case`; o resumo do fim repetia as falhas e os ignorados. O nome é
+o da lista, sem o `, where GetParam() = …` dos parametrizados. A lista do
+Catch2 sai com `--order decl`, na ordem da declaração, e o caso roda com a
+barra invertida antes de `\`, `,`, `[`, `]`, `*`, `~` e `"`. Quando o Catch2
+não isola o caso, porque o nome começa com `exclude:` ou outro caso da lista
+tem o mesmo nome sem a caixa ASCII, o `test.run` termina com `error`, o
+motivo, sem rodar o binário. Num build
+multi-config, o `ctest` recebe `-C` (veja o [cmake](cmake.md)). Veja a
+[consolidação C §20](../../especificacoes/consolidacao-nativa-de-c.md#20-c1-22-multi-config--desenho-de-2026-11-10).
+
 **gtest e Catch2 dentro dos binários do ctest (`0.119.0`, D7 do
 `roadmaps/41`, 2026-09-17).** Um `add_test` do `CMake` é UM binário com N
 casos; o `ctest -N` lista o binário. O `test.discover` de um `CMake` pergunta

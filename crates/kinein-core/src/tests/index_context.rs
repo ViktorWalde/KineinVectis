@@ -732,7 +732,7 @@ fn the_context_is_reloaded_after_configure_and_after_a_manifest_change() {
 /// Navigation must follow the winning object, not a filename search (the
 /// filename can occur in arguments, escaped, and in another unit).
 #[test]
-fn cdb_location_follows_last_unit_with_escaped_path_and_unicode_prefix() {
+fn cdb_location_follows_first_unit_with_escaped_path_and_unicode_prefix() {
     let root = temp_dir("cdb-location");
     let source = root.join(r"src/ação\unit.cpp");
     put_file(&source, "int main() {}\n");
@@ -745,17 +745,18 @@ fn cdb_location_follows_last_unit_with_escaped_path_and_unicode_prefix() {
     };
     let first = entry("clang++");
     let second = entry("g++");
-    // A non-ASCII string preceding the winning object shares its line.
-    let text = format!("[\n {first},\n \"ação🚀\", {second}\n]\n");
+    // A non-ASCII string preceding the winning object shares its line. The
+    // first entry wins, the one clangd reads (0.214.0, C1-22).
+    let text = format!("[\n \"ação🚀\", {first},\n {second}\n]\n");
     let database = root.join("compile_commands.json");
     put_file(&database, &text);
     let context = CompileContext::load(&root, &no_tools());
     let answer = context.for_file(&root, &source, "cpp");
-    assert_eq!(answer.unit.unwrap().compiler, "g++");
+    assert_eq!(answer.unit.unwrap().compiler, "clang++");
     let location = answer.cdb_location.unwrap();
     assert_eq!(location.path, database.display().to_string());
-    assert_eq!((location.line, location.column), (3, 12));
-    assert!(text.lines().nth(2).unwrap().ends_with(&second));
+    assert_eq!((location.line, location.column), (2, 12));
+    assert!(text.lines().nth(1).unwrap().ends_with(&format!("{first},")));
     assert!(
         context
             .for_file(&root, &root.join("src/header.hpp"), "cpp")

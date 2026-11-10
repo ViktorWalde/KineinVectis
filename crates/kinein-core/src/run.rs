@@ -126,8 +126,8 @@ fn cmake_binary_command(root: &Path) -> Result<String, RunError> {
     let build_dir = crate::cmake_configuration::active_dir(root)
         .map_err(|message| RunError::NoDefaultCommand { message })?;
     let location = crate::cmake_configuration::label(root, &build_dir);
-    let mut executables = Vec::new();
-    collect_executables(&build_dir, &mut executables);
+    let executables = cmake_executables(root, &build_dir)
+        .map_err(|message| RunError::NoDefaultCommand { message })?;
 
     match executables.as_slice() {
         [] => Err(RunError::NoDefaultCommand {
@@ -144,8 +144,46 @@ fn cmake_binary_command(root: &Path) -> Result<String, RunError> {
     }
 }
 
-/// Collects executable regular files under `dir`, skipping `CMakeFiles`.
-pub(crate) fn collect_executables(dir: &Path, found: &mut Vec<String>) {
+/// The executables of a `CMake` build folder: the artifacts of the
+/// `EXECUTABLE` targets in the codemodel, which in a multi-config build are
+/// those of the configuration clangd reads (C1-22). A shared library has the
+/// bit too (C1-30). Without the model, a single-config folder is walked.
+pub(crate) fn cmake_executables(root: &Path, build_dir: &Path) -> Result<Vec<String>, String> {
+    let Some(model) = crate::cmake::model::CmakeModel::load(build_dir) else {
+        if let Some(configuration) = crate::cmake::build_configuration::of(build_dir) {
+            return Err(format!(
+                "o build multi-config em {} não tem o modelo do file-api, que diz quais \
+                 executáveis são da configuração {}; configure pela IDE (Configurar)",
+                crate::cmake_configuration::label(root, build_dir),
+                configuration.name
+            ));
+        }
+        let mut found = Vec::new();
+        collect_executables(build_dir, &mut found);
+        return Ok(found);
+    };
+    Ok(model
+        .targets
+        .iter()
+        .filter(|target| target.kind == "EXECUTABLE")
+        .flat_map(|target| &target.artifacts)
+        .filter(|artifact| artifact.is_file() && crate::platform::is_executable(artifact))
+        .map(|artifact| artifact.display().to_string())
+        .collect())
+}
+
+/// `libm.so`, `libm.so.1.2.3` and `libm.1.dylib` (C1-30).
+fn is_shared_library(name: &str) -> bool {
+    Path::new(name).extension().is_some_and(|extension| {
+        extension.eq_ignore_ascii_case("so") || extension.eq_ignore_ascii_case("dylib")
+    }) || name.split_once(".so.").is_some_and(|(_, version)| {
+        version
+            .split('.')
+            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
+    })
+}
+
+fn collect_executables(dir: &Path, found: &mut Vec<String>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
@@ -158,25 +196,13 @@ pub(crate) fn collect_executables(dir: &Path, found: &mut Vec<String>) {
             if name != "CMakeFiles" {
                 collect_executables(&entry.path(), found);
             }
-        } else if file_type.is_file() && is_executable(&entry.path()) {
+        } else if file_type.is_file()
+            && !is_shared_library(&name)
+            && crate::platform::is_executable(&entry.path())
+        {
             found.push(entry.path().display().to_string());
         }
     }
-}
-
-/// Returns `true` when the file has any execute permission bit set.
-#[cfg(unix)]
-pub(crate) fn is_executable(path: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::metadata(path).is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
-}
-
-/// No Windows nao ha' bit de execucao: executavel e' o `.exe`, que e' o que o
-/// build do `CMake` gera (60 §3.3, W6a).
-#[cfg(windows)]
-pub(crate) fn is_executable(path: &Path) -> bool {
-    path.extension()
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("exe"))
 }
 
 #[cfg(test)]
@@ -253,6 +279,29 @@ mod tests {
         ));
     }
 
+    /// C1-30: the names of a shared library, which has the bit too.
+    #[test]
+    fn a_shared_library_is_not_an_executable() {
+        for (name, expected) in [
+            ("libkv.so", true),
+            ("libkv.so.1", true),
+            ("libkv.so.1.2.3", true),
+            ("libkv.dylib", true),
+            ("libkv.1.dylib", true),
+            ("libkv.SO", true),
+            ("app", false),
+            ("solver", false),
+            ("app.sonar", false),
+            ("libkv.so.", false),
+            ("libkv.so.1.", false),
+            ("libkv.so.1.bak", false),
+            ("libkv.so.d", false),
+            ("libkv.socket", false),
+        ] {
+            assert_eq!(super::is_shared_library(name), expected, "{name}");
+        }
+    }
+
     /// O executavel do build e' o que o sistema executa: no Unix o arquivo com
     /// bit de execucao, no Windows o `.exe` (60 §3.3, W6a). O comando e' o
     /// do shell do Run (D11).
@@ -264,6 +313,9 @@ mod tests {
         crate::write_executable(build.join("CMakeFiles/ignorado"), "#!/bin/sh\n");
 
         let binary = crate::write_executable(build.join("app"), "#!/bin/sh\n");
+        // C1-30: a shared library has the bit too.
+        crate::write_executable(build.join("libkv.so"), "\x7fELF");
+        crate::write_executable(build.join("libkv.so.1.2.3"), "\x7fELF");
 
         let command = default_command(ProjectKind::Cmake, &root).unwrap();
         assert_eq!(

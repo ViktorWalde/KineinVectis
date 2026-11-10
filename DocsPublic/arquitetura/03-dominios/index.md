@@ -1,5 +1,11 @@
 # `index.*` — o domínio no protocolo IPC
 
+**Entrada repetida (`0.214.0`, C1-22 do C-04).** Quando a CDB tem mais de uma
+entrada para o mesmo arquivo, como no Ninja Multi-Config, `unit` e
+`cdbLocation` vêm da primeira, a que o clangd lê. Até o 0.213.0 vinha a
+última. A unidade continua ambígua para a referência de headers e para a
+verificação. Veja a [consolidação C §20](../../especificacoes/consolidacao-nativa-de-c.md#20-c1-22-multi-config--desenho-de-2026-11-10).
+
 **Atualidade C/C++ (`0.203.0`).** `FileContext.staleBecause?` é o motivo pelo
 qual o comando conhecido não comprova o ambiente atual. A consulta confere
 origem/bytes da CDB carregada, invalidação por arquivos de build conhecidos,
@@ -63,8 +69,9 @@ PythonEnv    interpreter, version?, origin (VIRTUAL_ENV|.venv|venv|env|poetry|
 identifica o início do objeto da unidade efetivamente escolhida na CDB:
 caminho absoluto do JSON, linha e coluna desde 1 (coluna em unidades UTF-16,
 como o editor).
-Ausente sem unidade da CDB, inclusive no fallback file-api. A última entrada
-para o mesmo arquivo continua vencendo; a localização acompanha essa entrada.
+Ausente sem unidade da CDB, inclusive no fallback file-api. Até o 0.213.0,
+a última entrada para o mesmo arquivo vencia; desde o 0.214.0 vence a
+primeira (veja o topo). A localização acompanha a entrada que vence.
 Permite ao inspector abrir a unidade sem procurar o nome dentro do JSON.
 
 **0.180.0 (0.4.1c):** `FileContext.drift[]` (omitido quando vazio) contém

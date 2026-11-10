@@ -60,6 +60,13 @@ pub(crate) fn serial_device_key(path: &Path) -> io::Result<String> {
     imp::serial_device_key(path)
 }
 
+/// Whether a built file runs: any execute bit on Unix; on Windows, where there
+/// is none, the `.exe` the `CMake` build makes (60 §3.3, W6a). Moved from
+/// `run` in 2026-11-10 (C1-22), so `toolchain` does not depend on it.
+pub(crate) fn is_executable(path: &Path) -> bool {
+    imp::is_executable(path)
+}
+
 /// Cheap change token for a regular file, including replacement and metadata changes.
 pub(crate) fn file_revision(path: &Path) -> io::Result<String> {
     imp::file_revision(path)

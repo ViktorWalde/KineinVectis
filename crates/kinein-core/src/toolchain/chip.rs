@@ -41,7 +41,7 @@ pub(super) fn chip_driver(
     if let Some(extension) = generic.extension() {
         sibling.set_extension(extension);
     }
-    if sibling.is_file() && crate::run::is_executable(&sibling) {
+    if sibling.is_file() && crate::platform::is_executable(&sibling) {
         Some(sibling.display().to_string())
     } else {
         path
@@ -64,7 +64,7 @@ pub(super) fn generic_sibling(path: &str) -> Option<String> {
     if let Some(extension) = driver.extension() {
         generic.set_extension(extension);
     }
-    (generic.is_file() && crate::run::is_executable(&generic))
+    (generic.is_file() && crate::platform::is_executable(&generic))
         .then(|| generic.display().to_string())
 }
 

@@ -1,5 +1,6 @@
 //! Criacao C pelo dispatch e dialetos pelo contexto/compiladores reais.
 
+mod configuration_types;
 mod configurations;
 mod dialects;
 mod environment;
@@ -7,6 +8,7 @@ mod existing;
 mod existing_cdb;
 mod existing_kit;
 mod existing_recovery;
+mod inner_cases;
 mod preset_condition;
 mod preset_include;
 mod preset_macros;

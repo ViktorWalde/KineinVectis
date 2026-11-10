@@ -66,7 +66,12 @@ fn release_dir(p: &Project) -> PathBuf {
 }
 
 /// O ciclo de um job: o evento de início, as linhas e o sucesso.
-fn job(p: &mut Project, job: &Value, started: &str, finished: &str) -> (Value, Vec<String>, bool) {
+pub(super) fn job(
+    p: &mut Project,
+    job: &Value,
+    started: &str,
+    finished: &str,
+) -> (Value, Vec<String>, bool) {
     let deadline = Instant::now() + Duration::from_secs(60);
     let mut start = Value::Null;
     let mut lines = Vec::new();
@@ -89,13 +94,13 @@ fn job(p: &mut Project, job: &Value, started: &str, finished: &str) -> (Value, V
     }
 }
 
-fn configure(p: &mut Project, preset: &str) -> (Value, Vec<String>, bool) {
+pub(super) fn configure(p: &mut Project, preset: &str) -> (Value, Vec<String>, bool) {
     let id = p.call("cmake.configure", json!({"preset":preset}))["jobId"].clone();
     job(p, &id, "event.cmake.started", "event.cmake.finished")
 }
 
 /// `build.run`: as linhas do job, com as do configure implícito.
-fn build(p: &mut Project) -> Vec<String> {
+pub(super) fn build(p: &mut Project) -> Vec<String> {
     let id = p.call("build.run", json!({}))["jobId"].clone();
     let (_, lines, success) = job(p, &id, "event.build.started", "event.build.finished");
     assert!(success, "{lines:?}");
@@ -103,7 +108,7 @@ fn build(p: &mut Project) -> Vec<String> {
 }
 
 /// `run.start` sem comando: o executável da configuração ativa.
-fn run(p: &mut Project, expected: &Path) -> String {
+pub(super) fn run(p: &mut Project, expected: &Path) -> String {
     let result = p.call("run.start", json!({}));
     assert_eq!(
         result["command"],
@@ -120,7 +125,7 @@ fn run(p: &mut Project, expected: &Path) -> String {
 }
 
 /// Os casos que o `ctest` rodou, com o estado.
-fn ctest(p: &mut Project) -> Vec<String> {
+pub(super) fn ctest(p: &mut Project) -> Vec<String> {
     let id = p.call("test.run", json!({}))["jobId"].clone();
     let deadline = Instant::now() + Duration::from_secs(60);
     let mut cases = Vec::new();
@@ -146,7 +151,7 @@ fn ctest(p: &mut Project) -> Vec<String> {
 }
 
 /// O contexto de `main.c` depois que o core recarregou a CDB de `directory`.
-fn context_from(p: &mut Project, directory: &Path) -> Value {
+pub(super) fn context_from(p: &mut Project, directory: &Path) -> Value {
     let cdb = directory.join("compile_commands.json");
     let deadline = Instant::now() + Duration::from_secs(15);
     loop {
@@ -164,7 +169,7 @@ fn context_from(p: &mut Project, directory: &Path) -> Value {
     }
 }
 
-fn kind_define(context: &Value) -> String {
+pub(super) fn kind_define(context: &Value) -> String {
     context["unit"]["defines"]
         .as_array()
         .unwrap()
@@ -179,7 +184,7 @@ fn select(p: &mut Project, preset: Option<&str>) {
     p.call("cmake.selectConfiguration", json!({"preset":preset}));
 }
 
-fn status(p: &mut Project) -> Value {
+pub(super) fn status(p: &mut Project) -> Value {
     p.call("cmake.status", json!({}))
 }
 

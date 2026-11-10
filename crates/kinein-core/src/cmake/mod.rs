@@ -9,6 +9,7 @@
 //! proprio de `CMakeLists.txt`.
 
 pub mod attempt;
+pub mod build_configuration;
 pub mod model;
 mod preset_selection;
 mod rigor;

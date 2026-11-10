@@ -491,7 +491,14 @@ mostra **o motivo e o passo para instalar**, em vez de "0 testes".
 pergunta a cada executável do `ctest` quais casos ele tem (`--gtest_list_tests`
 ou `--list-tests` do Catch2) e os lista abaixo da linha do `ctest`, como
 `unit_tests::Math.Adds`; **Rodar só este teste** roda o binário com o filtro
-do framework, e cada `[ OK ]`/`[ FAILED ]` pinta a linha do caso.
+do framework, e cada `[ OK ]`/`[ FAILED ]` pinta a linha do caso. A lista do
+Catch2 só é pedida a quem se diz Catch2 no `--libidentify`: um teste comum
+que imprime algo não ganha casos falsos. Um caso gtest conta uma vez, e o
+parametrizado que falha pinta a linha dele. Os casos do Catch2 vêm na ordem do
+código, e **Rodar só este teste** roda só ele, também com vírgula, colchete
+ou `~` no nome. O Catch2 não consegue rodar sozinho um caso cujo nome começa
+com `exclude:`, nem um de dois nomes que só diferem na caixa: a aba diz por
+quê, e a linha do `ctest` roda o binário inteiro (desde 2026-11-10).
 
 **Análise em C/C++.** O clangd sobe com `--clang-tidy` e lê o `.clang-tidy`
 do projeto: os avisos aparecem no arquivo aberto como qualquer diagnóstico.
@@ -1598,6 +1605,24 @@ preset com `matches` ou `notMatches` usa a expressão regular do CMake, e a IDE
 não a avalia. Com o CMake, vale o que ele decide. Sem CMake que rode, o
 preset continua no menu, como se a condição fosse verdadeira, e a dica do
 item diz isso, na linha depois da pasta.
+
+**Multi-config** (desde 2026-11-10). Com o Ninja Multi-Config, o Xcode ou o
+Visual Studio, a pasta tem uma configuração por item de
+`CMAKE_CONFIGURATION_TYPES`, e o clangd lê a primeira. A IDE usa essa mesma:
+o build passa `--config`, o `ctest` passa `-C`, o ▶ e o 🐞 abrem o executável
+dela, e o contexto do arquivo mostra a entrada dela na CDB. Quando o
+`CMAKE_DEFAULT_BUILD_TYPE` é outra, a faixa informa que o `cmake --build` sem
+`--config` do terminal compila essa outra; a faixa não tem ação. Numa janela
+estreita, a faixa corta a mensagem, e pairar sobre ela mostra o texto inteiro. Numa pasta
+multi-config configurada fora da IDE, sem o modelo do file-api, o ▶ e o 🐞
+pedem o **Configurar** da IDE. Trocar de configuração na mesma pasta ainda não
+dá.
+
+**O executável do ▶ e do 🐞.** Sem configuração de execução, o ▶ e o 🐞
+procuram o executável do build nos alvos `add_executable` que o CMake
+descreve. Uma biblioteca compartilhada não conta. Numa pasta configurada fora
+da IDE, eles procuram na pasta e deixam de fora os `.so` e `.dylib`. Um script
+com permissão de execução conta: escolha o comando no painel Terminal.
 
 **Projeto só com Makefile.** É reconhecido como "Make": Build roda `bear --
 make` quando o `bear` está instalado — é ele que escreve o

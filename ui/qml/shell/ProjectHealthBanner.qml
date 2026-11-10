@@ -57,6 +57,8 @@ Rectangle {
     }
 
     Text {
+        id: messageText
+
         anchors.left: titleText.right
         anchors.leftMargin: Theme.spacingMedium
         anchors.right: actionButton.visible
@@ -67,6 +69,17 @@ Rectangle {
         color: Theme.textSecondary
         font.pixelSize: Theme.fontSizeSmall
         elide: Text.ElideRight
+
+        // Cortada numa janela estreita (C1-33): a mensagem inteira ao pairar.
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            onEntered: {
+                if (messageText.truncated) TooltipController.showFor(messageText, messageText.text, "bottom");
+            }
+            onExited: TooltipController.hideFor(messageText)
+        }
     }
 
     KvButton {

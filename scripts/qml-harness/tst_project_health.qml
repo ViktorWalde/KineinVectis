@@ -146,6 +146,28 @@ Item {
         ];
         if (controller.status !== "ok") failures += 1 << 24;
 
+        // Multi-config (C1-22, decisão do autor de 2026-11-10): o terminal
+        // compila outra configuração que a IDE, e a faixa diz isso como
+        // informativa, sem ação. A CDB velha, mais grave, vem antes.
+        const several = { preset: "rel", source: "configuration", directory: "build/rel",
+                        buildConfiguration: "Release", defaultBuildConfiguration: "Debug" };
+        controller.handleCmakeStatus(true, false, "", "rel", [], "", {}, several);
+        if (controller.status !== "info" || !controller.active || controller.actionLabel !== ""
+                || controller.actionTarget !== ""
+                || controller.message !== "a IDE compila e testa Release, a que o clangd lê; "
+                                           + "o cmake --build sem --config compila Debug")
+            failures += 1 << 29;
+        controller.handleCmakeStatus(true, true, "CMakeLists.txt", "rel", [], "", {}, several);
+        if (controller.actionTarget !== "cmakeConfigure") failures += 1 << 30;
+        controller.handleCmakeStatus(true, false, "", "rel", [], "", {},
+                                     { preset: "rel", source: "configuration", directory: "build/rel",
+                                       buildConfiguration: "Release" });
+        if (controller.status !== "ok") failures += 2 ** 31;
+        // Trocar de pasta apaga a configuração do projeto anterior.
+        controller.handleCmakeStatus(true, false, "", "rel", [], "", {}, several);
+        controller.workspaceRoot = "/tmp/other";
+        if (controller.message.indexOf("--config") >= 0) failures += 2 ** 32;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

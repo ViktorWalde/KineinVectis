@@ -74,8 +74,9 @@ pub(super) fn ctest_command(
         .arg(build_dir)
         .arg("--output-on-failure")
         .current_dir(root);
+    let configuration = super::ctest_configuration(&mut command, build_dir);
     crate::msvc::apply_environment(&mut command);
-    let mut display = String::from("ctest --output-on-failure");
+    let mut display = format!("ctest --output-on-failure{configuration}");
     match selection {
         Selection::All => {}
         Selection::Filter(filter) => {

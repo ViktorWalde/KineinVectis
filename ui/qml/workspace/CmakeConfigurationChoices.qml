@@ -18,6 +18,10 @@ QtObject {
     // O registro (`selectedConfiguration`): sem presets, é ele que ainda
     // precisa da volta ao automático.
     property string recorded: ""
+    // Multi-config (0.214.0, C1-22): a configuração que a IDE compila, a que
+    // o clangd lê, e a do `cmake --build` sem `--config`, quando é outra.
+    property string build: ""
+    property string defaultBuild: ""
 
     // A configuração ativa veio do registro; senão, das regras do automático.
     readonly property bool chosen: source === "configuration"
@@ -32,6 +36,8 @@ QtObject {
         directory = "";
         choices = [];
         recorded = "";
+        build = "";
+        defaultBuild = "";
     }
 
     function handle(configuration, recordedPreset) {
@@ -42,6 +48,16 @@ QtObject {
         directory = value.directory || "";
         choices = value.choices || [];
         recorded = recordedPreset || "";
+        build = value.buildConfiguration || "";
+        defaultBuild = value.defaultBuildConfiguration || "";
+    }
+
+    // A faixa informativa do C1-22 (decisão do autor de 2026-11-10): o
+    // terminal compila outra configuração que a IDE.
+    function buildMismatch() {
+        if (build === "" || defaultBuild === "") return "";
+        return qsTr("a IDE compila e testa %1, a que o clangd lê; o cmake --build sem --config compila %2")
+            .arg(build).arg(defaultBuild);
     }
 
     function nameOf(presetName) {

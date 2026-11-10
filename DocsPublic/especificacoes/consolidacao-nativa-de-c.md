@@ -1037,12 +1037,18 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-19 / configure fora do `binaryDir` | `configure_command` (`cmake/mod.rs`) passa `-B .kinein/build` também com `--preset`. Medido: `cmake --preset top -B ide` configura em `ide/`, e o `binaryDir` do preset fica vazio | Alta: a IDE e o terminal configuram pastas diferentes para o mesmo preset, e trocar de preset reconfigura a mesma pasta | Configurar na pasta da configuração (decisões abaixo). Provar com dois presets de `binaryDir` distinto, troca e retorno sem reconfigurar o outro, e o argv do CMake gravado |
 | C1-20 / registros da IDE numa pasta só | A tentativa pendente, a trava, o kit, o preset anotado e o perfil de rigor (`cmake/attempt.rs`, `cmake/rigor.rs`, `cmake/mod.rs`) moram em `.kinein/build`; o sucesso apaga `.kinein/configuration.json` (C-05) | Alta: o configure de uma configuração invalidaria os registros de outra | Os registros vão para a pasta de cada configuração, e o registro de `.kinein/configuration.json` passa a ser a configuração ativa. Provar a tentativa incompleta de uma configuração sem afetar a outra, com mutações |
 | C1-21 / consumidores fixos em `.kinein/build` | Build (`build/cmake.rs`), run (`run.rs`), debug (`dap/target.rs`), ctest (`test/mod.rs`), gravação (`project/flash_origin.rs`), qmlls (`handlers/qml.rs`), contexto (`index/context/mod.rs`), ações de configuração (`configaction/builddir.rs`) e `toolchain/project.rs` usam `cmake::build_dir` ou o caminho literal. Confirmada por leitura | Alta: com o C-19 corrigido, compilar e executar sairiam de outra pasta que a do contexto | Um dono, a configuração ativa, para todos. Provar build, run, debug e ctest reais na pasta do preset, e o contexto e o Project Health na mesma pasta |
-| C1-22 / multi-config | `CmakeModel` lê só `/configurations/0` (`cmake/model.rs`); `cmake --build` vai sem `--config`; `collect_executables` percorre a pasta inteira. Medido com Ninja Multi-Config: três configurações no codemodel, três entradas da CDB para o mesmo arquivo, o clangd usa a primeira (Debug), e `cmake --build` sem `--config` compila `CMAKE_DEFAULT_BUILD_TYPE`, senão a primeira; após dois builds há `Debug/app` e `Release/app` | Média: com `CMAKE_DEFAULT_BUILD_TYPE` diferente, o build compila uma configuração e o contexto mostra outra; o run recusa por achar dois executáveis | Usar a configuração que o clangd vê (decisão abaixo). Provar com Ninja Multi-Config real, `CMAKE_DEFAULT_BUILD_TYPE=Release` e mutações |
+| C1-22 / multi-config | `CmakeModel` lê só `/configurations/0` (`cmake/model.rs`); `cmake --build` vai sem `--config`; `collect_executables` percorre a pasta inteira. Medido com Ninja Multi-Config: três configurações no codemodel, três entradas da CDB para o mesmo arquivo, o clangd usa a primeira (Debug), e `cmake --build` sem `--config` compila `CMAKE_DEFAULT_BUILD_TYPE`, senão a primeira; após dois builds há `Debug/app` e `Release/app`. Medido de novo em 2026-11-10 (CMake 4.4.5, clangd 23.1.4, §20): a CDB e o codemodel seguem a ordem de `CMAKE_CONFIGURATION_TYPES`, e o clangd usa a primeira entrada; o `ctest` sem `-C` dá todo teste como "Not Run" e sai com 8, e o `--show-only=json-v1` sem `-C` não lista nenhum teste. A regressão do C1-22 achou mais um: o `index.context` mostra a última entrada repetida da CDB (Debug), e o clangd, a primeira (Release); `parse_cdb` substitui a unidade e só a marca `ambiguous` (a causa do C-03). Causa: o build, o ctest, o run e o debug não sabem qual configuração usar, e o contexto fica com outra entrada | Média: com `CMAKE_DEFAULT_BUILD_TYPE` diferente, o build compila uma configuração e o contexto mostra outra; o run recusa por achar dois executáveis; os testes da IDE não rodam num build multi-config, e a descoberta por framework fica vazia | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10), protocolo 0.214.0): o build, o `ctest`, o run, o debug e o contexto usam a configuração que o clangd lê, e a faixa informa a padrão diferente. Decisões do autor de 2026-11-10 (desenho no §20): a faixa mostra a diferença do `CMAKE_DEFAULT_BUILD_TYPE` como informativa, sem ação; a gravação nativa mantém a recusa do build multi-config; o run e o debug num build multi-config sem o modelo do file-api recusam com o motivo; o contexto fica com a primeira entrada repetida, como o clangd, e o resto do C-03 (guardar todas as unidades) segue no C2. Provar com Ninja Multi-Config real, `CMAKE_DEFAULT_BUILD_TYPE=Release` e mutações |
 | C1-23 / UI sem troca da configuração | O Project Health só oferece "Escolher configuração…" quando a escolha é obrigatória; o menu corta no fim a pasta longa fora da raiz (§16.1) | Média: trocar a configuração ativa ou voltar ao automático exige editar `.kinein/configuration.json` | Menu de configuração sempre que há presets, com a ativa marcada e "Automático". Provar na UI nativa isolada |
 | C1-24 / macros dos presets só sob demanda | Achado na prova do C1-23 (2026-11-09). `cmake_presets` expande só o `binaryDir`, e só do preset usado. Medido com `cmake --list-presets` e `cmake --preset` do CMake 4.4.5 (§17.4): cada preset de cada tipo, mesmo oculto e sem uso, é expandido ao ler os arquivos, com a herança e na versão do arquivo que o define. Uma macro desconhecida, sem fechamento, `$env{}` ou `$penv{}` sem nome, uma macro de versão maior (`${hostSystemName}` 3, `${fileDir}` 4, `${pathListSep}` 5) ou um ciclo no `environment` recusa o arquivo inteiro ("Invalid macro expansion"). Nos configure presets valem `binaryDir`, `installDir`, `toolchainFile`, `graphviz`, os valores de `cacheVariables` e de `environment` e as cadeias da `condition`; nos build presets, `environment`, `targets`, `nativeToolOptions` e `condition`, com o `environment` do configure preset; nos test presets, `environment`, `overwriteConfigurationFile`, `output`, `filter`, `execution` e `condition`; nos package presets, `environment`. `$vendor{}` tira da lista só o preset que o usa. Divergências vizinhas: `${generator}` sem `generator` expande vazio, e a IDE recusava a pasta; no build e no test preset, `${generator}` é o do configure preset, e no package preset é sempre vazio (achado pelos mutantes); na versão 12, `${fileDir}` é a pasta do arquivo que escreveu o texto quando todas as macros dele são `${fileDir}`, e a IDE usava a do preset em uso, então o `-B` da IDE e o `cmake --preset` configuravam em pastas diferentes. A `condition` é herdada, e o CMake a avalia ao listar: o preset de condição falsa some do `--list-presets`. A IDE lia só a do próprio preset e dava por verdadeira toda forma que não fosse do host. `environment: null` tira a chave, e `$env{}` cai no ambiente do processo; a IDE expandia vazio. `$vendor{}` interrompe a expansão do preset: o que vem depois, na ordem do CMake, não é conferido. A ordem é `environment`, `condition` e os campos do tipo, com as chaves dos mapas em ordem. A toolchain mostrava `CMAKE_C_COMPILER` e `toolchainFile` crus, com as macros | Média: a IDE lista, escolhe e oferece no menu presets de um arquivo que o CMake recusa, e o configure falha no CMake com a mensagem dele, não em silêncio; com `${fileDir}` na versão 12, a IDE configura fora da pasta do preset | Corrigido em 2026-11-09 (§17.4). Decisões do autor de 2026-11-09: corrigir antes do C1-22, e em todos os tipos de preset. Corrigir em `cmake_presets`, com o motivo do CMake. A `condition` segue o CMake em todas as formas menos `matches` e `notMatches`, que dependem da expressão regular do CMake (C1-26) e continuam valendo como verdadeiras. Provar com o CMake real cada campo, o preset oculto, a versão por arquivo, o ciclo e as pastas do `${fileDir}` |
 | C1-25 / esquema dos presets | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). O CMake recusa o arquivo inteiro por um campo que o esquema não tem ("Invalid extra field") e por um campo de versão maior (`installDir` e `toolchainFile` 3, `graphviz` 10: "File version must be N or higher"); um `generator` desconhecido tira o preset da lista, e o configure dele falha. Também recusam o arquivo um `configurePreset` inexistente (`Invalid "configurePreset"`), uma `condition` sem campo obrigatório (`Missing required field "rhs"`) e uma de tipo desconhecido (`Invalid condition`). A IDE lê só os campos que usa e lista esses presets; na `condition`, o campo ausente vale vazio, e o tipo desconhecido, verdadeiro | Média: o mesmo efeito do C1-24 por outra causa | Corrigido em 2026-11-10 (§18.1). Decisão do autor de 2026-11-09: corrigir depois do C1-24 e antes do C1-22. Decisões do autor de 2026-11-10: perguntar ao CMake do projeto, o que o kit padrão do workspace fixa, senão o do `PATH` (desenho no §18). A IDE roda o `cmake --list-presets` desse CMake, com cache pela data dos arquivos de presets e do executável, e a recusa e a lista dele valem: o esquema muda com a versão do CMake. A leitura nativa do C1-24 fica para os valores e para quando não há CMake. Com isso a lista do CMake já reflete `matches` e `notMatches`, e ao C1-26 resta o caso sem CMake. Provar com o CMake real cada recusa medida, o cache e a ausência do CMake |
 | C1-26 / expressão regular da `condition` | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). `matches` e `notMatches` usam a expressão regular do próprio CMake: `\d` não é classe, e `^a\d$` não casa `a1`. Uma expressão que não compila recusa o arquivo inteiro ("RegularExpression::compile(): Error in compile"). A IDE dá essas formas por verdadeiras | Baixa: um preset de `matches` falsa aparece na lista, e uma expressão inválida não recusa o arquivo | Corrigido em 2026-11-10 (§19.1). Decisão do autor de 2026-11-10: perguntar ao CMake. Só quando uma `condition` usa `matches` ou `notMatches`, a IDE roda o `cmake --list-presets` do projeto, com cache pela data dos arquivos, e usa a lista ou a recusa dele. Sem CMake, essas formas continuam verdadeiras, e a IDE diz isso. Vem depois do C1-25 e antes do C1-22 (autor, 2026-11-10). Com o C1-25, a lista do CMake já decide essas formas. Decisões do autor de 2026-11-10 para o resto (desenho no §19): sem CMake, o item do preset no menu diz na dica que a `condition` fica verdadeira; uma macro ou expressão inválida depois de uma forma indecisa, num `anyOf` ou `allOf`, deixa o preset indeciso, em vez de recusar. Provar com o CMake real a expressão que casa, a que não casa, a que não compila e a ausência do CMake |
 | C1-27 / preset oculto pedido pelo nome | Achado pelos mutantes do C1-25 (2026-11-10): o mutante que dava aos presets ocultos o motivo de fora da lista sobreviveu, porque nenhum teste decidia o caso. Medido com o CMake 4.4.5: `cmake --preset h`, com `h` oculto, sai com 1 e "Cannot use hidden configure preset", e o `cmake --list-presets` não o lista. A IDE resolve a pasta, o configure pelo nome começa o job e o CMake recusa depois. Causa: `Reading::unusable` não conhece o oculto, e só a lista o filtra | Baixa: só quem pede o preset pelo nome, pelo IPC ou por uma configuração registrada que ficou oculta; o configure falha com a mensagem do CMake | Corrigido em 2026-11-10 (§18.1). Decisão do autor de 2026-11-10: corrigir dentro do C1-25, no mesmo protocolo 0.212.0. A leitura nativa anota os configure presets ocultos, e o preset oculto pedido pelo nome é recusado antes do job, com ou sem CMake: "o preset h é oculto: o CMake não o usa pelo nome". Vale para a pasta, o configure e os valores da toolchain; um filho visível continua herdando dele. Provar pela leitura nativa e com o CMake real, de ponta a ponta sem job, e com o mutante da guarda |
+| C1-28 / Catch2 por qualquer saída | Achado na regressão do C1-22 (2026-11-10). `test::frameworks::list_cases` toma por Catch2 todo executável de teste que sai com 0 e imprime uma linha para `--list-tests --verbosity quiet`: um teste do `ctest` que imprime `kv-run-Release` para qualquer argumento virou dois casos Catch2 na descoberta, e rodar um deles roda `exe "kv-run-Release" -r compact`. O gtest exige a forma `Suite.` com casos indentados e não confunde esse binário. Causa: `parse_catch2_list` aceita qualquer linha não vazia | Média: a árvore de testes mostra casos falsos para um teste comum que imprime algo, e o caso falso roda o binário com um argumento que ele ignora | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10)): a lista do Catch2 só vem do binário que responde `framework: Catch2` ao `--libidentify`, provado com o Catch2 3.16.1 e o gtest 1.18 reais. Decisão do autor de 2026-11-10: corrigir agora, com o Catch2 real que ele instala nesta máquina (`catch2` 3.16.1 da CachyOS). Medir o que o Catch2 imprime em `--libidentify` e em `--list-tests`, e exigir a identidade antes de aceitar casos. Provar com Catch2 e gtest reais, o executável comum que imprime, e mutações |
+| C1-29 / caso gtest contado duas vezes | Achado na prova do C1-28 com o gtest 1.18 real (2026-11-10). Ao rodar um caso de dentro (`test::frameworks::run_inner_case`), o gtest imprime `[  FAILED  ] Math.Fails (0 ms)` e, no resumo do fim, `[  FAILED  ] Math.Fails` de novo; o mesmo com `[  SKIPPED ]`. Um caso que falha vira `failed: 2`. Num parametrizado, a linha é `[  FAILED  ] Some/P.Odd/1, where GetParam() = 2 (0 ms)`, e o nome que sai não é o `Some/P.Odd/1` da lista, então `JobsController.handleTestCase` não marca a linha do caso. Com `GTEST_PRINT_TIME=0` no ambiente, nem a linha do caso tem o tempo; `--gtest_print_time=1` vence o ambiente (medido). Causa: `parse_gtest_case` aceita as linhas do resumo e corta o nome só no ` (` | Baixa: o resumo do teste conta em dobro as falhas e os ignorados de um caso, e o caso parametrizado que falha não fica vermelho na árvore | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10)), provado com o gtest 1.18 real. Decisão do autor de 2026-11-10: corrigir agora, junto do C1-28. O caso roda com `--gtest_print_time=1`, e só conta a linha que termina no tempo; o comentário `, where …` sai do nome. Provar com gtest real, inclusive um `main` que desliga o tempo, e mutações |
+| C1-30 / biblioteca compartilhada como executável | Achado nos mutantes do C1-22 (2026-11-10), medido com `CMake` 4.4.5 e Ninja. Num build single-config, `run::cmake_executables` varre a pasta e conta todo arquivo com o bit de execução: um projeto com `add_library(... SHARED)`, `MODULE` e uma versionada tem `app`, `libshared.so`, `libplugin.so` e `libversioned.so.1.2.3`, e o run e o debug respondem "mais de um executável". O codemodel do file-api diz `EXECUTABLE` só para o `app`. Causa: o single-config não lê o codemodel, que o multi-config já lê desde o C1-22 | Média: o run e o debug sem comando recusam todo projeto C com biblioteca compartilhada | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10)), provado com o CMake 4.4.5 real. Decisão do autor de 2026-11-10: corrigir agora, junto do C1-22. Com o modelo do file-api, só os artefatos dos alvos `EXECUTABLE`, como no multi-config; sem o modelo, a varredura deixa de fora `.so`, `.so.N` e `.dylib` |
+| C1-31 / nome do caso Catch2 como filtro | Achado na prova do C1-28 com o Catch2 3.16.1 real (2026-11-10). `run_inner_case` passa o nome do caso como o filtro do Catch2, que dá sentido a alguns caracteres. Medido: `~tilde` e `exclude:this` excluem e rodam os 9 casos do binário; `a, b`, `x [y]` e `back\slash` não acham nada e saem com 2. A barra invertida antes de `\`, `,`, `[`, `]`, `*`, `~` e `"` roda só o caso; o prefixo `exclude:` não se escapa, e o Catch2 compara sem caixa (`case` roda `Case` também). O `--list-tests` do Catch2 v3 sai em ordem aleatória, e a árvore muda de ordem a cada descoberta; `--order decl` dá a ordem da declaração. Causa: o nome vai sem escape, e a lista, sem ordem | Média: "Rodar só este teste" roda todos os casos ou nenhum para esses nomes, e a falta de caso vira falha | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10)), provado com o Catch2 3.16.1 real. Decisão do autor de 2026-11-10: corrigir agora, junto do C1-22. O nome vai com a barra invertida antes de `\`, `,`, `[`, `]`, `*`, `~` e `"`, e a lista sai com `--order decl`. Quando o Catch2 não isola o caso (`exclude:` no começo, ou outro caso da lista com o mesmo nome sem caixa), "Rodar só este teste" recusa com o motivo, sem rodar o binário. Provar com o Catch2 3.16.1 real e mutações |
+| C1-32 / casos de dentro de um teste que já é um caso | Achado na prova do C1-31 (2026-11-10), por leitura de `test::frameworks::discover_inner_cases` e medido com o CTest do CMake 4.4.5, o gtest 1.18 e o Catch2 3.16.1. Com `gtest_discover_tests`, o `--show-only=json-v1` lista um teste por caso, com `--gtest_filter=Math.Adds` no comando; com `catch_discover_tests`, um por caso, com o nome do caso no comando. A descoberta pergunta ao binário todos os casos para cada teste: três casos gtest viram nove ids `teste::caso` falsos, e dois Catch2, quatro. O teste `Widget::draw works` do Catch2 tem `::` no nome, e `run_inner_case` corta o id no primeiro `::`. Causa: a descoberta usa só o primeiro item do comando, e o id não diz onde acaba o nome do teste do ctest | Média: num projeto com `gtest_discover_tests` ou `catch_discover_tests`, comuns no CMake, a árvore de testes repete cada caso uma vez por caso, e rodar um caso de um teste com `::` no nome diz que o ctest não o lista | Aberto. Decisão do autor de 2026-11-10: corrigir logo depois do C1-22, num commit próprio. Um teste do ctest cujo comando já filtra um caso não é expandido, e o id acha o nome do teste do ctest conhecido, em vez de cortar no primeiro `::` |
+| C1-33 / faixa cortada sem como ler | Achado na prova na UI nativa do C1-22 (2026-11-10), num Xvfb a 900x600. `ui/qml/shell/ProjectHealthBanner.qml` corta a mensagem com `Text.ElideRight` e não tem dica: a faixa do multi-config termina em "o cmake --buil…", e pairar não mostra o resto. Vale para toda mensagem longa da faixa, como a da CDB velha com o motivo. Causa: o texto cortado não tem outro lugar | Baixa: numa janela estreita, a faixa esconde o fim da mensagem, que às vezes é o que diz o que fazer | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10)), provado no harness e na UI nativa. Decisão do autor de 2026-11-10: corrigir agora, junto do C1-22. Quando a mensagem é cortada, pairar sobre ela mostra a mensagem inteira numa dica. Provar no harness e na UI nativa |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
 `binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
@@ -1786,3 +1792,216 @@ Limites:
 - a nota fica na dica do menu. A lista de presets do Project Health e a saída
   do configure não a repetem;
 - segue aberto o C1-22.
+
+## 20. C1-22: multi-config — desenho de 2026-11-10
+
+Decisão do autor de 2026-11-09 (§17): com gerador multi-config, a IDE usa a
+configuração que o clangd lê.
+
+Medido com o CMake 4.4.5, o Ninja 1.13.2 e o clangd 23.1.4, em oito projetos
+Ninja Multi-Config e um Ninja de configuração única:
+- a CDB tem, para cada arquivo, uma entrada por configuração, na ordem de
+  `CMAKE_CONFIGURATION_TYPES`, e o clangd usa a primeira. O codemodel tem as
+  configurações na mesma ordem. Com `Release;Debug`, o clangd lê a de
+  Release; com `Fast;Debug`, a de Fast;
+- `cmake --build` sem `--config` compila `CMAKE_DEFAULT_BUILD_TYPE`, senão a
+  primeira configuração; com `CMAKE_DEFAULT_CONFIGS=all`, todas;
+- o `ctest` sem `-C` dá todo teste como "Not Run" e sai com 8, também com uma
+  configuração só. O `--show-only=json-v1` sem `-C` não lista nenhum teste, e
+  o `-N` lista só os que não pedem configuração. Com `-C Debug`, o teste roda,
+  e o comando dele é o executável de `bin/Debug`;
+- o codemodel traz os artefatos de cada configuração (`bin/Debug/app`,
+  `bin/Release/app`);
+- um Ninja de configuração única aceita `CMAKE_CONFIGURATION_TYPES` no cache e
+  o ignora: o build e o ctest seguem o `CMAKE_BUILD_TYPE`. Quem diz se o
+  gerador é multi-config é o `CMAKE_GENERATOR` do cache (o index do file-api
+  traz `multiConfig`);
+- com `CMAKE_CONFIGURATION_TYPES` vazio, o build falha no próprio CMake.
+
+Na IDE, hoje, o build compila a configuração padrão do CMake, que pode não ser
+a que o clangd lê. Os testes não rodam, e a descoberta por framework fica
+vazia. O run e o debug acham um executável por configuração compilada e
+recusam por haver mais de um.
+
+Decisões do autor de 2026-11-10:
+- quando o `CMAKE_DEFAULT_BUILD_TYPE` difere da configuração que o clangd lê,
+  a faixa mostra isso como informativa, sem ação: o `cmake --build` sem
+  `--config` do terminal compila outra;
+- a gravação nativa mantém a recusa do build multi-config: ela fecha na etapa
+  5 (C6), e o motivo atual já diz o que fazer;
+- o run e o debug num build multi-config sem o modelo do file-api (configurado
+  fora da IDE) recusam com o motivo e pedem o configure pela IDE;
+- achado na regressão: o `index.context` mostra a última entrada repetida da
+  CDB (Debug), e o clangd, a primeira (Release). Corrigir agora: na entrada
+  repetida, a IDE fica com a primeira, como o clangd. O resto do C-03, guardar
+  todas as unidades com a identidade delas, segue no C2;
+- também achado na regressão, o C1-28 (Catch2 por qualquer saída) é corrigido
+  agora, com o Catch2 real que o autor instala.
+
+Desenho:
+- `cmake::build_configuration` lê o cache da pasta: com gerador multi-config
+  (`Ninja Multi-Config`, `Xcode` ou `Visual Studio …`), a configuração é o
+  primeiro item não vazio de `CMAKE_CONFIGURATION_TYPES`, e a padrão é
+  `CMAKE_DEFAULT_BUILD_TYPE`. Sem gerador multi-config, nada muda;
+- o build passa `--config` com ela; o `ctest -N`, o `--show-only=json-v1` e a
+  execução passam `-C`;
+- o run e o debug procuram o executável nos artefatos dos alvos
+  `EXECUTABLE` do codemodel. O modelo continua lido na primeira configuração,
+  que o CMake escreve na ordem de `CMAKE_CONFIGURATION_TYPES` (medido): é a
+  mesma, e o "lido por nome" do §17 não muda o resultado;
+- `cmake.status` ganha `buildConfiguration`, só com gerador multi-config, e
+  `defaultBuildConfiguration`, só quando ela difere. Protocolo 0.214.0, com o
+  contrato no [03 cmake](../arquitetura/03-dominios/cmake.md) antes da
+  mudança. A ponte leva os dois no mapa `configuration`, e a faixa mostra a
+  diferença como informativa;
+- `index/context/cdb.rs::parse_cdb`: a primeira unidade de um arquivo
+  repetido fica, marcada `ambiguous`, como antes; os headers e o verificador
+  continuam recusando a unidade ambígua.
+
+Provas necessárias:
+- testes do dono para cada gerador, a lista com itens vazios, a padrão igual e
+  diferente e o Ninja de configuração única com `CMAKE_CONFIGURATION_TYPES`;
+- regressão de ponta a ponta pelo core, com Ninja Multi-Config, GCC e o CTest
+  reais, `CMAKE_CONFIGURATION_TYPES=Release;Debug` e
+  `CMAKE_DEFAULT_BUILD_TYPE=Debug`: o status, o build só de Release, o teste
+  que passa, o run e o debug no executável de Release com o de Debug também
+  compilado, e a recusa sem o modelo; o contexto com a definição de Release;
+  o Ninja de configuração única sem `--config`;
+- o harness da faixa e a prova na UI nativa;
+- mutantes que compilem e reprovem pela guarda.
+
+Limites previstos:
+- trocar de configuração numa pasta multi-config fica para o C-03 (CDB 1:N);
+- a faixa compara só o `CMAKE_DEFAULT_BUILD_TYPE`. Com `CMAKE_DEFAULT_CONFIGS`,
+  o terminal compila outras também;
+- os build presets com `configuration` não são lidos: a IDE não usa build
+  presets;
+- `Xcode` e `Visual Studio` não foram medidos nesta máquina.
+
+### 20.1 C1-22: integração e provas — 2026-11-10
+
+O desenho do §20 entrou como previsto:
+- `cmake/build_configuration.rs` lê o cache como o CMake: sem os brancos do
+  fim do valor e com os do começo. Medido com o CMake 4.4.5: o
+  `-DCMAKE_CONFIGURATION_TYPES=" Release;Debug "` grava ` Release;Debug`, e o
+  codemodel e a pasta se chamam ` Release`. O primeiro desenho cortava os dois
+  lados, e um mutante que não cortava nada sobreviveu; o build (`build/cmake.rs`), o
+  `ctest -N` (`test/discover.rs`), o `--show-only=json-v1`
+  (`test/frameworks.rs`) e a execução (`test/runners.rs`) passam a
+  configuração dele;
+- `run::cmake_executables`, que o run e o debug usam, lê os artefatos dos
+  alvos `EXECUTABLE` do codemodel e recusa o multi-config sem o modelo;
+- `index/context/cdb.rs::parse_cdb` fica com a primeira entrada repetida. O
+  teste antigo que pedia a última, de 2026-10-19, passa a pedir a primeira,
+  com o mesmo caminho escapado e o mesmo prefixo não ASCII. O contrato do
+  `index.context` diz isso desde o 0.214.0;
+- `handlers/cmake_configuration.rs` dá os dois campos ao `cmake.status`, a
+  ponte os leva no mapa `configuration`, e
+  `CmakeConfigurationChoices.qml::buildMismatch` dá o texto da faixa
+  informativa ao `ProjectHealthController`, depois dos avisos da CDB e do
+  Python;
+- `is_executable` passou de `run` para `platform`: o `run` agora lê o `cmake`,
+  e o `toolchain`, que usava o do `run`, fecharia um ciclo de módulos.
+
+Achados na regressão, registrados antes da correção e corrigidos com decisão
+do autor:
+- C1-28: o Catch2 se identifica. `list_cases` só pede a lista ao binário que
+  responde `framework: Catch2` a `--libidentify`, na forma `chave: valor`
+  alinhada. O gtest real responde ao `--libidentify` rodando todos os testes
+  (gtest 1.18, medido); como ele é perguntado antes, não chega a isso;
+- C1-29: o caso gtest roda com `--gtest_print_time=1`, e
+  `parse_gtest_case` só aceita a linha que termina no tempo, sem o
+  `, where …`. Medido com o gtest 1.18: o resumo repete o `[  FAILED  ]` e o
+  `[  SKIPPED ]` sem o tempo, o `GTEST_PRINT_TIME=0` tira o tempo de todas as
+  linhas, e o `--gtest_print_time=1` vence o ambiente;
+- C1-30: o single-config também lê o codemodel. Sem o modelo, a varredura da
+  pasta deixa de fora `.so`, `.so.N` e `.dylib` pelo nome;
+- C1-31: o caso Catch2 roda com a barra invertida antes de `\`, `,`, `[`,
+  `]`, `*`, `~` e `"`, e a lista sai com `--order decl`. Medido com o Catch2
+  3.16.1: sem escape, `~tilde` e `exclude:this` rodavam os nove casos, e
+  `a, b`, `x [y]` e `back\slash`, nenhum; com o escape, cada nome roda só o
+  caso dele. O prefixo `exclude:`, só em minúsculas, não se escapa, e o
+  Catch2 compara os nomes sem a caixa ASCII: `case` roda `Case`, e `Ação` não
+  roda `aÇão`. Nesses dois casos, o `test.run` recusa com o motivo
+  (`TestError::Refused`), sem rodar o binário;
+- C1-33: a `ProjectHealthBanner` mostra a mensagem inteira numa dica, ao
+  pairar, quando a corta. A área só paira, e o clique segue para baixo.
+
+Achado na prova do C1-31 e registrado, o C1-32 fica para o commit seguinte,
+por decisão do autor.
+
+Provas:
+- testes do dono: os geradores, a lista com item vazio, a padrão igual,
+  diferente e vazia, o Ninja de configuração única, a chave de prefixo igual
+  (`CMAKE_GENERATOR_INSTANCE`) e o cache ausente; a entrada repetida da CDB; o
+  `--libidentify` alinhado, o programa que imprime uma linha para qualquer
+  argumento e o que se diz `framework: Catch`, com `description: Catch2`; as
+  linhas do gtest, com o resumo sem o tempo, os parametrizados e tipados, o
+  tempo que não é número e o parêntese no parâmetro; os nomes de biblioteca
+  compartilhada; o argv exato do caso gtest; o filtro do Catch2 para cada
+  caractere especial e para um nome não ASCII, e as recusas, com o
+  `EXCLUDE:` maiúsculo e o `Ação` ao lado de `aÇão` sem recusa; o falso Catch2
+  só lista quando recebe `--order decl`; os brancos do cache;
+- regressão de ponta a ponta pelo core, com CMake 4.4.5, Ninja Multi-Config,
+  GCC e CTest reais, em `tests/c_project/configuration_types.rs`. Com
+  `Release;Debug` e a padrão `Debug`: o status traz Release e Debug; o
+  contexto tem `KV_KIND="Release"`; o build é `cmake --build --config Release`
+  e só gera o de Release; o `ctest` roda os dois testes, um só de Release; a
+  descoberta mostra `ctest -N -C Release` e os dois nomes; o `json-v1` aponta
+  os dois para o de Release. Com o Debug também compilado pelo terminal, o run
+  imprime `kv-run-Release` e o debug resolve o de Release; sem o modelo, os
+  dois recusam com o motivo exato. No Ninja de configuração única, os campos
+  não vêm, o build vai sem `--config`, e o run e o debug acham só o
+  executável, com duas bibliotecas compartilhadas e um script do configure
+  com o bit de execução na pasta. Sem o modelo, a recusa lista o executável e
+  o script, e não as bibliotecas;
+- em `tests/c_project/inner_cases.rs`, com o gtest 1.18 e o Catch2 3.16.1
+  reais: o programa que ecoa os argumentos fica só a linha do ctest; o gtest
+  dá os cinco casos, os dois parametrizados com o nome da lista; rodar um
+  caso conta um aprovado, um reprovado ou um ignorado, e o parametrizado que
+  falha sai com o nome da lista. O `main` desse gtest desliga o tempo, como o
+  `GTEST_PRINT_TIME=0` faria. O Catch2 dá os oito casos na ordem da
+  declaração, sem o oculto. Cada caso imprime o próprio nome, e rodar
+  `a, b [x]`, `~tilde` e `back\slash` roda só ele; `exclude:this` e `case`
+  são recusados com o motivo exato;
+- o harness `tst_project_health` confere a faixa informativa sem ação com o
+  texto exato, a CDB velha antes dela, a falta da padrão e a troca de pasta.
+  O `tst_project_health_banner`, novo, confere a dica da mensagem cortada, a
+  falta dela com a mensagem inteira, o corte com o botão de ação e a área que
+  não pega o clique;
+- prova na UI nativa, em duas sessões num Xvfb com HOME isolado e o projeto
+  Ninja Multi-Config com `autoSave` desligado, `Release;Debug`, a padrão
+  `Debug` e uma biblioteca compartilhada. Confiar no projeto configura, e a
+  faixa fica azul, com o texto exato e sem botão. O ▶ antes do build pede o
+  build; o Ctrl+F9 roda `cmake --build --config Release` e só gera o de
+  Release; o ▶ roda `build/multi/Release/multi`, que imprime
+  `kv-run-Release`, com a biblioteca ao lado. Numa janela de 900 px, a faixa
+  corta a mensagem, e pairar mostra a mensagem inteira numa dica, que some ao
+  sair; a 1366 px, sem dica. O × fecha com saída 0, e nenhuma das duas sessões
+  registrou aviso QML;
+- 69 mutantes que compilam, todos reprovados. Na primeira rodada, 47 de 49:
+  o mutante que tirava o `--libidentify` não compilava, e o que lia o cache
+  sem cortar os brancos sobreviveu, o que mostrou que o `trim()` não lia como
+  o CMake. Na segunda, os dois, o corte dos dois lados e 13 do C1-31; na
+  terceira, os três da extensão da biblioteca sem caixa; e 5 da dica do
+  C1-33. São 56 no core e no protocolo e 13 no QML: o gerador, a primeira
+  configuração, a padrão, a chave e os brancos do cache; o `--config` e o
+  `-C` em cada um dos três lugares; o modelo, a recusa sem ele, o filtro
+  `EXECUTABLE` e os nomes de biblioteca; o debug; os campos do status e do
+  contrato; a entrada repetida da CDB; o `--libidentify`; o tempo, o resumo e
+  o `, where` do gtest; o escape de cada caractere, a ordem e as recusas do
+  Catch2; a faixa, a troca de pasta e a dica.
+
+Limites:
+- os do §20;
+- o Catch2 não roda sozinho um caso de nome com `exclude:` no começo, nem um
+  de dois nomes iguais sem a caixa ASCII: a IDE recusa, e a linha do ctest
+  roda o binário inteiro;
+- o escape do `]` não muda o que o Catch2 3.16.1 roda (medido), e não tem
+  mutante;
+- o C1-32 segue aberto: com `gtest_discover_tests` ou `catch_discover_tests`,
+  a árvore repete os casos;
+- sem o modelo, a varredura do single-config não distingue um script com o
+  bit de execução de um programa;
+- o `.dylib` e o `.exe` do Windows não foram medidos nesta máquina;
+- a ponte C++ é provada pela UI nativa, sem mutante próprio.

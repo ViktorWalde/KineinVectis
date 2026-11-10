@@ -123,6 +123,12 @@ pub enum TestError {
         /// The sentence for the person.
         reason: String,
     },
+    /// The runner cannot run only what was asked (C1-31): the reason, before
+    /// running anything.
+    Refused {
+        /// The sentence for the person.
+        reason: String,
+    },
 }
 
 impl fmt::Display for TestError {
@@ -139,7 +145,9 @@ impl fmt::Display for TestError {
             }
             Self::ToolMissing { tool, hint } => write!(formatter, "{tool} ausente: {hint}"),
             Self::Io(error) => write!(formatter, "falha de IO durante os testes: {error}"),
-            Self::NoConfiguration { reason } => formatter.write_str(reason),
+            Self::NoConfiguration { reason } | Self::Refused { reason } => {
+                formatter.write_str(reason)
+            }
         }
     }
 }
@@ -148,9 +156,10 @@ impl Error for TestError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Spawn { source, .. } | Self::Io(source) => Some(source),
-            Self::Unsupported { .. } | Self::ToolMissing { .. } | Self::NoConfiguration { .. } => {
-                None
-            }
+            Self::Unsupported { .. }
+            | Self::ToolMissing { .. }
+            | Self::NoConfiguration { .. }
+            | Self::Refused { .. } => None,
         }
     }
 }
@@ -158,6 +167,16 @@ impl Error for TestError {
 /// The folder ctest reads: the one of the active configuration (C1-21).
 pub(crate) fn cmake_test_dir(root: &Path) -> Result<std::path::PathBuf, TestError> {
     crate::cmake::active_dir(root).map_err(|reason| TestError::NoConfiguration { reason })
+}
+
+/// `-C` with the configuration clangd reads, in a multi-config build
+/// (C1-22): without it `ctest` runs no test ("Not Run") and its JSON lists
+/// none. Returns what the command line shows.
+fn ctest_configuration(command: &mut Command, build_dir: &Path) -> String {
+    crate::cmake::build_configuration::of(build_dir).map_or_else(String::new, |configuration| {
+        command.arg("-C").arg(&configuration.name);
+        format!(" -C {}", configuration.name)
+    })
 }
 
 impl TestError {
