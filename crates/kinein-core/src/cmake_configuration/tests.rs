@@ -59,7 +59,7 @@ const TWO: &str = r#"{"version":3,"configurePresets":[
   {"name":".."},
   {"name":"a/b"},
   {"name":"a\\b"},
-  {"name":"open","binaryDir":"${presetName"}]}"#;
+  {"name":"vendor","binaryDir":"$vendor{acme}"}]}"#;
 
 #[test]
 fn each_preset_configures_in_its_binary_dir_or_a_folder_of_the_ide() {
@@ -85,9 +85,11 @@ fn each_preset_configures_in_its_binary_dir_or_a_folder_of_the_ide() {
             "{name}: {reason}"
         );
     }
+    // O CMake ignora o preset com `$vendor{}` (C1-24): ele não tem pasta.
     assert_eq!(
-        dir(Some("open")).unwrap_err(),
-        "a pasta do preset open não é conhecida: macro sem fechamento: ${presetName"
+        dir(Some("vendor")).unwrap_err(),
+        "a pasta do preset vendor não é conhecida: o CMake ignora o preset vendor: ele usa \
+         $vendor{}"
     );
     assert_eq!(
         dir(Some("ghost")).unwrap_err(),
@@ -125,7 +127,8 @@ fn each_preset_configures_in_its_binary_dir_or_a_folder_of_the_ide() {
 
 /// O menu do C1-23: cada preset visível com a pasta dele, ou o motivo de
 /// ela não ser conhecida, e se ela já tem cache. Não depende da configuração
-/// ativa.
+/// ativa. O preset que o `CMake` ignora (`$vendor{}` em qualquer campo, C1-24)
+/// não entra.
 #[test]
 fn the_menu_lists_every_visible_preset_with_its_folder_or_why_not() {
     let root = root(
@@ -138,7 +141,7 @@ fn the_menu_lists_every_visible_preset_with_its_folder_or_why_not() {
   {"name":"release local"},
   {"name":"elsewhere","binaryDir":"${sourceParentDir}/saídas fora/${presetName}"},
   {"name":"a/b"},
-  {"name":"open","binaryDir":"${presetName"},
+  {"name":"vendor","binaryDir":"${sourceDir}/v","cacheVariables":{"V":"$vendor{acme}"}},
   {"name":"shared","binaryDir":"${sourceDir}/build/debug"}]}"#,
         ),
     );
@@ -175,12 +178,6 @@ fn the_menu_lists_every_visible_preset_with_its_folder_or_why_not() {
             ),
             false,
         ),
-        info(
-            "open",
-            None,
-            Err("a pasta do preset open não é conhecida: macro sem fechamento: ${presetName"),
-            false,
-        ),
         // Dois presets na mesma pasta: o cache dela vale para os dois.
         info("shared", None, Ok("build/debug"), true),
     ];
@@ -199,6 +196,15 @@ fn the_menu_lists_every_visible_preset_with_its_folder_or_why_not() {
     std::fs::write(
         root.join("CMakePresets.json"),
         r#"{"version":3,"configurePresets":[{"name":"debug"},{"name":"debug"}]}"#,
+    )
+    .unwrap();
+    assert_eq!(configurations(&root), []);
+    // Uma macro sem fechamento num preset oculto que ninguém usa recusa o
+    // arquivo inteiro no CMake 4.4.5 (C1-24): o menu não lista nenhum.
+    std::fs::write(
+        root.join("CMakePresets.json"),
+        r#"{"version":3,"configurePresets":[{"name":"debug"},
+  {"name":"open","hidden":true,"binaryDir":"${presetName"}]}"#,
     )
     .unwrap();
     assert_eq!(configurations(&root), []);

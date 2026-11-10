@@ -1,5 +1,31 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**Macros e `condition` de todos os presets (`0.211.0`, C1-24 do C-04).** Sem
+campo novo. Desenho na
+[consolidação C §17.4](../../especificacoes/consolidacao-nativa-de-c.md#174-c1-24-integração-e-provas--2026-11-09).
+Ao ler os arquivos de presets, o core expande cada preset de cada tipo
+(configure, build, test e package), oculto ou não, como o CMake 4.4.5: depois
+da herança, na versão do arquivo do preset, na ordem `environment` (chaves em
+ordem), `condition` e campos do tipo. Uma macro inválida em qualquer um
+recusa todos os presets com o motivo
+`macro inválida no preset de <tipo> "<nome>": <razão>`. São inválidas a macro
+desconhecida, a sem fechamento, `$env{}` ou `$penv{}` sem nome, a macro de
+versão maior que a do arquivo (`${hostSystemName}` 3, `${fileDir}` 4,
+`${pathListSep}` 5) e o ciclo no `environment`. A recusa vale como as do C1-18:
+`cmake.presets.list` falha inteira, o configure sem preset pedido é recusado
+com `INVALID_PARAMS`, e `configurations` é omitida.
+
+Um configure preset em que a expansão alcança um `$vendor{}`, ou cuja
+`condition` herdada é falsa, sai de `cmake.presets.list`, de `configurations` e
+do padrão. Pedido pelo nome, o configure é recusado com `INVALID_PARAMS` e o
+motivo, antes do job. `matches` e `notMatches` contam como verdadeiras (C1-26).
+`${generator}` é o gerador do configure preset, também no build e no test
+preset que o nomeiam; expande vazio sem `generator` e sempre no package
+preset. `$env{}` de uma variável desfeita com `null` lê o ambiente do core. Num arquivo de versão 12 ou maior,
+um texto cujas macros são todas `${fileDir}` usa a pasta do arquivo que o
+escreveu, mesmo herdado. A pasta da configuração e os valores que a toolchain
+lê (`CMAKE_C_COMPILER`, `toolchainFile`) chegam expandidos assim.
+
 **Configurações do menu (`0.210.0`, C1-23 do C-04).** Desenho na
 [consolidação C §17](../../especificacoes/consolidacao-nativa-de-c.md#17-c1-configure-no-binarydir-configuração-ativa-e-include-de-presets--desenho-de-2026-11-09).
 `cmake.status` ganha um campo, omitido quando vazio:
@@ -219,7 +245,9 @@ arquivo).
   lista parcial: JSON inválido, ciclo de `include`, arquivo ausente, `include`
   antes da versão 4, arquivo sem `version`, macro não aceita no caminho, nome
   repetido, pai inexistente, pai num arquivo que o do filho não inclui e
-  herança cíclica.
+  herança cíclica. Desde o `0.211.0` (C1-24), também uma macro inválida em
+  qualquer preset de qualquer tipo, e a lista deixa de fora o preset com
+  `$vendor{}` ou com a `condition` herdada falsa (veja o topo).
 - `cmake.targets.list {}` → `{ origin, targets: [{ name, kind, artifacts[],
   sources, generatedSources, languages[], standard?, includes, defines,
   sysroot?, dependencies[], sourceDir? }] }` — lidos da resposta codemodel-v2

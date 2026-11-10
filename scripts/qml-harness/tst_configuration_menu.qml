@@ -65,7 +65,8 @@ Item {
     readonly property var choices: [
         { preset: "debug", displayName: "Depuração", buildDir: "build/debug", configured: false },
         { preset: "release", buildDir: "build/release", configured: true },
-        { preset: "open", buildDirRefused: "a pasta do preset open não é conhecida: macro sem fechamento: ${presetName",
+        { preset: "ci/linux", buildDirRefused: "o preset \"ci/linux\" não declara binaryDir, e o nome não serve de "
+                                               + "pasta em .kinein/presets: declare binaryDir no preset ou mude o nome",
           configured: false },
         { preset: "elsewhere", buildDir: root.longPath, configured: true }
     ]
@@ -121,7 +122,7 @@ Item {
                   && items[0].tooltip === "build/debug — ainda sem configure",
                   "o displayName e a pasta sem configure: " + JSON.stringify(items[0]));
             check(!items[2].enabled && items[2].detail === "pasta desconhecida"
-                  && items[2].tooltip.indexOf("macro sem fechamento") >= 0,
+                  && items[2].tooltip.indexOf("não serve de pasta") >= 0,
                   "pasta desconhecida nao se escolhe e diz por que: " + JSON.stringify(items[2]));
             check(items[3].detail === root.longPath && items[3].tooltip === root.longPath,
                   "a pasta fora da raiz inteira no detalhe e na dica: " + JSON.stringify(items[3]));
@@ -156,7 +157,7 @@ Item {
             check(!root.areaOf(rows[4]).enabled, "o separador nao recebe o pairar");
             const before = popup.currentIndex;
             root.areaOf(rows[2]).entered();
-            check(TooltipController.shown && TooltipController.text.indexOf("macro sem fechamento") >= 0,
+            check(TooltipController.shown && TooltipController.text.indexOf("não serve de pasta") >= 0,
                   "o item desabilitado tambem explica: " + TooltipController.text);
             check(popup.currentIndex === before, "pairar no desabilitado nao o seleciona");
             popup.activate(2);

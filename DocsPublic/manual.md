@@ -1576,6 +1576,13 @@ uma ainda sem configure pede o **Configurar** da faixa. Sem espaço no
 cabeçalho, o chip vai para o ⋯. O mesmo menu abre por **Ambiente →
 Configuração do CMake…**.
 
+**Os presets como o CMake os lê** (desde 2026-11-09). A IDE expande as macros
+de todos os presets, de configure, build, test e package, mesmo ocultos, como o
+CMake. Uma macro que o CMake não aceita, em qualquer um deles, recusa os
+presets do projeto: o configure diz o tipo e o nome do preset e o motivo, antes
+de rodar o CMake. Um preset com `$vendor{}`, ou com a `condition` falsa, não
+aparece no menu, como não aparece no `cmake --list-presets`.
+
 **Projeto só com Makefile.** É reconhecido como "Make": Build roda `bear --
 make` quando o `bear` está instalado — é ele que escreve o
 `compile_commands.json` que o clangd lê — e `make` a seco quando não, dizendo

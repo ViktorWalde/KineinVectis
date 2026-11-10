@@ -23,23 +23,52 @@ pub(super) const USER: &str = "CMakeUserPresets.json";
 pub(super) struct File {
     /// The folder `${fileDir}` names and relative includes start from.
     pub dir: PathBuf,
+    /// The `version` of the file: it decides which macros its presets use.
+    pub version: u64,
     /// The files this one reaches, itself included.
     reaches: Vec<usize>,
     /// Reached from `CMakeUserPresets.json` and not from `CMakePresets.json`.
     pub user_side: bool,
 }
 
-/// One configure preset and the file that defines it.
+/// The kinds of presets whose macros `CMake` expands when it reads the
+/// files (C1-24): an invalid macro in any of them refuses every preset.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Kind {
+    Configure,
+    Build,
+    Test,
+    Package,
+}
+
+impl Kind {
+    pub(super) const ALL: [Self; 4] = [Self::Configure, Self::Build, Self::Test, Self::Package];
+
+    /// The list of this kind in a presets file.
+    const fn field(self) -> &'static str {
+        match self {
+            Self::Configure => "configurePresets",
+            Self::Build => "buildPresets",
+            Self::Test => "testPresets",
+            Self::Package => "packagePresets",
+        }
+    }
+}
+
+/// One preset and the file that defines it.
 pub(super) struct Entry {
     pub name: String,
     pub value: Value,
     pub file: usize,
 }
 
-/// Every configure preset of the project, in list order.
+/// Every preset of the project, in list order: the configure presets apart,
+/// because the IDE configures with them.
 pub(super) struct Presets {
     pub files: Vec<File>,
     pub entries: Vec<Entry>,
+    /// Build, test and package presets, by kind.
+    pub others: Vec<(Kind, Entry)>,
 }
 
 impl Presets {
@@ -48,11 +77,24 @@ impl Presets {
         Self {
             files: Vec::new(),
             entries: Vec::new(),
+            others: Vec::new(),
         }
     }
 
     pub(super) fn find(&self, name: &str) -> Option<&Entry> {
         self.entries.iter().find(|entry| entry.name == name)
+    }
+
+    /// The presets of one kind, in list order.
+    pub(super) fn of(&self, kind: Kind) -> Vec<&Entry> {
+        if kind == Kind::Configure {
+            return self.entries.iter().collect();
+        }
+        self.others
+            .iter()
+            .filter(|(other, _)| *other == kind)
+            .map(|(_, entry)| entry)
+            .collect()
     }
 
     pub(super) fn file_of(&self, entry: &Entry) -> &File {
@@ -133,22 +175,31 @@ impl Loader<'_> {
         let index = self.presets.files.len();
         self.presets.files.push(File {
             dir: dir.clone(),
+            version,
             reaches: vec![index],
             user_side: false,
         });
         self.read.insert(identity.clone(), index);
-        for item in value
-            .get("configurePresets")
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-        {
-            if let Some(name) = item.get("name").and_then(Value::as_str) {
-                self.presets.entries.push(Entry {
+        for kind in Kind::ALL {
+            for item in value
+                .get(kind.field())
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+            {
+                let Some(name) = item.get("name").and_then(Value::as_str) else {
+                    continue;
+                };
+                let entry = Entry {
                     name: name.to_owned(),
                     value: item.clone(),
                     file: index,
-                });
+                };
+                if kind == Kind::Configure {
+                    self.presets.entries.push(entry);
+                } else {
+                    self.presets.others.push((kind, entry));
+                }
             }
         }
         self.stack.push(identity);

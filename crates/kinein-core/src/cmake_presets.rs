@@ -4,10 +4,13 @@
 //! O `CMake` nao informa o `binaryDir` de um preset sem configurar: medido com
 //! o 4.4.5, `cmake --preset X -N` so' lista o cache. Por isso a IDE le
 //! `CMakePresets.json` e `CMakeUserPresets.json` como o cmake-presets(7)
-//! descreve, com `include` (C1-18, `files.rs`). O que ela nao sabe resolver
-//! fica sem pasta, nunca com uma pasta adivinhada (consolidacao C §16), e o
-//! que o `CMake` recusa ela tambem recusa, com o motivo (§17).
+//! descreve, com `include` (C1-18, `files.rs`) e com as macros de todos os
+//! presets expandidas ao ler, como o `CMake` faz (C1-24, `expansion.rs`). O
+//! que ela nao sabe resolver fica sem pasta, nunca com uma pasta adivinhada
+//! (consolidacao C §16), e o que o `CMake` recusa ela tambem recusa, com o
+//! motivo (§17).
 
+mod expansion;
 mod files;
 mod macros;
 
@@ -16,15 +19,31 @@ use std::path::{Path, PathBuf};
 use kinein_protocol::CmakePresetInfo;
 use serde_json::Value;
 
-use files::{PROJECT, Presets, USER};
+use expansion::{Preset, Reading};
+use files::{Entry, Kind, PROJECT, Presets, USER};
 
-/// Lista os configure presets nao ocultos de `CMakePresets.json` e
+/// Os presets lidos como o `CMake` le: os arquivos, e o que a expansao das
+/// macros e as `condition` deixaram fora da lista.
+fn load(root: &Path) -> Result<(Presets, Reading), String> {
+    let presets = files::load(root)?;
+    let reading = expansion::read(root, &presets)?;
+    Ok((presets, reading))
+}
+
+/// Os configure presets que o `CMake` lista: nao ocultos, sem `$vendor{}` e
+/// com a `condition` verdadeira (ou que a IDE nao decide, C1-26).
+fn listed<'a>(presets: &'a Presets, reading: &'a Reading) -> impl Iterator<Item = &'a Entry> {
+    presets.entries.iter().filter(|entry| {
+        entry.value.get("hidden").and_then(Value::as_bool) != Some(true)
+            && reading.listed(&entry.name)
+    })
+}
+
+/// Lista os configure presets de `CMakePresets.json` e
 /// `CMakeUserPresets.json`, com o que eles incluem, na ordem dos arquivos.
 pub fn list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
-    Ok(files::load(root)?
-        .entries
-        .iter()
-        .filter(|entry| entry.value.get("hidden").and_then(Value::as_bool) != Some(true))
+    let (presets, reading) = load(root)?;
+    Ok(listed(&presets, &reading)
         .map(|entry| CmakePresetInfo {
             name: entry.name.clone(),
             display_name: entry
@@ -52,25 +71,20 @@ pub enum PresetDefault {
 
 /// O preset PADRAO do projeto, quando nem o pedido nem o kit dizem um.
 ///
-/// Os `configurePresets` nao ocultos do primeiro lado que tem algum: o de
+/// Os configure presets listados do primeiro lado que tem algum: o de
 /// `CMakeUserPresets.json` (a escolha do usuario para ESTA maquina vence),
-/// com o que so' ele inclui, senao o de `CMakePresets.json`, pulando os que
-/// uma `condition` exclui no Linux. Ate' 2026-10-16 (P0, 40.7 §7.46) valia o
-/// PRIMEIRO da lista; desde a 0.4.0b, com varios, a UI pergunta
-/// (`roadmaps/52` §14.2).
+/// com o que so' ele inclui, senao o de `CMakePresets.json`. Ate' 2026-10-16
+/// (P0, 40.7 §7.46) valia o PRIMEIRO da lista; desde a 0.4.0b, com varios, a
+/// UI pergunta (`roadmaps/52` §14.2).
 #[must_use]
 pub fn default_preset(root: &Path) -> PresetDefault {
-    let presets = match files::load(root) {
-        Ok(presets) => presets,
+    let (presets, reading) = match load(root) {
+        Ok(loaded) => loaded,
         Err(reason) => return PresetDefault::Refused(reason),
     };
     for (file, user_side) in [(USER, true), (PROJECT, false)] {
-        let mut names: Vec<String> = presets
-            .entries
-            .iter()
-            .filter(|entry| {
-                presets.file_of(entry).user_side == user_side && visible_on_linux(&entry.value)
-            })
+        let mut names: Vec<String> = listed(&presets, &reading)
+            .filter(|entry| presets.file_of(entry).user_side == user_side)
             .map(|entry| entry.name.clone())
             .collect();
         match names.len() {
@@ -82,97 +96,21 @@ pub fn default_preset(root: &Path) -> PresetDefault {
     PresetDefault::Absent
 }
 
-/// Nao oculto, e a `condition` nao o exclui no Linux.
-fn visible_on_linux(item: &Value) -> bool {
-    item.get("hidden").and_then(Value::as_bool) != Some(true)
-        && condition_allows_linux(item.get("condition"))
-}
-
-/// A `condition` de um preset (cmake-presets(7)): so' as formas que dizem
-/// respeito ao sistema — `const`, e `equals`/`notEquals` sobre
-/// `${hostSystemName}` — sao avaliadas; qualquer outra e' considerada
-/// verdadeira (o `CMake` decide de fato na hora do configure).
-fn condition_allows_linux(condition: Option<&Value>) -> bool {
-    let Some(condition) = condition else {
-        return true;
-    };
-    match condition.get("type").and_then(Value::as_str) {
-        Some("const") => condition.get("value").and_then(Value::as_bool) != Some(false),
-        Some(kind @ ("equals" | "notEquals")) => {
-            let lhs = condition.get("lhs").and_then(Value::as_str).unwrap_or("");
-            let rhs = condition.get("rhs").and_then(Value::as_str).unwrap_or("");
-            let host = |s: &str| s == "${hostSystemName}";
-            let other = if host(lhs) {
-                rhs
-            } else if host(rhs) {
-                lhs
-            } else {
-                return true;
-            };
-            let equal = other == "Linux";
-            if kind == "equals" { equal } else { !equal }
-        }
-        _ => true,
-    }
-}
-
-/// Profundidade de `inherits`: o `CMake` recusa ciclos, e um ciclo aqui so'
-/// pode deixar o campo ausente.
-const MAX_DEPTH: usize = 16;
-
-/// O valor de um campo depois da heranca.
-#[derive(Debug, PartialEq, Eq)]
-enum Field {
-    Text(String),
-    /// `null`: o preset desfaz o que herdaria.
-    Unset,
-    Absent,
-}
-
-/// Um campo de configure preset, seguindo `inherits` como o `CMake`: o
-/// proprio preset primeiro, depois os pais na ordem declarada. Valor `null`
-/// desfaz a heranca. Valor objeto de `cacheVariables` usa seu `value`.
-/// Presets que o `CMake` recusaria nao tem campo.
+/// Um campo de configure preset depois da heranca, com as macros expandidas
+/// como o `CMake` (C1-24): o proprio preset primeiro, depois os pais na
+/// ordem declarada. Valor `null` desfaz a heranca. Valor objeto de
+/// `cacheVariables` usa seu `value`. Presets que o `CMake` recusaria ou
+/// ignora nao tem campo.
 pub(crate) fn preset_value(root: &Path, preset: &str, field: &[&str]) -> Option<String> {
-    if preset.is_empty() {
+    let (presets, reading) = load(root).ok()?;
+    let entry = presets.find(preset)?;
+    if reading.unusable(preset).is_some() {
         return None;
     }
-    match lookup(&files::load(root).ok()?, preset, field, 0) {
-        Field::Text(text) => Some(text),
-        Field::Unset | Field::Absent => None,
-    }
-}
-
-fn lookup(presets: &Presets, name: &str, field: &[&str], depth: usize) -> Field {
-    if depth > MAX_DEPTH {
-        return Field::Absent;
-    }
-    let Some(entry) = presets.find(name) else {
-        return Field::Absent;
-    };
-    match field
-        .iter()
-        .try_fold(&entry.value, |value, key| value.get(*key))
-    {
-        Some(Value::Null) => return Field::Unset,
-        Some(Value::String(text)) => return Field::Text(text.clone()),
-        Some(object) => {
-            if let Some(text) = object.get("value").and_then(Value::as_str) {
-                return Field::Text(text.to_owned());
-            }
-        }
-        None => {}
-    }
-    match entry.value.get("inherits") {
-        Some(Value::String(parent)) => lookup(presets, parent, field, depth + 1),
-        Some(Value::Array(parents)) => parents
-            .iter()
-            .filter_map(Value::as_str)
-            .map(|parent| lookup(presets, parent, field, depth + 1))
-            .find(|found| *found != Field::Absent)
-            .unwrap_or(Field::Absent),
-        _ => Field::Absent,
-    }
+    Preset::new(root, &presets, Kind::Configure, entry)
+        .field(field)
+        .ok()
+        .flatten()
 }
 
 /// Um configure preset visivel neste host e a pasta que ele declara.
@@ -182,19 +120,16 @@ pub(crate) struct PresetDirectory {
     pub directory: PathBuf,
 }
 
-/// O `binaryDir` resolvido dos configure presets nao ocultos que a
-/// `condition` nao exclui, na ordem dos arquivos. Um preset sem `binaryDir`
-/// ou com pasta nao resolvida nao aparece; presets recusados nao tem nenhuma.
+/// O `binaryDir` resolvido dos configure presets que o `CMake` lista, na
+/// ordem dos arquivos. Um preset sem `binaryDir` ou com pasta nao resolvida
+/// nao aparece; presets recusados nao tem nenhuma.
 pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
-    let Ok(presets) = files::load(root) else {
+    let Ok((presets, reading)) = load(root) else {
         return Vec::new();
     };
-    presets
-        .entries
-        .iter()
-        .filter(|entry| visible_on_linux(&entry.value))
+    listed(&presets, &reading)
         .filter_map(|entry| {
-            resolve_binary_dir(root, &presets, &entry.name)
+            resolve_binary_dir(root, &presets, entry)
                 .ok()
                 .flatten()
                 .map(|directory| PresetDirectory {
@@ -207,32 +142,29 @@ pub(crate) fn binary_dirs(root: &Path) -> Vec<PresetDirectory> {
 
 /// A pasta de build que o preset declara; `None` quando ele nao declara
 /// `binaryDir` (C1-19: a IDE configura em `.kinein/presets/<preset>`). Erro
-/// quando os presets sao recusados, o preset nao existe ou a pasta nao se
-/// resolve.
+/// quando os presets sao recusados, o preset nao existe, o `CMake` nao o usa
+/// (`$vendor{}` ou `condition` falsa) ou a pasta nao se resolve.
 pub(crate) fn binary_dir(root: &Path, preset: &str) -> Result<Option<PathBuf>, String> {
-    resolve_binary_dir(root, &files::load(root)?, preset)
+    let (presets, reading) = load(root)?;
+    let Some(entry) = presets.find(preset) else {
+        return Err(format!("preset de configure inexistente: {preset}"));
+    };
+    if let Some(reason) = reading.unusable(preset) {
+        return Err(reason);
+    }
+    resolve_binary_dir(root, &presets, entry)
 }
 
 fn resolve_binary_dir(
     root: &Path,
     presets: &Presets,
-    preset: &str,
+    entry: &Entry,
 ) -> Result<Option<PathBuf>, String> {
-    let Some(entry) = presets.find(preset) else {
-        return Err(format!("preset de configure inexistente: {preset}"));
+    let Some(expanded) =
+        Preset::new(root, presets, Kind::Configure, entry).field(&["binaryDir"])?
+    else {
+        return Ok(None);
     };
-    let declared = match lookup(presets, preset, &["binaryDir"], 0) {
-        Field::Text(text) => text,
-        Field::Unset | Field::Absent => return Ok(None),
-    };
-    let file_dir = presets.file_of(entry).dir.as_path();
-    let expanded = macros::Macros {
-        root,
-        presets,
-        preset,
-        file_dir,
-    }
-    .expand(&declared, 0)?;
     let path = PathBuf::from(expanded);
     Ok(Some(if path.is_absolute() {
         path
@@ -359,7 +291,6 @@ mod tests {
                "binaryDir":"$env{KV_OUT}"},
               {"name":"removed","inherits":"base","environment":{"KV_OUT":null},
                "binaryDir":"${sourceDir}/z$env{KV_OUT}"},
-              {"name":"loop","environment":{"A":"$env{B}","B":"$env{A}"},"binaryDir":"$env{A}"},
               {"name":"unknownvar","binaryDir":"${sourceDir}/u$env{KV_PRESETS_NOT_SET_ANYWHERE}"}]}"#,
         );
         // `$penv` le o ambiente do core, sem o `environment` do preset.
@@ -377,46 +308,65 @@ mod tests {
             root.join("z")
         );
         assert_eq!(
-            binary_dir(&root, "loop").unwrap_err(),
-            "ciclo de macros em environment"
-        );
-        assert_eq!(
             binary_dir(&root, "unknownvar").unwrap().unwrap(),
             root.join("u")
         );
     }
 
-    /// O que o `CMake` recusa ou ignora nao vira pasta.
+    /// O que o `CMake` 4.4.5 ignora ou nao usa nao vira pasta (C1-24): o
+    /// `$vendor{}` em qualquer campo e a `condition` falsa. `${generator}`
+    /// sem `generator` expande vazio, como no `CMake`; ate' o C1-24 a IDE
+    /// recusava a pasta. Macro desconhecida ou sem fechamento recusa o arquivo
+    /// (`expansion/tests.rs`).
     #[test]
-    fn presets_the_ide_cannot_resolve_have_no_directory() {
+    fn presets_cmake_ignores_or_disables_have_no_directory() {
         let root = root(
             "unresolvable",
             r#"{"version":6,"configurePresets":[
-              {"name":"unknown","binaryDir":"${sourceDir}/${nope}"},
               {"name":"vendor","binaryDir":"${sourceDir}/$vendor{acme}"},
-              {"name":"open","binaryDir":"${sourceDir}/${presetName"},
-              {"name":"nogenerator","binaryDir":"${sourceDir}/${generator}"},
+              {"name":"vendorcache","binaryDir":"${sourceDir}/vc","cacheVariables":{"X":"$vendor{acme}"}},
+              {"name":"nogenerator","binaryDir":"${sourceDir}/g[${generator}]"},
               {"name":"nodir"},
               {"name":"windows","binaryDir":"w","condition":{"type":"equals","lhs":"${hostSystemName}","rhs":"Windows"}},
               {"name":"ok","binaryDir":"ok"}]}"#,
         );
         for (preset, reason) in [
-            ("unknown", "macro desconhecida: ${nope}"),
-            ("vendor", "$vendor{acme}: o CMake ignora este preset"),
-            ("open", "macro sem fechamento: ${presetName"),
-            ("nogenerator", "a macro generator exige generator no preset"),
+            (
+                "vendor",
+                "o CMake ignora o preset vendor: ele usa $vendor{}",
+            ),
+            (
+                "vendorcache",
+                "o CMake ignora o preset vendorcache: ele usa $vendor{}",
+            ),
+            (
+                "windows",
+                "a condition do preset windows é falsa: o CMake não o usa",
+            ),
             ("absent", "preset de configure inexistente: absent"),
         ] {
             assert_eq!(binary_dir(&root, preset).unwrap_err(), reason, "{preset}");
         }
+        assert_eq!(
+            binary_dir(&root, "nogenerator").unwrap().unwrap(),
+            root.join("g[]")
+        );
         assert_eq!(binary_dir(&root, "nodir"), Ok(None));
+        assert_eq!(names(&root), ["nogenerator", "nodir", "ok"]);
         assert_eq!(
             binary_dirs(&root),
-            [PresetDirectory {
-                name: "ok".to_owned(),
-                directory: root.join("ok"),
-            }]
+            [
+                PresetDirectory {
+                    name: "nogenerator".to_owned(),
+                    directory: root.join("g[]"),
+                },
+                PresetDirectory {
+                    name: "ok".to_owned(),
+                    directory: root.join("ok"),
+                }
+            ]
         );
+        assert_eq!(preset_value(&root, "vendorcache", &["binaryDir"]), None);
     }
 
     #[test]
