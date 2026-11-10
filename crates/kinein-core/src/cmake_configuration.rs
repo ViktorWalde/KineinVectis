@@ -104,7 +104,7 @@ pub fn owned_by_ide(root: &Path, directory: &Path) -> bool {
 }
 
 /// The folder of every listed preset: its `binaryDir`, or the IDE's folder
-/// for one without it, in the order of the files.
+/// for one without it, in the order of the list.
 pub(crate) fn preset_dirs(root: &Path) -> Vec<PresetDirectory> {
     let mut directories = crate::cmake_presets::binary_dirs(root);
     for preset in crate::cmake_presets::list_presets(root).unwrap_or_default() {
@@ -120,9 +120,11 @@ pub(crate) fn preset_dirs(root: &Path) -> Vec<PresetDirectory> {
     directories
 }
 
-/// Every listed configure preset with the folder of its configuration, in
-/// the order of the files (C1-23): what the configuration menu offers. Empty
-/// without presets or with presets `CMake` would refuse.
+/// Every listed configure preset with the folder of its configuration: what
+/// the configuration menu offers.
+///
+/// In the order of the list (C1-23, C1-25); empty without presets or with
+/// presets `CMake` would refuse.
 #[must_use]
 pub fn configurations(root: &Path) -> Vec<CmakeConfigurationInfo> {
     crate::cmake_presets::list_presets(root)
@@ -140,6 +142,7 @@ pub fn configurations(root: &Path) -> Vec<CmakeConfigurationInfo> {
                     .map(|directory| label(root, directory)),
                 build_dir_refused: directory.err(),
                 display_name: preset.display_name,
+                condition_note: preset.condition_note,
                 preset: preset.name,
             }
         })

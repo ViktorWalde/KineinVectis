@@ -1041,7 +1041,7 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-23 / UI sem troca da configuração | O Project Health só oferece "Escolher configuração…" quando a escolha é obrigatória; o menu corta no fim a pasta longa fora da raiz (§16.1) | Média: trocar a configuração ativa ou voltar ao automático exige editar `.kinein/configuration.json` | Menu de configuração sempre que há presets, com a ativa marcada e "Automático". Provar na UI nativa isolada |
 | C1-24 / macros dos presets só sob demanda | Achado na prova do C1-23 (2026-11-09). `cmake_presets` expande só o `binaryDir`, e só do preset usado. Medido com `cmake --list-presets` e `cmake --preset` do CMake 4.4.5 (§17.4): cada preset de cada tipo, mesmo oculto e sem uso, é expandido ao ler os arquivos, com a herança e na versão do arquivo que o define. Uma macro desconhecida, sem fechamento, `$env{}` ou `$penv{}` sem nome, uma macro de versão maior (`${hostSystemName}` 3, `${fileDir}` 4, `${pathListSep}` 5) ou um ciclo no `environment` recusa o arquivo inteiro ("Invalid macro expansion"). Nos configure presets valem `binaryDir`, `installDir`, `toolchainFile`, `graphviz`, os valores de `cacheVariables` e de `environment` e as cadeias da `condition`; nos build presets, `environment`, `targets`, `nativeToolOptions` e `condition`, com o `environment` do configure preset; nos test presets, `environment`, `overwriteConfigurationFile`, `output`, `filter`, `execution` e `condition`; nos package presets, `environment`. `$vendor{}` tira da lista só o preset que o usa. Divergências vizinhas: `${generator}` sem `generator` expande vazio, e a IDE recusava a pasta; no build e no test preset, `${generator}` é o do configure preset, e no package preset é sempre vazio (achado pelos mutantes); na versão 12, `${fileDir}` é a pasta do arquivo que escreveu o texto quando todas as macros dele são `${fileDir}`, e a IDE usava a do preset em uso, então o `-B` da IDE e o `cmake --preset` configuravam em pastas diferentes. A `condition` é herdada, e o CMake a avalia ao listar: o preset de condição falsa some do `--list-presets`. A IDE lia só a do próprio preset e dava por verdadeira toda forma que não fosse do host. `environment: null` tira a chave, e `$env{}` cai no ambiente do processo; a IDE expandia vazio. `$vendor{}` interrompe a expansão do preset: o que vem depois, na ordem do CMake, não é conferido. A ordem é `environment`, `condition` e os campos do tipo, com as chaves dos mapas em ordem. A toolchain mostrava `CMAKE_C_COMPILER` e `toolchainFile` crus, com as macros | Média: a IDE lista, escolhe e oferece no menu presets de um arquivo que o CMake recusa, e o configure falha no CMake com a mensagem dele, não em silêncio; com `${fileDir}` na versão 12, a IDE configura fora da pasta do preset | Corrigido em 2026-11-09 (§17.4). Decisões do autor de 2026-11-09: corrigir antes do C1-22, e em todos os tipos de preset. Corrigir em `cmake_presets`, com o motivo do CMake. A `condition` segue o CMake em todas as formas menos `matches` e `notMatches`, que dependem da expressão regular do CMake (C1-26) e continuam valendo como verdadeiras. Provar com o CMake real cada campo, o preset oculto, a versão por arquivo, o ciclo e as pastas do `${fileDir}` |
 | C1-25 / esquema dos presets | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). O CMake recusa o arquivo inteiro por um campo que o esquema não tem ("Invalid extra field") e por um campo de versão maior (`installDir` e `toolchainFile` 3, `graphviz` 10: "File version must be N or higher"); um `generator` desconhecido tira o preset da lista, e o configure dele falha. Também recusam o arquivo um `configurePreset` inexistente (`Invalid "configurePreset"`), uma `condition` sem campo obrigatório (`Missing required field "rhs"`) e uma de tipo desconhecido (`Invalid condition`). A IDE lê só os campos que usa e lista esses presets; na `condition`, o campo ausente vale vazio, e o tipo desconhecido, verdadeiro | Média: o mesmo efeito do C1-24 por outra causa | Corrigido em 2026-11-10 (§18.1). Decisão do autor de 2026-11-09: corrigir depois do C1-24 e antes do C1-22. Decisões do autor de 2026-11-10: perguntar ao CMake do projeto, o que o kit padrão do workspace fixa, senão o do `PATH` (desenho no §18). A IDE roda o `cmake --list-presets` desse CMake, com cache pela data dos arquivos de presets e do executável, e a recusa e a lista dele valem: o esquema muda com a versão do CMake. A leitura nativa do C1-24 fica para os valores e para quando não há CMake. Com isso a lista do CMake já reflete `matches` e `notMatches`, e ao C1-26 resta o caso sem CMake. Provar com o CMake real cada recusa medida, o cache e a ausência do CMake |
-| C1-26 / expressão regular da `condition` | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). `matches` e `notMatches` usam a expressão regular do próprio CMake: `\d` não é classe, e `^a\d$` não casa `a1`. Uma expressão que não compila recusa o arquivo inteiro ("RegularExpression::compile(): Error in compile"). A IDE dá essas formas por verdadeiras | Baixa: um preset de `matches` falsa aparece na lista, e uma expressão inválida não recusa o arquivo | Aberto. Decisão do autor de 2026-11-10: perguntar ao CMake. Só quando uma `condition` usa `matches` ou `notMatches`, a IDE roda o `cmake --list-presets` do projeto, com cache pela data dos arquivos, e usa a lista ou a recusa dele. Sem CMake, essas formas continuam verdadeiras, e a IDE diz isso. Vem depois do C1-25 e antes do C1-22 (autor, 2026-11-10). Provar com o CMake real a expressão que casa, a que não casa, a que não compila e a ausência do CMake |
+| C1-26 / expressão regular da `condition` | Achado na medida do C1-24 (2026-11-09, CMake 4.4.5). `matches` e `notMatches` usam a expressão regular do próprio CMake: `\d` não é classe, e `^a\d$` não casa `a1`. Uma expressão que não compila recusa o arquivo inteiro ("RegularExpression::compile(): Error in compile"). A IDE dá essas formas por verdadeiras | Baixa: um preset de `matches` falsa aparece na lista, e uma expressão inválida não recusa o arquivo | Corrigido em 2026-11-10 (§19.1). Decisão do autor de 2026-11-10: perguntar ao CMake. Só quando uma `condition` usa `matches` ou `notMatches`, a IDE roda o `cmake --list-presets` do projeto, com cache pela data dos arquivos, e usa a lista ou a recusa dele. Sem CMake, essas formas continuam verdadeiras, e a IDE diz isso. Vem depois do C1-25 e antes do C1-22 (autor, 2026-11-10). Com o C1-25, a lista do CMake já decide essas formas. Decisões do autor de 2026-11-10 para o resto (desenho no §19): sem CMake, o item do preset no menu diz na dica que a `condition` fica verdadeira; uma macro ou expressão inválida depois de uma forma indecisa, num `anyOf` ou `allOf`, deixa o preset indeciso, em vez de recusar. Provar com o CMake real a expressão que casa, a que não casa, a que não compila e a ausência do CMake |
 | C1-27 / preset oculto pedido pelo nome | Achado pelos mutantes do C1-25 (2026-11-10): o mutante que dava aos presets ocultos o motivo de fora da lista sobreviveu, porque nenhum teste decidia o caso. Medido com o CMake 4.4.5: `cmake --preset h`, com `h` oculto, sai com 1 e "Cannot use hidden configure preset", e o `cmake --list-presets` não o lista. A IDE resolve a pasta, o configure pelo nome começa o job e o CMake recusa depois. Causa: `Reading::unusable` não conhece o oculto, e só a lista o filtra | Baixa: só quem pede o preset pelo nome, pelo IPC ou por uma configuração registrada que ficou oculta; o configure falha com a mensagem do CMake | Corrigido em 2026-11-10 (§18.1). Decisão do autor de 2026-11-10: corrigir dentro do C1-25, no mesmo protocolo 0.212.0. A leitura nativa anota os configure presets ocultos, e o preset oculto pedido pelo nome é recusado antes do job, com ou sem CMake: "o preset h é oculto: o CMake não o usa pelo nome". Vale para a pasta, o configure e os valores da toolchain; um filho visível continua herdando dele. Provar pela leitura nativa e com o CMake real, de ponta a ponta sem job, e com o mutante da guarda |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
@@ -1665,3 +1665,124 @@ Limites:
 - a ordem dos motivos de um preset oculto que também usa `$vendor{}` ou tem a
   `condition` falsa não foi medida: a IDE dá o do oculto;
 - segue aberto o C1-26 e, depois dele, o C1-22.
+
+## 19. C1-26: `matches` e `notMatches` sem o CMake — desenho de 2026-11-10
+
+Com o C1-25, a lista do CMake do projeto já decide `matches` e `notMatches`: um
+preset de `condition` falsa para ele sai da lista com
+`a condition do preset X é falsa para o CMake`. Restam dois casos.
+
+Medido com o CMake 4.4.5, em 16 projetos de um preset `ok` e um `c` com a
+`condition` do caso:
+- o `anyOf` para no primeiro verdadeiro e o `allOf` no primeiro falso, também
+  quando quem decide é um `matches` ou um `notMatches`. Depois disso, uma macro
+  inválida ou uma expressão que não compila não recusa nada: `anyOf` de um
+  `matches` verdadeiro e de `${nope}` lista `c`; `allOf` de um `matches` falso
+  e de `${nope}` lista só `ok`;
+- quando o CMake chega na forma inválida, recusa o arquivo com
+  `Invalid configure preset: "c": Invalid condition`, também a macro inválida
+  dentro do `string` ou da `regex`, e também num preset oculto;
+- a expressão só é compilada quando o CMake chega nela;
+- a macro dentro da `regex` expande antes: `^${hostSystemName}$` casa `Linux`.
+
+A leitura nativa não decide essas formas, porque a expressão regular é a do
+CMake, e a IDE não cria uma própria. Hoje ela segue avaliando
+depois de uma forma indecisa e recusa os presets pela macro inválida que o
+CMake talvez nem leia. Com o C1-25, isso aparece como
+`o CMake aceita os presets, mas a IDE não os lê`, mesmo quando o CMake aceita.
+
+Decisões do autor de 2026-11-10:
+- num `anyOf` ou `allOf`, depois de uma forma indecisa, uma macro inválida ou
+  um `$vendor{}` deixam a `condition` indecisa, e não recusam nem ignoram o
+  preset: o CMake só chega neles se a forma indecisa não decidir. Uma forma
+  depois dela que decide sozinha (verdadeira no `anyOf`, falsa no `allOf`)
+  continua decidindo. A `condition` de tipo desconhecido, que a leitura nativa
+  já dá por verdadeira (C1-25), não muda;
+- sem resposta do CMake, o preset de `condition` indecisa continua na lista,
+  como verdadeiro, e a IDE diz isso na dica do item dele no menu de
+  configurações.
+
+Desenho:
+- `expansion.rs`: a avaliação do `anyOf` e do `allOf` passa a parar indecisa no
+  primeiro erro ou `$vendor{}` depois de uma forma indecisa;
+- `verdict.rs`: quando o CMake lista, as formas indecisas ficam decididas por
+  ele, e a anotação sai. Quando não há resposta, ela fica;
+- `cmake.presets.list` e `cmake.status.configurations` ganham `conditionNote`,
+  só para um preset de `condition` indecisa sem resposta do CMake:
+  `a condition usa matches ou notMatches, que só o CMake decide; sem ele, a IDE
+  a dá por verdadeira`. Protocolo 0.213.0, com o contrato no
+  [03 cmake](../arquitetura/03-dominios/cmake.md) antes da mudança;
+- `CmakeConfigurationChoices.qml` acrescenta a nota à dica do item.
+
+Provas necessárias:
+- os casos medidos, pela leitura nativa e com o CMake real: o erro depois da
+  forma indecisa sem recusa, a forma que decide depois dela, e o erro antes de
+  qualquer forma indecisa ainda recusando;
+- a nota só sem resposta do CMake, na lista e no menu, de ponta a ponta;
+- o harness da dica e a prova na UI nativa, com o projeto sem CMake no `PATH`;
+- mutantes que compilem e reprovem pela guarda.
+
+Limites previstos:
+- sem o CMake, a expressão que não compila não é recusada: a IDE não compila
+  a expressão do CMake;
+- um `$vendor{}` depois da forma indecisa deixa a `condition` indecisa. Com o
+  CMake, a lista dele decide; sem ele, o preset aparece com a nota.
+
+### 19.1 C1-26: integração e provas — 2026-11-10
+
+O desenho do §19 entrou como previsto, no mesmo dono, `cmake_presets`:
+- `expansion.rs`: num `anyOf` ou `allOf`, depois de uma forma indecisa, a
+  avaliação para indecisa no primeiro erro ou `$vendor{}`. Uma forma que decide
+  sozinha (verdadeira no `anyOf`, falsa no `allOf`) continua decidindo;
+- `verdict.rs`: quando o CMake lista, a anotação das formas indecisas sai,
+  depois de dar o motivo dos presets que ele não lista;
+- `reading.rs` dá o texto da nota, só ao preset de `condition` indecisa;
+- `cmake_presets.rs` e `cmake_configuration.rs` passam a nota a
+  `cmake.presets.list` e a `cmake.status.configurations`, no protocolo 0.213.0;
+- `CmakeConfigurationChoices.qml` acrescenta a nota à dica do item, na linha
+  depois da pasta ou do motivo dela.
+
+A ponte C++ já passava os itens de `configurations` como mapas, e o campo novo
+chega ao QML sem mudança nela.
+
+Provas:
+- testes do dono, em `expansion/tests.rs`, pela leitura nativa. Depois de uma
+  forma indecisa, a macro inválida no `anyOf` e no `allOf`, a macro inválida
+  dentro da `regex`, o `$vendor{}` e o caso aninhado deixam o preset na lista,
+  com a nota. Depois dela, o `true` no `anyOf` decide, sem nota, e o `false` no
+  `allOf` desabilita. O `$vendor{}` antes da forma indecisa ainda ignora o
+  preset, e a macro inválida antes dela ainda recusa os presets;
+- em `verdict/tests.rs`, contra o CMake 4.4.5 real, os 16 casos medidos no §19:
+  o CMake decide cada um, com a recusa dele, o motivo de fora da lista ou a
+  lista, e nenhum preset leva a nota;
+- regressão de ponta a ponta pelo core, com CMake 4.4.5, GCC 16.2.1 e Ninja
+  reais, em `tests/c_project/preset_condition.rs`. Com o CMake, a lista e o
+  menu têm `ok` e o `anyOf` que ele para no `matches` verdadeiro, sem nota. O
+  configure desse preset escreve a CDB, e o do `matches` falso é recusado com o
+  motivo, sem job. Sem resposta do CMake, a lista e o menu têm os três, os dois
+  indecisos com a nota. Quando o CMake volta a responder, voltam à lista dele;
+- o harness `tst_configuration_menu` confere a nota depois da pasta e depois do
+  motivo da pasta desconhecida, o detalhe sem mudança e a dica na tela ao
+  pairar;
+- prova na UI nativa, num Xvfb com HOME isolado, o projeto com `autoSave`
+  desligado e um `PATH` sem `cmake`. O Project Health acusa o `cmake` ausente,
+  o menu tem `ok`, `rx` e `anybad`, e a dica de `rx` e de `anybad` tem a pasta
+  e, na linha seguinte, a nota; a de `ok`, só a pasta. Numa janela de 900 px, o
+  chip vai para o ⋯, e a dica se desloca para caber. Com o `cmake` no `PATH`, o
+  menu tem só `ok` e `anybad`, sem nota. Saída 0 e nenhum aviso QML;
+- 18 mutantes que compilam, todos reprovados na primeira rodada: sem o
+  curto-circuito, só no erro, só no `$vendor{}`, também antes da forma
+  indecisa e para qualquer valor depois dela; a anotação que fica com o CMake,
+  ou que sai antes do motivo de fora da lista; a nota nunca, sempre ou de
+  qualquer indeciso; a lista ou o menu sem a nota; a nota nula gravada na
+  lista ou no menu; e, no QML, a dica sem a nota, com ela antes da pasta, na
+  mesma linha ou no lugar da pasta.
+
+Limites:
+- sem o CMake, a expressão que não compila não é recusada: a IDE não compila a
+  expressão do CMake;
+- sem o CMake, o preset com `$vendor{}` depois da forma indecisa aparece com a
+  nota, e o CMake talvez o ignore;
+- a nota fica na dica do menu. A lista de presets do Project Health e a saída
+  do configure não a repetem;
+- segue aberto o C1-22.

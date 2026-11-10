@@ -7,6 +7,7 @@ mod existing;
 mod existing_cdb;
 mod existing_kit;
 mod existing_recovery;
+mod preset_condition;
 mod preset_include;
 mod preset_macros;
 mod preset_schema;

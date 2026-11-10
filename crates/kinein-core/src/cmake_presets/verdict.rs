@@ -88,6 +88,8 @@ pub(super) fn apply(
         .disabled
         .retain(|name| !lines.iter().any(|line| names(line, name)));
     reading.dropped = dropped(&presets, &reading, &lines);
+    // What the IDE did not decide, the list did (C1-26).
+    reading.unknown.clear();
     reading.order = lines
         .iter()
         .filter_map(|line| {

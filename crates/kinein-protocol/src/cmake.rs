@@ -21,15 +21,20 @@ pub struct CmakePresetInfo {
     /// Human-friendly label, when the preset declares one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
+    /// Without an answer of the `CMake` of the project, why its `condition`
+    /// counts as true: it uses `matches` or `notMatches`, which only `CMake`
+    /// decides (`0.213.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub condition_note: Option<String>,
 }
 
 /// Result payload for `cmake.presets.list`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CmakePresetsResult {
-    /// Non-hidden configure presets, in file order
-    /// (`CMakePresets.json` then `CMakeUserPresets.json`), each file before
-    /// the files it includes (`0.207.0`).
+    /// The configure presets the `CMake` of the project lists, in its order:
+    /// `CMakeUserPresets.json` first (`0.212.0`), each file before the files
+    /// it includes (`0.207.0`).
     pub presets: Vec<CmakePresetInfo>,
 }
 
@@ -195,6 +200,11 @@ pub struct CmakeConfigurationInfo {
     pub build_dir_refused: Option<String>,
     /// Whether the folder has a `CMakeCache.txt`.
     pub configured: bool,
+    /// Without an answer of the `CMake` of the project, why its `condition`
+    /// counts as true: it uses `matches` or `notMatches`, which only `CMake`
+    /// decides (`0.213.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub condition_note: Option<String>,
 }
 
 /// Where the compilation database in use came from (`0.206.0`).
@@ -299,17 +309,24 @@ mod tests {
                 CmakePresetInfo {
                     name: "dev".to_owned(),
                     display_name: Some("Dev Local".to_owned()),
+                    condition_note: None,
                 },
                 CmakePresetInfo {
                     name: "ci".to_owned(),
                     display_name: None,
+                    condition_note: Some("só o CMake decide".to_owned()),
                 },
             ],
         })
         .unwrap();
 
-        assert_eq!(value["presets"][0]["displayName"], "Dev Local");
-        assert!(value["presets"][1].get("displayName").is_none());
+        assert_eq!(
+            value["presets"],
+            json!([
+                {"name":"dev","displayName":"Dev Local"},
+                {"name":"ci","conditionNote":"só o CMake decide"}
+            ])
+        );
     }
 
     #[test]
@@ -339,6 +356,7 @@ mod tests {
                     build_dir: Some("/w/build/linux-clang".to_owned()),
                     build_dir_refused: None,
                     configured: true,
+                    condition_note: Some("só o CMake decide".to_owned()),
                 },
                 CmakeConfigurationInfo {
                     preset: "a/b".to_owned(),
@@ -346,6 +364,7 @@ mod tests {
                     build_dir: None,
                     build_dir_refused: Some("o nome não serve de pasta".to_owned()),
                     configured: false,
+                    condition_note: None,
                 },
             ],
         })
@@ -355,7 +374,8 @@ mod tests {
             value["configurations"],
             json!([
                 {"preset":"linux-clang","displayName":"Linux Clang",
-                 "buildDir":"/w/build/linux-clang","configured":true},
+                 "buildDir":"/w/build/linux-clang","configured":true,
+                 "conditionNote":"só o CMake decide"},
                 {"preset":"a/b","buildDirRefused":"o nome não serve de pasta","configured":false}
             ])
         );

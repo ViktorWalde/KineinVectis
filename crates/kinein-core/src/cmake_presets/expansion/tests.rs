@@ -510,6 +510,94 @@ fn conditions_are_inherited_and_evaluated_like_cmake() {
     assert!(list_presets(&root).is_err());
 }
 
+/// C1-26: `CMake` stops an `anyOf` at a true `matches` and an `allOf` at a
+/// false one, and never reads what comes after (measured with 4.4.5). After
+/// an undecided form, an invalid macro or a `$vendor{}` leave the `condition`
+/// undecided, also nested; before it they still refuse or stop the preset,
+/// and a form after it that decides alone still decides. Without `CMake`, the
+/// undecided ones count as true and say so.
+#[test]
+fn after_an_unknown_form_an_error_leaves_the_condition_unknown() {
+    let _native = native_reading();
+    let rx = r#"{"type":"matches","string":"a1","regex":"^a1$"}"#;
+    let bad = r#"{"type":"equals","lhs":"${nope}","rhs":"x"}"#;
+    let vendor = r#"{"type":"equals","lhs":"$vendor{acme}","rhs":"x"}"#;
+    let preset = |name: &str, condition: String| {
+        format!(r#"{{"name":"{name}","binaryDir":"{name}","condition":{condition}}}"#)
+    };
+    let any = |forms: &[&str]| format!(r#"{{"type":"anyOf","conditions":[{}]}}"#, forms.join(","));
+    let all = |forms: &[&str]| format!(r#"{{"type":"allOf","conditions":[{}]}}"#, forms.join(","));
+    let regex_macro = r#"{"type":"matches","string":"a","regex":"${nope}"}"#;
+    let nested = format!(
+        r#"{{"type":"not","condition":{}}}"#,
+        all(&[&any(&[rx, bad]), "true"])
+    );
+    let presets = [
+        preset("any-bad", any(&[rx, bad])),
+        preset("all-bad", all(&[rx, bad])),
+        preset("any-regex-macro", any(&[rx, regex_macro])),
+        preset("any-vendor", any(&[rx, vendor])),
+        preset("nested", nested),
+        preset("any-true-after", any(&[rx, "true", bad])),
+        preset("all-false-after", all(&[rx, "false", bad])),
+        preset("vendor-first", any(&[vendor, rx])),
+    ];
+    let root = project(
+        "undecided",
+        &format!(
+            r#"{{"version":10,"configurePresets":[{}]}}"#,
+            presets.join(",")
+        ),
+    );
+    let listed: Vec<(String, bool)> = list_presets(&root)
+        .unwrap()
+        .into_iter()
+        .map(|preset| (preset.name, preset.condition_note.is_some()))
+        .collect();
+    let noted = |name: &str| (name.to_owned(), true);
+    assert_eq!(
+        listed,
+        [
+            noted("any-bad"),
+            noted("all-bad"),
+            noted("any-regex-macro"),
+            noted("any-vendor"),
+            noted("nested"),
+            ("any-true-after".to_owned(), false),
+        ]
+    );
+    assert_eq!(
+        list_presets(&root).unwrap()[0].condition_note.as_deref(),
+        Some(
+            "a condition usa matches ou notMatches, que só o CMake decide; sem ele, a IDE a dá \
+             por verdadeira"
+        )
+    );
+    assert_eq!(
+        binary_dir(&root, "all-false-after").unwrap_err(),
+        "a condition do preset all-false-after é falsa: o CMake não o usa"
+    );
+    assert_eq!(
+        binary_dir(&root, "vendor-first").unwrap_err(),
+        "o CMake ignora o preset vendor-first: ele usa $vendor{}"
+    );
+    // Before the undecided form, the invalid macro still refuses them all.
+    let root = project(
+        "undecided-after",
+        &format!(
+            r#"{{"version":10,"configurePresets":[{OK},{}]}}"#,
+            preset("before", any(&[bad, rx]))
+        ),
+    );
+    assert!(
+        list_presets(&root)
+            .unwrap_err()
+            .starts_with("macro inválida no preset de configure \"before\": "),
+        "{:?}",
+        list_presets(&root)
+    );
+}
+
 /// `${generator}` in build and test presets is the generator of the configure
 /// preset, also inherited; in package presets it is always empty (measured).
 /// The `anyOf` shows it: when the first test is true, `${nope}` is never

@@ -62,10 +62,13 @@ QtObject {
         return qsTr("Configuração do CMake em %1 — clique para trocar").arg(directory);
     }
 
+    // A pasta, ou por que ela não é conhecida; sem o CMake, também a
+    // condition que só ele decide (C1-26), na linha seguinte.
     function choiceTooltip(choice) {
-        if (!choice.buildDir) return choice.buildDirRefused || "";
-        return choice.configured ? choice.buildDir
-                                 : qsTr("%1 — ainda sem configure").arg(choice.buildDir);
+        const folder = !choice.buildDir ? (choice.buildDirRefused || "")
+                     : choice.configured ? choice.buildDir
+                                         : qsTr("%1 — ainda sem configure").arg(choice.buildDir);
+        return [folder, choice.conditionNote || ""].filter(line => line !== "").join("\n");
     }
 
     // Um item por configuração; a pasta vai à direita, cortada no meio, e o

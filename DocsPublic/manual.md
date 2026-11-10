@@ -1593,6 +1593,12 @@ versão dele não conhece, a IDE recusa também, com o motivo que ele dá. Sem
 CMake que rode, vale a leitura da própria IDE. Um preset oculto só serve de
 base para outros: pedido pelo nome, o configure diz que ele é oculto.
 
+**A condição que só o CMake decide** (desde 2026-11-10). A `condition` de um
+preset com `matches` ou `notMatches` usa a expressão regular do CMake, e a IDE
+não a avalia. Com o CMake, vale o que ele decide. Sem CMake que rode, o
+preset continua no menu, como se a condição fosse verdadeira, e a dica do
+item diz isso, na linha depois da pasta.
+
 **Projeto só com Makefile.** É reconhecido como "Make": Build roda `bear --
 make` quando o `bear` está instalado — é ele que escreve o
 `compile_commands.json` que o clangd lê — e `make` a seco quando não, dizendo

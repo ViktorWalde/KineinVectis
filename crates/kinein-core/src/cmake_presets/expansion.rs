@@ -439,7 +439,13 @@ fn evaluate(context: &Context<'_>, condition: &Value) -> Result<Option<Truth>, S
                 .into_iter()
                 .flatten()
             {
-                match evaluate(context, inner)? {
+                let outcome = evaluate(context, inner);
+                // `CMake` reaches it only when the undecided form before did
+                // not stop the list (measured with 4.4.5, C1-26).
+                if result == Truth::Unknown && !matches!(outcome, Ok(Some(_))) {
+                    return Ok(Some(Truth::Unknown));
+                }
+                match outcome? {
                     None => return Ok(None),
                     Some(truth) if truth == stop => return Ok(Some(stop)),
                     Some(Truth::Unknown) => result = Truth::Unknown,

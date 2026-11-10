@@ -82,6 +82,7 @@ fn list_from(loaded: Result<(Presets, Reading), String>) -> Result<Vec<CmakePres
                 .get("displayName")
                 .and_then(Value::as_str)
                 .map(str::to_owned),
+            condition_note: reading.condition_note(&entry.name),
         })
         .collect())
 }

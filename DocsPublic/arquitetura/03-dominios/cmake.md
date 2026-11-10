@@ -1,5 +1,19 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**`matches` e `notMatches` sem o CMake (`0.213.0`, C1-26 do C-04).** Desenho
+na
+[consolidação C §19](../../especificacoes/consolidacao-nativa-de-c.md#19-c1-26-matches-e-notmatches-sem-o-cmake--desenho-de-2026-11-10).
+Campo novo e opcional `conditionNote` nos itens de `cmake.presets.list` e de
+`cmake.status.configurations`. Ele só vem quando o CMake do projeto não
+respondeu e a `condition` do preset usa `matches` ou `notMatches` sem que outra
+forma a decida. O texto é
+`a condition usa matches ou notMatches, que só o CMake decide; sem ele, a IDE a
+dá por verdadeira`. Com resposta do CMake, a lista dele decide e o campo não
+vem. Num `anyOf` ou `allOf`, uma macro inválida depois de uma forma indecisa
+não recusa mais os presets, e um `$vendor{}` nessa posição não ignora mais o
+preset: a `condition` fica indecisa, porque o CMake só chega neles se a forma
+indecisa não decidir. Clientes antigos ignoram o campo.
+
 **Presets pelo CMake do projeto (`0.212.0`, C1-25 do C-04).** Sem campo novo.
 Desenho na
 [consolidação C §18](../../especificacoes/consolidacao-nativa-de-c.md#18-c1-25-os-presets-pelo-cmake-do-projeto--desenho-de-2026-11-10).
@@ -61,7 +75,8 @@ lê (`CMAKE_C_COMPILER`, `toolchainFile`) chegam expandidos assim.
 `cmake.status` ganha um campo, omitido quando vazio:
 
 ```text
-configurations?  [{ preset, displayName?, buildDir?, buildDirRefused?, configured }]
+configurations?  [{ preset, displayName?, buildDir?, buildDirRefused?, configured,
+                    conditionNote? }]
 ```
 
 Há um item por configure preset não oculto, na ordem dos arquivos de presets.
@@ -69,7 +84,8 @@ Há um item por configure preset não oculto, na ordem dos arquivos de presets.
 relativo à raiz, `.` para ela, absoluto fora dela. Quando a pasta não é
 conhecida (`binaryDir` não resolvido, nome que não serve de pasta),
 `buildDirRefused` traz o motivo, e `buildDir` é omitido. `configured` diz se a
-pasta tem `CMakeCache.txt`. Sem presets, ou com presets que o CMake recusaria,
+pasta tem `CMakeCache.txt`, e `conditionNote` (`0.213.0`) vem como na lista de
+presets (veja o topo). Sem presets, ou com presets que o CMake recusaria,
 a lista é omitida; o motivo continua em `configurationRefused`. A lista não
 depende da configuração ativa nem muda outro campo.
 
@@ -264,7 +280,7 @@ arquivo).
   com `INVALID_PARAMS` e o motivo, sem configurar sem preset; até então um
   `CMakeUserPresets.json` inválido era ignorado, e o configure reprovava
   depois no CMake.
-- `cmake.presets.list {}` → `{ presets: [{ name, displayName? }] }` —
+- `cmake.presets.list {}` → `{ presets: [{ name, displayName?, conditionNote? }] }` —
   configure presets não ocultos de `CMakePresets.json` +
   `CMakeUserPresets.json` e dos arquivos que eles incluem (`include`, schema
   4+; `0.207.0`, C1-18), na ordem dos arquivos: os de cada arquivo antes dos

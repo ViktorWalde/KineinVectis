@@ -3,6 +3,8 @@
 // ativa marcada, "Automático", a pasta cortada no meio com o caminho inteiro
 // na dica, a pasta desconhecida que não se escolhe e diz por quê, e a faixa
 // que dá a volta ao automático quando não há configuração ativa nem presets.
+// C1-26: sem o CMake, a nota da condition que só ele decide vai na dica,
+// depois da pasta ou do motivo.
 import QtQuick
 import KineinVectis
 
@@ -61,13 +63,14 @@ Item {
         }
     }
 
+    readonly property string note: "a condition usa matches ou notMatches, que só o CMake decide; sem ele, a IDE a dá por verdadeira"
     readonly property string longPath: "/mnt/discos de trabalho/projetos com nomes compridos/saídas do build/clang-release-com-sanitizers"
     readonly property var choices: [
         { preset: "debug", displayName: "Depuração", buildDir: "build/debug", configured: false },
-        { preset: "release", buildDir: "build/release", configured: true },
+        { preset: "release", buildDir: "build/release", configured: true, conditionNote: root.note },
         { preset: "ci/linux", buildDirRefused: "o preset \"ci/linux\" não declara binaryDir, e o nome não serve de "
                                                + "pasta em .kinein/presets: declare binaryDir no preset ou mude o nome",
-          configured: false },
+          configured: false, conditionNote: root.note },
         { preset: "elsewhere", buildDir: root.longPath, configured: true }
     ]
 
@@ -121,6 +124,11 @@ Item {
             check(items[0].label === "Depuração" && items[0].action === "cmake.configuration:debug"
                   && items[0].tooltip === "build/debug — ainda sem configure",
                   "o displayName e a pasta sem configure: " + JSON.stringify(items[0]));
+            check(items[1].tooltip === "build/release\n" + root.note && items[1].detail === "build/release",
+                  "a nota da condition vem depois da pasta, e o detalhe nao muda: " + JSON.stringify(items[1]));
+            check(items[2].tooltip.indexOf("o preset \"ci/linux\"") === 0
+                  && items[2].tooltip.endsWith("mude o nome\n" + root.note),
+                  "a nota tambem depois do motivo: " + items[2].tooltip);
             check(!items[2].enabled && items[2].detail === "pasta desconhecida"
                   && items[2].tooltip.indexOf("não serve de pasta") >= 0,
                   "pasta desconhecida nao se escolhe e diz por que: " + JSON.stringify(items[2]));
@@ -150,6 +158,10 @@ Item {
                   && TooltipController.owner === longRow, "a dica tem o caminho inteiro: " + TooltipController.text);
             root.areaOf(longRow).exited();
             check(!TooltipController.shown, "sair do item esconde a dica");
+            root.areaOf(rows[1]).entered();
+            check(TooltipController.shown && TooltipController.text === "build/release\n" + root.note,
+                  "a dica na tela tem a nota: " + TooltipController.text);
+            root.areaOf(rows[1]).exited();
             // O sinal acima pula o enabled da area: o pairar de verdade so'
             // chega ao desabilitado se a area dele estiver ligada.
             check(root.areaOf(rows[2]).enabled && root.areaOf(rows[2]).hoverEnabled,

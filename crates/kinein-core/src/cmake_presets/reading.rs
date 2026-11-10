@@ -12,7 +12,7 @@ pub(super) struct Reading {
     /// Their `condition` is false.
     pub disabled: Vec<String>,
     /// Their `condition` uses `matches` or `notMatches`, which the IDE does
-    /// not decide (C1-26).
+    /// not decide (C1-26); empty once the `CMake` of the project listed them.
     pub unknown: Vec<String>,
     /// Not hidden, and the `CMake` of the project does not list them: each
     /// with why.
@@ -51,5 +51,15 @@ impl Reading {
             .iter()
             .find(|(dropped, _)| dropped == name)
             .map(|(_, reason)| reason.clone())
+    }
+
+    /// What the IDE says of a `condition` it took for true without the
+    /// `CMake` (C1-26, `conditionNote`).
+    pub(super) fn condition_note(&self, name: &str) -> Option<String> {
+        self.unknown.iter().any(|unknown| unknown == name).then(|| {
+            "a condition usa matches ou notMatches, que só o CMake decide; sem ele, a IDE a dá \
+             por verdadeira"
+                .to_owned()
+        })
     }
 }

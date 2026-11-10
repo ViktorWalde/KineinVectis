@@ -160,6 +160,7 @@ fn the_menu_lists_every_visible_preset_with_its_folder_or_why_not() {
             build_dir: dir.ok().map(str::to_owned),
             build_dir_refused: dir.err().map(str::to_owned),
             configured: done,
+            condition_note: None,
         }
     };
     let expected = vec![

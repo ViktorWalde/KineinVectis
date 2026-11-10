@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21, C1-23–C1-25, C1-27 e C-05 corrigidos com provas; abertos C-04 (C1-26, C1-22), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21, C1-23–C1-27 e C-05 corrigidos com provas; abertos C-04 (C1-22), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -415,8 +415,9 @@ auditorias e provas posteriores datadas nos donos:**
   ([40.7 §7.397](40.7-registro-das-entregas.md), protocolo 0.210.0); C1-24,
   corrigido em 2026-11-09 ([40.7 §7.398](40.7-registro-das-entregas.md),
   protocolo 0.211.0); C1-25, corrigido em 2026-11-10
-  ([40.7 §7.399](40.7-registro-das-entregas.md), protocolo 0.212.0); C1-26;
-  C1-22. Na
+  ([40.7 §7.399](40.7-registro-das-entregas.md), protocolo 0.212.0); C1-26,
+  corrigido em 2026-11-10 ([40.7 §7.400](40.7-registro-das-entregas.md),
+  protocolo 0.213.0); C1-22. Na
   segunda fatia, cada configuração
   configura na pasta dela: o `binaryDir`, ou `.kinein/presets/<preset>` sem ele.
   A configuração fica ativa ao começar o configure, e build, run, debug,
@@ -449,6 +450,11 @@ auditorias e provas posteriores datadas nos donos:**
   mutantes acharam o C1-27, corrigido na mesma fatia por decisão do autor: o
   preset oculto pedido pelo nome é recusado antes do job
   ([§18.1](../especificacoes/consolidacao-nativa-de-c.md#181-c1-25-integração-e-provas--2026-11-10)).
+  Na sexta fatia, sem resposta do CMake, o preset de `condition` com `matches`
+  ou `notMatches` fica no menu, e a dica do item diz que só o CMake a decide;
+  depois de uma forma indecisa, uma macro inválida ou um `$vendor{}` não
+  recusam nem ignoram mais o preset, como no CMake, que não chega neles
+  ([§19.1](../especificacoes/consolidacao-nativa-de-c.md#191-c1-26-integração-e-provas--2026-11-10)).
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste

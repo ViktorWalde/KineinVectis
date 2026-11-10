@@ -154,6 +154,98 @@ fn presets_this_cmake_cannot_generate_are_neither_listed_nor_configured() {
     ));
 }
 
+/// C1-26 against the real `CMake` 4.4.5, the cases measured on 2026-11-10:
+/// what the IDE leaves undecided (`matches`, `notMatches`, and an error
+/// after them) the `CMake` decides, and no preset carries the note. The
+/// regular expression is compiled only when `CMake` reaches it.
+#[test]
+fn the_cmake_decides_the_conditions_the_ide_does_not() {
+    type Case<'a> = (&'a str, String, Result<Option<&'a str>, &'a str>);
+    let yes = r#"{"type":"matches","string":"a1","regex":"^a1$"}"#;
+    let no = r#"{"type":"matches","string":"a1","regex":"^a\\d$"}"#;
+    let not_yes = r#"{"type":"notMatches","string":"a1","regex":"^b$"}"#;
+    let not_no = r#"{"type":"notMatches","string":"a1","regex":"^a1$"}"#;
+    let bad = r#"{"type":"equals","lhs":"${nope}","rhs":"x"}"#;
+    let bad_regex = r#"{"type":"matches","string":"a1","regex":"("}"#;
+    let host = r#"{"type":"matches","string":"${hostSystemName}","regex":"^${hostSystemName}$"}"#;
+    let any = |forms: &[&str]| format!(r#"{{"type":"anyOf","conditions":[{}]}}"#, forms.join(","));
+    let all = |forms: &[&str]| format!(r#"{{"type":"allOf","conditions":[{}]}}"#, forms.join(","));
+    let not = |form: &str| format!(r#"{{"type":"not","condition":{form}}}"#);
+    let invalid = r#"o CMake recusa os presets: Invalid configure preset: "c": Invalid condition"#;
+    let false_for_cmake = "a condition do preset c é falsa para o CMake";
+    // (case, condition of `c`, its reason when out of the list, or the refusal)
+    let cases: Vec<Case> = vec![
+        ("any-yes-bad", any(&[yes, bad]), Ok(None)),
+        ("any-no-bad", any(&[no, bad]), Err(invalid)),
+        ("all-no-bad", all(&[no, bad]), Ok(Some(false_for_cmake))),
+        ("all-yes-bad", all(&[yes, bad]), Err(invalid)),
+        ("any-not-yes-bad", any(&[not_yes, bad]), Ok(None)),
+        (
+            "all-not-no-bad",
+            all(&[not_no, bad]),
+            Ok(Some(false_for_cmake)),
+        ),
+        ("not-no", not(no), Ok(None)),
+        ("not-yes", not(yes), Ok(Some(false_for_cmake))),
+        ("bad-regex", bad_regex.to_owned(), Err(invalid)),
+        ("any-true-bad-regex", any(&["true", bad_regex]), Ok(None)),
+        (
+            "all-false-bad-regex",
+            all(&["false", bad_regex]),
+            Ok(Some("a condition do preset c é falsa: o CMake não o usa")),
+        ),
+        ("any-yes-bad-regex", any(&[yes, bad_regex]), Ok(None)),
+        (
+            "macro-in-string",
+            r#"{"type":"matches","string":"${nope}","regex":"^a$"}"#.to_owned(),
+            Err(invalid),
+        ),
+        (
+            "any-yes-macro-in-regex",
+            any(&[yes, r#"{"type":"matches","string":"a","regex":"${nope}"}"#]),
+            Ok(None),
+        ),
+        ("macro-in-regex", host.to_owned(), Ok(None)),
+    ];
+    for (name, condition, expected) in cases {
+        let root = project(
+            &format!("decides-{name}"),
+            &format!(
+                r#"{{"version":6,"configurePresets":[{{"name":"ok","binaryDir":"o"}},{{"name":"c","binaryDir":"c","condition":{condition}}}]}}"#
+            ),
+        );
+        match expected {
+            Err(refusal) => assert_eq!(list_presets(&root).unwrap_err(), refusal, "{name}"),
+            Ok(reason) => {
+                let listed = list_presets(&root).unwrap();
+                assert!(
+                    listed.iter().all(|preset| preset.condition_note.is_none()),
+                    "{name}: {listed:?}"
+                );
+                let names: Vec<&str> = listed.iter().map(|preset| preset.name.as_str()).collect();
+                match reason {
+                    None => assert_eq!(names, ["ok", "c"], "{name}"),
+                    Some(reason) => {
+                        assert_eq!(names, ["ok"], "{name}");
+                        assert_eq!(binary_dir(&root, "c").unwrap_err(), reason, "{name}");
+                    }
+                }
+            }
+        }
+    }
+    // A hidden preset is read too: its invalid expression refuses the file.
+    let root = project(
+        "decides-hidden",
+        &format!(
+            r#"{{"version":6,"configurePresets":[{{"name":"ok","binaryDir":"o"}},{{"name":"base","hidden":true,"condition":{bad_regex}}},{{"name":"c","inherits":"base","binaryDir":"c"}}]}}"#
+        ),
+    );
+    assert_eq!(
+        list_presets(&root).unwrap_err(),
+        r#"o CMake recusa os presets: Invalid configure preset: "base": Invalid condition"#
+    );
+}
+
 /// A fake `CMake` that writes down each call in `calls` and then does what
 /// `body` says.
 fn fake_cmake(dir: &Path, calls: &Path, body: &str) -> PathBuf {
