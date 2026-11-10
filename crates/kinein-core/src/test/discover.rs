@@ -88,12 +88,15 @@ pub fn parse_cargo_list_line(line: &str) -> Option<TestCaseInfo> {
 }
 
 /// Uma linha do `ctest -N`: `  Test #N: Nome`, ou nada.
+///
+/// O nome sai exato do `json-v1`; esta leitura fica para quando ele não lista
+/// nada, e o `-N` escreve ` (Disabled)` depois do nome do desativado (C1-36).
 #[must_use]
 pub fn parse_ctest_list_line(line: &str) -> Option<TestCaseInfo> {
-    let l = line.trim();
-    let resto = l.strip_prefix("Test #")?;
-    let (_numero, nome) = resto.split_once(':')?;
-    let nome = nome.trim();
+    if !line.trim_start().starts_with("Test ") {
+        return None;
+    }
+    let nome = super::parse::after_ctest_number(line)?.trim();
     if nome.is_empty() {
         return None;
     }
@@ -181,16 +184,16 @@ pub fn discover_tests(
     sink(TestEvent::Started {
         command: display.clone(),
     });
-    let mut casos = Vec::new();
+    let mut cases = Vec::new();
     let mut sem_pytest = false;
     let mut on_line = |stream: &'static str, line: String| {
         if line.contains("No module named pytest") {
             sem_pytest = true;
         }
         if stream == "stdout"
-            && let Some(caso) = parse(&line)
+            && let Some(case) = parse(&line)
         {
-            casos.push(caso);
+            cases.push(case);
         }
         sink(TestEvent::Output { stream, line });
     };
@@ -214,27 +217,48 @@ pub fn discover_tests(
             "`{display}` saiu com {status}"
         ))));
     }
+    if kind == ProjectKind::Cmake {
+        cmake_cases(root, &mut cases, cancel, sink)?;
+    }
+    Ok(cases)
+}
+
+/// As linhas do ctest pelo `json-v1` e os casos de dentro dos binários.
+fn cmake_cases(
+    root: &Path,
+    cases: &mut Vec<TestCaseInfo>,
+    cancel: &Arc<AtomicBool>,
+    sink: &mut dyn FnMut(TestEvent),
+) -> Result<(), TestError> {
     // CMake (D7 do roadmaps/41, 2026-09-17): os casos de DENTRO de cada
     // binario gtest/Catch2, perguntados ao proprio binario, entram depois
     // das linhas do ctest — com o id `teste::caso`.
-    if kind == ProjectKind::Cmake {
-        let internos = super::frameworks::discover_inner_cases(
-            Path::new("ctest"),
-            &super::cmake_test_dir(root)?,
-            cancel,
-        );
-        if !internos.is_empty() {
-            sink(TestEvent::Output {
-                stream: "stdout",
-                line: format!(
-                    "{} caso(s) de gtest/Catch2 dentro dos binários do ctest",
-                    internos.len()
-                ),
-            });
-            casos.extend(internos);
-        }
+    let entries =
+        super::frameworks::ctest_entries(Path::new("ctest"), &super::cmake_test_dir(root)?, cancel);
+    // C1-36: the names of the `json-v1` are exact; `-N` aligns
+    // `Test  #1` and writes ` (Disabled)` after the name.
+    if !entries.is_empty() {
+        *cases = entries
+            .iter()
+            .map(|entry| TestCaseInfo {
+                id: entry.name.clone(),
+                name: entry.name.clone(),
+                file: None,
+            })
+            .collect();
     }
-    Ok(casos)
+    let inner = super::frameworks::discover_inner_cases(&entries, cancel);
+    if !inner.is_empty() {
+        sink(TestEvent::Output {
+            stream: "stdout",
+            line: format!(
+                "{} caso(s) de gtest/Catch2 dentro dos binários do ctest",
+                inner.len()
+            ),
+        });
+        cases.extend(inner);
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -284,7 +308,23 @@ mod tests {
 
         let t = parse_ctest_list_line("  Test #2: Broken.Case").unwrap();
         assert_eq!(t.id, "Broken.Case");
-        for ruido in ["Test project /tmp/b", "Total Tests: 2", "", "  Test #3:"] {
+        // C1-36: with ten tests or more, CTest 4.4.5 aligns the number.
+        assert_eq!(parse_ctest_list_line("  Test  #1: t1").unwrap().id, "t1");
+        assert_eq!(parse_ctest_list_line("  Test #10: t10").unwrap().id, "t10");
+        assert_eq!(
+            parse_ctest_list_line("  Test   #7: Test #x: y").unwrap().id,
+            "Test #x: y"
+        );
+        for ruido in [
+            "Test project /tmp/b",
+            "Total Tests: 2",
+            "",
+            "  Test #3:",
+            "  Test #: t",
+            "  Test #1a: t",
+            "  Tests  #1: t",
+            "  1/11 Test  #1: t1 ....   Passed    0.01 sec",
+        ] {
             assert!(parse_ctest_list_line(ruido).is_none(), "{ruido:?}");
         }
     }

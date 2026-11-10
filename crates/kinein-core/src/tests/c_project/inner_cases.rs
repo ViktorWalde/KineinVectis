@@ -236,7 +236,12 @@ fn runs_alone(folder: &Path, ids: &[String]) {
         } else {
             Vec::new()
         };
-        assert_eq!(inner_run(folder, id), Ok((counts, vec![case], ran)), "{id}");
+        // C1-37: the event names the row of the tree, the id.
+        assert_eq!(
+            inner_run(folder, id),
+            Ok((counts, vec![(*id).to_owned()], ran)),
+            "{id}"
+        );
     }
     // O que o Catch2 não isola é recusado antes de rodar o binário.
     if ids.iter().any(|id| id == "kv_catch2") {

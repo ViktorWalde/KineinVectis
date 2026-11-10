@@ -3,6 +3,7 @@
 mod configuration_types;
 mod configurations;
 mod dialects;
+mod discovered_cases;
 mod environment;
 mod existing;
 mod existing_cdb;

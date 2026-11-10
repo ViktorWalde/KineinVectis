@@ -16,6 +16,7 @@ use std::{
 };
 
 pub mod discover;
+mod entries;
 pub mod frameworks;
 mod parse;
 mod runners;
@@ -670,6 +671,34 @@ mod tests {
             parse_ctest_case("2/2 Test #2: BrokenCase ...........***Failed    0.02 sec"),
             Some(("BrokenCase".to_owned(), CaseStatus::Failed))
         );
+        // C1-35, as CTest 4.4.5 writes them: the disabled test is not run and
+        // is not a failure; the missing executable is.
+        assert_eq!(
+            parse_ctest_case(
+                "1/2 Test #2: Text.Off .........................***Not Run (Disabled)   0.00 sec"
+            ),
+            Some(("Text.Off".to_owned(), CaseStatus::Ignored))
+        );
+        assert_eq!(
+            parse_ctest_case(
+                "2/2 Test #5: kv_missing .......................***Not Run   0.00 sec"
+            ),
+            Some(("kv_missing".to_owned(), CaseStatus::Failed))
+        );
+        // C1-36: the number aligned with ten tests or more.
+        assert_eq!(
+            parse_ctest_case(
+                " 1/11 Test  #1: t1 ...............................   Passed    0.01 sec"
+            ),
+            Some(("t1".to_owned(), CaseStatus::Passed))
+        );
+        assert_eq!(
+            parse_ctest_case(
+                "10/11 Test #10: t10 ..............................   Passed    0.01 sec"
+            ),
+            Some(("t10".to_owned(), CaseStatus::Passed))
+        );
+        assert!(parse_ctest_case("      Start  1: t1").is_none());
         assert!(parse_ctest_case("Test project /tmp/build").is_none());
     }
 

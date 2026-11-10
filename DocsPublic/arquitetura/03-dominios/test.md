@@ -6,6 +6,37 @@
 
 ### Testes (`test.run` / `test.discover` — jobs assíncronos)
 
+**Testes que já são casos (`0.215.0`, C1-32, C1-35, C1-36 e C1-37).** O
+`event.test.case` de um caso de dentro leva o id da árvore, `teste::caso`, e
+não mais o nome de dentro do binário: a linha que rodou é a que se pinta. Num `CMake`,
+o `test.discover` tira os nomes do `--show-only=json-v1`, exatos; o `-N`
+alinha `Test  #1` a partir de dez testes e escreve ` (Disabled)` depois do
+nome do desativado, e a árvore perdia os nove primeiros. A leitura da
+execução também aceita o número alinhado, e `***Not Run (Disabled)` vira
+`ignored`; o outro `***Not Run` segue `failed`. O `test.discover`
+só abre em casos o teste do ctest que roda todos os casos do binário. O gtest
+1.18 escolhe os casos pelo `--gtest_filter`, pelo `--gtest_flagfile` e pelo
+`--gtest_list_tests` no comando, e pelas variáveis `GTEST_FILTER`,
+`GTEST_TOTAL_SHARDS` e `GTEST_SHARD_INDEX` no `ENVIRONMENT` ou no
+`ENVIRONMENT_MODIFICATION` do teste; o `gtest_discover_tests` escreve
+`--gtest_filter=<caso>`. No Catch2 3.16.1, o teste só se abre quando todo
+argumento é uma opção conhecida que não escolhe casos. Um argumento que não
+começa com `-` é um test spec, como o nome que o `catch_discover_tests` escreve
+primeiro. Também deixam o teste fechado uma opção desconhecida, `-f`,
+`--shard-count`, `--shard-index`, as listagens e a ajuda. Fechado, o teste
+continua sendo a linha do ctest. Um id igual ao nome de um teste do ctest é
+esse teste, mesmo com `::`, como o `Widget::draw works` do
+`catch_discover_tests`. Os outros ids acham o teste pelo nome conhecido, e não
+mais pelo primeiro `::`. Quando o id não dá um caso só, o `test.run` termina
+com `error` e o motivo, sem rodar o binário: o ctest não lista um teste para
+o id, o teste não se abre, o binário não lista mais o caso, ou dois testes dão
+o mesmo id. O `test.discover` deixa de fora o id de caso igual ao de outro
+teste ou caso. O caso gtest roda também com `--gtest_brief=0`, que vence um
+`GTEST_BRIEF=1` do ambiente. Quando o gtest não diz nada do caso e escreve
+`YOU HAVE 1 DISABLED TEST`, o caso desativado sai como `ignored`, com uma
+linha que diz por quê. Veja a
+[consolidação C §21](../../especificacoes/consolidacao-nativa-de-c.md#21-c1-32-testes-que-já-são-casos--desenho-de-2026-11-10).
+
 **Casos de dentro (`0.214.0`, C1-28, C1-29 e C1-31 do C-04).** A lista do Catch2 só
 é pedida ao binário que responde `framework: Catch2` a `<exe> --libidentify`,
 na forma `chave: valor` alinhada que o Catch2 documenta para ferramentas. Um

@@ -22,6 +22,7 @@
 //! so' a linha do ctest (nada e' adivinhado).
 
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     process::Command,
     sync::{Arc, atomic::AtomicBool},
@@ -29,7 +30,7 @@ use std::{
 
 use kinein_protocol::TestCaseInfo;
 
-use super::{CaseStatus, TestError, TestEvent, TestOutcome, stream_command};
+use super::{CaseStatus, TestError, TestEvent, TestOutcome, entries, stream_command};
 use crate::process;
 
 /// O separador entre o teste do ctest e o caso de dentro do binario.
@@ -44,6 +45,10 @@ pub struct CtestEntry {
     pub command: Vec<String>,
     /// `WORKING_DIRECTORY`, quando declarada.
     pub working_directory: Option<PathBuf>,
+    /// `ENVIRONMENT`: `NAME=value` (C1-32).
+    pub environment: Vec<String>,
+    /// `ENVIRONMENT_MODIFICATION`: `NAME=op:value` (C1-32).
+    pub environment_modification: Vec<String>,
 }
 
 /// O framework que o binario revelou.
@@ -76,21 +81,31 @@ pub fn parse_ctest_json(texto: &str) -> Vec<CtestEntry> {
                         .collect()
                 })
                 .unwrap_or_default();
-            let working_directory = t
-                .get("properties")
-                .and_then(serde_json::Value::as_array)
-                .and_then(|ps| {
-                    ps.iter().find_map(|p| {
-                        if p.get("name")?.as_str()? != "WORKING_DIRECTORY" {
-                            return None;
-                        }
-                        Some(PathBuf::from(p.get("value")?.as_str()?))
-                    })
-                });
+            let property = |name: &str| {
+                t.get("properties")?
+                    .as_array()?
+                    .iter()
+                    .find(|p| p.get("name").and_then(serde_json::Value::as_str) == Some(name))?
+                    .get("value")
+            };
+            let working_directory = property("WORKING_DIRECTORY")
+                .and_then(serde_json::Value::as_str)
+                .map(PathBuf::from);
+            // The ctest writes a list property as an array of strings.
+            let list = |name: &str| -> Vec<String> {
+                property(name)
+                    .and_then(serde_json::Value::as_array)
+                    .into_iter()
+                    .flatten()
+                    .filter_map(|value| value.as_str().map(str::to_owned))
+                    .collect()
+            };
             Some(CtestEntry {
                 name,
                 command,
                 working_directory,
+                environment: list("ENVIRONMENT"),
+                environment_modification: list("ENVIRONMENT_MODIFICATION"),
             })
         })
         .collect()
@@ -234,6 +249,10 @@ fn catch2_refusal(name: &str, names: &[String]) -> Option<String> {
     ))
 }
 
+/// What gtest 1.18 writes when the filter of one case picked a disabled
+/// one: the count of the disabled cases the filter picked, never zero.
+const DISABLED_NOTE: &str = "YOU HAVE 1 DISABLED TEST";
+
 /// `framework: Catch2` in the `--libidentify` answer, aligned with spaces.
 fn is_catch2(identity: &str) -> bool {
     identity.lines().any(|line| {
@@ -261,39 +280,66 @@ pub fn ctest_entries(ctest: &Path, build_dir: &Path, cancel: &Arc<AtomicBool>) -
     parse_ctest_json(&texto)
 }
 
-/// Os casos de dentro de cada binario do ctest, ja' com o id `teste::caso`.
-pub fn discover_inner_cases(
-    ctest: &Path,
-    build_dir: &Path,
+/// What a binary said of its cases: the framework and the names.
+pub(super) type Listing = Option<(Framework, Vec<String>)>;
+
+/// The listing of the binary of a test of the ctest, asked once per binary
+/// and folder: `gtest_discover_tests` gives one test per case.
+type Listings = HashMap<(String, Option<PathBuf>), Listing>;
+
+/// Who lists the cases of a binary in a folder: `list_cases`, or a fake.
+type Lister<'a> = &'a mut dyn FnMut(&Path, Option<&Path>) -> Listing;
+
+fn listing(listings: &mut Listings, entry: &CtestEntry, list: Lister<'_>) -> Listing {
+    let exe = entry.command.first()?;
+    listings
+        .entry((exe.clone(), entry.working_directory.clone()))
+        .or_insert_with(|| {
+            Path::new(exe)
+                .is_file()
+                .then(|| list(Path::new(exe), entry.working_directory.as_deref()))
+                .flatten()
+        })
+        .clone()
+}
+
+/// Os casos de dentro de cada binario do ctest, ja' com o id `teste::caso`:
+/// só os do teste que roda todos os casos (C1-32).
+pub fn discover_inner_cases(entries: &[CtestEntry], cancel: &Arc<AtomicBool>) -> Vec<TestCaseInfo> {
+    inner_cases(entries, cancel, &mut list_cases)
+}
+
+fn inner_cases(
+    entries: &[CtestEntry],
     cancel: &Arc<AtomicBool>,
+    list: Lister<'_>,
 ) -> Vec<TestCaseInfo> {
+    let mut listings = Listings::new();
     let mut cases = Vec::new();
-    for entrada in ctest_entries(ctest, build_dir, cancel) {
+    for entry in entries {
         if cancel.load(std::sync::atomic::Ordering::SeqCst) {
             break;
         }
-        let Some(exe) = entrada.command.first().map(Path::new) else {
+        let Some((framework, names)) = listing(&mut listings, entry, list) else {
             continue;
         };
-        if !exe.is_file() {
+        if !entries::runs_every_case(framework, entry) {
             continue;
         }
-        let Some((_, nomes)) = list_cases(exe, entrada.working_directory.as_deref()) else {
-            continue;
-        };
-        for nome in nomes {
+        for name in names {
             cases.push(TestCaseInfo {
-                id: format!("{}{SEP}{nome}", entrada.name),
-                name: nome,
+                id: format!("{}{SEP}{name}", entry.name),
+                name,
                 file: None,
             });
         }
     }
-    cases
+    entries::unique(cases, entries)
 }
 
 /// Roda UM caso de dentro de um binario: `teste::caso`. `None` quando o id
-/// nao tem o separador (e' um teste do ctest de sempre).
+/// e' um teste do ctest de sempre: sem o separador, ou o nome de um teste do
+/// ctest com `::` (C1-32).
 pub fn run_inner_case(
     ctest: &Path,
     build_dir: &Path,
@@ -301,27 +347,21 @@ pub fn run_inner_case(
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Option<Result<TestOutcome, TestError>> {
-    let (teste, case) = id.split_once(SEP)?;
-    let entradas = ctest_entries(ctest, build_dir, cancel);
-    let Some(entrada) = entradas.iter().find(|e| e.name == teste) else {
-        return Some(Err(TestError::ToolMissing {
-            tool: teste.to_owned(),
-            hint: format!("o ctest não lista o teste `{teste}` — reconfigure/recompile"),
-        }));
+    if !id.contains(SEP) {
+        return None;
+    }
+    let entries = ctest_entries(ctest, build_dir, cancel);
+    let mut listings = Listings::new();
+    let named = match entries::resolve(&entries, id, &mut |entry| {
+        listing(&mut listings, entry, &mut list_cases)
+    })? {
+        Ok(named) => named,
+        Err(error) => return Some(Err(error)),
     };
-    let Some(exe) = entrada.command.first() else {
-        return Some(Err(TestError::ToolMissing {
-            tool: teste.to_owned(),
-            hint: "o teste do ctest não tem comando".to_owned(),
-        }));
-    };
-    let listed = list_cases(Path::new(exe), entrada.working_directory.as_deref());
-    let catch2 = matches!(listed, Some((Framework::Catch2, _)));
-    if catch2
-        && let Some(reason) = listed
-            .as_ref()
-            .and_then(|(_, names)| catch2_refusal(case, names))
-    {
+    let (entrada, case) = (named.entry, named.case);
+    let exe = entrada.command.first()?;
+    let catch2 = named.framework == Framework::Catch2;
+    if catch2 && let Some(reason) = catch2_refusal(case, &named.cases) {
         return Some(Err(TestError::Refused { reason }));
     }
     let mut command = Command::new(exe);
@@ -330,9 +370,13 @@ pub fn run_inner_case(
         command.arg(&filter).args(["-r", "compact"]);
         format!("{exe} \"{filter}\" -r compact")
     } else {
-        command
-            .arg(format!("--gtest_filter={case}"))
-            .args(["--gtest_color=no", "--gtest_print_time=1"]);
+        // C1-35: `--gtest_brief=0` wins over a `GTEST_BRIEF=1`, which hides
+        // the line of the case that passed.
+        command.arg(format!("--gtest_filter={case}")).args([
+            "--gtest_color=no",
+            "--gtest_print_time=1",
+            "--gtest_brief=0",
+        ]);
         format!("{exe} --gtest_filter={case}")
     };
     if let Some(cwd) = &entrada.working_directory {
@@ -340,10 +384,47 @@ pub fn run_inner_case(
     }
     let parse: fn(&str) -> Option<(String, CaseStatus)> =
         if catch2 { |_| None } else { parse_gtest_case };
-    let mut resultado = stream_command(command, &display, parse, cancel, sink);
+    let test = &entrada.name;
+    let mut disabled = false;
+    let mut result = stream_command(command, &display, parse, cancel, &mut |event| {
+        let event = match event {
+            // C1-37: the row of the tree is the id `test::case`, not the
+            // name inside the binary.
+            TestEvent::Case { name, status } => TestEvent::Case {
+                name: format!("{test}{SEP}{name}"),
+                status,
+            },
+            TestEvent::Output { stream, line } => {
+                disabled |= line.trim() == DISABLED_NOTE;
+                TestEvent::Output { stream, line }
+            }
+            other @ TestEvent::Started { .. } => other,
+        };
+        sink(event);
+    });
+    // C1-35: gtest runs no disabled case without
+    // `--gtest_also_run_disabled_tests` and says so; it does not say it of a
+    // case that ran.
+    if !catch2
+        && disabled
+        && let Ok(outcome) = &mut result
+    {
+        outcome.ignored += 1;
+        sink(TestEvent::Output {
+            stream: "stdout",
+            line: format!(
+                "o gtest não roda o caso desativado `{case}` sem \
+                 --gtest_also_run_disabled_tests; ele conta como ignorado"
+            ),
+        });
+        sink(TestEvent::Case {
+            name: id.to_owned(),
+            status: CaseStatus::Ignored,
+        });
+    }
     // O Catch2 nao diz o caso linha a linha (o `-r compact` diz asserções):
     // o desfecho do caso e' o exit code.
-    if catch2 && let Ok(outcome) = &mut resultado {
+    if catch2 && let Ok(outcome) = &mut result {
         let status = if outcome.success {
             outcome.passed += 1;
             CaseStatus::Passed
@@ -352,11 +433,11 @@ pub fn run_inner_case(
             CaseStatus::Failed
         };
         sink(TestEvent::Case {
-            name: case.to_owned(),
+            name: id.to_owned(),
             status,
         });
     }
-    Some(resultado)
+    Some(result)
 }
 
 #[cfg(test)]
@@ -509,7 +590,9 @@ mod tests {
         ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
     )]
     fn binaries_are_asked_for_their_cases_and_one_case_runs_by_the_binary() {
-        use super::{Framework, SEP, discover_inner_cases, list_cases, run_inner_case};
+        use super::{
+            Framework, SEP, ctest_entries, discover_inner_cases, list_cases, run_inner_case,
+        };
         use crate::test::TestEvent;
 
         let _serial = crate::serialize_executables();
@@ -564,7 +647,7 @@ mod tests {
             ),
         );
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let cases = discover_inner_cases(&ctest, &raiz, &cancel);
+        let cases = discover_inner_cases(&ctest_entries(&ctest, &raiz, &cancel), &cancel);
         let ids: Vec<&str> = cases.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(
             ids,
@@ -589,11 +672,11 @@ mod tests {
         .unwrap();
         assert!(r.success);
         assert_eq!(r.passed, 1);
-        assert!(eventos.iter().any(|e| matches!(e, TestEvent::Output { line, .. } if line == "argv: --gtest_filter=Math.Adds --gtest_color=no --gtest_print_time=1")));
+        assert!(eventos.iter().any(|e| matches!(e, TestEvent::Output { line, .. } if line == "argv: --gtest_filter=Math.Adds --gtest_color=no --gtest_print_time=1 --gtest_brief=0")));
         assert!(
-            eventos
-                .iter()
-                .any(|e| matches!(e, TestEvent::Case { name, .. } if name == "Math.Adds"))
+            eventos.iter().any(
+                |e| matches!(e, TestEvent::Case { name, .. } if name == "unit_tests::Math.Adds")
+            )
         );
         // Um caso Catch2: o nome e' o filtro; o exit code e' o desfecho.
         let mut eventos = Vec::new();
@@ -617,5 +700,36 @@ mod tests {
                 .is_err()
         );
         let _ = std::fs::remove_dir_all(&raiz);
+    }
+
+    /// C1-32: the listing is asked once per binary and folder. The same
+    /// binary can list other cases in another folder, as a gtest that
+    /// registers cases from the files there.
+    #[test]
+    fn the_listing_is_asked_once_per_binary_and_folder() {
+        use super::{CtestEntry, Framework, inner_cases};
+
+        let exe = std::env::temp_dir().join(format!("kinein-listing-{}", std::process::id()));
+        std::fs::write(&exe, "").unwrap();
+        let entry = |name: &str, folder: &str| CtestEntry {
+            name: name.to_owned(),
+            command: vec![exe.display().to_string()],
+            working_directory: Some(folder.into()),
+            environment: Vec::new(),
+            environment_modification: Vec::new(),
+        };
+        let entries = [entry("here", "a"), entry("again", "a"), entry("there", "b")];
+        let mut asked = Vec::new();
+        let ids: Vec<_> = inner_cases(&entries, &std::sync::Arc::default(), &mut |_, folder| {
+            let folder = folder?.display().to_string();
+            asked.push(folder.clone());
+            Some((Framework::Gtest, vec![format!("Dir.{folder}")]))
+        })
+        .into_iter()
+        .map(|case| case.id)
+        .collect();
+        assert_eq!(ids, ["here::Dir.a", "again::Dir.a", "there::Dir.b"]);
+        assert_eq!(asked, ["a", "b"]);
+        let _ = std::fs::remove_file(&exe);
     }
 }

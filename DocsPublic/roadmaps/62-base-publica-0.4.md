@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-31, C1-33, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-32, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-33, C1-35–C1-37, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-34, C1-38, C1-39, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -465,9 +465,15 @@ auditorias e provas posteriores datadas nos donos:**
   vez, com o nome da lista (C1-29), o run e o debug não contam mais as
   bibliotecas compartilhadas (C1-30), o caso Catch2 roda só ele (C1-31), e a
   faixa cortada mostra a mensagem inteira ao pairar (C1-33).
-  O C1-32, a árvore que repete os casos de um teste que já é um caso, fica
+  O C1-32, a árvore que repete os casos de um teste que já é um caso, ficou
   para o commit seguinte
-  ([§20.1](../especificacoes/consolidacao-nativa-de-c.md#201-c1-22-integração-e-provas--2026-11-10)).
+  ([§20.1](../especificacoes/consolidacao-nativa-de-c.md#201-c1-22-integração-e-provas--2026-11-10)),
+  que o corrigiu com o C1-35, o caso gtest desativado que dizia que passou, e
+  o C1-36, os testes do 1 ao 9 que sumiam da árvore numa suíte de dez ou
+  mais, e o C1-37, o desfecho do caso de dentro que pintava outra linha
+  ([§21.1](../especificacoes/consolidacao-nativa-de-c.md#211-c1-32-integração-e-provas--2026-11-10),
+  protocolo 0.215.0). O C1-34, o caso rodado sem o ambiente e os argumentos
+  do teste do ctest, fica para o commit seguinte.
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste

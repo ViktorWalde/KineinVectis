@@ -500,6 +500,18 @@ ou `~` no nome. O Catch2 não consegue rodar sozinho um caso cujo nome começa
 com `exclude:`, nem um de dois nomes que só diferem na caixa: a aba diz por
 quê, e a linha do `ctest` roda o binário inteiro (desde 2026-11-10).
 
+**Testes que já são casos.** Com `gtest_discover_tests` ou
+`catch_discover_tests`, cada caso já é uma linha do `ctest`, e a lista fica
+com essas linhas, sem repetir os casos abaixo delas. Só se abre em casos o
+teste que roda o binário inteiro: um `add_test` com `--gtest_filter`, com um
+nome de caso Catch2 ou com uma opção que a IDE não conhece continua sendo uma
+linha. Um teste com `::` no nome roda pelo nome inteiro. Quando um caso não
+existe mais no binário, ou o mesmo nome serve a dois testes, **Rodar só este
+teste** diz por quê e não roda nada; liste os testes de novo depois de
+recompilar. Um caso gtest `DISABLED_` aparece como ignorado, e não como
+aprovado, também na linha do `ctest`. Num projeto com dez testes ou mais,
+todos aparecem na lista e na contagem (desde 2026-11-10).
+
 **Análise em C/C++.** O clangd sobe com `--clang-tidy` e lê o `.clang-tidy`
 do projeto: os avisos aparecem no arquivo aberto como qualquer diagnóstico.
 A **Análise de qualidade** (`Ctrl+Shift+L`) num CMake ou Makefile roda o

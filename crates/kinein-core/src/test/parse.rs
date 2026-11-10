@@ -61,15 +61,27 @@ pub(super) fn parse_pytest_case(line: &str) -> Option<(String, CaseStatus)> {
     Some((name.to_owned(), status))
 }
 
+/// What follows `Test #10:` in a ctest line. With ten tests or more,
+/// `CTest` 4.4.5 aligns the number: ` 1/11 Test  #1: t1` (C1-36).
+pub(super) fn after_ctest_number(line: &str) -> Option<&str> {
+    let (_, rest) = line.split_once("Test ")?;
+    let (number, rest) = rest.trim_start().strip_prefix('#')?.split_once(':')?;
+    (!number.is_empty() && number.bytes().all(|byte| byte.is_ascii_digit())).then_some(rest)
+}
+
 /// Parses a ctest case line: `1/3 Test #1: Name .... Passed|***Failed`.
 pub(super) fn parse_ctest_case(line: &str) -> Option<(String, CaseStatus)> {
-    let marker = line.find("Test #")?;
-    let after_hash = line[marker + "Test #".len()..].split_once(':')?.1;
+    let after_hash = after_ctest_number(line)?;
     // `after_hash` is like `  Name .................   Passed    0.01 sec`.
-    let status = if line.contains("***Failed") || line.contains("***Not Run") {
-        CaseStatus::Failed
-    } else if line.contains("***Skipped") || line.contains("***Disabled") {
+    // C1-35: CTest 4.4.5 writes `***Not Run (Disabled)` for the test with the
+    // `DISABLED` property and exits 0; the other `***Not Run` is a failure.
+    let status = if line.contains("***Skipped")
+        || line.contains("***Disabled")
+        || line.contains("***Not Run (Disabled)")
+    {
         CaseStatus::Ignored
+    } else if line.contains("***Failed") || line.contains("***Not Run") {
+        CaseStatus::Failed
     } else if line.contains("   Passed") {
         CaseStatus::Passed
     } else {
