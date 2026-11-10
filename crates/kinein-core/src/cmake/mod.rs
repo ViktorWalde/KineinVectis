@@ -14,8 +14,8 @@ mod preset_selection;
 mod rigor;
 
 pub use crate::cmake_configuration::{
-    Configuration, Refusal, active_configuration, active_dir, configuration_dir, ide_build_dir,
-    label, owned_by_ide, select_configuration, selected_configuration,
+    Configuration, Refusal, active_configuration, active_dir, configuration_dir, configurations,
+    ide_build_dir, label, owned_by_ide, select_configuration, selected_configuration,
 };
 pub use crate::cmake_presets::{PresetDefault, default_preset, list_presets};
 pub use attempt::{

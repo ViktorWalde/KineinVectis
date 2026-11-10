@@ -69,7 +69,7 @@ rebaixado (§1.2.1), dentro das bandejas das abas.
 | --- | --- | --- |
 | Fundo e moldura | `ui/qml/shell/WindowBackdrop.qml` | Cor `Theme.frame` e o véu âmbar. Não tem lógica. |
 | Linha do topo, à esquerda | `ui/qml/shell/AppMenuBar.qml` | Ícone da IDE, ☰ (`menuExpanded`), os menus Arquivo…Ajuda **na própria barra** quando expandidos e os controles da janela. É também a área de arrastar a janela. |
-| Linha do topo, ao meio | `ui/qml/shell/TopHeaderBar.qml` | Os widgets de contexto: projeto, Git, toolchain, Python e o "⋯". A barra é transparente e fica por cima da `AppMenuBar` (`z: 101`). |
+| Linha do topo, ao meio | `ui/qml/shell/TopHeaderBar.qml` | O grupo da esquerda e o executar. O grupo (`HeaderLeftGroup.qml`, desde o C1-23) tem projeto, Git, configuração do CMake, toolchain, Python e o "⋯", e ordena e mede os seus. A barra é transparente e fica por cima da `AppMenuBar` (`z: 101`). |
 | Montagem do topo | `ui/qml/shell/ShellHeaderHost.qml` | Põe a `TopHeaderBar` logo depois do fim dos menus (`menuEndX`) e antes dos controles da janela (`controlsX`). |
 | Ilha e divisórias | `ui/qml/shell/ShellLayout.qml` | Um `Rectangle` arredondado atrás de uma `Row` (slot da esquerda, centro e slot da direita), mais as divisórias de 1 px (esquerda/centro, centro/direita, editor/painel de baixo). |
 | Janelas acopladas | `ui/qml/shell/ShellLeftWindowHost.qml` | Tem a instância **única** de cada janela acoplada (Projeto, Git, Banco, Containers, Remoto, Grafana, Embarcados, PlatformIO e Setup). Cada uma tem `parent: slotOf(nome)`: o próprio host (slot da esquerda) ou o slot da direita (§2.3). |
@@ -473,7 +473,7 @@ AppMenuBar (z 100, a linha inteira)
 ├─ [ícone da IDE]  ☰ ─┬─ recolhido: nada
 │                     └─ expandido: Arquivo Editar Ver … Ajuda   (menuEndX)
 ├─ TopHeaderBar (z 101), de menuEndX até controlsX
-│    leftWidgets: projeto · git · toolchain · python · ⋯
+│    leftWidgets: projeto · git · configuração · toolchain · python · ⋯
 │    à direita:   perfil ▾  ▷  ⏹  ⌘
 └─ controles da janela: _ □ ✕                                    (controlsX)
 ```

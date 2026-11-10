@@ -1039,6 +1039,7 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-21 / consumidores fixos em `.kinein/build` | Build (`build/cmake.rs`), run (`run.rs`), debug (`dap/target.rs`), ctest (`test/mod.rs`), gravação (`project/flash_origin.rs`), qmlls (`handlers/qml.rs`), contexto (`index/context/mod.rs`), ações de configuração (`configaction/builddir.rs`) e `toolchain/project.rs` usam `cmake::build_dir` ou o caminho literal. Confirmada por leitura | Alta: com o C-19 corrigido, compilar e executar sairiam de outra pasta que a do contexto | Um dono, a configuração ativa, para todos. Provar build, run, debug e ctest reais na pasta do preset, e o contexto e o Project Health na mesma pasta |
 | C1-22 / multi-config | `CmakeModel` lê só `/configurations/0` (`cmake/model.rs`); `cmake --build` vai sem `--config`; `collect_executables` percorre a pasta inteira. Medido com Ninja Multi-Config: três configurações no codemodel, três entradas da CDB para o mesmo arquivo, o clangd usa a primeira (Debug), e `cmake --build` sem `--config` compila `CMAKE_DEFAULT_BUILD_TYPE`, senão a primeira; após dois builds há `Debug/app` e `Release/app` | Média: com `CMAKE_DEFAULT_BUILD_TYPE` diferente, o build compila uma configuração e o contexto mostra outra; o run recusa por achar dois executáveis | Usar a configuração que o clangd vê (decisão abaixo). Provar com Ninja Multi-Config real, `CMAKE_DEFAULT_BUILD_TYPE=Release` e mutações |
 | C1-23 / UI sem troca da configuração | O Project Health só oferece "Escolher configuração…" quando a escolha é obrigatória; o menu corta no fim a pasta longa fora da raiz (§16.1) | Média: trocar a configuração ativa ou voltar ao automático exige editar `.kinein/configuration.json` | Menu de configuração sempre que há presets, com a ativa marcada e "Automático". Provar na UI nativa isolada |
+| C1-24 / macros dos presets só sob demanda | Achado na prova do C1-23 (2026-11-09). `cmake_presets` expande só o `binaryDir`, e só do preset usado. O CMake 4.4.5 expande ao ler os arquivos: uma macro inválida ou desconhecida no `binaryDir`, nas `cacheVariables` ou no `environment` de qualquer configure preset, mesmo oculto, recusa o arquivo inteiro ("Could not read presets … Invalid macro expansion"); `$vendor{}` no `binaryDir` tira o preset da lista. Medido com `cmake --list-presets` | Média: a IDE lista, escolhe e oferece no menu presets de um arquivo que o CMake recusa, e o configure falha no CMake com a mensagem dele, não em silêncio | Aberto. Decisão pendente do autor: corrigir antes do C1-22 ou depois. Provar com o CMake real cada campo e o preset oculto |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
 `binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
@@ -1104,14 +1105,21 @@ o executável nos artefatos dessa configuração. Quando `CMAKE_DEFAULT_BUILD_TY
 é outra, o status traz as duas, e a faixa mostra a diferença. Trocar de
 configuração numa pasta multi-config fica para o C-03, que trata da CDB 1:N.
 
-**Interface (C1-23).** Com presets, o Project Health oferece o menu de
-configuração a qualquer momento: as configurações, a ativa marcada, e
-"Automático". A pasta longa é cortada no meio, e o caminho inteiro fica na dica.
-O contrato do IPC é escrito no
-[03 cmake](../arquitetura/03-dominios/cmake.md) antes da mudança, com nova
-versão do protocolo.
+**Interface (C1-23).** O menu de configuração tem as configurações, com a
+ativa marcada, e "Automático". A pasta longa é cortada no meio, e o caminho
+inteiro fica na dica. Escolher não configura, como no C-05. A faixa do Project
+Health some quando está tudo bem. Por isso o menu mora num chip do cabeçalho,
+ao lado do da toolchain, por decisão do autor de 2026-11-09. O chip aparece
+num projeto CMake com configure presets ou com configuração registrada e
+mostra a configuração ativa. Sem espaço, ele vai para o "⋯", como os outros
+chips. A faixa usa o mesmo menu em dois casos: quando a escolha é obrigatória
+e quando a configuração ativa é recusada sem presets a escolher. O contrato
+do IPC é escrito no [03 cmake](../arquitetura/03-dominios/cmake.md) antes da
+mudança, com nova versão do protocolo.
 
-Fatias, cada uma com commit próprio: C1-18; C1-19–C1-21 com o IPC; C1-22; C1-23.
+Fatias, cada uma com commit próprio: C1-18; C1-19–C1-21 com o IPC; C1-23;
+C1-22. O autor pôs o C1-23 antes do C1-22 em 2026-11-09, porque sem presets e
+com o registro órfão a UI não tinha saída (§17.2).
 
 ### 17.1 C1-18: integração e provas — 2026-11-09
 
@@ -1259,3 +1267,88 @@ Limites:
   pendente;
 - o flash e os artefatos leem a pasta ativa sem regressão própria;
 - o multi-config (C1-22) e o menu (C1-23) seguem abertos.
+
+### 17.3 C1-23: integração e provas — 2026-11-09
+
+O `cmake.status` ganhou `configurations`: cada configure preset não oculto, com
+a pasta da configuração dele ou o motivo da recusa, e se ela tem
+`CMakeCache.txt`. Quem monta a lista é `cmake_configuration::configurations`,
+pelas mesmas regras da pasta do configure (§17). Protocolo 0.210.0, com o
+contrato no [03 cmake](../arquitetura/03-dominios/cmake.md). Na ponte,
+`cmakeStatusResolved` ganhou o argumento `configuration`.
+
+O menu tem um dono próprio, `CmakeConfigurationChoices.qml`, porque o
+`ProjectHealthController` estava perto do limite de tamanho. O controller
+decide o aviso da faixa, e o objeto novo diz o que há para escolher: o texto e
+a dica do chip e os itens do menu. Cada item mostra a pasta à direita, cortada
+no meio, e a dica tem o caminho inteiro. A pasta desconhecida não se escolhe,
+e a dica dela diz por quê. O `AppMenuPopup` ganhou o detalhe e a dica, e o item
+desabilitado passou a receber o pairar. O `TopHeaderBar` estava a quatro
+linhas do limite, e o grupo da esquerda foi para `HeaderLeftGroup.qml`. O chip
+da configuração entra antes do da toolchain e pega a largura antes dela. Uma
+ordem salva antes dele o recebe no fim.
+
+A faixa usa o mesmo menu quando a escolha é obrigatória (o menu do C-05 por
+candidata saiu) e quando não há configuração ativa sem presets a configurar.
+Nesse segundo caso, que inclui o registro órfão e o ilegível, o configure
+automático espera. Escolher no menu não configura.
+
+O menu Ambiente ganhou **Configuração do CMake…**, ao lado de **Configurar
+CMake**, habilitado só em projeto CMake. O item do "⋯" usa a mesma ação, e o
+gate dos atalhos exige que toda ação tratada pelo `ShellHeaderHost` tenha um
+item na barra de título. A toolchain e o Python já seguem esse padrão. Decisão
+do autor de 2026-11-09, quando o gate reprovou o item do "⋯" sozinho.
+
+Um achado da integração foi corrigido no dono. Num projeto confiável que
+ainda não tinha tido o configure automático, escolher uma pasta sem cache o
+liberava: a escolha de `semPasta` mandou `cmake.configure` na UI nativa. No
+C-05 isso não acontecia, porque o menu só tinha pastas com CDB. Agora a escolha
+gasta o configure automático, e a faixa oferece o **Configurar**.
+
+Outro achado ficou aberto como C1-24 (inventário acima). Ao montar a prova, o
+CMake 4.4.5 recusou o `CMakePresets.json` inteiro por uma macro inválida no
+`binaryDir` de um preset. A IDE expande só o `binaryDir` do preset usado e
+listava os outros.
+
+Provas:
+- testes do dono: a lista com `displayName`, pasta fora da raiz com espaço e
+  acento, preset sem `binaryDir`, nome que não serve de pasta, macro sem
+  fechamento, preset oculto e dois presets na mesma pasta; a lista vazia sem
+  presets e com presets recusados; o `cmake.status` no fio e o protocolo;
+- harnesses com o `ProjectHealthController`, a faixa, o `AppMenuPopup` e o
+  `TopHeaderBar` reais: a marca, o "Automático", o corte no meio, a dica do
+  item e do desabilitado, a faixa do órfão e do ilegível, o configure
+  automático que espera, a escolha que não configura, a ordem, a prioridade de
+  largura e o "⋯" com o aviso;
+- UI nativa isolada, em quatro sessões com CMake 4.4.5, GCC 16.2.1 e Ninja reais.
+  A fixture tem quatro presets: `debug` com `displayName`, `release` num
+  caminho longo fora da raiz, `semPasta` sem `binaryDir` e `ci/linux`, cujo
+  nome não serve de pasta. Escolher `release` e voltar ao automático gravou e
+  apagou o registro, sem configure. O menu da faixa escolheu `debug`. Com a
+  janela estreita, o chip foi para o "⋯", e o item dele abriu o menu. No
+  projeto com registro órfão e sem presets, a faixa deu a volta ao automático,
+  e o **Configurar** configurou `.kinein/build` de verdade. Escolher
+  `semPasta` não configurou, e o **Configurar** configurou
+  `.kinein/presets/semPasta`. Na quarta sessão, **Ambiente → Configuração do
+  CMake…** abriu o mesmo menu, com `semPasta` marcada. Fontes e presets
+  mantiveram seus bytes;
+- 24 mutantes que compilam ou carregam, todos reprovados: 6 no core (a lista
+  vazia, a pasta existente tomada por configurada, a recusa sem motivo, a pasta
+  sem rótulo, o `cmake.status` sem a lista e o `displayName` perdido) e 18 na
+  UI (a marca sem olhar a origem, o "Automático" marcado na recusa, a pasta
+  desconhecida escolhível, o corte no fim, o desabilitado sem pairar, o
+  configure automático na recusa e depois da escolha, a escolha herdada por
+  outro projeto, a faixa sem a volta ao automático, o ilegível sem chip, a
+  toolchain antes da configuração, o "⋯" sem ela, o aviso escondido sem ponto,
+  o menu estreito, o roteador sem o argumento, o automático sem o preset, o
+  chip sem `displayName` e o item do Ambiente fora de projeto CMake). O
+  mutante do desabilitado sobreviveu na primeira rodada: o harness emitia o
+  `entered` direto, o que pula o `enabled` da área. O harness passou a
+  conferir a área ligada.
+
+Limites:
+- a ponte C++ e o tratamento das ações do "⋯" e do Ambiente no
+  `ShellHeaderHost` não têm teste automatizado; ficaram provados na UI nativa;
+- abaixo de uns 760 px, o projeto e o executar ocupam o cabeçalho, e o "⋯" fica
+  por baixo do executar, como antes desta fatia;
+- C1-22 e C1-24 seguem abertos.

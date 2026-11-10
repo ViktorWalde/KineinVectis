@@ -107,13 +107,23 @@ void CoreClient::emitCmakeStatus(const QJsonObject& result)
         {QStringLiteral("selectedConfiguration"),
          result.value(QStringLiteral("selectedConfiguration")).toString()},
     };
+    // O menu de configuração do cabeçalho (0.210.0, C1-23).
+    const QVariantMap configuration{
+        {QStringLiteral("preset"), result.value(QStringLiteral("configurationPreset")).toString()},
+        {QStringLiteral("source"), result.value(QStringLiteral("configurationSource")).toString()},
+        {QStringLiteral("refused"),
+         result.value(QStringLiteral("configurationRefused")).toString()},
+        {QStringLiteral("directory"), result.value(QStringLiteral("buildDir")).toString()},
+        {QStringLiteral("choices"),
+         result.value(QStringLiteral("configurations")).toArray().toVariantList()},
+    };
     emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
                              result.value(QStringLiteral("hasCompileCommands")).toBool(),
                              result.value(QStringLiteral("cdbStale")).toBool(),
                              result.value(QStringLiteral("cdbStaleBecause")).toString(),
                              result.value(QStringLiteral("preset")).toString(), choices,
                              result.value(QStringLiteral("presetChoicesFile")).toString(),
-                             compileDatabase);
+                             compileDatabase, configuration);
 }
 
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)

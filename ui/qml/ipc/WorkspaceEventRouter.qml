@@ -24,11 +24,11 @@ Item {
 
         function onCmakeStatusResolved(configured, hasCompileCommands, cdbStale,
                                        cdbStaleBecause, preset, presetChoices, presetChoicesFile,
-                                       compileDatabase) {
+                                       compileDatabase, configuration) {
             root.projectHealthController.handleCmakeStatus(configured, cdbStale,
                                                            cdbStaleBecause, preset,
                                                            presetChoices, presetChoicesFile,
-                                                           compileDatabase);
+                                                           compileDatabase, configuration);
         }
 
         function onCmakeConfigureFinished(success) {

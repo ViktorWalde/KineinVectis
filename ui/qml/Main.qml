@@ -190,6 +190,7 @@ Window {
 
     ShellHeaderHost {
         indexController: domains.indexController
+        projectHealthController: domains.projectHealthController
         id: header
 
         anchors.top: parent.top

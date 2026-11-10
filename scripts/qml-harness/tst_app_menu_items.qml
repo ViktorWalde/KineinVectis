@@ -66,6 +66,18 @@ Item {
         if (build.indexOf("build.run.cargo") < 0 || build.indexOf("test.run.cmake") < 0 || build.indexOf("cmake.configure") < 0) failures += 256;
         if (build.indexOf("coverage.run") < 0 || build.indexOf("quality.run") < 0) failures += 512;
 
+        // A configuração do CMake (C1-23): no Ambiente, ao lado do configure,
+        // e só para projeto CMake; sem CMake o item fica, desabilitado.
+        const configurationItem = function() {
+            return withoutSeparators(menus.menuItems("environment"))
+                .filter(function(i) { return i.action === "cmake.configurationMenu"; })[0];
+        };
+        if (configurationItem() === undefined || !configurationItem().enabled
+            || configurationItem().icon !== "layers") failures += 16384;
+        menus.workspaceBuildSystems = ["cargo"];
+        if (configurationItem() === undefined || configurationItem().enabled) failures += 32768;
+        menus.workspaceBuildSystems = ["cargo", "cmake"];
+
         // Hierarquia (2026-10-03): separador entre grupos, nunca no comeco,
         // no fim ou dobrado; o separador nao e' selecionavel.
         const viewMenu = menus.menuItems("view");

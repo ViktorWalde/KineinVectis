@@ -259,6 +259,7 @@ fn without_presets_the_orphan_record_waits_for_the_automatic(
         status.get("presetChoices").is_none(),
         "nada a escolher: {status}"
     );
+    assert!(status.get("configurations").is_none(), "{status}");
     let automatic = core.handle_request(&JsonRpcRequest::new(
         962_i64,
         "cmake.selectConfiguration",
@@ -515,6 +516,7 @@ fn several_presets_ask_and_the_recorded_one_wins_until_it_vanishes() {
     let status = status_de(&mut core, 85);
     assert_eq!(status["preset"], "release");
     assert!(status.get("presetChoices").is_none(), "{status}");
+    the_menu_lists_both_presets(&status);
 
     let again = core.handle_request(&JsonRpcRequest::new(
         86_i64,
@@ -541,6 +543,19 @@ fn several_presets_ask_and_the_recorded_one_wins_until_it_vanishes() {
     );
 
     a_vanished_record_offers_the_automatic_choices(&mut core, &receiver, &dir);
+}
+
+/// O menu do C1-23 vem no fio: cada preset com a pasta dele, e so' o release
+/// configurado.
+fn the_menu_lists_both_presets(status: &serde_json::Value) {
+    assert_eq!(
+        status["configurations"],
+        json!([
+            {"preset": "debug", "buildDir": ".kinein/presets/debug", "configured": false},
+            {"preset": "release", "buildDir": ".kinein/presets/release", "configured": true}
+        ]),
+        "{status}"
+    );
 }
 
 /// O `clang-tidy` de verdade, o do Visual Studio, sobre a CDB de verdade do

@@ -1565,6 +1565,17 @@ num projeto com `CMakePresets.json`, o painel de Embarcados → Alvo do kit
 mostra os presets como chips (`padrão`, `dev`, `release`…); clicar num
 torna o kit dele o ativo, e o próximo configure usa esse preset.
 
+**Trocar a configuração do CMake** (desde 2026-11-09). Num projeto com
+configure presets, o cabeçalho tem o chip da configuração ativa, ao lado do da
+toolchain. Ele mostra o preset escolhido, `automático` quando a IDE escolhe
+sozinha, ou `⚠ sem configuração`. O clique abre o menu com cada preset e a
+pasta em que ele configura. O caminho longo é cortado no meio, e o inteiro
+aparece ao pairar. A ativa vem marcada, e **Automático** apaga a escolha.
+Escolher não roda o CMake: uma pasta já configurada passa a valer na hora, e
+uma ainda sem configure pede o **Configurar** da faixa. Sem espaço no
+cabeçalho, o chip vai para o ⋯. O mesmo menu abre por **Ambiente →
+Configuração do CMake…**.
+
 **Projeto só com Makefile.** É reconhecido como "Make": Build roda `bear --
 make` quando o `bear` está instalado — é ele que escreve o
 `compile_commands.json` que o clangd lê — e `make` a seco quando não, dizendo

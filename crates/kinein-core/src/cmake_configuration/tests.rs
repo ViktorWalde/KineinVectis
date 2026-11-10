@@ -1,8 +1,10 @@
 use std::path::{Path, PathBuf};
 
+use kinein_protocol::CmakeConfigurationInfo;
+
 use super::{
-    Configuration, Refusal, active_configuration, configuration_dir, ide_build_dir, owned_by_ide,
-    preset_dirs, record_path, select_configuration, selected_configuration,
+    Configuration, Refusal, active_configuration, configuration_dir, configurations, ide_build_dir,
+    owned_by_ide, preset_dirs, record_path, select_configuration, selected_configuration,
 };
 use crate::cmake_presets::PresetDirectory;
 
@@ -119,6 +121,88 @@ fn each_preset_configures_in_its_binary_dir_or_a_folder_of_the_ide() {
     ] {
         assert!(!owned_by_ide(&root, &foreign), "{}", foreign.display());
     }
+}
+
+/// O menu do C1-23: cada preset visível com a pasta dele, ou o motivo de
+/// ela não ser conhecida, e se ela já tem cache. Não depende da configuração
+/// ativa.
+#[test]
+fn the_menu_lists_every_visible_preset_with_its_folder_or_why_not() {
+    let root = root(
+        "menu",
+        Some(
+            r#"{"version":3,"configurePresets":[
+  {"name":"base","hidden":true,"binaryDir":"${sourceDir}/base"},
+  {"name":"debug","inherits":"base","displayName":"Depuração local",
+   "binaryDir":"${sourceDir}/build/${presetName}"},
+  {"name":"release local"},
+  {"name":"elsewhere","binaryDir":"${sourceParentDir}/saídas fora/${presetName}"},
+  {"name":"a/b"},
+  {"name":"open","binaryDir":"${presetName"},
+  {"name":"shared","binaryDir":"${sourceDir}/build/debug"}]}"#,
+        ),
+    );
+    let outside = root.parent().unwrap().join("saídas fora/elsewhere");
+    configured(&root.join("build/debug"), Some("debug"));
+    // Cache de outra configuração em `.kinein/build` não conta para nenhuma.
+    configured(&root.join(".kinein/build"), Some("release local"));
+    // A pasta de `release local` existe, mas sem cache.
+    std::fs::create_dir_all(root.join(".kinein/presets/release local")).unwrap();
+    let info = |preset: &str, name: Option<&str>, dir: Result<&str, &str>, done: bool| {
+        CmakeConfigurationInfo {
+            preset: preset.to_owned(),
+            display_name: name.map(str::to_owned),
+            build_dir: dir.ok().map(str::to_owned),
+            build_dir_refused: dir.err().map(str::to_owned),
+            configured: done,
+        }
+    };
+    let expected = vec![
+        info("debug", Some("Depuração local"), Ok("build/debug"), true),
+        info(
+            "release local",
+            None,
+            Ok(".kinein/presets/release local"),
+            false,
+        ),
+        info("elsewhere", None, Ok(outside.to_str().unwrap()), false),
+        info(
+            "a/b",
+            None,
+            Err(
+                "o preset \"a/b\" não declara binaryDir, e o nome não serve de pasta em \
+                 .kinein/presets: declare binaryDir no preset ou mude o nome",
+            ),
+            false,
+        ),
+        info(
+            "open",
+            None,
+            Err("a pasta do preset open não é conhecida: macro sem fechamento: ${presetName"),
+            false,
+        ),
+        // Dois presets na mesma pasta: o cache dela vale para os dois.
+        info("shared", None, Ok("build/debug"), true),
+    ];
+    assert_eq!(configurations(&root), expected);
+    configured(&outside, None);
+    assert!(configurations(&root)[2].configured, "fora da raiz também");
+    // Escolher outra não muda a lista.
+    select_configuration(&root, Some("release local")).unwrap();
+    let after = configurations(&root);
+    assert_eq!(after.len(), expected.len());
+    assert_eq!(after[0], expected[0]);
+
+    // Sem presets, ou com presets que o CMake recusaria: nada a oferecer.
+    std::fs::remove_file(root.join("CMakePresets.json")).unwrap();
+    assert_eq!(configurations(&root), []);
+    std::fs::write(
+        root.join("CMakePresets.json"),
+        r#"{"version":3,"configurePresets":[{"name":"debug"},{"name":"debug"}]}"#,
+    )
+    .unwrap();
+    assert_eq!(configurations(&root), []);
+    drop(std::fs::remove_dir_all(outside.parent().unwrap()));
 }
 
 #[test]

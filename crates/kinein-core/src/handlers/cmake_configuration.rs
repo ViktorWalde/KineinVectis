@@ -139,5 +139,6 @@ fn status_result(root: &std::path::Path) -> CmakeStatusResult {
         configuration_preset,
         configuration_source,
         configuration_refused,
+        configurations: cmake::configurations(root),
     }
 }

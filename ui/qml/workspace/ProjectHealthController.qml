@@ -19,6 +19,9 @@ Item {
     // UMA vez por workspace; falha devolve o aviso acionavel (sem loop).
     property bool autoConfigureAttempted: false
     property bool autoConfigureFailed: false
+    // A pessoa escolheu a configuração no menu (C1-23): escolher não
+    // configura, nem libera o configure automático que esperava a escolha.
+    property bool configurationChosen: false
     // 16.4b (roadmaps/59 §7.1.4): so' com a confianca da pessoa o configure
     // automatico roda o CMake do projeto. Vem do core (fora do projeto).
     property bool workspaceTrusted: false
@@ -49,13 +52,14 @@ Item {
     // faixa pergunta em vez de configurar sozinha.
     property var presetChoices: []
     property string presetChoicesFile: ""
-    // A CDB em uso (0.206.0, consolidação C §16): a pasta, a origem e, com
-    // várias configurações de presets e nenhuma escolhida, as candidatas que a
-    // faixa oferece. Escolher não reconfigura.
+    // A CDB em uso (0.206.0, consolidação C §16): a pasta, a origem e se a
+    // escolha entre várias configurações de presets é obrigatória.
     property string cdbDirectory: ""
     property bool cdbChoiceRequired: false
     property string cdbAbsentBecause: ""
-    property var cdbCandidates: []
+    // A configuração ativa e o menu dela (0.210.0, C1-23): o chip do
+    // cabeçalho e a faixa abrem o mesmo menu.
+    readonly property CmakeConfigurationChoices configuration: CmakeConfigurationChoices {}
     property var compileContext: ({})
     onCompileContextChanged: update()
     // O que o projeto exige e o que a máquina tem.
@@ -80,6 +84,7 @@ Item {
         cmakePreset = "";
         autoConfigureAttempted = false;
         autoConfigureFailed = false;
+        configurationChosen = false;
         cargoMetadataFailed = false;
         cargoMetadataError = "";
         cmakeConfigureRefusal = "";
@@ -90,7 +95,7 @@ Item {
         cdbDirectory = "";
         cdbChoiceRequired = false;
         cdbAbsentBecause = "";
-        cdbCandidates = [];
+        configuration.reset();
         update();
     }
     onWorkspaceKindChanged: update()
@@ -107,7 +112,7 @@ Item {
     Component.onCompleted: update()
 
     function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile,
-                               database) {
+                               database, activeConfiguration) {
         cmakeStatusKnown = true;
         cmakeConfigured = configured;
         cmakePreset = preset === undefined || preset === null ? "" : preset;
@@ -120,7 +125,7 @@ Item {
         cdbDirectory = cdb.directory || "";
         cdbChoiceRequired = cdb.choiceRequired === true;
         cdbAbsentBecause = cdb.absentBecause || "";
-        cdbCandidates = cdb.candidates || [];
+        configuration.handle(activeConfiguration, cdb.selectedConfiguration);
         configureIfTrusted();
         update();
     }
@@ -136,14 +141,20 @@ Item {
     // confianca, so' o "Configurar" da faixa (um gesto) o roda. Com uma CDB
     // em uso (de um preset, do CLI, de outra IDE) ou uma escolha pendente, ele
     // nao roda: configuraria a pasta da configuracao ativa, que pode nao ser a
-    // dessa CDB, e trocaria a base calado (C1-19).
+    // dessa CDB, e trocaria a base calado (C1-19). Sem configuracao ativa, o
+    // core recusaria: a tentativa espera a escolha (C1-23).
     function configureIfTrusted() {
         if (workspaceTrusted && hasBuildSystem("cmake") && cmakeStatusKnown
                 && !cmakeConfigured && !autoConfigureAttempted && presetChoices.length === 0
-                && cdbDirectory === "" && !cdbChoiceRequired) {
+                && cdbDirectory === "" && !cdbChoiceRequired && configuration.refused === ""
+                && !configurationChosen) {
             autoConfigureAttempted = true;
             autoConfigureRequested();
         }
+    }
+
+    function handleConfigurationChosen() {
+        configurationChosen = true;
     }
 
     function handleCmakeFinished(success) {
@@ -199,19 +210,11 @@ Item {
                                             icon: "", enabled: true, shortcut: "" }));
     }
 
-    // O menu do "Escolher configuração…": um item por pasta e preset;
-    // escolher só troca a CDB em uso (prefixo "cmake.configuration:").
-    function configurationMenuItems() {
-        return cdbCandidates.map(entry => ({
-            label: qsTr("%1 — %2").arg(entry.preset || entry.directory).arg(entry.directory),
-            action: "cmake.configuration:" + (entry.preset || ""), icon: "",
-            enabled: (entry.preset || "") !== "", shortcut: "" }));
-    }
-
-    // O menu da faixa atual; vazio quando a ação não abre menu.
+    // O menu da faixa atual; vazio quando a ação não abre menu. O
+    // "Escolher configuração…" é o menu do chip do cabeçalho.
     function menuItems() {
         if (actionTarget === "cmakePresetChoice") return presetMenuItems();
-        if (actionTarget === "cmakeConfigurationChoice") return configurationMenuItems();
+        if (actionTarget === "cmakeConfigurationChoice") return configuration.items();
         return [];
     }
 
@@ -270,6 +273,13 @@ Item {
                   qsTr("o projeto tem %1 presets de configure (%2): escolha um")
                       .arg(presetChoices.length).arg(presetChoicesFile),
                   qsTr("Escolher preset…"), "cmakePresetChoice");
+            return;
+        }
+        // Sem configuração ativa e sem presets a configurar: o menu tem a
+        // volta ao automático (o registro órfão, o ilegível).
+        if (hasBuildSystem("cmake") && cmakeStatusKnown && configuration.refused !== "") {
+            apply("warning", configuration.refused, qsTr("Escolher configuração…"),
+                  "cmakeConfigurationChoice");
             return;
         }
         if (hasBuildSystem("cmake") && cmakeConfigureRefusal !== "") {

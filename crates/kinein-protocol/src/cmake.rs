@@ -170,6 +170,31 @@ pub struct CmakeStatusResult {
     /// with this sentence.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub configuration_refused: Option<String>,
+    /// Every non-hidden configure preset with the folder of its configuration
+    /// (`0.210.0`, C1-23): what the configuration menu offers. Absent without
+    /// presets, or with presets `CMake` would refuse.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub configurations: Vec<CmakeConfigurationInfo>,
+}
+
+/// One configuration of the menu (`0.210.0`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CmakeConfigurationInfo {
+    /// The configure preset.
+    pub preset: String,
+    /// Its `displayName`, when it declares one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    /// The folder, labelled as `buildDir`; absent with `buildDirRefused`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_dir: Option<String>,
+    /// Why the folder is not known: a `binaryDir` that does not resolve, or a
+    /// name that cannot be a folder.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_dir_refused: Option<String>,
+    /// Whether the folder has a `CMakeCache.txt`.
+    pub configured: bool,
 }
 
 /// Where the compilation database in use came from (`0.206.0`).
@@ -249,8 +274,9 @@ mod tests {
     use serde_json::json;
 
     use super::{
-        CdbAbsence, CdbAbsenceKind, CdbCandidate, CdbOrigin, CmakeConfigureParams, CmakePresetInfo,
-        CmakePresetsResult, CmakeSelectConfigurationParams, CmakeStatusResult,
+        CdbAbsence, CdbAbsenceKind, CdbCandidate, CdbOrigin, CmakeConfigurationInfo,
+        CmakeConfigureParams, CmakePresetInfo, CmakePresetsResult, CmakeSelectConfigurationParams,
+        CmakeStatusResult,
     };
 
     #[test]
@@ -306,9 +332,33 @@ mod tests {
             configuration_preset: Some("linux-clang".to_owned()),
             configuration_source: Some("configuration".to_owned()),
             configuration_refused: None,
+            configurations: vec![
+                CmakeConfigurationInfo {
+                    preset: "linux-clang".to_owned(),
+                    display_name: Some("Linux Clang".to_owned()),
+                    build_dir: Some("/w/build/linux-clang".to_owned()),
+                    build_dir_refused: None,
+                    configured: true,
+                },
+                CmakeConfigurationInfo {
+                    preset: "a/b".to_owned(),
+                    display_name: None,
+                    build_dir: None,
+                    build_dir_refused: Some("o nome não serve de pasta".to_owned()),
+                    configured: false,
+                },
+            ],
         })
         .unwrap();
 
+        assert_eq!(
+            value["configurations"],
+            json!([
+                {"preset":"linux-clang","displayName":"Linux Clang",
+                 "buildDir":"/w/build/linux-clang","configured":true},
+                {"preset":"a/b","buildDirRefused":"o nome não serve de pasta","configured":false}
+            ])
+        );
         assert_eq!(value["configured"], true);
         assert_eq!(value["hasCompileCommands"], false);
         assert_eq!(value["buildDir"], "/w/build/linux-clang");
@@ -347,6 +397,7 @@ mod tests {
             configuration_preset: None,
             configuration_source: None,
             configuration_refused: None,
+            configurations: Vec::new(),
         })
         .unwrap();
 
@@ -364,6 +415,7 @@ mod tests {
             "configurationPreset",
             "configurationSource",
             "configurationRefused",
+            "configurations",
         ] {
             assert!(value.get(absent).is_none(), "{absent}");
         }

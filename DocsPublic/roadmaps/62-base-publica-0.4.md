@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21 e C-05 corrigidos com provas; abertos C-04 (C1-22, C1-23), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-21, C1-23 e C-05 corrigidos com provas; abertos C-04 (C1-22, C1-24), C1-07, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -411,13 +411,22 @@ auditorias e provas posteriores datadas nos donos:**
   Estado aberto, em quatro fatias: C1-18, corrigido em 2026-11-09
   ([40.7 §7.394](40.7-registro-das-entregas.md), protocolo 0.207.0); C1-19–C1-21,
   corrigidos em 2026-11-09 ([40.7 §7.396](40.7-registro-das-entregas.md),
-  protocolo 0.209.0); C1-22; C1-23. Na segunda fatia, cada configuração
+  protocolo 0.209.0); C1-23, corrigido em 2026-11-09
+  ([40.7 §7.397](40.7-registro-das-entregas.md), protocolo 0.210.0); C1-22. Na
+  segunda fatia, cada configuração
   configura na pasta dela: o `binaryDir`, ou `.kinein/presets/<preset>` sem ele.
   A configuração fica ativa ao começar o configure, e build, run, debug,
   ctest, flash, `qmlls`, o contexto e o Project Health usam a pasta dela
   ([§17.2](../especificacoes/consolidacao-nativa-de-c.md#172-c1-19c1-21-integração-e-provas--2026-11-09)).
-  Limite até o C1-23: sem presets e com o registro órfão, a UI não oferece a
-  volta ao automático.
+  Decisão do autor de 2026-11-09: o C1-23 vem antes do C1-22. Na terceira
+  fatia, um chip do cabeçalho mostra a configuração ativa e abre o menu: as
+  configurações com a pasta, a ativa marcada e "Automático". A faixa e o menu
+  Ambiente abrem o mesmo menu, e o registro órfão sem presets tem a volta ao
+  automático
+  ([§17.3](../especificacoes/consolidacao-nativa-de-c.md#173-c1-23-integração-e-provas--2026-11-09)).
+  A prova achou o C1-24, aberto no inventário do §17: o CMake recusa o arquivo
+  de presets inteiro por uma macro inválida em qualquer preset, e a IDE só
+  expande o `binaryDir` do preset usado. Decisão pendente do autor.
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste
@@ -594,7 +603,8 @@ auditorias e provas posteriores datadas nos donos:**
   certo ("prazo excedido"), mas o teste espera o veredito. Severidade média: o
   gate reprova de forma intermitente, sem defeito no produto. Testes: a
   reprodução sob carga controlada e uma prova que não dependa do relógio da
-  máquina. Decisão pendente do autor. Estado aberto.
+  máquina. Decisão do autor de 2026-11-09: fica aberto por enquanto, sem
+  mudar o teste. Estado aberto.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

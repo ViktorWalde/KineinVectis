@@ -29,9 +29,12 @@ Rectangle {
     property var pythonController: null
     property var recentWorkspacesController: null
     property var gitController: null
+    // A configuração ativa do CMake e o menu dela (C1-23 do C-04).
+    property var projectHealthController: null
     property bool windowMaximized: false
     property bool windowEdgesFlush: false
-    // Qual menu da barra principal esta' aberto (project | build | ""): o
+    // Qual menu da barra principal esta' aberto (project | build |
+    // configuration | ""): o
     // widget correspondente fica marcado enquanto o popup esta' na tela.
     property string headerMenu: ""
 
@@ -74,11 +77,12 @@ Rectangle {
             root.coreClient.cmakeConfigure();
             return;
         }
-        // A configuração escolhida na faixa (0.206.0): a CDB dela passa a
-        // valer sem reconfigurar, e o kit acompanha o mesmo preset.
+        // A configuração escolhida na faixa ou no chip (0.206.0, C1-23): a CDB
+        // dela passa a valer sem configurar, e o kit acompanha o mesmo preset.
         const configurationPrefix = "cmake.configuration:";
         if (action.indexOf(configurationPrefix) === 0) {
             const preset = action.substring(configurationPrefix.length);
+            root.projectHealthController.handleConfigurationChosen();
             root.toolchainController.selectPreset(preset);
             root.coreClient.cmakeSelectConfiguration(preset);
             return;
@@ -156,6 +160,9 @@ Rectangle {
         case "python.context":
             root.pythonController.openMenu(Theme.spacingLarge, root.contextMenuY());
             break;
+        case "cmake.configurationMenu":
+            root.openConfigurationMenu(Theme.spacingLarge, root.contextMenuY());
+            break;
         case "help.manual": root.manualRequested(); break;
         case "help.about": root.aboutRequested(); break;
         case "app.quit": Qt.quit(); break;
@@ -205,7 +212,18 @@ Rectangle {
             items.push({ label: qsTr("Python: %1").arg(headerBar.pythonSummary),
                          action: "python.context", enabled: true });
         }
+        if (headerBar.configurationHidden) {
+            items.push({ label: qsTr("Configuração: %1").arg(headerBar.configurationSummary),
+                         action: "cmake.configurationMenu", enabled: true });
+        }
         return items;
+    }
+
+    // O menu de configuração (C1-23): o mesmo da faixa do Project Health.
+    function openConfigurationMenu(menuX, menuY) {
+        root.headerMenu = "configuration";
+        root.appMenuRequested("configuration", menuX, menuY,
+                              root.projectHealthController.configuration.items());
     }
 
     function closeAppMenu() {
@@ -272,6 +290,16 @@ Rectangle {
         }
         pythonSummary: root.pythonController !== null ? root.pythonController.contextLabel() : ""
         pythonMenuOpen: root.pythonController !== null && root.pythonController.menuVisible
+        // Só num projeto CMake: o mesmo `cmake.status` serve outros sistemas.
+        configurationSummary: root.projectHealthController !== null
+                              && root.coreClient.workspaceBuildSystems.indexOf("cmake") >= 0
+                              ? root.projectHealthController.configuration.summary() : ""
+        configurationTooltip: root.projectHealthController !== null
+                              ? root.projectHealthController.configuration.tooltip() : ""
+        configurationMenuOpen: root.headerMenu === "configuration"
+        onConfigurationMenuRequested: function(menuX, menuY) {
+            root.openConfigurationMenu(menuX, menuY + headerBar.y);
+        }
         // Os overlays cobrem a janela inteira: a coordenada da janela serve.
         onContextOverflowRequested: function(menuX, menuY) {
             root.headerMenu = "context";

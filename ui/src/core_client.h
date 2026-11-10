@@ -450,10 +450,13 @@ signals:
     /// `origin`, `preset`, `candidates`, `absenceKind`, `choiceRequired` (o
     /// `kind` da ausência é `choiceRequired`), `absentBecause` e
     /// `selectedConfiguration`; campo ausente no core = vazio aqui.
+    /// `configuration` (0.210.0): a configuração ativa e o menu — `preset`,
+    /// `source`, `refused`, `directory` (o `buildDir`) e `choices` (as
+    /// `configurations`).
     void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
                              const QString& cdbStaleBecause, const QString& preset,
                              const QStringList& presetChoices, const QString& presetChoicesFile,
-                             const QVariantMap& compileDatabase);
+                             const QVariantMap& compileDatabase, const QVariantMap& configuration);
     void cmakeConfigureFinished(bool success);
     /// `origin` diz de onde os nomes vieram: "fileApi" (confirmados por um
     /// configure), "source" (lidos do CMakeLists) ou "none".

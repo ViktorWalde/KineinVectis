@@ -8,7 +8,8 @@ FocusScope {
     property real passThroughTop: 0
     property real menuX: 0
     property real menuY: 0
-    property real menuWidth: 280
+    // Item com `detail` (a pasta de uma configuração, C1-23) pede mais largura.
+    property real menuWidth: items.some(item => (item.detail || "") !== "") ? 440 : 280
     property var items: []
     property int currentIndex: -1
     property Item previousFocusItem: null
@@ -125,7 +126,8 @@ FocusScope {
             model: root.items
             currentIndex: root.currentIndex
 
-            // Um item: icone, rotulo e o atalho a direita; o separador e' uma
+            // Um item: icone, rotulo, o detalhe cortado no meio (o caminho
+            // inteiro vai na dica) e o atalho a direita; o separador e' uma
             // linha fina entre os grupos (2026-10-03: os menus eram listas
             // planas numa cor so'). Ao pairar, a superficie acende com
             // transicao e a barra ambar marca o item.
@@ -198,7 +200,7 @@ FocusScope {
 
                     anchors.left: itemIcon.right
                     anchors.leftMargin: Theme.spacingSmall
-                    anchors.right: itemShortcut.left
+                    anchors.right: itemDetail.left
                     anchors.rightMargin: Theme.spacingMedium
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !menuItem.separator
@@ -206,6 +208,20 @@ FocusScope {
                     color: menuItem.modelData.enabled ? Theme.textPrimary : Theme.textDisabled
                     font.pixelSize: Theme.fontSizeBody
                     elide: Text.ElideRight
+                }
+
+                Text {
+                    id: itemDetail
+
+                    anchors.right: itemShortcut.left
+                    anchors.rightMargin: text !== "" && itemShortcut.text !== "" ? Theme.spacingMedium : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !menuItem.separator
+                    width: text === "" ? 0 : Math.min(implicitWidth, menuItem.width * 0.55)
+                    text: menuItem.modelData.detail !== undefined ? menuItem.modelData.detail : ""
+                    color: menuItem.current ? Theme.textSecondary : Theme.textMuted
+                    font.pixelSize: Theme.fontSizeSmall
+                    elide: Text.ElideMiddle
                 }
 
                 Text {
@@ -221,14 +237,20 @@ FocusScope {
                     font.pixelSize: Theme.fontSizeCaption
                 }
 
+                // O item desabilitado também paira: a dica diz por que ele não
+                // se escolhe (a pasta desconhecida de um preset).
                 MouseArea {
                     id: itemArea
 
                     anchors.fill: parent
-                    enabled: menuItem.modelData.enabled
+                    enabled: !menuItem.separator
                     hoverEnabled: true
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onEntered: root.currentIndex = menuItem.index
+                    cursorShape: menuItem.modelData.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onEntered: {
+                        if (menuItem.modelData.enabled) root.currentIndex = menuItem.index;
+                        TooltipController.showFor(menuItem, menuItem.modelData.tooltip || "", "right");
+                    }
+                    onExited: TooltipController.hideFor(menuItem)
                     onClicked: root.activate(menuItem.index)
                 }
             }

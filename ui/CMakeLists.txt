@@ -104,6 +104,7 @@ set_source_files_properties(qml/shell/StatusBarJobWidget.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
 set_source_files_properties(qml/shell/HeaderGitWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderGitWidget.qml)
 set_source_files_properties(qml/shell/HeaderContextWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderContextWidget.qml)
+set_source_files_properties(qml/shell/HeaderLeftGroup.qml PROPERTIES QT_RESOURCE_ALIAS HeaderLeftGroup.qml)
 set_source_files_properties(qml/shell/HeaderProjectWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderProjectWidget.qml)
 set_source_files_properties(qml/shell/AppMenuBar.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuBar.qml)
 set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuPopup.qml)
@@ -405,6 +406,7 @@ set_source_files_properties(qml/workspace/WelcomeWave.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthController.qml)
 set_source_files_properties(qml/workspace/ProjectHealthActions.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthActions.qml)
 set_source_files_properties(qml/workspace/ProjectToolRequirements.qml PROPERTIES QT_RESOURCE_ALIAS ProjectToolRequirements.qml)
+set_source_files_properties(qml/workspace/CmakeConfigurationChoices.qml PROPERTIES QT_RESOURCE_ALIAS CmakeConfigurationChoices.qml)
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
@@ -560,6 +562,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/HeaderRunWidget.qml
         qml/shell/HeaderGitWidget.qml
         qml/shell/HeaderContextWidget.qml
+        qml/shell/HeaderLeftGroup.qml
         qml/shell/HeaderProjectWidget.qml
         qml/shell/AppMenuBar.qml
         qml/shell/AppMenuPopup.qml
@@ -863,6 +866,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/ProjectHealthController.qml
         qml/workspace/ProjectHealthActions.qml
         qml/workspace/ProjectToolRequirements.qml
+        qml/workspace/CmakeConfigurationChoices.qml
         qml/workspace/WorkspaceUiResetter.qml
         qml/jobs/JobsController.qml
         qml/runtime/RuntimeController.qml

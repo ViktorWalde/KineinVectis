@@ -56,7 +56,7 @@ Item {
         "help.manual": "help", "help.about": "help", "app.quit": "close", "editor.save": "save",
         "editor.saveAll": "save", "editor.gotoLine": "goto", "lsp.rename": "rename",
         "view.returnToEditor": "file", "view.cycleFocus": "chevron-down", "view.cycleFocusBack": "chevron-up",
-        "lsp.switchSourceHeader": "restore", "index.context": "configure"
+        "lsp.switchSourceHeader": "restore", "index.context": "configure", "cmake.configurationMenu": "layers"
     })
 
     // Item cuja tecla mora num comando de OUTRO nome no catalogo, e as poucas
@@ -211,6 +211,10 @@ Item {
                            root.item(qsTr("Contexto de compilação do arquivo…"), "index.context", open && file),
                            root.item(qsTr("Python do projeto…"), "python.context", open),
                            root.item(qsTr("Ações de configuração…"), "configAction.list", open),
+                           // O menu do chip da configuração (C1-23), para quando
+                           // o chip foi para o "⋯" ou o mouse está na barra.
+                           root.item(qsTr("Configuração do CMake…"), "cmake.configurationMenu",
+                                     open && root.hasBuildSystem("cmake")),
                            root.item(qsTr("Configurar CMake"), "cmake.configure", open && root.coreConnected)],
                           [root.item(qsTr("Instalar ferramentas…"), "setup.list", true),
                            root.item(qsTr("Detectar ferramentas"), "tools.detect", true),

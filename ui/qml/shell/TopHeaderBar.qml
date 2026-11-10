@@ -38,6 +38,10 @@ Rectangle {
     property bool toolchainMenuOpen: false
     property string pythonSummary: ""
     property bool pythonMenuOpen: false
+    // A configuracao ativa do CMake (C1-23 do C-04): o chip abre o menu dela.
+    property string configurationSummary: ""
+    property string configurationTooltip: ""
+    property bool configurationMenuOpen: false
 
     signal openWorkspaceRequested()
     signal projectMenuRequested(real menuX, real menuY)
@@ -47,45 +51,21 @@ Rectangle {
     signal gitBranchMenuRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
     signal pythonMenuRequested(real menuX, real menuY)
+    signal configurationMenuRequested(real menuX, real menuY)
     signal contextOverflowRequested(real menuX, real menuY)
     signal widgetMoved(string key, int dropIndex, var visibleKeys)
 
-    // A ordem que o usuario arrastou (0.3.9). Os widgets sao fixos (nao ha'
-    // Repeater): o grupo da esquerda e' um Item e cada widget calcula o x
-    // pela ordem — a soma dos visiveis antes dele. (Reanexar por um pai
-    // invisivel deixava o chip que aparecia depois fora do grafo de cena, e
-    // o stackBefore/stackAfter do C++ nao chega ao QML.)
+    // A ordem que o usuario arrastou (0.3.9); quem ordena e' o grupo.
     property var order: []
-    readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
-    readonly property var widgetOrder: root.codec.ordered(["project", "git", "toolchain", "python"],
-                                                          root.order)
 
     function xOf(key) {
-        const widgets = { project: projectWidget, git: gitWidget,
-                          toolchain: contextWidget, python: pythonWidget };
-        let x = 0;
-        for (const other of root.widgetOrder) {
-            if (other === key) return x;
-            if (widgets[other].visible) x += widgets[other].width + leftWidgets.spacing;
-        }
-        // O "⋯" (chave fora da ordem) e' sempre o ultimo.
-        return x;
-    }
-
-    ReorderController {
-        id: headerReorder
-
-        container: leftWidgets
-        onMoved: function(key, dropIndex, visibleKeys) {
-            root.widgetMoved(key, dropIndex, visibleKeys);
-        }
+        return leftWidgets.xOf(key);
     }
 
     // Contexto que existe mas nao coube: vai para o "⋯".
-    readonly property bool toolchainHidden: root.workspaceOpen && root.toolchainSummary !== ""
-                                            && !contextWidget.visible
-    readonly property bool pythonHidden: root.workspaceOpen && root.pythonSummary !== ""
-                                         && !pythonWidget.visible
+    readonly property bool toolchainHidden: leftWidgets.toolchainHidden
+    readonly property bool pythonHidden: leftWidgets.pythonHidden
+    readonly property bool configurationHidden: leftWidgets.configurationHidden
     signal runRequested()
     signal stopRunRequested()
     signal debugRequested()
@@ -115,148 +95,58 @@ Rectangle {
     height: 38
     color: "transparent"
 
-    Item {
+    HeaderLeftGroup {
         id: leftWidgets
-
-        property real spacing: Theme.spacingMedium
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingMedium
-        height: 32
-        width: overflowButton.x + (overflowButton.visible ? overflowButton.width : 0)
-
-        HeaderProjectWidget {
-            id: projectWidget
-
-            reorder: headerReorder
-            reorderKey: "project"
-            x: root.xOf("project")
-            Behavior on x {
-                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
-            }
-            opacity: headerReorder.opacityFor("project")
-            // Na tela de boas-vindas o "Abrir projeto" do topo repetia o cartao
-            // (decisao do autor, 2026-10-03): o widget so' existe com projeto.
-            visible: root.workspaceOpen
-
-            anchors.verticalCenter: parent.verticalCenter
-            workspaceOpen: root.workspaceOpen
-            workspaceName: root.workspaceName
-            systemLabel: root.workspaceSystemLabel()
-            coreConnected: root.coreConnected
-            menuOpen: root.projectMenuOpen
-            onOpenWorkspaceRequested: root.openWorkspaceRequested()
-            onMenuRequested: function(menuX, menuY) {
-                const pos = root.mapFromItem(projectWidget, menuX, menuY);
-                root.projectMenuRequested(pos.x, pos.y);
-            }
+        rightLimit: runWidget.visible ? runWidget.x : root.width
+        workspaceOpen: root.workspaceOpen
+        coreConnected: root.coreConnected
+        workspaceName: root.workspaceName
+        systemLabel: root.workspaceSystemLabel()
+        projectMenuOpen: root.projectMenuOpen
+        gitBranchLabel: root.gitBranchLabel
+        gitAheadCount: root.gitAheadCount
+        gitBehindCount: root.gitBehindCount
+        gitChangeCount: root.gitChangeCount
+        gitPanelActive: root.gitPanelActive
+        toolchainSummary: root.toolchainSummary
+        toolchainMenuOpen: root.toolchainMenuOpen
+        pythonSummary: root.pythonSummary
+        pythonMenuOpen: root.pythonMenuOpen
+        configurationSummary: root.configurationSummary
+        configurationTooltip: root.configurationTooltip
+        configurationMenuOpen: root.configurationMenuOpen
+        order: root.order
+        onOpenWorkspaceRequested: root.openWorkspaceRequested()
+        onGitPanelRequested: root.gitPanelRequested()
+        onGitBranchMenuRequested: root.gitBranchMenuRequested()
+        onWidgetMoved: (key, dropIndex, visibleKeys) => root.widgetMoved(key, dropIndex, visibleKeys)
+        // Os pontos dos menus voltam ao espaco da barra, como antes da divisao.
+        onProjectMenuRequested: function(menuX, menuY) {
+            const pos = root.mapFromItem(leftWidgets, menuX, menuY);
+            root.projectMenuRequested(pos.x, pos.y);
         }
-
-        HeaderGitWidget {
-            id: gitWidget
-
-            reorder: headerReorder
-            reorderKey: "git"
-            x: root.xOf("git")
-            Behavior on x {
-                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
-            }
-            opacity: headerReorder.opacityFor("git")
-
-            anchors.verticalCenter: parent.verticalCenter
-            visible: root.workspaceOpen && root.gitBranchLabel !== ""
-            branchLabel: root.gitBranchLabel
-            aheadCount: root.gitAheadCount
-            behindCount: root.gitBehindCount
-            changeCount: root.gitChangeCount
-            panelActive: root.gitPanelActive
-            onPanelRequested: root.gitPanelRequested()
-            onBranchMenuRequested: root.gitBranchMenuRequested()
+        onToolchainMenuRequested: function(menuX, menuY) {
+            const pos = root.mapFromItem(leftWidgets, menuX, menuY);
+            root.toolchainMenuRequested(pos.x, pos.y);
         }
-
-        HeaderContextWidget {
-            id: contextWidget
-
-            reorder: headerReorder
-            reorderKey: "toolchain"
-            x: root.xOf("toolchain")
-            Behavior on x {
-                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
-            }
-            opacity: headerReorder.opacityFor("toolchain")
-
-            anchors.verticalCenter: parent.verticalCenter
-            summary: root.workspaceOpen ? root.toolchainSummary : ""
-            tooltipText: qsTr("Toolchain efetiva do build — clique para trocar")
-            menuOpen: root.toolchainMenuOpen
-            // Prioridade por largura: a toolchain pega primeiro o que sobra
-            // ate' o executar; o Python, o resto. Sem lugar, o chip sai.
-            // Reserva o lugar do "⋯" (32 px e o espaco) para ele nunca empurrar.
-            availableWidth: (runWidget.visible ? runWidget.x : root.width) - Theme.spacingLarge
-                            - leftWidgets.x - projectWidget.width - leftWidgets.spacing
-                            - (gitWidget.visible ? gitWidget.width + leftWidgets.spacing : 0)
-                            - 32 - leftWidgets.spacing
-            onMenuRequested: function(menuX, menuY) {
-                const pos = root.mapFromItem(contextWidget, menuX, menuY);
-                root.toolchainMenuRequested(pos.x, pos.y);
-            }
+        onPythonMenuRequested: function(menuX, menuY) {
+            const pos = root.mapFromItem(leftWidgets, menuX, menuY);
+            root.pythonMenuRequested(pos.x, pos.y);
         }
-
-        HeaderContextWidget {
-            id: pythonWidget
-
-            reorder: headerReorder
-            reorderKey: "python"
-            x: root.xOf("python")
-            Behavior on x {
-                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
-            }
-            opacity: headerReorder.opacityFor("python")
-
-            anchors.verticalCenter: parent.verticalCenter
-            summary: root.workspaceOpen ? root.pythonSummary : ""
-            iconName: "tree-file-python"
-            tooltipText: qsTr("Python do projeto — interpretador e ambiente")
-            menuOpen: root.pythonMenuOpen
-            availableWidth: contextWidget.availableWidth
-                            - (contextWidget.visible ? contextWidget.width + leftWidgets.spacing : 0)
-            onMenuRequested: function(menuX, menuY) {
-                const pos = root.mapFromItem(pythonWidget, menuX, menuY);
-                root.pythonMenuRequested(pos.x, pos.y);
-            }
+        onConfigurationMenuRequested: function(menuX, menuY) {
+            const pos = root.mapFromItem(leftWidgets, menuX, menuY);
+            root.configurationMenuRequested(pos.x, pos.y);
         }
-
-        KvIconButton {
-            id: overflowButton
-
-            x: root.xOf("")
-
-            anchors.verticalCenter: parent.verticalCenter
-            visible: root.toolchainHidden || root.pythonHidden
-            iconName: "more"
-            iconSize: 16
-            focus: false
-            focusOnClick: false
-            tooltip: qsTr("Contexto que não coube")
-            onClicked: {
-                const pos = root.mapFromItem(overflowButton, 0, overflowButton.height);
-                root.contextOverflowRequested(pos.x, pos.y);
-            }
-
-            // O aviso nao some com o chip: o Python escondido com ⚠ acende o ⋯.
-            Rectangle {
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: 5
-                visible: root.pythonHidden && root.pythonSummary.indexOf("⚠") >= 0
-                width: 7
-                height: width
-                radius: width / 2
-                color: Theme.warningSoft
-            }
+        onContextOverflowRequested: function(menuX, menuY) {
+            const pos = root.mapFromItem(leftWidgets, menuX, menuY);
+            root.contextOverflowRequested(pos.x, pos.y);
         }
     }
+
 
     // Executar fica no CENTRO-DIREITA, como na referencia: e' o gesto mais
     // frequente depois de digitar, e o olho o acha sempre no mesmo lugar.

@@ -16,6 +16,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use kinein_protocol::CmakeConfigurationInfo;
 use serde::{Deserialize, Serialize};
 
 use crate::cmake_presets::{PresetDefault, PresetDirectory};
@@ -117,6 +118,32 @@ pub(crate) fn preset_dirs(root: &Path) -> Vec<PresetDirectory> {
         }
     }
     directories
+}
+
+/// Every listed configure preset with the folder of its configuration, in
+/// the order of the files (C1-23): what the configuration menu offers. Empty
+/// without presets or with presets `CMake` would refuse.
+#[must_use]
+pub fn configurations(root: &Path) -> Vec<CmakeConfigurationInfo> {
+    crate::cmake_presets::list_presets(root)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|preset| {
+            let directory = configuration_dir(root, Some(&preset.name));
+            CmakeConfigurationInfo {
+                configured: directory
+                    .as_ref()
+                    .is_ok_and(|directory| directory.join("CMakeCache.txt").is_file()),
+                build_dir: directory
+                    .as_ref()
+                    .ok()
+                    .map(|directory| label(root, directory)),
+                build_dir_refused: directory.err(),
+                display_name: preset.display_name,
+                preset: preset.name,
+            }
+        })
+        .collect()
 }
 
 /// The configuration that build, run, debug, ctest, flash, `qmlls`, the

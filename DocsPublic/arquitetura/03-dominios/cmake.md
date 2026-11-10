@@ -1,5 +1,26 @@
 # `cmake.*` — o domínio no protocolo IPC
 
+**Configurações do menu (`0.210.0`, C1-23 do C-04).** Desenho na
+[consolidação C §17](../../especificacoes/consolidacao-nativa-de-c.md#17-c1-configure-no-binarydir-configuração-ativa-e-include-de-presets--desenho-de-2026-11-09).
+`cmake.status` ganha um campo, omitido quando vazio:
+
+```text
+configurations?  [{ preset, displayName?, buildDir?, buildDirRefused?, configured }]
+```
+
+Há um item por configure preset não oculto, na ordem dos arquivos de presets.
+`buildDir` é o rótulo da pasta da configuração, pela regra do `buildDir`:
+relativo à raiz, `.` para ela, absoluto fora dela. Quando a pasta não é
+conhecida (`binaryDir` não resolvido, nome que não serve de pasta),
+`buildDirRefused` traz o motivo, e `buildDir` é omitido. `configured` diz se a
+pasta tem `CMakeCache.txt`. Sem presets, ou com presets que o CMake recusaria,
+a lista é omitida; o motivo continua em `configurationRefused`. A lista não
+depende da configuração ativa nem muda outro campo.
+
+Na ponte, `cmakeStatusResolved` ganha um nono argumento, `configuration`, com
+`preset`, `source` e `refused` (os campos `configuration*`), `directory` (o
+`buildDir`) e `choices` (a lista `configurations`). Campo omitido chega vazio.
+
 **Configuração ativa e pasta da configuração (`0.209.0`, C1-19–C1-21 do C-04).**
 Desenho e decisões na
 [consolidação C §17](../../especificacoes/consolidacao-nativa-de-c.md#17-c1-configure-no-binarydir-configuração-ativa-e-include-de-presets--desenho-de-2026-11-09).

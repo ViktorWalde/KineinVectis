@@ -10,7 +10,7 @@
 
 > **RESUMO TÉCNICO (2026-11-09; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.209.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.210.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
@@ -52,7 +52,7 @@
 > **C1 — instalação em existentes (§7.386):** caminho no kit com prévia, sem
 > troca silenciosa. **C-05 (§7.393):** CDB de presets e outras ferramentas,
 > escolha sem reconfigurar e clangd na mesma pasta. **C1-18 (§7.394):** `include`
-> de presets como o CMake. **C1-19–C1-21 (§7.396):** cada configuração na pasta dela.
+> de presets. **C1-19–C1-21 (§7.396):** pasta por configuração; **C1-23 (§7.397):** menu.
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
@@ -61,12 +61,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.209.0 (crates/kinein-protocol, medido em 2026-11-09; o
+protocolo   0.210.0 (crates/kinein-protocol, medido em 2026-11-09; o
             historico das versoes e' o arquitetura/03)
 metodos     195 roteados e 64 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
-harnesses   182 tst_*.qml em scripts/qml-harness (medido em 2026-11-09)
-testes      1539 Rust no gate rápido de 2026-11-09 (40.7 §7.396);
+harnesses   183 tst_*.qml em scripts/qml-harness (medido em 2026-11-09)
+testes      1540 Rust no gate rápido de 2026-11-09 (40.7 §7.397);
+            1539 Rust no gate rápido de 2026-11-09 (40.7 §7.396);
             1530 Rust no gate rápido de 2026-11-09 (40.7 §7.395);
             1526 Rust no gate rápido de 2026-11-09 (40.7 §7.394);
             1521 Rust no gate rápido de 2026-11-09 (40.7 §7.393);
