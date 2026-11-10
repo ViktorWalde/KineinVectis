@@ -206,6 +206,18 @@ pub(super) fn program_invocation(path: &str) -> String {
     format!("& '{}'", path.replace('\'', "''"))
 }
 
+pub(super) fn shell_argument(text: &str) -> String {
+    let plain = !text.is_empty()
+        && text
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "_=:/\\".contains(c));
+    if plain {
+        text.to_owned()
+    } else {
+        format!("'{}'", text.replace('\'', "''"))
+    }
+}
+
 /// As regras do C runtime da Microsoft (`CommandLineToArgvW`): espaco fora de
 /// aspas separa; `"` abre e fecha; dentro de aspas, `""` e' uma aspa; `\` e'
 /// literal, salvo antes de `"`: `2n` barras e uma aspa dao `n` barras e a aspa

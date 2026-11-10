@@ -512,6 +512,18 @@ recompilar. Um caso gtest `DISABLED_` aparece como ignorado, e não como
 aprovado, também na linha do `ctest`. Num projeto com dez testes ou mais,
 todos aparecem na lista e na contagem (desde 2026-11-10).
 
+**O caso como o `ctest` o roda.** **Rodar só este teste** num caso de dentro
+roda o binário com o ambiente que o `ctest` dá ao teste (`ENVIRONMENT` e
+`ENVIRONMENT_MODIFICATION`) e com os argumentos do `add_test`, como a pasta
+dos dados. A aba mostra o comando que roda, com aspas, para colar num
+terminal na raiz do projeto; o ambiente fica fora dele. O `TIMEOUT` do teste
+vale para o caso: o caso parado no prazo conta como reprovado, e a aba diz
+por quê. Um teste com `WILL_FAIL`, `DISABLED`, `FIXTURES_REQUIRED` ou outra
+propriedade com que o `ctest` decide o resultado de outro jeito continua uma
+linha só e roda inteiro. A linha do `ctest` do teste que cai, como num
+`SegFault`, ou que passa do prazo fica vermelha e conta como reprovada
+(desde 2026-11-10).
+
 **Análise em C/C++.** O clangd sobe com `--clang-tidy` e lê o `.clang-tidy`
 do projeto: os avisos aparecem no arquivo aberto como qualquer diagnóstico.
 A **Análise de qualidade** (`Ctrl+Shift+L`) num CMake ou Makefile roda o

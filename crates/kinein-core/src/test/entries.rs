@@ -14,6 +14,23 @@ use kinein_protocol::TestCaseInfo;
 
 use super::TestError;
 use super::frameworks::{CtestEntry, Framework, Listing, SEP};
+use super::launch;
+
+/// C1-40: the properties with which the ctest decides the outcome otherwise
+/// than by the exit code, or does not run the test alone, which one case does
+/// not reproduce. The `json-v1` of `CMake` 4.4.5 writes each one only when it
+/// is on.
+pub(super) const OUTCOME_PROPERTIES: [&str; 9] = [
+    "WILL_FAIL",
+    "PASS_REGULAR_EXPRESSION",
+    "FAIL_REGULAR_EXPRESSION",
+    "SKIP_REGULAR_EXPRESSION",
+    "SKIP_RETURN_CODE",
+    "DISABLED",
+    "FIXTURES_REQUIRED",
+    "REQUIRED_FILES",
+    "TIMEOUT_AFTER_MATCH",
+];
 
 /// What gtest 1.18 reads in the command to pick the cases. With a space,
 /// `--gtest_filter Math.Adds` prints the help and runs none.
@@ -80,6 +97,23 @@ const CATCH2_FLAGS: &[&str] = &[
     "--allow-running-no-tests",
 ];
 
+/// Why the tree does not open the test, whatever its binary lists: a property
+/// of [`OUTCOME_PROPERTIES`], or an `ENVIRONMENT_MODIFICATION` the ctest
+/// refuses (C1-40). The binary is not asked for its cases.
+pub(super) fn closed(entry: &CtestEntry) -> Option<String> {
+    entry
+        .outcome_properties
+        .first()
+        .map(|property| {
+            format!(
+                "o CTest decide o desfecho do teste `{}` também pelo `{property}`, que o caso \
+                 sozinho não reproduz, e ele não se abre em casos; rode a linha dele",
+                entry.name
+            )
+        })
+        .or_else(|| launch::environment_refusal(entry))
+}
+
 /// Whether the test of the ctest runs every case of its binary: the test the
 /// tree opens into cases.
 pub(super) fn runs_every_case(framework: Framework, entry: &CtestEntry) -> bool {
@@ -102,18 +136,31 @@ pub(super) fn runs_every_case(framework: Framework, entry: &CtestEntry) -> bool 
                     .chain(&entry.environment_modification)
                     .any(picking)
         }
-        Framework::Catch2 => catch2_runs_every_case(arguments),
+        Framework::Catch2 => catch2_options(arguments).is_some(),
     }
 }
 
-/// Catch2 reads the arguments as Clara does (measured with 3.16.1): one that
-/// does not start with `-` is a test spec; `--order decl`, `--order=decl`
-/// and `--order:decl` are the option with its value; `-sa` is `-s -a`.
-fn catch2_runs_every_case(arguments: &[String]) -> bool {
+/// Whether the arguments of a test that runs every case choose a reporter of
+/// Catch2, also as `--reporter=junit` or the last of `-sr junit`.
+pub(super) fn catch2_picks_reporter(arguments: &[String]) -> bool {
+    catch2_options(arguments).is_some_and(|names| {
+        names
+            .iter()
+            .any(|name| name == "-r" || name == "--reporter")
+    })
+}
+
+/// The options in the arguments, when each one is an option that does not
+/// pick the cases. Catch2 reads the arguments as Clara does (measured with
+/// 3.16.1): one that does not start with `-` is a test spec; `--order decl`,
+/// `--order=decl` and `--order:decl` are the option with its value; `-sa` is
+/// `-s -a`.
+fn catch2_options(arguments: &[String]) -> Option<Vec<String>> {
+    let mut options = Vec::new();
     let mut arguments = arguments.iter();
     while let Some(argument) = arguments.next() {
         if !argument.starts_with('-') {
-            return false;
+            return None;
         }
         let (names, inline) = match argument.find([' ', ':', '=']) {
             Some(at) => (vec![argument[..at].to_owned()], true),
@@ -130,15 +177,16 @@ fn catch2_runs_every_case(arguments: &[String]) -> bool {
             if CATCH2_VALUE_OPTIONS.contains(&name.as_str()) {
                 // Clara gives the next argument to the last of `-sr compact`.
                 if index + 1 < names.len() || (!inline && arguments.next().is_none()) {
-                    return false;
+                    return None;
                 }
             } else if inline || !CATCH2_FLAGS.contains(&name.as_str()) {
                 // The value of a flag is left as a test spec.
-                return false;
+                return None;
             }
         }
+        options.extend(names);
     }
-    true
+    Some(options)
 }
 
 /// The cases without an id that another test or case has: running such an
@@ -193,6 +241,10 @@ pub(super) fn resolve<'a>(
             continue;
         };
         let name = &entry.name;
+        if let Some(reason) = closed(entry) {
+            keep(name, &|| reason.clone());
+            continue;
+        }
         match list(entry) {
             Some((framework, _)) if !runs_every_case(framework, entry) => {
                 keep(name, &|| {
@@ -242,7 +294,9 @@ pub(super) fn resolve<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::{resolve, runs_every_case, unique};
+    use super::{
+        OUTCOME_PROPERTIES, catch2_picks_reporter, closed, resolve, runs_every_case, unique,
+    };
     use crate::test::frameworks::{CtestEntry, Framework, Listing};
     use kinein_protocol::TestCaseInfo;
 
@@ -259,6 +313,7 @@ mod tests {
             working_directory: None,
             environment: strings(environment),
             environment_modification: strings(modification),
+            ..CtestEntry::default()
         }
     }
 
@@ -507,5 +562,77 @@ mod tests {
             ]
         );
         assert_eq!(asked, ["dup", "dup::x", "gt_math", "ns", "ns::unit", "ns"]);
+    }
+
+    /// C1-40: a property with which the ctest decides the outcome closes the
+    /// test before its binary is asked, and the id of a case says why; so
+    /// does an `ENVIRONMENT_MODIFICATION` the ctest refuses.
+    #[test]
+    fn a_test_whose_outcome_is_not_the_exit_code_stays_closed() {
+        let refused = |property: &str| {
+            format!(
+                "o CTest decide o desfecho do teste `w` também pelo `{property}`, que o caso \
+                 sozinho não reproduz, e ele não se abre em casos; rode a linha dele"
+            )
+        };
+        for property in OUTCOME_PROPERTIES {
+            let test = CtestEntry {
+                outcome_properties: vec![property.to_owned()],
+                ..entry("w", &["/b/gt"], &[], &[])
+            };
+            assert_eq!(closed(&test), Some(refused(property)), "{property}");
+            let mut asked = 0;
+            let result = resolve(std::slice::from_ref(&test), "w::Math.Adds", &mut |_| {
+                asked += 1;
+                Some((Framework::Gtest, vec!["Math.Adds".to_owned()]))
+            });
+            assert_eq!(
+                result.map(|named| named.map(|_| ()).map_err(|error| error.to_string())),
+                Some(Err(refused(property)))
+            );
+            assert_eq!(asked, 0, "{property}");
+        }
+        let bad = entry("w", &["/b/gt"], &[], &["A=set:1", "M=bogus:x"]);
+        assert_eq!(
+            closed(&bad).as_deref(),
+            Some(
+                "o CTest não roda o teste `w`: o `ENVIRONMENT_MODIFICATION` `M=bogus:x` tem a \
+                 operação `bogus`, que ele não conhece; corrija o teste no CMake"
+            )
+        );
+        assert_eq!(
+            closed(&entry("w", &["/b/gt"], &["A=1"], &["A=reset:"])),
+            None
+        );
+    }
+
+    /// C1-34: the forms of a reporter Clara reads, and what is not one.
+    #[test]
+    fn a_catch2_reporter_is_seen_in_each_form_catch2_reads() {
+        let picks = |arguments: &[&str]| {
+            catch2_picks_reporter(&arguments.iter().map(|&a| a.to_owned()).collect::<Vec<_>>())
+        };
+        for arguments in [
+            &["-r", "junit"][..],
+            &["--reporter", "junit"],
+            &["-r=junit"],
+            &["-r:junit"],
+            &["--reporter=junit::out=j.xml"],
+            &["--reporter junit"],
+            &["-sr", "junit"],
+            &["-s", "-r", "compact", "--order", "decl"],
+        ] {
+            assert!(picks(arguments), "{arguments:?}");
+        }
+        for arguments in [
+            &[][..],
+            &["-s"],
+            &["-o", "-r"],
+            &["--order", "rand"],
+            &["-c", "-r"],
+            &["--rng-seed=7"],
+        ] {
+            assert!(!picks(arguments), "{arguments:?}");
+        }
     }
 }

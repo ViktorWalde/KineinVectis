@@ -13,11 +13,13 @@ use std::{
     path::Path,
     process::Command,
     sync::{Arc, atomic::AtomicBool},
+    time::Duration,
 };
 
 pub mod discover;
 mod entries;
 pub mod frameworks;
+mod launch;
 mod parse;
 mod runners;
 
@@ -172,12 +174,25 @@ pub(crate) fn cmake_test_dir(root: &Path) -> Result<std::path::PathBuf, TestErro
 
 /// `-C` with the configuration clangd reads, in a multi-config build
 /// (C1-22): without it `ctest` runs no test ("Not Run") and its JSON lists
-/// none. Returns what the command line shows.
-fn ctest_configuration(command: &mut Command, build_dir: &Path) -> String {
-    crate::cmake::build_configuration::of(build_dir).map_or_else(String::new, |configuration| {
+/// none.
+fn ctest_configuration(command: &mut Command, build_dir: &Path) {
+    if let Some(configuration) = crate::cmake::build_configuration::of(build_dir) {
         command.arg("-C").arg(&configuration.name);
-        format!(" -C {}", configuration.name)
-    })
+    }
+}
+
+/// The command shown of a `ctest` that runs, from the same arguments, with
+/// the quotes the shell of the system asks: run at the root, it runs the same
+/// tests (C1-41).
+fn ctest_shown(command: &Command) -> String {
+    std::iter::once("ctest".to_owned())
+        .chain(
+            command
+                .get_args()
+                .map(|argument| crate::platform::shell_argument(&argument.to_string_lossy())),
+        )
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 impl TestError {
@@ -277,6 +292,20 @@ pub(super) fn stream_command(
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
+    stream_command_until(command, display_name, parse_case, cancel, None, sink)
+        .map(|(outcome, _)| outcome)
+}
+
+/// [`stream_command`] stopped at the `timeout` of a test of the ctest; the
+/// bool says the deadline stopped it (C1-40).
+pub(super) fn stream_command_until(
+    command: Command,
+    display_name: &str,
+    parse_case: fn(&str) -> Option<(String, CaseStatus)>,
+    cancel: &Arc<AtomicBool>,
+    timeout: Option<Duration>,
+    sink: &mut dyn FnMut(TestEvent),
+) -> Result<(TestOutcome, bool), TestError> {
     sink(TestEvent::Started {
         command: display_name.to_owned(),
     });
@@ -296,23 +325,34 @@ pub(super) fn stream_command(
         sink(TestEvent::Output { stream, line });
     };
 
-    let status = process::stream_command_lines_cancelable(command, cancel, &mut on_line).map_err(
-        |error| match error {
-            ProcessError::Spawn(source) => TestError::Spawn {
-                command: display_name.to_owned(),
-                source,
-            },
-            ProcessError::Wait(source) => TestError::Io(source),
+    let run = match timeout {
+        Some(timeout) => process::stream_command_lines_with_timeout_cancelable(
+            command,
+            timeout,
+            Arc::clone(cancel),
+            &mut on_line,
+        ),
+        None => process::stream_command_lines_cancelable(command, cancel, &mut on_line)
+            .map(|status| (status, false)),
+    };
+    let (status, expired) = run.map_err(|error| match error {
+        ProcessError::Spawn(source) => TestError::Spawn {
+            command: display_name.to_owned(),
+            source,
         },
-    )?;
+        ProcessError::Wait(source) => TestError::Io(source),
+    })?;
 
-    Ok(TestOutcome {
-        success: status.success(),
-        exit_code: status.code(),
-        passed,
-        failed,
-        ignored,
-    })
+    Ok((
+        TestOutcome {
+            success: status.success(),
+            exit_code: status.code(),
+            passed,
+            failed,
+            ignored,
+        },
+        expired,
+    ))
 }
 
 #[cfg(test)]
@@ -320,7 +360,7 @@ mod tests {
     use super::parse::{parse_cargo_case, parse_ctest_case, parse_pytest_case};
     use super::runners::regex_literal;
     use super::{CaseStatus, Selection};
-    use super::{TestEvent, stream_command};
+    use super::{TestEvent, stream_command, stream_command_until};
 
     /// `testId` vence `filter`; vazios e espacos nao contam.
     #[test]
@@ -388,7 +428,15 @@ mod tests {
                 "^Broken\\.Case$"
             ]
         );
-        assert!(d.ends_with("-R ^Broken\\.Case$"), "{d}");
+        // C1-41: the command shown is the one that runs, with the quotes;
+        // the pattern needs them in the POSIX shell and in the PowerShell.
+        assert_eq!(
+            d,
+            format!(
+                "ctest --test-dir {} --output-on-failure -R '^Broken\\.Case$'",
+                crate::platform::shell_argument(&build)
+            )
+        );
         assert_eq!(
             args_de(&super::runners::ctest_command(root, &build_dir, Selection::Filter("Core")).0)
                 [3..],
@@ -529,12 +577,23 @@ mod tests {
         .unwrap();
         let ids: Vec<&str> = casos.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(ids, vec!["Core", "CoreParsing", "Broken.Case"]);
+        // C1-41: the command shown is the one that runs at the root.
+        let build = root.join(".kinein/build").display().to_string();
+        let listing = format!(
+            "ctest --test-dir {} -N",
+            crate::platform::shell_argument(&build)
+        );
         assert!(
             eventos
                 .iter()
-                .any(|e| matches!(e, TestEvent::Started { command } if command == "ctest -N"))
+                .any(|e| matches!(e, TestEvent::Started { command } if *command == listing))
         );
 
+        let ran = |events: &[TestEvent], test: &str| {
+            events
+                .iter()
+                .any(|e| matches!(e, TestEvent::Case { name, .. } if name == test))
+        };
         // Rodar so' o Broken.Case: um caso, falhou; o CoreParsing NAO rodou.
         let mut eventos = Vec::new();
         let outcome = super::run_tests(
@@ -548,11 +607,7 @@ mod tests {
         .unwrap();
         assert_eq!((outcome.passed, outcome.failed), (0, 1), "{eventos:?}");
         assert!(eventos.iter().any(|e| matches!(e, TestEvent::Case { name, status: CaseStatus::Failed } if name == "Broken.Case")));
-        assert!(
-            !eventos
-                .iter()
-                .any(|e| matches!(e, TestEvent::Case { name, .. } if name == "CoreParsing"))
-        );
+        assert!(!ran(&eventos, "CoreParsing"));
         // "Core" exato NAO arrasta "CoreParsing": a regex e' ancorada.
         let mut eventos = Vec::new();
         let outcome = super::run_tests(
@@ -565,11 +620,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!((outcome.passed, outcome.failed), (1, 0), "{eventos:?}");
-        assert!(
-            !eventos
-                .iter()
-                .any(|e| matches!(e, TestEvent::Case { name, .. } if name == "CoreParsing"))
-        );
+        assert!(!ran(&eventos, "CoreParsing"));
     }
 
     /// As linhas do `pytest -v` (medidas na doc do pytest 9, 2026-09-13):
@@ -700,6 +751,67 @@ mod tests {
         );
         assert!(parse_ctest_case("      Start  1: t1").is_none());
         assert!(parse_ctest_case("Test project /tmp/build").is_none());
+        // C1-42: each line of CTest 4.4.5 for a test that crashed, was
+        // killed or passed its `TIMEOUT`; and the ones of the outcome by the
+        // output and by the return code.
+        for (line, name, status) in [
+            (
+                " 1/14 Test  #1: segv .............................***Exception: SegFault  0.13 sec",
+                "segv",
+                CaseStatus::Failed,
+            ),
+            (
+                " 2/14 Test  #2: abort ............................Subprocess aborted***Exception:   0.10 sec",
+                "abort",
+                CaseStatus::Failed,
+            ),
+            (
+                " 3/14 Test  #3: fpe ..............................***Exception: Numerical  0.11 sec",
+                "fpe",
+                CaseStatus::Failed,
+            ),
+            (
+                " 4/14 Test  #4: ill ..............................***Exception: Illegal  0.11 sec",
+                "ill",
+                CaseStatus::Failed,
+            ),
+            (
+                " 5/14 Test  #5: term .............................Subprocess terminated***Exception:   0.00 sec",
+                "term",
+                CaseStatus::Failed,
+            ),
+            (
+                " 6/14 Test  #6: kill .............................Subprocess killed***Exception:   0.00 sec",
+                "kill",
+                CaseStatus::Failed,
+            ),
+            (
+                " 9/14 Test  #9: sleep ............................***Timeout   1.01 sec",
+                "sleep",
+                CaseStatus::Failed,
+            ),
+            (
+                "10/14 Test #10: passre ...........................***Failed  Required regular expression not found. Regex=[never",
+                "passre",
+                CaseStatus::Failed,
+            ),
+            (
+                "11/14 Test #11: failre ...........................***Failed  Error regular expression found in output. Regex=[boom]  0.00 sec",
+                "failre",
+                CaseStatus::Failed,
+            ),
+            (
+                "13/14 Test #13: skip77 ...........................***Skipped   0.00 sec",
+                "skip77",
+                CaseStatus::Ignored,
+            ),
+        ] {
+            assert_eq!(
+                parse_ctest_case(line),
+                Some((name.to_owned(), status)),
+                "{line}"
+            );
+        }
     }
 
     #[test]
@@ -731,5 +843,37 @@ mod tests {
             event,
             TestEvent::Case { name, status: CaseStatus::Failed } if name == "b"
         )));
+    }
+
+    /// C1-40: the `TIMEOUT` of a test stops the case and says so; a case that
+    /// ends before it is not stopped.
+    #[test]
+    fn the_timeout_stops_the_command_and_says_it() {
+        let cancel = std::sync::Arc::default();
+        let started = std::time::Instant::now();
+        let (outcome, expired) = stream_command_until(
+            crate::sh_command("echo 'test a ... ok'; exec sleep 30"),
+            "sh de teste",
+            parse_cargo_case,
+            &cancel,
+            Some(std::time::Duration::from_millis(300)),
+            &mut |_| {},
+        )
+        .unwrap();
+        assert!(expired);
+        assert!(!outcome.success);
+        assert_eq!(outcome.passed, 1);
+        assert!(started.elapsed() < std::time::Duration::from_secs(20));
+        let (outcome, expired) = stream_command_until(
+            crate::sh_command("echo 'test a ... ok'"),
+            "sh de teste",
+            parse_cargo_case,
+            &cancel,
+            Some(std::time::Duration::from_secs(60)),
+            &mut |_| {},
+        )
+        .unwrap();
+        assert!(!expired);
+        assert!(outcome.success);
     }
 }

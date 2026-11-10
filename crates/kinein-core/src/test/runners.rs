@@ -74,24 +74,19 @@ pub(super) fn ctest_command(
         .arg(build_dir)
         .arg("--output-on-failure")
         .current_dir(root);
-    let configuration = super::ctest_configuration(&mut command, build_dir);
+    super::ctest_configuration(&mut command, build_dir);
     crate::msvc::apply_environment(&mut command);
-    let mut display = format!("ctest --output-on-failure{configuration}");
     match selection {
         Selection::All => {}
         Selection::Filter(filter) => {
             command.arg("-R").arg(filter);
-            display.push_str(" -R ");
-            display.push_str(filter);
         }
         // Um nome exato e' uma regex ancorada com os metacaracteres escapados.
         Selection::Exact(id) => {
-            let ancorado = format!("^{}$", regex_literal(id));
-            command.arg("-R").arg(&ancorado);
-            display.push_str(" -R ");
-            display.push_str(&ancorado);
+            command.arg("-R").arg(format!("^{}$", regex_literal(id)));
         }
     }
+    let display = super::ctest_shown(&command);
     (command, display)
 }
 

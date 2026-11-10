@@ -211,6 +211,18 @@ pub(super) fn program_invocation(path: &str) -> String {
     format!("'{}'", path.replace('\'', "'\\''"))
 }
 
+pub(super) fn shell_argument(text: &str) -> String {
+    let plain = !text.is_empty()
+        && text
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "_@%+=:,./-".contains(c));
+    if plain {
+        text.to_owned()
+    } else {
+        program_invocation(text)
+    }
+}
+
 // O divisor de antes (o do leitor da CDB), movido sem mudar.
 pub(super) fn split_command_line(line: &str) -> Vec<String> {
     let mut args = Vec::new();

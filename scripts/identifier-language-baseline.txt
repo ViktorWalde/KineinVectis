@@ -1370,11 +1370,8 @@ crates/kinein-core/src/test/discover.rs	resto	2
 crates/kinein-core/src/test/discover.rs	ruido	6
 crates/kinein-core/src/test/discover.rs	vazio	2
 crates/kinein-core/src/test/frameworks.rs	corpo	1
-crates/kinein-core/src/test/frameworks.rs	entrada	4
-crates/kinein-core/src/test/frameworks.rs	eventos	7
 crates/kinein-core/src/test/frameworks.rs	linha	8
 crates/kinein-core/src/test/frameworks.rs	mudo	3
-crates/kinein-core/src/test/frameworks.rs	raiz	10
 crates/kinein-core/src/test/frameworks.rs	saida	3
 crates/kinein-core/src/test/frameworks.rs	texto	14
 crates/kinein-core/src/test/mod.rs	casos	6
@@ -1390,7 +1387,6 @@ crates/kinein-core/src/test/parse.rs	estados	2
 crates/kinein-core/src/test/parse.rs	marcador	2
 crates/kinein-core/src/test/parse.rs	melhor	4
 crates/kinein-core/src/test/parse.rs	palavra	1
-crates/kinein-core/src/test/runners.rs	ancorado	3
 crates/kinein-core/src/test/runners.rs	interpretador	2
 crates/kinein-core/src/test/runners.rs	observando	2
 crates/kinein-core/src/test/runners.rs	saida	4

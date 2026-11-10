@@ -26,18 +26,19 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     sync::{Arc, atomic::AtomicBool},
+    time::Duration,
 };
 
 use kinein_protocol::TestCaseInfo;
 
-use super::{CaseStatus, TestError, TestEvent, TestOutcome, entries, stream_command};
+use super::{CaseStatus, TestError, TestEvent, TestOutcome, entries, launch, stream_command_until};
 use crate::process;
 
 /// O separador entre o teste do ctest e o caso de dentro do binario.
 pub const SEP: &str = "::";
 
 /// Um teste do ctest como o `json-v1` o descreve.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct CtestEntry {
     /// `tests[].name`.
     pub name: String,
@@ -49,6 +50,10 @@ pub struct CtestEntry {
     pub environment: Vec<String>,
     /// `ENVIRONMENT_MODIFICATION`: `NAME=op:value` (C1-32).
     pub environment_modification: Vec<String>,
+    /// The properties of `entries::OUTCOME_PROPERTIES` that are on (C1-40).
+    pub outcome_properties: Vec<String>,
+    /// `TIMEOUT`, when greater than zero and a duration (C1-40).
+    pub timeout: Option<Duration>,
 }
 
 /// O framework que o binario revelou.
@@ -100,12 +105,33 @@ pub fn parse_ctest_json(texto: &str) -> Vec<CtestEntry> {
                     .filter_map(|value| value.as_str().map(str::to_owned))
                     .collect()
             };
+            // The ctest leaves out the property that is off; `false`, an
+            // empty list and an empty text are off too.
+            let on = |value: &serde_json::Value| match value {
+                serde_json::Value::Null | serde_json::Value::Bool(false) => false,
+                serde_json::Value::Array(values) => !values.is_empty(),
+                serde_json::Value::String(text) => !text.is_empty(),
+                _ => true,
+            };
+            let outcome_properties = entries::OUTCOME_PROPERTIES
+                .iter()
+                .filter(|name| property(name).is_some_and(on))
+                .map(|name| (*name).to_owned())
+                .collect();
+            // Zero and less is no limit, as the ctest does; a number too big
+            // for a duration is none either.
+            let timeout = property("TIMEOUT")
+                .and_then(serde_json::Value::as_f64)
+                .filter(|seconds| *seconds > 0.0)
+                .and_then(|seconds| Duration::try_from_secs_f64(seconds).ok());
             Some(CtestEntry {
                 name,
                 command,
                 working_directory,
                 environment: list("ENVIRONMENT"),
                 environment_modification: list("ENVIRONMENT_MODIFICATION"),
+                outcome_properties,
+                timeout,
             })
         })
         .collect()
@@ -178,16 +204,22 @@ pub fn parse_gtest_case(line: &str) -> Option<(String, CaseStatus)> {
     (!name.is_empty() && name.contains('.')).then(|| (name.to_owned(), status))
 }
 
-/// Pergunta ao binario quais casos ele tem: gtest primeiro, Catch2 depois.
-/// `None` = o binario nao e' de nenhum dos dois (ou nao roda).
+/// Pergunta ao binario do teste quais casos ele tem: gtest primeiro, Catch2
+/// depois.
+///
+/// `None` = o binario nao e' de nenhum dos dois (ou nao roda). A listagem tem
+/// a pasta e o ambiente do teste, sem os argumentos, como o
+/// `gtest_discover_tests` (C1-34).
 #[must_use]
-pub fn list_cases(exe: &Path, cwd: Option<&Path>) -> Option<(Framework, Vec<String>)> {
+pub fn list_cases(entry: &CtestEntry) -> Option<(Framework, Vec<String>)> {
+    let exe = entry.command.first()?;
     let run = |args: &[&str]| -> Option<String> {
         let mut c = Command::new(exe);
         c.args(args);
-        if let Some(cwd) = cwd {
+        if let Some(cwd) = &entry.working_directory {
             c.current_dir(cwd);
         }
+        launch::apply_environment(&mut c, entry).ok()?;
         let saida = c.output().ok()?;
         saida
             .status
@@ -213,20 +245,6 @@ pub fn list_cases(exe: &Path, cwd: Option<&Path>) -> Option<(Framework, Vec<Stri
         }
     }
     None
-}
-
-/// C1-31: Catch2 reads the name as a test spec, in which `\`, `,`, `[`,
-/// `]`, `*`, `~` and `"` mean something. A backslash before each one keeps
-/// the name (measured with Catch2 3.16.1).
-fn catch2_filter(name: &str) -> String {
-    let mut filter = String::with_capacity(name.len());
-    for character in name.chars() {
-        if matches!(character, '\\' | ',' | '[' | ']' | '*' | '~' | '"') {
-            filter.push('\\');
-        }
-        filter.push(character);
-    }
-    filter
 }
 
 /// Why Catch2 cannot run only this case, when it cannot (C1-31): a spec
@@ -283,23 +301,23 @@ pub fn ctest_entries(ctest: &Path, build_dir: &Path, cancel: &Arc<AtomicBool>) -
 /// What a binary said of its cases: the framework and the names.
 pub(super) type Listing = Option<(Framework, Vec<String>)>;
 
-/// The listing of the binary of a test of the ctest, asked once per binary
-/// and folder: `gtest_discover_tests` gives one test per case.
-type Listings = HashMap<(String, Option<PathBuf>), Listing>;
+/// The listing of the binary of a test of the ctest, asked once per binary,
+/// folder and environment: `gtest_discover_tests` gives one test per case.
+type Listings = HashMap<(String, Option<PathBuf>, Vec<String>, Vec<String>), Listing>;
 
-/// Who lists the cases of a binary in a folder: `list_cases`, or a fake.
-type Lister<'a> = &'a mut dyn FnMut(&Path, Option<&Path>) -> Listing;
+/// Who lists the cases of the binary of a test: `list_cases`, or a fake.
+type Lister<'a> = &'a mut dyn FnMut(&CtestEntry) -> Listing;
 
 fn listing(listings: &mut Listings, entry: &CtestEntry, list: Lister<'_>) -> Listing {
     let exe = entry.command.first()?;
     listings
-        .entry((exe.clone(), entry.working_directory.clone()))
-        .or_insert_with(|| {
-            Path::new(exe)
-                .is_file()
-                .then(|| list(Path::new(exe), entry.working_directory.as_deref()))
-                .flatten()
-        })
+        .entry((
+            exe.clone(),
+            entry.working_directory.clone(),
+            entry.environment.clone(),
+            entry.environment_modification.clone(),
+        ))
+        .or_insert_with(|| Path::new(exe).is_file().then(|| list(entry)).flatten())
         .clone()
 }
 
@@ -319,6 +337,9 @@ fn inner_cases(
     for entry in entries {
         if cancel.load(std::sync::atomic::Ordering::SeqCst) {
             break;
+        }
+        if entries::closed(entry).is_some() {
+            continue;
         }
         let Some((framework, names)) = listing(&mut listings, entry, list) else {
             continue;
@@ -358,50 +379,65 @@ pub fn run_inner_case(
         Ok(named) => named,
         Err(error) => return Some(Err(error)),
     };
-    let (entrada, case) = (named.entry, named.case);
-    let exe = entrada.command.first()?;
+    let (entry, case) = (named.entry, named.case);
     let catch2 = named.framework == Framework::Catch2;
     if catch2 && let Some(reason) = catch2_refusal(case, &named.cases) {
         return Some(Err(TestError::Refused { reason }));
     }
-    let mut command = Command::new(exe);
-    let display = if catch2 {
-        let filter = catch2_filter(case);
-        command.arg(&filter).args(["-r", "compact"]);
-        format!("{exe} \"{filter}\" -r compact")
-    } else {
-        // C1-35: `--gtest_brief=0` wins over a `GTEST_BRIEF=1`, which hides
-        // the line of the case that passed.
-        command.arg(format!("--gtest_filter={case}")).args([
-            "--gtest_color=no",
-            "--gtest_print_time=1",
-            "--gtest_brief=0",
-        ]);
-        format!("{exe} --gtest_filter={case}")
-    };
-    if let Some(cwd) = &entrada.working_directory {
-        command.current_dir(cwd);
+    // C1-34: the arguments and the environment of the test, as the ctest
+    // runs it.
+    let (mut command, display) = launch::case_command(entry, named.framework, case)?;
+    if let Err(reason) = launch::apply_environment(&mut command, entry) {
+        return Some(Err(TestError::Refused { reason }));
     }
     let parse: fn(&str) -> Option<(String, CaseStatus)> =
         if catch2 { |_| None } else { parse_gtest_case };
-    let test = &entrada.name;
+    let test = &entry.name;
     let mut disabled = false;
-    let mut result = stream_command(command, &display, parse, cancel, &mut |event| {
-        let event = match event {
-            // C1-37: the row of the tree is the id `test::case`, not the
-            // name inside the binary.
-            TestEvent::Case { name, status } => TestEvent::Case {
-                name: format!("{test}{SEP}{name}"),
-                status,
-            },
-            TestEvent::Output { stream, line } => {
-                disabled |= line.trim() == DISABLED_NOTE;
-                TestEvent::Output { stream, line }
-            }
-            other @ TestEvent::Started { .. } => other,
-        };
-        sink(event);
-    });
+    let run = stream_command_until(
+        command,
+        &display,
+        parse,
+        cancel,
+        entry.timeout,
+        &mut |event| {
+            let event = match event {
+                // C1-37: the row of the tree is the id `test::case`, not the
+                // name inside the binary.
+                TestEvent::Case { name, status } => TestEvent::Case {
+                    name: format!("{test}{SEP}{name}"),
+                    status,
+                },
+                TestEvent::Output { stream, line } => {
+                    disabled |= line.trim() == DISABLED_NOTE;
+                    TestEvent::Output { stream, line }
+                }
+                other @ TestEvent::Started { .. } => other,
+            };
+            sink(event);
+        },
+    );
+    let mut result = match (run, entry.timeout) {
+        // C1-40: stopped at the `TIMEOUT`, the case failed, as the ctest says
+        // of the test.
+        (Ok((mut outcome, true)), Some(timeout)) => {
+            let seconds = timeout.as_secs_f64();
+            sink(TestEvent::Output {
+                stream: "stderr",
+                line: format!(
+                    "o caso passou do `TIMEOUT` de {seconds} s do teste `{test}` e foi parado, \
+                     como o CTest faz"
+                ),
+            });
+            sink(TestEvent::Case {
+                name: id.to_owned(),
+                status: CaseStatus::Failed,
+            });
+            (outcome.passed, outcome.failed, outcome.ignored) = (0, 1, 0);
+            return Some(Ok(outcome));
+        }
+        (run, _) => run.map(|(outcome, _)| outcome),
+    };
     // C1-35: gtest runs no disabled case without
     // `--gtest_also_run_disabled_tests` and says so; it does not say it of a
     // case that ran.
@@ -443,10 +479,19 @@ pub fn run_inner_case(
 #[cfg(test)]
 mod tests {
     use super::{
-        catch2_filter, catch2_refusal, parse_catch2_list, parse_ctest_json, parse_gtest_case,
+        CtestEntry, catch2_refusal, parse_catch2_list, parse_ctest_json, parse_gtest_case,
         parse_gtest_list,
     };
-    use crate::test::CaseStatus;
+    use crate::test::{CaseStatus, launch::catch2_filter};
+
+    /// A test of the ctest that runs `exe`, as the `json-v1` gives it.
+    fn entry_of(exe: &std::path::Path) -> CtestEntry {
+        CtestEntry {
+            name: "t".to_owned(),
+            command: vec![exe.display().to_string()],
+            ..CtestEntry::default()
+        }
+    }
 
     #[test]
     fn the_ctest_json_gives_name_command_and_working_directory() {
@@ -464,6 +509,68 @@ mod tests {
         );
         assert!(e[1].command.is_empty());
         assert!(parse_ctest_json("nao e json").is_empty());
+    }
+
+    /// C1-40: the properties of the outcome as the `json-v1` of `CMake`
+    /// 4.4.5 writes them (measured), and the `TIMEOUT` that is a limit.
+    #[test]
+    fn the_ctest_json_gives_the_properties_of_the_outcome_and_the_timeout() {
+        let test = |properties: &str| {
+            let text = format!(
+                r#"{{"tests":[{{"name":"t","command":["/b/gt"],"properties":[{properties}]}}]}}"#
+            );
+            parse_ctest_json(&text).remove(0)
+        };
+        let all = test(
+            r#"{"name":"WILL_FAIL","value":true},
+               {"name":"PASS_REGULAR_EXPRESSION","value":["never"]},
+               {"name":"FAIL_REGULAR_EXPRESSION","value":["a","b"]},
+               {"name":"SKIP_REGULAR_EXPRESSION","value":["c"]},
+               {"name":"SKIP_RETURN_CODE","value":0},
+               {"name":"DISABLED","value":true},
+               {"name":"FIXTURES_REQUIRED","value":["db"]},
+               {"name":"REQUIRED_FILES","value":["/x"]},
+               {"name":"TIMEOUT_AFTER_MATCH","value":{"regex":["x"],"timeout":1.0}},
+               {"name":"TIMEOUT","value":7.5}"#,
+        );
+        assert_eq!(
+            all.outcome_properties,
+            [
+                "WILL_FAIL",
+                "PASS_REGULAR_EXPRESSION",
+                "FAIL_REGULAR_EXPRESSION",
+                "SKIP_REGULAR_EXPRESSION",
+                "SKIP_RETURN_CODE",
+                "DISABLED",
+                "FIXTURES_REQUIRED",
+                "REQUIRED_FILES",
+                "TIMEOUT_AFTER_MATCH"
+            ]
+        );
+        assert_eq!(all.timeout, Some(std::time::Duration::from_millis(7500)));
+        // What is off, and what does not change the outcome.
+        let none = test(
+            r#"{"name":"WILL_FAIL","value":false},
+               {"name":"PASS_REGULAR_EXPRESSION","value":[]},
+               {"name":"REQUIRED_FILES","value":""},
+               {"name":"DISABLED","value":null},
+               {"name":"DEPENDS","value":["setup"]},
+               {"name":"FIXTURES_SETUP","value":["db"]},
+               {"name":"RESOURCE_GROUPS","value":[{"requirements":[]}]},
+               {"name":"TIMEOUT_SIGNAL_NAME","value":"SIGINT"},
+               {"name":"TIMEOUT","value":0.0}"#,
+        );
+        assert!(none.outcome_properties.is_empty(), "{none:?}");
+        assert_eq!(none.timeout, None);
+        for (timeout, expected) in [
+            ("-1.0", None),
+            ("1e300", None),
+            ("\"7\"", None),
+            ("1", Some(std::time::Duration::from_secs(1))),
+        ] {
+            let entry = test(&format!(r#"{{"name":"TIMEOUT","value":{timeout}}}"#));
+            assert_eq!(entry.timeout, expected, "{timeout}");
+        }
     }
 
     #[test]
@@ -597,11 +704,11 @@ mod tests {
 
         let _serial = crate::serialize_executables();
 
-        let raiz = std::env::temp_dir().join(format!("kinein-frameworks-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&raiz);
-        std::fs::create_dir_all(&raiz).unwrap();
+        let root = std::env::temp_dir().join(format!("kinein-frameworks-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
         let exe = |nome: &str, corpo: &str| -> std::path::PathBuf {
-            let p = raiz.join(nome);
+            let p = root.join(nome);
             crate::write_executable(&p, format!("#!/bin/sh\n{corpo}"));
             p
         };
@@ -622,19 +729,19 @@ mod tests {
             "case \"$1\" in\n  --libidentify) printf 'description:    Catch2\\nframework:      Catch\\n'; exit 0;;\n  *) echo 'x'; exit 0;;\nesac\n",
         );
         assert_eq!(
-            list_cases(&gtest, None),
+            list_cases(&entry_of(&gtest)),
             Some((
                 Framework::Gtest,
                 vec!["Math.Adds".to_owned(), "Math.Subtracts".to_owned()]
             ))
         );
         assert_eq!(
-            list_cases(&catch2, None),
+            list_cases(&entry_of(&catch2)),
             Some((Framework::Catch2, vec!["vectors can be sized".to_owned()]))
         );
-        assert_eq!(list_cases(&mudo, None), None);
-        assert_eq!(list_cases(&printing, None), None);
-        assert_eq!(list_cases(&other, None), None);
+        assert_eq!(list_cases(&entry_of(&mudo)), None);
+        assert_eq!(list_cases(&entry_of(&printing)), None);
+        assert_eq!(list_cases(&entry_of(&other)), None);
 
         // O ctest falso: o json-v1 com os tres binarios.
         let ctest = exe(
@@ -647,7 +754,7 @@ mod tests {
             ),
         );
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let cases = discover_inner_cases(&ctest_entries(&ctest, &raiz, &cancel), &cancel);
+        let cases = discover_inner_cases(&ctest_entries(&ctest, &root, &cancel), &cancel);
         let ids: Vec<&str> = cases.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(
             ids,
@@ -660,46 +767,121 @@ mod tests {
         assert_eq!(cases[0].name, "Math.Adds");
 
         // Um caso gtest: `--gtest_filter=` e o `[ OK ]` vira caso passado.
-        let mut eventos = Vec::new();
+        let mut events = Vec::new();
         let r = run_inner_case(
             &ctest,
-            &raiz,
+            &root,
             &format!("unit_tests{SEP}Math.Adds"),
             &cancel,
-            &mut |e| eventos.push(e),
+            &mut |e| events.push(e),
         )
         .expect("e' um case de dentro")
         .unwrap();
         assert!(r.success);
         assert_eq!(r.passed, 1);
-        assert!(eventos.iter().any(|e| matches!(e, TestEvent::Output { line, .. } if line == "argv: --gtest_filter=Math.Adds --gtest_color=no --gtest_print_time=1 --gtest_brief=0")));
+        assert!(events.iter().any(|e| matches!(e, TestEvent::Output { line, .. } if line == "argv: --gtest_filter=Math.Adds --gtest_color=no --gtest_print_time=1 --gtest_brief=0")));
         assert!(
-            eventos.iter().any(
+            events.iter().any(
                 |e| matches!(e, TestEvent::Case { name, .. } if name == "unit_tests::Math.Adds")
             )
         );
         // Um caso Catch2: o nome e' o filtro; o exit code e' o desfecho.
-        let mut eventos = Vec::new();
+        let mut events = Vec::new();
         let r = run_inner_case(
             &ctest,
-            &raiz,
+            &root,
             "catch::vectors can be sized",
             &cancel,
-            &mut |e| eventos.push(e),
+            &mut |e| events.push(e),
         )
         .unwrap()
         .unwrap();
         assert_eq!(r.passed, 1);
-        assert!(eventos.iter().any(|e| matches!(e, TestEvent::Output { line, .. } if line == "argv: vectors can be sized -r compact")));
+        assert!(events.iter().any(|e| matches!(e, TestEvent::Output { line, .. } if line == "argv: vectors can be sized -r compact")));
         // Sem separador: nao e' caso de dentro.
-        assert!(run_inner_case(&ctest, &raiz, "unit_tests", &cancel, &mut |_| {}).is_none());
+        assert!(run_inner_case(&ctest, &root, "unit_tests", &cancel, &mut |_| {}).is_none());
         // Teste que o ctest nao lista: erro que diz.
         assert!(
-            run_inner_case(&ctest, &raiz, "nao::x", &cancel, &mut |_| {})
+            run_inner_case(&ctest, &root, "nao::x", &cancel, &mut |_| {})
                 .unwrap()
                 .is_err()
         );
-        let _ = std::fs::remove_dir_all(&raiz);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// C1-34: a binary that registers its cases from the environment of the
+    /// test lists them only with it, and the case runs with it too. C1-40: a
+    /// case that passed or was skipped and did not end by the `TIMEOUT`
+    /// counts only as failed.
+    #[test]
+    fn a_case_lists_and_runs_with_the_environment_and_the_timeout_of_its_test() {
+        use super::{ctest_entries, discover_inner_cases, run_inner_case};
+        use crate::test::TestEvent;
+
+        let _serial = crate::serialize_executables();
+        let root = std::env::temp_dir().join(format!("kinein-launch-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let exe = |name: &str, body: &str| -> std::path::PathBuf {
+            let path = root.join(name);
+            crate::write_executable(&path, format!("#!/bin/sh\n{body}"));
+            path
+        };
+        let dynamic = exe(
+            "dynamic",
+            "case \"$1\" in\n  --gtest_list_tests) [ \"$KV_LIST\" = 1 ] || exit 1; printf 'Dyn.\\n  Case\\n'; exit 0;;\n  --gtest_filter=*) echo \"env: $KV_LIST\"; echo '[       OK ] Dyn.Case (0 ms)'; exit 0;;\n  *) exit 1;;\nesac\n",
+        );
+        let blocked = exe(
+            "blocked",
+            "case \"$1\" in\n  --gtest_list_tests) printf 'Late.\\n  Ok\\n  Skip\\n  Fail\\n'; exit 0;;\n  --gtest_filter=Late.Ok) echo '[       OK ] Late.Ok (0 ms)'; exec sleep 30;;\n  --gtest_filter=Late.Fail) echo '[  FAILED  ] Late.Fail (0 ms)'; exec sleep 30;;\n  --gtest_filter=Late.Skip) echo '[  SKIPPED ] Late.Skip (0 ms)'; exec sleep 30;;\n  *) exit 1;;\nesac\n",
+        );
+        // The paths go through the JSON escape: on Windows they have a `\`.
+        let json = serde_json::json!({"tests": [
+            {"name": "dyn", "command": [dynamic], "properties": [
+                {"name": "ENVIRONMENT", "value": ["KV_LIST=1"]}]},
+            {"name": "late", "command": [blocked], "properties": [
+                {"name": "TIMEOUT", "value": 0.3}]},
+        ]})
+        .to_string();
+        assert!(!json.contains('\''), "{json}");
+        let ctest = exe("ctest", &format!("printf '%s' '{json}'\n"));
+        let cancel = std::sync::Arc::default();
+        let ids: Vec<_> = discover_inner_cases(&ctest_entries(&ctest, &root, &cancel), &cancel)
+            .into_iter()
+            .map(|case| case.id)
+            .collect();
+        assert_eq!(
+            ids,
+            [
+                "dyn::Dyn.Case",
+                "late::Late.Ok",
+                "late::Late.Skip",
+                "late::Late.Fail"
+            ]
+        );
+        let mut events = Vec::new();
+        let r = run_inner_case(&ctest, &root, "dyn::Dyn.Case", &cancel, &mut |e| {
+            events.push(e);
+        })
+        .unwrap()
+        .unwrap();
+        assert_eq!(r.passed, 1);
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, TestEvent::Output { line, .. } if line == "env: 1"))
+        );
+        for id in ["late::Late.Ok", "late::Late.Skip", "late::Late.Fail"] {
+            let r = run_inner_case(&ctest, &root, id, &cancel, &mut |_| {})
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                (r.success, r.passed, r.failed, r.ignored),
+                (false, 0, 1, 0),
+                "{id}"
+            );
+        }
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     /// C1-32: the listing is asked once per binary and folder. The same
@@ -707,21 +889,19 @@ mod tests {
     /// registers cases from the files there.
     #[test]
     fn the_listing_is_asked_once_per_binary_and_folder() {
-        use super::{CtestEntry, Framework, inner_cases};
+        use super::{Framework, inner_cases};
 
         let exe = std::env::temp_dir().join(format!("kinein-listing-{}", std::process::id()));
         std::fs::write(&exe, "").unwrap();
         let entry = |name: &str, folder: &str| CtestEntry {
             name: name.to_owned(),
-            command: vec![exe.display().to_string()],
             working_directory: Some(folder.into()),
-            environment: Vec::new(),
-            environment_modification: Vec::new(),
+            ..entry_of(&exe)
         };
         let entries = [entry("here", "a"), entry("again", "a"), entry("there", "b")];
         let mut asked = Vec::new();
-        let ids: Vec<_> = inner_cases(&entries, &std::sync::Arc::default(), &mut |_, folder| {
-            let folder = folder?.display().to_string();
+        let ids: Vec<_> = inner_cases(&entries, &std::sync::Arc::default(), &mut |entry| {
+            let folder = entry.working_directory.as_ref()?.display().to_string();
             asked.push(folder.clone());
             Some((Framework::Gtest, vec![format!("Dir.{folder}")]))
         })
@@ -730,6 +910,37 @@ mod tests {
         .collect();
         assert_eq!(ids, ["here::Dir.a", "again::Dir.a", "there::Dir.b"]);
         assert_eq!(asked, ["a", "b"]);
+        // C1-34: another environment can register other cases; C1-40: a
+        // closed test does not ask its binary.
+        let entries = [
+            entry("plain", "a"),
+            CtestEntry {
+                environment: vec!["DATA=x".to_owned()],
+                ..entry("data", "a")
+            },
+            CtestEntry {
+                environment_modification: vec!["DATA=set:x".to_owned()],
+                ..entry("modified", "a")
+            },
+            CtestEntry {
+                outcome_properties: vec!["WILL_FAIL".to_owned()],
+                ..entry("will_fail", "c")
+            },
+            CtestEntry {
+                environment_modification: vec!["M=bogus:x".to_owned()],
+                ..entry("bad", "d")
+            },
+        ];
+        let mut asked = Vec::new();
+        let ids: Vec<_> = inner_cases(&entries, &std::sync::Arc::default(), &mut |entry| {
+            asked.push(entry.name.clone());
+            Some((Framework::Gtest, vec!["Dir.x".to_owned()]))
+        })
+        .into_iter()
+        .map(|case| case.id)
+        .collect();
+        assert_eq!(ids, ["plain::Dir.x", "data::Dir.x", "modified::Dir.x"]);
+        assert_eq!(asked, ["plain", "data", "modified"]);
         let _ = std::fs::remove_file(&exe);
     }
 }

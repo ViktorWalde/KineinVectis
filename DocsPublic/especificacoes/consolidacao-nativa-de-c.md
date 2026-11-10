@@ -1049,12 +1049,17 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-31 / nome do caso Catch2 como filtro | Achado na prova do C1-28 com o Catch2 3.16.1 real (2026-11-10). `run_inner_case` passa o nome do caso como o filtro do Catch2, que dá sentido a alguns caracteres. Medido: `~tilde` e `exclude:this` excluem e rodam os 9 casos do binário; `a, b`, `x [y]` e `back\slash` não acham nada e saem com 2. A barra invertida antes de `\`, `,`, `[`, `]`, `*`, `~` e `"` roda só o caso; o prefixo `exclude:` não se escapa, e o Catch2 compara sem caixa (`case` roda `Case` também). O `--list-tests` do Catch2 v3 sai em ordem aleatória, e a árvore muda de ordem a cada descoberta; `--order decl` dá a ordem da declaração. Causa: o nome vai sem escape, e a lista, sem ordem | Média: "Rodar só este teste" roda todos os casos ou nenhum para esses nomes, e a falta de caso vira falha | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10)), provado com o Catch2 3.16.1 real. Decisão do autor de 2026-11-10: corrigir agora, junto do C1-22. O nome vai com a barra invertida antes de `\`, `,`, `[`, `]`, `*`, `~` e `"`, e a lista sai com `--order decl`. Quando o Catch2 não isola o caso (`exclude:` no começo, ou outro caso da lista com o mesmo nome sem caixa), "Rodar só este teste" recusa com o motivo, sem rodar o binário. Provar com o Catch2 3.16.1 real e mutações |
 | C1-32 / casos de dentro de um teste que já é um caso | Achado na prova do C1-31 (2026-11-10), por leitura de `test::frameworks::discover_inner_cases` e medido com o CTest do CMake 4.4.5, o gtest 1.18 e o Catch2 3.16.1. Com `gtest_discover_tests`, o `--show-only=json-v1` lista um teste por caso, com `--gtest_filter=Math.Adds` no comando; com `catch_discover_tests`, um por caso, com o nome do caso no comando. A descoberta pergunta ao binário todos os casos para cada teste: três casos gtest viram nove ids `teste::caso` falsos, e dois Catch2, quatro. O teste `Widget::draw works` do Catch2 tem `::` no nome, e `run_inner_case` corta o id no primeiro `::`. Causa: a descoberta usa só o primeiro item do comando, e o id não diz onde acaba o nome do teste do ctest | Média: num projeto com `gtest_discover_tests` ou `catch_discover_tests`, comuns no CMake, a árvore de testes repete cada caso uma vez por caso, e rodar um caso de um teste com `::` no nome diz que o ctest não o lista | Corrigido em 2026-11-10 ([§21.1](#211-c1-32-integração-e-provas--2026-11-10), protocolo 0.215.0). Decisão do autor de 2026-11-10: corrigir logo depois do C1-22, num commit próprio. Um teste do ctest cujo comando já filtra um caso não é expandido, e o id acha o nome do teste do ctest conhecido, em vez de cortar no primeiro `::`. Segunda decisão do autor, de 2026-11-10: o id que já não acha um caso só é recusado com o motivo, seja o caso que o binário não lista mais (o gtest 1.18 diz `PASSED 0 tests` e sai com 0), seja o id que dois testes dão; a descoberta deixa de fora o id repetido |
 | C1-33 / faixa cortada sem como ler | Achado na prova na UI nativa do C1-22 (2026-11-10), num Xvfb a 900x600. `ui/qml/shell/ProjectHealthBanner.qml` corta a mensagem com `Text.ElideRight` e não tem dica: a faixa do multi-config termina em "o cmake --buil…", e pairar não mostra o resto. Vale para toda mensagem longa da faixa, como a da CDB velha com o motivo. Causa: o texto cortado não tem outro lugar | Baixa: numa janela estreita, a faixa esconde o fim da mensagem, que às vezes é o que diz o que fazer | Corrigido em 2026-11-10 ([§20.1](#201-c1-22-integração-e-provas--2026-11-10)), provado no harness e na UI nativa. Decisão do autor de 2026-11-10: corrigir agora, junto do C1-22. Quando a mensagem é cortada, pairar sobre ela mostra a mensagem inteira numa dica. Provar no harness e na UI nativa |
-| C1-34 / caso de dentro sem o ambiente e os argumentos do teste | Achado no desenho do C1-32 (2026-11-10), por leitura de `test::frameworks`: `parse_ctest_json` lê do `--show-only=json-v1` só o `WORKING_DIRECTORY`, e `run_inner_case` roda o binário com o filtro do caso e nada mais. O CTest do CMake 4.4.5 dá no json-v1 o `ENVIRONMENT` (`["K=V", …]`) e o `ENVIRONMENT_MODIFICATION` (`["K=set:V", …]`) do teste, que ele aplica ao rodar, e o comando leva os argumentos do `add_test`. Causa: o caso de dentro é rodado pelo binário, fora do CTest, e só a pasta passava | Média: um teste que lê o ambiente ou um argumento do `add_test`, como a pasta dos dados, passa na linha do ctest e falha, ou faz outra coisa, ao rodar um caso dele pela árvore | Aberto. Decisão do autor de 2026-11-10: corrigir num commit próprio, logo depois do C1-32. Antes de mudar, medir como o CTest aplica o `ENVIRONMENT_MODIFICATION` e trazer ao autor quais argumentos acompanham o filtro do caso |
+| C1-34 / caso de dentro sem o ambiente e os argumentos do teste | Achado no desenho do C1-32 (2026-11-10), por leitura de `test::frameworks`: `parse_ctest_json` lê do `--show-only=json-v1` só o `WORKING_DIRECTORY`, e `run_inner_case` roda o binário com o filtro do caso e nada mais. O CTest do CMake 4.4.5 dá no json-v1 o `ENVIRONMENT` (`["K=V", …]`) e o `ENVIRONMENT_MODIFICATION` (`["K=set:V", …]`) do teste, que ele aplica ao rodar, e o comando leva os argumentos do `add_test`. Causa: o caso de dentro é rodado pelo binário, fora do CTest, e só a pasta passava | Média: um teste que lê o ambiente ou um argumento do `add_test`, como a pasta dos dados, passa na linha do ctest e falha, ou faz outra coisa, ao rodar um caso dele pela árvore | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir num commit próprio, logo depois do C1-32. Medido o `ENVIRONMENT_MODIFICATION` ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)), o autor decidiu em 2026-11-10: todos os argumentos do `add_test`, e as flags da IDE por último; no Catch2, o `-r compact` só quando os argumentos não escolhem um reporter; o ambiente que o CTest dá, também na listagem, que não leva os argumentos |
 | C1-35 / caso gtest desativado que diz que passou | Achado na medida do C1-32 com o gtest 1.18 real (2026-11-10). O `--gtest_list_tests` lista `Text.DISABLED_Off`, e a árvore mostra o caso. Rodá-lo com `--gtest_filter=Text.DISABLED_Off` não roda nada, imprime `YOU HAVE 1 DISABLED TEST` e sai com 0; a IDE não vê linha de caso e diz sucesso, com zero aprovados. O `gtest_discover_tests` dá a esse caso a propriedade `DISABLED`, e o CTest escreve `***Not Run (Disabled)` e sai com 0; `test::parse::parse_ctest_case` lê todo `***Not Run` como falha, e a linha do ctest sai reprovada num job que diz sucesso. Com `GTEST_BRIEF=1` no ambiente, o gtest não escreve a linha do caso que passou, e a IDE também conta zero. Causa: o gtest pula o desativado sem `--gtest_also_run_disabled_tests`, a IDE lê o código de saída, e o `Not Run` do desativado não é o de uma falha | Baixa: o caso desativado aparece como aprovado sem ter rodado, ou como reprovado na linha do ctest | Corrigido em 2026-11-10 ([§21.1](#211-c1-32-integração-e-provas--2026-11-10), protocolo 0.215.0). Decisão do autor de 2026-11-10: contar como ignorado, com o motivo, como o gtest e o CTest fazem; corrigir junto do C1-32 |
 | C1-36 / testes do 1 ao 9 fora da árvore | Achado na prova do C1-32 com o CTest do CMake 4.4.5 (2026-11-10). Com dez testes ou mais, o CTest alinha o número: o `ctest -N` escreve `  Test  #1: t1` e a execução, ` 1/11 Test  #1: t1 ...   Passed`. `test::discover::parse_ctest_list_line` pede `Test #` no começo da linha, e `test::parse::parse_ctest_case` procura `Test #`. O `-N` também escreve `t2 (Disabled)` para o desativado. Causa: a leitura do texto do CTest seguia a forma de menos de dez testes, e o nome exato já vinha no `--show-only=json-v1` | Alta: num projeto CMake com dez testes ou mais, os nove primeiros somem da árvore, e rodar todos não conta o desfecho deles; com cem ou mais, os 99 primeiros | Corrigido em 2026-11-10 ([§21.1](#211-c1-32-integração-e-provas--2026-11-10), protocolo 0.215.0). Achado com a decisão do autor de 2026-11-10 de incluir as correções no commit do C1-32: os nomes da árvore saem do `json-v1`, e a leitura do `Test #N:` aceita o número alinhado |
 | C1-37 / desfecho do caso de dentro fora da linha dele | Achado no preparo da prova na UI do C1-32 (2026-11-10), por leitura. `ui/qml/jobs/JobsController.qml::handleTestCase` pinta a linha da árvore cujo **id** é o `name` do `event.test.case`, como no cargo, no pytest e no ctest, em que o nome do caso é o id. `test::frameworks::run_inner_case` manda o nome de dentro do binário, `Math.Adds`, e o id da linha é `ns::unit::Math.Adds`. Causa: o caso de dentro tem um id que não é o nome dele, e o evento levava o nome | Média: o desfecho do caso de dentro não pinta a linha dele e vai para a lista de casos soltos; com o `gtest_discover_tests` ao lado, pinta a linha do ctest de mesmo nome, que não rodou | Corrigido em 2026-11-10 ([§21.1](#211-c1-32-integração-e-provas--2026-11-10), protocolo 0.215.0). Achado com a decisão do autor de 2026-11-10 de incluir as correções no commit do C1-32: o `event.test.case` do caso de dentro leva o id da árvore, `teste::caso` |
-| C1-38 / comando do caso gtest que não é o que roda | Achado na prova na UI nativa do C1-32 (2026-11-10). `test::frameworks::run_inner_case` roda o gtest com `--gtest_filter=Math.Adds --gtest_color=no --gtest_print_time=1 --gtest_brief=0`, e o `event.test.started` diz só `…/gt --gtest_filter=Math.Adds`; o caminho do executável vai sem aspas, e o do projeto da prova tem espaços. Já faltavam duas flags antes do C1-32, que pôs a terceira. Causa: o texto mostrado é montado à parte dos argumentos | Baixa: colado num terminal, o comando mostrado não roda, ou roda outra coisa: com o `brief` ligado no `main`, esconde a linha do caso que passou | Aberto. Corrigir com o C1-34, que decide quais argumentos acompanham o filtro do caso: o comando mostrado sai dos mesmos argumentos, com aspas onde o shell pede |
-| C1-39 / árvore que não distingue o caso de dentro nem o ignorado | Achado na prova na UI nativa do C1-32 (2026-11-10). `ui/qml/panels/bottom/TestsPanel.qml` mostra o `name` da linha: o caso `ns::unit::Math.Adds` aparece como `Math.Adds`, igual à linha do ctest do `gtest_discover_tests`, e os casos de `ns::unit` e de `gt_color` aparecem repetidos. `statusColor` pinta `ignored` com a cor do que não rodou | Baixa: na árvore, não se sabe de que teste é um caso de dentro, e o caso ignorado parece não ter rodado; o resumo diz `ignorado: 1` | Aberto. Decisão do autor pendente: como a linha mostra o teste do caso e que cor tem o ignorado. Provar no harness e na UI nativa |
+| C1-38 / comando do caso gtest que não é o que roda | Achado na prova na UI nativa do C1-32 (2026-11-10). `test::frameworks::run_inner_case` roda o gtest com `--gtest_filter=Math.Adds --gtest_color=no --gtest_print_time=1 --gtest_brief=0`, e o `event.test.started` diz só `…/gt --gtest_filter=Math.Adds`; o caminho do executável vai sem aspas, e o do projeto da prova tem espaços. Já faltavam duas flags antes do C1-32, que pôs a terceira. Causa: o texto mostrado é montado à parte dos argumentos | Baixa: colado num terminal, o comando mostrado não roda, ou roda outra coisa: com o `brief` ligado no `main`, esconde a linha do caso que passou | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0), junto do C1-34, que decide quais argumentos acompanham o filtro do caso: o comando mostrado sai dos mesmos argumentos, com aspas onde o shell pede ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
+| C1-39 / árvore que não distingue o caso de dentro nem o ignorado | Achado na prova na UI nativa do C1-32 (2026-11-10). `ui/qml/panels/bottom/TestsPanel.qml` mostra o `name` da linha: o caso `ns::unit::Math.Adds` aparece como `Math.Adds`, igual à linha do ctest do `gtest_discover_tests`, e os casos de `ns::unit` e de `gt_color` aparecem repetidos. `statusColor` pinta `ignored` com a cor do que não rodou | Baixa: na árvore, não se sabe de que teste é um caso de dentro, e o caso ignorado parece não ter rodado; o resumo diz `ignorado: 1` | Aberto. Decisão do autor de 2026-11-10: a linha mostra o id inteiro, `ns::unit::Math.Adds`, o texto que o "Rodar só este" usa, sem campo novo no protocolo; o ponto do ignorado é âmbar, o `warningSoft`. Corrigir num commit próprio, depois do C1-34, e provar no harness e na UI nativa |
+| C1-40 / caso de dentro de um teste cujo desfecho o CTest decide de outro jeito | Achado na medida do C1-34 com o CTest do CMake 4.4.5 (2026-11-10). Num teste escrito à mão que roda o binário gtest inteiro, com um caso que falha: o `WILL_FAIL` faz o CTest dizer `Passed`; o `PASS_REGULAR_EXPRESSION` que não aparece reprova; o `SKIP_RETURN_CODE 1` dá `Skipped`; o `DISABLED` dá `Not Run (Disabled)`; o `FIXTURES_REQUIRED` roda antes o teste do `FIXTURES_SETUP`, também com `-R`; e o `REQUIRED_FILES` que falta dá `Not Run`. O `json-v1` traz cada uma só quando ligada: o `WILL_FAIL FALSE` e o `DISABLED OFF` não aparecem. O `test.discover` abre esses testes em casos, e o caso roda pelo binário e sai pelo código de saída dele. Causa: o desfecho do CTest não é só o código de saída, e a regra do C1-32 olhava só o que escolhe os casos | Média: o caso de um teste `WILL_FAIL` sai reprovado quando a linha do ctest passa; o de um teste com fixture falha por falta do preparo; o de um teste desativado roda | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: não abrir em casos, com a mesma regra do C1-32, junto do C1-34; o `TIMEOUT` do teste passa a valer para o caso ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
+| C1-41 / comando mostrado da linha do ctest que não roda | Achado no desenho do C1-34 (2026-11-10), por leitura de `test::runners::ctest_command`. O `event.test.started` diz `ctest --output-on-failure -R ^Widget::draw works$`: sem o `--test-dir` da pasta da configuração, que o `ctest` recebe, e sem aspas no nome com espaço do `catch_discover_tests`; o `ctest` roda na raiz do projeto. Causa: o texto é montado à parte dos argumentos, como no C1-38 | Baixa: colado num terminal na raiz, o comando mostrado não acha os testes, ou roda outros | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir junto do C1-34. O comando mostrado sai dos mesmos argumentos, com o `--test-dir` e as aspas do C1-38; o `ctest -N` da descoberta, que também vinha sem o `--test-dir`, entra junto ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
+| C1-42 / linha do ctest que cai ou passa do prazo sem contar | Achado na regressão do C1-34 com o CTest do CMake 4.4.5 (2026-11-10). A linha do teste que cai é `***Exception: SegFault`, `***Exception: Numerical`, `***Exception: Illegal` ou `Subprocess aborted***Exception:`, com `terminated` e `killed` no lugar de `aborted` para o `SIGTERM` e o `SIGKILL`; a do que passa do `TIMEOUT` é `***Timeout`. `test::parse::parse_ctest_case` só lê `Passed`, `***Failed`, `***Not Run`, `***Skipped` e `***Disabled`, e essas linhas não viram `event.test.case`. Causa: as formas de falha do CTest que não são `***Failed` ficaram fora da leitura | Alta: num projeto C, o teste que cai por `SegFault` ou trava até o prazo não fica vermelho na árvore nem conta como reprovado; só o código de saída do job diz falha | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir junto do C1-34; as linhas medidas viram `failed` |
+| C1-43 / listagem de um binário que não termina | Achado no desenho da prova do C1-34 (2026-11-10), por leitura de `test::frameworks::list_cases`: a listagem roda o binário com `Command::output()`, que espera o processo sem prazo e sem olhar o `cancel` do job. Um programa comum posto como teste, como um servidor que ignora `--gtest_list_tests` e `--libidentify` e fica rodando, não termina. Causa: a listagem é uma chamada direta, fora do `process` que os jobs usam | Média: o `test.discover` desse projeto não termina, e cancelar não o para | Aberto. Registrado; fora do C1-34 sem decisão do autor |
+| C1-44 / árvore dos testes que volta ao topo ao rodar | Achado na prova na UI nativa do C1-34 (2026-11-10), com 17 linhas na árvore e o painel alto: rolada até os casos, a árvore volta ao topo depois do ▶, nas duas vezes medidas, e o caso que rodou sai da vista. Causa provável, por leitura: `ui/qml/jobs/JobsController.qml::prepareTestRun` zera a saída, o `hasOutput` de `ui/qml/panels/bottom/TestsPanel.qml` vira falso, a lista cresce até caber inteira e o `contentY` vai a 0; quando a saída volta, a lista encolhe e fica no topo | Baixa: para ver o desfecho do caso, é preciso rolar de novo a cada execução | Aberto. Registrado; sem decisão do autor, que pode juntá-lo ao C1-39, que mexe no mesmo painel |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
 `binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
@@ -2172,3 +2177,205 @@ Limites:
   continua com ` (Disabled)` no nome;
 - o comando mostrado do caso gtest não é o que roda (C1-38), e a árvore não
   distingue o caso de dentro nem o ignorado (C1-39).
+
+## 22. C1-34: o caso como o ctest roda o teste — desenho de 2026-11-10
+
+Decisões do autor de 2026-11-10: o caso de dentro roda com todos os
+argumentos do `add_test`, e as flags da IDE vêm por último. No Catch2, o
+`-r compact` só vai quando os argumentos não escolhem um reporter. O ambiente
+é o que o CTest dá, também na listagem, que não leva os argumentos, como o
+`gtest_discover_tests`. O C1-38 e o C1-40 entram junto. No C1-40, o teste
+cujo desfecho o CTest decide de outro jeito não se abre em casos, e o
+`TIMEOUT` do teste passa a valer para o caso.
+
+Medido com o CMake 4.4.5, o CTest dele, o gtest 1.18 e o Catch2 3.16.1, com o
+`env` como teste:
+- o CTest põe `CTEST_INTERACTIVE_DEBUG_MODE=1` no ambiente de todo teste,
+  com ou sem `-V` e `-j`, antes do `ENVIRONMENT`: um `ENVIRONMENT` com `=0`
+  vence, e um `unset:` tira a variável;
+- o `ENVIRONMENT` vale na ordem: com `R=1;R=2`, fica `2`. O texto é cortado
+  no primeiro `=`, e `Z=a=b` dá `a=b`. Uma entrada sem `=`, como `S`, tira a
+  variável, e `=x` põe uma de nome vazio. Depois dela, `S=string_append:x`
+  dá `x`, e não o valor do processo com `x`, e `S=reset:` deixa a variável
+  fora;
+- o `ENVIRONMENT_MODIFICATION` vale na ordem, depois do `ENVIRONMENT`. O
+  texto é cortado no primeiro `=` e, depois dele, no primeiro `:`: `N=set:a=b`
+  dá `a=b`, e `O=set:a:b` dá `a:b`. O `set` põe o valor, também vazio. O
+  `unset` tira a variável, e a operação seguinte parte do vazio. O `reset`
+  volta ao valor de antes das modificações, o do `ENVIRONMENT` ou o do
+  processo, e sem nenhum a variável fica fora; o valor do `unset` e do
+  `reset` não conta;
+- o `string_append` e o `string_prepend` juntam o valor ao atual, ou ao
+  vazio. O `path_list_append` e o `path_list_prepend` põem o `:` só quando o
+  atual não é vazio: `/a` mais o vazio dá `/a:`, e o vazio mais `/x` dá
+  `/x`. O `cmake_list_append` e o `cmake_list_prepend` fazem o mesmo com o
+  `;`. Uma operação de juntar sobre a variável ausente a põe, também vazia;
+- a entrada sem `=`, sem `:` ou com outra operação faz o CTest não rodar o
+  teste: `***Not Run` e `BAD_COMMAND`, com ``Error: Missing `=` after the
+  variable name``, ``Error: Missing `:` after the operation`` ou `Error:
+  Unrecognized environment manipulation argument: bogus`;
+- o `json-v1` traz o `ENVIRONMENT_MODIFICATION` com o `;` escapado num
+  elemento só (`V=set:a;b`), e o `WORKING_DIRECTORY`, sempre: sem ele
+  declarado, é a pasta de build do `CMakeLists.txt`;
+- o gtest usa a última de duas flags iguais: `--gtest_brief=1` antes de
+  `--gtest_brief=0` dá a linha do caso, e o contrário não. Um argumento que
+  não é flag dele fica para o `main` depois do `InitGoogleTest`. Com
+  `--gtest_repeat=2`, o caso escreve duas linhas `[       OK ]`. Com
+  `--gtest_also_run_disabled_tests`, o caso desativado roda e passa, sem o
+  `YOU HAVE 1 DISABLED TEST`;
+- no Catch2, um segundo reporter na saída padrão aborta o binário: `-r junit`
+  ou `-r compact` com mais um `-r compact` dão `cannot use default output for
+  multiple reporters` e o código 134. O `-r junit::out=j.xml` com o
+  `-r compact` roda os dois. Com `-o arquivo`, o `-r compact` escreve no
+  arquivo, e o código de saída segue o desfecho;
+- o `json-v1` traz o `WILL_FAIL`, o `PASS_REGULAR_EXPRESSION`, o
+  `FAIL_REGULAR_EXPRESSION`, o `SKIP_REGULAR_EXPRESSION`, o
+  `SKIP_RETURN_CODE`, o `DISABLED`, o `FIXTURES_REQUIRED`, o
+  `REQUIRED_FILES` e o `TIMEOUT_AFTER_MATCH` só quando ligados; o
+  `WILL_FAIL FALSE` e o `DISABLED OFF` não aparecem;
+- o `TIMEOUT` vem em segundos, como número. Com `1`, um `sleep 3` dá
+  `***Timeout`; com `0` ou `-1`, não há limite. Com `include(CTest)` e
+  `DART_TESTING_TIMEOUT` 1, o `DartConfiguration.tcl` diz `TimeOut: 1`, o
+  CTest para em 1 s o teste sem `TIMEOUT`, e o `json-v1` não traz o prazo.
+  Sem um arquivo de recursos, o `RESOURCE_GROUPS` não põe variável nenhuma;
+- o `TEST_LAUNCHER` vem no começo do `command`: `/usr/bin/env LAUNCHED=1
+  <exe>`. A listagem pergunta ao lançador, que não responde, e o teste fica
+  fechado;
+- o teste que cai sai como `***Exception: SegFault`, `***Exception:
+  Numerical`, `***Exception: Illegal`, `Subprocess aborted***Exception:`,
+  `Subprocess terminated***Exception:` ou `Subprocess killed***Exception:`, e o
+  que passa do prazo como `***Timeout` (C1-42).
+
+Desenho, em `test::launch`, novo:
+- o ambiente do caso e da listagem é o do processo, mais o do Visual Studio
+  que o `ctest` recebe, o `CTEST_INTERACTIVE_DEBUG_MODE=1`, o `ENVIRONMENT` e
+  o `ENVIRONMENT_MODIFICATION`, com as regras medidas. No Windows, o nome é
+  comparado sem caixa e a lista de caminhos usa o `;`;
+- o caso gtest roda com `<exe> <argumentos> --gtest_filter=<caso>
+  --gtest_color=no --gtest_print_time=1 --gtest_brief=0`. O caso Catch2 roda
+  com `<exe> <argumentos> <filtro>`, mais o `-r compact` quando nenhum
+  argumento é `-r` ou `--reporter`, também nas formas juntas que o Clara lê;
+- o comando mostrado sai dos mesmos argumentos, cada um com aspas quando o
+  shell do sistema pede: no Unix, as simples do POSIX; no Windows, o `& '…'`
+  do PowerShell (C1-38);
+- com `TIMEOUT` maior que zero, o caso é parado no prazo, conta como
+  reprovado e ganha uma linha que diz por quê. Um prazo grande demais para
+  uma duração fica sem limite;
+- C1-40: em `test::entries`, o teste com uma das propriedades que mudam o
+  desfecho não se abre em casos, e nem pede a listagem. O
+  `ENVIRONMENT_MODIFICATION` que o CTest recusa também deixa o teste fechado.
+  No `test.run`, o id de um caso desse teste é recusado com o motivo;
+- C1-41, com a decisão do autor de 2026-11-10 de corrigir junto: o comando
+  mostrado do `ctest` da linha e do `ctest -N` da descoberta sai dos mesmos
+  argumentos, com o `--test-dir` e as aspas do C1-38;
+- C1-42, achado na regressão e com a decisão do autor de 2026-11-10 de
+  corrigir junto: as linhas `***Exception` e `***Timeout` do CTest contam
+  como reprovadas;
+- protocolo 0.216.0, sem campo novo, com o contrato no
+  [03 test](../arquitetura/03-dominios/test.md) antes da mudança.
+
+Provas necessárias:
+- testes do dono com cada operação, a ordem, o vazio, o ausente, o `reset`
+  depois do `unset`, a entrada que o CTest recusa e o nome sem caixa; os
+  argumentos e as aspas do comando mostrado; cada propriedade que fecha o
+  teste e a que não fecha; o prazo;
+- regressão de ponta a ponta com o CMake, o gtest e o Catch2 reais: o caso
+  vê o ambiente e os argumentos que a linha do ctest vê, comparados pelo
+  próprio binário; o reporter do `add_test`; o desfecho de cada propriedade
+  pelo ctest e o teste fechado; o caso parado no `TIMEOUT`; e a mesma
+  regressão reprovando no código de antes;
+- mutantes que compilem e reprovem pela guarda.
+
+Limites previstos:
+- o comando mostrado não leva o ambiente do teste;
+- a listagem de um binário que não termina prende a descoberta (C1-43);
+- o `TIMEOUT_SIGNAL_NAME` não vale: no prazo, o caso é parado como um job
+  cancelado;
+- o prazo padrão do CTest, o `TimeOut` do `DartConfiguration.tcl`, que o
+  `json-v1` não traz, não vale para o caso;
+- o Windows não foi medido: a lista de caminhos com `;`, o nome sem caixa,
+  a entrada sem `=` e as aspas do PowerShell seguem a documentação.
+
+### 22.1 C1-34: integração e provas — 2026-11-10
+
+Integrado no desenho do §22, protocolo 0.216.0:
+- `test/launch.rs`, novo: o ambiente do caso e da listagem, pelas regras
+  medidas, e o comando do caso, com os argumentos do `add_test`, as flags da
+  IDE por último e o comando mostrado com as aspas do shell (C1-38);
+- `test/entries.rs`: `closed`, com as nove propriedades que mudam o desfecho
+  e o `ENVIRONMENT_MODIFICATION` recusado, antes da listagem e no `resolve`;
+  o reporter do Catch2 nas formas que o Clara lê (C1-40);
+- `test/frameworks.rs`: o `json-v1` dá as propriedades ligadas e o `TIMEOUT`;
+  a listagem roda com o ambiente e é pedida uma vez por binário, pasta e
+  ambiente; o caso parado no prazo conta só como reprovado;
+- `test/mod.rs`: o `stream_command` com prazo, que diz se parou; o comando
+  mostrado do `ctest` com o `--test-dir` e as aspas, na linha e no `-N`
+  (C1-41);
+- `test/parse.rs`: `***Exception` e `***Timeout` contam como reprovados
+  (C1-42);
+- `platform`: `shell_argument`, as aspas de um argumento no Unix e no
+  PowerShell.
+
+Provas:
+- testes do dono: cada operação do `ENVIRONMENT_MODIFICATION`, a ordem, o
+  vazio, o ausente, o `reset` depois do `unset`, a variável que o
+  `ENVIRONMENT` tira, o `CTEST_INTERACTIVE_DEBUG_MODE` antes do
+  `ENVIRONMENT`, o nome comparado como o sistema compara e as três entradas
+  que o CTest recusa, com o texto exato e o comando intocado; os argumentos e
+  as aspas do comando mostrado, no Unix e no Windows; cada propriedade que
+  fecha o teste e o valor desligado que não fecha, lidos do `json-v1`; o
+  reporter do Catch2 em cada forma; a listagem pedida uma vez por ambiente; o
+  caso parado no `TIMEOUT` e a linha que diz por quê; as linhas de queda e de
+  prazo do CTest;
+- em `tests/c_project/case_environment.rs`, com o CMake 4.4.5, o gtest 1.18 e
+  o Catch2 3.16.1 reais, num projeto com espaço e acento: o binário escreve o
+  ambiente e os argumentos que recebe, e o caso de `env_unit` vê os mesmos
+  que a linha do ctest vê, com o `ENVIRONMENT` que tira o `HOME`, o
+  `path_list_prepend` no `PATH`, o `set:` vazio e uma pasta com espaço nos
+  argumentos; o comando mostrado é o que roda, com as aspas. Os testes com
+  `WILL_FAIL`, `DISABLED`, fixtures e o `ENVIRONMENT_MODIFICATION` recusado
+  não se abrem em casos, o id de um caso deles sai recusado com o texto
+  exato, e a linha do ctest dá o desfecho do CTest: o `wf` passa, o `off`
+  fica ignorado, o `bad` reprova. O caso de um teste com `TIMEOUT 1` é parado
+  e reprova com a linha do motivo, e a linha do ctest dele também reprova. O
+  caso Catch2 de um teste com `-r console` roda sem o `-r compact` e passa;
+- a mesma regressão, posta no código do commit anterior, reprova em cada
+  parte: o caso sem o ambiente e sem os argumentos, o comando sem aspas, os
+  casos dos testes fechados, o caso que espera 30 s e passa, e a linha do
+  ctest que passa do prazo sem contar;
+- na UI nativa isolada, num Xvfb a 1366x768, com o core 0.216.0 atrás de um
+  `tee` do IPC, o projeto da regressão mais um teste que cai, numa pasta com
+  espaço e acento, e o `autoSave` desligado, confirmado pelo IPC: compilar e
+  rodar tudo dá 3 aprovados, 6 reprovados e 1 ignorado, com o `crash`
+  (`***Exception: SegFault`), o `slow` e o `slow_end` (`***Timeout`) em
+  vermelho, e o comando mostrado `ctest --test-dir '<pasta>'
+  --output-on-failure` (C1-41, C1-42). "Listar testes" mostra 17 linhas, os
+  10 testes do ctest e 7 casos, sem caso do `wf`, do `off`, do `fx_user` e do
+  `bad`. O ▶ de `env_unit::Env.Reads` roda o binário com a pasta dos dados, o
+  `--gtest_brief=1` e as flags da IDE por último, o comando mostrado é o que
+  roda, com as aspas, e as seis linhas que o binário escreve são iguais às da
+  linha `env_unit` na suíte; a linha do caso fica verde. O ▶ de
+  `slow_end::Slow.Passes` passa no gtest, é parado em 1 s, ganha a linha do
+  motivo e fica vermelho, com `passou: 0 falhou: 1`. O ▶ de `c2_rep::reads`
+  roda `c2 -r console reads` e passa. O ▶ da linha `slow_end` dá
+  `***Timeout` e fica vermelho. A IDE sai com 0, e o log dela fica vazio, sem
+  aviso de QML. A prova achou o C1-44, a árvore que volta ao topo ao rodar, e
+  o INF-07 (62 §3.4), o `settings.json` de esquema desconhecido que a IDE
+  sobrescreve;
+- nenhum teste novo fica de fora do Windows: a catraca dos adiados parou a
+  segunda rodada do gate com três `cfg(unix)` e um adiado da W6 a mais, e o
+  esperado de cada sistema passou para dentro do teste, com o JSON do ctest
+  falso montado pelo `serde_json`, que escapa a `\` dos caminhos;
+- 72 mutantes que compilam: 71 reprovados por um teste do dono ou pela
+  regressão; os quatro que não compilavam foram reescritos até compilar. Um
+  sobreviveu e é equivalente: tirar a recusa do `apply_environment` no
+  `run_inner_case`, porque o `resolve` já recusa o teste pelo `closed` antes
+  de chegar ali; a guarda fica, porque o tipo pede o `Err`, e o mutante que
+  tira o `closed` do `resolve` reprova.
+
+Limites:
+- os do §22;
+- o Windows segue sem medida: as aspas do PowerShell, o nome sem caixa e a
+  lista de caminhos com `;` seguem a documentação. Os testes do dono rodam
+  nos dois sistemas, com o esperado de cada um, e o do prazo e do ambiente
+  usa o executável falso da W2b, mas só rodaram no Linux.

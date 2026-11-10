@@ -153,9 +153,10 @@ pub fn discover_tests(
                 .arg(&build_dir)
                 .arg("-N")
                 .current_dir(root);
-            let configuration = super::ctest_configuration(&mut c, &build_dir);
+            super::ctest_configuration(&mut c, &build_dir);
             crate::msvc::apply_environment(&mut c);
-            (c, format!("ctest -N{configuration}"))
+            let display = super::ctest_shown(&c);
+            (c, display)
         }
         ProjectKind::Python => {
             let Some(launcher) = python else {

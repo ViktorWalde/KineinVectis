@@ -302,6 +302,7 @@ flowchart LR
   n_core_test --> n_core_build
   n_core_test --> n_core_cmake
   n_core_test --> n_core_msvc
+  n_core_test --> n_core_platform
   n_core_test --> n_core_process
   n_core_test --> n_core_python
   n_core_toolchain --> n_core_cmake_configuration
@@ -321,7 +322,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-53 módulos, 172 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+53 módulos, 173 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -381,7 +382,7 @@ flowchart LR
 | `size` | — | O tamanho de um ELF: |
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
-| `test` | build, cmake, msvc, process, python | Test execution with streamed, per-case results. |
+| `test` | build, cmake, msvc, platform, process, python | Test execution with streamed, per-case results. |
 | `toolchain` | cmake_configuration, cmake_presets, kits, platform, tools | Toolchain: |
 | `tools` | msvc, platform, process | External tool detection. |
 | `workspace` | configaction, fsops, platform, process, python, tools | Workspace opening, project kind detection, and metadata persistence. |

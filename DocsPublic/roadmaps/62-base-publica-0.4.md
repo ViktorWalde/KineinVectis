@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-33, C1-35–C1-37, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-34, C1-38, C1-39, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-38, C1-40–C1-42, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-39, C1-43, C1-44, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -197,9 +197,9 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
-e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-09: INF-01
+e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-10: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04 e INF-05 corrigidos; INF-06 e UI-01 abertos. A dívida
+INF-04 e INF-05 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -473,7 +473,12 @@ auditorias e provas posteriores datadas nos donos:**
   mais, e o C1-37, o desfecho do caso de dentro que pintava outra linha
   ([§21.1](../especificacoes/consolidacao-nativa-de-c.md#211-c1-32-integração-e-provas--2026-11-10),
   protocolo 0.215.0). O C1-34, o caso rodado sem o ambiente e os argumentos
-  do teste do ctest, fica para o commit seguinte.
+  do teste do ctest, ficou para o commit seguinte, que o corrigiu com o C1-38,
+  o comando mostrado do caso, o C1-40, o teste cujo desfecho o CTest decide de
+  outro jeito, o C1-41, o comando mostrado do ctest, e o C1-42, a linha que
+  cai ou passa do prazo
+  ([§22.1](../especificacoes/consolidacao-nativa-de-c.md#221-c1-34-integração-e-provas--2026-11-10),
+  protocolo 0.216.0).
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste
@@ -652,6 +657,20 @@ auditorias e provas posteriores datadas nos donos:**
   reprodução sob carga controlada e uma prova que não dependa do relógio da
   máquina. Decisão do autor de 2026-11-09: fica aberto por enquanto, sem
   mudar o teste. Estado aberto.
+- **INF-07 — `settings.json` de esquema desconhecido sobrescrito.** Dono e
+  evidência: `crates/kinein-core/src/settings.rs`. `read_values` devolve o
+  vazio para o arquivo sem `schemaVersion` ou com outro, e `set_workspace` e
+  `set_global` juntam o que chega a esse vazio e gravam por cima. Observado
+  em 2026-11-10, no preparo da prova na UI do C1-34: o
+  `.kinein/settings.json` escrito à mão com `{"autoSave": false}`, sem o
+  `schemaVersion`, foi ignorado, e o primeiro salvamento do layout o
+  substituiu, sem o `autoSave`. Pela mesma leitura, uma versão da IDE com o
+  esquema 1 apagaria o arquivo de uma versão com o esquema 2 no mesmo
+  projeto. Severidade média: perde, sem aviso, preferências que a IDE não
+  soube ler. Causa confirmada por leitura: a escrita não distingue o arquivo
+  ausente do que ela não entende. Testes: o arquivo sem `schemaVersion`, o de
+  esquema maior e o JSON inválido, cada um mantido no disco depois de um
+  `settings.set`, com mutações. Decisão do autor pendente. Estado aberto.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

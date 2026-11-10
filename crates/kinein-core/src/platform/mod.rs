@@ -190,6 +190,15 @@ pub(crate) fn program_invocation(path: &str) -> String {
     imp::program_invocation(path)
 }
 
+/// Um argumento na linha do [`program_invocation`]: como esta' quando o shell
+/// o le igual, senao entre aspas simples. No Unix, as do POSIX. No Windows, as
+/// do PowerShell, tambem no argumento que comeca com `-` ou tem `.`, que o
+/// PowerShell pode dividir num programa nativo (C1-38).
+#[must_use]
+pub(crate) fn shell_argument(text: &str) -> String {
+    imp::shell_argument(text)
+}
+
 /// O programa e os argumentos que rodam `command` como o usuario o digitaria:
 /// pelo shell do sistema, com o ambiente de login.
 ///
@@ -387,4 +396,39 @@ pub(crate) fn try_kill_group(group: &Group) -> io::Result<()> {
 /// DocsPublic/roadmaps/60 §3.3, W2c).
 pub(crate) fn release_group(group: &Group) {
     imp::release_group(&group.0);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::shell_argument;
+
+    /// C1-38: what the shell reads the same stays as it is; the rest goes in
+    /// single quotes.
+    #[test]
+    fn an_argument_is_quoted_only_when_the_shell_asks() {
+        let posix = [
+            ("--gtest_filter=Math.Adds", "--gtest_filter=Math.Adds"),
+            ("/b/os dados", "'/b/os dados'"),
+            ("it's", "'it'\\''s'"),
+            ("", "''"),
+            ("a\\, b", "'a\\, b'"),
+            ("$HOME", "'$HOME'"),
+            ("*", "'*'"),
+            ("ação", "'ação'"),
+        ];
+        let powershell = [
+            ("--gtest_filter=Math.Adds", "'--gtest_filter=Math.Adds'"),
+            ("C:\\b\\dados", "C:\\b\\dados"),
+            ("it's", "'it''s'"),
+            ("", "''"),
+            ("a,b", "'a,b'"),
+            ("$HOME", "'$HOME'"),
+            ("@args", "'@args'"),
+            ("ação", "'ação'"),
+        ];
+        let expected = if cfg!(windows) { powershell } else { posix };
+        for (text, quoted) in expected {
+            assert_eq!(shell_argument(text), quoted, "{text}");
+        }
+    }
 }

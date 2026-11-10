@@ -6,6 +6,31 @@
 
 ### Testes (`test.run` / `test.discover` — jobs assíncronos)
 
+**O caso como o ctest roda o teste (`0.216.0`, C1-34, C1-38, C1-40, C1-41 e
+C1-42).** O
+caso de dentro roda com o ambiente que o CTest dá ao teste dele: o do processo,
+o do Visual Studio que o `ctest` recebe, `CTEST_INTERACTIVE_DEBUG_MODE=1`, o
+`ENVIRONMENT` e o `ENVIRONMENT_MODIFICATION`, na ordem e com as regras que o
+CTest do CMake 4.4.5 aplica. A listagem dos casos recebe o mesmo ambiente,
+sem os argumentos. O caso recebe os argumentos do `add_test`, e depois deles
+as flags da IDE: no gtest, `--gtest_filter=<caso> --gtest_color=no
+--gtest_print_time=1 --gtest_brief=0`, das quais o gtest usa a última; no
+Catch2, o filtro, e o `-r compact` só quando nenhum argumento escolhe um
+reporter, porque dois na saída padrão abortam o binário. O `command` do
+`event.test.started` é esse comando, com aspas onde o shell do sistema pede.
+Com `TIMEOUT` maior que zero, o caso é parado no prazo e sai `failed`, com
+uma linha que diz por quê. O `test.discover` não abre em casos o teste com
+`WILL_FAIL`, `PASS_REGULAR_EXPRESSION`, `FAIL_REGULAR_EXPRESSION`,
+`SKIP_REGULAR_EXPRESSION`, `SKIP_RETURN_CODE`, `DISABLED`,
+`FIXTURES_REQUIRED`, `REQUIRED_FILES` ou `TIMEOUT_AFTER_MATCH`, com que o
+CTest decide o desfecho de outro jeito, nem o teste cujo
+`ENVIRONMENT_MODIFICATION` o CTest recusa; o `test.run` de um caso dele
+termina com `error` e o motivo. O `command` do `event.test.started` do
+`ctest` da linha e do `ctest -N` da descoberta é o que roda, com o
+`--test-dir` e as aspas. A linha do ctest com `***Exception` ou `***Timeout`,
+do teste que caiu ou passou do prazo, vira `event.test.case` `failed`. Veja a
+[consolidação C §22](../../especificacoes/consolidacao-nativa-de-c.md#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10).
+
 **Testes que já são casos (`0.215.0`, C1-32, C1-35, C1-36 e C1-37).** O
 `event.test.case` de um caso de dentro leva o id da árvore, `teste::caso`, e
 não mais o nome de dentro do binário: a linha que rodou é a que se pinta. Num `CMake`,

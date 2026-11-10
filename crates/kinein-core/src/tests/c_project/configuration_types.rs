@@ -122,7 +122,14 @@ fn c1_22_the_ide_builds_tests_and_runs_the_configuration_clangd_reads() {
     .collect();
     names.sort();
     assert_eq!(names, ["kv_release_only", "kv_smoke"]);
-    assert_eq!(listed, ["ctest -N -C Release"]);
+    // C1-41: the command shown is the one that runs at the root.
+    assert_eq!(
+        listed,
+        [format!(
+            "ctest --test-dir {} -N -C Release",
+            crate::platform::shell_argument(&folder.display().to_string())
+        )]
+    );
     let entries: Vec<_> = crate::test::frameworks::ctest_entries(
         Path::new("ctest"),
         &folder,

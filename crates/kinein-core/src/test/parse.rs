@@ -80,7 +80,12 @@ pub(super) fn parse_ctest_case(line: &str) -> Option<(String, CaseStatus)> {
         || line.contains("***Not Run (Disabled)")
     {
         CaseStatus::Ignored
-    } else if line.contains("***Failed") || line.contains("***Not Run") {
+    } else if line.contains("***Failed")
+        || line.contains("***Not Run")
+        // C1-42: the test that crashed or passed its `TIMEOUT` failed too.
+        || line.contains("***Exception")
+        || line.contains("***Timeout")
+    {
         CaseStatus::Failed
     } else if line.contains("   Passed") {
         CaseStatus::Passed
