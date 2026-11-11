@@ -6,6 +6,16 @@
 
 ### Testes (`test.run` / `test.discover` — jobs assíncronos)
 
+**O nome do caso de dentro é o id (`0.217.0`, C1-39 e C1-44).** No
+`event.test.discovered`, o `name` do caso de dentro de um binário do ctest
+passa a ser o id inteiro, `<teste do ctest>::<caso>`, como o `TestCaseInfo`
+diz para todo runner que não é o pytest: `ns::unit::Math.Adds`, e não mais
+`Math.Adds`, que se confundia com a linha do ctest de mesmo nome do
+`gtest_discover_tests` e com o caso de mesmo nome de outro teste. Sem campo
+novo. Na UI, o ponto do caso `ignored` é âmbar, e a árvore fica do mesmo
+tamanho quando um run novo zera a saída, para não voltar ao topo. Veja a
+[consolidação C §23](../../especificacoes/consolidacao-nativa-de-c.md#23-c1-39-e-c1-44-a-árvore-dos-casos--desenho-de-2026-11-10).
+
 **O caso como o ctest roda o teste (`0.216.0`, C1-34, C1-38, C1-40, C1-41 e
 C1-42).** O
 caso de dentro roda com o ambiente que o CTest dá ao teste dele: o do processo,
@@ -86,7 +96,8 @@ ao próprio binário: `ctest --test-dir <build> --show-only=json-v1` (ctest
 depois `<exe> --gtest_list_tests` (gtest: `Suite.` na coluna 0, `  Caso`
 indentado; parametrizados `Suite/Inst.Caso/0`) ou `<exe> --list-tests
 --verbosity quiet` (Catch2 v3: um nome por linha). Cada caso entra como
-`TestCaseInfo { id: "<teste do ctest>::<caso>", name: "<caso>" }` depois das
+`TestCaseInfo { id: "<teste do ctest>::<caso>", name: "<caso>" }` (desde
+`0.217.0`, `name` é o id inteiro) depois das
 linhas do ctest; um binário que não responde a nenhuma listagem continua
 sendo só a linha do ctest. `test.run { testId: "unit_tests::Math.Adds" }`
 roda o binário direto — `--gtest_filter=Math.Adds --gtest_color=no` (cada

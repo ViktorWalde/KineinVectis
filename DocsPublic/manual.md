@@ -524,6 +524,14 @@ linha só e roda inteiro. A linha do `ctest` do teste que cai, como num
 `SegFault`, ou que passa do prazo fica vermelha e conta como reprovada
 (desde 2026-11-10).
 
+**A linha de cada caso.** O caso de dentro aparece na lista pelo nome
+inteiro, `teste::caso`, como `slow_end::Slow.Passes`: dois testes com casos de
+mesmo nome, ou a linha do `gtest_discover_tests` e o caso de dentro, não se
+confundem. O ponto do caso que rodou e foi pulado, como um `GTEST_SKIP`, é
+âmbar; o cinza fica para o que não rodou. **Rodar só este teste** no fim de uma
+lista longa deixa a lista onde estava, e o resultado aparece na linha que você
+clicou (desde 2026-11-10).
+
 **Análise em C/C++.** O clangd sobe com `--clang-tidy` e lê o `.clang-tidy`
 do projeto: os avisos aparecem no arquivo aberto como qualquer diagnóstico.
 A **Análise de qualidade** (`Ctrl+Shift+L`) num CMake ou Makefile roda o

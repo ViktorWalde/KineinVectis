@@ -1054,12 +1054,12 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-36 / testes do 1 ao 9 fora da árvore | Achado na prova do C1-32 com o CTest do CMake 4.4.5 (2026-11-10). Com dez testes ou mais, o CTest alinha o número: o `ctest -N` escreve `  Test  #1: t1` e a execução, ` 1/11 Test  #1: t1 ...   Passed`. `test::discover::parse_ctest_list_line` pede `Test #` no começo da linha, e `test::parse::parse_ctest_case` procura `Test #`. O `-N` também escreve `t2 (Disabled)` para o desativado. Causa: a leitura do texto do CTest seguia a forma de menos de dez testes, e o nome exato já vinha no `--show-only=json-v1` | Alta: num projeto CMake com dez testes ou mais, os nove primeiros somem da árvore, e rodar todos não conta o desfecho deles; com cem ou mais, os 99 primeiros | Corrigido em 2026-11-10 ([§21.1](#211-c1-32-integração-e-provas--2026-11-10), protocolo 0.215.0). Achado com a decisão do autor de 2026-11-10 de incluir as correções no commit do C1-32: os nomes da árvore saem do `json-v1`, e a leitura do `Test #N:` aceita o número alinhado |
 | C1-37 / desfecho do caso de dentro fora da linha dele | Achado no preparo da prova na UI do C1-32 (2026-11-10), por leitura. `ui/qml/jobs/JobsController.qml::handleTestCase` pinta a linha da árvore cujo **id** é o `name` do `event.test.case`, como no cargo, no pytest e no ctest, em que o nome do caso é o id. `test::frameworks::run_inner_case` manda o nome de dentro do binário, `Math.Adds`, e o id da linha é `ns::unit::Math.Adds`. Causa: o caso de dentro tem um id que não é o nome dele, e o evento levava o nome | Média: o desfecho do caso de dentro não pinta a linha dele e vai para a lista de casos soltos; com o `gtest_discover_tests` ao lado, pinta a linha do ctest de mesmo nome, que não rodou | Corrigido em 2026-11-10 ([§21.1](#211-c1-32-integração-e-provas--2026-11-10), protocolo 0.215.0). Achado com a decisão do autor de 2026-11-10 de incluir as correções no commit do C1-32: o `event.test.case` do caso de dentro leva o id da árvore, `teste::caso` |
 | C1-38 / comando do caso gtest que não é o que roda | Achado na prova na UI nativa do C1-32 (2026-11-10). `test::frameworks::run_inner_case` roda o gtest com `--gtest_filter=Math.Adds --gtest_color=no --gtest_print_time=1 --gtest_brief=0`, e o `event.test.started` diz só `…/gt --gtest_filter=Math.Adds`; o caminho do executável vai sem aspas, e o do projeto da prova tem espaços. Já faltavam duas flags antes do C1-32, que pôs a terceira. Causa: o texto mostrado é montado à parte dos argumentos | Baixa: colado num terminal, o comando mostrado não roda, ou roda outra coisa: com o `brief` ligado no `main`, esconde a linha do caso que passou | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0), junto do C1-34, que decide quais argumentos acompanham o filtro do caso: o comando mostrado sai dos mesmos argumentos, com aspas onde o shell pede ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
-| C1-39 / árvore que não distingue o caso de dentro nem o ignorado | Achado na prova na UI nativa do C1-32 (2026-11-10). `ui/qml/panels/bottom/TestsPanel.qml` mostra o `name` da linha: o caso `ns::unit::Math.Adds` aparece como `Math.Adds`, igual à linha do ctest do `gtest_discover_tests`, e os casos de `ns::unit` e de `gt_color` aparecem repetidos. `statusColor` pinta `ignored` com a cor do que não rodou | Baixa: na árvore, não se sabe de que teste é um caso de dentro, e o caso ignorado parece não ter rodado; o resumo diz `ignorado: 1` | Aberto. Decisão do autor de 2026-11-10: a linha mostra o id inteiro, `ns::unit::Math.Adds`, o texto que o "Rodar só este" usa, sem campo novo no protocolo; o ponto do ignorado é âmbar, o `warningSoft`. Corrigir num commit próprio, depois do C1-34, e provar no harness e na UI nativa |
+| C1-39 / árvore que não distingue o caso de dentro nem o ignorado | Achado na prova na UI nativa do C1-32 (2026-11-10). `ui/qml/panels/bottom/TestsPanel.qml` mostra o `name` da linha: o caso `ns::unit::Math.Adds` aparece como `Math.Adds`, igual à linha do ctest do `gtest_discover_tests`, e os casos de `ns::unit` e de `gt_color` aparecem repetidos. `statusColor` pinta `ignored` com a cor do que não rodou | Baixa: na árvore, não se sabe de que teste é um caso de dentro, e o caso ignorado parece não ter rodado; o resumo diz `ignorado: 1` | Corrigido em 2026-11-10 ([§23.1](#231-c1-39-e-c1-44-integração-e-provas--2026-11-10), protocolo 0.217.0). Decisão do autor de 2026-11-10: a linha mostra o id inteiro, `ns::unit::Math.Adds`, o texto que o "Rodar só este" usa, sem campo novo no protocolo; o ponto do ignorado é âmbar, o `warningSoft`. Corrigir num commit próprio, depois do C1-34, e provar no harness e na UI nativa |
 | C1-40 / caso de dentro de um teste cujo desfecho o CTest decide de outro jeito | Achado na medida do C1-34 com o CTest do CMake 4.4.5 (2026-11-10). Num teste escrito à mão que roda o binário gtest inteiro, com um caso que falha: o `WILL_FAIL` faz o CTest dizer `Passed`; o `PASS_REGULAR_EXPRESSION` que não aparece reprova; o `SKIP_RETURN_CODE 1` dá `Skipped`; o `DISABLED` dá `Not Run (Disabled)`; o `FIXTURES_REQUIRED` roda antes o teste do `FIXTURES_SETUP`, também com `-R`; e o `REQUIRED_FILES` que falta dá `Not Run`. O `json-v1` traz cada uma só quando ligada: o `WILL_FAIL FALSE` e o `DISABLED OFF` não aparecem. O `test.discover` abre esses testes em casos, e o caso roda pelo binário e sai pelo código de saída dele. Causa: o desfecho do CTest não é só o código de saída, e a regra do C1-32 olhava só o que escolhe os casos | Média: o caso de um teste `WILL_FAIL` sai reprovado quando a linha do ctest passa; o de um teste com fixture falha por falta do preparo; o de um teste desativado roda | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: não abrir em casos, com a mesma regra do C1-32, junto do C1-34; o `TIMEOUT` do teste passa a valer para o caso ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
 | C1-41 / comando mostrado da linha do ctest que não roda | Achado no desenho do C1-34 (2026-11-10), por leitura de `test::runners::ctest_command`. O `event.test.started` diz `ctest --output-on-failure -R ^Widget::draw works$`: sem o `--test-dir` da pasta da configuração, que o `ctest` recebe, e sem aspas no nome com espaço do `catch_discover_tests`; o `ctest` roda na raiz do projeto. Causa: o texto é montado à parte dos argumentos, como no C1-38 | Baixa: colado num terminal na raiz, o comando mostrado não acha os testes, ou roda outros | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir junto do C1-34. O comando mostrado sai dos mesmos argumentos, com o `--test-dir` e as aspas do C1-38; o `ctest -N` da descoberta, que também vinha sem o `--test-dir`, entra junto ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
 | C1-42 / linha do ctest que cai ou passa do prazo sem contar | Achado na regressão do C1-34 com o CTest do CMake 4.4.5 (2026-11-10). A linha do teste que cai é `***Exception: SegFault`, `***Exception: Numerical`, `***Exception: Illegal` ou `Subprocess aborted***Exception:`, com `terminated` e `killed` no lugar de `aborted` para o `SIGTERM` e o `SIGKILL`; a do que passa do `TIMEOUT` é `***Timeout`. `test::parse::parse_ctest_case` só lê `Passed`, `***Failed`, `***Not Run`, `***Skipped` e `***Disabled`, e essas linhas não viram `event.test.case`. Causa: as formas de falha do CTest que não são `***Failed` ficaram fora da leitura | Alta: num projeto C, o teste que cai por `SegFault` ou trava até o prazo não fica vermelho na árvore nem conta como reprovado; só o código de saída do job diz falha | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir junto do C1-34; as linhas medidas viram `failed` |
-| C1-43 / listagem de um binário que não termina | Achado no desenho da prova do C1-34 (2026-11-10), por leitura de `test::frameworks::list_cases`: a listagem roda o binário com `Command::output()`, que espera o processo sem prazo e sem olhar o `cancel` do job. Um programa comum posto como teste, como um servidor que ignora `--gtest_list_tests` e `--libidentify` e fica rodando, não termina. Causa: a listagem é uma chamada direta, fora do `process` que os jobs usam | Média: o `test.discover` desse projeto não termina, e cancelar não o para | Aberto. Registrado; fora do C1-34 sem decisão do autor |
-| C1-44 / árvore dos testes que volta ao topo ao rodar | Achado na prova na UI nativa do C1-34 (2026-11-10), com 17 linhas na árvore e o painel alto: rolada até os casos, a árvore volta ao topo depois do ▶, nas duas vezes medidas, e o caso que rodou sai da vista. Causa provável, por leitura: `ui/qml/jobs/JobsController.qml::prepareTestRun` zera a saída, o `hasOutput` de `ui/qml/panels/bottom/TestsPanel.qml` vira falso, a lista cresce até caber inteira e o `contentY` vai a 0; quando a saída volta, a lista encolhe e fica no topo | Baixa: para ver o desfecho do caso, é preciso rolar de novo a cada execução | Aberto. Registrado; sem decisão do autor, que pode juntá-lo ao C1-39, que mexe no mesmo painel |
+| C1-43 / listagem de um binário que não termina | Achado no desenho da prova do C1-34 (2026-11-10), por leitura de `test::frameworks::list_cases`: a listagem roda o binário com `Command::output()`, que espera o processo sem prazo e sem olhar o `cancel` do job. Um programa comum posto como teste, como um servidor que ignora `--gtest_list_tests` e `--libidentify` e fica rodando, não termina. Causa: a listagem é uma chamada direta, fora do `process` que os jobs usam | Média: o `test.discover` desse projeto não termina, e cancelar não o para | Aberto. Registrado; fora do C1-34 sem decisão do autor. Decisão do autor de 2026-11-10: corrigir num commit próprio, depois do C1-39: a listagem pelo mesmo processo dos jobs, com o `cancel` e um prazo |
+| C1-44 / árvore dos testes que volta ao topo ao rodar | Achado na prova na UI nativa do C1-34 (2026-11-10), com 17 linhas na árvore e o painel alto: rolada até os casos, a árvore volta ao topo depois do ▶, nas duas vezes medidas, e o caso que rodou sai da vista. Causa provável, por leitura: `ui/qml/jobs/JobsController.qml::prepareTestRun` zera a saída, o `hasOutput` de `ui/qml/panels/bottom/TestsPanel.qml` vira falso, a lista cresce até caber inteira e o `contentY` vai a 0; quando a saída volta, a lista encolhe e fica no topo | Baixa: para ver o desfecho do caso, é preciso rolar de novo a cada execução | Corrigido em 2026-11-10 ([§23.1](#231-c1-39-e-c1-44-integração-e-provas--2026-11-10), protocolo 0.217.0). Decisão do autor de 2026-11-10: corrigir junto do C1-39, que mexe no mesmo painel: a árvore fica onde estava ao rodar. Provar no harness e na UI nativa |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
 `binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
@@ -2379,3 +2379,79 @@ Limites:
   lista de caminhos com `;` seguem a documentação. Os testes do dono rodam
   nos dois sistemas, com o esperado de cada um, e o do prazo e do ambiente
   usa o executável falso da W2b, mas só rodaram no Linux.
+
+## 23. C1-39 e C1-44: a árvore dos casos — desenho de 2026-11-10
+
+Decisões do autor de 2026-11-10: no C1-39, a linha mostra o id inteiro,
+`ns::unit::Math.Adds`, o texto que o "Rodar só este" usa, sem campo novo no
+protocolo, e o ponto do ignorado é âmbar, o `warningSoft`; no C1-44, achado
+na prova na UI do C1-34, corrigir junto, no mesmo painel.
+
+Medido no harness novo `tst_tests_tree`, com o `JobsController` e o
+`TestsPanel` reais, 17 linhas e um painel de 420 px: com saída, a árvore tem
+186 px; o `prepareTestRun` zera a saída, o `hasOutput` cai, e a árvore passa
+a 384 px, onde as 17 linhas cabem. O `fixup` do `Flickable` leva então o
+`contentY` a 0, e a árvore fica no topo quando a saída volta. Na UI do C1-34,
+foi o que se viu nas duas vezes medidas.
+
+Desenho:
+- C1-39, no core: o `name` do `TestCaseInfo` do caso de dentro é o id, como
+  o contrato do `TestCaseInfo` já diz para todo runner que não é o pytest;
+  protocolo 0.217.0, sem campo novo, com o contrato no
+  [03 test](../arquitetura/03-dominios/test.md) antes da mudança;
+- C1-39, na UI: `TestsPanel.statusColor` pinta `ignored` com o
+  `Theme.warningSoft`; o que não rodou segue com o `textMuted`;
+- C1-44, na UI: a área da saída fica enquanto houver árvore, depois que a
+  saída apareceu com ela na tela. A árvore que chega sem saída usa o painel
+  inteiro, como hoje, e sem árvore a área volta a seguir as linhas. O
+  `JobsController` está no limite de 400 linhas e não muda.
+
+Provas necessárias:
+- testes do dono no core: o `name` do caso de dentro é o id, na descoberta
+  e na regressão com o gtest e o Catch2 reais;
+- o harness `tst_tests_tree`: a árvore não muda de tamanho no run, na volta
+  da saída, ao relistar e no run seguinte; sem árvore, o run usa o painel
+  inteiro; depois do `clear`, a listagem usa o painel inteiro; a cor de cada
+  status. Ele reprova no código de antes;
+- mutantes que compilem e reprovem pela guarda;
+- na UI nativa: a linha do caso com o id inteiro, o ponto âmbar do ignorado,
+  e a árvore que fica onde estava ao rodar um caso do fim da lista.
+
+### 23.1 C1-39 e C1-44: integração e provas — 2026-11-10
+
+Integrado no desenho do §23, protocolo 0.217.0:
+- `test/frameworks.rs`: o `name` do caso de dentro é o id;
+- `ui/qml/panels/bottom/TestsPanel.qml`: `statusColor` pinta `ignored` com o
+  `warningSoft`; a área da saída fica enquanto houver árvore, depois que a
+  saída apareceu com ela (`keepsOutput`), e a árvore que chega sem saída
+  decide de novo pela saída que há;
+- `scripts/qml-harness/tst_tests_tree.qml`, novo.
+
+Provas:
+- testes do dono no core: todo caso da descoberta pelo ctest falso tem o
+  `name` igual ao id; na regressão `discovered_cases.rs`, com o CMake 4.4.5,
+  o gtest 1.18 e o Catch2 3.16.1 reais, toda linha da árvore também;
+- o harness `tst_tests_tree`, com o `JobsController` e o `TestsPanel` reais:
+  a árvore fica com 186 px no run, na volta da saída, ao relistar e no run
+  seguinte; sem árvore, o run usa os 384 px; depois do `clear`, a listagem
+  também; a cor de cada status. Com o `TestsPanel` do commit anterior, ele
+  reprova no run, no run depois de relistar e na cor do ignorado;
+- 9 mutantes que reprovam: um no core, pelo teste do dono e pela regressão,
+  e oito no painel, pelo harness: sem a trava, a trava sem a árvore, a trava
+  que nunca liga, a que nunca solta, a árvore nova que sempre desliga ou
+  sempre liga, e o ignorado apagado ou verde;
+- na UI nativa isolada, com o core 0.217.0 e o `autoSave` desligado,
+  confirmados pelo IPC, e a fixture do §22.1 mais um gtest com `GTEST_SKIP`:
+  "Listar testes" dá 20 linhas, todas com o `name` igual ao id, e a árvore
+  mostra `slow::Slow.Passes` e `slow_end::Slow.Passes`, que antes apareciam
+  iguais. Rolada até os casos e parada (duas fotos iguais), o ▶ de
+  `skip::Skip.Pulado` dá `ignorado: 1`; a área de texto da árvore fica igual
+  pixel a pixel à de antes do ▶, e o ponto da linha é `#e6b84a`, o
+  `warningSoft`, com o da linha ao lado no cinza do que não rodou. A IDE sai
+  com 0, e o log dela fica vazio, sem aviso de QML.
+
+Limites:
+- a cor do ignorado na lista de casos soltos, sem árvore, é a mesma, pela
+  mesma função;
+- o harness prova o tamanho da árvore, que é a causa; a posição da rolagem,
+  que depende do `fixup` animado do `Flickable`, está provada só na UI.

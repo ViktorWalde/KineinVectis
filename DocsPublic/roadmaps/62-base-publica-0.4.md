@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-38, C1-40–C1-42, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-39, C1-43, C1-44, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-42, C1-44, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-43, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -478,7 +478,12 @@ auditorias e provas posteriores datadas nos donos:**
   outro jeito, o C1-41, o comando mostrado do ctest, e o C1-42, a linha que
   cai ou passa do prazo
   ([§22.1](../especificacoes/consolidacao-nativa-de-c.md#221-c1-34-integração-e-provas--2026-11-10),
-  protocolo 0.216.0).
+  protocolo 0.216.0). O C1-39, a árvore que não distinguia o caso de dentro
+  nem o ignorado, veio no seguinte, com o C1-44, a árvore que voltava ao topo
+  ao rodar: a linha mostra o id inteiro, o ignorado é âmbar e a árvore fica
+  do tamanho que tinha
+  ([§23.1](../especificacoes/consolidacao-nativa-de-c.md#231-c1-39-e-c1-44-integração-e-provas--2026-11-10),
+  protocolo 0.217.0).
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste
@@ -670,7 +675,9 @@ auditorias e provas posteriores datadas nos donos:**
   soube ler. Causa confirmada por leitura: a escrita não distingue o arquivo
   ausente do que ela não entende. Testes: o arquivo sem `schemaVersion`, o de
   esquema maior e o JSON inválido, cada um mantido no disco depois de um
-  `settings.set`, com mutações. Decisão do autor pendente. Estado aberto.
+  `settings.set`, com mutações. Decisão do autor de 2026-11-10: a IDE não
+  grava por cima do arquivo que não entende e diz por quê, num commit
+  próprio, fora do C. Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`

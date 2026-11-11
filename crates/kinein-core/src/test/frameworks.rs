@@ -348,9 +348,14 @@ fn inner_cases(
             continue;
         }
         for name in names {
+            // C1-39: the name of the row is the id, as for every runner but
+            // pytest; the name inside the binary alone is the one of the
+            // ctest line of `gtest_discover_tests`, and of the same case of
+            // another test.
+            let id = format!("{}{SEP}{name}", entry.name);
             cases.push(TestCaseInfo {
-                id: format!("{}{SEP}{name}", entry.name),
-                name,
+                name: id.clone(),
+                id,
                 file: None,
             });
         }
@@ -764,7 +769,8 @@ mod tests {
                 "catch::vectors can be sized"
             ]
         );
-        assert_eq!(cases[0].name, "Math.Adds");
+        // C1-39: the name of the row is the id.
+        assert!(cases.iter().all(|case| case.name == case.id), "{cases:?}");
 
         // Um caso gtest: `--gtest_filter=` e o `[ OK ]` vira caso passado.
         let mut events = Vec::new();

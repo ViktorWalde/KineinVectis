@@ -156,7 +156,7 @@ fn c1_32_c1_35_tests_that_are_cases_stay_lines_and_ids_find_their_test() {
     build(&mut p);
 
     let mut said = Vec::new();
-    let mut ids: Vec<_> = crate::test::discover_tests(
+    let cases = crate::test::discover_tests(
         &p.root,
         ProjectKind::Cmake,
         None,
@@ -167,10 +167,10 @@ fn c1_32_c1_35_tests_that_are_cases_stay_lines_and_ids_find_their_test() {
             }
         },
     )
-    .unwrap()
-    .into_iter()
-    .map(|case| case.id)
-    .collect();
+    .unwrap();
+    // C1-39: every row of the tree is named by its id, the inner cases too.
+    assert!(cases.iter().all(|case| case.name == case.id), "{cases:?}");
+    let mut ids: Vec<_> = cases.into_iter().map(|case| case.id).collect();
     ids.sort();
     let gtest = ids.iter().any(|id| id == "ns::unit");
     let catch2 = ids.iter().any(|id| id == "c2_all");

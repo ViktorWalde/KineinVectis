@@ -21,14 +21,28 @@ Item {
     readonly property var output: panel.controller ? panel.controller.testOutputModel : modeloVazio
     readonly property string summary: panel.controller ? panel.controller.testSummary : ""
     readonly property bool hasTree: panel.discovered.count > 0
-    readonly property bool hasOutput: panel.output.count > 0
+    readonly property bool hasLines: panel.output.count > 0
+    // C1-44: um run novo zera a saida antes da primeira linha dele. Se a
+    // arvore crescesse nesse instante, caberia inteira e voltaria ao topo, e o
+    // caso que rodou sairia da vista: depois que a saida apareceu com a arvore
+    // na tela, a area dela fica. A arvore que chega sem saida usa o painel
+    // inteiro, e sem arvore a area volta a seguir as linhas.
+    property bool keepsOutput: false
+    readonly property bool hasOutput: panel.hasLines || (panel.hasTree && panel.keepsOutput)
 
+    onHasLinesChanged: if (panel.hasLines) panel.keepsOutput = true
+    onHasTreeChanged: panel.keepsOutput = panel.hasLines
+
+    // C1-39: o ignorado rodou e foi pulado; o que nao rodou fica apagado.
     function statusColor(status) {
         if (status === "passed") {
             return Theme.successSoft;
         }
         if (status === "failed") {
             return Theme.errorSoft;
+        }
+        if (status === "ignored") {
+            return Theme.warningSoft;
         }
         return Theme.textMuted;
     }
@@ -61,6 +75,7 @@ Item {
     ListView {
         id: lista
 
+        objectName: "testsTree"
         anchors.top: cabecalho.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: panel.hasOutput ? outputSeparator.top : parent.bottom
