@@ -26,6 +26,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 # Sempre, e nao so' quando o binario falta (2026-10-08): um core ANTIGO
 # provaria o codigo de ontem. Incremental, custa menos de 1 s sem mudanca.
 cargo build -q -p kinein-core
+# O texto do terminal que as provas abaixo leem: junta so' pela marca
+# `wrapped` do core (INF-08, 62 §3.4).
+python3 scripts/test_terminal_render_text.py
 echo "== a porta escolhida chega ao mpremote (run.start/run.script { device }) =="
 python3 scripts/verificar_micropython_porta.py
 

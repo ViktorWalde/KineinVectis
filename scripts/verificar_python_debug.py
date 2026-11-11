@@ -122,20 +122,32 @@ class Core:
         return msg.get("result") or {}
 
     @staticmethod
-    def _texto_do_render(params: dict) -> str:
+    def _render_text(params: dict) -> str:
         """O texto de um `event.terminal.render`, linhas desenroladas (uma
-        linha logica mais larga que o grid continua na seguinte)."""
+        linha logica mais larga que o grid continua na seguinte).
+
+        INF-08 (2026-11-10): junta so' pela marca `wrapped` do core (0.208.0,
+        INF-05). Ate' aqui este ajudante adivinhava pelo comprimento, e uma
+        quebra exatamente num espaco partia a linha: com o `TMPDIR` do gate e
+        um PID de 5 digitos, o caminho da porta do mpremote caia nela."""
         cols = int(params.get("cols") or 80)
-        linhas: list[str] = []
-        continua = False
-        for row in params.get("lines") or []:
-            bruto = "".join(s.get("text", "") for s in row)
-            if continua and linhas:
-                linhas[-1] += bruto.rstrip()
+        wrapped = set(params.get("wrapped") or [])
+        lines: list[str] = []
+        continues = False
+        for index, row in enumerate(params.get("lines") or []):
+            text = "".join(span.get("text", "") for span in row)
+            wraps = index in wrapped
+            if wraps:
+                # A linha quebrada ocupa todas as colunas: o espaco final que
+                # o core descarta (estilo default) faz parte do texto.
+                cells = sum(int(span.get("cells", 0)) for span in row)
+                text += " " * max(cols - cells, 0)
+            if continues and lines:
+                lines[-1] += text
             else:
-                linhas.append(bruto.rstrip())
-            continua = len(bruto) >= cols and not bruto.endswith(" ")
-        return "\n".join(linhas).rstrip()
+                lines.append(text)
+            continues = wraps
+        return "\n".join(line.rstrip() for line in lines).rstrip()
 
     def texto_da_execucao(self, terminal_id: str, timeout: float = 15.0) -> tuple[str, int | None]:
         """O que uma execucao (uma sessao de terminal desde 2026-09-18) mostrou
@@ -148,7 +160,7 @@ class Core:
             for msg in self.eventos:
                 params = msg.get("params") or {}
                 if params.get("id") == terminal_id and msg["method"] == "event.terminal.render":
-                    texto = self._texto_do_render(params)
+                    texto = self._render_text(params)
                 elif params.get("id") == terminal_id and msg["method"] == "event.terminal.closed":
                     fechado = params
                 else:
@@ -162,7 +174,7 @@ class Core:
                 for msg in self.eventos:
                     params = msg.get("params") or {}
                     if params.get("id") == terminal_id and msg["method"] == "event.terminal.render":
-                        texto = self._texto_do_render(params)
+                        texto = self._render_text(params)
                     else:
                         restantes.append(msg)
                 self.eventos = restantes

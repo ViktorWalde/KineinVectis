@@ -199,7 +199,7 @@ A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-10: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04 e INF-05 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
+INF-04, INF-05 e INF-08 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -671,6 +671,31 @@ auditorias e provas posteriores datadas nos donos:**
   ausente do que ela não entende. Testes: o arquivo sem `schemaVersion`, o de
   esquema maior e o JSON inválido, cada um mantido no disco depois de um
   `settings.set`, com mutações. Decisão do autor pendente. Estado aberto.
+- **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
+  gate.** Dono e evidência: `_texto_do_render` em
+  `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
+  também usa. Observado em 2026-11-10, no gate rápido do C1-39: o
+  `verificar-python-debug.sh` reprovou dois casos com `mpremote recebeu:
+  mpremote-falso connect …/port-one`, sem o `run main.py`. Sozinho, passou
+  três vezes. Causa confirmada: o ajudante só junta uma linha cheia que não
+  termina em espaço, a heurística que o INF-05 tirou do ajudante Rust, e
+  com o `TMPDIR` do gate e um PID de 5 dígitos o espaço cai exatamente na
+  coluna 80. Reproduzido sem o gate e sem carga, com um `TMPDIR` de 102
+  caracteres, que põe o espaço na coluna 160: as mesmas duas falhas. O
+  produto está certo: o render dá o `wrapped` desde 0.208.0. Severidade
+  média: o veredito depende do PID e do caminho temporário, e o gate reprova
+  sem defeito no produto. Testes: a mesma reprodução, que passa a passar, e
+  o ajudante conferido com a quebra num espaço, sem quebra, com quebra dupla
+  e com a linha cheia que o programa terminou, com mutações. Decisão: a do
+  autor no INF-05, de 2026-11-09, aplicada ao ajudante que ficou de fora: ele
+  junta só pela marca `wrapped`, com o espaço final que o render descarta.
+  Commit próprio. Estado corrigido em 2026-11-10
+  ([40.7 §7.404](40.7-registro-das-entregas.md)): o ajudante, agora
+  `_render_text`, junta só pela marca, e um teste dele roda no
+  `verificar-python-debug.sh` antes das provas. Com o ajudante anterior, a
+  reprodução com o `TMPDIR` de 102 caracteres reprova nos dois casos; agora
+  passa. Quatro mutações reprovam. O gate verde que veio depois teve um PID de
+  6 dígitos, que não põe o espaço na coluna: a prova do caso é a reprodução.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

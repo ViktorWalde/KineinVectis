@@ -2841,7 +2841,6 @@ scripts/verificar_python_attach.py	evento	3
 scripts/verificar_python_debug.py	ambiente	7
 scripts/verificar_python_debug.py	binario	2
 scripts/verificar_python_debug.py	bombear	5
-scripts/verificar_python_debug.py	bruto	5
 scripts/verificar_python_debug.py	ciclo	2
 scripts/verificar_python_debug.py	evento	9
 scripts/verificar_python_debug.py	eventos	9
@@ -2851,7 +2850,6 @@ scripts/verificar_python_debug.py	fila	4
 scripts/verificar_python_debug.py	inicio	6
 scripts/verificar_python_debug.py	interpretador	7
 scripts/verificar_python_debug.py	linha	5
-scripts/verificar_python_debug.py	linhas	5
 scripts/verificar_python_debug.py	metodo	4
 scripts/verificar_python_debug.py	onde	4
 scripts/verificar_python_debug.py	pacote	5
@@ -2864,7 +2862,7 @@ scripts/verificar_python_debug.py	respostas	4
 scripts/verificar_python_debug.py	restantes	6
 scripts/verificar_python_debug.py	saida	8
 scripts/verificar_python_debug.py	soma	3
-scripts/verificar_python_debug.py	texto	9
+scripts/verificar_python_debug.py	texto	6
 scripts/verificar_python_debug.py	variaveis	6
 scripts/verificar_python_debug.py	verificar	1
 scripts/verificar_python_debug.py	vivos	4
