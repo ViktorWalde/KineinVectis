@@ -199,7 +199,7 @@ A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-10: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04, INF-05 e INF-08 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
+INF-04, INF-05, INF-08 e INF-09 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -703,6 +703,42 @@ auditorias e provas posteriores datadas nos donos:**
   reprodução com o `TMPDIR` de 102 caracteres reprova nos dois casos; agora
   passa. Quatro mutações reprovam. O gate verde que veio depois teve um PID de
   6 dígitos, que não põe o espaço na coluna: a prova do caso é a reprodução.
+- **INF-09 — Saída dos jobs cortada no primeiro byte que não é UTF-8.** Dono
+  e evidência: `forward_output` em `crates/kinein-core/src/process.rs`, que o
+  build, o configure do CMake, os testes e os outros jobs usam. Sem o limite
+  de bytes, a linha que não é UTF-8 encerra a leitura daquele pipe, sem aviso;
+  antes do 0743e1d1, o `lines().map_while(Result::ok)` fazia o mesmo.
+  Observado em 2026-11-10, no desenho do C1-43, e medido no dono: depois de
+  uma linha com o byte 0xFF, as linhas seguintes somem, e o programa que
+  continua escrevendo morre por SIGPIPE. Com as ferramentas reais, o GCC 16
+  copia crua no diagnóstico a linha de um fonte em Latin-1. Num projeto CMake
+  com Ninja e 42 objetos, um `-Wunused-variable` nessa linha para o
+  `cmake --build` lido pelo `process` no 1/42, com `SIGPIPE` e "build tool
+  execution failed", sem gerar a biblioteca. O mesmo build no terminal vai
+  até o fim. O CTest 4.4.5 passa crua a saída do teste no `-V`. O Clang
+  escapa os bytes (`<E7><E3>`). Severidade alta: no perfil Equilibrado, no
+  Livre ou com o `COMPILE_WARNING_AS_ERROR` desligado pelo projeto, um
+  projeto válido, com fonte em Latin-1, não compila na IDE quando um aviso
+  cai numa linha acentuada, e o erro parece do projeto. No Estrito, o padrão,
+  o aviso já é erro, e se perde o resto da saída, com os erros dos outros
+  arquivos. Pela mesma leitura, o teste que imprime esses bytes derruba o
+  `ctest`. Causa confirmada: a decodificação
+  estrita sem limite termina o leitor, e o fim dele fecha o pipe; com o
+  limite, o byte inválido já é uma falha declarada, que a verificação de
+  edição usa. Testes: no dono, a linha inválida no meio, no fim e com muita
+  saída depois, nos dois pipes, e o build real com o fonte Latin-1 pelo core,
+  com mutações. Decisão do autor de 2026-11-10: o leitor sem limite troca o
+  byte inválido por U+FFFD e segue lendo, como o `from_utf8_lossy` que a
+  listagem dos casos já usa; com o limite, o byte inválido segue sendo a falha
+  declarada. Commit próprio, antes do C1-43. Estado corrigido em 2026-11-10
+  ([40.7 §7.406](40.7-registro-das-entregas.md)): os dois leitores sem limite
+  decodificam a linha com U+FFFD e seguem lendo, e o contrato está no
+  [03 job](../arquitetura/03-dominios/job.md), sem versão nova do protocolo.
+  A regressão `latin1_source`, com o CMake 4.4.5, o Ninja e o GCC 16 reais,
+  compila o fonte em Latin-1 e recebe a saída inteira do teste que imprime o
+  byte; com o código de antes, ela reprova. Seis mutações reprovam. Limite: o
+  texto noutra codificação mostra U+FFFD no lugar dos bytes, sem adivinhar a
+  codificação.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:

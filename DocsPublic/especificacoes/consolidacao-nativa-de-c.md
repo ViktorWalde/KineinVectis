@@ -2455,3 +2455,44 @@ Limites:
   mesma função;
 - o harness prova o tamanho da árvore, que é a causa; a posição da rolagem,
   que depende do `fixup` animado do `Flickable`, está provada só na UI.
+
+## 24. C1-43: a listagem dos casos com prazo — desenho de 2026-11-10
+
+Hoje `test::frameworks::list_cases` roda o binário até três vezes
+(`--gtest_list_tests`, `--libidentify` e `--list-tests`) com
+`Command::output()`, sem prazo e sem o `cancel` do job. O `inner_cases` só
+olha o `cancel` entre um teste e outro.
+
+Referência medida no CMake 4.4.5: o `GoogleTest.cmake` dá 5 s à listagem
+(`DISCOVERY_TIMEOUT`, padrão 5), no `execute_process` que roda o
+`--gtest_list_tests`, e o build falha quando ela passa disso. O
+`Catch.cmake` do Catch2 3.16.1 não tem prazo.
+
+Desenho, pela decisão do autor:
+- cada chamada da listagem roda pelo
+  `process::stream_command_lines_with_timeout_cancelable`, com o `cancel` do
+  job e o prazo de 5 s do `DISCOVERY_TIMEOUT` padrão; o processo nasce num
+  grupo, e o fim do prazo ou o cancel matam a árvore dele;
+- o binário que passa do prazo fica só com a linha do ctest, e a saída da
+  listagem diz qual e por quê, em vez de falhar a descoberta inteira como o
+  CMake, porque a linha do ctest ainda roda;
+- a saída guardada de uma chamada tem um teto, e passar dele conta como não
+  ter respondido, com o motivo na saída, porque em 5 s um programa pode
+  escrever gigabytes;
+- o `run_inner_case`, que lista para achar o caso, usa a mesma listagem e diz
+  o mesmo motivo.
+
+Depende do INF-09 (62 §3.4): pelo `process`, uma linha que não é UTF-8
+cortaria a listagem, e o `from_utf8_lossy` de hoje a mantém.
+
+Decisões do autor de 2026-11-10: o INF-09 vem antes, num commit próprio; o
+cancel no meio da listagem dá o erro "listagem cancelada", pelo caminho de
+falha que já existe, em vez da árvore pela metade contada como completa; o
+prazo de 5 s e o teto de 64 MiB valem para cada chamada, e um binário que
+trava pode levar até 15 s.
+
+Provas exigidas: o binário que não termina, o que ignora o `SIGTERM`, o que
+deixa um filho com o pipe aberto, o cancel no meio de cada chamada e a
+saída sem fim, cada um com o tempo medido e sem processo sobrando; a
+regressão com o gtest e o Catch2 reais segue igual; mutantes no prazo, no
+cancel, no teto e no motivo.

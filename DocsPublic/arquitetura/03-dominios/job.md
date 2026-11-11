@@ -32,5 +32,14 @@ event.job.output    { "jobId", "line" }
 event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 ```
 
+**A linha que não é UTF-8 (2026-11-10, INF-09).** O `line` de
+`event.job.output`, e o de `event.build.output` e `event.test.output`, chega
+sem a quebra e com U+FFFD no lugar dos bytes que não são UTF-8, como os da
+linha de um fonte em Latin-1 que o GCC copia no diagnóstico. Antes, a leitura
+daquele pipe parava na primeira linha assim, e a ferramenta morria por
+`SIGPIPE` na seguinte. Sem campo novo nem versão nova: o payload já era texto.
+A leitura com limite de bytes, que só a verificação de edição usa, segue
+recusando a saída inteira.
+
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.

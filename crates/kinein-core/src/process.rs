@@ -9,6 +9,7 @@ use std::{
     ffi::OsString,
     io::{self, BufRead, Read},
     process::{Command, ExitStatus, Stdio},
+    string::FromUtf8Error,
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -36,7 +37,8 @@ pub enum ProcessError {
 ///
 /// stdin is closed; stdout and stderr are piped and drained by dedicated
 /// reader threads, so large output never deadlocks on a full pipe. Lines are
-/// delivered without their trailing newline.
+/// delivered without their trailing newline, and a line that is not UTF-8
+/// with U+FFFD in place of the invalid bytes (INF-09).
 pub fn stream_command_lines(
     mut command: Command,
     on_line: &mut dyn FnMut(&'static str, String),
@@ -53,7 +55,7 @@ pub fn stream_command_lines(
     if let Some(stdout) = child.stdout.take() {
         let sender = sender.clone();
         readers.push(thread::spawn(move || {
-            for line in io::BufReader::new(stdout).lines().map_while(Result::ok) {
+            for line in lossy_lines(stdout) {
                 if sender.send(("stdout", line)).is_err() {
                     break;
                 }
@@ -63,7 +65,7 @@ pub fn stream_command_lines(
     if let Some(stderr) = child.stderr.take() {
         let sender = sender.clone();
         readers.push(thread::spawn(move || {
-            for line in io::BufReader::new(stderr).lines().map_while(Result::ok) {
+            for line in lossy_lines(stderr) {
                 if sender.send(("stderr", line)).is_err() {
                     break;
                 }
@@ -83,6 +85,39 @@ pub fn stream_command_lines(
     }
 
     child.wait().map_err(ProcessError::Wait)
+}
+
+/// `bytes` read up to a line break, without it (`\n` or `\r\n`); `Err` keeps
+/// the bytes of a line that is not UTF-8.
+fn without_break(mut bytes: Vec<u8>) -> Result<String, FromUtf8Error> {
+    if bytes.last() == Some(&b'\n') {
+        bytes.pop();
+        if bytes.last() == Some(&b'\r') {
+            bytes.pop();
+        }
+    }
+    String::from_utf8(bytes)
+}
+
+/// A line that is not UTF-8, with U+FFFD in place of the invalid bytes
+/// (INF-09): the line of a Latin-1 source that GCC quotes, the bytes a test
+/// prints. Stopping the reading there closed the pipe, and the tool died of
+/// `SIGPIPE`.
+fn lossy(error: &FromUtf8Error) -> String {
+    String::from_utf8_lossy(error.as_bytes()).into_owned()
+}
+
+/// The lines of `reader` up to the end of the pipe or a read error, each one
+/// without the break and decoded (`lossy`).
+fn lossy_lines(reader: impl Read) -> impl Iterator<Item = String> {
+    let mut reader = io::BufReader::new(reader);
+    std::iter::from_fn(move || {
+        let mut bytes = Vec::new();
+        match reader.read_until(b'\n', &mut bytes) {
+            Ok(0) | Err(_) => None,
+            Ok(_) => Some(without_break(bytes).unwrap_or_else(|error| lossy(&error))),
+        }
+    })
 }
 
 /// After the child exits, how long to keep draining output before returning.
@@ -167,18 +202,16 @@ fn forward_output(
             cancel.store(true, Ordering::SeqCst);
             break;
         }
-        if bytes.last() == Some(&b'\n') {
-            bytes.pop();
-            if bytes.last() == Some(&b'\r') {
-                bytes.pop();
-            }
-        }
-        let Ok(line) = String::from_utf8(bytes) else {
-            if let Some(b) = budget {
+        // With a cap, a line that is not UTF-8 stays a declared failure,
+        // which the edit verification reads.
+        let line = match (without_break(bytes), budget) {
+            (Ok(line), _) => line,
+            (Err(error), None) => lossy(&error),
+            (Err(_), Some(b)) => {
                 b.failed.store(true, Ordering::SeqCst);
                 cancel.store(true, Ordering::SeqCst);
+                break;
             }
-            break;
         };
         if sender.send((stream, line)).is_err() {
             break;
@@ -351,8 +384,8 @@ fn names_with_prefix(names: impl IntoIterator<Item = OsString>, prefix: &str) ->
 mod tests {
     use std::process::Command;
 
-    use super::stream_command_lines_cancelable;
     use super::{ProcessError, stream_command_lines};
+    use super::{stream_command_lines_bounded, stream_command_lines_cancelable};
 
     #[test]
     fn only_names_with_the_prefix_are_listed_in_order() {
@@ -384,6 +417,75 @@ mod tests {
         assert_eq!(status.code(), Some(3));
         assert!(lines.contains(&("stdout", "saida".to_owned())));
         assert!(lines.contains(&("stderr", "erro".to_owned())));
+    }
+
+    /// INF-09: a line that is not UTF-8 in the middle of stdout, with a lot
+    /// after it, one with `\r\n` on stderr and one at the end without a break.
+    /// Stopping at the first one closed the pipe, and the shell died of
+    /// `SIGPIPE` at the next line.
+    const NOT_UTF8: &str = r#"printf 'antes\nbin\377rio\n'
+i=0; while [ $i -lt 20000 ]; do echo "l$i"; i=$((i+1)); done
+printf 'e\347\343o\r\nfim-erro\n' 1>&2
+printf 'fim\n\377'"#;
+
+    fn assert_read_past_the_invalid_lines(
+        status: std::process::ExitStatus,
+        lines: &[(&str, String)],
+    ) {
+        let of = |stream| {
+            lines
+                .iter()
+                .filter(|(s, _)| *s == stream)
+                .map(|(_, line)| line.as_str())
+                .collect::<Vec<_>>()
+        };
+        let mut expected = vec!["antes".to_owned(), "bin\u{FFFD}rio".to_owned()];
+        expected.extend((0..20000).map(|i| format!("l{i}")));
+        expected.extend(["fim".to_owned(), "\u{FFFD}".to_owned()]);
+        assert_eq!(status.code(), Some(0), "{status:?}");
+        assert!(
+            of("stdout") == expected,
+            "{} linhas no stdout",
+            of("stdout").len()
+        );
+        assert_eq!(of("stderr"), ["e\u{FFFD}\u{FFFD}o", "fim-erro"]);
+    }
+
+    #[test]
+    fn a_line_that_is_not_utf8_gets_the_replacement_and_the_reading_goes_on() {
+        let mut lines = Vec::new();
+        let status = stream_command_lines(crate::sh_command(NOT_UTF8), &mut |stream, line| {
+            lines.push((stream, line));
+        })
+        .unwrap();
+        assert_read_past_the_invalid_lines(status, &lines);
+
+        let mut lines = Vec::new();
+        let cancel = std::sync::Arc::default();
+        let status = stream_command_lines_cancelable(
+            crate::sh_command(NOT_UTF8),
+            &cancel,
+            &mut |stream, line| {
+                lines.push((stream, line));
+            },
+        )
+        .unwrap();
+        assert_read_past_the_invalid_lines(status, &lines);
+    }
+
+    #[test]
+    fn with_a_cap_a_line_that_is_not_utf8_stays_a_failure() {
+        let mut lines = Vec::new();
+        let cancel = std::sync::Arc::default();
+        let (_, failed) = stream_command_lines_bounded(
+            crate::sh_command(r"printf 'a\nb\377\nc\n'"),
+            &cancel,
+            1_048_576,
+            &mut |stream, line| lines.push((stream, line)),
+        )
+        .unwrap();
+        assert!(failed);
+        assert_eq!(lines, [("stdout", "a".to_owned())]);
     }
 
     #[test]

@@ -474,6 +474,10 @@ Tudo roda em segundo plano como *job*: a barra de status mostra o
 progresso e um **×** para cancelar; a aba **Jobs** guarda o histórico.
 Clicar num problema abre o arquivo na linha exata.
 
+A saída de uma ferramenta que não está em UTF-8, como a linha de um fonte em
+Latin-1 que o GCC copia num aviso, aparece com � no lugar dos bytes que não
+são UTF-8, e o build ou o teste segue até o fim (desde 2026-11-10).
+
 **Projetos Rust:** além do build/clippy, há o **"Cargo: Check"** no Search
 Everywhere — feedback de tipos/borrow bem mais rápido que o build, com os
 problemas caindo na mesma aba Problemas. Se o `cargo metadata` do projeto

@@ -66,7 +66,8 @@ protocolo   0.217.0 (crates/kinein-protocol, medido em 2026-11-10; o
 metodos     195 roteados e 64 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   185 tst_*.qml em scripts/qml-harness (medido em 2026-11-10)
-testes      1594 Rust no gate rápido de 2026-11-10 (40.7 §7.405);
+testes      1597 Rust no gate rápido de 2026-11-10 (40.7 §7.406);
+            1594 Rust no gate rápido de 2026-11-10 (40.7 §7.405);
             1594 Rust no gate rápido de 2026-11-10 (40.7 §7.403);
             1580 Rust no gate rápido de 2026-11-10 (40.7 §7.402);
             1573 Rust no gate rápido de 2026-11-10 (40.7 §7.401);
