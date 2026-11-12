@@ -179,6 +179,14 @@ pub struct SettingsResult {
     /// Values explicitly set at the workspace scope (empty when no
     /// workspace is open).
     pub workspace: SettingsValues,
+    /// Why the global `settings.json` exists and was not read (`0.220.0`,
+    /// INF-07): its values come empty, and `settings.set` refuses to write it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub global_problem: Option<String>,
+    /// The same for the workspace `.kinein/settings.json`, which is also
+    /// refused when it or `.kinein` is a symbolic link (INF-12).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workspace_problem: Option<String>,
 }
 
 /// Parameters for `settings.set`.

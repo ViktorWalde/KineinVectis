@@ -29,10 +29,10 @@ impl Core {
     }
 
     fn settings_get_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let global = settings::load_global();
+        let global = settings::read_global();
         let workspace = self
             .workspace_root()
-            .map(|root| settings::load_workspace(&root))
+            .map(|root| settings::read_workspace(&root))
             .unwrap_or_default();
         JsonRpcResponse::success(request_id, json!(settings_result(global, workspace)))
     }
@@ -54,19 +54,24 @@ impl Core {
             return invalid_settings_response(request_id, message);
         }
 
-        match parsed.scope {
-            SettingsScope::Global => {
-                if let Err(message) = settings::set_global(&parsed.values) {
-                    return internal_settings_response(request_id, message);
-                }
-            }
+        let written = match parsed.scope {
+            SettingsScope::Global => settings::set_global(&parsed.values),
             SettingsScope::Workspace => {
                 let Some(root) = self.workspace_root() else {
                     return no_workspace_response(request_id, "settings.set");
                 };
-                if let Err(message) = settings::set_workspace(&root, &parsed.values) {
-                    return internal_settings_response(request_id, message);
-                }
+                settings::set_workspace(&root, &parsed.values)
+            }
+        };
+        // INF-07: o arquivo que a IDE nao entende fica como estava, e o
+        // motivo e' o mesmo do `settings.get`.
+        match written {
+            Ok(_) => {}
+            Err(settings::SetError::Refused(message)) => {
+                return settings_failure(request_id, JsonRpcErrorCode::InvalidRequest, message);
+            }
+            Err(settings::SetError::Write(message)) => {
+                return settings_failure(request_id, JsonRpcErrorCode::InternalError, message);
             }
         }
 
@@ -75,12 +80,15 @@ impl Core {
     }
 }
 
-/// Monta o `SettingsResult` (efetivo + os values de cada escopo).
-fn settings_result(global: SettingsValues, workspace: SettingsValues) -> SettingsResult {
+/// Monta o `SettingsResult` (efetivo + os values de cada escopo + o motivo
+/// do arquivo que existe e nao foi lido, `0.220.0`).
+fn settings_result(global: settings::Stored, workspace: settings::Stored) -> SettingsResult {
     SettingsResult {
-        settings: settings::resolve(&global, &workspace),
-        global,
-        workspace,
+        settings: settings::resolve(&global.values, &workspace.values),
+        global: global.values,
+        workspace: workspace.values,
+        global_problem: global.problem,
+        workspace_problem: workspace.problem,
     }
 }
 
@@ -144,15 +152,57 @@ fn validate_values(values: &SettingsValues) -> Option<String> {
 }
 
 fn invalid_settings_response(request_id: Option<Value>, message: String) -> JsonRpcResponse {
-    JsonRpcResponse::failure(
-        request_id,
-        JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
-    )
+    settings_failure(request_id, JsonRpcErrorCode::InvalidParams, message)
 }
 
-fn internal_settings_response(request_id: Option<Value>, message: String) -> JsonRpcResponse {
-    JsonRpcResponse::failure(
-        request_id,
-        JsonRpcError::new(JsonRpcErrorCode::InternalError, message, None),
-    )
+fn settings_failure(
+    request_id: Option<Value>,
+    code: JsonRpcErrorCode,
+    message: String,
+) -> JsonRpcResponse {
+    JsonRpcResponse::failure(request_id, JsonRpcError::new(code, message, None))
+}
+
+#[cfg(test)]
+mod tests {
+    use kinein_protocol::SettingsValues;
+
+    use crate::settings::Stored;
+
+    /// O motivo de cada escopo vai no campo dele, e os valores vazios dele
+    /// deixam o efetivo cair para o escopo de baixo (INF-07).
+    #[test]
+    fn each_scope_problem_goes_in_its_own_field() {
+        let global = Stored {
+            values: SettingsValues {
+                editor_font_size: Some(18),
+                ..SettingsValues::default()
+            },
+            problem: None,
+        };
+        let workspace = Stored {
+            values: SettingsValues::default(),
+            problem: Some(".kinein/settings.json nao tem schemaVersion".to_owned()),
+        };
+        let result = super::settings_result(global, workspace);
+        assert_eq!(result.settings.editor_font_size, 18);
+        assert_eq!(result.global_problem, None);
+        assert_eq!(
+            result.workspace_problem.as_deref(),
+            Some(".kinein/settings.json nao tem schemaVersion")
+        );
+        let swapped = super::settings_result(
+            Stored {
+                values: SettingsValues::default(),
+                problem: Some("/x/settings.json nao e' um objeto JSON".to_owned()),
+            },
+            Stored::default(),
+        );
+        assert_eq!(
+            swapped.global_problem.as_deref(),
+            Some("/x/settings.json nao e' um objeto JSON")
+        );
+        assert_eq!(swapped.workspace_problem, None);
+        assert_eq!(swapped.settings.editor_font_size, 14);
+    }
 }

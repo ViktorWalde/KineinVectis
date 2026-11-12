@@ -909,6 +909,19 @@ próprios em `.kinein/settings.json` (têm prioridade sobre o global); a opção
 que o projeto define leva o selo **neste projeto**, e trocá-la grava no
 projeto.
 
+**O arquivo que a IDE não entende.** Um `settings.json` escrito à mão sem o
+`schemaVersion`, de uma versão mais nova da IDE, com JSON inválido ou com um
+valor de tipo errado não vale, e a IDE não grava por cima dele: o que ele
+diz fica guardado até você corrigir. O de projeto aparece na faixa **Project
+Health** ("configurações do projeto não lidas"), com o caminho e o motivo, e
+o botão **[Configurações]** abre esta tela, que mostra o de cada escopo e a
+gravação recusada. Enquanto isso, valem os do outro escopo, ou os padrões;
+corrigido o arquivo, a próxima gravação, como a do layout, já o usa. No
+projeto, o `.kinein` e o `settings.json` que são link simbólico também são
+recusados, para a IDE nunca gravar fora do projeto; o global, que é seu,
+pode ser um link (de dotfiles, por exemplo). Chaves que esta versão não
+conhece ficam no arquivo quando ela grava.
+
 ---
 
 ## 8. Aba Ferramentas e saúde do ambiente

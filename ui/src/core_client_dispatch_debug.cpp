@@ -67,9 +67,17 @@ bool CoreClient::dispatchDebugResult(const QString& method, const QJsonObject& r
         return true;
     }
     if (method == QStringLiteral("settings.get") || method == QStringLiteral("settings.set")) {
+        QVariantMap problems;
+        for (const QString& scope : {QStringLiteral("global"), QStringLiteral("workspace")}) {
+            const QJsonValue problem = result.value(scope + QStringLiteral("Problem"));
+            if (problem.isString()) {
+                problems.insert(scope, problem.toString());
+            }
+        }
         emit settingsResolved(result.value(QStringLiteral("settings")).toObject().toVariantMap(),
                               result.value(QStringLiteral("global")).toObject().toVariantMap(),
-                              result.value(QStringLiteral("workspace")).toObject().toVariantMap());
+                              result.value(QStringLiteral("workspace")).toObject().toVariantMap(),
+                              problems);
         return true;
     }
     if (method == QStringLiteral("debug.stackTrace")) {

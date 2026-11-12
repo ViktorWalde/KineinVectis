@@ -728,8 +728,10 @@ signals:
     void gitBlameResolved(const QString& path, bool repo, bool tracked, const QVariantList& groups);
     void gitLogResolved(bool repo, const QVariantList& entries);
     void gitCommitDiffResolved(const QString& sha, const QString& text);
+    // `problems`: `global`/`workspace` com o motivo do arquivo que existe e
+    // nao foi lido (0.220.0, INF-07); sem a chave, o escopo foi lido.
     void settingsResolved(const QVariantMap& effective, const QVariantMap& global,
-                          const QVariantMap& workspace);
+                          const QVariantMap& workspace, const QVariantMap& problems);
     void terminalActiveChanged();
     // D2.3: a sessão nasceu; o id identifica a aba dela daqui pra frente.
     // `commandState`: "waiting", "sent" ou vazio quando nao houve comando.

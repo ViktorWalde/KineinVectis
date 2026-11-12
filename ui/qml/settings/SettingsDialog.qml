@@ -35,6 +35,9 @@ Item {
     // todas; aqui ficam so' as que esta tela mostra — o layout tambem e' do
     // projeto e nao tem selo).
     property var projectKeys: []
+    // INF-07 (0.220.0): o motivo de cada settings.json que o core nao leu e
+    // a gravacao que falhou (`SettingsController.problems`).
+    property var problems: []
     readonly property var shownProjectKeys: root.projectKeys.filter(function(key) {
         return ["editorFontSize", "autoSave", "formatOnSave", "compilerCheckOnSave", "autoClosePairs",
                 "rigorProfile"].indexOf(key) >= 0;
@@ -246,6 +249,14 @@ Item {
 
                 width: pageScroll.width
                 spacing: Theme.spacingMedium
+
+                KvVerdict {
+                    objectName: "settingsProblems"
+                    width: parent.width
+                    heading: qsTr("Problema nas configurações")
+                    message: root.problems.join("\n")
+                    codeFont: false
+                }
 
                 Text {
                     text: root.pages.filter(function(entry) { return entry.key === root.page; })[0].label

@@ -38,6 +38,9 @@ Item {
     property string pythonActionLabel: ""
     // Os stubs da placa (C4): faixa informativa num projeto MicroPython sem
     // typings/ — o botao instala pelo core.
+    // INF-07 (0.220.0): o motivo do .kinein/settings.json que o core nao
+    // leu; as preferencias do projeto nao valem, e ele nao e' regravado.
+    property string settingsProblem: ""
     property bool pythonNeedsStubs: false
     property bool pythonInstallingStubs: false
     property string pythonStubsMessage: ""
@@ -109,6 +112,7 @@ Item {
     onPythonNeedsStubsChanged: update()
     onPythonInstallingStubsChanged: update()
     onPythonStubsMessageChanged: update()
+    onSettingsProblemChanged: update()
     Component.onCompleted: update()
 
     function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile,
@@ -329,6 +333,13 @@ Item {
                 return;
             }
             apply("warning", pythonMessage, pythonActionLabel, "pythonEnvironment");
+            return;
+        }
+        // Depois dos avisos de build, antes dos informativos (decisao do
+        // autor de 2026-11-12); o botao abre as Configuracoes, com o motivo.
+        if (settingsProblem !== "") {
+            apply("warning", qsTr("configurações do projeto não lidas: %1").arg(settingsProblem),
+                  qsTr("Configurações"), "settings");
             return;
         }
         if (pythonNeedsStubs) {

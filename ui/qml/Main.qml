@@ -326,6 +326,7 @@ Window {
     ProjectHealthActions {
         id: healthActions
         indexController: domains.indexController
+        settingsController: domains.settingsController
         coreClient: core
         shellController: domains.shellController
         pythonController: domains.pythonController

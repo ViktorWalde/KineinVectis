@@ -39,6 +39,14 @@ Item {
     // O que esta explicitamente setado no global (para a UI mostrar).
     property var globalValues: ({})
     property var workspaceValues: ({})
+    // INF-07 (0.220.0): o motivo do settings.json que existe e o core nao
+    // leu, por escopo (os valores dele vem vazios), e a ultima gravacao que
+    // falhou. A faixa do projeto le o do workspace; o dialogo, os tres.
+    property string globalProblem: ""
+    property string workspaceProblem: ""
+    property string setFailure: ""
+    readonly property var problems: [globalProblem, workspaceProblem, setFailure]
+        .filter(text => text !== "")
     property bool loaded: false
     property bool dialogVisible: false
 
@@ -58,7 +66,7 @@ Item {
         dialogVisible = false;
     }
 
-    function handleResolved(effective, global, workspace) {
+    function handleResolved(effective, global, workspace, problems) {
         formatOnSave = effective.formatOnSave === true;
         editorFontSize = effective.editorFontSize !== undefined
                 ? effective.editorFontSize : 14;
@@ -83,10 +91,21 @@ Item {
         layout = effective.layout !== undefined ? effective.layout : null;
         globalValues = global;
         workspaceValues = workspace;
+        const scopes = problems !== undefined && problems !== null ? problems : ({});
+        globalProblem = scopes.global !== undefined ? scopes.global : "";
+        workspaceProblem = scopes.workspace !== undefined ? scopes.workspace : "";
+        setFailure = "";
         loaded = true;
         // Consumidor direto: o tamanho de fonte do editor.
         Theme.fontSizeEditor = editorFontSize;
         resolved();
+    }
+
+    // A gravacao que o core recusou ou nao fez fica a' vista ate' a proxima
+    // resposta boa. Sem novo `settings.get`: o eco reaplicaria o layout, que
+    // pediria outra gravacao recusada.
+    function handleSetFailed(message) {
+        setFailure = message;
     }
 
     // Uma escolha do dialogo vai para ONDE o valor mora: se o projeto o

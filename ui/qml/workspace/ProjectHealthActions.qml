@@ -12,6 +12,7 @@ QtObject {
     property var shellController: null
     property var pythonController: null
     property var indexController: null
+    property var settingsController: null
 
     function perform(target) {
         if (target === "scan") {
@@ -32,6 +33,8 @@ QtObject {
             root.pythonController.installStubs();
         } else if (target === "compileContext") {
             if (root.indexController !== null) root.indexController.openInspector();
+        } else if (target === "settings") {
+            if (root.settingsController !== null) root.settingsController.openDialog();
         } else if (target !== "") {
             root.shellController.showTab(target);
         }

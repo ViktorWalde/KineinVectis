@@ -90,6 +90,7 @@ Item {
         pythonNeedsStubs: pythonController.needsStubs
         pythonInstallingStubs: pythonController.installingStubs
         pythonStubsMessage: pythonController.stubsMessage()
+        settingsProblem: settingsController.workspaceProblem
         onAutoConfigureRequested: root.coreClient.cmakeConfigure()
     }
 

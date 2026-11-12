@@ -295,6 +295,7 @@ flowchart LR
   n_core_serial --> n_core_build
   n_core_serial --> n_core_platform
   n_core_serial --> n_core_toolchain
+  n_core_settings --> n_core_fsops
   n_core_settings --> n_core_platform
   n_core_setup --> n_core_tools
   n_core_terminal --> n_core_lsp
@@ -322,7 +323,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-53 módulos, 173 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+53 módulos, 174 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -377,7 +378,7 @@ flowchart LR
 | `runconfig` | flash, fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
 | `runtime` | datasource, rpc, settings | The stdio JSON-RPC loop that drives Core as a subprocess. |
 | `serial` | build, platform, toolchain | Portas seriais USB: |
-| `settings` | platform | Settings persistidos em dois níveis (settings.*). |
+| `settings` | fsops, platform | Settings persistidos em dois níveis (settings.*). |
 | `setup` | tools | Como instalar o que falta — passo a passo OFICIAL, para a distro detectada. |
 | `size` | — | O tamanho de um ELF: |
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
@@ -1595,6 +1596,7 @@ flowchart LR
   n_ui_src_core_client_datasource_cpp -.-> n_ui_qml_ipc_SetupEventRouter_qml
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_ConfigActionEventRouter_qml
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_LibraryEventRouter_qml
+  n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_SettingsEventRouter_qml
   n_ui_src_core_client_dispatch_cpp -.-> n_ui_qml_ipc_SetupEventRouter_qml
   n_ui_src_core_client_dispatch_cmake_cpp -.-> n_ui_qml_ipc_LibraryEventRouter_qml
   n_ui_src_core_client_dispatch_debug_cpp -.-> n_ui_qml_ipc_SettingsEventRouter_qml

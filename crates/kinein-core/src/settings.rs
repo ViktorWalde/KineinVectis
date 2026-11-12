@@ -3,20 +3,15 @@
 //! GLOBAL: XDG (`$XDG_CONFIG_HOME` ou `~/.config`) →
 //! `kinein-vectis/settings.json`, vale para todos os workspaces.
 //! WORKSPACE: `.kinein/settings.json`, sobrepõe o global campo a campo.
-//! Ambos com `schemaVersion` + arquivo inválido/desconhecido tratado como
-//! vazio (nunca quebra o fluxo), no mesmo padrão de `runconfig.rs`.
+//! Ambos com `schemaVersion`. O arquivo ausente vale como vazio; o que
+//! existe e a IDE não entende também, mas volta com o motivo e não é gravado
+//! por cima (`0.220.0`, INF-07; a leitura e a escrita estão em `file`).
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+mod file;
 
-use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
 use kinein_protocol::{EffectiveSettings, SettingsValues};
-
-/// Versão do schema escrita por este core.
-const SETTINGS_SCHEMA_VERSION: u32 = 1;
 
 /// Default do tamanho de fonte do editor (casa com `Theme.fontSizeEditor`).
 const DEFAULT_EDITOR_FONT_SIZE: u32 = 14;
@@ -37,15 +32,6 @@ pub const MAX_ASSISTANT_TERMINAL_WIDTH: u32 = 720;
 pub const MIN_BOTTOM_PANEL_HEIGHT: u32 = 120;
 /// Upper limit for persisted bottom tool-window height.
 pub const MAX_BOTTOM_PANEL_HEIGHT: u32 = 700;
-
-/// Representação em disco de um `settings.json` (global ou workspace).
-#[derive(Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SettingsFile {
-    schema_version: u32,
-    #[serde(flatten)]
-    values: SettingsValues,
-}
 
 /// Caminho do `settings.json` global (XDG).
 #[must_use]
@@ -79,40 +65,49 @@ fn config_home() -> PathBuf {
     crate::platform::config_home()
 }
 
-fn read_values(path: &Path) -> SettingsValues {
-    let Ok(body) = fs::read_to_string(path) else {
-        return SettingsValues::default();
-    };
-    match serde_json::from_str::<SettingsFile>(&body) {
-        Ok(file) if file.schema_version == SETTINGS_SCHEMA_VERSION => file.values,
-        _ => SettingsValues::default(),
+/// Os valores de um escopo e, quando o arquivo existe e a IDE não o entende,
+/// o motivo, com o nome do arquivo: os valores vêm vazios, e o
+/// `settings.set` daquele escopo é recusado (INF-07).
+#[derive(Debug, Default)]
+pub struct Stored {
+    /// Os valores lidos; vazios sem o arquivo ou com o problema.
+    pub values: SettingsValues,
+    /// Por que o arquivo que existe não foi lido.
+    pub problem: Option<String>,
+}
+
+/// Por que um `settings.set` não gravou.
+#[derive(Debug, Eq, PartialEq)]
+pub enum SetError {
+    /// O arquivo existe e a IDE não o entende: ficou como estava.
+    Refused(String),
+    /// A escrita falhou.
+    Write(String),
+}
+
+fn stored(place: &file::Place) -> Stored {
+    match file::read(place) {
+        Ok(contents) => Stored {
+            values: contents.values,
+            problem: None,
+        },
+        Err(problem) => Stored {
+            values: SettingsValues::default(),
+            problem: Some(problem),
+        },
     }
 }
 
-fn write_values(path: &Path, values: &SettingsValues) -> Result<(), String> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|error| format!("falha criando {}: {error}", parent.display()))?;
-    }
-    let file = SettingsFile {
-        schema_version: SETTINGS_SCHEMA_VERSION,
-        values: values.clone(),
-    };
-    let body = serde_json::to_string_pretty(&file)
-        .map_err(|error| format!("falha serializando settings: {error}"))?;
-    fs::write(path, body).map_err(|error| format!("falha escrevendo settings: {error}"))
+/// O escopo global, que segue o link (INF-12: é da pessoa).
+#[must_use]
+pub fn read_global() -> Stored {
+    stored(&file::Place::global(global_path()))
 }
 
-/// Values setados no escopo global (arquivo ausente/invalido → vazio).
+/// O escopo do workspace, que recusa o link no `.kinein` e no arquivo.
 #[must_use]
-pub fn load_global() -> SettingsValues {
-    read_values(&global_path())
-}
-
-/// Values setados no escopo do workspace.
-#[must_use]
-pub fn load_workspace(root: &Path) -> SettingsValues {
-    read_values(&workspace_path(root))
+pub fn read_workspace(root: &Path) -> Stored {
+    stored(&file::Place::workspace(root))
 }
 
 /// Resolve `default ← global ← workspace` campo a campo.
@@ -201,14 +196,14 @@ fn effective_layout(
 /// build/quality do usuario (fatia M4.5).
 #[must_use]
 pub fn effective_rigor_profile(root: &Path) -> kinein_protocol::RigorProfile {
-    resolve(&load_global(), &load_workspace(root)).rigor_profile
+    resolve(&read_global().values, &read_workspace(root).values).rigor_profile
 }
 
 /// A checagem do compilador ao salvar vale para `root`? (0.4.0c; padrao:
 /// ligada, decisao do autor de 2026-10-15, `roadmaps/52` §13.1.)
 #[must_use]
 pub fn effective_compiler_check_on_save(root: &Path) -> bool {
-    resolve(&load_global(), &load_workspace(root)).compiler_check_on_save
+    resolve(&read_global().values, &read_workspace(root).values).compiler_check_on_save
 }
 
 /// Merge de `incoming` sobre `base` (campo `Some` sobrescreve; `None` mantém).
@@ -240,18 +235,37 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
     }
 }
 
-/// Aplica `values` (parcial) ao escopo global e devolve o novo estado global.
-pub fn set_global(values: &SettingsValues) -> Result<SettingsValues, String> {
-    let merged = merge(&load_global(), values);
-    write_values(&global_path(), &merged)?;
+/// Junta `values` ao que `place` tem e grava; o arquivo que a IDE não
+/// entende fica como estava.
+fn set_at(place: &file::Place, values: &SettingsValues) -> Result<SettingsValues, SetError> {
+    let contents = file::read(place).map_err(|problem| {
+        SetError::Refused(format!(
+            "As configurações não foram gravadas: {problem}. A IDE não grava por cima do que não entende; corrija ou remova esse caminho e tente de novo."
+        ))
+    })?;
+    let merged = merge(&contents.values, values);
+    file::write(place, &contents, &merged).map_err(SetError::Write)?;
     Ok(merged)
 }
 
+/// Aplica `values` (parcial) ao escopo global e devolve o novo estado global.
+///
+/// # Errors
+///
+/// [`SetError::Refused`] quando o arquivo existe e a IDE não o entende;
+/// [`SetError::Write`] quando a escrita falha.
+pub fn set_global(values: &SettingsValues) -> Result<SettingsValues, SetError> {
+    set_at(&file::Place::global(global_path()), values)
+}
+
 /// Aplica `values` (parcial) ao escopo do workspace.
-pub fn set_workspace(root: &Path, values: &SettingsValues) -> Result<SettingsValues, String> {
-    let merged = merge(&load_workspace(root), values);
-    write_values(&workspace_path(root), &merged)?;
-    Ok(merged)
+///
+/// # Errors
+///
+/// Os de [`set_global`]; o `.kinein` e o arquivo que são link também são
+/// recusados.
+pub fn set_workspace(root: &Path, values: &SettingsValues) -> Result<SettingsValues, SetError> {
+    set_at(&file::Place::workspace(root), values)
 }
 
 #[cfg(test)]
@@ -260,7 +274,7 @@ mod tests {
 
     use kinein_protocol::SettingsValues;
 
-    use super::{merge, read_values, resolve, write_values};
+    use super::{file::Place, merge, resolve, set_at, stored};
 
     fn temp_dir(name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -384,14 +398,14 @@ mod tests {
         assert_eq!(resolve(&SettingsValues::default(), &workspace).layout, None);
 
         let dir = temp_dir("layout-newer");
-        let path = dir.join("settings.json");
-        write_values(&path, &workspace).unwrap();
+        let place = Place::global(dir.join("settings.json"));
+        set_at(&place, &workspace).unwrap();
         let other_field = SettingsValues {
             editor_font_size: Some(15),
             ..SettingsValues::default()
         };
-        write_values(&path, &merge(&read_values(&path), &other_field)).unwrap();
-        assert_eq!(read_values(&path).layout, Some(newer));
+        set_at(&place, &other_field).unwrap();
+        assert_eq!(stored(&place).values.layout, Some(newer));
     }
 
     /// Um layout novo substitui o anterior INTEIRO: misturar dois retratos
@@ -452,28 +466,23 @@ mod tests {
         assert_eq!(merged.auto_close_pairs, Some(true));
     }
 
+    /// O que se grava volta na leitura; o arquivo ausente vale como vazio,
+    /// sem problema. O que existe e a IDE nao entende esta' no `file/tests`.
     #[test]
-    fn roundtrip_and_unknown_schema_is_empty() {
+    fn roundtrip_and_a_missing_file_is_empty_without_a_problem() {
         let dir = temp_dir("roundtrip");
-        let path = dir.join("settings.json");
+        let place = Place::global(dir.join("settings.json"));
+        let missing = stored(&place);
+        assert_eq!(missing.values, SettingsValues::default());
+        assert_eq!(missing.problem, None);
         let values = SettingsValues {
             editor_font_size: Some(22),
             ..SettingsValues::default()
         };
-        write_values(&path, &values).unwrap();
-        assert_eq!(read_values(&path).editor_font_size, Some(22));
-
-        std::fs::write(&path, "{\"schemaVersion\":99,\"editorFontSize\":30}").unwrap();
-        assert_eq!(read_values(&path), SettingsValues::default());
-    }
-
-    #[test]
-    fn missing_file_reads_empty() {
-        let dir = temp_dir("missing");
-        assert_eq!(
-            read_values(&dir.join("absent.json")),
-            SettingsValues::default()
-        );
+        set_at(&place, &values).unwrap();
+        let read = stored(&place);
+        assert_eq!(read.values.editor_font_size, Some(22));
+        assert_eq!(read.problem, None);
     }
 
     #[test]
@@ -489,13 +498,15 @@ mod tests {
         );
     }
 
+    /// A primeira escrita cria as pastas: a do global e o `.kinein`.
     #[test]
     fn write_creates_parent_dir() {
         let dir = temp_dir("nested");
-        let path = dir.join(".kinein").join("settings.json");
-        assert!(!path.exists());
-        write_values(&path, &SettingsValues::default()).unwrap();
-        assert!(path.exists());
+        let path = dir.join("kinein-vectis").join("settings.json");
+        set_at(&Place::global(path.clone()), &SettingsValues::default()).unwrap();
+        assert!(path.is_file());
+        set_at(&Place::workspace(&dir), &SettingsValues::default()).unwrap();
+        assert!(dir.join(".kinein").join("settings.json").is_file());
     }
 
     // Garante que a assinatura de workspace_path monta `.kinein`.

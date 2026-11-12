@@ -147,6 +147,59 @@ fn settings_layout_round_trips_per_workspace_and_rejects_garbage() {
     assert_eq!(reread["settings"]["layout"], layout);
 }
 
+/// INF-07 pelo IPC (`0.220.0`): o `.kinein/settings.json` sem
+/// `schemaVersion` vem no `workspaceProblem`, com os valores do projeto
+/// vazios; o `settings.set` do projeto e' recusado com `INVALID_REQUEST` e o
+/// mesmo motivo, e o arquivo fica como estava. Apagado o arquivo, grava.
+#[test]
+fn settings_report_and_keep_the_project_file_the_ide_cannot_read() {
+    let dir = temp_workspace("problem");
+    std::fs::create_dir_all(dir.join(".kinein")).unwrap();
+    let file = dir.join(".kinein").join("settings.json");
+    std::fs::write(&file, r#"{"autoSave": false}"#).unwrap();
+    let mut core = core_with_empty_search_path("settings-problem");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        50_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let problem = ".kinein/settings.json não tem schemaVersion";
+
+    let get = core.handle_request(&JsonRpcRequest::new(51_i64, "settings.get", None));
+    let result = get.response().result.as_ref().unwrap().clone();
+    assert_eq!(result["workspace"], json!({}));
+    assert_eq!(result["workspaceProblem"], problem);
+
+    let set = core.handle_request(&JsonRpcRequest::new(
+        52_i64,
+        "settings.set",
+        Some(json!({ "scope": "workspace", "values": { "explorerWidth": 300 } })),
+    ));
+    let error = set.response().error.as_ref().unwrap();
+    assert_eq!(error.code, JsonRpcErrorCode::InvalidRequest);
+    assert_eq!(
+        error.message,
+        format!(
+            "As configurações não foram gravadas: {problem}. A IDE não grava por cima do que não entende; corrija ou remova esse caminho e tente de novo."
+        )
+    );
+    assert_eq!(
+        std::fs::read_to_string(&file).unwrap(),
+        r#"{"autoSave": false}"#
+    );
+
+    std::fs::remove_file(&file).unwrap();
+    let set = core.handle_request(&JsonRpcRequest::new(
+        53_i64,
+        "settings.set",
+        Some(json!({ "scope": "workspace", "values": { "explorerWidth": 300 } })),
+    ));
+    let result = set.response().result.as_ref().unwrap().clone();
+    assert_eq!(result["workspace"], json!({ "explorerWidth": 300 }));
+    assert!(result.get("workspaceProblem").is_none());
+}
+
 #[test]
 fn settings_set_rejects_out_of_range_font() {
     let dir = temp_workspace("font-range");

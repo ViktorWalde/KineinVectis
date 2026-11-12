@@ -199,7 +199,8 @@ A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-10: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04, INF-05, INF-08, INF-09 e INF-10 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
+INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11 e INF-12 corrigidos;
+INF-06, INF-13, INF-14 e UI-01 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -687,7 +688,109 @@ auditorias e provas posteriores datadas nos donos:**
   esquema maior e o JSON inválido, cada um mantido no disco depois de um
   `settings.set`, com mutações. Decisão do autor de 2026-11-10: a IDE não
   grava por cima do arquivo que não entende e diz por quê, num commit
-  próprio, fora do C. Estado aberto.
+  próprio, fora do C. Medido em 2026-11-12, com o core 0.219.0, `HOME` e
+  `XDG_CONFIG_HOME` isolados: o arquivo sem `schemaVersion`, o de
+  `schemaVersion` 2, o JSON cortado, o que não é UTF-8 e o de esquema 1 com
+  `"autoSave": "nao"` são lidos como vazios, o `autoSave: false` deles não
+  vale, e o primeiro `settings.set` os troca por `{"schemaVersion": 1,
+  "explorerWidth": 300}`. Decisões do autor de 2026-11-12: o
+  `settings.get` e o `settings.set` dizem o motivo por escopo, num campo novo
+  do `SettingsResult` (protocolo 0.220.0); o `settings.set` daquele escopo é
+  recusado com o mesmo motivo; a faixa de saúde do projeto mostra o problema
+  do `.kinein/settings.json`, e o diálogo de Configurações o de cada escopo;
+  INF-11 e INF-12 entram no mesmo commit. Desenho: a leitura segue a do
+  `runconfig.rs`, que já distingue o arquivo ausente do que não entende
+  (o que não é arquivo regular, o que passa de 1 MiB, o que não é UTF-8 nem
+  JSON, o esquema que não conhece e o valor de tipo errado). Correção de
+  2026-11-12, protocolo 0.220.0 (40.7 §7.410): a leitura e a escrita saíram
+  para `settings/file.rs`; o `settings.get` leva `globalProblem` e
+  `workspaceProblem`, com o caminho e o motivo; o `settings.set` daquele
+  escopo é recusado com `INVALID_REQUEST`, e o arquivo fica como estava; a
+  faixa mostra o do projeto, depois dos avisos de build, com o botão
+  **[Configurações]**, e o diálogo, o de cada escopo e a gravação recusada.
+  Provas: os cinco casos medidos e outros quatro motivos da leitura (o
+  `schemaVersion` em texto, a lista, o arquivo vazio e o de mais de 1 MiB),
+  mais a pasta no lugar do arquivo, nos dois escopos, cada um idêntico no
+  disco depois do `settings.set`; o teste do IPC com o arquivo sem
+  `schemaVersion`; o harness `tst_settings_problems`; 27 mutantes que
+  compilam, todos reprovados; na UI nativa, o projeto sem `schemaVersion` (o
+  caso de 2026-11-10) e o global de esquema 2, recusados sem mudar um byte,
+  e o arquivo corrigido por fora usado na gravação seguinte. Estado
+  corrigido.
+- **INF-11 — Chave desconhecida de um `settings.json` de esquema 1 apagada.**
+  Dono e evidência: `crates/kinein-core/src/settings.rs`. O `SettingsFile`
+  lê os campos conhecidos e ignora os outros, como o comentário do
+  `SettingsValues` promete para a compatibilidade com um core mais novo, mas
+  a escrita só grava os conhecidos. Medido em 2026-11-12, no preparo do
+  INF-07: `{"schemaVersion": 1, "autoSave": false, "chaveFutura": 7}` vira,
+  depois de um `settings.set`, um arquivo sem a `chaveFutura`. Severidade
+  média: um core mais velho apaga, sem aviso, o que um mais novo gravou no
+  mesmo esquema. Causa confirmada pela medida: a escrita parte dos valores
+  conhecidos, e não do objeto lido. Testes: a chave desconhecida e o valor
+  dela ficam no disco depois de um `settings.set`, nos dois escopos, com
+  mutações. Decisão do autor de 2026-11-12: corrigir junto do INF-07; a
+  escrita guarda as chaves que não conhece. Correção de 2026-11-12 (40.7
+  §7.410): a escrita parte do objeto lido e só troca as chaves que conhece;
+  a conhecida que vinha `null` fica até ser gravada, sem sair em dobro.
+  Provas: a chave desconhecida, com objeto e número, nos dois escopos, e a
+  UI nativa com a `chaveFutura` mantida. Estado corrigido.
+- **INF-12 — `settings.json` do projeto gravado fora dele por symlink.**
+  Dono e evidência: `crates/kinein-core/src/settings.rs`, que lê com
+  `read_to_string` e grava com `fs::write`, os dois seguindo o symlink.
+  Medido em 2026-11-12, no preparo do INF-07, com o core 0.219.0 e pastas
+  isoladas: com `.kinein/settings.json` apontando para um arquivo que não
+  existe fora do projeto, um `settings.set` do escopo do projeto o cria; com
+  o link para um arquivo de texto existente, o substitui pelo JSON das
+  configurações. O salvamento do layout é automático e não espera a
+  confiança no projeto: abrir um repositório clonado com esse link basta.
+  Severidade alta: a IDE cria ou sobrescreve, sem aviso, um arquivo da
+  pessoa fora do projeto. Causa confirmada pela medida: o escopo do projeto
+  não confere o tipo do caminho, como o `runconfig.rs` confere. Testes: o
+  link pendente, o link para um arquivo existente e para uma pasta, cada
+  um sem nada gravado fora do projeto, e o global por symlink lido e gravado
+  no alvo, com mutações. Decisão do autor de 2026-11-12: corrigir junto do
+  INF-07; no escopo do projeto, o symlink e o que não é arquivo regular são
+  recusados, com o motivo na faixa; o global, que é da pessoa e pode vir de
+  dotfiles, segue o link e recusa o alvo que não é arquivo regular.
+  Correção de 2026-11-12 (40.7 §7.410): no projeto, a leitura usa o
+  `symlink_metadata` no `.kinein` e no arquivo, e a escrita é atômica e não
+  segue um link que apareça depois da leitura; o global segue o link na
+  leitura e na escrita. Provas: o `.kinein` ligado a uma pasta de fora com um
+  `settings.json` e ao que não existe, o arquivo ligado ao que não existe e a
+  uma pasta, sem nada criado nem mudado fora; o global por uma pasta ligada,
+  gravado no alvo com o link de pé, e o ligado a uma pasta, recusado. Os
+  links são de pasta ou para o que não existe, e o Windows os faz com
+  junção, sem privilégio: os testes rodam nos dois sistemas. Na UI nativa, o
+  `.kinein/settings.json` ligado a um arquivo de texto de fora foi recusado,
+  e o arquivo ficou com o mesmo sha256. Estado corrigido.
+- **INF-13 — Outros arquivos do `.kinein` gravados por symlink.** Dono e
+  evidência: além do `settings.rs` e do `runconfig.rs`, 26 arquivos do core
+  citam o `.kinein` e gravam arquivos (entre eles `cmake_configuration.rs`,
+  `workspace/session.rs`, `kits/store.rs`, `datasource/store.rs` e
+  `project/artifacts.rs`), numa busca grosseira de 2026-11-12, no preparo do
+  INF-07: nem todos gravam no `.kinein`. O `runconfig.rs` confere o tipo do
+  caminho; os outros não foram lidos nem medidos. Severidade a medir: se algum
+  segue o link como o `settings.rs` do INF-12, é alta. Causa a medir.
+  Testes: o link pendente e o link para um arquivo existente em cada dono que
+  grava no `.kinein`, sem nada gravado fora do projeto. Decisão do autor de
+  2026-11-12: a varredura vem num commit próprio, logo depois do INF-07, antes
+  do C1-47. Estado aberto.
+- **INF-14 — `settings.json` lido pela UI na partida sem as regras do core.**
+  Dono e evidência: `ui/src/startup_web.cpp`, `readOption`, chamado pelo
+  `main.cpp` antes do `QGuiApplication` para decidir o contexto OpenGL
+  compartilhado. Lido em 2026-11-12, no INF-07, sem medir: ele abre o
+  `.kinein/settings.json` do projeto da linha de comando e o global com
+  `QFile`, que segue o link simbólico, sem conferir se é arquivo regular,
+  sem limite no `readAll` e sem o `schemaVersion`; e deixa o
+  `grafanaWebView` e o `platformioWebView` do projeto vencerem o global,
+  quando o core só usa o global (`settings.rs`, `resolve`). Severidade a
+  medir: se o `open` de um FIFO no lugar do arquivo prende a partida, um
+  repositório clonado trava a IDE ao abrir; o resto custa só o contexto
+  compartilhado (~13 ms e ~9 MiB, 59 §7.1.6). Causa: a leitura é uma cópia
+  à parte da do core, anterior ao INF-07. Testes: o FIFO, o link e o arquivo
+  sem `schemaVersion` no `tst_startup_web`, com a partida medida na UI.
+  Decisão do autor de 2026-11-12: entra no commit do INF-13, na mesma
+  varredura do `.kinein`. Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`

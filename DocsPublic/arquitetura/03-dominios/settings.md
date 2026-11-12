@@ -13,6 +13,24 @@ settings.json`, vale para todos os workspaces) e por-WORKSPACE
 `schemaVersion` (arquivo inválido/schema desconhecido = vazio, nunca
 quebra). O efetivo = `default ← global ← workspace`.
 
+**O arquivo que a IDE não entende (`0.220.0`, INF-07, INF-11 e INF-12).**
+Até o `0.219.0`, o arquivo que a IDE não entendia valia como vazio, e o
+primeiro `settings.set` daquele escopo o trocava pelo dele, sem aviso. Desde
+o `0.220.0`, o `SettingsResult` leva `globalProblem` e `workspaceProblem`,
+cada um presente só quando o arquivo daquele escopo existe e não foi lido, com
+o caminho e o motivo: não é arquivo regular, passa de 1 MiB, não está em
+UTF-8, não é JSON válido (com a linha e a coluna), não é um objeto, não tem
+`schemaVersion`, tem um `schemaVersion` que esta versão não conhece, ou um
+valor conhecido de tipo errado. Os valores daquele escopo vêm vazios, como
+antes, e o efetivo cai para o escopo de baixo. O `settings.set` daquele escopo
+é recusado com `INVALID_REQUEST` e o mesmo motivo, e o arquivo fica como
+estava. No escopo do workspace, o `.kinein` e o `settings.json` que são link
+simbólico também são recusados, e nada é gravado fora do projeto (INF-12); o
+global segue o link, porque é da pessoa e pode vir de dotfiles, e recusa o
+alvo que não é arquivo regular. Num arquivo entendido, a escrita guarda as
+chaves que esta versão não conhece, com os valores delas (INF-11), em vez de
+apagá-las. Veja o [62 §3.4](../../roadmaps/62-base-publica-0.4.md#34-inventário-sistemático-de-dívida-técnica).
+
 ```text
 settings.get {} → SettingsResult
 settings.set { scope: "global"|"workspace", values: SettingsValues }
@@ -42,7 +60,8 @@ Layout (schemaVersion 1) { schemaVersion: 1,
                  outlineCollapsed?: bool,
                  bottom?: { visible?: bool, tab?: string } }
 SettingsResult { settings: EffectiveSettings, global: SettingsValues,
-                 workspace: SettingsValues }
+                 workspace: SettingsValues,
+                 globalProblem?: string, workspaceProblem?: string (0.220.0) }
 ```
 
 - `settings.get` NÃO exige workspace (o global existe sempre; sem
@@ -63,8 +82,9 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
 - Erros: `NO_WORKSPACE` (set `scope=workspace` sem workspace);
   `INVALID_PARAMS` (`editorFontSize` fora de 8..=40, ou `rigorProfile`
   fora do enum; largura/altura de painel fora dos limites, inclusive terminal
-  KV ativo fora de 300..=720); `INTERNAL_ERROR`
-  (falha de escrita).
+  KV ativo fora de 300..=720); `INVALID_REQUEST` (0.220.0: o arquivo do
+  escopo existe e a IDE não o entende, o mesmo motivo do `globalProblem` ou
+  do `workspaceProblem`); `INTERNAL_ERROR` (falha de escrita).
 - Consumidores atuais: `editorFontSize` → `Theme.fontSizeEditor`;
   `autoClosePairs` → auto-close da E1; `formatOnSave` → Ctrl+S formata e
   então salva; `autoSave` → o `EditorPersistenceController` salva o buffer

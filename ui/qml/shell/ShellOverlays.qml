@@ -143,6 +143,7 @@ Item {
         grafanaWebView: root.settingsController.grafanaWebView
         platformioWebView: root.settingsController.platformioWebView
         projectKeys: Object.keys(root.settingsController.workspaceValues)
+        problems: root.settingsController.problems
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.settingsController.closeDialog()
