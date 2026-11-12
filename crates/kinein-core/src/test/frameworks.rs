@@ -22,15 +22,18 @@
 //! so' a linha do ctest (nada e' adivinhado).
 
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
     process::Command,
-    sync::{Arc, atomic::AtomicBool},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 
 use kinein_protocol::TestCaseInfo;
 
+use super::listing::{LIMITS, Lister, Listings, list_cases, listing};
 use super::{CaseStatus, TestError, TestEvent, TestOutcome, entries, launch, stream_command_until};
 use crate::process;
 
@@ -137,48 +140,6 @@ pub fn parse_ctest_json(texto: &str) -> Vec<CtestEntry> {
         .collect()
 }
 
-/// Os casos de `--gtest_list_tests`: `Suite.` na coluna 0, `  Caso` indentado
-/// (o `# GetParam()` dos parametrizados e' comentario e cai).
-#[must_use]
-pub fn parse_gtest_list(texto: &str) -> Vec<String> {
-    let mut suite = String::new();
-    let mut cases = Vec::new();
-    for linha in texto.lines() {
-        if linha.is_empty() || linha.starts_with("Running main()") {
-            continue;
-        }
-        if !linha.starts_with(' ') {
-            linha
-                .split('#')
-                .next()
-                .unwrap_or_default()
-                .trim()
-                .clone_into(&mut suite);
-            continue;
-        }
-        let case = linha.split('#').next().unwrap_or_default().trim();
-        if !case.is_empty() && !suite.is_empty() {
-            cases.push(format!("{suite}{case}"));
-        }
-    }
-    cases
-}
-
-/// Os casos de `--list-tests --verbosity quiet` (Catch2 v3): um por linha.
-#[must_use]
-pub fn parse_catch2_list(texto: &str) -> Vec<String> {
-    texto
-        .lines()
-        .map(str::trim)
-        .filter(|l| {
-            !l.is_empty()
-                && !l.starts_with("All available test cases")
-                && !l.ends_with(" test cases")
-        })
-        .map(str::to_owned)
-        .collect()
-}
-
 /// `[       OK ] Suite.Case (3 ms)` / `[  FAILED  ] Suite.Case (1 ms)`.
 ///
 /// C1-29: only the line of the case ends in the time; the summary at the end
@@ -202,49 +163,6 @@ pub fn parse_gtest_case(line: &str) -> Option<(String, CaseStatus)> {
     }
     let name = case.split(", where ").next()?.trim();
     (!name.is_empty() && name.contains('.')).then(|| (name.to_owned(), status))
-}
-
-/// Pergunta ao binario do teste quais casos ele tem: gtest primeiro, Catch2
-/// depois.
-///
-/// `None` = o binario nao e' de nenhum dos dois (ou nao roda). A listagem tem
-/// a pasta e o ambiente do teste, sem os argumentos, como o
-/// `gtest_discover_tests` (C1-34).
-#[must_use]
-pub fn list_cases(entry: &CtestEntry) -> Option<(Framework, Vec<String>)> {
-    let exe = entry.command.first()?;
-    let run = |args: &[&str]| -> Option<String> {
-        let mut c = Command::new(exe);
-        c.args(args);
-        if let Some(cwd) = &entry.working_directory {
-            c.current_dir(cwd);
-        }
-        launch::apply_environment(&mut c, entry).ok()?;
-        let saida = c.output().ok()?;
-        saida
-            .status
-            .success()
-            .then(|| String::from_utf8_lossy(&saida.stdout).into_owned())
-    };
-    if let Some(texto) = run(&["--gtest_list_tests"]) {
-        let cases = parse_gtest_list(&texto);
-        if !cases.is_empty() {
-            return Some((Framework::Gtest, cases));
-        }
-    }
-    // C1-28: the listing of Catch2 is one name per line, which any test that
-    // prints a line for every argument also gives. Catch2 says who it is in
-    // `--libidentify`, the flag it keeps for tools. Catch2 3 lists in random
-    // order, and the tree keeps the order of the declarations (C1-31).
-    if run(&["--libidentify"]).is_some_and(|answer| is_catch2(&answer))
-        && let Some(texto) = run(&["--list-tests", "--verbosity", "quiet", "--order", "decl"])
-    {
-        let cases = parse_catch2_list(&texto);
-        if !cases.is_empty() {
-            return Some((Framework::Catch2, cases));
-        }
-    }
-    None
 }
 
 /// Why Catch2 cannot run only this case, when it cannot (C1-31): a spec
@@ -271,14 +189,6 @@ fn catch2_refusal(name: &str, names: &[String]) -> Option<String> {
 /// one: the count of the disabled cases the filter picked, never zero.
 const DISABLED_NOTE: &str = "YOU HAVE 1 DISABLED TEST";
 
-/// `framework: Catch2` in the `--libidentify` answer, aligned with spaces.
-fn is_catch2(identity: &str) -> bool {
-    identity.lines().any(|line| {
-        line.split_once(':')
-            .is_some_and(|(key, value)| key.trim() == "framework" && value.trim() == "Catch2")
-    })
-}
-
 /// Os testes do ctest com os comandos, pelo `json-v1`. `ctest` e' o programa
 /// (o do PATH, ou um falso no teste).
 pub fn ctest_entries(ctest: &Path, build_dir: &Path, cancel: &Arc<AtomicBool>) -> Vec<CtestEntry> {
@@ -298,33 +208,24 @@ pub fn ctest_entries(ctest: &Path, build_dir: &Path, cancel: &Arc<AtomicBool>) -
     parse_ctest_json(&texto)
 }
 
-/// What a binary said of its cases: the framework and the names.
-pub(super) type Listing = Option<(Framework, Vec<String>)>;
-
-/// The listing of the binary of a test of the ctest, asked once per binary,
-/// folder and environment: `gtest_discover_tests` gives one test per case.
-type Listings = HashMap<(String, Option<PathBuf>, Vec<String>, Vec<String>), Listing>;
-
-/// Who lists the cases of the binary of a test: `list_cases`, or a fake.
-type Lister<'a> = &'a mut dyn FnMut(&CtestEntry) -> Listing;
-
-fn listing(listings: &mut Listings, entry: &CtestEntry, list: Lister<'_>) -> Listing {
-    let exe = entry.command.first()?;
-    listings
-        .entry((
-            exe.clone(),
-            entry.working_directory.clone(),
-            entry.environment.clone(),
-            entry.environment_modification.clone(),
-        ))
-        .or_insert_with(|| Path::new(exe).is_file().then(|| list(entry)).flatten())
-        .clone()
-}
-
 /// Os casos de dentro de cada binario do ctest, ja' com o id `teste::caso`:
 /// só os do teste que roda todos os casos (C1-32).
-pub fn discover_inner_cases(entries: &[CtestEntry], cancel: &Arc<AtomicBool>) -> Vec<TestCaseInfo> {
-    inner_cases(entries, cancel, &mut list_cases)
+///
+/// `sink` receives why a binary gave no cases in time (C1-43).
+pub fn discover_inner_cases(
+    entries: &[CtestEntry],
+    cancel: &Arc<AtomicBool>,
+    sink: &mut dyn FnMut(TestEvent),
+) -> Vec<TestCaseInfo> {
+    let mut note = |line| {
+        sink(TestEvent::Output {
+            stream: "stderr",
+            line,
+        });
+    };
+    inner_cases(entries, cancel, &mut |entry| {
+        list_cases(entry, cancel, LIMITS, &mut note)
+    })
 }
 
 fn inner_cases(
@@ -335,7 +236,7 @@ fn inner_cases(
     let mut listings = Listings::new();
     let mut cases = Vec::new();
     for entry in entries {
-        if cancel.load(std::sync::atomic::Ordering::SeqCst) {
+        if cancel.load(Ordering::SeqCst) {
             break;
         }
         if entries::closed(entry).is_some() {
@@ -363,6 +264,38 @@ fn inner_cases(
     entries::unique(cases, entries)
 }
 
+/// What `id` names, by the same listing as the tree (C1-43): why a binary
+/// did not answer in time is the reason of the refusal, not that it lists
+/// the case no more, and the cancel says so.
+fn find_case<'a>(
+    entries: &'a [CtestEntry],
+    id: &'a str,
+    cancel: &Arc<AtomicBool>,
+    sink: &mut dyn FnMut(TestEvent),
+) -> Option<Result<entries::Named<'a>, TestError>> {
+    let mut listings = Listings::new();
+    let mut last_note = None;
+    let mut note = |line: String| {
+        sink(TestEvent::Output {
+            stream: "stderr",
+            line: line.clone(),
+        });
+        last_note = Some(line);
+    };
+    let resolved = entries::resolve(entries, id, &mut |entry| {
+        listing(&mut listings, entry, &mut |entry| {
+            list_cases(entry, cancel, LIMITS, &mut note)
+        })
+    })?;
+    Some(match resolved {
+        Err(_) if cancel.load(Ordering::SeqCst) => Err(TestError::ListingCancelled),
+        Err(TestError::Refused { .. }) if let Some(reason) = last_note => {
+            Err(TestError::Refused { reason })
+        }
+        resolved => resolved,
+    })
+}
+
 /// Roda UM caso de dentro de um binario: `teste::caso`. `None` quando o id
 /// e' um teste do ctest de sempre: sem o separador, ou o nome de um teste do
 /// ctest com `::` (C1-32).
@@ -377,10 +310,7 @@ pub fn run_inner_case(
         return None;
     }
     let entries = ctest_entries(ctest, build_dir, cancel);
-    let mut listings = Listings::new();
-    let named = match entries::resolve(&entries, id, &mut |entry| {
-        listing(&mut listings, entry, &mut list_cases)
-    })? {
+    let named = match find_case(&entries, id, cancel, sink)? {
         Ok(named) => named,
         Err(error) => return Some(Err(error)),
     };
@@ -483,10 +413,8 @@ pub fn run_inner_case(
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        CtestEntry, catch2_refusal, parse_catch2_list, parse_ctest_json, parse_gtest_case,
-        parse_gtest_list,
-    };
+    use super::{CtestEntry, catch2_refusal, parse_ctest_json, parse_gtest_case};
+    use crate::test::listing::{parse_catch2_list, parse_gtest_list};
     use crate::test::{CaseStatus, launch::catch2_filter};
 
     /// A test of the ctest that runs `exe`, as the `json-v1` gives it.
@@ -496,6 +424,17 @@ mod tests {
             command: vec![exe.display().to_string()],
             ..CtestEntry::default()
         }
+    }
+
+    /// The cases `exe` lists, with the limits of the core and no cancel.
+    fn listed(exe: &std::path::Path) -> crate::test::listing::Listing {
+        use crate::test::listing::{LIMITS, list_cases};
+        list_cases(
+            &entry_of(exe),
+            &std::sync::Arc::default(),
+            LIMITS,
+            &mut |_| {},
+        )
     }
 
     #[test]
@@ -702,9 +641,7 @@ mod tests {
         ignore = "W6: build, qualidade e testes de C/C++ no Windows (Visual Studio, LLVM) sao da W6 (60 §3.3)"
     )]
     fn binaries_are_asked_for_their_cases_and_one_case_runs_by_the_binary() {
-        use super::{
-            Framework, SEP, ctest_entries, discover_inner_cases, list_cases, run_inner_case,
-        };
+        use super::{Framework, SEP, ctest_entries, discover_inner_cases, run_inner_case};
         use crate::test::TestEvent;
 
         let _serial = crate::serialize_executables();
@@ -734,19 +671,19 @@ mod tests {
             "case \"$1\" in\n  --libidentify) printf 'description:    Catch2\\nframework:      Catch\\n'; exit 0;;\n  *) echo 'x'; exit 0;;\nesac\n",
         );
         assert_eq!(
-            list_cases(&entry_of(&gtest)),
+            listed(&gtest),
             Some((
                 Framework::Gtest,
                 vec!["Math.Adds".to_owned(), "Math.Subtracts".to_owned()]
             ))
         );
         assert_eq!(
-            list_cases(&entry_of(&catch2)),
+            listed(&catch2),
             Some((Framework::Catch2, vec!["vectors can be sized".to_owned()]))
         );
-        assert_eq!(list_cases(&entry_of(&mudo)), None);
-        assert_eq!(list_cases(&entry_of(&printing)), None);
-        assert_eq!(list_cases(&entry_of(&other)), None);
+        assert_eq!(listed(&mudo), None);
+        assert_eq!(listed(&printing), None);
+        assert_eq!(listed(&other), None);
 
         // O ctest falso: o json-v1 com os tres binarios.
         let ctest = exe(
@@ -759,7 +696,8 @@ mod tests {
             ),
         );
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let cases = discover_inner_cases(&ctest_entries(&ctest, &root, &cancel), &cancel);
+        let cases =
+            discover_inner_cases(&ctest_entries(&ctest, &root, &cancel), &cancel, &mut |_| {});
         let ids: Vec<&str> = cases.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(
             ids,
@@ -852,10 +790,11 @@ mod tests {
         assert!(!json.contains('\''), "{json}");
         let ctest = exe("ctest", &format!("printf '%s' '{json}'\n"));
         let cancel = std::sync::Arc::default();
-        let ids: Vec<_> = discover_inner_cases(&ctest_entries(&ctest, &root, &cancel), &cancel)
-            .into_iter()
-            .map(|case| case.id)
-            .collect();
+        let ids: Vec<_> =
+            discover_inner_cases(&ctest_entries(&ctest, &root, &cancel), &cancel, &mut |_| {})
+                .into_iter()
+                .map(|case| case.id)
+                .collect();
         assert_eq!(
             ids,
             [

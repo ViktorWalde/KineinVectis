@@ -1370,15 +1370,12 @@ crates/kinein-core/src/test/discover.rs	resto	2
 crates/kinein-core/src/test/discover.rs	ruido	6
 crates/kinein-core/src/test/discover.rs	vazio	2
 crates/kinein-core/src/test/frameworks.rs	corpo	1
-crates/kinein-core/src/test/frameworks.rs	linha	8
+crates/kinein-core/src/test/frameworks.rs	linha	2
 crates/kinein-core/src/test/frameworks.rs	mudo	3
-crates/kinein-core/src/test/frameworks.rs	saida	3
-crates/kinein-core/src/test/frameworks.rs	texto	14
+crates/kinein-core/src/test/frameworks.rs	texto	6
 crates/kinein-core/src/test/mod.rs	casos	6
 crates/kinein-core/src/test/mod.rs	configurado	3
-crates/kinein-core/src/test/mod.rs	erro	2
 crates/kinein-core/src/test/mod.rs	eventos	10
-crates/kinein-core/src/test/mod.rs	falso	5
 crates/kinein-core/src/test/mod.rs	interpretador	1
 crates/kinein-core/src/test/mod.rs	limpo	3
 crates/kinein-core/src/test/mod.rs	resultado	2

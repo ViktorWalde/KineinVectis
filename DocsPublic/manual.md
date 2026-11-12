@@ -536,6 +536,14 @@ confundem. O ponto do caso que rodou e foi pulado, como um `GTEST_SKIP`, é
 lista longa deixa a lista onde estava, e o resultado aparece na linha que você
 clicou (desde 2026-11-10).
 
+**O binário que não responde.** Cada pergunta da listagem a um binário tem
+5 s, o prazo padrão do `gtest_discover_tests`. Um programa que não responde
+nesse prazo, como um servidor posto como teste, fica só com a linha do
+`ctest`, que o roda inteiro; por enquanto, a aba não diz por quê. **Rodar só
+este teste** num caso desse binário diz que ele não respondeu. Cancelar o job
+da listagem para o binário, e a aba diz "não listou: listagem cancelada"
+(desde 2026-11-11).
+
 **Análise em C/C++.** O clangd sobe com `--clang-tidy` e lê o `.clang-tidy`
 do projeto: os avisos aparecem no arquivo aberto como qualquer diagnóstico.
 A **Análise de qualidade** (`Ctrl+Shift+L`) num CMake ou Makefile roda o

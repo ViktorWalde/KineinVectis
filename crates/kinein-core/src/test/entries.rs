@@ -13,8 +13,9 @@ use std::collections::HashMap;
 use kinein_protocol::TestCaseInfo;
 
 use super::TestError;
-use super::frameworks::{CtestEntry, Framework, Listing, SEP};
+use super::frameworks::{CtestEntry, Framework, SEP};
 use super::launch;
+use super::listing::Listing;
 
 /// C1-40: the properties with which the ctest decides the outcome otherwise
 /// than by the exit code, or does not run the test alone, which one case does
@@ -297,7 +298,8 @@ mod tests {
     use super::{
         OUTCOME_PROPERTIES, catch2_picks_reporter, closed, resolve, runs_every_case, unique,
     };
-    use crate::test::frameworks::{CtestEntry, Framework, Listing};
+    use crate::test::frameworks::{CtestEntry, Framework};
+    use crate::test::listing::Listing;
     use kinein_protocol::TestCaseInfo;
 
     fn entry(

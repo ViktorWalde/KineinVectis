@@ -20,6 +20,7 @@ pub mod discover;
 mod entries;
 pub mod frameworks;
 mod launch;
+pub mod listing;
 mod parse;
 mod runners;
 
@@ -132,6 +133,9 @@ pub enum TestError {
         /// The sentence for the person.
         reason: String,
     },
+    /// The job was cancelled while it listed (C1-43): no tree is better than
+    /// half of one counted as whole.
+    ListingCancelled,
 }
 
 impl fmt::Display for TestError {
@@ -151,6 +155,7 @@ impl fmt::Display for TestError {
             Self::NoConfiguration { reason } | Self::Refused { reason } => {
                 formatter.write_str(reason)
             }
+            Self::ListingCancelled => formatter.write_str("listagem cancelada"),
         }
     }
 }
@@ -162,7 +167,8 @@ impl Error for TestError {
             Self::Unsupported { .. }
             | Self::ToolMissing { .. }
             | Self::NoConfiguration { .. }
-            | Self::Refused { .. } => None,
+            | Self::Refused { .. }
+            | Self::ListingCancelled => None,
         }
     }
 }
@@ -464,12 +470,12 @@ mod tests {
             .join(format!("{}-pytest-discover", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        let falso = dir.join("python");
+        let fake = dir.join("python");
         crate::write_executable(
-            &falso,
+            &fake,
             "#!/bin/sh\necho 'tests/a.py::no_stderr' >&2\necho 'tests/a.py::test_x'\necho '1 test collected in 0.00s'\nexit 0\n",
         );
-        let launcher = crate::python::run::PythonLauncher::Interpreter(falso.clone());
+        let launcher = crate::python::run::PythonLauncher::Interpreter(fake.clone());
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let casos = super::discover_tests(
             &dir,
@@ -487,7 +493,7 @@ mod tests {
         // Regravar pelo `write_executable`, nunca abrindo o executavel para
         // escrita AQUI: um `fork` de outro teste herdaria o descritor e o
         // `exec` daria ETXTBSY (falhou assim no gate de 2026-10-08).
-        crate::write_executable(&falso, "#!/bin/sh\necho 'no tests ran in 0.01s'\nexit 5\n");
+        crate::write_executable(&fake, "#!/bin/sh\necho 'no tests ran in 0.01s'\nexit 5\n");
         let casos = super::discover_tests(
             &dir,
             kinein_protocol::ProjectKind::Python,
@@ -498,8 +504,8 @@ mod tests {
         .unwrap();
         assert!(casos.is_empty(), "exit 5 = sem testes, nao erro");
 
-        crate::write_executable(&falso, "#!/bin/sh\necho 'erro de coleta' >&2\nexit 2\n");
-        let erro = super::discover_tests(
+        crate::write_executable(&fake, "#!/bin/sh\necho 'erro de coleta' >&2\nexit 2\n");
+        let error = super::discover_tests(
             &dir,
             kinein_protocol::ProjectKind::Python,
             Some(&launcher),
@@ -507,7 +513,49 @@ mod tests {
             &mut |_| {},
         )
         .unwrap_err();
-        assert!(erro.to_string().contains("saiu com"), "{erro}");
+        assert!(error.to_string().contains("saiu com"), "{error}");
+
+        // C1-43: the cancel in the middle of the command of the runner says
+        // so, and not the signal that stopped it.
+        let pid = dir.join("pid");
+        crate::write_executable(
+            &fake,
+            format!(
+                "#!/bin/sh\nsleep 30 &\n{}\nwait\n",
+                crate::sh_save_background_pid(&pid)
+            ),
+        );
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let canceller = {
+            let (cancel, pid) = (std::sync::Arc::clone(&cancel), pid.clone());
+            std::thread::spawn(move || {
+                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+                while std::fs::read_to_string(&pid)
+                    .unwrap_or_default()
+                    .trim()
+                    .is_empty()
+                {
+                    assert!(std::time::Instant::now() < deadline, "o runner não começou");
+                    std::thread::sleep(std::time::Duration::from_millis(20));
+                }
+                cancel.store(true, std::sync::atomic::Ordering::SeqCst);
+            })
+        };
+        let error = super::discover_tests(
+            &dir,
+            kinein_protocol::ProjectKind::Python,
+            Some(&launcher),
+            &cancel,
+            &mut |_| {},
+        )
+        .unwrap_err();
+        canceller.join().unwrap();
+        crate::kill_process(&std::fs::read_to_string(&pid).unwrap());
+        assert!(
+            matches!(error, super::TestError::ListingCancelled),
+            "{error}"
+        );
+        assert_eq!(error.to_string(), "listagem cancelada");
     }
 
     /// A descoberta contra o `ctest` REAL: um projeto minimo de dois testes

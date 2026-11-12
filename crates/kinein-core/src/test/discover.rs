@@ -21,7 +21,10 @@
 
 use std::path::Path;
 use std::process::Command;
-use std::sync::{Arc, atomic::AtomicBool};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 
 use kinein_protocol::{ProjectKind, TestCaseInfo};
 
@@ -207,6 +210,11 @@ pub fn discover_tests(
             ProcessError::Wait(source) => TestError::Io(source),
         },
     )?;
+    // C1-43: the cancelled listing says so, and not that the runner exited
+    // with the signal that stopped it.
+    if cancel.load(Ordering::SeqCst) {
+        return Err(TestError::ListingCancelled);
+    }
     if sem_pytest {
         return Err(sem_modulo_pytest());
     }
@@ -220,6 +228,9 @@ pub fn discover_tests(
     }
     if kind == ProjectKind::Cmake {
         cmake_cases(root, &mut cases, cancel, sink)?;
+        if cancel.load(Ordering::SeqCst) {
+            return Err(TestError::ListingCancelled);
+        }
     }
     Ok(cases)
 }
@@ -248,7 +259,7 @@ fn cmake_cases(
             })
             .collect();
     }
-    let inner = super::frameworks::discover_inner_cases(&entries, cancel);
+    let inner = super::frameworks::discover_inner_cases(&entries, cancel, sink);
     if !inner.is_empty() {
         sink(TestEvent::Output {
             stream: "stdout",

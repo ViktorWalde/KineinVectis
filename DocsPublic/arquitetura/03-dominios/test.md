@@ -6,6 +6,20 @@
 
 ### Testes (`test.run` / `test.discover` — jobs assíncronos)
 
+**A listagem dos casos com prazo e o cancel (`0.218.0`, C1-43).** No
+`test.discover` de um `CMake`, cada chamada que pergunta ao binário pelos
+casos (`--gtest_list_tests`, `--libidentify` e `--list-tests`) tem 5 s, o
+`DISCOVERY_TIMEOUT` padrão do `gtest_discover_tests`, e guarda até 64 MiB de
+saída. O cancel do job e o fim do prazo matam a árvore do processo. O
+binário que passa do prazo ou do teto fica só com a linha do ctest, e uma
+linha de `event.job.output` diz qual binário, qual chamada e por quê. O
+`test.run` de um caso de dentro lista do mesmo jeito para achar o caso, e o
+motivo vira o erro. O cancel no meio da listagem, de qualquer runner, termina
+em `event.test.discovered { success: false, error: "listagem cancelada" }`, e
+não mais em `success: true` com a árvore pela metade; o `event.job.finished`
+segue `cancelled`. Sem campo novo. Veja a
+[consolidação C §24](../../especificacoes/consolidacao-nativa-de-c.md#24-c1-43-a-listagem-dos-casos-com-prazo--desenho-de-2026-11-10).
+
 **O nome do caso de dentro é o id (`0.217.0`, C1-39 e C1-44).** No
 `event.test.discovered`, o `name` do caso de dentro de um binário do ctest
 passa a ser o id inteiro, `<teste do ctest>::<caso>`, como o `TestCaseInfo`

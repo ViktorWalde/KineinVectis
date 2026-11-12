@@ -1058,8 +1058,9 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-40 / caso de dentro de um teste cujo desfecho o CTest decide de outro jeito | Achado na medida do C1-34 com o CTest do CMake 4.4.5 (2026-11-10). Num teste escrito à mão que roda o binário gtest inteiro, com um caso que falha: o `WILL_FAIL` faz o CTest dizer `Passed`; o `PASS_REGULAR_EXPRESSION` que não aparece reprova; o `SKIP_RETURN_CODE 1` dá `Skipped`; o `DISABLED` dá `Not Run (Disabled)`; o `FIXTURES_REQUIRED` roda antes o teste do `FIXTURES_SETUP`, também com `-R`; e o `REQUIRED_FILES` que falta dá `Not Run`. O `json-v1` traz cada uma só quando ligada: o `WILL_FAIL FALSE` e o `DISABLED OFF` não aparecem. O `test.discover` abre esses testes em casos, e o caso roda pelo binário e sai pelo código de saída dele. Causa: o desfecho do CTest não é só o código de saída, e a regra do C1-32 olhava só o que escolhe os casos | Média: o caso de um teste `WILL_FAIL` sai reprovado quando a linha do ctest passa; o de um teste com fixture falha por falta do preparo; o de um teste desativado roda | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: não abrir em casos, com a mesma regra do C1-32, junto do C1-34; o `TIMEOUT` do teste passa a valer para o caso ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
 | C1-41 / comando mostrado da linha do ctest que não roda | Achado no desenho do C1-34 (2026-11-10), por leitura de `test::runners::ctest_command`. O `event.test.started` diz `ctest --output-on-failure -R ^Widget::draw works$`: sem o `--test-dir` da pasta da configuração, que o `ctest` recebe, e sem aspas no nome com espaço do `catch_discover_tests`; o `ctest` roda na raiz do projeto. Causa: o texto é montado à parte dos argumentos, como no C1-38 | Baixa: colado num terminal na raiz, o comando mostrado não acha os testes, ou roda outros | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir junto do C1-34. O comando mostrado sai dos mesmos argumentos, com o `--test-dir` e as aspas do C1-38; o `ctest -N` da descoberta, que também vinha sem o `--test-dir`, entra junto ([§22](#22-c1-34-o-caso-como-o-ctest-roda-o-teste--desenho-de-2026-11-10)) |
 | C1-42 / linha do ctest que cai ou passa do prazo sem contar | Achado na regressão do C1-34 com o CTest do CMake 4.4.5 (2026-11-10). A linha do teste que cai é `***Exception: SegFault`, `***Exception: Numerical`, `***Exception: Illegal` ou `Subprocess aborted***Exception:`, com `terminated` e `killed` no lugar de `aborted` para o `SIGTERM` e o `SIGKILL`; a do que passa do `TIMEOUT` é `***Timeout`. `test::parse::parse_ctest_case` só lê `Passed`, `***Failed`, `***Not Run`, `***Skipped` e `***Disabled`, e essas linhas não viram `event.test.case`. Causa: as formas de falha do CTest que não são `***Failed` ficaram fora da leitura | Alta: num projeto C, o teste que cai por `SegFault` ou trava até o prazo não fica vermelho na árvore nem conta como reprovado; só o código de saída do job diz falha | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir junto do C1-34; as linhas medidas viram `failed` |
-| C1-43 / listagem de um binário que não termina | Achado no desenho da prova do C1-34 (2026-11-10), por leitura de `test::frameworks::list_cases`: a listagem roda o binário com `Command::output()`, que espera o processo sem prazo e sem olhar o `cancel` do job. Um programa comum posto como teste, como um servidor que ignora `--gtest_list_tests` e `--libidentify` e fica rodando, não termina. Causa: a listagem é uma chamada direta, fora do `process` que os jobs usam | Média: o `test.discover` desse projeto não termina, e cancelar não o para | Aberto. Registrado; fora do C1-34 sem decisão do autor. Decisão do autor de 2026-11-10: corrigir num commit próprio, depois do C1-39: a listagem pelo mesmo processo dos jobs, com o `cancel` e um prazo |
+| C1-43 / listagem de um binário que não termina | Achado no desenho da prova do C1-34 (2026-11-10), por leitura de `test::frameworks::list_cases`: a listagem roda o binário com `Command::output()`, que espera o processo sem prazo e sem olhar o `cancel` do job. Um programa comum posto como teste, como um servidor que ignora `--gtest_list_tests` e `--libidentify` e fica rodando, não termina. Causa: a listagem é uma chamada direta, fora do `process` que os jobs usam | Média: o `test.discover` desse projeto não termina, e cancelar não o para | Corrigido em 2026-11-11 ([§24.1](#241-c1-43-integração-e-provas--2026-11-11), protocolo 0.218.0). Decisão do autor de 2026-11-10: corrigir num commit próprio, depois do C1-39: a listagem pelo mesmo processo dos jobs, com o `cancel` e um prazo; o cancel dá "listagem cancelada"; 5 s e 64 MiB por chamada ([§24](#24-c1-43-a-listagem-dos-casos-com-prazo--desenho-de-2026-11-10)) |
 | C1-44 / árvore dos testes que volta ao topo ao rodar | Achado na prova na UI nativa do C1-34 (2026-11-10), com 17 linhas na árvore e o painel alto: rolada até os casos, a árvore volta ao topo depois do ▶, nas duas vezes medidas, e o caso que rodou sai da vista. Causa provável, por leitura: `ui/qml/jobs/JobsController.qml::prepareTestRun` zera a saída, o `hasOutput` de `ui/qml/panels/bottom/TestsPanel.qml` vira falso, a lista cresce até caber inteira e o `contentY` vai a 0; quando a saída volta, a lista encolhe e fica no topo | Baixa: para ver o desfecho do caso, é preciso rolar de novo a cada execução | Corrigido em 2026-11-10 ([§23.1](#231-c1-39-e-c1-44-integração-e-provas--2026-11-10), protocolo 0.217.0). Decisão do autor de 2026-11-10: corrigir junto do C1-39, que mexe no mesmo painel: a árvore fica onde estava ao rodar. Provar no harness e na UI nativa |
+| C1-45 / motivo da listagem que não se vê na UI | Achado na prova na UI nativa do C1-43 (2026-11-11). O motivo do binário que não respondeu no prazo ou passou do teto sai só no `event.job.output` do `test.discover`. A aba Testes mostra a árvore e o resumo, sem a saída da listagem, e a aba Jobs mostra só a última linha de cada job, que é a do `ctest -N` ou a do fim. Causa: a saída da descoberta só vai para o log do job, e nenhuma vista da UI mostra esse log inteiro | Baixa: a linha do servidor aparece sem casos, e a UI não diz por quê; o motivo está no log do job e, no run do caso, no erro | Aberto. Registrado; fora do C1-43 por decisão do autor de 2026-11-11, que mandou fechar o escopo atual. Decisão do autor de 2026-11-11: mostrar as linhas da listagem na aba Testes |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
 `binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
@@ -2496,3 +2497,66 @@ deixa um filho com o pipe aberto, o cancel no meio de cada chamada e a
 saída sem fim, cada um com o tempo medido e sem processo sobrando; a
 regressão com o gtest e o Catch2 reais segue igual; mutantes no prazo, no
 cancel, no teto e no motivo.
+
+### 24.1 C1-43: integração e provas — 2026-11-11
+
+Integrado no desenho do §24, protocolo 0.218.0:
+- `test/listing.rs`, novo, com a listagem que saiu do `test/frameworks.rs`:
+  as três chamadas, cada uma pelo
+  `process::stream_command_lines_with_timeout_cancelable`, com o `cancel` do
+  job e os `LIMITS` (5 s e 64 MiB); o motivo do binário que passa do prazo ou
+  do teto vai para a saída; a chamada que vem depois do cancel não roda;
+- `test/frameworks.rs`: o `discover_inner_cases` recebe a saída do job para o
+  motivo, e o `run_inner_case` lista do mesmo jeito: o motivo do prazo vira o
+  erro, em vez de "não lista mais o caso", e o cancel vira "listagem
+  cancelada";
+- `test/discover.rs` e `TestError::ListingCancelled`: o cancel durante o
+  comando do runner ou durante a listagem dos casos dá o erro "listagem
+  cancelada", e o `event.test.discovered` sai com `success: false`.
+
+Provas:
+- testes do dono no `listing.rs`, com binários falsos e limites curtos: o
+  servidor que ignora as flags e o `SIGTERM` e tem um filho para em cada
+  chamada no prazo, com dois motivos e sem processo sobrando; a saída no teto
+  exato conta, um byte a mais não conta, a saída sem fim para no prazo, e o
+  `stderr` não entra na lista nem no teto; o cancel no meio de cada uma das
+  três chamadas para a chamada e as seguintes; o binário que responde e
+  deixa um filho com o pipe aberto conta, sem esperar o filho; os `LIMITS`
+  são 5 s e 64 MiB;
+- o cancel no meio do comando do runner, com um Python falso, dá
+  `ListingCancelled`, e não "saiu com signal";
+- a regressão `listing_deadline`, com o CMake 4.4.5, o `ctest` e o GCC 16
+  reais: um servidor posto como teste, que grava o pid a cada chamada, e um
+  binário que lista como o gtest. O `test.discover` termina em
+  10 s a 30 s com `server`, `fake` e `fake::Math.Adds` e os dois motivos do
+  servidor, sem os processos dele; o `test.run` de `server::Math.Adds` é
+  recusado pelo prazo; o cancel no meio do run e no meio da listagem dá
+  "listagem cancelada" em menos de 3 s, o job termina `cancelled`, e o
+  servidor não sobra. Com a listagem de antes, ela reprova;
+- 14 mutantes que reprovam: a listagem de antes, pelo
+  `Command::output()`; sem o prazo; sem o `cancel` na chamada; sem olhar o
+  `cancel` antes dela; sem o teto, com `>=` no teto, e o `stderr` contado
+  nele; o teto e o prazo sem o motivo; a descoberta sem o motivo; o run sem
+  o motivo e sem o erro do cancel; a descoberta sem o cancel do runner e sem
+  o da listagem. Sem o prazo, o teste da saída sem fim não termina, e o
+  mutante foi medido pelo teste do binário que não responde;
+- na UI nativa isolada, com o core 0.218.0 e o `autoSave` desligado,
+  confirmados pelo IPC, e a fixture do §23.1 mais um servidor posto como
+  teste: "Listar testes" termina em 11,5 s com 21 linhas, a do servidor sem
+  casos, e os dois processos do servidor terminam. Clicado o × do job na
+  barra de status no meio da listagem, o `event.test.discovered` chega em
+  0,75 s com `success: false` e "listagem cancelada", o job termina
+  `cancelled`, a aba Testes diz "não listou: listagem cancelada", e o
+  servidor não sobra. A IDE sai com 0, e o log dela fica sem aviso de QML.
+
+Limites:
+- o binário que trava em todas as chamadas leva 10 s, e o Catch2 que
+  responde ao `--libidentify` e trava na lista leva 15 s; o cancel para
+  antes;
+- o prazo é fixo: o `DISCOVERY_TIMEOUT` que o projeto passa ao
+  `gtest_discover_tests` não é lido, porque é argumento da função, que o usa
+  no build, e não propriedade do teste, e o `json-v1` não o tem;
+- o filho que o binário deixa vivo depois de responder segue vivo, como em
+  todo job que termina sozinho;
+- na UI, o motivo do prazo sai só no log do job, que nenhuma vista mostra
+  inteiro (C1-45).
