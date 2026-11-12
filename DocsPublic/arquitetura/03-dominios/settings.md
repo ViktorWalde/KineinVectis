@@ -77,7 +77,12 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
   dentro da IDE: o Grafana local, 59 §6.1, e o PIO Home, 52 §14.45). Só o
   global decide essas duas, e o projeto não opina. Qualquer uma ligada
   faz a IDE compartilhar o contexto OpenGL na abertura (~13 ms e ~9 MiB,
-  59 §7.1.6), o que o QtWebEngine exige. `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
+  59 §7.1.6), o que o QtWebEngine exige. A UI lê essa decisão antes do
+  core subir (`ui/src/startup_web.cpp`), só do arquivo global e com as
+  regras de leitura do core: segue o link, recusa o que não é arquivo
+  regular sem abri-lo, o que passa de 1 MiB e o que não tem `schemaVersion`
+  1 (INF-14, 2026-11-12; antes ela abria também o `.kinein/settings.json`
+  do projeto da linha de comando, e um FIFO ali prendia a partida). `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
   terminal KV ativo e Estrutura), painel inferior `260` e Estrutura expandida.
 - Erros: `NO_WORKSPACE` (set `scope=workspace` sem workspace);
   `INVALID_PARAMS` (`editorFontSize` fora de 8..=40, ou `rigorProfile`

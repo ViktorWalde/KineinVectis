@@ -46,19 +46,14 @@ pub(super) fn load(root: &Path) -> Vec<RemoteTarget> {
 
 /// Grava os alvos, criando `.kinein/`.
 pub(super) fn save(root: &Path, targets: &[RemoteTarget]) -> Result<(), String> {
-    let target = path_for(root);
-    if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|error| format!("falha criando {}: {error}", parent.display()))?;
-    }
     let file = RemoteFile {
         schema_version: SCHEMA_VERSION,
         targets: targets.to_vec(),
     };
     let body = serde_json::to_string_pretty(&file)
         .map_err(|error| format!("falha serializando alvos: {error}"))?;
-    fs::write(&target, body)
-        .map_err(|error| format!("falha gravando {}: {error}", target.display()))
+    // INF-13: pelo guarda do `.kinein`, que nao segue o link.
+    crate::kinein_dir::write(root, "remotes.json", body.as_bytes())
 }
 
 #[cfg(test)]

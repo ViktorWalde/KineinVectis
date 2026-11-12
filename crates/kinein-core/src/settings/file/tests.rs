@@ -12,6 +12,7 @@ use kinein_protocol::SettingsValues;
 use serde_json::{Value, json};
 
 use super::Place;
+use crate::kinein_dir::link;
 use crate::settings::{SetError, set_at, stored};
 
 fn base(name: &str) -> PathBuf {
@@ -21,29 +22,6 @@ fn base(name: &str) -> PathBuf {
     drop(std::fs::remove_dir_all(&dir));
     std::fs::create_dir_all(&dir).unwrap();
     crate::platform::canonicalize(&dir).unwrap()
-}
-
-/// Um link em `link` para `target`, uma pasta ou o que ainda não existe.
-fn link(target: &Path, link: &Path) {
-    let made = if cfg!(windows) {
-        std::process::Command::new("cmd")
-            .args(["/D", "/C", "mklink", "/J"])
-            .arg(link)
-            .arg(target)
-            .output()
-    } else {
-        std::process::Command::new("ln")
-            .arg("-s")
-            .arg(target)
-            .arg(link)
-            .output()
-    }
-    .unwrap();
-    assert!(
-        made.status.success(),
-        "{}",
-        String::from_utf8_lossy(&made.stderr)
-    );
 }
 
 fn is_link(path: &Path) -> bool {

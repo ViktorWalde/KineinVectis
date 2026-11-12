@@ -185,6 +185,26 @@ ativa por último.
 Caminho inexistente ou sem `path` nos params retorna `INVALID_PARAMS`; falha de
 IO ao persistir, listar ou criar diretorios retorna `INTERNAL_ERROR`.
 
+**O `.kinein` que o core não usa** (protocolo `0.221.0`, INF-13): tudo o que
+o core grava em `.kinein/` (`workspace.json`, `session.json`, `kinein.db`,
+`toolchain.json`, `remotes.json`, `grafana.json`, `configuration.json`,
+`python.json`, `coverage.lcov`, a pasta de build do CMake e os marcadores
+dela, além do `settings.json`, do `runconfigs.json` e do `datasources.json`,
+que já recusavam) passa por um guarda só: o `.kinein`, cada pasta abaixo dele
+e o arquivo têm de estar ausentes ou ser o que dizem, e nenhum pode ser link
+simbólico. O que não passa não é gravado, e nada é criado nem mudado fora do
+projeto; a escrita que passa troca o arquivo de forma atômica, sem seguir
+link. O projeto abre assim mesmo: a resposta de `workspace.open` (e a de
+`workspace.createProject`) ganha o campo opcional `stateProblem`, com o
+caminho a partir do projeto e o motivo, por exemplo
+`".kinein é um link simbólico, que a IDE não segue no projeto"`. Ele diz o
+problema do próprio `.kinein`, senão o da primeira entrada logo dentro dele,
+por nome, que é link; ausente quando o core grava ali como sempre. Nunca é
+persistido. Com ele, o `workspace.json` não é gravado, os rascunhos dos
+buffers ficam só na memória, e cada escrita recusada volta com o mesmo
+motivo, no erro do método que a pediu. A UI o mostra na faixa de saúde do
+projeto, sem botão: quem resolve é a pessoa, trocando o link por uma pasta.
+
 **Workspaces recentes globais** (protocolo `0.53.0`, fatia A1):
 somente `workspace.open` e `workspace.createProject` concluídos com sucesso
 registram a raiz canônica. O core persiste até 12 entradas em

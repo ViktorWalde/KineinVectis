@@ -46,6 +46,7 @@ mod index_context;
 mod index_drift;
 mod index_effective;
 mod jobs;
+mod kinein_dir;
 mod lsp;
 mod lsp_companion;
 mod lsp_deferred;

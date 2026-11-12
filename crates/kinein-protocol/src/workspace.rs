@@ -105,6 +105,12 @@ pub struct WorkspaceInfo {
     /// procedural macros in rust-analyzer). Kept outside the project.
     #[serde(default)]
     pub trusted: bool,
+    /// Why the core writes nothing in the project's `.kinein` through a
+    /// symbolic link (`0.221.0`, INF-13): the `.kinein` itself is one, or is
+    /// not a folder, or an entry right inside it is a link. Absent = the core
+    /// writes there as always. Never persisted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub state_problem: Option<String>,
 }
 
 /// Result of `workspace.trust` (`0.171.0`).
@@ -374,6 +380,7 @@ mod tests {
                 build_systems: vec![BuildSystem::Cargo],
             },
             trusted: false,
+            state_problem: None,
         };
         let value = serde_json::to_value(workspace).unwrap();
 

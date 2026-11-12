@@ -73,8 +73,9 @@ impl ProjectCreation {
     }
 }
 
-/// Directory created inside the workspace root for Kinein Vectis metadata.
-pub const WORKSPACE_DIR: &str = ".kinein";
+/// Directory created inside the workspace root for Kinein Vectis metadata
+/// (its guard is `kinein_dir`, INF-13).
+pub const WORKSPACE_DIR: &str = crate::kinein_dir::WORKSPACE_DIR;
 
 /// File name of the persisted workspace metadata.
 pub const WORKSPACE_FILE: &str = "workspace.json";

@@ -1371,6 +1371,15 @@ arquivos estavam abertos, o índice — e duas janelas na mesma pasta seriam dua
 donas do mesmo arquivo: a última a fechar apagaria o que a outra gravou, sem
 avisar ninguém.
 
+**O `.kinein` que é um link.** A IDE só grava o estado do projeto dentro dele:
+se o `.kinein`, uma pasta dentro dele ou um arquivo que ela grava ali for um
+link simbólico (um repositório clonado pode trazer um), ela não segue o link.
+O projeto abre normalmente, e a faixa **Project Health** diz "estado do
+projeto não gravado", com o caminho e o motivo. Enquanto isso, as abas
+abertas, o layout, a toolchain e os rascunhos dos arquivos não salvos não são
+gravados, e nada é criado nem mudado no lugar para onde o link aponta. Para
+voltar ao normal, troque o link por uma pasta de verdade e reabra o projeto.
+
 **No Wayland, trazer a janela para a frente é o compositor quem decide.** Se o
 seu terminal fornece um token de ativação, ela sobe; se não, o GNOME pode
 apenas destacá-la na barra de tarefas. O que a IDE garante em qualquer caso é o

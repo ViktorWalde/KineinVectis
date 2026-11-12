@@ -242,12 +242,10 @@ int main(int argc, char* argv[])
     // a opcao esta' ligada, pelo plugin QML: o QtWebEngine exige o contexto
     // OpenGL compartilhado ANTES do QGuiApplication. O contexto compartilhado
     // custa ~13 ms e ~9 MiB com GL de verdade (A/B de 2026-10-16, 59 §7.1.6):
-    // so' com a opcao ligada (a do projeto da linha de comando vence a global).
-    const QString workspaceSettings = request.action == kinein::cli::Action::Open
-                                          ? QDir(QFileInfo{request.folder}.canonicalFilePath())
-                                                .filePath(QStringLiteral(".kinein/settings.json"))
-                                          : QString();
-    if (kinein::wantsWebView(kinein::globalSettingsFile(), workspaceSettings)) {
+    // so' com a opcao ligada no global, a unica que o core usa (INF-14: o
+    // `.kinein/settings.json` do projeto da linha de comando nao e' lido aqui;
+    // um FIFO no lugar dele prendia a partida).
+    if (kinein::wantsWebView(kinein::globalSettingsFile())) {
         QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     }
 

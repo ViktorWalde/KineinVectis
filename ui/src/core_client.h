@@ -420,6 +420,9 @@ signals:
     void workspaceBrowseListed(const QString& path, const QString& parent,
                                const QVariantList& entries, const QVariantList& places);
     void workspaceFolderCreated(const QString& path);
+    // INF-13 (0.221.0): por que o core nao grava no `.kinein` do projeto
+    // aberto (um link simbolico); vazio quando grava como sempre.
+    void workspaceStateProblem(const QString& problem);
     void sessionRestored(const QStringList& files, const QString& activeFile);
     // M-S1 (DocsPublic/seguranca/23): rascunhos não salvos recuperados de um crash.
     void draftsRecovered(const QVariantList& drafts);

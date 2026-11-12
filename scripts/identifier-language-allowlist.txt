@@ -50,6 +50,9 @@ wrapline reflow
 tokio rustls webpki ureq rusqlite rustix nodelay
 # rustix::io::Errno::PERM — constante POSIX EPERM (operation not permitted).
 perm
+# 2026-11-12 (INF-14, tst_startup_web): QFAIL do Qt Test, mkfifo(3) do POSIX e
+# o namespace std::chrono do C++, para o prazo do teste do FIFO.
+qfail mkfifo chrono
 
 # --- abreviacoes inglesas consagradas
 args argc argv param params config configs dirs dest addr addrs init repl

@@ -114,15 +114,18 @@ fn gcc_or_clang(version: &str) -> bool {
 }
 
 pub(super) fn pin_python(root: &Path, executable: &str) -> Result<(), WorkspaceError> {
-    let directory = root.join(".kinein");
-    std::fs::create_dir_all(&directory).map_err(|source| WorkspaceError::CreateDirectory {
-        path: directory.display().to_string(),
-        source,
-    })?;
-    write_template(
-        &directory.join("python.json"),
-        &serde_json::json!({"schemaVersion":1,"interpreter":executable}).to_string(),
-    )
+    let body = serde_json::json!({"schemaVersion":1,"interpreter":executable}).to_string();
+    // INF-13: pelo guarda do `.kinein`, que nao segue o link.
+    crate::kinein_dir::write(root, "python.json", body.as_bytes()).map_err(|message| {
+        WorkspaceError::WriteTemplate {
+            path: root
+                .join(".kinein")
+                .join("python.json")
+                .display()
+                .to_string(),
+            source: std::io::Error::other(message),
+        }
+    })
 }
 
 pub(super) fn pin_rust(root: &Path, executable: &str) -> Result<(), WorkspaceError> {
@@ -140,3 +143,6 @@ pub(super) fn pin_rust(root: &Path, executable: &str) -> Result<(), WorkspaceErr
         &format!("[toolchain]\npath = {path}\n"),
     )
 }
+
+#[cfg(test)]
+mod tests;

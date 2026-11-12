@@ -206,10 +206,9 @@ pub fn run(
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(CoverageEvent),
 ) -> Result<(String, Report), CoverageError> {
-    let lcov = root.join(LCOV_PATH);
-    if let Some(pasta) = lcov.parent() {
-        std::fs::create_dir_all(pasta).map_err(CoverageError::Io)?;
-    }
+    // INF-13: a ferramenta grava o LCOV no `.kinein`, pelo guarda dele.
+    let lcov = crate::kinein_dir::file(root, "coverage.lcov")
+        .map_err(|message| CoverageError::Io(std::io::Error::other(message)))?;
     let _ = std::fs::remove_file(&lcov);
     let tool = match kind {
         ProjectKind::RustCargo => {

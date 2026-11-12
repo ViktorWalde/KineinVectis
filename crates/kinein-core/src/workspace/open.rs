@@ -50,11 +50,20 @@ pub fn open_workspace(path: &Path) -> Result<WorkspaceInfo, WorkspaceError> {
         // A confianca nunca vem do projeto: quem a decide e' o Core, pelo
         // arquivo FORA dele (16.4b, `workspace/trust.rs`).
         trusted: false,
+        state_problem: None,
     };
 
-    persist(&root, &workspace)?;
+    // INF-13 (0.221.0): com o `.kinein` ou o arquivo ligado, o projeto abre
+    // sem gravar por ele, e a faixa diz por que.
+    let state_problem = crate::kinein_dir::summary(&root);
+    if crate::kinein_dir::problem(&root, WORKSPACE_FILE, false).is_none() {
+        persist(&root, &workspace)?;
+    }
 
-    Ok(workspace)
+    Ok(WorkspaceInfo {
+        state_problem,
+        ..workspace
+    })
 }
 
 /// Lists child directories for the IDE-owned workspace picker.
@@ -131,12 +140,6 @@ pub fn metadata_path(root: &Path) -> PathBuf {
 }
 
 fn persist(root: &Path, workspace: &WorkspaceInfo) -> Result<(), WorkspaceError> {
-    let directory = root.join(WORKSPACE_DIR);
-    fs::create_dir_all(&directory).map_err(|source| WorkspaceError::Persist {
-        path: directory.display().to_string(),
-        source,
-    })?;
-
     let persisted = PersistedWorkspace {
         schema_version: WORKSPACE_SCHEMA_VERSION.to_owned(),
         workspace: workspace.clone(),
@@ -144,10 +147,12 @@ fn persist(root: &Path, workspace: &WorkspaceInfo) -> Result<(), WorkspaceError>
     let mut json = serde_json::to_string_pretty(&persisted).map_err(WorkspaceError::Serialize)?;
     json.push('\n');
 
-    let file = metadata_path(root);
-    fs::write(&file, json).map_err(|source| WorkspaceError::Persist {
-        path: file.display().to_string(),
-        source,
+    // INF-13: pelo guarda do `.kinein`, que nao segue o link.
+    crate::kinein_dir::write(root, WORKSPACE_FILE, json.as_bytes()).map_err(|message| {
+        WorkspaceError::Persist {
+            path: metadata_path(root).display().to_string(),
+            source: std::io::Error::other(message),
+        }
     })
 }
 

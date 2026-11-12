@@ -64,19 +64,16 @@ pub fn save_session(
         active_file: relative_active,
     };
     let target = session_path(root);
-    if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent).map_err(|source| FsError::Io {
-            path: parent.display().to_string(),
-            source,
-        })?;
-    }
     let body = serde_json::to_string_pretty(&session).map_err(|source| FsError::Io {
         path: target.display().to_string(),
         source: source.into(),
     })?;
-    fs::write(&target, body).map_err(|source| FsError::Io {
-        path: target.display().to_string(),
-        source,
+    // INF-13: pelo guarda do `.kinein`, que nao segue o link.
+    crate::kinein_dir::write(root, "session.json", body.as_bytes()).map_err(|message| {
+        FsError::Io {
+            path: target.display().to_string(),
+            source: std::io::Error::other(message),
+        }
     })?;
     Ok(saved)
 }

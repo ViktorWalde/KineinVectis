@@ -133,13 +133,9 @@ pub(crate) fn load(root: &Path) -> BTreeMap<String, Kit> {
 
 /// Grava os kits, criando `.kinein/` se preciso. Kit vazio nao e' persistido.
 pub(crate) fn save(root: &Path, kits: &BTreeMap<String, Kit>) -> Result<(), String> {
-    let target = path_for(root);
-    if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|error| format!("falha criando {}: {error}", parent.display()))?;
-    }
     let body = render(kits)?;
-    fs::write(&target, body).map_err(|error| format!("falha escrevendo a toolchain: {error}"))
+    // INF-13: pelo guarda do `.kinein`, que nao segue o link.
+    crate::kinein_dir::write(root, "toolchain.json", body.as_bytes())
 }
 
 /// O texto que [`save`] grava: a previa de uma receita mostra os mesmos bytes.

@@ -47,19 +47,14 @@ pub(super) fn load(root: &Path) -> Option<GrafanaProfile> {
 
 /// Grava a instancia, criando `.kinein/` se preciso.
 pub(super) fn save(root: &Path, profile: Option<&GrafanaProfile>) -> Result<(), String> {
-    let target = path_for(root);
-    if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|error| format!("falha criando {}: {error}", parent.display()))?;
-    }
     let file = GrafanaFile {
         schema_version: SCHEMA_VERSION,
         profile: profile.cloned(),
     };
     let body = serde_json::to_string_pretty(&file)
         .map_err(|error| format!("falha serializando a instância: {error}"))?;
-    fs::write(&target, body)
-        .map_err(|error| format!("falha gravando {}: {error}", target.display()))
+    // INF-13: pelo guarda do `.kinein`, que nao segue o link.
+    crate::kinein_dir::write(root, "grafana.json", body.as_bytes())
 }
 
 #[cfg(test)]

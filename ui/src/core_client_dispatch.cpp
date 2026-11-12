@@ -314,6 +314,9 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     // saude decidir o configure automatico ja' sabendo dela.
     setWorkspaceTrusted(result.value(QStringLiteral("trusted")).toBool());
     emit workspaceChanged();
+    // INF-13 (0.221.0): depois do workspaceChanged, que zera a faixa; vazio
+    // = o core grava no `.kinein` como sempre.
+    emit workspaceStateProblem(result.value(QStringLiteral("stateProblem")).toString());
     // Um espelho remoto (0.122.0) diz de quem e'; vazio = workspace comum.
     emit remoteMirrorChanged(result.value(QStringLiteral("remote")).toObject().toVariantMap());
     listRecentWorkspaces();

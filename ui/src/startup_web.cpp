@@ -2,38 +2,40 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
-#include <optional>
 
 namespace kinein {
 
 namespace {
 
-// `true`/`false` quando o arquivo declara `option`; nada quando nao declara.
-std::optional<bool> readOption(const QString& file, const QString& option)
+// O limite de leitura do core (`settings/file.rs`): o arquivo maior nao e' lido.
+constexpr qint64 kReadLimit = 1024LL * 1024;
+
+// O objeto do arquivo quando o core tambem o leria, senao vazio (INF-14). O
+// tipo vem antes do `open`, porque abrir um FIFO prende a partida (medido em
+// 2026-11-12: sem primeiro quadro, parada no `open`). O JSON quebrado, o que
+// nao e' UTF-8 e o que nao e' objeto chegam vazios, sem `schemaVersion`.
+QJsonObject readSettings(const QString& file)
 {
-    if (file.isEmpty()) {
-        return std::nullopt;
+    if (!QFileInfo(file).isFile()) {
+        return {};
     }
     QFile settings(file);
     if (!settings.open(QIODevice::ReadOnly)) {
-        return std::nullopt;
+        return {};
     }
-    const QJsonDocument document = QJsonDocument::fromJson(settings.readAll());
-    const QJsonValue value = document.object().value(option);
-    if (!value.isBool()) {
-        return std::nullopt;
+    const QByteArray body = settings.read(kReadLimit + 1);
+    if (body.size() > kReadLimit) {
+        return {};
     }
-    return value.toBool();
-}
-
-// A do projeto vence a global; nenhuma das duas declarando conta desligada.
-bool wantsOption(const QString& globalFile, const QString& workspaceFile, const QString& option)
-{
-    const std::optional<bool> workspace = readOption(workspaceFile, option);
-    return workspace.value_or(readOption(globalFile, option).value_or(false));
+    QJsonObject object = QJsonDocument::fromJson(body).object();
+    if (object.value(QStringLiteral("schemaVersion")).toInteger(0) != 1) {
+        return {};
+    }
+    return object;
 }
 
 } // namespace
@@ -54,12 +56,13 @@ QString globalSettingsFile()
     return QDir(base).filePath(QStringLiteral("kinein-vectis/settings.json"));
 }
 
-bool wantsWebView(const QString& globalFile, const QString& workspaceFile)
+bool wantsWebView(const QString& globalFile)
 {
     // As opcoes que pedem a visualizacao web: o Grafana (59 §6.1) e o PIO
     // Home (52 §14.45). Qualquer uma ligada liga o contexto compartilhado.
-    return wantsOption(globalFile, workspaceFile, QStringLiteral("grafanaWebView")) ||
-           wantsOption(globalFile, workspaceFile, QStringLiteral("platformioWebView"));
+    const QJsonObject settings = readSettings(globalFile);
+    return settings.value(QStringLiteral("grafanaWebView")).toBool() ||
+           settings.value(QStringLiteral("platformioWebView")).toBool();
 }
 
 } // namespace kinein

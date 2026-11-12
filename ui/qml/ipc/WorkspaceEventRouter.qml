@@ -113,6 +113,11 @@ Item {
             root.coreClient.detectTools();
         }
 
+        // INF-13 (0.221.0): chega logo depois do workspaceChanged; vazio limpa.
+        function onWorkspaceStateProblem(problem) {
+            root.projectHealthController.stateProblem = problem;
+        }
+
         function onRecentWorkspacesResolved(workspaces) {
             root.recentWorkspacesController.handleResolved(workspaces);
         }

@@ -359,11 +359,11 @@ pub fn select_configuration(root: &Path, preset: Option<&str>) -> io::Result<()>
             _ => Ok(()),
         };
     };
-    fs::create_dir_all(root.join(".kinein"))?;
     let body = serde_json::to_vec_pretty(&Record {
         preset: preset.to_owned(),
     })?;
-    crate::fsops::atomic_write(&path, &body).map_err(io::Error::other)
+    // INF-13: pelo guarda do `.kinein`, que nao segue o link.
+    crate::kinein_dir::write(root, "configuration.json", &body).map_err(io::Error::other)
 }
 
 #[cfg(test)]

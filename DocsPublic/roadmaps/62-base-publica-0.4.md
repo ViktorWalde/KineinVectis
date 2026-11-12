@@ -199,8 +199,8 @@ A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-10: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11 e INF-12 corrigidos;
-INF-06, INF-13, INF-14 e UI-01 abertos. A dívida
+INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13 e
+INF-14 corrigidos; INF-06, INF-15, INF-16, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -769,12 +769,68 @@ auditorias e provas posteriores datadas nos donos:**
   `workspace/session.rs`, `kits/store.rs`, `datasource/store.rs` e
   `project/artifacts.rs`), numa busca grosseira de 2026-11-12, no preparo do
   INF-07: nem todos gravam no `.kinein`. O `runconfig.rs` confere o tipo do
-  caminho; os outros não foram lidos nem medidos. Severidade a medir: se algum
-  segue o link como o `settings.rs` do INF-12, é alta. Causa a medir.
-  Testes: o link pendente e o link para um arquivo existente em cada dono que
-  grava no `.kinein`, sem nada gravado fora do projeto. Decisão do autor de
-  2026-11-12: a varredura vem num commit próprio, logo depois do INF-07, antes
-  do C1-47. Estado aberto.
+  caminho; os outros não foram lidos nem medidos. Medido em 2026-11-12, com o
+  core 0.220.0 e pastas isoladas, repetindo as requisições que a UI nativa
+  manda ao abrir um projeto (sem a confiança): com o `.kinein` ligado a uma
+  pasta de fora, a abertura cria nela o `workspace.json` e o `kinein.db` dos
+  rascunhos; com cada arquivo do `.kinein` ligado a um caminho de fora que
+  não existe, a abertura cria os mesmos dois lá; com o `workspace.json`
+  ligado a um arquivo de texto existente, a abertura o sobrescreve com o JSON
+  do workspace (sha256 diferente). O `kinein.db` ligado a um arquivo
+  existente não o muda: o `DraftStore` apaga o link e cria o banco no lugar.
+  O `runconfig.rs` e o `datasource/store.rs` recusam o link; o `settings.rs`
+  recusa desde o INF-12. Por leitura, gravam com `fs::write` ou
+  `create_dir_all`, seguindo o link, sem medir ainda pela ação de cada um:
+  `workspace/open.rs` (`persist`), `workspace/session.rs`,
+  `workspace/project_options.rs` (`python.json`), `kits/store.rs`
+  (`toolchain.json`), `remote/store.rs`, `remote/mirror.rs`,
+  `grafana/store.rs`, `db/mod.rs` (`Connection::open`), e o
+  `cmake_configuration.rs`, que grava atômico, mas cria o `.kinein` pelo
+  link. Severidade alta: abrir um repositório clonado basta para criar
+  arquivos fora do projeto ou sobrescrever um arquivo da pessoa, e o
+  `kinein.db` guarda o texto dos buffers não salvos, que iria para onde o
+  link aponta. Causa confirmada pela medida: cada dono monta o caminho e
+  grava por conta própria, e só três conferem o tipo. Testes: o `.kinein`
+  ligado a uma pasta de fora, o arquivo ligado ao que não existe e a um
+  arquivo existente, em cada dono, sem nada criado nem mudado fora, com
+  mutações. Decisões do autor de 2026-11-12: a varredura vem num commit
+  próprio, logo depois do INF-07, antes do C1-47, junto do INF-14; a regra é
+  a do INF-12, num guarda só por onde passa todo arquivo que o core grava no
+  `.kinein` (recusa o `.kinein` e o arquivo que são link ou não regulares,
+  grava atômico, nada fora do projeto); com o link, o projeto abre, nada se
+  grava por ele, e a faixa diz o caminho e o motivo, num campo novo do
+  `workspace.open` (protocolo 0.221.0). Corrigido em 2026-11-12, com o
+  protocolo 0.221.0 e o contrato no 03 workspace: o guarda é o
+  `kinein_dir.rs`, um módulo folha como o `fsops` (os donos dependem dele, e
+  ele só do `fsops`; desenhado primeiro dentro do `workspace`, ele fechava um
+  ciclo novo de 20 módulos no mapa de módulos, porque o `kits`, o `cmake` e
+  o `cmake_configuration` passavam a depender do `workspace`, que depende
+  deles), por onde passam o `workspace.json`, a sessão, o
+  `kinein.db`, a toolchain, os alvos remotos, o Grafana, a configuração
+  ativa, o `python.json`, o LCOV, os marcadores e a trava da pasta de build
+  do configure e o `settings.json` do INF-12. Ele confere cada componente do
+  caminho: o ausente e o do tipo certo passam; o link, a pasta do meio que
+  não é pasta e o último que não é arquivo regular voltam com o caminho a
+  partir do projeto e o motivo, sem nada criado; a escrita que passa é
+  atômica. Os arquivos que o `SQLite` cria ao lado do banco ele mesmo abre
+  sem seguir o link e sem criar o alvo (medido com o `-wal`, o `-shm` e o
+  `-journal`). O `workspace.open` abre o projeto assim mesmo, não grava o
+  `workspace.json` e leva no `stateProblem` o motivo do `.kinein`, ou o da
+  primeira entrada logo dentro dele que é link; a faixa de saúde o mostra sem
+  botão, antes do aviso do `settings.json`, e o zera ao trocar de projeto. O
+  `runconfig.rs` e o `datasource/store.rs` seguem com a conferência deles; o
+  `remote/mirror.rs` grava no espelho do cache, fora do projeto. Provas: o
+  guarda em cada componente, na escrita e no resumo; cada dono chamado
+  direto, e o `workspace.open` e o `workspace.saveSession` pelo IPC, com a
+  pasta de fora vazia no fim; a pasta de build e a trava do configure
+  ligadas; o banco e cada arquivo do `SQLite` ligados ao que não existe; o
+  harness `tst_workspace_state_problem`, novo, com o router e o controller
+  reais; 29 mutantes que compilam, todos reprovados. Na UI nativa isolada, o
+  projeto com o `.kinein` ligado a uma pasta de fora com um arquivo de texto
+  da pessoa abriu com a faixa; a sessão e o rascunho do buffer editado foram
+  recusados com o motivo, e a pasta de fora ficou com a mesma listagem e o
+  mesmo sha256; trocado o link por uma pasta, a faixa sumiu e o estado foi
+  gravado no projeto. Estado corrigido.
 - **INF-14 — `settings.json` lido pela UI na partida sem as regras do core.**
   Dono e evidência: `ui/src/startup_web.cpp`, `readOption`, chamado pelo
   `main.cpp` antes do `QGuiApplication` para decidir o contexto OpenGL
@@ -783,14 +839,62 @@ auditorias e provas posteriores datadas nos donos:**
   `QFile`, que segue o link simbólico, sem conferir se é arquivo regular,
   sem limite no `readAll` e sem o `schemaVersion`; e deixa o
   `grafanaWebView` e o `platformioWebView` do projeto vencerem o global,
-  quando o core só usa o global (`settings.rs`, `resolve`). Severidade a
-  medir: se o `open` de um FIFO no lugar do arquivo prende a partida, um
-  repositório clonado trava a IDE ao abrir; o resto custa só o contexto
-  compartilhado (~13 ms e ~9 MiB, 59 §7.1.6). Causa: a leitura é uma cópia
-  à parte da do core, anterior ao INF-07. Testes: o FIFO, o link e o arquivo
-  sem `schemaVersion` no `tst_startup_web`, com a partida medida na UI.
-  Decisão do autor de 2026-11-12: entra no commit do INF-13, na mesma
-  varredura do `.kinein`. Estado aberto.
+  quando o core só usa o global (`settings.rs`, `resolve`). Medido em
+  2026-11-12, com a UI 0.3.9 e pastas isoladas, abrindo pela linha de
+  comando um projeto com um FIFO no lugar do `.kinein/settings.json`: sem
+  primeiro quadro em 20 s, com o processo parado no `open` do FIFO
+  (`wait_for_partner`); com o arquivo regular, o primeiro quadro sai em
+  949 ms. Severidade alta: um repositório clonado trava a IDE aberta por
+  ele; o resto custa só o contexto compartilhado (~13 ms e ~9 MiB, 59
+  §7.1.6). Causa: a leitura é uma cópia à parte da do core, anterior ao
+  INF-07. Testes: o FIFO, o link e o arquivo sem `schemaVersion` no
+  `tst_startup_web`, com a partida medida na UI. Decisões do autor de
+  2026-11-12: entra no commit do INF-13, na mesma varredura do `.kinein`; na
+  partida vale só o global, como no core, e o arquivo do projeto deixa de
+  ser lido ali. Corrigido em 2026-11-12: o `wantsWebView` recebe só o
+  arquivo global, e o `main.cpp` não monta mais o caminho do projeto; a
+  leitura segue o link, recusa sem abrir o que não é arquivo regular, lê no
+  máximo 1 MiB e um byte, e só aceita o objeto JSON com `schemaVersion` 1.
+  Ficam duas diferenças do core, que custam só o contexto a mais: o valor de
+  tipo errado em outra chave não é conferido, e o `schemaVersion` 1.0 passa,
+  porque o Qt o guarda como o inteiro 1. Provas: o `tst_startup_web` com o
+  FIFO (com prazo, e o outro lado aberto se a leitura prender), a pasta no
+  lugar do arquivo, a pasta global ligada, o limite de 1 MiB nos dois lados
+  do byte, e o sem `schemaVersion`, o de versão 2, o de versão em texto, a
+  lista, o JSON quebrado, o que não é UTF-8 e a opção em texto; seis
+  mutantes que compilam, todos reprovados. Na UI, a mesma medida com o FIFO
+  dá o primeiro quadro em 697 ms. Estado corrigido.
+- **INF-15 — Arquivo do `.kinein` lido sem conferir o tipo: o FIFO prende o
+  core.** Dono e evidência: as leituras do `.kinein` no core, cada dono por
+  conta própria, com `fs::read_to_string` ou parecido, sem conferir o tipo
+  antes do `open`. Achado em 2026-11-12, na medida do INF-14, e medido com o
+  core 0.220.0 e pastas isoladas, mandando o `workspace.open`, o
+  `settings.get` e outras leituras de um projeto CMake: com um FIFO no lugar
+  do `workspace.json`, do `session.json`, do `toolchain.json`, do
+  `configuration.json` ou do `python.json`, nem o `workspace.open` responde
+  em 8 s, e o processo fica parado no `open` do FIFO (`wait_for_partner`); no
+  controle, sem FIFO, e com ele no lugar do `settings.json`, do
+  `remotes.json`, do `grafana.json`, do `runconfigs.json` ou do
+  `datasources.json`, o `workspace.open` e o `settings.get` respondem.
+  Severidade alta: o core atende os pedidos em ordem, então um repositório
+  clonado com esse FIFO trava a IDE inteira ao abrir o projeto. Causa
+  provável: a leitura não passa por um guarda, como a escrita passa desde o
+  INF-13; a confirmar lendo cada dono, e o link na leitura também. Testes: o
+  FIFO, o link e a pasta no lugar de cada arquivo lido, sem prender nem
+  seguir, com mutações; no Windows o caminho não tem FIFO, e vale a pasta.
+  Decisões: a ordem, a perguntar ao autor depois do commit do INF-13. Estado
+  aberto.
+- **INF-16 — Mapa de módulos conta o `tests.rs` de um módulo como código.**
+  Dono e evidência: `scripts/module_map.py`, que exclui só os caminhos com uma
+  pasta `tests` (linha 267). Achado em 2026-11-12, no INF-13: o mapa deu ao
+  `kinein_dir` uma dependência do `platform` que só o `kinein_dir/tests.rs`
+  tem (o `canonicalize` da pasta temporária). Todo `<módulo>/tests.rs` e
+  `<módulo>/<arquivo>/tests.rs` entra assim nas dependências medidas, e um
+  ciclo só de teste pode aparecer como de produção. Severidade baixa: o mapa
+  e o `--check` exageram arestas, sem esconder nenhuma. Causa confirmada por
+  leitura. Testes: um módulo com dependência só no `tests.rs`, fora do mapa,
+  e o mapa regenerado sem diferença no resto. Decisões: na revisão de
+  arquitetura com o autor (passagem de 2026-11-12). Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
@@ -879,6 +983,24 @@ auditorias e provas posteriores datadas nos donos:**
   Testes: foco/teclado, carga/vazio/erro/retry, escalas e capturas comparáveis com
   interação nativa. Decisão: corrigir o acabamento nos componentes atuais.
   Estado aberto e obrigatório em B3; não integra a implementação de C1.
+- **UI-02 — A faixa de saúde e o despacho do `CoreClient` crescem um ramo
+  por motivo.** Dono e evidência: `ui/qml/workspace/ProjectHealthController.qml`
+  (`update()`) e `ui/src/core_client_dispatch.cpp`. Medido em 2026-11-12, no
+  INF-13: o `update()` é uma cadeia de prioridade com 23 `apply()`, em 376 das
+  400 linhas permitidas a um controller; dos últimos 20 commits que tocaram o
+  arquivo, 14 acrescentaram ramos, e o INF-07 e o INF-13 acrescentaram um
+  cada. O `core_client_dispatch.cpp` tem 486 das 500 linhas e 56 ramos por
+  nome de método; o `handleWorkspaceOpened` cresce a cada campo novo do
+  `workspace.open`. Severidade média: cada motivo novo edita a mesma função,
+  e a ordem entre eles só existe na leitura da cadeia; os dois arquivos estão
+  perto do limite da catraca, e o próximo item que passar teria de dividi-los
+  às pressas. Causa: falta de um ponto de extensão (princípio aberto/fechado):
+  o motivo e o método não são unidades próprias. Testes: os harnesses da
+  faixa e do router, e os testes do despacho, iguais antes e depois, mais um
+  motivo e um método novos sem editar a cadeia. Decisões do autor de
+  2026-11-12: item próprio, logo depois do INF-13; o desenho vai para a
+  revisão de arquitetura com o autor, antes de seguir a etapa C, e a
+  execução segue o desenho. Estado aberto.
 
 As demais áreas da tabela ainda exigem inventário por capacidade; esta lista
 inicial não certifica ausência de dívida nelas. Atualizar classificação,

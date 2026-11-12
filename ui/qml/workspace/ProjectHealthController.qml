@@ -41,6 +41,9 @@ Item {
     // INF-07 (0.220.0): o motivo do .kinein/settings.json que o core nao
     // leu; as preferencias do projeto nao valem, e ele nao e' regravado.
     property string settingsProblem: ""
+    // INF-13 (0.221.0): por que o core nao grava no .kinein (um link
+    // simbolico); o projeto abre, e o estado da IDE fica sem gravar.
+    property string stateProblem: ""
     property bool pythonNeedsStubs: false
     property bool pythonInstallingStubs: false
     property string pythonStubsMessage: ""
@@ -98,6 +101,7 @@ Item {
         cdbDirectory = "";
         cdbChoiceRequired = false;
         cdbAbsentBecause = "";
+        stateProblem = "";
         configuration.reset();
         update();
     }
@@ -113,6 +117,7 @@ Item {
     onPythonInstallingStubsChanged: update()
     onPythonStubsMessageChanged: update()
     onSettingsProblemChanged: update()
+    onStateProblemChanged: update()
     Component.onCompleted: update()
 
     function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile,
@@ -333,6 +338,12 @@ Item {
                 return;
             }
             apply("warning", pythonMessage, pythonActionLabel, "pythonEnvironment");
+            return;
+        }
+        // INF-13: antes do settings.json, que o mesmo link tambem recusa; sem
+        // botao, porque quem resolve e' a pessoa, trocando o link por pasta.
+        if (stateProblem !== "") {
+            apply("warning", qsTr("estado do projeto não gravado: %1").arg(stateProblem), "", "");
             return;
         }
         // Depois dos avisos de build, antes dos informativos (decisao do

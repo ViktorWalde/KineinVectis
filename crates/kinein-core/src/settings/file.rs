@@ -4,8 +4,9 @@
 //! e a IDE não entende, que volta com o motivo e não é gravado por cima. A
 //! escrita parte do objeto lido e guarda as chaves que esta versão não
 //! conhece. No projeto, o `.kinein` e o arquivo que são link simbólico são
-//! recusados, e nada se grava fora dele; o global segue o link, porque é da
-//! pessoa e pode vir de dotfiles.
+//! recusados pelo guarda de todo o `.kinein` (`kinein_dir`, INF-13), e
+//! nada se grava fora dele; o global segue o link, porque é da pessoa e pode
+//! vir de dotfiles.
 
 use std::{
     fs,
@@ -21,14 +22,18 @@ use kinein_protocol::SettingsValues;
 /// Versão do schema que este core lê e escreve.
 const SCHEMA_VERSION: u64 = 1;
 
+/// O nome do arquivo, nos dois escopos.
+const FILE: &str = "settings.json";
+
 /// Um `settings.json` e o jeito de chegar a ele.
 pub(super) struct Place {
     path: PathBuf,
     /// Como o motivo nomeia o arquivo: o caminho inteiro no global, o
     /// relativo ao projeto no workspace.
     shown: String,
-    /// O `.kinein` do projeto. Presente, o link é recusado nele e no arquivo.
-    folder: Option<PathBuf>,
+    /// A raiz do projeto. Presente, o `.kinein` e o arquivo passam pelo
+    /// guarda do `.kinein`, que recusa o link.
+    project: Option<PathBuf>,
 }
 
 impl Place {
@@ -37,17 +42,16 @@ impl Place {
         Self {
             shown: path.display().to_string(),
             path,
-            folder: None,
+            project: None,
         }
     }
 
     /// O do projeto em `root`, que recusa o link.
     pub(super) fn workspace(root: &Path) -> Self {
-        let folder = root.join(".kinein");
         Self {
-            path: folder.join("settings.json"),
-            shown: ".kinein/settings.json".to_owned(),
-            folder: Some(folder),
+            path: root.join(".kinein").join(FILE),
+            shown: format!(".kinein/{FILE}"),
+            project: Some(root.to_owned()),
         }
     }
 
@@ -78,22 +82,16 @@ struct OnDisk<'a> {
 /// O arquivo de `place`. `Err` traz o motivo, com o nome do arquivo, quando
 /// ele existe e a IDE não o entende.
 pub(super) fn read(place: &Place) -> Result<Contents, String> {
-    if let Some(folder) = &place.folder {
-        check_folder(folder)?;
+    if let Some(root) = &place.project
+        && let Some(problem) = crate::kinein_dir::problem(root, FILE, false)
+    {
+        return Err(problem);
     }
-    let metadata = if place.folder.is_some() {
-        fs::symlink_metadata(&place.path)
-    } else {
-        fs::metadata(&place.path)
-    };
-    match metadata {
+    match fs::metadata(&place.path) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             return Ok(Contents::default());
         }
         Err(error) => return Err(place.problem(&format!("não pôde ser lido ({error})"))),
-        Ok(metadata) if metadata.file_type().is_symlink() => {
-            return Err(place.problem("é um link simbólico, que a IDE não segue no projeto"));
-        }
         Ok(metadata) if !metadata.is_file() => {
             return Err(place.problem("não é um arquivo regular"));
         }
@@ -150,19 +148,6 @@ fn known_values(object: &Map<String, Value>) -> Result<SettingsValues, String> {
     })
 }
 
-/// O `.kinein` do projeto: ausente, ou uma pasta de verdade.
-fn check_folder(folder: &Path) -> Result<(), String> {
-    match fs::symlink_metadata(folder) {
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(format!(".kinein não pôde ser lido ({error})")),
-        Ok(metadata) if metadata.file_type().is_symlink() => {
-            Err(".kinein é um link simbólico, que a IDE não segue no projeto".to_owned())
-        }
-        Ok(metadata) if !metadata.is_dir() => Err(".kinein não é uma pasta".to_owned()),
-        Ok(_) => Ok(()),
-    }
-}
-
 /// Grava `values` em `place`, sobre `read`, o que [`read`] devolveu dele: as
 /// chaves que esta versão não conhece ficam, com os valores delas. No
 /// projeto, a troca é atômica e não segue um link que tenha aparecido depois
@@ -183,15 +168,13 @@ pub(super) fn write(place: &Place, read: &Contents, values: &SettingsValues) -> 
         rest: &rest,
     })
     .map_err(|error| failure(&error))?;
-    let Some(folder) = &place.folder else {
+    let Some(root) = &place.project else {
         if let Some(parent) = place.path.parent() {
             fs::create_dir_all(parent).map_err(|error| failure(&error))?;
         }
         return fs::write(&place.path, body).map_err(|error| failure(&error));
     };
-    fs::create_dir_all(folder).map_err(|error| failure(&error))?;
-    check_folder(folder)?;
-    crate::fsops::atomic_write(&place.path, body.as_bytes()).map_err(|error| failure(&error))
+    crate::kinein_dir::write(root, FILE, body.as_bytes())
 }
 
 #[cfg(test)]

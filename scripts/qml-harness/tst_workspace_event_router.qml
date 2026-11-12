@@ -35,6 +35,7 @@ Item {
         signal workspaceBrowseListed(string path, string parent, var entries, var places)
         signal projectEnvironmentsResolved(var environments)
         signal workspaceFolderCreated(string path)
+        signal workspaceStateProblem(string problem)
         signal recentWorkspacesResolved(var workspaces)
         signal toolsListed(var tools)
         signal environmentTool(var tool)

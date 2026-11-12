@@ -15,8 +15,13 @@ namespace kinein {
 [[nodiscard]] QString globalSettingsFile();
 
 // Alguma visualizacao web pedida: `grafanaWebView` ou `platformioWebView`
-// (52 §14.45), cada uma com a do projeto (quando ha' uma pasta na linha de
-// comando) vencendo a global; arquivo ausente ou invalido conta como desligada.
-[[nodiscard]] bool wantsWebView(const QString& globalFile, const QString& workspaceFile);
+// (52 §14.45) no `settings.json` global, o unico que o core usa para elas
+// (INF-14). O arquivo e' lido com as regras do core (`settings/file.rs`):
+// segue o link, tem de ser arquivo regular de ate' 1 MiB, JSON em UTF-8, um
+// objeto com `schemaVersion` 1; o que nao passa conta como desligada. Duas
+// diferencas, que custam so' o contexto a mais: o valor de tipo errado em
+// outra chave nao e' conferido aqui, e o `schemaVersion` 1.0, que o core
+// recusa, passa, porque o Qt o guarda como o inteiro 1.
+[[nodiscard]] bool wantsWebView(const QString& globalFile);
 
 } // namespace kinein

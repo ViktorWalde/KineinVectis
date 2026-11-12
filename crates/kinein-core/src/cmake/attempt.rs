@@ -10,6 +10,9 @@ use std::{
 
 use crate::cmake_configuration::{Attempt, KIT_MARKER, PENDING_MARKER, pending};
 
+/// The lock of a configure, in the folder of the configuration.
+const LOCK_FILE: &str = ".kinein-configure-lock";
+
 /// One producer of configure artifacts in the folder of a configuration.
 #[derive(Debug)]
 #[must_use = "hold the configure lock until the producer finishes"]
@@ -31,8 +34,20 @@ pub fn begin_configure(
     preset: Option<&str>,
     kit: &str,
 ) -> io::Result<ConfigureAttempt> {
+    // INF-13: a pasta de build da IDE mora no `.kinein`; com ele, ela ou um
+    // marcador ligados, o CMake e a IDE gravariam fora do projeto. Cada
+    // marcador confere tambem cada pasta acima dele.
+    if let Ok(relative) = directory.strip_prefix(root.join(crate::kinein_dir::WORKSPACE_DIR)) {
+        let relative = relative.to_string_lossy().replace('\\', "/");
+        for marker in [PENDING_MARKER, KIT_MARKER, LOCK_FILE] {
+            let inside = format!("{relative}/{marker}");
+            if let Some(problem) = crate::kinein_dir::problem(root, &inside, false) {
+                return Err(io::Error::other(problem));
+            }
+        }
+    }
     fs::create_dir_all(directory)?;
-    let lock = crate::platform::configuration_lock(&directory.join(".kinein-configure-lock"))?;
+    let lock = crate::platform::configuration_lock(&directory.join(LOCK_FILE))?;
     let bytes = serde_json::to_vec(&Attempt {
         preset: preset.map(str::to_owned),
         kit: kit.to_owned(),

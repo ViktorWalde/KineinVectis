@@ -17,6 +17,9 @@ use rusqlite::{Connection, params};
 /// Versão do schema local (migrações via `PRAGMA user_version`).
 const SCHEMA_VERSION: i64 = 1;
 
+/// O banco, no `.kinein` do projeto.
+const FILE: &str = "kinein.db";
+
 /// Um rascunho não salvo, recuperável após um crash.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Draft {
@@ -40,11 +43,13 @@ impl DraftStore {
     /// não puder ser criado; DB corrompido é recriado do zero.
     #[must_use]
     pub fn open(root: &Path) -> Option<Self> {
-        let dir = root.join(".kinein");
-        if std::fs::create_dir_all(&dir).is_err() {
-            return None;
-        }
-        let path = dir.join("kinein.db");
+        // INF-13: o banco guarda o texto dos buffers nao salvos. Com o
+        // `.kinein` ou o banco ligados, nada vai pelo link: a persistencia
+        // fica desligada, e a faixa diz por que. O `-wal`, o `-shm` e o
+        // `-journal` ligados o `SQLite` recusa sozinho, sem criar o alvo
+        // (medido em 2026-11-12; o teste de cada um esta' em
+        // `tests/workspace_state.rs`).
+        let path = crate::kinein_dir::file(root, FILE).ok()?;
         if let Ok(store) = Self::open_at(&path) {
             return Some(store);
         }

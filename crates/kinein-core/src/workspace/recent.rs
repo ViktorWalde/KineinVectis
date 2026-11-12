@@ -383,6 +383,7 @@ mod tests {
             markers: Vec::new(),
             capabilities: WorkspaceCapabilities::default(),
             trusted: false,
+            state_problem: None,
         }
     }
 
