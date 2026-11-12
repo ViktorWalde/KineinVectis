@@ -391,7 +391,7 @@ Navegação/diagnósticos com clangd real e depuração DAP têm provas própria
 
 **Estado da primeira fatia, 2026-11-03:** fixture, sincronização pelo build e
 corpus implementados; regressões e mutações, clangd e GDB reais exercitados no
-[registro §7.376](../roadmaps/40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).
+[registro §7.376](../roadmaps/registro/40.7.9-a-base-publica-e-o-c-da-0.4.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).
 Isso aceita a jornada descrita em Linux, sem declarar todos os projetos C,
 Windows, cross ou o assistente completo consolidados.
 O fechamento da etapa C segue C1–C8; o corpus C11 continua como regressão,

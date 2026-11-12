@@ -226,7 +226,7 @@ preserva o contrato conserva a versão do protocolo.
 ## 7. Estado inicial e lacunas observadas — 2026-11-03
 
 **Etapa C aberta.** A jornada C11 de host tem prova parcial no
-[40.7 §7.376](../roadmaps/40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03):
+[40.7 §7.376](../roadmaps/registro/40.7.9-a-base-publica-e-o-c-da-0.4.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03):
 biblioteca/executável, contexto após build, prévia/verificação/aplicação,
 CTest, clangd e breakpoint GDB/DAP. Tem alcance Linux/host e provas por
 despacho/IPC; não constitui o aceite C1–C8 nem a prova visual completa.

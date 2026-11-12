@@ -160,7 +160,7 @@ e os problemas confirmados em §3.4.
    requer hierarquia cromática e estados mais distinguíveis, conforme sua
    [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
 4. **B4 — Verificador consolidado.** Recorte host inicial integrado e provado
-   conforme §4 e [40.7 §7.372](40.7-registro-das-entregas.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
+   conforme §4 e [40.7 §7.372](registro/40.7.9-a-base-publica-e-o-c-da-0.4.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
    Ampliar pela base das linguagens e pelo núcleo comum da especificação,
    priorizando Rust antes de Python. O assistente completo continua aberto
    no 52 §11.2; o recorte host não encerra esse trabalho.
@@ -199,7 +199,7 @@ A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-10: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04, INF-05, INF-08 e INF-09 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
+INF-04, INF-05, INF-08, INF-09 e INF-10 corrigidos; INF-06, INF-07 e UI-01 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -739,6 +739,26 @@ auditorias e provas posteriores datadas nos donos:**
   byte; com o código de antes, ela reprova. Seis mutações reprovam. Limite: o
   texto noutra codificação mostra U+FFFD no lugar dos bytes, sem adivinhar a
   codificação.
+- **INF-10 — `rustix` com advisory de comportamento indefinido.** Dono e
+  evidência: `Cargo.toml` (`rustix = "1.1"`, que o `Cargo.lock` fixa em
+  1.1.4), usado pelo `kinein-core`, pelo `alacritty_terminal`, pelo `polling`
+  e pelo `rustix-openpty`. O `cargo-deny` do gate rápido de 2026-11-11, no
+  C1-43, acusou RUSTSEC-2026-0486, publicado depois do gate verde anterior,
+  sem mudança local nas dependências: as funções de atributo estendido de
+  `rustix::fs` (`getxattr`, `listxattr` e as variantes `l` e `f`) marcam como
+  iniciados bytes que não foram escritos quando o buffer tem tamanho zero.
+  Por leitura, o código do core não chama essas funções: usa `mkfifoat`,
+  `flock` e o resto de `fs` e `process`. Severidade média: o gate rápido e o
+  completo ficam bloqueados, e a exposição, pelo que o core chama, é nula.
+  Causa confirmada pelo advisory: corrigido no `rustix` 1.1.6, compatível com
+  o `"1.1"` declarado; o 1.1.6 não estava no cache local do Cargo. Testes: os
+  existentes de terminal, console e plataforma, e o `cargo-deny` verde.
+  Decisão do autor de 2026-11-12: atualizar o `rustix` para o 1.1.6 num
+  commit próprio, antes do C1-43, sem exceção no `deny.toml`. Estado
+  corrigido em 2026-11-12 ([40.7 §7.407](40.7-registro-das-entregas.md)): o
+  `Cargo.lock` muda só no `rustix`, e o `cargo-deny` passa. O `windows-sys`
+  dos crates do Windows fica como estava, e o build no Windows segue para a
+  VM da etapa 10.
 - **UI-01 — Instalar Ferramentas.** Dono e evidência:
   [especificação §0.1](../especificacoes/instalar-ferramentas.md#01-polimento-visual-e-de-interação-da-base-04).
   Severidade média; impacto na hierarquia e distinção dos estados. Causa provável:
@@ -791,7 +811,7 @@ ações de linguagem. O algoritmo completo continua o [52 §11.2](52-arquitetura
 Clang/Clang++ e GCC/G++ reais comparam diagnósticos antes/depois, com headers
 imutáveis, ranges UTF-16 estritos e guardas de conteúdo/contexto. A prévia
 apresenta evidência, confiança do workspace e confirmação explícita. Corpus,
-mutações e prova nativa estão no [registro](40.7-registro-das-entregas.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
+mutações e prova nativa estão no [registro](registro/40.7.9-a-base-publica-e-o-c-da-0.4.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
 
 **Entradas:** conteúdo e versão do documento, edição LSP, CDB e compilador
 efetivos, diretório de trabalho e diagnósticos anteriores. Congelar a

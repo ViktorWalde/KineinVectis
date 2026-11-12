@@ -886,7 +886,7 @@ escopo completo; o recorte inicial não satisfaz seus critérios por extensão.
 prévia de correções LSP, com compilador/CDB efetivos, comparação antes/depois,
 evidência conservadora e confirmação explícita. Contrato, limites e corpus na
 [especificação](../especificacoes/verificador-de-correcoes-lsp.md); provas no
-[40.7 §7.372](40.7-registro-das-entregas.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
+[40.7 §7.372](registro/40.7.9-a-base-publica-e-o-c-da-0.4.md#7372--verificador-de-correções-lsp-e-guardas-de-contexto-2026-11-02).
 O consumidor usa “erro novo observado”, “sem erro novo observado” e “não
 verificado”; esses rótulos concretizam a evidência sem prometer equivalência
 ou build completo. O corpus de SDK e as fases S2–S4 abaixo continuam abertos.

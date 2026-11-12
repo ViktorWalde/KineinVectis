@@ -132,4 +132,4 @@ correção válida, erro novo, invalidação após alterar configuração/header
 aplicação explícita, regeneração, falha de ligação e recuperação. Esse aceite
 exercita o verificador existente sem ampliar seu escopo para edições de headers
 ou múltiplos arquivos. A prova separada com clangd e GDB reais consta no
-[registro §7.376](../roadmaps/40.7-registro-das-entregas.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).
+[registro §7.376](../roadmaps/registro/40.7.9-a-base-publica-e-o-c-da-0.4.md#7376--jornada-c-de-host-e-sincronização-do-contexto-após-build-2026-11-03).
