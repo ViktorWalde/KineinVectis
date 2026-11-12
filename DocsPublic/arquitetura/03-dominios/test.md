@@ -6,6 +6,20 @@
 
 ### Testes (`test.run` / `test.discover` — jobs assíncronos)
 
+**As linhas da listagem na aba Testes (`0.219.0`, C1-45).** O job do
+`test.discover` passa a mandar, como o `test.run`, um
+`event.test.started { jobId, command }` com o comando da listagem e um
+`event.test.output { jobId, stream, line }` por linha dela: as do `ctest -N`,
+do `cargo test -- --list` ou do `pytest --collect-only -q`, o motivo do
+binário que passou do prazo ou do teto e a contagem dos casos de dentro.
+Cada uma segue também no `event.job.output`. A contagem e o erro do fim ficam
+só no `event.job.output`, porque o `event.test.discovered` já os leva. As
+linhas saem antes do `event.test.discovered`, pelo mesmo canal, e o `jobId`
+delas é o do `test.discover`, não o de um `test.run`. Sem campo novo. Na UI,
+começar a listagem apaga a saída da aba, como o começo de um run, e as linhas
+vão para a área de baixo. Veja a
+[consolidação C §25](../../especificacoes/consolidacao-nativa-de-c.md#25-c1-45-as-linhas-da-listagem-na-aba-testes--desenho-de-2026-11-12).
+
 **A listagem dos casos com prazo e o cancel (`0.218.0`, C1-43).** No
 `test.discover` de um `CMake`, cada chamada que pergunta ao binário pelos
 casos (`--gtest_list_tests`, `--libidentify` e `--list-tests`) tem 5 s, o

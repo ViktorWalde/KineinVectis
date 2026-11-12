@@ -171,6 +171,7 @@ Item {
     ListView {
         id: testOutputView
 
+        objectName: "testsOutput"
         visible: panel.hasOutput
         height: visible ? Math.floor(panel.height * 0.45) : 0
         anchors.bottom: parent.bottom

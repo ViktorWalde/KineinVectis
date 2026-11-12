@@ -39,10 +39,12 @@ const PRESETS: &str = r#"{"version":6,"configurePresets":[
   {"name":"dev","generator":"Ninja","binaryDir":"${sourceDir}/build/dev",
    "cacheVariables":{"CMAKE_C_COMPILER":"gcc"}}]}"#;
 
-/// The lines of the job until `finished`, and its params.
-fn until(p: &mut Project, job: &Value, finished: &str) -> (Vec<String>, Value) {
+/// The lines of the job until `finished`, the ones of the Tests tab (C1-45),
+/// and its params.
+fn until(p: &mut Project, job: &Value, finished: &str) -> (Vec<String>, Vec<String>, Value) {
     let deadline = Instant::now() + Duration::from_secs(90);
     let mut lines = Vec::new();
+    let mut tab = Vec::new();
     loop {
         let left = deadline
             .checked_duration_since(Instant::now())
@@ -55,7 +57,8 @@ fn until(p: &mut Project, job: &Value, finished: &str) -> (Vec<String>, Value) {
         }
         match event.method.as_str() {
             "event.job.output" => lines.push(params["line"].as_str().unwrap().to_owned()),
-            method if method == finished => return (lines, params),
+            "event.test.output" => tab.push(params["line"].as_str().unwrap().to_owned()),
+            method if method == finished => return (lines, tab, params),
             _ => {}
         }
     }
@@ -140,7 +143,7 @@ fn c1_43_a_binary_that_never_lists_stops_at_the_deadline_and_the_cancel_stops_th
     // keeps its case.
     let started = Instant::now();
     let id = p.call("test.discover", json!({}))["jobId"].clone();
-    let (lines, discovered) = until(&mut p, &id, "event.test.discovered");
+    let (lines, tab, discovered) = until(&mut p, &id, "event.test.discovered");
     let elapsed = started.elapsed();
     assert_eq!(discovered["success"], true, "{discovered}");
     let ids: Vec<_> = discovered["tests"]
@@ -151,6 +154,10 @@ fn c1_43_a_binary_that_never_lists_stops_at_the_deadline_and_the_cancel_stops_th
         .collect();
     assert_eq!(ids, ["server", "fake", "fake::Math.Adds"], "{lines:?}");
     the_server_answered_none(&lines);
+    // C1-45: the Tests tab has the same lines, the reasons among them, without
+    // the `$` of the command and the count of the end.
+    the_server_answered_none(&tab);
+    assert_eq!(tab[..], lines[1..lines.len() - 1], "{lines:?}");
     assert!(elapsed >= Duration::from_secs(10), "{elapsed:?}");
     assert!(elapsed < Duration::from_secs(30), "{elapsed:?}");
     let listed = pids(&file);
@@ -162,7 +169,7 @@ fn c1_43_a_binary_that_never_lists_stops_at_the_deadline_and_the_cancel_stops_th
     // The case of the server is looked for by the same listing, and the
     // reason of the refusal is the deadline.
     let id = p.call("test.run", json!({"testId":"server::Math.Adds"}))["jobId"].clone();
-    let (lines, finished) = until(&mut p, &id, "event.test.finished");
+    let (lines, _, finished) = until(&mut p, &id, "event.test.finished");
     assert_eq!(finished["success"], false, "{finished}");
     let error = finished["error"].as_str().unwrap();
     assert!(
@@ -179,7 +186,7 @@ fn c1_43_a_binary_that_never_lists_stops_at_the_deadline_and_the_cancel_stops_th
     let id = p.call("test.run", json!({"testId":"server::Math.Adds"}))["jobId"].clone();
     asked(&file, before, "no run");
     assert_eq!(p.call("job.cancel", json!({"jobId":id}))["cancelled"], true);
-    let (_, finished) = until(&mut p, &id, "event.test.finished");
+    let (_, _, finished) = until(&mut p, &id, "event.test.finished");
     assert_eq!(finished["error"], "listagem cancelada", "{finished}");
     for pid in pids(&file).iter().skip(before) {
         assert!(gone(pid), "o servidor {pid} sobreviveu ao cancel do run");
@@ -191,7 +198,7 @@ fn c1_43_a_binary_that_never_lists_stops_at_the_deadline_and_the_cancel_stops_th
     asked(&file, before, "no discover");
     let cancelled = Instant::now();
     assert_eq!(p.call("job.cancel", json!({"jobId":id}))["cancelled"], true);
-    let (_, discovered) = until(&mut p, &id, "event.test.discovered");
+    let (_, _, discovered) = until(&mut p, &id, "event.test.discovered");
     assert!(
         cancelled.elapsed() < Duration::from_secs(3),
         "{:?}",
@@ -200,7 +207,7 @@ fn c1_43_a_binary_that_never_lists_stops_at_the_deadline_and_the_cancel_stops_th
     assert_eq!(discovered["success"], false, "{discovered}");
     assert_eq!(discovered["error"], "listagem cancelada", "{discovered}");
     assert_eq!(discovered.get("tests"), None, "{discovered}");
-    let (_, finished) = until(&mut p, &id, "event.job.finished");
+    let (_, _, finished) = until(&mut p, &id, "event.job.finished");
     assert_eq!(finished["status"], "cancelled", "{finished}");
     for pid in pids(&file).iter().skip(before) {
         assert!(gone(pid), "o servidor {pid} sobreviveu ao cancel");

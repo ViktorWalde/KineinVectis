@@ -183,7 +183,7 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 | Etapa | Conteúdo | Estado em 2026-11-09 |
 | --- | --- | --- |
-| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-44, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-45, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
+| 1. C | C1–C8 em profundidade, incluindo C23; o contexto incorreto do que já existe é corrigido aqui (C-03–C-05) | **Em andamento.** C1 aberto: C1-01–C1-06, C1-08–C1-45, C-04 e C-05 corrigidos com provas; abertos C1-07, C1-46–C1-48, origem por toolchain file e `CC` do ambiente e consulta de versão bloqueada. C2–C8 abertos (C-02, C-03) |
 | 2. C++ | Matriz de §3.1 e contrato de CodeAction (CPP-01) | Não iniciada como etapa; recursos existentes mantidos |
 | 3. Rust e Rust/C/C++ | Workspaces, features/target, fronteiras e a própria IDE | Não iniciada como etapa; recursos existentes mantidos |
 | 4. Python | Interpretador/venv, análise, testes e depuração | Não iniciada como etapa; recursos existentes mantidos |
@@ -488,7 +488,12 @@ auditorias e provas posteriores datadas nos donos:**
   cancel do job, e o cancel dá "listagem cancelada"
   ([§24.1](../especificacoes/consolidacao-nativa-de-c.md#241-c1-43-integração-e-provas--2026-11-11),
   protocolo 0.218.0). A prova na UI achou o C1-45, o motivo da listagem que só
-  o log do job mostra, aberto.
+  o log do job mostra: as linhas da listagem vão à aba Testes pelo
+  `event.test.output`, e listar apaga a saída anterior
+  ([§25.1](../especificacoes/consolidacao-nativa-de-c.md#251-c1-45-integração-e-provas--2026-11-12),
+  protocolo 0.219.0). Ficam abertos o C1-46 (run e listagem ao mesmo tempo),
+  o C1-47 (a saída da aba que para um lote antes do fim) e o C1-48 (a
+  contagem dos casos depois do cancel).
 - **C-05 — CDB fora dos diretórios conhecidos, C1.** Dono e evidência:
   `crates/kinein-core/src/cdb.rs` procura só em `.kinein/build`, na raiz, em
   `build`, `builddir` e `out/build`. Observado em 2026-11-08: as CDBs deste

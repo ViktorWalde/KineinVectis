@@ -507,11 +507,12 @@ fn test_run_in_a_micropython_project_stays_on_the_host() {
     assert_eq!(finished["passed"], 1, "{finished}");
 }
 
-/// Pede `test.discover` e espera o `event.test.discovered` desse job.
-fn discover_and_wait(
+/// Pede `test.discover` e devolve os eventos desse job, na ordem, até o
+/// `event.job.finished`.
+fn discover_events(
     core: &mut crate::Core,
     receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
-) -> serde_json::Value {
+) -> Vec<JsonRpcRequest> {
     use std::time::{Duration, Instant};
 
     let started = core.handle_request(&JsonRpcRequest::new(
@@ -524,25 +525,97 @@ fn discover_and_wait(
         .unwrap()
         .to_owned();
     let limite = Instant::now() + Duration::from_secs(20);
+    let mut events = Vec::new();
     loop {
         let e = receiver
             .recv_timeout(limite.saturating_duration_since(Instant::now()))
             .expect("evento");
-        if e.method == "event.test.discovered"
-            && e.params
-                .as_ref()
-                .is_some_and(|p| p["jobId"] == job_id.as_str())
+        if e.params
+            .as_ref()
+            .is_none_or(|p| p["jobId"] != job_id.as_str())
         {
-            break e.params.unwrap();
+            continue;
+        }
+        let finished = e.method == "event.job.finished";
+        events.push(e);
+        if finished {
+            break events;
         }
     }
+}
+
+/// The `line` of each event of `method`, with its position and stream.
+fn lines_of<'a>(events: &'a [JsonRpcRequest], method: &str) -> Vec<(usize, &'a str, &'a str)> {
+    events
+        .iter()
+        .enumerate()
+        .filter(|(_, e)| e.method == method)
+        .map(|(i, e)| {
+            let params = e.params.as_ref().unwrap();
+            (
+                i,
+                params["stream"].as_str().unwrap_or(""),
+                params["line"].as_str().unwrap(),
+            )
+        })
+        .collect()
+}
+
+/// C1-45 (consolidação C §25): o job do `test.discover` manda as linhas da
+/// listagem como o `test.run`, um `event.test.started` com o comando e um
+/// `event.test.output` por linha, com o `jobId` dele e antes do
+/// `event.test.discovered`. Cada linha segue no `event.job.output`, na mesma
+/// ordem, e a contagem do fim fica só no log do job. Devolve o `discovered`.
+fn the_listing_lines_reach_the_tests_tab(
+    events: &[JsonRpcRequest],
+    command: &str,
+    stdout: &[&str],
+    stderr: &[&str],
+    count: &str,
+) -> serde_json::Value {
+    let methods: Vec<&str> = events.iter().map(|e| e.method.as_str()).collect();
+    let discovered = methods
+        .iter()
+        .position(|m| *m == "event.test.discovered")
+        .expect("discovered");
+    let started: Vec<usize> = (0..methods.len())
+        .filter(|i| methods[*i] == "event.test.started")
+        .collect();
+    assert_eq!(started.len(), 1, "{methods:?}");
+    let started = started[0];
+    assert_eq!(events[started].params.as_ref().unwrap()["command"], command);
+
+    let tab = lines_of(events, "event.test.output");
+    assert!(
+        tab.iter().all(|(i, ..)| *i > started && *i < discovered),
+        "{methods:?}"
+    );
+    let of_stream = |wanted: &str| -> Vec<&str> {
+        tab.iter()
+            .filter(|(_, stream, _)| *stream == wanted)
+            .map(|(.., line)| *line)
+            .collect()
+    };
+    assert_eq!(of_stream("stdout"), stdout);
+    assert_eq!(of_stream("stderr"), stderr);
+
+    let job: Vec<&str> = lines_of(events, "event.job.output")
+        .into_iter()
+        .map(|(.., line)| line)
+        .collect();
+    let shown: Vec<&str> = tab.iter().map(|(.., line)| *line).collect();
+    assert_eq!(job.first().copied(), Some(format!("$ {command}").as_str()));
+    assert_eq!(job.last().copied(), Some(count));
+    assert_eq!(job[1..job.len() - 1], shown[..], "{job:?}");
+    events[discovered].params.clone().unwrap()
 }
 
 /// Descobre e roda um so' (41 B6, o que faltou; 2026-09-13): `test.discover`
 /// e' um job que lista pelo `--collect-only -q` e termina em
 /// `event.test.discovered` com o node id de cada caso; `test.run { testId }`
 /// passa esse id POSICIONAL ao pytest (nao `-k`), e o `testId` vence o
-/// `filter`. Sem pytest no ambiente, o discover diz como instalar nele.
+/// `filter`. Sem pytest no ambiente, o discover diz como instalar nele. As
+/// linhas da listagem chegam à aba Testes (C1-45).
 #[test]
 #[cfg_attr(
     windows,
@@ -557,7 +630,8 @@ fn tests_are_discovered_and_one_runs_by_its_exact_id() {
             "#!/bin/sh\n",
             "echo \"args: $*\"\n",
             "case \"$*\" in\n",
-            "  *--collect-only*) printf 'tests/test_a.py::test_soma\\ntests/test_a.py::test_x[a b]\\n\\n2 tests collected in 0.00s\\n'; exit 0;;\n",
+            "  *--collect-only*) echo 'aviso no stderr' >&2\n",
+            "    printf 'tests/test_a.py::test_soma\\ntests/test_a.py::test_x[a b]\\n\\n2 tests collected in 0.00s\\n'; exit 0;;\n",
             "  *) echo 'tests/test_a.py::test_soma PASSED [100%]'; exit 0;;\n",
             "esac\n"
         )),
@@ -574,7 +648,20 @@ fn tests_are_discovered_and_one_runs_by_its_exact_id() {
     ));
     assert!(opened.response().error.is_none());
 
-    let descoberto = discover_and_wait(&mut core, &receiver);
+    let listing = discover_events(&mut core, &receiver);
+    let descoberto = the_listing_lines_reach_the_tests_tab(
+        &listing,
+        ".venv/bin/python -m pytest --collect-only -q",
+        &[
+            "args: -m pytest --collect-only -q",
+            "tests/test_a.py::test_soma",
+            "tests/test_a.py::test_x[a b]",
+            "",
+            "2 tests collected in 0.00s",
+        ],
+        &["aviso no stderr"],
+        "2 teste(s) encontrado(s)",
+    );
     assert_eq!(descoberto["runner"], "pytest");
     assert_eq!(descoberto["success"], true, "{descoberto}");
     assert_eq!(

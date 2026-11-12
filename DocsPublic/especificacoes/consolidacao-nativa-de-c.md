@@ -1060,7 +1060,10 @@ GCC 16.2.1 reais, com o core do commit 3c224e9b:
 | C1-42 / linha do ctest que cai ou passa do prazo sem contar | Achado na regressão do C1-34 com o CTest do CMake 4.4.5 (2026-11-10). A linha do teste que cai é `***Exception: SegFault`, `***Exception: Numerical`, `***Exception: Illegal` ou `Subprocess aborted***Exception:`, com `terminated` e `killed` no lugar de `aborted` para o `SIGTERM` e o `SIGKILL`; a do que passa do `TIMEOUT` é `***Timeout`. `test::parse::parse_ctest_case` só lê `Passed`, `***Failed`, `***Not Run`, `***Skipped` e `***Disabled`, e essas linhas não viram `event.test.case`. Causa: as formas de falha do CTest que não são `***Failed` ficaram fora da leitura | Alta: num projeto C, o teste que cai por `SegFault` ou trava até o prazo não fica vermelho na árvore nem conta como reprovado; só o código de saída do job diz falha | Corrigido em 2026-11-10 ([§22.1](#221-c1-34-integração-e-provas--2026-11-10), protocolo 0.216.0). Decisão do autor de 2026-11-10: corrigir junto do C1-34; as linhas medidas viram `failed` |
 | C1-43 / listagem de um binário que não termina | Achado no desenho da prova do C1-34 (2026-11-10), por leitura de `test::frameworks::list_cases`: a listagem roda o binário com `Command::output()`, que espera o processo sem prazo e sem olhar o `cancel` do job. Um programa comum posto como teste, como um servidor que ignora `--gtest_list_tests` e `--libidentify` e fica rodando, não termina. Causa: a listagem é uma chamada direta, fora do `process` que os jobs usam | Média: o `test.discover` desse projeto não termina, e cancelar não o para | Corrigido em 2026-11-11 ([§24.1](#241-c1-43-integração-e-provas--2026-11-11), protocolo 0.218.0). Decisão do autor de 2026-11-10: corrigir num commit próprio, depois do C1-39: a listagem pelo mesmo processo dos jobs, com o `cancel` e um prazo; o cancel dá "listagem cancelada"; 5 s e 64 MiB por chamada ([§24](#24-c1-43-a-listagem-dos-casos-com-prazo--desenho-de-2026-11-10)) |
 | C1-44 / árvore dos testes que volta ao topo ao rodar | Achado na prova na UI nativa do C1-34 (2026-11-10), com 17 linhas na árvore e o painel alto: rolada até os casos, a árvore volta ao topo depois do ▶, nas duas vezes medidas, e o caso que rodou sai da vista. Causa provável, por leitura: `ui/qml/jobs/JobsController.qml::prepareTestRun` zera a saída, o `hasOutput` de `ui/qml/panels/bottom/TestsPanel.qml` vira falso, a lista cresce até caber inteira e o `contentY` vai a 0; quando a saída volta, a lista encolhe e fica no topo | Baixa: para ver o desfecho do caso, é preciso rolar de novo a cada execução | Corrigido em 2026-11-10 ([§23.1](#231-c1-39-e-c1-44-integração-e-provas--2026-11-10), protocolo 0.217.0). Decisão do autor de 2026-11-10: corrigir junto do C1-39, que mexe no mesmo painel: a árvore fica onde estava ao rodar. Provar no harness e na UI nativa |
-| C1-45 / motivo da listagem que não se vê na UI | Achado na prova na UI nativa do C1-43 (2026-11-11). O motivo do binário que não respondeu no prazo ou passou do teto sai só no `event.job.output` do `test.discover`. A aba Testes mostra a árvore e o resumo, sem a saída da listagem, e a aba Jobs mostra só a última linha de cada job, que é a do `ctest -N` ou a do fim. Causa: a saída da descoberta só vai para o log do job, e nenhuma vista da UI mostra esse log inteiro | Baixa: a linha do servidor aparece sem casos, e a UI não diz por quê; o motivo está no log do job e, no run do caso, no erro | Aberto. Registrado; fora do C1-43 por decisão do autor de 2026-11-11, que mandou fechar o escopo atual. Decisão do autor de 2026-11-11: mostrar as linhas da listagem na aba Testes |
+| C1-45 / motivo da listagem que não se vê na UI | Achado na prova na UI nativa do C1-43 (2026-11-11). O motivo do binário que não respondeu no prazo ou passou do teto sai só no `event.job.output` do `test.discover`. A aba Testes mostra a árvore e o resumo, sem a saída da listagem, e a aba Jobs mostra só a última linha de cada job, que é a do `ctest -N` ou a do fim. Causa: a saída da descoberta só vai para o log do job, e nenhuma vista da UI mostra esse log inteiro | Baixa: a linha do servidor aparece sem casos, e a UI não diz por quê; o motivo está no log do job e, no run do caso, no erro | Corrigido em 2026-11-12 ([§25.1](#251-c1-45-integração-e-provas--2026-11-12), protocolo 0.219.0). Fora do C1-43 por decisão do autor de 2026-11-11, que mandou fechar o escopo atual. Decisão do autor de 2026-11-11: mostrar as linhas da listagem na aba Testes. Decisões do autor de 2026-11-12: o core manda as linhas também como `event.test.started` e `event.test.output`, protocolo 0.219.0; a listagem apaga a saída anterior, como o run, e a lista dos jobs sai do `JobsController`, que está no limite ([§25](#25-c1-45-as-linhas-da-listagem-na-aba-testes--desenho-de-2026-11-12)) |
+| C1-46 / run e listagem ao mesmo tempo | Achado no desenho do C1-45 (2026-11-12), por leitura: `ui/qml/jobs/JobsController.qml::startTests` e `runOneTest` só olham o `testing`, que o `CoreClient` não liga no `test.discover` (`ui/src/core_client_dispatch.cpp`), e o core não recusa um `test.run` com a listagem em curso. O run pedido por Ctrl+Shift+F9 ou pelo menu no meio da listagem roda junto com ela: quando a listagem acaba, `handleTestsDiscovered` troca a árvore, apaga os status que o run já deu e põe o resumo da listagem por cima do "rodando testes...". Desde o C1-45, as linhas dos dois jobs também se misturam na saída da aba. Causa: a listagem e o run não se excluem na UI | Baixa: o run e a listagem juntos pedem um atalho no meio de uma listagem; o desfecho do run segue no `event.test.finished` e no log do job | Aberto. Registrado; fora do C1-45, para fechar o escopo atual |
+| C1-47 / saída da aba Testes que não chega ao fim | Achado na prova na UI nativa do C1-45 (2026-11-12). A área de baixo da aba Testes fica um lote atrás do fim: durante a listagem, para antes da linha vazia e de `Total Tests: 12`, que chegam juntas; no fim, antes do segundo motivo e da contagem dos casos de dentro; no cancel, antes da contagem e do erro, que só se veem rolando. Na prova do C1-39 (§23.1, protocolo 0.217.0), a saída do run de um caso, que chega quase toda de uma vez, ficou no topo. Causa provável, pelas medidas: `ui/qml/panels/bottom/TestsPanel.qml` chama `positionViewAtEnd()` no `onCountChanged` da `ListView`, antes de ela dispor as linhas novas, e a vista vai ao fim da disposição anterior; a lista dos casos soltos faz o mesmo | Baixa: as linhas estão na aba, a uma rolagem; o motivo do último binário e o erro da listagem podem ficar fora da vista | Aberto. Registrado; fora do C1-45, para fechar o escopo atual |
+| C1-48 / contagem dos casos depois do cancel | Achado na prova na UI nativa do C1-45 (2026-11-12): a listagem cancelada no meio do servidor escreve "9 caso(s) de gtest/Catch2 dentro dos binários do ctest" e depois "listagem cancelada", sem árvore. Causa: `test::discover::cmake_cases` manda a contagem do que o `discover_inner_cases` achou antes de o `discover_tests` olhar o `cancel`. Vem do C1-43; desde o C1-45, a linha aparece na aba | Baixa: a linha conta casos que a árvore não vai ter, e o erro vem logo depois | Aberto. Registrado; fora do C1-45, para fechar o escopo atual |
 
 **Decisões do autor em 2026-11-09.** O configure de um preset que declara
 `binaryDir` usa essa pasta (sessão anterior). A configuração pedida passa a ser
@@ -2560,3 +2563,116 @@ Limites:
   todo job que termina sozinho;
 - na UI, o motivo do prazo sai só no log do job, que nenhuma vista mostra
   inteiro (C1-45).
+
+## 25. C1-45: as linhas da listagem na aba Testes — desenho de 2026-11-12
+
+Hoje o job do `test.discover` manda as linhas da listagem só por
+`event.job.output`: o `$` do comando, as linhas do `ctest -N`, do
+`cargo test -- --list` ou do `pytest --collect-only -q`, o motivo do binário
+que passou do prazo ou do teto (C1-43) e a contagem dos casos de dentro. A
+área de baixo da aba Testes mostra o `event.test.started` e o
+`event.test.output`, que só o `test.run` manda, e a aba Jobs mostra a última
+linha de cada job. Na prova do §24.1, a linha do servidor aparece sem casos,
+e nenhuma vista diz por quê.
+
+Decisões do autor: em 2026-11-11, mostrar as linhas da listagem na aba
+Testes; em 2026-11-12, que o core as mande também como `event.test.started` e
+`event.test.output`, com o `jobId` do `test.discover`, em vez de a UI ligar o
+`event.job.output` ao job da listagem, porque os eventos do job saem por um
+canal à parte da resposta e podem chegar antes do `jobId`; e que a listagem
+apague a saída que a aba mostrava, como o começo de um run.
+
+Desenho:
+- core, `handlers/test_discover.rs`: o `sink` manda
+  `event.test.started { jobId, command }` e
+  `event.test.output { jobId, stream, line }` para cada evento do
+  `test::discover_tests`, além do `event.job.output` de hoje. A contagem e o
+  erro do fim seguem só no log do job: o resumo da aba e o `error` do
+  `event.test.discovered` já os mostram. O `event.test.discovered` sai pelo
+  mesmo canal, depois da última linha. Protocolo 0.219.0, sem campo novo, com
+  o contrato no [03 test](../arquitetura/03-dominios/test.md) antes da
+  mudança;
+- UI, `JobsController.discoverTests`: zera a saída antes de pedir a
+  listagem; o `handleTestStarted` e o `handleTestOutput` de hoje põem as
+  linhas na área de baixo, e o erro da listagem que falha entra uma vez, no
+  fim. O `JobsController` está no limite de 400 linhas: a lista dos jobs, o
+  modelo e o que o atualiza, sai para `ui/qml/jobs/JobListController.qml`, e
+  os `handleJob*` e o `jobsModel` do `JobsController` ficam, para os routers e
+  harnesses;
+- o `TestsPanel` não muda: a árvore que chega com as linhas da listagem fica
+  com a área da saída, e o run seguinte não muda o tamanho dela (C1-44).
+
+Provas necessárias:
+- testes do dono no core: o `test.discover` manda o `event.test.started` e o
+  `event.test.output` com o `jobId` dele, na ordem das linhas e antes do
+  `event.test.discovered`, com um pytest falso; na regressão
+  `listing_deadline`, com o CMake, o `ctest` e o GCC reais, os dois motivos
+  do servidor chegam como `event.test.output`. O Cargo passa pelo mesmo
+  `sink`;
+- harness com o `JobsController` e o `TestsPanel` reais: a listagem zera a
+  saída do run anterior; as linhas chegam à área de baixo; o erro sai uma
+  vez; a árvore não muda de tamanho no run seguinte; a lista dos jobs segue
+  igual no `tst_status_bar_state`;
+- mutantes que compilem e reprovem pela guarda;
+- na UI nativa, com a fixture do §24.1, "Listar testes" mostra na aba as
+  linhas da listagem com o motivo do servidor.
+
+### 25.1 C1-45: integração e provas — 2026-11-12
+
+Integrado no desenho do §25, protocolo 0.219.0:
+- `handlers/test_discover.rs`: o `sink` manda o `event.test.started` e um
+  `event.test.output` por linha, com o `jobId` do job, além do
+  `event.job.output`;
+- `ui/qml/jobs/JobsController.qml`: o `discoverTests` zera a saída antes de
+  pedir a listagem; a lista dos jobs saiu para
+  `ui/qml/jobs/JobListController.qml`, novo, e o `JobsController` foi de 400
+  para 316 linhas, com o `jobsModel` e os `handleJob*` de antes;
+- `ui/qml/panels/bottom/TestsPanel.qml`: só o `objectName` da área da saída,
+  para o harness;
+- `scripts/qml-harness/tst_tests_listing.qml`, novo.
+
+Provas:
+- no teste do dono `tests_are_discovered_and_one_runs_by_its_exact_id`, com
+  um pytest falso, a conferência `the_listing_lines_reach_the_tests_tab`: um
+  `event.test.started` com o comando, as linhas do stdout na ordem e a do
+  stderr com o `stream` dela, todas com o `jobId` do job, depois do `started`
+  e antes do `discovered`; o log do job tem o `$` do comando, as mesmas
+  linhas na mesma ordem e a contagem, que não vai à aba. Ela entrou nesse
+  teste, que já é adiado no Windows pela W7 (o pytest falso é um script de
+  shell), em vez de num teste novo, que subiria a W7 de 18 para 19;
+- a regressão `listing_deadline`, com o CMake 4.4.5, o `ctest` e o GCC 16
+  reais: os dois motivos do servidor chegam como `event.test.output`, e as
+  linhas da aba são as do log sem o `$` e sem a contagem;
+- o harness `tst_tests_listing`, com o `JobsEventRouter`, o `JobsController`
+  e o `TestsPanel` reais e um cliente falso: a listagem zera a saída do run;
+  as linhas chegam na ordem, e o motivo está numa linha da área de baixo; o
+  erro sai uma vez, no fim; a árvore fica do mesmo tamanho no run seguinte; o
+  job da listagem fica na lista com a última linha e a contagem dela; o
+  `clear` esquece a lista. O `tst_status_bar_state`, o `tst_tests_tree` e o
+  `tst_tests_output` seguem verdes;
+- 14 mutantes que reprovam. No core: sem o `event.test.output`, sem o
+  `event.test.started`, o output sem o `jobId`, o `stream` sempre `stdout`,
+  só o stdout na aba, a contagem também na aba e o `started` sem o comando.
+  Na UI: o `JobsController` do commit anterior, a listagem que não zera a
+  saída, o erro da listagem que não entra, o `clear` sem a lista dos jobs, o
+  `handleJobOutput` que não delega, e a última linha e o fim do job que não
+  entram;
+- na UI nativa isolada, com o core 0.219.0 e o `autoSave` desligado,
+  confirmados pelo IPC, e a fixture do §24.1: "Listar testes" manda à aba as
+  18 linhas da listagem, do `ctest -N` aos dois motivos do servidor e à
+  contagem dos casos de dentro, todas antes do `event.test.discovered`, e o
+  primeiro motivo aparece na área de baixo; o ▶ de `skip` troca as linhas
+  pela saída do run, e a árvore fica do mesmo tamanho; relistar troca a saída
+  do run pelas linhas da listagem; o × do job no meio do servidor dá "não
+  listou: listagem cancelada", e, rolada a área, o erro está uma vez, no fim.
+  O servidor não sobra, a IDE sai com 0, e o log dela fica sem aviso de QML.
+
+Limites:
+- o `cargo test -- --list` passa pelo mesmo `sink`, sem teste próprio: o
+  `cargo` vem do `PATH` do processo, e trocá-lo nos testes do core mudaria o
+  dos outros testes;
+- a área de baixo fica um lote atrás do fim, e o motivo do último binário
+  pode ficar a uma rolagem (C1-47); a listagem cancelada escreve a contagem
+  antes do erro (C1-48);
+- um run pedido no meio da listagem mistura as linhas dos dois jobs na aba
+  (C1-46).

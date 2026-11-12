@@ -16,7 +16,7 @@ Item {
     property alias discoveredModel: discoveredItemsModel
     property string discoverRunner: ""
     property bool discovering: false
-    property alias jobsModel: jobItemsModel
+    property alias jobsModel: jobList.model
     property string testSummary: ""
     // O placar da ultima rodada de testes, para a aba (HUD 2026-09-18); -1 = nao rodou.
     property int testsPassed: -1
@@ -48,7 +48,7 @@ Item {
     }
 
     ListModel { id: discoveredItemsModel }
-    ListModel { id: jobItemsModel }
+    JobListController { id: jobList }
 
     function clear() {
         buildOutputItemsModel.clear();
@@ -60,7 +60,7 @@ Item {
         discoveredItemsModel.clear();
         discoverRunner = "";
         discovering = false;
-        jobItemsModel.clear();
+        jobList.clear();
         testSummary = "";
         testsPassed = -1;
         testsFailed = 0;
@@ -110,6 +110,8 @@ Item {
             return;
         }
         discovering = true;
+        // C1-45: a aba mostra as linhas desta listagem, como as de um run.
+        testOutputItemsModel.clear();
         showTabRequested("tests");
         discoverTestsRequested(buildSystem || "");
     }
@@ -273,97 +275,11 @@ Item {
         showTabRequested("problems");
     }
 
-    function findJobIndex(jobId) {
-        for (let i = 0; i < jobItemsModel.count; i++) {
-            if (jobItemsModel.get(i).jobId === jobId) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    function trimJobsModel() {
-        while (jobItemsModel.count > 100) {
-            jobItemsModel.remove(0);
-        }
-    }
-
-    function appendFallbackJob(jobId, status) {
-        jobItemsModel.append({
-            jobId: jobId,
-            kind: "job",
-            title: jobId,
-            status: status,
-            progress: -1,
-            canCancel: false,
-            risk: "low",
-            latestLine: "",
-            outputCount: 0
-        });
-        trimJobsModel();
-        return jobItemsModel.count - 1;
-    }
-
-    function handleJobCreated(job) {
-        const jobId = job.id !== undefined ? job.id : "";
-        if (jobId === "") {
-            return;
-        }
-        const existingIndex = findJobIndex(jobId);
-        const row = {
-            jobId: jobId,
-            kind: job.kind !== undefined ? job.kind : "job",
-            title: job.title !== undefined ? job.title : jobId,
-            status: job.status !== undefined ? job.status : "running",
-            progress: job.progress !== undefined ? Number(job.progress) : -1,
-            canCancel: job.canCancel !== undefined ? Boolean(job.canCancel) : false,
-            risk: job.risk !== undefined ? job.risk : "low",
-            latestLine: "",
-            outputCount: 0
-        };
-        if (existingIndex >= 0) {
-            jobItemsModel.set(existingIndex, row);
-            return;
-        }
-        jobItemsModel.append(row);
-        trimJobsModel();
-    }
-
-    function handleJobProgress(jobId, status, progress, message) {
-        if (jobId === "") {
-            return;
-        }
-        let index = findJobIndex(jobId);
-        if (index < 0) {
-            index = appendFallbackJob(jobId, status);
-        }
-        jobItemsModel.setProperty(index, "status", status);
-        if (progress >= 0) {
-            jobItemsModel.setProperty(index, "progress", progress);
-        }
-        if (message !== "") {
-            jobItemsModel.setProperty(index, "latestLine", message);
-        }
-    }
-
-    function handleJobOutput(jobId, line) {
-        const index = findJobIndex(jobId);
-        if (index < 0) {
-            return;
-        }
-        const row = jobItemsModel.get(index);
-        jobItemsModel.setProperty(index, "latestLine", line);
-        jobItemsModel.setProperty(index, "outputCount", Number(row.outputCount) + 1);
-    }
-
-    function handleJobFinished(jobId, status) {
-        const index = findJobIndex(jobId);
-        if (index < 0) {
-            return;
-        }
-        jobItemsModel.setProperty(index, "status", status);
-        jobItemsModel.setProperty(index, "progress", 1);
-    }
+    // A lista dos jobs e' do JobListController; os routers chamam estes.
+    function handleJobCreated(job) { jobList.handleCreated(job); }
+    function handleJobProgress(jobId, status, progress, message) { jobList.handleProgress(jobId, status, progress, message); }
+    function handleJobOutput(jobId, line) { jobList.handleOutput(jobId, line); }
+    function handleJobFinished(jobId, status) { jobList.handleFinished(jobId, status); }
 
     function handleLspDiagnostics(path, diagnostics) {
         const rel = relativeToRoot(path);

@@ -58,12 +58,24 @@ impl Core {
             move |ctx| {
                 let cancel = ctx.cancellation();
                 let mut command = String::new();
+                // C1-45: the lines of the listing also go to the Tests tab,
+                // by the same events the `test.run` sends.
                 let mut sink = |event: test::TestEvent| match event {
                     test::TestEvent::Started { command: c } => {
                         ctx.emit_output(&format!("$ {c}"));
+                        ctx.emit_event(
+                            "event.test.started",
+                            json!({ "jobId": ctx.id(), "command": c }),
+                        );
                         command = c;
                     }
-                    test::TestEvent::Output { line, .. } => ctx.emit_output(&line),
+                    test::TestEvent::Output { stream, line } => {
+                        ctx.emit_output(&line);
+                        ctx.emit_event(
+                            "event.test.output",
+                            json!({ "jobId": ctx.id(), "stream": stream, "line": line }),
+                        );
+                    }
                     test::TestEvent::Case { .. } => {}
                 };
                 let resultado =

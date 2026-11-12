@@ -539,10 +539,17 @@ clicou (desde 2026-11-10).
 **O binário que não responde.** Cada pergunta da listagem a um binário tem
 5 s, o prazo padrão do `gtest_discover_tests`. Um programa que não responde
 nesse prazo, como um servidor posto como teste, fica só com a linha do
-`ctest`, que o roda inteiro; por enquanto, a aba não diz por quê. **Rodar só
-este teste** num caso desse binário diz que ele não respondeu. Cancelar o job
-da listagem para o binário, e a aba diz "não listou: listagem cancelada"
-(desde 2026-11-11).
+`ctest`, que o roda inteiro. **Rodar só este teste** num caso desse binário
+diz que ele não respondeu. Cancelar o job da listagem para o binário, e a aba
+diz "não listou: listagem cancelada" (desde 2026-11-11).
+
+**As linhas da listagem.** **Listar testes** apaga a saída que a aba
+mostrava, como o começo de um run, e põe embaixo da árvore as linhas da
+listagem: as do `ctest -N`, do `cargo test -- --list` ou do
+`pytest --collect-only -q`, a linha que diz qual binário não respondeu e em
+que pergunta, e quantos casos de dentro foram achados. Por enquanto, a área
+pode parar uma ou duas linhas antes do fim: role até o fim para ver as
+últimas (desde 2026-11-12).
 
 **Análise em C/C++.** O clangd sobe com `--clang-tidy` e lê o `.clang-tidy`
 do projeto: os avisos aparecem no arquivo aberto como qualquer diagnóstico.

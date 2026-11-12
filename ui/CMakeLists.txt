@@ -99,6 +99,7 @@ set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/workspace/LspStatusController.qml PROPERTIES QT_RESOURCE_ALIAS LspStatusController.qml)
 set_source_files_properties(qml/jobs/ActiveJobController.qml PROPERTIES QT_RESOURCE_ALIAS ActiveJobController.qml)
 set_source_files_properties(qml/jobs/ProblemRules.qml PROPERTIES QT_RESOURCE_ALIAS ProblemRules.qml)
+set_source_files_properties(qml/jobs/JobListController.qml PROPERTIES QT_RESOURCE_ALIAS JobListController.qml)
 set_source_files_properties(qml/shell/StatusBarRemoteWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarRemoteWidget.qml)
 set_source_files_properties(qml/shell/StatusBarJobWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarJobWidget.qml)
 set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
@@ -557,6 +558,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/LspStatusController.qml
         qml/jobs/ActiveJobController.qml
         qml/jobs/ProblemRules.qml
+        qml/jobs/JobListController.qml
         qml/shell/StatusBarRemoteWidget.qml
         qml/shell/StatusBarJobWidget.qml
         qml/shell/HeaderRunWidget.qml
