@@ -1067,9 +1067,10 @@ auditorias e provas posteriores datadas nos donos:**
   `cmake.status` diz o primeiro arquivo recusado entre os marcadores de
   build, os presets com os includes, o `.clangd` e, na pasta da
   configuração ativa, a CDB, o cache e as marcas fora do `.kinein`, e a
-  faixa de saúde o mostra. O sinal novo da ponte fica redeclarado nos três
-  harnesses que provam a faixa e conta na ENG-23, que passa a 37 sinais
-  (decisão do autor de 2026-11-13, no fechamento). Medido de novo com o core corrigido, nenhum FIFO
+  faixa de saúde o mostra. O sinal novo da ponte fica redeclarado no
+  cliente falso dos harnesses do roteador e do `stateProblem` e sai na
+  ENG-23 (decisão do autor de 2026-11-13, no fechamento); o harness da faixa
+  prova o controller sem cliente falso (40.7 §7.418). Medido de novo com o core corrigido, nenhum FIFO
   prende um pedido, o `projectProblem` nomeia cada FIFO e cada pasta que a
   abertura lê, e o `build.run` com o FIFO no cache termina recusado com o
   motivo, sem CMake filho. Provas pelo IPC, com dezesseis donos em cada
@@ -1347,9 +1348,15 @@ Decisão do autor de 2026-11-12, para todos: corrigir na 0.4, na ordem do 63
 - **ENG-22 — QML de área que fala com a ponte.** Severidade média. Causa: a
   regra da ARCHITECTURE §5 não tinha gate.
 - **ENG-23 — Cliente falso repetido nos harnesses.** Severidade média.
-  Desde 2026-11-13, 37 sinais: o INF-18 acrescentou o `workspaceProjectProblem`,
-  redeclarado nos três harnesses que provam a faixa (decisão do autor;
-  [63](63-regras-e-plano-de-engenharia-da-0.4.md) §0, D-16).
+  O INF-18 acrescentou o `workspaceProjectProblem`, redeclarado no cliente
+  falso dos harnesses do roteador e do `stateProblem`, que sai com os outros
+  (decisão do autor de 2026-11-13;
+  [63](63-regras-e-plano-de-engenharia-da-0.4.md) §0, D-16). O "37" que o
+  3952b8ad registrou foi escrito sem medir: medido depois, nesse commit, o
+  harness novo da faixa, que usava o roteador com um cliente falso de 24
+  sinais, levava a medida (sinais em 3 ou mais harnesses) de 36 a 55;
+  reescrito sem cliente falso, ela volta a 36
+  ([40.7](40.7-registro-das-entregas.md) §7.418).
 - **ENG-24 — Fachada do `EditorController.qml`.** Severidade média. Decisão
   do autor de 2026-11-12: dissolver a fachada; a decisão anterior, de mantê-la
   congelada ([32](../arquitetura/32-editor-por-responsabilidade.md) §8.4),

@@ -2,13 +2,11 @@ import QtQuick
 import KineinVectis
 
 // O arquivo do projeto que o core nao le (INF-18, 0.223.0, 2026-11-13): o
-// WorkspaceEventRouter e o ProjectHealthController REAIS, com um cliente
-// falso que emite na ordem do CoreClient: o workspaceRoot muda, o
-// workspaceChanged, o workspaceStateProblem e logo depois o
-// workspaceProjectProblem com o `projectProblem` da resposta do
-// `workspace.open`; cada `cmake.status` o emite de novo. Antes, um FIFO no
-// lugar do `CMakeLists.txt` ou do `CMakeCache.txt` prendia o core na
-// abertura, e a IDE ficava sem resposta.
+// ProjectHealthController REAL recebe o `projectProblem` da resposta do
+// `workspace.open` e de cada `cmake.status`, como o roteador o entrega. Antes,
+// um FIFO no lugar do `CMakeLists.txt` ou do `CMakeCache.txt` prendia o core
+// na abertura, e a IDE ficava sem resposta. Sem cliente falso (R-TEST-06): o
+// caminho do sinal ate' o controller e' provado no tst_workspace_event_router.
 //
 // O que se prova: o motivo vai para a faixa, sem botao, depois do pedido de
 // confianca e antes dos avisos do CMake; o `.kinein` que nao grava vem
@@ -18,55 +16,10 @@ Item {
     id: root
     property int failures: 0
 
-    QtObject {
-        id: bridge
-        property string workspaceRoot: ""
-        signal workspaceChanged()
-        signal workspaceStateProblem(string problem)
-        signal workspaceProjectProblem(string problem)
-        // Os outros sinais que o roteador ouve (sem eles, o Connections avisa).
-        signal statusChanged()
-        signal cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
-                                   string cdbStaleBecause, string preset, var presetChoices,
-                                   string presetChoicesFile, var compileDatabase,
-                                   var configuration)
-        signal cmakeConfigureFinished(bool success)
-        signal fileSaved(string path)
-        signal cargoMetadataResolved(var packages)
-        signal dirListed(string path, var entries)
-        signal fileCreated(string path)
-        signal directoryCreated(string path)
-        signal pathRenamed(string from, string to)
-        signal pathCopied(string from, string to)
-        signal pathBatchTransferred(var result)
-        signal pathCopyFailed(string to, string message)
-        signal pathDeleted(string path)
-        signal filesChanged(var changes)
-        signal workspaceBrowseListed(string path, string parent, var entries, var places)
-        signal projectEnvironmentsResolved(var environments)
-        signal workspaceFolderCreated(string path)
-        signal recentWorkspacesResolved(var workspaces)
-        signal toolsListed(var tools)
-        signal environmentTool(var tool)
-        signal requestFailed(string method, string message)
-        property bool workspaceTrusted: false
-        property var workspaceBuildSystems: []
-        function detectTools() {}
-    }
     ProjectHealthController {
         id: health
-        workspaceRoot: bridge.workspaceRoot
         workspaceKind: "unknown"
         projectRecognized: true
-    }
-    WorkspaceEventRouter {
-        coreClient: bridge
-        folderPicker: QtObject { function close() {} }
-        workspaceController: QtObject { function handleWorkspaceChanged() {} }
-        projectHealthController: health
-        recentWorkspacesController: QtObject {
-            function handleRequestFailed(method, message) {}
-        }
     }
 
     readonly property string fifo: "CMakeLists.txt não é um arquivo regular"
@@ -75,12 +28,12 @@ Item {
     function check(ok, message) {
         if (!ok) { root.failures++; console.error("FALHOU: " + message); }
     }
-    // O que o CoreClient faz no `workspace.open`.
+    // O que chega ao controller no `workspace.open`: a raiz, o `stateProblem`
+    // e o `projectProblem` da resposta.
     function open(path, problem) {
-        bridge.workspaceRoot = path;
-        bridge.workspaceChanged();
-        bridge.workspaceStateProblem("");
-        bridge.workspaceProjectProblem(problem);
+        health.workspaceRoot = path;
+        health.stateProblem = "";
+        health.projectProblem = problem;
     }
 
     Component.onCompleted: {
@@ -107,28 +60,26 @@ Item {
         health.handleTrust(true);
         check(health.message === "arquivo do projeto não lido: " + root.fifo,
               "o arquivo recusado vem antes da escolha da CDB: " + health.message);
-        bridge.workspaceStateProblem(".kinein é um link simbólico, que a IDE não segue no projeto");
+        health.stateProblem = ".kinein é um link simbólico, que a IDE não segue no projeto";
         check(health.message === "arquivo do projeto não lido: " + root.fifo,
               "o arquivo recusado vem antes do .kinein: " + health.message);
-        bridge.workspaceStateProblem("");
+        health.stateProblem = "";
         health.workspaceBuildSystems = [];
 
         // O `cmake.status` sem o motivo, com o arquivo trocado, limpa.
-        bridge.workspaceProjectProblem("");
+        health.projectProblem = "";
         check(health.projectProblem === "" && health.status === "ok" && !health.active,
               "o status sem o motivo deixa a faixa quieta: " + health.message);
 
         // Trocar de projeto zera o motivo antes da resposta nova chegar.
         root.open("/tmp/proj-fifo", root.fifo);
-        bridge.workspaceRoot = "/tmp/outro";
+        health.workspaceRoot = "/tmp/outro";
         check(health.projectProblem === "" && health.status === "ok",
               "trocar de projeto zera o motivo: " + health.projectProblem);
-        bridge.workspaceChanged();
-        bridge.workspaceProjectProblem("");
 
         // Fechar o projeto (o root vazio) tambem.
         root.open("/tmp/proj-fifo", root.fifo);
-        bridge.workspaceRoot = "";
+        health.workspaceRoot = "";
         check(health.projectProblem === "" && health.status === "idle" && !health.active,
               "fechar zera o motivo: " + health.projectProblem + " " + health.status);
 
@@ -136,7 +87,7 @@ Item {
         root.open("/tmp/proj-fifo", root.fifo);
         health.dismiss();
         check(!health.active && health.status === "warning", "dispensado, a faixa some: " + health.active);
-        bridge.workspaceProjectProblem(root.folder);
+        health.projectProblem = root.folder;
         check(health.active && health.message === "arquivo do projeto não lido: " + root.folder,
               "um motivo novo volta a faixa: " + health.message);
 
