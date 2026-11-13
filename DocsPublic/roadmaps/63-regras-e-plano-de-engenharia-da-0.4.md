@@ -30,6 +30,7 @@
 | D-13 | Na abertura do INF-15 (2026-11-12): a leitura guardada vale também para o `remote-contacts.json`, o `datasources.schema1.json` e as marcas do configure dentro do `.kinein`; o `stateProblem` nomeia também a entrada que não é arquivo regular nem pasta; o INF-17 (escritas que o INF-13 não cobriu) entra logo depois do INF-15 ([62 §3.4](62-base-publica-0.4.md)). |
 | D-14 | Depois do INF-15 (2026-11-13): o `CMakeLists.txt` e os outros arquivos do sistema de build são a verdade do projeto; o `.kinein` só complementa, sem atrapalhar nem tomar o lugar deles. O INF-18 entra logo depois do INF-17, pela R-DADOS-04: o arquivo do projeto e o da ferramenta são lidos como o sistema de build os lê, e o guarda só evita que a leitura prenda e diz o motivo, sem o limite de 1 MiB. O limite de cada arquivo do `.kinein` é declarado no catálogo do ENG-02, que passa a ler o LCOV da cobertura (INF-19) ([62 §3.4](62-base-publica-0.4.md)). |
 | D-15 | Na abertura do INF-18 (2026-11-13): o INF-20 (as marcas `.kinein-rigor` e `.kinein-preset` e o marcador do espelho fora do guarda, que o INF-13 e o INF-15 não cobriram) entra logo, antes do INF-18. Na abertura do INF-20, no mesmo dia: ele cobre também as remoções sob o `.kinein` (o registro da configuração e a pasta de build do reparo, pelo `kinein_dir::remove`), a query do file-api e as marcas que o configure que deu certo grava e apaga ([62 §3.4](62-base-publica-0.4.md)). |
+| D-17 | No gate rápido do INF-18 (2026-11-13): o INF-21 (o verificador de idioma lia a string crua de bytes do Rust e a string crua do C++ como código) entra logo, num commit próprio, antes de fechar o INF-18 ([62 §3.4](62-base-publica-0.4.md)). |
 
 ---
 
@@ -434,6 +435,7 @@ salvo o ENG-16: **paga na 0.4** (D-02).
 | INF-15 | Leitura do `.kinein` sem conferir o tipo | Um FIFO no lugar de 5 dos 10 arquivos lidos prende o `workspace.open` (62 §3.4) | alta |
 | INF-17 | Escritas do `.kinein` que o INF-13 não cobriu | Medido no 61934697: o `datasource.save` grava o `datasources.json` na pasta de fora do `.kinein` ligado (62 §3.4) | alta |
 | INF-20 | Marcas do configure, remoções e marcador do espelho fora do guarda | Medido no deb3ed5b: um FIFO no `.kinein-rigor` prende o `build.run`; com `.kinein/presets` ligado, o reparo da pasta de build apaga a pasta de fora inteira (62 §3.4) | alta |
+| INF-21 | Verificador de idioma lê a string crua de bytes do Rust e a do C++ como código | Medido no cfae82b9: o texto do `br#"…"#` vira identificador, e depois de `br#"a"b"#` ou de `R"(a"b)"` o resto da linha não é lido (62 §3.4) | baixa |
 | INF-18 | Arquivos do projeto e das ferramentas lidos sem conferir o tipo | Medido no 61934697: um FIFO no lugar do `CMakeLists.txt` da raiz ou do `CMakeCache.txt` da `.kinein/build/` prende o `workspace.open` (62 §3.4) | alta |
 | INF-19 | LCOV da cobertura lido fora do `kinein_dir` | O `.kinein/coverage.lcov` é lido de volta com `fs::read_to_string`, sem limite; o de 1 MiB não serve a ele (62 §3.4) | baixa |
 | ENG-01 | Mutantes avulsos, sobre o checkout vivo | Sem catálogo; numa cópia, o build frio do teste do core leva 69,1 s e cada mutante 11,3 s | média |
@@ -681,7 +683,7 @@ O desbloqueio da conta no GitHub não é do repositório: é do autor.
 ## E.1 A ordem
 
 ```text
-Fase 0  dados e gate     INF-15 → INF-17 → INF-20 → INF-18 → ENG-01 → INF-16 → ENG-02 → ENG-03 → ENG-04 → ENG-05 → ENG-06 → ENG-07
+Fase 0  dados e gate     INF-15 → INF-17 → INF-20 → INF-21 → INF-18 → ENG-01 → INF-16 → ENG-02 → ENG-03 → ENG-04 → ENG-05 → ENG-06 → ENG-07
 Fase 1  core             ENG-10 → ENG-11 → ENG-12 → ENG-13 → ENG-14 → ENG-15
 Fase 2  ponte e QML      UI-02 → ENG-20 → ENG-21 → ENG-22 → ENG-23 → ENG-24 → ENG-25
 Fase 3  testes e listas  INF-06 → ENG-30 → ENG-31 → ENG-32 → ENG-33 → ENG-34 → ENG-35 → ENG-36 → ENG-37 → ENG-38
@@ -749,6 +751,21 @@ cobriram** (D-15).
   apagado sem a conferência do guarda, salvo o LCOV (INF-19, no ENG-02). O
   literal `.kinein` que sobra fora do `kinein_dir`, em donos que já
   conferem o caminho, é a migração do ENG-02.
+
+**INF-21 — a string crua no verificador de idioma** (D-17).
+- Fazer: o `strip_c_like` pula inteira a string crua do Rust (`r`, `br`, com
+  ou sem `#`) e a do C++ (`R"fim(…)fim"`, com os prefixos), quando ela não
+  vem colada num nome.
+- Commits: um.
+- Aceite: cada forma com aspas dentro sai sem deixar palavra, e o
+  identificador depois dela na mesma linha é lido; o nome raw do Rust e o
+  nome terminado em `r` ou `R` colado numa string seguem como código; o gate
+  inteiro não reprova o texto da string e reprova o identificador em
+  português depois dela; a contagem do legado não muda.
+- Mutantes: sem o prefixo `b`; sem a string crua do C++; o C++ fechando sem
+  o delimitador e o Rust sem os `#`; sem conferir o caractere de antes; sem
+  os prefixos do C++.
+- Pronto: nenhuma string crua do Rust ou do C++ é lida como código.
 
 **INF-18 — a leitura dos arquivos do projeto e das ferramentas** (D-14,
 R-DADOS-04).

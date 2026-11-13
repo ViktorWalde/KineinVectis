@@ -65,6 +65,10 @@ SUFFIXES = {
 # Colado num digito nao e' identificador: e' o resto de um literal numerico
 # (`0xffb48ead` virava o "identificador" `xffb48ead`, 2026-10-01).
 IDENT = re.compile(r"(?<![0-9A-Za-z_])[A-Za-z_][A-Za-z0-9_]*")
+# A string crua, onde a aspa de dentro nao fecha nada (INF-21): o `r"…"`, o
+# `r#"…"#` e o `br#"…"#` do Rust; o `R"fim(…)fim"` do C++, com os prefixos.
+RUST_RAW = re.compile(r'b?r(#*)"')
+CPP_RAW = re.compile(r'(?:u8|[uUL])?R"([^()\\\s"]{0,16})\(')
 WORD = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+")
 
 
@@ -134,10 +138,10 @@ def strip_c_like(text: str) -> str:
             chunk = text[i:(n if j < 0 else j + 2)]
             out.append("\n" * chunk.count("\n"))
             i = n if j < 0 else j + 2
-        elif c == "r" and re.match(r'b?r#*"', text[i:i + 8]) and (i == 0 or not text[i - 1].isalnum() and text[i - 1] != "_"):
-            m = re.match(r'(b?r)(#*)"', text[i:])
-            close = '"' + m.group(2)
-            j = text.find(close, i + m.end())
+        elif c in "brRuUL" and (i == 0 or not text[i - 1].isalnum() and text[i - 1] != "_") and (
+                raw := RUST_RAW.match(text, i) or CPP_RAW.match(text, i)):
+            close = '"' + raw.group(1) if raw.re is RUST_RAW else ")" + raw.group(1) + '"'
+            j = text.find(close, raw.end())
             chunk = text[i:(n if j < 0 else j + len(close))]
             out.append("\n" * chunk.count("\n"))
             i = n if j < 0 else j + len(close)

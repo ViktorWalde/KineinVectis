@@ -85,5 +85,37 @@ class SameVerdictOnEveryDistro(unittest.TestCase):
         self.assertEqual(gate.VOCABULARY.read_text(encoding="utf-8"), before)
 
 
+class RawStringIsText(unittest.TestCase):
+    """INF-21: a aspa dentro da string crua do Rust e do C++ nao fecha nada."""
+
+    def test_the_raw_string_goes_whole_and_what_follows_is_read(self):
+        for raw in ('r#"a"b"#', 'br"a b"', 'br#"{"language": "C"}"#', 'br##"a"#b"##',
+                    'R"(a"b)"', 'R"fim(a)"b)fim"', 'u8R"(a"b)"', 'LR"(a"b)"'):
+            with self.subTest(raw=raw):
+                self.assertEqual(gate.strip_c_like(f"let a = {raw}; let resposta_nova = 1;"),
+                                 "let a = ; let resposta_nova = 1;")
+
+    def test_a_raw_identifier_and_a_name_ending_in_r_are_code(self):
+        for code, stripped in (('let r#type = 1;', 'let r#type = 1;'),
+                               ('let bar = "x";', 'let bar = ;'),
+                               ('let br = 1; let barR = "y";', 'let br = 1; let barR = ;'),
+                               ('auto p = DIR"(x)";', 'auto p = DIR;')):
+            with self.subTest(code=code):
+                self.assertEqual(gate.strip_c_like(code), stripped)
+
+    def test_the_gate_reads_neither_the_text_nor_past_a_raw_string(self):
+        with tempfile.TemporaryDirectory(prefix="kinein-ident-", dir=REPO_ROOT) as directory:
+            source = Path(directory) / "sample.rs"
+            source.write_text('const SAMPLE: &[u8] = br#"{"toolchains": [{"language": "C"}]}"#;\n',
+                              encoding="utf-8")
+            code, _, err = run()
+            self.assertEqual(code, 0, err)
+            source.write_text('const SAMPLE: &[u8] = br#"a"b"#; const RESPOSTA_NOVA: u8 = 1;\n',
+                              encoding="utf-8")
+            code, _, err = run()
+            self.assertEqual(code, 1)
+            self.assertIn("`resposta`", err)
+
+
 if __name__ == "__main__":
     unittest.main()

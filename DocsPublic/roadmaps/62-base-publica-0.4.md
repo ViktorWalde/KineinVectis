@@ -200,8 +200,8 @@ transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-13: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
-INF-14, INF-15, INF-17 e INF-20 corrigidos; INF-06, INF-16, INF-18, INF-19,
-UI-01 e UI-02 abertos. A dívida
+INF-14, INF-15, INF-17, INF-20 e INF-21 corrigidos; INF-06, INF-16, INF-18,
+INF-19, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -1105,6 +1105,37 @@ auditorias e provas posteriores datadas nos donos:**
   como a aplicação, e só uma corrida os separa; a forma deles, o dono que
   monta o caminho à mão, é um mutante que o ENG-02 tem de reprovar
   ([40.7](40.7-registro-das-entregas.md) §7.415). Estado corrigido.
+- **INF-21 — Verificador de idioma lê a string crua de bytes do Rust e a
+  string crua do C++ como código.** Dono e evidência: `strip_c_like` em
+  `scripts/check_identifier_language.py` (linha 137), que só reconhece a
+  string crua num `r` que não vem depois de letra: o `br"…"` e o `br#"…"#`
+  do Rust e o `R"(…)"` do C++ passam pelo ramo das aspas comuns. Achado em
+  2026-11-13, no gate rápido do INF-18: o teste novo do `cmake/model.rs`, com
+  `br#"{"toolchains": [{"language": "C", …}]}"#`, reprovou com
+  `toolchainslanguage` e `ccompilerpath`, palavras feitas do conteúdo da
+  string. Medido nessa data, chamando a função: `br#"{"language": "C"}"#`
+  sobra como `br#languageC#`; depois de `br#"a"b"#` ou de `R"(a"b)"`, o resto
+  da linha some, e um `resposta_nova` nela passa; o `r#"…"#` sai inteiro. A
+  árvore do cfae82b9 não tem `br"` em Rust; o C++ tem cinco `R"(…)"`, em
+  `ui/src/editor_highlighter_rules.cpp` e `ui/src/markdown_policy.cpp`, e
+  neste a aspa de dentro esconde o fim da linha. Severidade baixa: o erro
+  fica na linha da string, e nas que existem quase nada vem depois dela; o
+  falso negativo deixa passar identificador em português, e o falso positivo
+  reprova código certo. Causa confirmada por leitura e pela chamada. Testes:
+  o `br"…"`, o `br#"…"#` e o `R"delim(…)delim"` com aspas dentro, sem
+  palavra da string e com o identificador depois dela visto, no
+  `scripts/test_identifier_language.py`. Decisão do autor de 2026-11-13: entra
+  logo, num commit próprio, antes de fechar o INF-18
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §0, D-17, e §E.2).
+  Corrigido em 2026-11-13: a string crua do Rust (`r`, `br`, com ou sem
+  `#`) e a do C++ (`R"fim(…)fim"`, com os prefixos `u8`, `u`, `U` e `L`) são
+  puladas inteiras, quando não vêm coladas num nome; a contagem do legado
+  fica igual (14070). Provas: cada forma com aspas dentro, sem palavra da
+  string e com o identificador depois dela visto; o nome raw do Rust e o
+  nome terminado em `r` ou `R` colado numa string seguem como código; o gate
+  inteiro sem reprovar o texto da string e reprovando o `RESPOSTA_NOVA`
+  depois dela. Oito mutantes, numa cópia, todos reprovados
+  ([40.7](40.7-registro-das-entregas.md) §7.416). Estado corrigido.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
