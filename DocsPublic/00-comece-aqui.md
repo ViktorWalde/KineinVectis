@@ -95,7 +95,7 @@ documentação pública** (§6).
 | O que o projeto é, medido? | [`leitura-tecnica.md`](leitura-tecnica.md) |
 | Quais pastas existem e o que há em cada uma? | [`arquitetura/02-estrutura-do-repositorio.md`](arquitetura/02-estrutura-do-repositorio.md) |
 | **Quem fala com quem, por quê e como?** | [`arquitetura/01-mapa-de-modulos.md`](arquitetura/01-mapa-de-modulos.md) — gerado do código, com um diagrama por contexto |
-| Quais são as regras de engenharia (camadas, onde pôr código novo, anti-padrões)? | [`arquitetura/ARCHITECTURE.md`](arquitetura/ARCHITECTURE.md) |
+| Quais são as regras de engenharia (camadas, onde pôr código novo, anti-padrões)? | [`arquitetura/ARCHITECTURE.md`](arquitetura/ARCHITECTURE.md); o regulamento, com o ID e a verificação de cada regra, na Parte A do [`roadmaps/63`](roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md) |
 | Qual a forma de cada mensagem UI ↔ core? | [`arquitetura/03-protocolo-ipc.md`](arquitetura/03-protocolo-ipc.md) |
 | Como o processo sobe e as mensagens circulam? | [`arquitetura/04-boot-e-comunicacao.md`](arquitetura/04-boot-e-comunicacao.md) |
 | O que está aberto agora, e as decisões que não se reabrem? | [`roadmaps/40-estado-e-continuidade.md`](roadmaps/40-estado-e-continuidade.md) |
@@ -103,7 +103,7 @@ documentação pública** (§6).
 | **O que ler para mexer num contexto, e o que dispensar?** | §5.1 abaixo |
 | **Quais versões existem até a 1.0, e o que é decidido ou proposta?** | [`roadmaps/57-mapa-de-versoes-ate-a-1.0.md`](roadmaps/57-mapa-de-versoes-ate-a-1.0.md) |
 | **Onde, no código, cada versão começa — arquivos, mecanismo a estender, primeira fatia?** | [`roadmaps/58-onde-cada-versao-comeca-no-codigo.md`](roadmaps/58-onde-cada-versao-comeca-no-codigo.md) — caminhos conferidos por gate |
-| O plano da versão em curso? | o que o [mapa de versões](roadmaps/57-mapa-de-versoes-ate-a-1.0.md) marca EM CURSO; hoje (desde 2026-10-16), a 0.4, [`roadmaps/52-arquitetura-executavel-da-0.4.md`](roadmaps/52-arquitetura-executavel-da-0.4.md) §11 |
+| O plano da versão em curso? | o que o [mapa de versões](roadmaps/57-mapa-de-versoes-ate-a-1.0.md) marca EM CURSO; hoje (desde 2026-10-16), a 0.4, [`roadmaps/52-arquitetura-executavel-da-0.4.md`](roadmaps/52-arquitetura-executavel-da-0.4.md) §11; desde 2026-11-12, a engenharia vem primeiro, pela Parte E do [`roadmaps/63`](roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md) |
 | A visão-alvo de cada área do produto? | [`especificacoes/README.md`](especificacoes/README.md) — alvo, não estado |
 | Por que uma decisão de arquitetura foi tomada? | [`decisoes-adr/`](decisoes-adr/README.md) |
 | Como montar o ambiente e compilar? | [`contribuindo/02-preparar-o-ambiente.md`](contribuindo/02-preparar-o-ambiente.md), [`build/comandos-de-build-e-verificacao.md`](build/comandos-de-build-e-verificacao.md) |

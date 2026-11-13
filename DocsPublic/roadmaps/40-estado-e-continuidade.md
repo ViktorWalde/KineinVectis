@@ -20,9 +20,9 @@
 > → Rust/C/C++ → Python → DAP/QEMU → F5–F9 → algoritmo semântico de ambiente →
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
 > em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411); dívida na 0.4.
-> Recorte atual: **C1** (consolidação C §4.1), com C-04 do 62 §3.4; uso confiável
-> em projetos pequenos/médios e na própria IDE. Polimento UI/HUD/UX acompanha
-> as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
+> Recorte atual (2026-11-12): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
+> no §E.1; primeiro item INF-15), antes de retomar o **C1** (consolidação C §4.1). Polimento
+> UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
 >
@@ -56,7 +56,7 @@
 > **Provas anteriores:** completo estrito de 2026-10-27 (§7.365): 1395 testes
 > Rust, 8 CTest, 175 harnesses QML e análise C++ limpa. Matriz Linux medida em
 > 2026-11-01 (§7.368), com cobertura parcial. Não validam mudanças posteriores.
-> Requisitos em [build/14](../build/14-ambiente-de-desenvolvimento.md); EditorController congelado (§2).
+> Requisitos em [build/14](../build/14-ambiente-de-desenvolvimento.md); EditorController: dissolver na 0.4 (§2).
 
 ## 1. O estado, em números
 
@@ -124,11 +124,13 @@ número sem data aqui é afirmação sobre hoje e o `verificar-docs.sh` o cobra.
 ui/qml/editor/EditorController.qml   791/400
 ```
 
-**Não corte sem falar com o autor.** A decisão de mantê-lo congelado está em
-[`../arquitetura/32`](../arquitetura/32-editor-por-responsabilidade.md) §8.4, e
-as duas saídas estão medidas em [`39`](39-divida-tecnica-paga.md) §6: dissolver
-a fachada (~190 pontos de chamada em 15 arquivos) ou corrigir a categoria.
-Alterar a exceção exige decisão arquitetural registrada.
+**Decisão do autor de 2026-11-12: dissolver a fachada na 0.4.** É o item
+ENG-24 do [63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.4, na ordem de
+lá: cada consumidor passa a falar com o dono, e a linha de base fica vazia.
+Até essa data valia a decisão de mantê-lo congelado
+([`../arquitetura/32`](../arquitetura/32-editor-por-responsabilidade.md) §8.4),
+com as duas saídas medidas em [`39`](39-divida-tecnica-paga.md) §6. Não corte
+fora da ordem do 63, e nunca por tamanho.
 
 ## 3. O que este arquivo já guardou
 
@@ -149,6 +151,12 @@ escopo. Os mínimos da [infraestrutura fundamental](../especificacoes/infraestru
 integram o fechamento; a ordem antiga não impõe o backlog inteiro. Novas tarefas no
 [contribuindo/15](../contribuindo/15-tarefas-iniciais-embarcados-0.4.md).
 Provas de software, emulação e hardware permanecem distintas.
+
+**Desde 2026-11-12 (decisão do autor), a próxima fatia é a engenharia da
+0.4:** o [63](63-regras-e-plano-de-engenharia-da-0.4.md) traz as regras
+(Parte A), o inventário da dívida (Parte B) e a ordem (§E.1), que começa
+pelo INF-15. A 0.4 paga toda a dívida inventariada, e a etapa C só retoma
+depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)
 e pela [especificação comum](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).
@@ -217,7 +225,8 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Instalação | Sem sudo ou instalação silenciosa pela IDE; origem oficial e verificação de integridade para toolchains gerenciadas. | [toolchains](../integracoes/39-toolchains-por-alvo.md), [Instalar Ferramentas](../especificacoes/instalar-ferramentas.md) |
 | UI | Componentes reutilizáveis; layout pelo conteúdo e limites da tela; feedback claro, contexto explícito e editor dominante. Estudos visuais não são design aprovado. | [frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md), [componentes](../especificacoes/sistema-de-componentes-de-ui.md) |
 | Validação visual | Testar jornadas integradas com mouse/teclado; automação em instância isolada complementa o aceite visual. | [casca da IDE](../arquitetura/36-casca-da-ide.md), [escopo da 0.4](52-arquitetura-executavel-da-0.4.md) §11 |
-| EditorController | Fachada congelada até revisão arquitetural; não ampliar a exceção de tamanho. | [editor](../arquitetura/32-editor-por-responsabilidade.md) §8.4, [dívida](39-divida-tecnica-paga.md) §6 |
+| EditorController | Autor, 2026-11-12: dissolver a fachada na 0.4; a exceção de tamanho acaba. | [63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.4 (ENG-24), [editor](../arquitetura/32-editor-por-responsabilidade.md) §8.4 |
+| Engenharia da 0.4 | Autor, 2026-11-12: nenhuma dívida passa da 0.4; a engenharia vem antes de retomar a etapa C; nenhuma etapa começa sem plano escrito. Core por tabela de rotas e estado por domínio; ponte com um objeto por domínio; o tipo do fio como tipo interno é troca consciente. | [63](63-regras-e-plano-de-engenharia-da-0.4.md) §0 |
 | Ferramentas de linguagem | Usar provedores existentes; não duplicar parser, LSP ou motor semântico. GDB DAP exige versão compatível; degradações devem ser explícitas. | [semântica](56-motor-semantico-profundo-cpp-rust.md), [contrato debug](../arquitetura/03-dominios/debug.md) |
 | Banco | Provedores externos versionados, perfil separado de credencial, contexto explícito de produção e custo de leitura visível. | [banco](../arquitetura/37-banco-de-dados.md), [drivers](../arquitetura/40-contrato-operacional-de-drivers.md), [cofre](../seguranca/40-cofre-de-credencial.md) |
 | Grafana | Integração por HTTP API e serviço externo; navegador embutido opcional. | [integrações](../integracoes/README.md), [especificação Grafana](../especificacoes/grafana-ui-ux-0.3.5.md) |

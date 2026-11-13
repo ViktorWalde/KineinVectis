@@ -156,6 +156,13 @@ Git e ShellCheck. O cache Cargo usa toolchain, manifests e lockfile; as
 actions têm SHA fixado. Dispara em push, pull request e manualmente, com
 token de leitura, timeout e cancelamento de execução obsoleta.
 
+**Medido em 2026-11-12:** o workflow nunca executou. As 32 rodadas desde
+2026-10-19 terminaram em 2 s, sem nenhum passo: o job não chega a iniciar no
+runner, por um bloqueio da conta no GitHub, fora do repositório. Não é
+defeito do código, e este perfil nunca foi provado no Ubuntu 24.04. O
+contêiner que reproduz o ambiente da CI na máquina de quem desenvolve é o
+item ENG-07 do [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md).
+
 **Ainda não provado:** execução no GitHub; a publicação depende do fluxo da manutenção
 ([40](../roadmaps/40-estado-e-continuidade.md) §5). As camadas de UI,
 integrações pesadas agendadas e a matriz Arch continuam pendentes. Desenho da

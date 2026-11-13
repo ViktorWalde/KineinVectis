@@ -207,6 +207,15 @@ e comunicação entre módulos exercitadas até o limite, cenários improváveis
 falhas e casos de borda que façam defeitos aparecer, com mutações das guardas;
 quantidade de testes não substitui essa rigidez.
 
+**Ordem do autor (2026-11-12).** A 0.4 paga toda a dívida técnica e de
+arquitetura inventariada: nenhuma passa para a versão seguinte. A engenharia
+do [63](63-regras-e-plano-de-engenharia-da-0.4.md) vem inteira antes de
+retomar a etapa 1 (C), na ordem do §E.1 de lá: INF-15 primeiro, depois o gate,
+o core, a ponte com a QML, e os testes com as listas congeladas. O C1 retoma
+em seguida, do C1-47; os testes adiados do Windows são pagos na etapa 10. As
+regras de engenharia passam a morar na Parte A do 63, e nenhuma etapa desta
+tabela começa sem o plano dela escrito (R-PROC-01).
+
 Quality Center, schema 3, CircuitPython, Banco para embarcados, expansão de
 emuladores além de F3 e as demais jornadas não concluídas do 52 permanecem
 abertos nos seus donos. Bloqueiam quando integram os mínimos de §3.2 ou uma
@@ -672,7 +681,10 @@ auditorias e provas posteriores datadas nos donos:**
   gate reprova de forma intermitente, sem defeito no produto. Testes: a
   reprodução sob carga controlada e uma prova que não dependa do relógio da
   máquina. Decisão do autor de 2026-11-09: fica aberto por enquanto, sem
-  mudar o teste. Estado aberto.
+  mudar o teste. Decisão do autor de 2026-11-12: pagar na 0.4, com o prazo
+  como parâmetro do teste: o teste que não é sobre o prazo recebe um prazo
+  folgado, e o que é sobre o prazo usa um compilador falso que nunca termina
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.5). Estado aberto.
 - **INF-07 — `settings.json` de esquema desconhecido sobrescrito.** Dono e
   evidência: `crates/kinein-core/src/settings.rs`. `read_values` devolve o
   vazio para o arquivo sem `schemaVersion` ou com outro, e `set_workspace` e
@@ -882,8 +894,10 @@ auditorias e provas posteriores datadas nos donos:**
   INF-13; a confirmar lendo cada dono, e o link na leitura também. Testes: o
   FIFO, o link e a pasta no lugar de cada arquivo lido, sem prender nem
   seguir, com mutações; no Windows o caminho não tem FIFO, e vale a pasta.
-  Decisões: a ordem, a perguntar ao autor depois do commit do INF-13. Estado
-  aberto.
+  Decisões do autor de 2026-11-12: é o primeiro item da engenharia da 0.4;
+  a leitura passa pelo `kinein_dir`, que abre sem bloquear e sem seguir o
+  link e confere o tipo no descritor
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.2). Estado aberto.
 - **INF-16 — Mapa de módulos conta o `tests.rs` de um módulo como código.**
   Dono e evidência: `scripts/module_map.py`, que exclui só os caminhos com uma
   pasta `tests` (linha 267). Achado em 2026-11-12, no INF-13: o mapa deu ao
@@ -893,8 +907,15 @@ auditorias e provas posteriores datadas nos donos:**
   ciclo só de teste pode aparecer como de produção. Severidade baixa: o mapa
   e o `--check` exageram arestas, sem esconder nenhuma. Causa confirmada por
   leitura. Testes: um módulo com dependência só no `tests.rs`, fora do mapa,
-  e o mapa regenerado sem diferença no resto. Decisões: na revisão de
-  arquitetura com o autor (passagem de 2026-11-12). Estado aberto.
+  e o mapa regenerado sem diferença no resto. Ampliado em 2026-11-12, na
+  revisão de arquitetura: o extrator erra nos dois sentidos. Medido nessa
+  data, ele dá 184 arestas e 2 ciclos; só o código de produção, com os grupos
+  `use crate::{a, b}` lidos, tem 196 arestas e 0 ciclos. Os dois ciclos
+  conhecidos só existem em comentário, 11 arestas vêm de comentário ou de
+  teste, e 22 arestas reais em import agrupado não são vistas: um ciclo
+  fechado por elas passaria. Severidade média. Decisão do autor de
+  2026-11-12: corrigir o extrator e apagar a lista de ciclos conhecidos
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.2). Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
@@ -1000,7 +1021,79 @@ auditorias e provas posteriores datadas nos donos:**
   motivo e um método novos sem editar a cadeia. Decisões do autor de
   2026-11-12: item próprio, logo depois do INF-13; o desenho vai para a
   revisão de arquitetura com o autor, antes de seguir a etapa C, e a
-  execução segue o desenho. Estado aberto.
+  execução segue o desenho. Desenho decidido em 2026-11-12: cada motivo é
+  uma unidade numa lista ordenada, e o despacho passa à tabela do objeto de
+  domínio da ponte ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §C.4 e
+  §E.4). Estado aberto.
+
+**Registros da revisão de engenharia de 2026-11-12.** Medidos nessa data, no
+commit 6baddbdf. O dono de cada um é o
+[63](63-regras-e-plano-de-engenharia-da-0.4.md): a evidência medida está no
+§B.1 de lá, e os testes, os mutantes e o critério de pronto, na Parte E.
+Decisão do autor de 2026-11-12, para todos: corrigir na 0.4, na ordem do 63
+§E.1; o ENG-16 é a única troca consciente. Estado de todos: aberto.
+
+- **ENG-01 — Mutantes avulsos, sobre o checkout vivo.** Severidade média.
+  Causa: a mutação nunca virou ferramenta do repositório, com catálogo.
+- **ENG-02 — Cada dono monta o caminho do `.kinein`.** Severidade alta: é a
+  causa comum do INF-12, do INF-13 e do INF-15. Causa: falta de um catálogo
+  dos arquivos próprios, com leitura e escrita por um ponto só.
+- **ENG-03 — Checagem barata no fim do gate, e folha que grava no checkout.**
+  Severidade média. Causa: a ordem dos passos cresceu por acréscimo.
+- **ENG-04 — Três checagens do gate com custo quadrático.** Severidade baixa.
+  Causa: um regex por nome sobre o texto inteiro.
+- **ENG-05 — clang-tidy sem cache no gate rápido.** Severidade baixa.
+- **ENG-06 — Gate de docs que lê arquivo fora do git.** Severidade média: o
+  veredito local pode diferir do da CI.
+- **ENG-07 — A CI nunca executou.** Severidade alta: o perfil da CI nunca foi
+  provado no ambiente dela. Causa confirmada: o job não inicia, por bloqueio
+  da conta no GitHub, fora do repositório; e o ambiente da CI não se reproduz
+  localmente.
+- **ENG-10 — Roteamento do core por cadeia.** Severidade alta: o `lib.rs`
+  está no limite, e o próximo método não cabe. Causa: falta de um ponto de
+  extensão para método.
+- **ENG-11 — Reações a evento e à troca de workspace numa função central.**
+  Severidade média. Causa: falta de um ponto de extensão para reação.
+- **ENG-12 — Infraestrutura dentro de domínio, e borda que conhece domínio.**
+  Severidade média. Causa: as camadas do core nunca foram declaradas.
+- **ENG-13 — `workspace` com duas responsabilidades.** Severidade média.
+- **ENG-14 — `impl Core` espalhado.** Severidade alta: todo handler alcança
+  todo campo. Causa: o corte dos handlers foi físico, e não lógico
+  ([35](../arquitetura/35-crescer-sem-god-object.md) §2).
+- **ENG-15 — Estado de domínio sem dono no `Core`.** Severidade alta.
+- **ENG-16 — Tipo do fio como tipo interno.** Decisão do autor de
+  2026-11-12: troca consciente, com gatilho escrito no 63 §B.3. Não é
+  corrigido na 0.4.
+- **ENG-20 — `CoreClient` como classe única.** Severidade alta: todo método
+  e todo sinal editam o mesmo cabeçalho. Causa: a fachada única da
+  ARCHITECTURE §3.1, regra 5, revista nessa data.
+- **ENG-21 — Raízes de composição da UI no limite.** Severidade média.
+  Causa: o módulo por domínio do [27](../arquitetura/27-modulos-por-dominio.md)
+  §4 segue aberto.
+- **ENG-22 — QML de área que fala com a ponte.** Severidade média. Causa: a
+  regra da ARCHITECTURE §5 não tinha gate.
+- **ENG-23 — Cliente falso repetido nos harnesses.** Severidade média.
+- **ENG-24 — Fachada do `EditorController.qml`.** Severidade média. Decisão
+  do autor de 2026-11-12: dissolver a fachada; a decisão anterior, de mantê-la
+  congelada ([32](../arquitetura/32-editor-por-responsabilidade.md) §8.4),
+  deixa de valer.
+- **ENG-25 — Limite de linhas usado como alvo.** Severidade média. Causa: os
+  arquivos no limite são os que todo commit edita, por falta dos pontos de
+  extensão acima.
+- **ENG-30 — Espera fixa em teste.** Severidade média.
+- **ENG-31 — Ajudante de teste duplicado.** Severidade baixa.
+- **ENG-32 — A UI repete a regra do `settings.json` na partida.** Severidade
+  média. Decisão do autor de 2026-11-12: uma regra só, no core; a partida
+  pergunta a ele.
+- **ENG-33, ENG-34 e ENG-35 — As três linhas de base da QML** (funções sem
+  consumidor, derivações repetidas e literais fora do `Theme`). Severidade
+  baixa.
+- **ENG-36 — Supressões e listas de aceitos sem motivo na linha.** Severidade
+  baixa.
+- **ENG-37 — Identificadores em português.** Severidade média.
+- **ENG-38 — Checklist de riscos sem a verificação apontada.** Severidade
+  média. Causa não investigada: a auditoria é o próprio item.
+- **ENG-39 — Testes adiados no Windows.** Severidade média; pago na etapa 10.
 
 As demais áreas da tabela ainda exigem inventário por capacidade; esta lista
 inicial não certifica ausência de dívida nelas. Atualizar classificação,
@@ -1022,7 +1115,7 @@ nova entra lá quando for implementada.
 | Camada | Defeito que deve revelar | Técnica e evidência | Ponto de partida |
 | --- | --- | --- | --- |
 | Regressão de jornadas | Fluxo que funcionava e quebrou | Jornadas de C, C++, Rust, Python, DAP/QEMU e F5–F9 com fixtures reais, positivas, negativas e de recuperação, no gate completo estrito | Testes de despacho, harnesses QML, `verificar-exercitacao.sh` e `verificar-embarcado.sh` |
-| Mutação das guardas | Teste verde porque a guarda nunca foi exercida | Mutação de cada guarda crítica com baseline verde, que compile e reprove pela guarda; catálogo versionado em vez de scripts avulsos | Mutações manuais registradas por fatia no 40.7 |
+| Mutação das guardas | Teste verde porque a guarda nunca foi exercida | Mutação de cada guarda crítica com baseline verde, que compile e reprove pela guarda; catálogo versionado em vez de scripts avulsos | Mutações manuais registradas por fatia no 40.7; a ferramenta e o catálogo são o ENG-01 do [63](63-regras-e-plano-de-engenharia-da-0.4.md) |
 | Propriedades e fronteiras | Caso não imaginado em parsers, IPC, offsets Unicode, caminhos e CDB | Geração de entradas e fuzzing nas fronteiras, com regressão para cada falha encontrada | Casos fixos atuais; ferramenta nova só com registro de componente |
 | Ordem temporal e concorrência | Resposta antiga publicada, troca de workspace, cancelamento, processo morto | Sequências forçadas sem `sleep` como sincronização; repetição em lote para revelar intermitência; nenhum processo órfão ao final | Guardas de workspace e testes de cancelamento atuais |
 | Desempenho e atraso | Espera fixa, polling, trabalho repetido, custo quadrático, bloqueio do laço do core ou da UI | Baseline e p50/p95 de abrir, digitar, IPC, indexar, configurar e compilar; piora acima do limite medido reprova | Marcador de primeiro frame (G0.5) e medições por fatia |

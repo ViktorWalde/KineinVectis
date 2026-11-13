@@ -236,9 +236,14 @@ Regras:
    saída de ferramenta.
 4. **Roteador IPC QML só despacha evento.** Eventos de `CoreClient` ficam em
    `ui/qml/ipc/<Dominio>EventRouter.qml` e chamam o controller certo.
-5. **`CoreClient` é fachada única.** Não criar `CoreClient2` nem clientes QML
-   paralelos. A implementação C++ deve ser dividida internamente por domínio
-   quando crescer.
+5. **A ponte é uma só: um transporte e um objeto por domínio** (decisão do
+   autor de 2026-11-12; até essa data a regra era "`CoreClient` é fachada
+   única"). O `CoreClient` é o transporte e não nomeia método; pedido,
+   resposta, evento e sinal de um domínio moram no objeto dele. Não criar
+   segundo transporte nem cliente QML paralelo. A regra é a R-ARQ-09 do
+   [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md); a migração,
+   domínio a domínio, é o item ENG-20 de lá, e o domínio ainda não migrado
+   segue na classe `CoreClient`.
 6. **Regra de split da UI.** Arquivo QML visual acima de ~300 linhas,
    controller/store acima de ~400 linhas ou qualquer arquivo que combine
    renderização + estado + IPC deve ser quebrado antes de nova feature crescer
@@ -301,7 +306,10 @@ Onde esses cinco estao em 2026-09-02 (a fonte viva continua sendo a baseline):
 
 O `CoreClient` preserva a API QML única, com a implementação C++ fatiada em
 processo, requests, dispatch, estado e logs; o editor divide documentos, texto e
-completion em subcontrollers. Isso continua valendo e é o alvo.
+completion em subcontrollers. Esse foi o alvo até 2026-11-12. Desde então, por
+decisão do autor, o alvo é o da regra 5 acima (um objeto por domínio) e a
+fachada do `EditorController.qml` é dissolvida: Parte C do
+[63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md).
 
 ## 4. Organização interna do `kinein-core` (o que impede o monólito)
 
@@ -619,6 +627,18 @@ Regras que mantêm isso saudável:
     o `verificar-docs.sh` entende que uma seção "## Resultado 2026-07-06" data
     tudo dentro dela, e a catraca corta no `#[cfg(test)]`.
 
+12. **As fronteiras e os pontos de extensão são regra desde 2026-11-12**
+    (decisão do autor). O core tem três camadas — base, domínio e borda — sem
+    ciclo; um método IPC entra por uma linha na tabela de rotas do domínio; a
+    reação a um evento é registrada pelo domínio que reage; `impl Core` existe
+    só no `lib.rs`; e cada campo do `Core` é um serviço declarado ou o estado
+    de um domínio. As regras, com a verificação de cada uma, são as R-ARQ-01 a
+    R-ARQ-08 da Parte A do
+    [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md); as camadas e
+    o esboço estão na Parte C de lá. O código existente migra pelos itens
+    ENG-10 a ENG-15: até cada um fechar, as regras 1 e 2 acima descrevem o
+    que está no disco, e código novo já segue o alvo.
+
 O `kinein-protocol` segue a mesma ideia: **um módulo por domínio** (`rpc`,
 `workspace`, `fs`, `lsp`, `build`, …) re-exportado flat pelo `lib.rs`. Um tipo
 novo entra no módulo do seu domínio, não num arquivo gigante.
@@ -638,6 +658,13 @@ Ao adicionar um comando/feature, siga sempre esta ordem:
 
 Se o domínio ainda não existe, crie o par `handlers/<dominio>.rs` +
 `<dominio>.rs`. Não pendure método novo num domínio que não é o dele.
+
+**O alvo desta ordem mudou em 2026-11-12** (decisão do autor): o passo 2
+passa a ser uma linha na tabela de rotas do domínio, e os passos 7 a 9, o
+objeto do domínio na ponte e o `<Dominio>Domain.qml`. Os passos acima e
+abaixo descrevem o caminho de hoje; cada um é reescrito aqui pelo item que
+entrega o ponto de extensão (ENG-10 e ENG-20 do
+[63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md), Parte E).
 
 **A metade da UI** (escrita em 2026-10-01; até então esta seção parava no
 core, e a fiação da UI só se aprendia lendo código). Um resultado ou evento

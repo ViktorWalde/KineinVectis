@@ -58,8 +58,12 @@ separam duas jornadas bare metal e duas Linux embarcado. O 57 §1.1 conserva
 as decisões anteriores e aponta a fronteira atual; idiomas no 57 §3.
 Setup/Instalar Ferramentas é a primeira fatia de polimento; Quality Center
 conserva seu plano na trilha aberta.
+**Desde 2026-11-12 (decisão do autor),** a engenharia da 0.4 vem antes de
+retomar a etapa C: as regras, o inventário da dívida e a ordem estão no
+[`63-regras-e-plano-de-engenharia-da-0.4.md`](63-regras-e-plano-de-engenharia-da-0.4.md).
 
 ```text
+63-regras-e-plano-de-engenharia-da-0.4.md  Parte A: o regulamento de engenharia (CONTRATO); partes B–H: inventário, arquitetura-alvo, gate e ordem (PLANO)
 62-base-publica-0.4.md             Foundation: visão, inventário de dívida, fronteira e aceites da 0.4
 57-mapa-de-versoes-ate-a-1.0.md     as versões até a 1.0; §1.1: base pública 0.4 e trilha aberta
 58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia

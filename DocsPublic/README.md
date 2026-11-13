@@ -92,9 +92,9 @@ envelhecer, o que acontece?"*
 
 | Classe | Regra | O que acontece se envelhecer | Onde |
 | --- | --- | --- | --- |
-| **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `00-comece-aqui.md` (as regras), `arquitetura/ARCHITECTURE.md` §2/§4/§5, `decisoes-adr/` |
+| **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `00-comece-aqui.md` (as regras), `arquitetura/ARCHITECTURE.md` §2/§4/§5, a Parte A do `roadmaps/63` (o regulamento de engenharia, por decisão do autor de 2026-11-12), `decisoes-adr/` |
 | **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Pode induzir contribuições a reimplementar o que existe. | `roadmaps/40` (a fila), `leitura-tecnica.md`, `arquitetura/01` (o mapa, gerado do código), `arquitetura/02`, `arquitetura/03` |
-| **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `DocsPublic/especificacoes/`, `DocsPublic/roadmaps/` |
+| **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `DocsPublic/especificacoes/`, `DocsPublic/roadmaps/` (as partes B a H do `roadmaps/63` inclusive) |
 | **LOG** | Registro datado das decisões e provas **daquele dia**. Não atualizar fatos históricos; remover dados pessoais quando necessário. | Nada: envelhecer é a função dele. | `roadmaps/40.7` (o registro das entregas, separado do `40` em 2026-10-01), `decisoes-adr/` |
 | **PESQUISA** | Hipótese que **ninguém decidiu fazer**. Começa dizendo o que a falsearia. Sair de lá exige decisão datada. | Nada — desde que ninguém a leia como alvo, que é o risco inteiro. | `DocsPublic/pesquisa/` |
 

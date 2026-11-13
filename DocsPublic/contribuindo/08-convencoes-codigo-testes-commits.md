@@ -92,6 +92,10 @@ descreva o óbvio (`// incrementa i`); descreva a decisão.
 - Nomes de arquivo por domínio; ≤ 500 linhas fora de `#[cfg(test)]`.
   Quando um `impl Core` cresce, o split é por **método**
   (`handlers/datasource_destroy.rs` ao lado de `handlers/datasource.rs`).
+  Desde 2026-11-12 o alvo é outro: handler é função livre, ligada pela
+  tabela de rotas do domínio (R-ARQ-05 e R-ARQ-07 do
+  [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md)); o `impl Core`
+  existente migra pelo item ENG-14 de lá.
 - Testes de despacho em `src/tests/<dominio>.rs`, com cenário temporário
   em `std::env::temp_dir()/kinein-core-tests/<pid>-<nome>`, ferramenta
   falsa no `PATH` via `ToolDetector::with_search_path`, eventos pelo canal

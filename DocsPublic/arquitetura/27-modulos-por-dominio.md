@@ -20,6 +20,12 @@
 >            sair do debito, e e' fatia PROPRIA.
 > ```
 >
+> **Decisão do autor de 2026-11-12.** A Frente 1 entra na 0.4: o
+> `<X>Domain` passa a instanciar também o objeto do domínio na ponte, e é o
+> item ENG-21 do [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md),
+> depois do ENG-20. As camadas do core (base, domínio e borda) e os pontos de
+> extensão estão na Parte C de lá; as regras, na Parte A.
+>
 > Escrito em 2026-07-16 conforme os requisitos técnicos, antes de mover arquivo.
 >
 > Referências de arquitetura: VS Code, Zed e IntelliJ IDEA Community, em

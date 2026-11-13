@@ -180,6 +180,10 @@ seleção de formatter por extensão no core.
   do V1; toda mudança exige DocsPublic/arquitetura/03 + schemas sincronizados no mesmo commit.
 - **Revisitar:** congelar/versionar de verdade quando existir consumidor
   fora do repositório (CLI pública, plugins).
+- **Confirmado em 2026-11-12 (decisão do autor):** os tipos de dado do
+  protocolo seguem como tipos internos dos domínios, como troca consciente
+  ([63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md) §B.3, ENG-16).
+  O envelope do JSON-RPC fica só na borda do core (R-ARQ-04 de lá).
 
 ### D11. Sem telemetria; diagnóstico por log local
 

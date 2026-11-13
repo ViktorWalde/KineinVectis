@@ -178,6 +178,15 @@ fronteira, na `ARCHITECTURE.md`: quem pode conhecer quem. Custa uma tarde e é o
 que impede a próxima integração de atravessar duas camadas porque foi mais
 rápido.
 
+**Decisão do autor de 2026-11-12 sobre esta seção.** As três saídas viraram
+regra e plano no [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md):
+(a) o grafo sem ciclo e as camadas são as R-ARQ-01 a R-ARQ-03, conferidas
+pelo mapa de módulos, sem lista de ciclos conhecidos; (b) o detector vira a
+catraca de migração do ENG-14 e do ENG-15, com zero como critério de pronto
+dentro da 0.4, e não uma lista congelada; (c) as fronteiras estão escritas na
+Parte C de lá. A medição desta página é de 2026-09-10; a de 2026-11-12 está na
+Parte B do 63.
+
 ### 5.3 O que é decisão de produto, não de engenharia
 
 **Separar os tipos do fio dos tipos internos** (§3). Não é refatoração cosmética:
@@ -185,6 +194,13 @@ são 77 campos e 75 arquivos. **Só vale quando existir uma versão do protocolo
 manter** — e essa é a pergunta do autor, não minha. Até lá, o acoplamento é uma
 troca consciente, e o que falta é ela estar **escrita** como troca consciente, em
 vez de parecer descuido para quem chegar.
+
+**Respondida em 2026-11-12 (decisão do autor):** fica como troca consciente,
+escrita no [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md) §B.3
+(ENG-16) e no [19](19-compromissos-de-arquitetura.md) D10. O envelope do
+JSON-RPC não entra na troca: só a borda o nomeia (R-ARQ-04). Gatilho para
+rever: um cliente fora do repositório, sessão remota entre versões
+diferentes, ou a 1.0.
 
 ## 6. Como conferir tudo que está escrito aqui
 
