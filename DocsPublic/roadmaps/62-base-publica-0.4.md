@@ -954,11 +954,24 @@ auditorias e provas posteriores datadas nos donos:**
   revisão de arquitetura: o extrator erra nos dois sentidos. Medido nessa
   data, ele dá 184 arestas e 2 ciclos; só o código de produção, com os grupos
   `use crate::{a, b}` lidos, tem 196 arestas e 0 ciclos. Os dois ciclos
-  conhecidos só existem em comentário, 11 arestas vêm de comentário ou de
+  conhecidos só existem em comentário, 10 arestas vêm de comentário ou de
   teste, e 22 arestas reais em import agrupado não são vistas: um ciclo
   fechado por elas passaria. Severidade média. Decisão do autor de
   2026-11-12: corrigir o extrator e apagar a lista de ciclos conhecidos
-  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.2). Estado aberto.
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.2). Recontado em
+  2026-11-13, com o critério do 63 §E.2, nas árvores do 61934697 e do
+  3952b8ad: na da revisão, as falsas eram 10, não 11 (4 de comentário ou
+  literal, 4 de `tests.rs` e 2 de teste inline), o que fecha
+  184 − 10 + 22 = 196. No 3952b8ad, o extrator dá 200 arestas e os mesmos 2
+  ciclos, e o código de produção tem 213 arestas e 0 ciclos, com 9 falsas e
+  as 22 perdidas. As 17 novas são da Fase 0: 4 até o cfae82b9, para o
+  `kinein_dir` e dele para o `platform`, e 13 do INF-18, 11 delas para o
+  `fsops`.
+  O exemplo do achado, `kinein_dir → platform`, virou aresta real no INF-15;
+  as de `tests.rs` que sobram são `datasource → stderr_tail`,
+  `platformio → platform` e `platformio → tools`. Decisão do autor de
+  2026-11-13: o aceite passa a ser o da árvore do 3952b8ad (63 §0, D-18).
+  Estado aberto.
 - **INF-17 — Catálogo do Banco e contatos remotos gravados fora do projeto
   pelo link.** Dono e evidência: `datasource/store.rs` (`save`, `write`,
   `keep_legacy_copy`) e `remote/contacts.rs` (`store`). Achado em

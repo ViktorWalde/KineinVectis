@@ -32,6 +32,7 @@
 | D-15 | Na abertura do INF-18 (2026-11-13): o INF-20 (as marcas `.kinein-rigor` e `.kinein-preset` e o marcador do espelho fora do guarda, que o INF-13 e o INF-15 não cobriram) entra logo, antes do INF-18. Na abertura do INF-20, no mesmo dia: ele cobre também as remoções sob o `.kinein` (o registro da configuração e a pasta de build do reparo, pelo `kinein_dir::remove`), a query do file-api e as marcas que o configure que deu certo grava e apaga ([62 §3.4](62-base-publica-0.4.md)). |
 | D-16 | Na abertura do INF-18 (2026-11-13), depois da medida: o item cobre todo leitor de produção de arquivo do projeto ou de ferramenta que abre sem conferir o tipo, não só os do `CMakeLists.txt`, dos presets, do `CMakeCache.txt` e das marcas, num commit. O motivo do arquivo recusado vai no campo novo `projectProblem` do `workspace.open` e do `cmake.status`, com o caminho a partir do projeto, e a UI o mostra na faixa de saúde. O detector de frameworks, a CDB e a resposta do file-api leem o arquivo inteiro, como o sistema de build e o clangd; o índice, a busca, a substituição e a lista de dependências do compilador são trabalho da IDE e mantêm o teto próprio (§A.9). No fechamento, no mesmo dia: o sinal novo da ponte, `workspaceProjectProblem`, fica redeclarado nos três harnesses que provam a faixa e conta na ENG-23, que passa de 36 para 37 sinais (R-TEST-06) ([62 §3.4](62-base-publica-0.4.md)). |
 | D-17 | No gate rápido do INF-18 (2026-11-13): o INF-21 (o verificador de idioma lia a string crua de bytes do Rust e a string crua do C++ como código) entra logo, num commit próprio, antes de fechar o INF-18 ([62 §3.4](62-base-publica-0.4.md)). |
+| D-18 | Depois do INF-18 (2026-11-13): o aceite do INF-16 passa a ser medido na árvore do 3952b8ad, 213 arestas e 0 ciclos, com o critério do protótipo. O número da revisão (196, no 61934697) envelheceu com os itens da Fase 0, e as arestas falsas da revisão eram 10, não 11 ([62 §3.4](62-base-publica-0.4.md)). |
 
 ---
 
@@ -441,7 +442,7 @@ salvo o ENG-16: **paga na 0.4** (D-02).
 | INF-18 | Arquivos do projeto e das ferramentas lidos sem conferir o tipo | Medido no 61934697: um FIFO no lugar do `CMakeLists.txt` da raiz ou do `CMakeCache.txt` da `.kinein/build/` prende o `workspace.open` (62 §3.4) | alta |
 | INF-19 | LCOV da cobertura lido fora do `kinein_dir` | O `.kinein/coverage.lcov` é lido de volta com `fs::read_to_string`, sem limite; o de 1 MiB não serve a ele (62 §3.4) | baixa |
 | ENG-01 | Mutantes avulsos, sobre o checkout vivo | Sem catálogo; numa cópia, o build frio do teste do core leva 69,1 s e cada mutante 11,3 s | média |
-| INF-16 | O mapa de módulos mede errado nos dois sentidos | Mede 184 arestas e 2 ciclos; o código de produção tem 196 arestas e 0 ciclos. Os dois ciclos conhecidos só existem em comentário; 11 arestas vêm de comentário ou teste; 22 arestas reais em `use crate::{...}` não são vistas | média |
+| INF-16 | O mapa de módulos mede errado nos dois sentidos | Mede 184 arestas e 2 ciclos; o código de produção tem 196 arestas e 0 ciclos. Os dois ciclos conhecidos só existem em comentário; 10 arestas vêm de comentário ou teste; 22 arestas reais em `use crate::{...}` não são vistas. No 3952b8ad (2026-11-13): 200 arestas e os 2 ciclos, contra 213 e 0, com 9 falsas e as 22 perdidas (D-18) | média |
 | ENG-02 | Cada dono monta o caminho do `.kinein` | 33 arquivos de produção do core têm o literal; o `kinein_dir` não tem leitura nem catálogo | alta |
 | ENG-03 | Checagem barata no fim do gate; folha que grava no checkout | 19 passos estáticos somam 61,7 s e rodam por último; o autoteste dos identificadores cria uma pasta temporária dentro do checkout | média |
 | ENG-04 | Três checagens com um regex por nome sobre o texto todo | Fiação IPC 14,1 s, funções mortas 11,0 s, alcance 10,6 s; protótipo com índice: 11,07 s → 0,37 s, mesmo resultado | baixa |
@@ -614,7 +615,7 @@ reescrito pelo item que entrega cada ponto de extensão (ENG-10, ENG-20).
 
 | Regra | O que pega | Falso positivo medido | Custo | Como reprova |
 | --- | --- | --- | --- | --- |
-| Extrator do mapa (INF-16) | Ciclo e aresta reais, também em `use crate::{...}` | Hoje: 2 ciclos e 11 arestas falsos, 22 arestas perdidas. Protótipo: 0 falsos, 196 arestas | 0,4 s, como hoje | Qualquer ciclo; a lista de conhecidos deixa de existir |
+| Extrator do mapa (INF-16) | Ciclo e aresta reais, também em `use crate::{...}` | No 3952b8ad: 2 ciclos e 9 arestas falsos, 22 arestas perdidas. Protótipo: 0 falsos, 213 arestas (196 no 61934697) | 0,4 s, como hoje | Qualquer ciclo; a lista de conhecidos deixa de existir |
 | Camadas e vocabulário (ENG-12, ENG-02, ENG-10) | Base que conhece domínio; envelope fora da borda; `.kinein` fora do `kinein_dir`; método no `lib.rs` | Nenhum: cada ocorrência de hoje é a dívida do item (33, 6 e as rotas) | Menos de 1 s, no mesmo passo do mapa | Reprova direto depois do item; sem catraca |
 | `impl Core`, campos do `Core`, ponte, QML fora do `ipc` (ENG-14, ENG-15, ENG-20, ENG-22) | Volta do god object | Nenhum por construção: contagem exata | Menos de 1 s | Catraca de migração que só desce; em zero, vira regra direta e a catraca é apagada |
 | Estado do git antes e depois (ENG-03) | Folha que grava no checkout | Nenhum: o checkout ficou igual depois das 2 rodadas medidas do bloco | 11 ms por conferência | Reprova e mostra o arquivo |
@@ -829,7 +830,10 @@ D-16, R-DADOS-04).
   `use crate::{a, b::{c}}`. A lista de ciclos conhecidos é apagada. O
   [01](../arquitetura/01-mapa-de-modulos.md) é regenerado no mesmo commit.
 - Commits: um.
-- Aceite: 196 arestas e 0 ciclos nesta árvore; o resto do mapa sem diferença.
+- Aceite: 213 arestas e 0 ciclos na árvore do 3952b8ad (medido em
+  2026-11-13, D-18); se um commit antes do INF-16 mudar as dependências do
+  core, o executor mede de novo pelo critério do Fazer antes de começar; o
+  resto do mapa sem diferença.
 - Defeitos plantados: um ciclo fechado por import agrupado reprova; a menção
   num comentário e a dependência só no `tests.rs` não criam aresta.
 - Pronto: R-ARQ-01 reprova qualquer ciclo.
