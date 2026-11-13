@@ -1176,7 +1176,6 @@ crates/kinein-core/src/remote/discover.rs	vazio	3
 crates/kinein-core/src/remote/mirror.rs	caminho	7
 crates/kinein-core/src/remote/mirror.rs	itemizado	2
 crates/kinein-core/src/remote/mirror.rs	linha	2
-crates/kinein-core/src/remote/mirror.rs	marcador	4
 crates/kinein-core/src/remote/mirror.rs	remoto	3
 crates/kinein-core/src/remote/mod.rs	caminho	6
 crates/kinein-core/src/remote/mod.rs	cauda	3
