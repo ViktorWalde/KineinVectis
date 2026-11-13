@@ -7,7 +7,9 @@ import KineinVectis
 // - 16.4b (§7.1.4): salvar o CMakeLists.txt so' reconfigura (roda o CMake do
 //   projeto) com a confianca, e a confianca chega a' faixa de saude;
 // - C1-23 (0.210.0): o `cmake.status` chega a' faixa com a configuracao ativa
-//   e o menu dela, o nono argumento da ponte.
+//   e o menu dela, o nono argumento da ponte;
+// - INF-18 (0.223.0): o `projectProblem` da abertura e do status chega a'
+//   faixa, e o vazio limpa.
 Item {
     id: root
 
@@ -36,6 +38,7 @@ Item {
         signal projectEnvironmentsResolved(var environments)
         signal workspaceFolderCreated(string path)
         signal workspaceStateProblem(string problem)
+        signal workspaceProjectProblem(string problem)
         signal recentWorkspacesResolved(var workspaces)
         signal toolsListed(var tools)
         signal environmentTool(var tool)
@@ -65,6 +68,7 @@ Item {
         id: health
         property var trust: []
         property var cmakeStatus: []
+        property string projectProblem: ""
         function handleTrust(trusted) { health.trust = health.trust.concat([trusted]); }
         function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile,
                                    database, configuration) {
@@ -108,6 +112,12 @@ Item {
                 && status[7].directory === "build/debug" && status[7].choices.length === 1
                 && status[7].choices[0].buildDir === "build/debug";
         if (!configuration) console.error("FALHOU: o status não levou a configuração: " + JSON.stringify(status));
-        Qt.exit(ok && withoutTrust && trusted && environments && configuration ? 0 : 1);
+        bridge.workspaceProjectProblem("CMakeLists.txt não é um arquivo regular");
+        const refused = health.projectProblem === "CMakeLists.txt não é um arquivo regular";
+        bridge.workspaceProjectProblem("");
+        const cleared = health.projectProblem === "";
+        const problem = refused && cleared;
+        if (!problem) console.error("FALHOU: o projectProblem não chegou à faixa: " + refused + " " + cleared);
+        Qt.exit(ok && withoutTrust && trusted && environments && configuration && problem ? 0 : 1);
     }
 }

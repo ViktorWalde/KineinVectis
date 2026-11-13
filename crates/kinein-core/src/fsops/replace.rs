@@ -32,7 +32,7 @@ pub fn replace(
         if metadata.len() > MAX_READ_BYTES {
             return false;
         }
-        let Ok(raw) = fs::read(path) else {
+        let Ok(raw) = super::read_project_file(path) else {
             return false;
         };
         let Ok(content) = String::from_utf8(raw) else {
@@ -190,5 +190,18 @@ mod tests {
             fs::read_to_string(root.join("target/generated.txt")).unwrap(),
             "alpha\n"
         );
+    }
+
+    /// INF-18: o arquivo que não é arquivo regular não é substituído, sem
+    /// esperar num FIFO; a varredura já o deixa de fora, e a leitura também.
+    #[test]
+    fn a_file_that_is_not_a_regular_file_is_not_replaced() {
+        let base = root("replace-fifo");
+        let project = base.clone();
+        crate::fsops::reads_as_absent(&base.join("notas.txt"), b"fora\n", move || {
+            replace(&project, "fora", "dentro", false)
+                .map(|(paths, count)| (paths.len(), count))
+                .map_err(|error| error.to_string())
+        });
     }
 }

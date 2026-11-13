@@ -207,10 +207,11 @@ pub(super) fn prepare(
 /// build components it trusts, on every invocation; an extension can
 /// redefine `flash` (52 §14.44).
 fn refuse_extensions(root: &Path, build: &Path) -> Result<(), FlashError> {
-    let description: Value = std::fs::read(build.join("project_description.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .ok_or_else(|| invalid("project_description.json ilegível"))?;
+    let description: Value =
+        crate::fsops::read_project_file(&build.join("project_description.json"))
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+            .ok_or_else(|| invalid("project_description.json ilegível"))?;
     let components = description["build_component_info"]
         .as_object()
         .into_iter()
@@ -341,5 +342,27 @@ fn invalid(message: &str) -> FlashError {
         message: format!(
             "Não foi possível validar a gravação nativa: {message}. Nenhuma gravação foi iniciada."
         ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// INF-18: a descrição do projeto que não é arquivo regular é a ilegível:
+    /// a gravação nativa é recusada, sem esperar num FIFO.
+    #[test]
+    fn a_description_that_is_not_a_regular_file_is_unreadable() {
+        let root = std::env::temp_dir()
+            .join("kinein-idf-py-fifo")
+            .join(std::process::id().to_string());
+        let _ = std::fs::remove_dir_all(&root);
+        let (project, build) = (root.clone(), root.join("build"));
+        crate::fsops::reads_as_absent(
+            &build.join("project_description.json"),
+            br#"{"build_component_info": {}}"#,
+            move || {
+                super::refuse_extensions(&project, &build).map_err(|error| format!("{error:?}"))
+            },
+        );
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

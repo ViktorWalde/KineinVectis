@@ -230,6 +230,30 @@ contatos e o Grafana valem como ausentes, e o `python.json` como nenhum
 interpretador escolhido, sem cair no Python do sistema ao criar o ambiente,
 como já valiam quando ilegíveis.
 
+**A leitura dos arquivos do projeto** (protocolo `0.223.0`, INF-18): o que
+o core lê do projeto aberto e o que uma ferramenta gravou para ele (o
+`CMakeLists.txt`, os presets com os includes, o `CMakeCache.txt`, as marcas
+do configure fora do `.kinein`, o `.clangd`, os marcadores de build como o
+`Cargo.toml`, o `platformio.ini` e o `pyproject.toml`, a CDB, a resposta do
+file-api, os artefatos, os arquivos que o índice, a busca e o git leem) é
+lido como o sistema de build o lê: segue o link, que é da pessoa, abre sem
+bloquear, confere no descritor que é arquivo regular e lê sem limite
+próprio. O índice, a busca, a substituição e a verificação de uma edição
+mantêm o teto deles. O que não passa vale como ausente, e nenhum pedido
+espera por ele: um FIFO no lugar do arquivo não prende o core. A resposta
+de `workspace.open` (e a de `workspace.createProject`) ganha o campo
+opcional `projectProblem`, com o caminho a partir do projeto e o motivo do
+primeiro, na ordem, que existe e não passa: os marcadores de build da raiz,
+na ordem da precedência, os arquivos de presets que o CMake lê (o
+`CMakePresets.json`, o `CMakeUserPresets.json` e os includes, até o
+primeiro que não se lê), o `.clangd` e, na pasta da configuração ativa do
+CMake, o `compile_commands.json`, o `CMakeCache.txt` e, fora do `.kinein`,
+as marcas do configure. Por exemplo `"CMakeLists.txt não é um arquivo regular"`;
+ausente quando todos são lidos ou não existem. Nunca é persistido, e nada
+do `.kinein` toma o lugar do arquivo recusado. A UI o mostra na faixa de
+saúde do projeto, sem botão, depois do pedido de confiança e antes dos
+avisos do CMake. O `cmake.status` leva o mesmo campo.
+
 **Workspaces recentes globais** (protocolo `0.53.0`, fatia A1):
 somente `workspace.open` e `workspace.createProject` concluídos com sucesso
 registram a raiz canônica. O core persiste até 12 entradas em

@@ -172,6 +172,17 @@ const fn absent(kind: CdbAbsenceKind, reason: String) -> Choice {
     Choice::Absent(Some(CdbAbsence { kind, reason }))
 }
 
+/// Os arquivos da CDB que a abertura lê, para o `projectProblem` (`0.223.0`,
+/// INF-18): o `.clangd` da raiz e a CDB da pasta da configuração ativa.
+#[must_use]
+pub fn read_files(root: &Path) -> Vec<PathBuf> {
+    let mut files = vec![root.join(clangd::FILE)];
+    if let Ok(directory) = crate::cmake_configuration::active_dir(root) {
+        files.push(directory.join(FILE));
+    }
+    files
+}
+
 /// Procura a CDB e diz se ela envelheceu.
 ///
 /// Nunca falha: um workspace sem CDB é um estado legítimo (projeto Rust, ou

@@ -58,6 +58,7 @@ mod probe;
 mod project;
 mod project_contexts;
 mod project_creation;
+mod project_files;
 mod python;
 mod remote;
 mod remote_guard;

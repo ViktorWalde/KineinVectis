@@ -37,7 +37,9 @@ struct Arquivos {
 
 impl Arquivos {
     fn ler(root: &Path) -> Self {
-        let ler = |nome: &str| std::fs::read_to_string(root.join(nome)).unwrap_or_default();
+        // Como o sistema de build le, sem esperar num FIFO (INF-18).
+        let ler =
+            |nome: &str| crate::fsops::read_project_text(&root.join(nome)).unwrap_or_default();
         Self {
             pyproject: ler("pyproject.toml"),
             cargo: ler("Cargo.toml"),
@@ -319,5 +321,30 @@ mod tests {
             "{}",
             m.build_hint
         );
+    }
+
+    /// INF-18: cada arquivo que a detecção lê, quando não é arquivo regular,
+    /// vale como ausente, sem esperar num FIFO.
+    #[test]
+    fn a_file_that_is_not_a_regular_file_is_absent() {
+        let root = std::env::temp_dir()
+            .join("kinein-core-tests")
+            .join(format!("{}-python-native-fifo", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        for (file, valid) in [
+            (
+                "pyproject.toml",
+                "[build-system]\nrequires = [\"maturin>=1.7,<2.0\"]\n",
+            ),
+            (
+                "setup.py",
+                "from pybind11.setup_helpers import Pybind11Extension\n",
+            ),
+        ] {
+            let project = root.clone();
+            crate::fsops::reads_as_absent(&root.join(file), valid.as_bytes(), move || {
+                format!("{:?}", detect(&project))
+            });
+        }
     }
 }

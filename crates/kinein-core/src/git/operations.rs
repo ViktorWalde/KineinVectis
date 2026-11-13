@@ -157,7 +157,7 @@ pub fn file_diff(root: &Path, path: &Path) -> Result<GitFileDiffResult, GitError
     }
     if !is_tracked(root, path)? {
         // git diff nao cobre untracked: o arquivo inteiro e um hunk added.
-        let line_count = std::fs::read_to_string(path).map_or(0, |content| {
+        let line_count = crate::fsops::read_project_text(path).map_or(0, |content| {
             u32::try_from(content.lines().count()).unwrap_or(u32::MAX)
         });
         return Ok(GitFileDiffResult {
@@ -494,5 +494,37 @@ fn command_failure(args: &[&str], output: &Output) -> GitError {
             args.first().copied().unwrap_or("?"),
             stderr.trim().lines().last().unwrap_or("erro desconhecido")
         ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// INF-18: o arquivo fora do git que não é arquivo regular conta como o
+    /// ausente no diff, sem esperar num FIFO.
+    #[test]
+    fn an_untracked_file_that_is_not_a_regular_file_counts_as_absent() {
+        let root = std::env::temp_dir()
+            .join("kinein-git-diff-fifo")
+            .join(std::process::id().to_string());
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let init = std::process::Command::new("git")
+            .args(["init", "-q"])
+            .current_dir(&root)
+            .output()
+            .unwrap();
+        assert!(init.status.success(), "{init:?}");
+        let (project, path) = (root.clone(), root.join("novo.txt"));
+        crate::fsops::reads_as_absent(&root.join("novo.txt"), b"a\nb\nc\n", move || {
+            super::file_diff(&project, &path)
+                .map(|diff| {
+                    diff.hunks
+                        .iter()
+                        .map(|hunk| hunk.line_count)
+                        .collect::<Vec<_>>()
+                })
+                .map_err(|error| error.to_string())
+        });
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

@@ -9,7 +9,6 @@
 
 use std::{
     collections::HashMap,
-    fs,
     hash::{DefaultHasher, Hash, Hasher},
     path::{Component, Path, PathBuf},
 };
@@ -128,6 +127,9 @@ pub(super) struct Loaded {
     /// holds while none of them changes (C1-25); a file that appears or goes
     /// changes the list itself.
     pub opened: Vec<(PathBuf, Option<u64>)>,
+    /// A file exists and is not a regular file (INF-18): the `CMake` would
+    /// wait on it, a FIFO, and hold the core, so it is not asked.
+    pub irregular: bool,
 }
 
 /// Reads `CMakePresets.json`, then `CMakeUserPresets.json`, with includes.
@@ -138,11 +140,13 @@ pub(super) fn load(root: &Path) -> Loaded {
         read: HashMap::new(),
         stack: Vec::new(),
         opened: Vec::new(),
+        irregular: false,
     };
     let presets = loader.load();
     Loaded {
         presets,
         opened: loader.opened,
+        irregular: loader.irregular,
     }
 }
 
@@ -154,18 +158,19 @@ struct Loader<'a> {
     /// Files being read: one of them again is a cycle.
     stack: Vec<PathBuf>,
     opened: Vec<(PathBuf, Option<u64>)>,
+    irregular: bool,
 }
 
 impl Loader<'_> {
     fn load(&mut self) -> Result<Presets, String> {
         let project = self.root.join(PROJECT);
-        let project_index = if project.is_file() {
+        let project_index = if present(&project) {
             Some(self.read(&project, PROJECT)?)
         } else {
             None
         };
         let user = self.root.join(USER);
-        if user.is_file() {
+        if present(&user) {
             // `CMakeUserPresets.json` includes `CMakePresets.json` implicitly:
             // the project side reaching the user file is a cycle.
             if self.read.contains_key(&identity(&user)?) {
@@ -188,7 +193,7 @@ impl Loader<'_> {
     }
 
     fn read(&mut self, path: &Path, label: &str) -> Result<usize, String> {
-        if !path.is_file() {
+        if !present(path) {
             return Err(format!("arquivo de presets não encontrado: {label}"));
         }
         let identity = identity(path)?;
@@ -200,14 +205,22 @@ impl Loader<'_> {
         if let Some(&index) = self.read.get(&identity) {
             return Ok(index);
         }
-        let body = fs::read_to_string(path);
+        // As the `CMake` reads it, without waiting on a FIFO (INF-18).
+        let body = crate::fsops::read_project_text(path);
         let text = body.as_ref().ok().map(|body| {
             let mut hasher = DefaultHasher::new();
             body.hash(&mut hasher);
             hasher.finish()
         });
         self.opened.push((path.to_path_buf(), text));
-        let body = body.map_err(|error| format!("falha lendo {label}: {error}"))?;
+        let body = body.map_err(|error| {
+            if crate::fsops::is_not_regular(&error) {
+                self.irregular = true;
+                format!("{label} {error}")
+            } else {
+                format!("falha lendo {label}: {error}")
+            }
+        })?;
         let value: Value =
             serde_json::from_str(&body).map_err(|error| format!("{label} inválido: {error}"))?;
         let version = value
@@ -337,6 +350,12 @@ fn inherits_itself<'a>(presets: &'a Presets, entry: &'a Entry, path: &mut Vec<&'
         .any(|parent| inherits_itself(presets, parent, path));
     path.pop();
     cyclic
+}
+
+/// Whether `path` exists, a FIFO or a folder included, as the `CMake` sees a
+/// presets file: a broken link does not.
+fn present(path: &Path) -> bool {
+    path.try_exists().unwrap_or(true)
 }
 
 /// The same file reached by two paths is one file.

@@ -11,7 +11,7 @@
 //! serial, `cargo`) continuam com a mescla de 2026-09-04: la' o primeiro
 //! detectado e' mesmo o que roda.
 
-use std::{fs, path::Path};
+use std::path::Path;
 
 use kinein_protocol::{ToolchainCandidate, ToolchainRole};
 
@@ -34,7 +34,10 @@ impl ProjectCache {
     pub(super) fn read(root: &Path) -> Self {
         crate::cmake_configuration::active_dir(root)
             .ok()
-            .and_then(|directory| fs::read_to_string(directory.join("CMakeCache.txt")).ok())
+            .and_then(|directory| {
+                // Como o `CMake` le, sem esperar num FIFO (INF-18).
+                crate::fsops::read_project_text(&directory.join("CMakeCache.txt")).ok()
+            })
             .map(|body| Self::parse(&body))
             .unwrap_or_default()
     }

@@ -51,6 +51,8 @@ pub fn open_workspace(path: &Path) -> Result<WorkspaceInfo, WorkspaceError> {
         // arquivo FORA dele (16.4b, `workspace/trust.rs`).
         trusted: false,
         state_problem: None,
+        // A borda o mede, depois da abertura (INF-18).
+        project_problem: None,
     };
 
     // INF-13 (0.221.0): com o `.kinein` ou o arquivo ligado, o projeto abre

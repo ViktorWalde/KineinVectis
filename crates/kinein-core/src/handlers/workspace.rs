@@ -204,7 +204,7 @@ impl Core {
                 drop(store.clear(&draft.path));
                 continue;
             }
-            let on_disk = std::fs::read_to_string(path).ok();
+            let on_disk = crate::fsops::read_project_text(path).ok();
             if on_disk.as_deref() == Some(draft.content.as_str()) {
                 // Buffer já salvo em disco → rascunho obsoleto, limpa.
                 drop(store.clear(&draft.path));
@@ -432,6 +432,7 @@ impl Core {
         match workspace::open_workspace(Path::new(&params.path)) {
             Ok(mut opened) => {
                 opened.trusted = self.root_is_trusted(&opened.root);
+                opened.project_problem = project_problem(Path::new(&opened.root));
                 if let Err(error) = self.activate_workspace(&opened) {
                     return terminal_error_response(request_id, &error);
                 }
@@ -458,4 +459,18 @@ impl Core {
             Err(error) => workspace_path_error_response(request_id, &error, &params.path),
         }
     }
+}
+
+/// O `projectProblem` da abertura e do status do `CMake` (`0.223.0`, INF-18):
+/// o primeiro arquivo do projeto ou de ferramenta que eles leem e que existe
+/// sem poder ser lido como arquivo regular. A ordem e' a do contrato: os
+/// marcadores de build da raiz, os presets e os includes, o `.clangd` e a CDB, e o
+/// cache e as marcas da pasta da configuracao ativa.
+pub(super) fn project_problem(root: &Path) -> Option<String> {
+    workspace::marker_paths(root)
+        .into_iter()
+        .chain(crate::cmake_presets::read_files(root))
+        .chain(crate::cdb::read_files(root))
+        .chain(crate::cmake_configuration::read_files(root))
+        .find_map(|path| crate::fsops::project_file_problem(root, &path))
 }

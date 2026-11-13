@@ -56,6 +56,13 @@ pub fn begin_configure(
             }
         }
     }
+    // INF-18: um `CMakeCache.txt` que existe e nao e' arquivo regular (um FIFO
+    // seguraria o CMake lendo-o) e' recusado antes do CMake, com o motivo.
+    if let Some(problem) =
+        crate::fsops::project_file_problem(root, &directory.join("CMakeCache.txt"))
+    {
+        return Err(io::Error::other(problem));
+    }
     fs::create_dir_all(directory)?;
     let lock = crate::platform::configuration_lock(&directory.join(LOCK_FILE))?;
     let bytes = serde_json::to_vec(&Attempt {
@@ -124,7 +131,7 @@ pub const DEFINITIONS_LOST: &str = "o CMake recriou o cache sem as definições 
 /// cache applies them again. A cache without the entry is not this signal.
 #[must_use]
 pub fn lost_ide_definitions(directory: &Path) -> bool {
-    fs::read_to_string(directory.join("CMakeCache.txt")).is_ok_and(|cache| {
+    crate::fsops::read_project_text(&directory.join("CMakeCache.txt")).is_ok_and(|cache| {
         cache.lines().any(|line| {
             line.split_once('=').is_some_and(|(declaration, value)| {
                 declaration.split(':').next() == Some("CMAKE_EXPORT_COMPILE_COMMANDS")
@@ -185,5 +192,73 @@ mod tests {
         complete_configure(begin_configure(&root, &ide, None, "").unwrap()).unwrap();
         assert_eq!(selected_configuration(&root), Ok(None));
         assert_eq!(incomplete_in(&ide), None);
+    }
+
+    /// INF-18: o `CMakeCache.txt` que existe e não é arquivo regular para o
+    /// configure antes do `CMake`, sem esperar num FIFO e sem registro; o
+    /// cache grande e o ligado para fora são lidos como o `CMake` os lê.
+    #[test]
+    fn the_cache_that_is_not_a_regular_file_is_refused_before_cmake() {
+        let root = std::env::temp_dir()
+            .join("kinein-cmake-attempt")
+            .join(format!("{} cache", std::process::id()));
+        drop(std::fs::remove_dir_all(&root));
+        let debug = root.join("build/debug");
+        std::fs::create_dir_all(debug.join("CMakeCache.txt")).unwrap();
+        assert_eq!(
+            begin_configure(&root, &debug, Some("debug"), "gcc")
+                .unwrap_err()
+                .to_string(),
+            "build/debug/CMakeCache.txt não é um arquivo regular"
+        );
+        assert_eq!(incomplete_in(&debug), None);
+        assert_eq!(selected_configuration(&root), Ok(None));
+
+        std::fs::remove_dir(debug.join("CMakeCache.txt")).unwrap();
+        if crate::fsops::fifo(&debug.join("CMakeCache.txt")) {
+            let held = debug.join("CMakeCache.txt");
+            let (project, folder) = (root.clone(), debug.clone());
+            let refused = crate::fsops::unblocked(&held, move || {
+                begin_configure(&project, &folder, Some("debug"), "gcc")
+                    .map(drop)
+                    .map_err(|error| error.to_string())
+            });
+            assert_eq!(
+                refused,
+                Err("build/debug/CMakeCache.txt não é um arquivo regular".to_owned())
+            );
+            assert_eq!(incomplete_in(&debug), None);
+            std::fs::remove_file(&held).unwrap();
+        }
+
+        let large = "x".repeat(2 << 20);
+        let outside = root.join("fora");
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(outside.join("CMakeCache.txt"), &large).unwrap();
+        if cfg!(windows) {
+            std::fs::write(debug.join("CMakeCache.txt"), &large).unwrap();
+        } else {
+            crate::fsops::link(
+                &outside.join("CMakeCache.txt"),
+                &debug.join("CMakeCache.txt"),
+            );
+        }
+        drop(begin_configure(&root, &debug, Some("debug"), "gcc").unwrap());
+        assert!(incomplete_in(&debug).unwrap().contains("preset debug"));
+    }
+
+    /// INF-18: o cache que não é arquivo regular não diz que as definições
+    /// se perderam, sem esperar num FIFO.
+    #[test]
+    fn a_cache_that_is_not_a_regular_file_lost_nothing() {
+        let directory = std::env::temp_dir()
+            .join("kinein-cmake-attempt")
+            .join(format!("{} perdeu", std::process::id()));
+        drop(std::fs::remove_dir_all(&directory));
+        crate::fsops::reads_as_absent(
+            &directory.join("CMakeCache.txt"),
+            b"CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=\n",
+            move || super::lost_ide_definitions(&directory),
+        );
     }
 }

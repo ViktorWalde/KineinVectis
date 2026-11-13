@@ -200,7 +200,7 @@ transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-13: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
-INF-14, INF-15, INF-17, INF-20 e INF-21 corrigidos; INF-06, INF-16, INF-18,
+INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
 INF-19, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
@@ -1021,7 +1021,48 @@ auditorias e provas posteriores datadas nos donos:**
   nova R-DADOS-04 lê o arquivo do projeto e o da ferramenta como o sistema
   de build os lê, seguindo o link e sem limite próprio, e só evita que a
   leitura prenda e diz o motivo; o item entra logo depois do INF-17, antes
-  do ENG-01 (63 §0, D-14, e §E.2). Estado aberto.
+  do ENG-01 (63 §0, D-14, e §E.2). Na abertura, em 2026-11-13, medido com o
+  core do cfae82b9, pastas isoladas e um projeto configurado de verdade, cada
+  arquivo trocado por um FIFO, uma pasta, um link para fora e um arquivo
+  acima de 1 MiB, com dezoito pedidos de leitura um por vez: o FIFO no lugar
+  do `CMakeLists.txt`, do `platformio.ini`, do `.clangd`, do
+  `CMakeCache.txt` da pasta da configuração ativa e das marcas do preset, do
+  kit e da tentativa nela prende o `workspace.open`; no do `Cargo.toml`,
+  prende o `configAction.list` e o `python.status`; no do `pyproject.toml`,
+  o `python.status`; no do `CMakePresets.json`, o `configAction.list`; no de
+  um include dos presets ou do `CMakeUserPresets.json`, prende o
+  `cmake --list-presets` que a abertura roda, e o core espera por ele sem
+  prazo; no do `CMakeCache.txt`, o configure também prende no CMake. O leitor do `CMakeLists.txt` na abertura
+  é o detector de frameworks (`project/detect.rs`), confirmado pelo
+  backtrace. O link e o arquivo grande eram lidos como o sistema de build os
+  lê. A lista dos leitores de produção achou os mesmos `fs::read` no
+  `.clangd`, na CDB, na resposta do file-api, nos artefatos e no ELF, no
+  linker script, na lista de dependências da verificação, no índice, na
+  busca, na substituição, no git, nos rascunhos, no flash e no banco
+  `SQLite` do projeto. Decisões do autor de 2026-11-13, na abertura: o item
+  cobre todo leitor de produção de arquivo do projeto ou de ferramenta, num
+  commit; o motivo vai num campo novo, o `projectProblem`; o detector, a CDB
+  e o file-api perdem o teto próprio, e o trabalho da IDE (o índice, a busca,
+  a substituição e a verificação) mantém o dele (63 §0, D-16, e §A.9).
+  Corrigido em 2026-11-13 (protocolo `0.223.0`): a leitura comum
+  `fsops::open_project_file` abre sem bloquear, seguindo o link, confere no
+  descritor que é arquivo regular e lê sem limite próprio; todo leitor da
+  lista passa por ela. Os presets com um arquivo recusado são recusados com
+  o motivo sem rodar o `cmake --list-presets`; o `begin_configure` recusa o
+  `CMakeCache.txt` que não é arquivo regular antes do CMake. O
+  `projectProblem` do `workspace.open`, do `workspace.createProject` e do
+  `cmake.status` diz o primeiro arquivo recusado entre os marcadores de
+  build, os presets com os includes, o `.clangd` e, na pasta da
+  configuração ativa, a CDB, o cache e as marcas fora do `.kinein`, e a
+  faixa de saúde o mostra. O sinal novo da ponte fica redeclarado nos três
+  harnesses que provam a faixa e conta na ENG-23, que passa a 37 sinais
+  (decisão do autor de 2026-11-13, no fechamento). Medido de novo com o core corrigido, nenhum FIFO
+  prende um pedido, o `projectProblem` nomeia cada FIFO e cada pasta que a
+  abertura lê, e o `build.run` com o FIFO no cache termina recusado com o
+  motivo, sem CMake filho. Provas pelo IPC, com dezesseis donos em cada
+  forma, e no dono de cada leitor; cinquenta e três mutantes, quarenta e
+  sete reprovados e seis equivalentes, os leitores que só leem o que acabaram
+  de conferir como arquivo regular (40.7 §7.417). Estado corrigido.
 - **INF-19 — LCOV da cobertura lido fora do `kinein_dir`.** Dono e
   evidência: `coverage/mod.rs` (`run`), que lê o `.kinein/coverage.lcov` com
   `fs::read_to_string`, sem limite, depois que a ferramenta o grava. Achado em
@@ -1293,6 +1334,9 @@ Decisão do autor de 2026-11-12, para todos: corrigir na 0.4, na ordem do 63
 - **ENG-22 — QML de área que fala com a ponte.** Severidade média. Causa: a
   regra da ARCHITECTURE §5 não tinha gate.
 - **ENG-23 — Cliente falso repetido nos harnesses.** Severidade média.
+  Desde 2026-11-13, 37 sinais: o INF-18 acrescentou o `workspaceProjectProblem`,
+  redeclarado nos três harnesses que provam a faixa (decisão do autor;
+  [63](63-regras-e-plano-de-engenharia-da-0.4.md) §0, D-16).
 - **ENG-24 — Fachada do `EditorController.qml`.** Severidade média. Decisão
   do autor de 2026-11-12: dissolver a fachada; a decisão anterior, de mantê-la
   congelada ([32](../arquitetura/32-editor-por-responsabilidade.md) §8.4),

@@ -43,6 +43,7 @@ admits
 adopt
 advance
 advanced
+adversity
 advertise
 advice
 affected
@@ -661,6 +662,8 @@ declares
 decode
 decoded
 decoder
+decoy
+decoys
 deep
 default
 defaults
@@ -1389,6 +1392,7 @@ inverted
 invisible
 invocation
 invoke
+irregular
 island
 isolated
 isolates
@@ -2833,6 +2837,7 @@ unpinned
 unproven
 unquote
 unreachable
+unread
 unreadable
 unrecognised
 unregistered

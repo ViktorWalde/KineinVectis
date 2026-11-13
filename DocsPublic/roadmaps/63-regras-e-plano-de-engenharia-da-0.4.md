@@ -30,6 +30,7 @@
 | D-13 | Na abertura do INF-15 (2026-11-12): a leitura guardada vale também para o `remote-contacts.json`, o `datasources.schema1.json` e as marcas do configure dentro do `.kinein`; o `stateProblem` nomeia também a entrada que não é arquivo regular nem pasta; o INF-17 (escritas que o INF-13 não cobriu) entra logo depois do INF-15 ([62 §3.4](62-base-publica-0.4.md)). |
 | D-14 | Depois do INF-15 (2026-11-13): o `CMakeLists.txt` e os outros arquivos do sistema de build são a verdade do projeto; o `.kinein` só complementa, sem atrapalhar nem tomar o lugar deles. O INF-18 entra logo depois do INF-17, pela R-DADOS-04: o arquivo do projeto e o da ferramenta são lidos como o sistema de build os lê, e o guarda só evita que a leitura prenda e diz o motivo, sem o limite de 1 MiB. O limite de cada arquivo do `.kinein` é declarado no catálogo do ENG-02, que passa a ler o LCOV da cobertura (INF-19) ([62 §3.4](62-base-publica-0.4.md)). |
 | D-15 | Na abertura do INF-18 (2026-11-13): o INF-20 (as marcas `.kinein-rigor` e `.kinein-preset` e o marcador do espelho fora do guarda, que o INF-13 e o INF-15 não cobriram) entra logo, antes do INF-18. Na abertura do INF-20, no mesmo dia: ele cobre também as remoções sob o `.kinein` (o registro da configuração e a pasta de build do reparo, pelo `kinein_dir::remove`), a query do file-api e as marcas que o configure que deu certo grava e apaga ([62 §3.4](62-base-publica-0.4.md)). |
+| D-16 | Na abertura do INF-18 (2026-11-13), depois da medida: o item cobre todo leitor de produção de arquivo do projeto ou de ferramenta que abre sem conferir o tipo, não só os do `CMakeLists.txt`, dos presets, do `CMakeCache.txt` e das marcas, num commit. O motivo do arquivo recusado vai no campo novo `projectProblem` do `workspace.open` e do `cmake.status`, com o caminho a partir do projeto, e a UI o mostra na faixa de saúde. O detector de frameworks, a CDB e a resposta do file-api leem o arquivo inteiro, como o sistema de build e o clangd; o índice, a busca, a substituição e a lista de dependências do compilador são trabalho da IDE e mantêm o teto próprio (§A.9). No fechamento, no mesmo dia: o sinal novo da ponte, `workspaceProjectProblem`, fica redeclarado nos três harnesses que provam a faixa e conta na ENG-23, que passa de 36 para 37 sinais (R-TEST-06) ([62 §3.4](62-base-publica-0.4.md)). |
 | D-17 | No gate rápido do INF-18 (2026-11-13): o INF-21 (o verificador de idioma lia a string crua de bytes do Rust e a string crua do C++ como código) entra logo, num commit próprio, antes de fechar o INF-18 ([62 §3.4](62-base-publica-0.4.md)). |
 
 ---
@@ -419,6 +420,7 @@ antes do commit seguinte.**
 | --- | --- | --- |
 | R-DEP-01 | Licença AGPL-3.0-only dos crates próprios e Zlib do `foldhash`, no `deny.toml` | Autor; a do `foldhash`, em 2026-11-09 |
 | R-ARQ-04 | Os tipos de dado do protocolo seguem como tipos internos dos domínios (ENG-16) | Autor, 2026-11-12 (D-07) |
+| R-DADOS-04 | O teto próprio do trabalho da IDE sobre os arquivos do projeto: o índice não analisa o arquivo acima de 4 MiB e o lista com o motivo; a busca e a substituição pulam o arquivo acima de 1 MiB, o teto do `fs.read`, e a substituição para nos 16 MiB somados; a lista de dependências que o compilador grava na verificação de uma edição é recusada acima de 1 MiB, e a captura dos cabeçalhos dessa verificação, acima de 64 MiB | Autor, 2026-11-13 (D-16) |
 
 ---
 
@@ -457,7 +459,7 @@ salvo o ENG-16: **paga na 0.4** (D-02).
 | ENG-20 | `CoreClient` como classe única | 201 `Q_INVOKABLE`, cerca de 220 sinais, 287 ramos por nome de método em 22 arquivos; o cabeçalho foi editado em 40 dos últimos 300 commits e em 44% dos commits de IPC | alta |
 | ENG-21 | Raízes de composição no limite | `Main.qml` 397/400, `AppDomains.qml` 377/400; o módulo `<X>Domain` do [27](../arquitetura/27-modulos-por-dominio.md) §4 segue aberto | média |
 | ENG-22 | QML de área fala com a ponte | 8 arquivos fora de `ui/qml/ipc`, 99 acessos | média |
-| ENG-23 | Cliente falso repetido | 36 sinais da ponte redeclarados em 3 ou mais harnesses (`requestFailed` em 17) | média |
+| ENG-23 | Cliente falso repetido | 36 sinais da ponte redeclarados em 3 ou mais harnesses (`requestFailed` em 17); 37 desde o INF-18, com o `workspaceProjectProblem` (D-16) | média |
 | ENG-24 | Fachada do `EditorController.qml` | 791/400; 127 membros usados em 250 pontos de 22 arquivos (eram 123 em 15 em 2026-09-03) | média |
 | ENG-25 | Limite usado como alvo | 65 arquivos a 90% ou mais do limite, 21 a 99% ou mais; são tocados 7,2 vezes cada em 300 commits, contra 2,6 dos outros | média |
 | INF-06 | Prazo de relógio nos testes da verificação de edição | 5 testes reprovaram sob carga (62 §3.4) | média |
@@ -768,24 +770,38 @@ cobriram** (D-15).
 - Pronto: nenhuma string crua do Rust ou do C++ é lida como código.
 
 **INF-18 — a leitura dos arquivos do projeto e das ferramentas** (D-14,
-R-DADOS-04).
-- Fazer: antes, medir e listar os leitores, com o do `CMakeLists.txt` na
-  abertura, ainda por confirmar. Uma leitura comum no `fsops`, que segue o
-  link, abre sem bloquear, confere no descritor que é arquivo regular e lê
-  sem limite próprio; os leitores do `CMakeLists.txt` e dos presets, do
-  `CMakeCache.txt` (`ProjectCache::read`) e das marcas do configure fora do
-  `.kinein` passam por ela. Se a medida em projetos reais pedir um teto
-  contra abuso, ele volta ao autor (§G.4). No Windows não há FIFO: vale a
-  pasta, provada na etapa 10.
+D-16, R-DADOS-04).
+- Fazer: antes, medir e listar os leitores; o do `CMakeLists.txt` na
+  abertura é o detector de frameworks (`project/detect.rs`), confirmado
+  pelo backtrace. Uma leitura comum no `fsops`, que segue o link, abre sem
+  bloquear, confere no descritor que é arquivo regular e lê sem limite
+  próprio. Todo leitor de produção de arquivo do projeto ou de ferramenta
+  passa por ela (D-16): o `CMakeLists.txt` e os presets com os includes, o
+  `CMakeCache.txt` (`ProjectCache::read` e os outros), as marcas do
+  configure fora do `.kinein`, o `.clangd`, o `Cargo.toml`, o
+  `platformio.ini`, o `pyproject.toml`, o `setup.py`, a CDB, a resposta do
+  file-api, os artefatos e o ELF, o índice, a busca, a substituição, o git,
+  os rascunhos, o flash e o debug. Os presets com um arquivo recusado não
+  chamam o `cmake --list-presets`, que pararia no FIFO. O configure recusa
+  o `CMakeCache.txt` que não é arquivo regular antes do `CMake`. O
+  `projectProblem` do `workspace.open` e do `cmake.status` diz o primeiro
+  arquivo recusado entre os que a abertura e o status leem, e a faixa de
+  saúde o mostra. O detector, a CDB e o file-api perdem o teto próprio; o
+  do trabalho da IDE fica (§A.9). Se a medida em projetos reais pedir um
+  teto contra abuso, ele volta ao autor (§G.4). No Windows não há FIFO:
+  vale a pasta, provada na etapa 10.
 - Commits: um.
 - Aceite: o FIFO e a pasta no lugar de cada arquivo que a abertura e o
-  status do CMake leem, pelo IPC: o `workspace.open` responde no prazo, o
-  motivo aparece com o caminho, e nada do `.kinein` toma o lugar do
-  arquivo; o `CMakeLists.txt` ligado a um arquivo de fora e o
-  `CMakeCache.txt` acima de 1 MiB são lidos como antes. O teste abre o
-  outro lado do FIFO se a leitura prender.
+  status do CMake leem, pelo IPC: o `workspace.open` e o `cmake.status`
+  respondem no prazo, o `projectProblem` diz o caminho e o motivo, e nada
+  do `.kinein` toma o lugar do arquivo; o `CMakeLists.txt` ligado a um
+  arquivo de fora e o `CMakeCache.txt` acima de 1 MiB são lidos como antes;
+  cada leitor fora da abertura, no dono, com o FIFO e a pasta, sem prender.
+  O teste abre o outro lado do FIFO se a leitura prender.
 - Mutantes: abrir bloqueando; não conferir o tipo; aplicar o limite de
-  1 MiB; não seguir o link; um leitor lendo direto.
+  1 MiB; não seguir o link; cada leitor lendo direto; os presets chamando o
+  `CMake` com um arquivo recusado; o configure sem conferir o cache; o
+  `projectProblem` sem um dos arquivos.
 - Pronto: nenhuma leitura de arquivo do projeto ou de ferramenta que abra
   sem conferir o tipo.
 
@@ -1013,7 +1029,7 @@ Antes do UI-02, medir o primeiro quadro e a digitação com
   transporte falso, ou um falso por domínio conferido contra o cabeçalho. A
   escolha é decisão do autor (§G.4). Os harnesses param de redeclarar sinal.
 - Commits: o mecanismo; um por grupo de harnesses.
-- Pronto: 36 → 0 sinais redeclarados; R-TEST-06 reprova direto.
+- Pronto: 37 → 0 sinais redeclarados (D-16); R-TEST-06 reprova direto.
 
 **ENG-24 — a fachada do editor.**
 - Fazer: cada consumidor passa a falar com o dono

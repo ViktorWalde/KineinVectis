@@ -305,6 +305,16 @@ pub(super) fn open_child_nofollow(
     open_child(parent, name)
 }
 
+pub(super) fn open_without_waiting(path: &Path) -> io::Result<File> {
+    rustix::fs::open(
+        path,
+        OFlags::RDONLY | OFlags::NONBLOCK | OFlags::CLOEXEC,
+        Mode::empty(),
+    )
+    .map(File::from)
+    .map_err(Into::into)
+}
+
 fn open_child(parent: &File, name: &OsStr) -> Result<File, NoFollow> {
     openat(
         parent,

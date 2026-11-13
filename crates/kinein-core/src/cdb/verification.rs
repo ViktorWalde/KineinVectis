@@ -24,9 +24,11 @@ struct Stamp {
 }
 
 fn read(path: &Path, deadline: Instant) -> Option<(Stamp, Vec<u8>)> {
-    let mut file = std::fs::File::open(path).ok()?;
+    // Sem esperar num FIFO e so' arquivo regular (INF-18); o teto e' o da
+    // verificacao, trabalho da IDE (63 §A.9).
+    let mut file = crate::fsops::open_project_file(path).ok()?;
     let metadata = file.metadata().ok()?;
-    if !metadata.is_file() || metadata.len() > MAX_CONTEXT_BYTES as u64 {
+    if metadata.len() > MAX_CONTEXT_BYTES as u64 {
         return None;
     }
     let mut bytes = Vec::new();
@@ -57,16 +59,10 @@ fn read(path: &Path, deadline: Instant) -> Option<(Stamp, Vec<u8>)> {
     Some((stamp, bytes))
 }
 
+/// A CDB inteira, como o clangd a le: segue o link, nao espera num FIFO e
+/// nao tem teto proprio (D-16, INF-18).
 pub(crate) fn cdb_bytes(path: &Path) -> Result<Vec<u8>, String> {
-    let file = std::fs::File::open(path).map_err(|e| format!("CDB indisponível: {e}"))?;
-    let mut bytes = Vec::new();
-    file.take(16 * 1_048_576 + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|e| e.to_string())?;
-    if bytes.len() > 16 * 1_048_576 {
-        return Err("CDB excede 16 MiB.".into());
-    }
-    Ok(bytes)
+    crate::fsops::read_project_file(path).map_err(|e| format!("CDB indisponível: {e}"))
 }
 
 pub(crate) fn digest(bytes: &[u8]) -> String {
@@ -203,5 +199,32 @@ impl ContextGuard {
                 .directories
                 .iter()
                 .all(|(p, s)| super::directory::signature(p, deadline).as_ref() == Some(s))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::{Duration, Instant};
+
+    use super::{ContextGuard, cdb_bytes};
+
+    /// INF-18: a CDB e o cabeçalho que não são arquivo regular valem como
+    /// ausentes na verificação, sem esperar num FIFO; o cabeçalho é
+    /// recusado como o que não se captura.
+    #[test]
+    fn a_cdb_or_header_that_is_not_a_regular_file_is_absent() {
+        let root = std::env::temp_dir()
+            .join("kinein-cdb-verification-fifo")
+            .join(std::process::id().to_string());
+        let _ = std::fs::remove_dir_all(&root);
+        let cdb = root.join("compile_commands.json");
+        let read = cdb.clone();
+        crate::fsops::reads_as_absent(&cdb, b"[]", move || cdb_bytes(&read).ok());
+        let (project, header) = (root.clone(), root.join("valor.h"));
+        crate::fsops::reads_as_absent(&root.join("valor.h"), b"#define VALOR 1\n", move || {
+            let deadline = Instant::now() + Duration::from_secs(5);
+            ContextGuard::new(&project, cdb.clone(), b"[]", deadline).observe_input(&header)
+        });
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

@@ -285,7 +285,8 @@ pub fn targets_from_source(root: &Path) -> Vec<CmakeTargetInfo> {
     let mut encontrados = Vec::new();
     let mut vistos = std::collections::BTreeSet::new();
     for arquivo in cmake_lists_files(root) {
-        let Ok(texto) = fs::read_to_string(&arquivo) else {
+        // Como o `CMake` le, sem esperar num FIFO (INF-18).
+        let Ok(texto) = crate::fsops::read_project_text(&arquivo) else {
             continue;
         };
         for linha in texto.lines() {
@@ -782,5 +783,17 @@ mod tests {
             after.configuration,
             Err(super::Refusal::Several("CMakePresets.json", _))
         ));
+    }
+
+    /// INF-18: o `CMakeLists.txt` que não é arquivo regular não lista alvo,
+    /// sem esperar num FIFO.
+    #[test]
+    fn a_cmake_lists_that_is_not_a_regular_file_lists_no_target() {
+        let root = temp_root("alvos-fifo");
+        crate::fsops::reads_as_absent(
+            &root.join("CMakeLists.txt"),
+            b"add_executable(fora main.c)\n",
+            move || targets_from_source(&root).len(),
+        );
     }
 }

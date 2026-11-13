@@ -85,7 +85,7 @@ pub fn measure(program: &Path, prefix: Option<&str>, linker_script: Option<&Path
     let texto = String::from_utf8_lossy(&saida.stdout).into_owned();
     let sections = parse_sysv(&texto);
     let regioes = linker_script
-        .and_then(|caminho| std::fs::read_to_string(caminho).ok())
+        .and_then(|caminho| crate::fsops::read_project_text(caminho).ok())
         .map(|conteudo| regions_from(&parse_memory(&conteudo), &sections))
         .unwrap_or_default();
     SizeReport {
@@ -368,5 +368,34 @@ Total              216";
     #[test]
     fn sem_bloco_memory_nao_ha_regiao() {
         assert!(parse_memory("ENTRY(Reset_Handler)\nSECTIONS { }").is_empty());
+    }
+
+    /// INF-18: o linker script que não é arquivo regular não dá região, sem
+    /// esperar num FIFO.
+    #[test]
+    fn a_linker_script_that_is_not_a_regular_file_gives_no_region() {
+        // Escreve um executavel e o roda: sem este lock corre com os outros
+        // iguais e o `exec` volta ETXTBSY (ver lib.rs).
+        let _serial = crate::serialize_executables();
+        let dir = std::env::temp_dir()
+            .join("kinein-size-fifo")
+            .join(std::process::id().to_string());
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        crate::write_executable(
+            dir.join("falso-size"),
+            format!("#!/bin/sh\ncat <<'FIM'\n{SAIDA}\nFIM\n"),
+        );
+        let prefix = format!("{}/falso-", dir.display());
+        let (program, script) = (dir.join("fw.elf"), dir.join("app.ld"));
+        crate::fsops::reads_as_absent(
+            &dir.join("app.ld"),
+            b"MEMORY\n{\n  FLASH (rx) : ORIGIN = 0x0, LENGTH = 64K\n}\n",
+            move || {
+                super::measure(&program, Some(&prefix), Some(&script))
+                    .regions
+                    .len()
+            },
+        );
     }
 }

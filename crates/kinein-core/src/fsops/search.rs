@@ -66,7 +66,7 @@ fn search_file(
     if metadata.len() > MAX_READ_BYTES {
         return false;
     }
-    let Ok(bytes) = fs::read(file) else {
+    let Ok(bytes) = super::read_project_file(file) else {
         return false;
     };
     let Ok(content) = String::from_utf8(bytes) else {
@@ -370,5 +370,19 @@ sem nada
             .map(|entry| entry.path.as_str())
             .collect::<Vec<_>>();
         assert_eq!(paths, ["raiz.txt", "alfa/a.txt", "zeta/z.txt"]);
+    }
+
+    /// INF-18: o arquivo que não é arquivo regular não tem ocorrência, sem
+    /// esperar num FIFO; a varredura já o deixa de fora, e a leitura também.
+    #[test]
+    fn a_file_that_is_not_a_regular_file_has_no_match() {
+        let root = temp_root("search-fifo");
+        let file = root.join("notas.txt");
+        crate::fsops::reads_as_absent(&root.join("notas.txt"), b"fora\n", move || {
+            let mut matches = Vec::new();
+            let full = super::search_file(&root, &file, "fora", false, &mut matches);
+            let found = search(&root, "fora", false).unwrap().0.len();
+            (full, matches.len(), found)
+        });
     }
 }

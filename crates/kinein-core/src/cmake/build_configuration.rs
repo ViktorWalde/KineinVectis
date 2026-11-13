@@ -8,7 +8,6 @@
 //! builds `CMAKE_DEFAULT_BUILD_TYPE`, and `ctest` without `-C` runs nothing
 //! ("Not Run"). The IDE names the first one to both.
 
-use std::fs;
 use std::path::Path;
 
 /// The configuration of a folder a multi-config generator configured.
@@ -26,7 +25,8 @@ pub struct BuildConfiguration {
 /// (measured with `Ninja`), or with an empty list.
 #[must_use]
 pub fn of(directory: &Path) -> Option<BuildConfiguration> {
-    let cache = fs::read_to_string(directory.join("CMakeCache.txt")).ok()?;
+    // Como o `CMake` le, sem esperar num FIFO (INF-18).
+    let cache = crate::fsops::read_project_text(&directory.join("CMakeCache.txt")).ok()?;
     let value = |key: &str| {
         cache.lines().find_map(|line| {
             let (declaration, value) = line.split_once('=')?;
@@ -168,5 +168,17 @@ mod tests {
             assert_eq!(of(&folder(name, Some(cache))), expected, "{name}");
         }
         assert_eq!(of(&folder("no-cache", None)), None);
+    }
+
+    /// INF-18: o cache que não é arquivo regular vale como ausente, sem
+    /// esperar num FIFO.
+    #[test]
+    fn a_cache_that_is_not_a_regular_file_is_absent() {
+        let directory = folder("fifo", None);
+        crate::fsops::reads_as_absent(
+            &directory.join("CMakeCache.txt"),
+            b"CMAKE_GENERATOR:INTERNAL=Ninja Multi-Config\nCMAKE_CONFIGURATION_TYPES:STRING=Release;Debug\n",
+            move || of(&directory),
+        );
     }
 }

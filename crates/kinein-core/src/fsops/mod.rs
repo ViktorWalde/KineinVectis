@@ -18,13 +18,18 @@
 //! - [`replace`]: substituicao literal multi-arquivo, transacional;
 //! - [`transaction`]: escrita com snapshot e rollback inverso;
 //! - [`transfer_batch`]: preflight e resultados por item para cópia/movimento/importação em lote;
-//! - [`find`]: busca de arquivos por nome via `fd`.
+//! - [`find`]: busca de arquivos por nome via `fd`;
+//! - [`project_file`]: o arquivo do projeto ou de uma ferramenta lido como o
+//!   sistema de build o le, seguindo o link e sem esperar (INF-18).
 
+#[cfg(test)]
+mod adversity;
 mod confine;
 mod copy_ops;
 mod error;
 mod find;
 mod ops;
+mod project_file;
 mod publish;
 mod remove_ops;
 mod replace;
@@ -33,6 +38,8 @@ pub mod transaction;
 mod transfer_batch;
 mod walk;
 
+#[cfg(test)]
+pub use adversity::{fifo, link, reads_as_absent, unblocked};
 pub use confine::{confine_directory, confine_file};
 pub use copy_ops::{copy, copy_with_progress};
 pub use error::FsError;
@@ -40,6 +47,9 @@ pub use find::find_files;
 pub use ops::{
     create_directory, create_file, list_dir, open_regular_file, read_external_file, read_file,
     rename, write_file, write_file_if_unchanged,
+};
+pub use project_file::{
+    is_not_regular, open_project_file, project_file_problem, read_project_file, read_project_text,
 };
 pub use remove_ops::{delete, move_to_trash};
 pub use replace::replace;

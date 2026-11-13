@@ -423,6 +423,11 @@ signals:
     // INF-13 (0.221.0): por que o core nao grava no `.kinein` do projeto
     // aberto (um link simbolico); vazio quando grava como sempre.
     void workspaceStateProblem(const QString& problem);
+    // INF-18 (0.223.0): o primeiro arquivo do projeto ou de ferramenta que
+    // existe e nao se le como arquivo regular, com o motivo; o core o toma
+    // como ausente. Vazio quando todos se leem. Vem do workspace.open e do
+    // cmake.status.
+    void workspaceProjectProblem(const QString& problem);
     void sessionRestored(const QStringList& files, const QString& activeFile);
     // M-S1 (DocsPublic/seguranca/23): rascunhos não salvos recuperados de um crash.
     void draftsRecovered(const QVariantList& drafts);

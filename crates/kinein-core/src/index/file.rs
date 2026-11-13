@@ -39,7 +39,8 @@ pub(super) fn index_file(
             symbols: Vec::new(),
         });
     }
-    let Ok(buffer) = std::fs::read_to_string(absolute_path) else {
+    // Sem esperar num FIFO; o teto e' o do indice (INF-18, 63 §A.9).
+    let Ok(buffer) = crate::fsops::read_project_text(absolute_path) else {
         skipped.push(format!("{path} (não é UTF-8 legível)"));
         return Some(IndexedFile {
             path,
@@ -122,5 +123,57 @@ fn specificity(kind: &str) -> u8 {
         "method" | "constructor" => 2,
         "function" => 1,
         _ => 0,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::{Path, PathBuf};
+
+    use super::index_file;
+    use crate::lang::extract::SymbolExtractor;
+
+    /// As linhas e os símbolos do arquivo, quando entra, e quantos ficaram
+    /// de fora com o motivo.
+    fn indexed(root: &Path, path: &Path) -> (Option<(u64, usize)>, usize) {
+        let mut skipped = Vec::new();
+        let file = index_file(
+            root,
+            path,
+            &mut SymbolExtractor::default(),
+            &mut skipped,
+            None,
+        );
+        (
+            file.map(|file| (file.lines, file.symbols.len())),
+            skipped.len(),
+        )
+    }
+
+    /// INF-18: a fonte que não é arquivo regular entra sem ser lida e com o
+    /// motivo, sem esperar num FIFO; a varredura do índice já a deixa de fora.
+    #[test]
+    fn a_source_that_is_not_a_regular_file_is_counted_without_reading() {
+        let root: PathBuf = std::env::temp_dir()
+            .join("kinein-index-file-fifo")
+            .join(std::process::id().to_string());
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let path = root.join("main.c");
+        std::fs::write(&path, "int main(void) { return 0; }\n").unwrap();
+        assert_eq!(indexed(&root, &path), (Some((1, 1)), 0));
+        std::fs::remove_file(&path).unwrap();
+        let unread = (Some((0, 0)), 1);
+        std::fs::create_dir(&path).unwrap();
+        assert_eq!(indexed(&root, &path), unread);
+        std::fs::remove_dir(&path).unwrap();
+        if crate::fsops::fifo(&path) {
+            let (project, held) = (root.clone(), path.clone());
+            assert_eq!(
+                crate::fsops::unblocked(&path, move || indexed(&project, &held)),
+                unread
+            );
+        }
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

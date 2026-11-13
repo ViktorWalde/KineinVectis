@@ -258,7 +258,7 @@ fn container_candidate(info: &ContainerInfo) -> Option<DataSourceCandidate> {
 
 fn is_sqlite_file(path: &Path) -> bool {
     let mut header = [0_u8; 16];
-    fs::File::open(path)
+    crate::fsops::open_project_file(path)
         .and_then(|mut f| f.read_exact(&mut header))
         .is_ok()
         && header == SQLITE_HEADER
@@ -400,5 +400,19 @@ mod tests {
         assert_eq!(found[0].profile.engine, DataSourceEngine::Sqlite);
         assert_eq!(found[0].profile.name, "app");
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// INF-18: o arquivo do projeto que não é arquivo regular não é banco
+    /// `SQLite`, sem esperar num FIFO.
+    #[test]
+    fn a_file_that_is_not_a_regular_file_is_no_sqlite_database() {
+        let dir = std::env::temp_dir()
+            .join("kinein-discover-fifo")
+            .join(std::process::id().to_string());
+        let _ = fs::remove_dir_all(&dir);
+        let mut valid = SQLITE_HEADER.to_vec();
+        valid.extend([0_u8; 84]);
+        let path = dir.join("app.db");
+        crate::fsops::reads_as_absent(&dir.join("app.db"), &valid, move || is_sqlite_file(&path));
     }
 }

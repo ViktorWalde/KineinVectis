@@ -129,6 +129,8 @@ void CoreClient::emitCmakeStatus(const QJsonObject& result)
                              result.value(QStringLiteral("preset")).toString(), choices,
                              result.value(QStringLiteral("presetChoicesFile")).toString(),
                              compileDatabase, configuration);
+    // INF-18 (0.223.0): o status ve o arquivo que mudou depois da abertura.
+    emit workspaceProjectProblem(result.value(QStringLiteral("projectProblem")).toString());
 }
 
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)

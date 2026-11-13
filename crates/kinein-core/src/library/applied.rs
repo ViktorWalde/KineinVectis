@@ -50,7 +50,8 @@ pub fn applied_ids(root: &Path) -> BTreeSet<String> {
 fn linked_targets(root: &Path) -> BTreeSet<String> {
     let mut encontrados = BTreeSet::new();
     for arquivo in crate::cmake::cmake_lists_files(root) {
-        let Ok(texto) = std::fs::read_to_string(&arquivo) else {
+        // Como o `CMake` le, sem esperar num FIFO (INF-18).
+        let Ok(texto) = crate::fsops::read_project_text(&arquivo) else {
             continue;
         };
         // Comentario fora ANTES de qualquer coisa: uma linha comentada nao
@@ -140,5 +141,18 @@ mod tests {
         )
         .unwrap();
         assert!(applied_ids(&root).contains("nlohmann_json"));
+    }
+
+    /// INF-18: o `CMakeLists.txt` que não é arquivo regular não liga nada,
+    /// sem esperar num FIFO; a lista dos arquivos já o deixa de fora.
+    #[test]
+    fn a_cmake_lists_that_is_not_a_regular_file_links_nothing() {
+        let root = temp_root("fifo");
+        let project = root.clone();
+        crate::fsops::reads_as_absent(
+            &root.join("CMakeLists.txt"),
+            b"target_link_libraries(app PRIVATE fmt::fmt)\n",
+            move || applied_ids(&project),
+        );
     }
 }

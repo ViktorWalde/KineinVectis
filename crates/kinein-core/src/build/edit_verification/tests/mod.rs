@@ -634,3 +634,46 @@ fn edit_verification_accepts_the_effective_host_hardening_flags() {
     );
     assert_eq!(result.evidence.before_errors, Some(0));
 }
+
+/// INF-18: a lista de dependências que o compilador deixa e que não é
+/// arquivo regular, uma pasta ou um link para um FIFO, é a que ele não
+/// forneceu, sem esperar no FIFO. O compilador é o de verdade, embrulhado.
+#[test]
+fn edit_verification_a_dependency_list_that_is_not_a_regular_file_is_missing() {
+    for kind in ["pasta", "fifo"] {
+        let fixture = Fixture::new("c", "int value;", &[]);
+        let held = fixture.root.join("held");
+        let replace = if kind == "pasta" {
+            "mkdir \"$dep\"".to_owned()
+        } else if crate::fsops::fifo(&held) {
+            format!("ln -s '{}' \"$dep\"", held.display())
+        } else {
+            continue;
+        };
+        let wrapper = crate::write_executable(
+            fixture.root.join("clang"),
+            format!(
+                "#!/bin/sh\ndep=\ntake=\nfor arg in \"$@\"; do\n  if [ -n \"$take\" ]; then dep=$arg; take=; fi\n  [ \"$arg\" = \"-MF\" ] && take=1\ndone\nclang \"$@\" || exit $?\nrm -f \"$dep\"\n{replace}\n"
+            ),
+        );
+        let cdb = fixture.root.join("compile_commands.json");
+        let mut entries: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&cdb).unwrap()).unwrap();
+        entries[0]["arguments"][0] = serde_json::json!(wrapper);
+        std::fs::write(cdb, entries.to_string()).unwrap();
+        let evidence = crate::fsops::unblocked(&held, move || {
+            fixture.verify("int value;", "int value=1;").evidence
+        });
+        assert_eq!(
+            evidence.status,
+            EditVerificationStatus::NotVerified,
+            "{kind}: {evidence:?}"
+        );
+        assert!(
+            evidence
+                .reason
+                .contains("não forneceu a lista de dependências"),
+            "{kind}: {evidence:?}"
+        );
+    }
+}

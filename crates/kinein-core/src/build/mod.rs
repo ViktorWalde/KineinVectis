@@ -46,7 +46,7 @@ use crate::process::{self, ProcessError};
 pub fn ruff_profile_args(root: &Path, profile: RigorProfile) -> Vec<&'static str> {
     let projeto_declara = root.join("ruff.toml").is_file()
         || root.join(".ruff.toml").is_file()
-        || std::fs::read_to_string(root.join("pyproject.toml"))
+        || crate::fsops::read_project_text(&root.join("pyproject.toml"))
             .is_ok_and(|t| t.contains("[tool.ruff"));
     if projeto_declara {
         return Vec::new();
@@ -606,5 +606,22 @@ mod tests {
         let relaxed = super::clippy_profile_args(RigorProfile::Relaxed);
         assert!(relaxed.contains(&"clippy::correctness"));
         assert_eq!(super::rust_build_rustflags(RigorProfile::Relaxed), None);
+    }
+
+    /// INF-18: o `pyproject.toml` que não é arquivo regular não declara as
+    /// regras do ruff, sem esperar num FIFO.
+    #[test]
+    fn a_pyproject_that_is_not_a_regular_file_declares_no_ruff_rules() {
+        use super::ruff_profile_args;
+        use kinein_protocol::RigorProfile;
+
+        let dir = std::env::temp_dir()
+            .join("kinein-ruff-fifo")
+            .join(std::process::id().to_string());
+        let _ = std::fs::remove_dir_all(&dir);
+        let project = dir.clone();
+        crate::fsops::reads_as_absent(&dir.join("pyproject.toml"), b"[tool.ruff]\n", move || {
+            ruff_profile_args(&project, RigorProfile::Strict)
+        });
     }
 }

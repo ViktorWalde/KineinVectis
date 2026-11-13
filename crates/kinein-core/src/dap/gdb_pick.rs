@@ -122,7 +122,7 @@ pub const fn host_machine() -> ElfMachine {
 /// binario de other formato).
 #[must_use]
 pub fn elf_machine(path: &Path) -> Option<ElfMachine> {
-    let bytes = std::fs::read(path).ok()?;
+    let bytes = crate::fsops::read_project_file(path).ok()?;
     parse_elf_machine(&bytes)
 }
 
@@ -452,5 +452,17 @@ mod tests {
             ElfMachine::Arm
         ));
         assert_eq!(ElfMachine::Other(0x1234).gdb_architecture(), None);
+    }
+
+    /// INF-18: o programa que não é arquivo regular não é ELF, sem esperar
+    /// num FIFO.
+    #[test]
+    fn a_program_that_is_not_a_regular_file_is_no_elf() {
+        let dir = std::env::temp_dir()
+            .join("kinein-gdb-pick")
+            .join(format!("{}-fifo", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let program = dir.join("app");
+        crate::fsops::reads_as_absent(&dir.join("app"), &elf(0x28), move || elf_machine(&program));
     }
 }

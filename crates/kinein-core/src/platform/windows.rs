@@ -15,8 +15,9 @@ use std::{
 
 mod files;
 pub(super) use files::{
-    child_names, configuration_lock, open_child_nofollow, open_nofollow, owner_only_dir_builder,
-    owner_only_file, owner_writable, rename_noreplace, restrict_dir_to_owner,
+    child_names, configuration_lock, open_child_nofollow, open_nofollow, open_without_waiting,
+    owner_only_dir_builder, owner_only_file, owner_writable, rename_noreplace,
+    restrict_dir_to_owner,
 };
 
 pub(super) fn self_executable() -> io::Result<PathBuf> {

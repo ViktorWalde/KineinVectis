@@ -34,9 +34,6 @@ const IGNORADAS: &[&str] = &[
     "cmake-build-release",
 ];
 
-/// Tamanho maximo de arquivo que vale a pena ler para decidir (256 KiB).
-const LEITURA_MAXIMA: u64 = 256 * 1024;
-
 /// Os frameworks reconhecidos sob `root`, o mais especifico primeiro, um por
 /// framework (o mais raso vence).
 #[must_use]
@@ -116,11 +113,10 @@ fn relativo(root: &Path, caminho: &Path) -> String {
     )
 }
 
+/// O arquivo inteiro, como o sistema de build o le: segue o link e nao espera
+/// num FIFO, que vale como ausente (D-16, INF-18).
 fn ler(caminho: &Path) -> Option<String> {
-    let meta = std::fs::metadata(caminho).ok()?;
-    (meta.len() <= LEITURA_MAXIMA)
-        .then(|| std::fs::read_to_string(caminho).ok())
-        .flatten()
+    crate::fsops::read_project_text(caminho).ok()
 }
 
 /// O que UM arquivo prova. Pode provar mais de um framework (raro) — por isso

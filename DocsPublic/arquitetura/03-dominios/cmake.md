@@ -174,6 +174,18 @@ configurationSource?   "configuration" | "buildDir" | arquivo de presets do padr
 configurationRefused?  por que nao ha configuracao ativa
 ```
 
+Desde o `0.223.0` (INF-18), `projectProblem?` diz o primeiro arquivo do
+projeto ou da pasta da configuração ativa que o status lê e que existe sem
+ser arquivo regular, com o caminho a partir do projeto, na mesma ordem e com
+o mesmo texto do `workspace.open` ([workspace](workspace.md)). O
+`CMakeCache.txt` recusado vale como ausente (`configured: false`), e o
+configure da pasta recusa antes do `CMake`, que pararia num FIFO, com o
+mesmo motivo. Um arquivo de presets que existe e não é arquivo regular (o
+`CMakePresets.json`, o `CMakeUserPresets.json` ou um include) recusa os
+presets com o motivo, como um inválido, sem rodar o `cmake --list-presets`;
+até o `0.222.0` ele valia como ausente, e o `CMake` parava no FIFO,
+prendendo o core.
+
 `presetChoices` e `presetChoicesFile` passam a aparecer também quando o
 registro da configuração ativa é recusado (o preset registrado saiu dos
 presets, o registro está inválido): são as escolhas do automático, os vários

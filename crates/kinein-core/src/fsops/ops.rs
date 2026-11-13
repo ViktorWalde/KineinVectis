@@ -217,7 +217,7 @@ pub fn write_file_if_unchanged(
     expected_content: &str,
 ) -> Result<(PathBuf, u64), FsError> {
     let file = confine_file(root, path)?;
-    let current = fs::read(&file).map_err(|source| FsError::Io {
+    let current = super::read_project_file(&file).map_err(|source| FsError::Io {
         path: file.display().to_string(),
         source,
     })?;
@@ -621,5 +621,16 @@ mod tests {
         let error = delete(&root, &root).unwrap_err();
 
         assert!(matches!(error, FsError::WorkspaceRoot { .. }));
+    }
+
+    /// INF-18: o arquivo que não é arquivo regular não é gravado pela
+    /// conferência do disco, sem esperar num FIFO.
+    #[test]
+    fn a_file_that_is_not_a_regular_file_is_not_written_if_unchanged() {
+        let root = temp_root("unchanged-fifo");
+        let (project, file) = (root.clone(), root.join("notas.txt"));
+        crate::fsops::reads_as_absent(&file.clone(), b"fora", move || {
+            write_file_if_unchanged(&project, &file, "dentro", "fora").is_ok()
+        });
     }
 }

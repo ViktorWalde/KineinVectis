@@ -104,7 +104,7 @@ impl CompileContext {
         let mut ctx = Self::default();
         let cdb = crate::cdb::status(root);
         if let Some(path) = cdb.file(root)
-            && let Ok(text) = std::fs::read_to_string(&path)
+            && let Ok(text) = crate::fsops::read_project_text(&path)
         {
             ctx = Self::from_cdb_text(root, &path, &text);
         }

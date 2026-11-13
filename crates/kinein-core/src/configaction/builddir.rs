@@ -8,10 +8,7 @@
 //! dela e' deste projeto e ela nao e' a raiz nem a contem (decisao do autor
 //! de 2026-11-09).
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use super::error::ConfigActionError;
 use super::plan::ActionPlan;
@@ -39,7 +36,7 @@ fn active_dir(root: &Path) -> Result<PathBuf, ConfigActionError> {
 pub(super) fn inspect_cache(root: &Path) -> Result<ActionPlan, ConfigActionError> {
     let directory = active_dir(root)?;
     let cache = directory.join("CMakeCache.txt");
-    let Ok(body) = fs::read_to_string(&cache) else {
+    let Ok(body) = crate::fsops::read_project_text(&cache) else {
         return Err(ConfigActionError::NotApplicable {
             reason: format!(
                 "o CMake ainda não foi configurado em {} (CMakeCache.txt não existe)",
@@ -163,7 +160,7 @@ fn removable(root: &Path) -> Result<PathBuf, ConfigActionError> {
 
 /// O `CMAKE_HOME_DIRECTORY` do cache: a pasta de fontes que o configurou.
 fn cache_home(directory: &Path) -> Option<PathBuf> {
-    let body = fs::read_to_string(directory.join("CMakeCache.txt")).ok()?;
+    let body = crate::fsops::read_project_text(&directory.join("CMakeCache.txt")).ok()?;
     body.lines().find_map(|line| {
         let (declaration, value) = line.trim().split_once('=')?;
         (declaration.split(':').next() == Some("CMAKE_HOME_DIRECTORY"))
@@ -269,5 +266,25 @@ mod tests {
         assert!(!root.join(".kinein/build").exists());
         assert!(repair(&root).is_err());
         assert!(repair_plan(&root).is_err());
+    }
+
+    /// INF-18: o cache que não é arquivo regular vale como ausente na
+    /// inspeção e no reparo, sem esperar num FIFO.
+    #[test]
+    fn a_cache_that_is_not_a_regular_file_is_absent() {
+        let root = temp_root("cache-fifo");
+        let cache = root.join(".kinein/build/CMakeCache.txt");
+        let project = root.clone();
+        crate::fsops::reads_as_absent(&cache, b"CMAKE_BUILD_TYPE:STRING=Debug\n", move || {
+            inspect_cache(&project)
+                .map(|plan| format!("{plan:?}"))
+                .map_err(|error| error.to_string())
+        });
+        let directory = root.join(".kinein/build");
+        crate::fsops::reads_as_absent(
+            &cache,
+            b"CMAKE_HOME_DIRECTORY:INTERNAL=/fora\n",
+            move || super::cache_home(&directory),
+        );
     }
 }

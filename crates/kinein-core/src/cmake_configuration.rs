@@ -268,6 +268,26 @@ pub fn active_dir(root: &Path) -> Result<PathBuf, String> {
         .map_err(|refusal| refusal.reason())
 }
 
+/// What the IDE reads from the folder of the active configuration besides
+/// the CDB, for the `projectProblem` (`0.223.0`, INF-18).
+///
+/// The cache of the `CMake` and, outside the `.kinein`, whose guard says its
+/// own problem, the configure markers.
+#[must_use]
+pub fn read_files(root: &Path) -> Vec<PathBuf> {
+    let Ok(directory) = active_dir(root) else {
+        return Vec::new();
+    };
+    let mut files = vec![directory.join("CMakeCache.txt")];
+    if crate::kinein_dir::inside(&directory).is_none() {
+        files.extend(
+            [PENDING_MARKER, KIT_MARKER, PRESET_MARKER, RIGOR_MARKER]
+                .map(|name| directory.join(name)),
+        );
+    }
+    files
+}
+
 fn listed(root: &Path, preset: &str) -> Result<bool, String> {
     Ok(crate::cmake_presets::list_presets(root)?
         .iter()
@@ -284,15 +304,20 @@ pub(crate) struct Attempt {
 
 /// The bytes of the marker `name` of the configure folder `directory`;
 /// `None` when absent. Inside the `.kinein`, by its guard (INF-15); a
-/// folder of the project outside it is read as it is (INF-18).
+/// folder of the project outside it, as the build system reads it, without
+/// waiting on a FIFO (INF-18).
 fn marker(directory: &Path, name: &str) -> Result<Option<Vec<u8>>, String> {
     if let Some((root, relative)) = crate::kinein_dir::inside(directory) {
         return crate::kinein_dir::read(root, &format!("{relative}/{name}"));
     }
-    match fs::read(directory.join(name)) {
+    let path = directory.join(name);
+    match crate::fsops::read_project_file(&path) {
         Ok(bytes) => Ok(Some(bytes)),
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(error.to_string()),
+        Err(error) if crate::fsops::is_not_regular(&error) => {
+            Err(format!("{} {error}", path.display()))
+        }
+        Err(error) => Err(format!("{}: {error}", path.display())),
     }
 }
 

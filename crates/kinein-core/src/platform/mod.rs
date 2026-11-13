@@ -283,6 +283,19 @@ pub(crate) fn open_child_nofollow(
     imp::open_child_nofollow(parent, parent_path, name)
 }
 
+/// Abre `path` para leitura seguindo o link, como o sistema de build o abre,
+/// sem esperar por um escritor (INF-18): o chamador confere o tipo no handle.
+///
+/// No Unix e' um `open` com `O_NONBLOCK`, que num FIFO volta logo em vez de
+/// esperar o outro lado. No Windows nao ha FIFO; a pasta tambem abre
+/// (`FILE_FLAG_BACKUP_SEMANTICS`), para o handle dizer que nao e' arquivo.
+///
+/// # Errors
+/// O caminho nao existe ou nao pode ser aberto.
+pub(crate) fn open_without_waiting(path: &Path) -> io::Result<File> {
+    imp::open_without_waiting(path)
+}
+
 /// Os nomes dentro da pasta `dir`, aberta por esta API em `dir_path`, sem `.` e
 /// `..`. So' os nomes: o chamador abre um filho de cada vez.
 ///

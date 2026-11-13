@@ -384,6 +384,7 @@ mod tests {
             capabilities: WorkspaceCapabilities::default(),
             trusted: false,
             state_problem: None,
+            project_problem: None,
         }
     }
 

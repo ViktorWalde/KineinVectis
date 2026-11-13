@@ -37,12 +37,33 @@ fn load(root: &Path) -> Result<(Presets, Reading), String> {
 /// Idem, com `program` no lugar do `CMake` do projeto; `None` e' a leitura
 /// nativa so'.
 fn load_with(root: &Path, program: Option<&Path>) -> Result<(Presets, Reading), String> {
-    let files::Loaded { presets, opened } = files::load(root);
+    let files::Loaded {
+        presets,
+        opened,
+        irregular,
+    } = files::load(root);
     let native = presets.and_then(|presets| {
         let reading = expansion::read(root, &presets)?;
         Ok((presets, reading))
     });
+    // The `CMake` would wait on the FIFO, and the core with it (INF-18): the
+    // native refusal, with the path, is the answer.
+    if irregular {
+        return native;
+    }
     verdict::apply(root, native, &opened, program)
+}
+
+/// Os arquivos de presets que o `CMake` le, os da raiz e os includes, ate' o
+/// primeiro que nao se le; o `projectProblem` diz por que um que existe nao
+/// e' lido (`0.223.0`, INF-18).
+#[must_use]
+pub fn read_files(root: &Path) -> Vec<PathBuf> {
+    files::load(root)
+        .opened
+        .into_iter()
+        .map(|(path, _)| path)
+        .collect()
 }
 
 /// Os configure presets que o `CMake` lista: nao ocultos, sem `$vendor{}` e

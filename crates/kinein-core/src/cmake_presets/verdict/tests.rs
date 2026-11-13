@@ -478,6 +478,36 @@ fn without_presets_files_no_cmake_is_asked() {
     assert!(calls(&log).is_empty());
 }
 
+/// A presets file that exists and is not a regular file, a folder or a FIFO,
+/// at the root or included (INF-18): the `CMake` would wait on the FIFO, and
+/// the core with it, so it is not asked; the refusal is the native one, with
+/// the path.
+#[test]
+fn a_presets_file_that_is_not_a_regular_file_asks_no_cmake() {
+    for file in ["CMakePresets.json", "more.json"] {
+        for fifo in [false, true] {
+            let root = project(
+                &format!("irregular-{file}-{fifo}"),
+                r#"{"version":6,"include":["more.json"],"configurePresets":[{"name":"p","binaryDir":"o"}]}"#,
+            );
+            std::fs::write(root.join("more.json"), r#"{"version":6}"#).unwrap();
+            let path = root.join(file);
+            std::fs::remove_file(&path).unwrap();
+            if !fifo {
+                std::fs::create_dir(&path).unwrap();
+            } else if !crate::fsops::fifo(&path) {
+                continue;
+            }
+            let log = root.join("calls.log");
+            let program = fake_cmake(&root.join("bin"), &log, "exit 1");
+            let (project, cmake) = (root.clone(), program.clone());
+            let refused = crate::fsops::unblocked(&path, move || refusal(&project, &cmake));
+            assert_eq!(refused, format!("{file} não é um arquivo regular"));
+            assert!(calls(&log).is_empty(), "{:?}", calls(&log));
+        }
+    }
+}
+
 /// The `CMake` that answers is the one the default kit pins; another kit, or
 /// no pin, leaves it to the `PATH` of the core.
 #[test]

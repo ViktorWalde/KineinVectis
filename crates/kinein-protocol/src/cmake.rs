@@ -189,6 +189,13 @@ pub struct CmakeStatusResult {
     /// what `cmake --build` without `--config` builds (`0.214.0`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_build_configuration: Option<String>,
+    /// The first file of the project or of the active configuration folder
+    /// that the status reads and that exists without being a regular file,
+    /// with its path from the project and why (`0.223.0`, INF-18): the same
+    /// as `WorkspaceInfo::project_problem`. Absent = every one is read or
+    /// absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub project_problem: Option<String>,
 }
 
 /// One configuration of the menu (`0.210.0`).
@@ -378,6 +385,7 @@ mod tests {
             ],
             build_configuration: Some("Release".to_owned()),
             default_build_configuration: Some("Debug".to_owned()),
+            project_problem: None,
         })
         .unwrap();
 
@@ -433,6 +441,7 @@ mod tests {
             configurations: Vec::new(),
             build_configuration: None,
             default_build_configuration: None,
+            project_problem: None,
         })
         .unwrap();
 

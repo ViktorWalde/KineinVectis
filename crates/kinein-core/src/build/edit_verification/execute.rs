@@ -180,7 +180,8 @@ pub(super) fn run(
     for root in collected.roots {
         guard.observe_directory(&root)?;
     }
-    if let Ok(file) = std::fs::File::open(input.dependency) {
+    // Sem esperar num FIFO; o teto e' o da verificacao (INF-18, 63 §A.9).
+    if let Ok(file) = crate::fsops::open_project_file(input.dependency) {
         let mut bytes = Vec::new();
         file.take(1_048_577)
             .read_to_end(&mut bytes)

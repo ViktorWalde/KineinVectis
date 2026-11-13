@@ -85,7 +85,7 @@ pub fn artifacts(root: &Path) -> ProjectArtifacts {
             csv.is_file().then_some(csv)
         });
     art.partitions = partition_csv
-        .and_then(|p| std::fs::read_to_string(p).ok())
+        .and_then(|p| crate::fsops::read_project_text(&p).ok())
         .map(|csv| super::esp::partition_table(&csv, super::esp::TABLE_OFFSET_PADRAO));
     art
 }
@@ -202,7 +202,8 @@ fn tipo_de(caminho: &Path, tamanho: u64) -> Option<Tipo> {
 
 fn e_elf(caminho: &Path) -> bool {
     use std::io::Read;
-    let Ok(mut arquivo) = std::fs::File::open(caminho) else {
+    // Sem esperar num FIFO da pasta de build (INF-18).
+    let Ok(mut arquivo) = crate::fsops::open_project_file(caminho) else {
         return false;
     };
     let mut magico = [0u8; 4];
@@ -290,6 +291,34 @@ mod tests {
         let incomplete = artifacts(&root);
         assert!(incomplete.flash_recipe.is_none());
         assert_eq!(incomplete.flasher_args.as_deref(), new.to_str());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    /// INF-18: a tabela de partições e o binário sem extensão que não são
+    /// arquivo regular ficam de fora, sem esperar num FIFO; o link do build
+    /// para um FIFO chega à leitura do ELF pelo tamanho do próprio link.
+    #[test]
+    fn a_build_file_that_is_not_a_regular_file_is_left_out() {
+        let root = std::env::temp_dir()
+            .join("kinein-flash-artifacts-fifo")
+            .join(std::process::id().to_string());
+        let _ = fs::remove_dir_all(&root);
+        let project = root.clone();
+        crate::fsops::reads_as_absent(
+            &root.join("build").join("partitions.csv"),
+            b"nvs, data, nvs, 0x9000, 0x6000,\n",
+            move || format!("{:?}", artifacts(&project).partitions),
+        );
+        if cfg!(windows) {
+            return;
+        }
+        let outside = root.join("fora");
+        fs::create_dir_all(&outside).unwrap();
+        assert!(crate::fsops::fifo(&outside.join("app")));
+        crate::fsops::link(&outside.join("app"), &root.join("build").join("app"));
+        let project = root.clone();
+        let found = crate::fsops::unblocked(&outside.join("app"), move || artifacts(&project).elf);
+        assert_eq!(found, Vec::<String>::new());
         fs::remove_dir_all(root).unwrap();
     }
 }

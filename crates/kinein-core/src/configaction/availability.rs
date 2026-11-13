@@ -51,24 +51,25 @@ pub(super) struct WorkspaceFacts {
 }
 
 impl WorkspaceFacts {
-    /// Le do disco tudo que a avaliacao de estado precisa.
+    /// Le do disco tudo que a avaliacao de estado precisa, como o sistema de
+    /// build le, sem esperar num FIFO (INF-18).
     #[must_use]
     pub(super) fn measure(root: &Path, inputs: &super::Inputs) -> Self {
-        let cmakelists = std::fs::read_to_string(root.join(cmakelists::CMAKELISTS)).ok();
+        let cmakelists = crate::fsops::read_project_text(&root.join(cmakelists::CMAKELISTS)).ok();
         let targets = cmakelists
             .as_deref()
             .map(cmakelists::declared_targets)
             .unwrap_or_default();
         Self {
-            presets: std::fs::read_to_string(root.join(presets::CMAKE_PRESETS)).ok(),
-            cargo_toml: std::fs::read_to_string(root.join(cargotoml::CARGO_TOML)).ok(),
+            presets: crate::fsops::read_project_text(&root.join(presets::CMAKE_PRESETS)).ok(),
+            cargo_toml: crate::fsops::read_project_text(&root.join(cargotoml::CARGO_TOML)).ok(),
             configured: builddir::is_configured(root),
             has_cdb: crate::cdb::status(root).directory.is_some(),
             stale: builddir::stale_reason(root),
             // `.cargo/config.toml` e' o que a acao de embarcado do Cargo cria;
             // sem isso ela nao teria como dizer "ja' esta feito".
             cargo_config: root.join(".cargo/config.toml").is_file(),
-            platformio_ini: std::fs::read_to_string(root.join("platformio.ini")).ok(),
+            platformio_ini: crate::fsops::read_project_text(&root.join("platformio.ini")).ok(),
             kit_export: inputs.kit_export.as_ref().map(|export| {
                 export.as_ref().map_err(Clone::clone).map(|exported| {
                     super::plan::read_optional(root, &exported.path)
@@ -83,7 +84,7 @@ impl WorkspaceFacts {
                 .into_iter()
                 .map(|info| info.framework)
                 .collect(),
-            clangd: std::fs::read_to_string(root.join(clangd::CLANGD)).ok(),
+            clangd: crate::fsops::read_project_text(&root.join(clangd::CLANGD)).ok(),
             c_installations: inputs.c_installations.clone(),
         }
     }

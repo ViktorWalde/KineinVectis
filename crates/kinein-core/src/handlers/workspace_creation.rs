@@ -53,6 +53,8 @@ impl Core {
             Ok(mut opened) => {
                 // O projeto que a IDE criou nasce confiavel (16.4b).
                 opened.trusted = true;
+                opened.project_problem =
+                    super::workspace::project_problem(std::path::Path::new(&opened.root));
                 core.remember_trust(&opened.root);
                 if let Err(error) = core.activate_workspace(&opened) {
                     return terminal_error_response(

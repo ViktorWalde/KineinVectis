@@ -149,6 +149,7 @@ flowchart LR
   n_core_workspace[workspace]
   n_core_build --> n_core_cdb
   n_core_build --> n_core_cmake
+  n_core_build --> n_core_fsops
   n_core_build --> n_core_msvc
   n_core_build --> n_core_platform
   n_core_build --> n_core_process
@@ -158,6 +159,7 @@ flowchart LR
   n_core_cdb --> n_core_cmake
   n_core_cdb --> n_core_cmake_configuration
   n_core_cdb --> n_core_cmake_presets
+  n_core_cdb --> n_core_fsops
   n_core_cdb --> n_core_platform
   n_core_cmake --> n_core_cmake_configuration
   n_core_cmake --> n_core_cmake_presets
@@ -167,8 +169,10 @@ flowchart LR
   n_core_cmake --> n_core_platform
   n_core_cmake --> n_core_toolchain
   n_core_cmake_configuration --> n_core_cmake_presets
+  n_core_cmake_configuration --> n_core_fsops
   n_core_cmake_configuration --> n_core_kinein_dir
   n_core_cmake_configuration --> n_core_platform
+  n_core_cmake_presets --> n_core_fsops
   n_core_cmake_presets --> n_core_kits
   n_core_cmake_presets --> n_core_platform
   n_core_cmake_presets --> n_core_tools
@@ -188,6 +192,7 @@ flowchart LR
   n_core_coverage --> n_core_python
   n_core_dap --> n_core_cmake
   n_core_dap --> n_core_cmake_configuration
+  n_core_dap --> n_core_fsops
   n_core_dap --> n_core_lsp
   n_core_dap --> n_core_platform
   n_core_dap --> n_core_probe
@@ -219,11 +224,14 @@ flowchart LR
   n_core_format --> n_core_platform
   n_core_fsops --> n_core_platform
   n_core_fswatch --> n_core_platform
+  n_core_git --> n_core_fsops
   n_core_grafana --> n_core_datasource
   n_core_grafana --> n_core_kinein_dir
   n_core_handlers --> n_core_build
   n_core_handlers --> n_core_cdb
   n_core_handlers --> n_core_cmake
+  n_core_handlers --> n_core_cmake_configuration
+  n_core_handlers --> n_core_cmake_presets
   n_core_handlers --> n_core_configaction
   n_core_handlers --> n_core_container
   n_core_handlers --> n_core_coverage
@@ -256,6 +264,7 @@ flowchart LR
   n_core_handlers --> n_core_workspace
   n_core_index --> n_core_cdb
   n_core_index --> n_core_cmake
+  n_core_index --> n_core_fsops
   n_core_index --> n_core_fswatch
   n_core_index --> n_core_lang
   n_core_index --> n_core_platform
@@ -267,6 +276,7 @@ flowchart LR
   n_core_kits --> n_core_tools
   n_core_library --> n_core_cmake
   n_core_library --> n_core_configaction
+  n_core_library --> n_core_fsops
   n_core_lsp --> n_core_cdb
   n_core_lsp --> n_core_fsops
   n_core_lsp --> n_core_index
@@ -288,6 +298,7 @@ flowchart LR
   n_core_project --> n_core_dap
   n_core_project --> n_core_fsops
   n_core_project --> n_core_platform
+  n_core_python --> n_core_fsops
   n_core_python --> n_core_kinein_dir
   n_core_python --> n_core_run
   n_core_remote --> n_core_kinein_dir
@@ -311,6 +322,7 @@ flowchart LR
   n_core_settings --> n_core_kinein_dir
   n_core_settings --> n_core_platform
   n_core_setup --> n_core_tools
+  n_core_size --> n_core_fsops
   n_core_terminal --> n_core_lsp
   n_core_terminal --> n_core_platform
   n_core_test --> n_core_build
@@ -321,6 +333,7 @@ flowchart LR
   n_core_test --> n_core_python
   n_core_toolchain --> n_core_cmake_configuration
   n_core_toolchain --> n_core_cmake_presets
+  n_core_toolchain --> n_core_fsops
   n_core_toolchain --> n_core_kits
   n_core_toolchain --> n_core_platform
   n_core_toolchain --> n_core_tools
@@ -337,7 +350,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-54 módulos, 187 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+54 módulos, 200 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -348,17 +361,17 @@ flowchart LR
 
 | Domínio | Depende de | Cabeçalho |
 | --- | --- | --- |
-| `build` | cdb, cmake, msvc, platform, process, toolchain, tools | Build execution with streamed output and structured diagnostics. |
+| `build` | cdb, cmake, fsops, msvc, platform, process, toolchain, tools | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
-| `cdb` | cmake, cmake_configuration, cmake_presets, platform | Descoberta e diagnóstico da compilation database do C/C++. |
+| `cdb` | cmake, cmake_configuration, cmake_presets, fsops, platform | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | cmake_configuration, cmake_presets, fsops, kinein_dir, msvc, platform, toolchain | Servico CMake: |
-| `cmake_configuration` | cmake_presets, kinein_dir, platform | The configurations of a CMake project (C1-19 and C1-20 of C-04, consolidacao C §17): |
-| `cmake_presets` | kits, platform, tools | Os configure presets do projeto: |
+| `cmake_configuration` | cmake_presets, fsops, kinein_dir, platform | The configurations of a CMake project (C1-19 and C1-20 of C-04, consolidacao C §17): |
+| `cmake_presets` | fsops, kits, platform, tools | Os configure presets do projeto: |
 | `commands` | — | Command descriptors advertised to the UI (command palette, menus, shortcuts). |
 | `configaction` | cdb, cmake, fsops, library, platform, project, runconfig, toolchain | Configuration Actions: |
 | `container` | process, tools | Containers como dominio NATIVO: |
 | `coverage` | kinein_dir, platform, process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
-| `dap` | cmake, cmake_configuration, lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |
+| `dap` | cmake, cmake_configuration, fsops, lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |
 | `datasource` | container, db, fsops, jobs, kinein_dir, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | kinein_dir | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `dfu` | probe | Bounded dfu-util discovery. |
@@ -367,15 +380,15 @@ flowchart LR
 | `format` | platform | Buffer formatting by orchestrating the project's own formatters. |
 | `fsops` | platform | File system operations confined to the open workspace root. |
 | `fswatch` | platform | Debounced, workspace-confined observation of external file-system changes. |
-| `git` | — | Git orquestrado sobre o binario git. |
+| `git` | fsops | Git orquestrado sobre o binario git. |
 | `grafana` | datasource, kinein_dir | Observabilidade: |
-| `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Request handlers grouped by domain, each implemented as impl Core blocks. |
-| `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
+| `handlers` | build, cdb, cmake, cmake_configuration, cmake_presets, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Request handlers grouped by domain, each implemented as impl Core blocks. |
+| `index` | cdb, cmake, fsops, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
 | `kinein_dir` | fsops, platform | The .kinein folder of a project (0.222.0, INF-12, INF-13, INF-15 and INF-20). |
 | `kits` | kinein_dir, tools | Os kits como o workspace os grava e quem pode cumprir cada papel. |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
-| `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
+| `library` | cmake, configaction, fsops | Bibliotecas C/C++ curadas: |
 | `lsp` | cdb, fsops, index, owned_child, stderr_tail | Subsistema LSP: |
 | `msvc` | — | O Visual Studio do Windows, para o build de C/C++. |
 | `outcome` | rpc | O desfecho de um pedido (RequestOutcome) e o erro dos lacos de IO (CoreError). |
@@ -386,7 +399,7 @@ flowchart LR
 | `probe` | process | Sondas de debug conectadas: |
 | `process` | platform | Synchronous line streaming for child processes. |
 | `project` | cmake, dap, fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
-| `python` | kinein_dir, run | O dominio python: |
+| `python` | fsops, kinein_dir, run | O dominio python: |
 | `remote` | kinein_dir, platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
 | `run` | cmake, cmake_configuration, platform, python | O que "Executar" roda, e como se mostra. |
@@ -395,11 +408,11 @@ flowchart LR
 | `serial` | build, platform, toolchain | Portas seriais USB: |
 | `settings` | fsops, kinein_dir, platform | Settings persistidos em dois níveis (settings.*). |
 | `setup` | tools | Como instalar o que falta — passo a passo OFICIAL, para a distro detectada. |
-| `size` | — | O tamanho de um ELF: |
+| `size` | fsops | O tamanho de um ELF: |
 | `stderr_tail` | — | O stderr de um processo filho de LONGA VIDA (adaptador DAP, servidor de debug, servidor LSP): |
 | `terminal` | lsp, platform | Terminal profissional: |
 | `test` | build, cmake, msvc, platform, process, python | Test execution with streamed, per-case results. |
-| `toolchain` | cmake_configuration, cmake_presets, kits, platform, tools | Toolchain: |
+| `toolchain` | cmake_configuration, cmake_presets, fsops, kits, platform, tools | Toolchain: |
 | `tools` | msvc, platform, process | External tool detection. |
 | `workspace` | configaction, fsops, kinein_dir, platform, process, python, tools | Workspace opening, project kind detection, and metadata persistence. |
 

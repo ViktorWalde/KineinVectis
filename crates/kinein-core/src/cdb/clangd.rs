@@ -23,8 +23,12 @@ pub(super) enum Base {
     Manual(&'static str),
 }
 
+/// O arquivo da raiz.
+pub(super) const FILE: &str = ".clangd";
+
 pub(super) fn base(root: &Path) -> Base {
-    let Ok(text) = std::fs::read_to_string(root.join(".clangd")) else {
+    // Como o clangd o le, sem esperar num FIFO (INF-18).
+    let Ok(text) = crate::fsops::read_project_text(&root.join(FILE)) else {
         return Base::Unset;
     };
     let mut fragments = documents(&text).into_iter().filter(|lines| {

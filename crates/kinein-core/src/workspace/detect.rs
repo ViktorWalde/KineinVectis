@@ -1,6 +1,6 @@
 //! Project kind detection by build system markers.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use kinein_protocol::{BuildSystem, ProjectKind, WorkspaceCapabilities};
 
@@ -62,6 +62,17 @@ pub fn detect_project(root: &Path) -> (ProjectKind, Vec<String>, WorkspaceCapabi
     }
 
     (kind, markers, WorkspaceCapabilities { build_systems })
+}
+
+/// The build system markers of the root, in precedence order: a marker that
+/// exists and is not a regular file is not one, and the `projectProblem` of
+/// the open says why (`0.223.0`, INF-18).
+#[must_use]
+pub fn marker_paths(root: &Path) -> Vec<PathBuf> {
+    MARKERS
+        .iter()
+        .map(|(marker, _, _)| root.join(marker))
+        .collect()
 }
 
 #[cfg(test)]

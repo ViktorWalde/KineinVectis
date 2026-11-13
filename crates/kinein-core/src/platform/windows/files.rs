@@ -83,6 +83,13 @@ pub(in crate::platform) fn open_nofollow(path: &Path) -> Result<File, NoFollow> 
     current.ok_or(NoFollow::InvalidPath)
 }
 
+pub(in crate::platform) fn open_without_waiting(path: &Path) -> io::Result<File> {
+    OpenOptions::new()
+        .read(true)
+        .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+        .open(path)
+}
+
 pub(in crate::platform) fn open_child_nofollow(
     _parent: &File,
     parent_path: &Path,

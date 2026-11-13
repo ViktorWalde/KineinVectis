@@ -317,6 +317,8 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     // INF-13 (0.221.0): depois do workspaceChanged, que zera a faixa; vazio
     // = o core grava no `.kinein` como sempre.
     emit workspaceStateProblem(result.value(QStringLiteral("stateProblem")).toString());
+    // INF-18 (0.223.0): idem; vazio = todo arquivo do projeto se le.
+    emit workspaceProjectProblem(result.value(QStringLiteral("projectProblem")).toString());
     // Um espelho remoto (0.122.0) diz de quem e'; vazio = workspace comum.
     emit remoteMirrorChanged(result.value(QStringLiteral("remote")).toObject().toVariantMap());
     listRecentWorkspaces();

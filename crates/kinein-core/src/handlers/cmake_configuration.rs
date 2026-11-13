@@ -148,5 +148,6 @@ fn status_result(root: &std::path::Path) -> CmakeStatusResult {
         configurations: cmake::configurations(root),
         build_configuration: build.as_ref().map(|build| build.name.clone()),
         default_build_configuration: build.and_then(|build| build.default),
+        project_problem: super::workspace::project_problem(root),
     }
 }

@@ -39,7 +39,7 @@ pub struct QualityTools {
 /// `clang-tidy -p` recebe quando nao ha' `run-clang-tidy`.
 #[must_use]
 pub fn cdb_sources(cdb_dir: &Path) -> Vec<PathBuf> {
-    let Ok(texto) = std::fs::read_to_string(cdb_dir.join("compile_commands.json")) else {
+    let Ok(texto) = crate::fsops::read_project_text(&cdb_dir.join("compile_commands.json")) else {
         return Vec::new();
     };
     let Ok(entradas) = serde_json::from_str::<Vec<serde_json::Value>>(&texto) else {
@@ -170,6 +170,26 @@ mod tests {
         let fontes = cdb_sources(&root.join("build"));
         assert_eq!(fontes, vec![root.join("a.cpp"), root.join("b.c")]);
         assert!(cdb_sources(&root.join("nao")).is_empty());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// INF-18: a CDB que não é arquivo regular vale como ausente, sem esperar
+    /// num FIFO.
+    #[test]
+    fn a_cdb_that_is_not_a_regular_file_lists_no_source() {
+        let root = std::env::temp_dir().join(format!("kinein-tidy-fifo-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("build")).unwrap();
+        std::fs::write(root.join("a.c"), "").unwrap();
+        let cdb = serde_json::json!([
+            {"directory": root.display().to_string(), "file": "a.c", "command": "cc a.c"},
+        ]);
+        let build = root.join("build");
+        crate::fsops::reads_as_absent(
+            &build.join("compile_commands.json"),
+            cdb.to_string().as_bytes(),
+            move || cdb_sources(&build),
+        );
         let _ = std::fs::remove_dir_all(&root);
     }
 }

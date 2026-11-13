@@ -84,7 +84,7 @@ pub(super) fn run_engine_build(
 #[must_use]
 pub fn zephyr_board(root: &Path, west: &Path) -> Option<String> {
     let cache = root.join(BUILD_DIR).join("CMakeCache.txt");
-    if let Ok(texto) = std::fs::read_to_string(cache)
+    if let Ok(texto) = crate::fsops::read_project_text(&cache)
         && let Some(valor) = texto.lines().find_map(|l| {
             l.strip_prefix("CACHED_BOARD:STRING=")
                 .or_else(|| l.strip_prefix("BOARD:STRING="))
@@ -162,5 +162,20 @@ mod tests {
         std::fs::remove_file(raiz.join("build/CMakeCache.txt")).unwrap();
         assert_eq!(zephyr_board(&raiz, &west), None);
         let _ = std::fs::remove_dir_all(&raiz);
+    }
+
+    /// INF-18: o `CMakeCache.txt` que não é arquivo regular não diz a placa,
+    /// sem esperar num FIFO; sem o `west`, ninguém a diz.
+    #[test]
+    fn a_cache_that_is_not_a_regular_file_names_no_board() {
+        let root =
+            std::env::temp_dir().join(format!("kinein-zephyr-board-fifo-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let west = root.join("sem-west");
+        crate::fsops::reads_as_absent(
+            &root.join("build").join("CMakeCache.txt"),
+            b"CACHED_BOARD:STRING=fora\n",
+            move || zephyr_board(&root, &west),
+        );
     }
 }

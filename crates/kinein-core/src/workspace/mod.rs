@@ -26,7 +26,7 @@ mod session;
 mod trust;
 
 pub use create::{create_directory, create_project, create_project_with_options};
-pub use detect::detect_project;
+pub use detect::{detect_project, marker_paths};
 pub use error::WorkspaceError;
 pub use open::{browse_directories, metadata_path, open_workspace};
 pub use places::browse_places;

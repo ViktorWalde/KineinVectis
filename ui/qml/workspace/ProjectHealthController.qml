@@ -44,6 +44,10 @@ Item {
     // INF-13 (0.221.0): por que o core nao grava no .kinein (um link
     // simbolico); o projeto abre, e o estado da IDE fica sem gravar.
     property string stateProblem: ""
+    // INF-18 (0.223.0): o primeiro arquivo do projeto ou de ferramenta que
+    // existe e nao se le como arquivo regular (um FIFO, uma pasta), com o
+    // motivo; o core o toma como ausente.
+    property string projectProblem: ""
     property bool pythonNeedsStubs: false
     property bool pythonInstallingStubs: false
     property string pythonStubsMessage: ""
@@ -102,6 +106,7 @@ Item {
         cdbChoiceRequired = false;
         cdbAbsentBecause = "";
         stateProblem = "";
+        projectProblem = "";
         configuration.reset();
         update();
     }
@@ -118,6 +123,7 @@ Item {
     onPythonStubsMessageChanged: update()
     onSettingsProblemChanged: update()
     onStateProblemChanged: update()
+    onProjectProblemChanged: update()
     Component.onCompleted: update()
 
     function handleCmakeStatus(configured, stale, staleBecause, preset, choices, choicesFile,
@@ -269,6 +275,13 @@ Item {
                       ? qsTr("projeto ainda não confiável: o pio, que roda os scripts do projeto, espera a sua confiança")
                       : qsTr("projeto ainda não confiável: o CMake e os build scripts não rodam sozinhos"),
                   qsTr("Confiar neste projeto"), "trust");
+            return;
+        }
+        // INF-18: antes dos avisos do CMake, que leem o arquivo como
+        // ausente; sem botao, porque quem resolve e' a pessoa, trocando-o
+        // por um arquivo.
+        if (projectProblem !== "") {
+            apply("warning", qsTr("arquivo do projeto não lido: %1").arg(projectProblem), "", "");
             return;
         }
         if (hasBuildSystem("cmake") && cmakeStatusKnown && cdbChoiceRequired) {

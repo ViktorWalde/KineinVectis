@@ -43,7 +43,7 @@ impl CompileContext {
         // da base (inclusive em fragmentos condicionais) impede sobreposição.
         if path.ancestors().skip(1).any(|directory| {
             directory.join("compile_flags.txt").is_file()
-                || std::fs::read_to_string(directory.join(".clangd"))
+                || crate::fsops::read_project_text(&directory.join(".clangd"))
                     .is_ok_and(|text| text.contains("CompilationDatabase"))
         }) {
             return Err("base de compilação configurada manualmente");

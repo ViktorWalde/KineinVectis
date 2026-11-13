@@ -22,6 +22,7 @@ Item {
         property string workspaceRoot: ""
         signal workspaceChanged()
         signal workspaceStateProblem(string problem)
+        signal workspaceProjectProblem(string problem)
         // Os outros sinais que o roteador ouve (sem eles, o Connections avisa).
         signal statusChanged()
         signal cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,

@@ -1029,7 +1029,7 @@ crates/kinein-core/src/project/detect.rs	alvo	5
 crates/kinein-core/src/project/detect.rs	arquivos	3
 crates/kinein-core/src/project/detect.rs	atribuicao	8
 crates/kinein-core/src/project/detect.rs	atual	8
-crates/kinein-core/src/project/detect.rs	caminho	24
+crates/kinein-core/src/project/detect.rs	caminho	23
 crates/kinein-core/src/project/detect.rs	chave	4
 crates/kinein-core/src/project/detect.rs	detalhe	14
 crates/kinein-core/src/project/detect.rs	detalhes	3
@@ -1040,7 +1040,6 @@ crates/kinein-core/src/project/detect.rs	fecha	4
 crates/kinein-core/src/project/detect.rs	forca	2
 crates/kinein-core/src/project/detect.rs	ignoradas	2
 crates/kinein-core/src/project/detect.rs	importa	2
-crates/kinein-core/src/project/detect.rs	leitura	2
 crates/kinein-core/src/project/detect.rs	linha	24
 crates/kinein-core/src/project/detect.rs	nivel	4
 crates/kinein-core/src/project/detect.rs	ordem	2

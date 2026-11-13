@@ -236,20 +236,10 @@ fn reply_com_prefixo(reply_dir: &Path, prefixo: &str) -> Option<PathBuf> {
     candidatos.pop()
 }
 
+/// A resposta do file-api inteira, como o `CMake` a grava: segue o link, nao
+/// espera num FIFO e nao tem teto proprio (D-16, INF-18).
 fn read_json(path: &Path) -> Option<Value> {
-    let mut bytes = Vec::new();
-    let file = crate::fsops::open_regular_file(path).ok()?;
-    if file.metadata().ok()?.len() > 16 * 1024 * 1024 {
-        return None;
-    }
-    std::io::Read::read_to_end(
-        &mut std::io::Read::take(file, 16 * 1024 * 1024 + 1),
-        &mut bytes,
-    )
-    .ok()?;
-    if bytes.len() > 16 * 1024 * 1024 {
-        return None;
-    }
+    let bytes = crate::fsops::read_project_file(path).ok()?;
     serde_json::from_slice(&bytes).ok()
 }
 
@@ -430,6 +420,29 @@ mod tests {
         assert_eq!(
             super::absolute(&base, "./gen/moc.cpp"),
             base.join("gen").join("moc.cpp")
+        );
+    }
+
+    /// INF-18: a resposta do file-api que não é arquivo regular vale como
+    /// ausente, sem esperar num FIFO. O `codemodel` passa pela revisão, que
+    /// já confere o tipo; a `toolchains-v1`, pela leitura comum.
+    #[test]
+    fn a_reply_that_is_not_a_regular_file_is_absent() {
+        let build = std::env::temp_dir()
+            .join("kinein-cmake-model")
+            .join(format!("{}-fifo", std::process::id()));
+        drop(std::fs::remove_dir_all(&build));
+        let reply = build.join(".cmake").join("api").join("v1").join("reply");
+        std::fs::create_dir_all(&reply).unwrap();
+        std::fs::write(
+            reply.join("codemodel-v2-a.json"),
+            r#"{"configurations": [{"name": "", "targets": []}]}"#,
+        )
+        .unwrap();
+        crate::fsops::reads_as_absent(
+            &reply.join("toolchains-v1-a.json"),
+            br#"{"toolchains": [{"language": "C", "compiler": {"path": "/fora/cc"}}]}"#,
+            move || super::CmakeModel::load(&build).map(|model| model.toolchains.len()),
         );
     }
 }

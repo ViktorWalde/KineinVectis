@@ -118,6 +118,12 @@ Item {
             root.projectHealthController.stateProblem = problem;
         }
 
+        // INF-18 (0.223.0): do workspace.open e de cada cmake.status; vazio
+        // limpa.
+        function onWorkspaceProjectProblem(problem) {
+            root.projectHealthController.projectProblem = problem;
+        }
+
         function onRecentWorkspacesResolved(workspaces) {
             root.recentWorkspacesController.handleResolved(workspaces);
         }

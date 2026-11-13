@@ -112,6 +112,13 @@ pub struct WorkspaceInfo {
     /// Absent = the core uses it as always. Never persisted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub state_problem: Option<String>,
+    /// The first file of the project or of a tool, among those the opening
+    /// reads, that exists and cannot be read as a regular file, like a FIFO
+    /// or a folder, with its path from the project and why (`0.223.0`,
+    /// INF-18). The core reads it as absent. Absent = every one is read or
+    /// absent. Never persisted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub project_problem: Option<String>,
 }
 
 /// Result of `workspace.trust` (`0.171.0`).
@@ -382,6 +389,7 @@ mod tests {
             },
             trusted: false,
             state_problem: None,
+            project_problem: None,
         };
         let value = serde_json::to_value(workspace).unwrap();
 

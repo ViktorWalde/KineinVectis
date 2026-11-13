@@ -202,7 +202,7 @@ fn pacotes_com_main(base: &Path) -> Vec<String> {
 /// Leitura de linhas (chave = valor dentro da tabela), sem parser TOML: o
 /// que se quer e' o NOME, e ele e' a chave.
 fn project_scripts(root: &Path) -> Vec<String> {
-    let Ok(texto) = std::fs::read_to_string(root.join("pyproject.toml")) else {
+    let Ok(texto) = crate::fsops::read_project_text(&root.join("pyproject.toml")) else {
         return Vec::new();
     };
     let mut dentro = false;
@@ -539,6 +539,24 @@ mod tests {
         assert_eq!(
             default_command(&root, Some(&uv)).unwrap(),
             "'/opt/uv' 'run' 'python' 'app.py'"
+        );
+    }
+
+    /// INF-18: o `pyproject.toml` que não é arquivo regular não declara
+    /// script, sem esperar num FIFO.
+    #[test]
+    fn a_pyproject_that_is_not_a_regular_file_declares_no_script() {
+        let root = std::env::temp_dir()
+            .join("kinein-core-tests")
+            .join(format!("{}-python-run-scripts-fifo", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join(".venv/bin")).unwrap();
+        std::fs::write(root.join(".venv/bin/fora"), "").unwrap();
+        let project = root.clone();
+        crate::fsops::reads_as_absent(
+            &root.join("pyproject.toml"),
+            b"[project.scripts]\nfora = \"fora.cli:main\"\n",
+            move || entry_point(&project),
         );
     }
 }
