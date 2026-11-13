@@ -1,15 +1,16 @@
-//! The `.kinein` folder of a project (`0.222.0`, INF-12, INF-13 and INF-15).
+//! The `.kinein` folder of a project (`0.222.0`, INF-12, INF-13, INF-15 and
+//! INF-20).
 //!
-//! Every file and folder the core writes in it passes here: the `.kinein`,
-//! each folder under it and the file itself must be absent or what they say
-//! they are, and none may be a symbolic link. A cloned repository with
-//! `.kinein/workspace.json` linked to a file of the person had it overwritten
-//! just by opening the project (measured on 2026-11-12); with `.kinein`
-//! linked to another folder, the drafts of unsaved buffers went there. Every
-//! file the core reads there passes here too, on the descriptor: a FIFO in
-//! place of `.kinein/session.json` held the whole core in the `open` when the
-//! project opened (measured on 2026-11-12). The messages name the path from
-//! the project, like the settings ones.
+//! Every file and folder the core writes or removes in it passes here: the
+//! `.kinein`, each folder under it and the file itself must be absent or
+//! what they say they are, and none may be a symbolic link. A cloned
+//! repository with `.kinein/workspace.json` linked to a file of the person
+//! had it overwritten just by opening the project (measured on 2026-11-12);
+//! with `.kinein` linked to another folder, the drafts of unsaved buffers
+//! went there. Every file the core reads there passes here too, on the
+//! descriptor: a FIFO in place of `.kinein/session.json` held the whole core
+//! in the `open` when the project opened (measured on 2026-11-12). The
+//! messages name the path from the project, like the settings ones.
 //!
 //! A leaf module, like `fsops`: every owner of a file in the `.kinein` uses
 //! it, and it uses none of them (the module map, 01).
@@ -92,6 +93,28 @@ pub(crate) fn write(root: &Path, relative: &str, bytes: &[u8]) -> Result<(), Str
     let path = file(root, relative)?;
     crate::fsops::atomic_write(&path, bytes)
         .map_err(|error| format!("falha escrevendo {WORKSPACE_DIR}/{relative}: {error}"))
+}
+
+/// Removes `.kinein/<relative>` of `root`, a regular file, or with `folder`
+/// a folder and everything in it, after [`problem`]; absent is done. With
+/// `.kinein/presets` linked, the repair of the build folder removed the
+/// folder outside the project (measured on 2026-11-13).
+pub(crate) fn remove(root: &Path, relative: &str, folder: bool) -> Result<(), String> {
+    if let Some(problem) = problem(root, relative, folder) {
+        return Err(problem);
+    }
+    let path = parts(relative).fold(root.join(WORKSPACE_DIR), |path, part| path.join(part));
+    let removed = if folder {
+        fs::remove_dir_all(&path)
+    } else {
+        fs::remove_file(&path)
+    };
+    match removed {
+        Err(error) if error.kind() != io::ErrorKind::NotFound => Err(format!(
+            "falha removendo {WORKSPACE_DIR}/{relative}: {error}"
+        )),
+        _ => Ok(()),
+    }
 }
 
 /// Reads `.kinein/<relative>` of `root`, at most

@@ -116,7 +116,9 @@ fn same_directory(left: &Path, right: &Path) -> bool {
 /// A pasta que o reparo remove inteira: a da configuracao ativa, se existe.
 /// Uma pasta da IDE, como antes; a de um preset, so' com `CMakeCache.txt`
 /// cujo `CMAKE_HOME_DIRECTORY` e' a raiz, e que nao seja a raiz nem a contenha
-/// (o build in-source e' recusado). Conferido na previa e de novo ao aplicar.
+/// (o build in-source e' recusado). No `.kinein`, sem link nem entrada que
+/// nao seja pasta no caminho (INF-20). Conferido na previa e de novo ao
+/// aplicar.
 fn removable(root: &Path) -> Result<PathBuf, ConfigActionError> {
     let directory = active_dir(root)?;
     let refuse = |reason: String| Err(ConfigActionError::NotApplicable { reason });
@@ -125,6 +127,11 @@ fn removable(root: &Path) -> Result<PathBuf, ConfigActionError> {
             "{} não existe; não há o que reparar",
             directory.display()
         ));
+    }
+    // INF-20: a pasta no `.kinein` passa pelo guarda dele; com
+    // `.kinein/presets` ligado, o reparo apagava a pasta de fora.
+    if let Some(problem) = cmake::configuration_dir_problem(&directory) {
+        return refuse(problem);
     }
     if cmake::owned_by_ide(root, &directory) {
         return Ok(directory);
@@ -183,7 +190,7 @@ pub(super) fn repair_plan(root: &Path) -> Result<ActionPlan, ConfigActionError> 
 /// Remove a pasta da configuracao ativa, com a mesma conferencia da previa.
 pub(super) fn repair(root: &Path) -> Result<String, ConfigActionError> {
     let build_dir = removable(root)?;
-    fs::remove_dir_all(&build_dir).map_err(|source| {
+    cmake::remove_configuration_dir(&build_dir).map_err(|source| {
         ConfigActionError::Fs(crate::fsops::FsError::Io {
             path: build_dir.display().to_string(),
             source,

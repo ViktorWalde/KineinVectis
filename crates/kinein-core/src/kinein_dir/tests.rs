@@ -1,6 +1,7 @@
-//! The guard of the `.kinein` (INF-13 and INF-15): each component of the
-//! path, the write that does not follow a link, the read that does not follow
-//! one nor wait on a FIFO, and the summary for the health band.
+//! The guard of the `.kinein` (INF-13, INF-15 and INF-20): each component of
+//! the path, the write and the removal that do not follow a link, the read
+//! that does not follow one nor wait on a FIFO, and the summary for the
+//! health band.
 //!
 //! The links are of folders, or to what does not exist: `ln -s` on Unix and
 //! the junction on Windows, which needs no privilege (60 §3.3). The FIFO
@@ -8,7 +9,7 @@
 
 use std::path::PathBuf;
 
-use super::{fifo, file, inside, link, problem, read, summary, unblocked, write};
+use super::{fifo, file, inside, link, problem, read, remove, summary, unblocked, write};
 use crate::fsops::MAX_READ_BYTES;
 
 fn base(name: &str) -> PathBuf {
@@ -107,6 +108,93 @@ fn the_write_refuses_a_link_and_writes_nothing_outside() {
             .file_type()
             .is_symlink()
     );
+}
+
+/// The removal (INF-20): a file, and a folder with everything in it; absent
+/// is done. The `.kinein`, a folder in the middle and the file that are links
+/// are refused, and what is outside stays; so are the entry of the wrong kind
+/// and the FIFO, which stay too.
+#[test]
+fn the_removal_refuses_a_link_and_removes_nothing_outside() {
+    let root = base("remocao");
+    write(&root, "configuration.json", b"{}").unwrap();
+    write(&root, "presets/dev/.cmake/api/v1/query/codemodel-v2", b"").unwrap();
+    assert_eq!(remove(&root, "configuration.json", false), Ok(()));
+    assert!(!root.join(".kinein").join("configuration.json").exists());
+    assert_eq!(remove(&root, "presets/dev", true), Ok(()));
+    assert!(!root.join(".kinein").join("presets").join("dev").exists());
+    assert!(root.join(".kinein").join("presets").is_dir());
+    assert_eq!(remove(&root, "presets/dev", true), Ok(()));
+    assert_eq!(remove(&root, "configuration.json", false), Ok(()));
+
+    let outside = base("remocao-fora");
+    std::fs::create_dir_all(outside.join("dev")).unwrap();
+    std::fs::write(outside.join("dev").join("da-pessoa.txt"), "fica").unwrap();
+    std::fs::write(outside.join("configuration.json"), "fica").unwrap();
+    let preserved = || {
+        assert_eq!(
+            std::fs::read_to_string(outside.join("dev").join("da-pessoa.txt")).unwrap(),
+            "fica"
+        );
+        assert_eq!(
+            std::fs::read_to_string(outside.join("configuration.json")).unwrap(),
+            "fica"
+        );
+    };
+    let folder = base("remocao-pasta-ligada");
+    link(&outside, &folder.join(".kinein"));
+    assert_eq!(
+        remove(&folder, "configuration.json", false),
+        Err(FOLDER_LINK.to_owned())
+    );
+    assert_eq!(remove(&folder, "dev", true), Err(FOLDER_LINK.to_owned()));
+    preserved();
+
+    let middle = base("remocao-meio-ligado");
+    std::fs::create_dir_all(middle.join(".kinein")).unwrap();
+    link(&outside, &middle.join(".kinein").join("presets"));
+    assert_eq!(
+        remove(&middle, "presets/dev", true),
+        Err(".kinein/presets é um link simbólico, que a IDE não segue no projeto".to_owned())
+    );
+    preserved();
+
+    let leaf = base("remocao-arquivo-ligado");
+    std::fs::create_dir_all(leaf.join(".kinein")).unwrap();
+    let placed = leaf.join(".kinein").join("configuration.json");
+    let missing = outside.join("nao-existe");
+    link(&missing, &placed);
+    assert!(remove(&leaf, "configuration.json", false).is_err());
+    assert!(
+        std::fs::symlink_metadata(&placed)
+            .unwrap()
+            .file_type()
+            .is_symlink()
+    );
+    assert!(!missing.exists());
+    preserved();
+
+    let kinds = base("remocao-tipos");
+    write(&kinds, "session.json", b"{}").unwrap();
+    std::fs::create_dir_all(kinds.join(".kinein").join("build")).unwrap();
+    assert_eq!(
+        remove(&kinds, "build", false),
+        Err(".kinein/build não é um arquivo regular".to_owned())
+    );
+    assert_eq!(
+        remove(&kinds, "session.json", true),
+        Err(".kinein/session.json não é uma pasta".to_owned())
+    );
+    assert!(kinds.join(".kinein").join("build").is_dir());
+    assert!(kinds.join(".kinein").join("session.json").is_file());
+    let held = kinds.join(".kinein").join("rigor");
+    if fifo(&held) {
+        assert_eq!(
+            remove(&kinds, "rigor", false),
+            Err(".kinein/rigor não é um arquivo regular".to_owned())
+        );
+        assert!(std::fs::symlink_metadata(&held).is_ok());
+    }
 }
 
 /// The band: nothing for a regular `.kinein`; the folder itself first; else

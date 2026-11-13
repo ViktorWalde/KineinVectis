@@ -372,7 +372,7 @@ flowchart LR
 | `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Request handlers grouped by domain, each implemented as impl Core blocks. |
 | `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
-| `kinein_dir` | fsops, platform | The .kinein folder of a project (0.222.0, INF-12, INF-13 and INF-15). |
+| `kinein_dir` | fsops, platform | The .kinein folder of a project (0.222.0, INF-12, INF-13, INF-15 and INF-20). |
 | `kits` | kinein_dir, tools | Os kits como o workspace os grava e quem pode cumprir cada papel. |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |

@@ -19,7 +19,6 @@
 
 use std::{
     ffi::OsStr,
-    fs,
     hash::{DefaultHasher, Hash, Hasher},
     path::{Path, PathBuf},
 };
@@ -79,20 +78,15 @@ pub fn mirror_root(cache: &Path, target: &RemoteTarget, path: &str) -> PathBuf {
         .join(base)
 }
 
-fn marker_path(mirror: &Path) -> PathBuf {
-    mirror.join(".kinein").join("remote-mirror.json")
-}
+/// O marcador, no `.kinein` do espelho.
+const MARKER: &str = "remote-mirror.json";
 
-/// Grava o marcador do espelho (cria a pasta).
+/// Grava o marcador do espelho (cria a pasta). INF-20: pelo guarda do
+/// `.kinein`, que nao segue o link.
 ///
 /// # Errors
-/// Disco.
+/// A recusa do guarda, ou o disco.
 pub fn write_marker(mirror: &Path, target: &RemoteTarget, path: &str) -> Result<(), String> {
-    let marcador = marker_path(mirror);
-    if let Some(parent) = marcador.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|e| format!("falha criando {}: {e}", parent.display()))?;
-    }
     let body = serde_json::to_string_pretty(&MirrorFile {
         schema_version: SCHEMA_VERSION,
         name: target.name.clone(),
@@ -100,14 +94,16 @@ pub fn write_marker(mirror: &Path, target: &RemoteTarget, path: &str) -> Result<
         path: path.trim().trim_end_matches('/').to_owned(),
     })
     .map_err(|e| e.to_string())?;
-    fs::write(&marcador, body).map_err(|e| format!("falha gravando {}: {e}", marcador.display()))
+    crate::kinein_dir::write(mirror, MARKER, body.as_bytes())
 }
 
 /// O espelho que `root` e', se for um (marcador legivel e do schema atual).
+/// INF-20: pelo guarda do `.kinein`, que nao segue o link nem prende num
+/// FIFO; o que ele recusa vale como marcador ausente.
 #[must_use]
 pub fn read_marker(root: &Path) -> Option<RemoteMirror> {
-    let body = fs::read_to_string(marker_path(root)).ok()?;
-    let file: MirrorFile = serde_json::from_str(&body).ok()?;
+    let body = crate::kinein_dir::read(root, MARKER).ok()??;
+    let file: MirrorFile = serde_json::from_slice(&body).ok()?;
     (file.schema_version == SCHEMA_VERSION).then(|| RemoteMirror {
         name: file.name,
         host: file.host,
@@ -250,6 +246,8 @@ pub fn stays_inside(root: &Path, rel: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use super::*;
 
     fn pi() -> RemoteTarget {
@@ -309,11 +307,64 @@ mod tests {
         );
         assert_eq!(m.mirror_root, dir.display().to_string());
         fs::write(
-            marker_path(&dir),
+            dir.join(".kinein").join(MARKER),
             r#"{"schemaVersion": 9, "name": "x", "host": "h", "path": "/p"}"#,
         )
         .unwrap();
         assert!(read_marker(&dir).is_none());
+    }
+
+    /// INF-20: o marcador passa pelo guarda do `.kinein`. Ligado a um
+    /// marcador válido de fora, ou como FIFO, ele não faz do espelho um
+    /// espelho, e a leitura não prende; com o `.kinein` ligado, a gravação
+    /// recusa com o motivo e nada é criado fora.
+    #[test]
+    fn the_marker_is_read_and_written_by_the_guard() {
+        use crate::kinein_dir::{fifo, link, unblocked};
+
+        let base = std::env::temp_dir()
+            .join("kinein-remote-mirror")
+            .join(format!("{}-guarda", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        let outside = base.join("fora");
+        fs::create_dir_all(&outside).unwrap();
+        let valid = outside.join(MARKER);
+        fs::write(
+            &valid,
+            r#"{"schemaVersion": 1, "name": "pi", "host": "192.168.0.42", "path": "/p"}"#,
+        )
+        .unwrap();
+
+        let linked = base.join("marcador-ligado");
+        fs::create_dir_all(linked.join(".kinein")).unwrap();
+        if cfg!(windows) {
+            link(
+                &outside.join("ausente"),
+                &linked.join(".kinein").join(MARKER),
+            );
+        } else {
+            link(&valid, &linked.join(".kinein").join(MARKER));
+        }
+        assert!(read_marker(&linked).is_none());
+
+        let placed = base.join("fifo");
+        fs::create_dir_all(placed.join(".kinein")).unwrap();
+        let held = placed.join(".kinein").join(MARKER);
+        if fifo(&held) {
+            assert!(unblocked(&held, move || read_marker(&placed)).is_none());
+        }
+
+        let folder = base.join("pasta-ligada");
+        fs::create_dir_all(&folder).unwrap();
+        let elsewhere = base.join("outra");
+        fs::create_dir_all(&elsewhere).unwrap();
+        link(&elsewhere, &folder.join(".kinein"));
+        assert_eq!(
+            write_marker(&folder, &pi(), "/home/pi/sensor"),
+            Err(".kinein é um link simbólico, que a IDE não segue no projeto".to_owned())
+        );
+        assert_eq!(fs::read_dir(&elsewhere).unwrap().count(), 0);
+        let _ = fs::remove_dir_all(&base);
     }
 
     #[test]

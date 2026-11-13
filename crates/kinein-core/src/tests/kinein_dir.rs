@@ -15,6 +15,11 @@
 //! INF-17: o catálogo do Banco, a cópia dele e os contatos remotos gravam
 //! pelo mesmo guarda; o `datasource.save` e a sonda remota não criam nada
 //! fora do projeto pelo link.
+//!
+//! INF-20: as marcas do configure, a query do file-api, o registro da
+//! configuração e a pasta de build que o reparo remove passam pelo guarda; o
+//! `build.run` não prende num FIFO no lugar da marca do rigor, e nada de fora
+//! é gravado nem apagado pelo link.
 
 use std::{
     collections::BTreeMap,
@@ -730,5 +735,239 @@ fn the_probe_records_no_contact_through_a_link() {
             .unwrap()
             .file_type()
             .is_symlink()
+    );
+}
+
+const PRESETS_LINK: &str = ".kinein/presets é um link simbólico, que a IDE não segue no projeto";
+
+/// O `event.build.finished` do `build.run` de `root`, confiado, num core sem
+/// ferramentas. Roda pelo `unblocked`, que abre o outro lado do FIFO `held`
+/// se o build prender nele.
+fn built(root: &Path, held: &Path) -> Value {
+    let project = root.to_owned();
+    unblocked(held, move || {
+        let (sender, events) = std::sync::mpsc::channel();
+        let mut core = core_with_empty_search_path("kinein-dir-build");
+        core.enable_lsp(sender);
+        for ((method, params), id) in [
+            ("workspace.open", json!({ "path": project })),
+            ("workspace.trust", json!({})),
+            ("build.run", json!({})),
+        ]
+        .into_iter()
+        .zip(1_i64..)
+        {
+            let outcome = core.handle_request(&JsonRpcRequest::new(id, method, Some(params)));
+            let response = outcome.response();
+            assert!(response.error.is_none(), "{method}: {:?}", response.error);
+        }
+        loop {
+            let event = events.recv().unwrap();
+            if event.method == "event.build.finished" {
+                return event.params.unwrap();
+            }
+        }
+    })
+}
+
+/// INF-20 pelo IPC: com o cache do configure na `.kinein/build`, um FIFO ou
+/// um link para o que não existe no lugar da marca do rigor ou da do preset
+/// fazem o `build.run` terminar recusado com o motivo do guarda, antes do
+/// `CMake`. O build não prende no FIFO, e o alvo do link segue sem existir:
+/// antes, o build parava no `open` da marca do rigor, e o configure que deu
+/// certo gravava as duas marcas fora do projeto (medido em 2026-11-13).
+#[test]
+fn the_build_refuses_each_configure_mark_before_cmake() {
+    for marker in [".kinein-rigor", ".kinein-preset"] {
+        for placed in [Placed::Fifo, Placed::Link] {
+            if placed == Placed::Fifo && cfg!(windows) {
+                continue;
+            }
+            let case = format!("{marker} {placed:?}");
+            let dir = base(&format!("marca{marker}-{placed:?}"));
+            let root = dir.join("projeto");
+            let build = root.join(".kinein").join("build");
+            std::fs::create_dir_all(&build).unwrap();
+            std::fs::write(root.join("CMakeLists.txt"), "project(p C)\n").unwrap();
+            std::fs::write(build.join("CMakeCache.txt"), "").unwrap();
+            let path = build.join(marker);
+            let missing = dir.join("fora");
+            let expected = if placed == Placed::Fifo {
+                assert!(fifo(&path));
+                format!(".kinein/build/{marker} não é um arquivo regular")
+            } else {
+                link(&missing, &path);
+                format!(
+                    ".kinein/build/{marker} é um link simbólico, que a IDE não segue no projeto"
+                )
+            };
+            let finished = built(&root, &path);
+            assert_eq!(finished["success"], false, "{case}: {finished}");
+            let error = finished["error"].as_str().unwrap_or_default();
+            assert!(error.contains(&expected), "{case}: {finished}");
+            assert!(!missing.exists(), "{case}");
+        }
+    }
+}
+
+/// INF-20 pelo IPC: com `.kinein/presets` ligado a uma pasta de fora que tem
+/// a pasta do preset escolhido, o reparo da pasta de build recusa na prévia e
+/// ao aplicar, e o `build.run` recusa sem criar a query do file-api: nada de
+/// fora é apagado nem criado. Com o `.kinein` ligado, a volta à escolha
+/// automática não apaga o registro de fora. Antes, o reparo apagava a pasta
+/// de fora inteira, o build criava a query nela, e a volta apagava o registro
+/// (medido em 2026-11-13).
+#[test]
+fn nothing_outside_is_removed_or_created_through_a_link() {
+    let dir = base("remocoes");
+    let root = dir.join("projeto");
+    let outside = dir.join("fora");
+    let dev = outside.join("dev");
+    std::fs::create_dir_all(root.join(".kinein")).unwrap();
+    std::fs::create_dir_all(&dev).unwrap();
+    std::fs::write(root.join("CMakeLists.txt"), "project(p C)\n").unwrap();
+    std::fs::write(
+        root.join("CMakePresets.json"),
+        r#"{"version": 6, "configurePresets": [{"name": "dev"}]}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        root.join(".kinein").join("configuration.json"),
+        r#"{"preset": "dev"}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        dev.join("CMakeCache.txt"),
+        format!("CMAKE_HOME_DIRECTORY:INTERNAL={}\n", root.display()),
+    )
+    .unwrap();
+    std::fs::write(dev.join("da-pessoa.txt"), "fica").unwrap();
+    link(&outside, &root.join(".kinein").join("presets"));
+    let left = || assert_eq!(listing(&dev), ["CMakeCache.txt", "da-pessoa.txt"]);
+
+    let mut core = core_with_empty_search_path("kinein-dir-reparo");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({ "path": root })),
+    ));
+    assert_eq!(
+        opened.response().result.as_ref().unwrap()["stateProblem"],
+        PRESETS_LINK
+    );
+    for (method, id) in ["configAction.preview", "configAction.apply"]
+        .into_iter()
+        .zip(2_i64..)
+    {
+        let repaired = core.handle_request(&JsonRpcRequest::new(
+            id,
+            method,
+            Some(json!({ "id": "cmake.repairBuildDir" })),
+        ));
+        let error = repaired.response().error.as_ref();
+        assert_eq!(
+            error.map(|e| e.message.as_str()),
+            Some(PRESETS_LINK),
+            "{method}"
+        );
+        left();
+    }
+
+    let finished = built(&root, &dev);
+    let error = finished["error"].as_str().unwrap_or_default();
+    assert!(error.contains(PRESETS_LINK), "{finished}");
+    left();
+
+    let (linked, elsewhere) = linked_project("escolha");
+    std::fs::write(linked.join("CMakeLists.txt"), "project(p C)\n").unwrap();
+    std::fs::write(elsewhere.join("configuration.json"), r#"{"preset": "dev"}"#).unwrap();
+    let mut core = core_with_empty_search_path("kinein-dir-escolha");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({ "path": linked })),
+    ));
+    assert_eq!(
+        opened.response().result.as_ref().unwrap()["stateProblem"],
+        FOLDER_LINK
+    );
+    let chosen = core.handle_request(&JsonRpcRequest::new(
+        2_i64,
+        "cmake.selectConfiguration",
+        Some(json!({ "preset": null })),
+    ));
+    let message = &chosen.response().error.as_ref().unwrap().message;
+    assert!(message.contains(FOLDER_LINK), "{message}");
+    assert_eq!(
+        std::fs::read_to_string(elsewhere.join("configuration.json")).unwrap(),
+        r#"{"preset": "dev"}"#
+    );
+}
+
+/// INF-20: o que o configure que deu certo grava e apaga passa pelo guarda.
+/// Ligadas para o que não existe depois do `begin_configure`, a marca do kit
+/// e a de pendente fazem o `complete_configure` falhar com o motivo, e o alvo
+/// segue sem existir. Com `.kinein/presets` ligado, a marca do rigor e a do
+/// preset de fora não são lidas, gravadas nem apagadas, e a query do
+/// file-api recusa. Um FIFO no lugar da marca do rigor vale como perfil não
+/// anotado, sem prender.
+#[test]
+fn the_configure_records_pass_by_the_guard() {
+    let dir = base("registros");
+    let root = dir.join("projeto");
+    let outside = dir.join("fora");
+    let build = root.join(".kinein").join("build");
+    std::fs::create_dir_all(&build).unwrap();
+    std::fs::create_dir_all(&outside).unwrap();
+    for marker in [".kinein-kit", ".kinein-configure-pending"] {
+        let attempt = crate::cmake::begin_configure(&root, &build, None, "gcc").unwrap();
+        let path = build.join(marker);
+        drop(std::fs::remove_file(&path));
+        let missing = outside.join(marker);
+        link(&missing, &path);
+        assert_eq!(
+            crate::cmake::complete_configure(attempt)
+                .unwrap_err()
+                .to_string(),
+            format!(".kinein/build/{marker} é um link simbólico, que a IDE não segue no projeto")
+        );
+        assert!(!missing.exists(), "{marker}");
+        std::fs::remove_file(&path)
+            .or_else(|_| std::fs::remove_dir(&path))
+            .unwrap();
+    }
+
+    let held = build.join(".kinein-rigor");
+    if fifo(&held) {
+        assert_eq!(
+            unblocked(&held, move || crate::cmake::applied_rigor(&build)),
+            None
+        );
+    }
+
+    let dev = outside.join("dev");
+    std::fs::create_dir_all(&dev).unwrap();
+    std::fs::write(dev.join(".kinein-rigor"), "strict\n").unwrap();
+    std::fs::write(dev.join(".kinein-preset"), "dev\n").unwrap();
+    link(&outside, &root.join(".kinein").join("presets"));
+    let linked = root.join(".kinein").join("presets").join("dev");
+    assert_eq!(crate::cmake::applied_rigor(&linked), None);
+    crate::cmake::record_rigor(&linked, kinein_protocol::RigorProfile::Relaxed);
+    crate::cmake::record_preset(&linked, Some("outro"));
+    crate::cmake::record_preset(&linked, None);
+    assert_eq!(
+        crate::cmake::write_file_api_query(&linked)
+            .unwrap_err()
+            .to_string(),
+        PRESETS_LINK
+    );
+    assert_eq!(listing(&dev), [".kinein-preset", ".kinein-rigor"]);
+    assert_eq!(
+        std::fs::read_to_string(dev.join(".kinein-rigor")).unwrap(),
+        "strict\n"
+    );
+    assert_eq!(
+        std::fs::read_to_string(dev.join(".kinein-preset")).unwrap(),
+        "dev\n"
     );
 }

@@ -8,7 +8,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::cmake_configuration::{Attempt, KIT_MARKER, PENDING_MARKER, pending};
+use crate::cmake_configuration::{
+    Attempt, KIT_MARKER, PENDING_MARKER, PRESET_MARKER, RIGOR_MARKER, pending, remove_marker,
+    write_marker,
+};
 
 /// The lock of a configure, in the folder of the configuration.
 const LOCK_FILE: &str = ".kinein-configure-lock";
@@ -36,10 +39,17 @@ pub fn begin_configure(
 ) -> io::Result<ConfigureAttempt> {
     // INF-13: a pasta de build da IDE mora no `.kinein`; com ele, ela ou um
     // marcador ligados, o CMake e a IDE gravariam fora do projeto. Cada
-    // marcador confere tambem cada pasta acima dele.
+    // marcador confere tambem cada pasta acima dele. INF-20: o do preset e o
+    // do rigor, que o configure que deu certo grava, tambem.
     if let Ok(relative) = directory.strip_prefix(root.join(crate::kinein_dir::WORKSPACE_DIR)) {
         let relative = relative.to_string_lossy().replace('\\', "/");
-        for marker in [PENDING_MARKER, KIT_MARKER, LOCK_FILE] {
+        for marker in [
+            PENDING_MARKER,
+            KIT_MARKER,
+            LOCK_FILE,
+            PRESET_MARKER,
+            RIGOR_MARKER,
+        ] {
             let inside = format!("{relative}/{marker}");
             if let Some(problem) = crate::kinein_dir::problem(root, &inside, false) {
                 return Err(io::Error::other(problem));
@@ -52,7 +62,7 @@ pub fn begin_configure(
         preset: preset.map(str::to_owned),
         kit: kit.to_owned(),
     })?;
-    fs::write(directory.join(PENDING_MARKER), bytes)?;
+    write_marker(directory, PENDING_MARKER, &bytes)?;
     super::select_configuration(root, preset)?;
     Ok(ConfigureAttempt {
         directory: directory.to_owned(),
@@ -64,11 +74,12 @@ pub fn begin_configure(
 /// Only a successful configure may restore current evidence. The record of
 /// the active configuration stays: until C1-20 it was removed here.
 pub fn complete_configure(attempt: ConfigureAttempt) -> io::Result<()> {
-    fs::write(
-        attempt.directory.join(KIT_MARKER),
-        format!("{}\n", attempt.kit),
+    write_marker(
+        &attempt.directory,
+        KIT_MARKER,
+        format!("{}\n", attempt.kit).as_bytes(),
     )?;
-    let result = fs::remove_file(attempt.directory.join(PENDING_MARKER));
+    let result = remove_marker(&attempt.directory, PENDING_MARKER);
     drop(attempt);
     result
 }

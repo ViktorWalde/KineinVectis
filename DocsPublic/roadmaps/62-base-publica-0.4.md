@@ -200,8 +200,8 @@ transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-13: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
-INF-14, INF-15 e INF-17 corrigidos; INF-06, INF-16, INF-18, INF-19, UI-01 e
-UI-02 abertos. A dívida
+INF-14, INF-15, INF-17 e INF-20 corrigidos; INF-06, INF-16, INF-18, INF-19,
+UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -937,7 +937,10 @@ auditorias e provas posteriores datadas nos donos:**
   leitura que volta a ler direto. Medido de novo com o core corrigido, os 44
   casos e o FIFO no lugar de cada marca respondem todos, sem processo parado
   no `open`, e o `session.json` e o `python.json` ligados não são usados
-  ([40.7](40.7-registro-das-entregas.md) §7.413). Estado corrigido.
+  ([40.7](40.7-registro-das-entregas.md) §7.413). O pronto do 63 (nenhuma
+  leitura do `.kinein` fora do `kinein_dir`) não se cumpriu para o
+  `.kinein-rigor` e o `remote-mirror.json`, achados depois: INF-20. Estado
+  corrigido.
 - **INF-16 — Mapa de módulos conta o `tests.rs` de um módulo como código.**
   Dono e evidência: `scripts/module_map.py`, que exclui só os caminhos com uma
   pasta `tests` (linha 267). Achado em 2026-11-12, no INF-13: o mapa deu ao
@@ -1033,6 +1036,75 @@ auditorias e provas posteriores datadas nos donos:**
   leitura. Decisão do autor de 2026-11-13: o limite de cada arquivo é
   declarado no catálogo do ENG-02, e o LCOV entra nele com o limite dele,
   lido de volta pelo guarda (63 §0, D-14, e §E.2). Estado aberto.
+- **INF-20 — Marcas do configure, remoções e marcador do espelho fora do
+  guarda do `.kinein`.** Dono e evidência: `cmake/rigor.rs` (`applied_rigor`,
+  que o `needs_configure` do `build.run` chama, e `record_rigor`: o
+  `.kinein-rigor` com `fs::read_to_string` e `fs::write`), `cmake/mod.rs`
+  (`record_preset`, que grava e apaga o `.kinein-preset`, e
+  `write_file_api_query`, que cria a query do file-api), `cmake/attempt.rs`
+  (as marcas da tentativa e do kit gravadas e apagadas com `fs`, depois da
+  conferência), `cmake_configuration.rs` (`select_configuration` sem preset
+  apaga o `.kinein/configuration.json` com `fs::remove_file`),
+  `configaction/builddir.rs` (o reparo apaga a pasta de build da IDE com
+  `fs::remove_dir_all`, depois de uma conferência só do caminho) e
+  `remote/mirror.rs` (`read_marker` e `write_marker`: o
+  `.kinein/remote-mirror.json` com `fs`). Achado em 2026-11-13, na abertura
+  do INF-18, listando as leituras e as escritas de produção do core; as
+  remoções, a query e as marcas da tentativa e do kit, na abertura deste
+  item, listando as escritas e as remoções. Medido nessa data, com o core do
+  deb3ed5b e pastas isoladas: com o cache do configure presente, um FIFO no
+  lugar do `.kinein-rigor` prende o `build.run` no `open`, sem fim; com a
+  marca do rigor ligada para fora, o configure que deu certo grava `strict`
+  no alvo, e com a do preset ligada e um preset escolhido, grava `dev`; com
+  `.kinein/presets` ligado a uma pasta de fora, o `cmake.repairBuildDir`
+  responde sem erro e apaga lá fora a pasta do preset inteira, com o arquivo
+  da pessoa dentro, e o `build.run` cria nela a query do file-api antes de
+  recusar; com o `.kinein` ligado, o `cmake.selectConfiguration` sem preset
+  apaga o `configuration.json` de fora. Com o `.kinein` ou o `.kinein/build`
+  ligados, o reparo já recusava, pela leitura guardada do INF-15; um FIFO no
+  lugar do `kinein.db` ou de um arquivo do `SQLite` ao lado dele não prende a
+  abertura (o `kinein_dir::file` recusa). O marcador do espelho só é lido e
+  gravado no espelho que a IDE cria no cache dela, e o `.kinein` não
+  sincroniza com o alvo: só um arquivo posto ali à mão o alcança; lido no
+  código. Severidade alta, a do INF-13 e do INF-15, e maior no reparo, que
+  apaga fora do projeto: o repositório clonado traz o `.kinein`; baixa para o
+  marcador do espelho. Causa: os donos recebem a pasta de build ou a raiz do
+  espelho e montam o caminho à mão, e o guarda não tinha remoção; escaparam
+  às listas do INF-13 e do INF-15, feitas por medida e por leitura. Testes:
+  o FIFO e o link no lugar de cada marca no build, com prazo; o reparo, o
+  build e a volta à escolha automática pelo link, com a pasta de fora
+  intacta; o marcador do espelho ligado e como FIFO; com mutações. Decisões
+  do autor de 2026-11-13: entra logo, num commit próprio, antes do INF-18;
+  na abertura, o item cobre também as remoções, a query e as marcas da
+  tentativa e do kit ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §0,
+  D-15, e §E.2). Corrigido em 2026-11-13: o guarda ganha o
+  `kinein_dir::remove`, que confere o caminho como a escrita; as marcas e a
+  query passam por dois ajudantes do `cmake_configuration.rs`, pelo guarda
+  dentro do `.kinein` e como antes numa pasta do projeto fora dele; o
+  `begin_configure` confere também a marca do preset e a do rigor; o
+  registro da configuração e a pasta do reparo são apagados pelo guarda, e o
+  reparo confere o caminho na prévia e ao aplicar; o marcador do espelho
+  passa pelo guarda. Medido de novo com o core corrigido: o build com o FIFO
+  termina recusado com o motivo, sem thread parada, e cada caso de antes
+  recusa com o motivo, sem gravar nem apagar fora. A varredura das escritas e
+  remoções de produção não achou outra que saia do projeto: o
+  `runconfigs.json`, o export do toolchain e os consoles do Banco conferem o
+  caminho por conta própria, e o literal que sobra fora do guarda é a
+  migração do ENG-02. Provas: pelo IPC, o `build.run` com o FIFO e o link no
+  lugar da marca do rigor e da do preset, recusado antes do CMake e sem
+  prender; o reparo, o build e a volta à escolha automática com
+  `.kinein/presets` ou o `.kinein` ligados, com a pasta de fora intacta; no
+  dono, o `kinein_dir::remove` com o `.kinein`, uma pasta no meio e o
+  arquivo ligados, a entrada do tipo errado e o FIFO; as marcas da tentativa
+  e do kit ligadas depois do `begin_configure`; as marcas do rigor e do
+  preset e a query com `.kinein/presets` ligado; o marcador do espelho
+  ligado, como FIFO e com o `.kinein` ligado. Dezoito mutantes que compilam:
+  dezesseis reprovados e dois equivalentes, a marca da tentativa gravada e a
+  pasta do reparo apagada direto. Eles vêm logo depois da conferência do
+  guarda na mesma função, que recusa antes de gravar e faz a prévia recusar
+  como a aplicação, e só uma corrida os separa; a forma deles, o dono que
+  monta o caminho à mão, é um mutante que o ENG-02 tem de reprovar
+  ([40.7](40.7-registro-das-entregas.md) §7.415). Estado corrigido.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`

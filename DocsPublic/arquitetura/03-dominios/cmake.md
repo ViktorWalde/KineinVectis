@@ -195,7 +195,10 @@ pasta da IDE (`.kinein/build`, `.kinein/presets/<p>`) é removida como antes.
 Uma pasta de preset só é removida se tiver `CMakeCache.txt` cujo
 `CMAKE_HOME_DIRECTORY` é a raiz do projeto e se não for a raiz nem a contiver;
 o build in-source é recusado. A prévia mostra o caminho absoluto (decisão do
-autor de 2026-11-09).
+autor de 2026-11-09). Uma pasta no `.kinein` passa pelo guarda dele (INF-20):
+com o `.kinein`, uma pasta no caminho ou a própria pasta ligados, ou com uma
+entrada no caminho que não é pasta, a prévia e a aplicação recusam com o
+motivo, e nada de fora é apagado.
 
 **CDB em uso e configuração escolhida (`0.206.0`, C-05).** O `cdb::status`
 decide a CDB em uso nesta ordem: `.clangd` da raiz que fixa

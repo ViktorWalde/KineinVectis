@@ -103,7 +103,9 @@ fora de `[A-Za-z0-9_@%+=:,./-]`, com o `~/` do começo fora delas. O
 `remote.trustHost` recusa quando o `known_hosts` já tem chave para o host
 (`ssh-keygen -F`): confiar é só o primeiro contato. O marcador
 `.kinein/remote-mirror.json` só faz de uma pasta um espelho dentro do cache
-da IDE (`<cache>/kinein-vectis/remote/`), onde o `remote.open` o cria.
+da IDE (`<cache>/kinein-vectis/remote/`), onde o `remote.open` o cria. Ele é
+lido e gravado pelo guarda do `.kinein` (INF-20): ligado ou como FIFO, não
+faz da pasta um espelho, e a leitura não espera.
 Os caminhos também não saem (16.4c): a origem do `remote.deploy`, resolvida
 com os links, tem de ficar dentro da raiz do projeto (`..`, absoluta ou link
 para fora: `INVALID_REQUEST`, "fica fora do projeto"), e os `paths` do

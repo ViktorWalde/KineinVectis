@@ -191,11 +191,16 @@ o core grava em `.kinein/` (`workspace.json`, `session.json`, `kinein.db`,
 `python.json`, `coverage.lcov`, a pasta de build do CMake e os marcadores
 dela, além do `settings.json` e do `runconfigs.json`, que já recusavam, e,
 desde o INF-17, do `datasources.json`, da cópia `datasources.schema1.json` e
-do `remote-contacts.json`) passa por um guarda só: o `.kinein`, cada pasta abaixo dele
+do `remote-contacts.json`, e, desde o INF-20, das marcas do rigor e do preset,
+da query do file-api e do `remote-mirror.json` do espelho) passa por um
+guarda só: o `.kinein`, cada pasta abaixo dele
 e o arquivo têm de estar ausentes ou ser o que dizem, e nenhum pode ser link
 simbólico. O que não passa não é gravado, e nada é criado nem mudado fora do
 projeto; a escrita que passa troca o arquivo de forma atômica, sem seguir
-link. O projeto abre assim mesmo: a resposta de `workspace.open` (e a de
+link. O que o core apaga ali passa pelo mesmo guarda (INF-20): o
+`configuration.json` na volta à escolha automática, as marcas do configure e
+a pasta de build que o reparo remove; o que não passa não é apagado, e nada
+de fora some. O projeto abre assim mesmo: a resposta de `workspace.open` (e a de
 `workspace.createProject`) ganha o campo opcional `stateProblem`, com o
 caminho a partir do projeto e o motivo, por exemplo
 `".kinein é um link simbólico, que a IDE não segue no projeto"`. Ele diz o
@@ -212,8 +217,9 @@ projeto, sem botão: quem resolve é a pessoa, trocando o link por uma pasta.
 dali (o `session.json`, o `toolchain.json`, o `configuration.json`, o
 `python.json`, o `settings.json`, o `remotes.json`, o `remote-contacts.json`,
 o `grafana.json`, o `runconfigs.json`, o `datasources.json` e a cópia
-`datasources.schema1.json`, e as marcas do configure quando a pasta de build
-está no `.kinein`) passa pelo mesmo guarda. Cada componente é aberto sem
+`datasources.schema1.json`, as marcas do configure quando a pasta de build
+está no `.kinein`, com a do rigor desde o INF-20, e o `remote-mirror.json` do
+espelho) passa pelo mesmo guarda. Cada componente é aberto sem
 seguir link e sem bloquear, e o descritor tem de ser pasta no meio e arquivo
 regular no fim, de até 1 MiB. O que não passa não é lido, e nenhum pedido
 espera por ele: um FIFO no lugar do arquivo não prende o core. O motivo vem

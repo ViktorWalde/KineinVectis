@@ -15,8 +15,9 @@ mod preset_selection;
 mod rigor;
 
 pub use crate::cmake_configuration::{
-    Configuration, Refusal, active_configuration, active_dir, configuration_dir, configurations,
-    ide_build_dir, label, owned_by_ide, select_configuration, selected_configuration,
+    Configuration, Refusal, active_configuration, active_dir, configuration_dir,
+    configuration_dir_problem, configurations, ide_build_dir, label, owned_by_ide,
+    remove_configuration_dir, select_configuration, selected_configuration,
 };
 pub use crate::cmake_presets::{PresetDefault, default_preset, list_presets};
 pub use attempt::{
@@ -33,7 +34,9 @@ use std::{
 
 use kinein_protocol::{CmakeTargetInfo, ToolchainRole};
 
-use crate::cmake_configuration::{PRESET_MARKER, annotated_preset, last_kit, pending};
+use crate::cmake_configuration::{
+    PRESET_MARKER, annotated_preset, last_kit, pending, remove_marker, write_marker,
+};
 
 /// Maximo de targets repassados a UI por request.
 const MAX_TARGETS: usize = 200;
@@ -122,11 +125,15 @@ pub fn status(root: &Path) -> CmakeStatus {
 }
 
 /// Anota (ou apaga) o preset usado num configure que TERMINOU com sucesso.
+/// INF-20: no `.kinein`, pelo guarda dele, que nao segue o link.
 pub fn record_preset(directory: &Path, preset: Option<&str>) {
-    let marker = directory.join(PRESET_MARKER);
     match preset {
-        Some(p) => drop(fs::write(marker, format!("{p}\n"))),
-        None => drop(fs::remove_file(marker)),
+        Some(p) => drop(write_marker(
+            directory,
+            PRESET_MARKER,
+            format!("{p}\n").as_bytes(),
+        )),
+        None => drop(remove_marker(directory, PRESET_MARKER)),
     }
 }
 
@@ -150,18 +157,16 @@ pub fn configure_notes(root: &Path, directory: &Path, preset: Option<&str>) -> V
 
 /// Escreve a query `codemodel-v2` do file-api antes do configure, para o
 /// `CMake` responder com os targets em `.cmake/api/v1/reply`.
+///
+/// INF-20: no `.kinein`, pelo guarda dele; com `.kinein/presets` ligado, o
+/// build criava a query na pasta de fora antes de recusar (medido em
+/// 2026-11-13).
 pub fn write_file_api_query(directory: &Path) -> io::Result<()> {
-    let query = directory
-        .join(".cmake")
-        .join("api")
-        .join("v1")
-        .join("query");
-    fs::create_dir_all(&query)?;
     // A toolchains-v1 (CMake >= 3.20) da' o compilador de cada linguagem com
     // versao e includes implicitos: e' o que preenche a unidade de compilacao
     // de um arquivo quando nao ha' compile_commands.json (cmake/model.rs).
-    fs::write(query.join("toolchains-v1"), "")?;
-    fs::write(query.join("codemodel-v2"), "")
+    write_marker(directory, ".cmake/api/v1/query/toolchains-v1", b"")?;
+    write_marker(directory, ".cmake/api/v1/query/codemodel-v2", b"")
 }
 
 /// Monta o comando de configure com a CDB exportada e o `-B` da pasta da

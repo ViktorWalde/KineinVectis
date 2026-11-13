@@ -27,6 +27,9 @@ pub(crate) const PRESET_MARKER: &str = ".kinein-preset";
 pub(crate) const PENDING_MARKER: &str = ".kinein-configure-pending";
 /// The kit the last successful configure of a folder used (C1-13).
 pub(crate) const KIT_MARKER: &str = ".kinein-kit";
+/// The rigor profile the last successful configure of a folder used (M4.5):
+/// the build reconfigures only when the chosen profile changed.
+pub(crate) const RIGOR_MARKER: &str = ".kinein-rigor";
 
 /// The folder of a configure without preset, and of every configure before
 /// C-04.
@@ -310,8 +313,68 @@ pub(crate) fn pending(directory: &Path) -> Result<Option<Attempt>, String> {
 }
 
 /// The text of the marker `name`, when it can be read as UTF-8.
-fn marker_text(directory: &Path, name: &str) -> Option<String> {
+pub(crate) fn marker_text(directory: &Path, name: &str) -> Option<String> {
     String::from_utf8(marker(directory, name).ok()??).ok()
+}
+
+/// Writes the file `name` the IDE keeps in the configure folder `directory`,
+/// a marker or the file-api query, whose `name` has `/`, with the folders
+/// above it. Inside the `.kinein`, by its guard (INF-20); a folder of the
+/// project outside it is written as it is.
+///
+/// # Errors
+/// The refusal of the guard, or the disk.
+pub(crate) fn write_marker(directory: &Path, name: &str, bytes: &[u8]) -> io::Result<()> {
+    if let Some((root, relative)) = crate::kinein_dir::inside(directory) {
+        return crate::kinein_dir::write(root, &format!("{relative}/{name}"), bytes)
+            .map_err(io::Error::other);
+    }
+    let path = directory.join(name);
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(path, bytes)
+}
+
+/// Removes the marker `name` of the configure folder `directory`; absent is
+/// done. Inside the `.kinein`, by its guard (INF-20); a folder of the project
+/// outside it, as it is.
+///
+/// # Errors
+/// The refusal of the guard, or the disk.
+pub(crate) fn remove_marker(directory: &Path, name: &str) -> io::Result<()> {
+    if let Some((root, relative)) = crate::kinein_dir::inside(directory) {
+        return crate::kinein_dir::remove(root, &format!("{relative}/{name}"), false)
+            .map_err(io::Error::other);
+    }
+    match fs::remove_file(directory.join(name)) {
+        Err(error) if error.kind() != io::ErrorKind::NotFound => Err(error),
+        _ => Ok(()),
+    }
+}
+
+/// Why the IDE does not remove the configure folder `directory`: inside the
+/// `.kinein`, the problem its guard finds on the way (INF-20). `None` for a
+/// folder of the project outside it.
+#[must_use]
+pub fn configuration_dir_problem(directory: &Path) -> Option<String> {
+    let (root, relative) = crate::kinein_dir::inside(directory)?;
+    crate::kinein_dir::problem(root, &relative, true)
+}
+
+/// Removes the configure folder `directory` and everything in it.
+///
+/// Inside the `.kinein`, by its guard: with `.kinein/presets` linked, the
+/// repair removed the folder outside the project (measured on 2026-11-13,
+/// INF-20). A folder of the project outside it is removed as it is.
+///
+/// # Errors
+/// The refusal of the guard, or the disk.
+pub fn remove_configuration_dir(directory: &Path) -> io::Result<()> {
+    if let Some((root, relative)) = crate::kinein_dir::inside(directory) {
+        return crate::kinein_dir::remove(root, &relative, true).map_err(io::Error::other);
+    }
+    fs::remove_dir_all(directory)
 }
 
 /// The preset the IDE configured `directory` with, for a configured folder.
@@ -335,6 +398,10 @@ struct Record {
     preset: String,
 }
 
+/// The record of the active configuration, for the tests: the owner reads,
+/// writes and removes it by the guard of the `.kinein` (INF-13, INF-15 and
+/// INF-20).
+#[cfg(test)]
 fn record_path(root: &Path) -> PathBuf {
     root.join(".kinein").join("configuration.json")
 }
@@ -370,12 +437,11 @@ pub fn selected_configuration(root: &Path) -> Result<Option<String>, String> {
 /// # Errors
 /// The record cannot be written or removed.
 pub fn select_configuration(root: &Path, preset: Option<&str>) -> io::Result<()> {
-    let path = record_path(root);
     let Some(preset) = preset else {
-        return match fs::remove_file(&path) {
-            Err(error) if error.kind() != io::ErrorKind::NotFound => Err(error),
-            _ => Ok(()),
-        };
+        // INF-20: pelo guarda do `.kinein`; com ele ligado, a remocao
+        // apagava o registro da pasta de fora.
+        return crate::kinein_dir::remove(root, "configuration.json", false)
+            .map_err(io::Error::other);
     };
     let body = serde_json::to_vec_pretty(&Record {
         preset: preset.to_owned(),

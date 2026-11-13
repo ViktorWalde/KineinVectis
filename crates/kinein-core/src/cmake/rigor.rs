@@ -7,7 +7,6 @@
 //! a anotacao do perfil aplicado e a decisao de reconfigurar.
 
 use std::{
-    fs,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -15,10 +14,7 @@ use std::{
 use kinein_protocol::{RigorProfile, ToolchainRole};
 
 use super::configure_command;
-
-/// O arquivo em que a IDE anota o perfil de rigor do ultimo configure
-/// (M4.5): o build so' reconfigura quando o perfil escolhido mudou.
-const RIGOR_MARKER: &str = ".kinein-rigor";
+use crate::cmake_configuration::{RIGOR_MARKER, marker_text, write_marker};
 
 /// A chave estavel de um perfil, a mesma do `settings.json`.
 #[must_use]
@@ -86,19 +82,22 @@ fn version_at_least(version_text: &str, major: u32, minor: u32) -> bool {
 }
 
 /// O perfil com que a pasta foi configurada da ultima vez, se anotado.
+/// INF-20: no `.kinein`, pelo guarda dele, que nao segue o link nem prende
+/// num FIFO; o que ele recusa vale como perfil nao anotado.
 #[must_use]
 pub fn applied_rigor(directory: &Path) -> Option<String> {
-    fs::read_to_string(directory.join(RIGOR_MARKER))
-        .ok()
+    marker_text(directory, RIGOR_MARKER)
         .map(|text| text.trim().to_owned())
         .filter(|text| !text.is_empty())
 }
 
-/// Anota o perfil de um configure que deu certo na pasta.
+/// Anota o perfil de um configure que deu certo na pasta. INF-20: no
+/// `.kinein`, pelo guarda dele, que nao segue o link.
 pub fn record_rigor(directory: &Path, profile: RigorProfile) {
-    drop(fs::write(
-        directory.join(RIGOR_MARKER),
-        format!("{}\n", rigor_key(profile)),
+    drop(write_marker(
+        directory,
+        RIGOR_MARKER,
+        format!("{}\n", rigor_key(profile)).as_bytes(),
     ));
 }
 
