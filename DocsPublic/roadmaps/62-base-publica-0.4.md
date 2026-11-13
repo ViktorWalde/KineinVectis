@@ -200,7 +200,7 @@ transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
 e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-13: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
-INF-14 e INF-15 corrigidos; INF-06, INF-16, INF-17, INF-18, INF-19, UI-01 e
+INF-14, INF-15 e INF-17 corrigidos; INF-06, INF-16, INF-18, INF-19, UI-01 e
 UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
@@ -975,7 +975,24 @@ auditorias e provas posteriores datadas nos donos:**
   dono, com a pasta de fora vazia no fim, com mutações. Decisão do autor de
   2026-11-12: a regra do INF-13 (`kinein_dir::write`), num commit próprio
   logo depois do INF-15, antes do ENG-01
-  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.1). Estado aberto.
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.1). Desde o INF-15, a
+  leitura guardada antes de gravar já recusava o `.kinein` e o catálogo
+  ligados; o `remote-contacts.json`, que vale como vazio quando recusado,
+  seguia gravado pelo link. Corrigido em 2026-11-13: o catálogo, a cópia e os
+  contatos gravam pelo `kinein_dir::write`, todo o catálogo por um ajudante
+  só; a conferência própria e a criação de pasta do dono saíram, e o erro da
+  cópia recusada passa a trazer o motivo do guarda. Provas: pelo IPC, o
+  `datasource.save` com o `.kinein`, o catálogo e a cópia ligados, e a sonda
+  remota com o `ssh` falso e o `remote-contacts.json` ligado, com a pasta de
+  fora vazia no fim; no dono, o ajudante com o `.kinein` e cada arquivo
+  ligados, a restauração da migração com o `.kinein` trocado por um link no
+  meio, e o contato com o `.kinein` e o arquivo ligados. Seis mutantes que
+  compilam: quatro reprovados (o ajudante, a restauração, o motivo da cópia
+  e os contatos gravando direto) e dois equivalentes, a gravação principal e
+  a da cópia gravando direto, porque a leitura guardada do mesmo caminho vem
+  antes e só uma corrida os separa; a conferência de vocabulário do ENG-02
+  pega esse desvio ([40.7](40.7-registro-das-entregas.md) §7.414). Estado
+  corrigido.
 - **INF-18 — Arquivos do projeto e das pastas de build lidos sem conferir o
   tipo: o FIFO prende o core.** Dono e evidência: as leituras que não são de
   arquivo próprio do `.kinein`. Achado em 2026-11-12, na abertura do
@@ -995,8 +1012,13 @@ auditorias e provas posteriores datadas nos donos:**
   `CMakeLists.txt` na abertura está por confirmar. Testes: o FIFO no lugar
   de cada arquivo que a abertura e o status do CMake leem, sem prender. A
   regra R-DADOS-02 do [63](63-regras-e-plano-de-engenharia-da-0.4.md) cobre
-  só o `.kinein`: decisão do autor pendente sobre a regra, o desenho e a
-  ordem. Estado aberto.
+  só o `.kinein`. Decisões do autor de 2026-11-13: o `CMakeLists.txt` e os
+  outros arquivos do sistema de build são a verdade do projeto, e o
+  `.kinein` só complementa, sem atrapalhar nem tomar o lugar deles; a regra
+  nova R-DADOS-04 lê o arquivo do projeto e o da ferramenta como o sistema
+  de build os lê, seguindo o link e sem limite próprio, e só evita que a
+  leitura prenda e diz o motivo; o item entra logo depois do INF-17, antes
+  do ENG-01 (63 §0, D-14, e §E.2). Estado aberto.
 - **INF-19 — LCOV da cobertura lido fora do `kinein_dir`.** Dono e
   evidência: `coverage/mod.rs` (`run`), que lê o `.kinein/coverage.lcov` com
   `fs::read_to_string`, sem limite, depois que a ferramenta o grava. Achado em
@@ -1008,8 +1030,9 @@ auditorias e provas posteriores datadas nos donos:**
   baixa: o arquivo é da ferramenta que a IDE acabou de rodar. Causa: o
   `kinein_dir` não tem limite por arquivo. Testes: o LCOV acima de 1 MiB
   lido inteiro; o link e o FIFO no lugar dele entre a ferramenta e a
-  leitura. Decisão do autor pendente: o limite e a ordem (o catálogo do
-  ENG-02 declara cada arquivo). Estado aberto.
+  leitura. Decisão do autor de 2026-11-13: o limite de cada arquivo é
+  declarado no catálogo do ENG-02, e o LCOV entra nele com o limite dele,
+  lido de volta pelo guarda (63 §0, D-14, e §E.2). Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`

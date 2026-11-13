@@ -9,8 +9,7 @@
 //! configurou); este e' o que a IDE OBSERVOU, e se perde sem prejuizo.
 
 use std::{
-    fs,
-    path::{Path, PathBuf},
+    path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -25,10 +24,6 @@ struct ContactsFile {
     schema_version: u32,
     #[serde(default)]
     contacts: Vec<RemoteContact>,
-}
-
-fn path_for(root: &Path) -> PathBuf {
-    root.join(".kinein").join("remote-contacts.json")
 }
 
 /// Os contatos; ausente ou invalido = nenhum.
@@ -46,17 +41,18 @@ pub fn load(root: &Path) -> Vec<RemoteContact> {
 }
 
 fn store(root: &Path, contacts: Vec<RemoteContact>) {
-    let path = path_for(root);
-    if let Some(parent) = path.parent() {
-        let _ = fs::create_dir_all(parent);
-    }
     let file = ContactsFile {
         schema_version: SCHEMA_VERSION,
         contacts,
     };
-    // Observacao, nao perfil: falhar em gravar nao derruba a sonda.
+    // Observacao, nao perfil: falhar em gravar nao derruba a sonda. INF-17:
+    // pelo guarda do `.kinein`, que nao segue o link.
     if let Ok(body) = serde_json::to_string_pretty(&file) {
-        let _ = fs::write(path, body);
+        drop(crate::kinein_dir::write(
+            root,
+            "remote-contacts.json",
+            body.as_bytes(),
+        ));
     }
 }
 
@@ -140,5 +136,39 @@ mod tests {
         forget(&root, "pi");
         assert_eq!(load(&root).len(), 1);
         std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    /// INF-17: o contato e' gravado pelo guarda do `.kinein`. Com o `.kinein`
+    /// ligado a uma pasta de fora, ou com o arquivo ligado ao que nao existe,
+    /// a sonda segue sem gravar, e nada e' criado fora.
+    #[test]
+    fn a_contact_is_not_recorded_through_a_link() {
+        use crate::kinein_dir::link;
+
+        let base = std::env::temp_dir()
+            .join("kinein-remote-contacts")
+            .join(format!("{}-ligados", std::process::id()));
+        drop(std::fs::remove_dir_all(&base));
+        let outside = base.join("fora");
+        std::fs::create_dir_all(&outside).unwrap();
+
+        let folder = base.join("pasta-ligada");
+        std::fs::create_dir_all(&folder).unwrap();
+        link(&outside, &folder.join(".kinein"));
+        record(&folder, contact("pi", true));
+        assert_eq!(std::fs::read_dir(&outside).unwrap().count(), 0);
+
+        let file = base.join("arquivo-ligado");
+        std::fs::create_dir_all(file.join(".kinein")).unwrap();
+        let placed = file.join(".kinein").join("remote-contacts.json");
+        link(&outside.join("contatos"), &placed);
+        record(&file, contact("pi", true));
+        assert_eq!(std::fs::read_dir(&outside).unwrap().count(), 0);
+        assert!(
+            std::fs::symlink_metadata(&placed)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
     }
 }

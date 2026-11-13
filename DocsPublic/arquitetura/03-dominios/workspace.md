@@ -189,8 +189,9 @@ IO ao persistir, listar ou criar diretorios retorna `INTERNAL_ERROR`.
 o core grava em `.kinein/` (`workspace.json`, `session.json`, `kinein.db`,
 `toolchain.json`, `remotes.json`, `grafana.json`, `configuration.json`,
 `python.json`, `coverage.lcov`, a pasta de build do CMake e os marcadores
-dela, além do `settings.json`, do `runconfigs.json` e do `datasources.json`,
-que já recusavam) passa por um guarda só: o `.kinein`, cada pasta abaixo dele
+dela, além do `settings.json` e do `runconfigs.json`, que já recusavam, e,
+desde o INF-17, do `datasources.json`, da cópia `datasources.schema1.json` e
+do `remote-contacts.json`) passa por um guarda só: o `.kinein`, cada pasta abaixo dele
 e o arquivo têm de estar ausentes ou ser o que dizem, e nenhum pode ser link
 simbólico. O que não passa não é gravado, e nada é criado nem mudado fora do
 projeto; a escrita que passa troca o arquivo de forma atômica, sem seguir

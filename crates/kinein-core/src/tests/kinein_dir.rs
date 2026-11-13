@@ -11,6 +11,10 @@
 //! 1 MiB; o `workspace.open` e os pedidos do dono respondem, nada de fora é
 //! usado, e o motivo aparece como o do INF-13. Os pedidos rodam com prazo, e
 //! o teste abre o outro lado do FIFO se a leitura prender.
+//!
+//! INF-17: o catálogo do Banco, a cópia dele e os contatos remotos gravam
+//! pelo mesmo guarda; o `datasource.save` e a sonda remota não criam nada
+//! fora do projeto pelo link.
 
 use std::{
     collections::BTreeMap,
@@ -20,7 +24,10 @@ use std::{
 
 use serde_json::{Value, json};
 
-use super::core_with_empty_search_path;
+use super::{
+    core_with_empty_search_path,
+    remote::{scenario, write_tool},
+};
 use crate::kinein_dir::{fifo, link, unblocked};
 use kinein_protocol::{JsonRpcRequest, ProjectKind};
 
@@ -617,4 +624,111 @@ fn the_configured_preset_mark_is_read_by_the_guard() {
 #[test]
 fn the_configured_kit_mark_is_read_by_the_guard() {
     each_placement(&KIT_MARK);
+}
+
+/// INF-17 pelo IPC: o `datasource.save` com o `.kinein` ligado a uma pasta de
+/// fora, com o catálogo ligado ao que não existe, ou com a cópia do schema 1
+/// ligada numa migração, falha com o motivo do guarda e não cria nada fora;
+/// com o `.kinein` de verdade, grava no projeto.
+#[test]
+fn the_data_source_save_writes_nothing_through_a_link() {
+    let save = |root: &Path| {
+        let mut core = core_with_empty_search_path("kinein-dir-banco");
+        let opened = core.handle_request(&JsonRpcRequest::new(
+            1_i64,
+            "workspace.open",
+            Some(json!({ "path": root })),
+        ));
+        assert!(opened.response().result.is_some(), "{opened:?}");
+        let saved = core.handle_request(&JsonRpcRequest::new(
+            2_i64,
+            "datasource.save",
+            Some(serde_json::from_str(SAVE_PROFILE).unwrap()),
+        ));
+        saved.response().clone()
+    };
+
+    let root = base("banco-controle").join("projeto");
+    std::fs::create_dir_all(&root).unwrap();
+    let saved = save(&root);
+    assert!(saved.error.is_none(), "{saved:?}");
+    let catalogue = root.join(".kinein").join("datasources.json");
+    assert!(
+        std::fs::read_to_string(catalogue)
+            .unwrap()
+            .contains("copia-marca")
+    );
+
+    let (root, outside) = linked_project("banco-pasta");
+    let message = save(&root).error.unwrap().message;
+    assert!(message.contains(FOLDER_LINK), "{message}");
+    assert_eq!(listing(&outside), Vec::<String>::new());
+
+    for (file, before) in [
+        ("datasources.json", None),
+        ("datasources.schema1.json", Some(LEGACY_CATALOGUE)),
+    ] {
+        let dir = base(&format!("banco-{file}"));
+        let root = dir.join("projeto");
+        let state = root.join(".kinein");
+        std::fs::create_dir_all(&state).unwrap();
+        if let Some(body) = before {
+            std::fs::write(state.join("datasources.json"), body).unwrap();
+        }
+        let missing = dir.join("fora");
+        link(&missing, &state.join(file));
+        let message = save(&root).error.unwrap().message;
+        assert!(
+            message.contains(&format!(
+                ".kinein/{file} é um link simbólico, que a IDE não segue no projeto"
+            )),
+            "{message}"
+        );
+        assert!(!missing.exists(), "{file}");
+        if let Some(body) = before {
+            assert_eq!(
+                std::fs::read_to_string(state.join("datasources.json")).unwrap(),
+                body
+            );
+        }
+    }
+}
+
+/// INF-17 pelo IPC: a sonda grava o último contato no projeto; com o
+/// `remote-contacts.json` ligado ao que não existe, ela segue e responde, e
+/// nada é criado fora. O `ssh` é o falso dos testes do `remote`.
+#[test]
+fn the_probe_records_no_contact_through_a_link() {
+    let _serial = crate::serialize_executables();
+    let mut c = scenario("contatos-ligados");
+    c.ok(
+        "remote.save",
+        json!({ "target": { "name": "pi", "host": "192.168.0.42", "user": "pi" } }),
+    );
+    write_tool(
+        &c.bin().join("ssh"),
+        "#!/bin/sh\nprintf 'aarch64\\nLinux 6.6\\ngdbserver=\\npython3=\\nrsync=\\n'\n",
+    );
+    let contacts = c.root.join(".kinein").join("remote-contacts.json");
+    c.ok("remote.probe", json!({ "name": "pi" }));
+    assert_eq!(c.event("event.remote.probed")["success"], true);
+    assert!(
+        std::fs::read_to_string(&contacts)
+            .unwrap()
+            .contains("\"pi\"")
+    );
+
+    std::fs::remove_file(&contacts).unwrap();
+    let outside = c.root.parent().unwrap().join("fora");
+    std::fs::create_dir_all(&outside).unwrap();
+    link(&outside.join("contatos"), &contacts);
+    c.ok("remote.probe", json!({ "name": "pi" }));
+    assert_eq!(c.event("event.remote.probed")["success"], true);
+    assert_eq!(listing(&outside), Vec::<String>::new());
+    assert!(
+        std::fs::symlink_metadata(&contacts)
+            .unwrap()
+            .file_type()
+            .is_symlink()
+    );
 }

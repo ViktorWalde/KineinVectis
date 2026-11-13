@@ -28,6 +28,7 @@
 | D-11 | Ordem: a engenharia inteira deste documento vem antes de retomar a etapa C. Os adiados do Windows ficam na etapa 10 do [62 §3](62-base-publica-0.4.md). |
 | D-12 | INF-06: o prazo entra no teste como parâmetro. |
 | D-13 | Na abertura do INF-15 (2026-11-12): a leitura guardada vale também para o `remote-contacts.json`, o `datasources.schema1.json` e as marcas do configure dentro do `.kinein`; o `stateProblem` nomeia também a entrada que não é arquivo regular nem pasta; o INF-17 (escritas que o INF-13 não cobriu) entra logo depois do INF-15 ([62 §3.4](62-base-publica-0.4.md)). |
+| D-14 | Depois do INF-15 (2026-11-13): o `CMakeLists.txt` e os outros arquivos do sistema de build são a verdade do projeto; o `.kinein` só complementa, sem atrapalhar nem tomar o lugar deles. O INF-18 entra logo depois do INF-17, pela R-DADOS-04: o arquivo do projeto e o da ferramenta são lidos como o sistema de build os lê, e o guarda só evita que a leitura prenda e diz o motivo, sem o limite de 1 MiB. O limite de cada arquivo do `.kinein` é declarado no catálogo do ENG-02, que passa a ler o LCOV da cobertura (INF-19) ([62 §3.4](62-base-publica-0.4.md)). |
 
 ---
 
@@ -177,6 +178,22 @@ preserva.
   INF-11, INF-12).
 - Alcance: todo arquivo do catálogo.
 - Verificação: o mesmo teste de adversidade do catálogo (ENG-02).
+
+**R-DADOS-04 — O core lê o arquivo do projeto e o da ferramenta como o
+sistema de build os lê, sem bloquear.** Segue o link, que é da pessoa, e não
+impõe limite de tamanho próprio; abre sem bloquear e confere no descritor que
+é arquivo regular antes de ler. O que não passa não prende a IDE: o projeto
+abre, o motivo aparece com o caminho, e nada do `.kinein` toma o lugar do
+arquivo recusado.
+- Porquê: um FIFO no lugar do `CMakeLists.txt` da raiz ou do
+  `CMakeCache.txt` da `.kinein/build/` prende o `workspace.open` (INF-18); o
+  `CMakeLists.txt` é a verdade do projeto, e a IDE só complementa (D-14).
+- Alcance: código de produção do core que lê arquivo do projeto aberto ou o
+  que uma ferramenta gravou para ele, inclusive na pasta de build dentro do
+  `.kinein`, que não é do catálogo: o `CMakeLists.txt`, os presets, o
+  `CMakeCache.txt` e as marcas do configure numa pasta de build fora do
+  `.kinein`.
+- Verificação: o teste de adversidade do INF-18, com mutantes.
 
 ## A.3 IPC e contrato
 
@@ -415,6 +432,8 @@ salvo o ENG-16: **paga na 0.4** (D-02).
 | --- | --- | --- | --- |
 | INF-15 | Leitura do `.kinein` sem conferir o tipo | Um FIFO no lugar de 5 dos 10 arquivos lidos prende o `workspace.open` (62 §3.4) | alta |
 | INF-17 | Escritas do `.kinein` que o INF-13 não cobriu | Medido no 61934697: o `datasource.save` grava o `datasources.json` na pasta de fora do `.kinein` ligado (62 §3.4) | alta |
+| INF-18 | Arquivos do projeto e das ferramentas lidos sem conferir o tipo | Medido no 61934697: um FIFO no lugar do `CMakeLists.txt` da raiz ou do `CMakeCache.txt` da `.kinein/build/` prende o `workspace.open` (62 §3.4) | alta |
+| INF-19 | LCOV da cobertura lido fora do `kinein_dir` | O `.kinein/coverage.lcov` é lido de volta com `fs::read_to_string`, sem limite; o de 1 MiB não serve a ele (62 §3.4) | baixa |
 | ENG-01 | Mutantes avulsos, sobre o checkout vivo | Sem catálogo; numa cópia, o build frio do teste do core leva 69,1 s e cada mutante 11,3 s | média |
 | INF-16 | O mapa de módulos mede errado nos dois sentidos | Mede 184 arestas e 2 ciclos; o código de produção tem 196 arestas e 0 ciclos. Os dois ciclos conhecidos só existem em comentário; 11 arestas vêm de comentário ou teste; 22 arestas reais em `use crate::{...}` não são vistas | média |
 | ENG-02 | Cada dono monta o caminho do `.kinein` | 33 arquivos de produção do core têm o literal; o `kinein_dir` não tem leitura nem catálogo | alta |
@@ -544,8 +563,8 @@ pub(crate) const DOMAINS: &[&Domain] = &[&git::DOMAIN, /* um por linha */];
 
 ## C.3 Os dados da pessoa: o catálogo do `.kinein`
 
-O `kinein_dir` declara cada arquivo próprio (nome, versão de esquema, dono)
-e é o único caminho de leitura e de escrita. Um arquivo novo é uma entrada no
+O `kinein_dir` declara cada arquivo próprio (nome, versão de esquema, dono e
+limite de tamanho, D-14) e é o único caminho de leitura e de escrita. Um arquivo novo é uma entrada no
 catálogo, e herda o teste de adversidade: FIFO, link, pasta no lugar do
 arquivo, tamanho acima do limite, esquema desconhecido, JSON quebrado e texto
 que não é UTF-8 (R-DADOS-01 a R-DADOS-03).
@@ -660,7 +679,7 @@ O desbloqueio da conta no GitHub não é do repositório: é do autor.
 ## E.1 A ordem
 
 ```text
-Fase 0  dados e gate     INF-15 → INF-17 → ENG-01 → INF-16 → ENG-02 → ENG-03 → ENG-04 → ENG-05 → ENG-06 → ENG-07
+Fase 0  dados e gate     INF-15 → INF-17 → INF-18 → ENG-01 → INF-16 → ENG-02 → ENG-03 → ENG-04 → ENG-05 → ENG-06 → ENG-07
 Fase 1  core             ENG-10 → ENG-11 → ENG-12 → ENG-13 → ENG-14 → ENG-15
 Fase 2  ponte e QML      UI-02 → ENG-20 → ENG-21 → ENG-22 → ENG-23 → ENG-24 → ENG-25
 Fase 3  testes e listas  INF-06 → ENG-30 → ENG-31 → ENG-32 → ENG-33 → ENG-34 → ENG-35 → ENG-36 → ENG-37 → ENG-38
@@ -699,6 +718,28 @@ depois (R-TEST-07), o gate rápido passa, e a entrada do 40.7 traz as medidas.
 - Pronto: o `datasource/store.rs` e o `remote/contacts.rs` não gravam no
   `.kinein` fora do `kinein_dir`.
 
+**INF-18 — a leitura dos arquivos do projeto e das ferramentas** (D-14,
+R-DADOS-04).
+- Fazer: antes, medir e listar os leitores, com o do `CMakeLists.txt` na
+  abertura, ainda por confirmar. Uma leitura comum no `fsops`, que segue o
+  link, abre sem bloquear, confere no descritor que é arquivo regular e lê
+  sem limite próprio; os leitores do `CMakeLists.txt` e dos presets, do
+  `CMakeCache.txt` (`ProjectCache::read`) e das marcas do configure fora do
+  `.kinein` passam por ela. Se a medida em projetos reais pedir um teto
+  contra abuso, ele volta ao autor (§G.4). No Windows não há FIFO: vale a
+  pasta, provada na etapa 10.
+- Commits: um.
+- Aceite: o FIFO e a pasta no lugar de cada arquivo que a abertura e o
+  status do CMake leem, pelo IPC: o `workspace.open` responde no prazo, o
+  motivo aparece com o caminho, e nada do `.kinein` toma o lugar do
+  arquivo; o `CMakeLists.txt` ligado a um arquivo de fora e o
+  `CMakeCache.txt` acima de 1 MiB são lidos como antes. O teste abre o
+  outro lado do FIFO se a leitura prender.
+- Mutantes: abrir bloqueando; não conferir o tipo; aplicar o limite de
+  1 MiB; não seguir o link; um leitor lendo direto.
+- Pronto: nenhuma leitura de arquivo do projeto ou de ferramenta que abra
+  sem conferir o tipo.
+
 **ENG-01 — a ferramenta de mutação.**
 - Fazer: `scripts/mutantes.py` e um catálogo por item em `scripts/mutantes/`.
   Cada entrada: arquivo, texto exato, troca e o teste que deve reprovar.
@@ -732,12 +773,17 @@ depois (R-TEST-07), o gate rápido passa, e a entrada do 40.7 traz as medidas.
 - Fazer: a lista declarada dos arquivos próprios no `kinein_dir`; todo
   caminho sob a pasta nasce nele; a conferência de vocabulário (o literal só
   no `kinein_dir`); o teste de adversidade que percorre o catálogo (§C.3).
+  Cada entrada declara o limite de tamanho, e o `kinein_dir::read` lê com
+  ele; o LCOV da cobertura entra com o limite dele e é lido de volta pelo
+  guarda (INF-19, D-14).
 - Commits: o catálogo e o teste; depois um por grupo de donos migrados.
 - Aceite: o teste de extensão: uma entrada só de teste herda as adversidades
   sem editar o guarda.
-- Mutantes: uma entrada fora do teste; um dono montando o caminho à mão.
+- Mutantes: uma entrada fora do teste; um dono montando o caminho à mão; o
+  limite único no lugar do da entrada.
 - Pronto: 33 → 0 arquivos com o literal fora do `kinein_dir`; R-DADOS-01
-  reprova direto.
+  reprova direto; o LCOV acima de 1 MiB é lido inteiro, e o link e o FIFO no
+  lugar dele são recusados.
 
 **ENG-03 — o bloco estático, o checkout intacto e o ambiente isolado.**
 - Fazer: os 19 passos estáticos rodam logo depois do autoteste dos perfis, em

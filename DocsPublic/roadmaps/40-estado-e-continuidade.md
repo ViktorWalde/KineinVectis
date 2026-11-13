@@ -19,9 +19,9 @@
 > **Ordem (autor, 2026-11-08; 62 §3, com estado por etapa):** C com C23 → C++
 > → Rust/C/C++ → Python → DAP/QEMU → F5–F9 → algoritmo semântico de ambiente →
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
-> em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413); dívida na 0.4.
+> em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413; INF-17, §7.414); dívida na 0.4.
 > Recorte atual (2026-11-13): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
-> no §E.1; INF-15 corrigido, próximo INF-17), antes de retomar o **C1** (consolidação C §4.1). Polimento
+> no §E.1; INF-15 e INF-17 corrigidos, próximo INF-18), antes de retomar o **C1** (consolidação C §4.1). Polimento
 > UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
@@ -66,7 +66,8 @@ protocolo   0.222.0 (crates/kinein-protocol, medido em 2026-11-13; o
 metodos     195 roteados e 64 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   188 tst_*.qml em scripts/qml-harness (medido em 2026-11-12)
-testes      1637 Rust no gate rápido de 2026-11-13 (40.7 §7.413);
+testes      1642 Rust no gate rápido de 2026-11-13 (40.7 §7.414);
+            1637 Rust no gate rápido de 2026-11-13 (40.7 §7.413);
             1617 Rust no gate rápido de 2026-11-12 (40.7 §7.411);
             1609 Rust no gate rápido de 2026-11-12 (40.7 §7.410);
             1603 Rust no gate rápido de 2026-11-12 (40.7 §7.409);
@@ -156,9 +157,9 @@ Provas de software, emulação e hardware permanecem distintas.
 **Desde 2026-11-12 (decisão do autor), a próxima fatia é a engenharia da
 0.4:** o [63](63-regras-e-plano-de-engenharia-da-0.4.md) traz as regras
 (Parte A), o inventário da dívida (Parte B) e a ordem (§E.1), que começou
-pelo INF-15 (corrigido em 2026-11-13, 40.7 §7.413) e segue pelo INF-17. A
-0.4 paga toda a dívida inventariada, e a etapa C só retoma
-depois, do C1-47. O que segue descreve a frente que retoma então.
+pelo INF-15 e pelo INF-17 (corrigidos em 2026-11-13, 40.7 §7.413 e §7.414)
+e segue pelo INF-18. A 0.4 paga toda a dívida inventariada, e a etapa C só
+retoma depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)
 e pela [especificação comum](../especificacoes/orquestracao-e-verificacao-de-linguagens.md).

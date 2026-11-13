@@ -15,10 +15,7 @@
 //! reprova se qualquer chave do JSON parecer segredo, para que a garantia
 //! sobreviva a alguem acrescentar um campo sem ler este comentario.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
 use serde::Deserialize;
 
@@ -26,6 +23,10 @@ use super::profile_format::{self, CURRENT, Catalogue, LEGACY};
 
 /// Teto de leitura e gravacao; excesso recusa o arquivo inteiro.
 const MAX_BYTES: usize = 1_048_576;
+
+/// O catalogo e a copia do schema 1 (D1a.4), sob o `.kinein`.
+const CATALOGUE: &str = "datasources.json";
+const LEGACY_COPY: &str = "datasources.schema1.json";
 
 /// Le somente a versao antes de interpretar um formato reconhecido.
 #[derive(Deserialize)]
@@ -44,18 +45,6 @@ pub(super) struct Loaded {
     original: Vec<u8>,
 }
 
-/// Caminho do arquivo para um root de workspace.
-#[must_use]
-pub(super) fn path_for(root: &Path) -> PathBuf {
-    root.join(".kinein").join("datasources.json")
-}
-
-/// Onde a migracao guarda os bytes do schema 1 (D1a.4).
-#[must_use]
-pub(super) fn legacy_copy_for(root: &Path) -> PathBuf {
-    root.join(".kinein").join("datasources.schema1.json")
-}
-
 /// Le o catalogo; so' arquivo ausente significa nenhum perfil. Ler nunca grava.
 pub(super) fn load(root: &Path) -> Result<Loaded, String> {
     let empty = || Loaded {
@@ -65,7 +54,7 @@ pub(super) fn load(root: &Path) -> Result<Loaded, String> {
     };
     // INF-15: pelo guarda do `.kinein`, que nao segue o link, nao prende num
     // FIFO e respeita o limite de 1 MiB.
-    let body = match crate::kinein_dir::read(root, "datasources.json") {
+    let body = match crate::kinein_dir::read(root, CATALOGUE) {
         Ok(Some(body)) => body,
         Ok(None) => return Ok(empty()),
         Err(reason) => {
@@ -113,11 +102,6 @@ pub(super) fn save_with(
     // Tambem protege chamadas diretas e uma troca para formato desconhecido
     // entre a leitura no dominio e esta publicacao. O mutex e' do dominio.
     let before = load(root)?;
-    let target = path_for(root);
-    if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|error| format!("falha criando {}: {error}", parent.display()))?;
-    }
     let body = profile_format::serialize(catalogue)?;
     if body.len() > MAX_BYTES {
         return Err("Os perfis excedem o limite de 1 MiB. O arquivo não foi alterado.".to_owned());
@@ -125,7 +109,7 @@ pub(super) fn save_with(
     if before.schema == Some(LEGACY) {
         keep_legacy_copy(root, &before.original)?;
     }
-    write(&target, body.as_bytes())?;
+    write(root, CATALOGUE, body.as_bytes())?;
     if before.schema != Some(LEGACY) {
         return Ok(());
     }
@@ -133,7 +117,7 @@ pub(super) fn save_with(
     if confirmed {
         return Ok(());
     }
-    write(&target, &before.original)?;
+    write(root, CATALOGUE, &before.original)?;
     Err(
         "A migração dos perfis não se confirmou na releitura; o arquivo anterior foi restaurado."
             .to_owned(),
@@ -143,24 +127,40 @@ pub(super) fn save_with(
 /// A copia do schema 1 existe uma vez: igual, segue; diferente, recusa sem
 /// escrever, para nao apagar a copia de uma migracao anterior.
 fn keep_legacy_copy(root: &Path, original: &[u8]) -> Result<(), String> {
-    let copy = legacy_copy_for(root);
     // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
-    // FIFO.
-    match crate::kinein_dir::read(root, "datasources.schema1.json") {
+    // FIFO; o motivo dele vem primeiro.
+    match crate::kinein_dir::read(root, LEGACY_COPY) {
         Ok(Some(existing)) if existing == original => Ok(()),
         Ok(Some(_)) => Err("Já existe uma cópia .kinein/datasources.schema1.json diferente do catálogo atual. Mova-a antes de salvar: a migração não a sobrescreve.".to_owned()),
-        Ok(None) => write(&copy, original),
-        Err(_) => Err("Não foi possível conferir a cópia do catálogo anterior. Nada foi alterado.".to_owned()),
+        Ok(None) => write(root, LEGACY_COPY, original),
+        Err(reason) => Err(format!("{reason}. Não foi possível conferir a cópia do catálogo anterior. Nada foi alterado.")),
     }
 }
 
-fn write(path: &Path, bytes: &[u8]) -> Result<(), String> {
-    crate::fsops::atomic_write(path, bytes)
-        .map_err(|error| format!("falha gravando perfis: {error}"))
+/// Toda gravacao do catalogo e da copia passa aqui (INF-17): pelo guarda do
+/// `.kinein`, que nao segue o link e troca o arquivo de forma atomica.
+fn write(root: &Path, relative: &str, bytes: &[u8]) -> Result<(), String> {
+    crate::kinein_dir::write(root, relative, bytes)
+        .map_err(|reason| format!("falha gravando perfis: {reason}"))
+}
+
+/// Caminho do arquivo para um root de workspace, para os testes: o dono le
+/// e grava pelo guarda do `.kinein` (INF-15, INF-17).
+#[cfg(test)]
+#[must_use]
+pub(super) fn path_for(root: &Path) -> std::path::PathBuf {
+    root.join(".kinein").join(CATALOGUE)
+}
+
+/// Onde a migracao guarda os bytes do schema 1 (D1a.4), para os testes.
+#[cfg(test)]
+#[must_use]
+pub(super) fn legacy_copy_for(root: &Path) -> std::path::PathBuf {
+    root.join(".kinein").join(LEGACY_COPY)
 }
 
 #[cfg(test)]
-use std::io::Read;
+use std::{fs, io::Read, path::PathBuf};
 
 #[cfg(test)]
 mod tests {
@@ -458,5 +458,67 @@ mod tests {
         assert_eq!(raw(&after), raw(&before));
         assert!(after.profiles.iter().any(|p| p.name == "novo"));
         assert!(!legacy_copy_for(&root).exists());
+    }
+
+    /// INF-17: a gravacao do catalogo e da copia passa pelo guarda do
+    /// `.kinein`. Com o `.kinein` ligado a uma pasta de fora, ou com o
+    /// arquivo ligado ao que nao existe, ela recusa com o motivo, e nada e'
+    /// criado fora.
+    #[test]
+    fn the_write_refuses_a_linked_state_folder_or_file() {
+        use crate::kinein_dir::link;
+
+        let root = temp_root("escrita-pasta-ligada");
+        let outside = temp_root("escrita-fora");
+        link(&outside, &root.join(".kinein"));
+        let refused = write(&root, CATALOGUE, b"{}").unwrap_err();
+        assert!(refused.contains(".kinein é um link simbólico"), "{refused}");
+        assert_eq!(fs::read_dir(&outside).unwrap().count(), 0);
+
+        for file in [CATALOGUE, LEGACY_COPY] {
+            let root = temp_root(&format!("escrita-{file}"));
+            fs::create_dir_all(root.join(".kinein")).unwrap();
+            let missing = temp_root(&format!("escrita-{file}-fora")).join("ausente");
+            let placed = root.join(".kinein").join(file);
+            link(&missing, &placed);
+            let refused = write(&root, file, b"{}").unwrap_err();
+            assert!(
+                refused.contains(&format!(".kinein/{file} é um link simbólico")),
+                "{refused}"
+            );
+            assert!(!missing.exists(), "{file}");
+            assert!(
+                fs::symlink_metadata(&placed)
+                    .unwrap()
+                    .file_type()
+                    .is_symlink()
+            );
+        }
+    }
+
+    /// INF-17: a restauracao da migracao tambem passa pelo guarda. Trocado o
+    /// `.kinein` por um link entre a gravacao e a releitura, a restauracao e'
+    /// recusada, e nada e' gravado fora.
+    #[test]
+    fn a_restore_through_a_linked_state_folder_writes_nothing_outside() {
+        use crate::kinein_dir::link;
+
+        let root = temp_root("restauracao-ligada");
+        let outside = temp_root("restauracao-fora");
+        write_file(&root, LEGACY_FIXTURE);
+        let current = load(&root).unwrap().catalogue;
+        let message = save_with(&root, &current, |_, _| {
+            fs::rename(root.join(".kinein"), root.join("estado")).unwrap();
+            link(&outside, &root.join(".kinein"));
+            false
+        })
+        .unwrap_err();
+        assert!(message.contains(".kinein é um link simbólico"), "{message}");
+        assert_eq!(fs::read_dir(&outside).unwrap().count(), 0);
+        // O original segue na copia: a restauracao recusada nao perde nada.
+        assert_eq!(
+            fs::read_to_string(root.join("estado").join(LEGACY_COPY)).unwrap(),
+            LEGACY_FIXTURE
+        );
     }
 }
