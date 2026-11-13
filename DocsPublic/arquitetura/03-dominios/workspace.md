@@ -199,11 +199,29 @@ link. O projeto abre assim mesmo: a resposta de `workspace.open` (e a de
 caminho a partir do projeto e o motivo, por exemplo
 `".kinein é um link simbólico, que a IDE não segue no projeto"`. Ele diz o
 problema do próprio `.kinein`, senão o da primeira entrada logo dentro dele,
-por nome, que é link; ausente quando o core grava ali como sempre. Nunca é
+por nome, que é link ou, desde `0.222.0` (INF-15), que não é arquivo regular
+nem pasta, como um FIFO (`".kinein/session.json não é um arquivo regular nem
+uma pasta"`); ausente quando o core grava ali como sempre. Nunca é
 persistido. Com ele, o `workspace.json` não é gravado, os rascunhos dos
 buffers ficam só na memória, e cada escrita recusada volta com o mesmo
 motivo, no erro do método que a pediu. A UI o mostra na faixa de saúde do
 projeto, sem botão: quem resolve é a pessoa, trocando o link por uma pasta.
+
+**A leitura do `.kinein`** (protocolo `0.222.0`, INF-15): o que o core lê
+dali (o `session.json`, o `toolchain.json`, o `configuration.json`, o
+`python.json`, o `settings.json`, o `remotes.json`, o `remote-contacts.json`,
+o `grafana.json`, o `runconfigs.json`, o `datasources.json` e a cópia
+`datasources.schema1.json`, e as marcas do configure quando a pasta de build
+está no `.kinein`) passa pelo mesmo guarda. Cada componente é aberto sem
+seguir link e sem bloquear, e o descritor tem de ser pasta no meio e arquivo
+regular no fim, de até 1 MiB. O que não passa não é lido, e nenhum pedido
+espera por ele: um FIFO no lugar do arquivo não prende o core. O motivo vem
+com o caminho a partir do projeto, como na escrita, no erro do método que lê
+(o `workspaceProblem` do `settings.get`, o `runConfig.*`, o `datasource.*` e
+a configuração do CMake); a sessão, a toolchain, os alvos remotos, os
+contatos e o Grafana valem como ausentes, e o `python.json` como nenhum
+interpretador escolhido, sem cair no Python do sistema ao criar o ambiente,
+como já valiam quando ilegíveis.
 
 **Workspaces recentes globais** (protocolo `0.53.0`, fatia A1):
 somente `workspace.open` e `workspace.createProject` concluídos com sucesso

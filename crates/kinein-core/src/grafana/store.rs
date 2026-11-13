@@ -9,10 +9,7 @@
 //! perfil e reprova se qualquer chave do JSON parecer credencial, para que a
 //! garantia sobreviva a alguem acrescentar um campo sem ler este comentario.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
 use kinein_protocol::GrafanaProfile;
 use serde::{Deserialize, Serialize};
@@ -29,17 +26,13 @@ struct GrafanaFile {
     profile: Option<GrafanaProfile>,
 }
 
-/// Caminho do arquivo para um root de workspace.
-#[must_use]
-pub(super) fn path_for(root: &Path) -> PathBuf {
-    root.join(".kinein").join("grafana.json")
-}
-
 /// Le a instancia persistida; arquivo ausente/invalido = nenhuma.
 #[must_use]
 pub(super) fn load(root: &Path) -> Option<GrafanaProfile> {
-    let body = fs::read_to_string(path_for(root)).ok()?;
-    match serde_json::from_str::<GrafanaFile>(&body) {
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO; o que ele recusa vale como nenhuma instancia.
+    let body = crate::kinein_dir::read(root, "grafana.json").ok()??;
+    match serde_json::from_slice::<GrafanaFile>(&body) {
         Ok(file) if file.schema_version == SCHEMA_VERSION => file.profile,
         _ => None,
     }
@@ -55,6 +48,17 @@ pub(super) fn save(root: &Path, profile: Option<&GrafanaProfile>) -> Result<(), 
         .map_err(|error| format!("falha serializando a instância: {error}"))?;
     // INF-13: pelo guarda do `.kinein`, que nao segue o link.
     crate::kinein_dir::write(root, "grafana.json", body.as_bytes())
+}
+
+#[cfg(test)]
+use std::{fs, path::PathBuf};
+
+/// Caminho do arquivo para um root de workspace, para os testes: o dono le
+/// e grava pelo guarda do `.kinein` (INF-13, INF-15).
+#[cfg(test)]
+#[must_use]
+pub(super) fn path_for(root: &Path) -> PathBuf {
+    root.join(".kinein").join("grafana.json")
 }
 
 #[cfg(test)]

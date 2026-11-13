@@ -107,8 +107,9 @@ pub struct WorkspaceInfo {
     pub trusted: bool,
     /// Why the core writes nothing in the project's `.kinein` through a
     /// symbolic link (`0.221.0`, INF-13): the `.kinein` itself is one, or is
-    /// not a folder, or an entry right inside it is a link. Absent = the core
-    /// writes there as always. Never persisted.
+    /// not a folder, or an entry right inside it is a link, or, since
+    /// `0.222.0` (INF-15), neither a regular file nor a folder, like a FIFO.
+    /// Absent = the core uses it as always. Never persisted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub state_problem: Option<String>,
 }

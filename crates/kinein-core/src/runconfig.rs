@@ -8,7 +8,6 @@
 use std::{
     collections::BTreeSet,
     fs,
-    io::Read,
     path::{Path, PathBuf},
 };
 
@@ -70,32 +69,16 @@ fn storage_error(root: &Path, reason: impl std::fmt::Display) -> RunConfigError 
 }
 
 fn read_file(root: &Path) -> Result<RunConfigsFile, RunConfigError> {
-    let target = configs_path(root);
-    match fs::symlink_metadata(&target) {
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Ok(RunConfigsFile {
-                schema_version: RUNCONFIG_SCHEMA_VERSION,
-                ..RunConfigsFile::default()
-            });
-        }
-        Err(error) => return Err(storage_error(root, error)),
-        Ok(metadata) if !metadata.is_file() => {
-            return Err(storage_error(root, "o caminho não é um arquivo regular"));
-        }
-        Ok(_) => {}
-    }
-    let mut bytes = Vec::new();
-    fs::File::open(target)
-        .map_err(|error| storage_error(root, error))?
-        .take(crate::fsops::MAX_READ_BYTES + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|error| storage_error(root, error))?;
-    if u64::try_from(bytes.len()).unwrap_or(u64::MAX) > crate::fsops::MAX_READ_BYTES {
-        return Err(storage_error(
-            root,
-            "o arquivo excede o limite de leitura da IDE",
-        ));
-    }
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link, nao prende num
+    // FIFO e respeita o limite de leitura da IDE.
+    let Some(bytes) = crate::kinein_dir::read(root, "runconfigs.json")
+        .map_err(|reason| storage_error(root, reason))?
+    else {
+        return Ok(RunConfigsFile {
+            schema_version: RUNCONFIG_SCHEMA_VERSION,
+            ..RunConfigsFile::default()
+        });
+    };
     let body = String::from_utf8(bytes).map_err(|error| storage_error(root, error))?;
     let value: serde_json::Value =
         serde_json::from_str(&body).map_err(|error| storage_error(root, error))?;

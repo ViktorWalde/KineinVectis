@@ -199,6 +199,7 @@ flowchart LR
   n_core_datasource --> n_core_db
   n_core_datasource --> n_core_fsops
   n_core_datasource --> n_core_jobs
+  n_core_datasource --> n_core_kinein_dir
   n_core_datasource --> n_core_owned_child
   n_core_datasource --> n_core_platform
   n_core_datasource --> n_core_settings
@@ -287,6 +288,7 @@ flowchart LR
   n_core_project --> n_core_dap
   n_core_project --> n_core_fsops
   n_core_project --> n_core_platform
+  n_core_python --> n_core_kinein_dir
   n_core_python --> n_core_run
   n_core_remote --> n_core_kinein_dir
   n_core_remote --> n_core_platform
@@ -297,6 +299,7 @@ flowchart LR
   n_core_run --> n_core_python
   n_core_runconfig --> n_core_flash
   n_core_runconfig --> n_core_fsops
+  n_core_runconfig --> n_core_kinein_dir
   n_core_runconfig --> n_core_platform
   n_core_runtime --> n_core_datasource
   n_core_runtime --> n_core_rpc
@@ -334,7 +337,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-54 módulos, 184 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+54 módulos, 187 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -356,7 +359,7 @@ flowchart LR
 | `container` | process, tools | Containers como dominio NATIVO: |
 | `coverage` | kinein_dir, platform, process, python | Cobertura de linhas dos testes (D8 do roadmaps/41, P5 do 40 §4.1, 2026-09-17), com o LCOV como lingua comum. |
 | `dap` | cmake, cmake_configuration, lsp, platform, probe, python, run, serial, stderr_tail | Subsistema de debug: |
-| `datasource` | container, db, fsops, jobs, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
+| `datasource` | container, db, fsops, jobs, kinein_dir, owned_child, platform, settings, stderr_tail, tools | Fontes de dados: |
 | `db` | kinein_dir | Persistência local em SQLite — rede de segurança de dados (DocsPublic/seguranca/23). |
 | `dfu` | probe | Bounded dfu-util discovery. |
 | `fake_exe` | — | O executavel falso dos testes no Windows (DocsPublic/roadmaps/60 §3.3, W2b). |
@@ -369,7 +372,7 @@ flowchart LR
 | `handlers` | build, cdb, cmake, configaction, container, coverage, dap, datasource, flash, format, fsops, grafana, index, jobs, library, lsp, platform, platformio, probe, process, project, python, remote, rpc, run, runconfig, serial, settings, setup, terminal, toolchain, tools, workspace | Request handlers grouped by domain, each implemented as impl Core blocks. |
 | `index` | cdb, cmake, fswatch, lang, platform, python | O indice proprio do projeto INTEIRO: |
 | `jobs` | lsp | Job system: |
-| `kinein_dir` | fsops, platform | The .kinein folder of a project (0.221.0, INF-12 and INF-13). |
+| `kinein_dir` | fsops, platform | The .kinein folder of a project (0.222.0, INF-12, INF-13 and INF-15). |
 | `kits` | kinein_dir, tools | Os kits como o workspace os grava e quem pode cumprir cada papel. |
 | `lang` | — | Incremental local syntax intelligence backed by Tree-sitter. |
 | `library` | cmake, configaction | Bibliotecas C/C++ curadas: |
@@ -383,11 +386,11 @@ flowchart LR
 | `probe` | process | Sondas de debug conectadas: |
 | `process` | platform | Synchronous line streaming for child processes. |
 | `project` | cmake, dap, fsops, platform | O MODELO do projeto embarcado — pilar 0 do roadmaps/42 (2026-09-12). |
-| `python` | run | O dominio python: |
+| `python` | kinein_dir, run | O dominio python: |
 | `remote` | kinein_dir, platform | O alvo Linux por SSH como recurso do projeto (P6 do roadmaps/42, fatia 1, 2026-09-17): |
 | `rpc` | dap | JSON-RPC helpers shared by the request handlers: |
 | `run` | cmake, cmake_configuration, platform, python | O que "Executar" roda, e como se mostra. |
-| `runconfig` | flash, fsops, platform | Run configurations por workspace (.kinein/runconfigs.json). |
+| `runconfig` | flash, fsops, kinein_dir, platform | Run configurations por workspace (.kinein/runconfigs.json). |
 | `runtime` | datasource, rpc, settings | The stdio JSON-RPC loop that drives Core as a subprocess. |
 | `serial` | build, platform, toolchain | Portas seriais USB: |
 | `settings` | fsops, kinein_dir, platform | Settings persistidos em dois níveis (settings.*). |

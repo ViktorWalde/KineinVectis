@@ -12,11 +12,7 @@
 //! do alvo. O kit de chave vazia e' o padrao do workspace — que e' exatamente
 //! o que o schema 1 guardava, e por isso a migracao e' direta e sem perda.
 
-use std::{
-    collections::BTreeMap,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{collections::BTreeMap, path::Path};
 
 use serde::{Deserialize, Serialize};
 
@@ -88,12 +84,6 @@ struct ToolchainFileV1 {
     selections: BTreeMap<String, String>,
 }
 
-/// Caminho do arquivo para um root de workspace.
-#[must_use]
-pub(crate) fn path_for(root: &Path) -> PathBuf {
-    root.join(".kinein").join("toolchain.json")
-}
-
 /// Le os kits persistidos; arquivo ausente/invalido = nenhum kit.
 ///
 /// Um arquivo do schema 1 e' MIGRADO em memoria: as selecoes dele viram o kit
@@ -101,15 +91,17 @@ pub(crate) fn path_for(root: &Path) -> PathBuf {
 /// a escolha de quem abriu o projeto e nao mexeu na toolchain.
 #[must_use]
 pub(crate) fn load(root: &Path) -> BTreeMap<String, Kit> {
-    let Ok(body) = fs::read_to_string(path_for(root)) else {
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO; o que ele recusa vale como arquivo ausente.
+    let Ok(Some(body)) = crate::kinein_dir::read(root, "toolchain.json") else {
         return BTreeMap::new();
     };
-    if let Ok(file) = serde_json::from_str::<ToolchainFile>(&body)
+    if let Ok(file) = serde_json::from_slice::<ToolchainFile>(&body)
         && file.schema_version == SCHEMA_VERSION
     {
         return file.kits;
     }
-    match serde_json::from_str::<ToolchainFileV1>(&body) {
+    match serde_json::from_slice::<ToolchainFileV1>(&body) {
         Ok(legacy) if legacy.schema_version == 1 && !legacy.selections.is_empty() => {
             let mut kits = BTreeMap::new();
             kits.insert(
@@ -138,6 +130,13 @@ pub(crate) fn save(root: &Path, kits: &BTreeMap<String, Kit>) -> Result<(), Stri
     crate::kinein_dir::write(root, "toolchain.json", body.as_bytes())
 }
 
+/// O texto do arquivo como esta' no disco, para a previa de uma receita;
+/// `None` quando ausente, recusado pelo guarda do `.kinein` (INF-15) ou fora
+/// de UTF-8.
+pub(crate) fn text(root: &Path) -> Option<String> {
+    String::from_utf8(crate::kinein_dir::read(root, "toolchain.json").ok()??).ok()
+}
+
 /// O texto que [`save`] grava: a previa de uma receita mostra os mesmos bytes.
 pub(crate) fn render(kits: &BTreeMap<String, Kit>) -> Result<String, String> {
     let file = ToolchainFile {
@@ -152,11 +151,19 @@ pub(crate) fn render(kits: &BTreeMap<String, Kit>) -> Result<String, String> {
         .map_err(|error| format!("falha serializando a toolchain: {error}"))
 }
 
+/// Caminho do arquivo para um root de workspace, para os testes: o dono le
+/// e grava pelo guarda do `.kinein` (INF-13, INF-15).
+#[cfg(test)]
+#[must_use]
+pub(crate) fn path_for(root: &Path) -> std::path::PathBuf {
+    root.join(".kinein").join("toolchain.json")
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
 
-    use super::{Kit, load, path_for, save};
+    use super::{Kit, load, path_for, save, text};
 
     fn temp_root(name: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir()
@@ -247,5 +254,49 @@ mod tests {
 
         std::fs::write(path_for(&root), "{ nao e json").unwrap();
         assert!(load(&root).is_empty(), "arquivo quebrado virou escolha");
+    }
+
+    /// A previa de uma receita le pelo guarda do `.kinein` (INF-15): o texto
+    /// do arquivo comum; nada no lugar do FIFO, do link para fora, da pasta
+    /// e do arquivo acima do limite. Pelo IPC, ela so' roda depois de
+    /// conferir um compilador de verdade.
+    #[test]
+    fn the_recipe_preview_reads_by_the_guard() {
+        use crate::kinein_dir::{fifo, link, unblocked};
+
+        let placed = |name: &str| {
+            let root = temp_root(name);
+            std::fs::create_dir_all(root.join(".kinein")).unwrap();
+            let file = path_for(&root);
+            (root, file)
+        };
+        let (root, file) = placed("previa");
+        assert_eq!(text(&root), None);
+        std::fs::write(&file, "fora-marca").unwrap();
+        assert_eq!(text(&root).as_deref(), Some("fora-marca"));
+
+        let (root, file) = placed("previa-fifo");
+        if fifo(&file) {
+            assert_eq!(unblocked(&file, move || text(&root)), None);
+        }
+        let (root, file) = placed("previa-link");
+        let outside = temp_root("previa-fora");
+        if cfg!(windows) {
+            link(&outside.join("ausente"), &file);
+        } else {
+            std::fs::write(outside.join("toolchain.json"), "fora-marca").unwrap();
+            link(&outside.join("toolchain.json"), &file);
+        }
+        assert_eq!(text(&root), None);
+        let (root, file) = placed("previa-pasta");
+        std::fs::create_dir(&file).unwrap();
+        assert_eq!(text(&root), None);
+        // 1 MiB, o limite de leitura da IDE, e um byte.
+        let (root, file) = placed("previa-grande");
+        std::fs::File::create(&file)
+            .unwrap()
+            .set_len(1024 * 1024 + 1)
+            .unwrap();
+        assert_eq!(text(&root), None);
     }
 }

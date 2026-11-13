@@ -10,7 +10,7 @@
 
 > **RESUMO TÉCNICO (2026-11-09; provas funcionais datadas abaixo).**
 >
-> **Estado funcional:** binário **0.3.9**, protocolo **0.221.0**; etapa interna
+> **Estado funcional:** binário **0.3.9**, protocolo **0.222.0**; etapa interna
 > **0.4.1 aberta**, sem declaração de conclusão pela renumeração da entrega.
 > Entrega pública decidida: **Kinein Vectis 0.4**, SemVer **0.4.0**.
 > **Foundation — Engineering Consolidation Release**; visão em **62 §1.1**,
@@ -19,9 +19,9 @@
 > **Ordem (autor, 2026-11-08; 62 §3, com estado por etapa):** C com C23 → C++
 > → Rust/C/C++ → Python → DAP/QEMU → F5–F9 → algoritmo semântico de ambiente →
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
-> em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411); dívida na 0.4.
-> Recorte atual (2026-11-12): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
-> no §E.1; primeiro item INF-15), antes de retomar o **C1** (consolidação C §4.1). Polimento
+> em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413); dívida na 0.4.
+> Recorte atual (2026-11-13): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
+> no §E.1; INF-15 corrigido, próximo INF-17), antes de retomar o **C1** (consolidação C §4.1). Polimento
 > UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
@@ -61,12 +61,13 @@
 ## 1. O estado, em números
 
 ```text
-protocolo   0.221.0 (crates/kinein-protocol, medido em 2026-11-12; o
+protocolo   0.222.0 (crates/kinein-protocol, medido em 2026-11-13; o
             historico das versoes e' o arquitetura/03)
 metodos     195 roteados e 64 eventos (os titulos do arquitetura/03, que o
             verificar-fiacao-ipc.sh confere contra o core)
 harnesses   188 tst_*.qml em scripts/qml-harness (medido em 2026-11-12)
-testes      1617 Rust no gate rápido de 2026-11-12 (40.7 §7.411);
+testes      1637 Rust no gate rápido de 2026-11-13 (40.7 §7.413);
+            1617 Rust no gate rápido de 2026-11-12 (40.7 §7.411);
             1609 Rust no gate rápido de 2026-11-12 (40.7 §7.410);
             1603 Rust no gate rápido de 2026-11-12 (40.7 §7.409);
             1603 Rust no gate rápido de 2026-11-12 (40.7 §7.408);
@@ -154,8 +155,9 @@ Provas de software, emulação e hardware permanecem distintas.
 
 **Desde 2026-11-12 (decisão do autor), a próxima fatia é a engenharia da
 0.4:** o [63](63-regras-e-plano-de-engenharia-da-0.4.md) traz as regras
-(Parte A), o inventário da dívida (Parte B) e a ordem (§E.1), que começa
-pelo INF-15. A 0.4 paga toda a dívida inventariada, e a etapa C só retoma
+(Parte A), o inventário da dívida (Parte B) e a ordem (§E.1), que começou
+pelo INF-15 (corrigido em 2026-11-13, 40.7 §7.413) e segue pelo INF-17. A
+0.4 paga toda a dívida inventariada, e a etapa C só retoma
 depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)

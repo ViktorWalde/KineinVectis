@@ -17,7 +17,6 @@
 
 use std::{
     fs,
-    io::{self, Read},
     path::{Path, PathBuf},
 };
 
@@ -64,34 +63,17 @@ pub(super) fn load(root: &Path) -> Result<Loaded, String> {
         schema: None,
         original: Vec::new(),
     };
-    match fs::symlink_metadata(path_for(root)) {
-        Ok(metadata) if !metadata.is_file() => {
-            return Err(
-                "O catálogo de perfis não é um arquivo regular e foi preservado sem alterações."
-                    .to_owned(),
-            );
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link, nao prende num
+    // FIFO e respeita o limite de 1 MiB.
+    let body = match crate::kinein_dir::read(root, "datasources.json") {
+        Ok(Some(body)) => body,
+        Ok(None) => return Ok(empty()),
+        Err(reason) => {
+            return Err(format!(
+                "O catálogo de perfis não pôde ser usado ({reason}) e foi preservado sem alterações."
+            ));
         }
-        Ok(_) => {}
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(empty()),
-        Err(_) => {
-            return Err(
-                "Não foi possível acessar o catálogo de perfis. Ele foi preservado sem alterações."
-                    .to_owned(),
-            );
-        }
-    }
-    let file = match fs::File::open(path_for(root)) {
-        Ok(file) => file,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(empty()),
-        Err(_) => return Err("Não foi possível ler os perfis. O arquivo foi preservado; verifique as permissões de .kinein/datasources.json.".to_owned()),
     };
-    let mut body = Vec::new();
-    file.take((MAX_BYTES + 1) as u64)
-        .read_to_end(&mut body)
-        .map_err(|_| "Não foi possível ler os perfis. O arquivo foi preservado.".to_owned())?;
-    if body.len() > MAX_BYTES {
-        return Err("O arquivo de perfis excede 1 MiB e foi preservado sem alterações.".to_owned());
-    }
     let text = std::str::from_utf8(&body).map_err(|_| invalid_message())?;
     let header: SchemaHeader = serde_json::from_str(text).map_err(|_| invalid_message())?;
     // Decodificar direto do texto conserva a recusa de campos duplicados.
@@ -162,10 +144,12 @@ pub(super) fn save_with(
 /// escrever, para nao apagar a copia de uma migracao anterior.
 fn keep_legacy_copy(root: &Path, original: &[u8]) -> Result<(), String> {
     let copy = legacy_copy_for(root);
-    match fs::read(&copy) {
-        Ok(existing) if existing == original => Ok(()),
-        Ok(_) => Err("Já existe uma cópia .kinein/datasources.schema1.json diferente do catálogo atual. Mova-a antes de salvar: a migração não a sobrescreve.".to_owned()),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => write(&copy, original),
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO.
+    match crate::kinein_dir::read(root, "datasources.schema1.json") {
+        Ok(Some(existing)) if existing == original => Ok(()),
+        Ok(Some(_)) => Err("Já existe uma cópia .kinein/datasources.schema1.json diferente do catálogo atual. Mova-a antes de salvar: a migração não a sobrescreve.".to_owned()),
+        Ok(None) => write(&copy, original),
         Err(_) => Err("Não foi possível conferir a cópia do catálogo anterior. Nada foi alterado.".to_owned()),
     }
 }
@@ -174,6 +158,9 @@ fn write(path: &Path, bytes: &[u8]) -> Result<(), String> {
     crate::fsops::atomic_write(path, bytes)
         .map_err(|error| format!("falha gravando perfis: {error}"))
 }
+
+#[cfg(test)]
+use std::io::Read;
 
 #[cfg(test)]
 mod tests {

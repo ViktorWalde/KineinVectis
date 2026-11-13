@@ -1380,6 +1380,16 @@ abertas, o layout, a toolchain e os rascunhos dos arquivos não salvos não são
 gravados, e nada é criado nem mudado no lugar para onde o link aponta. Para
 voltar ao normal, troque o link por uma pasta de verdade e reabra o projeto.
 
+**O que não é um arquivo comum.** A IDE também lê o estado do projeto sem
+seguir link e sem esperar: um link, um FIFO, uma pasta ou um arquivo maior que
+1 MiB no lugar de um arquivo que ela lê do `.kinein` não prende a IDE nem é
+lido. O FIFO logo dentro do `.kinein` aparece na mesma faixa, com o caminho e
+o motivo; o resto aparece no erro de quem lê (as configurações, as
+configurações de execução, as conexões do Banco e a configuração do CMake). As
+abas abertas, a toolchain, os alvos remotos e o Grafana voltam ao padrão, e
+nenhum interpretador Python fica escolhido: a IDE não cria o ambiente com o
+Python do sistema no lugar dele. É o mesmo de quando o arquivo está ilegível.
+
 **No Wayland, trazer a janela para a frente é o compositor quem decide.** Se o
 seu terminal fornece um token de ativação, ela sobe; se não, o GNOME pode
 apenas destacá-la na barra de tarefas. O que a IDE garante em qualquer caso é o

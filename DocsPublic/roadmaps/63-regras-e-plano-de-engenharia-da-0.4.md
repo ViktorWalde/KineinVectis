@@ -27,6 +27,7 @@
 | D-10 | Gate: os passos estáticos primeiro e em paralelo; índice de palavras nas três checagens lentas; cache do clang-tidy só no `--rapido`; contêiner da CI no repositório; os gates de docs leem o que o git vê. |
 | D-11 | Ordem: a engenharia inteira deste documento vem antes de retomar a etapa C. Os adiados do Windows ficam na etapa 10 do [62 §3](62-base-publica-0.4.md). |
 | D-12 | INF-06: o prazo entra no teste como parâmetro. |
+| D-13 | Na abertura do INF-15 (2026-11-12): a leitura guardada vale também para o `remote-contacts.json`, o `datasources.schema1.json` e as marcas do configure dentro do `.kinein`; o `stateProblem` nomeia também a entrada que não é arquivo regular nem pasta; o INF-17 (escritas que o INF-13 não cobriu) entra logo depois do INF-15 ([62 §3.4](62-base-publica-0.4.md)). |
 
 ---
 
@@ -413,6 +414,7 @@ salvo o ENG-16: **paga na 0.4** (D-02).
 | ID | Dívida | Evidência | Sev. |
 | --- | --- | --- | --- |
 | INF-15 | Leitura do `.kinein` sem conferir o tipo | Um FIFO no lugar de 5 dos 10 arquivos lidos prende o `workspace.open` (62 §3.4) | alta |
+| INF-17 | Escritas do `.kinein` que o INF-13 não cobriu | Medido no 61934697: o `datasource.save` grava o `datasources.json` na pasta de fora do `.kinein` ligado (62 §3.4) | alta |
 | ENG-01 | Mutantes avulsos, sobre o checkout vivo | Sem catálogo; numa cópia, o build frio do teste do core leva 69,1 s e cada mutante 11,3 s | média |
 | INF-16 | O mapa de módulos mede errado nos dois sentidos | Mede 184 arestas e 2 ciclos; o código de produção tem 196 arestas e 0 ciclos. Os dois ciclos conhecidos só existem em comentário; 11 arestas vêm de comentário ou teste; 22 arestas reais em `use crate::{...}` não são vistas | média |
 | ENG-02 | Cada dono monta o caminho do `.kinein` | 33 arquivos de produção do core têm o literal; o `kinein_dir` não tem leitura nem catálogo | alta |
@@ -658,7 +660,7 @@ O desbloqueio da conta no GitHub não é do repositório: é do autor.
 ## E.1 A ordem
 
 ```text
-Fase 0  dados e gate     INF-15 → ENG-01 → INF-16 → ENG-02 → ENG-03 → ENG-04 → ENG-05 → ENG-06 → ENG-07
+Fase 0  dados e gate     INF-15 → INF-17 → ENG-01 → INF-16 → ENG-02 → ENG-03 → ENG-04 → ENG-05 → ENG-06 → ENG-07
 Fase 1  core             ENG-10 → ENG-11 → ENG-12 → ENG-13 → ENG-14 → ENG-15
 Fase 2  ponte e QML      UI-02 → ENG-20 → ENG-21 → ENG-22 → ENG-23 → ENG-24 → ENG-25
 Fase 3  testes e listas  INF-06 → ENG-30 → ENG-31 → ENG-32 → ENG-33 → ENG-34 → ENG-35 → ENG-36 → ENG-37 → ENG-38
@@ -685,6 +687,17 @@ depois (R-TEST-07), o gate rápido passa, e a entrada do 40.7 traz as medidas.
 - Mutantes: abrir bloqueando; seguir o link; não conferir o tipo; não aplicar
   o limite; um dono lendo direto.
 - Pronto: nenhuma leitura de arquivo do `.kinein` fora do `kinein_dir`.
+
+**INF-17 — as escritas que o INF-13 não cobriu** (D-13).
+- Fazer: o `datasources.json`, a cópia `datasources.schema1.json` e o
+  `remote-contacts.json` gravam pelo `kinein_dir::write`; a conferência
+  própria do `datasource/store.rs` sai.
+- Commits: um.
+- Aceite: o `.kinein` e cada arquivo ligados, pelo IPC e no dono, com a
+  pasta de fora vazia no fim; o erro do método diz o motivo do guarda.
+- Mutantes: cada dono gravando direto.
+- Pronto: o `datasource/store.rs` e o `remote/contacts.rs` não gravam no
+  `.kinein` fora do `kinein_dir`.
 
 **ENG-01 — a ferramenta de mutação.**
 - Fazer: `scripts/mutantes.py` e um catálogo por item em `scripts/mutantes/`.

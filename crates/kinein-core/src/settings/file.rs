@@ -82,31 +82,15 @@ struct OnDisk<'a> {
 /// O arquivo de `place`. `Err` traz o motivo, com o nome do arquivo, quando
 /// ele existe e a IDE não o entende.
 pub(super) fn read(place: &Place) -> Result<Contents, String> {
-    if let Some(root) = &place.project
-        && let Some(problem) = crate::kinein_dir::problem(root, FILE, false)
-    {
-        return Err(problem);
-    }
-    match fs::metadata(&place.path) {
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Ok(Contents::default());
-        }
-        Err(error) => return Err(place.problem(&format!("não pôde ser lido ({error})"))),
-        Ok(metadata) if !metadata.is_file() => {
-            return Err(place.problem("não é um arquivo regular"));
-        }
-        Ok(_) => {}
-    }
-    let mut bytes = Vec::new();
-    fs::File::open(&place.path)
-        .and_then(|file| {
-            file.take(crate::fsops::MAX_READ_BYTES + 1)
-                .read_to_end(&mut bytes)
-        })
-        .map_err(|error| place.problem(&format!("não pôde ser lido ({error})")))?;
-    if u64::try_from(bytes.len()).unwrap_or(u64::MAX) > crate::fsops::MAX_READ_BYTES {
-        return Err(place.problem("passa de 1 MiB, o limite de leitura da IDE"));
-    }
+    // INF-15: o do projeto pelo guarda do `.kinein`, que nao segue o link nem
+    // prende num FIFO; o global segue o link.
+    let bytes = match &place.project {
+        Some(root) => crate::kinein_dir::read(root, FILE)?,
+        None => read_global(place)?,
+    };
+    let Some(bytes) = bytes else {
+        return Ok(Contents::default());
+    };
     let body = String::from_utf8(bytes).map_err(|_| place.problem("não está em UTF-8"))?;
     let value: Value = serde_json::from_str(&body).map_err(|error| {
         place.problem(&format!(
@@ -129,6 +113,29 @@ pub(super) fn read(place: &Place) -> Result<Contents, String> {
     }
     let values = known_values(&object).map_err(|reason| place.problem(&reason))?;
     Ok(Contents { values, object })
+}
+
+/// Os bytes do global, seguindo o link, de até 1 MiB; `None` quando ausente.
+fn read_global(place: &Place) -> Result<Option<Vec<u8>>, String> {
+    match fs::metadata(&place.path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(place.problem(&format!("não pôde ser lido ({error})"))),
+        Ok(metadata) if !metadata.is_file() => {
+            return Err(place.problem("não é um arquivo regular"));
+        }
+        Ok(_) => {}
+    }
+    let mut bytes = Vec::new();
+    fs::File::open(&place.path)
+        .and_then(|file| {
+            file.take(crate::fsops::MAX_READ_BYTES + 1)
+                .read_to_end(&mut bytes)
+        })
+        .map_err(|error| place.problem(&format!("não pôde ser lido ({error})")))?;
+    if u64::try_from(bytes.len()).unwrap_or(u64::MAX) > crate::fsops::MAX_READ_BYTES {
+        return Err(place.problem("passa de 1 MiB, o limite de leitura da IDE"));
+    }
+    Ok(Some(bytes))
 }
 
 /// Os valores que esta versão conhece; o de tipo errado dá o motivo, com o

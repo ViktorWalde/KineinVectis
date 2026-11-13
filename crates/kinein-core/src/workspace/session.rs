@@ -7,10 +7,7 @@
 //! existir. Sessao invalida (schema desconhecido, JSON corrompido) nunca
 //! quebra o `workspace.open`: e simplesmente ignorada.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -84,8 +81,10 @@ pub fn save_session(
 /// invalido ou nenhum arquivo da sessao existe mais.
 #[must_use]
 pub fn load_session(root: &Path) -> Option<WorkspaceSession> {
-    let body = fs::read_to_string(session_path(root)).ok()?;
-    let session: SessionFile = serde_json::from_str(&body).ok()?;
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO; o que ele recusa vale como sessao ausente.
+    let body = crate::kinein_dir::read(root, "session.json").ok()??;
+    let session: SessionFile = serde_json::from_slice(&body).ok()?;
     if session.schema_version != SESSION_SCHEMA_VERSION {
         return None;
     }

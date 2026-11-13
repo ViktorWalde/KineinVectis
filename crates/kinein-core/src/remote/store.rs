@@ -8,10 +8,7 @@
 //! qualquer chave do JSON que pareca segredo — a mesma garantia estrutural
 //! do `seguranca/40`.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
 use kinein_protocol::RemoteTarget;
 use serde::{Deserialize, Serialize};
@@ -26,19 +23,15 @@ struct RemoteFile {
     targets: Vec<RemoteTarget>,
 }
 
-/// `.kinein/remotes.json` de um root.
-#[must_use]
-pub(super) fn path_for(root: &Path) -> PathBuf {
-    root.join(".kinein").join("remotes.json")
-}
-
 /// Le os alvos; ausente/invalido = nenhum.
 #[must_use]
 pub(super) fn load(root: &Path) -> Vec<RemoteTarget> {
-    let Ok(body) = fs::read_to_string(path_for(root)) else {
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO; o que ele recusa vale como arquivo ausente.
+    let Ok(Some(body)) = crate::kinein_dir::read(root, "remotes.json") else {
         return Vec::new();
     };
-    match serde_json::from_str::<RemoteFile>(&body) {
+    match serde_json::from_slice::<RemoteFile>(&body) {
         Ok(file) if file.schema_version == SCHEMA_VERSION => file.targets,
         _ => Vec::new(),
     }
@@ -54,6 +47,17 @@ pub(super) fn save(root: &Path, targets: &[RemoteTarget]) -> Result<(), String> 
         .map_err(|error| format!("falha serializando alvos: {error}"))?;
     // INF-13: pelo guarda do `.kinein`, que nao segue o link.
     crate::kinein_dir::write(root, "remotes.json", body.as_bytes())
+}
+
+#[cfg(test)]
+use std::{fs, path::PathBuf};
+
+/// `.kinein/remotes.json` de um root, para os testes: o dono le
+/// e grava pelo guarda do `.kinein` (INF-13, INF-15).
+#[cfg(test)]
+#[must_use]
+pub(super) fn path_for(root: &Path) -> PathBuf {
+    root.join(".kinein").join("remotes.json")
 }
 
 #[cfg(test)]

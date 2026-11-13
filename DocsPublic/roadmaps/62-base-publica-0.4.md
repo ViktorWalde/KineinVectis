@@ -197,10 +197,11 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
-e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-10: INF-01
+e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-13: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
-INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13 e
-INF-14 corrigidos; INF-06, INF-15, INF-16, UI-01 e UI-02 abertos. A dívida
+INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
+INF-14 e INF-15 corrigidos; INF-06, INF-16, INF-17, INF-18, INF-19, UI-01 e
+UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -897,7 +898,46 @@ auditorias e provas posteriores datadas nos donos:**
   Decisões do autor de 2026-11-12: é o primeiro item da engenharia da 0.4;
   a leitura passa pelo `kinein_dir`, que abre sem bloquear e sem seguir o
   link e confere o tipo no descritor
-  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.2). Estado aberto.
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.2). Medido de novo em
+  2026-11-12, no 61934697 (protocolo 0.221.0), com os quatro casos no lugar
+  de cada arquivo: o FIFO prende o core inteiro no `session.json`, no
+  `toolchain.json`, no `configuration.json`, no `python.json` e nas três
+  marcas do configure em `.kinein/build/` (`.kinein-preset`, `.kinein-kit` e
+  `.kinein-configure-pending`), já no `workspace.open`, parado no `open` do
+  FIFO; no `remotes.json`, no `grafana.json` e no `remote-contacts.json`, no
+  pedido do dono (`remote.list`, `grafana.get`). O `workspace.json`, que o
+  core só grava, deixou de prender com o INF-13. A leitura segue o link: o
+  `session.json` e o `python.json` ligados a arquivos de fora foram usados.
+  Decisões do autor de 2026-11-12, na abertura da execução: a leitura
+  guardada vale para os dez, para o `remote-contacts.json`, para o
+  `datasources.schema1.json` e para as três marcas quando a pasta de build
+  está dentro do `.kinein`; as marcas numa pasta de build fora dele e o
+  `coverage.lcov` são o INF-18 e o INF-19. O `stateProblem` passa a nomear
+  também a primeira entrada logo dentro do `.kinein` que não é arquivo
+  regular nem pasta (o FIFO), sem campo novo (protocolo 0.222.0); a pasta no
+  lugar do arquivo e o arquivo acima do limite aparecem no erro do método que
+  lê, e os donos que toleram o arquivo ilegível (a sessão, a toolchain, os
+  remotos, os contatos e o Grafana, como ausentes; o `python.json`, como
+  nenhum interpretador escolhido) seguem assim até o catálogo do ENG-02.
+  Corrigido em 2026-11-13: o `kinein_dir::read` abre a raiz canônica do
+  projeto e cada componente com `openat`, sem seguir link e sem bloquear,
+  confere no descritor que o do meio é pasta e o último é arquivo regular, e
+  lê no máximo 1 MiB e um byte; o motivo tem o caminho a partir do projeto,
+  como na escrita. As marcas do configure acham o projeto pelo `.kinein`
+  mais de fora do caminho, porque um preset pode se chamar `.kinein`.
+  Provas: o guarda em cada componente, o limite nos dois lados do byte e o
+  FIFO no lugar do arquivo e de uma pasta do meio, sem escritor do outro
+  lado; a reprodução deste registro pelo IPC, com o arquivo válido, o FIFO,
+  o link para o mesmo arquivo fora, a pasta e o arquivo acima do limite no
+  lugar de cada um dos quinze, conferindo a faixa, que o conteúdo só é usado
+  no controle, o motivo nos donos que erram e a pasta de fora intacta; a
+  prévia da receita da toolchain no dono. Os pedidos rodam com prazo, e o
+  teste abre o outro lado do FIFO se a leitura prender. 24 mutantes que
+  compilam, todos reprovados: dez do guarda e catorze dos donos, um por
+  leitura que volta a ler direto. Medido de novo com o core corrigido, os 44
+  casos e o FIFO no lugar de cada marca respondem todos, sem processo parado
+  no `open`, e o `session.json` e o `python.json` ligados não são usados
+  ([40.7](40.7-registro-das-entregas.md) §7.413). Estado corrigido.
 - **INF-16 — Mapa de módulos conta o `tests.rs` de um módulo como código.**
   Dono e evidência: `scripts/module_map.py`, que exclui só os caminhos com uma
   pasta `tests` (linha 267). Achado em 2026-11-12, no INF-13: o mapa deu ao
@@ -916,6 +956,60 @@ auditorias e provas posteriores datadas nos donos:**
   fechado por elas passaria. Severidade média. Decisão do autor de
   2026-11-12: corrigir o extrator e apagar a lista de ciclos conhecidos
   ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.2). Estado aberto.
+- **INF-17 — Catálogo do Banco e contatos remotos gravados fora do projeto
+  pelo link.** Dono e evidência: `datasource/store.rs` (`save`, `write`,
+  `keep_legacy_copy`) e `remote/contacts.rs` (`store`). Achado em
+  2026-11-12, na abertura do INF-15. Medido nessa data, com o core do
+  61934697 e pastas isoladas: num projeto com o `.kinein` ligado a uma pasta
+  de fora vazia, o `datasource.save` responde sem erro e grava o
+  `datasources.json` nela. A conferência própria do dono só olha o último
+  componente com `symlink_metadata`, que segue o `.kinein` ligado, e a
+  escrita é a `fsops::atomic_write` do caminho montado à mão. Lido no
+  código, sem medir: o `remote-contacts.json` é gravado com `fs::write`, que
+  segue o link do próprio arquivo e o do `.kinein`. O INF-13 deixou o
+  `datasource/store.rs` com a conferência dele, por engano, e não viu o
+  `remote/contacts.rs`. Severidade alta, a do INF-13: abrir um repositório
+  clonado e salvar uma conexão basta para criar ou sobrescrever um arquivo
+  fora do projeto. Causa confirmada: cada dono grava por conta própria (a
+  causa do ENG-02). Testes: o `.kinein` e cada arquivo ligados, pelo IPC e no
+  dono, com a pasta de fora vazia no fim, com mutações. Decisão do autor de
+  2026-11-12: a regra do INF-13 (`kinein_dir::write`), num commit próprio
+  logo depois do INF-15, antes do ENG-01
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.1). Estado aberto.
+- **INF-18 — Arquivos do projeto e das pastas de build lidos sem conferir o
+  tipo: o FIFO prende o core.** Dono e evidência: as leituras que não são de
+  arquivo próprio do `.kinein`. Achado em 2026-11-12, na abertura do
+  INF-15, e medido nessa data com o core do 61934697 e pastas isoladas: um
+  FIFO no lugar do `CMakeLists.txt` da raiz do projeto, ou do
+  `CMakeCache.txt` da `.kinein/build/` (o que o CMake grava, lido pelo
+  `ProjectCache::read` do `toolchain/project.rs`), prende o `workspace.open`,
+  parado no `open` do FIFO; o `CMakePresets.json`, o `CMakeUserPresets.json`
+  e o `build/CMakeCache.txt` de uma pasta que nenhum preset usa não prendem.
+  As marcas do configure (`.kinein-configure-pending`, `.kinein-preset`,
+  `.kinein-kit`, no `cmake_configuration.rs`) passam pelo guarda do INF-15
+  na pasta de build do `.kinein`; numa pasta de build de preset fora dele,
+  seguem com `fs::read`, inferido do mesmo código, sem medir. Severidade
+  alta, a do INF-15: o repositório clonado traz o arquivo. Causa provável:
+  o guarda conhece só os arquivos próprios do `.kinein`, e os leitores dos
+  arquivos do projeto e das ferramentas abrem com `fs::read`; o leitor do
+  `CMakeLists.txt` na abertura está por confirmar. Testes: o FIFO no lugar
+  de cada arquivo que a abertura e o status do CMake leem, sem prender. A
+  regra R-DADOS-02 do [63](63-regras-e-plano-de-engenharia-da-0.4.md) cobre
+  só o `.kinein`: decisão do autor pendente sobre a regra, o desenho e a
+  ordem. Estado aberto.
+- **INF-19 — LCOV da cobertura lido fora do `kinein_dir`.** Dono e
+  evidência: `coverage/mod.rs` (`run`), que lê o `.kinein/coverage.lcov` com
+  `fs::read_to_string`, sem limite, depois que a ferramenta o grava. Achado em
+  2026-11-12, na abertura do INF-15, lido no código. O caminho passa pelo
+  guarda do INF-13 antes da ferramenta, que recusa o link e o FIFO, e o
+  arquivo é apagado antes de ela gravar; a leitura de volta não passa pelo
+  `kinein_dir` (R-DADOS-01), e o limite de 1 MiB dos outros arquivos não
+  serve: o LCOV de um projeto grande passa dele sem defeito. Severidade
+  baixa: o arquivo é da ferramenta que a IDE acabou de rodar. Causa: o
+  `kinein_dir` não tem limite por arquivo. Testes: o LCOV acima de 1 MiB
+  lido inteiro; o link e o FIFO no lugar dele entre a ferramenta e a
+  leitura. Decisão do autor pendente: o limite e a ordem (o catálogo do
+  ENG-02 declara cada arquivo). Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`

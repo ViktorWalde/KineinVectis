@@ -99,9 +99,10 @@ fn versao_de(interpreter: &Path) -> Option<String> {
 
 /// A seleção explícita tem um único leitor, compartilhado com a criação de venv.
 pub(crate) fn selected_interpreter(root: &Path) -> Option<PathBuf> {
-    let value: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(root.join(".kinein/python.json")).ok()?)
-            .ok()?;
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO; o que ele recusa vale como nenhuma selecao.
+    let body = crate::kinein_dir::read(root, "python.json").ok()??;
+    let value: serde_json::Value = serde_json::from_slice(&body).ok()?;
     if value["schemaVersion"] != 1 {
         return None;
     }

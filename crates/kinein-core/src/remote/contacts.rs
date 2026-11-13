@@ -34,10 +34,12 @@ fn path_for(root: &Path) -> PathBuf {
 /// Os contatos; ausente ou invalido = nenhum.
 #[must_use]
 pub fn load(root: &Path) -> Vec<RemoteContact> {
-    let Ok(body) = fs::read_to_string(path_for(root)) else {
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO; o que ele recusa vale como nenhum contato.
+    let Ok(Some(body)) = crate::kinein_dir::read(root, "remote-contacts.json") else {
         return Vec::new();
     };
-    match serde_json::from_str::<ContactsFile>(&body) {
+    match serde_json::from_slice::<ContactsFile>(&body) {
         Ok(file) if file.schema_version == SCHEMA_VERSION => file.contacts,
         _ => Vec::new(),
     }

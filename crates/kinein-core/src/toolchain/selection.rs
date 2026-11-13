@@ -78,7 +78,7 @@ pub fn plan_c_compiler(
         None => drop(entry.selections.remove(&role)),
     }
     let after = store::render(&kits)?;
-    let before = std::fs::read_to_string(store::path_for(root)).ok();
+    let before = store::text(root);
 
     let cache_compiler = ProjectCache::read(root).c_compiler().map(str::to_owned);
     let mut notes = vec![

@@ -279,14 +279,28 @@ pub(crate) struct Attempt {
     pub(crate) kit: String,
 }
 
+/// The bytes of the marker `name` of the configure folder `directory`;
+/// `None` when absent. Inside the `.kinein`, by its guard (INF-15); a
+/// folder of the project outside it is read as it is (INF-18).
+fn marker(directory: &Path, name: &str) -> Result<Option<Vec<u8>>, String> {
+    if let Some((root, relative)) = crate::kinein_dir::inside(directory) {
+        return crate::kinein_dir::read(root, &format!("{relative}/{name}"));
+    }
+    match fs::read(directory.join(name)) {
+        Ok(bytes) => Ok(Some(bytes)),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
 /// The attempt pending in `directory`, if any.
 pub(crate) fn pending(directory: &Path) -> Result<Option<Attempt>, String> {
-    let text = match fs::read(directory.join(PENDING_MARKER)) {
-        Ok(text) => text,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => {
+    let text = match marker(directory, PENDING_MARKER) {
+        Ok(Some(text)) => text,
+        Ok(None) => return Ok(None),
+        Err(reason) => {
             return Err(format!(
-                "registro do configure incompleto ilegível: {error}"
+                "registro do configure incompleto ilegível: {reason}"
             ));
         }
     };
@@ -295,22 +309,24 @@ pub(crate) fn pending(directory: &Path) -> Result<Option<Attempt>, String> {
         .map_err(|error| format!("registro do configure incompleto inválido: {error}"))
 }
 
+/// The text of the marker `name`, when it can be read as UTF-8.
+fn marker_text(directory: &Path, name: &str) -> Option<String> {
+    String::from_utf8(marker(directory, name).ok()??).ok()
+}
+
 /// The preset the IDE configured `directory` with, for a configured folder.
 pub(crate) fn annotated_preset(directory: &Path) -> Option<String> {
     if !directory.join("CMakeCache.txt").is_file() {
         return None;
     }
-    fs::read_to_string(directory.join(PRESET_MARKER))
-        .ok()
+    marker_text(directory, PRESET_MARKER)
         .map(|preset| preset.trim().to_owned())
         .filter(|preset| !preset.is_empty())
 }
 
 /// The kit the last successful configure of `directory` recorded.
 pub(crate) fn last_kit(directory: &Path) -> Option<String> {
-    fs::read_to_string(directory.join(KIT_MARKER))
-        .ok()
-        .map(|kit| kit.trim_end_matches('\n').to_owned())
+    marker_text(directory, KIT_MARKER).map(|kit| kit.trim_end_matches('\n').to_owned())
 }
 
 #[derive(Serialize, Deserialize)]
@@ -333,12 +349,14 @@ fn record_path(root: &Path) -> PathBuf {
 /// # Errors
 /// The record exists and cannot be read or parsed.
 pub fn selected_configuration(root: &Path) -> Result<Option<String>, String> {
-    let bytes = match fs::read(record_path(root)) {
-        Ok(bytes) => bytes,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => {
+    // INF-15: pelo guarda do `.kinein`, que nao segue o link nem prende num
+    // FIFO.
+    let bytes = match crate::kinein_dir::read(root, "configuration.json") {
+        Ok(Some(bytes)) => bytes,
+        Ok(None) => return Ok(None),
+        Err(reason) => {
             return Err(format!(
-                "registro da configuração escolhida ilegível: {error}"
+                "registro da configuração escolhida ilegível: {reason}"
             ));
         }
     };
