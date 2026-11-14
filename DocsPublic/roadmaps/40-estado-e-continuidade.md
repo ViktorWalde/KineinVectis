@@ -162,7 +162,7 @@ Provas de software, emulação e hardware permanecem distintas.
 0.4:** o [63](63-regras-e-plano-de-engenharia-da-0.4.md) traz as regras
 (Parte A), o inventário da dívida (Parte B) e a ordem (§E.1), que começou
 pelo INF-15, pelo INF-17, pelo INF-20, pelo INF-21 e pelo INF-18 (corrigidos
-em 2026-11-13, 40.7 §7.413 a §7.418) e segue pelo ENG-01. A 0.4 paga toda a dívida inventariada, e a etapa C só
+em 2026-11-13, 40.7 §7.413 a §7.418) e segue pelo ENG-01, só a ferramenta, e pelo endurecimento das catracas e dos gates (ENG-40 a ENG-46, decisão do autor de 2026-11-13, 63 §0, D-19). A 0.4 paga toda a dívida inventariada, e a etapa C só
 retoma depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)

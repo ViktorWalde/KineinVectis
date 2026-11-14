@@ -1316,7 +1316,8 @@ Decisão do autor de 2026-11-12, para todos: corrigir na 0.4, na ordem do 63
 - **ENG-03 — Checagem barata no fim do gate, e folha que grava no checkout.**
   Severidade média. Causa: a ordem dos passos cresceu por acréscimo.
 - **ENG-04 — Três checagens do gate com custo quadrático.** Severidade baixa.
-  Causa: um regex por nome sobre o texto inteiro.
+  Causa: um regex por nome sobre o texto inteiro. Absorvido pelo ENG-43 em
+  2026-11-13 (63 §0, D-22).
 - **ENG-05 — clang-tidy sem cache no gate rápido.** Severidade baixa.
 - **ENG-06 — Gate de docs que lê arquivo fora do git.** Severidade média: o
   veredito local pode diferir do da CI.
@@ -1378,6 +1379,220 @@ Decisão do autor de 2026-11-12, para todos: corrigir na 0.4, na ordem do 63
 - **ENG-38 — Checklist de riscos sem a verificação apontada.** Severidade
   média. Causa não investigada: a auditoria é o próprio item.
 - **ENG-39 — Testes adiados no Windows.** Severidade média; pago na etapa 10.
+
+**Registros da revisão das catracas e dos gates de 2026-11-13.** Medidos
+nessa data, no commit 2e5fa164, numa cópia da árvore fora do checkout. Cada
+sonda foi aplicada sozinha na cópia, o comando do passo foi rodado, e a cópia
+foi desfeita: 135 sondas em 16 passos, 120 defeitos e 15 formas legítimas.
+Dos defeitos, 36 reprovaram; das formas legítimas, 14 foram reprovadas por
+engano. A sonda é uma forma difícil da linguagem (comentário, texto literal,
+`#[cfg(test)]`, bloco de uma linha), não um defeito comum. O dono de cada
+item é o [63](63-regras-e-plano-de-engenharia-da-0.4.md): a tabela por passo
+está na §D.5 de lá, e o que fazer, os defeitos plantados e o pronto, na
+§E.2. Decisão do autor de 2026-11-13, para todos: corrigir na 0.4, antes do
+catálogo `gate` do ENG-01 (63 §0, D-19 a D-22). Estado de todos: aberto.
+
+- **ENG-40 — Linha de base com folga, e comando que a sobe.** Dono e
+  evidência: os seis verificadores com catraca, cada um com a sua comparação.
+  - `bash scripts/verificar-arquitetura.sh --atualizar-baseline`, com um
+    arquivo Rust novo de 520 linhas na árvore: "baseline atualizada: 2
+    arquivos em debito", código de saída 0, e a rodada seguinte diz "catraca
+    ok (2 arquivos em debito, nenhum novo/crescido)". Com um arquivo QML
+    ilegível na árvore (um byte que não é UTF-8), o mesmo comando diz
+    "baseline atualizada: 0 arquivos em debito" e grava a base vazia.
+  - `bash scripts/verificar-arquitetura.sh`, sem atualizar: o
+    `EditorController.qml` encurtado de 791 para 771 passa, e crescendo de
+    volta até 786 passa de novo, porque a base ficou acima da contagem.
+  - `python3 scripts/verificar_qml_mortas.py --atualizar-baseline`, com uma
+    função morta nova: "baseline atualizada: 13 entrada(s)." (eram 12).
+  - `python3 scripts/verificar_qml_duplicacao.py --atualizar-baseline`, com
+    uma derivação repetida nova: "baseline atualizada: 12 derivacoes
+    duplicadas" (eram 11). Com uma chave a mais na base, nenhum aviso; a
+    duplicação com essa chave entra, e a saída é "12 derivacoes congeladas,
+    nenhuma nova nem espalhada."
+  - `python3 scripts/check_identifier_language.py --update-baseline`, com um
+    identificador novo em português: recusa. Com a base apagada antes,
+    grava: "linha de base: 3321 pares arquivo/palavra, 14069 ocorrencias"
+    (eram 3319 e 14.067). O `verificar_qml_tokens.py` faz o mesmo: recusa, e
+    com a base apagada grava "radius 8" (eram 7).
+  - Só o `verificar-adiados-windows.sh` reprova a contagem abaixo da base:
+    "W7: 18, abaixo da linha de base (19)".
+
+  Severidade alta: a dívida paga pode voltar sem que nada reclame, e um
+  comando põe a dívida nova dentro da base. Causa confirmada por leitura e
+  pelas rodadas: cada verificador compara e grava do seu jeito, e gravar é
+  regravar o que mediu. Decisão: o módulo comum do ENG-40 (63 §E.2), com as
+  regras R-GATE-09 e R-GATE-10.
+- **ENG-41 — Um leitor de código por verificador.** Dono e evidência: cada
+  script de `scripts/` que lê Rust, QML ou C++ tem o seu regex ou a sua
+  heurística de recuo. O `python3 scripts/check_identifier_language.py`
+  reprovou as 4 formas legítimas plantadas (português numa string Rust de
+  várias linhas, dentro de um comentário de bloco aninhado, numa string QML
+  de aspa simples e numa string depois de uma regex com aspa) e deixou
+  passar 7 de 10 defeitos (a variável de um `read -r`, o `local` sem
+  atribuição, um `.c`, um `.ps1`, um `.cmake`, um script `.in` e a palavra de
+  3 letras). O `python3 scripts/module_map.py --check` reprovou 4 de 4
+  formas legítimas (`crate::x` num comentário, numa string, num `tests.rs` e
+  num `#[cfg(test)] mod`) e deixou passar o ciclo por import agrupado.
+  Severidade alta: o mesmo erro de leitura aparece em vários gates, e cada
+  correção vale para um só (o INF-21 corrigiu a string crua no idioma, e só
+  nele). Causa confirmada por leitura. Decisão: um leitor por linguagem, com
+  corpus, e o idioma como primeiro consumidor (63 §E.2, R-GATE-11).
+- **ENG-42 — Gates que leem Rust errado.** Dono e evidência:
+  - `bash scripts/verificar-arquitetura.sh`: 3 de 8 defeitos. Um arquivo
+    novo com 520 linhas de produção passa quando elas vêm depois de um
+    comentário que cita `#[cfg(test)]`, de uma string que cita, ou de um
+    item de teste no meio do arquivo; passa num arquivo chamado `tests.rs`;
+    e passa com qualquer arquivo ilegível na árvore, porque o leitor quebra
+    e a lista sai vazia. Na árvore, medido em 2026-11-13 com um protótipo de
+    leitor: `crates/kinein-core/src/terminal/session.rs` tem 661 linhas de
+    produção e é contado como 135
+    (`grep -n '#\[cfg(test)\]' crates/kinein-core/src/terminal/session.rs`
+    dá 135, 141, 147 e 670: as três primeiras marcam um método cada), e
+    `crates/kinein-core/src/lib.rs` tem 567 e é contado como 500, com o
+    `#[cfg(test)] mod tests;` na linha 501. Os dois estão acima do limite de
+    500 e fora da base. Em 25 arquivos do core há mais de 2 linhas de
+    produção depois da primeira marca.
+  - `bash scripts/verificar-transicao-workspace.sh`: 1 de 7. Passam o
+    `mem::take`, a escrita por outro nome, a função livre com
+    `core: &mut Core`, o `Option::insert`, a atribuição em duas linhas e a
+    escrita depois de um comentário que cita `#[cfg(test)]`. Na árvore não
+    há nenhuma dessas formas: só as 4 escritas do dono.
+  - `bash scripts/verificar-adiados-windows.sh`: 3 de 10. Passam o
+    `cfg_attr(windows, ignore)` sem motivo, o adiamento sem fatia numa linha
+    só, `cfg(not(windows))`, `cfg(all(unix, test))`, `target_os`,
+    `target_family` e o retorno cedo por `cfg!(windows)`; e um
+    `#[cfg(unix)]` dentro de comentário conta. Na árvore, pelo protótipo: 3
+    retornos cedo por `cfg!(…)` em teste, fora da contagem.
+  - `python3 scripts/verificar_fiacao_ipc.py`, lado Rust: o braço de rota
+    que chama função livre, a forma do ENG-14, passa sem cliente; o nome de
+    evento só num `tests.rs` é reprovado.
+
+  Severidade alta: a catraca de arquitetura esconde dois arquivos, e as
+  formas que escapam são as que o ENG-14 vai introduzir. Causa confirmada
+  por leitura: o corte no primeiro texto `#[cfg(test)]`, o regex por linha
+  preso a `self.` e o script sem `set -e`. Decisão: 63 §E.2, ENG-42; os dois
+  arquivos entram em catraca de migração, o `lib.rs` com o ENG-14 e o
+  `session.rs` com o ENG-17 (D-22).
+- **ENG-43 — Gates que leem QML e C++ errado.** Dono e evidência, cada um
+  pelo comando do passo:
+  - `verificar_qml_mortas.py`: 1 de 7. Passam a função de recuo 8, a citada
+    só num comentário ou numa string, a guardada em propriedade, a de um
+    `.js` e a de nome igual ao de outro componente. Na árvore, pelo
+    protótipo: `DataSourceController.qml::introspect` só é citada em
+    strings.
+  - `verificar_qml_duplicacao.py`: 2 de 10, e reprova a comparação que só
+    existe em comentário. Passam `!==`, `==`, a invertida, o `case`, o valor
+    com sublinhado, a aspa simples, o `indexOf` e o colchete. Na árvore,
+    pelo protótipo: 20 chaves em 2 arquivos ou mais com essas formas, contra
+    as 11 da base.
+  - `verificar_qml_tokens.py`: 5 de 14, e reprova o literal dentro de um
+    comentário de bloco. Passam o `font { pixelSize }`, a cor com aspa
+    simples, por `Qt.rgba`, por nome e em `property color`, o
+    `radius: (6)`, o `pointSize`, a atribuição em JavaScript e a
+    `font.family`. Na árvore, pelo protótipo: 7 cores e 1 `font.family` fora
+    da base; e 1 das 7 entradas da base é a definição `radius` do próprio
+    `Theme.qml`, que nenhum trabalho de produto tira.
+  - `verificar_qml_alcance.py`: 1 de 6. Passam o componente instanciado só
+    num comentário ou numa string, o de nome que é trecho de outro no C++, a
+    linha do CMake com comentário e dois componentes que só se instanciam um
+    ao outro.
+  - `verificar-qml-fiacao.sh`: 2 de 6. Passam o `x: x` com comentário no
+    fim, num bloco de uma linha, num bloco aberto por `prop: Tipo {` e com
+    `;` no fim.
+  - `verificar_qml_propriedades.py`: 3 de 6, e reprova 2 formas legítimas
+    (`elide` num componente de raiz `Text`, `contentWidth` num de raiz
+    `Flickable`). O qmllint do passo 12 reprova as 4 formas plantadas e
+    aceita as 2; a `--ci-rapida` não o roda.
+  - `verificar_atalhos.py`: 2 de 5. Passam o `case` que só existe num
+    comentário e o `Shortcut` com `id` na mesma linha ou de uma linha só.
+  - `verificar_fiacao_ipc.py`, lado QML e C++: passam o cliente e o ouvinte
+    citados só num comentário, e o sinal sem tratador cujo nome outro
+    componente trata.
+
+  Custo, cada um sozinho: funções mortas 11,2 s, alcance 10,8 s e fiação
+  11,5 s, num núcleo só. Severidade alta: são os gates que seguram a UI, e o
+  recuo e o texto cru decidem o veredito. Causa confirmada por leitura.
+  Decisão: 63 §E.2, ENG-43, que absorve o ENG-04; o que a leitura certa
+  revela entra em catraca de migração no ENG-33, no ENG-34 e no ENG-35
+  (D-22); o passo de propriedades volta ao autor antes de mexer.
+- **ENG-44 — R-TEST-06 sem gate para o sinal da ponte.** Dono e evidência:
+  `scripts/qml-harness`. Medido contra os `signals:` do
+  `ui/src/core_client.h` (220 sinais): 19 dos 191 arquivos QML do harness
+  redeclaram sinal da ponte, 340 redeclarações ao todo, e o maior tem 29
+  (`tst_definition_missing.qml`); 36 sinais estão em 3 harnesses ou mais.
+  Nenhum passo confere, e a regra só tem o checklist até o ENG-23.
+  Severidade média. Causa: a regra nasceu antes do gate dela. Decisão: uma
+  catraca de migração por arquivo (63 §E.2, ENG-44), que o ENG-23 leva a
+  zero.
+- **ENG-45 — Gate que dá verde sem conferir; exceção sem conferência.** Dono
+  e evidência:
+  - `bash scripts/verificar-arquitetura.sh` com um arquivo ilegível na
+    árvore e um arquivo novo de 520 linhas: o leitor quebra
+    (`UnicodeDecodeError`), e o passo passa.
+  - `KINEIN_QML_TEST=nao_existe_zz bash scripts/verificar-qml-logica.sh`:
+    "✓ logica QML: tudo verde", com 0 testes rodados.
+  - `python3 scripts/verificar_fiacao_ipc.py` com um ouvinte novo para um
+    sinal da lista de aceitos: passa, e a entrada fica na lista sem motivo.
+  - `scripts/verificar-cpp.sh`: a exceção de falso positivo só vale no
+    clang-tidy 18. A máquina da medida tem o 23, e a `--ci-rapida` pula o
+    passo: a exceção não é exercida em lugar nenhum.
+  - `scripts/verificar-deny.sh`: uma rodada do gate reprovou por não
+    resolver o nome do servidor do banco de avisos, e as duas seguintes
+    passaram na mesma árvore. Este fica com o ENG-03.
+
+  Severidade alta: verde que não conferiu não se distingue do que conferiu.
+  Causa confirmada por leitura e pelas rodadas. Decisão: 63 §E.2, ENG-45,
+  com a R-GATE-12.
+- **ENG-46 — Arquivos que nenhum gate lê.** Dono e evidência:
+  - `clang-format --dry-run --Werror ui/tests/*.cpp`: 13 erros, 10 no
+    `tst_clipboard_files.cpp` e 3 no `tst_startup_web.cpp`. O
+    `verificar-cpp.sh` só lê `ui/src`, e os 8 arquivos C++ de `ui/tests`
+    ficam fora do clang-format e do clang-tidy.
+  - `bash scripts/verificar-shell.sh`: 1 de 5. Passam o script novo ainda
+    não rastreado, o script sem extensão com `#!/usr/bin/bash` ou com
+    `#! /bin/sh`, e a supressão sem motivo (esta é do ENG-36).
+  - `git ls-files '*.pyc'`: 2 arquivos em `scripts/__pycache__/`, que o
+    `.gitignore` ignora. Os dois trazem dentro o caminho do checkout de quem
+    os gerou, e a conferência de privacidade só lê `.md`.
+
+  Severidade média. Causa confirmada por leitura. Decisão: 63 §E.2, ENG-46.
+- **ENG-47 — Leitura de conteúdo sem dono; mutantes ditos equivalentes.**
+  Dono e evidência: o core lê conteúdo de arquivo fora dos leitores
+  guardados do INF-15 e do INF-18. Medido com o protótipo de leitor: 19
+  leituras (`fs::read`, `fs::read_to_string` ou `File::open`) em 14 arquivos
+  de produção. É por isso que os 6 mutantes do INF-18 que leem direto foram
+  registrados como equivalentes: nada os distingue de uma leitura legítima.
+  Com os 2 do INF-17 e os 2 do INF-20, são 10 mutantes registrados como
+  equivalentes neste documento. Severidade média: a guarda que o mutante
+  tira não tem prova. Decisão do autor de 2026-11-13 (D-21): equivalente
+  não é estado final. Os 4 do INF-17 e do INF-20 morrem na conferência de
+  vocabulário do ENG-02; os 6 do INF-18, na conferência de leitura com dono
+  do ENG-47 (63 §E.2).
+- **ENG-17 — `terminal/session.rs` acima do limite, fora da base.** Dono e
+  evidência: a medida do ENG-42 acima, de 2026-11-13: 661 linhas de produção
+  contra o limite de 500. Severidade média. Causa: o arquivo cresceu atrás
+  de uma marca de teste que a catraca tomava pelo fim da produção. Decisão:
+  dividir por responsabilidade, na Fase 1 (63 §E.3).
+
+Achados da mesma revisão que ficam com o dono que já existe (D-22):
+
+- **ENG-03:** o orquestrador mede em segundos inteiros e lista só os 5
+  maiores (15 dos 37 passos saem com 0 s); o `deny` depende da rede; o
+  qmllint (12,4 s) e o autoteste dos identificadores (13,2 s) usam um núcleo
+  dos 16; o `verificar-binario-abre.sh` leva 38,5 s com 0,6 núcleo.
+- **ENG-06:** o `bash scripts/verificar-docs.sh` reprovou 1 de 7 defeitos
+  (passam o número só com o nome do arquivo, antes do arquivo, perto de uma
+  data que não é dele, errado por 2 linhas e de um script Python), e o
+  `bash scripts/verificar-links-docs.sh`, 4 de 9 (passam o link por
+  referência, a âncora morta, o link em HTML e a menção a modelo e a
+  sessão).
+- **ENG-30:** o `verificar-exercitacao.sh` leva 29,5 s com 2,7 s de CPU; os
+  9 `sleep` fixos dele somam 29 s.
+- **ENG-36:** 71 supressões nas quatro formas da primeira medida (eram 69),
+  mais 3 em Python que ela não contou.
+- **ENG-37 e ENG-39:** as formas que a contagem de hoje não vê entram em
+  catraca de migração (63 §B.2).
 
 As demais áreas da tabela ainda exigem inventário por capacidade; esta lista
 inicial não certifica ausência de dívida nelas. Atualizar classificação,
