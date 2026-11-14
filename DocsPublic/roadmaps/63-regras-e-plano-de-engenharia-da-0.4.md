@@ -10,6 +10,14 @@
 >
 > **Ponto de partida.** Commit `6baddbdf`, protocolo 0.221.0. Toda medida
 > deste documento é de 2026-11-12, nessa árvore, salvo data própria.
+>
+> **Situação em 2026-11-14 (decisão do autor).** A 0.4 segue a estratégia B
+> do [64](64-revisao-da-arquitetura-e-estrategia-b.md). A Parte A segue
+> valendo como regulamento. Das Partes C e E, o bloco do D-19 (ENG-40 a
+> ENG-46) não começa como está escrito, e o destino de cada item está no
+> 64 §7. As decisões do 64 §11 foram tomadas no mesmo dia. As emendas que
+> elas pedem a este documento (Parte A, Parte F, R-GATE-01, Partes C e E)
+> são o resto do B0 do 64 §8 e ainda não foram escritas.
 
 ## 0. As decisões (decisão do autor, 2026-11-12)
 

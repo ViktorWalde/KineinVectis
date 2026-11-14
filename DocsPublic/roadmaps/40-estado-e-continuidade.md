@@ -21,7 +21,7 @@
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
 > em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413; INF-17, §7.414; INF-20, §7.415; INF-21, §7.416; INF-18, §§7.417–7.418); dívida na 0.4.
 > Recorte atual (2026-11-14): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
-> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419; o bloco do D-19, do ENG-40 em diante, espera uma revisão da arquitetura, por decisão do autor de 2026-11-14), antes de retomar o **C1** (consolidação C §4.1). Polimento
+> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia; a próxima fatia é o resto do B0 (os requisitos no 19 e o 63 reconciliado). **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). O **C1** (consolidação C §4.1) retoma depois. Polimento
 > UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
@@ -163,7 +163,18 @@ Provas de software, emulação e hardware permanecem distintas.
 0.4:** o [63](63-regras-e-plano-de-engenharia-da-0.4.md) traz as regras
 (Parte A), o inventário da dívida (Parte B) e a ordem (§E.1), que começou
 pelo INF-15, pelo INF-17, pelo INF-20, pelo INF-21 e pelo INF-18 (corrigidos
-em 2026-11-13, 40.7 §7.413 a §7.418), passou pela ferramenta do ENG-01 (2026-11-14, 40.7 §7.419). O passo seguinte do plano é o endurecimento das catracas e dos gates (ENG-40 a ENG-46, decisão do autor de 2026-11-13, 63 §0, D-19), que não começou: por decisão do autor de 2026-11-14, a sequência espera uma revisão crítica da arquitetura prevista no 63. A 0.4 paga toda a dívida inventariada, e a etapa C só
+em 2026-11-13, 40.7 §7.413 a §7.418), passou pela ferramenta do ENG-01 (2026-11-14, 40.7 §7.419). O passo seguinte do plano é o endurecimento das catracas e dos gates (ENG-40 a ENG-46, decisão do autor de 2026-11-13, 63 §0, D-19), que não começou.
+
+**Desde 2026-11-14 (decisão do autor), a 0.4 segue a estratégia B.** A
+revisão da arquitetura está no
+[64](64-revisao-da-arquitetura-e-estrategia-b.md) (40.7 §7.420): o
+diagnóstico medido, a arquitetura-alvo e a ordem. O bloco do D-19 não começa
+como está escrito; o destino de cada item do 63 está no 64 §7. As nove
+decisões do 64 §11 (DP-01 a DP-09) foram aceitas no mesmo dia. A próxima
+fatia é o resto do B0 do 64 §8: levar os requisitos ao 19 e reconciliar o
+63. Nenhuma fase de código da B começou. O INF-23 (código do projeto executado sem confiança,
+severidade crítica, [62 §3.4](62-base-publica-0.4.md)) está aberto e é o
+primeiro item da fase B2. A 0.4 paga toda a dívida inventariada, e a etapa C só
 retoma depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)
@@ -251,6 +262,7 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Internacionalização | UI em inglês no polimento; documentação integral em inglês e divulgação com a base finalizada, preservando português e strings traduzíveis. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | Frentes posteriores | ROS 2, colaboração remota, motor semântico profundo e estudo de CLI conservam seus planos. A trilha pública de contribuições já tem quatro tarefas; primeiro verificador na base 0.4. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
 | CI e recursos | CI pública compartilha os gates; limites de RAM, swap zero por escopo e limpeza de temporários devem ser verificáveis. | [gates](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md), [comandos](../build/comandos-de-build-e-verificacao.md) |
+| Arquitetura da 0.4 | Autor, 2026-11-14: estratégia B, reconstrução arquitetural seletiva. O nível macro fica (dois processos, core dono dos fatos, protocolo tipado, ferramentas como processos); trocam-se o modelo de execução do laço, a ponte, as políticas transversais e a persistência. As decisões DP-01 a DP-09 do 64 §11 foram aceitas no mesmo dia. | [64](64-revisao-da-arquitetura-e-estrategia-b.md) |
 | Documentação | Material público é técnico; contexto pessoal e instruções de agentes são locais e não publicáveis. | [política documental](../README.md#repositório-público--cópia-de-distribuição) |
 
 ## 7. O registro das entregas

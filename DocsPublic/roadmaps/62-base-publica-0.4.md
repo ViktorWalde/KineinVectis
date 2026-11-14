@@ -201,7 +201,7 @@ e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-14: INF
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, INF-22, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, INF-23, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -216,6 +216,17 @@ o core, a ponte com a QML, e os testes com as listas congeladas. O C1 retoma
 em seguida, do C1-47; os testes adiados do Windows são pagos na etapa 10. As
 regras de engenharia passam a morar na Parte A do 63, e nenhuma etapa desta
 tabela começa sem o plano dela escrito (R-PROC-01).
+
+**Decisão do autor (2026-11-14).** A revisão da arquitetura
+([64](64-revisao-da-arquitetura-e-estrategia-b.md)) mediu o produto e
+comparou três estratégias. A 0.4 segue a **estratégia B**, reconstrução
+arquitetural seletiva: o nível macro fica, e trocam-se o modelo de execução
+do laço, a ponte, as políticas transversais e a persistência. O bloco do
+D-19 do 63 (ENG-40 a ENG-46) não começa como está escrito; o destino de cada
+item do 63 está no 64 §7, e a ordem, no 64 §8. As nove decisões do 64 §11
+(DP-01 a DP-09) foram aceitas no mesmo dia. A regra de 2026-11-12
+segue valendo: nenhuma dívida passa da 0.4. Os achados da revisão são o
+INF-23 e os ENG-50 a ENG-59 do §3.4.
 
 Quality Center, schema 3, CircuitPython, Banco para embarcados, expansão de
 emuladores além de F3 e as demais jornadas não concluídas do 52 permanecem
@@ -1216,6 +1227,34 @@ auditorias e provas posteriores datadas nos donos:**
   mesmo tempo, antes e depois da correção. Decisão: nenhuma ainda; onde ele
   entra na ordem é do autor
   ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Estado aberto.
+- **INF-23 — Código do projeto executado sem a confiança da pessoa.** Dono e
+  evidência: [64 §2.1](64-revisao-da-arquitetura-e-estrategia-b.md).
+  Reproduzido em 2026-11-14, com o binário release do 9198888c, num projeto
+  que abre com `trusted: false`. Cinco vetores executaram um script do
+  projeto:
+  - o `workspace.open` roda `<raiz>/.venv/bin/python --version`
+    (`python/env.rs`, pelo `configure_python_lsp`), duas vezes; a origem da
+    segunda não foi isolada;
+  - o primeiro pedido LSP de um `.py` sobe o basedpyright, que recebe o
+    mesmo interpretador como `python.pythonPath` e o roda;
+  - o `git.status`, que a ponte manda sozinha depois de abrir, roda o
+    `core.fsmonitor` do `.git/config`;
+  - o primeiro pedido LSP de um `.rs` sobe o rust-analyzer, que roda o
+    `build.rustc-wrapper` do `.cargo/config.toml`;
+  - o primeiro pedido LSP de um `.c` leva ao `--query-driver` do clangd o
+    compilador fixado por caminho absoluto no `.kinein/toolchain.json`, e o
+    clangd o roda.
+
+  O `cargo metadata --no-deps` do core não roda o wrapper. Severidade
+  crítica: resultado incorreto tratado como seguro, porque a IDE mostra o
+  projeto como não confiável enquanto o código dele roda. Causa confirmada:
+  a confiança é consultada em quatro lugares do core e num da QML, e não
+  onde o processo nasce. Testes: o projeto hostil do 64 §2.1 como fixture,
+  com zero marcas para o `workspace.open`, para cada pedido automático da
+  ponte e para o primeiro arquivo de cada linguagem, e os mutantes da
+  guarda. Decisão do autor de 2026-11-14 (DP-02 e DP-04 do 64 §11):
+  corrigir pelo lançador e pelo modo restrito (64 §5.4 e §5.5), como
+  primeiro item da fase B2. Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
@@ -1612,7 +1651,66 @@ catálogo `gate` do ENG-01 (63 §0, D-19 a D-22). Estado de todos: aberto.
   de uma marca de teste que a catraca tomava pelo fim da produção. Decisão:
   dividir por responsabilidade, na Fase 1 (63 §E.3).
 
-Achados da mesma revisão que ficam com o dono que já existe (D-22):
+Achados da revisão da arquitetura de 2026-11-14. O dono, a medida e a
+solução de cada um estão no
+[64](64-revisao-da-arquitetura-e-estrategia-b.md); a decisão de cada um é
+do autor, de 2026-11-14 (64 §11). Todos abertos.
+
+- **ENG-50 — O laço do core bloqueia por padrão.** Evidência: 64 §2.2 e
+  §2.3. Com um `git` que espera 6 s, o `git.status` segura o laço por
+  18,0 s, e o `core.ping` e o `job.cancel` mandados em seguida respondem em
+  17,8 s; o `setup.list` segura o laço por 517,8 ms na mediana. Severidade
+  alta: uma ferramenta que não responde para a IDE inteira, inclusive o
+  cancelamento. Causa: o handler síncrono é o padrão, sair do laço é
+  escolha de cada handler, e pedido não tem prazo nem cancelamento.
+  Decisão: classe de execução na rota, prazo, `core.cancel` e fila por
+  recurso (64 §5.3), fase B3.
+- **ENG-51 — Processo criado sem política única.** Evidência: 64 §2.8,
+  cerca de 122 `Command::new` de produção em 28 módulos. Severidade alta: é
+  a causa do INF-23 e do ENG-50. Decisão: um lançador dono do processo,
+  imposto pelo compilador (64 §2.7 e §5.4), fase B2.
+- **ENG-52 — O core não registra pedido, processo nem job.** Evidência: 64
+  §2.8; a [especificação da arquitetura interna](../especificacoes/arquitetura-interna-core-ipc-jobs.md)
+  §23 pede o registro "desde o início", sem dono nem verificação.
+  Severidade alta: um requisito de tempo não tem como ser conferido no uso.
+  Decisão: 64 §5.10, fase B1.
+- **ENG-53 — A ponte não correlaciona resposta e pedido.** Evidência: 64
+  §2.8. Severidade alta: dois pedidos iguais não se distinguem, e pedido
+  não tem prazo nem cancelamento do lado da UI. Decisão: um objeto de
+  resposta por pedido (64 §5.6), fase B5; muda o desenho do ENG-20.
+- **ENG-54 — Contrato tipado de um lado só.** Evidência: 64 §2.8, com o
+  `schemas/ipc.schema.json` parado no protocolo 0.62.0. Severidade alta: a
+  divergência entre o Rust, o C++ e os dublês dos harnesses só aparece em
+  execução. Decisão: fonte única com artefatos gerados e conferidos (64
+  §5.7), fase B4; troca o ENG-44.
+- **ENG-55 — `syntaxTree.update` leva o arquivo inteiro e devolve a árvore
+  inteira a cada edição.** Evidência: 64 §2.4. Com 20 mil linhas, 345,0 ms
+  no laço e 8.218 KiB de resposta por edição; o RSS do core ao final da
+  rodada, 68.292 KiB, contra o orçamento de 60 MB. Severidade alta.
+  Decisão: sincronia e reanálise incrementais (64 §5.11), fase B8.
+- **ENG-56 — O `.kinein` mistura configuração do projeto, estado da pessoa
+  e cache.** Evidência: 64 §2.1 e §2.8. Abrir uma pasta grava nela o
+  `workspace.json`, com o caminho absoluto da raiz, e o `kinein.db`; os
+  modelos de C++ e de Python não ignoram o `.kinein` no git. Severidade
+  alta: o texto não salvo dos rascunhos e o caminho da pessoa podem ir para
+  o repositório, e todo arquivo de estado vive numa árvore que o projeto
+  controla. Decisão: três classes de armazenamento, com migração (64
+  §5.9), fase B7; absorve o ENG-02.
+- **ENG-57 — Drivers de banco no processo do core.** Evidência: 64 §2.6,
+  125 das 254 dependências do `kinein-core`. Severidade média. Decisão:
+  executar a [ADR-0010](../decisoes-adr/ADR-0010-drivers-em-processos-versionados.md),
+  fase B9.
+- **ENG-58 — Requisitos sem dono vivo nem verificação.** Evidência: o
+  [19](../arquitetura/19-compromissos-de-arquitetura.md) tem a última
+  revisão em 2026-07-09, e o limite de tempo do pedido síncrono (RNF3) não
+  tem medida no gate. Severidade alta: a arquitetura não tem contra o que
+  ser conferida. Decisão: a tabela do 64 §4, fase B0.
+- **ENG-59 — Adaptador de depuração e motor de gravação escolhidos por
+  `match` de texto.** Evidência: `dap/adapter.rs` e `flash/mod.rs`.
+  Severidade baixa. Decisão: tabela de descritores (64 §5.12), fase B10.
+
+Achados da revisão das catracas de 2026-11-13 que ficam com o dono que já
+existe (D-22):
 
 - **ENG-03:** o orquestrador mede em segundos inteiros e lista só os 5
   maiores (15 dos 37 passos saem com 0 s); o `deny` depende da rede; o
