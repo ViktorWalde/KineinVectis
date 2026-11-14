@@ -21,7 +21,7 @@
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
 > em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413; INF-17, §7.414; INF-20, §7.415; INF-21, §7.416; INF-18, §§7.417–7.418); dívida na 0.4.
 > Recorte atual (2026-11-14): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
-> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia; a próxima fatia é o resto do B0 (os requisitos no 19 e o 63 reconciliado). **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). O **C1** (consolidação C §4.1) retoma depois. Polimento
+> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia. O B0 fechou (§7.421): requisitos no 19 (D13 a D18) e 63 reconciliado. Pelo D-27 do 63, **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos**; o motor de edição virou a DP-10 do 64 §11 (ENG-60, aberta), que segura só as fases do editor. A próxima fatia de código é o B1. **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). O **C1** (consolidação C §4.1) retoma depois. Polimento
 > UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
@@ -137,7 +137,9 @@ lá: cada consumidor passa a falar com o dono, e a linha de base fica vazia.
 Até essa data valia a decisão de mantê-lo congelado
 ([`../arquitetura/32`](../arquitetura/32-editor-por-responsabilidade.md) §8.4),
 com as duas saídas medidas em [`39`](39-divida-tecnica-paga.md) §6. Não corte
-fora da ordem do 63, e nunca por tamanho.
+fora da ordem do 63, e nunca por tamanho. Desde 2026-11-14 o ENG-24 espera
+a DP-10 do [64](64-revisao-da-arquitetura-e-estrategia-b.md) §11 (o motor
+de edição), para não refatorar o que o motor pode trocar.
 
 ## 3. O que este arquivo já guardou
 
@@ -170,9 +172,16 @@ revisão da arquitetura está no
 [64](64-revisao-da-arquitetura-e-estrategia-b.md) (40.7 §7.420): o
 diagnóstico medido, a arquitetura-alvo e a ordem. O bloco do D-19 não começa
 como está escrito; o destino de cada item do 63 está no 64 §7. As nove
-decisões do 64 §11 (DP-01 a DP-09) foram aceitas no mesmo dia. A próxima
-fatia é o resto do B0 do 64 §8: levar os requisitos ao 19 e reconciliar o
-63. Nenhuma fase de código da B começou. O INF-23 (código do projeto executado sem confiança,
+decisões do 64 §11 (DP-01 a DP-09) foram aceitas no mesmo dia. O B0 do 64
+§8 fechou no mesmo dia (40.7 §7.421): os requisitos moram no
+[19](../arquitetura/19-compromissos-de-arquitetura.md), e o 63 foi
+reconciliado. Também no mesmo dia, por decisão do autor (D-27 do 63), a 0.4
+passou a ser a última versão que reconstrói de forma sistemática os
+fundamentos da Kinein Vectis; o motor de edição, que ficava para depois da
+V1, é decidido na 0.4 pela DP-10 do 64 §11, com a avaliação e a prova de
+conceito do ENG-60, fora do produto. A DP-10 segura só a parte do editor
+(64 §8). A próxima fatia de código é o B1. Nenhuma fase de código da B
+começou. O INF-23 (código do projeto executado sem confiança,
 severidade crítica, [62 §3.4](62-base-publica-0.4.md)) está aberto e é o
 primeiro item da fase B2. A 0.4 paga toda a dívida inventariada, e a etapa C só
 retoma depois, do C1-47. O que segue descreve a frente que retoma então.
@@ -262,7 +271,7 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Internacionalização | UI em inglês no polimento; documentação integral em inglês e divulgação com a base finalizada, preservando português e strings traduzíveis. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | Frentes posteriores | ROS 2, colaboração remota, motor semântico profundo e estudo de CLI conservam seus planos. A trilha pública de contribuições já tem quatro tarefas; primeiro verificador na base 0.4. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
 | CI e recursos | CI pública compartilha os gates; limites de RAM, swap zero por escopo e limpeza de temporários devem ser verificáveis. | [gates](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md), [comandos](../build/comandos-de-build-e-verificacao.md) |
-| Arquitetura da 0.4 | Autor, 2026-11-14: estratégia B, reconstrução arquitetural seletiva. O nível macro fica (dois processos, core dono dos fatos, protocolo tipado, ferramentas como processos); trocam-se o modelo de execução do laço, a ponte, as políticas transversais e a persistência. As decisões DP-01 a DP-09 do 64 §11 foram aceitas no mesmo dia. | [64](64-revisao-da-arquitetura-e-estrategia-b.md) |
+| Arquitetura da 0.4 | Autor, 2026-11-14: estratégia B, reconstrução arquitetural seletiva. O nível macro fica (dois processos, core dono dos fatos, protocolo tipado, ferramentas como processos); trocam-se o modelo de execução do laço, a ponte, as políticas transversais e a persistência. As decisões DP-01 a DP-09 do 64 §11 foram aceitas no mesmo dia. A 0.4 é a última versão que reconstrói de forma sistemática os fundamentos (D-27 do 63, D18 do 19); o motor de edição é decidido nela (DP-10, aberta). | [64](64-revisao-da-arquitetura-e-estrategia-b.md), [19](../arquitetura/19-compromissos-de-arquitetura.md) |
 | Documentação | Material público é técnico; contexto pessoal e instruções de agentes são locais e não publicáveis. | [política documental](../README.md#repositório-público--cópia-de-distribuição) |
 
 ## 7. O registro das entregas

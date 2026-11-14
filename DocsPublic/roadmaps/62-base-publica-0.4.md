@@ -226,7 +226,15 @@ D-19 do 63 (ENG-40 a ENG-46) não começa como está escrito; o destino de cada
 item do 63 está no 64 §7, e a ordem, no 64 §8. As nove decisões do 64 §11
 (DP-01 a DP-09) foram aceitas no mesmo dia. A regra de 2026-11-12
 segue valendo: nenhuma dívida passa da 0.4. Os achados da revisão são o
-INF-23 e os ENG-50 a ENG-59 do §3.4.
+INF-23 e os ENG-50 a ENG-60 do §3.4.
+
+**Decisão do autor (2026-11-14, D-27 do 63).** A 0.4 deve ser a última
+versão em que a Kinein Vectis precisa reconstruir sistematicamente os seus
+fundamentos. Cada fundamento (a lista está na D18 do
+[19](../arquitetura/19-compromissos-de-arquitetura.md)) fecha nesta versão,
+com decisão datada e imposição verificada; da 0.5 em diante, o produto
+cresce por pontos de extensão. O motor de edição, que ficava para depois da
+V1, é um desses fundamentos e é decidido na 0.4 (ENG-60).
 
 Quality Center, schema 3, CircuitPython, Banco para embarcados, expansão de
 emuladores além de F3 e as demais jornadas não concluídas do 52 permanecem
@@ -1396,7 +1404,15 @@ o que o item diz.
   2026-11-13 (63 §0, D-22).
 - **ENG-05 — clang-tidy sem cache no gate rápido.** Severidade baixa.
 - **ENG-06 — Gate de docs que lê arquivo fora do git.** Severidade média: o
-  veredito local pode diferir do da CI.
+  veredito local pode diferir do da CI. Achado de 2026-11-14, no
+  `d9b8d633`: o `verificar-docs.sh` falha aberto com nome ambíguo. A função
+  `achar()` devolve nada quando o nome casa com mais de um arquivo
+  rastreado, e a afirmação é pulada em silêncio. Plantado num documento,
+  "O `ui/qml/Main.qml` tem 336 linhas" reprova (saída 1); "O `Main.qml`
+  tem 336 linhas" passa (saída 0), com dois `Main.qml` rastreados e o da
+  UI com 397 linhas. A correção entra no ENG-06: nome ambíguo reprova e
+  pede o caminho (R-GATE-12 do 63), com o defeito plantado no catálogo
+  (R-GATE-03).
 - **ENG-07 — A CI nunca executou.** Severidade alta: o perfil da CI nunca foi
   provado no ambiente dela. Causa confirmada: o job não inicia, por bloqueio
   da conta no GitHub, fora do repositório; e o ambiente da CI não se reproduz
@@ -1654,7 +1670,7 @@ catálogo `gate` do ENG-01 (63 §0, D-19 a D-22). Estado de todos: aberto.
 Achados da revisão da arquitetura de 2026-11-14. O dono, a medida e a
 solução de cada um estão no
 [64](64-revisao-da-arquitetura-e-estrategia-b.md); a decisão de cada um é
-do autor, de 2026-11-14 (64 §11). Todos abertos.
+do autor, de 2026-11-14 (64 §11). Todos abertos; o ENG-58 está parcial.
 
 - **ENG-50 — O laço do core bloqueia por padrão.** Evidência: 64 §2.2 e
   §2.3. Com um `git` que espera 6 s, o `git.status` segura o laço por
@@ -1704,7 +1720,19 @@ do autor, de 2026-11-14 (64 §11). Todos abertos.
   [19](../arquitetura/19-compromissos-de-arquitetura.md) tem a última
   revisão em 2026-07-09, e o limite de tempo do pedido síncrono (RNF3) não
   tem medida no gate. Severidade alta: a arquitetura não tem contra o que
-  ser conferida. Decisão: a tabela do 64 §4, fase B0.
+  ser conferida. Decisão: uma tabela de requisitos mensuráveis no 19, fase
+  B0. Estado em 2026-11-14: parcial. A tabela mora no 19, com dono, métrica,
+  medida e quem impõe; nenhum requisito é cumprido ainda, e cada um fecha
+  na fase que o impõe (64 §8).
+- **ENG-60 — O motor de edição ficava para depois da V1.** Evidência: a D5
+  do 19 dizia "revisitar pós-V1", e o 64 §10 o deixava "previsto na 0.6".
+  Pelo D-27 do 63, o motor de edição e a posse do documento e da
+  inteligência de linguagem são fundamento e fecham na 0.4. Severidade
+  alta: uma troca de motor depois da 0.4 refaria o domínio do editor, a
+  sincronia da sintaxe (B8), a fachada do editor (ENG-24) e o cliente LSP.
+  Decisão: avaliar com prova de conceito isolada e decidir na DP-10 do 64
+  §11, que segura só as fases do editor (64 §8). O produto não migra antes
+  da aprovação explícita do autor depois da prova. Aberto.
 - **ENG-59 — Adaptador de depuração e motor de gravação escolhidos por
   `match` de texto.** Evidência: `dap/adapter.rs` e `flash/mod.rs`.
   Severidade baixa. Decisão: tabela de descritores (64 §5.12), fase B10.

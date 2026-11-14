@@ -564,6 +564,18 @@ os motores; as hipóteses ficam em [pesquisa/02](../pesquisa/02-analise-e-refato
 > tree-sitter entra (highlighter C++ atual → parser incremental); a fundação
 > está no [ADR-0002](../decisoes-adr/ADR-0002-tree-sitter-syntax-foundation.md).
 
+> **Revista em 2026-11-14 (decisão do autor, D-27 do
+> [63](63-regras-e-plano-de-engenharia-da-0.4.md)).** O motor de edição é
+> fundamento, e a decisão sai da 0.6 para a 0.4: é a DP-10 do
+> [64](64-revisao-da-arquitetura-e-estrategia-b.md) §11, avaliada pelo
+> ENG-60 do [62](62-base-publica-0.4.md) §3.4. A avaliação reabre, de forma
+> explícita, a exclusão do Neovim embutido do mandato acima: o Neovim como
+> motor é o candidato preferido do autor, e a tensão entre o modo modal e a
+> identidade JetBrains (RNF8 do
+> [19](../arquitetura/19-compromissos-de-arquitetura.md)) é um critério de
+> refutação da prova, não uma questão encerrada. O tree-sitter segue
+> obrigatório em qualquer resultado. Até a DP-10, o mandato acima vale.
+
 ```text
 Contexto honesto: o TextEdit do QtQuick nos levou até aqui (custo
 baixíssimo), mas bloqueia: split view, minimap, multi-cursor real,

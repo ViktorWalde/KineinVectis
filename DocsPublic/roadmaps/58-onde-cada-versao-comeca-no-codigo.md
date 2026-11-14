@@ -350,6 +350,13 @@ chega à 0.5 já integrado pela 0.4 — a consequência está na nota datada do
 
 ### 4.6 0.6 — motor do editor (o quê: [`21`](21-roadmap-de-longo-prazo.md) §M5.4)
 
+> **Revista em 2026-11-14 (decisão do autor, D-27 do
+> [63](63-regras-e-plano-de-engenharia-da-0.4.md)).** A decisão do motor e a
+> troca, se houver, passaram para a 0.4: DP-10 do
+> [64](64-revisao-da-arquitetura-e-estrategia-b.md) §11, com o ENG-60. O
+> texto abaixo é o ponto de partida medido em 2026-10-01 e segue útil para a
+> avaliação; a 0.6 fica com os recursos sobre o motor fechado.
+
 **Estado de partida (medido).** O texto é um `TextEdit` do QtQuick em
 `ui/qml/editor/EditorTextSurface.qml` (linha 235; arquivo 300/300). O
 `ui/qml/editor/EditorSurfaceBridge.qml` já é a costura entre a superfície e o

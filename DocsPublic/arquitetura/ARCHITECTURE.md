@@ -630,9 +630,10 @@ Regras que mantêm isso saudável:
 12. **As fronteiras e os pontos de extensão são regra desde 2026-11-12**
     (decisão do autor). O core tem três camadas — base, domínio e borda — sem
     ciclo; um método IPC entra por uma linha na tabela de rotas do domínio; a
-    reação a um evento é registrada pelo domínio que reage; `impl Core` existe
-    só no `lib.rs`; e cada campo do `Core` é um serviço declarado ou o estado
-    de um domínio. As regras, com a verificação de cada uma, são as R-ARQ-01 a
+    reação a um evento é registrada pelo domínio que reage; o `Core` mora num
+    módulo próprio, fora da raiz do crate, e o handler recebe por parâmetro
+    só o estado do domínio dele (emenda de 2026-11-14, D-28 do 63); e cada
+    campo do `Core` é um serviço declarado ou o estado de um domínio. As regras, com a verificação de cada uma, são as R-ARQ-01 a
     R-ARQ-08 da Parte A do
     [63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md); as camadas e
     o esboço estão na Parte C de lá. O código existente migra pelos itens

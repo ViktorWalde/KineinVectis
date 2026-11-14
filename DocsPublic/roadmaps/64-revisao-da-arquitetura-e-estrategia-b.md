@@ -10,8 +10,12 @@
 > [63](63-regras-e-plano-de-engenharia-da-0.4.md) (ENG-40 a ENG-46) não
 > começa como está escrito. As nove decisões do §11 foram tomadas no mesmo
 > dia, todas como recomendadas. A Parte A do 63 continua sendo o
-> regulamento. Do B0 (§8) falta levar os requisitos ao 19 e reconciliar o
-> 63. Nenhuma fase de código começou.
+> regulamento. O B0 (§8) fechou no mesmo dia: os requisitos moram no 19, e o
+> 63 foi reconciliado. Também no mesmo dia, o autor decidiu que **a 0.4 é a
+> última versão que reconstrói de forma sistemática os fundamentos da Kinein
+> Vectis** (D-27 do 63, D18 do 19). Por isso o motor de edição deixou de ser
+> "pós-V1" e virou a DP-10 (§11), ainda aberta, que segura as fases do
+> editor. Nenhuma fase de código começou.
 >
 > **Ponto de partida.** Commit `9198888c`, protocolo 0.223.0. Toda medida
 > deste documento é de 2026-11-14, nessa árvore, salvo data própria.
@@ -20,9 +24,10 @@
 
 O §1 responde à pergunta da revisão. O §2 traz o que foi medido e
 reproduzido, com o método. O §3 lista os problemas por gravidade, cada um com
-a solução consolidada que este plano adota. O §4 traz os requisitos que
-faltavam. O §5 é a arquitetura-alvo. O §6 lista os riscos da estratégia B e
-a correção de cada um. O §7 diz o que acontece com cada item do 63. O §8 é a
+a solução consolidada que este plano adota. O §4 aponta os requisitos que
+faltavam, agora no 19. O §5 é a arquitetura-alvo; o §5.15 traz o Zed como
+referência de engenharia. O §6 lista os riscos da estratégia B e a correção
+de cada um. O §7 diz o que acontece com cada item do 63. O §8 é a
 ordem, com aceite e reversão. O §9 traz as provas. O §10 classifica os
 componentes. O §11 traz as decisões do autor. O §12 diz o que não foi
 medido.
@@ -64,6 +69,16 @@ foi descartada a continuação do 63 como está: ele endurece verificadores de
 texto em volta de estruturas que o próprio 63 troca depois. Os §5 e §6
 mostram que cada ponto tem solução consolidada na indústria, e o plano usa
 essas soluções, não mecanismos próprios.
+
+**O princípio que limita a B (decisão do autor de 2026-11-14, D-27 do 63).**
+A 0.4 deve ser a última versão em que a Kinein Vectis precisa reconstruir
+sistematicamente os seus fundamentos. A B não é a primeira de uma série de
+reconstruções: cada costura que ela troca fecha com decisão datada e
+imposição verificada, e da 0.5 em diante o produto cresce por pontos de
+extensão. A lista dos fundamentos está na D18 do
+[19](../arquitetura/19-compromissos-de-arquitetura.md). O motor de edição
+entra nela, e por isso a escolha dele virou a DP-10 (§11), com avaliação e
+prova de conceito dentro da 0.4.
 
 ## 2. O que foi medido e reproduzido em 2026-11-14
 
@@ -241,8 +256,26 @@ o Rust 1.96.1 e o clippy 0.1.96 do projeto:
 | a chamada pelo crate do lançador | passa |
 
 A regra "só o lançador cria processo" não precisa de leitor nem de catraca:
-o compilador a impõe, e a fuga pelo `allow` não compila. O mesmo mecanismo
-serve para a leitura de arquivo fora dos leitores guardados (o ENG-47 do 63).
+o compilador a impõe, e a fuga pelo `allow` não compila.
+
+**O mesmo mecanismo para a leitura e a escrita de arquivo (o ENG-47 e o
+ENG-02 do 63).** Segundo protótipo, no mesmo arranjo: o crate dono tem o
+`clippy.toml` próprio e é o único que lê e grava; a raiz proíbe
+`std::fs::read`, `read_to_string`, `write`, `File::open`, `File::create` e
+`OpenOptions::open`. Cada forma foi plantada sozinha no consumidor.
+
+| Forma plantada no consumidor | Resultado |
+| --- | --- |
+| a leitura pelo crate dono | passa |
+| `std::fs::read_to_string`, `std::fs::read`, `std::fs::write` | `error: use of a disallowed method` |
+| `std::fs::File::open`, direto ou importado com `use std::fs::File` | `error: use of a disallowed method` |
+| `std::fs::OpenOptions::new().read(true).open(...)` | `error: use of a disallowed method` |
+| a leitura com `#[allow(clippy::disallowed_methods)]` | `error[E0453]` |
+| a função guardada num apelido (`let g = std::fs::read_to_string::<&Path>`) | `error: use of a disallowed method` |
+
+O que o protótipo não cobre: `std::fs::read_dir`, `metadata`, `copy`,
+`rename` e `remove_file` não estavam na lista. Entram na lista do B7 pelo
+mesmo mecanismo, e a lista final é a do catálogo do `kinein_dir` (§5.9).
 
 ### 2.8 Medidas estáticas da revisão
 
@@ -296,7 +329,8 @@ do item é o do inventário do 62.
 | ENG-55 | `syntaxTree.update` com o buffer inteiro na ida e 1 a 8 MiB na volta por tecla | alta | Sincronia incremental como o `didChange` incremental do LSP; `Tree::edit` e reanálise incremental do tree-sitter fora do laço; volta só com as faixas mudadas (`changed_ranges`); versão velha descartada | §5.11, B8 |
 | ENG-56 | O `.kinein` mistura configuração do projeto, estado da pessoa e cache; dois dos três modelos não o ignoram no git | alta | As três classes do XDG Base Directory (config, state, cache), com o estado e o cache por projeto fora da árvore dele, como o `workspaceStorage` do VS Code; a divisão compartilhável/local do JetBrains (`dataSources.xml` e `dataSources.local.xml`); a pasta da ferramenta com `.gitignore` próprio, como `.pytest_cache` e `.ruff_cache` | §5.9, B7 |
 | ENG-57 | Drivers de banco no processo do core: 125 de 254 dependências | média | A ADR-0010 executada: adaptador em processo, com contrato versionado. O precedente já existe: `kinein-adapter-sqlite` | §5.13, B9 |
-| ENG-58 | Requisitos parados em 2026-07-09; requisitos do 9 (log, armazenamento) sem dono nem verificação | alta | Linha de base de requisitos em tabela, cada requisito com métrica, método de medida e o teste ou gate que o impõe | §4, B0 |
+| ENG-58 | Requisitos parados em 2026-07-09; requisitos do 9 (log, armazenamento) sem dono nem verificação | alta | Linha de base de requisitos em tabela, cada requisito com métrica, método de medida e o teste ou gate que o impõe | 19 (desde o B0); a imposição, na fase de cada requisito |
+| ENG-60 | O motor de edição e a posse do documento e da inteligência de linguagem ficavam para "pós-V1", contra o D-27 | alta | Avaliação com prova de conceito isolada antes de decidir, com critérios de refutação escritos antes da prova | DP-10 (§11), §9 |
 | ENG-59 | Adaptador DAP e motor de gravação escolhidos por `match` de texto | baixa | Tabela de descritores, no molde do `ServerSpec` do LSP (`lsp/registry.rs`) | §5.12, B10 |
 
 Os itens ENG-10 a ENG-17 e ENG-20 a ENG-25 do 63 continuam válidos: tabela
@@ -306,40 +340,12 @@ muda em cada um.
 ## 4. Os requisitos que faltavam
 
 O [19](../arquitetura/19-compromissos-de-arquitetura.md) é o dono dos
-requisitos. A tabela foi aceita pela decisão do autor de 2026-11-14 (§11,
-DP-03). Levá-la ao 19 é parte do B0 (§8), e até lá ela vale daqui. Todo
-requisito tem métrica, método de medida e quem o impõe.
-
-**Referência de medida:**
-- o clone do repositório no commit fixado pelo item;
-- a máquina de medição do projeto;
-- o contêiner da CI, quando o ENG-07 rodar.
-
-| ID | Requisito | Métrica | Medida | Quem impõe |
-| --- | --- | --- | --- | --- |
-| RNF-EXE-01 | Trabalho de estado roda no laço; processo, disco do projeto e rede nunca rodam | Pedido da classe estado: p99 ≤ 10 ms e máximo ≤ 50 ms na referência | Os spans do §5.10, por método | Guarda de E/S no laço nos testes (§5.3); a classe na rota |
-| RNF-EXE-02 | Todo pedido tem prazo e é cancelável | `core.ping` e o cancelamento respondem em ≤ 50 ms com uma ferramenta presa | O experimento do §2.3 vira teste | Teste com ferramenta falsa travada por trava (sem `sleep`) |
-| RNF-SEG-01 | Sem confiança, nada que o projeto define é executado | Zero marcas no projeto hostil, para cada pedido automático da ponte e para o primeiro arquivo de cada linguagem | Os experimentos do §2.1 viram fixture | O lançador (§5.4) e o teste do projeto hostil |
-| RNF-SEG-02 | O que é executado diz de onde veio | Todo processo registrado com programa, origem e decisão de confiança | O span do lançador | O tipo do lançador: a origem é campo obrigatório |
-| RNF-OBS-01 | Todo pedido, processo e job deixa registro estruturado e sem segredo | 100% dos pedidos com span; zero segredo no registro | Teste com assinante de `tracing`; teste de redação de segredo | O registro do roteador (um ponto só) |
-| RNF-DADOS-05 | Estado da pessoa e cache não moram na árvore do projeto; a árvore de build segue a convenção do CMake | Zero arquivo por pessoa sob o `.kinein`; `.kinein/.gitignore` cobre o que não é compartilhável | Catálogo do `kinein_dir` com a coluna classe | Teste do catálogo (§5.9) |
-| RNF-CON-01 | O contrato tem fonte única | Renomear um método ou campo só no Rust reprova o build C++ ou um teste dos dublês | Mutante no catálogo do ENG-01 | Artefatos gerados conferidos (§5.7) |
-| RNF-EDI-01 | Editar não custa o arquivo inteiro | Edição de 1 caractere num arquivo de 20 mil linhas: trabalho do core p95 ≤ 16 ms e volta ≤ 4 KiB mais a faixa mudada | Os spans; o tamanho da resposta | Teste com o arquivo de 20 mil linhas |
-| RNF-MEM-01 | O orçamento de RSS do 21 §M4.2 vale com edição | RSS do core ≤ 60 MB depois de abrir, indexar e editar o arquivo de 20 mil linhas | `/proc/<pid>/status` | Passo do `medir-performance.sh` com veredito |
-| RNF-ESC-01 | Capacidade de periferia não pesa no núcleo | Dependências do processo do core sem os drivers de banco | `cargo tree` | `cargo-deny` com proibição dos crates de driver no `kinein-core` |
-
-**Camadas de suporte (DP-07):**
-- **Núcleo:** as jornadas de C, C++, Rust e Python, embarcados (build,
-  gravação, depuração), editor, terminal, Git, busca e Jobs.
-- **Periferia:** Banco, Grafana, Remoto e contêineres.
-
-A periferia segue no produto e na 0.4. A diferença está em onde mora: as
-dependências pesadas dela saem do processo do core, e a falha dela não
-derruba o núcleo.
-
-**Extensibilidade:** a [especificação da arquitetura interna](../especificacoes/arquitetura-interna-core-ipc-jobs.md)
-§22.1 já decidiu "sem sistema público de plugins no MVP". Na 0.4, a extensão é
-interna, por tabela de descritores, com o teste de extensão da R-TEST-05.
+requisitos. A tabela aceita na DP-03 (§11) foi levada ao 19 no B0, na seção
+"Requisitos mensuráveis", com a referência de medida, a coluna "quem impõe"
+e o estado de cada requisito em 2026-11-14. As camadas de suporte (DP-07) e
+a extensibilidade também moram lá. Este documento cita os requisitos pelo
+ID (RNF-EXE-01, RNF-SEG-01 e os demais) e não repete a tabela, para ela ter
+um dono só.
 
 ## 5. A arquitetura-alvo
 
@@ -386,15 +392,19 @@ A tabela de rotas do ENG-10 ganha a classe de cada método:
 
 ```rust
 pub(crate) enum Execution {
-    /// Só memória do core; roda no laço. Orçamento do RNF-EXE-01.
-    State(fn(&mut Core, Request) -> Response),
+    /// Só memória do domínio; roda no laço. Orçamento do RNF-EXE-01.
+    State(fn(&mut Ctx, Request) -> Response),
     /// Processo, disco do projeto ou rede: fora do laço, com prazo,
     /// cancelamento e fila por recurso. Volta ao laço só para aplicar.
-    Work(fn(&Core, Request) -> Plan),
+    Work(fn(&Ctx, Request) -> Plan),
     /// Operação longa e visível: um Job (o JobManager de hoje).
-    Job(fn(&mut Core, Request) -> Response),
+    Job(fn(&mut Ctx, Request) -> Response),
 }
 ```
+
+O `Ctx` é o contexto que o roteador monta para a rota (§5.8): o estado do
+domínio dela e os serviços que ela declara, nunca o `Core` inteiro. O nome e
+a forma exata saem da prova do B3 (§9).
 
 **A forma do handler de trabalho:**
 1. **Preparar, no laço:** uma cópia imutável do que o trabalho precisa,
@@ -472,6 +482,22 @@ pub struct Launch {
   duração, código de saída e se o prazo venceu.
 - **Testes.** A API do lançador para testes cria repositórios e
   ferramentas falsas. Os testes também deixam de chamar o `Command` direto.
+- **O git interno.** Todo comando do git que a IDE roda sozinha (status,
+  log, blame, diff de fundo) sai do lançador com a mesma forma, como o Zed
+  faz em `crates/git/src/repository.rs` (§5.15):
+  - `--no-optional-locks`: o status de fundo não disputa o `index.lock` com
+    o terminal da pessoa;
+  - `--no-pager` e `GIT_TERMINAL_PROMPT=0`, posto depois do ambiente do
+    projeto: comando de fundo nunca espera entrada;
+  - `-c core.fsmonitor=false` e `-c log.showSignature=false` sempre, como lá.
+
+  Sem confiança, o Git segue desligado (§5.5, DP-02), e a forma acima não
+  substitui o desligamento. O Zed, sem confiança, roda o git com uma lista
+  de chaves neutralizadas (`core.hooksPath`, `credential.helper`,
+  `diff.external` e outras). Pela leitura do código no `703b5ac`, a lista
+  não cobre os filtros `filter.<nome>.clean` e `smudge`, um dos caminhos do
+  E2 (§2.1). Uma lista de chaves é aberta por natureza; o desligamento é
+  fechado.
 
 ### 5.5 O modo restrito
 
@@ -545,9 +571,24 @@ não tipo completo. O §6, item 7, trata o resto.
 
 ### 5.8 O estado e a troca de workspace
 
-- Cada domínio é dono do próprio estado, em campos privados do módulo dele.
-  O `Core` guarda os domínios (é o ENG-15). Com o `Core` fora da raiz do
-  crate, a privacidade do Rust passa a separar os domínios.
+- **O `Core` sai da raiz do crate (R-ARQ-07 e R-ARQ-08 do 63, D-28).** No
+  Rust, um item privado é visível no módulo que o define e em todos os
+  descendentes. Com o `Core` definido no `lib.rs`, todo módulo do crate
+  descende da raiz e vê todos os 32 campos (§2.8): a regra antiga ("`impl
+  Core` só no `lib.rs`") juntava as funções num arquivo, mas deixava o estado
+  aberto ao crate inteiro.
+- **A forma adotada:**
+  - o `Core` mora em módulo próprio (`core/`), com campos privados;
+  - cada domínio é dono do próprio estado, em tipo próprio com campos
+    privados no módulo dele;
+  - o roteador entrega ao handler, por parâmetro, só o estado do domínio
+    dele e os serviços que a rota declara (lançador, jobs, eventos).
+
+  É o padrão do `State` com `FromRef` do axum: o handler declara o que
+  recebe, e quem monta o contexto é um ponto só. O compilador impõe a
+  separação; nenhum gate de texto é preciso para ela.
+- **O que não muda:** os testes IPC (`handle_request`) seguem a superfície
+  de hoje; a mudança é interna ao roteador e aos handlers.
 - A troca de workspace é um gancho de domínio (`workspace_changed`, no
   §C.2 do 63). `activate_workspace` e `deactivate_workspace` deixam de nomear
   o estado de todos.
@@ -566,8 +607,26 @@ resolve as pastas de configuração e de estado; a de cache entra com o B7.
 | Árvore de build | `<raiz>/.kinein/build`, `presets/<preset>` (convenção do CMake, como o `cmake-build-*` do CLion) | saída do build, com `.gitignore` próprio |
 
 O `<id>` é o hash do caminho canônico da raiz, como o `workspaceStorage` do
-VS Code. Um arquivo `projeto.json` dentro da pasta guarda o caminho, para a
-listagem e a limpeza de projetos que sumiram.
+VS Code e o banco do Zed, que guarda o workspace pelos caminhos locais
+(`crates/workspace/src/persistence.rs`). Um arquivo `projeto.json` dentro da
+pasta guarda o caminho, para a listagem e a limpeza de projetos que sumiram.
+
+**O estado segue o projeto renomeado ou movido (D-28 do 63; D15 do 19).**
+Só o hash do caminho perde o estado quando a pasta muda de nome. A solução:
+- o `projeto.json` guarda também a identidade do diretório raiz:
+  dispositivo, inode e data de criação (`statx`); no Windows, número de
+  série do volume, identificador do arquivo e data de criação;
+- ao abrir um caminho sem pasta de estado, o core procura uma pasta cujo
+  caminho gravado sumiu e cuja identidade é a do diretório aberto, e a adota
+  com o caminho novo;
+- a adoção automática exige a identidade completa e o caminho antigo
+  ausente; cópia, clone novo e movimento entre volumes começam do zero;
+- a pasta que sobra vai para a lista de projetos que sumiram, com "adotar"
+  e "remover"; nada é apagado sem o gesto da pessoa.
+
+Um identificador gravado dentro do projeto (o `ProjectId` do JetBrains) foi
+descartado: obrigaria a gravar na pasta ao abrir, viria de um arquivo que o
+projeto controla e seria dividido entre cópias (D15 do 19).
 
 **Classificação dos arquivos de hoje** (dono pelo código; a divisão campo a
 campo dos arquivos mistos é o primeiro passo do B7):
@@ -599,8 +658,12 @@ campo dos arquivos mistos é o primeiro passo do B7):
   compartilhável.
 - Abrir uma pasta sem confiança deixa de gravar nela: o `.kinein` só nasce
   quando a pessoa grava uma configuração do projeto.
-- O esquema de cada arquivo não muda. Muda o lugar, e a DP-05 levantou a
-  Parte F, item 3, do 63 para isso.
+- O arquivo que só muda de lugar mantém o esquema. O arquivo misto que se
+  divide (o `toolchain.json`, o `datasources.json` e o `runconfigs.json`
+  com o `activeId`) ganha versão nova de esquema nas duas metades. O
+  binário novo lê a versão antiga; o binário anterior, diante da versão
+  nova, avisa e preserva, pela R-DADOS-03 do 63. A DP-05 levantou a Parte F,
+  item 3, do 63 para isso.
 
 ### 5.10 A observabilidade
 
@@ -627,9 +690,12 @@ campo dos arquivos mistos é o primeiro passo do B7):
   laço (classe trabalho, fila por documento).
 - **A volta traz só as faixas que mudaram** (`changed_ranges`) e a versão.
   A resposta de versão velha é descartada nos dois lados.
-- **A UI aplica faixas no realce.** O motor do editor (Qt Quick `TextEdit`
-  com `QSyntaxHighlighter`, D5 do 19) não muda nesta fatia. O custo do lado
-  da UI é medido antes e depois com o `KINEIN_PERF_TYPING*`.
+- **A UI aplica faixas no realce.** O custo do lado da UI é medido antes e
+  depois com o `KINEIN_PERF_TYPING*`.
+- **Espera a DP-10 (§11).** O desenho acima vale para o motor de hoje (Qt
+  Quick `TextEdit` com `QSyntaxHighlighter`, D5 do 19). Se a DP-10 trocar o
+  motor, quem guarda o documento e manda as edições muda, e o B8 é
+  reescrito sobre a decisão, em vez de ser feito duas vezes.
 
 ### 5.12 Os adaptadores
 
@@ -667,6 +733,45 @@ ecossistema mantém, e não leitores próprios. A R-GATE-01 ("antes de qualquer
 build") passa a permitir o binário da ferramenta, guardado pelo cargo
 (DP-06).
 
+### 5.15 O Zed como referência de engenharia
+
+O Zed é um editor em Rust, de código aberto, que resolve em produção
+problemas que a B também resolve: limites entre editor, projeto e
+ferramentas; trabalho assíncrono sem prender a interface; documento com
+análise incremental; ciclo de vida de LSP e de DAP; e testes determinísticos
+de concorrência. Ele entra no plano como **referência**, não como molde.
+
+**Fonte.** Código do repositório do Zed no commit `703b5ac` (2026-11-14),
+lido e não executado. Os caminhos abaixo são desse commit.
+
+**O que ele mostra, e onde a B usa:**
+
+| Tema | O que o Zed faz | Onde | Uso na Kinein |
+| --- | --- | --- | --- |
+| Limites entre editor, projeto e ferramentas | O `Project` é um agregado de lojas por responsabilidade (`BufferStore`, `WorktreeStore`, `LspStore`, `GitStore`, `DapStore`, `TaskStore`, `ToolchainStore`). Cada loja é dona do próprio estado; as outras a alcançam por referência explícita | `crates/project/src/project.rs` | Confirma o estado por domínio com dono único (§5.8, ENG-15, B6) |
+| Trabalho assíncrono sem prender a interface | Executor de primeiro plano (a interface) e executor de fundo. A tarefa é um valor: soltá-la cancela o trabalho, e manter trabalho sem dono exige `detach()` explícito | `crates/scheduler/src/executor.rs` (`Task`), `crates/gpui/src/executor.rs` | A classe de execução e o cancelamento por dono (§5.3, B3): trabalho que ninguém espera não continua rodando |
+| Operação longa | O pedido ao servidor de linguagem cancelado por queda do dono manda `$/cancelRequest` sozinho | `crates/lsp/src/lsp.rs` (`cancel_on_drop`) | O `CoreReply` destruído gera `core.cancel` (§5.6, B5) |
+| Documento e análise incremental | A reanálise tenta 1 ms em linha (10 ms nos testes) e, passado o prazo, continua no fundo, aplicando a árvore quando termina | `crates/language/src/buffer.rs` (`sync_parse_timeout`) | Orçamento explícito para o trabalho em linha e o resto fora (§5.11, RNF-EDI-01) |
+| Sincronia com o servidor de linguagem | Guarda as últimas versões enviadas de cada documento (`OLD_VERSIONS_TO_RETAIN = 10`) para traduzir resposta de versão velha | `crates/project/src/lsp_store.rs` | Geração por documento e descarte do velho (§5.3), a decidir com a DP-10 |
+| Ciclo de vida do DAP | Adaptador de depuração como implementação de um traço (`DebugAdapter`), registrado por nome | `crates/dap/src/adapters.rs` | Tabela de descritores (§5.12, B10) |
+| Confiança no projeto | Modo restrito por árvore de trabalho; o git interno com `core.fsmonitor=false` sempre e chaves neutralizadas sem confiança | `crates/project/src/trusted_worktrees.rs`, `crates/git/src/repository.rs` | O modo restrito (§5.5) e o git interno (§5.4); a Kinein desliga o Git sem confiança, em vez de neutralizar chaves |
+| Testes de concorrência | Agendador de testes determinístico: `run_until_parked`, permissão explícita para estacionar e a semente `SEED` para repetir uma ordem | `crates/scheduler/src/test_scheduler.rs`, `crates/gpui/src/test.rs`, `crates/gpui/src/platform/test/dispatcher.rs` | O `TestRuntime` (§5.3) e a camada de concorrência do 62 §3.5: a semente que reprovou é a que se repete |
+| Estado do workspace | Banco SQLite com o workspace pelos caminhos locais | `crates/workspace/src/persistence.rs` | A chave pelo caminho (§5.9), com o rastreio de identidade que o Zed não tem |
+
+**O que não se transpõe sem validar na Kinein.** A Kinein tem dois
+processos e uma fronteira IPC; o Zed é um processo com um runtime próprio
+(`gpui`). Por isso:
+- a tarefa que cancela ao cair vale, na Kinein, do lado da ponte (o
+  `CoreReply`) e do lado do core (o trabalho fora do laço); não há
+  `gpui` nos dois lados;
+- o agendador determinístico do Zed controla todas as tarefas do processo;
+  o `TestRuntime` da Kinein controla o core, e a UI segue testada pelos
+  harnesses;
+- o orçamento de 1 ms da análise em linha é número do Zed, não da Kinein: o
+  valor daqui sai da medida do B1;
+- toda técnica tirada do Zed entra pela prova da fase dela (§9), com o
+  mesmo aceite medido de qualquer outra.
+
 ## 6. Os riscos da estratégia B, e a correção de cada um
 
 | # | Risco | Correção | O que resta |
@@ -683,7 +788,10 @@ build") passa a permitir o binário da ferramenta, guardado pelo cargo
 | 10 | Dois planos (63 e 64) contradizem o D-01 | Este documento diz, item a item, o que substitui (§7). Com a DP-01, o 63 fica com o regulamento (Parte A) e aponta para cá nas Partes C e E | Até o B0 reconciliar o texto do 63, ele tem a nota de situação no topo |
 | 11 | "Toda dívida" com linha de chegada móvel: o leitor melhor revela mais dívida (D-22) | O compilador conta a dívida das regras que passam a ele, e a conta é exata e finita desde o primeiro dia; os gates de texto restantes leem pelo tree-sitter | Nada da dívida sai da 0.4; o ENG-37 (identificadores) vem por último, pelo rename do rust-analyzer (R-PROC-03), depois que a estrutura assenta |
 | 12 | A ferramenta do gate precisa de build antes dos passos estáticos | O binário fica no cache do cargo; os passos estáticos rodam em paralelo depois dele; o custo é medido no ENG-03 | A primeira rodada num checkout limpo paga o build da ferramenta |
-| 13 | A Parte F do 63 congela o fio e os arquivos gravados | O protocolo é 0.x e a UI e o core saem juntos (D10 do 19): o fio muda no mesmo commit, com o contrato; arquivo gravado muda de lugar com migração, cópia e releitura | A DP-05 levantou os dois itens; o texto da Parte F muda no B0 |
+| 13 | A Parte F do 63 congela o fio e os arquivos gravados | O protocolo é 0.x e a UI e o core saem juntos (D10 do 19): o fio muda no mesmo commit, com o contrato; arquivo gravado muda de lugar com migração, cópia e releitura | A DP-05 levantou os dois itens; o texto da Parte F mudou no B0 |
+| 14 | O D-27 alarga a 0.4: o motor de edição, que ficava para depois, entra nela | A DP-10 decide com avaliação e prova isolada (§9); só as fases que dependem do motor esperam (§8); B1, B2 e B3, que fecham segurança, concorrência e IPC, não esperam | Calendário mais longo, aceito pela decisão do autor; o risco de a prova consumir o tempo das fases críticas é tratado pela ordem: a prova não toca o produto e não passa na frente do B2 |
+| 15 | Trocar o motor de edição muda o domínio do editor, a sincronia da sintaxe e o dono do cliente LSP | O B4 (contrato), o B5 (piloto da ponte), o B6 (domínio `lsp`), o B8 e o ENG-24 começam depois da DP-10 na parte do editor; o resto deles segue | Se a DP-10 trocar o motor, parte do LSP do core vira outra coisa; o código de produção só sai quando a substituição estiver validada |
+| 16 | Uma técnica do Zed copiada sem medir | Toda técnica do §5.15 entra pela prova da fase, com aceite medido | O Zed é um processo; a Kinein são dois (§5.15) |
 
 ## 7. O que acontece com cada item do 63
 
@@ -694,10 +802,10 @@ build") passa a permitir o binário da ferramenta, guardado pelo cargo
 | ENG-03, ENG-05, ENG-06, ENG-07 | ficam, independentes da arquitetura |
 | ENG-10 (tabela de rotas) | fica, com a classe de execução (§5.3) |
 | ENG-11 (reações), ENG-13, ENG-14, ENG-15, ENG-17 | ficam (§5.8) |
-| ENG-12 (camadas) | passa a crates (§5.1); o `module_map.py` deixa de conferir camadas por texto |
+| ENG-12 (camadas) | a base passa a crate (§5.1), e o grafo do Cargo impõe a R-ARQ-02; a borda e os domínios seguem no mesmo crate, e a R-ARQ-03 e a R-ARQ-04 seguem no `module_map.py`, lendo pelo tree-sitter (R-GATE-11, R-GATE-13) |
 | ENG-16 (tipo do fio como tipo interno) | fica a decisão D-07 |
-| ENG-20 (`CoreClient` por domínio) | fica, com o `CoreReply` e o contrato gerado (§5.6, §5.7) |
-| ENG-21 a ENG-25 | ficam; o ENG-22 vira estrutura (§5.6) |
+| ENG-20 (`CoreClient` por domínio) | fica, com o `CoreReply` e o contrato gerado (§5.6, §5.7); a parte do editor espera a DP-10 |
+| ENG-21 a ENG-25 | ficam; o ENG-22 vira estrutura (§5.6); o ENG-24 (a fachada do `EditorController.qml`) espera a DP-10 |
 | ENG-30 a ENG-36, ENG-38 | ficam |
 | ENG-37 (identificadores) | fica, por último no Rust, pelo rename do rust-analyzer |
 | ENG-39 (adiados do Windows) | fica na etapa 10 do 62 §3 |
@@ -719,7 +827,7 @@ primeiro.
 
 | Fase | O quê | Aceite objetivo | Reversão |
 | --- | --- | --- | --- |
-| B0 | Decisões do §11; requisitos no 19; 63 reconciliado | As DP decididas e registradas; os gates de docs verdes | Documento |
+| B0 | Decisões do §11; requisitos no 19; 63 reconciliado | As DP-01 a DP-09 decididas e registradas; os gates de docs verdes | Documento |
 | B1 | Registro (`tracing`, §5.10) e a guarda do laço (§5.3), sem mudar comportamento | A tabela do §2.2 sai do registro; um `Command` plantado num handler de estado reprova um teste pela guarda | Desligar o assinante; a guarda é só de teste e depuração |
 | B2 | O lançador e o modo restrito (§5.4, §5.5); fecha o INF-23 primeiro, nos cinco vetores, e migra os ~122 locais | O projeto hostil do §2.1 é fixture: zero marcas para o `workspace.open`, para cada pedido automático da ponte e para o primeiro arquivo de cada linguagem; `forbid` ativo; `Command::new` plantado não compila | Reverter por domínio; o `forbid` só entra quando a lista do compilador chega a zero |
 | B3 | Classes de execução, prazo, `core.cancel` e fila por recurso (§5.3); migração dos infratores (`git.*`, `setup.list`, as sondas do `workspace.open`, `debug.*`) e depois do resto | O experimento do §2.3 é teste: `core.ping` e cancelamento em ≤ 50 ms com o git falso travado; RNF-EXE-01 no registro | A rota volta para a classe estado (é uma linha na tabela) |
@@ -732,10 +840,22 @@ primeiro.
 | B10 | Descritores para DAP e gravação (§5.12) | Teste de extensão: um adaptador de mentira entra só pela tabela | Mecânica |
 | B11 | O resto do 63: ENG-21 a ENG-25, ENG-30 a ENG-36, ENG-38, ENG-03, ENG-05, ENG-06, ENG-45, ENG-46; ENG-37 por último | O aceite de cada item no 63 | O de cada item |
 
-**Estado do B0 em 2026-11-14.** As nove decisões do §11 estão tomadas.
-Falta levar a tabela do §4 ao 19 e reconciliar o 63: as regras da DP-09 na
-Parte A, a Parte F com a DP-05, a R-GATE-01 com a DP-06, e as Partes C e E
-apontando para cá.
+**Estado do B0 em 2026-11-14: pronto.** As nove decisões estão tomadas; os
+requisitos moram no 19, com a D13 à D18; o 63 tem as regras da DP-09 na
+Parte A, a Parte F com a DP-05, a R-GATE-01 com a DP-06, a R-ARQ-07 e a
+R-ARQ-08 emendadas (D-28) e as Partes C e E apontando para cá.
+
+**A DP-10 segura só a parte do editor.** Até ela ser decidida:
+- B1, B2 e B3 seguem sem esperar. São eles que fecham as falhas críticas de
+  segurança, concorrência e IPC, e nenhum depende do motor de edição;
+- B4, B5 e B6 seguem nos outros domínios: a geração do contrato, o piloto
+  da ponte e os crates não escolhem o editor nem o domínio `lsp` como
+  piloto;
+- B7, B9 e B10 seguem;
+- B8, o ENG-24 e a parte do editor do ENG-20 esperam.
+
+A avaliação do ENG-60 e a prova de conceito correm fora do produto (§9) e não
+passam na frente do B2.
 
 Depois do B11, a etapa C retoma do C1-47. O ENG-39 fica na etapa 10 do 62
 §3.
@@ -762,6 +882,7 @@ no B2, o §2.3 no B3, o §2.4 no B8.
 | A tabela de métodos gerando schema e cabeçalho para um domínio | A geração cobre os tipos do protocolo sem exceção manual? | início do B4 |
 | Os crates `base` e `process` | Quanto muda o tempo de build e de teste? | início do B6 |
 | A ferramenta do gate com tree-sitter lendo QML | O `tree-sitter-qmljs` lê os 447 arquivos QML sem erro de análise? | antes de trocar o ENG-41 |
+| O motor de edição (ENG-60) | Um motor candidato cabe na UI Qt Quick, na confiança do core e nos fluxos do editor sem regressão? Os critérios de refutação são escritos antes da prova, e a prova vive fora do produto | antes da DP-10 |
 
 **Fluxos verticais que ficam equivalentes,** com os testes de despacho que já
 existem:
@@ -779,11 +900,12 @@ existem:
 | **Preservar** | Separação UI/core e o fio JSON-RPC; `kinein-protocol` e os códigos de erro; JobManager; `owned_child`; `kinein_dir` e `fsops`; gerenciador LSP e sessão DAP; a lógica de `flash`, `toolchain`, `build`, `cmake_presets` e `serial`; o terminal (§2.5); os testes da superfície IPC; os controladores QML e os harnesses; a ferramenta de mutação; os lints estritos; a regra "o CMake é a verdade" |
 | **Refatorar** (mesmo desenho, outro lugar) | Despacho para a tabela de rotas com classe; `Core` para estado por domínio; troca de workspace por gancho; camadas para crates; a confiança da QML para o core; DAP e gravação para descritores |
 | **Substituir** | Bloqueio por padrão no laço; sinal difundido por resultado; contrato espelhado à mão e o schema parado; `Command::new` espalhado; o `.kinein` como pasta única; o `syntaxTree.update` inteiro; os drivers de banco no processo; os gates de texto para o que o compilador impõe |
-| **Investigar** | O custo do realce na UI (o JSON de 1 MiB por tecla não foi medido do lado da UI); o motor do editor, previsto na 0.6 (não muda na 0.4 sem medida que peça); a divisão campo a campo dos arquivos mistos do `.kinein` (B7) |
+| **Investigar** | O custo do realce na UI (o JSON de 1 MiB por tecla não foi medido do lado da UI); o motor de edição e o dono do documento e do cliente LSP, decididos na 0.4 pela DP-10, com o ENG-60 (D-27); a divisão campo a campo dos arquivos mistos do `.kinein` (B7) |
 
 ## 11. As decisões do autor
 
-Decisão do autor de 2026-11-14: as nove foram aceitas como recomendadas.
+Decisão do autor de 2026-11-14: as nove primeiras foram aceitas como
+recomendadas. A DP-10 nasceu no mesmo dia, do D-27 do 63, e está aberta.
 
 | ID | Pergunta | Decisão (2026-11-14) |
 | --- | --- | --- |
@@ -794,8 +916,9 @@ Decisão do autor de 2026-11-14: as nove foram aceitas como recomendadas.
 | DP-05 | Levantar a Parte F do 63, itens 1 (o fio) e 3 (os arquivos gravados), para os itens da B, com contrato primeiro e migração com cópia | Aceito |
 | DP-06 | Verificação: o compilador primeiro, o tree-sitter na ferramenta do gate no lugar dos leitores próprios do ENG-41, e a R-GATE-01 emendada | Aceita |
 | DP-07 | Camadas de suporte (núcleo e periferia) e a ADR-0010 dentro da 0.4 (B9) | Aceitas |
-| DP-08 | A persistência em três classes, com o estado da pessoa e o cache fora da árvore do projeto | Aceita |
-| DP-09 | Novas regras na Parte A do 63: classe de execução na rota, só o lançador cria processo, a confiança mora no core, todo pedido tem span, a classe de cada arquivo próprio | Aceitas. Entram na Parte A no B0 |
+| DP-08 | A persistência em três classes, com o estado da pessoa e o cache fora da árvore do projeto | Aceita. Emenda do mesmo dia (D-28 do 63): o estado segue o projeto renomeado ou movido no mesmo volume, pela identidade do diretório (§5.9) |
+| DP-09 | Novas regras na Parte A do 63: classe de execução na rota, só o lançador cria processo, a confiança mora no core, todo pedido tem span, a classe de cada arquivo próprio | Aceitas. Entraram na Parte A no B0 |
+| DP-10 | O motor de edição da Kinein: o de hoje (Qt Quick `TextEdit`, D5 do 19) ou outro, e quem é dono do documento e do cliente LSP | **Aberta.** A avaliação é o ENG-60 do 62 §3.4, com prova de conceito isolada (§9). O candidato preferido do autor é o Neovim como motor embutido, com a decisão orientada por evidência. A avaliação reabre de forma explícita a exclusão do Neovim embutido do mandato de 2026-07-11 ([21](21-roadmap-de-longo-prazo.md) §M5.4), e a tensão entre o modo modal e a identidade JetBrains (RNF8 do 19) é critério de refutação. A migração do produto só começa com aprovação explícita do autor depois da prova |
 
 ## 12. O que não foi medido
 
@@ -817,6 +940,14 @@ Decisão do autor de 2026-11-14: as nove foram aceitas como recomendadas.
 - O projeto de referência é o próprio repositório. Projetos maiores (SDKs de
   embarcados com dezenas de milhares de arquivos) não foram medidos, e o B1
   passa a medi-los pelo registro.
+- O Zed (§5.15) foi lido, não executado. Nenhum número dele foi medido
+  aqui; o comportamento do git dele com um filtro hostil também não.
+- O rastreio de identidade do §5.9 não foi prototipado: a estabilidade do
+  inode e da data de criação depois de um `mv` no mesmo volume é da
+  documentação do `statx` e do Windows, e o B7 a prova em teste nos
+  sistemas de arquivos suportados.
+- As chamadas de arquivo fora da lista do protótipo do §2.7 (`read_dir`,
+  `metadata`, `copy`, `rename`, `remove_file`).
 
 **Referências das soluções adotadas:**
 - [JetBrains — Project security (Safe Mode)](https://www.jetbrains.com/help/idea/project-security.html)
@@ -830,3 +961,7 @@ Decisão do autor de 2026-11-14: as nove foram aceitas como recomendadas.
 - [tree-sitter — análise incremental](https://tree-sitter.github.io/tree-sitter/using-parsers/)
 - [`tracing`](https://docs.rs/tracing) e [`schemars`](https://docs.rs/schemars)
 - [rust-analyzer — `untrustedWorkspaces` no `package.json` da extensão](https://github.com/rust-lang/rust-analyzer/blob/master/editors/code/package.json)
+- [Zed — código-fonte](https://github.com/zed-industries/zed) (lido no commit `703b5ac`)
+- [axum — `State` e `FromRef`](https://docs.rs/axum/latest/axum/extract/struct.State.html)
+- [Linux — `statx(2)`](https://man7.org/linux/man-pages/man2/statx.2.html) e [Windows — `GetFileInformationByHandle`](https://learn.microsoft.com/windows/win32/api/fileapi/nf-fileapi-getfileinformationbyhandle)
+- [JetBrains — árvores de trabalho do git e o `ProjectId`](https://www.jetbrains.com/help/idea/use-git-worktrees.html)

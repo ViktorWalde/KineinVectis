@@ -5,19 +5,20 @@
 > acompanham a execução. Um documento só, por decisão do autor de 2026-11-12
 > (D-01), para a regra e o plano não se contradizerem em dois lugares.
 >
-> **Para quem executa.** Leia a Parte G, depois a Parte A, e siga a Parte E na
-> ordem. O que este documento não traz está num dono que ele aponta pela seção.
+> **Para quem executa.** Leia a Parte G, depois a Parte A, e siga a ordem do
+> [64](64-revisao-da-arquitetura-e-estrategia-b.md) §8. A Parte E traz o
+> detalhe dos itens que o 64 §7 mantém. O que este documento não traz está
+> num dono que ele aponta pela seção.
 >
 > **Ponto de partida.** Commit `6baddbdf`, protocolo 0.221.0. Toda medida
 > deste documento é de 2026-11-12, nessa árvore, salvo data própria.
 >
-> **Situação em 2026-11-14 (decisão do autor).** A 0.4 segue a estratégia B
-> do [64](64-revisao-da-arquitetura-e-estrategia-b.md). A Parte A segue
-> valendo como regulamento. Das Partes C e E, o bloco do D-19 (ENG-40 a
-> ENG-46) não começa como está escrito, e o destino de cada item está no
-> 64 §7. As decisões do 64 §11 foram tomadas no mesmo dia. As emendas que
-> elas pedem a este documento (Parte A, Parte F, R-GATE-01, Partes C e E)
-> são o resto do B0 do 64 §8 e ainda não foram escritas.
+> **Situação em 2026-11-14 (decisão do autor, D-23 a D-28).** A 0.4 segue a
+> estratégia B do 64, que é o dono do plano: o diagnóstico, a
+> arquitetura-alvo, a ordem e o aceite. A Parte A segue valendo como
+> regulamento, com as regras e as emendas de 2026-11-14. As Partes C, D e E
+> valem no que o 64 §7 mantém: cada uma abre com uma nota que diz o que
+> mudou. O bloco do D-19 (ENG-40 a ENG-46) não começa como está escrito.
 
 ## 0. As decisões (decisão do autor, 2026-11-12)
 
@@ -45,6 +46,12 @@
 | D-20 | Na mesma revisão (2026-11-13): quatro regras novas na Parte A: R-GATE-09 (linha de base sem folga), R-GATE-10 (linha de base só desce, e nenhum comando a cria nem a sobe), R-GATE-11 (um leitor por linguagem) e R-GATE-12 (gate falha fechado). A verificação da R-TEST-06 passa a citar a catraca do ENG-44. |
 | D-21 | Na mesma revisão (2026-11-13): mutante equivalente não é estado final. Cada um dos 10 registrados (2 no INF-17, 2 no INF-20 e 6 no INF-18) vira pendência com dono: uma regra estática o reprova, ou o código que ele troca sai. Os 4 do INF-17 e do INF-20 são da conferência de vocabulário do ENG-02; os 6 do INF-18, do ENG-47, item novo. A lista de pendentes é catraca de migração (R-GATE-07). A R-TEST-02 e a verificação da R-DADOS-04 mudam junto. |
 | D-22 | Na mesma revisão (2026-11-13): a dívida que o leitor certo revela não entra em linha de base que já existe. Entra em catraca de migração nova, criada pelo item que troca o leitor, com zero como pronto e no dono que já existe: ENG-14 (`lib.rs`), ENG-17 (item novo, `terminal/session.rs`), ENG-33, ENG-34, ENG-35, ENG-37 e ENG-39 (§B.2). O bloco só endurece gate: não corrige código de produto. O ENG-04 é absorvido pelo ENG-43. O tempo em milissegundos e a rede do `deny` vão para o ENG-03; a sensibilidade dos gates de docs, para o ENG-06; o conteúdo das supressões e dos aceitos segue no ENG-36. |
+| D-23 | Na revisão da arquitetura (2026-11-14, [64](64-revisao-da-arquitetura-e-estrategia-b.md)): a 0.4 segue a estratégia B, reconstrução arquitetural seletiva. O plano dela mora no 64: o diagnóstico, a arquitetura-alvo (64 §5), a ordem e o aceite (64 §8). Este documento fica com a Parte A como regulamento; as Partes C, D e E valem no que o 64 §7 mantém, e a ordem da §E.1 dá lugar à do 64 §8 (DP-01 e DP-04 do 64 §11). Muda o D-19: o bloco ENG-40 a ENG-46 não começa como está escrito. O D-02 e o D-11 seguem: nenhuma dívida passa da 0.4, e a etapa C retoma depois. As decisões de produto da revisão (o modo restrito, os requisitos, as camadas de suporte e a persistência: DP-02, DP-03, DP-07 e DP-08) moram no 64 §11 e no [19](../arquitetura/19-compromissos-de-arquitetura.md). |
+| D-24 | Na mesma revisão (2026-11-14, DP-09): cinco regras novas na Parte A: R-ARQ-14 (classe de execução na rota), R-ARQ-15 (só o lançador cria processo), R-ARQ-16 (a confiança é decidida no core), R-ARQ-17 (registro de pedido, processo e job) e R-DADOS-05 (classe de armazenamento de cada arquivo próprio). |
+| D-25 | Na mesma revisão (2026-11-14, DP-06): a verificação prefere o compilador. Regra nova: R-GATE-13 (a ordem de preferência da imposição). A R-GATE-11 muda: o leitor de cada linguagem é a gramática tree-sitter, na ferramenta do gate, e não um leitor próprio. A R-GATE-01 muda: a ferramenta do gate é binário do workspace, e o build dela vem antes dos passos estáticos. A verificação da R-ARQ-02, da R-ARQ-10, da R-DADOS-01, da R-DADOS-04 e da R-TEST-06 muda junto, pelo destino do item no 64 §7. |
+| D-26 | Na mesma revisão (2026-11-14, DP-05 e DP-02): a Parte F, itens 1 e 3, deixa de valer para os itens da estratégia B que o 64 §8 nomeia. O fio muda com o contrato primeiro (R-IPC-01), no mesmo commit do core e da UI. Arquivo gravado muda de lugar com migração por cópia, releitura e, só então, remoção; o arquivo misto é dividido com versão de esquema nova. O modo restrito muda o comportamento visível de um projeto sem confiança (Parte F, item 2). |
+| D-27 | Na mesma revisão (2026-11-14): **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos da Kinein Vectis.** Fundamento é o que todo domínio usa e que não se troca por extensão: o modelo de processos e de execução, o contrato e a ponte, a confiança e a criação de processo, a persistência, o registro, a estrutura do core e os pontos de extensão, a verificação, e o motor de edição com a posse do documento e da inteligência de linguagem. Cada um fecha na 0.4, com decisão datada e imposição. Nada fundamental fica marcado para uma versão seguinte: o "revisitar pós-V1" do motor de edição (D5 do [19](../arquitetura/19-compromissos-de-arquitetura.md)) vira decisão da 0.4 (ENG-60, DP-10 do 64 §11). Da 0.5 em diante, linguagem, toolchain, SDK, adaptador de depuração, motor de gravação, painel e método IPC entram por um ponto de extensão (tabela, descritor ou registro) sem mexer num fundamento. Mudar um fundamento depois da 0.4 exige gatilho medido e ADR. Reforça o D-02. |
+| D-28 | Na mesma revisão (2026-11-14), pelo critério do autor (fundamento consolidado, troca positiva e manutenção de longo prazo sem dívida): (1) a R-ARQ-07 e a R-ARQ-08 passam a pedir o `Core` num módulo próprio, fora da raiz do crate, e o estado entregue ao handler por parâmetro, verificado pelo compilador; a forma antiga ("`impl Core` só no `lib.rs`") deixava todos os campos visíveis ao crate inteiro. (2) A pasta de estado por projeto (DP-08) segue o diretório renomeado ou movido no mesmo volume, pela identidade do diretório no sistema de arquivos, e nada é apagado sem gesto da pessoa (64 §5.9; D15 do 19). |
 
 ---
 
@@ -59,8 +66,9 @@ evidência, o alcance e a verificação. Quatro pontos valem para todas:
    tabela da §A.9 e, quando um gate precisa conhecê-la, no arquivo que a regra
    nomeia. Exceção que não está na §A.9 é defeito.
 2. **Verificação por gate.** O passo citado reprova o commit. Quando o passo
-   ainda não existe, a regra cita o item da Parte E que o cria; até esse item
-   fechar, a regra é conferida pelo checklist do commit (§G.3).
+   ainda não existe, a regra cita o item da Parte E ou a fase do
+   [64](64-revisao-da-arquitetura-e-estrategia-b.md) §8 que o cria; até esse
+   item fechar, a regra é conferida pelo checklist do commit (§G.3).
 3. **Verificação por checklist.** Quem executa confere antes do commit e
    registra na entrada do [40.7](40.7-registro-das-entregas.md); o autor
    confere ao ler o commit, antes do push.
@@ -81,13 +89,19 @@ evidência, o alcance e a verificação. Quatro pontos valem para todas:
   folha (INF-13); infraestrutura que mora dentro de um domínio obriga os
   outros a depender dele (ENG-12).
 - Alcance: os módulos da lista `base` declarada em `scripts/module_map.py`.
-- Verificação: `scripts/module_map.py --check` (regra nova, ENG-12).
+- Verificação: o grafo de crates do Cargo, com a base no crate
+  `kinein-base` (64 §5.1, fase B6): a dependência proibida não compila
+  (D-25). Até lá, `scripts/module_map.py --check` (regra nova, ENG-12).
 
 **R-ARQ-03 — Nenhum módulo fora da borda depende da borda.** A borda é
 `handlers`, `runtime`, `outcome` e `rpc`.
 - Porquê: a borda conhece todos os domínios; quem depende dela herda todos.
 - Alcance: `crates/kinein-core/src`.
-- Verificação: `scripts/module_map.py --check` (ENG-12).
+- Verificação: `scripts/module_map.py --check` (ENG-12), lendo pelo
+  tree-sitter (R-GATE-11). A borda e os domínios ficam no mesmo crate (64
+  §5.1), e a visibilidade do Rust não consegue esconder um módulo dos irmãos
+  que descendem da mesma raiz: esta regra segue no gate de texto, de
+  propósito (R-GATE-13).
 
 **R-ARQ-04 — Só a borda nomeia o envelope de resposta do JSON-RPC.** Domínio
 devolve valor e erro próprios; a borda os traduz.
@@ -114,21 +128,33 @@ domínio que reage. A função central não nomeia evento nem estado de domínio
 - Verificação: teste de extensão (R-TEST-05) e vocabulário no
   `module_map.py --check` (ENG-11).
 
-**R-ARQ-07 — `impl Core` existe só no `lib.rs`. Handler é função livre.**
+**R-ARQ-07 — O `Core` mora num módulo próprio, fora da raiz do crate, e os
+campos dele são privados a esse módulo. Handler é função livre e recebe, por
+parâmetro, só o estado do próprio domínio e os serviços que declara** (D-28).
 - Porquê: com o `impl` espalhado, todo handler alcança todo campo, e o
-  acoplamento real fica invisível (ENG-14).
+  acoplamento real fica invisível (ENG-14). No Rust, o item privado é
+  visível no módulo que o define e em todos os descendentes; definido na raiz
+  do crate, o `Core` tem os campos visíveis no crate inteiro, e nenhuma regra
+  de texto compensa isso. Fora da raiz, a privacidade do compilador separa os
+  domínios. É o mesmo desenho do estado por extrator do `axum` (`State` com
+  `FromRef`): a tabela de rotas entrega a cada handler o pedaço de estado que
+  ele declara.
 - Alcance: `crates/kinein-core/src`, fora de teste.
-- Verificação: contagem no `module_map.py --check`, com a catraca de migração
-  do ENG-14 até zero.
+- Verificação: o compilador. O handler que nomeia estado de outro domínio
+  não compila, porque o campo é privado e a assinatura da rota só entrega o
+  estado declarado (ENG-14, fase B6 do
+  [64](64-revisao-da-arquitetura-e-estrategia-b.md) §8). Até lá, a contagem
+  no `module_map.py --check`, com a catraca de migração do ENG-14 até zero.
 
 **R-ARQ-08 — Cada campo do `Core` é um serviço declarado ou o estado de um
-domínio. Um domínio tem um campo de estado, e um arquivo de handler só toca o
-estado do próprio domínio, os serviços e os estados que o mapa declara para
-ele.**
+domínio. Um domínio tem um campo de estado, com o tipo no módulo do domínio e
+os campos privados a ele. Um handler só recebe o estado do próprio domínio,
+os serviços e os estados que a rota declara para ele** (D-28).
 - Porquê: campo de domínio solto no `Core` é estado sem dono (ENG-15).
-- Alcance: `struct Core` e `handlers/`.
-- Verificação: `module_map.py --check`, contra a lista declarada nele, que o
-  mapa gerado publica (ENG-15).
+- Alcance: `struct Core`, os tipos de estado dos domínios e a tabela de rotas.
+- Verificação: o compilador, pela mesma privacidade da R-ARQ-07; a matriz
+  handler × estado sai da tabela de rotas no mapa gerado (ENG-15, fase B6).
+  Até lá, `module_map.py --check`, contra a lista declarada nele.
 
 **R-ARQ-09 — A ponte é um transporte e um objeto por domínio. Pedido,
 resposta, evento e sinal de um domínio moram no objeto dele; o transporte não
@@ -144,7 +170,9 @@ ponte.**
 - Porquê: a regra já está na [ARCHITECTURE §5](../arquitetura/ARCHITECTURE.md)
   e nenhum gate a conferia (ENG-22).
 - Alcance: `ui/qml`.
-- Verificação: `scripts/verificar-fiacao-ipc.sh` (ENG-22).
+- Verificação: a estrutura da ponte (64 §5.6, fase B5): só os roteadores
+  recebem a referência, como propriedade obrigatória, e fora deles ela não
+  existe. Até lá, `scripts/verificar-fiacao-ipc.sh` (ENG-22).
 
 **R-ARQ-11 — Um motivo da faixa de saúde é uma unidade numa lista ordenada.
 O controller da faixa não nomeia motivo.**
@@ -168,6 +196,46 @@ qual responsabilidade saiu e qual palavra o arquivo deixou de nomear.
 - Verificação: `scripts/verificar-arquitetura.sh` para o limite; checklist do
   commit (§G.3, item 6) para a mensagem.
 
+**R-ARQ-14 — Toda rota declara a classe de execução, e só o trabalho de
+estado roda no laço do core.** Processo, disco do projeto, rede e espera de
+servidor de linguagem ou de depuração rodam fora do laço, com prazo,
+cancelamento e fila por recurso; o resultado volta ao laço só para ser
+aplicado (D-24).
+- Porquê: o handler síncrono era o padrão, e uma ferramenta que não responde
+  parava a IDE inteira, inclusive o cancelamento (ENG-50; 64 §2.2 e §2.3).
+- Alcance: a tabela de rotas de todos os domínios do `kinein-core`.
+- Verificação: a guarda de E/S no laço, nos testes e no build de depuração
+  (fase B1 do 64 §8), e o teste do registro, que confere a classe de cada
+  rota (fase B3).
+
+**R-ARQ-15 — Só o lançador cria processo.** Nenhum outro módulo, de produção
+ou de teste, nomeia `std::process::Command` nem o construtor de comando do
+PTY. Todo lançamento declara a origem do programa, o prazo e o teto de saída
+(D-24).
+- Porquê: cada dono criava processo por conta própria, sem prazo e sem
+  política de confiança; é a causa comum do INF-23 e do ENG-50 (ENG-51).
+- Alcance: o workspace Rust inteiro, fora do crate do lançador.
+- Verificação: o `cargo clippy` do gate, com `disallowed_methods` em `forbid`
+  no crate (64 §2.7 e §5.4, fase B2).
+
+**R-ARQ-16 — A confiança no projeto é decidida no core, onde o processo
+nasce.** Sem confiança, nada cujo programa ou comportamento venha do projeto
+é executado. A UI só mostra o estado e pede o gesto (D-24).
+- Porquê: a confiança era consultada em alguns handlers e na QML, e um
+  projeto aberto como não confiável executava código dele (INF-23; 64 §2.1).
+- Alcance: o lançador, e todo argumento que entrega o caminho de um programa
+  a um servidor de linguagem ou a um adaptador.
+- Verificação: o teste do projeto hostil, com zero marcas, e os mutantes da
+  guarda (64 §5.5, fase B2).
+
+**R-ARQ-17 — Todo pedido, todo processo lançado e todo job deixa um registro
+estruturado, aberto num ponto só e sem segredo** (D-24).
+- Porquê: o core não registrava nada, e um requisito de tempo não tinha como
+  ser conferido no uso (ENG-52).
+- Alcance: o roteador de pedidos, o lançador e o gerenciador de jobs.
+- Verificação: o teste com assinante em memória e o teste de redação de
+  segredo (64 §5.10, fase B1).
+
 ## A.2 Dados da pessoa
 
 **R-DADOS-01 — Toda leitura e toda escrita sob o `.kinein` passa pelo
@@ -176,7 +244,9 @@ qual responsabilidade saiu e qual palavra o arquivo deixou de nomear.
 - Porquê: cada dono fazia por conta própria, e o defeito de um não era
   corrigido nos outros (INF-12, INF-13, INF-15).
 - Alcance: código de produção do core.
-- Verificação: vocabulário no `module_map.py --check` (ENG-02); até lá, os
+- Verificação: o `cargo clippy` do gate, com `disallowed_methods` em
+  `forbid` para `std::fs` fora do `kinein_dir` e dos leitores guardados (64
+  §2.7; D-25). Até lá, vocabulário no `module_map.py --check` (ENG-02) e os
   testes do INF-13 e do INF-15.
 
 **R-DADOS-02 — O core não segue link, não abre o que não é arquivo regular e
@@ -210,7 +280,20 @@ arquivo recusado.
   `CMakeCache.txt` e as marcas do configure numa pasta de build fora do
   `.kinein`.
 - Verificação: o teste de adversidade do INF-18, com mutantes; a conferência
-  de que o conteúdo de arquivo só é lido por um leitor com dono (ENG-47).
+  de que o conteúdo de arquivo só é lido por um leitor com dono, pelo
+  `forbid` de `disallowed_methods` (64 §2.7), que troca a conferência de
+  texto do ENG-47 (D-25).
+
+**R-DADOS-05 — Todo arquivo próprio da IDE declara no catálogo a classe de
+armazenamento: configuração do projeto, estado da pessoa ou cache.** Só a
+configuração do projeto mora sob o `.kinein`. Abrir uma pasta não grava
+nela: o `.kinein` só nasce quando a pessoa grava uma configuração do
+projeto. A árvore de build fica onde o sistema de build a põe (D-24).
+- Porquê: o `.kinein` misturava as três classes, e o estado da pessoa podia
+  ir para o repositório (ENG-56; 64 §2.1 e §5.9).
+- Alcance: todo arquivo do catálogo do `kinein_dir`.
+- Verificação: o teste do catálogo, com a coluna da classe (fase B7 do
+  64 §8).
 
 ## A.3 IPC e contrato
 
@@ -279,8 +362,9 @@ caso só de teste entra sem editar a parte fechada.**
 dois arquivos de teste, e harness não redeclara sinal da ponte.**
 - Porquê: a correção feita numa cópia não chega à outra (INF-08, INF-13).
 - Alcance: testes Rust e `scripts/qml-harness`.
-- Verificação: conferências no gate rápido (ENG-31; para o sinal da ponte, a
-  catraca de migração do ENG-44, que o ENG-23 leva a zero).
+- Verificação: conferências no gate rápido (ENG-31). Para o sinal da ponte,
+  o dublê gerado do contrato e validado contra ele (64 §5.7, fase B4), que
+  troca a catraca do ENG-44 (D-25).
 
 **R-TEST-07 — Refatoração não edita os testes que a provam.** Os testes
 existentes passam iguais antes e depois; a única edição aceita é o nome que o
@@ -378,9 +462,12 @@ rastreados e novos não ignorados.
 
 ## A.8 Gate e CI
 
-**R-GATE-01 — Os passos estáticos rodam antes de qualquer build, em
-paralelo.**
-- Porquê: checagem barata reprovava no fim, depois de minutos (ENG-03).
+**R-GATE-01 — Os passos estáticos rodam antes de qualquer build de produto,
+em paralelo. O único build que vem antes deles é o da ferramenta do gate,
+binário do workspace guardado pelo cache do cargo** (D-25).
+- Porquê: checagem barata reprovava no fim, depois de minutos (ENG-03). A
+  ferramenta do gate lê pelo tree-sitter (R-GATE-11) e precisa existir antes
+  dos passos que a usam.
 - Alcance: todo perfil do `scripts/verificar.sh`.
 - Verificação: `scripts/test_verification_profiles.py` (ENG-03).
 
@@ -451,15 +538,19 @@ cabeçalho do arquivo.
 - Verificação: `scripts/ratchet.py --history` confere cada base contra a
   história do git (ENG-40); a tabela da §B.2 lista as bases.
 
-**R-GATE-11 — Cada linguagem tem um leitor só, com dono, e todo gate que lê
-código lê por ele.** O leitor separa código, comentário e texto literal, e é
-provado por um corpus das formas difíceis da linguagem.
+**R-GATE-11 — Todo gate de texto que lê código lê pela gramática tree-sitter
+da linguagem, numa ferramenta do workspace. Não há leitor próprio.** A
+ferramenta separa código, comentário e texto literal pela árvore, e é provada
+por um corpus das formas difíceis de cada linguagem (D-25).
 - Porquê: cada verificador tinha o seu regex, e o mesmo erro de leitura
-  aparecia em vários (INF-21, INF-16, ENG-41).
-- Alcance: todo gate que lê Rust, QML e JavaScript, C++ ou shell. O Python é
-  lido pela árvore sintática da própria linguagem.
-- Verificação: o corpus do leitor no bloco estático, e a conferência de que
-  nenhum verificador lê arquivo de código fora do leitor (ENG-41).
+  aparecia em vários (INF-21, INF-16, ENG-41). Um leitor próprio por
+  linguagem repetiria o problema num lugar só; a gramática que o ecossistema
+  mantém já é a que o produto compila (64 §5.14).
+- Alcance: todo gate de texto que lê Rust, QML e JavaScript, C++ ou shell. O
+  Python é lido pela árvore sintática da própria linguagem.
+- Verificação: o corpus da ferramenta no bloco estático, e a conferência de
+  que nenhum verificador lê arquivo de código fora dela (o ENG-41, trocado
+  pelo tree-sitter no 64 §7).
 
 **R-GATE-12 — Gate falha fechado.** Leitor que quebra, arquivo do alcance que
 não se lê, conjunto vazio onde a regra espera itens e ferramenta ou rede
@@ -469,6 +560,17 @@ ausente nunca resultam em verde: reprovam, ou saem como NÃO PROVADO.
 - Alcance: todo passo do orquestrador.
 - Verificação: os defeitos plantados do ENG-45 no catálogo `gate`; o
   protocolo NÃO PROVADO do orquestrador (R-TEST-01).
+
+**R-GATE-13 — A regra de estrutura é imposta pelo meio mais forte que a
+alcança.** A ordem é: o compilador (grafo de crates, privacidade, lint em
+`forbid`, enum exaustivo); o artefato gerado e conferido; o teste de
+contrato; e, só onde os três não alcançam, o gate de texto (D-25).
+- Porquê: os verificadores de texto deixaram passar defeito plantado e
+  reprovaram forma legítima (§D.5); o compilador não lê errado, e a fuga
+  pelo `allow` não compila (64 §2.7).
+- Alcance: toda regra desta Parte A, nova ou mudada, que confere estrutura
+  de código.
+- Verificação: checklist do desenho e do commit (§G.3).
 
 ## A.9 Exceções registradas
 
@@ -596,6 +698,21 @@ do Fazer dele, e grava o que medir.
 
 # Parte C — A arquitetura-alvo
 
+> **Situação em 2026-11-14 (D-23).** A arquitetura-alvo da 0.4 é a do
+> [64](64-revisao-da-arquitetura-e-estrategia-b.md) §5, que inclui esta
+> parte e a estende. O que mudou aqui:
+> - **C.1:** as camadas passam a crates onde o compilador alcança
+>   (`kinein-protocol`, `kinein-base`, `kinein-process`; 64 §5.1). A regra
+>   da borda segue no gate de texto (R-ARQ-03).
+> - **C.2:** a rota ganha a classe de execução (R-ARQ-14; 64 §5.3), e o
+>   handler recebe por parâmetro só o estado do domínio dele (R-ARQ-07 e
+>   R-ARQ-08, D-28). O esboço abaixo mostra a forma antiga da assinatura.
+> - **C.3:** o catálogo do `kinein_dir` ganha a classe de armazenamento de
+>   cada arquivo (R-DADOS-05; 64 §5.9).
+> - **C.4:** a ponte ganha o objeto de resposta por pedido e o contrato
+>   gerado (64 §5.6 e §5.7). O destino do editor e do item 5 depende da
+>   DP-10 do 64 §11 (o motor de edição, ENG-60).
+
 Os esboços de código desta parte mostram a forma, e não são contrato: o
 primeiro domínio de cada item confirma a forma. Se ela não servir, quem
 executa para e pergunta (§G.4).
@@ -695,6 +812,12 @@ reescrito pelo item que entrega cada ponto de extensão (ENG-10, ENG-20).
 ---
 
 # Parte D — O gate
+
+> **Situação em 2026-11-14 (D-25).** As medidas desta parte seguem como
+> registro. A forma de cada regra muda pela R-GATE-13: as linhas do ENG-41,
+> do ENG-42, do ENG-44 e do ENG-47 na §D.1 dão lugar ao compilador, ao
+> contrato gerado e à ferramenta com tree-sitter (64 §5.14 e §7). A do
+> ENG-40 vale só para as catracas de texto que sobram.
 
 ## D.1 Regras novas ou mudadas (medido em 2026-11-12)
 
@@ -888,6 +1011,20 @@ determinismo é cumprido pelos 17 estáticos; o custo só é medido em segundos.
 ---
 
 # Parte E — A execução
+
+> **Situação em 2026-11-14 (D-23).** A ordem que vale é a do
+> [64](64-revisao-da-arquitetura-e-estrategia-b.md) §8 (B0 a B11), e o
+> destino de cada item abaixo está no 64 §7. A §E.1 fica como registro da
+> ordem de 2026-11-13. Os itens que o 64 mantém seguem com o texto desta
+> parte, com estas leituras:
+> - o ENG-14 e o ENG-15 seguem a R-ARQ-07 e a R-ARQ-08 emendadas (D-28): o
+>   pronto passa a ser o `Core` fora da raiz e o estado por parâmetro, e não
+>   "1 arquivo com `impl Core`";
+> - o ENG-02 e o ENG-47 entram no catálogo com classe e no `forbid` de
+>   `std::fs` (64 §7);
+> - o ENG-24 (a fachada do `EditorController.qml`) e a parte do ENG-20 que
+>   cobre o editor esperam a DP-10 do 64 §11, para não refatorar o que o
+>   motor de edição pode trocar.
 
 ## E.1 A ordem
 
@@ -1747,13 +1884,22 @@ de D.2 medida; o 62 §3.4 com cada item fechado e a evidência.
 
 # Parte F — O que não muda
 
+> **Situação em 2026-11-14 (D-26).** Os itens 1, 2 e 3 mudam para os itens
+> da estratégia B que o 64 §8 nomeia; os outros seguem para todos.
+
 1. **O fio.** Nenhum item desta engenharia muda método, parâmetro, resultado
-   ou evento. Se um item precisar mudar, é contrato primeiro (R-IPC-01) e
-   quem executa para e pergunta.
+   ou evento, salvo os itens da estratégia B que o 64 §8 nomeia. Esses mudam
+   o fio com o contrato primeiro (R-IPC-01), no mesmo commit do core e da
+   UI. Fora deles, se um item precisar mudar o fio, quem executa para e
+   pergunta.
 2. **O comportamento visível.** Telas, textos, atalhos e ordem das ações
-   ficam iguais, salvo decisão do autor.
+   ficam iguais, salvo decisão do autor. O modo restrito (DP-02 do 64 §11)
+   é uma dessas decisões: muda o que um projeto sem confiança mostra.
 3. **Os arquivos gravados.** Formato e versão de esquema dos arquivos do
-   `.kinein` e da configuração global ficam iguais.
+   `.kinein` e da configuração global ficam iguais, salvo nos itens da
+   estratégia B. Neles, o arquivo muda de lugar por migração (cópia,
+   releitura e, só então, remoção), e o arquivo misto que se divide ganha
+   versão de esquema nova, com a leitura da versão antiga (64 §5.9).
 4. **O desempenho.** Primeiro quadro e digitação não pioram contra a base
    medida no início da fase 2.
 5. **A regra de produto.** O CMake segue como fonte da verdade, e a IDE
@@ -1807,12 +1953,19 @@ acrescenta as regras e as paradas.
 7. Todo rename foi pelo compilador ou pela ferramenta (R-PROC-03).
 8. O fato novo está num dono só; os outros apontam (R-DOC-03).
 9. Se a CI rodou vermelha, a causa está no 40 (R-GATE-08).
+10. Em item da estratégia B: o aceite objetivo da fase no 64 §8 está provado
+    com a medida na entrada do 40.7; a guarda que o item cria tem o mutante
+    no catálogo; e a regra nova foi imposta pelo meio mais forte que a
+    alcança (R-GATE-13).
+11. Nenhum fundamento (D-27) ficou marcado para depois da 0.4.
 
 ## G.4 Quando parar e perguntar
 
 Pergunta curta, com a recomendação primeiro. Sempre que:
 
-- a forma esboçada na Parte C não servir no primeiro domínio;
+- a forma esboçada na Parte C ou no 64 §5 não servir no primeiro domínio, ou
+  a prova de conceito de uma fase (64 §9) reprovar;
+- um fundamento já fechado (D-27) precisar mudar;
 - um item precisar mudar o fio, um arquivo gravado ou o comportamento visível;
 - um limite, uma categoria ou uma linha de base precisar mudar (inclusive a
   categoria do cabeçalho, no fim do ENG-20);
