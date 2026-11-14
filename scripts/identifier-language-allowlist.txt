@@ -236,3 +236,11 @@ pyenv # Official Python version manager; installed versions are enumerated local
 # INF-02 shell integration: zsh's startup variable and files, and the theme and
 # plugin names of the real zsh configurations in the terminal matrix.
 zdotdir zshenv zshrc powerlevel robbyrussell autosuggestions
+# ENG-01 (scripts/mutantes.py e o teste dele): nomes da biblioteca padrao do
+# Python. os.sched_getaffinity/sched_setaffinity dao a cada copia a parte dela
+# dos nucleos; shutil.copyfile/copymode, os.readlink, os.path.lexists e os.utime
+# levam e conferem os arquivos da copia; dict.fromkeys, hasattr, classmethod,
+# queue.get_nowait, o modulo traceback e o `metavar` do argparse; SIGINT e
+# SIGHUP, os sinais POSIX que encerram a rodada como o SIGTERM.
+sched getaffinity setaffinity copyfile copymode readlink lexists utime
+fromkeys hasattr classmethod nowait traceback metavar sigint sighup

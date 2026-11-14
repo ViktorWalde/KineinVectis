@@ -71,6 +71,7 @@ ferramenta de gate do **repositório** ausente reprova; ferramenta de
 | `verificar-links-docs.sh` | dados de contas pessoais, identificadores de dispositivo, metadados de sessão e inclusão de orientações locais na árvore pública; alvo relativo inexistente em Markdown versionado; **citação `DocsPublic/…` inexistente em qualquer arquivo** (código e comentários inclusive, desde 2026-10-01); **documento que não aparece, pelo nome, no `README.md` da sua pasta**; **menção a documento interno do autor** em qualquer arquivo (só o público cita o público); **caminho de código entre crases que não existe**, num documento marcado `<!-- caminhos-conferidos -->` (hoje o roadmap 58); **o registro em partes** (desde 2026-10-15): entrada `### 7.N` duplicada, tabela do 40.7 que não bate com as partes, citação "40.7 §7.N" a entrada inexistente e fase aberta acima de 1500 linhas; não verifica âncoras/URLs externas | para renomear documento use `scripts/rename_doc.py`, que reescreve link, citação e nome |
 | `verificar-arquitetura.sh` | a catraca: Rust 500 (sem testes), view 300, controller/host 400, ui/src 500 | split por responsabilidade; nunca "Part2" |
 | `verificar-transicao-workspace.sh` | estado por-workspace com um dono | |
+| `mutantes.py --conferir` (desde 2026-11-14, [roadmap 63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md), ENG-01) | entrada do catálogo de defeitos plantados (`scripts/mutantes/*.toml`) cujo texto não ocorre mais **exatamente uma vez** no arquivo; entrada fora da forma, com id repetido ou sem o trecho da mensagem; pendente fora da conta. Antes, o `test_mutantes.py` prova a própria ferramenta | o código mudou e a entrada envelheceu: acerte o `texto` ao código de hoje e rode `python3 scripts/mutantes.py --rodar <catálogo> --so <id>`, que planta o defeito numa cópia fora do checkout e diz se ele ainda reprova pelo trecho esperado. A entrada só é apagada junto com a guarda que ela provava. O `--rodar` não entra no gate rápido |
 | `verificar-qml-logica.sh` | os harnesses (`tst_*.qml`) num espelho do módulo; **harness verde que imprime aviso de `avisos-qml.txt`** | o bitmask está no `console.error`; aviso na saída quase sempre é um falso incompleto no harness |
 | `verificar-binario-abre.sh --preset <p>` | o binário abre, primeiro frame medido, **nenhum aviso QML no stderr** até o frame | um `Connections` no alvo errado só aparece aqui |
 | `verificar-windows.ps1` (desde 2026-10-09, [roadmap 60](../roadmaps/60-windows-e-edicao-especial.md) §3.1, D8) | o gate do **Windows**, nativo: ambiente (Visual Studio, Rust, Qt, Python, WSL), `cargo fmt`/`clippy`/`test`, o preset `windows-msvc-debug` (MSVC `/W4 /WX /sdl` com ASan), `ctest`, o smoke (a IDE sobe, o core é filho, nada fica órfão) e, com `-Foto`, a janela real; no fim, o `verificar-agnostico.sh` no WSL. Com `-Linux`, também o gate do Linux no espelho | sem ambiente ele para logo na primeira etapa, porque o resto mediria a máquina. O arquivo é ASCII de propósito (o PowerShell 5.1 lê `.ps1` sem BOM como ANSI) |
@@ -113,7 +114,13 @@ se ela ainda é uma pendência aberta.
    ferramenta, perfil, permissão), isso também é defeito do gate: corrija o
    gate para não depender dela, ou declare a premissa na tabela acima.
 5. Se falta um gate (uma falha silenciosa passou), escreva-o: um
-   `scripts/verificar_<x>.py` + `.sh`, e **prove por mutação** (quebre de
-   propósito, veja o gate reprovar, desfaça). Quando a regra é um parser ou
+   `scripts/verificar_<x>.py` + `.sh`, e **prove por mutação**. Desde
+   2026-11-14 o defeito não é plantado à mão no checkout: ele entra no
+   catálogo (`scripts/mutantes/<item>.toml`: o arquivo, o texto exato, a
+   troca, quem o reprova e o trecho da mensagem), e
+   `python3 scripts/mutantes.py --rodar <item>` o planta numa cópia fora do
+   checkout. Só "reprovado" serve: o defeito que sobrevive, que não compila
+   ou que reprova sem o trecho esperado reprova a rodada, e a forma legítima
+   (`espera = "passa"`) que reprova também. Quando a regra é um parser ou
    uma regex, guarde os casos de mutação **dentro** do gate e rode-os a cada
    execução, como o `check_qml_qt64.py`.

@@ -1,0 +1,387 @@
+# Os defeitos da própria ferramenta de mutação (roadmaps/63, ENG-01): cada um
+# tira uma coisa que ela promete, e o caso do `scripts/test_mutantes.py` que
+# prova a promessa tem de reprovar.
+item = "ENG-01"
+roda = "python3 scripts/test_mutantes.py"
+# O teste da ferramenta roda os casos em paralelo, e o da divisão dos núcleos
+# não prova nada com um só.
+nucleos = 4
+
+[[entrada]]
+id = "eng-01-nao-compila-serve"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheRound.test_a_defect_that_does_not_build_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''return "prazo" if code is None else "nao-compila"'''
+troca = '''return "prazo" if code is None else "reprovado"'''
+
+[[entrada]]
+id = "eng-01-sobrevivente-serve"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheRound.test_a_survivor_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''return "passou" if entry.expects == "passa" else "sobreviveu"'''
+troca = '''return "passou" if entry.expects == "passa" else "reprovado"'''
+
+[[entrada]]
+id = "eng-01-outro-motivo-serve"
+regra = "R-GATE-03"
+mensagem = "FALHOU __main__.TheRound.test_a_defect_reproved_for_another_reason_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''return "reprovado" if all(fragment in output for fragment in entry.fragments) else "outro-motivo"'''
+troca = '''return "reprovado"'''
+
+[[entrada]]
+id = "eng-01-um-trecho-basta"
+regra = "R-GATE-03"
+mensagem = "FALHOU __main__.TheRound.test_a_defect_reproved_for_another_reason_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''return "reprovado" if all(fragment in output for fragment in entry.fragments) else "outro-motivo"'''
+troca = '''return "reprovado" if any(fragment in output for fragment in entry.fragments) else "outro-motivo"'''
+
+[[entrada]]
+id = "eng-01-legitima-reprovada-serve"
+regra = "R-GATE-03"
+mensagem = "FALHOU __main__.TheRound.test_a_legitimate_form_that_is_reproved_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''            return "falso-positivo"'''
+troca = '''            return "passou"'''
+
+[[entrada]]
+id = "eng-01-base-que-falha-serve"
+regra = "R-GATE-12"
+mensagem = "FALHOU __main__.TheRound.test_a_runner_that_is_missing_or_fails_without_the_defect_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''                if code != 0:
+                    reason ='''
+troca = '''                if code is None:
+                    reason ='''
+
+[[entrada]]
+id = "eng-01-trecho-na-base-serve"
+regra = "R-GATE-03"
+mensagem = "FALHOU __main__.TheRound.test_a_fragment_that_the_passing_output_has_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''if fragment in copy.passed[command]:'''
+troca = '''if False and fragment in copy.passed[command]:'''
+
+[[entrada]]
+id = "eng-01-sem-prazo"
+regra = "R-GATE-12"
+mensagem = "FALHOU __main__.TheRound.test_a_command_past_its_deadline_is_killed_and_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''code = process.wait(timeout=deadline)'''
+troca = '''code = process.wait()'''
+
+[[entrada]]
+id = "eng-01-prazo-sem-matar"
+regra = "R-GATE-12"
+mensagem = "FALHOU __main__.TheRound.test_a_command_past_its_deadline_is_killed_and_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''                kill(process)
+                code = None'''
+troca = '''                code = None'''
+
+[[entrada]]
+id = "eng-01-copias-disputam-os-nucleos"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheRound.test_each_copy_has_its_share_of_the_cores"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''os.sched_setaffinity(0, self.shares[index - 1])'''
+troca = '''os.sched_setaffinity(0, os.sched_getaffinity(0))'''
+
+[[entrada]]
+id = "eng-01-grava-na-arvore-serve"
+regra = "R-GATE-02"
+mensagem = "FALHOU __main__.TheRound.test_a_command_that_writes_in_the_tree_fails_the_round"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''return None if found == self.status else'''
+troca = '''return None if found else'''
+
+[[entrada]]
+id = "eng-01-entrada-que-nao-rodou-some"
+regra = "R-GATE-12"
+mensagem = "FALHOU __main__.TheRound.test_every_entry_runs_or_the_round_fails"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''for entry in self.entries if entry.name not in ran)'''
+troca = '''for entry in self.entries if entry.name in ran)'''
+
+[[entrada]]
+id = "eng-01-pendente-que-reprova-fica"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheRound.test_a_pending_survivor_is_expected_and_a_reproved_one_leaves"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''            return self.state == "sobreviveu"'''
+troca = '''            return self.state in ("sobreviveu", "reprovado")'''
+
+[[entrada]]
+id = "eng-01-texto-duas-vezes"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheStaticCheck.test_a_text_that_occurs_twice_or_never_fails"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''        if found != 1:'''
+troca = '''        if found < 1:'''
+
+[[entrada]]
+id = "eng-01-arquivo-novo-por-cima"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheStaticCheck.test_a_new_file_has_to_be_new"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''if os.path.lexists(path) or edit.file in contents:'''
+troca = '''if edit.file in contents:'''
+
+[[entrada]]
+id = "eng-01-campo-desconhecido"
+regra = "R-GATE-12"
+mensagem = "FALHOU __main__.TheStaticCheck.test_the_shape_of_an_entry_is_checked"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''for key in sorted(table.keys() - allowed):'''
+troca = '''for key in sorted(table.keys() - table.keys()):'''
+
+[[entrada]]
+id = "eng-01-reprova-sem-mensagem"
+regra = "R-GATE-03"
+mensagem = "FALHOU __main__.TheStaticCheck.test_the_shape_of_an_entry_is_checked"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''if expects == "reprova" and pending is None and not fragments:'''
+troca = '''if expects == "reprova" and pending is None and not fragments and not rule:'''
+
+[[entrada]]
+id = "eng-01-id-repetido"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheStaticCheck.test_the_shape_of_an_entry_is_checked"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''            if entry.name in seen:'''
+troca = '''            if entry.name in seen and not seen:'''
+
+[[entrada]]
+id = "eng-01-pendente-em-qualquer-catalogo"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheStaticCheck.test_pending_lives_in_its_file_and_its_count_is_exact"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''            if file != PENDING_FILE:'''
+troca = '''            if file != PENDING_FILE and not file:'''
+
+[[entrada]]
+id = "eng-01-pendente-com-folga"
+regra = "R-GATE-09"
+mensagem = "FALHOU __main__.TheStaticCheck.test_pending_lives_in_its_file_and_its_count_is_exact"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''        if count != limit:'''
+troca = '''        if count > limit:'''
+
+[[entrada]]
+id = "eng-01-catalogo-torto-roda"
+regra = "R-GATE-12"
+mensagem = "FALHOU __main__.TheRound.test_a_catalogue_out_of_shape_does_not_run"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''    if problems:
+        print("catálogo de mutantes FALHOU:", file=sys.stderr)'''
+troca = '''    if problems and not options.run:
+        print("catálogo de mutantes FALHOU:", file=sys.stderr)'''
+
+[[entrada]]
+id = "eng-01-copias-dentro-do-repositorio"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_the_copies_stay_outside_the_repository"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''if base == root or root in base.parents:'''
+troca = '''if base == root:'''
+
+[[entrada]]
+id = "eng-01-duas-rodadas-nas-mesmas-copias"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_two_rounds_do_not_share_the_copies"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)'''
+troca = '''fcntl.flock(lock, fcntl.LOCK_UN)'''
+
+[[entrada]]
+id = "eng-01-volta-com-a-hora-velha"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_a_stale_build_never_judges_the_next_entry"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''                target.write_bytes(data)
+        return self.dirty()'''
+troca = '''                target.write_bytes(data)
+                os.utime(target, (0, 0))
+        return self.dirty()'''
+
+[[entrada]]
+id = "eng-01-copia-com-a-hora-da-origem"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_a_stale_build_never_judges_the_next_entry"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''                shutil.copyfile(origin, target)
+                shutil.copymode(origin, target)'''
+troca = '''                shutil.copy2(origin, target)'''
+
+[[entrada]]
+id = "eng-01-indice-aprende-da-copia"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_a_copy_changed_from_outside_is_rewritten"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''("--add", (tracked & written) | (tracked - indexed))):'''
+troca = '''("--add", tracked)):'''
+
+[[entrada]]
+id = "eng-01-resto-da-rodada-anterior-fica"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_a_copy_changed_from_outside_is_rewritten"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''            if name and name not in snapshot.files:
+                remove(self.tree / name)'''
+troca = '''            if name and name not in snapshot.files:
+                continue'''
+
+[[entrada]]
+id = "eng-01-manifesto-nao-esquece-o-defeito"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_an_interrupted_round_is_repaired_by_the_next_one"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''known.update(dict.fromkeys(contents, PLANTED))'''
+troca = '''known.update(dict.fromkeys((), PLANTED))'''
+
+[[entrada]]
+id = "eng-01-copia-nao-segue-o-apagado"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_the_copy_follows_the_working_tree_and_keeps_what_did_not_change"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''        for name in known.keys() - snapshot.files.keys():
+            remove(self.tree / name)'''
+troca = '''        for name in known.keys() - known.keys():
+            remove(self.tree / name)'''
+
+[[entrada]]
+id = "eng-01-copia-grava-tudo-sempre"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_the_copy_follows_the_working_tree_and_keeps_what_did_not_change"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''            if known.get(name) == mark and os.path.lexists(target):
+                continue'''
+troca = '''            if known.get(name) == mark and not os.path.lexists(target):
+                continue'''
+
+[[entrada]]
+id = "eng-01-arvore-mudou-calada"
+regra = "R-TEST-02"
+mensagem = "FALHOU __main__.TheDisk.test_a_working_tree_that_changes_during_the_round_fails_it"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''if Snapshot.of(self.root).files != snapshot.files:'''
+troca = '''if Snapshot.of(self.root).files.keys() != snapshot.files.keys():'''
+
+[[entrada]]
+id = "eng-01-encerrada-deixa-os-processos"
+regra = "R-GATE-02"
+mensagem = "FALHOU __main__.TheRound.test_a_stopped_round_takes_its_processes_with_it"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''for ending in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):'''
+troca = '''for ending in ():'''
+
+[[entrada]]
+id = "eng-01-interrompida-sem-matar"
+regra = "R-GATE-02"
+mensagem = "FALHOU __main__.TheRound.test_a_stopped_round_takes_its_processes_with_it"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''        for process in running:
+            kill(process)'''
+troca = '''        for process in running:
+            pass'''
+
+[[entrada]]
+id = "eng-01-encerrada-comeca-processo"
+regra = "R-GATE-02"
+mensagem = "FALHOU __main__.TheProcesses.test_a_stopped_round_starts_no_process"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''                if self.stopped:
+                    return None, ""'''
+troca = '''                if False:
+                    return None, ""'''
+
+[[entrada]]
+id = "eng-01-encerrada-nao-para"
+regra = "R-GATE-02"
+mensagem = "FALHOU __main__.TheProcesses.test_a_stopped_round_starts_no_process"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''            self.stopped = True'''
+troca = '''            self.stopped = False'''
+
+[[entrada]]
+id = "eng-01-interrompida-vira-veredito"
+regra = "R-GATE-03"
+mensagem = "FALHOU __main__.TheRound.test_a_stopped_round_takes_its_processes_with_it"
+[[entrada.edicao]]
+arquivo = "scripts/mutantes.py"
+texto = '''                if self.processes.stopped:
+                    return  # o que a interrupção matou não é veredito'''
+troca = '''                if False:
+                    return  # o que a interrupção matou não é veredito'''
+
+# O passo do gate: o orquestrador roda o teste da ferramenta e a conferência
+# do catálogo, e o teste dos perfis reprova quando um dos dois sai.
+[[entrada]]
+id = "eng-01-teste-da-ferramenta-fora-do-gate"
+regra = "R-GATE-03"
+roda = "python3 scripts/test_verification_profiles.py"
+mensagem = [
+    "FAIL: test_ci_runs_all_static_checks_without_build_directories",
+    "AssertionError: 'python3 scripts/test_mutantes.py' not found in",
+]
+[[entrada.edicao]]
+arquivo = "scripts/verificar.sh"
+texto = '''python3 scripts/test_mutantes.py
+python3 scripts/mutantes.py --conferir
+'''
+troca = '''python3 scripts/mutantes.py --conferir
+'''
+
+[[entrada]]
+id = "eng-01-conferencia-fora-do-gate"
+regra = "R-GATE-03"
+roda = "python3 scripts/test_verification_profiles.py"
+mensagem = [
+    "FAIL: test_ci_runs_all_static_checks_without_build_directories",
+    "AssertionError: 'python3 scripts/mutantes.py --conferir' not found in",
+]
+[[entrada.edicao]]
+arquivo = "scripts/verificar.sh"
+texto = '''python3 scripts/test_mutantes.py
+python3 scripts/mutantes.py --conferir
+'''
+troca = '''python3 scripts/test_mutantes.py
+'''

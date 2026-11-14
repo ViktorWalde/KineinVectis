@@ -138,7 +138,7 @@ repete a lista de verificações em YAML.
 
 | Perfil | Cobertura |
 | --- | --- |
-| `--ci-rapida` | fmt, testes Rust e Clippy com `--locked`, cargo-deny, ShellCheck, invariantes AppImage e os gates estáticos de identificadores, QML (fiação, propriedades, mortas, duplicação, tokens e alcance), IPC, atalhos, docs, mapa, links, arquitetura, adiados Windows e transição de workspace |
+| `--ci-rapida` | fmt, testes Rust e Clippy com `--locked`, cargo-deny, ShellCheck, invariantes AppImage e os gates estáticos de identificadores, QML (fiação, propriedades, mortas, duplicação, tokens e alcance), IPC, atalhos, docs, mapa, links, arquitetura, adiados Windows, transição de workspace e o catálogo de mutantes (`--conferir`) |
 | `--rapido` | tudo acima, mais build de debug, C++, CTest, qmllint, exercitação real, QEMU, depuração Python, clangd-cross e harnesses QML |
 | `--completo` | tudo do rápido, mais os builds finais e os smokes |
 
@@ -218,6 +218,7 @@ muda. O código do produto que um gate inspeciona continua em seu domínio norma
 | `verificar-links-docs.sh` | `scripts/verificar-links-docs.sh` | Existência dos alvos relativos reconhecidos em Markdown versionado e novo não ignorado; citações `DocsPublic/…` em qualquer arquivo; todo documento no índice da pasta; nenhuma menção a documento interno; caminhos de código nos documentos marcados `caminhos-conferidos`; o registro em partes (numeração única, tabela do 40.7, citações "40.7 §7.N" e o teto da fase aberta). Não verifica URLs externas nem âncoras. |
 | `verificar-arquitetura.sh` | `scripts/verificar-arquitetura.sh` + `arquitetura-baseline.txt` | Catraca de tamanho por categoria de arquivo; responsabilidade semântica ainda exige revisão. |
 | `verificar-transicao-workspace.sh` | `scripts/verificar-transicao-workspace.sh` | Dono único da mutação de estado por workspace no core. |
+| `mutantes.py --conferir` | `scripts/mutantes.py`, `scripts/test_mutantes.py` e os catálogos `scripts/mutantes/*.toml` | O catálogo de defeitos plantados ainda se aplica: cada entrada tem forma, e o texto dela ocorre uma vez no arquivo. Roda antes o teste da própria ferramenta. O `--rodar`, que planta cada defeito numa cópia fora do checkout e exige a reprovação pelo trecho esperado, é chamado por quem fecha o item, não pelo orquestrador. |
 | `verificar-qml-logica.sh` | script `.sh` + `scripts/qml-harness/tst_*.qml` | Lógica QML real em espelho temporário do módulo e modo headless; reprova também harness verde cuja saída tem aviso de `avisos-qml.txt`. |
 | `verificar-qml-logica-qt64.sh` | script `.sh` + `packaging/appimage/Containerfile.qml64` | Os mesmos harnesses com o runner do Qt 6.4.2 do AppImage; sem engine (ou engine sem serviço), NÃO PROVADO. |
 | `check_terminal_quiet.py` | script `.py` (pty, XDG isolados, inclusive `XDG_RUNTIME_DIR`) | `kinein <pasta>` desacopla como `code .`: < 300 ms, mudo, e o processo desacoplado **prova** que chegou ao primeiro frame (`KINEIN_PERF_MARKER_FILE`). |
@@ -315,7 +316,10 @@ Ao surgir uma classe de falha que nenhum gate atual detecta:
 3. crie outro gate somente para uma propriedade realmente diferente;
 4. mantenha uma única fronteira `.sh`, com auxiliar interno se necessário;
 5. registre nome e função no orquestrador, e diagnóstico no catálogo `04`;
-6. prove por mutação que o gate reprova o defeito e aceita o código correto.
+6. prove por mutação que o gate reprova o defeito e aceita o código correto:
+   o defeito e a forma legítima entram no catálogo `scripts/mutantes/`, e
+   `python3 scripts/mutantes.py --rodar <catálogo>` os julga numa cópia fora
+   do checkout ([04](04-os-gates-que-dizem-nao.md), item 5).
 
 Um gate não deve chamar um irmão para “reaproveitar o fluxo”. Reuso de análise
 vai para uma função ou auxiliar comum; composição de execução continua sendo

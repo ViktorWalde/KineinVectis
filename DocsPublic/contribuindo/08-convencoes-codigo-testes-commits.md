@@ -195,8 +195,12 @@ diz qual falhou.
   `✓`/`✗` no fim; o script diz **o que mede e por quê** no cabeçalho.
 - Gates em Python (`scripts/verificar_<x>.py`) com um `.sh` fino que os
   chama; sem dependências fora da stdlib.
-- Um gate novo é provado por **mutação**: quebre de propósito, veja-o
-  reprovar, desfaça, registre no `40`.
+- Um gate novo é provado por **mutação**: o defeito entra no catálogo
+  (`scripts/mutantes/<item>.toml`), o `scripts/mutantes.py --rodar <item>`
+  o planta numa cópia fora do checkout, e ele tem de reprovar pelo trecho
+  esperado; a medida vai para o `40`. Vale o mesmo para a guarda nova do
+  código ([63](../roadmaps/63-regras-e-plano-de-engenharia-da-0.4.md),
+  R-TEST-02).
 
 ## Commits
 

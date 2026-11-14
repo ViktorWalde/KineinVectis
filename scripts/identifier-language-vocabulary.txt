@@ -479,6 +479,7 @@ commits
 committed
 committing
 common
+communicate
 como
 compact
 companion
@@ -667,6 +668,8 @@ decoys
 deep
 default
 defaults
+defect
+defects
 defer
 deferred
 define
@@ -945,6 +948,7 @@ executed
 executes
 executing
 execution
+executor
 exercise
 exhaustive
 exist
@@ -1369,6 +1373,7 @@ internal
 interpolation
 interpret
 interpreter
+interrupt
 interrupted
 intersect
 intersection
@@ -1409,6 +1414,8 @@ javascript
 jobs
 join
 joined
+judge
+judges
 jump
 junction
 junta
@@ -1472,8 +1479,10 @@ leftover
 leftovers
 legacy
 legend
+legitimate
 length
 lens
+less
 letter
 level
 levels
@@ -1539,6 +1548,7 @@ looks
 lookup
 loop
 loops
+loose
 lose
 loses
 loss
@@ -1756,6 +1766,7 @@ occupied
 occurred
 occurrence
 occurrences
+occurs
 offender
 offenders
 offending
@@ -1934,6 +1945,8 @@ places
 plain
 plan
 planned
+plant
+planted
 platform
 plugin
 plugins
@@ -1951,6 +1964,7 @@ poisoner
 policy
 poll
 polling
+pool
 popover
 popped
 populate
@@ -2226,6 +2240,7 @@ repositories
 repository
 representable
 reproduce
+reproved
 request
 requested
 requesting
@@ -2517,6 +2532,7 @@ sortable
 sorted
 sorting
 sorts
+sound
 source
 sourced
 sources
@@ -2612,6 +2628,7 @@ structures
 stub
 stubborn
 stubs
+stuck
 studio
 style
 styled
@@ -2642,11 +2659,13 @@ super
 support
 supported
 supports
+suppress
 suppressed
 surface
 survive
 survived
 survives
+survivor
 suse
 suspend
 suspended
@@ -2683,6 +2702,7 @@ tear
 technical
 teeth
 telemetry
+tell
 tells
 temp
 template
@@ -2794,6 +2814,7 @@ trusting
 truth
 ttys
 turns
+twice
 type
 typed
 types

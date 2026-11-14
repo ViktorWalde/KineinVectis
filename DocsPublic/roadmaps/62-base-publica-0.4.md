@@ -197,11 +197,11 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
-e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-13: INF-01
+e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-14: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -1191,6 +1191,31 @@ auditorias e provas posteriores datadas nos donos:**
   inteiro sem reprovar o texto da string e reprovando o `RESPOSTA_NOVA`
   depois dela. Oito mutantes, numa cópia, todos reprovados
   ([40.7](40.7-registro-das-entregas.md) §7.416). Estado corrigido.
+- **INF-22 — Teste do configure cancelado que reprova sob carga, sem
+  defeito plantado.** Dono e evidência:
+  `c1_existing_cancelled_configure_retains_obsolete_state_until_successful_retry`,
+  em `crates/kinein-core/src/tests/c_project/existing_recovery.rs`. Depois
+  que o configure do `release local` termina, o teste pede o `index.context`
+  do `main.c` e espera o `release local` no `staleBecause`; quando falha, é
+  a asserção da linha 60, com "the configuration begun last is the active
+  one". Achado em 2026-11-14, na entrega da ferramenta do ENG-01
+  ([40.7](40.7-registro-das-entregas.md) §7.419): numa rodada do
+  `python3 scripts/mutantes.py --rodar pendentes`, com 4 cópias rodando ao
+  mesmo tempo o `cargo test --workspace --all-features --no-fail-fast
+  --locked`, ele falhou numa das 14 execuções e fez um pendente sair como
+  reprovado. Nas outras duas rodadas completas do dia com esse comando, 28
+  execuções, não falhou. Medido na mesma data, sem defeito plantado, com o
+  binário de teste da lib do core da árvore do c244102f e `--exact` nesse
+  teste: 16 ao mesmo tempo, 2 reprovações em 192 execuções, na mesma linha;
+  4 ao mesmo tempo, 0 em 100; um por vez, 0 em 60.
+  Severidade média: o gate rápido roda esse teste e pode reprovar sem
+  mudança nenhuma, e a rodada dos pendentes reprova por um teste que não vê
+  o defeito. Causa não investigada: este registro não diz se a corrida é do
+  produto (a configuração começada por último ainda não é a ativa quando o
+  `event.cmake.finished` sai) ou do teste. Testes: a reprodução acima, 16 ao
+  mesmo tempo, antes e depois da correção. Decisão: nenhuma ainda; onde ele
+  entra na ordem é do autor
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
@@ -1306,10 +1331,22 @@ commit 6baddbdf. O dono de cada um é o
 [63](63-regras-e-plano-de-engenharia-da-0.4.md): a evidência medida está no
 §B.1 de lá, e os testes, os mutantes e o critério de pronto, na Parte E.
 Decisão do autor de 2026-11-12, para todos: corrigir na 0.4, na ordem do 63
-§E.1; o ENG-16 é a única troca consciente. Estado de todos: aberto.
+§E.1; o ENG-16 é a única troca consciente. Estado de todos: aberto, salvo
+o que o item diz.
 
 - **ENG-01 — Mutantes avulsos, sobre o checkout vivo.** Severidade média.
-  Causa: a mutação nunca virou ferramenta do repositório, com catálogo.
+  Causa: a mutação nunca virou ferramenta do repositório, com catálogo. Em
+  2026-11-14 entraram a ferramenta (`scripts/mutantes.py`, com o
+  `--conferir` no gate rápido), o catálogo do INF-15 e a seção de pendentes
+  do D-21 ([40.7](40.7-registro-das-entregas.md) §7.419). Achado na
+  entrega: o `--rodar`, chamado fora do orquestrador, não tem teto de
+  memória; na rodada dos pendentes, com 4 cópias, a memória disponível
+  chegou a 4,0 GiB. O teto entra com o catálogo `gate`. As rodadas dos
+  pendentes acharam também um teste instável do core (INF-22): enquanto
+  ele está aberto, a rodada pode reprovar sem mudança nenhuma. Estado
+  parcial:
+  faltam o catálogo `gate`, no fim do bloco do D-19, e a migração dos
+  mutantes antigos (§3.5).
 - **ENG-02 — Cada dono monta o caminho do `.kinein`.** Severidade alta: é a
   causa comum do INF-12, do INF-13 e do INF-15. Causa: falta de um catálogo
   dos arquivos próprios, com leitura e escrita por um ponto só.
@@ -1614,7 +1651,7 @@ nova entra lá quando for implementada.
 | Camada | Defeito que deve revelar | Técnica e evidência | Ponto de partida |
 | --- | --- | --- | --- |
 | Regressão de jornadas | Fluxo que funcionava e quebrou | Jornadas de C, C++, Rust, Python, DAP/QEMU e F5–F9 com fixtures reais, positivas, negativas e de recuperação, no gate completo estrito | Testes de despacho, harnesses QML, `verificar-exercitacao.sh` e `verificar-embarcado.sh` |
-| Mutação das guardas | Teste verde porque a guarda nunca foi exercida | Mutação de cada guarda crítica com baseline verde, que compile e reprove pela guarda; catálogo versionado em vez de scripts avulsos | Mutações manuais registradas por fatia no 40.7; a ferramenta e o catálogo são o ENG-01 do [63](63-regras-e-plano-de-engenharia-da-0.4.md) |
+| Mutação das guardas | Teste verde porque a guarda nunca foi exercida | Mutação de cada guarda crítica com baseline verde, que compile e reprove pela guarda; catálogo versionado em vez de scripts avulsos | A ferramenta existe desde 2026-11-14 (`scripts/mutantes.py`, 40.7 §7.419), com os catálogos do INF-15 e dos pendentes do D-21; as mutações manuais das outras fatias, registradas no 40.7, ainda não migraram (ENG-01 do [63](63-regras-e-plano-de-engenharia-da-0.4.md)) |
 | Propriedades e fronteiras | Caso não imaginado em parsers, IPC, offsets Unicode, caminhos e CDB | Geração de entradas e fuzzing nas fronteiras, com regressão para cada falha encontrada | Casos fixos atuais; ferramenta nova só com registro de componente |
 | Ordem temporal e concorrência | Resposta antiga publicada, troca de workspace, cancelamento, processo morto | Sequências forçadas sem `sleep` como sincronização; repetição em lote para revelar intermitência; nenhum processo órfão ao final | Guardas de workspace e testes de cancelamento atuais |
 | Desempenho e atraso | Espera fixa, polling, trabalho repetido, custo quadrático, bloqueio do laço do core ou da UI | Baseline e p50/p95 de abrir, digitar, IPC, indexar, configurar e compilar; piora acima do limite medido reprova | Marcador de primeiro frame (G0.5) e medições por fatia |

@@ -390,6 +390,11 @@ passo "scripts/verificar-transicao-workspace.sh" \
     "Garante que a troca do estado por workspace continua com um unico dono."
 bash scripts/verificar-transicao-workspace.sh
 
+passo "scripts/mutantes.py --conferir" \
+    "Prova a ferramenta de mutacao e confere que cada defeito plantado do catalogo ainda se aplica uma vez."
+python3 scripts/test_mutantes.py
+python3 scripts/mutantes.py --conferir
+
 if [ "$mode" != "ci-rapida" ]; then
     passo "scripts/verificar-qml-logica.sh" \
         "Executa em modo headless a logica real dos controllers e componentes QML."

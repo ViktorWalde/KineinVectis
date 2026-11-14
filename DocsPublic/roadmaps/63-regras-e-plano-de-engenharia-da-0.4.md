@@ -828,6 +828,11 @@ Como foi medido, numa cópia da árvore fora do checkout:
 "Não medido" quer dizer que esta revisão não plantou defeito no passo: o
 catálogo `gate` do ENG-01 mede (§H.3).
 
+Desde 2026-11-14 o orquestrador tem um passo que a tabela, medida no
+2e5fa164, não traz: `scripts/mutantes.py --conferir`, depois do passo 31,
+com o teste da própria ferramenta (ENG-01, 40.7 §7.419). São 38 passos no
+`--completo` e 33 no `--rapido`.
+
 | # | Passo | Promete | Como lê | Defeitos reprovados | Legítimas reprovadas | Base e comando | Custo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `test_verification_profiles.py` | Perfis, fail-fast e NÃO PROVADO do orquestrador | Autoteste | não medido | — | — | 1 s |
@@ -1022,10 +1027,25 @@ D-16, R-DADOS-04).
     C++ ou um passo do gate. Toda entrada roda: a rodada que pula uma entrada
     por falta de quem a rode reprova (a rodada do INF-18 deixou os mutantes
     da QML de fora até ser corrigida).
-  - `--rodar` usa uma cópia por entrada e roda as entradas em paralelo, até o
-    número de núcleos; a de passo estático copia só os arquivos rastreados.
-    No fim imprime, por regra: plantados, reprovados, formas legítimas e as
-    que passaram. Sai com erro se qualquer número não for o esperado.
+  - `--rodar` roda as entradas em paralelo, em cópias de trabalho fora do
+    checkout que ficam guardadas entre as rodadas, cada uma com a sua pasta
+    de build e a sua parte dos núcleos (`nucleos` no catálogo: 4 por cópia
+    com `compila`, 1 sem). A cópia leva os arquivos rastreados e os novos
+    que o git não ignora: o arquivo ainda sem commit também é julgado. No
+    fim imprime, por regra: plantados, reprovados, pendentes, formas
+    legítimas e as que passaram. Sai com erro se qualquer número não for o
+    esperado. Até 2026-11-14 este item dizia "uma cópia por entrada, até o
+    número de núcleos". Medido na entrega (40.7 §7.419): numa cópia nova, o
+    build e o teste do core sem defeito levam 195 s, que uma cópia por
+    entrada pagaria em cada uma; e 16 cópias, cada uma enxergando os 16
+    núcleos, reprovaram a base de todas as entradas da própria ferramenta.
+  - Desde a entrega (2026-11-14), a rodada confere também: sem o defeito, o
+    `roda` passa em cada cópia e não grava na árvore dela; o trecho esperado
+    não aparece na saída de quem passa; a entrada que passa do prazo tem os
+    processos mortos e reprova; a árvore de trabalho não mudou enquanto a
+    rodada rodava; a rodada encerrada mata os processos que criou; e o
+    arquivo gravado numa cópia recebe a hora de agora, para o build que
+    confia na hora não guardar a saída de um defeito.
   - `--conferir` reprova também o passo do orquestrador que não tem entrada
     no catálogo `gate` (R-GATE-03).
   - A seção de pendentes: os 10 mutantes registrados como equivalentes
@@ -1034,10 +1054,13 @@ D-16, R-DADOS-04).
     catálogo do dono e tem de reprovar. É catraca de migração: 10 → 0, e a
     seção é apagada. Nenhuma entrada nova nasce pendente.
   - O `--completo` roda `--rodar gate` inteiro. O `--rapido` roda só o
-    `--conferir`.
+    `--conferir`. Achado na entrega da ferramenta (2026-11-14, 62 §3.4): o
+    `--rodar` chamado fora do orquestrador não tem teto de memória. No
+    commit do catálogo `gate`, a rodada passa a respeitar o teto do
+    orquestrador, e o número de cópias, a memória disponível.
 - Commits: a ferramenta com o catálogo do INF-15, seu primeiro usuário, e a
-  seção de pendentes; no fim do bloco do D-19, o catálogo `gate` (D.3) e o
-  passo no `--completo`.
+  seção de pendentes (entregue em 2026-11-14, 40.7 §7.419); no fim do bloco
+  do D-19, o catálogo `gate` (D.3) e o passo no `--completo`.
 - Aceite: o estado do git do checkout é igual antes e depois de `--rodar`. O
   catálogo `gate` reprova 100% dos defeitos e deixa passar 100% das formas
   legítimas, e o tempo da rodada inteira fica registrado no 40.7 (a medida de
@@ -1046,7 +1069,10 @@ D-16, R-DADOS-04).
   falha; uma que sobrevive reprova a rodada; um texto que ocorre duas vezes
   reprova o `--conferir`; uma reprovação sem o trecho esperado reprova a
   rodada; uma forma legítima que reprova, também; um passo sem entrada
-  reprova o `--conferir`.
+  reprova o `--conferir`. Desde 2026-11-14 eles moram em
+  `scripts/mutantes/eng-01.toml`, cada um reprovado pelo caso nomeado do
+  `scripts/test_mutantes.py`; o do passo sem entrada entra com o catálogo
+  `gate`.
 - Pronto: os mutantes de cada item seguinte moram no catálogo. Os mutantes
   antigos, descritos no 40.7, migram na camada "Mutação das guardas" do
   [62 §3.5](62-base-publica-0.4.md). O autor roda `--rodar gate` e lê, por

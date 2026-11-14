@@ -125,6 +125,8 @@ class GateProfiles(unittest.TestCase):
         self.assertIn("python3 scripts/test_identifier_language.py", calls)
         self.assertIn("python3 scripts/check_identifier_language.py", calls)
         self.assertIn("python3 scripts/module_map.py --check", calls)
+        self.assertIn("python3 scripts/test_mutantes.py", calls)
+        self.assertIn("python3 scripts/mutantes.py --conferir", calls)
         self.assertFalse(any(call.startswith("cmake ") for call in calls))
         self.assertIn("VERDE no perfil CI rapida", result.stdout)
         self.assertNotIn("TUDO VERDE", result.stdout)
