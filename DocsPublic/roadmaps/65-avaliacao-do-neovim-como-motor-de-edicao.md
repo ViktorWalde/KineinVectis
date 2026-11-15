@@ -754,7 +754,9 @@ próprio, e a referência entra aqui com ele.
   No `EditorPersistenceController.qml` do `308c1561` (lido), cada mudança
   reinicia o temporizador do rascunho (1.500 ms) e, com a gravação
   automática ligada, o dela (2.000 ms), sem prazo máximo. A queda 2,5 s
-  depois recupera as 40.
+  depois recupera as 40. É o INF-26 do 62 §3.4: com 200 teclas, em cerca
+  de 100 s de digitação, a queda logo depois da última perde as 200, em 3
+  de 3 rodadas (ramo `prova/eng-60`, `37ed0789`).
 - **A UI desenha uns 6 quadros por tecla durante a digitação:** 728
   quadros para 120 teclas, com intervalo mediano de 35 ms entre eles; a
   prova desenha 120. A causa não foi investigada.

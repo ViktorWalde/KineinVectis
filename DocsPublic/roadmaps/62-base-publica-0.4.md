@@ -201,7 +201,7 @@ e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-15: INF
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, INF-22, INF-23, INF-24, INF-25, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, INF-23, INF-24, INF-25, INF-26, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -1339,6 +1339,37 @@ auditorias e provas posteriores datadas nos donos:**
   §21), o editor atual sai na fase E se o produto integrado passar nas
   condições, e o item fecha com ele; até lá, e se uma condição reprovar, o
   defeito é do produto. Estado aberto.
+- **INF-26 — Rascunho que não grava enquanto a pessoa digita.** Dono e
+  evidência: `ui/qml/editor/EditorPersistenceController.qml` no
+  `308c1561` (lido). A cada mudança, o `scheduleDraftSave()` reinicia o
+  temporizador do rascunho (`autosaveDebounce`, 1.500 ms) e, com a
+  gravação automática ligada, o dela (`diskSaveDebounce`, 2.000 ms).
+  Nenhum dos dois tem prazo máximo: enquanto as teclas vêm com menos de
+  1,5 s entre elas, nada é gravado. Medido em 2026-11-15, com o produto em
+  Release e `kill -9` na UI, onde o texto mora, pela prova do
+  [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) (§20.2, R4) e pela
+  digitação longa do ramo `prova/eng-60` (`37ed0789`):
+  - 40 teclas e queda 0 ou 200 ms depois da última: 0 recuperadas, nos 2
+    casos;
+  - 200 teclas, uma a cada 0,5 s mais ou menos, cerca de 100 s de
+    digitação, e queda logo depois da última: 0 recuperadas, 3 de 3;
+  - queda 2,5 s depois da última tecla: as 40 recuperadas em 2 de 3
+    rodadas (a terceira terminou com erro do harness de digitação), e as
+    200 em 2 de 2,
+    no disco e ao reabrir.
+
+  A perda não tem teto: vai tudo o que foi digitado desde a última pausa de
+  1,5 s, qualquer que seja a duração da digitação. Severidade alta: uma
+  queda perde texto que a pessoa digitou, sem limite de quantidade. Causa
+  confirmada, pela leitura e pela medida: os temporizadores reiniciam sem
+  prazo máximo. Testes: a queda depois de uma digitação longa sem pausa,
+  com a perda máxima medida, e o mutante que tira o prazo máximo
+  reprovando. Decisão: nenhuma ainda; onde ele entra na ordem é do autor
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Pela DP-10 (65
+  §21), o editor atual sai na fase E se o produto integrado passar nas
+  condições, e a recuperação passa ao rascunho pelo espelho; a prova não
+  mediu digitação longa nesse caminho, e o teste deste item vale também
+  para ele. Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
