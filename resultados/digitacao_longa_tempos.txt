@@ -1,0 +1,10 @@
+# INF-26: tempos de cada caso da digitação longa, pelos arquivos da rodada
+# pasta = criação da pasta da fixture (stat %W); queda = última escrita do log da UI
+# (base-queda.log); amostras = linhas typing_sample_ms, uma por tecla com quadro.
+# Com atraso de 2500 ms, a queda vem 2,5 s depois da última tecla.
+perf-60-x7i4oi2p pasta=07:56:35 queda=07:58:17 intervalo_s=102 amostras=200 typing_chars_inserted=200 typing_crash_in_ms=0 
+perf-60-s4vkqca3 pasta=07:58:20 queda=08:00:02 intervalo_s=102 amostras=200 typing_chars_inserted=200 typing_crash_in_ms=0 
+perf-60-jq4qxjsu pasta=08:00:05 queda=08:01:47 intervalo_s=102 amostras=200 typing_chars_inserted=200 typing_crash_in_ms=0 
+perf-60-uvy1eaqt pasta=08:01:49 queda=08:03:50 intervalo_s=121 amostras=229 
+perf-60-bdbqt8lk pasta=08:03:53 queda=08:05:40 intervalo_s=107 amostras=200 typing_chars_inserted=200 typing_crash_in_ms=2500 
+perf-60-4rs665yi pasta=08:05:43 queda=08:07:30 intervalo_s=107 amostras=200 typing_chars_inserted=200 typing_crash_in_ms=2500 

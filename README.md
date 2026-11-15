@@ -11,7 +11,8 @@ histórico em comum com o `main`. A integração no produto é a fase D do 65
 Os dois primeiros commits deste ramo são o código: a prova (`2d1ac38d`) e o
 `XDG_RUNTIME_DIR` próprio de cada rodada (`6e828799`). O terceiro traz os
 resultados da rodada de 2026-11-15, feita a partir de uma cópia limpa do
-`6e828799` (`resultados/`).
+`6e828799` (`resultados/`). O quarto traz a digitação longa do INF-26, medida
+depois, na mesma cópia (`resultados/digitacao_longa*`).
 
 ## A pilha
 
@@ -88,6 +89,18 @@ traz o commit, o início, o fim e o código de saída de cada etapa; o
 `<etapa>.log`, a saída dela. O `runtime-de-quem-roda.diff` compara a
 listagem do `XDG_RUNTIME_DIR` de quem roda antes e depois da rodada (`diff
 rc=0`: nada sobrou nele).
+
+A digitação longa (o INF-26 do produto) roda o `recuperacao_base.py` com
+outro número de teclas, pela raiz da cópia:
+
+```sh
+python3 -I driver/digitacao_longa.py "$PWD" resultados/digitacao_longa.json \
+    200:0 200:0 200:0 400:0 200:2500 200:2500   # teclas:atraso da queda (ms)
+```
+
+O `digitacao_longa_tempos.txt` traz a duração de cada caso pelos arquivos
+da rodada. O caso de 400 teclas não terminou: o `rodar` do
+`recuperacao_base.py` corta a UI em 120 s, antes do fim da digitação.
 
 ## O isolamento
 
