@@ -1,0 +1,12 @@
+# INF-28: as passadas do harness em cada caso, pelo log da UI (base-queda.log).
+# Duas linhas typing_file_bytes = o harness recomeçou; a segunda vem com o arquivo
+# 40 bytes maior, depois da gravação automática.
+perf-60-07knjqk6 amostras=40 typing_file_bytes=56226 typing_chars_inserted=40 typing_crash_in_ms=6000 typing_file_bytes=56266 typing_chars_inserted=0 typing_error=teclas perdidas: 40 enviadas, 0 inseridas 
+perf-60-hddr9xz3 amostras=40 typing_file_bytes=56226 typing_chars_inserted=40 typing_crash_in_ms=6000 typing_file_bytes=56266 typing_chars_inserted=0 typing_error=teclas perdidas: 40 enviadas, 0 inseridas 
+perf-60-ru9ndcgo amostras=40 typing_file_bytes=56226 typing_chars_inserted=40 typing_crash_in_ms=6000 typing_file_bytes=56266 typing_chars_inserted=0 typing_error=teclas perdidas: 40 enviadas, 0 inseridas 
+perf-60-tdrnmbzv amostras=40 typing_file_bytes=56226 typing_chars_inserted=40 typing_crash_in_ms=1000 
+perf-60-i7r8nc31 amostras=40 typing_file_bytes=56226 typing_chars_inserted=40 typing_crash_in_ms=1000 
+perf-60-7mri2a7n amostras=40 typing_file_bytes=56226 typing_chars_inserted=40 typing_crash_in_ms=1000 
+# O caso do controle positivo da rodada de 2026-11-15 que terminou com o erro
+# (recuperacao_base_2500ms_2500ms_2500ms.json, o primeiro), pelo mesmo log:
+perf-60-1t900fxt amostras=40 typing_file_bytes=56226 typing_chars_inserted=40 typing_crash_in_ms=2500 typing_file_bytes=56266 typing_chars_inserted=0 typing_error=teclas perdidas: 40 enviadas, 0 inseridas 

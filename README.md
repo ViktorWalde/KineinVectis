@@ -102,6 +102,19 @@ O `digitacao_longa_tempos.txt` traz a duração de cada caso pelos arquivos
 da rodada. O caso de 400 teclas não terminou: o `rodar` do
 `recuperacao_base.py` corta a UI em 120 s, antes do fim da digitação.
 
+A reprodução do INF-28 (o harness do produto recomeça quando o editor relê
+o arquivo depois da gravação automática) usa o mesmo script, com a queda
+depois e antes dos 2 s da gravação:
+
+```sh
+python3 -I driver/digitacao_longa.py "$PWD" resultados/harness_releitura.json \
+    40:6000 40:6000 40:6000 40:1000 40:1000 40:1000
+```
+
+O `harness_releitura_passadas.txt` traz as passadas do harness em cada caso,
+pelo log da UI, e o caso do controle positivo da rodada que terminou com o
+mesmo erro.
+
 ## O isolamento
 
 - Tudo roda offscreen, salvo o R10, que sobe um Xvfb e uma sessão D-Bus
