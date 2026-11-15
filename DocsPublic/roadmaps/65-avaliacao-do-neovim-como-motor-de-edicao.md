@@ -11,7 +11,8 @@
 > integração é a fase D do §14, depois do B2 e do B3 do 64 §8, e o editor
 > atual fica até o produto integrado passar nas condições do §21. A fase A
 > recomendou GO só para a prova isolada; a prova rodou fora do produto, e o
-> código e os resultados dela estão no ramo local `prova/eng-60` (§20.1).
+> código e os resultados dela estão no ramo `prova/eng-60` do repositório
+> (§20.1).
 >
 > **Ponto de partida.** Commit `308c1561`, protocolo 0.223.0. Na máquina de
 > medição do projeto (Linux 7.3, Landlock ABI 11): Neovim 0.12.6, Qt 6.12.0,
@@ -640,8 +641,8 @@ Medido em 2026-11-14 e 15. Os números desta seção são da rodada de
 
 ### 20.1 Método e evidência
 
-- **Onde está.** O código e os resultados estão no ramo local
-  `prova/eng-60`, sem histórico em comum com o `main` e fora do produto:
+- **Onde está.** O código e os resultados estão no ramo `prova/eng-60`
+  do repositório, sem histórico em comum com o `main` e fora do produto:
   a prova no `2d1ac38d`, o isolamento da pasta de runtime no `6e828799` e
   os resultados no `3beea8f5`. As medidas do INF-26 e do INF-28 (§20.4)
   vieram depois, no `37ed0789` e no `8e35e471`. O README do ramo diz como
