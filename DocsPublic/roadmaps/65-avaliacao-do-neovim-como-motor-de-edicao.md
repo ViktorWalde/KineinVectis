@@ -643,7 +643,9 @@ Medido em 2026-11-14 e 15. Os números desta seção são da rodada de
 - **Onde está.** O código e os resultados estão no ramo local
   `prova/eng-60`, sem histórico em comum com o `main` e fora do produto:
   a prova no `2d1ac38d`, o isolamento da pasta de runtime no `6e828799` e
-  os resultados no `3beea8f5`. O README do ramo diz como reproduzir.
+  os resultados no `3beea8f5`. As medidas do INF-26 e do INF-28 (§20.4)
+  vieram depois, no `37ed0789` e no `8e35e471`. O README do ramo diz como
+  reproduzir.
 - **A pilha.** A UI Qt Quick (`NvimView`, offscreen) fala com o
   `nvim --embed` 0.12.6 por socket. Um supervisor em Rust faz o papel do
   core: cria o `nvim` com Landlock e uma sonda que falha fechado, faz o
@@ -760,10 +762,16 @@ próprio, e a referência entra aqui com ele.
 - **A UI desenha uns 6 quadros por tecla durante a digitação:** 728
   quadros para 120 teclas, com intervalo mediano de 35 ms entre eles; a
   prova desenha 120. A causa não foi investigada. É o INF-27 do 62 §3.4.
-- **O harness de digitação do produto perde teclas de vez em quando:** o
-  controle positivo terminou com "teclas perdidas: 40 enviadas, 0
-  inseridas" em 1 de 3 rodadas, e a primeira rodada completa (§20.6)
-  também teve um caso. O R1 integrado da fase D depende dele.
+- **O harness de digitação do produto recomeça quando o editor relê o
+  arquivo.** O controle positivo terminou com "teclas perdidas: 40
+  enviadas, 0 inseridas" em 1 de 3 rodadas, e em 1 de 1 na primeira rodada
+  completa (§20.6). Não é tecla perdida: depois da gravação automática, o
+  editor relê o arquivo para comparar com o que gravou, e o harness toma a
+  releitura pela abertura e recomeça. Com a queda 6 s depois da última
+  tecla, o erro aparece em 3 de 3; com a queda 1 s depois, em 0 de 3 (ramo
+  `prova/eng-60`, `8e35e471`). A queda do R4 e a memória do R12 da fase D
+  seguram o processo depois da digitação e dependem da correção. É o
+  INF-28 do 62 §3.4.
 
 ### 20.5 Defeitos, contornos e requisitos da fase D
 

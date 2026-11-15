@@ -197,11 +197,17 @@ começou. O INF-23 (código do projeto executado sem confiança,
 severidade crítica, [62 §3.4](62-base-publica-0.4.md)) está aberto e é o
 primeiro item da fase B2. O INF-24 (a suíte do core que reprova sob a
 própria carga, em cinco testes, sem defeito plantado) está aberto, com a
-ordem a decidir pelo autor. A prova do ENG-60 achou no editor atual o
-INF-25 (abrir um arquivo de 19.970 linhas ocupa a UI por dezenas de
-segundos, §7.425) e o INF-26 (o rascunho não grava enquanto a pessoa
-digita, e uma queda perde tudo desde a última pausa de 1,5 s, §7.426) e o
-INF-27 (a UI desenha uns 6 quadros por tecla, §7.427), abertos. A 0.4 paga toda a dívida inventariada, e a etapa C só
+ordem a decidir pelo autor. A prova do ENG-60 achou quatro itens, todos
+abertos:
+- no editor atual, o INF-25 (abrir um arquivo de 19.970 linhas ocupa a UI
+  por dezenas de segundos, §7.425), o INF-26 (o rascunho não grava
+  enquanto a pessoa digita, e uma queda perde tudo desde a última pausa de
+  1,5 s, §7.426) e o INF-27 (a UI desenha uns 6 quadros por tecla,
+  §7.427);
+- no harness de digitação do produto, o INF-28 (ele recomeça quando o
+  editor relê o arquivo depois da gravação automática, §7.428).
+
+A 0.4 paga toda a dívida inventariada, e a etapa C só
 retoma depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)

@@ -201,7 +201,7 @@ e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-15: INF
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, INF-22, INF-23, INF-24, INF-25, INF-26, INF-27, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, INF-23, INF-24, INF-25, INF-26, INF-27, INF-28, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -1354,8 +1354,8 @@ auditorias e provas posteriores datadas nos donos:**
   - 200 teclas, uma a cada 0,5 s mais ou menos, cerca de 100 s de
     digitação, e queda logo depois da última: 0 recuperadas, 3 de 3;
   - queda 2,5 s depois da última tecla: as 40 recuperadas em 2 de 3
-    rodadas (a terceira terminou com erro do harness de digitação), e as
-    200 em 2 de 2,
+    rodadas (a terceira terminou com erro do harness de digitação, o
+    INF-28), e as 200 em 2 de 2,
     no disco e ao reabrir.
 
   A perda não tem teto: vai tudo o que foi digitado desde a última pausa de
@@ -1392,6 +1392,38 @@ auditorias e provas posteriores datadas nos donos:**
   do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Pela
   DP-10 (65 §21), o editor atual sai na fase E se o produto integrado
   passar nas condições, e o item fecha com ele. Estado aberto.
+- **INF-28 — Harness de digitação que recomeça quando o editor relê o
+  arquivo.** Dono e evidência: `ui/src/typing_perf_harness.cpp`, o harness
+  do A3.3-1 que o `scripts/medir-performance.sh` usa, lido no `308c1561`:
+  ele começa a cada `CoreClient::fileLoaded` do arquivo, sem guardar que
+  já começou. Depois da gravação automática, 2 s depois da última tecla
+  (INF-26), o watcher avisa a mudança, e o editor relê o arquivo por
+  `fs.read` para comparar com o que gravou
+  (`ui/qml/editor/EditorExternalChangeController.qml`, de propósito). Essa
+  leitura emite outro `fileLoaded`, e o harness recomeça: a segunda passada
+  já tem as teclas contadas como enviadas, acha 0 caracteres novos e
+  reprova com "teclas perdidas: 40 enviadas, 0 inseridas". Só acontece com
+  o processo vivo mais de 2 s depois da última tecla: o
+  `medir-performance.sh` sai logo depois do relatório e não é afetado; a
+  instrumentação da prova do
+  [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) (§20.1), que segura
+  o processo para a queda e para ler a memória, é. Reproduzido em
+  2026-11-15, com o produto em Release e essa instrumentação (ramo
+  `prova/eng-60`, `8e35e471`): com a queda 6 s depois da última tecla, o
+  erro em 3 de 3, e o log mostra as duas passadas, a segunda com o arquivo
+  40 bytes maior; com a queda 1 s depois, nenhum erro em 3 de 3. O controle
+  positivo das rodadas do 65 §20, com a queda 2,5 s depois, terminou com o
+  erro em 1 de 1 e em 1 de 3, e o caso com log tem as mesmas duas
+  passadas. Antes do commit da prova, o erro apareceu uma vez, num contexto
+  que não foi registrado. Severidade média, como o INF-22: o harness
+  reprova sem defeito no produto, e as medidas que seguram o processo
+  depois da digitação (a queda do R4 e a memória do R12) voltam na fase D,
+  no produto integrado (65 §21). Causa confirmada, pela leitura e pela
+  reprodução. Testes: o harness com o processo vivo além da gravação
+  automática, sem o erro, e o mutante que volta a recomeçar a cada
+  `fileLoaded` reprovando. Decisão: nenhuma ainda; onde ele entra na ordem
+  é do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2).
+  Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
