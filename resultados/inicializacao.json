@@ -1,0 +1,96 @@
+{
+  "veredito": "APROVADO",
+  "marcas": [],
+  "vetores_plantados": [
+    "init.lua da pessoa",
+    "plugin da pessoa",
+    "pacote em site/pack",
+    "plugin em site",
+    "VIMINIT",
+    "VIMRUNTIME falso",
+    "NVIM_APPNAME"
+  ],
+  "rodadas": [
+    {
+      "ui_primeiro_quadro_ms": 40.459875,
+      "ui_editor_quadro_ms": 79.165732,
+      "nvim_pronto_ms_no_supervisor": 26.744051000000002,
+      "sonda_ms": 2.472134999999998,
+      "contencao": {
+        "abi": 11,
+        "layer2": true,
+        "tsync": true
+      },
+      "runtimepath": "$PROVA/runtime,~/.local/opt/neovim/v0.12.6/nvim-linux-x86_64/share/nvim/runtime",
+      "scripts_carregados": 20
+    },
+    {
+      "ui_primeiro_quadro_ms": 39.653825,
+      "ui_editor_quadro_ms": 76.28474,
+      "nvim_pronto_ms_no_supervisor": 23.722327,
+      "sonda_ms": 2.7277580000000015,
+      "contencao": {
+        "abi": 11,
+        "layer2": true,
+        "tsync": true
+      },
+      "runtimepath": "$PROVA/runtime,~/.local/opt/neovim/v0.12.6/nvim-linux-x86_64/share/nvim/runtime",
+      "scripts_carregados": 20
+    },
+    {
+      "ui_primeiro_quadro_ms": 39.023988,
+      "ui_editor_quadro_ms": 77.573468,
+      "nvim_pronto_ms_no_supervisor": 24.569094,
+      "sonda_ms": 2.6625949999999996,
+      "contencao": {
+        "abi": 11,
+        "layer2": true,
+        "tsync": true
+      },
+      "runtimepath": "$PROVA/runtime,~/.local/opt/neovim/v0.12.6/nvim-linux-x86_64/share/nvim/runtime",
+      "scripts_carregados": 20
+    },
+    {
+      "ui_primeiro_quadro_ms": 38.018889,
+      "ui_editor_quadro_ms": 74.002646,
+      "nvim_pronto_ms_no_supervisor": 23.642917,
+      "sonda_ms": 3.127603999999998,
+      "contencao": {
+        "abi": 11,
+        "layer2": true,
+        "tsync": true
+      },
+      "runtimepath": "$PROVA/runtime,~/.local/opt/neovim/v0.12.6/nvim-linux-x86_64/share/nvim/runtime",
+      "scripts_carregados": 20
+    },
+    {
+      "ui_primeiro_quadro_ms": 39.358323,
+      "ui_editor_quadro_ms": 75.868481,
+      "nvim_pronto_ms_no_supervisor": 24.036967,
+      "sonda_ms": 2.323300999999997,
+      "contencao": {
+        "abi": 11,
+        "layer2": true,
+        "tsync": true
+      },
+      "runtimepath": "$PROVA/runtime,~/.local/opt/neovim/v0.12.6/nvim-linux-x86_64/share/nvim/runtime",
+      "scripts_carregados": 20
+    }
+  ],
+  "ui_editor_quadro_ms": {
+    "n": 5,
+    "mediana": 76.28474,
+    "p95": 79.165732,
+    "pior": 79.165732,
+    "melhor": 74.002646
+  },
+  "nvim_pronto_ms": {
+    "n": 5,
+    "mediana": 24.036967,
+    "p95": 26.744051000000002,
+    "pior": 26.744051000000002,
+    "melhor": 23.642917
+  },
+  "nota": "o HOME falso da casa plantada vale para a UI também (cache de fontes frio); os tempos daqui não são o R2",
+  "duracao_s": 11.3
+}

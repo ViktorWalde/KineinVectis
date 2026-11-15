@@ -1,0 +1,20 @@
+{
+  "loadlib": "carregou",
+  "sonda_depois": {
+    "containment": {
+      "abi": 11,
+      "layer2": true,
+      "tsync": true
+    },
+    "ldso": "EACCES: permission denied",
+    "nvim": "EACCES: permission denied",
+    "system": "v:shell_error=-1",
+    "true": "EACCES: permission denied"
+  },
+  "marcas": [
+    "biblioteca"
+  ],
+  "veredito": "LIMITE CONFIRMADO",
+  "nota": "o que impede o projeto de chegar a este ponto é o runtimepath, o package.path/cpath fechados e modeline/exrc desligados (os vetores passivos do teste hostil); a contenção do execve vale também para o código da biblioteca",
+  "duracao_s": 2.5
+}

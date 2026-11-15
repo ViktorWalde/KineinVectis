@@ -1,0 +1,33 @@
+== 2 funções: 85 linhas
+   base 1: abertura 261.55 ms, mediana tecla 10.98 ms, cpu 2.3 s, erro None
+   prova 1: abertura 30.579044 ms, mediana tecla 8.209126 ms, cpu 0.25 s, erro None
+   base 2: abertura 245.31 ms, mediana tecla 10.71 ms, cpu 2.31 s, erro None
+   prova 2: abertura 30.617096 ms, mediana tecla 8.235384 ms, cpu 0.25 s, erro None
+   base 3: abertura 243.93 ms, mediana tecla 10.7 ms, cpu 2.31 s, erro None
+   prova 3: abertura 29.160372 ms, mediana tecla 8.25319 ms, cpu 0.25 s, erro None
+   base 4: abertura 247.92 ms, mediana tecla 10.9 ms, cpu 2.32 s, erro None
+   prova 4: abertura 29.009151 ms, mediana tecla 8.133617 ms, cpu 0.25 s, erro None
+   base 5: abertura 235.86 ms, mediana tecla 10.72 ms, cpu 2.31 s, erro None
+   prova 5: abertura 29.396977 ms, mediana tecla 8.189069 ms, cpu 0.24 s, erro None
+== 60 funções: 2463 linhas
+   base 1: abertura 945.59 ms, mediana tecla 9.01 ms, cpu 12.98 s, erro None
+   prova 1: abertura 30.39871 ms, mediana tecla 8.459075 ms, cpu 0.27 s, erro None
+   base 2: abertura 988.45 ms, mediana tecla 9.4 ms, cpu 13.07 s, erro None
+   prova 2: abertura 32.33907 ms, mediana tecla 8.450063 ms, cpu 0.28 s, erro None
+   base 3: abertura 971.88 ms, mediana tecla 9.24 ms, cpu 13.06 s, erro None
+   prova 3: abertura 28.638514 ms, mediana tecla 8.371137 ms, cpu 0.27 s, erro None
+   base 4: abertura 981.23 ms, mediana tecla 9.29 ms, cpu 13.1 s, erro None
+   prova 4: abertura 28.088075 ms, mediana tecla 8.33754 ms, cpu 0.26 s, erro None
+   base 5: abertura 954.99 ms, mediana tecla 8.74 ms, cpu 12.74 s, erro None
+   prova 5: abertura 31.535989 ms, mediana tecla 8.575841 ms, cpu 0.27 s, erro None
+== 487 funções: 19970 linhas
+   base 1: abertura 46325.73 ms, mediana tecla 20.89 ms, cpu 26.59 s, erro None
+   prova 1: abertura 32.112847 ms, mediana tecla 9.205041 ms, cpu 0.38 s, erro None
+   base 2: abertura 47249.1 ms, mediana tecla 20.22 ms, cpu 24.75 s, erro None
+   prova 2: abertura 32.531816 ms, mediana tecla 9.201824 ms, cpu 0.39 s, erro None
+   base 3: abertura 46199.33 ms, mediana tecla 22.45 ms, cpu 21.86 s, erro None
+   prova 3: abertura 31.896513 ms, mediana tecla 9.191273 ms, cpu 0.37 s, erro None
+   base 4: abertura 47270.45 ms, mediana tecla 20.05 ms, cpu 23.56 s, erro None
+   prova 4: abertura 30.915144 ms, mediana tecla 9.170178 ms, cpu 0.35 s, erro None
+   base 5: abertura 47926.02 ms, mediana tecla 20.18 ms, cpu 26.81 s, erro None
+   prova 5: abertura 32.006422 ms, mediana tecla 9.207052 ms, cpu 0.39 s, erro None

@@ -1,0 +1,86 @@
+{
+  "veredito": "APROVADO no caminho de eventos do Qt; IME real NÃO PROVADO",
+  "framework_de_ime": null,
+  "casos": [
+    {
+      "caso": "acento morto (´ + e) pelo IME",
+      "pixels_mudados_na_celula_do_cursor": 59,
+      "buffer_intacto_na_composicao": true,
+      "retangulo_do_cursor": [
+        58.734375,
+        0,
+        8.390625,
+        20
+      ],
+      "alvo_e_o_editor": true,
+      "ok": true,
+      "buffer": [
+        "xé"
+      ],
+      "avanco_de_celulas": 1,
+      "a11y": [
+        "xé",
+        2
+      ]
+    },
+    {
+      "caso": "tecla com texto direto (ç)",
+      "buffer": [
+        "xç"
+      ],
+      "avanco_de_celulas": 1,
+      "a11y": [
+        "xç",
+        2
+      ],
+      "ok": true
+    },
+    {
+      "caso": "largura dupla (中文)",
+      "buffer": [
+        "x中文"
+      ],
+      "avanco_de_celulas": 4,
+      "a11y": [
+        "x中文",
+        3
+      ],
+      "ok": true
+    },
+    {
+      "caso": "emoji (😀)",
+      "buffer": [
+        "x😀"
+      ],
+      "avanco_de_celulas": 2,
+      "a11y": [
+        "x😀",
+        3
+      ],
+      "ok": true
+    },
+    {
+      "caso": "combinante (e + U+0301) pelo IME",
+      "alvo_e_o_editor": true,
+      "cursor_rect": [
+        58.734375,
+        0,
+        8.390625,
+        20
+      ],
+      "enviados": 1,
+      "buffer": [
+        "xé"
+      ],
+      "avanco_de_celulas": 1,
+      "a11y": [
+        "xé",
+        3
+      ],
+      "ok": true
+    }
+  ],
+  "captura": "$PROVA/tmp/unicode-0sqh6wzk/unicode.png",
+  "limite": "sem ibus nem fcitx instalados, o teste manda QInputMethodEvent direto ao editor: prova o tratamento da composição pelo NvimView, não o caminho do framework até ele",
+  "duracao_s": 3.8
+}

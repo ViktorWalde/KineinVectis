@@ -1,0 +1,76 @@
+{
+  "veredito": "APROVADO",
+  "linhas_do_arquivo": 2463,
+  "verificacoes": [
+    {
+      "passo": "abertura",
+      "linha_do_topo": 1,
+      "linhas_conferidas": 38,
+      "n_faltando": 0,
+      "glifos_faltando": [],
+      "n_sobrando": 0,
+      "sobrando": [],
+      "linhas_diferentes_do_buffer": []
+    },
+    {
+      "passo": "PageDown x3",
+      "linha_do_topo": 109,
+      "linhas_conferidas": 38,
+      "n_faltando": 0,
+      "glifos_faltando": [],
+      "n_sobrando": 0,
+      "sobrando": [],
+      "linhas_diferentes_do_buffer": []
+    },
+    {
+      "passo": "PageUp x1",
+      "linha_do_topo": 73,
+      "linhas_conferidas": 38,
+      "n_faltando": 0,
+      "glifos_faltando": [],
+      "n_sobrando": 0,
+      "sobrando": [],
+      "linhas_diferentes_do_buffer": []
+    },
+    {
+      "passo": "Ctrl+End",
+      "linha_do_topo": 2426,
+      "linhas_conferidas": 38,
+      "n_faltando": 0,
+      "glifos_faltando": [],
+      "n_sobrando": 0,
+      "sobrando": [],
+      "linhas_diferentes_do_buffer": []
+    },
+    {
+      "passo": "Ctrl+Home",
+      "linha_do_topo": 1,
+      "linhas_conferidas": 38,
+      "n_faltando": 0,
+      "glifos_faltando": [],
+      "n_sobrando": 0,
+      "sobrando": [],
+      "linhas_diferentes_do_buffer": []
+    },
+    {
+      "passo": "seta abaixo x45",
+      "linha_do_topo": 9,
+      "linhas_conferidas": 38,
+      "n_faltando": 0,
+      "glifos_faltando": [],
+      "n_sobrando": 0,
+      "sobrando": [],
+      "linhas_diferentes_do_buffer": []
+    }
+  ],
+  "capturas": [
+    "$PROVA/tmp/desenho-rlq294_w/captura-0.png",
+    "$PROVA/tmp/desenho-rlq294_w/captura-1.png",
+    "$PROVA/tmp/desenho-rlq294_w/captura-2.png",
+    "$PROVA/tmp/desenho-rlq294_w/captura-3.png",
+    "$PROVA/tmp/desenho-rlq294_w/captura-4.png",
+    "$PROVA/tmp/desenho-rlq294_w/captura-5.png"
+  ],
+  "erros_de_protocolo_ui": 0,
+  "duracao_s": 3.8
+}

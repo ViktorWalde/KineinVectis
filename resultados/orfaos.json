@@ -1,0 +1,83 @@
+{
+  "veredito": "APROVADO",
+  "casos": [
+    {
+      "queda": "ui",
+      "arvore_antes": [
+        "clangd",
+        "kinein-prova-supervisor",
+        "nvim",
+        "rust-analyzer",
+        "rust-analyzer-proc-macro-srv"
+      ],
+      "processos_antes": 5,
+      "restantes": [],
+      "orfaos": 0
+    },
+    {
+      "queda": "supervisor",
+      "arvore_antes": [
+        "clangd",
+        "kinein-prova-supervisor",
+        "nvim",
+        "rust-analyzer",
+        "rust-analyzer-proc-macro-srv"
+      ],
+      "processos_antes": 5,
+      "restantes": [],
+      "orfaos": 0
+    },
+    {
+      "queda": "nvim",
+      "arvore_antes": [
+        "clangd",
+        "kinein-prova-supervisor",
+        "nvim",
+        "rust-analyzer",
+        "rust-analyzer-proc-macro-srv"
+      ],
+      "processos_antes": 5,
+      "servidores_depois": [
+        {
+          "nome": "clangd",
+          "lancamentos": 2,
+          "recusadas": 0,
+          "pid": 600436,
+          "ativo": true
+        },
+        {
+          "nome": "rust-analyzer",
+          "lancamentos": 2,
+          "recusadas": 0,
+          "pid": 600446,
+          "ativo": true
+        }
+      ],
+      "servidores_vivos_por_nome": {
+        "clangd": 1,
+        "rust-analyzer": 1
+      },
+      "clientes_no_nvim_novo": [
+        "clangd",
+        "rust-analyzer"
+      ],
+      "nvim_antigo_vivo": false,
+      "restantes": [],
+      "orfaos": 0
+    },
+    {
+      "queda": "saida_normal",
+      "arvore_antes": [
+        "clangd",
+        "kinein-prova-supervisor",
+        "nvim",
+        "rust-analyzer",
+        "rust-analyzer-proc-macro-srv"
+      ],
+      "processos_antes": 5,
+      "restantes": [],
+      "orfaos": 0
+    }
+  ],
+  "duracao_s": 38.5
+}

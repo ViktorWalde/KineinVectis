@@ -1,0 +1,63 @@
+{
+  "plantio": null,
+  "editor_entregue": true,
+  "antes_das_tentativas": {
+    "geracao": 1,
+    "pid_nvim": 601643,
+    "pid_supervisor": 601638,
+    "servidores": [
+      "clangd"
+    ]
+  },
+  "tabstop_depois_da_modeline": 4,
+  "runtimepath": "$PROVA/runtime,~/.local/opt/neovim/v0.12.6/nvim-linux-x86_64/share/nvim/runtime",
+  "package_cpath": "",
+  "tentativas": {
+    "ex :!": "rodou sem erro de Lua",
+    "system()": "rodou sem erro de Lua",
+    "system() com lista": "rodou sem erro de Lua",
+    "jobstart()": "rodou sem erro de Lua",
+    "vim.system()": "rodou sem erro de Lua",
+    "vim.uv.spawn sh": "rodou sem erro de Lua",
+    "io.popen": "rodou sem erro de Lua",
+    "os.execute": "rodou sem erro de Lua",
+    "terminal": "rodou sem erro de Lua",
+    "ld.so como trampolim": "rodou sem erro de Lua",
+    "o próprio nvim": "rodou sem erro de Lua",
+    ":make com makeprg": "rodou sem erro de Lua",
+    "vim.ui.open": "rodou sem erro de Lua",
+    "system(3) da libc pela FFI": "rodou sem erro de Lua"
+  },
+  "sonda": {
+    "containment": {
+      "abi": 11,
+      "layer2": true,
+      "tsync": true
+    },
+    "ldso": "EACCES: permission denied",
+    "nvim": "EACCES: permission denied",
+    "system": "v:shell_error=-1",
+    "true": "EACCES: permission denied"
+  },
+  "build_sem_confianca": "recusado: build: projeto sem confiança: nada do projeto é executado",
+  "servidores": [
+    {
+      "nome": "clangd",
+      "args": [
+        "--background-index=false",
+        "--log=error",
+        "--pch-storage=memory",
+        "--compile-commands-dir=$PROVA/tmp/hostil-qiga13v_"
+      ],
+      "lancamentos": 1
+    }
+  ],
+  "depois_das_tentativas": {
+    "geracao": 1,
+    "pid_nvim": 601643,
+    "pid_supervisor": 601638
+  },
+  "marcas": [],
+  "veredito": "APROVADO",
+  "duracao_s": 5.1
+}

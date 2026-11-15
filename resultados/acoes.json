@@ -1,0 +1,68 @@
+{
+  "diagnostico_no_painel": "Included header vector is not used directly (fix available)",
+  "diagnostico_no_buffer": [
+    "Included header vector is not used directly (fix available)"
+  ],
+  "menu_de_acoes": [
+    "    3",
+    "    5",
+    "   10 }",
+    "1: remove #include directive"
+  ],
+  "acao_aplicada": true,
+  "renomeado_em": [
+    "main.cpp",
+    "util.h",
+    "util.cpp"
+  ],
+  "build_depois": {
+    "status": 0,
+    "stderr": ""
+  },
+  "latencias_no_rele": {
+    "initialize": {
+      "n": 1,
+      "mediana": 14.929193,
+      "p95": 14.929193,
+      "pior": 14.929193,
+      "melhor": 14.929193
+    },
+    "textDocument/codeAction": {
+      "n": 1,
+      "mediana": 0.28244199999999997,
+      "p95": 0.28244199999999997,
+      "pior": 0.28244199999999997,
+      "melhor": 0.28244199999999997
+    },
+    "textDocument/prepareRename": {
+      "n": 1,
+      "mediana": 0.36283000000000004,
+      "p95": 0.36283000000000004,
+      "pior": 0.36283000000000004,
+      "melhor": 0.36283000000000004
+    },
+    "textDocument/rename": {
+      "n": 1,
+      "mediana": 0.507613,
+      "p95": 0.507613,
+      "pior": 0.507613,
+      "melhor": 0.507613
+    },
+    "textDocument/semanticTokens/full": {
+      "n": 6,
+      "mediana": 7.292853999999999,
+      "p95": 274.64208099999996,
+      "pior": 274.64208099999996,
+      "melhor": 0.25667
+    },
+    "textDocument/semanticTokens/full/delta": {
+      "n": 2,
+      "mediana": 5.602043999999999,
+      "p95": 6.424157,
+      "pior": 6.424157,
+      "melhor": 5.602043999999999
+    }
+  },
+  "veredito": "APROVADO",
+  "duracao_s": 4.1
+}

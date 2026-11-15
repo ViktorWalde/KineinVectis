@@ -1,0 +1,20 @@
+{
+  "clientes": [
+    {
+      "nome": "clangd",
+      "buffers": 4
+    }
+  ],
+  "servidores": [
+    {
+      "nome": "clangd",
+      "lancamentos": 1,
+      "conexoes": 1,
+      "recusadas": 1,
+      "pid": 597641
+    }
+  ],
+  "processos_clangd": 1,
+  "veredito": "APROVADO",
+  "duracao_s": 10.6
+}

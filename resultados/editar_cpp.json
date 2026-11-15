@@ -1,0 +1,16 @@
+{
+  "veredito": "APROVADO",
+  "gravacao": "nvim",
+  "disco": "#include <cstdio>\n#include <vector>\n\n#include \"util.h\"\n\nint triplo(int v) {\n    return v * 3;\n}\n\nint main() {\n    const Ponto p{3, 4};\n    std::printf(\"%d\\n\", triplo(soma(p) * 2));\n    return 0;\n}\n// fim\n",
+  "esperado": "#include <cstdio>\n#include <vector>\n\n#include \"util.h\"\n\nint triplo(int v) {\n    return v * 3;\n}\n\nint main() {\n    const Ponto p{3, 4};\n    std::printf(\"%d\\n\", triplo(soma(p) * 2));\n    return 0;\n}\n// fim\n",
+  "buffer_modificado_depois_de_salvar": false,
+  "build": {
+    "status": 0,
+    "ms": 279.04199800000004,
+    "stderr": ""
+  },
+  "saida_do_programa": "42",
+  "evento_de_gravacao": true,
+  "erros_de_protocolo": 0,
+  "duracao_s": 3.2
+}

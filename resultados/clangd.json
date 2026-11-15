@@ -1,0 +1,223 @@
+{
+  "cliente_anexado_ms": 37.0585589989787,
+  "completion": {
+    "tentativas": [
+      {
+        "popup_ms": 32.7,
+        "via": "autotrigger",
+        "itens": [
+          " main",
+          " vector",
+          " include",
+          " std",
+          " int"
+        ]
+      },
+      {
+        "popup_ms": 46.8,
+        "via": "autotrigger",
+        "itens": [
+          " assign(size_type n, const value_type &val)",
+          " assign(initializer_list<value_type> l)",
+          " assign(InputIterator first, InputIterator last)",
+          " at(size_type n)",
+          " back()"
+        ]
+      }
+    ],
+    "ate_a_primeira_lista_util_s": 1.24,
+    "popup_ms": 46.8,
+    "via": "autotrigger",
+    "selecionado_depois_do_filtro": [
+      {
+        "kind": "Method",
+        "menu": "void",
+        "word": " push_back(const value_type &x)"
+      },
+      {
+        "kind": "Method",
+        "menu": "void",
+        "word": " push_back(value_type &&x)"
+      }
+    ],
+    "aceito": "    v.push_back(const value_type &x)",
+    "modo_depois_de_aceitar": "s",
+    "ponto_e_virgula": "digitado",
+    "linha": "    v.push_back(7);",
+    "modo_final": "i",
+    "ok": true,
+    "selection_depois": "exclusive"
+  },
+  "completion_quente": [
+    {
+      "tentativas": [
+        {
+          "popup_ms": 43.1,
+          "via": "autotrigger",
+          "itens": [
+            " assign(size_type n, const value_type &val)",
+            " assign(InputIterator first, InputIterator last)",
+            " assign(initializer_list<value_type> l)",
+            " at(size_type n)",
+            " back()"
+          ]
+        }
+      ],
+      "ate_a_primeira_lista_util_s": 0.11,
+      "popup_ms": 43.1,
+      "via": "autotrigger",
+      "selecionado_depois_do_filtro": [
+        {
+          "kind": "Method",
+          "menu": "void",
+          "word": " push_back(const value_type &x)"
+        },
+        {
+          "kind": "Method",
+          "menu": "void",
+          "word": " push_back(value_type &&x)"
+        }
+      ],
+      "aceito": "    v.push_back(const value_type &x)",
+      "modo_depois_de_aceitar": "s",
+      "ponto_e_virgula": "digitado",
+      "linha": "    v.push_back(7);",
+      "modo_final": "i",
+      "ok": true
+    },
+    {
+      "tentativas": [
+        {
+          "popup_ms": 43.1,
+          "via": "autotrigger",
+          "itens": [
+            " assign(size_type n, const value_type &val)",
+            " assign(InputIterator first, InputIterator last)",
+            " assign(initializer_list<value_type> l)",
+            " at(size_type n)",
+            " back()"
+          ]
+        }
+      ],
+      "ate_a_primeira_lista_util_s": 0.12,
+      "popup_ms": 43.1,
+      "via": "autotrigger",
+      "selecionado_depois_do_filtro": [
+        {
+          "kind": "Method",
+          "menu": "void",
+          "word": " push_back(value_type &&x)"
+        },
+        {
+          "kind": "Method",
+          "menu": "void",
+          "word": " push_back(const value_type &x)"
+        }
+      ],
+      "aceito": "    v.push_back(value_type &&x)",
+      "modo_depois_de_aceitar": "s",
+      "ponto_e_virgula": "digitado",
+      "linha": "    v.push_back(7);",
+      "modo_final": "i",
+      "ok": true
+    },
+    {
+      "tentativas": [
+        {
+          "popup_ms": 41.3,
+          "via": "autotrigger",
+          "itens": [
+            " assign(size_type n, const value_type &val)",
+            " assign(initializer_list<value_type> l)",
+            " assign(InputIterator first, InputIterator last)",
+            " at(size_type n)",
+            " back()"
+          ]
+        }
+      ],
+      "ate_a_primeira_lista_util_s": 0.13,
+      "popup_ms": 41.3,
+      "via": "autotrigger",
+      "selecionado_depois_do_filtro": [
+        {
+          "kind": "Method",
+          "menu": "void",
+          "word": " push_back(const value_type &x)"
+        },
+        {
+          "kind": "Method",
+          "menu": "void",
+          "word": " push_back(value_type &&x)"
+        }
+      ],
+      "aceito": "    v.push_back(const value_type &x)",
+      "modo_depois_de_aceitar": "s",
+      "ponto_e_virgula": "digitado",
+      "linha": "    v.push_back(7);",
+      "modo_final": "i",
+      "ok": true
+    }
+  ],
+  "definicao": {
+    "arquivo": "util.h",
+    "linha": 8,
+    "ok": true
+  },
+  "diagnostico": {
+    "linha": "    int y = \"texto\";",
+    "do_teclado_ao_buffer_ms": 43.60102800274035,
+    "no_painel": "Cannot initialize a variable of type 'int' with an lvalue of type 'const char[6]'",
+    "ok": true
+  },
+  "latencias_no_rele": {
+    "initialize": {
+      "n": 1,
+      "mediana": 14.909567000000001,
+      "p95": 14.909567000000001,
+      "pior": 14.909567000000001,
+      "melhor": 14.909567000000001
+    },
+    "textDocument/completion": {
+      "n": 6,
+      "mediana": 12.776586,
+      "p95": 15.35516,
+      "pior": 15.35516,
+      "melhor": 0.134935
+    },
+    "textDocument/definition": {
+      "n": 1,
+      "mediana": 0.35556699999999997,
+      "p95": 0.35556699999999997,
+      "pior": 0.35556699999999997,
+      "melhor": 0.35556699999999997
+    },
+    "textDocument/semanticTokens/full": {
+      "n": 4,
+      "mediana": 20.807044,
+      "p95": 275.28414000000004,
+      "pior": 275.28414000000004,
+      "melhor": 0.321833
+    },
+    "textDocument/semanticTokens/full/delta": {
+      "n": 23,
+      "mediana": 12.814371,
+      "p95": 20.665334,
+      "pior": 22.865084,
+      "melhor": 0.17355800000000002
+    }
+  },
+  "servidor": {
+    "args": [
+      "--background-index=false",
+      "--log=error",
+      "--pch-storage=memory",
+      "--compile-commands-dir=$PROVA/tmp/cpp-b943nrxv/build-20",
+      "--query-driver=/usr/bin/g++"
+    ],
+    "lancamentos": 1,
+    "conexoes": 1,
+    "recusadas": 0
+  },
+  "veredito": "APROVADO",
+  "duracao_s": 7.0
+}

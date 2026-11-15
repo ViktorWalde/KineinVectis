@@ -1,0 +1,38 @@
+inicializacao: APROVADO (11.3 s)
+desenho: APROVADO (3.8 s)
+editar_cpp: APROVADO (3.2 s)
+editar_cpp_core_grava: APROVADO (3.2 s)
+editar_rust: APROVADO (2.5 s)
+atalhos: APROVADO (6.5 s)
+$PROVA/driver/provas.py:460: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  return list(img.crop(caixa).getdata())
+unicode_ime: APROVADO no caminho de eventos do Qt; IME real NÃO PROVADO (3.8 s)
+clangd: APROVADO (7.0 s)
+rust_analyzer: APROVADO (9.6 s)
+contexto: APROVADO (4.3 s)
+acoes: APROVADO (4.1 s)
+sessao_unica: APROVADO (10.6 s)
+dono_unico: APROVADO (2.3 s)
+   {'modo': 'espelho', 'queda': 'nvim', 'atraso_ms': 0, 'digitados': 40, 'recuperacao_ms': 76.77608099766076, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'espelho', 'queda': 'nvim', 'atraso_ms': 200, 'digitados': 40, 'recuperacao_ms': 78.10224499553442, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'espelho', 'queda': 'ui', 'atraso_ms': 0, 'digitados': 40, 'reabrir_e_restaurar_ms': 2628.587801998947, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'espelho', 'queda': 'ui', 'atraso_ms': 200, 'digitados': 40, 'reabrir_e_restaurar_ms': 2632.019016004051, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'espelho', 'queda': 'supervisor', 'atraso_ms': 0, 'digitados': 40, 'reabrir_e_restaurar_ms': 2349.0522330030217, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'espelho', 'queda': 'supervisor', 'atraso_ms': 200, 'digitados': 40, 'reabrir_e_restaurar_ms': 2472.130008005479, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'swap', 'queda': 'nvim', 'atraso_ms': 0, 'digitados': 40, 'recuperacao_ms': 78.68654599587899, 'restaurado_sem_acao': True, 'modificado': False, 'recuperados': 0, 'perdidos': 40}
+   {'modo': 'swap', 'queda': 'nvim', 'atraso_ms': 200, 'digitados': 40, 'recuperacao_ms': 79.66301000124076, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'swap', 'queda': 'ui', 'atraso_ms': 0, 'digitados': 40, 'reabrir_e_restaurar_ms': 2529.3927470047493, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'swap', 'queda': 'ui', 'atraso_ms': 200, 'digitados': 40, 'reabrir_e_restaurar_ms': 2596.2592710056924, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+   {'modo': 'swap', 'queda': 'supervisor', 'atraso_ms': 0, 'digitados': 40, 'reabrir_e_restaurar_ms': 2359.7891029930906, 'restaurado_sem_acao': True, 'modificado': False, 'recuperados': 0, 'perdidos': 40}
+   {'modo': 'swap', 'queda': 'supervisor', 'atraso_ms': 200, 'digitados': 40, 'reabrir_e_restaurar_ms': 2369.0971199976048, 'restaurado_sem_acao': True, 'modificado': True, 'recuperados': 40, 'perdidos': 0}
+recuperacao: MEDIDO (111.5 s)
+recuperacao_mutante: REPROVA PELO MOTIVO CERTO (14.5 s)
+   {'queda': 'ui', 'processos_antes': 5, 'restantes': [], 'orfaos': 0}
+   {'queda': 'supervisor', 'processos_antes': 5, 'restantes': [], 'orfaos': 0}
+   {'queda': 'nvim', 'processos_antes': 5, 'servidores_depois': [{'nome': 'clangd', 'lancamentos': 2, 'recusadas': 0, 'pid': 600436, 'ativo': True}, {'nome': 'rust-analyzer', 'lancamentos': 2, 'recusadas': 0, 'pid': 600446, 'ativo': True}], 'servidores_vivos_por_nome': {'clangd': 1, 'rust-analyzer': 1}, 'clientes_no_nvim_novo': ['clangd', 'rust-analyzer'], 'nvim_antigo_vivo': False, 'restantes': [], 'orfaos': 0}
+   {'queda': 'saida_normal', 'processos_antes': 5, 'restantes': [], 'orfaos': 0}
+orfaos: APROVADO (38.5 s)
+hostil: APROVADO (5.1 s)
+hostil_mutante_sem_landlock: REPROVA PELO MOTIVO CERTO (8.7 s)
+hostil_mutante_sem_landlock_sem_sonda: REPROVA PELO MOTIVO CERTO (5.2 s)
+hostil_biblioteca: LIMITE CONFIRMADO (2.5 s)

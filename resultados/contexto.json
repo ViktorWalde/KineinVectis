@@ -1,0 +1,72 @@
+{
+  "cpp17": {
+    "erros_no_buffer": 4,
+    "ms": 42.78555099881487,
+    "mensagens": [
+      "Unknown type name 'consteval'; did you mean 'constexpr'? (fix available)",
+      "No member named 'span' in namespace 'std'",
+      "Expected expression",
+      "Expected ';' after top level declarator (fix available)"
+    ],
+    "args": [
+      "--background-index=false",
+      "--log=error",
+      "--pch-storage=memory",
+      "--compile-commands-dir=$PROVA/tmp/cpp-11vh_as9/build-17",
+      "--query-driver=/usr/bin/g++"
+    ]
+  },
+  "buffers_reconectados": 1,
+  "cpp20": {
+    "erros_no_buffer": 0,
+    "ms": 1398.1595809964347,
+    "args": [
+      "--background-index=false",
+      "--log=error",
+      "--pch-storage=memory",
+      "--compile-commands-dir=$PROVA/tmp/cpp-11vh_as9/build-20",
+      "--query-driver=/usr/bin/g++"
+    ]
+  },
+  "servidor": {
+    "lancamentos": 2,
+    "conexoes": 2,
+    "recusadas": 0,
+    "ativo": true,
+    "pid": 597399
+  },
+  "eventos_do_rele": [
+    {
+      "detalhe": "",
+      "evento": "aceita",
+      "servidor": "clangd",
+      "t_ms": 44
+    },
+    {
+      "detalhe": "",
+      "evento": "o Neovim fechou a conexão",
+      "servidor": "clangd",
+      "t_ms": 124
+    },
+    {
+      "detalhe": "",
+      "evento": "sessão terminou",
+      "servidor": "clangd",
+      "t_ms": 1290
+    },
+    {
+      "detalhe": "978 ms",
+      "evento": "esperou a sessão anterior",
+      "servidor": "clangd",
+      "t_ms": 1297
+    },
+    {
+      "detalhe": "",
+      "evento": "aceita",
+      "servidor": "clangd",
+      "t_ms": 1297
+    }
+  ],
+  "veredito": "APROVADO",
+  "duracao_s": 4.3
+}

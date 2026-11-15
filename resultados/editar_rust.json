@@ -1,0 +1,13 @@
+{
+  "veredito": "APROVADO",
+  "disco": "mod util;\n\nfn triplo(v: i32) -> i32 {\n    v * 3\n}\n\nfn main() {\n    let valores: Vec<i32> = vec![1, 2, 3];\n    println!(\"{}\", triplo(util::dobro(valores.len() as i32)));\n}\n",
+  "esperado": "mod util;\n\nfn triplo(v: i32) -> i32 {\n    v * 3\n}\n\nfn main() {\n    let valores: Vec<i32> = vec![1, 2, 3];\n    println!(\"{}\", triplo(util::dobro(valores.len() as i32)));\n}\n",
+  "build": {
+    "status": 0,
+    "ms": 173.58758699999998,
+    "stderr": ""
+  },
+  "saida_do_programa": "18",
+  "erros_de_protocolo": 0,
+  "duracao_s": 2.5
+}

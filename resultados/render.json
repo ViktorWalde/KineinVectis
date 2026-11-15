@@ -1,0 +1,198 @@
+{
+  "base": {
+    "rodada_inteira": {
+      "quadros": 764,
+      "loops": [
+        "software"
+      ],
+      "frameDelta": {
+        "n": 764,
+        "mediana": 35.0,
+        "p95": 259.0,
+        "pior": 973.0,
+        "melhor": 0.0
+      },
+      "polish": {
+        "n": 764,
+        "mediana": 1.0,
+        "p95": 4.0,
+        "pior": 24.0,
+        "melhor": 0.0
+      },
+      "render": {
+        "n": 764,
+        "mediana": 0.0,
+        "p95": 1.0,
+        "pior": 4.0,
+        "melhor": 0.0
+      },
+      "swap": {
+        "n": 764,
+        "mediana": 0.0,
+        "p95": 0.0,
+        "pior": 0.0,
+        "melhor": 0.0
+      },
+      "sync": {
+        "n": 764,
+        "mediana": 0.0,
+        "p95": 2.0,
+        "pior": 25.0,
+        "melhor": 0.0
+      },
+      "total_ms": {
+        "n": 764,
+        "mediana": 1.0,
+        "p95": 7.0,
+        "pior": 41.0,
+        "melhor": 0.0
+      }
+    },
+    "digitando": {
+      "quadros": 728,
+      "loops": [
+        "software"
+      ],
+      "frameDelta": {
+        "n": 728,
+        "mediana": 35.0,
+        "p95": 259.0,
+        "pior": 973.0,
+        "melhor": 3.0
+      },
+      "polish": {
+        "n": 728,
+        "mediana": 1.0,
+        "p95": 4.0,
+        "pior": 4.0,
+        "melhor": 0.0
+      },
+      "render": {
+        "n": 728,
+        "mediana": 0.0,
+        "p95": 1.0,
+        "pior": 3.0,
+        "melhor": 0.0
+      },
+      "swap": {
+        "n": 728,
+        "mediana": 0.0,
+        "p95": 0.0,
+        "pior": 0.0,
+        "melhor": 0.0
+      },
+      "sync": {
+        "n": 728,
+        "mediana": 0.0,
+        "p95": 2.0,
+        "pior": 2.0,
+        "melhor": 0.0
+      },
+      "total_ms": {
+        "n": 728,
+        "mediana": 1.0,
+        "p95": 7.0,
+        "pior": 9.0,
+        "melhor": 0.0
+      }
+    }
+  },
+  "prova": {
+    "rodada_inteira": {
+      "quadros": 135,
+      "loops": [
+        "software"
+      ],
+      "frameDelta": {
+        "n": 135,
+        "mediana": 159.0,
+        "p95": 161.0,
+        "pior": 476.0,
+        "melhor": 0.0
+      },
+      "polish": {
+        "n": 135,
+        "mediana": 0.0,
+        "p95": 0.0,
+        "pior": 0.0,
+        "melhor": 0.0
+      },
+      "render": {
+        "n": 135,
+        "mediana": 1.0,
+        "p95": 2.0,
+        "pior": 3.0,
+        "melhor": 0.0
+      },
+      "swap": {
+        "n": 135,
+        "mediana": 0.0,
+        "p95": 0.0,
+        "pior": 0.0,
+        "melhor": 0.0
+      },
+      "sync": {
+        "n": 135,
+        "mediana": 0.0,
+        "p95": 2.0,
+        "pior": 4.0,
+        "melhor": 0.0
+      },
+      "total_ms": {
+        "n": 135,
+        "mediana": 2.0,
+        "p95": 2.0,
+        "pior": 7.0,
+        "melhor": 0.0
+      }
+    },
+    "digitando": {
+      "quadros": 120,
+      "loops": [
+        "software"
+      ],
+      "frameDelta": {
+        "n": 120,
+        "mediana": 159.0,
+        "p95": 160.0,
+        "pior": 476.0,
+        "melhor": 158.0
+      },
+      "polish": {
+        "n": 120,
+        "mediana": 0.0,
+        "p95": 0.0,
+        "pior": 0.0,
+        "melhor": 0.0
+      },
+      "render": {
+        "n": 120,
+        "mediana": 1.0,
+        "p95": 2.0,
+        "pior": 2.0,
+        "melhor": 1.0
+      },
+      "swap": {
+        "n": 120,
+        "mediana": 0.0,
+        "p95": 0.0,
+        "pior": 0.0,
+        "melhor": 0.0
+      },
+      "sync": {
+        "n": 120,
+        "mediana": 0.0,
+        "p95": 0.0,
+        "pior": 0.0,
+        "melhor": 0.0
+      },
+      "total_ms": {
+        "n": 120,
+        "mediana": 2.0,
+        "p95": 2.0,
+        "pior": 2.0,
+        "melhor": 1.0
+      }
+    }
+  }
+}

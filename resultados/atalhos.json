@@ -1,0 +1,289 @@
+{
+  "veredito": "APROVADO",
+  "n": 30,
+  "acoes": [
+    {
+      "acao": "digitar insere",
+      "buffer": [
+        "aXYbc"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Shift+→ seleciona; digitar substitui (e não mexe na área de transferência)",
+      "buffer": [
+        "aZef"
+      ],
+      "ok": true,
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true
+    },
+    {
+      "acao": "Shift+← seleciona para trás",
+      "buffer": [
+        "abZef"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Shift+↓ seleciona até a linha de baixo",
+      "buffer": [
+        "aZef"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Shift+End seleciona até o fim",
+      "buffer": [
+        "abc x"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Shift+Home seleciona até o início",
+      "buffer": [
+        "xdef"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+Shift+→ seleciona palavra",
+      "buffer": [
+        "xbeta"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+C copia a seleção (e a mantém)",
+      "buffer": [
+        "alfa beta"
+      ],
+      "ok": true,
+      "modo_depois": "s",
+      "tecla_seguinte_insere": true
+    },
+    {
+      "acao": "Ctrl+X recorta",
+      "buffer": [
+        " beta"
+      ],
+      "ok": true,
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true
+    },
+    {
+      "acao": "Ctrl+V cola",
+      "buffer": [
+        "aXYZb"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+V substitui a seleção (e a área de transferência fica)",
+      "buffer": [
+        "aXYd"
+      ],
+      "ok": true,
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true
+    },
+    {
+      "acao": "Ctrl+V no fim da linha sobre a seleção",
+      "buffer": [
+        "abXY"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+V duas vezes cola o mesmo texto",
+      "buffer": [
+        "aXYXY"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+Z desfaz a última palavra",
+      "buffer": [
+        "base um"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+Shift+Z refaz",
+      "buffer": [
+        "base um dois"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+A seleciona tudo",
+      "buffer": [
+        "x"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+S salva",
+      "buffer": [
+        "salvo"
+      ],
+      "ok": true,
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true
+    },
+    {
+      "acao": "Ctrl+D duplica a linha",
+      "buffer": [
+        "um",
+        "um",
+        "dois"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+Y apaga a linha",
+      "buffer": [
+        "um",
+        "tres"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+/ comenta",
+      "buffer": [
+        "// int a;"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+/ descomenta",
+      "buffer": [
+        "int a;"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Alt+Shift+↑ sobe a linha",
+      "buffer": [
+        "dois",
+        "um",
+        "tres"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Alt+Shift+↓ desce a linha",
+      "buffer": [
+        "um",
+        "tres",
+        "dois"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Tab recua",
+      "buffer": [
+        "    x"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Shift+Tab desfaz o recuo",
+      "buffer": [
+        "x"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Tab com seleção recua as linhas",
+      "buffer": [
+        "    a",
+        "    b"
+      ],
+      "modo_depois": "s",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Ctrl+F busca",
+      "buffer": [
+        "alfa",
+        "beta",
+        "gama alvo"
+      ],
+      "ok": true,
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true
+    },
+    {
+      "acao": "Esc não tira da edição",
+      "buffer": [
+        "ab"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Home e End",
+      "buffer": [
+        "#  abc!"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    },
+    {
+      "acao": "Backspace apaga a seleção",
+      "buffer": [
+        "ad"
+      ],
+      "modo_depois": "i",
+      "tecla_seguinte_insere": true,
+      "ok": true
+    }
+  ],
+  "falhas": [],
+  "erros_de_protocolo": 0,
+  "duracao_s": 6.5
+}

@@ -1,0 +1,33 @@
+{
+  "casos": [
+    {
+      "queda": "ui",
+      "atraso_ms": 0,
+      "digitados": 40,
+      "linha_alvo": 1231,
+      "codigo_de_saida": -9,
+      "core_sobrou_depois_da_queda": 0,
+      "recuperados_no_disco": 0,
+      "linha_mostrada_ao_reabrir": "    }",
+      "recuperados_ao_reabrir": 0,
+      "recuperados": 0,
+      "perdidos": 40,
+      "arquivos_de_rascunho": []
+    },
+    {
+      "queda": "ui",
+      "atraso_ms": 200,
+      "digitados": 40,
+      "linha_alvo": 1231,
+      "codigo_de_saida": -9,
+      "core_sobrou_depois_da_queda": 0,
+      "recuperados_no_disco": 0,
+      "linha_mostrada_ao_reabrir": "    }",
+      "recuperados_ao_reabrir": 0,
+      "recuperados": 0,
+      "perdidos": 40,
+      "arquivos_de_rascunho": []
+    }
+  ],
+  "nao_medido": "queda só do core: no produto o texto vive na UI, que sobrevive a ela"
+}

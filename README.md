@@ -8,8 +8,10 @@ produto**: não compila com ele, não passa pelos gates dele e não tem
 histórico em comum com o `main`. A integração no produto é a fase D do 65
 §14, feita por partes, cada uma com os gates do produto.
 
-O primeiro commit deste ramo é o código; o segundo, os resultados da rodada
-feita a partir de uma cópia limpa do primeiro.
+Os dois primeiros commits deste ramo são o código: a prova (`2d1ac38d`) e o
+`XDG_RUNTIME_DIR` próprio de cada rodada (`6e828799`). O terceiro traz os
+resultados da rodada de 2026-11-15, feita a partir de uma cópia limpa do
+`6e828799` (`resultados/`).
 
 ## A pilha
 
@@ -77,6 +79,15 @@ python3 -I driver/render.py            # o custo de desenhar um quadro, nos dois
 python3 -I driver/recuperacao_base.py  # R4 no editor atual; `2500` roda o controle positivo
 python3 -I driver/normalizar.py        # tira dos resultados o caminho da máquina
 ```
+
+A rodada de `resultados/` rodou uma etapa por vez, sem outra medida em
+paralelo, nesta ordem: `provas.py`, `a11y.sh`, `recuperacao_base.py`,
+`recuperacao_base.py 2500 2500 2500` (o controle positivo três vezes),
+`desempenho.py` e `render.py`; depois, o `normalizar.py`. O `rodada.log`
+traz o commit, o início, o fim e o código de saída de cada etapa; o
+`<etapa>.log`, a saída dela. O `runtime-de-quem-roda.diff` compara a
+listagem do `XDG_RUNTIME_DIR` de quem roda antes e depois da rodada (`diff
+rc=0`: nada sobrou nele).
 
 ## O isolamento
 

@@ -1,0 +1,13 @@
+{
+  "veredito": "APROVADO",
+  "velho_recusado": true,
+  "certo_aplicado": true,
+  "buffer_final": [
+    "xum",
+    "DOIS"
+  ],
+  "espelho_igual": true,
+  "escritas_diretas_no_supervisor": [],
+  "nota": "o supervisor só muda texto pelo kinein.apply (com changedtick) e pelo kinein.open da recuperação, que roda antes de a UI receber o editor",
+  "duracao_s": 2.3
+}

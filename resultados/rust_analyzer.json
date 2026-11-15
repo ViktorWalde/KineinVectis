@@ -1,0 +1,226 @@
+{
+  "cliente_anexado_ms": 37.560794000455644,
+  "completion": {
+    "tentativas": [
+      {
+        "popup_ms": 3842.4,
+        "via": "Ctrl+Space",
+        "itens": [
+          "split_off(…)",
+          "iter_mut()",
+          "split(…)",
+          "repeat(…)",
+          "drain(…)"
+        ]
+      }
+    ],
+    "ate_a_primeira_lista_util_s": 3.92,
+    "popup_ms": 3842.4,
+    "via": "Ctrl+Space",
+    "selecionado_depois_do_filtro": [
+      {
+        "kind": "Method",
+        "menu": "fn(&mut self, T) -> &mut T",
+        "word": "push_mut(…)"
+      },
+      {
+        "kind": "Method",
+        "menu": "fn(&mut self, T)",
+        "word": "push(…)"
+      }
+    ],
+    "aceito": "    w.push_mut(value)",
+    "modo_depois_de_aceitar": "s",
+    "ponto_e_virgula": "digitado",
+    "linha": "    w.push_mut(7);",
+    "modo_final": "i",
+    "ok": true,
+    "selection_depois": "exclusive"
+  },
+  "completion_quente": [
+    {
+      "tentativas": [
+        {
+          "popup_ms": 79.2,
+          "via": "autotrigger",
+          "itens": [
+            "split_off(…)",
+            "iter_mut()",
+            "split(…)",
+            "repeat(…)",
+            "drain(…)"
+          ]
+        }
+      ],
+      "ate_a_primeira_lista_util_s": 0.15,
+      "popup_ms": 79.2,
+      "via": "autotrigger",
+      "selecionado_depois_do_filtro": [
+        {
+          "kind": "Method",
+          "menu": "fn(&mut self, T)",
+          "word": "push(…)"
+        },
+        {
+          "kind": "Method",
+          "menu": "fn(&mut self, T) -> &mut T",
+          "word": "push_mut(…)"
+        }
+      ],
+      "aceito": "    w.push(value);",
+      "modo_depois_de_aceitar": "s",
+      "ponto_e_virgula": "do servidor",
+      "linha": "    w.push(7);",
+      "modo_final": "i",
+      "ok": true
+    },
+    {
+      "tentativas": [
+        {
+          "popup_ms": 71.9,
+          "via": "autotrigger",
+          "itens": [
+            "split_off(…)",
+            "iter_mut()",
+            "split(…)",
+            "repeat(…)",
+            "drain(…)"
+          ]
+        }
+      ],
+      "ate_a_primeira_lista_util_s": 0.15,
+      "popup_ms": 71.9,
+      "via": "autotrigger",
+      "selecionado_depois_do_filtro": [
+        {
+          "kind": "Method",
+          "menu": "fn(&mut self, T)",
+          "word": "push(…)"
+        },
+        {
+          "kind": "Method",
+          "menu": "fn(&mut self, T) -> &mut T",
+          "word": "push_mut(…)"
+        }
+      ],
+      "aceito": "    w.push(value);",
+      "modo_depois_de_aceitar": "s",
+      "ponto_e_virgula": "do servidor",
+      "linha": "    w.push(7);",
+      "modo_final": "i",
+      "ok": true
+    },
+    {
+      "tentativas": [
+        {
+          "popup_ms": 72.7,
+          "via": "autotrigger",
+          "itens": [
+            "split_off(…)",
+            "iter_mut()",
+            "split(…)",
+            "repeat(…)",
+            "drain(…)"
+          ]
+        }
+      ],
+      "ate_a_primeira_lista_util_s": 0.15,
+      "popup_ms": 72.7,
+      "via": "autotrigger",
+      "selecionado_depois_do_filtro": [
+        {
+          "kind": "Method",
+          "menu": "fn(&mut self, T)",
+          "word": "push(…)"
+        },
+        {
+          "kind": "Method",
+          "menu": "fn(&mut self, T) -> &mut T",
+          "word": "push_mut(…)"
+        }
+      ],
+      "aceito": "    w.push(value);",
+      "modo_depois_de_aceitar": "s",
+      "ponto_e_virgula": "do servidor",
+      "linha": "    w.push(7);",
+      "modo_final": "i",
+      "ok": true
+    }
+  ],
+  "definicao": {
+    "arquivo": "util.rs",
+    "linha": 1,
+    "ok": true
+  },
+  "diagnostico": {
+    "do_salvar_ao_buffer_ms": 4.680685997300316,
+    "ok": true,
+    "no_painel": "mismatched types\nexpected `i32`, found `&str`"
+  },
+  "latencias_no_rele": {
+    "completionItem/resolve": {
+      "n": 4,
+      "mediana": 6.1750989999999994,
+      "p95": 9.068102999999999,
+      "pior": 9.068102999999999,
+      "melhor": 5.306820999999999
+    },
+    "initialize": {
+      "n": 1,
+      "mediana": 11.497774,
+      "p95": 11.497774,
+      "pior": 11.497774,
+      "melhor": 11.497774
+    },
+    "textDocument/completion": {
+      "n": 9,
+      "mediana": 32.34854,
+      "p95": 1800.389837,
+      "pior": 1800.389837,
+      "melhor": 0.632352
+    },
+    "textDocument/definition": {
+      "n": 1,
+      "mediana": 0.6732790000000001,
+      "p95": 0.6732790000000001,
+      "pior": 0.6732790000000001,
+      "melhor": 0.6732790000000001
+    },
+    "textDocument/diagnostic": {
+      "n": 62,
+      "mediana": 4.426181000000001,
+      "p95": 52.783114,
+      "pior": 2467.750156,
+      "melhor": 0.099595
+    },
+    "textDocument/semanticTokens/full": {
+      "n": 2,
+      "mediana": 1.756252,
+      "p95": 2.947341,
+      "pior": 2.947341,
+      "melhor": 1.756252
+    },
+    "textDocument/semanticTokens/full/delta": {
+      "n": 27,
+      "mediana": 4.165879,
+      "p95": 9.172587,
+      "pior": 2392.0850539999997,
+      "melhor": 0.295153
+    },
+    "textDocument/semanticTokens/range": {
+      "n": 28,
+      "mediana": 4.108398,
+      "p95": 8.730137000000001,
+      "pior": 2391.3496849999997,
+      "melhor": 0.669088
+    }
+  },
+  "servidor": {
+    "args": [],
+    "lancamentos": 1,
+    "conexoes": 1,
+    "recusadas": 0
+  },
+  "veredito": "APROVADO",
+  "duracao_s": 9.6
+}

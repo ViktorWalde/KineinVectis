@@ -1,0 +1,9 @@
+{
+  "primeiro_quadro_ms": {
+    "n": 5,
+    "mediana": 1008.0,
+    "p95": 1041.0,
+    "pior": 1041.0,
+    "melhor": 1001.0
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "plantio": "sem_landlock",
+  "editor_entregue": false,
+  "eventos": [
+    {
+      "controle": "/tmp/kr-pbikoosu/kp-5nsbvl4b/controle.sock",
+      "evento": "supervisor_pronto",
+      "pid": 601720
+    },
+    {
+      "detalhe": {
+        "contencao": {
+          "layer2": false,
+          "reason": "defeito plantado: camada 2 desligada"
+        },
+        "sonda": {
+          "containment": {
+            "layer2": false,
+            "reason": "defeito plantado: camada 2 desligada"
+          },
+          "ldso": "executou",
+          "nvim": "executou",
+          "system": "v:shell_error=0",
+          "true": "executou"
+        }
+      },
+      "evento": "contencao_falhou"
+    }
+  ],
+  "marcas": [],
+  "veredito": "REPROVA PELO MOTIVO CERTO",
+  "duracao_s": 8.7
+}

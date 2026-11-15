@@ -1,0 +1,64 @@
+{
+  "prova": {
+    "registros_da_pid": [
+      [
+        "kinein-prova-ui",
+        0
+      ],
+      [
+        "kinein-prova-ui",
+        1
+      ]
+    ],
+    "editaveis_achados": 1,
+    "antes": {
+      "papel": "text",
+      "nome": "Editor",
+      "texto": "primeira linha",
+      "caracteres": 14,
+      "cursor": 0,
+      "focado": true,
+      "editavel": true
+    },
+    "depois_de_digitar": {
+      "papel": "text",
+      "nome": "Editor",
+      "texto": "Olá primeira linha",
+      "caracteres": 18,
+      "cursor": 4,
+      "focado": true,
+      "editavel": true
+    },
+    "depois_da_seta": {
+      "papel": "text",
+      "nome": "Editor",
+      "texto": "segunda linha",
+      "caracteres": 13,
+      "cursor": 4,
+      "focado": true,
+      "editavel": true
+    },
+    "veredito": "CAMINHO VIÁVEL",
+    "limite": "a interface de texto expõe só a linha do cursor, não o documento inteiro"
+  },
+  "base": {
+    "harness": "KINEIN_PERF typing_hold=1",
+    "registros_da_pid": [
+      [
+        "Kinein Vectis",
+        1
+      ]
+    ],
+    "editaveis_achados": 1,
+    "editor": {
+      "papel": "text",
+      "nome": "",
+      "texto": "use std::collections::HashMap; use std::fmt;  #[derive(Debug, Clone, PartialEq)] pub struct Registro0 {     pub id: u64,     pub nome: String,     pub tags: Vec<String>,     pub indice: HashMap<String",
+      "caracteres": 1912,
+      "cursor": 970,
+      "focado": true,
+      "editavel": true
+    },
+    "veredito": "EXPÕE O DOCUMENTO"
+  }
+}
