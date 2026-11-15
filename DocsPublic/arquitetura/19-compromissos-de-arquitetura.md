@@ -228,6 +228,14 @@ Em 2026-07-09: `Main.qml` com 336 linhas; visual recebe `property`/emite
   hoje vai e volta inteira a cada edição (ENG-55); a sincronia incremental
   do 64 §5.11 espera a DP-10, para não ser feita duas vezes. O custo do
   realce do lado da UI não foi medido (64 §12).
+- **Revista em 2026-11-15 (decisão do autor, DP-10):** o motor de edição
+  passa a ser o Neovim embutido, com condições
+  ([65](../roadmaps/65-avaliacao-do-neovim-como-motor-de-edicao.md) §21).
+  O `TextEdit` fica no produto até a fase E do 65 §14, quando o produto
+  integrado passar no R1 e no R12 pelo método da prova, no R10 com o
+  documento inteiro, no IME real e nos testes do Windows. A edição sem modo
+  (RNF8) é o padrão. O realce por tree-sitter continua obrigatório, agora no
+  Neovim (fase D).
 
 ### D6. Semantic tokens: full-file com debounce, ancorados por linha
 

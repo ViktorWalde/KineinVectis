@@ -5,12 +5,13 @@
 > para a DP-10 do [64](64-revisao-da-arquitetura-e-estrategia-b.md) §11: o
 > Neovim como motor de edição e cliente LSP da Kinein Vectis.
 >
-> **Situação em 2026-11-14.** A fase A (diagnóstico e decisão preliminar)
-> está pronta. **Recomendação: GO para a prova de conceito isolada, e só
-> para ela.** A DP-10 segue aberta. A prova vive fora do checkout e não muda
-> o produto; o produto só migra com aprovação explícita do autor depois dos
-> resultados da prova. Nenhuma fase da estratégia B espera por esta
-> avaliação, salvo as do editor (64 §8).
+> **Situação em 2026-11-15.** As fases A (§1 a §18, de 2026-11-14), B
+> (§20) e C (§21) estão prontas. **Decisão do autor de 2026-11-15: a DP-10
+> escolhe o Neovim, com condições** (§21). O produto não mudou: a
+> integração é a fase D do §14, depois do B2 e do B3 do 64 §8, e o editor
+> atual fica até o produto integrado passar nas condições do §21. A fase A
+> recomendou GO só para a prova isolada; a prova rodou fora do produto, e o
+> código e os resultados dela estão no ramo local `prova/eng-60` (§20.1).
 >
 > **Ponto de partida.** Commit `308c1561`, protocolo 0.223.0. Na máquina de
 > medição do projeto (Linux 7.3, Landlock ABI 11): Neovim 0.12.6, Qt 6.12.0,
@@ -28,7 +29,10 @@ atual; o §10 cruza com a estratégia B; o §11 avalia a dependência. O §12 é
 prova; o §13, a jornada de self-hosting; o §14, a implementação na 0.4, se
 a DP-10 aprovar. O §15 estima o esforço; o §16 diz como a arquitetura nova
 se verifica. O §17 responde às perguntas da avaliação; o §18 lista o que é
-decisão do autor; o §19, o que não foi medido.
+decisão do autor; o §19, o que não foi medido. O §1 ao §18 são a fase A,
+escrita antes da prova, e ficam como foram escritos, salvo as notas
+datadas. O §20 traz os resultados da prova (fase B); o §21, a decisão do
+autor (fase C).
 
 ## 1. Os critérios de refutação
 
@@ -508,6 +512,10 @@ com aceite, evidência e reversão.
 Os dois motores não convivem de forma permanente: a convivência dura da
 fase D até a fase E.
 
+**Estado em 2026-11-15.** As fases A, B (§20) e C (§21) estão prontas. A
+fase E só começa quando o produto integrado passar nas condições do §21,
+além dos testes da §16; a fase D leva também os requisitos do §20.5.
+
 ## 15. O esforço economizado
 
 - **Medido:** 7.571 linhas de produção candidatas a sair (§9); as 6.738 da
@@ -597,21 +605,294 @@ Pela ordem de preferência da R-GATE-13 do 63.
 8. **O mandato de 2026-07-11** (21 §M5.4, sem Neovim embutido) fica revisto
    pela DP-10, qualquer que seja o resultado.
 
+As decisões tomadas em 2026-11-15 estão no §21.
+
 ## 19. O que não foi medido
 
-- Nada da prova: latência, abertura, memória, recuperação, órfãos, IME,
-  acessibilidade, projeto hostil com Neovim e código próprio. São os
-  critérios do §1.
-- A latência do editor atual nesta árvore: a prova a mede pelo
-  `medir-performance.sh`, na mesma máquina, junto da do Neovim.
-- A árvore AT-SPI do `TextEdit` de hoje.
-- A compatibilidade da ABI tree-sitter entre as gramáticas do core e o
-  Neovim.
-- O `qmlls` contra o clangd e o rust-analyzer em recursos.
-- O Job Object no Windows; nada rodou no Windows.
+Refeito em 2026-11-15, depois da prova. A latência, a abertura, a memória,
+a recuperação, os órfãos, o projeto hostil, a árvore AT-SPI dos dois
+editores e o código próprio foram medidos (§20). Não foram:
+
+- **O IME real.** A máquina de medição não tem fcitx5 nem ibus; o R9 foi
+  provado só no caminho de eventos do Qt (§20.2).
+- **O Windows.** Nada rodou no Windows: nem o Job Object do §8, nem o pipe
+  nomeado.
+- **O produto integrado.** O supervisor da prova faz o papel do core, e a
+  janela da prova é mínima: R1 e R12 integrados, o R10 com o documento
+  inteiro e o ciclo do `nvim` no lançador do B2 ficam para a fase D (§21).
+- **A renderização por GPU.** As duas UIs mediram no renderloop `software`,
+  offscreen.
+- **A jornada de self-hosting do §13** como jornada; a prova cobre partes
+  dos passos 1, 2, 3 e 7.
+- **A compatibilidade da ABI tree-sitter** entre as gramáticas do core e o
+  Neovim; a prova realça por regex.
+- **A queda só do core na base.** No produto, o texto vive na UI, que
+  sobrevive à queda do core.
+- **O `qmlls`** contra o clangd e o rust-analyzer em recursos.
+- **O multi-cursor e o verificador de correções** (§18, itens 6 e 7).
+- **A causa da variação da base entre as sessões** (§20.6).
 - O Neovim-Qt, o Neovide e o goneovim foram lidos, não executados.
 
-**Referências:**
+## 20. Os resultados da prova (fase B)
+
+Medido em 2026-11-14 e 15. Os números desta seção são da rodada de
+2026-11-15 (§20.1), salvo onde a data diz outra coisa.
+
+### 20.1 Método e evidência
+
+- **Onde está.** O código e os resultados estão no ramo local
+  `prova/eng-60`, sem histórico em comum com o `main` e fora do produto:
+  a prova no `2d1ac38d`, o isolamento da pasta de runtime no `6e828799` e
+  os resultados no `3beea8f5`. O README do ramo diz como reproduzir.
+- **A pilha.** A UI Qt Quick (`NvimView`, offscreen) fala com o
+  `nvim --embed` 0.12.6 por socket. Um supervisor em Rust faz o papel do
+  core: cria o `nvim` com Landlock e uma sonda que falha fechado, faz o
+  relé LSP e guarda o espelho do buffer e o rascunho. O Lua da Kinein dá a
+  edição sem modo, os atalhos do §12.3 e o LSP pelo relé.
+- **A linha de base.** O produto no `308c1561`, em Release (GCC 16.2.1, com
+  o endurecimento do `KINEIN_ENABLE_HARDENING`). Uma instrumentação mexe só
+  no harness de digitação que o produto já tem
+  (`ui/src/typing_perf_harness.cpp`), atrás de variáveis de ambiente, sem
+  mudar o caminho da tecla. Ela dá a abertura até o primeiro quadro com o
+  texto (R2), a linha digitada (R4), a queda provocada (R4) e o processo de
+  pé para ler memória, CPU e a árvore AT-SPI (R10, R12).
+- **A rodada.** A partir de uma cópia limpa do `6e828799`, em 2026-11-15,
+  das 07:18 às 07:39 (-03:00): uma etapa por vez, sem outra medida em
+  paralelo, na ordem suíte funcional, R10, recuperação da base, controle
+  positivo, desempenho e render.
+- **O isolamento.** Tudo roda offscreen; o R10 roda num Xvfb, numa sessão
+  D-Bus sem ativação de serviço e numa pasta de runtime próprios. Cada
+  rodada tem `HOME`, `XDG_*` e `XDG_RUNTIME_DIR` próprios. A listagem da
+  pasta de runtime de quem roda é igual antes e depois da rodada.
+- **As fixtures.** Projetos C++ e Rust compilados de verdade. As de
+  desempenho saem da geradora do `medir-core.py` do `308c1561`: arquivos
+  Rust de 85, 2.463 e 19.970 linhas (2, 60 e 487 funções). O "arquivo de 20
+  mil linhas" do §1 é o de 19.970.
+
+### 20.2 Os quinze itens e os critérios
+
+| # | Item | Resultado |
+| --- | --- | --- |
+| 1 | Inicialização controlada | 0 marcas, com 7 vetores plantados: `init.lua` e plugin da pessoa, pacote em `site/pack`, plugin em `site`, `VIMINIT`, `VIMRUNTIME` falso e `NVIM_APPNAME`. O `nvim` fica pronto em 24,0 ms de mediana (p95 26,7), e o editor desenha o primeiro quadro em 76,3 ms, com o cache de fontes frio (não é o R2) |
+| 2 | msgpack-RPC | 0 erros de protocolo nos testes que os contam: desenho, atalhos, as três edições (na UI e no supervisor) e as 15 rodadas de desempenho da prova |
+| 3 | Desenho | 6 posições no arquivo de 2.463 linhas (abertura, PageDown, PageUp, `Ctrl+End`, `Ctrl+Home`, 45 setas para baixo), 38 linhas cada, conferidas contra o buffer: 0 glifos faltando ou sobrando |
+| 4 | Editar C++ | O disco fica igual ao esperado, o build passa e o programa imprime 42, gravando pelo `nvim` e pelo core |
+| 5 | Editar Rust | O disco fica igual ao esperado, o build passa e o programa imprime 18 |
+| 6 | Atalhos (R8) | 30 de 30 ações do §12.3; depois de cada uma, a tecla seguinte insere |
+| 7 | Unicode (R9) | 5 de 5 no caminho de eventos do Qt: acento morto, `ç`, `中文` (4 células), `😀` (2 células) e o combinante U+0301. **IME real NÃO PROVADO** |
+| 8 | clangd | Primeira lista útil em 1,24 s, a frio; o popup em 41 a 43 ms, a quente; a definição em `util.h:8`; o diagnóstico chega do teclado ao buffer em 43,6 ms |
+| 9 | rust-analyzer | Primeira lista útil em 3,92 s, a frio, pelo `Ctrl+Space`; o popup em 72 a 79 ms, a quente; a definição em `util.rs:1`; o diagnóstico chega do salvar ao buffer em 4,7 ms (entre 5 e 234 ms nas rodadas anteriores ao commit) |
+| 10 | Contexto (R11) | Trocar C++17 por C++20 no preset leva o buffer de 4 erros a 0 em 1.398 ms; o relé espera a sessão anterior terminar (978 ms) antes de aceitar a nova |
+| 11 | Ações LSP | O diagnóstico aparece no buffer e no painel; `Alt+Enter` remove o include; renomear muda 3 arquivos; o build passa depois |
+| 12 | Recuperação (R4) | Pelo espelho, 0 teclas perdidas em 6 de 6 casos (queda do `nvim`, da UI ou do supervisor, 0 ou 200 ms depois da última tecla). O `nvim` volta em 77 a 78 ms; a UI ou o supervisor reabrem e restauram em 2,35 a 2,63 s. O mutante sem rascunho recupera 0 de 10 |
+| 13 | Órfãos (R5) | 0 órfãos nos 4 cenários (queda da UI, do supervisor ou do `nvim`, e saída normal). Depois da queda do `nvim`, ficam 1 clangd e 1 rust-analyzer, reconectados ao `nvim` novo |
+| 14 | Projeto hostil (R3) | 0 marcas. As 14 tentativas de execução foram barradas: `:!`, `system()` com texto e com lista, `jobstart()`, `vim.system()`, `vim.uv.spawn`, `io.popen`, `os.execute`, terminal, `ld.so` como trampolim, o próprio `nvim`, `:make`, `vim.ui.open` e `system(3)` pela FFI. A modeline é ignorada, o build sem confiança é recusado e o clangd roda sem `--query-driver` |
+| 15 | Desempenho | §20.3 |
+
+| R | Veredito |
+| --- | --- |
+| R1 | **Passa na prova**, nos três tamanhos (§20.3). **No produto integrado, NÃO PROVADO**: a estimativa pessimista passa do limite de p95 no arquivo de 2.463 linhas |
+| R2 | Passa: 32,0 ms contra 47.249 ms, no arquivo de 19.970 linhas |
+| R3 | Passa (item 14). Os mutantes reprovam pelo motivo certo: sem a segunda camada do Landlock (a que o Lua da Kinein aplica dentro do `nvim`), o supervisor recusa entregar o editor; sem Landlock e sem a sonda, aparecem 13 marcas |
+| R4 | Passa. O espelho perde 0 teclas. O swap perde as 40 em 2 de 6 casos (queda do `nvim` ou do supervisor, 0 ms depois da última tecla). A base perde as 40 em 2 de 2 casos (queda da UI 0 ou 200 ms depois da última tecla); com a queda 2,5 s depois, recupera as 40 em 2 de 3 rodadas, e a terceira terminou com erro do harness (§20.4) |
+| R5 | Passa (item 13) |
+| R6 | Passa: a edição com `changedtick` velho é recusada, a certa é aplicada e o espelho fica igual. O supervisor só muda texto pela função que confere o `changedtick` e pela abertura da recuperação, que roda antes de a UI receber o editor |
+| R7 | Passa: 4 buffers, 1 processo clangd, 1 lançamento; a segunda conexão é recusada |
+| R8 | Passa (item 6) |
+| R9 | **NÃO PROVADO** para IME real, como o critério manda dizer (item 7) |
+| R10 | **Caminho viável, abaixo do editor atual.** Pela libatspi (a biblioteca do Orca), o editor da prova aparece focado e editável; digitar "Olá " dá o texto e o cursor certos (posição 4), e a seta para baixo dá a linha seguinte. A prova expõe só a linha do cursor; o editor atual expõe o documento (1.912 caracteres na fixture, cursor em 970). É regressão a pagar na fase D (§21) |
+| R11 | Passa (item 10) |
+| R12 | **Passa na prova:** 83,4 contra 582,4 MiB de RSS, no arquivo de 19.970 linhas. **Integrado, NÃO PROVADO.** A estimativa pessimista soma à base o `nvim` e o supervisor: 593,4 MiB de PSS, 1,04 vez a base |
+| R13 | 4.134 linhas próprias contra as 7.571 da classe Eliminar (§9): Lua 603; Rust 1.700, sem os testes (Landlock 182, RPC 186, espelho 207, relé 436, o resto do supervisor 689); C++ e QML 1.831 (msgpack 374, cliente RPC 180, `NvimView` 1.010, janela e ligação 267). Fora da conta: o controle de teste da UI e os testes. **É um piso:** faltam o documento inteiro na acessibilidade, a integração com o core real, o realce por tree-sitter e o Windows |
+
+### 20.3 Desempenho
+
+Pelo método do A3.3-1 (`medir-performance.sh`): 5 rodadas alternadas por
+lado, 40 teclas por rodada (200 amostras por lado), na linha do meio, com
+150 ms entre as teclas, offscreen, janela de 1280x800. A memória é a soma
+dos processos depois de digitar: na base, a UI e o core; na prova, a UI, o
+supervisor e o `nvim`. A CPU é a desses processos durante a digitação.
+
+| Linhas | Lado | Tecla→quadro, mediana / p95 / pior (ms) | Abertura (ms) | CPU ao digitar (s) | RSS / PSS (MiB) |
+| --- | --- | --- | --- | --- | --- |
+| 85 | base | 10,76 / 12,89 / 16,12 | 245,3 | 2,31 | 211,9 / 201,7 |
+| 85 | prova | 8,21 / 8,71 / 9,33 | 29,4 | 0,25 | 73,9 / 61,4 |
+| 2.463 | base | 9,15 / 10,31 / 11,12 | 971,9 | 13,06 | 278,1 / 267,7 |
+| 2.463 | prova | 8,45 / 9,00 / 9,68 | 30,4 | 0,27 | 75,0 / 62,5 |
+| 19.970 | base | 20,75 / 27,15 / 85,71 | 47.249 (46.199 a 47.926) | 24,75 | 582,4 / 572,0 |
+| 19.970 | prova | 9,21 / 9,94 / 10,16 | 32,0 | 0,38 | 83,4 / 70,9 |
+
+O primeiro quadro da janela sai em 1.005 a 1.039 ms de mediana na base e em
+37,55 a 38,24 ms na prova, conforme o tamanho.
+
+**O R1 e a estimativa pessimista.** A janela da prova é mínima, e a IDE
+inteira paga mais por quadro. O `render.py` mediu o custo de cada quadro
+durante a digitação, 3 rodadas por lado no arquivo de 2.463 linhas: na
+base, 728 quadros, mediana 1, p95 7 e pior 9 ms; na prova, 120 quadros,
+mediana 2, p95 2 e pior 2 ms. A estimativa soma à prova a diferença: 5 ms
+no p95 e 7 ms no pior caso.
+
+| Linhas | Limite do p95 (1,25×) | p95 da prova | Estimado | Limite do pior (2×) | Pior da prova | Estimado |
+| --- | --- | --- | --- | --- | --- | --- |
+| 85 | 16,11 | 8,71 | 13,71 | 32,24 | 9,33 | 16,33 |
+| 2.463 | 12,89 | 9,00 | **14,00** | 22,24 | 9,68 | 16,68 |
+| 19.970 | 33,94 | 9,94 | 14,94 | 171,42 | 10,16 | 17,16 |
+
+No arquivo de 2.463 linhas, o estimado passa 1,11 ms do limite. Por isso o
+R1 integrado é condição do §21, e não consequência da prova.
+
+### 20.4 O que a comparação mostrou no produto atual
+
+Cada achado vira um item do [62](62-base-publica-0.4.md) §3.4, num commit
+próprio, e a referência entra aqui com ele.
+
+- **Abrir o arquivo de 19.970 linhas leva de 46,2 a 47,9 s** nesta rodada
+  (24,8 s numa medida de 2026-11-15 anterior ao commit, §20.6). Naquela
+  medida, um relógio externo confirmou 26,4 s, com a thread da UI a 100%
+  de um núcleo, e 26,9 s sem a sonda da abertura.
+- **A queda da UI até 200 ms depois da última tecla perde as 40 teclas.**
+  No `EditorPersistenceController.qml` do `308c1561` (lido), cada mudança
+  reinicia o temporizador do rascunho (1.500 ms) e, com a gravação
+  automática ligada, o dela (2.000 ms), sem prazo máximo. A queda 2,5 s
+  depois recupera as 40.
+- **A UI desenha uns 6 quadros por tecla durante a digitação:** 728
+  quadros para 120 teclas, com intervalo mediano de 35 ms entre eles; a
+  prova desenha 120. A causa não foi investigada.
+- **O harness de digitação do produto perde teclas de vez em quando:** o
+  controle positivo terminou com "teclas perdidas: 40 enviadas, 0
+  inseridas" em 1 de 3 rodadas, e a primeira rodada completa (§20.6)
+  também teve um caso. O R1 integrado da fase D depende dele.
+
+### 20.5 Defeitos, contornos e requisitos da fase D
+
+A prova achou e corrigiu oito defeitos da integração. Cada um vira
+requisito da fase D, com o teste que o pega:
+
+1. **Colar sobre uma seleção deixava o modo `niI`**, e a tecla seguinte
+   virava comando do Vim. Requisito: depois de cada ação composta, a camada
+   sem modo volta à inserção; o teste dos atalhos confere que a tecla
+   seguinte insere.
+2. **O `clipboard=unnamedplus` sobrescrevia a área de transferência** ao
+   substituir a seleção. Requisito: digitar ou colar sobre a seleção não
+   muda a área de transferência.
+3. **O `Tab` e o `Shift+Tab` da Kinein escondiam o salto do snippet.**
+   Requisito: com snippet ativo, o `Tab` salta de campo.
+4. **O `vim.snippet` supõe `selection=inclusive`**, e a camada sem modo
+   usa `exclusive`: digitar sobre o campo deixava a última letra.
+   Requisito: o contorno da prova, com teste.
+5. **O relé matava o clangd antes do reinício, e uma corrida recusava a
+   reconexão** (R11). Requisito: o lançador espera a sessão anterior
+   terminar antes de aceitar a nova.
+6. **Um caminho de socket acima de 108 bytes desligava o LSP em silêncio.**
+   Requisito: o socket fica num caminho curto, e um caminho longo demais
+   falha com mensagem.
+7. **Emojis eram descartados**, porque o `isPrint` era testado por unidade
+   UTF-16. Requisito: a entrada trata o texto por ponto de código.
+8. **A fábrica de acessibilidade era instalada depois da QML**, e o leitor
+   de tela recebia texto vazio. O teste de Unicode não pegava, porque lê a
+   view direto. Requisito: a fábrica antes do motor QML, e o R10 lido pela
+   AT-SPI, não pela view.
+
+**Os contornos e a API interna.** Os defeitos 1 e 4 contornam o
+comportamento do `vim.paste` e do `vim.snippet` no 0.12.6. O `Ctrl+/` usa a
+API interna `vim._comment`, que não tem `:help` e por isso não é contrato
+(§3). É o que torna necessário o `nvim` fixado (§21, decisão 5): a regressão
+do editor roda a cada troca de versão (§11). Nenhum relato foi aberto no
+projeto Neovim.
+
+**O limite do Landlock, confirmado.** Um Lua que já roda carrega uma
+biblioteca nativa (`package.loadlib`), e o Landlock não impede: o direito
+`EXECUTE` vale para o `execve`. Depois da carga, a sonda continua barrada,
+porque a contenção do `execve` vale também para o código da biblioteca. O
+que impede o projeto de chegar a esse ponto são os vetores passivos
+fechados: o `runtimepath`, o `package.path` e o `package.cpath`, a modeline
+e o `exrc` (§8). Requisito: o teste hostil da fase D cobre os vetores
+passivos, e o limite fica escrito.
+
+### 20.6 Repetições e limites da medida
+
+**Repetições declaradas.**
+- A primeira rodada completa foi a do `2d1ac38d`, em 2026-11-15, das
+  06:43 às 07:03. Ela mostrou que os sockets e o barramento de
+  acessibilidade iam à pasta de runtime de quem roda; o `6e828799` corrige
+  isso, e a rodada do §20.1 é a de depois. Os vereditos das duas são os
+  mesmos.
+- O controle positivo da base rodou três vezes na rodada do §20.1, e uma
+  terminou com o erro do harness (§20.4).
+- Antes do `2d1ac38d`, dois testes reprovaram por defeito do próprio teste:
+  às vezes o rust-analyzer manda o snippet do `push` com o `;`, e o teste
+  digitava outro; e o teste da recuperação lia o buffer no meio da
+  restauração. Depois da correção, o teste do rust-analyzer rodou mais 7
+  vezes, para os dois ramos rodarem, e o da recuperação mais 2.
+- No R10, o tema GTK3 do Qt carrega a `libatk-bridge`, que registra uma
+  segunda aplicação, vazia, com o mesmo pid. O teste escolhe o registro
+  que tem janela e grava quantos achou.
+
+**A base variou entre as sessões; a prova, não.** Numa medida de
+2026-11-15 anterior ao commit, com o mesmo método, a base abriu o arquivo
+de 19.970 linhas em 24.781 ms, com a tecla em 17,68 / 31,5 / 64,63 ms; na
+rodada do §20.1, em 47.249 ms. O binário da base daquela medida e o atual,
+rodados de novo em alternância, deram de 47,5 a 48,7 s: a diferença vem do
+estado da máquina, não do build, e a causa não foi isolada. No arquivo de 2.463
+linhas, a mediana da tecla na base foi 6,53 ms naquela medida, abaixo da
+prova (9,40), e 9,15 ms na rodada do §20.1, acima dela (8,45). A mediana
+nesse tamanho não decide nada. Nenhum veredito muda entre as duas medidas.
+
+**Limites da medida.**
+- O custo de quadro sai do renderloop `software`, com resolução de 1 ms;
+  não há medida com GPU.
+- O clangd roda sem índice de fundo (`--background-index=false`).
+- A prova realça por regex; o editor atual, por tree-sitter. A latência da
+  prova não paga o realce do produto.
+- A base roda com o endurecimento do release do produto, e a prova sem ele.
+- A estimativa pessimista do R1 cobre só a diferença do custo de quadro, e
+  não o resto da IDE no mesmo processo.
+
+## 21. A decisão (fase C)
+
+Decisão do autor de 2026-11-15, sobre os resultados do §20: **a DP-10
+escolhe o Neovim como motor de edição e cliente LSP da Kinein Vectis, com
+condições.** O mandato de 2026-07-11 ([21](21-roadmap-de-longo-prazo.md)
+§M5.4) fica revisto: a exclusão do Neovim embutido deixa de valer, e o
+tree-sitter continua obrigatório.
+
+**As condições.** O editor atual fica no produto, ao lado do novo, até o
+produto integrado passar nas quatro. Só então a fase E remove o que ficou
+redundante.
+
+| Condição | Por que a prova não basta | Aceite no produto integrado |
+| --- | --- | --- |
+| R1 e R12 pelo método da prova | A prova desenha uma janela mínima, e a IDE inteira paga mais por quadro (§20.3) | Os limites do §1 contra o editor atual, nos três tamanhos, pelo método do §20.3 |
+| R10 com o documento inteiro | A prova expõe só a linha do cursor; o editor atual expõe o documento (§20.2) | Pela AT-SPI, o documento inteiro, o cursor e a seleção, como no editor atual |
+| IME real | A máquina de medição não tem framework de IME (R9) | Composição com fcitx5 ou ibus: pré-edição no cursor e texto confirmado certo |
+| Windows | Nada rodou no Windows (§19) | Os testes da etapa 10 do [62](62-base-publica-0.4.md) §3, com a contenção pelo Job Object (§8) |
+
+Se uma condição reprovar, a DP-10 volta ao autor com a medida, e o editor
+atual fica. O B8, o ENG-24 e a parte do editor do ENG-20 voltam como estão
+escritos no 64 e no 63.
+
+**A ordem.** A integração (fase D) começa depois do B2 e do B3 do 64 §8 e
+não passa na frente deles; o INF-23 segue no início do B2. O B4, o B5 e o
+B6 tratam a parte do editor pelo §10. O B8, a divisão do ENG-24 e a parte
+do editor do ENG-20 não são implementados antes da fase E.
+
+**As decisões do §18** (autor, 2026-11-15), com a evidência do §20:
+1. **Sem modo por padrão**, com o modo do Vim como opção da pessoa.
+2. **O core grava o arquivo**, pelo `BufWriteCmd`, com a gravação guardada
+   de hoje. Os dois caminhos passaram; com o core gravando, o acesso a
+   arquivo tem um dono só.
+3. **A recuperação é pelo rascunho da Kinein a partir do espelho, sem
+   swap.**
+4. **Sem Landlock, o projeto não confiável abre sem o editor novo.** O que
+   a pessoa vê nesse caso depois da fase E, quando o editor atual não
+   existir mais, é desenho da fase D.
+5. **O `nvim` fixado dentro do AppImage.** A prova depende de contornos
+   sobre o comportamento de uma versão e de uma API interna (§20.5).
+6. e 7. **Seguem abertas:** a prova não mediu multi-cursor nem o
+   verificador de correções.
+
+## Referências
+
 - [Neovim — API e `api-contract`](https://neovim.io/doc/user/api.html)
 - [Neovim — eventos de UI](https://neovim.io/doc/user/api-ui-events.html)
 - [Neovim — LSP](https://neovim.io/doc/user/lsp.html)

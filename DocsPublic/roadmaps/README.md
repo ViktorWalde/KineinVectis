@@ -68,10 +68,12 @@ está no
 [`64-revisao-da-arquitetura-e-estrategia-b.md`](64-revisao-da-arquitetura-e-estrategia-b.md),
 que diz o destino de cada item do 63. A avaliação do Neovim como motor de
 edição (ENG-60, DP-10 do 64) está no
-[`65-avaliacao-do-neovim-como-motor-de-edicao.md`](65-avaliacao-do-neovim-como-motor-de-edicao.md).
+[`65-avaliacao-do-neovim-como-motor-de-edicao.md`](65-avaliacao-do-neovim-como-motor-de-edicao.md);
+desde 2026-11-15 (decisão do autor), a DP-10 escolhe o Neovim, com
+condições.
 
 ```text
-65-avaliacao-do-neovim-como-motor-de-edicao.md  a avaliação do Neovim como motor de edição e cliente LSP (ENG-60): critérios de refutação, diagnóstico, donos, segurança e a prova de conceito (PLANO)
+65-avaliacao-do-neovim-como-motor-de-edicao.md  a avaliação do Neovim como motor de edição e cliente LSP (ENG-60): critérios de refutação, diagnóstico, donos, segurança, os resultados da prova de conceito e a decisão da DP-10 com as condições (PLANO)
 64-revisao-da-arquitetura-e-estrategia-b.md  a revisão de concepção de 2026-11-14 e o plano da estratégia B: medidas, arquitetura-alvo, ordem e decisões do autor (PLANO)
 63-regras-e-plano-de-engenharia-da-0.4.md  Parte A: o regulamento de engenharia (CONTRATO); partes B–H: inventário, arquitetura-alvo, gate e ordem (PLANO)
 62-base-publica-0.4.md             Foundation: visão, inventário de dívida, fronteira e aceites da 0.4

@@ -355,7 +355,10 @@ chega à 0.5 já integrado pela 0.4 — a consequência está na nota datada do
 > troca, se houver, passaram para a 0.4: DP-10 do
 > [64](64-revisao-da-arquitetura-e-estrategia-b.md) §11, com o ENG-60. O
 > texto abaixo é o ponto de partida medido em 2026-10-01 e segue útil para a
-> avaliação; a 0.6 fica com os recursos sobre o motor fechado.
+> avaliação; a 0.6 fica com os recursos sobre o motor fechado. Decisão do
+> autor de 2026-11-15 (DP-10): o motor é o Neovim, com condições
+> ([65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §21); o texto
+> abaixo descreve o `TextEdit`, que fica até a fase E do 65.
 
 **Estado de partida (medido).** O texto é um `TextEdit` do QtQuick em
 `ui/qml/editor/EditorTextSurface.qml` (linha 235; arquivo 300/300). O

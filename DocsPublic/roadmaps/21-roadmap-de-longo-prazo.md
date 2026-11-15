@@ -576,6 +576,14 @@ os motores; as hipóteses ficam em [pesquisa/02](../pesquisa/02-analise-e-refato
 > refutação da prova, não uma questão encerrada. O tree-sitter segue
 > obrigatório em qualquer resultado. Até a DP-10, o mandato acima vale.
 
+> **Revista em 2026-11-15 (decisão do autor, DP-10).** Depois da prova de
+> conceito ([65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §20), a
+> exclusão do Neovim embutido deixa de valer: o motor de edição é o Neovim,
+> com condições (65 §21). A edição sem modo é o padrão (o R8 passou), e o
+> modo do Vim fica como opção da pessoa. O tree-sitter continua
+> obrigatório. Os caminhos a e b do texto abaixo ficam como alternativa se
+> uma condição da DP-10 reprovar na fase D.
+
 ```text
 Contexto honesto: o TextEdit do QtQuick nos levou até aqui (custo
 baixíssimo), mas bloqueia: split view, minimap, multi-cursor real,

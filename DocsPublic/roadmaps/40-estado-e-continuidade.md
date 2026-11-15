@@ -21,7 +21,7 @@
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
 > em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413; INF-17, §7.414; INF-20, §7.415; INF-21, §7.416; INF-18, §§7.417–7.418); dívida na 0.4.
 > Recorte atual (2026-11-14): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
-> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia. O B0 fechou (§7.421): requisitos no 19 (D13 a D18) e 63 reconciliado. Pelo D-27 do 63, **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos**; o motor de edição virou a DP-10 do 64 §11 (ENG-60, aberta), que segura só as fases do editor; a avaliação do Neovim está no **65** (§7.422), com GO só para a prova de conceito isolada. A próxima fatia de código é o B1. **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). **INF-24 aberto:** a suíte do core reprova sob a própria carga, sem defeito plantado (§7.423); o veredito do gate rápido depende de sorte até ele fechar. O **C1** (consolidação C §4.1) retoma depois. Polimento
+> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia. O B0 fechou (§7.421): requisitos no 19 (D13 a D18) e 63 reconciliado. Pelo D-27 do 63, **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos**; o motor de edição virou a DP-10 do 64 §11 (ENG-60); a avaliação do Neovim está no **65** (§7.422). Depois da prova de conceito (65 §20, §7.424), por decisão do autor de 2026-11-15 **a DP-10 escolhe o Neovim, com condições** (65 §21): o editor atual fica até o produto integrado passar nelas, e a integração começa depois do B2 e do B3. A próxima fatia de código é o B1. **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). **INF-24 aberto:** a suíte do core reprova sob a própria carga, sem defeito plantado (§7.423); o veredito do gate rápido depende de sorte até ele fechar. O **C1** (consolidação C §4.1) retoma depois. Polimento
 > UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
@@ -139,7 +139,10 @@ Até essa data valia a decisão de mantê-lo congelado
 com as duas saídas medidas em [`39`](39-divida-tecnica-paga.md) §6. Não corte
 fora da ordem do 63, e nunca por tamanho. Desde 2026-11-14 o ENG-24 espera
 a DP-10 do [64](64-revisao-da-arquitetura-e-estrategia-b.md) §11 (o motor
-de edição), para não refatorar o que o motor pode trocar.
+de edição), para não refatorar o que o motor pode trocar. Desde a decisão
+da DP-10 (2026-11-15, D-29 do 63), a fachada sai com o editor atual na fase
+E do [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) e não é dividida
+antes; se uma condição da DP-10 reprovar, volta a decisão de 2026-11-12.
 
 ## 3. O que este arquivo já guardou
 
@@ -183,8 +186,13 @@ conceito do ENG-60, fora do produto. A DP-10 segura só a parte do editor
 (64 §8). A fase A da avaliação está no
 [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) (40.7 §7.422): os
 critérios de refutação escritos antes da prova, o diagnóstico medido e a
-recomendação de GO só para a prova isolada. A próxima fatia de código é o
-B1. Nenhuma fase de código da B
+recomendação de GO só para a prova isolada. A prova (fase B) rodou em
+2026-11-14 e 15, fora do produto (65 §20; 40.7 §7.424). Decisão do autor de
+2026-11-15 (fase C, 65 §21; D-29 do 63): **o motor de edição é o Neovim,
+com condições**. O editor atual fica até o produto integrado passar no R1 e
+no R12 pelo método da prova, no R10 com o documento inteiro, no IME real e
+nos testes do Windows; a integração começa depois do B2 e do B3. A próxima
+fatia de código é o B1. Nenhuma fase de código da B
 começou. O INF-23 (código do projeto executado sem confiança,
 severidade crítica, [62 §3.4](62-base-publica-0.4.md)) está aberto e é o
 primeiro item da fase B2. O INF-24 (a suíte do core que reprova sob a
@@ -277,7 +285,7 @@ Mudanças de escopo devem ser registradas no documento responsável.
 | Internacionalização | UI em inglês no polimento; documentação integral em inglês e divulgação com a base finalizada, preservando português e strings traduzíveis. | [versões](57-mapa-de-versoes-ate-a-1.0.md) §3 |
 | Frentes posteriores | ROS 2, colaboração remota, motor semântico profundo e estudo de CLI conservam seus planos. A trilha pública de contribuições já tem quatro tarefas; primeiro verificador na base 0.4. | [versões](57-mapa-de-versoes-ate-a-1.0.md), [ROS 2](../integracoes/41-ros2-hud-ux-analise-projeto.md), [pesquisa](../pesquisa/02-analise-e-refatoracao-complementares.md) |
 | CI e recursos | CI pública compartilha os gates; limites de RAM, swap zero por escopo e limpeza de temporários devem ser verificáveis. | [gates](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md), [comandos](../build/comandos-de-build-e-verificacao.md) |
-| Arquitetura da 0.4 | Autor, 2026-11-14: estratégia B, reconstrução arquitetural seletiva. O nível macro fica (dois processos, core dono dos fatos, protocolo tipado, ferramentas como processos); trocam-se o modelo de execução do laço, a ponte, as políticas transversais e a persistência. As decisões DP-01 a DP-09 do 64 §11 foram aceitas no mesmo dia. A 0.4 é a última versão que reconstrói de forma sistemática os fundamentos (D-27 do 63, D18 do 19); o motor de edição é decidido nela (DP-10, aberta). | [64](64-revisao-da-arquitetura-e-estrategia-b.md), [19](../arquitetura/19-compromissos-de-arquitetura.md) |
+| Arquitetura da 0.4 | Autor, 2026-11-14: estratégia B, reconstrução arquitetural seletiva. O nível macro fica (dois processos, core dono dos fatos, protocolo tipado, ferramentas como processos); trocam-se o modelo de execução do laço, a ponte, as políticas transversais e a persistência. As decisões DP-01 a DP-09 do 64 §11 foram aceitas no mesmo dia. A 0.4 é a última versão que reconstrói de forma sistemática os fundamentos (D-27 do 63, D18 do 19); o motor de edição é decidido nela (DP-10): autor, 2026-11-15, o Neovim, com condições. | [64](64-revisao-da-arquitetura-e-estrategia-b.md), [19](../arquitetura/19-compromissos-de-arquitetura.md), [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §21 |
 | Documentação | Material público é técnico; contexto pessoal e instruções de agentes são locais e não publicáveis. | [política documental](../README.md#repositório-público--cópia-de-distribuição) |
 
 ## 7. O registro das entregas

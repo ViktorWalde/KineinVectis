@@ -236,6 +236,12 @@ com decisão datada e imposição verificada; da 0.5 em diante, o produto
 cresce por pontos de extensão. O motor de edição, que ficava para depois da
 V1, é um desses fundamentos e é decidido na 0.4 (ENG-60).
 
+**Decisão do autor (2026-11-15, DP-10 do 64 §11).** Depois da prova de
+conceito do [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) (§20), o
+motor de edição é o Neovim, com condições (65 §21): o editor atual fica
+até o produto integrado passar nelas. A integração começa depois do B2 e do
+B3 do 64 §8, e o INF-23 segue no início do B2.
+
 Quality Center, schema 3, CircuitPython, Banco para embarcados, expansão de
 emuladores além de F3 e as demais jornadas não concluídas do 52 permanecem
 abertos nos seus donos. Bloqueiam quando integram os mínimos de §3.2 ou uma
@@ -1499,7 +1505,10 @@ o que o item diz.
 - **ENG-24 — Fachada do `EditorController.qml`.** Severidade média. Decisão
   do autor de 2026-11-12: dissolver a fachada; a decisão anterior, de mantê-la
   congelada ([32](../arquitetura/32-editor-por-responsabilidade.md) §8.4),
-  deixa de valer.
+  deixa de valer. Desde a DP-10 (2026-11-15,
+  [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §21), a fachada sai
+  com o editor atual na fase E do 65, e não é dividida antes; se uma
+  condição da DP-10 reprovar na fase D, volta a decisão de 2026-11-12.
 - **ENG-25 — Limite de linhas usado como alvo.** Severidade média. Causa: os
   arquivos no limite são os que todo commit edita, por falta dos pontos de
   extensão acima.
@@ -1749,7 +1758,10 @@ do autor, de 2026-11-14 (64 §11). Todos abertos; o ENG-58 está parcial.
   inteira a cada edição.** Evidência: 64 §2.4. Com 20 mil linhas, 345,0 ms
   no laço e 8.218 KiB de resposta por edição; o RSS do core ao final da
   rodada, 68.292 KiB, contra o orçamento de 60 MB. Severidade alta.
-  Decisão: sincronia e reanálise incrementais (64 §5.11), fase B8.
+  Decisão: sincronia e reanálise incrementais (64 §5.11), fase B8. Desde a
+  DP-10 (2026-11-15, 65 §21), o item fecha pela remoção do editor atual na
+  fase E do 65: o Neovim analisa de forma incremental no próprio processo.
+  Se uma condição da DP-10 reprovar na fase D, volta a decisão acima.
 - **ENG-56 — O `.kinein` mistura configuração do projeto, estado da pessoa
   e cache.** Evidência: 64 §2.1 e §2.8. Abrir uma pasta grava nela o
   `workspace.json`, com o caminho absoluto da raiz, e o `kinein.db`; os
@@ -1780,7 +1792,13 @@ do autor, de 2026-11-14 (64 §11). Todos abertos; o ENG-58 está parcial.
   §11, que segura só as fases do editor (64 §8). O produto não migra antes
   da aprovação explícita do autor depois da prova. Aberto. A avaliação está
   no [65](65-avaliacao-do-neovim-como-motor-de-edicao.md): a fase A ficou
-  pronta em 2026-11-14, com GO só para a prova de conceito.
+  pronta em 2026-11-14, com GO só para a prova de conceito. A prova (fase
+  B) foi feita em 2026-11-14 e 15, fora do produto (65 §20). Decisão do
+  autor de 2026-11-15 (fase C, 65 §21): o Neovim, com condições. O editor
+  atual fica até o produto integrado passar no R1 e no R12 pelo método da
+  prova, no R10 com o documento inteiro, no IME real e nos testes do
+  Windows. Estado: aberto até a fase F do 65 §14; a integração começa
+  depois do B2 e do B3.
 - **ENG-59 — Adaptador de depuração e motor de gravação escolhidos por
   `match` de texto.** Evidência: `dap/adapter.rs` e `flash/mod.rs`.
   Severidade baixa. Decisão: tabela de descritores (64 §5.12), fase B10.

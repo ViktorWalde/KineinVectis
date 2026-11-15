@@ -52,6 +52,7 @@
 | D-26 | Na mesma revisão (2026-11-14, DP-05 e DP-02): a Parte F, itens 1 e 3, deixa de valer para os itens da estratégia B que o 64 §8 nomeia. O fio muda com o contrato primeiro (R-IPC-01), no mesmo commit do core e da UI. Arquivo gravado muda de lugar com migração por cópia, releitura e, só então, remoção; o arquivo misto é dividido com versão de esquema nova. O modo restrito muda o comportamento visível de um projeto sem confiança (Parte F, item 2). |
 | D-27 | Na mesma revisão (2026-11-14): **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos da Kinein Vectis.** Fundamento é o que todo domínio usa e que não se troca por extensão: o modelo de processos e de execução, o contrato e a ponte, a confiança e a criação de processo, a persistência, o registro, a estrutura do core e os pontos de extensão, a verificação, e o motor de edição com a posse do documento e da inteligência de linguagem. Cada um fecha na 0.4, com decisão datada e imposição. Nada fundamental fica marcado para uma versão seguinte: o "revisitar pós-V1" do motor de edição (D5 do [19](../arquitetura/19-compromissos-de-arquitetura.md)) vira decisão da 0.4 (ENG-60, DP-10 do 64 §11). Da 0.5 em diante, linguagem, toolchain, SDK, adaptador de depuração, motor de gravação, painel e método IPC entram por um ponto de extensão (tabela, descritor ou registro) sem mexer num fundamento. Mudar um fundamento depois da 0.4 exige gatilho medido e ADR. Reforça o D-02. |
 | D-28 | Na mesma revisão (2026-11-14), pelo critério do autor (fundamento consolidado, troca positiva e manutenção de longo prazo sem dívida): (1) a R-ARQ-07 e a R-ARQ-08 passam a pedir o `Core` num módulo próprio, fora da raiz do crate, e o estado entregue ao handler por parâmetro, verificado pelo compilador; a forma antiga ("`impl Core` só no `lib.rs`") deixava todos os campos visíveis ao crate inteiro. (2) A pasta de estado por projeto (DP-08) segue o diretório renomeado ou movido no mesmo volume, pela identidade do diretório no sistema de arquivos, e nada é apagado sem gesto da pessoa (64 §5.9; D15 do 19). |
+| D-29 | DP-10 do 64 §11, decisão do autor de 2026-11-15, depois da prova de conceito do [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §20: **o motor de edição é o Neovim, com condições** (65 §21). O editor atual fica até o produto integrado passar no R1 e no R12 pelo método da prova, no R10 com o documento inteiro, no IME real e nos testes do Windows. O ENG-24 e a parte do editor do ENG-20 (Parte E) e o B8 do 64 saem com o editor atual na fase E do 65 e não são implementados antes; se uma condição reprovar na fase D, eles voltam como estão escritos. A ordem do 64 §8 não muda. |
 
 ---
 
@@ -711,7 +712,8 @@ do Fazer dele, e grava o que medir.
 >   cada arquivo (R-DADOS-05; 64 §5.9).
 > - **C.4:** a ponte ganha o objeto de resposta por pedido e o contrato
 >   gerado (64 §5.6 e §5.7). O destino do editor e do item 5 depende da
->   DP-10 do 64 §11 (o motor de edição, ENG-60).
+>   DP-10 do 64 §11 (o motor de edição, ENG-60), decidida em 2026-11-15
+>   (D-29): o domínio do editor da ponte encolhe pelo 65 §10.
 
 Os esboços de código desta parte mostram a forma, e não são contrato: o
 primeiro domínio de cada item confirma a forma. Se ela não servir, quem
@@ -1024,7 +1026,9 @@ determinismo é cumprido pelos 17 estáticos; o custo só é medido em segundos.
 >   `std::fs` (64 §7);
 > - o ENG-24 (a fachada do `EditorController.qml`) e a parte do ENG-20 que
 >   cobre o editor esperam a DP-10 do 64 §11, para não refatorar o que o
->   motor de edição pode trocar.
+>   motor de edição pode trocar. Desde a DP-10 (D-29, 2026-11-15), os dois
+>   saem com o editor atual na fase E do 65; se uma condição reprovar na
+>   fase D, voltam como estão escritos.
 
 ## E.1 A ordem
 

@@ -17,6 +17,12 @@
 > "pós-V1" e virou a DP-10 (§11), ainda aberta, que segura as fases do
 > editor. Nenhuma fase de código começou.
 >
+> **Situação em 2026-11-15.** Decisão do autor de 2026-11-15: a DP-10
+> escolhe o Neovim como motor de edição, com condições
+> ([65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §21). O editor atual
+> fica no produto até a fase E de lá. A ordem do §8 não muda: o B1 e o B2
+> vêm antes da integração.
+>
 > **Ponto de partida.** Commit `9198888c`, protocolo 0.223.0. Toda medida
 > deste documento é de 2026-11-14, nessa árvore, salvo data própria.
 
@@ -696,6 +702,11 @@ campo dos arquivos mistos é o primeiro passo do B7):
   Quick `TextEdit` com `QSyntaxHighlighter`, D5 do 19). Se a DP-10 trocar o
   motor, quem guarda o documento e manda as edições muda, e o B8 é
   reescrito sobre a decisão, em vez de ser feito duas vezes.
+- **A DP-10 trocou o motor (2026-11-15, 65 §21).** O Neovim analisa de
+  forma incremental no próprio processo, e o B8 sai com o editor atual na
+  fase E do 65. Até lá, o desenho acima não é implementado. Se uma condição
+  da DP-10 reprovar na fase D, o editor atual fica, e o B8 volta com este
+  desenho.
 
 ### 5.12 Os adaptadores
 
@@ -804,8 +815,8 @@ processos e uma fronteira IPC; o Zed é um processo com um runtime próprio
 | ENG-11 (reações), ENG-13, ENG-14, ENG-15, ENG-17 | ficam (§5.8) |
 | ENG-12 (camadas) | a base passa a crate (§5.1), e o grafo do Cargo impõe a R-ARQ-02; a borda e os domínios seguem no mesmo crate, e a R-ARQ-03 e a R-ARQ-04 seguem no `module_map.py`, lendo pelo tree-sitter (R-GATE-11, R-GATE-13) |
 | ENG-16 (tipo do fio como tipo interno) | fica a decisão D-07 |
-| ENG-20 (`CoreClient` por domínio) | fica, com o `CoreReply` e o contrato gerado (§5.6, §5.7); a parte do editor espera a DP-10 |
-| ENG-21 a ENG-25 | ficam; o ENG-22 vira estrutura (§5.6); o ENG-24 (a fachada do `EditorController.qml`) espera a DP-10 |
+| ENG-20 (`CoreClient` por domínio) | fica, com o `CoreReply` e o contrato gerado (§5.6, §5.7); a parte do editor segue a DP-10, decidida em 2026-11-15 (65 §10 e §21) |
+| ENG-21 a ENG-25 | ficam; o ENG-22 vira estrutura (§5.6); o ENG-24 (a fachada do `EditorController.qml`) sai com o editor atual na fase E do 65 (DP-10, 2026-11-15) e volta à divisão se uma condição da DP-10 reprovar |
 | ENG-30 a ENG-36, ENG-38 | ficam |
 | ENG-37 (identificadores) | fica, por último no Rust, pelo rename do rust-analyzer |
 | ENG-39 (adiados do Windows) | fica na etapa 10 do 62 §3 |
@@ -857,6 +868,18 @@ R-ARQ-08 emendadas (D-28) e as Partes C e E apontando para cá.
 A avaliação do ENG-60 e a prova de conceito correm fora do produto (§9) e não
 passam na frente do B2.
 
+**A DP-10 foi decidida em 2026-11-15:** o Neovim, com condições
+([65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §21). A ordem acima
+continua valendo:
+- B1, B2 e B3 vêm primeiro, com o INF-23 no início do B2;
+- a integração (fase D do 65 §14) começa depois do B2 e do B3, por partes,
+  com o editor atual ao lado;
+- B4, B5 e B6 tratam a parte do editor pelo 65 §10;
+- B8, o ENG-24 e a parte do editor do ENG-20 saem com o editor atual na
+  fase E do 65, e não são implementados antes. Se uma condição da DP-10
+  reprovar na fase D, o editor atual fica, e os três voltam como estão
+  escritos.
+
 Depois do B11, a etapa C retoma do C1-47. O ENG-39 fica na etapa 10 do 62
 §3.
 
@@ -882,7 +905,7 @@ no B2, o §2.3 no B3, o §2.4 no B8.
 | A tabela de métodos gerando schema e cabeçalho para um domínio | A geração cobre os tipos do protocolo sem exceção manual? | início do B4 |
 | Os crates `base` e `process` | Quanto muda o tempo de build e de teste? | início do B6 |
 | A ferramenta do gate com tree-sitter lendo QML | O `tree-sitter-qmljs` lê os 447 arquivos QML sem erro de análise? | antes de trocar o ENG-41 |
-| O motor de edição (ENG-60) | Um motor candidato cabe na UI Qt Quick, na confiança do core e nos fluxos do editor sem regressão? Os critérios de refutação estão no [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §1, e a prova vive fora do produto | antes da DP-10 |
+| O motor de edição (ENG-60) | Um motor candidato cabe na UI Qt Quick, na confiança do core e nos fluxos do editor sem regressão? Os critérios de refutação estão no [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §1, e a prova vive fora do produto | antes da DP-10; feita em 2026-11-14 e 15 (65 §20) |
 
 **Fluxos verticais que ficam equivalentes,** com os testes de despacho que já
 existem:
@@ -900,12 +923,13 @@ existem:
 | **Preservar** | Separação UI/core e o fio JSON-RPC; `kinein-protocol` e os códigos de erro; JobManager; `owned_child`; `kinein_dir` e `fsops`; gerenciador LSP e sessão DAP; a lógica de `flash`, `toolchain`, `build`, `cmake_presets` e `serial`; o terminal (§2.5); os testes da superfície IPC; os controladores QML e os harnesses; a ferramenta de mutação; os lints estritos; a regra "o CMake é a verdade" |
 | **Refatorar** (mesmo desenho, outro lugar) | Despacho para a tabela de rotas com classe; `Core` para estado por domínio; troca de workspace por gancho; camadas para crates; a confiança da QML para o core; DAP e gravação para descritores |
 | **Substituir** | Bloqueio por padrão no laço; sinal difundido por resultado; contrato espelhado à mão e o schema parado; `Command::new` espalhado; o `.kinein` como pasta única; o `syntaxTree.update` inteiro; os drivers de banco no processo; os gates de texto para o que o compilador impõe |
-| **Investigar** | O custo do realce na UI (o JSON de 1 MiB por tecla não foi medido do lado da UI); o motor de edição e o dono do documento e do cliente LSP, decididos na 0.4 pela DP-10, com o ENG-60 (D-27); a divisão campo a campo dos arquivos mistos do `.kinein` (B7) |
+| **Investigar** | O custo do realce na UI (o JSON de 1 MiB por tecla não foi medido do lado da UI); o motor de edição e o dono do documento e do cliente LSP, decididos na 0.4 pela DP-10, com o ENG-60 (D-27), em 2026-11-15 (65 §21); a divisão campo a campo dos arquivos mistos do `.kinein` (B7) |
 
 ## 11. As decisões do autor
 
 Decisão do autor de 2026-11-14: as nove primeiras foram aceitas como
-recomendadas. A DP-10 nasceu no mesmo dia, do D-27 do 63, e está aberta.
+recomendadas. A DP-10 nasceu no mesmo dia, do D-27 do 63, e foi decidida
+em 2026-11-15.
 
 | ID | Pergunta | Decisão (2026-11-14) |
 | --- | --- | --- |
@@ -918,7 +942,7 @@ recomendadas. A DP-10 nasceu no mesmo dia, do D-27 do 63, e está aberta.
 | DP-07 | Camadas de suporte (núcleo e periferia) e a ADR-0010 dentro da 0.4 (B9) | Aceitas |
 | DP-08 | A persistência em três classes, com o estado da pessoa e o cache fora da árvore do projeto | Aceita. Emenda do mesmo dia (D-28 do 63): o estado segue o projeto renomeado ou movido no mesmo volume, pela identidade do diretório (§5.9) |
 | DP-09 | Novas regras na Parte A do 63: classe de execução na rota, só o lançador cria processo, a confiança mora no core, todo pedido tem span, a classe de cada arquivo próprio | Aceitas. Entraram na Parte A no B0 |
-| DP-10 | O motor de edição da Kinein: o de hoje (Qt Quick `TextEdit`, D5 do 19) ou outro, e quem é dono do documento e do cliente LSP | **Aberta.** A avaliação é o ENG-60 do 62 §3.4, com prova de conceito isolada (§9); o dono é o [65](65-avaliacao-do-neovim-como-motor-de-edicao.md). O candidato preferido do autor é o Neovim como motor embutido, com a decisão orientada por evidência. A avaliação reabre de forma explícita a exclusão do Neovim embutido do mandato de 2026-07-11 ([21](21-roadmap-de-longo-prazo.md) §M5.4), e a tensão entre o modo modal e a identidade JetBrains (RNF8 do 19) é critério de refutação. A migração do produto só começa com aprovação explícita do autor depois da prova |
+| DP-10 | O motor de edição da Kinein: o de hoje (Qt Quick `TextEdit`, D5 do 19) ou outro, e quem é dono do documento e do cliente LSP | **Decisão do autor de 2026-11-15: o Neovim, com condições** ([65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §21). O editor atual fica até o produto integrado passar no R1 e no R12 pelo método da prova, no R10 com o documento inteiro, no IME real e nos testes do Windows; a integração começa depois do B2 e do B3. Aberta até 2026-11-15: a avaliação é o ENG-60 do 62 §3.4, com prova de conceito isolada (§9); o dono é o [65](65-avaliacao-do-neovim-como-motor-de-edicao.md). O candidato preferido do autor é o Neovim como motor embutido, com a decisão orientada por evidência. A avaliação reabre de forma explícita a exclusão do Neovim embutido do mandato de 2026-07-11 ([21](21-roadmap-de-longo-prazo.md) §M5.4), e a tensão entre o modo modal e a identidade JetBrains (RNF8 do 19) é critério de refutação. A migração do produto só começa com aprovação explícita do autor depois da prova |
 
 ## 12. O que não foi medido
 
