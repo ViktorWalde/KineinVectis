@@ -4,12 +4,13 @@ método do A3.3-1 (medir-performance.sh): a mesma fixture do medir-core.py,
 janela 1280x800.
 
 A linha de base é o produto no código do 308c1561 (base/arvore), com o
-harness instrumentado por base/instrumentar.py: KINEIN_PERF_OPEN_PROBE (R2),
-KINEIN_PERF_HOLD (o processo fica de pé para ler RSS e CPU).
+harness instrumentado pelo base/instrumentacao.patch: KINEIN_PERF_OPEN_PROBE
+(R2), KINEIN_PERF_HOLD (o processo fica de pé para ler RSS e CPU).
 
-Cada rodada, nos dois lados, roda com HOME e XDG_* próprios (nada lê nem
-grava a configuração de quem roda); só o XDG_CACHE_HOME é compartilhado,
-para o cache de fontes não pesar diferente entre rodadas.
+Cada rodada, nos dois lados, roda com HOME e XDG_* próprios, o
+XDG_RUNTIME_DIR inclusive (nada lê nem grava a configuração nem os sockets
+de quem roda); só o XDG_CACHE_HOME é compartilhado, para o cache de fontes
+não pesar diferente entre rodadas.
 
 Uso: python3 -I desempenho.py [rodadas] [funcoes ...]
 """
@@ -24,7 +25,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import fixtures  # noqa: E402
-from pilha import PROVA, TMP, Pilha, descendentes, ler_cmdline, ler_stat, rss_kib, vivos  # noqa: E402
+from pilha import PROVA, TMP, Pilha, descendentes, ler_cmdline, ler_stat, rss_kib, runtime_privado, vivos  # noqa: E402
 from util import esperar, gravar, resumo  # noqa: E402
 
 BASE_UI = os.path.join(PROVA, "base", "arvore", "build", "release", "ui", "kinein-vectis")
@@ -42,6 +43,7 @@ def casa_limpa():
         "XDG_DATA_HOME": os.path.join(casa, ".local", "share"),
         "XDG_STATE_HOME": os.path.join(casa, ".local", "state"),
         "XDG_CACHE_HOME": CACHE,
+        "XDG_RUNTIME_DIR": runtime_privado(),
     }
 
 

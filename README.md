@@ -81,9 +81,12 @@ python3 -I driver/normalizar.py        # tira dos resultados o caminho da máqui
 ## O isolamento
 
 - Tudo roda offscreen, salvo o R10, que sobe um Xvfb e uma sessão D-Bus
-  próprios: nada abre na sessão gráfica de quem roda.
+  próprios: nada abre na sessão gráfica de quem roda. A sessão D-Bus não
+  ativa serviço nenhum (`driver/a11y-sessao.conf`).
 - Cada rodada usa `HOME` e `XDG_*` próprios, dentro de `tmp/`: nada lê nem
-  grava a configuração de quem roda.
+  grava a configuração de quem roda. O `XDG_RUNTIME_DIR` também é próprio,
+  numa pasta curta em `/tmp` apagada no fim: os sockets dos dois lados não
+  vão ao de quem roda, nem depois de uma queda provocada.
 - O log do Qt vai para o log da rodada (`QT_FORCE_STDERR_LOGGING=1`), não
   para o journal do sistema.
 - Os resultados passam pelo `driver/normalizar.py` antes de entrar no git:

@@ -1,6 +1,7 @@
 """A pilha da prova: UI (Qt Quick, offscreen) -> supervisor (o papel do core)
 -> nvim, com os dois canais de controle, e a árvore de processos lida do /proc."""
 
+import atexit
 import json
 import os
 import shutil
@@ -17,6 +18,24 @@ SUP_BIN = os.path.join(PROVA, "supervisor", "target", "release", "kinein-prova-s
 RUNTIME = os.path.join(PROVA, "runtime")
 NVIM = os.path.realpath(shutil.which("nvim") or "nvim")
 TMP = os.path.join(PROVA, "tmp")
+
+_RUNTIMES = []
+
+
+def runtime_privado():
+    """Um XDG_RUNTIME_DIR só da rodada, curto (o sun_path tem 108 bytes) e
+    apagado quando o driver sai. Sem ele, os sockets dos dois lados (o da
+    instância única do produto, os do nvim, os da acessibilidade) iam para o
+    de quem roda e ficavam lá depois de cada queda provocada."""
+    pasta = tempfile.mkdtemp(prefix="kr-", dir="/tmp")
+    _RUNTIMES.append(pasta)
+    return pasta
+
+
+@atexit.register
+def _apagar_runtimes():
+    for pasta in _RUNTIMES:
+        shutil.rmtree(pasta, ignore_errors=True)
 
 
 def ler_stat(pid):
@@ -97,9 +116,12 @@ class Pilha:
         self.base = base or tempfile.mkdtemp(prefix=f"{nome}-", dir=TMP)
         self.projeto = os.path.realpath(projeto)
         self.estado = os.path.join(self.base, "estado")
-        # Os sockets numa pasta curta (o sun_path tem 108 bytes), no lugar
-        # que o produto usaria; uma pasta nova a cada subida, apagada no fim.
-        self.run = tempfile.mkdtemp(prefix="kp-", dir=os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
+        # O XDG_RUNTIME_DIR desta subida (ou o da casa que o teste deu):
+        # sockets e barramento de acessibilidade não vão ao de quem roda.
+        self.runtime = (env or {}).get("XDG_RUNTIME_DIR") or runtime_privado()
+        # Os sockets numa pasta curta (o sun_path tem 108 bytes); uma pasta
+        # nova a cada subida, apagada no fim.
+        self.run = tempfile.mkdtemp(prefix="kp-", dir=self.runtime)
         self.ui_sock = os.path.join(self.run, "ui.sock")
         self.log_path = os.path.join(self.base, "ui.log")
         comando = [UI_BIN, "--controle", self.ui_sock, "--", SUP_BIN, "--projeto", self.projeto,
@@ -113,6 +135,7 @@ class Pilha:
         # O log do Qt no ui.log da rodada: sem isto, com o stderr fora de um
         # terminal, o Qt escreve no journal do sistema.
         ambiente["QT_FORCE_STDERR_LOGGING"] = "1"
+        ambiente["XDG_RUNTIME_DIR"] = self.runtime
         ambiente.update(env or {})
         self.ambiente = ambiente
         self.comando = comando
