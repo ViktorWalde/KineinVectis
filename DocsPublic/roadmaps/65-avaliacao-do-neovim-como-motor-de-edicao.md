@@ -749,7 +749,7 @@ próprio, e a referência entra aqui com ele.
 - **Abrir o arquivo de 19.970 linhas leva de 46,2 a 47,9 s** nesta rodada
   (24,8 s numa medida de 2026-11-15 anterior ao commit, §20.6). Naquela
   medida, um relógio externo confirmou 26,4 s, com a thread da UI a 100%
-  de um núcleo, e 26,9 s sem a sonda da abertura.
+  de um núcleo, e 26,9 s sem a sonda da abertura. É o INF-25 do 62 §3.4.
 - **A queda da UI até 200 ms depois da última tecla perde as 40 teclas.**
   No `EditorPersistenceController.qml` do `308c1561` (lido), cada mudança
   reinicia o temporizador do rascunho (1.500 ms) e, com a gravação

@@ -197,7 +197,9 @@ começou. O INF-23 (código do projeto executado sem confiança,
 severidade crítica, [62 §3.4](62-base-publica-0.4.md)) está aberto e é o
 primeiro item da fase B2. O INF-24 (a suíte do core que reprova sob a
 própria carga, em cinco testes, sem defeito plantado) está aberto, com a
-ordem a decidir pelo autor. A 0.4 paga toda a dívida inventariada, e a etapa C só
+ordem a decidir pelo autor. A prova do ENG-60 achou no editor atual o
+INF-25 (abrir um arquivo de 19.970 linhas ocupa a UI por dezenas de
+segundos, §7.425), aberto. A 0.4 paga toda a dívida inventariada, e a etapa C só
 retoma depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)

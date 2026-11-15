@@ -197,11 +197,11 @@ cada atualização datada a substitui, e o detalhe fica nos donos:
 
 A fundação geral (integridade do editor, terminal, Git, busca e Jobs) é
 transversal: cada jornada corrige o que exercitar, e INF-02 (terminal com bash
-e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-14: INF-01
+e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-15: INF-01
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, INF-22, INF-23, INF-24, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, INF-23, INF-24, INF-25, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -1315,6 +1315,30 @@ auditorias e provas posteriores datadas nos donos:**
   sem a causa não fecha o item. Decisão: nenhuma ainda; onde ele entra na
   ordem é do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2).
   Estado aberto.
+- **INF-25 — Abrir um arquivo grande ocupa a UI por dezenas de segundos.**
+  Dono e evidência: a abertura de documento no editor atual, na UI, medida
+  pela prova do [65](65-avaliacao-do-neovim-como-motor-de-edicao.md)
+  (§20.3), com o produto no `308c1561` em Release. Da abertura ao primeiro
+  quadro com o texto, em arquivos Rust da geradora do `medir-core.py`, 5
+  rodadas por tamanho, em 2026-11-15:
+  - 85 linhas: de 236 a 262 ms;
+  - 2.463 linhas: de 946 a 988 ms;
+  - 19.970 linhas: de 46,2 a 47,9 s.
+
+  Numa medida anterior, no mesmo dia, o arquivo de 19.970 linhas abriu em
+  24,8 s; um relógio externo deu 26,4 s, com a thread da UI a 100% de um
+  núcleo, e 26,9 s sem a sonda da abertura. A diferença entre as duas
+  medidas vem do estado da máquina, não do build (65 §20.6). De 2.463 para
+  19.970 linhas, 8,1 vezes mais texto, a abertura fica 48,6 vezes mais
+  lenta. Severidade alta: abrir um arquivo grande ocupa a thread da UI por
+  dezenas de segundos, e o custo cresce mais rápido que o tamanho. Causa não
+  investigada. Testes: a abertura pelo método do 65 §20.3, nos três
+  tamanhos, com o tempo da thread da UI, antes e depois da correção.
+  Decisão: nenhuma ainda; onde ele entra na ordem é do autor
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Pela DP-10 (65
+  §21), o editor atual sai na fase E se o produto integrado passar nas
+  condições, e o item fecha com ele; até lá, e se uma condição reprovar, o
+  defeito é do produto. Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
