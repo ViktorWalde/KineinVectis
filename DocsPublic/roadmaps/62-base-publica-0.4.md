@@ -201,7 +201,7 @@ e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-15: INF
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, INF-22, INF-23, INF-24, INF-25, INF-26, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, INF-23, INF-24, INF-25, INF-26, INF-27, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -1370,6 +1370,28 @@ auditorias e provas posteriores datadas nos donos:**
   condições, e a recuperação passa ao rascunho pelo espelho; a prova não
   mediu digitação longa nesse caminho, e o teste deste item vale também
   para ele. Estado aberto.
+- **INF-27 — A UI desenha uns 6 quadros por tecla.** Dono e evidência: o
+  editor atual, na UI. Medido em 2026-11-15 pelo `render.py` da prova do
+  [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) (§20.3), com o log
+  de tempo do renderloop do Qt, offscreen, 3 rodadas de 40 teclas no
+  arquivo de 2.463 linhas, com o produto no `308c1561` em Release: durante
+  a digitação, a base desenhou 728 quadros para 120 teclas (6,1 por
+  tecla), com intervalo mediano de 35 ms entre eles; a prova, 120. Cada
+  quadro custa pouco (mediana 1 ms, p95 7 ms), e a latência da tecla passa
+  no R1. O harness de digitação do produto espera 150 ms sem quadro antes
+  de cada tecla (`ui/src/typing_perf_harness.cpp`, lido): na base, as 40
+  teclas levaram de 14,5 a 20,7 s, conforme o tamanho do arquivo, contra
+  os 6 s das esperas. Na mesma medida, a UI e o core gastaram de CPU, ao
+  digitar as 40 teclas, 2,31 s com 85 linhas, 13,06 s com 2.463 e 24,75 s
+  com 19.970 (medianas), contra 0,25 a 0,38 s na prova; essa CPU não foi
+  atribuída aos quadros, e parte dela pode ser o `syntaxTree.update` do
+  ENG-55 (hipótese). Severidade baixa: a latência passa, e o custo é de
+  CPU; sobe se a CPU ao digitar vier dos quadros. Causa não investigada.
+  Testes: os quadros por tecla pelo `render.py` e a CPU ao digitar, antes
+  e depois da correção. Decisão: nenhuma ainda; onde ele entra na ordem é
+  do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Pela
+  DP-10 (65 §21), o editor atual sai na fase E se o produto integrado
+  passar nas condições, e o item fecha com ele. Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`

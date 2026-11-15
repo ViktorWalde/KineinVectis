@@ -759,7 +759,7 @@ próprio, e a referência entra aqui com ele.
   de 3 rodadas (ramo `prova/eng-60`, `37ed0789`).
 - **A UI desenha uns 6 quadros por tecla durante a digitação:** 728
   quadros para 120 teclas, com intervalo mediano de 35 ms entre eles; a
-  prova desenha 120. A causa não foi investigada.
+  prova desenha 120. A causa não foi investigada. É o INF-27 do 62 §3.4.
 - **O harness de digitação do produto perde teclas de vez em quando:** o
   controle positivo terminou com "teclas perdidas: 40 enviadas, 0
   inseridas" em 1 de 3 rodadas, e a primeira rodada completa (§20.6)
