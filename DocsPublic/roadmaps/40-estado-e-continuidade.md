@@ -21,7 +21,7 @@
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
 > em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413; INF-17, §7.414; INF-20, §7.415; INF-21, §7.416; INF-18, §§7.417–7.418); dívida na 0.4.
 > Recorte atual (2026-11-14): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
-> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia. O B0 fechou (§7.421): requisitos no 19 (D13 a D18) e 63 reconciliado. Pelo D-27 do 63, **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos**; o motor de edição virou a DP-10 do 64 §11 (ENG-60, aberta), que segura só as fases do editor; a avaliação do Neovim está no **65** (§7.422), com GO só para a prova de conceito isolada. A próxima fatia de código é o B1. **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). O **C1** (consolidação C §4.1) retoma depois. Polimento
+> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia. O B0 fechou (§7.421): requisitos no 19 (D13 a D18) e 63 reconciliado. Pelo D-27 do 63, **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos**; o motor de edição virou a DP-10 do 64 §11 (ENG-60, aberta), que segura só as fases do editor; a avaliação do Neovim está no **65** (§7.422), com GO só para a prova de conceito isolada. A próxima fatia de código é o B1. **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). **INF-24 aberto:** a suíte do core reprova sob a própria carga, sem defeito plantado (§7.423); o veredito do gate rápido depende de sorte até ele fechar. O **C1** (consolidação C §4.1) retoma depois. Polimento
 > UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
@@ -187,7 +187,9 @@ recomendação de GO só para a prova isolada. A próxima fatia de código é o
 B1. Nenhuma fase de código da B
 começou. O INF-23 (código do projeto executado sem confiança,
 severidade crítica, [62 §3.4](62-base-publica-0.4.md)) está aberto e é o
-primeiro item da fase B2. A 0.4 paga toda a dívida inventariada, e a etapa C só
+primeiro item da fase B2. O INF-24 (a suíte do core que reprova sob a
+própria carga, em cinco testes, sem defeito plantado) está aberto, com a
+ordem a decidir pelo autor. A 0.4 paga toda a dívida inventariada, e a etapa C só
 retoma depois, do C1-47. O que segue descreve a frente que retoma então.
 
 A próxima frente é a consolidação das linguagens pelo [62 §3.1](62-base-publica-0.4.md#31-matriz-de-consolidação-e-prontidão)

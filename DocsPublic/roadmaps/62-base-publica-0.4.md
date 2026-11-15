@@ -201,7 +201,7 @@ e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-14: INF
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, INF-22, INF-23, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, INF-23, INF-24, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -1263,6 +1263,52 @@ auditorias e provas posteriores datadas nos donos:**
   guarda. Decisão do autor de 2026-11-14 (DP-02 e DP-04 do 64 §11):
   corrigir pelo lançador e pelo modo restrito (64 §5.4 e §5.5), como
   primeiro item da fase B2. Estado aberto.
+- **INF-24 — Suíte do core que reprova sob a própria carga, sem defeito
+  plantado.** Dono e evidência: a lib do `kinein-core`, nos testes abaixo.
+  Achado em 2026-11-14, no gate rápido do commit do
+  [65](65-avaliacao-do-neovim-como-motor-de-edicao.md), que só mudou
+  documento: a primeira rodada reprovou em dois testes do core, e a segunda,
+  sem mudança na árvore, passou ([40.7](40.7-registro-das-entregas.md)
+  §7.423). Medido na mesma data, com o código do `308c1561`:
+  - cinco rodadas seguidas, uma por vez, de `cargo test -q -p kinein-core
+    --lib --all-features --locked`: três verdes (43,7 s a 46,5 s) e duas
+    vermelhas (55,8 s e 56,6 s). A segunda reprovou quatro testes e a
+    terceira, um;
+  - os dois testes que reprovaram no gate, 20 vezes cada com `--exact`, um
+    por vez e sem carga: 40 de 40 verdes.
+
+  Os cinco testes e o que se viu quando falharam:
+  - `c_host_keeps_build_lsp_context_and_verification_on_the_same_configuration`
+    (`tests/c_host.rs`, linha 254), no gate: a verificação da edição saiu
+    `notVerified` com `obsolete: true`, no lugar de `newError`;
+  - `c_standard_drives_gcc_clang_cdb_context_and_tests_without_changing_other_targets`
+    (`tests/c_host/standard.rs`, linha 96): o mesmo `notVerified` com
+    `obsolete: true`, no lugar de `noNewError`;
+  - `c1_existing_cancelled_configure_retains_obsolete_state_until_successful_retry`,
+    o teste do INF-22, na mesma linha 60;
+  - `the_compiledb_action_runs_pio_and_hands_the_new_cdb_to_the_index`
+    (`tests/platformio.rs`, linha 179): o `index.context` voltou sem os
+    argumentos do banco de compilação novo, com a dica de que ele não
+    existe;
+  - `a_failed_program_releases_the_port_after_the_terminal_reports_its_exit`
+    (`tests/serial/ownership_run.rs`, pela espera de `tests/mod.rs`, linha
+    203), no gate e nas duas rodadas vermelhas: a sessão `t1` não fechou em
+    4 s, e o terminal mostrou `fatal runtime error: assertion failed:
+    output.write(&bytes).is_ok(), aborting`.
+
+  Severidade média, como o INF-22 e o INF-08: o gate reprova sem defeito, e
+  repetir a rodada até ficar verde é veredito por sorte. O impacto cresce na
+  estratégia B: o B1, o B2 e o B3 mexem na concorrência, e o aceite deles
+  precisa de uma suíte em que vermelho quer dizer defeito. A severidade sobe
+  se a causa de algum dos cinco estiver no produto. Causa não investigada:
+  este registro não diz, para nenhum dos cinco, se a corrida é do produto
+  ou do teste; a verificação marcada obsoleta, igual em dois testes, e a
+  sessão que não fecha são as duas pistas a seguir primeiro. Testes: a repetição da suíte em lote,
+  com a taxa por teste, e cada um dos cinco com 16 cópias ao mesmo tempo,
+  como no INF-22, antes e depois da correção; aumentar o prazo de espera
+  sem a causa não fecha o item. Decisão: nenhuma ainda; onde ele entra na
+  ordem é do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2).
+  Estado aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`
