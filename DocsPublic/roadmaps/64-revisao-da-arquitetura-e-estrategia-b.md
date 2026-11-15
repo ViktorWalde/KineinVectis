@@ -882,7 +882,7 @@ no B2, o §2.3 no B3, o §2.4 no B8.
 | A tabela de métodos gerando schema e cabeçalho para um domínio | A geração cobre os tipos do protocolo sem exceção manual? | início do B4 |
 | Os crates `base` e `process` | Quanto muda o tempo de build e de teste? | início do B6 |
 | A ferramenta do gate com tree-sitter lendo QML | O `tree-sitter-qmljs` lê os 447 arquivos QML sem erro de análise? | antes de trocar o ENG-41 |
-| O motor de edição (ENG-60) | Um motor candidato cabe na UI Qt Quick, na confiança do core e nos fluxos do editor sem regressão? Os critérios de refutação são escritos antes da prova, e a prova vive fora do produto | antes da DP-10 |
+| O motor de edição (ENG-60) | Um motor candidato cabe na UI Qt Quick, na confiança do core e nos fluxos do editor sem regressão? Os critérios de refutação estão no [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) §1, e a prova vive fora do produto | antes da DP-10 |
 
 **Fluxos verticais que ficam equivalentes,** com os testes de despacho que já
 existem:
@@ -918,7 +918,7 @@ recomendadas. A DP-10 nasceu no mesmo dia, do D-27 do 63, e está aberta.
 | DP-07 | Camadas de suporte (núcleo e periferia) e a ADR-0010 dentro da 0.4 (B9) | Aceitas |
 | DP-08 | A persistência em três classes, com o estado da pessoa e o cache fora da árvore do projeto | Aceita. Emenda do mesmo dia (D-28 do 63): o estado segue o projeto renomeado ou movido no mesmo volume, pela identidade do diretório (§5.9) |
 | DP-09 | Novas regras na Parte A do 63: classe de execução na rota, só o lançador cria processo, a confiança mora no core, todo pedido tem span, a classe de cada arquivo próprio | Aceitas. Entraram na Parte A no B0 |
-| DP-10 | O motor de edição da Kinein: o de hoje (Qt Quick `TextEdit`, D5 do 19) ou outro, e quem é dono do documento e do cliente LSP | **Aberta.** A avaliação é o ENG-60 do 62 §3.4, com prova de conceito isolada (§9). O candidato preferido do autor é o Neovim como motor embutido, com a decisão orientada por evidência. A avaliação reabre de forma explícita a exclusão do Neovim embutido do mandato de 2026-07-11 ([21](21-roadmap-de-longo-prazo.md) §M5.4), e a tensão entre o modo modal e a identidade JetBrains (RNF8 do 19) é critério de refutação. A migração do produto só começa com aprovação explícita do autor depois da prova |
+| DP-10 | O motor de edição da Kinein: o de hoje (Qt Quick `TextEdit`, D5 do 19) ou outro, e quem é dono do documento e do cliente LSP | **Aberta.** A avaliação é o ENG-60 do 62 §3.4, com prova de conceito isolada (§9); o dono é o [65](65-avaliacao-do-neovim-como-motor-de-edicao.md). O candidato preferido do autor é o Neovim como motor embutido, com a decisão orientada por evidência. A avaliação reabre de forma explícita a exclusão do Neovim embutido do mandato de 2026-07-11 ([21](21-roadmap-de-longo-prazo.md) §M5.4), e a tensão entre o modo modal e a identidade JetBrains (RNF8 do 19) é critério de refutação. A migração do produto só começa com aprovação explícita do autor depois da prova |
 
 ## 12. O que não foi medido
 

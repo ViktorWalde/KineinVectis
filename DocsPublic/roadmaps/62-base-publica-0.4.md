@@ -1732,7 +1732,9 @@ do autor, de 2026-11-14 (64 §11). Todos abertos; o ENG-58 está parcial.
   sincronia da sintaxe (B8), a fachada do editor (ENG-24) e o cliente LSP.
   Decisão: avaliar com prova de conceito isolada e decidir na DP-10 do 64
   §11, que segura só as fases do editor (64 §8). O produto não migra antes
-  da aprovação explícita do autor depois da prova. Aberto.
+  da aprovação explícita do autor depois da prova. Aberto. A avaliação está
+  no [65](65-avaliacao-do-neovim-como-motor-de-edicao.md): a fase A ficou
+  pronta em 2026-11-14, com GO só para a prova de conceito.
 - **ENG-59 — Adaptador de depuração e motor de gravação escolhidos por
   `match` de texto.** Evidência: `dap/adapter.rs` e `flash/mod.rs`.
   Severidade baixa. Decisão: tabela de descritores (64 §5.12), fase B10.
