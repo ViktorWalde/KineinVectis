@@ -1,0 +1,13 @@
+[package]
+name = "kinein-prova-supervisor"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+libc = "0.2"
+rmpv = "1"
+serde_json = "1"
+
+[profile.release]
+debug = 1

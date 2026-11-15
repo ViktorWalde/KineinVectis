@@ -1,0 +1,5 @@
+/ui/build/
+/supervisor/target/
+/base/arvore/
+/tmp/
+__pycache__/

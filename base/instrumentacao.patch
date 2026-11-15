@@ -1,0 +1,100 @@
+--- a/ui/src/typing_perf_harness.cpp
++++ b/ui/src/typing_perf_harness.cpp
+@@ -19,6 +19,8 @@
+ #include <QVariant>
+ 
+ #include <atomic>
++#include <csignal>
++#include <unistd.h>
+ #include <functional>
+ #include <utility>
+ 
+@@ -117,6 +119,11 @@
+     bool m_workspaceRequested = false;
+     std::function<void()> m_afterQuiet;
+     QTimer m_quietTimer;
++    // Medida da prova do Neovim (R2): 1 = pedido; 2 = texto no editor;
++    // 3 = sincronizado; o swap seguinte fecha a amostra.
++    std::atomic<int> m_openStage{0};
++    std::atomic<qint64> m_openSentNs{-1};
++    QTimer m_openPoll;
+ };
+ 
+ void TypingHarness::begin()
+@@ -168,6 +175,33 @@
+         },
+         Qt::DirectConnection);
+ 
++    connect(
++        m_window, &QQuickWindow::afterSynchronizing, this,
++        [this] {
++            int two = 2;
++            m_openStage.compare_exchange_strong(two, 3);
++        },
++        Qt::DirectConnection);
++    connect(
++        m_window, &QQuickWindow::frameSwapped, this,
++        [this] {
++            int three = 3;
++            if (m_openStage.compare_exchange_strong(three, 0)) {
++                const double ms = static_cast<double>(m_clock.nsecsElapsed() - m_openSentNs.load()) / 1000000.0;
++                qInfo().noquote().nospace() << "KINEIN_PERF open_to_frame_ms=" << QString::number(ms, 'f', 2);
++            }
++        },
++        Qt::DirectConnection);
++    m_openPoll.setInterval(1);
++    connect(&m_openPoll, &QTimer::timeout, this, [this] {
++        if (!editorText().isEmpty()) {
++            m_openPoll.stop();
++            int one = 1;
++            m_openStage.compare_exchange_strong(one, 2);
++            m_window->update();
++        }
++    });
++    qInfo().noquote().nospace() << "KINEIN_PERF typing_window=" << m_window->width() << 'x' << m_window->height();
+     QTimer::singleShot(m_timeoutMs, this, [this] {
+         fail(QStringLiteral("timeout após %1 ms (amostras=%2)")
+                  .arg(m_timeoutMs)
+@@ -204,6 +238,10 @@
+         return;
+     }
+     disconnect(m_client, &CoreClient::workspaceChanged, this, nullptr);
++    if (qEnvironmentVariableIsSet("KINEIN_PERF_OPEN_PROBE")) {
++        m_openSentNs.store(m_clock.nsecsElapsed());
++        m_openStage.store(1);
++    }
+     // Abre a aba. O jump/foco definitivo vem depois, ja com o texto carregado.
+     QMetaObject::invokeMethod(m_editor, "openDiagnostic", Q_ARG(QVariant, m_file),
+                               Q_ARG(QVariant, 1), Q_ARG(QVariant, 1));
+@@ -211,6 +249,9 @@
+ 
+ void TypingHarness::onFileLoaded()
+ {
++    if (m_openStage.load() == 1) {
++        m_openPoll.start();
++    }
+     waitForQuiet([this] {
+         const QString text = editorText();
+         if (text.isEmpty()) {
+@@ -295,6 +336,21 @@
+         return;
+     }
+     qInfo().noquote().nospace() << "KINEIN_PERF typing_keys=" << m_samples.size();
++    if (qEnvironmentVariableIsSet("KINEIN_PERF_DUMP_LINE")) {
++        const QStringList lines = editorText().split(QLatin1Char('\n'));
++        const int line = envInt("KINEIN_PERF_TYPING_LINE", static_cast<int>(editorText().count(QLatin1Char('\n'))) / 2);
++        qInfo().noquote().nospace() << "KINEIN_PERF typing_line_text=" << lines.value(line - 1);
++    }
++    const int crashAfter = envInt("KINEIN_PERF_CRASH_AFTER_MS", -1);
++    if (crashAfter >= 0) {
++        qInfo().noquote().nospace() << "KINEIN_PERF typing_crash_in_ms=" << crashAfter;
++        QTimer::singleShot(crashAfter, this, [] { ::kill(::getpid(), SIGKILL); });
++        return;
++    }
++    if (qEnvironmentVariableIsSet("KINEIN_PERF_HOLD")) {
++        qInfo().noquote().nospace() << "KINEIN_PERF typing_hold=1";
++        return;
++    }
+     QCoreApplication::quit();
+ }
+ 
