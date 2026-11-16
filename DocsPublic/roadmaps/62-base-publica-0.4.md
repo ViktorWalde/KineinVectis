@@ -201,7 +201,8 @@ e zsh reais, com fish) é o primeiro item. Estado transversal em 2026-11-15: INF
 e INF-02 corrigidos no recorte Linux (INF-02 com bash, zsh e fish); INF-03,
 INF-04, INF-05, INF-07, INF-08, INF-09, INF-10, INF-11, INF-12, INF-13,
 INF-14, INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; INF-06, INF-16,
-INF-19, INF-22, INF-23, INF-24, INF-25, INF-26, INF-27, INF-28, UI-01 e UI-02 abertos. A dívida
+INF-19, INF-22, INF-23, INF-24, INF-25, INF-26, INF-27, INF-28, INF-29,
+INF-30, INF-31, UI-01 e UI-02 abertos. A dívida
 técnica que compromete essas capacidades é paga dentro da 0.4 (§3.4), e as
 camadas finais de teste estão em §3.5. As provas mantêm rigidez alta: lógica
 e comunicação entre módulos exercitadas até o limite, cenários improváveis,
@@ -710,7 +711,12 @@ auditorias e provas posteriores datadas nos donos:**
   mudar o teste. Decisão do autor de 2026-11-12: pagar na 0.4, com o prazo
   como parâmetro do teste: o teste que não é sobre o prazo recebe um prazo
   folgado, e o que é sobre o prazo usa um compilador falso que nunca termina
-  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.5). Estado aberto.
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §E.5). Medido em
+  2026-11-15 ([66](66-os-gates-antes-da-estrategia-b.md) §2.3): o mesmo
+  prazo de 5 s é uma constante em
+  `crates/kinein-core/src/handlers/lsp/verification.rs`, e dois testes do
+  INF-24 que passam pelo handler reprovam por ele; o parâmetro tem de
+  alcançar esse caminho. Estado aberto.
 - **INF-07 — `settings.json` de esquema desconhecido sobrescrito.** Dono e
   evidência: `crates/kinein-core/src/settings.rs`. `read_values` devolve o
   vazio para o arquivo sem `schemaVersion` ou com outro, e `set_workspace` e
@@ -1235,12 +1241,36 @@ auditorias e provas posteriores datadas nos donos:**
   4 ao mesmo tempo, 0 em 100; um por vez, 0 em 60.
   Severidade média: o gate rápido roda esse teste e pode reprovar sem
   mudança nenhuma, e a rodada dos pendentes reprova por um teste que não vê
-  o defeito. Causa não investigada: este registro não diz se a corrida é do
-  produto (a configuração começada por último ainda não é a ativa quando o
-  `event.cmake.finished` sai) ou do teste. Testes: a reprodução acima, 16 ao
-  mesmo tempo, antes e depois da correção. Decisão: nenhuma ainda; onde ele
-  entra na ordem é do autor
-  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Estado aberto.
+  o defeito. Causa confirmada em 2026-11-15, por medida
+  ([66](66-os-gates-antes-da-estrategia-b.md) §2.3): a corrida é do
+  produto. Cada `reload_index_context`
+  (`crates/kinein-core/src/handlers/index.rs`) cria um job que carrega o
+  contexto de compilador e o troca no índice, e a troca só confere a raiz
+  do workspace: uma carga mais velha pode cair por cima de uma mais nova.
+  No começo do configure de `release local` nascem duas releituras com
+  poucos milissegundos de diferença; a mais velha carrega o contexto com a
+  CDB de `debug local`, e a mais nova, o contexto sem CDB, que é o certo.
+  Medido com o binário de teste da árvore do `cbb1f649`, instrumentado
+  numa cópia:
+  - 32 ao mesmo tempo, 24 reprovações em 1920 execuções. Em todas, a
+    primeira leitura respondeu "a origem ou o conteúdo da CDB mudou;
+    recarregue/reconfigure", e a resposta certa veio de 1 ms a 18 ms
+    depois;
+  - o mesmo lote com a ordem das trocas registrada: 11 em 1920, e em 11 de
+    11 a 4ª releitura do processo trocou depois da 5ª;
+  - com a 4ª releitura segura 100 ms ou 140 ms entre carregar e trocar: 10
+    em 10, com a mesma resposta;
+  - 16 ao mesmo tempo: 0 em 192 nesse dia.
+
+  No teste, a releitura do fim do configure conserta o estado em
+  milissegundos. No produto, o contexto velho fica até o próximo evento
+  que relê; quanto isso dura no uso não foi medido. A severidade segue
+  média. Testes: o teste de unidade da troca fora de ordem, com o mutante
+  que tira a comparação; a sequência forçada acima e o lote de 32, antes e
+  depois da correção. Decisão: nenhuma ainda. A proposta do 66 §9 (G1.3)
+  é corrigir antes do B1, dando ordem à troca; onde ele entra na ordem é
+  do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Estado
+  aberto.
 - **INF-23 — Código do projeto executado sem a confiança da pessoa.** Dono e
   evidência: [64 §2.1](64-revisao-da-arquitetura-e-estrategia-b.md).
   Reproduzido em 2026-11-14, com o binário release do 9198888c, num projeto
@@ -1306,15 +1336,38 @@ auditorias e provas posteriores datadas nos donos:**
   repetir a rodada até ficar verde é veredito por sorte. O impacto cresce na
   estratégia B: o B1, o B2 e o B3 mexem na concorrência, e o aceite deles
   precisa de uma suíte em que vermelho quer dizer defeito. A severidade sobe
-  se a causa de algum dos cinco estiver no produto. Causa não investigada:
-  este registro não diz, para nenhum dos cinco, se a corrida é do produto
-  ou do teste; a verificação marcada obsoleta, igual em dois testes, e a
-  sessão que não fecha são as duas pistas a seguir primeiro. Testes: a repetição da suíte em lote,
+  se a causa de algum dos cinco estiver no produto. Causa medida em
+  2026-11-15, teste a teste, na árvore do `cbb1f649`
+  ([66](66-os-gates-antes-da-estrategia-b.md) §2.3). Nesse dia a suíte
+  rodou 25 vezes, todas verdes; a causa saiu da medida do mecanismo dentro
+  da suíte e da dose e resposta num parâmetro, numa cópia instrumentada:
+  - os dois da verificação de edição: do teste. O prazo de 5 s é uma
+    constante no handler, e o teste não o recebe: é o INF-06 num caminho
+    que ele não citava. Dentro da suíte a verificação levou até 3227 ms.
+    Com o prazo por variável, a 300 ms e a 1000 ms o teste reprova 3 em 3,
+    com o mesmo `notVerified` e `obsolete: true`; a 2500 ms, 0 em 3. Os
+    dois defeitos do produto que a medida achou são o INF-30;
+  - o do INF-22: do produto, com a causa no INF-22;
+  - o do PlatformIO: do teste. O `event.index.finished` sai de três
+    produtores e não diz a causa; o teste espera o primeiro, e quando o
+    primeiro vem do watcher o contexto ainda não foi relido. 16 ao mesmo
+    tempo, 6 em 320; com a releitura 300 ms mais lenta, 10 em 10; o
+    contexto fica certo de 2 ms a 3 ms depois;
+  - o do serial: do produto e do ambiente do teste. O filho aborta na
+    falha do `exec` (INF-29), o sistema grava o core dump dele, e a sessão
+    só fecha depois. Dentro da suíte, a sessão fechou entre 3079 ms e
+    3534 ms com outra carga na máquina, contra o prazo de 4000 ms. Com a
+    máquina livre: 2058 ms a 2120 ms, e 505 ms a 564 ms com o limite de
+    core do processo em zero.
+
+  A severidade segue média: as duas causas do produto têm item próprio
+  (INF-22 e INF-29). Testes: a repetição da suíte em lote,
   com a taxa por teste, e cada um dos cinco com 16 cópias ao mesmo tempo,
   como no INF-22, antes e depois da correção; aumentar o prazo de espera
-  sem a causa não fecha o item. Decisão: nenhuma ainda; onde ele entra na
-  ordem é do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2).
-  Estado aberto.
+  sem a causa não fecha o item. Decisão: nenhuma ainda. A proposta do 66
+  §9 (G1) é corrigir os cinco antes do B1, nenhum com prazo maior; onde
+  ele entra na ordem é do autor
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Estado aberto.
 - **INF-25 — Abrir um arquivo grande ocupa a UI por dezenas de segundos.**
   Dono e evidência: a abertura de documento no editor atual, na UI, medida
   pela prova do [65](65-avaliacao-do-neovim-como-motor-de-edicao.md)
@@ -1424,6 +1477,95 @@ auditorias e provas posteriores datadas nos donos:**
   `fileLoaded` reprovando. Decisão: nenhuma ainda; onde ele entra na ordem
   é do autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2).
   Estado aberto.
+- **INF-29 — Falha de `exec` numa sessão de terminal aborta o filho, e o
+  sistema grava um core dump.** Dono e evidência:
+  `crates/kinein-core/src/terminal/session.rs`, que cria o processo da
+  sessão pelo `portable-pty` 0.9.0. Lido na dependência: antes do `exec`,
+  ela fecha todos os descritores acima do 2, inclusive o canal por onde a
+  biblioteca padrão do Rust avisa o pai de que o `exec` falhou; a
+  biblioteca não consegue escrever nele e aborta o filho. Medido em
+  2026-11-15 ([66](66-os-gates-antes-da-estrategia-b.md) §2.3), com o
+  teste `a_failed_program_releases_the_port_after_the_terminal_reports_its_exit`,
+  que roda um script cujo interpretador não existe: o terminal mostra
+  "fatal runtime error: assertion failed: output.write(&bytes).is_ok(),
+  aborting", o filho morre por aborto, e a sessão só fecha depois que o
+  sistema grava o core dump. Com o teste sozinho, a sessão fecha em
+  1011 ms a 1162 ms com o core dump e em 535 ms com o limite de core do
+  processo em zero. Cada core dump do teste ocupa de 21 MiB a 26 MiB
+  compactado no registro do sistema. Para a pessoa, um script com o
+  interpretador errado aparece como erro interno do runtime, e não como
+  programa que não pôde ser executado; lido, não medido: no produto, o
+  processo que aborta é uma cópia do core. No gate, é a causa de um dos
+  cinco testes do INF-24, e cada rodada da suíte deixa um core dump na
+  máquina de quem a roda (R-TEST-04 do
+  [63](63-regras-e-plano-de-engenharia-da-0.4.md)). Severidade média:
+  mensagem errada e efeito na máquina da pessoa, sem perda de dado. Causa
+  confirmada pela leitura da dependência e pela medida com e sem core
+  dump; não foi medido se uma versão mais nova da dependência corrige.
+  Testes: a falha de `exec` numa sessão mostra o erro do sistema e fecha
+  com código de saída, sem aborto e sem core dump; o mutante que volta a
+  fechar o canal reprova. Decisão: nenhuma ainda. A proposta do 66 §9 é
+  corrigir no B2, com a sessão de terminal no lançador, e até lá zerar o
+  limite de core no executor dos testes (G1.1). Estado aberto.
+- **INF-30 — A verificação de edição só conclui quando o par de
+  compilações cabe num segundo do relógio, e o prazo estourado sai como
+  obsoleto.** Dono e evidência:
+  `crates/kinein-core/src/build/edit_verification/mod.rs` e
+  `crates/kinein-core/src/handlers/lsp/verification.rs`. Lido: depois da
+  sonda, a verificação compila antes e depois da edição e repete o par
+  enquanto as duas chamadas não caem no mesmo segundo do relógio, salvo
+  com `SOURCE_DATE_EPOCH` definido; e marca `obsolete` quando a
+  conferência final do contexto passa do prazo, mesmo com o contexto
+  igual. Com `obsolete`, o handler troca o motivo por "Edição ou contexto
+  obsoleto; consulte as ações novamente.". Medido em 2026-11-15
+  ([66](66-os-gates-antes-da-estrategia-b.md) §2.3), numa cópia
+  instrumentada:
+  - com o prazo de 1000 ms e de 1500 ms, 4 verificações terminaram a
+    comparação e saíram `notVerified` com `obsolete: true`, sem nada
+    obsoleto;
+  - com o compilador 600 ms mais lento por chamada, o par leva 1,36 s e
+    nunca cabe num segundo: com o prazo de 5 s, `notVerified` em 5,4 s;
+    com 30 s, 18 pares repetidos e `notVerified` em 30,5 s;
+  - com 250 ms a mais por chamada, 7 de 10 verificações passaram de 5 s;
+  - o `clang++ -fsyntax-only` de 4 unidades de `ui/src`, com as flags do
+    build, leva de 2,4 s a 3,6 s por chamada: as três chamadas de uma
+    verificação não cabem no prazo de 5 s do §4, e nenhuma unidade C++ do
+    próprio produto se verifica.
+
+  Severidade média: o veredito nunca sai errado, é sempre "não
+  verificado"; mas o motivo manda a pessoa repetir um pedido que dá o
+  mesmo resultado, e a verificação gasta o prazo inteiro compilando em
+  laço. Causa confirmada por leitura e pela medida. Testes: o prazo
+  estourado sai com o motivo do prazo e sem `obsolete`; o par que
+  atravessa o segundo conclui, com um compilador falso lento; os mutantes
+  das duas guardas. Decisão: nenhuma ainda. Não é do gate: o prazo como
+  parâmetro do teste é o INF-06. Onde ele entra na ordem é do autor
+  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Estado aberto.
+- **INF-31 — Passo dinâmico do gate exercita o binário da árvore, e não o
+  que a rodada compilou.** Dono e evidência:
+  `scripts/verificar-exercitacao.sh`, que roda `cargo build -q -p
+  kinein-core` e depois usa `target/debug/kinein-core`, relativo à
+  árvore. Com `CARGO_TARGET_DIR` fora da árvore, como no comando do gate
+  rápido, o cargo grava em outro lugar, e o passo exercita o binário que
+  estiver na árvore. Medido em 2026-11-15
+  ([66](66-os-gates-antes-da-estrategia-b.md) §2.4), numa cópia, com um
+  core plantado que sai com o código 3 ao subir sem argumento: com o alvo
+  do cargo fora da árvore, o passo sai com 0 e diz "os endpoints com
+  ferramenta externa responderam", exercitando o binário da árvore, de
+  2026-11-13; sem a variável, sai com 1. Lido, não medido: o
+  `verificar_embarcado.py`, o `verificar_python_debug.py` e o
+  `verificar_micropython_porta.py` usam o mesmo caminho fixo, e a UI que o
+  `verificar_binario_abre.py` abre procura o core em `target/debug/` a
+  partir da raiz (`ui/src/core_client_process.cpp`). Na árvore do
+  `cbb1f649` o veredito não mudou por isso, porque `crates/` não muda
+  desde 2026-11-13. Severidade alta, como o ENG-45: verde que não conferiu
+  o código da rodada não se distingue do que conferiu. Causa confirmada
+  por leitura e pela medida. Testes: o core plantado reprova o passo com o
+  alvo do cargo fora da árvore; cada passo dinâmico diz o caminho do
+  binário que exercitou. Decisão: nenhuma ainda. A proposta do 66 §9 é o
+  G5, com o ENG-03, e a regra nova do 66 §11; onde ele entra na ordem é do
+  autor ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Estado
+  aberto.
 - **INF-08 — Linha do terminal juntada por heurística no ajudante Python do
   gate.** Dono e evidência: `_texto_do_render` em
   `scripts/verificar_python_debug.py`, que o `verificar_micropython_porta.py`

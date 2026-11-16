@@ -70,9 +70,15 @@ que diz o destino de cada item do 63. A avaliação do Neovim como motor de
 edição (ENG-60, DP-10 do 64) está no
 [`65-avaliacao-do-neovim-como-motor-de-edicao.md`](65-avaliacao-do-neovim-como-motor-de-edicao.md);
 desde 2026-11-15 (decisão do autor), a DP-10 escolhe o Neovim, com
-condições.
+condições. **Desde 2026-11-15 (decisão do autor),** nenhuma fase de código
+da estratégia B começa sobre gate frouxo: a proposta do bloco dos gates
+que vem antes do B1, com as medidas, a classe de cada regra, a ordem e as
+perguntas ao autor, está no
+[`66-os-gates-antes-da-estrategia-b.md`](66-os-gates-antes-da-estrategia-b.md)
+e aguarda decisão.
 
 ```text
+66-os-gates-antes-da-estrategia-b.md  a proposta dos gates antes do código da estratégia B: medidas de 2026-11-15, classe de cada regra da Parte A e de cada passo do gate, ordem do bloco e perguntas ao autor (PLANO)
 65-avaliacao-do-neovim-como-motor-de-edicao.md  a avaliação do Neovim como motor de edição e cliente LSP (ENG-60): critérios de refutação, diagnóstico, donos, segurança, os resultados da prova de conceito e a decisão da DP-10 com as condições (PLANO)
 64-revisao-da-arquitetura-e-estrategia-b.md  a revisão de concepção de 2026-11-14 e o plano da estratégia B: medidas, arquitetura-alvo, ordem e decisões do autor (PLANO)
 63-regras-e-plano-de-engenharia-da-0.4.md  Parte A: o regulamento de engenharia (CONTRATO); partes B–H: inventário, arquitetura-alvo, gate e ordem (PLANO)

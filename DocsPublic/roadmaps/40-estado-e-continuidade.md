@@ -21,7 +21,7 @@
 > algoritmo especializado → camadas finais de teste (62 §3.5) → Windows básico
 > em VM. Fundação transversal (INF-02/INF-04 no Linux, INF-03 e INF-05; §§7.390–7.392, §7.395; INF-07, INF-11 e INF-12, §7.410; INF-13 e INF-14, §7.411; INF-15, §7.413; INF-17, §7.414; INF-20, §7.415; INF-21, §7.416; INF-18, §§7.417–7.418); dívida na 0.4.
 > Recorte atual (2026-11-14): **engenharia da 0.4**, pelo **63** (regras na Parte A, ordem
-> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia. O B0 fechou (§7.421): requisitos no 19 (D13 a D18) e 63 reconciliado. Pelo D-27 do 63, **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos**; o motor de edição virou a DP-10 do 64 §11 (ENG-60); a avaliação do Neovim está no **65** (§7.422). Depois da prova de conceito (65 §20, §7.424), por decisão do autor de 2026-11-15 **a DP-10 escolhe o Neovim, com condições** (65 §21): o editor atual fica até o produto integrado passar nelas, e a integração começa depois do B2 e do B3. A próxima fatia de código é o B1. **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). **INF-24 aberto:** a suíte do core reprova sob a própria carga, sem defeito plantado (§7.423); o veredito do gate rápido depende de sorte até ele fechar. O **C1** (consolidação C §4.1) retoma depois. Polimento
+> no §E.1; INF-15, INF-17, INF-20, INF-21 e INF-18 corrigidos; ferramenta do ENG-01, §7.419). A revisão da arquitetura terminou (**64**, §7.420): por decisão do autor de 2026-11-14, a 0.4 segue a **estratégia B**, o bloco do D-19 (ENG-40 em diante) não começa como está escrito, e as nove decisões do 64 §11 foram aceitas no mesmo dia. O B0 fechou (§7.421): requisitos no 19 (D13 a D18) e 63 reconciliado. Pelo D-27 do 63, **a 0.4 é a última versão que reconstrói de forma sistemática os fundamentos**; o motor de edição virou a DP-10 do 64 §11 (ENG-60); a avaliação do Neovim está no **65** (§7.422). Depois da prova de conceito (65 §20, §7.424), por decisão do autor de 2026-11-15 **a DP-10 escolhe o Neovim, com condições** (65 §21): o editor atual fica até o produto integrado passar nelas, e a integração começa depois do B2 e do B3. Por decisão do autor de 2026-11-15, nenhuma fase de código da B começa sobre gate frouxo: a proposta do bloco dos gates, que vem antes do B1, está no **66** (§7.429) e aguarda a decisão do autor. **INF-23 aberto, crítico:** código do projeto executado sem confiança (64 §2.1). **INF-24 aberto:** a suíte do core reprova sob a própria carga, sem defeito plantado (§7.423); o veredito do gate rápido depende de sorte até ele fechar. A causa de cada um dos cinco testes foi medida em 2026-11-15 (66 §2.3): duas são do produto (INF-22 e INF-29) e as outras, do teste; INF-30 e INF-31 abertos (62 §3.4). O **C1** (consolidação C §4.1) retoma depois. Polimento
 > UI/HUD/UX acompanha as jornadas; Setup exige polimento cromático/de interação (62, §7.373).
 > **Fundamentos obrigatórios:** ambiente, DAP, QEMU, SVD, VFS, plotagem, notebooks,
 > engenharia e Windows básico (porte completo por colaboração); B6–B10 no 62.
@@ -191,13 +191,24 @@ recomendação de GO só para a prova isolada. A prova (fase B) rodou em
 2026-11-15 (fase C, 65 §21; D-29 do 63): **o motor de edição é o Neovim,
 com condições**. O editor atual fica até o produto integrado passar no R1 e
 no R12 pelo método da prova, no R10 com o documento inteiro, no IME real e
-nos testes do Windows; a integração começa depois do B2 e do B3. A próxima
-fatia de código é o B1. Nenhuma fase de código da B
-começou. O INF-23 (código do projeto executado sem confiança,
+nos testes do Windows; a integração começa depois do B2 e do B3. Nenhuma
+fase de código da B começou. Por decisão do autor de 2026-11-15, nenhuma
+começa sobre gate frouxo: a proposta do bloco dos gates que vem antes do
+B1 está no [66](66-os-gates-antes-da-estrategia-b.md) (40.7 §7.429) e
+aguarda a decisão do autor; a Parte A do 63 e a ordem do 64 §8 não
+mudaram. O INF-23 (código do projeto executado sem confiança,
 severidade crítica, [62 §3.4](62-base-publica-0.4.md)) está aberto e é o
 primeiro item da fase B2. O INF-24 (a suíte do core que reprova sob a
 própria carga, em cinco testes, sem defeito plantado) está aberto, com a
-ordem a decidir pelo autor. A prova do ENG-60 achou quatro itens, todos
+ordem a decidir pelo autor; a causa de cada um dos cinco foi medida em
+2026-11-15 (66 §2.3), e a do INF-22 está no produto: a releitura do
+contexto de compilador não tem ordem. A medida dos gates achou três
+itens, todos abertos (§7.429): o INF-29 (a falha de `exec` numa sessão de
+terminal aborta o processo filho, e o sistema grava um core dump), o
+INF-30 (a verificação de edição só conclui quando o par de compilações
+cabe num segundo do relógio, e o prazo estourado sai como obsoleto) e o
+INF-31 (passo dinâmico do gate exercita o binário da árvore, e não o que
+a rodada compilou). A prova do ENG-60 achou quatro itens, todos
 abertos:
 - no editor atual, o INF-25 (abrir um arquivo de 19.970 linhas ocupa a UI
   por dezenas de segundos, §7.425), o INF-26 (o rascunho não grava
