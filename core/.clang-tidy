@@ -1,0 +1,46 @@
+# clang-tidy do core em C++ (docs/engenharia/analise-estatica-clang-tidy.md).
+# Independente do .clang-tidy da raiz, que segue valendo para ui/.
+#
+# Checagens desligadas, cada uma com o motivo. Todas vem do .clang-tidy da 0.3
+# sem medida nova; cada uma volta a ser avaliada com o primeiro codigo do core:
+# - bugprone-easily-swappable-parameters: ruido alto na 0.3. A defesa planejada
+#   e' tipo proprio para parametro do dominio (regras-de-cpp23.md).
+# - cppcoreguidelines-avoid-magic-numbers: so estilo, sem defeito associado.
+# - cppcoreguidelines-non-private-member-variables-in-classes: struct de dados
+#   com campos publicos e' a forma pedida pelas Core Guidelines (C.2, C.131).
+# - modernize-use-trailing-return-type: so estilo.
+#
+# Uma supressao no codigo so entra como NOLINT(<checagem>): <motivo>, na linha.
+InheritParentConfig: false
+Checks: >-
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -modernize-use-trailing-return-type
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*/core/(lib|qt|tests)/.*'
+ExcludeHeaderFilterRegex: '.*_autogen/.*'
+SystemHeaders: false
+FormatStyle: file
+CheckOptions:
+  # Resultado de std::expected descartado e' erro (padrao do clang-tidy 23,
+  # fixado aqui para nao mudar com a versao).
+  bugprone-unused-return-value.CheckedReturnTypes: '^::std::error_code$;^::std::error_condition$;^::std::errc$;^::std::expected$'
+  bugprone-unused-return-value.AllowCastToVoid: false
+  cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors: true
+  # Processo so pelo lancador (docs/arquitetura/processos-e-confianca.md).
+  # Casa o nome qualificado da funcao chamada ou referenciada: chamada direta,
+  # qualificada, via std::, ponteiro, macro, using e metodo de classe. Nao casa
+  # construtor. Eficacia medida pelo teste gate.launcher (preset lint), com o
+  # corpus em tests/gates/launcher/. Quando o modulo que cria processo existir,
+  # a pasta dele ganha um .clang-tidy proprio sem esta lista, e so ela.
+  # Uma linha so: o YAML dobrado poria um espaco antes de cada entrada.
+  bugprone-unsafe-functions.CustomFunctions: '^::(fork|vfork|_Fork|clone|clone3|execl|execle|execlp|execv|execve|execvp|execvpe|execveat|fexecve|posix_spawn|posix_spawnp|pidfd_spawn|pidfd_spawnp|system|popen|syscall|forkpty|daemon|wordexp)$,,cria processo fora do lancador;^::QProcess::(start|startDetached|startCommand|execute|open)$,,cria processo fora do lancador;^::(CreateProcessA|CreateProcessW|CreateProcessAsUserA|CreateProcessAsUserW|CreateProcessWithLogonW|CreateProcessWithTokenW|ShellExecuteA|ShellExecuteW|ShellExecuteExA|ShellExecuteExW|WinExec|_spawnl|_spawnv|_spawnvp|_spawnvpe|_wspawnvp|_wsystem|_popen|_wpopen)$,,cria processo fora do lancador'

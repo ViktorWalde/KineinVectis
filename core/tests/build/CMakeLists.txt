@@ -1,0 +1,23 @@
+# Contrato do build: o perfil promete flags, e estes testes conferem que elas
+# chegaram ao compilador (build.contract) e ao binario (build.elf_hardening).
+add_executable(kinein_build_contract_test build_contract_test.cpp)
+kinein_apply_profile(kinein_build_contract_test TEST)
+
+string(MAKE_C_IDENTIFIER "${KINEIN_PROFILE}" profile_id)
+string(TOUPPER "${profile_id}" profile_id)
+target_compile_definitions(kinein_build_contract_test PRIVATE
+    KINEIN_EXPECTED_PROFILE_${profile_id}=1
+    KINEIN_EXPECTED_CXX_STANDARD=${KINEIN_CXX_STANDARD}
+)
+
+add_test(NAME build.contract COMMAND kinein_build_contract_test)
+kinein_sanitizer_test_environment(build.contract)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_program(KINEIN_READELF NAMES readelf REQUIRED)
+    add_test(NAME build.elf_hardening
+        COMMAND "${CMAKE_COMMAND}"
+            "-DBINARY=$<TARGET_FILE:kinein_build_contract_test>"
+            "-DREADELF=${KINEIN_READELF}"
+            -P "${PROJECT_SOURCE_DIR}/cmake/CheckElfHardening.cmake")
+endif()

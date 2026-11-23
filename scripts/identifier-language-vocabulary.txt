@@ -673,6 +673,7 @@ defects
 defer
 deferred
 define
+defined
 defines
 definition
 definitions
@@ -1109,6 +1110,7 @@ format
 formats
 formatted
 forms
+fortify
 forward
 forwards
 found
@@ -1792,6 +1794,7 @@ operation
 operational
 operations
 operator
+optimal
 option
 optional
 optionally

@@ -1,0 +1,85 @@
+# CI do core em C++ (docs/engenharia/gates-e-medida-de-eficacia.md, secao "A CI").
+#
+# Roda os mesmos presets de core/CMakePresets.json que a maquina de quem
+# desenvolve, sem conteiner: o runner do GitHub ja traz os compiladores.
+# - Piso declarado (decisao de 2026-11-22): GCC 14 e Clang 20.
+# - Mais novo do runner: GCC 15 e Clang 22, com o clang-tidy 22.
+# O compilador do preset e' trocado na linha de comando; o resto do preset vale.
+name: Core C++
+
+on:
+  push:
+    paths:
+      - "core/**"
+      - ".github/workflows/core.yml"
+  pull_request:
+    paths:
+      - "core/**"
+      - ".github/workflows/core.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: ${{ matrix.preset }} / ${{ matrix.cxx }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # O piso: o configure recusa compilador abaixo dele.
+          - { preset: dev, cxx: g++-14 }
+          - { preset: dev, cxx: clang++-20 }
+          # O mais novo do runner, em todos os perfis.
+          - { preset: dev, cxx: g++-15 }
+          - { preset: production, cxx: g++-15 }
+          - { preset: asan-ubsan, cxx: g++-15 }
+          - { preset: tsan, cxx: g++-15 }
+          - { preset: debug-stl, cxx: g++-15 }
+          - { preset: cxx26-probe, cxx: g++-15 }
+          - { preset: lint, cxx: clang++-22, tidy: clang-tidy-22 }
+          - { preset: asan-ubsan, cxx: clang++-22 }
+          - { preset: tsan, cxx: clang++-22 }
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      # HIPOTESE, nao medida no runner: kernel com ASLR de alta entropia
+      # (vm.mmap_rnd_bits=32) derruba os sanitizers de LLVM antigo
+      # (actions/runner-images#9491). Sai se a primeira rodada sem ele passar.
+      - name: Limit mmap randomization for the sanitizers
+        if: ${{ matrix.preset == 'asan-ubsan' || matrix.preset == 'tsan' }}
+        run: sudo sysctl -w vm.mmap_rnd_bits=28
+
+      - name: Show the toolchain
+        run: |
+          ${{ matrix.cxx }} --version | head -n 1
+          cmake --version | head -n 1
+          ninja --version
+          if [ -n "${{ matrix.tidy }}" ]; then ${{ matrix.tidy }} --version | grep -i version; fi
+
+      - name: Configure
+        working-directory: core
+        run: |
+          extra=()
+          if [ -n "${{ matrix.tidy }}" ]; then
+            extra+=("-DKINEIN_CLANG_TIDY_EXE=$(command -v ${{ matrix.tidy }})")
+          fi
+          cmake --preset "${{ matrix.preset }}" -DCMAKE_CXX_COMPILER="${{ matrix.cxx }}" "${extra[@]}"
+
+      - name: Build
+        working-directory: core
+        run: cmake --build --preset "${{ matrix.preset }}"
+
+      - name: Test
+        working-directory: core
+        run: ctest --preset "${{ matrix.preset }}"

@@ -244,3 +244,11 @@ zdotdir zshenv zshrc powerlevel robbyrussell autosuggestions
 # SIGHUP, os sinais POSIX que encerram a rodada como o SIGTERM.
 sched getaffinity setaffinity copyfile copymode readlink lexists utime
 fromkeys hasattr classmethod nowait traceback metavar sigint sighup
+
+# --- core em C++ (core/, 2026-11-22): as APIs POSIX, glibc e Windows que criam
+# processo, citadas no corpus do gate do lancador (core/tests/gates/launcher/),
+# os cabecalhos e macros da biblioteca padrao, e os nomes dos sanitizers.
+execl execle execlp execv execve execveat execvp fexecve forkpty vfork wordexp
+syscall pidfd spawnp spawnvp wsystem wchar envp wnohang atoi
+cstdio cstdlib csignal cstddef filesystem glibcxx gnuc
+asan tsan ubsan

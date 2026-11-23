@@ -1,0 +1,110 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../build/core-${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_COMPILER": "g++",
+        "KINEIN_CXX_STANDARD": "23",
+        "KINEIN_WERROR": "ON"
+      }
+    },
+    {
+      "name": "dev",
+      "inherits": "base",
+      "displayName": "Desenvolvimento (GCC, -Werror, semantica de producao)",
+      "cacheVariables": { "KINEIN_PROFILE": "dev" }
+    },
+    {
+      "name": "asan-ubsan",
+      "inherits": "base",
+      "displayName": "ASan + UBSan (GCC)",
+      "cacheVariables": { "KINEIN_PROFILE": "asan-ubsan" }
+    },
+    {
+      "name": "tsan",
+      "inherits": "base",
+      "displayName": "TSan (GCC)",
+      "cacheVariables": { "KINEIN_PROFILE": "tsan" }
+    },
+    {
+      "name": "debug-stl",
+      "inherits": "base",
+      "displayName": "Teste da biblioteca padrao (_GLIBCXX_DEBUG, -O0)",
+      "cacheVariables": { "KINEIN_PROFILE": "debug-stl" }
+    },
+    {
+      "name": "production",
+      "inherits": "base",
+      "displayName": "Producao (sem -Werror: e' o que se distribui)",
+      "cacheVariables": {
+        "KINEIN_PROFILE": "production",
+        "KINEIN_WERROR": "OFF"
+      }
+    },
+    {
+      "name": "lint",
+      "inherits": "base",
+      "displayName": "Clang + clang-tidy (perfil dev)",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "KINEIN_PROFILE": "dev",
+        "KINEIN_CLANG_TIDY": "ON"
+      }
+    },
+    {
+      "name": "cxx26-probe",
+      "inherits": "base",
+      "displayName": "Sondagem C++26 (so detecta incompatibilidade)",
+      "cacheVariables": {
+        "KINEIN_PROFILE": "dev",
+        "KINEIN_CXX_STANDARD": "26"
+      }
+    },
+    {
+      "name": "dev-qt",
+      "inherits": "dev",
+      "displayName": "Desenvolvimento com o adaptador Qt (KINEIN_QT_PREFIX)",
+      "cacheVariables": {
+        "KINEIN_CORE_WITH_QT": "ON",
+        "CMAKE_PREFIX_PATH": "$env{KINEIN_QT_PREFIX}"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev", "configurePreset": "dev" },
+    { "name": "asan-ubsan", "configurePreset": "asan-ubsan" },
+    { "name": "tsan", "configurePreset": "tsan" },
+    { "name": "debug-stl", "configurePreset": "debug-stl" },
+    { "name": "production", "configurePreset": "production" },
+    { "name": "lint", "configurePreset": "lint" },
+    { "name": "cxx26-probe", "configurePreset": "cxx26-probe" },
+    { "name": "dev-qt", "configurePreset": "dev-qt" }
+  ],
+  "testPresets": [
+    { "name": "base", "hidden": true, "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } },
+    { "name": "dev", "inherits": "base", "configurePreset": "dev" },
+    { "name": "asan-ubsan", "inherits": "base", "configurePreset": "asan-ubsan" },
+    { "name": "tsan", "inherits": "base", "configurePreset": "tsan" },
+    { "name": "debug-stl", "inherits": "base", "configurePreset": "debug-stl" },
+    { "name": "production", "inherits": "base", "configurePreset": "production" },
+    { "name": "lint", "inherits": "base", "configurePreset": "lint" },
+    { "name": "cxx26-probe", "inherits": "base", "configurePreset": "cxx26-probe" },
+    { "name": "dev-qt", "inherits": "base", "configurePreset": "dev-qt" }
+  ],
+  "workflowPresets": [
+    { "name": "dev", "steps": [ { "type": "configure", "name": "dev" }, { "type": "build", "name": "dev" }, { "type": "test", "name": "dev" } ] },
+    { "name": "asan-ubsan", "steps": [ { "type": "configure", "name": "asan-ubsan" }, { "type": "build", "name": "asan-ubsan" }, { "type": "test", "name": "asan-ubsan" } ] },
+    { "name": "tsan", "steps": [ { "type": "configure", "name": "tsan" }, { "type": "build", "name": "tsan" }, { "type": "test", "name": "tsan" } ] },
+    { "name": "debug-stl", "steps": [ { "type": "configure", "name": "debug-stl" }, { "type": "build", "name": "debug-stl" }, { "type": "test", "name": "debug-stl" } ] },
+    { "name": "production", "steps": [ { "type": "configure", "name": "production" }, { "type": "build", "name": "production" }, { "type": "test", "name": "production" } ] },
+    { "name": "lint", "steps": [ { "type": "configure", "name": "lint" }, { "type": "build", "name": "lint" }, { "type": "test", "name": "lint" } ] },
+    { "name": "cxx26-probe", "steps": [ { "type": "configure", "name": "cxx26-probe" }, { "type": "build", "name": "cxx26-probe" }, { "type": "test", "name": "cxx26-probe" } ] },
+    { "name": "dev-qt", "steps": [ { "type": "configure", "name": "dev-qt" }, { "type": "build", "name": "dev-qt" }, { "type": "test", "name": "dev-qt" } ] }
+  ]
+}
