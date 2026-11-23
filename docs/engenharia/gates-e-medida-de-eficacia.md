@@ -160,13 +160,17 @@ com semelhança de 0,85 ou mais (`difflib`). Função gerada por macro não entr
 
 ## A CI
 
-Só o ramo `reescrita/core-cpp23`, a cada push e pull request nele. A
-referência é a máquina local, e o runner `ubuntu-26.04` imita o que ela tem,
-sem contêiner. Todo push roda inteiro, e todo passo com `bash -euo pipefail`
-(o padrão do runner é `bash -e`: medido na rodada 45188723983).
+O workflow `CoreCpp 0.1` (`.github/workflows/core.yml`) é a única CI do ramo
+`reescrita/core-cpp23`, a frente nova que vai substituir o core da `main`. A
+CI da 0.3 saiu do ramo em 2026-11-23 (decisão do Viktor): os testes e gates
+dela reprovam aqui por construção e não são critério. A CI da 0.1 se refaz
+por partes, cada gate com eficácia medida, como nas seções acima.
 
-O `core.yml` roda os presets do `core/CMakePresets.json` quando o push toca
-`core/` ou o próprio workflow:
+Todo push e pull request no ramo roda inteiro, sem filtro de caminho e sem
+cancelar o anterior: todo commit tem veredito. A referência é a máquina
+local, e o runner `ubuntu-26.04` a imita, sem contêiner; todo passo roda
+com `bash -euo pipefail` (o padrão do runner é `bash -e`: medido na rodada
+45188723983). Os jobs rodam os presets do `core/CMakePresets.json`:
 
 | Jobs | Compilador | Para quê |
 | --- | --- | --- |
@@ -174,27 +178,23 @@ O `core.yml` roda os presets do `core/CMakePresets.json` quando o push toca
 | `dev`, `production`, `asan-ubsan`, `tsan`, `debug-stl`, `cxx26-probe` | g++-15 | Todos os perfis, no GCC mais novo do runner |
 | `lint` (com o clang-tidy 22 e o `python3-clang-22`), `asan-ubsan`, `tsan` | clang++-22 | O segundo compilador e a análise estática |
 
-O `ci.yml` roda o `scripts/verificar.sh --ci-rapida --estrito` da 0.3, com o
-`bubblewrap` e o `clangd` que os testes de C usam.
-
-- **Segurança:** token só de leitura, ações fixadas por SHA (checkout v7.0.1
-  e cache v6.1.0, últimas releases em 2026-11-23, Node 24), credencial não
-  persistida, prazo por job, matriz por variável de ambiente (o `shellcheck`
-  lê os passos `run:` de verdade).
+- **Segurança:** token só de leitura, checkout v7.0.1 fixado por SHA
+  (última release em 2026-11-23, Node 24), credencial não persistida, prazo
+  por job, matriz por variável de ambiente (o `shellcheck` lê os passos
+  `run:` de verdade).
 - **Sem passo de ambiente sem fonte:** a imagem já grava `vm.mmap_rnd_bits=28`
-  (actions/runner-images#9491); o `ci.yml` prova o `bwrap` antes dos testes.
+  (actions/runner-images#9491).
 - **Máquina local × runner:** a imagem não traz o GCC 16, o Clang 23 nem o
-  Qt 6.12 (o `dev-qt` e o perfil completo da 0.3 ficam fora); trazê-los é
-  dependência nova, que o Viktor decide. O CMake 4.3 local lê os presets até
-  a versão 11, e o 4.5 do runner até a 13 (o `schema.json` de cada tag do
-  CMake): o `${fileDir}` da versão 12 só se prova na CI. O piso 3.25, nenhum.
+  Qt 6.12 (o `dev-qt` fica fora); trazê-los é dependência nova, que o Viktor
+  decide. O CMake 4.3 local lê os presets até a versão 11, e o 4.5 do runner
+  até a 13 (o `schema.json` de cada tag do CMake). O piso 3.25, nenhum.
+- **Sem mecanismo na CI** desde a saída da 0.3: o idioma dos identificadores
+  e a privacidade das docs (P17), e as regras 6 a 9 do README (P19).
 - **No GitHub, pelo Viktor** (o token daqui não administra): ações só do
   GitHub e por SHA, token padrão só de leitura, aprovação de todo
   contribuidor externo, ramo sem apagar nem forçar push (P18).
 
-**Estado (2026-11-23):** `core.yml` verde nos 11 jobs (rodada 45188723983,
-`5acb917c`; `gate.duplication` em 19,5 s), sem custo em repositório público
-([cobrança](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
-O `ci.yml` reprovou 17 testes no `ubuntu-24.04` (rodada 45188723227) e não
-rodou no 26.04. Na máquina local, o perfil dele reprova em 4 testes (defeitos
-da 0.3) e no `cargo deny` (40.7 §7.431).
+**Estado (2026-11-23):** verde nos 11 jobs, ainda como `Core C++` (rodada
+45188723983, `5acb917c`; `gate.duplication` em 19,5 s), sem custo em
+repositório público ([cobrança](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
+O nome `CoreCpp 0.1`, o checkout v7.0.1 e o gatilho em todo push não rodaram.

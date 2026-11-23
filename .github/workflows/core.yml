@@ -1,25 +1,21 @@
-# CI do core em C++ (docs/engenharia/gates-e-medida-de-eficacia.md, secao "A CI").
+# CI da 0.1 do Kinein Vectis, o core em C++23 que vai substituir o da main
+# (docs/engenharia/gates-e-medida-de-eficacia.md, secao "A CI"). E' a unica
+# CI deste ramo: a da 0.3 nao roda aqui.
 #
 # Roda os mesmos presets de core/CMakePresets.json que a maquina de quem
 # desenvolve, sem conteiner: o runner do GitHub ja traz os compiladores.
 # - Piso declarado (decisao de 2026-11-22): GCC 14 e Clang 20.
 # - Mais novo do runner: GCC 15 e Clang 22, com o clang-tidy 22.
 # O compilador do preset e' trocado na linha de comando; o resto do preset vale.
-name: Core C++
+name: CoreCpp 0.1
 
-# So o ramo da reescrita; cada push roda inteiro, sem cancelar o anterior,
-# para todo commit ter veredito.
+# So o ramo da reescrita. Todo push e pull request roda inteiro, sem filtro
+# de caminho e sem cancelar o anterior: todo commit tem veredito.
 on:
   push:
     branches: [reescrita/core-cpp23]
-    paths:
-      - "core/**"
-      - ".github/workflows/core.yml"
   pull_request:
     branches: [reescrita/core-cpp23]
-    paths:
-      - "core/**"
-      - ".github/workflows/core.yml"
   workflow_dispatch:
 
 permissions:
