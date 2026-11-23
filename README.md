@@ -2,918 +2,207 @@
 
 **Linux-first IDE for embedded, systems and IoT development.**
 
-**C · C++ · Rust · Python**
+> **This branch, `reescrita/core-cpp23`, rebuilds the core of the IDE in C++23.** It is an
+> engineering front: the CI, the quality gates, the architecture and the requirements come before
+> any feature code, and the C++ core has no editor functionality yet. The public release is 0.3.5
+> (tag `v0.3.5`, on the Releases page of this repository), built on the Rust core of the `main`
+> branch.
 
-Kinein Vectis é uma IDE open source voltada para desenvolvimento de **firmware, sistemas, Linux embarcado, IoT e software de apoio ao dispositivo**.
+## The rewrite
 
-A proposta é simples:
+Kinein Vectis is a desktop IDE: a Qt Quick UI and a separate core process that reads the
+project, runs the tools and keeps the state. The core of the 0.3 series is a Rust prototype. Its review
+found defects that come from the design, not from isolated bugs: an untrusted project could run
+its own code through five paths, the core's loop blocked with no deadline or cancellation, and
+opening a 20,000-line file took up to 47 s
+([lessons from 0.3](docs/licoes-da-0.3.md)).
 
-> **A Vectis lê o projeto e o ambiente, mostra o que encontrou, explica o que será usado e deixa a decisão com o desenvolvedor.**
+The decision is recorded in
+[ADR-0012](docs/adr/ADR-0012-backend-em-cpp23-com-neovim.md):
 
-Compilador, toolchain, target, sysroot, SDK, preset, language server, interpretador, debugger, placa, container e serviços locais permanecem explícitos e sob controle do usuário.
+- The core is rewritten in C++23 under `core/`: a library with no Qt (`core/lib`) and a thin Qt
+  adapter (`core/qt`). The Rust core gets no new features.
+- An embedded Neovim (`nvim --embed`) is the editing engine. The QML frontend stays.
+- The scope is C and C++ until the core is solid; Rust and Python come back later.
+- The migration strangles the old core inside this repository: the C++ core speaks the same
+  protocol, the UI picks the core binary through `KINEIN_CORE_BIN`, and the Rust core is the
+  oracle of the differential test. A working IDE exists at every step.
+- The Rust core is deleted only after the C++ core meets the non-functional requirements of
+  levels N0 and N1 and passes the differential test, with the tag `v0.3-rust-final` created first.
 
-A Vectis não tenta substituir CMake, Cargo, clangd, GDB ou os SDKs dos fabricantes.
-
-**Ela integra e orquestra essas ferramentas.**
-
-> **Versão pública atual: [`0.3.5 — Public Beta`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5) · Linux x86_64**
-
-**[Download 0.3.5](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5) · [Discord / Comunidade](https://discord.gg/cWRkUGUmQU)**
-
-**Em desenvolvimento: base Kinein Vectis 0.4, ainda não publicada.** A próxima
-entrega usa SemVer **0.4.0** e reúne também o trabalho não publicado da
-0.3.6–0.3.9. Após a base comprovada, versões públicas 0.4.1 em diante, até a
-0.5, aprofundam, complementam, integram, aprimoram e estabilizam essa fundação. Pacotes dependem
-dos [critérios de entrega](DocsPublic/roadmaps/62-base-publica-0.4.md), com
-polimento, jornadas e plataformas comprovados.
-
-## Base 0.4 em desenvolvimento
-
-Os seguintes mínimos são **requisitos de fechamento**, com implementação e
-validação ainda pendentes conforme a capacidade:
-
-- Consolidar [C em etapa própria, incluindo C23](DocsPublic/especificacoes/consolidacao-nativa-de-c.md),
-  depois C++, Rust e integração Rust/C/C++, depois Python, para projetos
-  pequenos/médios e o desenvolvimento da própria IDE.
-- Integrar detecção de toolchains e perfis de projeto ao ciclo compilar,
-  emular com QEMU e depurar por DAP, sem exigir edição manual de JSON.
-- Validar visualizador SVD e contexto de arquivos local, SSH e container.
-- Entregar notebooks Python/Jupyter, plotagem reutilizável, bibliotecas e
-  utilitários de engenharia, com consumo Flash/RAM identificado por artefato.
-- Depois, um algoritmo que lê a configuração essencial de ambiente de cada
-  ecossistema e a fase dedicada do algoritmo especializado de verificação.
-- No fim, camadas de teste rigorosas contra regressões, falhas de lógica e
-  atrasos desnecessários, e uma validação funcional básica no Windows.
-- Polir UI/HUD/UX, Instalar Ferramentas e a entrada de colaboradores.
-
-O [escopo e os aceites da infraestrutura](DocsPublic/especificacoes/infraestrutura-fundamental-0.4.md)
-distinguem os mecanismos existentes das lacunas. Estes requisitos não descrevem
-os recursos disponíveis na release 0.3.5 nem certificam a 0.4 como concluída.
-
----
-
-## Para quem vai colaborar
-
-Pessoa ou IA: comece por **[`DocsPublic/00-comece-aqui.md`](DocsPublic/00-comece-aqui.md)** —
-as regras, onde mora cada fato, o [mapa de módulos](DocsPublic/arquitetura/01-mapa-de-modulos.md)
-(quem fala com quem, por quê e como) e o [mapa de versões até a 1.0](DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md).
-
-## Download
-
-A **Kinein Vectis 0.3.5** está disponível publicamente pelo GitHub Releases:
-
-### [Download Kinein Vectis 0.3.5](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5)
-
-Pacote de distribuição:
-
-```text
-KV0.3.zip
+```mermaid
+flowchart LR
+    subgraph MAIN["main"]
+        RUST["Rust core (crates/)<br/>public release 0.3.5"]
+    end
+    subgraph BRANCH["reescrita/core-cpp23"]
+        BASE["Engineering base<br/>CI, gates, architecture,<br/>requirements"] --> CORE01["C++23 core 0.1<br/>tag CoreCpp-0.1.0"]
+        CORE01 --> CORE10["C++23 core 1.0"]
+    end
+    RUST -.->|oracle of the differential test| CORE01
+    CORE10 ==>|replaces the Rust core on main| RUST
 ```
 
-O zip contém a pasta `KV0.3/` com o AppImage, o checksum, o instalador e o tutorial. O AppImage e seu `.sha256` também estão anexados à release.
+The C++ core is version 0.1 of Kinein Vectis. Its tags use their own prefix, `CoreCpp-X.Y.Z`
+([Semantic Versioning](https://semver.org/)), so they never sort among the `v0.2.0` and `v0.3.5`
+tags of the prototype. Version 1.0 of this branch replaces the core of `main`.
 
-Depois de extrair o pacote, confira o SHA-256 do AppImage:
+## Engineering before code
 
-```bash
-sha256sum -c Kinein-Vectis-0.3.5-x86_64.AppImage.sha256
+Code without planning is technical debt. The prototype grew one feature at a time, without a
+bounded scope, a product vision or the consolidation of what existed before the next feature
+started. This branch reverses that order: C++ code enters `core/lib` and `core/qt` only after the
+maintainer closes five conditions. On 2026-11-23 all five are open; the decisions that block them
+are listed in [docs/decisoes-pendentes.md](docs/decisoes-pendentes.md).
+
+```mermaid
+flowchart TD
+    C1["1. Reliable gates and tests,<br/>current with the rewrite"] --> CODE
+    C2["2. Stable engineering standard<br/>and system architecture"] --> CODE
+    C3["3. The successes and mistakes of 0.3<br/>written as explicit rules"] --> CODE
+    C4["4. Bounded scope<br/>and product vision"] --> CODE
+    C5["5. Functional and non-functional requirements,<br/>with measured limits and acceptance tests"] --> CODE
+    CODE["C++ code in core/lib and core/qt"]
 ```
 
-O resultado deve terminar em:
+| Condition | Owning documents |
+| --- | --- |
+| 1. Gates and tests | [Gates and effectiveness](docs/engenharia/gates-e-medida-de-eficacia.md), [test strategy](docs/engenharia/estrategia-de-testes.md) |
+| 2. Engineering standard and architecture | [C++23 rules](docs/engenharia/regras-de-cpp23.md), [modules and layers](docs/arquitetura/modulos-e-camadas.md) |
+| 3. Lessons from 0.3 | [Lessons from 0.3](docs/licoes-da-0.3.md) |
+| 4. Scope and product vision | [Functional requirements](docs/requisitos/requisitos-funcionais.md), sections "Escopo" and "Níveis" |
+| 5. Requirements and limits | [Functional](docs/requisitos/requisitos-funcionais.md) and [non-functional](docs/requisitos/requisitos-nao-funcionais.md) requirements |
 
-```text
-OK
+Quality comes before dates: there is no deadline. Where the scope matches a mature IDE, its
+behavior is the reference, with the IDE, its version and how the behavior was observed. Where no
+IDE is a reference, the expected behavior is proven by tests, including how each failure is
+handled.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI["UI<br/>Qt Quick + QML (ui/)"] -->|line-delimited JSON-RPC over stdio| CORE["Core<br/>C++23 (core/)"]
+    CORE -->|launcher| TOOLS["Tools<br/>cmake, compilers, git, gdb, probes"]
+    CORE -->|launcher + Landlock| NVIM["nvim --embed"]
+    CORE -->|LSP relay| CLANGD["clangd"]
+    UI -->|private socket: grid, keyboard, mouse| NVIM
 ```
 
-Execute:
+- The UI and the core are separate processes. The UI picks the core binary through
+  `KINEIN_CORE_BIN`, so the C++ core replaces the Rust core without a change to the UI.
+- Every external process, `nvim` and `clangd` included, starts through the core's launcher, which
+  decides what an untrusted project may run.
+- Keystrokes go from the UI straight to `nvim`; the core stays off the typing path.
 
-```bash
-chmod +x Kinein-Vectis-0.3.5-x86_64.AppImage
-./Kinein-Vectis-0.3.5-x86_64.AppImage
+The processes and their responsibilities are in
+[boundaries and responsibilities](docs/arquitetura/fronteiras-e-responsabilidades.md); the full
+map of the documentation is in [docs/README.md](docs/README.md).
+
+## Repository layout
+
+| Path | Content | On this branch |
+| --- | --- | --- |
+| `core/` | The C++23 core: CMake project, build profiles, tests and gates | Active, the focus of the branch |
+| `docs/` | Documentation of the C++ core: requirements, architecture, engineering, ADRs | Active |
+| `.github/` | The `CoreCpp 0.1` workflow and the issue and pull request templates | Active |
+| `schemas/ipc.schema.json` | Contract between the UI and the core | Changes only through an approved ADR |
+| `ui/` | Qt Quick frontend and its C++ bridge | Kept; a change to its logic needs the maintainer's approval |
+| `crates/` | Rust core of the 0.3 series | Frozen: no changes; oracle of the differential test |
+| `DocsPublic/` | Documentation of the 0.3 series | Frozen |
+
+## Building the core
+
+The reference machine is the one the project is developed and measured on; its versions are the
+source of truth. The floor is the oldest version the build accepts.
+
+| Tool | Reference machine | Floor |
+| --- | --- | --- |
+| Operating system | Fedora 45, x86_64 | Linux |
+| GCC | 16.2.1 | 14: configure rejects older versions |
+| Clang, clang-tidy, libclang and its Python bindings | 23.1.5 | Clang 20: configure rejects older versions |
+| CMake | 4.3.0 | 3.25, declared by the presets (version 6). Not verified: no CI job runs it |
+| Ninja | 1.13.2 | None declared |
+| Python | 3.15.2 | 3.10, for the gates of the `lint` preset |
+| Qt | 6.12.1 | 6.12, only for the `dev-qt` preset |
+
+Every preset is a workflow: configure, build and test. Build trees go to `build/core-<preset>/` at
+the repository root.
+
+```sh
+cd core
+cmake --workflow --preset dev          # GCC, -Werror, production semantics
+cmake --workflow --preset asan-ubsan   # AddressSanitizer + UndefinedBehaviorSanitizer
+cmake --workflow --preset tsan         # ThreadSanitizer
+cmake --workflow --preset lint         # Clang + clang-tidy + gate measurements
+KINEIN_QT_PREFIX=$HOME/Qt/6.12.1/gcc_64 cmake --workflow --preset dev-qt
 ```
 
-Se houver problema com FUSE:
-
-```bash
-APPIMAGE_EXTRACT_AND_RUN=1 ./Kinein-Vectis-0.3.5-x86_64.AppImage
-```
-
-A série `0.x` está em **beta público**.
-
-Bugs, mudanças de interface, alterações de configuração e fluxos ainda incompletos são esperados até a `1.0`.
-
----
-
-## O foco
-
-A Vectis foi projetada para projetos que frequentemente atravessam diferentes camadas:
-
-```text
-Firmware
-   ↓
-Bare Metal / RTOS
-   ↓
-Linux Embedded / Edge
-   ↓
-Gateway / Serviços
-   ↓
-API / Banco / Observabilidade
-```
-
-As quatro linguagens de primeira classe refletem esse objetivo:
-
-* **C** — firmware, drivers, RTOS e systems programming;
-* **C++** — firmware, sistemas, aplicações nativas e robótica;
-* **Rust** — systems programming, tooling e embedded;
-* **Python** — automação, testes, ferramentas de engenharia, MicroPython, gateways, APIs e serviços IoT.
-
-A Vectis não busca ser uma IDE universal para todas as linguagens.
-
-O objetivo é aprofundar o ecossistema de **embedded, systems e IoT**.
-
----
-
-# A ideia
-
-Um projeto C/C++ ou embedded raramente é apenas:
-
-```text
-arquivo → compilador
-```
-
-Na prática existe uma cadeia maior:
-
-```text
-Projeto
-  ↓
-Build System
-  ↓
-Preset / Profile
-  ↓
-Toolchain
-  ↓
-Target / Sysroot
-  ↓
-Dependencies
-  ↓
-Language Server
-  ↓
-Debugger
-  ↓
-Device / Host remoto
-```
-
-A Vectis tenta tornar essa cadeia **visível, explicável e controlável**.
-
-Sempre que possível, a IDE diferencia:
-
-```text
-Detected
-   ↓
-Selected
-   ↓
-Effective
-```
-
-Ou seja:
-
-* o que foi encontrado;
-* o que o desenvolvedor escolheu;
-* o que o projeto realmente está utilizando;
-* de onde cada informação foi obtida.
-
----
-
-## Escolhas explícitas
-
-Compilador, preset, kit, chip, target, sysroot, SVD, debugger, language server, formatador, interpretador e motor de containers continuam sendo escolhas do desenvolvedor.
-
-A IDE pode sugerir configurações com base no projeto e na máquina, mas mudanças relevantes são apresentadas antes de serem aplicadas.
-
----
-
-## Nenhuma instalação silenciosa
-
-Se uma ferramenta estiver ausente, a Vectis apresenta o procedimento correspondente da distribuição ou do fabricante.
-
-A IDE **não executa `sudo`**.
-
-Toolchains gerenciadas pela própria Vectis ficam isoladas em sua área de dados e têm sua integridade verificada antes da instalação.
-
----
-
-## Ferramentas reais
-
-A Vectis não cria um compilador, build system, package manager ou debugger próprio.
-
-Ela trabalha com ferramentas dos próprios ecossistemas, como:
-
-```text
-CMake
-Cargo
-clangd
-rust-analyzer
-basedpyright
-clang-tidy
-Ruff
-LLDB
-GDB
-debugpy
-Git
-Docker
-Podman
-```
-
-além dos SDKs e utilitários relacionados aos targets do projeto.
-
----
-
-## Local-first
-
-Não há telemetria.
-
-Código e informações do projeto não são enviados para servidores da Kinein.
-
----
-
-## Sem IA embutida
-
-A Vectis não possui chat ou assistente de IA integrado.
-
-Agentes e ferramentas CLI podem ser utilizados normalmente pelo terminal integrado, caso o desenvolvedor queira.
-
-A IDE continua independente de qualquer fornecedor ou modelo de IA.
-
----
-
-# Embedded & Firmware
-
-Embedded é uma das áreas centrais da Vectis.
-
-O fluxo é organizado em torno de:
-
-```text
-Placa
-  ↓
-Projeto
-  ↓
-Kit
-  ↓
-Build
-  ↓
-Flash
-  ↓
-Debug
-```
-
-### Ecossistemas reconhecidos
-
-* ESP-IDF
-* Zephyr
-* Raspberry Pi Pico / pico-sdk
-* PlatformIO
-* STM32Cube
-* Rust bare metal
-* MicroPython
-* Yocto
-* Buildroot
-
-### Hardware
-
-A IDE possui suporte para:
-
-* descoberta de portas seriais sem abri-las;
-* identificação de dispositivos;
-* monitor serial;
-* seleção de chip e target;
-* SDKs e sysroots;
-* kits por alvo;
-* debug probes;
-* QEMU.
-
-### Flash
-
-Dependendo do projeto e do dispositivo:
-
-```text
-esptool
-probe-rs
-picotool
-dfu-util
-idf.py
-west
-pio
-```
-
-Permissões, dispositivo e ferramenta permanecem explícitos antes da execução.
-
-### Debug
-
-O fluxo atual contempla:
-
-* GDB/DAP;
-* LLDB;
-* QEMU;
-* memória;
-* disassembly;
-* periféricos via SVD;
-* RTT / defmt quando disponíveis para o target.
-
----
-
-# C e C++
-
-A Vectis trata o **ambiente C/C++ como parte do projeto**, e não apenas como configuração do editor.
-
-O suporte atual inclui:
-
-* CMake;
-* CMake Presets;
-* detecção de compiladores;
-* `compile_commands.json`;
-* clangd;
-* clang-format;
-* clang-tidy;
-* GDB / LLDB;
-* gtest / Catch2;
-* cobertura LCOV;
-* kits;
-* toolchains;
-* sysroots;
-* cross-compilation.
-
-O ambiente está sendo desenvolvido para tornar cada vez mais explícitos:
-
-```text
-Compiler
-Standard
-Target
-Preset
-Dependencies
-Compile Context
-Link Context
-Debugger
-```
-
-sem substituir CMake ou criar formatos próprios desnecessários.
-
----
-
-# Rust
-
-Projetos Rust possuem integração com:
-
-* Cargo;
-* rust-analyzer;
-* rustfmt;
-* Clippy;
-* testes;
-* cobertura;
-* debug;
-* targets externos;
-* Rust bare metal;
-* `probe-rs`.
-
-A Vectis utiliza a própria estrutura do ecossistema Rust:
-
-```text
-rustup
-Cargo.toml
-Cargo.lock
-Workspaces
-Features
-Profiles
-Targets
-```
-
-em vez de criar uma configuração paralela.
-
----
-
-# Python
-
-Python é uma linguagem de primeira classe porque faz parte do fluxo completo de muitos projetos embedded e IoT.
-
-O suporte atual inclui:
-
-* resolução do interpretador;
-* `.venv`;
-* criação de ambiente com `uv`;
-* basedpyright;
-* Ruff;
-* pytest;
-* debugpy;
-* execução de módulos e scripts;
-* MicroPython via `mpremote`.
-
-Python não é limitado a scripts.
-
-A Vectis também pode ser utilizada para:
-
-```text
-Automação
-Ferramentas de engenharia
-Testes de hardware
-Gateways
-APIs
-FastAPI
-Serviços locais
-Backends IoT
-```
-
----
-
-# Linux Embedded & Edge
-
-A Vectis também trabalha com projetos cujo target é um sistema Linux.
-
-O ecossistema contempla:
-
-* Yocto;
-* Buildroot;
-* SDKs externos;
-* sysroots;
-* cross-toolchains;
-* SSH;
-* deploy;
-* debug remoto;
-* QEMU;
-* containers.
-
-A intenção é permitir um fluxo contínuo entre:
-
-```text
-Host de desenvolvimento
-        ↓
-Cross Toolchain
-        ↓
-Linux Target
-        ↓
-Deploy
-        ↓
-Run / Debug
-```
-
----
-
-# IoT, Edge e software de apoio
-
-Nem todo projeto termina no firmware.
-
-Um produto pode envolver:
-
-```text
-MCU
- ↓
-Gateway
- ↓
-Backend
- ↓
-Database
- ↓
-Monitoring
-```
-
-Por isso algumas integrações da Vectis também cobrem o software ao redor do dispositivo.
-
-## Containers
-
-Docker e Podman:
-
-* descoberta do motor;
-* ciclo de vida;
-* jobs;
-* logs;
-* shell;
-* Compose associado ao projeto.
-
-## Bancos de dados
-
-Suporte atual para:
-
-* PostgreSQL;
-* TimescaleDB;
-* SQLite;
-* MongoDB.
-
-É possível descobrir serviços locais, executar consultas e visualizar esquemas.
-
-Credenciais não são persistidas em texto aberto pela IDE.
-
-## Observabilidade
-
-A Vectis possui integração com Grafana através da API HTTP para consultar informações relacionadas ao ambiente observado pelo projeto.
-
-Essa área continua em desenvolvimento.
-
----
-
-# Desenvolvimento diário
-
-## Editor
-
-O editor possui:
-
-* múltiplas abas;
-* recuperação de rascunhos;
-* Tree-sitter incremental;
-* syntax highlighting;
-* folding;
-* estrutura do arquivo;
-* completion;
-* diagnósticos;
-* navegação;
-* rename;
-* quick fixes com preview;
-* símbolos do arquivo e do projeto.
-
-A inteligência semântica é fornecida principalmente pelos language servers:
-
-```text
-C / C++  → clangd
-Rust     → rust-analyzer
-Python   → basedpyright
-```
-
----
-
-## Build, testes e qualidade
-
-Dependendo do projeto:
-
-```text
-Build
-Test
-Lint
-Static Analysis
-Coverage
-Run
-Debug
-```
-
-Operações demoradas são executadas como **jobs assíncronos e canceláveis**, evitando bloquear a interface.
-
----
-
-## Terminal
-
-O terminal integrado utiliza PTY real e suporta múltiplas sessões.
-
-Shells, CLIs, SDKs, ferramentas de build e agentes podem ser utilizados normalmente.
-
----
-
-## Git
-
-O fluxo Git integrado cobre operações comuns:
-
-* status;
-* diff;
-* stage;
-* commit;
-* amend;
-* commit + push;
-* branches;
-* pull;
-* push;
-* stash;
-* histórico;
-* grafo de refs;
-* blame.
-
-Diffs e commits podem ser abertos no próprio editor.
-
----
-
-# Ambiente do projeto
-
-Uma das áreas centrais da Vectis é construir uma visão coerente do ambiente.
-
-```text
-Projeto
-├── Linguagens
-├── Targets
-├── Toolchains
-├── Compiladores
-├── Build System
-├── Presets / Profiles
-├── Dependências
-├── Language Servers
-├── Debuggers
-├── Devices
-└── Serviços locais
-```
-
-O objetivo é reduzir a quantidade de configuração que o desenvolvedor precisa reconstruir mentalmente toda vez que abre um projeto.
-
----
-
-# Biblioteca
-
-A **Biblioteca** organiza capacidades, ferramentas e integrações do ambiente por assunto e necessidade.
-
-Exemplos:
-
-```text
-Build
-Debug
-Testing
-Quality
-Coverage
-Profiling
-Dependencies
-Toolchains
-Cross Compilation
-Embedded
-```
-
-As capacidades também podem ser encontradas por ecossistema:
-
-```text
-C / C++
-Rust
-Python
-Embedded
-IoT / Edge
-```
-
-A intenção é permitir tanto uma busca por necessidade:
-
-> “Quero configurar cobertura.”
-
-quanto uma busca por ferramenta:
-
-> “Quero usar clang-tidy.”
-
-e chegar às mesmas capacidades relacionadas.
-
-A Biblioteca é pensada para evoluir futuramente para comportar também:
-
-```text
-Integrations
-Recipes
-Extensions
-Plugins
-```
-
-sem transformar toda a experiência da IDE em um marketplace.
-
----
-
-# Arquitetura
-
-A interface e a lógica de negócio são separadas:
-
-```text
-┌───────────────────────────┐
-│       Qt / QML UI         │
-└─────────────┬─────────────┘
-              │
-         JSON-RPC local
-              │
-┌─────────────▼─────────────┐
-│         Rust Core         │
-└─────────────┬─────────────┘
-              │
-     ┌────────┼─────────┐
-     ▼        ▼         ▼
-   CMake    Cargo     Python
-   clangd   rust-     basedpyright
-            analyzer
-     │        │         │
-     └────────┼─────────┘
-              ▼
-   Toolchains · Debuggers
-      Git · Containers
-       Devices · SDKs
-```
-
-A UI apresenta estado e recebe ações.
-
-O core mantém o modelo do projeto, valida operações e orquestra ferramentas externas.
-
-Operações longas são jobs canceláveis.
-
-O protocolo entre frontend e core está documentado em:
-
-```text
-DocsPublic/arquitetura/03-protocolo-ipc.md
-```
-
-As decisões e regras arquiteturais estão em:
-
-```text
-DocsPublic/arquitetura/ARCHITECTURE.md
-```
-
----
-
-# Documentação
-
-### Instalação, atualização e distribuição
-
-[`DocsPublic/tutorial.md`](DocsPublic/tutorial.md)
-
-### Manual da IDE
-
-[`DocsPublic/manual.md`](DocsPublic/manual.md)
-
-### Compilar pelo código-fonte
-
-[`DocsPublic/build/como-executar.md`](DocsPublic/build/como-executar.md)
-
-### Índice da documentação
-
-[`DocsPublic/README.md`](DocsPublic/README.md)
-
----
-
-# Comunidade
-
-A Vectis está em **beta público** e feedback de projetos reais é especialmente importante nesta fase.
-
-### Discord
-
-**[Entrar no servidor da Kinein Vectis](https://discord.gg/cWRkUGUmQU)**
-
-Convite direto:
-
-```text
-https://discord.gg/cWRkUGUmQU
-```
-
-O servidor pode ser usado para:
-
-* relatar bugs;
-* discutir funcionalidades;
-* sugerir melhorias;
-* compartilhar experiências com C/C++, Rust, Python e embedded;
-* comparar fluxos com outras IDEs;
-* acompanhar o desenvolvimento das próximas versões.
-
-Ao relatar um problema, se possível inclua:
-
-```text
-Distribuição Linux e versão
-Wayland ou X11
-Passos para reproduzir
-Comportamento esperado
-Comportamento observado
-Screenshot ou log
-```
-
-Logs da interface podem ser encontrados em:
-
-```text
-~/.cache/kinein-vectis/logs/kinein-ui-erros.txt
-```
-
----
-
-# Contribuindo
-
-Contribuições são bem-vindas.
-
-Áreas de interesse incluem:
-
-* C/C++;
-* Rust;
-* Python;
-* embedded;
-* Linux;
-* Qt/QML;
-* UX;
-* toolchains;
-* debugging;
-* documentação;
-* testes automatizados.
-
-O ponto de entrada é:
-
-[`DocsPublic/contribuindo/README.md`](DocsPublic/contribuindo/README.md)
-
-O projeto procura manter um fluxo previsível para mudanças:
-
-```text
-Entender
-   ↓
-Desenhar
-   ↓
-Definir contrato
-   ↓
-Implementar core
-   ↓
-Implementar UI
-   ↓
-Testar
-   ↓
-Documentar
-```
-
-O uso de agentes de IA é opcional e não faz parte da arquitetura da IDE.
-
----
-
-# Plataforma
-
-A versão `0.3.5` suporta atualmente:
-
-```text
-Linux x86_64
-glibc 2.36+
-Wayland ou X11
-```
-
-A distribuição oficial utiliza AppImage.
-
-Atualmente:
-
-```text
-Windows        não suportado
-Linux ARM64    ainda não distribuído
-```
-
-A 0.4 exige no Windows nativo só uma validação funcional básica numa VM; o
-porte completo e o instalador são uma frente aberta a colaboradores, e o
-[plano de portabilidade](DocsPublic/roadmaps/60-windows-e-edicao-especial.md)
-mantém os aceites pendentes e distingue Windows de WSL2.
-
----
-
-# Estado do projeto
-
-Kinein Vectis está em desenvolvimento ativo.
-
-```text
-0.x → Public Beta
-1.0 → primeira versão considerada estável
-```
-
-Até a `1.0`, podem ocorrer:
-
-* mudanças de interface;
-* alterações em configurações;
-* mudanças de fluxo;
-* recursos incompletos;
-* bugs.
-
-Durante o beta, a prioridade é aprofundar e estabilizar os fluxos existentes antes de ampliar significativamente o escopo.
-
-As principais áreas de desenvolvimento são:
-
-```text
-Editor & ergonomia
-C/C++ environment intelligence
-Rust
-Python
-Embedded
-Linux Embedded
-Cross-compilation
-Debugging
-Toolchains
-Biblioteca
-UX
-Performance
-Stability
-Testing
-```
-
----
-
-# Filosofia
-
-A Vectis não tenta esconder o ambiente de desenvolvimento atrás de configuração implícita.
-
-A ideia é:
-
-```text
-Detectar
-   ↓
-Entender
-   ↓
-Explicar
-   ↓
-Escolher
-   ↓
-Executar
-```
-
-**O ambiente continua sendo seu.**
-
----
-
-# Licença
-
-Kinein Vectis é software livre sob a **GNU Affero General Public License,
-versão 3 somente** (`AGPL-3.0-only`). O texto integral está em
-[`LICENSE`](LICENSE). A documentação própria utiliza **CC BY-SA 4.0**,
-ressalvadas as licenças específicas e os materiais de terceiros.
-
-Distribuições e versões modificadas devem cumprir as obrigações de fontes,
-avisos e reciprocidade nas hipóteses previstas na licença. Uso comercial e
-forks são permitidos. As permissões MIT/Apache-2.0 concedidas anteriormente
-permanecem válidas para o material que abrangem.
-
-Consulte o [escopo e as regras de licenciamento](DocsPublic/contribuindo/12-licenciamento-e-procedencia.md),
-os [créditos de autoria](AUTHORS.md), o [NOTICE](NOTICE) e a
-[política de identidade](TRADEMARKS.md).
-
+| Preset | Purpose |
+| --- | --- |
+| `dev` | Development with GCC, `-Werror` and the semantics of what ships |
+| `asan-ubsan`, `tsan` | Sanitizer builds; a sanitizer error fails the test |
+| `debug-stl` | Standard library debug mode (`_GLIBCXX_DEBUG`, `-O0`) |
+| `production` | The shipped build: same flags as `dev`, without `-Werror` |
+| `lint` | Clang with clang-tidy on every unit, plus the measurement of the gates |
+| `cxx26-probe` | Builds with C++26 to detect incompatibilities early |
+| `dev-qt` | `dev` plus the Qt adapter, with Qt from `KINEIN_QT_PREFIX` |
+
+Configure downloads GoogleTest 1.17.0 with a pinned SHA-256. Without network access, pass
+`-DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=<directory>`. The profiles, flags and sources are in
+[build profiles and hardening](docs/engenharia/perfis-de-compilacao-e-hardening.md).
+
+## CI and quality gates
+
+The `CoreCpp 0.1` workflow ([`.github/workflows/core.yml`](.github/workflows/core.yml)) is the only
+CI of this branch. It runs on every push and pull request to the branch, with no path filter, in
+11 jobs on `ubuntu-26.04`: the compiler floor (`dev` with GCC 14 and with Clang 20), GCC 15 in
+every profile, and Clang 22 with clang-tidy 22 in `lint` and in both sanitizer profiles. Actions are
+pinned by commit SHA, and the token is read-only.
+
+The project's own gates run as tests of the `lint` preset. Each one is measured against a versioned
+corpus of planted defects and correct forms on every build
+([method](docs/engenharia/gates-e-medida-de-eficacia.md)).
+
+| Test | Rule | Measured on 2026-11-23 |
+| --- | --- | --- |
+| `gate.launcher` | Processes start only through the launcher | 40 of 40 defects rejected, 16 of 16 correct forms accepted |
+| `gate.detach` | No detached thread (C++ Core Guidelines CP.26) | 10 of 10 defects rejected, 10 of 10 correct forms accepted |
+| `gate.duplication` | No copied logic, clone types T1 to T3 | 15 of 15 defects rejected, 14 of 14 correct forms accepted |
+| `build.contract` | The flags of the profile reach the compiler | Passes in every preset |
+| `build.elf_hardening` | The hardening reaches the linked binary | Passes in every preset |
+
+A change is done only when it meets the [definition of done](docs/engenharia/definicao-de-pronto.md),
+which includes no warning in `dev` and `lint`, a clean clang-tidy, tests green in `dev`,
+`asan-ubsan` and `tsan`, and the list of what was not verified. Approved and not yet in place: `actionlint` and `zizmor`, Dependabot for the actions,
+a DCO check, a documentation gate, a CMake floor that a job tests (or a higher floor), a job in a Fedora 45 container that
+reproduces the reference machine, and a gate on the roles of the files of each module.
+
+## Contributing
+
+- **English** for everything a contributor reads or writes: identifiers, comments, messages, file
+  names, documentation, commits and pull requests.
+- **Developer Certificate of Origin 1.1:** every commit carries a sign-off (`git commit -s`); no
+  copyright assignment is required
+  ([ADR-0011](DocsPublic/decisoes-adr/ADR-0011-copyleft-e-procedencia.md)).
+- **Comments** follow one standard, C1 to C12
+  ([C++23 rules](docs/engenharia/regras-de-cpp23.md), section "Comments"); the code rules and the
+  tool that enforces each one are in the same file.
+- **Design first:** the core's algorithms, concurrency and protocol are designed with the
+  maintainer before any code is written. A new external dependency needs the maintainer's
+  approval and a checked license.
+- **Issues and pull requests** use the templates in `.github/`.
+
+## License
+
+Kinein Vectis is free software under the GNU Affero General Public License, version 3 only
+(`AGPL-3.0-only`, [`LICENSE`](LICENSE)). The project's own documentation uses CC BY-SA 4.0
+([`LICENSE-CC-BY-SA-4.0.txt`](LICENSE-CC-BY-SA-4.0.txt)), except where a file states otherwise and
+for third-party material. The MIT and Apache-2.0 permissions granted earlier remain valid for the
+material they cover ([`LICENSE-MIT.txt`](LICENSE-MIT.txt),
+[`LICENSE-APACHE-2.0.txt`](LICENSE-APACHE-2.0.txt)). See also [`AUTHORS.md`](AUTHORS.md),
+[`NOTICE`](NOTICE) and [`TRADEMARKS.md`](TRADEMARKS.md).
+
+## Community
+
+Feedback and discussion: [Kinein Vectis on Discord](https://discord.gg/cWRkUGUmQU).
