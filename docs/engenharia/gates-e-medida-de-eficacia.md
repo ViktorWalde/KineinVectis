@@ -114,7 +114,10 @@ que toca `core/` ou o próprio workflow.
 
 - **Segurança do workflow:** token só de leitura, a action do checkout fixada
   por SHA (v6.1.0), credencial não persistida, prazo por job e cancelamento
-  da rodada obsoleta.
+  da rodada obsoleta. A matriz entra nos scripts por variável de ambiente, e
+  nunca colada no texto com `${{ }}`: o `shellcheck` lê os passos `run:` de
+  verdade (limpo em 2026-11-22), e os passos rodaram nesta máquina no shell do
+  runner (`bash --noprofile --norc -eo pipefail`), com e sem clang-tidy.
 - **Hipótese não medida:** o passo que baixa o `vm.mmap_rnd_bits` para 28
   nos jobs de sanitizer. Kernel com ASLR de alta entropia derrubava os
   sanitizers de LLVM antigo (actions/runner-images#9491). O passo sai se a
@@ -122,10 +125,19 @@ que toca `core/` ou o próprio workflow.
 - **Fora da CI por ora:** o `dev-qt`. O Ubuntu não traz o Qt 6.12, e o
   `core/qt` ainda não tem código.
 
-**A CI nunca rodou.** Toda rodada do repositório termina sem iniciar, com a
-anotação "The job was not started because your account is locked due to a
-billing issue" (lida pela API pública do GitHub em 2026-11-22). O repositório
-é público, e o runner padrão é gratuito para repositório público: o bloqueio
-é da conta, e só o Viktor o resolve, nas configurações de cobrança do GitHub.
+**A CI nunca rodou.** As 44 rodadas do repositório, de 2026-10-19 a
+2026-11-16, terminaram sem iniciar, todas com a anotação "The job was not
+started because your account is locked due to a billing issue" (lida pela API
+pública do GitHub em 2026-11-22). Os workflows estão ativos e o repositório é
+público, e o runner padrão é gratuito e ilimitado em repositório público
+([runners do GitHub](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)):
+o bloqueio é da conta. A documentação do GitHub
+([conta bloqueada](https://docs.github.com/en/billing/how-tos/troubleshooting/locked-account))
+dá duas causas: pagamento recusado ou atrasado, e retenção de autorização que
+falhou (assinatura do Copilot ou aumento de orçamento), que bloqueia o
+Actions mesmo na conta Free e sem forma de pagamento cadastrada. A saída é do
+Viktor, com o login dele: Settings → Billing & Licensing → Payment
+information; e, se a página não mostrar assinatura, saldo nem problema,
+pedir a revisão do bloqueio em [support.github.com](https://support.github.com).
 Depois da primeira rodada verde, a regra de proteção do ramo `main` pode
 exigir os jobs (P18).

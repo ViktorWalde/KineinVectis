@@ -47,6 +47,14 @@ jobs:
           - { preset: lint, cxx: clang++-22, tidy: clang-tidy-22 }
           - { preset: asan-ubsan, cxx: clang++-22 }
           - { preset: tsan, cxx: clang++-22 }
+    # A matriz entra nos scripts por variavel de ambiente, e nunca colada no
+    # texto do script com ${{ }}: assim o shellcheck le o script de verdade,
+    # e um valor nunca vira codigo (guia de seguranca do GitHub Actions,
+    # "intermediate environment variable").
+    env:
+      PRESET: ${{ matrix.preset }}
+      CXX_COMPILER: ${{ matrix.cxx }}
+      TIDY: ${{ matrix.tidy }}
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -60,26 +68,28 @@ jobs:
         if: ${{ matrix.preset == 'asan-ubsan' || matrix.preset == 'tsan' }}
         run: sudo sysctl -w vm.mmap_rnd_bits=28
 
+      # Sem "| head": o shell do runner roda com -o pipefail, e um head que
+      # fecha o pipe cedo pode reprovar o passo pelo SIGPIPE de quem escreve.
       - name: Show the toolchain
         run: |
-          ${{ matrix.cxx }} --version | head -n 1
-          cmake --version | head -n 1
+          "$CXX_COMPILER" --version
+          cmake --version
           ninja --version
-          if [ -n "${{ matrix.tidy }}" ]; then ${{ matrix.tidy }} --version | grep -i version; fi
+          if [ -n "$TIDY" ]; then "$TIDY" --version; fi
 
       - name: Configure
         working-directory: core
         run: |
           extra=()
-          if [ -n "${{ matrix.tidy }}" ]; then
-            extra+=("-DKINEIN_CLANG_TIDY_EXE=$(command -v ${{ matrix.tidy }})")
+          if [ -n "$TIDY" ]; then
+            extra+=("-DKINEIN_CLANG_TIDY_EXE=$(command -v "$TIDY")")
           fi
-          cmake --preset "${{ matrix.preset }}" -DCMAKE_CXX_COMPILER="${{ matrix.cxx }}" "${extra[@]}"
+          cmake --preset "$PRESET" -DCMAKE_CXX_COMPILER="$CXX_COMPILER" "${extra[@]}"
 
       - name: Build
         working-directory: core
-        run: cmake --build --preset "${{ matrix.preset }}"
+        run: cmake --build --preset "$PRESET"
 
       - name: Test
         working-directory: core
-        run: ctest --preset "${{ matrix.preset }}"
+        run: ctest --preset "$PRESET"
