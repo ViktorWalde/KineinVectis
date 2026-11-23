@@ -146,6 +146,7 @@ asked
 asking
 asks
 aspect
+assemble
 assert
 assertion
 asset
@@ -254,6 +255,7 @@ blocker
 blocks
 blue
 board
+bodies
 body
 bold
 boolean
@@ -502,6 +504,7 @@ components
 compose
 composed
 composes
+compound
 compressed
 compute
 concise
@@ -579,6 +582,7 @@ copyable
 copying
 core
 cores
+correct
 correction
 corrupt
 corrupting
@@ -727,6 +731,7 @@ destroyed
 destroying
 destruction
 destructive
+destructor
 detach
 detached
 detaches
@@ -987,6 +992,7 @@ extended
 extends
 extension
 extensions
+extent
 external
 externally
 extra
@@ -1292,6 +1298,7 @@ ignored
 ignores
 image
 images
+imaginary
 immediate
 impact
 impacts
@@ -1832,6 +1839,7 @@ overlap
 overlapping
 overlay
 overlays
+overloaded
 override
 overrides
 oversized
@@ -2075,6 +2083,7 @@ publishes
 pull
 pulse
 pump
+punctuation
 pure
 purple
 purpose
@@ -2084,6 +2093,7 @@ pushes
 puts
 python
 quad
+qualified
 quality
 queried
 queries
@@ -2156,6 +2166,7 @@ redirect
 reduce
 redundant
 reference
+referenced
 references
 reflects
 refresh
@@ -2192,6 +2203,7 @@ reload
 reloaded
 reloads
 remain
+remainder
 remaining
 remains
 remedy
@@ -2338,6 +2350,7 @@ rows
 ruff
 ruins
 rule
+ruler
 rules
 runner
 runners
@@ -2379,6 +2392,7 @@ scheme
 scope
 scoped
 scopes
+score
 scratch
 screen
 screenshot
@@ -2492,6 +2506,7 @@ signals
 silent
 silently
 similar
+similarity
 simple
 simples
 sinais
@@ -2554,6 +2569,7 @@ speak
 speaks
 spec
 special
+specialization
 specs
 speed
 spell
@@ -2639,6 +2655,7 @@ style
 styled
 submit
 submitted
+subscript
 substituted
 subtitle
 succeeded
@@ -2793,6 +2810,7 @@ transfers
 transform
 transition
 translate
+translation
 transparent
 transport
 transpose
@@ -2827,6 +2845,7 @@ typing
 typings
 ubuntu
 unambiguous
+unary
 unavailable
 unblocked
 unbounded

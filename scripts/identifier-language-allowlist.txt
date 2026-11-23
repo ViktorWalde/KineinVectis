@@ -252,3 +252,12 @@ execl execle execlp execv execve execveat execvp fexecve forkpty vfork wordexp
 syscall pidfd spawnp spawnvp wsystem wchar envp wnohang atoi
 cstdio cstdlib csignal cstddef filesystem glibcxx gnuc jthread
 asan tsan ubsan
+
+# --- gate de duplicacao do core (core/tests/gates/duplication/, 2026-11-23):
+# a libclang e os nomes da API dela (cindex, displayname e os tipos de no
+# *_DECL, *_EXPR e UNEXPOSED_*), o difflib e o autojunk dele, o nargs e o
+# add_subparsers do argparse, e o C++ do corpus: os cabecalhos charconv e
+# cstdint, a palavra-chave noexcept, a diretiva undef, std::errc, npos e
+# std::wstring_view.
+libclang cindex displayname decl expr unexposed difflib autojunk nargs subparsers
+charconv cstdint noexcept undef errc npos wstring

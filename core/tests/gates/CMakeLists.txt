@@ -28,4 +28,37 @@ if(KINEIN_CLANG_TIDY)
             --std "${KINEIN_CXX_STANDARD}"
             --reject "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-proibido.cpp"
             --accept "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-permitido.cpp")
+
+    # Duplicacao (P20): o detector sobre a libclang, medido contra o corpus
+    # de duplication/. Usa a libclang e os cabecalhos internos do mesmo Clang
+    # que compila; sem eles o configure para, e o gate nunca pula calado.
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        message(FATAL_ERROR "gate.duplication: o preset com clang-tidy compila com o Clang")
+    endif()
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" -I -c "import clang.cindex"
+        RESULT_VARIABLE kinein_python_clang
+        OUTPUT_QUIET ERROR_QUIET)
+    if(NOT kinein_python_clang EQUAL 0)
+        message(FATAL_ERROR
+            "gate.duplication: faltam os bindings de Python da libclang "
+            "(python3-clang no Fedora, python3-clang-<versao do Clang> no Ubuntu)")
+    endif()
+    execute_process(
+        COMMAND "${CMAKE_CXX_COMPILER}" -print-resource-dir
+        OUTPUT_VARIABLE KINEIN_CLANG_RESOURCE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY)
+    # <prefixo>/lib/clang/<versao> -> <prefixo>/lib, onde o Ubuntu poe a
+    # libclang da versao (/usr/lib/llvm-22/lib). No Fedora ela fica no
+    # caminho padrao (/usr/lib64).
+    cmake_path(GET KINEIN_CLANG_RESOURCE_DIR PARENT_PATH kinein_clang_lib)
+    cmake_path(GET kinein_clang_lib PARENT_PATH kinein_clang_lib)
+    find_library(KINEIN_LIBCLANG NAMES clang HINTS "${kinein_clang_lib}" REQUIRED)
+    add_test(NAME gate.duplication
+        COMMAND "${Python3_EXECUTABLE}" -I "${CMAKE_CURRENT_SOURCE_DIR}/duplication/clones.py"
+            --libclang "${KINEIN_LIBCLANG}"
+            --resource-dir "${KINEIN_CLANG_RESOURCE_DIR}"
+            --std "${KINEIN_CXX_STANDARD}"
+            measure "${CMAKE_CURRENT_SOURCE_DIR}/duplication")
 endif()

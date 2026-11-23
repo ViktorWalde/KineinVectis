@@ -94,9 +94,8 @@ tem de ser acusada, e nenhuma outra.
 
 - **Defeito:** o GoogleTest compilado sem o perfil no `debug-stl`, e portanto
   sem o `_GLIBCXX_DEBUG`. Reprovado no link (`undefined reference`).
-- **A primeira versão não pegou:** ela chamava uma função que só devolvia
-  `std::vector`, e o tipo de retorno não entra no nome mangled. Corrigida para
-  uma função que recebe `std::vector`.
+- **Mecanismo:** a prova recebe `std::vector`; o retorno não entra no nome
+  mangled.
 - **Forma correta:** os oito presets, verdes.
 - **Veredito:** entra.
 
@@ -130,22 +129,34 @@ A mesma opção do clang-tidy, com `std::thread::detach` e
 - **Forma correta:** os oito presets, verdes.
 - **Veredito:** entra, só no GCC.
 
-### `alpha.clone.CloneChecker` do Clang: duplicação (2026-11-23)
+### `gate.duplication`: cópia de lógica, de T1 a T3 (2026-11-23)
 
-Candidato ao gate de duplicação (P20), medido com o Clang 23.1.5 num corpus
-de quatro funções em dois arquivos.
+`core/tests/gates/duplication/clones.py`, sobre a libclang: cada função vira
+a sequência dos nós da árvore, com local e parâmetro sem nome e o resto pelo
+USR. Acusa 44 nós iguais em dois lugares (janela) e função de 40 nós ou mais
+com semelhança de 0,85 ou mais (`difflib`). Função gerada por macro não entra.
 
-- **Pega** a cópia com os nomes trocados no mesmo `.cpp`.
-- **Não pega** a mesma cópia em outro `.cpp`: a análise é por unidade de
-  tradução.
-- **Acusa** o laço de uma função de lógica diferente (contar `\t` em vez de
-  `\n`), porque ignora os literais. Pode ser duplicação real (é um
-  `std::ranges::count`); acusar ou não é decisão de política.
-- É checagem `alpha`, instável, do analisador estático.
-- O AST em JSON do Clang também não serve de base para um detector próprio:
-  144 MiB, 1,9 s e 410 MB de memória para um arquivo de 30 linhas com dois
-  cabeçalhos da biblioteca padrão.
-- **Veredito:** não entra.
+- **Corpus:** 15 de 15 defeitos (T1; T2 de nomes, literais e tipos; T3 com
+  comando a mais, a menos e trocado; no arquivo, entre arquivos e módulos;
+  lambda, template, método, bloco em outra função), 14 de 14 formas corretas
+  (acessores, tabelas, serializador irmão, mesmo laço com outro algoritmo,
+  macro, `std::expected`, código como texto, cabeçalho duas vezes), base limpa.
+- **Margem:** semelhança de 0,87 no menor defeito e 0,82 na maior forma
+  correta; janela de 45 e 36 nós. Passam a janela de 38 a 50 e o limiar de
+  0,83 a 0,86. **Mutantes:** os 8 reprovam (sem renomear local, sem janela,
+  sem semelhança, macro entra, cabeçalho contado duas vezes, nome dependente
+  vazio, literal sem valor, janela sem USR).
+- **GoogleTest 1.17** (41 mil linhas): 32 s, 506 MB, 101 acusações. São 55
+  cópias (cinco lidas, o resto pelo nome) e 46 nas 23 sobrecargas de
+  `UnpackStructImpl`, repetição que o C++23 impõe.
+- **Limites:** ferramenta e corpus do mesmo autor, e o d13 (template) só
+  passou depois de ler o nome dependente pelo token. Só a libclang 23 e a
+  libstdc++. Sem medida em 85, 2.500 e 20.000 linhas. T4 é indecidível
+  (teorema de Rice): fica na P20.
+- **Descartados:** o `alpha.clone.CloneChecker` (não vê outro arquivo) e o AST
+  em JSON (144 MiB para 30 linhas). Falta medir o PMD CPD.
+- **Veredito:** entra no `lint`, medindo o corpus a cada build (6 s). Lê o
+  `core/lib` a partir do primeiro módulo (P15).
 
 ## A CI
 
@@ -157,36 +168,33 @@ que toca `core/` ou o próprio workflow.
 | --- | --- | --- |
 | `dev` | g++-14 e clang++-20 | O piso declarado |
 | `dev`, `production`, `asan-ubsan`, `tsan`, `debug-stl`, `cxx26-probe` | g++-15 | Todos os perfis, no GCC mais novo do runner |
-| `lint` (com o clang-tidy 22), `asan-ubsan`, `tsan` | clang++-22 | O segundo compilador e a análise estática |
+| `lint` (com o clang-tidy 22 e o `python3-clang-22`), `asan-ubsan`, `tsan` | clang++-22 | O segundo compilador e a análise estática |
 
-- **Segurança do workflow:** token só de leitura, a action do checkout fixada
-  por SHA (v6.1.0), credencial não persistida, prazo por job e cancelamento
-  da rodada obsoleta. A matriz entra nos scripts por variável de ambiente, e
-  nunca colada no texto com `${{ }}`: o `shellcheck` lê os passos `run:` de
-  verdade (limpo em 2026-11-22), e os passos rodaram nesta máquina no shell do
-  runner (`bash --noprofile --norc -eo pipefail`), com e sem clang-tidy.
-- **Hipótese não medida:** que o passo que baixa o `vm.mmap_rnd_bits` para
-  28 nos jobs de sanitizer seja necessário. Kernel com ASLR de alta entropia
-  derrubava os sanitizers de LLVM antigo (actions/runner-images#9491). O passo
-  sai se uma rodada sem ele passar.
+- **Segurança do workflow:** token só de leitura, checkout fixado por SHA
+  (v6.1.0), credencial não persistida, prazo por job, rodada obsoleta
+  cancelada. A matriz entra por variável de ambiente, nunca colada com
+  `${{ }}`: o `shellcheck` lê os passos `run:` de verdade, e eles rodaram aqui
+  no shell do runner (`bash --noprofile --norc -eo pipefail`).
+- **Hipótese não medida:** que baixar o `vm.mmap_rnd_bits` para 28 nos jobs
+  de sanitizer seja preciso; ASLR de alta entropia derrubava os sanitizers de
+  LLVM antigo (actions/runner-images#9491). Sai se uma rodada sem ele passar.
 - **Fora da CI por ora:** o `dev-qt`. O Ubuntu não traz o Qt 6.12, e o
   `core/qt` ainda não tem código.
 
-**Estado (2026-11-23):** verde. A primeira rodada, no push do
-`reescrita/core-cpp23` (`7648308d`), passou nos 11 jobs, de 0,3 a 0,7 min cada
-(rodada 45098547884, lida pela API pública). O log de cada job só abre com
-login de admin; o passo de teste verde prova que houve teste, porque o preset
-tem `noTestsAction: error`.
+**Estado (2026-11-23):** verde nos 11 jobs, de 0,3 a 0,7 min cada (rodada
+45098547884, `7648308d`). O log se lê com o `gh`, por token só de leitura
+deste repositório (Actions: leitura).
 
-- **Custo:** zero. Runner padrão em repositório público é gratuito e não gasta
-  a cota do plano
-  ([cobrança do Actions](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
-  O plano Free roda até 20 jobs ao mesmo tempo, e um push abre 12: os 11
-  daqui e o `ci.yml` da 0.3, que roda em push de qualquer ramo
-  ([limites](https://docs.github.com/en/actions/reference/limits)).
-- **Conta bloqueada por cobrança**, como de 2026-10-19 a 2026-11-22: o job
-  não começa e a anotação diz "account is locked due to a billing issue". A
-  saída é do Viktor, pela cobrança da conta ou pelo suporte do GitHub
+- **Custo:** zero; runner padrão em repositório público não gasta a cota
+  ([cobrança](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
+  O Free roda 20 jobs ao mesmo tempo, e um push abre 12: os 11 daqui e o
+  `ci.yml` da 0.3 ([limites](https://docs.github.com/en/actions/reference/limits)).
+- **Conta bloqueada por cobrança** (2026-10-19 a 2026-11-22): o job não
+  começa ("account is locked due to a billing issue"); a saída é do Viktor
   ([conta bloqueada](https://docs.github.com/en/billing/how-tos/troubleshooting/locked-account)).
-- **Proteção da `main`** (P18): só os jobs deste workflow. O `ci.yml` da 0.3
-  reprovou na primeira rodada dele (2026-11-23, saída 101 do `verificar.sh`).
+- **Proteção da `main`** (P18): só os jobs deste workflow.
+- **O `ci.yml` da 0.3** rodou uma vez em 45 (as outras pararam na cobrança).
+  Na rodada 45098547764, 18 testes Rust reprovaram pelo `ubuntu-24.04`: sem
+  `bwrap` nem `clangd`, GCC sem `-std=c23`, CMake com presets só até a versão
+  10 e outro texto de erro. O `c1_24` é defeito: a 0.3 lista o preset `undo`,
+  que o CMake do runner esconde (`condition: null` herdada).

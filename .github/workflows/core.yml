@@ -44,7 +44,7 @@ jobs:
           - { preset: tsan, cxx: g++-15 }
           - { preset: debug-stl, cxx: g++-15 }
           - { preset: cxx26-probe, cxx: g++-15 }
-          - { preset: lint, cxx: clang++-22, tidy: clang-tidy-22 }
+          - { preset: lint, cxx: clang++-22, tidy: clang-tidy-22, pyclang: python3-clang-22 }
           - { preset: asan-ubsan, cxx: clang++-22 }
           - { preset: tsan, cxx: clang++-22 }
     # A matriz entra nos scripts por variavel de ambiente, e nunca colada no
@@ -55,6 +55,7 @@ jobs:
       PRESET: ${{ matrix.preset }}
       CXX_COMPILER: ${{ matrix.cxx }}
       TIDY: ${{ matrix.tidy }}
+      PYCLANG: ${{ matrix.pyclang }}
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -67,6 +68,14 @@ jobs:
       - name: Limit mmap randomization for the sanitizers
         if: ${{ matrix.preset == 'asan-ubsan' || matrix.preset == 'tsan' }}
         run: sudo sysctl -w vm.mmap_rnd_bits=28
+
+      # Os bindings de Python da libclang, da versao do clang-tidy, para o
+      # gate.duplication do lint (docs/engenharia/gates-e-medida-de-eficacia.md).
+      - name: Install the libclang Python bindings
+        if: ${{ matrix.pyclang }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends "$PYCLANG"
 
       # Sem "| head": o shell do runner roda com -o pipefail, e um head que
       # fecha o pipe cedo pode reprovar o passo pelo SIGPIPE de quem escreve.
