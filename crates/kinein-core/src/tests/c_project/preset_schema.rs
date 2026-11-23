@@ -112,10 +112,12 @@ fn c1_25_the_cmake_of_the_project_decides_the_list_the_menu_and_the_configure() 
     // Um campo que o esquema não tem: o `CMake` recusa o arquivo, e a IDE
     // também, com o motivo dele e sem job.
     fs::write(p.root.join("CMakePresets.json"), presets(r#","nope":1"#)).unwrap();
-    let reason =
-        "o CMake recusa os presets: CMakePresets.json:2: Invalid extra field \"nope\" in Preset";
-    let (_, message) = refusal(&mut p, "cmake.presets.list", json!({}));
-    assert_eq!(message, reason);
+    let (_, reason) = refusal(&mut p, "cmake.presets.list", json!({}));
+    crate::cmake_presets::assert_cmake_refused(
+        &p.root,
+        &reason,
+        "Invalid extra field \"nope\" in Preset",
+    );
     let (code, message) = refusal(&mut p, "cmake.configure", json!({}));
     assert_eq!(code, JsonRpcErrorCode::InvalidParams);
     assert_eq!(message, reason);

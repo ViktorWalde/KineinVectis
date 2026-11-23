@@ -160,9 +160,13 @@ com semelhança de 0,85 ou mais (`difflib`). Função gerada por macro não entr
 
 ## A CI
 
-`.github/workflows/core.yml`, que roda os presets do `core/CMakePresets.json`
-no runner `ubuntu-26.04` do GitHub, sem contêiner, a cada push e pull request
-que toca `core/` ou o próprio workflow.
+Só o ramo `reescrita/core-cpp23`, a cada push e pull request nele. A
+referência é a máquina local, e o runner `ubuntu-26.04` imita o que ela tem,
+sem contêiner. Todo push roda inteiro, e todo passo com `bash -euo pipefail`
+(o padrão do runner é `bash -e`: medido na rodada 45188723983).
+
+O `core.yml` roda os presets do `core/CMakePresets.json` quando o push toca
+`core/` ou o próprio workflow:
 
 | Jobs | Compilador | Para quê |
 | --- | --- | --- |
@@ -170,31 +174,27 @@ que toca `core/` ou o próprio workflow.
 | `dev`, `production`, `asan-ubsan`, `tsan`, `debug-stl`, `cxx26-probe` | g++-15 | Todos os perfis, no GCC mais novo do runner |
 | `lint` (com o clang-tidy 22 e o `python3-clang-22`), `asan-ubsan`, `tsan` | clang++-22 | O segundo compilador e a análise estática |
 
-- **Segurança do workflow:** token só de leitura, checkout fixado por SHA
-  (v6.1.0), credencial não persistida, prazo por job, rodada obsoleta
-  cancelada. A matriz entra por variável de ambiente, nunca colada com
-  `${{ }}`: o `shellcheck` lê os passos `run:` de verdade, e eles rodaram aqui
-  no shell do runner (`bash --noprofile --norc -eo pipefail`).
-- **Hipótese não medida:** que baixar o `vm.mmap_rnd_bits` para 28 nos jobs
-  de sanitizer seja preciso; ASLR de alta entropia derrubava os sanitizers de
-  LLVM antigo (actions/runner-images#9491). Sai se uma rodada sem ele passar.
-- **Fora da CI por ora:** o `dev-qt`. O Ubuntu não traz o Qt 6.12, e o
-  `core/qt` ainda não tem código.
+O `ci.yml` roda o `scripts/verificar.sh --ci-rapida --estrito` da 0.3, com o
+`bubblewrap` e o `clangd` que os testes de C usam.
 
-**Estado (2026-11-23):** verde nos 11 jobs, de 0,3 a 0,7 min cada (rodada
-45098547884, `7648308d`). O log se lê com o `gh`, por token só de leitura
-deste repositório (Actions: leitura).
+- **Segurança:** token só de leitura, ações fixadas por SHA (checkout v7.0.1
+  e cache v6.1.0, últimas releases em 2026-11-23, Node 24), credencial não
+  persistida, prazo por job, matriz por variável de ambiente (o `shellcheck`
+  lê os passos `run:` de verdade).
+- **Sem passo de ambiente sem fonte:** a imagem já grava `vm.mmap_rnd_bits=28`
+  (actions/runner-images#9491); o `ci.yml` prova o `bwrap` antes dos testes.
+- **Máquina local × runner:** a imagem não traz o GCC 16, o Clang 23 nem o
+  Qt 6.12 (o `dev-qt` e o perfil completo da 0.3 ficam fora); trazê-los é
+  dependência nova, que o Viktor decide. O CMake 4.3 local lê os presets até
+  a versão 11, e o 4.5 do runner até a 13 (o `schema.json` de cada tag do
+  CMake): o `${fileDir}` da versão 12 só se prova na CI. O piso 3.25, nenhum.
+- **No GitHub, pelo Viktor** (o token daqui não administra): ações só do
+  GitHub e por SHA, token padrão só de leitura, aprovação de todo
+  contribuidor externo, ramo sem apagar nem forçar push (P18).
 
-- **Custo:** zero; runner padrão em repositório público não gasta a cota
-  ([cobrança](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
-  O Free roda 20 jobs ao mesmo tempo, e um push abre 12: os 11 daqui e o
-  `ci.yml` da 0.3 ([limites](https://docs.github.com/en/actions/reference/limits)).
-- **Conta bloqueada por cobrança** (2026-10-19 a 2026-11-22): o job não
-  começa ("account is locked due to a billing issue"); a saída é do Viktor
-  ([conta bloqueada](https://docs.github.com/en/billing/how-tos/troubleshooting/locked-account)).
-- **Proteção da `main`** (P18): só os jobs deste workflow.
-- **O `ci.yml` da 0.3** rodou uma vez em 45 (as outras pararam na cobrança).
-  Na rodada 45098547764, 18 testes Rust reprovaram pelo `ubuntu-24.04`: sem
-  `bwrap` nem `clangd`, GCC sem `-std=c23`, CMake com presets só até a versão
-  10 e outro texto de erro. O `c1_24` é defeito: a 0.3 lista o preset `undo`,
-  que o CMake do runner esconde (`condition: null` herdada).
+**Estado (2026-11-23):** `core.yml` verde nos 11 jobs (rodada 45188723983,
+`5acb917c`; `gate.duplication` em 19,5 s), sem custo em repositório público
+([cobrança](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
+O `ci.yml` reprovou 17 testes no `ubuntu-24.04` (rodada 45188723227) e não
+rodou no 26.04. Na máquina local, o perfil dele reprova em 4 testes (defeitos
+da 0.3) e no `cargo deny` (40.7 §7.431).

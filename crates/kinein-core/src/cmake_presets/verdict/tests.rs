@@ -1,13 +1,15 @@
 //! C1-25: the `CMake` of the project answers for the presets (consolidacao C
-//! §18). The schema cases and the generators run against the real `CMake`
-//! 4.4.5, as measured on 2026-11-10; the cache, the parsing and the absence
-//! of `CMake` use fake executables that write down each call.
+//! §18). The schema cases and the generators run against the real `cmake` on
+//! the `PATH`, measured with 4.4.5 on 2026-11-10 and with 4.3.0 on
+//! 2026-11-23; a refusal is judged by what that `cmake` writes, not by the
+//! text of one version. The cache, the parsing and the absence of `CMake`
+//! use fake executables that write down each call.
 
 use std::path::{Path, PathBuf};
 
 use super::super::{
-    PresetDefault, binary_dir, binary_dirs, default_preset, list_from, list_presets, load_with,
-    native_reading,
+    PresetDefault, assert_cmake_refused, binary_dir, binary_dirs, default_preset, list_from,
+    list_presets, load_with, native_reading,
 };
 use crate::kits::{
     pinned_program,
@@ -34,58 +36,59 @@ fn names(root: &Path) -> Vec<String> {
 
 const OK: &str = r#"{"name":"ok","generator":"Ninja","binaryDir":"o"}"#;
 
-/// Each case the native reading takes and `CMake` 4.4.5 refuses, with the
-/// line it gives after "Could not read presets from" (measured).
+/// Each case the native reading takes and `CMake` refuses, with what names
+/// the cause in the line every measured version gives after "Could not read
+/// presets from"; the rest of the line is the one of each version.
 const SCHEMA: &[(&str, &str, &str)] = &[
     (
         "extra-root",
         r#"{"version":10,"configurePresets":[OK],"nope":1}"#,
-        r#"CMakePresets.json:1: Invalid extra field "nope" in root object"#,
+        r#"Invalid extra field "nope" in root object"#,
     ),
     (
         "extra-preset",
         r#"{"version":10,"configurePresets":[{"name":"ok","generator":"Ninja","binaryDir":"o","nope":1}]}"#,
-        r#"CMakePresets.json:1: Invalid extra field "nope" in Preset"#,
+        r#"Invalid extra field "nope" in Preset"#,
     ),
     (
         "installDir-v2",
         r#"{"version":2,"configurePresets":[{"name":"ok","generator":"Ninja","binaryDir":"o","installDir":"i"}]}"#,
-        "File version must be 3 or higher for installDir preset support",
+        "installDir preset support",
     ),
     (
         "graphviz-v9",
         r#"{"version":9,"configurePresets":[{"name":"ok","generator":"Ninja","binaryDir":"o","graphviz":"g"}]}"#,
-        "File version must be 10 or higher for graphviz preset support",
+        "graphviz preset support",
     ),
     (
         "binaryDir-number",
         r#"{"version":10,"configurePresets":[{"name":"ok","generator":"Ninja","binaryDir":3}]}"#,
-        r#"CMakePresets.json:1: "binaryDir" expected a string, got: 3"#,
+        r#""binaryDir" expected a string"#,
     ),
     (
         "missing-configurePreset",
         r#"{"version":10,"configurePresets":[OK],"buildPresets":[{"name":"b","configurePreset":"x"}]}"#,
-        r#"Invalid "configurePreset": "b""#,
+        r#""configurePreset": "b""#,
     ),
     (
         "condition-without-rhs",
         r#"{"version":10,"configurePresets":[{"name":"ok","generator":"Ninja","binaryDir":"o","condition":{"type":"equals","lhs":"a"}}]}"#,
-        r#"CMakePresets.json:1: Missing required field "rhs" in  condition for preset "ok""#,
+        r#"Missing required field "rhs""#,
     ),
     (
         "unknown-condition",
         r#"{"version":10,"configurePresets":[{"name":"ok","generator":"Ninja","binaryDir":"o","condition":{"type":"maybe"}}]}"#,
-        r#"CMakePresets.json:1: Invalid condition for preset "ok""#,
+        r#"Invalid condition for preset "ok""#,
     ),
     (
         "empty-name",
         r#"{"version":10,"configurePresets":[OK,{"name":""}]}"#,
-        "CMakePresets.json:1: Invalid Preset Name",
+        "Invalid Preset Name",
     ),
     (
         "invalid-regex",
         r#"{"version":10,"configurePresets":[{"name":"ok","generator":"Ninja","binaryDir":"o","condition":{"type":"matches","string":"a","regex":"("}}]}"#,
-        r#"Invalid configure preset: "ok": Invalid condition"#,
+        r#"preset: "ok""#,
     ),
 ];
 
@@ -100,8 +103,8 @@ fn the_cmake_of_the_project_refuses_what_its_schema_does_not_accept() {
         let native = native_reading();
         assert!(list_presets(&root).is_ok(), "{name}");
         drop(native);
-        let refused = format!("o CMake recusa os presets: {reason}");
-        assert_eq!(list_presets(&root).unwrap_err(), refused, "{name}");
+        let refused = list_presets(&root).unwrap_err();
+        assert_cmake_refused(&root, &refused, reason);
         assert_eq!(
             default_preset(&root),
             PresetDefault::Refused(refused.clone()),
@@ -154,7 +157,7 @@ fn presets_this_cmake_cannot_generate_are_neither_listed_nor_configured() {
     ));
 }
 
-/// C1-26 against the real `CMake` 4.4.5, the cases measured on 2026-11-10:
+/// C1-26 against the real `cmake`, the cases measured with 4.4.5 on 2026-11-10:
 /// what the IDE leaves undecided (`matches`, `notMatches`, and an error
 /// after them) the `CMake` decides, and no preset carries the note. The
 /// regular expression is compiled only when `CMake` reaches it.
@@ -171,9 +174,11 @@ fn the_cmake_decides_the_conditions_the_ide_does_not() {
     let any = |forms: &[&str]| format!(r#"{{"type":"anyOf","conditions":[{}]}}"#, forms.join(","));
     let all = |forms: &[&str]| format!(r#"{{"type":"allOf","conditions":[{}]}}"#, forms.join(","));
     let not = |form: &str| format!(r#"{{"type":"not","condition":{form}}}"#);
-    let invalid = r#"o CMake recusa os presets: Invalid configure preset: "c": Invalid condition"#;
+    // The `CMake` refuses the file; what names the cause in its line.
+    let invalid = r#"preset: "c""#;
     let false_for_cmake = "a condition do preset c é falsa para o CMake";
-    // (case, condition of `c`, its reason when out of the list, or the refusal)
+    // (case, condition of `c`, its reason when out of the list, or what names
+    // the cause of the refusal)
     let cases: Vec<Case> = vec![
         ("any-yes-bad", any(&[yes, bad]), Ok(None)),
         ("any-no-bad", any(&[no, bad]), Err(invalid)),
@@ -215,7 +220,7 @@ fn the_cmake_decides_the_conditions_the_ide_does_not() {
             ),
         );
         match expected {
-            Err(refusal) => assert_eq!(list_presets(&root).unwrap_err(), refusal, "{name}"),
+            Err(cause) => assert_cmake_refused(&root, &list_presets(&root).unwrap_err(), cause),
             Ok(reason) => {
                 let listed = list_presets(&root).unwrap();
                 assert!(
@@ -240,9 +245,10 @@ fn the_cmake_decides_the_conditions_the_ide_does_not() {
             r#"{{"version":6,"configurePresets":[{{"name":"ok","binaryDir":"o"}},{{"name":"base","hidden":true,"condition":{bad_regex}}},{{"name":"c","inherits":"base","binaryDir":"c"}}]}}"#
         ),
     );
-    assert_eq!(
-        list_presets(&root).unwrap_err(),
-        r#"o CMake recusa os presets: Invalid configure preset: "base": Invalid condition"#
+    assert_cmake_refused(
+        &root,
+        &list_presets(&root).unwrap_err(),
+        r#"preset: "base""#,
     );
 }
 
@@ -320,11 +326,7 @@ fn the_answer_holds_until_the_cmake_or_a_presets_file_changes() {
     // when something changes.
     std::fs::remove_file(root.join("more.json")).unwrap();
     for expected in [5, 5] {
-        let refused = refusal(&root, &program);
-        assert!(
-            refused.starts_with("o CMake recusa os presets: File not found: "),
-            "{refused}"
-        );
+        assert_cmake_refused(&root, &refusal(&root, &program), "more.json");
         assert_eq!(calls(&log).len(), expected);
     }
 }

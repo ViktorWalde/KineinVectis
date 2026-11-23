@@ -446,6 +446,17 @@ fn compiler_of(directory: &Path) -> String {
 #[test]
 fn c1_24_file_dir_of_version_12_configures_where_cmake_does() {
     let mut p = fixture();
+    // O `CMake` que não lê a versão 12 (o 4.3.0 lê até a 11) recusa o
+    // arquivo, e a IDE também, com a linha dele; o `${fileDir}` da 12 fica
+    // sem prova nesta máquina.
+    if cmake_listing(&p.root).is_err() {
+        let refused = crate::cmake_presets::list_presets(&p.root).unwrap_err();
+        crate::cmake_presets::assert_cmake_refused(&p.root, &refused, "\"version\" 12");
+        eprintln!(
+            "NAO PROVADO: o ${{fileDir}} da versao 12 dos presets (o cmake desta maquina nao le a 12)"
+        );
+        return;
+    }
     // O `CMake` real: a pasta do arquivo incluído, e a do preset em uso
     // quando o texto tem `${presetName}`.
     let cli = cli_configure(&p.root, "kid");

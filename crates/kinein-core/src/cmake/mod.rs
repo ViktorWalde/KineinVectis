@@ -726,28 +726,36 @@ mod tests {
             default_preset(&root),
             PresetDefault::One("dev-local".to_owned(), "CMakeUserPresets.json")
         );
-        // Um arquivo de usuario invalido: o `CMake` 4.4.5 recusa todos os
-        // presets ("Could not read presets"), e a IDE tambem (C1-18). Ate'
+        // Um arquivo de usuario invalido: o `CMake` recusa todos os presets
+        // ("Could not read presets"), e a IDE tambem (C1-18). Ate'
         // 2026-11-09 o padrao saia dos presets do projeto, e o configure
         // reprovava depois no `CMake`.
-        // Desde o C1-25 o motivo e' o do `CMake` do projeto; sem ele, o da
-        // leitura nativa.
+        // Desde o C1-25 o motivo e' uma linha do `CMake` do projeto, com o
+        // texto da versao dele; sem ele, o da leitura nativa.
         std::fs::write(root.join("CMakeUserPresets.json"), "{ nao e json").unwrap();
-        for (asks, reason) in [
-            (true, "o CMake recusa os presets: CMakeUserPresets.json:1: "),
-            (false, "CMakeUserPresets.json inválido"),
-        ] {
+        for asks in [true, false] {
             let _native = (!asks).then(crate::cmake_presets::native_reading);
-            assert!(matches!(
-                default_preset(&root),
-                PresetDefault::Refused(refused) if refused.starts_with(reason)
-            ));
+            let PresetDefault::Refused(refused) = default_preset(&root) else {
+                panic!("{:?}", default_preset(&root));
+            };
+            if asks {
+                crate::cmake_presets::assert_cmake_refused(
+                    &root,
+                    &refused,
+                    "CMakeUserPresets.json",
+                );
+            } else {
+                assert!(
+                    refused.starts_with("CMakeUserPresets.json inválido"),
+                    "{refused}"
+                );
+            }
             // O configure sem preset pedido recusa com o mesmo motivo, sem
             // configurar sem preset.
             assert!(
                 super::choose_preset(&root, None)
                     .unwrap_err()
-                    .starts_with(reason)
+                    .starts_with(&refused)
             );
         }
 

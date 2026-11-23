@@ -274,6 +274,33 @@ pub(crate) fn native_list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, S
     list_from(load_with(root, None))
 }
 
+/// A recusa da IDE diante do `cmake` desta máquina, sem o texto de uma
+/// versão: o motivo é uma linha que o `cmake --list-presets` escreveu, sem
+/// mudar uma letra, e contém `cause`. Cada versão escreve a sua: para a mesma
+/// `condition` inválida, `Invalid configure preset: "c": Invalid condition`
+/// no 4.4.5 e `Invalid preset: "c"` no 4.3.0 (medido em 2026-11-23). A
+/// `cause` não pode estar no caminho da pasta, que o `CMake` também escreve.
+#[cfg(test)]
+pub(crate) fn assert_cmake_refused(root: &Path, refused: &str, cause: &str) {
+    let output = std::process::Command::new("cmake")
+        .arg("--list-presets")
+        .current_dir(root)
+        .output()
+        .unwrap();
+    assert!(!output.status.success(), "o CMake aceita: {output:?}");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let reason = refused
+        .strip_prefix("o CMake recusa os presets: ")
+        .unwrap_or_else(|| panic!("não é a recusa do CMake: {refused}"));
+    assert!(
+        stderr
+            .lines()
+            .any(|line| line.trim().trim_start_matches("CMake Error: ") == reason),
+        "{reason:?} não é uma linha do CMake:\n{stderr}"
+    );
+    assert!(reason.contains(cause), "{reason:?} não nomeia {cause:?}");
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::{Path, PathBuf};

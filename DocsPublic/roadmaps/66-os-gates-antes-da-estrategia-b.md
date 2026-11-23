@@ -331,6 +331,11 @@ padrão, de um commit. Não existe `packaging/ci/` nem `scripts/ci-local.sh`.
 A máquina de medição tem o `podman` 6.2.0 e nenhuma imagem do Ubuntu.
 Nada da CI foi executado nesta revisão (§12).
 
+Em 2026-11-23 o `ci.yml` passou para o `ubuntu-26.04`, só no ramo
+`reescrita/core-cpp23`, com o `bubblewrap` e o `clangd` instalados no
+próprio YAML ([40.7](40.7-registro-das-entregas.md) §7.431). No
+`ubuntu-24.04` ele reprovou 17 testes na rodada 45188723227.
+
 ## 3. As classes
 
 | Classe | O que quer dizer |

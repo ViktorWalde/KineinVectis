@@ -1,21 +1,31 @@
+# CI da 0.3 (Rust e gates estaticos), no ramo da reescrita
+# (docs/engenharia/gates-e-medida-de-eficacia.md, secao "A CI").
+#
+# A referencia e' a maquina local: o scripts/verificar.sh --estrito de quem
+# desenvolve. O runner imita o que ela tem (bwrap, clangd, GCC com C23, CMake
+# que le os presets da versao do projeto), e cada push roda inteiro.
 name: CI
 
 on:
   push:
+    branches: [reescrita/core-cpp23]
   pull_request:
+    branches: [reescrita/core-cpp23]
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+# O padrao do runner, sem "shell:", e' "bash -e {0}", sem pipefail (medido
+# no log da rodada 45188723983).
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 jobs:
   fast:
     name: Rust and static checks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
     env:
       CARGO_TERM_COLOR: always
@@ -23,29 +33,50 @@ jobs:
       CARGO_BUILD_JOBS: "2"
     steps:
       - name: Check out source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      # bubblewrap: o isolamento do GCC na verificacao de edicao
+      # (build::edit_verification). clangd: os testes de C e C++ com o
+      # servidor real (c_identity, c05). Sem cmake nem ninja-build do apt: a
+      # imagem ja traz o CMake 4.5.0 em /usr/local e o Ninja 1.13.2, e o
+      # CMake do apt (4.2.3 no 26.04, Launchpad) seria uma segunda
+      # instalacao, que a maquina local nao tem.
       - name: Install build and gate prerequisites
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
-            build-essential cmake ninja-build clang pkg-config unixodbc-dev python3 shellcheck git
+            build-essential clang clangd bubblewrap pkg-config \
+            unixodbc-dev python3 shellcheck git
+
+      # "type -a" lista todo cmake e ninja do PATH: um de cada, como na
+      # maquina local. A ultima linha prova o bwrap antes dos testes: se o
+      # runner barrar o user namespace, o passo reprova aqui, com a causa.
+      - name: Show the toolchain
+        run: |
+          type -a cmake ninja
+          cmake --version
+          ninja --version
+          gcc --version
+          clang --version
+          clangd --version
+          bwrap --version
+          bwrap --ro-bind / / --dev /dev --proc /proc true
 
       - name: Install the repository Rust toolchain
         run: rustup show active-toolchain
 
       - name: Restore Cargo cache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ci-rust-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', '**/Cargo.toml') }}
+          key: ci-rust-v2-ubuntu-26.04-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
-            ci-rust-v1-${{ runner.os }}-${{ runner.arch }}-
+            ci-rust-v2-ubuntu-26.04-${{ runner.arch }}-
 
       - name: Install the pinned dependency auditor
         run: cargo install cargo-deny --version 0.20.2 --locked

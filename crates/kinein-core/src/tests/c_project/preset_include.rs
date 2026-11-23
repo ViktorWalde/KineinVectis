@@ -131,20 +131,11 @@ fn c1_18_presets_of_an_included_file_are_found_where_cmake_configures_them() {
     assert_eq!(chosen["cdbPreset"], "gcc-inc", "{chosen}");
 
     // Um `include` que some recusa tudo, como no `CMake`: nem candidata de
-    // preset nem lista parcial. Desde o C1-25 o motivo é o do `CMake`.
+    // preset nem lista parcial. Desde o C1-25 o motivo é uma linha do
+    // `CMake`, com o texto da versão dele.
     fs::remove_file(p.root.join("cmake/presets/compilers.json")).unwrap();
     let refused = refusal(&mut p, "cmake.presets.list");
-    assert!(
-        refused.starts_with("o CMake recusa os presets: File not found: ")
-            && refused.ends_with("cmake/presets/compilers.json"),
-        "{refused}"
-    );
-    let cmake = Command::new("cmake")
-        .arg("--list-presets")
-        .current_dir(&p.root)
-        .output()
-        .unwrap();
-    assert!(!cmake.status.success(), "{cmake:?}");
+    crate::cmake_presets::assert_cmake_refused(&p.root, &refused, "compilers.json");
     let status = p.call("cmake.status", json!({}));
     assert_eq!(
         status["cdbAbsence"]["kind"], "chosenConfiguration",
@@ -154,7 +145,7 @@ fn c1_18_presets_of_an_included_file_are_found_where_cmake_configures_them() {
         status["cdbAbsence"]["reason"]
             .as_str()
             .unwrap()
-            .contains("o CMake recusa os presets: File not found: "),
+            .contains(&refused),
         "{status}"
     );
 }

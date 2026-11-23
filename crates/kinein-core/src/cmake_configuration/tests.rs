@@ -244,11 +244,7 @@ fn the_record_comes_first_and_is_never_replaced() {
     );
     select_configuration(&root, Some("debug")).unwrap();
     std::fs::write(root.join("CMakePresets.json"), "{").unwrap();
-    assert!(
-        refused(&root).starts_with("o CMake recusa os presets: CMakePresets.json:1: "),
-        "{}",
-        refused(&root)
-    );
+    crate::cmake_presets::assert_cmake_refused(&root, &refused(&root), "CMakePresets.json");
     let _native = crate::cmake_presets::native_reading();
     assert!(refused(&root).starts_with("CMakePresets.json inválido"));
 }
