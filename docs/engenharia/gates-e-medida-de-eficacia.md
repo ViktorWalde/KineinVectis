@@ -100,6 +100,23 @@ tem de ser acusada, e nenhuma outra.
 - **Forma correta:** os oito presets, verdes.
 - **Veredito:** entra.
 
+### `alpha.clone.CloneChecker` do Clang: duplicação (2026-11-23)
+
+Candidato ao gate de duplicação (P20), medido com o Clang 23.1.5 num corpus
+de quatro funções em dois arquivos.
+
+- **Pega** a cópia com os nomes trocados no mesmo `.cpp`.
+- **Não pega** a mesma cópia em outro `.cpp`: a análise é por unidade de
+  tradução.
+- **Acusa** o laço de uma função de lógica diferente (contar `\t` em vez de
+  `\n`), porque ignora os literais. Pode ser duplicação real (é um
+  `std::ranges::count`); acusar ou não é decisão de política.
+- É checagem `alpha`, instável, do analisador estático.
+- O AST em JSON do Clang também não serve de base para um detector próprio:
+  144 MiB, 1,9 s e 410 MB de memória para um arquivo de 30 linhas com dois
+  cabeçalhos da biblioteca padrão.
+- **Veredito:** não entra.
+
 ## A CI
 
 `.github/workflows/core.yml`, que roda os presets do `core/CMakePresets.json`
@@ -118,26 +135,28 @@ que toca `core/` ou o próprio workflow.
   nunca colada no texto com `${{ }}`: o `shellcheck` lê os passos `run:` de
   verdade (limpo em 2026-11-22), e os passos rodaram nesta máquina no shell do
   runner (`bash --noprofile --norc -eo pipefail`), com e sem clang-tidy.
-- **Hipótese não medida:** o passo que baixa o `vm.mmap_rnd_bits` para 28
-  nos jobs de sanitizer. Kernel com ASLR de alta entropia derrubava os
-  sanitizers de LLVM antigo (actions/runner-images#9491). O passo sai se a
-  primeira rodada sem ele passar.
+- **Hipótese não medida:** que o passo que baixa o `vm.mmap_rnd_bits` para
+  28 nos jobs de sanitizer seja necessário. Kernel com ASLR de alta entropia
+  derrubava os sanitizers de LLVM antigo (actions/runner-images#9491). O passo
+  sai se uma rodada sem ele passar.
 - **Fora da CI por ora:** o `dev-qt`. O Ubuntu não traz o Qt 6.12, e o
   `core/qt` ainda não tem código.
 
-**A CI nunca rodou.** As 44 rodadas do repositório, de 2026-10-19 a
-2026-11-16, terminaram sem iniciar, todas com a anotação "The job was not
-started because your account is locked due to a billing issue" (lida pela API
-pública do GitHub em 2026-11-22). Os workflows estão ativos e o repositório é
-público, e o runner padrão é gratuito e ilimitado em repositório público
-([runners do GitHub](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)):
-o bloqueio é da conta. A documentação do GitHub
-([conta bloqueada](https://docs.github.com/en/billing/how-tos/troubleshooting/locked-account))
-dá duas causas: pagamento recusado ou atrasado, e retenção de autorização que
-falhou (assinatura do Copilot ou aumento de orçamento), que bloqueia o
-Actions mesmo na conta Free e sem forma de pagamento cadastrada. A saída é do
-Viktor, com o login dele: Settings → Billing & Licensing → Payment
-information; e, se a página não mostrar assinatura, saldo nem problema,
-pedir a revisão do bloqueio em [support.github.com](https://support.github.com).
-Depois da primeira rodada verde, a regra de proteção do ramo `main` pode
-exigir os jobs (P18).
+**Estado (2026-11-23):** verde. A primeira rodada, no push do
+`reescrita/core-cpp23` (`7648308d`), passou nos 11 jobs, de 0,3 a 0,7 min cada
+(rodada 45098547884, lida pela API pública). O log de cada job só abre com
+login de admin; o passo de teste verde prova que houve teste, porque o preset
+tem `noTestsAction: error`.
+
+- **Custo:** zero. Runner padrão em repositório público é gratuito e não gasta
+  a cota do plano
+  ([cobrança do Actions](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
+  O plano Free roda até 20 jobs ao mesmo tempo, e um push abre 12: os 11
+  daqui e o `ci.yml` da 0.3, que roda em push de qualquer ramo
+  ([limites](https://docs.github.com/en/actions/reference/limits)).
+- **Conta bloqueada por cobrança**, como de 2026-10-19 a 2026-11-22: o job
+  não começa e a anotação diz "account is locked due to a billing issue". A
+  saída é do Viktor, pela cobrança da conta ou pelo suporte do GitHub
+  ([conta bloqueada](https://docs.github.com/en/billing/how-tos/troubleshooting/locked-account)).
+- **Proteção da `main`** (P18): só os jobs deste workflow. O `ci.yml` da 0.3
+  reprovou na primeira rodada dele (2026-11-23, saída 101 do `verificar.sh`).

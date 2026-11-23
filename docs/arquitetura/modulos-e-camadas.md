@@ -161,35 +161,6 @@ Windows. Se um dia um laço próprio em `sys.io` (epoll no Linux, IOCP no
 Windows) valer mais que a dependência, ele troca o `core/qt` sem tocar no
 domínio. A interface mantém essa troca possível.
 
-## O caminho de um pedido
-
-```mermaid
-sequenceDiagram
-    participant UI
-    participant T as core/qt (Transport)
-    participant P as protocol
-    participant D as domínio (ex.: cmake)
-    participant R as rt
-    participant L as launch
-    UI->>T: uma linha JSON-RPC
-    T->>P: os bytes da linha
-    P->>D: pedido tipado, sem JSON-RPC
-    alt trabalho de estado
-        D-->>P: resultado, no laço
-    else trabalho externo
-        D->>R: trabalho com prazo e geração
-        R->>L: lançar (origem, prazo, teto)
-        L-->>R: saída ou erro tipado
-        R-->>D: resultado no laço, se a geração não mudou
-        D-->>P: resultado
-    end
-    P-->>T: resposta
-    T-->>UI: uma linha JSON-RPC
-```
-
-O que acontece dentro de `R` e de `P` (threads, filas, enquadramento) é o
-desenho do Viktor; o diagrama só mostra quem fala com quem.
-
 ## As pastas
 
 ```text
@@ -221,17 +192,3 @@ está na tabela porque uma lição da 0.3 pediu aquela fronteira, mas **um
 módulo só nasce com o primeiro código dele**. Nenhum alvo vazio entra no
 build. Se dois módulos sempre mudarem juntos, isso é sinal de que são um só, e
 eles se juntam.
-
-## A ordem da base
-
-Proposta para a Fase D (P12), com o critério de pronto de cada passo a
-escrever antes do código:
-
-1. `base`, `sys.fs` e `codec`, depois da decisão das bibliotecas (P16).
-2. `rt` e `protocol` (desenho do Viktor), mais `app` e `core/qt` com só o
-   `core.ping` e o `initialize`. É o primeiro marco do estrangulamento: a UI
-   sobe o core em C++ por `KINEIN_CORE_BIN`, o ping responde e o resto devolve
-   `MethodNotFound`. Prova o caminho inteiro, o CI e os sanitizers cedo, sem
-   tirar a IDE do dogfooding, que continua no core em Rust.
-3. `storage`, `sys.process` e `launch`, com o teste do projeto hostil.
-4. `workspace`, e então o domínio do N0.

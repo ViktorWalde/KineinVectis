@@ -57,6 +57,7 @@ termos de código:
 | Dependência entre módulos só para camada de baixo | `kinein_add_module`, proposto ([módulos](../arquitetura/modulos-e-camadas.md)) |
 | Nada executa antes da confiança no workspace | Teste do projeto hostil (RNF-SEG-01) |
 | Dependência externa nova só com aprovação do Viktor, com licença conferida | Revisão |
+| Uma responsabilidade, um módulo dono. Variação nova entra como adaptador de uma porta que já existe (aberto/fechado), nunca como cópia ajustada de código existente | Revisão; o gate de duplicação está em proposta (P20) |
 
 ## Supressões
 

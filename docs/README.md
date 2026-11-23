@@ -58,6 +58,20 @@ Ordem de leitura para quem chega: este arquivo, `licoes-da-0.3.md`,
 5. **ADRs** ficam em `adr/`. A numeração continua a de
    `DocsPublic/decisoes-adr/` (a última é a ADR-0011), para nenhum número
    apontar para duas decisões.
+6. **Até 200 linhas por arquivo**, e cada assunto numa seção `##` de nome
+   explícito, que se entende sozinha. Passou disso, o arquivo se divide por
+   responsabilidade (regra 4).
+7. **As primeiras linhas dizem o dono.** Quem lê decide por elas se precisa
+   do arquivo, e então lê só a seção de que precisa.
+8. **Estado, não história.** O arquivo diz o que vale agora e de onde veio.
+   Como se chegou lá fica na mensagem do commit. A exceção é o registro de
+   medidas dos gates, que é a prova de cada gate.
+9. **A 0.3 se consulta pelo identificador** (`INF-26`, `ENG-51`) ou pela
+   linha (`62:1371`), e nunca lendo um roadmap inteiro: o 62 sozinho tem
+   2.183 linhas. O resumo é o `licoes-da-0.3.md`.
+
+As regras 6 a 9 ainda são convenção: o mecanismo é a P19
+([decisões](decisoes-pendentes.md)).
 
 ## Como citar a 0.3
 

@@ -1,7 +1,7 @@
 # Requisitos funcionais do core em C++
 
-Dono: o que o core faz, em que nível de prioridade e qual teste aceita cada
-capacidade. Os limites de tempo, memória e segurança são do
+Dono: o que o core faz, em que nível de prioridade, qual teste aceita cada
+capacidade e a ordem de entrega da base. Os limites de tempo, memória e segurança são do
 [requisitos-nao-funcionais.md](requisitos-nao-funcionais.md).
 
 Estado: rascunho de 2026-11-22. Nenhum requisito está implementado. Os testes
@@ -77,3 +77,17 @@ só registra o que a 0.3 já cobre, para nada se perder.
 | RF-EMB-04 | Memória e registradores | `memory.x`, `debug.readMemory`, `debug.disassemble` |
 | RF-SEM-01 | Análise semântica própria: índice, definição, referência e escopo locais | `index.*`, `local.*` |
 | RF-SEM-02 | Qualidade e cobertura | `quality.run`, `coverage.*` |
+
+## A ordem da base
+
+Proposta para a Fase D (P12), com o critério de pronto de cada passo a
+escrever antes do código:
+
+1. `base`, `sys.fs` e `codec` ([módulos](../arquitetura/modulos-e-camadas.md)), depois da decisão das bibliotecas (P16).
+2. `rt` e `protocol` (desenho do Viktor), mais `app` e `core/qt` com só o
+   `core.ping` e o `initialize`. É o primeiro marco do estrangulamento: a UI
+   sobe o core em C++ por `KINEIN_CORE_BIN`, o ping responde e o resto devolve
+   `MethodNotFound`. Prova o caminho inteiro, o CI e os sanitizers cedo, sem
+   tirar a IDE do dogfooding, que continua no core em Rust.
+3. `storage`, `sys.process` e `launch`, com o teste do projeto hostil.
+4. `workspace`, e então o domínio do N0.

@@ -88,9 +88,10 @@ sem os avisos e sem o clang-tidy (`core/cmake/KineinProfile.cmake`).
 
 - MSVC e Windows: o ramo MSVC dos módulos foi herdado do
   `KineinStrictOptions.cmake` e não compilou nesta máquina.
-- GCC 14 e Clang 20: o piso só compila no CI, que ainda não rodou
-  ([gates](gates-e-medida-de-eficacia.md#a-ci)). Nesta máquina há só o GCC
-  16.2.1 e o Clang 23.1.5.
+- GCC 14 e Clang 20: o piso compilou e passou no CI em 2026-11-23
+  ([gates](gates-e-medida-de-eficacia.md#a-ci)), mas a versão exata que o
+  runner usou está no log, que não foi lido. Nesta máquina há só o GCC 16.2.1
+  e o Clang 23.1.5.
 - O ruído do `-Wconversion` no código gerado pelo moc: `core/qt` ainda não tem
   código. Os cabeçalhos do Qt já entram como `-isystem`.
 - aarch64.

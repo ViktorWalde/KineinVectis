@@ -90,8 +90,9 @@ fecham com a remoção do editor atual na fase E do 65, e não com o backend.
   é conferido contra o oráculo ou contra a lista de divergências.
 - O contrato precisa de uma fonte que não dependa do Rust antes de o Rust sair
   ([decisões](../decisoes-pendentes.md), P02).
-- Os defeitos da 0.3 seguem no produto em uso até a troca: o INF-26 e o INF-23
-  pedem tratamento próprio (P10).
+- Os defeitos da 0.3 seguem no produto em uso até a troca. O INF-26 foi
+  corrigido no QML atual em 2026-11-22 (decisão do Viktor); o INF-23 segue, e
+  até o lançador em C++ existir só se abre projeto confiável.
 - A regra "só o lançador cria processo" perde a imposição pelo compilador que
   o Rust dava (`disallowed_methods = "forbid"`) e precisa de outro mecanismo,
   com eficácia medida.

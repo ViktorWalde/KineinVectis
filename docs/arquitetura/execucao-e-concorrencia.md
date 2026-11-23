@@ -1,8 +1,8 @@
 # Execução e concorrência
 
 Dono: onde o trabalho do core roda, quem é dono de cada dado, prazo,
-cancelamento e descarte de resultado velho. Também é o registro das threads
-(o "threads.md" do plano).
+cancelamento, descarte de resultado velho e o caminho de um pedido entre os
+módulos. Também é o registro das threads (o "threads.md" do plano).
 
 O **desenho** do modelo de execução é do Viktor. Esta página guarda as
 invariantes que o desenho tem de cumprir e, depois de aprovado, o desenho.
@@ -35,3 +35,34 @@ que a cria.
 | Thread | Dona de | Recebe | Envia | Para como |
 | --- | --- | --- | --- | --- |
 | — | — | — | — | — |
+
+## O caminho de um pedido
+
+Os módulos são os de [módulos e camadas](modulos-e-camadas.md).
+
+```mermaid
+sequenceDiagram
+    participant UI
+    participant T as core/qt (Transport)
+    participant P as protocol
+    participant D as domínio (ex.: cmake)
+    participant R as rt
+    participant L as launch
+    UI->>T: uma linha JSON-RPC
+    T->>P: os bytes da linha
+    P->>D: pedido tipado, sem JSON-RPC
+    alt trabalho de estado
+        D-->>P: resultado, no laço
+    else trabalho externo
+        D->>R: trabalho com prazo e geração
+        R->>L: lançar (origem, prazo, teto)
+        L-->>R: saída ou erro tipado
+        R-->>D: resultado no laço, se a geração não mudou
+        D-->>P: resultado
+    end
+    P-->>T: resposta
+    T-->>UI: uma linha JSON-RPC
+```
+
+O que acontece dentro de `R` e de `P` (threads, filas, enquadramento) é o
+desenho do Viktor; o diagrama só mostra quem fala com quem.
