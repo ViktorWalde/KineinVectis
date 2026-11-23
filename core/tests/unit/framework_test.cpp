@@ -1,11 +1,13 @@
-// O GoogleTest foi compilado no mesmo modo da biblioteca padrao do teste.
+// Test that GoogleTest was built in the same standard library mode as the tests.
 //
-// No perfil debug-stl, o _GLIBCXX_DEBUG troca std::vector por
-// std::__debug::vector, e o tipo de PARAMETRO entra no nome mangled da funcao
-// (o de retorno nao entra). A CalculateOptimalEdits mora na biblioteca do
-// GoogleTest e recebe std::vector: se a biblioteca tiver sido compilada sem o
-// modo de depuracao, o simbolo pedido aqui nao existe nela, e o teste nao
-// liga. E' isso que ele prova; nao testa codigo do core.
+// Documented in: docs/engenharia/estrategia-de-testes.md
+//
+// In the debug-stl profile, _GLIBCXX_DEBUG replaces std::vector with
+// std::__debug::vector, and the PARAMETER type enters the function's mangled
+// name (the return type does not). CalculateOptimalEdits lives in the GoogleTest
+// library and takes a std::vector: if the library was built without the debug
+// mode, the symbol requested here does not exist in it, and the test does not
+// link. That is what it proves; it does not test core code.
 #include <gtest/gtest.h>
 
 #include <cstddef>

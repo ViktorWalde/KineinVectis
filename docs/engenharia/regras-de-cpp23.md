@@ -66,3 +66,40 @@ termos de código:
 - Aviso do compilador não se desliga por arquivo; se uma flag não serve, ela
   sai do perfil, com o motivo no `core/cmake/`.
 - O `-Werror` dos presets de desenvolvimento não se desliga para passar um build.
+
+## Comments
+
+One standard covers every comment in `core/` and `.github/`: C++, CMake, Python, YAML and
+`.clang-tidy`. It is the same in every file and for every author, and a change to it is a
+decision of the maintainer. A comment that breaks it fails review, the same as a compiler
+warning. No tool enforces these rules in the CI.
+
+| # | Rule | Reason |
+| --- | --- | --- |
+| C1 | American English, complete sentences that end with a period, present tense, impersonal technical voice | One voice across the codebase; a reader never has to tell an opinion from a rule |
+| C2 | ASCII only | Keeps the text readable in every terminal, diff and log, and leaves no room for look-alike characters |
+| C3 | `//` in C++ (`/* */` only as corpus data); `#` in CMake, YAML, `.clang-tidy` and shell; docstrings in Python ([PEP 257](https://peps.python.org/pep-0257/)), with the function summary in the imperative (`Return ...`) | One syntax per language |
+| C4 | At most 100 columns, the `ColumnLimit` of `.clang-format`. Only a URL, a path, a regular expression or a corpus line that cannot break may exceed it | The width of the code |
+| C5 | A comment sits on its own line, above the code it explains. On a code line, only `NOLINT(<check>): <reason>`, `} // namespace <name>`, `#endif // <condition>`, a corpus mark, and `# vX.Y.Z` after an action pinned by SHA | Each allowed form is read by a tool or closes a block |
+| C6 | Every file that accepts comments opens with the header below | The reader finds the owning document from any file |
+| C7 | A comment states what the code cannot: the reason, the contract, the source, the limit. It never paraphrases the code | A paraphrase goes stale as soon as the code changes |
+| C8 | State, not history: no "now", "new", "old", "still", "already", "changed", "used to" | History is in git |
+| C9 | A technical claim (version, flag, API behavior) carries its source in one of three forms: `(<document title>, <section>)`; `Measured on YYYY-MM-DD with <tool> <version>.`; `Not verified: <reason>.` | A claim without a source cannot be checked |
+| C10 | A decision is cited as `the maintainer's decision of YYYY-MM-DD (<ID>)`; a pending item by its ID in [decisoes-pendentes.md](../decisoes-pendentes.md). No `TODO`, `FIXME` or `XXX` | Pending work has one owner, not one per file |
+| C11 | A file is cited by its path from the repository root (`docs/...`, `core/...`); a 0.3 lesson by its ID in [licoes-da-0.3.md](../licoes-da-0.3.md) | The path works from any directory |
+| C12 | Never a person's name or user name ("the maintainer"), a mention of AI tools or assistants, or commented-out code outside a corpus | The code describes the product, not who wrote it |
+
+The header (C6) uses `//` or `#`. In Python it is the module docstring with the same lines,
+and its first line is in the imperative because it is also the `--help` text.
+
+```text
+# <One sentence: what the file is or does.>
+#
+# Documented in: <path from the repository root>[, section "<heading>"]
+#
+# <Optional paragraphs: rules, sources, limits.>
+```
+
+Corpus marks are `// reject: <what the defect is>` and `// accept: <what the form is>`, with no
+final period. In the duplication corpus the mark is `// reject: <name of the original function>`.
+Corpus code is data: `clang-format` does not reformat it, but its comments follow this standard.

@@ -1,4 +1,6 @@
-// Corpus do gate de duplicação (P20): o módulo de texto da árvore base.
+// Corpus of gate.duplication: the text module of the base tree.
+//
+// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
 #include "corpus/text/lines.hpp"
 
 #include <algorithm>
@@ -73,4 +75,4 @@ std::vector<std::string> wrap_words(std::string_view text, std::size_t width) {
     return lines;
 }
 
-}  // namespace corpus::text
+} // namespace corpus::text

@@ -1,16 +1,18 @@
-# CI da 0.1 do Kinein Vectis, o core em C++23 que vai substituir o da main
-# (docs/engenharia/gates-e-medida-de-eficacia.md, secao "A CI"). E' a unica
-# CI deste ramo: a da 0.3 nao roda aqui.
+# CI of Kinein Vectis 0.1, the C++23 core that will replace the core on main.
 #
-# Roda os mesmos presets de core/CMakePresets.json que a maquina de quem
-# desenvolve, sem conteiner: o runner do GitHub ja traz os compiladores.
-# - Piso declarado (decisao de 2026-11-22): GCC 14 e Clang 20.
-# - Mais novo do runner: GCC 15 e Clang 22, com o clang-tidy 22.
-# O compilador do preset e' trocado na linha de comando; o resto do preset vale.
+# Documented in: docs/engenharia/gates-e-medida-de-eficacia.md, section "A CI"
+#
+# It is the only CI of this branch: the 0.3 CI does not run here. It runs the same
+# core/CMakePresets.json presets as a developer machine, with no container: the GitHub runner
+# ships the compilers.
+# - Declared floor, the maintainer's decision of 2026-11-22: GCC 14 and Clang 20.
+# - Newest on the runner: GCC 15 and Clang 22, with clang-tidy 22.
+# The preset's compiler is overridden on the command line; the rest of the
+# preset applies.
 name: CoreCpp 0.1
 
-# So o ramo da reescrita. Todo push e pull request roda inteiro, sem filtro
-# de caminho e sem cancelar o anterior: todo commit tem veredito.
+# Only the rewrite branch. Every push and pull request runs in full, with no
+# path filter and without canceling the previous run: every commit gets a verdict.
 on:
   push:
     branches: [reescrita/core-cpp23]
@@ -21,8 +23,8 @@ on:
 permissions:
   contents: read
 
-# O padrao do runner, sem "shell:", e' "bash -e {0}", sem pipefail (medido
-# no log da rodada 45188723983).
+# The runner default without "shell:" is "bash -e {0}", without pipefail (log of GitHub Actions
+# run 45188723983).
 defaults:
   run:
     shell: bash --noprofile --norc -euo pipefail {0}
@@ -36,10 +38,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # O piso: o configure recusa compilador abaixo dele.
+          # The floor: configure rejects a compiler below it.
           - { preset: dev, cxx: g++-14 }
           - { preset: dev, cxx: clang++-20 }
-          # O mais novo do runner, em todos os perfis.
+          # The newest on the runner, in every profile.
           - { preset: dev, cxx: g++-15 }
           - { preset: production, cxx: g++-15 }
           - { preset: asan-ubsan, cxx: g++-15 }
@@ -49,9 +51,9 @@ jobs:
           - { preset: lint, cxx: clang++-22, tidy: clang-tidy-22, pyclang: python3-clang-22 }
           - { preset: asan-ubsan, cxx: clang++-22 }
           - { preset: tsan, cxx: clang++-22 }
-    # A matriz entra nos scripts por variavel de ambiente, e nunca colada no
-    # texto do script com ${{ }}: assim o shellcheck le o script de verdade,
-    # e um valor nunca vira codigo (guia de seguranca do GitHub Actions,
+    # The matrix reaches the scripts through environment variables, never pasted
+    # into the script text with ${{ }}: this way shellcheck reads the real
+    # script, and a value never becomes code (GitHub Actions security guide,
     # "intermediate environment variable").
     env:
       PRESET: ${{ matrix.preset }}
@@ -64,20 +66,20 @@ jobs:
         with:
           persist-credentials: false
 
-      # Sem passo de vm.mmap_rnd_bits: a imagem ja grava 28 no sysctl.conf
-      # (actions/runner-images, images/ubuntu/scripts/build/
-      # configure-environment.sh, issue 9491).
+      # No vm.mmap_rnd_bits step: the image writes vm.mmap_rnd_bits=28 to sysctl.conf
+      # (actions/runner-images, images/ubuntu/scripts/build/configure-environment.sh and
+      # issue 9491).
 
-      # Os bindings de Python da libclang, da versao do clang-tidy, para o
-      # gate.duplication do lint (docs/engenharia/gates-e-medida-de-eficacia.md).
+      # The libclang Python bindings, of the clang-tidy version, for the lint
+      # gate.duplication (docs/engenharia/gates-e-medida-de-eficacia.md).
       - name: Install the libclang Python bindings
         if: ${{ matrix.pyclang }}
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends "$PYCLANG"
 
-      # Sem "| head": o shell roda com -o pipefail, e um head que fecha o
-      # pipe cedo pode reprovar o passo pelo SIGPIPE de quem escreve.
+      # No "| head": the shell runs with -o pipefail, and a head that closes the
+      # pipe early can fail the step through the writer's SIGPIPE.
       - name: Show the toolchain
         run: |
           "$CXX_COMPILER" --version

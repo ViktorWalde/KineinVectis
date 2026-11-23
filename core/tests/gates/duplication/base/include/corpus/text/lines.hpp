@@ -1,5 +1,6 @@
-// Corpus do gate de duplicação (P20): o módulo de texto da árvore base.
-// (docs/engenharia/gates-e-medida-de-eficacia.md)
+// Corpus of gate.duplication: the text module of the base tree.
+//
+// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
 #ifndef CORPUS_TEXT_LINES_HPP
 #define CORPUS_TEXT_LINES_HPP
 
@@ -17,8 +18,8 @@ enum class ByteOffset : std::size_t {};
 [[nodiscard]] std::string_view trim(std::string_view text);
 [[nodiscard]] std::vector<std::string> wrap_words(std::string_view text, std::size_t width);
 
-// Definição em cabeçalho incluído por duas unidades: a ferramenta vê a mesma
-// função duas vezes, e isso não é cópia.
+// A definition in a header included by two units: the tool sees the same
+// function twice, and that is not a copy.
 [[nodiscard]] inline bool is_blank(std::string_view text) {
     for (const char character : text) {
         const bool space = character == ' ' || character == '\t' || character == '\n'
@@ -30,6 +31,6 @@ enum class ByteOffset : std::size_t {};
     return true;
 }
 
-}  // namespace corpus::text
+} // namespace corpus::text
 
 #endif

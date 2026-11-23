@@ -1,16 +1,19 @@
-# clang-tidy do core em C++ (docs/engenharia/analise-estatica-clang-tidy.md).
-# Independente do .clang-tidy da raiz, que segue valendo para ui/.
+# clang-tidy configuration of the C++ core.
 #
-# Checagens desligadas, cada uma com o motivo. Todas vem do .clang-tidy da 0.3
-# sem medida nova; cada uma volta a ser avaliada com o primeiro codigo do core:
-# - bugprone-easily-swappable-parameters: ruido alto na 0.3. A defesa planejada
-#   e' tipo proprio para parametro do dominio (regras-de-cpp23.md).
-# - cppcoreguidelines-avoid-magic-numbers: so estilo, sem defeito associado.
-# - cppcoreguidelines-non-private-member-variables-in-classes: struct de dados
-#   com campos publicos e' a forma pedida pelas Core Guidelines (C.2, C.131).
-# - modernize-use-trailing-return-type: so estilo.
+# Documented in: docs/engenharia/analise-estatica-clang-tidy.md
 #
-# Uma supressao no codigo so entra como NOLINT(<checagem>): <motivo>, na linha.
+# Independent of the .clang-tidy at the repository root, which applies to ui/.
+#
+# Disabled checks, each with its reason. Not verified on core code: the list comes from the
+# .clang-tidy of 0.3, and each check is measured again with the first code of the core.
+# - bugprone-easily-swappable-parameters: high noise in 0.3. The planned defense is a dedicated
+#   type for each domain parameter (docs/engenharia/regras-de-cpp23.md).
+# - cppcoreguidelines-avoid-magic-numbers: style only, no associated defect.
+# - cppcoreguidelines-non-private-member-variables-in-classes: a data struct
+#   with public fields is the form the Core Guidelines ask for (C.2, C.131).
+# - modernize-use-trailing-return-type: style only.
+#
+# A suppression in code only enters as NOLINT(<check>): <reason>, on the line.
 InheritParentConfig: false
 Checks: >-
   -*,
@@ -31,20 +34,21 @@ ExcludeHeaderFilterRegex: '.*_autogen/.*'
 SystemHeaders: false
 FormatStyle: file
 CheckOptions:
-  # Resultado de std::expected descartado e' erro (padrao do clang-tidy 23,
-  # fixado aqui para nao mudar com a versao).
+  # A discarded std::expected result is an error. The list is the default of clang-tidy 23
+  # (clang-tidy documentation, bugprone-unused-return-value), pinned here so that it does not
+  # change with the version.
   bugprone-unused-return-value.CheckedReturnTypes: '^::std::error_code$;^::std::error_condition$;^::std::errc$;^::std::expected$'
   bugprone-unused-return-value.AllowCastToVoid: false
   cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors: true
-  # Processo so pelo lancador (docs/arquitetura/processos-e-confianca.md).
-  # Casa o nome qualificado da funcao chamada ou referenciada: chamada direta,
-  # qualificada, via std::, ponteiro, macro, using e metodo de classe. Nao casa
-  # construtor. Eficacia medida pelo teste gate.launcher (preset lint), com o
-  # corpus em tests/gates/launcher/. Quando o modulo que cria processo existir,
-  # a pasta dele ganha um .clang-tidy proprio sem esta lista, e so ela.
-  # Thread solta (CP.26): std::thread::detach e std::jthread::detach, pela
-  # mesma opcao, com o corpus em tests/gates/threads/ (teste gate.detach).
-  # Medido so com a libstdc++: na libc++ o nome qualificado pode ter o
-  # namespace interno.
-  # Uma linha so: o YAML dobrado poria um espaco antes de cada entrada.
-  bugprone-unsafe-functions.CustomFunctions: '^::(fork|vfork|_Fork|clone|clone3|execl|execle|execlp|execv|execve|execvp|execvpe|execveat|fexecve|posix_spawn|posix_spawnp|pidfd_spawn|pidfd_spawnp|system|popen|syscall|forkpty|daemon|wordexp)$,,cria processo fora do lancador;^::QProcess::(start|startDetached|startCommand|execute|open)$,,cria processo fora do lancador;^::(CreateProcessA|CreateProcessW|CreateProcessAsUserA|CreateProcessAsUserW|CreateProcessWithLogonW|CreateProcessWithTokenW|ShellExecuteA|ShellExecuteW|ShellExecuteExA|ShellExecuteExW|WinExec|_spawnl|_spawnv|_spawnvp|_spawnvpe|_wspawnvp|_wsystem|_popen|_wpopen)$,,cria processo fora do lancador;^::std::(thread|jthread)::detach$,,thread solta: use std::jthread sem detach (CP.26)'
+  # Processes only through the launcher (docs/arquitetura/processos-e-confianca.md).
+  # Matches the qualified name of the called or referenced function: direct and
+  # qualified calls, via std::, pointer, macro, using and class method. It does
+  # not match constructors. Effectiveness measured by the gate.launcher test
+  # (lint preset), with the corpus in tests/gates/launcher/. When the module that
+  # creates processes exists, its directory gets its own .clang-tidy without this
+  # list, and only that directory.
+  # Detached thread (CP.26): std::thread::detach and std::jthread::detach, through
+  # the same option, with the corpus in tests/gates/threads/ (gate.detach test).
+  # Not verified with libc++: its qualified names may carry an internal namespace.
+  # A single line: folded YAML would put a space before each entry.
+  bugprone-unsafe-functions.CustomFunctions: '^::(fork|vfork|_Fork|clone|clone3|execl|execle|execlp|execv|execve|execvp|execvpe|execveat|fexecve|posix_spawn|posix_spawnp|pidfd_spawn|pidfd_spawnp|system|popen|syscall|forkpty|daemon|wordexp)$,,creates a process outside the launcher;^::QProcess::(start|startDetached|startCommand|execute|open)$,,creates a process outside the launcher;^::(CreateProcessA|CreateProcessW|CreateProcessAsUserA|CreateProcessAsUserW|CreateProcessWithLogonW|CreateProcessWithTokenW|ShellExecuteA|ShellExecuteW|ShellExecuteExA|ShellExecuteExW|WinExec|_spawnl|_spawnv|_spawnvp|_spawnvpe|_wspawnvp|_wsystem|_popen|_wpopen)$,,creates a process outside the launcher;^::std::(thread|jthread)::detach$,,detached thread: use std::jthread without detach (CP.26)'

@@ -1,4 +1,6 @@
-// Corpus do gate de duplicação (P20): o módulo de build da árvore base.
+// Corpus of gate.duplication: the build module of the base tree.
+//
+// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
 #ifndef CORPUS_BUILD_DIAGNOSTICS_HPP
 #define CORPUS_BUILD_DIAGNOSTICS_HPP
 
@@ -21,7 +23,7 @@ struct Diagnostic {
     std::string message{};
 };
 
-// Os campos de "arquivo:linha:coluna: severidade: mensagem".
+// The fields of "file:line:column: severity: message".
 struct Fields {
     std::string_view file{};
     std::string_view line{};
@@ -36,6 +38,6 @@ struct Fields {
 [[nodiscard]] std::string_view severity_name(Severity severity);
 [[nodiscard]] std::expected<Diagnostic, ParseError> parse_diagnostic(std::string_view text);
 
-}  // namespace corpus::build
+} // namespace corpus::build
 
 #endif

@@ -1,4 +1,6 @@
-// Corpus do gate de duplicação (P20): o módulo de protocolo da árvore base.
+// Corpus of gate.duplication: the protocol module of the base tree.
+//
+// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
 #ifndef CORPUS_PROTOCOL_MESSAGES_HPP
 #define CORPUS_PROTOCOL_MESSAGES_HPP
 
@@ -51,6 +53,6 @@ private:
     std::uint64_t version_{0};
 };
 
-}  // namespace corpus::protocol
+} // namespace corpus::protocol
 
 #endif

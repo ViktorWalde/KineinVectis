@@ -1,4 +1,6 @@
-// Corpus do gate de duplicação (P20): o módulo de build da árvore base.
+// Corpus of gate.duplication: the build module of the base tree.
+//
+// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
 #include "corpus/build/diagnostics.hpp"
 
 #include "corpus/text/lines.hpp"
@@ -95,4 +97,4 @@ std::expected<Diagnostic, ParseError> parse_diagnostic(std::string_view text) {
     };
 }
 
-}  // namespace corpus::build
+} // namespace corpus::build

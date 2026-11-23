@@ -1,12 +1,14 @@
-# Avisos do compilador para o core (docs/engenharia/perfis-de-compilacao-e-hardening.md).
+# Compiler warnings of the C++ core.
 #
-# As listas sao fixas por compilador e nao passam por check_cxx_compiler_flag:
-# flag desconhecida quebra o build em vez de sumir em silencio (falha fechado).
-# Base: o KineinStrictOptions.cmake da 0.3, que ja compilava a UI com -Werror,
-# mais o TL;DR do guia OpenSSF de 2026-08-20.
+# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+#
+# The lists are fixed per compiler and do not go through check_cxx_compiler_flag: an unknown
+# flag breaks the build instead of silently vanishing (fail closed). Base: the lists of
+# cmake/KineinStrictOptions.cmake, which builds the UI with -Werror, plus the TL;DR of the
+# OpenSSF Compiler Options Hardening Guide for C and C++, version of 2026-08-20.
 include_guard(GLOBAL)
 
-option(KINEIN_WERROR "Aviso vira erro. Ligado nos perfis de desenvolvimento e CI; nunca na distribuicao do fonte" OFF)
+option(KINEIN_WERROR "Turn warnings into errors. On in the development and CI profiles; never in the source distribution" OFF)
 
 set(KINEIN_WARNINGS_COMMON
     -Wall
@@ -66,14 +68,14 @@ set(KINEIN_WARNINGS_CLANG
     -Wthread-safety
 )
 
-# So na biblioteca do core: inicializacao e destruicao estatica fora de ordem.
-# Teste fica de fora porque o registro de casos usa construtor global.
+# Core library only: static initialization and destruction order.
+# Tests are left out because test case registration uses global constructors.
 set(KINEIN_WARNINGS_CLANG_LIBRARY
     -Wglobal-constructors
     -Wexit-time-destructors
 )
 
-# Herdado do KineinStrictOptions.cmake (60 §3.2); nao conferido nesta maquina.
+# Taken from cmake/KineinStrictOptions.cmake. Not verified: the reference machine has no MSVC.
 set(KINEIN_WARNINGS_MSVC
     /W4
     /permissive-

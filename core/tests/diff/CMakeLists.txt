@@ -1,5 +1,6 @@
-# Teste diferencial: o mesmo pedido ao core em Rust (oraculo) e ao core em C++,
-# pelo fio JSON-RPC, com as respostas comparadas depois de normalizadas.
-# Desenho e regras: docs/engenharia/estrategia-de-testes.md, secao "Diferencial".
+# Differential test: the same request to the Rust core (the oracle) and to the C++ core.
 #
-# Vazio ate o core em C++ responder o primeiro metodo.
+# Documented in: docs/engenharia/estrategia-de-testes.md, section "Diferencial"
+#
+# The requests go over the JSON-RPC wire, and the responses are compared after normalization.
+# Empty until the C++ core answers its first method.

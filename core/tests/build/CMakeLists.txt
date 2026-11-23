@@ -1,5 +1,8 @@
-# Contrato do build: o perfil promete flags, e estes testes conferem que elas
-# chegaram ao compilador (build.contract) e ao binario (build.elf_hardening).
+# Tests of the build contract: the flags the profile promises reach the compiler and the binary.
+#
+# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+#
+# build.contract checks the compiler side; build.elf_hardening checks the linked binary.
 add_executable(kinein_build_contract_test build_contract_test.cpp)
 kinein_apply_profile(kinein_build_contract_test TEST)
 

@@ -1,27 +1,29 @@
-# GoogleTest no core (docs/engenharia/estrategia-de-testes.md).
+# GoogleTest for the tests of the C++ core.
 #
-# Decisao do Viktor de 2026-11-22 (P06): GoogleTest 1.17.0, licenca BSD-3-Clause.
+# Documented in: docs/engenharia/estrategia-de-testes.md
 #
-# Compilado aqui, com o perfil, e nao o do sistema:
-# - no perfil debug-stl, o _GLIBCXX_DEBUG muda o ABI dos containers (manual da
-#   libstdc++, Debug Mode), e a biblioteca do framework precisa estar no mesmo
-#   modo do teste. O teste unit.TestFramework.* confere isso no link;
-# - nos sanitizers, o codigo do framework tambem fica instrumentado.
+# GoogleTest 1.17.0, BSD-3-Clause license: the maintainer's decision of 2026-11-22 (P06).
 #
-# O tarball vem com hash fixado. Sem rede, aponte para uma copia local:
-#   -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=/caminho/googletest-1.17.0
+# Built here, with the profile, instead of the system's copy:
+# - in the debug-stl profile, _GLIBCXX_DEBUG changes the ABI of the containers
+#   (libstdc++ manual, Debug Mode), and the framework library must be in the same
+#   mode as the test. The unit.TestFramework.* test checks this at link time;
+# - under the sanitizers, the framework code is instrumented too.
+#
+# The tarball has a pinned hash. Without network access, point to a local copy:
+#   -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=/path/to/googletest-1.17.0
 include_guard(GLOBAL)
 
 include(FetchContent)
 
-set(INSTALL_GTEST OFF CACHE BOOL "O core nao instala o GoogleTest" FORCE)
-set(BUILD_GMOCK ON CACHE BOOL "gMock para os dubles de porta" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "The core does not install GoogleTest" FORCE)
+set(BUILD_GMOCK ON CACHE BOOL "gMock for the port test doubles" FORCE)
 
 FetchContent_Declare(googletest
     URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
     URL_HASH SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    # Os cabecalhos entram como -isystem: os avisos do framework nao sao nossos.
+    # The headers come in as -isystem: the framework's warnings are not ours.
     SYSTEM
 )
 FetchContent_MakeAvailable(googletest)
@@ -32,15 +34,15 @@ endforeach()
 
 include(GoogleTest)
 
-# kinein_add_unit_test(<nome> SOURCES <arquivos...> [LIBRARIES <alvos...>])
+# kinein_add_unit_test(<name> SOURCES <files...> [LIBRARIES <targets...>])
 #
-# Um executavel por modulo, com o perfil de teste, e cada TEST vira um teste do
-# CTest com o prefixo "unit.". A descoberta roda na hora do teste (PRE_TEST),
-# e nao no build: o binario so executa sob o ambiente do sanitizer.
+# One executable per module, with the test profile, and each TEST becomes a CTest
+# test with the "unit." prefix. Discovery runs at test time (PRE_TEST), not at
+# build time: the binary only runs under the sanitizer environment.
 function(kinein_add_unit_test name)
     cmake_parse_arguments(PARSE_ARGV 1 arg "" "" "SOURCES;LIBRARIES")
     if(NOT arg_SOURCES)
-        message(FATAL_ERROR "kinein_add_unit_test(${name}): faltam as SOURCES")
+        message(FATAL_ERROR "kinein_add_unit_test(${name}): SOURCES is missing")
     endif()
     add_executable("${name}" ${arg_SOURCES})
     kinein_apply_profile("${name}" TEST)

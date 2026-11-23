@@ -1,45 +1,48 @@
-# Perfil de compilacao do core em C++ (docs/engenharia/perfis-de-compilacao-e-hardening.md).
+# Build profile of the C++ core.
 #
-# O perfil e' o unico dono das flags de otimizacao, depuracao, avisos,
-# endurecimento e sanitizers. O CMAKE_BUILD_TYPE nao decide nada aqui: as flags
-# padrao do CMake por configuracao sao zeradas neste escopo.
+# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+#
+# The profile is the only owner of the optimization, debug, warning, hardening
+# and sanitizer flags. CMAKE_BUILD_TYPE decides nothing here: CMake's default
+# per-configuration flags are cleared in this scope.
 include_guard(GLOBAL)
 
 set(KINEIN_PROFILES dev production asan-ubsan tsan debug-stl)
-set(KINEIN_PROFILE "dev" CACHE STRING "Perfil de compilacao: ${KINEIN_PROFILES}")
+set(KINEIN_PROFILE "dev" CACHE STRING "Build profile: ${KINEIN_PROFILES}")
 set_property(CACHE KINEIN_PROFILE PROPERTY STRINGS ${KINEIN_PROFILES})
 if(NOT KINEIN_PROFILE IN_LIST KINEIN_PROFILES)
-    message(FATAL_ERROR "KINEIN_PROFILE='${KINEIN_PROFILE}' nao existe. Use um de: ${KINEIN_PROFILES}")
+    message(FATAL_ERROR "KINEIN_PROFILE='${KINEIN_PROFILE}' does not exist. Use one of: ${KINEIN_PROFILES}")
 endif()
 
-# C++23 sem extensoes. O 26 so existe para o job de sondagem (docs/engenharia/regras-de-cpp23.md).
-set(KINEIN_CXX_STANDARD "23" CACHE STRING "Padrao da linguagem: 23; 26 so na sondagem")
+# C++23 without extensions. 26 exists only for the probe job (docs/engenharia/regras-de-cpp23.md).
+set(KINEIN_CXX_STANDARD "23" CACHE STRING "Language standard: 23; 26 only in the probe")
 set_property(CACHE KINEIN_CXX_STANDARD PROPERTY STRINGS 23 26)
 if(NOT KINEIN_CXX_STANDARD MATCHES "^(23|26)$")
-    message(FATAL_ERROR "KINEIN_CXX_STANDARD='${KINEIN_CXX_STANDARD}': use 23 ou 26")
+    message(FATAL_ERROR "KINEIN_CXX_STANDARD='${KINEIN_CXX_STANDARD}': use 23 or 26")
 endif()
 set(CMAKE_CXX_STANDARD ${KINEIN_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Versoes minimas, decisao do Viktor de 2026-11-22: GCC 14 e Clang 20, o piso
-# que o CI testa no ubuntu-26.04. Antes do Clang 19, o __cpp_concepts do Clang
-# era 201907L, e a libstdc++ so declara o std::expected com 202002L (PR #87998
-# do LLVM): com Clang 18 o core nao compila. Abaixo do piso, o configure falha.
+# Minimum versions, the maintainer's decision of 2026-11-22: GCC 14 and Clang 20,
+# the floor the CI tests on ubuntu-26.04. Before Clang 19, Clang's __cpp_concepts
+# was 201907L, and libstdc++ only declares std::expected with 202002L (LLVM pull request
+# 87998): with Clang 18 the core does not compile. Below the floor,
+# configure fails.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
-    message(FATAL_ERROR "GCC ${CMAKE_CXX_COMPILER_VERSION}: o core exige GCC 14 ou mais novo")
+    message(FATAL_ERROR "GCC ${CMAKE_CXX_COMPILER_VERSION}: the core requires GCC 14 or newer")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20)
-    message(FATAL_ERROR "Clang ${CMAKE_CXX_COMPILER_VERSION}: o core exige Clang 20 ou mais novo")
+    message(FATAL_ERROR "Clang ${CMAKE_CXX_COMPILER_VERSION}: the core requires Clang 20 or newer")
 elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|MSVC)$")
-    message(FATAL_ERROR "Compilador ${CMAKE_CXX_COMPILER_ID} sem perfil definido")
+    message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} has no defined profile")
 endif()
 
 foreach(config DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
     set(CMAKE_CXX_FLAGS_${config} "")
 endforeach()
 
-# PIE em tudo; o CMake poe o -pie no link dos executaveis (politica CMP0083).
+# PIE everywhere; CMake adds -pie when it links executables (policy CMP0083).
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(CheckPIESupported)
 check_pie_supported(LANGUAGES CXX)
@@ -48,7 +51,8 @@ include(KineinWarnings)
 include(KineinHardening)
 include(KineinSanitizers)
 
-# Otimizacao e depuracao por perfil. O FORTIFY exige -O1 ou mais (guia OpenSSF).
+# Optimization and debug information per profile. FORTIFY requires -O1 or higher (OpenSSF
+# Compiler Options Hardening Guide for C and C++, Table 2).
 function(kinein_apply_optimization target)
     if(MSVC)
         if(KINEIN_PROFILE STREQUAL "debug-stl")
@@ -68,24 +72,23 @@ function(kinein_apply_optimization target)
     endif()
 endfunction()
 
-# kind: LIBRARY (biblioteca do core), EXECUTABLE (processo entregue), TEST, ou
-# THIRD_PARTY (codigo de fora compilado junto, como o GoogleTest).
+# kind: LIBRARY (core library), EXECUTABLE (shipped process), TEST, or
+# THIRD_PARTY (external code built along with the core, such as GoogleTest).
 #
-# THIRD_PARTY recebe tudo o que muda o ABI ou a instrumentacao (otimizacao,
-# modo da biblioteca padrao, sanitizers, protecoes) e nada dos avisos nem do
-# clang-tidy: o codigo nao e' nosso, e o -Werror nele so quebraria o build
-# quando o compilador mudasse.
+# THIRD_PARTY gets everything that changes the ABI or the instrumentation
+# (optimization, standard library mode, sanitizers, protections) and none of the
+# warnings nor clang-tidy: the code is not ours, and -Werror on it would only
+# break the build on another compiler version.
 function(kinein_apply_profile target kind)
     if(NOT kind MATCHES "^(LIBRARY|EXECUTABLE|TEST|THIRD_PARTY)$")
         message(FATAL_ERROR
-            "kinein_apply_profile(${target} ${kind}): use LIBRARY, EXECUTABLE, TEST ou THIRD_PARTY")
+            "kinein_apply_profile(${target} ${kind}): use LIBRARY, EXECUTABLE, TEST or THIRD_PARTY")
     endif()
     kinein_apply_optimization("${target}")
     if(kind STREQUAL "THIRD_PARTY")
-        # Aviso no codigo de fora nao tem acao possivel aqui: medido em
-        # 2026-11-22, o Clang 23 avisa -Wcharacter-conversion (ligado por
-        # padrao) no gtest-printers.h do GoogleTest 1.17.0. Para quem usa o
-        # framework, os cabecalhos ja entram como -isystem.
+        # A warning in external code has no possible action here. Measured on 2026-11-22 with
+        # Clang 23: -Wcharacter-conversion, on by default, fires in gtest-printers.h of
+        # GoogleTest 1.17.0. The code that uses the framework gets its headers as -isystem.
         if(MSVC)
             target_compile_options("${target}" PRIVATE /w)
         else()
@@ -99,5 +102,5 @@ function(kinein_apply_profile target kind)
     kinein_apply_sanitizers("${target}")
 endfunction()
 
-message(STATUS "Kinein core: perfil ${KINEIN_PROFILE}, C++${KINEIN_CXX_STANDARD}, "
+message(STATUS "Kinein core: profile ${KINEIN_PROFILE}, C++${KINEIN_CXX_STANDARD}, "
                "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

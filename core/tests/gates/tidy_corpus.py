@@ -1,17 +1,18 @@
-"""Mede um gate do clang-tidy contra o corpus dele.
+"""Measure a clang-tidy gate against its corpus.
 
-Metodo do docs/engenharia/gates-e-medida-de-eficacia.md: N defeitos plantados
-que o gate tem de reprovar e M formas corretas que ele tem de aceitar.
+Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
 
-- No arquivo de defeitos, cada linha marcada com "// reprova:" tem de receber
-  o diagnostico da checagem, e nenhuma outra linha pode receber.
-- No arquivo de formas corretas, nenhuma linha pode receber. As marcadas com
-  "// aceita:" sao contadas como formas corretas.
-- Qualquer outro diagnostico (o corpus nao compila, por exemplo) reprova: um
-  corpus que nao compila nao mede nada.
+N planted defects the gate must reject and M correct forms it must accept:
 
-Roda so a checagem do gate (--checks=-*,<checagem>), com as opcoes do
-.clang-tidy do core, para medir o gate e nada mais.
+- In the defects file, each line marked with "// reject:" must receive the
+  check's diagnostic, and no other line may receive it.
+- In the correct-forms file, no line may receive it. The lines marked with
+  "// accept:" are counted as correct forms.
+- Any other diagnostic (the corpus does not compile, for example) fails: a
+  corpus that does not compile measures nothing.
+
+Runs only the gate's check (--checks=-*,<check>), with the options of the
+core's .clang-tidy, to measure the gate and nothing else.
 """
 
 import argparse
@@ -23,8 +24,8 @@ from pathlib import Path
 DIAGNOSTIC = re.compile(
     r"^(?P<path>.+?):(?P<line>\d+):\d+: (?:warning|error): .*\[(?P<tags>[^\]]+)\]$"
 )
-REJECT_MARK = "// reprova:"
-ACCEPT_MARK = "// aceita:"
+REJECT_MARK = "// reject:"
+ACCEPT_MARK = "// accept:"
 
 
 def marked_lines(source: Path, mark: str) -> set[int]:
@@ -53,7 +54,7 @@ def diagnostics(args: argparse.Namespace, source: Path) -> dict[int, set[str]]:
 
 def foreign(found: dict[int, set[str]], check: str) -> list[str]:
     return [
-        f"linha {line}: {', '.join(sorted(tags - {check}))}"
+        f"line {line}: {', '.join(sorted(tags - {check}))}"
         for line, tags in sorted(found.items())
         if tags - {check}
     ]
@@ -73,24 +74,24 @@ def main() -> int:
 
     planted = marked_lines(args.reject, REJECT_MARK)
     rejected = diagnostics(args, args.reject)
-    problems += [f"{args.reject.name}: diagnostico estranho na {item}" for item in foreign(rejected, args.check)]
+    problems += [f"{args.reject.name}: unexpected diagnostic on {item}" for item in foreign(rejected, args.check)]
     flagged = {line for line, tags in rejected.items() if args.check in tags}
-    problems += [f"{args.reject.name}:{line}: defeito nao reprovado" for line in sorted(planted - flagged)]
-    problems += [f"{args.reject.name}:{line}: acusada sem marca de defeito" for line in sorted(flagged - planted)]
+    problems += [f"{args.reject.name}:{line}: defect not rejected" for line in sorted(planted - flagged)]
+    problems += [f"{args.reject.name}:{line}: flagged without a defect mark" for line in sorted(flagged - planted)]
 
     legitimate = marked_lines(args.accept, ACCEPT_MARK)
     accepted = diagnostics(args, args.accept)
-    problems += [f"{args.accept.name}: diagnostico estranho na {item}" for item in foreign(accepted, args.check)]
-    problems += [f"{args.accept.name}:{line}: forma correta reprovada" for line in sorted(accepted)]
+    problems += [f"{args.accept.name}: unexpected diagnostic on {item}" for item in foreign(accepted, args.check)]
+    problems += [f"{args.accept.name}:{line}: correct form rejected" for line in sorted(accepted)]
 
     rejected_count = len(planted & flagged)
     accepted_count = len(legitimate - set(accepted))
-    print(f"gate {args.check}: {rejected_count} de {len(planted)} defeitos reprovados; "
-          f"{accepted_count} de {len(legitimate)} formas corretas aceitas")
+    print(f"gate {args.check}: {rejected_count} of {len(planted)} defects rejected; "
+          f"{accepted_count} of {len(legitimate)} correct forms accepted")
     for problem in problems:
         print(problem)
     if not planted or not legitimate:
-        print("corpus vazio: sem defeito ou sem forma correta, a medida nao vale")
+        print("empty corpus: no defect or no correct form, the measurement is void")
         return 1
     return 1 if problems else 0
 

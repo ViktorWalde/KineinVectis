@@ -17,7 +17,7 @@
     {
       "name": "dev",
       "inherits": "base",
-      "displayName": "Desenvolvimento (GCC, -Werror, semantica de producao)",
+      "displayName": "Development (GCC, -Werror, production semantics)",
       "cacheVariables": { "KINEIN_PROFILE": "dev" }
     },
     {
@@ -35,13 +35,13 @@
     {
       "name": "debug-stl",
       "inherits": "base",
-      "displayName": "Teste da biblioteca padrao (_GLIBCXX_DEBUG, -O0)",
+      "displayName": "Standard library debug mode (_GLIBCXX_DEBUG, -O0)",
       "cacheVariables": { "KINEIN_PROFILE": "debug-stl" }
     },
     {
       "name": "production",
       "inherits": "base",
-      "displayName": "Producao (sem -Werror: e' o que se distribui)",
+      "displayName": "Production (no -Werror: what ships)",
       "cacheVariables": {
         "KINEIN_PROFILE": "production",
         "KINEIN_WERROR": "OFF"
@@ -50,7 +50,7 @@
     {
       "name": "lint",
       "inherits": "base",
-      "displayName": "Clang + clang-tidy (perfil dev)",
+      "displayName": "Clang + clang-tidy (dev profile)",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang++",
         "KINEIN_PROFILE": "dev",
@@ -60,7 +60,7 @@
     {
       "name": "cxx26-probe",
       "inherits": "base",
-      "displayName": "Sondagem C++26 (so detecta incompatibilidade)",
+      "displayName": "C++26 probe (detects incompatibilities only)",
       "cacheVariables": {
         "KINEIN_PROFILE": "dev",
         "KINEIN_CXX_STANDARD": "26"
@@ -69,7 +69,7 @@
     {
       "name": "dev-qt",
       "inherits": "dev",
-      "displayName": "Desenvolvimento com o adaptador Qt (KINEIN_QT_PREFIX)",
+      "displayName": "Development with the Qt adapter (KINEIN_QT_PREFIX)",
       "cacheVariables": {
         "KINEIN_CORE_WITH_QT": "ON",
         "CMAKE_PREFIX_PATH": "$env{KINEIN_QT_PREFIX}"
