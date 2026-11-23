@@ -42,5 +42,9 @@ CheckOptions:
   # construtor. Eficacia medida pelo teste gate.launcher (preset lint), com o
   # corpus em tests/gates/launcher/. Quando o modulo que cria processo existir,
   # a pasta dele ganha um .clang-tidy proprio sem esta lista, e so ela.
+  # Thread solta (CP.26): std::thread::detach e std::jthread::detach, pela
+  # mesma opcao, com o corpus em tests/gates/threads/ (teste gate.detach).
+  # Medido so com a libstdc++: na libc++ o nome qualificado pode ter o
+  # namespace interno.
   # Uma linha so: o YAML dobrado poria um espaco antes de cada entrada.
-  bugprone-unsafe-functions.CustomFunctions: '^::(fork|vfork|_Fork|clone|clone3|execl|execle|execlp|execv|execve|execvp|execvpe|execveat|fexecve|posix_spawn|posix_spawnp|pidfd_spawn|pidfd_spawnp|system|popen|syscall|forkpty|daemon|wordexp)$,,cria processo fora do lancador;^::QProcess::(start|startDetached|startCommand|execute|open)$,,cria processo fora do lancador;^::(CreateProcessA|CreateProcessW|CreateProcessAsUserA|CreateProcessAsUserW|CreateProcessWithLogonW|CreateProcessWithTokenW|ShellExecuteA|ShellExecuteW|ShellExecuteExA|ShellExecuteExW|WinExec|_spawnl|_spawnv|_spawnvp|_spawnvpe|_wspawnvp|_wsystem|_popen|_wpopen)$,,cria processo fora do lancador'
+  bugprone-unsafe-functions.CustomFunctions: '^::(fork|vfork|_Fork|clone|clone3|execl|execle|execlp|execv|execve|execvp|execvpe|execveat|fexecve|posix_spawn|posix_spawnp|pidfd_spawn|pidfd_spawnp|system|popen|syscall|forkpty|daemon|wordexp)$,,cria processo fora do lancador;^::QProcess::(start|startDetached|startCommand|execute|open)$,,cria processo fora do lancador;^::(CreateProcessA|CreateProcessW|CreateProcessAsUserA|CreateProcessAsUserW|CreateProcessWithLogonW|CreateProcessWithTokenW|ShellExecuteA|ShellExecuteW|ShellExecuteExA|ShellExecuteExW|WinExec|_spawnl|_spawnv|_spawnvp|_spawnvpe|_wspawnvp|_wsystem|_popen|_wpopen)$,,cria processo fora do lancador;^::std::(thread|jthread)::detach$,,thread solta: use std::jthread sem detach (CP.26)'

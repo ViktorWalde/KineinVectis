@@ -47,6 +47,7 @@ set(KINEIN_WARNINGS_GCC
     -Wuseless-cast
     -Wdangling-reference
     -Wtrampolines
+    -Wbidi-chars=any
     -Wformat-overflow=2
     -Wformat-truncation=2
     -Wcast-align=strict

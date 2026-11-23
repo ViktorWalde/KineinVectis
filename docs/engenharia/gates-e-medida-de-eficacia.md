@@ -100,6 +100,36 @@ tem de ser acusada, e nenhuma outra.
 - **Forma correta:** os oito presets, verdes.
 - **Veredito:** entra.
 
+### `gate.detach`: thread nunca solta (2026-11-23)
+
+A mesma opção do clang-tidy, com `std::thread::detach` e
+`std::jthread::detach`. O corpus está em `core/tests/gates/threads/`.
+
+- **Defeitos:** 10 de 10 reprovados: `std::thread` e `std::jthread`, por
+  ponteiro, por referência, ponteiro para o método, método passado a
+  `std::invoke`, dentro de lambda, herdado por classe derivada, dentro de
+  macro e em temporário.
+- **Formas corretas:** 10 de 10 aceitas, entre elas `detach` de classe
+  própria, função própria chamada `detach`, `join`, `request_stop`, texto,
+  comentário e variável chamada `detach`.
+- **Mutantes do próprio gate**, todos reprovados pelo teste: sem o `jthread`
+  (9 de 10), regex de qualquer classe (2 formas corretas reprovadas) e sem a
+  entrada (0 de 10).
+- **Limite:** medido só com a libstdc++.
+- **Veredito:** entra.
+
+### `-Wbidi-chars=any`: Trojan Source (2026-11-23)
+
+- **Defeito:** um par de caracteres bidirecionais (U+202E e U+202C) num
+  comentário. O padrão do GCC não acusa o par fechado; com `=any`, acusa. Numa
+  cópia do core, o defeito plantado num teste reprovou o `dev`.
+- **O lado do Clang não pega o par:** o compilador não acusa nada, e o
+  `misc-misleading-bidirectional` do clang-tidy só acusa o par aberto, que o
+  GCC já pega. Por não acrescentar nada à CI, que sempre roda o GCC, ele não
+  foi ligado.
+- **Forma correta:** os oito presets, verdes.
+- **Veredito:** entra, só no GCC.
+
 ### `alpha.clone.CloneChecker` do Clang: duplicação (2026-11-23)
 
 Candidato ao gate de duplicação (P20), medido com o Clang 23.1.5 num corpus

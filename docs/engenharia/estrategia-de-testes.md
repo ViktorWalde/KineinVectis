@@ -22,7 +22,7 @@ diferencial contra o core em Rust e a medida de desempenho.
 | --- | --- | --- | --- |
 | Contrato do build | As flags prometidas chegaram ao compilador e ao binário | `core/tests/build/` | **Existe**: 2 testes |
 | Unidade | Regra e algoritmo de `core/lib`, sem laço de eventos e sem processo | `core/tests/unit/` | Framework ligado; o primeiro teste do core nasce com o primeiro código |
-| Eficácia dos gates | Cada gate próprio reprova os defeitos plantados e aceita as formas corretas do corpus dele | `core/tests/gates/` | **Existe**: `gate.launcher`, no preset `lint` |
+| Eficácia dos gates | Cada gate próprio reprova os defeitos plantados e aceita as formas corretas do corpus dele | `core/tests/gates/` | **Existe**: `gate.launcher` e `gate.detach`, no preset `lint` |
 | Complexidade | Nenhum caminho cresce mais que linearmente (RNF-PERF-01) | `core/tests/complexity/` | A criar |
 | Diferencial | O core em C++ responde como o core em Rust | `core/tests/diff/` | Pasta criada, vazia |
 | Ordem e concorrência | Intercalações forçadas: geração velha descartada, cancelamento, mesmo recurso em série | `core/tests/unit/` | A criar |

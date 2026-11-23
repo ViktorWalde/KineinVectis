@@ -53,6 +53,7 @@ GCC 16.2.1 e no Clang 23.1.5, em 2026-11-22.
 | Resultado de `std::expected` descartado | **T** `bugprone-unused-return-value` com `std::expected` |
 | Laço infinito por condição que não muda | **T** `bugprone-infinite-loop` |
 | Sombra de variável | **C** `-Wshadow` |
+| Caractere bidirecional do Unicode que muda o que o código parece dizer (Trojan Source, CVE-2021-42574) | **C** `-Wbidi-chars=any` (GCC), que pega também o par fechado; o padrão do GCC e o clang-tidy só pegam o par aberto (medido) |
 
 ## Concorrência
 
@@ -63,7 +64,8 @@ GCC 16.2.1 e no Clang 23.1.5, em 2026-11-22.
 | Espera em variável de condição sem predicado (despertar espúrio) | **T** `bugprone-spuriously-wake-up-functions` |
 | Bloqueio dentro de seção crítica | **T** `clang-analyzer-unix.BlockInCriticalSection` |
 | Exceção escapando de thread ou de slot | **T** `bugprone-exception-escape`; **R** `noexcept` no corpo de thread e no slot |
-| Thread esquecida sem `join` | **R** `std::jthread`; sem checagem automática conhecida |
+| Thread esquecida sem `join` | **R** `std::jthread`; sem checagem automática para `std::thread` sem `join` (o clang-tidy não casa construtor) |
+| Thread solta com `detach()` | **T** `bugprone-unsafe-functions.CustomFunctions`, medido pelo `gate.detach` |
 | Travas pedidas em ordens diferentes (deadlock em potencial) | **S** TSan, que reporta `lock-order-inversion` |
 | Dado acessado sem a trava que o protege | **C** `-Wthread-safety` (Clang), que só age com as anotações da análise de segurança de threads. Usar ou não é decisão do desenho |
 

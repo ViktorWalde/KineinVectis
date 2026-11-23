@@ -48,8 +48,9 @@ Desligar mais uma exige o achado concreto que a motivou, registrado na tabela.
   `AllowCastToVoid: false`, nem o cast para `void` descarta o erro.
 - `bugprone-unsafe-functions.CustomFunctions` lista as funções de criar
   processo: o gate "processo só pelo lançador"
-  ([processos](../arquitetura/processos-e-confianca.md)). A lista padrão da
-  checagem (`gets`, as do Anexo K) continua ligada.
+  ([processos](../arquitetura/processos-e-confianca.md)), e o
+  `std::thread::detach` e o `std::jthread::detach`: o gate "thread nunca
+  solta". A lista padrão da checagem (`gets`, as do Anexo K) continua ligada.
 
 ## Gates sobre o clang-tidy
 

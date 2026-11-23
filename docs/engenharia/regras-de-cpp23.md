@@ -42,6 +42,7 @@ termos de código:
 | Regra | Quem impõe |
 | --- | --- |
 | `std::jthread` com `std::stop_token` para trabalho cancelável | Revisão |
+| Thread nunca solta: sem `detach()` | clang-tidy (`CustomFunctions`), `gate.detach` |
 | Um dono por dado; threads trocam mensagens | TSan; revisão |
 | Variável global não constante é proibida | `cppcoreguidelines-avoid-non-const-global-variables`; `-Wglobal-constructors` e `-Wexit-time-destructors` em `core/lib` (Clang) |
 | Função da biblioteca C que não é segura em thread é proibida | `concurrency-mt-unsafe` |

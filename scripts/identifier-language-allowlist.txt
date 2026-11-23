@@ -250,5 +250,5 @@ fromkeys hasattr classmethod nowait traceback metavar sigint sighup
 # os cabecalhos e macros da biblioteca padrao, e os nomes dos sanitizers.
 execl execle execlp execv execve execveat execvp fexecve forkpty vfork wordexp
 syscall pidfd spawnp spawnvp wsystem wchar envp wnohang atoi
-cstdio cstdlib csignal cstddef filesystem glibcxx gnuc
+cstdio cstdlib csignal cstddef filesystem glibcxx gnuc jthread
 asan tsan ubsan

@@ -18,4 +18,14 @@ if(KINEIN_CLANG_TIDY)
             --std "${KINEIN_CXX_STANDARD}"
             --reject "${CMAKE_CURRENT_SOURCE_DIR}/launcher/processos-proibidos.cpp"
             --accept "${CMAKE_CURRENT_SOURCE_DIR}/launcher/processos-permitidos.cpp")
+
+    # Thread nunca solta (CP.26), pela mesma opcao do clang-tidy.
+    add_test(NAME gate.detach
+        COMMAND "${Python3_EXECUTABLE}" -I "${CMAKE_CURRENT_SOURCE_DIR}/tidy_corpus.py"
+            --clang-tidy "${KINEIN_CLANG_TIDY_EXE}"
+            --config "${PROJECT_SOURCE_DIR}/.clang-tidy"
+            --check bugprone-unsafe-functions
+            --std "${KINEIN_CXX_STANDARD}"
+            --reject "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-proibido.cpp"
+            --accept "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-permitido.cpp")
 endif()
