@@ -52,6 +52,14 @@ kinein_add_cpp_test(tst_line_spans)
 kinein_add_cpp_test(tst_startup_web)
 set_target_properties(tst_startup_web PROPERTIES AUTOMOC ON)
 
+# O prazo máximo do rascunho (INF-26). Carrega o QML de verdade, da pasta do
+# editor, com pontes falsas; o `QQmlEngine` precisa do Qt Quick.
+kinein_add_cpp_test(tst_editor_draft_deadline)
+target_link_libraries(tst_editor_draft_deadline PRIVATE Qt6::Qml Qt6::Quick)
+target_compile_definitions(tst_editor_draft_deadline PRIVATE
+    KINEIN_QML_EDITOR_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../qml/editor")
+set_target_properties(tst_editor_draft_deadline PROPERTIES AUTOMOC ON)
+
 # O clipboard é um singleton de UI com MIME do sistema. Compila a MESMA fonte
 # que o aplicativo e cria QGuiApplication no teste, sem mockar QClipboard.
 kinein_add_cpp_test(tst_clipboard_files)

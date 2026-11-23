@@ -1417,12 +1417,16 @@ auditorias e provas posteriores datadas nos donos:**
   confirmada, pela leitura e pela medida: os temporizadores reiniciam sem
   prazo máximo. Testes: a queda depois de uma digitação longa sem pausa,
   com a perda máxima medida, e o mutante que tira o prazo máximo
-  reprovando. Decisão: nenhuma ainda; onde ele entra na ordem é do autor
-  ([63](63-regras-e-plano-de-engenharia-da-0.4.md) §H.2). Pela DP-10 (65
-  §21), o editor atual sai na fase E se o produto integrado passar nas
-  condições, e a recuperação passa ao rascunho pelo espelho; a prova não
-  mediu digitação longa nesse caminho, e o teste deste item vale também
-  para ele. Estado aberto.
+  reprovando. Decisão do autor de 2026-11-22: corrigir já no editor
+  atual, com prazo máximo de 2 s. A correção ([40.7](40.7-registro-das-entregas.md)
+  §7.430) é um segundo temporizador que a primeira mudança suja liga e as
+  seguintes não reiniciam; o teste é o `ui/tests/tst_editor_draft_deadline.cpp`,
+  com 4 mutantes reprovados, entre eles o que tira o prazo máximo. Pela
+  DP-10 (65 §21), o editor atual sai na fase E se o produto integrado
+  passar nas condições, e a recuperação passa ao rascunho pelo espelho; a
+  prova não mediu digitação longa nesse caminho, e o teste deste item vale
+  também para ele. Estado: corrigido no editor atual; a queda real depois
+  de digitação longa não foi refeita.
 - **INF-27 — A UI desenha uns 6 quadros por tecla.** Dono e evidência: o
   editor atual, na UI. Medido em 2026-11-15 pelo `render.py` da prova do
   [65](65-avaliacao-do-neovim-como-motor-de-edicao.md) (§20.3), com o log

@@ -208,13 +208,13 @@ terminal aborta o processo filho, e o sistema grava um core dump), o
 INF-30 (a verificação de edição só conclui quando o par de compilações
 cabe num segundo do relógio, e o prazo estourado sai como obsoleto) e o
 INF-31 (passo dinâmico do gate exercita o binário da árvore, e não o que
-a rodada compilou). A prova do ENG-60 achou quatro itens, todos
+a rodada compilou). A prova do ENG-60 achou quatro itens, três
 abertos:
 - no editor atual, o INF-25 (abrir um arquivo de 19.970 linhas ocupa a UI
-  por dezenas de segundos, §7.425), o INF-26 (o rascunho não grava
-  enquanto a pessoa digita, e uma queda perde tudo desde a última pausa de
-  1,5 s, §7.426) e o INF-27 (a UI desenha uns 6 quadros por tecla,
-  §7.427);
+  por dezenas de segundos, §7.425) e o INF-27 (a UI desenha uns 6 quadros
+  por tecla, §7.427), abertos; o INF-26 (o rascunho não gravava enquanto a
+  pessoa digitava, §7.426) foi corrigido em 2026-11-22: o rascunho tem
+  prazo máximo de 2 s (§7.430);
 - no harness de digitação do produto, o INF-28 (ele recomeça quando o
   editor relê o arquivo depois da gravação automática, §7.428).
 

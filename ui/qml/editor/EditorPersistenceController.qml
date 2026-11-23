@@ -32,6 +32,22 @@ import QtQuick
 // arbitrários herdados: o rascunho grava o TEXTO INTEIRO num banco a cada
 // disparo, e a sessão grava uma lista de caminhos. O mais caro espera mais.
 //
+// # O rascunho tem prazo máximo (INF-26, corrigido em 2026-11-22)
+//
+// Só o debounce não basta: cada tecla reinicia o temporizador, e quem digita
+// sem uma pausa de 1,5 s não tinha NADA gravado. Medido em 2026-11-15 (62
+// §3.4): 100 s de digitação e `kill -9` logo depois, 0 teclas recuperadas em
+// 3 de 3. Por isso há um segundo temporizador, `draftMaxWait`, que a primeira
+// mudança suja liga e as seguintes NÃO reiniciam. O que disparar primeiro
+// grava e desliga os dois. Assim toda mudança sai para o core em até
+// `draftMaxWaitMs` (2 s, o RNF-DUR-01 do core novo), digite a pessoa quanto
+// digitar. O teste é o `ui/tests/tst_editor_draft_deadline.cpp`.
+//
+// A gravação automática no DISCO (`diskSaveDebounce`) continua só com o
+// debounce, de propósito: gravar o arquivo do projeto no meio da digitação
+// faz o editor reler o que gravou (INF-28), e a rede contra queda é o
+// rascunho, não o disco.
+//
 // # A ordem do restore de sessão é carga estrutural
 //
 // Os arquivos são pedidos NA ORDEM DAS ABAS (desde 0.3.9: a aba se arrasta, e
@@ -56,6 +72,11 @@ Item {
     // continua: ele grava aos 1,5 s e e' a rede ate' o disco receber; salvar
     // o limpa (a regra de sempre). Desligavel em Configuracoes.
     property bool autoSaveEnabled: true
+
+    // A pausa que grava o rascunho e o prazo máximo que nenhuma digitação
+    // adia (INF-26, ver o topo). Propriedades para o teste poder encurtar.
+    property int draftPauseMs: 1500
+    property int draftMaxWaitMs: 2000
 
     signal readFileRequested(string path)
     signal draftSaveRequested(string path, string content)
@@ -118,6 +139,11 @@ Item {
 
     function scheduleDraftSave() {
         autosaveDebounce.restart();
+        // `start` e não `restart`: o prazo conta da primeira mudança ainda não
+        // gravada. Reiniciá-lo aqui devolveria o INF-26.
+        if (!draftMaxWait.running) {
+            draftMaxWait.start();
+        }
         if (autoSaveEnabled) {
             diskSaveDebounce.restart();
         }
@@ -125,8 +151,22 @@ Item {
 
     function cancelPendingSaves() {
         autosaveDebounce.stop();
+        draftMaxWait.stop();
         diskSaveDebounce.stop();
         sessionSaveDebounce.stop();
+    }
+
+    // Quem disparar primeiro, a pausa ou o prazo, grava e desliga os dois.
+    function saveDraftNow() {
+        autosaveDebounce.stop();
+        draftMaxWait.stop();
+        // `currentIsModified` é a guarda que impede o rascunho de existir
+        // para um buffer limpo — rascunho idêntico ao disco reabriria a
+        // aba marcada como modificada sem motivo.
+        const path = currentPath();
+        if (path !== "" && ready() && documentController.currentIsModified()) {
+            draftSaveRequested(path, surfaceBridge.text());
+        }
     }
 
     // O gesto que nao espera a pausa: trocar de aba, perder o foco.
@@ -154,17 +194,17 @@ Item {
     Timer {
         id: autosaveDebounce
 
-        interval: 1500
+        interval: root.draftPauseMs
         repeat: false
-        onTriggered: {
-            // `currentIsModified` é a guarda que impede o rascunho de existir
-            // para um buffer limpo — rascunho idêntico ao disco reabriria a
-            // aba marcada como modificada sem motivo.
-            const path = root.currentPath();
-            if (path !== "" && root.ready() && root.documentController.currentIsModified()) {
-                root.draftSaveRequested(path, root.surfaceBridge.text());
-            }
-        }
+        onTriggered: root.saveDraftNow()
+    }
+
+    Timer {
+        id: draftMaxWait
+
+        interval: root.draftMaxWaitMs
+        repeat: false
+        onTriggered: root.saveDraftNow()
     }
 
     Timer {
