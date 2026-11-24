@@ -12,7 +12,7 @@ exist yet.
 - **Languages:** C and C++. Rust and Python come back once the core is solid (ADR-0012).
 - **Outside the C++ core:** databases, Grafana, remote work over SSH, containers, Cargo and
   Python. The 0.3 methods `lsp.*`, `syntaxTree.*` and `draft.*` leave with Neovim
-  ([editing engine](../architecture/neovim-editing-engine.md)).
+  ([editing engine](../architecture/editing-engine.md)).
 - **Origin:** each capability names the 0.3 methods that cover it today (protocol 0.223.0, route
   table of `crates/kinein-core/src/lib.rs`). The inherited acceptance is the differential test
   against the Rust core, apart from the intentional divergences

@@ -18,7 +18,7 @@ opening a 20,000-line file took up to 47 s
 ([lessons from 0.3](docs/lessons-from-0.3.md)).
 
 The decision is recorded in
-[ADR-0012](docs/adr/ADR-0012-cpp23-backend-with-neovim.md):
+[ADR-0012](docs/adr/ADR-0012-cpp23-backend.md):
 
 - The core is rewritten in C++23 under `core/`: a library with no Qt (`core/lib`) and a thin Qt
   adapter (`core/qt`). The Rust core gets no new features.

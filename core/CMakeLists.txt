@@ -4,7 +4,7 @@
 #
 # A standalone project, configured from this directory (core/CMakePresets.json). It is not part
 # of the UI build: the UI and the Rust core stay as they are until the C++ core meets the switch
-# criteria of docs/adr/ADR-0012-cpp23-backend-with-neovim.md.
+# criteria of docs/adr/ADR-0012-cpp23-backend.md.
 cmake_minimum_required(VERSION 3.25)
 
 project(kinein_core LANGUAGES CXX)

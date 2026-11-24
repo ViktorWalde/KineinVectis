@@ -25,7 +25,7 @@ The full list, with the evidence, is in the [lessons](../lessons-from-0.3.md).
 1. **The core is rewritten in C++23**, in `core/`, with a library that has no Qt (`core/lib`) and
    a thin adapter (`core/qt`). The Rust core gets no further evolution.
 2. **The editing engine is an embedded Neovim** (`nvim --embed`, msgpack-RPC, `ext_linegrid`),
-   under the conditions of 65 §21 ([editing engine](../architecture/neovim-editing-engine.md)).
+   under the conditions of 65 §21 ([editing engine](../architecture/editing-engine.md)).
 3. **The QML frontend stays.** The views and the theme are reused; the controllers go through the
    boundary test ([boundaries](../architecture/boundaries-and-responsibilities.md)).
 4. **The scope is only C and C++** until the core is solid. Rust and Python come back later.

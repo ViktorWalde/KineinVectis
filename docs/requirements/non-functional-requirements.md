@@ -34,7 +34,7 @@ their value is a **proposal** until the decision.
 | RNF-EDI-01 | Editing does not cost the whole file | Per 1-character editing event in the 20,000-line file: the core's work p95 ≤ 16 ms; no message after the opening carries the whole document | Record; message sizes | Test at the reference sizes. Adapted from 19:121, which measured `syntaxTree.update`, a method that leaves |
 | RNF-PERF-01 *(0.1)* | No path of the core grows faster than linearly with the size of the file or the project | From 20,000 to 40,000 lines, the time grows at most 2.5 times (**proposal**, P04) | Complexity test at the four sizes | Complexity test per path ([tests](../engineering/test-strategy.md#complexity)) |
 | RNF-MEM-01 | Memory budget of the core while editing | Core RSS ≤ 60 MB after opening, indexing and editing the 20,000-line file | `/proc/<pid>/status` | Performance test with a verdict |
-| RNF-ED-01 *(0.1)* | The conditions of DP-10 in the integrated product | R1 and R12 by the method of the proof, R10 with the whole document, real IME and Windows | 65 §20.3 and 65:874-879 | The phase D tests ([editing engine](../architecture/neovim-editing-engine.md)) |
+| RNF-ED-01 *(0.1)* | The conditions of DP-10 in the integrated product | R1 and R12 by the method of the proof, R10 with the whole document, real IME and Windows | 65 §20.3 and 65:874-879 | The phase D tests ([editing engine](../architecture/editing-engine.md)) |
 
 ## Security and privacy
 

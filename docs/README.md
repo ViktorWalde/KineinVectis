@@ -34,7 +34,7 @@ flowchart TD
     ARCH --> PROC["processes-and-trust.md"]
     ARCH --> PERS["persistence-and-durability.md"]
     ARCH --> PROTO["protocol-and-contract.md"]
-    ARCH --> NVIM["neovim-editing-engine.md"]
+    ARCH --> NVIM["editing-engine.md"]
     ENG --> RULES["cpp23-rules.md"]
     ENG --> DEFECTS["known-cpp-defects-and-defenses.md"]
     ENG --> PROFILES["build-profiles-and-hardening.md"]
@@ -48,7 +48,7 @@ flowchart TD
 | --- | --- |
 | [lessons-from-0.3.md](lessons-from-0.3.md) | What did 0.3 get wrong and right, and what prevents each mistake from coming back? |
 | [pending-decisions.md](pending-decisions.md) | What is still the maintainer's decision, with the recommendation? |
-| [adr/ADR-0012-cpp23-backend-with-neovim.md](adr/ADR-0012-cpp23-backend-with-neovim.md) | Why C++23 and Neovim, and what does this decision replace? |
+| [adr/ADR-0012-cpp23-backend.md](adr/ADR-0012-cpp23-backend.md) | Why C++23 and Neovim, and what does this decision replace? |
 | [adr/ADR-0013-single-source-of-the-contract.md](adr/ADR-0013-single-source-of-the-contract.md) | Where does the contract between the UI and the two cores come from, and how does it change? |
 | **Requirements** | |
 | [requirements/functional-requirements.md](requirements/functional-requirements.md) | What the core does, in what order, and the acceptance test of each capability |
@@ -60,7 +60,7 @@ flowchart TD
 | [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | How a process is born and what an untrusted project may do |
 | [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Where each file of the IDE lives and how much text a crash can lose |
 | [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | The wire between the UI and the core, the switch of cores and the change of contract |
-| [architecture/neovim-editing-engine.md](architecture/neovim-editing-engine.md) | What Neovim owns, what the core owns and the conditions of the switch |
+| [architecture/editing-engine.md](architecture/editing-engine.md) | What Neovim owns, what the core owns and the conditions of the switch |
 | **Engineering** | |
 | [engineering/cpp23-rules.md](engineering/cpp23-rules.md) | The C++ methods of the project, the comment standard and what enforces each one |
 | [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | The classic defects of the language and the defense against each one |
