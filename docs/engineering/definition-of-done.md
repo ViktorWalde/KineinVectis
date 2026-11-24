@@ -1,34 +1,33 @@
-# Definição de pronto
+# Definition of done
 
-Dono: quando uma mudança no core e quando um marco podem ser chamados de
-prontos. "Pronto" sem todos os itens não é pronto: é "parcial", com a lista
-do que falta.
+Owner: when a change to the core and when a milestone may be called done. "Done" without every
+item is not done: it is "partial", with the list of what is missing.
 
-## Toda mudança
+## Every change
 
-1. Zero aviso no preset `dev` (GCC) e no `lint` (Clang).
-2. clang-tidy limpo no `lint`.
-3. Testes verdes nos presets `dev`, `asan-ubsan` e `tsan`
-   (`cmake --workflow --preset <nome>`, da pasta `core/`).
-4. Teste novo para o comportamento novo, e mutante para cada guarda nova.
-5. Desempenho medido antes e depois nos quatro tamanhos, quando a mudança toca
-   um caminho que depende do tamanho do arquivo ou do projeto.
-6. O documento dono do assunto atualizado no mesmo commit, quando a mudança
-   muda um fato dele. Thread nova entra na tabela da
-   [execução](../architecture/execution-and-concurrency.md#threads-e-donos).
-7. **A lista explícita do que não foi verificado**: ambiente, plataforma ou
-   caso que a mudança não exercitou.
-8. Commit só quando o Viktor pede.
+1. Zero warnings in the `dev` preset (GCC) and in `lint` (Clang).
+2. A clean clang-tidy in `lint`.
+3. Tests green in the `dev`, `asan-ubsan` and `tsan` presets
+   (`cmake --workflow --preset <name>`, from `core/`).
+4. A test for the added behavior, and a mutant for each added guard.
+5. Performance measured before and after at the four sizes, when the change touches a path that
+   depends on the size of the file or of the project.
+6. The owning document of the subject updated in the same commit, when the change alters one of
+   its facts. A thread enters the table of
+   [execution](../architecture/execution-and-concurrency.md#threads-and-owners).
+7. **The explicit list of what was not verified:** environment, platform or case the change did
+   not exercise.
+8. A commit with a DCO sign-off (`git commit -s`, ADR-0011) whose message states what was measured
+   and what was not verified.
 
-## Todo marco
+## Every milestone
 
-- Os critérios de pronto do marco são escritos **antes** do código, com
-  número, método e o teste que impõe cada um (A09 das
-  [lições](../lessons-from-0.3.md)).
-- O marco fecha com a medida de cada critério, ou com NÃO PROVADO explícito.
-- Defeito de perda de dados e de segurança achado no caminho fura a fila.
+- The done criteria of the milestone are written **before** the code, with a number, a method and
+  the test that enforces each one (A09 of the [lessons](../lessons-from-0.3.md)).
+- The milestone closes with the measurement of each criterion, or with an explicit NOT PROVEN.
+- A data-loss or security defect found on the way jumps the queue.
 
-## Critérios por marco
+## Criteria per milestone
 
-Ainda não definidos. A proposta da ordem dos marcos e dos critérios de cada um
-é a Fase D ([decisões](../pending-decisions.md)).
+Not defined yet. The proposed order of the milestones and the criteria of each one are Phase D
+(P12 in the [pending decisions](../pending-decisions.md)).

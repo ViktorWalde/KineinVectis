@@ -1,52 +1,56 @@
-# Protocolo e contrato
+# Protocol and contract
 
-Dono: o fio entre a UI e o core, o que o core em C++ implementa dele, como a
-UI troca de core e como o contrato muda.
+Owner: the wire between the UI and the core, what the C++ core implements of it, how the UI
+switches cores and how the contract changes.
 
-## O fio
+## The wire
 
-- **JSON-RPC 2.0**, uma mensagem por linha, no stdin e no stdout do core
-  (64:95-96; `ui/src/core_client_process.cpp:74` e `:220`).
-- **Versão:** a do core em Rust, hoje 0.223.0
-  (`crates/kinein-protocol/src/lib.rs:121`). O core em C++ informa a versão
-  que implementa; a mudança de versão segue a regra da última seção.
-- **A fonte do contrato hoje são os tipos Rust do `kinein-protocol`.** O
-  `schemas/ipc.schema.json` parou no 0.62.0 e só descreve o envelope
-  (`schemas/ipc.schema.json:4`; ENG-54). Não serve de referência para o core
-  em C++ (L12).
+- **JSON-RPC 2.0**, one message per line, on the core's stdin and stdout (64:95-96;
+  `ui/src/core_client_process.cpp:74` and `:220`).
+- **Version:** the one of the Rust core, 0.223.0 (`crates/kinein-protocol/src/lib.rs:121`). The
+  C++ core reports the version it implements; a version change follows the rule of the last
+  section.
+- **The source of the contract is the Rust types of `kinein-protocol`.** `schemas/ipc.schema.json`
+  stopped at 0.62.0 and describes only the envelope (`schemas/ipc.schema.json:4`; ENG-54). It is
+  no reference for the C++ core (L12).
 
-## O que o core em C++ implementa
+## What the C++ core implements
 
-- **Um subconjunto**, pelos níveis dos
-  [requisitos funcionais](../requirements/functional-requirements.md). Cada
-  método implementado tem a mesma forma de pedido, resposta e erro do core em
-  Rust, conferida pelo teste diferencial.
-- **Método fora do subconjunto** responde com o erro `MethodNotFound`, que é o
-  que o core em Rust já devolve para método desconhecido
-  (`crates/kinein-protocol/src/rpc.rs:132` e `:195`).
-- **Pedidos que a UI manda sozinha** ao abrir um workspace (`cmakeStatus`,
-  `cmakePresetsList`, `cargoMetadata`, `runConfigList`, `gitStatus`; 64:110-114)
-  têm de ter resposta definida no N0, mesmo que seja `MethodNotFound`. Como a
-  UI reage a esse erro é NÃO VERIFICADO; o primeiro marco confere.
+- **A subset**, by the levels of the
+  [functional requirements](../requirements/functional-requirements.md). Each implemented method
+  has the same request, response and error shape as in the Rust core, checked by the differential
+  test.
+- **A method outside the subset** answers with the `MethodNotFound` error, which is what the Rust
+  core returns for an unknown method (`crates/kinein-protocol/src/rpc.rs:132` and `:195`).
+- **The requests the UI sends on its own** when opening a workspace (`cmakeStatus`,
+  `cmakePresetsList`, `cargoMetadata`, `runConfigList`, `gitStatus`; 64:110-114) need a defined
+  answer in N0, even if it is `MethodNotFound`. How the UI reacts to that error is NOT VERIFIED;
+  the first milestone checks it.
 
-## A troca de core
+## Switching cores
 
 ```sh
-KINEIN_CORE_BIN=/caminho/do/core-em-cpp ./kinein-vectis
+KINEIN_CORE_BIN=/path/to/the/cpp/core ./kinein-vectis
 ```
 
-A UI já lê essa variável (`ui/src/core_client_process.cpp:240`). Sem ela, a
-UI sobe o core em Rust como hoje.
+The UI reads this variable (`ui/src/core_client_process.cpp:240`). Without it, the UI starts the
+Rust core.
 
-## Mudança de contrato
+```mermaid
+flowchart LR
+    UI["UI"] --> ENV{"KINEIN_CORE_BIN set?"}
+    ENV -->|yes| CPP["C++ core<br/>subset, MethodNotFound for the rest"]
+    ENV -->|no| RUST["Rust core<br/>the product in use"]
+```
 
-1. **Só por ADR** em [`docs/adr/`](../adr/), aprovada pelo Viktor. Isso inclui
-   o `schemas/ipc.schema.json` e métodos novos que o 64 previa e a 0.223.0 não
-   tem, como o `core.cancel` (64:431-432).
-2. **O contrato vem antes do código** (R-IPC-01 do 63): o teste de contrato
-   muda no mesmo commit.
-3. **Uma fonte única** (RNF-CON-01): o schema gerado a partir dos tipos do
-   `kinein-protocol`, com os dois cores conferidos contra ele, decisão do
-   Viktor de 2026-11-22. Os detalhes estão na
-   [ADR-0013](../adr/ADR-0013-single-source-of-the-contract.md), em rascunho:
-   nada muda no schema antes da aprovação.
+## Changing the contract
+
+1. **Only through an ADR** in [`docs/adr/`](../adr/), approved by the maintainer. This includes
+   `schemas/ipc.schema.json` and methods that 64 planned and 0.223.0 lacks, such as `core.cancel`
+   (64:431-432).
+2. **The contract comes before the code** (R-IPC-01 of 63): the contract test changes in the same
+   commit.
+3. **A single source** (RNF-CON-01): the schema generated from the types of `kinein-protocol`,
+   with both cores checked against it, the maintainer's decision of 2026-11-22. The details are in
+   [ADR-0013](../adr/ADR-0013-single-source-of-the-contract.md), a draft: nothing changes in the
+   schema before the approval.

@@ -70,7 +70,7 @@ flowchart TD
 | 1. Gates and tests | [Gates and effectiveness](docs/engineering/gates-and-effectiveness.md), [test strategy](docs/engineering/test-strategy.md) |
 | 2. Engineering standard and architecture | [C++23 rules](docs/engineering/cpp23-rules.md), [modules and layers](docs/architecture/modules-and-layers.md) |
 | 3. Lessons from 0.3 | [Lessons from 0.3](docs/lessons-from-0.3.md) |
-| 4. Scope and product vision | [Functional requirements](docs/requirements/functional-requirements.md), sections "Escopo" and "Níveis" |
+| 4. Scope and product vision | [Functional requirements](docs/requirements/functional-requirements.md), sections "Scope" and "Levels" |
 | 5. Requirements and limits | [Functional](docs/requirements/functional-requirements.md) and [non-functional](docs/requirements/non-functional-requirements.md) requirements |
 
 Quality comes before dates: there is no deadline. Where the scope matches a mature IDE, its

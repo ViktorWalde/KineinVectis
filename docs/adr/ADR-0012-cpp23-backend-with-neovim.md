@@ -1,104 +1,106 @@
-# ADR-0012: o backend em C++23, com o Neovim como motor de edição
+# ADR-0012: the backend in C++23, with Neovim as the editing engine
 
-> **Estado:** rascunho de 2026-11-22, para revisão do Viktor.
-> **Decisão do autor:** 2026-11-22 (backend em C++23); 2026-11-15 (Neovim, DP-10 do 64).
-> A numeração continua a de `DocsPublic/decisoes-adr/`.
+> **State:** draft of 2026-11-22, under review by the maintainer.
+> **Decision by the maintainer:** 2026-11-22 (C++23 backend); 2026-11-15 (Neovim, DP-10 of 64).
+> The numbering continues the one of `DocsPublic/decisoes-adr/`.
 
-## Contexto
+## Context
 
-Até a 0.3.9, a Kinein Vectis foi construída para uso próprio, e a arquitetura
-seguiu a funcionalidade. A 0.4 precisa atender terceiros. A revisão de
-2026-11-14 (64) e a avaliação do motor de edição (65) mediram defeitos que vêm
-do desenho, e não de um ponto isolado:
+Up to 0.3.9, Kinein Vectis was built for its author's own use, and the architecture followed the
+features. 0.4 has to serve other people. The review of 2026-11-14 (64) and the evaluation of the
+editing engine (65) measured defects that come from the design, not from an isolated spot:
 
-- um projeto não confiável executava código dele por cinco caminhos (INF-23);
-- o laço do core bloqueava, e nada tinha prazo nem cancelamento (ENG-50);
-- processo criado em cerca de 122 lugares (ENG-51);
-- o texto viajava inteiro a cada tecla, e abrir 20 mil linhas levava até 47 s
+- an untrusted project ran its own code through five paths (INF-23);
+- the core's loop blocked, and nothing had a deadline or cancellation (ENG-50);
+- processes were created in about 122 places (ENG-51);
+- the whole text travelled on every keystroke, and opening 20 thousand lines took up to 47 s
   (ENG-55, INF-25);
-- o rascunho não tinha prazo máximo de gravação (INF-26);
-- os gates de texto detectavam 36 de 120 defeitos (66).
+- the draft had no maximum write delay (INF-26);
+- the text gates detected 36 of 120 defects (66).
 
-A lista completa, com a evidência, está nas [lições](../lessons-from-0.3.md).
+The full list, with the evidence, is in the [lessons](../lessons-from-0.3.md).
 
-## Decisão
+## Decision
 
-1. **O core é reescrito em C++23**, na pasta `core/`, com uma biblioteca sem
-   Qt (`core/lib`) e um adaptador fino (`core/qt`). O core em Rust não recebe
-   mais evolução.
-2. **O motor de edição é o Neovim** embutido (`nvim --embed`, msgpack-RPC,
-   `ext_linegrid`), nas condições do 65 §21
-   ([motor de edição](../architecture/neovim-editing-engine.md)).
-3. **O frontend QML fica.** As views e o tema são reaproveitados; os
-   controllers passam pelo teste de fronteira
-   ([fronteiras](../architecture/boundaries-and-responsibilities.md)).
-4. **O escopo é só C e C++** até o núcleo estar sólido. Rust e Python voltam
-   depois.
-5. **A migração é por estrangulamento**, no mesmo repositório:
-   - o core em C++ fala o mesmo protocolo, e a UI escolhe o core por
-     `KINEIN_CORE_BIN`;
-   - o core em Rust é o oráculo do teste diferencial;
-   - sempre existe uma IDE funcionando, para o dogfooding.
-6. **O core em Rust só é apagado** quando o core em C++ passar nos requisitos
-   não funcionais do N0 e do N1 e no teste diferencial, salvo a lista de
-   divergências intencionais. Antes de apagar, cria-se a tag
-   `v0.3-rust-final`.
+1. **The core is rewritten in C++23**, in `core/`, with a library that has no Qt (`core/lib`) and
+   a thin adapter (`core/qt`). The Rust core gets no further evolution.
+2. **The editing engine is an embedded Neovim** (`nvim --embed`, msgpack-RPC, `ext_linegrid`),
+   under the conditions of 65 §21 ([editing engine](../architecture/neovim-editing-engine.md)).
+3. **The QML frontend stays.** The views and the theme are reused; the controllers go through the
+   boundary test ([boundaries](../architecture/boundaries-and-responsibilities.md)).
+4. **The scope is only C and C++** until the core is solid. Rust and Python come back later.
+5. **The migration strangles the old core**, in the same repository:
+   - the C++ core speaks the same protocol, and the UI picks the core through `KINEIN_CORE_BIN`;
+   - the Rust core is the oracle of the differential test;
+   - a working IDE always exists, for dogfooding.
+6. **The Rust core is deleted only** when the C++ core meets the non-functional requirements of
+   N0 and N1 and passes the differential test, apart from the list of intentional divergences.
+   Before the deletion, the tag `v0.3-rust-final` is created.
 
-## Por quê
+```mermaid
+stateDiagram-v2
+    [*] --> TwoCores
+    TwoCores: Two cores, the UI picks one through KINEIN_CORE_BIN
+    TwoCores --> Measured: the C++ core speaks the same protocol
+    Measured: Differential test against the Rust oracle
+    Measured --> RustDeleted: N0 and N1 requirements met, differential test passed
+    RustDeleted: Tag v0.3-rust-final, then crates/ is deleted
+    RustDeleted --> [*]
+```
 
-**A CONFIRMAR PELO VIKTOR.** Os motivos abaixo saem do plano de 2026-11-22;
-nenhum documento anterior os registra:
+## Why
 
-- quem escreve a lógica do core quer dominar o mecanismo, e a biblioteca de
-  algoritmos (ambiente C/C++, embarcados, semântica) é o diferencial do
-  produto;
-- o produto é uma IDE para C e C++, desenvolvida nela mesma: o código do core
-  passa pelo mesmo clangd, pelo mesmo CMake e pelos mesmos sanitizers que a
-  IDE oferece a quem a usa;
-- a UI já é Qt e C++: uma linguagem a menos no produto.
+**TO BE CONFIRMED BY THE MAINTAINER.** The reasons below come from the plan of 2026-11-22; no
+earlier document records them:
 
-## O que esta decisão substitui
+- whoever writes the logic of the core wants to master the mechanism, and the algorithms library
+  (C/C++ environment, embedded, semantics) is the differentiator of the product;
+- the product is an IDE for C and C++, developed in itself: the core's code goes through the same
+  clangd, the same CMake and the same sanitizers that the IDE offers to its users;
+- the UI is Qt and C++: one language fewer in the product.
 
-- **A conclusão do 64 §1** (64:71-77), que descartou a reconstrução ampla e
-  escolheu a estratégia B: trocar quatro costuras dentro do core em Rust.
-- **As fases B1 a B11 do 64 §8**, como plano de código. As soluções que elas
-  descreviam (lançador com confiança, classes de execução, prazo e
-  cancelamento, contrato com fonte única, três classes de persistência) passam
-  a ser requisitos do core em C++.
-- **A proposta do 66** (os gates antes do B1), que aguardava decisão: os gates
-  de texto da 0.3 não entram no core em C++.
-- **A frase do 62:2079-2080**, de fechar dívida "pelo comportamento comprovado,
-  não pela conclusão de um rewrite". A troca de core só acontece pelo
-  comportamento comprovado: o critério do item 6 é medida, não conclusão.
+## What this decision replaces
 
-**Itens que fecham pela remoção do core em Rust**, sem correção própria:
-INF-24, INF-29, INF-30, INF-31 e ENG-57. **Itens que viram requisito do core
-em C++**: INF-23, ENG-50 a ENG-56 e INF-22. **Itens da UI** (INF-25 a INF-28)
-fecham com a remoção do editor atual na fase E do 65, e não com o backend.
+- **The conclusion of 64 §1** (64:71-77), which discarded a broad rebuild and chose strategy B:
+  replacing four seams inside the Rust core.
+- **Phases B1 to B11 of 64 §8**, as a code plan. The solutions they described (a launcher with
+  trust, execution classes, deadline and cancellation, a contract with a single source, three
+  persistence classes) become requirements of the C++ core.
+- **The proposal of 66** (the gates before B1), which awaited a decision: the text gates of 0.3
+  do not enter the C++ core.
+- **The sentence of 62:2079-2080**, about closing debt "by proven behavior, not by the
+  completion of a rewrite". The switch of cores happens only by proven behavior: the criterion of
+  item 6 is a measurement, not a completion.
 
-## Alternativas consideradas
+**Items that close with the removal of the Rust core**, with no fix of their own: INF-24, INF-29,
+INF-30, INF-31 and ENG-57. **Items that become requirements of the C++ core:** INF-23, ENG-50 to
+ENG-56 and INF-22. **UI items** (INF-25 to INF-28) close with the removal of the current editor in
+phase E of 65, not with the backend.
 
-| Alternativa | Por que não |
+## Alternatives considered
+
+| Alternative | Why not |
 | --- | --- |
-| A estratégia B do 64, no Rust | Era o plano decidido em 2026-11-14 (DP-01 a DP-09). A decisão de 2026-11-22 o revê, pelos motivos da seção "Por quê" (a confirmar) |
-| C++26 | Não publicado (a votação DIS de 2026-10-23 reprovou); o GCC 16 marca o suporte como experimental; o Clang oficial 23 não tem reflexão, e o clangd não entenderia o código. Recursos do C++26 entram um por vez, por ADR |
-| Reescrever também a UI | A UI em QML funciona e é a IDE do dogfooding; os defeitos medidos estão no core, na ponte e no editor |
+| Strategy B of 64, in Rust | It was the plan decided on 2026-11-14 (DP-01 to DP-09). The decision of 2026-11-22 revises it, for the reasons of the section "Why" (to be confirmed) |
+| C++26 | Not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection, and clangd would not understand the code. C++26 features enter one at a time, by ADR |
+| Rewriting the UI too | The QML UI works and is the IDE of dogfooding; the measured defects are in the core, in the bridge and in the editor |
 
-## Consequências
+## Consequences
 
-- Durante a migração há dois cores, e todo comportamento novo do core em C++
-  é conferido contra o oráculo ou contra a lista de divergências.
-- O contrato precisa de uma fonte que não dependa do Rust antes de o Rust sair
-  ([decisões](../pending-decisions.md), P02).
-- Os defeitos da 0.3 seguem no produto em uso até a troca. O INF-26 foi
-  corrigido no QML atual em 2026-11-22 (decisão do Viktor); o INF-23 segue, e
-  até o lançador em C++ existir só se abre projeto confiável.
-- A regra "só o lançador cria processo" perde a imposição pelo compilador que
-  o Rust dava (`disallowed_methods = "forbid"`) e precisa de outro mecanismo,
-  com eficácia medida.
+- During the migration there are two cores, and every new behavior of the C++ core is checked
+  against the oracle or against the list of divergences.
+- The contract needs a source that does not depend on Rust before Rust leaves
+  ([ADR-0013](ADR-0013-single-source-of-the-contract.md), pending the maintainer's approval).
+- The defects of 0.3 stay in the product in use until the switch. INF-26 was fixed in the current
+  QML on 2026-11-22 (the maintainer's decision); INF-23 remains, and until the C++ launcher exists
+  only trusted projects are opened.
+- The rule "only the launcher creates processes" loses the compiler enforcement that Rust gave
+  (`disallowed_methods = "forbid"`). Its mechanism in C++ is the `bugprone-unsafe-functions`
+  option of clang-tidy, measured by `gate.launcher`
+  ([gates](../engineering/gates-and-effectiveness.md)).
 
-## O que não foi verificado
+## What was not verified
 
-- A reação da UI a `MethodNotFound` nos pedidos que ela manda sozinha.
-- O esforço da reescrita: nenhuma estimativa foi medida.
-- Windows e MSVC.
+- How the UI reacts to `MethodNotFound` on the requests it sends on its own.
+- The effort of the rewrite: no estimate was measured.
+- Windows and MSVC.

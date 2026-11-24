@@ -1,72 +1,72 @@
-# Fronteiras e responsabilidades
+# Boundaries and responsibilities
 
-Dono: os processos, os componentes, o que cada um decide e a direção das
-dependências. O desenho interno de cada componente fica com o dono dele
-(execução, processos, persistência, protocolo, motor de edição).
+Owner: the processes, the components, what each one decides and the direction of the
+dependencies. The internal design of each component belongs to its own owner (execution,
+processes, persistence, protocol, editing engine).
 
-## Processos
+## Processes
 
-```text
-UI (Qt Quick + QML)  --JSON-RPC por linha, stdio-->  core (C++23)  --lançador-->  ferramentas
-   |                                                   |                          (cmake, compiladores,
-   |                                                   |                           git, gdb, sondas)
-   |                                                   +--lançador + Landlock-->  nvim --embed
-   |                                                   +--relé LSP-->  clangd (criado pelo lançador)
-   +--socket privado: grade, teclado, mouse-------------------------------------> nvim
+```mermaid
+flowchart LR
+    UI["UI<br/>Qt Quick + QML"] -->|line-delimited JSON-RPC over stdio| CORE["core<br/>C++23"]
+    CORE -->|launcher| TOOLS["tools<br/>cmake, compilers, git, gdb, probes"]
+    CORE -->|launcher + Landlock| NVIM["nvim --embed"]
+    CORE -->|LSP relay| CLANGD["clangd<br/>created by the launcher"]
+    UI -->|private socket: grid, keyboard, mouse| NVIM
 ```
 
-- **A UI e o core** são processos separados, como na 0.3 (A01 das
-  [lições](../lessons-from-0.3.md)). A UI escolhe o binário do core por
-  `KINEIN_CORE_BIN` (`ui/src/core_client_process.cpp:240`): é assim que o core
-  em C++ entra no lugar do core em Rust, sem mudar a UI.
-- **O `nvim`** nasce pelo lançador do core e morre quando o core fecha o canal
-  dele (65 §6.1). A tecla vai da UI direto ao `nvim`; o core fica fora do
-  caminho da digitação.
-- **Toda ferramenta externa** nasce pelo lançador
-  ([processos e confiança](processes-and-trust.md)).
+- **The UI and the core** are separate processes, as in 0.3 (A01 of the
+  [lessons](../lessons-from-0.3.md)). The UI picks the core binary through `KINEIN_CORE_BIN`
+  (`ui/src/core_client_process.cpp:240`): that is how the C++ core takes the place of the Rust
+  core without a change to the UI.
+- **`nvim`** is born through the core's launcher and dies when the core closes its channel
+  (65 §6.1). A keystroke goes from the UI straight to `nvim`; the core stays off the typing path.
+- **Every external tool** is born through the launcher
+  ([processes and trust](processes-and-trust.md)).
 
-## O que cada componente decide
+## What each component decides
 
-Regra herdada do 64 §5.2 (64:384-393), adaptada ao core em C++.
+A rule inherited from 64 §5.2 (64:384-393), adapted to the C++ core.
 
-| Componente | Decide | Nunca decide |
+| Component | Decides | Never decides |
 | --- | --- | --- |
-| QML | apresentação e intenção | fato, regra, caminho efetivo, confiança |
-| Ponte da UI (C++) | transporte, correlação, prazo do lado da UI, vida da resposta | regra de domínio |
-| `core/qt` (adaptador) | laço de eventos, transporte do fio, tradução entre o fio e a biblioteca | regra de domínio |
-| `core/lib`, domínio | regra e estado do domínio, algoritmos | como um processo nasce, onde um arquivo próprio mora |
-| `core/lib`, lançador | origem, confiança, ambiente, prazo, teto de saída, grupo de processos | regra de domínio |
-| `core/lib`, persistência | caminho, classe e esquema de cada arquivo próprio, durabilidade | conteúdo de domínio |
-| Neovim | texto, `changedtick`, cursor, protocolo LSP do documento | processo, confiança, configuração do servidor |
+| QML | presentation and intent | facts, rules, effective paths, trust |
+| UI bridge (C++) | transport, correlation, the UI-side deadline, the life of a response | domain rules |
+| `core/qt` (adapter) | event loop, transport of the wire, translation between the wire and the library | domain rules |
+| `core/lib`, domain | domain rules and state, algorithms | how a process is born, where an own file lives |
+| `core/lib`, launcher | origin, trust, environment, deadline, output cap, process group | domain rules |
+| `core/lib`, persistence | path, class and schema of each own file, durability | domain content |
+| Neovim | text, `changedtick`, cursor, the document's LSP protocol | processes, trust, server configuration |
 
-**O teste de cada função** de controller QML e da ponte: *se um cliente de
-linha de comando precisaria da mesma lógica, ela pertence ao core.* O
-inventário dos 89 `*Controller.qml` por esse teste é a Fase B, pendente
-([decisões](../pending-decisions.md)).
+**The test for each function** of a QML controller and of the bridge: *if a command-line client
+would need the same logic, it belongs to the core.* The inventory of the 89 `*Controller.qml`
+under this test is Phase B, pending ([decisions](../pending-decisions.md), P11).
 
-## Direção das dependências
+## Direction of the dependencies
 
-```text
-core/lib   ->  biblioteca padrão C++23 (e dependência aprovada, uma a uma)
-core/qt    ->  core/lib, Qt Core
-executável ->  core/qt
-testes     ->  core/lib (sem laço de eventos), core/qt só nos testes do adaptador
+```mermaid
+flowchart TD
+    EXE["executable"] --> QT["core/qt"]
+    QT --> LIB["core/lib"]
+    QT --> QTCORE["Qt Core"]
+    LIB --> STD["C++23 standard library<br/>and approved dependencies, one at a time"]
+    TESTS["tests"] --> LIB
+    TESTS -.->|adapter tests only| QT
 ```
 
-| Regra | Quem impõe |
+| Rule | Enforced by |
 | --- | --- |
-| `core/lib` não inclui nem liga Qt | O preset `dev` nem procura o Qt: um `#include <QObject>` em `core/lib` não compila (`core/CMakeLists.txt`) |
-| O moc nunca vê o código de `core/lib` | O AUTOMOC só é ligado nos alvos de `core/qt`; nenhum `CMAKE_AUTOMOC` global |
-| `core/lib` é testável sem laço de eventos | Os testes de `core/lib` não ligam `core/qt` |
-| Nada de `core/` depende de `crates/` nem de `ui/` | O projeto CMake de `core/` não referencia essas pastas |
+| `core/lib` neither includes nor links Qt | The `dev` preset does not even look for Qt: an `#include <QObject>` in `core/lib` does not compile (`core/CMakeLists.txt`) |
+| moc never sees the code of `core/lib` | AUTOMOC is enabled only on the targets of `core/qt`; there is no global `CMAKE_AUTOMOC` |
+| `core/lib` is testable without an event loop | The tests of `core/lib` do not link `core/qt` |
+| Nothing in `core/` depends on `crates/` or `ui/` | The CMake project of `core/` does not reference those directories |
 
-Os módulos dentro de `core/lib`, as camadas e o gate que recusa ciclo estão
-em [modules-and-layers.md](modules-and-layers.md). O grafo do CMake não recusa
-ciclo sozinho: ele aceita ciclo entre bibliotecas `STATIC` (medido em
-2026-11-22).
+The modules inside `core/lib`, the layers and the gate that rejects cycles are in
+[modules-and-layers.md](modules-and-layers.md). The CMake graph does not reject cycles on its
+own: it accepts a cycle between `STATIC` libraries (measured on 2026-11-22).
 
-## Estrangulamento
+## Strangling
 
-O core em Rust fica em `crates/` como produto em uso e como oráculo do teste
-diferencial até o core em C++ passar nos critérios de troca da ADR-0012. Nada
-em `crates/` é apagado nem movido antes disso.
+The Rust core stays in `crates/` as the product in use and as the oracle of the differential test
+until the C++ core passes the switch criteria of ADR-0012. Nothing in `crates/` is deleted or
+moved before that.

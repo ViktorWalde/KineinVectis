@@ -1,97 +1,106 @@
-# Perfis de compilação e hardening
+# Build profiles and hardening
 
-Dono: os perfis de build do core, o que cada um liga, as fontes de cada
-escolha e como rodar. A lista exata de flags está em `core/cmake/`: este
-documento explica, e não repete.
+Owner: the build profiles of the core, what each one enables, the source of each choice and how
+to run them. The exact list of flags is in `core/cmake/`: this document explains it and does not
+repeat it.
 
-## Como rodar
+## How to run
 
-Da pasta `core/`:
+From `core/`:
 
 ```sh
-cmake --workflow --preset dev          # configura, compila e testa
+cmake --workflow --preset dev          # configure, build and test
 cmake --workflow --preset asan-ubsan
 cmake --workflow --preset tsan
 cmake --workflow --preset lint         # Clang + clang-tidy
 ```
 
-Os builds vão para `build/core-<preset>/`, na raiz do repositório, que o git
-ignora. O preset `dev-qt` precisa de `KINEIN_QT_PREFIX` apontando para o Qt da
-UI (por exemplo `~/Qt/6.12.1/gcc_64`). O clangd lê `build/core-lint/` pelo
-`core/.clangd`.
+The build trees go to `build/core-<preset>/`, at the repository root, which git ignores. The
+`dev-qt` preset needs `KINEIN_QT_PREFIX` pointing to the Qt of the UI (for example
+`~/Qt/6.12.1/gcc_64`). clangd reads `build/core-lint/` through `core/.clangd`.
 
-## Os perfis
+## The profiles
 
-| Preset | Perfil | Compilador | O que muda | Para quê |
+| Preset | Profile | Compiler | What changes | What for |
 | --- | --- | --- | --- | --- |
-| `dev` | dev | GCC | baseline, semântica de produção e `-Werror`; `-O2 -g` | O build do dia a dia: o que se testa é o que se entrega |
-| `production` | production | GCC | o mesmo, **sem `-Werror`** | O que se distribui: aviso de um compilador mais novo não quebra o build de quem empacota |
-| `asan-ubsan` | asan-ubsan | GCC | ASan e UBSan, sem FORTIFY e sem a semântica de produção; `-O1 -g` | Achar erro de memória e comportamento indefinido |
-| `tsan` | tsan | GCC | TSan, sem FORTIFY; `-O1 -g` | Achar corrida de dados |
-| `debug-stl` | debug-stl | GCC | `_GLIBCXX_DEBUG`; `-O0 -g3` | Iteradores inválidos e precondições da biblioteca; depuração passo a passo |
-| `lint` | dev | Clang | clang-tidy em cada unidade | Análise estática; e o segundo compilador com `-Werror` |
-| `cxx26-probe` | dev | GCC | `-std=c++26` | Só detectar incompatibilidade com o C++26 |
-| `dev-qt` | dev | GCC | liga `core/qt` | O adaptador Qt |
+| `dev` | dev | GCC | baseline, production semantics and `-Werror`; `-O2 -g` | The daily build: what is tested is what ships |
+| `production` | production | GCC | the same, **without `-Werror`** | What is distributed: a warning of a newer compiler does not break the packager's build |
+| `asan-ubsan` | asan-ubsan | GCC | ASan and UBSan, without FORTIFY and without production semantics; `-O1 -g` | Find memory errors and undefined behavior |
+| `tsan` | tsan | GCC | TSan, without FORTIFY; `-O1 -g` | Find data races |
+| `debug-stl` | debug-stl | GCC | `_GLIBCXX_DEBUG`; `-O0 -g3` | Invalid iterators and library preconditions; step-by-step debugging |
+| `lint` | dev | Clang | clang-tidy on each unit | Static analysis, and the second compiler with `-Werror` |
+| `cxx26-probe` | dev | GCC | `-std=c++26` | Only detect incompatibilities with C++26 |
+| `dev-qt` | dev | GCC | builds `core/qt` | The Qt adapter |
 
-Versões mínimas, decisão do Viktor de 2026-11-22: **GCC 14 e Clang 20**,
-o piso que o CI testa no `ubuntu-26.04`. Abaixo disso o configure falha. O
-Clang 18 não serve: até o Clang 18, o `__cpp_concepts` do Clang era 201907L,
-e a libstdc++ só declara o `std::expected` com 202002L
-(`bits/version.h` da libstdc++ 16, lido; o Clang 19 subiu o valor para
-habilitar o `<expected>` da libstdc++, [PR #87998 do LLVM](https://lists.llvm.org/pipermail/cfe-commits/Week-of-Mon-20240408/565418.html)).
+Each target gets its profile from one orchestrator, `kinein_apply_profile(<target> <kind>)` in
+`core/cmake/KineinProfile.cmake`, which commands one specialist module per concern:
 
-O código de terceiros compilado junto (o GoogleTest) recebe o perfil como
-`THIRD_PARTY`: otimização, modo da biblioteca padrão, sanitizers e proteções,
-sem os avisos e sem o clang-tidy (`core/cmake/KineinProfile.cmake`).
+```mermaid
+flowchart TD
+    ROOT["core/CMakeLists.txt"] --> PROFILE["KineinProfile.cmake<br/>kinein_apply_profile: orchestrator"]
+    PROFILE --> OPT["kinein_apply_optimization<br/>same file"]
+    PROFILE --> WARN["KineinWarnings.cmake<br/>kinein_apply_warnings"]
+    PROFILE --> HARD["KineinHardening.cmake<br/>kinein_apply_hardening"]
+    PROFILE --> SAN["KineinSanitizers.cmake<br/>kinein_apply_sanitizers"]
+    TESTING["KineinTesting.cmake<br/>kinein_add_unit_test"] --> PROFILE
+    ELF["CheckElfHardening.cmake<br/>build.elf_hardening"] -.->|reads the linked binary| HARD
+```
 
-## O que vale em todos os perfis
+Minimum versions, the maintainer's decision of 2026-11-22: **GCC 14 and Clang 20**, the floor the
+CI tests on `ubuntu-26.04`. Below that, configure fails. Clang 18 does not work: up to Clang 18,
+Clang's `__cpp_concepts` was 201907L, and libstdc++ declares `std::expected` only with 202002L
+(`bits/version.h` of libstdc++ 16, read; Clang 19 raised the value to enable the `<expected>` of
+libstdc++, [LLVM PR #87998](https://lists.llvm.org/pipermail/cfe-commits/Week-of-Mon-20240408/565418.html)).
 
-- **Avisos:** a lista do `KineinStrictOptions.cmake` da 0.3, que já compilava
-  a UI com `-Werror` (A10 das [lições](../lessons-from-0.3.md)), mais o TL;DR do
-  OpenSSF. A lista é fixa por compilador: flag desconhecida quebra o build em
-  vez de sumir (falha fechado).
-- **Proteções:** `-fstack-protector-strong`, `-fstack-clash-protection`,
-  `-fstrict-flex-arrays=3`; no x86_64, `-fcf-protection=full` e
-  `-fzero-call-used-regs=used-gpr`; no aarch64, `-mbranch-protection=standard`.
-- **Biblioteca padrão:** `_GLIBCXX_ASSERTIONS` e o modo `FAST` da libc++; no
-  `debug-stl`, `_GLIBCXX_DEBUG` e o modo `DEBUG` da libc++.
-- **Link do executável e dos testes:** `-z nodlopen`, `-z noexecstack`,
-  `-z relro`, `-z now`, `--as-needed`, `--no-copy-dt-needed-entries` e PIE.
+Third-party code built together with the core (GoogleTest) gets the profile as `THIRD_PARTY`:
+optimization, standard library mode, sanitizers and protections, without the warnings and
+without clang-tidy (`core/cmake/KineinProfile.cmake`).
 
-## As escolhas e as fontes
+## What holds in every profile
 
-| Escolha | Fonte |
+- **Warnings:** the list of the 0.3 `KineinStrictOptions.cmake`, which built the UI with
+  `-Werror` (A10 of the [lessons](../lessons-from-0.3.md)), plus the OpenSSF TL;DR. The list is
+  fixed per compiler: an unknown flag breaks the build instead of vanishing (fail closed).
+- **Protections:** `-fstack-protector-strong`, `-fstack-clash-protection`,
+  `-fstrict-flex-arrays=3`; on x86_64, `-fcf-protection=full` and
+  `-fzero-call-used-regs=used-gpr`; on aarch64, `-mbranch-protection=standard`.
+- **Standard library:** `_GLIBCXX_ASSERTIONS` and the `FAST` mode of libc++; in `debug-stl`,
+  `_GLIBCXX_DEBUG` and the `DEBUG` mode of libc++.
+- **Linking the executable and the tests:** `-z nodlopen`, `-z noexecstack`, `-z relro`, `-z now`,
+  `--as-needed`, `--no-copy-dt-needed-entries` and PIE.
+
+## The choices and their sources
+
+| Choice | Source |
 | --- | --- |
-| O baseline de flags | OpenSSF, *Compiler Options Hardening Guide for C and C++*, versão de 2026-08-20, TL;DR; linhas condicionais "for x86_64", "for aarch64" e "for production code" |
-| `-Werror` só em desenvolvimento, nunca no fonte distribuído; `-Werror=format-security` em todos | O mesmo guia, TL;DR |
-| `_FORTIFY_SOURCE` só com `-O1` ou mais, precedido de `-U_FORTIFY_SOURCE` | O mesmo guia, Tabela 2 |
-| Sem `_FORTIFY_SOURCE` nos sanitizers | FAQ do AddressSanitizer: "ASan (and other sanitizers) doesn't support source fortification" |
-| TSan em build separado | Medido: o GCC 16.2.1 recusa `-fsanitize=thread` junto de `-fsanitize=address` |
-| `_GLIBCXX_DEBUG` só no `debug-stl`, com tudo compilado junto | Manual da libstdc++ (Debug Mode): a flag muda o tamanho dos containers, e o código só se liga com o de fora do modo se nenhum container passar entre os dois |
-| A semântica de produção também no `dev` | Decisão deste documento: o build do dia a dia roda o que se entrega. Os sanitizers ficam sem ela, para o UBSan ver o UB que ela define |
-| O `-z nodlopen` não marca executável | Medido em 2026-11-22: o GNU ld 2.47 marca `NOOPEN` em biblioteca compartilhada e não em executável PIE. A flag fica, como o guia pede, e a conferência vale para biblioteca compartilhada quando houver uma |
-| `CMAKE_BUILD_TYPE` não muda flag nenhuma | As flags padrão do CMake por configuração são zeradas no escopo do core: o perfil é o único dono |
+| The flag baseline | OpenSSF, *Compiler Options Hardening Guide for C and C++*, version of 2026-08-20, TL;DR; the conditional lines "for x86_64", "for aarch64" and "for production code" |
+| `-Werror` only in development, never in the distributed source; `-Werror=format-security` in all | The same guide, TL;DR |
+| `_FORTIFY_SOURCE` only with `-O1` or more, preceded by `-U_FORTIFY_SOURCE` | The same guide, Table 2 |
+| No `_FORTIFY_SOURCE` in the sanitizers | AddressSanitizer FAQ: "ASan (and other sanitizers) doesn't support source fortification" |
+| TSan in a separate build | Measured: GCC 16.2.1 refuses `-fsanitize=thread` together with `-fsanitize=address` |
+| `_GLIBCXX_DEBUG` only in `debug-stl`, with everything built together | libstdc++ manual (Debug Mode): the flag changes the size of the containers, and the code links with code outside the mode only if no container passes between them |
+| Production semantics in `dev` as well | A decision of this document: the daily build runs what ships. The sanitizers stay without it, so that UBSan sees the UB that it defines |
+| `-z nodlopen` does not mark an executable | Measured on 2026-11-22: GNU ld 2.47 marks `NOOPEN` on a shared library and not on a PIE executable. The flag stays, as the guide asks, and the check applies to a shared library once there is one |
+| `CMAKE_BUILD_TYPE` changes no flag | CMake's default per-configuration flags are cleared in the core's scope: the profile is the only owner |
 
-## Conferido pelo próprio build
+## Checked by the build itself
 
-- `build.contract` (`core/tests/build/build_contract_test.cpp`): o compilador
-  confere o padrão da linguagem, a ausência de extensões, PIE, SSP, CET,
-  `_GLIBCXX_ASSERTIONS`, o FORTIFY de nível 3 efetivo na glibc, a ausência de
-  FORTIFY nos sanitizers e o sanitizer certo em cada perfil.
-- `build.elf_hardening` (`core/cmake/CheckElfHardening.cmake`): o `readelf`
-  confere no binário da rodada `BIND_NOW`, `PIE`, `GNU_RELRO` e a pilha não
-  executável.
-- A eficácia dos dois, medida em 2026-11-22, está em
-  [gates-and-effectiveness.md](gates-and-effectiveness.md#registro).
+- `build.contract` (`core/tests/build/build_contract_test.cpp`): the compiler checks the language
+  standard, the absence of extensions, PIE, SSP, CET, `_GLIBCXX_ASSERTIONS`, the effective level
+  3 FORTIFY in glibc, the absence of FORTIFY in the sanitizers and the right sanitizer in each
+  profile.
+- `build.elf_hardening` (`core/cmake/CheckElfHardening.cmake`): `readelf` checks `BIND_NOW`,
+  `PIE`, `GNU_RELRO` and the non-executable stack in the binary of the run.
+- The effectiveness of both, measured on 2026-11-22, is in
+  [gates-and-effectiveness.md](gates-and-effectiveness.md#measurement-record).
 
-## NÃO VERIFICADO
+## NOT VERIFIED
 
-- MSVC e Windows: o ramo MSVC dos módulos foi herdado do
-  `KineinStrictOptions.cmake` e não compilou nesta máquina.
-- GCC 14 e Clang 20: o piso compilou e passou no CI em 2026-11-23
-  ([gates](gates-and-effectiveness.md#a-ci)), mas a versão exata que o
-  runner usou está no log, que não foi lido. Nesta máquina há só o GCC 16.2.1
-  e o Clang 23.1.5.
-- O ruído do `-Wconversion` no código gerado pelo moc: `core/qt` ainda não tem
-  código. Os cabeçalhos do Qt já entram como `-isystem`.
+- MSVC and Windows: the MSVC branch of the modules comes from `KineinStrictOptions.cmake` and was
+  not built on this machine.
+- GCC 14 and Clang 20: the floor built and passed in the CI on 2026-11-23
+  ([gates](gates-and-effectiveness.md#the-ci)), but the exact version the runner used is in the
+  log, which was not read. This machine has only GCC 16.2.1 and Clang 23.1.5.
+- The noise of `-Wconversion` in the code moc generates: `core/qt` has no code yet. The Qt headers
+  enter as `-isystem`.
 - aarch64.

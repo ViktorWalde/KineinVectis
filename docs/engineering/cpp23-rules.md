@@ -1,71 +1,90 @@
-# Regras de C++23
+# C++23 rules
 
-Dono: os métodos de C++ do core e o mecanismo que impõe cada um. A defesa
-contra cada defeito clássico da linguagem está em
-[known-cpp-defects-and-defenses.md](known-cpp-defects-and-defenses.md).
-As flags estão em [build-profiles-and-hardening.md](build-profiles-and-hardening.md).
+Owner: the C++ methods of the core, the comment standard, and the mechanism that enforces each
+one. The defense against each classic defect of the language is in
+[known-cpp-defects-and-defenses.md](known-cpp-defects-and-defenses.md). The flags are in
+[build-profiles-and-hardening.md](build-profiles-and-hardening.md). The file roles inside a module
+are in [modules and layers](../architecture/modules-and-layers.md#inside-a-module-file-roles).
 
-"Revisão" na última coluna quer dizer que nenhuma ferramenta impõe a regra:
-quem revisa confere. Toda regra marcada assim é candidata a mecanismo.
+"Review" in the last column means that no tool enforces the rule: the reviewer checks it. Every
+rule marked so is a candidate for a mechanism. "CG" cites the
+[C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) by rule ID
+(the version of 2026-06-14).
 
-## Linguagem
+## Language
 
-| Regra | Por quê | Quem impõe |
+| Rule | Why | Enforced by |
 | --- | --- | --- |
-| C++23 sem extensões (`CMAKE_CXX_EXTENSIONS OFF`) | Código portável entre GCC, Clang e MSVC, que o clangd entende | `build.contract` reprova `-std=gnu++` |
-| C++26 só por ADR, um recurso por vez, quando GCC, clangd e MSVC o suportarem sem a etiqueta de experimental, protegido por macro de teste de recurso (`__cpp_*`) | O C++26 não foi publicado (a votação DIS de 2026-10-23 reprovou); o GCC 16 marca o suporte como experimental; o Clang oficial 23 não tem reflexão (P2996) | Revisão; a sondagem `cxx26-probe` só detecta incompatibilidade |
-| Identificadores em inglês; comentários e documentação em português | ENG-37 da 0.3: 14 mil ocorrências de identificador em português viraram dívida | Revisão |
+| C++23 with no extensions (`CMAKE_CXX_EXTENSIONS OFF`) | Code portable between GCC, Clang and MSVC, which clangd understands | `build.contract` fails on `-std=gnu++` |
+| C++26 only through an ADR, one feature at a time, once GCC, clangd and MSVC support it without the experimental label, guarded by a feature-test macro (`__cpp_*`) | C++26 is not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection (P2996) | Review; the `cxx26-probe` preset only detects incompatibilities |
+| English for everything a contributor reads: identifiers, comments, messages, file names, documentation | ENG-37 of 0.3: 14 thousand Portuguese identifiers became debt; contributors read English | Review (P17) |
+| The warnings and protections of the profile, `-Werror` in development | The OpenSSF compiler hardening baseline, adapted per compiler ([profiles](build-profiles-and-hardening.md)) | The compiler; `build.contract`, `build.elf_hardening` |
+| A Unicode bidirectional character in the code fails the build | Trojan Source (CVE-2021-42574) | `-Wbidi-chars=any` (GCC) |
+| No `using namespace` in a header (CG SF.7) | It leaks into every file that includes the header | `-Wheader-hygiene` (Clang) |
 
-## Recursos e posse
+## Resources and ownership
 
-| Regra | Por quê | Quem impõe |
+| Rule | Why | Enforced by |
 | --- | --- | --- |
-| RAII para todo recurso; nada de `new` e `delete` soltos | Vazamento e liberação dupla | `cppcoreguidelines-owning-memory`, `cppcoreguidelines-no-malloc`; ASan e LSan |
-| `QObject` vive na árvore de pais do Qt; todo o resto em RAII; nunca os dois no mesmo objeto | Dois donos para o mesmo objeto é liberação dupla | Revisão; só existe em `core/qt` |
-| `std::string_view` e `std::span` só como parâmetro, nunca guardados em membro nem devolvidos de função que recebeu temporário | Referência pendurada | `bugprone-dangling-handle`, `-Wdangling-reference` (GCC), `-Wdangling` (Clang); ASan `stack-use-after-return` |
-| Regra do zero; se uma operação especial é declarada, as cinco são | Cópia rasa e liberação dupla | `cppcoreguidelines-special-member-functions` |
+| RAII for every resource (memory, file, descriptor, pipe, process); no bare `new`, `delete`, `malloc` or `free` | Leaks and double frees | `cppcoreguidelines-owning-memory`, `cppcoreguidelines-no-malloc`; ASan and LSan |
+| `T*` and `T&` never transfer ownership; ownership is a value or a `std::unique_ptr`. `T*` only observes and may be null; "not null" is a reference. No GSL (CG I.11, R.20) | The type says who frees | `cppcoreguidelines-owning-memory` |
+| `std::shared_ptr` only with the reason for shared ownership written next to it (CG R.21) | Shared ownership hides the lifetime | Review |
+| A `QObject` lives in the Qt parent tree; everything else in RAII; never both for the same object | Two owners for one object is a double free | Review; it exists only in `core/qt` |
+| `std::string_view` and `std::span` only as parameters, never stored in a member or returned from a function that received a temporary. An array parameter is a `std::span` | Dangling references; array-to-pointer decay loses the size | `bugprone-dangling-handle`, `-Wdangling-reference` (GCC), `-Wdangling` (Clang), `cppcoreguidelines-pro-bounds-array-to-pointer-decay`; ASan `stack-use-after-return` |
+| Rule of zero; if one special operation is declared, all five are (CG C.20, C.21) | Shallow copies and double frees | `cppcoreguidelines-special-member-functions` |
 
-## Erros
+## Types and interfaces
 
-| Regra | Por quê | Quem impõe |
+| Rule | Why | Enforced by |
 | --- | --- | --- |
-| `std::expected` para erro esperado (arquivo ausente, ferramenta que falhou, prazo vencido) | O erro faz parte do tipo e não é esquecido | Resultado descartado reprova: `bugprone-unused-return-value` com `std::expected` (`core/.clang-tidy`) |
-| Exceção só para o que não é esperado, e nunca atravessa thread nem o laço de eventos do Qt | Exceção que escapa de thread chama `std::terminate`; pelo laço do Qt, o comportamento não é definido | `bugprone-exception-escape` em função `noexcept`; corpo de thread e slot do adaptador são `noexcept` |
-| Cada causa de falha tem nome próprio (`DeadlineExceeded`, `RequestCancelled`, `WorkspaceUntrusted`...) | L19: o prazo vencido saía como "obsoleto" | Teste de cada caminho de falha |
+| A domain value has a named type (`LineIndex`, `ByteOffset`) and an `enum class`; no bare `int` or `bool` with a meaning (CG I.4, Enum.3) | The compiler rejects a swapped argument | Review |
+| Output by return value; several outputs are a `struct` with named members, not `pair` or `tuple` (CG F.20, F.21) | The name of each output is part of the interface | Review |
+| `const` by default, on objects and on member functions; a template has a concept (CG Con.1, Con.2, T.10) | Mutation and template requirements are visible in the signature | Review |
+| Every object is born initialized (`{}`); a constructor delivers a ready object, with no `init()` (CG ES.20, C.41) | No read of an indeterminate value, no half-built object | `cppcoreguidelines-pro-type-member-init`, `cppcoreguidelines-prefer-member-initializer` |
+| A narrowing conversion only explicit and checked; only named casts (CG ES.46, ES.49) | Silent truncation and sign changes | `-Wconversion`, `-Wsign-conversion`, `-Wold-style-cast`, `-Wuseless-cast` |
 
-## Concorrência e execução
+## Errors
 
-As invariantes E1 a E10 estão em
-[execution-and-concurrency.md](../architecture/execution-and-concurrency.md). Em
-termos de código:
+| Rule | Why | Enforced by |
+| --- | --- | --- |
+| `std::expected<T, E>` for an expected error (missing file, failed tool, expired deadline), with `E` naming the cause; the result is never discarded, not even with a cast to `void` | The error is part of the type and is not forgotten | `bugprone-unused-return-value` with `std::expected` (`core/.clang-tidy`) |
+| An exception only for the unexpected (memory, broken invariant), caught before it crosses a thread, a Qt slot or a protocol handler: those entry points are `noexcept` (CG E.2, E.3) | An exception escaping a thread calls `std::terminate`; through the Qt loop, the behavior is undefined | `bugprone-exception-escape` on `noexcept` functions |
+| Each failure cause has its own name (`DeadlineExceeded`, `RequestCancelled`, `WorkspaceUntrusted`) and its own test | L19: an expired deadline came out as "stale" | A test per failure path |
 
-| Regra | Quem impõe |
+## Concurrency and execution
+
+The invariants E1 to E10 are in [execution and concurrency](../architecture/execution-and-concurrency.md).
+In terms of code:
+
+| Rule | Enforced by |
 | --- | --- |
-| `std::jthread` com `std::stop_token` para trabalho cancelável | Revisão |
-| Thread nunca solta: sem `detach()` | clang-tidy (`CustomFunctions`), `gate.detach` |
-| Um dono por dado; threads trocam mensagens | TSan; revisão |
-| Variável global não constante é proibida | `cppcoreguidelines-avoid-non-const-global-variables`; `-Wglobal-constructors` e `-Wexit-time-destructors` em `core/lib` (Clang) |
-| Função da biblioteca C que não é segura em thread é proibida | `concurrency-mt-unsafe` |
-| O laço nunca bloqueia; toda chamada externa tem prazo e cancelamento | Guarda de E/S no laço (a projetar) |
+| Threads only in `rt`, as `std::jthread` with `std::stop_token` | Review |
+| A thread is never detached: no `detach()` (CG CP.26) | clang-tidy (`CustomFunctions`), `gate.detach` |
+| One owner per piece of data; threads exchange messages | TSan; review |
+| No non-constant global variable | `cppcoreguidelines-avoid-non-const-global-variables`; `-Wglobal-constructors` and `-Wexit-time-destructors` in `core/lib` (Clang) |
+| A lock only through RAII (`std::scoped_lock`), with a name; never call unknown code (a callback, a Qt signal) while holding a lock (CG CP.20, CP.22) | `bugprone-unused-raii` for the unnamed lock; review for the unknown code |
+| `wait` always with a predicate or a `stop_token`; `volatile` does not synchronize (CG CP.42, CP.8) | Review |
+| A C library function that is not thread-safe is forbidden | `concurrency-mt-unsafe` |
+| The loop never blocks; every external call has a deadline and cancellation | An I/O guard on the loop (to be designed) |
 
-## Fronteiras
+## Boundaries
 
-| Regra | Quem impõe |
+| Rule | Enforced by |
 | --- | --- |
-| `core/lib` sem Qt, testável sem laço de eventos | O preset `dev` não procura o Qt |
-| O moc nunca vê `core/lib` | AUTOMOC só nos alvos de `core/qt` |
-| Processo só pelo lançador | clang-tidy (`CustomFunctions`), ativo e medido ([processos](../architecture/processes-and-trust.md)) |
-| Dependência entre módulos só para camada de baixo | `kinein_add_module`, proposto ([módulos](../architecture/modules-and-layers.md)) |
-| Nada executa antes da confiança no workspace | Teste do projeto hostil (RNF-SEG-01) |
-| Dependência externa nova só com aprovação do Viktor, com licença conferida | Revisão |
-| Uma responsabilidade, um módulo dono. Variação nova entra como adaptador de uma porta que já existe (aberto/fechado), nunca como cópia ajustada de código existente | `gate.duplication` (T1 a T3); a mesma lógica escrita de outro jeito (T4), na revisão (P20) |
+| `core/lib` with no Qt, testable without an event loop | The `dev` preset does not look for Qt |
+| moc never sees `core/lib` | AUTOMOC only on the targets of `core/qt` |
+| Processes only through the launcher | clang-tidy (`CustomFunctions`), active and measured ([processes](../architecture/processes-and-trust.md)) |
+| Dependencies between modules only toward a lower layer | `kinein_add_module`, proposed ([modules](../architecture/modules-and-layers.md)) |
+| Nothing runs before trust in the workspace | Hostile project test (RNF-SEG-01) |
+| A new external dependency only with the maintainer's approval and a checked license | Review |
+| One responsibility, one owning module. Before a function is written, the behavior is searched for in the owner of the subject, not by name. A new variation enters as an adapter of an existing port (open/closed), never as an adjusted copy or a scattered `switch`. A port exists only where the variation exists: the second occurrence creates it | `gate.duplication` (T1 to T3); the same logic written another way (T4) in review (P20) |
 
-## Supressões
+## Suppressions
 
-- `NOLINT` só na forma `NOLINT(<checagem>): <motivo>`, na linha, nunca em bloco.
-- Aviso do compilador não se desliga por arquivo; se uma flag não serve, ela
-  sai do perfil, com o motivo no `core/cmake/`.
-- O `-Werror` dos presets de desenvolvimento não se desliga para passar um build.
+- `NOLINT` only in the form `NOLINT(<check>): <reason>`, on the line, never as a block.
+- A compiler warning is not disabled per file; if a flag does not fit, it leaves the profile, with
+  the reason in `core/cmake/`.
+- The `-Werror` of the development presets is not disabled to get a build through.
 
 ## Comments
 
@@ -103,3 +122,5 @@ and its first line is in the imperative because it is also the `--help` text.
 Corpus marks are `// reject: <what the defect is>` and `// accept: <what the form is>`, with no
 final period. In the duplication corpus the mark is `// reject: <name of the original function>`.
 Corpus code is data: `clang-format` does not reformat it, but its comments follow this standard.
+The `Layout:` and role fields of the header ([file roles](../architecture/modules-and-layers.md#inside-a-module-file-roles))
+enter C6 when the role gate is written.

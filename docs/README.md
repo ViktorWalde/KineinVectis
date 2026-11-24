@@ -1,82 +1,119 @@
-# Documentação do core em C++23
+# Documentation of the C++23 core
 
-Esta árvore documenta só o core (backend) da Kinein Vectis reescrito em C++23,
-na pasta `core/`. A UI em QML, o core em Rust e a documentação da série 0.3
-continuam em `ui/`, `crates/` e `DocsPublic/`. Nenhum arquivo daqui manda
-neles, e nenhum deles manda no core novo. Quando um fato da 0.3 serve de
-evidência, ele é citado pela origem, não copiado.
+Owner: the map of this tree, the question each file answers, and the rules every file follows.
 
-Estado: rascunho de 2026-11-22, para revisão do Viktor.
+This tree documents only the core (backend) of Kinein Vectis, rewritten in C++23 in `core/`. The
+QML UI, the Rust core and the documentation of the 0.3 series live in `ui/`, `crates/` and
+`DocsPublic/`. No file here governs them, and none of them governs the new core. When a fact of
+0.3 serves as evidence, it is cited by its origin, not copied.
 
-## O mapa
+State: draft of 2026-11-22; the maintainer reviews it.
 
-Cada arquivo responde a uma pergunta e é o único dono dos fatos dessa
-pergunta. Os outros apontam para ele.
+## The map
 
-| Arquivo | Pergunta que responde |
+Each file answers one question and is the only owner of the facts of that question. The other
+files link to it. The tree is a hierarchy: this index, then one directory per area, then one file
+per question, then one `##` section per subject.
+
+```mermaid
+flowchart TD
+    INDEX["docs/README.md<br/>map and rules"]
+    INDEX --> LESSONS["lessons-from-0.3.md"]
+    INDEX --> PENDING["pending-decisions.md"]
+    INDEX --> ADR["adr/"]
+    INDEX --> REQ["requirements/"]
+    INDEX --> ARCH["architecture/"]
+    INDEX --> ENG["engineering/"]
+    ADR --> ADR12["ADR-0012 C++23 backend with Neovim"]
+    ADR --> ADR13["ADR-0013 single source of the contract"]
+    REQ --> FR["functional-requirements.md"]
+    REQ --> NFR["non-functional-requirements.md"]
+    ARCH --> BOUND["boundaries-and-responsibilities.md"]
+    ARCH --> MOD["modules-and-layers.md"]
+    ARCH --> EXEC["execution-and-concurrency.md"]
+    ARCH --> PROC["processes-and-trust.md"]
+    ARCH --> PERS["persistence-and-durability.md"]
+    ARCH --> PROTO["protocol-and-contract.md"]
+    ARCH --> NVIM["neovim-editing-engine.md"]
+    ENG --> RULES["cpp23-rules.md"]
+    ENG --> DEFECTS["known-cpp-defects-and-defenses.md"]
+    ENG --> PROFILES["build-profiles-and-hardening.md"]
+    ENG --> TIDY["static-analysis-clang-tidy.md"]
+    ENG --> TESTS["test-strategy.md"]
+    ENG --> GATES["gates-and-effectiveness.md"]
+    ENG --> DONE["definition-of-done.md"]
+```
+
+| File | Question it answers |
 | --- | --- |
-| [lessons-from-0.3.md](lessons-from-0.3.md) | O que a 0.3 errou e acertou, e o que impede a repetição de cada erro? |
-| [pending-decisions.md](pending-decisions.md) | O que ainda é decisão do Viktor, com a recomendação? |
-| [adr/ADR-0012-cpp23-backend-with-neovim.md](adr/ADR-0012-cpp23-backend-with-neovim.md) | Por que C++23 e Neovim, e o que essa decisão substitui? |
-| [adr/ADR-0013-single-source-of-the-contract.md](adr/ADR-0013-single-source-of-the-contract.md) | De onde vem o contrato entre a UI e os dois cores, e como ele muda? |
-| **Requisitos** | |
-| [requirements/functional-requirements.md](requirements/functional-requirements.md) | O que o core faz, em que ordem, e o teste de aceite de cada capacidade |
-| [requirements/non-functional-requirements.md](requirements/non-functional-requirements.md) | Com que limite medido: tempo, memória, segurança, durabilidade, qualidade |
-| **Arquitetura** | |
-| [architecture/boundaries-and-responsibilities.md](architecture/boundaries-and-responsibilities.md) | Quais processos e componentes existem, quem decide o quê e quem depende de quem |
-| [architecture/modules-and-layers.md](architecture/modules-and-layers.md) | Quais módulos `core/lib` tem, em que camada, quem usa quem e o que impõe isso (com os diagramas) |
-| [architecture/execution-and-concurrency.md](architecture/execution-and-concurrency.md) | Onde o trabalho roda, quem é dono de cada dado, prazo e cancelamento |
-| [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | Como um processo nasce e o que o projeto não confiável pode fazer |
-| [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Onde cada arquivo próprio mora e quanto texto uma queda pode levar |
-| [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | O fio entre a UI e o core, a troca de core e a mudança de contrato |
-| [architecture/neovim-editing-engine.md](architecture/neovim-editing-engine.md) | O que o Neovim é dono, o que o core é dono e as condições da troca |
-| **Engenharia** | |
-| [engineering/cpp23-rules.md](engineering/cpp23-rules.md) | Os métodos de C++ do projeto e o mecanismo que impõe cada um |
-| [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | Os defeitos clássicos da linguagem e a defesa contra cada um |
-| [engineering/build-profiles-and-hardening.md](engineering/build-profiles-and-hardening.md) | Os perfis de build, as flags, as fontes e como rodar |
-| [engineering/static-analysis-clang-tidy.md](engineering/static-analysis-clang-tidy.md) | O que o clang-tidy confere, o que está desligado e por quê |
-| [engineering/test-strategy.md](engineering/test-strategy.md) | As camadas de teste, o diferencial contra o Rust e as medidas de desempenho |
-| [engineering/gates-and-effectiveness.md](engineering/gates-and-effectiveness.md) | Em que ordem os gates rodam e como um gate novo prova que funciona |
-| [engineering/definition-of-done.md](engineering/definition-of-done.md) | Quando uma mudança ou um marco pode ser chamado de pronto |
+| [lessons-from-0.3.md](lessons-from-0.3.md) | What did 0.3 get wrong and right, and what prevents each mistake from coming back? |
+| [pending-decisions.md](pending-decisions.md) | What is still the maintainer's decision, with the recommendation? |
+| [adr/ADR-0012-cpp23-backend-with-neovim.md](adr/ADR-0012-cpp23-backend-with-neovim.md) | Why C++23 and Neovim, and what does this decision replace? |
+| [adr/ADR-0013-single-source-of-the-contract.md](adr/ADR-0013-single-source-of-the-contract.md) | Where does the contract between the UI and the two cores come from, and how does it change? |
+| **Requirements** | |
+| [requirements/functional-requirements.md](requirements/functional-requirements.md) | What the core does, in what order, and the acceptance test of each capability |
+| [requirements/non-functional-requirements.md](requirements/non-functional-requirements.md) | Within which measured limits: time, memory, security, durability, quality |
+| **Architecture** | |
+| [architecture/boundaries-and-responsibilities.md](architecture/boundaries-and-responsibilities.md) | Which processes and components exist, who decides what, and who depends on whom |
+| [architecture/modules-and-layers.md](architecture/modules-and-layers.md) | Which modules `core/lib` has, in which layer, who uses whom and what enforces it |
+| [architecture/execution-and-concurrency.md](architecture/execution-and-concurrency.md) | Where work runs, who owns each piece of data, deadlines and cancellation |
+| [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | How a process is born and what an untrusted project may do |
+| [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Where each file of the IDE lives and how much text a crash can lose |
+| [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | The wire between the UI and the core, the switch of cores and the change of contract |
+| [architecture/neovim-editing-engine.md](architecture/neovim-editing-engine.md) | What Neovim owns, what the core owns and the conditions of the switch |
+| **Engineering** | |
+| [engineering/cpp23-rules.md](engineering/cpp23-rules.md) | The C++ methods of the project, the comment standard and what enforces each one |
+| [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | The classic defects of the language and the defense against each one |
+| [engineering/build-profiles-and-hardening.md](engineering/build-profiles-and-hardening.md) | The build profiles, the flags, their sources and how to run them |
+| [engineering/static-analysis-clang-tidy.md](engineering/static-analysis-clang-tidy.md) | What clang-tidy checks, what is disabled and why |
+| [engineering/test-strategy.md](engineering/test-strategy.md) | The test layers, the differential test against Rust and the performance measurements |
+| [engineering/gates-and-effectiveness.md](engineering/gates-and-effectiveness.md) | The order the gates run in, the CI, and how a new gate proves that it works |
+| [engineering/definition-of-done.md](engineering/definition-of-done.md) | When a change or a milestone may be called done |
 
-Ordem de leitura para quem chega: este arquivo, `lessons-from-0.3.md`,
+Reading order for a newcomer: this file, `lessons-from-0.3.md`,
 `architecture/boundaries-and-responsibilities.md`, `architecture/modules-and-layers.md`,
-`engineering/cpp23-rules.md` e `engineering/definition-of-done.md`. O resto se lê quando o assunto aparece.
+`engineering/cpp23-rules.md` and `engineering/definition-of-done.md`. The others are read when
+their subject comes up.
 
-## As regras desta árvore
+## Rules of this tree
 
-1. **Um fato, um dono.** Se o fato já tem dono aqui, os outros arquivos
-   apontam para a seção (R-DOC-03 da 0.3).
-2. **A regra que uma ferramenta impõe mora na ferramenta.** O documento diz
-   qual ferramenta impõe e por quê; ele não repete a lista de flags nem de
-   checagens. O CMake, o `.clang-tidy` e os testes são a verdade.
-3. **Cada afirmação técnica diz de onde veio:** medido (com data e método),
-   lido (com arquivo e linha), fonte primária (com link) ou **hipótese**. O
-   que ninguém conferiu é marcado como NÃO VERIFICADO.
-4. **Arquivo novo só com pedido do Viktor.** Assunto novo entra primeiro como
-   seção do dono mais próximo.
-5. **ADRs** ficam em `adr/`. A numeração continua a de
-   `DocsPublic/decisoes-adr/` (a última é a ADR-0011), para nenhum número
-   apontar para duas decisões.
-6. **Até 200 linhas por arquivo**, e cada assunto numa seção `##` de nome
-   explícito, que se entende sozinha. Passou disso, o arquivo se divide por
-   responsabilidade (regra 4).
-7. **As primeiras linhas dizem o dono.** Quem lê decide por elas se precisa
-   do arquivo, e então lê só a seção de que precisa.
-8. **Estado, não história.** O arquivo diz o que vale agora e de onde veio.
-   Como se chegou lá fica na mensagem do commit. A exceção é o registro de
-   medidas dos gates, que é a prova de cada gate.
-9. **A 0.3 se consulta pelo identificador** (`INF-26`, `ENG-51`) ou pela
-   linha (`62:1371`), e nunca lendo um roadmap inteiro: o 62 sozinho tem
-   2.183 linhas. O resumo é o `lessons-from-0.3.md`.
+1. **One fact, one owner.** When a fact already has an owner here, the other files link to its
+   section (R-DOC-03 of 0.3).
+2. **A rule a tool enforces lives in the tool.** The document says which tool enforces it and
+   why; it does not repeat the list of flags or checks. CMake, `.clang-tidy` and the tests are
+   the truth.
+3. **Every technical claim says where it came from:** measured (with date and method), read (with
+   file and line), primary source (with a link) or **hypothesis**. What nobody checked is marked
+   NOT VERIFIED.
+4. **A new file only at the maintainer's request.** A new subject first enters as a section of
+   the closest owner.
+5. **ADRs** live in `adr/`. The numbering continues the one of `DocsPublic/decisoes-adr/` (the
+   last one there is ADR-0011), so that no number points to two decisions.
+6. **At most 200 lines per file**, and each subject in a `##` section with an explicit name that
+   stands on its own. Past that, the file splits by responsibility (rule 4).
+7. **The first lines name the owner.** The reader decides from them whether the file is needed,
+   and then reads only the section needed.
+8. **State, not history.** A file says what holds and where it came from. How it got there
+   belongs in the commit message. The exception is the record of the gate measurements, which is
+   the proof of each gate.
+9. **0.3 is consulted by identifier** (`INF-26`, `ENG-51`) or by line (`62:1371`), never by
+   reading a whole roadmap: roadmap 62 alone has 2,183 lines. The summary is
+   `lessons-from-0.3.md`.
+10. **No god document.** A file answers the one question the map gives it. A subject that needs
+    a second question goes to the owner of that question, or to a new file the maintainer
+    approves; it never grows the file into a second owner.
+11. **English, technical and objective.** Each file is product documentation for a contributor:
+    no report addressed to a person, no narration of how the text was produced. The maintainer
+    is "the maintainer", never a name or a user name.
+12. **Diagrams where there is structure.** Structure, flow, dependency, state and sequence get a
+    Mermaid diagram, which GitHub renders with no extra tool; the text explains what the diagram
+    cannot.
 
-As regras 6 a 9 ainda são convenção: o mecanismo é a P19
-([decisões](pending-decisions.md)).
+Rules 6 to 12 are conventions until the documentation gate exists (P19 in the
+[pending decisions](pending-decisions.md)).
 
-## Como citar a 0.3
+## How to cite 0.3
 
-`62:1371` quer dizer `DocsPublic/roadmaps/62-base-publica-0.4.md`, linha 1371,
-no commit `a9f01d51`. A mesma forma vale para o 19
-(`DocsPublic/arquitetura/19-compromissos-de-arquitetura.md`) e para os
-roadmaps 63 a 66. Arquivos de código são citados pelo caminho a partir da
-raiz do repositório.
+`62:1371` means `DocsPublic/roadmaps/62-base-publica-0.4.md`, line 1371, at commit `a9f01d51`.
+The same form holds for document 19 (`DocsPublic/arquitetura/19-compromissos-de-arquitetura.md`)
+and for roadmaps 63 to 66. Code files are cited by their path from the repository root.

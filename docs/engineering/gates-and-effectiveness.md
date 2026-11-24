@@ -1,200 +1,198 @@
-# Gates e medida de eficácia
+# Gates and effectiveness
 
-Dono: em que ordem os gates do core rodam, como um gate próprio prova que
-funciona e o registro das medidas.
+Owner: the order in which the gates of the core run, how a project gate proves that it works, the
+record of the measurements and the CI.
 
-## Ordem
+## Order
 
-1. **Determinísticos:** compilador com `-Werror`, sanitizers, clang-tidy,
-   testes (contrato do build, unidade, complexidade, diferencial, queda) e
-   validação do contrato do protocolo.
-2. **Gate próprio**, só com a eficácia medida pelo método abaixo e registrada
-   neste arquivo.
-3. **Modelo de IA** ajuda a revisar o diff, propor caso de teste e montar o
-   corpus de defeitos. Quem decide são os números.
+1. **Deterministic:** compiler with `-Werror`, sanitizers, clang-tidy, tests (build contract,
+   unit, complexity, differential, crash) and validation of the protocol contract.
+2. **Project gate**, only with its effectiveness measured by the method below and recorded in
+   this file.
+3. **Review** reads the diff, proposes test cases and builds the defect corpora. The numbers
+   decide.
 
-Gate de heurística de texto sobre código não entra (L15: na 0.3, esses gates
-detectaram 36 de 120 defeitos e rejeitaram 14 de 15 formas corretas).
+A text-heuristic gate on code does not enter (L15: in 0.3, such gates detected 36 of 120 defects
+and rejected 14 of 15 correct forms).
 
-## O método (63 §D.5 e 66 §2.1)
+## The method (63 §D.5 and 66 §2.1)
 
-- **N defeitos plantados** que o gate precisa reprovar, cada um aplicado
-  sozinho numa cópia da árvore, nunca no checkout.
-- **M formas corretas** que o gate precisa aceitar, incluindo as formas
-  difíceis (comentário, texto literal, macro, código gerado).
-- **Mutante equivalente** (a mudança não altera a propriedade) não conta como
-  defeito e é registrado como equivalente, com o motivo.
-- O gate entra no CI só com N de N reprovados e M de M aceitos. Abaixo disso,
-  a medida fica registrada com o veredito "não entra".
-- O corpus fica versionado junto do gate, e a medida volta a rodar quando o
-  gate muda.
+```mermaid
+flowchart LR
+    CORPUS["versioned corpus<br/>N defects, M correct forms"] --> RUN["the gate runs on<br/>a copy of the tree"]
+    RUN --> D{"N of N defects<br/>rejected?"}
+    D -->|no| OUT["recorded with the verdict<br/>does not enter"]
+    D -->|yes| A{"M of M correct<br/>forms accepted?"}
+    A -->|no| OUT
+    A -->|yes| MUT["mutants of the gate<br/>each must fail the test"]
+    MUT --> IN["enters the CI,<br/>measured on every build"]
+```
 
-## Registro
+- **N planted defects** the gate must reject, each applied alone to a copy of the tree, never to
+  the checkout.
+- **M correct forms** the gate must accept, including the hard ones (comment, string literal,
+  macro, generated code).
+- **An equivalent mutant** (the change does not alter the property) does not count as a defect
+  and is recorded as equivalent, with the reason.
+- The gate enters the CI only with N of N rejected and M of M accepted. Below that, the
+  measurement is recorded with the verdict "does not enter".
+- The corpus is versioned with the gate, and the measurement runs again whenever the gate
+  changes.
 
-### `build.contract` e `build.elf_hardening` (2026-11-22)
+## Measurement record
 
-Medido numa cópia de `core/`, um defeito por vez, com GCC 16.2.1, Clang 23.1.5
-e GNU ld 2.47.
+### `build.contract` and `build.elf_hardening` (2026-11-22)
 
-| # | Defeito plantado | Preset | Reprovado por |
+Measured on a copy of `core/`, one defect at a time, with GCC 16.2.1, Clang 23.1.5 and GNU ld 2.47.
+
+| # | Planted defect | Preset | Rejected by |
 | --- | --- | --- | --- |
 | D01 | `CMAKE_CXX_EXTENSIONS ON` | dev | `build.contract` |
-| D02 | Sem `-D_FORTIFY_SOURCE=3` | dev | `build.contract` |
-| D03 | `_FORTIFY_SOURCE=2` | production | `build.contract` (nível efetivo da glibc) |
-| D04 | FORTIFY ligado no ASan | asan-ubsan | `build.contract` |
-| D05 | Sem `_GLIBCXX_ASSERTIONS` | dev | `build.contract` |
+| D02 | No `-D_FORTIFY_SOURCE=3` | dev | `build.contract` |
+| D03 | `_FORTIFY_SOURCE=2` | production | `build.contract` (effective glibc level) |
+| D04 | FORTIFY enabled under ASan | asan-ubsan | `build.contract` |
+| D05 | No `_GLIBCXX_ASSERTIONS` | dev | `build.contract` |
 | D06 | `-fno-stack-protector` | dev | `build.contract` |
 | D07 | `-fcf-protection=none` | dev | `build.contract` |
-| D08 | Sem PIE na compilação e no link | dev | `build.contract` |
+| D08 | No PIE at compile and link time | dev | `build.contract` |
 | D09 | `-Wl,-z,lazy` | dev | `build.elf_hardening` |
 | D10 | `-Wl,-z,norelro` | dev | `build.elf_hardening` |
 | D11 | `-Wl,-z,execstack` | dev | `build.elf_hardening` |
-| D12 | Perfil `tsan` sem `-fsanitize=thread` | tsan | `build.contract` |
-| D13 | Perfil `debug-stl` sem `_GLIBCXX_DEBUG` | debug-stl | `build.contract` |
+| D12 | `tsan` profile without `-fsanitize=thread` | tsan | `build.contract` |
+| D13 | `debug-stl` profile without `_GLIBCXX_DEBUG` | debug-stl | `build.contract` |
 | D14 | `CMAKE_CXX_STANDARD 20` | dev | `build.contract` |
-| D15 | Perfil `asan-ubsan` sem ASan | asan-ubsan | `build.contract` |
-| D16 | Compilação com PIE, link com `-no-pie` | dev | `build.elf_hardening` |
+| D15 | `asan-ubsan` profile without ASan | asan-ubsan | `build.contract` |
+| D16 | PIE at compile time, link with `-no-pie` | dev | `build.elf_hardening` |
 
-- **Defeitos:** 16 de 16 reprovados.
-- **Equivalente:** um `-no-pie` acrescentado ao link sem desligar o PIE do
-  CMake. O `-pie` do CMake vem depois na linha de comando e vence, e o binário
-  continua PIE (conferido com `readelf -h`).
-- **Formas corretas:** 12 de 12 aceitas: os oito presets (dev, asan-ubsan,
-  tsan, debug-stl, production, lint, cxx26-probe, dev-qt) e os perfis
-  asan-ubsan, tsan, production e debug-stl compilados com o Clang.
-- **Veredito:** entram. **Limite:** nenhuma forma correta difícil, porque o
-  alvo é um arquivo só. Não cobrem MSVC nem aarch64.
+- **Defects:** 16 of 16 rejected.
+- **Equivalent:** a `-no-pie` added to the link without disabling CMake's PIE. CMake's `-pie`
+  comes later on the command line and wins, and the binary stays PIE (checked with `readelf -h`).
+- **Correct forms:** 12 of 12 accepted: the eight presets (dev, asan-ubsan, tsan, debug-stl,
+  production, lint, cxx26-probe, dev-qt) and the asan-ubsan, tsan, production and debug-stl
+  profiles built with Clang.
+- **Verdict:** they enter. **Limit:** no hard correct form, because the target is a single file.
+  They cover neither MSVC nor aarch64.
 
-### `gate.launcher`: processo só pelo lançador (2026-11-22)
+### `gate.launcher`: processes only through the launcher (2026-11-22)
 
-O `bugprone-unsafe-functions.CustomFunctions` do `core/.clang-tidy`
-([processos](../architecture/processes-and-trust.md)). O corpus está em
-`core/tests/gates/launcher/`, e o teste `gate.launcher` (preset `lint`) mede a
-eficácia a cada build, com o `tidy_corpus.py`: cada linha marcada como defeito
-tem de ser acusada, e nenhuma outra.
+`bugprone-unsafe-functions.CustomFunctions` in `core/.clang-tidy`
+([processes](../architecture/processes-and-trust.md)). The corpus is in
+`core/tests/gates/launcher/`, and the `gate.launcher` test (`lint` preset) measures the
+effectiveness on every build with `tidy_corpus.py`: each line marked as a defect must be flagged,
+and no other line.
 
-- **Defeitos:** 40 de 40 reprovados. São 24 funções POSIX e glibc (fork,
-  vfork, `_Fork`, a família exec, `posix_spawn`, `pidfd_spawn`, system,
-  popen, syscall, clone, forkpty, daemon, wordexp), 5 formas (ponteiro, macro,
-  `using`, função passada como argumento, lambda), 5 métodos do `QProcess` e
-  6 funções do Windows.
-- **Formas corretas:** 16 de 16 aceitas, entre elas as difíceis: função
-  própria com o mesmo nome em outro namespace, método `start` de classe
-  própria, texto literal, comentário, macro com "system" no nome,
-  `posix_spawn_file_actions_init` e `std::chrono::system_clock`.
-- **Mutantes do próprio gate**, todos reprovados pelo teste: lista sem
-  `popen` (38 de 40), sem o `QProcess` (35 de 40), regex sem âncora (3 formas
-  corretas reprovadas), sem a opção (2 de 40, os que a lista padrão da
-  checagem já pega) e corpus que não compila (diagnóstico estranho).
-- **Limite medido:** a checagem não casa construtor; por isso
-  `std::thread` não pode ser barrado por ela.
-- **Veredito:** entra.
+- **Defects:** 40 of 40 rejected: 24 POSIX and glibc functions (fork, vfork, `_Fork`, the exec
+  family, `posix_spawn`, `pidfd_spawn`, system, popen, syscall, clone, forkpty, daemon, wordexp),
+  5 forms (pointer, macro, `using`, function passed as an argument, lambda), 5 `QProcess` methods
+  and 6 Windows functions.
+- **Correct forms:** 16 of 16 accepted, among them the hard ones: an own function with the same
+  name in another namespace, a `start` method of an own class, a string literal, a comment, a
+  macro with "system" in its name, `posix_spawn_file_actions_init` and `std::chrono::system_clock`.
+- **Mutants of the gate**, all failed by the test: a list without `popen` (38 of 40), without
+  `QProcess` (35 of 40), a regex without an anchor (3 correct forms rejected), without the option
+  (2 of 40, the ones the default list of the check catches) and a corpus that does not compile
+  (an unexpected diagnostic).
+- **Measured limit:** the check does not match a constructor, so it cannot block `std::thread`.
+- **Verdict:** it enters.
 
-### `unit.TestFramework`: o GoogleTest no modo da biblioteca padrão (2026-11-22)
+### `unit.TestFramework`: GoogleTest in the standard library mode (2026-11-22)
 
-- **Defeito:** o GoogleTest compilado sem o perfil no `debug-stl`, e portanto
-  sem o `_GLIBCXX_DEBUG`. Reprovado no link (`undefined reference`).
-- **Mecanismo:** a prova recebe `std::vector`; o retorno não entra no nome
-  mangled.
-- **Forma correta:** os oito presets, verdes.
-- **Veredito:** entra.
+- **Defect:** GoogleTest built without the profile in `debug-stl`, hence without
+  `_GLIBCXX_DEBUG`. Rejected at link time (`undefined reference`).
+- **Mechanism:** the probe takes a `std::vector`; the return type is not part of the mangled name.
+- **Correct form:** the eight presets, green.
+- **Verdict:** it enters.
 
-### `gate.detach`: thread nunca solta (2026-11-23)
+### `gate.detach`: no detached thread (2026-11-23)
 
-A mesma opção do clang-tidy, com `std::thread::detach` e
-`std::jthread::detach`. O corpus está em `core/tests/gates/threads/`.
+The same clang-tidy option, with `std::thread::detach` and `std::jthread::detach`. The corpus is
+in `core/tests/gates/threads/`.
 
-- **Defeitos:** 10 de 10 reprovados: `std::thread` e `std::jthread`, por
-  ponteiro, por referência, ponteiro para o método, método passado a
-  `std::invoke`, dentro de lambda, herdado por classe derivada, dentro de
-  macro e em temporário.
-- **Formas corretas:** 10 de 10 aceitas, entre elas `detach` de classe
-  própria, função própria chamada `detach`, `join`, `request_stop`, texto,
-  comentário e variável chamada `detach`.
-- **Mutantes do próprio gate**, todos reprovados pelo teste: sem o `jthread`
-  (9 de 10), regex de qualquer classe (2 formas corretas reprovadas) e sem a
-  entrada (0 de 10).
-- **Limite:** medido só com a libstdc++.
-- **Veredito:** entra.
+- **Defects:** 10 of 10 rejected: `std::thread` and `std::jthread`, through a pointer, through a
+  reference, a pointer to the member function, the member function passed to `std::invoke`,
+  inside a lambda, inherited by a derived class, inside a macro and on a temporary.
+- **Correct forms:** 10 of 10 accepted, among them `detach` of an own class, an own function
+  named `detach`, `join`, `request_stop`, a string, a comment and a variable named `detach`.
+- **Mutants of the gate**, all failed by the test: without `jthread` (9 of 10), a regex for any
+  class (2 correct forms rejected) and without the entry (0 of 10).
+- **Limit:** measured only with libstdc++.
+- **Verdict:** it enters.
 
 ### `-Wbidi-chars=any`: Trojan Source (2026-11-23)
 
-- **Defeito:** um par de caracteres bidirecionais (U+202E e U+202C) num
-  comentário. O padrão do GCC não acusa o par fechado; com `=any`, acusa. Numa
-  cópia do core, o defeito plantado num teste reprovou o `dev`.
-- **O lado do Clang não pega o par:** o compilador não acusa nada, e o
-  `misc-misleading-bidirectional` do clang-tidy só acusa o par aberto, que o
-  GCC já pega. Por não acrescentar nada à CI, que sempre roda o GCC, ele não
-  foi ligado.
-- **Forma correta:** os oito presets, verdes.
-- **Veredito:** entra, só no GCC.
+- **Defect:** a pair of bidirectional characters (U+202E and U+202C) in a comment. The GCC default
+  does not flag the closed pair; with `=any`, it does. On a copy of the core, the defect planted
+  in a test failed `dev`.
+- **The Clang side does not catch the pair:** the compiler flags nothing, and clang-tidy's
+  `misc-misleading-bidirectional` flags only the open pair, which GCC catches. It adds nothing to
+  the CI, which always runs GCC, so it is not enabled.
+- **Correct form:** the eight presets, green.
+- **Verdict:** it enters, on GCC only.
 
-### `gate.duplication`: cópia de lógica, de T1 a T3 (2026-11-23)
+### `gate.duplication`: copied logic, T1 to T3 (2026-11-23)
 
-`core/tests/gates/duplication/clones.py`, sobre a libclang: cada função vira
-a sequência dos nós da árvore, com local e parâmetro sem nome e o resto pelo
-USR. Acusa 44 nós iguais em dois lugares (janela) e função de 40 nós ou mais
-com semelhança de 0,85 ou mais (`difflib`). Função gerada por macro não entra.
+`core/tests/gates/duplication/clones.py`, on libclang: each function becomes the sequence of its
+tree nodes, with locals and parameters unnamed and everything else by USR. It flags 44 equal
+nodes in two places (window) and a function of 40 nodes or more with a similarity of 0.85 or
+more (`difflib`). A function generated by a macro does not enter.
 
-- **Corpus:** 15 de 15 defeitos (T1; T2 de nomes, literais e tipos; T3 com
-  comando a mais, a menos e trocado; no arquivo, entre arquivos e módulos;
-  lambda, template, método, bloco em outra função), 14 de 14 formas corretas
-  (acessores, tabelas, serializador irmão, mesmo laço com outro algoritmo,
-  macro, `std::expected`, código como texto, cabeçalho duas vezes), base limpa.
-- **Margem:** semelhança de 0,87 no menor defeito e 0,82 na maior forma
-  correta; janela de 45 e 36 nós. Passam a janela de 38 a 50 e o limiar de
-  0,83 a 0,86. **Mutantes:** os 8 reprovam (sem renomear local, sem janela,
-  sem semelhança, macro entra, cabeçalho contado duas vezes, nome dependente
-  vazio, literal sem valor, janela sem USR).
-- **GoogleTest 1.17** (41 mil linhas): 32 s, 506 MB, 101 acusações. São 55
-  cópias (cinco lidas, o resto pelo nome) e 46 nas 23 sobrecargas de
-  `UnpackStructImpl`, repetição que o C++23 impõe.
-- **Limites:** ferramenta e corpus do mesmo autor, e o d13 (template) só
-  passou depois de ler o nome dependente pelo token. Só a libclang 23 e a
-  libstdc++. Sem medida em 85, 2.500 e 20.000 linhas. T4 é indecidível
-  (teorema de Rice): fica na P20.
-- **Descartados:** o `alpha.clone.CloneChecker` (não vê outro arquivo) e o AST
-  em JSON (144 MiB para 30 linhas). Falta medir o PMD CPD.
-- **Veredito:** entra no `lint`, medindo o corpus a cada build (6 s). Lê o
-  `core/lib` a partir do primeiro módulo (P15).
+- **Corpus:** 15 of 15 defects (T1; T2 of names, literals and types; T3 with an extra, a missing
+  and a replaced statement; in the file, across files and across modules; lambda, template,
+  method, block inside another function), 14 of 14 correct forms (accessors, tables, sibling
+  serializer, same loop with another algorithm, macro, `std::expected`, code as text, a header
+  included twice), clean base.
+- **Margin:** similarity of 0.87 on the smallest defect and 0.82 on the largest correct form;
+  window of 45 and 36 nodes. A window from 38 to 50 and a threshold from 0.83 to 0.86 pass.
+  **Mutants:** all 8 fail (no local renaming, no window, no similarity, macros enter, a header
+  counted twice, an empty dependent name, a literal without its value, a window without USR).
+- **GoogleTest 1.17** (41 thousand lines): 32 s, 506 MB, 101 findings: 55 copies (five read, the
+  rest by name) and 46 in the 23 overloads of `UnpackStructImpl`, a repetition C++23 imposes.
+- **Limits:** the tool and the corpus have the same author, and d13 (template) passes only by
+  reading the dependent name from the token. Only libclang 23 and libstdc++. No measurement at
+  85, 2,500 and 20,000 lines. T4 is undecidable (Rice's theorem): it stays in P20.
+- **Discarded:** `alpha.clone.CloneChecker` (it does not see another file) and the JSON AST
+  (144 MiB for 30 lines). PMD CPD is not measured.
+- **Verdict:** it enters `lint`, measuring the corpus on every build (6 s). It reads `core/lib`
+  from the first module on (P15).
 
-## A CI
+## The CI
 
-O workflow `CoreCpp 0.1` (`.github/workflows/core.yml`) é a única CI do ramo
-`reescrita/core-cpp23`, a frente nova que vai substituir o core da `main`. A
-CI da 0.3 saiu do ramo em 2026-11-23 (decisão do Viktor): os testes e gates
-dela reprovam aqui por construção e não são critério. A CI da 0.1 se refaz
-por partes, cada gate com eficácia medida, como nas seções acima.
+The `CoreCpp 0.1` workflow (`.github/workflows/core.yml`) is the only CI of the branch
+`reescrita/core-cpp23`. The 0.3 CI left the branch on 2026-11-23 (the maintainer's decision): its
+tests and gates fail here by construction and are not a criterion. The 0.1 CI is built piece by
+piece, each gate with measured effectiveness, as in the sections above.
 
-Todo push e pull request no ramo roda inteiro, sem filtro de caminho e sem
-cancelar o anterior: todo commit tem veredito. A referência é a máquina
-local, e o runner `ubuntu-26.04` a imita, sem contêiner; todo passo roda
-com `bash -euo pipefail` (o padrão do runner é `bash -e`: medido na rodada
-45188723983). Os jobs rodam os presets do `core/CMakePresets.json`:
+Every push and pull request on the branch runs in full, with no path filter and without
+cancelling the previous run: every commit has a verdict. The reference is the local machine, and
+the `ubuntu-26.04` runner imitates it, with no container; every step runs with
+`bash -euo pipefail` (the runner default is `bash -e`: measured in run 45188723983).
 
-| Jobs | Compilador | Para quê |
+| Jobs | Compiler | What for |
 | --- | --- | --- |
-| `dev` | g++-14 e clang++-20 | O piso declarado |
-| `dev`, `production`, `asan-ubsan`, `tsan`, `debug-stl`, `cxx26-probe` | g++-15 | Todos os perfis, no GCC mais novo do runner |
-| `lint` (com o clang-tidy 22 e o `python3-clang-22`), `asan-ubsan`, `tsan` | clang++-22 | O segundo compilador e a análise estática |
+| `dev` | g++-14 and clang++-20 | The declared floor |
+| `dev`, `production`, `asan-ubsan`, `tsan`, `debug-stl`, `cxx26-probe` | g++-15 | Every profile, on the newest GCC of the runner |
+| `lint` (with clang-tidy 22 and `python3-clang-22`), `asan-ubsan`, `tsan` | clang++-22 | The second compiler and the static analysis |
 
-- **Segurança:** token só de leitura, checkout v7.0.1 fixado por SHA
-  (última release em 2026-11-23, Node 24), credencial não persistida, prazo
-  por job, matriz por variável de ambiente (o `shellcheck` lê os passos
-  `run:` de verdade).
-- **Sem passo de ambiente sem fonte:** a imagem já grava `vm.mmap_rnd_bits=28`
+- **Security:** read-only token, checkout v7.0.1 pinned by SHA (the latest release on 2026-11-23,
+  Node 24), credentials not persisted, a timeout per job, the matrix through environment
+  variables (so `shellcheck` reads the real `run:` steps).
+- **No environment step without a source:** the image sets `vm.mmap_rnd_bits=28`
   (actions/runner-images#9491).
-- **Máquina local × runner:** a imagem não traz o GCC 16, o Clang 23 nem o
-  Qt 6.12 (o `dev-qt` fica fora); trazê-los é dependência nova, que o Viktor
-  decide. O CMake 4.3 local lê os presets até a versão 11, e o 4.5 do runner
-  até a 13 (o `schema.json` de cada tag do CMake). O piso 3.25, nenhum.
-- **Sem mecanismo na CI** desde a saída da 0.3: o idioma dos identificadores
-  e a privacidade das docs (P17), e as regras 6 a 9 do README (P19).
-- **No GitHub, pelo Viktor** (o token daqui não administra): ações só do
-  GitHub e por SHA, token padrão só de leitura, aprovação de todo
-  contribuidor externo, ramo sem apagar nem forçar push (P18).
+- **Local machine and runner:** the image has neither GCC 16, Clang 23 nor Qt 6.12 (`dev-qt` stays
+  out); bringing them in is a new dependency, the maintainer's decision. The local CMake 4.3 reads
+  presets up to version 11, and the runner's 4.5 up to 13 (the `schema.json` of each CMake tag).
+  No job runs the 3.25 floor.
+- **No CI mechanism:** English identifiers and the privacy of the documents (P17), and rules 6 to
+  12 of the [README](../README.md#rules-of-this-tree) (P19).
+- **On GitHub, by the maintainer** (the token of the CI does not administer): actions only from
+  GitHub and by SHA, a read-only default token, approval of every outside contributor, a branch
+  that cannot be deleted or force-pushed (P18).
+- **Approved on 2026-11-23, not yet in place:** `actionlint` and `zizmor`, Dependabot for the
+  actions, a DCO check, the documentation gate with the role gate, the pinned N and M of the
+  clang-tidy gates, the CMake floor tested or raised, and a job in a Fedora 45 container that
+  reproduces the reference machine.
 
-**Estado (2026-11-23):** verde nos 11 jobs, ainda como `Core C++` (rodada
-45188723983, `5acb917c`; `gate.duplication` em 19,5 s), sem custo em
-repositório público ([cobrança](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
-O nome `CoreCpp 0.1`, o checkout v7.0.1 e o gatilho em todo push não rodaram.
+**State on 2026-11-23:** green in the 11 jobs, under the earlier name `Core C++` (run
+45188723983, `5acb917c`; `gate.duplication` in 19.5 s), at no cost on a public repository
+([billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). The name
+`CoreCpp 0.1`, checkout v7.0.1 and the trigger on every push have not run yet.

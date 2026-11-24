@@ -1,93 +1,98 @@
-# Requisitos funcionais do core em C++
+# Functional requirements of the C++ core
 
-Dono: o que o core faz, em que nível de prioridade, qual teste aceita cada
-capacidade e a ordem de entrega da base. Os limites de tempo, memória e segurança são do
+Owner: what the core does, at which priority level, which test accepts each capability and the
+delivery order of the base. The limits of time, memory and security belong to
 [non-functional-requirements.md](non-functional-requirements.md).
 
-Estado: rascunho de 2026-11-22. Nenhum requisito está implementado. Os testes
-de aceite citados ainda não existem.
+State: draft of 2026-11-22. No requirement is implemented. The acceptance tests cited here do not
+exist yet.
 
-## Escopo
+## Scope
 
-- **Linguagens:** C e C++. Rust e Python voltam depois que o núcleo estiver
-  sólido (ADR-0012).
-- **Fora do core em C++:** banco de dados, Grafana, remoto por SSH, contêineres,
-  Cargo e Python. Os métodos `lsp.*`, `syntaxTree.*` e `draft.*` da 0.3 saem
-  com o Neovim ([motor de edição](../architecture/neovim-editing-engine.md)).
-- **Origem:** cada capacidade aponta os métodos da 0.3 que a cobrem hoje
-  (protocolo 0.223.0, tabela de rotas de `crates/kinein-core/src/lib.rs`). O
-  aceite herdado é o teste diferencial contra o core em Rust, salvo as
-  divergências intencionais ([estratégia de testes](../engineering/test-strategy.md#diferencial)).
+- **Languages:** C and C++. Rust and Python come back once the core is solid (ADR-0012).
+- **Outside the C++ core:** databases, Grafana, remote work over SSH, containers, Cargo and
+  Python. The 0.3 methods `lsp.*`, `syntaxTree.*` and `draft.*` leave with Neovim
+  ([editing engine](../architecture/neovim-editing-engine.md)).
+- **Origin:** each capability names the 0.3 methods that cover it today (protocol 0.223.0, route
+  table of `crates/kinein-core/src/lib.rs`). The inherited acceptance is the differential test
+  against the Rust core, apart from the intentional divergences
+  ([test strategy](../engineering/test-strategy.md#differential)).
 
-## Níveis
+## Levels
 
-| Nível | Critério de entrada |
+| Level | Entry criterion |
 | --- | --- |
-| **N0** | Sem ele, não dá para desenvolver a Kinein na própria Kinein (dogfooding) |
-| **N1** | Paridade com a 0.3 para C e C++ |
-| **N2** | O diferencial: ambiente C/C++, embarcados e análise semântica própria |
+| **N0** | Without it, Kinein cannot be developed in Kinein itself (dogfooding) |
+| **N1** | Parity with 0.3 for C and C++ |
+| **N2** | The differentiator: C/C++ environment, embedded and the project's own semantic analysis |
 
-A jornada de dogfooding que define o N0 é a do 65 §13 (65:484-497), restrita a
-C e C++: abrir o repositório, editar, usar o clangd, compilar e testar com o
-CMake, usar o terminal, reiniciar sem perder alteração e lidar com ferramenta
-ausente ou travada.
+The dogfooding journey that defines N0 is the one of 65 §13 (65:484-497), restricted to C and
+C++: open the repository, edit, use clangd, build and test with CMake, use the terminal, restart
+without losing a change, and handle a missing or hung tool.
 
 ## N0: dogfooding
 
-| ID | Capacidade | Métodos 0.3 | Aceite |
+| ID | Capability | 0.3 methods | Acceptance |
 | --- | --- | --- | --- |
-| RF-CORE-01 | Ciclo de vida: responder ao ping, informar a versão do protocolo, encerrar limpo | `core.ping`, `core.shutdown` | Diferencial; encerrar sem órfão (R5 do 65) |
-| RF-CORE-02 | Todo pedido pode ser cancelado e tem prazo; operação longa é job com progresso | `job.list`, `job.cancel` | Teste com ferramenta falsa travada (RNF-EXE-02) |
-| RF-WS-01 | Abrir, fechar e consultar o workspace; lista de recentes | `workspace.open`, `workspace.close`, `workspace.status`, `workspace.recent.*` | Diferencial; abrir pasta sem confiança não grava nela (RNF-DADOS-05) |
-| RF-WS-02 | Confiança no projeto: estado, concessão e o modo restrito | `workspace.trust` | Fixture do projeto hostil com zero marcas (RNF-SEG-01) |
-| RF-FS-01 | Ler, gravar (com conteúdo esperado e gravação atômica), criar, renomear, copiar, mandar para a lixeira | `fs.read`, `fs.write`, `fs.createFile`, `fs.createDirectory`, `fs.rename`, `fs.copy`, `fs.trash`, `fs.delete`, `fs.list` | Diferencial; queda no meio da gravação não deixa arquivo parcial (RNF-DUR-02) |
-| RF-FS-02 | Busca no projeto e substituição | `fs.search`, `fs.findFiles`, `fs.replace` | Diferencial; teste de complexidade (RNF-PERF-01) |
-| RF-FS-03 | Mudança externa no disco vira evento | eventos do watcher | Teste com arquivo mudado por fora |
-| RF-TC-01 | Toolchain C/C++ no modelo Detectado → Selecionado → Efetivo | `tools.detect`, `tools.status`, `toolchain.get`, `toolchain.set`, `toolchain.setKit` | Diferencial; compilador do projeto nunca é executado sem confiança |
-| RF-CMK-01 | CMake: estado, presets, alvos, configurar, cache e reparo da pasta de build; `compile_commands.json` do preset ativo | `cmake.status`, `cmake.presets.list`, `cmake.targets.list`, `cmake.configure`, `cmake.inspectCache`, `cmake.repairBuildDir` | Diferencial; configurar sem confiança é recusado |
-| RF-BLD-01 | Compilar, executar e testar o alvo, com saída e diagnóstico | `build.run`, `run.start`, `run.stop`, `test.discover`, `test.run`, `runConfig.*` | Diferencial; cancelar mata o grupo de processos |
-| RF-TERM-01 | Terminal: abrir, escrever, redimensionar, rolar, selecionar, fechar | `terminal.*` | Diferencial; falha de `exec` vira erro tipado (L18) |
-| RF-ED-01 | Criar e supervisionar o `nvim` com contenção, entregar o endereço do socket à UI e manter o espelho do buffer | novo | Os 15 itens da prova (65 §20.2) no produto integrado |
-| RF-ED-02 | Gravar o arquivo do editor pelo `BufWriteCmd` e recuperar o texto depois de queda pelo espelho | `draft.*` sai | Queda com zero tecla perdida acima do limite (RNF-DUR-01) |
-| RF-LSP-01 | Uma sessão clangd por raiz, criada pelo lançador, com o contexto do core (`compile_commands.json`, `--query-driver` só de compilador detectado sem confiança), ligada ao Neovim pelo relé | `lsp.*` sai | R7 e R11 do 65 no produto integrado |
-| RF-SET-01 | Configuração da IDE e do projeto | `settings.get`, `settings.set` | Diferencial |
+| RF-CORE-01 | Life cycle: answer the ping, report the protocol version, shut down cleanly | `core.ping`, `core.shutdown` | Differential; shut down with no orphan (R5 of 65) |
+| RF-CORE-02 | Every request can be cancelled and has a deadline; a long operation is a job with progress | `job.list`, `job.cancel` | Test with a fake, hung tool (RNF-EXE-02) |
+| RF-WS-01 | Open, close and query the workspace; list of recent ones | `workspace.open`, `workspace.close`, `workspace.status`, `workspace.recent.*` | Differential; opening a folder without trust writes nothing in it (RNF-DADOS-05) |
+| RF-WS-02 | Trust in the project: state, grant and the restricted mode | `workspace.trust` | Fixture of the hostile project with zero marks (RNF-SEG-01) |
+| RF-FS-01 | Read, write (with the expected content and an atomic write), create, rename, copy, move to the trash | `fs.read`, `fs.write`, `fs.createFile`, `fs.createDirectory`, `fs.rename`, `fs.copy`, `fs.trash`, `fs.delete`, `fs.list` | Differential; a crash in the middle of a write leaves no partial file (RNF-DUR-02) |
+| RF-FS-02 | Search in the project and replace | `fs.search`, `fs.findFiles`, `fs.replace` | Differential; complexity test (RNF-PERF-01) |
+| RF-FS-03 | An external change on disk becomes an event | watcher events | Test with a file changed from outside |
+| RF-TC-01 | C/C++ toolchain in the Detected, Selected, Effective model | `tools.detect`, `tools.status`, `toolchain.get`, `toolchain.set`, `toolchain.setKit` | Differential; the project's compiler never runs without trust |
+| RF-CMK-01 | CMake: state, presets, targets, configure, cache and repair of the build directory; `compile_commands.json` of the active preset | `cmake.status`, `cmake.presets.list`, `cmake.targets.list`, `cmake.configure`, `cmake.inspectCache`, `cmake.repairBuildDir` | Differential; configuring without trust is refused |
+| RF-BLD-01 | Build, run and test the target, with output and diagnostics | `build.run`, `run.start`, `run.stop`, `test.discover`, `test.run`, `runConfig.*` | Differential; cancelling kills the process group |
+| RF-TERM-01 | Terminal: open, write, resize, scroll, select, close | `terminal.*` | Differential; an `exec` failure becomes a typed error (L18) |
+| RF-ED-01 | Create and supervise `nvim` with containment, hand the socket address to the UI and keep the buffer mirror | new | The 15 items of the proof (65 §20.2) in the integrated product |
+| RF-ED-02 | Write the editor's file through `BufWriteCmd` and recover the text after a crash from the mirror | `draft.*` leaves | A crash with zero keystrokes lost beyond the limit (RNF-DUR-01) |
+| RF-LSP-01 | One clangd session per root, created by the launcher, with the core's context (`compile_commands.json`, `--query-driver` only for a compiler detected without trust), connected to Neovim by the relay | `lsp.*` leaves | R7 and R11 of 65 in the integrated product |
+| RF-SET-01 | Settings of the IDE and of the project | `settings.get`, `settings.set` | Differential |
 
-## N1: paridade C/C++
+## N1: C/C++ parity
 
-| ID | Capacidade | Métodos 0.3 | Aceite |
+| ID | Capability | 0.3 methods | Acceptance |
 | --- | --- | --- | --- |
-| RF-GIT-01 | Git: status, diff, log, blame, stage, commit, branches; desligado sem confiança | `git.*` | Diferencial; o `fsmonitor` do projeto nunca roda (64:119) |
-| RF-DBG-01 | Depuração por DAP: iniciar, parar, passos, pilha, variáveis, avaliar, memória, desmontagem | `debug.*` | Fluxo vertical do 64:914 |
-| RF-CMK-02 | Edição assistida do CMake: alvos, bibliotecas, padrão da linguagem, presets, sanitizers | `cmake.add*`, `cmake.set*`, `cmake.create*Preset`, `cmake.enable*`, `cmake.fetchContent`, `cmake.findPackage` | Diferencial; prévia antes de gravar |
-| RF-CA-01 | Receitas de configuração com prévia e aplicação | `configAction.list`, `configAction.preview`, `configAction.apply` | Diferencial |
-| RF-PRJ-01 | Criar projeto C/C++ a partir de modelo | `workspace.createProject`, `workspace.createFolder` | O modelo novo ignora o estado da IDE no git (L13) |
-| RF-SETUP-01 | Guia de instalação das ferramentas | `setup.list`, `toolchain.installable`, `toolchain.install` | Diferencial; nenhum `--version` roda no laço (L08) |
-| RF-FMT-01 | Formatar pelo `clang-format` do projeto, com confiança | `format.text`, `format.capabilities` | Diferencial |
+| RF-GIT-01 | Git: status, diff, log, blame, stage, commit, branches; off without trust | `git.*` | Differential; the project's `fsmonitor` never runs (64:119) |
+| RF-DBG-01 | Debugging over DAP: start, stop, steps, stack, variables, evaluate, memory, disassembly | `debug.*` | Vertical flow of 64:914 |
+| RF-CMK-02 | Assisted editing of CMake: targets, libraries, language standard, presets, sanitizers | `cmake.add*`, `cmake.set*`, `cmake.create*Preset`, `cmake.enable*`, `cmake.fetchContent`, `cmake.findPackage` | Differential; a preview before writing |
+| RF-CA-01 | Configuration recipes with preview and apply | `configAction.list`, `configAction.preview`, `configAction.apply` | Differential |
+| RF-PRJ-01 | Create a C/C++ project from a template | `workspace.createProject`, `workspace.createFolder` | The new template ignores the IDE's state in git (L13) |
+| RF-SETUP-01 | Installation guide for the tools | `setup.list`, `toolchain.installable`, `toolchain.install` | Differential; no `--version` runs on the loop (L08) |
+| RF-FMT-01 | Format with the project's `clang-format`, with trust | `format.text`, `format.capabilities` | Differential |
 
-## N2: o diferencial
+## N2: the differentiator
 
-A ordem e o desenho do N2 são do Viktor, na biblioteca sem Qt. A lista abaixo
-só registra o que a 0.3 já cobre, para nada se perder.
+The order and the design of N2 belong to the maintainer, in the library with no Qt. The list
+below only records what 0.3 covers, so that nothing is lost.
 
-| ID | Capacidade | Métodos 0.3 |
+| ID | Capability | 0.3 methods |
 | --- | --- | --- |
-| RF-EMB-01 | Gravação e sondas | `runConfig.flashProposal`, `probe.*`, `dfu.*`, `picotool.*` |
+| RF-EMB-01 | Flashing and probes | `runConfig.flashProposal`, `probe.*`, `dfu.*`, `picotool.*` |
 | RF-EMB-02 | Serial | `serial.*` |
 | RF-EMB-03 | SDKs: ESP-IDF, Zephyr (`west`), PlatformIO | `idf.*`, `espidf.*`, `west.*`, `platformio.*` |
-| RF-EMB-04 | Memória e registradores | `memory.x`, `debug.readMemory`, `debug.disassemble` |
-| RF-SEM-01 | Análise semântica própria: índice, definição, referência e escopo locais | `index.*`, `local.*` |
-| RF-SEM-02 | Qualidade e cobertura | `quality.run`, `coverage.*` |
+| RF-EMB-04 | Memory and registers | `memory.x`, `debug.readMemory`, `debug.disassemble` |
+| RF-SEM-01 | The project's own semantic analysis: local index, definition, reference and scope | `index.*`, `local.*` |
+| RF-SEM-02 | Quality and coverage | `quality.run`, `coverage.*` |
 
-## A ordem da base
+## The order of the base
 
-Proposta para a Fase D (P12), com o critério de pronto de cada passo a
-escrever antes do código:
+Proposal for Phase D (P12), with the done criterion of each step written before the code:
 
-1. `base`, `sys.fs` e `codec` ([módulos](../architecture/modules-and-layers.md)), depois da decisão das bibliotecas (P16).
-2. `rt` e `protocol` (desenho do Viktor), mais `app` e `core/qt` com só o
-   `core.ping` e o `initialize`. É o primeiro marco do estrangulamento: a UI
-   sobe o core em C++ por `KINEIN_CORE_BIN`, o ping responde e o resto devolve
-   `MethodNotFound`. Prova o caminho inteiro, o CI e os sanitizers cedo, sem
-   tirar a IDE do dogfooding, que continua no core em Rust.
-3. `storage`, `sys.process` e `launch`, com o teste do projeto hostil.
-4. `workspace`, e então o domínio do N0.
+1. `base`, `sys.fs` and `codec` ([modules](../architecture/modules-and-layers.md)), after the
+   decision on the libraries (P16).
+2. `rt` and `protocol` (designed by the maintainer), plus `app` and `core/qt` with only
+   `core.ping` and `initialize`. It is the first milestone of the strangling: the UI starts the
+   C++ core through `KINEIN_CORE_BIN`, the ping answers and everything else returns
+   `MethodNotFound`. It proves the whole path, the CI and the sanitizers early, without taking the
+   IDE out of dogfooding, which stays on the Rust core.
+3. `storage`, `sys.process` and `launch`, with the hostile project test.
+4. `workspace`, and then the N0 domain.
+
+```mermaid
+flowchart LR
+    S1["1. base, sys.fs, codec<br/>after P16"] --> S2["2. rt, protocol, app, core/qt<br/>core.ping and initialize"]
+    S2 --> S3["3. storage, sys.process, launch<br/>hostile project test"]
+    S3 --> S4["4. workspace<br/>then the N0 domain"]
+```

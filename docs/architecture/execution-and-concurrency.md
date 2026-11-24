@@ -1,68 +1,66 @@
-# Execução e concorrência
+# Execution and concurrency
 
-Dono: onde o trabalho do core roda, quem é dono de cada dado, prazo,
-cancelamento, descarte de resultado velho e o caminho de um pedido entre os
-módulos. Também é o registro das threads (o "threads.md" do plano).
+Owner: where the core's work runs, who owns each piece of data, deadlines, cancellation, the
+discarding of stale results and the path of a request between the modules. It is also the
+register of the threads.
 
-O **desenho** do modelo de execução é do Viktor. Esta página guarda as
-invariantes que o desenho tem de cumprir e, depois de aprovado, o desenho.
+The **design** of the execution model belongs to the maintainer. This page holds the invariants
+the design must meet and, after the approval, the design itself.
 
-## Invariantes
+## Invariants
 
-| # | Invariante | Origem | Quem impõe |
+| # | Invariant | Origin | Enforced by |
 | --- | --- | --- | --- |
-| E1 | O laço do core nunca bloqueia: processo, disco do projeto, rede e espera de servidor rodam fora dele | L08; RNF-EXE-01 | Guarda de E/S no laço, que reprova nos testes e no build de depuração |
-| E2 | Toda chamada externa tem prazo e cancelamento | L08, L09; RNF-EXE-02 | O tipo do pedido de trabalho exige prazo; teste com ferramenta travada |
-| E3 | Cada dado tem um dono só; threads trocam mensagens, não compartilham estado mutável | Regras de C++ do plano | TSan no perfil `tsan`; revisão do desenho |
-| E4 | Trabalho cancelável usa `std::jthread` com `std::stop_token` | Regras de C++ do plano | Revisão; `std::thread` solto fica fora (sem checagem automática conhecida) |
-| E5 | Exceção não atravessa thread nem o laço de eventos do Qt | Regras de C++ do plano | `bugprone-exception-escape` no clang-tidy; corpo de thread e slot do adaptador são `noexcept` |
-| E6 | Resultado de uma geração velha (workspace ou documento) não se aplica | L10 (INF-22); 64:416-421 | Teste de ordem com intercalação forçada |
-| E7 | Cancelado responde `RequestCancelled`; prazo vencido responde `DeadlineExceeded`; nenhum dos dois vira "obsoleto" | L19 (INF-30); 64:433-434 | Teste de prazo |
-| E8 | Cancelar um trabalho mata o grupo de processos dele, primeiro com SIGTERM e depois com SIGKILL | A05; 64:435-436 | Teste do lançador: nenhum processo sobra |
-| E9 | Recursos diferentes andam em paralelo; o mesmo recurso (repositório, pasta de build, documento) anda em série | 64:425-427 | Teste com dois trabalhos no mesmo recurso |
-| E10 | Nada sincroniza por tempo fixo nos testes | R-TEST-03 do 63; L16 | Ferramenta falsa com trava controlada pelo teste |
+| E1 | The core's loop never blocks: processes, the project's disk, the network and waiting on a server run outside it | L08; RNF-EXE-01 | An I/O guard on the loop that fails in the tests and in the debug build |
+| E2 | Every external call has a deadline and cancellation | L08, L09; RNF-EXE-02 | The type of a work request requires a deadline; test with a hung tool |
+| E3 | Each piece of data has a single owner; threads exchange messages and share no mutable state | The C++ rules of the plan | TSan in the `tsan` profile; review of the design |
+| E4 | Cancellable work uses `std::jthread` with `std::stop_token` | The C++ rules of the plan | Review; a bare `std::thread` stays out (no known automatic check) |
+| E5 | An exception crosses neither a thread nor the Qt event loop | The C++ rules of the plan | `bugprone-exception-escape` in clang-tidy; a thread body and an adapter slot are `noexcept` |
+| E6 | The result of a stale generation (workspace or document) is never applied | L10 (INF-22); 64:416-421 | Ordering test with forced interleaving |
+| E7 | A cancellation answers `RequestCancelled`; an expired deadline answers `DeadlineExceeded`; neither becomes "stale" | L19 (INF-30); 64:433-434 | Deadline test |
+| E8 | Cancelling a piece of work kills its process group, first with SIGTERM and then with SIGKILL | A05; 64:435-436 | Launcher test: no process is left |
+| E9 | Different resources run in parallel; the same resource (repository, build directory, document) runs in series | 64:425-427 | Test with two pieces of work on the same resource |
+| E10 | Nothing in the tests synchronizes on a fixed time | R-TEST-03 of 63; L16 | Fake tool with a lock the test controls |
 
-O 64 §5.3 propôs três classes de rota (estado no laço, trabalho fora dele,
-job visível) e um ajudante em três fases: preparar no laço, trabalhar fora,
-aplicar no laço se a geração não mudou (64:395-451). É referência da 0.3,
-não decisão para o core novo.
+64 §5.3 proposed three route classes (state on the loop, work outside it, visible job) and a
+three-phase helper: prepare on the loop, work outside it, apply on the loop if the generation has
+not moved (64:395-451). It is a 0.3 reference, not a decision for the C++ core.
 
-## Threads e donos
+## Threads and owners
 
-Nenhuma thread existe ainda. Cada thread entra nesta tabela no mesmo commit
-que a cria.
+No thread exists yet. Each thread enters this table in the same commit that creates it.
 
-| Thread | Dona de | Recebe | Envia | Para como |
+| Thread | Owns | Receives | Sends | Stops how |
 | --- | --- | --- | --- | --- |
-| — | — | — | — | — |
+| none | | | | |
 
-## O caminho de um pedido
+## The path of a request
 
-Os módulos são os de [módulos e camadas](modules-and-layers.md).
+The modules are those of [modules and layers](modules-and-layers.md).
 
 ```mermaid
 sequenceDiagram
     participant UI
     participant T as core/qt (Transport)
     participant P as protocol
-    participant D as domínio (ex.: cmake)
+    participant D as domain (e.g. cmake)
     participant R as rt
     participant L as launch
-    UI->>T: uma linha JSON-RPC
-    T->>P: os bytes da linha
-    P->>D: pedido tipado, sem JSON-RPC
-    alt trabalho de estado
-        D-->>P: resultado, no laço
-    else trabalho externo
-        D->>R: trabalho com prazo e geração
-        R->>L: lançar (origem, prazo, teto)
-        L-->>R: saída ou erro tipado
-        R-->>D: resultado no laço, se a geração não mudou
-        D-->>P: resultado
+    UI->>T: one JSON-RPC line
+    T->>P: the bytes of the line
+    P->>D: typed request, no JSON-RPC
+    alt state work
+        D-->>P: result, on the loop
+    else external work
+        D->>R: work with a deadline and a generation
+        R->>L: launch (origin, deadline, cap)
+        L-->>R: output or typed error
+        R-->>D: result on the loop, if the generation has not moved
+        D-->>P: result
     end
-    P-->>T: resposta
-    T-->>UI: uma linha JSON-RPC
+    P-->>T: response
+    T-->>UI: one JSON-RPC line
 ```
 
-O que acontece dentro de `R` e de `P` (threads, filas, enquadramento) é o
-desenho do Viktor; o diagrama só mostra quem fala com quem.
+What happens inside `R` and `P` (threads, queues, framing) is the maintainer's design; the diagram
+shows only who talks to whom.

@@ -1,87 +1,93 @@
-# Estratégia de testes
+# Test strategy
 
-Dono: as camadas de teste do core, as regras de todo teste, o teste
-diferencial contra o core em Rust e a medida de desempenho.
+Owner: the test layers of the core, the rules of every test, the differential test against the
+Rust core and the performance measurement.
 
-## Regras de todo teste
+## Rules of every test
 
-| Regra | Origem |
+| Rule | Origin |
 | --- | --- |
-| A prova usa a ferramenta real; ferramenta ausente é NÃO PROVADO, nunca aprovado | R-TEST-01 do 63 |
-| Teste não sincroniza por tempo fixo: espera um evento, ou a ferramenta falsa tem trava controlada pelo teste | R-TEST-03 do 63; L16 |
-| Prazo é parâmetro do teste, nunca constante escondida no código de produção | INF-06 e INF-30 da 0.3 |
-| Teste não lê nem grava o diretório pessoal: `HOME` e `XDG_*` apontam para pasta temporária | R-TEST-04 do 63 |
-| Refatoração não edita os testes que a provam | R-TEST-07 do 63 |
-| Toda guarda nova tem um mutante que a desliga e precisa reprovar | R-TEST-02 do 63 |
-| O teste confere o artefato da própria rodada, nunca um binário velho | L17 (INF-31) |
-| A suíte passa nos perfis `dev`, `asan-ubsan` e `tsan` | RNF-QUA-03 |
+| The proof uses the real tool; a missing tool is NOT PROVEN, never passed | R-TEST-01 of 63 |
+| A test never synchronizes on a fixed time: it waits for an event, or the fake tool has a lock the test controls | R-TEST-03 of 63; L16 |
+| A deadline is a test parameter, never a constant hidden in production code | INF-06 and INF-30 of 0.3 |
+| A test neither reads nor writes the home directory: `HOME` and `XDG_*` point to a temporary directory | R-TEST-04 of 63 |
+| A refactoring does not edit the tests that prove it | R-TEST-07 of 63 |
+| Every guard has a mutant that disables it and must fail | R-TEST-02 of 63 |
+| A test checks the artifact of its own run, never an old binary | L17 (INF-31) |
+| The suite passes in the `dev`, `asan-ubsan` and `tsan` profiles | RNF-QUA-03 |
 
-## Camadas
+## Layers
 
-| Camada | O que prova | Onde | Estado |
+| Layer | What it proves | Where | State |
 | --- | --- | --- | --- |
-| Contrato do build | As flags prometidas chegaram ao compilador e ao binário | `core/tests/build/` | **Existe**: 2 testes |
-| Unidade | Regra e algoritmo de `core/lib`, sem laço de eventos e sem processo | `core/tests/unit/` | Framework ligado; o primeiro teste do core nasce com o primeiro código |
-| Eficácia dos gates | Cada gate próprio reprova os defeitos plantados e aceita as formas corretas do corpus dele | `core/tests/gates/` | **Existe**: `gate.launcher` e `gate.detach`, no preset `lint` |
-| Complexidade | Nenhum caminho cresce mais que linearmente (RNF-PERF-01) | `core/tests/complexity/` | A criar |
-| Diferencial | O core em C++ responde como o core em Rust | `core/tests/diff/` | Pasta criada, vazia |
-| Ordem e concorrência | Intercalações forçadas: geração velha descartada, cancelamento, mesmo recurso em série | `core/tests/unit/` | A criar |
-| Queda | `kill -9` em cada processo, com a perda medida (RNF-DUR-01) e nenhum órfão | `core/tests/crash/` | A criar |
-| Projeto hostil | Zero marcas sem confiança (RNF-SEG-01) | `core/tests/hostile/` | A criar |
+| Build contract | The promised flags reached the compiler and the binary | `core/tests/build/` | **Exists**: 2 tests |
+| Unit | Rules and algorithms of `core/lib`, with no event loop and no process | `core/tests/unit/` | Framework in place; the first test of the core is born with the first code |
+| Gate effectiveness | Each project gate rejects the planted defects and accepts the correct forms of its corpus | `core/tests/gates/` | **Exists**: `gate.launcher`, `gate.detach` and `gate.duplication`, in the `lint` preset |
+| Complexity | No path grows faster than linearly (RNF-PERF-01) | `core/tests/complexity/` | To be created |
+| Differential | The C++ core answers like the Rust core | `core/tests/diff/` | Directory with only its `CMakeLists.txt` |
+| Ordering and concurrency | Forced interleavings: stale generation discarded, cancellation, same resource in series | `core/tests/unit/` | To be created |
+| Crash | `kill -9` on each process, with the loss measured (RNF-DUR-01) and no orphan | `core/tests/crash/` | To be created |
+| Hostile project | Zero marks without trust (RNF-SEG-01) | `core/tests/hostile/` | To be created |
 
-## Diferencial
+## Differential
 
-- **O oráculo** é o binário do core em Rust, pelo fio JSON-RPC, como a UI o
-  usa. Os 622 testes IPC da 0.3 chamam `handle_request` dentro do processo
-  (64:310) e não servem para comparar dois processos.
-- **A comparação** acontece depois de normalizar ids, caminhos absolutos,
-  horários, ids de job e a ordem dos eventos que não têm ordem garantida.
-- **As divergências intencionais** ficam numa lista versionada junto dos
-  testes, cada uma com o defeito do oráculo que ela evita. Sem essa lista, o
-  teste premia quem reproduz o defeito. Entram de início:
-  - INF-23: o oráculo executa código do projeto sem confiança;
-  - INF-22: carga antiga do contexto por cima da nova;
-  - INF-29: falha de `exec` com aborto e core dump;
-  - INF-30: prazo vencido reportado como obsoleto;
-  - ENG-56: o oráculo grava estado da pessoa no `.kinein`.
-- **O critério de troca** (ADR-0012): cada método do N0 e do N1 passa no
-  diferencial, salvo a lista.
+```mermaid
+flowchart LR
+    CASE["test case<br/>JSON-RPC requests"] --> RUST["Rust core binary<br/>the oracle"]
+    CASE --> CPP["C++ core binary"]
+    RUST --> NORM["normalize ids, absolute paths,<br/>times, job ids, unordered events"]
+    CPP --> NORM
+    NORM --> CMP{"equal, or listed as an<br/>intentional divergence?"}
+    CMP -->|yes| PASS["pass"]
+    CMP -->|no| FAIL["fail"]
+```
 
-## Complexidade
+- **The oracle** is the binary of the Rust core, over the JSON-RPC wire, the way the UI uses it.
+  The 622 IPC tests of 0.3 call `handle_request` inside the process (64:310) and cannot compare
+  two processes.
+- **The comparison** happens after normalizing ids, absolute paths, times, job ids and the order
+  of events that have no guaranteed order.
+- **The intentional divergences** live in a versioned list next to the tests, each one with the
+  defect of the oracle it avoids. Without that list, the test rewards reproducing the defect. The
+  initial list:
+  - INF-23: the oracle runs project code without trust;
+  - INF-22: an old load of the context lands on top of the new one;
+  - INF-29: an `exec` failure with an abort and a core dump;
+  - INF-30: an expired deadline reported as stale;
+  - ENG-56: the oracle writes personal state in `.kinein`.
+- **The switch criterion** (ADR-0012): each N0 and N1 method passes the differential test, apart
+  from the list.
 
-Cada caminho que depende do tamanho do arquivo ou do projeto roda nos quatro
-tamanhos de referência (85, 2.500, 20.000 e 40.000 linhas) e reprova se a
-razão de tempo entre dois tamanhos passar do limite do RNF-PERF-01. A medida é
-o tempo de CPU do processo, não o de parede, para não depender da carga da
-máquina.
+## Complexity
 
-## Desempenho
+Each path that depends on the size of the file or of the project runs at the four reference
+sizes (85, 2,500, 20,000 and 40,000 lines) and fails if the time ratio between two sizes exceeds
+the limit of RNF-PERF-01. The measurement is the CPU time of the process, not the wall time, so
+that it does not depend on the load of the machine.
 
-- **Antes e depois**, sempre com o mesmo arquivo, o mesmo método e o mesmo
-  perfil (`production`).
-- **As fixtures C/C++ não existem.** As linhas de base da 0.3 usaram arquivos
-  Rust da geradora do `medir-core.py` (65:670-673). O primeiro passo é gerar
-  fixtures C/C++ nos quatro tamanhos e medir nelas o produto atual (UI e core
-  em Rust), para haver base de comparação.
-- **O método do editor** é o do 65 §20.3: tecla→quadro, abertura, CPU ao
-  digitar e memória, com as rodadas alternadas.
+## Performance
 
-## Framework de teste
+- **Before and after**, always with the same file, the same method and the same profile
+  (`production`).
+- **The C/C++ fixtures do not exist.** The 0.3 baselines used Rust files from the generator of
+  `medir-core.py` (65:670-673). The first step is to generate C/C++ fixtures at the four sizes
+  and measure the current product (UI and Rust core) on them, so that there is a baseline.
+- **The method of the editor** is the one of 65 §20.3: key to frame, opening, CPU while typing
+  and memory, with alternating rounds.
 
-GoogleTest 1.17.0, decisão do Viktor de 2026-11-22. O módulo é
-`core/cmake/KineinTesting.cmake`, e um teste de unidade nasce com
-`kinein_add_unit_test(<nome> SOURCES ... LIBRARIES ...)`. Cada `TEST` vira um
-teste do CTest com o prefixo `unit.`.
+## Test framework
 
-- **Compilado com o perfil, não o do sistema.** No `debug-stl`, o
-  `_GLIBCXX_DEBUG` muda o ABI dos containers, e a biblioteca do framework
-  precisa estar no mesmo modo. O `unit.TestFramework.*` confere isso no link:
-  ele chama uma função da biblioteca que recebe `std::vector` como parâmetro.
-  O tipo de parâmetro entra no nome mangled; o de retorno, não, e a primeira
-  versão do teste, com uma função que só devolvia `std::vector`, não pegou o
-  mutante (medido em 2026-11-22). Nos sanitizers, o framework também fica
-  instrumentado.
-- **O tarball tem hash fixado** e é baixado no configure. Sem rede:
-  `-DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=<pasta>`.
-- O teste de contrato do build não usa framework: é um executável que
-  compila ou não.
+GoogleTest 1.17.0, the maintainer's decision of 2026-11-22. The module is
+`core/cmake/KineinTesting.cmake`, and a unit test is born with
+`kinein_add_unit_test(<name> SOURCES ... LIBRARIES ...)`. Each `TEST` becomes a CTest test with
+the prefix `unit.`.
+
+- **Built with the profile, not the system's.** In `debug-stl`, `_GLIBCXX_DEBUG` changes the ABI
+  of the containers, and the framework library must be in the same mode. `unit.TestFramework.*`
+  checks that at link time: it calls a library function that takes a `std::vector` parameter. The
+  parameter type enters the mangled name and the return type does not, so a function that only
+  returns a `std::vector` does not catch the mutant (measured on 2026-11-22). In the sanitizer
+  profiles, the framework is instrumented too.
+- **The tarball has a pinned hash** and is downloaded at configure. Without network access:
+  `-DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=<directory>`.
+- The build contract test uses no framework: it is an executable that either compiles or not.

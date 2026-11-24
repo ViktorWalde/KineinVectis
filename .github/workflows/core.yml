@@ -1,6 +1,6 @@
 # CI of Kinein Vectis 0.1, the C++23 core that will replace the core on main.
 #
-# Documented in: docs/engineering/gates-and-effectiveness.md, section "A CI"
+# Documented in: docs/engineering/gates-and-effectiveness.md, section "The CI"
 #
 # It is the only CI of this branch: the 0.3 CI does not run here. It runs the same
 # core/CMakePresets.json presets as a developer machine, with no container: the GitHub runner

@@ -1,46 +1,57 @@
-# Persistência e durabilidade
+# Persistence and durability
 
-Dono: onde cada arquivo próprio da IDE mora, como ele é gravado e quanto texto
-uma queda pode levar. Fecha as lições L04 e L13 ([lições](../lessons-from-0.3.md)).
+Owner: where each file the IDE owns lives, how it is written and how much text a crash can lose.
+It closes lessons L04 and L13 ([lessons](../lessons-from-0.3.md)).
 
-## Três classes, mais a árvore de build
+## Three classes, plus the build tree
 
-Do 64 §5.9 (64:603-672), decisão DP-08 do Viktor (64:943).
+From 64 §5.9 (64:603-672), decision DP-08 of the maintainer (64:943). The directory names are
+English in the C++ core; 64 wrote `projetos/`, a name no code uses.
 
-| Classe | Onde | O quê |
+| Class | Where | What |
 | --- | --- | --- |
-| Configuração do projeto, compartilhável | `<raiz>/.kinein/` | o que um colega deve receber pelo git |
-| Estado da pessoa no projeto | `$XDG_STATE_HOME/kinein-vectis/projetos/<id>/` | sessão, rascunhos, escolhas locais |
-| Cache do projeto | `$XDG_CACHE_HOME/kinein-vectis/projetos/<id>/` | derivado e recriável |
-| Árvore de build | `<raiz>/.kinein/build/` | saída do build, com `.gitignore` próprio |
+| Project configuration, shareable | `<root>/.kinein/` | what a colleague should receive through git |
+| The person's state in the project | `$XDG_STATE_HOME/kinein-vectis/projects/<id>/` | session, drafts, local choices |
+| Project cache | `$XDG_CACHE_HOME/kinein-vectis/projects/<id>/` | derived and re-creatable |
+| Build tree | `<root>/.kinein/build/` | build output, with its own `.gitignore` |
 
-- O `<id>` é derivado do caminho canônico da raiz, e o estado segue o projeto
-  renomeado no mesmo volume pela identidade do diretório (64:620-635).
-- Abrir uma pasta sem confiança não grava nela.
-- Cada arquivo próprio tem dono, classe e versão de esquema num catálogo único.
+- `<id>` derives from the canonical path of the root, and the state follows a project renamed on
+  the same volume through the identity of the directory (64:620-635).
+- Opening a folder without trust writes nothing in it.
+- Each own file has an owner, a class and a schema version in a single catalog.
 
-## Regras de gravação
+## Writing rules
 
-| Regra | Origem |
+| Rule | Origin |
 | --- | --- |
-| Gravação atômica: arquivo temporário na mesma pasta, `fsync`, troca de nome, `fsync` da pasta | RNF-DUR-02 |
-| Gravar com o conteúdo esperado: se o disco mudou desde a leitura, a gravação é recusada com o conflito | `fs.write` da 0.3 (65:83-84) |
-| Não seguir link, não abrir o que não é arquivo regular | R-DADOS-02 do 63 |
-| Não gravar por cima de arquivo que não se entende (versão de esquema mais nova): avisar e preservar | R-DADOS-03 do 63 |
-| Migração do `.kinein` da 0.3: copiar, reler e só então remover | 64:660-672 |
+| Atomic write: temporary file in the same directory, `fsync`, rename, `fsync` of the directory | RNF-DUR-02 |
+| Write with the expected content: if the disk changed since the read, the write is refused with the conflict | `fs.write` of 0.3 (65:83-84) |
+| Never follow a link, never open what is not a regular file | R-DADOS-02 of 63 |
+| Never overwrite a file that is not understood (a newer schema version): warn and preserve | R-DADOS-03 of 63 |
+| Migration of the 0.3 `.kinein`: copy, read back, and only then remove | 64:660-672 |
 
-## Durabilidade do texto digitado
+```mermaid
+sequenceDiagram
+    participant S as storage / sys.fs
+    participant D as directory of the target
+    S->>D: create a temporary file in the same directory
+    S->>D: write the content, then fsync the file
+    S->>D: rename the temporary file over the target
+    S->>D: fsync the directory
+    Note over S,D: a crash at any step leaves the old file or the new one, never a mix
+```
 
-- **O problema da 0.3:** debounce sem prazo máximo num `Timer` de QML. Quem
-  digita sem pausa de 1,5 s não tem nada gravado, e a perda não tem teto (INF-26).
-- **A regra:** a política de durabilidade é do core. Toda mudança do espelho
-  do buffer agenda a gravação do rascunho com **prazo máximo**; a pausa da
-  digitação pode adiantar a gravação, nunca adiar além do prazo.
-- **O limite:** RNF-DUR-01, com 2 s propostos
-  ([decisões](../pending-decisions.md)).
-- **O caminho:** o rascunho sai do espelho que o core mantém pelo
-  `nvim_buf_attach`, sem o swap do Neovim (decisão 3 do 65 §21, 65:895-896).
-  O arquivo do projeto é gravado pelo core, pelo `BufWriteCmd` (65:892-894).
-- **Aceite:** `kill -9` na UI, no core e no `nvim` depois de digitação longa
-  sem pausa, com a perda medida, e um mutante sem prazo máximo que precisa
-  reprovar.
+## Durability of typed text
+
+- **The 0.3 problem:** a debounce with no maximum delay in a QML `Timer`. Whoever types without a
+  1.5 s pause has nothing written, and the loss has no ceiling (INF-26).
+- **The rule:** the durability policy belongs to the core. Every change of the buffer mirror
+  schedules the write of the draft with a **maximum delay**; a pause in the typing may bring the
+  write forward, never push it past the delay.
+- **The limit:** RNF-DUR-01, 2 s, the maintainer's decision of 2026-11-22
+  ([non-functional requirements](../requirements/non-functional-requirements.md)).
+- **The path:** the draft comes from the mirror the core keeps through `nvim_buf_attach`, without
+  the Neovim swap file (decision 3 of 65 §21, 65:895-896). The project file is written by the
+  core, through `BufWriteCmd` (65:892-894).
+- **Acceptance:** `kill -9` on the UI, the core and `nvim` after long typing with no pause, with
+  the loss measured, and a mutant with no maximum delay that must fail.
