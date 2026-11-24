@@ -35,6 +35,7 @@ flowchart TD
     ARCH --> PERS["persistence-and-durability.md"]
     ARCH --> PROTO["protocol-and-contract.md"]
     ARCH --> EDIT["editing-engine.md"]
+    ARCH --> TEXT["text-encoding-and-positions.md"]
     ENG --> RULES["cpp23-rules.md"]
     ENG --> DEFECTS["known-cpp-defects-and-defenses.md"]
     ENG --> PROFILES["build-profiles-and-hardening.md"]
@@ -61,6 +62,7 @@ flowchart TD
 | [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Where each file of the IDE lives and how much text a crash can lose |
 | [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | The wire between the UI and the core, the switch of cores and the change of contract |
 | [architecture/editing-engine.md](architecture/editing-engine.md) | Which component edits, who owns the text of a document, how an edit travels and how a large file degrades |
+| [architecture/text-encoding-and-positions.md](architecture/text-encoding-and-positions.md) | How the bytes of a file become text, how lines end, which unit each component counts a position in, and who converts |
 | **Engineering** | |
 | [engineering/cpp23-rules.md](engineering/cpp23-rules.md) | The C++ methods of the project, the comment standard and what enforces each one |
 | [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | The classic defects of the language and the defense against each one |

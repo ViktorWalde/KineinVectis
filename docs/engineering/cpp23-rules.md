@@ -38,6 +38,7 @@ rule marked so is a candidate for a mechanism. "CG" cites the
 | Rule | Why | Enforced by |
 | --- | --- | --- |
 | A domain value has a named type (`LineIndex`, `ByteOffset`) and an `enum class`; no bare `int` or `bool` with a meaning (CG I.4, Enum.3) | The compiler rejects a swapped argument | Review |
+| A text position carries its unit in its type (`ByteOffset`, `Utf16Column`, `DisplayColumn`); only the conversions of `base` change the unit, at a boundary ([text encoding and positions](../architecture/text-encoding-and-positions.md)) | A column in the wrong unit moves an edit and corrupts the text with no error | Review; the property and conversion tests |
 | Output by return value; several outputs are a `struct` with named members, not `pair` or `tuple` (CG F.20, F.21) | The name of each output is part of the interface | Review |
 | `const` by default, on objects and on member functions; a template has a concept (CG Con.1, Con.2, T.10) | Mutation and template requirements are visible in the signature | Review |
 | Every object is born initialized (`{}`); a constructor delivers a ready object, with no `init()` (CG ES.20, C.41) | No read of an indeterminate value, no half-built object | `cppcoreguidelines-pro-type-member-init`, `cppcoreguidelines-prefer-member-initializer` |

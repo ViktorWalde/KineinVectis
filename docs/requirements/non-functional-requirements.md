@@ -51,6 +51,7 @@ their value is a **proposal** until the decision.
 | --- | --- | --- | --- | --- |
 | RNF-DUR-01 *(0.1)* | Typed text survives the crash of any process | At most **2 s** of continuous typing lost, whatever the length of the typing (the maintainer's decision of 2026-11-22; in the current product since the fix of INF-26 in QML) | `kill -9` on the UI and on the core after long typing with no pause (INF-26) | Crash test with a mutant that removes the maximum delay |
 | RNF-DUR-02 *(0.1)* | Writing a project file is atomic | No crash leaves a project file truncated or mixed | Crash injected between the write and the rename | Crash test on writing |
+| RNF-DUR-03 *(0.1)* | Opening and saving a file with no edit writes the same bytes | Zero bytes changed: the line ending, the BOM and every character are kept | Files with LF, CRLF, a BOM, U+00A0, a character outside the BMP, a combining mark, tabs and no final line break | Round-trip test ([text encoding](../architecture/text-encoding-and-positions.md#acceptance)) |
 | RNF-DADOS-05 | Personal state and cache do not live in the project tree | Zero per-person files under `.kinein`; opening without trust writes nothing in the project | Listing of the tree before and after | Opening test ([persistence](../architecture/persistence-and-durability.md)) |
 
 ## Engineering quality

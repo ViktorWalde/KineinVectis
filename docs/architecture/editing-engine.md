@@ -48,13 +48,15 @@ flowchart TD
   500,000 characters of CLion are 25 characters per line at 20,000 lines: copied as they are, they
   would take highlighting away from the reference sizes of the requirements.
 - In every tier where the file opens, the versions, the draft and the guarded write hold.
+- Before the size, the content of the file decides whether it opens for editing
+  ([text encoding and positions](text-encoding-and-positions.md#file-content)).
 
 ## Who owns what
 
 | Responsibility | Owner | The others |
 | --- | --- | --- |
 | Text and version of the document | The core | The UI holds the copy it shows and never decides a version |
-| A keystroke | The UI applies it to its copy at once and sends the delta with its base version | The core applies the deltas in order; a typed delta is never refused |
+| A keystroke | The UI applies it to its copy at once and sends the delta with its base version, in line and UTF-16 column ([units](text-encoding-and-positions.md#between-the-ui-and-the-core)) | The core applies the deltas in order; a typed delta is never refused |
 | A text change of the core (format, rename, fix) | The core proposes it with its base version | The UI applies it only on that base, and the change reaches the core as an ordinary delta; on another base it refuses, and the core computes again |
 | A divergence between the copy and the document | The core: its text and version replace the copy | none |
 | Writing the file | The core, with the guarded write of [persistence](persistence-and-durability.md) | The UI sends the intent |
@@ -100,8 +102,9 @@ sequenceDiagram
 
 - No message after the opening carries the whole document (RNF-EDI-01). The exception is the
   resynchronization after a divergence, which is recorded as a defect.
-- The shape of a delta, the detection of a divergence and the replay of the deltas the draft does
-  not have after a crash of the core belong to the editing protocol, by ADR (P22).
+- The units of a delta are in [text encoding and positions](text-encoding-and-positions.md). Its shape, the
+  detection of a divergence and the replay of the deltas the draft does not have after a crash of
+  the core belong to the editing protocol, by ADR (P22).
 
 ## Acceptance
 
