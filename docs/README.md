@@ -94,8 +94,9 @@ their subject comes up.
 7. **The first lines name the owner.** The reader decides from them whether the file is needed,
    and then reads only the section needed.
 8. **State, not history.** A file says what holds and where it came from. How it got there
-   belongs in the commit message. The exception is the record of the gate measurements, which is
-   the proof of each gate.
+   belongs in the commit message. What leaves the project leaves the documents entirely, with no
+   note that it was removed and no justification. The exception is the record of the gate
+   measurements, which is the proof of each gate.
 9. **0.3 is consulted by identifier** (`INF-26`, `ENG-51`) or by line (`62:1371`), never by
    reading a whole roadmap: roadmap 62 alone has 2,183 lines. The summary is
    `lessons-from-0.3.md`.
