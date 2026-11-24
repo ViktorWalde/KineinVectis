@@ -50,6 +50,7 @@ without losing a change, and handle a missing or hung tool.
 | RF-ED-01 | Keep the document of each open file: apply the deltas of the UI in order, number the versions, propose the core's text changes with a base version, resynchronize the UI after a divergence | new | Property test: after random deltas and proposals, the copy of the UI equals the document; a proposal on a stale base is refused |
 | RF-ED-02 | Write the editor's file with the guarded write and recover the text after a crash from the draft | `draft.*` leaves | A crash with zero keystrokes lost beyond the limit (RNF-DUR-01) |
 | RF-ED-03 | Highlight with tree-sitter, incrementally, for a named version | `syntaxTree.*` leaves | RNF-EDI-01 at the reference sizes; complexity test (RNF-PERF-01) |
+| RF-ED-04 | Place each file in its size tier (full, editing only, not opened), tell the person the limit and the size, and take the limits from the settings | new | Files one byte below and above each limit; raising a limit in the settings changes the tier |
 | RF-LSP-01 | One clangd session per root, created by the launcher, with the core's context (`compile_commands.json`, `--query-driver` only for a compiler detected without trust); the core is the LSP client of each document | `lsp.*` leaves | One clangd process per root during the journey; changing the language standard of the preset changes the diagnostics; no `didChange` carries the whole document |
 | RF-SET-01 | Settings of the IDE and of the project | `settings.get`, `settings.set` | Differential |
 

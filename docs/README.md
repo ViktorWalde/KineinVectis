@@ -60,7 +60,7 @@ flowchart TD
 | [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | How a process is born and what an untrusted project may do |
 | [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Where each file of the IDE lives and how much text a crash can lose |
 | [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | The wire between the UI and the core, the switch of cores and the change of contract |
-| [architecture/editing-engine.md](architecture/editing-engine.md) | Which component edits, who owns the text of a document and how an edit travels |
+| [architecture/editing-engine.md](architecture/editing-engine.md) | Which component edits, who owns the text of a document, how an edit travels and how a large file degrades |
 | **Engineering** | |
 | [engineering/cpp23-rules.md](engineering/cpp23-rules.md) | The C++ methods of the project, the comment standard and what enforces each one |
 | [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | The classic defects of the language and the defense against each one |

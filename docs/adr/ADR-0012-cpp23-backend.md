@@ -36,6 +36,8 @@ The full list, with the evidence, is in the [lessons](../lessons-from-0.3.md).
    - the core is the truth for the disk, the draft, the LSP session and every edit, and its own
      text changes reach the UI as proposals with a base version;
    - a divergence is resolved from the core's text;
+   - a file beyond a size limit degrades in a declared way, by the method of the JetBrains IDEs:
+     editing without code insight, or not opened, with a notice of the limit and the size;
    - the core is the LSP client of the document, and tree-sitter runs in the core.
 4. **The scope is only C and C++** until the core is solid. Rust and Python come back later.
 5. **The migration strangles the old core**, in the same repository:
