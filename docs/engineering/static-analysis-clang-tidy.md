@@ -20,7 +20,7 @@ segue valendo para `ui/`.
 segue caminhos de execução e pega o que a checagem local não pega:
 desreferência de nulo, uso depois de liberar, vazamento, uso depois de
 `std::move` e bloqueio dentro de seção crítica
-([erros conhecidos](erros-conhecidos-de-cpp-e-defesas.md)). Não está nas
+([erros conhecidos](known-cpp-defects-and-defenses.md)). Não está nas
 categorias pedidas; sai se o Viktor preferir.
 
 `readability-`, `misc-`, `hicpp-` e `portability-`, que a raiz usa, ficam de
@@ -48,7 +48,7 @@ Desligar mais uma exige o achado concreto que a motivou, registrado na tabela.
   `AllowCastToVoid: false`, nem o cast para `void` descarta o erro.
 - `bugprone-unsafe-functions.CustomFunctions` lista as funções de criar
   processo: o gate "processo só pelo lançador"
-  ([processos](../arquitetura/processos-e-confianca.md)), e o
+  ([processos](../architecture/processes-and-trust.md)), e o
   `std::thread::detach` e o `std::jthread::detach`: o gate "thread nunca
   solta". A lista padrão da checagem (`gets`, as do Anexo K) continua ligada.
 
@@ -56,7 +56,7 @@ Desligar mais uma exige o achado concreto que a motivou, registrado na tabela.
 
 Uma opção do clang-tidy usada como gate tem corpus em `core/tests/gates/` e
 um teste no preset `lint` que mede a eficácia a cada build
-([gates](gates-e-medida-de-eficacia.md)). O teste roda só a checagem do gate,
+([gates](gates-and-effectiveness.md)). O teste roda só a checagem do gate,
 com as opções do `core/.clang-tidy`: mudar a opção sem atualizar o corpus
 reprova.
 

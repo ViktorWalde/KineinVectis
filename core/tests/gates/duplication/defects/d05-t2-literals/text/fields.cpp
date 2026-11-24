@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: defect d05, wrap_words with a comma in place of the space.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // The same logic with another literal: it should take the separator.
 #include <cstddef>

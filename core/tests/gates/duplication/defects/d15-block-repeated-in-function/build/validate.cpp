@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d15, the same block pasted twice inside the same function, for
 // two arguments.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/build/diagnostics.hpp"
 
 #include <expected>

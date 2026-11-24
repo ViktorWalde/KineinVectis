@@ -1,6 +1,6 @@
 # Build profile of the C++ core.
 #
-# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+# Documented in: docs/engineering/build-profiles-and-hardening.md
 #
 # The profile is the only owner of the optimization, debug, warning, hardening
 # and sanitizer flags. CMAKE_BUILD_TYPE decides nothing here: CMake's default
@@ -14,7 +14,7 @@ if(NOT KINEIN_PROFILE IN_LIST KINEIN_PROFILES)
     message(FATAL_ERROR "KINEIN_PROFILE='${KINEIN_PROFILE}' does not exist. Use one of: ${KINEIN_PROFILES}")
 endif()
 
-# C++23 without extensions. 26 exists only for the probe job (docs/engenharia/regras-de-cpp23.md).
+# C++23 without extensions. 26 exists only for the probe job (docs/engineering/cpp23-rules.md).
 set(KINEIN_CXX_STANDARD "23" CACHE STRING "Language standard: 23; 26 only in the probe")
 set_property(CACHE KINEIN_CXX_STANDARD PROPERTY STRINGS 23 26)
 if(NOT KINEIN_CXX_STANDARD MATCHES "^(23|26)$")

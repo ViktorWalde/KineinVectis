@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c04, the same index loop as line_starts, with another
 // algorithm inside.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/text/lines.hpp"
 
 #include <cstddef>

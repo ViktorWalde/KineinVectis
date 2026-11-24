@@ -1,6 +1,6 @@
 # Hardening flags of the C++ core.
 #
-# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+# Documented in: docs/engineering/build-profiles-and-hardening.md
 #
 # The flags are the whole TL;DR plus the conditional rows "for x86_64", "for aarch64" and
 # "for production code" (OpenSSF Compiler Options Hardening Guide for C and C++, version of

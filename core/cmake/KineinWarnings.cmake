@@ -1,6 +1,6 @@
 # Compiler warnings of the C++ core.
 #
-# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+# Documented in: docs/engineering/build-profiles-and-hardening.md
 #
 # The lists are fixed per compiler and do not go through check_cxx_compiler_flag: an unknown
 # flag breaks the build instead of silently vanishing (fail closed). Base: the lists of

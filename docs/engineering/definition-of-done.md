@@ -15,7 +15,7 @@ do que falta.
    um caminho que depende do tamanho do arquivo ou do projeto.
 6. O documento dono do assunto atualizado no mesmo commit, quando a mudança
    muda um fato dele. Thread nova entra na tabela da
-   [execução](../arquitetura/execucao-e-concorrencia.md#threads-e-donos).
+   [execução](../architecture/execution-and-concurrency.md#threads-e-donos).
 7. **A lista explícita do que não foi verificado**: ambiente, plataforma ou
    caso que a mudança não exercitou.
 8. Commit só quando o Viktor pede.
@@ -24,11 +24,11 @@ do que falta.
 
 - Os critérios de pronto do marco são escritos **antes** do código, com
   número, método e o teste que impõe cada um (A09 das
-  [lições](../licoes-da-0.3.md)).
+  [lições](../lessons-from-0.3.md)).
 - O marco fecha com a medida de cada critério, ou com NÃO PROVADO explícito.
 - Defeito de perda de dados e de segurança achado no caminho fura a fila.
 
 ## Critérios por marco
 
 Ainda não definidos. A proposta da ordem dos marcos e dos critérios de cada um
-é a Fase D ([decisões](../decisoes-pendentes.md)).
+é a Fase D ([decisões](../pending-decisions.md)).

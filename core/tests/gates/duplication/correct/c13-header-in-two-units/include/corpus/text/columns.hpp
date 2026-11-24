@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c13, an inline function in a header included by the
 // two units of the case.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #ifndef CORPUS_TEXT_COLUMNS_HPP
 #define CORPUS_TEXT_COLUMNS_HPP
 

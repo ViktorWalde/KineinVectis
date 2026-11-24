@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: the protocol module of the base tree.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #ifndef CORPUS_PROTOCOL_MESSAGES_HPP
 #define CORPUS_PROTOCOL_MESSAGES_HPP
 

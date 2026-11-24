@@ -1,6 +1,6 @@
 // Corpus of gate.launcher: the planted defects of "processes only through the launcher".
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // Each line marked with "reject:" is a defect. clang-tidy, with the configuration of
 // core/.clang-tidy, must flag the call exactly on that line and on no other line. The file is

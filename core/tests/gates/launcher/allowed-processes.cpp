@@ -1,6 +1,6 @@
 // Corpus of gate.launcher: the correct forms of "processes only through the launcher".
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // No line of this file may receive the diagnostic. The lines marked with "accept:" are the forms
 // the gate must accept, including the hard ones: the same name in another namespace, text,

@@ -1,6 +1,6 @@
 # Effectiveness measurement of the project's own gates.
 #
-# Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+# Documented in: docs/engineering/gates-and-effectiveness.md
 #
 # Each gate has a versioned corpus: planted defects it must reject and correct
 # forms it must accept. The measurement runs again on every build of the preset
@@ -10,7 +10,7 @@
 if(KINEIN_CLANG_TIDY)
     find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
 
-    # Processes only through the launcher (docs/arquitetura/processos-e-confianca.md).
+    # Processes only through the launcher (docs/architecture/processes-and-trust.md).
     add_test(NAME gate.launcher
         COMMAND "${Python3_EXECUTABLE}" -I "${CMAKE_CURRENT_SOURCE_DIR}/tidy_corpus.py"
             --clang-tidy "${KINEIN_CLANG_TIDY_EXE}"

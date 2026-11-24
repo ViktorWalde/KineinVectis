@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d09, T3, wrap_words with another comparison and one
 // replaced statement.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <cstddef>
 #include <string>
 #include <string_view>

@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c11, two data tables with the same shape, looked up by a
 // single function.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <array>
 #include <cstddef>
 #include <optional>

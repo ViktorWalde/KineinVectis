@@ -18,7 +18,7 @@ UI troca de core e como o contrato muda.
 ## O que o core em C++ implementa
 
 - **Um subconjunto**, pelos níveis dos
-  [requisitos funcionais](../requisitos/requisitos-funcionais.md). Cada
+  [requisitos funcionais](../requirements/functional-requirements.md). Cada
   método implementado tem a mesma forma de pedido, resposta e erro do core em
   Rust, conferida pelo teste diferencial.
 - **Método fora do subconjunto** responde com o erro `MethodNotFound`, que é o
@@ -48,5 +48,5 @@ UI sobe o core em Rust como hoje.
 3. **Uma fonte única** (RNF-CON-01): o schema gerado a partir dos tipos do
    `kinein-protocol`, com os dois cores conferidos contra ele, decisão do
    Viktor de 2026-11-22. Os detalhes estão na
-   [ADR-0013](../adr/ADR-0013-fonte-unica-do-contrato.md), em rascunho:
+   [ADR-0013](../adr/ADR-0013-single-source-of-the-contract.md), em rascunho:
    nada muda no schema antes da aprovação.

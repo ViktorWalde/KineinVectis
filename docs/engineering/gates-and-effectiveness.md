@@ -68,7 +68,7 @@ e GNU ld 2.47.
 ### `gate.launcher`: processo só pelo lançador (2026-11-22)
 
 O `bugprone-unsafe-functions.CustomFunctions` do `core/.clang-tidy`
-([processos](../arquitetura/processos-e-confianca.md)). O corpus está em
+([processos](../architecture/processes-and-trust.md)). O corpus está em
 `core/tests/gates/launcher/`, e o teste `gate.launcher` (preset `lint`) mede a
 eficácia a cada build, com o `tidy_corpus.py`: cada linha marcada como defeito
 tem de ser acusada, e nenhuma outra.

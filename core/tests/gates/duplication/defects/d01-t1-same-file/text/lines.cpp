@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: defect d01, the base lines.cpp with a copy.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/text/lines.hpp"
 
 #include <algorithm>

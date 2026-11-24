@@ -1,6 +1,6 @@
 """Measure a clang-tidy gate against its corpus.
 
-Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+Documented in: docs/engineering/gates-and-effectiveness.md
 
 N planted defects the gate must reject and M correct forms it must accept:
 

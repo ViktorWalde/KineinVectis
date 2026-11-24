@@ -15,33 +15,33 @@ pergunta. Os outros apontam para ele.
 
 | Arquivo | Pergunta que responde |
 | --- | --- |
-| [licoes-da-0.3.md](licoes-da-0.3.md) | O que a 0.3 errou e acertou, e o que impede a repetição de cada erro? |
-| [decisoes-pendentes.md](decisoes-pendentes.md) | O que ainda é decisão do Viktor, com a recomendação? |
-| [adr/ADR-0012-backend-em-cpp23-com-neovim.md](adr/ADR-0012-backend-em-cpp23-com-neovim.md) | Por que C++23 e Neovim, e o que essa decisão substitui? |
-| [adr/ADR-0013-fonte-unica-do-contrato.md](adr/ADR-0013-fonte-unica-do-contrato.md) | De onde vem o contrato entre a UI e os dois cores, e como ele muda? |
+| [lessons-from-0.3.md](lessons-from-0.3.md) | O que a 0.3 errou e acertou, e o que impede a repetição de cada erro? |
+| [pending-decisions.md](pending-decisions.md) | O que ainda é decisão do Viktor, com a recomendação? |
+| [adr/ADR-0012-cpp23-backend-with-neovim.md](adr/ADR-0012-cpp23-backend-with-neovim.md) | Por que C++23 e Neovim, e o que essa decisão substitui? |
+| [adr/ADR-0013-single-source-of-the-contract.md](adr/ADR-0013-single-source-of-the-contract.md) | De onde vem o contrato entre a UI e os dois cores, e como ele muda? |
 | **Requisitos** | |
-| [requisitos/requisitos-funcionais.md](requisitos/requisitos-funcionais.md) | O que o core faz, em que ordem, e o teste de aceite de cada capacidade |
-| [requisitos/requisitos-nao-funcionais.md](requisitos/requisitos-nao-funcionais.md) | Com que limite medido: tempo, memória, segurança, durabilidade, qualidade |
+| [requirements/functional-requirements.md](requirements/functional-requirements.md) | O que o core faz, em que ordem, e o teste de aceite de cada capacidade |
+| [requirements/non-functional-requirements.md](requirements/non-functional-requirements.md) | Com que limite medido: tempo, memória, segurança, durabilidade, qualidade |
 | **Arquitetura** | |
-| [arquitetura/fronteiras-e-responsabilidades.md](arquitetura/fronteiras-e-responsabilidades.md) | Quais processos e componentes existem, quem decide o quê e quem depende de quem |
-| [arquitetura/modulos-e-camadas.md](arquitetura/modulos-e-camadas.md) | Quais módulos `core/lib` tem, em que camada, quem usa quem e o que impõe isso (com os diagramas) |
-| [arquitetura/execucao-e-concorrencia.md](arquitetura/execucao-e-concorrencia.md) | Onde o trabalho roda, quem é dono de cada dado, prazo e cancelamento |
-| [arquitetura/processos-e-confianca.md](arquitetura/processos-e-confianca.md) | Como um processo nasce e o que o projeto não confiável pode fazer |
-| [arquitetura/persistencia-e-durabilidade.md](arquitetura/persistencia-e-durabilidade.md) | Onde cada arquivo próprio mora e quanto texto uma queda pode levar |
-| [arquitetura/protocolo-e-contrato.md](arquitetura/protocolo-e-contrato.md) | O fio entre a UI e o core, a troca de core e a mudança de contrato |
-| [arquitetura/motor-de-edicao-neovim.md](arquitetura/motor-de-edicao-neovim.md) | O que o Neovim é dono, o que o core é dono e as condições da troca |
+| [architecture/boundaries-and-responsibilities.md](architecture/boundaries-and-responsibilities.md) | Quais processos e componentes existem, quem decide o quê e quem depende de quem |
+| [architecture/modules-and-layers.md](architecture/modules-and-layers.md) | Quais módulos `core/lib` tem, em que camada, quem usa quem e o que impõe isso (com os diagramas) |
+| [architecture/execution-and-concurrency.md](architecture/execution-and-concurrency.md) | Onde o trabalho roda, quem é dono de cada dado, prazo e cancelamento |
+| [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | Como um processo nasce e o que o projeto não confiável pode fazer |
+| [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Onde cada arquivo próprio mora e quanto texto uma queda pode levar |
+| [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | O fio entre a UI e o core, a troca de core e a mudança de contrato |
+| [architecture/neovim-editing-engine.md](architecture/neovim-editing-engine.md) | O que o Neovim é dono, o que o core é dono e as condições da troca |
 | **Engenharia** | |
-| [engenharia/regras-de-cpp23.md](engenharia/regras-de-cpp23.md) | Os métodos de C++ do projeto e o mecanismo que impõe cada um |
-| [engenharia/erros-conhecidos-de-cpp-e-defesas.md](engenharia/erros-conhecidos-de-cpp-e-defesas.md) | Os defeitos clássicos da linguagem e a defesa contra cada um |
-| [engenharia/perfis-de-compilacao-e-hardening.md](engenharia/perfis-de-compilacao-e-hardening.md) | Os perfis de build, as flags, as fontes e como rodar |
-| [engenharia/analise-estatica-clang-tidy.md](engenharia/analise-estatica-clang-tidy.md) | O que o clang-tidy confere, o que está desligado e por quê |
-| [engenharia/estrategia-de-testes.md](engenharia/estrategia-de-testes.md) | As camadas de teste, o diferencial contra o Rust e as medidas de desempenho |
-| [engenharia/gates-e-medida-de-eficacia.md](engenharia/gates-e-medida-de-eficacia.md) | Em que ordem os gates rodam e como um gate novo prova que funciona |
-| [engenharia/definicao-de-pronto.md](engenharia/definicao-de-pronto.md) | Quando uma mudança ou um marco pode ser chamado de pronto |
+| [engineering/cpp23-rules.md](engineering/cpp23-rules.md) | Os métodos de C++ do projeto e o mecanismo que impõe cada um |
+| [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | Os defeitos clássicos da linguagem e a defesa contra cada um |
+| [engineering/build-profiles-and-hardening.md](engineering/build-profiles-and-hardening.md) | Os perfis de build, as flags, as fontes e como rodar |
+| [engineering/static-analysis-clang-tidy.md](engineering/static-analysis-clang-tidy.md) | O que o clang-tidy confere, o que está desligado e por quê |
+| [engineering/test-strategy.md](engineering/test-strategy.md) | As camadas de teste, o diferencial contra o Rust e as medidas de desempenho |
+| [engineering/gates-and-effectiveness.md](engineering/gates-and-effectiveness.md) | Em que ordem os gates rodam e como um gate novo prova que funciona |
+| [engineering/definition-of-done.md](engineering/definition-of-done.md) | Quando uma mudança ou um marco pode ser chamado de pronto |
 
-Ordem de leitura para quem chega: este arquivo, `licoes-da-0.3.md`,
-`arquitetura/fronteiras-e-responsabilidades.md`, `arquitetura/modulos-e-camadas.md`,
-`engenharia/regras-de-cpp23.md` e `engenharia/definicao-de-pronto.md`. O resto se lê quando o assunto aparece.
+Ordem de leitura para quem chega: este arquivo, `lessons-from-0.3.md`,
+`architecture/boundaries-and-responsibilities.md`, `architecture/modules-and-layers.md`,
+`engineering/cpp23-rules.md` e `engineering/definition-of-done.md`. O resto se lê quando o assunto aparece.
 
 ## As regras desta árvore
 
@@ -68,10 +68,10 @@ Ordem de leitura para quem chega: este arquivo, `licoes-da-0.3.md`,
    medidas dos gates, que é a prova de cada gate.
 9. **A 0.3 se consulta pelo identificador** (`INF-26`, `ENG-51`) ou pela
    linha (`62:1371`), e nunca lendo um roadmap inteiro: o 62 sozinho tem
-   2.183 linhas. O resumo é o `licoes-da-0.3.md`.
+   2.183 linhas. O resumo é o `lessons-from-0.3.md`.
 
 As regras 6 a 9 ainda são convenção: o mecanismo é a P19
-([decisões](decisoes-pendentes.md)).
+([decisões](pending-decisions.md)).
 
 ## Como citar a 0.3
 

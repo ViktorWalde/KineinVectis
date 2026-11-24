@@ -1,7 +1,7 @@
 # Processos e confiança
 
 Dono: como um processo externo nasce e o que um projeto não confiável pode
-fazer. Fecha as lições L05, L06 e L18 ([lições](../licoes-da-0.3.md)).
+fazer. Fecha as lições L05, L06 e L18 ([lições](../lessons-from-0.3.md)).
 
 ## O lançador
 
@@ -16,7 +16,7 @@ cada local de chamada (64:460-470):
 | Argumentos, diretório e ambiente (lista permitida) | Ambiente herdado inteiro vaza segredo e configuração |
 | Prazo, obrigatório | L08 |
 | Teto de saída, obrigatório | Saída sem limite enche a memória |
-| Cancelamento | E2 e E8 da [execução](execucao-e-concorrencia.md) |
+| Cancelamento | E2 e E8 da [execução](execution-and-concurrency.md) |
 
 E as regras:
 
@@ -39,10 +39,10 @@ direto. Desde 2026-11-22 é o `bugprone-unsafe-functions.CustomFunctions` do
 `QProcess` e Windows) em qualquer lugar do core. Ele casa chamada direta,
 qualificada, via `std::`, ponteiro, macro, `using` e método de classe; não
 casa construtor. Eficácia: 40 de 40 defeitos e 16 de 16 formas corretas, pelo
-teste `gate.launcher` ([gates](../engenharia/gates-e-medida-de-eficacia.md#registro)).
+teste `gate.launcher` ([gates](../engineering/gates-and-effectiveness.md#registro)).
 Quando `sys.process` existir, a pasta dele ganha um `.clang-tidy` próprio que
 libera só ela, e o `VISIBLE_TO` deixa só o `launch` ligá-lo
-([módulos](modulos-e-camadas.md)).
+([módulos](modules-and-layers.md)).
 
 ## O modo restrito
 

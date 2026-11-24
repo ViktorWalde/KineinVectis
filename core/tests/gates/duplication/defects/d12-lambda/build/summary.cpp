@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: defect d12, the body of line_starts copied into a lambda.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/text/lines.hpp"
 
 #include <cstddef>

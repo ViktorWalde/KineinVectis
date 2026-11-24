@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d08, T3, wrap_words without two statements (the stop at the
 // end of the text and the last flush).
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <cstddef>
 #include <string>
 #include <string_view>

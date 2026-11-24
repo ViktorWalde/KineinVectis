@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c12, two std::visit with the same shape and different
 // actions.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <cstddef>
 #include <string>
 #include <variant>

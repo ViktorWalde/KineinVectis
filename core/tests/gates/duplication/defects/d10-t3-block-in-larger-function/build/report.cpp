@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d10, the loop of wrap_words copied inside a larger function
 // that does other things.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/build/diagnostics.hpp"
 
 #include <cstddef>

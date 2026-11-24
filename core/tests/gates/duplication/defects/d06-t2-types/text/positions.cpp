@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: defect d06, line_starts returning std::size_t in place of ByteOffset.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // The same logic with another type.
 #include <cstddef>

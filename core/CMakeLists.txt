@@ -1,10 +1,10 @@
 # Top-level CMake project of the Kinein Vectis C++23 core.
 #
-# Documented in: docs/arquitetura/fronteiras-e-responsabilidades.md
+# Documented in: docs/architecture/boundaries-and-responsibilities.md
 #
 # A standalone project, configured from this directory (core/CMakePresets.json). It is not part
 # of the UI build: the UI and the Rust core stay as they are until the C++ core meets the switch
-# criteria of docs/adr/ADR-0012-backend-em-cpp23-com-neovim.md.
+# criteria of docs/adr/ADR-0012-cpp23-backend-with-neovim.md.
 cmake_minimum_required(VERSION 3.25)
 
 project(kinein_core LANGUAGES CXX)

@@ -16,14 +16,14 @@ UI (Qt Quick + QML)  --JSON-RPC por linha, stdio-->  core (C++23)  --lançador--
 ```
 
 - **A UI e o core** são processos separados, como na 0.3 (A01 das
-  [lições](../licoes-da-0.3.md)). A UI escolhe o binário do core por
+  [lições](../lessons-from-0.3.md)). A UI escolhe o binário do core por
   `KINEIN_CORE_BIN` (`ui/src/core_client_process.cpp:240`): é assim que o core
   em C++ entra no lugar do core em Rust, sem mudar a UI.
 - **O `nvim`** nasce pelo lançador do core e morre quando o core fecha o canal
   dele (65 §6.1). A tecla vai da UI direto ao `nvim`; o core fica fora do
   caminho da digitação.
 - **Toda ferramenta externa** nasce pelo lançador
-  ([processos e confiança](processos-e-confianca.md)).
+  ([processos e confiança](processes-and-trust.md)).
 
 ## O que cada componente decide
 
@@ -42,7 +42,7 @@ Regra herdada do 64 §5.2 (64:384-393), adaptada ao core em C++.
 **O teste de cada função** de controller QML e da ponte: *se um cliente de
 linha de comando precisaria da mesma lógica, ela pertence ao core.* O
 inventário dos 89 `*Controller.qml` por esse teste é a Fase B, pendente
-([decisões](../decisoes-pendentes.md)).
+([decisões](../pending-decisions.md)).
 
 ## Direção das dependências
 
@@ -61,7 +61,7 @@ testes     ->  core/lib (sem laço de eventos), core/qt só nos testes do adapta
 | Nada de `core/` depende de `crates/` nem de `ui/` | O projeto CMake de `core/` não referencia essas pastas |
 
 Os módulos dentro de `core/lib`, as camadas e o gate que recusa ciclo estão
-em [modulos-e-camadas.md](modulos-e-camadas.md). O grafo do CMake não recusa
+em [modules-and-layers.md](modules-and-layers.md). O grafo do CMake não recusa
 ciclo sozinho: ele aceita ciclo entre bibliotecas `STATIC` (medido em
 2026-11-22).
 

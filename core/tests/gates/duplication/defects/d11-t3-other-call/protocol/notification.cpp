@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d11, encode_request copied, calling another function with the
 // same signature and with another literal.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/protocol/messages.hpp"
 
 #include <array>

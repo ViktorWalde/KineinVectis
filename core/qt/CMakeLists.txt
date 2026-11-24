@@ -1,6 +1,6 @@
 # Qt adapter target of the core: connects the library to the event loop and the transport.
 #
-# Documented in: docs/arquitetura/fronteiras-e-responsabilidades.md
+# Documented in: docs/architecture/boundaries-and-responsibilities.md
 #
 # Thin on purpose: no domain rule lives here. moc runs only on the targets of this directory;
 # core/lib code never goes through it. The Qt version is the UI's (cmake/KineinQt.cmake).

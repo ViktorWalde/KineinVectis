@@ -2,7 +2,7 @@
 
 Dono: o que o core faz, em que nível de prioridade, qual teste aceita cada
 capacidade e a ordem de entrega da base. Os limites de tempo, memória e segurança são do
-[requisitos-nao-funcionais.md](requisitos-nao-funcionais.md).
+[non-functional-requirements.md](non-functional-requirements.md).
 
 Estado: rascunho de 2026-11-22. Nenhum requisito está implementado. Os testes
 de aceite citados ainda não existem.
@@ -13,11 +13,11 @@ de aceite citados ainda não existem.
   sólido (ADR-0012).
 - **Fora do core em C++:** banco de dados, Grafana, remoto por SSH, contêineres,
   Cargo e Python. Os métodos `lsp.*`, `syntaxTree.*` e `draft.*` da 0.3 saem
-  com o Neovim ([motor de edição](../arquitetura/motor-de-edicao-neovim.md)).
+  com o Neovim ([motor de edição](../architecture/neovim-editing-engine.md)).
 - **Origem:** cada capacidade aponta os métodos da 0.3 que a cobrem hoje
   (protocolo 0.223.0, tabela de rotas de `crates/kinein-core/src/lib.rs`). O
   aceite herdado é o teste diferencial contra o core em Rust, salvo as
-  divergências intencionais ([estratégia de testes](../engenharia/estrategia-de-testes.md#diferencial)).
+  divergências intencionais ([estratégia de testes](../engineering/test-strategy.md#diferencial)).
 
 ## Níveis
 
@@ -83,7 +83,7 @@ só registra o que a 0.3 já cobre, para nada se perder.
 Proposta para a Fase D (P12), com o critério de pronto de cada passo a
 escrever antes do código:
 
-1. `base`, `sys.fs` e `codec` ([módulos](../arquitetura/modulos-e-camadas.md)), depois da decisão das bibliotecas (P16).
+1. `base`, `sys.fs` e `codec` ([módulos](../architecture/modules-and-layers.md)), depois da decisão das bibliotecas (P16).
 2. `rt` e `protocol` (desenho do Viktor), mais `app` e `core/qt` com só o
    `core.ping` e o `initialize`. É o primeiro marco do estrangulamento: a UI
    sobe o core em C++ por `KINEIN_CORE_BIN`, o ping responde e o resto devolve

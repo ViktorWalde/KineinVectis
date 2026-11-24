@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c08, the idiom of propagating the std::expected error,
 // repeated with other calls and other errors.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // The shape repeats; the logic does not.
 #include "corpus/build/diagnostics.hpp"

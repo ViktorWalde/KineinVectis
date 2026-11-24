@@ -19,7 +19,7 @@ do desenho, e não de um ponto isolado:
 - o rascunho não tinha prazo máximo de gravação (INF-26);
 - os gates de texto detectavam 36 de 120 defeitos (66).
 
-A lista completa, com a evidência, está nas [lições](../licoes-da-0.3.md).
+A lista completa, com a evidência, está nas [lições](../lessons-from-0.3.md).
 
 ## Decisão
 
@@ -28,10 +28,10 @@ A lista completa, com a evidência, está nas [lições](../licoes-da-0.3.md).
    mais evolução.
 2. **O motor de edição é o Neovim** embutido (`nvim --embed`, msgpack-RPC,
    `ext_linegrid`), nas condições do 65 §21
-   ([motor de edição](../arquitetura/motor-de-edicao-neovim.md)).
+   ([motor de edição](../architecture/neovim-editing-engine.md)).
 3. **O frontend QML fica.** As views e o tema são reaproveitados; os
    controllers passam pelo teste de fronteira
-   ([fronteiras](../arquitetura/fronteiras-e-responsabilidades.md)).
+   ([fronteiras](../architecture/boundaries-and-responsibilities.md)).
 4. **O escopo é só C e C++** até o núcleo estar sólido. Rust e Python voltam
    depois.
 5. **A migração é por estrangulamento**, no mesmo repositório:
@@ -89,7 +89,7 @@ fecham com a remoção do editor atual na fase E do 65, e não com o backend.
 - Durante a migração há dois cores, e todo comportamento novo do core em C++
   é conferido contra o oráculo ou contra a lista de divergências.
 - O contrato precisa de uma fonte que não dependa do Rust antes de o Rust sair
-  ([decisões](../decisoes-pendentes.md), P02).
+  ([decisões](../pending-decisions.md), P02).
 - Os defeitos da 0.3 seguem no produto em uso até a troca. O INF-26 foi
   corrigido no QML atual em 2026-11-22 (decisão do Viktor); o INF-23 segue, e
   até o lançador em C++ existir só se abre projeto confiável.

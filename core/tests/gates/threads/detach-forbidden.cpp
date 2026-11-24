@@ -1,6 +1,6 @@
 // Corpus of gate.detach: the planted defects of "no detached thread".
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // The rule is C++ Core Guidelines CP.26. Each line marked with "reject:" is a defect. clang-tidy,
 // with the bugprone-unsafe-functions.CustomFunctions option of core/.clang-tidy, must flag

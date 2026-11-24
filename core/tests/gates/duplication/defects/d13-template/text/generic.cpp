@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d13, line_starts copied as a template, instead of becoming a
 // template in its owner.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <cstddef>
 #include <string_view>
 #include <vector>

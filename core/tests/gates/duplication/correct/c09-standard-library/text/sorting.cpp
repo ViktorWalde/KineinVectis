@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c09, short calls to the standard library, similar and
 // with a different effect.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <algorithm>
 #include <string>
 #include <vector>

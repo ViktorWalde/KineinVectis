@@ -47,7 +47,7 @@ sem os avisos e sem o clang-tidy (`core/cmake/KineinProfile.cmake`).
 ## O que vale em todos os perfis
 
 - **Avisos:** a lista do `KineinStrictOptions.cmake` da 0.3, que já compilava
-  a UI com `-Werror` (A10 das [lições](../licoes-da-0.3.md)), mais o TL;DR do
+  a UI com `-Werror` (A10 das [lições](../lessons-from-0.3.md)), mais o TL;DR do
   OpenSSF. A lista é fixa por compilador: flag desconhecida quebra o build em
   vez de sumir (falha fechado).
 - **Proteções:** `-fstack-protector-strong`, `-fstack-clash-protection`,
@@ -82,14 +82,14 @@ sem os avisos e sem o clang-tidy (`core/cmake/KineinProfile.cmake`).
   confere no binário da rodada `BIND_NOW`, `PIE`, `GNU_RELRO` e a pilha não
   executável.
 - A eficácia dos dois, medida em 2026-11-22, está em
-  [gates-e-medida-de-eficacia.md](gates-e-medida-de-eficacia.md#registro).
+  [gates-and-effectiveness.md](gates-and-effectiveness.md#registro).
 
 ## NÃO VERIFICADO
 
 - MSVC e Windows: o ramo MSVC dos módulos foi herdado do
   `KineinStrictOptions.cmake` e não compilou nesta máquina.
 - GCC 14 e Clang 20: o piso compilou e passou no CI em 2026-11-23
-  ([gates](gates-e-medida-de-eficacia.md#a-ci)), mas a versão exata que o
+  ([gates](gates-and-effectiveness.md#a-ci)), mas a versão exata que o
   runner usou está no log, que não foi lido. Nesta máquina há só o GCC 16.2.1
   e o Clang 23.1.5.
 - O ruído do `-Wconversion` no código gerado pelo moc: `core/qt` ainda não tem

@@ -15,10 +15,10 @@ project, runs the tools and keeps the state. The core of the 0.3 series is a Rus
 found defects that come from the design, not from isolated bugs: an untrusted project could run
 its own code through five paths, the core's loop blocked with no deadline or cancellation, and
 opening a 20,000-line file took up to 47 s
-([lessons from 0.3](docs/licoes-da-0.3.md)).
+([lessons from 0.3](docs/lessons-from-0.3.md)).
 
 The decision is recorded in
-[ADR-0012](docs/adr/ADR-0012-backend-em-cpp23-com-neovim.md):
+[ADR-0012](docs/adr/ADR-0012-cpp23-backend-with-neovim.md):
 
 - The core is rewritten in C++23 under `core/`: a library with no Qt (`core/lib`) and a thin Qt
   adapter (`core/qt`). The Rust core gets no new features.
@@ -53,7 +53,7 @@ Code without planning is technical debt. The prototype grew one feature at a tim
 bounded scope, a product vision or the consolidation of what existed before the next feature
 started. This branch reverses that order: C++ code enters `core/lib` and `core/qt` only after the
 maintainer closes five conditions. On 2026-11-23 all five are open; the decisions that block them
-are listed in [docs/decisoes-pendentes.md](docs/decisoes-pendentes.md).
+are listed in [docs/pending-decisions.md](docs/pending-decisions.md).
 
 ```mermaid
 flowchart TD
@@ -67,11 +67,11 @@ flowchart TD
 
 | Condition | Owning documents |
 | --- | --- |
-| 1. Gates and tests | [Gates and effectiveness](docs/engenharia/gates-e-medida-de-eficacia.md), [test strategy](docs/engenharia/estrategia-de-testes.md) |
-| 2. Engineering standard and architecture | [C++23 rules](docs/engenharia/regras-de-cpp23.md), [modules and layers](docs/arquitetura/modulos-e-camadas.md) |
-| 3. Lessons from 0.3 | [Lessons from 0.3](docs/licoes-da-0.3.md) |
-| 4. Scope and product vision | [Functional requirements](docs/requisitos/requisitos-funcionais.md), sections "Escopo" and "Níveis" |
-| 5. Requirements and limits | [Functional](docs/requisitos/requisitos-funcionais.md) and [non-functional](docs/requisitos/requisitos-nao-funcionais.md) requirements |
+| 1. Gates and tests | [Gates and effectiveness](docs/engineering/gates-and-effectiveness.md), [test strategy](docs/engineering/test-strategy.md) |
+| 2. Engineering standard and architecture | [C++23 rules](docs/engineering/cpp23-rules.md), [modules and layers](docs/architecture/modules-and-layers.md) |
+| 3. Lessons from 0.3 | [Lessons from 0.3](docs/lessons-from-0.3.md) |
+| 4. Scope and product vision | [Functional requirements](docs/requirements/functional-requirements.md), sections "Escopo" and "Níveis" |
+| 5. Requirements and limits | [Functional](docs/requirements/functional-requirements.md) and [non-functional](docs/requirements/non-functional-requirements.md) requirements |
 
 Quality comes before dates: there is no deadline. Where the scope matches a mature IDE, its
 behavior is the reference, with the IDE, its version and how the behavior was observed. Where no
@@ -96,7 +96,7 @@ flowchart LR
 - Keystrokes go from the UI straight to `nvim`; the core stays off the typing path.
 
 The processes and their responsibilities are in
-[boundaries and responsibilities](docs/arquitetura/fronteiras-e-responsabilidades.md); the full
+[boundaries and responsibilities](docs/architecture/boundaries-and-responsibilities.md); the full
 map of the documentation is in [docs/README.md](docs/README.md).
 
 ## Repository layout
@@ -150,7 +150,7 @@ KINEIN_QT_PREFIX=$HOME/Qt/6.12.1/gcc_64 cmake --workflow --preset dev-qt
 
 Configure downloads GoogleTest 1.17.0 with a pinned SHA-256. Without network access, pass
 `-DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=<directory>`. The profiles, flags and sources are in
-[build profiles and hardening](docs/engenharia/perfis-de-compilacao-e-hardening.md).
+[build profiles and hardening](docs/engineering/build-profiles-and-hardening.md).
 
 ## CI and quality gates
 
@@ -162,7 +162,7 @@ pinned by commit SHA, and the token is read-only.
 
 The project's own gates run as tests of the `lint` preset. Each one is measured against a versioned
 corpus of planted defects and correct forms on every build
-([method](docs/engenharia/gates-e-medida-de-eficacia.md)).
+([method](docs/engineering/gates-and-effectiveness.md)).
 
 | Test | Rule | Measured on 2026-11-23 |
 | --- | --- | --- |
@@ -172,7 +172,7 @@ corpus of planted defects and correct forms on every build
 | `build.contract` | The flags of the profile reach the compiler | Passes in every preset |
 | `build.elf_hardening` | The hardening reaches the linked binary | Passes in every preset |
 
-A change is done only when it meets the [definition of done](docs/engenharia/definicao-de-pronto.md),
+A change is done only when it meets the [definition of done](docs/engineering/definition-of-done.md),
 which includes no warning in `dev` and `lint`, a clean clang-tidy, tests green in `dev`,
 `asan-ubsan` and `tsan`, and the list of what was not verified. Approved and not yet in place: `actionlint` and `zizmor`, Dependabot for the actions,
 a DCO check, a documentation gate, a CMake floor that a job tests (or a higher floor), a job in a Fedora 45 container that
@@ -186,7 +186,7 @@ reproduces the reference machine, and a gate on the roles of the files of each m
   copyright assignment is required
   ([ADR-0011](DocsPublic/decisoes-adr/ADR-0011-copyleft-e-procedencia.md)).
 - **Comments** follow one standard, C1 to C12
-  ([C++23 rules](docs/engenharia/regras-de-cpp23.md), section "Comments"); the code rules and the
+  ([C++23 rules](docs/engineering/cpp23-rules.md), section "Comments"); the code rules and the
   tool that enforces each one are in the same file.
 - **Design first:** the core's algorithms, concurrency and protocol are designed with the
   maintainer before any code is written. A new external dependency needs the maintainer's

@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c03, the response serializer, with the same skeleton as
 // the request's and other fields.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // What truly repeats (the escaping) lives in append_escaped.
 #include "corpus/protocol/messages.hpp"

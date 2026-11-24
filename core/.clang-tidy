@@ -1,13 +1,13 @@
 # clang-tidy configuration of the C++ core.
 #
-# Documented in: docs/engenharia/analise-estatica-clang-tidy.md
+# Documented in: docs/engineering/static-analysis-clang-tidy.md
 #
 # Independent of the .clang-tidy at the repository root, which applies to ui/.
 #
 # Disabled checks, each with its reason. Not verified on core code: the list comes from the
 # .clang-tidy of 0.3, and each check is measured again with the first code of the core.
 # - bugprone-easily-swappable-parameters: high noise in 0.3. The planned defense is a dedicated
-#   type for each domain parameter (docs/engenharia/regras-de-cpp23.md).
+#   type for each domain parameter (docs/engineering/cpp23-rules.md).
 # - cppcoreguidelines-avoid-magic-numbers: style only, no associated defect.
 # - cppcoreguidelines-non-private-member-variables-in-classes: a data struct
 #   with public fields is the form the Core Guidelines ask for (C.2, C.131).
@@ -40,7 +40,7 @@ CheckOptions:
   bugprone-unused-return-value.CheckedReturnTypes: '^::std::error_code$;^::std::error_condition$;^::std::errc$;^::std::expected$'
   bugprone-unused-return-value.AllowCastToVoid: false
   cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors: true
-  # Processes only through the launcher (docs/arquitetura/processos-e-confianca.md).
+  # Processes only through the launcher (docs/architecture/processes-and-trust.md).
   # Matches the qualified name of the called or referenced function: direct and
   # qualified calls, via std::, pointer, macro, using and class method. It does
   # not match constructors. Effectiveness measured by the gate.launcher test

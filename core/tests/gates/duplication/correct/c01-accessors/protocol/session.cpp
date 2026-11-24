@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c01, one-line accessors, with the same shape as those of
 // Document.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <cstdint>
 #include <string>
 #include <utility>

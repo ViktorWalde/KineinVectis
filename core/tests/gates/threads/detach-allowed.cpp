@@ -1,6 +1,6 @@
 // Corpus of gate.detach: the correct forms of "no detached thread".
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // The rule is C++ Core Guidelines CP.26. No line of this file may receive the diagnostic. The
 // lines marked with "accept:" are the forms the gate must accept, including the hard ones: a

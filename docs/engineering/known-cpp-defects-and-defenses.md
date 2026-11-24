@@ -9,7 +9,7 @@ Camadas: **C** compilador (aviso vira erro nos presets de desenvolvimento),
 (`asan-ubsan`, `tsan`), **B** verificação da biblioteca padrão
 (`_GLIBCXX_ASSERTIONS`; `_GLIBCXX_DEBUG` no `debug-stl`), **P** endurecimento
 do binário entregue, **R** regra de projeto
-([regras-de-cpp23.md](regras-de-cpp23.md)).
+([cpp23-rules.md](cpp23-rules.md)).
 
 Os nomes das checagens foram conferidos no clang-tidy 23.1.5 e as flags no
 GCC 16.2.1 e no Clang 23.1.5, em 2026-11-22.
@@ -84,6 +84,6 @@ GCC 16.2.1 e no Clang 23.1.5, em 2026-11-22.
 - Thread esquecida, captura por referência em trabalho assíncrono e a
   mistura de árvore do Qt com RAII dependem de revisão. Candidatas: o
   `-Wunsafe-buffer-usage` do Clang e uma checagem própria, cada uma só depois
-  da medida de eficácia ([gates](gates-e-medida-de-eficacia.md)).
+  da medida de eficácia ([gates](gates-and-effectiveness.md)).
 - O MemorySanitizer (leitura não inicializada em tempo de execução) só existe
   no Clang e exige a biblioteca padrão instrumentada. Fica fora.

@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: correct form c07, overloads that delegate to a single implementation.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/text/lines.hpp"
 
 #include <cstddef>

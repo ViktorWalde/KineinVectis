@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d04, T2, parse_diagnostic with other names, other formatting
 // and comments.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/build/diagnostics.hpp"
 
 #include <expected>

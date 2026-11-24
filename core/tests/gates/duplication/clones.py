@@ -1,6 +1,6 @@
 """Detect duplicated code over the libclang syntax tree.
 
-Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+Documented in: docs/engineering/gates-and-effectiveness.md
 
 gate.duplication runs this detector against the corpus in this directory.
 

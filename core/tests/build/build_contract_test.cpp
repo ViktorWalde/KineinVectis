@@ -1,6 +1,6 @@
 // Contract of the build profile, checked by the compiler itself.
 //
-// Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+// Documented in: docs/engineering/build-profiles-and-hardening.md
 //
 // CMake declares the profile (KINEIN_EXPECTED_PROFILE_*) and the language standard
 // (KINEIN_EXPECTED_CXX_STANDARD). Each #error or static_assert that fires here is a build defect,

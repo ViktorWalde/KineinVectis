@@ -41,7 +41,7 @@
 | --- | --- |
 | Escrever um schema novo à mão, só do subconjunto N0 | Cópia manual de um contrato que ainda muda no Rust; repete a causa do ENG-54 |
 | Decidir no primeiro marco, com o diferencial como única referência | O diferencial compara comportamento, não forma; um campo opcional que os dois omitem passa despercebido |
-| Gerar cabeçalho C++ dos tipos Rust | O 64 §5.7 previa para a ponte da UI. Para o core novo, o desenho dos tipos do protocolo é do Viktor (`protocol`, [módulos](../arquitetura/modulos-e-camadas.md)); a geração pode entrar depois, por ADR própria |
+| Gerar cabeçalho C++ dos tipos Rust | O 64 §5.7 previa para a ponte da UI. Para o core novo, o desenho dos tipos do protocolo é do Viktor (`protocol`, [módulos](../architecture/modules-and-layers.md)); a geração pode entrar depois, por ADR própria |
 
 ## Consequências
 

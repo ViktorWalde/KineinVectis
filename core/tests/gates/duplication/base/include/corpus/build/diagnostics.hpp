@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: the build module of the base tree.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #ifndef CORPUS_BUILD_DIAGNOSTICS_HPP
 #define CORPUS_BUILD_DIAGNOSTICS_HPP
 

@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: the text module of the base tree.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/text/lines.hpp"
 
 #include <algorithm>

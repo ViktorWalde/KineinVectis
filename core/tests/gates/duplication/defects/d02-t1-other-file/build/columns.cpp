@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: defect d02, T1 in another file of the same module, hidden in an
 // anonymous namespace so as "not to touch the header".
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/build/diagnostics.hpp"
 
 #include "corpus/text/lines.hpp"

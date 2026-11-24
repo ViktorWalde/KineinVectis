@@ -2,8 +2,8 @@
 
 Dono: os métodos de C++ do core e o mecanismo que impõe cada um. A defesa
 contra cada defeito clássico da linguagem está em
-[erros-conhecidos-de-cpp-e-defesas.md](erros-conhecidos-de-cpp-e-defesas.md).
-As flags estão em [perfis-de-compilacao-e-hardening.md](perfis-de-compilacao-e-hardening.md).
+[known-cpp-defects-and-defenses.md](known-cpp-defects-and-defenses.md).
+As flags estão em [build-profiles-and-hardening.md](build-profiles-and-hardening.md).
 
 "Revisão" na última coluna quer dizer que nenhuma ferramenta impõe a regra:
 quem revisa confere. Toda regra marcada assim é candidata a mecanismo.
@@ -36,7 +36,7 @@ quem revisa confere. Toda regra marcada assim é candidata a mecanismo.
 ## Concorrência e execução
 
 As invariantes E1 a E10 estão em
-[execucao-e-concorrencia.md](../arquitetura/execucao-e-concorrencia.md). Em
+[execution-and-concurrency.md](../architecture/execution-and-concurrency.md). Em
 termos de código:
 
 | Regra | Quem impõe |
@@ -54,8 +54,8 @@ termos de código:
 | --- | --- |
 | `core/lib` sem Qt, testável sem laço de eventos | O preset `dev` não procura o Qt |
 | O moc nunca vê `core/lib` | AUTOMOC só nos alvos de `core/qt` |
-| Processo só pelo lançador | clang-tidy (`CustomFunctions`), ativo e medido ([processos](../arquitetura/processos-e-confianca.md)) |
-| Dependência entre módulos só para camada de baixo | `kinein_add_module`, proposto ([módulos](../arquitetura/modulos-e-camadas.md)) |
+| Processo só pelo lançador | clang-tidy (`CustomFunctions`), ativo e medido ([processos](../architecture/processes-and-trust.md)) |
+| Dependência entre módulos só para camada de baixo | `kinein_add_module`, proposto ([módulos](../architecture/modules-and-layers.md)) |
 | Nada executa antes da confiança no workspace | Teste do projeto hostil (RNF-SEG-01) |
 | Dependência externa nova só com aprovação do Viktor, com licença conferida | Revisão |
 | Uma responsabilidade, um módulo dono. Variação nova entra como adaptador de uma porta que já existe (aberto/fechado), nunca como cópia ajustada de código existente | `gate.duplication` (T1 a T3); a mesma lógica escrita de outro jeito (T4), na revisão (P20) |
@@ -85,8 +85,8 @@ warning. No tool enforces these rules in the CI.
 | C7 | A comment states what the code cannot: the reason, the contract, the source, the limit. It never paraphrases the code | A paraphrase goes stale as soon as the code changes |
 | C8 | State, not history: no "now", "new", "old", "still", "already", "changed", "used to" | History is in git |
 | C9 | A technical claim (version, flag, API behavior) carries its source in one of three forms: `(<document title>, <section>)`; `Measured on YYYY-MM-DD with <tool> <version>.`; `Not verified: <reason>.` | A claim without a source cannot be checked |
-| C10 | A decision is cited as `the maintainer's decision of YYYY-MM-DD (<ID>)`; a pending item by its ID in [decisoes-pendentes.md](../decisoes-pendentes.md). No `TODO`, `FIXME` or `XXX` | Pending work has one owner, not one per file |
-| C11 | A file is cited by its path from the repository root (`docs/...`, `core/...`); a 0.3 lesson by its ID in [licoes-da-0.3.md](../licoes-da-0.3.md) | The path works from any directory |
+| C10 | A decision is cited as `the maintainer's decision of YYYY-MM-DD (<ID>)`; a pending item by its ID in [pending-decisions.md](../pending-decisions.md). No `TODO`, `FIXME` or `XXX` | Pending work has one owner, not one per file |
+| C11 | A file is cited by its path from the repository root (`docs/...`, `core/...`); a 0.3 lesson by its ID in [lessons-from-0.3.md](../lessons-from-0.3.md) | The path works from any directory |
 | C12 | Never a person's name or user name ("the maintainer"), a mention of AI tools or assistants, or commented-out code outside a corpus | The code describes the product, not who wrote it |
 
 The header (C6) uses `//` or `#`. In Python it is the module docstring with the same lines,

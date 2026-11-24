@@ -2,7 +2,7 @@
 
 Dono: quais módulos `core/lib` tem, o que cada um faz, quem pode usar quem e o
 mecanismo que impõe isso. Os processos e quem decide o quê estão em
-[fronteiras-e-responsabilidades.md](fronteiras-e-responsabilidades.md).
+[boundaries-and-responsibilities.md](boundaries-and-responsibilities.md).
 
 Estado: **proposta de 2026-11-22, aguardando a aprovação do Viktor (P15)**.
 Nenhum módulo existe ainda. O desenho interno de `rt` (execução) e de
@@ -40,7 +40,7 @@ dependências no build, onde um erro reprova o configure.
    por `launch`, e ligado como `PRIVATE`, para não vazar adiante pelo grafo.
 4. **Dentro do módulo**, o clang-tidy impede chamar a função de sistema fora
    do lugar dela. A primeira lista, a de criar processo, já está ativa
-   ([gates](../engenharia/gates-e-medida-de-eficacia.md#registro)).
+   ([gates](../engineering/gates-and-effectiveness.md#registro)).
 
 Os dois primeiros itens são uma função só, `kinein_add_module(NAME RANK
 DEPENDS VISIBLE_TO)`, a escrever depois da aprovação, com mutantes (ciclo,

@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: defect d07, T3, parse_diagnostic with two extra validations.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include "corpus/build/diagnostics.hpp"
 
 #include <expected>

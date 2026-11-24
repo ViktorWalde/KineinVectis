@@ -1,6 +1,6 @@
 // Test that GoogleTest was built in the same standard library mode as the tests.
 //
-// Documented in: docs/engenharia/estrategia-de-testes.md
+// Documented in: docs/engineering/test-strategy.md
 //
 // In the debug-stl profile, _GLIBCXX_DEBUG replaces std::vector with
 // std::__debug::vector, and the PARAMETER type enters the function's mangled

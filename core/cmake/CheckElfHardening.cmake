@@ -1,11 +1,11 @@
 # Check in the binary what core/cmake/KineinHardening.cmake promises at link time.
 #
-# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+# Documented in: docs/engineering/build-profiles-and-hardening.md
 #
 # Usage: cmake -DBINARY=<executable> -DREADELF=<readelf> -P CheckElfHardening.cmake
 #
 # The test reads the ELF the build produced, not the CMake flags: green here means that the
-# protection reached the file (lesson L17 in docs/licoes-da-0.3.md).
+# protection reached the file (lesson L17 in docs/lessons-from-0.3.md).
 
 if(NOT DEFINED BINARY OR NOT EXISTS "${BINARY}")
     message(FATAL_ERROR "BINARY does not exist: '${BINARY}'")

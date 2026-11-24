@@ -1,6 +1,6 @@
 # Sanitizers of the C++ core.
 #
-# Documented in: docs/engenharia/perfis-de-compilacao-e-hardening.md
+# Documented in: docs/engineering/build-profiles-and-hardening.md
 #
 # ASan and UBSan together; TSan in a separate build, because the compiler rejects
 # -fsanitize=thread together with -fsanitize=address. A sanitizer error fails the

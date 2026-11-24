@@ -38,7 +38,7 @@ que a cria.
 
 ## O caminho de um pedido
 
-Os módulos são os de [módulos e camadas](modulos-e-camadas.md).
+Os módulos são os de [módulos e camadas](modules-and-layers.md).
 
 ```mermaid
 sequenceDiagram

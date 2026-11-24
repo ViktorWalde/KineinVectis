@@ -1,6 +1,6 @@
 # GoogleTest for the tests of the C++ core.
 #
-# Documented in: docs/engenharia/estrategia-de-testes.md
+# Documented in: docs/engineering/test-strategy.md
 #
 # GoogleTest 1.17.0, BSD-3-Clause license: the maintainer's decision of 2026-11-22 (P06).
 #

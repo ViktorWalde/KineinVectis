@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c02, another enum table with the shape of method_name
 // and severity_name.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 //
 // The data change; the logic is the switch.
 #include "corpus/protocol/messages.hpp"

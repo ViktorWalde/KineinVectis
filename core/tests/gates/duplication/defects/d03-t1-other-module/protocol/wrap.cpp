@@ -1,6 +1,6 @@
 // Corpus of gate.duplication: defect d03, T1 of text::wrap_words in the protocol module.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <cstddef>
 #include <string>
 #include <string_view>

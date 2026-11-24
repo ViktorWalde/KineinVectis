@@ -1,7 +1,7 @@
 # Persistência e durabilidade
 
 Dono: onde cada arquivo próprio da IDE mora, como ele é gravado e quanto texto
-uma queda pode levar. Fecha as lições L04 e L13 ([lições](../licoes-da-0.3.md)).
+uma queda pode levar. Fecha as lições L04 e L13 ([lições](../lessons-from-0.3.md)).
 
 ## Três classes, mais a árvore de build
 
@@ -37,7 +37,7 @@ Do 64 §5.9 (64:603-672), decisão DP-08 do Viktor (64:943).
   do buffer agenda a gravação do rascunho com **prazo máximo**; a pausa da
   digitação pode adiantar a gravação, nunca adiar além do prazo.
 - **O limite:** RNF-DUR-01, com 2 s propostos
-  ([decisões](../decisoes-pendentes.md)).
+  ([decisões](../pending-decisions.md)).
 - **O caminho:** o rascunho sai do espelho que o core mantém pelo
   `nvim_buf_attach`, sem o swap do Neovim (decisão 3 do 65 §21, 65:895-896).
   O arquivo do projeto é gravado pelo core, pelo `BufWriteCmd` (65:892-894).

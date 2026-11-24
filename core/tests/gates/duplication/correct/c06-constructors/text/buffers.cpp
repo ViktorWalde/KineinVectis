@@ -1,7 +1,7 @@
 // Corpus of gate.duplication: correct form c06, constructors and special member functions with the
 // same shape, in different classes.
 //
-// Documented in: docs/engenharia/gates-e-medida-de-eficacia.md
+// Documented in: docs/engineering/gates-and-effectiveness.md
 #include <cstddef>
 #include <string>
 #include <vector>
