@@ -22,7 +22,10 @@ The decision is recorded in
 
 - The core is rewritten in C++23 under `core/`: a library with no Qt (`core/lib`) and a thin Qt
   adapter (`core/qt`). The Rust core gets no new features.
-- An embedded Neovim (`nvim --embed`) is the editing engine. The QML frontend stays.
+- The core owns the truth. The QML frontend stays, with no domain logic: it shows what the core
+  asserts and sends the person's intent.
+- The editor is a ready component, the Qt Quick `TextEdit`. The core owns the text of every
+  document; the UI applies each keystroke at once and sends it to the core as a versioned delta.
 - The scope is C and C++ until the core is solid; Rust and Python come back later.
 - The migration strangles the old core inside this repository: the C++ core speaks the same
   protocol, the UI picks the core binary through `KINEIN_CORE_BIN`, and the Rust core is the
@@ -84,16 +87,15 @@ handled.
 flowchart LR
     UI["UI<br/>Qt Quick + QML (ui/)"] -->|line-delimited JSON-RPC over stdio| CORE["Core<br/>C++23 (core/)"]
     CORE -->|launcher| TOOLS["Tools<br/>cmake, compilers, git, gdb, probes"]
-    CORE -->|launcher + Landlock| NVIM["nvim --embed"]
-    CORE -->|LSP relay| CLANGD["clangd"]
-    UI -->|private socket: grid, keyboard, mouse| NVIM
+    CORE -->|launcher, LSP client| CLANGD["clangd"]
 ```
 
 - The UI and the core are separate processes. The UI picks the core binary through
   `KINEIN_CORE_BIN`, so the C++ core replaces the Rust core without a change to the UI.
-- Every external process, `nvim` and `clangd` included, starts through the core's launcher, which
-  decides what an untrusted project may run.
-- Keystrokes go from the UI straight to `nvim`; the core stays off the typing path.
+- Every external process, `clangd` included, starts through the core's launcher, which decides
+  what an untrusted project may run.
+- A keystroke is drawn by the UI at once and reaches the core as a versioned delta; the core owns
+  the text, the draft, the file and the LSP session.
 
 The processes and their responsibilities are in
 [boundaries and responsibilities](docs/architecture/boundaries-and-responsibilities.md); the full

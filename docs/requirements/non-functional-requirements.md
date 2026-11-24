@@ -34,22 +34,21 @@ their value is a **proposal** until the decision.
 | RNF-EDI-01 | Editing does not cost the whole file | Per 1-character editing event in the 20,000-line file: the core's work p95 ≤ 16 ms; no message after the opening carries the whole document | Record; message sizes | Test at the reference sizes. Adapted from 19:121, which measured `syntaxTree.update`, a method that leaves |
 | RNF-PERF-01 *(0.1)* | No path of the core grows faster than linearly with the size of the file or the project | From 20,000 to 40,000 lines, the time grows at most 2.5 times (**proposal**, P04) | Complexity test at the four sizes | Complexity test per path ([tests](../engineering/test-strategy.md#complexity)) |
 | RNF-MEM-01 | Memory budget of the core while editing | Core RSS ≤ 60 MB after opening, indexing and editing the 20,000-line file | `/proc/<pid>/status` | Performance test with a verdict |
-| RNF-ED-01 *(0.1)* | The conditions of DP-10 in the integrated product | R1 and R12 by the method of the proof, R10 with the whole document, real IME and Windows | 65 §20.3 and 65:874-879 | The phase D tests ([editing engine](../architecture/editing-engine.md)) |
+| RNF-ED-01 *(0.1)* | The editor is as fast and as light as the reference | At the three reference sizes: key to frame p95 ≤ 1.25 times and worst case ≤ 2 times the reference, opening ≤ 1.25 times, RSS ≤ 1.5 times (**proposal**, P23). IME and the AT-SPI tree at least as in the current editor | The method of 65 §20.3; the reference is the proof column of its table | Performance test with a verdict; IME and accessibility tests ([editing engine](../architecture/editing-engine.md#acceptance)) |
 
 ## Security and privacy
 
 | ID | Requirement | Limit | Method | Enforced by |
 | --- | --- | --- | --- | --- |
-| RNF-SEG-01 | Without trust, nothing the project defines runs | Zero marks in the hostile project for `workspace.open`, for each automatic request of the UI and for the first file of each language | The vectors of 64 §2.1 and those of Neovim (65 §20.2, item 14) as a fixture | The launcher and the hostile project test, with a mutant of the guard |
+| RNF-SEG-01 | Without trust, nothing the project defines runs | Zero marks in the hostile project for `workspace.open`, for each automatic request of the UI and for the first file of each language | The vectors of 64 §2.1 as a fixture | The launcher and the hostile project test, with a mutant of the guard |
 | RNF-SEG-02 | Every process states where it came from | Every launch recorded with program, origin and trust decision | Launcher record | The origin is a mandatory field of the launch request |
-| RNF-SEG-03 *(0.1)* | `nvim` runs no program | Zero `execve` from `nvim`; without Landlock, an untrusted project opens without the new editor | The 14 vectors of 65 §20.2, item 14 | Hostile test with a mutant that removes the Landlock rule |
 | RNF-PRIV-01 | Zero telemetry; nothing leaves the machine without a gesture of the person | Zero network connections started by the core without an explicit request | Test with the network denied | RNF1 of 19 (19:66) |
 
 ## Data and durability
 
 | ID | Requirement | Limit | Method | Enforced by |
 | --- | --- | --- | --- | --- |
-| RNF-DUR-01 *(0.1)* | Typed text survives the crash of any process | At most **2 s** of continuous typing lost, whatever the length of the typing (the maintainer's decision of 2026-11-22; in the current product since the fix of INF-26 in QML) | `kill -9` on the UI, the core and `nvim` after long typing with no pause (INF-26) | Crash test with a mutant that removes the maximum delay |
+| RNF-DUR-01 *(0.1)* | Typed text survives the crash of any process | At most **2 s** of continuous typing lost, whatever the length of the typing (the maintainer's decision of 2026-11-22; in the current product since the fix of INF-26 in QML) | `kill -9` on the UI and on the core after long typing with no pause (INF-26) | Crash test with a mutant that removes the maximum delay |
 | RNF-DUR-02 *(0.1)* | Writing a project file is atomic | No crash leaves a project file truncated or mixed | Crash injected between the write and the rename | Crash test on writing |
 | RNF-DADOS-05 | Personal state and cache do not live in the project tree | Zero per-person files under `.kinein`; opening without trust writes nothing in the project | Listing of the tree before and after | Opening test ([persistence](../architecture/persistence-and-durability.md)) |
 
@@ -62,4 +61,4 @@ their value is a **proposal** until the decision.
 | RNF-QUA-03 *(0.1)* | Tests green under the sanitizers | The whole suite passes in the `dev`, `asan-ubsan` and `tsan` profiles | `cmake --workflow` of each preset |
 | RNF-QUA-04 *(0.1)* | C++23 with no extensions, and the code builds as C++26 | `cxx26-probe` green | `build.contract` test |
 | RNF-ESC-01 | The core library depends neither on Qt nor on the periphery | `core/lib` builds without Qt installed | The `dev` preset does not look for Qt ([boundaries](../architecture/boundaries-and-responsibilities.md)) |
-| RNF-POR-01 *(0.1)* | Linux x86_64 first; Windows is a condition of DP-10 | The tests of step 10 of 62 §3 on Windows | NOT VERIFIED: nothing of the new core has run on Windows |
+| RNF-POR-01 *(0.1)* | Linux x86_64 first, then Windows | The tests of step 10 of 62 §3 on Windows | NOT VERIFIED: nothing of the new core has run on Windows |

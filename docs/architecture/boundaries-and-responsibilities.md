@@ -10,17 +10,16 @@ processes, persistence, protocol, editing engine).
 flowchart LR
     UI["UI<br/>Qt Quick + QML"] -->|line-delimited JSON-RPC over stdio| CORE["core<br/>C++23"]
     CORE -->|launcher| TOOLS["tools<br/>cmake, compilers, git, gdb, probes"]
-    CORE -->|launcher + Landlock| NVIM["nvim --embed"]
-    CORE -->|LSP relay| CLANGD["clangd<br/>created by the launcher"]
-    UI -->|private socket: grid, keyboard, mouse| NVIM
+    CORE -->|launcher, LSP client| CLANGD["clangd<br/>created by the launcher"]
 ```
 
 - **The UI and the core** are separate processes, as in 0.3 (A01 of the
   [lessons](../lessons-from-0.3.md)). The UI picks the core binary through `KINEIN_CORE_BIN`
   (`ui/src/core_client_process.cpp:240`): that is how the C++ core takes the place of the Rust
   core without a change to the UI.
-- **`nvim`** is born through the core's launcher and dies when the core closes its channel
-  (65 §6.1). A keystroke goes from the UI straight to `nvim`; the core stays off the typing path.
+- **The editor** is the Qt Quick `TextEdit`, in the UI process. The core owns the text of every
+  document: the UI applies a keystroke to its copy and sends it to the core as a versioned delta,
+  so the core stays off the path from the key to the frame ([editing engine](editing-engine.md)).
 - **Every external tool** is born through the launcher
   ([processes and trust](processes-and-trust.md)).
 
@@ -36,7 +35,12 @@ A rule inherited from 64 §5.2 (64:384-393), adapted to the C++ core.
 | `core/lib`, domain | domain rules and state, algorithms | how a process is born, where an own file lives |
 | `core/lib`, launcher | origin, trust, environment, deadline, output cap, process group | domain rules |
 | `core/lib`, persistence | path, class and schema of each own file, durability | domain content |
-| Neovim | text, `changedtick`, cursor, the document's LSP protocol | processes, trust, server configuration |
+| Editor (`TextEdit`) | cursor, selection, scroll; it applies the person's keystrokes to its copy | the version, the text of record, the file, highlighting, diagnostics |
+
+**The frontend has no domain logic.** It shows what the core asserts and sends the person's
+intent. The 0.3 logic in the UI that belongs to the core leaves the UI and is rebuilt in the core
+with the design of 0.1, keeping the behavior the person sees: it is neither ported nor fixed in
+place.
 
 **The test for each function** of a QML controller and of the bridge: *if a command-line client
 would need the same logic, it belongs to the core.* The inventory of the 89 `*Controller.qml`

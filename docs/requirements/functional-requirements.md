@@ -11,8 +11,10 @@ exist yet.
 
 - **Languages:** C and C++. Rust and Python come back once the core is solid (ADR-0012).
 - **Outside the C++ core:** databases, Grafana, remote work over SSH, containers, Cargo and
-  Python. The 0.3 methods `lsp.*`, `syntaxTree.*` and `draft.*` leave with Neovim
-  ([editing engine](../architecture/editing-engine.md)).
+  Python.
+- **Editing:** the 0.3 methods `lsp.*`, `syntaxTree.*` and `draft.*` carry the whole document
+  (L01). The editing protocol replaces them and exists only in the C++ core, so the differential
+  test does not cover it ([editing engine](../architecture/editing-engine.md)).
 - **Origin:** each capability names the 0.3 methods that cover it today (protocol 0.223.0, route
   table of `crates/kinein-core/src/lib.rs`). The inherited acceptance is the differential test
   against the Rust core, apart from the intentional divergences
@@ -45,9 +47,10 @@ without losing a change, and handle a missing or hung tool.
 | RF-CMK-01 | CMake: state, presets, targets, configure, cache and repair of the build directory; `compile_commands.json` of the active preset | `cmake.status`, `cmake.presets.list`, `cmake.targets.list`, `cmake.configure`, `cmake.inspectCache`, `cmake.repairBuildDir` | Differential; configuring without trust is refused |
 | RF-BLD-01 | Build, run and test the target, with output and diagnostics | `build.run`, `run.start`, `run.stop`, `test.discover`, `test.run`, `runConfig.*` | Differential; cancelling kills the process group |
 | RF-TERM-01 | Terminal: open, write, resize, scroll, select, close | `terminal.*` | Differential; an `exec` failure becomes a typed error (L18) |
-| RF-ED-01 | Create and supervise `nvim` with containment, hand the socket address to the UI and keep the buffer mirror | new | The 15 items of the proof (65 §20.2) in the integrated product |
-| RF-ED-02 | Write the editor's file through `BufWriteCmd` and recover the text after a crash from the mirror | `draft.*` leaves | A crash with zero keystrokes lost beyond the limit (RNF-DUR-01) |
-| RF-LSP-01 | One clangd session per root, created by the launcher, with the core's context (`compile_commands.json`, `--query-driver` only for a compiler detected without trust), connected to Neovim by the relay | `lsp.*` leaves | R7 and R11 of 65 in the integrated product |
+| RF-ED-01 | Keep the document of each open file: apply the deltas of the UI in order, number the versions, propose the core's text changes with a base version, resynchronize the UI after a divergence | new | Property test: after random deltas and proposals, the copy of the UI equals the document; a proposal on a stale base is refused |
+| RF-ED-02 | Write the editor's file with the guarded write and recover the text after a crash from the draft | `draft.*` leaves | A crash with zero keystrokes lost beyond the limit (RNF-DUR-01) |
+| RF-ED-03 | Highlight with tree-sitter, incrementally, for a named version | `syntaxTree.*` leaves | RNF-EDI-01 at the reference sizes; complexity test (RNF-PERF-01) |
+| RF-LSP-01 | One clangd session per root, created by the launcher, with the core's context (`compile_commands.json`, `--query-driver` only for a compiler detected without trust); the core is the LSP client of each document | `lsp.*` leaves | One clangd process per root during the journey; changing the language standard of the preset changes the diagnostics; no `didChange` carries the whole document |
 | RF-SET-01 | Settings of the IDE and of the project | `settings.get`, `settings.set` | Differential |
 
 ## N1: C/C++ parity

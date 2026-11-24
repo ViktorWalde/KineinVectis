@@ -53,12 +53,11 @@ exists, its directory gets its own `.clang-tidy` that allows only it, and `VISIB
 
 ## The restricted mode
 
-From 64 §5.5 (64:508-528), restricted to C and C++, with Neovim (65 §21).
+From 64 §5.5 (64:508-528), restricted to C and C++.
 
 | Capability | Without trust | With trust |
 | --- | --- | --- |
 | Read, navigate, edit, search | yes | yes |
-| The new editor (`nvim`) | starts with Landlock; without Landlock, the project opens without the new editor | starts with Landlock |
 | clangd | starts with `--query-driver` only for a compiler the IDE detected | starts with the whole kit |
 | Git | off, with a notice | yes |
 | CMake configure, build, run, test, debug, flash | asks for trust on the gesture | yes |
@@ -70,5 +69,5 @@ From 64 §5.5 (64:508-528), restricted to C and C++, with Neovim (65 §21).
   In 0.3, QML held back the automatic configure (64:306-309); in the C++ core, the core refuses.
 - **Trust** stays in the person's global state, by the canonical root of the project, with the
   trusted folders of DP-02 (64:525-528).
-- **Acceptance:** the hostile project of 64 §2.1 plus the Neovim vectors, with zero marks
+- **Acceptance:** the hostile project of 64 §2.1, with zero marks
   (RNF-SEG-01) and a mutant that removes the guard and must fail.

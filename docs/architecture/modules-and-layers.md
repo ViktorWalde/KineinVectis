@@ -60,7 +60,7 @@ flowchart TB
     subgraph C4["40: domain, C and C++ scope"]
         direction LR
         workspace["workspace"] --- toolchain["toolchain"] --- cmake["cmake"] --- build["build"]
-        terminal["terminal"] --- editor["editor<br/>nvim supervisor"] --- lsp["lsp<br/>clangd relay"] --- settings["settings"]
+        terminal["terminal"] --- editor["editor<br/>document, versions, draft"] --- lsp["lsp<br/>LSP client"] --- settings["settings"]
     end
     subgraph C3["30: launcher"]
         launch["launch<br/>launcher and trust"]
@@ -71,7 +71,7 @@ flowchart TB
     end
     subgraph C1["10: system and format"]
         direction LR
-        sysfs["sys.fs"] --- sysio["sys.io"] --- sysproc["sys.process"] --- codec["codec<br/>JSON, msgpack"]
+        sysfs["sys.fs"] --- sysio["sys.io"] --- sysproc["sys.process"] --- codec["codec<br/>JSON"]
     end
     subgraph C0["00: vocabulary"]
         base["base<br/>Error, Result, Deadline, Clock,<br/>ids and paths"]
@@ -90,8 +90,8 @@ module may skip layers downward (the domain uses `base` directly), never go up.
 | `base` | 00 | Vocabulary with no I/O: `Error` with the named cause, `Result<T>` (`std::expected`), `Deadline`, the `Clock` port, strong ids (`RequestId`, `Generation`, `JobId`), `CanonicalPath` | standard library | L19, E7, E10 |
 | `sys.fs` | 10 | RAII descriptors, reading, atomic writing (temporary file, `fsync`, rename, `fsync` of the directory), never following links | `base` | RNF-DUR-02, R-DADOS-02 |
 | `sys.io` | 11 | Pipe, PTY, local socket, waiting on a descriptor | `base` | none |
-| `sys.process` | 12 | `posix_spawn`, `pidfd`, process group, Landlock. **The only place with the process-creation functions** | `base`, `sys.io` | L05, L18 |
-| `codec` | 13 | JSON and msgpack, with the library to be decided (P16) | `base` | none |
+| `sys.process` | 12 | `posix_spawn`, `pidfd`, process group. **The only place with the process-creation functions** | `base`, `sys.io` | L05, L18 |
+| `codec` | 13 | JSON, with the library to be decided (P16) | `base` | none |
 | `rt` | 20 | Loop (port), work classes, deadline, cancellation, generation. **Designed by the maintainer** | `base` | E1 to E10, RNF-EXE-01 and 02 |
 | `storage` | 21 | The three XDG classes, the catalog of own files, the schema version, the migration of `.kinein` | `base`, `sys.fs`, `codec` | L04, L13, RNF-DADOS-05 |
 | `launch` | 30 | Launcher and trust: origin, environment, deadline, output cap, cancellation, record; the trust store through `storage` | `base`, `rt`, `storage`, `sys.io`, `sys.process` (only `launch`) | L05, L06, L08, RNF-SEG-01 and 02 |
@@ -101,8 +101,8 @@ module may skip layers downward (the domain uses `base` directly), never go up.
 | `terminal` | 43 | Terminal on a PTY through the launcher | `launch`, `sys.io` | RF-TERM-01 |
 | `cmake` | 44 | Presets, File API, configure | `launch`, `toolchain`, `workspace`, `codec` | RF-CMK |
 | `build` | 45 | Build, run and the problems panel | `cmake`, `launch` | RF-BLD-01 |
-| `editor` | 46 | `nvim` supervisor: msgpack-RPC, buffer mirror, `BufWriteCmd`, draft with a maximum delay | `launch`, `codec`, `storage`, `workspace`, `rt` | RF-ED, RNF-DUR-01, RNF-SEG-03 |
-| `lsp` | 47 | clangd relay: process through the launcher, socket to `nvim`, diagnostics to the panel | `launch`, `codec`, `toolchain`, `cmake` | RF-LSP-01 |
+| `editor` | 46 | The document of each open file: text and version of record, the deltas of the UI, the proposals with a base version, tree-sitter highlighting, the draft with a maximum delay | `storage`, `workspace`, `rt` | RF-ED, RNF-EDI-01, RNF-DUR-01 |
+| `lsp` | 47 | LSP client of each document: the session through the launcher, incremental sync from the document, diagnostics to the panel | `launch`, `codec`, `toolchain`, `cmake`, `editor` | RF-LSP-01 |
 | `protocol` | 50 | Line-delimited JSON-RPC 2.0, method table, translation between the wire and the domain, wire errors. **Designed by the maintainer** | `codec`, `base`, the domain modules | L12, RNF-CON-01 |
 | `app` | 60 | Composition root: creates the modules, injects the ports, registers the methods | all | ENG-14, ENG-15 |
 

@@ -45,13 +45,13 @@ sequenceDiagram
 
 - **The 0.3 problem:** a debounce with no maximum delay in a QML `Timer`. Whoever types without a
   1.5 s pause has nothing written, and the loss has no ceiling (INF-26).
-- **The rule:** the durability policy belongs to the core. Every change of the buffer mirror
+- **The rule:** the durability policy belongs to the core. Every delta the core accepts
   schedules the write of the draft with a **maximum delay**; a pause in the typing may bring the
   write forward, never push it past the delay.
 - **The limit:** RNF-DUR-01, 2 s, the maintainer's decision of 2026-11-22
   ([non-functional requirements](../requirements/non-functional-requirements.md)).
-- **The path:** the draft comes from the mirror the core keeps through `nvim_buf_attach`, without
-  the Neovim swap file (decision 3 of 65 §21, 65:895-896). The project file is written by the
-  core, through `BufWriteCmd` (65:892-894).
-- **Acceptance:** `kill -9` on the UI, the core and `nvim` after long typing with no pause, with
+- **The path:** the draft comes from the core's document, which owns the text
+  ([editing engine](editing-engine.md)). The project file is written by the core, with the guarded
+  write above.
+- **Acceptance:** `kill -9` on the UI and on the core after long typing with no pause, with
   the loss measured, and a mutant with no maximum delay that must fail.

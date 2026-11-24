@@ -1,7 +1,8 @@
-# ADR-0012: the backend in C++23, with Neovim as the editing engine
+# ADR-0012: the backend in C++23 and the editing model
 
-> **State:** draft of 2026-11-22, under review by the maintainer.
-> **Decision by the maintainer:** 2026-11-22 (C++23 backend); 2026-11-15 (Neovim, DP-10 of 64).
+> **State:** draft, under review by the maintainer.
+> **Decision by the maintainer:** 2026-11-22 (C++23 backend); 2026-11-23 (the core owns the
+> truth, the frontend has no domain logic, the editor is a ready component).
 > The numbering continues the one of `DocsPublic/decisoes-adr/`.
 
 ## Context
@@ -24,13 +25,24 @@ The full list, with the evidence, is in the [lessons](../lessons-from-0.3.md).
 
 1. **The core is rewritten in C++23**, in `core/`, with a library that has no Qt (`core/lib`) and
    a thin adapter (`core/qt`). The Rust core gets no further evolution.
-2. **The editing engine is an embedded Neovim** (`nvim --embed`, msgpack-RPC, `ext_linegrid`),
-   under the conditions of 65 §21 ([editing engine](../architecture/editing-engine.md)).
-3. **The QML frontend stays.** The views and the theme are reused; the controllers go through the
-   boundary test ([boundaries](../architecture/boundaries-and-responsibilities.md)).
+2. **The core owns the truth, and the frontend has no domain logic.** The QML frontend stays: it
+   shows what the core asserts and sends the person's intent. The 0.3 logic in the UI that
+   belongs to the core leaves the UI and is rebuilt in the core with the design of 0.1, keeping
+   the behavior the person sees
+   ([boundaries](../architecture/boundaries-and-responsibilities.md)).
+3. **The editor is a ready component, the Qt Quick `TextEdit`**, and the core owns the text of
+   every document ([editing engine](../architecture/editing-engine.md)):
+   - the UI applies a keystroke to its copy at once and sends the delta with its base version;
+   - the core is the truth for the disk, the draft, the LSP session and every edit, and its own
+     text changes reach the UI as proposals with a base version;
+   - a divergence is resolved from the core's text;
+   - the core is the LSP client of the document, and tree-sitter runs in the core.
 4. **The scope is only C and C++** until the core is solid. Rust and Python come back later.
 5. **The migration strangles the old core**, in the same repository:
    - the C++ core speaks the same protocol, and the UI picks the core through `KINEIN_CORE_BIN`;
+   - editing is the exception: the 0.3 methods `lsp.*`, `syntaxTree.*` and `draft.*` carry the
+     whole document (L01), and the editing protocol that replaces them exists only in the C++
+     core, by its own ADR (P22);
    - the Rust core is the oracle of the differential test;
    - a working IDE always exists, for dogfooding.
 6. **The Rust core is deleted only** when the C++ core meets the non-functional requirements of
@@ -50,14 +62,19 @@ stateDiagram-v2
 
 ## Why
 
-**TO BE CONFIRMED BY THE MAINTAINER.** The reasons below come from the plan of 2026-11-22; no
-earlier document records them:
+**Items 1, 4, 5 and 6: TO BE CONFIRMED BY THE MAINTAINER.** The reasons below come from the plan
+of 2026-11-22; no earlier document records them:
 
 - whoever writes the logic of the core wants to master the mechanism, and the algorithms library
   (C/C++ environment, embedded, semantics) is the differentiator of the product;
 - the product is an IDE for C and C++, developed in itself: the core's code goes through the same
   clangd, the same CMake and the same sanitizers that the IDE offers to its users;
 - the UI is Qt and C++: one language fewer in the product.
+
+**Items 2 and 3.** One owner for each fact: a rule written once, in the core, serves the UI, a
+command-line client and the tests. `TextEdit` is Qt's own component: input, IME, accessibility
+and the clipboard come with it, in the process and the toolkit of the UI, with no process to
+contain.
 
 ## What this decision replaces
 
@@ -74,8 +91,8 @@ earlier document records them:
 
 **Items that close with the removal of the Rust core**, with no fix of their own: INF-24, INF-29,
 INF-30, INF-31 and ENG-57. **Items that become requirements of the C++ core:** INF-23, ENG-50 to
-ENG-56 and INF-22. **UI items** (INF-25 to INF-28) close with the removal of the current editor in
-phase E of 65, not with the backend.
+ENG-56 and INF-22. **UI items** (INF-25 to INF-28) close with the rebuilt editor, each with its
+test.
 
 ## Alternatives considered
 
@@ -83,7 +100,9 @@ phase E of 65, not with the backend.
 | --- | --- |
 | Strategy B of 64, in Rust | It was the plan decided on 2026-11-14 (DP-01 to DP-09). The decision of 2026-11-22 revises it, for the reasons of the section "Why" (to be confirmed) |
 | C++26 | Not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection, and clangd would not understand the code. C++26 features enter one at a time, by ADR |
-| Rewriting the UI too | The QML UI works and is the IDE of dogfooding; the measured defects are in the core, in the bridge and in the editor |
+| Rewriting the views too | The views and the theme work and are the IDE of dogfooding; what is wrong in the UI is the domain logic, which leaves it (item 2) |
+| QScintilla or KTextEditor | `QWidget` components, outside the Qt Quick scene. The Qt Quick port of Scintilla lives in a fork with no commit since 2023-03 |
+| KSyntaxHighlighting | Highlighting by regular expressions; tree-sitter is mandatory (21 §M5.4) and also feeds the analysis of the core |
 
 ## Consequences
 
@@ -98,9 +117,14 @@ phase E of 65, not with the backend.
   (`disallowed_methods = "forbid"`). Its mechanism in C++ is the `bugprone-unsafe-functions`
   option of clang-tidy, measured by `gate.launcher`
   ([gates](../engineering/gates-and-effectiveness.md)).
+- The core carries an LSP client and the tree-sitter grammars; their dependencies are P21.
+- The UI keeps a copy of each open document; the property test of the
+  [editing engine](../architecture/editing-engine.md#acceptance) proves that it stays equal to the
+  core's.
 
 ## What was not verified
 
 - How the UI reacts to `MethodNotFound` on the requests it sends on its own.
 - The effort of the rewrite: no estimate was measured.
 - Windows and MSVC.
+- `TextEdit` with the files of 20,000 and 40,000 lines, without the IPC of 0.3.

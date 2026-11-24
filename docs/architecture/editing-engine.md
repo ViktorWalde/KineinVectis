@@ -1,74 +1,107 @@
-# Editing engine: Neovim
+# Editing engine
 
-Owner: the division of responsibilities between Neovim, the core and the UI, the conditions of
-the switch of editors and the requirements inherited from the proof. The full evaluation is in
-65; this file keeps only what the C++ core must meet.
+Owner: the editing component, who owns the text of a document, how an edit travels between the
+UI and the core, what the component does not bring and how the editor is accepted.
+
+## The component
+
+The Qt Quick `TextEdit`, with its `QQuickTextDocument`, inside a `Flickable`
+([ADR-0012](../adr/ADR-0012-cpp23-backend.md)). It is Qt's own component: keyboard and mouse
+input, selection, the clipboard, undo, input methods and accessibility come with it. A solid ready
+component is used wherever one exists; what no component brings is built, with the reason written
+in this file.
+
+| Need | Comes from |
+| --- | --- |
+| Input, selection, clipboard, undo, IME, accessibility | `TextEdit` |
+| Highlighting | tree-sitter in the core; the UI applies the ranges the core sends through a `QSyntaxHighlighter` on the `QQuickTextDocument` |
+| Completion, diagnostics, navigation, rename, code actions | clangd, through the LSP client of the core (P21) |
+| Line numbers, diagnostic marks, folding, multiple cursors, split view | Not in `TextEdit`. Each one enters only with a requirement, as QML over the component, fed by the core |
+
+Inside a `Flickable`, `TextEdit` creates scene graph nodes only for the blocks in the viewport
+([Text editing improvements in Qt Quick](https://www.qt.io/blog/text-editing-improvements-in-qt-quick)).
+The layout, however, covers the whole document: that is the risk the first measurement checks.
 
 ## Who owns what
 
-From 65 §5 (65:185-200).
-
 | Responsibility | Owner | The others |
 | --- | --- | --- |
-| Text and version of the document | Neovim (`changedtick`) | The core and the UI receive versioned events and never edit on their own |
-| A text change made by Kinein | A Lua function that checks the expected `changedtick` and refuses a stale one | none |
-| Writing the file | The core, through `BufWriteCmd`, with a guarded write | Neovim notifies |
-| Recovery after a crash | The core, from the draft of the mirror, with no swap file | none |
-| The LSP server process | The core, through the launcher | Neovim connects through a socket and creates no process |
-| The document's LSP protocol | Neovim | The core does not synchronize the same document; the relay sends no `didOpen` |
-| Server configuration | The core (kit, preset, trust) | Neovim receives it ready |
-| Server diagnostics | The server publishes; Neovim shows | The core reads them through the relay for the problems panel |
+| Text and version of the document | The core | The UI holds the copy it shows and never decides a version |
+| A keystroke | The UI applies it to its copy at once and sends the delta with its base version | The core applies the deltas in order; a typed delta is never refused |
+| A text change of the core (format, rename, fix) | The core proposes it with its base version | The UI applies it only on that base, and the change reaches the core as an ordinary delta; on another base it refuses, and the core computes again |
+| A divergence between the copy and the document | The core: its text and version replace the copy | none |
+| Writing the file | The core, with the guarded write of [persistence](persistence-and-durability.md) | The UI sends the intent |
+| Draft and recovery | The core, from its document, with a maximum delay (RNF-DUR-01) | none |
+| Highlighting, diagnostics, completion | The core, for a named version | The UI discards a result for an older version |
+| The LSP session and the document sync | The core: one client per document, incremental `didChange` from the deltas | none |
+| Cursor, selection, scroll | The UI (presentation) | The core receives the position when a request needs it |
+
+The core's document changes only through the stream of deltas, so it has a single writer.
+
+## An edit
 
 ```mermaid
-flowchart LR
-    UI["UI<br/>NvimView"] -->|keys and mouse, grid back| NVIM["nvim --embed<br/>owns the text"]
-    NVIM -->|nvim_buf_attach events| CORE["core<br/>mirror, draft, BufWriteCmd"]
-    CORE -->|launcher + Landlock| NVIM
-    CORE -->|launcher| CLANGD["clangd"]
-    NVIM <-->|LSP over a socket, through the relay| CLANGD
+sequenceDiagram
+    participant P as person
+    participant UI as UI, TextEdit
+    participant C as core, editor module
+    participant L as clangd
+    P->>UI: keystroke
+    UI->>UI: apply to the copy, draw the frame
+    UI->>C: delta on base version n
+    C->>C: apply, version n+1, schedule the draft
+    C-->>UI: acknowledgment of version n+1
+    C->>L: incremental didChange, version n+1
+    C-->>UI: highlighting and diagnostics of version n+1
 ```
 
-## Decisions of the maintainer of 2026-11-15 (65:890-903)
+## A text change of the core
 
-1. No modal editing by default; Vim modes are the person's option.
-2. The core writes the file, through `BufWriteCmd`.
-3. Recovery comes from the draft of the mirror, with no swap file.
-4. Without Landlock, an untrusted project opens without the new editor.
-5. `nvim` ships pinned inside the AppImage.
-6. and 7. Multiple cursors and the fix checker (a specialized algorithm of the core that queries
-   the LSP server through the relay, 65:285-288) stay open: the proof measured neither.
+```mermaid
+sequenceDiagram
+    participant UI as UI, TextEdit
+    participant C as core
+    C->>UI: proposal on base version n
+    alt the copy is on version n
+        UI->>UI: apply to the copy
+        UI->>C: delta on base version n
+    else the copy is on a later version
+        UI-->>C: refused, stale base
+        C->>C: compute again on the current version
+    end
+```
 
-## Conditions to remove the current editor (65:870-883)
+- No message after the opening carries the whole document (RNF-EDI-01). The exception is the
+  resynchronization after a divergence, which is recorded as a defect.
+- The shape of a delta, the detection of a divergence and the replay of the deltas the draft does
+  not have after a crash of the core belong to the editing protocol, by ADR (P22).
 
-The current editor stays next to the new one until the integrated product passes all four: R1 and
-R12 by the method of the proof, R10 with the whole document, real IME with fcitx5 or ibus, and the
-Windows tests with the Job Object. If one fails, the decision goes back to the maintainer with the
-measurement.
+## Acceptance
 
-## What exists
+1. **The component alone**, before the integration: `TextEdit` with no IPC, offscreen at
+   1280x800, with the files of 85, 2,463, 19,970 and 40,000 lines, by the method of 65 §20.3 (key
+   to frame, opening to the first frame, CPU while typing, RSS).
+2. **The reference** is the proof column of the table of 65 §20.3:
 
-The branch `origin/prova/eng-60` (`8e35e471`) holds the proof of the 15 items (65 §20). The UI
-side is C++: msgpack, the RPC client and `NvimView` (65:709). The supervisor, which plays the role
-of the core, is Rust (Landlock, relay, mirror, about 1,700 lines). What is missing is the
-supervisor inside the C++ core, in the integrated product.
+   | Lines | Key to frame, p95 (ms) | Opening (ms) | RSS (MiB) |
+   | --- | --- | --- | --- |
+   | 85 | 8.71 | 29.4 | 73.9 |
+   | 2,463 | 9.00 | 30.4 | 75.0 |
+   | 19,970 | 9.94 | 32.0 | 83.4 |
 
-**The order.** `nvim` is born through the launcher with Landlock, so the integration comes after
-the launcher and the deadlines (65:885-888). The isolated proof does not depend on the language of
-the backend; the integration depends on the launcher.
+   The limits against it are RNF-ED-01 (P23). The 40,000-line file has no reference; it answers
+   to RNF-PERF-01. A missed limit goes back to the maintainer with the measurement.
+3. **The integrated product**, by the same method.
+4. **IME** with fcitx5 or ibus: the preedit at the cursor and the right committed text.
+5. **Accessibility** through AT-SPI: the whole document, the cursor and the selection.
+6. **A property test:** after random deltas and proposals, the copy of the UI and the document of
+   the core are equal, and a proposal on a stale base is refused.
+7. **Crash:** RNF-DUR-01, with `kill -9` on the UI and on the core.
 
-## Requirements of the integration (65:777-805)
+## NOT VERIFIED
 
-Eight defects the proof found and fixed, each with a mandatory test in the integration:
-
-1. After each compound action, the modeless layer returns to insertion.
-2. Typing or pasting over the selection does not change the clipboard.
-3. With an active snippet, `Tab` jumps to the next field.
-4. The workaround of `selection=exclusive` with `vim.snippet`.
-5. The launcher waits for the previous LSP session to end before accepting the next one.
-6. The socket lives on a short path, and a path above 108 bytes fails with a message.
-7. Input handles text by code point, not by UTF-16 unit.
-8. The accessibility factory is installed before the QML engine, and R10 is read through AT-SPI.
-
-The limit of Landlock (65:814-821): it blocks `execve`, not the loading of a library. The hostile
-test covers the passive vectors (`runtimepath`, `package.path`, `package.cpath`, modeline and
-`exrc`).
+- `TextEdit` with 19,970 and 40,000 lines without the IPC of 0.3: never measured. The 0.3 opening
+  of 47 s (INF-25) has no isolated cause.
+- A report on Qt 6.6 measured 5 s to redraw 21,000 lines, growing linearly
+  ([Qt Forum](https://forum.qt.io/post/819626)). It was not reproduced with Qt 6.12.
+- Folding and multiple cursors on `QQuickTextDocument`.
