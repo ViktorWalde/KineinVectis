@@ -13,12 +13,10 @@ fixes only their boundary. The file roles were approved by the maintainer on 202
 0.3 measured the same cause in several places: nothing prevented a module from using another,
 and the dependency was whatever compiled.
 
-- **Processes created in about 122 places** (ENG-51).
-- **Infrastructure in the domain:** the `Content-Length` framing and `EventSender` lived in `lsp`
-  and served 9 modules; `rpc.rs` held error functions of 6 domains (ENG-12).
-- **A `Core` with 32 fields**, and `impl Core` spread over 73 files (ENG-14, ENG-15).
-- **Routing by chain:** one `match` and 40 `or_else`, in a file 35 of the last 300 commits edited
-  (ENG-10).
+- **Processes created in about 122 places** (L06).
+- **Infrastructure in the domain:** framing and event sending shared by 9 modules (L21).
+- **A `Core` with 32 fields**, and `impl Core` spread over 73 files (L22).
+- **Routing by chain:** one `match` and 40 `or_else` (L23).
 
 Convention held none of these. The core puts the direction of the dependencies in the build,
 where a mistake fails the configure step.
@@ -88,7 +86,7 @@ module may skip layers downward (the domain uses `base` directly), never go up.
 | Module | Rank | Responsibility | Uses | Origin |
 | --- | --- | --- | --- | --- |
 | `base` | 00 | Vocabulary with no I/O: `Error` with the named cause, `Result<T>` (`std::expected`), `Deadline`, the `Clock` port, strong ids (`RequestId`, `Generation`, `JobId`), `CanonicalPath`, the units of a text position (`ByteOffset`, `LineIndex`, `Utf16Column`, `DisplayColumn`) and their conversion per line | standard library | L19, E7, E10 |
-| `sys.fs` | 10 | RAII descriptors, reading, atomic writing (temporary file, `fsync`, rename, `fsync` of the directory), never following links | `base` | RNF-DUR-02, R-DADOS-02 |
+| `sys.fs` | 10 | RAII descriptors, reading, atomic writing (temporary file, `fsync`, rename, `fsync` of the directory), never following links | `base` | RNF-DUR-02 |
 | `sys.io` | 11 | Pipe, PTY, local socket, waiting on a descriptor | `base` | none |
 | `sys.process` | 12 | `posix_spawn`, `pidfd`, process group. **The only place with the process-creation functions** | `base`, `sys.io` | L05, L18 |
 | `codec` | 13 | JSON, with the library to be decided (P16) | `base` | none |
@@ -104,7 +102,7 @@ module may skip layers downward (the domain uses `base` directly), never go up.
 | `editor` | 46 | The document of each open file: text and version of record, the deltas of the UI, the proposals with a base version, the content check and the size tier, tree-sitter highlighting, the draft with a maximum delay | `storage`, `workspace`, `rt` | RF-ED, RNF-EDI-01, RNF-DUR-01, RNF-DUR-03 |
 | `lsp` | 47 | LSP client: one session per workspace root, through the launcher, and the incremental sync of each document in negotiated `utf-8` positions, diagnostics to the panel | `launch`, `codec`, `toolchain`, `cmake`, `editor` | RF-LSP-01 |
 | `protocol` | 50 | The contract of P24: framing, method table, translation between the wire and the domain, wire errors. **Designed by the maintainer** | `codec`, `base`, the domain modules | L12, RNF-CON-01 |
-| `app` | 60 | Composition root: creates the modules, injects the ports, registers the methods | all | ENG-14, ENG-15 |
+| `app` | 60 | Composition root: creates the modules, injects the ports, registers the methods | all | L22 |
 
 The N1 modules (git, debugging, project creation, tool setup, formatting) enter later,
 under the same rules. E1 to E10 are the invariants of [execution](execution-and-concurrency.md).
