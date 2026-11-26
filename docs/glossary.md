@@ -65,6 +65,8 @@ classDiagram
 | divergence | A copy in the UI that differs from the document. The text and the version of the core replace the copy | | [editing engine](architecture/editing-engine.md) |
 | resynchronization | The message that carries a whole document after a divergence, recorded as a defect: no other message after the opening carries the whole document (RNF-EDI-01) | | [editing engine](architecture/editing-engine.md) |
 | draft | The core's copy of the edits not yet in the file, written within a maximum delay of each accepted delta (RNF-DUR-01) | | [persistence](architecture/persistence-and-durability.md#durability-of-typed-text) |
+| save trigger | An event that writes every document with unsaved edits: the window loses focus, before a build, run, test or configure, closing the workspace, exit, and the person's save | | [editing engine](architecture/editing-engine.md#the-life-of-a-document) |
+| conflict | The state of a document whose file changed on disk while it had unsaved edits: the person keeps the disk or the memory version, seeing their diff | | [editing engine](architecture/editing-engine.md#the-life-of-a-document) |
 | size tier | Where a file falls by its size on disk: full; editing only, with no highlighting and no LSP; or not opened. The core decides it from the limits in the settings | | [editing engine](architecture/editing-engine.md#size-limits) |
 | code insight limit | The size above which a file leaves the full tier for editing only | | [editing engine](architecture/editing-engine.md#size-limits) |
 | opening limit | The size above which a file is not opened in the editor | | [editing engine](architecture/editing-engine.md#size-limits) |
@@ -91,6 +93,7 @@ boundary.
 | intent | What the UI sends for a gesture of the person; the core decides what follows | | [boundaries](architecture/boundaries-and-responsibilities.md) |
 | fact | What the core asserts and the UI shows: state, the result of a rule, an effective path, trust | | [boundaries](architecture/boundaries-and-responsibilities.md) |
 | request | A message of the protocol that expects a response, identified by its id | `RequestId` | [protocol](architecture/protocol-and-contract.md) |
+| job | A long operation that runs outside the loop, with progress, a deadline and cancellation | | [execution](architecture/execution-and-concurrency.md#the-life-of-a-job) |
 | deadline | The time limit that every external call and every work item carries. Its expiry ends the work with its own cause | `Deadline`, `DeadlineExceeded` | [execution](architecture/execution-and-concurrency.md) |
 | cancellation | The end of a request or a work item before its result, with its own cause | `RequestCancelled` | [execution](architecture/execution-and-concurrency.md) |
 | generation | The counter of a context that tells whether a result is stale: a result of an older generation is never applied (E6). For a document, the generation is its version | | [execution](architecture/execution-and-concurrency.md) |
@@ -103,6 +106,7 @@ boundary.
 | tool | An external program the core runs through the launcher: a compiler, clangd, CMake, git, clang-format | | [processes and trust](architecture/processes-and-trust.md) |
 | environment | The variables an external process receives, from an allow list; never the whole inherited environment | | [processes and trust](architecture/processes-and-trust.md) |
 | LSP session | One clangd per workspace root, started by the launcher. Each open document is synchronized in it by incremental `didChange` | | [editing engine](architecture/editing-engine.md) (RF-LSP-01) |
+| crash | An end of a process that no shutdown asked for, or a start that fails | | [protocol](architecture/protocol-and-contract.md#the-core-process) |
 | diagnostic | A problem at a position, reported by a compiler or by clangd, with its column converted to the unit of the UI | | [text encoding](architecture/text-encoding-and-positions.md#between-the-core-and-the-tools) |
 
 ## Toolchain

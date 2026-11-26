@@ -106,6 +106,59 @@ sequenceDiagram
   detection of a divergence and the replay of the deltas the draft does not have after a crash of
   the core belong to the editing protocol, by ADR (P22).
 
+## The life of a document
+
+The core runs this machine for each open document. It follows IntelliJ IDEA 2026.3 (branch `263`):
+a document with no unsaved edit reloads in silence when its file changes, and one with unsaved
+edits gets a conflict, with the choice of the disk or the memory version and their diff
+(`FileDocumentManagerImpl.contentsChanged`, `MemoryDiskConflictResolver`); the file is checked
+before each write (`doSaveDocument`); closing an editor neither saves nor asks; the editors of a
+deleted file close (`FileEditorManagerImpl.beforeFileDeletion`). The draft is the core's own
+(RNF-DUR-01). A cell with "—" keeps the state and records the event.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Clean: no newer draft
+    [*] --> Modified: newer draft, file unchanged since its base
+    [*] --> Conflict: newer draft, file changed since its base
+    Clean --> Modified: edit
+    Modified --> Saving: save trigger
+    Saving --> Clean: written, no later edit
+    Saving --> Modified: written with later edits, or write failed
+    Modified --> Conflict: disk changed
+    Saving --> Conflict: disk changed
+    Conflict --> Clean: load disk
+    Conflict --> Modified: keep memory
+    Clean --> Closed: editor closed, or deleted
+    Modified --> Closed: deleted, draft kept
+    Saving --> Closed: deleted, draft kept
+    Conflict --> Closed: deleted, draft kept
+    Closed --> [*]
+```
+
+| State | edit | save trigger | written | write failed | disk changed | load disk | keep memory | deleted | editor closed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Clean | Modified | — | — | — | Clean, reloaded in silence | — | — | Closed | Closed |
+| Modified | Modified | Saving | — | — | Conflict | — | — | Closed, draft kept | Modified |
+| Saving | Saving | — | Clean, or Modified with later edits | Modified, with the error | Conflict, nothing written | — | — | Closed, draft kept | Saving |
+| Conflict | Conflict | Conflict, nothing written | — | — | Conflict, with the new disk version | Clean, draft discarded | Modified, on the disk version as the base | Closed, draft kept | Conflict |
+| Closed | — | — | — | — | — | — | — | — | — |
+
+- **Save triggers,** as in IntelliJ: the window loses focus, before a build, run, test or
+  configure, closing the workspace, and exit (`GeneralSettings.autoSaveFiles`,
+  `SaveAndSyncHandlerImpl`); saving after inactivity is a setting, off by default, of 15 s
+  (`autoSaveIfInactive`, `inactiveTimeout`). The person's save writes every modified document.
+- **deleted** is any removal of the file that the IDE did not do; the draft of a document with
+  unsaved edits stays, with the offer to write the file again from it. A rename or a move by the
+  IDE changes the path and keeps the state. A document whose editor is closed closes at Clean.
+- **Opening** with a draft newer than the file gives Modified when the file did not change since
+  the base of the draft, and Conflict when it did. A read-only document (RF-ED-05) refuses every
+  edit and stays Clean.
+- **What the person sees:** the unsaved mark, the conflict with the diff of the two versions, a
+  write error, and the offer to write a deleted file again from its draft.
+- **Acceptance:** a table test with a fake file system drives every cell; mutants that write in
+  Conflict, skip the check before the write, or drop the draft of a deleted document fail it.
+
 ## Acceptance
 
 1. **The component alone**, before the integration: `TextEdit` with no IPC, offscreen at

@@ -46,9 +46,9 @@ sequenceDiagram
     participant D as domain (e.g. cmake)
     participant R as rt
     participant L as launch
-    UI->>T: one JSON-RPC line
+    UI->>T: one message of the contract (P24)
     T->>P: the bytes of the line
-    P->>D: typed request, no JSON-RPC
+    P->>D: typed request, no wire format
     alt state work
         D-->>P: result, on the loop
     else external work
@@ -59,8 +59,50 @@ sequenceDiagram
         D-->>P: result
     end
     P-->>T: response
-    T-->>UI: one JSON-RPC line
+    T-->>UI: one message of the contract
 ```
 
 What happens inside `R` and `P` (threads, queues, framing) is the maintainer's design; the diagram
 shows only who talks to whom.
+
+## The life of a job
+
+Every long operation is a job (RF-CORE-02), and the core runs this machine for each one. CLion
+2026.3 lists the work that runs in the background and lets the person cancel it
+([processes](https://www.jetbrains.com/help/clion/working-with-processes.html)). A cell with "—" keeps the state and records the event.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Queued
+    Queued --> Running: start
+    Running --> Running: progress
+    Running --> Succeeded: result
+    Running --> Failed: error
+    Running --> Cancelling: cancel or deadline
+    Queued --> Cancelled: cancel
+    Queued --> Expired: deadline
+    Cancelling --> Cancelled: ended, after a cancel
+    Cancelling --> Expired: ended, after a deadline
+    Succeeded --> [*]
+    Failed --> [*]
+    Cancelled --> [*]
+    Expired --> [*]
+```
+
+| State | start | progress | result | error | cancel | deadline | ended |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Queued | Running | — | — | — | Cancelled | Expired | — |
+| Running | — | Running, with the progress | Succeeded | Failed, with its cause | Cancelling | Cancelling | — |
+| Cancelling | — | — | Dropped | Dropped | — | — | Cancelled or Expired, by the first of cancel and deadline |
+| Succeeded, Failed, Cancelled, Expired | — | — | — | — | — | — | — |
+
+- **start** comes when the resource of the job is free: the same resource runs in series (E9).
+- **Cancelling** requests the stop through the `std::stop_token` and stops the processes of the
+  job by their own machine ([processes](processes-and-trust.md#the-life-of-an-external-process));
+  **ended** comes when all of it has stopped.
+- **The answer** of Cancelled is `RequestCancelled`, and of Expired `DeadlineExceeded` (E7). A
+  result of a stale generation is never applied (E6).
+- **What the person sees:** the running jobs with their progress and the cancel action, and the
+  final state with its cause.
+- **Acceptance:** a table test with a fake, hung tool drives every cell; a mutant that answers a
+  cancellation as a deadline, or the reverse, fails it.
