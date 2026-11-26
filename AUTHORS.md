@@ -1,16 +1,16 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Autoria e créditos
+# Authorship and credits
 
-**Autor inicial:** Vitor Hugo da Silva (**ViktorWalde**).
+**Initial author:** Vitor Hugo da Silva (**ViktorWalde**).
 
-Copyright © 2026 Vitor Hugo da Silva (ViktorWalde) e colaboradores,
-cada qual sobre suas próprias contribuições.
+Copyright © 2026 Vitor Hugo da Silva (ViktorWalde) and contributors,
+each with respect to their own contributions.
 
-A autoria das contribuições posteriores é registrada no histórico de
-versionamento e nos avisos dos respectivos arquivos. Preservam-se os créditos
-e os direitos de terceiros; a identificação do autor inicial não representa
-titularidade exclusiva sobre todas as contribuições ou dependências.
+The authorship of later contributions is recorded in the version control
+history and in the notices of the respective files. The credits and the rights
+of third parties are preserved; the identification of the initial author does
+not represent exclusive ownership of all contributions or dependencies.
 
-O licenciamento e seu escopo estão no [guia de licenciamento](DocsPublic/contribuindo/12-licenciamento-e-procedencia.md)
-e no [NOTICE](NOTICE).
+The licensing and its scope are in the [README](README.md#license) and in the
+[NOTICE](NOTICE).

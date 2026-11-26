@@ -1,28 +1,28 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Nome, identidade e identificação de distribuições
+# Name, identity and identification of distributions
 
-Esta política trata da identificação da distribuição oficial da **Kinein
-Vectis**. Não declara registro de marca nem cria exclusividade além dos
-direitos reconhecidos pela legislação aplicável.
+This policy covers the identification of the official distribution of **Kinein
+Vectis**. It declares no trademark registration and creates no exclusivity
+beyond the rights recognized by the applicable law.
 
-É permitido mencionar o nome para atribuição, documentação, comparação,
-pesquisa, treinamento e descrição verdadeira de compatibilidade ou de
-serviços. Essas referências devem indicar com clareza quem oferece o
-produto ou serviço, sem sugerir patrocínio, certificação ou vínculo oficial
-inexistente.
+The name may be mentioned for attribution, documentation, comparison,
+research, training and a truthful description of compatibility or of
+services. Such references must state clearly who offers the product or
+service, without suggesting sponsorship, certification or an official
+affiliation that does not exist.
 
-Forks e distribuições modificadas devem identificar suas alterações e sua
-origem de forma clara. Recomenda-se identidade própria para distingui-los da
-distribuição oficial. Os créditos à Kinein Vectis e aos autores devem ser
-preservados conforme as licenças aplicáveis.
+Forks and modified distributions must identify their changes and their origin
+clearly. An identity of their own is recommended, to distinguish them from the
+official distribution. The credits to Kinein Vectis and to its authors must be
+preserved as the applicable licenses require.
 
-A licença de copyright de um logotipo ou ícone e o direito de usá-lo como
-identificador de origem são questões distintas. As licenças específicas dos
-recursos gráficos continuam válidas. Usos que dependam de autorização de
-marca devem ser acordados com quem detenha esses direitos.
+The copyright license of a logo or an icon and the right to use it as an
+identifier of origin are separate matters. The specific licenses of the
+graphic assets remain valid. Uses that depend on a trademark authorization
+must be agreed with whoever holds those rights.
 
-Esta política não exige autorização para executar, estudar, modificar,
-redistribuir ou comercializar o software nas condições da sua licença, e
-não condiciona o acesso ao código à contratação de serviços. O texto da
-licença pública prevalece quanto às liberdades que concede.
+This policy requires no authorization to run, study, modify, redistribute or
+commercialize the software under the terms of its license, and does not make
+access to the code conditional on contracting services. The text of the public
+license prevails as to the freedoms it grants.
