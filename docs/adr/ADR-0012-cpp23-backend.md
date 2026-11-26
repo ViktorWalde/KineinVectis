@@ -9,16 +9,16 @@
 ## Context
 
 Up to 0.3.9, Kinein Vectis was built for its author's own use, and the architecture followed the
-features. 0.4 has to serve other people. The review of 2026-11-14 (64) and the evaluation of the
-editing engine (65) measured defects that come from the design, not from an isolated spot:
+features. The next version has to serve other people. The review of 0.3 measured defects that
+come from the design, not from an isolated spot:
 
-- an untrusted workspace ran its own code through five paths (INF-23);
-- the core's loop blocked, and nothing had a deadline or cancellation (ENG-50);
-- processes were created in about 122 places (ENG-51);
+- an untrusted workspace ran its own code through five paths (L05);
+- the core's loop blocked, and nothing had a deadline or cancellation (L08);
+- processes were created in about 122 places (L06);
 - the whole text travelled on every keystroke, and opening 20 thousand lines took up to 47 s
-  (ENG-55, INF-25);
-- the draft had no maximum write delay (INF-26);
-- the text gates detected 36 of 120 defects (66).
+  (L01, L02);
+- the draft had no maximum write delay (L04);
+- the text gates detected 36 of 120 defects (L15).
 
 The full list, with the evidence, is in the [lessons](../lessons-from-0.3.md).
 
@@ -85,29 +85,11 @@ contain.
 IDEs exist for the fundamental behavior of an IDE. The engineering of the UI is rebuilt from
 scratch: a known problem is deleted, not patched in place.
 
-## What this decision replaces
-
-- **The conclusion of 64 §1** (64:71-77), which discarded a broad rebuild and chose strategy B:
-  replacing four seams inside the Rust core.
-- **Phases B1 to B11 of 64 §8**, as a code plan. The solutions they described (a launcher with
-  trust, execution classes, deadline and cancellation, a contract with a single source, three
-  persistence classes) become requirements of the core.
-- **The proposal of 66** (the gates before B1), which awaited a decision: the text gates of 0.3
-  do not enter the core.
-- **The sentence of 62:2079-2080**, about closing debt "by proven behavior, not by the
-  completion of a rewrite". The switch of cores happens only by proven behavior: the criterion of
-  item 6 is a measurement, not a completion.
-
-**Items that close with the removal of the Rust core**, with no fix of their own: INF-24, INF-29,
-INF-30, INF-31 and ENG-57. **Items that become requirements of the core:** INF-23, ENG-50 to
-ENG-56 and INF-22. **UI items** (INF-25 to INF-28) close with the rebuilt editor, each with its
-test.
-
 ## Alternatives considered
 
 | Alternative | Why not |
 | --- | --- |
-| Strategy B of 64, in Rust | It was the plan decided on 2026-11-14 (DP-01 to DP-09). The decision of 2026-11-22 revises it, for the reasons of the section "Why" |
+| Fixing four seams inside the Rust core | It was the plan decided on 2026-11-14. The decision of 2026-11-22 revises it, for the reasons of the section "Why" |
 | C++26 | Not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection, and clangd would not understand the code. C++26 features enter one at a time, by ADR |
 | Rewriting the views too | The views and the theme work and are the IDE of dogfooding; what is wrong in the UI is the domain logic and the code with a known problem, which leave it (item 2) |
 | QScintilla or KTextEditor | `QWidget` components, outside the Qt Quick scene. The Qt Quick port of Scintilla lives in a fork with no commit since 2023-03 |
@@ -119,11 +101,11 @@ test.
   compares it with the Rust core.
 - The contract between the UI and the core is designed from scratch, by its own ADR (P24), and
   the client of the UI bridge is rebuilt on it at the sync.
-- The defects of 0.3 stay in the product in use until the sync. INF-26 was fixed in the current
-  QML on 2026-11-22 (the maintainer's decision); INF-23 remains, and until the C++ launcher exists
+- The defects of 0.3 stay in the product in use until the sync. L04 was fixed in the QML of
+  the prototype on 2026-11-22 (the maintainer's decision); L05 remains, and until the launcher exists
   only trusted projects are opened.
-- The rule "only the launcher creates processes" loses the compiler enforcement that Rust gave
-  (`disallowed_methods = "forbid"`). Its mechanism in C++ is the `bugprone-unsafe-functions`
+- The rule "only the launcher creates processes" has no compiler mechanism in C++. Its mechanism
+  is the `bugprone-unsafe-functions`
   option of clang-tidy, measured by `gate.launcher`
   ([gates](../engineering/gates-and-effectiveness.md)).
 - The core carries tree-sitter with the C and C++ grammars (MIT) and an LSP client, whose library
