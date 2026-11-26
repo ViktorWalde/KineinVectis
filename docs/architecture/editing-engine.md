@@ -162,31 +162,23 @@ stateDiagram-v2
 ## Acceptance
 
 1. **The component alone**, before the integration: `TextEdit` with no IPC, offscreen at
-   1280x800, with the files of 85, 2,463, 19,970 and 40,000 lines and at the opening limit, by
-   the method of 65 §20.3 (key to frame, opening to the first frame, CPU while typing, RSS).
-2. **The reference** is the proof column of the table of 65 §20.3:
-
-   | Lines | Key to frame, p95 (ms) | Opening (ms) | RSS (MiB) |
-   | --- | --- | --- | --- |
-   | 85 | 8.71 | 29.4 | 73.9 |
-   | 2,463 | 9.00 | 30.4 | 75.0 |
-   | 19,970 | 9.94 | 32.0 | 83.4 |
-
-   The limits against it are RNF-ED-01. The 40,000-line file has no reference; it answers
-   to RNF-PERF-01. A missed limit goes back to the maintainer with the measurement.
-3. **The integrated product**, by the same method.
-4. **IME** with fcitx5 or ibus: the preedit at the cursor and the right committed text.
-5. **Accessibility** through AT-SPI: the whole document, the cursor and the selection.
-6. **A property test:** after random deltas and proposals, the copy of the UI and the document of
+   1280x800, at the four reference sizes and at the opening limit, by the method of the
+   [test strategy](../engineering/test-strategy.md#performance). Its measurement on the reference
+   machine is the reference of RNF-ED-01.
+2. **The integrated product**, by the same method, within the limits of RNF-ED-01. A missed limit
+   goes back to the maintainer with the measurement.
+3. **IME** with fcitx5 or ibus: the preedit at the cursor and the right committed text.
+4. **Accessibility** through AT-SPI: the whole document, the cursor and the selection.
+5. **A property test:** after random deltas and proposals, the copy of the UI and the document of
    the core are equal, and a proposal on a stale base is refused.
-7. **Crash:** RNF-DUR-01, with `kill -9` on the UI and on the core.
-8. **Tiers:** a file one byte below and one byte above each limit falls in the right tier, and the
+6. **Crash:** RNF-DUR-01, with `kill -9` on the UI and on the core.
+7. **Tiers:** a file one byte below and one byte above each limit falls in the right tier, and the
    notice states the limit and the size (RNF-ED-02).
 
 ## NOT VERIFIED
 
-- `TextEdit` with 19,970 and 40,000 lines without the IPC of 0.3: never measured. The 0.3 opening
-  of 47 s (INF-25) has no isolated cause.
+- `TextEdit` alone at the four reference sizes: never measured, so RNF-ED-01 has no reference
+  number yet.
 - A report on Qt 6.6 measured 5 s to redraw 21,000 lines, growing linearly
   ([Qt Forum](https://forum.qt.io/post/819626)). It was not reproduced with Qt 6.12.
 - Folding and multiple cursors on `QQuickTextDocument`.

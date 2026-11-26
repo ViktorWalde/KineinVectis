@@ -62,11 +62,11 @@ that it does not depend on the load of the machine.
 
 - **Before and after**, always with the same file, the same method and the same profile
   (`production`).
-- **The C/C++ fixtures do not exist.** The 0.3 baselines used Rust files from the generator of
-  `medir-core.py` (65:670-673). The first step is to generate C/C++ fixtures at the four sizes
-  and measure the current product (UI and Rust core) on them, so that there is a baseline.
-- **The method of the editor** is the one of 65 §20.3: key to frame, opening, CPU while typing
-  and memory, with alternating rounds.
+- **The C/C++ fixtures do not exist.** The first step generates them at the four reference sizes
+  and measures `TextEdit` alone on them: that measurement is the reference of RNF-ED-01.
+- **The method of the editor:** offscreen at 1280x800; key to frame (p95 and worst case), opening
+  to the first frame, CPU while typing and RSS. The rounds of the reference and of the candidate
+  alternate, so that a drift of the machine reaches both.
 
 ## Test framework
 
