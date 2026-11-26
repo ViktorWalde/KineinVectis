@@ -10,12 +10,12 @@ English in the C++ core; 64 wrote `projetos/`, a name no code uses.
 
 | Class | Where | What |
 | --- | --- | --- |
-| Project configuration, shareable | `<root>/.kinein/` | what a colleague should receive through git |
-| The person's state in the project | `$XDG_STATE_HOME/kinein-vectis/projects/<id>/` | session, drafts, local choices |
-| Project cache | `$XDG_CACHE_HOME/kinein-vectis/projects/<id>/` | derived and re-creatable |
+| Workspace settings, shareable | `<root>/.kinein/` | what a colleague should receive through git |
+| The person's state in the workspace | `$XDG_STATE_HOME/kinein-vectis/workspaces/<id>/` | session, drafts, local choices |
+| Workspace cache | `$XDG_CACHE_HOME/kinein-vectis/workspaces/<id>/` | derived and re-creatable |
 | Build tree | `<root>/.kinein/build/` | build output, with its own `.gitignore` |
 
-- `<id>` derives from the canonical path of the root, and the state follows a project renamed on
+- `<id>` derives from the canonical path of the root, and the state follows a workspace renamed on
   the same volume through the identity of the directory (64:620-635).
 - Opening a folder without trust writes nothing in it.
 - Each own file has an owner, a class and a schema version in a single catalog.
@@ -33,10 +33,10 @@ English in the C++ core; 64 wrote `projetos/`, a name no code uses.
 ```mermaid
 sequenceDiagram
     participant S as storage / sys.fs
-    participant D as directory of the target
+    participant D as directory of the destination
     S->>D: create a temporary file in the same directory
     S->>D: write the content, then fsync the file
-    S->>D: rename the temporary file over the target
+    S->>D: rename the temporary file over the destination
     S->>D: fsync the directory
     Note over S,D: a crash at any step leaves the old file or the new one, never a mix
 ```
@@ -51,7 +51,7 @@ sequenceDiagram
 - **The limit:** RNF-DUR-01, 2 s, the maintainer's decision of 2026-11-22
   ([non-functional requirements](../requirements/non-functional-requirements.md)).
 - **The path:** the draft comes from the core's document, which owns the text
-  ([editing engine](editing-engine.md)). The project file is written by the core, with the guarded
+  ([editing engine](editing-engine.md)). The file is written by the core, with the guarded
   write above.
 - **Acceptance:** `kill -9` on the UI and on the core after long typing with no pause, with
   the loss measured, and a mutant with no maximum delay that must fail.

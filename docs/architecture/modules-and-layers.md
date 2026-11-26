@@ -96,17 +96,17 @@ module may skip layers downward (the domain uses `base` directly), never go up.
 | `storage` | 21 | The three XDG classes, the catalog of own files, the schema version, the migration of `.kinein` | `base`, `sys.fs`, `codec` | L04, L13, RNF-DADOS-05 |
 | `launch` | 30 | Launcher and trust: origin, environment, deadline, output cap, cancellation, record; the trust store through `storage` | `base`, `rt`, `storage`, `sys.io`, `sys.process` (only `launch`) | L05, L06, L08, RNF-SEG-01 and 02 |
 | `workspace` | 40 | Open and close, workspace generation, tree, `fs.*` confined to the root | `base`, `rt`, `storage`, `sys.fs` | RF-WS, RF-FS |
-| `settings` | 41 | Settings of the person and of the project | `storage`, `codec` | RF-SET-01 |
+| `settings` | 41 | Settings of the person and of the workspace | `storage`, `codec` | RF-SET-01 |
 | `toolchain` | 42 | Detection of compilers and tools: detected, selected, effective | `launch`, `storage` | A06, RF-TC-01 |
 | `terminal` | 43 | Terminal on a PTY through the launcher | `launch`, `sys.io` | RF-TERM-01 |
 | `cmake` | 44 | Presets, File API, configure | `launch`, `toolchain`, `workspace`, `codec` | RF-CMK |
 | `build` | 45 | Build, run and the problems panel, with the columns of each compiler converted | `cmake`, `launch` | RF-BLD-01 |
 | `editor` | 46 | The document of each open file: text and version of record, the deltas of the UI, the proposals with a base version, the content check and the size tier, tree-sitter highlighting, the draft with a maximum delay | `storage`, `workspace`, `rt` | RF-ED, RNF-EDI-01, RNF-DUR-01, RNF-DUR-03 |
-| `lsp` | 47 | LSP client of each document: the session through the launcher, incremental sync from the document in negotiated `utf-8` positions, diagnostics to the panel | `launch`, `codec`, `toolchain`, `cmake`, `editor` | RF-LSP-01 |
+| `lsp` | 47 | LSP client: one session per workspace root, through the launcher, and the incremental sync of each document in negotiated `utf-8` positions, diagnostics to the panel | `launch`, `codec`, `toolchain`, `cmake`, `editor` | RF-LSP-01 |
 | `protocol` | 50 | Line-delimited JSON-RPC 2.0, method table, translation between the wire and the domain, wire errors. **Designed by the maintainer** | `codec`, `base`, the domain modules | L12, RNF-CON-01 |
 | `app` | 60 | Composition root: creates the modules, injects the ports, registers the methods | all | ENG-14, ENG-15 |
 
-The N1 modules (git, debugging, project creation, environment setup, formatting) enter later,
+The N1 modules (git, debugging, project creation, tool setup, formatting) enter later,
 under the same rules. E1 to E10 are the invariants of [execution](execution-and-concurrency.md).
 
 **"The domain does not know the wire"** means: no domain module sees the JSON-RPC messages, the

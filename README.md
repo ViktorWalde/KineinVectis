@@ -11,8 +11,8 @@
 ## The rewrite
 
 Kinein Vectis is a desktop IDE: a Qt Quick UI and a separate core process that reads the
-project, runs the tools and keeps the state. The core of the 0.3 series is a Rust prototype. Its review
-found defects that come from the design, not from isolated bugs: an untrusted project could run
+workspace, runs the tools and keeps the state. The core of the 0.3 series is a Rust prototype. Its review
+found defects that come from the design, not from isolated bugs: an untrusted workspace could run
 its own code through five paths, the core's loop blocked with no deadline or cancellation, and
 opening a 20,000-line file took up to 47 s
 ([lessons from 0.3](docs/lessons-from-0.3.md)).
@@ -93,7 +93,7 @@ flowchart LR
 - The UI and the core are separate processes. The UI picks the core binary through
   `KINEIN_CORE_BIN`, so the C++ core replaces the Rust core without a change to the UI.
 - Every external process, `clangd` included, starts through the core's launcher, which decides
-  what an untrusted project may run.
+  what an untrusted workspace may run.
 - A keystroke is drawn by the UI at once and reaches the core as a versioned delta; the core owns
   the text, the draft, the file and the LSP session.
 

@@ -11,7 +11,7 @@ Up to 0.3.9, Kinein Vectis was built for its author's own use, and the architect
 features. 0.4 has to serve other people. The review of 2026-11-14 (64) and the evaluation of the
 editing engine (65) measured defects that come from the design, not from an isolated spot:
 
-- an untrusted project ran its own code through five paths (INF-23);
+- an untrusted workspace ran its own code through five paths (INF-23);
 - the core's loop blocked, and nothing had a deadline or cancellation (ENG-50);
 - processes were created in about 122 places (ENG-51);
 - the whole text travelled on every keystroke, and opening 20 thousand lines took up to 47 s
@@ -68,7 +68,7 @@ stateDiagram-v2
 of 2026-11-22; no earlier document records them:
 
 - whoever writes the logic of the core wants to master the mechanism, and the algorithms library
-  (C/C++ environment, embedded, semantics) is the differentiator of the product;
+  (C/C++ tool setup, embedded, semantics) is the differentiator of the product;
 - the product is an IDE for C and C++, developed in itself: the core's code goes through the same
   clangd, the same CMake and the same sanitizers that the IDE offers to its users;
 - the UI is Qt and C++: one language fewer in the product.

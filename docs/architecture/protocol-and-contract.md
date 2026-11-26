@@ -7,7 +7,7 @@ switches cores and how the contract changes.
 
 - **JSON-RPC 2.0**, one message per line, on the core's stdin and stdout (64:95-96;
   `ui/src/core_client_process.cpp:74` and `:220`).
-- **Version:** the one of the Rust core, 0.223.0 (`crates/kinein-protocol/src/lib.rs:121`). The
+- **Protocol version:** the one of the Rust core, 0.223.0 (`crates/kinein-protocol/src/lib.rs:121`). The
   C++ core reports the version it implements; a version change follows the rule of the last
   section.
 - **The source of the contract is the Rust types of `kinein-protocol`.** `schemas/ipc.schema.json`

@@ -1,6 +1,6 @@
 # Processes and trust
 
-Owner: how an external process is born and what an untrusted project may do. It closes lessons
+Owner: how an external process is born and what an untrusted workspace may do. It closes lessons
 L05, L06 and L18 ([lessons](../lessons-from-0.3.md)).
 
 ## The launcher
@@ -11,7 +11,7 @@ launch request carries, by type, what 0.3 left to each call site (64:460-470):
 
 | Field | Why |
 | --- | --- |
-| Origin of the program: from the IDE (detected), from the project, or a tool configured by the project | Trust is decided by the origin (L05) |
+| Origin of the program: from the IDE (detected), from the workspace, or a tool configured by the workspace | Trust is decided by the origin (L05) |
 | Arguments, directory and environment (allow list) | An entire inherited environment leaks secrets and configuration |
 | Deadline, mandatory | L08 |
 | Output cap, mandatory | Unbounded output fills the memory |
@@ -21,8 +21,8 @@ launch request carries, by type, what 0.3 left to each call site (64:460-470):
 flowchart LR
     CALLER["domain module"] -->|launch request: origin, args,<br/>env, deadline, cap| LAUNCH["launch"]
     LAUNCH --> TRUST{"origin allowed<br/>without trust?"}
-    TRUST -->|no, and the project is untrusted| REFUSE["typed refusal<br/>WorkspaceUntrusted"]
-    TRUST -->|yes, or the project is trusted| SPAWN["sys.process<br/>posix_spawn, pidfd, group"]
+    TRUST -->|no, and the workspace is untrusted| REFUSE["typed refusal<br/>WorkspaceUntrusted"]
+    TRUST -->|yes, or the workspace is trusted| SPAWN["sys.process<br/>posix_spawn, pidfd, group"]
     SPAWN --> RECORD["record: program, origin, decision,<br/>duration, exit code, deadline"]
 ```
 
@@ -30,10 +30,10 @@ The rules:
 
 - **An argument that names a program** (`--query-driver` of clangd, for example) goes through the
   same origin rule. It was vector E5 of INF-23 (64:122).
-- **git is a tool configured by the project:** `.git/config` defines `fsmonitor`, filters and
+- **git is a tool configured by the workspace:** `.git/config` defines `fsmonitor`, filters and
   hooks (64:476-477).
-- **The compiler pinned in the kit** belongs to the project while its path comes from a file of
-  the project tree (64:480-482).
+- **The compiler pinned in the kit** belongs to the workspace while its path comes from a file of
+  the workspace tree (64:480-482).
 - **An `exec` failure** returns as a typed error, with the system error, with no abort or core
   dump (L18).
 - **Every launch** records the program, the origin, the decision, the duration, the exit code and
@@ -61,13 +61,13 @@ From 64 §5.5 (64:508-528), restricted to C and C++.
 | clangd | starts with `--query-driver` only for a compiler the IDE detected | starts with the whole kit |
 | Git | off, with a notice | yes |
 | CMake configure, build, run, test, debug, flash | asks for trust on the gesture | yes |
-| `--version` of a project tool | no | yes |
+| `--version` of a tool of the workspace | no | yes |
 
 - **Nothing runs before trust**, including the CMake configure step and the `--query-driver` of
   clangd.
 - **The rule lives in the core**, in the launcher. QML shows the state and asks for the gesture.
   In 0.3, QML held back the automatic configure (64:306-309); in the C++ core, the core refuses.
-- **Trust** stays in the person's global state, by the canonical root of the project, with the
+- **Trust** stays in the person's global state, by the canonical root of the workspace, with the
   trusted folders of DP-02 (64:525-528).
 - **Acceptance:** the hostile project of 64 §2.1, with zero marks
   (RNF-SEG-01) and a mutant that removes the guard and must fail.

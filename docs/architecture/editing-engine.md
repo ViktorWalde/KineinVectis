@@ -62,7 +62,7 @@ flowchart TD
 | Writing the file | The core, with the guarded write of [persistence](persistence-and-durability.md) | The UI sends the intent |
 | Draft and recovery | The core, from its document, with a maximum delay (RNF-DUR-01) | none |
 | Highlighting, diagnostics, completion | The core, for a named version | The UI discards a result for an older version |
-| The LSP session and the document sync | The core: one client per document, incremental `didChange` from the deltas | none |
+| The LSP session and the document sync | The core: one session per workspace root, and each open document synchronized in it by incremental `didChange` from the deltas | none |
 | Cursor, selection, scroll | The UI (presentation) | The core receives the position when a request needs it |
 
 The core's document changes only through the stream of deltas, so it has a single writer.

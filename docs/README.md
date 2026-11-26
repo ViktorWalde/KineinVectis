@@ -20,6 +20,7 @@ flowchart TD
     INDEX["docs/README.md<br/>map and rules"]
     INDEX --> LESSONS["lessons-from-0.3.md"]
     INDEX --> PENDING["pending-decisions.md"]
+    INDEX --> GLOSSARY["glossary.md"]
     INDEX --> ADR["adr/"]
     INDEX --> REQ["requirements/"]
     INDEX --> ARCH["architecture/"]
@@ -49,6 +50,7 @@ flowchart TD
 | --- | --- |
 | [lessons-from-0.3.md](lessons-from-0.3.md) | What did 0.3 get wrong and right, and what prevents each mistake from coming back? |
 | [pending-decisions.md](pending-decisions.md) | What is still the maintainer's decision, with the recommendation? |
+| [glossary.md](glossary.md) | What does each term of the domain mean, and which name does the code give it? |
 | [adr/ADR-0012-cpp23-backend.md](adr/ADR-0012-cpp23-backend.md) | Why C++23, who owns the truth, which component edits, and what does this decision replace? |
 | [adr/ADR-0013-single-source-of-the-contract.md](adr/ADR-0013-single-source-of-the-contract.md) | Where does the contract between the UI and the two cores come from, and how does it change? |
 | **Requirements** | |
@@ -58,7 +60,7 @@ flowchart TD
 | [architecture/boundaries-and-responsibilities.md](architecture/boundaries-and-responsibilities.md) | Which processes and components exist, who decides what, and who depends on whom |
 | [architecture/modules-and-layers.md](architecture/modules-and-layers.md) | Which modules `core/lib` has, in which layer, who uses whom and what enforces it |
 | [architecture/execution-and-concurrency.md](architecture/execution-and-concurrency.md) | Where work runs, who owns each piece of data, deadlines and cancellation |
-| [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | How a process is born and what an untrusted project may do |
+| [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | How a process is born and what an untrusted workspace may do |
 | [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Where each file of the IDE lives and how much text a crash can lose |
 | [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | The wire between the UI and the core, the switch of cores and the change of contract |
 | [architecture/editing-engine.md](architecture/editing-engine.md) | Which component edits, who owns the text of a document, how an edit travels and how a large file degrades |

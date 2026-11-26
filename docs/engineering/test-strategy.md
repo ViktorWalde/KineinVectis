@@ -50,7 +50,7 @@ flowchart LR
 - **The intentional divergences** live in a versioned list next to the tests, each one with the
   defect of the oracle it avoids. Without that list, the test rewards reproducing the defect. The
   initial list:
-  - INF-23: the oracle runs project code without trust;
+  - INF-23: the oracle runs workspace code without trust;
   - INF-22: an old load of the context lands on top of the new one;
   - INF-29: an `exec` failure with an abort and a core dump;
   - INF-30: an expired deadline reported as stale;
@@ -60,7 +60,7 @@ flowchart LR
 
 ## Complexity
 
-Each path that depends on the size of the file or of the project runs at the four reference
+Each path that depends on the size of the file or of the workspace runs at the four reference
 sizes (85, 2,500, 20,000 and 40,000 lines) and fails if the time ratio between two sizes exceeds
 the limit of RNF-PERF-01. The measurement is the CPU time of the process, not the wall time, so
 that it does not depend on the load of the machine.

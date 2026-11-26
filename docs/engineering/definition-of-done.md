@@ -11,7 +11,7 @@ item is not done: it is "partial", with the list of what is missing.
    (`cmake --workflow --preset <name>`, from `core/`).
 4. A test for the added behavior, and a mutant for each added guard.
 5. Performance measured before and after at the four sizes, when the change touches a path that
-   depends on the size of the file or of the project.
+   depends on the size of the file or of the workspace.
 6. The owning document of the subject updated in the same commit, when the change alters one of
    its facts. A thread enters the table of
    [execution](../architecture/execution-and-concurrency.md#threads-and-owners).
