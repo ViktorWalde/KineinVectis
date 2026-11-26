@@ -12,7 +12,7 @@ in the git history.
 | # | Decision | Recommendation | Owner afterwards |
 | --- | --- | --- | --- |
 | P01 | License of the algorithms library: LGPL-3.0, MPL-2.0 or Apache-2.0 | None: it is the maintainer's choice. Any choice amends ADR-0011 of 0.3 (tag `v0.3.5`; AGPL-3.0-only, DCO with no copyright assignment). The history has a single human author | A new ADR |
-| P04 | Value of RNF-PERF-01: the maximum growth from 20,000 to 40,000 lines | 2.5 times: linear, with a margin for the variation of the machine (65 §20.6) | [requirements](requirements/non-functional-requirements.md) |
+| P04 | Value of RNF-PERF-01: the maximum growth from 20,000 to 40,000 lines | 2.5 times: linear, with a margin for the variation of the machine | [requirements](requirements/non-functional-requirements.md) |
 | P07 | `NDEBUG` in the `production` profile | Do not define it: `assert` stays active, like the `_GLIBCXX_ASSERTIONS` the plan keeps | [profiles](engineering/build-profiles-and-hardening.md) |
 | P09 | QML in the dogfooding scope: `qmlls` through the LSP client of the core | Edit QML as text in N0, and `qmlls` in N1: the UI is QML and dogfooding will need it | [requirements](requirements/functional-requirements.md) |
 | P11 | Phase B: the inventory of the 89 `*Controller.qml` | Do it before touching the bridge; it does not block the core | A new file, if the maintainer asks for it |

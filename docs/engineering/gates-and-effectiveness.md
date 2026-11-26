@@ -15,7 +15,7 @@ record of the measurements and the CI.
 A text-heuristic gate on code does not enter (L15: in 0.3, such gates detected 36 of 120 defects
 and rejected 14 of 15 correct forms).
 
-## The method (63 §D.5 and 66 §2.1)
+## The method
 
 ```mermaid
 flowchart LR
