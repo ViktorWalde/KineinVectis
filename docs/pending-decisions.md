@@ -4,7 +4,7 @@ Owner: what is still the maintainer's decision, with the recommendation and the 
 becomes the owner once the decision is made. A decision that is made leaves this list and goes to
 its owner, with the date.
 
-State on 2026-11-25. The decisions already made are in the owner of each one, with the date, and
+State on 2026-11-26. The decisions already made are in the owner of each one, with the date, and
 in the git history.
 
 ## Pending
@@ -22,3 +22,4 @@ in the git history.
 | P16 | The third-party dependency of the base: JSON | Decide before the `codec` module. Candidates: nlohmann/json (simple, slow), simdjson (read-only, fast), glaze (compile-time reflection) | [modules](architecture/modules-and-layers.md) |
 | P21 | The library of the LSP client of the core; tree-sitter with the C and C++ grammars is decided in the [editing engine](architecture/editing-engine.md) | No C++ library is broadly adopted (searched on 2026-11-23). Two candidates: kotatsu `ipc` (C++23, Apache-2.0, the LSP 3.18 model, peers with cancellation and timeouts, a CI with GCC 14, Clang 20 and the three sanitizers, a build without exceptions; first commit in 2025-12, no release, one main author with 261 of 284 commits, its own coroutine loop) and lsp-framework (C++20, MIT, no dependency, LSP 3.17 and 3.18 types; one main author with 415 of 428 commits; errors by exception, `std::future`, its own thread pool and process class). Both are evaluated when the code of the core starts (the maintainer's decision of 2026-11-25), with a measured prototype outside `core/` against the rules of `rt`, `launch` and errors; adopting the loop of kotatsu is a design question of `rt`. Own code over the JSON of P16 only if neither fits | [editing engine](architecture/editing-engine.md) |
 | P22 | The editing protocol, by ADR, before the `editor` module | Deltas in the order typed, in the units of [text encoding and positions](architecture/text-encoding-and-positions.md); versions numbered by the core; a proposal applied by the UI only on its base version; a hash of the text in each acknowledgment, to detect a divergence; after a crash of the core, the UI replays the deltas the draft does not have | A new ADR |
+| P24 | The contract between the UI and the C++ core, by ADR, before the `protocol` module: the framing, the methods, the single source of the shapes and the protocol version; the editing protocol (P22) is part of it | None: the design of the protocol belongs to the maintainer. What already holds is in the [protocol](architecture/protocol-and-contract.md) | A new ADR and the [protocol](architecture/protocol-and-contract.md) |

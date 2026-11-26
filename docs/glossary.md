@@ -1,12 +1,13 @@
 # Glossary
 
-Owner: what each term of the domain of the core means, and which name the code and the protocol
-give it. The rules of each term stay in its owner, linked in the last column; the other files use
+Owner: what each term of the domain of the core means, and which name the code gives it. The rules of each term stay in its owner, linked in the last column; the other files use
 these terms and do not define them again.
 
-One concept has one name in this tree, in the protocol and in the code. A term with more than one
+One concept has one name in this tree and in the code. A term with more than one
 meaning is always written with its qualifier ([Words with more than one meaning](#words-with-more-than-one-meaning)).
-The method is the ubiquitous language of Evans (*Domain-Driven Design*, 2003, chapter 2).
+The method is the ubiquitous language of Evans (*Domain-Driven Design*, 2003, chapter 2). Where a
+reference IDE names the concept, the term is its name (CLion first,
+[ADR-0012](adr/ADR-0012-cpp23-backend.md)).
 
 ```mermaid
 classDiagram
@@ -23,7 +24,8 @@ classDiagram
     Workspace --> Document : holds open
     Workspace --> LspSession : one per root
     Workspace --> Project : may hold
-    Workspace --> Kit : default kit
+    Workspace --> CMakeProfile : one or more
+    CMakeProfile --> Toolchain : selects
     Project --> BuildTarget : defines
     Document --> Version : numbered by the core
     Document --> Draft : unsaved edits
@@ -36,17 +38,17 @@ classDiagram
 
 | Term | Meaning | Name in the code | Owner |
 | --- | --- | --- | --- |
-| workspace | The folder the person opens in the IDE. Trust, settings, personal state, cache and the LSP session belong to it | `workspace.*`, `WorkspaceUntrusted` | [functional requirements](requirements/functional-requirements.md) (RF-WS-01) |
+| workspace | The folder the person opens in the IDE. Trust, settings, personal state, cache and the LSP session belong to it | `WorkspaceUntrusted` | [functional requirements](requirements/functional-requirements.md) (RF-WS-01) |
 | root | The canonical path of the workspace folder; the identifier of the workspace derives from it | | [persistence](architecture/persistence-and-durability.md) |
-| trust | The person's grant that lets a workspace run what it defines: its compiler, its tools, its git configuration and the CMake configure step. It is kept in the person's global state, by the root | `workspace.trust` | [processes and trust](architecture/processes-and-trust.md) |
-| trusted folder | A folder that makes every workspace opened inside it trusted (DP-02, 64:525-528) | | [processes and trust](architecture/processes-and-trust.md) |
-| restricted mode | A workspace without trust: reading, navigating, editing and searching work, and nothing the workspace defines runs | | [processes and trust](architecture/processes-and-trust.md) |
+| trust | The person's grant that lets a workspace run what it defines: its compiler, its tools, its git configuration and the CMake configure step. It is kept in the person's global state, by the root | | [processes and trust](architecture/processes-and-trust.md) |
+| trusted folder | A folder that makes every workspace opened inside it trusted: the trusted locations of CLion 2026.3 ([project security](https://www.jetbrains.com/help/clion/project-security.html)) | | [processes and trust](architecture/processes-and-trust.md) |
+| restricted mode | A workspace without trust: reading, navigating, editing and searching work, and nothing the workspace defines runs. CLion 2026.3 calls it safe mode, and VS Code, Restricted Mode | | [processes and trust](architecture/processes-and-trust.md) |
 | origin | Where a program comes from: detected by the IDE, defined by the workspace, or a tool configured by the workspace. Trust is decided by it | | [processes and trust](architecture/processes-and-trust.md) |
-| settings | Values that change what the IDE does, of the person or of the workspace. Those of the workspace live in `<root>/.kinein/` and travel through git | `settings.get`, `settings.set` | [persistence](architecture/persistence-and-durability.md) |
+| settings | Values that change what the IDE does, of the person or of the workspace. Those of the workspace live in `<root>/.kinein/` and travel through git | | [persistence](architecture/persistence-and-durability.md) |
 | personal state | What belongs to one person in one workspace: session, drafts and local choices. It never lives in the workspace tree | | [persistence](architecture/persistence-and-durability.md) |
 | cache | Derived data of a workspace that can be created again, outside its tree | | [persistence](architecture/persistence-and-durability.md) |
-| project | The CMake project under the root of a workspace. CMake is its truth (A11), and a template creates one (RF-PRJ-01) | `workspace.createProject` | [functional requirements](requirements/functional-requirements.md) |
-| build target | A target of the CMake project, which the person builds, runs and tests | `build.run`, `test.run`, `runConfig.*` | [functional requirements](requirements/functional-requirements.md) (RF-BLD-01) |
+| project | The CMake project under the root of a workspace. CMake is its truth (RF-CMK-01), and a template creates one (RF-PRJ-01) | | [functional requirements](requirements/functional-requirements.md) |
+| build target | A target of the CMake project, which the person builds, runs and tests | | [functional requirements](requirements/functional-requirements.md) (RF-BLD-01) |
 
 ## Documents and editing
 
@@ -98,7 +100,7 @@ boundary.
 | Term | Meaning | Name in the code | Owner |
 | --- | --- | --- | --- |
 | launcher | The only path that creates a process in the core. It decides by origin and trust, and sets the arguments, directory, environment, deadline, output cap and process group | | [processes and trust](architecture/processes-and-trust.md) |
-| tool | An external program the core runs through the launcher: a compiler, clangd, CMake, git, clang-format | `tools.detect`, `tools.status` | [processes and trust](architecture/processes-and-trust.md) |
+| tool | An external program the core runs through the launcher: a compiler, clangd, CMake, git, clang-format | | [processes and trust](architecture/processes-and-trust.md) |
 | environment | The variables an external process receives, from an allow list; never the whole inherited environment | | [processes and trust](architecture/processes-and-trust.md) |
 | LSP session | One clangd per workspace root, started by the launcher. Each open document is synchronized in it by incremental `didChange` | | [editing engine](architecture/editing-engine.md) (RF-LSP-01) |
 | diagnostic | A problem at a position, reported by a compiler or by clangd, with its column converted to the unit of the UI | | [text encoding](architecture/text-encoding-and-positions.md#between-the-core-and-the-tools) |
@@ -107,27 +109,26 @@ boundary.
 
 | Term | Meaning | Name in the code | Owner |
 | --- | --- | --- | --- |
-| toolchain | The compilers and tools that build the code of a workspace, each one in the Detected, Selected, Effective model | `toolchain.get`, `toolchain.set` | [functional requirements](requirements/functional-requirements.md) (RF-TC-01) |
-| Detected, Selected, Effective | The three values of each tool: what the IDE found, what the person chose, and what the core runs | | [functional requirements](requirements/functional-requirements.md) (RF-TC-01, A06) |
-| kit | The values that build and debug one configuration, named by a CMake preset or the default of the workspace: sysroot, target triple, chip, CMake toolchain file, and the debug server with its remote target (`crates/kinein-protocol/src/toolchain.rs:236` to `:260`). Qt Creator 21.0.0 gives the name to a similar set: device, toolchain, Qt version and debugger ([Managing kits](https://doc.qt.io/qtcreator/creator-preferences-kits.html)) | `toolchain.setKit`, `toolchain.importKit` | [functional requirements](requirements/functional-requirements.md) (RF-TC-01) |
-| target triple | The architecture, vendor and system a kit compiles for | | [functional requirements](requirements/functional-requirements.md) (RF-TC-01) |
-| tool setup | Installing and configuring tools and SDKs, in N1 and N2 | `setup.list`, `toolchain.installable`, `toolchain.install` | [functional requirements](requirements/functional-requirements.md) (RF-SETUP-01) |
-| configuration recipe | A change to the files of a workspace, shown as a preview before it is applied | `configAction.*` | [functional requirements](requirements/functional-requirements.md) (RF-CA-01) |
+| toolchain | The tools that build and run code: CMake, the build tool, the C and C++ compilers, the debugger and their environment, which a script can set up. A toolchain is independent of the workspace, and one is the default (CLion 2026.3, [Toolchains](https://www.jetbrains.com/help/clion/how-to-create-toolchain-in-clion.html)). VS Code CMake Tools and Qt Creator call a similar set a kit | | [functional requirements](requirements/functional-requirements.md) (RF-TC-01) |
+| CMake profile | How a workspace builds its CMake project: the toolchain, the build type, the generator, the CMake options, the build options, the environment and the build directory. A CMake preset of the project becomes a read-only profile (CLion 2026.3, [CMake profiles](https://www.jetbrains.com/help/clion/cmake-profile.html), [CMake presets](https://www.jetbrains.com/help/clion/cmake-presets.html)) | | [functional requirements](requirements/functional-requirements.md) (RF-CMK-01) |
+| tool setup | Installing and configuring tools and SDKs, in N1 and N2 | | [functional requirements](requirements/functional-requirements.md) (RF-SETUP-01) |
+| configuration recipe | A change to the files of a workspace, shown as a preview before it is applied | | [functional requirements](requirements/functional-requirements.md) (RF-CA-01) |
 
 ## Versions of other things
 
 | Term | Meaning | Owner |
 | --- | --- | --- |
 | product version | The version of Kinein Vectis: the C++ core is 0.1, with tags `CoreCpp-X.Y.Z` | [README](../README.md) |
-| protocol version | The version of the contract between the UI and the core: the one of `kinein-protocol` | [protocol](architecture/protocol-and-contract.md) |
+| protocol version | The version of the contract between the UI and the core (P24) | [protocol](architecture/protocol-and-contract.md) |
 | schema version | The version of the format of a file the core owns | [persistence](architecture/persistence-and-durability.md) |
 
 ## Words with more than one meaning
 
 | Word | Written as | Never alone for |
 | --- | --- | --- |
-| target | build target, target triple, destination (of an atomic write) | any of the three |
+| target | build target, destination (of an atomic write) | either one |
 | environment | environment: the variables of a process | tool setup |
 | version | version: of a document | the product, protocol and schema versions |
 | project | project: the CMake project | the folder the person opens, which is the workspace |
 | settings | settings: of the person or of the workspace | a configuration recipe, or the CMake configure step |
+| profile | CMake profile (of a workspace); build profile (of the core's own build, `core/CMakePresets.json`) | either one |

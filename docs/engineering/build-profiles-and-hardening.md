@@ -58,9 +58,10 @@ without clang-tidy (`core/cmake/KineinProfile.cmake`).
 
 ## What holds in every profile
 
-- **Warnings:** the list of the 0.3 `KineinStrictOptions.cmake`, which built the UI with
-  `-Werror` (A10 of the [lessons](../lessons-from-0.3.md)), plus the OpenSSF TL;DR. The list is
-  fixed per compiler: an unknown flag breaks the build instead of vanishing (fail closed).
+- **Warnings:** the list of `cmake/KineinStrictOptions.cmake`, which builds the UI with
+  `-Werror`, plus the OpenSSF TL;DR. NOT VERIFIED: the source of each flag outside the OpenSSF list
+  in the manuals of GCC and Clang. The list is fixed per compiler: an unknown flag breaks the
+  build instead of vanishing (fail closed).
 - **Protections:** `-fstack-protector-strong`, `-fstack-clash-protection`,
   `-fstrict-flex-arrays=3`; on x86_64, `-fcf-protection=full` and
   `-fzero-call-used-regs=used-gpr`; on aarch64, `-mbranch-protection=standard`.

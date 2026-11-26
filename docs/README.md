@@ -4,8 +4,10 @@ Owner: the map of this tree, the question each file answers, and the rules every
 
 This tree documents only the core (backend) of Kinein Vectis, rewritten in C++23 in `core/`. The
 QML UI, the Rust core and the documentation of the 0.3 series live in `ui/`, `crates/` and
-`DocsPublic/`. No file here governs them, and none of them governs the new core. When a fact of
-0.3 serves as evidence, it is cited by its origin, not copied.
+`DocsPublic/`. No file here governs them, and none of them governs the new core: 0.3 is no
+reference for behavior, design or engineering, and enters only through the mistakes of
+[lessons-from-0.3.md](lessons-from-0.3.md), by ID. The behavior comes from the reference IDEs
+([ADR-0012](adr/ADR-0012-cpp23-backend.md)).
 
 State: draft of 2026-11-22; the maintainer reviews it.
 
@@ -26,7 +28,6 @@ flowchart TD
     INDEX --> ARCH["architecture/"]
     INDEX --> ENG["engineering/"]
     ADR --> ADR12["ADR-0012 C++23 backend and editing model"]
-    ADR --> ADR13["ADR-0013 single source of the contract"]
     REQ --> FR["functional-requirements.md"]
     REQ --> NFR["non-functional-requirements.md"]
     ARCH --> BOUND["boundaries-and-responsibilities.md"]
@@ -48,11 +49,10 @@ flowchart TD
 
 | File | Question it answers |
 | --- | --- |
-| [lessons-from-0.3.md](lessons-from-0.3.md) | What did 0.3 get wrong and right, and what prevents each mistake from coming back? |
+| [lessons-from-0.3.md](lessons-from-0.3.md) | What did 0.3 get wrong, and what prevents each mistake from coming back? |
 | [pending-decisions.md](pending-decisions.md) | What is still the maintainer's decision, with the recommendation? |
 | [glossary.md](glossary.md) | What does each term of the domain mean, and which name does the code give it? |
-| [adr/ADR-0012-cpp23-backend.md](adr/ADR-0012-cpp23-backend.md) | Why C++23, who owns the truth, which component edits, and what does this decision replace? |
-| [adr/ADR-0013-single-source-of-the-contract.md](adr/ADR-0013-single-source-of-the-contract.md) | Where does the contract between the UI and the two cores come from, and how does it change? |
+| [adr/ADR-0012-cpp23-backend.md](adr/ADR-0012-cpp23-backend.md) | Why C++23, who owns the truth, which component edits, which IDEs are the reference, and when the C++ core replaces the Rust core? |
 | **Requirements** | |
 | [requirements/functional-requirements.md](requirements/functional-requirements.md) | What the core does, in what order, and the acceptance test of each capability |
 | [requirements/non-functional-requirements.md](requirements/non-functional-requirements.md) | Within which measured limits: time, memory, security, durability, quality |
@@ -62,7 +62,7 @@ flowchart TD
 | [architecture/execution-and-concurrency.md](architecture/execution-and-concurrency.md) | Where work runs, who owns each piece of data, deadlines and cancellation |
 | [architecture/processes-and-trust.md](architecture/processes-and-trust.md) | How a process is born and what an untrusted workspace may do |
 | [architecture/persistence-and-durability.md](architecture/persistence-and-durability.md) | Where each file of the IDE lives and how much text a crash can lose |
-| [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | The wire between the UI and the core, the switch of cores and the change of contract |
+| [architecture/protocol-and-contract.md](architecture/protocol-and-contract.md) | The contract between the UI and the core, and how it changes |
 | [architecture/editing-engine.md](architecture/editing-engine.md) | Which component edits, who owns the text of a document, how an edit travels and how a large file degrades |
 | [architecture/text-encoding-and-positions.md](architecture/text-encoding-and-positions.md) | How the bytes of a file become text, how lines end, which unit each component counts a position in, and who converts |
 | **Engineering** | |
@@ -82,7 +82,7 @@ their subject comes up.
 ## Rules of this tree
 
 1. **One fact, one owner.** When a fact already has an owner here, the other files link to its
-   section (R-DOC-03 of 0.3).
+   section.
 2. **A rule a tool enforces lives in the tool.** The document says which tool enforces it and
    why; it does not repeat the list of flags or checks. CMake, `.clang-tidy` and the tests are
    the truth.
@@ -101,9 +101,8 @@ their subject comes up.
    belongs in the commit message. What leaves the project leaves the documents entirely, with no
    note that it was removed and no justification. The exception is the record of the gate
    measurements, which is the proof of each gate.
-9. **0.3 is consulted by identifier** (`INF-26`, `ENG-51`) or by line (`62:1371`), never by
-   reading a whole roadmap: roadmap 62 alone has 2,183 lines. The summary is
-   `lessons-from-0.3.md`.
+9. **0.3 enters only through the lessons.** `lessons-from-0.3.md` cites the origin of each mistake
+   by identifier (`INF-26`, `ENG-51`) or by line (`62:1371`), never a whole roadmap.
 10. **No god document.** A file answers the one question the map gives it. A subject that needs
     a second question goes to the owner of that question, or to a new file the maintainer
     approves; it never grows the file into a second owner.

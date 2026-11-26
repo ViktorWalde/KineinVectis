@@ -1,6 +1,6 @@
 # Lessons from 0.3
 
-Owner: what the 0.3 series got wrong and right, with the evidence of origin and the mechanism
+Owner: what the 0.3 series got wrong, with the evidence of origin and the mechanism
 that prevents the repetition in the C++ core. Citations follow the form of the
 [README](README.md#how-to-cite-03).
 
@@ -34,21 +34,3 @@ recommendation.
 | L18 | An `exec` failure in a terminal session aborted the child and wrote a core dump | INF-29; 62:1480-1509 | The launcher returns an `exec` failure as a typed error, with no abort | Launcher test |
 | L19 | An expired deadline was reported as "stale", telling the person to repeat a request that gives the same result | INF-30; 62:1510-1543 | Each failure has its own cause: an expired deadline is `DeadlineExceeded`, a cancellation is `RequestCancelled` | Deadline test |
 | L20 | Documentation and ceremony growing faster than the product: 126 thousand lines of Markdown against 166 thousand of Rust and 74 thousand of QML and C++; of the last 400 commits, 99 were documentation and 5 refactoring | 64:319-320; measured on 2026-11-22 | A new document only on request; one fact, one owner; a rule a tool enforces is not repeated in text | [README](README.md#rules-of-this-tree) |
-
-## Successes that stay
-
-| ID | Success | Origin | How it continues |
-| --- | --- | --- | --- |
-| A01 | Two processes, with the core owning the facts and QML only sending intent | 64:48-53 | The same: the core owns the facts and the text of record; the UI sends intent and edit deltas ([boundaries](architecture/boundaries-and-responsibilities.md)) |
-| A02 | An explicit, versioned protocol contract | 64:50; `crates/kinein-protocol/src/lib.rs:121` | The C++ core speaks the same protocol ([protocol](architecture/protocol-and-contract.md)) |
-| A03 | The UI picks the core binary through an environment variable | `ui/src/core_client_process.cpp:240` (`KINEIN_CORE_BIN`) | Switching between the two cores needs no change to the UI |
-| A04 | Jobs with cancellation | 64:52 | Every long operation is a cancellable job |
-| A05 | A single launcher as an intention (`owned_child`, SIGTERM and then SIGKILL) | 64:297-298, 64:435-436 | It becomes an enforced rule ([processes](architecture/processes-and-trust.md)) |
-| A06 | Toolchains in the Detected, Selected, Effective model | `DocsPublic/especificacoes/instalar-ferramentas.md:117` | RF-TC-01 ([requirements](requirements/functional-requirements.md)) |
-| A07 | Zero telemetry, everything local | 19:66; `README.md:232` at commit `a9f01d51` | RNF-PRIV-01 |
-| A08 | Measuring the effectiveness of a gate with planted defects and correct forms | 63 §D.5; 66:96-118 | Mandatory method for a project gate ([gates](engineering/gates-and-effectiveness.md)) |
-| A09 | Refutation criteria written before the proof | 65:38-61 | The done criteria of each milestone are written before the code |
-| A10 | Strict flags, sanitizers and `-Werror` in the UI build | `cmake/KineinStrictOptions.cmake` | They are the base of the core's profiles ([profiles](engineering/build-profiles-and-hardening.md)) |
-| A11 | CMake is the truth of a C/C++ project | 64:923 | The core reads the CMake model and does not rebuild it |
-| A12 | A missing tool is NOT PROVEN, never passed; a refactoring does not edit the tests that prove it | R-TEST-01 and R-TEST-07 of 63 | Rules of the [test strategy](engineering/test-strategy.md) |
-| A13 | Do not follow links, do not open what is not a regular file, do not overwrite what is not understood | R-DADOS-02 and R-DADOS-03 of 63 | Rules of [persistence](architecture/persistence-and-durability.md) |

@@ -23,7 +23,7 @@ item is not done: it is "partial", with the list of what is missing.
 ## Every milestone
 
 - The done criteria of the milestone are written **before** the code, with a number, a method and
-  the test that enforces each one (A09 of the [lessons](../lessons-from-0.3.md)).
+  the test that enforces each one.
 - The milestone closes with the measurement of each criterion, or with an explicit NOT PROVEN.
 - A data-loss or security defect found on the way jumps the queue.
 

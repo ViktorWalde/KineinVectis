@@ -18,7 +18,7 @@ the design must meet and, after the approval, the design itself.
 | E5 | An exception crosses neither a thread nor the Qt event loop | The C++ rules of the plan | `bugprone-exception-escape` in clang-tidy; a thread body and an adapter slot are `noexcept` |
 | E6 | The result of a stale generation (of the workspace, or the version of a document) is never applied | L10 (INF-22); 64:416-421 | Ordering test with forced interleaving |
 | E7 | A cancellation answers `RequestCancelled`; an expired deadline answers `DeadlineExceeded`; neither becomes "stale" | L19 (INF-30); 64:433-434 | Deadline test |
-| E8 | Cancelling a piece of work kills its process group, first with SIGTERM and then with SIGKILL | A05; 64:435-436 | Launcher test: no process is left |
+| E8 | Cancelling a piece of work kills its process group, first with SIGTERM and then with SIGKILL | The Stop of CLion 2026.3: SIGTERM, then SIGKILL ([Run tool window](https://www.jetbrains.com/help/clion/run-tool-window.html)) | Launcher test: no process is left |
 | E9 | Different resources run in parallel; the same resource (repository, build directory, document) runs in series | 64:425-427 | Test with two pieces of work on the same resource |
 | E10 | Nothing in the tests synchronizes on a fixed time | R-TEST-03 of 63; L16 | Fake tool with a lock the test controls |
 

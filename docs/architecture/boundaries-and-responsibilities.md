@@ -8,15 +8,13 @@ processes, persistence, protocol, editing engine).
 
 ```mermaid
 flowchart LR
-    UI["UI<br/>Qt Quick + QML"] -->|line-delimited JSON-RPC over stdio| CORE["core<br/>C++23"]
+    UI["UI<br/>Qt Quick + QML"] -->|the contract, P24| CORE["core<br/>C++23"]
     CORE -->|launcher| TOOLS["tools<br/>cmake, compilers, git, gdb, probes"]
     CORE -->|launcher, LSP client| CLANGD["clangd<br/>created by the launcher"]
 ```
 
-- **The UI and the core** are separate processes, as in 0.3 (A01 of the
-  [lessons](../lessons-from-0.3.md)). The UI picks the core binary through `KINEIN_CORE_BIN`
-  (`ui/src/core_client_process.cpp:240`): that is how the C++ core takes the place of the Rust
-  core without a change to the UI.
+- **The UI and the core** are separate processes, joined by the contract of
+  [protocol and contract](protocol-and-contract.md).
 - **The editor** is the Qt Quick `TextEdit`, in the UI process. The core owns the text of every
   document: the UI applies a keystroke to its copy and sends it to the core as a versioned delta,
   so the core stays off the path from the key to the frame ([editing engine](editing-engine.md)).
@@ -24,8 +22,6 @@ flowchart LR
   ([processes and trust](processes-and-trust.md)).
 
 ## What each component decides
-
-A rule inherited from 64 §5.2 (64:384-393), adapted to the C++ core.
 
 | Component | Decides | Never decides |
 | --- | --- | --- |
@@ -38,9 +34,9 @@ A rule inherited from 64 §5.2 (64:384-393), adapted to the C++ core.
 | Editor (`TextEdit`) | cursor, selection, scroll; it applies the person's keystrokes to its copy | the version, the text of record, the file, highlighting, diagnostics |
 
 **The frontend has no domain logic.** It shows what the core asserts and sends the person's
-intent. The 0.3 logic in the UI that belongs to the core leaves the UI and is rebuilt in the core
-with the design of 0.1, keeping the behavior the person sees: it is neither ported nor fixed in
-place.
+intent. The logic of the UI that belongs to the core leaves the UI and is rebuilt in the core with
+the design of 0.1; the code of the UI with a known problem is deleted, not fixed. The behavior the
+person sees comes from the reference IDEs ([ADR-0012](../adr/ADR-0012-cpp23-backend.md)).
 
 **The test for each function** of a QML controller and of the bridge: *if a command-line client
 would need the same logic, it belongs to the core.* The inventory of the 89 `*Controller.qml`
@@ -69,8 +65,8 @@ The modules inside `core/lib`, the layers and the gate that rejects cycles are i
 [modules-and-layers.md](modules-and-layers.md). The CMake graph does not reject cycles on its
 own: it accepts a cycle between `STATIC` libraries (measured on 2026-11-22).
 
-## Strangling
+## The sync with the frontend
 
-The Rust core stays in `crates/` as the product in use and as the oracle of the differential test
-until the C++ core passes the switch criteria of ADR-0012. Nothing in `crates/` is deleted or
-moved before that.
+Until the C++ core passes the acceptance of N0 and N1, the UI runs on the Rust core in `crates/`,
+which gets no change. The criterion and what leaves at the sync are in
+[ADR-0012](../adr/ADR-0012-cpp23-backend.md).

@@ -26,28 +26,23 @@ The decision is recorded in
 - The editor is a ready component, the Qt Quick `TextEdit`. The core owns the text of every
   document; the UI applies each keystroke at once and sends it to the core as a versioned delta.
 - The scope is C and C++ until the core is solid; Rust and Python come back later.
-- The migration strangles the old core inside this repository: the C++ core speaks the same
-  protocol, the UI picks the core binary through `KINEIN_CORE_BIN`, and the Rust core is the
-  oracle of the differential test. A working IDE exists at every step.
-- The Rust core is deleted only after the C++ core meets the non-functional requirements of
-  levels N0 and N1 and passes the differential test, with the tag `v0.3-rust-final` created first.
+- The behavior of the IDE and its acceptance come from mature IDEs: CLion first, with the source
+  of IntelliJ IDEA, VS Code CMake Tools, Qt Creator, VS Code and Zed. The prototype is no
+  reference.
+- The UI runs on the Rust core until the C++ core passes the acceptance of levels N0 and N1. Then
+  the UI talks to the C++ core over its own contract, the Rust code leaves (after the tag
+  `v0.3-rust-final`), and the code of the UI with a known problem is deleted, not fixed.
 
 ```mermaid
 flowchart LR
-    subgraph MAIN["main"]
-        RUST["Rust core (crates/)<br/>public release 0.3.5"]
-    end
-    subgraph BRANCH["reescrita/core-cpp23"]
-        BASE["Engineering base<br/>CI, gates, architecture,<br/>requirements"] --> CORE01["C++23 core 0.1<br/>tag CoreCpp-0.1.0"]
-        CORE01 --> CORE10["C++23 core 1.0"]
-    end
-    RUST -.->|oracle of the differential test| CORE01
-    CORE10 ==>|replaces the Rust core on main| RUST
+    BASE["Engineering base<br/>CI, gates, architecture,<br/>requirements"] --> CORE01["C++23 core 0.1<br/>tag CoreCpp-0.1.0"]
+    CORE01 --> SYNC["Sync with the frontend<br/>N0 and N1 accepted"]
+    RUST["Rust prototype (crates/)<br/>public release 0.3.5"] -->|leaves at the sync| SYNC
 ```
 
 The C++ core is version 0.1 of Kinein Vectis. Its tags use their own prefix, `CoreCpp-X.Y.Z`
 ([Semantic Versioning](https://semver.org/)), so they never sort among the `v0.2.0` and `v0.3.5`
-tags of the prototype. Version 1.0 of this branch replaces the core of `main`.
+tags of the prototype.
 
 ## Engineering before code
 
@@ -61,7 +56,7 @@ are listed in [docs/pending-decisions.md](docs/pending-decisions.md).
 flowchart TD
     C1["1. Reliable gates and tests,<br/>current with the rewrite"] --> CODE
     C2["2. Stable engineering standard<br/>and system architecture"] --> CODE
-    C3["3. The successes and mistakes of 0.3<br/>written as explicit rules"] --> CODE
+    C3["3. The mistakes of 0.3,<br/>each prevented by a rule"] --> CODE
     C4["4. Bounded scope<br/>and product vision"] --> CODE
     C5["5. Functional and non-functional requirements,<br/>with measured limits and acceptance tests"] --> CODE
     CODE["C++ code in core/lib and core/qt"]
@@ -84,13 +79,13 @@ handled.
 
 ```mermaid
 flowchart LR
-    UI["UI<br/>Qt Quick + QML (ui/)"] -->|line-delimited JSON-RPC over stdio| CORE["Core<br/>C++23 (core/)"]
+    UI["UI<br/>Qt Quick + QML (ui/)"] -->|the contract of the core| CORE["Core<br/>C++23 (core/)"]
     CORE -->|launcher| TOOLS["Tools<br/>cmake, compilers, git, gdb, probes"]
     CORE -->|launcher, LSP client| CLANGD["clangd"]
 ```
 
-- The UI and the core are separate processes. The UI picks the core binary through
-  `KINEIN_CORE_BIN`, so the C++ core replaces the Rust core without a change to the UI.
+- The UI and the core are separate processes, joined by a contract that the maintainer designs
+  by ADR.
 - Every external process, `clangd` included, starts through the core's launcher, which decides
   what an untrusted workspace may run.
 - A keystroke is drawn by the UI at once and reaches the core as a versioned delta; the core owns
@@ -107,9 +102,9 @@ map of the documentation is in [docs/README.md](docs/README.md).
 | `core/` | The C++23 core: CMake project, build profiles, tests and gates | Active, the focus of the project |
 | `docs/` | Documentation of the C++ core: requirements, architecture, engineering, ADRs | Active |
 | `.github/` | The `CoreCpp 0.1` workflow and the issue and pull request templates | Active |
-| `schemas/ipc.schema.json` | Contract between the UI and the core | Changes only through an approved ADR |
-| `ui/` | Qt Quick frontend and its C++ bridge | Kept; a change to its logic needs the maintainer's approval |
-| `crates/` | Rust core of the 0.3 series | Frozen: no changes; oracle of the differential test |
+| `schemas/ipc.schema.json` | Contract between the UI and the Rust core | Frozen; no reference for the C++ core |
+| `ui/` | Qt Quick frontend and its C++ bridge | Kept; a change to its logic needs the maintainer's approval. At the sync, its code with a known problem is deleted |
+| `crates/` | Rust core of the 0.3 series | Frozen: no changes; it leaves at the sync with the frontend |
 | `DocsPublic/` | Documentation of the 0.3 series | Frozen |
 
 ## Building the core
