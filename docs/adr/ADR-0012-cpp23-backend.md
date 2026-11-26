@@ -1,6 +1,6 @@
 # ADR-0012: the backend in C++23 and the editing model
 
-> **State:** draft, under review by the maintainer.
+> **State:** accepted by the maintainer on 2026-11-25.
 > **Decision by the maintainer:** 2026-11-22 (C++23 backend); 2026-11-23 (the core owns the
 > truth, the frontend has no domain logic, the editor is a ready component).
 > The numbering continues the one of `DocsPublic/decisoes-adr/`.
@@ -119,7 +119,8 @@ test.
   (`disallowed_methods = "forbid"`). Its mechanism in C++ is the `bugprone-unsafe-functions`
   option of clang-tidy, measured by `gate.launcher`
   ([gates](../engineering/gates-and-effectiveness.md)).
-- The core carries an LSP client and the tree-sitter grammars; their dependencies are P21.
+- The core carries tree-sitter with the C and C++ grammars (MIT) and an LSP client, whose library
+  is P21.
 - The UI keeps a copy of each open document; the property test of the
   [editing engine](../architecture/editing-engine.md#acceptance) proves that it stays equal to the
   core's.

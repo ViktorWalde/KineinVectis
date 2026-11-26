@@ -112,8 +112,8 @@ their subject comes up.
     Mermaid diagram, which GitHub renders with no extra tool; the text explains what the diagram
     cannot.
 
-Rules 6 to 12 are conventions until the documentation gate exists (P19 in the
-[pending decisions](pending-decisions.md)).
+Rules 6 to 12 are conventions until the documentation gate is in place: it is approved, not yet
+written ([the CI](engineering/gates-and-effectiveness.md#the-ci)).
 
 ## How to cite 0.3
 

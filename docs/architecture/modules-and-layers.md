@@ -4,7 +4,7 @@ Owner: which modules `core/lib` has, what each one does, who may use whom, how t
 module are ranked, and the mechanism that enforces it. The processes and who decides what are in
 [boundaries-and-responsibilities.md](boundaries-and-responsibilities.md).
 
-State: **proposal of 2026-11-22, awaiting the maintainer's approval (P15)**. No module exists yet.
+State: **approved by the maintainer on 2026-11-25**. No module exists yet.
 The internal design of `rt` (execution) and of `protocol` belongs to the maintainer; this page
 fixes only their boundary. The file roles were approved by the maintainer on 2026-11-23.
 
@@ -39,8 +39,8 @@ where a mistake fails the configure step.
    first list, process creation, is active
    ([gates](../engineering/gates-and-effectiveness.md#measurement-record)).
 
-Items 1 and 2 are a single function, `kinein_add_module(NAME RANK DEPENDS VISIBLE_TO)`, written
-after the approval, with mutants (cycle, going up, same layer, restricted module linked by
+Items 1 and 2 are a single function, `kinein_add_module(NAME RANK DEPENDS VISIBLE_TO)`, not yet
+written, with mutants (cycle, going up, same layer, restricted module linked by
 another, restricted module linked as `PUBLIC`) that must fail.
 
 ## The layers
@@ -182,14 +182,14 @@ The target is `kinein_<module>`, with the alias `kinein::<module>`, and the name
 | Rule | Mechanism | State |
 | --- | --- | --- |
 | A module includes only what it links | One header directory per module, no common directory | By construction, once the first module exists |
-| Dependencies only on a lower rank: no cycle, no going up | `kinein_add_module` checks at configure | Gate written after the approval, with measured effectiveness |
+| Dependencies only on a lower rank: no cycle, no going up | `kinein_add_module` checks at configure | Approved; not yet written, with measured effectiveness |
 | `sys.process` only for `launch`, as `PRIVATE` | `VISIBLE_TO` of the same `kinein_add_module` | Same |
 | Process-creation functions only in `sys.process` | clang-tidy, `bugprone-unsafe-functions.CustomFunctions` | **Active**: 40 of 40 defects and 16 of 16 correct forms |
 | No Qt in `core/lib` | The `dev` preset does not look for Qt | Active |
 | The domain does not know the wire | `protocol` above the domain: the domain cannot include `kinein/protocol/` | By construction |
 | Threads only inside `rt` | No mechanism: clang-tidy does not match constructors (measured). Review and TSan | Review |
 | File roles: header fields against the real includes, downward direction, `Layout:` and diagram | Role gate in the CI, with a corpus and measured effectiveness | Approved; written after the translation of the documentation |
-| One responsibility per file | No tool decides it, like T4 (P20) | Review |
+| One responsibility per file | No tool decides it, like T4 | Review |
 
 ## Against over-engineering
 

@@ -15,7 +15,7 @@ in this file.
 | Need | Comes from |
 | --- | --- |
 | Input, selection, clipboard, undo, IME, accessibility | `TextEdit` |
-| Highlighting | tree-sitter in the core; the UI applies the ranges the core sends through a `QSyntaxHighlighter` on the `QQuickTextDocument` |
+| Highlighting | tree-sitter in the core, with the C and C++ grammars (all three MIT, as GitHub reported on 2026-11-25; decided on 2026-11-25); the UI applies the ranges the core sends through a `QSyntaxHighlighter` on the `QQuickTextDocument` |
 | Completion, diagnostics, navigation, rename, code actions | clangd, through the LSP client of the core (P21) |
 | Line numbers, diagnostic marks, folding, multiple cursors, split view | Not in `TextEdit`. Each one enters only with a requirement, as QML over the component, fed by the core |
 

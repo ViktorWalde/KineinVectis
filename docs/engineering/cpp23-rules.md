@@ -17,7 +17,7 @@ rule marked so is a candidate for a mechanism. "CG" cites the
 | --- | --- | --- |
 | C++23 with no extensions (`CMAKE_CXX_EXTENSIONS OFF`) | Code portable between GCC, Clang and MSVC, which clangd understands | `build.contract` fails on `-std=gnu++` |
 | C++26 only through an ADR, one feature at a time, once GCC, clangd and MSVC support it without the experimental label, guarded by a feature-test macro (`__cpp_*`) | C++26 is not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection (P2996) | Review; the `cxx26-probe` preset only detects incompatibilities |
-| English for everything a contributor reads: identifiers, comments, messages, file names, documentation | ENG-37 of 0.3: 14 thousand Portuguese identifiers became debt; contributors read English | Review (P17) |
+| English for everything a contributor reads: identifiers, comments, messages, file names, documentation | ENG-37 of 0.3: 14 thousand Portuguese identifiers became debt; contributors read English | Review |
 | The warnings and protections of the profile, `-Werror` in development | The OpenSSF compiler hardening baseline, adapted per compiler ([profiles](build-profiles-and-hardening.md)) | The compiler; `build.contract`, `build.elf_hardening` |
 | A Unicode bidirectional character in the code fails the build | Trojan Source (CVE-2021-42574) | `-Wbidi-chars=any` (GCC) |
 | No `using namespace` in a header (CG SF.7) | It leaks into every file that includes the header | `-Wheader-hygiene` (Clang) |
@@ -78,7 +78,7 @@ In terms of code:
 | Dependencies between modules only toward a lower layer | `kinein_add_module`, proposed ([modules](../architecture/modules-and-layers.md)) |
 | Nothing runs before trust in the workspace | Hostile project test (RNF-SEG-01) |
 | A new external dependency only with the maintainer's approval and a checked license | Review |
-| One responsibility, one owning module. Before a function is written, the behavior is searched for in the owner of the subject, not by name. A new variation enters as an adapter of an existing port (open/closed), never as an adjusted copy or a scattered `switch`. A port exists only where the variation exists: the second occurrence creates it | `gate.duplication` (T1 to T3); the same logic written another way (T4) in review (P20) |
+| One responsibility, one owning module. Before a function is written, the behavior is searched for in the owner of the subject, not by name. A new variation enters as an adapter of an existing port (open/closed), never as an adjusted copy or a scattered `switch`. A port exists only where the variation exists: the second occurrence creates it | `gate.duplication` (T1 to T3); the same logic written another way (T4) in review |
 
 ## Suppressions
 

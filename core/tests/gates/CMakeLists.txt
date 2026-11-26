@@ -30,7 +30,7 @@ if(KINEIN_CLANG_TIDY)
             --reject "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-forbidden.cpp"
             --accept "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-allowed.cpp")
 
-    # Duplication (P20): the detector built on libclang, measured against the
+    # Duplication: the detector built on libclang, measured against the
     # duplication/ corpus. It uses the libclang and the internal headers of the
     # same Clang that compiles; without them configure stops, and the gate is
     # never skipped silently.
