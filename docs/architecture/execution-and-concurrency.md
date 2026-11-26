@@ -16,15 +16,11 @@ the design must meet and, after the approval, the design itself.
 | E3 | Each piece of data has a single owner; threads exchange messages and share no mutable state | The C++ rules of the plan | TSan in the `tsan` profile; review of the design |
 | E4 | Cancellable work uses `std::jthread` with `std::stop_token` | The C++ rules of the plan | Review; a bare `std::thread` stays out (no known automatic check) |
 | E5 | An exception crosses neither a thread nor the Qt event loop | The C++ rules of the plan | `bugprone-exception-escape` in clang-tidy; a thread body and an adapter slot are `noexcept` |
-| E6 | The result of a stale generation (of the workspace, or the version of a document) is never applied | L10 (INF-22); 64:416-421 | Ordering test with forced interleaving |
-| E7 | A cancellation answers `RequestCancelled`; an expired deadline answers `DeadlineExceeded`; neither becomes "stale" | L19 (INF-30); 64:433-434 | Deadline test |
+| E6 | The result of a stale generation (of the workspace, or the version of a document) is never applied | L10 | Ordering test with forced interleaving |
+| E7 | A cancellation answers `RequestCancelled`; an expired deadline answers `DeadlineExceeded`; neither becomes "stale" | L19 | Deadline test |
 | E8 | Cancelling a piece of work kills its process group, first with SIGTERM and then with SIGKILL | The Stop of CLion 2026.3: SIGTERM, then SIGKILL ([Run tool window](https://www.jetbrains.com/help/clion/run-tool-window.html)) | Launcher test: no process is left |
-| E9 | Different resources run in parallel; the same resource (repository, build directory, document) runs in series | 64:425-427 | Test with two pieces of work on the same resource |
-| E10 | Nothing in the tests synchronizes on a fixed time | R-TEST-03 of 63; L16 | Fake tool with a lock the test controls |
-
-64 §5.3 proposed three route classes (state on the loop, work outside it, visible job) and a
-three-phase helper: prepare on the loop, work outside it, apply on the loop if the generation has
-not moved (64:395-451). It is a 0.3 reference, not a decision for the core.
+| E9 | Different resources run in parallel; the same resource (repository, build directory, document) runs in series | The design of the core | Test with two pieces of work on the same resource |
+| E10 | Nothing in the tests synchronizes on a fixed time | L16 | Fake tool with a lock the test controls |
 
 ## Threads and owners
 
