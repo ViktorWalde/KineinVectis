@@ -103,7 +103,6 @@ map of the documentation is in [docs/README.md](docs/README.md).
 | `core/` | The core: CMake project, build profiles, tests and gates | Active, the focus of the project |
 | `docs/` | Documentation of the core: requirements, architecture, engineering, ADRs | Active |
 | `.github/` | The `Core 0.1` workflow and the issue and pull request templates | Active |
-| `schemas/ipc.schema.json` | Contract between the UI and the Rust core | Frozen; no reference for the core |
 | `ui/` | Qt Quick frontend and its C++ bridge | Kept; a change to its logic needs the maintainer's approval. At the sync, its code with a known problem is deleted |
 
 ## Building the core

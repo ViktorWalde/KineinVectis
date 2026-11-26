@@ -22,3 +22,13 @@ CLAUDE.md
 05-com-um-agente-de-ia.md
 /crates/
 /DocsPublic/
+/Cargo.toml
+/Cargo.lock
+/.cargo/
+/clippy.toml
+/deny.toml
+/rust-toolchain.toml
+/rustfmt.toml
+/scripts/
+/schemas/
+/packaging/

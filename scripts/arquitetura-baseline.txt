@@ -1,1 +1,0 @@
-ui/qml/editor/EditorController.qml 791 400
