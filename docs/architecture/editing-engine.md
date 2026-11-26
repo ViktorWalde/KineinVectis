@@ -41,8 +41,8 @@ flowchart TD
 
 | Limit | JetBrains default (CLion 2026.3) | Kinein |
 | --- | --- | --- |
-| Opening | 20,000 KB (`idea.max.content.load.filesize`) | Set by the measurement of the component (P23) |
-| Code insight | 2,500 KB (`idea.max.intellisense.filesize`); for a C/C++ file, 500,000 characters | Set by the measurement (P23); the full tier covers at least the 40,000-line reference file |
+| Opening | 20,000 KB (`idea.max.content.load.filesize`) | Set by the measurement of the component |
+| Code insight | 2,500 KB (`idea.max.intellisense.filesize`); for a C/C++ file, 500,000 characters | Set by the measurement; the full tier covers at least the 40,000-line reference file |
 
 - The method is adopted; the values come from the measurement of `TextEdit` and of the core. The
   500,000 characters of CLion are 25 characters per line at 20,000 lines: copied as they are, they
@@ -119,7 +119,7 @@ sequenceDiagram
    | 2,463 | 9.00 | 30.4 | 75.0 |
    | 19,970 | 9.94 | 32.0 | 83.4 |
 
-   The limits against it are RNF-ED-01 (P23). The 40,000-line file has no reference; it answers
+   The limits against it are RNF-ED-01. The 40,000-line file has no reference; it answers
    to RNF-PERF-01. A missed limit goes back to the maintainer with the measurement.
 3. **The integrated product**, by the same method.
 4. **IME** with fcitx5 or ibus: the preedit at the cursor and the right committed text.
