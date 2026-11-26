@@ -3,7 +3,8 @@
 # Documented in: docs/architecture/boundaries-and-responsibilities.md
 #
 # Thin on purpose: no domain rule lives here. moc runs only on the targets of this directory;
-# core/lib code never goes through it. The Qt version is the UI's (cmake/KineinQt.cmake).
+# core/lib code never goes through it. Qt 6.12 is the version of the reference machine; the
+# dev-qt preset finds it through KINEIN_QT_PREFIX (core/CMakePresets.json).
 find_package(Qt6 6.12 REQUIRED COMPONENTS Core)
 
 # No code yet. With the first .cpp: add_library(... STATIC), AUTOMOC ON

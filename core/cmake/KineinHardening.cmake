@@ -14,8 +14,7 @@ include_guard(GLOBAL)
 
 function(kinein_apply_hardening target kind)
     if(MSVC)
-        # Taken from cmake/KineinStrictOptions.cmake. Not verified: the reference machine has no
-        # MSVC.
+        # Not verified: the reference machine has no MSVC.
         target_compile_options("${target}" PRIVATE /sdl /guard:cf)
         if(kind MATCHES "^(EXECUTABLE|TEST)$")
             target_link_options("${target}" PRIVATE /guard:cf /CETCOMPAT)

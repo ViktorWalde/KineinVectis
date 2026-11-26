@@ -2,8 +2,8 @@
 #
 # Documented in: docs/architecture/boundaries-and-responsibilities.md
 #
-# A standalone project, configured from this directory (core/CMakePresets.json). It is not part
-# of the UI build: the UI connects to the core at the sync of
+# A standalone project, configured from this directory (core/CMakePresets.json), and the only
+# build of the repository. The UI connects to the core at the sync of
 # docs/adr/ADR-0012-cpp23-backend.md.
 cmake_minimum_required(VERSION 3.25)
 

@@ -3,9 +3,9 @@
 # Documented in: docs/engineering/build-profiles-and-hardening.md
 #
 # The lists are fixed per compiler and do not go through check_cxx_compiler_flag: an unknown
-# flag breaks the build instead of silently vanishing (fail closed). Base: the lists of
-# cmake/KineinStrictOptions.cmake, which builds the UI with -Werror, plus the TL;DR of the
-# OpenSSF Compiler Options Hardening Guide for C and C++, version of 2026-08-20.
+# flag breaks the build instead of silently vanishing (fail closed). Base: the TL;DR of the
+# OpenSSF Compiler Options Hardening Guide for C and C++, version of 2026-08-20. Not verified:
+# the source of each flag outside that list in the manuals of GCC and Clang.
 include_guard(GLOBAL)
 
 option(KINEIN_WERROR "Turn warnings into errors. On in the development and CI profiles; never in the source distribution" OFF)
@@ -75,7 +75,7 @@ set(KINEIN_WARNINGS_CLANG_LIBRARY
     -Wexit-time-destructors
 )
 
-# Taken from cmake/KineinStrictOptions.cmake. Not verified: the reference machine has no MSVC.
+# Not verified: the reference machine has no MSVC.
 set(KINEIN_WARNINGS_MSVC
     /W4
     /permissive-

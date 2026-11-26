@@ -51,12 +51,15 @@ process](processes-and-trust.md#the-life-of-an-external-process)): a workspace w
 (`WorkspaceUntrusted`); an exec that fails, with the system error (L18); a deadline or a
 cancellation (`DeadlineExceeded`, `RequestCancelled`), with SIGTERM and then SIGKILL to the process
 group (E8). A non-zero exit or a signal is the result of the tool, not a failure of the boundary:
-the job reports the exit status.
+the job reports the exit status. The output cap and malformed output follow the maintainer's
+decision of 2026-11-26: the answer past the cap depends on whether the core parses the output or
+the person reads it.
 
 | Failure and detection | Cause | Answer | The person sees | Test |
 | --- | --- | --- | --- | --- |
-| **Output past the cap** of the launch request | `OutputCapExceeded` | P25 | P25 | Decided with P25 |
-| **Malformed output** (a reply of the CMake File API, the diagnostics of a compiler): the parser of the tool | `MalformedOutput` | Not applied, not even in part; the rest is P25 | P25 | A fuzz target for each parser |
+| **Output past the cap, of a tool whose output the core parses** (`cmake -E capabilities`, a `--version`) | `OutputCapExceeded` | As at a deadline: SIGTERM and then SIGKILL to the process group; nothing of the output is applied | The tool, the cap and the cause, through the job | A fake tool that writes past the cap ends with `OutputCapExceeded`; a mutant with no cap fails it |
+| **Output past the cap, of a process the person reads** (a build, a program, a test run) | None: the process goes on, and only its deadline or a cancellation stops it | The last bytes up to the cap are kept and the oldest lines dropped, as the console of IntelliJ IDEA does (`idea.cycle.buffer.size`, 1024 KiB, in `bin/idea.properties`) | The output, with a notice that its start was dropped | A fake tool that writes twice the cap and exits by itself; the kept output is its end |
+| **Malformed output** (a reply of the CMake File API, the diagnostics of a compiler): the parser of the tool | `MalformedOutput` | Not applied, not even in part; the job ends, and the previous result of the tool stays, marked out of date | The previous result, with the mark and the cause | A fuzz target for each parser; a malformed reply after a good one keeps the good one, marked out of date |
 
 ## The LSP session
 
@@ -130,3 +133,5 @@ Answered by an owner: a stale result (E6) and an exception that would cross a th
 - No failure is implemented or tested yet.
 - `flock` on a state directory on NFS.
 - IntelliJ IDEA and VS Code were read in their source on 2026-11-26, not observed running.
+- CLion 2026.3 with a tool past the cap and with a malformed reply of the CMake File API: the
+  answers above are checked against it in a test with CLion running.

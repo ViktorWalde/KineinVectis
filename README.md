@@ -31,8 +31,9 @@ The decision is recorded in
   of IntelliJ IDEA, VS Code CMake Tools, Qt Creator, VS Code and Zed. The prototype is no
   reference.
 - The UI connects to the new core when it passes the acceptance of levels N0 and N1, over its own
-  contract; until then the UI runs on the prototype of the tag `v0.3-rust-final`. At the connection,
-  the code of the UI with a known problem is deleted, not fixed.
+  contract, after an architectural analysis of the connection. Until then the UI is parked in
+  `ui/`, with no build in this tree. At the connection, its build is rebuilt over `core/cmake/`,
+  and the code of the UI with a known problem is deleted, not fixed.
 
 ```mermaid
 flowchart LR
@@ -103,7 +104,7 @@ map of the documentation is in [docs/README.md](docs/README.md).
 | `core/` | The core: CMake project, build profiles, tests and gates | Active, the focus of the project |
 | `docs/` | Documentation of the core: requirements, architecture, engineering, ADRs | Active |
 | `.github/` | The `Core 0.1` workflow and the issue and pull request templates | Active |
-| `ui/` | Qt Quick frontend and its C++ bridge | Kept; a change to its logic needs the maintainer's approval. At the sync, its code with a known problem is deleted |
+| `ui/` | Qt Quick frontend and its C++ bridge | Parked, with no build until its connection to the core; a change to its logic needs the maintainer's approval. At the connection, its build is rebuilt over `core/cmake/` and its code with a known problem is deleted |
 
 ## Building the core
 

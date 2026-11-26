@@ -67,8 +67,10 @@ own: it accepts a cycle between `STATIC` libraries (measured on 2026-11-22).
 
 ## The sync with the frontend
 
-Until the core passes the acceptance of N0 and N1, the UI runs on the Rust prototype of the tag
-`v0.3-rust-final`, outside this tree. The criterion of the sync is in
+Until the core passes the acceptance of N0 and N1, the UI is parked in `ui/`, with no build; it
+runs only on the Rust prototype of the tag `v0.3-rust-final`. The connection has an architectural
+analysis of its own before its code, and the build of the UI is rebuilt there over the modules
+of `core/cmake/` (the maintainer's decision of 2026-11-26). The criterion of the sync is in
 [ADR-0012](../adr/ADR-0012-cpp23-backend.md).
 
 **At the sync, text from outside the IDE reaches the person with no network access** (the

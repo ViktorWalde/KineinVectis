@@ -14,8 +14,9 @@ endif()
 function(kinein_apply_sanitizers target)
     if(KINEIN_PROFILE STREQUAL "asan-ubsan")
         if(MSVC)
-            # MSVC has ASan and no UBSan, as cmake/KineinStrictOptions.cmake states. Not
-            # verified: the reference machine has no MSVC.
+            # MSVC has ASan and no UBSan: /fsanitize takes address, kernel-address and fuzzer
+            # (/fsanitize (Enable sanitizers), Syntax). Not verified: the reference machine has no
+            # MSVC.
             target_compile_options("${target}" PRIVATE /fsanitize=address)
             return()
         endif()

@@ -71,7 +71,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | The core connects to the network | I | Zero telemetry, and no connection without the person's gesture | RNF-PRIV-01 |
 | A secret of the environment reaches a tool or a record | I | The environment comes from an allow list; no secret is recorded | [launcher](processes-and-trust.md#the-launcher), RNF-OBS-01 |
-| A tool writes without end, or never ends | D | The output cap; the deadline, SIGTERM and then SIGKILL to the process group | [life of a process](processes-and-trust.md#the-life-of-an-external-process), P25 |
+| A tool writes without end, or never ends | D | The output cap: past it, a tool whose output the core parses is stopped, and a process the person reads keeps only its end; the deadline, SIGTERM and then SIGKILL to the process group | [life of a process](processes-and-trust.md#the-life-of-an-external-process), [failures](failures-by-boundary.md#external-processes) |
 | Which process ran, from where and why is unknown | R | Every launch is recorded with the program, the origin and the trust decision | RNF-SEG-02 |
 | clangd runs a compiler that the compilation database names | E | Without trust, `--query-driver` names only a compiler the IDE detected | [restricted mode](processes-and-trust.md#the-restricted-mode) |
 | The compilation database loads a plugin into clangd (`-fplugin`) | E | clangd does not load plugins | clangd, below |

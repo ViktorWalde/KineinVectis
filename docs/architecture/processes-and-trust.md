@@ -14,7 +14,7 @@ launch request carries, by type, what 0.3 left to each call site (L06):
 | Origin of the program: from the IDE (detected), from the workspace, or a tool configured by the workspace | Trust is decided by the origin (L05) |
 | Arguments, directory and environment (allow list) | An entire inherited environment leaks secrets and configuration |
 | Deadline, mandatory | L08 |
-| Output cap, mandatory | Unbounded output fills the memory |
+| Output cap, mandatory, and whether the core parses the output or the person reads it | Unbounded output fills the memory; past the cap, the first is stopped and the second keeps its end ([failures](failures-by-boundary.md#external-processes)) |
 | Cancellation | E2 and E8 of [execution](execution-and-concurrency.md) |
 
 ```mermaid
@@ -132,7 +132,7 @@ stateDiagram-v2
     Requested --> Failed: exec failed
     Requested --> Ended: cancel or deadline
     Running --> Ended: exited
-    Running --> Stopping: cancel or deadline, SIGTERM
+    Running --> Stopping: cancel, deadline or cap, SIGTERM
     Stopping --> Stopping: grace expired, SIGKILL
     Stopping --> Ended: exited
     Refused --> [*]
@@ -140,13 +140,14 @@ stateDiagram-v2
     Ended --> [*]
 ```
 
-| State | allowed | refused | exec failed | exited | cancel | deadline | grace expired |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Requested | Running | Refused, `WorkspaceUntrusted` | Failed, with the system error (L18) | — | Ended, `RequestCancelled` | Ended, `DeadlineExceeded` | — |
-| Running | — | — | — | Ended, with the exit status | Stopping, `RequestCancelled` | Stopping, `DeadlineExceeded` | — |
-| Stopping | — | — | — | Ended, with the cause of the stop | — | — | Stopping, SIGKILL to the group |
-| Refused, Failed, Ended | — | — | — | — | — | — | — |
+| State | allowed | refused | exec failed | exited | cancel | deadline | cap | grace expired |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Requested | Running | Refused, `WorkspaceUntrusted` | Failed, with the system error (L18) | — | Ended, `RequestCancelled` | Ended, `DeadlineExceeded` | — | — |
+| Running | — | — | — | Ended, with the exit status | Stopping, `RequestCancelled` | Stopping, `DeadlineExceeded` | Stopping, `OutputCapExceeded` | — |
+| Stopping | — | — | — | Ended, with the cause of the stop | — | — | — | Stopping, SIGKILL to the group |
+| Refused, Failed, Ended | — | — | — | — | — | — | — | — |
 
+- **cap** is only for output the core parses; output the person reads keeps its end instead.
 - **The record** of every launch is written at its final state (RNF-SEG-02).
 - **What the person sees:** the cause of the end, through the job that asked for the process.
 - **Acceptance:** a table test with the fake tools drives every cell; a fake tool that ignores

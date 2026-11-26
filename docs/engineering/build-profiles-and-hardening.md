@@ -15,9 +15,11 @@ cmake --workflow --preset tsan
 cmake --workflow --preset lint         # Clang + clang-tidy
 ```
 
-The build trees go to `build/core-<preset>/`, at the repository root, which git ignores. The
-`dev-qt` preset needs `KINEIN_QT_PREFIX` pointing to the Qt of the UI (for example
-`~/Qt/6.12.1/gcc_64`). clangd reads `build/core-lint/` through `core/.clangd`.
+The build trees go to `build/core-<preset>/`, at the repository root, which git ignores. These
+presets are the only build of the repository: the build of the UI is rebuilt over these modules
+at its connection to the core (the maintainer's decision of 2026-11-26). The `dev-qt` preset needs
+`KINEIN_QT_PREFIX` pointing to a Qt 6.12 (on the reference machine, `~/Qt/6.12.1/gcc_64`).
+clangd reads `build/core-lint/` through `core/.clangd`.
 
 ## The profiles
 
@@ -57,8 +59,8 @@ without clang-tidy (`core/cmake/KineinProfile.cmake`).
 
 ## What holds in every profile
 
-- **Warnings:** the list of `cmake/KineinStrictOptions.cmake`, which builds the UI with
-  `-Werror`, plus the OpenSSF TL;DR. NOT VERIFIED: the source of each flag outside the OpenSSF list
+- **Warnings:** the OpenSSF TL;DR plus the lists of `core/cmake/KineinWarnings.cmake`. NOT
+  VERIFIED: the source of each flag outside the OpenSSF list
   in the manuals of GCC and Clang. The list is fixed per compiler: an unknown flag breaks the
   build instead of vanishing (fail closed).
 - **Protections:** `-fstack-protector-strong`, `-fstack-clash-protection`,
@@ -96,8 +98,8 @@ without clang-tidy (`core/cmake/KineinProfile.cmake`).
 
 ## NOT VERIFIED
 
-- MSVC and Windows: the MSVC branch of the modules comes from `KineinStrictOptions.cmake` and was
-  not built on this machine.
+- MSVC and Windows: the MSVC branch of the modules was never built, and Windows is not a target
+  (RNF-POR-01).
 - GCC 14 and Clang 20: the floor built and passed in the CI on 2026-11-23
   ([gates](gates-and-effectiveness.md#the-ci)), but the exact version the runner used is in the
   log, which was not read. This machine has only GCC 16.2.1 and Clang 23.1.5.
