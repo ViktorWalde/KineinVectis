@@ -7,7 +7,7 @@ L05, L06 and L18 ([lessons](../lessons-from-0.3.md)).
 
 The launcher is the only path that creates a process in the core: `fork`, `exec*`,
 `posix_spawn*`, `system`, `popen`, PTY and `QProcess`. Its design belongs to the maintainer. The
-launch request carries, by type, what 0.3 left to each call site (64:460-470):
+launch request carries, by type, what 0.3 left to each call site (L06):
 
 | Field | Why |
 | --- | --- |
@@ -29,20 +29,19 @@ flowchart LR
 The rules:
 
 - **An argument that names a program** (`--query-driver` of clangd, for example) goes through the
-  same origin rule. It was vector E5 of INF-23 (64:122).
+  same origin rule. It was one of the paths of L05.
 - **git is a tool configured by the workspace:** `.git/config` defines `fsmonitor`, filters and
-  hooks (64:476-477).
+  hooks (`core.fsmonitor` and `core.hooksPath` of `git-config`).
 - **A compiler that a file of the workspace names** (a CMake preset or a toolchain file) belongs
-  to the workspace (64:480-482).
+  to the workspace.
 - **An `exec` failure** returns as a typed error, with the system error, with no abort or core
   dump (L18).
 - **Every launch** records the program, the origin, the decision, the duration, the exit code and
   whether the deadline expired (RNF-SEG-02).
 - **The tests** also go through the launcher, with the fake tools API.
 
-**What enforces "only the launcher creates processes".** In Rust it was the compiler
-(`disallowed_methods = "forbid"`, 64:248-265). C++ has no direct equivalent. Since 2026-11-22 it
-is `bugprone-unsafe-functions.CustomFunctions` in `core/.clang-tidy`, which flags every
+**What enforces "only the launcher creates processes".** C++ has no compiler mechanism for it.
+Since 2026-11-22 it is `bugprone-unsafe-functions.CustomFunctions` in `core/.clang-tidy`, which flags every
 process-creation function (POSIX, glibc, `QProcess` and Windows) anywhere in the core. It matches
 a direct call, a qualified call, a call through `std::`, a pointer, a macro, a `using` and a class
 method; it does not match a constructor. Effectiveness: 40 of 40 defects and 16 of 16 correct
@@ -53,7 +52,7 @@ exists, its directory gets its own `.clang-tidy` that allows only it, and `VISIB
 
 ## The restricted mode
 
-From 64 §5.5 (64:508-528), restricted to C and C++.
+As the restricted mode of VS Code and the safe mode of CLion 2026.3 ([project security](https://www.jetbrains.com/help/clion/project-security.html)): browsing and editing work, and nothing the workspace defines runs.
 
 | Capability | Without trust | With trust |
 | --- | --- | --- |
@@ -66,10 +65,10 @@ From 64 §5.5 (64:508-528), restricted to C and C++.
 - **Nothing runs before trust**, including the CMake configure step and the `--query-driver` of
   clangd.
 - **The rule lives in the core**, in the launcher. QML shows the state and asks for the gesture.
-  In 0.3, QML held back the automatic configure (64:306-309); here, the core refuses.
+  The core refuses, not the UI (L14).
 - **Trust** stays in the person's global state, by the canonical root of the workspace, with the
-  trusted folders of DP-02 (64:525-528).
-- **Acceptance:** the hostile project of 64 §2.1, with zero marks
+  trusted folders (the trusted locations of CLion 2026.3).
+- **Acceptance:** the hostile project, a fixture with a mark on every path of L05, with zero marks
   (RNF-SEG-01) and a mutant that removes the guard and must fail.
 
 ## The workspace and its trust
