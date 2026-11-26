@@ -4,7 +4,7 @@
 > **Decision by the maintainer:** 2026-11-22 (C++23 backend); 2026-11-23 (the core owns the
 > truth, the frontend has no domain logic, the editor is a ready component); 2026-11-25 (the
 > reference IDEs and the sync with the frontend).
-> The numbering continues the one of `DocsPublic/decisoes-adr/`.
+> The numbering continues the ADRs of 0.3 (tag `v0.3.5`).
 
 ## Context
 
@@ -49,20 +49,20 @@ The full list, with the evidence, is in the [lessons](../lessons-from-0.3.md).
      of that behavior; JetBrains is the reference for safe behavior;
    - VS Code CMake Tools and Qt Creator, alongside CLion: CMake, toolchains and kits;
    - VS Code and Zed: the rest of the behavior of an editor.
-6. **The C++ core replaces the Rust core at the sync with the frontend.** Until then the UI runs
-   on the Rust core, which gets no change, so a working IDE exists for dogfooding. The sync
-   happens when the C++ core passes the acceptance of the N0 and N1 requirements, functional and
-   non-functional. The UI then talks to the C++ core over its own contract (P24 in the
-   [pending decisions](../pending-decisions.md)), the tag `v0.3-rust-final` is created, and
-   `crates/` and all the Rust code leave.
+6. **The C++ core replaces the Rust core at the sync with the frontend.** The Rust core and the
+   documents of 0.3 are not in the repository: their last state is the tag `v0.3-rust-final`, on
+   which the UI runs for dogfooding until the sync (the maintainer's decision of 2026-11-26). The
+   sync happens when the C++ core passes the acceptance of the N0 and N1 requirements, functional
+   and non-functional; the UI then talks to the C++ core over its own contract (P24 in the
+   [pending decisions](../pending-decisions.md)).
 
 ```mermaid
 stateDiagram-v2
     [*] --> Building
-    Building: The UI runs on the Rust core; the C++ core passes its own tests
+    Building: The UI runs on the prototype of v0.3-rust-final; the core passes its own tests
     Building --> Synced: N0 and N1 accepted against the reference IDEs
     Synced: The UI talks to the C++ core over its own contract (P24)
-    Synced --> [*]: tag v0.3-rust-final, then crates/ and all the Rust code leave
+    Synced --> [*]
 ```
 
 ## Why

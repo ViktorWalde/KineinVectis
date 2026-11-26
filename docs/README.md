@@ -2,11 +2,10 @@
 
 Owner: the map of this tree, the question each file answers, and the rules every file follows.
 
-This tree documents only the core (backend) of Kinein Vectis, rewritten in C++23 in `core/`. The
-QML UI, the Rust core and the documentation of the 0.3 series live in `ui/`, `crates/` and
-`DocsPublic/`. No file here governs them, and none of them governs the new core: 0.3 is no
-reference for behavior, design or engineering, and enters only through the mistakes of
-[lessons-from-0.3.md](lessons-from-0.3.md), by ID. The behavior comes from the reference IDEs
+This tree documents only the core (backend) of Kinein Vectis, in `core/`. The QML UI lives in
+`ui/`, and no file here governs it. The 0.3 series is not in the repository (its last state is the
+tag `v0.3-rust-final`) and is no reference for behavior, design or engineering: it enters only
+through the mistakes of [lessons-from-0.3.md](lessons-from-0.3.md), by ID. The behavior comes from the reference IDEs
 ([ADR-0012](adr/ADR-0012-cpp23-backend.md)).
 
 State: draft of 2026-11-22; the maintainer reviews it.
@@ -91,8 +90,8 @@ their subject comes up.
    NOT VERIFIED.
 4. **A new file only at the maintainer's request.** A new subject first enters as a section of
    the closest owner.
-5. **ADRs** live in `adr/`. The numbering continues the one of `DocsPublic/decisoes-adr/` (the
-   last one there is ADR-0011), so that no number points to two decisions.
+5. **ADRs** live in `adr/`. The numbering continues the ADRs of 0.3 (the last one is ADR-0011, at
+   the tag `v0.3.5`), so that no number points to two decisions.
 6. **At most 200 lines per file**, and each subject in a `##` section with an explicit name that
    stands on its own. Past that, the file splits by responsibility (rule 4).
 7. **The first lines name the owner.** The reader decides from them whether the file is needed,
@@ -118,6 +117,7 @@ written ([the CI](engineering/gates-and-effectiveness.md#the-ci)).
 
 ## How to cite 0.3
 
-`62:1371` means `DocsPublic/roadmaps/62-base-publica-0.4.md`, line 1371, at commit `a9f01d51`.
-The same form holds for document 19 (`DocsPublic/arquitetura/19-compromissos-de-arquitetura.md`)
-and for roadmaps 63 to 66. Code files are cited by their path from the repository root.
+`62:1371` means `DocsPublic/roadmaps/62-base-publica-0.4.md`, line 1371, at commit `a9f01d51`
+(the tag `v0.3.5`). The same form holds for document 19
+(`DocsPublic/arquitetura/19-compromissos-de-arquitetura.md`) and for roadmaps 63 to 66. Code files
+of 0.3 are cited by their path from the repository root, at the same commit.

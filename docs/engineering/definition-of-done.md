@@ -17,7 +17,7 @@ item is not done: it is "partial", with the list of what is missing.
    [execution](../architecture/execution-and-concurrency.md#threads-and-owners).
 7. **The explicit list of what was not verified:** environment, platform or case the change did
    not exercise.
-8. A commit with a DCO sign-off (`git commit -s`, ADR-0011) whose message states what was measured
+8. A commit with a DCO sign-off (`git commit -s`, [`DCO.txt`](../../DCO.txt)) whose message states what was measured
    and what was not verified.
 
 ## Every milestone

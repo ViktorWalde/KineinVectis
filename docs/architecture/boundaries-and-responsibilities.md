@@ -59,7 +59,7 @@ flowchart TD
 | `core/lib` neither includes nor links Qt | The `dev` preset does not even look for Qt: an `#include <QObject>` in `core/lib` does not compile (`core/CMakeLists.txt`) |
 | moc never sees the code of `core/lib` | AUTOMOC is enabled only on the targets of `core/qt`; there is no global `CMAKE_AUTOMOC` |
 | `core/lib` is testable without an event loop | The tests of `core/lib` do not link `core/qt` |
-| Nothing in `core/` depends on `crates/` or `ui/` | The CMake project of `core/` does not reference those directories |
+| Nothing in `core/` depends on `ui/` | The CMake project of `core/` does not reference that directory |
 
 The modules inside `core/lib`, the layers and the gate that rejects cycles are in
 [modules-and-layers.md](modules-and-layers.md). The CMake graph does not reject cycles on its
@@ -67,6 +67,6 @@ own: it accepts a cycle between `STATIC` libraries (measured on 2026-11-22).
 
 ## The sync with the frontend
 
-Until the C++ core passes the acceptance of N0 and N1, the UI runs on the Rust core in `crates/`,
-which gets no change. The criterion and what leaves at the sync are in
+Until the core passes the acceptance of N0 and N1, the UI runs on the Rust prototype of the tag
+`v0.3-rust-final`, outside this tree. The criterion of the sync is in
 [ADR-0012](../adr/ADR-0012-cpp23-backend.md).

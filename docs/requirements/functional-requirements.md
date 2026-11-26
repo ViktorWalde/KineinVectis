@@ -90,7 +90,7 @@ Proposal for Phase D (P12), with the done criterion of each step written before 
    decision on the libraries (P16).
 2. `rt` and `protocol` (designed by the maintainer, after P24), plus `app` and `core/qt` with only
    the ping and the initialization. A test client over the contract proves the path from the wire
-   to the library, the CI and the sanitizers early; dogfooding stays on the Rust core until the
+   to the library, the CI and the sanitizers early; dogfooding stays on the prototype of the tag `v0.3-rust-final` until the
    sync with the frontend ([ADR-0012](../adr/ADR-0012-cpp23-backend.md), item 6).
 3. `storage`, `sys.process` and `launch`, with the hostile project test.
 4. `workspace`, and then the N0 domain.

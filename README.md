@@ -20,7 +20,8 @@ The decision is recorded in
 [ADR-0012](docs/adr/ADR-0012-cpp23-backend.md):
 
 - The core is rewritten in C++23 under `core/`: a library with no Qt (`core/lib`) and a thin Qt
-  adapter (`core/qt`). The Rust core gets no new features.
+  adapter (`core/qt`). The Rust prototype is not in this tree: its last state is the tag
+  `v0.3-rust-final`.
 - The core owns the truth. The QML frontend stays, with no domain logic: it shows what the core
   asserts and sends the person's intent.
 - The editor is a ready component, the Qt Quick `TextEdit`. The core owns the text of every
@@ -29,15 +30,15 @@ The decision is recorded in
 - The behavior of the IDE and its acceptance come from mature IDEs: CLion first, with the source
   of IntelliJ IDEA, VS Code CMake Tools, Qt Creator, VS Code and Zed. The prototype is no
   reference.
-- The UI runs on the Rust core until the C++ core passes the acceptance of levels N0 and N1. Then
-  the UI talks to the C++ core over its own contract, the Rust code leaves (after the tag
-  `v0.3-rust-final`), and the code of the UI with a known problem is deleted, not fixed.
+- The UI connects to the new core when it passes the acceptance of levels N0 and N1, over its own
+  contract; until then the UI runs on the prototype of the tag `v0.3-rust-final`. At the connection, the
+  code of the UI with a known problem is deleted, not fixed.
 
 ```mermaid
 flowchart LR
     BASE["Engineering base<br/>CI, gates, architecture,<br/>requirements"] --> CORE01["C++23 core 0.1<br/>tag CoreCpp-0.1.0"]
     CORE01 --> SYNC["Sync with the frontend<br/>N0 and N1 accepted"]
-    RUST["Rust prototype (crates/)<br/>public release 0.3.5"] -->|leaves at the sync| SYNC
+    RUST["Rust prototype<br/>tag v0.3-rust-final"] -->|replaced at the sync| SYNC
 ```
 
 The C++ core is version 0.1 of Kinein Vectis. Its tags use their own prefix, `CoreCpp-X.Y.Z`
@@ -104,8 +105,6 @@ map of the documentation is in [docs/README.md](docs/README.md).
 | `.github/` | The `CoreCpp 0.1` workflow and the issue and pull request templates | Active |
 | `schemas/ipc.schema.json` | Contract between the UI and the Rust core | Frozen; no reference for the C++ core |
 | `ui/` | Qt Quick frontend and its C++ bridge | Kept; a change to its logic needs the maintainer's approval. At the sync, its code with a known problem is deleted |
-| `crates/` | Rust core of the 0.3 series | Frozen: no changes; it leaves at the sync with the frontend |
-| `DocsPublic/` | Documentation of the 0.3 series | Frozen |
 
 ## Building the core
 
@@ -181,7 +180,7 @@ reproduces the reference machine, and a gate on the roles of the files of each m
   names, documentation, commits and pull requests.
 - **Developer Certificate of Origin 1.1:** every commit carries a sign-off (`git commit -s`); no
   copyright assignment is required
-  ([ADR-0011](DocsPublic/decisoes-adr/ADR-0011-copyleft-e-procedencia.md)).
+  ([`DCO.txt`](DCO.txt)).
 - **Comments** follow one standard, C1 to C12
   ([C++23 rules](docs/engineering/cpp23-rules.md), section "Comments"); the code rules and the
   tool that enforces each one are in the same file.
